@@ -27,6 +27,44 @@ a { color: inherit; }
 
 .brand-dash { display: inline-block; width: 28px; height: 3px; background: var(--accent); vertical-align: middle; }
 
+/* ---------- cadastro / código de acesso ---------- */
+#gate {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; overflow-y: auto;
+}
+body.gated .layout, body.gated .topbar { filter: blur(3px); pointer-events: none; user-select: none; }
+.gate-card {
+  width: 100%; max-width: 420px;
+  background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--accent);
+  padding: 34px 32px; text-align: center;
+}
+.gate-logo { width: 210px; max-width: 80%; margin-bottom: 18px; }
+.gate-card h1 { margin: 0; font-size: 26px; font-weight: 800; color: #fff; }
+.gate-card > p { margin: 12px 0 22px; font-size: 14.5px; line-height: 1.55; color: var(--muted); }
+.gate-card form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.campo-gate label { display: block; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; color: var(--muted); margin-bottom: 5px; }
+.campo-gate input {
+  width: 100%; padding: 12px 14px; box-sizing: border-box;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); font-family: inherit; font-size: 15px;
+}
+.campo-gate input:focus { outline: none; border-color: var(--accent); }
+.gate-erro { margin: 0; font-size: 13.5px; color: #f87171; background: rgba(220,38,38,.1); border: 1px solid rgba(220,38,38,.35); padding: 10px 12px; }
+.gate-card small { display: block; margin-top: 18px; font-size: 12px; color: var(--muted-2); line-height: 1.5; }
+
+.side-perfil {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 12px; font-size: 12.5px; color: var(--muted);
+}
+.side-perfil span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-perfil button {
+  flex: none; padding: 5px 10px; font-family: inherit; font-size: 11px; font-weight: 600;
+  background: none; border: 1px solid var(--line); color: var(--muted); cursor: pointer;
+}
+.side-perfil button:hover { border-color: var(--accent); color: var(--text); }
+
 /* ---------- top bar (mobile) ---------- */
 .topbar {
   display: none;

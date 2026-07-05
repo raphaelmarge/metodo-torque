@@ -312,6 +312,22 @@
     if (e.target.closest(".nav-item")) closeNav();
   });
 
+  // ---------- perfil do aluno ----------
+  function syncPerfil() {
+    var p = window.MT_perfil && window.MT_perfil();
+    var box = el("sidePerfil");
+    if (p && p.nome) {
+      box.hidden = false;
+      el("perfilNome").textContent = "👤 " + p.nome.split(" ")[0];
+      box.title = p.nome + (p.email ? " · " + p.email : "");
+    } else {
+      box.hidden = true;
+    }
+  }
+  el("sairBtn").addEventListener("click", function () { window.MT_sair && window.MT_sair(); });
+  window.MT_onAcesso = syncPerfil;
+  syncPerfil();
+
   // ---------- logo da academia ----------
   function syncLogoBtns() {
     var tem = !!window.MTStore.getLogo();

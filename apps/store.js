@@ -4,6 +4,16 @@
 (function () {
   "use strict";
 
+  // proteção leve (só nas páginas de programas em /apps/, nunca no shell):
+  // com o cadastro exigido e ainda não feito, volta à entrada
+  try {
+    if (self.MT_ACCESS && self.MT_ACCESS.exigirCadastro &&
+        location.pathname.indexOf("/apps/") !== -1 &&
+        !localStorage.getItem("mtapp:perfil")) {
+      window.top.location.replace("../index.html");
+    }
+  } catch (e) {}
+
   var PREFIX = "mtapp:";
 
   function read(key, fallback) {

@@ -80,3 +80,13 @@ docs/
 ```
 
 Os documentos em `docs/` preservam o formato original do material (runtime `dc`), com dois patches: fontes e bibliotecas apontam para cópias locais (funciona offline e sem CDN) e os links entre documentos usam os novos nomes de arquivo.
+
+## Controle de acesso (código + cadastro)
+
+O portal pede **código de acesso + cadastro** (nome, e-mail, WhatsApp) na primeira visita de cada aparelho. Configuração em `assets/access-config.js`:
+
+- `exigirCadastro: false` desliga a tela de entrada;
+- `codigos`: lista de códigos válidos em SHA-256 — gere novos com `gerador-codigo.html` (abra no navegador, digite o código, cole a linha gerada);
+- `notificarEmail`: preencha com seu e-mail para receber cada cadastro por e-mail (via formsubmit.co — confirme o e-mail de ativação no primeiro envio).
+
+Código inicial: `TORQUE2026`. É uma proteção **leve** (o conteúdo continua tecnicamente público para quem souber as URLs); para login com senha de verdade e alunos gerenciados na nuvem, o próximo passo é o Supabase.
