@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Inventário de Equipamentos</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MATERIAL DO MÓDULO 7 · INVENTÁRIO DE EQUIPAMENTOS</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · MATERIAL DO MÓDULO 7</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">Inventário de Equipamentos</h1>
+    <p style="margin: 16px 0 0 0; font-size: 16px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 16px 20px;">A fotografia do seu parque — a ação mais valiosa do curso (aula 7.5). Reserve uma manhã, percorra o salão área por área e preencha uma linha por equipamento. É este inventário que diz <strong>o que trocar, em que ordem e quando</strong> — e que alimenta o plano de renovação em fases.</p>
+
+    <p style="margin: 20px 0 0 0; font-size: 14px; line-height: 2.2; color: #3A3742;">Data do levantamento: <span style="display: inline-block; min-width: 130px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Feito por: <span style="display: inline-block; min-width: 240px; border-bottom: 1px solid #8A8695;"></span></p>
+
+    <h3 style="margin: 22px 0 0 0; font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">ESCALA DE ESTADO (COLUNA "EST.")</h3>
+    <p style="margin: 8px 0 0 0; font-size: 13.5px; line-height: 1.7; color: #3A3742;"><strong>5</strong> — como novo · <strong>4</strong> — bom, desgaste normal · <strong>3</strong> — funcional, estética cansada (estofado, pintura) · <strong>2</strong> — problemas recorrentes, aluno percebe · <strong>1</strong> — parado ou inseguro (prioridade absoluta)</p>
+
+    <!-- TABELA PRINCIPAL -->
+    <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12.5px; line-height: 1.4;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em;">EQUIPAMENTO</th>
+          <th style="text-align: left; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 110px;">MARCA</th>
+          <th style="text-align: center; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 64px;">IDADE (anos)</th>
+          <th style="text-align: center; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 46px;">EST. 1–5</th>
+          <th style="text-align: center; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 76px;">CONSERTOS 12 MESES (R$)</th>
+          <th style="text-align: center; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 66px;">FILA NO PICO?</th>
+          <th style="text-align: left; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 130px;">OBSERVAÇÃO / DECISÃO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="7" style="padding: 7px 10px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.1em; color: #7C3AED;">CARDIO (esteiras, bikes, elípticos, remo)</td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td colspan="7" style="padding: 7px 10px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.1em; color: #7C3AED;">MUSCULAÇÃO — MÁQUINAS</td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td colspan="7" style="padding: 7px 10px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.1em; color: #7C3AED;">PESO LIVRE (bancos, racks, halteres, barras, anilhas)</td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td colspan="7" style="padding: 7px 10px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.1em; color: #7C3AED;">FUNCIONAL / COLETIVAS / OUTROS</td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+      </tbody>
+    </table>
+    <p style="margin: 8px 0 0 0; font-size: 12.5px; color: #6E6A78;">Imprima quantas cópias desta página precisar para cobrir o salão inteiro.</p>
+
+    <!-- TOP 5 -->
+    <div style="margin-top: 28px; border: 1.5px solid #7C3AED; padding: 18px 22px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">OS 5 QUE MAIS CUSTAM ALUNOS HOJE</p>
+      <p style="margin: 6px 0 0 0; font-size: 13.5px; line-height: 1.6; color: #3A3742;">Cruze o inventário com a fila do pico e as reclamações do NPS. Estado 1–2, fila marcada ou reclamação citada = candidato.</p>
+      <p style="margin: 12px 0 0 0; font-size: 14px; line-height: 2.6; color: #3A3742;">
+        1. <span style="display: inline-block; min-width: 440px; border-bottom: 1px solid #C6C2CF;"></span> Fase: <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        2. <span style="display: inline-block; min-width: 440px; border-bottom: 1px solid #C6C2CF;"></span> Fase: <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        3. <span style="display: inline-block; min-width: 440px; border-bottom: 1px solid #C6C2CF;"></span> Fase: <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        4. <span style="display: inline-block; min-width: 440px; border-bottom: 1px solid #C6C2CF;"></span> Fase: <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        5. <span style="display: inline-block; min-width: 440px; border-bottom: 1px solid #C6C2CF;"></span> Fase: <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #C6C2CF;"></span>
+      </p>
+    </div>
+
+    <!-- PLANO DE RENOVAÇÃO -->
+    <h2 style="margin: 32px 0 0 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Plano de renovação em 3 fases</h2>
+    <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.65;">Renove 20–25% do parque por ano, na ordem: (1) o que quebra e frustra, (2) o que o pico disputa, (3) o que a entrada mostra. Fonte de recurso: terço de reinvestimento do lucro (aula 2.5) + caixa dos planos anuais (aula 2.2). Cada fase entregue vira campanha de marketing e argumento de reajuste.</p>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 120px;">FASE</th>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em;">EQUIPAMENTOS</th>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 130px;">ORÇAMENTO (R$)</th>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 130px;">FONTE DO RECURSO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 10px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Fase 1 · 12 meses</td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 10px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Fase 2 · 24 meses</td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 10px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Fase 3 · 36 meses</td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+      </tbody>
+    </table>
+
+    <!-- REGRAS -->
+    <div style="margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="background: #131118; color: #FFFFFF; padding: 18px 22px;">
+        <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">QUANDO A TROCA SE PAGA</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7; color: #E8E5F0;">Consertos dos últimos 12 meses acima de 20–30% do valor de um substituto melhor = troca se paga (aula 7.5). Vidas úteis de referência: esteiras 7–10 anos · bikes/elípticos 8–12 · máquinas 10–15 · peso livre de qualidade, quase eterno.</p>
+      </div>
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 18px 22px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">ANTES DE COMPRAR A FASE 1</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Compare os três caminhos com números (aula 7.3): novo nacional, usado e importado direto — e exija de qualquer fornecedor NCM por item, Incoterm claro, prazo realista, garantia por escrito e referências verificáveis (aula 7.4).</p>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#121016"/>
+  <!-- arco de torque (velocímetro) -->
+  <path d="M 116 332 A 156 156 0 1 1 396 332" fill="none" stroke="#2E2A38" stroke-width="34" stroke-linecap="round"/>
+  <path d="M 116 332 A 156 156 0 0 1 256 100" fill="none" stroke="#7C3AED" stroke-width="34" stroke-linecap="round"/>
+  <path d="M 256 100 A 156 156 0 0 1 380 162" fill="none" stroke="#A78BFA" stroke-width="34" stroke-linecap="round"/>
+  <!-- T -->
+  <path d="M 176 208 H 336 V 252 H 280 V 400 H 232 V 252 H 176 Z" fill="#FFFFFF"/>
+</svg>
