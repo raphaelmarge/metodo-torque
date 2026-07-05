@@ -1,0 +1,51 @@
+/* Método Torque — adaptação dos materiais para celular.
+ * As páginas foram desenhadas para papel carta / desktop; estas regras
+ * fazem tudo caber e funcionar em telas pequenas. */
+@media (max-width: 760px) {
+
+  /* a "folha" da apostila (doc-page) ocupa a largura da tela e reflui o texto */
+  doc-page {
+    --doc-page-w: 100% !important;
+    --doc-page-margin: 20px !important;
+    padding: 10px 8px !important;
+  }
+
+  html, body { -webkit-text-size-adjust: 100%; }
+
+  /* grades de múltiplas colunas viram coluna única */
+  [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+
+  /* linhas flexíveis podem quebrar */
+  [style*="display: flex"] { flex-wrap: wrap !important; }
+  * { min-width: 0; }
+
+  /* respiros gigantes de desktop encolhem */
+  [style*="48px"] { padding-left: 16px !important; padding-right: 16px !important; }
+  [style*="padding: 110px"] { padding-top: 48px !important; padding-bottom: 40px !important; }
+
+  /* tabelas largas rolam para o lado em vez de estourar a tela */
+  table { display: block; overflow-x: auto; max-width: 100%; }
+
+  img { max-width: 100%; height: auto; }
+
+  /* linhas de escrever com largura fixa (min-width inline) encolhem para caber */
+  [style*="min-width"] { min-width: 0 !important; max-width: 100% !important; }
+  span[style*="min-width"][style*="border-bottom"] { width: 100% !important; }
+
+  /* deixa textos longos quebrarem em vez de esticar a página */
+  [style*="white-space: nowrap"] { white-space: normal !important; }
+  h1, h2, h3, p, span, li, td, th, label { overflow-wrap: anywhere; }
+  [style*="letter-spacing: 0.2"], [style*="letter-spacing: 0.18"], [style*="letter-spacing: 0.22"] { letter-spacing: .08em !important; }
+
+  /* evita o zoom automático do iPhone ao focar campos */
+  input, select, textarea, [contenteditable="true"] { font-size: 16px !important; }
+
+  /* títulos enormes de capa */
+  [style*="font-size: 62px"] { font-size: 34px !important; }
+  [style*="font-size: 40px"] { font-size: 28px !important; }
+  [style*="font-size: 36px"] { font-size: 26px !important; }
+  [style*="font-size: 32px"] { font-size: 24px !important; }
+
+  /* selo da ficha preenchível mais discreto no celular */
+  .pf-badge { right: 8px; bottom: 8px; font-size: 11px !important; padding: 7px 10px; }
+}

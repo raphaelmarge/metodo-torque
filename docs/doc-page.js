@@ -82,6 +82,18 @@
       padding: var(--doc-page-margin);
     }
     .frame { width: 100%; border-collapse: collapse; }
+    /* celular: a folha ocupa a largura da tela e o texto reflui */
+    @media (max-width: 760px) {
+      :host {
+        padding: 10px 6px !important;
+        --doc-page-w: 100% !important;
+        --doc-page-margin: 18px !important;
+      }
+      /* na tela do celular a estrutura de tabela vira blocos, para a
+         largura minima do conteudo nao esticar a pagina */
+      .frame, .frame thead, .frame tbody, .frame tfoot,
+      .frame tr, .frame td, .frame th { display: block; width: 100%; box-sizing: border-box; }
+    }
     .frame td, .frame th { padding: 0; text-align: left; font-weight: inherit; }
     .hdr-space { min-height: var(--doc-hdr-h); }
     .ftr-space { min-height: var(--doc-ftr-h); }
