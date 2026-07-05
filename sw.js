@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v1";
+var VERSION = "mt-v2";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
@@ -28,9 +28,12 @@ var CORE = [
   "docs/doc-page.js",
   "docs/image-slot.js",
   "docs/deck-stage.js",
+  "apps/store.js",
+  "apps/apps.css",
 ];
 
-var DOC_PAGES = (self.MT_DOCS || []).map(function (d) { return "docs/" + d.slug + ".html"; });
+var DOC_PAGES = (self.MT_DOCS || []).map(function (d) { return "docs/" + d.slug + ".html"; })
+  .concat((self.MT_APPS || []).map(function (a) { return a.file; }));
 
 self.addEventListener("install", function (event) {
   event.waitUntil(

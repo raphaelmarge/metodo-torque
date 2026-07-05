@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Central de Manutenção — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .resumo .card { text-align: center; padding: 16px; }
+  .resumo .n { font-size: 30px; font-weight: 800; }
+  .resumo .erro .n { color: var(--erro); }
+  .resumo .alerta .n { color: var(--alerta); }
+  .resumo .ok .n { color: var(--ok); }
+  .chamado { display: flex; flex-direction: column; gap: 10px; }
+  .chamado .cab { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .chamado h3 { margin: 0; font-size: 16.5px; }
+  .chamado .local { font-size: 13px; color: var(--cinza); }
+  .fotos { display: flex; gap: 8px; flex-wrap: wrap; }
+  .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hist { font-size: 12.5px; color: var(--cinza); border-left: 2px solid var(--linha); padding-left: 10px; margin: 0; display: flex; flex-direction: column; gap: 3px; }
+  .atrasado-borda { border-left: 4px solid var(--erro); }
+  #fotoGrande img { max-width: 100%; display: block; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div>
+    <span class="kicker">PROGRAMA · OPERAÇÃO</span>
+    <h1>Central de Manutenção</h1>
+  </div>
+  <p>Aparelhos, predial e limpeza num só lugar: registre o problema com foto, agende o conserto ou o retorno e nunca mais perca uma pendência. Atrasos aparecem no modo TV.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <div class="resumo" id="resumo"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abasCat">
+      <button data-cat="" class="ativa">Tudo</button>
+      <button data-cat="aparelho">🏋 Aparelhos</button>
+      <button data-cat="predial">🏢 Predial</button>
+      <button data-cat="limpeza">🧽 Limpeza</button>
+    </div>
+    <div class="linha-flex">
+      <select id="filtroStatus" style="width: auto;">
+        <option value="abertos">Em aberto (padrão)</option>
+        <option value="atrasados">Só atrasados</option>
+        <option value="hoje">Agendados para hoje</option>
+        <option value="resolvido">Resolvidos</option>
+        <option value="">Todos</option>
+      </select>
+      <button class="btn" id="btnNovo">+ Novo chamado</button>
+    </div>
+  </div>
+
+  <div id="lista" style="display: flex; flex-direction: column; gap: 12px;"></div>
+</main>
+
+<!-- novo chamado -->
+<dialog id="dlgNovo">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 520px; max-width: 100%;">
+    <h2>Novo chamado</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Categoria</label>
+        <select id="nCat"><option value="aparelho">🏋 Aparelho</option><option value="predial">🏢 Predial</option><option value="limpeza">🧽 Limpeza</option></select>
+      </div>
+      <div class="campo"><label>Prioridade</label>
+        <select id="nPrio"><option value="alta">Alta — risco/parado</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select>
+      </div>
+    </div>
+    <div class="campo"><label>O que precisa de atenção?</label><input id="nTitulo" required placeholder="ex.: Esteira 3 fazendo barulho na correia"></div>
+    <div class="campo"><label>Local / equipamento</label><input id="nLocal" placeholder="ex.: Salão cardio, vestiário masculino…"></div>
+    <div class="campo"><label>Detalhes (opcional)</label><textarea id="nDesc" rows="2" placeholder="observações, fornecedor, peça…"></textarea></div>
+    <div class="grid-2">
+      <div class="campo"><label>Agendar para (opcional)</label><input id="nData" type="date"></div>
+      <div class="campo"><label>Foto (opcional)</label><input id="nFoto" type="file" accept="image/*" capture="environment"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Abrir chamado</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ver foto -->
+<dialog id="fotoGrande"><div class="card" style="padding: 8px;"><img alt="foto do chamado"><div style="text-align:right; margin-top:8px;"><button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button></div></div></dialog>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // estado: { chamados: [{id, cat, prio, titulo, local, desc, status, criado, agendado, fotos:[], hist:[{data,txt}]}] }
+  function load() { return S.read("manut", { chamados: [] }); }
+  function save(st) { S.write("manut", st); render(); }
+
+  var CAT = { aparelho: "🏋 Aparelho", predial: "🏢 Predial", limpeza: "🧽 Limpeza" };
+  var PRIO = { alta: ["ALTA", "erro"], media: ["MÉDIA", "alerta"], baixa: ["BAIXA", "neutro"] };
+  var ST = { aberto: ["EM ABERTO", "alerta"], agendado: ["AGENDADO", "roxo"], resolvido: ["RESOLVIDO ✓", "ok"] };
+
+  var catAtiva = "", filtro = "abertos";
+
+  function atrasado(c) {
+    return c.status !== "resolvido" && c.agendado && c.agendado < S.todayISO();
+  }
+
+  function render() {
+    var st = load();
+    var hoje = S.todayISO();
+    var cs = st.chamados;
+
+    // resumo
+    var abertos = cs.filter(function (c) { return c.status !== "resolvido"; });
+    var nAtras = cs.filter(atrasado).length;
+    var nHoje = cs.filter(function (c) { return c.status !== "resolvido" && c.agendado === hoje; }).length;
+    var mes = hoje.slice(0, 7);
+    var nResolvMes = cs.filter(function (c) { return c.status === "resolvido" && (c.resolvido || "").slice(0, 7) === mes; }).length;
+    $("resumo").innerHTML =
+      card(abertos.length, "em aberto", nAtras ? "" : "") +
+      card(nAtras, "atrasados", "erro") +
+      card(nHoje, "para hoje", "alerta") +
+      card(nResolvMes, "resolvidos no mês", "ok");
+    function card(n, label, cls) {
+      return '<div class="card ' + cls + '"><div class="n">' + n + '</div><div class="muted">' + label + "</div></div>";
+    }
+
+    // lista
+    var vis = cs.filter(function (c) {
+      if (catAtiva && c.cat !== catAtiva) return false;
+      if (filtro === "abertos") return c.status !== "resolvido";
+      if (filtro === "atrasados") return atrasado(c);
+      if (filtro === "hoje") return c.status !== "resolvido" && c.agendado === hoje;
+      if (filtro === "resolvido") return c.status === "resolvido";
+      return true;
+    }).sort(function (a, b) {
+      var pa = atrasado(a) ? 0 : (a.status === "resolvido" ? 2 : 1);
+      var pb = atrasado(b) ? 0 : (b.status === "resolvido" ? 2 : 1);
+      if (pa !== pb) return pa - pb;
+      return (a.agendado || "9999") < (b.agendado || "9999") ? -1 : 1;
+    });
+
+    $("lista").innerHTML = vis.length ? vis.map(tpl).join("") :
+      '<div class="vazio">Nenhum chamado aqui. ' + (filtro === "abertos" ? "Tudo em dia 💪" : "") + "</div>";
+
+    // carrega thumbs
+    vis.forEach(function (c) {
+      (c.fotos || []).forEach(function (fid) {
+        S.getPhoto(fid).then(function (data) {
+          var img = document.querySelector('img[data-foto="' + fid + '"]');
+          if (img && data) img.src = data;
+        });
+      });
+    });
+  }
+
+  function tpl(c) {
+    var atr = atrasado(c);
+    var stTag = atr ? ["ATRASADO ⚠", "erro"] : ST[c.status] || ST.aberto;
+    return '<div class="card chamado' + (atr ? " atrasado-borda" : "") + '" data-id="' + c.id + '">' +
+      '<div class="cab"><div><h3>' + esc(c.titulo) + '</h3><div class="local">' + esc(c.local || "") + "</div></div>" +
+      '<div class="linha-flex" style="gap:6px;"><span class="tag neutro">' + CAT[c.cat] + '</span><span class="tag ' + PRIO[c.prio][1] + '">' + PRIO[c.prio][0] + '</span><span class="tag ' + stTag[1] + '">' + stTag[0] + "</span></div></div>" +
+      (c.desc ? '<div style="font-size:14px;">' + esc(c.desc) + "</div>" : "") +
+      '<div class="muted">Aberto em ' + S.fmtData(c.criado) +
+      (c.agendado ? " · agendado para <strong>" + S.fmtData(c.agendado) + "</strong>" : "") +
+      (c.resolvido ? " · resolvido em " + S.fmtData(c.resolvido) : "") + "</div>" +
+      ((c.fotos || []).length ? '<div class="fotos">' + c.fotos.map(function (f) { return '<img class="thumb" data-foto="' + f + '" alt="foto">'; }).join("") + "</div>" : "") +
+      ((c.hist || []).length ? '<div class="hist">' + c.hist.slice(-3).map(function (h) { return "<span>" + S.fmtData(h.data) + " — " + esc(h.txt) + "</span>"; }).join("") + "</div>" : "") +
+      '<div class="acoes">' +
+      (c.status !== "resolvido" ?
+        '<button class="btn ok mini" data-acao="resolver">✓ Resolver</button>' +
+        '<button class="btn sec mini" data-acao="agendar">📅 ' + (c.agendado ? "Reagendar / retorno" : "Agendar") + "</button>" +
+        '<button class="btn sec mini" data-acao="foto">📷 Foto</button>' +
+        '<button class="btn sec mini" data-acao="nota">✎ Anotação</button>'
+        : '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir (retorno)</button>') +
+      '<button class="btn perigo mini" data-acao="excluir">excluir</button>' +
+      '<input type="file" accept="image/*" capture="environment" data-fotoinput hidden>' +
+      "</div></div>";
+  }
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  // ---------- eventos ----------
+  $("abasCat").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    catAtiva = b.getAttribute("data-cat");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  $("filtroStatus").onchange = function () { filtro = this.value; render(); };
+
+  $("btnNovo").onclick = function () {
+    $("nTitulo").value = ""; $("nLocal").value = ""; $("nDesc").value = ""; $("nData").value = ""; $("nFoto").value = "";
+    $("dlgNovo").showModal();
+  };
+
+  $("dlgNovo").addEventListener("close", function () {
+    if ($("dlgNovo").returnValue !== "ok") return;
+    var novo = {
+      id: S.uid(), cat: $("nCat").value, prio: $("nPrio").value,
+      titulo: $("nTitulo").value.trim(), local: $("nLocal").value.trim(), desc: $("nDesc").value.trim(),
+      status: $("nData").value ? "agendado" : "aberto",
+      criado: S.todayISO(), agendado: $("nData").value || "", fotos: [], hist: [],
+    };
+    var f = $("nFoto").files[0];
+    var fim = function () { var st = load(); st.chamados.unshift(novo); save(st); };
+    if (f) S.savePhoto(f).then(function (fid) { novo.fotos.push(fid); fim(); }, fim);
+    else fim();
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    // foto ampliada
+    if (e.target.matches("img.thumb")) {
+      $("fotoGrande").querySelector("img").src = e.target.src;
+      $("fotoGrande").showModal();
+      return;
+    }
+    var b = e.target.closest("[data-acao]"); if (!b) return;
+    var cardEl = e.target.closest("[data-id]");
+    var id = cardEl.getAttribute("data-id");
+    var st = load();
+    var c = st.chamados.find(function (x) { return x.id === id; });
+    if (!c) return;
+    var acao = b.getAttribute("data-acao");
+
+    if (acao === "resolver") {
+      c.status = "resolvido"; c.resolvido = S.todayISO();
+      c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: "Resolvido" });
+      save(st);
+    } else if (acao === "agendar") {
+      var d = prompt("Agendar para qual data? (AAAA-MM-DD)", c.agendado || S.todayISO());
+      if (!d) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { alert("Use o formato AAAA-MM-DD, ex.: 2026-07-15"); return; }
+      c.agendado = d; c.status = "agendado";
+      c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: "Agendado para " + S.fmtData(d) });
+      save(st);
+    } else if (acao === "reabrir") {
+      c.status = "aberto"; c.resolvido = ""; c.agendado = "";
+      c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: "Reaberto (retorno)" });
+      save(st);
+    } else if (acao === "nota") {
+      var txt = prompt("Anotação:");
+      if (!txt) return;
+      c.hist = (c.hist || []).concat({ data: S.todayISO(), txt: txt });
+      save(st);
+    } else if (acao === "foto") {
+      cardEl.querySelector("[data-fotoinput]").click();
+    } else if (acao === "excluir") {
+      if (!confirm("Excluir este chamado?")) return;
+      (c.fotos || []).forEach(S.deletePhoto);
+      st.chamados = st.chamados.filter(function (x) { return x.id !== id; });
+      save(st);
+    }
+  });
+
+  $("lista").addEventListener("change", function (e) {
+    if (!e.target.matches("[data-fotoinput]")) return;
+    var f = e.target.files[0]; if (!f) return;
+    var id = e.target.closest("[data-id]").getAttribute("data-id");
+    S.savePhoto(f).then(function (fid) {
+      var st = load();
+      var c = st.chamados.find(function (x) { return x.id === id; });
+      if (c) { c.fotos = (c.fotos || []).concat(fid); save(st); }
+    }, function () { alert("Não foi possível salvar a foto."); });
+  });
+
+  S.onChange(function () { render(); });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -4,8 +4,12 @@
 
   var MODULES = window.MT_MODULES;
   var DOCS = window.MT_DOCS;
+  var APPS = window.MT_APPS || [];
   var bySlug = {};
   DOCS.forEach(function (d) { bySlug[d.slug] = d; });
+  APPS.forEach(function (d) { d.type = "app"; bySlug[d.slug] = d; });
+
+  function urlFor(doc) { return doc.file || "docs/" + doc.slug + ".html"; }
 
   var APOSTILAS = DOCS.filter(function (d) { return d.type === "apostila"; });
 
@@ -51,11 +55,18 @@
   function navItem(doc, num) {
     var a = document.createElement("a");
     a.className = "nav-item";
-    a.href = "#/d/" + doc.slug;
+    if (doc.standalone) {
+      a.href = urlFor(doc);
+      a.target = "_blank";
+      a.rel = "noopener";
+    } else {
+      a.href = "#/d/" + doc.slug;
+    }
     a.dataset.slug = doc.slug;
     a.dataset.search = (doc.title + " " + doc.desc).toLowerCase();
     var html = "";
     if (num != null) html += '<span class="n">' + num + "</span>";
+    if (doc.icone) html += '<span style="flex:none;">' + doc.icone + "</span>";
     html += '<span class="t">' + doc.title.replace(/^Apostila · /, "") + "</span>";
     var tag = badgeFor(doc);
     if (tag) html += '<span class="tag">' + tag + "</span>";
@@ -73,6 +84,10 @@
 
   function buildSidebar() {
     sideNav.innerHTML = "";
+
+    var gA = navGroup("PROGRAMAS DO DIA A DIA");
+    APPS.forEach(function (d) { gA.appendChild(navItem(d)); });
+    sideNav.appendChild(gA);
 
     var g0 = navGroup("COMEÇO");
     g0.appendChild(navItem(bySlug["deck"]));
@@ -144,6 +159,13 @@
   }
 
   function buildHome() {
+    // programas
+    el("appGrid").innerHTML = APPS.map(function (d) {
+      var href = d.standalone ? urlFor(d) : "#/d/" + d.slug;
+      var extra = d.standalone ? ' target="_blank" rel="noopener"' : "";
+      return '<a class="tool-card app-card" href="' + href + '"' + extra + '><span class="app-ico">' + d.icone + '</span><h3>' + d.title + "</h3><p>" + d.desc + "</p></a>";
+    }).join("");
+
     // módulos
     var mg = el("modGrid");
     mg.innerHTML = MODULES.map(function (m) {
@@ -182,6 +204,7 @@
 
   // ---------- viewer ----------
   function moduleLabel(doc) {
+    if (doc.type === "app") return "PROGRAMA";
     if (doc.type === "deck") return "APRESENTAÇÃO";
     if (doc.type === "indice") return "APOSTILAS";
     var m = MODULES[doc.module - 1];
@@ -202,7 +225,7 @@
     el("topbarDoc").textContent = doc.title;
     document.title = doc.title + " — Método Torque";
 
-    var url = "docs/" + slug + ".html";
+    var url = urlFor(doc);
     el("openBtn").href = url;
     if (frameSlug !== slug) {
       frameSlug = slug;
@@ -254,10 +277,15 @@
   docFrame.addEventListener("load", function () {
     var path;
     try { path = docFrame.contentWindow.location.pathname; } catch (e) { return; }
-    var m = /\/docs\/([^\/]+)\.html$/.exec(path);
-    if (m && bySlug[m[1]] && m[1] !== current) {
-      frameSlug = m[1];
-      location.hash = "#/d/" + m[1];
+    var m = /\/(docs|apps)\/([^\/]+)\.html$/.exec(path);
+    var slug = null;
+    if (m) {
+      if (m[1] === "docs") slug = bySlug[m[2]] ? m[2] : null;
+      else APPS.some(function (a) { if (a.file === "apps/" + m[2] + ".html") { slug = a.slug; return true; } return false; });
+    }
+    if (slug && slug !== current) {
+      frameSlug = slug;
+      location.hash = "#/d/" + slug;
     } else if (/\/index\.html$|\/$/.test(path) && !m) {
       // doc linkou de volta para a home
       frameSlug = null;
@@ -280,6 +308,23 @@
   el("scrim").addEventListener("click", closeNav);
   sideNav.addEventListener("click", function (e) {
     if (e.target.closest(".nav-item")) closeNav();
+  });
+
+  // ---------- backup dos programas ----------
+  el("backupExp").addEventListener("click", function () {
+    window.MTStore.exportBackup();
+  });
+  el("backupImp").addEventListener("click", function () { el("backupFile").click(); });
+  el("backupFile").addEventListener("change", function () {
+    var f = this.files[0];
+    if (!f) return;
+    if (!confirm("Restaurar este backup? Os dados atuais dos programas serão substituídos.")) { this.value = ""; return; }
+    window.MTStore.importBackup(f).then(function () {
+      alert("Backup restaurado com sucesso.");
+    }, function (e) {
+      alert("Não foi possível restaurar: " + e.message);
+    });
+    this.value = "";
   });
 
   // ---------- PWA ----------

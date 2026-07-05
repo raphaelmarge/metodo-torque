@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklist do Dia — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .turno-cab { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 10px; }
+  .turno-cab h2 { margin: 0; }
+  .item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--linha); background: #fff; }
+  .item + .item { margin-top: -1px; }
+  .item input[type=checkbox] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--roxo); flex: none; cursor: pointer; }
+  .item .txt { flex: 1; font-size: 15px; line-height: 1.45; }
+  .item .sub { font-size: 12.5px; color: var(--cinza); margin-top: 3px; }
+  .item.feito .txt { text-decoration: line-through; color: var(--cinza-2); }
+  .item.atrasado { border-left: 4px solid var(--erro); background: #fef5f5; }
+  .hist-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hist-dia { text-align: center; font-size: 11px; color: var(--cinza); }
+  .hist-dia .q { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; border: 1px solid var(--linha); margin-bottom: 4px; }
+  .q.bom { background: rgba(22,163,74,.12); color: var(--ok); border-color: rgba(22,163,74,.4); }
+  .q.medio { background: rgba(217,119,6,.12); color: var(--alerta); border-color: rgba(217,119,6,.4); }
+  .q.ruim { background: rgba(220,38,38,.10); color: var(--erro); border-color: rgba(220,38,38,.4); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div>
+    <span class="kicker">PROGRAMA · OPERAÇÃO</span>
+    <h1>Checklist do Dia</h1>
+  </div>
+  <p>Abertura e fechamento com dono e hora limite. Item atrasado fica vermelho e gera cobrança pronta no WhatsApp — você cobra o processo, não a pessoa.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="linha-flex">
+      <label style="margin: 0;">Dia:</label>
+      <input type="date" id="dia" style="width: auto;">
+      <span id="resumoDia" class="muted"></span>
+    </div>
+    <div class="linha-flex">
+      <button class="btn sec" id="btnEquipe">👤 Equipe</button>
+      <button class="btn sec" id="btnTarefas">⚙ Editar tarefas</button>
+    </div>
+  </div>
+
+  <section id="blocos"></section>
+
+  <div class="card">
+    <h2>Últimos 7 dias</h2>
+    <div class="hist-grid" id="hist"></div>
+  </div>
+</main>
+
+<!-- equipe -->
+<dialog id="dlgEquipe">
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 520px; max-width: 100%;">
+    <h2>Equipe (responsáveis)</h2>
+    <p class="muted" style="margin: 0;">O WhatsApp é usado no botão de cobrança. Formato: DDD + número, ex.: 11999998888.</p>
+    <div class="linha-flex">
+      <input id="eqNome" placeholder="Nome" style="flex: 1; min-width: 120px;">
+      <input id="eqZap" placeholder="WhatsApp (só números)" style="flex: 1; min-width: 140px;" inputmode="numeric">
+      <button class="btn mini" id="eqAdd">+ Adicionar</button>
+    </div>
+    <table class="tabela"><thead><tr><th>Nome</th><th>WhatsApp</th><th></th></tr></thead><tbody id="eqLinhas"></tbody></table>
+    <div style="text-align: right;"><button class="btn" onclick="this.closest('dialog').close()">Concluir</button></div>
+  </div>
+</dialog>
+
+<!-- tarefas -->
+<dialog id="dlgTarefas">
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 640px; max-width: 100%;">
+    <h2>Tarefas do checklist</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nova tarefa</label><input id="tTexto" placeholder="ex.: Conferir bebedouros"></div>
+      <div class="linha-flex" style="align-items: flex-end;">
+        <div class="campo" style="flex:1;"><label>Turno</label><select id="tTurno"><option value="abertura">Abertura</option><option value="fechamento">Fechamento</option></select></div>
+        <div class="campo" style="flex:1;"><label>Hora limite</label><input id="tHora" type="time"></div>
+        <div class="campo" style="flex:1;"><label>Responsável</label><select id="tResp"></select></div>
+        <button class="btn mini" id="tAdd" style="margin-bottom: 1px;">+</button>
+      </div>
+    </div>
+    <table class="tabela"><thead><tr><th>Turno</th><th>Tarefa</th><th>Limite</th><th>Responsável</th><th></th></tr></thead><tbody id="tLinhas"></tbody></table>
+    <div style="text-align: right;"><button class="btn" onclick="this.closest('dialog').close()">Concluir</button></div>
+  </div>
+</dialog>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // tarefas padrão — extraídas do material do Módulo 6 (Checklists de Abertura e Fechamento)
+  var PADRAO_ABERTURA = [
+    "Luzes, ar-condicionado/ventilação e som ligados no padrão definido",
+    "Ronda no salão: equipamentos no lugar, anilhas e halteres organizados, nada quebrado da noite anterior",
+    "Banheiros e vestiários: limpos, papel e sabonete abastecidos, ralos ok",
+    "Recepção pronta: sistema logado, caixa conferido, WhatsApp aberto, visitas do dia à vista",
+    "Bebedouros e balança funcionando; estações de limpeza do aluno abastecidas",
+    "Catraca/check-in testados com um acesso de teste",
+    "Teste do cheiro na entrada: ambiente neutro? (ventilar antes de abrir)",
+  ];
+  var PADRAO_FECHAMENTO = [
+    "Salão organizado: anilhas, halteres e barras nos lugares, bancos alinhados",
+    "Equipamentos elétricos (esteiras, TVs) desligados conforme padrão",
+    "Vestiários conferidos: ninguém dentro, chuveiros fechados, achados e perdidos recolhidos",
+    "Caixa conferido e fechado no sistema; valores guardados conforme procedimento",
+    "Pendências do dia registradas para a abertura seguinte",
+    "Luzes e ar-condicionado desligados; janelas fechadas",
+    "Portas trancadas e alarme ativado",
+  ];
+
+  function load() {
+    var st = S.read("checklist", null);
+    if (!st) {
+      st = { tarefas: [], equipe: [], dias: {} };
+      PADRAO_ABERTURA.forEach(function (t, i) {
+        st.tarefas.push({ id: "a" + i, turno: "abertura", texto: t, resp: "", hora: "07:00" });
+      });
+      PADRAO_FECHAMENTO.forEach(function (t, i) {
+        st.tarefas.push({ id: "f" + i, turno: "fechamento", texto: t, resp: "", hora: "23:00" });
+      });
+      S.write("checklist", st);
+    }
+    return st;
+  }
+  function save(st) { S.write("checklist", st); render(); }
+
+  var diaSel = S.todayISO();
+
+  function respDe(st, id) { return st.equipe.find(function (e) { return e.id === id; }); }
+
+  function itemAtrasado(t, marca) {
+    if (marca && marca.feito) return false;
+    if (diaSel < S.todayISO()) return true;               // dia passado e não feito
+    if (diaSel > S.todayISO()) return false;              // dia futuro
+    if (!t.hora) return false;
+    var agora = new Date();
+    var hm = ("0" + agora.getHours()).slice(-2) + ":" + ("0" + agora.getMinutes()).slice(-2);
+    return hm > t.hora;
+  }
+
+  function msgCobranca(t, resp) {
+    var turno = t.turno === "abertura" ? "abertura" : "fechamento";
+    return "Oi " + (resp ? resp.nome.split(" ")[0] : "") + "! Passando pelo checklist de " + turno +
+      " de hoje: o item “" + t.texto + "” ainda está pendente (limite " + (t.hora || "—") +
+      "). Consegue resolver e marcar aqui? Qualquer impedimento me avisa que eu destravo. 💪";
+  }
+
+  function render() {
+    var st = load();
+    $("dia").value = diaSel;
+    var marcas = st.dias[diaSel] || {};
+
+    var html = "";
+    ["abertura", "fechamento"].forEach(function (turno) {
+      var ts = st.tarefas.filter(function (t) { return t.turno === turno; });
+      if (!ts.length) return;
+      var feitos = ts.filter(function (t) { return marcas[t.id] && marcas[t.id].feito; }).length;
+      html += '<div class="turno-cab"><h2 class="titulo" style="font-size:14px;">' +
+        (turno === "abertura" ? "🌅 ABERTURA" : "🌙 FECHAMENTO") + "</h2><span class=\"muted\">" + feitos + "/" + ts.length + " feitos</span></div>";
+      html += ts.map(function (t) {
+        var m = marcas[t.id];
+        var feito = m && m.feito;
+        var atr = itemAtrasado(t, m);
+        var resp = respDe(st, t.resp);
+        return '<div class="item' + (feito ? " feito" : "") + (atr ? " atrasado" : "") + '">' +
+          '<input type="checkbox" data-t="' + t.id + '"' + (feito ? " checked" : "") + ">" +
+          '<div class="txt">' + esc(t.texto) +
+          '<div class="sub">' + (resp ? "👤 " + esc(resp.nome) + " · " : "") + "limite " + (t.hora || "—") +
+          (feito ? " · <strong>feito às " + m.hora + (m.por ? " por " + esc(m.por) : "") + "</strong>" : "") +
+          (atr && !feito ? ' · <strong style="color:var(--erro);">atrasado</strong>' : "") + "</div></div>" +
+          (atr && !feito && resp && resp.zap ?
+            '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + resp.zap.replace(/\D/g, "") +
+            "?text=" + encodeURIComponent(msgCobranca(t, resp)) + '">Cobrar 💬</a>' : "") +
+          "</div>";
+      }).join("");
+      html += '<div style="height:18px;"></div>';
+    });
+    $("blocos").innerHTML = html || '<div class="vazio">Nenhuma tarefa cadastrada.</div>';
+
+    var tot = st.tarefas.length;
+    var feitosTot = st.tarefas.filter(function (t) { return marcas[t.id] && marcas[t.id].feito; }).length;
+    $("resumoDia").textContent = tot ? feitosTot + " de " + tot + " itens concluídos" : "";
+
+    // histórico 7 dias
+    var hh = "";
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(); d.setDate(d.getDate() - i);
+      var iso = S.todayISO(d);
+      var ms = st.dias[iso] || {};
+      var f = st.tarefas.filter(function (t) { return ms[t.id] && ms[t.id].feito; }).length;
+      var pct = tot ? Math.round(f / tot * 100) : 0;
+      var cls = pct >= 90 ? "bom" : pct >= 50 ? "medio" : "ruim";
+      hh += '<div class="hist-dia"><div class="q ' + cls + '">' + pct + '%</div>' + iso.slice(8) + "/" + iso.slice(5, 7) + "</div>";
+    }
+    $("hist").innerHTML = hh;
+  }
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  // ---------- marcar ----------
+  $("blocos").addEventListener("change", function (e) {
+    if (!e.target.matches("input[type=checkbox]")) return;
+    var st = load();
+    var dia = st.dias[diaSel] || (st.dias[diaSel] = {});
+    var tid = e.target.getAttribute("data-t");
+    if (e.target.checked) {
+      var agora = new Date();
+      var quem = localStorage.getItem("mtapp:quem") || "";
+      dia[tid] = { feito: true, hora: ("0" + agora.getHours()).slice(-2) + ":" + ("0" + agora.getMinutes()).slice(-2), por: quem };
+    } else {
+      delete dia[tid];
+    }
+    save(st);
+  });
+
+  $("dia").onchange = function () { diaSel = this.value || S.todayISO(); render(); };
+
+  // ---------- equipe ----------
+  $("btnEquipe").onclick = function () { renderEquipe(); $("dlgEquipe").showModal(); };
+  function renderEquipe() {
+    var st = load();
+    $("eqLinhas").innerHTML = st.equipe.map(function (e) {
+      return "<tr><td>" + esc(e.nome) + "</td><td>" + esc(e.zap || "—") +
+        '</td><td style="text-align:right;"><button class="btn perigo mini" data-eqdel="' + e.id + '">excluir</button></td></tr>';
+    }).join("") || '<tr><td colspan="3" class="muted">Ninguém cadastrado ainda.</td></tr>';
+  }
+  $("eqAdd").onclick = function () {
+    var nome = $("eqNome").value.trim(); if (!nome) return;
+    var st = load();
+    st.equipe.push({ id: S.uid(), nome: nome, zap: $("eqZap").value.trim() });
+    S.write("checklist", st);
+    $("eqNome").value = ""; $("eqZap").value = "";
+    renderEquipe(); render();
+  };
+  $("eqLinhas").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-eqdel");
+    if (!id) return;
+    var st = load();
+    st.equipe = st.equipe.filter(function (x) { return x.id !== id; });
+    st.tarefas.forEach(function (t) { if (t.resp === id) t.resp = ""; });
+    S.write("checklist", st);
+    renderEquipe(); render();
+  });
+
+  // ---------- tarefas ----------
+  $("btnTarefas").onclick = function () { renderTarefas(); $("dlgTarefas").showModal(); };
+  function renderTarefas() {
+    var st = load();
+    $("tResp").innerHTML = '<option value="">— sem responsável —</option>' +
+      st.equipe.map(function (e) { return '<option value="' + e.id + '">' + esc(e.nome) + "</option>"; }).join("");
+    $("tLinhas").innerHTML = st.tarefas.map(function (t) {
+      var r = respDe(st, t.resp);
+      return "<tr><td>" + (t.turno === "abertura" ? "🌅" : "🌙") + "</td><td>" + esc(t.texto) + "</td><td>" +
+        '<input type="time" value="' + (t.hora || "") + '" data-hora="' + t.id + '" style="width:110px;"></td><td>' +
+        '<select data-resp="' + t.id + '" style="width:150px;"><option value="">—</option>' +
+        st.equipe.map(function (e) { return '<option value="' + e.id + '"' + (t.resp === e.id ? " selected" : "") + ">" + esc(e.nome) + "</option>"; }).join("") +
+        '</select></td><td style="text-align:right;"><button class="btn perigo mini" data-tdel="' + t.id + '">excluir</button></td></tr>';
+    }).join("") || '<tr><td colspan="5" class="muted">Nenhuma tarefa.</td></tr>';
+  }
+  $("tAdd").onclick = function () {
+    var texto = $("tTexto").value.trim(); if (!texto) return;
+    var st = load();
+    st.tarefas.push({ id: S.uid(), turno: $("tTurno").value, texto: texto, hora: $("tHora").value || "", resp: $("tResp").value });
+    S.write("checklist", st);
+    $("tTexto").value = "";
+    renderTarefas(); render();
+  };
+  $("dlgTarefas").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-tdel");
+    if (!id) return;
+    var st = load();
+    st.tarefas = st.tarefas.filter(function (t) { return t.id !== id; });
+    S.write("checklist", st);
+    renderTarefas(); render();
+  });
+  $("dlgTarefas").addEventListener("change", function (e) {
+    var st = load(), t;
+    if (e.target.hasAttribute("data-hora")) {
+      t = st.tarefas.find(function (x) { return x.id === e.target.getAttribute("data-hora"); });
+      if (t) { t.hora = e.target.value; S.write("checklist", st); render(); }
+    } else if (e.target.hasAttribute("data-resp")) {
+      t = st.tarefas.find(function (x) { return x.id === e.target.getAttribute("data-resp"); });
+      if (t) { t.resp = e.target.value; S.write("checklist", st); render(); }
+    }
+  });
+
+  S.onChange(function () { render(); });
+  render();
+  // re-render a cada minuto para atualizar “atrasado” em tempo real
+  setInterval(render, 60000);
+})();
+</script>
+</body>
+</html>
