@@ -11,7 +11,7 @@ Portal web do curso **Método Torque · Gestão de Academias de Alta Performance
 |---|---|
 | **Programas do dia a dia** | 🎯 Metas de Vendas (meta por vendedora, ranking, projeção) · 🔧 Central de Manutenção (aparelhos/predial/limpeza com fotos e agendamentos) · ✅ Checklist do Dia (responsável + hora limite + cobrança via WhatsApp) · 📺 Modo TV (painel para o telão) |
 | Começo | Apresentação do método (deck com 20+ slides) e índice das apostilas |
-| Apostilas | Módulos 1–8 + Módulo Bônus (Expansão) |
+| Apostilas | Módulos 1–9 (incluindo CT Low Cost) + Módulo Bônus (Expansão) |
 | Planilhas interativas | 7 Números, Diagnóstico 360, DRE, Calculadora de Precificação, Funil Comercial — calculam em tempo real e salvam os dados no navegador |
 | Modelos e rotinas | Script de Vendas, Réguas de Cobrança/Retenção WhatsApp, Onboarding 90 Dias, Checklists, Manutenção, Inventário, Pauta Semanal, Briefing de Delegação, Calendário de Campanhas |
 
@@ -60,7 +60,7 @@ Com o site aberto no navegador (Chrome/Edge/Safari):
 - **Celular**: menu do navegador → “Adicionar à tela inicial” / “Instalar app”.
 - **Desktop**: ícone de instalação na barra de endereço.
 
-Depois de instalado, o app abre em janela própria e funciona sem internet (o service worker pré-carrega todos os 26 materiais).
+Depois de instalado, o app abre em janela própria e funciona sem internet (o service worker pré-carrega todos os materiais).
 
 ## Estrutura
 
@@ -75,7 +75,7 @@ assets/
   vendor/               ← react, react-dom, babel (mesmas versões/hashes do original)
   icons/                ← ícones do app (svg + png)
 docs/
-  *.html                ← os 26 materiais originais (renomeados p/ URLs limpas)
+  *.html                ← os 55 materiais originais (renomeados p/ URLs limpas)
   support.js, doc-page.js, image-slot.js, deck-stage.js  ← runtime dos documentos
 ```
 

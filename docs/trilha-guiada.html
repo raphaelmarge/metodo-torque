@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Trilha Guiada pelo Diagnóstico</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F5F4F7; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4F7; font-family: 'Archivo', sans-serif; color: #131118; display: flex; flex-direction: column;">
+
+  <div style="background: #121016; color: #FFFFFF; padding: 36px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">MÉTODO TORQUE · COMECE POR AQUI</span>
+      </div>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.01em;">Trilha Guiada pelo Diagnóstico</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #8A8695; max-width: 440px; line-height: 1.5;">O curso inteiro dá ferramenta para todos os pilares — mas a ordem de implantação na SUA academia começa pelo pilar de menor nota (a regra do gargalo, aula 1.3). Informe suas notas e receba a sequência.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(320px, 380px) minmax(0, 1fr); gap: 28px; padding: 32px 48px 48px; align-items: start; max-width: 1440px; box-sizing: border-box; width: 100%; margin: 0 auto;">
+
+    <!-- NOTAS -->
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 28px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">NOTAS POR PILAR (0–10)</span>
+        <button onClick="{{ onImportar }}" style="border: 1px solid #7C3AED; background: #FFFFFF; color: #7C3AED; font-family: 'Archivo', sans-serif; font-size: 12.5px; font-weight: 700; padding: 6px 12px; cursor: pointer;" style-hover="background: #7C3AED; color: #FFFFFF;">Importar do Diagnóstico 360</button>
+      </div>
+      <p style="margin: 0; font-size: 12.5px; line-height: 1.55; color: #8A8695;">{{ importNota }}</p>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; font-weight: 600;">1 · Finanças</label>
+        <input value="{{ p1 }}" onChange="{{ on1 }}" placeholder="0–10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; font-weight: 600;">2 · Vendas</label>
+        <input value="{{ p2 }}" onChange="{{ on2 }}" placeholder="0–10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; font-weight: 600;">3 · Retenção</label>
+        <input value="{{ p3 }}" onChange="{{ on3 }}" placeholder="0–10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; font-weight: 600;">4 · Equipe</label>
+        <input value="{{ p4 }}" onChange="{{ on4 }}" placeholder="0–10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; font-weight: 600;">5 · Operação</label>
+        <input value="{{ p5 }}" onChange="{{ on5 }}" placeholder="0–10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; font-weight: 600;">6 · Estrutura e equipamentos</label>
+        <input value="{{ p6 }}" onChange="{{ on6 }}" placeholder="0–10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.55; color: #8A8695;">Ainda não fez o diagnóstico? <a href="diagnostico-360.html" style="color: #7C3AED; font-weight: 600;">Responda as 18 perguntas primeiro</a> e volte aqui — as notas entram sozinhas pelo botão acima.</p>
+    </div>
+
+    <!-- TRILHA -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="background: #131118; color: #FFFFFF; padding: 20px 26px; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px;">
+        <span style="font-size: 15px; font-weight: 800; letter-spacing: 0.1em;">A SUA SEQUÊNCIA DE IMPLANTAÇÃO</span>
+        <span style="font-size: 13px; color: #A78BFA;">{{ resumo }}</span>
+      </div>
+
+      <sc-for list="{{ trilha }}" as="etapa" hint-placeholder-count="9">
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 16px 22px; display: grid; grid-template-columns: 44px 1fr auto; gap: 16px; align-items: center;">
+          <span style="font-size: 24px; font-weight: 800; color: {{ etapa.cor }};">{{ etapa.pos }}</span>
+          <span style="display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 16px; font-weight: 700;">{{ etapa.titulo }}</span>
+            <span style="font-size: 13px; color: #6E6A78; line-height: 1.5;">{{ etapa.motivo }}</span>
+          </span>
+          <a href="{{ etapa.link }}" style="font-size: 14px; color: #7C3AED; font-weight: 700; text-decoration: none;">abrir →</a>
+        </div>
+      </sc-for>
+
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 22px;">
+        <p style="margin: 0; font-size: 13.5px; line-height: 1.65; color: #3A3742;"><strong style="color: #7C3AED;">Como usar:</strong> um módulo por vez, com a ação prática implantada antes de avançar. Reaplique o Diagnóstico 360 a cada trimestre — a trilha se reordena conforme os pilares evoluem. Os módulos 9 e Bônus fecham a jornada: só fazem sentido com a operação atual rodando.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: auto; background: #121016; padding: 18px 48px; display: flex; justify-content: space-between; align-items: baseline;">
+    <span style="font-size: 13px; color: #8A8695;">Método Torque · Gestão de Academias de Alta Performance · Material do aluno</span>
+    <span style="font-size: 13px; color: #8A8695;">www.torquefitness.com.br</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { p1: '', p2: '', p3: '', p4: '', p5: '', p6: '', importMsg: '' };
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('metodo-torque-trilha') || 'null');
+      if (saved && typeof saved === 'object') {
+        const clean = {};
+        for (const k of ['p1','p2','p3','p4','p5','p6']) if (typeof saved[k] === 'string') clean[k] = saved[k];
+        this.setState(clean);
+      }
+    } catch (e) {}
+  }
+
+  persist() { try { localStorage.setItem('metodo-torque-trilha', JSON.stringify(this.state)); } catch (e) {} }
+  set(k) { return (e) => this.setState({ [k]: e.target.value }, () => this.persist()); }
+
+  importar() {
+    try {
+      const d = JSON.parse(localStorage.getItem('metodo-torque-diag360') || 'null');
+      if (!d) { this.setState({ importMsg: 'Diagnóstico 360 ainda sem respostas neste navegador — preencha lá primeiro.' }); return; }
+      const P = (s) => {
+        s = (s == null ? '' : String(s)).trim().replace(',', '.');
+        if (!s) return null;
+        const n = parseFloat(s);
+        return isFinite(n) ? Math.max(0, Math.min(10, n)) : null;
+      };
+      const grupos = [['q1a','q1b','q1c'],['q2a','q2b','q2c'],['q3a','q3b','q3c'],['q4a','q4b','q4c'],['q5a','q5b','q5c'],['q6a','q6b','q6c']];
+      const upd = { importMsg: 'Notas importadas do Diagnóstico 360.' };
+      let algum = false;
+      grupos.forEach((g, i) => {
+        const vals = g.map((k) => P(d[k])).filter((v) => v != null);
+        if (vals.length) {
+          algum = true;
+          upd['p' + (i + 1)] = (vals.reduce((a, v) => a + v, 0) / vals.length).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+        }
+      });
+      if (!algum) upd.importMsg = 'Diagnóstico 360 ainda sem respostas neste navegador — preencha lá primeiro.';
+      this.setState(upd, () => this.persist());
+    } catch (e) {
+      this.setState({ importMsg: 'Não foi possível importar — preencha as notas manualmente.' });
+    }
+  }
+
+  renderVals() {
+    const P = (s) => {
+      s = (s == null ? '' : String(s)).trim().replace(',', '.');
+      if (!s) return null;
+      const n = parseFloat(s);
+      return isFinite(n) ? Math.max(0, Math.min(10, n)) : null;
+    };
+    const fmt = (n) => n == null ? 'sem nota' : 'nota ' + n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+    const cor = (n) => n == null ? '#8A8695' : (n >= 7 ? '#1F8A5B' : (n >= 4 ? '#D97706' : '#DC2626'));
+
+    const pilares = [
+      { nota: P(this.state.p1), nome: 'Finanças', modulo: 'Módulo 2 — Finanças para Dono de Academia', link: 'modulo-2.html' },
+      { nota: P(this.state.p2), nome: 'Vendas', modulo: 'Módulo 3 — Máquina de Vendas', link: 'modulo-3.html' },
+      { nota: P(this.state.p3), nome: 'Retenção', modulo: 'Módulo 4 — Retenção: Onde o Lucro Mora', link: 'modulo-4.html' },
+      { nota: P(this.state.p4), nome: 'Equipe', modulo: 'Módulo 5 — Equipe e Liderança', link: 'modulo-5.html' },
+      { nota: P(this.state.p5), nome: 'Operação', modulo: 'Módulo 6 — Operação Redonda', link: 'modulo-6.html' },
+      { nota: P(this.state.p6), nome: 'Estrutura', modulo: 'Módulo 7 — Equipamentos e Estrutura', link: 'modulo-7.html' }
+    ];
+
+    const ordenados = pilares.slice().sort((a, b) => {
+      const na = a.nota == null ? 11 : a.nota;
+      const nb = b.nota == null ? 11 : b.nota;
+      return na - nb;
+    });
+
+    const trilha = [];
+    trilha.push({ pos: '1', titulo: 'Módulo 1 — Diagnóstico e Fundamentos', motivo: 'Sempre primeiro: os 7 números, o Diagnóstico 360 e o posicionamento são a base de tudo.', link: 'modulo-1.html', cor: '#7C3AED' });
+    ordenados.forEach((p, i) => {
+      trilha.push({
+        pos: String(i + 2),
+        titulo: p.modulo,
+        motivo: i === 0 && p.nota != null
+          ? 'SEU GARGALO — pilar ' + p.nome + ' com a menor nota (' + fmt(p.nota).replace('nota ', '') + '). Comece a implantação por aqui.'
+          : 'Pilar ' + p.nome + ' — ' + fmt(p.nota) + (p.nota == null ? ' (preencha para ordenar melhor)' : ''),
+        link: p.link,
+        cor: cor(p.nota)
+      });
+    });
+    trilha.push({ pos: '8', titulo: 'Módulo 8 — Marketing Local e Marca', motivo: 'Depois do funil e da retenção rodando: marketing escala o que já funciona.', link: 'modulo-8.html', cor: '#7C3AED' });
+    trilha.push({ pos: '9', titulo: 'Módulo 9 + Bônus — CT Low Cost e Expansão', motivo: 'A visão de crescimento — só com a operação atual madura (critérios do Bônus).', link: 'modulo-9.html', cor: '#131118' });
+
+    const preenchidos = pilares.filter((p) => p.nota != null).length;
+    const gargalo = ordenados[0];
+
+    return {
+      p1: this.state.p1, p2: this.state.p2, p3: this.state.p3, p4: this.state.p4, p5: this.state.p5, p6: this.state.p6,
+      on1: this.set('p1'), on2: this.set('p2'), on3: this.set('p3'), on4: this.set('p4'), on5: this.set('p5'), on6: this.set('p6'),
+      onImportar: () => this.importar(),
+      importNota: this.state.importMsg || 'Se você já preencheu o Diagnóstico 360 neste navegador, o botão puxa as médias automaticamente.',
+      resumo: preenchidos === 0 ? 'preencha as notas para personalizar' : (preenchidos < 6 ? preenchidos + ' de 6 pilares com nota' : 'gargalo: ' + gargalo.nome),
+      trilha
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Metas e Comissão</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F5F4F7; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4F7; font-family: 'Archivo', sans-serif; color: #131118; display: flex; flex-direction: column;">
+
+  <div style="background: #121016; color: #FFFFFF; padding: 36px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">MÉTODO TORQUE · MATERIAL DO MÓDULO 3</span>
+      </div>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.01em;">Metas e Comissão</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #8A8695; max-width: 440px; line-height: 1.5;">Meta sem método é cobrança injusta; método sem meta é passeio. Calcule a meta do mês pela fórmula da aula 3.5 e simule o custo da comissão sobre a receita nova. Dados salvos neste navegador.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 28px; padding: 32px 48px 48px; align-items: start; max-width: 1440px; box-sizing: border-box; width: 100%; margin: 0 auto;">
+
+    <!-- ENTRADAS -->
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 28px; display: flex; flex-direction: column; gap: 18px;">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">A META DO MÊS</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Alunos ativos hoje</label>
+          <input value="{{ hoje }}" onChange="{{ onHoje }}" placeholder="ex.: 400" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Quero ter no fim do mês</label>
+          <input value="{{ desejado }}" onChange="{{ onDesejado }}" placeholder="ex.: 420" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Cancelamentos previstos no mês (churn médio)</label>
+        <input value="{{ churn }}" onChange="{{ onChurn }}" placeholder="ex.: 24" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78; border-top: 1px solid #E2E0E8; padding-top: 16px;">A COMISSÃO</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Fixo por matrícula (R$)</label>
+          <input value="{{ fixo }}" onChange="{{ onFixo }}" placeholder="20 a 50" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Ticket médio (R$/mês)</label>
+          <input value="{{ ticket }}" onChange="{{ onTicket }}" placeholder="ex.: 120" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Bônus coletivo por pessoa (R$)</label>
+          <input value="{{ bonus }}" onChange="{{ onBonus }}" placeholder="200 a 400" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Pessoas no atendimento</label>
+          <input value="{{ equipe }}" onChange="{{ onEquipe }}" placeholder="ex.: 3" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.55; color: #8A8695;">Cuidados da aula 3.5: comissão maior para plano anual, comissão só se o aluno passar do 1º mês pago (evita matrícula fantasma) e planilha aberta que a equipe confere.</p>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <div style="background: #131118; color: #FFFFFF; padding: 26px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">META DO MÊS</span>
+          <span style="font-size: 44px; font-weight: 800; line-height: 1;">{{ metaTxt }}</span>
+          <span style="font-size: 13.5px; color: #C9C5D4;">{{ metaDetalhe }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+          <span style="font-size: 22px; font-weight: 800; color: #A78BFA;">{{ porSemanaTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695;">por semana · acompanhe no placar do ritual diário</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">RECEITA NOVA (BATENDO A META)</span>
+          <span style="font-size: 34px; font-weight: 800; line-height: 1;">{{ receitaNovaTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Matrículas da meta × ticket, no primeiro mês — e recorrente dali em diante.</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">CUSTO TOTAL DA COMISSÃO</span>
+          <span style="font-size: 34px; font-weight: 800; line-height: 1;">{{ custoComissaoTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">{{ custoDetalhe }}</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid {{ pesoBorda }}; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">PESO SOBRE A RECEITA NOVA</span>
+          <span style="font-size: 34px; font-weight: 800; line-height: 1;">{{ pesoTxt }}</span>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{ pesoDot }};"></span><span style="font-size: 13px; font-weight: 600; color: #55515F;">{{ pesoLabel }}</span></div>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Referência: comissão saudável consome até ~15% da receita nova do mês.</span>
+        </div>
+      </div>
+
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 18px 24px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">LEITURA</span>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.65; color: #3A3742;">{{ leitura }}</p>
+      </div>
+
+      <!-- METAS AUTO GERENCIÁVEIS -->
+      <div style="background: #FFFFFF; border: 1px solid #E2E0E8;">
+        <div style="background: #131118; color: #FFFFFF; padding: 14px 24px; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px;">
+          <span style="font-size: 15px; font-weight: 800; letter-spacing: 0.08em;">METAS AUTO GERENCIÁVEIS — META · SUPER META · HIPER META</span>
+          <span style="font-size: 12.5px; color: #A78BFA;">definidas no início de cada mês</span>
+        </div>
+        <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+          <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #3A3742;">Cada recepcionista/vendedora tem <strong>3 níveis individuais</strong> (por quantidade de matrículas OU valor vendido), com prêmio crescente por nível atingido. Quem vender mais no mês leva o <strong>prêmio de campeã</strong> — a competição puxa todo mundo para cima. Preencha e imprima o quadro no dia 1º:</p>
+
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr>
+                <th style="text-align: left; padding: 8px 8px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; letter-spacing: 0.04em; width: 20%;">VENDEDORA</th>
+                <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; letter-spacing: 0.04em;">META<br>(qtd/valor · prêmio)</th>
+                <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; letter-spacing: 0.04em;">SUPER META<br>(qtd/valor · prêmio)</th>
+                <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; letter-spacing: 0.04em;">HIPER META<br>(qtd/valor · prêmio)</th>
+                <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; letter-spacing: 0.04em; width: 14%;">RESULTADO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="border: 1px solid #E2E0E8; height: 32px; padding: 0 12px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+              <tr><td style="border: 1px solid #E2E0E8; height: 32px; padding: 0 12px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+              <tr><td style="border: 1px solid #E2E0E8; height: 32px; padding: 0 12px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+              <tr><td style="border: 1px solid #E2E0E8; height: 32px; padding: 0 12px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+            </tbody>
+          </table>
+          <p style="margin: 0; font-size: 13.5px; line-height: 1.6; color: #3A3742;">🏆 Prêmio de campeã do mês (quem vender mais): <span style="display: inline-block; min-width: 320px; border-bottom: 1px solid #C6C2CF;"></span></p>
+
+          <div style="border: 1.5px solid #7C3AED; padding: 16px 20px;">
+            <p style="margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">A GERENTE — MESMAS METAS, REGRA DE EQUILÍBRIO</p>
+            <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.65; color: #3A3742;">A gerente tem os mesmos 3 níveis sobre o TOTAL da equipe, com prêmio individual menor (ela já ganha do todo). <strong>O porém que faz o sistema girar:</strong> ela só recebe o prêmio se nenhuma vendedora terminar o mês muito distante das outras — defina a régua (ex.: a última não pode ficar abaixo de ___% da primeira). Assim a gerente cobra de quem precisa ser cobrada, treina quem está atrás, redistribui leads — e todo mundo trabalha por interesse próprio.</p>
+            <p style="margin: 10px 0 0 0; font-size: 13.5px; line-height: 2.2; color: #3A3742;">Meta gerente: <span style="display: inline-block; min-width: 130px; border-bottom: 1px solid #C6C2CF;"></span> Super: <span style="display: inline-block; min-width: 130px; border-bottom: 1px solid #C6C2CF;"></span> Hiper: <span style="display: inline-block; min-width: 130px; border-bottom: 1px solid #C6C2CF;"></span> Régua de equilíbrio: <span style="display: inline-block; min-width: 110px; border-bottom: 1px solid #C6C2CF;"></span></p>
+          </div>
+
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #6E6A78;">Calibragem: some os prêmios possíveis (níveis + campeã + gerente) e confira no card "peso sobre a receita nova" acima — o modelo inteiro deve seguir cabendo na referência de ~15%. Meta individual = meta da academia ÷ vendedoras, ajustada por turno (quem pega o horário de pico vende mais).</p>
+        </div>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1.5px solid #7C3AED; padding: 18px 24px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">O RITUAL DIÁRIO DE 10 MINUTOS (AULA 3.5)</span>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.7; color: #3A3742;">1 · Leads de ontem respondidos em 15 min? &nbsp;2 · Follow-ups de hoje &nbsp;3 · Visitas agendadas e quem recebe &nbsp;4 · Placar: matrículas do mês vs. meta — visível para todos, atualizado diariamente. No balcão, em pé, todo dia no mesmo horário.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin-top: auto; background: #121016; padding: 18px 48px; display: flex; justify-content: space-between; align-items: baseline;">
+    <span style="font-size: 13px; color: #8A8695;">Método Torque · Gestão de Academias de Alta Performance · Material do aluno</span>
+    <span style="font-size: 13px; color: #8A8695;">www.torquefitness.com.br</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { hoje: '', desejado: '', churn: '', fixo: '', ticket: '', bonus: '', equipe: '' };
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('metodo-torque-metas') || 'null');
+      if (saved && typeof saved === 'object') {
+        const clean = {};
+        for (const k of Object.keys(this.state)) if (typeof saved[k] === 'string') clean[k] = saved[k];
+        this.setState(clean);
+      }
+    } catch (e) {}
+  }
+
+  set(k) {
+    return (e) => {
+      this.setState({ [k]: e.target.value }, () => {
+        try { localStorage.setItem('metodo-torque-metas', JSON.stringify(this.state)); } catch (err) {}
+      });
+    };
+  }
+
+  renderVals() {
+    const VERDE = '#1F8A5B', AMAR = '#D97706', VERM = '#DC2626', NEUTRO = '#C6C2CF';
+    const P = (s) => {
+      s = (s == null ? '' : String(s)).trim();
+      if (!s) return null;
+      s = s.replace(/R\$\s?/g, '').replace(/\s/g, '');
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return isFinite(n) && n >= 0 ? n : null;
+    };
+    const num = (n) => n == null ? '—' : n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+    const brl = (n) => n == null ? '—' : 'R$ ' + n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+    const hoje = P(this.state.hoje);
+    const desejado = P(this.state.desejado);
+    const churn = P(this.state.churn);
+    const fixo = P(this.state.fixo);
+    const ticket = P(this.state.ticket);
+    const bonus = P(this.state.bonus);
+    const equipe = P(this.state.equipe);
+
+    const crescimento = (hoje != null && desejado != null) ? desejado - hoje : null;
+    const meta = (crescimento != null && churn != null) ? Math.max(0, Math.round(crescimento + churn)) : null;
+
+    const receitaNova = (meta != null && ticket != null) ? meta * ticket : null;
+    const custoFixo = (meta != null && fixo != null) ? meta * fixo : null;
+    const custoBonus = (bonus != null && equipe != null) ? bonus * equipe : null;
+    const custoTotal = (custoFixo != null || custoBonus != null) ? (custoFixo || 0) + (custoBonus || 0) : null;
+    const peso = (custoTotal != null && receitaNova) ? (custoTotal / receitaNova) * 100 : null;
+
+    let pS = { dot: NEUTRO, borda: '#E2E0E8', label: 'aguardando dados' };
+    if (peso != null) {
+      if (peso <= 15) pS = { dot: VERDE, borda: VERDE, label: 'saudável — motiva sem corroer a margem' };
+      else if (peso <= 25) pS = { dot: AMAR, borda: AMAR, label: 'pesada — revise fixo ou bônus' };
+      else pS = { dot: VERM, borda: VERM, label: 'corrói a margem — redesenhe o modelo' };
+    }
+
+    let leitura = 'Preencha os campos para ver a meta e o custo do modelo de comissão.';
+    if (meta != null) {
+      if (crescimento < 0) {
+        leitura = 'Atenção: você quer TERMINAR o mês com menos alunos do que tem hoje — confira os números. Se a base está encolhendo, o problema é retenção (Módulo 4), não meta comercial.';
+      } else if (churn != null && crescimento != null && churn > crescimento * 2 && crescimento > 0) {
+        leitura = 'Repare: dos ' + num(meta) + ' da meta, ' + num(churn) + ' servem só para repor cancelamentos — você corre para ficar no lugar. Cada ponto de churn a menos (Módulo 4) vale mais que uma campanha: com churn menor, a mesma equipe entrega crescimento maior.';
+      } else {
+        leitura = 'Meta de ' + num(meta) + ' matrículas: ' + num(crescimento) + ' de crescimento real + ' + num(churn) + ' de reposição do churn. Sem somar o churn, a equipe "bate meta" e a academia continua do mesmo tamanho — é a fórmula da cobrança injusta.';
+      }
+    }
+
+    return {
+      hoje: this.state.hoje, desejado: this.state.desejado, churn: this.state.churn,
+      fixo: this.state.fixo, ticket: this.state.ticket, bonus: this.state.bonus, equipe: this.state.equipe,
+      onHoje: this.set('hoje'), onDesejado: this.set('desejado'), onChurn: this.set('churn'),
+      onFixo: this.set('fixo'), onTicket: this.set('ticket'), onBonus: this.set('bonus'), onEquipe: this.set('equipe'),
+      metaTxt: meta == null ? '—' : num(meta) + ' matrículas',
+      metaDetalhe: meta == null ? 'meta = (desejado − hoje) + cancelamentos previstos' : num(crescimento) + ' de crescimento + ' + num(churn) + ' de reposição do churn',
+      porSemanaTxt: meta == null ? '—' : '~' + num(Math.ceil(meta / 4.33)),
+      receitaNovaTxt: brl(receitaNova),
+      custoComissaoTxt: brl(custoTotal),
+      custoDetalhe: custoTotal == null ? 'fixo × matrículas + bônus × equipe' : brl(custoFixo || 0) + ' de fixo + ' + brl(custoBonus || 0) + ' de bônus coletivo (se a meta bater)',
+      pesoTxt: peso == null ? '—' : peso.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%',
+      pesoDot: pS.dot, pesoBorda: pS.borda, pesoLabel: pS.label,
+      leitura
+    };
+  }
+}
+</script>
+</body>
+</html>

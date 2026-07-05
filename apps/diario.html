@@ -75,7 +75,8 @@
     6: [["checklist", "Checklists diários rodando? (0=não 10=sempre)", "num010"], ["manutprev", "Manutenção preventiva em dia? (0-10)", "num010"]],
     7: [["notaparque", "Nota do parque de equipamentos (0-10)", "num010"], ["parados", "Aparelhos parados/quebrados hoje", "num"], ["investimento", "Investimento planejado 12m (R$)", "reais"]],
     8: [["indicacoes", "Matrículas por indicação/mês", "num"], ["campanhas", "Campanhas feitas no trimestre", "num"], ["instagram", "Postagens por semana", "num"]],
-    9: [["expansao", "Pretende abrir nova unidade? (0=não 10=já decidiu)", "num010"], ["novasreceitas", "Novas receitas ativas (ex.: personal, loja, avaliação)", "texto"]],
+    9: [["pracact", "Já avaliou uma praça para CT? (0=não 10=fechada)", "num010"], ["unitct", "Unit economics do CT fecha? (0=não fiz 10=fecha com folga)", "num010"], ["assinaturasct", "Assinaturas projetadas no CT (se aplicável)", "num"]],
+    10: [["expansao", "Pretende abrir nova unidade? (0=não 10=já decidiu)", "num010"], ["novasreceitas", "Novas receitas ativas (ex.: personal, loja, avaliação)", "texto"]],
   };
 
   function load() { return S.read("diario", { modulos: {} }); }

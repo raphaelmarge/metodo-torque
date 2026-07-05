@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Guia de Metragem e Layout</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MATERIAL DO MÓDULO 7 · METRAGEM E LAYOUT</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · MATERIAL DO MÓDULO 7</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">Guia de Metragem e Layout</h1>
+    <p style="margin: 16px 0 0 0; font-size: 16px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 16px 20px;">Layout é engenharia de receita: o mesmo salão pode comportar 30% mais alunos no pico ou virar corredor de espera. Use este guia para auditar o layout atual ou planejar reforma/montagem (aula 7.1).</p>
+
+    <h2 style="margin: 28px 0 0 0; font-size: 21px; font-weight: 700;">Distribuição de referência da área de treino</h2>
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; font-size: 13.5px;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 30%;">ÁREA</th>
+          <th style="text-align: center; padding: 9px 8px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; width: 16%;">REFERÊNCIA</th>
+          <th style="text-align: center; padding: 9px 8px; background: #7C3AED; color: #FFFFFF; font-weight: 700; font-size: 11.5px; width: 14%;">NA MINHA (m² / %)</th>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px;">OBSERVAÇÃO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Musculação (máquinas)</td><td style="text-align: center; border: 1px solid #E2E0E8;">40–50%</td><td style="border: 1px solid #E2E0E8;"></td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-size: 12.5px;">Onde a fila do pico dói mais</td></tr>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Peso livre</td><td style="text-align: center; border: 1px solid #E2E0E8;">15–20%</td><td style="border: 1px solid #E2E0E8;"></td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-size: 12.5px;">≥1 m de segurança entre estações</td></tr>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Cardio</td><td style="text-align: center; border: 1px solid #E2E0E8;">15–20%</td><td style="border: 1px solid #E2E0E8;"></td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-size: 12.5px;">Com vista — nunca esteira para a parede</td></tr>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Coletivas / funcional</td><td style="text-align: center; border: 1px solid #E2E0E8;">20–25%</td><td style="border: 1px solid #E2E0E8;"></td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-size: 12.5px;">Menos se o posicionamento é força pura</td></tr>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Corredores principais</td><td style="text-align: center; border: 1px solid #E2E0E8;">mín. 1,2 m</td><td style="border: 1px solid #E2E0E8;"></td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-size: 12.5px;">Aluno com anilha na mão passa sem se espremer?</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 18px; background: #131118; color: #FFFFFF; padding: 18px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">RÉGUA DE CAPACIDADE NO PICO</p>
+      <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.7; color: #E8E5F0;">1 aluno para cada 2–3 m² de área de TREINO no pico. Faça a conta: área de treino <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #55515F;"></span> m² ÷ 2,5 = capacidade confortável de <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #55515F;"></span> pessoas. Pico real (check-ins/hora do sistema): <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #55515F;"></span>. Acima da régua? O gargalo é layout ou distribuição de horário — resolver isso é mais barato que alugar o imóvel ao lado.</p>
+    </div>
+
+    <h2 style="margin: 28px 0 0 0; font-size: 21px; font-weight: 700;">Auditoria dos 3 erros clássicos</h2>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6;"><strong style="color: #7C3AED;">1 · Fila crônica em um grupo muscular.</strong> Quais 2–3 estações têm fila todo pico? <span style="display: inline-block; min-width: 300px; border-bottom: 1px solid #C6C2CF;"></span><br><span style="font-size: 13px; color: #6E6A78;">Duplicar as máquinas certas resolve mais que comprar 10 diferentes.</span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6;"><strong style="color: #7C3AED;">2 · Áreas mortas.</strong> Cantos sem função que viraram depósito: <span style="display: inline-block; min-width: 320px; border-bottom: 1px solid #C6C2CF;"></span><br><span style="font-size: 13px; color: #6E6A78;">Todo metro quadrado paga aluguel — vire alongamento, funcional, personal ou loja.</span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6;"><strong style="color: #7C3AED;">3 · Primeira impressão desperdiçada.</strong> O que o visitante vê da porta: ☐ o melhor da academia (salão vivo, equipamento novo) ☐ parede de armários/corredor morto<br><span style="font-size: 13px; color: #6E6A78;">A entrada vende — reposicione o que impressiona para o campo de visão da recepção.</span></p>
+      </div>
+    </div>
+
+    <h2 style="margin: 28px 0 0 0; font-size: 21px; font-weight: 700;">Faixas de investimento (ordem de grandeza — aula 7.2)</h2>
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; font-size: 13.5px;">
+      <tbody>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700; width: 40%;">Estúdio/box até 200 m²</td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; color: #7C3AED; font-weight: 700;">R$ 100 mil – 300 mil</td></tr>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Academia de 300 a 500 m²</td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; color: #7C3AED; font-weight: 700;">R$ 300 mil – 600 mil</td></tr>
+        <tr><td style="padding: 9px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Acima de 800 m²</td><td style="padding: 9px 12px; border: 1px solid #E2E0E8; color: #7C3AED; font-weight: 700;">R$ 600 mil – 1,5 mi+</td></tr>
+      </tbody>
+    </table>
+    <p style="margin: 10px 0 0 0; font-size: 13px; line-height: 1.6; color: #6E6A78;">Varia com padrão, câmbio e mix. Prioridade com orçamento curto (aula 7.2): 1º fila do pico → 2º básico completo → 3º peso livre digno → 4º cardio suficiente → 5º itens de vitrine. Compare novo nacional × usado × linha Torque antes de fechar (aula 7.3).</p>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

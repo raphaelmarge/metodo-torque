@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Unit Economics CT Low Cost</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F5F4F7; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4F7; font-family: 'Archivo', sans-serif; color: #131118; display: flex; flex-direction: column;">
+
+  <div style="background: #121016; color: #FFFFFF; padding: 36px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">MÉTODO TORQUE · MATERIAL DO MÓDULO 9</span>
+      </div>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.01em;">Unit Economics — CT Low Cost</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #8A8695; max-width: 440px; line-height: 1.5;">Rode a conta da SUA praça: base, ticket, custos, capex e o efeito do parque de equipamentos no payback. Dados salvos neste navegador.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 28px; padding: 32px 48px 48px; align-items: start; max-width: 1440px; box-sizing: border-box; width: 100%; margin: 0 auto;">
+
+    <!-- ENTRADAS -->
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 28px; display: flex; flex-direction: column; gap: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">O SEU PROJETO</span>
+        <button onClick="{{ onExemplo }}" style="border: 1px solid #7C3AED; background: #FFFFFF; color: #7C3AED; font-family: 'Archivo', sans-serif; font-size: 12.5px; font-weight: 700; padding: 6px 12px; cursor: pointer;" style-hover="background: #7C3AED; color: #FFFFFF;">Carregar exemplo da aula</button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Ticket mensal (R$)</label>
+          <input value="{{ ticket }}" onChange="{{ onTicket }}" placeholder="89 a 119" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Base projetada (alunos)</label>
+          <input value="{{ base }}" onChange="{{ onBase }}" placeholder="ex.: 3000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Custo fixo mensal (R$)</label>
+        <input value="{{ custo }}" onChange="{{ onCusto }}" placeholder="150000 a 200000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Taxas + impostos sobre a receita (%)</label>
+        <input value="{{ deducoes }}" onChange="{{ onDeducoes }}" placeholder="ex.: 10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78; border-top: 1px solid #E2E0E8; padding-top: 16px;">CAPEX — OS DOIS CENÁRIOS DE PARQUE</span>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Obra + capital de giro (R$, sem equipamentos)</label>
+        <input value="{{ obra }}" onChange="{{ onObra }}" placeholder="ex.: 1200000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Parque — varejo nacional (R$)</label>
+          <input value="{{ parqueNac }}" onChange="{{ onParqueNac }}" placeholder="ex.: 1800000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Parque — cotação Torque (R$)</label>
+          <input value="{{ parqueImp }}" onChange="{{ onParqueImp }}" placeholder="ex.: 1000000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1.5px solid #7C3AED; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #6D28D9; outline: none;">
+        </div>
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.55; color: #8A8695;">Referências da aula 9.3: base madura 2.500–4.000 · fixos R$ 150–200 mil · margem saudável 20–35%. O parque comprado com a Torque sai tipicamente 30–50% abaixo do varejo nacional, com o mesmo padrão das grandes redes — peça sua cotação.</p>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <div style="background: #131118; color: #FFFFFF; padding: 26px 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">RECEITA RECORRENTE</span>
+          <span style="font-size: 32px; font-weight: 800; line-height: 1;">{{ receitaTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695;">{{ receitaAnoTxt }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">RESULTADO MENSAL</span>
+          <span style="font-size: 32px; font-weight: 800; line-height: 1; color: {{ margemCor }};">{{ resultadoTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695;">margem: {{ margemTxt }} · {{ margemLabel }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">PONTO DE EQUILÍBRIO</span>
+          <span style="font-size: 32px; font-weight: 800; line-height: 1;">{{ peTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695;">{{ peNota }}</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">CENÁRIO A — PARQUE NO VAREJO NACIONAL</span>
+          <span style="font-size: 30px; font-weight: 800; line-height: 1;">{{ capexNacTxt }}</span>
+          <span style="font-size: 13.5px; font-weight: 600; color: #55515F;">payback: {{ paybackNacTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Capex total = obra + parque no varejo.</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1.5px solid #7C3AED; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">CENÁRIO B — PARQUE COM A TORQUE</span>
+          <span style="font-size: 30px; font-weight: 800; line-height: 1;">{{ capexImpTxt }}</span>
+          <span style="font-size: 13.5px; font-weight: 600; color: #55515F;">payback: {{ paybackImpTxt }}</span>
+          <span style="font-size: 12.5px; font-weight: 600; color: #7C3AED; line-height: 1.5;">{{ economiaTxt }}</span>
+        </div>
+      </div>
+
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 18px 24px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">LEITURA</span>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.65; color: #3A3742;">{{ leitura }}</p>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1.5px solid #7C3AED; padding: 18px 24px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">O AVISO HONESTO (AULA 9.5)</span>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.65; color: #3A3742;">Margem por aluno é fina: inadimplência sem régua, energia sem controle, equipe inchada ou churn alto destroem o resultado em silêncio. O payback acima assume a base projetada ATINGIDA — a rampa de 18–24 meses depende dos Módulos 3 e 4 rodando em escala.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin-top: auto; background: #121016; padding: 18px 48px; display: flex; justify-content: space-between; align-items: baseline;">
+    <span style="font-size: 13px; color: #8A8695;">Método Torque · Gestão de Academias de Alta Performance · Material do aluno</span>
+    <span style="font-size: 13px; color: #8A8695;">www.torquefitness.com.br</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ticket: '', base: '', custo: '', deducoes: '', obra: '', parqueNac: '', parqueImp: '' };
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('metodo-torque-ct-unit') || 'null');
+      if (saved && typeof saved === 'object') {
+        const clean = {};
+        for (const k of Object.keys(this.state)) if (typeof saved[k] === 'string') clean[k] = saved[k];
+        this.setState(clean);
+      }
+    } catch (e) {}
+  }
+
+  persist() { try { localStorage.setItem('metodo-torque-ct-unit', JSON.stringify(this.state)); } catch (e) {} }
+  set(k) { return (e) => this.setState({ [k]: e.target.value }, () => this.persist()); }
+
+  renderVals() {
+    const VERDE = '#4ADE80', AMAR = '#FBBF24', VERM = '#F87171';
+    const P = (s) => {
+      s = (s == null ? '' : String(s)).trim();
+      if (!s) return null;
+      s = s.replace(/R\$\s?/g, '').replace(/%/g, '').replace(/\s/g, '');
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return isFinite(n) && n >= 0 ? n : null;
+    };
+    const brl = (n) => n == null ? '—' : 'R$ ' + n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+    const brlK = (n) => {
+      if (n == null) return '—';
+      if (n >= 1000000) return 'R$ ' + (n / 1000000).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' mi';
+      return brl(n);
+    };
+    const num = (n) => n == null ? '—' : n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+    const ticket = P(this.state.ticket);
+    const base = P(this.state.base);
+    const custo = P(this.state.custo);
+    const dedu = P(this.state.deducoes) || 0;
+    const obra = P(this.state.obra);
+    const pNac = P(this.state.parqueNac);
+    const pImp = P(this.state.parqueImp);
+
+    const receita = (ticket != null && base != null) ? ticket * base : null;
+    const liquida = receita != null ? receita * (1 - dedu / 100) : null;
+    const resultado = (liquida != null && custo != null) ? liquida - custo : null;
+    const margem = (resultado != null && receita) ? (resultado / receita) * 100 : null;
+    const ticketLiq = ticket != null ? ticket * (1 - dedu / 100) : null;
+    const pe = (custo != null && ticketLiq) ? custo / ticketLiq : null;
+
+    let mS = { cor: '#FFFFFF', label: 'aguardando dados' };
+    if (margem != null) {
+      if (margem < 0) mS = { cor: VERM, label: 'prejuízo — reveja base, ticket ou custo' };
+      else if (margem < 20) mS = { cor: AMAR, label: 'abaixo da faixa do modelo (20–35%)' };
+      else if (margem <= 35) mS = { cor: VERDE, label: 'na faixa saudável do modelo' };
+      else mS = { cor: VERDE, label: 'acima da faixa — confira o custo' };
+    }
+
+    const capexNac = (obra != null || pNac != null) ? (obra || 0) + (pNac || 0) : null;
+    const capexImp = (obra != null || pImp != null) ? (obra || 0) + (pImp || 0) : null;
+    const payback = (capex) => (capex != null && resultado != null && resultado > 0) ? capex / resultado : null;
+    const pbNac = payback(capexNac);
+    const pbImp = payback(capexImp);
+    const fmtPb = (m) => m == null ? '—' : (m >= 12 ? (m / 12).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' anos' : Math.ceil(m) + ' meses');
+
+    const economia = (pNac != null && pImp != null && pNac > pImp) ? pNac - pImp : null;
+    const ganhoMeses = (pbNac != null && pbImp != null && pbNac > pbImp) ? pbNac - pbImp : null;
+
+    let leitura = 'Preencha os campos (ou carregue o exemplo) para ver a conta completa da unidade.';
+    if (resultado != null && resultado <= 0) {
+      leitura = 'Com esses números a unidade não se sustenta na base projetada. Antes de descartar a praça: o ticket aguenta R$ 10 a mais? O custo fixo tem gordura (folga de folha, aluguel)? A base de equilíbrio (' + num(pe ? Math.ceil(pe) : null) + ' alunos) é atingível no raio? Rode cenários antes de decidir.';
+    } else if (resultado != null) {
+      leitura = 'Com ' + num(base) + ' alunos a ' + brl(ticket) + ', a unidade gera ' + brl(resultado) + '/mês' + (pe != null ? ' e empata com ' + num(Math.ceil(pe)) + ' alunos — a base projetada é ' + (base >= pe * 1.3 ? 'folgada' : (base >= pe ? 'apertada: qualquer atraso de rampa come o resultado' : 'INSUFICIENTE')) + '.' : '.') + (economia != null ? ' A diferença de ' + brlK(economia) + ' no parque ' + (ganhoMeses != null ? 'encurta o payback em ' + fmtPb(ganhoMeses).replace('anos', 'anos').replace('meses', 'meses') : 'muda o retorno do projeto') + ' — é a conta que fecha o modelo (aula 9.4).' : '');
+    }
+
+    return {
+      ticket: this.state.ticket, base: this.state.base, custo: this.state.custo, deducoes: this.state.deducoes,
+      obra: this.state.obra, parqueNac: this.state.parqueNac, parqueImp: this.state.parqueImp,
+      onTicket: this.set('ticket'), onBase: this.set('base'), onCusto: this.set('custo'), onDeducoes: this.set('deducoes'),
+      onObra: this.set('obra'), onParqueNac: this.set('parqueNac'), onParqueImp: this.set('parqueImp'),
+      onExemplo: () => this.setState({ ticket: '99', base: '3000', custo: '180000', deducoes: '10', obra: '1200000', parqueNac: '1800000', parqueImp: '1000000' }, () => this.persist()),
+      receitaTxt: brl(receita),
+      receitaAnoTxt: receita != null ? brlK(receita * 12) + '/ano em UMA unidade' : 'ticket × base',
+      resultadoTxt: brl(resultado),
+      margemCor: mS.cor, margemTxt: margem == null ? '—' : margem.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%',
+      margemLabel: mS.label,
+      peTxt: pe == null ? '—' : num(Math.ceil(pe)) + ' alunos',
+      peNota: (pe != null && base != null) ? 'base projetada: ' + num(base) + ' (' + (base / pe).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '× o equilíbrio)' : 'custo ÷ ticket líquido',
+      capexNacTxt: brlK(capexNac), paybackNacTxt: fmtPb(pbNac),
+      capexImpTxt: brlK(capexImp), paybackImpTxt: fmtPb(pbImp),
+      economiaTxt: economia != null ? brlK(economia) + ' a menos no capex com o mesmo padrão de máquina — peça a cotação Torque' : 'Peça a cotação Torque do seu parque',
+      leitura
+    };
+  }
+}
+</script>
+</body>
+</html>
