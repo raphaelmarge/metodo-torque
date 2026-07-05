@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle de Inadimplência — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .dev { display: flex; flex-direction: column; gap: 10px; }
+  .dev .cab { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .dev h3 { margin: 0; font-size: 16px; }
+  .dev .sub { font-size: 13px; color: var(--cinza); }
+  .dev.critico { border-left: 4px solid var(--erro); }
+  .passos { display: flex; gap: 5px; flex-wrap: wrap; }
+  .passo { font-size: 11px; font-weight: 700; padding: 3px 8px; border: 1px solid var(--linha); color: var(--cinza-2); }
+  .passo.feito { background: rgba(22,163,74,.1); color: var(--ok); border-color: rgba(22,163,74,.35); }
+  .passo.agora { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  #roteiro pre { white-space: pre-wrap; font-family: inherit; font-size: 14.5px; line-height: 1.6; background: var(--fundo); border: 1px solid var(--linha); padding: 14px; margin: 0; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Controle de Inadimplência</h1>
+    </div>
+  </div>
+  <p>A Régua de Cobrança do Módulo 2 em ação: cada devedor mostra em que passo está (D+1 a D+30) e a mensagem certa sai pronta no WhatsApp. Firme no processo, leve na comunicação.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-f="aberto" class="ativa">Em aberto</button>
+      <button data-f="acordo">Em acordo</button>
+      <button data-f="pago">Pagos no mês</button>
+    </div>
+    <div class="linha-flex">
+      <button class="btn sec" id="btnCfg">⚙ Academia e link</button>
+      <button class="btn" id="btnNovo">+ Nova pendência</button>
+    </div>
+  </div>
+
+  <div id="lista" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+  <div class="card">
+    <h2>O que nunca fazer (regra do curso)</h2>
+    <p class="muted" style="margin: 6px 0 0;">Cobrar na frente de outros alunos · expor nome em mural ou grupo · deixar o professor cobrar · deixar acumular duas mensalidades. E a prevenção que resolve de vez: migrar a base para <strong>recorrência no cartão</strong> (inadimplência cai de 10–20% para 3–5%).</p>
+  </div>
+</main>
+
+<!-- nova pendência -->
+<dialog id="dlgNovo">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
+    <h2>Nova pendência</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome do aluno</label><input id="nNome" required></div>
+      <div class="campo"><label>WhatsApp</label><input id="nZap" inputmode="numeric" placeholder="11999998888"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Valor (R$)</label><input id="nValor" type="number" min="0" step="0.01" required></div>
+      <div class="campo"><label>Vencimento</label><input id="nVenc" type="date" required></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Adicionar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- config -->
+<dialog id="dlgCfg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
+    <h2>Dados usados nas mensagens</h2>
+    <div class="campo"><label>Nome da academia</label><input id="cAcad" placeholder="ex.: Academia Corpo em Forma"></div>
+    <div class="campo"><label>Link de pagamento</label><input id="cLink" placeholder="ex.: https://pag.ae/..."></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn" value="ok">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- roteiro de ligação -->
+<dialog id="roteiro">
+  <div class="card" style="width: 560px; max-width: 100%; display: flex; flex-direction: column; gap: 12px;">
+    <h2>D+10 · Ligação pessoal (não é mensagem)</h2>
+    <pre id="roteiroTxt"></pre>
+    <p class="muted" style="margin: 0;">Sem julgamento, com proposta concreta: parcelar ou mudar a data de vencimento. O objetivo é remover o obstáculo real, não constranger.</p>
+    <div style="text-align: right;"><button class="btn" id="roteiroOk">Liguei — registrar</button> <button class="btn sec" onclick="this.closest('dialog').close()">Fechar</button></div>
+  </div>
+</dialog>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Régua de Cobrança do Módulo 2 — mensagens oficiais do material
+  var REGUA = [
+    { d: 1, id: "d1", rotulo: "D+1", titulo: "Mensagem amigável", canal: "zap",
+      msg: function (n, c) { return "Oi " + n + "! Tudo bem? 😊 Vi aqui que a mensalidade de " + c.mes + " não passou no sistema. Às vezes é só o cartão que trocou ou venceu — quer que eu atualize por aqui mesmo? É rapidinho!"; } },
+    { d: 5, id: "d5", rotulo: "D+5", titulo: "Link de pagamento", canal: "zap",
+      msg: function (n, c) { return "Oi " + n + "! Passando de novo por aqui 🙂 Pra facilitar, deixei tudo pronto: é só clicar nesse link que você regulariza em 1 minuto, direto do celular: " + c.link + ". Se preferir atualizar o cartão, me avisa que eu te mando o caminho. Qualquer dúvida, tô aqui!"; } },
+    { d: 10, id: "d10", rotulo: "D+10", titulo: "Ligação pessoal", canal: "fone",
+      msg: function (n, c) { return "Oi " + n + ", aqui é da " + c.acad + "! Tô ligando porque senti sua falta e vi que a mensalidade ficou pendente — aconteceu alguma coisa? [OUVIR de verdade]\n\nOlha, a gente consegue resolver do jeito que ficar melhor pra você: dá pra parcelar, ou mudar a data de vencimento pra perto do seu pagamento. O que funciona melhor?"; } },
+    { d: 13, id: "d13", rotulo: "D+13", titulo: "Aviso de bloqueio", canal: "zap",
+      msg: function (n, c) { return "Oi " + n + "! Não quero que você perca seu treino: como a mensalidade de " + c.mes + " segue pendente, o sistema bloqueia o acesso automaticamente em 2 dias. Pra continuar treinando normal é só regularizar por aqui: " + c.link + ". Te esperamos! 💪"; } },
+    { d: 15, id: "d15", rotulo: "D+15", titulo: "Acesso bloqueado", canal: "zap",
+      msg: function (n, c) { return "Oi " + n + ", o acesso ficou temporariamente bloqueado pela pendência de " + c.mes + ". Assim que regularizar (leva 1 minuto: " + c.link + "), libera na hora — seu treino continua te esperando. Qualquer dificuldade, me chama que a gente encontra um caminho juntos."; } },
+    { d: 30, id: "d30", rotulo: "D+30", titulo: "Acordo de renegociação", canal: "zap",
+      msg: function (n, c) { return "Oi " + n + ", aqui é da gestão da " + c.acad + ". Quero resolver sua pendência de um jeito bom pra você: consigo parcelar o valor ou fechar um acordo com desconto nos juros pra quitar essa semana. Qual das duas opções encaixa melhor? Se nenhuma servir, me conta sua situação que a gente monta juntos."; } },
+  ];
+
+  function load() { return S.read("inad", { config: { acad: "", link: "" }, devedores: [] }); }
+  function save(st) { S.write("inad", st); render(); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var filtro = "aberto";
+
+  function diasAtraso(dev) {
+    return Math.max(0, Math.round((new Date(S.todayISO()) - new Date(dev.vencimento)) / 864e5));
+  }
+  function passoAtual(dev) {
+    var dias = diasAtraso(dev), atual = null;
+    REGUA.forEach(function (p) { if (dias >= p.d) atual = p; });
+    return atual;
+  }
+  function ctxMsg(st, dev) {
+    var mes = new Date(dev.vencimento + "T12:00").toLocaleDateString("pt-BR", { month: "long" });
+    return {
+      mes: mes,
+      acad: st.config.acad || "[academia]",
+      link: st.config.link || "[link de pagamento]",
+    };
+  }
+
+  function render() {
+    var st = load();
+    var mes = S.todayISO().slice(0, 7);
+    var abertos = st.devedores.filter(function (d) { return d.status === "aberto"; });
+    var totAberto = abertos.reduce(function (a, d) { return a + (+d.valor || 0); }, 0);
+    var recuperado = st.devedores.filter(function (d) { return d.status === "pago" && (d.pagoEm || "").slice(0, 7) === mes; })
+      .reduce(function (a, d) { return a + (+d.valor || 0); }, 0);
+    var criticos = abertos.filter(function (d) { return diasAtraso(d) >= 30; }).length;
+
+    $("stats").innerHTML =
+      '<div class="card"><div class="n" style="color:var(--erro);">' + S.fmtBRL(totAberto) + '</div><div class="muted">em aberto</div></div>' +
+      '<div class="card"><div class="n">' + abertos.length + '</div><div class="muted">alunos pendentes</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--alerta);">' + criticos + '</div><div class="muted">há 30+ dias (crítico)</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok);">' + S.fmtBRL(recuperado) + '</div><div class="muted">recuperado no mês</div></div>';
+
+    var vis = st.devedores.filter(function (d) {
+      if (filtro === "pago") return d.status === "pago" && (d.pagoEm || "").slice(0, 7) === mes;
+      return d.status === filtro;
+    }).sort(function (a, b) { return diasAtraso(b) - diasAtraso(a); });
+
+    $("lista").innerHTML = vis.length ? vis.map(function (d) { return tpl(st, d); }).join("") :
+      '<div class="vazio">' + (filtro === "aberto" ? "Nenhuma pendência em aberto 🎉" : "Nada aqui.") + "</div>";
+  }
+
+  function tpl(st, dev) {
+    var dias = diasAtraso(dev);
+    var passo = passoAtual(dev);
+    var passosHtml = REGUA.map(function (p) {
+      var feito = dev.envios && dev.envios[p.id];
+      var agora = passo && p.id === passo.id && !feito;
+      return '<span class="passo' + (feito ? " feito" : "") + (agora ? " agora" : "") + '" title="' + p.titulo + '">' + p.rotulo + (feito ? " ✓" : "") + "</span>";
+    }).join("");
+    var pend = dev.status === "aberto";
+    return '<div class="card dev' + (dias >= 30 && pend ? " critico" : "") + '" data-id="' + dev.id + '">' +
+      '<div class="cab"><div><h3>' + esc(dev.nome) + '</h3><div class="sub">' + S.fmtBRL(+dev.valor) + " · venceu " + S.fmtData(dev.vencimento) +
+      (pend ? " · <strong>" + dias + " dia(s) de atraso</strong>" : dev.status === "pago" ? " · pago em " + S.fmtData(dev.pagoEm) : " · em acordo") + "</div></div>" +
+      (pend && passo ? '<span class="tag ' + (dias >= 30 ? "erro" : dias >= 13 ? "alerta" : "roxo") + '">PASSO ATUAL: ' + passo.rotulo + " · " + passo.titulo.toUpperCase() + "</span>" : "") + "</div>" +
+      '<div class="passos">' + passosHtml + "</div>" +
+      '<div class="acoes">' +
+      (pend && passo ? (passo.canal === "fone" ?
+          '<button class="btn" data-acao="ligar">📞 Ver roteiro da ligação</button>' :
+          (dev.zap ? '<a class="btn whats" target="_blank" rel="noopener" data-acao="zap" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(passo.msg(dev.nome.split(" ")[0], ctxMsg(st, dev))) + '">💬 Enviar ' + passo.rotulo + "</a>" : '<span class="muted">sem WhatsApp cadastrado</span>')) : "") +
+      (pend ? '<button class="btn ok mini" data-acao="pago">✓ Recebido</button><button class="btn sec mini" data-acao="acordo">🤝 Acordo</button>' :
+        '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir</button>') +
+      '<button class="btn perigo mini" data-acao="excluir">excluir</button>' +
+      "</div></div>";
+  }
+
+  // ---------- eventos ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    filtro = b.getAttribute("data-f");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+
+  $("btnNovo").onclick = function () {
+    $("nNome").value = ""; $("nZap").value = ""; $("nValor").value = ""; $("nVenc").value = "";
+    $("dlgNovo").showModal();
+  };
+  $("dlgNovo").addEventListener("close", function () {
+    if ($("dlgNovo").returnValue !== "ok") return;
+    var st = load();
+    st.devedores.unshift({ id: S.uid(), nome: $("nNome").value.trim(), zap: $("nZap").value.trim(), valor: +$("nValor").value || 0, vencimento: $("nVenc").value, status: "aberto", envios: {} });
+    save(st);
+  });
+
+  $("btnCfg").onclick = function () {
+    var st = load();
+    $("cAcad").value = st.config.acad || "";
+    $("cLink").value = st.config.link || "";
+    $("dlgCfg").showModal();
+  };
+  $("dlgCfg").addEventListener("close", function () {
+    if ($("dlgCfg").returnValue !== "ok") return;
+    var st = load();
+    st.config = { acad: $("cAcad").value.trim(), link: $("cLink").value.trim() };
+    save(st);
+  });
+
+  var ligandoPara = null;
+  $("lista").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-acao]"); if (!b) return;
+    var id = e.target.closest("[data-id]").getAttribute("data-id");
+    var st = load();
+    var d = st.devedores.find(function (x) { return x.id === id; });
+    if (!d) return;
+    var acao = b.getAttribute("data-acao");
+    var passo = passoAtual(d);
+
+    if (acao === "zap") {
+      // registra o envio (o link já abre pelo href)
+      d.envios = d.envios || {};
+      if (passo) d.envios[passo.id] = S.todayISO();
+      save(st);
+      return;
+    }
+    if (acao === "ligar") {
+      ligandoPara = id;
+      $("roteiroTxt").textContent = passo.msg(d.nome.split(" ")[0], ctxMsg(st, d));
+      $("roteiro").showModal();
+      return;
+    }
+    if (acao === "pago") { d.status = "pago"; d.pagoEm = S.todayISO(); }
+    else if (acao === "acordo") { d.status = "acordo"; }
+    else if (acao === "reabrir") { d.status = "aberto"; d.pagoEm = ""; }
+    else if (acao === "excluir") {
+      if (!confirm("Excluir esta pendência?")) return;
+      st.devedores = st.devedores.filter(function (x) { return x.id !== id; });
+    }
+    save(st);
+  });
+
+  $("roteiroOk").onclick = function () {
+    var st = load();
+    var d = st.devedores.find(function (x) { return x.id === ligandoPara; });
+    if (d) {
+      var passo = passoAtual(d);
+      d.envios = d.envios || {};
+      if (passo) d.envios[passo.id] = S.todayISO();
+      save(st);
+    }
+    $("roteiro").close();
+  };
+
+  S.onChange(function () { render(); });
+  render();
+})();
+</script>
+</body>
+</html>

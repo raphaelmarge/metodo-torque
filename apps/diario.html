@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diário do Curso — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .mod { border: 1px solid var(--linha); background: #fff; }
+  .mod summary { cursor: pointer; list-style: none; padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
+  .mod summary::-webkit-details-marker { display: none; }
+  .mod .num { flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-weight: 800; background: rgba(124,58,237,.1); color: var(--roxo); border: 1px solid rgba(124,58,237,.35); }
+  .mod .tit { flex: 1; font-weight: 700; font-size: 15.5px; }
+  .mod .corpo-mod { padding: 4px 20px 20px; display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--linha); }
+  .mod + .mod { margin-top: -1px; }
+  .nota-linha { display: flex; align-items: center; gap: 14px; }
+  .nota-linha input[type=range] { flex: 1; accent-color: var(--roxo); }
+  .nota-valor { font-size: 22px; font-weight: 800; color: var(--roxo); min-width: 52px; text-align: center; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .rel-sec { display: flex; flex-direction: column; gap: 10px; }
+  .rel-item { display: flex; gap: 10px; padding: 12px 14px; border: 1px solid var(--linha); background: #fff; font-size: 14.5px; line-height: 1.5; }
+  .rel-item.bom { border-left: 4px solid var(--ok); }
+  .rel-item.ruim { border-left: 4px solid var(--erro); }
+  .rel-item.dica { border-left: 4px solid var(--roxo); }
+  .mod-bar { display: grid; grid-template-columns: 150px 1fr 44px; gap: 10px; align-items: center; font-size: 13px; }
+  #promptIa { width: 100%; height: 180px; font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · SUA EVOLUÇÃO</span>
+    <h1>Diário do Curso</h1>
+    </div>
+  </div>
+  <p>Preencha cada módulo com os números da sua academia. No final, o relatório cruza tudo com os dados dos programas e monta a análise — inclusive pronta para levar a uma IA.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abasView">
+      <button data-v="diario" class="ativa">📝 Diário por módulo</button>
+      <button data-v="relatorio">📊 Relatório final</button>
+    </div>
+    <span class="muted" id="progresso"></span>
+  </div>
+
+  <section id="viewDiario"></section>
+
+  <section id="viewRelatorio" hidden style="display: flex; flex-direction: column; gap: 18px;"></section>
+</main>
+
+<script src="../assets/content.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  var MODULES = window.MT_MODULES;
+
+  // KPIs por módulo: [chave, rótulo, tipo(num|pct|reais|texto), referência do curso p/ análise]
+  var CAMPOS = {
+    1: [["ativos", "Alunos ativos", "num"], ["ticket", "Ticket médio (R$)", "reais"], ["churn", "Churn mensal (%)", "pct"], ["cac", "CAC — custo por matrícula (R$)", "reais"], ["gargalo", "Seu gargalo nº 1 (do Diagnóstico 360)", "texto"]],
+    2: [["receita", "Receita mensal (R$)", "reais"], ["lucro", "Lucro mensal (R$)", "reais"], ["inad", "Inadimplência (%)", "pct"], ["recorrencia", "% da base em recorrência no cartão", "pct"]],
+    3: [["leads", "Leads por mês", "num"], ["visitas", "Visitas por mês", "num"], ["matriculas", "Matrículas por mês", "num"]],
+    4: [["permanencia", "Permanência média (meses)", "num"], ["onboarding", "Onboarding 90 dias rodando? (0=não 10=sim)", "num010"], ["regua", "Régua de retenção ativa? (0=não 10=sim)", "num010"]],
+    5: [["equipe", "Tamanho da equipe", "num"], ["reuniao", "Reunião semanal acontecendo? (0=não 10=toda semana)", "num010"], ["delegacoes", "Responsabilidades delegadas com briefing", "num"]],
+    6: [["checklist", "Checklists diários rodando? (0=não 10=sempre)", "num010"], ["manutprev", "Manutenção preventiva em dia? (0-10)", "num010"]],
+    7: [["notaparque", "Nota do parque de equipamentos (0-10)", "num010"], ["parados", "Aparelhos parados/quebrados hoje", "num"], ["investimento", "Investimento planejado 12m (R$)", "reais"]],
+    8: [["indicacoes", "Matrículas por indicação/mês", "num"], ["campanhas", "Campanhas feitas no trimestre", "num"], ["instagram", "Postagens por semana", "num"]],
+    9: [["expansao", "Pretende abrir nova unidade? (0=não 10=já decidiu)", "num010"], ["novasreceitas", "Novas receitas ativas (ex.: personal, loja, avaliação)", "texto"]],
+  };
+
+  function load() { return S.read("diario", { modulos: {} }); }
+  function save(st) { S.write("diario", st); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  // ---------- DIÁRIO ----------
+  function renderDiario() {
+    var st = load();
+    // preserva os painéis que o usuário deixou abertos (no primeiro render, abre o próximo módulo pendente)
+    var abertos = {};
+    var existentes = $("viewDiario").querySelectorAll("details.mod");
+    Array.prototype.forEach.call(existentes, function (dt) { abertos[dt.getAttribute("data-m")] = dt.open; });
+    var primeiraVez = existentes.length === 0;
+    $("viewDiario").innerHTML = MODULES.map(function (m) {
+      var d = st.modulos[m.n] || {};
+      var status = d.status || "nao";
+      var aberto = primeiraVez ? (status !== "ok" && m.n === proximoAberto(st)) : !!abertos[m.n];
+      var stTag = status === "ok" ? '<span class="tag ok">IMPLANTADO ✓</span>' : status === "andamento" ? '<span class="tag alerta">EM ANDAMENTO</span>' : '<span class="tag neutro">NÃO COMECEI</span>';
+      return '<details class="mod" data-m="' + m.n + '"' + (aberto ? " open" : "") + ">" +
+        '<summary><span class="num">' + (m.bonus ? "B" : m.n) + '</span><span class="tit">' + m.title + "</span>" + stTag + "</summary>" +
+        '<div class="corpo-mod">' +
+        '<div class="campo"><label>Status do módulo na sua academia</label><select data-campo="status">' +
+        '<option value="nao"' + (status === "nao" ? " selected" : "") + '>Não comecei</option>' +
+        '<option value="andamento"' + (status === "andamento" ? " selected" : "") + '>Em andamento</option>' +
+        '<option value="ok"' + (status === "ok" ? " selected" : "") + '>Implantado e rodando</option></select></div>' +
+        '<div><label>Quanto isso está rodando de verdade? (0 = nada · 10 = redondo)</label>' +
+        '<div class="nota-linha"><input type="range" min="0" max="10" step="1" value="' + (d.nota != null ? d.nota : 0) + '" data-campo="nota"><span class="nota-valor">' + (d.nota != null ? d.nota : 0) + "</span></div></div>" +
+        '<div class="kpis">' + (CAMPOS[m.n] || []).map(function (c) {
+          var val = d[c[0]] != null ? d[c[0]] : "";
+          if (c[2] === "texto") return '<div class="campo" style="grid-column: 1/-1;"><label>' + c[1] + '</label><input data-campo="' + c[0] + '" value="' + esc(val) + '"></div>';
+          return '<div class="campo"><label>' + c[1] + '</label><input type="number" step="any" min="0" data-campo="' + c[0] + '" value="' + esc(val) + '"></div>';
+        }).join("") + "</div>" +
+        '<div class="campo"><label>O que você implantou neste módulo?</label><textarea rows="2" data-campo="feito">' + esc(d.feito || "") + "</textarea></div>" +
+        '<div class="campo"><label>Maior dificuldade</label><textarea rows="2" data-campo="dificuldade">' + esc(d.dificuldade || "") + "</textarea></div>" +
+        "</div></details>";
+    }).join("");
+    atualizaProgresso();
+  }
+
+  function proximoAberto(st) {
+    for (var i = 0; i < MODULES.length; i++) {
+      var d = st.modulos[MODULES[i].n] || {};
+      if (d.status !== "ok") return MODULES[i].n;
+    }
+    return -1;
+  }
+
+  function atualizaProgresso() {
+    var st = load();
+    var ok = MODULES.filter(function (m) { return (st.modulos[m.n] || {}).status === "ok"; }).length;
+    $("progresso").textContent = ok + " de " + MODULES.length + " módulos implantados";
+  }
+
+  // salva ao digitar/mudar
+  $("viewDiario").addEventListener("input", function (e) {
+    var campo = e.target.getAttribute("data-campo");
+    if (!campo) return;
+    var mn = +e.target.closest("[data-m]").getAttribute("data-m");
+    var st = load();
+    var d = st.modulos[mn] || (st.modulos[mn] = {});
+    d[campo] = e.target.type === "number" || e.target.type === "range" ? (e.target.value === "" ? null : +e.target.value) : e.target.value;
+    save(st);
+    if (campo === "nota") e.target.closest(".nota-linha").querySelector(".nota-valor").textContent = e.target.value;
+    if (campo === "status") renderDiario();
+    else atualizaProgresso();
+  });
+  $("viewDiario").addEventListener("change", function (e) {
+    if (e.target.getAttribute("data-campo") === "status") {
+      var mn = +e.target.closest("[data-m]").getAttribute("data-m");
+      var st = load();
+      (st.modulos[mn] = st.modulos[mn] || {}).status = e.target.value;
+      save(st);
+      renderDiario();
+    }
+  });
+
+  // ---------- RELATÓRIO ----------
+  function coletaTudo() {
+    var st = load();
+    var hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    var dados = { diario: st.modulos, live: {} };
+
+    var metas = S.read("metas", null);
+    if (metas) {
+      var vendas = metas.vendas.filter(function (v) { return v.data.slice(0, 7) === mes; });
+      var meta = (metas.metas || {})[mes] || { acad: {} };
+      dados.live.vendas = {
+        matriculasMes: vendas.filter(function (v) { return v.tipo === "matricula"; }).length,
+        receitaVendasMes: vendas.reduce(function (a, v) { return a + (+v.valor || 0); }, 0),
+        metaMatriculas: meta.acad.mat || 0, metaReceita: meta.acad.rec || 0,
+        vendedoras: (metas.vendedoras || []).filter(function (v) { return v.ativa !== false; }).length,
+      };
+    }
+    var funil = S.read("funil", null);
+    if (funil) {
+      var ativos = funil.leads.filter(function (l) { return l.status !== "matriculado" && l.status !== "perdido"; });
+      dados.live.funil = {
+        leadsAtivos: ativos.length,
+        followupAtrasado: ativos.filter(function (l) { return l.proximo && l.proximo < hoje; }).length,
+        matriculadosMes: funil.leads.filter(function (l) { return (l.matriculouEm || "").slice(0, 7) === mes; }).length,
+        perdidosMes: funil.leads.filter(function (l) { return (l.perdidoEm || "").slice(0, 7) === mes; }).length,
+      };
+    }
+    var ex = S.read("exper", null);
+    if (ex) {
+      var doMes = ex.aulas.filter(function (a) { return a.data.slice(0, 7) === mes; });
+      var veio = doMes.filter(function (a) { return a.status === "compareceu" || a.status === "matriculado"; }).length;
+      var faltou = doMes.filter(function (a) { return a.status === "faltou"; }).length;
+      dados.live.experimentais = { agendadasMes: doMes.length, compareceu: veio, faltou: faltou, matricularam: doMes.filter(function (a) { return a.status === "matriculado"; }).length };
+    }
+    var inad = S.read("inad", null);
+    if (inad) {
+      var abertos = inad.devedores.filter(function (d) { return d.status === "aberto"; });
+      dados.live.inadimplencia = {
+        pendentes: abertos.length,
+        valorAberto: abertos.reduce(function (a, d) { return a + (+d.valor || 0); }, 0),
+        criticos30d: abertos.filter(function (d) { return (new Date(hoje) - new Date(d.vencimento)) / 864e5 >= 30; }).length,
+      };
+    }
+    var manut = S.read("manut", null);
+    if (manut) {
+      var pend = manut.chamados.filter(function (c) { return c.status !== "resolvido"; });
+      dados.live.manutencao = {
+        chamadosAbertos: pend.length,
+        atrasados: pend.filter(function (c) { return c.agendado && c.agendado < hoje; }).length,
+        aparelhos: pend.filter(function (c) { return c.cat === "aparelho"; }).length,
+      };
+    }
+    var chk = S.read("checklist", null);
+    if (chk && chk.tarefas.length) {
+      var dias7 = 0, soma = 0;
+      for (var i = 1; i <= 7; i++) {
+        var d2 = new Date(); d2.setDate(d2.getDate() - i);
+        var iso = S.todayISO(d2);
+        var marcas = chk.dias[iso];
+        if (marcas) { dias7++; soma += Object.keys(marcas).length / chk.tarefas.length; }
+      }
+      dados.live.checklist = { execucaoMedia7d: dias7 ? Math.round(soma / dias7 * 100) : null };
+    }
+    return dados;
+  }
+
+  // análise com as referências do curso
+  function analisa(dados) {
+    var bons = [], ruins = [], dicas = [];
+    var m1 = dados.diario[1] || {}, m2 = dados.diario[2] || {}, m3 = dados.diario[3] || {}, m4 = dados.diario[4] || {}, m7 = dados.diario[7] || {};
+    function add(arr, txt) { arr.push(txt); }
+
+    if (m1.churn != null) {
+      if (m1.churn <= 5) add(bons, "Churn de " + m1.churn + "% ao mês está dentro da referência saudável do curso (3–5%). Retenção sob controle.");
+      else if (m1.churn > 7) add(ruins, "Churn de " + m1.churn + "% ao mês está acima de 7% — o curso chama isso de \"enxugar gelo\": priorize o Módulo 4 (onboarding 90 dias + régua de retenção) antes de investir mais em captação.");
+      else add(dicas, "Churn de " + m1.churn + "% está na zona de atenção (5–7%). Reforce o onboarding dos 90 dias.");
+    }
+    if (m1.cac != null && m1.ticket != null && m1.ticket > 0) {
+      if (m1.cac <= m1.ticket) add(bons, "CAC de " + S.fmtBRL(m1.cac) + " está saudável: até 1 mensalidade (" + S.fmtBRL(m1.ticket) + "), como o curso recomenda.");
+      else add(ruins, "CAC de " + S.fmtBRL(m1.cac) + " custa mais que 1 mensalidade (" + S.fmtBRL(m1.ticket) + ") — reveja canais de captação e aposte em indicação (Módulo 8).");
+    }
+    if (m1.ticket != null && m1.churn != null && m1.churn > 0) {
+      var ltv = m1.ticket * (100 / m1.churn);
+      add(dicas, "Seu LTV estimado é " + S.fmtBRL(ltv) + " (ticket ÷ churn). Cada ponto de churn a menos vale mais que uma campanha de captação.");
+    }
+    if (m2.receita != null && m2.lucro != null && m2.receita > 0) {
+      var margem = m2.lucro / m2.receita * 100;
+      if (margem >= 15) add(bons, "Margem de " + Math.round(margem) + "% — academia lucrativa de verdade, não só \"movimentada\".");
+      else if (margem < 5) add(ruins, "Margem de " + Math.round(margem) + "% é zona de risco: revisite a Calculadora de Precificação e o DRE (Módulo 2) — provável preço abaixo do mínimo viável.");
+      else add(dicas, "Margem de " + Math.round(margem) + "% tem espaço para melhorar: ataque as 3 maiores linhas de custo do DRE antes de pensar em aumentar preço.");
+    }
+    if (m2.inad != null) {
+      if (m2.inad <= 5) add(bons, "Inadimplência de " + m2.inad + "% dentro da meta do curso (3–5%).");
+      else add(ruins, "Inadimplência de " + m2.inad + "% acima do saudável — a solução estrutural do curso: migrar a base para recorrência no cartão" + (m2.recorrencia != null ? " (hoje você tem " + m2.recorrencia + "% na recorrência)" : "") + " e rodar a régua de cobrança sem falha.");
+    }
+    if (m3.leads != null && m3.matriculas != null && m3.leads > 0) {
+      var conv = m3.matriculas / m3.leads * 100;
+      if (conv >= 20) add(bons, "Conversão de lead em matrícula de " + Math.round(conv) + "% — funil redondo.");
+      else add(dicas, "Conversão de lead em matrícula de " + Math.round(conv) + "%: o vazamento normalmente está entre lead e visita. Use o follow-up do Funil Comercial em até 1 hora por lead.");
+    }
+    if (m7.parados != null && m7.parados > 0) add(ruins, m7.parados + " aparelho(s) parado(s): equipamento quebrado por mais de uma semana derruba percepção de valor — priorize conserto ou plano de troca (Módulo 7).");
+
+    // dados vivos dos programas
+    var L = dados.live;
+    if (L.funil && L.funil.followupAtrasado > 0) add(ruins, L.funil.followupAtrasado + " lead(s) com follow-up atrasado no Funil Comercial — lead esfria em 48h.");
+    if (L.experimentais && (L.experimentais.compareceu + L.experimentais.faltou) >= 3) {
+      var cp = Math.round(L.experimentais.compareceu / (L.experimentais.compareceu + L.experimentais.faltou) * 100);
+      if (cp >= 70) add(bons, "Comparecimento de " + cp + "% nas aulas experimentais — confirmação por WhatsApp está funcionando.");
+      else add(dicas, "Comparecimento de " + cp + "% nas aulas experimentais: confirme sempre no dia anterior e no dia (o programa já manda a mensagem pronta).");
+    }
+    if (L.inadimplencia && L.inadimplencia.criticos30d > 0) add(ruins, L.inadimplencia.criticos30d + " pendência(s) com 30+ dias — o curso alerta: 2 meses acumulados raramente voltam. Feche acordo agora (passo D+30 da régua).");
+    if (L.manutencao && L.manutencao.atrasados > 0) add(ruins, L.manutencao.atrasados + " manutenção(ões) atrasada(s) na Central — reagende hoje.");
+    if (L.checklist && L.checklist.execucaoMedia7d != null) {
+      if (L.checklist.execucaoMedia7d >= 90) add(bons, "Checklist diário com " + L.checklist.execucaoMedia7d + "% de execução na última semana — operação redonda.");
+      else if (L.checklist.execucaoMedia7d < 60) add(ruins, "Checklist diário com só " + L.checklist.execucaoMedia7d + "% de execução na semana — lembre a regra do curso: quem executa assina, e o gestor confere por amostragem.");
+    }
+    if (L.vendas && L.vendas.metaReceita > 0) {
+      var pct = Math.round(L.vendas.receitaVendasMes / L.vendas.metaReceita * 100);
+      add(pct >= 100 ? bons : dicas, "Meta de vendas do mês: " + pct + "% atingida (" + S.fmtBRL(L.vendas.receitaVendasMes) + " de " + S.fmtBRL(L.vendas.metaReceita) + ").");
+    }
+    return { bons: bons, ruins: ruins, dicas: dicas };
+  }
+
+  function montaPromptIA(dados) {
+    var linhas = [];
+    linhas.push("Você é um consultor especialista em gestão de academias, formado no Método Torque (curso brasileiro de gestão de academias de alta performance).");
+    linhas.push("Analise os dados reais da minha academia abaixo, coletados ao longo dos 8 módulos + bônus do curso, e monte um RELATÓRIO FINAL com:");
+    linhas.push("1) Pontos positivos; 2) Pontos negativos/riscos; 3) Conselhos práticos priorizados do que melhorar primeiro; 4) O que vale a pena comprar/investir (equipamentos, sistemas, marketing) com justificativa e ordem de prioridade; 5) Plano simples para os próximos 90 dias.");
+    linhas.push("Referências do curso: churn saudável 3–5% ao mês; CAC até 1 mensalidade; LTV ≥ 5× CAC; inadimplência saudável 3–5% (solução: recorrência no cartão); todo módulo termina com algo rodando na academia.");
+    linhas.push("");
+    linhas.push("=== AUTOAVALIAÇÃO E NÚMEROS POR MÓDULO ===");
+    MODULES.forEach(function (m) {
+      var d = dados.diario[m.n] || {};
+      linhas.push("Módulo " + (m.bonus ? "Bônus" : m.n) + " — " + m.title + ":");
+      linhas.push("  status: " + ({ ok: "implantado", andamento: "em andamento", nao: "não começou" }[d.status] || "não começou") + " · nota autoavaliação: " + (d.nota != null ? d.nota + "/10" : "—"));
+      (CAMPOS[m.n] || []).forEach(function (c) {
+        if (d[c[0]] != null && d[c[0]] !== "") linhas.push("  " + c[1] + ": " + d[c[0]]);
+      });
+      if (d.feito) linhas.push("  o que implantou: " + d.feito);
+      if (d.dificuldade) linhas.push("  maior dificuldade: " + d.dificuldade);
+    });
+    linhas.push("");
+    linhas.push("=== DADOS AO VIVO DOS PROGRAMAS DE GESTÃO (mês atual) ===");
+    linhas.push(JSON.stringify(dados.live, null, 2));
+    linhas.push("");
+    linhas.push("Escreva em português do Brasil, direto e prático, como um consultor que conhece a rotina de academia.");
+    return linhas.join("\n");
+  }
+
+  function renderRelatorio() {
+    var dados = coletaTudo();
+    var st = load();
+    var an = analisa(dados);
+
+    var barras = MODULES.map(function (m) {
+      var d = st.modulos[m.n] || {};
+      var nota = d.nota != null ? d.nota : 0;
+      return '<div class="mod-bar"><span>' + (m.bonus ? "Bônus" : "Módulo " + m.n) + " · " + esc(m.short) + '</span><span class="barra"' + '><div style="width:' + nota * 10 + '%"></div></span><strong>' + nota + "/10</strong></div>";
+    }).join("");
+
+    function bloco(titulo, itens, cls, vazio) {
+      return '<div class="card rel-sec"><h2>' + titulo + "</h2>" +
+        (itens.length ? itens.map(function (t) { return '<div class="rel-item ' + cls + '">' + t + "</div>"; }).join("") :
+          '<span class="muted">' + vazio + "</span>") + "</div>";
+    }
+
+    $("viewRelatorio").innerHTML =
+      '<div class="card rel-sec"><h2>Maturidade por módulo (sua autoavaliação)</h2>' + barras + "</div>" +
+      bloco("✅ Pontos positivos", an.bons, "bom", "Preencha os números no diário para a análise aparecer aqui.") +
+      bloco("⚠ Pontos de atenção", an.ruins, "ruim", "Nenhum alerta com os dados preenchidos até agora.") +
+      bloco("💡 Conselhos do método", an.dicas, "dica", "Preencha mais números para receber conselhos.") +
+      '<div class="card rel-sec"><h2>🤖 Relatório completo com IA</h2>' +
+      '<p class="muted" style="margin:0;">Copie o texto abaixo (já com todos os seus dados) e cole no Claude, ChatGPT ou outra IA: você recebe o relatório completo com plano de 90 dias, prioridades de investimento e o que comprar.</p>' +
+      '<textarea id="promptIa" readonly></textarea>' +
+      '<div class="linha-flex"><button class="btn" id="copiaIa">📋 Copiar para a IA</button>' +
+      '<a class="btn sec" href="https://claude.ai/new" target="_blank" rel="noopener">Abrir Claude ↗</a>' +
+      '<a class="btn sec" href="https://chatgpt.com" target="_blank" rel="noopener">Abrir ChatGPT ↗</a></div></div>';
+
+    $("promptIa").value = montaPromptIA(dados);
+    $("copiaIa").onclick = function () {
+      var ta = $("promptIa");
+      ta.select();
+      (navigator.clipboard ? navigator.clipboard.writeText(ta.value) : Promise.reject()).then(function () {
+        $("copiaIa").textContent = "✓ Copiado! Agora cole na IA";
+      }, function () {
+        document.execCommand("copy");
+        $("copiaIa").textContent = "✓ Copiado! Agora cole na IA";
+      });
+    };
+  }
+
+  // ---------- abas ----------
+  $("abasView").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    var v = b.getAttribute("data-v");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    $("viewDiario").hidden = v !== "diario";
+    $("viewRelatorio").hidden = v !== "relatorio";
+    if (v === "relatorio") renderRelatorio();
+  });
+
+  renderDiario();
+})();
+</script>
+</body>
+</html>
