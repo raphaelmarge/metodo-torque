@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v6";
+var VERSION = "mt-v7";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
@@ -15,6 +15,7 @@ var CORE = [
   "assets/access-config.js",
   "assets/access.js",
   "docs/gate.js",
+  "docs/preenchivel.js",
   "assets/icons/icon.svg",
   "assets/icons/icon-192.png",
   "assets/icons/icon-512.png",

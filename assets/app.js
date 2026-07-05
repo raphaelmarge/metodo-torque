@@ -49,6 +49,7 @@
   // ---------- sidebar ----------
   function badgeFor(doc) {
     if (doc.type === "ferramenta") return "INTERATIVA";
+    if (doc.type === "modelo") return "PREENCHÍVEL";
     return null;
   }
 
@@ -108,7 +109,7 @@
     });
     sideNav.appendChild(g2);
 
-    var g3 = navGroup("MODELOS E ROTINAS");
+    var g3 = navGroup("FICHAS PREENCHÍVEIS");
     DOCS.filter(function (d) { return d.type === "modelo"; }).forEach(function (d) {
       g3.appendChild(navItem(d));
     });
@@ -188,7 +189,7 @@
 
     var models = DOCS.filter(function (d) { return d.type === "modelo"; });
     el("modelGrid").innerHTML = models.map(function (d) {
-      return '<a class="tool-card" href="#/d/' + d.slug + '"><span class="tk">MÓDULO ' + d.module + "</span><h3>" + d.title + "</h3><p>" + d.desc + "</p></a>";
+      return '<a class="tool-card" href="#/d/' + d.slug + '"><span class="tk">MÓDULO ' + d.module + " · PREENCHÍVEL</span><h3>" + d.title + "</h3><p>" + d.desc + "</p></a>";
     }).join("");
 
     // retomar
