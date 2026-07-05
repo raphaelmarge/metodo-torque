@@ -26,5 +26,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+      # O publicador automático antigo ("pages build and deployment") roda em
+      # paralelo em pushes na main e os dois deploys conflitam. Espera ele
+      # terminar antes de publicar.
+      - name: Aguardar publicador paralelo
+        if: github.event_name == 'push'
+        run: sleep 75
       - id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Nova tentativa se houve conflito
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 45
+      - id: deployment-retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
