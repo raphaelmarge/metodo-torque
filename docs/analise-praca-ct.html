@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Análise de Praça CT Low Cost</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MATERIAL DO MÓDULO 9 · ANÁLISE DE PRAÇA</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · MATERIAL DO MÓDULO 9</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">Análise de Praça — CT Low Cost</h1>
+    <p style="margin: 16px 0 0 0; font-size: 16px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 16px 20px;">Uma ficha por região candidata (compare 2 ou 3). O critério é o da aula 9.4, nesta ordem: densidade → renda → oferta → fluxo → imóvel. <strong>Fontes:</strong> Censo/IBGE por setor censitário (painel do IBGE Cidades e plataformas de dados censitários), Google Maps para a oferta, e caminhada na região em horário de pico.</p>
+
+    <p style="margin: 20px 0 0 0; font-size: 14px; line-height: 2.2; color: #3A3742;">Região candidata: <span style="display: inline-block; min-width: 340px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Data: <span style="display: inline-block; min-width: 110px; border-bottom: 1px solid #8A8695;"></span></p>
+
+    <!-- CRITÉRIOS -->
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #7C3AED;">1 · DENSIDADE — meta: 80–150 mil+ no raio de 2–3 km</p>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2.2;">População no raio de 3 km (IBGE): <span style="display: inline-block; min-width: 160px; border-bottom: 1px solid #C6C2CF;"></span> hab &nbsp;·&nbsp; Tipo: ☐ bairro popular denso ☐ conjunto habitacional ☐ centro de cidade média (100–400 mil hab)</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #7C3AED;">2 · RENDA — meta: média local de 1 a 3 salários mínimos</p>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2.2;">Renda média do setor (IBGE): R$ <span style="display: inline-block; min-width: 130px; border-bottom: 1px solid #C6C2CF;"></span> &nbsp;·&nbsp; Um ticket de R$ 89–119 representa <span style="display: inline-block; min-width: 60px; border-bottom: 1px solid #C6C2CF;"></span>% da renda local (meta: ≤ 7%)</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #7C3AED;">3 · OFERTA LOCAL — a janela está aberta?</p>
+        <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 10px; font-size: 12.5px;">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 7px 10px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px;">ACADEMIA</th>
+              <th style="text-align: center; padding: 7px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; width: 16%;">PREÇO (R$)</th>
+              <th style="text-align: center; padding: 7px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; width: 22%;">PADRÃO (novo/velho)</th>
+              <th style="text-align: center; padding: 7px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11px; width: 18%;">LOTADA NO PICO?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+            <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+            <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+            <tr><td style="border: 1px solid #E2E0E8; height: 26px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+          </tbody>
+        </table>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2;">Gigante (Smart Fit/Panobianco/Selfit/BlueFit) no raio? ☐ não ☐ sim, com <span style="display: inline-block; min-width: 40px; border-bottom: 1px solid #C6C2CF;"></span> unidade(s) — lotada(s)? ☐ sim ☐ não</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #7C3AED;">4 · FLUXO E ACESSO — no bairro popular, a maioria vem a pé</p>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2.2;">☐ Avenida comercial de fluxo &nbsp;☐ Perto de terminal/estação/ponto forte de ônibus &nbsp;☐ Fachada visível de longe &nbsp;☐ Caminhável para a massa do raio<br>Movimento observado na porta às 18–20h: ☐ intenso ☐ médio ☐ fraco</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 14px; font-weight: 700; color: #7C3AED;">5 · IMÓVEL — galpão/laje de 1.200 a 2.500 m²</p>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2.2;">Opções identificadas: <span style="display: inline-block; min-width: 340px; border-bottom: 1px solid #C6C2CF;"></span> &nbsp;·&nbsp; R$/m² pedido: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #C6C2CF;"></span><br>☐ Aceita carência de obra &nbsp;☐ Contrato 10+ anos com renovatória possível &nbsp;·&nbsp; Zoneamento permite academia? ☐ sim ☐ verificar</p>
+      </div>
+    </div>
+
+    <!-- VEREDICTO -->
+    <div style="margin-top: 20px; background: #131118; color: #FFFFFF; padding: 18px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">VEREDICTO DA PRAÇA</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 2.2; color: #E8E5F0;">Critérios atendidos: ☐1 ☐2 ☐3 ☐4 ☐5 &nbsp;—&nbsp; <strong style="color: #FFFFFF;">Regra: os critérios 1, 2 e 3 são eliminatórios.</strong> Decisão: ☐ avançar para unit economics ☐ descartar ☐ monitorar<br>Observações: <span style="display: inline-block; min-width: 480px; border-bottom: 1px solid #55515F;"></span></p>
+    </div>
+
+    <p style="margin: 16px 0 0 0; font-size: 13px; line-height: 1.6; color: #6E6A78;">Praça aprovada → rode a Unit Economics do CT com números desta região e siga para o Checklist de Implantação. Compare sempre 2–3 praças antes de fechar ponto: a melhor região vence, não a mais conveniente.</p>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

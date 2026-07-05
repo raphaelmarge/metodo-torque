@@ -83,8 +83,8 @@
     }
     .frame { width: 100%; border-collapse: collapse; }
     .frame td, .frame th { padding: 0; text-align: left; font-weight: inherit; }
-    .hdr-space { height: var(--doc-hdr-h); }
-    .ftr-space { height: var(--doc-ftr-h); }
+    .hdr-space { min-height: var(--doc-hdr-h); }
+    .ftr-space { min-height: var(--doc-ftr-h); }
     ::slotted([slot="header"]),
     ::slotted([slot="footer"]) { display: block; box-sizing: border-box; }
     @media print {
@@ -245,8 +245,8 @@
     /** Slot heights feed the print spacers (--doc-hdr-h / --doc-ftr-h), so
      *  they re-measure on content mutation, resize, and font load. */
     _measure() {
-      const hdr = this.querySelector(':scope > [slot="header"]');
-      const ftr = this.querySelector(':scope > [slot="footer"]');
+      const hdr = this.querySelector(':scope > [slot="header"]') || this.querySelector('[slot="header"]');
+      const ftr = this.querySelector(':scope > [slot="footer"]') || this.querySelector('[slot="footer"]');
       this._syncSize(hdr ? hdr.offsetHeight : 0, ftr ? ftr.offsetHeight : 0);
     }
   }

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Ficha de Avaliação Física</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MATERIAL DO MÓDULO 4 · AVALIAÇÃO FÍSICA</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · MATERIAL DO MÓDULO 4</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">Ficha de Avaliação Física</h1>
+    <p style="margin: 16px 0 0 0; font-size: 16px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 16px 20px;">Resultado documentado é retenção e marketing: é esta ficha que vira o comparativo dos dias 30 e 90 do onboarding. Use a mesma ficha nas reavaliações (colunas lado a lado) para o aluno VER a evolução. <strong>A avaliação é conduzida por profissional de educação física habilitado</strong> — adapte os campos ao protocolo da sua academia.</p>
+
+    <!-- IDENTIFICAÇÃO -->
+    <div style="margin-top: 24px; border: 1.5px solid #131118; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #131118;">IDENTIFICAÇÃO</p>
+      <p style="margin: 12px 0 0 0; font-size: 14px; line-height: 2.5; color: #3A3742;">
+        Nome: <span style="display: inline-block; min-width: 340px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;&nbsp;Nascimento: ___/___/______&nbsp;&nbsp;Sexo: <span style="display: inline-block; min-width: 60px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        Objetivo principal (com as palavras do aluno): <span style="display: inline-block; min-width: 400px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        Avaliador(a): <span style="display: inline-block; min-width: 260px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;&nbsp;CREF: <span style="display: inline-block; min-width: 130px; border-bottom: 1px solid #C6C2CF;"></span>
+      </p>
+    </div>
+
+    <!-- SAÚDE -->
+    <h2 style="margin: 28px 0 0 0; font-size: 20px; font-weight: 700;">Triagem de saúde (anamnese resumida)</h2>
+    <div style="border: 1px solid #E2E0E8; padding: 14px 18px; margin-top: 10px;">
+      <p style="margin: 0; font-size: 14px; line-height: 2.3; color: #3A3742;">
+        Pratica atividade física atualmente? ☐ sim ☐ não — qual/frequência: <span style="display: inline-block; min-width: 240px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        Condição cardíaca, pressão alta, diabetes ou outra condição diagnosticada? ☐ não ☐ sim: <span style="display: inline-block; min-width: 230px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        Lesão, cirurgia ou dor atual (articulação, coluna)? ☐ não ☐ sim: <span style="display: inline-block; min-width: 300px; border-bottom: 1px solid #C6C2CF;"></span><br>
+        Medicação de uso contínuo? ☐ não ☐ sim: <span style="display: inline-block; min-width: 330px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;&nbsp;Fuma? ☐ não ☐ sim<br>
+        Liberação médica necessária/apresentada? ☐ não se aplica ☐ solicitada ☐ apresentada em ___/___
+      </p>
+    </div>
+
+    <!-- MEDIDAS -->
+    <h2 style="margin: 28px 0 0 0; font-size: 20px; font-weight: 700;">Medidas — avaliação e reavaliações</h2>
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 10px; font-size: 13px;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 8px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 30%;">MEDIDA</th>
+          <th style="text-align: center; padding: 8px 6px; background: #7C3AED; color: #FFFFFF; font-weight: 700; font-size: 11.5px;">DIA 0<br>___/___</th>
+          <th style="text-align: center; padding: 8px 6px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px;">DIA 30<br>___/___</th>
+          <th style="text-align: center; padding: 8px 6px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px;">DIA 90<br>___/___</th>
+          <th style="text-align: center; padding: 8px 6px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px;">DIA 180<br>___/___</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Peso (kg)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Altura (m) / IMC</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">% de gordura (método: __________)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Cintura (cm)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Quadril (cm)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Tórax (cm)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Braço D / E (cm)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Coxa D / E (cm)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Panturrilha (cm)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">PA de repouso / FC de repouso</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+      </tbody>
+    </table>
+
+    <!-- CAPACIDADES -->
+    <h2 style="margin: 28px 0 0 0; font-size: 20px; font-weight: 700;">Testes de capacidade (conforme protocolo da casa)</h2>
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 10px; font-size: 13px;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 8px 12px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11.5px; letter-spacing: 0.06em; width: 30%;">TESTE</th>
+          <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11.5px;">DIA 0</th>
+          <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11.5px;">DIA 30</th>
+          <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11.5px;">DIA 90</th>
+          <th style="text-align: center; padding: 8px 6px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 11.5px;">DIA 180</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Ex.: flexões em 1 min</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;">Ex.: prancha (segundos)</td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;"><span style="display: inline-block; min-width: 90%; border-bottom: 1px solid #C6C2CF;"></span></td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 8px 12px; border: 1px solid #E2E0E8;"><span style="display: inline-block; min-width: 90%; border-bottom: 1px solid #C6C2CF;"></span></td><td style="border: 1px solid #E2E0E8; height: 28px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+      </tbody>
+    </table>
+
+    <!-- FOTOS E CONSENTIMENTO -->
+    <div style="margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="border: 1.5px solid #7C3AED; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">REGISTRO FOTOGRÁFICO (O "ANTES")</p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 2.1;">Fotos frente/perfil/costas feitas? ☐ dia 0 ☐ dia 30 ☐ dia 90 ☐ dia 180<br>Armazenadas em: <span style="display: inline-block; min-width: 200px; border-bottom: 1px solid #C6C2CF;"></span></p>
+        <p style="margin: 8px 0 0 0; font-size: 12.5px; line-height: 1.6; color: #6E6A78;">Fotos são dado pessoal (LGPD): acesso restrito, uso interno de acompanhamento. Divulgação SÓ com o consentimento ao lado.</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CONSENTIMENTO DE USO DE IMAGEM (OPCIONAL)</p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.8;">☐ AUTORIZO o uso das minhas fotos de evolução nas redes da academia&nbsp;&nbsp;☐ NÃO autorizo</p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 2.1;">Assinatura: <span style="display: inline-block; min-width: 220px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;Data: ___/___</p>
+      </div>
+    </div>
+
+    <!-- PLANO -->
+    <div style="margin-top: 20px; background: #131118; color: #FFFFFF; padding: 18px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">FECHAMENTO DA AVALIAÇÃO — O PLANO EM 3 FRASES</p>
+      <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 2.6; color: #E8E5F0;">Para o objetivo de <span style="display: inline-block; min-width: 200px; border-bottom: 1px solid #55515F;"></span>, o caminho é <span style="display: inline-block; min-width: 300px; border-bottom: 1px solid #55515F;"></span>,<br>com <span style="display: inline-block; min-width: 80px; border-bottom: 1px solid #55515F;"></span> treinos/semana. Próxima reavaliação agendada para ___/___.</p>
+      <p style="margin: 10px 0 0 0; font-size: 12.5px; color: #8A8695;">Todo aluno sai da avaliação sabendo o plano e com a reavaliação marcada — é isso que transforma avaliação em retenção (aula 4.2).</p>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Mapa de Leads Diário da Recepção</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" width="11in" height="8.5in" margin="0.5in" hint-size="100%,1200px">
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- CABEÇALHO -->
+    <div style="background: #131118; color: #FFFFFF; padding: 16px 28px; display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 32px; height: 4px; background: #7C3AED;"></div>
+        <span style="font-size: 15px; font-weight: 800; letter-spacing: 0.16em;">MAPA DE LEADS DIÁRIO — RECEPÇÃO</span>
+      </div>
+      <span style="font-size: 15px; font-weight: 700;">Data: <span style="display: inline-block; min-width: 120px; border-bottom: 2px solid #7C3AED;"></span>&nbsp;&nbsp;Responsável do turno: <span style="display: inline-block; min-width: 180px; border-bottom: 2px solid #7C3AED;"></span></span>
+    </div>
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #6E6A78;">Uma folha por dia na prancheta do balcão. TODO lead entra aqui na hora em que chega (WhatsApp, direct, telefone, balcão) — lead sem registro não recebe follow-up, e lead sem follow-up é dinheiro de anúncio jogado fora (aula 3.1). No fim do dia, passe para a planilha/sistema.</p>
+
+    <!-- TABELA DE LEADS -->
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; font-size: 12px;">
+      <thead>
+        <tr>
+          <th style="text-align: center; padding: 8px 4px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 6%;">HORA</th>
+          <th style="text-align: left; padding: 8px 8px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 18%;">NOME</th>
+          <th style="text-align: left; padding: 8px 8px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 14%;">TELEFONE</th>
+          <th style="text-align: center; padding: 8px 4px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 12%;">ORIGEM<br><span style="font-size: 9px; font-weight: 600; overflow-wrap: anywhere;">zap · insta · google · indicação · balcão</span></th>
+          <th style="text-align: left; padding: 8px 8px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 14%;">INTERESSE/OBJETIVO</th>
+          <th style="text-align: center; padding: 8px 4px; background: #7C3AED; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 10%;">RESPONDIDO EM 15 MIN?</th>
+          <th style="text-align: center; padding: 8px 4px; background: #7C3AED; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 13%;">PRÓXIMO PASSO<br><span style="font-size: 9px; font-weight: 600; overflow-wrap: anywhere;">visita · experimental · follow-up</span></th>
+          <th style="text-align: center; padding: 8px 4px; background: #7C3AED; color: #FFFFFF; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; width: 8%;">DATA/HORA MARCADA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 30px;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+      </tbody>
+    </table>
+
+    <!-- RODAPÉ -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 14px;">
+      <div style="border: 1.5px solid #7C3AED; padding: 12px 16px;">
+        <p style="margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #7C3AED;">FECHAMENTO DO DIA</p>
+        <p style="margin: 6px 0 0 0; font-size: 12.5px; line-height: 2;">Leads do dia: ______ · Respondidos em 15 min: ______<br>Visitas marcadas: ______ · Experimentais: ______</p>
+      </div>
+      <div style="border: 1px solid #C6C2CF; background: #F5F4F7; padding: 12px 16px;">
+        <p style="margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #6E6A78;">FOLLOW-UPS DE AMANHÃ</p>
+        <p style="margin: 6px 0 0 0; font-size: 12.5px; line-height: 2;">1. <span style="display: inline-block; min-width: 80%; border-bottom: 1px solid #C6C2CF;"></span><br>2. <span style="display: inline-block; min-width: 80%; border-bottom: 1px solid #C6C2CF;"></span><br>3. <span style="display: inline-block; min-width: 80%; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="background: #131118; color: #FFFFFF; padding: 12px 16px;">
+        <p style="margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #A78BFA;">AS 3 REGRAS</p>
+        <p style="margin: 6px 0 0 0; font-size: 12.5px; line-height: 1.7; color: #E8E5F0;">1 · Todo lead na folha, na hora<br>2 · Resposta em 15 minutos no horário comercial<br>3 · Nenhum lead sem próximo passo COM DATA — "vou pensar" sem data é despedida</p>
+      </div>
+    </div>
+
+    <p style="margin: 12px 0 0 0; font-size: 11.5px; color: #8A8695;">Esta folha alimenta o ritual diário de 10 minutos (aula 3.5) e a Planilha de Funil Comercial no fim do mês. Etiquete as conversas no WhatsApp Business conforme o Kit (🟣 lead novo → 🔵 visita agendada → 🟡 follow-up).</p>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Cronograma de Aulas Coletivas</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" width="11in" height="8.5in" margin="0.5in" hint-size="100%,1200px">
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- CABEÇALHO -->
+    <div style="background: #131118; color: #FFFFFF; padding: 18px 28px; display: flex; justify-content: space-between; align-items: center; gap: 24px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 32px; height: 4px; background: #7C3AED;"></div>
+        <span style="font-size: 15px; font-weight: 800; letter-spacing: 0.16em;">GRADE DE AULAS COLETIVAS</span>
+      </div>
+      <span style="font-size: 15px; font-weight: 700;">Vigência: <span style="display: inline-block; min-width: 160px; border-bottom: 2px solid #7C3AED;"></span></span>
+    </div>
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #6E6A78;">Coletiva é fábrica de vínculo (aula 4.4): o aluno cria compromisso com a turma e o horário — e cancela visivelmente menos. Imprima para o mural, para a recepção e mande a foto nas listas de transmissão a cada atualização.</p>
+
+    <!-- GRADE -->
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; font-size: 12.5px;">
+      <thead>
+        <tr>
+          <th style="text-align: center; padding: 9px 6px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11.5px; letter-spacing: 0.08em; width: 9%;">HORÁRIO</th>
+          <th style="text-align: center; padding: 9px 6px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11.5px; letter-spacing: 0.08em;">SEGUNDA</th>
+          <th style="text-align: center; padding: 9px 6px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11.5px; letter-spacing: 0.08em;">TERÇA</th>
+          <th style="text-align: center; padding: 9px 6px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11.5px; letter-spacing: 0.08em;">QUARTA</th>
+          <th style="text-align: center; padding: 9px 6px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11.5px; letter-spacing: 0.08em;">QUINTA</th>
+          <th style="text-align: center; padding: 9px 6px; background: #131118; color: #FFFFFF; font-weight: 800; font-size: 11.5px; letter-spacing: 0.08em;">SEXTA</th>
+          <th style="text-align: center; padding: 9px 6px; background: #7C3AED; color: #FFFFFF; font-weight: 800; font-size: 11.5px; letter-spacing: 0.08em;">SÁBADO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 40px; text-align: center; font-weight: 700; background: #F5F4F7;">___:___</td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 40px; text-align: center; font-weight: 700; background: #F5F4F7;">___:___</td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 40px; text-align: center; font-weight: 700; background: #F5F4F7;">___:___</td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 40px; text-align: center; font-weight: 700; background: #F5F4F7;">___:___</td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 40px; text-align: center; font-weight: 700; background: #F5F4F7;">___:___</td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 40px; text-align: center; font-weight: 700; background: #F5F4F7;">___:___</td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+        <tr><td style="border: 1.2px solid #C6C2CF; height: 40px; text-align: center; font-weight: 700; background: #F5F4F7;">___:___</td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF;"></td><td style="border: 1.2px solid #C6C2CF; background: #F8F6FD;"></td></tr>
+      </tbody>
+    </table>
+    <p style="margin: 6px 0 0 0; font-size: 11.5px; color: #6E6A78;">Em cada célula: nome da aula + professor(a) (ex.: "FUNCIONAL · Ana"). Célula vazia é oportunidade — ou horário deliberadamente livre.</p>
+
+    <!-- RODAPÉ DE GESTÃO -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 14px;">
+      <div style="border: 1.5px solid #7C3AED; padding: 12px 16px;">
+        <p style="margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #7C3AED;">MONTANDO A GRADE</p>
+        <p style="margin: 6px 0 0 0; font-size: 12px; line-height: 1.6;">Âncoras nos picos (manhã cedo, 18–20h), aulas de menor apelo coladas nas âncoras, sábado como porta de entrada (aulão aberto). Grade estável por pelo menos 1 trimestre — turma é hábito.</p>
+      </div>
+      <div style="border: 1px solid #C6C2CF; background: #F5F4F7; padding: 12px 16px;">
+        <p style="margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #6E6A78;">MEDINDO CADA AULA</p>
+        <p style="margin: 6px 0 0 0; font-size: 12px; line-height: 1.6;">Presença média por turma no mês. Turma cheia = considerar 2ª sessão; turma vazia por 8 semanas = trocar horário, formato ou professor — nunca deixar aula fantasma na grade.</p>
+      </div>
+      <div style="border: 1px solid #C6C2CF; padding: 12px 16px;">
+        <p style="margin: 0; font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #6E6A78;">RETENÇÃO NA PRÁTICA</p>
+        <p style="margin: 6px 0 0 0; font-size: 12px; line-height: 1.6;">Dia 60 do onboarding: todo aluno novo é convidado para UMA turma. Professor de coletiva chama pelo nome e sente falta — é a cola social que segura a base.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px; background: #7C3AED; color: #FFFFFF; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <span style="font-size: 13.5px; font-weight: 700;">Aulas inclusas em todos os planos · Chegue 5 min antes — vagas por ordem de chegada</span>
+      <span style="font-size: 12px; color: #E8E5F0;">Dúvidas e reservas: WhatsApp [número]</span>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

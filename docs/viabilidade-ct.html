@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Sumário de Viabilidade CT</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.65in" hint-size="100%,1400px">
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- CABEÇALHO -->
+    <div style="background: #131118; color: #FFFFFF; padding: 20px 26px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 28px; height: 3px; background: #7C3AED;"></div>
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">SUMÁRIO DE VIABILIDADE · CT LOW COST</span>
+        </div>
+        <span style="font-size: 22px; font-weight: 800;">Projeto: <span style="display: inline-block; min-width: 260px; border-bottom: 2px solid #7C3AED;"></span></span>
+      </div>
+      <span style="font-size: 13px; color: #8A8695;">Data: __________<br>Por: ______________</span>
+    </div>
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #6E6A78;">Uma página, decisão na mesa — para si mesmo, sócio ou investidor. Preencha a partir da Análise de Praça e da Unit Economics.</p>
+
+    <!-- A PRAÇA -->
+    <div style="margin-top: 14px; border: 1px solid #E2E0E8; padding: 14px 20px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">A PRAÇA</p>
+      <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2.2;">Região: <span style="display: inline-block; min-width: 300px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;·&nbsp;População no raio de 3 km: <span style="display: inline-block; min-width: 110px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;·&nbsp;Renda média: R$ <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #C6C2CF;"></span><br>Oferta local: <span style="display: inline-block; min-width: 380px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;·&nbsp;Gigante no raio: ☐ não ☐ sim (lotada ☐)</p>
+    </div>
+
+    <!-- O NEGÓCIO -->
+    <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="border: 1px solid #E2E0E8; padding: 14px 20px;">
+        <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">O PRODUTO</p>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2.2;">Área: <span style="display: inline-block; min-width: 80px; border-bottom: 1px solid #C6C2CF;"></span> m² · Ticket: R$ <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #C6C2CF;"></span><br>Estações de musculação: <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #C6C2CF;"></span> · Coletivas/semana: <span style="display: inline-block; min-width: 60px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 20px;">
+        <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">A BASE</p>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 2.2;">Meta de abertura (pré-venda): <span style="display: inline-block; min-width: 80px; border-bottom: 1px solid #C6C2CF;"></span> alunos<br>Base em 24 meses: <span style="display: inline-block; min-width: 80px; border-bottom: 1px solid #C6C2CF;"></span> · Equilíbrio: <span style="display: inline-block; min-width: 80px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+    </div>
+
+    <!-- OS NÚMEROS -->
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; font-size: 13.5px;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 8px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; letter-spacing: 0.08em;">NÚMERO-CHAVE</th>
+          <th style="text-align: center; padding: 8px 10px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 11.5px; width: 26%;">VALOR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 9px 14px; border: 1px solid #E2E0E8;">Receita recorrente na base madura (base × ticket)</td><td style="border: 1px solid #E2E0E8; height: 30px;"></td></tr>
+        <tr><td style="padding: 9px 14px; border: 1px solid #E2E0E8;">Custo fixo mensal estimado</td><td style="border: 1px solid #E2E0E8; height: 30px;"></td></tr>
+        <tr style="background: #F5F4F7;"><td style="padding: 9px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Resultado mensal maduro / margem (meta: 20–35%)</td><td style="border: 1px solid #E2E0E8; height: 30px;"></td></tr>
+        <tr><td style="padding: 9px 14px; border: 1px solid #E2E0E8;">Capex total (obra + parque cotação Torque + capital de giro)</td><td style="border: 1px solid #E2E0E8; height: 30px;"></td></tr>
+        <tr><td style="padding: 9px 14px; border: 1px solid #E2E0E8;">Economia no parque vs. varejo nacional (cotação Torque)</td><td style="border: 1px solid #E2E0E8; height: 30px;"></td></tr>
+        <tr style="background: #131118;"><td style="padding: 9px 14px; border: 1px solid #131118; font-weight: 700; color: #FFFFFF;">Payback projetado</td><td style="border: 1px solid #2A2733; height: 30px;"></td></tr>
+      </tbody>
+    </table>
+
+    <!-- RISCOS + FUNDING -->
+    <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="border: 1.5px solid #7C3AED; padding: 14px 20px;">
+        <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">OS 3 MAIORES RISCOS E COMO MITIGO</p>
+        <p style="margin: 8px 0 0 0; font-size: 13.5px; line-height: 2.4;">1. <span style="display: inline-block; min-width: 82%; border-bottom: 1px solid #C6C2CF;"></span><br>2. <span style="display: inline-block; min-width: 82%; border-bottom: 1px solid #C6C2CF;"></span><br>3. <span style="display: inline-block; min-width: 82%; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 14px 20px;">
+        <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">FUNDING</p>
+        <p style="margin: 8px 0 0 0; font-size: 13.5px; line-height: 2.3;">Capital próprio: R$ <span style="display: inline-block; min-width: 110px; border-bottom: 1px solid #C6C2CF;"></span><br>Financiamento/sócio: R$ <span style="display: inline-block; min-width: 110px; border-bottom: 1px solid #C6C2CF;"></span><br>Reserva de 6 meses de fixo garantida? ☐ sim ☐ não</p>
+      </div>
+    </div>
+
+    <!-- DECISÃO -->
+    <div style="margin-top: 12px; background: #131118; color: #FFFFFF; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <p style="margin: 0; font-size: 15px; font-weight: 700;">DECISÃO: ☐ Avançar para busca de ponto &nbsp;&nbsp;☐ Preparar a base primeiro (Módulos 1–8) &nbsp;&nbsp;☐ Descartar a praça</p>
+      <p style="margin: 0; font-size: 13.5px; color: #A78BFA;">Data da decisão: __________&nbsp;&nbsp;Assinatura: ______________</p>
+    </div>
+
+    <p style="margin: 10px 0 0 0; font-size: 11.5px; line-height: 1.6; color: #8A8695;">Lembrete da aula 9.5: o CT é o modelo de maior potencial e menor perdão a erro de gestão. Os critérios de prontidão do Módulo Bônus valem dobrado — unidade atual lucrativa, operação rodando sem o dono e gestor formado em casa.</p>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

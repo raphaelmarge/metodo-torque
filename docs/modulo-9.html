@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 9</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 9 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 9 · O MÓDULO DE VISÃO DE NEGÓCIO</span>
+      <span>CT Low Cost: Padrão de Rico, Preço de Povo</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">O módulo de visão do Método Torque:</strong> entender por que o low cost de alto padrão em áreas populares densas é a maior oportunidade do fitness brasileiro, dominar a matemática do volume que sustenta o modelo — e conhecer o caminho que transformou academias assim nas maiores empresas do setor.</p>
+
+    <!-- AULA 9.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 9.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">A tese: o Brasil que ganha pouco é o maior mercado fitness do país</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Toda a lógica tradicional do fitness brasileiro foi construída de cabeça para baixo: academias boas para quem tem dinheiro, academias precárias (ou nenhuma) para o resto. Só que “o resto” é quase todo o país — e os números provam.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">O TAMANHO DO PÚBLICO (DADOS OFICIAIS)</h3>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Renda.</strong> Pelo Censo 2022 do IBGE, apenas 7,6% dos trabalhadores ganham mais de 5 salários mínimos. Cerca de 68% ganham até 2, e 35% até 1. Levantamentos com dados do IBGE indicam que ~90% dos brasileiros têm renda mensal abaixo de R$ 3.500 — o público que ganha menos de R$ 5 mil/mês não é nicho: é praticamente o Brasil inteiro.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Penetração.</strong> O Brasil tem mais de 41 mil academias (um dos 4 maiores parques do mundo), mas só ~7% da população treina. Nos mercados maduros, passa de 20%. O crescimento não virá de disputar os mesmos 7% — virá de incluir quem ficou de fora. E quem ficou de fora é, majoritariamente, quem ganha menos.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Densidade.</strong> Bairros populares e periferias metropolitanas concentram dezenas de milhares de pessoas por km² — muito mais que os bairros nobres — e são historicamente subatendidos: a oferta local costuma ser academia pequena, equipamento velho, sem padrão. Demanda gigante, oferta fraca: a definição de oportunidade.</p>
+    </div>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">A PROVA DE QUE A TESE FUNCIONA (NÚMEROS PÚBLICOS DAS REDES)</h3>
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; font-size: 14px; line-height: 1.5;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; width: 22%;">REDE</th>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">NÚMEROS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Smart Fit</td><td style="padding: 11px 14px; border: 1px solid #E2E0E8;">2025: 2.084 unidades em 16 países (984 no Brasil), 5,2 milhões de alunos, R$ 7,2 bi de receita. Unidade madura: ~3.400 alunos.</td></tr>
+        <tr><td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Panobianco</td><td style="padding: 11px 14px; border: 1px solid #E2E0E8;">~400 unidades, R$ 800 mi+ de faturamento em 2025, meta pública de 1.000 academias até 2028.</td></tr>
+        <tr><td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Selfit</td><td style="padding: 11px 14px; border: 1px solid #E2E0E8;">~200 unidades, R$ 400 mi — crescendo deliberadamente em bairros periféricos e cidades médias, onde a concorrência é menor.</td></tr>
+        <tr><td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700;">BlueFit</td><td style="padding: 11px 14px; border: 1px solid #E2E0E8;">~215 unidades; fundo soberano comprou 51% da rede por R$ 464 milhões em 2022.</td></tr>
+      </tbody>
+    </table>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>A leitura:</strong> as maiores empresas do fitness brasileiro foram construídas vendendo alto padrão a preço baixo para a massa. Não é aposta — é o modelo vencedor comprovado da década. <strong>A pergunta deste módulo:</strong> qual é o espaço do independente? Enorme — as gigantes não chegam em todo lugar, demoram, e entregam um produto padronizado que deixa flancos abertos. As próximas aulas mostram como ocupar esse espaço com um conceito mais forte: o CT Low Cost.</p>
+
+    <!-- AULA 9.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 9.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">O conceito CT Low Cost: o que é (e o que não é)</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">CT Low Cost é um <strong>Centro de Treinamento de alto padrão</strong> — quantidade absurda de máquinas, peso livre completo, grade forte de coletivas — operado com estrutura de custo enxuta e mensalidade acessível, instalado onde a densidade populacional é alta e a renda é baixa. Em uma frase: <strong>a academia que o bairro rico tem, no preço que o bairro popular paga.</strong></p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">OS 5 PILARES DO CONCEITO</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Densidade de equipamento, não variedade de serviço.</strong> O dinheiro vai para o salão: em vez de sauna, piscina e lanchonete (custo fixo alto, uso baixo), o CT entrega 2, 3, 4 estações do mesmo exercício — ninguém pega fila no supino às 19h. Fila é a maior frustração do low cost tradicional; densidade de máquina é o diferencial mais visível e mais barato de comunicar.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Coletivas em volume como produto, não como enfeite.</strong> Grade cheia (ritmos, funcional, luta, alongamento, spinning) em estúdios simples. Custo marginal baixo por aluno, lota horário fora do pico, atrai o público feminino — decisivo em bairro popular — e é o motor de retenção que o low cost das gigantes entrega fraco ou cobra à parte.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Experiência premium nos pontos que o aluno sente.</strong> Climatização de verdade, banheiro impecável (aula 6.2), equipamento novo e padronizado, iluminação e som profissionais, app e catraca. O aluno de baixa renda não quer “academia de pobre barata” — quer sentir que entrou num lugar de rico pagando pouco. Esse orgulho vira status de bairro: o marketing mais poderoso do modelo.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Operação enxuta de verdade.</strong> Poucos funcionários por turno, processos por checklist (Módulo 6), autoatendimento no comercial (plano fecha no app/totem), recorrência 100% no cartão (Módulo 2), horário estendido. É a estrutura de custo que permite o preço — sem ela, o preço baixo quebra a empresa (aula 1.1: preço de low cost exige custo de low cost).</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Localização por densidade, não por vaidade.</strong> O CT vai onde tem GENTE: avenidas de bairro populoso, centros de cidades médias, vizinhança de terminais e comércio popular. Imóvel mais barato por m², público andando na porta, concorrência fraca (critério completo na aula 9.4).</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">O QUE O CT LOW COST NÃO É</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Não é academia velha com preço baixo (isso o bairro já tem, e está vazia). Não é low cost de gigante copiado sem o caixa de gigante (você não vence a Smart Fit jogando o jogo idêntico ao dela). É uma terceira via: <strong>o padrão da gigante + a alma e a densidade de serviço que a gigante não entrega, no território que ela ainda não priorizou.</strong></p>
+    </div>
+
+    <!-- AULA 9.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 9.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">A matemática do volume: como preço baixo vira receita alta</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">O modelo tradicional pensa: “mensalidade baixa = receita baixa”. O CT inverte: <strong>mensalidade baixa × volume alto = receita ALTA com resiliência de base.</strong> A conta abaixo usa faixas realistas do modelo — rode a sua na planilha do módulo.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">UNIT ECONOMICS — CT DE 1.500 A 2.000 M²</h3>
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; font-size: 14px; line-height: 1.55;">
+      <tbody>
+        <tr><td style="padding: 10px 14px; border: 1px solid #E2E0E8; font-weight: 700; width: 32%;">Ticket</td><td style="padding: 10px 14px; border: 1px solid #E2E0E8;">R$ 89 a R$ 119 — plano único ou dois planos, recorrência no cartão</td></tr>
+        <tr><td style="padding: 10px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Base madura</td><td style="padding: 10px 14px; border: 1px solid #E2E0E8;">2.500 a 4.000 alunos (Smart Fit reporta ~3.400/unidade madura). Em bairro denso e subatendido, 2.500 é meta conservadora para 18–24 meses</td></tr>
+        <tr style="background: #F5F4F7;"><td style="padding: 10px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Receita recorrente</td><td style="padding: 10px 14px; border: 1px solid #E2E0E8;"><strong>3.000 × R$ 99 ≈ R$ 297.000/mês — R$ 3,5 mi/ano em UMA unidade.</strong> A academia tradicional de 400 alunos × R$ 120 fatura R$ 48.000/mês: o CT fatura 6× mais</td></tr>
+        <tr><td style="padding: 10px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Custos fixos</td><td style="padding: 10px 14px; border: 1px solid #E2E0E8;">R$ 150–200 mil/mês nessa escala (aluguel de periferia, folha enxuta de 12–18 pessoas, energia pesada de climatização, sistema)</td></tr>
+        <tr style="background: #F5F4F7;"><td style="padding: 10px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Margem madura</td><td style="padding: 10px 14px; border: 1px solid #E2E0E8;"><strong>20 a 35%</strong> — acima da tradicional (10–20%), porque o fixo se dilui numa base 6–8× maior</td></tr>
+        <tr><td style="padding: 10px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Ponto de equilíbrio</td><td style="padding: 10px 14px; border: 1px solid #E2E0E8;">R$ 180 mil de custo ÷ ticket R$ 99 ≈ <strong>1.800 alunos</strong>. Acima disso, margem crescente — cada aluno novo custa quase zero para atender</td></tr>
+        <tr style="background: #131118;"><td style="padding: 10px 14px; border: 1px solid #131118; font-weight: 700; color: #FFFFFF;">Capex</td><td style="padding: 10px 14px; border: 1px solid #131118; color: #FFFFFF;">R$ 1,5 a 3,5 milhões (obra + equipamentos + capital de giro) — o parque de máquinas é o maior item isolado, e é aí que a próxima aula muda o retorno do projeto inteiro</td></tr>
+      </tbody>
+    </table>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px;">
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">POR QUE A BASE É RESILIENTE</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Com 3.000 alunos a R$ 99, perder 150 num mês ruim dói 5% da receita. Na academia de 400 a R$ 250, perder 80 dói 20%. Volume com ticket baixo é carteira pulverizada — nenhum aluno, mês ou concorrente sozinho derruba o negócio.</p>
+      </div>
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">POR QUE CABE NO BOLSO</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">R$ 99 é ~6–7% de um salário mínimo e ~4% da renda de quem ganha R$ 2.400 (a mediana). Academia vira assinatura do tamanho de um streaming família — decisão de baixo atrito. Cancelamento também é de baixo atrito: o Módulo 4 (retenção) fica ainda mais crítico.</p>
+      </div>
+    </div>
+
+    <!-- AULA 9.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 9.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Implantação: localização, imóvel e o capex que decide o jogo</h2>
+
+    <h3 style="margin: 24px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">CRITÉRIO DE LOCALIZAÇÃO (NESTA ORDEM)</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Densidade:</strong> 80–150 mil+ pessoas no raio de 2–3 km (Censo/IBGE por setor censitário). Bairro popular denso, conjunto habitacional, centro de cidade média de 100–400 mil habitantes.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Renda média local de 1–3 salários mínimos:</strong> abaixo do radar das redes premium, acima da linha em que R$ 99 não cabem de jeito nenhum.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Oferta local fraca:</strong> mapeie as academias do raio (aula 1.4). Padrão local antigo e a gigante ausente (ou com uma unidade lotada) = janela aberta.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Fluxo e acesso:</strong> avenida comercial, perto de terminal, fachada visível, fácil de chegar a pé — no bairro popular a maioria vem caminhando. Ponto de ônibus importa mais que estacionamento.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Imóvel:</strong> galpões e lajes de 1.200–2.500 m² em área popular custam por m² uma fração do bairro nobre — o subsídio silencioso do modelo. Negocie carência de obra e contrato longo (10+ anos com renovatória): CT é negócio de ponto.</p>
+      </div>
+    </div>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">O CAPEX E A ALAVANCA DO PARQUE COMPRADO COMO GIGANTE</h3>
+    <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.65;">Num CT, o parque de equipamentos é o coração do conceito e o maior cheque do projeto: facilmente <strong>50 a 60% do capex</strong>. É aqui que o Módulo 7 vira vantagem competitiva estrutural:</p>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Varejo nacional premium:</strong> um parque de 200+ estações para um CT de 1.800 m² pode consumir R$ 1,5–2 milhões — e inviabilizar o preço baixo, porque o investimento por aluno fica alto demais.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Comprando com a Torque (equipamento direto da fábrica, vendido e entregue no Brasil):</strong> economia típica de 30–50% no parque = R$ 500 mil a R$ 1 milhão a menos no capex, com o MESMO padrão de máquina das grandes redes (que compram em contêiner exatamente por isso). Essa economia derruba o ponto de equilíbrio, encurta o payback em anos e financia a “quantidade absurda” que é a alma do conceito — com venda, garantia e peças no Brasil.</p>
+    </div>
+    <div style="margin-top: 16px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">A CONTA QUE FECHA O MODELO</p>
+      <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65; color: #E8E5F0;">O CT Low Cost só é possível replicando a arma central das gigantes: <strong style="color: #FFFFFF;">comprar equipamento como gigante</strong>. Smart Fit, Panobianco e BlueFit não pagam preço de revenda nacional — compram com escala. O independente que compra com a Torque neutraliza a maior vantagem de custo das redes e compete de igual para igual no que o aluno vê: o salão. Cotação do seu parque direto com a equipe Torque.</p>
+    </div>
+    <p style="margin: 16px 0 0 0; font-size: 15px; line-height: 1.65;"><strong>Cronograma realista (8–12 meses do aluguel à abertura):</strong> ponto e contrato (2–3 meses) → projeto e obra (4–6 meses) → equipamentos chegando junto do fim da obra (pedido feito no início da obra — os 60–120 dias correm em paralelo) → pré-venda agressiva 60 dias antes, com meta de abrir com <strong>800 a 1.500 matriculados</strong> (Módulo 3 em escala de bairro inteiro).</p>
+
+    <!-- AULA 9.5 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 9.5</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Competindo com as gigantes — e o caminho para virar uma</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">A gigante vai chegar? Talvez. E o CT bem construído não só sobrevive — prospera do lado dela, vencendo nos flancos que a padronização não cobre:</p>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Densidade real de máquina.</strong> A unidade padrão das redes lota às 19h e enfileira o aluno. O CT com 2–3 estações por exercício transforma a maior reclamação do low cost no seu maior argumento: “aqui você treina, não espera”.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Coletivas incluídas e fortes.</strong> Grade cheia no plano base, com professores que viram referência local — o que as redes cobram como upgrade ou entregam raso.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Alma de bairro.</strong> Nome do aluno, professor que corrige, comunidade, desafio, evento (Módulo 4 inteiro). A rede tem processo; o CT tem processo E pertencimento — em bairro popular, a academia vira clube do bairro.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Velocidade local.</strong> Você decide em dias o que a rede decide em trimestres: horário novo de coletiva, parceria com o comércio, ajuste pedido no NPS.</p>
+    </div>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">O CAMINHO DE EXPANSÃO (A RÉGUA DO BÔNUS VALE DOBRADA AQUI)</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Unidade 1 madura e lucrativa</strong> (15%+ por 12 meses), rodando por processo sem o dono — Módulos 1 a 8 implantados.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Unidades 2 e 3 próprias na mesma região:</strong> mesmo playbook, ganho imediato de escala em compra (pedido fechado para duas unidades muda o preço unitário), marketing e equipe compartilhados.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Só então, franquia ou investidor:</strong> com 3+ unidades performando, playbook documentado (os checklists e planilhas deste curso SÃO o embrião do manual de franquia) e unit economics comprovada, o negócio vira ativo replicável — o caminho que levou as redes de 1 unidade a centenas. A BlueFit vendeu 51% por R$ 464 mi; a Selfit acelerou com fundo. <strong>O comprador paga pela máquina de replicar, não pelo salão.</strong></p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">O AVISO HONESTO</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">O CT Low Cost é o modelo de maior potencial de receita deste curso — e o de menor perdão a erro de gestão. Margem por aluno é fina: inadimplência sem régua, energia sem controle, equipe inchada ou churn alto destroem o resultado em silêncio. Este módulo é a visão; <strong>os Módulos 1 a 8 são o motor</strong>. Ninguém deve abrir um CT sem antes dominar a operação de uma academia — é por isso que ele é o módulo 9, e não o 1.</p>
+    </div>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO — ESTUDO DE VIABILIDADE (2 A 4 SEMANAS)</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Escolha 2–3 regiões candidatas e levante densidade e renda no raio de 3 km (Censo/IBGE) + mapa da oferta local com preço e padrão de cada academia.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Rode a planilha de unit economics com números da SUA praça: ticket possível, base projetada em 24 meses, custo fixo, ponto de equilíbrio e payback.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Cote o parque nos dois cenários — varejo nacional × cotação Torque — e veja o efeito no capex e no payback.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Monte o sumário de viabilidade de 1 página e tome a decisão com data: avançar para busca de ponto, ou engordar caixa e gestão da operação atual primeiro.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Planilha de unit economics do CT Low Cost (base, ticket, custos, equilíbrio, payback)<br>— Roteiro de análise de praça: densidade, renda e mapa de oferta (fontes IBGE indicadas)<br>— Checklist de implantação — do contrato do ponto à inauguração (8 a 12 meses)<br>— Modelo de sumário de viabilidade de 1 página (decisão ou apresentação a sócio/investidor)</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Sei explicar em 2 minutos por que o low cost de alto padrão em área popular densa é a maior oportunidade do fitness brasileiro — com os números de renda e penetração.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Rodei a unit economics com dados da minha praça e conheço equilíbrio e payback projetados.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Comparei o capex do parque nos dois cenários e sei o impacto da cotação Torque no retorno.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Tenho decisão escrita e com data: avançar, ou preparar a base primeiro.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

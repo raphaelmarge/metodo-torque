@@ -9,7 +9,8 @@ self.MT_MODULES = [
   { n: 6, title: "Operação Redonda", short: "Operação" },
   { n: 7, title: "Equipamentos e Estrutura: Investir com Inteligência", short: "Equipamentos" },
   { n: 8, title: "Marketing Local e Marca", short: "Marketing e Marca" },
-  { n: 9, title: "Expansão: A Próxima Unidade e Novas Receitas", short: "Bônus · Expansão", bonus: true },
+  { n: 9, title: "CT Low Cost: Padrão de Rico, Preço de Povo", short: "CT Low Cost" },
+  { n: 10, title: "Expansão: A Próxima Unidade e Novas Receitas", short: "Bônus · Expansão", bonus: true },
 ];
 
 // Programas do dia a dia (apps completos, dados salvos no navegador)
@@ -26,8 +27,9 @@ self.MT_APPS = [
 
 // type: apostila | ferramenta (interativa) | modelo (documento de apoio) | deck | indice
 self.MT_DOCS = [
-  { slug: "deck", type: "deck", module: null, title: "Apresentação do Método", desc: "O deck completo do Método Torque: promessa, percurso dos 8 módulos e o que muda na sua academia." },
-  { slug: "indice", type: "indice", module: null, title: "Índice das Apostilas", desc: "Visão geral das 9 apostilas com o que você implanta em cada módulo." },
+  { slug: "deck", type: "deck", module: null, title: "Apresentação do Método", desc: "O deck completo do Método Torque: promessa, percurso dos módulos e o que muda na sua academia." },
+  { slug: "indice", type: "indice", module: null, title: "Índice das Apostilas", desc: "Visão geral das apostilas com o que você implanta em cada módulo." },
+  { slug: "trilha-guiada", type: "inicio", module: null, title: "Trilha Guiada — Comece por Aqui", desc: "Responda o diagnóstico rápido e receba a ordem certa de módulos para o seu momento." },
 
   { slug: "modulo-1", type: "apostila", module: 1, title: "Apostila · Módulo 1", desc: "O negócio academia: mercado, os 7 números e o seu gargalo número um." },
   { slug: "modulo-2", type: "apostila", module: 2, title: "Apostila · Módulo 2", desc: "Finanças: DRE simplificado, precificação e fluxo de caixa sem sustos." },
@@ -37,13 +39,16 @@ self.MT_DOCS = [
   { slug: "modulo-6", type: "apostila", module: 6, title: "Apostila · Módulo 6", desc: "Operação redonda: rotinas, checklists e padrão de qualidade." },
   { slug: "modulo-7", type: "apostila", module: 7, title: "Apostila · Módulo 7", desc: "Equipamentos e estrutura: investir com inteligência e manter o parque vivo." },
   { slug: "modulo-8", type: "apostila", module: 8, title: "Apostila · Módulo 8", desc: "Marketing local e marca: campanhas, indicação e presença no bairro." },
-  { slug: "modulo-bonus", type: "apostila", module: 9, title: "Apostila · Módulo Bônus", desc: "Expansão: a próxima unidade e novas fontes de receita." },
+  { slug: "modulo-9", type: "apostila", module: 9, title: "Apostila · Módulo 9", desc: "CT low cost: padrão de rico, preço de povo — praça, unit economics e implantação." },
+  { slug: "modulo-bonus", type: "apostila", module: 10, title: "Apostila · Módulo Bônus", desc: "Expansão: a próxima unidade e novas fontes de receita." },
 
   { slug: "planilha-7-numeros", type: "ferramenta", module: 1, title: "Planilha dos 7 Números", desc: "Preencha os dados do mês e veja o semáforo dos 7 indicadores que mandam no resultado." },
   { slug: "diagnostico-360", type: "ferramenta", module: 1, title: "Diagnóstico 360", desc: "Avalie as áreas da academia e descubra onde está o seu gargalo número um." },
   { slug: "planilha-dre", type: "ferramenta", module: 2, title: "Planilha DRE Academia", desc: "Monte o DRE simplificado da academia e enxergue o lucro de verdade." },
   { slug: "calculadora-precificacao", type: "ferramenta", module: 2, title: "Calculadora de Precificação", desc: "Calcule o preço mínimo viável dos seus planos a partir dos custos reais." },
   { slug: "funil-comercial", type: "ferramenta", module: 3, title: "Planilha de Funil Comercial", desc: "Acompanhe leads, agendamentos, visitas e matrículas — e ache o vazamento do funil." },
+  { slug: "metas-comissao", type: "ferramenta", module: 3, title: "Metas e Comissão", desc: "Simule a meta do time e a comissão de cada vendedora com os números da sua academia." },
+  { slug: "unit-economics-ct", type: "ferramenta", module: 9, title: "Unit Economics CT Low Cost", desc: "Simule o CT low cost: investimento, ponto de equilíbrio e payback antes de assinar contrato." },
 
   { slug: "regua-cobranca", type: "modelo", module: 2, title: "Régua de Cobrança WhatsApp", desc: "Mensagens prontas, dia a dia, para recuperar inadimplentes sem constranger." },
   { slug: "script-vendas", type: "modelo", module: 3, title: "Script de Vendas", desc: "Roteiro completo do atendimento comercial: da recepção ao fechamento." },
@@ -55,4 +60,30 @@ self.MT_DOCS = [
   { slug: "controle-manutencao-limpeza", type: "modelo", module: 6, title: "Controle de Manutenção e Limpeza", desc: "Plano de limpeza e manutenção preventiva por área e frequência." },
   { slug: "inventario-equipamentos", type: "modelo", module: 7, title: "Inventário de Equipamentos", desc: "Levantamento do parque de equipamentos: estado, prioridade e plano de troca." },
   { slug: "calendario-campanhas", type: "modelo", module: 8, title: "Calendário Anual de Campanhas", desc: "As campanhas comerciais do ano, mês a mês, com foco e mecânica de cada uma." },
+
+  { slug: "mapa-concorrentes", type: "modelo", module: 1, title: "Mapa de Concorrentes", desc: "Levante os concorrentes do bairro: preço, estrutura e onde você ganha deles." },
+  { slug: "fluxo-caixa", type: "modelo", module: 2, title: "Fluxo de Caixa 8 Semanas", desc: "Enxergue as próximas 8 semanas de caixa e antecipe o aperto antes que ele chegue." },
+  { slug: "mapa-leads", type: "modelo", module: 3, title: "Mapa de Leads Diário", desc: "A folha da recepção: todo lead registrado na hora — lead sem registro não recebe follow-up." },
+  { slug: "quadro-metas", type: "modelo", module: 3, title: "Quadro de Metas da Parede", desc: "O placar do mês para imprimir e atualizar todo dia no ritual dos 10 minutos." },
+  { slug: "roteiro-aula-experimental", type: "modelo", module: 3, title: "Roteiro de Aula Experimental", desc: "O passo a passo da aula que converte: da recepção do visitante ao convite de matrícula." },
+  { slug: "avaliacao-fisica", type: "modelo", module: 4, title: "Ficha de Avaliação Física", desc: "Ficha padrão de avaliação e reavaliação — o aluno que vê progresso não cancela." },
+  { slug: "pesquisa-nps", type: "modelo", module: 4, title: "Kit NPS", desc: "Pesquisa de satisfação pronta: pergunta, régua de envio e o que fazer com cada nota." },
+  { slug: "ligacao-detratores", type: "modelo", module: 4, title: "Roteiro de Ligação para Detratores", desc: "O que falar com o aluno que deu nota baixa — antes que ele cancele e espalhe." },
+  { slug: "desafio-trimestral", type: "modelo", module: 4, title: "Guia do Desafio Trimestral", desc: "O desafio de 90 dias que engaja a base: regras, premiação e calendário." },
+  { slug: "cronograma-coletivas", type: "modelo", module: 4, title: "Cronograma de Aulas Coletivas", desc: "A grade de coletivas para o mural — aula coletiva é fábrica de vínculo e retenção." },
+  { slug: "contratacao-segura", type: "modelo", module: 5, title: "Checklist de Contratação Segura", desc: "O passo a passo para contratar sem dor de cabeça: documentos, contrato e período de teste." },
+  { slug: "folha-funcao", type: "modelo", module: 5, title: "Folha de Função", desc: "Papel e responsabilidades de cada função da academia, preto no branco." },
+  { slug: "integracao-3-dias", type: "modelo", module: 5, title: "Roteiro de Integração 3 Dias", desc: "Os 3 primeiros dias do novo contratado: o que aprender, com quem e em que ordem." },
+  { slug: "avaliacao-sistemas", type: "modelo", module: 6, title: "Avaliação de Sistemas de Gestão", desc: "Compare os sistemas do mercado e escolha o que serve a sua operação." },
+  { slug: "conformidade-legal", type: "modelo", module: 6, title: "Checklist de Conformidade Legal", desc: "Alvarás, licenças e obrigações em dia — sem surpresa de fiscalização." },
+  { slug: "contrato-matricula", type: "modelo", module: 6, title: "Pauta do Contrato de Matrícula", desc: "O que não pode faltar no contrato de matrícula para proteger a academia e o aluno." },
+  { slug: "convivencia-salao", type: "modelo", module: 6, title: "Guia de Convivência do Salão", desc: "Os 8 combinados do salão para imprimir — todo mundo treina melhor quando todo mundo colabora." },
+  { slug: "metragem-layout", type: "modelo", module: 7, title: "Guia de Metragem e Layout", desc: "Quantos metros por área e como distribuir o salão para caber treino de verdade." },
+  { slug: "banco-ideias-conteudo", type: "modelo", module: 8, title: "Banco de 30 Ideias de Conteúdo", desc: "30 ideias prontas de post para nunca mais travar no Instagram da academia." },
+  { slug: "kit-whatsapp", type: "modelo", module: 8, title: "Kit WhatsApp Business", desc: "Configuração completa do WhatsApp Business: etiquetas, respostas rápidas e mensagens." },
+  { slug: "respostas-google", type: "modelo", module: 8, title: "Respostas para Avaliações Google", desc: "Modelos de resposta para cada tipo de avaliação — inclusive as injustas." },
+  { slug: "analise-praca-ct", type: "modelo", module: 9, title: "Análise de Praça CT", desc: "Avalie a praça do futuro CT low cost: fluxo, concorrência e potencial de assinaturas." },
+  { slug: "viabilidade-ct", type: "modelo", module: 9, title: "Sumário de Viabilidade CT", desc: "Uma página para a decisão: viabilidade do CT para você, sócio ou investidor." },
+  { slug: "implantacao-ct", type: "modelo", module: 9, title: "Checklist de Implantação CT", desc: "Da assinatura do contrato à inauguração do CT: cada etapa na ordem certa." },
+  { slug: "checklist-expansao", type: "modelo", module: 10, title: "Checklist de Expansão e Acordo de Sócios", desc: "O que validar antes da segunda unidade e o que travar no acordo de sócios." },
 ];

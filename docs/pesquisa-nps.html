@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Kit NPS</title>
+  <link href="../assets/fonts/archivo.css" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MATERIAL DO MÓDULO 4 · KIT NPS</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · MATERIAL DO MÓDULO 4</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">Kit NPS — Pesquisa, Tabulação e Ação</h1>
+    <p style="margin: 16px 0 0 0; font-size: 16px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 16px 20px;">Uma pergunta, trimestral, brutal de reveladora. <strong>NPS = % promotores (9–10) − % detratores (0–6).</strong> Meta de participação: 30% da base. Acima de 50 é forte; abaixo de 30, alerta. O valor não está na nota — está na ação em 48 horas.</p>
+
+    <h2 style="margin: 32px 0 0 0; font-size: 22px; font-weight: 700;">1 · A pesquisa (WhatsApp, trimestral)</h2>
+    <div style="margin-top: 12px; background: #F5F4F7; border-left: 3px solid #7C3AED; padding: 14px 18px; font-size: 15px; line-height: 1.6;">Oi [nome]! Pesquisa rápida de 30 segundos pra gente melhorar sempre: <strong>de 0 a 10, quanto você recomendaria a [academia] para um amigo?</strong> E o mais importante: <strong>por quê?</strong> Pode ser sincero(a) — é assim que a gente evolui. 🙏</div>
+    <p style="margin: 10px 0 0 0; font-size: 13.5px; line-height: 1.6; color: #6E6A78;">Envie pela lista de transmissão de alunos ativos. Anônimo opcional — mas incentive identificação: “se quiser que a gente resolva algo, deixa seu nome”.</p>
+
+    <h2 style="margin: 32px 0 0 0; font-size: 22px; font-weight: 700;">2 · Tabulação</h2>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em;">GRUPO</th>
+          <th style="text-align: center; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 110px;">QUANTOS</th>
+          <th style="text-align: center; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 110px;">% DO TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding: 10px 12px; border: 1px solid #E2E0E8;"><strong style="color: #1F8A5B;">Promotores</strong> (nota 9–10)</td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 10px 12px; border: 1px solid #E2E0E8;"><strong style="color: #D97706;">Neutros</strong> (nota 7–8)</td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 10px 12px; border: 1px solid #E2E0E8;"><strong style="color: #DC2626;">Detratores</strong> (nota 0–6)</td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        <tr><td style="padding: 10px 12px; border: 1px solid #E2E0E8; background: #F5F4F7; font-weight: 700;">NPS = % promotores − % detratores</td><td style="border: 1px solid #E2E0E8; background: #F5F4F7;"></td><td style="border: 1px solid #E2E0E8; background: #F5F4F7;"></td></tr>
+      </tbody>
+    </table>
+    <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.65;"><strong>O “por quê” vale mais que a nota:</strong> tabule os motivos citados. Três pessoas reclamando do mesmo horário lotado, do mesmo banheiro, da mesma máquina = prioridade operacional definida pelos seus clientes, de graça.</p>
+    <p style="margin: 12px 0 0 0; font-size: 14px; line-height: 2.4; color: #3A3742;">Top 3 motivos citados: 1. <span style="display: inline-block; min-width: 420px; border-bottom: 1px solid #C6C2CF;"></span><br>2. <span style="display: inline-block; min-width: 460px; border-bottom: 1px solid #C6C2CF;"></span>&nbsp;&nbsp;3. <span style="display: inline-block; min-width: 440px; border-bottom: 1px solid #C6C2CF;"></span></p>
+
+    <h2 style="margin: 32px 0 0 0; font-size: 22px; font-weight: 700;">3 · Ação em 48 horas</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
+      <div style="border: 1.5px solid #DC2626; padding: 18px 22px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #DC2626;">DETRATOR → LIGAÇÃO DO GESTOR</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;"><strong>Roteiro:</strong> (1) agradecer a franqueza; (2) ouvir sem se defender; (3) resolver o resolvível na hora; (4) dar retorno do que foi feito. Detrator bem atendido vira o promotor mais barulhento; ignorado, cancela e leva dois amigos.</p>
+      </div>
+      <div style="border: 1.5px solid #1F8A5B; padding: 18px 22px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #1F8A5B;">PROMOTOR → PEDIR A INDICAÇÃO</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">“Que alegria ler isso! Tem alguém que você traria pra treinar com a gente? Te dou um passe de convidado.” E na sequência: pedido de avaliação no Google (link nas respostas rápidas do Kit WhatsApp).</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; background: #131118; color: #FFFFFF; padding: 18px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">CICLO TRIMESTRAL</p>
+      <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.65; color: #E8E5F0;">Enviar pesquisa → tabular em 1 semana → ligar para 100% dos detratores em 48h → pedir indicação aos promotores → levar o top 3 de motivos para a reunião semanal com dono e prazo → comparar o NPS com o trimestre anterior no quadro de metas.</p>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

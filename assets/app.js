@@ -91,6 +91,7 @@
 
     var g0 = navGroup("COMEÇO");
     g0.appendChild(navItem(bySlug["deck"]));
+    if (bySlug["trilha-guiada"]) g0.appendChild(navItem(bySlug["trilha-guiada"]));
     g0.appendChild(navItem(bySlug["indice"]));
     sideNav.appendChild(g0);
 
@@ -206,6 +207,7 @@
   function moduleLabel(doc) {
     if (doc.type === "app") return "PROGRAMA";
     if (doc.type === "deck") return "APRESENTAÇÃO";
+    if (doc.type === "inicio") return "COMECE POR AQUI";
     if (doc.type === "indice") return "APOSTILAS";
     var m = MODULES[doc.module - 1];
     return m.bonus ? "MÓDULO BÔNUS" : "MÓDULO " + m.n;
