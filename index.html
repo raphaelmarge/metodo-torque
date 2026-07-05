@@ -14,6 +14,28 @@
 </head>
 <body>
 
+<!-- CADASTRO / CÓDIGO DE ACESSO -->
+<div id="gate" hidden>
+  <div class="gate-card">
+    <img src="assets/icons/logo-torque-claro.svg" alt="Método Torque" class="gate-logo">
+    <h1>Portal do Aluno</h1>
+    <p>Faça seu cadastro para acessar o curso, as planilhas e os programas. Use o <strong>código de acesso</strong> que você recebeu na compra.</p>
+    <form id="gateForm">
+      <div class="campo-gate"><label for="gCodigo">Código de acesso</label>
+        <input id="gCodigo" required autocomplete="off" placeholder="Digite o código que você recebeu"></div>
+      <div class="campo-gate"><label for="gNome">Seu nome</label>
+        <input id="gNome" required placeholder="Nome e sobrenome"></div>
+      <div class="campo-gate"><label for="gEmail">E-mail</label>
+        <input id="gEmail" type="email" required placeholder="voce@email.com"></div>
+      <div class="campo-gate"><label for="gZap">WhatsApp</label>
+        <input id="gZap" inputmode="numeric" placeholder="11999998888"></div>
+      <p id="gateErro" class="gate-erro" hidden></p>
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Entrar no portal →</button>
+    </form>
+    <small>Seus dados ficam salvos neste aparelho. Não tem código? Fale com o suporte do Método Torque.</small>
+  </div>
+</div>
+
 <header class="topbar" id="topbar">
   <button class="iconbtn" id="menuBtn" aria-label="Abrir menu">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -41,6 +63,10 @@
       <div class="side-progress">
         <div class="side-progress-label"><span>Progresso do curso</span><span id="sideProgressPct">0%</span></div>
         <div class="bar"><div class="bar-fill" id="sideProgressBar"></div></div>
+      </div>
+      <div class="side-perfil" id="sidePerfil" hidden>
+        <span id="perfilNome"></span>
+        <button id="sairBtn" title="Sair do portal neste aparelho">Sair</button>
       </div>
       <div class="side-backup">
         <button id="logoBtn" title="Sua logo aparece nos programas do dia a dia e no modo TV, para a sua equipe">🖼 Logo</button>
@@ -127,6 +153,8 @@
 </div>
 
 <script src="assets/content.js"></script>
+<script src="assets/access-config.js"></script>
+<script src="assets/access.js"></script>
 <script src="apps/store.js"></script>
 <script src="assets/app.js"></script>
 </body>
