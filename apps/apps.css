@@ -18,7 +18,21 @@ body { background: var(--fundo); color: var(--texto); font-family: "Archivo", sy
 .topo p { margin: 0; font-size: 13.5px; color: #8a8695; max-width: 420px; line-height: 1.5; }
 
 .corpo { max-width: 1280px; margin: 0 auto; padding: 26px 40px 60px; }
-@media (max-width: 760px) { .topo { padding: 22px 18px; } .corpo { padding: 18px 14px 50px; } }
+@media (max-width: 760px) {
+  .topo { padding: 20px 16px; }
+  .topo h1 { font-size: 22px; }
+  .topo p { font-size: 12.5px; }
+  .corpo { padding: 16px 12px 50px; }
+  .card { padding: 16px 14px; }
+  /* tabelas largas rolam para o lado */
+  .tabela { display: block; overflow-x: auto; white-space: nowrap; }
+  /* evita o zoom automático do iPhone ao focar campos */
+  input, select, textarea { font-size: 16px; }
+  dialog { max-width: 94vw; }
+  dialog .card { max-height: 82vh; overflow-y: auto; }
+  .btn { padding: 10px 14px; }
+  .logo-cliente { max-height: 44px; max-width: 130px; }
+}
 
 .card { background: var(--card); border: 1px solid var(--linha); padding: 22px; }
 .card h2, .card .titulo { margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: .14em; color: var(--cinza); text-transform: uppercase; }
