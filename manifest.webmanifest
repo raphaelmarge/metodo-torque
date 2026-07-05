@@ -1,0 +1,29 @@
+{
+  "name": "Método Torque — Gestão de Academias",
+  "short_name": "Torque",
+  "description": "Curso e kit de implantação para gestores de academia: 8 módulos + bônus, planilhas, scripts e checklists.",
+  "lang": "pt-BR",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121016",
+  "theme_color": "#121016",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Todos os materiais",
+      "url": "./Apostilas - Índice.dc.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Planilha dos 7 Números",
+      "url": "./Planilha dos 7 Números.dc.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

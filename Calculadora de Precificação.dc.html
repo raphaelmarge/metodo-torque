@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#121016">
+<link rel="icon" type="image/png" sizes="48x48" href="./icons/favicon-48.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torque">
+<script src="./app.js" defer></script>
+<link rel="stylesheet" href="./mobile.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Calculadora de Precificação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F5F4F7; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4F7; font-family: 'Archivo', sans-serif; color: #131118; display: flex; flex-direction: column;">
+
+  <div style="background: #121016; color: #FFFFFF; padding: 36px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">MÉTODO TORQUE · MATERIAL DO MÓDULO 2</span>
+      </div>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.01em;">Calculadora de Precificação</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #8A8695; max-width: 440px; line-height: 1.5;">Preço se constrói de dentro para fora: primeiro o piso (abaixo do qual você paga para trabalhar), depois a arquitetura de 3 planos. Os dados ficam salvos neste navegador.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 28px; padding: 32px 48px 48px; align-items: start; max-width: 1440px; box-sizing: border-box; width: 100%; margin: 0 auto;">
+
+    <!-- ENTRADAS -->
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 28px; display: flex; flex-direction: column; gap: 18px;">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">DADOS DA SUA ACADEMIA</span>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Custo fixo total mensal (R$)</label>
+        <input value="{{ custo }}" onChange="{{ onCusto }}" placeholder="ex.: 37000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Alunos ativos</label>
+        <input value="{{ alunos }}" onChange="{{ onAlunos }}" placeholder="ex.: 400" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Taxas + impostos sobre a receita (%)</label>
+        <input value="{{ deducoes }}" onChange="{{ onDeducoes }}" placeholder="ex.: 10" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="border-top: 1px solid #E2E0E8; padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Preço do plano recorrente — o carro-chefe (R$/mês)</label>
+        <input value="{{ preco }}" onChange="{{ onPreco }}" placeholder="ex.: 129" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1.5px solid #7C3AED; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #6D28D9; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Plano cheio: % mais caro</label>
+          <input value="{{ premium }}" onChange="{{ onPremium }}" placeholder="15 a 25" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Anual à vista: % desconto</label>
+          <input value="{{ descAnual }}" onChange="{{ onDescAnual }}" placeholder="ex.: 15" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.55; color: #8A8695;">Referências da aula 2.2: plano cheio 15–25% acima do recorrente; anual com desconto agressivo para injetar caixa e travar 12 meses. Nunca precifique olhando só o vizinho.</p>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">CUSTO POR ALUNO</span>
+          <span style="font-size: 36px; font-weight: 800; line-height: 1;">{{ custoAlunoTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Custo fixo ÷ alunos ativos. É quanto cada aluno custa antes de qualquer taxa.</span>
+        </div>
+        <div style="background: #131118; color: #FFFFFF; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #A78BFA;">PISO REAL — NÃO VENDA ABAIXO DISSO</span>
+          <span style="font-size: 36px; font-weight: 800; line-height: 1;">{{ pisoTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Custo por aluno corrigido pelas taxas e impostos: preço que, líquido, cobre o custo. Qualquer plano permanente abaixo é prejuízo por assinatura.</span>
+        </div>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1.5px solid {{ statusBorda }}; padding: 24px 28px; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">SEU PLANO RECORRENTE vs PISO</span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 12px; height: 12px; border-radius: 50%; background: {{ statusDot }};"></span>
+            <span style="font-size: 19px; font-weight: 700;">{{ statusLabel }}</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+          <span style="font-size: 26px; font-weight: 800; color: {{ statusDot }};">{{ margemAlunoTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695;">margem líquida por aluno/mês sobre o custo</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">PLANO CHEIO (SEM FIDELIDADE)</span>
+          <span style="font-size: 30px; font-weight: 800; line-height: 1;">{{ cheioTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">{{ premiumTxt }} acima do recorrente. Existe para dar liberdade a quem paga por ela — e para o plano do meio parecer óbvio.</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1.5px solid #7C3AED; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">RECORRENTE — CARRO-CHEFE</span>
+          <span style="font-size: 30px; font-weight: 800; line-height: 1;">{{ recorrenteTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Cobrança automática no cartão, fidelidade de 12 meses. Meta: 70%+ da base neste plano.</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">ANUAL À VISTA (ÂNCORA)</span>
+          <span style="font-size: 30px; font-weight: 800; line-height: 1;">{{ anualMesTxt }}</span>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">{{ anualTotalTxt }} à vista ({{ descAnualTxt }} de desconto). Injeta caixa, trava 12 meses e zera o churn desse grupo.</span>
+        </div>
+      </div>
+
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 18px 24px; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">LEMBRETE SOBRE DESCONTO</span>
+        <span style="font-size: 14px; line-height: 1.6; color: #3A3742;">Desconto é ferramenta com data para acabar, nunca identidade. Cada 10% de desconto permanente no ticket exige ~10% mais alunos só para empatar — com mais custo de operação e desgaste. Se precisar ceder, ceda em bônus (avaliação, mês 13, brinde), não em mensalidade.</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin-top: auto; background: #121016; padding: 18px 48px; display: flex; justify-content: space-between; align-items: baseline;">
+    <span style="font-size: 13px; color: #8A8695;">Método Torque · Gestão de Academias de Alta Performance · Material do aluno</span>
+    <span style="font-size: 13px; color: #8A8695;">www.torquefitness.com.br</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { custo: '', alunos: '', deducoes: '', preco: '', premium: '20', descAnual: '15' };
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('metodo-torque-precificacao') || 'null');
+      if (saved && typeof saved === 'object') {
+        const clean = {};
+        for (const k of Object.keys(this.state)) if (typeof saved[k] === 'string') clean[k] = saved[k];
+        this.setState(clean);
+      }
+    } catch (e) {}
+  }
+
+  set(k) {
+    return (e) => {
+      this.setState({ [k]: e.target.value }, () => {
+        try { localStorage.setItem('metodo-torque-precificacao', JSON.stringify(this.state)); } catch (err) {}
+      });
+    };
+  }
+
+  renderVals() {
+    const VERDE = '#1F8A5B', AMAR = '#D97706', VERM = '#DC2626', NEUTRO = '#C6C2CF';
+    const P = (s) => {
+      s = (s == null ? '' : String(s)).trim();
+      if (!s) return null;
+      s = s.replace(/R\$\s?/g, '').replace(/%/g, '').replace(/\s/g, '');
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return isFinite(n) && n >= 0 ? n : null;
+    };
+    const brl = (n, d) => n == null ? '—' : 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: d == null ? 0 : d, maximumFractionDigits: d == null ? 0 : d });
+
+    const custo = P(this.state.custo);
+    const alunos = P(this.state.alunos);
+    const dedu = P(this.state.deducoes);
+    const preco = P(this.state.preco);
+    const premium = P(this.state.premium) != null ? P(this.state.premium) : 20;
+    const desc = P(this.state.descAnual) != null ? P(this.state.descAnual) : 15;
+
+    const custoAluno = (custo != null && alunos) ? custo / alunos : null;
+    const fator = (dedu != null && dedu < 100) ? (1 - dedu / 100) : 1;
+    const piso = custoAluno != null ? custoAluno / fator : null;
+    const liquido = preco != null ? preco * fator : null;
+    const margem = (liquido != null && custoAluno != null) ? liquido - custoAluno : null;
+
+    let st = { dot: NEUTRO, borda: '#E2E0E8', label: 'aguardando dados' };
+    if (preco != null && piso != null) {
+      if (preco >= piso * 1.2) st = { dot: VERDE, borda: VERDE, label: 'Acima do piso com folga' };
+      else if (preco >= piso) st = { dot: AMAR, borda: AMAR, label: 'Acima do piso, mas colado — sem espaço para promoção' };
+      else st = { dot: VERM, borda: VERM, label: 'ABAIXO do piso — você paga para o aluno treinar' };
+    }
+
+    const cheio = preco != null ? preco * (1 + premium / 100) : null;
+    const anualMes = preco != null ? preco * (1 - desc / 100) : null;
+    const anualTotal = anualMes != null ? anualMes * 12 : null;
+
+    return {
+      custo: this.state.custo, alunos: this.state.alunos, deducoes: this.state.deducoes,
+      preco: this.state.preco, premium: this.state.premium, descAnual: this.state.descAnual,
+      onCusto: this.set('custo'), onAlunos: this.set('alunos'), onDeducoes: this.set('deducoes'),
+      onPreco: this.set('preco'), onPremium: this.set('premium'), onDescAnual: this.set('descAnual'),
+      custoAlunoTxt: brl(custoAluno, 2),
+      pisoTxt: brl(piso, 2),
+      statusDot: st.dot, statusBorda: st.borda, statusLabel: st.label,
+      margemAlunoTxt: margem == null ? '—' : (margem < 0 ? '− ' : '+ ') + brl(Math.abs(margem), 2).replace('R$ ', 'R$ '),
+      cheioTxt: brl(cheio),
+      premiumTxt: premium.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '%',
+      recorrenteTxt: brl(preco),
+      anualMesTxt: anualMes == null ? '—' : brl(anualMes) + '/mês',
+      anualTotalTxt: brl(anualTotal),
+      descAnualTxt: desc.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '%'
+    };
+  }
+}
+</script>
+</body>
+</html>

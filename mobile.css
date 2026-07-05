@@ -1,0 +1,80 @@
+/* Ajustes de responsividade para celular.
+ * As páginas usam estilos inline, então os overrides usam seletores de
+ * atributo + !important para linearizar em telas estreitas os grids com
+ * colunas fixas largas (150px+). Grids pequenos (ícones de 44–92px) são
+ * mantidos. */
+@media screen and (max-width: 760px) {
+
+  /* Painéis de duas colunas viram uma coluna */
+  [style*="grid-template-columns: 400px"],
+  [style*="grid-template-columns: 420px"],
+  [style*="grid-template-columns: 460px"],
+  [style*="grid-template-columns: minmax(320px"],
+  [style*="grid-template-columns: 1fr 340px"],
+  [style*="grid-template-columns: 200px"],
+  [style*="grid-template-columns: 210px"],
+  [style*="grid-template-columns: 190px"],
+  [style*="grid-template-columns: 170px"],
+  [style*="grid-template-columns: 150px"],
+  [style*="grid-template-columns: 130px"],
+  [style*="grid-template-columns: 120px"],
+  [style*="grid-template-columns: 112px"],
+  [style*="grid-template-columns: 110px"],
+  [style*="grid-template-columns: 44px 1fr 170px"],
+  [style*="grid-template-columns: 1fr 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Espaçamentos largos de desktop ficam menores */
+  [style*="padding: 32px 48px 48px"] { padding: 20px 16px 32px !important; }
+  [style*="padding: 110px 32px 90px"] { padding: 64px 20px 56px !important; }
+  [style*="padding: 80px 32px"] { padding: 48px 20px !important; }
+
+  /* Apostilas (doc-page): a folha de 8,5in vira fluida.
+   * As variáveis são definidas no shadow DOM via :host — regras do
+   * documento no próprio elemento têm precedência sobre :host. */
+  doc-page {
+    --doc-page-w: 100% !important;
+    --doc-page-margin: 22px !important;
+    padding: 12px 8px !important;
+  }
+
+  /* Tabelas largas rolam na horizontal em vez de esticar a página */
+  table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  /* Linhas flex quebram em vez de estourar; itens de grid/flex podem
+   * encolher abaixo do conteúdo mínimo (min-width:auto é o padrão). */
+  [style*="display: flex"] { flex-wrap: wrap; }
+  [style*="display: grid"] > *,
+  [style*="display: flex"] > * { min-width: 0; }
+
+  h1[style*="font-size: 62px"] { font-size: 38px !important; }
+
+  /* Linhas de preenchimento (spans sublinhados para escrever à mão):
+   * larguras fixas de desktop/impressão viram fluidas no celular. */
+  [style*="min-width: 380px"][style*="border-bottom"],
+  [style*="min-width: 400px"][style*="border-bottom"],
+  [style*="min-width: 420px"][style*="border-bottom"],
+  [style*="min-width: 440px"][style*="border-bottom"],
+  [style*="min-width: 520px"][style*="border-bottom"],
+  [style*="min-width: 600px"][style*="border-bottom"],
+  [style*="min-width: 620px"][style*="border-bottom"],
+  [style*="min-width: 640px"][style*="border-bottom"] {
+    min-width: 0 !important;
+    width: 100%;
+  }
+  [style*="min-width: 200px"][style*="border-bottom"],
+  [style*="min-width: 220px"][style*="border-bottom"],
+  [style*="min-width: 240px"][style*="border-bottom"],
+  [style*="min-width: 260px"][style*="border-bottom"],
+  [style*="min-width: 280px"][style*="border-bottom"],
+  [style*="min-width: 300px"][style*="border-bottom"],
+  [style*="min-width: 320px"][style*="border-bottom"] {
+    min-width: 110px !important;
+    max-width: 55vw;
+  }
+}

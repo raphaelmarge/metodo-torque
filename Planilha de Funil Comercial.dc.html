@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#121016">
+<link rel="icon" type="image/png" sizes="48x48" href="./icons/favicon-48.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torque">
+<script src="./app.js" defer></script>
+<link rel="stylesheet" href="./mobile.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Planilha de Funil Comercial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F5F4F7; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4F7; font-family: 'Archivo', sans-serif; color: #131118; display: flex; flex-direction: column;">
+
+  <div style="background: #121016; color: #FFFFFF; padding: 36px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">MÉTODO TORQUE · MATERIAL DO MÓDULO 3</span>
+      </div>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.01em;">Planilha de Funil Comercial</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #8A8695; max-width: 440px; line-height: 1.5;">Preencha os números do mês e veja onde o dinheiro vaza: o funil aponta exatamente qual remédio usar. Regra de ouro: TODO lead entra na planilha, sem exceção. Os dados ficam salvos neste navegador.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 28px; padding: 32px 48px 48px; align-items: start; max-width: 1440px; box-sizing: border-box; width: 100%; margin: 0 auto;">
+
+    <!-- ENTRADAS -->
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 28px; display: flex; flex-direction: column; gap: 18px;">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">NÚMEROS DO MÊS</span>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Leads recebidos (WhatsApp, direct, balcão)</label>
+        <input value="{{ leads }}" onChange="{{ onLeads }}" placeholder="ex.: 100" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Visitas realizadas (tour ou aula experimental)</label>
+        <input value="{{ visitas }}" onChange="{{ onVisitas }}" placeholder="ex.: 40" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 14px; font-weight: 600;">Matrículas fechadas</label>
+        <input value="{{ matriculas }}" onChange="{{ onMatriculas }}" placeholder="ex.: 24" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="border-top: 1px solid #E2E0E8; padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Meta de matrículas</label>
+          <input value="{{ meta }}" onChange="{{ onMeta }}" placeholder="ex.: 44" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 14px; font-weight: 600;">Gasto em captação (R$)</label>
+          <input value="{{ gasto }}" onChange="{{ onGasto }}" placeholder="ex.: 2500" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 16px; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.55; color: #8A8695;">Meta do mês = (alunos desejados − ativos hoje) + cancelamentos previstos (aula 3.5). Referências: lead→visita 30–50% · visita→matrícula com script 50–60%.</p>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div style="display: flex; flex-direction: column; gap: 20px; min-width: 0;">
+
+      <!-- FUNIL VISUAL -->
+      <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 26px 30px; display: flex; flex-direction: column; gap: 14px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">O FUNIL DO MÊS</span>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: grid; grid-template-columns: 110px 1fr 90px; gap: 14px; align-items: center;">
+            <span style="font-size: 14px; font-weight: 700;">Leads</span>
+            <div style="height: 34px; background: #EDEBF2;"><div style="height: 34px; width: 100%; background: #131118;"></div></div>
+            <span style="font-size: 20px; font-weight: 800; text-align: right;">{{ leadsTxt }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px 1fr 90px; gap: 14px; align-items: center;">
+            <span style="font-size: 14px; font-weight: 700;">Visitas</span>
+            <div style="height: 34px; background: #EDEBF2;"><div style="height: 34px; width: {{ visitasBar }}; background: #7C3AED;"></div></div>
+            <span style="font-size: 20px; font-weight: 800; text-align: right;">{{ visitasTxt }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 110px 1fr 90px; gap: 14px; align-items: center;">
+            <span style="font-size: 14px; font-weight: 700;">Matrículas</span>
+            <div style="height: 34px; background: #EDEBF2;"><div style="height: 34px; width: {{ matriculasBar }}; background: #A78BFA;"></div></div>
+            <span style="font-size: 20px; font-weight: 800; text-align: right;">{{ matriculasTxt }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">LEAD → VISITA</span>
+          <span style="font-size: 36px; font-weight: 800; line-height: 1;">{{ convLVTxt }}</span>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{ lvDot }};"></span><span style="font-size: 13px; font-weight: 600; color: #55515F;">{{ lvLabel }}</span></div>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Referência: 30–50%. Depende da velocidade de resposta — regra dos 15 minutos (aula 8.3).</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">VISITA → MATRÍCULA</span>
+          <span style="font-size: 36px; font-weight: 800; line-height: 1;">{{ convVMTxt }}</span>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{ vmDot }};"></span><span style="font-size: 13px; font-weight: 600; color: #55515F;">{{ vmLabel }}</span></div>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">Sem script: 20–30%. Com tour de 7 passos e fechamento no dia: 50–60%.</span>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">MATRÍCULAS vs META</span>
+          <span style="font-size: 36px; font-weight: 800; line-height: 1;">{{ metaTxt }}</span>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{ metaDot }};"></span><span style="font-size: 13px; font-weight: 600; color: #55515F;">{{ metaLabel }}</span></div>
+          <span style="font-size: 12.5px; color: #8A8695; line-height: 1.5;">CAC do mês: {{ cacTxt }} por matrícula. Saudável: até 1 mensalidade.</span>
+        </div>
+      </div>
+
+      <!-- DIAGNÓSTICO -->
+      <div style="background: #131118; color: #FFFFFF; padding: 24px 28px; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">DIAGNÓSTICO — ONDE O FUNIL VAZA</span>
+        <span style="font-size: 21px; font-weight: 700; line-height: 1.35;">{{ diagTitulo }}</span>
+        <span style="font-size: 14.5px; line-height: 1.65; color: #C9C5D4;">{{ diagTexto }}</span>
+      </div>
+
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 18px 24px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">SIMULAÇÃO</span>
+        <p style="margin: 8px 0 0 0; font-size: 14px; line-height: 1.65; color: #3A3742;">{{ simulacao }}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin-top: auto; background: #121016; padding: 18px 48px; display: flex; justify-content: space-between; align-items: baseline;">
+    <span style="font-size: 13px; color: #8A8695;">Método Torque · Gestão de Academias de Alta Performance · Material do aluno</span>
+    <span style="font-size: 13px; color: #8A8695;">www.torquefitness.com.br</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { leads: '', visitas: '', matriculas: '', meta: '', gasto: '' };
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('metodo-torque-funil') || 'null');
+      if (saved && typeof saved === 'object') {
+        const clean = {};
+        for (const k of Object.keys(this.state)) if (typeof saved[k] === 'string') clean[k] = saved[k];
+        this.setState(clean);
+      }
+    } catch (e) {}
+  }
+
+  set(k) {
+    return (e) => {
+      this.setState({ [k]: e.target.value }, () => {
+        try { localStorage.setItem('metodo-torque-funil', JSON.stringify(this.state)); } catch (err) {}
+      });
+    };
+  }
+
+  renderVals() {
+    const VERDE = '#1F8A5B', AMAR = '#D97706', VERM = '#DC2626', NEUTRO = '#C6C2CF';
+    const P = (s) => {
+      s = (s == null ? '' : String(s)).trim();
+      if (!s) return null;
+      s = s.replace(/R\$\s?/g, '').replace(/\s/g, '');
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return isFinite(n) && n >= 0 ? n : null;
+    };
+    const num = (n) => n == null ? '—' : n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+    const pct = (n) => n == null ? '—' : n.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '%';
+    const brl = (n) => n == null ? '—' : 'R$ ' + n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+    const leads = P(this.state.leads);
+    const visitas = P(this.state.visitas);
+    const mat = P(this.state.matriculas);
+    const meta = P(this.state.meta);
+    const gasto = P(this.state.gasto);
+
+    const convLV = (leads && visitas != null) ? (visitas / leads) * 100 : null;
+    const convVM = (visitas && mat != null) ? (mat / visitas) * 100 : null;
+    const cac = (gasto != null && mat) ? gasto / mat : null;
+
+    let lv = { dot: NEUTRO, label: 'aguardando dados' };
+    if (convLV != null) {
+      if (convLV >= 30) lv = { dot: VERDE, label: 'dentro da referência (30–50%)' };
+      else if (convLV >= 20) lv = { dot: AMAR, label: 'abaixo da referência — resposta lenta?' };
+      else lv = { dot: VERM, label: 'muito abaixo — leads morrendo no vácuo' };
+    }
+    let vm = { dot: NEUTRO, label: 'aguardando dados' };
+    if (convVM != null) {
+      if (convVM >= 50) vm = { dot: VERDE, label: 'nível de script rodando (50–60%)' };
+      else if (convVM >= 30) vm = { dot: AMAR, label: 'mediano — script parcial' };
+      else vm = { dot: VERM, label: 'nível de improviso (20–30%)' };
+    }
+    let mt = { dot: NEUTRO, label: 'defina a meta do mês' };
+    if (mat != null && meta) {
+      const r = (mat / meta) * 100;
+      if (r >= 100) mt = { dot: VERDE, label: 'meta batida (' + pct(r) + ')' };
+      else if (r >= 70) mt = { dot: AMAR, label: pct(r) + ' da meta' };
+      else mt = { dot: VERM, label: 'só ' + pct(r) + ' da meta' };
+    }
+
+    let diagTitulo = 'Preencha leads, visitas e matrículas', diagTexto = 'Com os três números, o funil mostra qual etapa está segurando o seu crescimento — e qual aula do Módulo 3 usar como remédio.';
+    if (convLV != null && convVM != null) {
+      const lvRuim = convLV < 30, vmRuim = convVM < 50;
+      if (lvRuim && vmRuim) {
+        diagTitulo = 'O funil vaza nas duas etapas — comece pelo fechamento';
+        diagTexto = 'Ordem certa: primeiro o script (aulas 3.3 e 3.4) para converter as visitas que você já tem; depois a velocidade de resposta e o follow-up (regra dos 15 minutos, aula 8.3) para transformar mais leads em visita. Só então escale a mídia.';
+      } else if (lvRuim) {
+        diagTitulo = 'Problema de resposta e agendamento';
+        diagTexto = 'Suas visitas convertem bem, mas poucos leads viram visita. Remédios: responder em até 15 minutos (aula 8.3), follow-up com data marcada para todo lead (aula 3.5) e registro de 100% dos leads na planilha. Dobrar a verba de anúncio agora seria dobrar o desperdício.';
+      } else if (vmRuim) {
+        diagTitulo = 'Problema de script e fechamento';
+        diagTexto = 'Os leads chegam e viram visita, mas a visita não fecha. Remédios: tour de 7 passos treinado em dramatização (aula 3.3), respostas prontas para as 5 objeções (aula 3.4) e fechamento no dia com bônus de início. Meta: 50–60% de conversão.';
+      } else if (leads != null && leads < 50) {
+        diagTitulo = 'Funil saudável — o gargalo é captação';
+        diagTexto = 'Suas conversões estão na referência; falta volume. Agora sim vale investir: indicação estruturada com recompensa dupla, Meta Ads local no raio de 3–5 km e ficha do Google impecável (aula 3.2). Cada lead novo tende a virar matrícula.';
+      } else {
+        diagTitulo = 'Funil rodando na referência';
+        diagTexto = 'As duas conversões estão saudáveis. Mantenha o ritual diário de 10 minutos (aula 3.5), continue registrando todo lead e escale a captação com segurança — o funil aguenta o volume.';
+      }
+    }
+
+    let simulacao = 'Preencha o funil para ver quanto vale subir a conversão.';
+    if (leads && convVM != null && visitas != null && mat != null) {
+      const alvoVM = Math.max(convVM, 55);
+      const alvoLV = Math.max(convLV || 0, 40);
+      const matPotencial = Math.round(leads * (alvoLV / 100) * (alvoVM / 100));
+      if (matPotencial > mat) {
+        simulacao = 'Com os MESMOS ' + num(leads) + ' leads, subindo as conversões para as referências (40% lead→visita e 55% visita→matrícula), você fecharia ~' + num(matPotencial) + ' matrículas em vez de ' + num(mat) + ' — sem gastar R$ 1 a mais em anúncio. É isso que o script e o follow-up valem.';
+      } else {
+        simulacao = 'Seu funil já opera nas referências. O caminho de crescimento agora é volume de leads (aula 3.2) — cada 10 leads a mais tendem a virar ~' + num(Math.round(10 * (alvoLV / 100) * (alvoVM / 100))) + ' matrículas.';
+      }
+    }
+
+    return {
+      leads: this.state.leads, visitas: this.state.visitas, matriculas: this.state.matriculas,
+      meta: this.state.meta, gasto: this.state.gasto,
+      onLeads: this.set('leads'), onVisitas: this.set('visitas'), onMatriculas: this.set('matriculas'),
+      onMeta: this.set('meta'), onGasto: this.set('gasto'),
+      leadsTxt: num(leads), visitasTxt: num(visitas), matriculasTxt: num(mat),
+      visitasBar: (convLV != null ? Math.min(100, convLV) : 0) + '%',
+      matriculasBar: (leads && mat != null ? Math.min(100, (mat / leads) * 100) : 0) + '%',
+      convLVTxt: pct(convLV), lvDot: lv.dot, lvLabel: lv.label,
+      convVMTxt: pct(convVM), vmDot: vm.dot, vmLabel: vm.label,
+      metaTxt: mat == null ? '—' : num(mat) + (meta ? ' / ' + num(meta) : ''),
+      metaDot: mt.dot, metaLabel: mt.label,
+      cacTxt: brl(cac),
+      diagTitulo, diagTexto, simulacao
+    };
+  }
+}
+</script>
+</body>
+</html>

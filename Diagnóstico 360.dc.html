@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#121016">
+<link rel="icon" type="image/png" sizes="48x48" href="./icons/favicon-48.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torque">
+<script src="./app.js" defer></script>
+<link rel="stylesheet" href="./mobile.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Diagnóstico 360</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F5F4F7; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4F7; font-family: 'Archivo', sans-serif; color: #131118; display: flex; flex-direction: column;">
+
+  <div style="background: #121016; color: #FFFFFF; padding: 36px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">MÉTODO TORQUE · MATERIAL DO MÓDULO 1</span>
+      </div>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.01em;">Diagnóstico 360</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #8A8695; max-width: 440px; line-height: 1.5;">18 perguntas, nota de 0 a 10 cada — 0 é “não existe”, 10 é “funciona sem mim, documentado e medido”. Honestidade brutal: nota inflada aqui é mentir para si mesmo. Salvo neste navegador.</p>
+  </div>
+
+  <!-- RESULTADO -->
+  <div style="max-width: 1200px; width: 100%; margin: 0 auto; box-sizing: border-box; padding: 32px 48px 0;">
+    <div style="background: #131118; color: #FFFFFF; padding: 26px 30px; display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: center;">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">FOTOGRAFIA DA SUA ACADEMIA</span>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: grid; grid-template-columns: 190px 1fr 44px; gap: 12px; align-items: center;">
+            <span style="font-size: 13.5px; font-weight: 600;">1 · Finanças</span>
+            <div style="height: 12px; background: #2A2733;"><div style="height: 12px; width: {{ b1 }}; background: {{ c1 }};"></div></div>
+            <span style="font-size: 14px; font-weight: 800; text-align: right;">{{ n1 }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 190px 1fr 44px; gap: 12px; align-items: center;">
+            <span style="font-size: 13.5px; font-weight: 600;">2 · Vendas</span>
+            <div style="height: 12px; background: #2A2733;"><div style="height: 12px; width: {{ b2 }}; background: {{ c2 }};"></div></div>
+            <span style="font-size: 14px; font-weight: 800; text-align: right;">{{ n2 }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 190px 1fr 44px; gap: 12px; align-items: center;">
+            <span style="font-size: 13.5px; font-weight: 600;">3 · Retenção</span>
+            <div style="height: 12px; background: #2A2733;"><div style="height: 12px; width: {{ b3 }}; background: {{ c3 }};"></div></div>
+            <span style="font-size: 14px; font-weight: 800; text-align: right;">{{ n3 }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 190px 1fr 44px; gap: 12px; align-items: center;">
+            <span style="font-size: 13.5px; font-weight: 600;">4 · Equipe</span>
+            <div style="height: 12px; background: #2A2733;"><div style="height: 12px; width: {{ b4 }}; background: {{ c4 }};"></div></div>
+            <span style="font-size: 14px; font-weight: 800; text-align: right;">{{ n4 }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 190px 1fr 44px; gap: 12px; align-items: center;">
+            <span style="font-size: 13.5px; font-weight: 600;">5 · Operação</span>
+            <div style="height: 12px; background: #2A2733;"><div style="height: 12px; width: {{ b5 }}; background: {{ c5 }};"></div></div>
+            <span style="font-size: 14px; font-weight: 800; text-align: right;">{{ n5 }}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 190px 1fr 44px; gap: 12px; align-items: center;">
+            <span style="font-size: 13.5px; font-weight: 600;">6 · Estrutura</span>
+            <div style="height: 12px; background: #2A2733;"><div style="height: 12px; width: {{ b6 }}; background: {{ c6 }};"></div></div>
+            <span style="font-size: 14px; font-weight: 800; text-align: right;">{{ n6 }}</span>
+          </div>
+        </div>
+      </div>
+      <div style="border-left: 1px solid #2A2733; padding-left: 32px; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">SEU GARGALO NÚMERO UM</span>
+        <span style="font-size: 30px; font-weight: 800; line-height: 1.15; color: {{ gargaloCor }};">{{ gargaloTxt }}</span>
+        <span style="font-size: 13.5px; line-height: 1.6; color: #C9C5D4;">{{ gargaloNota }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILARES -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 24px 48px 48px; max-width: 1200px; box-sizing: border-box; width: 100%; margin: 0 auto; align-items: start;">
+
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 1 — FINANÇAS</span>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Eu sei meu lucro real do mês passado (não o saldo do banco)?</label>
+        <input value="{{ q1a }}" onChange="{{ on1a }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Existe DRE ou controle equivalente atualizado todo mês?</label>
+        <input value="{{ q1b }}" onChange="{{ on1b }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">A inadimplência está medida e abaixo de 5%?</label>
+        <input value="{{ q1c }}" onChange="{{ on1c }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 2 — VENDAS</span>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Todo lead que chega é registrado em algum lugar?</label>
+        <input value="{{ q2a }}" onChange="{{ on2a }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Existe script de atendimento e a equipe usa?</label>
+        <input value="{{ q2b }}" onChange="{{ on2b }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Eu sei minha taxa de conversão de visita em matrícula?</label>
+        <input value="{{ q2c }}" onChange="{{ on2c }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 3 — RETENÇÃO</span>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Eu sei meu churn mensal de cabeça?</label>
+        <input value="{{ q3a }}" onChange="{{ on3a }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Aluno que some 7 dias recebe contato automático?</label>
+        <input value="{{ q3b }}" onChange="{{ on3b }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Existe processo de boas-vindas nos primeiros 30 dias?</label>
+        <input value="{{ q3c }}" onChange="{{ on3c }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 4 — EQUIPE</span>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Cada função tem responsabilidades escritas?</label>
+        <input value="{{ q4a }}" onChange="{{ on4a }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Existe reunião semanal com pauta e decisões registradas?</label>
+        <input value="{{ q4b }}" onChange="{{ on4b }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">A academia funciona bem quando eu tiro uma semana de férias?</label>
+        <input value="{{ q4c }}" onChange="{{ on4c }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 5 — OPERAÇÃO</span>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Abertura e fechamento seguem checklist assinado?</label>
+        <input value="{{ q5a }}" onChange="{{ on5a }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Existe manutenção preventiva agendada (não só conserto)?</label>
+        <input value="{{ q5b }}" onChange="{{ on5b }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Documentação legal (CREF, alvará, bombeiros) está em dia?</label>
+        <input value="{{ q5c }}" onChange="{{ on5c }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 6 — ESTRUTURA E EQUIPAMENTOS</span>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Nenhum equipamento está parado há mais de 7 dias?</label>
+        <input value="{{ q6a }}" onChange="{{ on6a }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">Eu sei a idade e o estado de cada máquina do salão?</label>
+        <input value="{{ q6b }}" onChange="{{ on6b }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 74px; gap: 14px; align-items: center;">
+        <label style="font-size: 14px; line-height: 1.5;">O layout atende o horário de pico sem fila crônica?</label>
+        <input value="{{ q6c }}" onChange="{{ on6c }}" placeholder="0–10" inputMode="numeric" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 9px 10px; border: 1px solid #D8D5E0; font-size: 15px; text-align: center; font-family: 'Archivo', sans-serif;" style-focus="border-color: #7C3AED; outline: none;">
+      </div>
+    </div>
+
+    <div style="grid-column: 1 / -1; border: 1.5px solid #7C3AED; background: #FFFFFF; padding: 18px 22px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">A REGRA DO GARGALO</p>
+      <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">Não olhe a média — olhe a <strong>menor</strong> nota. O pilar mais fraco limita todos os outros: não adianta encher a academia de leads (vendas nota 8) se o aluno entra e cancela em 60 dias (retenção nota 3). A ordem de implantação do curso na SUA academia começa pelo pilar de menor nota. Reaplique o diagnóstico ao final do curso e compare.</p>
+    </div>
+
+  </div>
+
+  <div style="margin-top: auto; background: #121016; padding: 18px 48px; display: flex; justify-content: space-between; align-items: baseline;">
+    <span style="font-size: 13px; color: #8A8695;">Método Torque · Gestão de Academias de Alta Performance · Material do aluno</span>
+    <span style="font-size: 13px; color: #8A8695;">www.torquefitness.com.br</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { q1a:'',q1b:'',q1c:'',q2a:'',q2b:'',q2c:'',q3a:'',q3b:'',q3c:'',q4a:'',q4b:'',q4c:'',q5a:'',q5b:'',q5c:'',q6a:'',q6b:'',q6c:'' };
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('metodo-torque-diag360') || 'null');
+      if (saved && typeof saved === 'object') {
+        const clean = {};
+        for (const k of Object.keys(this.state)) if (typeof saved[k] === 'string') clean[k] = saved[k];
+        this.setState(clean);
+      }
+    } catch (e) {}
+  }
+
+  set(k) {
+    return (e) => {
+      let v = e.target.value.replace(/[^0-9,\.]/g, '');
+      this.setState({ [k]: v }, () => {
+        try { localStorage.setItem('metodo-torque-diag360', JSON.stringify(this.state)); } catch (err) {}
+      });
+    };
+  }
+
+  renderVals() {
+    const P = (s) => {
+      s = (s == null ? '' : String(s)).trim().replace(',', '.');
+      if (!s) return null;
+      let n = parseFloat(s);
+      if (!isFinite(n)) return null;
+      return Math.max(0, Math.min(10, n));
+    };
+    const NOMES = ['Finanças', 'Vendas', 'Retenção', 'Equipe', 'Operação', 'Estrutura'];
+    const grupos = [
+      [P(this.state.q1a), P(this.state.q1b), P(this.state.q1c)],
+      [P(this.state.q2a), P(this.state.q2b), P(this.state.q2c)],
+      [P(this.state.q3a), P(this.state.q3b), P(this.state.q3c)],
+      [P(this.state.q4a), P(this.state.q4b), P(this.state.q4c)],
+      [P(this.state.q5a), P(this.state.q5b), P(this.state.q5c)],
+      [P(this.state.q6a), P(this.state.q6b), P(this.state.q6c)]
+    ];
+    const medias = grupos.map((g) => {
+      const vals = g.filter((v) => v != null);
+      return vals.length ? vals.reduce((a, v) => a + v, 0) / vals.length : null;
+    });
+    const cor = (m) => m == null ? '#2A2733' : (m >= 7 ? '#1F8A5B' : (m >= 4 ? '#D97706' : '#DC2626'));
+    const fmt = (m) => m == null ? '—' : m.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+
+    let gargalo = null, gMin = Infinity;
+    medias.forEach((m, i) => { if (m != null && m < gMin) { gMin = m; gargalo = i; } });
+    const preenchidos = medias.filter((m) => m != null).length;
+
+    const out = {
+      gargaloTxt: gargalo == null ? 'Preencha as notas' : NOMES[gargalo],
+      gargaloCor: gargalo == null ? '#8A8695' : (gMin >= 7 ? '#4ADE80' : (gMin >= 4 ? '#FBBF24' : '#F87171')),
+      gargaloNota: gargalo == null
+        ? 'O pilar de menor nota é a sua prioridade de implantação no curso.'
+        : (preenchidos < 6
+          ? 'Parcial (' + preenchidos + ' de 6 pilares preenchidos). Nota do pilar: ' + fmt(gMin) + '.'
+          : 'Nota ' + fmt(gMin) + '. Comece a implantação do curso por este pilar — ele está limitando todos os outros.')
+    };
+    for (let i = 0; i < 6; i++) {
+      out['n' + (i + 1)] = fmt(medias[i]);
+      out['b' + (i + 1)] = medias[i] == null ? '0%' : (medias[i] * 10) + '%';
+      out['c' + (i + 1)] = cor(medias[i]);
+    }
+    const keys = ['1a','1b','1c','2a','2b','2c','3a','3b','3c','4a','4b','4c','5a','5b','5c','6a','6b','6c'];
+    for (const k of keys) {
+      out['q' + k] = this.state['q' + k];
+      out['on' + k] = this.set('q' + k);
+    }
+    return out;
+  }
+}
+</script>
+</body>
+</html>

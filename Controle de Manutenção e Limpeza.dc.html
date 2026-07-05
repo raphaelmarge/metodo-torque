@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#121016">
+<link rel="icon" type="image/png" sizes="48x48" href="./icons/favicon-48.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torque">
+<script src="./app.js" defer></script>
+<link rel="stylesheet" href="./mobile.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Controle de Manutenção e Limpeza</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MATERIAL DO MÓDULO 6 · MANUTENÇÃO E LIMPEZA</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · MATERIAL DO MÓDULO 6</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">Controle de Manutenção e Limpeza</h1>
+    <p style="margin: 16px 0 0 0; font-size: 16px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 16px 20px;">Quatro controles em um: limpeza diária, manutenção de aparelhos, manutenção predial e a ficha individual por máquina. Imprima o que for de uso diário e deixe na prancheta. <strong>Regra que faz tudo funcionar: quem executa, assina — e o gestor confere 2 ou 3 itens por amostragem toda semana.</strong></p>
+
+    <!-- 1. LIMPEZA DIÁRIA -->
+    <h2 style="margin: 36px 0 0 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em;">1 · Folha de limpeza diária <span style="font-size: 14px; font-weight: 600; color: #6E6A78;">(uma folha por dia, na porta do vestiário)</span></h2>
+    <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 2.2; color: #3A3742;">Data: <span style="display: inline-block; min-width: 120px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Responsável do dia: <span style="display: inline-block; min-width: 220px; border-bottom: 1px solid #8A8695;"></span></p>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px; line-height: 1.5;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em;">ÁREA / TAREFA</th>
+          <th style="text-align: center; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 130px;">PÓS-PICO MANHÃ<br>hora + rubrica</th>
+          <th style="text-align: center; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 130px;">MEIO DA TARDE<br>hora + rubrica</th>
+          <th style="text-align: center; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 130px;">PÓS-PICO NOITE<br>hora + rubrica</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Banheiros e vestiários: limpos, papel, sabonete, ralos ok</td>
+          <td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Estofados e pegadas dos equipamentos higienizados</td>
+          <td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Estações de limpeza do aluno abastecidas (borrifador + papel)</td>
+          <td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Espelhos e superfícies sem marcas</td>
+          <td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Piso do salão e área de peso livre (magnésio, borracha)</td>
+          <td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Bebedouros, recepção e lixeiras</td>
+          <td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Teste do cheiro: ambiente neutro? (ventilação ok)</td>
+          <td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin: 10px 0 0 0; font-size: 13px; line-height: 1.6; color: #6E6A78;">Semanal (dia fixo): limpeza profunda de vestiários e áreas, atrás/embaixo dos equipamentos. Mensal: filtros de ar-condicionado, vidros altos, caixas de gordura/ralos.</p>
+
+    <!-- 2. APARELHOS -->
+    <h2 style="margin: 40px 0 0 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em;">2 · Manutenção de aparelhos <span style="font-size: 14px; font-weight: 600; color: #6E6A78;">(rotina preventiva — aula 6.3)</span></h2>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">DIÁRIO</span>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6;">Equipe do salão: olhar e ouvir — barulho anormal, folga, cabo desfiando, estofado abrindo. Achou, registrou no canal de manutenção <strong>com foto</strong>.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">MENSAL</span>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6;">☐ Aperto geral de parafusos e articulações &nbsp;☐ Inspeção de cabos e polias (desfiado = troca NA HORA) &nbsp;☐ Lubrificação de pontos móveis &nbsp;☐ Esteiras: manta centralizada, velocidade, parada de emergência &nbsp;☐ Limpeza sob manta/motor conforme manual</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">TRIMESTRAL</span>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6;">☐ Revisão aprofundada de cardio (motor, manta, horas de uso) &nbsp;☐ Calibração de cargas &nbsp;☐ Revisão de estofados para reforma em lote</p>
+      </div>
+    </div>
+    <div style="margin-top: 14px; background: #131118; color: #FFFFFF; padding: 16px 22px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">REGRA DOS 7 DIAS</p>
+      <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6; color: #E8E5F0;">Nenhum equipamento parado mais de 7 dias. Peça demorando? Cartaz honesto ("em manutenção — peça a caminho, volta dia X") e cobrança do fornecedor por escrito. Corretiva de emergência custa 2 a 3× a preventiva que a evitaria — sem contar o aluno perdido.</p>
+    </div>
+
+    <!-- FICHA POR MÁQUINA -->
+    <h3 style="margin: 28px 0 0 0; font-size: 16px; font-weight: 700; letter-spacing: 0.1em; color: #131118;">FICHA INDIVIDUAL POR MÁQUINA <span style="font-weight: 600; color: #6E6A78;">(uma por equipamento)</span></h3>
+    <div style="border: 1.5px solid #131118; padding: 16px 20px; margin-top: 10px;">
+      <p style="margin: 0; font-size: 14px; line-height: 2.4; color: #3A3742;">Equipamento: <span style="display: inline-block; min-width: 260px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Marca/modelo: <span style="display: inline-block; min-width: 200px; border-bottom: 1px solid #8A8695;"></span><br>Data de compra: <span style="display: inline-block; min-width: 120px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Novo / usado / importado: <span style="display: inline-block; min-width: 140px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Estado atual (1–5): <span style="display: inline-block; min-width: 60px; border-bottom: 1px solid #8A8695;"></span></p>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px 12px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 100px;">DATA</th>
+            <th style="text-align: left; padding: 8px 12px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.08em;">INTERVENÇÃO / PEÇA TROCADA</th>
+            <th style="text-align: left; padding: 8px 12px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 110px;">CUSTO (R$)</th>
+            <th style="text-align: left; padding: 8px 12px; background: #F5F4F7; border: 1px solid #E2E0E8; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 120px;">RESPONSÁVEL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="border: 1px solid #E2E0E8; height: 30px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+          <tr><td style="border: 1px solid #E2E0E8; height: 30px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+          <tr><td style="border: 1px solid #E2E0E8; height: 30px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+          <tr><td style="border: 1px solid #E2E0E8; height: 30px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+          <tr><td style="border: 1px solid #E2E0E8; height: 30px;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td><td style="border: 1px solid #E2E0E8;"></td></tr>
+        </tbody>
+      </table>
+      <p style="margin: 10px 0 0 0; font-size: 13px; line-height: 1.6; color: #6E6A78;">Quando o custo anual de conserto passar de 20–30% do valor de um substituto melhor, a troca se paga (aula 7.5). Este histórico vale ouro na venda do usado.</p>
+    </div>
+
+    <!-- 3. PREDIAL -->
+    <h2 style="margin: 40px 0 0 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em;">3 · Manutenção predial <span style="font-size: 14px; font-weight: 600; color: #6E6A78;">(o prédio também é experiência do aluno)</span></h2>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px; line-height: 1.55;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 130px;">FREQUÊNCIA</th>
+          <th style="text-align: left; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em;">O QUE CONFERIR</th>
+          <th style="text-align: center; padding: 9px 12px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; width: 150px;">ÚLTIMA / PRÓXIMA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Mensal</td>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Iluminação (lâmpadas queimadas), tomadas e quadro elétrico sem aquecimento/cheiro, torneiras e descargas sem vazamento, ralos escoando, filtros do ar-condicionado, portas/fechaduras/catraca</td>
+          <td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Trimestral</td>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Infiltrações e mofo (teto, paredes, vestiários), pintura e sinalização, pisos soltos/borracha descolando, calhas e telhado (antes das chuvas), higienização completa do ar-condicionado, pragas (contrato de dedetização em dia)</td>
+          <td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8; font-weight: 700;">Semestral / anual</td>
+          <td style="padding: 10px 12px; border: 1px solid #E2E0E8;">Extintores (validade e pressão), luzes de emergência e saídas desobstruídas (AVCB — aula 6.4), revisão elétrica geral com eletricista, caixa d'água (limpeza semestral), fachada e letreiro, estrutura de telhado/mezanino</td>
+          <td style="border: 1px solid #E2E0E8;"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- REGRAS FINAIS -->
+    <div style="margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="border: 1.5px solid #7C3AED; padding: 18px 22px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">COMO FAZER RODAR</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">— Cada controle tem UM dono (folha de função — aula 5.1)<br>— Canal de manutenção no WhatsApp da equipe: achou problema, registrou com foto<br>— Agenda do trimestre publicada no mural da equipe<br>— Inspeção do gestor: 1× por semana, dia e hora aleatórios, com olhos de visitante — anote 5 pontos e distribua</p>
+      </div>
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 18px 22px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">POR QUE ISSO RETÉM ALUNO</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">O aluno não reclama de banheiro sujo nem de esteira parada — ele conclui em silêncio que a academia está decaindo e começa a olhar o concorrente. Limpeza e manutenção são os itens de retenção mais baratos que existem: custam processo, não dinheiro.</p>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

@@ -87,6 +87,13 @@
     .ftr-space { height: var(--doc-ftr-h); }
     ::slotted([slot="header"]),
     ::slotted([slot="footer"]) { display: block; box-sizing: border-box; }
+    @media screen and (max-width: 760px) {
+      /* Em telas estreitas a folha vira fluida; table-layout fixed impede
+       * que conteúdo largo (tabelas, linhas de preenchimento) expanda a
+       * célula do frame além da tela — o conteúdo rola dentro da folha. */
+      .frame { table-layout: fixed; }
+      .frame .body { max-width: 100%; overflow-x: auto; }
+    }
     @media print {
       :host { background: none; padding: 0; min-height: 0; }
       .sheet {
