@@ -14,25 +14,35 @@
 </head>
 <body>
 
-<!-- CADASTRO / CÓDIGO DE ACESSO -->
+<!-- ENTRADA: LOGIN COM SENHA (nuvem) ou CÓDIGO DE ACESSO (modo local) -->
 <div id="gate" hidden>
   <div class="gate-card">
     <img src="assets/icons/logo-torque-claro.svg" alt="Método Torque" class="gate-logo">
     <h1>Portal do Aluno</h1>
-    <p>Faça seu cadastro para acessar o curso, as planilhas e os programas. Use o <strong>código de acesso</strong> que você recebeu na compra.</p>
+
+    <div class="gate-abas" id="gateAbas" hidden>
+      <button type="button" data-aba="entrar" class="ativa">Entrar</button>
+      <button type="button" data-aba="criar">Criar conta</button>
+    </div>
+
+    <p id="gateIntro">Faça seu cadastro para acessar o curso, as planilhas e os programas.</p>
+
     <form id="gateForm">
-      <div class="campo-gate"><label for="gCodigo">Código de acesso</label>
-        <input id="gCodigo" required autocomplete="off" placeholder="Digite o código que você recebeu"></div>
-      <div class="campo-gate"><label for="gNome">Seu nome</label>
-        <input id="gNome" required placeholder="Nome e sobrenome"></div>
+      <div class="campo-gate" id="cCodigo"><label for="gCodigo">Código de acesso</label>
+        <input id="gCodigo" autocomplete="off" placeholder="Digite o código que você recebeu"></div>
+      <div class="campo-gate" id="cNome"><label for="gNome">Seu nome</label>
+        <input id="gNome" placeholder="Nome e sobrenome"></div>
       <div class="campo-gate"><label for="gEmail">E-mail</label>
-        <input id="gEmail" type="email" required placeholder="voce@email.com"></div>
-      <div class="campo-gate"><label for="gZap">WhatsApp</label>
+        <input id="gEmail" type="email" required placeholder="voce@email.com" autocomplete="username"></div>
+      <div class="campo-gate" id="cZap"><label for="gZap">WhatsApp</label>
         <input id="gZap" inputmode="numeric" placeholder="11999998888"></div>
+      <div class="campo-gate" id="cSenha" hidden><label for="gSenha">Senha</label>
+        <input id="gSenha" type="password" minlength="6" placeholder="mínimo 6 caracteres" autocomplete="current-password"></div>
       <p id="gateErro" class="gate-erro" hidden></p>
-      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Entrar no portal →</button>
+      <button type="submit" class="btn btn-primary" id="gateBtn" style="width: 100%; justify-content: center;">Entrar no portal →</button>
+      <button type="button" class="gate-link" id="gateEsqueci" hidden>Esqueci minha senha</button>
     </form>
-    <small>Seus dados ficam salvos neste aparelho. Não tem código? Fale com o suporte do Método Torque.</small>
+    <small id="gateRodape">Seus dados ficam salvos neste aparelho. Não tem código? Fale com o suporte do Método Torque.</small>
   </div>
 </div>
 
@@ -66,6 +76,7 @@
       </div>
       <div class="side-perfil" id="sidePerfil" hidden>
         <span id="perfilNome"></span>
+        <span class="sync-chip" id="syncChip" hidden title="Dados sincronizados na nuvem">☁ ✓</span>
         <button id="sairBtn" title="Sair do portal neste aparelho">Sair</button>
       </div>
       <div class="side-backup">
@@ -154,6 +165,8 @@
 
 <script src="assets/content.js"></script>
 <script src="assets/access-config.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/vendor/supabase.js"></script>
 <script src="assets/access.js"></script>
 <script src="apps/store.js"></script>
 <script src="assets/app.js"></script>

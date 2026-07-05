@@ -89,4 +89,24 @@ O portal pede **código de acesso + cadastro** (nome, e-mail, WhatsApp) na prime
 - `codigos`: lista de códigos válidos em SHA-256 — gere novos com `gerador-codigo.html` (abra no navegador, digite o código, cole a linha gerada);
 - `notificarEmail`: preencha com seu e-mail para receber cada cadastro por e-mail (via formsubmit.co — confirme o e-mail de ativação no primeiro envio).
 
-Código inicial: `TORQUE2026`. É uma proteção **leve** (o conteúdo continua tecnicamente público para quem souber as URLs); para login com senha de verdade e alunos gerenciados na nuvem, o próximo passo é o Supabase.
+Código inicial: `TORQUE2026`. É uma proteção **leve** (o conteúdo continua tecnicamente público para quem souber as URLs).
+
+## Login com senha + sincronização online (Supabase)
+
+O portal tem um segundo modo, ativado por `assets/cloud-config.js`: **login com e-mail e senha** e **dados sincronizados na nuvem** entre todos os aparelhos da conta (recepção, celular, TV).
+
+Como ativar (~10 minutos, gratuito):
+
+1. Crie um projeto em [supabase.com](https://supabase.com);
+2. No painel, abra **SQL Editor**, cole o conteúdo de [`supabase-setup.sql`](supabase-setup.sql) e clique em **Run**;
+3. Em **Project Settings → API**, copie a *Project URL* e a chave *anon public*;
+4. Preencha os dois campos em `assets/cloud-config.js` e publique;
+5. (Recomendado) Em **Authentication → Sign In / Up → Email**, desligue *Confirm email* para o aluno entrar direto após criar a conta.
+
+Comportamento no modo nuvem:
+
+- **Criar conta** continua exigindo o código de acesso (só compradores entram);
+- A sessão vale em qualquer aparelho — a equipe pode usar **a mesma conta da academia** em recepção + celular + TV, e todos veem os mesmos dados;
+- Programas e fichas preenchíveis sincronizam sozinhos (última alteração vence, por item); as fotos da manutenção ficam locais nesta versão;
+- Sem internet, tudo continua funcionando e sincroniza quando a conexão volta;
+- Com `cloud-config.js` vazio, o portal opera no modo local (código de acesso), como antes.

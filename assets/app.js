@@ -329,6 +329,13 @@
   window.MT_onAcesso = syncPerfil;
   syncPerfil();
 
+  // indicador de sincronização na nuvem
+  window.MT_syncInfo = function (info) {
+    var chip = el("syncChip");
+    chip.hidden = !info.ativa;
+    if (info.ultima) chip.title = "Sincronizado na nuvem às " + info.ultima.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
+
   // ---------- logo da academia ----------
   function syncLogoBtns() {
     var tem = !!window.MTStore.getLogo();
