@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modo TV — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  :root { --roxo: #7c3aed; --lilas: #a78bfa; --ok: #22c55e; --erro: #f87171; --alerta: #fbbf24; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #121016; color: #fff; font-family: "Archivo", system-ui, sans-serif; overflow: hidden; }
+  .tela { height: 100vh; display: flex; flex-direction: column; padding: 3.5vh 4vw; }
+  .cab { display: flex; justify-content: space-between; align-items: center; }
+  .marca { display: flex; align-items: center; gap: 14px; font-size: 2.2vh; font-weight: 700; letter-spacing: .2em; color: var(--lilas); }
+  .marca::before { content: ""; width: 3.5vw; height: .55vh; background: var(--roxo); }
+  .relogio { font-size: 3.2vh; font-weight: 800; font-variant-numeric: tabular-nums; }
+  h1 { margin: 2.2vh 0 0; font-size: 5.6vh; font-weight: 800; letter-spacing: -.01em; }
+  .conteudo { flex: 1; margin-top: 3vh; overflow: hidden; }
+  .pontos { display: flex; gap: 10px; justify-content: center; padding-top: 2vh; }
+  .pontos span { width: 12px; height: 12px; border-radius: 50%; background: #3a3644; }
+  .pontos span.on { background: var(--roxo); }
+
+  /* metas */
+  .meta-acad { display: flex; gap: 4vw; margin-bottom: 3.5vh; }
+  .meta-acad > div { flex: 1; }
+  .rotulo { font-size: 2vh; font-weight: 700; letter-spacing: .16em; color: #a09aae; }
+  .num { font-size: 6.4vh; font-weight: 800; margin: .6vh 0; }
+  .num small { font-size: 2.6vh; color: #a09aae; font-weight: 600; }
+  .barra { height: 2.2vh; background: #1b1822; border: 1px solid #2e2a38; }
+  .barra > div { height: 100%; background: linear-gradient(90deg, var(--roxo), var(--lilas)); }
+  .barra.cheia > div { background: var(--ok); }
+  .rank { display: flex; flex-direction: column; gap: 1.6vh; }
+  .rk { display: grid; grid-template-columns: 6vh 1fr 22vw 16vw; gap: 2vw; align-items: center; font-size: 3.4vh; }
+  .rk .pos { font-weight: 800; color: var(--lilas); }
+  .rk .pos.p1 { color: #fff; background: var(--roxo); text-align: center; }
+  .rk .nome { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rk .val { text-align: right; font-variant-numeric: tabular-nums; font-size: 3vh; }
+  .rk .val strong { color: var(--ok); }
+
+  /* listas (manutenção / checklist) */
+  .lin { display: flex; align-items: center; gap: 1.6vw; padding: 1.6vh 0; border-bottom: 1px solid #2e2a38; font-size: 3.2vh; }
+  .lin .tag { font-size: 1.9vh; font-weight: 800; letter-spacing: .08em; padding: .5vh 1vw; flex: none; }
+  .tag.erro { background: rgba(248,113,113,.15); color: var(--erro); }
+  .tag.alerta { background: rgba(251,191,36,.14); color: var(--alerta); }
+  .tag.roxo { background: rgba(124,58,237,.2); color: var(--lilas); }
+  .tag.ok { background: rgba(34,197,94,.15); color: var(--ok); }
+  .lin .quando { margin-left: auto; color: #a09aae; font-size: 2.6vh; white-space: nowrap; }
+  .tudo-ok { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 2vh; color: var(--ok); font-size: 5vh; font-weight: 800; }
+  .tudo-ok small { font-size: 2.4vh; color: #a09aae; font-weight: 600; }
+  .aviso-vazio { color: #6e6a78; font-size: 3vh; padding-top: 6vh; text-align: center; }
+</style>
+</head>
+<body>
+<div class="tela">
+  <div class="cab">
+    <span class="marca">MÉTODO TORQUE</span>
+    <span class="relogio" id="relogio"></span>
+  </div>
+  <h1 id="titulo"></h1>
+  <div class="conteudo" id="conteudo"></div>
+  <div class="pontos" id="pontos"></div>
+</div>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var INTERVALO = 12000; // troca de painel
+  var params = new URLSearchParams(location.search);
+  var fixo = params.get("painel"); // ?painel=metas|manutencao|checklist para travar
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  // ---------- painéis ----------
+  function painelMetas() {
+    var st = S.read("metas", { vendedoras: [], metas: {}, vendas: [] });
+    var mk = S.monthKey();
+    var meta = st.metas[mk] || { acad: { mat: 0, rec: 0 }, vend: {} };
+    var vendas = st.vendas.filter(function (v) { return v.data.slice(0, 7) === mk; });
+    var totMat = vendas.filter(function (v) { return v.tipo === "matricula"; }).length;
+    var totRec = vendas.reduce(function (a, v) { return a + (+v.valor || 0); }, 0);
+
+    var html = '<div class="meta-acad">' +
+      blocoAcad("MATRÍCULAS NO MÊS", totMat, meta.acad.mat, function (n) { return Math.round(n); }) +
+      blocoAcad("RECEITA DE VENDAS", totRec, meta.acad.rec, S.fmtBRL) + "</div>";
+
+    var linhas = st.vendedoras.filter(function (v) { return v.ativa !== false; }).map(function (v) {
+      var minhas = vendas.filter(function (x) { return x.vid === v.id; });
+      var mat = minhas.filter(function (x) { return x.tipo === "matricula"; }).length;
+      var rec = minhas.reduce(function (a, x) { return a + (+x.valor || 0); }, 0);
+      var m = meta.vend[v.id] || { mat: 0, rec: 0 };
+      var pct = m.rec > 0 ? rec / m.rec * 100 : (m.mat > 0 ? mat / m.mat * 100 : 0);
+      return { nome: v.nome, mat: mat, rec: rec, pct: pct };
+    }).sort(function (a, b) { return b.pct - a.pct || b.rec - a.rec; }).slice(0, 6);
+
+    if (linhas.length) {
+      html += '<div class="rank">' + linhas.map(function (l, i) {
+        var p = Math.min(100, l.pct);
+        return '<div class="rk"><span class="pos' + (i === 0 ? " p1" : "") + '">' + (i + 1) + 'º</span>' +
+          '<span class="nome">' + esc(l.nome) + "</span>" +
+          '<span class="barra' + (l.pct >= 100 ? " cheia" : "") + '"><div style="width:' + p + '%"></div></span>' +
+          '<span class="val"><strong>' + Math.round(l.pct) + "%</strong> · " + S.fmtBRL(l.rec) + "</span></div>";
+      }).join("") + "</div>";
+    } else {
+      html += '<div class="aviso-vazio">Cadastre as vendedoras no programa Metas de Vendas.</div>';
+    }
+    return { titulo: "Metas do mês 🎯", html: html };
+
+    function blocoAcad(rotulo, real, alvo, fmt) {
+      var pct = alvo > 0 ? Math.min(100, real / alvo * 100) : 0;
+      return "<div><div class=\"rotulo\">" + rotulo + '</div><div class="num">' + fmt(real) +
+        " <small>/ " + (alvo ? fmt(alvo) : "—") + '</small></div><div class="barra' + (pct >= 100 ? " cheia" : "") + '"><div style="width:' + pct + '%"></div></div></div>';
+    }
+  }
+
+  function painelManutencao() {
+    var st = S.read("manut", { chamados: [] });
+    var hoje = S.todayISO();
+    var CAT = { aparelho: "🏋", predial: "🏢", limpeza: "🧽" };
+    var pend = st.chamados.filter(function (c) { return c.status !== "resolvido"; })
+      .sort(function (a, b) {
+        var aa = a.agendado && a.agendado < hoje ? 0 : 1;
+        var bb = b.agendado && b.agendado < hoje ? 0 : 1;
+        if (aa !== bb) return aa - bb;
+        return (a.agendado || "9999") < (b.agendado || "9999") ? -1 : 1;
+      }).slice(0, 7);
+
+    if (!pend.length) return { titulo: "Manutenção 🔧", html: '<div class="tudo-ok">✓ Nenhuma pendência<small>Aparelhos, predial e limpeza em dia</small></div>' };
+
+    var html = pend.map(function (c) {
+      var atr = c.agendado && c.agendado < hoje;
+      var tag = atr ? '<span class="tag erro">ATRASADO</span>' :
+        c.agendado === hoje ? '<span class="tag alerta">HOJE</span>' :
+        c.agendado ? '<span class="tag roxo">AGENDADO</span>' : '<span class="tag alerta">EM ABERTO</span>';
+      return '<div class="lin"><span>' + CAT[c.cat] + "</span>" + tag +
+        "<span>" + esc(c.titulo) + (c.local ? ' <span style="color:#a09aae;">· ' + esc(c.local) + "</span>" : "") + "</span>" +
+        '<span class="quando">' + (c.agendado ? S.fmtData(c.agendado) : "sem data") + "</span></div>";
+    }).join("");
+    return { titulo: "Manutenção 🔧", html: html };
+  }
+
+  function painelChecklist() {
+    var st = S.read("checklist", null);
+    if (!st || !st.tarefas.length) return { titulo: "Checklist do dia ✅", html: '<div class="aviso-vazio">Configure o programa Checklist do Dia.</div>' };
+    var hoje = S.todayISO();
+    var marcas = st.dias[hoje] || {};
+    var agora = new Date();
+    var hm = ("0" + agora.getHours()).slice(-2) + ":" + ("0" + agora.getMinutes()).slice(-2);
+
+    var pend = st.tarefas.filter(function (t) { return !(marcas[t.id] && marcas[t.id].feito); });
+    var atrasados = pend.filter(function (t) { return t.hora && hm > t.hora; });
+    var feitos = st.tarefas.length - pend.length;
+
+    var html = '<div class="meta-acad"><div><div class="rotulo">CONCLUÍDO HOJE</div><div class="num">' + feitos +
+      " <small>/ " + st.tarefas.length + '</small></div><div class="barra' + (pend.length === 0 ? " cheia" : "") +
+      '"><div style="width:' + (feitos / st.tarefas.length * 100) + '%"></div></div></div></div>';
+
+    if (!pend.length) {
+      html += '<div class="tudo-ok" style="height:50%;">✓ Checklist 100% concluído</div>';
+    } else {
+      var equipe = st.equipe || [];
+      html += (atrasados.length ? atrasados : pend).slice(0, 6).map(function (t) {
+        var atr = t.hora && hm > t.hora;
+        var r = equipe.find(function (e) { return e.id === t.resp; });
+        return '<div class="lin">' + (atr ? '<span class="tag erro">ATRASADO</span>' : '<span class="tag roxo">' + (t.turno === "abertura" ? "ABERTURA" : "FECHAMENTO") + "</span>") +
+          "<span>" + esc(t.texto) + "</span>" +
+          '<span class="quando">' + (r ? "👤 " + esc(r.nome) + " · " : "") + "limite " + (t.hora || "—") + "</span></div>";
+      }).join("");
+    }
+    return { titulo: "Checklist do dia ✅", html: html };
+  }
+
+  // ---------- rotação ----------
+  var paineis = { metas: painelMetas, manutencao: painelManutencao, checklist: painelChecklist };
+  var ordem = fixo && paineis[fixo] ? [fixo] : ["metas", "manutencao", "checklist"];
+  var idx = 0;
+
+  function mostra() {
+    var p = paineis[ordem[idx]]();
+    $("titulo").textContent = p.titulo;
+    $("conteudo").innerHTML = p.html;
+    $("pontos").innerHTML = ordem.length > 1 ? ordem.map(function (_, i) {
+      return '<span class="' + (i === idx ? "on" : "") + '"></span>';
+    }).join("") : "";
+  }
+
+  function proximo() { idx = (idx + 1) % ordem.length; mostra(); }
+
+  function relogio() {
+    var d = new Date();
+    $("relogio").textContent = d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }) +
+      "  " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+  }
+
+  relogio(); mostra();
+  setInterval(relogio, 10000);
+  if (ordem.length > 1) setInterval(proximo, INTERVALO);
+  S.onChange(function () { mostra(); });
+  document.addEventListener("click", function () {
+    if (document.fullscreenElement) return;
+    document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(function () {});
+  });
+})();
+</script>
+</body>
+</html>

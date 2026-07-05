@@ -12,6 +12,14 @@ self.MT_MODULES = [
   { n: 9, title: "Expansão: A Próxima Unidade e Novas Receitas", short: "Bônus · Expansão", bonus: true },
 ];
 
+// Programas do dia a dia (apps completos, dados salvos no navegador)
+self.MT_APPS = [
+  { slug: "app-metas", file: "apps/metas.html", icone: "🎯", title: "Metas de Vendas", desc: "Meta mensal por vendedora, lançamento de vendas em segundos, ranking e projeção do mês." },
+  { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
+  { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },
+  { slug: "tv", file: "apps/tv.html", icone: "📺", title: "Modo TV", desc: "Painel para o telão da academia: metas, manutenção e checklist girando em tela cheia, sempre atualizados.", standalone: true },
+];
+
 // type: apostila | ferramenta (interativa) | modelo (documento de apoio) | deck | indice
 self.MT_DOCS = [
   { slug: "deck", type: "deck", module: null, title: "Apresentação do Método", desc: "O deck completo do Método Torque: promessa, percurso dos 8 módulos e o que muda na sua academia." },

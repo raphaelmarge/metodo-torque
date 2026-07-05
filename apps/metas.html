@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metas de Vendas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .painel-mes { display: flex; align-items: center; gap: 10px; }
+  .painel-mes strong { font-size: 17px; min-width: 150px; text-align: center; text-transform: capitalize; }
+  .meta-acad { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .kpi { font-size: 30px; font-weight: 800; }
+  .kpi small { font-size: 14px; font-weight: 600; color: var(--cinza); }
+  .vend-card { display: flex; flex-direction: column; gap: 12px; }
+  .vend-card .nome { display: flex; justify-content: space-between; align-items: center; }
+  .vend-card .nome strong { font-size: 17px; }
+  .pos { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; background: var(--fundo); border: 1px solid var(--linha); }
+  .pos.p1 { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .prog { display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+  .prog .l { display: flex; justify-content: space-between; }
+  .proj { font-size: 12.5px; color: var(--cinza); }
+  .venda-row button { margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div>
+    <span class="kicker">PROGRAMA · COMERCIAL</span>
+    <h1>Metas de Vendas</h1>
+  </div>
+  <p>Defina a meta do mês por vendedora, lance cada venda em segundos e acompanhe o ranking e a projeção. Os dados aparecem também no modo TV.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <!-- mês + ações -->
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="painel-mes">
+      <button class="btn sec mini" id="mesAnt">←</button>
+      <strong id="mesLabel"></strong>
+      <button class="btn sec mini" id="mesProx">→</button>
+    </div>
+    <div class="linha-flex">
+      <button class="btn" id="btnVenda">+ Lançar venda</button>
+      <button class="btn sec" id="btnConfig">⚙ Vendedoras e metas</button>
+    </div>
+  </div>
+
+  <!-- resumo da academia -->
+  <div class="card">
+    <h2>Meta da academia no mês</h2>
+    <div class="meta-acad" id="resumoAcad"></div>
+  </div>
+
+  <!-- ranking -->
+  <section>
+    <h2 class="titulo" style="margin: 6px 0 10px;">Ranking das vendedoras</h2>
+    <div class="grid-3" id="ranking"></div>
+  </section>
+
+  <!-- vendas do mês -->
+  <div class="card">
+    <h2>Vendas lançadas no mês</h2>
+    <div id="listaVendas"></div>
+  </div>
+</main>
+
+<!-- diálogo: lançar venda -->
+<dialog id="dlgVenda">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <h2>Lançar venda</h2>
+    <div class="campo"><label>Vendedora</label><select id="vVend" required></select></div>
+    <div class="grid-2">
+      <div class="campo"><label>Tipo</label>
+        <select id="vTipo"><option value="matricula">Matrícula nova</option><option value="rematricula">Rematrícula / renovação</option><option value="outro">Outra receita</option></select>
+      </div>
+      <div class="campo"><label>Valor (R$)</label><input id="vValor" type="number" min="0" step="0.01" required placeholder="ex.: 129,90"></div>
+    </div>
+    <div class="campo"><label>Data</label><input id="vData" type="date" required></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok" id="vSalvar">Salvar venda</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- diálogo: config -->
+<dialog id="dlgConfig">
+  <div class="card" style="display: flex; flex-direction: column; gap: 16px; width: 560px; max-width: 100%;">
+    <h2>Vendedoras e metas do mês <span id="cfgMes" style="text-transform: capitalize;"></span></h2>
+    <div class="linha-flex">
+      <input id="novoNome" placeholder="Nome da vendedora" style="flex: 1; min-width: 160px;">
+      <button class="btn mini" id="addVend">+ Adicionar</button>
+    </div>
+    <table class="tabela">
+      <thead><tr><th>Vendedora</th><th>Meta matrículas</th><th>Meta receita (R$)</th><th></th></tr></thead>
+      <tbody id="cfgLinhas"></tbody>
+    </table>
+    <div class="grid-2">
+      <div class="campo"><label>Meta da academia — matrículas</label><input id="acadMat" type="number" min="0" placeholder="ex.: 60"></div>
+      <div class="campo"><label>Meta da academia — receita (R$)</label><input id="acadRec" type="number" min="0" placeholder="ex.: 25000"></div>
+    </div>
+    <p class="muted" style="margin: 0;">Dica do curso: a meta da academia pode ser maior que a soma das metas individuais — o excedente é o “colchão” de segurança.</p>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn" id="cfgFechar">Concluir</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // estado: { vendedoras: [{id,nome,ativa}], metas: {"2026-07": {acad:{mat,rec}, vend:{vid:{mat,rec}}}}, vendas: [{id,vid,tipo,valor,data}] }
+  function load() {
+    return S.read("metas", { vendedoras: [], metas: {}, vendas: [] });
+  }
+  function save(st) { S.write("metas", st); render(); }
+
+  var mesAtual = S.monthKey();
+
+  function nomeMes(mk) {
+    var p = mk.split("-");
+    return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  }
+  function metaMes(st) {
+    if (!st.metas[mesAtual]) st.metas[mesAtual] = { acad: { mat: 0, rec: 0 }, vend: {} };
+    return st.metas[mesAtual];
+  }
+  function vendasMes(st) {
+    return st.vendas.filter(function (v) { return v.data.slice(0, 7) === mesAtual; });
+  }
+
+  function projecao(realizado) {
+    var hoje = new Date();
+    if (S.monthKey(hoje) !== mesAtual) return null;
+    var dia = hoje.getDate();
+    var diasMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+    if (dia < 3) return null; // muito cedo para projetar
+    return realizado / dia * diasMes;
+  }
+
+  function render() {
+    var st = load();
+    var meta = metaMes(st);
+    var vendas = vendasMes(st);
+    $("mesLabel").textContent = nomeMes(mesAtual);
+
+    // resumo academia
+    var totMat = vendas.filter(function (v) { return v.tipo === "matricula"; }).length;
+    var totRec = vendas.reduce(function (a, v) { return a + (+v.valor || 0); }, 0);
+    var projMat = projecao(totMat), projRec = projecao(totRec);
+    $("resumoAcad").innerHTML =
+      bloco("MATRÍCULAS", totMat, meta.acad.mat, projMat, function (n) { return Math.round(n); }) +
+      bloco("RECEITA DE VENDAS", totRec, meta.acad.rec, projRec, S.fmtBRL);
+
+    function bloco(label, real, alvo, proj, fmt) {
+      var pct = alvo > 0 ? Math.min(100, real / alvo * 100) : 0;
+      return '<div><div class="titulo">' + label + '</div>' +
+        '<div class="kpi">' + fmt(real) + ' <small>/ ' + (alvo ? fmt(alvo) : "meta não definida") + '</small></div>' +
+        '<div class="barra' + (pct >= 100 ? " cheia" : "") + '" style="margin: 8px 0 6px;"><div style="width:' + pct + '%"></div></div>' +
+        '<div class="proj">' + (alvo ? Math.round(pct) + "% da meta" : "") +
+        (proj != null && alvo ? " · ritmo atual projeta <strong>" + fmt(proj) + "</strong> no fim do mês" : "") + "</div></div>";
+    }
+
+    // ranking
+    var ativas = st.vendedoras.filter(function (v) { return v.ativa !== false; });
+    var linhas = ativas.map(function (v) {
+      var minhas = vendas.filter(function (x) { return x.vid === v.id; });
+      var mat = minhas.filter(function (x) { return x.tipo === "matricula"; }).length;
+      var rec = minhas.reduce(function (a, x) { return a + (+x.valor || 0); }, 0);
+      var m = meta.vend[v.id] || { mat: 0, rec: 0 };
+      var score = m.rec > 0 ? rec / m.rec : (m.mat > 0 ? mat / m.mat : 0);
+      return { v: v, mat: mat, rec: rec, meta: m, score: score };
+    }).sort(function (a, b) { return b.score - a.score || b.rec - a.rec; });
+
+    $("ranking").innerHTML = linhas.length ? linhas.map(function (l, i) {
+      var pctM = l.meta.mat > 0 ? Math.min(100, l.mat / l.meta.mat * 100) : 0;
+      var pctR = l.meta.rec > 0 ? Math.min(100, l.rec / l.meta.rec * 100) : 0;
+      var bateu = (l.meta.rec > 0 && pctR >= 100) || (l.meta.rec === 0 && l.meta.mat > 0 && pctM >= 100);
+      return '<div class="card vend-card">' +
+        '<div class="nome"><span class="linha-flex" style="gap:10px;"><span class="pos ' + (i === 0 ? "p1" : "") + '">' + (i + 1) + 'º</span><strong>' + esc(l.v.nome) + '</strong></span>' +
+        (bateu ? '<span class="tag ok">META BATIDA 🎉</span>' : "") + "</div>" +
+        prog("Matrículas", l.mat, l.meta.mat, pctM, function (n) { return n; }) +
+        prog("Receita", l.rec, l.meta.rec, pctR, S.fmtBRL) +
+        "</div>";
+    }).join("") : '<div class="vazio" style="grid-column: 1/-1;">Nenhuma vendedora cadastrada — clique em “⚙ Vendedoras e metas”.</div>';
+
+    function prog(label, real, alvo, pct, fmt) {
+      return '<div class="prog"><div class="l"><span>' + label + "</span><span><strong>" + fmt(real) + "</strong>" +
+        (alvo ? " / " + fmt(alvo) + " · " + Math.round(pct) + "%" : ' <span class="muted">(sem meta)</span>') + "</span></div>" +
+        '<div class="barra' + (pct >= 100 ? " cheia" : "") + '"><div style="width:' + pct + '%"></div></div></div>';
+    }
+
+    // lista de vendas
+    var porData = vendas.slice().sort(function (a, b) { return b.data < a.data ? -1 : 1; }).reverse();
+    porData.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    $("listaVendas").innerHTML = porData.length ?
+      '<table class="tabela"><thead><tr><th>Data</th><th>Vendedora</th><th>Tipo</th><th>Valor</th><th></th></tr></thead><tbody>' +
+      porData.map(function (v) {
+        var vend = st.vendedoras.find(function (x) { return x.id === v.vid; });
+        var tipo = { matricula: "Matrícula", rematricula: "Rematrícula", outro: "Outra" }[v.tipo] || v.tipo;
+        return "<tr><td>" + S.fmtData(v.data) + "</td><td>" + esc(vend ? vend.nome : "?") + "</td><td>" + tipo +
+          "</td><td>" + S.fmtBRL(+v.valor) + '</td><td style="text-align:right;"><button class="btn perigo mini" data-del="' + v.id + '">excluir</button></td></tr>';
+      }).join("") + "</tbody></table>"
+      : '<div class="vazio">Nenhuma venda lançada neste mês ainda.</div>';
+  }
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  // ---------- eventos ----------
+  $("mesAnt").onclick = function () { mudaMes(-1); };
+  $("mesProx").onclick = function () { mudaMes(1); };
+  function mudaMes(d) {
+    var p = mesAtual.split("-");
+    mesAtual = S.monthKey(new Date(+p[0], +p[1] - 1 + d, 1));
+    render();
+  }
+
+  $("btnVenda").onclick = function () {
+    var st = load();
+    var ativas = st.vendedoras.filter(function (v) { return v.ativa !== false; });
+    if (!ativas.length) { alert("Cadastre pelo menos uma vendedora primeiro (⚙ Vendedoras e metas)."); return; }
+    $("vVend").innerHTML = ativas.map(function (v) { return '<option value="' + v.id + '">' + esc(v.nome) + "</option>"; }).join("");
+    $("vData").value = S.todayISO();
+    $("vValor").value = "";
+    $("dlgVenda").showModal();
+  };
+
+  $("dlgVenda").addEventListener("close", function () {
+    if ($("dlgVenda").returnValue !== "ok") return;
+    var st = load();
+    st.vendas.push({ id: S.uid(), vid: $("vVend").value, tipo: $("vTipo").value, valor: +$("vValor").value || 0, data: $("vData").value || S.todayISO() });
+    save(st);
+  });
+
+  $("listaVendas").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-del");
+    if (!id) return;
+    if (!confirm("Excluir esta venda?")) return;
+    var st = load();
+    st.vendas = st.vendas.filter(function (v) { return v.id !== id; });
+    save(st);
+  });
+
+  // ---------- config ----------
+  $("btnConfig").onclick = function () { renderConfig(); $("dlgConfig").showModal(); };
+  $("cfgFechar").onclick = function () { salvarConfig(); $("dlgConfig").close(); };
+
+  function renderConfig() {
+    var st = load();
+    var meta = metaMes(st);
+    $("cfgMes").textContent = "· " + nomeMes(mesAtual);
+    $("acadMat").value = meta.acad.mat || "";
+    $("acadRec").value = meta.acad.rec || "";
+    $("cfgLinhas").innerHTML = st.vendedoras.map(function (v) {
+      var m = meta.vend[v.id] || { mat: "", rec: "" };
+      var off = v.ativa === false;
+      return '<tr data-vid="' + v.id + '"' + (off ? ' style="opacity:.45"' : "") + "><td>" + esc(v.nome) + "</td>" +
+        '<td><input type="number" min="0" class="cfg-mat" value="' + (m.mat || "") + '" style="width:90px;"' + (off ? " disabled" : "") + "></td>" +
+        '<td><input type="number" min="0" class="cfg-rec" value="' + (m.rec || "") + '" style="width:110px;"' + (off ? " disabled" : "") + "></td>" +
+        '<td style="text-align:right; white-space:nowrap;"><button class="btn sec mini" data-toggle="' + v.id + '">' + (off ? "reativar" : "desativar") + "</button></td></tr>";
+    }).join("") || '<tr><td colspan="4" class="muted">Nenhuma vendedora ainda.</td></tr>';
+  }
+
+  function salvarConfig() {
+    var st = load();
+    var meta = metaMes(st);
+    meta.acad.mat = +$("acadMat").value || 0;
+    meta.acad.rec = +$("acadRec").value || 0;
+    Array.prototype.forEach.call(document.querySelectorAll("#cfgLinhas tr[data-vid]"), function (tr) {
+      var vid = tr.getAttribute("data-vid");
+      var mat = tr.querySelector(".cfg-mat"), rec = tr.querySelector(".cfg-rec");
+      if (mat && rec) meta.vend[vid] = { mat: +mat.value || 0, rec: +rec.value || 0 };
+    });
+    save(st);
+  }
+
+  $("addVend").onclick = function () {
+    var nome = $("novoNome").value.trim();
+    if (!nome) return;
+    var st = load();
+    st.vendedoras.push({ id: S.uid(), nome: nome, ativa: true });
+    S.write("metas", st);
+    $("novoNome").value = "";
+    renderConfig();
+  };
+
+  $("cfgLinhas").addEventListener("click", function (e) {
+    var vid = e.target.getAttribute && e.target.getAttribute("data-toggle");
+    if (!vid) return;
+    salvarConfig(); // preserva metas digitadas antes de redesenhar
+    var st = load();
+    var v = st.vendedoras.find(function (x) { return x.id === vid; });
+    if (v) v.ativa = v.ativa === false;
+    S.write("metas", st);
+    renderConfig();
+    render();
+  });
+
+  S.onChange(function () { render(); });
+  render();
+})();
+</script>
+</body>
+</html>
