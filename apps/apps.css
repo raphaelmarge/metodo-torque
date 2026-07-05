@@ -10,6 +10,8 @@ html, body { margin: 0; padding: 0; }
 body { background: var(--fundo); color: var(--texto); font-family: "Archivo", system-ui, sans-serif; }
 
 .topo { background: var(--escuro); color: #fff; padding: 28px 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+.topo-marca { display: flex; align-items: center; gap: 18px; }
+.logo-cliente { max-height: 64px; max-width: 200px; object-fit: contain; background: #fff; padding: 4px 8px; }
 .topo .kicker { display: flex; align-items: center; gap: 12px; font-size: 12.5px; font-weight: 700; letter-spacing: .18em; color: var(--lilas); }
 .topo .kicker::before { content: ""; width: 30px; height: 3px; background: var(--roxo); }
 .topo h1 { margin: 8px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; }

@@ -15,13 +15,13 @@
     html, body { margin: 0; padding: 0; height: 100%; background: #0B0A0E; }
   </style>
 </helmet>
-<x-import component-from-global-scope="image-slot" from="./image-slot.js" hint-size="0,0"></x-import>
+
 <x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
 
   <!-- 1 · CAPA -->
   <section data-label="Capa" data-speaker-notes="Abertura: este deck alinha a equipe sobre o curso Método Torque — o que é, como está estruturado, preços e plano de lançamento." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; justify-content: center; padding: 100px 120px; box-sizing: border-box;">
     <div style="display: flex; align-items: center; gap: 32px;">
-      <image-slot id="logo-torque" style="width: 280px; height: 140px;" shape="rect" fit="contain" placeholder="Logo Torque"></image-slot>
+      <img src="../assets/icons/logo-torque-claro.svg" alt="Método Torque" style="width: 280px; height: 140px; object-fit: contain;">
       <div style="display: flex; align-items: center; gap: 18px;">
         <div style="width: 44px; height: 4px; background: #7C3AED;"></div>
         <span style="font-size: 26px; font-weight: 600; letter-spacing: 0.22em; color: #A78BFA;">TORQUE FITNESS APRESENTA</span>
@@ -41,7 +41,7 @@
   <!-- 2 · VISÃO GERAL -->
   <section data-label="Visão geral" data-speaker-notes="O curso fecha a lacuna de gestão: transforma dono operador em dono gestor. Promessa concreta ao final dos 8 módulos." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">01 · VISÃO GERAL</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Do dono operador ao dono gestor</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: 72px;">
       <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -58,7 +58,7 @@
   <!-- 3 · POR QUE A TORQUE -->
   <section data-label="Por que a Torque" data-speaker-notes="Autoridade: não é guru de palco. Operação própria com mais de 30 colaboradores e importação direta com mais de 900 produtos." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #A78BFA;">02 · POR QUE A TORQUE</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-claro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF;">Quem ensina, opera</h2>
     <p style="margin: 32px 0 0 0; font-size: 32px; line-height: 1.5; color: #C9C5D4; max-width: 1300px;">Método testado em operação real — não em palco. A Torque domina os dois lados do negócio:</p>
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 80px;">
@@ -83,7 +83,7 @@
   <!-- 4 · PÚBLICO-ALVO -->
   <section data-label="Público-alvo" data-speaker-notes="Público claro dos dois lados: para quem é e para quem não é. Isso orienta copy, oferta e moderação da comunidade." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">03 · PÚBLICO-ALVO</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Para quem é — e para quem não é</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 72px;">
       <div style="background: #FFFFFF; padding: 56px; display: flex; flex-direction: column; gap: 36px;">
@@ -108,7 +108,7 @@
   <!-- 5 · POSICIONAMENTO -->
   <section data-label="Posicionamento" data-speaker-notes="Três pilares diferenciam o curso de qualquer outro de gestão fitness. É o nosso argumento central de venda." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">04 · POSICIONAMENTO</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Três pilares que nenhum concorrente junta</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 80px;">
       <div style="border-top: 6px solid #7C3AED; background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 22px;">
@@ -132,7 +132,7 @@
   <!-- 6 · ESTRUTURA DO CURSO -->
   <section data-label="Estrutura do curso" data-speaker-notes="Oito módulos sequenciais mais bônus. A ordem importa: enxergar o negócio, encher a academia, estruturar o time, investir com inteligência." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 90px 120px 70px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">05 · ESTRUTURA DO CURSO</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 24px 0 0 0; font-size: 64px; font-weight: 700; letter-spacing: -0.01em;">Oito módulos sequenciais + bônus de expansão</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; margin-top: 56px;">
       <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">1</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Diagnóstico e fundamentos</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">O negócio em números e posicionamento</span></div></div>
@@ -151,7 +151,7 @@
   <!-- 7 · ENGENHARIA DOS MÓDULOS -->
   <section data-label="Engenharia dos módulos" data-speaker-notes="Todo módulo segue a mesma engenharia de quatro peças. O aluno nunca termina apenas sabendo mais — termina com algo rodando." style="background: #2D1266; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #C4B5FD;">06 · ENGENHARIA DOS MÓDULOS</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-claro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF; max-width: 1400px;">Todo módulo termina com algo rodando na academia</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 32px; margin-top: 90px;">
       <div style="display: flex; flex-direction: column; gap: 18px; border-top: 3px solid #7C3AED; padding-top: 32px;">
@@ -180,7 +180,7 @@
   <!-- 8 · KIT DE MATERIAIS -->
   <section data-label="Kit de materiais" data-speaker-notes="O kit é metade do valor percebido. Boa parte já existe em versão interna da Torque — produção é adaptação, não criação do zero." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">07 · KIT DE MATERIAIS</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Metade do valor percebido do curso</h2>
     <div style="display: grid; grid-template-columns: 420px 1fr; gap: 80px; margin-top: 64px; align-items: start;">
       <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -212,7 +212,7 @@
   <!-- 9 · FORMATOS E PREÇOS -->
   <section data-label="Formatos e preços" data-speaker-notes="Escada de valor em três formatos + mentoria contínua pós-curso. Recomendação: estrear com a turma ao vivo (Pro)." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 90px 120px 70px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">08 · FORMATOS E PREÇOS</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 24px 0 0 0; font-size: 64px; font-weight: 700; letter-spacing: -0.01em;">Três formatos, uma escada de valor</h2>
     <div style="display: flex; flex-direction: column; margin-top: 56px; background: #FFFFFF;">
       <div style="display: grid; grid-template-columns: 460px 1fr 360px; gap: 40px; padding: 26px 48px; border-bottom: 1px solid #E2E0E8;">
@@ -246,7 +246,7 @@
   <!-- 10 · TURMA FUNDADORA -->
   <section data-label="Turma fundadora" data-speaker-notes="Estreia recomendada: turma Pro ao vivo em modelo fundador. Valida conteúdo, cria cases e financia a gravação da versão online." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #A78BFA;">09 · TURMA FUNDADORA</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-claro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF;">Estreia em modelo fundador</h2>
     <p style="margin: 32px 0 0 0; font-size: 32px; line-height: 1.5; color: #C9C5D4; max-width: 1360px;">Lançar primeiro a turma ao vivo (formato Pro): valida o conteúdo com feedback real, cria os primeiros cases e financia a gravação da versão online.</p>
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 76px;">
@@ -269,7 +269,7 @@
   <!-- 11 · LANÇAMENTO EM 90 DIAS -->
   <section data-label="Lançamento em 90 dias" data-speaker-notes="Três fases de 30 dias: fundação com isca gratuita, aquecimento com bastidores reais, abertura de matrículas por 7 dias." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">10 · LANÇAMENTO EM 90 DIAS</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Três fases até a turma fundadora</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 76px;">
       <div style="background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 24px;">
@@ -305,7 +305,7 @@
   <!-- 12 · MOTOR DO B2B -->
   <section data-label="Motor do B2B" data-speaker-notes="O curso não é só receita: é geração de demanda para equipamentos. O aluno é exatamente o comprador do catálogo Torque." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #A78BFA;">11 · MOTOR DO B2B</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-claro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF; max-width: 1500px;">O aluno do curso é o comprador do catálogo</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px 56px; margin-top: 80px;">
       <div style="display: flex; gap: 28px; align-items: baseline; border-top: 1px solid #2A2733; padding-top: 30px;">
@@ -330,7 +330,7 @@
   <!-- 13 · PRÓXIMOS PASSOS -->
   <section data-label="Próximos passos" data-speaker-notes="Sequência recomendada para tirar do papel. Decisões 1 e 2 são desta reunião: nome/formato e preço/vagas." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
     <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">12 · PRÓXIMOS PASSOS</span>
-    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <img src="../assets/icons/logo-torque-escuro.svg" alt="Método Torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px; object-fit: contain;">
     <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Sequência para tirar do papel</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px 64px; margin-top: 72px;">
       <div style="display: flex; gap: 28px; align-items: baseline; background: #FFFFFF; padding: 32px 40px;"><span style="font-size: 34px; font-weight: 800; color: #7C3AED; min-width: 48px;">1</span><span style="font-size: 28px; line-height: 1.4;">Validar o nome e o formato de estreia (turma ao vivo fundadora)</span></div>
