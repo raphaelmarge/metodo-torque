@@ -99,8 +99,42 @@
     });
   }
 
+  // ---------- logo da academia (do cliente) ----------
+  // Guardada como dataURL PNG (preserva transparência), reduzida para caber no localStorage.
+  function saveLogo(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function () {
+        var scale = Math.min(1, 240 / img.height, 720 / img.width);
+        var c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        var dataUrl = c.toDataURL("image/png");
+        if (dataUrl.length > 900000) { reject(new Error("imagem muito pesada — use um arquivo menor")); return; }
+        write("logo", dataUrl);
+        resolve(dataUrl);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("imagem inválida")); };
+      img.src = url;
+    });
+  }
+  function getLogo() { return read("logo", null); }
+  function removeLogo() { localStorage.removeItem(PREFIX + "logo"); }
+
+  // Preenche <img id="logoCliente"> (se existir na página) com a logo salva.
+  function aplicaLogo() {
+    var el = document.getElementById("logoCliente");
+    if (!el) return;
+    var logo = getLogo();
+    if (logo) { el.src = logo; el.hidden = false; }
+    else { el.removeAttribute("src"); el.hidden = true; }
+  }
+
   // ---------- backup ----------
-  var BACKUP_KEYS = ["metas", "manut", "checklist"];
+  var BACKUP_KEYS = ["metas", "manut", "checklist", "logo"];
 
   function exportBackup() {
     var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString() };
@@ -132,6 +166,12 @@
     read: read, write: write, uid: uid,
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,
     savePhoto: savePhoto, getPhoto: getPhoto, deletePhoto: deletePhoto,
+    saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,
     exportBackup: exportBackup, importBackup: importBackup, onChange: onChange,
   };
+
+  // aplica a logo automaticamente quando a página carrega e quando muda em outra aba
+  if (document.readyState !== "loading") aplicaLogo();
+  else document.addEventListener("DOMContentLoaded", aplicaLogo);
+  onChange(function (key) { if (key === "logo") aplicaLogo(); });
 })();

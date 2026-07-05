@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" role="img" aria-label="Método Torque">
+  <!-- versão para fundos escuros -->
+  <g>
+    <rect x="10" y="20" width="160" height="160" rx="30" fill="#121016" stroke="#2E2A38" stroke-width="4"/>
+    <path d="M 53 124 A 49 49 0 1 1 141 124" fill="none" stroke="#2E2A38" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 53 124 A 49 49 0 0 1 97 51" fill="none" stroke="#7C3AED" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 97 51 A 49 49 0 0 1 136 70" fill="none" stroke="#A78BFA" stroke-width="11" stroke-linecap="round"/>
+    <path d="M 72 85 H 122 V 99 H 105 V 145 H 89 V 99 H 72 Z" fill="#FFFFFF"/>
+  </g>
+  <g font-family="Archivo, Arial, sans-serif">
+    <text x="196" y="92" font-size="44" font-weight="800" letter-spacing="6" fill="#FFFFFF">MÉTODO</text>
+    <text x="196" y="150" font-size="56" font-weight="800" letter-spacing="8" fill="#A78BFA">TORQUE</text>
+    <rect x="198" y="166" width="130" height="6" fill="#7C3AED"/>
+  </g>
+</svg>

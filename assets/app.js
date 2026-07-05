@@ -310,6 +310,31 @@
     if (e.target.closest(".nav-item")) closeNav();
   });
 
+  // ---------- logo da academia ----------
+  function syncLogoBtns() {
+    var tem = !!window.MTStore.getLogo();
+    el("logoBtn").textContent = tem ? "🖼 Trocar logo" : "🖼 Logo da academia";
+    el("logoDel").hidden = !tem;
+  }
+  el("logoBtn").addEventListener("click", function () { el("logoFile").click(); });
+  el("logoFile").addEventListener("change", function () {
+    var f = this.files[0];
+    this.value = "";
+    if (!f) return;
+    window.MTStore.saveLogo(f).then(function () {
+      syncLogoBtns();
+      alert("Logo salva! Ela aparece nos programas do dia a dia e no modo TV.");
+    }, function (e) {
+      alert("Não foi possível salvar a logo: " + e.message);
+    });
+  });
+  el("logoDel").addEventListener("click", function () {
+    if (!confirm("Remover a logo da academia?")) return;
+    window.MTStore.removeLogo();
+    syncLogoBtns();
+  });
+  syncLogoBtns();
+
   // ---------- backup dos programas ----------
   el("backupExp").addEventListener("click", function () {
     window.MTStore.exportBackup();

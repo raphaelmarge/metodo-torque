@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v2";
+var VERSION = "mt-v3";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
@@ -16,6 +16,8 @@ var CORE = [
   "assets/icons/icon-192.png",
   "assets/icons/icon-512.png",
   "assets/icons/icon-maskable-512.png",
+  "assets/icons/logo-torque-claro.svg",
+  "assets/icons/logo-torque-escuro.svg",
   "assets/fonts/archivo.css",
   "assets/fonts/files/archivo-latin-400-normal.woff2",
   "assets/fonts/files/archivo-latin-500-normal.woff2",
