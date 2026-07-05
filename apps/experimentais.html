@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aulas Experimentais — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .dia-cab { display: flex; align-items: baseline; gap: 10px; margin: 10px 0 8px; }
+  .dia-cab h2 { margin: 0; font-size: 15px; font-weight: 800; text-transform: capitalize; }
+  .aula { display: flex; gap: 14px; align-items: center; padding: 12px 16px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .aula + .aula { margin-top: -1px; }
+  .aula .hora { font-size: 18px; font-weight: 800; color: var(--roxo); min-width: 56px; }
+  .aula .quem { flex: 1; min-width: 160px; }
+  .aula .quem strong { font-size: 15px; }
+  .aula .quem .sub { font-size: 12.5px; color: var(--cinza); }
+  .aula.hoje-pendente { border-left: 4px solid var(--roxo); }
+  .acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .acoes .btn { padding: 6px 10px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · COMERCIAL</span>
+    <h1>Aulas Experimentais</h1>
+    </div>
+  </div>
+  <p>Agende, confirme por WhatsApp no dia anterior, registre presença e converta em matrícula. Aula experimental sem confirmação tem o dobro de falta.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-f="proximas" class="ativa">Próximas</button>
+      <button data-f="passadas">Histórico do mês</button>
+    </div>
+    <button class="btn" id="btnNova">+ Agendar aula</button>
+  </div>
+
+  <div id="agenda"></div>
+</main>
+
+<!-- nova aula -->
+<dialog id="dlgNova">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
+    <h2>Agendar aula experimental</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome</label><input id="aNome" required></div>
+      <div class="campo"><label>WhatsApp</label><input id="aZap" inputmode="numeric" placeholder="11999998888"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Data</label><input id="aData" type="date" required></div>
+      <div class="campo"><label>Hora</label><input id="aHora" type="time" required></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Professor(a) que recebe</label><input id="aProf" placeholder="quem dá atenção ao aluno"></div>
+      <div class="campo"><label>Origem</label>
+        <select id="aOrigem"><option>Instagram</option><option>Indicação</option><option>Passou na porta</option><option>Google</option><option>Outro</option></select>
+      </div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Agendar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function load() { return S.read("exper", { aulas: [] }); }
+  function save(st) { S.write("exper", st); render(); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var filtro = "proximas";
+
+  function msgConfirma(a) {
+    var nome = a.nome.split(" ")[0];
+    var quando = S.fmtData(a.data) + (a.hora ? " às " + a.hora : "");
+    return "Oi " + nome + "! Confirmando sua aula experimental gratuita " + quando + " 💪 " +
+      (a.prof ? "O(a) professor(a) " + a.prof + " vai te receber e montar o treino do seu jeito. " : "") +
+      "Vem de roupa confortável e traz uma garrafinha de água. Qualquer imprevisto me avisa por aqui que a gente remarca. Até lá!";
+  }
+  function msgFalta(a) {
+    var nome = a.nome.split(" ")[0];
+    return "Oi " + nome + "! Sentimos sua falta na aula experimental de hoje 😊 Acontece! Quer remarcar? Tenho horário amanhã e depois — me fala o que encaixa melhor que eu já deixo reservado pra você.";
+  }
+  function msgPosAula(a) {
+    var nome = a.nome.split(" ")[0];
+    return "Oi " + nome + "! Que bom te receber hoje 🙌 Me conta: o que achou do treino e da estrutura? Se quiser garantir a condição especial que te apresentei, consigo segurar até amanhã — é só me confirmar por aqui!";
+  }
+
+  // sincroniza o lead do funil quando a aula veio de lá
+  function syncLead(aula, novoStatus, campoData) {
+    if (!aula.leadId) return;
+    var fu = S.read("funil", null);
+    if (!fu) return;
+    var l = fu.leads.find(function (x) { return x.id === aula.leadId; });
+    if (!l) return;
+    l.status = novoStatus;
+    if (campoData) l[campoData] = S.todayISO();
+    l.proximo = S.todayISO();
+    S.write("funil", fu);
+  }
+
+  function render() {
+    var st = load();
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+
+    var doMes = st.aulas.filter(function (a) { return a.data.slice(0, 7) === mes; });
+    var realizadas = doMes.filter(function (a) { return a.status !== "agendada"; });
+    var compareceu = doMes.filter(function (a) { return a.status === "compareceu" || a.status === "matriculado"; }).length;
+    var faltou = doMes.filter(function (a) { return a.status === "faltou"; }).length;
+    var matriculou = doMes.filter(function (a) { return a.status === "matriculado"; }).length;
+    function tx(a, b) { return b > 0 ? Math.round(a / b * 100) + "%" : "—"; }
+
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + doMes.length + '</div><div class="muted">agendadas no mês</div></div>' +
+      '<div class="card"><div class="n">' + tx(compareceu, compareceu + faltou) + '</div><div class="muted">comparecimento</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok);">' + matriculou + '</div><div class="muted">viraram matrícula</div></div>' +
+      '<div class="card"><div class="n">' + tx(matriculou, compareceu) + '</div><div class="muted">conversão pós-aula</div></div>';
+
+    var vis;
+    if (filtro === "proximas") {
+      // hoje em diante, qualquer status — assim dá para marcar presença e matrícula na sequência
+      vis = st.aulas.filter(function (a) { return a.data >= hoje; });
+    } else {
+      vis = st.aulas.filter(function (a) { return a.data.slice(0, 7) === mes && (a.data < hoje || a.status !== "agendada"); });
+    }
+    vis.sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; });
+
+    // pendentes de resultado (passadas ainda "agendada")
+    var pendentes = st.aulas.filter(function (a) { return a.status === "agendada" && a.data < hoje; });
+    if (filtro === "proximas" && pendentes.length) vis = pendentes.concat(vis);
+
+    // agrupa por dia
+    var porDia = {};
+    vis.forEach(function (a) { (porDia[a.data] = porDia[a.data] || []).push(a); });
+    var dias = Object.keys(porDia).sort();
+
+    $("agenda").innerHTML = dias.length ? dias.map(function (d) {
+      var label = new Date(d + "T12:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit" });
+      var chip = d === hoje ? '<span class="tag roxo">HOJE</span>' : (d < hoje ? '<span class="tag erro">RESULTADO PENDENTE</span>' : "");
+      return '<div class="dia-cab"><h2>' + label + "</h2>" + chip + "</div>" + porDia[d].map(tpl).join("");
+    }).join("") : '<div class="vazio">' + (filtro === "proximas" ? "Nenhuma aula agendada. Bora encher a agenda? 😉" : "Nada no histórico deste mês.") + "</div>";
+  }
+
+  function tpl(a) {
+    var hoje = S.todayISO();
+    var pend = a.status === "agendada";
+    var stTag = { compareceu: ["COMPARECEU ✓", "ok"], faltou: ["FALTOU", "erro"], matriculado: ["MATRICULADO 🎉", "ok"] }[a.status];
+    return '<div class="aula' + (pend && a.data === hoje ? " hoje-pendente" : "") + '" data-id="' + a.id + '">' +
+      '<span class="hora">' + (a.hora || "—") + "</span>" +
+      '<div class="quem"><strong>' + esc(a.nome) + '</strong><div class="sub">' +
+      (a.prof ? "prof. " + esc(a.prof) + " · " : "") + esc(a.origem || "") + (a.leadId ? " · veio do funil" : "") + "</div></div>" +
+      (stTag ? '<span class="tag ' + stTag[1] + '">' + stTag[0] + "</span>" : "") +
+      '<div class="acoes">' +
+      (pend && a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgConfirma(a)) + '">💬 Confirmar</a>' : "") +
+      (pend ? '<button class="btn ok" data-acao="compareceu">✓ Veio</button><button class="btn sec" data-acao="faltou">✗ Faltou</button>' : "") +
+      (a.status === "compareceu" ? '<button class="btn ok" data-acao="matriculou">🎉 Matriculou</button>' +
+        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgPosAula(a)) + '">💬 Pós-aula</a>' : "") : "") +
+      (a.status === "faltou" ? '<button class="btn sec" data-acao="remarcar">📅 Remarcar</button>' +
+        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFalta(a)) + '">💬 Reconquistar</a>' : "") : "") +
+      '<button class="btn perigo" data-acao="excluir">✕</button>' +
+      "</div></div>";
+  }
+
+  // ---------- eventos ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    filtro = b.getAttribute("data-f");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+
+  $("btnNova").onclick = function () {
+    $("aNome").value = ""; $("aZap").value = ""; $("aProf").value = "";
+    $("aData").value = S.todayISO(); $("aHora").value = "18:00";
+    $("dlgNova").showModal();
+  };
+  $("dlgNova").addEventListener("close", function () {
+    if ($("dlgNova").returnValue !== "ok") return;
+    var st = load();
+    st.aulas.push({ id: S.uid(), nome: $("aNome").value.trim(), zap: $("aZap").value.trim(), data: $("aData").value, hora: $("aHora").value, prof: $("aProf").value.trim(), origem: $("aOrigem").value, status: "agendada" });
+    save(st);
+  });
+
+  $("agenda").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-acao]"); if (!b) return;
+    var id = e.target.closest("[data-id]").getAttribute("data-id");
+    var st = load();
+    var a = st.aulas.find(function (x) { return x.id === id; });
+    if (!a) return;
+    var acao = b.getAttribute("data-acao");
+
+    if (acao === "compareceu") { a.status = "compareceu"; syncLead(a, "visitou", "visitouEm"); }
+    else if (acao === "faltou") { a.status = "faltou"; syncLead(a, "contato", null); }
+    else if (acao === "matriculou") { a.status = "matriculado"; syncLead(a, "matriculado", "matriculouEm"); }
+    else if (acao === "remarcar") {
+      var d = prompt("Nova data? (AAAA-MM-DD)", S.todayISO());
+      if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+      var h = prompt("Horário? (HH:MM)", a.hora || "18:00") || a.hora;
+      a.data = d; a.hora = h; a.status = "agendada";
+      syncLead(a, "agendado", null);
+    } else if (acao === "excluir") {
+      if (!confirm("Excluir esta aula?")) return;
+      st.aulas = st.aulas.filter(function (x) { return x.id !== id; });
+    }
+    save(st);
+  });
+
+  S.onChange(function () { render(); });
+  render();
+})();
+</script>
+</body>
+</html>

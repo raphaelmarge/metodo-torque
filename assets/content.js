@@ -15,8 +15,12 @@ self.MT_MODULES = [
 // Programas do dia a dia (apps completos, dados salvos no navegador)
 self.MT_APPS = [
   { slug: "app-metas", file: "apps/metas.html", icone: "🎯", title: "Metas de Vendas", desc: "Meta mensal por vendedora, lançamento de vendas em segundos, ranking e projeção do mês." },
+  { slug: "app-funil", file: "apps/funil.html", icone: "🧲", title: "Funil Comercial", desc: "Leads com etapa, dono e data de follow-up — contato atrasado fica vermelho com a mensagem pronta no WhatsApp." },
+  { slug: "app-experimentais", file: "apps/experimentais.html", icone: "🗓", title: "Aulas Experimentais", desc: "Agenda das aulas grátis com confirmação por WhatsApp, presença e conversão em matrícula." },
+  { slug: "app-inadimplencia", file: "apps/inadimplencia.html", icone: "💰", title: "Controle de Inadimplência", desc: "A régua de cobrança do curso em ação: cada devedor no passo certo (D+1 a D+30) com a mensagem pronta." },
   { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
   { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },
+  { slug: "app-diario", file: "apps/diario.html", icone: "📈", title: "Diário do Curso", desc: "Preencha os números de cada módulo e gere o relatório final — com análise pronta para levar à IA." },
   { slug: "tv", file: "apps/tv.html", icone: "📺", title: "Modo TV", desc: "Painel para o telão da academia: metas, manutenção e checklist girando em tela cheia, sempre atualizados.", standalone: true },
 ];
 

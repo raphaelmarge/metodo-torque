@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funil Comercial — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .stats .taxa { font-size: 12px; color: var(--roxo); font-weight: 700; }
+  .kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: start; }
+  @media (max-width: 1000px) { .kanban { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .kanban { grid-template-columns: 1fr; } }
+  .coluna { background: #edecf1; border: 1px solid var(--linha); padding: 10px; display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+  .coluna > .cab { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--cinza); display: flex; justify-content: space-between; padding: 2px 4px; }
+  .lead { background: #fff; border: 1px solid var(--linha); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .lead.atrasado { border-left: 4px solid var(--erro); }
+  .lead .nome { font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .lead .info { font-size: 12px; color: var(--cinza); }
+  .lead .acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .lead .acoes .btn { padding: 5px 9px; font-size: 12px; }
+  .fim { display: flex; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · COMERCIAL</span>
+    <h1>Funil Comercial</h1>
+    </div>
+  </div>
+  <p>Cada lead com dono, etapa e data do próximo contato. Follow-up atrasado fica vermelho com a mensagem pronta no WhatsApp — lead sem resposta não é lead perdido.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <span class="muted" id="alertaFollow"></span>
+    <button class="btn" id="btnNovo">+ Novo lead</button>
+  </div>
+
+  <div class="kanban" id="kanban"></div>
+
+  <div class="card">
+    <h2>Fechados no mês</h2>
+    <div class="fim" id="fechados"></div>
+  </div>
+</main>
+
+<!-- novo lead -->
+<dialog id="dlgNovo">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
+    <h2>Novo lead</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome</label><input id="nNome" required placeholder="ex.: João Silva"></div>
+      <div class="campo"><label>WhatsApp</label><input id="nZap" inputmode="numeric" placeholder="11999998888"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Origem</label>
+        <select id="nOrigem"><option>Instagram</option><option>Indicação</option><option>Passou na porta</option><option>Google</option><option>iFood/parcerias</option><option>Outro</option></select>
+      </div>
+      <div class="campo"><label>Interesse</label><input id="nInteresse" placeholder="ex.: musculação, manhã"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Adicionar ao funil</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var ETAPAS = [
+    { id: "novo", titulo: "🆕 NOVOS" },
+    { id: "contato", titulo: "💬 EM CONVERSA" },
+    { id: "agendado", titulo: "📅 AULA AGENDADA" },
+    { id: "visitou", titulo: "🏋 VISITOU" },
+  ];
+
+  // mensagens de follow-up por etapa (tom do Script de Vendas do curso)
+  function msgFollow(l) {
+    var nome = l.nome.split(" ")[0];
+    var m = {
+      novo: "Oi " + nome + "! Aqui é da academia 😊 Vi seu interesse" + (l.interesse ? " em " + l.interesse : "") + " e queria te conhecer melhor: qual seu objetivo principal agora — e qual horário costuma ficar melhor pra você treinar? Já te adianto que essa semana consigo te encaixar numa aula experimental gratuita!",
+      contato: "Oi " + nome + "! Passando pra não te deixar sem resposta 🙂 Que tal marcarmos sua aula experimental gratuita? Tenho horário amanhã ou depois — qual encaixa melhor pra você?",
+      agendado: "Oi " + nome + "! Confirmando sua aula experimental 💪 Qualquer imprevisto me avisa que a gente remarca sem problema. Te esperamos!",
+      visitou: "Oi " + nome + "! Foi ótimo te receber aqui 😊 Ficou alguma dúvida do plano ou dos horários? Se fechar hoje ainda consigo manter a condição que te apresentei — me fala o que achou!",
+    };
+    return m[l.status] || m.contato;
+  }
+
+  function load() { return S.read("funil", { leads: [] }); }
+  function save(st) { S.write("funil", st); render(); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  function atrasado(l) { return l.proximo && l.proximo < S.todayISO(); }
+
+  function render() {
+    var st = load();
+    var mes = S.todayISO().slice(0, 7);
+    var doMes = st.leads.filter(function (l) { return (l.criado || "").slice(0, 7) === mes; });
+    var ativos = st.leads.filter(function (l) { return l.status !== "matriculado" && l.status !== "perdido"; });
+
+    // estatísticas do mês (funil do curso: leads → agendamentos → visitas → matrículas)
+    var nLeads = doMes.length;
+    var nAg = st.leads.filter(function (l) { return l.agendouEm && l.agendouEm.slice(0, 7) === mes; }).length;
+    var nVis = st.leads.filter(function (l) { return l.visitouEm && l.visitouEm.slice(0, 7) === mes; }).length;
+    var nMat = st.leads.filter(function (l) { return l.matriculouEm && l.matriculouEm.slice(0, 7) === mes; }).length;
+    function tx(a, b) { return b > 0 ? Math.round(a / b * 100) + "%" : "—"; }
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + nLeads + '</div><div class="muted">leads no mês</div></div>' +
+      '<div class="card"><div class="n">' + nAg + '</div><div class="muted">aulas agendadas</div><div class="taxa">' + tx(nAg, nLeads) + " dos leads</div></div>" +
+      '<div class="card"><div class="n">' + nVis + '</div><div class="muted">visitas</div><div class="taxa">' + tx(nVis, nAg) + " dos agendados</div></div>" +
+      '<div class="card"><div class="n">' + nMat + '</div><div class="muted">matrículas</div><div class="taxa">' + tx(nMat, nVis) + " das visitas</div></div>";
+
+    var nAtras = ativos.filter(atrasado).length;
+    $("alertaFollow").innerHTML = nAtras ?
+      '<strong style="color:var(--erro);">⚠ ' + nAtras + " lead(s) com follow-up atrasado</strong> — responda hoje: lead esfria em 48h." :
+      "Nenhum follow-up atrasado. Lead novo tem que receber contato em até 1 hora.";
+
+    // kanban
+    $("kanban").innerHTML = ETAPAS.map(function (e) {
+      var ls = ativos.filter(function (l) { return l.status === e.id; })
+        .sort(function (a, b) { return (a.proximo || "9999") < (b.proximo || "9999") ? -1 : 1; });
+      return '<div class="coluna"><div class="cab"><span>' + e.titulo + "</span><span>" + ls.length + "</span></div>" +
+        (ls.map(cardLead).join("") || '<div class="muted" style="text-align:center; padding: 10px 0;">vazio</div>') + "</div>";
+    }).join("");
+
+    // fechados no mês
+    var fech = st.leads.filter(function (l) {
+      return (l.status === "matriculado" && (l.matriculouEm || "").slice(0, 7) === mes) ||
+             (l.status === "perdido" && (l.perdidoEm || "").slice(0, 7) === mes);
+    });
+    $("fechados").innerHTML = fech.length ? fech.map(function (l) {
+      return '<span class="tag ' + (l.status === "matriculado" ? "ok" : "neutro") + '">' +
+        (l.status === "matriculado" ? "🎉 " : "✕ ") + esc(l.nome) + "</span>";
+    }).join("") : '<span class="muted">Nenhum fechamento ainda neste mês.</span>';
+  }
+
+  function cardLead(l) {
+    var atr = atrasado(l);
+    var dias = Math.round((new Date(S.todayISO()) - new Date(l.criado)) / 864e5);
+    return '<div class="lead' + (atr ? " atrasado" : "") + '" data-id="' + l.id + '">' +
+      '<div class="nome"><span>' + esc(l.nome) + '</span><span class="tag neutro" style="font-size:10px;">' + esc(l.origem || "") + "</span></div>" +
+      '<div class="info">' + (l.interesse ? esc(l.interesse) + " · " : "") + dias + "d no funil" +
+      (l.proximo ? " · próx. contato <strong" + (atr ? ' style="color:var(--erro);"' : "") + ">" + S.fmtData(l.proximo) + "</strong>" : "") + "</div>" +
+      '<div class="acoes">' +
+      (l.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(l.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFollow(l)) + '">💬' + (atr ? " Cobrar" : "") + "</a>" : "") +
+      '<button class="btn sec" data-acao="proximo">📅 Próx.</button>' +
+      (l.status === "novo" ? '<button class="btn sec" data-acao="avancar">→ Conversa</button>' : "") +
+      (l.status === "contato" ? '<button class="btn sec" data-acao="agendar">📅 Agendar aula</button>' : "") +
+      (l.status === "agendado" ? '<button class="btn sec" data-acao="visitou">✓ Visitou</button>' : "") +
+      (l.status === "visitou" ? '<button class="btn ok" data-acao="matricular">🎉 Matriculou</button>' : "") +
+      '<button class="btn perigo" data-acao="perdido">✕</button>' +
+      "</div></div>";
+  }
+
+  // ---------- eventos ----------
+  $("btnNovo").onclick = function () {
+    $("nNome").value = ""; $("nZap").value = ""; $("nInteresse").value = "";
+    $("dlgNovo").showModal();
+  };
+  $("dlgNovo").addEventListener("close", function () {
+    if ($("dlgNovo").returnValue !== "ok") return;
+    var st = load();
+    st.leads.unshift({
+      id: S.uid(), nome: $("nNome").value.trim(), zap: $("nZap").value.trim(),
+      origem: $("nOrigem").value, interesse: $("nInteresse").value.trim(),
+      status: "novo", criado: S.todayISO(), proximo: S.todayISO(),
+    });
+    save(st);
+  });
+
+  $("kanban").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-acao]"); if (!b) return;
+    var id = e.target.closest("[data-id]").getAttribute("data-id");
+    var st = load();
+    var l = st.leads.find(function (x) { return x.id === id; });
+    if (!l) return;
+    var acao = b.getAttribute("data-acao");
+    var hoje = S.todayISO();
+
+    if (acao === "proximo") {
+      var d = prompt("Próximo contato em qual data? (AAAA-MM-DD)", l.proximo || hoje);
+      if (!d) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { alert("Use o formato AAAA-MM-DD"); return; }
+      l.proximo = d;
+    } else if (acao === "avancar") {
+      l.status = "contato";
+      l.proximo = hoje;
+    } else if (acao === "agendar") {
+      var da = prompt("Aula experimental em qual data? (AAAA-MM-DD)", hoje);
+      if (!da || !/^\d{4}-\d{2}-\d{2}$/.test(da)) return;
+      var hora = prompt("Horário? (HH:MM)", "18:00") || "";
+      l.status = "agendado"; l.agendouEm = hoje; l.proximo = da;
+      // integra com o programa de Aulas Experimentais
+      var ex = S.read("exper", { aulas: [] });
+      ex.aulas.push({ id: S.uid(), nome: l.nome, zap: l.zap, data: da, hora: hora, prof: "", origem: l.origem, status: "agendada", leadId: l.id });
+      S.write("exper", ex);
+    } else if (acao === "visitou") {
+      l.status = "visitou"; l.visitouEm = hoje; l.proximo = hoje;
+    } else if (acao === "matricular") {
+      l.status = "matriculado"; l.matriculouEm = hoje; l.proximo = "";
+    } else if (acao === "perdido") {
+      if (!confirm("Marcar " + l.nome + " como perdido?")) return;
+      l.status = "perdido"; l.perdidoEm = hoje; l.proximo = "";
+    }
+    save(st);
+  });
+
+  S.onChange(function () { render(); });
+  render();
+})();
+</script>
+</body>
+</html>
