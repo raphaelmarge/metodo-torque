@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Planilha DRE Academia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F5F4F7; }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: #F5F4F7; font-family: 'Archivo', sans-serif; color: #131118; display: flex; flex-direction: column;">
+
+  <div style="background: #121016; color: #FFFFFF; padding: 36px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #A78BFA;">MÉTODO TORQUE · MATERIAL DO MÓDULO 2</span>
+      </div>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.01em;">Planilha DRE Academia</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #8A8695; max-width: 420px; line-height: 1.5;">A conta de padaria na ordem certa: lucro ou prejuízo neste mês, e por quê. Números aproximados servem — refine mês a mês. Os dados ficam salvos neste navegador.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 420px 1fr; gap: 28px; padding: 32px 48px 48px; align-items: start; max-width: 1440px; box-sizing: border-box; width: 100%; margin: 0 auto;">
+
+    <!-- ENTRADAS -->
+    <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 28px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">DADOS DO MÊS</span>
+        <button onClick="{{ onExemplo }}" style="border: 1px solid #7C3AED; background: #FFFFFF; color: #7C3AED; font-family: 'Archivo', sans-serif; font-size: 12.5px; font-weight: 700; padding: 6px 12px; cursor: pointer;" style-hover="background: #7C3AED; color: #FFFFFF;">Carregar exemplo da aula</button>
+      </div>
+
+      <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">RECEITAS (R$)</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Mensalidades</label>
+          <input value="{{ mensal }}" onChange="{{ onMensal }}" placeholder="ex.: 48000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Extras (matrícula, loja…)</label>
+          <input value="{{ extras }}" onChange="{{ onExtras }}" placeholder="ex.: 3000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+
+      <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">DEDUÇÕES (% SOBRE A RECEITA)</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Taxas de cartão (%)</label>
+          <input value="{{ taxas }}" onChange="{{ onTaxas }}" placeholder="2 a 5" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Impostos (%)</label>
+          <input value="{{ impostos }}" onChange="{{ onImpostos }}" placeholder="ex.: 6" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+
+      <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">CUSTOS VARIÁVEIS (R$)</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Comissões de venda</label>
+          <input value="{{ comissoes }}" onChange="{{ onComissoes }}" placeholder="ex.: 1400" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Repasses e produto (CPV)</label>
+          <input value="{{ repasses }}" onChange="{{ onRepasses }}" placeholder="ex.: 1500" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+
+      <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">CUSTOS FIXOS (R$)</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Aluguel</label>
+          <input value="{{ aluguel }}" onChange="{{ onAluguel }}" placeholder="ex.: 9000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Folha e encargos</label>
+          <input value="{{ folha }}" onChange="{{ onFolha }}" placeholder="ex.: 22000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Energia, água, internet</label>
+          <input value="{{ energia }}" onChange="{{ onEnergia }}" placeholder="ex.: 2500" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Sistema, contador, limpeza</label>
+          <input value="{{ servicos }}" onChange="{{ onServicos }}" placeholder="ex.: 1500" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Manutenção e marketing</label>
+          <input value="{{ manutencao }}" onChange="{{ onManutencao }}" placeholder="ex.: 1000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600;">Pró-labore e outros</label>
+          <input value="{{ prolabore }}" onChange="{{ onProlabore }}" placeholder="ex.: 1000" inputMode="decimal" style="width: 100%; box-sizing: border-box; min-width: 0; padding: 10px 12px; border: 1px solid #D8D5E0; font-size: 15px; font-family: 'Archivo', sans-serif; background: #FFFFFF; color: #131118;" style-focus="border-color: #7C3AED; outline: none;">
+        </div>
+      </div>
+      <p style="margin: 4px 0 0 0; font-size: 12.5px; line-height: 1.55; color: #8A8695;">Fixos são a conta que chega treinando ou não treinando ninguém. DRE malfeito rodando vale mil vezes mais que DRE perfeito que nunca sai do papel.</p>
+    </div>
+
+    <!-- CASCATA DRE -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div style="background: #FFFFFF; border: 1px solid #E2E0E8;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 18px 26px; border-bottom: 1px solid #E2E0E8;">
+          <span style="font-size: 14px; font-weight: 700;">Receita bruta</span>
+          <span style="font-size: 20px; font-weight: 800;">{{ brutaTxt }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 26px; border-bottom: 1px solid #E2E0E8;">
+          <span style="font-size: 14px; color: #55515F;">(−) Deduções — taxas e impostos ({{ deduPctTxt }})</span>
+          <span style="font-size: 16px; font-weight: 600; color: #55515F;">{{ deduTxt }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 26px; background: #F5F4F7; border-bottom: 1px solid #E2E0E8;">
+          <span style="font-size: 14px; font-weight: 700;">(=) Receita líquida</span>
+          <span style="font-size: 20px; font-weight: 800;">{{ liquidaTxt }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 26px; border-bottom: 1px solid #E2E0E8;">
+          <span style="font-size: 14px; color: #55515F;">(−) Custos variáveis — comissões, repasses, CPV</span>
+          <span style="font-size: 16px; font-weight: 600; color: #55515F;">{{ variaveisTxt }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 16px 26px; background: #F5F4F7; border-bottom: 1px solid #E2E0E8;">
+          <span style="font-size: 14px; font-weight: 700;">(=) Margem de contribuição</span>
+          <span style="font-size: 20px; font-weight: 800;">{{ mcTxt }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 26px;">
+          <span style="font-size: 14px; color: #55515F;">(−) Custos fixos</span>
+          <span style="font-size: 16px; font-weight: 600; color: #55515F;">{{ fixosTxt }}</span>
+        </div>
+      </div>
+
+      <div style="background: #131118; color: #FFFFFF; padding: 26px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #A78BFA;">(=) RESULTADO OPERACIONAL DO MÊS</span>
+          <span style="font-size: 44px; font-weight: 800; line-height: 1; color: {{ resultadoCor }};">{{ resultadoTxt }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+          <span style="font-size: 30px; font-weight: 800; color: {{ resultadoCor }};">{{ margemTxt }}</span>
+          <div style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{ margemDot }};"></span><span style="font-size: 13.5px; font-weight: 600; color: #E8E5F0;">{{ margemLabel }}</span></div>
+        </div>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #E2E0E8; padding: 20px 26px; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">REFERÊNCIA DO CURSO</span>
+        <span style="font-size: 14px; line-height: 1.6; color: #3A3742;">Margem saudável para o setor: <strong>10 a 20%</strong>. Abaixo de 10%, qualquer soluço (um junho fraco, uma máquina quebrada) vira prejuízo. Do resultado positivo, aplique a regra dos três terços (aula 2.5): 1/3 distribuição extra, 1/3 reserva de segurança, 1/3 reinvestimento no negócio.</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: auto; background: #121016; padding: 18px 48px; display: flex; justify-content: space-between; align-items: baseline;">
+    <span style="font-size: 13px; color: #8A8695;">Método Torque · Gestão de Academias de Alta Performance · Material do aluno</span>
+    <span style="font-size: 13px; color: #8A8695;">www.torquefitness.com.br</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { mensal: '', extras: '', taxas: '', impostos: '', comissoes: '', repasses: '', aluguel: '', folha: '', energia: '', servicos: '', manutencao: '', prolabore: '' };
+
+  componentDidMount() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('metodo-torque-dre') || 'null');
+      if (saved && typeof saved === 'object') {
+        const clean = {};
+        for (const k of Object.keys(this.state)) if (typeof saved[k] === 'string') clean[k] = saved[k];
+        this.setState(clean);
+      }
+    } catch (e) {}
+  }
+
+  persist() {
+    try { localStorage.setItem('metodo-torque-dre', JSON.stringify(this.state)); } catch (e) {}
+  }
+
+  set(k) {
+    return (e) => this.setState({ [k]: e.target.value }, () => this.persist());
+  }
+
+  renderVals() {
+    const VERDE = '#1F8A5B', AMAR = '#D97706', VERM = '#EF4444', NEUTRO = '#C6C2CF';
+    const P = (s) => {
+      s = (s == null ? '' : String(s)).trim();
+      if (!s) return null;
+      s = s.replace(/R\$\s?/g, '').replace(/%/g, '').replace(/\s/g, '');
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return isFinite(n) && n >= 0 ? n : null;
+    };
+    const brl = (n) => n == null ? '—' : (n < 0 ? '− ' : '') + 'R$ ' + Math.abs(n).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+    const mensal = P(this.state.mensal), extras = P(this.state.extras);
+    const taxas = P(this.state.taxas), impostos = P(this.state.impostos);
+    const comissoes = P(this.state.comissoes), repasses = P(this.state.repasses);
+    const fixosArr = [P(this.state.aluguel), P(this.state.folha), P(this.state.energia), P(this.state.servicos), P(this.state.manutencao), P(this.state.prolabore)];
+
+    const bruta = (mensal != null || extras != null) ? (mensal || 0) + (extras || 0) : null;
+    const deduPct = (taxas || 0) + (impostos || 0);
+    const dedu = bruta != null ? bruta * deduPct / 100 : null;
+    const liquida = bruta != null ? bruta - dedu : null;
+    const variaveis = (comissoes != null || repasses != null) ? (comissoes || 0) + (repasses || 0) : 0;
+    const mc = liquida != null ? liquida - variaveis : null;
+    const temFixo = fixosArr.some((v) => v != null);
+    const fixos = temFixo ? fixosArr.reduce((a, v) => a + (v || 0), 0) : 0;
+    const resultado = mc != null ? mc - fixos : null;
+    const margem = (resultado != null && bruta) ? (resultado / bruta) * 100 : null;
+
+    let mS = { dot: NEUTRO, label: 'aguardando dados', cor: '#FFFFFF' };
+    if (margem != null) {
+      if (margem < 0) mS = { dot: VERM, label: 'prejuízo no mês — reveja custos e ticket', cor: '#F87171' };
+      else if (margem < 10) mS = { dot: AMAR, label: 'abaixo de 10% — qualquer soluço vira prejuízo', cor: '#FBBF24' };
+      else if (margem <= 20) mS = { dot: VERDE, label: 'saudável para o setor (10–20%)', cor: '#4ADE80' };
+      else mS = { dot: VERDE, label: 'acima de 20% — excelente', cor: '#4ADE80' };
+    }
+
+    const onExemplo = () => {
+      this.setState({
+        mensal: '48000', extras: '3000', taxas: '4', impostos: '6',
+        comissoes: '1400', repasses: '1500',
+        aluguel: '9000', folha: '22000', energia: '2500', servicos: '1500', manutencao: '1000', prolabore: '1000'
+      }, () => this.persist());
+    };
+
+    return {
+      mensal: this.state.mensal, extras: this.state.extras, taxas: this.state.taxas, impostos: this.state.impostos,
+      comissoes: this.state.comissoes, repasses: this.state.repasses, aluguel: this.state.aluguel, folha: this.state.folha,
+      energia: this.state.energia, servicos: this.state.servicos, manutencao: this.state.manutencao, prolabore: this.state.prolabore,
+      onMensal: this.set('mensal'), onExtras: this.set('extras'), onTaxas: this.set('taxas'), onImpostos: this.set('impostos'),
+      onComissoes: this.set('comissoes'), onRepasses: this.set('repasses'), onAluguel: this.set('aluguel'), onFolha: this.set('folha'),
+      onEnergia: this.set('energia'), onServicos: this.set('servicos'), onManutencao: this.set('manutencao'), onProlabore: this.set('prolabore'),
+      onExemplo,
+      brutaTxt: brl(bruta),
+      deduPctTxt: deduPct ? deduPct.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '—',
+      deduTxt: brl(dedu),
+      liquidaTxt: brl(liquida),
+      variaveisTxt: brl(variaveis),
+      mcTxt: brl(mc),
+      fixosTxt: brl(fixos),
+      resultadoTxt: brl(resultado),
+      resultadoCor: mS.cor,
+      margemTxt: margem == null ? '—' : margem.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%',
+      margemDot: mS.dot,
+      margemLabel: mS.label
+    };
+  }
+}
+</script>
+</body>
+</html>

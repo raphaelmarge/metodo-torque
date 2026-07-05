@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 6</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 6 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 6</span>
+      <span>Operação Redonda</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">Ao final deste módulo</strong>, a rotina da academia roda por checklist e não por memória: abertura e fechamento padronizados, limpeza com frequência definida, manutenção preventiva agendada, documentação legal em dia e critérios claros para o sistema de gestão.</p>
+
+    <!-- AULA 6.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 6.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Checklists: a academia que funciona sem depender de memória</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Operação boa é chata: as mesmas coisas, feitas do mesmo jeito, todos os dias. Checklist é a tecnologia mais barata do mundo para garantir isso — transforma “todo mundo sabe que tem que fazer” em “feito, conferido e assinado”. E protege a equipe: ninguém depende de lembrar, e o gestor cobra o processo, não a pessoa.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">CHECKLIST DE ABERTURA (EXEMPLO — ADAPTE À SUA ESTRUTURA)</h3>
+    <div style="border: 1px solid #E2E0E8; padding: 18px 22px; margin-top: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14.5px; line-height: 1.55;">Luzes, ar-condicionado/ventilação e som ligados no padrão definido.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14.5px; line-height: 1.55;">Ronda rápida no salão: equipamentos no lugar, anilhas organizadas, nada quebrado da noite anterior (se houver, registrar e sinalizar).</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14.5px; line-height: 1.55;">Banheiros e vestiários: limpos, abastecidos (papel, sabonete), ralos ok.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14.5px; line-height: 1.55;">Recepção pronta: sistema logado, caixa conferido, WhatsApp aberto, lista de visitas agendadas do dia à vista.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14.5px; line-height: 1.55;">Bebedouros e balança funcionando; borrifadores e papel nas estações de limpeza do aluno.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14.5px; line-height: 1.55;">Catraca/check-in testados.</p></div>
+      </div>
+    </div>
+
+    <p style="margin: 18px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Fechamento é o espelho:</strong> equipamentos recolhidos e desligados onde aplicável, conferência do caixa, luzes e ar, portas e alarme, registro de pendências para a abertura seguinte. Além dos diários, mantenha o checklist <strong>semanal</strong> (limpeza profunda de áreas, teste de itens de segurança, conferência de estoque) e o <strong>mensal</strong> (manutenção preventiva — aula 6.3, validade de documentos, revisão de fornecedores).</p>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">A REGRA QUE FAZ O CHECKLIST FUNCIONAR</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Quem executa, assina (papel na prancheta ou app — tanto faz). Uma vez por semana, o gestor confere por amostragem 2 ou 3 itens no local: banheiro dito limpo está limpo? Checklist sem conferência vira ritual de rabiscar papel; com conferência, vira padrão de verdade.</p>
+    </div>
+
+    <!-- AULA 6.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 6.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Limpeza e apresentação: o básico que derruba academias</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Pergunte o que faz um aluno cancelar e ele dirá coisas grandiosas. Observe o que ele comenta no Google e no grupo de amigos: banheiro sujo, cheiro ruim, estofado rasgado, equipamento empoeirado. Limpeza é o item de retenção mais subestimado do fitness — e o mais barato de resolver com processo.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">FREQUÊNCIAS MÍNIMAS</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 210px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">BANHEIROS E VESTIÁRIOS</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">No mínimo 3 conferências/limpezas por dia em horários fixos (pós-pico da manhã, meio da tarde, pós-pico da noite), com folha de registro na porta — a mesma que você confere em restaurante. Aluno vê, aluno confia.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 210px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">ESTOFADOS E PEGADAS</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Higienização diária pela equipe + estação de limpeza para o aluno (borrifador e papel a cada 10-15 equipamentos) com placa educativa. Cultura de limpar a estação se constrói com exemplo do professor.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 210px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">ESPELHOS E SUPERFÍCIES</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Diário. Espelho embaçado numa academia é vitrine suja de loja.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 210px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">AR E CHEIRO</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Filtros de ar-condicionado no plano mensal, ventilação cruzada quando possível. Cheiro é a primeira impressão invisível — e a última coisa que o dono, acostumado, percebe. Peça a um visitante honesto para “cheirar” sua academia.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 210px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">PISO E PESO LIVRE</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Varrição/limpeza diária, atenção a magnésio e borracha danificada.</p>
+      </div>
+    </div>
+
+    <p style="margin: 18px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Inspeção do gestor:</strong> uma vez por semana, em dia e hora aleatórios, percorra a academia com os olhos de um visitante que nunca entrou ali — do estacionamento ao vestiário. Anote 5 pontos, distribua os consertos, repita na semana seguinte. Padrão de apresentação é músculo: treina toda semana ou atrofia.</p>
+
+    <!-- AULA 6.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 6.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Manutenção de equipamentos: preventiva barata, corretiva cara</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Máquina parada não custa só o conserto — custa aluno. O praticante que encontra a esteira favorita quebrada duas semanas seguidas não reclama: ele silenciosamente conclui que a academia está decaindo e começa a olhar a concorrente. Regra do setor: manutenção corretiva de emergência custa 2 a 3 vezes a preventiva que a evitaria, sem contar a receita perdida.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">O PLANO PREVENTIVO MÍNIMO</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">DIÁRIO</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Equipe do salão: olhar e ouvir — barulho anormal, folga, cabo desfiando, estofado abrindo. Achou, registrou no canal de manutenção com foto.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">MENSAL</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Aperto geral de parafusos e articulações das máquinas de musculação, inspeção de cabos e polias (cabo desfiado troca na hora — é item de segurança), lubrificação de pontos móveis, teste de esteiras (manta centralizada, velocidade, parada de emergência) e limpeza sob a manta/motor conforme manual e uso.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">TRIMESTRAL</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Revisão aprofundada de cardio (motor, manta, lubrificação conforme horas de uso), calibração de cargas, revisão de estofados para reforma em lote (reformar 10 de uma vez sai muito mais barato que 10 vezes um).</p>
+      </div>
+    </div>
+
+    <p style="margin: 18px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Registro por máquina:</strong> cada equipamento com sua ficha (a planilha de inventário do Módulo 7): data de compra, intervenções, peças trocadas. É esse histórico que diz quando o conserto deixou de valer a pena — e vale ouro na hora de vender o usado.</p>
+
+    <div style="margin-top: 20px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">REGRA DOS 7 DIAS</p>
+      <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65; color: #E8E5F0;">Nenhum equipamento fica parado mais de 7 dias. Se a peça demora, sinalize com cartaz honesto (“em manutenção — peça a caminho, volta dia X”) e cobre o fornecedor por escrito. Transparência segura o aluno; silêncio e fita zebrada eterna afugentam. E na compra de equipamento, disponibilidade de peça de reposição É critério de decisão — tema do Módulo 7.</p>
+    </div>
+
+    <!-- AULA 6.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 6.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Obrigações e normas: o mapa para não ser pego de surpresa</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Fiscalização não avisa. A boa notícia: a lista do que uma academia precisa é conhecida e finita. Monte a pasta (física e digital) e revise validade duas vezes por ano. Esta aula é o mapa — a regulamentação exata varia por município e estado, então confirme os detalhes com seu contador e o conselho regional.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 18px;">
+      <div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">CREF</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Registro da pessoa jurídica no conselho regional, todos os profissionais de educação física com registro ativo e um responsável técnico formalmente designado. É a fiscalização mais frequente do setor.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">PREFEITURA</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Alvará de funcionamento/licença de localização compatível com a atividade, e licença sanitária onde exigida.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">BOMBEIROS</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Auto de vistoria (AVCB/CLCB conforme o estado) válido: extintores na validade, saídas de emergência desobstruídas e sinalizadas, brigada quando aplicável. Além de obrigação, é segurança real do seu aluno.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">MÚSICA (ECAD)</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Execução pública de música tem recolhimento ao ECAD. Regularize ou dimensione — chegar boleto retroativo com multa é clássico do setor.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">LGPD BÁSICA</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Dados de aluno (cadastro, saúde da anamnese, biometria da catraca) são dados pessoais — alguns, sensíveis. Colete só o necessário, guarde com acesso restrito, tenha consentimento no contrato e NUNCA poste foto/vídeo de aluno sem autorização expressa (item do contrato + bom senso: pergunte sempre).</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">CONTRATOS E SEGUROS</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Contrato de matrícula revisado por advogado (regras de cancelamento, multa, uso de imagem, responsabilidades), atestado/anamnese de aptidão conforme exigência local, e vale avaliar seguro de responsabilidade civil — acidente acontece na melhor operação.</p>
+      </div>
+    </div>
+
+    <!-- AULA 6.5 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 6.5</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Sistema de gestão: critérios para escolher (ou trocar) sem se arrepender</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">O sistema de gestão é o sistema nervoso da academia: catraca, cobrança, CRM e relatório passam por ele. Sistema ruim não “atrapalha um pouco” — ele esconde seus números e sabota sua régua de retenção. Avalie qualquer plataforma (ou a sua atual) contra os critérios abaixo, em ordem de importância:</p>
+
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 18px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Cobrança recorrente automática no cartão</strong> com retentativa inteligente e atualização fácil de cartão pelo próprio aluno — é o coração do faturamento (aula 2.2).</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Controle de acesso integrado</strong> (catraca/leitor) com registro de frequência confiável — sem isso, não existe régua de ausência (aula 4.3).</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>CRM com histórico do aluno e disparo de comunicação</strong> (ou integração direta com WhatsApp) para automatizar os 6 gatilhos da régua.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Relatórios que entregam os 7 números do Módulo 1</strong> sem exportar dez planilhas: ativos, ticket, churn, inadimplência, receita.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>App do aluno</strong> (treino, agendamento de coletivas, financeiro) — retenção e menos fila no balcão.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">6</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Suporte que responde:</strong> teste ANTES de assinar, mande três perguntas e cronometre a resposta.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">TROCANDO DE SISTEMA SEM TRAUMA</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Rode 30 dias em paralelo: base migrada e conferida (planos, cartões, vencimentos), catraca testada fora do pico, equipe treinada com uma semana de antecedência e um responsável interno pela migração com contato direto do suporte. A migração malfeita cobra o preço em cobrança que não sai — exatamente o que você não pode errar.</p>
+    </div>
+
+    <p style="margin: 18px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Custo-benefício:</strong> sistema bom custa uma fração de uma mensalidade por dezena de alunos e devolve isso só em inadimplência evitada. Não escolha pelo mais barato — escolha pelo que sustenta os processos que você implantou nos módulos 2, 3 e 4.</p>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.6;">Implantação desta semana:</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Adapte e imprima os checklists de abertura e fechamento; comece a usá-los amanhã, com assinatura de quem executa.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Monte o calendário de manutenção preventiva do trimestre e agende a primeira rodada mensal.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Confira a pasta de documentação legal item a item (CREF, alvará, bombeiros, ECAD, contratos) e liste pendências com prazo.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Avalie seu sistema atual contra os 6 critérios; se reprovar em cobrança recorrente ou frequência, inicie a pesquisa de troca.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Kit de checklists operacionais: abertura, fechamento, semanal e mensal (editáveis)<br>— Plano de manutenção preventiva por tipo de equipamento + ficha individual de máquina<br>— Checklist de conformidade legal da academia<br>— Tabela de avaliação de sistemas de gestão com os 6 critérios ponderados</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Checklists de abertura e fechamento rodando com assinatura diária.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Calendário de preventiva do trimestre publicado, com responsáveis.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Documentação legal conferida e pendências com prazo definido.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Sistema de gestão avaliado contra os 6 critérios (nota registrada).</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

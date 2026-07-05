@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 2 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 2</span>
+      <span>Finanças para Dono de Academia</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">Ao final deste módulo</strong>, você sai da gestão pelo extrato bancário: DRE simples rodando todo mês, planos precificados com piso calculado, fluxo de caixa preparado para a sazonalidade e inadimplência sob controle com régua de cobrança.</p>
+
+    <!-- AULA 2.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 2.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">DRE simplificado sem ser contador</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">DRE é a demonstração de resultado: uma conta de padaria, feita na ordem certa, que responde à única pergunta que importa — a academia deu lucro ou prejuízo neste mês, e por quê? Olhar o saldo do banco não responde isso: o saldo mistura mês passado, parcelamento, dinheiro que ainda vai sair e dinheiro que nem é seu (impostos).</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">AS LINHAS DO DRE DA ACADEMIA</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; line-height: 1.5;">
+      <tbody>
+        <tr>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap; width: 230px;">Receita bruta</td>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8;">Tudo que entrou de mensalidades, matrículas, avaliações, loja, personal e locações.</td>
+        </tr>
+        <tr>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">(−) Deduções</td>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8;">Taxas de cartão e recorrência (2 a 5%), impostos sobre a receita (conforme seu regime, geralmente Simples Nacional) e estornos.</td>
+        </tr>
+        <tr style="background: #F5F4F7;">
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">(=) Receita líquida</td>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8;">O que realmente sobrou para pagar o negócio.</td>
+        </tr>
+        <tr>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">(−) Custos variáveis</td>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8;">O que cresce junto com o volume: comissões de venda, repasse de personal, custo de produto vendido na loja.</td>
+        </tr>
+        <tr style="background: #F5F4F7;">
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">(=) Margem de contribuição</td>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8;">O que sobra para cobrir a estrutura.</td>
+        </tr>
+        <tr>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">(−) Custos fixos</td>
+          <td style="padding: 11px 14px; border: 1px solid #E2E0E8;">Aluguel, folha e encargos, energia, água, internet, sistema, limpeza, contador, manutenção, marketing fixo. É a conta que chega treinando ou não treinando ninguém.</td>
+        </tr>
+        <tr style="background: #131118;">
+          <td style="padding: 11px 14px; border: 1px solid #131118; font-weight: 700; white-space: nowrap; color: #FFFFFF;">(=) Resultado operacional</td>
+          <td style="padding: 11px 14px; border: 1px solid #131118; color: #FFFFFF;">O lucro (ou prejuízo) do mês. Aqui mora a verdade.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">EXEMPLO COMPLETO — ACADEMIA DE 400 ALUNOS</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.75;">Receita bruta: 400 alunos × R$ 120 + R$ 3.000 de extras = <strong>R$ 51.000</strong> · (−) Taxas e impostos (≈10%): R$ 5.100 → Receita líquida: <strong>R$ 45.900</strong> · (−) Variáveis (comissões e repasses): R$ 2.900 → Margem de contribuição: <strong>R$ 43.000</strong> · (−) Fixos: aluguel R$ 9.000 + folha R$ 22.000 + energia R$ 2.500 + demais R$ 3.500 = R$ 37.000 · (=) Resultado: <strong>R$ 6.000 no mês — margem de 11,8%</strong>. Saudável para o setor fica entre 10 e 20%. Abaixo de 10%, qualquer soluço (um junho fraco, uma máquina quebrada) vira prejuízo.</p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Implantação:</strong> não tente perfeição contábil. Preencha a planilha do curso com os números que você tem, mesmo aproximados, e refine mês a mês. DRE malfeito rodando vale mil vezes mais que DRE perfeito que nunca sai do papel.</p>
+
+    <!-- AULA 2.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 2.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Precificação de planos: piso, âncora e recorrência</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">A maioria das academias precifica olhando para o vizinho: “ele cobra 110, vou cobrar 99”. Isso é terceirizar a sua margem para o concorrente. Preço se constrói de dentro para fora: primeiro o piso (abaixo do qual você paga para trabalhar), depois o posicionamento (aula 1.4), depois a arquitetura de planos.</p>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">PASSO 1 — CALCULE O CUSTO POR ALUNO</h3>
+    <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65;">Custo fixo total ÷ alunos ativos. No exemplo da aula anterior: R$ 37.000 ÷ 400 = R$ 92,50 por aluno. Somando taxas e variáveis proporcionais, o custo real passa de R$ 100. Qualquer plano vendido abaixo disso é prejuízo por assinatura — você está pagando para o aluno treinar. Promoção pontual tudo bem; tabela permanente abaixo do custo é suicídio em prestações.</p>
+    <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 2.2; color: #3A3742;">Meu custo por aluno: <span style="display: inline-block; min-width: 140px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Meu plano mais barato: <span style="display: inline-block; min-width: 140px; border-bottom: 1px solid #8A8695;"></span></p>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">PASSO 2 — MONTE A ARQUITETURA DE 3 PLANOS</h3>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Plano cheio (mensal sem fidelidade).</strong> O mais caro. Existe para dar liberdade a quem paga por ela — e para fazer o plano do meio parecer óbvio.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Plano recorrente (o carro-chefe).</strong> Cobrança automática no cartão, 15 a 25% mais barato que o cheio, com fidelidade mínima de 12 meses ou multa proporcional. É aqui que você quer 70% ou mais da base.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Plano anual à vista (a âncora).</strong> Desconto agressivo para pagamento adiantado. Injeta caixa, trava o aluno por 12 meses e derruba o churn desse grupo para perto de zero.</p>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">POR QUE RECORRÊNCIA NO CARTÃO MUDA O JOGO</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Boleto e pagamento no balcão geram inadimplência de 10 a 20% — todo mês você vira cobrador. Recorrência no cartão derruba isso para a faixa de 3 a 5% e transforma sua receita em assinatura previsível. Se a sua academia ainda vive de boleto, a migração para recorrência é a decisão financeira de maior impacto que você pode tomar este ano.</p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Sobre desconto:</strong> desconto é ferramenta com data para acabar, nunca identidade. Cada 10% de desconto permanente no ticket exige cerca de 10% a mais de alunos só para empatar — com mais custo de operação e desgaste de equipamento. Se precisar ceder, ceda em bônus (avaliação, mês 13, brinde), não em mensalidade.</p>
+
+    <!-- AULA 2.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 2.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Fluxo de caixa e a sazonalidade do fitness</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Academia tem duas estações: a cheia e a vazia. Janeiro a março, a onda das resoluções e do verão enche a recepção — a receita sobe 30 a 50% sobre a média. Junho a agosto, o frio e as férias esvaziam: queda de 15 a 30% é comum. Dono despreparado gasta o janeiro inteiro achando que ficou rico e chega em julho sem caixa para a folha. Dono preparado usa o verão para financiar o inverno.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">AS TRÊS REGRAS DO CAIXA</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Reserva mínima.</strong> Acumule e não toque em 2 a 3 meses de custo fixo (no nosso exemplo, R$ 74.000 a R$ 111.000). É o colchão que transforma crise em contratempo.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Poupança de alta estação.</strong> De janeiro a março, transfira automaticamente 10 a 15% da receita para uma conta separada. Esse dinheiro tem nome: inverno.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Visão de 8 semanas.</strong> Toda segunda-feira, 15 minutos: quanto entra e quanto sai nas próximas 8 semanas, incluindo 13º, férias da equipe e parcelas de equipamento. Aperto previsto com 2 meses de antecedência se resolve com campanha; descoberto na sexta-feira se resolve com empréstimo caro.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">NA PRÁTICA — JUNHO SEM PÂNICO</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Além do caixa reservado, ataque o inverno com produto, não com desconto: desafio indoor de 8 semanas, campanha “projeto verão começa no inverno” (quem começa em junho chega em dezembro com resultado), condição especial só no plano <strong>anual</strong>. Você protege o ticket e ainda antecipa receita.</p>
+    </div>
+
+    <!-- AULA 2.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 2.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Inadimplência sob controle: a régua de cobrança</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Inadimplência não se resolve com constrangimento no balcão — se resolve com processo. A régua abaixo recupera a maior parte dos atrasos nos primeiros 10 dias, preserva a relação e protege o caixa. O tom é sempre o mesmo: firme no processo, leve na comunicação.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 18px;">
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 16px; font-weight: 800; color: #7C3AED; white-space: nowrap;">D+1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Mensagem automática amigável:</strong> “Oi [nome]! Vi que a mensalidade de [mês] não passou. Às vezes é só o cartão que trocou — quer que eu atualize por aqui mesmo?”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 16px; font-weight: 800; color: #7C3AED; white-space: nowrap;">D+5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Segunda mensagem oferecendo caminho fácil:</strong> link de pagamento ou atualização de cartão em um clique.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 16px; font-weight: 800; color: #7C3AED; white-space: nowrap;">D+10</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Ligação (não mensagem) da recepção ou gerente:</strong> pessoal, sem julgamento, com proposta concreta: “conseguimos parcelar / mudar a data de vencimento para perto do seu pagamento”.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 16px; font-weight: 800; color: #7C3AED; white-space: nowrap;">D+15</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Bloqueio do acesso na catraca</strong>, comunicado com respeito no D+13: “para continuar treinando é só regularizar — te esperamos!”. Bloqueio sem aviso gera detrator; bloqueio avisado gera pagamento.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 16px; font-weight: 800; color: #7C3AED; white-space: nowrap;">D+30</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Acordo formal de renegociação</strong> ou, persistindo, negativação conforme contrato. A essa altura, o objetivo é recuperar o valor sem consumir mais energia da equipe.</p>
+      </div>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Prevenção estrutural:</strong> migre a base para recorrência no cartão (aula 2.2), ofereça troca de data de vencimento para o dia seguinte ao pagamento do aluno e nunca deixe acumular duas mensalidades — atraso de 2 meses raramente volta.</p>
+
+    <div style="margin-top: 16px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">O QUE NUNCA FAZER</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Cobrar na frente de outros alunos, expor nome em mural ou grupo, ou deixar o professor fazer a cobrança. Cobrança é processo da gestão, não do salão.</p>
+    </div>
+
+    <!-- AULA 2.5 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 2.5</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Pró-labore, lucro e reinvestimento</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Os dois extremos quebram academia: o dono que tira dinheiro do caixa conforme a necessidade da casa (e descapitaliza o negócio sem perceber) e o dono que não se paga nunca (e desanima, ou pior, mistura tudo). A solução tem três decisões:</p>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Decisão 1 — Pró-labore fixo.</strong> Defina um valor mensal fixo pelo SEU trabalho de gestor e lance como custo fixo no DRE. É o seu salário: entra todo mês, no mesmo dia, chova ou faça sol. Referência honesta: o que custaria contratar um gerente para fazer o que você faz.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Decisão 2 — Contas separadas.</strong> Conta PJ é da academia, conta PF é sua. Cartão da empresa não paga mercado de casa; cartão pessoal não paga esteira. Sem essa separação, nenhum DRE do mundo mostra a verdade.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Decisão 3 — A regra dos três terços para o lucro.</strong> Do resultado operacional de cada mês, 1/3 vira distribuição extra para o dono, 1/3 vai para a reserva de segurança (até completar os 2-3 meses de fixo) e 1/3 volta para o negócio — manutenção pesada, renovação de equipamento, marketing de crescimento.</p>
+    </div>
+    <p style="margin: 14px 0 0 0; font-size: 15px; line-height: 2.2; color: #3A3742;">Meu pró-labore mensal: <span style="display: inline-block; min-width: 160px; border-bottom: 1px solid #8A8695;"></span></p>
+
+    <div style="margin-top: 16px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">POR QUE O TERÇO DE REINVESTIMENTO IMPORTA TANTO</p>
+      <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65; color: #E8E5F0;">Academia é negócio de ativo físico: o parque de equipamentos envelhece todos os dias e o aluno percebe antes de você. Quem distribui 100% do lucro por 5 anos acorda com estofado rasgado, esteira parada e concorrente novo na esquina — e aí precisa de um investimento gigante de uma vez, geralmente financiado caro. O terço reinvestido mantém a academia jovem em prestações que o caixa aguenta. No Módulo 7 você vai transformar esse terço num plano de renovação com custo de engenharia.</p>
+    </div>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.6;">Nesta semana, com a Planilha DRE em mãos:</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Monte o DRE dos últimos 3 meses, mesmo com números aproximados — a precisão vem com a repetição.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Calcule seu custo por aluno e confira se algum plano da sua tabela está abaixo do piso. Se estiver, planeje a correção (reajuste na renovação ou migração de plano).</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Configure a régua de cobrança: cadastre as mensagens de D+1 e D+5 no WhatsApp e defina quem liga no D+10.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Defina seu pró-labore fixo e agende a transferência automática mensal.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Planilha DRE Academia: modelo preenchido com o exemplo da aula + modelo em branco<br>— Calculadora de precificação: custo por aluno, piso de plano e simulador de arquitetura de 3 planos<br>— Régua de cobrança pronta: mensagens de WhatsApp para cada etapa (D+1 a D+30)<br>— Planilha de fluxo de caixa com visão de 8 semanas</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Meu DRE dos últimos 3 meses está preenchido e eu sei minha margem real.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Nenhum plano da tabela está abaixo do custo por aluno (ou existe plano de correção).</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">A régua de cobrança está ativa com responsável definido para cada etapa.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Meu pró-labore está definido, fixo e separado do lucro.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

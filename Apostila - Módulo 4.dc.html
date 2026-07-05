@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 4 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 4</span>
+      <span>Retenção: Onde o Lucro Mora</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">Ao final deste módulo</strong>, você terá o churn medido, um onboarding de 90 dias implantado e uma régua de relacionamento rodando no WhatsApp — porque reter um aluno custa de 5 a 7 vezes menos do que captar um novo, e é na retenção que a academia lucra de verdade.</p>
+
+    <!-- AULA 4.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 4.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">A matemática do churn: o balde furado</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Imagine encher um balde furado. Você pode abrir mais a torneira (vendas) ou tapar o furo (retenção). A maioria dos donos passa a vida abrindo a torneira — porque venda dá dopamina e cancelamento dá vergonha. Mas a conta não perdoa: cada ponto de churn a menos vale mais que uma campanha inteira de captação.</p>
+
+    <div style="margin-top: 20px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">A CONTA QUE DÓI</p>
+      <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.7; color: #E8E5F0;">Academia de 400 alunos, ticket R$ 120, churn de 6% = <strong style="color: #FFFFFF;">24 cancelamentos/mês</strong>. Receita recorrente perdida: 24 × R$ 120 = <strong style="color: #FFFFFF;">R$ 2.880 por mês</strong>, todo mês. Custo para repor: 24 matrículas × CAC de R$ 100 = <strong style="color: #FFFFFF;">R$ 2.400</strong> só para voltar ao zero.</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.7; color: #E8E5F0;">Reduzindo o churn de 6% para 4% (8 alunos a menos cancelando): R$ 960/mês de receita preservada + R$ 800 de CAC economizado + permanência média subindo — o LTV de toda a base cresce. Em 12 meses, essa diferença passa de <strong style="color: #FFFFFF;">R$ 20.000</strong>. Sem vender um plano a mais.</p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Medindo certo:</strong> churn do mês = cancelamentos ÷ ativos no início do mês. Conte cancelamento real e também o “cancelamento silencioso”: aluno que parou de frequentar e vai cancelar na renovação. Frequência é o termômetro que antecipa o churn em 30 a 60 dias — por isso a régua da aula 4.3 é baseada em ausência.</p>
+    <p style="margin: 14px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Por que aluno cancela (em ordem real):</strong> não criou hábito nos primeiros 90 dias, não percebe resultado, não se sente visto por ninguém, problema financeiro, mudança de rotina/endereço. Repare: os três primeiros são culpa do processo da academia, não do bolso do aluno — e é neles que este módulo ataca.</p>
+    <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 2.2; color: #3A3742;">Meu churn atual: <span style="display: inline-block; min-width: 100px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Minha meta para 3 meses: <span style="display: inline-block; min-width: 100px; border-bottom: 1px solid #8A8695;"></span></p>
+
+    <!-- AULA 4.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 4.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Onboarding de 90 dias: os primeiros treinos decidem tudo</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">A estatística é cruel: a maior parte dos cancelamentos acontece nos primeiros 90 dias. Quem atravessa esse período criando hábito fica anos; quem se perde nas primeiras semanas vira churn do trimestre. Onboarding é o processo que carrega o aluno pela travessia — e é o investimento de retenção com maior retorno que existe.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">O PROTOCOLO TORQUE DE 90 DIAS</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 0</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Matrícula:</strong> boas-vindas calorosas, foto/avaliação inicial registrada (o “antes” que vai virar prova de resultado), apresentação ao professor responsável e primeiro treino JÁ agendado. Aluno não sai sem data de volta.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">SEMANA 1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Primeiro treino acompanhado de perto — ensinar equipamento, ajustar carga, garantir que ele saia se sentindo capaz, não humilhado. Mensagem no dia seguinte: “E aí, como está o corpo depois do primeiro treino? Dor boa?”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 7</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Check-in do professor no salão ou WhatsApp: “Fechou a primeira semana! Como está se sentindo? Alguma dúvida no treino?”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 30</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Mini-reavaliação + celebração da constância: “Um mês! Você veio X vezes — está na frente da maioria”. Ajuste fino no treino para renovar o estímulo.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 60</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Troca de treino (novidade combate monotonia) + convite para uma aula coletiva ou desafio (hora de plugar o aluno na comunidade — aula 4.4).</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 90</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Reavaliação completa com comparativo do dia 0. Resultado documentado = aluno retido + depoimento/foto (com autorização) = combustível de marketing. Feche pedindo a indicação: “quem você conhece que ia curtir esse resultado também?”</p>
+      </div>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Custo disso tudo:</strong> praticamente zero em dinheiro — é processo e atenção. Delegue cada ponto de contato a um responsável (professor ou recepção) com registro na ficha do aluno. O que não tem dono, não acontece.</p>
+
+    <!-- AULA 4.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 4.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Régua de relacionamento: os gatilhos que seguram o aluno</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Régua de relacionamento é o conjunto de contatos automáticos disparados por comportamento do aluno. O princípio: ninguém cancela de surpresa — o aluno avisa sumindo. Quem monitora ausência recupera o aluno ANTES do pedido de cancelamento, quando ainda é barato e fácil.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">OS 6 GATILHOS ESSENCIAIS</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">AUSÊNCIA 7 DIAS</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Mensagem leve do professor: “Oi [nome]! Senti sua falta essa semana no salão. Tudo bem por aí? Seu treino de [grupo] tá te esperando”. Tom de cuidado, zero cobrança.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">AUSÊNCIA 15 DIAS</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">LIGAÇÃO do professor ou gerente. Ouvir o motivo real (rotina? desânimo? lesão?) e oferecer solução concreta: ajustar horário, refazer treino, agendar retorno acompanhado.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">AUSÊNCIA 30 DIAS</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Oferta de recomeço: “Vamos zerar o jogo: treino novo + reavaliação essa semana, eu monto tudo pra você só aparecer. Que dia fica bom?”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">ANIVERSÁRIO</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Mensagem pessoal + mimo na recepção (não cupom genérico). É o contato de vínculo mais barato que existe.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">RENOVAÇÃO D−15</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Contato ANTES do vencimento do plano celebrando a jornada (“você já treinou X vezes, olha sua evolução”) e facilitando a renovação — de preferência com upgrade para anual.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">EX-ALUNO D+60</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Dois meses após o cancelamento, convite sem pressão para voltar com condição de retorno. Ex-aluno tem CAC zero e já conhece a casa — é a lista mais lucrativa que você tem.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">IMPLANTAÇÃO SEM SISTEMA SOFISTICADO</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">O ideal é o seu sistema de gestão disparar os alertas de ausência automaticamente. Não tendo, resolve-se com disciplina: toda segunda-feira, a recepção puxa a lista de check-ins e separa quem não aparece há 7, 15 e 30 dias; cada professor recebe a sua lista de alunos para contatar até quarta. Trinta minutos por semana que salvam dezenas de mensalidades por mês.</p>
+    </div>
+
+    <!-- AULA 4.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 4.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Comunidade e experiência: o aluno fica onde pertence</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Preço o concorrente cobre. Equipamento ele compra. O que ninguém copia é o aluno chegar e três pessoas falarem “e aí, sumido!”. Pertencimento é a barreira de saída mais forte do fitness — e se constrói de propósito, não por acaso.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Aulas coletivas como cola social.</strong> Coletiva não é só produto de treino, é fábrica de vínculo — o aluno cria compromisso com a turma e com o horário. Aluno de coletiva cancela visivelmente menos que o de treino solitário. Use o dia 60 do onboarding para plugar todo mundo em pelo menos uma turma.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Desafio trimestral.</strong> 4 a 8 semanas, regras simples (ex.: ranking de presença + evolução na reavaliação), mural visível, premiação simbólica. Desafio dá meta de curto prazo, assunto no salão e pico de frequência exatamente nos meses fracos — rode um em junho, sempre.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Eventos internos.</strong> Aulão temático no sábado, café da manhã dos alunos da manhã, treino especial de aniversário da academia. Um evento por bimestre basta. Fotos alimentam o Instagram por semanas (aula 8.2).</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Reconhecimento.</strong> Aluno destaque do mês (constância, não físico), sino/quadro de metas batidas, celebrar publicamente o dia 90 de quem completou o onboarding. Gente adora ser vista — e volta para onde é vista.</p>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">ERRO COMUM</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Confundir experiência com luxo. Experiência é: ser chamado pelo nome, música no volume certo, banheiro limpo, professor que corrige, equipamento funcionando. O básico bem-feito com calor humano retém mais que sauna nova. Primeiro o básico impecável — depois o extra.</p>
+    </div>
+
+    <!-- AULA 4.5 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 4.5</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">NPS: medir satisfação de verdade e agir em 48 horas</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">NPS é uma pergunta só: “De 0 a 10, quanto você recomendaria a academia para um amigo?” — seguida de “por quê?”. Quem responde 9 ou 10 é promotor, 7 ou 8 é neutro, 0 a 6 é detrator. <strong>NPS = % de promotores − % de detratores.</strong> Simples de aplicar, brutal de revelador.</p>
+    <p style="margin: 14px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Como rodar:</strong> trimestral, por WhatsApp ou formulário na saída, anônimo opcional (mas incentive identificação: “se quiser que a gente resolva algo, deixa seu nome”). Meta de participação: 30% da base. Meta de nota: NPS acima de 50 é forte; abaixo de 30, acenda o alerta.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px;">
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">DETRATOR = LIGAÇÃO EM 48 HORAS</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.6;">Do GESTOR, não da recepção. Roteiro: agradecer a franqueza, ouvir sem se defender, resolver o resolvível na hora e dar retorno do que foi feito. Detrator bem atendido vira o promotor mais barulhento; detrator ignorado cancela e leva dois amigos.</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">PROMOTOR = PEDIR A INDICAÇÃO</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.6;">Quem deu 9 ou 10 acabou de dizer que indicaria. Então peça: “que alegria ler isso! Tem alguém que você traria pra treinar com a gente? Te dou um passe de convidado.” É o programa de indicação (aula 3.2) mirando exatamente em quem já quer indicar.</p>
+      </div>
+    </div>
+
+    <p style="margin: 18px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>O “por quê” vale mais que a nota:</strong> tabule os motivos citados. Três pessoas reclamando do mesmo horário lotado, do mesmo banheiro, da mesma máquina quebrada = prioridade operacional definida pelos seus clientes, de graça.</p>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.6;">Implantação desta semana:</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Calcule seu churn dos últimos 3 meses e faça a conta do balde furado com os seus números — sinta o tamanho do prêmio.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Ative o gatilho de ausência de 7 dias hoje: puxe a lista de quem sumiu e distribua os contatos entre os professores.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Implante o protocolo de 90 dias para TODO aluno novo a partir de agora, com responsável definido por ponto de contato.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Agende o primeiro NPS para os próximos 15 dias.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Régua de retenção completa: mensagens prontas de WhatsApp para os 6 gatilhos<br>— Protocolo de onboarding de 90 dias: checklist por aluno com responsáveis<br>— Modelo de pesquisa NPS + planilha de tabulação + roteiro da ligação para detratores<br>— Guia do desafio trimestral (regras, mural e premiação)</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Sei meu churn atual e minha meta de churn para os próximos 3 meses.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">A lista de ausentes de 7/15/30 dias foi puxada e os contatos, feitos.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Todo aluno matriculado esta semana entrou no protocolo de 90 dias.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Primeiro NPS agendado com data e canal definidos.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

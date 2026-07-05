@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 1 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 1</span>
+      <span>O Negócio Academia: Diagnóstico e Fundamentos</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">Ao final deste módulo</strong>, você vai enxergar a sua academia como um negócio mensurável: vai saber em qual modelo de mercado ela compete, quais são os 7 números que mandam no resultado e qual é o seu gargalo número um — antes de mudar qualquer coisa.</p>
+
+    <!-- AULA 1.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 1.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">O mercado fitness brasileiro e onde você se encaixa</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">O Brasil é uma das maiores potências do fitness no mundo: estamos entre os países com mais academias do planeta, com dezenas de milhares de unidades ativas. E mesmo assim, só uma pequena fração da população treina em academia — algo em torno de 4 a 5 pessoas a cada 100. Nos mercados mais maduros, esse número passa de 20. Tradução: o mercado ainda tem muito espaço para crescer, e quem estrutura a gestão agora colhe esse crescimento. O problema nunca foi falta de cliente. É excesso de academia mal gerida disputando o mesmo aluno por preço.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">OS QUATRO MODELOS DE NEGÓCIO</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; line-height: 1.5;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">MODELO</th>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">TICKET</th>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">COMO FUNCIONA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Low cost</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">R$ 89–129</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Volume alto, estrutura padronizada e enxuta, pouquíssimo atendimento individual. Só funciona com escala, processo rígido e custo controlado ao centavo. É o modelo das grandes redes.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Full service</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">R$ 130–300</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Musculação, cardio, coletivas, avaliação, atendimento próximo. É o modelo da maioria das academias de bairro — e o que mais sofre quando tenta competir por preço com low cost sem ter a estrutura de custo de low cost.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Boutique / estúdio</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">R$ 300–800+</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Experiência premium, turmas pequenas, forte relação professor-aluno. Vende transformação e exclusividade, não esteira.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Box (cross training)</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">médio-alto</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Comunidade forte e aulas em turma. Retenção vem do pertencimento; o maior risco é depender demais da figura do coach.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">ERRO COMUM</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Cobrar preço de low cost com custo de full service. Se a sua folha, aluguel e estrutura são de academia completa, cada mensalidade de R$ 99 vendida está financiando o seu concorrente — ele aguenta essa margem, você não. Escolha um modelo e monte a estrutura de custo dele. Quem tenta ser tudo para todos quebra devagar.</p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>A pergunta desta aula:</strong> em qual desses quatro modelos a sua academia realmente está hoje — pelo preço que cobra e pelo custo que carrega? Se preço e custo apontam para modelos diferentes, você acabou de encontrar a origem de boa parte dos seus problemas.</p>
+    <p style="margin: 14px 0 0 0; font-size: 15px; line-height: 2.2; color: #3A3742;">Meu modelo hoje: <span style="display: inline-block; min-width: 260px; border-bottom: 1px solid #8A8695;"></span>&nbsp;&nbsp;Modelo que meu custo sustenta: <span style="display: inline-block; min-width: 220px; border-bottom: 1px solid #8A8695;"></span></p>
+
+    <!-- AULA 1.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 1.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Os 7 números que mandam na academia</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Dono que não sabe esses 7 números de cabeça está dirigindo de olhos vendados. Não precisa de ERP sofisticado nem de contador do lado: precisa de uma planilha alimentada uma vez por mês e de 15 minutos de atenção.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 18px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr 170px; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Alunos ativos.</strong> Quantos alunos estão pagando neste mês. Não é quantos já se matricularam na história — é quem está ativo agora. É o número que puxa todos os outros.</p>
+        <span style="font-size: 13px; color: #6E6A78;">Meu número: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #8A8695;"></span></span>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr 170px; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Ticket médio.</strong> Receita total de mensalidades dividida pelos alunos ativos. Mostra quanto, na média, cada aluno deixa por mês — e denuncia excesso de desconto na hora.</p>
+        <span style="font-size: 13px; color: #6E6A78;">Meu número: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #8A8695;"></span></span>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr 170px; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Receita recorrente mensal.</strong> Alunos ativos × ticket médio. É a previsibilidade do negócio. Receita de venda avulsa (avaliação, loja, diária) entra à parte.</p>
+        <span style="font-size: 13px; color: #6E6A78;">Meu número: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #8A8695;"></span></span>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr 170px; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Churn mensal (taxa de cancelamento).</strong> Alunos que cancelaram no mês dividido pelos ativos no início do mês. Um churn de 3 a 5% ao mês é saudável; acima de 7 a 8%, a academia está enxugando gelo: tudo que a venda traz, o cancelamento leva.</p>
+        <span style="font-size: 13px; color: #6E6A78;">Meu número: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #8A8695;"></span></span>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr 170px; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>CAC (custo de aquisição).</strong> Tudo que você gastou para captar (anúncio, comissão, material, evento) dividido pelo número de matrículas novas no período. Regra prática: CAC saudável fica abaixo do valor de uma mensalidade.</p>
+        <span style="font-size: 13px; color: #6E6A78;">Meu número: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #8A8695;"></span></span>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr 170px; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">6</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>LTV (valor do aluno no tempo).</strong> Ticket médio × permanência média em meses. Se o aluno paga R$ 130 e fica em média 8 meses, cada matrícula vale R$ 1.040 — não R$ 130. É esse número que diz quanto vale a pena investir para captar e, principalmente, para reter.</p>
+        <span style="font-size: 13px; color: #6E6A78;">Meu número: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #8A8695;"></span></span>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr 170px; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">7</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Ponto de equilíbrio.</strong> Custo total mensal dividido pelo ticket médio = quantos alunos pagantes você precisa para empatar. Todo aluno acima desse número é lucro; abaixo, é prejuízo. Saber esse número muda o seu sono.</p>
+        <span style="font-size: 13px; color: #6E6A78;">Meu número: <span style="display: inline-block; min-width: 90px; border-bottom: 1px solid #8A8695;"></span></span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">NÚMEROS DE REFERÊNCIA DO MERCADO</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Churn saudável: <strong>3 a 5% ao mês</strong> · Permanência média no Brasil: <strong>6 a 9 meses</strong> (as boas passam de 12) · CAC saudável: <strong>até 1 mensalidade</strong> · LTV desejável: <strong>pelo menos 5× o CAC</strong></p>
+      </div>
+      <div style="background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">EXEMPLO</p>
+        <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Academia com 400 ativos, ticket R$ 120, churn 6% e custo total de R$ 40.000 tem receita recorrente de <strong>R$ 48.000</strong>, perde <strong>24 alunos por mês</strong> e precisa de <strong>334 pagantes</strong> para empatar.</p>
+      </div>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Rotina:</strong> todo dia 1º do mês, atualize os 7 números na planilha do curso. Compare com o mês anterior. Um número piorando dois meses seguidos é o negócio te avisando onde olhar.</p>
+
+    <!-- AULA 1.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 1.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Diagnóstico 360 da sua academia</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Antes de mudar qualquer coisa, você precisa de uma fotografia honesta. O Diagnóstico 360 avalia a academia em seis pilares, com três perguntas por pilar. Responda cada pergunta com uma nota de 0 a 10 — sendo 0 “não existe” e 10 “funciona sem mim, documentado e medido”. A nota do pilar é a média das três.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 1 — FINANÇAS</span><span style="font-size: 12.5px; color: #6E6A78;">nota média: <span style="display: inline-block; min-width: 44px; border-bottom: 1px solid #8A8695;"></span></span></p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.8;">Eu sei meu lucro real do mês passado (não o saldo do banco)? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Existe DRE ou controle equivalente atualizado todo mês? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>A inadimplência está medida e abaixo de 5%? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 2 — VENDAS</span><span style="font-size: 12.5px; color: #6E6A78;">nota média: <span style="display: inline-block; min-width: 44px; border-bottom: 1px solid #8A8695;"></span></span></p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.8;">Todo lead que chega é registrado em algum lugar? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Existe script de atendimento e a equipe usa? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Eu sei minha taxa de conversão de visita em matrícula? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 3 — RETENÇÃO</span><span style="font-size: 12.5px; color: #6E6A78;">nota média: <span style="display: inline-block; min-width: 44px; border-bottom: 1px solid #8A8695;"></span></span></p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.8;">Eu sei meu churn mensal de cabeça? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Aluno que some 7 dias recebe contato automático? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Existe processo de boas-vindas nos primeiros 30 dias? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 4 — EQUIPE</span><span style="font-size: 12.5px; color: #6E6A78;">nota média: <span style="display: inline-block; min-width: 44px; border-bottom: 1px solid #8A8695;"></span></span></p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.8;">Cada função tem responsabilidades escritas? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Existe reunião semanal com pauta e decisões registradas? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>A academia funciona bem quando eu tiro uma semana de férias? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 5 — OPERAÇÃO</span><span style="font-size: 12.5px; color: #6E6A78;">nota média: <span style="display: inline-block; min-width: 44px; border-bottom: 1px solid #8A8695;"></span></span></p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.8;">Abertura e fechamento seguem checklist assinado? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Existe manutenção preventiva agendada (não só conserto)? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Documentação legal (CREF, alvará, bombeiros) está em dia? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: #7C3AED;">PILAR 6 — ESTRUTURA E EQUIPAMENTOS</span><span style="font-size: 12.5px; color: #6E6A78;">nota média: <span style="display: inline-block; min-width: 44px; border-bottom: 1px solid #8A8695;"></span></span></p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; line-height: 1.8;">Nenhum equipamento está parado há mais de 7 dias? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>Eu sei a idade e o estado de cada máquina do salão? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span><br>O layout atende o horário de pico sem fila crônica? <span style="display: inline-block; min-width: 34px; border-bottom: 1px solid #C6C2CF;"></span></p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">A REGRA DO GARGALO</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Some as notas. Mas não olhe a média — olhe a <strong>menor</strong> nota. O pilar mais fraco é o que limita todos os outros: não adianta encher a academia de leads (vendas nota 8) se o aluno entra e cancela em 60 dias (retenção nota 3). O curso inteiro vai te dar ferramenta para todos os pilares; a ordem de implantação na SUA academia começa pelo pilar de menor nota.</p>
+      <p style="margin: 12px 0 0 0; font-size: 14px; color: #3A3742;">Meu gargalo número um: <span style="display: inline-block; min-width: 280px; border-bottom: 1px solid #8A8695;"></span></p>
+    </div>
+
+    <!-- AULA 1.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 1.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Posicionamento: por que o aluno escolhe (e fica na) sua academia</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Academia é negócio de bairro: 80% ou mais dos seus alunos moram ou trabalham num raio de 3 quilômetros. Sua concorrência real não é a rede famosa do outro lado da cidade — são as 3 a 6 academias dentro desse raio. Posicionar é decidir, com clareza, por que alguém escolhe você dentro desse mapa.</p>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">PASSO 1 — MAPEIE O RAIO DE 3 KM</h3>
+    <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65;">Liste cada concorrente com quatro informações: preço do plano mensal, estrutura (o que tem de relevante), ponto forte percebido e ponto fraco visível (leia as avaliações do Google deles — os alunos contam tudo). Em uma hora de pesquisa você terá o mapa competitivo que a maioria dos donos nunca fez.</p>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">PASSO 2 — ESCOLHA AS TRÊS DECISÕES DE POSICIONAMENTO</h3>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Público.</strong> Quem é o seu aluno principal? “Todo mundo” não é resposta — é a ausência de uma. Exemplos reais: mulheres 30-50 que querem emagrecer com acompanhamento; homens 20-35 focados em hipertrofia; público 50+ que busca saúde e segurança.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Promessa.</strong> Qual resultado ou experiência você entrega melhor que os vizinhos? Acompanhamento de verdade, estrutura nova, horários que ninguém tem, comunidade, resultado documentado.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Prova.</strong> O que torna a promessa crível? Fotos de resultado com autorização, avaliações no Google, número de alunos há mais de 2 anos, estrutura visível.</p>
+    </div>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">PASSO 3 — ESCREVA A FRASE DE POSICIONAMENTO</h3>
+    <div style="margin-top: 12px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">FÓRMULA</p>
+      <p style="margin: 10px 0 0 0; font-size: 16.5px; line-height: 1.6; font-weight: 500;">“A [nome da academia] é a academia do [bairro/região] para [público] que quer [resultado], porque [diferencial com prova].”</p>
+    </div>
+    <p style="margin: 14px 0 0 0; font-size: 15px; line-height: 1.65; color: #3A3742;"><strong>Exemplo:</strong> “A Torque é a academia da região para quem leva treino a sério e quer estrutura de ponta, porque importamos direto os mesmos equipamentos das grandes redes — sem cobrar preço de grande rede.”</p>
+    <p style="margin: 14px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Teste da frase:</strong> leia para 5 alunos atuais. Se eles reconhecerem a academia na frase, você acertou. Se acharem genérica, volte ao passo 2. Essa frase vai guiar seu Instagram, seu WhatsApp, sua fachada e o discurso da recepção — tudo no curso daqui pra frente aponta para ela.</p>
+    <p style="margin: 16px 0 0 0; font-size: 15px; line-height: 2.4; color: #3A3742;">Minha frase: <span style="display: inline-block; min-width: 520px; border-bottom: 1px solid #8A8695;"></span><br><span style="display: inline-block; min-width: 640px; border-bottom: 1px solid #8A8695;"></span></p>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.6;">Reserve 2 horas nesta semana, de preferência fora do horário de pico, e execute na ordem:</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Preencha a Planilha Diagnóstico 360 respondendo as 18 perguntas com honestidade brutal — nota inflada aqui é mentir para si mesmo.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Calcule os 7 números com dados reais dos últimos 3 meses (puxe do seu sistema ou do extrato, o que tiver).</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Identifique o pilar de menor nota: esse é o seu gargalo número um e a sua prioridade de implantação no curso.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Escreva a sua frase de posicionamento e teste com 5 alunos atuais.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Planilha Diagnóstico 360: seis pilares, 18 perguntas, pontuação automática e gráfico de radar<br>— Calculadora dos 7 números com semáforo de alerta (verde, amarelo, vermelho) por indicador<br>— Mapa de concorrentes do raio de 3 km (modelo preenchível)</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Sei de cabeça: alunos ativos, ticket médio, churn e ponto de equilíbrio da minha academia.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Identifiquei meu pilar mais fraco no Diagnóstico 360.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Minha frase de posicionamento está escrita e testada com alunos reais.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

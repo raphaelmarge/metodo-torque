@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Gestão de Academias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #0B0A0E; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="image-slot" from="./image-slot.js" hint-size="0,0"></x-import>
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+
+  <!-- 1 · CAPA -->
+  <section data-label="Capa" data-speaker-notes="Abertura: este deck alinha a equipe sobre o curso Método Torque — o que é, como está estruturado, preços e plano de lançamento." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; justify-content: center; padding: 100px 120px; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 32px;">
+      <image-slot id="logo-torque" style="width: 280px; height: 140px;" shape="rect" fit="contain" placeholder="Logo Torque"></image-slot>
+      <div style="display: flex; align-items: center; gap: 18px;">
+        <div style="width: 44px; height: 4px; background: #7C3AED;"></div>
+        <span style="font-size: 26px; font-weight: 600; letter-spacing: 0.22em; color: #A78BFA;">TORQUE FITNESS APRESENTA</span>
+      </div>
+    </div>
+    <h1 style="margin: 48px 0 0 0; font-size: 190px; line-height: 0.95; font-weight: 800; letter-spacing: -0.02em;">
+      <span style="display: block; color: #FFFFFF;">MÉTODO</span>
+      <span style="display: block; color: #7C3AED;">TORQUE</span>
+    </h1>
+    <p style="margin: 56px 0 0 0; font-size: 44px; font-weight: 500; color: #C9C5D4; max-width: 1100px; line-height: 1.3;">Gestão de Academias de Alta Performance</p>
+    <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2A2733; padding-top: 36px;">
+      <span style="font-size: 24px; color: #8A8695;">Documento de estruturação do curso · Versão 1.0 · Julho 2026</span>
+      <span style="font-size: 24px; color: #8A8695;">www.torquefitness.com.br</span>
+    </div>
+  </section>
+
+  <!-- 2 · VISÃO GERAL -->
+  <section data-label="Visão geral" data-speaker-notes="O curso fecha a lacuna de gestão: transforma dono operador em dono gestor. Promessa concreta ao final dos 8 módulos." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">01 · VISÃO GERAL</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Do dono operador ao dono gestor</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: 72px;">
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <span style="font-size: 26px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">O CONCEITO</span>
+        <p style="margin: 0; font-size: 33px; line-height: 1.5; color: #131118;">A maioria dos donos de academia é excelente em treino e fraca em gestão — porque ninguém ensina o negócio academia. O Método Torque fecha essa lacuna, com números na mão e processos rodando sem depender do dono o dia inteiro.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <span style="font-size: 26px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">A PROMESSA</span>
+        <p style="margin: 0; font-size: 33px; line-height: 1.5; color: #131118;">Ao final dos 8 módulos, o aluno sai com diagnóstico completo, DRE funcionando, máquina de vendas no balcão, régua de retenção no WhatsApp, equipe com delegação clara e plano de equipamentos calculado com custo de engenharia.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · POR QUE A TORQUE -->
+  <section data-label="Por que a Torque" data-speaker-notes="Autoridade: não é guru de palco. Operação própria com mais de 30 colaboradores e importação direta com mais de 900 produtos." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #A78BFA;">02 · POR QUE A TORQUE</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF;">Quem ensina, opera</h2>
+    <p style="margin: 32px 0 0 0; font-size: 32px; line-height: 1.5; color: #C9C5D4; max-width: 1300px;">Método testado em operação real — não em palco. A Torque domina os dois lados do negócio:</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 80px;">
+      <div style="background: #1C1924; padding: 56px 48px; display: flex; flex-direction: column; gap: 20px;">
+        <span style="font-size: 96px; font-weight: 800; color: #A78BFA; line-height: 1;">30+</span>
+        <span style="font-size: 30px; font-weight: 600; color: #FFFFFF;">colaboradores na academia própria</span>
+        <span style="font-size: 25px; color: #8A8695; line-height: 1.45;">Musculação, cross training, spinning, coletivas e espaço kids</span>
+      </div>
+      <div style="background: #1C1924; padding: 56px 48px; display: flex; flex-direction: column; gap: 20px;">
+        <span style="font-size: 96px; font-weight: 800; color: #A78BFA; line-height: 1;">900+</span>
+        <span style="font-size: 30px; font-weight: 600; color: #FFFFFF;">produtos no catálogo de equipamentos</span>
+        <span style="font-size: 25px; color: #8A8695; line-height: 1.45;">Importadora direta, sem intermediário</span>
+      </div>
+      <div style="background: #1C1924; padding: 56px 48px; display: flex; flex-direction: column; gap: 20px;">
+        <span style="font-size: 96px; font-weight: 800; color: #A78BFA; line-height: 1;">100%</span>
+        <span style="font-size: 30px; font-weight: 600; color: #FFFFFF;">da cadeia de custo dominada</span>
+        <span style="font-size: 25px; color: #8A8695; line-height: 1.45;">Da fábrica ao piso da academia no Brasil</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · PÚBLICO-ALVO -->
+  <section data-label="Público-alvo" data-speaker-notes="Público claro dos dois lados: para quem é e para quem não é. Isso orienta copy, oferta e moderação da comunidade." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">03 · PÚBLICO-ALVO</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Para quem é — e para quem não é</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 72px;">
+      <div style="background: #FFFFFF; padding: 56px; display: flex; flex-direction: column; gap: 36px;">
+        <span style="font-size: 26px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">PARA QUEM É</span>
+        <div style="display: flex; flex-direction: column; gap: 28px;">
+          <div style="display: flex; gap: 20px; align-items: baseline;"><span style="color: #7C3AED; font-weight: 700; font-size: 28px;">—</span><span style="font-size: 30px; line-height: 1.4;">Donos de academia de bairro a médio porte</span></div>
+          <div style="display: flex; gap: 20px; align-items: baseline;"><span style="color: #7C3AED; font-weight: 700; font-size: 28px;">—</span><span style="font-size: 30px; line-height: 1.4;">Gerentes que respondem pelo resultado da unidade</span></div>
+          <div style="display: flex; gap: 20px; align-items: baseline;"><span style="color: #7C3AED; font-weight: 700; font-size: 28px;">—</span><span style="font-size: 30px; line-height: 1.4;">Sócios entrando no mercado fitness</span></div>
+          <div style="display: flex; gap: 20px; align-items: baseline;"><span style="color: #7C3AED; font-weight: 700; font-size: 28px;">—</span><span style="font-size: 30px; line-height: 1.4;">Personal trainers migrando para estúdio ou box próprio</span></div>
+        </div>
+      </div>
+      <div style="background: #E9E7EE; padding: 56px; display: flex; flex-direction: column; gap: 36px;">
+        <span style="font-size: 26px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">PARA QUEM NÃO É</span>
+        <div style="display: flex; flex-direction: column; gap: 28px;">
+          <div style="display: flex; gap: 20px; align-items: baseline;"><span style="color: #6E6A78; font-weight: 700; font-size: 28px;">—</span><span style="font-size: 30px; line-height: 1.4; color: #3A3742;">Quem procura fórmula mágica sem implantar processo</span></div>
+          <div style="display: flex; gap: 20px; align-items: baseline;"><span style="color: #6E6A78; font-weight: 700; font-size: 28px;">—</span><span style="font-size: 30px; line-height: 1.4; color: #3A3742;">Quem não aceita olhar os próprios números</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · POSICIONAMENTO -->
+  <section data-label="Posicionamento" data-speaker-notes="Três pilares diferenciam o curso de qualquer outro de gestão fitness. É o nosso argumento central de venda." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">04 · POSICIONAMENTO</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Três pilares que nenhum concorrente junta</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 80px;">
+      <div style="border-top: 6px solid #7C3AED; background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 22px;">
+        <span style="font-size: 30px; font-weight: 800; color: #7C3AED;">01</span>
+        <span style="font-size: 36px; font-weight: 700; line-height: 1.2;">Números de engenharia</span>
+        <p style="margin: 0; font-size: 27px; line-height: 1.5; color: #55515F;">Todo conceito vira planilha, indicador e meta. O aluno não sai com frases motivacionais — sai com DRE preenchido.</p>
+      </div>
+      <div style="border-top: 6px solid #7C3AED; background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 22px;">
+        <span style="font-size: 30px; font-weight: 800; color: #7C3AED;">02</span>
+        <span style="font-size: 36px; font-weight: 700; line-height: 1.2;">Implantação, não teoria</span>
+        <p style="margin: 0; font-size: 27px; line-height: 1.5; color: #55515F;">Cada módulo termina com ação prática obrigatória e material pronto para usar no dia seguinte na academia.</p>
+      </div>
+      <div style="border-top: 6px solid #7C3AED; background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 22px;">
+        <span style="font-size: 30px; font-weight: 800; color: #7C3AED;">03</span>
+        <span style="font-size: 36px; font-weight: 700; line-height: 1.2;">Visão de dono de verdade</span>
+        <p style="margin: 0; font-size: 27px; line-height: 1.5; color: #55515F;">Inadimplência, risco trabalhista, máquina parada, janeiro lotado e junho vazio — o que realmente tira o sono de quem opera.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · ESTRUTURA DO CURSO -->
+  <section data-label="Estrutura do curso" data-speaker-notes="Oito módulos sequenciais mais bônus. A ordem importa: enxergar o negócio, encher a academia, estruturar o time, investir com inteligência." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 90px 120px 70px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">05 · ESTRUTURA DO CURSO</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 24px 0 0 0; font-size: 64px; font-weight: 700; letter-spacing: -0.01em;">Oito módulos sequenciais + bônus de expansão</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; margin-top: 56px;">
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">1</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Diagnóstico e fundamentos</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">O negócio em números e posicionamento</span></div></div>
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">2</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Finanças</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">DRE, precificação e fluxo de caixa rodando</span></div></div>
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">3</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Máquina de vendas</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">Funil, script no balcão e meta com comissão</span></div></div>
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">4</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Retenção</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">Régua ativa no WhatsApp e churn sob controle</span></div></div>
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">5</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Equipe e liderança</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">Delegação clara, sem passivo trabalhista</span></div></div>
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">6</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Operação redonda</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">Checklists, manutenção e conformidade</span></div></div>
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">7</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Equipamentos e estrutura</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">Investir com custo de engenharia — módulo assinatura</span></div></div>
+      <div style="background: #FFFFFF; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #7C3AED; min-width: 54px;">8</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700;">Marketing local e marca</span><span style="font-size: 24px; color: #6E6A78; line-height: 1.35;">A academia referência do bairro</span></div></div>
+      <div style="background: #131118; padding: 34px 36px; display: flex; gap: 24px; align-items: baseline;"><span style="font-size: 40px; font-weight: 800; color: #A78BFA; min-width: 54px;">B</span><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 28px; font-weight: 700; color: #FFFFFF;">Expansão</span><span style="font-size: 24px; color: #8A8695; line-height: 1.35;">Segunda unidade e novas receitas, sem quebrar</span></div></div>
+    </div>
+    <p style="margin: 44px 0 0 0; font-size: 26px; color: #55515F;">Carga: 42 aulas de 15–25 min (gravado) ou 8 encontros semanais de 90 min (ao vivo), sempre com ação prática entre módulos.</p>
+  </section>
+
+  <!-- 7 · ENGENHARIA DOS MÓDULOS -->
+  <section data-label="Engenharia dos módulos" data-speaker-notes="Todo módulo segue a mesma engenharia de quatro peças. O aluno nunca termina apenas sabendo mais — termina com algo rodando." style="background: #2D1266; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #C4B5FD;">06 · ENGENHARIA DOS MÓDULOS</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF; max-width: 1400px;">Todo módulo termina com algo rodando na academia</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 32px; margin-top: 90px;">
+      <div style="display: flex; flex-direction: column; gap: 18px; border-top: 3px solid #7C3AED; padding-top: 32px;">
+        <span style="font-size: 26px; font-weight: 700; color: #C4B5FD; letter-spacing: 0.1em;">PEÇA 1</span>
+        <span style="font-size: 34px; font-weight: 700; color: #FFFFFF;">Objetivo claro</span>
+        <span style="font-size: 25px; color: #C9C0E8; line-height: 1.45;">Um resultado definido antes de qualquer aula</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 18px; border-top: 3px solid #7C3AED; padding-top: 32px;">
+        <span style="font-size: 26px; font-weight: 700; color: #C4B5FD; letter-spacing: 0.1em;">PEÇA 2</span>
+        <span style="font-size: 34px; font-weight: 700; color: #FFFFFF;">Aulas curtas e diretas</span>
+        <span style="font-size: 25px; color: #C9C0E8; line-height: 1.45;">15 a 25 minutos, na linguagem da academia</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 18px; border-top: 3px solid #7C3AED; padding-top: 32px;">
+        <span style="font-size: 26px; font-weight: 700; color: #C4B5FD; letter-spacing: 0.1em;">PEÇA 3</span>
+        <span style="font-size: 34px; font-weight: 700; color: #FFFFFF;">Ação prática obrigatória</span>
+        <span style="font-size: 25px; color: #C9C0E8; line-height: 1.45;">Implantação real entre um módulo e o próximo</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 18px; border-top: 3px solid #7C3AED; padding-top: 32px;">
+        <span style="font-size: 26px; font-weight: 700; color: #C4B5FD; letter-spacing: 0.1em;">PEÇA 4</span>
+        <span style="font-size: 34px; font-weight: 700; color: #FFFFFF;">Materiais prontos</span>
+        <span style="font-size: 25px; color: #C9C0E8; line-height: 1.45;">Planilhas e templates para usar no dia seguinte</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · KIT DE MATERIAIS -->
+  <section data-label="Kit de materiais" data-speaker-notes="O kit é metade do valor percebido. Boa parte já existe em versão interna da Torque — produção é adaptação, não criação do zero." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">07 · KIT DE MATERIAIS</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Metade do valor percebido do curso</h2>
+    <div style="display: grid; grid-template-columns: 420px 1fr; gap: 80px; margin-top: 64px; align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <span style="font-size: 170px; font-weight: 800; color: #7C3AED; line-height: 1;">16</span>
+        <span style="font-size: 32px; font-weight: 600; line-height: 1.3;">materiais prontos para implantar</span>
+        <span style="font-size: 25px; color: #6E6A78; line-height: 1.45;">Boa parte já existe em versão interna da Torque — a produção é adaptação, não criação do zero.</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px 56px;">
+        <div style="display: flex; flex-direction: column; gap: 14px; border-left: 3px solid #D8D5E0; padding-left: 28px;">
+          <span style="font-size: 25px; font-weight: 700; letter-spacing: 0.1em; color: #6E6A78;">DIAGNÓSTICO E FINANÇAS</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Diagnóstico 360, calculadora dos 7 números, DRE Academia, precificação e régua de cobrança</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; border-left: 3px solid #D8D5E0; padding-left: 28px;">
+          <span style="font-size: 25px; font-weight: 700; letter-spacing: 0.1em; color: #6E6A78;">VENDAS E RETENÇÃO</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Script de vendas, funil comercial, meta e comissão, régua de 90 dias, onboarding e NPS</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; border-left: 3px solid #D8D5E0; padding-left: 28px;">
+          <span style="font-size: 25px; font-weight: 700; letter-spacing: 0.1em; color: #6E6A78;">EQUIPE E OPERAÇÃO</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Briefing de delegação, pauta semanal, contratação segura, checklists e manutenção preventiva</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; border-left: 3px solid #D8D5E0; padding-left: 28px;">
+          <span style="font-size: 25px; font-weight: 700; letter-spacing: 0.1em; color: #6E6A78;">EQUIPAMENTOS E MARKETING</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Inventário de parque, simulador de importação, guia de layout, calendário editorial e banco de ideias</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · FORMATOS E PREÇOS -->
+  <section data-label="Formatos e preços" data-speaker-notes="Escada de valor em três formatos + mentoria contínua pós-curso. Recomendação: estrear com a turma ao vivo (Pro)." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 90px 120px 70px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">08 · FORMATOS E PREÇOS</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 24px 0 0 0; font-size: 64px; font-weight: 700; letter-spacing: -0.01em;">Três formatos, uma escada de valor</h2>
+    <div style="display: flex; flex-direction: column; margin-top: 56px; background: #FFFFFF;">
+      <div style="display: grid; grid-template-columns: 460px 1fr 360px; gap: 40px; padding: 26px 48px; border-bottom: 1px solid #E2E0E8;">
+        <span style="font-size: 23px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">FORMATO</span>
+        <span style="font-size: 23px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78;">O QUE INCLUI</span>
+        <span style="font-size: 23px; font-weight: 700; letter-spacing: 0.12em; color: #6E6A78; text-align: right;">PREÇO SUGERIDO</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 460px 1fr 360px; gap: 40px; padding: 34px 48px; border-bottom: 1px solid #E2E0E8; align-items: center;">
+        <span style="font-size: 32px; font-weight: 700;">TORQUE START <span style="font-size: 24px; font-weight: 500; color: #6E6A78;">· online gravado</span></span>
+        <span style="font-size: 25px; color: #3A3742; line-height: 1.4;">8 módulos + bônus, kit completo de materiais, comunidade de alunos</span>
+        <span style="font-size: 32px; font-weight: 700; color: #7C3AED; text-align: right;">R$ 697</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 460px 1fr 360px; gap: 40px; padding: 34px 48px; border-bottom: 1px solid #E2E0E8; align-items: center;">
+        <span style="font-size: 32px; font-weight: 700;">TORQUE PRO <span style="font-size: 24px; font-weight: 500; color: #6E6A78;">· turma ao vivo</span></span>
+        <span style="font-size: 25px; color: #3A3742; line-height: 1.4;">Start + 8 encontros ao vivo com correção do diagnóstico + grupo fechado</span>
+        <span style="font-size: 32px; font-weight: 700; color: #7C3AED; text-align: right;">R$ 1.997</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 460px 1fr 360px; gap: 40px; padding: 34px 48px; border-bottom: 1px solid #E2E0E8; align-items: center;">
+        <span style="font-size: 32px; font-weight: 700;">TORQUE BLACK <span style="font-size: 24px; font-weight: 500; color: #6E6A78;">· imersão presencial</span></span>
+        <span style="font-size: 25px; color: #3A3742; line-height: 1.4;">2 dias dentro da operação Torque no RJ + plano individual de equipamentos</span>
+        <span style="font-size: 32px; font-weight: 700; color: #7C3AED; text-align: right;">R$ 4.997</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 460px 1fr 360px; gap: 40px; padding: 34px 48px; align-items: center;">
+        <span style="font-size: 32px; font-weight: 700;">MENTORIA CONTÍNUA <span style="font-size: 24px; font-weight: 500; color: #6E6A78;">· pós-curso</span></span>
+        <span style="font-size: 25px; color: #3A3742; line-height: 1.4;">Encontro mensal em grupo, análise de indicadores — exclusiva para ex-alunos</span>
+        <span style="font-size: 32px; font-weight: 700; color: #7C3AED; text-align: right;">R$ 497/mês</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · TURMA FUNDADORA -->
+  <section data-label="Turma fundadora" data-speaker-notes="Estreia recomendada: turma Pro ao vivo em modelo fundador. Valida conteúdo, cria cases e financia a gravação da versão online." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #A78BFA;">09 · TURMA FUNDADORA</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF;">Estreia em modelo fundador</h2>
+    <p style="margin: 32px 0 0 0; font-size: 32px; line-height: 1.5; color: #C9C5D4; max-width: 1360px;">Lançar primeiro a turma ao vivo (formato Pro): valida o conteúdo com feedback real, cria os primeiros cases e financia a gravação da versão online.</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 76px;">
+      <div style="background: #1C1924; padding: 52px 48px; display: flex; flex-direction: column; gap: 16px;">
+        <span style="font-size: 80px; font-weight: 800; color: #A78BFA; line-height: 1;">R$ 1.497</span>
+        <span style="font-size: 27px; color: #C9C5D4;">preço fundador <span style="color: #8A8695;">(cheio: R$ 1.997)</span></span>
+      </div>
+      <div style="background: #1C1924; padding: 52px 48px; display: flex; flex-direction: column; gap: 16px;">
+        <span style="font-size: 80px; font-weight: 800; color: #A78BFA; line-height: 1;">30–50</span>
+        <span style="font-size: 27px; color: #C9C5D4;">vagas na primeira turma</span>
+      </div>
+      <div style="background: #1C1924; padding: 52px 48px; display: flex; flex-direction: column; gap: 16px;">
+        <span style="font-size: 80px; font-weight: 800; color: #A78BFA; line-height: 1;">Bônus</span>
+        <span style="font-size: 27px; color: #C9C5D4;">Diagnóstico de Parque de Equipamentos feito individualmente pela equipe Torque</span>
+      </div>
+    </div>
+    <p style="margin: 56px 0 0 0; font-size: 30px; font-weight: 600; color: #A78BFA;">Escassez real, valor real.</p>
+  </section>
+
+  <!-- 11 · LANÇAMENTO EM 90 DIAS -->
+  <section data-label="Lançamento em 90 dias" data-speaker-notes="Três fases de 30 dias: fundação com isca gratuita, aquecimento com bastidores reais, abertura de matrículas por 7 dias." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">10 · LANÇAMENTO EM 90 DIAS</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Três fases até a turma fundadora</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; margin-top: 76px;">
+      <div style="background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 24px;">
+        <span style="font-size: 24px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">FASE 1 · DIAS 1–30</span>
+        <span style="font-size: 38px; font-weight: 700;">Fundação</span>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Gravar o Módulo 1 e transformar “Os 7 números” em isca gratuita</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Página de captura + lista de WhatsApp de donos</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #7C3AED; font-weight: 600;">Meta: 300 leads qualificados</span>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 24px;">
+        <span style="font-size: 24px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">FASE 2 · DIAS 31–60</span>
+        <span style="font-size: 38px; font-weight: 700;">Aquecimento</span>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Bastidores reais: números da academia Torque, contêiner chegando, reforma de parque</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Duas lives com donos de academia convidados</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #7C3AED; font-weight: 600;">Prova social antes de qualquer oferta</span>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; padding: 48px; display: flex; flex-direction: column; gap: 24px;">
+        <span style="font-size: 24px; font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">FASE 3 · DIAS 61–90</span>
+        <span style="font-size: 38px; font-weight: 700;">Turma Fundadora</span>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Matrículas abertas por 7 dias, 30–50 vagas, preço fundador</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #3A3742;">Início da turma ao vivo</span>
+          <span style="font-size: 26px; line-height: 1.45; color: #7C3AED; font-weight: 600;">Documentar tudo para o próximo lançamento nascer com cases</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · MOTOR DO B2B -->
+  <section data-label="Motor do B2B" data-speaker-notes="O curso não é só receita: é geração de demanda para equipamentos. O aluno é exatamente o comprador do catálogo Torque." style="background: #121016; color: #FFFFFF; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #A78BFA;">11 · MOTOR DO B2B</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em; color: #FFFFFF; max-width: 1500px;">O aluno do curso é o comprador do catálogo</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px 56px; margin-top: 80px;">
+      <div style="display: flex; gap: 28px; align-items: baseline; border-top: 1px solid #2A2733; padding-top: 30px;">
+        <span style="font-size: 30px; font-weight: 800; color: #A78BFA;">→</span>
+        <span style="font-size: 29px; line-height: 1.45; color: #E8E5F0;"><span style="font-weight: 700; color: #FFFFFF;">Lead B2B mais qualificado que existe:</span> dono com CNPJ, verba e ambição</span>
+      </div>
+      <div style="display: flex; gap: 28px; align-items: baseline; border-top: 1px solid #2A2733; padding-top: 30px;">
+        <span style="font-size: 30px; font-weight: 800; color: #A78BFA;">→</span>
+        <span style="font-size: 29px; line-height: 1.45; color: #E8E5F0;"><span style="font-weight: 700; color: #FFFFFF;">Módulo 7 gera orçamento:</span> o aluno aprende a exigir exatamente o que a Torque entrega</span>
+      </div>
+      <div style="display: flex; gap: 28px; align-items: baseline; border-top: 1px solid #2A2733; padding-top: 30px;">
+        <span style="font-size: 30px; font-weight: 800; color: #A78BFA;">→</span>
+        <span style="font-size: 29px; line-height: 1.45; color: #E8E5F0;"><span style="font-weight: 700; color: #FFFFFF;">Oferta embutida:</span> condição exclusiva em equipamentos + diagnóstico de parque gratuito</span>
+      </div>
+      <div style="display: flex; gap: 28px; align-items: baseline; border-top: 1px solid #2A2733; padding-top: 30px;">
+        <span style="font-size: 30px; font-weight: 800; color: #A78BFA;">→</span>
+        <span style="font-size: 29px; line-height: 1.45; color: #E8E5F0;"><span style="font-weight: 700; color: #FFFFFF;">Efeito autoridade:</span> a Torque vira referência técnica do setor, encurtando o ciclo de venda</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · PRÓXIMOS PASSOS -->
+  <section data-label="Próximos passos" data-speaker-notes="Sequência recomendada para tirar do papel. Decisões 1 e 2 são desta reunião: nome/formato e preço/vagas." style="background: #F5F4F7; color: #131118; font-family: 'Archivo', sans-serif; display: flex; flex-direction: column; padding: 100px 120px 80px; box-sizing: border-box;">
+    <span style="font-size: 24px; font-weight: 600; letter-spacing: 0.2em; color: #7C3AED;">12 · PRÓXIMOS PASSOS</span>
+    <image-slot id="logo-torque" style="position: absolute; top: 64px; right: 120px; width: 200px; height: 72px;" shape="rect" fit="contain" placeholder="Logo"></image-slot>
+    <h2 style="margin: 28px 0 0 0; font-size: 68px; font-weight: 700; letter-spacing: -0.01em;">Sequência para tirar do papel</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px 64px; margin-top: 72px;">
+      <div style="display: flex; gap: 28px; align-items: baseline; background: #FFFFFF; padding: 32px 40px;"><span style="font-size: 34px; font-weight: 800; color: #7C3AED; min-width: 48px;">1</span><span style="font-size: 28px; line-height: 1.4;">Validar o nome e o formato de estreia (turma ao vivo fundadora)</span></div>
+      <div style="display: flex; gap: 28px; align-items: baseline; background: #FFFFFF; padding: 32px 40px;"><span style="font-size: 34px; font-weight: 800; color: #7C3AED; min-width: 48px;">2</span><span style="font-size: 28px; line-height: 1.4;">Definir preço fundador e número de vagas da primeira turma</span></div>
+      <div style="display: flex; gap: 28px; align-items: baseline; background: #FFFFFF; padding: 32px 40px;"><span style="font-size: 34px; font-weight: 800; color: #7C3AED; min-width: 48px;">3</span><span style="font-size: 28px; line-height: 1.4;">Estruturar o Módulo 1 e a isca “Os 7 números que mandam na academia”</span></div>
+      <div style="display: flex; gap: 28px; align-items: baseline; background: #FFFFFF; padding: 32px 40px;"><span style="font-size: 34px; font-weight: 800; color: #7C3AED; min-width: 48px;">4</span><span style="font-size: 28px; line-height: 1.4;">Criar página de captura e fluxo de WhatsApp para leads</span></div>
+      <div style="display: flex; gap: 28px; align-items: baseline; background: #FFFFFF; padding: 32px 40px;"><span style="font-size: 34px; font-weight: 800; color: #7C3AED; min-width: 48px;">5</span><span style="font-size: 28px; line-height: 1.4;">Adaptar o kit de materiais a partir das planilhas internas da Torque</span></div>
+      <div style="display: flex; gap: 28px; align-items: baseline; background: #FFFFFF; padding: 32px 40px;"><span style="font-size: 34px; font-weight: 800; color: #7C3AED; min-width: 48px;">6</span><span style="font-size: 28px; line-height: 1.4;">Travar a janela de lançamento e a agenda das 3 fases de 90 dias</span></div>
+    </div>
+    <div style="margin-top: auto; display: flex; justify-content: space-between; border-top: 1px solid #E2E0E8; padding-top: 32px;">
+      <span style="font-size: 24px; color: #6E6A78;">Método Torque · Documento interno</span>
+      <span style="font-size: 24px; color: #6E6A78;">www.torquefitness.com.br</span>
+    </div>
+  </section>
+
+</x-import>
+</x-dc>
+</body>
+</html>

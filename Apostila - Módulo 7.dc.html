@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 7</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 7 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 7 · O MÓDULO ASSINATURA</span>
+      <span>Equipamentos e Estrutura: Investir com Inteligência</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">O módulo assinatura do Método Torque:</strong> ao final, você vai planejar layout com metragem certa, comparar novo, usado e importado com números reais, entender a composição completa do custo de importação — e montar um plano de renovação do parque em fases que o caixa aguenta.</p>
+
+    <!-- AULA 7.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 7.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Layout que vende: metragem, fluxo e os erros que criam fila</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Layout de academia não é decoração — é engenharia de receita. O mesmo salão pode comportar confortavelmente 30% mais alunos no pico ou virar um corredor de espera, dependendo de como as áreas conversam. E o aluno decide se matricular (e se ficar) olhando exatamente para isso: “essa academia cabe na minha rotina de 18h30?”</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">DISTRIBUIÇÃO DE REFERÊNCIA DA ÁREA DE TREINO</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; line-height: 1.5;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">ÁREA</th>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">% DA ÁREA ÚTIL</th>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">OBSERVAÇÃO</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Musculação (máquinas)</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">40 a 50%</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">O coração da maioria das academias full service — e onde a fila dói mais.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Peso livre</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">15 a 20%</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Espaço real entre bancos e halteres (colchão de segurança de pelo menos 1 m entre estações). Peso livre apertado é acidente esperando e aluno avançado indo embora.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Cardio</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">15 a 20%</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">De preferência com vista (rua, TV, salão) — nunca esteira olhando para a parede no fundo escuro.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Coletivas/funcional</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">20 a 25%</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Se aulas são parte da proposta (e são poderosas para retenção — aula 4.4); menos se seu posicionamento é força pura.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Circulação</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap;">mín. 1,2 m</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Corredores principais. Aluno se espremendo entre máquinas com anilha na mão é reclamação e risco.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">RÉGUA DE CAPACIDADE NO PICO</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Referência prática: 1 aluno para cada 2 a 3 m² de área de TREINO no horário de pico. Salão com 300 m² de treino comporta 100 a 150 pessoas simultâneas com conforto. Meça seu pico real (o sistema mostra os check-ins por hora): se está acima da régua, o gargalo não é “falta de aluno” — é layout ou distribuição de horário, e resolver isso é mais barato que alugar o imóvel ao lado.</p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Os 3 erros clássicos:</strong> (1) fila crônica em um grupo muscular — falta estação do exercício mais demandado (banco reto, leg press): duplicar 2 ou 3 máquinas certas resolve mais que comprar 10 diferentes; (2) áreas mortas — cantos escuros sem função que viram depósito: todo metro quadrado paga aluguel; (3) primeira impressão desperdiçada — a entrada deve mostrar o melhor da academia (equipamento novo, salão vivo), não a parede dos armários.</p>
+
+    <!-- AULA 7.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 7.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Quanto custa montar ou renovar — e o que priorizar</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Equipamento não é despesa, é o ativo que gera a receita — mas só quando comprado com critério. Antes de qualquer catálogo, responda: qual é o meu posicionamento (aula 1.4) e o que o MEU público sente falta hoje? A compra certa nasce da fila do pico e do pedido do aluno, não do impulso na feira.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">FAIXAS DE INVESTIMENTO EM EQUIPAMENTOS (REFERÊNCIA DE MERCADO)</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; line-height: 1.5;">
+      <tbody>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Estúdio/box até 200 m²</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap; font-weight: 700; color: #7C3AED;">R$ 100 mil – 300 mil</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Conforme proposta (funcional pesado custa menos que linha completa de máquinas).</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Academia de 300 a 500 m²</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap; font-weight: 700; color: #7C3AED;">R$ 300 mil – 600 mil</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Parque completo e coerente (musculação, peso livre, cardio).</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Acima de 800 m²</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap; font-weight: 700; color: #7C3AED;">R$ 600 mil – 1,5 mi+</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Dependendo do padrão. Nessa faixa, cada decisão de fornecedor mexe em dezenas de milhares de reais — e é onde a importação direta muda o jogo.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin: 12px 0 0 0; font-size: 14px; line-height: 1.6; color: #55515F;">As faixas variam com padrão, câmbio e mix — use-as como ordem de grandeza para planejar, e o simulador do curso para o SEU caso.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">ORDEM DE PRIORIDADE QUANDO O ORÇAMENTO É CURTO</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Resolva a fila do pico:</strong> as 2 ou 3 estações mais disputadas. Retenção imediata.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Complete o básico bem-feito:</strong> linha de musculação coerente cobrindo todos os grupos, antes de qualquer item de vitrine.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Peso livre digno:</strong> halteres completos e bancos bons seguram o aluno avançado — que é formador de opinião no salão.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Cardio suficiente para o pico</strong> (esteira é o cartão de visita, mas não precisa de 30 se o pico usa 12).</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Só então itens de diferenciação:</strong> máquinas premium, tecnologia, brinquedos de Instagram.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">PENSE EM RETORNO, NÃO EM PREÇO</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Uma renovação de R$ 80 mil que segura 10 cancelamentos por mês (ticket R$ 120) preserva R$ 1.200/mês de receita recorrente e melhora conversão de visita — o retorno composto costuma pagar o investimento em 18 a 36 meses, e o parque valorizado ainda sustenta reajuste de mensalidade. A pergunta certa nunca é “quanto custa?”, é “quanto retorna e em quanto tempo?”. A planilha do módulo faz essa conta.</p>
+    </div>
+
+    <!-- AULA 7.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 7.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Novo nacional, usado ou importado direto: o comparativo honesto</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Existem três caminhos para montar ou renovar o parque — e cada um faz sentido num cenário. O erro é escolher por reflexo (“sempre comprei do fulano”) sem colocar os três lado a lado com números.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 18px;">
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">Novo nacional (fabricante ou revenda)</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">Entrega mais rápida (15 a 60 dias), garantia formal, assistência estabelecida e peça de reposição fácil. Em contrapartida, o preço carrega toda a cadeia de intermediação — especialmente nas linhas premium, onde o mesmo padrão de máquina pode custar 30 a 50% a mais que o custo de importar direto.</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">Usado/seminovo</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">Economia de 40 a 60% sobre o novo e entrega imediata. Riscos: sem garantia real, histórico de manutenção desconhecido, estofados e cabos no fim da vida, e mistura de marcas que vira pesadelo de peça. Faz sentido para começar enxuto ou para itens simples (bancos, anilhas, racks); arriscado para cardio (motor e eletrônica são caros) e para quem vende padrão premium.</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">Importado direto de fábrica</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">Economia típica de 30 a 50% sobre o equivalente nacional premium, acesso ao mesmo padrão de máquina das grandes redes, personalização (cores, marca própria) e parque inteiro padronizado. Contrapartidas: prazo total de 60 a 120 dias (produção + trânsito + nacionalização), pagamento antecipado parcial, e um processo com dezenas de detalhes técnicos onde erro custa caro — câmbio, classificação fiscal, frete, licenças. É o caminho de melhor custo-benefício para compras médias e grandes, DESDE QUE conduzido por quem domina o processo (a próxima aula abre essa caixa-preta).</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">COMO DECIDIR — REGRA PRÁTICA TORQUE</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Precisa para ontem ou é reposição pontual pequena: <strong>novo nacional</strong> (ou usado bom, se o caixa aperta e o item é simples).<br>— Montagem inicial com orçamento curto: <strong>mix</strong> — usado nos itens simples, novo/importado no que o aluno percebe (cardio, máquinas principais).<br>— Renovação ou montagem de médio/grande porte com 3 a 4 meses de planejamento: <strong>importação direta</strong> — é onde dezenas de milhares de reais ficam no seu caixa em vez de virar margem de intermediário.</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.6; color: #55515F;">Em qualquer caminho, exija por escrito: garantia (prazo e o que cobre), disponibilidade de peças de reposição e prazo de entrega com penalidade por atraso.</p>
+    </div>
+
+    <!-- AULA 7.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 7.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Os bastidores da importação: a composição real do custo</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Essa é a aula que nenhum vendedor de equipamento quer que você assista. Quando você entende do que é feito o preço de um equipamento importado, duas coisas acontecem: você para de pagar “margem sobre margem” de intermediário e passa a negociar com qualquer fornecedor de igual para igual — mesmo que nunca importe um contêiner na vida.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">A CADEIA DO CUSTO, PASSO A PASSO</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Preço FOB:</strong> o valor do equipamento posto no porto de origem (China, na maior parte do fitness mundial — as mesmas fábricas produzem para muitas marcas famosas). É a base de tudo.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Frete internacional + seguro:</strong> o contêiner até o porto brasileiro. Somado ao FOB, forma o valor CIF — a base de cálculo dos impostos.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Impostos de importação em cascata:</strong> sobre o CIF incidem Imposto de Importação, IPI, PIS/COFINS-importação e ICMS do estado de destino (calculado “por dentro”, o que amplifica o efeito). As alíquotas variam conforme a classificação fiscal (NCM) de cada equipamento e o estado — por isso dois produtos parecidos podem ter cargas diferentes.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Despesas de nacionalização:</strong> despachante aduaneiro, armazenagem no porto, taxas portuárias e de sistema, licenças quando exigidas.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 13px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Frete interno:</strong> do porto até a porta da academia — no Brasil, nunca desprezível.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">ORDEM DE GRANDEZA (ILUSTRATIVA)</p>
+      <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65; color: #E8E5F0;">Somando tudo, um equipamento com FOB de “100” costuma chegar nacionalizado entre <strong style="color: #FFFFFF;">180 e 220</strong> — quase o dobro do preço de fábrica, variando com NCM, estado, câmbio e frete do momento.</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.65; color: #E8E5F0;">Parece muito? Compare com o caminho tradicional: o importador/distribuidor paga esses mesmos 180-220, aplica a margem dele, vende ao revendedor regional, que aplica a dele, que vende a você. É assim que a máquina de 180 vira <strong style="color: #FFFFFF;">280, 320</strong>. A economia da importação direta não vem de mágica — vem de ELIMINAR essas camadas.</p>
+      <p style="margin: 12px 0 0 0; font-size: 14px; line-height: 1.6; color: #8A8695;">Números exatos exigem cotação real do momento (câmbio e frete oscilam). O simulador do curso mostra a mecânica; a cotação fechada, só com o processo rodando.</p>
+    </div>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">O QUE EXIGIR DE QUALQUER FORNECEDOR (IMPORTANDO VOCÊ OU NÃO)</h3>
+    <div style="border: 1px solid #E2E0E8; padding: 18px 22px; margin-top: 12px;">
+      <p style="margin: 0; font-size: 14.5px; line-height: 1.85;">— NCM de cada item na proposta — é ela que define os impostos e denuncia proposta mal-feita.<br>— Incoterm claro (FOB? CIF? DDP?) — “preço na China” e “preço na sua porta” são universos diferentes.<br>— Prazo total realista, incluindo produção, trânsito marítimo e liberação — desconfie de promessa redonda demais.<br>— Garantia por escrito com processo de acionamento no Brasil e política de peças de reposição (quanto tempo, a que custo, estoque local?).<br>— Referências verificáveis: academias reais que receberam contêiner desse fornecedor. Visite ou ligue.</p>
+    </div>
+
+    <p style="margin: 18px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>O caminho sem dor de cabeça:</strong> importar direto exige domínio técnico — errar NCM, subdimensionar frete ou ignorar uma licença transforma economia em prejuízo parado no porto. É exatamente esse processo que a Torque opera de ponta a ponta: você compra com preço de importação direta, e a engenharia do processo (fábrica, câmbio, documentação, nacionalização, entrega) é problema nosso. O simulador deste módulo permite comparar, com os SEUS números, o custo direto contra qualquer proposta de mercado.</p>
+
+    <!-- AULA 7.5 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 7.5</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Vida útil e o momento certo de renovar</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Equipamento envelhece em dois relógios: o mecânico (peças, motor, estrutura) e o percebido (estofado, pintura, cara de velho). O aluno cancela pelo segundo muito antes do primeiro parar. Gerir o parque é gerir os dois relógios — com plano, não com susto.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">VIDAS ÚTEIS DE REFERÊNCIA (USO COMERCIAL COM MANUTENÇÃO EM DIA)</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; line-height: 1.5;">
+      <tbody>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Esteiras</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap; font-weight: 700; color: #7C3AED;">7 a 10 anos</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Motor, manta e deck pedem atenção bem antes (a manta é consumível — troca conforme horas de uso). Maior desgaste e maior custo de corretiva do salão.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Bikes e elípticos</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap; font-weight: 700; color: #7C3AED;">8 a 12 anos</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Revisão de rolamentos, correias e sensores no plano trimestral.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Máquinas de musculação</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap; font-weight: 700; color: #7C3AED;">10 a 15 anos</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Cabos e polias a cada 2 a 4 anos conforme uso; estofados a cada 2 a 3 anos (reforma em lote — aula 6.3).</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Peso livre</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; white-space: nowrap; font-weight: 700; color: #7C3AED;">quase eterno</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Se de qualidade — o que acaba é emborrachado ruim e rosca de barra barata. Aqui, comprar bom uma vez é o barato.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">SINAIS DE QUE A MÁQUINA ESTÁ CUSTANDO ALUNOS</h3>
+    <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.7;">— Manutenções corretivas repetidas no mesmo equipamento (a ficha da máquina, aula 6.3, mostra o padrão) — quando o custo anual de conserto passa de 20 a 30% do valor de um substituto melhor, a troca se paga.<br>— Barulho, folga e trepidação que o aluno comenta; estética decadente (ferrugem, estofado remendado) na área mais visível do salão.<br>— Reclamações no NPS citando “equipamentos velhos” — o aluno está literalmente te entregando a prioridade de investimento.</p>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">RENOVAÇÃO EM FASES — O PLANO QUE O CAIXA AGUENTA</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Renove <strong>20 a 25% do parque por ano</strong>, em ordem: (1) o que quebra e frustra, (2) o que o pico disputa, (3) o que a entrada da academia mostra. Financie com o terço de reinvestimento do lucro (aula 2.5) + o caixa injetado pelos planos anuais (aula 2.2). Cada fase entregue vira campanha de marketing (“chegou a nova área de peso livre”) e argumento de reajuste.</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">Em 4 a 5 anos, o parque inteiro se renovou sem nenhum ano de aperto — enquanto o concorrente que “economizou” encara a troca total de uma vez, financiada a juro alto, geralmente tarde demais.</p>
+    </div>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.6;">A ação deste módulo é a mais valiosa do curso — reserve uma manhã:</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Preencha a planilha de inventário: cada equipamento com idade, estado (nota 1 a 5), histórico de manutenção e observações do salão.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Cruze com a fila do pico e com as reclamações do NPS: marque os 5 equipamentos que mais custam alunos hoje.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Monte o plano de renovação em 3 fases (12/24/36 meses) com orçamento por fase, usando as faixas da aula 7.2.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Rode o simulador de importação com os itens da Fase 1 e compare com pelo menos uma proposta do mercado nacional — decisão com número na mesa.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Planilha de inventário de equipamentos com ficha individual por máquina<br>— Simulador simplificado de custo de importação (FOB → nacionalizado)<br>— Guia de metragem e layout por porte de academia<br>— Planilha de plano de renovação em fases com cálculo de retorno</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Inventário completo do parque preenchido, com notas de estado.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Os 5 equipamentos que mais custam alunos estão identificados.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Plano de renovação em 3 fases montado, com orçamento e fonte de recurso.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Comparativo importação direta × proposta nacional feito para a Fase 1.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

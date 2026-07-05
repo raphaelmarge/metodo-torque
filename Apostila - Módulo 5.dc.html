@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 5 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 5</span>
+      <span>Equipe e Liderança</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">Ao final deste módulo</strong>, sua academia terá organograma com funções escritas, contratação com risco trabalhista mapeado, padrão de atendimento treinado e um sistema de delegação que permite ao dono sair da operação sem perder o controle.</p>
+
+    <!-- AULA 5.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 5.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Estrutura enxuta: função antes de cargo</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">O erro clássico de estrutura é contratar cargo (“preciso de um gerente”) antes de definir função (“preciso que alguém seja dono destes resultados”). Cargo sem função escrita vira salário sem entrega. A regra do Método Torque: primeiro escreva o que precisa ser feito e qual resultado define “bem-feito”; só depois decida quem faz — e às vezes a resposta é redistribuir, não contratar.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">ORGANOGRAMA POR PORTE</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; line-height: 1.5;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">PORTE</th>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">ESTRUTURA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Até 300 alunos</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Dono (gestão, financeiro, marketing) + recepção (atendimento, vendas, cobrança) + 2 a 3 professores (salão, onboarding, retenção) + limpeza. O dono ainda está na operação — o objetivo do curso é tirá-lo dela gradualmente.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">300 a 800 alunos</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Entra o coordenador ou gerente: assume o dia a dia (escala, ritual comercial, régua de retenção, checklists) e libera o dono para estratégia, finanças e crescimento. É a contratação mais transformadora da história de uma academia — e a mais malfeita, quando vem sem função escrita.</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700; white-space: nowrap;">Acima de 800 alunos</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Áreas com donos: comercial, técnica (professores), operação/manutenção. O gerente vira gestor de líderes, e o dono, de fato, empresário.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">FERRAMENTA — A FOLHA DE FUNÇÃO (1 PÁGINA POR PESSOA)</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Missão da função em uma frase (ex.: recepção — “transformar visita em matrícula e aluno em fã”)<br>— 5 a 8 responsabilidades concretas<br>— 3 indicadores que dizem se está indo bem (ex.: conversão de visita, tempo de resposta no WhatsApp, NPS de atendimento)<br>— A quem responde e o que só pode com aprovação</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.6; color: #55515F;">Sem essa folha, avaliação de desempenho vira opinião e demissão vira surpresa.</p>
+    </div>
+
+    <!-- AULA 5.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 5.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Contratar certo: CLT, PJ e parceria — sem criar bomba trabalhista</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Academia é um dos setores que mais colecionam processos trabalhistas — quase sempre pelo mesmo motivo: contratar como PJ ou “parceiro” alguém que, na prática do dia a dia, trabalha como empregado. O papel assinado diz uma coisa; a Justiça do Trabalho olha a ROTINA. Esta aula existe para você montar o time com os olhos abertos. <strong>Importante: ela orienta, mas não substitui o seu contador e um advogado trabalhista — os contratos da sua academia devem passar por eles.</strong></p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">OS TRÊS FORMATOS</h3>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">CLT.</strong> Vínculo formal com carteira. Custa na prática em torno de 1,7 a 1,8 vez o salário (encargos, férias, 13º, FGTS), mas dá controle total sobre horário, exclusividade e rotina — e segurança jurídica. Recomendado para recepção, limpeza e funções com horário e subordinação claros.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">PJ (professor com CNPJ).</strong> Só é seguro quando existe autonomia REAL: o profissional define ou negocia sua agenda, pode atender em outros lugares, emite nota, tem seus próprios meios. Se você marca o ponto dele, exige exclusividade e dá ordem direta de rotina, o CNPJ vira só fantasia — e a conta chega com juros na reclamação trabalhista.</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;"><strong style="color: #7C3AED;">Parceria (personal externo).</strong> O personal usa a estrutura e paga pelo uso — percentual sobre o atendimento (15 a 30%) ou valor fixo mensal de locação. Exige contrato escrito de parceria/locação, o personal com CREF ativo e responsabilidade pelos próprios alunos, e nenhuma inserção dele na operação da academia (não cobre horário de salão, não usa uniforme da casa como se fosse equipe).</p>
+    </div>
+
+    <div style="margin-top: 20px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">ATENÇÃO — OS 4 SINAIS DE VÍNCULO QUE A JUSTIÇA ENXERGA</p>
+      <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.75; color: #E8E5F0;"><strong style="color: #FFFFFF;">Pessoalidade:</strong> só aquela pessoa pode prestar o serviço, sem poder se fazer substituir · <strong style="color: #FFFFFF;">Habitualidade:</strong> trabalha com frequência regular, dias e horários repetidos · <strong style="color: #FFFFFF;">Onerosidade:</strong> recebe pagamento pelo trabalho de forma contínua · <strong style="color: #FFFFFF;">Subordinação:</strong> recebe ordens diretas, cumpre escala definida por você, sofre controle e punição.</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.65; color: #E8E5F0;">Presentes os quatro na rotina real, existe risco alto de reconhecimento de vínculo — não importa o que o contrato diz. Documente a autonomia de verdade: agendas próprias, notas fiscais, ausência de exclusividade, comunicação que reflita relação entre empresas.</p>
+    </div>
+
+    <div style="margin-top: 16px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">REGRA PRÁTICA DO MÉTODO TORQUE</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Função com horário fixo e ordem direta = CLT, sem criatividade. Autonomia real e verificável = PJ ou parceria, com contrato revisado por advogado e rotina coerente com o papel. Economia de encargo hoje que vira passivo amanhã não é economia — é empréstimo com o pior juro do mercado.</p>
+    </div>
+
+    <!-- AULA 5.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 5.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Treinamento e padrão de atendimento</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">O aluno não pode depender do humor do professor nem da boa vontade de quem está no balcão. Padrão de atendimento é garantir que a experiência seja boa TODA vez, com QUALQUER pessoa da equipe. Não engessa o carisma — dá um piso abaixo do qual ninguém desce.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">OS INEGOCIÁVEIS DO SALÃO (EXEMPLO TORQUE — ADAPTE AOS SEUS)</h3>
+    <div style="border: 1px solid #E2E0E8; padding: 18px 22px; margin-top: 12px;">
+      <p style="margin: 0; font-size: 14.5px; line-height: 1.85;">— Todo aluno é cumprimentado ao entrar — pelo nome, sempre que possível.<br>— Celular do professor no salão: só para montar treino e registrar ficha. Rede social em horário de trabalho, nunca.<br>— Correção ativa: professor circula e corrige postura sem o aluno pedir. Professor encostado no equipamento é placa de “não ligamos para você”.<br>— Dúvida de aluno tem prioridade sobre qualquer tarefa administrativa.<br>— Problema relatado por aluno (máquina, vestiário, música) é registrado na hora no canal da equipe — nunca “depois eu vejo”.</p>
+    </div>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">INTEGRAÇÃO DE NOVO CONTRATADO EM 3 DIAS</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Cultura e casa:</strong> história e posicionamento da academia (aula 1.4), tour completo, leitura dos inegociáveis e da folha de função, apresentação à equipe.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Sombra:</strong> acompanha um veterano o turno inteiro. Observa atendimento, tour de visita, uso do sistema, checklists.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800; color: #7C3AED; white-space: nowrap;">DIA 3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Executa com supervisão:</strong> assume a função com o veterano por perto. Feedback estruturado no fim do dia: 2 pontos fortes, 2 ajustes.</p>
+      </div>
+    </div>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Manutenção do padrão:</strong> 20 minutos por semana de treino contínuo (revezando temas: objeções, régua de retenção, atendimento difícil) + feedback individual mensal de 15 minutos usando os indicadores da folha de função. Padrão não se comunica uma vez — se treina para sempre.</p>
+
+    <!-- AULA 5.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 5.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Delegação com briefing: sair da operação sem perder o controle</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">“Eu faço mais rápido sozinho” é a frase que mantém o dono preso na operação para sempre. É verdade no curto prazo e falência de tempo no longo. O problema quase nunca é a equipe — é a delegação malfeita: tarefa jogada sem contexto, sem critério de pronto e sem acompanhamento combinado. O antídoto é o briefing de delegação.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">OS 6 CAMPOS DO BRIEFING</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">1 · O QUÊ</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">A entrega, em uma frase concreta. “Organizar a campanha de indicação de agosto.”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">2 · POR QUÊ</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">O contexto que permite boas decisões sem te perguntar. “Junho e julho caem 20%; indicação é nosso canal mais barato.”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">3 · CRITÉRIO DE PRONTO</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Como saberemos que ficou bom. “Arte divulgada, regra explicada em vídeo de 1 min, meta de 15 matrículas por indicação no mês, planilha de acompanhamento ativa.”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">4 · PRAZO</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Data e hora. “Pronto para lançar dia 1º, revisão comigo dia 28.”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">5 · RECURSOS E LIMITES</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Verba, ferramentas, o que pode decidir sozinho e o que precisa de aprovação. “Até R$ 300 de premiação sem me consultar.”</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 14px; font-weight: 800; color: #7C3AED;">6 · CHECK-IN</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;">Quando e como acompanhamos. “Toque de 5 min na quarta; me aciona antes se travar.”</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">ERRO COMUM</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Delegar a tarefa e reter a decisão. Se a pessoa precisa da sua aprovação para cada micro-passo, você não delegou — só arrumou um mensageiro e dobrou o trabalho. O briefing existe exatamente para definir a caixa dentro da qual a pessoa DECIDE sozinha. Delegue resultados, não movimentos.</p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Comece por:</strong> liste tudo que só você faz hoje. Marque o que é estratégico (preço, contratação, expansão, caixa) — isso fica. Todo o resto entra numa fila de delegação: um briefing por semana, começando pelo que consome mais do seu tempo. Em 90 dias a sua agenda muda de figura.</p>
+
+    <!-- AULA 5.5 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 5.5</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Reunião semanal, metas visíveis e cultura</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Time desalinhado não é time ruim — é time sem ritual. Uma única reunião semanal de 30 minutos, sempre no mesmo dia e hora, com pauta fixa, substitui cem cobranças no corredor e mil áudios no WhatsApp.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">A PAUTA FIXA DOS 30 MINUTOS</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Números da semana (10 min):</strong> matrículas vs. meta, cancelamentos e motivos, ausentes contatados, NPS/reclamações. Quem apresenta é o responsável de cada número — não o dono.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Top 3 problemas (10 min):</strong> os três maiores travamentos da semana. Cada um sai com dono e prazo. Problema sem dono é reclamação coletiva.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Decisões e prioridades (10 min):</strong> o que muda na semana que entra, recados de gestão, reconhecimento público de quem executou bem.</p>
+      </div>
+    </div>
+
+    <p style="margin: 18px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Metas visíveis:</strong> quadro simples na copa/área da equipe com os números do mês: matrículas vs. meta, churn, NPS. O que está na parede entra na conversa; o que está numa planilha escondida, não existe.</p>
+    <p style="margin: 14px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Cultura na prática:</strong> cultura não é frase na parede — é o que você TOLERA. Se o inegociável é “celular só para ficha” e o professor fica no story sem consequência, a cultura real acabou de ser publicada para todo o time. Elogie em público o comportamento que quer repetido; corrija em particular, rápido e sempre, o que fere o padrão.</p>
+    <p style="margin: 14px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Registro:</strong> ata de 5 linhas no grupo da equipe após cada reunião: decisões, donos, prazos. Semana seguinte, a reunião abre conferindo a ata anterior. Simples assim — e nada mais se perde.</p>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.6;">Implantação desta semana:</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Desenhe o organograma atual e escreva a folha de função de cada pessoa (comece por recepção e professores).</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Revise cada contratação existente contra os 4 sinais de vínculo; anote os pontos de risco e agende conversa com contador/advogado para os casos sensíveis.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Marque a primeira reunião semanal com a pauta fixa de 30 minutos — e faça a ata de 5 linhas.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Escolha UMA tarefa que só você faz e delegue com o briefing de 6 campos.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Modelo de folha de função (1 página) + exemplos preenchidos para recepção e professor<br>— Checklist de contratação segura: CLT, PJ e parceria, com os 4 sinais de vínculo<br>— Modelo de briefing de delegação de 6 campos + exemplo preenchido<br>— Pauta da reunião semanal de 30 minutos + modelo de ata de 5 linhas<br>— Roteiro de integração de 3 dias para novos contratados</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Cada pessoa da equipe tem folha de função escrita e conhecida por ela.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Riscos de vínculo mapeados e encaminhados a orientação profissional.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Primeira reunião semanal realizada, com ata publicada.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Primeira delegação com briefing entregue e com check-in marcado.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>

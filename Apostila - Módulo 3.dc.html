@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Método Torque — Apostila Módulo 3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,1600px">
+
+  <div slot="header" style="display: flex; justify-content: space-between; align-items: baseline; font-family: 'Archivo', sans-serif; font-size: 12px; color: #6E6A78; border-bottom: 1px solid #E2E0E8; padding-bottom: 8px;">
+    <span style="font-weight: 700; letter-spacing: 0.12em; color: #7C3AED;">MÉTODO TORQUE</span>
+    <span style="letter-spacing: 0.08em;">MÓDULO 3 · APOSTILA DO ALUNO</span>
+  </div>
+  <div slot="footer" style="display: flex; justify-content: space-between; font-family: 'Archivo', sans-serif; font-size: 12px; color: #8A8695; border-top: 1px solid #E2E0E8; padding-top: 8px;">
+    <span>Método Torque · Gestão de Academias de Alta Performance</span>
+    <span>www.torquefitness.com.br</span>
+  </div>
+
+  <div style="font-family: 'Archivo', sans-serif; color: #131118;">
+
+    <!-- ABERTURA -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+      <div style="width: 32px; height: 3px; background: #7C3AED;"></div>
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: #7C3AED;">MÉTODO TORQUE · GESTÃO DE ACADEMIAS DE ALTA PERFORMANCE</span>
+    </div>
+    <h1 style="margin: 20px 0 0 0; font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em;">
+      <span style="display: block; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; color: #6E6A78; margin-bottom: 8px;">MÓDULO 3</span>
+      <span>Máquina de Vendas</span>
+    </h1>
+    <p style="margin: 20px 0 0 0; font-size: 17px; line-height: 1.6; color: #3A3742; border: 1px solid #E2E0E8; background: #F5F4F7; padding: 18px 22px;"><strong style="color: #7C3AED;">Ao final deste módulo</strong>, sua academia terá um funil comercial medido, um script de visita rodando no balcão e metas com comissão para a equipe — matrícula deixa de depender de sorte ou do talento de uma pessoa e vira processo previsível.</p>
+
+    <!-- AULA 3.1 -->
+    <p style="margin: 40px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 3.1</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">O funil da academia: onde o dinheiro vaza</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Toda matrícula percorre o mesmo caminho: alguém conhece a academia (lead), aparece para conhecer (visita), experimenta ou recebe a proposta e decide (matrícula). Funil é simplesmente medir quantos passam de cada etapa para a seguinte. Quem não mede acha que o problema é “falta de gente” — quase nunca é. Quase sempre é conversão.</p>
+
+    <h3 style="margin: 28px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: #131118;">TAXAS DE REFERÊNCIA</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; line-height: 1.5;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">ETAPA</th>
+          <th style="text-align: left; padding: 10px 14px; background: #131118; color: #FFFFFF; font-weight: 700; font-size: 13px; letter-spacing: 0.08em;">CONVERSÃO DE REFERÊNCIA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Lead → visita agendada</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">30 a 50% (depende da velocidade de resposta — aula 8.3)</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Visita → matrícula</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Sem script: 20 a 30% · Com script e fechamento no dia: <strong>50 a 60%</strong></td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8; font-weight: 700;">Aula experimental bem conduzida</td>
+          <td style="padding: 12px 14px; border: 1px solid #E2E0E8;">Converte 50 a 70%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">EXEMPLO</p>
+      <p style="margin: 10px 0 0 0; font-size: 14.5px; line-height: 1.7;">100 leads no mês → 40 visitas → <strong>24 matrículas (60%)</strong>. A mesma academia sem processo faria 10. Mesmo aluguel, mesma equipe, mesma verba de anúncio — o dobro de resultado.</p>
+    </div>
+
+    <p style="margin: 20px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>A disciplina que muda tudo:</strong> TODO lead entra na planilha (nome, telefone, origem, data, status). Sem exceção. Lead que não é registrado não recebe follow-up, e lead sem follow-up é dinheiro de anúncio jogado fora. A planilha do curso faz as contas de conversão sozinha.</p>
+    <p style="margin: 14px 0 0 0; font-size: 15.5px; line-height: 1.65;"><strong>Diagnóstico rápido pelo funil:</strong> muitos leads e poucas visitas = problema de resposta e agendamento. Muitas visitas e poucas matrículas = problema de script e fechamento. Poucos leads = problema de captação (próxima aula). O funil aponta exatamente qual remédio usar.</p>
+
+    <!-- AULA 3.2 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 3.2</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Captação que funciona no bairro</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Academia não precisa de campanha nacional — precisa de presença dominante num raio de 3 a 5 km. Quatro canais resolvem 90% da captação, nesta ordem de custo-benefício:</p>
+
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 18px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Indicação estruturada (o canal mais barato e mais ignorado).</strong> Programa aluno-traz-aluno com recompensa DUPLA: quem indica ganha (ex.: 50% de desconto na próxima mensalidade ou um mês de upgrade) e quem chega ganha (ex.: matrícula zero + avaliação). Divulgue todo mês, na renovação e nos momentos de alegria do aluno (bateu meta, elogiou no NPS). Indicado converte mais e cancela menos — ele já chega com prova social.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Instagram e Meta Ads local.</strong> R$ 15 a 30 por dia, raio de 3 a 5 km, criativo com gente real da SUA academia (aluno treinando, resultado com autorização, estrutura) e chamada única: “chama no WhatsApp”. Anúncio de banco de imagem com modelo americano não conecta com o bairro.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Google.</strong> Quem digita “academia perto de mim” está com o cartão na mão. Ficha do Google impecável (aula 8.4) captura essa demanda de graça.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Parcerias e eventos de bairro.</strong> Convênio com empresas e condomínios vizinhos (desconto coletivo em troca de divulgação interna), aula aberta na praça no sábado, presença nos eventos locais. Custo quase zero, autoridade local enorme.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">ERRO COMUM</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Gastar em anúncio com o funil furado. Se a conversão de visita em matrícula está em 25%, dobrar a verba de tráfego é dobrar o desperdício. Ordem certa: primeiro script e follow-up (aulas 3.3 a 3.5), depois escala de mídia.</p>
+    </div>
+
+    <!-- AULA 3.3 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 3.3</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">O tour perfeito: da recepção à matrícula em 7 passos</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">A visita é o momento de maior intenção de compra que existe — a pessoa saiu de casa para te conhecer. O tour perfeito não é decoreba robótica: é uma sequência que garante que nenhuma visita seja desperdiçada por improviso. Treine até virar natural.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 18px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Recepção com nome.</strong> Levante, sorria, aperte a mão. “Bem-vindo! Seu nome? [Nome], eu sou a [nome], vou te mostrar tudo.” Anote o nome e USE durante todo o tour.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Pergunta de objetivo (a mais importante).</strong> “Antes de te mostrar a academia: o que te fez procurar academia agora? Qual seu principal objetivo?” Ouça de verdade. Tudo que vem depois usa essa resposta.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Tour guiado pelo objetivo, não pelos aparelhos.</strong> Quem quer emagrecer vê o cardio, as coletivas e ouve como funciona o acompanhamento; quem quer hipertrofia vê a área de força e os equipamentos novos. Ninguém compra “30 esteiras” — compram o caminho até o resultado DELES.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Apresente uma pessoa.</strong> “Esse é o professor [nome], especialista em [objetivo do visitante]”. Vínculo humano fecha mais que máquina.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">5</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Prova social no caminho.</strong> “Essa aluna começou em março com o mesmo objetivo que o seu — hoje ela [resultado]”. Uma história real vale mais que dez argumentos.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">6</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Proposta com duas opções (nunca uma).</strong> Sentados, sem balcão no meio: “Pelo seu objetivo, os dois planos que fazem sentido são o [recorrente] e o [anual]. A diferença é essa. Qual encaixa melhor pra você?” Duas opções tiram a decisão de “sim ou não” e levam para “qual dos dois”.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 22px; font-weight: 800; color: #7C3AED;">7</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Fechamento hoje com bônus de início.</strong> “Fechando hoje, sua avaliação física já fica agendada e a matrícula sai zero. Quer que eu já deixe seu treino de amanhã montado?”</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; background: #131118; color: #FFFFFF; padding: 20px 24px;">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA;">REGRA DE OURO</p>
+      <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65; color: #E8E5F0;">Toda visita sai com um próximo passo marcado — matrícula, aula experimental agendada ou follow-up com data e hora. “Vou pensar e volto” sem data não é próximo passo, é despedida.</p>
+    </div>
+
+    <!-- AULA 3.4 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 3.4</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Quebra de objeções: as 5 clássicas com resposta pronta</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Objeção não é rejeição — é pedido de ajuda para decidir. A pessoa quer treinar (ela está na sua frente); falta destravar um receio. Regra geral: acolha, entenda, responda com o objetivo dela, e devolva uma pergunta de avanço.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 18px;">
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">“Tá caro.”</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">“Entendo. Só pra te mostrar em perspectiva: o plano sai por menos de R$ 5 por dia — menos que o café. E olhando o seu objetivo de [objetivo], o custo real seria continuar adiando. No anual consigo uma condição melhor: quer ver?”</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">“Vou pensar.”</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">“Claro! Só pra eu te ajudar a pensar certo: o que exatamente você precisa avaliar — o valor, o horário, ou se vai se adaptar? [responde a dúvida real]. Que tal o seguinte: agenda uma aula experimental amanhã, você pensa treinando.”</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">“Preciso falar com meu marido/minha esposa.”</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">“Perfeito, decisão de casa se toma junto. Vou fazer melhor: leva esse passe de casal — vocês dois treinam juntos essa semana, sem compromisso. Que dia funciona pra vocês virem?”</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">“Moro/trabalho meio longe.”</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">“Quanto tempo daqui? [X min]. Temos alunos que vêm de mais longe por causa de [diferencial]. E no seu horário, às [hora], o trânsito nesse trecho é tranquilo. Quer testar o trajeto uma vez com a aula experimental?”</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 16px 20px;">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #7C3AED;">“Começo mês que vem.”</p>
+        <p style="margin: 8px 0 0 0; font-size: 14.5px; line-height: 1.6;">“Te entendo — todo mundo quer começar na segunda-feira perfeita. Ela não existe. Começa leve essa semana, 2 treinos, e o plano só passa a contar a partir do dia 1º. Assim mês que vem você já chega com hábito criado.”</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border: 1.5px solid #7C3AED; padding: 16px 20px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #7C3AED;">TREINO DA EQUIPE</p>
+      <p style="margin: 8px 0 0 0; font-size: 15px; line-height: 1.6;">Objeção se responde bem quando já foi respondida 50 vezes em treino. Reserve 20 minutos por semana para dramatização: um faz o visitante difícil, outro atende, o grupo dá feedback. Equipe que treina objeção fecha no dia; equipe que improvisa coleciona “vou pensar”.</p>
+    </div>
+
+    <!-- AULA 3.5 -->
+    <p style="margin: 44px 0 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AULA 3.5</p>
+    <h2 style="margin: 6px 0 0 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">Metas, comissão e o ritmo comercial de 10 minutos</h2>
+    <p style="margin: 16px 0 0 0; font-size: 15.5px; line-height: 1.65;">Meta sem método é cobrança injusta; método sem meta é passeio. Os dois juntos criam ritmo — e ritmo comercial é o que separa academia que cresce de academia que oscila.</p>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">COMO DEFINIR A META DE MATRÍCULAS</h3>
+    <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65;"><strong>Meta do mês = (alunos que você quer ter no fim do mês − ativos hoje) + cancelamentos previstos.</strong> Exemplo: tem 400, quer 420, churn médio de 24/mês → meta = 20 + 24 = 44 matrículas. Sem somar o churn, você corre o mês inteiro para ficar no lugar e ainda acha que a equipe falhou.</p>
+    <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 2.2; color: #3A3742;">Minha meta deste mês: <span style="display: inline-block; min-width: 120px; border-bottom: 1px solid #8A8695;"></span> matrículas &nbsp;(crescimento <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #8A8695;"></span> + churn previsto <span style="display: inline-block; min-width: 70px; border-bottom: 1px solid #8A8695;"></span>)</p>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">COMISSÃO QUE MOTIVA SEM CORROER A MARGEM</h3>
+    <p style="margin: 10px 0 0 0; font-size: 15px; line-height: 1.65;"><strong>Modelo recomendado:</strong> valor FIXO por matrícula (R$ 20 a R$ 50 conforme seu ticket) + bônus coletivo se a meta do mês bater (ex.: R$ 200 a 400 por pessoa da equipe de atendimento). Fixo por matrícula é simples de conferir; bônus coletivo faz a recepcionista torcer pela colega em vez de disputar lead.</p>
+    <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.65;"><strong>Cuidados:</strong> comissão maior para plano anual (vale mais para o caixa), comissão só se o aluno passar do 1º mês pago (evita matrícula fantasma) e transparência total — planilha aberta que a equipe mesma confere.</p>
+
+    <h3 style="margin: 26px 0 0 0; font-size: 15px; font-weight: 700; letter-spacing: 0.12em;">O RITUAL DIÁRIO DE 10 MINUTOS</h3>
+    <div style="display: flex; flex-direction: column; gap: 0; margin-top: 12px;">
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">1</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Leads de ontem:</strong> quantos entraram, todos foram respondidos em menos de 15 minutos?</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">2</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Follow-ups de hoje:</strong> quem tem retorno marcado? Quem visitou e não fechou há 2 dias?</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">3</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Visitas agendadas para hoje:</strong> quem recebe cada uma?</p>
+      </div>
+      <div style="display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid #E2E0E8; border-bottom: 1px solid #E2E0E8; align-items: baseline;">
+        <span style="font-size: 20px; font-weight: 800; color: #7C3AED;">4</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.55;"><strong>Placar:</strong> quantas matrículas no mês vs. meta — visível para todos, atualizado diariamente.</p>
+      </div>
+    </div>
+    <p style="margin: 14px 0 0 0; font-size: 15px; line-height: 1.65;"><strong>Onde:</strong> no balcão, em pé, todo dia no mesmo horário. Dez minutos. É a diferença entre gerir vendas e torcer por vendas.</p>
+
+    <!-- AÇÃO PRÁTICA -->
+    <div style="margin-top: 44px; background: #F5F4F7; border: 1px solid #E2E0E8; padding: 24px 28px;">
+      <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #7C3AED;">AÇÃO PRÁTICA DO MÓDULO</p>
+      <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 1.6;">Implantação desta semana, nesta ordem:</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Coloque a planilha de funil no ar hoje: todo lead registrado, sem exceção, com origem e status.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Treine o tour de 7 passos com quem atende visita — dramatize duas visitas completas antes de atender a próxima real.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Imprima as respostas das 5 objeções e deixe no balcão até virarem reflexo.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Defina a meta do mês pela fórmula (crescimento + churn) e apresente o modelo de comissão para a equipe.</p></div>
+        <div style="display: flex; gap: 12px; align-items: baseline;"><span style="width: 15px; height: 15px; border: 1.5px solid #7C3AED; flex-shrink: 0; transform: translateY(2px);"></span><p style="margin: 0; font-size: 15px; line-height: 1.55;">Comece o ritual diário de 10 minutos amanhã.</p></div>
+      </div>
+    </div>
+
+    <!-- MATERIAIS + CHECKLIST -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">MATERIAIS DESTE MÓDULO</p>
+        <p style="margin: 12px 0 0 0; font-size: 14.5px; line-height: 1.75;">— Script de vendas completo: tour de 7 passos + respostas das 5 objeções (versão para imprimir)<br>— Planilha de funil comercial com taxas de conversão automáticas por etapa e por origem de lead<br>— Modelo de meta e comissionamento com simulador de custo de comissão sobre a margem<br>— Roteiro do ritual diário de 10 minutos</p>
+      </div>
+      <div style="border: 1px solid #E2E0E8; padding: 20px 24px;">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: #6E6A78;">CHECKLIST — ANTES DE AVANÇAR</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Todo lead dos últimos 7 dias está registrado na planilha de funil.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">A equipe executou o tour de 7 passos em visitas reais esta semana.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Meta do mês calculada (incluindo churn) e comissão comunicada.</p></div>
+          <div style="display: flex; gap: 10px; align-items: baseline;"><span style="width: 13px; height: 13px; border: 1.5px solid #8A8695; flex-shrink: 0; transform: translateY(1px);"></span><p style="margin: 0; font-size: 14px; line-height: 1.5;">Ritual diário de 10 minutos aconteceu pelo menos 3 vezes esta semana.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</x-import>
+</x-dc>
+</body>
+</html>
