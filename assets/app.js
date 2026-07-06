@@ -316,15 +316,53 @@
   // ---------- perfil do aluno ----------
   function syncPerfil() {
     var p = window.MT_perfil && window.MT_perfil();
+    var acad = window.MT_academia && window.MT_academia();
     var box = el("sidePerfil");
     if (p && p.nome) {
       box.hidden = false;
-      el("perfilNome").textContent = "👤 " + p.nome.split(" ")[0];
-      box.title = p.nome + (p.email ? " · " + p.email : "");
+      el("perfilNome").textContent = "👤 " + p.nome.split(" ")[0] + (acad && acad.nome ? " · " + acad.nome : "");
+      box.title = p.nome + (p.email ? " · " + p.email : "") + (acad && acad.nome ? " · " + acad.nome : "");
     } else {
       box.hidden = true;
     }
+    // painel Equipe: só para o dono no modo nuvem
+    el("equipeBox").hidden = !(acad && acad.papel === "dono" && window.MT_supabase);
   }
+
+  // ---------- equipe da academia (dono) ----------
+  el("equipeBtn").addEventListener("click", function () {
+    var acad = window.MT_academia && window.MT_academia();
+    if (!acad || !window.MT_supabase) return;
+    el("eqaNome").textContent = "Equipe · " + (acad.nome || "sua academia");
+    el("eqaCodigo").textContent = acad.codigo_equipe || "——";
+    el("eqaLinhas").innerHTML = '<tr><td colspan="4">Carregando…</td></tr>';
+    document.getElementById("dlgEquipeAcad").showModal();
+    window.MT_supabase.from("membros").select("user_id, papel, nome, email").eq("academia_id", acad.id).then(function (r) {
+      var rows = (r.data || []).sort(function (a, b) { return a.papel === "dono" ? -1 : 1; });
+      el("eqaLinhas").innerHTML = rows.map(function (m) {
+        return "<tr><td>" + (m.nome || "—") + "</td><td>" + (m.email || "—") + "</td><td>" +
+          (m.papel === "dono" ? "👑 Dono" : "Funcionário") + "</td><td>" +
+          (m.papel !== "dono" ? '<button class="eqa-remover" data-uid="' + m.user_id + '">remover</button>' : "") + "</td></tr>";
+      }).join("") || '<tr><td colspan="4">Só você por enquanto — compartilhe o código acima com a equipe.</td></tr>';
+    });
+  });
+  el("eqaCopiar").addEventListener("click", function () {
+    var c = el("eqaCodigo").textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(function () {
+      el("eqaCopiar").textContent = "✓ Copiado";
+      setTimeout(function () { el("eqaCopiar").textContent = "Copiar"; }, 2000);
+    }, function () {});
+  });
+  document.getElementById("dlgEquipeAcad").addEventListener("click", function (e) {
+    var uid = e.target.getAttribute && e.target.getAttribute("data-uid");
+    if (!uid) return;
+    if (!confirm("Remover este funcionário da equipe? Ele perde o acesso aos dados da academia.")) return;
+    var acad = window.MT_academia();
+    window.MT_supabase.from("membros").delete().eq("academia_id", acad.id).eq("user_id", uid).then(function (r) {
+      if (r.error) alert("Não foi possível remover: " + r.error.message);
+      else e.target.closest("tr").remove();
+    });
+  });
   el("sairBtn").addEventListener("click", function () { window.MT_sair && window.MT_sair(); });
   window.MT_onAcesso = syncPerfil;
   syncPerfil();

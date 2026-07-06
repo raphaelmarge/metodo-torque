@@ -103,10 +103,12 @@ Como ativar (~10 minutos, gratuito):
 4. Preencha os dois campos em `assets/cloud-config.js` e publique;
 5. (Recomendado) Em **Authentication → Sign In / Up → Email**, desligue *Confirm email* para o aluno entrar direto após criar a conta.
 
-Comportamento no modo nuvem:
+Comportamento no modo nuvem (multi-academia):
 
-- **Criar conta** continua exigindo o código de acesso (só compradores entram);
-- A sessão vale em qualquer aparelho — a equipe pode usar **a mesma conta da academia** em recepção + celular + TV, e todos veem os mesmos dados;
-- Programas e fichas preenchíveis sincronizam sozinhos (última alteração vence, por item); as fotos da manutenção ficam locais nesta versão;
+- **Criar academia** (dono): exige o código de acesso do curso, cria a conta da academia e gera um **código da equipe** de 6 caracteres;
+- **Sou da equipe** (funcionário): cria o próprio login com o código da equipe que o dono passou — cada pessoa tem seu e-mail e senha;
+- **Isolamento total**: os dados sincronizam por academia, com regras no banco (RLS) — uma academia nunca enxerga a outra;
+- **Painel 👥 Equipe** (barra lateral, só o dono vê): mostra o código da equipe, lista os funcionários e permite remover acessos;
+- Programas e fichas preenchíveis sincronizam sozinhos entre todos da equipe (última alteração vence, por item); fotos da manutenção ficam locais nesta versão;
 - Sem internet, tudo continua funcionando e sincroniza quando a conexão volta;
 - Com `cloud-config.js` vazio, o portal opera no modo local (código de acesso), como antes.

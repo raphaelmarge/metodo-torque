@@ -22,18 +22,23 @@
 
     <div class="gate-abas" id="gateAbas" hidden>
       <button type="button" data-aba="entrar" class="ativa">Entrar</button>
-      <button type="button" data-aba="criar">Criar conta</button>
+      <button type="button" data-aba="criar">Criar academia</button>
+      <button type="button" data-aba="equipe">Sou da equipe</button>
     </div>
 
     <p id="gateIntro">Faça seu cadastro para acessar o curso, as planilhas e os programas.</p>
 
     <form id="gateForm">
-      <div class="campo-gate" id="cCodigo"><label for="gCodigo">Código de acesso</label>
-        <input id="gCodigo" autocomplete="off" placeholder="Digite o código que você recebeu"></div>
+      <div class="campo-gate" id="cCodigo"><label for="gCodigo">Código de acesso do curso</label>
+        <input id="gCodigo" autocomplete="off" placeholder="Digite o código que você recebeu na compra"></div>
+      <div class="campo-gate" id="cAcademia" hidden><label for="gAcademia">Nome da academia</label>
+        <input id="gAcademia" placeholder="ex.: Academia Corpo em Forma"></div>
+      <div class="campo-gate" id="cEquipe" hidden><label for="gEquipe">Código da equipe</label>
+        <input id="gEquipe" autocomplete="off" placeholder="6 letras/números — peça ao dono da academia" style="text-transform: uppercase;"></div>
       <div class="campo-gate" id="cNome"><label for="gNome">Seu nome</label>
         <input id="gNome" placeholder="Nome e sobrenome"></div>
-      <div class="campo-gate"><label for="gEmail">E-mail</label>
-        <input id="gEmail" type="email" required placeholder="voce@email.com" autocomplete="username"></div>
+      <div class="campo-gate" id="cEmail"><label for="gEmail">E-mail</label>
+        <input id="gEmail" type="email" placeholder="voce@email.com" autocomplete="username"></div>
       <div class="campo-gate" id="cZap"><label for="gZap">WhatsApp</label>
         <input id="gZap" inputmode="numeric" placeholder="11999998888"></div>
       <div class="campo-gate" id="cSenha" hidden><label for="gSenha">Senha</label>
@@ -78,6 +83,9 @@
         <span id="perfilNome"></span>
         <span class="sync-chip" id="syncChip" hidden title="Dados sincronizados na nuvem">☁ ✓</span>
         <button id="sairBtn" title="Sair do portal neste aparelho">Sair</button>
+      </div>
+      <div class="side-backup" id="equipeBox" hidden>
+        <button id="equipeBtn" title="Código da equipe e funcionários da sua academia">👥 Equipe da academia</button>
       </div>
       <div class="side-backup">
         <button id="logoBtn" title="Sua logo aparece nos programas do dia a dia e no modo TV, para a sua equipe">🖼 Logo</button>
@@ -144,6 +152,22 @@
         </footer>
       </div>
     </section>
+
+    <!-- EQUIPE DA ACADEMIA (dono) -->
+    <dialog id="dlgEquipeAcad">
+      <div class="equipe-card">
+        <h2 id="eqaNome">Equipe da academia</h2>
+        <p class="eqa-intro">Para cadastrar um funcionário: ele acessa o portal, toca em <strong>“Sou da equipe”</strong> e usa este código:</p>
+        <div class="eqa-codigo"><strong id="eqaCodigo">——</strong><button class="btn-eqa" id="eqaCopiar">Copiar</button></div>
+        <table class="eqa-tabela">
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th></th></tr></thead>
+          <tbody id="eqaLinhas"></tbody>
+        </table>
+        <div style="text-align: right; margin-top: 14px;">
+          <button class="btn btn-primary btn-sm" onclick="this.closest('dialog').close()">Fechar</button>
+        </div>
+      </div>
+    </dialog>
 
     <!-- VIEWER -->
     <section class="viewer" id="viewerView" hidden>

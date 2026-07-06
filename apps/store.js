@@ -194,7 +194,7 @@
     try { localStorage.setItem(TSKEY, JSON.stringify(m)); } catch (e) {}
   }
 
-  var sync = { client: null, uid: null, sujas: {}, timer: null, aplicando: false, ultima: null };
+  var sync = { client: null, aid: null, sujas: {}, timer: null, aplicando: false, ultima: null };
 
   function sincronizavel(chaveFull) {
     if (SYNC_IGNORA[chaveFull]) return false;
@@ -218,7 +218,7 @@
       var raw = localStorage.getItem(k);
       var valor = null;
       try { valor = raw == null ? null : JSON.parse(raw); } catch (e) { valor = raw; }
-      return { user_id: sync.uid, chave: k, valor: valor, atualizado: m[k] || new Date().toISOString() };
+      return { academia_id: sync.aid, chave: k, valor: valor, atualizado: m[k] || new Date().toISOString() };
     });
     sync.client.from("dados").upsert(linhas).then(function (r) {
       if (r.error) {
@@ -234,7 +234,7 @@
 
   function puxa() {
     if (!sync.client) return Promise.resolve();
-    return sync.client.from("dados").select("chave,valor,atualizado").then(function (r) {
+    return sync.client.from("dados").select("chave,valor,atualizado").eq("academia_id", sync.aid).then(function (r) {
       if (r.error || !r.data) return;
       var m = tsMap();
       var mudou = [];
@@ -286,8 +286,34 @@
     client.auth.getSession().then(function (r) {
       var sess = r.data && r.data.session;
       if (!sess) return; // sem login, sem sync
-      sync.client = client;
-      sync.uid = sess.user.id;
+
+      // resolve a academia do usuário (cache local para funcionar offline)
+      var acad = null;
+      try { acad = JSON.parse(localStorage.getItem("mtapp:academia")); } catch (e) {}
+      var resolve = acad && acad.id
+        ? Promise.resolve(acad.id)
+        : client.from("membros").select("academia_id, papel, nome, academias(nome, codigo_equipe)").then(function (rm) {
+            var m = rm.data && rm.data[0];
+            if (!m) return null;
+            try {
+              localStorage.setItem("mtapp:academia", JSON.stringify({
+                id: m.academia_id, papel: m.papel,
+                nome: (m.academias && m.academias.nome) || "",
+                codigo_equipe: m.papel === "dono" && m.academias ? m.academias.codigo_equipe : "",
+              }));
+            } catch (e) {}
+            return m.academia_id;
+          }, function () { return null; });
+
+      resolve.then(function (aid) {
+        if (!aid) return; // sem academia vinculada ainda
+        sync.client = client;
+        sync.aid = aid;
+        depoisDeLigar();
+      });
+      return;
+
+      function depoisDeLigar() {
       puxa();
       // aplica alterações vindas de iframes/outras abas deste aparelho
       window.addEventListener("storage", function (e) {
@@ -303,6 +329,7 @@
         document.addEventListener("visibilitychange", function () {
           if (!document.hidden) puxa();
         });
+      }
       }
     }, function () {});
   }
