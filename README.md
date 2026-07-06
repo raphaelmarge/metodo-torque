@@ -17,6 +17,7 @@ Portal web do curso **Método Torque · Gestão de Academias de Alta Performance
 
 ### Programas do dia a dia
 
+- **🏋 Gestão de Alunos** — o coração estilo EVO: cadastro completo de alunos, planos configuráveis (recorrente, à vista, agregador Gympass/TotalPass), matrícula que gera as mensalidades do contrato automaticamente, baixa de pagamento, congelamento/cancelamento, check-in da recepção com **bloqueio automático a partir de 15 dias de atraso** (regra D+15 do curso) e integração de mão dupla com a régua de cobrança: mensalidade vencida entra sozinha na Inadimplência, pagamento em qualquer um dos dois reflete no outro.
 - **🎯 Metas de Vendas** — cadastre vendedoras, defina metas mensais (matrículas e receita), lance cada venda em segundos e acompanhe ranking + projeção do fim do mês.
 - **🔧 Central de Manutenção** — chamados de aparelhos, predial e limpeza com foto (tirada na hora pelo celular), prioridade, agendamento de conserto/retorno e alerta de atraso.
 - **✅ Checklist do Dia** — abertura e fechamento com os itens do Módulo 6 já carregados; cada tarefa tem responsável e hora limite, e item atrasado gera **mensagem de cobrança pronta no WhatsApp**.
@@ -89,4 +90,26 @@ O portal pede **código de acesso + cadastro** (nome, e-mail, WhatsApp) na prime
 - `codigos`: lista de códigos válidos em SHA-256 — gere novos com `gerador-codigo.html` (abra no navegador, digite o código, cole a linha gerada);
 - `notificarEmail`: preencha com seu e-mail para receber cada cadastro por e-mail (via formsubmit.co — confirme o e-mail de ativação no primeiro envio).
 
-Código inicial: `TORQUE2026`. É uma proteção **leve** (o conteúdo continua tecnicamente público para quem souber as URLs); para login com senha de verdade e alunos gerenciados na nuvem, o próximo passo é o Supabase.
+Código inicial: `TORQUE2026`. É uma proteção **leve** (o conteúdo continua tecnicamente público para quem souber as URLs).
+
+## Login com senha + sincronização online (Supabase)
+
+O portal tem um segundo modo, ativado por `assets/cloud-config.js`: **login com e-mail e senha** e **dados sincronizados na nuvem** entre todos os aparelhos da conta (recepção, celular, TV).
+
+Como ativar (~10 minutos, gratuito):
+
+1. Crie um projeto em [supabase.com](https://supabase.com);
+2. No painel, abra **SQL Editor**, cole o conteúdo de [`supabase-setup.sql`](supabase-setup.sql) e clique em **Run**;
+3. Em **Project Settings → API**, copie a *Project URL* e a chave *anon public*;
+4. Preencha os dois campos em `assets/cloud-config.js` e publique;
+5. (Recomendado) Em **Authentication → Sign In / Up → Email**, desligue *Confirm email* para o aluno entrar direto após criar a conta.
+
+Comportamento no modo nuvem (multi-academia):
+
+- **Criar academia** (dono): exige o código de acesso do curso, cria a conta da academia e gera um **código da equipe** de 6 caracteres;
+- **Sou da equipe** (funcionário): cria o próprio login com o código da equipe que o dono passou — cada pessoa tem seu e-mail e senha;
+- **Isolamento total**: os dados sincronizam por academia, com regras no banco (RLS) — uma academia nunca enxerga a outra;
+- **Painel 👥 Equipe** (barra lateral, só o dono vê): mostra o código da equipe, lista os funcionários e permite remover acessos;
+- Programas e fichas preenchíveis sincronizam sozinhos entre todos da equipe (última alteração vence, por item); fotos da manutenção ficam locais nesta versão;
+- Sem internet, tudo continua funcionando e sincroniza quando a conexão volta;
+- Com `cloud-config.js` vazio, o portal opera no modo local (código de acesso), como antes.

@@ -23,8 +23,12 @@
     } catch (e) { return fallback; }
   }
 
+  var ouvintes = [];
   function write(key, value) {
     localStorage.setItem(PREFIX + key, JSON.stringify(value));
+    marcaTs(PREFIX + key);
+    agendaEnvio(PREFIX + key);
+    ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });
   }
 
   function uid() {
@@ -132,7 +136,7 @@
     });
   }
   function getLogo() { return read("logo", null); }
-  function removeLogo() { localStorage.removeItem(PREFIX + "logo"); }
+  function removeLogo() { write("logo", null); }
 
   // Preenche <img id="logoCliente"> (se existir na página) com a logo salva.
   function aplicaLogo() {
@@ -144,7 +148,7 @@
   }
 
   // ---------- backup ----------
-  var BACKUP_KEYS = ["metas", "manut", "checklist", "funil", "exper", "inad", "diario", "logo"];
+  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "logo"];
 
   function exportBackup() {
     var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString() };
@@ -165,11 +169,169 @@
     });
   }
 
-  // Notifica outras abas (modo TV) — localStorage já dispara 'storage' entre abas.
+  // Notifica mudanças: no mesmo contexto (write) e entre abas/iframes (storage).
   function onChange(cb) {
+    ouvintes.push(cb);
     window.addEventListener("storage", function (e) {
       if (e.key && e.key.indexOf(PREFIX) === 0) cb(e.key.slice(PREFIX.length));
     });
+  }
+
+  /* ==================== SINCRONIZAÇÃO ONLINE (Supabase) ====================
+   * Cada chave mtapp:/mtpf: vira uma linha (user_id, chave, valor, atualizado)
+   * na tabela `dados`. Última escrita vence, por chave. Fotos (IndexedDB)
+   * ficam locais nesta versão. */
+  var SYNC_PREFIXES = ["mtapp:", "mtpf:"];
+  var SYNC_IGNORA = { "mtapp:perfil": 1 };
+  var TSKEY = "mtsync:ts";
+
+  function tsMap() {
+    try { return JSON.parse(localStorage.getItem(TSKEY)) || {}; } catch (e) { return {}; }
+  }
+  function marcaTs(chaveFull, quando) {
+    var m = tsMap();
+    m[chaveFull] = quando || new Date().toISOString();
+    try { localStorage.setItem(TSKEY, JSON.stringify(m)); } catch (e) {}
+  }
+
+  var sync = { client: null, aid: null, sujas: {}, timer: null, aplicando: false, ultima: null };
+
+  function sincronizavel(chaveFull) {
+    if (SYNC_IGNORA[chaveFull]) return false;
+    return SYNC_PREFIXES.some(function (p) { return chaveFull.indexOf(p) === 0; });
+  }
+
+  function agendaEnvio(chaveFull) {
+    if (!sync.client || sync.aplicando || !sincronizavel(chaveFull)) return;
+    sync.sujas[chaveFull] = true;
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(enviaSujas, 1200);
+  }
+
+  function enviaSujas() {
+    if (!sync.client) return;
+    var chaves = Object.keys(sync.sujas);
+    if (!chaves.length) return;
+    sync.sujas = {};
+    var m = tsMap();
+    var linhas = chaves.map(function (k) {
+      var raw = localStorage.getItem(k);
+      var valor = null;
+      try { valor = raw == null ? null : JSON.parse(raw); } catch (e) { valor = raw; }
+      return { academia_id: sync.aid, chave: k, valor: valor, atualizado: m[k] || new Date().toISOString() };
+    });
+    sync.client.from("dados").upsert(linhas).then(function (r) {
+      if (r.error) {
+        // devolve à fila para tentar de novo no próximo ciclo
+        chaves.forEach(function (k) { sync.sujas[k] = true; });
+      } else {
+        avisaStatus();
+      }
+    }, function () {
+      chaves.forEach(function (k) { sync.sujas[k] = true; });
+    });
+  }
+
+  function puxa() {
+    if (!sync.client) return Promise.resolve();
+    return sync.client.from("dados").select("chave,valor,atualizado").eq("academia_id", sync.aid).then(function (r) {
+      if (r.error || !r.data) return;
+      var m = tsMap();
+      var mudou = [];
+      r.data.forEach(function (row) {
+        if (!sincronizavel(row.chave)) return;
+        var local = m[row.chave];
+        if (!local || row.atualizado > local) {
+          sync.aplicando = true;
+          try {
+            localStorage.setItem(row.chave, JSON.stringify(row.valor));
+            marcaTs(row.chave, row.atualizado);
+            mudou.push(row.chave);
+          } catch (e) {}
+          sync.aplicando = false;
+        } else if (row.atualizado < local) {
+          sync.sujas[row.chave] = true; // local mais novo: manda de volta
+        }
+      });
+      // chaves locais que a nuvem ainda não tem
+      var remotas = {};
+      r.data.forEach(function (row) { remotas[row.chave] = 1; });
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (sincronizavel(k) && !remotas[k]) { marcaTs(k, tsMap()[k]); sync.sujas[k] = true; }
+      }
+      if (Object.keys(sync.sujas).length) enviaSujas();
+      sync.ultima = new Date();
+      avisaStatus();
+      if (mudou.length) {
+        ouvintes.forEach(function (cb) {
+          mudou.forEach(function (k) {
+            if (k.indexOf(PREFIX) === 0) { try { cb(k.slice(PREFIX.length)); } catch (e) {} }
+          });
+        });
+      }
+    }, function () {});
+  }
+
+  function avisaStatus() {
+    if (window.MT_syncInfo) {
+      try { window.MT_syncInfo({ ativa: !!sync.client, ultima: sync.ultima }); } catch (e) {}
+    }
+  }
+
+  function iniciaSync() {
+    var cfg = self.MT_CLOUD;
+    if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase || sync.client) return;
+    var client = window.MT_supabase || window.supabase.createClient(cfg.url, cfg.anonKey);
+    client.auth.getSession().then(function (r) {
+      var sess = r.data && r.data.session;
+      if (!sess) return; // sem login, sem sync
+
+      // resolve a academia do usuário (cache local para funcionar offline)
+      var acad = null;
+      try { acad = JSON.parse(localStorage.getItem("mtapp:academia")); } catch (e) {}
+      var resolve = acad && acad.id
+        ? Promise.resolve(acad.id)
+        : client.from("membros").select("academia_id, papel, nome, academias(nome, codigo_equipe)").then(function (rm) {
+            var m = rm.data && rm.data[0];
+            if (!m) return null;
+            try {
+              localStorage.setItem("mtapp:academia", JSON.stringify({
+                id: m.academia_id, papel: m.papel,
+                nome: (m.academias && m.academias.nome) || "",
+                codigo_equipe: m.papel === "dono" && m.academias ? m.academias.codigo_equipe : "",
+              }));
+            } catch (e) {}
+            return m.academia_id;
+          }, function () { return null; });
+
+      resolve.then(function (aid) {
+        if (!aid) return; // sem academia vinculada ainda
+        sync.client = client;
+        sync.aid = aid;
+        depoisDeLigar();
+      });
+      return;
+
+      function depoisDeLigar() {
+      puxa();
+      // aplica alterações vindas de iframes/outras abas deste aparelho
+      window.addEventListener("storage", function (e) {
+        if (e.key && sincronizavel(e.key) && !sync.aplicando) {
+          marcaTs(e.key);
+          agendaEnvio(e.key);
+        }
+      });
+      // só a janela principal fica puxando da nuvem (evita tráfego repetido)
+      if (window === window.top) {
+        setInterval(puxa, 30000);
+        window.addEventListener("focus", puxa);
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden) puxa();
+        });
+      }
+      }
+    }, function () {});
   }
 
   window.MTStore = {
@@ -178,7 +340,12 @@
     savePhoto: savePhoto, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,
     exportBackup: exportBackup, importBackup: importBackup, onChange: onChange,
+    iniciaSync: iniciaSync,
   };
+
+  // nas páginas de programas e no modo TV, inicia a sincronização sozinho
+  if (document.readyState !== "loading") iniciaSync();
+  else document.addEventListener("DOMContentLoaded", iniciaSync);
 
   // aplica a logo automaticamente quando a página carrega e quando muda em outra aba
   if (document.readyState !== "loading") aplicaLogo();

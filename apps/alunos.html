@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestão de Alunos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .aluno-linha { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #fff; border: 1px solid var(--linha); cursor: pointer; flex-wrap: wrap; }
+  .aluno-linha + .aluno-linha { margin-top: -1px; }
+  .aluno-linha:hover { border-color: var(--roxo); }
+  .avatar { flex: none; width: 42px; height: 42px; border-radius: 50%; background: rgba(124,58,237,.12); color: var(--roxo); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+  .aluno-info { flex: 1; min-width: 150px; }
+  .aluno-info strong { font-size: 15px; }
+  .aluno-info .sub { font-size: 12.5px; color: var(--cinza); }
+  .venc { font-size: 12.5px; color: var(--cinza); text-align: right; min-width: 110px; }
+  .ficha-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .ficha-grid { grid-template-columns: 1fr; } }
+  .bloco { border: 1px solid var(--linha); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .bloco h3 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--cinza); }
+  .receb { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13.5px; padding: 7px 0; border-bottom: 1px solid var(--fundo); }
+  .checkin-banner { padding: 14px 18px; font-size: 15px; font-weight: 700; display: none; }
+  .checkin-banner.ok { display: block; background: rgba(22,163,74,.12); color: var(--ok); border: 1px solid rgba(22,163,74,.4); }
+  .checkin-banner.erro { display: block; background: rgba(220,38,38,.1); color: var(--erro); border: 1px solid rgba(220,38,38,.4); }
+  #fichaDlg .card { width: 860px; max-width: 100%; }
+  .acao-topo { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GESTÃO COMPLETA</span>
+    <h1>Gestão de Alunos</h1>
+    </div>
+  </div>
+  <p>O coração da academia: alunos, planos e contratos que geram as mensalidades sozinhos. Atrasou, entra na régua de cobrança; passou de 15 dias, o check-in bloqueia — como o método manda.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-v="alunos" class="ativa">👥 Alunos</button>
+      <button data-v="receber">💳 A receber</button>
+      <button data-v="planos">🏷 Planos</button>
+      <button data-v="checkin">✅ Check-in</button>
+    </div>
+    <button class="btn" id="btnNovoAluno">+ Novo aluno</button>
+  </div>
+
+  <!-- ALUNOS -->
+  <section id="vAlunos" style="display: flex; flex-direction: column; gap: 12px;">
+    <div class="card linha-flex">
+      <input id="busca" placeholder="Buscar por nome, CPF ou telefone…" style="flex: 1; min-width: 200px;">
+      <select id="filtro" style="width: auto;">
+        <option value="">Todos</option>
+        <option value="emdia">Em dia</option>
+        <option value="atrasado">Atrasados</option>
+        <option value="bloqueado">Bloqueados (15+ dias)</option>
+        <option value="semcontrato">Sem contrato ativo</option>
+        <option value="inativo">Inativos</option>
+      </select>
+    </div>
+    <div id="listaAlunos"></div>
+  </section>
+
+  <!-- A RECEBER -->
+  <section id="vReceber" hidden style="display: flex; flex-direction: column; gap: 12px;">
+    <div class="card linha-flex" style="justify-content: space-between;">
+      <div class="painel-mes linha-flex">
+        <button class="btn sec mini" id="mesAnt">←</button>
+        <strong id="mesLabel" style="min-width: 150px; text-align: center; text-transform: capitalize;"></strong>
+        <button class="btn sec mini" id="mesProx">→</button>
+      </div>
+      <span class="muted" id="resumoReceber"></span>
+    </div>
+    <div id="listaReceber"></div>
+  </section>
+
+  <!-- PLANOS -->
+  <section id="vPlanos" hidden style="display: flex; flex-direction: column; gap: 12px;">
+    <div class="card">
+      <h2>Planos da academia</h2>
+      <p class="muted" style="margin: 4px 0 12px;">O contrato do aluno nasce de um plano. Recorrente gera mensalidade todo mês; à vista gera uma cobrança única; agregador (Gympass/TotalPass) não gera cobrança — o repasse vem da plataforma.</p>
+      <div class="linha-flex" style="margin-bottom: 12px;">
+        <input id="pNome" placeholder="Nome do plano" style="flex: 2; min-width: 140px;">
+        <input id="pValor" type="number" min="0" step="0.01" placeholder="Valor mensal R$" style="flex: 1; min-width: 110px;">
+        <input id="pMeses" type="number" min="1" max="36" placeholder="Meses" style="width: 90px;">
+        <select id="pTipo" style="width: auto;">
+          <option value="recorrente">Recorrente</option>
+          <option value="avista">À vista</option>
+          <option value="agregador">Agregador</option>
+        </select>
+        <button class="btn mini" id="pAdd">+ Criar</button>
+      </div>
+      <table class="tabela"><thead><tr><th>Plano</th><th>Valor/mês</th><th>Duração</th><th>Tipo</th><th>Alunos ativos</th><th></th></tr></thead><tbody id="pLinhas"></tbody></table>
+    </div>
+  </section>
+
+  <!-- CHECK-IN -->
+  <section id="vCheckin" hidden style="display: flex; flex-direction: column; gap: 12px;">
+    <div class="card">
+      <h2>Check-in da recepção</h2>
+      <p class="muted" style="margin: 4px 0 12px;">Digite o nome do aluno e confirme a entrada. Aluno com 15+ dias de atraso é bloqueado automaticamente (passo D+15 da régua) — regularizou, libera na hora.</p>
+      <div class="linha-flex">
+        <input id="ckBusca" list="ckLista" placeholder="Nome do aluno…" style="flex: 1; min-width: 200px;">
+        <datalist id="ckLista"></datalist>
+        <button class="btn" id="ckEntrar">✅ Registrar entrada</button>
+      </div>
+      <div class="checkin-banner" id="ckBanner" style="margin-top: 12px;"></div>
+    </div>
+    <div class="card">
+      <h2>Entradas de hoje (<span id="ckHojeN">0</span>)</h2>
+      <div id="ckHoje" class="muted">Ninguém ainda.</div>
+    </div>
+  </section>
+</main>
+
+<!-- NOVO ALUNO -->
+<dialog id="dlgAluno">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 560px; max-width: 100%;">
+    <h2 id="dlgAlunoTitulo">Novo aluno</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome completo</label><input id="aNome" required></div>
+      <div class="campo"><label>CPF</label><input id="aCpf" inputmode="numeric" placeholder="só números"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>WhatsApp</label><input id="aZap" inputmode="numeric" placeholder="21999998888"></div>
+      <div class="campo"><label>E-mail</label><input id="aEmail" type="email"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Nascimento</label><input id="aNasc" type="date"></div>
+      <div class="campo"><label>Observações</label><input id="aObs" placeholder="restrição médica, indicação…"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar aluno</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- FICHA DO ALUNO -->
+<dialog id="fichaDlg">
+  <div class="card" style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <div class="linha-flex" style="gap: 12px;">
+        <span class="avatar" id="fAvatar"></span>
+        <div><strong id="fNome" style="font-size: 18px;"></strong><div class="muted" id="fSub"></div></div>
+      </div>
+      <span id="fStatus"></span>
+    </div>
+    <div class="acao-topo" id="fAcoes"></div>
+    <div class="ficha-grid">
+      <div class="bloco">
+        <h3>CONTRATO ATUAL</h3>
+        <div id="fContrato"></div>
+      </div>
+      <div class="bloco">
+        <h3>MENSALIDADES</h3>
+        <div id="fRecebiveis" style="max-height: 260px; overflow-y: auto;"></div>
+      </div>
+    </div>
+    <div style="text-align: right;"><button class="btn sec" onclick="this.closest('dialog').close()">Fechar</button></div>
+  </div>
+</dialog>
+
+<!-- MATRICULAR -->
+<dialog id="dlgMatricula">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
+    <h2>Matricular no plano</h2>
+    <div class="campo"><label>Plano</label><select id="mPlano" required></select></div>
+    <div class="grid-2">
+      <div class="campo"><label>Início</label><input id="mInicio" type="date" required></div>
+      <div class="campo"><label>Dia de vencimento</label><input id="mDia" type="number" min="1" max="28" value="5" required></div>
+    </div>
+    <div class="campo"><label>Valor negociado (R$/mês)</label><input id="mValor" type="number" min="0" step="0.01" placeholder="deixe vazio p/ valor do plano"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Matricular →</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var PLANOS_PADRAO = [
+    { id: "pl-mensal", nome: "Mensal", valor: 129.9, meses: 1, tipo: "recorrente" },
+    { id: "pl-trim", nome: "Trimestral", valor: 119.9, meses: 3, tipo: "recorrente" },
+    { id: "pl-anual", nome: "Anual Recorrente", valor: 99.9, meses: 12, tipo: "recorrente" },
+    { id: "pl-gympass", nome: "Gympass / Wellhub", valor: 0, meses: 1, tipo: "agregador" },
+    { id: "pl-totalpass", nome: "TotalPass", valor: 0, meses: 1, tipo: "agregador" },
+  ];
+
+  function load() {
+    var st = S.read("alunos", null);
+    if (!st) {
+      st = { planos: PLANOS_PADRAO, alunos: [], recebiveis: [] };
+      S.write("alunos", st);
+    }
+    return st;
+  }
+  function save(st) { S.write("alunos", st); sincronizaInadimplencia(st); render(); }
+
+  // ---------- domínio ----------
+  function contratoAtivo(a) {
+    return (a.contratos || []).find(function (c) { return c.status === "ativo" || c.status === "congelado"; }) || null;
+  }
+  function recebiveisDo(st, alunoId) {
+    return st.recebiveis.filter(function (r) { return r.alunoId === alunoId; })
+      .sort(function (a, b) { return a.vencimento < b.vencimento ? -1 : 1; });
+  }
+  function diasAtraso(st, a) {
+    var hoje = S.todayISO(), pior = 0;
+    st.recebiveis.forEach(function (r) {
+      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
+        var d = Math.round((new Date(hoje) - new Date(r.vencimento)) / 864e5);
+        if (d > pior) pior = d;
+      }
+    });
+    return pior;
+  }
+  function situacao(st, a) {
+    if (a.status === "inativo") return { rot: "INATIVO", cls: "neutro" };
+    var c = contratoAtivo(a);
+    if (!c) return { rot: "SEM CONTRATO", cls: "neutro" };
+    if (c.status === "congelado") return { rot: "CONGELADO ❄", cls: "roxo" };
+    var d = diasAtraso(st, a);
+    if (d >= 15) return { rot: "BLOQUEADO · " + d + "d", cls: "erro" };
+    if (d > 0) return { rot: "ATRASADO · " + d + "d", cls: "alerta" };
+    return { rot: "EM DIA ✓", cls: "ok" };
+  }
+
+  // gera as mensalidades do contrato (uma por mês de competência)
+  function geraRecebiveis(st, aluno, contrato, plano) {
+    if (plano.tipo === "agregador") return;
+    var n = plano.tipo === "avista" ? 1 : contrato.meses;
+    var ini = new Date(contrato.inicio + "T12:00");
+    for (var i = 0; i < n; i++) {
+      var comp = new Date(ini.getFullYear(), ini.getMonth() + i, 1);
+      var venc = new Date(ini.getFullYear(), ini.getMonth() + i, Math.min(contrato.diaVenc, 28));
+      if (i === 0 && venc < ini) venc = ini; // 1ª parcela nunca antes do início
+      st.recebiveis.push({
+        id: S.uid(), alunoId: aluno.id, contratoId: contrato.id,
+        competencia: comp.toISOString().slice(0, 7),
+        vencimento: S.todayISO(venc),
+        valor: contrato.valor, status: "aberto",
+      });
+    }
+  }
+
+  // ---------- integração com o programa de Inadimplência (régua) ----------
+  function sincronizaInadimplencia(st) {
+    var inad = S.read("inad", { config: { acad: "", link: "" }, devedores: [] });
+    var hoje = S.todayISO();
+    var mudou = false;
+
+    // baixas feitas lá refletem aqui
+    inad.devedores.forEach(function (d) {
+      if (d.origem === "alunos" && d.status === "pago") {
+        var r = st.recebiveis.find(function (x) { return x.id === d.recebivelId; });
+        if (r && r.status === "aberto") { r.status = "pago"; r.pagoEm = d.pagoEm || hoje; r.forma = "via régua"; }
+      }
+    });
+
+    // recebíveis vencidos viram devedores na régua
+    st.recebiveis.forEach(function (r) {
+      if (r.status !== "aberto" || r.vencimento >= hoje) return;
+      var a = st.alunos.find(function (x) { return x.id === r.alunoId; });
+      if (!a) return;
+      var jaTem = inad.devedores.find(function (d) { return d.recebivelId === r.id; });
+      if (!jaTem) {
+        inad.devedores.unshift({
+          id: S.uid(), recebivelId: r.id, origem: "alunos",
+          nome: a.nome, zap: a.zap || "", valor: r.valor,
+          vencimento: r.vencimento, status: "aberto", envios: {},
+        });
+        mudou = true;
+      } else if (jaTem.status === "aberto" && false) {}
+    });
+
+    // pagamentos feitos aqui limpam a régua
+    inad.devedores.forEach(function (d) {
+      if (d.origem !== "alunos" || d.status !== "aberto") return;
+      var r = st.recebiveis.find(function (x) { return x.id === d.recebivelId; });
+      if (r && r.status === "pago") { d.status = "pago"; d.pagoEm = r.pagoEm || hoje; mudou = true; }
+    });
+
+    if (mudou) S.write("inad", inad);
+  }
+
+  // ---------- render ----------
+  var vista = "alunos";
+  var mesReceber = S.monthKey();
+  var busca = "", filtro = "";
+
+  function render() {
+    var st = load();
+    sincronizaInadimplencia(st);
+    var hoje = S.todayISO(), mes = hoje.slice(0, 7);
+
+    // stats
+    var ativos = st.alunos.filter(function (a) { return a.status !== "inativo" && contratoAtivo(a); });
+    var novos = st.alunos.filter(function (a) { return (a.criado || "").slice(0, 7) === mes; }).length;
+    var atrasados = st.alunos.filter(function (a) { var d = diasAtraso(st, a); return d > 0; }).length;
+    var previsto = st.recebiveis.filter(function (r) { return r.competencia === mes; })
+      .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    var recebido = st.recebiveis.filter(function (r) { return r.status === "pago" && (r.pagoEm || "").slice(0, 7) === mes; })
+      .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + ativos.length + '</div><div class="muted">alunos ativos</div></div>' +
+      '<div class="card"><div class="n">' + novos + '</div><div class="muted">novos no mês</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--erro);">' + atrasados + '</div><div class="muted">com atraso</div></div>' +
+      '<div class="card"><div class="n">' + S.fmtBRL(previsto) + '</div><div class="muted">previsto no mês</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok);">' + S.fmtBRL(recebido) + '</div><div class="muted">recebido no mês</div></div>';
+
+    renderAlunos(st);
+    renderReceber(st);
+    renderPlanos(st);
+    renderCheckin(st);
+  }
+
+  function renderAlunos(st) {
+    var q = busca.toLowerCase();
+    var lista = st.alunos.filter(function (a) {
+      if (q && (a.nome + " " + (a.cpf || "") + " " + (a.zap || "")).toLowerCase().indexOf(q) === -1) return false;
+      var sit = situacao(st, a), d = diasAtraso(st, a);
+      if (filtro === "emdia") return sit.cls === "ok";
+      if (filtro === "atrasado") return d > 0;
+      if (filtro === "bloqueado") return d >= 15;
+      if (filtro === "semcontrato") return a.status !== "inativo" && !contratoAtivo(a);
+      if (filtro === "inativo") return a.status === "inativo";
+      return true;
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+
+    $("listaAlunos").innerHTML = lista.length ? lista.map(function (a) {
+      var sit = situacao(st, a);
+      var c = contratoAtivo(a);
+      var plano = c && st.planos.find(function (p) { return p.id === c.planoId; });
+      var prox = st.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "aberto"; })
+        .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; })[0];
+      return '<div class="aluno-linha" data-id="' + a.id + '">' +
+        '<span class="avatar">' + esc(a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase()) + "</span>" +
+        '<div class="aluno-info"><strong>' + esc(a.nome) + '</strong><div class="sub">' +
+        (plano ? esc(plano.nome) + (c.valor ? " · " + S.fmtBRL(c.valor) + "/mês" : "") : "sem plano") + "</div></div>" +
+        '<span class="tag ' + sit.cls + '">' + sit.rot + "</span>" +
+        '<div class="venc">' + (prox ? "próx. venc.<br><strong>" + S.fmtData(prox.vencimento) + "</strong>" : "") + "</div></div>";
+    }).join("") : '<div class="vazio">Nenhum aluno aqui. Cadastre o primeiro em “+ Novo aluno”.</div>';
+  }
+
+  function renderReceber(st) {
+    $("mesLabel").textContent = new Date(mesReceber + "-01T12:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    var doMes = st.recebiveis.filter(function (r) { return r.competencia === mesReceber; })
+      .sort(function (a, b) { return a.vencimento < b.vencimento ? -1 : 1; });
+    var tot = doMes.reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    var pago = doMes.filter(function (r) { return r.status === "pago"; }).reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    $("resumoReceber").textContent = doMes.length + " cobranças · " + S.fmtBRL(pago) + " recebido de " + S.fmtBRL(tot);
+    var hoje = S.todayISO();
+    $("listaReceber").innerHTML = doMes.length ?
+      '<table class="tabela" style="background:#fff;"><thead><tr><th>Aluno</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>' +
+      doMes.map(function (r) {
+        var a = st.alunos.find(function (x) { return x.id === r.alunoId; });
+        var atras = r.status === "aberto" && r.vencimento < hoje;
+        return "<tr><td>" + esc(a ? a.nome : "?") + "</td><td>" + S.fmtData(r.vencimento) + "</td><td>" + S.fmtBRL(r.valor) + "</td><td>" +
+          (r.status === "pago" ? '<span class="tag ok">PAGO ' + S.fmtData(r.pagoEm) + "</span>" :
+            atras ? '<span class="tag erro">ATRASADO</span>' : '<span class="tag neutro">EM ABERTO</span>') + "</td>" +
+          '<td style="text-align:right;">' + (r.status === "aberto" ? '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Receber</button>' : "") + "</td></tr>";
+      }).join("") + "</tbody></table>"
+      : '<div class="vazio">Nenhuma cobrança na competência ' + mesReceber + ".</div>";
+  }
+
+  function renderPlanos(st) {
+    $("pLinhas").innerHTML = st.planos.map(function (p) {
+      var n = st.alunos.filter(function (a) { var c = contratoAtivo(a); return c && c.planoId === p.id; }).length;
+      var tipo = { recorrente: "Recorrente", avista: "À vista", agregador: "Agregador" }[p.tipo];
+      return "<tr><td><strong>" + esc(p.nome) + "</strong></td><td>" + (p.tipo === "agregador" ? "—" : S.fmtBRL(p.valor)) + "</td><td>" +
+        p.meses + " mês(es)</td><td>" + tipo + "</td><td>" + n + '</td><td style="text-align:right;">' +
+        (n === 0 ? '<button class="btn perigo mini" data-pdel="' + p.id + '">excluir</button>' : "") + "</td></tr>";
+    }).join("");
+  }
+
+  function renderCheckin(st) {
+    $("ckLista").innerHTML = st.alunos.filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) { return '<option value="' + esc(a.nome) + '">'; }).join("");
+    var hoje = S.todayISO();
+    var entradas = [];
+    st.alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (ts) {
+        if (ts.slice(0, 10) === hoje) entradas.push({ nome: a.nome, hora: ts.slice(11, 16) });
+      });
+    });
+    entradas.sort(function (a, b) { return a.hora < b.hora ? 1 : -1; });
+    $("ckHojeN").textContent = entradas.length;
+    $("ckHoje").innerHTML = entradas.length ? entradas.map(function (e) {
+      return '<div class="receb"><span>' + esc(e.nome) + "</span><strong>" + e.hora + "</strong></div>";
+    }).join("") : "Ninguém ainda.";
+  }
+
+  // ---------- ficha do aluno ----------
+  var fichaId = null;
+  function abreFicha(id) {
+    fichaId = id;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === id; });
+    if (!a) return;
+    var sit = situacao(st, a);
+    var c = contratoAtivo(a);
+    var plano = c && st.planos.find(function (p) { return p.id === c.planoId; });
+
+    $("fAvatar").textContent = a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+    $("fNome").textContent = a.nome;
+    $("fSub").textContent = [(a.cpf ? "CPF " + a.cpf : ""), a.zap, a.email, (a.obs || "")].filter(Boolean).join(" · ");
+    $("fStatus").innerHTML = '<span class="tag ' + sit.cls + '">' + sit.rot + "</span>";
+
+    var acoes = [];
+    if (a.zap) acoes.push('<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬 WhatsApp</a>');
+    if (!c) acoes.push('<button class="btn mini" data-facao="matricular">📝 Matricular</button>');
+    if (c && c.status === "ativo") acoes.push('<button class="btn sec mini" data-facao="congelar">❄ Congelar</button>');
+    if (c && c.status === "congelado") acoes.push('<button class="btn sec mini" data-facao="descongelar">▶ Reativar</button>');
+    if (c) acoes.push('<button class="btn perigo mini" data-facao="cancelar">✕ Cancelar contrato</button>');
+    acoes.push('<button class="btn sec mini" data-facao="editar">✎ Editar dados</button>');
+    if (a.status !== "inativo" && !c) acoes.push('<button class="btn sec mini" data-facao="inativar">Arquivar aluno</button>');
+    $("fAcoes").innerHTML = acoes.join("");
+
+    $("fContrato").innerHTML = c ?
+      "<div><strong>" + esc(plano ? plano.nome : "?") + "</strong> · " + S.fmtBRL(c.valor) + '/mês</div>' +
+      '<div class="muted">Início ' + S.fmtData(c.inicio) + " · " + c.meses + " meses · vencimento dia " + c.diaVenc + "</div>" +
+      (c.status === "congelado" ? '<div class="tag roxo" style="margin-top:6px;">CONGELADO desde ' + S.fmtData(c.congeladoEm) + "</div>" : "")
+      : '<div class="muted">Sem contrato ativo. Todos os contratos: ' + (a.contratos || []).length + "</div>";
+
+    var recs = recebiveisDo(st, a.id);
+    var hoje = S.todayISO();
+    $("fRecebiveis").innerHTML = recs.length ? recs.map(function (r) {
+      var atras = r.status === "aberto" && r.vencimento < hoje;
+      return '<div class="receb"><span>' + r.competencia + " · vence " + S.fmtData(r.vencimento) + "</span>" +
+        "<span><strong>" + S.fmtBRL(r.valor) + "</strong> " +
+        (r.status === "pago" ? '<span class="tag ok">PAGO</span>' :
+          atras ? '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Receber</button> <span class="tag erro">ATRASADO</span>' :
+          '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Receber</button>') + "</span></div>";
+    }).join("") : '<div class="muted">Sem cobranças (plano agregador ou sem contrato).</div>';
+
+    document.getElementById("fichaDlg").showModal();
+  }
+
+  // ---------- eventos ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    vista = b.getAttribute("data-v");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    $("vAlunos").hidden = vista !== "alunos";
+    $("vReceber").hidden = vista !== "receber";
+    $("vPlanos").hidden = vista !== "planos";
+    $("vCheckin").hidden = vista !== "checkin";
+  });
+
+  $("busca").addEventListener("input", function () { busca = this.value; render(); });
+  $("filtro").addEventListener("change", function () { filtro = this.value; render(); });
+  $("mesAnt").onclick = function () { mudaMes(-1); };
+  $("mesProx").onclick = function () { mudaMes(1); };
+  function mudaMes(d) {
+    var p = mesReceber.split("-");
+    mesReceber = S.monthKey(new Date(+p[0], +p[1] - 1 + d, 1));
+    render();
+  }
+
+  // novo/editar aluno
+  var editandoId = null;
+  $("btnNovoAluno").onclick = function () {
+    editandoId = null;
+    $("dlgAlunoTitulo").textContent = "Novo aluno";
+    ["aNome", "aCpf", "aZap", "aEmail", "aNasc", "aObs"].forEach(function (i) { $(i).value = ""; });
+    $("dlgAluno").showModal();
+  };
+  $("dlgAluno").addEventListener("close", function () {
+    if ($("dlgAluno").returnValue !== "ok") return;
+    var st = load();
+    if (editandoId) {
+      var a = st.alunos.find(function (x) { return x.id === editandoId; });
+      if (a) { a.nome = $("aNome").value.trim(); a.cpf = $("aCpf").value.trim(); a.zap = $("aZap").value.trim(); a.email = $("aEmail").value.trim(); a.nasc = $("aNasc").value; a.obs = $("aObs").value.trim(); }
+      save(st);
+      if (fichaId) abreFicha(fichaId);
+    } else {
+      st.alunos.push({ id: S.uid(), nome: $("aNome").value.trim(), cpf: $("aCpf").value.trim(), zap: $("aZap").value.trim(), email: $("aEmail").value.trim(), nasc: $("aNasc").value, obs: $("aObs").value.trim(), criado: S.todayISO(), status: "ativo", contratos: [], checkins: [] });
+      save(st);
+    }
+  });
+
+  $("listaAlunos").addEventListener("click", function (e) {
+    var linha = e.target.closest("[data-id]");
+    if (linha) abreFicha(linha.getAttribute("data-id"));
+  });
+
+  // ações da ficha
+  document.getElementById("fichaDlg").addEventListener("click", function (e) {
+    var baixa = e.target.getAttribute && e.target.getAttribute("data-baixa");
+    if (baixa) { darBaixa(baixa); abreFicha(fichaId); return; }
+    var acao = e.target.getAttribute && e.target.getAttribute("data-facao");
+    if (!acao) return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === fichaId; });
+    var c = contratoAtivo(a);
+
+    if (acao === "matricular") {
+      $("mPlano").innerHTML = st.planos.map(function (p) {
+        return '<option value="' + p.id + '">' + esc(p.nome) + (p.tipo !== "agregador" ? " — " + S.fmtBRL(p.valor) + "/mês" : "") + "</option>";
+      }).join("");
+      $("mInicio").value = S.todayISO();
+      $("mValor").value = "";
+      $("dlgMatricula").showModal();
+      return;
+    }
+    if (acao === "congelar") {
+      c.status = "congelado"; c.congeladoEm = S.todayISO();
+      save(st); abreFicha(fichaId); return;
+    }
+    if (acao === "descongelar") {
+      c.status = "ativo"; c.congeladoEm = "";
+      save(st); abreFicha(fichaId); return;
+    }
+    if (acao === "cancelar") {
+      if (!confirm("Cancelar o contrato de " + a.nome + "? As mensalidades futuras em aberto serão removidas.")) return;
+      c.status = "cancelado"; c.canceladoEm = S.todayISO();
+      var hoje = S.todayISO();
+      st.recebiveis = st.recebiveis.filter(function (r) {
+        return !(r.contratoId === c.id && r.status === "aberto" && r.vencimento > hoje);
+      });
+      save(st); abreFicha(fichaId); return;
+    }
+    if (acao === "editar") {
+      editandoId = a.id;
+      $("dlgAlunoTitulo").textContent = "Editar aluno";
+      $("aNome").value = a.nome; $("aCpf").value = a.cpf || ""; $("aZap").value = a.zap || "";
+      $("aEmail").value = a.email || ""; $("aNasc").value = a.nasc || ""; $("aObs").value = a.obs || "";
+      $("dlgAluno").showModal(); return;
+    }
+    if (acao === "inativar") {
+      a.status = "inativo";
+      save(st);
+      document.getElementById("fichaDlg").close();
+    }
+  });
+
+  $("dlgMatricula").addEventListener("close", function () {
+    if ($("dlgMatricula").returnValue !== "ok") return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === fichaId; });
+    var plano = st.planos.find(function (p) { return p.id === $("mPlano").value; });
+    var contrato = {
+      id: S.uid(), planoId: plano.id, inicio: $("mInicio").value,
+      diaVenc: Math.min(+$("mDia").value || 5, 28), meses: plano.meses,
+      valor: +$("mValor").value || plano.valor, status: "ativo",
+    };
+    a.contratos = a.contratos || [];
+    a.contratos.push(contrato);
+    a.status = "ativo";
+    geraRecebiveis(st, a, contrato, plano);
+    save(st);
+    abreFicha(fichaId);
+  });
+
+  function darBaixa(recebivelId) {
+    var st = load();
+    var r = st.recebiveis.find(function (x) { return x.id === recebivelId; });
+    if (!r) return;
+    r.status = "pago"; r.pagoEm = S.todayISO(); r.forma = "recepção";
+    save(st);
+  }
+  $("listaReceber").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-baixa");
+    if (id) darBaixa(id);
+  });
+
+  // planos
+  $("pAdd").onclick = function () {
+    var nome = $("pNome").value.trim();
+    if (!nome) return;
+    var st = load();
+    st.planos.push({ id: S.uid(), nome: nome, valor: +$("pValor").value || 0, meses: +$("pMeses").value || 1, tipo: $("pTipo").value });
+    $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = "";
+    save(st);
+  };
+  $("pLinhas").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-pdel");
+    if (!id) return;
+    var st = load();
+    st.planos = st.planos.filter(function (p) { return p.id !== id; });
+    save(st);
+  });
+
+  // check-in com bloqueio D+15
+  $("ckEntrar").onclick = function () {
+    var nome = $("ckBusca").value.trim().toLowerCase();
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.nome.toLowerCase() === nome; });
+    var banner = $("ckBanner");
+    if (!a) { banner.className = "checkin-banner erro"; banner.textContent = "Aluno não encontrado — confira o nome ou cadastre."; return; }
+    var d = diasAtraso(st, a);
+    var c = contratoAtivo(a);
+    if (!c) { banner.className = "checkin-banner erro"; banner.textContent = "⛔ " + a.nome + " está sem contrato ativo — encaminhe para a recepção."; return; }
+    if (d >= 15) {
+      banner.className = "checkin-banner erro";
+      banner.textContent = "⛔ ACESSO BLOQUEADO — " + a.nome + " está com " + d + " dias de atraso (regra D+15). Regularizou, libera na hora.";
+      return;
+    }
+    a.checkins = (a.checkins || []).slice(-199);
+    a.checkins.push(new Date().toISOString());
+    save(st);
+    banner.className = "checkin-banner ok";
+    banner.textContent = "✅ Boa aula, " + a.nome.split(" ")[0] + "!" + (d > 0 ? " (Lembrete: há mensalidade em atraso de " + d + " dia(s).)" : "");
+    $("ckBusca").value = "";
+  };
+
+  S.onChange(function (k) { if (k === "alunos" || k === "inad") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
