@@ -95,6 +95,24 @@
   .painel h3 { margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
   .lista-simples div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 13.5px; }
 
+  /* abas do dashboard (Clientes | Vendas | Financeiro) */
+  .dash-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .dash-cab .data { font-size: 13px; color: var(--cinza); }
+  .dash-abas { display: flex; gap: 28px; border-bottom: 1px solid var(--linha); margin: 10px 0 20px; }
+  .dash-abas button {
+    padding: 10px 2px; font-family: inherit; font-size: 14px; font-weight: 600;
+    background: none; border: none; border-bottom: 2.5px solid transparent;
+    color: var(--cinza); cursor: pointer;
+  }
+  .dash-abas button.ativa { color: var(--roxo); border-bottom-color: var(--roxo); }
+  .grafico svg { width: 100%; height: auto; display: block; }
+  .leg { display: flex; gap: 18px; font-size: 12px; color: var(--cinza); justify-content: center; margin: 2px 0 10px; flex-wrap: wrap; }
+  .leg i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: -1px; }
+  .destaque-par { display: flex; gap: 40px; flex-wrap: wrap; margin-bottom: 6px; }
+  .destaque-par .par { font-size: 30px; font-weight: 800; }
+  .destaque-par .par small { font-size: 12px; font-weight: 600; color: var(--cinza-2); margin-left: 8px; }
+  .destaque-par .par .conv { color: var(--ok); }
+
   /* config */
   .cfg-bloco { background: #fff; border: 1px solid var(--linha); border-radius: 4px; padding: 18px; margin-bottom: 14px; }
   .cfg-bloco h3 { margin: 0 0 10px; font-size: 14px; }
@@ -214,10 +232,45 @@
 
   <!-- DASHBOARD -->
   <section class="pagina" id="pgDashboard" hidden>
-    <h1>Dashboard</h1>
-    <p class="sub">Clientes · atualizado agora, com os dados do sistema</p>
-    <div class="kpis" id="kpis"></div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" id="paineisDash"></div>
+    <div class="dash-cab">
+      <h1>Dashboard</h1>
+      <span class="data" id="dashData"></span>
+    </div>
+    <div class="dash-abas" id="dashAbas">
+      <button class="ativa" data-dv="clientes">Clientes</button>
+      <button data-dv="vendas">Vendas</button>
+      <button data-dv="financeiro">Financeiro</button>
+    </div>
+
+    <div id="dvClientes">
+      <div class="kpis" id="kpis"></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" id="paineisDash"></div>
+    </div>
+
+    <div id="dvVendas" hidden>
+      <div class="kpis" id="kpisVendas"></div>
+      <div class="painel">
+        <h3>🛒 Total de vendas — últimos 6 meses</h3>
+        <div class="grafico" id="grafVendas"></div>
+      </div>
+      <div class="painel">
+        <h3>💜 Visitantes x conversões (aulas experimentais)</h3>
+        <div class="destaque-par" id="visitDestaque"></div>
+        <div class="grafico" id="grafVisit"></div>
+      </div>
+    </div>
+
+    <div id="dvFinanceiro" hidden>
+      <div class="kpis" id="kpisFin"></div>
+      <div class="painel">
+        <h3>📈 Recebimentos — últimos 6 meses</h3>
+        <div class="grafico" id="grafReceb"></div>
+      </div>
+      <div class="painel">
+        <h3>🎟 Ticket médio por mês</h3>
+        <div class="grafico" id="grafTicket"></div>
+      </div>
+    </div>
   </section>
 
   <!-- CONFIGURAÇÕES -->
@@ -370,7 +423,113 @@
   }
 
   // ---------- DASHBOARD ----------
+  var dvAtiva = "clientes";
+  $("dashAbas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    dvAtiva = b.getAttribute("data-dv");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    $("dvClientes").hidden = dvAtiva !== "clientes";
+    $("dvVendas").hidden = dvAtiva !== "vendas";
+    $("dvFinanceiro").hidden = dvAtiva !== "financeiro";
+    renderDashboard();
+  });
+
+  function padM(n) { return (n < 10 ? "0" : "") + n; }
+  function ultimosMeses(n) {
+    var arr = [], agora = new Date();
+    for (var i = n - 1; i >= 0; i--) {
+      var m = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+      arr.push({ chave: m.getFullYear() + "-" + padM(m.getMonth() + 1), rotulo: (m.getMonth() + 1) + "/" + m.getFullYear() });
+    }
+    return arr;
+  }
+  function compara(atual, anterior, fmt) {
+    var f = fmt || function (x) { return String(Math.round(x)); };
+    var d = atual - anterior;
+    if (d > 0) return '<span style="color:var(--ok)">↑</span> ' + f(Math.abs(d)) + " a mais que o período anterior";
+    if (d < 0) return '<span style="color:var(--erro)">↓</span> ' + f(Math.abs(d)) + " a menos do que o período anterior";
+    return "igual ao período anterior";
+  }
+  function fmtEixo(v) {
+    if (v >= 1000) return (v / 1000).toFixed(v % 1000 ? 1 : 0).replace(".", ",") + " mil";
+    return String(Math.round(v));
+  }
+  function legenda(series) {
+    return '<div class="leg">' + series.map(function (s) {
+      return "<span><i style='background:" + s.cor + "'></i>" + s.nome + "</span>";
+    }).join("") + "</div>";
+  }
+  // gráfico de barras simples em SVG (sem biblioteca — funciona offline)
+  function grafBarras(labels, series) {
+    var W = 760, H = 230, pL = 56, pR = 10, pT = 14, pB = 30;
+    var todos = [1];
+    series.forEach(function (s) { todos = todos.concat(s.valores); });
+    var max = Math.max.apply(null, todos);
+    var passo = Math.pow(10, Math.floor(Math.log(max) / Math.LN10));
+    var teto = Math.ceil(max / passo) * passo || 1;
+    var iw = (W - pL - pR) / labels.length;
+    var nB = series.length;
+    var bw = Math.max(8, Math.min(34, (iw - 16) / nB));
+    var svg = '<svg viewBox="0 0 ' + W + " " + H + '" role="img">';
+    for (var g = 0; g <= 4; g++) {
+      var y = pT + (H - pT - pB) * g / 4;
+      svg += '<line x1="' + pL + '" y1="' + y + '" x2="' + (W - pR) + '" y2="' + y + '" stroke="#eceaf1"/>' +
+        '<text x="' + (pL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#9995a3">' + fmtEixo(teto * (4 - g) / 4) + "</text>";
+    }
+    labels.forEach(function (rot, i) {
+      var cx = pL + iw * i + iw / 2;
+      series.forEach(function (s, j) {
+        var v = +s.valores[i] || 0;
+        var h = (H - pT - pB) * v / teto;
+        var x = cx - (bw * nB + 4 * (nB - 1)) / 2 + j * (bw + 4);
+        svg += '<rect x="' + x + '" y="' + (H - pB - h) + '" width="' + bw + '" height="' + h + '" fill="' + s.cor + '" rx="2"/>';
+      });
+      svg += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="#6e6a78">' + rot + "</text>";
+    });
+    return legenda(series) + svg + "</svg>";
+  }
+  // gráfico de linha simples em SVG
+  function grafLinha(labels, series) {
+    var W = 760, H = 230, pL = 56, pR = 14, pT = 14, pB = 30;
+    var todos = [1];
+    series.forEach(function (s) { todos = todos.concat(s.valores); });
+    var max = Math.max.apply(null, todos);
+    var passo = Math.pow(10, Math.floor(Math.log(max) / Math.LN10));
+    var teto = Math.ceil(max / passo) * passo || 1;
+    var iw = (W - pL - pR) / Math.max(1, labels.length - 1);
+    var svg = '<svg viewBox="0 0 ' + W + " " + H + '" role="img">';
+    for (var g = 0; g <= 4; g++) {
+      var y = pT + (H - pT - pB) * g / 4;
+      svg += '<line x1="' + pL + '" y1="' + y + '" x2="' + (W - pR) + '" y2="' + y + '" stroke="#eceaf1"/>' +
+        '<text x="' + (pL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#9995a3">' + fmtEixo(teto * (4 - g) / 4) + "</text>";
+    }
+    labels.forEach(function (rot, i) {
+      svg += '<text x="' + (pL + iw * i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="#6e6a78">' + rot + "</text>";
+    });
+    series.forEach(function (s) {
+      var pts = s.valores.map(function (v, i) {
+        return (pL + iw * i) + "," + (H - pB - (H - pT - pB) * (+v || 0) / teto);
+      });
+      svg += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + s.cor + '" stroke-width="2.5" stroke-linejoin="round"/>';
+      pts.forEach(function (p) { var xy = p.split(","); svg += '<circle cx="' + xy[0] + '" cy="' + xy[1] + '" r="3" fill="' + s.cor + '"/>'; });
+    });
+    return legenda(series) + svg + "</svg>";
+  }
+  function kpi2(icone, rotulo, valor, cls, extra, linkFiltro) {
+    return '<div class="kpi"><div class="rotulo"><span>' + icone + " " + rotulo + "</span>" +
+      (linkFiltro != null ? '<a data-abrir="alunos.html?filtro=' + linkFiltro + '">Detalhes</a>' : "") + "</div>" +
+      '<div class="valor ' + (cls || "") + '">' + valor + "</div>" +
+      '<div class="compara">' + (extra || "atualizado agora") + "</div></div>";
+  }
+
   function renderDashboard() {
+    $("dashData").textContent = new Date().toLocaleDateString("pt-BR");
+    if (dvAtiva === "clientes") renderDashClientes();
+    else if (dvAtiva === "vendas") renderDashVendas();
+    else renderDashFin();
+  }
+
+  function renderDashClientes() {
     var st = dados();
     var hoje = S.todayISO(), mes = hoje.slice(0, 7);
 
@@ -390,16 +549,27 @@
       }
     });
     var adimplentes = ativos - inadimplentes;
-    var canceladosMes = 0;
-    st.alunos.forEach(function (a) {
-      (a.contratos || []).forEach(function (c) {
-        if (c.status === "cancelado" && (c.canceladoEm || "").slice(0, 7) === mes) canceladosMes++;
+    function canceladosEm(chave) {
+      var n = 0;
+      st.alunos.forEach(function (a) {
+        (a.contratos || []).forEach(function (c) {
+          if (c.status === "cancelado" && (c.canceladoEm || "").slice(0, 7) === chave) n++;
+        });
       });
-    });
+      return n;
+    }
+    var mesAnterior = ultimosMeses(2)[0].chave;
+    var canceladosMes = canceladosEm(mes);
     var churn = ativos + canceladosMes > 0 ? (canceladosMes / (ativos + canceladosMes) * 100) : 0;
     var vidaMedia = comContrato ? (somaVidaMeses / comContrato) : 0;
-    var checkinsHoje = 0;
-    st.alunos.forEach(function (a) { (a.checkins || []).forEach(function (t) { if (t.slice(0, 10) === hoje) checkinsHoje++; }); });
+    var ontem = S.todayISO(new Date(Date.now() - 864e5));
+    var checkinsHoje = 0, checkinsOntem = 0;
+    st.alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        if (t.slice(0, 10) === hoje) checkinsHoje++;
+        if (t.slice(0, 10) === ontem) checkinsOntem++;
+      });
+    });
 
     function kpi(rotulo, valor, cls, linkFiltro, extra) {
       return '<div class="kpi"><div class="rotulo"><span>👥 ' + rotulo + "</span>" +
@@ -415,8 +585,8 @@
       kpi("Suspensos", suspensos, "vermelho", "", "contratos congelados ❄") +
       kpi("Evasão (churn)", churn.toFixed(1).replace(".", ",") + "%", churn <= 5 ? "verde" : "vermelho", null, "cancelamentos do mês ÷ base · referência saudável: 3–5%") +
       kpi("Tempo médio de vida", vidaMedia.toFixed(1).replace(".", ",") + " <span style='font-size:16px'>meses</span>", "vermelho", null, "média dos contratos ativos") +
-      kpi("Acessos do dia", checkinsHoje, "", "", "check-ins de hoje") +
-      kpi("Contratos cancelados", canceladosMes, canceladosMes ? "vermelho" : "verde", null, "no mês " + mes);
+      kpi("Acessos do dia", checkinsHoje, "", "", compara(checkinsHoje, checkinsOntem) + " (ontem)") +
+      kpi("Contratos cancelados", canceladosMes, canceladosMes ? "vermelho" : "verde", null, compara(canceladosMes, canceladosEm(mesAnterior)));
 
     // renovações: contratos vencendo nos próximos 90 dias
     var vencendo = [];
@@ -445,6 +615,125 @@
       "<div><span>Recebido</span><strong style='color:var(--ok)'>" + S.fmtBRL(pago) + "</strong></div>" +
       "<div><span>Em aberto</span><strong style='color:var(--erro)'>" + S.fmtBRL(totalMes - pago) + "</strong></div>" +
       "</div></div>";
+  }
+
+  // ---------- DASHBOARD · aba Vendas ----------
+  function vendasDoMes(st, chave) {
+    var lista = [];
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) !== chave) return;
+        var plano = st.planos.find(function (p) { return p.id === c.planoId; }) || {};
+        var meses = plano.tipo === "avista" ? 1 : (c.meses || 1);
+        lista.push({ c: c, plano: plano, total: plano.tipo === "agregador" ? 0 : (+c.valor || 0) * meses });
+      });
+    });
+    return lista;
+  }
+  function renderDashVendas() {
+    var st = dados();
+    var meses = ultimosMeses(6);
+    var mesAtual = meses[5].chave, mesAnt = meses[4].chave;
+    var hoje = S.todayISO();
+
+    var agora = vendasDoMes(st, mesAtual);
+    var antes = vendasDoMes(st, mesAnt);
+    var pagantes = agora.filter(function (v) { return v.plano.tipo !== "agregador"; });
+    var pagantesAnt = antes.filter(function (v) { return v.plano.tipo !== "agregador"; });
+    function media(l, f) { return l.length ? l.reduce(function (t, v) { return t + f(v); }, 0) / l.length : 0; }
+    var mensalMedia = media(pagantes, function (v) { return +v.c.valor || 0; });
+    var mensalMediaAnt = media(pagantesAnt, function (v) { return +v.c.valor || 0; });
+    var tempoMedio = media(agora, function (v) { return +v.c.meses || 0; });
+    var tempoMedioAnt = media(antes, function (v) { return +v.c.meses || 0; });
+    function soma(l, tipo) {
+      return l.filter(function (v) { return !tipo || v.plano.tipo === tipo; })
+        .reduce(function (t, v) { return t + v.total; }, 0);
+    }
+
+    $("kpisVendas").innerHTML =
+      kpi2("🛒", "Contratos vendidos", agora.length, agora.length ? "verde" : "", compara(agora.length, antes.length)) +
+      kpi2("📊", "Mensal. média dos contratos vendidos", S.fmtBRL(mensalMedia), "", compara(mensalMedia, mensalMediaAnt, S.fmtBRL)) +
+      kpi2("⏱", "Tempo médio de contrato", tempoMedio.toFixed(1).replace(".", ",") + " <span style='font-size:16px'>meses</span>", "verde", compara(tempoMedio, tempoMedioAnt, function (x) { return x.toFixed(1).replace(".", ","); })) +
+      kpi2("💰", "Total de vendas", S.fmtBRL(soma(agora)), soma(agora) ? "verde" : "", compara(soma(agora), soma(antes), S.fmtBRL)) +
+      kpi2("🔁", "Vendas recorrentes", S.fmtBRL(soma(agora, "recorrente")), "", "planos com mensalidade automática") +
+      kpi2("⚡", "Vendas à vista", S.fmtBRL(soma(agora, "avista")), "", "pagamento único");
+
+    $("grafVendas").innerHTML = grafBarras(
+      meses.map(function (m) { return m.rotulo; }),
+      [{ nome: "Total de vendas (R$)", cor: "#f5a662", valores: meses.map(function (m) { return soma(vendasDoMes(st, m.chave)); }) }]
+    );
+
+    // visitantes x conversões (aulas experimentais)
+    var ex = S.read("exper", { aulas: [] }).aulas;
+    function visitConv(chave) {
+      var doMes = ex.filter(function (a) { return (a.data || "").slice(0, 7) === chave; });
+      return {
+        vis: doMes.filter(function (a) { return a.status === "compareceu" || a.status === "matriculado"; }).length,
+        conv: doMes.filter(function (a) { return a.status === "matriculado"; }).length,
+      };
+    }
+    var vcMes = visitConv(mesAtual);
+    var deHoje = ex.filter(function (a) { return a.data === hoje; });
+    var vcHoje = {
+      vis: deHoje.filter(function (a) { return a.status === "compareceu" || a.status === "matriculado"; }).length,
+      conv: deHoje.filter(function (a) { return a.status === "matriculado"; }).length,
+    };
+    var nomeMes = new Date().toLocaleDateString("pt-BR", { month: "long" });
+    $("visitDestaque").innerHTML =
+      '<div class="par">' + vcMes.vis + ' x <span class="conv">' + vcMes.conv + "</span><small>" + nomeMes + "</small></div>" +
+      '<div class="par">' + vcHoje.vis + ' x <span class="conv">' + vcHoje.conv + "</span><small>Hoje" +
+      (vcMes.vis ? " · convertidos: " + Math.round(vcMes.conv / vcMes.vis * 100) + "%" : "") + "</small></div>";
+    $("grafVisit").innerHTML = grafBarras(
+      meses.map(function (m) { return m.rotulo; }),
+      [
+        { nome: "Visitantes", cor: "#2fc4c4", valores: meses.map(function (m) { return visitConv(m.chave).vis; }) },
+        { nome: "Conversões", cor: "#f5a662", valores: meses.map(function (m) { return visitConv(m.chave).conv; }) },
+      ]
+    );
+  }
+
+  // ---------- DASHBOARD · aba Financeiro ----------
+  function renderDashFin() {
+    var st = dados();
+    var meses = ultimosMeses(6);
+    var mesAtual = meses[5].chave, mesAnt = meses[4].chave;
+    var hoje = S.todayISO();
+
+    var inad = st.recebiveis.filter(function (r) { return r.status === "aberto" && r.vencimento < hoje; })
+      .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    function recebidoEm(chave) {
+      return st.recebiveis.filter(function (r) { return r.status === "pago" && (r.pagoEm || "").slice(0, 7) === chave; })
+        .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    }
+    function previstoEm(chave) {
+      return st.recebiveis.filter(function (r) { return r.competencia === chave; })
+        .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    }
+    function ticketEm(chave) {
+      var doMes = st.recebiveis.filter(function (r) { return r.competencia === chave && +r.valor > 0; });
+      return doMes.length ? doMes.reduce(function (t, r) { return t + +r.valor; }, 0) / doMes.length : 0;
+    }
+    var recebido = recebidoEm(mesAtual), previsto = previstoEm(mesAtual), ticket = ticketEm(mesAtual);
+
+    $("kpisFin").innerHTML =
+      kpi2("📉", "Inadimplência", S.fmtBRL(inad), inad ? "vermelho" : "verde",
+        inad ? "total vencido em aberto — acompanhe na régua de cobrança" : "nada vencido em aberto 🎉", inad ? "atrasado" : null) +
+      kpi2("💵", "Recebido no mês", S.fmtBRL(recebido), "verde", compara(recebido, recebidoEm(mesAnt), S.fmtBRL)) +
+      kpi2("🗓", "Previsto no mês", S.fmtBRL(previsto), "", compara(previsto, previstoEm(mesAnt), S.fmtBRL)) +
+      kpi2("🎟", "Ticket médio", S.fmtBRL(ticket), "", compara(ticket, ticketEm(mesAnt), S.fmtBRL)) +
+      kpi2("⏳", "Em aberto no mês", S.fmtBRL(Math.max(0, previsto - recebido)), previsto - recebido > 0 ? "vermelho" : "verde", "previsto − recebido da competência " + mesAtual);
+
+    $("grafReceb").innerHTML = grafLinha(
+      meses.map(function (m) { return m.rotulo; }),
+      [
+        { nome: "Previsto (R$)", cor: "#a78bfa", valores: meses.map(function (m) { return previstoEm(m.chave); }) },
+        { nome: "Recebido (R$)", cor: "#16a34a", valores: meses.map(function (m) { return recebidoEm(m.chave); }) },
+      ]
+    );
+    $("grafTicket").innerHTML = grafLinha(
+      meses.map(function (m) { return m.rotulo; }),
+      [{ nome: "Ticket médio (R$)", cor: "#e8798a", valores: meses.map(function (m) { return ticketEm(m.chave); }) }]
+    );
   }
 
   // ---------- configurações ----------
