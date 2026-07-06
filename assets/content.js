@@ -15,6 +15,7 @@ self.MT_MODULES = [
 
 // Programas do dia a dia (apps completos, dados salvos no navegador)
 self.MT_APPS = [
+  { slug: "sistema", file: "apps/sistema.html", icone: "🖥", title: "Sistema da Academia", desc: "O sistema completo estilo EVO: menu com todas as áreas, Dashboard com os números da academia e atalhos de venda e check-in.", standalone: true },
   { slug: "app-alunos", file: "apps/alunos.html", icone: "🏋", title: "Gestão de Alunos", desc: "Alunos, planos e contratos que geram as mensalidades sozinhos — com check-in e bloqueio automático D+15." },
   { slug: "app-metas", file: "apps/metas.html", icone: "🎯", title: "Metas de Vendas", desc: "Meta mensal por vendedora, lançamento de vendas em segundos, ranking e projeção do mês." },
   { slug: "app-funil", file: "apps/funil.html", icone: "🧲", title: "Funil Comercial", desc: "Leads com etapa, dono e data de follow-up — contato atrasado fica vermelho com a mensagem pronta no WhatsApp." },

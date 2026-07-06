@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema da Academia — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  :root {
+    --roxo: #7c3aed; --roxo-2: #6d28d9; --lilas: #a78bfa;
+    --escuro: #121016; --texto: #2e2b36; --cinza: #6e6a78; --cinza-2: #9995a3;
+    --fundo: #f2f1f5; --menu: #fafafa; --linha: #e4e2ea;
+    --ok: #16a34a; --erro: #dc2626; --alerta: #d97706;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; font-family: "Archivo", system-ui, sans-serif; background: var(--fundo); color: var(--texto); }
+
+  /* ---------- topbar (escura, estilo EVO) ---------- */
+  .topo {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 30; height: 54px;
+    background: var(--escuro); color: #fff;
+    display: flex; align-items: center; gap: 16px; padding: 0 16px;
+  }
+  .topo .marca { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .06em; font-size: 15px; white-space: nowrap; }
+  .topo .marca img { width: 26px; height: 26px; }
+  .topo .buscaGlobal {
+    flex: 1; max-width: 560px; display: flex; align-items: center; gap: 8px;
+    background: #2a2733; border-radius: 4px; padding: 7px 12px;
+  }
+  .topo .buscaGlobal input { flex: 1; background: none; border: none; color: #fff; font-family: inherit; font-size: 13.5px; outline: none; }
+  .topo .direita { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12.5px; text-align: right; }
+  .topo .direita small { display: block; color: var(--cinza-2); }
+  .topo .logoAcad { max-height: 34px; max-width: 110px; object-fit: contain; background: #fff; padding: 2px 6px; border-radius: 3px; }
+
+  /* ---------- menu lateral (claro, estilo EVO) ---------- */
+  .menu {
+    position: fixed; top: 54px; bottom: 0; left: 0; width: 228px; z-index: 20;
+    background: var(--menu); border-right: 1px solid var(--linha);
+    display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: thin;
+  }
+  .menu .pesquisaMenu { padding: 12px 14px 6px; }
+  .menu .pesquisaMenu input {
+    width: 100%; padding: 8px 12px; font-family: inherit; font-size: 13px;
+    border: 1px solid var(--linha); border-radius: 4px; background: #fff; color: var(--texto);
+  }
+  .menu nav { flex: 1; padding: 6px 0 12px; }
+  .item, .grupo > summary {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 18px; font-size: 13.5px; color: var(--texto);
+    cursor: pointer; text-decoration: none; border-left: 3px solid transparent;
+    list-style: none; user-select: none;
+  }
+  .grupo > summary::-webkit-details-marker { display: none; }
+  .item:hover, .grupo > summary:hover { background: #efedf4; }
+  .item.ativo { color: var(--roxo); border-left-color: var(--roxo); background: #f1ecfb; font-weight: 600; }
+  .item .ico, .grupo .ico { width: 20px; text-align: center; flex: none; opacity: .8; }
+  .grupo > summary::after { content: "▾"; margin-left: auto; font-size: 11px; color: var(--cinza-2); transition: transform .15s; }
+  .grupo[open] > summary::after { transform: rotate(180deg); }
+  .grupo .sub { display: flex; flex-direction: column; }
+  .grupo .sub .item { padding-left: 50px; font-size: 13px; color: var(--cinza); }
+  .grupo .sub .item.ativo { color: var(--roxo); }
+  .menu .rodape { border-top: 1px solid var(--linha); padding: 8px 0; }
+
+  /* ---------- conteúdo ---------- */
+  .conteudo { margin-left: 228px; margin-top: 54px; min-height: calc(100vh - 54px); display: flex; flex-direction: column; }
+  #quadro { flex: 1; width: 100%; border: 0; min-height: calc(100vh - 54px); background: #fff; }
+  .pagina { padding: 26px 32px 60px; max-width: 1240px; }
+  .pagina h1 { margin: 0 0 4px; font-size: 22px; font-weight: 800; }
+  .pagina .sub { color: var(--cinza); font-size: 13.5px; margin-bottom: 22px; }
+
+  /* home */
+  .atalhos { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 26px; }
+  .atalho {
+    display: flex; align-items: center; gap: 10px; padding: 16px 26px;
+    background: #fff; border: 1px solid var(--linha); border-radius: 4px;
+    font-size: 14.5px; font-weight: 600; color: var(--roxo); cursor: pointer; font-family: inherit;
+  }
+  .atalho:hover { border-color: var(--roxo); }
+
+  /* dashboard */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .kpi {
+    background: #fff; border: 1px solid var(--linha); border-radius: 4px; padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .kpi .rotulo { display: flex; justify-content: space-between; font-size: 13px; color: var(--texto); font-weight: 600; }
+  .kpi .rotulo a { font-size: 12.5px; color: var(--roxo); text-decoration: none; font-weight: 600; cursor: pointer; }
+  .kpi .valor { font-size: 34px; font-weight: 800; }
+  .kpi .valor.verde { color: var(--ok); }
+  .kpi .valor.vermelho { color: var(--erro); }
+  .kpi .compara { font-size: 11.5px; color: var(--cinza-2); border-top: 1px solid var(--fundo); padding-top: 8px; margin-top: 6px; }
+  .painel { background: #fff; border: 1px solid var(--linha); border-radius: 4px; padding: 18px; margin-top: 14px; }
+  .painel h3 { margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .lista-simples div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 13.5px; }
+
+  /* config */
+  .cfg-bloco { background: #fff; border: 1px solid var(--linha); border-radius: 4px; padding: 18px; margin-bottom: 14px; }
+  .cfg-bloco h3 { margin: 0 0 10px; font-size: 14px; }
+  .btnzinho { padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--linha); background: #fff; color: var(--texto); cursor: pointer; border-radius: 4px; }
+  .btnzinho:hover { border-color: var(--roxo); color: var(--roxo); }
+
+  @media (max-width: 900px) {
+    .menu { width: 200px; }
+    .conteudo { margin-left: 200px; }
+    .topo .direita small { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <span class="marca"><img src="../assets/icons/icon.svg" alt="">TORQUE<span style="color:var(--lilas)">SYS</span></span>
+  <div class="buscaGlobal">🔍 <input id="buscaGlobal" placeholder="Pesquise por nome, sobrenome, e-mail, CPF (CIN) ou carteirinha"></div>
+  <div class="direita">
+    <div><strong id="topNome">—</strong><small id="topAcad"></small></div>
+    <img id="logoCliente" class="logoAcad" alt="" hidden>
+  </div>
+</header>
+
+<aside class="menu">
+  <div class="pesquisaMenu"><input id="pesquisaMenu" placeholder="🔍 Pesquisar no menu"></div>
+  <nav id="nav">
+    <a class="item" data-pg="home"><span class="ico">🏠</span>Home</a>
+    <a class="item" data-pg="dashboard"><span class="ico">📈</span>Dashboard</a>
+    <a class="item" data-url="alunos.html"><span class="ico">👥</span>Clientes</a>
+    <a class="item" data-url="../docs/cronograma-coletivas.html"><span class="ico">🗓</span>Grade</a>
+    <a class="item" data-url="experimentais.html"><span class="ico">📅</span>Agenda</a>
+
+    <details class="grupo" open>
+      <summary><span class="ico">🧲</span>CRM 2.0</summary>
+      <div class="sub">
+        <a class="item" data-url="funil.html">Funil de Vendas</a>
+        <a class="item" data-url="experimentais.html">Aulas Experimentais</a>
+        <a class="item" data-url="metas.html">Metas de Vendas</a>
+      </div>
+    </details>
+    <details class="grupo">
+      <summary><span class="ico">💬</span>CRM</summary>
+      <div class="sub">
+        <a class="item" data-url="../docs/regua-retencao.html">Régua de Retenção</a>
+        <a class="item" data-url="../docs/pesquisa-nps.html">NPS</a>
+        <a class="item" data-url="../docs/ligacao-detratores.html">Detratores</a>
+        <a class="item" data-url="../docs/kit-whatsapp.html">Kit WhatsApp</a>
+      </div>
+    </details>
+    <details class="grupo">
+      <summary><span class="ico">💲</span>Financeiro</summary>
+      <div class="sub">
+        <a class="item" data-url="alunos.html?aba=receber">A Receber</a>
+        <a class="item" data-url="inadimplencia.html">Inadimplência (régua)</a>
+        <a class="item" data-url="alunos.html?aba=planos">Planos e Preços</a>
+        <a class="item" data-url="../docs/fluxo-caixa.html">Fluxo de Caixa 8 Semanas</a>
+        <a class="item" data-url="../docs/planilha-dre.html">DRE da Academia</a>
+      </div>
+    </details>
+    <details class="grupo">
+      <summary><span class="ico">📊</span>Gerencial</summary>
+      <div class="sub">
+        <a class="item" data-url="diario.html">Diário &amp; Relatório IA</a>
+        <a class="item" data-url="../docs/planilha-7-numeros.html">Planilha dos 7 Números</a>
+        <a class="item" data-url="tv.html" data-nova-aba="1">Modo TV (telão) ↗</a>
+      </div>
+    </details>
+    <details class="grupo">
+      <summary><span class="ico">⏱</span>Treinos</summary>
+      <div class="sub">
+        <a class="item" data-url="../docs/desafio-trimestral.html">Desafio Trimestral</a>
+        <a class="item" data-url="../docs/cronograma-coletivas.html">Aulas Coletivas</a>
+      </div>
+    </details>
+    <details class="grupo">
+      <summary><span class="ico">🫀</span>Dados de saúde</summary>
+      <div class="sub">
+        <a class="item" data-url="../docs/avaliacao-fisica.html">Ficha de Avaliação Física</a>
+        <a class="item" data-url="../docs/onboarding-90-dias.html">Onboarding 90 Dias</a>
+      </div>
+    </details>
+    <details class="grupo">
+      <summary><span class="ico">🗄</span>Administrativo</summary>
+      <div class="sub">
+        <a class="item" data-url="checklist.html">Checklist do Dia</a>
+        <a class="item" data-url="manutencao.html">Central de Manutenção</a>
+        <a class="item" data-url="../docs/inventario-equipamentos.html">Inventário de Equipamentos</a>
+        <a class="item" data-url="../docs/conformidade-legal.html">Conformidade Legal</a>
+        <a class="item" data-url="../docs/contratacao-segura.html">Contratação Segura</a>
+      </div>
+    </details>
+    <a class="item" data-pg="config"><span class="ico">⚙️</span>Configurações</a>
+  </nav>
+  <div class="rodape">
+    <a class="item" data-url="../index.html" data-nova-aba="1"><span class="ico">🎓</span>Curso Método Torque ↗</a>
+    <a class="item" data-url="../docs/trilha-guiada.html"><span class="ico">🧭</span>Central de ajuda</a>
+  </div>
+</aside>
+
+<main class="conteudo">
+  <!-- HOME -->
+  <section class="pagina" id="pgHome">
+    <h1 id="hOla">Que bom ter você aqui!</h1>
+    <p class="sub">Nesta tela estão os principais atalhos da sua operação.</p>
+    <div class="atalhos">
+      <button class="atalho" data-ir="dashboard">📈 Dashboard</button>
+      <button class="atalho" data-abrir="alunos.html?acao=novo">👤+ Novo cadastro</button>
+      <button class="atalho" data-abrir="alunos.html?acao=venda">🛒 Nova venda</button>
+      <button class="atalho" data-abrir="alunos.html?aba=checkin">✅ Check-in</button>
+    </div>
+    <div class="painel">
+      <h3>📢 Hoje na academia</h3>
+      <div class="lista-simples" id="hojeResumo"></div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="pagina" id="pgDashboard" hidden>
+    <h1>Dashboard</h1>
+    <p class="sub">Clientes · atualizado agora, com os dados do sistema</p>
+    <div class="kpis" id="kpis"></div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" id="paineisDash"></div>
+  </section>
+
+  <!-- CONFIGURAÇÕES -->
+  <section class="pagina" id="pgConfig" hidden>
+    <h1>Configurações</h1>
+    <p class="sub">Identidade, dados e acessos da academia</p>
+    <div class="cfg-bloco">
+      <h3>🖼 Logo da academia</h3>
+      <p class="sub" style="margin-bottom: 10px;">Aparece no topo do sistema, nos programas e no modo TV.</p>
+      <button class="btnzinho" id="cfgLogo">Escolher logo…</button>
+      <button class="btnzinho" id="cfgLogoDel">Remover</button>
+      <input type="file" id="cfgLogoFile" accept="image/*" hidden>
+    </div>
+    <div class="cfg-bloco">
+      <h3>💾 Backup dos dados</h3>
+      <p class="sub" style="margin-bottom: 10px;">Exporta ou restaura tudo (alunos, financeiro, programas) deste navegador.</p>
+      <button class="btnzinho" id="cfgBkExp">⬇ Baixar backup</button>
+      <button class="btnzinho" id="cfgBkImp">⬆ Restaurar backup</button>
+      <input type="file" id="cfgBkFile" accept="application/json" hidden>
+    </div>
+    <div class="cfg-bloco">
+      <h3>🎓 Portal do curso</h3>
+      <p class="sub" style="margin-bottom: 10px;">Apostilas, planilhas e fichas do Método Torque.</p>
+      <button class="btnzinho" onclick="window.open('../index.html','_blank')">Abrir o portal ↗</button>
+    </div>
+  </section>
+
+  <!-- PÁGINAS EM IFRAME -->
+  <iframe id="quadro" hidden title="Página do sistema"></iframe>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  // ---------- topo: quem sou / academia ----------
+  try {
+    var perfil = JSON.parse(localStorage.getItem("mtapp:perfil") || "null");
+    var acad = JSON.parse(localStorage.getItem("mtapp:academia") || "null");
+    if (perfil && perfil.nome) {
+      $("topNome").textContent = perfil.nome.toUpperCase();
+      $("hOla").textContent = "Que bom ter você aqui, " + perfil.nome.toUpperCase() + "!";
+    }
+    $("topAcad").textContent = (acad && acad.nome) || "";
+  } catch (e) {}
+
+  // ---------- navegação ----------
+  var paginas = { home: "pgHome", dashboard: "pgDashboard", config: "pgConfig" };
+
+  function ativa(el) {
+    Array.prototype.forEach.call(document.querySelectorAll(".menu .item"), function (x) {
+      x.classList.toggle("ativo", x === el);
+    });
+  }
+
+  function mostraNativa(pg) {
+    Object.keys(paginas).forEach(function (k) { $(paginas[k]).hidden = k !== pg; });
+    $("quadro").hidden = true;
+    if (pg === "dashboard") renderDashboard();
+    if (pg === "home") renderHoje();
+  }
+
+  function abreUrl(url) {
+    Object.keys(paginas).forEach(function (k) { $(paginas[k]).hidden = true; });
+    $("quadro").hidden = false;
+    if ($("quadro").getAttribute("src") !== url) $("quadro").src = url;
+  }
+
+  document.querySelector(".menu").addEventListener("click", function (e) {
+    var el = e.target.closest(".item");
+    if (!el) return;
+    e.preventDefault();
+    var url = el.getAttribute("data-url");
+    if (el.getAttribute("data-nova-aba")) { window.open(url, "_blank"); return; }
+    ativa(el);
+    if (el.getAttribute("data-pg")) mostraNativa(el.getAttribute("data-pg"));
+    else if (url) abreUrl(url);
+  });
+
+  document.body.addEventListener("click", function (e) {
+    var ir = e.target.closest("[data-ir]");
+    if (ir) {
+      var alvo = document.querySelector('.menu .item[data-pg="' + ir.getAttribute("data-ir") + '"]');
+      if (alvo) alvo.click();
+      return;
+    }
+    var abrir = e.target.closest("[data-abrir]");
+    if (abrir) {
+      ativa(document.querySelector('.menu .item[data-url="alunos.html"]'));
+      abreUrl(abrir.getAttribute("data-abrir"));
+    }
+  });
+
+  // busca global → Clientes com o termo
+  $("buscaGlobal").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || !this.value.trim()) return;
+    ativa(document.querySelector('.menu .item[data-url="alunos.html"]'));
+    abreUrl("alunos.html?busca=" + encodeURIComponent(this.value.trim()));
+    this.value = "";
+  });
+
+  // pesquisa no menu
+  $("pesquisaMenu").addEventListener("input", function () {
+    var q = this.value.trim().toLowerCase();
+    Array.prototype.forEach.call(document.querySelectorAll(".menu nav .item"), function (a) {
+      a.style.display = !q || a.textContent.toLowerCase().indexOf(q) !== -1 ? "" : "none";
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".menu .grupo"), function (g) {
+      var tem = Array.prototype.some.call(g.querySelectorAll(".item"), function (a) { return a.style.display !== "none"; });
+      g.style.display = tem ? "" : "none";
+      if (q && tem) g.open = true;
+    });
+  });
+
+  // ---------- dados (mesmos stores dos programas) ----------
+  function dados() { return S.read("alunos", { planos: [], alunos: [], recebiveis: [] }); }
+  function contratoAtivo(a) { return (a.contratos || []).find(function (c) { return c.status === "ativo" || c.status === "congelado"; }) || null; }
+  function diasAtraso(st, a) {
+    var hoje = S.todayISO(), pior = 0;
+    st.recebiveis.forEach(function (r) {
+      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
+        var d = Math.round((new Date(hoje) - new Date(r.vencimento)) / 864e5);
+        if (d > pior) pior = d;
+      }
+    });
+    return pior;
+  }
+
+  // ---------- HOME: hoje na academia ----------
+  function renderHoje() {
+    var st = dados();
+    var hoje = S.todayISO();
+    var checkins = 0;
+    st.alunos.forEach(function (a) { (a.checkins || []).forEach(function (t) { if (t.slice(0, 10) === hoje) checkins++; }); });
+    var vencemHoje = st.recebiveis.filter(function (r) { return r.status === "aberto" && r.vencimento === hoje; });
+    var exper = S.read("exper", { aulas: [] }).aulas.filter(function (x) { return x.data === hoje && x.status === "agendada"; });
+    var manut = S.read("manut", { chamados: [] }).chamados.filter(function (c) { return c.status !== "resolvido" && c.agendado === hoje; });
+    $("hojeResumo").innerHTML =
+      "<div><span>✅ Check-ins até agora</span><strong>" + checkins + "</strong></div>" +
+      "<div><span>🗓 Aulas experimentais de hoje</span><strong>" + exper.length + "</strong></div>" +
+      "<div><span>💳 Mensalidades vencendo hoje</span><strong>" + vencemHoje.length + " (" + S.fmtBRL(vencemHoje.reduce(function (t, r) { return t + (+r.valor || 0); }, 0)) + ")</strong></div>" +
+      "<div><span>🔧 Manutenções agendadas para hoje</span><strong>" + manut.length + "</strong></div>";
+  }
+
+  // ---------- DASHBOARD ----------
+  function renderDashboard() {
+    var st = dados();
+    var hoje = S.todayISO(), mes = hoje.slice(0, 7);
+
+    var ativos = 0, agregadores = 0, suspensos = 0, inadimplentes = 0, somaVidaMeses = 0, comContrato = 0;
+    st.alunos.forEach(function (a) {
+      if (a.status === "inativo") return;
+      var c = contratoAtivo(a);
+      if (!c) return;
+      ativos++;
+      var plano = st.planos.find(function (p) { return p.id === c.planoId; });
+      if (plano && plano.tipo === "agregador") agregadores++;
+      if (c.status === "congelado") suspensos++;
+      if (diasAtraso(st, a) > 0) inadimplentes++;
+      if (c.inicio) {
+        somaVidaMeses += Math.max(0, (new Date(hoje) - new Date(c.inicio)) / 2592e6);
+        comContrato++;
+      }
+    });
+    var adimplentes = ativos - inadimplentes;
+    var canceladosMes = 0;
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if (c.status === "cancelado" && (c.canceladoEm || "").slice(0, 7) === mes) canceladosMes++;
+      });
+    });
+    var churn = ativos + canceladosMes > 0 ? (canceladosMes / (ativos + canceladosMes) * 100) : 0;
+    var vidaMedia = comContrato ? (somaVidaMeses / comContrato) : 0;
+    var checkinsHoje = 0;
+    st.alunos.forEach(function (a) { (a.checkins || []).forEach(function (t) { if (t.slice(0, 10) === hoje) checkinsHoje++; }); });
+
+    function kpi(rotulo, valor, cls, linkFiltro, extra) {
+      return '<div class="kpi"><div class="rotulo"><span>👥 ' + rotulo + "</span>" +
+        (linkFiltro != null ? '<a data-abrir="alunos.html?filtro=' + linkFiltro + '">Detalhes</a>' : "") + "</div>" +
+        '<div class="valor ' + (cls || "") + '">' + valor + "</div>" +
+        '<div class="compara">' + (extra || "atualizado agora") + "</div></div>";
+    }
+    $("kpis").innerHTML =
+      kpi("Ativos", ativos, "verde", "") +
+      kpi("Adimplentes", adimplentes, "verde", "emdia") +
+      kpi("Inadimplentes", inadimplentes, "vermelho", "atrasado", inadimplentes ? "acompanhe na régua de cobrança" : "ninguém devendo 🎉") +
+      kpi("Agregadores", agregadores, "vermelho", "", "Gympass / TotalPass") +
+      kpi("Suspensos", suspensos, "vermelho", "", "contratos congelados ❄") +
+      kpi("Evasão (churn)", churn.toFixed(1).replace(".", ",") + "%", churn <= 5 ? "verde" : "vermelho", null, "cancelamentos do mês ÷ base · referência saudável: 3–5%") +
+      kpi("Tempo médio de vida", vidaMedia.toFixed(1).replace(".", ",") + " <span style='font-size:16px'>meses</span>", "vermelho", null, "média dos contratos ativos") +
+      kpi("Acessos do dia", checkinsHoje, "", "", "check-ins de hoje") +
+      kpi("Contratos cancelados", canceladosMes, canceladosMes ? "vermelho" : "verde", null, "no mês " + mes);
+
+    // renovações: contratos vencendo nos próximos 90 dias
+    var vencendo = [];
+    st.alunos.forEach(function (a) {
+      var c = contratoAtivo(a);
+      if (!c || !c.inicio) return;
+      var fim = new Date(c.inicio + "T12:00");
+      fim.setMonth(fim.getMonth() + (c.meses || 1));
+      var fimIso = S.todayISO(fim);
+      var dias = Math.round((new Date(fimIso) - new Date(hoje)) / 864e5);
+      if (dias >= 0 && dias <= 90) vencendo.push({ nome: a.nome, fim: fimIso, dias: dias });
+    });
+    vencendo.sort(function (a, b) { return a.dias - b.dias; });
+
+    var mesReceb = st.recebiveis.filter(function (r) { return r.competencia === mes; });
+    var pago = mesReceb.filter(function (r) { return r.status === "pago"; }).reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    var totalMes = mesReceb.reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+
+    $("paineisDash").innerHTML =
+      '<div class="painel"><h3>🔁 Renovações — contratos vencendo em 90 dias (' + vencendo.length + ')</h3><div class="lista-simples">' +
+      (vencendo.slice(0, 8).map(function (v) {
+        return "<div><span>" + esc(v.nome) + "</span><strong>" + (v.dias === 0 ? "hoje!" : "em " + v.dias + "d · " + S.fmtData(v.fim)) + "</strong></div>";
+      }).join("") || "<div><span>Nenhum contrato vencendo no período.</span></div>") + "</div></div>" +
+      '<div class="painel"><h3>💰 Financeiro do mês</h3><div class="lista-simples">' +
+      "<div><span>Previsto</span><strong>" + S.fmtBRL(totalMes) + "</strong></div>" +
+      "<div><span>Recebido</span><strong style='color:var(--ok)'>" + S.fmtBRL(pago) + "</strong></div>" +
+      "<div><span>Em aberto</span><strong style='color:var(--erro)'>" + S.fmtBRL(totalMes - pago) + "</strong></div>" +
+      "</div></div>";
+  }
+
+  // ---------- configurações ----------
+  $("cfgLogo").onclick = function () { $("cfgLogoFile").click(); };
+  $("cfgLogoFile").addEventListener("change", function () {
+    var f = this.files[0]; this.value = "";
+    if (!f) return;
+    S.saveLogo(f).then(function () { S.aplicaLogo(); alert("Logo salva!"); }, function (e) { alert("Não deu: " + e.message); });
+  });
+  $("cfgLogoDel").onclick = function () {
+    if (confirm("Remover a logo da academia?")) { S.removeLogo(); S.aplicaLogo(); }
+  };
+  $("cfgBkExp").onclick = function () { S.exportBackup(); };
+  $("cfgBkImp").onclick = function () { $("cfgBkFile").click(); };
+  $("cfgBkFile").addEventListener("change", function () {
+    var f = this.files[0]; this.value = "";
+    if (!f) return;
+    if (!confirm("Restaurar este backup? Os dados atuais serão substituídos.")) return;
+    S.importBackup(f).then(function () { alert("Backup restaurado."); location.reload(); }, function (e) { alert("Não deu: " + e.message); });
+  });
+
+  S.onChange(function () {
+    if (!$("pgDashboard").hidden) renderDashboard();
+    if (!$("pgHome").hidden) renderHoje();
+  });
+
+  // boot
+  document.querySelector('.menu .item[data-pg="home"]').classList.add("ativo");
+  renderHoje();
+})();
+</script>
+</body>
+</html>

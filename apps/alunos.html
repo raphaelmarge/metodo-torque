@@ -832,6 +832,22 @@
   };
 
   S.onChange(function (k) { if (k === "alunos" || k === "inad") render(); });
+
+  // ---------- deep-links do Sistema (?aba= ?filtro= ?busca= ?acao=) ----------
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var aba = q.get("aba");
+    if (aba) {
+      var b = document.querySelector('[data-v="' + aba + '"]');
+      if (b) b.click();
+    }
+    if (q.get("filtro") != null) { filtro = q.get("filtro"); $("filtro").value = filtro; }
+    if (q.get("busca")) { busca = q.get("busca"); $("busca").value = busca; }
+    var acao = q.get("acao");
+    if (acao === "novo") setTimeout(function () { abreCadastro(null); }, 50);
+    if (acao === "venda") setTimeout(function () { $("btnNovaVenda").click(); }, 50);
+  })();
+
   render();
 })();
 </script>
