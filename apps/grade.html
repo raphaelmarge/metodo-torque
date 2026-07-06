@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grade de Aulas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .controles { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .controles .abas button { padding: 8px 14px; }
+  .nav-data { display: flex; align-items: center; gap: 6px; }
+  .nav-data strong { font-size: 14px; min-width: 190px; text-align: center; text-transform: capitalize; }
+  .nav-data .btn.mini { padding: 6px 10px; }
+  .semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 1px solid var(--linha); background: #fff; overflow-x: auto; }
+  .semana .col { border-right: 1px solid var(--linha); min-width: 130px; }
+  .semana .col:last-child { border-right: none; }
+  .semana .col-cab { padding: 9px 8px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--cinza); border-bottom: 2px solid var(--linha); }
+  .semana .col.hoje { background: #f6f2fd; }
+  .semana .col.hoje .col-cab { color: var(--roxo); }
+  .col-corpo { display: flex; flex-direction: column; gap: 8px; padding: 8px; min-height: 60px; }
+  .aula-card {
+    background: #fff; border: 1px solid var(--linha); border-left: 4px solid var(--roxo);
+    padding: 8px 10px; cursor: pointer; font-size: 12px;
+  }
+  .aula-card:hover { box-shadow: 0 2px 8px rgba(18,16,22,.12); }
+  .aula-card .linha1 { display: flex; justify-content: space-between; gap: 6px; font-weight: 700; }
+  .aula-card .vagas { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 8px; background: var(--fundo); color: var(--cinza); white-space: nowrap; }
+  .aula-card .vagas.tem { background: rgba(22,163,74,.12); color: var(--ok); }
+  .aula-card .vagas.cheia { background: rgba(220,38,38,.12); color: var(--erro); }
+  .aula-card .nome { font-size: 13px; font-weight: 800; margin: 3px 0 1px; text-transform: uppercase; }
+  .aula-card .sub { color: var(--cinza); font-size: 11.5px; }
+  .aula-card.avulsa { border-style: dashed; }
+  .dia-lista { display: flex; flex-direction: column; border: 1px solid var(--linha); background: #fff; }
+  .dia-hora { display: flex; border-bottom: 1px solid var(--linha); }
+  .dia-hora:last-child { border-bottom: none; }
+  .dia-hora .rotulo { width: 64px; flex: none; padding: 12px 10px; font-size: 13px; font-weight: 700; color: var(--cinza); border-right: 1px solid var(--linha); }
+  .dia-hora .cards { flex: 1; display: flex; gap: 10px; flex-wrap: wrap; padding: 10px; }
+  .dia-hora .aula-card { width: 220px; }
+  .parts { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+  .parts .p { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--fundo); font-size: 13.5px; }
+  .parts .p button { background: none; border: none; color: var(--erro); cursor: pointer; font-size: 14px; }
+  .cores { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cores label { display: inline-flex; }
+  .cores input { display: none; }
+  .cores span { width: 26px; height: 26px; border-radius: 4px; cursor: pointer; border: 2px solid transparent; display: inline-block; }
+  .cores input:checked + span { border-color: var(--escuro); }
+  .dias-semana { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dias-semana label { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--linha); padding: 6px 9px; cursor: pointer; }
+  .dias-semana input { width: auto; }
+  .dias-semana label:has(input:checked) { border-color: var(--roxo); color: var(--roxo); background: rgba(124,58,237,.06); }
+  @media (max-width: 760px) { .nav-data strong { min-width: 0; } .dia-hora .aula-card { width: 100%; } }
+  @media print {
+    .topo, .controles, .no-print { display: none !important; }
+    body { background: #fff; }
+    .corpo { padding: 0; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · OPERAÇÃO</span>
+    <h1>Grade de Aulas</h1>
+    </div>
+  </div>
+  <p>A grade da semana com vagas, professor e sala. Clique numa aula para ver os participantes do dia — e use "sob demanda" para aulas fora da grade.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card controles no-print" style="justify-content: space-between;">
+    <div class="abas" id="turnos">
+      <button data-t="" class="ativa">Todos</button>
+      <button data-t="manha">Manhã</button>
+      <button data-t="tarde">Tarde</button>
+      <button data-t="noite">Noite</button>
+    </div>
+    <div class="nav-data">
+      <button class="btn sec mini" id="navAnt">‹</button>
+      <strong id="navRotulo"></strong>
+      <button class="btn sec mini" id="navProx">›</button>
+      <button class="btn sec mini" id="navHoje">Hoje</button>
+    </div>
+    <div class="abas" id="vistas">
+      <button data-v="dia">Dia</button>
+      <button data-v="semana" class="ativa">Semana</button>
+    </div>
+  </div>
+
+  <div class="card controles no-print" style="justify-content: space-between;">
+    <input id="busca" placeholder="Pesquise por aula, professor ou sala…" style="max-width: 340px;">
+    <div class="linha-flex">
+      <button class="btn sec" id="btnImprimir">🖨 Imprimir</button>
+      <button class="btn sec" id="btnDemanda">Agendar sob demanda</button>
+      <button class="btn" id="btnNova">+ Nova aula da grade</button>
+    </div>
+  </div>
+
+  <div id="quadroGrade"></div>
+</main>
+
+<!-- nova aula recorrente -->
+<dialog id="dlgAula">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 540px; max-width: 100%;">
+    <h2 id="dlgAulaTitulo">Nova aula da grade</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Atividade *</label><input id="gNome" required placeholder="ex.: CROSSFIT, SPINNING, GAP"></div>
+      <div class="campo"><label>Professor(a) *</label><input id="gProf" required></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Sala / área</label><input id="gSala" placeholder="ex.: SALA DE GINÁSTICA"></div>
+      <div class="campo"><label>Vagas</label><input id="gVagas" type="number" min="1" value="14"></div>
+    </div>
+    <div class="campo"><label>Dias da semana *</label>
+      <div class="dias-semana" id="gDias">
+        <label><input type="checkbox" value="0">Dom</label>
+        <label><input type="checkbox" value="1">Seg</label>
+        <label><input type="checkbox" value="2">Ter</label>
+        <label><input type="checkbox" value="3">Qua</label>
+        <label><input type="checkbox" value="4">Qui</label>
+        <label><input type="checkbox" value="5">Sex</label>
+        <label><input type="checkbox" value="6">Sáb</label>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Início *</label><input id="gInicio" type="time" required value="06:00"></div>
+      <div class="campo"><label>Duração (min)</label><input id="gDur" type="number" min="10" step="5" value="60"></div>
+    </div>
+    <div class="campo"><label>Cor na grade</label>
+      <div class="cores" id="gCores"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button type="button" class="btn perigo mini" id="gExcluir" hidden>Excluir aula</button>
+      <div class="linha-flex">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- agendamento sob demanda -->
+<dialog id="dlgDemanda">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
+    <h2>Agendamento sob demanda</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Data *</label><input id="dData" type="date" required></div>
+      <div class="campo"><label>Horário de início *</label><input id="dInicio" type="time" required></div>
+    </div>
+    <div class="campo"><label>Atividade sob demanda *</label><input id="dNome" required placeholder="ex.: AULÃO DE FUNCIONAL"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Duração (min)</label><input id="dDur" type="number" min="10" step="5" value="60"></div>
+      <div class="campo"><label>Quantidade de vagas</label><input id="dVagas" type="number" min="1" value="14"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Professor(a) *</label><input id="dProf" required></div>
+      <div class="campo"><label>Área *</label><input id="dSala" required placeholder="ex.: SALA DE GINÁSTICA"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- participantes de uma ocorrência -->
+<dialog id="dlgPart">
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <div>
+      <h2 id="partTitulo" style="margin-bottom: 2px;">Aula</h2>
+      <div class="muted" id="partSub"></div>
+    </div>
+    <div class="linha-flex no-print">
+      <input id="partNome" list="alunosLista" placeholder="Adicionar participante…" style="flex: 1;">
+      <datalist id="alunosLista"></datalist>
+      <button class="btn mini" id="partAdd">Adicionar</button>
+    </div>
+    <div class="parts" id="partLista"></div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button class="btn sec mini" id="partEditar" hidden>✎ Editar aula</button>
+      <button class="btn sec" id="partFechar">Fechar</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var CORES = ["#7c3aed", "#0ea5a5", "#f59e0b", "#dc2626", "#16a34a", "#2563eb", "#db2777", "#57534e"];
+  var DIAS = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
+  var DIAS_CURTO = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+
+  function load() { return S.read("grade", { aulas: [], avulsas: [], presencas: {} }); }
+  function save(st) { S.write("grade", st); render(); }
+
+  // ---------- estado ----------
+  var refDia = S.todayISO();
+  var vista = "semana";
+  var turno = "";
+  var busca = "";
+
+  function horaMin(h) { var p = (h || "00:00").split(":"); return +p[0] * 60 + +p[1]; }
+  function minHora(m) { return (m < 600 ? "0" : "") + Math.floor(m / 60) + ":" + ((m % 60) < 10 ? "0" : "") + (m % 60); }
+  function fimDe(a) { return minHora(horaMin(a.inicio) + (+a.dur || 60)); }
+  function turnoDe(a) { var m = horaMin(a.inicio); return m < 720 ? "manha" : m < 1080 ? "tarde" : "noite"; }
+  function domingoDe(iso) {
+    var d = new Date(iso + "T12:00");
+    d.setDate(d.getDate() - d.getDay());
+    return d;
+  }
+  function diaISO(base, mais) {
+    var d = new Date(base.getTime());
+    d.setDate(d.getDate() + mais);
+    return S.todayISO(d);
+  }
+
+  // ocorrências de um dia = aulas recorrentes daquele dia da semana + avulsas na data
+  function ocorrencias(st, iso) {
+    var dow = new Date(iso + "T12:00").getDay();
+    var lista = [];
+    st.aulas.forEach(function (a) {
+      if ((a.dias || []).indexOf(dow) !== -1) lista.push({ a: a, avulsa: false, chave: a.id + "|" + iso });
+    });
+    st.avulsas.forEach(function (a) {
+      if (a.data === iso) lista.push({ a: a, avulsa: true, chave: a.id + "|" + iso });
+    });
+    var q = busca.trim().toLowerCase();
+    return lista.filter(function (o) {
+      if (turno && turnoDe(o.a) !== turno) return false;
+      if (q && ((o.a.nome || "") + " " + (o.a.prof || "") + " " + (o.a.sala || "")).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    }).sort(function (x, y) { return horaMin(x.a.inicio) - horaMin(y.a.inicio); });
+  }
+
+  function cardAula(st, o, iso) {
+    var n = (st.presencas[o.chave] || []).length;
+    var vagas = +o.a.vagas || 0;
+    var cls = n === 0 ? "" : n >= vagas ? "cheia" : "tem";
+    return '<div class="aula-card' + (o.avulsa ? " avulsa" : "") + '" data-chave="' + o.chave + '" data-dia="' + iso + '" style="border-left-color:' + (o.a.cor || "#7c3aed") + '">' +
+      '<div class="linha1"><span>' + o.a.inicio + " - " + fimDe(o.a) + '</span><span class="vagas ' + cls + '">' + n + "/" + vagas + "</span></div>" +
+      '<div class="nome">' + esc(o.a.nome) + (o.avulsa ? " ✦" : "") + "</div>" +
+      '<div class="sub">' + esc(o.a.prof || "") + (o.a.sala ? "<br>" + esc(o.a.sala) : "") + "</div></div>";
+  }
+
+  function render() {
+    var st = load();
+    if (vista === "semana") {
+      var dom = domingoDe(refDia);
+      var fim = diaISO(dom, 6);
+      $("navRotulo").textContent = new Date(diaISO(dom, 0) + "T12:00").getDate() + " " +
+        new Date(diaISO(dom, 0) + "T12:00").toLocaleDateString("pt-BR", { month: "short" }) + ". - " +
+        new Date(fim + "T12:00").getDate() + " " + new Date(fim + "T12:00").toLocaleDateString("pt-BR", { month: "short" }) + "., " + dom.getFullYear();
+      var cols = "";
+      for (var i = 0; i < 7; i++) {
+        var iso = diaISO(dom, i);
+        var oc = ocorrencias(st, iso);
+        cols += '<div class="col' + (iso === S.todayISO() ? " hoje" : "") + '">' +
+          '<div class="col-cab">' + DIAS_CURTO[i] + " " + new Date(iso + "T12:00").getDate() + "</div>" +
+          '<div class="col-corpo">' + oc.map(function (o) { return cardAula(st, o, iso); }).join("") + "</div></div>";
+      }
+      $("quadroGrade").innerHTML = st.aulas.length + st.avulsas.length
+        ? '<div class="semana">' + cols + "</div>"
+        : '<div class="vazio">Nenhuma aula na grade ainda. Clique em <strong>+ Nova aula da grade</strong> para montar a sua semana.</div>';
+    } else {
+      $("navRotulo").textContent = DIAS[new Date(refDia + "T12:00").getDay()] + " - " +
+        new Date(refDia + "T12:00").getDate() + " " + new Date(refDia + "T12:00").toLocaleDateString("pt-BR", { month: "short" }) + "., " + refDia.slice(0, 4);
+      var oc2 = ocorrencias(load(), refDia);
+      if (!oc2.length) { $("quadroGrade").innerHTML = '<div class="vazio">Nenhuma aula neste dia' + (turno || busca ? " com esses filtros" : "") + ".</div>"; return; }
+      var porHora = {};
+      oc2.forEach(function (o) {
+        var h = o.a.inicio.slice(0, 2) + ":00";
+        (porHora[h] = porHora[h] || []).push(o);
+      });
+      $("quadroGrade").innerHTML = '<div class="dia-lista">' + Object.keys(porHora).sort().map(function (h) {
+        return '<div class="dia-hora"><div class="rotulo">' + h + '</div><div class="cards">' +
+          porHora[h].map(function (o) { return cardAula(st, o, refDia); }).join("") + "</div></div>";
+      }).join("") + "</div>";
+    }
+  }
+
+  // ---------- navegação ----------
+  $("turnos").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    turno = b.getAttribute("data-t");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  $("vistas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    vista = b.getAttribute("data-v");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  $("navAnt").onclick = function () { refDia = diaISO(new Date(refDia + "T12:00"), vista === "semana" ? -7 : -1); render(); };
+  $("navProx").onclick = function () { refDia = diaISO(new Date(refDia + "T12:00"), vista === "semana" ? 7 : 1); render(); };
+  $("navHoje").onclick = function () { refDia = S.todayISO(); render(); };
+  $("busca").addEventListener("input", function () { busca = this.value; render(); });
+  $("btnImprimir").onclick = function () { window.print(); };
+
+  // ---------- nova aula / editar ----------
+  var editandoId = null;
+  $("gCores").innerHTML = CORES.map(function (c, i) {
+    return '<label><input type="radio" name="gCor" value="' + c + '"' + (i === 0 ? " checked" : "") + '><span style="background:' + c + '"></span></label>';
+  }).join("");
+
+  function abreAula(a) {
+    editandoId = a ? a.id : null;
+    $("dlgAulaTitulo").textContent = a ? "Editar aula da grade" : "Nova aula da grade";
+    $("gExcluir").hidden = !a;
+    $("gNome").value = a ? a.nome : "";
+    $("gProf").value = a ? a.prof : "";
+    $("gSala").value = a ? (a.sala || "") : "";
+    $("gVagas").value = a ? a.vagas : 14;
+    $("gInicio").value = a ? a.inicio : "06:00";
+    $("gDur").value = a ? a.dur : 60;
+    Array.prototype.forEach.call(document.querySelectorAll("#gDias input"), function (c) {
+      c.checked = a ? (a.dias || []).indexOf(+c.value) !== -1 : false;
+    });
+    var cor = a ? a.cor : CORES[0];
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="gCor"]'), function (r) { r.checked = r.value === cor; });
+    $("dlgAula").showModal();
+  }
+  $("btnNova").onclick = function () { abreAula(null); };
+
+  $("dlgAula").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var dias = [];
+    Array.prototype.forEach.call(document.querySelectorAll("#gDias input:checked"), function (c) { dias.push(+c.value); });
+    if (!dias.length) { e.preventDefault(); alert("Marque pelo menos um dia da semana."); return; }
+    var st = load();
+    var cor = (document.querySelector('input[name="gCor"]:checked') || {}).value || CORES[0];
+    var dados = {
+      nome: $("gNome").value.trim(), prof: $("gProf").value.trim(), sala: $("gSala").value.trim(),
+      vagas: +$("gVagas").value || 14, inicio: $("gInicio").value, dur: +$("gDur").value || 60,
+      dias: dias, cor: cor,
+    };
+    if (editandoId) {
+      var a = st.aulas.find(function (x) { return x.id === editandoId; });
+      Object.keys(dados).forEach(function (k) { a[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      st.aulas.push(dados);
+    }
+    save(st);
+  });
+  $("gExcluir").onclick = function () {
+    if (!confirm("Excluir esta aula da grade? (as presenças registradas somem também)")) return;
+    var st = load();
+    st.aulas = st.aulas.filter(function (x) { return x.id !== editandoId; });
+    Object.keys(st.presencas).forEach(function (k) { if (k.indexOf(editandoId + "|") === 0) delete st.presencas[k]; });
+    $("dlgAula").close();
+    save(st);
+  };
+
+  // ---------- sob demanda ----------
+  $("btnDemanda").onclick = function () {
+    $("dData").value = refDia;
+    $("dInicio").value = "18:00";
+    $("dNome").value = ""; $("dProf").value = ""; $("dSala").value = "";
+    $("dlgDemanda").showModal();
+  };
+  $("dlgDemanda").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    st.avulsas.push({
+      id: S.uid(), data: $("dData").value, inicio: $("dInicio").value,
+      nome: $("dNome").value.trim(), dur: +$("dDur").value || 60, vagas: +$("dVagas").value || 14,
+      prof: $("dProf").value.trim(), sala: $("dSala").value.trim(), cor: "#57534e",
+    });
+    save(st);
+  });
+
+  // ---------- participantes ----------
+  var chaveAberta = null;
+  function alunosNomes() {
+    var a = S.read("alunos", { alunos: [] });
+    return a.alunos.filter(function (x) { return x.status !== "inativo"; }).map(function (x) { return x.nome; });
+  }
+  function abrePart(chave, iso) {
+    chaveAberta = chave;
+    var st = load();
+    var id = chave.split("|")[0];
+    var aula = st.aulas.find(function (x) { return x.id === id; }) || st.avulsas.find(function (x) { return x.id === id; });
+    if (!aula) return;
+    $("partTitulo").textContent = aula.nome + " · " + aula.inicio;
+    $("partSub").textContent = DIAS[new Date(iso + "T12:00").getDay()] + " " + S.fmtData(iso) +
+      (aula.prof ? " · " + aula.prof : "") + (aula.sala ? " · " + aula.sala : "");
+    $("partEditar").hidden = !st.aulas.some(function (x) { return x.id === id; });
+    $("alunosLista").innerHTML = alunosNomes().map(function (n) { return "<option>" + esc(n) + "</option>"; }).join("");
+    renderPart();
+    $("dlgPart").showModal();
+  }
+  function renderPart() {
+    var st = load();
+    var lista = st.presencas[chaveAberta] || [];
+    var id = chaveAberta.split("|")[0];
+    var aula = st.aulas.find(function (x) { return x.id === id; }) || st.avulsas.find(function (x) { return x.id === id; }) || {};
+    $("partLista").innerHTML = lista.length
+      ? lista.map(function (n, i) {
+          return '<div class="p"><span>' + esc(n) + '</span><button data-rm="' + i + '" title="Remover">✕</button></div>';
+        }).join("")
+      : '<div class="muted">Ninguém marcado ainda — ' + (+aula.vagas || 0) + " vagas livres.</div>";
+    $("partNome").value = "";
+  }
+  $("partAdd").onclick = function () {
+    var n = $("partNome").value.trim();
+    if (!n) return;
+    var st = load();
+    var lista = st.presencas[chaveAberta] || [];
+    var id = chaveAberta.split("|")[0];
+    var aula = st.aulas.find(function (x) { return x.id === id; }) || st.avulsas.find(function (x) { return x.id === id; }) || {};
+    if (lista.indexOf(n) !== -1) { alert(n + " já está na lista."); return; }
+    if (lista.length >= (+aula.vagas || 0) && !confirm("A aula já está cheia (" + aula.vagas + " vagas). Adicionar mesmo assim?")) return;
+    lista.push(n);
+    st.presencas[chaveAberta] = lista;
+    S.write("grade", st);
+    renderPart(); render();
+  };
+  $("partNome").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("partAdd").click(); } });
+  $("partLista").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-rm");
+    if (i == null) return;
+    var st = load();
+    (st.presencas[chaveAberta] || []).splice(+i, 1);
+    S.write("grade", st);
+    renderPart(); render();
+  });
+  $("partFechar").onclick = function () { $("dlgPart").close(); };
+  $("partEditar").onclick = function () {
+    var id = chaveAberta.split("|")[0];
+    var a = load().aulas.find(function (x) { return x.id === id; });
+    $("dlgPart").close();
+    if (a) abreAula(a);
+  };
+
+  $("quadroGrade").addEventListener("click", function (e) {
+    var c = e.target.closest("[data-chave]");
+    if (c) abrePart(c.getAttribute("data-chave"), c.getAttribute("data-dia"));
+  });
+
+  S.onChange(function (k) { if (k === "grade" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
