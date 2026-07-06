@@ -105,6 +105,33 @@
     color: var(--cinza); cursor: pointer;
   }
   .dash-abas button.ativa { color: var(--roxo); border-bottom-color: var(--roxo); }
+  .dash-controles { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dash-controles input[type="date"] {
+    padding: 8px 10px; font-family: inherit; font-size: 13px; color: var(--texto);
+    border: 1px solid var(--linha); border-radius: 4px; background: #fff;
+  }
+  .btn-roxo {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+    background: var(--roxo); color: #fff; border: none; border-radius: 4px;
+    font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: .04em; cursor: pointer;
+  }
+  .btn-roxo:hover { background: var(--roxo-2); }
+  .mini-abas { display: inline-flex; align-items: center; gap: 14px; margin-left: auto; font-weight: 400; }
+  .mini-abas button {
+    padding: 4px 2px; font-family: inherit; font-size: 12.5px; font-weight: 600;
+    background: none; border: none; border-bottom: 2px solid transparent; color: var(--cinza); cursor: pointer;
+  }
+  .mini-abas button.ativa { color: var(--roxo); border-bottom-color: var(--roxo); }
+  .mini-abas select {
+    padding: 5px 8px; font-family: inherit; font-size: 12px; color: var(--texto);
+    border: 1px solid var(--linha); border-radius: 4px; background: #fff; max-width: 180px;
+  }
+  .acoes-topo { display: flex; gap: 4px; }
+  .acoes-topo button {
+    background: none; border: none; color: #cfccd8; font-size: 17px; cursor: pointer;
+    padding: 6px 8px; border-radius: 4px;
+  }
+  .acoes-topo button:hover { background: #2a2733; color: #fff; }
   .grafico svg { width: 100%; height: auto; display: block; }
   .leg { display: flex; gap: 18px; font-size: 12px; color: var(--cinza); justify-content: center; margin: 2px 0 10px; flex-wrap: wrap; }
   .leg i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: -1px; }
@@ -131,6 +158,10 @@
 <header class="topo">
   <span class="marca"><img src="../assets/icons/icon.svg" alt="">TORQUE<span style="color:var(--lilas)">SYS</span></span>
   <div class="buscaGlobal">🔍 <input id="buscaGlobal" placeholder="Pesquise por nome, sobrenome, e-mail, CPF (CIN) ou carteirinha"></div>
+  <div class="acoes-topo">
+    <button title="Novo cadastro" data-abrir="alunos.html?acao=novo">👤➕</button>
+    <button title="Nova venda" data-abrir="alunos.html?acao=venda">🛒</button>
+  </div>
   <div class="direita">
     <div><strong id="topNome">—</strong><small id="topAcad"></small></div>
     <img id="logoCliente" class="logoAcad" alt="" hidden>
@@ -234,7 +265,11 @@
   <section class="pagina" id="pgDashboard" hidden>
     <div class="dash-cab">
       <h1>Dashboard</h1>
-      <span class="data" id="dashData"></span>
+      <div class="dash-controles">
+        <button class="btn-roxo" data-abrir="alunos.html?acao=novo">👤➕ NOVO CADASTRO</button>
+        <input type="date" id="dashDia" title="Data de referência do painel">
+        <button class="btnzinho" id="dashAtualiza" title="Atualizar agora">⟳</button>
+      </div>
     </div>
     <div class="dash-abas" id="dashAbas">
       <button class="ativa" data-dv="clientes">Clientes</button>
@@ -249,12 +284,31 @@
 
     <div id="dvVendas" hidden>
       <div class="kpis" id="kpisVendas"></div>
-      <div class="painel">
-        <h3>🛒 Total de vendas — últimos 6 meses</h3>
-        <div class="grafico" id="grafVendas"></div>
+      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 14px;">
+        <div class="painel">
+          <h3>🛒 Total de vendas
+            <span class="mini-abas" id="vendasVistaBt">
+              <button data-v="dia">Dia</button>
+              <button data-v="mes" class="ativa">Mês</button>
+            </span>
+          </h3>
+          <div class="destaque-par" id="vendasDestaque"></div>
+          <div class="grafico" id="grafVendas"></div>
+        </div>
+        <div class="painel">
+          <h3>📊 Mensal. média dos contratos vendidos</h3>
+          <div class="destaque-par" id="mensalDestaque"></div>
+          <div class="grafico" id="grafMensalMedia"></div>
+        </div>
       </div>
       <div class="painel">
-        <h3>💜 Visitantes x conversões (aulas experimentais)</h3>
+        <h3>💜 Visitantes x conversões (aulas experimentais)
+          <span class="mini-abas" id="visitCtrl">
+            <select id="visitOrigem" title="Origem do visitante"><option value="">Todas as origens</option></select>
+            <button data-v="7d">Últimos 7 dias</button>
+            <button data-v="mes" class="ativa">Mês</button>
+          </span>
+        </h3>
         <div class="destaque-par" id="visitDestaque"></div>
         <div class="grafico" id="grafVisit"></div>
       </div>
@@ -424,6 +478,11 @@
 
   // ---------- DASHBOARD ----------
   var dvAtiva = "clientes";
+  var refDia = S.todayISO();        // data de referência do painel (seletor no topo)
+  var vendasVista = "mes";          // Dia | Mês do gráfico de vendas
+  var visitVista = "mes";           // Últimos 7 dias | Mês do visitantes x conversões
+  var visitOrigem = "";             // filtro de origem das aulas experimentais
+
   $("dashAbas").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
     dvAtiva = b.getAttribute("data-dv");
@@ -434,12 +493,36 @@
     renderDashboard();
   });
 
+  function marcaMini(ct, b) {
+    Array.prototype.forEach.call(ct.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+  }
+  $("dashDia").value = refDia;
+  $("dashDia").addEventListener("change", function () { refDia = this.value || S.todayISO(); renderDashboard(); });
+  $("dashAtualiza").onclick = function () { refDia = $("dashDia").value || S.todayISO(); renderDashboard(); };
+  $("vendasVistaBt").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    vendasVista = b.getAttribute("data-v"); marcaMini(this, b); renderDashVendas();
+  });
+  $("visitCtrl").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    visitVista = b.getAttribute("data-v"); marcaMini(this, b); renderDashVendas();
+  });
+  $("visitOrigem").addEventListener("change", function () { visitOrigem = this.value; renderDashVendas(); });
+
   function padM(n) { return (n < 10 ? "0" : "") + n; }
   function ultimosMeses(n) {
-    var arr = [], agora = new Date();
+    var arr = [], agora = new Date(refDia + "T12:00");
     for (var i = n - 1; i >= 0; i--) {
       var m = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
       arr.push({ chave: m.getFullYear() + "-" + padM(m.getMonth() + 1), rotulo: (m.getMonth() + 1) + "/" + m.getFullYear() });
+    }
+    return arr;
+  }
+  function ultimosDias(n) {
+    var arr = [], base = new Date(refDia + "T12:00");
+    for (var i = n - 1; i >= 0; i--) {
+      var d = new Date(base.getTime() - i * 864e5);
+      arr.push({ chave: S.todayISO(d), rotulo: d.getDate() + "/" + (d.getMonth() + 1) });
     }
     return arr;
   }
@@ -476,6 +559,7 @@
       svg += '<line x1="' + pL + '" y1="' + y + '" x2="' + (W - pR) + '" y2="' + y + '" stroke="#eceaf1"/>' +
         '<text x="' + (pL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#9995a3">' + fmtEixo(teto * (4 - g) / 4) + "</text>";
     }
+    var pulo = labels.length > 14 ? Math.ceil(labels.length / 12) : 1;
     labels.forEach(function (rot, i) {
       var cx = pL + iw * i + iw / 2;
       series.forEach(function (s, j) {
@@ -484,7 +568,7 @@
         var x = cx - (bw * nB + 4 * (nB - 1)) / 2 + j * (bw + 4);
         svg += '<rect x="' + x + '" y="' + (H - pB - h) + '" width="' + bw + '" height="' + h + '" fill="' + s.cor + '" rx="2"/>';
       });
-      svg += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="#6e6a78">' + rot + "</text>";
+      if (i % pulo === 0) svg += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="#6e6a78">' + rot + "</text>";
     });
     return legenda(series) + svg + "</svg>";
   }
@@ -523,7 +607,6 @@
   }
 
   function renderDashboard() {
-    $("dashData").textContent = new Date().toLocaleDateString("pt-BR");
     if (dvAtiva === "clientes") renderDashClientes();
     else if (dvAtiva === "vendas") renderDashVendas();
     else renderDashFin();
@@ -531,7 +614,7 @@
 
   function renderDashClientes() {
     var st = dados();
-    var hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    var hoje = refDia, mes = hoje.slice(0, 7);
 
     var ativos = 0, agregadores = 0, suspensos = 0, inadimplentes = 0, somaVidaMeses = 0, comContrato = 0;
     st.alunos.forEach(function (a) {
@@ -562,7 +645,7 @@
     var canceladosMes = canceladosEm(mes);
     var churn = ativos + canceladosMes > 0 ? (canceladosMes / (ativos + canceladosMes) * 100) : 0;
     var vidaMedia = comContrato ? (somaVidaMeses / comContrato) : 0;
-    var ontem = S.todayISO(new Date(Date.now() - 864e5));
+    var ontem = S.todayISO(new Date(new Date(hoje + "T12:00").getTime() - 864e5));
     var checkinsHoje = 0, checkinsOntem = 0;
     st.alunos.forEach(function (a) {
       (a.checkins || []).forEach(function (t) {
@@ -634,7 +717,8 @@
     var st = dados();
     var meses = ultimosMeses(6);
     var mesAtual = meses[5].chave, mesAnt = meses[4].chave;
-    var hoje = S.todayISO();
+    var hoje = refDia;
+    var nomeMes = new Date(refDia + "T12:00").toLocaleDateString("pt-BR", { month: "long" });
 
     var agora = vendasDoMes(st, mesAtual);
     var antes = vendasDoMes(st, mesAnt);
@@ -658,38 +742,77 @@
       kpi2("🔁", "Vendas recorrentes", S.fmtBRL(soma(agora, "recorrente")), "", "planos com mensalidade automática") +
       kpi2("⚡", "Vendas à vista", S.fmtBRL(soma(agora, "avista")), "", "pagamento único");
 
-    $("grafVendas").innerHTML = grafBarras(
+    // total de vendas — destaque do mês e do dia, gráfico Dia | Mês
+    var totalMes = soma(agora);
+    var doDia = agora.filter(function (v) { return (v.c.inicio || "") === refDia; })
+      .reduce(function (t, v) { return t + v.total; }, 0);
+    $("vendasDestaque").innerHTML =
+      '<div class="par">' + S.fmtBRL(totalMes) + "<small>" + nomeMes + "</small></div>" +
+      '<div class="par">' + S.fmtBRL(doDia) + "<small>" + S.fmtData(refDia) + "</small></div>";
+    if (vendasVista === "dia") {
+      var nDias = new Date(+mesAtual.slice(0, 4), +mesAtual.slice(5, 7), 0).getDate();
+      var porDia = {};
+      agora.forEach(function (v) { var d = +(v.c.inicio || "").slice(8, 10); porDia[d] = (porDia[d] || 0) + v.total; });
+      var labelsD = [], valsD = [];
+      for (var dd = 1; dd <= nDias; dd++) { labelsD.push(String(dd)); valsD.push(porDia[dd] || 0); }
+      $("grafVendas").innerHTML = grafBarras(labelsD,
+        [{ nome: "Vendas por dia (R$) — " + nomeMes, cor: "#f5a662", valores: valsD }]);
+    } else {
+      $("grafVendas").innerHTML = grafBarras(
+        meses.map(function (m) { return m.rotulo; }),
+        [{ nome: "Total de vendas (R$)", cor: "#f5a662", valores: meses.map(function (m) { return soma(vendasDoMes(st, m.chave)); }) }]
+      );
+    }
+
+    // mensalidade média dos contratos vendidos — por mês
+    $("mensalDestaque").innerHTML = '<div class="par">' + S.fmtBRL(mensalMedia) + "<small>" + nomeMes + "</small></div>";
+    $("grafMensalMedia").innerHTML = grafLinha(
       meses.map(function (m) { return m.rotulo; }),
-      [{ nome: "Total de vendas (R$)", cor: "#f5a662", valores: meses.map(function (m) { return soma(vendasDoMes(st, m.chave)); }) }]
+      [{ nome: "Mensalidade média (R$)", cor: "#e8798a", valores: meses.map(function (m) {
+        var l = vendasDoMes(st, m.chave).filter(function (v) { return v.plano.tipo !== "agregador"; });
+        return l.length ? l.reduce(function (t, v) { return t + (+v.c.valor || 0); }, 0) / l.length : 0;
+      }) }]
     );
 
-    // visitantes x conversões (aulas experimentais)
+    // visitantes x conversões (aulas experimentais) — com filtro de origem e período
     var ex = S.read("exper", { aulas: [] }).aulas;
-    function visitConv(chave) {
-      var doMes = ex.filter(function (a) { return (a.data || "").slice(0, 7) === chave; });
+    var origens = [];
+    ex.forEach(function (a) { if (a.origem && origens.indexOf(a.origem) === -1) origens.push(a.origem); });
+    $("visitOrigem").innerHTML = '<option value="">Todas as origens</option>' + origens.map(function (o) {
+      return "<option" + (o === visitOrigem ? " selected" : "") + ">" + esc(o) + "</option>";
+    }).join("");
+    var exFil = visitOrigem ? ex.filter(function (a) { return a.origem === visitOrigem; }) : ex;
+    function conta(lista) {
       return {
-        vis: doMes.filter(function (a) { return a.status === "compareceu" || a.status === "matriculado"; }).length,
-        conv: doMes.filter(function (a) { return a.status === "matriculado"; }).length,
+        vis: lista.filter(function (a) { return a.status === "compareceu" || a.status === "matriculado"; }).length,
+        conv: lista.filter(function (a) { return a.status === "matriculado"; }).length,
       };
     }
-    var vcMes = visitConv(mesAtual);
-    var deHoje = ex.filter(function (a) { return a.data === hoje; });
-    var vcHoje = {
-      vis: deHoje.filter(function (a) { return a.status === "compareceu" || a.status === "matriculado"; }).length,
-      conv: deHoje.filter(function (a) { return a.status === "matriculado"; }).length,
-    };
-    var nomeMes = new Date().toLocaleDateString("pt-BR", { month: "long" });
+    function vcMesF(chave) { return conta(exFil.filter(function (a) { return (a.data || "").slice(0, 7) === chave; })); }
+    function vcDiaF(chave) { return conta(exFil.filter(function (a) { return a.data === chave; })); }
+    var vcMes = vcMesF(mesAtual), vcHoje = vcDiaF(hoje);
     $("visitDestaque").innerHTML =
       '<div class="par">' + vcMes.vis + ' x <span class="conv">' + vcMes.conv + "</span><small>" + nomeMes + "</small></div>" +
-      '<div class="par">' + vcHoje.vis + ' x <span class="conv">' + vcHoje.conv + "</span><small>Hoje" +
+      '<div class="par">' + vcHoje.vis + ' x <span class="conv">' + vcHoje.conv + "</span><small>" + S.fmtData(refDia) +
       (vcMes.vis ? " · convertidos: " + Math.round(vcMes.conv / vcMes.vis * 100) + "%" : "") + "</small></div>";
-    $("grafVisit").innerHTML = grafBarras(
-      meses.map(function (m) { return m.rotulo; }),
-      [
-        { nome: "Visitantes", cor: "#2fc4c4", valores: meses.map(function (m) { return visitConv(m.chave).vis; }) },
-        { nome: "Conversões", cor: "#f5a662", valores: meses.map(function (m) { return visitConv(m.chave).conv; }) },
-      ]
-    );
+    if (visitVista === "7d") {
+      var dias7 = ultimosDias(7);
+      $("grafVisit").innerHTML = grafBarras(
+        dias7.map(function (d) { return d.rotulo; }),
+        [
+          { nome: "Visitantes", cor: "#2fc4c4", valores: dias7.map(function (d) { return vcDiaF(d.chave).vis; }) },
+          { nome: "Conversões", cor: "#f5a662", valores: dias7.map(function (d) { return vcDiaF(d.chave).conv; }) },
+        ]
+      );
+    } else {
+      $("grafVisit").innerHTML = grafBarras(
+        meses.map(function (m) { return m.rotulo; }),
+        [
+          { nome: "Visitantes", cor: "#2fc4c4", valores: meses.map(function (m) { return vcMesF(m.chave).vis; }) },
+          { nome: "Conversões", cor: "#f5a662", valores: meses.map(function (m) { return vcMesF(m.chave).conv; }) },
+        ]
+      );
+    }
   }
 
   // ---------- DASHBOARD · aba Financeiro ----------
@@ -697,7 +820,7 @@
     var st = dados();
     var meses = ultimosMeses(6);
     var mesAtual = meses[5].chave, mesAnt = meses[4].chave;
-    var hoje = S.todayISO();
+    var hoje = refDia;
 
     var inad = st.recebiveis.filter(function (r) { return r.status === "aberto" && r.vencimento < hoje; })
       .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
