@@ -46,6 +46,17 @@
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
 
+  <!-- boas-vindas + atalhos (estilo EVO) -->
+  <div class="card">
+    <h2 style="font-size: 18px; text-transform: none; letter-spacing: 0; color: var(--texto);" id="boasVindas">Que bom ter você aqui!</h2>
+    <p class="muted" style="margin: 4px 0 14px;">Nesta tela estão os principais atalhos da operação.</p>
+    <div class="linha-flex">
+      <button class="btn sec" id="atDashboard">📊 Dashboard</button>
+      <button class="btn sec" id="btnNovoAluno">👤+ Novo cadastro</button>
+      <button class="btn" id="btnNovaVenda">🛒 Nova venda</button>
+    </div>
+  </div>
+
   <div class="stats" id="stats"></div>
 
   <div class="card linha-flex" style="justify-content: space-between;">
@@ -55,7 +66,6 @@
       <button data-v="planos">🏷 Planos</button>
       <button data-v="checkin">✅ Check-in</button>
     </div>
-    <button class="btn" id="btnNovoAluno">+ Novo aluno</button>
   </div>
 
   <!-- ALUNOS -->
@@ -126,27 +136,95 @@
   </section>
 </main>
 
-<!-- NOVO ALUNO -->
+<!-- NOVO CADASTRO (completo, estilo EVO) -->
 <dialog id="dlgAluno">
-  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 560px; max-width: 100%;">
-    <h2 id="dlgAlunoTitulo">Novo aluno</h2>
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 640px; max-width: 100%; max-height: 86vh; overflow-y: auto;">
+    <h2 id="dlgAlunoTitulo">Novo cadastro</h2>
+
+    <div class="linha-flex" style="gap: 14px;">
+      <img id="aFotoPrev" alt="" hidden style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--roxo);">
+      <span id="aFotoVazia" class="avatar" style="width: 56px; height: 56px;">📷</span>
+      <label class="btn sec mini" style="cursor: pointer;">📷 Foto de perfil
+        <input id="aFoto" type="file" accept="image/*" capture="user" hidden></label>
+    </div>
+
     <div class="grid-2">
-      <div class="campo"><label>Nome completo</label><input id="aNome" required></div>
-      <div class="campo"><label>CPF</label><input id="aCpf" inputmode="numeric" placeholder="só números"></div>
+      <div class="campo"><label>Nome *</label><input id="aNome" required></div>
+      <div class="campo"><label>Sobrenome *</label><input id="aSobrenome" required></div>
     </div>
     <div class="grid-2">
-      <div class="campo"><label>WhatsApp</label><input id="aZap" inputmode="numeric" placeholder="21999998888"></div>
+      <div class="campo"><label>CPF (CIN)</label><input id="aCpf" inputmode="numeric" placeholder="só números"></div>
+      <div class="campo"><label>Data de Nascimento</label><input id="aNasc" type="date"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Gênero</label>
+        <select id="aGenero"><option value=""></option><option>Feminino</option><option>Masculino</option><option>Outro / prefiro não informar</option></select></div>
+      <div class="campo"><label>RG</label><input id="aRg"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Nome da pessoa responsável</label><input id="aResp" placeholder="se menor de idade"></div>
+      <div class="campo"><label>Wellhub ID / TotalPass</label><input id="aWellhub"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="campo"><label>CEP</label><input id="aCep" inputmode="numeric" maxlength="9" placeholder="preenche o endereço sozinho"></div>
+      <div class="campo"><label>Endereço</label><input id="aEndereco"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Número</label><input id="aNumero"></div>
+      <div class="campo"><label>Complemento</label><input id="aComplemento"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Bairro</label><input id="aBairro"></div>
+      <div class="linha-flex" style="gap: 10px;">
+        <div class="campo" style="flex: 2;"><label>Cidade</label><input id="aCidade"></div>
+        <div class="campo" style="flex: 1;"><label>UF</label><input id="aUf" maxlength="2" style="text-transform: uppercase;"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="linha-flex" style="gap: 10px;">
+        <div class="campo" style="width: 84px;"><label>DDI</label><input id="aDdi" value="+55"></div>
+        <div class="campo" style="flex: 1;"><label>Telefone Celular *</label><input id="aZap" inputmode="numeric" required placeholder="21999998888"></div>
+      </div>
       <div class="campo"><label>E-mail</label><input id="aEmail" type="email"></div>
     </div>
+
     <div class="grid-2">
-      <div class="campo"><label>Nascimento</label><input id="aNasc" type="date"></div>
-      <div class="campo"><label>Observações</label><input id="aObs" placeholder="restrição médica, indicação…"></div>
+      <div class="campo"><label>Tipo de Visita</label>
+        <select id="aTipoVisita"><option value=""></option><option>Espontânea</option><option>Agendada</option><option>Aula experimental</option><option>Online</option><option>Evento</option></select></div>
+      <div class="campo"><label>Como conheceu</label>
+        <div class="linha-flex" style="gap: 6px;">
+          <select id="aComoConheceu" style="flex: 1;"></select>
+          <button type="button" class="btn sec mini" id="aComoMais" title="Adicionar opção">+</button>
+        </div></div>
     </div>
+    <div class="grid-2">
+      <div class="campo"><label>Indicação</label><input id="aIndicacao" placeholder="quem indicou"></div>
+      <div class="campo"><label>Consultor(a)</label><input id="aConsultor" placeholder="quem atendeu"></div>
+    </div>
+    <div class="campo"><label>Observações</label><input id="aObs" placeholder="restrição médica, metas…"></div>
+
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
-      <button class="btn" value="ok">Salvar aluno</button>
+      <button class="btn ok" value="ok">SALVAR</button>
     </div>
   </form>
+</dialog>
+
+<!-- NOVA VENDA (estilo EVO) -->
+<dialog id="dlgVenda">
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 520px; max-width: 100%;">
+    <h2>Nova Venda</h2>
+    <p class="muted" style="margin: 0;">Para quem você quer fazer uma venda?</p>
+    <input id="vBusca" placeholder="Pesquisar um cliente / oportunidade" autocomplete="off">
+    <div id="vResultados" style="max-height: 220px; overflow-y: auto;"></div>
+    <div style="border-top: 1px solid var(--linha); padding-top: 12px;">
+      <span class="muted">Criar cadastro</span><br>
+      <button class="btn sec mini" id="vNovoCadastro" style="margin-top: 6px;">👤+ Novo cadastro</button>
+    </div>
+    <div style="text-align: right;"><button class="btn sec" onclick="this.closest('dialog').close()">FECHAR</button></div>
+  </div>
 </dialog>
 
 <!-- FICHA DO ALUNO -->
@@ -358,12 +436,18 @@
       var prox = st.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "aberto"; })
         .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; })[0];
       return '<div class="aluno-linha" data-id="' + a.id + '">' +
-        '<span class="avatar">' + esc(a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase()) + "</span>" +
+        (a.fotoId ? '<img class="avatar" data-foto="' + a.fotoId + '" alt="" style="object-fit:cover;">' :
+          '<span class="avatar">' + esc(a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase()) + "</span>") +
         '<div class="aluno-info"><strong>' + esc(a.nome) + '</strong><div class="sub">' +
         (plano ? esc(plano.nome) + (c.valor ? " · " + S.fmtBRL(c.valor) + "/mês" : "") : "sem plano") + "</div></div>" +
         '<span class="tag ' + sit.cls + '">' + sit.rot + "</span>" +
         '<div class="venc">' + (prox ? "próx. venc.<br><strong>" + S.fmtData(prox.vencimento) + "</strong>" : "") + "</div></div>";
-    }).join("") : '<div class="vazio">Nenhum aluno aqui. Cadastre o primeiro em “+ Novo aluno”.</div>';
+    }).join("") : '<div class="vazio">Nenhum aluno aqui. Cadastre o primeiro em “👤+ Novo cadastro”.</div>';
+
+    // carrega as fotos de perfil
+    Array.prototype.forEach.call(document.querySelectorAll("img.avatar[data-foto]"), function (img) {
+      S.getPhoto(img.getAttribute("data-foto")).then(function (data) { if (data) img.src = data; });
+    });
   }
 
   function renderReceber(st) {
@@ -427,7 +511,9 @@
 
     $("fAvatar").textContent = a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
     $("fNome").textContent = a.nome;
-    $("fSub").textContent = [(a.cpf ? "CPF " + a.cpf : ""), a.zap, a.email, (a.obs || "")].filter(Boolean).join(" · ");
+    var endereco = [a.endereco, a.numero, a.bairro, a.cidade && (a.cidade + (a.uf ? "/" + a.uf : ""))].filter(Boolean).join(", ");
+    $("fSub").textContent = [(a.cpf ? "CPF " + a.cpf : ""), a.zap, a.email, endereco,
+      (a.comoConheceu ? "veio por: " + a.comoConheceu : ""), (a.consultor ? "consultor(a): " + a.consultor : ""), (a.obs || "")].filter(Boolean).join(" · ");
     $("fStatus").innerHTML = '<span class="tag ' + sit.cls + '">' + sit.rot + "</span>";
 
     var acoes = [];
@@ -481,27 +567,153 @@
     render();
   }
 
+  // ---------- boas-vindas + atalhos ----------
+  (function () {
+    try {
+      var p = JSON.parse(localStorage.getItem("mtapp:perfil"));
+      if (p && p.nome) $("boasVindas").textContent = "Que bom ter você aqui, " + p.nome.toUpperCase() + "!";
+    } catch (e) {}
+  })();
+  $("atDashboard").onclick = function () {
+    document.querySelector('[data-v=alunos]').click();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // ---------- como conheceu (opções configuráveis) ----------
+  var COMO_PADRAO = ["Instagram", "Indicação", "Fachada / passou na porta", "Google", "Facebook", "Gympass / Wellhub", "TotalPass", "Outro"];
+  function opcoesComo() {
+    var st = load();
+    return (st.config && st.config.comoConheceu) || COMO_PADRAO;
+  }
+  function preencheComo(valor) {
+    $("aComoConheceu").innerHTML = '<option value=""></option>' + opcoesComo().map(function (o) {
+      return "<option" + (o === valor ? " selected" : "") + ">" + esc(o) + "</option>";
+    }).join("");
+  }
+  $("aComoMais").onclick = function () {
+    var nova = prompt("Nova opção de 'Como conheceu':");
+    if (!nova) return;
+    var st = load();
+    st.config = st.config || {};
+    st.config.comoConheceu = opcoesComo().concat(nova);
+    S.write("alunos", st);
+    preencheComo(nova);
+  };
+
+  // ---------- CEP → endereço automático (ViaCEP) ----------
+  $("aCep").addEventListener("change", function () {
+    var cep = this.value.replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    fetch("https://viacep.com.br/ws/" + cep + "/json/").then(function (r) { return r.json(); }).then(function (d) {
+      if (d.erro) return;
+      if (!$("aEndereco").value) $("aEndereco").value = d.logradouro || "";
+      if (!$("aBairro").value) $("aBairro").value = d.bairro || "";
+      if (!$("aCidade").value) $("aCidade").value = d.localidade || "";
+      if (!$("aUf").value) $("aUf").value = d.uf || "";
+    }).catch(function () {});
+  });
+
+  // ---------- foto de perfil ----------
+  var fotoPendente = null; // id salvo no IndexedDB
+  $("aFoto").addEventListener("change", function () {
+    var f = this.files[0];
+    if (!f) return;
+    S.savePhoto(f).then(function (fid) {
+      fotoPendente = fid;
+      S.getPhoto(fid).then(function (data) {
+        if (data) { $("aFotoPrev").src = data; $("aFotoPrev").hidden = false; $("aFotoVazia").hidden = true; }
+      });
+    }, function () { alert("Não foi possível carregar a foto."); });
+  });
+
+  var CAMPOS_A = { aNome: "pnome", aSobrenome: "sobrenome", aCpf: "cpf", aNasc: "nasc", aGenero: "genero", aRg: "rg", aResp: "responsavel", aWellhub: "wellhub", aCep: "cep", aEndereco: "endereco", aNumero: "numero", aComplemento: "complemento", aBairro: "bairro", aCidade: "cidade", aUf: "uf", aDdi: "ddi", aZap: "zap", aEmail: "email", aTipoVisita: "tipoVisita", aIndicacao: "indicacao", aConsultor: "consultor", aObs: "obs" };
+
   // novo/editar aluno
   var editandoId = null;
-  $("btnNovoAluno").onclick = function () {
-    editandoId = null;
-    $("dlgAlunoTitulo").textContent = "Novo aluno";
-    ["aNome", "aCpf", "aZap", "aEmail", "aNasc", "aObs"].forEach(function (i) { $(i).value = ""; });
+  function abreCadastro(a) {
+    editandoId = a ? a.id : null;
+    fotoPendente = a ? (a.fotoId || null) : null;
+    $("dlgAlunoTitulo").textContent = a ? "Editar cadastro" : "Novo cadastro";
+    Object.keys(CAMPOS_A).forEach(function (id) {
+      var campo = CAMPOS_A[id];
+      var v = a ? (a[campo] != null ? a[campo] : "") : "";
+      if (id === "aDdi" && !v) v = "+55";
+      if (id === "aNome" && a && !a.pnome) v = (a.nome || "").split(" ")[0];
+      if (id === "aSobrenome" && a && !a.sobrenome) v = (a.nome || "").split(" ").slice(1).join(" ");
+      $(id).value = v;
+    });
+    preencheComo(a ? a.comoConheceu : "");
+    $("aFotoPrev").hidden = true; $("aFotoVazia").hidden = false;
+    if (a && a.fotoId) S.getPhoto(a.fotoId).then(function (data) {
+      if (data) { $("aFotoPrev").src = data; $("aFotoPrev").hidden = false; $("aFotoVazia").hidden = true; }
+    });
     $("dlgAluno").showModal();
-  };
+  }
+  $("btnNovoAluno").onclick = function () { abreCadastro(null); };
+
   $("dlgAluno").addEventListener("close", function () {
     if ($("dlgAluno").returnValue !== "ok") return;
     var st = load();
+    var alvo;
     if (editandoId) {
-      var a = st.alunos.find(function (x) { return x.id === editandoId; });
-      if (a) { a.nome = $("aNome").value.trim(); a.cpf = $("aCpf").value.trim(); a.zap = $("aZap").value.trim(); a.email = $("aEmail").value.trim(); a.nasc = $("aNasc").value; a.obs = $("aObs").value.trim(); }
-      save(st);
-      if (fichaId) abreFicha(fichaId);
+      alvo = st.alunos.find(function (x) { return x.id === editandoId; });
+      if (!alvo) return;
     } else {
-      st.alunos.push({ id: S.uid(), nome: $("aNome").value.trim(), cpf: $("aCpf").value.trim(), zap: $("aZap").value.trim(), email: $("aEmail").value.trim(), nasc: $("aNasc").value, obs: $("aObs").value.trim(), criado: S.todayISO(), status: "ativo", contratos: [], checkins: [] });
-      save(st);
+      alvo = { id: S.uid(), criado: S.todayISO(), status: "ativo", contratos: [], checkins: [] };
+      st.alunos.push(alvo);
     }
+    Object.keys(CAMPOS_A).forEach(function (id) {
+      alvo[CAMPOS_A[id]] = $(id).value.trim();
+    });
+    alvo.comoConheceu = $("aComoConheceu").value;
+    alvo.nome = (alvo.pnome + " " + alvo.sobrenome).trim();
+    if (fotoPendente) alvo.fotoId = fotoPendente;
+    save(st);
+    if (editandoId && fichaId) abreFicha(fichaId);
   });
+
+  // ---------- nova venda (estilo EVO) ----------
+  function renderVendaBusca() {
+    var st = load();
+    var q = $("vBusca").value.trim().toLowerCase();
+    var achados = st.alunos.filter(function (a) {
+      return a.status !== "inativo" && (!q || (a.nome + " " + (a.cpf || "") + " " + (a.zap || "")).toLowerCase().indexOf(q) !== -1);
+    }).slice(0, 8);
+    $("vResultados").innerHTML = achados.map(function (a) {
+      var c = contratoAtivo(a);
+      return '<div class="aluno-linha" data-venda="' + a.id + '" style="padding: 9px 12px;">' +
+        '<span class="avatar" style="width:32px;height:32px;font-size:12px;">' + esc(a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase()) + "</span>" +
+        '<div class="aluno-info"><strong style="font-size:14px;">' + esc(a.nome) + '</strong><div class="sub">' + (c ? "já tem contrato ativo" : "sem contrato — pronto para vender") + "</div></div></div>";
+    }).join("") || '<div class="muted" style="padding: 8px 0;">' + (q ? "Ninguém encontrado — crie o cadastro abaixo." : "Digite para buscar.") + "</div>";
+  }
+  $("btnNovaVenda").onclick = function () {
+    $("vBusca").value = "";
+    renderVendaBusca();
+    $("dlgVenda").showModal();
+    $("vBusca").focus();
+  };
+  $("vBusca").addEventListener("input", renderVendaBusca);
+  $("vResultados").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-venda]");
+    if (!el) return;
+    $("dlgVenda").close();
+    fichaId = el.getAttribute("data-venda");
+    abrirMatricula();
+  });
+  $("vNovoCadastro").onclick = function () {
+    $("dlgVenda").close();
+    abreCadastro(null);
+  };
+
+  function abrirMatricula() {
+    var st = load();
+    $("mPlano").innerHTML = st.planos.map(function (p) {
+      return '<option value="' + p.id + '">' + esc(p.nome) + (p.tipo !== "agregador" ? " — " + S.fmtBRL(p.valor) + "/mês" : "") + "</option>";
+    }).join("");
+    $("mInicio").value = S.todayISO();
+    $("mValor").value = "";
+    $("dlgMatricula").showModal();
+  }
 
   $("listaAlunos").addEventListener("click", function (e) {
     var linha = e.target.closest("[data-id]");
@@ -519,12 +731,7 @@
     var c = contratoAtivo(a);
 
     if (acao === "matricular") {
-      $("mPlano").innerHTML = st.planos.map(function (p) {
-        return '<option value="' + p.id + '">' + esc(p.nome) + (p.tipo !== "agregador" ? " — " + S.fmtBRL(p.valor) + "/mês" : "") + "</option>";
-      }).join("");
-      $("mInicio").value = S.todayISO();
-      $("mValor").value = "";
-      $("dlgMatricula").showModal();
+      abrirMatricula();
       return;
     }
     if (acao === "congelar") {
@@ -545,11 +752,7 @@
       save(st); abreFicha(fichaId); return;
     }
     if (acao === "editar") {
-      editandoId = a.id;
-      $("dlgAlunoTitulo").textContent = "Editar aluno";
-      $("aNome").value = a.nome; $("aCpf").value = a.cpf || ""; $("aZap").value = a.zap || "";
-      $("aEmail").value = a.email || ""; $("aNasc").value = a.nasc || ""; $("aObs").value = a.obs || "";
-      $("dlgAluno").showModal(); return;
+      abreCadastro(a); return;
     }
     if (acao === "inativar") {
       a.status = "inativo";
