@@ -6,6 +6,7 @@
   --ok: #16a34a; --alerta: #d97706; --erro: #dc2626;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; padding: 0; }
 body { background: var(--fundo); color: var(--texto); font-family: "Archivo", system-ui, sans-serif; }
 

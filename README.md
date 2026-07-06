@@ -17,6 +17,7 @@ Portal web do curso **Método Torque · Gestão de Academias de Alta Performance
 
 ### Programas do dia a dia
 
+- **🏋 Gestão de Alunos** — o coração estilo EVO: cadastro completo de alunos, planos configuráveis (recorrente, à vista, agregador Gympass/TotalPass), matrícula que gera as mensalidades do contrato automaticamente, baixa de pagamento, congelamento/cancelamento, check-in da recepção com **bloqueio automático a partir de 15 dias de atraso** (regra D+15 do curso) e integração de mão dupla com a régua de cobrança: mensalidade vencida entra sozinha na Inadimplência, pagamento em qualquer um dos dois reflete no outro.
 - **🎯 Metas de Vendas** — cadastre vendedoras, defina metas mensais (matrículas e receita), lance cada venda em segundos e acompanhe ranking + projeção do fim do mês.
 - **🔧 Central de Manutenção** — chamados de aparelhos, predial e limpeza com foto (tirada na hora pelo celular), prioridade, agendamento de conserto/retorno e alerta de atraso.
 - **✅ Checklist do Dia** — abertura e fechamento com os itens do Módulo 6 já carregados; cada tarefa tem responsável e hora limite, e item atrasado gera **mensagem de cobrança pronta no WhatsApp**.
