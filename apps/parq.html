@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PAR-Q Digital — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .duas { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .duas { grid-template-columns: 1fr; } }
+  .lista-alunos { display: flex; flex-direction: column; max-height: 68vh; overflow-y: auto; }
+  .al { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--linha); cursor: pointer; background: #fff; }
+  .al:hover { background: #f6f4fa; }
+  .al.ativo { border-left: 3px solid var(--roxo); background: #f1ecfb; }
+  .al .info { flex: 1; }
+  .al .info strong { font-size: 13.5px; display: block; }
+  .al .info .sub { font-size: 11.5px; color: var(--cinza); }
+  .pergunta { padding: 12px 0; border-bottom: 1px solid var(--fundo); }
+  .pergunta p { margin: 0 0 8px; font-size: 14px; }
+  .pergunta .opcoes { display: flex; gap: 14px; }
+  .pergunta label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 600; cursor: pointer; }
+  .pergunta input { width: auto; }
+  .veredito { padding: 16px; text-align: center; font-weight: 800; font-size: 16px; margin-top: 14px; }
+  .veredito.apto { background: rgba(22,163,74,.1); color: var(--ok); }
+  .veredito.medico { background: rgba(220,38,38,.08); color: var(--erro); }
+  @media print { .topo, .no-print, .lista-alunos { display: none !important; } .duas { grid-template-columns: 1fr; } body { background: #fff; } .corpo { padding: 0; max-width: none; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · DADOS DE SAÚDE</span>
+    <h1>PAR-Q Digital</h1>
+    </div>
+  </div>
+  <p>O questionário de prontidão obrigatório antes do primeiro treino — digital, guardado no cadastro e com o parecer na hora.</p>
+</header>
+
+<main class="corpo">
+  <div class="duas">
+    <div class="card" style="padding: 0;">
+      <div style="padding: 12px;"><input id="busca" placeholder="Pesquisar aluno…"></div>
+      <div class="lista-alunos" id="listaAlunos"></div>
+    </div>
+    <div class="card" id="painel">
+      <div class="vazio">Escolha um aluno para preencher ou consultar o PAR-Q.</div>
+    </div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var PERGUNTAS = [
+    "Algum médico já disse que você possui um problema de coração e recomendou que você só praticasse atividade física sob supervisão médica?",
+    "Você sente dor no peito quando pratica atividade física?",
+    "No último mês, você sentiu dor no peito quando NÃO estava praticando atividade física?",
+    "Você perde o equilíbrio por tontura ou já perdeu a consciência alguma vez?",
+    "Você tem algum problema ósseo ou articular que poderia piorar com a prática de atividade física?",
+    "Atualmente algum médico prescreve medicamentos para pressão arterial ou coração?",
+    "Você conhece alguma outra razão pela qual não deveria praticar atividade física?",
+  ];
+
+  function load() { return S.read("parq", { fichas: {} }); }
+  var busca = "", alunoSel = null;
+
+  function alunosAtivos() {
+    return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  }
+
+  function renderLista() {
+    var st = load();
+    var q = busca.trim().toLowerCase();
+    var alunos = alunosAtivos().filter(function (a) { return !q || a.nome.toLowerCase().indexOf(q) !== -1; });
+    // sem PAR-Q primeiro
+    alunos.sort(function (a, b) { return (st.fichas[a.id] ? 1 : 0) - (st.fichas[b.id] ? 1 : 0); });
+    $("listaAlunos").innerHTML = alunos.length ? alunos.map(function (a) {
+      var f = st.fichas[a.id];
+      return '<div class="al' + (a.id === alunoSel ? " ativo" : "") + '" data-al="' + a.id + '">' +
+        '<div class="info"><strong>' + esc(a.nome) + '</strong><span class="sub">' +
+        (f ? "preenchido em " + S.fmtData(f.data) : "sem PAR-Q") + "</span></div>" +
+        (f ? (f.temSim ? '<span class="tag erro">AVAL. MÉDICA</span>' : '<span class="tag ok">APTO ✓</span>') :
+          '<span class="tag alerta">PENDENTE</span>') + "</div>";
+    }).join("") : '<div class="vazio" style="margin: 12px;">Nenhum aluno.</div>';
+  }
+
+  function renderPainel() {
+    var st = load();
+    var aluno = alunosAtivos().find(function (a) { return a.id === alunoSel; });
+    if (!aluno) { $("painel").innerHTML = '<div class="vazio">Escolha um aluno para preencher ou consultar o PAR-Q.</div>'; return; }
+    var f = st.fichas[aluno.id];
+    $("painel").innerHTML =
+      '<div class="linha-flex no-print" style="justify-content: space-between;">' +
+      "<h2 style='font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--texto); margin: 0;'>PAR-Q — " + esc(aluno.nome) + "</h2>" +
+      (f ? '<div class="linha-flex"><button class="btn sec mini" onclick="window.print()">🖨</button><button class="btn perigo mini" id="btnRefazer">Refazer</button></div>' : "") +
+      "</div>" +
+      PERGUNTAS.map(function (p, i) {
+        var resp = f ? f.respostas[i] : null;
+        return '<div class="pergunta"><p><strong>' + (i + 1) + ".</strong> " + p + "</p>" +
+          '<div class="opcoes">' +
+          '<label><input type="radio" name="q' + i + '" value="sim"' + (resp === "sim" ? " checked" : "") + (f ? " disabled" : "") + "> Sim</label>" +
+          '<label><input type="radio" name="q' + i + '" value="nao"' + (resp === "nao" ? " checked" : "") + (f ? " disabled" : "") + "> Não</label>" +
+          "</div></div>";
+      }).join("") +
+      (f
+        ? '<div class="veredito ' + (f.temSim ? "medico" : "apto") + '">' +
+          (f.temSim ? "⚠ ENCAMINHAR PARA AVALIAÇÃO MÉDICA antes de treinar" : "✅ APTO PARA ATIVIDADE FÍSICA") +
+          '</div><p class="muted" style="margin-top: 10px;">Preenchido em ' + S.fmtData(f.data) + " · declarado por: " + esc(f.assinatura) + "</p>"
+        : '<div class="no-print" style="margin-top: 16px;">' +
+          '<div class="campo"><label>Declaro que as respostas são verdadeiras (digite o nome completo) *</label><input id="fAssinatura" placeholder="' + esc(aluno.nome) + '"></div>' +
+          '<button class="btn" id="btnSalvarParq" style="margin-top: 10px;">Salvar PAR-Q</button></div>');
+
+    var salvar = $("btnSalvarParq");
+    if (salvar) salvar.onclick = function () {
+      var respostas = [], falta = false;
+      PERGUNTAS.forEach(function (_, i) {
+        var m = document.querySelector('input[name="q' + i + '"]:checked');
+        if (!m) falta = true;
+        else respostas.push(m.value);
+      });
+      if (falta) { alert("Responda todas as " + PERGUNTAS.length + " perguntas."); return; }
+      var ass = $("fAssinatura").value.trim();
+      if (!ass) { alert("Digite o nome completo como declaração."); return; }
+      var st2 = load();
+      st2.fichas[aluno.id] = {
+        data: S.todayISO(), respostas: respostas,
+        temSim: respostas.indexOf("sim") !== -1, assinatura: ass,
+      };
+      S.write("parq", st2);
+      renderLista(); renderPainel();
+    };
+    var refazer = $("btnRefazer");
+    if (refazer) refazer.onclick = function () {
+      if (!confirm("Refazer o PAR-Q apaga o atual. Continuar?")) return;
+      var st2 = load();
+      delete st2.fichas[aluno.id];
+      S.write("parq", st2);
+      renderLista(); renderPainel();
+    };
+  }
+
+  $("busca").addEventListener("input", function () { busca = this.value; renderLista(); });
+  $("listaAlunos").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-al]");
+    if (!el) return;
+    alunoSel = el.getAttribute("data-al");
+    renderLista(); renderPainel();
+  });
+
+  S.onChange(function (k) { if (k === "parq" || k === "alunos") { renderLista(); renderPainel(); } });
+  renderLista(); renderPainel();
+})();
+</script>
+</body>
+</html>

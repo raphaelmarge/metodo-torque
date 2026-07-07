@@ -145,6 +145,7 @@
   });
   $("cfgValor").addEventListener("change", function () {
     var st = load();
+    if (st.valorPadrao === (+this.value || 0)) return;
     st.valorPadrao = +this.value || 0;
     save(st);
   });

@@ -140,6 +140,7 @@
 
   $("pctPadrao").addEventListener("change", function () {
     var c = cfg();
+    if (c.pctPadrao === (+this.value || 0)) return;
     c.pctPadrao = +this.value || 0;
     S.write("comissoes", c);
     render();

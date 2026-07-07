@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Segmentação de Clientes — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .filtros { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .filtros .campo { min-width: 150px; }
+  .resultado-linha { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .resultado-linha + .resultado-linha { margin-top: -1px; }
+  .resultado-linha .quem { flex: 1; min-width: 170px; }
+  .resultado-linha .quem strong { font-size: 14px; }
+  .resultado-linha .quem .sub { font-size: 12px; color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM</span>
+    <h1>Segmentação de Clientes</h1>
+    </div>
+  </div>
+  <p>Combine filtros e encontre exatamente quem você procura — depois exporte a lista ou dispare a mensagem certa, um a um, direto no WhatsApp.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card">
+    <div class="filtros">
+      <div class="campo"><label>Status</label>
+        <select id="fStatus"><option value="ativos">Ativos</option><option value="inativos">Inativos / sem contrato</option><option value="todos">Todos</option></select>
+      </div>
+      <div class="campo"><label>Plano</label><select id="fPlano"><option value="">Todos</option></select></div>
+      <div class="campo"><label>Pagamento</label>
+        <select id="fPag"><option value="">Tanto faz</option><option value="emdia">Em dia</option><option value="atrasado">Atrasado</option></select>
+      </div>
+      <div class="campo"><label>Sem treinar há</label>
+        <select id="fSumido"><option value="">Tanto faz</option><option value="7">7+ dias</option><option value="15">15+ dias</option><option value="30">30+ dias</option></select>
+      </div>
+      <div class="campo"><label>Consultor(a)</label><select id="fConsultor"><option value="">Todos</option></select></div>
+      <div class="campo"><label style="visibility: hidden;">.</label>
+        <label style="display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 600; font-size: 13px;">
+          <input type="checkbox" id="fAniver" style="width: auto;">🎂 aniversariantes do mês
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <strong id="contagem" style="color: var(--roxo); font-size: 15px;"></strong>
+    <div class="linha-flex">
+      <div class="campo" style="min-width: 260px; margin: 0;"><input id="msgPadrao" placeholder="Mensagem para o WhatsApp (usa {nome})…"></div>
+      <button class="btn sec" id="btnCsv">⬇ Exportar CSV</button>
+      <button class="btn sec" id="btnCopiar">📋 Copiar telefones</button>
+    </div>
+  </div>
+
+  <div id="resultados"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function stAlunos() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  function contratoAtivo(a) { return (a.contratos || []).find(function (c) { return c.status === "ativo" || c.status === "congelado"; }) || null; }
+  function diasAtraso(st, a) {
+    var hoje = S.todayISO(), pior = 0;
+    st.recebiveis.forEach(function (r) {
+      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
+        var d = Math.round((new Date(hoje) - new Date(r.vencimento)) / 864e5);
+        if (d > pior) pior = d;
+      }
+    });
+    return pior;
+  }
+  function ultimoCheckin(a) {
+    var ult = null;
+    (a.checkins || []).forEach(function (t) { var d = (t || "").slice(0, 10); if (!ult || d > ult) ult = d; });
+    return ult;
+  }
+
+  function filtra() {
+    var st = stAlunos();
+    var hoje = S.todayISO(), mes = hoje.slice(5, 7);
+    return st.alunos.filter(function (a) {
+      var c = contratoAtivo(a);
+      var ativo = a.status !== "inativo" && !!c;
+      if ($("fStatus").value === "ativos" && !ativo) return false;
+      if ($("fStatus").value === "inativos" && ativo) return false;
+      if ($("fPlano").value && (!c || c.planoId !== $("fPlano").value)) return false;
+      var atras = diasAtraso(st, a);
+      if ($("fPag").value === "emdia" && atras > 0) return false;
+      if ($("fPag").value === "atrasado" && atras === 0) return false;
+      if ($("fSumido").value) {
+        var ult = ultimoCheckin(a);
+        var dias = ult ? Math.floor((new Date(hoje) - new Date(ult)) / 864e5) : 9999;
+        if (dias < +$("fSumido").value) return false;
+      }
+      if ($("fConsultor").value && (a.consultor || "") !== $("fConsultor").value) return false;
+      if ($("fAniver").checked && (a.nasc || "").slice(5, 7) !== mes) return false;
+      return true;
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  }
+
+  function render() {
+    var st = stAlunos();
+    // combos
+    $("fPlano").innerHTML = '<option value="">Todos</option>' + st.planos.map(function (p) {
+      return '<option value="' + p.id + '">' + esc(p.nome) + "</option>";
+    }).join("");
+    var consultores = [];
+    st.alunos.forEach(function (a) { if (a.consultor && consultores.indexOf(a.consultor) === -1) consultores.push(a.consultor); });
+    $("fConsultor").innerHTML = '<option value="">Todos</option>' + consultores.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("");
+    aplicar();
+  }
+
+  var atual = [];
+  function aplicar() {
+    var st = stAlunos();
+    atual = filtra();
+    $("contagem").textContent = atual.length + " cliente(s) no segmento";
+    var msg = $("msgPadrao").value.trim();
+    $("resultados").innerHTML = atual.length ? atual.map(function (a) {
+      var c = contratoAtivo(a);
+      var plano = c ? (st.planos.find(function (p) { return p.id === c.planoId; }) || {}).nome : null;
+      var ult = ultimoCheckin(a);
+      var atras = diasAtraso(st, a);
+      var texto = (msg || "Oi {nome}! Tudo bem?").split("{nome}").join(a.nome.split(" ")[0]);
+      return '<div class="resultado-linha"><div class="quem"><strong>' + esc(a.nome) + '</strong><div class="sub">' +
+        (plano ? esc(plano) + " · " : "sem contrato · ") +
+        (ult ? "último treino " + S.fmtData(ult) : "nunca treinou") +
+        (atras ? ' · <span style="color:var(--erro)">' + atras + "d de atraso</span>" : "") + "</div></div>" +
+        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+          String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(texto) + '">💬 WhatsApp</a>' : '<span class="muted">sem zap</span>') +
+        "</div>";
+    }).join("") : '<div class="vazio">Nenhum cliente com esses filtros.</div>';
+  }
+
+  ["fStatus", "fPlano", "fPag", "fSumido", "fConsultor"].forEach(function (id) {
+    $(id).addEventListener("change", aplicar);
+  });
+  $("fAniver").addEventListener("change", aplicar);
+  $("msgPadrao").addEventListener("input", aplicar);
+
+  $("btnCsv").onclick = function () {
+    var st = stAlunos();
+    var linhas = ["nome;telefone;email;plano;ultimo_treino"];
+    atual.forEach(function (a) {
+      var c = contratoAtivo(a);
+      var plano = c ? (st.planos.find(function (p) { return p.id === c.planoId; }) || {}).nome || "" : "";
+      linhas.push([a.nome, a.zap || "", a.email || "", plano, ultimoCheckin(a) || ""].join(";"));
+    });
+    var blob = new Blob(["﻿" + linhas.join("\n")], { type: "text/csv;charset=utf-8" });
+    var el = document.createElement("a");
+    el.href = URL.createObjectURL(blob);
+    el.download = "segmento-" + S.todayISO() + ".csv";
+    el.click();
+  };
+  $("btnCopiar").onclick = function () {
+    var tels = atual.map(function (a) { return a.zap; }).filter(Boolean).join(", ");
+    navigator.clipboard.writeText(tels).then(function () { alert("Telefones copiados: " + atual.filter(function (a) { return a.zap; }).length); },
+      function () { prompt("Copie os telefones:", tels); });
+  };
+
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
