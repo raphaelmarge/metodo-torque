@@ -146,17 +146,50 @@
   .btnzinho { padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--linha); background: #fff; color: var(--texto); cursor: pointer; border-radius: 4px; }
   .btnzinho:hover { border-color: var(--roxo); color: var(--roxo); }
 
-  @media (max-width: 900px) {
-    .menu { width: 200px; }
-    .conteudo { margin-left: 200px; }
+  /* botão hambúrguer (só aparece no celular) */
+  .hamb {
+    display: none; background: none; border: none; color: #fff; font-size: 22px;
+    cursor: pointer; padding: 4px 6px; margin-left: -4px; flex: none;
+  }
+  .menu-fundo { display: none; }
+
+  @media (max-width: 860px) {
+    .hamb { display: block; }
+    .topo { gap: 10px; padding: 0 12px; }
+    .topo .marca span { display: none; } /* só o ícone no celular */
     .topo .direita small { display: none; }
+    .topo .buscaGlobal { padding: 6px 10px; }
+    .acoes-topo { display: none; } /* os atalhos ficam na Home */
+
+    /* menu vira gaveta retrátil */
+    .menu {
+      width: 272px; max-width: 84vw;
+      transform: translateX(-105%); transition: transform .22s ease;
+      box-shadow: none; z-index: 45;
+    }
+    body.menu-aberto .menu { transform: none; box-shadow: 0 0 40px rgba(18,16,22,.45); }
+    .menu-fundo {
+      position: fixed; inset: 54px 0 0 0; background: rgba(18,16,22,.5);
+      z-index: 40; opacity: 0; pointer-events: none; transition: opacity .22s;
+    }
+    body.menu-aberto .menu-fundo { display: block; opacity: 1; pointer-events: auto; }
+
+    .conteudo { margin-left: 0; }
+    #quadro { min-height: calc(100vh - 54px); }
+    .pagina { padding: 18px 14px 50px; }
+    .dash-cab { flex-direction: column; align-items: flex-start; }
+    .atalhos .atalho { flex: 1 1 calc(50% - 12px); justify-content: center; padding: 14px 10px; }
+    .kpis { grid-template-columns: 1fr; }
+    #dvClientes > div[style], #dvVendas > div[style] { grid-template-columns: 1fr !important; }
+    input, select { font-size: 16px; } /* evita zoom automático do iPhone */
   }
 </style>
 </head>
 <body>
 
 <header class="topo">
-  <span class="marca"><img src="../assets/icons/icon.svg" alt="">TORQUE<span style="color:var(--lilas)">SYS</span></span>
+  <button class="hamb" id="btnMenu" aria-label="Abrir menu">☰</button>
+  <span class="marca"><img src="../assets/icons/icon.svg" alt=""><span>TORQUE<span style="color:var(--lilas)">SYS</span></span></span>
   <div class="buscaGlobal">🔍 <input id="buscaGlobal" placeholder="Pesquise por nome, sobrenome, e-mail, CPF (CIN) ou carteirinha"></div>
   <div class="acoes-topo">
     <button title="Novo cadastro" data-abrir="alunos.html?acao=novo">👤➕</button>
@@ -243,6 +276,7 @@
     <a class="item" data-url="../docs/trilha-guiada.html"><span class="ico">🧭</span>Central de ajuda</a>
   </div>
 </aside>
+<div class="menu-fundo" id="fundoMenu"></div>
 
 <main class="conteudo">
   <!-- HOME -->
@@ -400,10 +434,15 @@
     if ($("quadro").getAttribute("src") !== url) $("quadro").src = url;
   }
 
+  function fechaMenu() { document.body.classList.remove("menu-aberto"); }
+  $("btnMenu").onclick = function () { document.body.classList.toggle("menu-aberto"); };
+  $("fundoMenu").onclick = fechaMenu;
+
   document.querySelector(".menu").addEventListener("click", function (e) {
     var el = e.target.closest(".item");
     if (!el) return;
     e.preventDefault();
+    fechaMenu();
     var url = el.getAttribute("data-url");
     if (el.getAttribute("data-nova-aba")) { window.open(url, "_blank"); return; }
     ativa(el);
