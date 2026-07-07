@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resumo Gerencial — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 800px) { .colunas { grid-template-columns: 1fr; } }
+  .bloco { border: 1px solid var(--linha); background: #fff; margin-bottom: 14px; }
+  .bloco h3 {
+    margin: 0; padding: 10px 14px; background: var(--fundo); border-bottom: 1px solid var(--linha);
+    font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--cinza);
+  }
+  .bloco .corpo-bloco { padding: 8px 14px 12px; }
+  .kv { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--fundo); font-size: 13.5px; }
+  .kv:last-child { border-bottom: none; }
+  .kv strong { font-variant-numeric: tabular-nums; }
+  .kv .sub-rotulo { font-weight: 700; color: var(--roxo); }
+  .verde { color: var(--ok); } .vermelho { color: var(--erro); }
+  @media print {
+    .topo, .no-print { display: none !important; }
+    body { background: #fff; }
+    .corpo { padding: 0; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Resumo Gerencial</h1>
+    </div>
+  </div>
+  <p>O fechamento do mês numa página só, como no EVO: contas, status da base, movimentação, acessos por horário e os números que decidem o negócio.</p>
+</header>
+
+<main class="corpo">
+  <div class="card linha-flex no-print" style="justify-content: space-between; margin-bottom: 16px;">
+    <div class="linha-flex">
+      <label style="margin: 0;">Selecione o mês</label>
+      <select id="selMes" style="width: auto;"></select>
+    </div>
+    <button class="btn sec" onclick="window.print()">🖨 Imprimir</button>
+  </div>
+
+  <div style="text-align: center; margin-bottom: 12px;" class="only-print">
+    <strong id="tituloRel"></strong>
+  </div>
+
+  <div class="colunas">
+    <div>
+      <div class="bloco"><h3>CONTAS</h3><div class="corpo-bloco" id="bContas"></div></div>
+      <div class="bloco"><h3>ACESSO DE CLIENTES</h3><div class="corpo-bloco" id="bAcessos"></div></div>
+      <div class="bloco"><h3>VENDAS DE CONTRATOS</h3><div class="corpo-bloco" id="bVendas"></div></div>
+    </div>
+    <div>
+      <div class="bloco"><h3>STATUS</h3><div class="corpo-bloco" id="bStatus"></div></div>
+      <div class="bloco"><h3>MOVIMENTAÇÃO</h3><div class="corpo-bloco" id="bMov"></div></div>
+      <div class="bloco"><h3>INDICADORES</h3><div class="corpo-bloco" id="bInd"></div></div>
+    </div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function kv(rot, val, cls) { return '<div class="kv"><span>' + rot + '</span><strong class="' + (cls || "") + '">' + val + "</strong></div>"; }
+
+  var mes = S.monthKey(new Date());
+
+  function meses12() {
+    var arr = [], d = new Date();
+    for (var i = 0; i < 12; i++) {
+      var m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+      arr.push({ chave: S.monthKey(m), rotulo: m.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) });
+    }
+    return arr;
+  }
+
+  function render() {
+    var alunosSt = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var contasSt = S.read("contas", { contas: [] });
+    var exper = S.read("exper", { aulas: [] }).aulas;
+    var hoje = S.todayISO();
+
+    $("tituloRel").textContent = "Resumo Gerencial — " + (meses12().find(function (m) { return m.chave === mes; }) || {}).rotulo;
+
+    // ---------- CONTAS ----------
+    var ctsMes = contasSt.contas.filter(function (c) { return (c.vencimento || "").slice(0, 7) === mes && c.status !== "cancelado"; });
+    var pagas = ctsMes.filter(function (c) { return c.status === "pago"; }).reduce(function (t, c) { return t + +c.valor; }, 0);
+    var vencidasC = ctsMes.filter(function (c) { return c.status === "aberto" && c.vencimento < hoje; }).reduce(function (t, c) { return t + +c.valor; }, 0);
+    var recMes = alunosSt.recebiveis.filter(function (r) { return r.competencia === mes; });
+    var vendido = recMes.reduce(function (t, r) { return t + +r.valor; }, 0);
+    var recebido = alunosSt.recebiveis.filter(function (r) { return r.status === "pago" && (r.pagoEm || "").slice(0, 7) === mes; })
+      .reduce(function (t, r) { return t + +r.valor; }, 0);
+    var vencidoR = recMes.filter(function (r) { return r.status === "aberto" && r.vencimento < hoje; }).reduce(function (t, r) { return t + +r.valor; }, 0);
+    $("bContas").innerHTML =
+      kv("<span class='sub-rotulo'>Contas a pagar</span>", "") +
+      kv("Pagas", S.fmtBRL(pagas)) +
+      kv("Vencidas", S.fmtBRL(vencidasC), vencidasC ? "vermelho" : "") +
+      kv("<span class='sub-rotulo'>Contas a receber</span>", "") +
+      kv("Previsto (competência)", S.fmtBRL(vendido)) +
+      kv("Recebido", S.fmtBRL(recebido), "verde") +
+      kv("Vencido", S.fmtBRL(vencidoR), vencidoR ? "vermelho" : "") +
+      kv("Saldo (recebido − pago)", S.fmtBRL(recebido - pagas), recebido - pagas >= 0 ? "verde" : "vermelho");
+
+    // ---------- STATUS ----------
+    var ativos = 0, suspensos = 0, inativos = 0;
+    alunosSt.alunos.forEach(function (a) {
+      if (a.status === "inativo") { inativos++; return; }
+      var c = (a.contratos || []).find(function (x) { return x.status === "ativo" || x.status === "congelado"; });
+      if (!c) { inativos++; return; }
+      ativos++;
+      if (c.status === "congelado") suspensos++;
+    });
+    var visitas = exper.filter(function (a) { return (a.data || "").slice(0, 7) === mes && (a.status === "compareceu" || a.status === "matriculado"); }).length;
+    $("bStatus").innerHTML =
+      kv("Visitas no mês", visitas) +
+      kv("Clientes ativos", ativos, "verde") +
+      kv("Clientes inativos / sem contrato", inativos) +
+      kv("Clientes suspensos", suspensos);
+
+    // ---------- MOVIMENTAÇÃO ----------
+    var conversoes = exper.filter(function (a) { return (a.data || "").slice(0, 7) === mes && a.status === "matriculado"; }).length;
+    var suspensoesMes = 0, cancelamentosMes = 0, novosContratos = 0, renovacoes = 0;
+    alunosSt.alunos.forEach(function (a) {
+      var cs = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+      cs.forEach(function (c, i) {
+        if ((c.congeladoEm || "").slice(0, 7) === mes) suspensoesMes++;
+        if ((c.canceladoEm || "").slice(0, 7) === mes) cancelamentosMes++;
+        if ((c.inicio || "").slice(0, 7) === mes) {
+          novosContratos++;
+          if (i > 0) renovacoes++;
+        }
+      });
+    });
+    $("bMov").innerHTML =
+      kv("Conversões (experimental → matrícula)", conversoes, "verde") +
+      kv("Contratos novos no mês", novosContratos) +
+      kv("Renovações / rematrículas", renovacoes) +
+      kv("Suspensões", suspensoesMes) +
+      kv("Cancelamentos", cancelamentosMes, cancelamentosMes ? "vermelho" : "");
+
+    // ---------- ACESSOS por faixa ----------
+    var faixas = [[0, 5, "00:00 às 04:59"], [5, 12, "5:00 às 11:59"], [12, 17, "12:00 às 16:59"], [17, 22, "17:00 às 21:59"], [22, 24, "22:00 às 23:59"]];
+    var cont = [0, 0, 0, 0, 0], total = 0, dias = {};
+    alunosSt.alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        if ((t || "").slice(0, 7) !== mes) return;
+        total++;
+        dias[t.slice(0, 10)] = 1;
+        var h = new Date(t).getHours();
+        faixas.forEach(function (f, i) { if (h >= f[0] && h < f[1]) cont[i]++; });
+      });
+    });
+    var nDias = Object.keys(dias).length;
+    $("bAcessos").innerHTML =
+      faixas.map(function (f, i) { return kv(f[2], cont[i]); }).join("") +
+      kv("Acesso por dia (média)", nDias ? (total / nDias).toFixed(1).replace(".", ",") : 0) +
+      kv("Total de dias com acesso", nDias) +
+      kv("Total de acessos", total, "verde");
+
+    // ---------- VENDAS DE CONTRATOS (ranking de planos) ----------
+    var porPlano = {};
+    alunosSt.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) !== mes) return;
+        var plano = alunosSt.planos.find(function (p) { return p.id === c.planoId; });
+        var nome = plano ? plano.nome : "Sem plano";
+        porPlano[nome] = (porPlano[nome] || 0) + 1;
+      });
+    });
+    var ranking = Object.keys(porPlano).map(function (n) { return { nome: n, qtd: porPlano[n] }; })
+      .sort(function (a, b) { return b.qtd - a.qtd; }).slice(0, 5);
+    $("bVendas").innerHTML = ranking.length
+      ? ranking.map(function (r, i) { return kv((i + 1) + "º — " + esc(r.nome), r.qtd + " vendido(s)"); }).join("")
+      : '<div class="muted" style="padding: 8px 0;">Nenhum contrato vendido neste mês.</div>';
+
+    // ---------- INDICADORES ----------
+    var recValidos = recMes.filter(function (r) { return +r.valor > 0; });
+    var ticket = recValidos.length ? recValidos.reduce(function (t, r) { return t + +r.valor; }, 0) / recValidos.length : 0;
+    var gastoMes = contasSt.contas.filter(function (c) { return c.status === "pago" && (c.pagoEm || "").slice(0, 7) === mes; })
+      .reduce(function (t, c) { return t + +c.valor; }, 0);
+    var custoCliente = ativos ? gastoMes / ativos : 0;
+    var vendidosMes = [];
+    alunosSt.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) === mes && +c.valor > 0) vendidosMes.push(+c.valor);
+      });
+    });
+    var mensalMedia = vendidosMes.length ? vendidosMes.reduce(function (t, v) { return t + v; }, 0) / vendidosMes.length : 0;
+    $("bInd").innerHTML =
+      kv("Ticket médio", S.fmtBRL(ticket)) +
+      kv("Custo por cliente", S.fmtBRL(custoCliente)) +
+      kv("Mensalidade média dos contratos vendidos", S.fmtBRL(mensalMedia)) +
+      kv("Resultado do mês (recebido − gastos)", S.fmtBRL(recebido - gastoMes), recebido - gastoMes >= 0 ? "verde" : "vermelho") +
+      kv("Churn do mês", (ativos + cancelamentosMes ? (cancelamentosMes / (ativos + cancelamentosMes) * 100) : 0).toFixed(1).replace(".", ",") + "%");
+  }
+
+  $("selMes").innerHTML = meses12().map(function (m) {
+    return '<option value="' + m.chave + '">' + m.rotulo + "</option>";
+  }).join("");
+  $("selMes").addEventListener("change", function () { mes = this.value; render(); });
+
+  S.onChange(function () { render(); });
+  render();
+})();
+</script>
+</body>
+</html>
