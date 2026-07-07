@@ -11,6 +11,6 @@
 // Enquanto url/anonKey estiverem vazios, o portal usa o modo local
 // (código de acesso + cadastro salvo no aparelho, sem sincronização).
 self.MT_CLOUD = {
-  url: "",
-  anonKey: "",
+  url: "https://hdcufkaalxfhwmfwoiqp.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3Vma2FhbHhmaHdtZndvaXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzOTI2NzksImV4cCI6MjA5ODk2ODY3OX0.Y-hldMsLQot4dgR5ijssTxGX5ztEJURr81lPrZTzHds",
 };
