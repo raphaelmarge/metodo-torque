@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crescimento — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .grafico svg { width: 100%; height: auto; display: block; }
+  .leg { display: flex; gap: 18px; font-size: 12px; color: var(--cinza); justify-content: center; margin: 2px 0 10px; flex-wrap: wrap; }
+  .leg i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: -1px; }
+  .canc { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .canc + .canc { margin-top: -1px; }
+  .canc .quem { flex: 1; min-width: 160px; }
+  .motivo-linha { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 13.5px; }
+  .colunas { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .colunas { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Crescimento e Cancelamentos</h1>
+    </div>
+  </div>
+  <p>A base está crescendo ou encolhendo? Novos × cancelados mês a mês, a curva de ativos e os motivos de quem saiu — para atacar a causa certa.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card">
+    <h2>Últimos 12 meses</h2>
+    <div class="grafico" id="graf" style="margin-top: 10px;"></div>
+  </div>
+
+  <div class="colunas">
+    <div class="card">
+      <h2>Cancelamentos recentes</h2>
+      <div id="listaCanc" style="margin-top: 8px;"></div>
+    </div>
+    <div class="card">
+      <h2>Por motivo (12 meses)</h2>
+      <div id="motivos" style="margin-top: 6px;"></div>
+      <p class="muted" style="margin-top: 12px;">💡 O motivo é perguntado na hora do cancelamento, na ficha do aluno.</p>
+    </div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  function meses12() {
+    var arr = [], d = new Date();
+    for (var i = 11; i >= 0; i--) {
+      var m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+      arr.push({ chave: m.getFullYear() + "-" + pad(m.getMonth() + 1), rotulo: (m.getMonth() + 1) + "/" + String(m.getFullYear()).slice(2) });
+    }
+    return arr;
+  }
+  function fimContrato(c) {
+    var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+    f.setMonth(f.getMonth() + (c.meses || 1));
+    return S.todayISO(f);
+  }
+
+  function render() {
+    var st = S.read("alunos", { alunos: [] });
+    var meses = meses12();
+    var novos = [], cancelados = [], ativosFim = [];
+    var cancList = [];
+
+    meses.forEach(function (m) {
+      var fimMes = m.chave + "-31";
+      var n = 0, c = 0, at = 0;
+      st.alunos.forEach(function (a) {
+        (a.contratos || []).forEach(function (ct) {
+          if ((ct.inicio || "").slice(0, 7) === m.chave) n++;
+          if ((ct.canceladoEm || "").slice(0, 7) === m.chave) c++;
+          // ativo no fim do mês: começou até lá, não cancelado antes, e não vencido antes
+          if ((ct.inicio || "") <= fimMes &&
+              (!ct.canceladoEm || ct.canceladoEm > fimMes) &&
+              fimContrato(ct) > fimMes) at++;
+        });
+      });
+      novos.push(n); cancelados.push(c); ativosFim.push(at);
+    });
+
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (ct) {
+        if (ct.status === "cancelado" && ct.canceladoEm) {
+          cancList.push({ aluno: a.nome, data: ct.canceladoEm, motivo: ct.motivoCancel || "não informado" });
+        }
+      });
+    });
+    cancList.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+
+    var mesAtual = meses[11], saldo = novos[11] - cancelados[11];
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + ativosFim[11] + '</div><div class="muted">ativos hoje (contratos)</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok)">+' + novos[11] + '</div><div class="muted">novos no mês</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--erro)">−' + cancelados[11] + '</div><div class="muted">cancelados no mês</div></div>' +
+      '<div class="card"><div class="n" style="color:' + (saldo >= 0 ? "var(--ok)" : "var(--erro)") + '">' + (saldo >= 0 ? "+" : "") + saldo + '</div><div class="muted">saldo do mês</div></div>' +
+      '<div class="card"><div class="n">' + (ativosFim[11] - ativosFim[0] >= 0 ? "+" : "") + (ativosFim[11] - ativosFim[0]) + '</div><div class="muted">crescimento em 12 meses</div></div>';
+
+    // gráfico: barras novos (verde) e cancelados (vermelho) + linha de ativos (roxa)
+    var W = 780, H = 250, pL = 46, pR = 40, pT = 14, pB = 26;
+    var maxB = Math.max.apply(null, novos.concat(cancelados).concat([1]));
+    var maxL = Math.max.apply(null, ativosFim.concat([1]));
+    var iw = (W - pL - pR) / meses.length;
+    var svg = '<svg viewBox="0 0 ' + W + " " + H + '">';
+    for (var g = 0; g <= 3; g++) {
+      var y = pT + (H - pT - pB) * g / 3;
+      svg += '<line x1="' + pL + '" y1="' + y + '" x2="' + (W - pR) + '" y2="' + y + '" stroke="#eceaf1"/>' +
+        '<text x="' + (pL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#9995a3">' + Math.round(maxB * (3 - g) / 3) + "</text>" +
+        '<text x="' + (W - pR + 6) + '" y="' + (y + 4) + '" font-size="10" fill="#a78bfa">' + Math.round(maxL * (3 - g) / 3) + "</text>";
+    }
+    meses.forEach(function (m, i) {
+      var cx = pL + iw * i + iw / 2;
+      var hN = (H - pT - pB) * novos[i] / maxB;
+      var hC = (H - pT - pB) * cancelados[i] / maxB;
+      svg += '<rect x="' + (cx - 11) + '" y="' + (H - pB - hN) + '" width="10" height="' + hN + '" fill="#16a34a" rx="2"/>' +
+        '<rect x="' + (cx + 1) + '" y="' + (H - pB - hC) + '" width="10" height="' + hC + '" fill="#dc2626" rx="2"/>';
+      if (i % 2 === 0) svg += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#6e6a78">' + m.rotulo + "</text>";
+    });
+    var pts = ativosFim.map(function (v, i) {
+      return (pL + iw * i + iw / 2) + "," + (pT + (H - pT - pB) * (1 - v / maxL));
+    });
+    svg += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linejoin="round"/>';
+    pts.forEach(function (p) { var xy = p.split(","); svg += '<circle cx="' + xy[0] + '" cy="' + xy[1] + '" r="3" fill="#7c3aed"/>'; });
+    svg += "</svg>";
+    $("graf").innerHTML = '<div class="leg"><span><i style="background:#16a34a"></i>Novos contratos</span>' +
+      '<span><i style="background:#dc2626"></i>Cancelados</span><span><i style="background:#7c3aed"></i>Ativos (linha, eixo direito)</span></div>' + svg;
+
+    // lista + motivos
+    $("listaCanc").innerHTML = cancList.length ? cancList.slice(0, 12).map(function (c) {
+      return '<div class="canc"><div class="quem"><strong>' + esc(c.aluno) + '</strong><div class="muted" style="font-size: 12px;">' +
+        S.fmtData(c.data) + "</div></div>" + '<span class="tag erro">' + esc(c.motivo).toUpperCase() + "</span></div>";
+    }).join("") : '<div class="vazio">Nenhum cancelamento registrado. Que continue assim! 🎉</div>';
+
+    var corte = meses[0].chave;
+    var porMotivo = {};
+    cancList.forEach(function (c) {
+      if (c.data.slice(0, 7) < corte) return;
+      porMotivo[c.motivo] = (porMotivo[c.motivo] || 0) + 1;
+    });
+    var motivos = Object.keys(porMotivo).sort(function (a, b) { return porMotivo[b] - porMotivo[a]; });
+    $("motivos").innerHTML = motivos.length ? motivos.map(function (mo) {
+      return '<div class="motivo-linha"><span>' + esc(mo) + "</span><strong>" + porMotivo[mo] + "</strong></div>";
+    }).join("") : '<div class="muted">Sem cancelamentos no período.</div>';
+  }
+
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

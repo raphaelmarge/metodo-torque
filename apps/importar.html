@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Importar Alunos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .passo { border-left: 4px solid var(--roxo); padding-left: 14px; margin-bottom: 6px; }
+  .passo .num { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--roxo); }
+  .mapa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .previa-tab { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .previa-tab th { background: var(--fundo); padding: 6px 8px; text-align: left; font-size: 11px; letter-spacing: .06em; color: var(--cinza); }
+  .previa-tab td { padding: 6px 8px; border-bottom: 1px solid var(--fundo); white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Importar Alunos</h1>
+    </div>
+  </div>
+  <p>Veio de outro sistema (EVO, planilha, agenda)? Solte o CSV aqui, confira o mapeamento das colunas e traga sua base inteira em um clique.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card">
+    <div class="passo"><span class="num">PASSO 1</span><h2 style="margin-top: 2px;">Escolha o arquivo CSV</h2></div>
+    <p class="muted" style="margin: 4px 0 12px;">Exporte do sistema antigo em CSV (ou salve a planilha como CSV). A primeira linha deve ter os nomes das colunas.</p>
+    <div class="linha-flex">
+      <input type="file" id="arquivo" accept=".csv,text/csv,.txt" style="max-width: 340px;">
+      <span class="muted" id="infoArquivo"></span>
+    </div>
+  </div>
+
+  <div class="card" id="cardMapa" hidden>
+    <div class="passo"><span class="num">PASSO 2</span><h2 style="margin-top: 2px;">Confira o mapeamento</h2></div>
+    <p class="muted" style="margin: 4px 0 12px;">Eu chuto pelas cabeças das colunas — ajuste o que não bater. Só o <strong>nome</strong> é obrigatório.</p>
+    <div class="mapa-grid" id="mapa"></div>
+  </div>
+
+  <div class="card" id="cardPrevia" hidden>
+    <div class="passo"><span class="num">PASSO 3</span><h2 style="margin-top: 2px;">Prévia e importação</h2></div>
+    <div style="overflow-x: auto; margin-top: 10px;"><table class="previa-tab" id="previa"></table></div>
+    <div class="linha-flex" style="justify-content: space-between; margin-top: 14px;">
+      <span class="muted" id="resumoImp"></span>
+      <button class="btn" id="btnImportar">✓ Importar alunos</button>
+    </div>
+  </div>
+
+  <div class="card" id="cardFeito" hidden>
+    <h2>Resultado</h2>
+    <div id="resultado" style="margin-top: 8px; font-size: 15px;"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var CAMPOS = [
+    ["nome", "Nome completo *", ["nome", "name", "aluno", "cliente"]],
+    ["zap", "WhatsApp / telefone", ["zap", "whats", "celular", "telefone", "phone", "fone"]],
+    ["email", "E-mail", ["email", "e-mail", "mail"]],
+    ["cpf", "CPF", ["cpf", "documento", "doc"]],
+    ["nasc", "Nascimento", ["nasc", "nascimento", "aniversario", "aniversário", "birth", "data de nas"]],
+    ["consultor", "Consultor(a)", ["consultor", "vendedor", "carteira"]],
+    ["indicacao", "Indicado por", ["indica", "referral"]],
+    ["obs", "Observações", ["obs", "observa", "nota"]],
+  ];
+
+  var linhas = [], cabecalhos = [];
+
+  function parseCSV(texto) {
+    var sep = (texto.split("\n")[0].split(";").length > texto.split("\n")[0].split(",").length) ? ";" : ",";
+    var out = [];
+    var linha = [], campo = "", dentro = false;
+    for (var i = 0; i < texto.length; i++) {
+      var ch = texto[i];
+      if (dentro) {
+        if (ch === '"') { if (texto[i + 1] === '"') { campo += '"'; i++; } else dentro = false; }
+        else campo += ch;
+      } else if (ch === '"') dentro = true;
+      else if (ch === sep) { linha.push(campo); campo = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && texto[i + 1] === "\n") i++;
+        linha.push(campo); campo = "";
+        if (linha.some(function (c) { return c.trim() !== ""; })) out.push(linha);
+        linha = [];
+      } else campo += ch;
+    }
+    if (campo !== "" || linha.length) { linha.push(campo); if (linha.some(function (c) { return c.trim() !== ""; })) out.push(linha); }
+    return out;
+  }
+
+  function normalizaData(v) {
+    v = (v || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+    var m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);
+    if (m) {
+      var ano = m[3].length === 2 ? (+m[3] > 30 ? "19" + m[3] : "20" + m[3]) : m[3];
+      return ano + "-" + ("0" + m[2]).slice(-2) + "-" + ("0" + m[1]).slice(-2);
+    }
+    return "";
+  }
+
+  $("arquivo").addEventListener("change", function () {
+    var f = this.files[0];
+    if (!f) return;
+    var leitor = new FileReader();
+    leitor.onload = function () {
+      var tudo = parseCSV(String(leitor.result));
+      if (tudo.length < 2) { alert("Arquivo vazio ou sem linhas de dados."); return; }
+      cabecalhos = tudo[0].map(function (c) { return c.trim(); });
+      linhas = tudo.slice(1);
+      $("infoArquivo").textContent = f.name + " · " + linhas.length + " linha(s), " + cabecalhos.length + " coluna(s)";
+      montaMapa();
+    };
+    leitor.readAsText(f, "utf-8");
+  });
+
+  function chuta(apelidos) {
+    for (var i = 0; i < cabecalhos.length; i++) {
+      var h = cabecalhos[i].toLowerCase();
+      for (var j = 0; j < apelidos.length; j++) if (h.indexOf(apelidos[j]) !== -1) return i;
+    }
+    return -1;
+  }
+
+  function montaMapa() {
+    $("cardMapa").hidden = false;
+    $("mapa").innerHTML = CAMPOS.map(function (c) {
+      var chute = chuta(c[2]);
+      return '<div class="campo"><label>' + c[1] + '</label><select data-campo="' + c[0] + '">' +
+        '<option value="-1">— não importar —</option>' +
+        cabecalhos.map(function (h, i) {
+          return '<option value="' + i + '"' + (i === chute ? " selected" : "") + ">" + esc(h) + "</option>";
+        }).join("") + "</select></div>";
+    }).join("");
+    montaPrevia();
+  }
+
+  function mapeamento() {
+    var m = {};
+    Array.prototype.forEach.call(document.querySelectorAll("[data-campo]"), function (sel) {
+      m[sel.getAttribute("data-campo")] = +sel.value;
+    });
+    return m;
+  }
+  function extrai(linha, m) {
+    function v(campo) { return m[campo] >= 0 ? (linha[m[campo]] || "").trim() : ""; }
+    return {
+      nome: v("nome"), zap: v("zap").replace(/\D/g, ""), email: v("email"), cpf: v("cpf"),
+      nasc: normalizaData(v("nasc")), consultor: v("consultor"), indicacao: v("indicacao"), obs: v("obs"),
+    };
+  }
+
+  function montaPrevia() {
+    var m = mapeamento();
+    if (m.nome < 0) { $("cardPrevia").hidden = true; return; }
+    $("cardPrevia").hidden = false;
+    var st = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var existentes = {};
+    st.alunos.forEach(function (a) { existentes[a.nome.toLowerCase()] = 1; });
+    var novos = 0, repetidos = 0, semNome = 0;
+    linhas.forEach(function (l) {
+      var d = extrai(l, m);
+      if (!d.nome) { semNome++; return; }
+      if (existentes[d.nome.toLowerCase()]) repetidos++;
+      else novos++;
+    });
+    var mostra = linhas.slice(0, 5).map(function (l) { return extrai(l, m); });
+    $("previa").innerHTML = "<tr><th>Nome</th><th>WhatsApp</th><th>E-mail</th><th>Nascimento</th><th>Consultor</th></tr>" +
+      mostra.map(function (d) {
+        return "<tr><td>" + esc(d.nome || "⚠ sem nome") + "</td><td>" + esc(d.zap) + "</td><td>" + esc(d.email) +
+          "</td><td>" + (d.nasc ? S.fmtData(d.nasc) : "") + "</td><td>" + esc(d.consultor) + "</td></tr>";
+      }).join("");
+    $("resumoImp").textContent = novos + " novo(s) · " + repetidos + " já existem (pulados)" + (semNome ? " · " + semNome + " sem nome (ignorados)" : "");
+    $("btnImportar").disabled = !novos;
+  }
+  $("mapa").addEventListener("change", montaPrevia);
+
+  $("btnImportar").onclick = function () {
+    var m = mapeamento();
+    var st = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var existentes = {};
+    st.alunos.forEach(function (a) { existentes[a.nome.toLowerCase()] = 1; });
+    var importados = 0;
+    linhas.forEach(function (l) {
+      var d = extrai(l, m);
+      if (!d.nome || existentes[d.nome.toLowerCase()]) return;
+      existentes[d.nome.toLowerCase()] = 1;
+      st.alunos.push({
+        id: S.uid(), nome: d.nome, zap: d.zap, email: d.email, cpf: d.cpf, nasc: d.nasc,
+        consultor: d.consultor, indicacao: d.indicacao, obs: d.obs,
+        status: "ativo", contratos: [], checkins: [], criado: S.todayISO(), origem: "importacao",
+      });
+      importados++;
+    });
+    S.write("alunos", st);
+    $("cardFeito").hidden = false;
+    $("resultado").innerHTML = "✅ <strong>" + importados + " aluno(s) importados!</strong><br>" +
+      '<span class="muted">Eles entraram sem contrato — venda o plano de cada um na Gestão de Alunos (botão Nova venda), ou já use a Segmentação para dar boas-vindas por WhatsApp.</span>';
+    $("btnImportar").disabled = true;
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  };
+})();
+</script>
+</body>
+</html>

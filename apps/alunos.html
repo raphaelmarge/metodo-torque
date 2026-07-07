@@ -744,7 +744,9 @@
     }
     if (acao === "cancelar") {
       if (!confirm("Cancelar o contrato de " + a.nome + "? As mensalidades futuras em aberto serão removidas.")) return;
+      var motivo = prompt("Qual o motivo do cancelamento? (ex.: mudança, financeiro, insatisfação, lesão)") || "";
       c.status = "cancelado"; c.canceladoEm = S.todayISO();
+      c.motivoCancel = motivo.trim() || "não informado";
       var hoje = S.todayISO();
       st.recebiveis = st.recebiveis.filter(function (r) {
         return !(r.contratoId === c.id && r.status === "aberto" && r.vencimento > hoje);
