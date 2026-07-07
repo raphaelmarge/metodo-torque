@@ -59,6 +59,13 @@
   function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
   var alunoId = new URLSearchParams(location.search).get("id") || null;
   var secao = "perfil";
+  var subFin = "mov";     // sub-aba do Financeiro
+  var subCad = "dados";   // sub-aba do Cadastro
+  function abasHTML(attr, atual, lista) {
+    return '<div class="abas" style="margin-bottom: 12px;">' + lista.map(function (x) {
+      return '<button data-' + attr + '="' + x[0] + '"' + (atual === x[0] ? ' class="ativa"' : "") + ">" + x[1] + "</button>";
+    }).join("") + "</div>";
+  }
 
   function fimDe(c) {
     var f = new Date((c.inicio || "2000-01-01") + "T12:00");
@@ -236,7 +243,26 @@
         .map(function (v) { return v.data; }).sort();
       var ultAv = avs2[avs2.length - 1];
       var endereco = [a.endereco, a.numero, a.complemento, a.bairro, a.cidade, a.uf].filter(Boolean).join(", ");
-      html = '<div class="grid-perfil"><div>' +
+      html = abasHTML("sc", subCad, [["dados", "DADOS PESSOAIS"], ["documentos", "DOCUMENTOS"], ["responsaveis", "RESPONSÁVEIS"]]);
+      if (subCad === "documentos") {
+        html += '<div class="card"><h2>Documentos do aluno</h2>' +
+          '<div class="kv"><span>PAR-Q (questionário de prontidão)</span><span>' + (parq2 ?
+            (parq2.temSim ? '<span class="tag alerta">RISCO — aval. médica</span>' : '<span class="tag ok">ASSINADO' + (parq2.data ? " — " + S.fmtData(parq2.data) : "") + "</span>")
+            : '<span class="tag erro">PENDENTE</span>') + "</span></div>" +
+          '<div class="linha-flex" style="margin-top: 14px;">' +
+          '<a class="btn" href="documentos.html">🧾 Gerar recibo de pagamento</a>' +
+          '<a class="btn sec" href="documentos.html">📄 Gerar contrato de matrícula</a>' +
+          '<a class="btn sec" href="parq.html">🩺 Aplicar PAR-Q</a></div>' +
+          '<p class="muted" style="margin-top: 10px;">Os documentos são preenchidos automaticamente com os dados do aluno e do contrato em Recibos e Contratos.</p></div>';
+      } else if (subCad === "responsaveis") {
+        html += '<div class="card"><h2>Responsáveis e emergência</h2>' +
+          (a.responsavel ? '<div class="kv"><span>Responsável (menor de idade)</span><span>' + esc(a.responsavel) + "</span></div>" :
+            '<p class="muted">Nenhum responsável cadastrado (necessário apenas para menores de idade).</p>') +
+          (a.emergenciaNome || a.emergenciaFone ? '<div class="kv"><span>Contato de emergência</span><span>' +
+            esc([a.emergenciaNome, a.emergenciaFone].filter(Boolean).join(" · ")) + "</span></div>" : "") +
+          '<p class="muted" style="margin-top: 10px;">Edite pelo cadastro completo na <a href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">Gestão de Alunos</a>.</p></div>';
+      } else
+      html += '<div class="grid-perfil"><div>' +
         '<div class="card" style="margin-bottom:12px;"><div class="linha-flex" style="justify-content: space-between;"><h2>Dados pessoais</h2>' +
         '<a class="btn sec mini" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">✏ Editar</a></div>' +
         [["Nome completo", a.nome], ["Apelido", a.apelido], ["Gênero", a.genero], ["CPF (CIN)", a.cpf], ["RG", a.rg],
@@ -286,18 +312,46 @@
     if (secao === "financeiro") {
       var recs = st.recebiveis.filter(function (r2) { return r2.alunoId === a.id; })
         .sort(function (x, y) { return x.vencimento < y.vencimento ? 1 : -1; });
-      var pago = 0, aberto = 0;
-      recs.forEach(function (r2) { if (r2.status === "pago") pago += +r2.valor || 0; else aberto += +r2.valor || 0; });
-      html = '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Movimentações</h2>' +
-        '<span class="muted">pago: <strong style="color:var(--ok)">' + S.fmtBRL(pago) + '</strong> · em aberto: <strong style="color:var(--erro)">' + S.fmtBRL(aberto) + "</strong> " +
-        '<button class="btn sec mini" id="btnCsv">⬇ Exportar CSV</button></span></div>' +
-        (recs.length ? '<table class="tabela"><tr><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>VALOR</th><th>STATUS</th></tr>' + recs.map(function (r2) {
-          var venc = r2.status === "aberto" && r2.vencimento < hoje;
-          return "<tr><td>" + esc(r2.competencia || "—") + "</td><td>" + S.fmtData(r2.vencimento) + "</td><td>" + S.fmtBRL(+r2.valor) + "</td>" +
-            "<td>" + (r2.status === "pago" ? '<span class="tag ok">PAGO ' + (r2.pagoEm ? S.fmtData(r2.pagoEm) : "") + "</span>" :
-              venc ? '<span class="tag erro">VENCIDA</span>' : '<span class="tag neutro">ABERTA</span>') + "</td></tr>";
-        }).join("") + "</table>" : '<p class="muted">Nenhuma mensalidade gerada.</p>') +
-        '<p class="muted" style="margin-top:10px;">Para receber ou estornar, use a aba A Receber da <a href="alunos.html?aba=receber">Gestão de Alunos</a>.</p></div>';
+      var pago = 0, aberto = 0, vencidas = [];
+      recs.forEach(function (r2) {
+        if (r2.status === "pago") pago += +r2.valor || 0;
+        else { aberto += +r2.valor || 0; if (r2.vencimento < hoje) vencidas.push(r2); }
+      });
+      var devTotal = vencidas.reduce(function (t, r2) { return t + (+r2.valor || 0); }, 0);
+      html = abasHTML("sf", subFin, [["mov", "MOVIMENTAÇÕES"], ["devedor", "SALDO DEVEDOR"], ["credor", "SALDO CREDOR"], ["boletos", "BOLETOS / PIX"]]);
+      if (subFin === "mov") {
+        html += '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Movimentações</h2>' +
+          '<span class="muted">pago: <strong style="color:var(--ok)">' + S.fmtBRL(pago) + '</strong> · em aberto: <strong style="color:var(--erro)">' + S.fmtBRL(aberto) + "</strong> " +
+          '<button class="btn sec mini" id="btnCsv">⬇ Exportar CSV</button></span></div>' +
+          (recs.length ? '<table class="tabela"><tr><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>VALOR</th><th>STATUS</th></tr>' + recs.map(function (r2) {
+            var venc = r2.status === "aberto" && r2.vencimento < hoje;
+            return "<tr><td>" + esc(r2.competencia || "—") + "</td><td>" + S.fmtData(r2.vencimento) + "</td><td>" + S.fmtBRL(+r2.valor) + "</td>" +
+              "<td>" + (r2.status === "pago" ? '<span class="tag ok">PAGO ' + (r2.pagoEm ? S.fmtData(r2.pagoEm) : "") + "</span>" :
+                venc ? '<span class="tag erro">VENCIDA</span>' : '<span class="tag neutro">ABERTA</span>') + "</td></tr>";
+          }).join("") + "</table>" : '<p class="muted">Nenhuma mensalidade gerada.</p>') +
+          '<p class="muted" style="margin-top:10px;">Para receber ou estornar, use a aba A Receber da <a href="alunos.html?aba=receber">Gestão de Alunos</a>.</p></div>';
+      }
+      if (subFin === "devedor") {
+        html += '<div class="card">' +
+          '<div class="linha-flex" style="gap:12px; margin-bottom: 14px;">' +
+          '<div class="alerta-bloq vermelho" style="flex:1; margin:0;"><strong>$ Saldo devedor</strong><span style="font-size:18px; font-weight:800; color:var(--erro);">' + S.fmtBRL(devTotal) + "</span></div>" +
+          '<div class="alerta-bloq verde" style="flex:1; margin:0;"><strong>$ Saldo credor</strong><span style="font-size:18px; font-weight:800; color:var(--ok);">' + S.fmtBRL(+(a.saldoCredor || 0)) + "</span></div></div>" +
+          (vencidas.length ? '<table class="tabela"><tr><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>ATRASO</th><th>VALOR</th></tr>' + vencidas.map(function (r2) {
+            return "<tr><td>" + esc(r2.competencia || "—") + "</td><td>" + S.fmtData(r2.vencimento) + "</td><td><strong style='color:var(--erro)'>" +
+              diasDesde(r2.vencimento) + " dia(s)</strong></td><td>" + S.fmtBRL(+r2.valor) + "</td></tr>";
+          }).join("") + "</table>" +
+          (a.zap ? '<a class="btn whats" style="margin-top:12px;" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") +
+            "?text=" + encodeURIComponent("Oi " + a.nome.split(" ")[0] + "! Passando para lembrar da mensalidade em aberto (" + S.fmtBRL(devTotal) + "). Consegue regularizar essa semana? 💜") + '">💬 Cobrar no WhatsApp</a>' : "")
+          : '<div class="vazio">👍 Esse cliente está em dia com seus pagamentos!</div>') + "</div>";
+      }
+      if (subFin === "credor") {
+        html += '<div class="card"><h2>Saldo credor</h2>' +
+          '<div class="kv"><span>Crédito disponível</span><span style="font-weight:800; color:var(--ok);">' + S.fmtBRL(+(a.saldoCredor || 0)) + "</span></div>" +
+          '<p class="muted" style="margin-top:8px;">Crédito do aluno (ex.: pagamento adiantado ou compensação de congelamento). Ajuste o valor no cadastro pela Gestão de Alunos.</p></div>';
+      }
+      if (subFin === "boletos") {
+        html += '<div class="card"><div class="vazio">Boletos, PIX automático e transações de cartão fazem parte da <strong>Fase 2</strong> — dependem do gateway de cobrança (Stone/Pagar.me/Asaas).<br>Por enquanto, use o botão de cobrança no WhatsApp.</div></div>';
+      }
     }
     if (secao === "contratos") {
       var todos = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? 1 : -1; });
@@ -367,8 +421,12 @@
     });
   }
 
-  // delegate único: excluir contato do relacionamento
+  // delegate único: sub-abas + excluir contato do relacionamento
   $("corpo").addEventListener("click", function (e) {
+    var sf = e.target.getAttribute && e.target.getAttribute("data-sf");
+    if (sf) { subFin = sf; render(); return; }
+    var sc = e.target.getAttribute && e.target.getAttribute("data-sc");
+    if (sc) { subCad = sc; render(); return; }
     var id = e.target.getAttribute && e.target.getAttribute("data-delct");
     if (!id || !alunoId) return;
     var st2 = stA();
