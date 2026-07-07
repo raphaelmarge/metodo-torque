@@ -53,6 +53,7 @@ self.MT_APPS = [
   { slug: "app-carteiras", file: "apps/carteiras.html", icone: "💼", title: "Carteiras por Consultor(a)", desc: "A base dividida por quem atende: ativos, novos no mês, inadimplentes e a receita de cada carteira." },
   { slug: "app-tarefas", file: "apps/tarefas.html", icone: "☑️", title: "Tarefas do Dia", desc: "A lista da recepção: ligações, cobranças, renovações, aniversários e pendências de todos os programas em um só lugar." },
   { slug: "app-personais", file: "apps/personais.html", icone: "🏋️", title: "Personal Trainers", desc: "Personais externos com CREF, taxa de uso mensal e o controle mês a mês de quem já pagou — cobrança pronta no WhatsApp." },
+  { slug: "app-fornecedores", file: "apps/fornecedores.html", icone: "📦", title: "Fornecedores", desc: "Contato e categoria de cada fornecedor com o gasto somado das Contas a Pagar — negocie sabendo quanto você deixa em cada um." },
   { slug: "app-inadimplencia", file: "apps/inadimplencia.html", icone: "💰", title: "Controle de Inadimplência", desc: "A régua de cobrança do curso em ação: cada devedor no passo certo (D+1 a D+30) com a mensagem pronta." },
   { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
   { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },
