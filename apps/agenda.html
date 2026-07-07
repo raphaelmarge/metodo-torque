@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .controles { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .nav-data { display: flex; align-items: center; gap: 6px; }
+  .nav-data strong { font-size: 14px; min-width: 210px; text-align: center; text-transform: capitalize; }
+  .nav-data .btn.mini { padding: 6px 10px; }
+  .dia-lista { display: flex; flex-direction: column; border: 1px solid var(--linha); background: #fff; }
+  .dia-hora { display: flex; border-bottom: 1px solid var(--linha); }
+  .dia-hora:last-child { border-bottom: none; }
+  .dia-hora .rotulo { width: 64px; flex: none; padding: 12px 10px; font-size: 13px; font-weight: 700; color: var(--cinza); border-right: 1px solid var(--linha); }
+  .dia-hora .cards { flex: 1; display: flex; gap: 10px; flex-wrap: wrap; padding: 10px; }
+  .comp-card {
+    width: 250px; background: #fff; border: 1px solid var(--linha); border-left: 4px solid var(--roxo);
+    padding: 9px 11px; cursor: pointer; font-size: 12.5px;
+  }
+  .comp-card:hover { box-shadow: 0 2px 8px rgba(18,16,22,.12); }
+  .comp-card .linha1 { display: flex; justify-content: space-between; gap: 6px; font-weight: 700; }
+  .comp-card .tipo { font-size: 13px; font-weight: 800; margin: 3px 0 1px; text-transform: uppercase; }
+  .comp-card .sub { color: var(--cinza); font-size: 11.5px; }
+  .comp-card.concluido { opacity: .55; border-left-color: var(--ok); }
+  .comp-card.concluido .tipo { text-decoration: line-through; }
+  .sem-expediente { padding: 70px 20px; text-align: center; color: var(--cinza-2); }
+  .sem-expediente .ico { font-size: 44px; display: block; margin-bottom: 10px; }
+  @media (max-width: 760px) { .nav-data strong { min-width: 0; } .comp-card { width: 100%; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · OPERAÇÃO</span>
+    <h1>Agenda</h1>
+    </div>
+  </div>
+  <p>Avaliações físicas, reavaliações, visitas e reuniões — tudo com hora marcada, lembrete pronto no WhatsApp e presença registrada.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card controles no-print" style="justify-content: space-between;">
+    <div class="abas" id="turnos">
+      <button data-t="" class="ativa">Todos</button>
+      <button data-t="manha">Manhã</button>
+      <button data-t="tarde">Tarde</button>
+      <button data-t="noite">Noite</button>
+    </div>
+    <div class="nav-data">
+      <button class="btn sec mini" id="navAnt">‹</button>
+      <strong id="navRotulo"></strong>
+      <button class="btn sec mini" id="navProx">›</button>
+      <button class="btn sec mini" id="navHoje">Hoje</button>
+    </div>
+    <button class="btn" id="btnNovo">+ Encontrar horário</button>
+  </div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <input id="busca" placeholder="Pesquise por cliente ou profissional…" style="max-width: 340px;">
+    <span class="muted" id="resumoDia"></span>
+  </div>
+
+  <div id="quadroAgenda"></div>
+</main>
+
+<!-- novo compromisso -->
+<dialog id="dlgComp">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 520px; max-width: 100%;">
+    <h2 id="dlgTitulo">Agendar</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Tipo *</label>
+        <select id="cTipo">
+          <option>Avaliação física</option>
+          <option>Reavaliação</option>
+          <option>Consulta nutricional</option>
+          <option>Treino acompanhado</option>
+          <option>Visita / conhecer a academia</option>
+          <option>Reunião</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="campo"><label>Cliente</label><input id="cCliente" list="alunosLista" placeholder="nome do aluno ou visitante"><datalist id="alunosLista"></datalist></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Profissional *</label><input id="cProf" required></div>
+      <div class="campo"><label>Área / sala</label><input id="cArea" placeholder="ex.: SALA DE AVALIAÇÃO"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Data *</label><input id="cData" type="date" required></div>
+      <div class="campo"><label>Início *</label><input id="cInicio" type="time" required></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Duração (min)</label><input id="cDur" type="number" min="10" step="5" value="30"></div>
+      <div class="campo"><label>WhatsApp do cliente</label><input id="cZap" inputmode="numeric" placeholder="11999998888"></div>
+    </div>
+    <div class="campo"><label>Observações</label><input id="cObs"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- detalhe do compromisso -->
+<dialog id="dlgDet">
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 440px; max-width: 100%;">
+    <div>
+      <h2 id="detTitulo" style="margin-bottom: 2px;">Compromisso</h2>
+      <div class="muted" id="detSub"></div>
+      <div class="muted" id="detObs" style="margin-top: 6px;"></div>
+    </div>
+    <div class="linha-flex" id="detAcoes"></div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button class="btn perigo mini" id="detExcluir">Excluir</button>
+      <div class="linha-flex">
+        <button class="btn sec mini" id="detEditar">✎ Editar</button>
+        <button class="btn sec" id="detFechar">Fechar</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("agenda", { compromissos: [] }); }
+  function save(st) { S.write("agenda", st); render(); }
+
+  var refDia = S.todayISO();
+  var turno = "";
+  var busca = "";
+
+  function horaMin(h) { var p = (h || "0:0").split(":"); return +p[0] * 60 + +p[1]; }
+  function minHora(m) { return (m < 600 ? "0" : "") + Math.floor(m / 60) + ":" + ((m % 60) < 10 ? "0" : "") + (m % 60); }
+  function turnoDe(c) { var m = horaMin(c.inicio); return m < 720 ? "manha" : m < 1080 ? "tarde" : "noite"; }
+  var DIAS = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
+
+  function doDia(st, iso) {
+    var q = busca.trim().toLowerCase();
+    return st.compromissos.filter(function (c) {
+      if (c.data !== iso || c.status === "cancelado") return false;
+      if (turno && turnoDe(c) !== turno) return false;
+      if (q && ((c.cliente || "") + " " + (c.prof || "") + " " + (c.tipo || "")).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    }).sort(function (a, b) { return horaMin(a.inicio) - horaMin(b.inicio); });
+  }
+
+  function render() {
+    var st = load();
+    var d = new Date(refDia + "T12:00");
+    $("navRotulo").textContent = DIAS[d.getDay()] + ", " + d.getDate() + " " +
+      d.toLocaleDateString("pt-BR", { month: "short" }) + ". " + d.getFullYear();
+    var lista = doDia(st, refDia);
+    var pend = lista.filter(function (c) { return c.status !== "concluido"; }).length;
+    $("resumoDia").textContent = lista.length ? lista.length + " compromisso(s) · " + pend + " pendente(s)" : "";
+
+    if (!lista.length) {
+      $("quadroAgenda").innerHTML = '<div class="dia-lista"><div class="sem-expediente"><span class="ico">🗓</span>' +
+        (turno || busca ? "Nada neste período com esses filtros." : "Sem expediente — nenhum compromisso neste dia.") +
+        "</div></div>";
+      return;
+    }
+    var porHora = {};
+    lista.forEach(function (c) {
+      var h = (c.inicio || "00:00").slice(0, 2) + ":00";
+      (porHora[h] = porHora[h] || []).push(c);
+    });
+    $("quadroAgenda").innerHTML = '<div class="dia-lista">' + Object.keys(porHora).sort().map(function (h) {
+      return '<div class="dia-hora"><div class="rotulo">' + h + '</div><div class="cards">' +
+        porHora[h].map(function (c) {
+          var fim = minHora(horaMin(c.inicio) + (+c.dur || 30));
+          return '<div class="comp-card' + (c.status === "concluido" ? " concluido" : "") + '" data-id="' + c.id + '">' +
+            '<div class="linha1"><span>' + c.inicio + " - " + fim + "</span>" +
+            (c.status === "concluido" ? '<span class="tag ok">FEITO ✓</span>' : "") + "</div>" +
+            '<div class="tipo">' + esc(c.tipo) + "</div>" +
+            '<div class="sub">' + esc(c.cliente || "—") + "<br>" + esc(c.prof || "") + (c.area ? " · " + esc(c.area) : "") + "</div></div>";
+        }).join("") + "</div></div>";
+    }).join("") + "</div>";
+  }
+
+  // ---------- navegação ----------
+  $("turnos").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    turno = b.getAttribute("data-t");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  function muda(n) {
+    var d = new Date(refDia + "T12:00");
+    d.setDate(d.getDate() + n);
+    refDia = S.todayISO(d);
+    render();
+  }
+  $("navAnt").onclick = function () { muda(-1); };
+  $("navProx").onclick = function () { muda(1); };
+  $("navHoje").onclick = function () { refDia = S.todayISO(); render(); };
+  $("busca").addEventListener("input", function () { busca = this.value; render(); });
+
+  // ---------- novo / editar ----------
+  var editandoId = null;
+  function alunosNomes() {
+    var a = S.read("alunos", { alunos: [] });
+    return a.alunos.filter(function (x) { return x.status !== "inativo"; });
+  }
+  function abreForm(c) {
+    editandoId = c ? c.id : null;
+    $("dlgTitulo").textContent = c ? "Editar compromisso" : "Agendar";
+    $("alunosLista").innerHTML = alunosNomes().map(function (a) { return "<option>" + esc(a.nome) + "</option>"; }).join("");
+    $("cTipo").value = c ? c.tipo : "Avaliação física";
+    $("cCliente").value = c ? (c.cliente || "") : "";
+    $("cProf").value = c ? c.prof : "";
+    $("cArea").value = c ? (c.area || "") : "";
+    $("cData").value = c ? c.data : refDia;
+    $("cInicio").value = c ? c.inicio : "09:00";
+    $("cDur").value = c ? c.dur : 30;
+    $("cZap").value = c ? (c.zap || "") : "";
+    $("cObs").value = c ? (c.obs || "") : "";
+    $("dlgComp").showModal();
+  }
+  $("btnNovo").onclick = function () { abreForm(null); };
+  $("dlgComp").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = {
+      tipo: $("cTipo").value, cliente: $("cCliente").value.trim(), prof: $("cProf").value.trim(),
+      area: $("cArea").value.trim(), data: $("cData").value, inicio: $("cInicio").value,
+      dur: +$("cDur").value || 30, zap: $("cZap").value.replace(/\D/g, ""), obs: $("cObs").value.trim(),
+    };
+    if (editandoId) {
+      var c = st.compromissos.find(function (x) { return x.id === editandoId; });
+      Object.keys(dados).forEach(function (k) { c[k] = dados[k]; });
+    } else {
+      dados.id = S.uid(); dados.status = "agendado";
+      st.compromissos.push(dados);
+    }
+    // aluno cadastrado sem zap informado? tenta puxar do cadastro
+    if (!dados.zap && dados.cliente) {
+      var al = alunosNomes().find(function (a) { return a.nome === dados.cliente; });
+      if (al && al.zap) {
+        (editandoId ? st.compromissos.find(function (x) { return x.id === editandoId; }) : st.compromissos[st.compromissos.length - 1]).zap = al.zap;
+      }
+    }
+    refDia = dados.data;
+    save(st);
+  });
+
+  // ---------- detalhe ----------
+  var detId = null;
+  function abreDet(id) {
+    var st = load();
+    var c = st.compromissos.find(function (x) { return x.id === id; });
+    if (!c) return;
+    detId = id;
+    var fim = minHora(horaMin(c.inicio) + (+c.dur || 30));
+    $("detTitulo").textContent = c.tipo + " · " + c.inicio;
+    $("detSub").textContent = (c.cliente || "sem cliente") + " · " + c.prof + (c.area ? " · " + c.area : "") +
+      " · " + S.fmtData(c.data) + " " + c.inicio + "-" + fim;
+    $("detObs").textContent = c.obs || "";
+    var msg = "Olá" + (c.cliente ? " " + c.cliente.split(" ")[0] : "") + "! Confirmando seu horário de *" +
+      c.tipo + "* na academia: " + S.fmtData(c.data) + " às " + c.inicio + " com " + c.prof + ". Até lá! 💪";
+    $("detAcoes").innerHTML =
+      (c.status !== "concluido" ? '<button class="btn ok mini" data-acao="concluir">✓ Compareceu</button>' :
+        '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir</button>') +
+      (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + c.zap +
+        "?text=" + encodeURIComponent(msg) + '">💬 Lembrete WhatsApp</a>' : "");
+    $("dlgDet").showModal();
+  }
+  $("quadroAgenda").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-id]");
+    if (el) abreDet(el.getAttribute("data-id"));
+  });
+  $("detAcoes").addEventListener("click", function (e) {
+    var acao = e.target.getAttribute && e.target.getAttribute("data-acao");
+    if (!acao) return;
+    var st = load();
+    var c = st.compromissos.find(function (x) { return x.id === detId; });
+    c.status = acao === "concluir" ? "concluido" : "agendado";
+    $("dlgDet").close();
+    save(st);
+  });
+  $("detExcluir").onclick = function () {
+    if (!confirm("Excluir este compromisso?")) return;
+    var st = load();
+    st.compromissos = st.compromissos.filter(function (x) { return x.id !== detId; });
+    $("dlgDet").close();
+    save(st);
+  };
+  $("detEditar").onclick = function () {
+    var c = load().compromissos.find(function (x) { return x.id === detId; });
+    $("dlgDet").close();
+    if (c) abreForm(c);
+  };
+  $("detFechar").onclick = function () { $("dlgDet").close(); };
+
+  S.onChange(function (k) { if (k === "agenda" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

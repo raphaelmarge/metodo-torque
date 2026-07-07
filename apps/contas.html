@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contas a Pagar — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .cards-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .cr { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 4px; }
+  .cr .ico { font-size: 22px; }
+  .cr .rot { font-size: 13px; font-weight: 600; }
+  .cr .val { font-size: 22px; font-weight: 800; }
+  .cr.azul { background: #e7f1fb; color: #1d5c96; }
+  .cr.verde { background: #e6f6ec; color: #14713c; }
+  .cr.laranja { background: #fdf0dd; color: #9a6414; }
+  .modelos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modelos button {
+    padding: 8px 14px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    background: #fff; border: 1px solid var(--linha); color: var(--cinza);
+  }
+  .modelos button.ativa { background: var(--escuro); color: #fff; border-color: var(--escuro); }
+  .venc-atras { color: var(--erro); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Contas a Pagar</h1>
+    </div>
+  </div>
+  <p>Aluguel, energia, folha, marketing… tudo com vencimento e centro de despesa. É daqui que saem o custo por cliente e o lucro real do Dashboard.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="cards-resumo" id="resumo"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="modelos" id="modelos">
+      <button data-m="avencer" class="ativa">A vencer</button>
+      <button data-m="hoje">Vence hoje</button>
+      <button data-m="vencidas">Vencidas</button>
+      <button data-m="mes">A pagar este mês</button>
+      <button data-m="pagasmes">Pagas este mês</button>
+      <button data-m="canceladas">Canceladas</button>
+      <button data-m="todas">Todas</button>
+    </div>
+    <div class="linha-flex">
+      <input id="busca" placeholder="Pesquisar conta…" style="width: 200px;">
+      <button class="btn sec" id="btnCentros">Centros de despesa</button>
+      <button class="btn" id="btnNova">+ Nova conta</button>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 0;">
+    <table class="tabela" id="tabela">
+      <thead><tr>
+        <th>Descrição</th><th>Centro de despesa</th><th>Vencimento</th><th style="text-align:right">Valor</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody id="linhas"></tbody>
+    </table>
+    <div class="vazio" id="vazio" hidden>Nenhuma conta neste filtro.</div>
+  </div>
+</main>
+
+<!-- nova conta -->
+<dialog id="dlgConta">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 500px; max-width: 100%;">
+    <h2 id="dlgTitulo">Nova conta a pagar</h2>
+    <div class="campo"><label>Descrição *</label><input id="fDesc" required placeholder="ex.: Aluguel do galpão"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Centro de despesa</label><select id="fCentro"></select></div>
+      <div class="campo"><label>Fornecedor</label><input id="fForn" placeholder="opcional"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Valor (R$) *</label><input id="fValor" type="number" step="0.01" min="0" required></div>
+      <div class="campo"><label>Vencimento *</label><input id="fVenc" type="date" required></div>
+    </div>
+    <div class="campo" id="campoRepete"><label>Repetir</label>
+      <select id="fRepete">
+        <option value="1">Só este mês</option>
+        <option value="3">Por 3 meses</option>
+        <option value="6">Por 6 meses</option>
+        <option value="12">Por 12 meses</option>
+      </select>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- centros de despesa -->
+<dialog id="dlgCentros">
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 420px; max-width: 100%;">
+    <h2>Centros de despesa</h2>
+    <p class="muted" style="margin: -8px 0 0;">Como no EVO: agrupe os gastos para saber para onde o dinheiro vai.</p>
+    <div id="listaCentros" style="display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto;"></div>
+    <div class="linha-flex">
+      <input id="novoCentro" placeholder="Novo centro… (ex.: Limpeza)" style="flex: 1;">
+      <button class="btn mini" id="addCentro">Adicionar</button>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" id="fecharCentros">Fechar</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var CENTROS_PADRAO = ["Aluguel", "Energia e água", "Folha de pagamento", "Marketing", "Manutenção", "Equipamentos", "Impostos e taxas", "Sistema e software", "Outros"];
+  function load() { return S.read("contas", { centros: CENTROS_PADRAO.slice(), contas: [] }); }
+  function save(st) { S.write("contas", st); render(); }
+
+  var modelo = "avencer";
+  var busca = "";
+
+  function filtra(st) {
+    var hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    var q = busca.trim().toLowerCase();
+    return st.contas.filter(function (c) {
+      if (q && ((c.desc || "") + " " + (c.centro || "") + " " + (c.forn || "")).toLowerCase().indexOf(q) === -1) return false;
+      if (modelo === "avencer") return c.status === "aberto" && c.vencimento >= hoje;
+      if (modelo === "hoje") return c.status === "aberto" && c.vencimento === hoje;
+      if (modelo === "vencidas") return c.status === "aberto" && c.vencimento < hoje;
+      if (modelo === "mes") return c.status === "aberto" && c.vencimento.slice(0, 7) === mes;
+      if (modelo === "pagasmes") return c.status === "pago" && (c.pagoEm || "").slice(0, 7) === mes;
+      if (modelo === "canceladas") return c.status === "cancelado";
+      return true;
+    }).sort(function (a, b) { return a.vencimento < b.vencimento ? -1 : 1; });
+  }
+
+  function render() {
+    var st = load();
+    var lista = filtra(st);
+    var hoje = S.todayISO();
+    var total = lista.reduce(function (t, c) { return t + (+c.valor || 0); }, 0);
+    var pago = lista.filter(function (c) { return c.status === "pago"; }).reduce(function (t, c) { return t + (+c.valor || 0); }, 0);
+
+    $("resumo").innerHTML =
+      '<div class="cr azul"><span class="ico">💲</span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(total) + "</div></div></div>" +
+      '<div class="cr verde"><span class="ico">✅</span><div><div class="rot">Valor pago</div><div class="val">' + S.fmtBRL(pago) + "</div></div></div>" +
+      '<div class="cr laranja"><span class="ico">📄</span><div><div class="rot">Quantidade de contas</div><div class="val">' + lista.length + "</div></div></div>";
+
+    $("vazio").hidden = !!lista.length;
+    $("linhas").innerHTML = lista.map(function (c) {
+      var atras = c.status === "aberto" && c.vencimento < hoje;
+      return "<tr>" +
+        "<td><strong>" + esc(c.desc) + "</strong>" + (c.forn ? '<div class="muted" style="font-size:12px">' + esc(c.forn) + "</div>" : "") + "</td>" +
+        "<td>" + esc(c.centro || "—") + "</td>" +
+        '<td class="' + (atras ? "venc-atras" : "") + '">' + S.fmtData(c.vencimento) + (atras ? " ⚠" : "") + "</td>" +
+        '<td style="text-align:right"><strong>' + S.fmtBRL(c.valor) + "</strong></td>" +
+        "<td>" + (c.status === "pago" ? '<span class="tag ok">PAGA</span>' :
+          c.status === "cancelado" ? '<span class="tag neutro">CANCELADA</span>' :
+          atras ? '<span class="tag erro">VENCIDA</span>' : '<span class="tag alerta">EM ABERTO</span>') + "</td>" +
+        "<td style='text-align:right; white-space:nowrap'>" +
+        (c.status === "aberto" ? '<button class="btn ok mini" data-pagar="' + c.id + '">✓ Pagar</button> ' +
+          '<button class="btn sec mini" data-cancelar="' + c.id + '">✕</button>' :
+          '<button class="btn sec mini" data-reabrir="' + c.id + '">↩</button>') +
+        "</td></tr>";
+    }).join("");
+  }
+
+  $("modelos").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    modelo = b.getAttribute("data-m");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  $("busca").addEventListener("input", function () { busca = this.value; render(); });
+
+  $("linhas").addEventListener("click", function (e) {
+    var st = load();
+    var id = e.target.getAttribute && e.target.getAttribute("data-pagar");
+    if (id) {
+      var c = st.contas.find(function (x) { return x.id === id; });
+      c.status = "pago"; c.pagoEm = S.todayISO();
+      save(st); return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-cancelar");
+    if (id) {
+      if (!confirm("Cancelar esta conta?")) return;
+      st.contas.find(function (x) { return x.id === id; }).status = "cancelado";
+      save(st); return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-reabrir");
+    if (id) {
+      var c2 = st.contas.find(function (x) { return x.id === id; });
+      c2.status = "aberto"; c2.pagoEm = "";
+      save(st);
+    }
+  });
+
+  // ---------- nova conta ----------
+  $("btnNova").onclick = function () {
+    var st = load();
+    $("fCentro").innerHTML = st.centros.map(function (c) { return "<option>" + esc(c) + "</option>"; }).join("");
+    $("fDesc").value = ""; $("fForn").value = ""; $("fValor").value = "";
+    $("fVenc").value = S.todayISO();
+    $("fRepete").value = "1";
+    $("dlgConta").showModal();
+  };
+  $("dlgConta").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var n = +$("fRepete").value || 1;
+    var venc = new Date($("fVenc").value + "T12:00");
+    for (var i = 0; i < n; i++) {
+      var v = new Date(venc.getFullYear(), venc.getMonth() + i, Math.min(venc.getDate(), 28));
+      if (i === 0) v = venc;
+      st.contas.push({
+        id: S.uid(), desc: $("fDesc").value.trim(), forn: $("fForn").value.trim(),
+        centro: $("fCentro").value, valor: +$("fValor").value || 0,
+        vencimento: S.todayISO(v), status: "aberto",
+      });
+    }
+    save(st);
+  });
+
+  // ---------- centros ----------
+  function renderCentros() {
+    var st = load();
+    $("listaCentros").innerHTML = st.centros.map(function (c, i) {
+      return '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 7px 10px;"><span style="font-size:14px">' + esc(c) +
+        '</span><button class="btn perigo mini" data-rc="' + i + '" style="padding:2px 8px">✕</button></div>';
+    }).join("");
+  }
+  $("btnCentros").onclick = function () { renderCentros(); $("dlgCentros").showModal(); };
+  $("addCentro").onclick = function () {
+    var n = $("novoCentro").value.trim();
+    if (!n) return;
+    var st = load();
+    if (st.centros.indexOf(n) !== -1) { alert("Esse centro já existe."); return; }
+    st.centros.push(n);
+    S.write("contas", st);
+    $("novoCentro").value = "";
+    renderCentros();
+  };
+  $("listaCentros").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-rc");
+    if (i == null) return;
+    var st = load();
+    st.centros.splice(+i, 1);
+    S.write("contas", st);
+    renderCentros();
+  });
+  $("fecharCentros").onclick = function () { $("dlgCentros").close(); };
+
+  S.onChange(function (k) { if (k === "contas") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
