@@ -351,4 +351,21 @@
   if (document.readyState !== "loading") aplicaLogo();
   else document.addEventListener("DOMContentLoaded", aplicaLogo);
   onChange(function (key) { if (key === "logo") aplicaLogo(); });
+
+  // ---------- atualização automática do app ----------
+  // Quando uma versão nova é publicada, o service worker novo assume e a
+  // página recarrega UMA vez sozinha — sem precisar "recarregar 2 vezes".
+  try {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then(function (reg) { if (reg.update) reg.update(); }).catch(function () {});
+      if (navigator.serviceWorker.controller) {
+        var jaRecarregou = false;
+        navigator.serviceWorker.addEventListener("controllerchange", function () {
+          if (jaRecarregou) return;
+          jaRecarregou = true;
+          location.reload();
+        });
+      }
+    }
+  } catch (e) {}
 })();

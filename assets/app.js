@@ -419,8 +419,20 @@
   // ---------- PWA ----------
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("sw.js").catch(function () {});
+      navigator.serviceWorker.register("sw.js").then(function (reg) {
+        // procura versão nova sempre que o portal abre
+        if (reg.update) reg.update();
+      }).catch(function () {});
     });
+    // versão nova assumiu? recarrega uma vez sozinho
+    if (navigator.serviceWorker.controller) {
+      var jaRecarregou = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (jaRecarregou) return;
+        jaRecarregou = true;
+        location.reload();
+      });
+    }
   }
 
   // ---------- boot ----------
