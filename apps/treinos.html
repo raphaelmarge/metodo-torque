@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Treinos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .duas-colunas { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .duas-colunas { grid-template-columns: 1fr; } }
+  .lista-alunos { display: flex; flex-direction: column; max-height: 70vh; overflow-y: auto; }
+  .al {
+    display: flex; gap: 10px; align-items: center; padding: 10px 12px;
+    border-bottom: 1px solid var(--linha); cursor: pointer; background: #fff;
+  }
+  .al:hover { background: #f6f4fa; }
+  .al.ativo { border-left: 3px solid var(--roxo); background: #f1ecfb; }
+  .al .avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--roxo); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none;
+  }
+  .al .info { flex: 1; min-width: 0; }
+  .al .info strong { font-size: 13.5px; display: block; }
+  .al .info .sub { font-size: 11.5px; color: var(--cinza); }
+  .badge-treino { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+  .badge-treino.sem { background: #f1f0f4; color: var(--cinza); }
+  .badge-treino.ok { background: rgba(22,163,74,.12); color: var(--ok); }
+  .badge-treino.vencendo { background: rgba(217,119,6,.14); color: var(--alerta); }
+  .badge-treino.vencido { background: rgba(220,38,38,.12); color: var(--erro); }
+  .plan-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .plan-grid { grid-template-columns: 1fr; } }
+  .ficha { border: 1px solid var(--linha); margin-top: 12px; }
+  .ficha-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--fundo); padding: 9px 12px; }
+  .ficha-cab input { font-weight: 700; border: none; background: none; padding: 4px; flex: 1; }
+  .ex-linha { display: grid; grid-template-columns: 2.4fr .7fr .7fr .9fr .9fr auto; gap: 6px; padding: 6px 10px; border-top: 1px solid var(--fundo); align-items: center; }
+  .ex-linha input { padding: 7px 8px; font-size: 13px; }
+  .ex-linha .rm { background: none; border: none; color: var(--erro); cursor: pointer; font-size: 14px; }
+  .ex-cab { display: grid; grid-template-columns: 2.4fr .7fr .7fr .9fr .9fr auto; gap: 6px; padding: 6px 10px; font-size: 10.5px; letter-spacing: .08em; color: var(--cinza-2); }
+  @media (max-width: 700px) {
+    .ex-linha, .ex-cab { grid-template-columns: 1fr 1fr 1fr; }
+    .ex-linha input:first-child { grid-column: 1 / -1; }
+    .ex-cab span:first-child { grid-column: 1 / -1; }
+  }
+  .grupo-ex { display: inline-block; font-size: 10.5px; color: var(--cinza); background: var(--fundo); padding: 2px 8px; border-radius: 8px; margin-left: 6px; }
+  @media print {
+    .topo, .no-print, .lista-alunos, .abas { display: none !important; }
+    body { background: #fff; }
+    .corpo { padding: 0; max-width: none; }
+    .duas-colunas { grid-template-columns: 1fr; }
+    input { border: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · TREINOS</span>
+    <h1>Treinos</h1>
+    </div>
+  </div>
+  <p>Prescreva a ficha de cada aluno como no EVO: treinos A/B/C, modelos prontos para aplicar em segundos e alerta de treino vencido.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex no-print" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-a="presc" class="ativa">Prescrição de Treinos</button>
+      <button data-a="padroes">Treinos Padrão</button>
+      <button data-a="exercicios">Exercícios</button>
+    </div>
+    <span class="muted" id="resumoAba"></span>
+  </div>
+
+  <!-- ============ PRESCRIÇÃO ============ -->
+  <section id="vPresc">
+    <div class="duas-colunas">
+      <div class="card no-print" style="padding: 0;">
+        <div style="padding: 12px;"><input id="buscaAluno" placeholder="Pesquisar por nome…"></div>
+        <div class="lista-alunos" id="listaAlunos"></div>
+      </div>
+      <div class="card" id="painelAluno">
+        <div class="vazio">Escolha um aluno na lista para ver ou montar o treino dele.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TREINOS PADRÃO ============ -->
+  <section id="vPadroes" hidden>
+    <div class="card linha-flex no-print" style="justify-content: space-between;">
+      <input id="buscaPadrao" placeholder="Pesquise por nome do treino ou professor…" style="max-width: 340px;">
+      <button class="btn" id="btnNovoPadrao">Criar treino padrão</button>
+    </div>
+    <div class="card" style="padding: 0; margin-top: 14px;">
+      <table class="tabela">
+        <thead><tr><th>Nome do treino</th><th>Criado por</th><th>Fichas</th><th style="text-align:right">Ações</th></tr></thead>
+        <tbody id="linhasPadrao"></tbody>
+      </table>
+      <div class="vazio" id="vazioPadrao" hidden>Nenhum treino padrão ainda — crie o primeiro modelo.</div>
+    </div>
+  </section>
+
+  <!-- ============ EXERCÍCIOS ============ -->
+  <section id="vExercicios" hidden>
+    <div class="card linha-flex" style="justify-content: space-between;">
+      <input id="buscaEx" placeholder="Pesquisar exercício…" style="max-width: 300px;">
+      <div class="linha-flex">
+        <input id="novoExNome" placeholder="Novo exercício…" style="width: 200px;">
+        <input id="novoExGrupo" placeholder="Grupo (ex.: Peito)" style="width: 140px;">
+        <button class="btn mini" id="addEx">Adicionar</button>
+      </div>
+    </div>
+    <div class="card" style="padding: 0; margin-top: 14px;">
+      <table class="tabela">
+        <thead><tr><th>Exercício</th><th>Grupo muscular</th><th style="text-align:right"></th></tr></thead>
+        <tbody id="linhasEx"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- editor de treino padrão -->
+<dialog id="dlgPadrao" style="max-width: min(760px, 94vw);">
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 720px; max-width: 100%; max-height: 86vh; overflow-y: auto;">
+    <h2 id="padTitulo">Criar treino padrão</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome do treino *</label><input id="pNome" placeholder="ex.: Treino iniciante Masculino A-B"></div>
+      <div class="campo"><label>Criado por</label><input id="pProf" placeholder="professor(a)"></div>
+    </div>
+    <div id="pFichas"></div>
+    <button class="btn sec mini" id="pAddFicha" style="align-self: flex-start;">+ Adicionar ficha (A, B, C…)</button>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" id="pCancelar">Cancelar</button>
+      <button class="btn" id="pSalvar">Salvar</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var EX_PADRAO = [
+    ["Supino reto", "Peito"], ["Supino inclinado com halteres", "Peito"], ["Crucifixo na máquina", "Peito"], ["Flexão de braços", "Peito"],
+    ["Puxada frontal", "Costas"], ["Remada baixa", "Costas"], ["Remada curvada", "Costas"], ["Barra fixa", "Costas"],
+    ["Agachamento livre", "Pernas"], ["Leg press 45", "Pernas"], ["Cadeira extensora", "Pernas"], ["Mesa flexora", "Pernas"],
+    ["Afundo com halteres", "Pernas"], ["Elevação pélvica", "Glúteos"], ["Cadeira abdutora", "Glúteos"], ["Stiff", "Posterior"],
+    ["Desenvolvimento com halteres", "Ombros"], ["Elevação lateral", "Ombros"], ["Elevação frontal", "Ombros"],
+    ["Rosca direta", "Bíceps"], ["Rosca alternada", "Bíceps"], ["Tríceps na polia", "Tríceps"], ["Tríceps testa", "Tríceps"],
+    ["Panturrilha em pé", "Panturrilha"], ["Abdominal supra", "Abdômen"], ["Prancha", "Abdômen"],
+    ["Esteira", "Cardio"], ["Bicicleta", "Cardio"], ["Escada", "Cardio"], ["Remo ergômetro", "Cardio"],
+  ];
+  function load() {
+    var st = S.read("treinos", null);
+    if (!st) st = { exercicios: EX_PADRAO.map(function (e) { return { id: S.uid(), nome: e[0], grupo: e[1] }; }), padroes: [], prescricoes: [] };
+    st.exercicios = st.exercicios || []; st.padroes = st.padroes || []; st.prescricoes = st.prescricoes || [];
+    return st;
+  }
+  function save(st) { S.write("treinos", st); }
+
+  // ---------- abas ----------
+  var aba = "presc";
+  function mostraAba() {
+    $("vPresc").hidden = aba !== "presc";
+    $("vPadroes").hidden = aba !== "padroes";
+    $("vExercicios").hidden = aba !== "exercicios";
+    Array.prototype.forEach.call(document.querySelectorAll("#abas button"), function (b) {
+      b.classList.toggle("ativa", b.getAttribute("data-a") === aba);
+    });
+    render();
+  }
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-a");
+    mostraAba();
+  });
+
+  // ---------- helpers ----------
+  function alunosAtivos() {
+    return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  }
+  function prescDe(st, alunoId) {
+    return st.prescricoes.find(function (p) { return p.alunoId === alunoId; }) || null;
+  }
+  function situacaoTreino(p) {
+    if (!p) return { rot: "SEM TREINO", cls: "sem" };
+    var hoje = S.todayISO();
+    if (p.vencimento && p.vencimento < hoje) return { rot: "VENCIDO", cls: "vencido" };
+    if (p.vencimento) {
+      var dias = Math.round((new Date(p.vencimento) - new Date(hoje)) / 864e5);
+      if (dias <= 7) return { rot: "VENCE EM " + dias + "D", cls: "vencendo" };
+      return { rot: "ATÉ " + S.fmtData(p.vencimento), cls: "ok" };
+    }
+    return { rot: "EM DIA", cls: "ok" };
+  }
+  function fichaVazia(n) { return { nome: "Ficha " + n, itens: [] }; }
+  function itemVazio() { return { ex: "", series: "3", reps: "12", carga: "", descanso: "60s" }; }
+
+  var busca = "";
+  var alunoSel = null;
+
+  // ---------- PRESCRIÇÃO: lista de alunos ----------
+  function renderLista() {
+    var st = load();
+    var q = busca.trim().toLowerCase();
+    var alunos = alunosAtivos().filter(function (a) { return !q || a.nome.toLowerCase().indexOf(q) !== -1; });
+    // sem treino / vencidos primeiro (como o "Vencimento de treinos" do EVO)
+    alunos.sort(function (a, b) {
+      var ordem = { sem: 0, vencido: 1, vencendo: 2, ok: 3 };
+      return ordem[situacaoTreino(prescDe(st, a.id)).cls] - ordem[situacaoTreino(prescDe(st, b.id)).cls];
+    });
+    $("listaAlunos").innerHTML = alunos.length ? alunos.map(function (a) {
+      var sit = situacaoTreino(prescDe(st, a.id));
+      var ini = a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+      return '<div class="al' + (a.id === alunoSel ? " ativo" : "") + '" data-al="' + a.id + '">' +
+        '<span class="avatar">' + esc(ini) + "</span>" +
+        '<div class="info"><strong>' + esc(a.nome) + '</strong><span class="sub">' +
+        (prescDe(st, a.id) ? esc(prescDe(st, a.id).nome || "Treino") : "nenhum treino prescrito") + "</span></div>" +
+        '<span class="badge-treino ' + sit.cls + '">' + sit.rot + "</span></div>";
+    }).join("") : '<div class="vazio" style="margin: 12px;">Nenhum aluno — cadastre na Gestão de Alunos.</div>';
+    var semTreino = alunosAtivos().filter(function (a) { return !prescDe(st, a.id); }).length;
+    $("resumoAba").textContent = aba === "presc" && semTreino ? semTreino + " aluno(s) sem treino" : "";
+  }
+  $("buscaAluno").addEventListener("input", function () { busca = this.value; renderLista(); });
+  $("listaAlunos").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-al]");
+    if (!el) return;
+    alunoSel = el.getAttribute("data-al");
+    renderLista(); renderPainel();
+  });
+
+  // ---------- PRESCRIÇÃO: painel do aluno ----------
+  function fichasHTML(fichas, editavel) {
+    var st = load();
+    var dl = '<datalist id="exLista">' + st.exercicios.map(function (x) { return "<option>" + esc(x.nome) + "</option>"; }).join("") + "</datalist>";
+    return dl + fichas.map(function (f, fi) {
+      return '<div class="ficha" data-fi="' + fi + '">' +
+        '<div class="ficha-cab"><input value="' + esc(f.nome) + '" data-fnome="' + fi + '" placeholder="Nome da ficha (ex.: A — Peito e tríceps)">' +
+        (editavel ? '<button class="btn sec mini" data-additem="' + fi + '">+ Exercício</button>' +
+          '<button class="btn perigo mini" data-rmficha="' + fi + '" style="padding: 4px 8px;">✕</button>' : "") + "</div>" +
+        '<div class="ex-cab"><span>EXERCÍCIO</span><span>SÉRIES</span><span>REPS</span><span>CARGA</span><span>DESCANSO</span><span></span></div>' +
+        f.itens.map(function (it, ii) {
+          return '<div class="ex-linha">' +
+            '<input list="exLista" value="' + esc(it.ex) + '" data-c="ex" data-fi="' + fi + '" data-ii="' + ii + '" placeholder="exercício">' +
+            '<input value="' + esc(it.series) + '" data-c="series" data-fi="' + fi + '" data-ii="' + ii + '">' +
+            '<input value="' + esc(it.reps) + '" data-c="reps" data-fi="' + fi + '" data-ii="' + ii + '">' +
+            '<input value="' + esc(it.carga) + '" data-c="carga" data-fi="' + fi + '" data-ii="' + ii + '" placeholder="kg">' +
+            '<input value="' + esc(it.descanso) + '" data-c="descanso" data-fi="' + fi + '" data-ii="' + ii + '">' +
+            '<button class="rm" data-rmitem="' + fi + "|" + ii + '" title="Remover">✕</button></div>';
+        }).join("") +
+        (f.itens.length ? "" : '<div class="muted" style="padding: 10px 12px;">Sem exercícios ainda.</div>') +
+        "</div>";
+    }).join("");
+  }
+
+  function renderPainel() {
+    var st = load();
+    var aluno = alunosAtivos().find(function (a) { return a.id === alunoSel; });
+    if (!aluno) { $("painelAluno").innerHTML = '<div class="vazio">Escolha um aluno na lista para ver ou montar o treino dele.</div>'; return; }
+    var p = prescDe(st, aluno.id);
+    if (!p) {
+      var ops = st.padroes.map(function (m) { return '<option value="' + m.id + '">' + esc(m.nome) + "</option>"; }).join("");
+      $("painelAluno").innerHTML =
+        "<h2 style='font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--texto);'>" + esc(aluno.nome) + "</h2>" +
+        '<p class="muted">Nenhum treino prescrito. Comece do zero ou aplique um treino padrão.</p>' +
+        '<div class="linha-flex" style="margin-top: 12px;">' +
+        '<button class="btn" id="btnNovoTreino">+ Planejar treino</button>' +
+        (st.padroes.length ? '<select id="selPadrao" style="width:auto">' + ops + '</select><button class="btn sec" id="btnAplicar">Aplicar padrão</button>' : "") +
+        "</div>";
+      $("btnNovoTreino").onclick = function () { criaPrescricao(aluno, null); };
+      var ap = $("btnAplicar");
+      if (ap) ap.onclick = function () {
+        var m = st.padroes.find(function (x) { return x.id === $("selPadrao").value; });
+        criaPrescricao(aluno, m);
+      };
+      return;
+    }
+    // planejamento (como o EVO: nome, frequência, semanas, início, vencimento, descrição, restrições)
+    $("painelAluno").innerHTML =
+      '<div class="linha-flex no-print" style="justify-content: space-between;">' +
+      "<h2 style='font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--texto); margin: 0;'>" + esc(aluno.nome) + "</h2>" +
+      '<div class="linha-flex">' +
+      '<button class="btn sec mini" id="btnImprimir">🖨 Imprimir ficha</button>' +
+      '<button class="btn perigo mini" id="btnExcluirTreino">Excluir treino</button></div></div>' +
+      '<div class="plan-grid" style="margin-top: 14px;">' +
+      '<div class="campo"><label>Nome do treino</label><input id="tNome" value="' + esc(p.nome) + '"></div>' +
+      '<div class="campo"><label>Frequência semanal</label><input id="tFreq" type="number" min="1" max="7" value="' + esc(p.freq) + '"></div>' +
+      '<div class="campo"><label>Total de semanas</label><input id="tSem" type="number" min="1" value="' + esc(p.semanas) + '"></div>' +
+      "</div>" +
+      '<div class="plan-grid">' +
+      '<div class="campo"><label>Descrição / observações</label><input id="tDesc" value="' + esc(p.descricao || "") + '"></div>' +
+      '<div class="campo"><label>Data de início</label><input id="tIni" type="date" value="' + esc(p.inicio) + '"></div>' +
+      '<div class="campo"><label>Vencimento previsto</label><input id="tVenc" type="date" value="' + esc(p.vencimento) + '"></div>' +
+      "</div>" +
+      '<div class="campo"><label>Restrições e dores crônicas</label><input id="tRestr" value="' + esc(p.restricoes || "") + '" placeholder="ex.: condromalácia — evitar impacto"></div>' +
+      '<div class="muted" style="margin: 8px 0 2px;">' + p.freq + "x por semana · " + p.semanas + " semana(s) · " + (p.freq * p.semanas) + " sessões</div>" +
+      "<div id='areaFichas'>" + fichasHTML(p.fichas, true) + "</div>" +
+      '<div class="linha-flex no-print" style="margin-top: 12px;">' +
+      '<button class="btn sec mini" id="btnAddFicha">+ Adicionar ficha</button>' +
+      '<button class="btn mini" id="btnSalvarTreino">Salvar treino</button></div>';
+
+    function coleta() {
+      var st2 = load();
+      var p2 = prescDe(st2, aluno.id);
+      p2.nome = $("tNome").value.trim();
+      p2.freq = +$("tFreq").value || 3;
+      p2.semanas = +$("tSem").value || 4;
+      p2.descricao = $("tDesc").value.trim();
+      p2.inicio = $("tIni").value;
+      p2.vencimento = $("tVenc").value;
+      p2.restricoes = $("tRestr").value.trim();
+      Array.prototype.forEach.call(document.querySelectorAll("#areaFichas [data-fnome]"), function (inp) {
+        p2.fichas[+inp.getAttribute("data-fnome")].nome = inp.value;
+      });
+      Array.prototype.forEach.call(document.querySelectorAll("#areaFichas [data-c]"), function (inp) {
+        p2.fichas[+inp.getAttribute("data-fi")].itens[+inp.getAttribute("data-ii")][inp.getAttribute("data-c")] = inp.value;
+      });
+      return { st: st2, p: p2 };
+    }
+    $("btnSalvarTreino").onclick = function () {
+      var r = coleta();
+      save(r.st); renderLista(); renderPainel();
+    };
+    $("btnAddFicha").onclick = function () {
+      var r = coleta();
+      r.p.fichas.push(fichaVazia(String.fromCharCode(65 + r.p.fichas.length)));
+      save(r.st); renderPainel();
+    };
+    $("btnImprimir").onclick = function () {
+      var r = coleta(); save(r.st);
+      window.print();
+    };
+    $("btnExcluirTreino").onclick = function () {
+      if (!confirm("Excluir o treino de " + aluno.nome + "?")) return;
+      var st2 = load();
+      st2.prescricoes = st2.prescricoes.filter(function (x) { return x.alunoId !== aluno.id; });
+      save(st2); renderLista(); renderPainel();
+    };
+    $("areaFichas").addEventListener("click", function (e) {
+      var fi = e.target.getAttribute && e.target.getAttribute("data-additem");
+      if (fi != null) {
+        var r = coleta();
+        r.p.fichas[+fi].itens.push(itemVazio());
+        save(r.st); renderPainel(); return;
+      }
+      var rmf = e.target.getAttribute && e.target.getAttribute("data-rmficha");
+      if (rmf != null) {
+        if (!confirm("Remover esta ficha?")) return;
+        var r2 = coleta();
+        r2.p.fichas.splice(+rmf, 1);
+        save(r2.st); renderPainel(); return;
+      }
+      var rmi = e.target.getAttribute && e.target.getAttribute("data-rmitem");
+      if (rmi != null) {
+        var pp = rmi.split("|");
+        var r3 = coleta();
+        r3.p.fichas[+pp[0]].itens.splice(+pp[1], 1);
+        save(r3.st); renderPainel();
+      }
+    });
+  }
+
+  function criaPrescricao(aluno, modelo) {
+    var st = load();
+    var inicio = S.todayISO();
+    var semanas = 6;
+    var venc = new Date(inicio + "T12:00");
+    venc.setDate(venc.getDate() + semanas * 7);
+    st.prescricoes.push({
+      id: S.uid(), alunoId: aluno.id,
+      nome: modelo ? modelo.nome : "Treino de " + aluno.nome.split(" ")[0],
+      freq: 3, semanas: semanas, inicio: inicio, vencimento: S.todayISO(venc),
+      descricao: "", restricoes: "",
+      fichas: modelo ? JSON.parse(JSON.stringify(modelo.fichas)) : [fichaVazia("A")],
+      criadoEm: inicio,
+    });
+    save(st); renderLista(); renderPainel();
+  }
+
+  // ---------- TREINOS PADRÃO ----------
+  var buscaPad = "";
+  var editPadId = null;
+  var padTemp = null; // edição em memória
+  function renderPadroes() {
+    var st = load();
+    var q = buscaPad.trim().toLowerCase();
+    var lista = st.padroes.filter(function (m) { return !q || (m.nome + " " + (m.criadoPor || "")).toLowerCase().indexOf(q) !== -1; });
+    $("vazioPadrao").hidden = !!lista.length;
+    $("linhasPadrao").innerHTML = lista.map(function (m) {
+      return "<tr><td><strong>" + esc(m.nome) + "</strong></td><td>" + esc(m.criadoPor || "—") + "</td>" +
+        "<td>" + m.fichas.length + " ficha(s) · " + m.fichas.reduce(function (t, f) { return t + f.itens.length; }, 0) + " exercícios</td>" +
+        "<td style='text-align:right; white-space:nowrap'>" +
+        '<button class="btn sec mini" data-edit="' + m.id + '">✎</button> ' +
+        '<button class="btn sec mini" data-dup="' + m.id + '" title="Duplicar">⧉</button> ' +
+        '<button class="btn perigo mini" data-del="' + m.id + '">✕</button></td></tr>';
+    }).join("");
+    if (aba === "padroes") $("resumoAba").textContent = st.padroes.length + " modelo(s)";
+  }
+  $("buscaPadrao").addEventListener("input", function () { buscaPad = this.value; renderPadroes(); });
+
+  function abrePadrao(m) {
+    editPadId = m ? m.id : null;
+    padTemp = m ? JSON.parse(JSON.stringify(m)) : { nome: "", criadoPor: "", fichas: [fichaVazia("A")] };
+    $("padTitulo").textContent = m ? "Editar treino padrão" : "Criar treino padrão";
+    $("pNome").value = padTemp.nome;
+    $("pProf").value = padTemp.criadoPor || "";
+    $("pFichas").innerHTML = fichasHTML(padTemp.fichas, true);
+    $("dlgPadrao").showModal();
+  }
+  function coletaPadrao() {
+    padTemp.nome = $("pNome").value.trim();
+    padTemp.criadoPor = $("pProf").value.trim();
+    Array.prototype.forEach.call(document.querySelectorAll("#pFichas [data-fnome]"), function (inp) {
+      padTemp.fichas[+inp.getAttribute("data-fnome")].nome = inp.value;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#pFichas [data-c]"), function (inp) {
+      padTemp.fichas[+inp.getAttribute("data-fi")].itens[+inp.getAttribute("data-ii")][inp.getAttribute("data-c")] = inp.value;
+    });
+  }
+  $("btnNovoPadrao").onclick = function () { abrePadrao(null); };
+  $("linhasPadrao").addEventListener("click", function (e) {
+    var st = load();
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (id) { abrePadrao(st.padroes.find(function (m) { return m.id === id; })); return; }
+    id = e.target.getAttribute && e.target.getAttribute("data-dup");
+    if (id) {
+      var m = st.padroes.find(function (x) { return x.id === id; });
+      var copia = JSON.parse(JSON.stringify(m));
+      copia.id = S.uid(); copia.nome = m.nome + " (cópia)";
+      st.padroes.push(copia);
+      save(st); renderPadroes(); return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-del");
+    if (id) {
+      if (!confirm("Excluir este treino padrão?")) return;
+      st.padroes = st.padroes.filter(function (x) { return x.id !== id; });
+      save(st); renderPadroes();
+    }
+  });
+  $("pFichas").addEventListener("click", function (e) {
+    var fi = e.target.getAttribute && e.target.getAttribute("data-additem");
+    if (fi != null) { coletaPadrao(); padTemp.fichas[+fi].itens.push(itemVazio()); $("pFichas").innerHTML = fichasHTML(padTemp.fichas, true); return; }
+    var rmf = e.target.getAttribute && e.target.getAttribute("data-rmficha");
+    if (rmf != null) { coletaPadrao(); padTemp.fichas.splice(+rmf, 1); $("pFichas").innerHTML = fichasHTML(padTemp.fichas, true); return; }
+    var rmi = e.target.getAttribute && e.target.getAttribute("data-rmitem");
+    if (rmi != null) { var pp = rmi.split("|"); coletaPadrao(); padTemp.fichas[+pp[0]].itens.splice(+pp[1], 1); $("pFichas").innerHTML = fichasHTML(padTemp.fichas, true); }
+  });
+  $("pAddFicha").onclick = function () {
+    coletaPadrao();
+    padTemp.fichas.push(fichaVazia(String.fromCharCode(65 + padTemp.fichas.length)));
+    $("pFichas").innerHTML = fichasHTML(padTemp.fichas, true);
+  };
+  $("pSalvar").onclick = function () {
+    coletaPadrao();
+    if (!padTemp.nome) { alert("Dê um nome ao treino."); return; }
+    var st = load();
+    if (editPadId) {
+      var i = st.padroes.findIndex(function (m) { return m.id === editPadId; });
+      st.padroes[i] = padTemp;
+    } else {
+      padTemp.id = S.uid();
+      st.padroes.push(padTemp);
+    }
+    save(st);
+    $("dlgPadrao").close();
+    renderPadroes();
+  };
+  $("pCancelar").onclick = function () { $("dlgPadrao").close(); };
+
+  // ---------- EXERCÍCIOS ----------
+  var buscaEx = "";
+  function renderEx() {
+    var st = load();
+    var q = buscaEx.trim().toLowerCase();
+    var lista = st.exercicios.filter(function (x) { return !q || (x.nome + " " + x.grupo).toLowerCase().indexOf(q) !== -1; })
+      .sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); });
+    $("linhasEx").innerHTML = lista.map(function (x) {
+      return "<tr><td>" + esc(x.nome) + "</td><td><span class='grupo-ex' style='margin:0'>" + esc(x.grupo) + "</span></td>" +
+        "<td style='text-align:right'><button class='btn perigo mini' data-delex='" + x.id + "'>✕</button></td></tr>";
+    }).join("");
+    if (aba === "exercicios") $("resumoAba").textContent = st.exercicios.length + " exercício(s) na biblioteca";
+  }
+  $("buscaEx").addEventListener("input", function () { buscaEx = this.value; renderEx(); });
+  $("addEx").onclick = function () {
+    var n = $("novoExNome").value.trim();
+    if (!n) return;
+    var st = load();
+    st.exercicios.push({ id: S.uid(), nome: n, grupo: $("novoExGrupo").value.trim() || "Outros" });
+    save(st);
+    $("novoExNome").value = ""; $("novoExGrupo").value = "";
+    renderEx();
+  };
+  $("linhasEx").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-delex");
+    if (!id) return;
+    var st = load();
+    st.exercicios = st.exercicios.filter(function (x) { return x.id !== id; });
+    save(st); renderEx();
+  });
+
+  function render() { renderLista(); renderPadroes(); renderEx(); }
+
+  // deep-links (?aba=padroes|exercicios)
+  var qs = new URLSearchParams(location.search);
+  if (qs.get("aba")) aba = qs.get("aba") === "padroes" ? "padroes" : qs.get("aba") === "exercicios" ? "exercicios" : "presc";
+
+  S.onChange(function (k) { if (k === "treinos" || k === "alunos") render(); });
+  mostraAba();
+})();
+</script>
+</body>
+</html>
