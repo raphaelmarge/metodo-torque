@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vouchers e Descontos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .cupom { border: 1px dashed var(--roxo); background: #fff; margin-bottom: 12px; }
+  .cupom summary { display: flex; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer; list-style: none; flex-wrap: wrap; }
+  .cupom summary::-webkit-details-marker { display: none; }
+  .cupom .cod { font-size: 17px; font-weight: 800; letter-spacing: .12em; color: var(--roxo); background: rgba(124,58,237,.07); padding: 6px 12px; }
+  .cupom .quem { flex: 1; min-width: 160px; }
+  .cupom .quem .sub { font-size: 12px; color: var(--cinza); }
+  .cupom.morto { border-color: var(--linha); opacity: .6; }
+  .cupom.morto .cod { color: var(--cinza); background: var(--fundo); }
+  .uso { display: flex; justify-content: space-between; padding: 8px 16px; border-top: 1px solid var(--fundo); font-size: 13.5px; }
+  .registrar-uso { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--fundo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · COMERCIAL</span>
+    <h1>Vouchers e Descontos</h1>
+    </div>
+  </div>
+  <p>Cupons para campanhas: código, desconto, validade e limite de usos — e o registro de quem usou para você medir cada campanha.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <input id="busca" placeholder="Pesquisar código ou campanha…" style="max-width: 280px;">
+    <button class="btn" id="btnNovo">+ Criar cupom</button>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <h2>Criar cupom</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Código *</label>
+        <div class="linha-flex" style="gap: 6px;">
+          <input id="fCodigo" required style="text-transform: uppercase; flex: 1;" placeholder="ex.: VOLTA10">
+          <button type="button" class="btn sec mini" id="fGerar" title="Gerar código">🎲</button>
+        </div>
+      </div>
+      <div class="campo"><label>Campanha</label><input id="fCampanha" placeholder="ex.: Volta às aulas"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Tipo de desconto</label>
+        <select id="fTipo"><option value="pct">% por cento</option><option value="valor">R$ valor fixo</option></select>
+      </div>
+      <div class="campo"><label>Desconto *</label><input id="fValor" type="number" step="0.5" min="0" required></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Válido até</label><input id="fValidade" type="date"></div>
+      <div class="campo"><label>Limite de usos (0 = sem limite)</label><input id="fMax" type="number" min="0" value="0"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Criar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("vouchers", { cupons: [] }); }
+  function save(st) { S.write("vouchers", st); render(); }
+
+  var busca = "";
+  function statusDe(c) {
+    if (c.ativo === false) return { rot: "DESATIVADO", cls: "neutro", morto: true };
+    if (c.validade && c.validade < S.todayISO()) return { rot: "EXPIRADO", cls: "erro", morto: true };
+    if (c.maxUsos > 0 && (c.usos || []).length >= c.maxUsos) return { rot: "ESGOTADO", cls: "alerta", morto: true };
+    return { rot: "ATIVO", cls: "ok", morto: false };
+  }
+  function descTexto(c) {
+    return c.tipo === "pct" ? (+c.valor) + "% de desconto" : S.fmtBRL(+c.valor) + " de desconto";
+  }
+
+  function render() {
+    var st = load();
+    var mes = S.monthKey(new Date());
+    var ativos = st.cupons.filter(function (c) { return !statusDe(c).morto; }).length;
+    var usosMes = st.cupons.reduce(function (t, c) {
+      return t + (c.usos || []).filter(function (u) { return (u.data || "").slice(0, 7) === mes; }).length;
+    }, 0);
+    $("stats").innerHTML =
+      '<div class="card"><div class="n" style="color:var(--ok)">' + ativos + '</div><div class="muted">cupons ativos</div></div>' +
+      '<div class="card"><div class="n">' + st.cupons.length + '</div><div class="muted">criados no total</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + usosMes + '</div><div class="muted">usos este mês</div></div>';
+
+    var q = busca.trim().toLowerCase();
+    var lista = st.cupons.filter(function (c) {
+      return !q || (c.codigo + " " + (c.campanha || "")).toLowerCase().indexOf(q) !== -1;
+    });
+    $("lista").innerHTML = lista.length ? lista.map(function (c) {
+      var stt = statusDe(c);
+      var usos = c.usos || [];
+      return '<details class="cupom' + (stt.morto ? " morto" : "") + '"><summary>' +
+        '<span class="cod">' + esc(c.codigo) + "</span>" +
+        '<div class="quem"><strong>' + descTexto(c) + '</strong><div class="sub">' +
+        (c.campanha ? esc(c.campanha) + " · " : "") + usos.length + " uso(s)" +
+        (c.maxUsos > 0 ? " de " + c.maxUsos : "") +
+        (c.validade ? " · até " + S.fmtData(c.validade) : "") + "</div></div>" +
+        '<span class="tag ' + stt.cls + '">' + stt.rot + "</span>" +
+        (stt.morto ? (c.ativo === false ? '' : '') : ' <button class="btn perigo mini" data-off="' + c.id + '">desativar</button>') +
+        "</summary>" +
+        usos.map(function (u, i) {
+          return '<div class="uso"><span>' + esc(u.aluno) + "</span><span>" + S.fmtData(u.data) + "</span></div>";
+        }).join("") +
+        (!stt.morto ? '<div class="registrar-uso"><input placeholder="Quem usou? (nome)" data-usoinput="' + c.id + '" style="flex: 1;">' +
+          '<button class="btn mini" data-usobtn="' + c.id + '">Registrar uso</button></div>' : "") +
+        "</details>";
+    }).join("") : '<div class="vazio">Nenhum cupom — crie o primeiro para a próxima campanha.</div>';
+  }
+
+  $("busca").addEventListener("input", function () { busca = this.value; render(); });
+  $("btnNovo").onclick = function () {
+    $("fCodigo").value = ""; $("fCampanha").value = ""; $("fTipo").value = "pct"; $("fValor").value = "";
+    $("fValidade").value = ""; $("fMax").value = 0;
+    $("dlg").showModal();
+  };
+  $("fGerar").onclick = function () {
+    var s = "";
+    var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    for (var i = 0; i < 6; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    $("fCodigo").value = s;
+  };
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var cod = $("fCodigo").value.trim().toUpperCase();
+    if (st.cupons.some(function (c) { return c.codigo === cod; })) { e.preventDefault(); alert("Já existe cupom com esse código."); return; }
+    st.cupons.unshift({
+      id: S.uid(), codigo: cod, campanha: $("fCampanha").value.trim(),
+      tipo: $("fTipo").value, valor: +$("fValor").value || 0,
+      validade: $("fValidade").value, maxUsos: +$("fMax").value || 0,
+      usos: [], ativo: true, criadoEm: S.todayISO(),
+    });
+    save(st);
+  });
+  $("lista").addEventListener("click", function (e) {
+    var st = load();
+    var id = e.target.getAttribute && e.target.getAttribute("data-off");
+    if (id) {
+      e.preventDefault();
+      if (!confirm("Desativar este cupom?")) return;
+      st.cupons.find(function (c) { return c.id === id; }).ativo = false;
+      save(st);
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-usobtn");
+    if (id) {
+      var inp = document.querySelector('[data-usoinput="' + id + '"]');
+      var nome = (inp.value || "").trim();
+      if (!nome) return;
+      var c = st.cupons.find(function (x) { return x.id === id; });
+      c.usos = c.usos || [];
+      c.usos.push({ aluno: nome, data: S.todayISO() });
+      save(st);
+    }
+  });
+
+  S.onChange(function (k) { if (k === "vouchers") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

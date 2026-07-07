@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colaboradores — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .colab { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .colab + .colab { margin-top: -1px; }
+  .colab .avatar { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  .colab .quem { flex: 1; min-width: 160px; }
+  .colab .quem strong { font-size: 14.5px; }
+  .colab .quem .sub { font-size: 12px; color: var(--cinza); }
+  .colab.inativo { opacity: .5; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Colaboradores</h1>
+    </div>
+  </div>
+  <p>Sua equipe com cargo, contato e data de admissão — a base para escalas, comissões e a folha de função do método.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="linha-flex">
+      <input id="busca" placeholder="Pesquisar por nome ou cargo…" style="width: 260px;">
+      <select id="fCargo" style="width: auto;"><option value="">Todos os cargos</option></select>
+      <label style="margin: 0; font-size: 13px;"><input type="checkbox" id="verInativos" style="width: auto; margin-right: 4px;">mostrar inativos</label>
+    </div>
+    <button class="btn" id="btnNovo">+ Colaborador(a)</button>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <h2 id="dlgTitulo">Novo colaborador(a)</h2>
+    <div class="campo"><label>Nome *</label><input id="fNome" required></div>
+    <div class="grid-2">
+      <div class="campo"><label>Cargo *</label>
+        <div class="linha-flex" style="gap: 6px;">
+          <select id="fCargoSel" style="flex: 1;"></select>
+          <button type="button" class="btn sec mini" id="fCargoMais" title="Novo cargo">+</button>
+        </div>
+      </div>
+      <div class="campo"><label>Admissão</label><input id="fAdmissao" type="date"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>WhatsApp</label><input id="fZap" inputmode="numeric" placeholder="31999998888"></div>
+      <div class="campo"><label>E-mail</label><input id="fEmail" type="email"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button type="button" class="btn perigo mini" id="fDesativar" hidden>Desativar</button>
+      <div class="linha-flex">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var CARGOS_PADRAO = ["Recepção", "Consultor(a) de vendas", "Professor(a)", "Personal trainer", "Limpeza", "Manutenção", "Gerente"];
+  var CORES = ["#7c3aed", "#0ea5a5", "#f59e0b", "#dc2626", "#16a34a", "#2563eb", "#db2777"];
+  function load() {
+    var st = S.read("equipe", null);
+    if (!st) st = { cargos: CARGOS_PADRAO.slice(), colaboradores: [] };
+    st.cargos = st.cargos || []; st.colaboradores = st.colaboradores || [];
+    return st;
+  }
+  function save(st) { S.write("equipe", st); render(); }
+
+  var busca = "", filtroCargo = "", verInativos = false, editId = null;
+
+  function render() {
+    var st = load();
+    var ativos = st.colaboradores.filter(function (c) { return c.ativo !== false; });
+    var porCargo = {};
+    ativos.forEach(function (c) { porCargo[c.cargo] = (porCargo[c.cargo] || 0) + 1; });
+    var top = Object.keys(porCargo).sort(function (a, b) { return porCargo[b] - porCargo[a]; }).slice(0, 3);
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + ativos.length + '</div><div class="muted">na equipe</div></div>' +
+      top.map(function (cg) {
+        return '<div class="card"><div class="n">' + porCargo[cg] + '</div><div class="muted">' + esc(cg) + "</div></div>";
+      }).join("");
+
+    $("fCargo").innerHTML = '<option value="">Todos os cargos</option>' + st.cargos.map(function (c) {
+      return "<option" + (c === filtroCargo ? " selected" : "") + ">" + esc(c) + "</option>";
+    }).join("");
+
+    var q = busca.trim().toLowerCase();
+    var lista = st.colaboradores.filter(function (c) {
+      if (!verInativos && c.ativo === false) return false;
+      if (filtroCargo && c.cargo !== filtroCargo) return false;
+      if (q && (c.nome + " " + c.cargo).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+
+    $("lista").innerHTML = lista.length ? lista.map(function (c) {
+      var ini = c.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+      var cor = CORES[Math.abs(c.nome.length * 7 + (c.cargo || "").length) % CORES.length];
+      return '<div class="colab' + (c.ativo === false ? " inativo" : "") + '" data-id="' + c.id + '">' +
+        '<span class="avatar" style="background:' + cor + '">' + esc(ini) + "</span>" +
+        '<div class="quem"><strong>' + esc(c.nome) + '</strong><div class="sub">' + esc(c.cargo) +
+        (c.admissao ? " · desde " + S.fmtData(c.admissao) : "") + "</div></div>" +
+        (c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') +
+        (c.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        ' <button class="btn sec mini" data-edit="' + c.id + '">✎</button></div>';
+    }).join("") : '<div class="vazio">Ninguém aqui ainda — cadastre a equipe.</div>';
+  }
+
+  $("busca").addEventListener("input", function () { busca = this.value; render(); });
+  $("fCargo").addEventListener("change", function () { filtroCargo = this.value; render(); });
+  $("verInativos").addEventListener("change", function () { verInativos = this.checked; render(); });
+
+  function abre(c) {
+    editId = c ? c.id : null;
+    var st = load();
+    $("dlgTitulo").textContent = c ? "Editar colaborador(a)" : "Novo colaborador(a)";
+    $("fCargoSel").innerHTML = st.cargos.map(function (x) {
+      return "<option" + (c && c.cargo === x ? " selected" : "") + ">" + esc(x) + "</option>";
+    }).join("");
+    $("fNome").value = c ? c.nome : "";
+    $("fAdmissao").value = c ? (c.admissao || "") : S.todayISO();
+    $("fZap").value = c ? (c.zap || "") : "";
+    $("fEmail").value = c ? (c.email || "") : "";
+    $("fDesativar").hidden = !c || c.ativo === false;
+    $("dlg").showModal();
+  }
+  $("btnNovo").onclick = function () { abre(null); };
+  $("lista").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (!id) return;
+    abre(load().colaboradores.find(function (c) { return c.id === id; }));
+  });
+  $("fCargoMais").onclick = function () {
+    var novo = prompt("Nome do novo cargo:");
+    if (!novo) return;
+    var st = load();
+    if (st.cargos.indexOf(novo) === -1) st.cargos.push(novo);
+    S.write("equipe", st);
+    $("fCargoSel").innerHTML += "<option selected>" + esc(novo) + "</option>";
+    $("fCargoSel").value = novo;
+  };
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = {
+      nome: $("fNome").value.trim(), cargo: $("fCargoSel").value,
+      admissao: $("fAdmissao").value, zap: $("fZap").value.replace(/\D/g, ""), email: $("fEmail").value.trim(),
+    };
+    if (editId) {
+      var c = st.colaboradores.find(function (x) { return x.id === editId; });
+      Object.keys(dados).forEach(function (k) { c[k] = dados[k]; });
+    } else {
+      dados.id = S.uid(); dados.ativo = true;
+      st.colaboradores.push(dados);
+    }
+    save(st);
+  });
+  $("fDesativar").onclick = function () {
+    if (!confirm("Desativar este colaborador(a)?")) return;
+    var st = load();
+    st.colaboradores.find(function (x) { return x.id === editId; }).ativo = false;
+    $("dlg").close();
+    save(st);
+  };
+
+  S.onChange(function (k) { if (k === "equipe") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

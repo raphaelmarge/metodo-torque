@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Convênios — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .empresa { border: 1px solid var(--linha); background: #fff; margin-bottom: 12px; }
+  .empresa summary { display: flex; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer; list-style: none; flex-wrap: wrap; }
+  .empresa summary::-webkit-details-marker { display: none; }
+  .empresa .logo-emp { width: 42px; height: 42px; border-radius: 6px; background: var(--escuro); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; flex: none; }
+  .empresa .quem { flex: 1; min-width: 160px; }
+  .empresa .quem strong { font-size: 15px; }
+  .empresa .quem .sub { font-size: 12px; color: var(--cinza); }
+  .empresa .desconto { font-size: 17px; font-weight: 800; color: var(--roxo); }
+  .vinculo { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--fundo); font-size: 13.5px; }
+  .add-aluno { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--fundo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · COMERCIAL</span>
+    <h1>Convênios e Empresas</h1>
+    </div>
+  </div>
+  <p>Feche parceria com empresas da região: desconto combinado, funcionários vinculados e um canal direto com o RH — matrícula em lote é ouro.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <input id="busca" placeholder="Pesquisar empresa…" style="max-width: 280px;">
+    <button class="btn" id="btnNova">+ Nova empresa parceira</button>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <h2 id="dlgTitulo">Nova empresa parceira</h2>
+    <div class="campo"><label>Empresa *</label><input id="fNome" required placeholder="ex.: Supermercado Central"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Desconto (%)</label><input id="fDesconto" type="number" step="1" min="0" max="100" value="10"></div>
+      <div class="campo"><label>Contato (RH)</label><input id="fContato" placeholder="nome de quem fecha"></div>
+    </div>
+    <div class="campo"><label>WhatsApp do contato</label><input id="fZap" inputmode="numeric" placeholder="31999998888"></div>
+    <div class="campo"><label>Observações</label><input id="fObs" placeholder="ex.: cobrança direto na folha"></div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button type="button" class="btn perigo mini" id="fExcluir" hidden>Excluir</button>
+      <div class="linha-flex">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("convenios", { empresas: [], vinculos: [] }); }
+  function save(st) { S.write("convenios", st); render(); }
+
+  var busca = "", editId = null;
+
+  function alunosNomes() {
+    return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) { return a.nome; });
+  }
+
+  function render() {
+    var st = load();
+    var q = busca.trim().toLowerCase();
+    var lista = st.empresas.filter(function (e) { return !q || e.nome.toLowerCase().indexOf(q) !== -1; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + st.empresas.length + '</div><div class="muted">empresas parceiras</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + st.vinculos.length + '</div><div class="muted">alunos conveniados</div></div>';
+
+    var dl = '<datalist id="alunosLista">' + alunosNomes().map(function (n) { return "<option>" + esc(n) + "</option>"; }).join("") + "</datalist>";
+    $("lista").innerHTML = dl + (lista.length ? lista.map(function (e) {
+      var vincs = st.vinculos.filter(function (v) { return v.empresaId === e.id; });
+      var ini = e.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+      return '<details class="empresa"><summary>' +
+        '<span class="logo-emp">' + esc(ini) + "</span>" +
+        '<div class="quem"><strong>' + esc(e.nome) + '</strong><div class="sub">' + vincs.length + " funcionário(s) matriculado(s)" +
+        (e.contato ? " · contato: " + esc(e.contato) : "") + "</div></div>" +
+        '<span class="desconto">' + (+e.desconto || 0) + "% off</span>" +
+        (e.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(e.zap).replace(/\D/g, "") + '">💬 RH</a>' : "") +
+        ' <button class="btn sec mini" data-edit="' + e.id + '">✎</button></summary>' +
+        vincs.map(function (v) {
+          return '<div class="vinculo"><span>' + esc(v.aluno) + '</span><button class="btn perigo mini" data-rmv="' + v.id + '" style="padding: 3px 8px;">✕</button></div>';
+        }).join("") +
+        '<div class="add-aluno"><input list="alunosLista" placeholder="Vincular aluno…" data-addinput="' + e.id + '" style="flex: 1;">' +
+        '<button class="btn mini" data-addbtn="' + e.id + '">Vincular</button></div>' +
+        (e.obs ? '<div class="vinculo" style="border-top: 1px solid var(--fundo); color: var(--cinza);">📝 ' + esc(e.obs) + "</div>" : "") +
+        "</details>";
+    }).join("") : '<div class="vazio">Nenhuma empresa parceira ainda — feche a primeira!</div>');
+  }
+
+  $("busca").addEventListener("input", function () { busca = this.value; render(); });
+  $("btnNova").onclick = function () {
+    editId = null;
+    $("dlgTitulo").textContent = "Nova empresa parceira";
+    $("fNome").value = ""; $("fDesconto").value = 10; $("fContato").value = ""; $("fZap").value = ""; $("fObs").value = "";
+    $("fExcluir").hidden = true;
+    $("dlg").showModal();
+  };
+  $("lista").addEventListener("click", function (e) {
+    var st = load();
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (id) {
+      e.preventDefault();
+      var emp = st.empresas.find(function (x) { return x.id === id; });
+      editId = id;
+      $("dlgTitulo").textContent = "Editar empresa";
+      $("fNome").value = emp.nome; $("fDesconto").value = emp.desconto; $("fContato").value = emp.contato || "";
+      $("fZap").value = emp.zap || ""; $("fObs").value = emp.obs || "";
+      $("fExcluir").hidden = false;
+      $("dlg").showModal();
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-addbtn");
+    if (id) {
+      var inp = document.querySelector('[data-addinput="' + id + '"]');
+      var nome = (inp.value || "").trim();
+      if (!nome) return;
+      if (st.vinculos.some(function (v) { return v.empresaId === id && v.aluno === nome; })) { alert("Já vinculado."); return; }
+      st.vinculos.push({ id: S.uid(), empresaId: id, aluno: nome });
+      save(st);
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-rmv");
+    if (id) {
+      st.vinculos = st.vinculos.filter(function (v) { return v.id !== id; });
+      save(st);
+    }
+  });
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = {
+      nome: $("fNome").value.trim(), desconto: +$("fDesconto").value || 0,
+      contato: $("fContato").value.trim(), zap: $("fZap").value.replace(/\D/g, ""), obs: $("fObs").value.trim(),
+    };
+    if (editId) {
+      var emp = st.empresas.find(function (x) { return x.id === editId; });
+      Object.keys(dados).forEach(function (k) { emp[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      st.empresas.push(dados);
+    }
+    save(st);
+  });
+  $("fExcluir").onclick = function () {
+    if (!confirm("Excluir a empresa e os vínculos dela?")) return;
+    var st = load();
+    st.empresas = st.empresas.filter(function (x) { return x.id !== editId; });
+    st.vinculos = st.vinculos.filter(function (v) { return v.empresaId !== editId; });
+    $("dlg").close();
+    save(st);
+  };
+
+  S.onChange(function (k) { if (k === "convenios" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
