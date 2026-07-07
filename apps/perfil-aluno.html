@@ -155,7 +155,7 @@
       (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
       '<a class="btn sec" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">✏ Editar cadastro</a></div></div>' +
       '<div class="secoes" id="secoes">' +
-      [["perfil", "Perfil"], ["financeiro", "Financeiro"], ["contratos", "Contratos"], ["turmas", "Turmas"], ["atividades", "Atividades"]].map(function (s) {
+      [["perfil", "Perfil"], ["cadastro", "Cadastro"], ["financeiro", "Financeiro"], ["relacionamento", "Relacionamento"], ["contratos", "Contratos"], ["turmas", "Turmas"], ["atividades", "Atividades"]].map(function (s) {
         return '<button data-s="' + s[0] + '"' + (secao === s[0] ? ' class="ativa"' : "") + ">" + s[1] + "</button>";
       }).join("") + "</div></div>";
 
@@ -168,8 +168,17 @@
       var contratosAtivos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
       var proximas = st.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "aberto" && r.vencimento >= hoje; })
         .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; }).slice(0, 3);
+      // histórico de vendas = contratos + compras de produtos (como o EVO)
       var vendas = S.read("produtos", { vendas: [] }).vendas.filter(function (v) { return (v.cliente || "").toLowerCase() === a.nome.toLowerCase(); })
-        .sort(function (x, y) { return x.data < y.data ? 1 : -1; }).slice(0, 5);
+        .map(function (v) { return { data: v.data, desc: "Produtos — " + v.itens.map(function (i) { return i.qtd + "× " + i.nome; }).join(", "), valor: +v.total || 0 }; })
+        .concat((a.contratos || []).map(function (c) {
+          var p = st.planos.find(function (x) { return x.id === c.planoId; }) || {};
+          return { data: c.inicio, desc: "Contrato — " + (p.nome || "plano") + " (" + (c.meses || 1) + " meses)" + (c.renovacaoDe ? " · renovação" : ""), valor: (+c.valor || 0) * (c.meses || 1) };
+        }))
+        .sort(function (x, y) { return (x.data || "") < (y.data || "") ? 1 : -1; }).slice(0, 6);
+      var devedor = 0;
+      st.recebiveis.forEach(function (r2) { if (r2.alunoId === a.id && r2.status === "aberto" && r2.vencimento < hoje) devedor += +r2.valor || 0; });
+      var ultimoCk = (a.checkins || []).slice().sort().pop();
       var r = risco(a);
       var fs = freqSemanas(a);
       var maxF = Math.max.apply(null, fs.map(function (x) { return x.n; }).concat([1]));
@@ -193,13 +202,20 @@
           return "<tr><td>" + S.fmtData(r2.vencimento) + "</td><td><strong>" + S.fmtBRL(+r2.valor) + "</strong></td></tr>";
         }).join("") + "</table>" : '<p class="muted">Não há cobranças futuras.</p>') + "</div>" +
 
-        '<div class="card"><h2>Histórico de vendas (produtos)</h2>' +
+        '<div class="card" style="margin-bottom:12px;"><h2>Histórico de vendas</h2>' +
         (vendas.length ? '<table class="tabela"><tr><th>DATA</th><th>VENDA</th><th>VALOR</th></tr>' + vendas.map(function (v) {
-          return "<tr><td>" + S.fmtData(v.data) + "</td><td>" + esc(v.itens.map(function (i) { return i.qtd + "× " + i.nome; }).join(", ")) +
-            "</td><td>" + S.fmtBRL(v.total) + "</td></tr>";
-        }).join("") + "</table>" : '<p class="muted">Nenhuma compra de produtos registrada.</p>') + "</div>" +
+          return "<tr><td>" + S.fmtData(v.data) + "</td><td>" + esc(v.desc) + "</td><td>" + S.fmtBRL(v.valor) + "</td></tr>";
+        }).join("") + "</table>" : '<p class="muted">Nenhuma venda registrada.</p>') + "</div>" +
+
+        '<div class="card"><h2>Acessos</h2>' +
+        (ultimoCk ? '<div class="kv"><span>Último acesso</span><span>' + S.fmtData((ultimoCk || "").slice(0, 10)) + " às " + new Date(ultimoCk).toTimeString().slice(0, 5) + "</span></div>" +
+          '<div class="kv"><span>Total de acessos</span><span>' + (a.checkins || []).length + "</span></div>"
+          : '<p class="muted"><strong>Nunca acessou</strong> — nenhum acesso registrado.</p>') + "</div>" +
 
         '</div><div>' +
+        '<div class="card" style="margin-bottom:12px;"><h2>Saldos</h2>' +
+        '<div class="kv"><span>Saldo devedor</span><span style="color:' + (devedor ? "var(--erro)" : "inherit") + '">' + S.fmtBRL(devedor) + "</span></div>" +
+        '<div class="kv"><span>Saldo credor</span><span>' + S.fmtBRL(+(a.saldoCredor || 0)) + "</span></div></div>" +
         '<div class="card" style="margin-bottom:12px;"><h2>Sobre</h2>' +
         [["E-mail", a.email], ["Celular", a.zap], ["CPF", a.cpf], ["Nascimento", a.nasc ? S.fmtData(a.nasc) : ""],
          ["Como conheceu", a.comoConheceu || a.origem], ["Indicado por", a.indicacao], ["Observações", a.obs]].map(function (kv) {
@@ -214,13 +230,67 @@
         }).join("") + "</div><p class='muted' style='margin-top:6px;'>check-ins por semana (últimas 8)</p></div>" +
         "</div></div>";
     }
+    if (secao === "cadastro") {
+      var parq2 = (S.read("parq", { fichas: {} }).fichas || {})[a.id];
+      var avs2 = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; })
+        .map(function (v) { return v.data; }).sort();
+      var ultAv = avs2[avs2.length - 1];
+      var endereco = [a.endereco, a.numero, a.complemento, a.bairro, a.cidade, a.uf].filter(Boolean).join(", ");
+      html = '<div class="grid-perfil"><div>' +
+        '<div class="card" style="margin-bottom:12px;"><div class="linha-flex" style="justify-content: space-between;"><h2>Dados pessoais</h2>' +
+        '<a class="btn sec mini" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">✏ Editar</a></div>' +
+        [["Nome completo", a.nome], ["Apelido", a.apelido], ["Gênero", a.genero], ["CPF (CIN)", a.cpf], ["RG", a.rg],
+         ["Data de nascimento", a.nasc ? S.fmtData(a.nasc) : ""], ["Responsável", a.responsavel], ["Wellhub / Gympass", a.wellhub]].map(function (kv) {
+          return kv[1] ? '<div class="kv"><span>' + kv[0] + "</span><span>" + esc(kv[1]) + "</span></div>" : "";
+        }).join("") + "</div>" +
+        '<div class="card"><h2>Dados de contato</h2>' +
+        [["Celular", (a.ddi ? "+" + a.ddi + " " : "") + (a.zap || "")], ["E-mail", a.email], ["CEP", a.cep], ["Endereço", endereco]].map(function (kv) {
+          return kv[1] ? '<div class="kv"><span>' + kv[0] + "</span><span>" + esc(kv[1]) + "</span></div>" : "";
+        }).join("") + "</div>" +
+        "</div><div>" +
+        '<div class="card" style="margin-bottom:12px;"><h2>Vencimento de exames</h2>' +
+        '<div class="kv"><span>Avaliação física</span><span>' + (ultAv ?
+          (diasDesde(ultAv) >= 90 ? '<span class="tag alerta">VENCIDA — ' + S.fmtData(ultAv) + "</span>" : '<span class="tag ok">EM DIA — ' + S.fmtData(ultAv) + "</span>")
+          : '<span class="tag erro">NUNCA FEZ</span>') + "</span></div>" +
+        '<div class="kv"><span>PAR-Q</span><span>' + (parq2 ?
+          (parq2.temSim ? '<span class="tag alerta">RISCO — aval. médica</span>' : '<span class="tag ok">APTO' + (parq2.data ? " — " + S.fmtData(parq2.data) : "") + "</span>")
+          : '<span class="tag erro">PENDENTE</span>') + "</span></div>" +
+        '<p class="muted" style="margin-top:8px;">Reavaliação recomendada a cada 90 dias — agende pela <a href="saude.html">Avaliação Física</a>.</p></div>' +
+        '<div class="card"><h2>Origem e observações</h2>' +
+        [["Como conheceu", a.comoConheceu || a.origem], ["Indicado por", a.indicacao], ["Consultor(a)", a.consultor],
+         ["Tipo de visita", a.tipoVisita], ["Cliente desde", a.criado ? S.fmtData(a.criado) : ""], ["Observações", a.obs]].map(function (kv) {
+          return kv[1] ? '<div class="kv"><span>' + kv[0] + "</span><span>" + esc(kv[1]) + "</span></div>" : "";
+        }).join("") + "</div></div></div>";
+    }
+    if (secao === "relacionamento") {
+      var contatos = (a.contatos || []).slice().sort(function (x, y) { return (x.em || "") < (y.em || "") ? 1 : -1; });
+      var ICONES = { ligacao: "📞", whatsapp: "💬", email: "✉️", nota: "📝" };
+      html = '<div class="card" style="margin-bottom:12px;"><h2>Registrar contato</h2>' +
+        '<div class="linha-flex" style="align-items: flex-end; margin-top: 8px;">' +
+        '<div class="campo"><label>Tipo</label><select id="ctTipo"><option value="ligacao">Ligação</option><option value="whatsapp">WhatsApp</option><option value="email">E-mail</option><option value="nota">Anotação</option></select></div>' +
+        '<div class="campo" style="flex:1; min-width: 220px;"><label>O que foi conversado</label><input id="ctTexto" placeholder="ex.: liguei para lembrar da renovação, vai passar aqui sábado"></div>' +
+        '<div class="campo"><label>Quem registrou</label><input id="ctQuem" placeholder="nome"></div>' +
+        '<button class="btn" id="btnRegistrar">✓ Registrar</button>' +
+        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬 Abrir WhatsApp</a>' : "") +
+        "</div></div>" +
+        '<div class="card"><h2>Histórico de contatos</h2>' +
+        (contatos.length ? contatos.map(function (ct) {
+          var d = new Date(ct.em);
+          return '<div class="kv"><span>' + (ICONES[ct.tipo] || "📝") + " <strong>" + esc(ct.quem || "equipe") + "</strong> registrou " +
+            (ct.tipo === "ligacao" ? "uma ligação" : ct.tipo === "whatsapp" ? "uma mensagem de WhatsApp" : ct.tipo === "email" ? "um e-mail" : "uma anotação") +
+            ': “' + esc(ct.texto || "") + '”</span><span class="muted" style="white-space:nowrap;">' +
+            S.fmtData(ct.em.slice(0, 10)) + " às " + d.toTimeString().slice(0, 5) +
+            ' <button class="btn perigo mini" data-delct="' + ct.id + '" style="padding:1px 7px;">✕</button></span></div>';
+        }).join("") : '<p class="muted">Nenhum contato registrado ainda — registre a primeira ligação ou mensagem acima.</p>') + "</div>";
+    }
     if (secao === "financeiro") {
       var recs = st.recebiveis.filter(function (r2) { return r2.alunoId === a.id; })
         .sort(function (x, y) { return x.vencimento < y.vencimento ? 1 : -1; });
       var pago = 0, aberto = 0;
       recs.forEach(function (r2) { if (r2.status === "pago") pago += +r2.valor || 0; else aberto += +r2.valor || 0; });
       html = '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Movimentações</h2>' +
-        '<span class="muted">pago: <strong style="color:var(--ok)">' + S.fmtBRL(pago) + '</strong> · em aberto: <strong style="color:var(--erro)">' + S.fmtBRL(aberto) + "</strong></span></div>" +
+        '<span class="muted">pago: <strong style="color:var(--ok)">' + S.fmtBRL(pago) + '</strong> · em aberto: <strong style="color:var(--erro)">' + S.fmtBRL(aberto) + "</strong> " +
+        '<button class="btn sec mini" id="btnCsv">⬇ Exportar CSV</button></span></div>' +
         (recs.length ? '<table class="tabela"><tr><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>VALOR</th><th>STATUS</th></tr>' + recs.map(function (r2) {
           var venc = r2.status === "aberto" && r2.vencimento < hoje;
           return "<tr><td>" + esc(r2.competencia || "—") + "</td><td>" + S.fmtData(r2.vencimento) + "</td><td>" + S.fmtBRL(+r2.valor) + "</td>" +
@@ -259,6 +329,36 @@
     }
     $("corpo").innerHTML = html;
 
+    // relacionamento: registrar/excluir contato
+    var bReg = $("btnRegistrar");
+    if (bReg) {
+      if (S.equipeDatalist) S.equipeDatalist(["ctQuem"]);
+      bReg.onclick = function () {
+        var texto = $("ctTexto").value.trim();
+        if (!texto) { alert("Escreva o que foi conversado."); return; }
+        var st2 = stA();
+        var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+        (a2.contatos = a2.contatos || []).push({
+          id: S.uid(), tipo: $("ctTipo").value, texto: texto,
+          quem: $("ctQuem").value.trim(), em: new Date().toISOString(),
+        });
+        S.write("alunos", st2);
+      };
+    }
+    // financeiro: exportar CSV
+    var bCsv = $("btnCsv");
+    if (bCsv) bCsv.onclick = function () {
+      var recs2 = stA().recebiveis.filter(function (r2) { return r2.alunoId === a.id; })
+        .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; });
+      var csv = "competencia;vencimento;valor;status;pago em\n" + recs2.map(function (r2) {
+        return [r2.competencia || "", r2.vencimento || "", String(+r2.valor || 0).replace(".", ","), r2.status, r2.pagoEm || ""].join(";");
+      }).join("\n");
+      var el = document.createElement("a");
+      el.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+      el.download = "financeiro-" + a.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".csv";
+      el.click();
+    };
+
     var sec = $("secoes");
     if (sec) sec.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b) return;
@@ -266,6 +366,17 @@
       render();
     });
   }
+
+  // delegate único: excluir contato do relacionamento
+  $("corpo").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-delct");
+    if (!id || !alunoId) return;
+    var st2 = stA();
+    var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a2) return;
+    a2.contatos = (a2.contatos || []).filter(function (ct) { return ct.id !== id; });
+    S.write("alunos", st2);
+  });
 
   S.onChange(function (k) { if (k === "alunos" || k === "turmas" || k === "produtos") render(); });
   render();
