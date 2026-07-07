@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comissões — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .consultor { border: 1px solid var(--linha); background: #fff; margin-bottom: 12px; }
+  .consultor summary {
+    display: flex; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer;
+    list-style: none; flex-wrap: wrap;
+  }
+  .consultor summary::-webkit-details-marker { display: none; }
+  .consultor .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  .consultor .quem { flex: 1; min-width: 150px; }
+  .consultor .quem strong { font-size: 15px; }
+  .consultor .quem .sub { font-size: 12px; color: var(--cinza); }
+  .consultor .comissao { font-size: 18px; font-weight: 800; color: var(--ok); }
+  .consultor .pct { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+  .consultor .pct input { width: 64px; padding: 6px 8px; text-align: right; }
+  .venda-det { display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--fundo); font-size: 13.5px; flex-wrap: wrap; }
+  .totalzao { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .totalzao .n { font-size: 24px; font-weight: 800; color: var(--roxo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Comissões</h1>
+    </div>
+  </div>
+  <p>Cada contrato vendido conta para quem vendeu: defina o % por consultor(a), veja a comissão do mês e lance direto nas Contas a Pagar.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="linha-flex">
+      <button class="btn sec mini" id="mAnt">‹</button>
+      <strong id="mLabel" style="text-transform: capitalize;"></strong>
+      <button class="btn sec mini" id="mProx">›</button>
+    </div>
+    <div class="linha-flex">
+      <label style="margin: 0; font-size: 13px;">% padrão</label>
+      <input id="pctPadrao" type="number" step="0.5" min="0" style="width: 80px; text-align: right;">
+      <span class="muted">sobre o valor cheio do contrato</span>
+    </div>
+  </div>
+
+  <div id="listaConsultores"></div>
+
+  <div class="card totalzao">
+    <div>
+      <strong>Total de comissões do mês</strong>
+      <div class="muted" id="totalSub"></div>
+    </div>
+    <div class="linha-flex">
+      <span class="n" id="totalComissoes">R$ 0</span>
+      <button class="btn" id="btnLancar">Lançar nas Contas a Pagar</button>
+    </div>
+  </div>
+
+  <p class="muted">💡 O consultor de cada venda vem do campo "Consultor" no cadastro do aluno (Gestão de Alunos → Novo cadastro). Vendas sem consultor aparecem como "Sem consultor".</p>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function cfg() { return S.read("comissoes", { pctPadrao: 5, pct: {}, lancadas: {} }); }
+  var mes = S.monthKey(new Date());
+
+  function vendasDoMes() {
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var mapa = {};
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) !== mes) return;
+        var plano = st.planos.find(function (p) { return p.id === c.planoId; }) || {};
+        if (plano.tipo === "agregador") return;
+        var meses = plano.tipo === "avista" ? 1 : (c.meses || 1);
+        var valorCheio = (+c.valor || 0) * meses;
+        var quem = (a.consultor || "").trim() || "Sem consultor";
+        (mapa[quem] = mapa[quem] || []).push({ aluno: a.nome, plano: plano.nome || "—", inicio: c.inicio, valor: valorCheio });
+      });
+    });
+    return mapa;
+  }
+  function pctDe(c, nome) { return c.pct[nome] != null ? +c.pct[nome] : +c.pctPadrao || 0; }
+
+  function render() {
+    var c = cfg();
+    $("pctPadrao").value = c.pctPadrao;
+    $("mLabel").textContent = new Date(mes + "-01T12:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    var mapa = vendasDoMes();
+    var nomes = Object.keys(mapa).sort(function (a, b) {
+      var tv = function (n) { return mapa[n].reduce(function (t, v) { return t + v.valor; }, 0); };
+      return tv(b) - tv(a);
+    });
+    var totalCom = 0, totalVendido = 0, totalContratos = 0;
+
+    $("listaConsultores").innerHTML = nomes.length ? nomes.map(function (nome) {
+      var vendas = mapa[nome];
+      var vendido = vendas.reduce(function (t, v) { return t + v.valor; }, 0);
+      var pct = pctDe(c, nome);
+      var comissao = vendido * pct / 100;
+      totalCom += comissao; totalVendido += vendido; totalContratos += vendas.length;
+      var ini = nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+      return '<details class="consultor"><summary>' +
+        '<span class="avatar">' + esc(ini) + "</span>" +
+        '<div class="quem"><strong>' + esc(nome) + '</strong><div class="sub">' + vendas.length + " contrato(s) · " + S.fmtBRL(vendido) + " vendidos</div></div>" +
+        '<span class="pct">% <input type="number" step="0.5" min="0" value="' + pct + '" data-pct="' + esc(nome) + '"></span>' +
+        '<span class="comissao">' + S.fmtBRL(comissao) + "</span></summary>" +
+        vendas.map(function (v) {
+          return '<div class="venda-det"><span>' + esc(v.aluno) + ' <span class="muted">(' + esc(v.plano) + " · " + S.fmtData(v.inicio) + ')</span></span>' +
+            "<span><strong>" + S.fmtBRL(v.valor) + "</strong> → comissão " + S.fmtBRL(v.valor * pct / 100) + "</span></div>";
+        }).join("") + "</details>";
+    }).join("") : '<div class="vazio">Nenhum contrato vendido neste mês ainda.</div>';
+
+    $("totalComissoes").textContent = S.fmtBRL(totalCom);
+    $("totalSub").textContent = totalContratos + " contrato(s) · " + S.fmtBRL(totalVendido) + " vendidos no mês";
+    var lanc = c.lancadas[mes];
+    $("btnLancar").disabled = !totalCom || !!lanc;
+    $("btnLancar").textContent = lanc ? "✓ Lançada nas Contas a Pagar" : "Lançar nas Contas a Pagar";
+  }
+
+  $("pctPadrao").addEventListener("change", function () {
+    var c = cfg();
+    c.pctPadrao = +this.value || 0;
+    S.write("comissoes", c);
+    render();
+  });
+  $("listaConsultores").addEventListener("change", function (e) {
+    var nome = e.target.getAttribute && e.target.getAttribute("data-pct");
+    if (nome == null) return;
+    var c = cfg();
+    c.pct[nome] = +e.target.value || 0;
+    S.write("comissoes", c);
+    render();
+  });
+
+  function mudaMes(d) {
+    var p = mes.split("-");
+    mes = S.monthKey(new Date(+p[0], +p[1] - 1 + d, 1));
+    render();
+  }
+  $("mAnt").onclick = function () { mudaMes(-1); };
+  $("mProx").onclick = function () { mudaMes(1); };
+
+  // lança o total como conta a pagar (integração com apps/contas.html)
+  $("btnLancar").onclick = function () {
+    var c = cfg();
+    var mapa = vendasDoMes();
+    var total = 0;
+    Object.keys(mapa).forEach(function (nome) {
+      total += mapa[nome].reduce(function (t, v) { return t + v.valor; }, 0) * pctDe(c, nome) / 100;
+    });
+    if (!total) return;
+    if (!confirm("Lançar " + S.fmtBRL(total) + " de comissões como conta a pagar do mês?")) return;
+    var contas = S.read("contas", { centros: [], contas: [] });
+    if (contas.centros.indexOf("Folha de pagamento") === -1) contas.centros.push("Folha de pagamento");
+    var venc = new Date(mes + "-28T12:00");
+    contas.contas.push({
+      id: S.uid(), desc: "Comissões de vendas — " + $("mLabel").textContent,
+      centro: "Folha de pagamento", valor: Math.round(total * 100) / 100,
+      vencimento: S.todayISO(venc), status: "aberto",
+    });
+    S.write("contas", contas);
+    c.lancadas[mes] = true;
+    S.write("comissoes", c);
+    render();
+    alert("Comissão lançada! Veja em Financeiro → Contas a Pagar.");
+  };
+
+  S.onChange(function (k) { if (k === "alunos" || k === "comissoes") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

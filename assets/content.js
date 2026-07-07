@@ -30,6 +30,7 @@ self.MT_APPS = [
   { slug: "app-nps", file: "apps/nps.html", icone: "💜", title: "NPS", desc: "Registre as notas 0-10 dos alunos, acompanhe o NPS do mês e trate cada detrator com ligação em 24h." },
   { slug: "app-produtos", file: "apps/produtos.html", icone: "🛒", title: "Produtos e Vendas", desc: "Água, suplemento, camiseta: venda em 3 toques com estoque baixando sozinho e alerta de reposição." },
   { slug: "app-caixa", file: "apps/caixa.html", icone: "💵", title: "Caixa do Dia", desc: "Abertura com troco, entradas e saídas, sangria e fechamento conferido — mensalidades e vendas entram sozinhas." },
+  { slug: "app-comissoes", file: "apps/comissoes.html", icone: "🤝", title: "Comissões", desc: "Percentual por consultor(a), comissão do mês calculada por contrato vendido e lançamento nas Contas a Pagar." },
   { slug: "app-inadimplencia", file: "apps/inadimplencia.html", icone: "💰", title: "Controle de Inadimplência", desc: "A régua de cobrança do curso em ação: cada devedor no passo certo (D+1 a D+30) com a mensagem pronta." },
   { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
   { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },
