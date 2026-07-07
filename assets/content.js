@@ -43,6 +43,8 @@ self.MT_APPS = [
   { slug: "app-segmentacao", file: "apps/segmentacao.html", icone: "🔎", title: "Segmentação de Clientes", desc: "Combine filtros (plano, atraso, sumidos, aniversário), exporte CSV e dispare a mensagem certa no WhatsApp." },
   { slug: "app-indicacoes", file: "apps/indicacoes.html", icone: "🤗", title: "Indicações", desc: "Ranking de quem mais indica, os indicados de cada um e o controle da recompensa entregue." },
   { slug: "app-parq", file: "apps/parq.html", icone: "🩺", title: "PAR-Q Digital", desc: "O questionário de prontidão antes do primeiro treino, com parecer automático e registro assinado." },
+  { slug: "app-importar", file: "apps/importar.html", icone: "📥", title: "Importar Alunos (CSV)", desc: "Traga a base do sistema antigo: solte o CSV, confira o mapeamento e importe tudo de uma vez." },
+  { slug: "app-crescimento", file: "apps/crescimento.html", icone: "🌱", title: "Crescimento e Cancelamentos", desc: "Novos × cancelados mês a mês, a curva de alunos ativos e os motivos de quem saiu." },
   { slug: "app-inadimplencia", file: "apps/inadimplencia.html", icone: "💰", title: "Controle de Inadimplência", desc: "A régua de cobrança do curso em ação: cada devedor no passo certo (D+1 a D+30) com a mensagem pronta." },
   { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
   { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },
