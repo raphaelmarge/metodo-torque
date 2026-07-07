@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle de Entradas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .busca-grande input { font-size: 18px; padding: 14px 16px; width: 100%; }
+  .resultado { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); cursor: pointer; flex-wrap: wrap; }
+  .resultado + .resultado { margin-top: -1px; }
+  .resultado:hover { background: var(--fundo); }
+  .resultado .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  .painel-lib { border: 2px solid var(--linha); background: #fff; padding: 18px; }
+  .painel-lib.ok { border-color: var(--ok); }
+  .painel-lib.atencao { border-color: var(--alerta); }
+  .painel-lib.bloq { border-color: var(--erro); }
+  .aviso { display: flex; gap: 8px; align-items: center; padding: 8px 12px; margin-top: 8px; font-size: 13.5px; border: 1px solid; }
+  .aviso.erro { color: var(--erro); border-color: rgba(220,38,38,.4); background: rgba(220,38,38,.05); }
+  .aviso.alerta { color: var(--alerta); border-color: rgba(217,119,6,.4); background: rgba(217,119,6,.06); }
+  .aviso.info { color: var(--cinza); border-color: var(--linha); background: var(--fundo); }
+  .entrada-linha { display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; }
+  .entrada-linha + .entrada-linha { margin-top: -1px; }
+  .entrada-linha .hora { font-weight: 800; font-variant-numeric: tabular-nums; }
+  @media (max-width: 900px) { main.corpo { display: flex !important; flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · RECEPÇÃO</span>
+    <h1>Controle de Entradas</h1>
+    </div>
+  </div>
+  <p>A catraca virtual da recepção: busque o aluno, veja na hora se está tudo em dia (mensalidade, contrato, PAR-Q) e libere a entrada com um toque.</p>
+</header>
+
+<main class="corpo" style="display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; align-items: start;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px;">
+    <div class="card busca-grande">
+      <div class="campo"><label>Aluno</label>
+        <input id="busca" placeholder="digite o nome…" autocomplete="off">
+      </div>
+      <div id="resultados" style="margin-top: 10px;"></div>
+    </div>
+    <div id="painel"></div>
+  </div>
+
+  <div class="card">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2>Entradas de hoje</h2>
+      <span class="tag roxo" id="totalHoje">0</span>
+    </div>
+    <div id="listaHoje" style="margin-top: 10px;"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function ini(n) { return String(n || "?").split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase(); }
+
+  function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+
+  // situação do aluno para a liberação
+  function situacao(a) {
+    var st = stA();
+    var hoje = S.todayISO();
+    var avisos = [];
+    var nivel = "ok"; // ok | atencao | bloq
+    var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+    if (!ativos.length) {
+      avisos.push({ t: "erro", txt: "Sem contrato ativo — fazer matrícula ou renovação antes de liberar." });
+      nivel = "bloq";
+    } else {
+      var fimMax = null;
+      ativos.forEach(function (c) {
+        var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+        f.setMonth(f.getMonth() + (c.meses || 1));
+        var iso = S.todayISO(f);
+        if (!fimMax || iso > fimMax) fimMax = iso;
+      });
+      if (fimMax < hoje) { avisos.push({ t: "erro", txt: "Contrato vencido em " + S.fmtData(fimMax) + " — encaminhar para renovação." }); nivel = "bloq"; }
+      if (ativos.some(function (c) { return c.status === "congelado"; }) && ativos.every(function (c) { return c.status === "congelado"; })) {
+        avisos.push({ t: "alerta", txt: "Plano congelado — confirmar reativação na ficha do aluno." });
+        if (nivel === "ok") nivel = "atencao";
+      }
+    }
+    var atraso = 0;
+    st.recebiveis.forEach(function (r) {
+      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) atraso += +r.valor || 0;
+    });
+    if (atraso > 0) {
+      avisos.push({ t: "alerta", txt: "Mensalidade em atraso: " + S.fmtBRL(atraso) + " — lembrar na saída." });
+      if (nivel === "ok") nivel = "atencao";
+    }
+    var parq = (S.read("parq", { fichas: {} }).fichas || {})[a.id];
+    if (!parq) avisos.push({ t: "info", txt: "PAR-Q ainda não preenchido — aproveitar para fazer hoje." });
+    var jaHoje = (a.checkins || []).some(function (t) { return (t || "").slice(0, 10) === hoje; });
+    if (jaHoje) avisos.push({ t: "info", txt: "Já tem check-in registrado hoje." });
+    return { avisos: avisos, nivel: nivel };
+  }
+
+  var selId = null;
+
+  function renderResultados() {
+    var q = $("busca").value.trim().toLowerCase();
+    if (q.length < 2) { $("resultados").innerHTML = ""; return; }
+    var lista = stA().alunos.filter(function (a) {
+      return a.status !== "inativo" && a.nome.toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 8);
+    $("resultados").innerHTML = lista.map(function (a) {
+      return '<div class="resultado" data-sel="' + a.id + '"><span class="avatar">' + esc(ini(a.nome)) + "</span>" +
+        "<strong style='flex:1'>" + esc(a.nome) + "</strong><span class='muted'>ver situação →</span></div>";
+    }).join("") || '<div class="vazio">Nenhum aluno ativo com esse nome.</div>';
+  }
+
+  function renderPainel() {
+    if (!selId) { $("painel").innerHTML = ""; return; }
+    var a = stA().alunos.find(function (x) { return x.id === selId; });
+    if (!a) { $("painel").innerHTML = ""; return; }
+    var s = situacao(a);
+    var titulo = s.nivel === "bloq" ? "⛔ VERIFICAR ANTES DE LIBERAR" : s.nivel === "atencao" ? "⚠ LIBERAR COM AVISO" : "✅ TUDO EM DIA";
+    var cor = s.nivel === "bloq" ? "var(--erro)" : s.nivel === "atencao" ? "var(--alerta)" : "var(--ok)";
+    $("painel").innerHTML = '<div class="painel-lib ' + s.nivel + '">' +
+      '<div class="linha-flex" style="justify-content: space-between;">' +
+      "<h2 style='margin:0; text-transform:none; letter-spacing:0; font-size:17px;'>" + esc(a.nome) + "</h2>" +
+      '<strong style="color:' + cor + '">' + titulo + "</strong></div>" +
+      s.avisos.map(function (v) { return '<div class="aviso ' + v.t + '">' + esc(v.txt) + "</div>"; }).join("") +
+      '<div class="linha-flex" style="margin-top: 14px; justify-content: flex-end;">' +
+      '<a class="btn sec mini" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">Abrir ficha</a>' +
+      '<button class="btn" id="btnLiberar">✓ Liberar entrada</button></div></div>';
+    $("btnLiberar").onclick = function () {
+      var st = stA();
+      var al = st.alunos.find(function (x) { return x.id === selId; });
+      (al.checkins = al.checkins || []).push(new Date().toISOString());
+      S.write("alunos", st);
+      selId = null;
+      $("busca").value = "";
+      renderResultados(); renderPainel(); renderHoje();
+    };
+  }
+
+  function renderHoje() {
+    var hoje = S.todayISO();
+    var entradas = [];
+    stA().alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        if ((t || "").slice(0, 10) === hoje) entradas.push({ nome: a.nome, hora: new Date(t).toTimeString().slice(0, 5) });
+      });
+    });
+    entradas.sort(function (x, y) { return x.hora < y.hora ? 1 : -1; });
+    $("totalHoje").textContent = entradas.length;
+    $("listaHoje").innerHTML = entradas.length ? entradas.map(function (e) {
+      return '<div class="entrada-linha"><span class="hora">' + e.hora + "</span><span>" + esc(e.nome) + "</span></div>";
+    }).join("") : '<div class="vazio">Nenhuma entrada registrada hoje ainda.</div>';
+  }
+
+  $("busca").addEventListener("input", function () { selId = null; renderPainel(); renderResultados(); });
+  $("resultados").addEventListener("click", function (e) {
+    var r = e.target.closest("[data-sel]"); if (!r) return;
+    selId = r.getAttribute("data-sel");
+    renderPainel();
+  });
+
+  S.onChange(function (k) { if (k === "alunos") { renderHoje(); renderPainel(); } });
+  renderHoje();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cartão do Aluno — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .passo { border-left: 4px solid var(--roxo); padding-left: 14px; margin-bottom: 6px; }
+  .passo .num { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--roxo); }
+  #quadroPrevia { width: 100%; max-width: 430px; height: 620px; border: 1px solid var(--linha); background: #fff; display: block; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ATENDIMENTO</span>
+    <h1>Cartão do Aluno</h1>
+    </div>
+  </div>
+  <p>Um "mini-app" pessoal para mandar no WhatsApp do aluno: o treino atual, o plano com o próximo vencimento e os horários da academia — tudo num arquivo que abre em qualquer celular, até sem internet.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card">
+    <div class="passo"><span class="num">PASSO 1</span><h2 style="margin-top: 2px;">Escolha o aluno</h2></div>
+    <div class="linha-flex" style="margin-top: 10px; align-items: flex-end;">
+      <div class="campo" style="min-width: 260px;"><label>Aluno *</label>
+        <input id="fAluno" list="alunosLista" placeholder="nome"><datalist id="alunosLista"></datalist>
+      </div>
+      <button class="btn" id="btnGerar">Gerar cartão</button>
+    </div>
+  </div>
+
+  <div class="card" id="cardPrevia" hidden>
+    <div class="passo"><span class="num">PASSO 2</span><h2 style="margin-top: 2px;">Prévia (como o aluno vê no celular)</h2></div>
+    <iframe id="quadroPrevia" title="Prévia do cartão"></iframe>
+    <div class="linha-flex" style="margin-top: 12px;">
+      <button class="btn" id="btnBaixar">⬇ Baixar cartão (HTML)</button>
+      <a class="btn whats" id="btnZap" target="_blank" rel="noopener" hidden>💬 Abrir WhatsApp do aluno</a>
+    </div>
+    <p class="muted" style="margin-top: 8px;">Baixe o arquivo e anexe na conversa do aluno no WhatsApp — ele abre direto no navegador do celular e funciona offline.</p>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  var htmlGerado = "";
+  var alunoAtual = null;
+
+  function alunos() { return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; }); }
+  $("alunosLista").innerHTML = alunos().map(function (a) { return "<option>" + a.nome.replace(/[<>&]/g, "") + "</option>"; }).join("");
+
+  function gera() {
+    var a = alunos().find(function (x) { return x.nome === $("fAluno").value.trim(); });
+    if (!a) { alert("Escolha um aluno da lista."); return; }
+    alunoAtual = a;
+    var st = S.read("alunos", { planos: [], recebiveis: [] });
+    var cfg = S.read("config", { dados: {}, horarios: {} });
+    var nome = cfg.dados.nome;
+    try { nome = nome || (JSON.parse(localStorage.getItem("mtapp:academia")) || {}).nome; } catch (e) {}
+    nome = nome || "Academia";
+    var logo = S.getLogo ? S.getLogo() : null;
+    var zapAcad = String(cfg.dados.zap || "").replace(/\D/g, "");
+
+    var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+    var plano = c ? (st.planos.find(function (p) { return p.id === c.planoId; }) || {}) : null;
+    var proxVenc = st.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "aberto"; })
+      .map(function (r) { return r.vencimento; }).sort()[0];
+
+    var presc = S.read("treinos", { prescricoes: [] }).prescricoes.find(function (p) { return p.alunoId === a.id; });
+
+    var horarios = [];
+    for (var i = 0; i < 7; i++) {
+      var h = cfg.horarios[i] || {};
+      if (h.abre && h.fecha) horarios.push(DIAS[i] + ": " + h.abre + "–" + h.fecha);
+    }
+
+    htmlGerado = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+      "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
+      "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(nome) + "</title><style>" +
+      "*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#121016;color:#fff;padding:18px 14px 40px;max-width:480px;margin:0 auto}" +
+      ".topo{text-align:center;padding:10px 0 18px}" +
+      ".topo img{max-height:56px;max-width:180px;object-fit:contain;background:#fff;padding:5px 10px;border-radius:6px;margin-bottom:12px}" +
+      "h1{font-size:22px}.sub{color:#a9a4b5;font-size:13.5px;margin-top:4px}" +
+      ".sec{background:#1d1a24;border:1px solid #322e3d;border-radius:10px;padding:16px;margin-top:12px}" +
+      ".sec h2{font-size:12px;letter-spacing:.12em;color:#a78bfa;margin-bottom:10px}" +
+      ".kv{display:flex;justify-content:space-between;font-size:14.5px;padding:4px 0}" +
+      ".kv span:last-child{font-weight:700}" +
+      ".ficha{margin-top:10px}.ficha h3{font-size:14px;color:#fff;margin-bottom:6px}" +
+      ".ex{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;padding:5px 0;border-bottom:1px dashed #322e3d;color:#d9d5e3}" +
+      ".ex b{color:#fff;font-weight:600}.ex span{white-space:nowrap;color:#a9a4b5}" +
+      ".cta{display:block;text-align:center;margin-top:16px;background:#16a34a;color:#fff;text-decoration:none;font-weight:800;padding:14px;border-radius:8px}" +
+      ".rodape{text-align:center;color:#8a8695;font-size:12px;margin-top:16px;line-height:1.7}" +
+      "</style></head><body>" +
+      "<div class='topo'>" + (logo ? "<img src='" + logo + "' alt=''><br>" : "") +
+      "<h1>" + esc(a.nome.split(" ")[0]) + ", esse é o seu cartão 💜</h1>" +
+      "<div class='sub'>" + esc(nome) + "</div></div>" +
+
+      (plano ? "<div class='sec'><h2>SEU PLANO</h2>" +
+        "<div class='kv'><span>Plano</span><span>" + esc(plano.nome || "—") + "</span></div>" +
+        (proxVenc ? "<div class='kv'><span>Próximo vencimento</span><span>" + S.fmtData(proxVenc) + "</span></div>" : "") +
+        "</div>" : "") +
+
+      (presc && presc.fichas && presc.fichas.length ?
+        "<div class='sec'><h2>SEU TREINO — " + esc(presc.nome || "") + "</h2>" +
+        "<div class='kv'><span>Frequência</span><span>" + (presc.freq || "?") + "x por semana</span></div>" +
+        (presc.vencimento ? "<div class='kv'><span>Renovar ficha em</span><span>" + S.fmtData(presc.vencimento) + "</span></div>" : "") +
+        presc.fichas.map(function (f) {
+          return "<div class='ficha'><h3>" + esc(f.nome || "Ficha") + "</h3>" +
+            (f.itens || []).map(function (i) {
+              return "<div class='ex'><b>" + esc(i.ex || "") + "</b><span>" + esc(i.series || "?") + "×" + esc(i.reps || "?") +
+                (i.carga ? " · " + esc(i.carga) : "") + (i.descanso ? " · " + esc(i.descanso) : "") + "</span></div>";
+            }).join("") + "</div>";
+        }).join("") +
+        (presc.restricoes ? "<div class='sub' style='margin-top:10px'>⚠ " + esc(presc.restricoes) + "</div>" : "") +
+        "</div>" : "") +
+
+      (horarios.length ? "<div class='sec'><h2>HORÁRIOS DA ACADEMIA</h2>" +
+        horarios.map(function (h) { return "<div class='kv'><span>" + esc(h.split(":")[0]) + "</span><span>" + esc(h.split(/:(.+)/)[1].trim()) + "</span></div>"; }).join("") +
+        "</div>" : "") +
+
+      (zapAcad ? "<a class='cta' href='https://wa.me/55" + zapAcad + "'>💬 Falar com a academia</a>" : "") +
+      "<div class='rodape'>" + esc(nome) +
+      (cfg.dados.endereco ? "<br>📍 " + esc(cfg.dados.endereco) : "") +
+      (cfg.dados.instagram ? "<br>📸 " + esc(cfg.dados.instagram) : "") +
+      "</div></body></html>";
+
+    $("cardPrevia").hidden = false;
+    $("quadroPrevia").srcdoc = htmlGerado;
+    var bz = $("btnZap");
+    if (a.zap) {
+      bz.hidden = false;
+      bz.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, "") + "?text=" +
+        encodeURIComponent("Oi " + a.nome.split(" ")[0] + "! Seu cartão da academia está pronto — vou te mandar o arquivo aqui, é só abrir 💜");
+    } else bz.hidden = true;
+  }
+
+  $("btnGerar").onclick = gera;
+  $("btnBaixar").onclick = function () {
+    if (!htmlGerado) return;
+    var blob = new Blob([htmlGerado], { type: "text/html;charset=utf-8" });
+    var el = document.createElement("a");
+    el.href = URL.createObjectURL(blob);
+    el.download = "cartao-" + (alunoAtual ? alunoAtual.nome : "aluno").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
+    el.click();
+  };
+})();
+</script>
+</body>
+</html>
