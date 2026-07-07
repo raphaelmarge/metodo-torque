@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Central de Treinos com IA — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .passo { border-left: 4px solid var(--roxo); padding-left: 14px; margin-bottom: 6px; }
+  .passo .num { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--roxo); }
+  textarea { min-height: 140px; font-family: inherit; line-height: 1.5; }
+  .prompt-caixa { background: var(--escuro); color: #d9d5e3; padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · TREINOS</span>
+    <h1>Central de Treinos com IA</h1>
+    </div>
+  </div>
+  <p>Monte o prompt perfeito com os dados reais do aluno (avaliação, restrições, objetivo), cole no ChatGPT ou Claude, e traga o treino de volta já formatado nas fichas.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card">
+    <div class="passo"><span class="num">PASSO 1</span><h2 style="margin-top: 2px;">Escolha o aluno e o objetivo</h2></div>
+    <div class="linha-flex" style="margin-top: 10px; align-items: flex-end;">
+      <div class="campo" style="min-width: 240px;"><label>Aluno *</label>
+        <input id="fAluno" list="alunosLista" placeholder="nome"><datalist id="alunosLista"></datalist>
+      </div>
+      <div class="campo"><label>Objetivo</label>
+        <select id="fObjetivo"><option>Hipertrofia</option><option>Emagrecimento</option><option>Condicionamento geral</option><option>Força</option><option>Reabilitação / retorno</option></select>
+      </div>
+      <div class="campo"><label>Frequência semanal</label><input id="fFreq" type="number" min="1" max="7" value="3" style="width: 90px;"></div>
+      <div class="campo"><label>Fichas</label>
+        <select id="fFichas"><option value="2">A-B</option><option value="3" selected>A-B-C</option><option value="4">A-B-C-D</option></select>
+      </div>
+      <button class="btn" id="btnGerar">Gerar prompt</button>
+    </div>
+  </div>
+
+  <div class="card" id="cardPrompt" hidden>
+    <div class="passo"><span class="num">PASSO 2</span><h2 style="margin-top: 2px;">Copie e cole na IA</h2></div>
+    <p class="muted" style="margin: 4px 0 10px;">O prompt já leva avaliação física, restrições do PAR-Q e a biblioteca de exercícios da academia.</p>
+    <div class="prompt-caixa" id="promptTexto"></div>
+    <button class="btn" id="btnCopiar" style="margin-top: 12px;">📋 Copiar prompt</button>
+  </div>
+
+  <div class="card" id="cardColar" hidden>
+    <div class="passo"><span class="num">PASSO 3</span><h2 style="margin-top: 2px;">Cole a resposta da IA e salve</h2></div>
+    <p class="muted" style="margin: 4px 0 10px;">Eu leio o texto e transformo em fichas com séries e repetições. Linhas tipo "Supino reto — 3x12" viram exercícios.</p>
+    <textarea id="respostaIa" placeholder="Cole aqui o treino que a IA respondeu…"></textarea>
+    <div class="linha-flex" style="justify-content: space-between; margin-top: 12px;">
+      <span class="muted" id="parsePrevia"></span>
+      <button class="btn" id="btnSalvar">✓ Salvar como treino do aluno</button>
+    </div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function alunos() { return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; }); }
+  $("alunosLista").innerHTML = alunos().map(function (a) { return "<option>" + a.nome.replace(/[<>&]/g, "") + "</option>"; }).join("");
+
+  var alunoAtual = null;
+
+  $("btnGerar").onclick = function () {
+    var a = alunos().find(function (x) { return x.nome === $("fAluno").value.trim(); });
+    if (!a) { alert("Escolha um aluno da lista."); return; }
+    alunoAtual = a;
+
+    var saude = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    var ultimaAval = saude[saude.length - 1];
+    var parq = (S.read("parq", { fichas: {} }).fichas || {})[a.id];
+    var presc = S.read("treinos", { prescricoes: [] }).prescricoes.find(function (p) { return p.alunoId === a.id; });
+    var exercicios = S.read("treinos", { exercicios: [] }).exercicios || [];
+    var idade = "";
+    if (a.nasc) idade = Math.floor((new Date() - new Date(a.nasc + "T12:00")) / 3.156e10) + " anos";
+
+    var nFichas = +$("fFichas").value;
+    var letras = ["A", "B", "C", "D"].slice(0, nFichas);
+    var p = "Você é um treinador experiente. Monte um treino de musculação completo para este aluno:\n\n" +
+      "ALUNO: " + a.nome + (idade ? ", " + idade : "") + "\n" +
+      "OBJETIVO: " + $("fObjetivo").value + "\n" +
+      "FREQUÊNCIA: " + $("fFreq").value + "x por semana, dividido em " + nFichas + " fichas (" + letras.join(", ") + ")\n" +
+      (ultimaAval ? "AVALIAÇÃO FÍSICA (" + S.fmtData(ultimaAval.data) + "): peso " + ultimaAval.peso + "kg" +
+        (ultimaAval.altura ? ", altura " + ultimaAval.altura + "cm" : "") +
+        (ultimaAval.gordura ? ", " + ultimaAval.gordura + "% de gordura" : "") + "\n" : "") +
+      (parq && parq.temSim ? "ATENÇÃO: o PAR-Q apontou risco — treino conservador, sem exercícios de alto impacto, e recomende acompanhamento médico.\n" : "") +
+      (presc && presc.restricoes ? "RESTRIÇÕES E DORES: " + presc.restricoes + "\n" : "") +
+      "\nUSE PREFERENCIALMENTE estes exercícios disponíveis na academia:\n" +
+      exercicios.map(function (x) { return x.nome + " (" + x.grupo + ")"; }).join(", ") + "\n\n" +
+      "FORMATO DA RESPOSTA (obrigatório, sem texto extra):\n" +
+      letras.map(function (l) { return "Ficha " + l + " — [grupos musculares]\n- [exercício] — [séries]x[repetições] — descanso [tempo]"; }).join("\n") +
+      "\n\nInclua 5 a 7 exercícios por ficha e uma linha final 'OBS:' com orientações gerais.";
+
+    $("promptTexto").textContent = p;
+    $("cardPrompt").hidden = false;
+    $("cardColar").hidden = false;
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  };
+
+  $("btnCopiar").onclick = function () {
+    var t = $("promptTexto").textContent;
+    navigator.clipboard.writeText(t).then(function () { alert("Prompt copiado! Cole no ChatGPT, Claude ou Gemini."); },
+      function () { prompt("Copie o prompt:", t); });
+  };
+
+  // parser: "Ficha X ..." cria ficha; "- exercício — 3x12 — descanso 60s" vira item
+  function parseia(texto) {
+    var fichas = [], atual = null;
+    texto.split("\n").forEach(function (linha) {
+      var l = linha.trim();
+      if (!l) return;
+      var mF = l.match(/^(?:treino|ficha)\s+([a-dA-D])\b[\s—:-]*(.*)$/i);
+      if (mF) {
+        atual = { nome: "Ficha " + mF[1].toUpperCase() + (mF[2] ? " — " + mF[2].trim() : ""), itens: [] };
+        fichas.push(atual);
+        return;
+      }
+      var mI = l.match(/^[-•*]?\s*(.+?)\s*[—:-]+\s*(\d+)\s*[x×]\s*(\d+(?:\s*a\s*\d+)?)(?:.*?descanso\s*[:—-]?\s*(\S+))?/i);
+      if (mI && atual) {
+        atual.itens.push({ ex: mI[1].trim(), series: mI[2], reps: mI[3].replace(/\s/g, ""), carga: "", descanso: mI[4] || "60s" });
+      }
+    });
+    return fichas.filter(function (f) { return f.itens.length; });
+  }
+
+  $("respostaIa").addEventListener("input", function () {
+    var fichas = parseia(this.value);
+    var itens = fichas.reduce(function (t, f) { return t + f.itens.length; }, 0);
+    $("parsePrevia").textContent = fichas.length ? "Entendi " + fichas.length + " ficha(s) com " + itens + " exercício(s)." : "Ainda não reconheci fichas — confira o formato.";
+  });
+
+  $("btnSalvar").onclick = function () {
+    if (!alunoAtual) { alert("Gere o prompt primeiro (passo 1)."); return; }
+    var fichas = parseia($("respostaIa").value);
+    if (!fichas.length) { alert("Não reconheci fichas no texto. Peça à IA o formato 'Ficha A' com linhas '- exercício — 3x12'."); return; }
+    var st = S.read("treinos", { exercicios: [], padroes: [], prescricoes: [] });
+    st.prescricoes = st.prescricoes.filter(function (p) { return p.alunoId !== alunoAtual.id; });
+    var semanas = 6;
+    var inicio = S.todayISO();
+    var venc = new Date(inicio + "T12:00");
+    venc.setDate(venc.getDate() + semanas * 7);
+    var obsLinha = ($("respostaIa").value.match(/OBS:?\s*(.+)/i) || [])[1] || "";
+    st.prescricoes.push({
+      id: S.uid(), alunoId: alunoAtual.id,
+      nome: $("fObjetivo").value + " (IA)", freq: +$("fFreq").value || 3, semanas: semanas,
+      inicio: inicio, vencimento: S.todayISO(venc),
+      descricao: obsLinha.slice(0, 300), restricoes: "",
+      fichas: fichas, criadoEm: inicio, origem: "ia",
+    });
+    S.write("treinos", st);
+    alert("Treino salvo! Revise e ajuste as cargas na Prescrição de Treinos.");
+    location.href = "treinos.html";
+  };
+})();
+</script>
+</body>
+</html>

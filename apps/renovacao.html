@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Renovação e Rematrícula — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .ren { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .ren + .ren { margin-top: -1px; }
+  .ren.vencido { border-left: 4px solid var(--erro); }
+  .ren.vencendo { border-left: 4px solid var(--alerta); }
+  .ren .quem { flex: 1; min-width: 180px; }
+  .ren .quem strong { font-size: 14.5px; }
+  .ren .quem .sub { font-size: 12px; color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · COMERCIAL</span>
+    <h1>Renovação e Rematrícula</h1>
+    </div>
+  </div>
+  <p>Contratos vencendo ou vencidos, com a renovação em 2 cliques: novo contrato emendado no fim do atual e mensalidades geradas na hora.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-f="tudo" class="ativa">Para renovar</button>
+      <button data-f="vencidos">Já vencidos</button>
+      <button data-f="30">Vencem em 30 dias</button>
+    </div>
+    <span class="muted">Renovar antes de vencer é 10× mais fácil que recuperar depois.</span>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<!-- renovar -->
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
+    <h2 id="dlgTitulo">Renovar contrato</h2>
+    <div class="muted" id="dlgInfo" style="margin-top: -8px;"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Plano</label><select id="rPlano"></select></div>
+      <div class="campo"><label>Valor mensal (R$)</label><input id="rValor" type="number" step="0.01" min="0"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Início do novo contrato</label><input id="rInicio" type="date"></div>
+      <div class="campo"><label>Dia de vencimento</label><input id="rDia" type="number" min="1" max="28" value="5"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Renovar agora</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  function fimDe(c) {
+    var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+    f.setMonth(f.getMonth() + (c.meses || 1));
+    return S.todayISO(f);
+  }
+  var filtro = "tudo";
+
+  // contratos ativos vencendo/vencidos e ainda não renovados (sem outro contrato começando depois)
+  function candidatos() {
+    var st = stA();
+    var hoje = S.todayISO();
+    var lista = [];
+    st.alunos.forEach(function (a) {
+      if (a.status === "inativo") return;
+      var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+      if (!ativos.length) return;
+      // considera o contrato com fim mais distante
+      var c = ativos.sort(function (x, y) { return fimDe(y) < fimDe(x) ? -1 : 1; })[0];
+      var fim = fimDe(c);
+      var dias = Math.round((new Date(fim) - new Date(hoje)) / 864e5);
+      if (dias <= 30) lista.push({ a: a, c: c, fim: fim, dias: dias });
+    });
+    return lista.sort(function (x, y) { return x.dias - y.dias; });
+  }
+
+  function render() {
+    var todos = candidatos();
+    var vencidos = todos.filter(function (x) { return x.dias < 0; });
+    var vencendo = todos.filter(function (x) { return x.dias >= 0; });
+    $("stats").innerHTML =
+      '<div class="card"><div class="n" style="color:var(--erro)">' + vencidos.length + '</div><div class="muted">já vencidos</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--alerta)">' + vencendo.length + '</div><div class="muted">vencem em 30 dias</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + S.fmtBRL(todos.reduce(function (t, x) { return t + (+x.c.valor || 0) * (x.c.meses || 1); }, 0)) + '</div><div class="muted">receita em jogo (renovações)</div></div>';
+
+    var lista = filtro === "vencidos" ? vencidos : filtro === "30" ? vencendo : todos;
+    $("lista").innerHTML = lista.length ? lista.map(function (x) {
+      var st = stA();
+      var plano = st.planos.find(function (p) { return p.id === x.c.planoId; }) || {};
+      var msg = "Oi " + x.a.nome.split(" ")[0] + "! Seu plano " + (plano.nome || "") +
+        (x.dias < 0 ? " venceu em " + S.fmtData(x.fim) : " vence em " + S.fmtData(x.fim)) +
+        ". Bora renovar e garantir sua vaga e o valor atual? Me chama! 💜";
+      return '<div class="ren ' + (x.dias < 0 ? "vencido" : "vencendo") + '">' +
+        '<div class="quem"><strong>' + esc(x.a.nome) + '</strong><div class="sub">' + esc(plano.nome || "plano") +
+        " · " + S.fmtBRL(+x.c.valor || 0) + "/mês · " +
+        (x.dias < 0 ? "<strong style='color:var(--erro)'>venceu há " + Math.abs(x.dias) + " dia(s)</strong>" :
+          "vence " + S.fmtData(x.fim) + " (" + x.dias + "d)") + "</div></div>" +
+        (x.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+          String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "") +
+        '<button class="btn mini" data-renovar="' + x.a.id + "|" + x.c.id + '">🔁 Renovar</button></div>';
+    }).join("") : '<div class="vazio">Nada para renovar neste filtro. 🎉</div>';
+  }
+
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    filtro = b.getAttribute("data-f");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+
+  var alvo = null;
+  $("lista").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-renovar");
+    if (!id) return;
+    var pp = id.split("|");
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === pp[0]; });
+    var c = (a.contratos || []).find(function (x) { return x.id === pp[1]; });
+    alvo = { alunoId: a.id, contratoId: c.id };
+    var fim = fimDe(c);
+    var hoje = S.todayISO();
+    $("dlgTitulo").textContent = "Renovar — " + a.nome;
+    $("dlgInfo").textContent = "Contrato atual termina em " + S.fmtData(fim) + ". O novo começa emendado (ou hoje, se já venceu).";
+    $("rPlano").innerHTML = st.planos.map(function (p) {
+      return '<option value="' + p.id + '"' + (p.id === c.planoId ? " selected" : "") + ">" + esc(p.nome) +
+        (p.tipo !== "agregador" ? " — " + S.fmtBRL(+p.valor) + "/mês" : "") + "</option>";
+    }).join("");
+    $("rValor").value = +c.valor || 0;
+    $("rInicio").value = fim > hoje ? fim : hoje;
+    $("rDia").value = c.diaVenc || 5;
+    $("dlg").showModal();
+  });
+  $("rPlano").addEventListener("change", function () {
+    var p = stA().planos.find(function (x) { return x.id === $("rPlano").value; });
+    if (p && p.tipo !== "agregador") $("rValor").value = +p.valor || 0;
+  });
+
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === alvo.alunoId; });
+    var antigo = a.contratos.find(function (x) { return x.id === alvo.contratoId; });
+    var plano = st.planos.find(function (p) { return p.id === $("rPlano").value; });
+    var novo = {
+      id: S.uid(), planoId: plano.id, inicio: $("rInicio").value,
+      diaVenc: Math.min(+$("rDia").value || 5, 28), meses: plano.meses || antigo.meses || 12,
+      valor: +$("rValor").value || 0, status: "ativo", renovacaoDe: antigo.id,
+    };
+    // encerra o antigo no fim natural (mantém histórico) e emenda o novo
+    a.contratos.push(novo);
+    a.status = "ativo";
+    // gera as mensalidades do novo contrato
+    if (plano.tipo !== "agregador") {
+      var n = plano.tipo === "avista" ? 1 : novo.meses;
+      var ini = new Date(novo.inicio + "T12:00");
+      for (var i = 0; i < n; i++) {
+        var comp = new Date(ini.getFullYear(), ini.getMonth() + i, 1);
+        var venc = new Date(ini.getFullYear(), ini.getMonth() + i, Math.min(novo.diaVenc, 28));
+        if (i === 0 && venc < ini) venc = ini;
+        st.recebiveis.push({
+          id: S.uid(), alunoId: a.id, contratoId: novo.id,
+          competencia: comp.getFullYear() + "-" + ((comp.getMonth() + 1) < 10 ? "0" : "") + (comp.getMonth() + 1),
+          vencimento: S.todayISO(venc), valor: novo.valor, status: "aberto",
+        });
+      }
+    }
+    S.write("alunos", st);
+    render();
+    alert("Renovado! Novo contrato de " + a.nome.split(" ")[0] + " começa em " + S.fmtData(novo.inicio) + " com as mensalidades já geradas.");
+  });
+
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
