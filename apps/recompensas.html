@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clube de Recompensas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .rk { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .rk + .rk { margin-top: -1px; }
+  .rk .pos { font-weight: 800; color: var(--roxo); width: 30px; }
+  .rk .pts { font-weight: 800; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM 2.0</span>
+    <h1>Clube de Recompensas</h1>
+    </div>
+  </div>
+  <p>TorqueCoins: o aluno ganha pontos por treinar, indicar e renovar — e troca por prêmios. Retenção que vira jogo.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="stats" id="stats"></div>
+
+  <div class="card">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2>Como se ganha ponto</h2>
+      <button class="btn sec mini" id="btnPremios">🎁 Prêmios do catálogo</button>
+    </div>
+    <div class="linha-flex" style="margin-top: 10px;">
+      <div class="campo"><label>Por check-in</label><input id="pCheckin" type="number" min="0" style="width: 90px;"></div>
+      <div class="campo"><label>Por indicação</label><input id="pIndicacao" type="number" min="0" style="width: 90px;"></div>
+      <div class="campo"><label>Por renovação</label><input id="pRenovacao" type="number" min="0" style="width: 90px;"></div>
+      <div class="campo"><label>Por avaliação física</label><input id="pAvaliacao" type="number" min="0" style="width: 90px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Ranking de pontos</h2>
+    <div id="ranking" style="margin-top: 10px;"></div>
+  </div>
+</main>
+
+<dialog id="dlgPremios">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 480px; max-width: 100%;">
+    <h2>Catálogo de prêmios</h2>
+    <div id="listaPremios"></div>
+    <div class="linha-flex">
+      <input id="npNome" placeholder="ex.: 1 mês de armário grátis" style="flex:1">
+      <input id="npCusto" type="number" min="1" placeholder="pontos" style="width: 90px;">
+      <button class="btn sec mini" id="addPremio" type="button">+ Adicionar</button>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;"><button class="btn" value="ok">Fechar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgResgate">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 440px; max-width: 100%;">
+    <h2 id="rgTitulo">Resgatar prêmio</h2>
+    <div class="campo"><label>Prêmio</label><select id="rgPremio"></select></div>
+    <div class="muted" id="rgSaldo"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Resgatar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var PADRAO = { pontos: { checkin: 1, indicacao: 10, renovacao: 20, avaliacao: 5 }, premios: [], resgates: [] };
+  function load() { return S.read("recompensas", JSON.parse(JSON.stringify(PADRAO))); }
+  function save(st) { S.write("recompensas", st); render(); }
+
+  ["pCheckin", "pIndicacao", "pRenovacao", "pAvaliacao"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var st = load();
+      var k = id.slice(1).toLowerCase();
+      if (st.pontos[k] === (+this.value || 0)) return;
+      st.pontos[k] = +this.value || 0;
+      save(st);
+    });
+  });
+
+  function pontosDe(a, st, stA) {
+    var p = st.pontos;
+    var ganhos = (a.checkins || []).length * p.checkin;
+    ganhos += (a.contratos || []).filter(function (c) { return c.renovacaoDe; }).length * p.renovacao;
+    ganhos += S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; }).length * p.avaliacao;
+    var indicados = stA.alunos.filter(function (x) { return (x.indicacao || "").toLowerCase() === a.nome.toLowerCase(); }).length;
+    ganhos += indicados * p.indicacao;
+    var gastos = st.resgates.filter(function (r) { return r.alunoId === a.id; })
+      .reduce(function (t, r) { return t + (+r.custo || 0); }, 0);
+    return { ganhos: ganhos, gastos: gastos, saldo: ganhos - gastos, indicados: indicados };
+  }
+
+  var alvoId = null;
+  function render() {
+    var st = load();
+    var stA = S.read("alunos", { alunos: [] });
+    $("pCheckin").value = st.pontos.checkin;
+    $("pIndicacao").value = st.pontos.indicacao;
+    $("pRenovacao").value = st.pontos.renovacao;
+    $("pAvaliacao").value = st.pontos.avaliacao;
+
+    var lista = stA.alunos.filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) { var pt = pontosDe(a, st, stA); return { a: a, pt: pt }; })
+      .filter(function (x) { return x.pt.ganhos > 0; })
+      .sort(function (x, y) { return y.pt.saldo - x.pt.saldo; });
+
+    var totalPts = lista.reduce(function (t, x) { return t + x.pt.saldo; }, 0);
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + lista.length + '</div><div class="muted">alunos pontuando</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + totalPts + '</div><div class="muted">pontos em circulação</div></div>' +
+      '<div class="card"><div class="n">' + st.resgates.length + '</div><div class="muted">resgates feitos</div></div>' +
+      '<div class="card"><div class="n">' + st.premios.length + '</div><div class="muted">prêmios no catálogo</div></div>';
+
+    $("ranking").innerHTML = lista.length ? lista.slice(0, 30).map(function (x, i) {
+      return '<div class="rk"><span class="pos">' + (i + 1) + 'º</span>' +
+        '<span style="flex:1"><strong>' + esc(x.a.nome) + '</strong> <span class="muted">(' +
+        (x.a.checkins || []).length + " treinos" + (x.pt.indicados ? " · " + x.pt.indicados + " indicações" : "") + ")</span></span>" +
+        '<span class="pts">' + x.pt.saldo + ' pts</span>' +
+        '<button class="btn mini" data-resgata="' + x.a.id + '">🎁 Resgatar</button></div>';
+    }).join("") : '<div class="vazio">Ninguém pontuou ainda — os pontos vêm dos check-ins, indicações, renovações e avaliações já registrados.</div>';
+  }
+
+  // catálogo
+  function renderPremios() {
+    var st = load();
+    $("listaPremios").innerHTML = st.premios.length ? st.premios.map(function (p, i) {
+      return '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 7px 10px; margin-bottom: 4px;">' +
+        "<span>" + esc(p.nome) + " — <strong>" + p.custo + " pts</strong></span>" +
+        '<button class="btn perigo mini" data-rp="' + i + '" type="button" style="padding: 1px 8px;">✕</button></div>';
+    }).join("") : '<p class="muted">Nenhum prêmio ainda. Ex.: garrafa (50 pts), camiseta (150 pts), 1 mês grátis (600 pts).</p>';
+  }
+  $("btnPremios").onclick = function () { renderPremios(); $("dlgPremios").showModal(); };
+  $("addPremio").onclick = function () {
+    var nome = $("npNome").value.trim(), custo = +$("npCusto").value || 0;
+    if (!nome || custo < 1) return;
+    var st = load();
+    st.premios.push({ id: S.uid(), nome: nome, custo: custo });
+    $("npNome").value = ""; $("npCusto").value = "";
+    S.write("recompensas", st);
+    renderPremios(); render();
+  };
+  $("listaPremios").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-rp");
+    if (i == null) return;
+    var st = load();
+    st.premios.splice(+i, 1);
+    S.write("recompensas", st);
+    renderPremios(); render();
+  });
+
+  // resgate
+  $("ranking").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-resgata");
+    if (!id) return;
+    var st = load();
+    if (!st.premios.length) { alert("Cadastre prêmios no catálogo primeiro (🎁)."); return; }
+    alvoId = id;
+    var stA = S.read("alunos", { alunos: [] });
+    var a = stA.alunos.find(function (x) { return x.id === id; });
+    var pt = pontosDe(a, st, stA);
+    $("rgTitulo").textContent = "Resgatar — " + a.nome;
+    $("rgSaldo").textContent = "Saldo atual: " + pt.saldo + " pontos.";
+    $("rgPremio").innerHTML = st.premios.map(function (p) {
+      return '<option value="' + p.id + '"' + (p.custo > pt.saldo ? " disabled" : "") + ">" + esc(p.nome) + " — " + p.custo + " pts" + (p.custo > pt.saldo ? " (faltam " + (p.custo - pt.saldo) + ")" : "") + "</option>";
+    }).join("");
+    $("dlgResgate").showModal();
+  });
+  $("dlgResgate").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var p = st.premios.find(function (x) { return x.id === $("rgPremio").value; });
+    if (!p) return;
+    var stA = S.read("alunos", { alunos: [] });
+    var a = stA.alunos.find(function (x) { return x.id === alvoId; });
+    var pt = pontosDe(a, st, stA);
+    if (p.custo > pt.saldo) { alert("Saldo insuficiente."); return; }
+    st.resgates.push({ id: S.uid(), alunoId: alvoId, premio: p.nome, custo: p.custo, em: S.todayISO() });
+    save(st);
+    alert("Resgatado! " + a.nome.split(" ")[0] + " trocou " + p.custo + " pts por: " + p.nome);
+  });
+
+  S.onChange(function (k) { if (k === "recompensas" || k === "alunos" || k === "saude") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
