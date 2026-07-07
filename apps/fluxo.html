@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluxo de Caixa — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .fx { width: 100%; border-collapse: collapse; background: #fff; }
+  .fx td, .fx th { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fx td:first-child, .fx th:first-child { text-align: left; }
+  .fx th { background: var(--escuro); color: #fff; font-size: 12px; letter-spacing: .06em; }
+  .fx tr.neg td { background: #fdeaea; }
+  .fx .hoje td:first-child::after { content: " · semana atual"; color: var(--roxo); font-size: 11px; font-weight: 700; }
+  .graf { display: flex; gap: 8px; align-items: flex-end; height: 130px; padding-top: 8px; }
+  .graf .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .graf .b { width: 60%; max-width: 46px; border-radius: 3px 3px 0 0; min-height: 2px; }
+  .graf .rotulo { font-size: 10.5px; color: var(--cinza); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Fluxo de Caixa — 8 Semanas</h1>
+    </div>
+  </div>
+  <p>A projeção automática das próximas 8 semanas: mensalidades a receber contra contas a pagar, semana a semana, para o caixa nunca te pegar de surpresa.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end;">
+    <div class="campo" style="max-width: 240px;"><label>Saldo em caixa hoje (R$)</label>
+      <input id="fSaldo" type="number" step="0.01" placeholder="0,00">
+    </div>
+    <span class="muted" id="atrasados"></span>
+  </div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="fx" id="tabela"></table>
+  </div>
+
+  <div class="card">
+    <h2>Saldo acumulado projetado</h2>
+    <div class="graf" id="graf"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function cfg() { return S.read("fluxo", { saldoInicial: 0 }); }
+  $("fSaldo").value = cfg().saldoInicial || "";
+  $("fSaldo").addEventListener("change", function () {
+    var st = cfg();
+    if (st.saldoInicial === (+this.value || 0)) return;
+    st.saldoInicial = +this.value || 0;
+    S.write("fluxo", st);
+    render();
+  });
+
+  // segunda-feira da semana atual
+  function segundaAtual() {
+    var d = new Date(S.todayISO() + "T12:00");
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return d;
+  }
+
+  function render() {
+    var hoje = S.todayISO();
+    var recebiveis = S.read("alunos", { recebiveis: [] }).recebiveis;
+    var contas = S.read("contas", { contas: [] }).contas;
+    var seg = segundaAtual();
+    var iniProj = S.todayISO(seg);
+
+    // atrasados de antes da projeção: dinheiro que ainda pode entrar
+    var atras = recebiveis.filter(function (r) { return r.status === "aberto" && r.vencimento < iniProj; })
+      .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    $("atrasados").innerHTML = atras
+      ? "⚠ Fora da projeção: <strong>" + S.fmtBRL(atras) + "</strong> em mensalidades atrasadas — cobre na <a href='inadimplencia.html'>régua</a>."
+      : "Sem mensalidades atrasadas antes desta semana. 🎉";
+
+    var semanas = [];
+    for (var i = 0; i < 8; i++) {
+      var a = new Date(seg); a.setDate(a.getDate() + i * 7);
+      var b = new Date(a); b.setDate(b.getDate() + 6);
+      var ia = S.todayISO(a), ib = S.todayISO(b);
+      var entra = recebiveis.filter(function (r) {
+        return (r.status === "aberto" && r.vencimento >= ia && r.vencimento <= ib) ||
+          (r.status === "pago" && (r.pagoEm || "") >= ia && (r.pagoEm || "") <= ib);
+      }).reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+      var sai = contas.filter(function (c) {
+        return (c.status === "aberto" && c.vencimento >= ia && c.vencimento <= ib) ||
+          (c.status === "pago" && (c.pagoEm || "") >= ia && (c.pagoEm || "") <= ib);
+      }).reduce(function (t, c) { return t + (+c.valor || 0); }, 0);
+      semanas.push({ ia: ia, ib: ib, entra: entra, sai: sai, atual: hoje >= ia && hoje <= ib });
+    }
+
+    var saldo = cfg().saldoInicial || 0;
+    var linhas = semanas.map(function (s, i) {
+      saldo += s.entra - s.sai;
+      s.acum = saldo;
+      return '<tr class="' + (s.acum < 0 ? "neg " : "") + (s.atual ? "hoje" : "") + '">' +
+        "<td>Semana " + (i + 1) + " · " + S.fmtData(s.ia) + " a " + S.fmtData(s.ib) + "</td>" +
+        '<td style="color:var(--ok)">' + S.fmtBRL(s.entra) + "</td>" +
+        '<td style="color:var(--erro)">' + S.fmtBRL(s.sai) + "</td>" +
+        "<td>" + S.fmtBRL(s.entra - s.sai) + "</td>" +
+        '<td style="font-weight:800; color:' + (s.acum < 0 ? "var(--erro)" : "inherit") + '">' + S.fmtBRL(s.acum) + "</td></tr>";
+    }).join("");
+    $("tabela").innerHTML = "<tr><th>Semana</th><th>Entradas</th><th>Saídas</th><th>Saldo da semana</th><th>Acumulado</th></tr>" + linhas;
+
+    var max = Math.max.apply(null, semanas.map(function (s) { return Math.abs(s.acum); }).concat([1]));
+    $("graf").innerHTML = semanas.map(function (s, i) {
+      return '<div class="col">' +
+        '<div class="b" style="height:' + Math.max(2, Math.round((Math.abs(s.acum) / max) * 100)) + '%; background:' +
+        (s.acum < 0 ? "var(--erro)" : "var(--ok)") + ';" title="' + S.fmtBRL(s.acum) + '"></div>' +
+        '<span class="rotulo">S' + (i + 1) + "</span></div>";
+    }).join("");
+  }
+
+  S.onChange(function (k) { if (k === "alunos" || k === "contas" || k === "fluxo") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

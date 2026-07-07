@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRE Automático — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .dre { width: 100%; border-collapse: collapse; background: #fff; }
+  .dre td, .dre th { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 14px; }
+  .dre td:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .dre .secao td { background: var(--escuro); color: #fff; font-weight: 700; font-size: 12.5px; letter-spacing: .08em; }
+  .dre .total td { font-weight: 800; background: var(--fundo); }
+  .dre .resultado td { font-weight: 800; font-size: 16px; }
+  .hist { display: flex; gap: 6px; align-items: flex-end; height: 150px; overflow-x: auto; padding-top: 10px; }
+  .hist .mesCol { flex: 1; min-width: 52px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .hist .duo { display: flex; gap: 3px; align-items: flex-end; height: 100px; }
+  .hist .b { width: 14px; border-radius: 2px 2px 0 0; min-height: 2px; }
+  .hist .rotulo { font-size: 10.5px; color: var(--cinza); }
+  .hist .res { font-size: 10.5px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>DRE Automático</h1>
+    </div>
+  </div>
+  <p>O demonstrativo de resultado do mês montado sozinho: mensalidades recebidas, vendas de produtos e as despesas por centro de custo, direto do que você já lança no sistema.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="linha-flex">
+      <div class="campo"><label>Mês</label><input id="fMes" type="month"></div>
+      <div class="campo"><label>Regime</label>
+        <div class="abas" id="abasRegime">
+          <button data-r="caixa" class="ativa">Caixa (o que entrou/saiu)</button>
+          <button data-r="competencia">Competência (do mês)</button>
+        </div>
+      </div>
+    </div>
+    <span class="muted" id="dica"></span>
+  </div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="dre" id="tabela"></table>
+  </div>
+
+  <div class="card">
+    <h2>Últimos 12 meses</h2>
+    <p class="muted" style="margin: 2px 0 4px;">Barras: <span style="color:var(--ok); font-weight:700;">receitas</span> × <span style="color:var(--erro); font-weight:700;">despesas</span> (regime de caixa). Abaixo, o resultado.</p>
+    <div class="hist" id="hist"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var mes = S.todayISO().slice(0, 7);
+  var regime = "caixa";
+  $("fMes").value = mes;
+
+  function ultimoDia(m) {
+    var p = m.split("-");
+    return m + "-" + new Date(+p[0], +p[1], 0).getDate();
+  }
+
+  // { receitas: [{nome, valor}], despesas: [{nome, valor}] } para um mês/regime
+  function apura(m, reg) {
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var mensal = stA.recebiveis.filter(function (r) {
+      return reg === "caixa" ? (r.status === "pago" && (r.pagoEm || "").slice(0, 7) === m)
+        : ((r.competencia || (r.vencimento || "").slice(0, 7)) === m);
+    }).reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    var produtos = S.read("produtos", { vendas: [] }).vendas.filter(function (v) {
+      return (v.data || "").slice(0, 7) === m;
+    }).reduce(function (t, v) { return t + (+v.total || 0); }, 0);
+    var receitas = [{ nome: reg === "caixa" ? "Mensalidades recebidas" : "Mensalidades do mês", valor: mensal }];
+    if (produtos) receitas.push({ nome: "Vendas de produtos", valor: produtos });
+    if (reg === "competencia") {
+      var arm = S.read("armarios", { locacoes: [] }).locacoes.filter(function (l) {
+        var f = new Date(l.inicio + "T12:00");
+        f.setMonth(f.getMonth() + (+l.meses || 1));
+        return l.inicio <= ultimoDia(m) && S.todayISO(f) >= m + "-01";
+      }).reduce(function (t, l) { return t + (+l.valor || 0); }, 0);
+      if (arm) receitas.push({ nome: "Armários (aluguéis do mês)", valor: arm });
+    }
+
+    var porCentro = {};
+    S.read("contas", { contas: [] }).contas.forEach(function (c) {
+      var entra = reg === "caixa" ? (c.status === "pago" && (c.pagoEm || "").slice(0, 7) === m)
+        : ((c.vencimento || "").slice(0, 7) === m);
+      if (!entra) return;
+      var k = c.centro || "Outros";
+      porCentro[k] = (porCentro[k] || 0) + (+c.valor || 0);
+    });
+    var despesas = Object.keys(porCentro).map(function (k) { return { nome: k, valor: porCentro[k] }; })
+      .sort(function (a, b) { return b.valor - a.valor; });
+    return { receitas: receitas, despesas: despesas };
+  }
+
+  function render() {
+    var d = apura(mes, regime);
+    var totR = d.receitas.reduce(function (t, x) { return t + x.valor; }, 0);
+    var totD = d.despesas.reduce(function (t, x) { return t + x.valor; }, 0);
+    var res = totR - totD;
+    var margem = totR ? Math.round((res / totR) * 100) : 0;
+    $("dica").textContent = regime === "caixa"
+      ? "Só o que foi de fato recebido e pago no mês."
+      : "Tudo que pertence ao mês, mesmo que ainda não tenha sido pago.";
+    $("tabela").innerHTML =
+      '<tr class="secao"><td colspan="2">RECEITAS</td></tr>' +
+      (d.receitas.map(function (x) {
+        return "<tr><td>" + esc(x.nome) + "</td><td>" + S.fmtBRL(x.valor) + "</td></tr>";
+      }).join("") || '<tr><td colspan="2" class="muted">nenhuma receita no mês</td></tr>') +
+      '<tr class="total"><td>Total de receitas</td><td style="color:var(--ok)">' + S.fmtBRL(totR) + "</td></tr>" +
+      '<tr class="secao"><td colspan="2">DESPESAS' + (regime === "competencia" ? " (com vencimento no mês)" : "") + "</td></tr>" +
+      (d.despesas.map(function (x) {
+        var pct = totD ? Math.round((x.valor / totD) * 100) : 0;
+        return "<tr><td>" + esc(x.nome) + ' <span class="muted">(' + pct + "%)</span></td><td>" + S.fmtBRL(x.valor) + "</td></tr>";
+      }).join("") || '<tr><td colspan="2" class="muted">nenhuma despesa no mês</td></tr>') +
+      '<tr class="total"><td>Total de despesas</td><td style="color:var(--erro)">' + S.fmtBRL(totD) + "</td></tr>" +
+      '<tr class="resultado"><td>RESULTADO DO MÊS</td><td style="color:' + (res >= 0 ? "var(--ok)" : "var(--erro)") + '">' +
+      S.fmtBRL(res) + ' <span class="muted" style="font-size:12px">(margem ' + margem + "%)</span></td></tr>";
+
+    // histórico 12 meses (regime de caixa)
+    var meses = [];
+    var base = new Date(mes + "-15T12:00");
+    for (var i = 11; i >= 0; i--) {
+      var dm = new Date(base.getFullYear(), base.getMonth() - i, 15);
+      meses.push(dm.getFullYear() + "-" + ((dm.getMonth() + 1) < 10 ? "0" : "") + (dm.getMonth() + 1));
+    }
+    var serie = meses.map(function (m) {
+      var a = apura(m, "caixa");
+      return {
+        m: m,
+        r: a.receitas.reduce(function (t, x) { return t + x.valor; }, 0),
+        d: a.despesas.reduce(function (t, x) { return t + x.valor; }, 0),
+      };
+    });
+    var max = Math.max.apply(null, serie.map(function (x) { return Math.max(x.r, x.d); }).concat([1]));
+    $("hist").innerHTML = serie.map(function (x) {
+      var res = x.r - x.d;
+      return '<div class="mesCol"><div class="duo">' +
+        '<div class="b" style="height:' + Math.round((x.r / max) * 100) + '%; background: var(--ok);" title="Receitas ' + S.fmtBRL(x.r) + '"></div>' +
+        '<div class="b" style="height:' + Math.round((x.d / max) * 100) + '%; background: var(--erro);" title="Despesas ' + S.fmtBRL(x.d) + '"></div></div>' +
+        '<span class="res" style="color:' + (res >= 0 ? "var(--ok)" : "var(--erro)") + '">' + S.fmtBRL(res) + "</span>" +
+        '<span class="rotulo">' + x.m.slice(5) + "/" + x.m.slice(2, 4) + "</span></div>";
+    }).join("");
+  }
+
+  $("fMes").addEventListener("change", function () { if (this.value) { mes = this.value; render(); } });
+  $("abasRegime").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    regime = b.getAttribute("data-r");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  S.onChange(function (k) { if (k === "alunos" || k === "contas" || k === "produtos" || k === "armarios") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

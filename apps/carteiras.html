@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carteiras por Consultor — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .cart { border: 1px solid var(--linha); background: #fff; margin-bottom: 12px; }
+  .cart summary { display: flex; gap: 12px; align-items: center; padding: 12px 14px; cursor: pointer; list-style: none; flex-wrap: wrap; }
+  .cart summary::-webkit-details-marker { display: none; }
+  .cart .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  .cart .quem { flex: 1; min-width: 150px; }
+  .cart .quem strong { font-size: 15px; }
+  .cart .quem .sub { font-size: 12px; color: var(--cinza); }
+  .cart .kpis { display: flex; gap: 18px; flex-wrap: wrap; }
+  .cart .kpi { text-align: center; }
+  .cart .kpi .n { font-size: 18px; font-weight: 800; }
+  .cart .kpi .l { font-size: 10.5px; color: var(--cinza); letter-spacing: .04em; }
+  .cart .detalhe { border-top: 1px solid var(--linha); padding: 10px 14px; }
+  .cart .aluno-linha { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .barra { height: 7px; background: var(--fundo); border-radius: 4px; overflow: hidden; min-width: 120px; flex: 1; }
+  .barra i { display: block; height: 100%; background: var(--roxo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Carteiras por Consultor(a)</h1>
+    </div>
+  </div>
+  <p>A base de alunos dividida por quem atende: quantos ativos cada consultor(a) tem na carteira, quantos entraram no mês, quem está inadimplente e a receita que a carteira sustenta.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="campo" style="max-width: 200px;"><label>Novos no mês de</label><input id="fMes" type="month"></div>
+    <span class="muted">O(a) consultor(a) vem do cadastro do aluno — preencha em Clientes → editar.</span>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var mes = S.todayISO().slice(0, 7);
+  $("fMes").value = mes;
+  $("fMes").addEventListener("change", function () { if (this.value) { mes = this.value; render(); } });
+
+  function render() {
+    var st = S.read("alunos", { alunos: [], recebiveis: [] });
+    var hoje = S.todayISO();
+    var ativos = st.alunos.filter(function (a) { return a.status !== "inativo"; });
+    var devedores = {};
+    st.recebiveis.forEach(function (r) {
+      if (r.status === "aberto" && r.vencimento < hoje) devedores[r.alunoId] = true;
+    });
+
+    var grupos = {};
+    ativos.forEach(function (a) {
+      var k = (a.consultor || "").trim() || "Sem consultor(a)";
+      (grupos[k] = grupos[k] || []).push(a);
+    });
+
+    var cartes = Object.keys(grupos).map(function (k) {
+      var lista = grupos[k];
+      var receita = 0;
+      lista.forEach(function (a) {
+        (a.contratos || []).forEach(function (c) { if (c.status === "ativo") receita += +c.valor || 0; });
+      });
+      return {
+        nome: k, alunos: lista,
+        novos: lista.filter(function (a) { return (a.criado || "").slice(0, 7) === mes; }).length,
+        inad: lista.filter(function (a) { return devedores[a.id]; }).length,
+        receita: receita,
+      };
+    }).sort(function (a, b) { return b.alunos.length - a.alunos.length; });
+
+    var totalAtivos = ativos.length || 1;
+    $("lista").innerHTML = cartes.length ? cartes.map(function (c) {
+      var pct = Math.round((c.alunos.length / totalAtivos) * 100);
+      var iniciais = c.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+      return '<details class="cart"><summary>' +
+        '<div class="avatar">' + esc(iniciais) + "</div>" +
+        '<div class="quem"><strong>' + esc(c.nome) + "</strong><div class='sub'>" + pct + "% da base ativa</div>" +
+        '<div class="barra" style="margin-top:4px"><i style="width:' + pct + '%"></i></div></div>' +
+        '<div class="kpis">' +
+        '<div class="kpi"><div class="n">' + c.alunos.length + '</div><div class="l">ATIVOS</div></div>' +
+        '<div class="kpi"><div class="n" style="color:var(--ok)">' + c.novos + '</div><div class="l">NOVOS NO MÊS</div></div>' +
+        '<div class="kpi"><div class="n" style="color:' + (c.inad ? "var(--erro)" : "inherit") + '">' + c.inad + '</div><div class="l">INADIMPLENTES</div></div>' +
+        '<div class="kpi"><div class="n">' + S.fmtBRL(c.receita) + '</div><div class="l">RECEITA/MÊS</div></div>' +
+        "</div></summary>" +
+        '<div class="detalhe">' + c.alunos.map(function (a) {
+          return '<div class="aluno-linha"><span style="flex:1">' + esc(a.nome) + "</span>" +
+            ((a.criado || "").slice(0, 7) === mes ? '<span class="tag ok">NOVO</span>' : "") +
+            (devedores[a.id] ? '<span class="tag erro">INADIMPLENTE</span>' : "") +
+            "</div>";
+        }).join("") + "</div></details>";
+    }).join("") : '<div class="vazio">Nenhum aluno ativo ainda. Cadastre em Clientes e preencha o(a) consultor(a).</div>';
+  }
+
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
