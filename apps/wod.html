@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WOD — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .wod-folha { background: var(--escuro); color: #fff; padding: 30px 34px; }
+  .wod-folha .dia { color: var(--lilas); font-size: 13px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+  .wod-folha h2 { font-size: 30px; margin: 6px 0 2px; color: #fff; letter-spacing: 0; text-transform: none; }
+  .wod-folha .tipo { color: #8a8695; font-size: 14px; }
+  .bloco-wod { margin-top: 20px; }
+  .bloco-wod .rotulo { color: var(--lilas); font-size: 12px; font-weight: 700; letter-spacing: .14em; }
+  .bloco-wod pre { font-family: inherit; font-size: 17px; line-height: 1.7; margin: 6px 0 0; white-space: pre-wrap; }
+  .nav-data { display: flex; align-items: center; gap: 6px; }
+  .nav-data strong { min-width: 190px; text-align: center; text-transform: capitalize; font-size: 14px; }
+  .placar-linha { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--linha); font-size: 14px; align-items: center; }
+  .placar-linha .pos { font-weight: 800; color: var(--roxo); min-width: 30px; }
+  @media print { .topo, .no-print { display: none !important; } body { background: #fff; } .corpo { padding: 0; max-width: none; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · TREINOS</span>
+    <h1>WOD — Treino do Dia</h1>
+    </div>
+  </div>
+  <p>Monte o WOD, mostre no telão e registre os resultados dos alunos — com ranking do dia para acender a competição saudável.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex no-print" style="justify-content: space-between;">
+    <div class="nav-data">
+      <button class="btn sec mini" id="dAnt">‹</button>
+      <strong id="dLabel"></strong>
+      <button class="btn sec mini" id="dProx">›</button>
+      <button class="btn sec mini" id="dHoje">Hoje</button>
+    </div>
+    <div class="linha-flex">
+      <button class="btn sec" id="btnImprimir">🖨 Imprimir</button>
+      <button class="btn" id="btnEditar">✎ Montar / editar WOD</button>
+    </div>
+  </div>
+
+  <div id="quadroWod"></div>
+
+  <div class="card">
+    <div class="linha-flex no-print" style="justify-content: space-between;">
+      <h2>Placar do dia</h2>
+      <div class="linha-flex">
+        <input id="rAluno" list="alunosLista" placeholder="aluno" style="width: 180px;"><datalist id="alunosLista"></datalist>
+        <input id="rResultado" placeholder="resultado (ex.: 12:34 ou 8 rounds)" style="width: 210px;">
+        <button class="btn mini" id="rAdd">Registrar</button>
+      </div>
+    </div>
+    <div id="placar" style="margin-top: 8px;"></div>
+  </div>
+</main>
+
+<!-- editor do WOD -->
+<dialog id="dlgWod" style="max-width: min(620px, 94vw);">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 580px; max-width: 100%;">
+    <h2>WOD do dia</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome do WOD</label><input id="wNome" placeholder='ex.: "Cindy", "Torque Killer"'></div>
+      <div class="campo"><label>Tipo</label>
+        <select id="wTipo"><option>AMRAP</option><option>For Time</option><option>EMOM</option><option>Tabata</option><option>Força</option><option>Outro</option></select>
+      </div>
+    </div>
+    <div class="campo"><label>Aquecimento / mobilidade</label><textarea id="wAquecimento" rows="2" placeholder="ex.: 3 voltas: 10 polichinelos, 10 agachamentos…"></textarea></div>
+    <div class="campo"><label>WOD (o treino em si) *</label><textarea id="wTreino" rows="5" placeholder="ex.: AMRAP 20':&#10;5 barras&#10;10 flexões&#10;15 agachamentos"></textarea></div>
+    <div class="campo"><label>Observações / escalas</label><textarea id="wObs" rows="2" placeholder="ex.: iniciante faz barra assistida"></textarea></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("wod", { dias: {} }); }
+  function save(st) { S.write("wod", st); render(); }
+
+  var dia = S.todayISO();
+  var DIAS = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
+
+  function wodDe(st) { return st.dias[dia] || null; }
+
+  function render() {
+    var st = load();
+    var d = new Date(dia + "T12:00");
+    $("dLabel").textContent = DIAS[d.getDay()] + " · " + S.fmtData(dia);
+    var w = wodDe(st);
+    if (!w) {
+      $("quadroWod").innerHTML = '<div class="vazio">Nenhum WOD montado para este dia. Clique em <strong>✎ Montar / editar WOD</strong>.</div>';
+    } else {
+      $("quadroWod").innerHTML = '<div class="wod-folha">' +
+        '<div class="dia">' + DIAS[d.getDay()] + " · " + S.fmtData(dia) + "</div>" +
+        "<h2>" + esc(w.nome || "WOD do dia") + "</h2>" +
+        '<div class="tipo">' + esc(w.tipo || "") + "</div>" +
+        (w.aquecimento ? '<div class="bloco-wod"><div class="rotulo">AQUECIMENTO</div><pre>' + esc(w.aquecimento) + "</pre></div>" : "") +
+        '<div class="bloco-wod"><div class="rotulo">WOD</div><pre>' + esc(w.treino) + "</pre></div>" +
+        (w.obs ? '<div class="bloco-wod"><div class="rotulo">ESCALAS / OBS</div><pre>' + esc(w.obs) + "</pre></div>" : "") +
+        "</div>";
+    }
+    var resultados = (w && w.resultados) || [];
+    $("placar").innerHTML = resultados.length ? resultados.map(function (r, i) {
+      return '<div class="placar-linha"><span><span class="pos">' + (i + 1) + "º</span> " + esc(r.aluno) + "</span>" +
+        "<span><strong>" + esc(r.resultado) + '</strong> <button class="btn perigo mini no-print" data-rm="' + i + '" style="padding: 2px 8px;">✕</button></span></div>';
+    }).join("") : '<div class="muted">Ninguém registrou ainda — quem vai abrir o placar?</div>';
+    $("alunosLista").innerHTML = S.read("alunos", { alunos: [] }).alunos
+      .filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) { return "<option>" + esc(a.nome) + "</option>"; }).join("");
+  }
+
+  function mudaDia(n) {
+    var d = new Date(dia + "T12:00");
+    d.setDate(d.getDate() + n);
+    dia = S.todayISO(d);
+    render();
+  }
+  $("dAnt").onclick = function () { mudaDia(-1); };
+  $("dProx").onclick = function () { mudaDia(1); };
+  $("dHoje").onclick = function () { dia = S.todayISO(); render(); };
+  $("btnImprimir").onclick = function () { window.print(); };
+
+  $("btnEditar").onclick = function () {
+    var w = wodDe(load()) || {};
+    $("wNome").value = w.nome || "";
+    $("wTipo").value = w.tipo || "AMRAP";
+    $("wAquecimento").value = w.aquecimento || "";
+    $("wTreino").value = w.treino || "";
+    $("wObs").value = w.obs || "";
+    $("dlgWod").showModal();
+  };
+  $("dlgWod").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    if (!$("wTreino").value.trim()) { e.preventDefault(); alert("Descreva o WOD."); return; }
+    var st = load();
+    var atual = st.dias[dia] || {};
+    st.dias[dia] = {
+      nome: $("wNome").value.trim(), tipo: $("wTipo").value,
+      aquecimento: $("wAquecimento").value.trim(), treino: $("wTreino").value.trim(),
+      obs: $("wObs").value.trim(), resultados: atual.resultados || [],
+    };
+    save(st);
+  });
+
+  $("rAdd").onclick = function () {
+    var nome = $("rAluno").value.trim(), res = $("rResultado").value.trim();
+    if (!nome || !res) { alert("Informe o aluno e o resultado."); return; }
+    var st = load();
+    if (!st.dias[dia]) { alert("Monte o WOD do dia primeiro."); return; }
+    st.dias[dia].resultados = st.dias[dia].resultados || [];
+    st.dias[dia].resultados.push({ aluno: nome, resultado: res });
+    $("rAluno").value = ""; $("rResultado").value = "";
+    save(st);
+  };
+  $("placar").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-rm");
+    if (i == null) return;
+    var st = load();
+    st.dias[dia].resultados.splice(+i, 1);
+    save(st);
+  });
+
+  S.onChange(function (k) { if (k === "wod" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
