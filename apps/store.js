@@ -148,7 +148,7 @@
   }
 
   // ---------- backup ----------
-  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "config", "logo"];
+  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "config", "logo"];
 
   function exportBackup() {
     var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString() };

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Produtos e Vendas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .grade-prod { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .prod {
+    background: #fff; border: 1px solid var(--linha); padding: 12px; cursor: pointer; text-align: center;
+  }
+  .prod:hover { border-color: var(--roxo); }
+  .prod .nome { font-weight: 700; font-size: 13.5px; }
+  .prod .preco { font-size: 17px; font-weight: 800; color: var(--roxo); margin-top: 4px; }
+  .prod .est { font-size: 11px; color: var(--cinza-2); margin-top: 2px; }
+  .prod.sem-estoque { opacity: .45; cursor: not-allowed; }
+  .prod .est.baixo { color: var(--erro); font-weight: 700; }
+  .carrinho-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 13.5px; }
+  .carrinho-item .qtd { display: flex; align-items: center; gap: 6px; }
+  .carrinho-item .qtd button { width: 24px; height: 24px; border: 1px solid var(--linha); background: #fff; cursor: pointer; font-weight: 700; }
+  .venda-linha { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .venda-linha + .venda-linha { margin-top: -1px; }
+  .duas { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .duas { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · VENDAS AVULSAS</span>
+    <h1>Produtos e Vendas</h1>
+    </div>
+  </div>
+  <p>Água, suplemento, camiseta, luva… venda em 3 toques, com estoque baixando sozinho e o dinheiro caindo no caixa do dia.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-a="vender" class="ativa">🛒 Vender</button>
+      <button data-a="produtos">📦 Produtos e estoque</button>
+      <button data-a="historico">📋 Vendas</button>
+    </div>
+    <span class="muted" id="resumoTopo"></span>
+  </div>
+
+  <!-- VENDER -->
+  <section id="vVender">
+    <div class="duas">
+      <div class="card">
+        <h2>Toque para adicionar</h2>
+        <div class="grade-prod" id="gradeProd" style="margin-top: 10px;"></div>
+      </div>
+      <div class="card">
+        <h2>Carrinho</h2>
+        <div id="carrinho" style="margin-top: 6px;"></div>
+        <div class="linha-flex" style="justify-content: space-between; margin-top: 12px; font-size: 17px;">
+          <strong>Total</strong><strong id="carTotal" style="color: var(--roxo);">R$ 0</strong>
+        </div>
+        <div class="campo" style="margin-top: 12px;"><label>Forma de pagamento</label>
+          <select id="vForma"><option>Dinheiro</option><option>Pix</option><option>Cartão de débito</option><option>Cartão de crédito</option></select>
+        </div>
+        <div class="campo"><label>Cliente (opcional)</label><input id="vCliente" list="alunosLista" placeholder="nome"><datalist id="alunosLista"></datalist></div>
+        <button class="btn" id="btnFinalizar" style="width: 100%; margin-top: 12px;">✓ Finalizar venda</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUTOS -->
+  <section id="vProdutos" hidden>
+    <div class="card linha-flex" style="justify-content: space-between;">
+      <input id="buscaProd" placeholder="Pesquisar produto…" style="max-width: 280px;">
+      <button class="btn" id="btnNovoProd">+ Novo produto</button>
+    </div>
+    <div class="card" style="padding: 0; margin-top: 14px;">
+      <table class="tabela">
+        <thead><tr><th>Produto</th><th style="text-align:right">Preço</th><th style="text-align:right">Estoque</th><th style="text-align:right">Ações</th></tr></thead>
+        <tbody id="linhasProd"></tbody>
+      </table>
+      <div class="vazio" id="vazioProd" hidden>Nenhum produto — cadastre o primeiro (água, suplemento…).</div>
+    </div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section id="vHistorico" hidden>
+    <div class="card linha-flex" style="justify-content: space-between;">
+      <div class="linha-flex">
+        <button class="btn sec mini" id="hAnt">‹</button>
+        <strong id="hLabel" style="text-transform: capitalize;"></strong>
+        <button class="btn sec mini" id="hProx">›</button>
+        <button class="btn sec mini" id="hHoje">Hoje</button>
+      </div>
+      <strong id="hTotal" style="color: var(--roxo);"></strong>
+    </div>
+    <div id="listaVendas" style="margin-top: 14px;"></div>
+  </section>
+</main>
+
+<!-- novo produto -->
+<dialog id="dlgProd">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 440px; max-width: 100%;">
+    <h2 id="prodTitulo">Novo produto</h2>
+    <div class="campo"><label>Nome *</label><input id="pNome" required placeholder="ex.: Água 500ml"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Preço de venda (R$) *</label><input id="pPreco" type="number" step="0.01" min="0" required></div>
+      <div class="campo"><label>Estoque atual</label><input id="pEstoque" type="number" min="0" value="0"></div>
+    </div>
+    <div class="campo"><label>Alerta de estoque mínimo</label><input id="pMinimo" type="number" min="0" value="5"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("produtos", { itens: [], vendas: [] }); }
+  function save(st) { S.write("produtos", st); render(); }
+
+  var aba = "vender";
+  var carrinho = []; // {produtoId, nome, preco, qtd}
+  var buscaP = "";
+  var diaHist = S.todayISO();
+  var editProdId = null;
+
+  // ---------- abas ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-a");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    mostra();
+  });
+  function mostra() {
+    $("vVender").hidden = aba !== "vender";
+    $("vProdutos").hidden = aba !== "produtos";
+    $("vHistorico").hidden = aba !== "historico";
+    render();
+  }
+
+  // ---------- VENDER ----------
+  function renderVender() {
+    var st = load();
+    $("gradeProd").innerHTML = st.itens.length ? st.itens.map(function (p) {
+      var baixo = p.estoque <= (p.minimo || 0);
+      var sem = p.estoque <= 0;
+      return '<div class="prod' + (sem ? " sem-estoque" : "") + '" data-add="' + p.id + '">' +
+        '<div class="nome">' + esc(p.nome) + "</div>" +
+        '<div class="preco">' + S.fmtBRL(p.preco) + "</div>" +
+        '<div class="est' + (baixo ? " baixo" : "") + '">' + (sem ? "SEM ESTOQUE" : p.estoque + " em estoque" + (baixo ? " ⚠" : "")) + "</div></div>";
+    }).join("") : '<div class="vazio">Cadastre produtos na aba "Produtos e estoque".</div>';
+
+    $("carrinho").innerHTML = carrinho.length ? carrinho.map(function (c, i) {
+      return '<div class="carrinho-item"><span>' + esc(c.nome) + "</span>" +
+        '<span class="qtd"><button data-menos="' + i + '">−</button><strong>' + c.qtd + '</strong><button data-mais="' + i + '">+</button></span>' +
+        "<strong>" + S.fmtBRL(c.preco * c.qtd) + "</strong></div>";
+    }).join("") : '<div class="muted">Carrinho vazio.</div>';
+    $("carTotal").textContent = S.fmtBRL(carrinho.reduce(function (t, c) { return t + c.preco * c.qtd; }, 0));
+  }
+  $("gradeProd").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-add]");
+    if (!el || el.classList.contains("sem-estoque")) return;
+    var st = load();
+    var p = st.itens.find(function (x) { return x.id === el.getAttribute("data-add"); });
+    var no = carrinho.find(function (c) { return c.produtoId === p.id; });
+    var jaNoCarrinho = no ? no.qtd : 0;
+    if (jaNoCarrinho >= p.estoque) { alert("Estoque insuficiente."); return; }
+    if (no) no.qtd++;
+    else carrinho.push({ produtoId: p.id, nome: p.nome, preco: +p.preco, qtd: 1 });
+    renderVender();
+  });
+  $("carrinho").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-mais");
+    if (i != null) {
+      var st = load();
+      var c = carrinho[+i];
+      var p = st.itens.find(function (x) { return x.id === c.produtoId; });
+      if (c.qtd >= p.estoque) { alert("Estoque insuficiente."); return; }
+      c.qtd++; renderVender(); return;
+    }
+    i = e.target.getAttribute && e.target.getAttribute("data-menos");
+    if (i != null) {
+      carrinho[+i].qtd--;
+      if (carrinho[+i].qtd <= 0) carrinho.splice(+i, 1);
+      renderVender();
+    }
+  });
+  $("btnFinalizar").onclick = function () {
+    if (!carrinho.length) { alert("Adicione produtos ao carrinho."); return; }
+    var st = load();
+    var total = carrinho.reduce(function (t, c) { return t + c.preco * c.qtd; }, 0);
+    carrinho.forEach(function (c) {
+      var p = st.itens.find(function (x) { return x.id === c.produtoId; });
+      if (p) p.estoque = Math.max(0, p.estoque - c.qtd);
+    });
+    var agora = new Date();
+    st.vendas.push({
+      id: S.uid(), data: S.todayISO(), hora: agora.toTimeString().slice(0, 5),
+      itens: carrinho.map(function (c) { return { produtoId: c.produtoId, nome: c.nome, qtd: c.qtd, preco: c.preco }; }),
+      total: total, forma: $("vForma").value, cliente: $("vCliente").value.trim(),
+    });
+    carrinho = [];
+    $("vCliente").value = "";
+    save(st);
+    alert("Venda registrada! " + S.fmtBRL(total) + " (" + $("vForma").value + ")");
+  };
+
+  // ---------- PRODUTOS ----------
+  function renderProdutos() {
+    var st = load();
+    var q = buscaP.trim().toLowerCase();
+    var lista = st.itens.filter(function (p) { return !q || p.nome.toLowerCase().indexOf(q) !== -1; });
+    $("vazioProd").hidden = !!lista.length;
+    $("linhasProd").innerHTML = lista.map(function (p) {
+      var baixo = p.estoque <= (p.minimo || 0);
+      return "<tr><td><strong>" + esc(p.nome) + "</strong></td>" +
+        "<td style='text-align:right'>" + S.fmtBRL(p.preco) + "</td>" +
+        "<td style='text-align:right'>" + (baixo ? "<span style='color:var(--erro); font-weight:700'>" + p.estoque + " ⚠</span>" : p.estoque) + "</td>" +
+        "<td style='text-align:right; white-space:nowrap'>" +
+        '<button class="btn sec mini" data-rep="' + p.id + '" title="Repor estoque">+ estoque</button> ' +
+        '<button class="btn sec mini" data-edit="' + p.id + '">✎</button> ' +
+        '<button class="btn perigo mini" data-del="' + p.id + '">✕</button></td></tr>';
+    }).join("");
+  }
+  $("buscaProd").addEventListener("input", function () { buscaP = this.value; renderProdutos(); });
+  $("btnNovoProd").onclick = function () {
+    editProdId = null;
+    $("prodTitulo").textContent = "Novo produto";
+    $("pNome").value = ""; $("pPreco").value = ""; $("pEstoque").value = 0; $("pMinimo").value = 5;
+    $("dlgProd").showModal();
+  };
+  $("linhasProd").addEventListener("click", function (e) {
+    var st = load();
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (id) {
+      var p = st.itens.find(function (x) { return x.id === id; });
+      editProdId = id;
+      $("prodTitulo").textContent = "Editar produto";
+      $("pNome").value = p.nome; $("pPreco").value = p.preco; $("pEstoque").value = p.estoque; $("pMinimo").value = p.minimo || 5;
+      $("dlgProd").showModal(); return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-rep");
+    if (id) {
+      var qtd = prompt("Quantas unidades chegaram?");
+      if (!qtd || !+qtd) return;
+      st.itens.find(function (x) { return x.id === id; }).estoque += +qtd;
+      save(st); return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-del");
+    if (id) {
+      if (!confirm("Excluir este produto?")) return;
+      st.itens = st.itens.filter(function (x) { return x.id !== id; });
+      save(st);
+    }
+  });
+  $("dlgProd").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = { nome: $("pNome").value.trim(), preco: +$("pPreco").value || 0, estoque: +$("pEstoque").value || 0, minimo: +$("pMinimo").value || 0 };
+    if (editProdId) {
+      var p = st.itens.find(function (x) { return x.id === editProdId; });
+      Object.keys(dados).forEach(function (k) { p[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      st.itens.push(dados);
+    }
+    save(st);
+  });
+
+  // ---------- HISTÓRICO ----------
+  function renderHistorico() {
+    var st = load();
+    var d = new Date(diaHist + "T12:00");
+    $("hLabel").textContent = d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit" });
+    var doDia = st.vendas.filter(function (v) { return v.data === diaHist; })
+      .sort(function (a, b) { return a.hora < b.hora ? 1 : -1; });
+    var tot = doDia.reduce(function (t, v) { return t + v.total; }, 0);
+    $("hTotal").textContent = doDia.length + " venda(s) · " + S.fmtBRL(tot);
+    $("listaVendas").innerHTML = doDia.length ? doDia.map(function (v) {
+      return '<div class="venda-linha"><strong style="min-width: 46px;">' + v.hora + "</strong>" +
+        '<div style="flex: 1; min-width: 180px;">' +
+        v.itens.map(function (i) { return i.qtd + "× " + esc(i.nome); }).join(", ") +
+        (v.cliente ? '<div class="muted" style="font-size: 12px;">' + esc(v.cliente) + "</div>" : "") + "</div>" +
+        '<span class="tag neutro">' + esc(v.forma) + "</span>" +
+        "<strong>" + S.fmtBRL(v.total) + "</strong>" +
+        '<button class="btn perigo mini" data-est="' + v.id + '" title="Estornar (devolve o estoque)">↩</button></div>';
+    }).join("") : '<div class="vazio">Nenhuma venda neste dia.</div>';
+  }
+  function mudaDia(n) {
+    var d = new Date(diaHist + "T12:00");
+    d.setDate(d.getDate() + n);
+    diaHist = S.todayISO(d);
+    renderHistorico();
+  }
+  $("hAnt").onclick = function () { mudaDia(-1); };
+  $("hProx").onclick = function () { mudaDia(1); };
+  $("hHoje").onclick = function () { diaHist = S.todayISO(); renderHistorico(); };
+  $("listaVendas").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-est");
+    if (!id) return;
+    if (!confirm("Estornar esta venda? O estoque volta.")) return;
+    var st = load();
+    var v = st.vendas.find(function (x) { return x.id === id; });
+    v.itens.forEach(function (i) {
+      var p = st.itens.find(function (x) { return x.id === i.produtoId; });
+      if (p) p.estoque += i.qtd;
+    });
+    st.vendas = st.vendas.filter(function (x) { return x.id !== id; });
+    save(st);
+  });
+
+  function render() {
+    var st = load();
+    var hoje = S.todayISO();
+    var vHoje = st.vendas.filter(function (v) { return v.data === hoje; });
+    $("resumoTopo").textContent = vHoje.length ? "hoje: " + vHoje.length + " venda(s) · " +
+      S.fmtBRL(vHoje.reduce(function (t, v) { return t + v.total; }, 0)) : "";
+    $("alunosLista").innerHTML = S.read("alunos", { alunos: [] }).alunos
+      .filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) { return "<option>" + esc(a.nome) + "</option>"; }).join("");
+    renderVender(); renderProdutos(); renderHistorico();
+  }
+
+  S.onChange(function (k) { if (k === "produtos" || k === "alunos") render(); });
+  mostra();
+})();
+</script>
+</body>
+</html>
