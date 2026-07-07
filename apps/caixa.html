@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caixa do Dia — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .cards-caixa { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .cards-caixa .card { text-align: center; padding: 14px; }
+  .cards-caixa .n { font-size: 22px; font-weight: 800; }
+  .mov { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .mov + .mov { margin-top: -1px; }
+  .mov .hora { font-weight: 700; color: var(--cinza); min-width: 46px; font-size: 13px; }
+  .mov .desc { flex: 1; min-width: 160px; font-size: 14px; }
+  .mov .desc .sub { font-size: 11.5px; color: var(--cinza-2); }
+  .mov .valor { font-weight: 800; font-size: 15px; }
+  .mov.entrada .valor { color: var(--ok); }
+  .mov.saida .valor, .mov.sangria .valor { color: var(--erro); }
+  .mov.auto { background: #fbfaff; }
+  .status-caixa { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .08em; padding: 4px 12px; border-radius: 10px; }
+  .status-caixa.aberto { background: rgba(22,163,74,.12); color: var(--ok); }
+  .status-caixa.fechado { background: rgba(220,38,38,.1); color: var(--erro); }
+  .status-caixa.nunca { background: var(--fundo); color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Caixa do Dia</h1>
+    </div>
+  </div>
+  <p>Abra com o troco, lance entradas e saídas, faça sangria e feche conferindo o dinheiro — as mensalidades e vendas do dia entram sozinhas.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="linha-flex">
+      <button class="btn sec mini" id="dAnt">‹</button>
+      <strong id="dLabel" style="text-transform: capitalize;"></strong>
+      <button class="btn sec mini" id="dProx">›</button>
+      <button class="btn sec mini" id="dHoje">Hoje</button>
+      <span class="status-caixa" id="statusCaixa"></span>
+    </div>
+    <div class="linha-flex" id="acoesCaixa"></div>
+  </div>
+
+  <div class="cards-caixa" id="cards"></div>
+
+  <div class="card linha-flex no-print" id="formMov" style="align-items: flex-end;" hidden>
+    <div class="campo"><label>Tipo</label>
+      <select id="mTipo" style="width: auto;"><option value="entrada">Entrada</option><option value="saida">Saída</option><option value="sangria">Sangria (retirada)</option></select>
+    </div>
+    <div class="campo" style="flex: 1; min-width: 180px;"><label>Descrição</label><input id="mDesc" placeholder="ex.: venda de day use / troco para padaria"></div>
+    <div class="campo"><label>Forma</label>
+      <select id="mForma" style="width: auto;"><option>Dinheiro</option><option>Pix</option><option>Cartão de débito</option><option>Cartão de crédito</option></select>
+    </div>
+    <div class="campo"><label>Valor (R$)</label><input id="mValor" type="number" step="0.01" min="0" style="width: 120px;"></div>
+    <button class="btn" id="mLancar">Lançar</button>
+  </div>
+
+  <div id="listaMovs"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("caixa", { dias: {} }); }
+  function save(st) { S.write("caixa", st); render(); }
+
+  var dia = S.todayISO();
+  function diaSt(st) { return st.dias[dia] || null; }
+
+  // entradas automáticas: mensalidades recebidas no dia + vendas de produtos do dia
+  function automaticas() {
+    var lista = [];
+    var alunosSt = S.read("alunos", { alunos: [], recebiveis: [] });
+    alunosSt.recebiveis.forEach(function (r) {
+      if (r.status === "pago" && r.pagoEm === dia) {
+        var a = alunosSt.alunos.find(function (x) { return x.id === r.alunoId; });
+        lista.push({ auto: true, tipo: "entrada", forma: "—", hora: "", desc: "Mensalidade — " + (a ? a.nome : "aluno"), valor: +r.valor || 0, origem: "mensalidade" });
+      }
+    });
+    S.read("produtos", { vendas: [] }).vendas.forEach(function (v) {
+      if (v.data === dia) {
+        lista.push({ auto: true, tipo: "entrada", forma: v.forma, hora: v.hora, desc: "Venda — " + v.itens.map(function (i) { return i.qtd + "× " + i.nome; }).join(", "), valor: v.total, origem: "produtos" });
+      }
+    });
+    return lista;
+  }
+
+  function totais(d) {
+    var autos = automaticas();
+    var movs = (d && d.movs) || [];
+    var entradas = autos.reduce(function (t, m) { return t + m.valor; }, 0) +
+      movs.filter(function (m) { return m.tipo === "entrada"; }).reduce(function (t, m) { return t + m.valor; }, 0);
+    var saidas = movs.filter(function (m) { return m.tipo !== "entrada"; }).reduce(function (t, m) { return t + m.valor; }, 0);
+    var dinheiro = (d ? +d.abertura || 0 : 0);
+    autos.concat(movs).forEach(function (m) {
+      var ehDin = (m.forma || "").toLowerCase().indexOf("dinheiro") !== -1 || m.origem === "mensalidade";
+      if (!ehDin) return;
+      dinheiro += m.tipo === "entrada" ? m.valor : -m.valor;
+    });
+    return { entradas: entradas, saidas: saidas, dinheiro: dinheiro };
+  }
+
+  function render() {
+    var st = load();
+    var d = diaSt(st);
+    var dd = new Date(dia + "T12:00");
+    $("dLabel").textContent = dd.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
+
+    var status = !d ? "nunca" : d.fechado ? "fechado" : "aberto";
+    $("statusCaixa").className = "status-caixa " + status;
+    $("statusCaixa").textContent = !d ? "NÃO ABERTO" : d.fechado ? "FECHADO" : "ABERTO";
+
+    $("acoesCaixa").innerHTML =
+      (!d ? '<button class="btn" id="btnAbrir">Abrir caixa</button>' :
+        d.fechado ? '<button class="btn sec" id="btnReabrir">Reabrir</button>' :
+          '<button class="btn" id="btnFechar">Fechar caixa</button>');
+    $("formMov").hidden = !d || d.fechado;
+
+    var t = totais(d);
+    $("cards").innerHTML =
+      '<div class="card"><div class="n">' + S.fmtBRL(d ? +d.abertura || 0 : 0) + '</div><div class="muted">troco inicial</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok)">' + S.fmtBRL(t.entradas) + '</div><div class="muted">entradas do dia</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--erro)">' + S.fmtBRL(t.saidas) + '</div><div class="muted">saídas + sangrias</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + S.fmtBRL(t.dinheiro) + '</div><div class="muted">dinheiro esperado na gaveta</div></div>' +
+      (d && d.fechado ? '<div class="card"><div class="n" style="color:' + (Math.abs(d.quebra) < 0.005 ? "var(--ok)" : "var(--erro)") + '">' +
+        (d.quebra > 0 ? "+" : "") + S.fmtBRL(d.quebra) + '</div><div class="muted">quebra de caixa (contado − esperado)</div></div>' : "");
+
+    var autos = automaticas();
+    var movs = ((d && d.movs) || []).slice();
+    var linhas = autos.map(function (m) {
+      return '<div class="mov entrada auto"><span class="hora">' + (m.hora || "auto") + '</span>' +
+        '<div class="desc">' + esc(m.desc) + '<div class="sub">lançado automaticamente (' + m.origem + ')</div></div>' +
+        '<span class="tag neutro">' + esc(m.forma) + '</span><span class="valor">+ ' + S.fmtBRL(m.valor) + "</span></div>";
+    }).join("") + movs.map(function (m, i) {
+      return '<div class="mov ' + m.tipo + '"><span class="hora">' + m.hora + '</span>' +
+        '<div class="desc">' + esc(m.desc) + (m.tipo === "sangria" ? '<div class="sub">sangria (retirada da gaveta)</div>' : "") + "</div>" +
+        '<span class="tag neutro">' + esc(m.forma) + "</span>" +
+        '<span class="valor">' + (m.tipo === "entrada" ? "+ " : "− ") + S.fmtBRL(m.valor) + "</span>" +
+        (!d.fechado ? '<button class="btn perigo mini" data-rm="' + i + '" style="padding:3px 8px;">✕</button>' : "") + "</div>";
+    }).join("");
+    $("listaMovs").innerHTML = linhas || '<div class="vazio">Nenhuma movimentação neste dia ainda.</div>';
+
+    // ações
+    var ab = $("btnAbrir");
+    if (ab) ab.onclick = function () {
+      var troco = prompt("Troco inicial na gaveta (R$):", "100");
+      if (troco == null) return;
+      var st2 = load();
+      st2.dias[dia] = { abertura: +String(troco).replace(",", ".") || 0, fechado: false, movs: [], abertoEm: new Date().toTimeString().slice(0, 5) };
+      save(st2);
+    };
+    var fc = $("btnFechar");
+    if (fc) fc.onclick = function () {
+      var t2 = totais(diaSt(load()));
+      var contado = prompt("Conte o dinheiro da gaveta e digite o valor (esperado: " + S.fmtBRL(t2.dinheiro) + "):");
+      if (contado == null) return;
+      var st2 = load();
+      var d2 = st2.dias[dia];
+      d2.fechado = true;
+      d2.contado = +String(contado).replace(",", ".") || 0;
+      d2.quebra = d2.contado - t2.dinheiro;
+      d2.fechadoEm = new Date().toTimeString().slice(0, 5);
+      save(st2);
+      alert(Math.abs(d2.quebra) < 0.005 ? "Caixa bateu certinho! 🎉" :
+        d2.quebra > 0 ? "Sobrou " + S.fmtBRL(d2.quebra) + " na gaveta — confira os lançamentos." :
+        "Faltou " + S.fmtBRL(Math.abs(d2.quebra)) + " — confira os lançamentos do dia.");
+    };
+    var rb = $("btnReabrir");
+    if (rb) rb.onclick = function () {
+      var st2 = load();
+      st2.dias[dia].fechado = false;
+      save(st2);
+    };
+  }
+
+  $("mLancar").onclick = function () {
+    var valor = +$("mValor").value;
+    if (!valor || !$("mDesc").value.trim()) { alert("Preencha a descrição e o valor."); return; }
+    var st = load();
+    st.dias[dia].movs.push({
+      id: S.uid(), tipo: $("mTipo").value, desc: $("mDesc").value.trim(),
+      forma: $("mTipo").value === "sangria" ? "Dinheiro" : $("mForma").value,
+      valor: valor, hora: new Date().toTimeString().slice(0, 5),
+    });
+    $("mDesc").value = ""; $("mValor").value = "";
+    save(st);
+  };
+  $("listaMovs").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-rm");
+    if (i == null) return;
+    if (!confirm("Remover este lançamento?")) return;
+    var st = load();
+    st.dias[dia].movs.splice(+i, 1);
+    save(st);
+  });
+
+  function mudaDia(n) {
+    var d = new Date(dia + "T12:00");
+    d.setDate(d.getDate() + n);
+    dia = S.todayISO(d);
+    render();
+  }
+  $("dAnt").onclick = function () { mudaDia(-1); };
+  $("dProx").onclick = function () { mudaDia(1); };
+  $("dHoje").onclick = function () { dia = S.todayISO(); render(); };
+
+  S.onChange(function (k) { if (k === "caixa" || k === "produtos" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
