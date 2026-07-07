@@ -27,7 +27,23 @@ Portal web do curso **Método Torque · Gestão de Academias de Alta Performance
 - **📈 Diário do Curso** — cada módulo é preenchível e mensurável (status, autoavaliação 0–10 e os KPIs do módulo: churn, CAC, margem, conversão…). O Relatório Final cruza tudo com os dados vivos dos programas e gera: pontos positivos, pontos de atenção e conselhos com as referências do curso — mais um prompt completo para colar numa IA (Claude/ChatGPT) e receber o relatório aprofundado com plano de 90 dias e prioridades de investimento.
 - **📺 Modo TV** — abra `apps/tv.html` no navegador da TV/telão: painéis de metas, manutenção e checklist giram em tela cheia e se atualizam sozinhos.
 
-Os dados dos programas ficam salvos **no navegador do dispositivo** (localStorage + IndexedDB para fotos). Use os botões **⬇ Backup / ⬆ Restaurar** na barra lateral para exportar/levar os dados para outro computador. Sincronização automática entre vários aparelhos exigiria um servidor — próximo passo natural do projeto.
+### TORQUESYS — o sistema completo estilo EVO (`apps/sistema.html`)
+
+Réplica funcional do EVO construída a partir de 127 capturas reais de tela, com **50 páginas** organizadas no mesmo menu (CRM 2.0, CRM, Financeiro, Gerencial, Treinos, Dados de saúde, Administrativo):
+
+| Área | Páginas |
+|---|---|
+| **Operação diária** | Tarefas do Dia (ligações a fazer) · Controle de Entradas (catraca virtual com bloqueios) · Log de Acessos · Caixa do Dia · Agenda · Grade de horários |
+| **Clientes** | Gestão de Alunos (planos/contratos/mensalidades/check-in) · **Perfil do Aluno estilo EVO** (herói com foto, alertas de bloqueio, 7 seções com sub-abas, risco de abandono) · Importar CSV |
+| **CRM / Comercial** | Funil de Vendas · Aulas Experimentais · Metas de Vendas · Renovação e Rematrícula · Radar de Retenção (faltantes/aniversários/vencimentos/avaliações) · Timeline · Segmentação · Indicações · NPS · Convênios · Vouchers · Clube de Recompensas (TorqueCoins) · Página de Vendas · Cartão do Aluno |
+| **Financeiro** | A Receber · Contas a Pagar · Inadimplência (régua D+1…D+30) · Reajuste de Contratos · **DRE Automático** · **Fluxo de Caixa 8 Semanas** · Planos e Preços |
+| **Gerencial** | Resumo Gerencial · Crescimento e Cancelamentos · Presenças e Ocupação · Comissões · Carteiras por Consultor(a) · Diário & Relatório IA · Modo TV |
+| **Treinos & Saúde** | Prescrição de Treinos (com envio da ficha pelo WhatsApp) · Central de Treinos com IA · Treino Padrão · Exercícios · WOD · Turmas · Avaliação Física · PAR-Q Digital |
+| **Administrativo** | Colaboradores e Cargos · Personal Trainers · Fornecedores · Produtos e Vendas · Recibos e Contratos · Locação de Armários |
+
+Tudo integrado: contrato gera mensalidade, mensalidade vencida entra na régua e no saldo devedor do perfil, check-in alimenta presenças/radar/recompensas, cancelamento aparece no Crescimento e na Timeline.
+
+Os dados dos programas ficam salvos **no navegador do dispositivo** (localStorage + IndexedDB para fotos), com **⬇ Backup / ⬆ Restaurar** e **sincronização automática entre aparelhos via Supabase** (login por academia, com isolamento multiacademia). O site **atualiza sozinho** quando sai versão nova (service worker com recarga automática).
 
 Recursos do portal:
 
