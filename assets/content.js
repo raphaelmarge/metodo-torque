@@ -21,6 +21,8 @@ self.MT_APPS = [
   { slug: "app-funil", file: "apps/funil.html", icone: "🧲", title: "Funil Comercial", desc: "Leads com etapa, dono e data de follow-up — contato atrasado fica vermelho com a mensagem pronta no WhatsApp." },
   { slug: "app-experimentais", file: "apps/experimentais.html", icone: "🗓", title: "Aulas Experimentais", desc: "Agenda das aulas grátis com confirmação por WhatsApp, presença e conversão em matrícula." },
   { slug: "app-grade", file: "apps/grade.html", icone: "📅", title: "Grade de Aulas", desc: "A grade da semana como no EVO: vagas, professor, sala, participantes por aula e agendamento sob demanda." },
+  { slug: "app-agenda", file: "apps/agenda.html", icone: "🗓", title: "Agenda", desc: "Avaliações físicas, reavaliações, visitas e reuniões com hora marcada, lembrete por WhatsApp e presença." },
+  { slug: "app-contas", file: "apps/contas.html", icone: "📤", title: "Contas a Pagar", desc: "Gastos com vencimento e centro de despesa — alimenta o custo por cliente e o financeiro do Dashboard." },
   { slug: "app-inadimplencia", file: "apps/inadimplencia.html", icone: "💰", title: "Controle de Inadimplência", desc: "A régua de cobrança do curso em ação: cada devedor no passo certo (D+1 a D+30) com a mensagem pronta." },
   { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
   { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },

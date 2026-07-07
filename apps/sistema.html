@@ -208,7 +208,7 @@
     <a class="item" data-pg="dashboard"><span class="ico">📈</span>Dashboard</a>
     <a class="item" data-url="alunos.html"><span class="ico">👥</span>Clientes</a>
     <a class="item" data-url="grade.html"><span class="ico">🗓</span>Grade</a>
-    <a class="item" data-url="experimentais.html"><span class="ico">📅</span>Agenda</a>
+    <a class="item" data-url="agenda.html"><span class="ico">📅</span>Agenda</a>
 
     <details class="grupo" open>
       <summary><span class="ico">🧲</span>CRM 2.0</summary>
@@ -231,6 +231,7 @@
       <summary><span class="ico">💲</span>Financeiro</summary>
       <div class="sub">
         <a class="item" data-url="alunos.html?aba=receber">A Receber</a>
+        <a class="item" data-url="contas.html">Contas a Pagar</a>
         <a class="item" data-url="inadimplencia.html">Inadimplência (régua)</a>
         <a class="item" data-url="alunos.html?aba=planos">Planos e Preços</a>
         <a class="item" data-url="../docs/fluxo-caixa.html">Fluxo de Caixa 8 Semanas</a>
@@ -508,10 +509,14 @@
     var vencemHoje = st.recebiveis.filter(function (r) { return r.status === "aberto" && r.vencimento === hoje; });
     var exper = S.read("exper", { aulas: [] }).aulas.filter(function (x) { return x.data === hoje && x.status === "agendada"; });
     var manut = S.read("manut", { chamados: [] }).chamados.filter(function (c) { return c.status !== "resolvido" && c.agendado === hoje; });
+    var compr = S.read("agenda", { compromissos: [] }).compromissos.filter(function (c) { return c.data === hoje && c.status === "agendado"; });
+    var pagarHoje = S.read("contas", { contas: [] }).contas.filter(function (c) { return c.status === "aberto" && c.vencimento === hoje; });
     $("hojeResumo").innerHTML =
       "<div><span>✅ Check-ins até agora</span><strong>" + checkins + "</strong></div>" +
+      "<div><span>📅 Compromissos na agenda</span><strong>" + compr.length + "</strong></div>" +
       "<div><span>🗓 Aulas experimentais de hoje</span><strong>" + exper.length + "</strong></div>" +
       "<div><span>💳 Mensalidades vencendo hoje</span><strong>" + vencemHoje.length + " (" + S.fmtBRL(vencemHoje.reduce(function (t, r) { return t + (+r.valor || 0); }, 0)) + ")</strong></div>" +
+      "<div><span>📤 Contas a pagar vencendo hoje</span><strong>" + pagarHoje.length + " (" + S.fmtBRL(pagarHoje.reduce(function (t, c) { return t + (+c.valor || 0); }, 0)) + ")</strong></div>" +
       "<div><span>🔧 Manutenções agendadas para hoje</span><strong>" + manut.length + "</strong></div>";
   }
 
@@ -877,9 +882,26 @@
     }
     var recebido = recebidoEm(mesAtual), previsto = previstoEm(mesAtual), ticket = ticketEm(mesAtual);
 
+    // contas a pagar (programa Contas a Pagar)
+    var cts = S.read("contas", { contas: [] }).contas;
+    var pagarVencidas = cts.filter(function (c) { return c.status === "aberto" && c.vencimento < hoje; })
+      .reduce(function (t, c) { return t + (+c.valor || 0); }, 0);
+    function gastoEm(chave) {
+      return cts.filter(function (c) { return c.status === "pago" && (c.pagoEm || "").slice(0, 7) === chave; })
+        .reduce(function (t, c) { return t + (+c.valor || 0); }, 0);
+    }
+    var ativosAgora = 0;
+    st.alunos.forEach(function (a) { if (a.status !== "inativo" && contratoAtivo(a)) ativosAgora++; });
+    var custoCliente = ativosAgora ? gastoEm(mesAtual) / ativosAgora : 0;
+    var custoClienteAnt = ativosAgora ? gastoEm(mesAnt) / ativosAgora : 0;
+
     $("kpisFin").innerHTML =
       kpi2("📉", "Inadimplência", S.fmtBRL(inad), inad ? "vermelho" : "verde",
         inad ? "total vencido em aberto — acompanhe na régua de cobrança" : "nada vencido em aberto 🎉", inad ? "atrasado" : null) +
+      kpi2("📤", "Contas a pagar vencidas", S.fmtBRL(pagarVencidas), pagarVencidas ? "vermelho" : "verde",
+        pagarVencidas ? "resolva no programa Contas a Pagar" : "nenhuma conta atrasada 👏") +
+      kpi2("👤", "Custo por cliente", S.fmtBRL(custoCliente), "",
+        ativosAgora ? compara(custoCliente, custoClienteAnt, S.fmtBRL) + " · gastos pagos ÷ " + ativosAgora + " ativos" : "cadastre alunos e gastos para calcular") +
       kpi2("💵", "Recebido no mês", S.fmtBRL(recebido), "verde", compara(recebido, recebidoEm(mesAnt), S.fmtBRL)) +
       kpi2("🗓", "Previsto no mês", S.fmtBRL(previsto), "", compara(previsto, previstoEm(mesAnt), S.fmtBRL)) +
       kpi2("🎟", "Ticket médio", S.fmtBRL(ticket), "", compara(ticket, ticketEm(mesAnt), S.fmtBRL)) +
@@ -890,6 +912,7 @@
       [
         { nome: "Previsto (R$)", cor: "#a78bfa", valores: meses.map(function (m) { return previstoEm(m.chave); }) },
         { nome: "Recebido (R$)", cor: "#16a34a", valores: meses.map(function (m) { return recebidoEm(m.chave); }) },
+        { nome: "Gastos pagos (R$)", cor: "#dc2626", valores: meses.map(function (m) { return gastoEm(m.chave); }) },
       ]
     );
     $("grafTicket").innerHTML = grafLinha(
