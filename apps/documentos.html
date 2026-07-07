@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recibos e Contratos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .doc-folha {
+    background: #fff; border: 1px solid var(--linha); padding: 34px 40px; max-width: 760px;
+    font-size: 14px; line-height: 1.65;
+  }
+  .doc-folha h2 { text-align: center; letter-spacing: .1em; margin: 0 0 4px; color: var(--texto); }
+  .doc-folha .num { text-align: center; color: var(--cinza); font-size: 12.5px; margin-bottom: 18px; }
+  .doc-cab { display: flex; justify-content: space-between; align-items: center; gap: 14px; border-bottom: 2px solid var(--escuro); padding-bottom: 12px; margin-bottom: 18px; }
+  .doc-cab .acad strong { font-size: 16px; }
+  .doc-cab .acad .sub { font-size: 12px; color: var(--cinza); }
+  .doc-folha .clausula { margin: 10px 0; text-align: justify; }
+  .doc-folha .clausula strong { letter-spacing: .04em; }
+  .assinaturas { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 56px; text-align: center; }
+  .assinaturas div { border-top: 1.5px solid var(--texto); padding-top: 6px; font-size: 12.5px; }
+  .valor-caixa { background: var(--fundo); border: 1px solid var(--linha); padding: 12px 16px; display: flex; justify-content: space-between; font-size: 15px; margin: 14px 0; }
+  @media print {
+    .topo, .no-print { display: none !important; }
+    body { background: #fff; }
+    .corpo { padding: 0; max-width: none; }
+    .doc-folha { border: none; padding: 10px; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Recibos e Contratos</h1>
+    </div>
+  </div>
+  <p>Recibo de mensalidade com numeração automática e contrato de matrícula preenchido sozinho — escolha o aluno, imprima, assine.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex no-print" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-a="recibo" class="ativa">🧾 Recibo de pagamento</button>
+      <button data-a="contrato">📄 Contrato de matrícula</button>
+    </div>
+    <button class="btn" id="btnImprimir" hidden>🖨 Imprimir</button>
+  </div>
+
+  <div class="card no-print">
+    <div class="linha-flex" style="align-items: flex-end;">
+      <div class="campo" style="min-width: 260px;"><label>Aluno</label>
+        <input id="selAluno" list="alunosLista" placeholder="digite o nome…"><datalist id="alunosLista"></datalist>
+      </div>
+      <div class="campo" id="campoPag" style="min-width: 260px;"><label>Pagamento (recibos)</label>
+        <select id="selPag"><option value="">— escolha o aluno primeiro —</option></select>
+      </div>
+      <button class="btn" id="btnGerar">Gerar documento</button>
+    </div>
+  </div>
+
+  <div id="docArea"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var aba = "recibo";
+  function docs() { return S.read("docs", { proxRecibo: 1 }); }
+  function academia() {
+    var c = S.read("config", { dados: {} }).dados || {};
+    var nome = c.nome;
+    try { nome = nome || (JSON.parse(localStorage.getItem("mtapp:academia")) || {}).nome; } catch (e) {}
+    return { nome: nome || "Academia", endereco: c.endereco || "", zap: c.zap || "", instagram: c.instagram || "" };
+  }
+  function alunosSt() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  function alunoPorNome(n) {
+    return alunosSt().alunos.find(function (a) { return a.nome === n; });
+  }
+
+  // valor por extenso (simplificado até 9999)
+  var UN = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+  var DEZ = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+  var CEN = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+  function ext999(n) {
+    if (n === 0) return "";
+    if (n === 100) return "cem";
+    var c = Math.floor(n / 100), r = n % 100;
+    var s = c ? CEN[c] + (r ? " e " : "") : "";
+    if (r < 20) s += UN[r];
+    else s += DEZ[Math.floor(r / 10)] + (r % 10 ? " e " + UN[r % 10] : "");
+    return s;
+  }
+  function extenso(v) {
+    var reais = Math.floor(v), cent = Math.round((v - reais) * 100);
+    var s = "";
+    if (reais >= 1000) {
+      var m = Math.floor(reais / 1000);
+      s += (m === 1 ? "mil" : ext999(m) + " mil") + (reais % 1000 ? (reais % 1000 < 100 ? " e " : " ") + ext999(reais % 1000) : "");
+    } else s = ext999(reais);
+    s += reais === 1 ? " real" : " reais";
+    if (cent) s += " e " + ext999(cent) + (cent === 1 ? " centavo" : " centavos");
+    return s;
+  }
+  function brl2(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }); }
+
+  // ---------- abas / seleção ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-a");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    $("campoPag").style.display = aba === "recibo" ? "" : "none";
+    $("docArea").innerHTML = ""; $("btnImprimir").hidden = true;
+  });
+
+  $("alunosLista").innerHTML = alunosSt().alunos.filter(function (a) { return a.status !== "inativo"; })
+    .map(function (a) { return "<option>" + esc(a.nome) + "</option>"; }).join("");
+
+  $("selAluno").addEventListener("change", function () {
+    var a = alunoPorNome(this.value);
+    var st = alunosSt();
+    if (!a) { $("selPag").innerHTML = '<option value="">— aluno não encontrado —</option>'; return; }
+    var pagos = st.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "pago"; })
+      .sort(function (x, y) { return (x.pagoEm || "") < (y.pagoEm || "") ? 1 : -1; });
+    $("selPag").innerHTML = pagos.length ? pagos.map(function (r) {
+      return '<option value="' + r.id + '">' + r.competencia + " · pago em " + S.fmtData(r.pagoEm) + " · " + brl2(+r.valor) + "</option>";
+    }).join("") : '<option value="">— nenhum pagamento registrado —</option>';
+  });
+
+  // ---------- gerar ----------
+  $("btnGerar").onclick = function () {
+    var a = alunoPorNome($("selAluno").value);
+    if (!a) { alert("Escolha um aluno da lista."); return; }
+    if (aba === "recibo") gerarRecibo(a);
+    else gerarContrato(a);
+  };
+
+  function cabecalho(ac) {
+    var logo = S.getLogo ? S.getLogo() : null;
+    return '<div class="doc-cab">' +
+      '<div class="acad"><strong>' + esc(ac.nome) + "</strong>" +
+      '<div class="sub">' + esc(ac.endereco) + (ac.zap ? " · " + esc(ac.zap) : "") + (ac.instagram ? " · " + esc(ac.instagram) : "") + "</div></div>" +
+      (logo ? '<img src="' + logo + '" style="max-height: 54px; max-width: 160px; object-fit: contain;">' : "") +
+      "</div>";
+  }
+
+  function gerarRecibo(a) {
+    var st = alunosSt();
+    var r = st.recebiveis.find(function (x) { return x.id === $("selPag").value; });
+    if (!r) { alert("Escolha o pagamento (o aluno precisa ter mensalidade paga)."); return; }
+    var d = docs();
+    var num = d.proxRecibo;
+    d.proxRecibo = num + 1;
+    S.write("docs", d);
+    var ac = academia();
+    var plano = "mensalidade";
+    var contrato = (a.contratos || []).find(function (c) { return c.id === r.contratoId; });
+    if (contrato) {
+      var p = st.planos.find(function (x) { return x.id === contrato.planoId; });
+      if (p) plano = "mensalidade do plano " + p.nome;
+    }
+    $("docArea").innerHTML = '<div class="doc-folha">' + cabecalho(ac) +
+      "<h2>RECIBO DE PAGAMENTO</h2>" +
+      '<div class="num">Nº ' + String(num).padStart(4, "0") + " · emitido em " + S.fmtData(S.todayISO()) + "</div>" +
+      '<div class="valor-caixa"><span>Valor recebido</span><strong>' + brl2(+r.valor) + "</strong></div>" +
+      '<p class="clausula">Recebemos de <strong>' + esc(a.nome) + "</strong>" + (a.cpf ? ", CPF " + esc(a.cpf) + "," : "") +
+      " a importância de <strong>" + brl2(+r.valor) + "</strong> (" + extenso(+r.valor) + "), referente à " + esc(plano) +
+      " — competência <strong>" + r.competencia + "</strong>, paga em <strong>" + S.fmtData(r.pagoEm) + "</strong>.</p>" +
+      '<p class="clausula">Para clareza, firmamos o presente recibo, dando plena e total quitação do valor acima.</p>' +
+      '<div class="assinaturas"><div>' + esc(ac.nome) + "<br>CNPJ / responsável</div><div>" + esc(a.nome) + "<br>Aluno(a)</div></div>" +
+      "</div>";
+    $("btnImprimir").hidden = false;
+  }
+
+  function gerarContrato(a) {
+    var st = alunosSt();
+    var c = (a.contratos || []).find(function (x) { return x.status === "ativo" || x.status === "congelado"; }) ||
+      (a.contratos || [])[0];
+    if (!c) { alert(a.nome + " não tem contrato — faça a matrícula na Gestão de Alunos primeiro."); return; }
+    var p = st.planos.find(function (x) { return x.id === c.planoId; }) || {};
+    var ac = academia();
+    var fim = new Date(c.inicio + "T12:00");
+    fim.setMonth(fim.getMonth() + (c.meses || 1));
+    $("docArea").innerHTML = '<div class="doc-folha">' + cabecalho(ac) +
+      "<h2>CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h2>" +
+      '<div class="num">Matrícula · gerado em ' + S.fmtData(S.todayISO()) + "</div>" +
+      '<p class="clausula"><strong>CONTRATADA:</strong> ' + esc(ac.nome) + (ac.endereco ? ", com sede em " + esc(ac.endereco) : "") + ".</p>" +
+      '<p class="clausula"><strong>CONTRATANTE:</strong> ' + esc(a.nome) +
+      (a.cpf ? ", CPF " + esc(a.cpf) : "") + (a.nasc ? ", nascido(a) em " + S.fmtData(a.nasc) : "") +
+      ((a.endereco || a.cidade) ? ", residente em " + esc([a.endereco, a.numero, a.bairro, a.cidade].filter(Boolean).join(", ")) : "") +
+      (a.zap ? ", telefone " + esc(a.zap) : "") + ".</p>" +
+      '<p class="clausula"><strong>CLÁUSULA 1ª — OBJETO.</strong> Prestação de serviços de atividades físicas na modalidade do plano <strong>' +
+      esc(p.nome || "contratado") + "</strong>, com início em <strong>" + S.fmtData(c.inicio) + "</strong> e término em <strong>" + S.fmtData(S.todayISO(fim)) +
+      "</strong> (" + (c.meses || 1) + " meses).</p>" +
+      '<p class="clausula"><strong>CLÁUSULA 2ª — VALOR.</strong> ' +
+      (p.tipo === "avista" ? "Pagamento único de <strong>" + brl2(+c.valor) + "</strong> (" + extenso(+c.valor) + ")." :
+        "Mensalidade de <strong>" + brl2(+c.valor) + "</strong> (" + extenso(+c.valor) + "), com vencimento todo dia <strong>" + (c.diaVenc || 5) + "</strong>.") + "</p>" +
+      '<p class="clausula"><strong>CLÁUSULA 3ª — INADIMPLÊNCIA.</strong> O atraso superior a 15 (quinze) dias autoriza o bloqueio do acesso até a regularização, sem prejuízo da cobrança dos valores devidos.</p>' +
+      '<p class="clausula"><strong>CLÁUSULA 4ª — SAÚDE.</strong> O(a) CONTRATANTE declara estar apto(a) à prática de atividades físicas e compromete-se a informar restrições médicas.</p>' +
+      '<p class="clausula"><strong>CLÁUSULA 5ª — CANCELAMENTO.</strong> O cancelamento antecipado deve ser solicitado por escrito, aplicando-se as condições comerciais vigentes na contratação.</p>' +
+      '<p class="clausula">E por estarem de acordo, firmam o presente em duas vias.</p>' +
+      '<p class="clausula" style="text-align: right;">' + (ac.endereco ? esc(ac.endereco.split(",")[0]) + ", " : "") + S.fmtData(S.todayISO()) + "</p>" +
+      '<div class="assinaturas"><div>' + esc(ac.nome) + "<br>Contratada</div><div>" + esc(a.nome) + "<br>Contratante</div></div>" +
+      "</div>";
+    $("btnImprimir").hidden = false;
+  }
+
+  $("btnImprimir").onclick = function () { window.print(); };
+})();
+</script>
+</body>
+</html>

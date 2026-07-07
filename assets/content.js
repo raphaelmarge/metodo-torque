@@ -31,6 +31,8 @@ self.MT_APPS = [
   { slug: "app-produtos", file: "apps/produtos.html", icone: "🛒", title: "Produtos e Vendas", desc: "Água, suplemento, camiseta: venda em 3 toques com estoque baixando sozinho e alerta de reposição." },
   { slug: "app-caixa", file: "apps/caixa.html", icone: "💵", title: "Caixa do Dia", desc: "Abertura com troco, entradas e saídas, sangria e fechamento conferido — mensalidades e vendas entram sozinhas." },
   { slug: "app-comissoes", file: "apps/comissoes.html", icone: "🤝", title: "Comissões", desc: "Percentual por consultor(a), comissão do mês calculada por contrato vendido e lançamento nas Contas a Pagar." },
+  { slug: "app-documentos", file: "apps/documentos.html", icone: "🧾", title: "Recibos e Contratos", desc: "Recibo de mensalidade com numeração e contrato de matrícula preenchidos sozinhos — imprima e assine." },
+  { slug: "app-armarios", file: "apps/armarios.html", icone: "🔐", title: "Locação de Armários", desc: "O mapa dos armários: verde alugado, vermelho vencido, cinza livre — com receita mensal somada." },
   { slug: "app-inadimplencia", file: "apps/inadimplencia.html", icone: "💰", title: "Controle de Inadimplência", desc: "A régua de cobrança do curso em ação: cada devedor no passo certo (D+1 a D+30) com a mensagem pronta." },
   { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
   { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },
