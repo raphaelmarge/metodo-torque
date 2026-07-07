@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Página de Vendas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .passo { border-left: 4px solid var(--roxo); padding-left: 14px; margin-bottom: 6px; }
+  .passo .num { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--roxo); }
+  #quadroPrevia { width: 100%; height: 520px; border: 1px solid var(--linha); background: #fff; }
+  textarea { font-family: inherit; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · MARKETING</span>
+    <h1>Página de Vendas</h1>
+    </div>
+  </div>
+  <p>Um mini-site de divulgação gerado com os seus planos e o seu WhatsApp: baixe o arquivo, mande para quem pediu informação ou hospede onde quiser.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card">
+    <div class="passo"><span class="num">PASSO 1</span><h2 style="margin-top: 2px;">Personalize o texto</h2></div>
+    <div class="linha-flex" style="margin-top: 10px; align-items: flex-end;">
+      <div class="campo" style="flex: 1; min-width: 260px;"><label>Chamada principal</label>
+        <input id="fTitulo" placeholder="ex.: Treine na melhor academia da região">
+      </div>
+      <div class="campo" style="flex: 1; min-width: 260px;"><label>Subtítulo</label>
+        <input id="fSub" placeholder="ex.: Estrutura completa, professores no salão e resultado de verdade.">
+      </div>
+      <button class="btn" id="btnGerar">Gerar página</button>
+    </div>
+    <p class="muted" style="margin-top: 8px;">Os planos vêm de Planos e Preços; logo, endereço, WhatsApp e horários vêm das Configurações do sistema.</p>
+  </div>
+
+  <div class="card" id="cardPrevia" hidden>
+    <div class="passo"><span class="num">PASSO 2</span><h2 style="margin-top: 2px;">Prévia</h2></div>
+    <iframe id="quadroPrevia" title="Prévia da página"></iframe>
+    <div class="linha-flex" style="margin-top: 12px;">
+      <button class="btn" id="btnBaixar">⬇ Baixar página (HTML)</button>
+      <button class="btn sec" id="btnTexto">📋 Copiar texto para WhatsApp/bio</button>
+    </div>
+    <p class="muted" style="margin-top: 8px;">O arquivo é independente: abre em qualquer celular/computador, dá para anexar no WhatsApp ou hospedar em qualquer serviço.</p>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var htmlGerado = "";
+  var DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+  function dados() {
+    var cfg = S.read("config", { dados: {}, horarios: {} });
+    var nome = cfg.dados.nome;
+    try { nome = nome || (JSON.parse(localStorage.getItem("mtapp:academia")) || {}).nome; } catch (e) {}
+    var planos = S.read("alunos", { planos: [] }).planos.filter(function (p) { return p.tipo !== "agregador" && +p.valor > 0; });
+    return { nome: nome || "Academia", cfg: cfg, planos: planos, logo: S.getLogo ? S.getLogo() : null };
+  }
+
+  function gera() {
+    var d = dados();
+    var titulo = $("fTitulo").value.trim() || "Vem treinar com a gente!";
+    var sub = $("fSub").value.trim() || "Estrutura completa, equipe presente e acompanhamento de verdade.";
+    var zap = String(d.cfg.dados.zap || "").replace(/\D/g, "");
+    var msgZap = encodeURIComponent("Olá! Vi a página da " + d.nome + " e quero saber mais sobre os planos 💪");
+    var horarios = [];
+    for (var i = 0; i < 7; i++) {
+      var h = d.cfg.horarios[i] || {};
+      if (h.abre && h.fecha) horarios.push(DIAS[i] + ": " + h.abre + " às " + h.fecha);
+    }
+    htmlGerado = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+      "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
+      "<title>" + esc(d.nome) + "</title><style>" +
+      "*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#121016;color:#fff}" +
+      ".topo{padding:56px 24px 40px;text-align:center}" +
+      ".topo img{max-height:80px;max-width:220px;object-fit:contain;background:#fff;padding:6px 12px;border-radius:6px;margin-bottom:18px}" +
+      "h1{font-size:clamp(26px,6vw,44px);line-height:1.15}" +
+      ".sub{color:#a9a4b5;margin-top:10px;font-size:17px}" +
+      ".cta{display:inline-block;margin-top:24px;background:#16a34a;color:#fff;text-decoration:none;font-weight:800;padding:16px 34px;border-radius:8px;font-size:17px}" +
+      ".planos{max-width:900px;margin:30px auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}" +
+      ".plano{background:#1d1a24;border:1px solid #322e3d;border-radius:10px;padding:24px;text-align:center}" +
+      ".plano .nome{font-weight:700;color:#a78bfa;letter-spacing:.06em;font-size:13px;text-transform:uppercase}" +
+      ".plano .preco{font-size:34px;font-weight:800;margin:10px 0}" +
+      ".plano .preco small{font-size:14px;color:#8a8695;font-weight:600}" +
+      ".plano a{display:block;margin-top:14px;background:#7c3aed;color:#fff;text-decoration:none;font-weight:700;padding:12px;border-radius:6px}" +
+      ".info{max-width:640px;margin:24px auto 60px;padding:0 20px;text-align:center;color:#a9a4b5;font-size:14.5px;line-height:1.8}" +
+      "</style></head><body>" +
+      "<div class='topo'>" +
+      (d.logo ? "<img src='" + d.logo + "' alt=''><br>" : "") +
+      "<h1>" + esc(titulo) + "</h1><div class='sub'>" + esc(sub) + "</div>" +
+      (zap ? "<a class='cta' href='https://wa.me/55" + zap + "?text=" + msgZap + "'>💬 Falar no WhatsApp agora</a>" : "") +
+      "</div>" +
+      (d.planos.length ? "<div class='planos'>" + d.planos.map(function (p) {
+        return "<div class='plano'><div class='nome'>" + esc(p.nome) + "</div>" +
+          "<div class='preco'>R$ " + Math.round(+p.valor) + "<small>/mês</small></div>" +
+          (zap ? "<a href='https://wa.me/55" + zap + "?text=" + encodeURIComponent("Quero o plano " + p.nome + "!") + "'>Quero esse</a>" : "") +
+          "</div>";
+      }).join("") + "</div>" : "") +
+      "<div class='info'>" +
+      "<strong style='color:#fff'>" + esc(d.nome) + "</strong><br>" +
+      (d.cfg.dados.endereco ? "📍 " + esc(d.cfg.dados.endereco) + "<br>" : "") +
+      (d.cfg.dados.instagram ? "📸 " + esc(d.cfg.dados.instagram) + "<br>" : "") +
+      (horarios.length ? "<br>🕐 " + horarios.join(" · ") : "") +
+      "</div></body></html>";
+
+    $("cardPrevia").hidden = false;
+    $("quadroPrevia").srcdoc = htmlGerado;
+  }
+
+  $("btnGerar").onclick = gera;
+  $("btnBaixar").onclick = function () {
+    var blob = new Blob([htmlGerado], { type: "text/html;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "pagina-" + (dados().nome || "academia").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
+    a.click();
+  };
+  $("btnTexto").onclick = function () {
+    var d = dados();
+    var zap = String(d.cfg.dados.zap || "").replace(/\D/g, "");
+    var t = "💪 " + ($("fTitulo").value.trim() || "Vem treinar na " + d.nome + "!") + "\n\n" +
+      d.planos.map(function (p) { return "✅ " + p.nome + " — R$ " + Math.round(+p.valor) + "/mês"; }).join("\n") +
+      (d.cfg.dados.endereco ? "\n\n📍 " + d.cfg.dados.endereco : "") +
+      (zap ? "\n💬 Chama no WhatsApp: https://wa.me/55" + zap : "") +
+      (d.cfg.dados.instagram ? "\n📸 " + d.cfg.dados.instagram : "");
+    navigator.clipboard.writeText(t).then(function () { alert("Texto copiado! Cole no WhatsApp, status ou bio do Instagram."); },
+      function () { prompt("Copie o texto:", t); });
+  };
+})();
+</script>
+</body>
+</html>
