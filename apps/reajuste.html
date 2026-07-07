@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reajuste de Contratos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .previa-linha { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--fundo); font-size: 14px; }
+  .previa-linha .seta { color: var(--roxo); font-weight: 800; }
+  .hist { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 13px; color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Reajuste de Contratos</h1>
+    </div>
+  </div>
+  <p>Reajuste anual sem planilha: escolha o plano, o percentual, veja a prévia aluno por aluno e aplique — as mensalidades futuras atualizam juntas.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card">
+    <h2>Configurar reajuste</h2>
+    <div class="linha-flex" style="margin-top: 10px; align-items: flex-end;">
+      <div class="campo" style="min-width: 220px;"><label>Plano</label><select id="fPlano"></select></div>
+      <div class="campo"><label>Reajuste (%)</label><input id="fPct" type="number" step="0.5" value="10" style="width: 110px;"></div>
+      <div class="campo"><label>Também atualizar o preço do plano (novas vendas)</label>
+        <select id="fPlanoJunto" style="width: auto;"><option value="sim">Sim</option><option value="nao">Não, só os contratos</option></select>
+      </div>
+      <button class="btn sec" id="btnPrevia">Ver prévia</button>
+    </div>
+  </div>
+
+  <div class="card" id="cardPrevia" hidden>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2>Prévia do reajuste</h2>
+      <strong id="previaTotais" style="color: var(--roxo);"></strong>
+    </div>
+    <div id="previa" style="margin-top: 8px;"></div>
+    <button class="btn" id="btnAplicar" style="margin-top: 14px;">✓ Aplicar reajuste</button>
+    <p class="muted" style="margin-top: 8px;">Atualiza o valor dos contratos ativos e das mensalidades <strong>em aberto com vencimento futuro</strong>. As já vencidas ou pagas não mudam.</p>
+  </div>
+
+  <div class="card">
+    <h2>Histórico de reajustes</h2>
+    <div id="historico" style="margin-top: 6px;"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function brl2(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }); }
+
+  function alunosSt() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  function reajustes() { return S.read("reajustes", { historico: [] }); }
+
+  function planosSelect() {
+    var st = alunosSt();
+    $("fPlano").innerHTML = st.planos.filter(function (p) { return p.tipo !== "agregador"; })
+      .map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + " — hoje " + brl2(+p.valor) + "</option>"; }).join("") ||
+      "<option value=''>— nenhum plano cadastrado —</option>";
+  }
+
+  function calcula() {
+    var st = alunosSt();
+    var planoId = $("fPlano").value;
+    var pct = +$("fPct").value || 0;
+    var afetados = [];
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if (c.planoId !== planoId) return;
+        if (c.status !== "ativo" && c.status !== "congelado") return;
+        afetados.push({ aluno: a.nome, atual: +c.valor || 0, novo: Math.round((+c.valor || 0) * (1 + pct / 100) * 100) / 100 });
+      });
+    });
+    return { afetados: afetados, pct: pct, planoId: planoId };
+  }
+
+  $("btnPrevia").onclick = function () {
+    var r = calcula();
+    $("cardPrevia").hidden = false;
+    var somaAtual = r.afetados.reduce(function (t, x) { return t + x.atual; }, 0);
+    var somaNova = r.afetados.reduce(function (t, x) { return t + x.novo; }, 0);
+    $("previaTotais").textContent = r.afetados.length + " contrato(s) · " + brl2(somaAtual) + " → " + brl2(somaNova) + " /mês (+" + brl2(somaNova - somaAtual) + ")";
+    $("previa").innerHTML = r.afetados.length ? r.afetados.map(function (x) {
+      return '<div class="previa-linha"><span>' + esc(x.aluno) + "</span><span>" + brl2(x.atual) +
+        ' <span class="seta">→</span> <strong>' + brl2(x.novo) + "</strong></span></div>";
+    }).join("") : '<div class="vazio">Nenhum contrato ativo neste plano.</div>';
+    $("btnAplicar").disabled = !r.afetados.length;
+  };
+
+  $("btnAplicar").onclick = function () {
+    var r = calcula();
+    if (!r.afetados.length) return;
+    if (!confirm("Aplicar " + r.pct + "% em " + r.afetados.length + " contrato(s)? As mensalidades futuras em aberto também sobem.")) return;
+    var st = alunosSt();
+    var hoje = S.todayISO();
+    var plano = st.planos.find(function (p) { return p.id === r.planoId; });
+    var mudouParcelas = 0;
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if (c.planoId !== r.planoId) return;
+        if (c.status !== "ativo" && c.status !== "congelado") return;
+        var novo = Math.round((+c.valor || 0) * (1 + r.pct / 100) * 100) / 100;
+        c.valor = novo;
+        st.recebiveis.forEach(function (rec) {
+          if (rec.contratoId === c.id && rec.status === "aberto" && rec.vencimento >= hoje) {
+            rec.valor = novo;
+            mudouParcelas++;
+          }
+        });
+      });
+    });
+    if ($("fPlanoJunto").value === "sim" && plano) {
+      plano.valor = Math.round((+plano.valor || 0) * (1 + r.pct / 100) * 100) / 100;
+    }
+    S.write("alunos", st);
+    var h = reajustes();
+    h.historico.unshift({
+      data: hoje, plano: plano ? plano.nome : "?", pct: r.pct,
+      contratos: r.afetados.length, parcelas: mudouParcelas,
+    });
+    S.write("reajustes", h);
+    $("cardPrevia").hidden = true;
+    render();
+    alert("Reajuste aplicado! " + r.afetados.length + " contrato(s) e " + mudouParcelas + " mensalidade(s) futuras atualizadas.");
+  };
+
+  function render() {
+    planosSelect();
+    var h = reajustes().historico;
+    $("historico").innerHTML = h.length ? h.map(function (x) {
+      return '<div class="hist"><span>' + S.fmtData(x.data) + " · <strong>" + esc(x.plano) + "</strong> +" + x.pct + "%</span>" +
+        "<span>" + x.contratos + " contrato(s) · " + x.parcelas + " parcela(s)</span></div>";
+    }).join("") : '<div class="muted">Nenhum reajuste aplicado ainda.</div>';
+  }
+
+  S.onChange(function (k) { if (k === "alunos" || k === "reajustes") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presenças e Ocupação — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .heat { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .heat th { font-size: 10.5px; letter-spacing: .08em; color: var(--cinza); padding: 5px; }
+  .heat td { padding: 0; }
+  .heat .cel { height: 30px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #4c1d95; margin: 1.5px; border-radius: 3px; }
+  .heat .hora-col { text-align: right; padding-right: 8px; color: var(--cinza); white-space: nowrap; font-size: 11px; }
+  .rank { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--fundo); font-size: 14px; }
+  .rank .pos { font-weight: 800; color: var(--roxo); min-width: 30px; }
+  .colunas { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .colunas { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Presenças e Ocupação</h1>
+    </div>
+  </div>
+  <p>O mapa de calor dos check-ins: quais horários lotam, quais dias esvaziam e quem são os alunos mais frequentes — decisão de grade com dados.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="periodos">
+      <button data-p="30" class="ativa">Últimos 30 dias</button>
+      <button data-p="7">Últimos 7 dias</button>
+      <button data-p="90">Últimos 90 dias</button>
+    </div>
+    <span class="muted" id="resumo"></span>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="colunas">
+    <div class="card">
+      <h2>Mapa de calor — check-ins por horário</h2>
+      <div id="mapa" style="margin-top: 10px; overflow-x: auto;"></div>
+    </div>
+    <div class="card">
+      <h2>Alunos mais frequentes</h2>
+      <div id="ranking" style="margin-top: 6px;"></div>
+    </div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var DIAS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+  var periodo = 30;
+
+  function coleta() {
+    var corte = new Date(Date.now() - periodo * 864e5).toISOString();
+    var alunos = S.read("alunos", { alunos: [] }).alunos;
+    var eventos = [];
+    alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        if (t >= corte) eventos.push({ aluno: a.nome, t: t });
+      });
+    });
+    return eventos;
+  }
+
+  function render() {
+    var evs = coleta();
+    // matriz hora (5-23) × dia da semana
+    var horas = [];
+    for (var h = 5; h <= 22; h++) horas.push(h);
+    var m = {};
+    horas.forEach(function (h) { m[h] = [0, 0, 0, 0, 0, 0, 0]; });
+    var porAluno = {}, porDia = [0, 0, 0, 0, 0, 0, 0];
+    evs.forEach(function (e) {
+      var d = new Date(e.t);
+      var h = d.getHours(), dw = d.getDay();
+      if (m[h]) m[h][dw]++;
+      porDia[dw]++;
+      porAluno[e.aluno] = (porAluno[e.aluno] || 0) + 1;
+    });
+    var max = 1;
+    horas.forEach(function (h) { m[h].forEach(function (v) { if (v > max) max = v; }); });
+
+    // pico
+    var pico = { v: 0, h: null, dw: null };
+    horas.forEach(function (h) {
+      m[h].forEach(function (v, dw) { if (v > pico.v) pico = { v: v, h: h, dw: dw }; });
+    });
+    var melhorDia = porDia.indexOf(Math.max.apply(null, porDia));
+    var piorDia = porDia.indexOf(Math.min.apply(null, porDia.slice(1, 7))); // ignora domingo no "pior"
+
+    $("resumo").textContent = evs.length + " check-ins no período";
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + evs.length + '</div><div class="muted">check-ins</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + (pico.h != null && pico.v ? pico.h + "h · " + DIAS[pico.dw] : "—") + '</div><div class="muted">horário de pico</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok)">' + (evs.length ? DIAS[melhorDia] : "—") + '</div><div class="muted">dia mais cheio</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--alerta)">' + (evs.length ? DIAS[piorDia === -1 ? 0 : piorDia] : "—") + '</div><div class="muted">dia mais vazio (útil)</div></div>' +
+      '<div class="card"><div class="n">' + Object.keys(porAluno).length + '</div><div class="muted">alunos treinando</div></div>';
+
+    var tabela = '<table class="heat"><tr><th></th>' + DIAS.map(function (d) { return "<th>" + d + "</th>"; }).join("") + "</tr>";
+    horas.forEach(function (h) {
+      tabela += '<tr><td class="hora-col">' + h + "h</td>" + m[h].map(function (v) {
+        var pct = v / max;
+        var cor = v === 0 ? "#f4f2f8" : "rgba(124, 58, 237, " + (0.14 + pct * 0.86).toFixed(2) + ")";
+        var texto = pct > 0.55 ? "#fff" : "#4c1d95";
+        return '<td><div class="cel" style="background:' + cor + "; color:" + texto + '">' + (v || "") + "</div></td>";
+      }).join("") + "</tr>";
+    });
+    tabela += "</table>";
+    $("mapa").innerHTML = evs.length ? tabela : '<div class="vazio">Sem check-ins no período — registre na aba Check-in da Gestão de Alunos.</div>';
+
+    var rank = Object.keys(porAluno).map(function (n) { return { nome: n, qtd: porAluno[n] }; })
+      .sort(function (a, b) { return b.qtd - a.qtd; }).slice(0, 12);
+    $("ranking").innerHTML = rank.length ? rank.map(function (r, i) {
+      return '<div class="rank"><span><span class="pos">' + (i + 1) + "º</span> " + esc(r.nome) + "</span><strong>" +
+        r.qtd + " treino(s)</strong></div>";
+    }).join("") : '<div class="muted">Sem dados ainda.</div>';
+  }
+
+  $("periodos").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    periodo = +b.getAttribute("data-p");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

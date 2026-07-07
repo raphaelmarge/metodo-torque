@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indicações — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .indicador { border: 1px solid var(--linha); background: #fff; margin-bottom: 12px; }
+  .indicador summary { display: flex; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer; list-style: none; flex-wrap: wrap; }
+  .indicador summary::-webkit-details-marker { display: none; }
+  .indicador .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  .indicador .quem { flex: 1; min-width: 160px; }
+  .indicado { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--fundo); font-size: 13.5px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM</span>
+    <h1>Indicações</h1>
+    </div>
+  </div>
+  <p>Quem indica amigo é seu melhor vendedor: veja o ranking de indicadores, quem cada um trouxe e controle a entrega da recompensa.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="campo" style="flex: 1; max-width: 480px; margin: 0;">
+      <label>🎁 Recompensa por indicação (aparece na mensagem)</label>
+      <input id="premio" placeholder="ex.: 1 semana grátis para os dois">
+    </div>
+    <span class="muted">A indicação vem do campo "Indicado por" no cadastro do aluno.</span>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function cfg() { return S.read("indicacoes", { premio: "", entregues: {} }); }
+
+  function render() {
+    var st = S.read("alunos", { alunos: [] });
+    var c = cfg();
+    $("premio").value = c.premio || "";
+    // agrupa indicados por indicador
+    var mapa = {};
+    st.alunos.forEach(function (a) {
+      var quem = (a.indicacao || "").trim();
+      if (!quem) return;
+      (mapa[quem] = mapa[quem] || []).push(a);
+    });
+    var nomes = Object.keys(mapa).sort(function (a, b) { return mapa[b].length - mapa[a].length; });
+    var totalInd = nomes.reduce(function (t, n) { return t + mapa[n].length; }, 0);
+    var ativos = 0;
+    nomes.forEach(function (n) {
+      mapa[n].forEach(function (a) {
+        if (a.status !== "inativo" && (a.contratos || []).some(function (x) { return x.status === "ativo"; })) ativos++;
+      });
+    });
+    var pendentes = 0;
+    nomes.forEach(function (n) {
+      mapa[n].forEach(function (a) { if (!c.entregues[n + "|" + a.nome]) pendentes++; });
+    });
+
+    $("stats").innerHTML =
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + nomes.length + '</div><div class="muted">indicadores</div></div>' +
+      '<div class="card"><div class="n">' + totalInd + '</div><div class="muted">alunos indicados</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok)">' + ativos + '</div><div class="muted">indicados ativos hoje</div></div>' +
+      '<div class="card"><div class="n" style="color:' + (pendentes ? "var(--alerta)" : "var(--cinza-2)") + '">' + pendentes + '</div><div class="muted">recompensas pendentes</div></div>';
+
+    $("lista").innerHTML = nomes.length ? nomes.map(function (n, idx) {
+      var indicados = mapa[n];
+      var ini = n.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+      var indicadorAluno = st.alunos.find(function (a) { return a.nome === n; });
+      var premio = c.premio || "um agrado especial";
+      var msg = "Oi " + n.split(" ")[0] + "! Sua indicação deu certo demais 🎉 Você tem direito a " + premio + " aqui na academia. Passa na recepção para resgatar!";
+      return '<details class="indicador"' + (idx === 0 ? " open" : "") + '><summary>' +
+        '<span class="avatar">' + esc(ini) + "</span>" +
+        '<div class="quem"><strong>' + esc(n) + '</strong><div class="muted" style="font-size: 12px;">' + indicados.length + " indicação(ões)</div></div>" +
+        (idx === 0 ? '<span class="tag roxo">🏆 TOP INDICADOR</span>' : "") +
+        (indicadorAluno && indicadorAluno.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+          String(indicadorAluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Avisar recompensa</a>' : "") +
+        "</summary>" +
+        indicados.map(function (a) {
+          var chave = n + "|" + a.nome;
+          var ativo = a.status !== "inativo" && (a.contratos || []).some(function (x) { return x.status === "ativo"; });
+          return '<div class="indicado"><span>' + esc(a.nome) + " " +
+            (ativo ? '<span class="tag ok">ATIVO</span>' : '<span class="tag neutro">SEM CONTRATO</span>') + "</span>" +
+            (c.entregues[chave] ? '<span class="tag ok">RECOMPENSA ENTREGUE ✓</span>' :
+              '<button class="btn mini" data-entregar="' + esc(chave) + '">🎁 Marcar recompensa entregue</button>') +
+            "</div>";
+        }).join("") + "</details>";
+    }).join("") : '<div class="vazio">Nenhuma indicação registrada ainda — preencha o campo "Indicado por" ao cadastrar alunos novos.</div>';
+  }
+
+  $("premio").addEventListener("change", function () {
+    var c = cfg();
+    if (c.premio === this.value.trim()) return; // nada mudou — não re-renderiza (evita engolir o clique seguinte)
+    c.premio = this.value.trim();
+    S.write("indicacoes", c);
+    render();
+  });
+  $("lista").addEventListener("click", function (e) {
+    var chave = e.target.getAttribute && e.target.getAttribute("data-entregar");
+    if (!chave) return;
+    var c = cfg();
+    c.entregues[chave] = S.todayISO();
+    S.write("indicacoes", c);
+    render();
+  });
+
+  S.onChange(function (k) { if (k === "alunos" || k === "indicacoes") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
