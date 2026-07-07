@@ -451,6 +451,7 @@
     if (c) abrePart(c.getAttribute("data-chave"), c.getAttribute("data-dia"));
   });
 
+  S.equipeDatalist(["gProf", "dProf"]);
   S.onChange(function (k) { if (k === "grade" || k === "alunos") render(); });
   render();
 })();

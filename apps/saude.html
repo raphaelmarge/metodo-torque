@@ -313,6 +313,7 @@
   });
 
   function render() { renderLista(); renderPainel(); }
+  S.equipeDatalist(["vAvaliador"]);
   S.onChange(function (k) { if (k === "saude" || k === "alunos") render(); });
   render();
 })();

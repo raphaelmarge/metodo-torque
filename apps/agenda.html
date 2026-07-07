@@ -308,6 +308,7 @@
   };
   $("detFechar").onclick = function () { $("dlgDet").close(); };
 
+  S.equipeDatalist(["cProf"]);
   S.onChange(function (k) { if (k === "agenda" || k === "alunos") render(); });
   render();
 })();
