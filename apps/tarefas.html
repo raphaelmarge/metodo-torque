@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarefas do Dia — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .resumo .card { text-align: center; padding: 12px; }
+  .resumo .n { font-size: 24px; font-weight: 800; }
+  .bloco { border: 1px solid var(--linha); background: #fff; margin-bottom: 14px; }
+  .bloco > header { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 14px; background: var(--fundo); border-bottom: 1px solid var(--linha); flex-wrap: wrap; }
+  .bloco > header h2 { font-size: 14.5px; margin: 0; }
+  .bloco .item-t { display: flex; gap: 10px; align-items: center; padding: 9px 14px; border-bottom: 1px dashed var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .bloco .item-t:last-child { border-bottom: 0; }
+  .bloco .item-t .txt { flex: 1; min-width: 160px; }
+  .bloco .item-t .sub { color: var(--cinza); font-size: 12px; }
+  .bloco .ok-bloco { padding: 12px 14px; color: var(--ok); font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · OPERAÇÃO</span>
+    <h1>Tarefas do Dia</h1>
+    </div>
+  </div>
+  <p>Tudo que precisa de ação hoje, reunido dos outros programas: ligações, cobranças, renovações, aniversários, experimentais e pendências — a lista da recepção ao abrir a academia.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="resumo" id="resumo"></div>
+  <div id="blocos"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function wa(zap, msg) {
+    var n = String(zap || "").replace(/\D/g, "");
+    return n ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + n + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "";
+  }
+  function pnome(n) { return String(n || "").split(" ")[0]; }
+  function diasDesde(iso) { return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5); }
+
+  function coleta() {
+    var hoje = S.todayISO();
+    var hojeMD = hoje.slice(5, 10);
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var ativos = stA.alunos.filter(function (a) { return a.status !== "inativo"; });
+    var nomeDe = {};
+    stA.alunos.forEach(function (a) { nomeDe[a.id] = a; });
+
+    // aniversariantes de hoje
+    var niver = ativos.filter(function (a) { return (a.nasc || "").slice(5, 10) === hojeMD; });
+
+    // detratores NPS não tratados
+    var detr = S.read("nps", { respostas: [] }).respostas.filter(function (r) { return r.nota <= 6 && !r.tratado; });
+
+    // inadimplentes (agrupado por aluno)
+    var dev = {};
+    stA.recebiveis.forEach(function (r) {
+      if (r.status === "aberto" && r.vencimento < hoje) {
+        (dev[r.alunoId] = dev[r.alunoId] || { total: 0, desde: r.vencimento }).total += +r.valor || 0;
+        if (r.vencimento < dev[r.alunoId].desde) dev[r.alunoId].desde = r.vencimento;
+      }
+    });
+    var inad = Object.keys(dev).map(function (id) { return { a: nomeDe[id], total: dev[id].total, desde: dev[id].desde }; })
+      .filter(function (x) { return x.a && x.a.status !== "inativo"; })
+      .sort(function (x, y) { return x.desde < y.desde ? -1 : 1; });
+
+    // renovações urgentes (vencidos ou ≤7 dias)
+    var renov = [];
+    ativos.forEach(function (a) {
+      var cs = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+      if (!cs.length) return;
+      var fimMax = null;
+      cs.forEach(function (c) {
+        var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+        f.setMonth(f.getMonth() + (c.meses || 1));
+        var iso = S.todayISO(f);
+        if (!fimMax || iso > fimMax) fimMax = iso;
+      });
+      var dias = Math.round((new Date(fimMax) - new Date(hoje)) / 864e5);
+      if (dias <= 7) renov.push({ a: a, fim: fimMax, dias: dias });
+    });
+    renov.sort(function (x, y) { return x.dias - y.dias; });
+
+    // faltantes 15+ dias
+    var falt = ativos.map(function (a) {
+      var ult = null;
+      (a.checkins || []).forEach(function (t) { var d = (t || "").slice(0, 10); if (!ult || d > ult) ult = d; });
+      var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+      return { a: a, dias: diasDesde(ult || (c && c.inicio) || hoje) };
+    }).filter(function (f) { return f.dias >= 15; }).sort(function (x, y) { return y.dias - x.dias; });
+
+    // experimentais de hoje
+    var exper = S.read("exper", { aulas: [] }).aulas.filter(function (x) { return x.data === hoje && x.status === "agendada"; })
+      .sort(function (x, y) { return (x.hora || "") < (y.hora || "") ? -1 : 1; });
+
+    // leads com contato marcado até hoje
+    var leads = S.read("funil", { leads: [] }).leads.filter(function (l) {
+      return l.status !== "matriculado" && l.status !== "perdido" && l.proximo && l.proximo <= hoje;
+    }).sort(function (x, y) { return (x.proximo || "") < (y.proximo || "") ? -1 : 1; });
+
+    // agenda de hoje
+    var agenda = S.read("agenda", { compromissos: [] }).compromissos.filter(function (c) { return c.data === hoje; })
+      .sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+
+    // manutenção pendente (aberto, ou agendado para até hoje)
+    var manut = S.read("manut", { chamados: [] }).chamados.filter(function (c) {
+      return c.status === "aberto" || (c.status === "agendado" && c.agendado && c.agendado <= hoje);
+    });
+
+    // checklist de hoje
+    var chk = S.read("checklist", { tarefas: [], dias: {} });
+    var marcas = (chk.dias || {})[hoje] || {};
+    var chkPend = (chk.tarefas || []).filter(function (t) { return !(marcas[t.id] && marcas[t.id].feito); }).length;
+    var chkTotal = (chk.tarefas || []).length;
+
+    return { niver: niver, detr: detr, inad: inad, renov: renov, falt: falt, exper: exper, leads: leads, agenda: agenda, manut: manut, chkPend: chkPend, chkTotal: chkTotal };
+  }
+
+  function bloco(titulo, itens, linkTxt, linkUrl, corpoFn, vazioTxt) {
+    return '<div class="bloco"><header><h2>' + titulo + " — <strong>" + itens.length + '</strong></h2>' +
+      '<a class="btn sec mini" href="' + linkUrl + '">' + linkTxt + " →</a></header>" +
+      (itens.length ? itens.slice(0, 8).map(corpoFn).join("") +
+        (itens.length > 8 ? '<div class="item-t sub">… e mais ' + (itens.length - 8) + ' — veja no programa completo.</div>' : "")
+        : '<div class="ok-bloco">✓ ' + vazioTxt + "</div>") + "</div>";
+  }
+
+  function render() {
+    var d = coleta();
+    var totalAcoes = d.niver.length + d.detr.length + d.inad.length + d.renov.length + d.falt.length + d.exper.length + d.leads.length + d.manut.length;
+    $("resumo").innerHTML =
+      '<div class="card"><div class="n" style="color:' + (totalAcoes ? "var(--roxo)" : "var(--ok)") + '">' + totalAcoes + '</div><div class="muted">ações para hoje</div></div>' +
+      '<div class="card"><div class="n">' + d.agenda.length + '</div><div class="muted">compromissos na agenda</div></div>' +
+      '<div class="card"><div class="n" style="color:' + (d.chkPend ? "var(--alerta)" : "var(--ok)") + '">' + d.chkPend + "/" + d.chkTotal + '</div><div class="muted">checklist pendente</div></div>';
+
+    $("blocos").innerHTML =
+      bloco("📞 Detratores do NPS para ligar", d.detr, "NPS", "nps.html", function (r) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(r.aluno || "aluno") + '</strong> — nota ' + r.nota +
+          (r.comentario ? ' <span class="sub">“' + esc(r.comentario) + "”</span>" : "") + "</span>" +
+          '<span class="sub">' + S.fmtData(r.data) + "</span></div>";
+      }, "Nenhum detrator pendente.") +
+
+      bloco("💸 Inadimplentes para cobrar", d.inad, "Régua de cobrança", "inadimplencia.html", function (x) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(x.a.nome) + "</strong> — " + S.fmtBRL(x.total) +
+          ' <span class="sub">em atraso desde ' + S.fmtData(x.desde) + "</span></span>" +
+          wa(x.a.zap, "Oi " + pnome(x.a.nome) + "! Passando para lembrar da mensalidade em aberto (" + S.fmtBRL(x.total) + "). Consegue regularizar hoje? Qualquer dúvida me chama! 💜") + "</div>";
+      }, "Ninguém em atraso.") +
+
+      bloco("🔁 Renovações urgentes (vencido ou ≤ 7 dias)", d.renov, "Renovação", "renovacao.html", function (x) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(x.a.nome) + "</strong> <span class='sub'>" +
+          (x.dias < 0 ? "venceu há " + Math.abs(x.dias) + " dia(s)" : "vence em " + x.dias + " dia(s) — " + S.fmtData(x.fim)) + "</span></span>" +
+          wa(x.a.zap, "Oi " + pnome(x.a.nome) + "! Seu plano " + (x.dias < 0 ? "venceu" : "está vencendo") + ". Bora renovar e garantir o valor atual? 💜") + "</div>";
+      }, "Nenhuma renovação urgente.") +
+
+      bloco("🎂 Aniversariantes de hoje", d.niver, "Radar", "radar.html", function (a) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(a.nome) + "</strong></span>" +
+          wa(a.zap, "Feliz aniversário, " + pnome(a.nome) + "! 🎉 A equipe toda te deseja um ano incrível — passa aqui hoje que tem treino especial de parabéns! 💜") + "</div>";
+      }, "Nenhum aniversário hoje.") +
+
+      bloco("🧲 Leads para contatar (funil)", d.leads, "Funil de Vendas", "funil.html", function (l) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(l.nome) + '</strong> <span class="sub">' + esc(l.status) +
+          (l.proximo < S.todayISO() ? " · contato atrasado (" + S.fmtData(l.proximo) + ")" : " · para hoje") + "</span></span>" +
+          wa(l.zap, "Oi " + pnome(l.nome) + "! Aqui é da academia — bora marcar sua aula experimental? Tenho horário hoje! 💪") + "</div>";
+      }, "Nenhum lead agendado para hoje.") +
+
+      bloco("🧪 Aulas experimentais de hoje", d.exper, "Experimentais", "experimentais.html", function (x) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(x.nome) + "</strong> <span class='sub'>" + (x.hora || "") +
+          (x.prof ? " · prof. " + esc(x.prof) : "") + "</span></span>" +
+          wa(x.zap, "Oi " + pnome(x.nome) + "! Confirmando sua aula experimental hoje às " + (x.hora || "") + ". Te esperamos! 💪") + "</div>";
+      }, "Nenhuma experimental hoje.") +
+
+      bloco("😶 Faltantes há 15+ dias", d.falt, "Radar de Retenção", "radar.html", function (f) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(f.a.nome) + "</strong> <span class='sub'>há " + f.dias + " dias sem treinar</span></span>" +
+          wa(f.a.zap, "Oi " + pnome(f.a.nome) + "! Sentimos sua falta por aqui 😢 Bora voltar essa semana? Seu treino te espera! 💪") + "</div>";
+      }, "Ninguém sumido há 15+ dias.") +
+
+      bloco("🔧 Manutenção pendente", d.manut, "Central de Manutenção", "manutencao.html", function (c) {
+        return '<div class="item-t"><span class="txt"><strong>' + esc(c.titulo) + "</strong> <span class='sub'>" + esc(c.cat || "") +
+          (c.prio ? " · prioridade " + esc(c.prio) : "") + (c.status === "agendado" ? " · agendado " + S.fmtData(c.agendado) : "") + "</span></span></div>";
+      }, "Nenhum chamado pendente.") +
+
+      bloco("📅 Agenda de hoje", d.agenda, "Agenda", "agenda.html", function (c) {
+        return '<div class="item-t"><span class="txt"><strong>' + (c.inicio || "") + "</strong> — " + esc(c.tipo || "compromisso") +
+          (c.cliente ? " · " + esc(c.cliente) : "") + (c.prof ? " <span class='sub'>com " + esc(c.prof) + "</span>" : "") + "</span></div>";
+      }, "Agenda livre hoje.");
+  }
+
+  S.onChange(render);
+  render();
+})();
+</script>
+</body>
+</html>

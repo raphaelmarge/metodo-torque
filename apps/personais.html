@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal Trainers — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .pt { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .pt + .pt { margin-top: -1px; }
+  .pt.inativo { opacity: .55; }
+  .pt .quem { flex: 1; min-width: 180px; }
+  .pt .quem strong { font-size: 14.5px; }
+  .pt .quem .sub { font-size: 12px; color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Personal Trainers</h1>
+    </div>
+  </div>
+  <p>Os personais externos que atendem na sua academia: cadastro com CREF, taxa de uso mensal e o controle de quem já pagou o mês — com cobrança pronta no WhatsApp.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="linha-flex">
+      <div class="campo"><label>Mês</label><input id="fMes" type="month"></div>
+      <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativos" type="checkbox"> mostrar inativos</label>
+    </div>
+    <button class="btn" id="btnNovo">➕ Novo personal</button>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <h2 id="dlgTitulo">Novo personal</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome *</label><input id="pNome" required></div>
+      <div class="campo"><label>CREF</label><input id="pCref" placeholder="000000-G/MG"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>WhatsApp</label><input id="pZap" placeholder="31 9…"></div>
+      <div class="campo"><label>Taxa mensal (R$)</label><input id="pTaxa" type="number" step="0.01" min="0" value="0"></div>
+    </div>
+    <div class="campo"><label>Situação</label>
+      <select id="pStatus"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("personais", { lista: [], pagamentos: {} }); }
+  function save(st) { S.write("personais", st); render(); }
+
+  var mes = S.todayISO().slice(0, 7);
+  $("fMes").value = mes;
+  $("fMes").addEventListener("change", function () { if (this.value) { mes = this.value; render(); } });
+  $("fInativos").addEventListener("change", render);
+
+  function render() {
+    var st = load();
+    var pagos = st.pagamentos[mes] || {};
+    var ativos = st.lista.filter(function (p) { return p.status !== "inativo"; });
+    var recebido = 0, previsto = 0, pendentes = 0;
+    ativos.forEach(function (p) {
+      previsto += +p.taxa || 0;
+      if (pagos[p.id]) recebido += +p.taxa || 0;
+      else if (+p.taxa > 0) pendentes++;
+    });
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + ativos.length + '</div><div class="muted">personais ativos</div></div>' +
+      '<div class="card"><div class="n">' + S.fmtBRL(previsto) + '</div><div class="muted">taxas do mês (previsto)</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok)">' + S.fmtBRL(recebido) + '</div><div class="muted">recebido no mês</div></div>' +
+      '<div class="card"><div class="n" style="color:' + (pendentes ? "var(--erro)" : "inherit") + '">' + pendentes + '</div><div class="muted">taxas pendentes</div></div>';
+
+    var lista = $("fInativos").checked ? st.lista : ativos;
+    $("lista").innerHTML = lista.length ? lista.map(function (p) {
+      var pago = pagos[p.id];
+      var msg = "Oi " + p.nome.split(" ")[0] + "! Lembrete da taxa de uso da academia de " +
+        mes.slice(5) + "/" + mes.slice(0, 4) + " (" + S.fmtBRL(+p.taxa || 0) + "). Consegue acertar essa semana? Obrigado! 🤝";
+      return '<div class="pt' + (p.status === "inativo" ? " inativo" : "") + '">' +
+        '<div class="quem"><strong>' + esc(p.nome) + "</strong>" +
+        (p.status === "inativo" ? ' <span class="tag neutro">INATIVO</span>' : "") +
+        '<div class="sub">' + (p.cref ? "CREF " + esc(p.cref) + " · " : "") + S.fmtBRL(+p.taxa || 0) + "/mês</div></div>" +
+        (p.status !== "inativo" && +p.taxa > 0 ? (pago
+          ? '<span class="tag ok">PAGO ' + S.fmtData(pago) + '</span><button class="btn sec mini" data-desfaz="' + p.id + '">↩</button>'
+          : '<span class="tag erro">PENDENTE</span><button class="btn mini" data-paga="' + p.id + '">✓ Receber</button>' +
+            (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "")) : "") +
+        '<button class="btn sec mini" data-edita="' + p.id + '">✏</button></div>';
+    }).join("") : '<div class="vazio">Nenhum personal cadastrado. Clique em ➕ Novo personal.</div>';
+  }
+
+  var editandoId = null;
+  function abre(p) {
+    editandoId = p ? p.id : null;
+    $("dlgTitulo").textContent = p ? "Editar — " + p.nome : "Novo personal";
+    $("pNome").value = p ? p.nome : "";
+    $("pCref").value = p ? p.cref || "" : "";
+    $("pZap").value = p ? p.zap || "" : "";
+    $("pTaxa").value = p ? p.taxa || 0 : 0;
+    $("pStatus").value = p ? p.status || "ativo" : "ativo";
+    $("dlg").showModal();
+  }
+  $("btnNovo").onclick = function () { abre(null); };
+
+  $("lista").addEventListener("click", function (e) {
+    var t = e.target;
+    var st = load();
+    if (t.getAttribute && t.getAttribute("data-paga")) {
+      (st.pagamentos[mes] = st.pagamentos[mes] || {})[t.getAttribute("data-paga")] = S.todayISO();
+      save(st); return;
+    }
+    if (t.getAttribute && t.getAttribute("data-desfaz")) {
+      delete (st.pagamentos[mes] || {})[t.getAttribute("data-desfaz")];
+      save(st); return;
+    }
+    if (t.getAttribute && t.getAttribute("data-edita")) {
+      abre(st.lista.find(function (p) { return p.id === t.getAttribute("data-edita"); }));
+    }
+  });
+
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = {
+      nome: $("pNome").value.trim(), cref: $("pCref").value.trim(),
+      zap: $("pZap").value.trim(), taxa: +$("pTaxa").value || 0, status: $("pStatus").value,
+    };
+    if (!dados.nome) return;
+    if (editandoId) {
+      var p = st.lista.find(function (x) { return x.id === editandoId; });
+      Object.keys(dados).forEach(function (k) { p[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      dados.criado = S.todayISO();
+      st.lista.push(dados);
+    }
+    save(st);
+  });
+
+  S.onChange(function (k) { if (k === "personais") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
