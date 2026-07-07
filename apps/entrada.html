@@ -141,7 +141,7 @@
       '<strong style="color:' + cor + '">' + titulo + "</strong></div>" +
       s.avisos.map(function (v) { return '<div class="aviso ' + v.t + '">' + esc(v.txt) + "</div>"; }).join("") +
       '<div class="linha-flex" style="margin-top: 14px; justify-content: flex-end;">' +
-      '<a class="btn sec mini" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">Abrir ficha</a>' +
+      '<a class="btn sec mini" href="perfil-aluno.html?id=' + a.id + '">Abrir perfil</a>' +
       '<button class="btn" id="btnLiberar">✓ Liberar entrada</button></div></div>';
     $("btnLiberar").onclick = function () {
       var st = stA();
