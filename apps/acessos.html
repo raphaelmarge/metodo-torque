@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log de Acessos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .lin { display: flex; gap: 12px; align-items: center; padding: 8px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; }
+  .lin + .lin { margin-top: -1px; }
+  .lin .hora { font-weight: 800; font-variant-numeric: tabular-nums; width: 52px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · RECEPÇÃO</span>
+    <h1>Log de Acessos</h1>
+    </div>
+  </div>
+  <p>Todos os check-ins registrados, dia a dia: quem entrou, a que horas, e o total do dia.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="linha-flex" style="align-items: flex-end;">
+      <div class="campo"><label>Dia</label><input id="fDia" type="date"></div>
+      <div class="campo" style="min-width: 200px;"><label>Aluno</label><input id="busca" placeholder="filtrar por nome"></div>
+    </div>
+    <span class="muted"><strong id="total">0</strong> acesso(s) no dia · <a href="entrada.html">registrar entrada →</a></span>
+  </div>
+  <div id="lista"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  $("fDia").value = S.todayISO();
+
+  function render() {
+    var dia = $("fDia").value || S.todayISO();
+    var q = $("busca").value.trim().toLowerCase();
+    var entradas = [];
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) {
+      if (q && a.nome.toLowerCase().indexOf(q) < 0) return;
+      (a.checkins || []).forEach(function (t) {
+        if ((t || "").slice(0, 10) === dia) entradas.push({ nome: a.nome, id: a.id, hora: new Date(t).toTimeString().slice(0, 5) });
+      });
+    });
+    entradas.sort(function (x, y) { return x.hora < y.hora ? 1 : -1; });
+    $("total").textContent = entradas.length;
+    $("lista").innerHTML = entradas.length ? entradas.map(function (e) {
+      return '<div class="lin"><span class="hora">' + e.hora + '</span><span style="flex:1">' + esc(e.nome) + "</span>" +
+        '<a class="btn sec mini" href="perfil-aluno.html?id=' + e.id + '">perfil</a></div>';
+    }).join("") : '<div class="vazio">Nenhum acesso registrado nesse dia.</div>';
+  }
+
+  $("fDia").addEventListener("change", render);
+  $("busca").addEventListener("input", render);
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

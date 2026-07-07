@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .ev { display: flex; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); align-items: flex-start; }
+  .ev + .ev { margin-top: -1px; }
+  .ev .ico { font-size: 18px; flex: none; margin-top: 1px; }
+  .ev .txt { flex: 1; font-size: 13.5px; }
+  .ev .quando { font-size: 12px; color: var(--cinza); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM</span>
+    <h1>Timeline</h1>
+    </div>
+  </div>
+  <p>Tudo que aconteceu na academia em um feed só: matrículas, renovações, cancelamentos, check-ins, vendas, contatos registrados, avaliações e NPS.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="filtros">
+      <button data-f="tudo" class="ativa">Tudo</button>
+      <button data-f="matricula">📝 Matrículas</button>
+      <button data-f="renovacao">🔁 Renovações</button>
+      <button data-f="cancelamento">✕ Cancelamentos</button>
+      <button data-f="venda">🛒 Vendas</button>
+      <button data-f="contato">📞 Contatos</button>
+      <button data-f="avaliacao">🩺 Avaliações</button>
+      <button data-f="nps">💜 NPS</button>
+      <button data-f="checkin">🚪 Check-ins</button>
+    </div>
+    <div class="campo" style="max-width: 200px;"><label>Aluno</label><input id="busca" placeholder="filtrar por nome"></div>
+  </div>
+  <div id="feed"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var filtro = "tudo";
+
+  function eventos() {
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var evs = [];
+    var planoDe = {};
+    st.planos.forEach(function (p) { planoDe[p.id] = p.nome; });
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        var plano = planoDe[c.planoId] || "plano";
+        if (c.inicio) evs.push({ t: c.renovacaoDe ? "renovacao" : "matricula", em: c.inicio, ico: c.renovacaoDe ? "🔁" : "📝",
+          txt: "<strong>" + esc(a.nome) + "</strong> " + (c.renovacaoDe ? "renovou" : "fechou") + " o plano <strong>" + esc(plano) + "</strong> (" + S.fmtBRL(+c.valor || 0) + "/mês)", quem: a.nome });
+        if (c.status === "cancelado" && c.canceladoEm) evs.push({ t: "cancelamento", em: c.canceladoEm, ico: "✕",
+          txt: "<strong>" + esc(a.nome) + "</strong> cancelou o plano " + esc(plano) + (c.motivoCancel ? " — motivo: <em>" + esc(c.motivoCancel) + "</em>" : ""), quem: a.nome });
+      });
+      (a.contatos || []).forEach(function (ct) {
+        evs.push({ t: "contato", em: (ct.em || "").slice(0, 10), hora: (ct.em || "").slice(11, 16), ico: "📞",
+          txt: "<strong>" + esc(ct.quem || "equipe") + "</strong> registrou " + (ct.tipo === "whatsapp" ? "WhatsApp" : ct.tipo === "email" ? "e-mail" : ct.tipo === "nota" ? "anotação" : "ligação") + " para <strong>" + esc(a.nome) + "</strong>: “" + esc(ct.texto || "") + "”", quem: a.nome });
+      });
+      (a.checkins || []).slice(-20).forEach(function (t) {
+        evs.push({ t: "checkin", em: (t || "").slice(0, 10), hora: new Date(t).toTimeString().slice(0, 5), ico: "🚪",
+          txt: "<strong>" + esc(a.nome) + "</strong> fez check-in", quem: a.nome });
+      });
+    });
+    S.read("produtos", { vendas: [] }).vendas.forEach(function (v) {
+      evs.push({ t: "venda", em: v.data, hora: v.hora, ico: "🛒",
+        txt: "Venda de <strong>" + esc(v.itens.map(function (i) { return i.qtd + "× " + i.nome; }).join(", ")) + "</strong> (" + S.fmtBRL(v.total) + ")" + (v.cliente ? " para <strong>" + esc(v.cliente) + "</strong>" : ""), quem: v.cliente || "" });
+    });
+    S.read("saude", { avaliacoes: [] }).avaliacoes.forEach(function (v) {
+      var a = st.alunos.find(function (x) { return x.id === v.alunoId; });
+      evs.push({ t: "avaliacao", em: v.data, ico: "🩺",
+        txt: "Avaliação física de <strong>" + esc(a ? a.nome : "aluno") + "</strong>" + (v.peso ? " — " + v.peso + "kg" : ""), quem: a ? a.nome : "" });
+    });
+    S.read("nps", { respostas: [] }).respostas.forEach(function (r) {
+      evs.push({ t: "nps", em: r.data, ico: "💜",
+        txt: "<strong>" + esc(r.aluno || "aluno") + "</strong> respondeu o NPS com nota <strong>" + r.nota + "</strong>" + (r.comentario ? ": “" + esc(r.comentario) + "”" : ""), quem: r.aluno || "" });
+    });
+    return evs.filter(function (e) { return e.em; }).sort(function (x, y) {
+      return (y.em + (y.hora || "")) < (x.em + (x.hora || "")) ? -1 : 1;
+    });
+  }
+
+  function render() {
+    var q = $("busca").value.trim().toLowerCase();
+    var lista = eventos().filter(function (e) {
+      if (filtro !== "tudo" && e.t !== filtro) return false;
+      if (q && (e.quem || "").toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    }).slice(0, 150);
+    $("feed").innerHTML = lista.length ? lista.map(function (e) {
+      return '<div class="ev"><span class="ico">' + e.ico + '</span><span class="txt">' + e.txt + "</span>" +
+        '<span class="quando">' + S.fmtData(e.em) + (e.hora ? " · " + e.hora : "") + "</span></div>";
+    }).join("") : '<div class="vazio">Nada por aqui com esse filtro ainda.</div>';
+  }
+
+  $("filtros").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    filtro = b.getAttribute("data-f");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  $("busca").addEventListener("input", render);
+  S.onChange(render);
+  render();
+})();
+</script>
+</body>
+</html>
