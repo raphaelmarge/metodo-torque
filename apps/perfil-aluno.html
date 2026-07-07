@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfil do Aluno — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .hero { background: linear-gradient(100deg, #121016 40%, #2a2140); color: #fff; padding: 26px 40px 0; }
+  .hero-top { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .hero .foto { width: 86px; height: 86px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; border: 3px solid #fff; object-fit: cover; flex: none; overflow: hidden; }
+  .hero h1 { font-size: 26px; margin: 0; }
+  .hero .idlinha { display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap; font-size: 13px; color: #a9a4b5; }
+  .hero .acoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .secoes { display: flex; gap: 4px; margin-top: 20px; overflow-x: auto; }
+  .secoes button { background: none; border: 0; color: #cfcadd; font: inherit; font-weight: 600; font-size: 14px; padding: 12px 16px; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+  .secoes button.ativa { color: #fff; border-bottom-color: var(--roxo); }
+  .grid-perfil { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 960px) { .grid-perfil { display: flex; flex-direction: column-reverse; } }
+  .alerta-bloq { border: 1px solid; padding: 12px 16px; margin-bottom: 12px; }
+  .alerta-bloq.vermelho { border-color: rgba(220,38,38,.4); background: rgba(220,38,38,.05); color: var(--erro); }
+  .alerta-bloq.verde { border-color: rgba(22,163,74,.4); background: rgba(22,163,74,.05); color: var(--ok); }
+  .alerta-bloq.amarelo { border-color: rgba(217,119,6,.4); background: rgba(217,119,6,.06); color: var(--alerta); }
+  .alerta-bloq strong { display: block; margin-bottom: 2px; }
+  .alerta-bloq span { color: var(--texto); font-size: 13.5px; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 14px; }
+  .kv span:first-child { color: var(--cinza); }
+  .kv span:last-child { font-weight: 600; text-align: right; }
+  .tabela { width: 100%; border-collapse: collapse; }
+  .tabela td, .tabela th { padding: 8px 10px; border-bottom: 1px solid var(--fundo); font-size: 13.5px; text-align: left; }
+  .tabela th { font-size: 11px; letter-spacing: .08em; color: var(--cinza); }
+  .freq-barras { display: flex; gap: 6px; align-items: flex-end; height: 80px; margin-top: 10px; }
+  .freq-barras .fb { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+  .freq-barras .fb i { width: 70%; background: var(--roxo); border-radius: 2px 2px 0 0; min-height: 2px; display: block; }
+  .freq-barras .fb small { font-size: 9.5px; color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<div id="topoPerfil"></div>
+
+<main class="corpo" id="corpo" style="padding-top: 20px;"></main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function ini(n) { return String(n || "?").split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase(); }
+  function diasDesde(iso) { return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5); }
+
+  function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  var alunoId = new URLSearchParams(location.search).get("id") || null;
+  var secao = "perfil";
+
+  function fimDe(c) {
+    var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+    f.setMonth(f.getMonth() + (c.meses || 1));
+    return S.todayISO(f);
+  }
+
+  // ---------- seletor (sem ?id) ----------
+  function renderSeletor() {
+    document.title = "Perfil do Aluno — Método Torque";
+    $("topoPerfil").innerHTML = '<header class="topo"><div class="topo-marca"><div>' +
+      '<span class="kicker">PROGRAMA · CLIENTES</span><h1>Perfil do Aluno</h1></div></div>' +
+      "<p>A ficha completa estilo EVO: pendências, contratos, cobranças, frequência e risco de abandono.</p></header>";
+    var lista = stA().alunos.filter(function (a) { return a.status !== "inativo"; })
+      .sort(function (x, y) { return x.nome < y.nome ? -1 : 1; });
+    $("corpo").innerHTML = '<div class="card"><div class="campo"><label>Escolha o aluno</label>' +
+      '<input id="busca" placeholder="digite o nome…" autocomplete="off"></div><div id="resultados" style="margin-top:10px;"></div></div>';
+    function res() {
+      var q = $("busca").value.trim().toLowerCase();
+      var m = lista.filter(function (a) { return a.nome.toLowerCase().indexOf(q) >= 0; }).slice(0, 12);
+      $("resultados").innerHTML = m.map(function (a) {
+        return '<a class="btn sec" style="display:block; margin-bottom:6px; text-align:left;" href="perfil-aluno.html?id=' + a.id + '">' + esc(a.nome) + "</a>";
+      }).join("") || '<div class="vazio">Nenhum aluno com esse nome.</div>';
+    }
+    $("busca").addEventListener("input", res);
+    res();
+  }
+
+  // ---------- situação ----------
+  function situacao(a, st) {
+    var hoje = S.todayISO();
+    var out = { bloqueios: [], avisos: [], badge: "SEM CONTRATO", badgeCls: "erro" };
+    var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+    if (ativos.length) {
+      var fimMax = null;
+      ativos.forEach(function (c) { var f = fimDe(c); if (!fimMax || f > fimMax) fimMax = f; });
+      if (fimMax < hoje) { out.badge = "CONTRATO VENCIDO"; out.badgeCls = "erro"; out.bloqueios.push("Contrato vencido em " + S.fmtData(fimMax) + " — encaminhar para renovação."); }
+      else if (ativos.every(function (c) { return c.status === "congelado"; })) { out.badge = "CONGELADO ❄"; out.badgeCls = "roxo"; }
+      else { out.badge = "CONTRATO ATIVO"; out.badgeCls = "ok"; }
+    } else out.bloqueios.push("Sem contrato ativo — fazer matrícula.");
+    var atraso = 0;
+    st.recebiveis.forEach(function (r) { if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) atraso += +r.valor || 0; });
+    if (atraso > 0) out.bloqueios.push("Mensalidade em atraso: " + S.fmtBRL(atraso) + ".");
+    var parq = (S.read("parq", { fichas: {} }).fichas || {})[a.id];
+    if (!parq) out.avisos.push("Preenchimento PAR-Q pendente.");
+    var avs = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; });
+    var ult = avs.map(function (v) { return v.data; }).sort().pop();
+    if (!ult || diasDesde(ult) >= 90) out.avisos.push(ult ? "Avaliação física vencida (última há " + diasDesde(ult) + " dias)." : "Nunca fez avaliação física.");
+    return out;
+  }
+
+  function risco(a) {
+    var ult = null;
+    (a.checkins || []).forEach(function (t) { var d = (t || "").slice(0, 10); if (!ult || d > ult) ult = d; });
+    var dias = ult ? diasDesde(ult) : null;
+    if (dias === null) return { rot: "Sem check-ins", cls: "neutro", dias: dias };
+    if (dias >= 15) return { rot: "Alto", cls: "erro", dias: dias };
+    if (dias >= 7) return { rot: "Médio", cls: "alerta", dias: dias };
+    return { rot: "Baixo", cls: "ok", dias: dias };
+  }
+
+  // check-ins por semana (últimas 8)
+  function freqSemanas(a) {
+    var out = [];
+    var seg = new Date(S.todayISO() + "T12:00");
+    seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    for (var i = 7; i >= 0; i--) {
+      var ia = new Date(seg); ia.setDate(ia.getDate() - i * 7);
+      var ib = new Date(ia); ib.setDate(ib.getDate() + 6);
+      var a1 = S.todayISO(ia), b1 = S.todayISO(ib);
+      var n = (a.checkins || []).filter(function (t) { var d = (t || "").slice(0, 10); return d >= a1 && d <= b1; }).length;
+      out.push({ label: ia.getDate() + "/" + (ia.getMonth() + 1), n: n });
+    }
+    return out;
+  }
+
+  // ---------- render ----------
+  function render() {
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) { renderSeletor(); return; }
+    document.title = a.nome + " — Perfil do Aluno";
+    var sit = situacao(a, st);
+    var hoje = S.todayISO();
+
+    $("topoPerfil").innerHTML = '<div class="hero"><div class="hero-top">' +
+      '<div class="foto" id="fotoAluno">' + esc(ini(a.nome)) + "</div>" +
+      "<div><h1>" + esc(a.nome) + '</h1><div class="idlinha">' +
+      '<span class="tag ' + sit.badgeCls + '">' + sit.badge + "</span>" +
+      (a.criado ? "<span>cliente há " + diasDesde(a.criado) + " dia(s)</span>" : "") +
+      (a.consultor ? "<span>consultor(a): " + esc(a.consultor) + "</span>" : "") + "</div></div>" +
+      '<div class="acoes">' +
+      '<a class="btn" href="alunos.html?acao=venda">🛒 Nova venda</a>' +
+      (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+      '<a class="btn sec" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">✏ Editar cadastro</a></div></div>' +
+      '<div class="secoes" id="secoes">' +
+      [["perfil", "Perfil"], ["financeiro", "Financeiro"], ["contratos", "Contratos"], ["turmas", "Turmas"], ["atividades", "Atividades"]].map(function (s) {
+        return '<button data-s="' + s[0] + '"' + (secao === s[0] ? ' class="ativa"' : "") + ">" + s[1] + "</button>";
+      }).join("") + "</div></div>";
+
+    if (a.fotoId && S.getPhoto) S.getPhoto(a.fotoId).then(function (data) {
+      if (data) $("fotoAluno").innerHTML = '<img src="' + data + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+    });
+
+    var html = "";
+    if (secao === "perfil") {
+      var contratosAtivos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+      var proximas = st.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "aberto" && r.vencimento >= hoje; })
+        .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; }).slice(0, 3);
+      var vendas = S.read("produtos", { vendas: [] }).vendas.filter(function (v) { return (v.cliente || "").toLowerCase() === a.nome.toLowerCase(); })
+        .sort(function (x, y) { return x.data < y.data ? 1 : -1; }).slice(0, 5);
+      var r = risco(a);
+      var fs = freqSemanas(a);
+      var maxF = Math.max.apply(null, fs.map(function (x) { return x.n; }).concat([1]));
+
+      html = '<div class="grid-perfil"><div>' +
+        (sit.bloqueios.length ? '<div class="alerta-bloq vermelho"><strong>🔒 Acesso bloqueado</strong>' +
+          sit.bloqueios.map(function (b) { return "<span>" + esc(b) + "</span><br>"; }).join("") + "</div>" : "") +
+        (sit.avisos.length ? '<div class="alerta-bloq amarelo"><strong>⚠ Pendências</strong>' +
+          sit.avisos.map(function (b) { return "<span>" + esc(b) + "</span><br>"; }).join("") + "</div>" : "") +
+        (!sit.bloqueios.length && !sit.avisos.length ? '<div class="alerta-bloq verde"><strong>🕐 Cliente sem pendências</strong></div>' : "") +
+
+        '<div class="card" style="margin-bottom:12px;"><h2>Contratos</h2>' +
+        (contratosAtivos.length ? '<table class="tabela"><tr><th>CONTRATO</th><th>STATUS</th></tr>' + contratosAtivos.map(function (c) {
+          var p = st.planos.find(function (x) { return x.id === c.planoId; }) || {};
+          return "<tr><td><strong>" + esc(p.nome || "plano") + "</strong> — de " + S.fmtData(c.inicio) + " até " + S.fmtData(fimDe(c)) + "</td>" +
+            '<td><span class="tag ' + (c.status === "congelado" ? "roxo" : "ok") + '">' + (c.status === "congelado" ? "Congelado" : "Ativo") + "</span></td></tr>";
+        }).join("") + "</table>" : '<p class="muted">Nenhum contrato ativo.</p>') + "</div>" +
+
+        '<div class="card" style="margin-bottom:12px;"><h2>Próximas cobranças</h2>' +
+        (proximas.length ? '<table class="tabela"><tr><th>VENCIMENTO</th><th>VALOR</th></tr>' + proximas.map(function (r2) {
+          return "<tr><td>" + S.fmtData(r2.vencimento) + "</td><td><strong>" + S.fmtBRL(+r2.valor) + "</strong></td></tr>";
+        }).join("") + "</table>" : '<p class="muted">Não há cobranças futuras.</p>') + "</div>" +
+
+        '<div class="card"><h2>Histórico de vendas (produtos)</h2>' +
+        (vendas.length ? '<table class="tabela"><tr><th>DATA</th><th>VENDA</th><th>VALOR</th></tr>' + vendas.map(function (v) {
+          return "<tr><td>" + S.fmtData(v.data) + "</td><td>" + esc(v.itens.map(function (i) { return i.qtd + "× " + i.nome; }).join(", ")) +
+            "</td><td>" + S.fmtBRL(v.total) + "</td></tr>";
+        }).join("") + "</table>" : '<p class="muted">Nenhuma compra de produtos registrada.</p>') + "</div>" +
+
+        '</div><div>' +
+        '<div class="card" style="margin-bottom:12px;"><h2>Sobre</h2>' +
+        [["E-mail", a.email], ["Celular", a.zap], ["CPF", a.cpf], ["Nascimento", a.nasc ? S.fmtData(a.nasc) : ""],
+         ["Como conheceu", a.comoConheceu || a.origem], ["Indicado por", a.indicacao], ["Observações", a.obs]].map(function (kv) {
+          return kv[1] ? '<div class="kv"><span>' + kv[0] + "</span><span>" + esc(kv[1]) + "</span></div>" : "";
+        }).join("") + "</div>" +
+        '<div class="card"><h2>Frequência</h2>' +
+        '<div class="kv"><span>Risco de abandono</span><span class="tag ' + r.cls + '">' + r.rot + "</span></div>" +
+        (r.dias != null ? '<div class="kv"><span>Último check-in</span><span>há ' + r.dias + " dia(s)</span></div>" : "") +
+        '<div class="kv"><span>Check-ins (total)</span><span>' + (a.checkins || []).length + "</span></div>" +
+        '<div class="freq-barras">' + fs.map(function (x) {
+          return '<div class="fb"><i style="height:' + Math.round((x.n / maxF) * 100) + '%"></i><small>' + x.label + "</small></div>";
+        }).join("") + "</div><p class='muted' style='margin-top:6px;'>check-ins por semana (últimas 8)</p></div>" +
+        "</div></div>";
+    }
+    if (secao === "financeiro") {
+      var recs = st.recebiveis.filter(function (r2) { return r2.alunoId === a.id; })
+        .sort(function (x, y) { return x.vencimento < y.vencimento ? 1 : -1; });
+      var pago = 0, aberto = 0;
+      recs.forEach(function (r2) { if (r2.status === "pago") pago += +r2.valor || 0; else aberto += +r2.valor || 0; });
+      html = '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Movimentações</h2>' +
+        '<span class="muted">pago: <strong style="color:var(--ok)">' + S.fmtBRL(pago) + '</strong> · em aberto: <strong style="color:var(--erro)">' + S.fmtBRL(aberto) + "</strong></span></div>" +
+        (recs.length ? '<table class="tabela"><tr><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>VALOR</th><th>STATUS</th></tr>' + recs.map(function (r2) {
+          var venc = r2.status === "aberto" && r2.vencimento < hoje;
+          return "<tr><td>" + esc(r2.competencia || "—") + "</td><td>" + S.fmtData(r2.vencimento) + "</td><td>" + S.fmtBRL(+r2.valor) + "</td>" +
+            "<td>" + (r2.status === "pago" ? '<span class="tag ok">PAGO ' + (r2.pagoEm ? S.fmtData(r2.pagoEm) : "") + "</span>" :
+              venc ? '<span class="tag erro">VENCIDA</span>' : '<span class="tag neutro">ABERTA</span>') + "</td></tr>";
+        }).join("") + "</table>" : '<p class="muted">Nenhuma mensalidade gerada.</p>') +
+        '<p class="muted" style="margin-top:10px;">Para receber ou estornar, use a aba A Receber da <a href="alunos.html?aba=receber">Gestão de Alunos</a>.</p></div>';
+    }
+    if (secao === "contratos") {
+      var todos = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? 1 : -1; });
+      html = '<div class="card"><h2>Histórico de contratos</h2>' +
+        (todos.length ? '<table class="tabela"><tr><th>PLANO</th><th>PERÍODO</th><th>VALOR</th><th>STATUS</th></tr>' + todos.map(function (c) {
+          var p = st.planos.find(function (x) { return x.id === c.planoId; }) || {};
+          var tag = c.status === "ativo" ? '<span class="tag ok">ATIVO</span>' :
+            c.status === "congelado" ? '<span class="tag roxo">CONGELADO</span>' :
+            '<span class="tag erro">CANCELADO' + (c.canceladoEm ? " " + S.fmtData(c.canceladoEm) : "") + "</span>";
+          return "<tr><td><strong>" + esc(p.nome || "plano") + "</strong>" + (c.renovacaoDe ? ' <span class="tag neutro">RENOVAÇÃO</span>' : "") + "</td>" +
+            "<td>" + S.fmtData(c.inicio) + " → " + S.fmtData(fimDe(c)) + "</td><td>" + S.fmtBRL(+c.valor || 0) + "/mês</td>" +
+            "<td>" + tag + (c.motivoCancel ? '<div class="muted" style="font-size:11.5px;">motivo: ' + esc(c.motivoCancel) + "</div>" : "") + "</td></tr>";
+        }).join("") + "</table>" : '<p class="muted">Nenhum contrato registrado.</p>') + "</div>";
+    }
+    if (secao === "turmas") {
+      var turmas = S.read("turmas", { turmas: [] }).turmas.filter(function (t) { return (t.alunos || []).indexOf(a.id) >= 0; });
+      html = '<div class="card"><h2>Turmas inscritas</h2>' +
+        (turmas.length ? turmas.map(function (t) {
+          return '<div class="kv"><span>' + esc(t.nome) + (t.prof ? " · prof. " + esc(t.prof) : "") + "</span><span>" + esc(t.hora || "") + "</span></div>";
+        }).join("") : '<p class="muted">Não está inscrito em nenhuma turma. Inscreva na página <a href="turmas.html">Turmas</a>.</p>') + "</div>";
+    }
+    if (secao === "atividades") {
+      var cks = (a.checkins || []).slice().sort().reverse().slice(0, 30);
+      html = '<div class="card"><h2>Últimos check-ins</h2>' +
+        (cks.length ? '<table class="tabela"><tr><th>DATA</th><th>HORA</th></tr>' + cks.map(function (t) {
+          var d = new Date(t);
+          return "<tr><td>" + S.fmtData((t || "").slice(0, 10)) + "</td><td>" + d.toTimeString().slice(0, 5) + "</td></tr>";
+        }).join("") + "</table>" : '<p class="muted">Nenhum check-in registrado ainda.</p>') + "</div>";
+    }
+    $("corpo").innerHTML = html;
+
+    var sec = $("secoes");
+    if (sec) sec.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      secao = b.getAttribute("data-s");
+      render();
+    });
+  }
+
+  S.onChange(function (k) { if (k === "alunos" || k === "turmas" || k === "produtos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

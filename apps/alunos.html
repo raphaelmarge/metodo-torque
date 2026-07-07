@@ -517,6 +517,7 @@
     $("fStatus").innerHTML = '<span class="tag ' + sit.cls + '">' + sit.rot + "</span>";
 
     var acoes = [];
+    acoes.push('<a class="btn mini" href="perfil-aluno.html?id=' + a.id + '">👤 Perfil completo</a>');
     if (a.zap) acoes.push('<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬 WhatsApp</a>');
     if (!c) acoes.push('<button class="btn mini" data-facao="matricular">📝 Matricular</button>');
     if (c && c.status === "ativo") acoes.push('<button class="btn sec mini" data-facao="congelar">❄ Congelar</button>');
