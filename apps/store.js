@@ -170,6 +170,29 @@
   }
 
   // Notifica mudanças: no mesmo contexto (write) e entre abas/iframes (storage).
+  // Preenche um <datalist> com os colaboradores ativos (programa Colaboradores)
+  // e liga os inputs informados a ele — sugestão de professor/consultor em toda tela.
+  function equipeDatalist(ids) {
+    try {
+      var eq = read("equipe", { colaboradores: [] }).colaboradores || [];
+      var ativos = eq.filter(function (c) { return c.ativo !== false && c.nome; });
+      if (!ativos.length) return;
+      var dl = document.getElementById("mtEquipe");
+      if (!dl) {
+        dl = document.createElement("datalist");
+        dl.id = "mtEquipe";
+        document.body.appendChild(dl);
+      }
+      dl.innerHTML = ativos.map(function (c) {
+        return "<option>" + String(c.nome).replace(/[<>&]/g, "") + "</option>";
+      }).join("");
+      (ids || []).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el && !el.getAttribute("list")) el.setAttribute("list", "mtEquipe");
+      });
+    } catch (e) {}
+  }
+
   function onChange(cb) {
     ouvintes.push(cb);
     window.addEventListener("storage", function (e) {
@@ -339,7 +362,7 @@
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,
     savePhoto: savePhoto, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,
-    exportBackup: exportBackup, importBackup: importBackup, onChange: onChange,
+    exportBackup: exportBackup, importBackup: importBackup, onChange: onChange, equipeDatalist: equipeDatalist,
     iniciaSync: iniciaSync,
   };
 

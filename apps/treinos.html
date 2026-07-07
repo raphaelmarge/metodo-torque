@@ -517,6 +517,7 @@
   var qs = new URLSearchParams(location.search);
   if (qs.get("aba")) aba = qs.get("aba") === "padroes" ? "padroes" : qs.get("aba") === "exercicios" ? "exercicios" : "presc";
 
+  S.equipeDatalist(["pProf"]);
   S.onChange(function (k) { if (k === "treinos" || k === "alunos") render(); });
   mostraAba();
 })();
