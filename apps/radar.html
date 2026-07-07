@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar de Retenção — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; cursor: pointer; }
+  .stats .card:hover { border-color: var(--roxo); }
+  .stats .card.ativa { border-color: var(--roxo); border-width: 2px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .pessoa { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .pessoa + .pessoa { margin-top: -1px; }
+  .pessoa .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none; }
+  .pessoa .quem { flex: 1; min-width: 170px; }
+  .pessoa .quem strong { font-size: 14.5px; }
+  .pessoa .quem .sub { font-size: 12px; color: var(--cinza); }
+  .pessoa.grave { border-left: 4px solid var(--erro); }
+  .pessoa.medio { border-left: 4px solid var(--alerta); }
+  .pessoa.leve { border-left: 4px solid #eab308; }
+  .pessoa.festa { border-left: 4px solid var(--roxo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM E RETENÇÃO</span>
+    <h1>Radar de Retenção</h1>
+    </div>
+  </div>
+  <p>Quem sumiu, quem faz aniversário e quem está com contrato ou treino vencendo — cada um com a mensagem certa pronta no WhatsApp.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="abas">
+      <button data-a="faltantes" class="ativa">😶 Faltantes</button>
+      <button data-a="aniver">🎂 Aniversariantes</button>
+      <button data-a="contratos">📄 Contratos vencendo</button>
+      <button data-a="treinos">⏱ Treinos vencendo</button>
+    </div>
+    <span class="muted" id="dica"></span>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var aba = "faltantes";
+
+  function alunosAtivos() {
+    return S.read("alunos", { alunos: [] }).alunos.filter(function (a) {
+      return a.status !== "inativo" && (a.contratos || []).some(function (c) { return c.status === "ativo"; });
+    });
+  }
+  function primeiroNome(a) { return (a.nome || "").split(" ")[0]; }
+  function avatarIni(a) { return a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase(); }
+  function waLink(a, msg) {
+    if (!a.zap) return "";
+    var zap = String(a.zap).replace(/\D/g, "");
+    return '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + zap + "?text=" + encodeURIComponent(msg) + '">💬 WhatsApp</a>';
+  }
+  function diasDesde(iso) {
+    return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5);
+  }
+
+  // ---------- coletas ----------
+  function faltantes() {
+    var hoje = S.todayISO();
+    return alunosAtivos().map(function (a) {
+      var ult = null;
+      (a.checkins || []).forEach(function (t) { var d = (t || "").slice(0, 10); if (!ult || d > ult) ult = d; });
+      var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+      var base = ult || (c && c.inicio) || hoje;
+      return { a: a, ultimo: ult, dias: diasDesde(base) };
+    }).filter(function (f) { return f.dias >= 7; })
+      .sort(function (x, y) { return y.dias - x.dias; });
+  }
+  function aniversariantes() {
+    var mes = S.todayISO().slice(5, 7);
+    var hojeMD = S.todayISO().slice(5, 10);
+    return alunosAtivos().filter(function (a) { return (a.nasc || "").slice(5, 7) === mes; })
+      .map(function (a) { return { a: a, md: a.nasc.slice(5, 10), hoje: a.nasc.slice(5, 10) === hojeMD }; })
+      .sort(function (x, y) { return x.md < y.md ? -1 : 1; });
+  }
+  function contratosVencendo() {
+    var hoje = S.todayISO();
+    var lista = [];
+    alunosAtivos().forEach(function (a) {
+      var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+      if (!c || !c.inicio) return;
+      var fim = new Date(c.inicio + "T12:00");
+      fim.setMonth(fim.getMonth() + (c.meses || 1));
+      var iso = S.todayISO(fim);
+      var dias = Math.round((new Date(iso) - new Date(hoje)) / 864e5);
+      if (dias >= 0 && dias <= 30) lista.push({ a: a, fim: iso, dias: dias });
+    });
+    return lista.sort(function (x, y) { return x.dias - y.dias; });
+  }
+  function treinosVencendo() {
+    var st = S.read("treinos", { prescricoes: [] });
+    var hoje = S.todayISO();
+    var lista = [];
+    alunosAtivos().forEach(function (a) {
+      var p = (st.prescricoes || []).find(function (x) { return x.alunoId === a.id; });
+      if (!p || !p.vencimento) return;
+      var dias = Math.round((new Date(p.vencimento) - new Date(hoje)) / 864e5);
+      if (dias <= 7) lista.push({ a: a, venc: p.vencimento, dias: dias, nome: p.nome });
+    });
+    return lista.sort(function (x, y) { return x.dias - y.dias; });
+  }
+
+  // ---------- render ----------
+  function render() {
+    var f = faltantes(), an = aniversariantes(), cv = contratosVencendo(), tv = treinosVencendo();
+    var academiaNome = "";
+    try { academiaNome = (JSON.parse(localStorage.getItem("mtapp:academia")) || {}).nome || ""; } catch (e) {}
+
+    $("stats").innerHTML =
+      '<div class="card' + (aba === "faltantes" ? " ativa" : "") + '" data-st="faltantes"><div class="n" style="color:' + (f.length ? "var(--erro)" : "var(--ok)") + '">' + f.length + '</div><div class="muted">faltantes (7+ dias)</div></div>' +
+      '<div class="card' + (aba === "aniver" ? " ativa" : "") + '" data-st="aniver"><div class="n" style="color:var(--roxo)">' + an.length + '</div><div class="muted">aniversariantes do mês</div></div>' +
+      '<div class="card' + (aba === "contratos" ? " ativa" : "") + '" data-st="contratos"><div class="n" style="color:' + (cv.length ? "var(--alerta)" : "var(--ok)") + '">' + cv.length + '</div><div class="muted">contratos vencendo (30d)</div></div>' +
+      '<div class="card' + (aba === "treinos" ? " ativa" : "") + '" data-st="treinos"><div class="n">' + tv.length + '</div><div class="muted">treinos vencendo (7d)</div></div>';
+
+    var html = "";
+    if (aba === "faltantes") {
+      $("dica").textContent = "Regra do método: sumiu 7 dias, mensagem; 15 dias, ligação.";
+      html = f.map(function (x) {
+        var cls = x.dias >= 30 ? "grave" : x.dias >= 15 ? "medio" : "leve";
+        var msg = "Oi " + primeiroNome(x.a) + "! Sentimos sua falta aqui na " + (academiaNome || "academia") +
+          " 💜 Já faz " + x.dias + " dias! Bora voltar pro treino essa semana? Qualquer coisa me chama aqui!";
+        return '<div class="pessoa ' + cls + '"><span class="avatar">' + esc(avatarIni(x.a)) + "</span>" +
+          '<div class="quem"><strong>' + esc(x.a.nome) + '</strong><div class="sub">' +
+          (x.ultimo ? "último treino " + S.fmtData(x.ultimo) + " · " : "nunca fez check-in · ") +
+          "<strong>" + x.dias + " dias sem aparecer</strong></div></div>" +
+          '<span class="tag ' + (x.dias >= 15 ? "erro" : "alerta") + '">' + (x.dias >= 15 ? "LIGAR ☎" : "MENSAGEM 💬") + "</span>" +
+          waLink(x.a, msg) + "</div>";
+      }).join("") || '<div class="vazio">Ninguém sumido há 7+ dias. Base ativa! 🎉</div>';
+    }
+    if (aba === "aniver") {
+      $("dica").textContent = "Parabéns dado no dia = aluno que se sente visto. Custa 10 segundos.";
+      html = an.map(function (x) {
+        var msg = "🎉 Parabéns, " + primeiroNome(x.a) + "!! Toda a equipe da " + (academiaNome || "academia") +
+          " te deseja um aniversário incrível! Passa aqui hoje que tem um agrado te esperando 🎁💪";
+        return '<div class="pessoa festa"><span class="avatar">' + esc(avatarIni(x.a)) + "</span>" +
+          '<div class="quem"><strong>' + esc(x.a.nome) + '</strong><div class="sub">aniversário em ' +
+          x.md.split("-").reverse().join("/") + (x.hoje ? " · <strong style='color:var(--roxo)'>É HOJE! 🎂</strong>" : "") + "</div></div>" +
+          (x.hoje ? '<span class="tag roxo">HOJE</span>' : "") +
+          waLink(x.a, msg) + "</div>";
+      }).join("") || '<div class="vazio">Nenhum aniversariante este mês (confira se os cadastros têm data de nascimento).</div>';
+    }
+    if (aba === "contratos") {
+      $("dica").textContent = "Renovar antes de vencer é 10x mais fácil que recuperar depois.";
+      html = cv.map(function (x) {
+        var msg = "Oi " + primeiroNome(x.a) + "! Seu plano aqui na " + (academiaNome || "academia") + " vence em " +
+          S.fmtData(x.fim) + ". Bora renovar e garantir sua vaga e condições? Me chama que resolvo agora 💜";
+        return '<div class="pessoa ' + (x.dias <= 7 ? "grave" : "medio") + '"><span class="avatar">' + esc(avatarIni(x.a)) + "</span>" +
+          '<div class="quem"><strong>' + esc(x.a.nome) + '</strong><div class="sub">contrato vence ' + S.fmtData(x.fim) +
+          " · <strong>" + (x.dias === 0 ? "HOJE" : "em " + x.dias + " dia(s)") + "</strong></div></div>" +
+          '<span class="tag ' + (x.dias <= 7 ? "erro" : "alerta") + '">RENOVAR</span>' +
+          waLink(x.a, msg) + "</div>";
+      }).join("") || '<div class="vazio">Nenhum contrato vencendo nos próximos 30 dias.</div>';
+    }
+    if (aba === "treinos") {
+      $("dica").textContent = "Treino vencido = aluno desmotivado. Renove a ficha antes.";
+      html = tv.map(function (x) {
+        var msg = "Oi " + primeiroNome(x.a) + "! Seu treino está " + (x.dias < 0 ? "vencido" : "vencendo") +
+          " — bora marcar a renovação da ficha? Treino novo = motivação nova 💪";
+        return '<div class="pessoa ' + (x.dias < 0 ? "grave" : "medio") + '"><span class="avatar">' + esc(avatarIni(x.a)) + "</span>" +
+          '<div class="quem"><strong>' + esc(x.a.nome) + '</strong><div class="sub">' + esc(x.nome || "treino") + " · " +
+          (x.dias < 0 ? "<strong style='color:var(--erro)'>vencido há " + Math.abs(x.dias) + " dia(s)</strong>" : "vence em " + x.dias + " dia(s)") + "</div></div>" +
+          '<span class="tag ' + (x.dias < 0 ? "erro" : "alerta") + '">' + (x.dias < 0 ? "VENCIDO" : "RENOVAR FICHA") + "</span>" +
+          waLink(x.a, msg) + "</div>";
+      }).join("") || '<div class="vazio">Nenhum treino vencendo nos próximos 7 dias.</div>';
+    }
+    $("lista").innerHTML = html;
+  }
+
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-a");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  $("stats").addEventListener("click", function (e) {
+    var c = e.target.closest("[data-st]"); if (!c) return;
+    aba = c.getAttribute("data-st");
+    Array.prototype.forEach.call(document.querySelectorAll("#abas button"), function (x) {
+      x.classList.toggle("ativa", x.getAttribute("data-a") === aba);
+    });
+    render();
+  });
+
+  S.onChange(function (k) { if (k === "alunos" || k === "treinos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

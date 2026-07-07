@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dados de Saúde — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .duas-colunas { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 860px) { .duas-colunas { grid-template-columns: 1fr; } }
+  .lista-alunos { display: flex; flex-direction: column; max-height: 70vh; overflow-y: auto; }
+  .al { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--linha); cursor: pointer; background: #fff; }
+  .al:hover { background: #f6f4fa; }
+  .al.ativo { border-left: 3px solid var(--roxo); background: #f1ecfb; }
+  .al .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex: none; }
+  .al .info { flex: 1; }
+  .al .info strong { font-size: 13.5px; display: block; }
+  .al .info .sub { font-size: 11.5px; color: var(--cinza); }
+  .med-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .delta { font-size: 12px; font-weight: 700; }
+  .delta.baixa { color: var(--ok); }
+  .delta.alta { color: var(--erro); }
+  .delta.neutra { color: var(--cinza-2); }
+  .comp-tabela td, .comp-tabela th { text-align: center; }
+  .comp-tabela td:first-child, .comp-tabela th:first-child { text-align: left; }
+  .grafico svg { width: 100%; height: auto; display: block; }
+  .leg { display: flex; gap: 18px; font-size: 12px; color: var(--cinza); justify-content: center; margin: 2px 0 10px; }
+  .leg i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: -1px; }
+  .imc-chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · DADOS DE SAÚDE</span>
+    <h1>Avaliação Física</h1>
+    </div>
+  </div>
+  <p>Peso, medidas e evolução de cada aluno — com comparativo automático entre avaliações e gráficos para mostrar o progresso (retenção pura).</p>
+</header>
+
+<main class="corpo">
+  <div class="duas-colunas">
+    <div class="card" style="padding: 0;">
+      <div style="padding: 12px;"><input id="buscaAluno" placeholder="Pesquisar aluno…"></div>
+      <div class="lista-alunos" id="listaAlunos"></div>
+    </div>
+
+    <div>
+      <div class="card linha-flex" style="justify-content: space-between; margin-bottom: 14px;">
+        <div class="abas" id="abas">
+          <button data-a="avals" class="ativa">Avaliações físicas</button>
+          <button data-a="evolucao">Comparativo e evolução</button>
+        </div>
+        <button class="btn" id="btnNova" hidden>+ Nova avaliação</button>
+      </div>
+      <div class="card" id="painel">
+        <div class="vazio">Escolha um aluno para ver as avaliações dele.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- nova avaliação -->
+<dialog id="dlgAval" style="max-width: min(680px, 94vw);">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 640px; max-width: 100%; max-height: 86vh; overflow-y: auto;">
+    <h2>Nova avaliação física</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Data *</label><input id="vData" type="date" required></div>
+      <div class="campo"><label>Avaliador(a) *</label><input id="vAvaliador" required></div>
+    </div>
+    <div class="med-grid">
+      <div class="campo"><label>Peso (kg) *</label><input id="vPeso" type="number" step="0.1" min="0" required></div>
+      <div class="campo"><label>Altura (cm)</label><input id="vAltura" type="number" step="0.5" min="0"></div>
+      <div class="campo"><label>% Gordura</label><input id="vGordura" type="number" step="0.1" min="0"></div>
+    </div>
+    <strong style="font-size: 12.5px; letter-spacing: .08em; color: var(--cinza);">MEDIDAS (cm)</strong>
+    <div class="med-grid">
+      <div class="campo"><label>Tórax</label><input id="mTorax" type="number" step="0.5"></div>
+      <div class="campo"><label>Cintura</label><input id="mCintura" type="number" step="0.5"></div>
+      <div class="campo"><label>Abdômen</label><input id="mAbdomen" type="number" step="0.5"></div>
+      <div class="campo"><label>Quadril</label><input id="mQuadril" type="number" step="0.5"></div>
+      <div class="campo"><label>Braço D</label><input id="mBracoD" type="number" step="0.5"></div>
+      <div class="campo"><label>Braço E</label><input id="mBracoE" type="number" step="0.5"></div>
+      <div class="campo"><label>Coxa D</label><input id="mCoxaD" type="number" step="0.5"></div>
+      <div class="campo"><label>Coxa E</label><input id="mCoxaE" type="number" step="0.5"></div>
+      <div class="campo"><label>Panturrilha</label><input id="mPant" type="number" step="0.5"></div>
+    </div>
+    <div class="campo"><label>Observações</label><input id="vObs" placeholder="postura, objetivos, restrições…"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar avaliação</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var MEDIDAS = [["torax", "Tórax"], ["cintura", "Cintura"], ["abdomen", "Abdômen"], ["quadril", "Quadril"],
+    ["bracoD", "Braço D"], ["bracoE", "Braço E"], ["coxaD", "Coxa D"], ["coxaE", "Coxa E"], ["pant", "Panturrilha"]];
+
+  function load() { return S.read("saude", { avaliacoes: [] }); }
+  function save(st) { S.write("saude", st); render(); }
+
+  var busca = "", alunoSel = null, aba = "avals";
+
+  function alunosAtivos() {
+    return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  }
+  function avalsDe(st, alunoId) {
+    return st.avaliacoes.filter(function (v) { return v.alunoId === alunoId; })
+      .sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+  }
+  function imc(v) {
+    if (!v.peso || !v.altura) return null;
+    var m = v.altura / 100;
+    return v.peso / (m * m);
+  }
+  function imcFaixa(x) {
+    if (x < 18.5) return { rot: "abaixo do peso", cor: "#d97706" };
+    if (x < 25) return { rot: "peso normal", cor: "#16a34a" };
+    if (x < 30) return { rot: "sobrepeso", cor: "#d97706" };
+    return { rot: "obesidade", cor: "#dc2626" };
+  }
+  function delta(atual, anterior, invertido) {
+    if (atual == null || anterior == null || atual === "" || anterior === "") return "";
+    var d = +atual - +anterior;
+    if (!d) return '<span class="delta neutra">=</span>';
+    var boa = invertido ? d > 0 : d < 0; // medidas caindo = verde (exceto invertido, ex.: braço crescendo pode ser meta)
+    return '<span class="delta ' + (boa ? "baixa" : "alta") + '">' + (d > 0 ? "▲" : "▼") + " " + Math.abs(d).toFixed(1) + "</span>";
+  }
+
+  // gráfico de linha simples (SVG)
+  function grafLinha(labels, series) {
+    var W = 720, H = 210, pL = 50, pR = 14, pT = 12, pB = 28;
+    var todos = [];
+    series.forEach(function (s) { s.valores.forEach(function (v) { if (v != null) todos.push(+v); }); });
+    if (!todos.length) return '<div class="muted">Sem dados suficientes.</div>';
+    var min = Math.min.apply(null, todos), max = Math.max.apply(null, todos);
+    if (min === max) { min -= 1; max += 1; }
+    var pad = (max - min) * .15;
+    min -= pad; max += pad;
+    var iw = (W - pL - pR) / Math.max(1, labels.length - 1);
+    function y(v) { return pT + (H - pT - pB) * (1 - (v - min) / (max - min)); }
+    var svg = '<svg viewBox="0 0 ' + W + " " + H + '">';
+    for (var g = 0; g <= 3; g++) {
+      var yy = pT + (H - pT - pB) * g / 3;
+      svg += '<line x1="' + pL + '" y1="' + yy + '" x2="' + (W - pR) + '" y2="' + yy + '" stroke="#eceaf1"/>' +
+        '<text x="' + (pL - 8) + '" y="' + (yy + 4) + '" text-anchor="end" font-size="10" fill="#9995a3">' + (max - (max - min) * g / 3).toFixed(1) + "</text>";
+    }
+    labels.forEach(function (rot, i) {
+      svg += '<text x="' + (pL + iw * i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#6e6a78">' + rot + "</text>";
+    });
+    series.forEach(function (s) {
+      var pts = [];
+      s.valores.forEach(function (v, i) { if (v != null && v !== "") pts.push((pL + iw * i) + "," + y(+v)); });
+      svg += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + s.cor + '" stroke-width="2.5" stroke-linejoin="round"/>';
+      pts.forEach(function (p) { var xy = p.split(","); svg += '<circle cx="' + xy[0] + '" cy="' + xy[1] + '" r="3.5" fill="' + s.cor + '"/>'; });
+    });
+    var leg = '<div class="leg">' + series.map(function (s) { return "<span><i style='background:" + s.cor + "'></i>" + s.nome + "</span>"; }).join("") + "</div>";
+    return leg + svg + "</svg>";
+  }
+
+  // ---------- lista ----------
+  function renderLista() {
+    var st = load();
+    var q = busca.trim().toLowerCase();
+    var alunos = alunosAtivos().filter(function (a) { return !q || a.nome.toLowerCase().indexOf(q) !== -1; });
+    $("listaAlunos").innerHTML = alunos.length ? alunos.map(function (a) {
+      var avs = avalsDe(st, a.id);
+      var ini = a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+      return '<div class="al' + (a.id === alunoSel ? " ativo" : "") + '" data-al="' + a.id + '">' +
+        '<span class="avatar">' + esc(ini) + "</span>" +
+        '<div class="info"><strong>' + esc(a.nome) + '</strong><span class="sub">' +
+        (avs.length ? avs.length + " avaliação(ões) · última " + S.fmtData(avs[avs.length - 1].data) : "nenhuma avaliação") +
+        "</span></div></div>";
+    }).join("") : '<div class="vazio" style="margin: 12px;">Nenhum aluno encontrado.</div>';
+  }
+  $("buscaAluno").addEventListener("input", function () { busca = this.value; renderLista(); });
+  $("listaAlunos").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-al]");
+    if (!el) return;
+    alunoSel = el.getAttribute("data-al");
+    renderLista(); renderPainel();
+  });
+
+  // ---------- abas ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-a");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    renderPainel();
+  });
+
+  // ---------- painel ----------
+  function renderPainel() {
+    var st = load();
+    var aluno = alunosAtivos().find(function (a) { return a.id === alunoSel; });
+    $("btnNova").hidden = !aluno;
+    if (!aluno) { $("painel").innerHTML = '<div class="vazio">Escolha um aluno para ver as avaliações dele.</div>'; return; }
+    var avs = avalsDe(st, aluno.id);
+
+    if (aba === "avals") {
+      if (!avs.length) {
+        $("painel").innerHTML = '<div class="vazio">' + esc(aluno.nome) + ' ainda não tem avaliação física.<br><br>Clique em <strong>+ Nova avaliação</strong> para registrar a primeira.</div>';
+        return;
+      }
+      $("painel").innerHTML = avs.slice().reverse().map(function (v, idx) {
+        var anterior = avs[avs.length - 2 - idx] || null;
+        var x = imc(v);
+        var faixa = x ? imcFaixa(x) : null;
+        return '<div class="ficha" style="border: 1px solid var(--linha); margin-bottom: 12px;">' +
+          '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 10px 14px;">' +
+          "<strong>" + S.fmtData(v.data) + "</strong><span class='muted'>avaliador(a): " + esc(v.avaliador) + "</span>" +
+          '<button class="btn perigo mini" data-del="' + v.id + '" style="padding: 3px 9px;">✕</button></div>' +
+          '<div style="padding: 12px 14px;">' +
+          '<div class="linha-flex" style="gap: 22px;">' +
+          "<span><strong style='font-size: 20px;'>" + v.peso + "</strong> kg " + delta(v.peso, anterior && anterior.peso) + "</span>" +
+          (v.gordura ? "<span><strong style='font-size: 20px;'>" + v.gordura + "</strong> % gordura " + delta(v.gordura, anterior && anterior.gordura) + "</span>" : "") +
+          (x ? '<span>IMC <strong>' + x.toFixed(1) + '</strong> <span class="imc-chip" style="background:' + faixa.cor + '22; color:' + faixa.cor + '">' + faixa.rot + "</span></span>" : "") +
+          "</div>" +
+          '<div class="med-grid" style="margin-top: 12px;">' +
+          MEDIDAS.map(function (m) {
+            var val = (v.medidas || {})[m[0]];
+            if (val == null || val === "") return "";
+            return "<div><span class='muted' style='font-size: 11px;'>" + m[1] + "</span><br><strong>" + val + " cm</strong> " +
+              delta(val, anterior && (anterior.medidas || {})[m[0]]) + "</div>";
+          }).join("") + "</div>" +
+          (v.obs ? '<div class="muted" style="margin-top: 10px;">📝 ' + esc(v.obs) + "</div>" : "") +
+          "</div></div>";
+      }).join("");
+      return;
+    }
+
+    // evolução / comparativo
+    if (avs.length < 2) {
+      $("painel").innerHTML = '<div class="vazio">O comparativo aparece a partir da 2ª avaliação de ' + esc(aluno.nome) + ".</div>";
+      return;
+    }
+    var labels = avs.map(function (v) { return S.fmtData(v.data).slice(0, 5); });
+    var prim = avs[0], ult = avs[avs.length - 1];
+    var linhas = [["Peso (kg)", "peso", false], ["% Gordura", "gordura", false]].map(function (r) {
+      return "<tr><td>" + r[0] + "</td><td>" + (prim[r[1]] || "—") + "</td><td>" + (ult[r[1]] || "—") + "</td><td>" +
+        delta(ult[r[1]], prim[r[1]]) + "</td></tr>";
+    }).join("") + MEDIDAS.map(function (m) {
+      var a0 = (prim.medidas || {})[m[0]], a1 = (ult.medidas || {})[m[0]];
+      if ((a0 == null || a0 === "") && (a1 == null || a1 === "")) return "";
+      return "<tr><td>" + m[1] + " (cm)</td><td>" + (a0 || "—") + "</td><td>" + (a1 || "—") + "</td><td>" + delta(a1, a0) + "</td></tr>";
+    }).join("");
+
+    $("painel").innerHTML =
+      "<h2>EVOLUÇÃO — " + esc(aluno.nome).toUpperCase() + "</h2>" +
+      '<div class="grafico">' + grafLinha(labels, [
+        { nome: "Peso (kg)", cor: "#7c3aed", valores: avs.map(function (v) { return v.peso; }) },
+        { nome: "% Gordura", cor: "#e8798a", valores: avs.map(function (v) { return v.gordura; }) },
+      ]) + "</div>" +
+      '<div class="grafico" style="margin-top: 16px;">' + grafLinha(labels, [
+        { nome: "Cintura (cm)", cor: "#d97706", valores: avs.map(function (v) { return (v.medidas || {}).cintura; }) },
+        { nome: "Quadril (cm)", cor: "#0ea5a5", valores: avs.map(function (v) { return (v.medidas || {}).quadril; }) },
+      ]) + "</div>" +
+      '<h2 style="margin-top: 20px;">COMPARATIVO · PRIMEIRA × ÚLTIMA</h2>' +
+      '<table class="tabela comp-tabela"><thead><tr><th>Medida</th><th>' + S.fmtData(prim.data) + "</th><th>" + S.fmtData(ult.data) + "</th><th>Diferença</th></tr></thead><tbody>" +
+      linhas + "</tbody></table>";
+  }
+
+  $("painel").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-del");
+    if (!id) return;
+    if (!confirm("Excluir esta avaliação?")) return;
+    var st = load();
+    st.avaliacoes = st.avaliacoes.filter(function (v) { return v.id !== id; });
+    save(st);
+  });
+
+  // ---------- nova ----------
+  $("btnNova").onclick = function () {
+    $("vData").value = S.todayISO();
+    try {
+      var p = JSON.parse(localStorage.getItem("mtapp:perfil"));
+      $("vAvaliador").value = (p && p.nome) || "";
+    } catch (e) {}
+    $("dlgAval").showModal();
+  };
+  $("dlgAval").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var medidas = {};
+    MEDIDAS.forEach(function (m) {
+      var el = $("m" + m[0].charAt(0).toUpperCase() + m[0].slice(1));
+      if (el && el.value !== "") medidas[m[0]] = +el.value;
+    });
+    st.avaliacoes.push({
+      id: S.uid(), alunoId: alunoSel, data: $("vData").value, avaliador: $("vAvaliador").value.trim(),
+      peso: +$("vPeso").value || 0, altura: +$("vAltura").value || 0, gordura: +$("vGordura").value || "",
+      medidas: medidas, obs: $("vObs").value.trim(),
+    });
+    save(st);
+  });
+
+  function render() { renderLista(); renderPainel(); }
+  S.onChange(function (k) { if (k === "saude" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

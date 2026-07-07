@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NPS — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .placar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .placar .card { text-align: center; padding: 16px; }
+  .placar .n { font-size: 30px; font-weight: 800; }
+  .nota-botoes { display: flex; gap: 5px; flex-wrap: wrap; }
+  .nota-botoes button {
+    width: 42px; height: 42px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    border: 1.5px solid var(--linha); background: #fff; border-radius: 4px;
+  }
+  .nota-botoes button.sel { color: #fff; border-color: transparent; }
+  .nota-botoes button.sel.det { background: var(--erro); }
+  .nota-botoes button.sel.neu { background: var(--alerta); }
+  .nota-botoes button.sel.pro { background: var(--ok); }
+  .resp { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .resp + .resp { margin-top: -1px; }
+  .resp .nota { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; flex: none; }
+  .resp .quem { flex: 1; min-width: 170px; }
+  .resp .quem .sub { font-size: 12.5px; color: var(--cinza); }
+  .barrinha { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 10px; }
+  .barrinha div { height: 100%; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM E RETENÇÃO</span>
+    <h1>NPS — Satisfação dos Alunos</h1>
+    </div>
+  </div>
+  <p>"De 0 a 10, quanto você indicaria a academia?" — registre as respostas, acompanhe o NPS e ligue para cada detrator em até 24h, como manda o método.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="placar" id="placar"></div>
+
+  <div class="card">
+    <h2>Registrar resposta</h2>
+    <div class="linha-flex" style="margin-top: 10px; align-items: flex-end;">
+      <div class="campo" style="min-width: 220px;"><label>Aluno</label>
+        <input id="rAluno" list="alunosLista" placeholder="nome (ou deixe em branco = anônimo)"><datalist id="alunosLista"></datalist>
+      </div>
+      <div class="campo"><label>Nota (0 a 10)</label>
+        <div class="nota-botoes" id="notas"></div>
+      </div>
+    </div>
+    <div class="linha-flex" style="margin-top: 12px; align-items: flex-end;">
+      <div class="campo" style="flex: 1; min-width: 220px;"><label>Comentário (opcional)</label><input id="rComent" placeholder="o que o aluno disse"></div>
+      <button class="btn" id="rSalvar">Salvar resposta</button>
+    </div>
+  </div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="abas" id="filtros">
+      <button data-f="" class="ativa">Todas</button>
+      <button data-f="det">😠 Detratores (0-6)</button>
+      <button data-f="neu">😐 Neutros (7-8)</button>
+      <button data-f="pro">😍 Promotores (9-10)</button>
+    </div>
+    <div class="linha-flex">
+      <button class="btn sec mini" id="mesAnt">‹</button>
+      <strong id="mesLabel" style="text-transform: capitalize; font-size: 13.5px;"></strong>
+      <button class="btn sec mini" id="mesProx">›</button>
+    </div>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("nps", { respostas: [] }); }
+  function save(st) { S.write("nps", st); render(); }
+
+  var mes = S.monthKey(new Date());
+  var filtro = "";
+  var notaSel = null;
+
+  function classeDe(n) { return n <= 6 ? "det" : n <= 8 ? "neu" : "pro"; }
+  function corDe(n) { return n <= 6 ? "var(--erro)" : n <= 8 ? "var(--alerta)" : "var(--ok)"; }
+  function rotuloDe(n) { return n <= 6 ? "DETRATOR" : n <= 8 ? "NEUTRO" : "PROMOTOR"; }
+
+  // notas 0-10
+  $("notas").innerHTML = "";
+  for (var i = 0; i <= 10; i++) {
+    $("notas").innerHTML += '<button type="button" data-n="' + i + '">' + i + "</button>";
+  }
+  $("notas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    notaSel = +b.getAttribute("data-n");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) {
+      x.className = +x.getAttribute("data-n") === notaSel ? "sel " + classeDe(notaSel) : "";
+    });
+  });
+
+  function alunos() {
+    return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; });
+  }
+  $("alunosLista").innerHTML = alunos().map(function (a) { return "<option>" + esc(a.nome) + "</option>"; }).join("");
+
+  $("rSalvar").onclick = function () {
+    if (notaSel == null) { alert("Escolha a nota de 0 a 10."); return; }
+    var st = load();
+    st.respostas.push({
+      id: S.uid(), aluno: $("rAluno").value.trim(), nota: notaSel,
+      comentario: $("rComent").value.trim(), data: S.todayISO(), tratado: false,
+    });
+    $("rAluno").value = ""; $("rComent").value = ""; notaSel = null;
+    Array.prototype.forEach.call(document.querySelectorAll("#notas button"), function (x) { x.className = ""; });
+    save(st);
+  };
+
+  function doMes(st) {
+    return st.respostas.filter(function (r) { return (r.data || "").slice(0, 7) === mes; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  }
+
+  function render() {
+    var st = load();
+    $("mesLabel").textContent = new Date(mes + "-01T12:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    var lista = doMes(st);
+    var det = lista.filter(function (r) { return r.nota <= 6; }).length;
+    var neu = lista.filter(function (r) { return r.nota >= 7 && r.nota <= 8; }).length;
+    var pro = lista.filter(function (r) { return r.nota >= 9; }).length;
+    var nps = lista.length ? Math.round((pro - det) / lista.length * 100) : 0;
+    var corNps = nps >= 75 ? "var(--ok)" : nps >= 50 ? "var(--alerta)" : "var(--erro)";
+    var faixa = nps >= 75 ? "excelente (zona de encantamento)" : nps >= 50 ? "bom — dá para melhorar" : nps >= 0 ? "atenção: zona de risco" : "crítico";
+
+    $("placar").innerHTML =
+      '<div class="card"><div class="n" style="color:' + (lista.length ? corNps : "var(--cinza-2)") + '">' + (lista.length ? nps : "—") + '</div><div class="muted">NPS do mês · ' + (lista.length ? faixa : "sem respostas") + "</div>" +
+      (lista.length ? '<div class="barrinha">' +
+        (det ? '<div style="width:' + (det / lista.length * 100) + '%; background: var(--erro)"></div>' : "") +
+        (neu ? '<div style="width:' + (neu / lista.length * 100) + '%; background: var(--alerta)"></div>' : "") +
+        (pro ? '<div style="width:' + (pro / lista.length * 100) + '%; background: var(--ok)"></div>' : "") + "</div>" : "") + "</div>" +
+      '<div class="card"><div class="n">' + lista.length + '</div><div class="muted">respostas no mês</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok)">' + pro + '</div><div class="muted">promotores (9-10)</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--alerta)">' + neu + '</div><div class="muted">neutros (7-8)</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--erro)">' + det + '</div><div class="muted">detratores (0-6)</div></div>';
+
+    var vis = lista.filter(function (r) { return !filtro || classeDe(r.nota) === filtro; });
+    $("lista").innerHTML = vis.length ? vis.map(function (r) {
+      var al = alunos().find(function (a) { return a.nome === r.aluno; });
+      var msg = "Oi " + (r.aluno ? r.aluno.split(" ")[0] : "") + "! Vi sua resposta na nossa pesquisa e queria entender melhor como podemos melhorar sua experiência aqui. Pode me contar? Sua opinião muda a academia de verdade 🙏";
+      return '<div class="resp"><span class="nota" style="background:' + corDe(r.nota) + '">' + r.nota + "</span>" +
+        '<div class="quem"><strong>' + esc(r.aluno || "Anônimo") + "</strong> " +
+        '<span class="tag ' + (r.nota <= 6 ? "erro" : r.nota <= 8 ? "alerta" : "ok") + '">' + rotuloDe(r.nota) + "</span>" +
+        '<div class="sub">' + S.fmtData(r.data) + (r.comentario ? ' · "' + esc(r.comentario) + '"' : "") + "</div></div>" +
+        (r.nota <= 6 ? (r.tratado
+          ? '<span class="tag ok">TRATADO ✓</span>'
+          : '<button class="btn mini" data-tratar="' + r.id + '">☎ Marquei a ligação</button>' +
+            (al && al.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(al.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "")) : "") +
+        '<button class="btn perigo mini" data-del="' + r.id + '" style="padding: 4px 9px;">✕</button></div>';
+    }).join("") : '<div class="vazio">Nenhuma resposta ' + (filtro ? "nesse grupo " : "") + "neste mês.</div>";
+  }
+
+  $("filtros").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    filtro = b.getAttribute("data-f");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  function mudaMes(d) {
+    var p = mes.split("-");
+    mes = S.monthKey(new Date(+p[0], +p[1] - 1 + d, 1));
+    render();
+  }
+  $("mesAnt").onclick = function () { mudaMes(-1); };
+  $("mesProx").onclick = function () { mudaMes(1); };
+
+  $("lista").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-tratar");
+    if (id) {
+      var st = load();
+      st.respostas.find(function (r) { return r.id === id; }).tratado = true;
+      save(st); return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-del");
+    if (id) {
+      if (!confirm("Excluir esta resposta?")) return;
+      var st2 = load();
+      st2.respostas = st2.respostas.filter(function (r) { return r.id !== id; });
+      save(st2);
+    }
+  });
+
+  S.onChange(function (k) { if (k === "nps" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
