@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fornecedores — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stats .card { text-align: center; padding: 14px; }
+  .stats .n { font-size: 26px; font-weight: 800; }
+  .forn { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .forn + .forn { margin-top: -1px; }
+  .forn .quem { flex: 1; min-width: 180px; }
+  .forn .quem strong { font-size: 14.5px; }
+  .forn .quem .sub { font-size: 12px; color: var(--cinza); }
+  .forn .gasto { text-align: right; }
+  .forn .gasto .v { font-weight: 800; font-size: 15px; }
+  .forn .gasto .l { font-size: 10.5px; color: var(--cinza); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Fornecedores</h1>
+    </div>
+  </div>
+  <p>Quem fornece para a academia, com contato na mão e o gasto somado direto das Contas a Pagar — para negociar sabendo quanto você deixa em cada um.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <span class="muted">O gasto vem das Contas a Pagar cujo campo "Fornecedor" bate com o nome cadastrado.</span>
+    <button class="btn" id="btnNovo">➕ Novo fornecedor</button>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <h2 id="dlgTitulo">Novo fornecedor</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome *</label><input id="fNome" required></div>
+      <div class="campo"><label>Categoria</label>
+        <select id="fCat"><option>Suplementos</option><option>Equipamentos</option><option>Limpeza</option><option>Manutenção</option><option>Serviços</option><option>Bebidas</option><option>Outros</option></select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>WhatsApp / telefone</label><input id="fZap" placeholder="31 9…"></div>
+      <div class="campo"><label>CNPJ</label><input id="fCnpj" placeholder="00.000.000/0001-00"></div>
+    </div>
+    <div class="campo"><label>Observações</label><input id="fObs" placeholder="prazo de entrega, condição de pagamento…"></div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button class="btn perigo mini" id="btnExcluir" type="button" hidden>Excluir</button>
+      <div class="linha-flex" style="margin-left: auto;">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">✓ Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("fornecedores", { lista: [] }); }
+  function save(st) { S.write("fornecedores", st); render(); }
+  function norm(s) { return String(s || "").trim().toLowerCase(); }
+
+  // gasto por fornecedor a partir das Contas a Pagar (12 meses e mês atual)
+  function gastos() {
+    var contas = S.read("contas", { contas: [] }).contas;
+    var mes = S.todayISO().slice(0, 7);
+    var corte = new Date(S.todayISO() + "T12:00");
+    corte.setMonth(corte.getMonth() - 12);
+    var corteISO = S.todayISO(corte);
+    var g = {};
+    contas.forEach(function (c) {
+      var k = norm(c.forn);
+      if (!k) return;
+      var ref = c.pagoEm || c.vencimento || "";
+      var e = (g[k] = g[k] || { mes: 0, ano: 0, qtd: 0 });
+      if (ref >= corteISO) { e.ano += +c.valor || 0; e.qtd++; }
+      if (ref.slice(0, 7) === mes) e.mes += +c.valor || 0;
+    });
+    return g;
+  }
+
+  function render() {
+    var st = load();
+    var g = gastos();
+    var totalAno = 0;
+    st.lista.forEach(function (f) { totalAno += (g[norm(f.nome)] || {}).ano || 0; });
+    $("stats").innerHTML =
+      '<div class="card"><div class="n">' + st.lista.length + '</div><div class="muted">fornecedores</div></div>' +
+      '<div class="card"><div class="n">' + S.fmtBRL(totalAno) + '</div><div class="muted">gasto em 12 meses (cadastrados)</div></div>';
+
+    var ordenada = st.lista.slice().sort(function (a, b) {
+      return ((g[norm(b.nome)] || {}).ano || 0) - ((g[norm(a.nome)] || {}).ano || 0);
+    });
+    $("lista").innerHTML = ordenada.length ? ordenada.map(function (f) {
+      var x = g[norm(f.nome)] || { mes: 0, ano: 0, qtd: 0 };
+      return '<div class="forn">' +
+        '<div class="quem"><strong>' + esc(f.nome) + '</strong> <span class="tag neutro">' + esc(f.cat || "Outros") + "</span>" +
+        '<div class="sub">' + [f.cnpj ? "CNPJ " + esc(f.cnpj) : "", f.obs ? esc(f.obs) : ""].filter(Boolean).join(" · ") + "</div></div>" +
+        '<div class="gasto"><div class="v">' + S.fmtBRL(x.ano) + '</div><div class="l">12 MESES (' + x.qtd + ' conta(s))</div></div>' +
+        '<div class="gasto"><div class="v">' + S.fmtBRL(x.mes) + '</div><div class="l">ESTE MÊS</div></div>' +
+        (f.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(f.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        '<button class="btn sec mini" data-edita="' + f.id + '">✏</button></div>';
+    }).join("") : '<div class="vazio">Nenhum fornecedor cadastrado. Clique em ➕ Novo fornecedor.</div>';
+  }
+
+  var editandoId = null;
+  function abre(f) {
+    editandoId = f ? f.id : null;
+    $("dlgTitulo").textContent = f ? "Editar — " + f.nome : "Novo fornecedor";
+    $("fNome").value = f ? f.nome : "";
+    $("fCat").value = f ? f.cat || "Outros" : "Suplementos";
+    $("fZap").value = f ? f.zap || "" : "";
+    $("fCnpj").value = f ? f.cnpj || "" : "";
+    $("fObs").value = f ? f.obs || "" : "";
+    $("btnExcluir").hidden = !f;
+    $("dlg").showModal();
+  }
+  $("btnNovo").onclick = function () { abre(null); };
+  $("lista").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-edita");
+    if (!id) return;
+    abre(load().lista.find(function (f) { return f.id === id; }));
+  });
+  $("btnExcluir").onclick = function () {
+    if (!editandoId || !confirm("Excluir este fornecedor? (as contas lançadas não são apagadas)")) return;
+    var st = load();
+    st.lista = st.lista.filter(function (f) { return f.id !== editandoId; });
+    $("dlg").close();
+    save(st);
+  };
+
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = {
+      nome: $("fNome").value.trim(), cat: $("fCat").value,
+      zap: $("fZap").value.trim(), cnpj: $("fCnpj").value.trim(), obs: $("fObs").value.trim(),
+    };
+    if (!dados.nome) return;
+    if (editandoId) {
+      var f = st.lista.find(function (x) { return x.id === editandoId; });
+      Object.keys(dados).forEach(function (k) { f[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      dados.criado = S.todayISO();
+      st.lista.push(dados);
+    }
+    save(st);
+  });
+
+  S.onChange(function (k) { if (k === "fornecedores" || k === "contas") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

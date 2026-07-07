@@ -48,6 +48,7 @@
       <button data-a="aniver">🎂 Aniversariantes</button>
       <button data-a="contratos">📄 Contratos vencendo</button>
       <button data-a="treinos">⏱ Treinos vencendo</button>
+      <button data-a="avaliacoes">🩺 Avaliações vencidas</button>
     </div>
     <span class="muted" id="dica"></span>
   </div>
@@ -129,10 +130,21 @@
     });
     return lista.sort(function (x, y) { return x.dias - y.dias; });
   }
+  function avaliacoesVencidas() {
+    var avs = S.read("saude", { avaliacoes: [] }).avaliacoes || [];
+    var lista = [];
+    alunosAtivos().forEach(function (a) {
+      var ult = null;
+      avs.forEach(function (v) { if (v.alunoId === a.id && (!ult || v.data > ult)) ult = v.data; });
+      var dias = ult ? diasDesde(ult) : null;
+      if (dias === null || dias >= 90) lista.push({ a: a, ultima: ult, dias: dias });
+    });
+    return lista.sort(function (x, y) { return (y.dias == null ? 1e9 : y.dias) - (x.dias == null ? 1e9 : x.dias); });
+  }
 
   // ---------- render ----------
   function render() {
-    var f = faltantes(), an = aniversariantes(), cv = contratosVencendo(), tv = treinosVencendo();
+    var f = faltantes(), an = aniversariantes(), cv = contratosVencendo(), tv = treinosVencendo(), av = avaliacoesVencidas();
     var academiaNome = "";
     try { academiaNome = (JSON.parse(localStorage.getItem("mtapp:academia")) || {}).nome || ""; } catch (e) {}
 
@@ -140,7 +152,8 @@
       '<div class="card' + (aba === "faltantes" ? " ativa" : "") + '" data-st="faltantes"><div class="n" style="color:' + (f.length ? "var(--erro)" : "var(--ok)") + '">' + f.length + '</div><div class="muted">faltantes (7+ dias)</div></div>' +
       '<div class="card' + (aba === "aniver" ? " ativa" : "") + '" data-st="aniver"><div class="n" style="color:var(--roxo)">' + an.length + '</div><div class="muted">aniversariantes do mês</div></div>' +
       '<div class="card' + (aba === "contratos" ? " ativa" : "") + '" data-st="contratos"><div class="n" style="color:' + (cv.length ? "var(--alerta)" : "var(--ok)") + '">' + cv.length + '</div><div class="muted">contratos vencendo (30d)</div></div>' +
-      '<div class="card' + (aba === "treinos" ? " ativa" : "") + '" data-st="treinos"><div class="n">' + tv.length + '</div><div class="muted">treinos vencendo (7d)</div></div>';
+      '<div class="card' + (aba === "treinos" ? " ativa" : "") + '" data-st="treinos"><div class="n">' + tv.length + '</div><div class="muted">treinos vencendo (7d)</div></div>' +
+      '<div class="card' + (aba === "avaliacoes" ? " ativa" : "") + '" data-st="avaliacoes"><div class="n" style="color:' + (av.length ? "var(--alerta)" : "var(--ok)") + '">' + av.length + '</div><div class="muted">avaliações vencidas (90d)</div></div>';
 
     var html = "";
     if (aba === "faltantes") {
@@ -193,6 +206,20 @@
           waLink(x.a, msg) + "</div>";
       }).join("") || '<div class="vazio">Nenhum treino vencendo nos próximos 7 dias.</div>';
     }
+    if (aba === "avaliacoes") {
+      $("dica").textContent = "Reavaliar a cada 90 dias mostra resultado — e resultado segura aluno.";
+      html = av.map(function (x) {
+        var msg = "Oi " + primeiroNome(x.a) + "! " + (x.dias == null ? "Vi aqui que você ainda não fez sua avaliação física" :
+          "Sua última avaliação física já tem " + x.dias + " dias") +
+          " — bora agendar uma nova pra ver sua evolução? Tenho horário essa semana! 📊💪";
+        return '<div class="pessoa ' + (x.dias == null || x.dias >= 180 ? "grave" : "medio") + '"><span class="avatar">' + esc(avatarIni(x.a)) + "</span>" +
+          '<div class="quem"><strong>' + esc(x.a.nome) + '</strong><div class="sub">' +
+          (x.ultima ? "última avaliação " + S.fmtData(x.ultima) + " · <strong>há " + x.dias + " dias</strong>" :
+            "<strong style='color:var(--erro)'>nunca fez avaliação</strong>") + "</div></div>" +
+          '<span class="tag ' + (x.dias == null ? "erro" : "alerta") + '">' + (x.dias == null ? "AGENDAR 1ª" : "REAVALIAR") + "</span>" +
+          waLink(x.a, msg) + "</div>";
+      }).join("") || '<div class="vazio">Todo mundo com avaliação em dia (menos de 90 dias). 🎉</div>';
+    }
     $("lista").innerHTML = html;
   }
 
@@ -211,7 +238,7 @@
     render();
   });
 
-  S.onChange(function (k) { if (k === "alunos" || k === "treinos") render(); });
+  S.onChange(function (k) { if (k === "alunos" || k === "treinos" || k === "saude") render(); });
   render();
 })();
 </script>

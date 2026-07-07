@@ -294,6 +294,7 @@
       "<h2 style='font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--texto); margin: 0;'>" + esc(aluno.nome) + "</h2>" +
       '<div class="linha-flex">' +
       '<button class="btn sec mini" id="btnImprimir">🖨 Imprimir ficha</button>' +
+      (aluno.zap ? '<button class="btn whats mini" id="btnZapFicha">💬 Enviar ficha</button>' : "") +
       '<button class="btn perigo mini" id="btnExcluirTreino">Excluir treino</button></div></div>' +
       '<div class="plan-grid" style="margin-top: 14px;">' +
       '<div class="campo"><label>Nome do treino</label><input id="tNome" value="' + esc(p.nome) + '"></div>' +
@@ -342,6 +343,24 @@
     $("btnImprimir").onclick = function () {
       var r = coleta(); save(r.st);
       window.print();
+    };
+    var bZap = $("btnZapFicha");
+    if (bZap) bZap.onclick = function () {
+      var r = coleta(); save(r.st);
+      var p2 = r.p;
+      var txt = "💪 SEU TREINO — " + (p2.nome || "treino") + "\n" +
+        p2.freq + "x por semana · " + p2.semanas + " semana(s)" +
+        (p2.vencimento ? " · vence " + S.fmtData(p2.vencimento) : "") + "\n" +
+        (p2.descricao ? "\n📝 " + p2.descricao + "\n" : "") +
+        p2.fichas.map(function (f) {
+          return "\n▪ " + (f.nome || "Ficha").toUpperCase() + "\n" + f.itens.map(function (i) {
+            return "  • " + (i.ex || "exercício") + " — " + (i.series || "?") + "x" + (i.reps || "?") +
+              (i.carga ? " (" + i.carga + ")" : "") + (i.descanso ? " · desc. " + i.descanso : "");
+          }).join("\n");
+        }).join("\n") +
+        (p2.restricoes ? "\n\n⚠ Atenção: " + p2.restricoes : "") +
+        "\n\nQualquer dúvida me chama! 🤜🤛";
+      window.open("https://wa.me/55" + String(aluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(txt), "_blank");
     };
     $("btnExcluirTreino").onclick = function () {
       if (!confirm("Excluir o treino de " + aluno.nome + "?")) return;
