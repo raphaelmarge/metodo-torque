@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turmas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .turma { border: 1px solid var(--linha); border-left: 4px solid var(--roxo); background: #fff; margin-bottom: 12px; }
+  .turma summary { display: flex; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer; list-style: none; flex-wrap: wrap; }
+  .turma summary::-webkit-details-marker { display: none; }
+  .turma .quem { flex: 1; min-width: 170px; }
+  .turma .quem strong { font-size: 15px; }
+  .turma .quem .sub { font-size: 12px; color: var(--cinza); }
+  .aluno-linha { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--fundo); font-size: 13.5px; }
+  .aluno-linha label { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 400; font-size: 13.5px; cursor: pointer; }
+  .aluno-linha input[type="checkbox"] { width: auto; }
+  .freq { font-size: 11.5px; color: var(--cinza-2); }
+  .add-aluno { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--fundo); }
+  .chamada-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px; background: var(--fundo); border-top: 1px solid var(--linha); font-size: 13px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · OPERAÇÃO</span>
+    <h1>Turmas</h1>
+    </div>
+  </div>
+  <p>Kids, lutas, ginástica: turmas fechadas com lista de alunos e chamada do dia — presença registrada mostra quem está sumindo.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <span class="muted" id="resumo"></span>
+    <button class="btn" id="btnNova">+ Nova turma</button>
+  </div>
+
+  <div id="lista"></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
+    <h2 id="dlgTitulo">Nova turma</h2>
+    <div class="campo"><label>Nome da turma *</label><input id="fNome" required placeholder="ex.: Kids 6-9 anos / Muay Thai iniciante"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Professor(a)</label><input id="fProf"></div>
+      <div class="campo"><label>Horário</label><input id="fHora" placeholder="ex.: Seg/Qua 18h"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button type="button" class="btn perigo mini" id="fExcluir" hidden>Excluir turma</button>
+      <div class="linha-flex">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("turmas", { turmas: [], chamadas: {} }); }
+  function save(st) { S.write("turmas", st); render(); }
+
+  var editId = null;
+  var hoje = S.todayISO();
+
+  function alunosNomes() {
+    return S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) { return a.nome; });
+  }
+  function freqDe(st, turma, aluno) {
+    var total = 0, veio = 0;
+    Object.keys(st.chamadas).forEach(function (k) {
+      if (k.indexOf(turma.id + "|") !== 0) return;
+      total++;
+      if (st.chamadas[k].indexOf(aluno) !== -1) veio++;
+    });
+    return total ? Math.round(veio / total * 100) : null;
+  }
+
+  function render() {
+    var st = load();
+    $("resumo").textContent = st.turmas.length + " turma(s) · chamada de hoje: " + S.fmtData(hoje);
+    var dl = '<datalist id="alunosLista">' + alunosNomes().map(function (n) { return "<option>" + esc(n) + "</option>"; }).join("") + "</datalist>";
+    $("lista").innerHTML = dl + (st.turmas.length ? st.turmas.map(function (t) {
+      var chaveHoje = t.id + "|" + hoje;
+      var presentes = st.chamadas[chaveHoje] || [];
+      var alunos = t.alunos || [];
+      return '<details class="turma"><summary>' +
+        '<div class="quem"><strong>' + esc(t.nome) + '</strong><div class="sub">' +
+        (t.prof ? esc(t.prof) + " · " : "") + (t.hora ? esc(t.hora) + " · " : "") + alunos.length + " aluno(s)" +
+        (st.chamadas[chaveHoje] ? " · chamada de hoje: " + presentes.length + "/" + alunos.length : "") + "</div></div>" +
+        (st.chamadas[chaveHoje] ? '<span class="tag ok">CHAMADA FEITA</span>' : '<span class="tag neutro">SEM CHAMADA HOJE</span>') +
+        ' <button class="btn sec mini" data-edit="' + t.id + '">✎</button></summary>' +
+        '<div class="chamada-cab"><span>CHAMADA DE HOJE (' + S.fmtData(hoje) + ')</span>' +
+        '<button class="btn mini" data-salvar="' + t.id + '">💾 Salvar chamada</button></div>' +
+        alunos.map(function (a) {
+          var f = freqDe(st, t, a);
+          return '<div class="aluno-linha"><label><input type="checkbox" data-ch="' + t.id + '" value="' + esc(a) + '"' +
+            (presentes.indexOf(a) !== -1 ? " checked" : "") + ">" + esc(a) + "</label>" +
+            "<span>" + (f != null ? '<span class="freq">' + f + "% presença</span> " : "") +
+            '<button class="btn perigo mini" data-rma="' + t.id + "|" + esc(a) + '" style="padding: 2px 8px;">✕</button></span></div>';
+        }).join("") +
+        (alunos.length ? "" : '<div class="muted" style="padding: 10px 16px;">Turma vazia — adicione os alunos.</div>') +
+        '<div class="add-aluno"><input list="alunosLista" placeholder="Adicionar aluno…" data-addinput="' + t.id + '" style="flex: 1;">' +
+        '<button class="btn mini" data-addbtn="' + t.id + '">Adicionar</button></div>' +
+        "</details>";
+    }).join("") : '<div class="vazio">Nenhuma turma ainda — crie a primeira (Kids, Muay Thai, FitDance…).</div>');
+  }
+
+  $("btnNova").onclick = function () {
+    editId = null;
+    $("dlgTitulo").textContent = "Nova turma";
+    $("fNome").value = ""; $("fProf").value = ""; $("fHora").value = "";
+    $("fExcluir").hidden = true;
+    $("dlg").showModal();
+  };
+  $("lista").addEventListener("click", function (e) {
+    var st = load();
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (id) {
+      e.preventDefault();
+      var t = st.turmas.find(function (x) { return x.id === id; });
+      editId = id;
+      $("dlgTitulo").textContent = "Editar turma";
+      $("fNome").value = t.nome; $("fProf").value = t.prof || ""; $("fHora").value = t.hora || "";
+      $("fExcluir").hidden = false;
+      $("dlg").showModal();
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-addbtn");
+    if (id) {
+      var inp = document.querySelector('[data-addinput="' + id + '"]');
+      var nome = (inp.value || "").trim();
+      if (!nome) return;
+      var t2 = st.turmas.find(function (x) { return x.id === id; });
+      t2.alunos = t2.alunos || [];
+      if (t2.alunos.indexOf(nome) !== -1) { alert("Já está na turma."); return; }
+      t2.alunos.push(nome);
+      save(st);
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-rma");
+    if (id) {
+      var pp = id.split("|");
+      var t3 = st.turmas.find(function (x) { return x.id === pp[0]; });
+      t3.alunos = (t3.alunos || []).filter(function (a) { return a !== pp[1]; });
+      save(st);
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-salvar");
+    if (id) {
+      var marcados = [];
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ch="' + id + '"]:checked'), function (c) { marcados.push(c.value); });
+      st.chamadas[id + "|" + hoje] = marcados;
+      save(st);
+      alert("Chamada salva: " + marcados.length + " presente(s).");
+    }
+  });
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    if (editId) {
+      var t = st.turmas.find(function (x) { return x.id === editId; });
+      t.nome = $("fNome").value.trim(); t.prof = $("fProf").value.trim(); t.hora = $("fHora").value.trim();
+    } else {
+      st.turmas.push({ id: S.uid(), nome: $("fNome").value.trim(), prof: $("fProf").value.trim(), hora: $("fHora").value.trim(), alunos: [] });
+    }
+    save(st);
+  });
+  $("fExcluir").onclick = function () {
+    if (!confirm("Excluir a turma e as chamadas dela?")) return;
+    var st = load();
+    st.turmas = st.turmas.filter(function (x) { return x.id !== editId; });
+    Object.keys(st.chamadas).forEach(function (k) { if (k.indexOf(editId + "|") === 0) delete st.chamadas[k]; });
+    $("dlg").close();
+    save(st);
+  };
+
+  S.onChange(function (k) { if (k === "turmas" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
