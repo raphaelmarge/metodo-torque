@@ -32,6 +32,14 @@
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 4px;">
 
+  <div class="integ" style="border-color: rgba(217,119,6,.5);">
+    <header><span class="ico">🎭</span><h2>Modo demonstração</h2><span id="stDemo" class="tag neutro">DESLIGADO</span></header>
+    <p class="muted" style="margin: 8px 0 10px;">Liga <strong>toda a Fase 2 sem precisar do Pagar.me nem da Meta</strong>: a régua gera PIX/boleto/link de mentira (com uma página de pagamento de demonstração), o cartão recorrente cadastra uma assinatura simulada e o WhatsApp automático registra o envio. <strong>Nada é cobrado nem enviado de verdade.</strong> Quando contratar o Pagar.me, preencha os campos abaixo — as chaves reais têm prioridade e você pode desligar a demonstração.</p>
+    <label class="linha-flex" style="gap: 8px; align-items: center; font-size: 14px; font-weight: 700;">
+      <input id="tgDemo" type="checkbox" style="width: 18px; height: 18px;"> Ativar modo demonstração
+    </label>
+  </div>
+
   <div class="integ">
     <header><span class="ico">💳</span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
     <p class="muted" style="margin: 8px 0 10px;">Gera PIX (copia e cola), boleto e <strong>link de cartão de crédito</strong> (checkout seguro do Pagar.me, até 3×) para cada mensalidade em atraso, direto da régua de cobrança — e confere sozinho se foi pago.</p>
@@ -117,6 +125,22 @@
   $("pgUrl").value = (c0.integracoes && c0.integracoes.pagarmeUrl) || "";
   $("pgPk").value = (c0.integracoes && c0.integracoes.pagarmePk) || "";
   atualizaStatus();
+
+  // ---------- modo demonstração ----------
+  function atualizaDemo() {
+    var ligado = !!(cfg().integracoes && cfg().integracoes.demo);
+    $("tgDemo").checked = ligado;
+    $("stDemo").textContent = ligado ? "🎭 LIGADO — TUDO SIMULADO" : "DESLIGADO";
+    $("stDemo").className = "tag " + (ligado ? "alerta" : "neutro");
+  }
+  $("tgDemo").addEventListener("change", function () {
+    var st = cfg();
+    st.integracoes = st.integracoes || {};
+    st.integracoes.demo = this.checked;
+    S.write("config", st);
+    atualizaDemo();
+  });
+  atualizaDemo();
 
   $("pgPk").addEventListener("change", function () {
     var st = cfg();

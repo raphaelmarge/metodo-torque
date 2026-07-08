@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagamento (demonstração) — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f3f2ef; }
+  .checkout { width: 420px; max-width: 92vw; background: #fff; border: 1px solid var(--linha); padding: 26px; }
+  .valor { font-size: 34px; font-weight: 800; margin: 4px 0 2px; }
+  .faixa { background: rgba(217,119,6,.1); border: 1px solid rgba(217,119,6,.4); color: var(--alerta); font-size: 12px; font-weight: 700; padding: 6px 10px; letter-spacing: .04em; margin-bottom: 14px; }
+  .metodos { display: flex; gap: 6px; margin: 12px 0; }
+  .metodos span { flex: 1; text-align: center; border: 1px solid var(--linha); padding: 8px 4px; font-size: 12.5px; font-weight: 700; color: var(--cinza); }
+  .metodos span.on { border-color: var(--escuro); color: var(--escuro); background: #faf9f7; }
+</style>
+</head>
+<body>
+
+<div class="checkout" id="caixa">
+  <div class="faixa">🎭 PÁGINA DE DEMONSTRAÇÃO — nenhum valor real é cobrado</div>
+  <span class="kicker">PAGAMENTO DA MENSALIDADE</span>
+  <div id="conteudo"><p class="muted">carregando…</p></div>
+</div>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var ord = new URLSearchParams(location.search).get("ord") || "";
+
+  function acha() {
+    var st = S.read("inad", { config: {}, devedores: [] });
+    var dev = st.devedores.find(function (d) { return d.cobranca && d.cobranca.orderId === ord; });
+    return { st: st, dev: dev };
+  }
+
+  function render() {
+    var r = acha();
+    if (!r.dev) {
+      $("conteudo").innerHTML = '<p class="muted" style="margin-top: 8px;">Cobrança não encontrada — este link de demonstração só funciona no mesmo navegador em que a cobrança foi gerada.</p>';
+      return;
+    }
+    var d = r.dev;
+    if (d.status === "pago" || (d.cobranca && d.cobranca.statusPago)) {
+      $("conteudo").innerHTML = '<div class="valor" style="color: var(--ok);">✅ Pago</div>' +
+        "<p>" + esc(d.nome) + " — " + brl(+d.valor || 0) + "</p>" +
+        '<p class="muted" style="margin-top: 10px;">Pagamento simulado aprovado. Volte na Inadimplência ou nas Cobranças para ver o status atualizado.</p>';
+      return;
+    }
+    $("conteudo").innerHTML =
+      '<div class="valor">' + brl(+d.valor || 0) + "</div>" +
+      '<p class="muted">' + esc(d.nome) + " · Mensalidade — venc. " + S.fmtData(d.vencimento) + "</p>" +
+      '<div class="metodos"><span class="on">💳 Cartão</span><span>◈ PIX</span><span>📄 Boleto</span></div>' +
+      '<p class="muted" style="font-size: 12.5px;">No Pagar.me de verdade, o aluno digita o cartão aqui (ou escolhe PIX/boleto). Nesta demonstração, clique abaixo para simular a aprovação:</p>' +
+      '<button class="btn" id="btnPagar" style="width: 100%; margin-top: 12px;">✓ Simular pagamento aprovado</button>';
+    $("btnPagar").onclick = function () {
+      var r2 = acha();
+      if (!r2.dev) return;
+      r2.dev.cobranca.statusPago = true;
+      r2.dev.status = "pago";
+      r2.dev.pagoEm = S.todayISO();
+      S.write("inad", r2.st);
+      render();
+    };
+  }
+  render();
+})();
+</script>
+</body>
+</html>

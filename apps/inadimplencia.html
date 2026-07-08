@@ -206,9 +206,9 @@
       (pend && passo ? (passo.canal === "fone" ?
           '<button class="btn" data-acao="ligar">📞 Ver roteiro da ligação</button>' :
           (dev.zap ? '<a class="btn whats" target="_blank" rel="noopener" data-acao="zap" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(passo.msg(dev.nome.split(" ")[0], ctxMsg(st, dev))) + '">💬 Enviar ' + passo.rotulo + "</a>" +
-            (whatsappUrl() ? ' <button class="btn mini" data-acao="zapauto">🚀 Automático</button>' : "")
+            ((whatsappUrl() || demoOn()) ? ' <button class="btn mini" data-acao="zapauto">🚀 Automático</button>' : "")
             : '<span class="muted">sem WhatsApp cadastrado</span>')) : "") +
-      (pend && pagarmeUrl() ? '<button class="btn mini" data-acao="cobranca">💳 ' + (dev.cobranca ? "Ver PIX/boleto" : "Gerar PIX/boleto") + "</button>" : "") +
+      (pend && (pagarmeUrl() || demoOn()) ? '<button class="btn mini" data-acao="cobranca">💳 ' + (dev.cobranca ? "Ver PIX/boleto" : "Gerar PIX/boleto") + "</button>" : "") +
       (pend ? '<button class="btn ok mini" data-acao="pago">✓ Recebido</button><button class="btn sec mini" data-acao="acordo">🤝 Acordo</button>' :
         '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir</button>') +
       '<button class="btn perigo mini" data-acao="excluir">excluir</button>' +
@@ -280,7 +280,8 @@
           d2.envios = d2.envios || {};
           if (passo) d2.envios[passo.id] = S.todayISO();
           save(st2);
-          alert("📨 Mensagem " + (passo ? passo.rotulo : "") + " enviada pela API oficial para " + d.nome.split(" ")[0] + "!");
+          alert(r.demo ? "🎭 SIMULAÇÃO: mensagem " + (passo ? passo.rotulo : "") + " registrada para " + d.nome.split(" ")[0] + " — nada foi enviado de verdade. Com o WhatsApp oficial conectado, sai sozinha." :
+            "📨 Mensagem " + (passo ? passo.rotulo : "") + " enviada pela API oficial para " + d.nome.split(" ")[0] + "!");
         } else {
           btn.disabled = false; btn.textContent = "🚀 Automático";
           alert("Não foi: " + ((r && r.erro) || "erro") + (r && r.precisaTemplate ? "\n\nO aluno não falou com o número nas últimas 24h — configure o template aprovado em Integrações, ou use o botão 💬 manual." : ""));
@@ -303,12 +304,18 @@
   });
 
   // ---------- Fase 2: WhatsApp oficial (envio pela API, sem abrir o app) ----------
+  function demoOn() {
+    var c = S.read("config", { dados: {} });
+    return !!(c.integracoes && c.integracoes.demo);
+  }
   function whatsappUrl() {
     var c = S.read("config", { dados: {} });
     return (c.integracoes && c.integracoes.whatsappUrl) || "";
   }
   function enviaWaAuto(dev, passo) {
     var c = S.read("config", { dados: {} }).integracoes || {};
+    // modo demonstração: registra o envio sem chamar a API oficial
+    if (!whatsappUrl() && demoOn()) return Promise.resolve({ ok: true, demo: true });
     var headers = { "Content-Type": "application/json" };
     if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
       headers.apikey = window.MT_CLOUD.anonKey;
@@ -331,6 +338,7 @@
     return (c.integracoes && c.integracoes.pagarmeUrl) || "";
   }
   function chamaFuncao(payload) {
+    if (!pagarmeUrl() && demoOn()) return Promise.resolve(simulaPagarme(payload));
     var headers = { "Content-Type": "application/json" };
     if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
       headers.apikey = window.MT_CLOUD.anonKey;
@@ -338,6 +346,31 @@
     }
     return fetch(pagarmeUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
       .then(function (r) { return r.json(); });
+  }
+  // modo demonstração: gera cobranças de mentira (nada é cobrado de verdade)
+  function simulaPagarme(payload) {
+    if (payload.acao === "criar") {
+      var ordem = "sim_" + S.uid();
+      var link = "pagamento-demo.html?ord=" + ordem;
+      var r = { ok: true, orderId: ordem, metodo: payload.metodo };
+      if (payload.metodo === "pix") {
+        r.pixCopiaECola = "00020126580014BR.GOV.BCB.PIX0136DEMO-TORQUESYS-" + ordem + "520400005303986540" +
+          ((payload.valorCentavos || 0) / 100).toFixed(2) + "5802BR5909TORQUEFIT6009SAO PAULO6304DEMO";
+        r.linkPagamento = link;
+      } else if (payload.metodo === "boleto") {
+        r.boletoUrl = link;
+        r.linhaDigitavel = "00190.00009 01234.567890 12345.678901 2 " + String((payload.valorCentavos || 0)).padStart(10, "0");
+      } else {
+        r.linkPagamento = link;
+      }
+      return r;
+    }
+    if (payload.acao === "status") {
+      var d = load().devedores.find(function (x) { return x.cobranca && x.cobranca.orderId === payload.orderId; });
+      var pago = d && (d.status === "pago" || d.cobranca.statusPago);
+      return { ok: true, status: pago ? "paid" : "pending" };
+    }
+    return { ok: false, erro: "ação não simulada" };
   }
   function cpfDe(dev) {
     var stA = S.read("alunos", { alunos: [], recebiveis: [] });
@@ -348,8 +381,9 @@
   function renderCob(dev) {
     var c = dev.cobranca;
     $("cobTitulo").textContent = "💳 Cobrança — " + dev.nome;
+    var demoTag = (demoOn() && !pagarmeUrl()) ? '<p class="tag alerta" style="margin-bottom: 8px;">🎭 MODO DEMONSTRAÇÃO — nada é cobrado de verdade</p>' : "";
     if (!c) {
-      $("cobCorpo").innerHTML = '<p class="muted">Gerar cobrança de <strong>' + S.fmtBRL(+dev.valor) + "</strong> para " + esc(dev.nome) + ":</p>" +
+      $("cobCorpo").innerHTML = demoTag + '<p class="muted">Gerar cobrança de <strong>' + S.fmtBRL(+dev.valor) + "</strong> para " + esc(dev.nome) + ":</p>" +
         '<div class="linha-flex" style="margin-top: 10px;">' +
         '<button class="btn" id="cobPix">Gerar PIX (copia e cola)</button>' +
         '<button class="btn sec" id="cobCartao">Link p/ cartão (até 3×)</button>' +
@@ -366,7 +400,7 @@
       " da mensalidade (" + S.fmtBRL(+dev.valor) + "):\n\n" +
       (c.metodo === "boleto" ? (c.boletoUrl || "") : c.metodo === "cartao" ? (c.linkPagamento || "") : (c.pixCopiaECola || "")) +
       "\n\nQualquer dúvida me chama! 💜";
-    $("cobCorpo").innerHTML =
+    $("cobCorpo").innerHTML = demoTag +
       '<div class="linha-flex" style="justify-content: space-between;"><span class="tag ' +
       (c.statusPago ? "ok" : "roxo") + '">' + (c.statusPago ? "✅ PAGO" : (c.metodo === "boleto" ? "BOLETO GERADO" : c.metodo === "cartao" ? "LINK DE PAGAMENTO GERADO" : "PIX GERADO")) + "</span>" +
       '<span class="muted">' + S.fmtBRL(+dev.valor) + " · gerado " + S.fmtData(c.criadoEm) + "</span></div>" +
@@ -398,7 +432,7 @@
           d2.status = "pago"; d2.pagoEm = S.todayISO();
           save(st);
           $("dlgCob").close();
-          alert("Pagamento confirmado pelo Pagar.me! " + dev.nome.split(" ")[0] + " marcado(a) como pago. 🎉");
+          alert((demoOn() && !pagarmeUrl() ? "🎭 SIMULAÇÃO: pagamento aprovado! " : "Pagamento confirmado pelo Pagar.me! ") + dev.nome.split(" ")[0] + " marcado(a) como pago. 🎉");
         } else $("cobAviso").textContent = "ainda não pago (status: " + ((r && r.status) || "?") + ")";
       }).catch(function (e) { $("cobAviso").textContent = "erro: " + e.message; });
     };
