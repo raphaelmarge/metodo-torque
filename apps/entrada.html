@@ -99,6 +99,13 @@
         if (nivel === "ok") nivel = "atencao";
       }
     }
+    var susp = S.read("suspensoes", { itens: [] }).itens.find(function (s2) {
+      return s2.alunoId === a.id && !s2.finalizadaEm && s2.inicio <= hoje && (!s2.fim || s2.fim >= hoje);
+    });
+    if (susp) {
+      avisos.push({ t: "erro", txt: "Contrato SUSPENSO desde " + S.fmtData(susp.inicio) + (susp.motivo ? " (" + susp.motivo + ")" : "") + " — reativar em Suspensões antes de liberar." });
+      nivel = "bloq";
+    }
     var atraso = 0;
     st.recebiveis.forEach(function (r) {
       if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) atraso += +r.valor || 0;

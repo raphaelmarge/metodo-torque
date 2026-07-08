@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suspensões — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 8px 10px; border-bottom: 1px solid var(--linha); font-size: 13px; text-align: left; white-space: nowrap; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11px; letter-spacing: .06em; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .kpi { border: 1px solid var(--linha); padding: 10px 14px; background: #fff; }
+  .kpi .rot { font-size: 11px; letter-spacing: .08em; font-weight: 700; color: var(--cinza); }
+  .kpi .val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+  .kpi.verde { background: rgba(22,163,74,.06); border-color: rgba(22,163,74,.35); }
+  .kpi.azul { background: rgba(37,99,235,.06); border-color: rgba(37,99,235,.35); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Suspensões</h1>
+    </div>
+  </div>
+  <p>O congelamento de contrato do EVO: quem está suspenso (saúde, viagem, gravidez…), desde quando e por quê — com bloqueio automático na entrada enquanto durar.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
+  <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+    <div class="campo" style="flex: 1; min-width: 200px;"><label>Buscar aluno</label><input id="fBusca" placeholder="nome"></div>
+    <div class="campo"><label>Status</label>
+      <select id="fStatus"><option value="">Todas</option><option value="vigente">Vigentes</option><option value="programada">Programadas</option><option value="finalizada">Finalizadas</option></select>
+    </div>
+    <button class="btn sec mini" id="btnExportar" type="button">⬇ Exportar</button>
+    <button class="btn" id="btnNova">⏸ Nova suspensão</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+  <p class="muted" style="font-size: 12.5px;">Enquanto a suspensão está vigente, o Controle de Entradas bloqueia o check-in e a ficha do aluno mostra o aviso. Reativar encerra a suspensão hoje.</p>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
+    <h2>⏸ Nova suspensão</h2>
+    <div class="campo"><label>Aluno *</label>
+      <input id="sAluno" list="listaAlunos" required placeholder="digite o nome">
+      <datalist id="listaAlunos"></datalist>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Tipo</label>
+        <select id="sTipo"><option>Indeterminada</option><option>Determinada (com data fim)</option></select>
+      </div>
+      <div class="campo"><label>Suspenso por (colaborador)</label><input id="sPor" placeholder="quem registrou"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Início *</label><input id="sInicio" type="date" required></div>
+      <div class="campo" id="campoFim" hidden><label>Fim</label><input id="sFim" type="date"></div>
+    </div>
+    <div class="campo"><label>Motivo *</label><input id="sMotivo" required placeholder="ex.: cirurgia, viagem, gravidez"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Suspender</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function dias(a, b) { return Math.max(0, Math.round((new Date(b + "T12:00") - new Date(a + "T12:00")) / 86400000)); }
+
+  function load() { return S.read("suspensoes", { itens: [] }); }
+  function save(st) { S.write("suspensoes", st); render(); }
+  function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+
+  function statusDe(s, hoje) {
+    if (s.finalizadaEm) return "finalizada";
+    if (s.inicio > hoje) return "programada";
+    if (s.fim && s.fim < hoje) return "finalizada";
+    return "vigente";
+  }
+  function fimReal(s) { return s.finalizadaEm || s.fim || ""; }
+
+  function render() {
+    var st = load();
+    var hoje = S.todayISO();
+    var q = $("fBusca").value.trim().toLowerCase();
+    var fs = $("fStatus").value;
+    var tot = { vigente: 0, programada: 0, finalizada: 0 };
+    st.itens.forEach(function (s) { tot[statusDe(s, hoje)]++; });
+    $("kpis").innerHTML =
+      '<div class="kpi verde"><div class="rot">VIGENTES</div><div class="val">' + tot.vigente + "</div></div>" +
+      '<div class="kpi azul"><div class="rot">PROGRAMADAS</div><div class="val">' + tot.programada + "</div></div>" +
+      '<div class="kpi"><div class="rot">FINALIZADAS</div><div class="val">' + tot.finalizada + "</div></div>";
+    var lista = st.itens.filter(function (s) {
+      if (q && (s.nome || "").toLowerCase().indexOf(q) < 0) return false;
+      if (fs && statusDe(s, hoje) !== fs) return false;
+      return true;
+    }).sort(function (a, b) { return a.inicio < b.inicio ? 1 : -1; });
+    $("tabela").innerHTML = "<tr><th>NOME</th><th>CONTRATO</th><th>SUSPENSO POR</th><th>TIPO</th><th>INCLUÍDA EM</th><th>INÍCIO</th><th>FIM</th><th>DIAS SUSPENSOS</th><th>MOTIVO</th><th>STATUS</th><th></th></tr>" +
+      (lista.length ? lista.map(function (s) {
+        var stt = statusDe(s, hoje);
+        var ate = fimReal(s) || hoje;
+        var tag = stt === "vigente" ? '<span class="tag ok">VIGENTE</span>' : stt === "programada" ? '<span class="tag roxo">PROGRAMADA</span>' : '<span class="tag neutro">FINALIZADA</span>';
+        return "<tr><td><strong>" + esc(s.nome) + "</strong></td><td>" + esc(s.contratoNome || "—") + "</td><td>" + esc(s.por || "—") +
+          "</td><td>" + esc(s.tipo || "Indeterminada") + "</td><td>" + S.fmtData(s.incluidaEm) + "</td><td>" + S.fmtData(s.inicio) +
+          "</td><td>" + (fimReal(s) ? S.fmtData(fimReal(s)) : "—") + "</td><td>" + (stt === "programada" ? "—" : dias(s.inicio, ate)) +
+          "</td><td style='white-space: normal; max-width: 220px;'>" + esc(s.motivo || "") + "</td><td>" + tag + "</td><td>" +
+          (stt !== "finalizada" ? '<button class="btn ok mini" data-reativa="' + s.id + '">▶ Reativar</button> ' : "") +
+          '<button class="btn perigo mini" data-excluir="' + s.id + '">✕</button></td></tr>';
+      }).join("") : '<tr><td colspan="11" class="muted" style="padding: 20px;">Nenhuma suspensão — use ⏸ Nova suspensão quando um aluno precisar congelar o plano.</td></tr>');
+  }
+  ["fBusca", "fStatus"].forEach(function (id) { $(id).addEventListener("input", render); });
+
+  $("tabela").addEventListener("click", function (e) {
+    var t = e.target;
+    var id = t.getAttribute && (t.getAttribute("data-reativa") || t.getAttribute("data-excluir"));
+    if (!id) return;
+    var st = load();
+    var s = st.itens.find(function (x) { return x.id === id; });
+    if (!s) return;
+    if (t.hasAttribute("data-reativa")) {
+      if (!confirm("Reativar " + s.nome + "? A suspensão encerra hoje e o aluno volta a entrar normalmente.")) return;
+      s.finalizadaEm = S.todayISO();
+    } else {
+      if (!confirm("Excluir este registro de suspensão?")) return;
+      st.itens = st.itens.filter(function (x) { return x.id !== id; });
+    }
+    save(st);
+  });
+
+  $("btnNova").onclick = function () {
+    var alunos = stA().alunos.filter(function (a) { return a.status !== "inativo"; });
+    $("listaAlunos").innerHTML = alunos.map(function (a) { return '<option value="' + esc(a.nome) + '">'; }).join("");
+    $("sAluno").value = ""; $("sMotivo").value = ""; $("sPor").value = "";
+    $("sInicio").value = S.todayISO();
+    $("sTipo").value = "Indeterminada";
+    $("campoFim").hidden = true; $("sFim").value = "";
+    $("dlg").showModal();
+  };
+  $("sTipo").addEventListener("change", function () { $("campoFim").hidden = this.value === "Indeterminada"; });
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var stAl = stA();
+    var nome = $("sAluno").value.trim();
+    var a = stAl.alunos.find(function (x) { return x.nome.toLowerCase() === nome.toLowerCase(); });
+    var cAtivo = a && (a.contratos || []).find(function (c) { return c.status === "ativo"; });
+    var pl = cAtivo && (stAl.planos || []).find(function (p) { return p.id === cAtivo.planoId; });
+    var st = load();
+    st.itens.push({
+      id: S.uid(), alunoId: a ? a.id : "", nome: a ? a.nome : nome,
+      contratoNome: pl ? pl.nome : (cAtivo ? "contrato ativo" : "—"),
+      por: $("sPor").value.trim(), tipo: $("sTipo").value.indexOf("Determinada") === 0 ? "Determinada" : "Indeterminada",
+      incluidaEm: S.todayISO(), inicio: $("sInicio").value,
+      fim: $("campoFim").hidden ? "" : $("sFim").value,
+      motivo: $("sMotivo").value.trim(),
+    });
+    save(st);
+  });
+
+  $("btnExportar").onclick = function () {
+    var hoje = S.todayISO();
+    var linhas = [["Nome", "Contrato", "Suspenso por", "Tipo", "Incluída em", "Início", "Fim", "Dias suspensos", "Motivo", "Status"]];
+    load().itens.forEach(function (s) {
+      var stt = statusDe(s, hoje);
+      linhas.push([s.nome, s.contratoNome || "", s.por || "", s.tipo || "", s.incluidaEm, s.inicio, fimReal(s), stt === "programada" ? "" : dias(s.inicio, fimReal(s) || hoje), s.motivo || "", stt]);
+    });
+    var csv = linhas.map(function (l) { return l.map(function (c) { return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(";"); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "suspensoes-" + S.todayISO() + ".csv";
+    a.click();
+  };
+
+  S.onChange(function (k) { if (k === "suspensoes" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

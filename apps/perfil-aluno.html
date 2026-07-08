@@ -108,6 +108,13 @@
       else if (ativos.every(function (c) { return c.status === "congelado"; })) { out.badge = "CONGELADO ❄"; out.badgeCls = "roxo"; }
       else { out.badge = "CONTRATO ATIVO"; out.badgeCls = "ok"; }
     } else out.bloqueios.push("Sem contrato ativo — fazer matrícula.");
+    var susp = S.read("suspensoes", { itens: [] }).itens.find(function (s2) {
+      return s2.alunoId === a.id && !s2.finalizadaEm && s2.inicio <= hoje && (!s2.fim || s2.fim >= hoje);
+    });
+    if (susp) {
+      out.badge = "SUSPENSO ⏸"; out.badgeCls = "roxo";
+      out.bloqueios.push("Contrato suspenso desde " + S.fmtData(susp.inicio) + (susp.motivo ? " — motivo: " + susp.motivo : "") + " (reative em Suspensões).");
+    }
     var atraso = 0;
     st.recebiveis.forEach(function (r) { if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) atraso += +r.valor || 0; });
     if (atraso > 0) out.bloqueios.push("Mensalidade em atraso: " + S.fmtBRL(atraso) + ".");

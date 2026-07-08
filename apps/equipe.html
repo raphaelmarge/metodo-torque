@@ -47,6 +47,11 @@
   </div>
 
   <div id="lista"></div>
+
+  <details class="card" id="cardSalarios">
+    <summary style="cursor: pointer; font-weight: 800;">💰 Salários de colaboradores (relatório do EVO)</summary>
+    <div id="salarios" style="margin-top: 12px; overflow-x: auto;"></div>
+  </details>
 </main>
 
 <dialog id="dlg">
@@ -135,6 +140,22 @@
         ' <a class="btn mini" href="colaborador.html?id=' + c.id + '">👔 Ficha</a>' +
         ' <button class="btn sec mini" data-edit="' + c.id + '">✎</button></div>';
     }).join("") : '<div class="vazio">Ninguém aqui ainda — cadastre a equipe.</div>';
+
+    // relatório de salários (tela "Funcionários" do menu Gerencial do EVO)
+    var comSalario = st.colaboradores.filter(function (c) { return verInativos || c.ativo !== false; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    var totalFolha = 0;
+    $("salarios").innerHTML = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
+      "<tr><th style='text-align:left; padding: 6px 8px;'>NOME</th><th style='text-align:left;'>CARGO</th><th style='text-align:left;'>TIPO</th><th style='text-align:right;'>SALÁRIO MENSAL</th><th style='text-align:right;'>VALOR HORA</th><th style='text-align:left; padding-left: 12px;'>STATUS</th></tr>" +
+      comSalario.map(function (c) {
+        totalFolha += c.ativo === false ? 0 : (+c.salario || 0);
+        return "<tr style='border-top: 1px solid var(--linha);'><td style='padding: 6px 8px;'><strong>" + esc(c.nome) + "</strong></td><td>" + esc(c.cargo || "—") +
+          "</td><td>" + esc(c.tipoContrato || "—") + "</td><td style='text-align:right;'>" + (+c.salario ? S.fmtBRL(+c.salario) : "—") +
+          "</td><td style='text-align:right;'>" + (+c.valorHora ? S.fmtBRL(+c.valorHora) : "—") + "</td><td style='padding-left: 12px;'>" +
+          (c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') + "</td></tr>";
+      }).join("") +
+      "<tr style='border-top: 2px solid var(--escuro);'><td style='padding: 8px;' colspan='3'><strong>FOLHA MENSAL (ativos)</strong></td><td style='text-align:right;'><strong>" + S.fmtBRL(totalFolha) + "</strong></td><td></td><td></td></tr></table>" +
+      '<p class="muted" style="font-size: 12px; margin-top: 8px;">Salário e valor-hora vêm da aba Contratação da ficha de cada colaborador(a). O botão "Lançar na folha" da ficha manda para Contas a Pagar.</p>';
   }
 
   $("busca").addEventListener("input", function () { busca = this.value; render(); });
