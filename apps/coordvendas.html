@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultados (Painel do Gestor) — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .paineis { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .painel { background: #fff; border: 1px solid var(--linha); padding: 14px 16px; }
+  .painel h2 { font-size: 12px; letter-spacing: .08em; color: var(--cinza); margin: 0 0 10px; }
+  .grande { font-size: 28px; font-weight: 800; }
+  .meta-linha { font-size: 12.5px; color: var(--cinza); margin-top: 2px; }
+  .barras { display: flex; gap: 6px; align-items: flex-end; height: 110px; margin-top: 10px; }
+  .barra { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+  .barra i { display: block; width: 100%; background: var(--escuro); min-height: 2px; }
+  .barra i.meta { background: rgba(124,58,237,.35); }
+  .barra small { font-size: 10px; color: var(--cinza); }
+  .tabela { width: 100%; border-collapse: collapse; }
+  .tabela th, .tabela td { padding: 6px 8px; border-bottom: 1px solid var(--linha); font-size: 13px; text-align: left; }
+  .tabela th { font-size: 10.5px; letter-spacing: .06em; color: var(--cinza); }
+  .tabela td.num, .tabela th.num { text-align: right; }
+  .conv { display: flex; gap: 20px; align-items: center; }
+  .conv .n { font-size: 26px; font-weight: 800; }
+  .conv .rot { font-size: 11px; color: var(--cinza); letter-spacing: .06em; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Resultados — Painel do Gestor</h1>
+    </div>
+  </div>
+  <p>O painel "Gestor / Coord. de Vendas" do EVO: vendas contra a meta, ticket médio, visitas × conversões, contratos mais vendidos, renovações e o resultado por consultor(a) — tudo calculado sozinho.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
+  <div class="card linha-flex" style="align-items: flex-end; gap: 12px;">
+    <div class="campo"><label>Mês</label><input id="fMes" type="month"></div>
+    <p class="muted" style="font-size: 12.5px;">As metas vêm do programa Metas de Vendas; visitas e conversões, do Funil; vendas, dos contratos e das vendas de produtos.</p>
+  </div>
+  <div class="paineis" id="paineis"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+
+  function vendasDoMes(mes) {
+    // cada contrato iniciado no mês conta como venda de valor (valor × meses)
+    var st = stA();
+    var lista = [];
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) !== mes) return;
+        var pl = (st.planos || []).find(function (p) { return p.id === c.planoId; });
+        lista.push({ aluno: a, contrato: c, plano: pl, total: (+c.valor || 0) * (c.meses || 1), mensal: +c.valor || 0 });
+      });
+    });
+    S.read("produtos", { vendas: [] }).vendas.forEach(function (v) {
+      if ((v.data || "").slice(0, 7) === mes) lista.push({ produto: true, total: +v.total || 0 });
+    });
+    return lista;
+  }
+
+  function render() {
+    var mes = $("fMes").value || S.todayISO().slice(0, 7);
+    var st = stA();
+    var vendas = vendasDoMes(mes);
+    var contratosMes = vendas.filter(function (v) { return !v.produto; });
+    var totalVendido = vendas.reduce(function (t, v) { return t + v.total; }, 0);
+
+    // meta do mês (programa Metas de Vendas)
+    var metas = S.read("metas", { vendedoras: [], metas: {}, vendas: [] });
+    var metaMes = 0;
+    Object.keys(metas.metas || {}).forEach(function (k) {
+      if (k.indexOf(mes) === 0 || k === mes) {
+        var m = metas.metas[k];
+        metaMes += typeof m === "number" ? m : Object.keys(m || {}).reduce(function (t, v2) { return t + (+m[v2] || 0); }, 0);
+      }
+    });
+
+    // série de 7 meses para o gráfico
+    var serie = [];
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(mes + "-15T12:00");
+      d.setMonth(d.getMonth() - i);
+      var k2 = d.toISOString().slice(0, 7);
+      serie.push({ mes: k2, total: vendasDoMes(k2).reduce(function (t, v) { return t + v.total; }, 0) });
+    }
+    var maxSerie = Math.max.apply(null, serie.map(function (x) { return x.total; }).concat([1]));
+
+    // ticket e mensalidade média
+    var mensalMedia = contratosMes.length ? contratosMes.reduce(function (t, v) { return t + v.mensal; }, 0) / contratosMes.length : 0;
+    var valorMedio = contratosMes.length ? contratosMes.reduce(function (t, v) { return t + v.total; }, 0) / contratosMes.length : 0;
+    var tempoMedio = contratosMes.length ? contratosMes.reduce(function (t, v) { return t + (v.contrato.meses || 1); }, 0) / contratosMes.length : 0;
+
+    // visitas × conversões (funil)
+    var funil = S.read("funil", { leads: [] });
+    var visitas = funil.leads.filter(function (l) { return l.visitouEm && l.visitouEm.slice(0, 7) === mes; }).length;
+    var conversoes = funil.leads.filter(function (l) { return l.matriculouEm && l.matriculouEm.slice(0, 7) === mes; }).length;
+    var origens = {};
+    funil.leads.forEach(function (l) {
+      if ((l.criado || "").slice(0, 7) !== mes) return;
+      var o = l.origem || "não informada";
+      origens[o] = (origens[o] || 0) + 1;
+    });
+
+    // contratos mais vendidos
+    var ranking = {};
+    contratosMes.forEach(function (v) {
+      var n = v.plano ? v.plano.nome : "plano";
+      ranking[n] = (ranking[n] || 0) + 1;
+    });
+    var top = Object.keys(ranking).map(function (k3) { return { nome: k3, qt: ranking[k3] }; })
+      .sort(function (a, b) { return b.qt - a.qt; }).slice(0, 5);
+
+    // renovações: contratos que vencem nos próximos 30 dias + renovados no mês (contrato novo de aluno que já tinha contrato anterior)
+    var hoje = S.todayISO();
+    var aVencer = 0, renovacoes = 0, rematriculas = 0;
+    st.alunos.forEach(function (a) {
+      var cs = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+      cs.forEach(function (c, idx) {
+        if (c.status === "ativo") {
+          var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+          f.setMonth(f.getMonth() + (c.meses || 1));
+          var fim = S.todayISO(f);
+          var em30 = new Date(); em30.setDate(em30.getDate() + 30);
+          if (fim >= hoje && fim <= S.todayISO(em30)) aVencer++;
+        }
+        if ((c.inicio || "").slice(0, 7) === mes && idx > 0) {
+          if ((a.status || "") === "inativo") rematriculas++; else renovacoes++;
+        }
+      });
+    });
+
+    // resultado por consultor
+    var porConsultor = {};
+    contratosMes.forEach(function (v) {
+      var c2 = v.aluno.consultor || "sem consultor(a)";
+      porConsultor[c2] = porConsultor[c2] || { vendas: 0, total: 0 };
+      porConsultor[c2].vendas++;
+      porConsultor[c2].total += v.total;
+    });
+
+    var h = "";
+    h += '<div class="painel" style="grid-column: 1 / -1;"><h2>VENDAS — ACUMULADO DO MÊS × META</h2>' +
+      '<div class="linha-flex" style="justify-content: space-between; flex-wrap: wrap;"><div><div class="grande" id="pvTotal">' + brl(totalVendido) + '</div>' +
+      '<div class="meta-linha">Meta: ' + brl(metaMes) + (metaMes ? " · " + Math.round(totalVendido / metaMes * 100) + "% atingido" : " (defina em Metas de Vendas)") + "</div></div>" +
+      '<div style="flex: 1; min-width: 300px; max-width: 560px;"><div class="barras">' + serie.map(function (x) {
+        return '<div class="barra"><i style="height:' + Math.max(2, Math.round(x.total / maxSerie * 100)) + 'px"></i><small>' + x.mes.slice(5) + "/" + x.mes.slice(2, 4) + "</small></div>";
+      }).join("") + "</div></div></div></div>";
+
+    h += '<div class="painel"><h2>MENSALIDADE MÉDIA DOS CONTRATOS VENDIDOS</h2><div class="grande">' + brl(mensalMedia) + '</div><div class="meta-linha">' + contratosMes.length + " contrato(s) no mês</div></div>";
+    h += '<div class="painel"><h2>VALOR MÉDIO DE CONTRATO</h2><div class="grande">' + brl(valorMedio) + '</div><div class="meta-linha">valor total ÷ contratos vendidos</div></div>';
+    h += '<div class="painel"><h2>TEMPO MÉDIO DE CONTRATO</h2><div class="grande">' + (Math.round(tempoMedio * 10) / 10) + ' meses</div><div class="meta-linha">média dos contratos vendidos no mês</div></div>';
+
+    h += '<div class="painel"><h2>VISITAS × CONVERSÕES</h2><div class="conv">' +
+      '<div><div class="n">' + visitas + '</div><div class="rot">VISITAS</div></div>' +
+      '<div><div class="n">' + conversoes + '</div><div class="rot">CONVERSÕES</div></div>' +
+      '<div><div class="n">' + (visitas ? Math.round(conversoes / visitas * 100) : 0) + '%</div><div class="rot">TAXA</div></div></div>' +
+      '<h2 style="margin-top: 12px;">ORIGEM DAS VISITAS (LEADS DO MÊS)</h2>' +
+      (Object.keys(origens).length ? Object.keys(origens).map(function (o) {
+        return '<div class="kv" style="display:flex; justify-content: space-between; font-size: 13px; padding: 3px 0;"><span>' + esc(o) + "</span><strong>" + origens[o] + "</strong></div>";
+      }).join("") : '<p class="muted" style="font-size: 12.5px;">Sem leads no mês — cadastre no Funil de Vendas.</p>') + "</div>";
+
+    h += '<div class="painel"><h2>CONTRATOS MAIS VENDIDOS</h2>' +
+      (top.length ? '<table class="tabela"><tr><th>POSIÇÃO</th><th>CONTRATO</th><th class="num">QUANTIDADE</th></tr>' +
+        top.map(function (x, i2) { return "<tr><td>" + (i2 + 1) + "º</td><td>" + esc(x.nome) + '</td><td class="num"><strong>' + x.qt + "</strong></td></tr>"; }).join("") + "</table>"
+        : '<p class="muted" style="font-size: 12.5px;">Nenhum contrato vendido no mês.</p>') + "</div>";
+
+    h += '<div class="painel"><h2>RENOVAÇÕES</h2><div class="conv">' +
+      '<div><div class="n">' + aVencer + '</div><div class="rot">A VENCER (30D)</div></div>' +
+      '<div><div class="n">' + renovacoes + '</div><div class="rot">RENOVAÇÕES</div></div>' +
+      '<div><div class="n">' + rematriculas + '</div><div class="rot">REMATRÍCULAS</div></div></div>' +
+      '<p class="muted" style="font-size: 12.5px; margin-top: 10px;">Detalhes na página <a href="renovacao.html">Renovação de Contratos</a>.</p></div>';
+
+    h += '<div class="painel" style="grid-column: 1 / -1;"><h2>RESULTADO POR CONSULTOR(A)</h2>' +
+      (Object.keys(porConsultor).length ? '<table class="tabela"><tr><th>NOME</th><th class="num">VENDAS</th><th class="num">TOTAL VENDIDO</th><th class="num">TICKET MÉDIO</th></tr>' +
+        Object.keys(porConsultor).sort(function (a, b) { return porConsultor[b].total - porConsultor[a].total; }).map(function (n2) {
+          var r = porConsultor[n2];
+          return "<tr><td><strong>" + esc(n2) + '</strong></td><td class="num">' + r.vendas + '</td><td class="num">' + brl(r.total) + '</td><td class="num">' + brl(r.total / r.vendas) + "</td></tr>";
+        }).join("") + "</table>"
+        : '<p class="muted" style="font-size: 12.5px;">Nenhuma venda no mês — o consultor vem do campo "Consultor(a)" do cadastro do aluno.</p>') + "</div>";
+
+    $("paineis").innerHTML = h;
+  }
+
+  $("fMes").value = S.todayISO().slice(0, 7);
+  $("fMes").addEventListener("input", render);
+  S.onChange(function (k) { if (["alunos", "funil", "metas", "produtos"].indexOf(k) >= 0) render(); });
+  render();
+})();
+</script>
+</body>
+</html>
