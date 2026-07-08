@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ficha do Colaborador — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .grid-col { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .grid-col { display: flex; flex-direction: column; } }
+  .painel-esq { text-align: center; }
+  .painel-esq .avatar { width: 84px; height: 84px; border-radius: 50%; background: var(--roxo); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; }
+  .painel-esq h2 { margin: 10px 0 2px; text-transform: none; letter-spacing: 0; font-size: 18px; color: var(--texto); }
+  .painel-esq .sub { color: var(--cinza); font-size: 13px; }
+  .bloco-esq { text-align: left; border-top: 1px solid var(--linha); margin-top: 14px; padding-top: 12px; }
+  .bloco-esq h3 { font-size: 11.5px; letter-spacing: .1em; color: var(--cinza); margin-bottom: 8px; }
+  .kv { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 13.5px; }
+  .kv span:first-child { color: var(--cinza); }
+  .tgl { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Ficha do Colaborador</h1>
+    </div>
+  </div>
+  <p>A ficha completa do funcionário, como no EVO: dados, contratação com salário, horário de trabalho, permissões e controle de acesso.</p>
+</header>
+
+<main class="corpo" id="corpo"></main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+  function ini(n) { return String(n || "?").split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase(); }
+
+  function load() { return S.read("equipe", { cargos: [], colaboradores: [] }); }
+  var colId = new URLSearchParams(location.search).get("id") || null;
+  var aba = "cadastro";
+  var DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  var PERFIS = [
+    ["admin", "Administrador", "vê e mexe em tudo, inclusive Financeiro, DRE e Configurações."],
+    ["gerente", "Gerente", "operação completa + relatórios gerenciais; sem Configurações do sistema."],
+    ["recepcao", "Recepção", "entradas, alunos, caixa, vendas, agenda e tarefas do dia."],
+    ["professor", "Professor(a)", "treinos, turmas, grade, avaliações e WOD."],
+  ];
+
+  function renderSeletor() {
+    var lista = load().colaboradores.slice().sort(function (x, y) { return x.nome < y.nome ? -1 : 1; });
+    $("corpo").innerHTML = '<div class="card"><div class="campo"><label>Escolha o colaborador</label>' +
+      '<input id="busca" placeholder="digite o nome…" autocomplete="off"></div><div id="res" style="margin-top:10px;"></div></div>';
+    function res() {
+      var q = $("busca").value.trim().toLowerCase();
+      $("res").innerHTML = lista.filter(function (c) { return c.nome.toLowerCase().indexOf(q) >= 0; }).slice(0, 12).map(function (c) {
+        return '<a class="btn sec" style="display:block; margin-bottom:6px; text-align:left;" href="colaborador.html?id=' + c.id + '">' +
+          esc(c.nome) + ' <span class="muted">— ' + esc(c.cargo || "sem cargo") + "</span></a>";
+      }).join("") || '<div class="vazio">Ninguém com esse nome. Cadastre em <a href="equipe.html">Colaboradores e Cargos</a>.</div>';
+    }
+    $("busca").addEventListener("input", res);
+    res();
+  }
+
+  function salvaCampo(id, campo, transform) {
+    var el = $(id);
+    if (!el) return;
+    el.addEventListener("change", function () {
+      var st = load();
+      var c = st.colaboradores.find(function (x) { return x.id === colId; });
+      var v = transform ? transform(this) : this.value.trim();
+      if (c[campo] === v) return;
+      c[campo] = v;
+      S.write("equipe", st);
+    });
+  }
+
+  function render() {
+    var st = load();
+    var c = st.colaboradores.find(function (x) { return x.id === colId; });
+    if (!c) { renderSeletor(); return; }
+    document.title = c.nome + " — Ficha do Colaborador";
+    var h = c.horario || {};
+
+    $("corpo").innerHTML = '<div class="grid-col">' +
+      // painel esquerdo (como no EVO)
+      '<div class="card painel-esq">' +
+      '<div class="avatar">' + esc(ini(c.nome)) + "</div>" +
+      "<div style='margin-top:8px;'><span class='tag " + (c.ativo === false ? "neutro" : "ok") + "'>" + (c.ativo === false ? "INATIVO" : "ATIVO") + "</span></div>" +
+      "<h2>" + esc(c.nome) + '</h2><div class="sub">' + esc(c.cargo || "sem cargo") + "</div>" +
+      '<div class="bloco-esq"><h3>SOBRE O COLABORADOR</h3>' +
+      '<div class="tgl"><span>Inativar</span><input type="checkbox" id="tglInativo"' + (c.ativo === false ? " checked" : "") + "></div>" +
+      (c.email ? '<div class="kv"><span>E-mail</span><span>' + esc(c.email) + "</span></div>" : "") +
+      (c.zap ? '<div class="kv"><span>Celular</span><span>' + esc(c.zap) +
+        ' <a class="btn whats mini" style="padding:1px 7px;" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '">💬</a></span></div>' : "") +
+      "</div>" +
+      '<div class="bloco-esq"><h3>🔒 PERMITIR ACESSO</h3>' +
+      '<div class="tgl"><span>À catraca</span><input type="checkbox" id="tglCatraca"' + (c.acessoCatraca !== false ? " checked" : "") + "></div>" +
+      '<div class="tgl"><span>Fora do horário de trabalho</span><input type="checkbox" id="tglFora"' + (c.acessoForaHorario ? " checked" : "") + "></div>" +
+      '<div class="tgl"><span>Utiliza teclado para acesso</span><input type="checkbox" id="tglTeclado"' + (c.acessoTeclado ? " checked" : "") + "></div>" +
+      "</div></div>" +
+
+      // painel direito com abas
+      '<div><div class="abas" style="margin-bottom: 12px;" id="abas">' +
+      [["cadastro", "Cadastro"], ["contratacao", "Contratação"], ["horario", "Horário"], ["permissoes", "Permissões"]].map(function (x) {
+        return '<button data-ab="' + x[0] + '"' + (aba === x[0] ? ' class="ativa"' : "") + ">" + x[1] + "</button>";
+      }).join("") + "</div><div id='painelAba'></div></div></div>";
+
+    // toggles do painel esquerdo
+    function tgl(id, campo, invertido) {
+      $(id).addEventListener("change", function () {
+        var st2 = load();
+        var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+        c2[campo] = invertido ? !this.checked : this.checked;
+        S.write("equipe", st2);
+      });
+    }
+    tgl("tglInativo", "ativo", true);
+    tgl("tglCatraca", "acessoCatraca", false);
+    tgl("tglFora", "acessoForaHorario", false);
+    tgl("tglTeclado", "acessoTeclado", false);
+
+    var p = "";
+    if (aba === "cadastro") {
+      p = '<div class="card"><h2>Informações principais</h2><div class="grid-2" style="margin-top: 10px;">' +
+        '<div class="campo"><label>Nome *</label><input id="cNome" value="' + esc(c.nome) + '"></div>' +
+        '<div class="campo"><label>Gênero</label><select id="cGenero"><option></option><option' + (c.genero === "Masculino" ? " selected" : "") + '>Masculino</option><option' + (c.genero === "Feminino" ? " selected" : "") + '>Feminino</option><option' + (c.genero === "Outro" ? " selected" : "") + ">Outro</option></select></div>" +
+        '<div class="campo"><label>E-mail</label><input id="cEmail" value="' + esc(c.email || "") + '"></div>' +
+        '<div class="campo"><label>Celular</label><input id="cZap" value="' + esc(c.zap || "") + '"></div>' +
+        '<div class="campo"><label>Cargo</label><select id="cCargo">' + st.cargos.map(function (cg) {
+          return "<option" + (cg === c.cargo ? " selected" : "") + ">" + esc(cg) + "</option>";
+        }).join("") + "</select></div>" +
+        '<div class="campo"><label>Admissão</label><input id="cAdmissao" type="date" value="' + esc(c.admissao || "") + '"></div>' +
+        '<div class="campo"><label>Endereço</label><input id="cEndereco" value="' + esc(c.endereco || "") + '" placeholder="rua, nº, bairro"></div>' +
+        '<div class="campo"><label>CPF</label><input id="cCpf" value="' + esc(c.cpf || "") + '"></div>' +
+        "</div><h2 style='margin-top: 16px;'>Emergência</h2><div class='grid-2' style='margin-top: 10px;'>" +
+        '<div class="campo"><label>Contato de emergência</label><input id="cEmgNome" value="' + esc(c.emergenciaNome || "") + '"></div>' +
+        '<div class="campo"><label>Telefone</label><input id="cEmgFone" value="' + esc(c.emergenciaFone || "") + '"></div>' +
+        "</div><p class='muted' style='margin-top: 10px;'>Os campos salvam sozinhos ao sair deles.</p></div>";
+    }
+    if (aba === "contratacao") {
+      p = '<div class="card"><h2>Salário</h2><div class="linha-flex" style="margin-top: 10px;">' +
+        '<div class="campo"><label>Tipo de contratação</label><select id="cTipo">' +
+        ["", "CLT", "PJ", "Estágio", "Horista", "Diarista"].map(function (t) {
+          return "<option" + (t === (c.tipoContrato || "") ? " selected" : "") + ">" + t + "</option>";
+        }).join("") + "</select></div>" +
+        '<div class="campo"><label>Salário mensal (R$)</label><input id="cSalario" type="number" step="0.01" min="0" value="' + (+c.salario || "") + '"></div>' +
+        '<div class="campo"><label>Valor hora (R$)</label><input id="cValorHora" type="number" step="0.01" min="0" value="' + (+c.valorHora || "") + '"></div>' +
+        "</div>" +
+        '<div class="linha-flex" style="margin-top: 8px;"><button class="btn" id="btnFolha">💲 Lançar salário do mês em Contas a Pagar</button>' +
+        '<span class="muted">entra no centro "Folha de pagamento", vencimento dia 5 do mês seguinte</span></div>' +
+        "<h2 style='margin-top: 18px;'>Informações complementares</h2><div class='grid-2' style='margin-top: 10px;'>" +
+        '<div class="campo"><label>Conta bancária / PIX</label><input id="cBanco" value="' + esc(c.banco || "") + '"></div>' +
+        '<div class="campo"><label>Observações (benefícios, documentos, exames)</label><input id="cObsC" value="' + esc(c.obsContratacao || "") + '"></div>' +
+        "</div></div>";
+    }
+    if (aba === "horario") {
+      p = '<div class="card"><h2>Horário de trabalho</h2><p class="muted" style="margin: 4px 0 10px;">Deixe em branco os dias de folga.</p>' +
+        DIAS.map(function (d, i) {
+          var hd = h[i] || {};
+          return '<div class="linha-flex" style="padding: 4px 0; align-items: center;"><span style="width: 90px; font-size: 13.5px;">' + d + "</span>" +
+            '<input type="time" data-h="' + i + '" data-c="de" value="' + esc(hd.de || "") + '" style="width: 110px;"> às ' +
+            '<input type="time" data-h="' + i + '" data-c="ate" value="' + esc(hd.ate || "") + '" style="width: 110px;"></div>';
+        }).join("") + "</div>";
+    }
+    if (aba === "permissoes") {
+      p = '<div class="card"><h2>Perfil de acesso</h2><p class="muted" style="margin: 4px 0 10px;">Define o que esse colaborador deve usar no sistema. (O bloqueio real por login individual entra na Fase 2 — hoje vale como orientação da equipe.)</p>' +
+        PERFIS.map(function (pf) {
+          return '<label class="linha-flex" style="gap: 8px; padding: 7px 0; align-items: flex-start; cursor: pointer;">' +
+            '<input type="radio" name="perfil" value="' + pf[0] + '"' + ((c.perfilAcesso || "recepcao") === pf[0] ? " checked" : "") + ">" +
+            "<span><strong>" + pf[1] + "</strong><br><span class='muted' style='font-size: 12.5px;'>" + pf[2] + "</span></span></label>";
+        }).join("") + "</div>";
+    }
+    $("painelAba").innerHTML = p;
+
+    // salvar campos da aba ativa
+    [["cNome", "nome"], ["cGenero", "genero"], ["cEmail", "email"], ["cZap", "zap"], ["cCargo", "cargo"],
+     ["cAdmissao", "admissao"], ["cEndereco", "endereco"], ["cCpf", "cpf"], ["cEmgNome", "emergenciaNome"],
+     ["cEmgFone", "emergenciaFone"], ["cTipo", "tipoContrato"], ["cBanco", "banco"], ["cObsC", "obsContratacao"]]
+      .forEach(function (par) { salvaCampo(par[0], par[1]); });
+    salvaCampo("cSalario", "salario", function (el) { return +el.value || 0; });
+    salvaCampo("cValorHora", "valorHora", function (el) { return +el.value || 0; });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-h]"), function (inp) {
+      inp.addEventListener("change", function () {
+        var st2 = load();
+        var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+        c2.horario = c2.horario || {};
+        var i = this.getAttribute("data-h");
+        (c2.horario[i] = c2.horario[i] || {})[this.getAttribute("data-c")] = this.value;
+        S.write("equipe", st2);
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[name="perfil"]'), function (r) {
+      r.addEventListener("change", function () {
+        var st2 = load();
+        var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+        c2.perfilAcesso = this.value;
+        S.write("equipe", st2);
+      });
+    });
+
+    var bF = $("btnFolha");
+    if (bF) bF.onclick = function () {
+      var st2 = load();
+      var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+      if (!+c2.salario) { alert("Preencha o salário mensal primeiro."); return; }
+      var hoje = new Date(S.todayISO() + "T12:00");
+      var venc = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 5);
+      var comp = S.todayISO().slice(0, 7);
+      var desc = "Salário " + comp + " — " + c2.nome;
+      var stC = S.read("contas", { centros: [], contas: [] });
+      if (stC.contas.some(function (x) { return x.desc === desc; })) { alert("O salário de " + comp + " já foi lançado."); return; }
+      stC.contas.push({ id: S.uid(), desc: desc, forn: c2.nome, centro: "Folha de pagamento",
+        valor: +c2.salario, vencimento: S.todayISO(venc), status: "aberto" });
+      S.write("contas", stC);
+      alert("Lançado! " + desc + " (" + S.fmtBRL(+c2.salario) + ") nas Contas a Pagar, vencimento " + S.fmtData(S.todayISO(venc)) + ".");
+    };
+
+    $("abas").addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      aba = b.getAttribute("data-ab");
+      render();
+    });
+  }
+
+  S.onChange(function (k) { if (k === "equipe") { /* campos salvam sozinhos; sem re-render para não perder foco */ } });
+  render();
+})();
+</script>
+</body>
+</html>
