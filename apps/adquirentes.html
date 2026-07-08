@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adquirentes e Taxas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11.5px; letter-spacing: .07em; }
+  .tabela td.num, .tabela th.num { text-align: right; }
+  .sim { background: rgba(37,99,235,.05); border: 1px solid rgba(37,99,235,.3); }
+  .sim .res { font-size: 22px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Adquirentes e Taxas de Cartão</h1>
+    </div>
+  </div>
+  <p>Cadastre as taxas da sua maquininha (Stone, Cielo, Pagar.me…) e simule quanto cai líquido na conta — é o "valor de baixa" que o EVO mostra ao lado do valor cheio.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card sim" style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end;">
+    <div class="campo"><label>Simulador — valor da venda</label><input id="sValor" type="number" step="0.01" value="119.90" style="width: 120px;"></div>
+    <div class="campo"><label>Adquirente</label><select id="sAdq"></select></div>
+    <div class="campo"><label>Forma</label>
+      <select id="sForma">
+        <option value="debito">Débito</option>
+        <option value="1">Crédito à vista (1×)</option>
+        <option value="2">Crédito 2×</option><option value="3">Crédito 3×</option><option value="4">Crédito 4×</option>
+        <option value="5">Crédito 5×</option><option value="6">Crédito 6×</option><option value="7">Crédito 7×</option>
+        <option value="8">Crédito 8×</option><option value="9">Crédito 9×</option><option value="10">Crédito 10×</option>
+        <option value="11">Crédito 11×</option><option value="12">Crédito 12×</option>
+      </select>
+    </div>
+    <div style="margin-left: auto; text-align: right;">
+      <div class="muted" style="font-size: 12px;" id="sTaxa">taxa —</div>
+      <div class="res" id="sLiquido">—</div>
+    </div>
+  </div>
+
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <p class="muted" style="font-size: 13px;">Taxas em % sobre a venda. No EVO essa tela é a "Cartões e Gateways de Pagamento", com a tabela por bandeira.</p>
+    <button class="btn" id="btnNova">➕ Nova adquirente</button>
+  </div>
+  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 480px; max-width: 100%;">
+    <h2 id="dTitulo">Nova adquirente</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome *</label><input id="aNome" required placeholder="ex.: Stone"></div>
+      <div class="campo"><label>Recebe em (dias)</label><input id="aPrazo" type="number" min="0" placeholder="ex.: 1 (D+1)"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Taxa débito (%)</label><input id="aDebito" type="number" step="0.01" placeholder="ex.: 1,54"></div>
+      <div class="campo"><label>Crédito à vista (%)</label><input id="aCred1" type="number" step="0.01" placeholder="ex.: 2,69"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Crédito 2× a 6× (%)</label><input id="aCred2" type="number" step="0.01" placeholder="ex.: 2,89"></div>
+      <div class="campo"><label>Crédito 7× a 12× (%)</label><input id="aCred7" type="number" step="0.01" placeholder="ex.: 3,26"></div>
+    </div>
+    <div class="campo"><label>Situação</label>
+      <select id="aStatus"><option value="ativo">Ativa</option><option value="inativo">Inativa</option></select>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button class="btn perigo mini" id="btnExcluir" type="button" hidden>Excluir</button>
+      <div class="linha-flex" style="margin-left: auto;">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">✓ Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("adquirentes", { itens: [] }); }
+  function save(st) { S.write("adquirentes", st); render(); }
+
+  function taxaDe(a, forma) {
+    if (forma === "debito") return +a.debito || 0;
+    var n = +forma || 1;
+    if (n <= 1) return +a.cred1 || 0;
+    if (n <= 6) return +a.cred2 || +a.cred1 || 0;
+    return +a.cred7 || +a.cred2 || +a.cred1 || 0;
+  }
+  function pct(v) { return (v == null || v === 0) ? "—" : String(v).replace(".", ",") + " %"; }
+
+  function simula() {
+    var st = load();
+    var a = st.itens.find(function (x) { return x.id === $("sAdq").value; });
+    var valor = +$("sValor").value || 0;
+    if (!a || !valor) { $("sTaxa").textContent = "taxa —"; $("sLiquido").textContent = "—"; return; }
+    var taxa = taxaDe(a, $("sForma").value);
+    var liquido = valor * (1 - taxa / 100);
+    $("sTaxa").textContent = "taxa " + pct(taxa) + " → desconto de " + brl(valor - liquido);
+    $("sLiquido").textContent = brl(liquido) + " líquido";
+  }
+
+  function render() {
+    var st = load();
+    $("sAdq").innerHTML = st.itens.filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("") || '<option value="">cadastre uma adquirente</option>';
+    $("tabela").innerHTML = "<tr><th>ADQUIRENTE</th><th class=\"num\">DÉBITO</th><th class=\"num\">CRÉDITO 1×</th><th class=\"num\">2× A 6×</th><th class=\"num\">7× A 12×</th><th>RECEBE EM</th><th>STATUS</th><th></th></tr>" +
+      (st.itens.length ? st.itens.map(function (a) {
+        return "<tr><td><strong>" + esc(a.nome) + '</strong></td><td class="num">' + pct(+a.debito || 0) + '</td><td class="num">' + pct(+a.cred1 || 0) +
+          '</td><td class="num">' + pct(+a.cred2 || 0) + '</td><td class="num">' + pct(+a.cred7 || 0) + "</td><td>" +
+          (a.prazo ? "D+" + a.prazo : "—") + "</td><td>" +
+          (a.status === "inativo" ? '<span class="tag neutro">INATIVA</span>' : '<span class="tag ok">ATIVA</span>') +
+          '</td><td><button class="btn sec mini" data-edit="' + a.id + '">✏</button></td></tr>';
+      }).join("") : '<tr><td colspan="8" class="muted" style="padding: 20px;">Nenhuma adquirente cadastrada — clique em ➕ Nova adquirente e copie as taxas do seu contrato com a maquininha.</td></tr>');
+    simula();
+  }
+  ["sValor", "sAdq", "sForma"].forEach(function (id) { $(id).addEventListener("input", simula); });
+
+  var editId = null;
+  function abre(a) {
+    editId = a ? a.id : null;
+    $("dTitulo").textContent = a ? "Editar — " + a.nome : "Nova adquirente";
+    $("aNome").value = a ? a.nome : "";
+    $("aPrazo").value = a && a.prazo ? a.prazo : "";
+    $("aDebito").value = a && a.debito ? a.debito : "";
+    $("aCred1").value = a && a.cred1 ? a.cred1 : "";
+    $("aCred2").value = a && a.cred2 ? a.cred2 : "";
+    $("aCred7").value = a && a.cred7 ? a.cred7 : "";
+    $("aStatus").value = a ? a.status || "ativo" : "ativo";
+    $("btnExcluir").hidden = !a;
+    $("dlg").showModal();
+  }
+  $("btnNova").onclick = function () { abre(null); };
+  $("tabela").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (id) abre(load().itens.find(function (a) { return a.id === id; }));
+  });
+  $("btnExcluir").onclick = function () {
+    if (!editId || !confirm("Excluir esta adquirente?")) return;
+    var st = load();
+    st.itens = st.itens.filter(function (a) { return a.id !== editId; });
+    $("dlg").close();
+    save(st);
+  };
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = { nome: $("aNome").value.trim(), prazo: +$("aPrazo").value || 0,
+      debito: +$("aDebito").value || 0, cred1: +$("aCred1").value || 0,
+      cred2: +$("aCred2").value || 0, cred7: +$("aCred7").value || 0, status: $("aStatus").value };
+    if (!dados.nome) return;
+    if (editId) {
+      var a = st.itens.find(function (x) { return x.id === editId; });
+      Object.keys(dados).forEach(function (k) { a[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      st.itens.push(dados);
+    }
+    save(st);
+  });
+  S.onChange(function (k) { if (k === "adquirentes") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

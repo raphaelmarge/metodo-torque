@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cobranças — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 8px 10px; border-bottom: 1px solid var(--linha); font-size: 13px; text-align: left; white-space: nowrap; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11px; letter-spacing: .06em; }
+  .tabela td.num, .tabela th.num { text-align: right; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .kpi { border: 1px solid var(--linha); padding: 10px 14px; background: #fff; }
+  .kpi .rot { font-size: 11px; letter-spacing: .08em; font-weight: 700; color: var(--cinza); }
+  .kpi .val { font-size: 19px; font-weight: 800; margin-top: 2px; }
+  .kpi.verde { background: rgba(22,163,74,.06); border-color: rgba(22,163,74,.35); }
+  .kpi.laranja { background: rgba(217,119,6,.07); border-color: rgba(217,119,6,.35); }
+  .kpi.vermelho { background: rgba(220,38,38,.06); border-color: rgba(220,38,38,.35); }
+  .kpi.azul { background: rgba(37,99,235,.06); border-color: rgba(37,99,235,.35); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Cobranças</h1>
+    </div>
+  </div>
+  <p>A central de cobrança como no EVO: extrato das cobranças geradas, recorrências programadas no cartão, painel de inadimplência com recuperação e os cartões cadastrados.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
+  <div class="abas">
+    <button class="ativa" data-aba="extrato">EXTRATO</button>
+    <button data-aba="recorrencia">RECORRÊNCIA</button>
+    <button data-aba="inad">INADIMPLÊNCIA</button>
+    <button data-aba="cartoes">CARTÕES</button>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+  <p class="muted" id="rodape" style="font-size: 12.5px;"></p>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function dias(a, b) { return Math.round((new Date(b + "T12:00") - new Date(a + "T12:00")) / 86400000); }
+
+  var aba = "extrato";
+  function stAlunos() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  function stInad() { return S.read("inad", { config: {}, devedores: [] }); }
+
+  function kpi(rot, val, cor) { return '<div class="kpi ' + (cor || "") + '"><div class="rot">' + rot + '</div><div class="val">' + val + "</div></div>"; }
+
+  // ---------- EXTRATO: cobranças PIX/boleto/cartão geradas na régua (Fase 2) ----------
+  function renderExtrato() {
+    var st = stInad();
+    var stA = stAlunos();
+    var nomeDe = {};
+    stA.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var lista = st.devedores.filter(function (d) { return d.cobranca; });
+    lista.sort(function (x, y) { return (y.cobranca.criadoEm || "") < (x.cobranca.criadoEm || "") ? -1 : 1; });
+    var pago = 0, pendente = 0;
+    lista.forEach(function (d) {
+      if (d.status === "pago") pago += +d.valor || 0; else pendente += +d.valor || 0;
+    });
+    $("kpis").innerHTML = kpi("COBRANÇAS GERADAS", lista.length) + kpi("APROVADO / PAGO", brl(pago), "verde") + kpi("AGUARDANDO PAGAMENTO", brl(pendente), "laranja");
+    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>CRIADA EM</th><th>MÉTODO</th><th class=\"num\">VALOR</th><th>STATUS</th><th>CÓDIGO / LINK</th></tr>" +
+      (lista.length ? lista.map(function (d) {
+        var c = d.cobranca;
+        var metodo = c.metodo === "pix" ? "PIX" : c.metodo === "boleto" ? "Boleto" : "Cartão (link)";
+        var link = c.linkPagamento || c.boletoUrl || "";
+        return "<tr><td><strong>" + esc(d.nome || nomeDe[d.alunoId] || "?") + "</strong></td><td>" + S.fmtData((c.criadoEm || "").slice(0, 10)) +
+          "</td><td>" + metodo + '</td><td class="num">' + brl(+d.valor || 0) + "</td><td>" +
+          (d.status === "pago" ? '<span class="tag ok">APROVADO</span>' : '<span class="tag alerta">EM ABERTO</span>') + "</td><td>" +
+          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener">abrir página de pagamento</a>' : (c.pixCopiaECola ? "PIX copia e cola gerado" : "—")) + "</td></tr>";
+      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — precisa do Pagar.me conectado em Integrações.</td></tr>');
+    $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUESYS via Pagar.me (Fase 2). No EVO essa aba lista as tentativas de cartão da adquirente.";
+  }
+
+  // ---------- RECORRÊNCIA: assinaturas de cartão dos contratos ----------
+  function coletaAssinaturas() {
+    var st = stAlunos();
+    var lista = [];
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if (c.assinatura) lista.push({ aluno: a, contrato: c, asn: c.assinatura });
+      });
+    });
+    return lista;
+  }
+  function renderRecorrencia() {
+    var lista = coletaAssinaturas();
+    var programado = 0, ativas = 0, canceladas = 0;
+    lista.forEach(function (x) {
+      if (x.asn.statusCancelada) canceladas++;
+      else { ativas++; programado += +x.contrato.valor || 0; }
+    });
+    $("kpis").innerHTML = kpi("PROGRAMADAS (MÊS)", brl(programado), "azul") + kpi("ASSINATURAS ATIVAS", ativas, "verde") + kpi("CANCELADAS", canceladas, "vermelho");
+    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>PRÓXIMA COBRANÇA</th><th class=\"num\">VALOR ORIGINAL</th><th>STATUS DA TRANSAÇÃO</th><th>PAGAMENTO ORIGINAL</th><th>CARTÃO</th></tr>" +
+      (lista.length ? lista.map(function (x) {
+        return "<tr><td><strong>" + esc(x.aluno.nome) + "</strong></td><td>" + (x.asn.proximaCobranca ? S.fmtData(String(x.asn.proximaCobranca).slice(0, 10)) : "—") +
+          '</td><td class="num">' + brl(+x.contrato.valor || 0) + "</td><td>" +
+          (x.asn.statusCancelada ? '<span class="tag erro">CANCELADA</span>' : '<span class="tag roxo">PROGRAMADA</span>') +
+          "</td><td>Cartão de Crédito</td><td>" + esc(x.asn.cartao || "—") + "</td></tr>";
+      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma assinatura recorrente. Cadastre o cartão do aluno no Perfil do Aluno → Cadastro → Formas de pagamento (precisa do Pagar.me conectado).</td></tr>');
+    $("rodape").textContent = "Cada assinatura cobra o cartão do aluno todo mês no dia do vencimento, direto na Pagar.me — igual à recorrência do EVO.";
+  }
+
+  // ---------- INADIMPLÊNCIA: recuperação e atraso ----------
+  function renderInad() {
+    var st = stAlunos();
+    var hoje = S.todayISO();
+    var nomeDe = {};
+    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var recuperadas = [], vencidas = [];
+    st.recebiveis.forEach(function (r) {
+      if (r.status === "pago" && r.pagoEm && r.pagoEm > r.vencimento) recuperadas.push(r);
+      if (r.status === "aberto" && r.vencimento < hoje) vencidas.push(r);
+    });
+    var valorRec = recuperadas.reduce(function (t, r) { return t + ((r.valorBaixa != null ? +r.valorBaixa : +r.valor) || 0); }, 0);
+    var mediaRec = recuperadas.length ? Math.round(recuperadas.reduce(function (t, r) { return t + dias(r.vencimento, r.pagoEm); }, 0) / recuperadas.length) : 0;
+    var valorAberto = vencidas.reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    var mediaAtraso = vencidas.length ? Math.round(vencidas.reduce(function (t, r) { return t + dias(r.vencimento, hoje); }, 0) / vencidas.length) : 0;
+    $("kpis").innerHTML = kpi("VALOR RECUPERADO", brl(valorRec), "verde") + kpi("MÉDIA DE RECUPERAÇÃO", mediaRec + " dias") +
+      kpi("VALOR EM ABERTO", brl(valorAberto), "laranja") + kpi("MÉDIA DE ATRASO", mediaAtraso + " dias");
+    var linhas = vencidas.map(function (r) { return { r: r, tipo: "aberta" }; }).concat(recuperadas.map(function (r) { return { r: r, tipo: "rec" }; }));
+    linhas.sort(function (x, y) { return x.r.vencimento < y.r.vencimento ? -1 : 1; });
+    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>VENCIMENTO</th><th>RECEBIMENTO</th><th class=\"num\">DIAS DE ATRASO</th><th class=\"num\">VALOR DA DÍVIDA</th><th>SITUAÇÃO</th></tr>" +
+      (linhas.length ? linhas.map(function (x) {
+        var r = x.r;
+        var atraso = x.tipo === "rec" ? dias(r.vencimento, r.pagoEm) : dias(r.vencimento, hoje);
+        return "<tr><td><strong>" + esc(nomeDe[r.alunoId] || "?") + "</strong></td><td>" + S.fmtData(r.vencimento) + "</td><td>" +
+          (r.pagoEm ? S.fmtData(r.pagoEm) : "—") + '</td><td class="num">' + atraso + '</td><td class="num">' + brl(+r.valor || 0) + "</td><td>" +
+          (x.tipo === "rec" ? '<span class="tag ok">RECUPERADA</span>' : '<span class="tag erro">EM ABERTO</span>') + "</td></tr>";
+      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px;">Nenhuma parcela vencida nem recuperada. 🎉</td></tr>');
+    $("rodape").textContent = "Recuperada = parcela paga depois de vencer. Para cobrar as em aberto, use a Inadimplência (régua) — WhatsApp, PIX e boleto.";
+  }
+
+  // ---------- CARTÕES cadastrados ----------
+  function renderCartoes() {
+    var lista = coletaAssinaturas();
+    var ativos = lista.filter(function (x) { return !x.asn.statusCancelada; }).length;
+    $("kpis").innerHTML = kpi("CARTÕES CADASTRADOS", lista.length) + kpi("ATIVOS", ativos, "verde") + kpi("CANCELADOS", lista.length - ativos, "vermelho");
+    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>CARTÃO</th><th>DATA DE CADASTRO</th><th>PRÓXIMA COBRANÇA</th><th>STATUS DO CARTÃO</th></tr>" +
+      (lista.length ? lista.map(function (x) {
+        return "<tr><td><strong>" + esc(x.aluno.nome) + "</strong></td><td>" + esc(x.asn.cartao || "—") + "</td><td>" +
+          (x.asn.desde ? S.fmtData(x.asn.desde) : "—") + "</td><td>" + (x.asn.proximaCobranca ? S.fmtData(String(x.asn.proximaCobranca).slice(0, 10)) : "—") + "</td><td>" +
+          (x.asn.statusCancelada ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') + "</td></tr>";
+      }).join("") : '<tr><td colspan="5" class="muted" style="padding: 20px; white-space: normal;">Nenhum cartão cadastrado. O número do cartão nunca fica no sistema: a Pagar.me guarda e devolve só a bandeira e os 4 últimos dígitos.</td></tr>');
+    $("rodape").textContent = "Os cartões são tokenizados no navegador com a chave pública — o TORQUESYS só guarda \"bandeira •••• final\".";
+  }
+
+  function render() {
+    if (aba === "extrato") renderExtrato();
+    else if (aba === "recorrencia") renderRecorrencia();
+    else if (aba === "inad") renderInad();
+    else renderCartoes();
+  }
+
+  document.querySelector(".abas").addEventListener("click", function (e) {
+    var a = e.target.getAttribute && e.target.getAttribute("data-aba");
+    if (!a) return;
+    aba = a;
+    document.querySelectorAll(".abas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-aba") === a); });
+    render();
+  });
+  S.onChange(function (k) { if (k === "alunos" || k === "inad") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
