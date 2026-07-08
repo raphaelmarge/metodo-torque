@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contas Bancárias — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11.5px; letter-spacing: .07em; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Contas Bancárias</h1>
+    </div>
+  </div>
+  <p>As contas da academia (banco, PIX, caixinha interna) num lugar só — a base para saber para onde vai a sangria do caixa e, na Fase 2, a conciliação.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativas" type="checkbox"> mostrar inativas</label>
+    <button class="btn" id="btnNova">➕ Nova conta</button>
+  </div>
+  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 480px; max-width: 100%;">
+    <h2 id="dTitulo">Nova conta</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Descrição *</label><input id="bDesc" required placeholder="ex.: Conta principal"></div>
+      <div class="campo"><label>Banco</label><input id="bBanco" placeholder="ex.: Stone, Cora, Santander"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Tipo</label>
+        <select id="bTipo"><option>Bancária</option><option>Interna (caixinha)</option><option>PIX / carteira digital</option></select>
+      </div>
+      <div class="campo"><label>Chave PIX (opcional)</label><input id="bPix"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Agência</label><input id="bAg"></div>
+      <div class="campo"><label>Conta</label><input id="bConta"></div>
+    </div>
+    <div class="campo"><label>Situação</label>
+      <select id="bStatus"><option value="ativo">Ativa</option><option value="inativo">Inativa</option></select>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button class="btn perigo mini" id="btnExcluir" type="button" hidden>Excluir</button>
+      <div class="linha-flex" style="margin-left: auto;">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">✓ Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("bancos", { contas: [] }); }
+  function save(st) { S.write("bancos", st); render(); }
+
+  function render() {
+    var st = load();
+    var lista = $("fInativas").checked ? st.contas : st.contas.filter(function (c) { return c.status !== "inativo"; });
+    $("tabela").innerHTML = "<tr><th>DESCRIÇÃO</th><th>BANCO</th><th>TIPO</th><th>AGÊNCIA</th><th>CONTA</th><th>PIX</th><th>STATUS</th><th></th></tr>" +
+      (lista.length ? lista.map(function (c) {
+        return "<tr><td><strong>" + esc(c.desc) + "</strong></td><td>" + esc(c.banco || "—") + "</td><td>" + esc(c.tipo || "—") +
+          "</td><td>" + esc(c.ag || "—") + "</td><td>" + esc(c.conta || "—") + "</td><td>" + esc(c.pix || "—") + "</td>" +
+          "<td>" + (c.status === "inativo" ? '<span class="tag neutro">INATIVA</span>' : '<span class="tag ok">ATIVA</span>') + "</td>" +
+          '<td><button class="btn sec mini" data-edit="' + c.id + '">✏</button></td></tr>';
+      }).join("") : '<tr><td colspan="8" class="muted" style="padding: 20px;">Nenhuma conta cadastrada — clique em ➕ Nova conta.</td></tr>');
+  }
+  $("fInativas").addEventListener("change", render);
+
+  var editId = null;
+  function abre(c) {
+    editId = c ? c.id : null;
+    $("dTitulo").textContent = c ? "Editar — " + c.desc : "Nova conta";
+    $("bDesc").value = c ? c.desc : "";
+    $("bBanco").value = c ? c.banco || "" : "";
+    $("bTipo").value = c ? c.tipo || "Bancária" : "Bancária";
+    $("bPix").value = c ? c.pix || "" : "";
+    $("bAg").value = c ? c.ag || "" : "";
+    $("bConta").value = c ? c.conta || "" : "";
+    $("bStatus").value = c ? c.status || "ativo" : "ativo";
+    $("btnExcluir").hidden = !c;
+    $("dlg").showModal();
+  }
+  $("btnNova").onclick = function () { abre(null); };
+  $("tabela").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (id) abre(load().contas.find(function (c) { return c.id === id; }));
+  });
+  $("btnExcluir").onclick = function () {
+    if (!editId || !confirm("Excluir esta conta?")) return;
+    var st = load();
+    st.contas = st.contas.filter(function (c) { return c.id !== editId; });
+    $("dlg").close();
+    save(st);
+  };
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = { desc: $("bDesc").value.trim(), banco: $("bBanco").value.trim(), tipo: $("bTipo").value,
+      pix: $("bPix").value.trim(), ag: $("bAg").value.trim(), conta: $("bConta").value.trim(), status: $("bStatus").value };
+    if (!dados.desc) return;
+    if (editId) {
+      var c = st.contas.find(function (x) { return x.id === editId; });
+      Object.keys(dados).forEach(function (k) { c[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      st.contas.push(dados);
+    }
+    save(st);
+  });
+  S.onChange(function (k) { if (k === "bancos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
