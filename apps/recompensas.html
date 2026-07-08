@@ -140,6 +140,7 @@
         '<span style="flex:1"><strong>' + esc(x.a.nome) + '</strong> <span class="muted">(' +
         (x.a.checkins || []).length + " treinos" + (x.pt.indicados ? " · " + x.pt.indicados + " indicações" : "") + ")</span></span>" +
         '<span class="pts">' + x.pt.saldo + ' pts</span>' +
+        '<button class="btn sec mini" data-extrato="' + x.a.id + '">📜 Extrato</button>' +
         '<button class="btn mini" data-resgata="' + x.a.id + '">🎁 Resgatar</button></div>';
     }).join("") : '<div class="vazio">Ninguém pontuou ainda — os pontos vêm dos check-ins, indicações, renovações e avaliações já registrados.</div>';
   }
@@ -170,6 +171,35 @@
     st.premios.splice(+i, 1);
     S.write("recompensas", st);
     renderPremios(); render();
+  });
+
+  // extrato de pontos (aba Movimentações do EVO)
+  $("ranking").addEventListener("click", function (e) {
+    var idx = e.target.getAttribute && e.target.getAttribute("data-extrato");
+    if (!idx) return;
+    var st = load();
+    var stA = S.read("alunos", { alunos: [] });
+    var a = stA.alunos.find(function (x) { return x.id === idx; });
+    if (!a) return;
+    var movs = [];
+    (a.checkins || []).forEach(function (t) { movs.push({ em: (t || "").slice(0, 10), txt: "Check-in", pts: +st.pontos.checkin }); });
+    (a.contratos || []).forEach(function (c) { if (c.renovacaoDe && c.inicio) movs.push({ em: c.inicio, txt: "Renovação de contrato", pts: +st.pontos.renovacao }); });
+    S.read("saude", { avaliacoes: [] }).avaliacoes.forEach(function (v) { if (v.alunoId === a.id) movs.push({ em: v.data, txt: "Avaliação física", pts: +st.pontos.avaliacao }); });
+    stA.alunos.forEach(function (x) {
+      if ((x.indicacao || "").toLowerCase() === a.nome.toLowerCase()) movs.push({ em: x.criado || "", txt: "Indicou " + x.nome.split(" ")[0], pts: +st.pontos.indicacao });
+    });
+    st.resgates.forEach(function (r) { if (r.alunoId === a.id) movs.push({ em: r.em, txt: "Resgate: " + r.premio, pts: -r.custo }); });
+    movs.sort(function (x, y) { return (y.em || "") < (x.em || "") ? -1 : 1; });
+    var saldo = movs.reduce(function (t, m) { return t + m.pts; }, 0);
+    var w = window.open("", "_blank", "width=460,height=640");
+    w.document.write("<title>Extrato — " + esc(a.nome) + "</title><body style='font-family:system-ui;padding:18px;'>" +
+      "<h2 style='margin:0 0 4px;'>📜 Extrato de pontos — " + esc(a.nome) + "</h2>" +
+      "<p style='margin:0 0 12px;color:#666;'>Saldo atual: <strong>" + saldo + " pts</strong></p>" +
+      movs.slice(0, 60).map(function (m) {
+        return "<div style='display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #ddd;font-size:14px;'>" +
+          "<span>" + (m.em ? S.fmtData(m.em) + " · " : "") + esc(m.txt) + "</span>" +
+          "<strong style='color:" + (m.pts < 0 ? "#dc2626" : "#16a34a") + "'>" + (m.pts > 0 ? "+" : "") + m.pts + "</strong></div>";
+      }).join("") + "</body>");
   });
 
   // resgate
