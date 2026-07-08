@@ -255,6 +255,7 @@
         } else if (cAtivo.assinatura) {
           var asn = cAtivo.assinatura;
           html += '<div class="card"><h2>Cartão recorrente</h2>' +
+            (String(asn.id || "").indexOf("sim_") === 0 ? '<p class="tag alerta" style="margin: 4px 0 8px;">🎭 SIMULAÇÃO — cadastrada no modo demonstração, nada é cobrado</p>' : "") +
             '<div class="kv"><span>Cartão</span><span>💳 ' + esc(asn.cartao || "cadastrado") + "</span></div>" +
             '<div class="kv"><span>Situação</span><span class="tag ' + (asn.statusCancelada ? "neutro" : "ok") + '">' + (asn.statusCancelada ? "CANCELADA" : "ATIVA") + "</span></div>" +
             '<div class="kv"><span>Valor</span><span>' + S.fmtBRL(+cAtivo.valor || 0) + "/mês · todo dia " + (cAtivo.diaVenc || 5) + "</span></div>" +
@@ -263,10 +264,11 @@
             '<button class="btn sec mini" id="asnStatus">🔄 Atualizar situação</button>' +
             (!asn.statusCancelada ? '<button class="btn perigo mini" id="asnCancelar">✕ Cancelar recorrência</button>' : "") +
             '<span class="muted" id="asnAviso"></span></div></div>';
-        } else if (!integ.pagarmeUrl || !integ.pagarmePk) {
-          html += '<div class="card"><div class="vazio">Para cadastrar o cartão do aluno e cobrar todo mês sozinho, configure a URL da função e a <strong>chave pública (pk_)</strong> em <a href="integracoes.html">Integrações</a>.</div></div>';
+        } else if (!integ.demo && (!integ.pagarmeUrl || !integ.pagarmePk)) {
+          html += '<div class="card"><div class="vazio">Para cadastrar o cartão do aluno e cobrar todo mês sozinho, configure a URL da função e a <strong>chave pública (pk_)</strong> em <a href="integracoes.html">Integrações</a> — ou ative o <strong>modo demonstração</strong> lá para testar sem Pagar.me.</div></div>';
         } else {
           html += '<div class="card"><h2>Cadastrar cartão para cobrança recorrente</h2>' +
+            ((integ.demo && !integ.pagarmePk) ? '<p class="tag alerta" style="margin: 4px 0 8px;">🎭 MODO DEMONSTRAÇÃO — o cartão não é cadastrado de verdade e nada é cobrado</p>' : "") +
             '<p class="muted" style="margin: 4px 0 10px;">🔒 Os dados do cartão vão <strong>direto do navegador para o Pagar.me</strong> — não ficam no sistema. A mensalidade de <strong>' +
             S.fmtBRL(+cAtivo.valor || 0) + "</strong> (" + esc(pl ? pl.nome : "plano") + ") será cobrada automaticamente todo mês.</p>" +
             '<div class="grid-2">' +
@@ -430,7 +432,33 @@
 
     // recorrência (Fase 2.2): tokeniza o cartão direto no Pagar.me e assina
     function integ2() { return S.read("config", { dados: {} }).integracoes || {}; }
+    function demoAsn() { var c = integ2(); return !!c.demo && !c.pagarmeUrl; }
+    function proximaData(diaVenc) {
+      var h = new Date();
+      var d = new Date(h.getFullYear(), h.getMonth(), Math.min(diaVenc || 5, 28));
+      if (d <= h) d = new Date(h.getFullYear(), h.getMonth() + 1, Math.min(diaVenc || 5, 28));
+      return S.todayISO(d);
+    }
+    // modo demonstração: assinaturas de mentira (nada é cobrado de verdade)
+    function simulaAsn(payload) {
+      if (payload.acao === "assinar") {
+        var p = String(payload.tokenCartao || "").split("_"); // sim_bandeira_final4
+        return { ok: true, assinaturaId: "sim_asn_" + S.uid(), status: "active",
+          proximaCobranca: proximaData(payload.diaVencimento), cartao: (p[1] || "cartão") + " •••• " + (p[2] || "0000") };
+      }
+      var st9 = stA(), achada = null;
+      st9.alunos.forEach(function (a9) { (a9.contratos || []).forEach(function (c9) {
+        if (c9.assinatura && c9.assinatura.id === payload.assinaturaId) achada = c9;
+      }); });
+      if (payload.acao === "assinatura-status") {
+        return { ok: true, status: achada && achada.assinatura.statusCancelada ? "canceled" : "active",
+          proximaCobranca: achada ? proximaData(achada.diaVenc) : null };
+      }
+      if (payload.acao === "assinatura-cancelar") return { ok: true };
+      return { ok: false, erro: "ação não simulada" };
+    }
     function chamaFn(payload) {
+      if (demoAsn()) return Promise.resolve(simulaAsn(payload));
       var headers = { "Content-Type": "application/json" };
       if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
         headers.apikey = window.MT_CLOUD.anonKey;
@@ -446,15 +474,20 @@
       var val = $("ccVal").value.split("/");
       var mes2 = parseInt(val[0], 10), ano2 = parseInt(val[1], 10);
       if (num.length < 13 || !mes2 || !ano2 || $("ccCvv").value.length < 3) { alert("Confira número, validade (MM/AA) e CVV."); return; }
-      $("asnAviso").textContent = "cadastrando cartão no Pagar.me…";
+      var ehDemo = demoAsn();
+      $("asnAviso").textContent = ehDemo ? "simulando cadastro do cartão…" : "cadastrando cartão no Pagar.me…";
       // tokenização: navegador → Pagar.me com a chave PÚBLICA (o número não passa pelo sistema)
-      fetch("https://api.pagar.me/core/v5/tokens?appId=" + encodeURIComponent(integ2().pagarmePk), {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "card", card: {
-          number: num, holder_name: $("ccNome").value.trim(),
-          exp_month: mes2, exp_year: ano2 < 100 ? 2000 + ano2 : ano2, cvv: $("ccCvv").value.trim(),
-        } }),
-      }).then(function (r) { return r.json(); }).then(function (tk) {
+      // no modo demonstração só a bandeira e os 4 últimos dígitos são usados — o número é descartado
+      var tokenP = ehDemo
+        ? Promise.resolve({ id: "sim_" + (num[0] === "4" ? "visa" : num[0] === "5" ? "mastercard" : "elo") + "_" + num.slice(-4) })
+        : fetch("https://api.pagar.me/core/v5/tokens?appId=" + encodeURIComponent(integ2().pagarmePk), {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "card", card: {
+              number: num, holder_name: $("ccNome").value.trim(),
+              exp_month: mes2, exp_year: ano2 < 100 ? 2000 + ano2 : ano2, cvv: $("ccCvv").value.trim(),
+            } }),
+          }).then(function (r) { return r.json(); });
+      tokenP.then(function (tk) {
         if (!tk || !tk.id) { $("asnAviso").textContent = "cartão recusado na tokenização — confira os dados."; return null; }
         $("asnAviso").textContent = "ativando recorrência…";
         var st2 = stA();
@@ -473,7 +506,8 @@
           var c3 = contratoAtivo(st3, a3);
           c3.assinatura = { id: r.assinaturaId, cartao: r.cartao, proximaCobranca: r.proximaCobranca, desde: S.todayISO() };
           S.write("alunos", st3);
-          alert("Recorrência ativa! 💳 " + (r.cartao || "") + " — o Pagar.me cobra sozinho todo mês.");
+          alert(ehDemo ? "🎭 SIMULAÇÃO: recorrência ativa! 💳 " + (r.cartao || "") + " — nada será cobrado de verdade. Com o Pagar.me conectado, o fluxo é idêntico."
+            : "Recorrência ativa! 💳 " + (r.cartao || "") + " — o Pagar.me cobra sozinho todo mês.");
         });
       }).catch(function (e) { $("asnAviso").textContent = "erro: " + e.message; });
     };

@@ -88,7 +88,7 @@
           "</td><td>" + metodo + '</td><td class="num">' + brl(+d.valor || 0) + "</td><td>" +
           (d.status === "pago" ? '<span class="tag ok">APROVADO</span>' : '<span class="tag alerta">EM ABERTO</span>') + "</td><td>" +
           (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener">abrir página de pagamento</a>' : (c.pixCopiaECola ? "PIX copia e cola gerado" : "—")) + "</td></tr>";
-      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — precisa do Pagar.me conectado em Integrações.</td></tr>');
+      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — com o Pagar.me conectado ou com o modo demonstração ligado em Integrações.</td></tr>');
     $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUESYS via Pagar.me (Fase 2). No EVO essa aba lista as tentativas de cartão da adquirente.";
   }
 
@@ -117,7 +117,7 @@
           '</td><td class="num">' + brl(+x.contrato.valor || 0) + "</td><td>" +
           (x.asn.statusCancelada ? '<span class="tag erro">CANCELADA</span>' : '<span class="tag roxo">PROGRAMADA</span>') +
           "</td><td>Cartão de Crédito</td><td>" + esc(x.asn.cartao || "—") + "</td></tr>";
-      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma assinatura recorrente. Cadastre o cartão do aluno no Perfil do Aluno → Cadastro → Formas de pagamento (precisa do Pagar.me conectado).</td></tr>');
+      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma assinatura recorrente. Cadastre o cartão do aluno no Perfil do Aluno → Cadastro → Formas de pagamento (com Pagar.me conectado ou modo demonstração ligado em Integrações).</td></tr>');
     $("rodape").textContent = "Cada assinatura cobra o cartão do aluno todo mês no dia do vencimento, direto na Pagar.me — igual à recorrência do EVO.";
   }
 

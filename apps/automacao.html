@@ -184,7 +184,13 @@
     return lista;
   }
 
+  function demoOn() {
+    var c = S.read("config", { dados: {} });
+    return !!(c.integracoes && c.integracoes.demo);
+  }
   function enviaWa(para, texto) {
+    // modo demonstração: registra o disparo sem chamar a API oficial
+    if (!integ().whatsappUrl && demoOn()) return Promise.resolve({ ok: true, demo: true });
     var headers = { "Content-Type": "application/json" };
     if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
       headers.apikey = window.MT_CLOUD.anonKey;
@@ -206,9 +212,9 @@
       h = '<div class="card linha-flex" style="justify-content: space-between;">' +
         "<span><strong>" + pend.length + "</strong> disparo(s) para hoje · <span class='muted'>" +
         (lista.length - pend.length) + " já enviados</span></span>" +
-        (integ().whatsappUrl
-          ? '<button class="btn" id="btnTodos"' + (pend.length ? "" : " disabled") + ">🚀 Enviar todos pela API</button>"
-          : '<span class="muted">Configure o WhatsApp oficial em <a href="integracoes.html">Integrações</a> para enviar em lote — os links manuais funcionam sempre.</span>') +
+        ((integ().whatsappUrl || demoOn())
+          ? '<button class="btn" id="btnTodos"' + (pend.length ? "" : " disabled") + ">🚀 Enviar todos" + (!integ().whatsappUrl && demoOn() ? " (simulação)" : " pela API") + "</button>"
+          : '<span class="muted">Configure o WhatsApp oficial em <a href="integracoes.html">Integrações</a> (ou ative o modo demonstração) para enviar em lote — os links manuais funcionam sempre.</span>') +
         "</div><div id='listaDisp'>" +
         (lista.length ? lista.map(function (d) {
           return '<div class="lin disp' + (d.enviado ? " enviado" : "") + '" data-ch="' + d.chave + '">' +
