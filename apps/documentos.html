@@ -49,6 +49,7 @@
     <div class="abas" id="abas">
       <button data-a="recibo" class="ativa">🧾 Recibo de pagamento</button>
       <button data-a="contrato">📄 Contrato de matrícula</button>
+      <button data-a="cancelamento">✕ Recibo de cancelamento</button>
     </div>
     <button class="btn" id="btnImprimir" hidden>🖨 Imprimir</button>
   </div>
@@ -146,8 +147,42 @@
     var a = alunoPorNome($("selAluno").value);
     if (!a) { alert("Escolha um aluno da lista."); return; }
     if (aba === "recibo") gerarRecibo(a);
+    else if (aba === "cancelamento") gerarCancelamento(a);
     else gerarContrato(a);
   };
+
+  // recibo de cancelamento — modelo do EVO (Configurações → Documentos)
+  function gerarCancelamento(a) {
+    var st = alunosSt();
+    var c = (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })
+      .sort(function (x, y) { return (x.canceladoEm || "") < (y.canceladoEm || "") ? 1 : -1; })[0];
+    if (!c) { alert(a.nome + " não tem contrato cancelado — cancele primeiro na Gestão de Alunos."); return; }
+    var ac = academia();
+    var plano = st.planos.find(function (p) { return p.id === c.planoId; }) || {};
+    var pagos = st.recebiveis.filter(function (r) { return r.contratoId === c.id && r.status === "pago"; });
+    var valorPago = pagos.reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    var abertas = st.recebiveis.filter(function (r) { return r.contratoId === c.id && r.status === "aberto"; });
+    var devedor = abertas.filter(function (r) { return r.vencimento < S.todayISO(); })
+      .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
+    var linhas = [["Nome", a.nome], ["CPF", a.cpf || "—"],
+      ["Contrato", (plano.nome || "plano") + " — início em " + S.fmtData(c.inicio)],
+      ["Cancelar a partir de", S.fmtData(c.canceladoEm || S.todayISO())],
+      ["Valor do contrato", brl2((+c.valor || 0) * (c.meses || 1))],
+      ["Valor pago", brl2(valorPago) + " (" + pagos.length + " parcela(s))"],
+      ["Recebimentos futuros cancelados", abertas.length + " parcela(s)"],
+      ["Saldo devedor", brl2(devedor)],
+      ["Motivo do cancelamento", c.motivoCancel || "não informado"],
+      ["Data de emissão", S.fmtData(S.todayISO())]];
+    $("docArea").innerHTML = '<div class="doc-folha">' + cabecalho(ac) +
+      "<h2>SOLICITAÇÃO DE CANCELAMENTO DE CONTRATO</h2>" +
+      linhas.map(function (kv) {
+        return '<p class="clausula" style="margin: 4px 0;"><strong>' + kv[0] + ":</strong> " + esc(kv[1]) + "</p>";
+      }).join("") +
+      '<p class="clausula" style="margin-top: 14px;">O(a) aluno(a) declara ciência do cancelamento do contrato acima, das parcelas futuras canceladas e de eventual saldo devedor apurado até esta data.</p>' +
+      '<div class="assinaturas"><div>' + esc(a.nome) + "<br>Aluno(a)</div><div>" + esc(ac.nome) + "<br>Responsável</div></div>" +
+      "</div>";
+    $("btnImprimir").hidden = false;
+  }
 
   function cabecalho(ac) {
     var logo = S.getLogo ? S.getLogo() : null;
