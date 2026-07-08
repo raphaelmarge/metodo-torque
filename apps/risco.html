@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risco de Abandono — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .media { text-align: right; font-size: 15px; }
+  .media strong { font-size: 26px; }
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11.5px; letter-spacing: .07em; }
+  .tabela td:nth-child(4), .tabela td:nth-child(5) { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM</span>
+    <h1>Risco de Abandono</h1>
+    </div>
+  </div>
+  <p>A régua de risco do EVO: cada aluno ativo com a última presença, os dias ausente e a nota de risco 0–100 — para agir antes do cancelamento.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end;">
+    <div class="linha-flex" style="align-items: flex-end;">
+      <div class="abas" id="abas">
+        <button data-f="todos" class="ativa">Todos</button>
+        <button data-f="alto">🔴 Alto</button>
+        <button data-f="medio">🟡 Médio</button>
+        <button data-f="baixo">🟢 Baixo</button>
+      </div>
+      <button class="btn sec mini" id="btnCsv">⬇ Exportar CSV</button>
+    </div>
+    <div class="media">Média de risco de abandono: <strong id="media">0</strong><span class="muted">/100</span></div>
+  </div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="tabela" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var filtro = "todos";
+
+  // dias ausente → nota 0–100 (30+ dias = 100), com as faixas do método:
+  // 7+ dias = médio (mensagem), 15+ = alto (ligação)
+  function calcula() {
+    var hoje = S.todayISO();
+    return S.read("alunos", { alunos: [] }).alunos
+      .filter(function (a) { return a.status !== "inativo"; })
+      .map(function (a) {
+        var ult = null;
+        (a.checkins || []).forEach(function (t) { var d = (t || "").slice(0, 10); if (!ult || d > ult) ult = d; });
+        var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+        var base = ult || (c && c.inicio) || hoje;
+        var dias = Math.max(0, Math.floor((new Date(hoje) - new Date(base)) / 864e5));
+        var nota = Math.min(100, Math.round(dias * (100 / 30)));
+        var faixa = dias >= 15 ? "alto" : dias >= 7 ? "medio" : "baixo";
+        return { a: a, ultimo: ult, dias: dias, nota: nota, faixa: faixa };
+      })
+      .sort(function (x, y) { return y.nota - x.nota; });
+  }
+
+  function render() {
+    var todos = calcula();
+    var media = todos.length ? Math.round(todos.reduce(function (t, x) { return t + x.nota; }, 0) / todos.length) : 0;
+    $("media").textContent = media;
+    $("media").style.color = media >= 50 ? "var(--erro)" : media >= 23 ? "var(--alerta)" : "var(--ok)";
+
+    var lista = todos.filter(function (x) { return filtro === "todos" || x.faixa === filtro; });
+    $("tabela").innerHTML = "<tr><th>NOME</th><th>CONSULTOR(A)</th><th>ÚLTIMA PRESENÇA</th><th>DIAS AUSENTE</th><th>RISCO</th><th></th></tr>" +
+      (lista.length ? lista.map(function (x) {
+        var tag = x.faixa === "alto" ? '<span class="tag erro">ALTO</span>' :
+          x.faixa === "medio" ? '<span class="tag alerta">MÉDIO</span>' : '<span class="tag ok">BAIXO</span>';
+        var msg = "Oi " + x.a.nome.split(" ")[0] + "! Sentimos sua falta" +
+          (x.dias ? " — já faz " + x.dias + " dias" : "") + ". Bora voltar pro treino essa semana? 💪";
+        return "<tr><td><a href='perfil-aluno.html?id=" + x.a.id + "'><strong>" + esc(x.a.nome) + "</strong></a></td>" +
+          "<td>" + esc(x.a.consultor || "—") + "</td>" +
+          "<td>" + (x.ultimo ? S.fmtData(x.ultimo) : "<span class='muted'>nunca veio</span>") + "</td>" +
+          "<td><strong>" + x.dias + "</strong></td>" +
+          "<td>" + x.nota + "/100 " + tag + "</td>" +
+          "<td>" + (x.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+            String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "") + "</td></tr>";
+      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px;">Nenhum aluno nessa faixa. 🎉</td></tr>');
+  }
+
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    filtro = b.getAttribute("data-f");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  $("btnCsv").onclick = function () {
+    var csv = "nome;consultor;ultima presenca;dias ausente;risco\n" + calcula().map(function (x) {
+      return [x.a.nome, x.a.consultor || "", x.ultimo || "nunca", x.dias, x.nota].join(";");
+    }).join("\n");
+    var el = document.createElement("a");
+    el.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    el.download = "risco-de-abandono.csv";
+    el.click();
+  };
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
