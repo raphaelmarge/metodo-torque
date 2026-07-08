@@ -34,10 +34,13 @@
 
   <div class="integ">
     <header><span class="ico">💳</span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
-    <p class="muted" style="margin: 8px 0 10px;">Gera PIX (copia e cola) e boleto para cada mensalidade em atraso, direto da régua de cobrança e do perfil do aluno — e confere sozinho se foi pago.</p>
+    <p class="muted" style="margin: 8px 0 10px;">Gera PIX (copia e cola), boleto e <strong>link de cartão de crédito</strong> (checkout seguro do Pagar.me, até 3×) para cada mensalidade em atraso, direto da régua de cobrança — e confere sozinho se foi pago.</p>
     <div class="linha-flex" style="align-items: flex-end;">
       <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → pagarme)</label>
         <input id="pgUrl" placeholder="https://seu-projeto.supabase.co/functions/v1/pagarme">
+      </div>
+      <div class="campo" style="flex: 1; min-width: 240px;"><label>Chave PÚBLICA do Pagar.me (pk_...) — para cartão recorrente</label>
+        <input id="pgPk" placeholder="pk_...">
       </div>
       <button class="btn" id="btnTestar">🔌 Testar conexão</button>
       <button class="btn sec" id="btnCodigo">📋 Copiar código da função</button>
@@ -52,6 +55,7 @@
         <li>Clique em <strong>📋 Copiar código da função</strong> aqui em cima e cole no editor do Supabase. Clique em <strong>Deploy</strong>.</li>
         <li>Na função <code>pagarme</code> → <strong>Secrets</strong> → adicione <code>PAGARME_SECRET_KEY</code> com a chave <code>sk_...</code> do passo 2.</li>
         <li>Copie a <strong>URL da função</strong> (aparece na página dela) e cole no campo acima. Clique em <strong>Testar conexão</strong> — tem que ficar verde. ✅</li>
+        <li><em>Para cartão recorrente:</em> em Configurações → Chaves do Pagar.me copie também a <strong>chave pública</strong> (<code>pk_...</code>) e cole no campo acima. Ela é pública mesmo — serve só para o navegador do sistema tokenizar o cartão direto no Pagar.me (o número nunca fica aqui).</li>
       </ol>
     </details>
   </div>
@@ -83,7 +87,18 @@
   function cfg() { return S.read("config", { dados: {}, horarios: {} }); }
   var c0 = cfg();
   $("pgUrl").value = (c0.integracoes && c0.integracoes.pagarmeUrl) || "";
+  $("pgPk").value = (c0.integracoes && c0.integracoes.pagarmePk) || "";
   atualizaStatus();
+
+  $("pgPk").addEventListener("change", function () {
+    var st = cfg();
+    st.integracoes = st.integracoes || {};
+    var v = this.value.trim();
+    if (v && v.indexOf("sk_") === 0) { alert("Essa é a chave SECRETA (sk_) — ela vai só nos Secrets do Supabase, nunca aqui! Cole a chave PÚBLICA (pk_)."); this.value = ""; return; }
+    if (st.integracoes.pagarmePk === v) return;
+    st.integracoes.pagarmePk = v;
+    S.write("config", st);
+  });
 
   function atualizaStatus() {
     var ok = !!$("pgUrl").value.trim();

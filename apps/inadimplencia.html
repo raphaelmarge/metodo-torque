@@ -301,22 +301,28 @@
       $("cobCorpo").innerHTML = '<p class="muted">Gerar cobrança de <strong>' + S.fmtBRL(+dev.valor) + "</strong> para " + esc(dev.nome) + ":</p>" +
         '<div class="linha-flex" style="margin-top: 10px;">' +
         '<button class="btn" id="cobPix">Gerar PIX (copia e cola)</button>' +
+        '<button class="btn sec" id="cobCartao">Link p/ cartão (até 3×)</button>' +
         '<button class="btn sec" id="cobBoleto">Gerar boleto</button></div>' +
-        '<p class="muted" id="cobAviso" style="margin-top: 8px;"></p>';
+        '<p class="muted" style="margin-top: 8px;">No link de cartão o aluno digita os dados na página segura do Pagar.me — e lá também pode escolher PIX ou boleto.</p>' +
+        '<p class="muted" id="cobAviso"></p>';
       $("cobPix").onclick = function () { geraCob(dev, "pix"); };
+      $("cobCartao").onclick = function () { geraCob(dev, "cartao"); };
       $("cobBoleto").onclick = function () { geraCob(dev, "boleto"); };
       return;
     }
-    var zapMsg = "Oi " + dev.nome.split(" ")[0] + "! Segue o " + (c.metodo === "boleto" ? "boleto" : "PIX") +
+    var zapMsg = "Oi " + dev.nome.split(" ")[0] + "! Segue o " +
+      (c.metodo === "boleto" ? "boleto" : c.metodo === "cartao" ? "link de pagamento (cartão, PIX ou boleto)" : "PIX") +
       " da mensalidade (" + S.fmtBRL(+dev.valor) + "):\n\n" +
-      (c.metodo === "boleto" ? (c.boletoUrl || "") : (c.pixCopiaECola || "")) +
+      (c.metodo === "boleto" ? (c.boletoUrl || "") : c.metodo === "cartao" ? (c.linkPagamento || "") : (c.pixCopiaECola || "")) +
       "\n\nQualquer dúvida me chama! 💜";
     $("cobCorpo").innerHTML =
       '<div class="linha-flex" style="justify-content: space-between;"><span class="tag ' +
-      (c.statusPago ? "ok" : "roxo") + '">' + (c.statusPago ? "✅ PAGO" : (c.metodo === "boleto" ? "BOLETO GERADO" : "PIX GERADO")) + "</span>" +
+      (c.statusPago ? "ok" : "roxo") + '">' + (c.statusPago ? "✅ PAGO" : (c.metodo === "boleto" ? "BOLETO GERADO" : c.metodo === "cartao" ? "LINK DE PAGAMENTO GERADO" : "PIX GERADO")) + "</span>" +
       '<span class="muted">' + S.fmtBRL(+dev.valor) + " · gerado " + S.fmtData(c.criadoEm) + "</span></div>" +
       (c.metodo === "pix" && c.pixCopiaECola ?
         '<div class="campo" style="margin-top: 10px;"><label>PIX copia e cola</label><textarea id="cobCodigo" readonly style="min-height: 80px; font-size: 12px;">' + esc(c.pixCopiaECola) + "</textarea></div>" : "") +
+      (c.metodo === "cartao" && c.linkPagamento ?
+        '<p style="margin-top: 10px;"><a class="btn" target="_blank" rel="noopener" href="' + esc(c.linkPagamento) + '">💳 Abrir página de pagamento</a></p>' : "") +
       (c.metodo === "boleto" && c.boletoUrl ?
         '<p style="margin-top: 10px;"><a class="btn sec" target="_blank" rel="noopener" href="' + esc(c.boletoUrl) + '">📄 Abrir boleto</a>' +
         (c.linhaDigitavel ? ' <span class="muted">linha: ' + esc(c.linhaDigitavel) + "</span>" : "") + "</p>" : "") +
@@ -354,13 +360,14 @@
       valorCentavos: Math.round((+dev.valor || 0) * 100),
       descricao: "Mensalidade — venc. " + S.fmtData(dev.vencimento),
       nome: dev.nome, cpf: extra.cpf, email: extra.email,
-      vencimento: S.todayISO(),
+      vencimento: S.todayISO(), parcelas: metodo === "cartao" ? 3 : 1,
     }).then(function (r) {
       if (!r || !r.ok) { $("cobAviso").textContent = "erro: " + ((r && r.erro) || "resposta inválida"); return; }
       var st = load();
       var d2 = st.devedores.find(function (x) { return x.id === dev.id; });
       d2.cobranca = { orderId: r.orderId, metodo: r.metodo, pixCopiaECola: r.pixCopiaECola,
-        boletoUrl: r.boletoUrl || r.boletoPdf, linhaDigitavel: r.linhaDigitavel, criadoEm: S.todayISO() };
+        boletoUrl: r.boletoUrl || r.boletoPdf, linhaDigitavel: r.linhaDigitavel,
+        linkPagamento: r.linkPagamento, criadoEm: S.todayISO() };
       save(st);
       renderCob(d2);
     }).catch(function (e) { $("cobAviso").textContent = "não alcancei a função: " + e.message; });
