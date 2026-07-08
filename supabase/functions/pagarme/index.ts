@@ -133,6 +133,73 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  // ---------- assinatura recorrente (cartão cadastrado, cobra todo mês) ----------
+  // O cartão NUNCA passa por aqui: o site tokeniza direto no Pagar.me com a
+  // chave PÚBLICA e envia só o token (token_...), que vira assinatura.
+  if (body.acao === "assinar") {
+    const valor = Math.round(Number(body.valorCentavos));
+    if (!valor || valor < 100) return json({ erro: "valorCentavos inválido." }, 400);
+    const nome = String(body.nome || "").trim();
+    const token = String(body.tokenCartao || "").trim();
+    if (!nome || !token) return json({ erro: "nome e tokenCartao são obrigatórios." }, 400);
+    const cpf = String(body.cpf || "").replace(/\D/g, "");
+    const dia = Math.min(Math.max(Number(body.diaVencimento) || 5, 1), 28);
+
+    const customer: any = { name: nome, type: "individual" };
+    if (cpf.length === 11) customer.document = cpf;
+    if (body.email) customer.email = String(body.email).trim();
+
+    const resp = await fetch(API + "/subscriptions", {
+      method: "POST",
+      headers: { Authorization: auth, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer,
+        payment_method: "credit_card",
+        card_token: token,
+        interval: "month",
+        interval_count: 1,
+        billing_type: "exact_day",
+        billing_day: dia,
+        installments: 1,
+        items: [{
+          description: String(body.descricao || "Mensalidade"),
+          quantity: 1,
+          pricing_scheme: { scheme_type: "unit", price: valor },
+        }],
+      }),
+    });
+    const dados: any = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      return json({ erro: "Pagar.me recusou a assinatura: " + (dados?.message || resp.status), detalhe: dados }, 502);
+    }
+    return json({
+      ok: true,
+      assinaturaId: dados.id,
+      status: dados.status,
+      proximaCobranca: dados.next_billing_at || null,
+      cartao: dados.card ? (dados.card.brand || "") + " •••• " + (dados.card.last_four_digits || "") : null,
+    });
+  }
+  if (body.acao === "assinatura-status") {
+    const id = String(body.assinaturaId || "").trim();
+    if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
+    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), { headers: { Authorization: auth } });
+    const dados: any = await resp.json().catch(() => ({}));
+    if (!resp.ok) return json({ erro: "Pagar.me recusou: " + (dados?.message || resp.status) }, 502);
+    return json({ ok: true, status: dados.status, proximaCobranca: dados.next_billing_at || null });
+  }
+  if (body.acao === "assinatura-cancelar") {
+    const id = String(body.assinaturaId || "").trim();
+    if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
+    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), {
+      method: "DELETE",
+      headers: { Authorization: auth },
+    });
+    const dados: any = await resp.json().catch(() => ({}));
+    if (!resp.ok) return json({ erro: "Pagar.me recusou o cancelamento: " + (dados?.message || resp.status) }, 502);
+    return json({ ok: true, status: dados.status || "canceled" });
+  }
+
   // ---------- consultar situação ----------
   if (body.acao === "status") {
     const id = String(body.orderId || "").trim();

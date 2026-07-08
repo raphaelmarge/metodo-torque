@@ -245,7 +245,42 @@
         .map(function (v) { return v.data; }).sort();
       var ultAv = avs2[avs2.length - 1];
       var endereco = [a.endereco, a.numero, a.complemento, a.bairro, a.cidade, a.uf].filter(Boolean).join(", ");
-      html = abasHTML("sc", subCad, [["dados", "DADOS PESSOAIS"], ["documentos", "DOCUMENTOS"], ["responsaveis", "RESPONSÁVEIS"]]);
+      html = abasHTML("sc", subCad, [["dados", "DADOS PESSOAIS"], ["documentos", "DOCUMENTOS"], ["responsaveis", "RESPONSÁVEIS"], ["pagamento", "FORMAS DE PAGAMENTO"]]);
+      if (subCad === "pagamento") {
+        var integ = (S.read("config", { dados: {} }).integracoes || {});
+        var cAtivo = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+        var pl = cAtivo && st.planos.find(function (x) { return x.id === cAtivo.planoId; });
+        if (!cAtivo) {
+          html += '<div class="card"><div class="vazio">Sem contrato ativo — matricule o aluno antes de cadastrar a recorrência.</div></div>';
+        } else if (cAtivo.assinatura) {
+          var asn = cAtivo.assinatura;
+          html += '<div class="card"><h2>Cartão recorrente</h2>' +
+            '<div class="kv"><span>Cartão</span><span>💳 ' + esc(asn.cartao || "cadastrado") + "</span></div>" +
+            '<div class="kv"><span>Situação</span><span class="tag ' + (asn.statusCancelada ? "neutro" : "ok") + '">' + (asn.statusCancelada ? "CANCELADA" : "ATIVA") + "</span></div>" +
+            '<div class="kv"><span>Valor</span><span>' + S.fmtBRL(+cAtivo.valor || 0) + "/mês · todo dia " + (cAtivo.diaVenc || 5) + "</span></div>" +
+            (asn.proximaCobranca ? '<div class="kv"><span>Próxima cobrança</span><span>' + S.fmtData(String(asn.proximaCobranca).slice(0, 10)) + "</span></div>" : "") +
+            '<div class="linha-flex" style="margin-top: 12px;">' +
+            '<button class="btn sec mini" id="asnStatus">🔄 Atualizar situação</button>' +
+            (!asn.statusCancelada ? '<button class="btn perigo mini" id="asnCancelar">✕ Cancelar recorrência</button>' : "") +
+            '<span class="muted" id="asnAviso"></span></div></div>';
+        } else if (!integ.pagarmeUrl || !integ.pagarmePk) {
+          html += '<div class="card"><div class="vazio">Para cadastrar o cartão do aluno e cobrar todo mês sozinho, configure a URL da função e a <strong>chave pública (pk_)</strong> em <a href="integracoes.html">Integrações</a>.</div></div>';
+        } else {
+          html += '<div class="card"><h2>Cadastrar cartão para cobrança recorrente</h2>' +
+            '<p class="muted" style="margin: 4px 0 10px;">🔒 Os dados do cartão vão <strong>direto do navegador para o Pagar.me</strong> — não ficam no sistema. A mensalidade de <strong>' +
+            S.fmtBRL(+cAtivo.valor || 0) + "</strong> (" + esc(pl ? pl.nome : "plano") + ") será cobrada automaticamente todo mês.</p>" +
+            '<div class="grid-2">' +
+            '<div class="campo"><label>Número do cartão</label><input id="ccNum" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000 0000"></div>' +
+            '<div class="campo"><label>Nome impresso no cartão</label><input id="ccNome" autocomplete="off" value="' + esc(a.nome.toUpperCase()) + '"></div>' +
+            '<div class="campo"><label>Validade (MM/AA)</label><input id="ccVal" autocomplete="off" placeholder="12/28" style="width: 110px;"></div>' +
+            '<div class="campo"><label>CVV</label><input id="ccCvv" inputmode="numeric" autocomplete="off" placeholder="123" style="width: 90px;"></div>' +
+            '<div class="campo"><label>Dia da cobrança</label><input id="ccDia" type="number" min="1" max="28" value="' + (cAtivo.diaVenc || 5) + '" style="width: 90px;"></div>' +
+            "</div>" +
+            '<div class="linha-flex" style="margin-top: 12px;">' +
+            '<button class="btn" id="btnAssinar">🔒 Cadastrar cartão e ativar recorrência</button>' +
+            '<span class="muted" id="asnAviso"></span></div></div>';
+        }
+      } else
       if (subCad === "documentos") {
         html += '<div class="card"><h2>Documentos do aluno</h2>' +
           '<div class="kv"><span>PAR-Q (questionário de prontidão)</span><span>' + (parq2 ?
@@ -384,6 +419,84 @@
         }).join("") + "</table>" : '<p class="muted">Nenhum check-in registrado ainda.</p>') + "</div>";
     }
     $("corpo").innerHTML = html;
+
+    // recorrência (Fase 2.2): tokeniza o cartão direto no Pagar.me e assina
+    function integ2() { return S.read("config", { dados: {} }).integracoes || {}; }
+    function chamaFn(payload) {
+      var headers = { "Content-Type": "application/json" };
+      if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
+        headers.apikey = window.MT_CLOUD.anonKey;
+        headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
+      }
+      return fetch(integ2().pagarmeUrl, { method: "POST", headers: headers, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json(); });
+    }
+    function contratoAtivo(st2, a2) { return (a2.contratos || []).find(function (x) { return x.status === "ativo"; }); }
+    var bAss = $("btnAssinar");
+    if (bAss) bAss.onclick = function () {
+      var num = $("ccNum").value.replace(/\D/g, "");
+      var val = $("ccVal").value.split("/");
+      var mes2 = parseInt(val[0], 10), ano2 = parseInt(val[1], 10);
+      if (num.length < 13 || !mes2 || !ano2 || $("ccCvv").value.length < 3) { alert("Confira número, validade (MM/AA) e CVV."); return; }
+      $("asnAviso").textContent = "cadastrando cartão no Pagar.me…";
+      // tokenização: navegador → Pagar.me com a chave PÚBLICA (o número não passa pelo sistema)
+      fetch("https://api.pagar.me/core/v5/tokens?appId=" + encodeURIComponent(integ2().pagarmePk), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "card", card: {
+          number: num, holder_name: $("ccNome").value.trim(),
+          exp_month: mes2, exp_year: ano2 < 100 ? 2000 + ano2 : ano2, cvv: $("ccCvv").value.trim(),
+        } }),
+      }).then(function (r) { return r.json(); }).then(function (tk) {
+        if (!tk || !tk.id) { $("asnAviso").textContent = "cartão recusado na tokenização — confira os dados."; return null; }
+        $("asnAviso").textContent = "ativando recorrência…";
+        var st2 = stA();
+        var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+        var c2 = contratoAtivo(st2, a2);
+        return chamaFn({
+          acao: "assinar", tokenCartao: tk.id,
+          valorCentavos: Math.round((+c2.valor || 0) * 100),
+          descricao: "Mensalidade — " + a2.nome,
+          nome: a2.nome, cpf: a2.cpf || "", email: a2.email || "",
+          diaVencimento: +$("ccDia").value || c2.diaVenc || 5,
+        }).then(function (r) {
+          if (!r || !r.ok) { $("asnAviso").textContent = "erro: " + ((r && r.erro) || "resposta inválida"); return; }
+          var st3 = stA();
+          var a3 = st3.alunos.find(function (x) { return x.id === alunoId; });
+          var c3 = contratoAtivo(st3, a3);
+          c3.assinatura = { id: r.assinaturaId, cartao: r.cartao, proximaCobranca: r.proximaCobranca, desde: S.todayISO() };
+          S.write("alunos", st3);
+          alert("Recorrência ativa! 💳 " + (r.cartao || "") + " — o Pagar.me cobra sozinho todo mês.");
+        });
+      }).catch(function (e) { $("asnAviso").textContent = "erro: " + e.message; });
+    };
+    var bSt = $("asnStatus");
+    if (bSt) bSt.onclick = function () {
+      var st2 = stA();
+      var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+      var c2 = contratoAtivo(st2, a2);
+      $("asnAviso").textContent = "consultando…";
+      chamaFn({ acao: "assinatura-status", assinaturaId: c2.assinatura.id }).then(function (r) {
+        if (!r || !r.ok) { $("asnAviso").textContent = "erro: " + ((r && r.erro) || "?"); return; }
+        c2.assinatura.proximaCobranca = r.proximaCobranca;
+        c2.assinatura.statusCancelada = r.status === "canceled";
+        S.write("alunos", st2);
+        $("asnAviso").textContent = "situação: " + r.status;
+      }).catch(function (e) { $("asnAviso").textContent = "erro: " + e.message; });
+    };
+    var bCanc = $("asnCancelar");
+    if (bCanc) bCanc.onclick = function () {
+      if (!confirm("Cancelar a cobrança recorrente deste aluno no Pagar.me?")) return;
+      var st2 = stA();
+      var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+      var c2 = contratoAtivo(st2, a2);
+      $("asnAviso").textContent = "cancelando…";
+      chamaFn({ acao: "assinatura-cancelar", assinaturaId: c2.assinatura.id }).then(function (r) {
+        if (!r || !r.ok) { $("asnAviso").textContent = "erro: " + ((r && r.erro) || "?"); return; }
+        c2.assinatura.statusCancelada = true;
+        S.write("alunos", st2);
+        alert("Recorrência cancelada no Pagar.me.");
+      }).catch(function (e) { $("asnAviso").textContent = "erro: " + e.message; });
+    };
 
     // relacionamento: registrar/excluir contato
     var bReg = $("btnRegistrar");
