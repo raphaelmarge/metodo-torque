@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Descontos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11.5px; letter-spacing: .07em; }
+  .regras { display: flex; gap: 4px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Descontos</h1>
+    </div>
+  </div>
+  <p>Os descontos oficiais da academia com as regras do EVO: porcentagem ou valor, vigência, limite de idade, recorrência, autorização e quem pode aplicar.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativos" type="checkbox"> mostrar inativos</label>
+    <button class="btn" id="btnNovo">➕ Novo desconto</button>
+  </div>
+  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 560px; max-width: 100%;">
+    <h2 id="dTitulo">Novo desconto</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Descrição *</label><input id="dDesc" required placeholder="ex.: Desconto 5%"></div>
+      <div class="campo"><label>Tipo de desconto</label>
+        <select id="dTipo"><option value="pct">Porcentagem (%)</option><option value="valor">Valor (R$)</option></select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Valor *</label><input id="dValor" type="number" step="0.01" required></div>
+      <div class="campo"><label>Quantidade máxima por mês</label><input id="dMaxMes" type="number" min="0" placeholder="sem limite"></div>
+    </div>
+    <fieldset style="border: 1px solid var(--linha); padding: 10px 12px;">
+      <legend style="font-size: 12px; font-weight: 700;">Vigência definida</legend>
+      <div class="grid-2">
+        <div class="campo"><label>De</label><input id="dVigDe" type="date"></div>
+        <div class="campo"><label>Até</label><input id="dVigAte" type="date"></div>
+      </div>
+    </fieldset>
+    <fieldset style="border: 1px solid var(--linha); padding: 10px 12px;">
+      <legend style="font-size: 12px; font-weight: 700;">Limite de idade</legend>
+      <div class="grid-2">
+        <div class="campo"><label>De (anos)</label><input id="dIdadeDe" type="number" min="0"></div>
+        <div class="campo"><label>Até (anos)</label><input id="dIdadeAte" type="number" min="0"></div>
+      </div>
+    </fieldset>
+    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px;">
+      <label class="linha-flex" style="gap: 6px;"><input id="dRecorrente" type="checkbox"> Aplicar desconto recorrente (em todas as parcelas)</label>
+      <label class="linha-flex" style="gap: 6px;"><input id="dAutorizacao" type="checkbox"> Necessita de autorização do gestor</label>
+      <label class="linha-flex" style="gap: 6px;"><input id="dFamiliares" type="checkbox"> Desconto para familiares</label>
+      <label class="linha-flex" style="gap: 6px;"><input id="dInativo" type="checkbox"> Inativo</label>
+    </div>
+    <div class="campo"><label>Quem pode aplicar (cargo)</label>
+      <select id="dCargo"><option value="">Qualquer colaborador</option><option>Somente gestor(a)</option><option>Gestor(a) e recepção</option><option>Somente vendas</option></select>
+    </div>
+    <div class="campo"><label>Observações</label><textarea id="dObs" rows="2"></textarea></div>
+    <div class="linha-flex" style="justify-content: space-between;">
+      <button class="btn perigo mini" id="btnExcluir" type="button" hidden>Excluir</button>
+      <div class="linha-flex" style="margin-left: auto;">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">✓ Salvar</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("descontos", { itens: [] }); }
+  function save(st) { S.write("descontos", st); render(); }
+
+  function valorFmt(d) { return d.tipo === "pct" ? (+d.valor || 0) + " %" : brl(+d.valor || 0); }
+
+  function render() {
+    var st = load();
+    var lista = $("fInativos").checked ? st.itens : st.itens.filter(function (d) { return !d.inativo; });
+    $("tabela").innerHTML = "<tr><th>DESCRIÇÃO</th><th>TIPO</th><th>VALOR</th><th>VIGÊNCIA</th><th>REGRAS</th><th>STATUS</th><th></th></tr>" +
+      (lista.length ? lista.map(function (d) {
+        var regras = [];
+        if (d.recorrente) regras.push("RECORRENTE");
+        if (d.autorizacao) regras.push("AUTORIZAÇÃO");
+        if (d.familiares) regras.push("FAMILIARES");
+        if (d.maxMes) regras.push("MÁX " + d.maxMes + "/MÊS");
+        if (d.idadeDe || d.idadeAte) regras.push("IDADE " + (d.idadeDe || "0") + "–" + (d.idadeAte || "∞"));
+        if (d.cargo) regras.push(d.cargo.toUpperCase());
+        return "<tr><td><strong>" + esc(d.desc) + "</strong>" + (d.obs ? '<br><span class="muted" style="font-size: 12px;">' + esc(d.obs) + "</span>" : "") +
+          "</td><td>" + (d.tipo === "pct" ? "Porcentagem" : "Valor") + "</td><td><strong>" + valorFmt(d) + "</strong></td><td>" +
+          (d.vigDe || d.vigAte ? (d.vigDe ? S.fmtData(d.vigDe) : "…") + " → " + (d.vigAte ? S.fmtData(d.vigAte) : "…") : "sempre") +
+          '</td><td><div class="regras">' + (regras.length ? regras.map(function (r) { return '<span class="tag roxo">' + r + "</span>"; }).join("") : '<span class="muted">—</span>') + "</div></td><td>" +
+          (d.inativo ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') +
+          '</td><td><button class="btn sec mini" data-edit="' + d.id + '">✏</button></td></tr>';
+      }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px;">Nenhum desconto cadastrado — clique em ➕ Novo desconto.</td></tr>');
+  }
+  $("fInativos").addEventListener("change", render);
+
+  var editId = null;
+  function abre(d) {
+    editId = d ? d.id : null;
+    $("dTitulo").textContent = d ? "Editar — " + d.desc : "Novo desconto";
+    $("dDesc").value = d ? d.desc : "";
+    $("dTipo").value = d ? d.tipo || "pct" : "pct";
+    $("dValor").value = d ? d.valor : "";
+    $("dMaxMes").value = d && d.maxMes ? d.maxMes : "";
+    $("dVigDe").value = d ? d.vigDe || "" : "";
+    $("dVigAte").value = d ? d.vigAte || "" : "";
+    $("dIdadeDe").value = d && d.idadeDe ? d.idadeDe : "";
+    $("dIdadeAte").value = d && d.idadeAte ? d.idadeAte : "";
+    $("dRecorrente").checked = !!(d && d.recorrente);
+    $("dAutorizacao").checked = !!(d && d.autorizacao);
+    $("dFamiliares").checked = !!(d && d.familiares);
+    $("dInativo").checked = !!(d && d.inativo);
+    $("dCargo").value = d ? d.cargo || "" : "";
+    $("dObs").value = d ? d.obs || "" : "";
+    $("btnExcluir").hidden = !d;
+    $("dlg").showModal();
+  }
+  $("btnNovo").onclick = function () { abre(null); };
+  $("tabela").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-edit");
+    if (id) abre(load().itens.find(function (d) { return d.id === id; }));
+  });
+  $("btnExcluir").onclick = function () {
+    if (!editId || !confirm("Excluir este desconto?")) return;
+    var st = load();
+    st.itens = st.itens.filter(function (d) { return d.id !== editId; });
+    $("dlg").close();
+    save(st);
+  };
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var dados = {
+      desc: $("dDesc").value.trim(), tipo: $("dTipo").value, valor: +$("dValor").value || 0,
+      maxMes: +$("dMaxMes").value || 0, vigDe: $("dVigDe").value, vigAte: $("dVigAte").value,
+      idadeDe: +$("dIdadeDe").value || 0, idadeAte: +$("dIdadeAte").value || 0,
+      recorrente: $("dRecorrente").checked, autorizacao: $("dAutorizacao").checked,
+      familiares: $("dFamiliares").checked, inativo: $("dInativo").checked,
+      cargo: $("dCargo").value, obs: $("dObs").value.trim(),
+    };
+    if (!dados.desc) return;
+    if (editId) {
+      var d = st.itens.find(function (x) { return x.id === editId; });
+      Object.keys(dados).forEach(function (k) { d[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      st.itens.push(dados);
+    }
+    save(st);
+  });
+  S.onChange(function (k) { if (k === "descontos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

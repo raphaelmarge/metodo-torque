@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contas a Receber — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 8px 10px; border-bottom: 1px solid var(--linha); font-size: 13px; text-align: left; white-space: nowrap; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11px; letter-spacing: .06em; }
+  .tabela td.num, .tabela th.num { text-align: right; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .kpi { background: #fff; border: 1px solid var(--linha); padding: 10px 14px; }
+  .kpi .rot { font-size: 11px; letter-spacing: .08em; color: var(--cinza); font-weight: 700; }
+  .kpi .val { font-size: 20px; font-weight: 800; margin-top: 2px; }
+  .filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .filtros .campo { min-width: 130px; flex: 0 1 auto; }
+  .filtros input, .filtros select { padding: 7px 8px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Contas a Receber</h1>
+    </div>
+  </div>
+  <p>Todas as parcelas dos alunos como no EVO: filtros por período, baixa com forma de pagamento e valor líquido, exportação e visão por centro de receita.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
+  <div class="abas">
+    <button class="ativa" data-aba="contas">CONTAS</button>
+    <button data-aba="centros">POR CENTRO DE RECEITA</button>
+  </div>
+
+  <section id="secContas" style="display: flex; flex-direction: column; gap: 14px;">
+    <div class="card filtros">
+      <div class="campo" style="flex: 1 1 180px;"><label>Pagador / descrição</label><input id="fBusca" placeholder="nome, CPF ou plano"></div>
+      <div class="campo"><label>Status</label>
+        <select id="fStatus">
+          <option value="">Todos</option>
+          <option value="aberto">Em aberto</option>
+          <option value="vencido">Vencidas</option>
+          <option value="pago">Pagas</option>
+          <option value="cancelado">Canceladas</option>
+        </select>
+      </div>
+      <div class="campo"><label>Vencimento de</label><input id="fVde" type="date"></div>
+      <div class="campo"><label>até</label><input id="fVate" type="date"></div>
+      <div class="campo"><label>Recebimento de</label><input id="fRde" type="date"></div>
+      <div class="campo"><label>até</label><input id="fRate" type="date"></div>
+      <div class="campo"><label>Competência</label><input id="fComp" type="month"></div>
+      <div class="campo"><label>Valor mín.</label><input id="fVmin" type="number" step="0.01" style="width: 90px;"></div>
+      <div class="campo"><label>Valor máx.</label><input id="fVmax" type="number" step="0.01" style="width: 90px;"></div>
+      <button class="btn sec mini" id="btnLimpar" type="button">Limpar filtros</button>
+      <button class="btn mini" id="btnExportar" type="button">⬇ Exportar</button>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+  </section>
+
+  <section id="secCentros" hidden style="display: flex; flex-direction: column; gap: 14px;">
+    <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end;">
+      <div class="campo"><label>Competência</label><input id="cComp" type="month"></div>
+      <p class="muted" style="font-size: 12.5px; max-width: 520px;">Recebimentos agrupados pelo centro de receita (plano do contrato ou venda avulsa), como no relatório do EVO.</p>
+      <button class="btn mini" id="btnExpCentros" type="button">⬇ Exportar</button>
+    </div>
+    <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabCentros"></table></div>
+  </section>
+</main>
+
+<dialog id="dlgBaixa">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 420px; max-width: 100%;">
+    <h2>✓ Baixar conta</h2>
+    <p id="bxQuem" class="muted" style="font-size: 13px;"></p>
+    <div class="grid-2">
+      <div class="campo"><label>Data do recebimento</label><input id="bxData" type="date" required></div>
+      <div class="campo"><label>Forma de pagamento</label>
+        <select id="bxForma"><option>Dinheiro</option><option>PIX</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Boleto</option><option>Transferência</option></select>
+      </div>
+    </div>
+    <div class="campo"><label>Valor de baixa (líquido recebido)</label><input id="bxValor" type="number" step="0.01" required></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Confirmar baixa</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+
+  function mapas(st) {
+    var porAluno = {}, porContrato = {}, porPlano = {};
+    st.alunos.forEach(function (a) {
+      porAluno[a.id] = a;
+      (a.contratos || []).forEach(function (c) { porContrato[c.id] = c; });
+    });
+    (st.planos || []).forEach(function (p) { porPlano[p.id] = p; });
+    return { aluno: porAluno, contrato: porContrato, plano: porPlano };
+  }
+
+  function descDe(r, m) {
+    var c = m.contrato[r.contratoId];
+    var p = c && m.plano[c.planoId];
+    return "Mensalidade — " + (p ? p.nome : "plano");
+  }
+
+  function filtra() {
+    var st = load();
+    var m = mapas(st);
+    var hoje = S.todayISO();
+    var q = $("fBusca").value.trim().toLowerCase();
+    var status = $("fStatus").value;
+    var vde = $("fVde").value, vate = $("fVate").value;
+    var rde = $("fRde").value, rate = $("fRate").value;
+    var comp = $("fComp").value;
+    var vmin = $("fVmin").value, vmax = $("fVmax").value;
+    var lista = st.recebiveis.filter(function (r) {
+      var a = m.aluno[r.alunoId] || {};
+      if (q) {
+        var alvo = ((a.nome || "") + " " + (a.cpf || "") + " " + descDe(r, m)).toLowerCase();
+        if (alvo.indexOf(q) < 0) return false;
+      }
+      if (status === "aberto" && r.status !== "aberto") return false;
+      if (status === "pago" && r.status !== "pago") return false;
+      if (status === "cancelado" && r.status !== "cancelado") return false;
+      if (status === "vencido" && !(r.status === "aberto" && r.vencimento < hoje)) return false;
+      if (vde && r.vencimento < vde) return false;
+      if (vate && r.vencimento > vate) return false;
+      if (rde && (!r.pagoEm || r.pagoEm < rde)) return false;
+      if (rate && (!r.pagoEm || r.pagoEm > rate)) return false;
+      if (comp && r.competencia !== comp) return false;
+      if (vmin !== "" && +r.valor < +vmin) return false;
+      if (vmax !== "" && +r.valor > +vmax) return false;
+      return true;
+    });
+    lista.sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; });
+    return { lista: lista, m: m, hoje: hoje };
+  }
+
+  function statusHTML(r, hoje) {
+    if (r.status === "pago") return '<span class="tag ok">PAGO</span>';
+    if (r.status === "cancelado") return '<span class="tag neutro">CANCELADA</span>';
+    if (r.vencimento < hoje) return '<span class="tag erro">VENCIDA</span>';
+    return '<span class="tag alerta">EM ABERTO</span>';
+  }
+
+  function render() {
+    var f = filtra();
+    var aberto = 0, vencido = 0, recebido = 0;
+    f.lista.forEach(function (r) {
+      if (r.status === "aberto") { aberto += +r.valor || 0; if (r.vencimento < f.hoje) vencido += +r.valor || 0; }
+      if (r.status === "pago") recebido += (r.valorBaixa != null ? +r.valorBaixa : +r.valor) || 0;
+    });
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">RESULTADOS</div><div class="val">' + f.lista.length + '</div></div>' +
+      '<div class="kpi"><div class="rot">EM ABERTO</div><div class="val" style="color: var(--alerta);">' + brl(aberto) + '</div></div>' +
+      '<div class="kpi"><div class="rot">VENCIDO</div><div class="val" style="color: var(--erro);">' + brl(vencido) + '</div></div>' +
+      '<div class="kpi"><div class="rot">RECEBIDO (VALOR DE BAIXA)</div><div class="val" style="color: var(--ok);">' + brl(recebido) + '</div></div>';
+
+    $("tabela").innerHTML = "<tr><th>ALUNO</th><th>CPF</th><th>DESCRIÇÃO</th><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>RECEBIMENTO</th><th class=\"num\">VALOR</th><th class=\"num\">VALOR DE BAIXA</th><th>FORMA</th><th>STATUS</th><th></th></tr>" +
+      (f.lista.length ? f.lista.map(function (r) {
+        var a = f.m.aluno[r.alunoId] || {};
+        var acoes = "";
+        if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
+        acoes += ' <button class="btn sec mini" data-copia="' + r.id + '" title="Copiar conta">⧉</button>';
+        return "<tr><td><strong>" + esc(a.nome || "?") + "</strong></td><td>" + esc(a.cpf || "—") + "</td><td>" + esc(descDe(r, f.m)) +
+          "</td><td>" + esc(r.competencia || "—") + "</td><td>" + S.fmtData(r.vencimento) + "</td><td>" + (r.pagoEm ? S.fmtData(r.pagoEm) : "—") +
+          '</td><td class="num">' + brl(+r.valor || 0) + '</td><td class="num">' + (r.status === "pago" ? brl(r.valorBaixa != null ? +r.valorBaixa : +r.valor) : "—") +
+          "</td><td>" + esc(r.forma || "—") + "</td><td>" + statusHTML(r, f.hoje) + "</td><td>" + acoes + "</td></tr>";
+      }).join("") : '<tr><td colspan="11" class="muted" style="padding: 20px; white-space: normal;">Nenhuma conta com esses filtros. As parcelas nascem na matrícula (Gestão de Alunos).</td></tr>');
+    renderCentros();
+  }
+
+  // ---------- por centro de receita ----------
+  function renderCentros() {
+    var st = load();
+    var m = mapas(st);
+    var comp = $("cComp").value;
+    var grupos = {};
+    st.recebiveis.forEach(function (r) {
+      if (r.status === "cancelado") return;
+      if (comp && r.competencia !== comp) return;
+      var k = descDe(r, m);
+      var g = grupos[k] || (grupos[k] = { qtde: 0, aberto: 0, recebido: 0 });
+      g.qtde++;
+      if (r.status === "aberto") g.aberto += +r.valor || 0;
+      if (r.status === "pago") g.recebido += (r.valorBaixa != null ? +r.valorBaixa : +r.valor) || 0;
+    });
+    S.read("produtos", { vendas: [] }).vendas.forEach(function (v) {
+      if (comp && (v.data || "").slice(0, 7) !== comp) return;
+      var g = grupos["Venda avulsa / produtos"] || (grupos["Venda avulsa / produtos"] = { qtde: 0, aberto: 0, recebido: 0 });
+      g.qtde++; g.recebido += +v.total || 0;
+    });
+    var chaves = Object.keys(grupos).sort();
+    $("tabCentros").innerHTML = "<tr><th>CENTRO DE RECEITA</th><th class=\"num\">LANÇAMENTOS</th><th class=\"num\">EM ABERTO</th><th class=\"num\">RECEBIDO</th><th class=\"num\">TOTAL</th></tr>" +
+      (chaves.length ? chaves.map(function (k) {
+        var g = grupos[k];
+        return "<tr><td><strong>" + esc(k) + '</strong></td><td class="num">' + g.qtde + '</td><td class="num">' + brl(g.aberto) +
+          '</td><td class="num">' + brl(g.recebido) + '</td><td class="num"><strong>' + brl(g.aberto + g.recebido) + "</strong></td></tr>";
+      }).join("") : '<tr><td colspan="5" class="muted" style="padding: 20px;">Sem lançamentos nessa competência.</td></tr>');
+  }
+
+  // ---------- exportar ----------
+  function baixaCSV(nome, linhas) {
+    var csv = linhas.map(function (l) { return l.map(function (c) { return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(";"); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = nome;
+    a.click();
+  }
+  $("btnExportar").onclick = function () {
+    var f = filtra();
+    var linhas = [["Aluno", "CPF", "Descrição", "Competência", "Vencimento", "Recebimento", "Valor", "Valor de baixa", "Forma", "Status"]];
+    f.lista.forEach(function (r) {
+      var a = f.m.aluno[r.alunoId] || {};
+      linhas.push([a.nome || "", a.cpf || "", descDe(r, f.m), r.competencia || "", r.vencimento, r.pagoEm || "",
+        (+r.valor || 0).toFixed(2), r.status === "pago" ? (r.valorBaixa != null ? +r.valorBaixa : +r.valor).toFixed(2) : "", r.forma || "", r.status]);
+    });
+    baixaCSV("contas-a-receber-" + S.todayISO() + ".csv", linhas);
+  };
+  $("btnExpCentros").onclick = function () {
+    var linhas = [["Centro de receita", "Lançamentos", "Em aberto", "Recebido", "Total"]];
+    var trs = $("tabCentros").querySelectorAll("tr");
+    for (var i = 1; i < trs.length; i++) {
+      var tds = trs[i].querySelectorAll("td");
+      if (tds.length < 5) continue;
+      linhas.push([tds[0].textContent, tds[1].textContent, tds[2].textContent, tds[3].textContent, tds[4].textContent]);
+    }
+    baixaCSV("recebimentos-por-centro-" + S.todayISO() + ".csv", linhas);
+  };
+
+  // ---------- ações ----------
+  var baixaId = null;
+  $("tabela").addEventListener("click", function (e) {
+    var t = e.target;
+    var id = t.getAttribute && (t.getAttribute("data-baixa") || t.getAttribute("data-cancela") || t.getAttribute("data-copia"));
+    if (!id) return;
+    var st = load();
+    var r = st.recebiveis.find(function (x) { return x.id === id; });
+    if (!r) return;
+    if (t.hasAttribute("data-baixa")) {
+      baixaId = id;
+      var a = st.alunos.find(function (x) { return x.id === r.alunoId; }) || {};
+      $("bxQuem").textContent = (a.nome || "?") + " — vencimento " + S.fmtData(r.vencimento) + " — " + brl(+r.valor || 0);
+      $("bxData").value = S.todayISO();
+      $("bxValor").value = (+r.valor || 0).toFixed(2);
+      $("dlgBaixa").showModal();
+      return;
+    }
+    if (t.hasAttribute("data-cancela")) {
+      if (!confirm("Cancelar esta conta? Ela sai do saldo devedor do aluno.")) return;
+      r.status = "cancelado";
+      r.canceladaEm = S.todayISO();
+      S.write("alunos", st);
+      render();
+      return;
+    }
+    if (t.hasAttribute("data-copia")) {
+      st.recebiveis.push({ id: S.uid(), alunoId: r.alunoId, contratoId: r.contratoId, competencia: r.competencia, vencimento: r.vencimento, valor: r.valor, status: "aberto" });
+      S.write("alunos", st);
+      render();
+    }
+  });
+  $("dlgBaixa").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    var r = st.recebiveis.find(function (x) { return x.id === baixaId; });
+    if (!r) return;
+    r.status = "pago";
+    r.pagoEm = $("bxData").value || S.todayISO();
+    r.forma = $("bxForma").value;
+    r.valorBaixa = +$("bxValor").value || +r.valor || 0;
+    S.write("alunos", st);
+    render();
+  });
+
+  // ---------- abas e filtros ----------
+  document.querySelector(".abas").addEventListener("click", function (e) {
+    var aba = e.target.getAttribute && e.target.getAttribute("data-aba");
+    if (!aba) return;
+    document.querySelectorAll(".abas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-aba") === aba); });
+    $("secContas").hidden = aba !== "contas";
+    $("secCentros").hidden = aba !== "centros";
+  });
+  ["fBusca", "fStatus", "fVde", "fVate", "fRde", "fRate", "fComp", "fVmin", "fVmax", "cComp"].forEach(function (id) {
+    $(id).addEventListener("input", render);
+  });
+  $("btnLimpar").onclick = function () {
+    ["fBusca", "fVde", "fVate", "fRde", "fRate", "fComp", "fVmin", "fVmax"].forEach(function (id) { $(id).value = ""; });
+    $("fStatus").value = "";
+    render();
+  };
+
+  S.onChange(function (k) { if (k === "alunos" || k === "produtos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
