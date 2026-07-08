@@ -318,7 +318,15 @@
         '<div class="kv"><span>PAR-Q</span><span>' + (parq2 ?
           (parq2.temSim ? '<span class="tag alerta">RISCO — aval. médica</span>' : '<span class="tag ok">APTO' + (parq2.data ? " — " + S.fmtData(parq2.data) : "") + "</span>")
           : '<span class="tag erro">PENDENTE</span>') + "</span></div>" +
-        '<p class="muted" style="margin-top:8px;">Reavaliação recomendada a cada 90 dias — agende pela <a href="saude.html">Avaliação Física</a>.</p></div>' +
+        [["medico", "Exame médico"], ["nutricional", "Aval. nutricional"], ["dermato", "Exame dermatológico"]].map(function (ex) {
+          var d = (a.exames || {})[ex[0]] || "";
+          var tag = !d ? '<span class="tag neutro">SEM REGISTRO</span>' :
+            diasDesde(d) >= 365 ? '<span class="tag alerta">VENCIDO — ' + S.fmtData(d) + "</span>" :
+            '<span class="tag ok">EM DIA — ' + S.fmtData(d) + "</span>";
+          return '<div class="kv"><span>' + ex[1] + "</span><span>" + tag +
+            ' <input type="date" data-exame="' + ex[0] + '" value="' + esc(d) + '" style="width: 140px; padding: 2px 6px; font-size: 12px;"></span></div>';
+        }).join("") +
+        '<p class="muted" style="margin-top:8px;">Avaliação física a cada 90 dias (agende pela <a href="saude.html">Avaliação Física</a>); exames valem por 1 ano — a data salva sozinha.</p></div>' +
         '<div class="card"><h2>Origem e observações</h2>' +
         [["Como conheceu", a.comoConheceu || a.origem], ["Indicado por", a.indicacao], ["Consultor(a)", a.consultor],
          ["Tipo de visita", a.tipoVisita], ["Cliente desde", a.criado ? S.fmtData(a.criado) : ""], ["Observações", a.obs]].map(function (kv) {
@@ -535,6 +543,17 @@
       render();
     });
   }
+
+  // datas de exames (médico/nutricional/dermatológico) salvam no blur
+  $("corpo").addEventListener("change", function (e) {
+    var ex = e.target.getAttribute && e.target.getAttribute("data-exame");
+    if (!ex || !alunoId) return;
+    var st2 = stA();
+    var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a2) return;
+    (a2.exames = a2.exames || {})[ex] = e.target.value;
+    S.write("alunos", st2);
+  });
 
   // delegate único: sub-abas + excluir contato do relacionamento
   $("corpo").addEventListener("click", function (e) {
