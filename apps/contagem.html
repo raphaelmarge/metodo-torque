@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contagem de Clientes — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 8px 10px; border-bottom: 1px solid var(--linha); font-size: 13px; text-align: left; white-space: nowrap; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11px; letter-spacing: .06em; }
+  .tabela td.num, .tabela th.num { text-align: right; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .kpi { border: 1px solid var(--linha); padding: 10px 14px; background: #fff; }
+  .kpi .rot { font-size: 11px; letter-spacing: .08em; font-weight: 700; color: var(--cinza); }
+  .kpi .val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · TREINOS / GERENCIAL</span>
+    <h1>Contagem de Clientes</h1>
+    </div>
+  </div>
+  <p>A "Contagem de clientes" e a "Ocupação de áreas" do EVO: o professor conta quantos estão na musculação e no cardio, o sistema mostra a lotação por horário e dia da semana.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
+  <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+    <div class="campo"><label>Período — de</label><input id="fDe" type="date"></div>
+    <div class="campo"><label>até</label><input id="fAte" type="date"></div>
+    <button class="btn sec mini" id="btnExportar" type="button">⬇ Exportar</button>
+    <button class="btn" id="btnNova">➕ Nova contagem</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .06em;">MÉDIA DE OCUPAÇÃO POR HORÁRIO (período filtrado)</h2>
+    <div style="overflow-x: auto;"><table class="tabela" id="tabMedia" style="margin-top: 8px;"></table></div>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 460px; max-width: 100%;">
+    <h2>➕ Nova contagem</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Data</label><input id="cData" type="date" required></div>
+      <div class="campo"><label>Horário</label><input id="cHora" type="time" required></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Musculação (pessoas)</label><input id="cMusc" type="number" min="0" value="0"></div>
+      <div class="campo"><label>Cardio (pessoas)</label><input id="cCardio" type="number" min="0" value="0"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Outras áreas (pessoas)</label><input id="cOutras" type="number" min="0" value="0"></div>
+      <div class="campo"><label>Preenchido por</label><input id="cQuem" placeholder="nome"></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Registrar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+  function load() { return S.read("contagens", { itens: [] }); }
+  function save(st) { S.write("contagens", st); render(); }
+  function totalDe(c) { return (+c.musc || 0) + (+c.cardio || 0) + (+c.outras || 0); }
+  function diaSemana(iso) { return DIAS[new Date(iso + "T12:00").getDay()]; }
+
+  function filtradas() {
+    var de = $("fDe").value, ate = $("fAte").value;
+    return load().itens.filter(function (c) {
+      if (de && c.data < de) return false;
+      if (ate && c.data > ate) return false;
+      return true;
+    }).sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? 1 : -1; });
+  }
+
+  function render() {
+    var lista = filtradas();
+    var totalPico = 0, somaTotal = 0;
+    lista.forEach(function (c) { var t = totalDe(c); somaTotal += t; if (t > totalPico) totalPico = t; });
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">CONTAGENS</div><div class="val">' + lista.length + "</div></div>" +
+      '<div class="kpi"><div class="rot">PICO DE PESSOAS</div><div class="val">' + totalPico + "</div></div>" +
+      '<div class="kpi"><div class="rot">MÉDIA POR CONTAGEM</div><div class="val">' + (lista.length ? Math.round(somaTotal / lista.length) : 0) + "</div></div>";
+
+    $("tabela").innerHTML = "<tr><th>DATA</th><th>DIA DA SEMANA</th><th>HORÁRIO</th><th class=\"num\">MUSCULAÇÃO</th><th class=\"num\">CARDIO</th><th class=\"num\">OUTRAS</th><th class=\"num\">TOTAL</th><th>PREENCHIDO POR</th><th></th></tr>" +
+      (lista.length ? lista.map(function (c) {
+        return "<tr><td>" + S.fmtData(c.data) + "</td><td>" + diaSemana(c.data) + "</td><td>" + esc(c.hora) +
+          '</td><td class="num">' + (+c.musc || 0) + '</td><td class="num">' + (+c.cardio || 0) + '</td><td class="num">' + (+c.outras || 0) +
+          '</td><td class="num"><strong>' + totalDe(c) + "</strong></td><td>" + esc(c.quem || "—") +
+          '</td><td><button class="btn perigo mini" data-excluir="' + c.id + '">✕</button></td></tr>';
+      }).join("") : '<tr><td colspan="9" class="muted" style="padding: 20px;">Nenhuma contagem no período — registre com ➕ Nova contagem (ex.: toda hora cheia).</td></tr>');
+
+    // média por horário (hora cheia)
+    var porHora = {};
+    lista.forEach(function (c) {
+      var h = (c.hora || "").slice(0, 2) + "h";
+      porHora[h] = porHora[h] || { n: 0, soma: 0 };
+      porHora[h].n++; porHora[h].soma += totalDe(c);
+    });
+    var horas = Object.keys(porHora).sort();
+    var maxMedia = 1;
+    horas.forEach(function (h) { maxMedia = Math.max(maxMedia, porHora[h].soma / porHora[h].n); });
+    $("tabMedia").innerHTML = horas.length ? "<tr><th>HORÁRIO</th><th class=\"num\">CONTAGENS</th><th class=\"num\">MÉDIA DE PESSOAS</th><th style=\"width: 45%;\">LOTAÇÃO</th></tr>" +
+      horas.map(function (h) {
+        var m = porHora[h].soma / porHora[h].n;
+        return "<tr><td><strong>" + h + '</strong></td><td class="num">' + porHora[h].n + '</td><td class="num">' + Math.round(m) +
+          '</td><td><div style="background: var(--escuro); height: 12px; width: ' + Math.round(m / maxMedia * 100) + '%;"></div></td></tr>';
+      }).join("") : '<tr><td class="muted" style="padding: 14px;">Sem dados para calcular a média.</td></tr>';
+  }
+  ["fDe", "fAte"].forEach(function (id) { $(id).addEventListener("input", render); });
+
+  $("btnNova").onclick = function () {
+    $("cData").value = S.todayISO();
+    $("cHora").value = new Date().toTimeString().slice(0, 5);
+    $("cMusc").value = "0"; $("cCardio").value = "0"; $("cOutras").value = "0";
+    $("dlg").showModal();
+  };
+  $("dlg").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    st.itens.push({ id: S.uid(), data: $("cData").value, hora: $("cHora").value,
+      musc: +$("cMusc").value || 0, cardio: +$("cCardio").value || 0, outras: +$("cOutras").value || 0,
+      quem: $("cQuem").value.trim() });
+    save(st);
+  });
+  $("tabela").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-excluir");
+    if (!id || !confirm("Excluir esta contagem?")) return;
+    var st = load();
+    st.itens = st.itens.filter(function (c) { return c.id !== id; });
+    save(st);
+  });
+
+  $("btnExportar").onclick = function () {
+    var linhas = [["Data", "Dia da semana", "Horário", "Musculação", "Cardio", "Outras", "Total", "Preenchido por"]];
+    filtradas().forEach(function (c) { linhas.push([c.data, diaSemana(c.data), c.hora, +c.musc || 0, +c.cardio || 0, +c.outras || 0, totalDe(c), c.quem || ""]); });
+    var csv = linhas.map(function (l) { return l.map(function (x) { return '"' + String(x == null ? "" : x).replace(/"/g, '""') + '"'; }).join(";"); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "contagem-clientes-" + S.todayISO() + ".csv";
+    a.click();
+  };
+
+  S.onChange(function (k) { if (k === "contagens") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

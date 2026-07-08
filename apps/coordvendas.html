@@ -86,15 +86,20 @@
     var contratosMes = vendas.filter(function (v) { return !v.produto; });
     var totalVendido = vendas.reduce(function (t, v) { return t + v.total; }, 0);
 
-    // meta do mês (programa Metas de Vendas)
+    // meta do mês: 1º a grade "Metas da Empresa" (faturamento), senão a soma das metas por vendedora
     var metas = S.read("metas", { vendedoras: [], metas: {}, vendas: [] });
     var metaMes = 0;
-    Object.keys(metas.metas || {}).forEach(function (k) {
-      if (k.indexOf(mes) === 0 || k === mes) {
-        var m = metas.metas[k];
-        metaMes += typeof m === "number" ? m : Object.keys(m || {}).reduce(function (t, v2) { return t + (+m[v2] || 0); }, 0);
-      }
-    });
+    var emp = (metas.empresa || {})[mes.slice(0, 4)];
+    if (emp && emp.faturamento && +emp.faturamento[+mes.slice(5, 7) - 1]) {
+      metaMes = +emp.faturamento[+mes.slice(5, 7) - 1];
+    } else {
+      Object.keys(metas.metas || {}).forEach(function (k) {
+        if (k.indexOf(mes) === 0 || k === mes) {
+          var m = metas.metas[k];
+          metaMes += typeof m === "number" ? m : Object.keys(m || {}).reduce(function (t, v2) { return t + (+m[v2] || 0); }, 0);
+        }
+      });
+    }
 
     // série de 7 meses para o gráfico
     var serie = [];

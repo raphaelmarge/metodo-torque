@@ -69,6 +69,16 @@
     <h2>Vendas lançadas no mês</h2>
     <div id="listaVendas"></div>
   </div>
+
+  <details class="card" id="cardEmpresa">
+    <summary style="cursor: pointer; font-weight: 800;">🏢 Metas da Empresa (grade anual do EVO)</summary>
+    <div class="linha-flex" style="margin: 10px 0; align-items: center; gap: 8px;">
+      <label style="font-size: 13px;">Ano</label>
+      <input id="empAno" type="number" style="width: 90px;">
+      <span class="muted" style="font-size: 12.5px;">A meta de <strong>Faturamento</strong> do mês aparece no painel Resultados (Coord. de Vendas / Gestor).</span>
+    </div>
+    <div id="gradeEmpresa" style="overflow-x: auto;"></div>
+  </details>
 </main>
 
 <!-- diálogo: lançar venda -->
@@ -310,7 +320,40 @@
     render();
   });
 
-  S.onChange(function () { render(); });
+  // ---------- metas da empresa (grade indicadores × 12 meses, como no EVO) ----------
+  var INDICADORES = [["faturamento", "Faturamento (R$)"], ["clientesAtivos", "Clientes ativos (nº)"], ["contratosVendidos", "Contratos vendidos (nº)"], ["cancelamentos", "Contratos cancelados (nº)"]];
+  var MESES_ROT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  function renderEmpresa() {
+    var st = load();
+    var ano = $("empAno").value || S.todayISO().slice(0, 4);
+    var emp = (st.empresa || {})[ano] || {};
+    $("gradeEmpresa").innerHTML = '<table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">' +
+      "<tr><th style='text-align:left; padding: 6px;'>DESCRIÇÃO</th>" + MESES_ROT.map(function (m) { return "<th style='text-align:right; padding: 6px 4px;'>" + m + "</th>"; }).join("") + "</tr>" +
+      INDICADORES.map(function (ind) {
+        var vals = emp[ind[0]] || [];
+        return "<tr style='border-top: 1px solid var(--linha);'><td style='padding: 6px; white-space: nowrap;'><strong>" + ind[1] + "</strong></td>" +
+          MESES_ROT.map(function (_, i) {
+            return "<td style='padding: 2px;'><input data-emp='" + ind[0] + ":" + i + "' type='number' value='" + (vals[i] != null && vals[i] !== 0 ? vals[i] : "") + "' style='width: 72px; padding: 4px 5px; font-size: 12px; text-align: right;'></td>";
+          }).join("") + "</tr>";
+      }).join("") + "</table>";
+  }
+  $("empAno").value = S.todayISO().slice(0, 4);
+  $("empAno").addEventListener("change", renderEmpresa);
+  $("gradeEmpresa").addEventListener("change", function (e) {
+    var alvo = e.target.getAttribute && e.target.getAttribute("data-emp");
+    if (!alvo) return;
+    var p = alvo.split(":");
+    var st = load();
+    st.empresa = st.empresa || {};
+    var ano = $("empAno").value || S.todayISO().slice(0, 4);
+    st.empresa[ano] = st.empresa[ano] || {};
+    st.empresa[ano][p[0]] = st.empresa[ano][p[0]] || [];
+    st.empresa[ano][p[0]][+p[1]] = +e.target.value || 0;
+    S.write("metas", st);
+  });
+  renderEmpresa();
+
+  S.onChange(function () { render(); renderEmpresa(); });
   render();
 })();
 </script>
