@@ -80,11 +80,20 @@
 
   var GATILHOS = {
     aniversario: "🎂 Aniversário (no dia)",
+    aniversario_inativo: "🎂 Aniversário de cliente INATIVO",
     faltante7: "😶 Sumido há 7+ dias",
     faltante15: "😶 Sumido há 15+ dias",
     venc_contrato: "📄 Contrato vence em até 7 dias",
     inadimplente: "💸 Mensalidade em atraso",
     aval_vencida: "🩺 Avaliação física vencida (90+ dias)",
+    apos_matricula: "🎉 Após a matrícula (até 3 dias)",
+    apos_renovacao: "🔄 Após a renovação do contrato (até 3 dias)",
+    apos_cancelamento: "👋 Após o cancelamento do contrato (até 7 dias)",
+    cobranca_recusada: "💳 Cobrança gerada e não paga (3+ dias)",
+    sem_treino: "🏋️ Cliente ativo sem treino prescrito",
+    exame_medico: "🧑‍⚕️ Exame médico vencido (1 ano)",
+    exame_dermato: "🔬 Exame dermatológico vencido (1 ano)",
+    exame_nutricional: "🥗 Avaliação nutricional vencida (1 ano)",
   };
   var TPL_PADRAO = [
     { id: "tp1", nome: "Aniversário", texto: "Feliz aniversário, {nome}! 🎉 A equipe toda te deseja um ano incrível — passa aqui hoje que tem treino especial! 💜" },
@@ -150,6 +159,56 @@
         if (r.status === "aberto" && r.vencimento < hoje) dev[r.alunoId] = (dev[r.alunoId] || 0) + (+r.valor || 0);
       });
       ativos.forEach(function (a) { if (dev[a.id]) out.push({ a: a, dias: 0, valor: dev[a.id] }); });
+    }
+    if (gatilho === "aniversario_inativo") {
+      stA.alunos.filter(function (a) { return a.status === "inativo" && a.zap; }).forEach(function (a) {
+        if ((a.nasc || "").slice(5, 10) === hoje.slice(5, 10)) out.push({ a: a, dias: 0, valor: 0 });
+      });
+    }
+    if (gatilho === "apos_matricula" || gatilho === "apos_renovacao") {
+      ativos.forEach(function (a) {
+        var cs = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+        if (!cs.length) return;
+        var ult = cs[cs.length - 1];
+        var dias = diasDesde(ult.inicio || hoje);
+        if (dias < 0 || dias > 3) return;
+        var ehRenovacao = cs.length > 1;
+        if ((gatilho === "apos_matricula") !== ehRenovacao) out.push({ a: a, dias: dias, valor: +ult.valor || 0 });
+      });
+    }
+    if (gatilho === "apos_cancelamento") {
+      stA.alunos.filter(function (a) { return a.zap; }).forEach(function (a) {
+        var canc = (a.contratos || []).filter(function (c) { return c.status === "cancelado" && c.canceladoEm; })
+          .map(function (c) { return c.canceladoEm; }).sort().pop();
+        if (!canc) return;
+        var dias = diasDesde(canc);
+        if (dias >= 0 && dias <= 7 && !(a.contratos || []).some(function (c) { return c.status === "ativo"; })) out.push({ a: a, dias: dias, valor: 0 });
+      });
+    }
+    if (gatilho === "cobranca_recusada") {
+      var inad = S.read("inad", { devedores: [] });
+      (inad.devedores || []).forEach(function (d) {
+        if (d.status !== "aberto" || !d.cobranca || d.cobranca.statusPago) return;
+        var dias = diasDesde((d.cobranca.criadoEm || "").slice(0, 10) || hoje);
+        if (dias < 3) return;
+        var a = stA.alunos.find(function (x) { return x.id === d.alunoId; });
+        if (a && a.zap) out.push({ a: a, dias: dias, valor: +d.valor || 0 });
+      });
+    }
+    if (gatilho === "sem_treino") {
+      var presc = S.read("treinos", { prescricoes: [] }).prescricoes || [];
+      var tem = {};
+      presc.forEach(function (p) { if (p.alunoId) tem[p.alunoId] = true; });
+      ativos.forEach(function (a) {
+        if (!tem[a.id] && (a.contratos || []).some(function (c) { return c.status === "ativo"; })) out.push({ a: a, dias: 0, valor: 0 });
+      });
+    }
+    if (gatilho === "exame_medico" || gatilho === "exame_dermato" || gatilho === "exame_nutricional") {
+      var campo = gatilho === "exame_medico" ? "medico" : gatilho === "exame_dermato" ? "dermato" : "nutricional";
+      ativos.forEach(function (a) {
+        var d = (a.exames || {})[campo];
+        if (d && diasDesde(d) >= 365) out.push({ a: a, dias: diasDesde(d), valor: 0 });
+      });
     }
     if (gatilho === "aval_vencida") {
       var avs = S.read("saude", { avaliacoes: [] }).avaliacoes;
