@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Performance de Professores — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .prof { border: 1px solid var(--linha); background: #fff; margin-bottom: 12px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .prof .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; flex: none; }
+  .prof .quem { flex: 1; min-width: 150px; }
+  .prof .kpi { text-align: center; min-width: 86px; }
+  .prof .kpi .n { font-size: 18px; font-weight: 800; }
+  .prof .kpi .l { font-size: 10px; color: var(--cinza); letter-spacing: .05em; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Performance de Professores</h1>
+    </div>
+  </div>
+  <p>Quanto cada professor(a) entrega no mês: aulas dadas na grade, alunos presentes, chamadas de turmas e avaliações físicas realizadas.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <div class="campo" style="max-width: 200px;"><label>Mês</label><input id="fMes" type="month"></div>
+    <span class="muted">Os dados vêm da Grade (presenças por aula), das Turmas (chamadas) e da Avaliação Física (avaliador).</span>
+  </div>
+  <div id="lista"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function ini(n) { return String(n || "?").split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase(); }
+  var mes = S.todayISO().slice(0, 7);
+  $("fMes").value = mes;
+  $("fMes").addEventListener("change", function () { if (this.value) { mes = this.value; render(); } });
+
+  function render() {
+    var profs = {}; // nome → métricas
+    function P(nome) {
+      var k = (nome || "").trim();
+      if (!k) k = "Sem professor";
+      return (profs[k] = profs[k] || { aulas: 0, presencas: 0, chamadas: 0, presTurma: 0, avaliacoes: 0 });
+    }
+    var g = S.read("grade", { aulas: [], avulsas: [], presencas: {} });
+    var aulaDe = {};
+    g.aulas.concat(g.avulsas || []).forEach(function (a) { aulaDe[a.id] = a; });
+    Object.keys(g.presencas || {}).forEach(function (k) {
+      var pp = k.split("|");
+      if ((pp[1] || "").slice(0, 7) !== mes) return;
+      var a = aulaDe[pp[0]];
+      if (!a) return;
+      var p = P(a.prof);
+      p.aulas++;
+      p.presencas += (g.presencas[k] || []).length;
+    });
+    var t = S.read("turmas", { turmas: [], chamadas: {} });
+    var turmaDe = {};
+    t.turmas.forEach(function (x) { turmaDe[x.id] = x; });
+    Object.keys(t.chamadas || {}).forEach(function (k) {
+      var pp = k.split("|");
+      if ((pp[1] || "").slice(0, 7) !== mes) return;
+      var tu = turmaDe[pp[0]];
+      if (!tu) return;
+      var p = P(tu.prof);
+      p.chamadas++;
+      p.presTurma += (t.chamadas[k] || []).length;
+    });
+    S.read("saude", { avaliacoes: [] }).avaliacoes.forEach(function (v) {
+      if ((v.data || "").slice(0, 7) !== mes) return;
+      if (v.avaliador) P(v.avaliador).avaliacoes++;
+    });
+
+    var lista = Object.keys(profs).map(function (nome) {
+      var p = profs[nome];
+      p.total = p.presencas + p.presTurma;
+      p.media = p.aulas ? Math.round((p.presencas / p.aulas) * 10) / 10 : 0;
+      return { nome: nome, p: p };
+    }).sort(function (x, y) { return y.p.total - x.p.total; });
+
+    $("lista").innerHTML = lista.length ? lista.map(function (x, i) {
+      return '<div class="prof"><span style="font-weight:800;color:var(--roxo);width:26px;">' + (i + 1) + 'º</span>' +
+        '<span class="avatar">' + esc(ini(x.nome)) + '</span>' +
+        '<div class="quem"><strong>' + esc(x.nome) + '</strong><div class="muted" style="font-size:12px;">' +
+        x.p.total + " presença(s) recebidas no mês</div></div>" +
+        '<div class="kpi"><div class="n">' + x.p.aulas + '</div><div class="l">AULAS (GRADE)</div></div>' +
+        '<div class="kpi"><div class="n">' + x.p.media + '</div><div class="l">MÉDIA/AULA</div></div>' +
+        '<div class="kpi"><div class="n">' + x.p.chamadas + '</div><div class="l">CHAMADAS TURMA</div></div>' +
+        '<div class="kpi"><div class="n">' + x.p.presTurma + '</div><div class="l">PRESENÇAS TURMA</div></div>' +
+        '<div class="kpi"><div class="n">' + x.p.avaliacoes + '</div><div class="l">AVALIAÇÕES</div></div></div>';
+    }).join("") : '<div class="vazio">Sem registros neste mês — as presenças da Grade, chamadas de Turmas e avaliações alimentam este ranking.</div>';
+  }
+  S.onChange(function (k) { if (k === "grade" || k === "turmas" || k === "saude") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automação de Mensagens — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .lin { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .lin + .lin { margin-top: -1px; }
+  .lin .quem { flex: 1; min-width: 200px; }
+  .lin .sub { font-size: 12px; color: var(--cinza); }
+  .disp { border-left: 4px solid var(--roxo); }
+  .disp.enviado { border-left-color: var(--ok); opacity: .75; }
+  .disp .msg { font-size: 12.5px; color: var(--cinza); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM 2.0</span>
+    <h1>Automação de Mensagens</h1>
+    </div>
+  </div>
+  <p>A Automação do EVO: regras de disparo (aniversário, sumidos, vencimentos, atraso) + seus templates — calcule os disparos do dia e envie todos de uma vez pelo WhatsApp oficial.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="abas" id="abas">
+    <button data-a="disparos" class="ativa">🚀 Disparos de hoje</button>
+    <button data-a="regras">⚙ Automações</button>
+    <button data-a="templates">📝 Templates</button>
+  </div>
+  <div id="painel"></div>
+</main>
+
+<dialog id="dlgRegra">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 480px; max-width: 100%;">
+    <h2 id="rTitulo">Nova automação</h2>
+    <div class="campo"><label>Nome</label><input id="rNome" placeholder="ex.: Parabéns no aniversário"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Regra de disparo</label><select id="rGatilho"></select></div>
+      <div class="campo"><label>Template</label><select id="rTemplate"></select></div>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgTpl">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
+    <h2 id="tTitulo">Novo template</h2>
+    <div class="campo"><label>Nome</label><input id="tNome" placeholder="ex.: Aniversário"></div>
+    <div class="campo"><label>Mensagem</label><textarea id="tTexto" style="min-height: 110px;" placeholder="Oi {nome}! ..."></textarea></div>
+    <p class="muted" style="margin: 0;">Variáveis: <code>{nome}</code> (primeiro nome), <code>{valor}</code> (em atraso), <code>{dias}</code> (dias do gatilho).</p>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var GATILHOS = {
+    aniversario: "🎂 Aniversário (no dia)",
+    faltante7: "😶 Sumido há 7+ dias",
+    faltante15: "😶 Sumido há 15+ dias",
+    venc_contrato: "📄 Contrato vence em até 7 dias",
+    inadimplente: "💸 Mensalidade em atraso",
+    aval_vencida: "🩺 Avaliação física vencida (90+ dias)",
+  };
+  var TPL_PADRAO = [
+    { id: "tp1", nome: "Aniversário", texto: "Feliz aniversário, {nome}! 🎉 A equipe toda te deseja um ano incrível — passa aqui hoje que tem treino especial! 💜" },
+    { id: "tp2", nome: "Sentimos sua falta", texto: "Oi {nome}! Já faz {dias} dias que você não aparece 😢 Bora voltar essa semana? Seu treino te espera! 💪" },
+    { id: "tp3", nome: "Renovação", texto: "Oi {nome}! Seu plano vence em {dias} dia(s). Bora renovar e garantir sua vaga e o valor atual? 💜" },
+    { id: "tp4", nome: "Cobrança amigável", texto: "Oi {nome}! Passando pra lembrar da mensalidade em aberto ({valor}). Consegue regularizar essa semana? Qualquer coisa me chama! 💜" },
+  ];
+  function load() {
+    var st = S.read("automacao", null);
+    if (!st) {
+      st = { templates: TPL_PADRAO.slice(), regras: [
+        { id: "rg1", nome: "Parabéns no aniversário", gatilho: "aniversario", templateId: "tp1", ativo: true },
+        { id: "rg2", nome: "Resgate de sumidos", gatilho: "faltante7", templateId: "tp2", ativo: true },
+        { id: "rg3", nome: "Cobrança em atraso", gatilho: "inadimplente", templateId: "tp4", ativo: true },
+      ], historico: {} };
+      S.write("automacao", st);
+    }
+    st.historico = st.historico || {};
+    return st;
+  }
+  function save(st) { S.write("automacao", st); render(); }
+  function integ() { return S.read("config", { dados: {} }).integracoes || {}; }
+  function diasDesde(iso) { return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5); }
+
+  // ---------- cálculo dos disparos do dia ----------
+  function alvosDe(gatilho) {
+    var hoje = S.todayISO();
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var ativos = stA.alunos.filter(function (a) { return a.status !== "inativo" && a.zap; });
+    var out = [];
+    if (gatilho === "aniversario") {
+      ativos.forEach(function (a) { if ((a.nasc || "").slice(5, 10) === hoje.slice(5, 10)) out.push({ a: a, dias: 0, valor: 0 }); });
+    }
+    if (gatilho === "faltante7" || gatilho === "faltante15") {
+      var min = gatilho === "faltante15" ? 15 : 7;
+      var max = gatilho === "faltante7" ? 15 : 9999; // faixas separadas p/ não duplicar
+      ativos.forEach(function (a) {
+        var ult = null;
+        (a.checkins || []).forEach(function (t) { var d = (t || "").slice(0, 10); if (!ult || d > ult) ult = d; });
+        var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+        var dias = diasDesde(ult || (c && c.inicio) || hoje);
+        if (dias >= min && dias < max) out.push({ a: a, dias: dias, valor: 0 });
+      });
+    }
+    if (gatilho === "venc_contrato") {
+      ativos.forEach(function (a) {
+        var cs = (a.contratos || []).filter(function (c) { return c.status === "ativo"; });
+        if (!cs.length) return;
+        var fimMax = null;
+        cs.forEach(function (c) {
+          var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+          f.setMonth(f.getMonth() + (c.meses || 1));
+          var iso = S.todayISO(f);
+          if (!fimMax || iso > fimMax) fimMax = iso;
+        });
+        var dias = Math.round((new Date(fimMax) - new Date(hoje)) / 864e5);
+        if (dias >= 0 && dias <= 7) out.push({ a: a, dias: dias, valor: 0 });
+      });
+    }
+    if (gatilho === "inadimplente") {
+      var dev = {};
+      stA.recebiveis.forEach(function (r) {
+        if (r.status === "aberto" && r.vencimento < hoje) dev[r.alunoId] = (dev[r.alunoId] || 0) + (+r.valor || 0);
+      });
+      ativos.forEach(function (a) { if (dev[a.id]) out.push({ a: a, dias: 0, valor: dev[a.id] }); });
+    }
+    if (gatilho === "aval_vencida") {
+      var avs = S.read("saude", { avaliacoes: [] }).avaliacoes;
+      ativos.forEach(function (a) {
+        var ult = null;
+        avs.forEach(function (v) { if (v.alunoId === a.id && (!ult || v.data > ult)) ult = v.data; });
+        var dias = ult ? diasDesde(ult) : null;
+        if (dias === null || dias >= 90) out.push({ a: a, dias: dias == null ? 0 : dias, valor: 0 });
+      });
+    }
+    return out;
+  }
+  function renderiza(texto, alvo) {
+    return String(texto || "")
+      .replace(/\{nome\}/g, alvo.a.nome.split(" ")[0])
+      .replace(/\{valor\}/g, S.fmtBRL(alvo.valor || 0))
+      .replace(/\{dias\}/g, String(alvo.dias || 0));
+  }
+  function disparosDeHoje() {
+    var st = load();
+    var hoje = S.todayISO();
+    var feitos = st.historico[hoje] || {};
+    var lista = [];
+    st.regras.filter(function (r) { return r.ativo !== false; }).forEach(function (r) {
+      var tpl = st.templates.find(function (t) { return t.id === r.templateId; });
+      if (!tpl) return;
+      alvosDe(r.gatilho).forEach(function (alvo) {
+        var chave = r.id + "|" + alvo.a.id;
+        lista.push({ chave: chave, regra: r, alvo: alvo, msg: renderiza(tpl.texto, alvo), enviado: !!feitos[chave] });
+      });
+    });
+    return lista;
+  }
+
+  function enviaWa(para, texto) {
+    var headers = { "Content-Type": "application/json" };
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
+      headers.apikey = window.MT_CLOUD.anonKey;
+      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
+    }
+    return fetch(integ().whatsappUrl, { method: "POST", headers: headers,
+      body: JSON.stringify({ acao: "enviar", para: "55" + String(para).replace(/\D/g, ""), texto: texto }) })
+      .then(function (r) { return r.json(); });
+  }
+
+  // ---------- render ----------
+  var aba = "disparos";
+  function render() {
+    var st = load();
+    var h = "";
+    if (aba === "disparos") {
+      var lista = disparosDeHoje();
+      var pend = lista.filter(function (d) { return !d.enviado; });
+      h = '<div class="card linha-flex" style="justify-content: space-between;">' +
+        "<span><strong>" + pend.length + "</strong> disparo(s) para hoje · <span class='muted'>" +
+        (lista.length - pend.length) + " já enviados</span></span>" +
+        (integ().whatsappUrl
+          ? '<button class="btn" id="btnTodos"' + (pend.length ? "" : " disabled") + ">🚀 Enviar todos pela API</button>"
+          : '<span class="muted">Configure o WhatsApp oficial em <a href="integracoes.html">Integrações</a> para enviar em lote — os links manuais funcionam sempre.</span>') +
+        "</div><div id='listaDisp'>" +
+        (lista.length ? lista.map(function (d) {
+          return '<div class="lin disp' + (d.enviado ? " enviado" : "") + '" data-ch="' + d.chave + '">' +
+            '<div class="quem"><strong>' + esc(d.alvo.a.nome) + "</strong> <span class='sub'>· " + esc(GATILHOS[d.regra.gatilho] || d.regra.gatilho) + "</span>" +
+            '<div class="msg">' + esc(d.msg) + "</div></div>" +
+            (d.enviado ? '<span class="tag ok">ENVIADO</span>' :
+              '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(d.alvo.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(d.msg) + '">💬 manual</a>') +
+            "</div>";
+        }).join("") : '<div class="vazio">Nenhum disparo hoje — as regras ativas não encontraram ninguém. 🎉</div>') + "</div>";
+    }
+    if (aba === "regras") {
+      h = '<div class="card linha-flex" style="justify-content: space-between;"><h2>Automações</h2>' +
+        '<button class="btn" id="btnNovaRegra">➕ Nova automação</button></div>' +
+        (st.regras.length ? st.regras.map(function (r) {
+          var tpl = st.templates.find(function (t) { return t.id === r.templateId; });
+          return '<div class="lin"><div class="quem"><strong>' + esc(r.nome) + '</strong><div class="sub">' +
+            esc(GATILHOS[r.gatilho] || r.gatilho) + " → template “" + esc(tpl ? tpl.nome : "?") + "”</div></div>" +
+            '<span class="tag ' + (r.ativo !== false ? "ok" : "neutro") + '">' + (r.ativo !== false ? "ATIVA" : "INATIVA") + "</span>" +
+            '<button class="btn sec mini" data-liga="' + r.id + '">' + (r.ativo !== false ? "pausar" : "ativar") + "</button>" +
+            '<button class="btn perigo mini" data-delr="' + r.id + '">✕</button></div>';
+        }).join("") : '<div class="vazio">Nenhuma automação.</div>');
+    }
+    if (aba === "templates") {
+      h = '<div class="card linha-flex" style="justify-content: space-between;"><h2>Templates</h2>' +
+        '<button class="btn" id="btnNovoTpl">➕ Novo template</button></div>' +
+        st.templates.map(function (t) {
+          return '<div class="lin"><div class="quem"><strong>' + esc(t.nome) + '</strong><div class="msg">' + esc(t.texto) + "</div></div>" +
+            '<button class="btn sec mini" data-edt="' + t.id + '">✏</button>' +
+            '<button class="btn perigo mini" data-delt="' + t.id + '">✕</button></div>';
+        }).join("");
+    }
+    $("painel").innerHTML = h;
+
+    var bt = $("btnTodos");
+    if (bt) bt.onclick = function () {
+      var lista = disparosDeHoje().filter(function (d) { return !d.enviado; });
+      if (!lista.length) return;
+      if (!confirm("Enviar " + lista.length + " mensagem(ns) agora pelo WhatsApp oficial?")) return;
+      bt.disabled = true;
+      var okN = 0, falha = 0;
+      var fila = lista.slice();
+      (function proxima() {
+        var d = fila.shift();
+        if (!d) {
+          render();
+          alert("Disparo concluído: " + okN + " enviada(s)" + (falha ? ", " + falha + " falhou(aram) — ficaram pendentes com o link manual." : "!"));
+          return;
+        }
+        enviaWa(d.alvo.a.zap, d.msg).then(function (r) {
+          if (r && r.ok) {
+            okN++;
+            var st2 = load();
+            (st2.historico[S.todayISO()] = st2.historico[S.todayISO()] || {})[d.chave] = new Date().toISOString();
+            S.write("automacao", st2);
+          } else falha++;
+          proxima();
+        }).catch(function () { falha++; proxima(); });
+      })();
+    };
+    var bnr = $("btnNovaRegra");
+    if (bnr) bnr.onclick = function () {
+      $("rTitulo").textContent = "Nova automação";
+      $("rNome").value = "";
+      $("rGatilho").innerHTML = Object.keys(GATILHOS).map(function (g) { return '<option value="' + g + '">' + GATILHOS[g] + "</option>"; }).join("");
+      $("rTemplate").innerHTML = load().templates.map(function (t) { return '<option value="' + t.id + '">' + esc(t.nome) + "</option>"; }).join("");
+      $("dlgRegra").showModal();
+    };
+    var bnt = $("btnNovoTpl");
+    if (bnt) bnt.onclick = function () { editTpl = null; $("tTitulo").textContent = "Novo template"; $("tNome").value = ""; $("tTexto").value = ""; $("dlgTpl").showModal(); };
+  }
+
+  var editTpl = null;
+  $("painel").addEventListener("click", function (e) {
+    var g = function (attr) { return e.target.getAttribute && e.target.getAttribute(attr); };
+    var st = load();
+    if (g("data-liga")) { var r = st.regras.find(function (x) { return x.id === g("data-liga"); }); r.ativo = r.ativo === false; save(st); }
+    else if (g("data-delr")) { st.regras = st.regras.filter(function (x) { return x.id !== g("data-delr"); }); save(st); }
+    else if (g("data-delt")) { st.templates = st.templates.filter(function (x) { return x.id !== g("data-delt"); }); save(st); }
+    else if (g("data-edt")) {
+      editTpl = g("data-edt");
+      var t = st.templates.find(function (x) { return x.id === editTpl; });
+      $("tTitulo").textContent = "Editar — " + t.nome;
+      $("tNome").value = t.nome; $("tTexto").value = t.texto;
+      $("dlgTpl").showModal();
+    }
+  });
+  $("dlgRegra").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    st.regras.push({ id: S.uid(), nome: $("rNome").value.trim() || GATILHOS[$("rGatilho").value],
+      gatilho: $("rGatilho").value, templateId: $("rTemplate").value, ativo: true });
+    save(st);
+  });
+  $("dlgTpl").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    if (editTpl) {
+      var t = st.templates.find(function (x) { return x.id === editTpl; });
+      t.nome = $("tNome").value.trim(); t.texto = $("tTexto").value;
+    } else st.templates.push({ id: S.uid(), nome: $("tNome").value.trim() || "Template", texto: $("tTexto").value });
+    save(st);
+  });
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-a");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  S.onChange(function (k) { if (k === "automacao" || k === "alunos" || k === "saude") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
