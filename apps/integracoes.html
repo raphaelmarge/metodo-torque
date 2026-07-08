@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrações — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .integ { border: 1px solid var(--linha); background: #fff; padding: 16px; margin-bottom: 14px; }
+  .integ header { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .integ header .ico { font-size: 22px; }
+  .integ header h2 { margin: 0; flex: 1; }
+  .passo-g { margin-top: 10px; border: 1px dashed var(--linha); padding: 10px 14px; }
+  .passo-g summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+  .passo-g ol { margin: 10px 0 4px 18px; font-size: 13.5px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FASE 2</span>
+    <h1>Integrações</h1>
+    </div>
+  </div>
+  <p>As conexões do sistema com o mundo real: cobrança automática, WhatsApp oficial, notas fiscais e catraca. As chaves secretas ficam no Supabase — nunca no site.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 4px;">
+
+  <div class="integ">
+    <header><span class="ico">💳</span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
+    <p class="muted" style="margin: 8px 0 10px;">Gera PIX (copia e cola) e boleto para cada mensalidade em atraso, direto da régua de cobrança e do perfil do aluno — e confere sozinho se foi pago.</p>
+    <div class="linha-flex" style="align-items: flex-end;">
+      <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → pagarme)</label>
+        <input id="pgUrl" placeholder="https://seu-projeto.supabase.co/functions/v1/pagarme">
+      </div>
+      <button class="btn" id="btnTestar">🔌 Testar conexão</button>
+      <button class="btn sec" id="btnCodigo">📋 Copiar código da função</button>
+    </div>
+    <div id="resultadoTeste" style="margin-top: 8px;"></div>
+    <details class="passo-g">
+      <summary>📖 Passo a passo da instalação (uma vez só, ~10 minutos)</summary>
+      <ol>
+        <li><strong>Crie a conta no Pagar.me</strong> (pagar.me → Criar conta). Se você já usa maquininha Stone, dá para vincular na mesma conta e unificar o repasse.</li>
+        <li>No painel do Pagar.me, vá em <strong>Configurações → Chaves</strong> e copie a <strong>chave secreta</strong> (começa com <code>sk_</code>). <em>Não me mande essa chave nem cole no site — ela vai só no Supabase.</em></li>
+        <li>Abra o painel do <strong>Supabase</strong> (supabase.com) → seu projeto → <strong>Edge Functions</strong> → <strong>Deploy new function</strong> → nome <code>pagarme</code>.</li>
+        <li>Clique em <strong>📋 Copiar código da função</strong> aqui em cima e cole no editor do Supabase. Clique em <strong>Deploy</strong>.</li>
+        <li>Na função <code>pagarme</code> → <strong>Secrets</strong> → adicione <code>PAGARME_SECRET_KEY</code> com a chave <code>sk_...</code> do passo 2.</li>
+        <li>Copie a <strong>URL da função</strong> (aparece na página dela) e cole no campo acima. Clique em <strong>Testar conexão</strong> — tem que ficar verde. ✅</li>
+      </ol>
+    </details>
+  </div>
+
+  <div class="integ" style="opacity:.65;">
+    <header><span class="ico">💬</span><h2>WhatsApp oficial (API da Meta)</h2><span class="tag neutro">PRÓXIMA</span></header>
+    <p class="muted" style="margin-top: 8px;">Mensagens automáticas de verdade (cobrança, boas-vindas, lembretes) sem abrir o WhatsApp. Exige verificação da empresa na Meta — quando quiser começar, me avisa.</p>
+  </div>
+  <div class="integ" style="opacity:.65;">
+    <header><span class="ico">🧾</span><h2>Notas fiscais (NFS-e)</h2><span class="tag neutro">PRÓXIMA</span></header>
+    <p class="muted" style="margin-top: 8px;">Emissão automática por mensalidade via eNotas/FocusNFe. Exige certificado digital A1 e cadastro na prefeitura.</p>
+  </div>
+  <div class="integ" style="opacity:.65;">
+    <header><span class="ico">🚪</span><h2>Catraca / biometria</h2><span class="tag neutro">PRÓXIMA</span></header>
+    <p class="muted" style="margin-top: 8px;">Liberação física integrada ao Controle de Entradas (ex.: Control iD). Depende do hardware da recepção.</p>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function cfg() { return S.read("config", { dados: {}, horarios: {} }); }
+  var c0 = cfg();
+  $("pgUrl").value = (c0.integracoes && c0.integracoes.pagarmeUrl) || "";
+  atualizaStatus();
+
+  function atualizaStatus() {
+    var ok = !!$("pgUrl").value.trim();
+    var tag = $("stPagarme");
+    tag.textContent = ok ? "CONFIGURADA" : "NÃO CONFIGURADA";
+    tag.className = "tag " + (ok ? "ok" : "neutro");
+  }
+
+  $("pgUrl").addEventListener("change", function () {
+    var st = cfg();
+    st.integracoes = st.integracoes || {};
+    var v = this.value.trim().replace(/\/+$/, "");
+    if (st.integracoes.pagarmeUrl === v) return;
+    st.integracoes.pagarmeUrl = v;
+    S.write("config", st);
+    atualizaStatus();
+  });
+
+  $("btnTestar").onclick = function () {
+    var url = $("pgUrl").value.trim().replace(/\/+$/, "");
+    var out = $("resultadoTeste");
+    if (!url) { out.innerHTML = '<span class="tag alerta">Cole a URL da função primeiro.</span>'; return; }
+    out.innerHTML = '<span class="muted">testando…</span>';
+    var headers = { "Content-Type": "application/json" };
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
+      headers.apikey = window.MT_CLOUD.anonKey;
+      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
+    }
+    fetch(url, { method: "POST", headers: headers, body: JSON.stringify({ acao: "ping" }) })
+      .then(function (r) { return r.json().then(function (j) { return { st: r.status, j: j }; }); })
+      .then(function (r) {
+        if (r.j && r.j.ok && r.j.chaveConfigurada) out.innerHTML = '<span class="tag ok">✅ Conectado — chave do Pagar.me configurada. Cobrança automática LIGADA.</span>';
+        else if (r.j && r.j.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas falta o secret PAGARME_SECRET_KEY (passo 5 do guia).</span>';
+        else out.innerHTML = '<span class="tag erro">Resposta inesperada (' + r.st + "): " + (r.j && r.j.erro ? r.j.erro : "confira a URL") + "</span>";
+      })
+      .catch(function (e) { out.innerHTML = '<span class="tag erro">Não alcancei a função: ' + e.message + " — confira a URL e o deploy.</span>"; });
+  };
+
+  $("btnCodigo").onclick = function () {
+    fetch("../supabase/functions/pagarme/index.ts")
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) {
+        return navigator.clipboard.writeText(t).then(function () {
+          alert("Código copiado! Cole no editor da Edge Function \"pagarme\" no painel do Supabase e clique em Deploy.");
+        }, function () { prompt("Copie o código:", t); });
+      })
+      .catch(function () { alert("Não consegui carregar o arquivo — ele está no repositório em supabase/functions/pagarme/index.ts"); });
+  };
+})();
+</script>
+</body>
+</html>

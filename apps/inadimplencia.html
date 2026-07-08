@@ -93,6 +93,14 @@
 </dialog>
 
 <!-- roteiro de ligação -->
+<dialog id="dlgCob">
+  <div class="card" style="width: 560px; max-width: 100%; display: flex; flex-direction: column; gap: 12px;">
+    <h2 id="cobTitulo">💳 Cobrança automática</h2>
+    <div id="cobCorpo"></div>
+    <div style="text-align: right;"><button class="btn sec" onclick="this.closest('dialog').close()">Fechar</button></div>
+  </div>
+</dialog>
+
 <dialog id="roteiro">
   <div class="card" style="width: 560px; max-width: 100%; display: flex; flex-direction: column; gap: 12px;">
     <h2>D+10 · Ligação pessoal (não é mensagem)</h2>
@@ -193,6 +201,7 @@
       (pend && passo ? (passo.canal === "fone" ?
           '<button class="btn" data-acao="ligar">📞 Ver roteiro da ligação</button>' :
           (dev.zap ? '<a class="btn whats" target="_blank" rel="noopener" data-acao="zap" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(passo.msg(dev.nome.split(" ")[0], ctxMsg(st, dev))) + '">💬 Enviar ' + passo.rotulo + "</a>" : '<span class="muted">sem WhatsApp cadastrado</span>')) : "") +
+      (pend && pagarmeUrl() ? '<button class="btn mini" data-acao="cobranca">💳 ' + (dev.cobranca ? "Ver PIX/boleto" : "Gerar PIX/boleto") + "</button>" : "") +
       (pend ? '<button class="btn ok mini" data-acao="pago">✓ Recebido</button><button class="btn sec mini" data-acao="acordo">🤝 Acordo</button>' :
         '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir</button>') +
       '<button class="btn perigo mini" data-acao="excluir">excluir</button>' +
@@ -254,6 +263,7 @@
       $("roteiro").showModal();
       return;
     }
+    if (acao === "cobranca") { abreCobranca(d.id); return; }
     if (acao === "pago") { d.status = "pago"; d.pagoEm = S.todayISO(); }
     else if (acao === "acordo") { d.status = "acordo"; }
     else if (acao === "reabrir") { d.status = "aberto"; d.pagoEm = ""; }
@@ -263,6 +273,104 @@
     }
     save(st);
   });
+
+  // ---------- Fase 2: cobrança automática (Pagar.me via Edge Function) ----------
+  function pagarmeUrl() {
+    var c = S.read("config", { dados: {} });
+    return (c.integracoes && c.integracoes.pagarmeUrl) || "";
+  }
+  function chamaFuncao(payload) {
+    var headers = { "Content-Type": "application/json" };
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
+      headers.apikey = window.MT_CLOUD.anonKey;
+      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
+    }
+    return fetch(pagarmeUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); });
+  }
+  function cpfDe(dev) {
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var r = stA.recebiveis.find(function (x) { return x.id === dev.recebivelId; });
+    var a = r && stA.alunos.find(function (x) { return x.id === r.alunoId; });
+    return { cpf: (a && a.cpf) || "", email: (a && a.email) || "" };
+  }
+  function renderCob(dev) {
+    var c = dev.cobranca;
+    $("cobTitulo").textContent = "💳 Cobrança — " + dev.nome;
+    if (!c) {
+      $("cobCorpo").innerHTML = '<p class="muted">Gerar cobrança de <strong>' + S.fmtBRL(+dev.valor) + "</strong> para " + esc(dev.nome) + ":</p>" +
+        '<div class="linha-flex" style="margin-top: 10px;">' +
+        '<button class="btn" id="cobPix">Gerar PIX (copia e cola)</button>' +
+        '<button class="btn sec" id="cobBoleto">Gerar boleto</button></div>' +
+        '<p class="muted" id="cobAviso" style="margin-top: 8px;"></p>';
+      $("cobPix").onclick = function () { geraCob(dev, "pix"); };
+      $("cobBoleto").onclick = function () { geraCob(dev, "boleto"); };
+      return;
+    }
+    var zapMsg = "Oi " + dev.nome.split(" ")[0] + "! Segue o " + (c.metodo === "boleto" ? "boleto" : "PIX") +
+      " da mensalidade (" + S.fmtBRL(+dev.valor) + "):\n\n" +
+      (c.metodo === "boleto" ? (c.boletoUrl || "") : (c.pixCopiaECola || "")) +
+      "\n\nQualquer dúvida me chama! 💜";
+    $("cobCorpo").innerHTML =
+      '<div class="linha-flex" style="justify-content: space-between;"><span class="tag ' +
+      (c.statusPago ? "ok" : "roxo") + '">' + (c.statusPago ? "✅ PAGO" : (c.metodo === "boleto" ? "BOLETO GERADO" : "PIX GERADO")) + "</span>" +
+      '<span class="muted">' + S.fmtBRL(+dev.valor) + " · gerado " + S.fmtData(c.criadoEm) + "</span></div>" +
+      (c.metodo === "pix" && c.pixCopiaECola ?
+        '<div class="campo" style="margin-top: 10px;"><label>PIX copia e cola</label><textarea id="cobCodigo" readonly style="min-height: 80px; font-size: 12px;">' + esc(c.pixCopiaECola) + "</textarea></div>" : "") +
+      (c.metodo === "boleto" && c.boletoUrl ?
+        '<p style="margin-top: 10px;"><a class="btn sec" target="_blank" rel="noopener" href="' + esc(c.boletoUrl) + '">📄 Abrir boleto</a>' +
+        (c.linhaDigitavel ? ' <span class="muted">linha: ' + esc(c.linhaDigitavel) + "</span>" : "") + "</p>" : "") +
+      '<div class="linha-flex" style="margin-top: 12px;">' +
+      (c.metodo === "pix" && c.pixCopiaECola ? '<button class="btn sec mini" id="cobCopiar">📋 Copiar PIX</button>' : "") +
+      (dev.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(zapMsg) + '">💬 Enviar no WhatsApp</a>' : "") +
+      (!c.statusPago ? '<button class="btn mini" id="cobVerificar">🔄 Verificar pagamento</button>' : "") +
+      '<span class="muted" id="cobAviso"></span></div>';
+    var bc = $("cobCopiar");
+    if (bc) bc.onclick = function () {
+      navigator.clipboard.writeText(c.pixCopiaECola).then(function () { $("cobAviso").textContent = "copiado!"; },
+        function () { prompt("Copie o PIX:", c.pixCopiaECola); });
+    };
+    var bv = $("cobVerificar");
+    if (bv) bv.onclick = function () {
+      $("cobAviso").textContent = "consultando…";
+      chamaFuncao({ acao: "status", orderId: c.orderId }).then(function (r) {
+        if (r && r.status === "paid") {
+          var st = load();
+          var d2 = st.devedores.find(function (x) { return x.id === dev.id; });
+          d2.cobranca.statusPago = true;
+          d2.status = "pago"; d2.pagoEm = S.todayISO();
+          save(st);
+          $("dlgCob").close();
+          alert("Pagamento confirmado pelo Pagar.me! " + dev.nome.split(" ")[0] + " marcado(a) como pago. 🎉");
+        } else $("cobAviso").textContent = "ainda não pago (status: " + ((r && r.status) || "?") + ")";
+      }).catch(function (e) { $("cobAviso").textContent = "erro: " + e.message; });
+    };
+  }
+  function geraCob(dev, metodo) {
+    $("cobAviso").textContent = "gerando " + metodo + "…";
+    var extra = cpfDe(dev);
+    chamaFuncao({
+      acao: "criar", metodo: metodo,
+      valorCentavos: Math.round((+dev.valor || 0) * 100),
+      descricao: "Mensalidade — venc. " + S.fmtData(dev.vencimento),
+      nome: dev.nome, cpf: extra.cpf, email: extra.email,
+      vencimento: S.todayISO(),
+    }).then(function (r) {
+      if (!r || !r.ok) { $("cobAviso").textContent = "erro: " + ((r && r.erro) || "resposta inválida"); return; }
+      var st = load();
+      var d2 = st.devedores.find(function (x) { return x.id === dev.id; });
+      d2.cobranca = { orderId: r.orderId, metodo: r.metodo, pixCopiaECola: r.pixCopiaECola,
+        boletoUrl: r.boletoUrl || r.boletoPdf, linhaDigitavel: r.linhaDigitavel, criadoEm: S.todayISO() };
+      save(st);
+      renderCob(d2);
+    }).catch(function (e) { $("cobAviso").textContent = "não alcancei a função: " + e.message; });
+  }
+  function abreCobranca(devId) {
+    var dev = load().devedores.find(function (x) { return x.id === devId; });
+    if (!dev) return;
+    renderCob(dev);
+    $("dlgCob").showModal();
+  }
 
   $("roteiroOk").onclick = function () {
     var st = load();
