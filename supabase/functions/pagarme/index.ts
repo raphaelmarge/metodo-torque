@@ -14,8 +14,12 @@
 //
 // Ações aceitas (POST JSON):
 //   { acao: "ping" }                                  → confirma que está no ar
-//   { acao: "criar", metodo: "pix"|"boleto",
-//     valorCentavos, descricao, nome, cpf?, email?, vencimento? (AAAA-MM-DD) }
+//   { acao: "criar", metodo: "pix"|"boleto"|"cartao",
+//     valorCentavos, descricao, nome, cpf?, email?, vencimento? (AAAA-MM-DD),
+//     parcelas? (1..12, só para cartao) }
+//   → "cartao" gera um LINK DE CHECKOUT do Pagar.me: o aluno digita o cartão
+//     na página segura do Pagar.me (nunca no nosso site) e pode escolher
+//     também PIX ou boleto no mesmo link.
 //   { acao: "status", orderId }                       → situação da cobrança
 
 const CORS = {
@@ -60,7 +64,7 @@ Deno.serve(async (req: Request) => {
     if (!valor || valor < 100) return json({ erro: "valorCentavos inválido (mínimo 100 = R$ 1,00)." }, 400);
     const nome = String(body.nome || "").trim();
     if (!nome) return json({ erro: "nome do aluno é obrigatório." }, 400);
-    const metodo = body.metodo === "boleto" ? "boleto" : "pix";
+    const metodo = body.metodo === "boleto" ? "boleto" : body.metodo === "cartao" ? "cartao" : "pix";
     const cpf = String(body.cpf || "").replace(/\D/g, "");
 
     const customer: any = { name: nome, type: "individual" };
@@ -69,8 +73,26 @@ Deno.serve(async (req: Request) => {
     // boleto exige documento; sem CPF, caímos para PIX
     const metodoFinal = metodo === "boleto" && cpf.length !== 11 ? "pix" : metodo;
 
+    // cartão = checkout hospedado no Pagar.me (aceita cartão/PIX/boleto no link)
+    const maxParcelas = Math.min(Math.max(Number(body.parcelas) || 1, 1), 12);
+    const installments = [];
+    for (let n = 1; n <= maxParcelas; n++) installments.push({ number: n, total: valor });
+
     const payments =
-      metodoFinal === "boleto"
+      metodoFinal === "cartao"
+        ? [{
+            payment_method: "checkout",
+            checkout: {
+              expires_in: 259200,
+              customer_editable: true,
+              skip_checkout_success_page: false,
+              accepted_payment_methods: ["credit_card", "pix", "boleto"],
+              credit_card: { operation_type: "auth_and_capture", installments },
+              pix: { expires_in: 259200 },
+              boleto: { due_at: body.vencimento ? body.vencimento + "T23:59:59Z" : undefined },
+            },
+          }]
+        : metodoFinal === "boleto"
         ? [{
             payment_method: "boleto",
             boleto: {
@@ -95,17 +117,19 @@ Deno.serve(async (req: Request) => {
     }
     const ch = dados.charges?.[0] || {};
     const tx = ch.last_transaction || {};
+    const checkout = dados.checkouts?.[0] || {};
     return json({
       ok: true,
       orderId: dados.id,
       chargeId: ch.id,
-      status: ch.status,
+      status: ch.status || dados.status,
       metodo: metodoFinal,
       pixCopiaECola: tx.qr_code || null,
       pixQrUrl: tx.qr_code_url || null,
       boletoUrl: tx.url || null,
       boletoPdf: tx.pdf || null,
       linhaDigitavel: tx.line || null,
+      linkPagamento: checkout.payment_url || null,
     });
   }
 
