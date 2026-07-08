@@ -61,6 +61,7 @@ self.MT_APPS = [
   { slug: "app-recompensas", file: "apps/recompensas.html", icone: "🏆", title: "Clube de Recompensas", desc: "TorqueCoins: pontos por treino, indicação e renovação, catálogo de prêmios e resgates — retenção que vira jogo." },
   { slug: "app-acessos", file: "apps/acessos.html", icone: "🕐", title: "Log de Acessos", desc: "Todos os check-ins dia a dia: quem entrou, a que horas e o total — com atalho para o perfil do aluno." },
   { slug: "app-colaborador", file: "apps/colaborador.html", icone: "👔", title: "Ficha do Colaborador", desc: "A ficha do funcionário estilo EVO: contratação com salário (lança na Folha), horário de trabalho, permissões e acesso." },
+  { slug: "app-risco", file: "apps/risco.html", icone: "🚨", title: "Risco de Abandono", desc: "Cada aluno com última presença, dias ausente e nota de risco 0–100 — a lista de quem salvar antes do cancelamento." },
   { slug: "app-inadimplencia", file: "apps/inadimplencia.html", icone: "💰", title: "Controle de Inadimplência", desc: "A régua de cobrança do curso em ação: cada devedor no passo certo (D+1 a D+30) com a mensagem pronta." },
   { slug: "app-manutencao", file: "apps/manutencao.html", icone: "🔧", title: "Central de Manutenção", desc: "Aparelhos, predial e limpeza: chamados com foto, agendamento de consertos e retornos, alerta de atraso." },
   { slug: "app-checklist", file: "apps/checklist.html", icone: "✅", title: "Checklist do Dia", desc: "Abertura e fechamento com responsável e hora limite — item atrasado gera cobrança pronta no WhatsApp." },
