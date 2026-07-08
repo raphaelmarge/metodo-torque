@@ -136,7 +136,12 @@
       msg: function (n, c) { return "Oi " + n + ", aqui é da gestão da " + c.acad + ". Quero resolver sua pendência de um jeito bom pra você: consigo parcelar o valor ou fechar um acordo com desconto nos juros pra quitar essa semana. Qual das duas opções encaixa melhor? Se nenhuma servir, me conta sua situação que a gente monta juntos."; } },
   ];
 
-  function load() { return S.read("inad", { config: { acad: "", link: "" }, devedores: [] }); }
+  function load() {
+    var st = S.read("inad", { config: { acad: "", link: "" }, devedores: [] });
+    st.config = st.config || { acad: "", link: "" };
+    st.devedores = st.devedores || [];
+    return st;
+  }
   function save(st) { S.write("inad", st); render(); }
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
@@ -200,7 +205,9 @@
       '<div class="acoes">' +
       (pend && passo ? (passo.canal === "fone" ?
           '<button class="btn" data-acao="ligar">📞 Ver roteiro da ligação</button>' :
-          (dev.zap ? '<a class="btn whats" target="_blank" rel="noopener" data-acao="zap" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(passo.msg(dev.nome.split(" ")[0], ctxMsg(st, dev))) + '">💬 Enviar ' + passo.rotulo + "</a>" : '<span class="muted">sem WhatsApp cadastrado</span>')) : "") +
+          (dev.zap ? '<a class="btn whats" target="_blank" rel="noopener" data-acao="zap" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(passo.msg(dev.nome.split(" ")[0], ctxMsg(st, dev))) + '">💬 Enviar ' + passo.rotulo + "</a>" +
+            (whatsappUrl() ? ' <button class="btn mini" data-acao="zapauto">🚀 Automático</button>' : "")
+            : '<span class="muted">sem WhatsApp cadastrado</span>')) : "") +
       (pend && pagarmeUrl() ? '<button class="btn mini" data-acao="cobranca">💳 ' + (dev.cobranca ? "Ver PIX/boleto" : "Gerar PIX/boleto") + "</button>" : "") +
       (pend ? '<button class="btn ok mini" data-acao="pago">✓ Recebido</button><button class="btn sec mini" data-acao="acordo">🤝 Acordo</button>' :
         '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir</button>') +
@@ -263,6 +270,27 @@
       $("roteiro").showModal();
       return;
     }
+    if (acao === "zapauto") {
+      var btn = e.target;
+      btn.disabled = true; btn.textContent = "enviando…";
+      enviaWaAuto(d, passo).then(function (r) {
+        if (r && r.ok) {
+          var st2 = load();
+          var d2 = st2.devedores.find(function (x) { return x.id === id; });
+          d2.envios = d2.envios || {};
+          if (passo) d2.envios[passo.id] = S.todayISO();
+          save(st2);
+          alert("📨 Mensagem " + (passo ? passo.rotulo : "") + " enviada pela API oficial para " + d.nome.split(" ")[0] + "!");
+        } else {
+          btn.disabled = false; btn.textContent = "🚀 Automático";
+          alert("Não foi: " + ((r && r.erro) || "erro") + (r && r.precisaTemplate ? "\n\nO aluno não falou com o número nas últimas 24h — configure o template aprovado em Integrações, ou use o botão 💬 manual." : ""));
+        }
+      }).catch(function (er) {
+        btn.disabled = false; btn.textContent = "🚀 Automático";
+        alert("Não alcancei a função: " + er.message);
+      });
+      return;
+    }
     if (acao === "cobranca") { abreCobranca(d.id); return; }
     if (acao === "pago") { d.status = "pago"; d.pagoEm = S.todayISO(); }
     else if (acao === "acordo") { d.status = "acordo"; }
@@ -273,6 +301,29 @@
     }
     save(st);
   });
+
+  // ---------- Fase 2: WhatsApp oficial (envio pela API, sem abrir o app) ----------
+  function whatsappUrl() {
+    var c = S.read("config", { dados: {} });
+    return (c.integracoes && c.integracoes.whatsappUrl) || "";
+  }
+  function enviaWaAuto(dev, passo) {
+    var c = S.read("config", { dados: {} }).integracoes || {};
+    var headers = { "Content-Type": "application/json" };
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
+      headers.apikey = window.MT_CLOUD.anonKey;
+      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
+    }
+    var payload = { acao: "enviar", para: "55" + String(dev.zap).replace(/\D/g, "") };
+    if (c.whatsappTemplate) {
+      payload.template = c.whatsappTemplate;
+      payload.variaveis = [dev.nome.split(" ")[0], S.fmtBRL(+dev.valor || 0)];
+    } else {
+      payload.texto = passo ? passo.msg(dev.nome.split(" ")[0], ctxMsg(load(), dev)) : "Oi " + dev.nome.split(" ")[0] + "!";
+    }
+    return fetch(whatsappUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); });
+  }
 
   // ---------- Fase 2: cobrança automática (Pagar.me via Edge Function) ----------
   function pagarmeUrl() {
