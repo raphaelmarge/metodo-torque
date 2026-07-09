@@ -30,10 +30,23 @@
 
   <div class="card">
     <h2>Configurar reajuste</h2>
-    <div class="linha-flex" style="margin-top: 10px; align-items: flex-end;">
+    <div class="linha-flex" style="margin-top: 10px; align-items: flex-end; flex-wrap: wrap;">
       <div class="campo" style="min-width: 220px;"><label>Plano</label><select id="fPlano"></select></div>
-      <div class="campo"><label>Reajuste (%)</label><input id="fPct" type="number" step="0.5" value="10" style="width: 110px;"></div>
-      <div class="campo"><label>Também atualizar o preço do plano (novas vendas)</label>
+      <div class="campo"><label>Operação</label>
+        <select id="fModo" style="width: auto;">
+          <option value="aumento">Aumentar valor atual</option>
+          <option value="novo">Definir novo valor</option>
+        </select>
+      </div>
+      <div class="campo"><label>Base</label>
+        <select id="fBase" style="width: auto;">
+          <option value="pct">Porcentagem (%)</option>
+          <option value="reais">Reais (R$)</option>
+        </select>
+      </div>
+      <div class="campo"><label id="lblValor">Reajuste (%)</label><input id="fPct" type="number" step="0.5" value="10" style="width: 110px;"></div>
+      <label class="linha-flex" style="gap: 6px; font-size: 13px; align-items: center; margin-bottom: 4px;"><input id="fArred" type="checkbox"> arredondar centavos</label>
+      <div class="campo"><label>Atualizar preço do plano (novas vendas)</label>
         <select id="fPlanoJunto" style="width: auto;"><option value="sim">Sim</option><option value="nao">Não, só os contratos</option></select>
       </div>
       <button class="btn sec" id="btnPrevia">Ver prévia</button>
@@ -78,19 +91,37 @@
       "<option value=''>— nenhum plano cadastrado —</option>";
   }
 
+  // calcula o novo valor de um contrato conforme operação/base escolhidas
+  function novoValor(atual, modo, base, val, arred) {
+    var n;
+    if (modo === "novo") n = val;                                  // definir valor fixo
+    else if (base === "reais") n = atual + val;                    // aumentar em R$
+    else n = atual * (1 + val / 100);                              // aumentar em %
+    n = arred ? Math.round(n) : Math.round(n * 100) / 100;
+    return n < 0 ? 0 : n;
+  }
+
+  function atualizaLabel() {
+    var modo = $("fModo").value, base = $("fBase").value;
+    $("fBase").disabled = modo === "novo";
+    $("lblValor").textContent = modo === "novo" ? "Novo valor (R$)" : base === "reais" ? "Aumento (R$)" : "Reajuste (%)";
+  }
+
   function calcula() {
     var st = alunosSt();
     var planoId = $("fPlano").value;
-    var pct = +$("fPct").value || 0;
+    var modo = $("fModo").value, base = $("fBase").value, arred = $("fArred").checked;
+    var val = +$("fPct").value || 0;
     var afetados = [];
     st.alunos.forEach(function (a) {
       (a.contratos || []).forEach(function (c) {
         if (c.planoId !== planoId) return;
         if (c.status !== "ativo" && c.status !== "congelado") return;
-        afetados.push({ aluno: a.nome, atual: +c.valor || 0, novo: Math.round((+c.valor || 0) * (1 + pct / 100) * 100) / 100 });
+        var atual = +c.valor || 0;
+        afetados.push({ aluno: a.nome, atual: atual, novo: novoValor(atual, modo, base, val, arred) });
       });
     });
-    return { afetados: afetados, pct: pct, planoId: planoId };
+    return { afetados: afetados, modo: modo, base: base, val: val, arred: arred, planoId: planoId };
   }
 
   $("btnPrevia").onclick = function () {
@@ -106,10 +137,15 @@
     $("btnAplicar").disabled = !r.afetados.length;
   };
 
+  function descrOperacao(r) {
+    if (r.modo === "novo") return "definir " + brl2(r.val);
+    return "+" + (r.base === "reais" ? brl2(r.val) : r.val + "%");
+  }
+
   $("btnAplicar").onclick = function () {
     var r = calcula();
     if (!r.afetados.length) return;
-    if (!confirm("Aplicar " + r.pct + "% em " + r.afetados.length + " contrato(s)? As mensalidades futuras em aberto também sobem.")) return;
+    if (!confirm("Aplicar reajuste (" + descrOperacao(r) + ") em " + r.afetados.length + " contrato(s)? As mensalidades futuras em aberto também mudam.")) return;
     var st = alunosSt();
     var hoje = S.todayISO();
     var plano = st.planos.find(function (p) { return p.id === r.planoId; });
@@ -118,7 +154,7 @@
       (a.contratos || []).forEach(function (c) {
         if (c.planoId !== r.planoId) return;
         if (c.status !== "ativo" && c.status !== "congelado") return;
-        var novo = Math.round((+c.valor || 0) * (1 + r.pct / 100) * 100) / 100;
+        var novo = novoValor(+c.valor || 0, r.modo, r.base, r.val, r.arred);
         c.valor = novo;
         st.recebiveis.forEach(function (rec) {
           if (rec.contratoId === c.id && rec.status === "aberto" && rec.vencimento >= hoje) {
@@ -129,12 +165,12 @@
       });
     });
     if ($("fPlanoJunto").value === "sim" && plano) {
-      plano.valor = Math.round((+plano.valor || 0) * (1 + r.pct / 100) * 100) / 100;
+      plano.valor = novoValor(+plano.valor || 0, r.modo, r.base, r.val, r.arred);
     }
     S.write("alunos", st);
     var h = reajustes();
     h.historico.unshift({
-      data: hoje, plano: plano ? plano.nome : "?", pct: r.pct,
+      data: hoje, plano: plano ? plano.nome : "?", pct: descrOperacao(r),
       contratos: r.afetados.length, parcelas: mudouParcelas,
     });
     S.write("reajustes", h);
@@ -147,11 +183,15 @@
     planosSelect();
     var h = reajustes().historico;
     $("historico").innerHTML = h.length ? h.map(function (x) {
-      return '<div class="hist"><span>' + S.fmtData(x.data) + " · <strong>" + esc(x.plano) + "</strong> +" + x.pct + "%</span>" +
+      // compat: reajustes antigos guardavam pct numérico; novos guardam texto
+      var op = typeof x.pct === "number" ? "+" + x.pct + "%" : x.pct;
+      return '<div class="hist"><span>' + S.fmtData(x.data) + " · <strong>" + esc(x.plano) + "</strong> " + esc(op) + "</span>" +
         "<span>" + x.contratos + " contrato(s) · " + x.parcelas + " parcela(s)</span></div>";
     }).join("") : '<div class="muted">Nenhum reajuste aplicado ainda.</div>';
   }
 
+  ["fModo", "fBase"].forEach(function (id) { $(id).addEventListener("change", atualizaLabel); });
+  atualizaLabel();
   S.onChange(function (k) { if (k === "alunos" || k === "reajustes") render(); });
   render();
 })();
