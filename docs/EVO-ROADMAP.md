@@ -1,14 +1,16 @@
 # Estudo completo da Central de Ajuda do EVO — 579 artigos lidos na íntegra
 
 > ## Progresso da implementação (atualizado)
-> ✅ **TODOS os 🔴 alta prioridade concluídos** + refinos 🟡 já entregues:
-> Blocos 1–9 (todos os 🔴) · 10 (limite de entradas + horário de contrato) ·
-> 11 (Tabela de Preços dinâmica) · 12 (multa de cancelamento em 2 modos).
+> ✅ **TODOS os 🔴 alta prioridade** + a maioria dos refinos 🟡 concluídos. Blocos entregues:
+> 1–9 (todos os 🔴) · 10 (limite de entradas + horário de contrato) · 11 (Tabela de Preços) ·
+> 12 (multa em 2 modos) · 13 (aulas virtuais na grade) · 14 (caixa cego) ·
+> 15 (estilos de série na prescrição) · 16 (ocupação por área).
 >
-> **Refinos ainda pendentes (🟡/⚪, cada um pequeno e isolado):** anuidade data-fixa/período ·
-> plano de contas hierárquico · PAR-Q com regras completas · estilos de série na prescrição ·
-> aulas virtuais na grade · combinações de horário · caixa oculto · fornecedores↔lançamentos ·
-> ocupação por área · contrato com fim determinado · 2FA (TOTP). Detalhes nas seções abaixo.
+> Já existiam (roadmap havia superestimado): recompensas resgatáveis, fornecedores↔lançamentos.
+>
+> **Restante (complexos ou de menor valor):** plano de contas hierárquico · PAR-Q com regras completas ·
+> anuidade data-fixa/período · combinações fixas de horário · contrato com fim determinado (cross-cutting) ·
+> 2FA (TOTP) · protocolo de avaliação configurável · metodologia de treino por IA.
 
 
 > Leitura integral das 92 coleções (`ajuda-md/`) por 6 leitores em paralelo, cruzada com o
