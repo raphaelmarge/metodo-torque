@@ -56,8 +56,12 @@
         <div class="abas" id="abas">
           <button data-a="avals" class="ativa">Avaliações físicas</button>
           <button data-a="evolucao">Comparativo e evolução</button>
+          <button data-a="diario">Diário de evolução</button>
         </div>
-        <button class="btn" id="btnNova" hidden>+ Nova avaliação</button>
+        <span>
+          <button class="btn" id="btnDiario" hidden>+ Registro do dia</button>
+          <button class="btn" id="btnNova" hidden>+ Nova avaliação</button>
+        </span>
       </div>
       <div class="card" id="painel">
         <div class="vazio">Escolha um aluno para ver as avaliações dele.</div>
@@ -99,6 +103,24 @@
   </form>
 </dialog>
 
+<dialog id="dlgDiario">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
+    <h2>Registro de evolução</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Data *</label><input id="dData" type="date" required></div>
+      <div class="campo"><label>Atividade / aula</label><input id="dAtividade" placeholder="ex.: Musculação — treino B"></div>
+    </div>
+    <div class="campo"><label>Como o cliente se sentiu?</label>
+      <select id="dSentiu"><option value="">—</option><option>😀 Muito bem</option><option>🙂 Bem</option><option>😐 Normal</option><option>😣 Cansado</option><option>🤕 Com dor/desconforto</option></select>
+    </div>
+    <div class="campo"><label>Evolução / observações da sessão</label><input id="dDetalhe" placeholder="cargas, exercícios, o que evoluiu, o que ajustar"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar registro</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
@@ -113,7 +135,7 @@
   var MEDIDAS = [["torax", "Tórax"], ["cintura", "Cintura"], ["abdomen", "Abdômen"], ["quadril", "Quadril"],
     ["bracoD", "Braço D"], ["bracoE", "Braço E"], ["coxaD", "Coxa D"], ["coxaE", "Coxa E"], ["pant", "Panturrilha"]];
 
-  function load() { return S.read("saude", { avaliacoes: [] }); }
+  function load() { var st = S.read("saude", { avaliacoes: [], evolucoes: [] }); st.evolucoes = st.evolucoes || []; return st; }
   function save(st) { S.write("saude", st); render(); }
 
   var busca = "", alunoSel = null, aba = "avals";
@@ -211,7 +233,8 @@
   function renderPainel() {
     var st = load();
     var aluno = alunosAtivos().find(function (a) { return a.id === alunoSel; });
-    $("btnNova").hidden = !aluno;
+    $("btnNova").hidden = !aluno || aba === "diario";
+    $("btnDiario").hidden = !aluno || aba !== "diario";
     if (!aluno) { $("painel").innerHTML = '<div class="vazio">Escolha um aluno para ver as avaliações dele.</div>'; return; }
     var avs = avalsDe(st, aluno.id);
 
@@ -244,6 +267,22 @@
           (v.obs ? '<div class="muted" style="margin-top: 10px;">📝 ' + esc(v.obs) + "</div>" : "") +
           "</div></div>";
       }).join("");
+      return;
+    }
+
+    if (aba === "diario") {
+      var evs = st.evolucoes.filter(function (e) { return e.alunoId === aluno.id; })
+        .sort(function (x, y) { return (x.data + x.id) < (y.data + y.id) ? 1 : -1; });
+      $("painel").innerHTML = evs.length ? evs.map(function (e) {
+        return '<div class="ficha" style="border: 1px solid var(--linha); margin-bottom: 10px;">' +
+          '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 9px 14px;">' +
+          "<strong>" + S.fmtData(e.data) + "</strong>" + (e.atividade ? "<span class='muted'>" + esc(e.atividade) + "</span>" : "<span></span>") +
+          '<button class="btn perigo mini" data-deld="' + e.id + '" style="padding: 3px 9px;">✕</button></div>' +
+          '<div style="padding: 10px 14px;">' +
+          (e.sentiu ? '<div style="font-size: 14px; margin-bottom: 4px;">' + esc(e.sentiu) + "</div>" : "") +
+          (e.detalhe ? '<div class="muted">' + esc(e.detalhe) + "</div>" : "") +
+          "</div></div>";
+      }).join("") : '<div class="vazio">' + esc(aluno.nome) + ' ainda não tem registros de evolução.<br><br>Clique em <strong>+ Registro do dia</strong> para anotar como foi a sessão (o prontuário do EVO).</div>';
       return;
     }
 
@@ -286,6 +325,14 @@
     st.avaliacoes = st.avaliacoes.filter(function (v) { return v.id !== id; });
     save(st);
   });
+  $("painel").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-deld");
+    if (!id) return;
+    if (!confirm("Excluir este registro de evolução?")) return;
+    var st = load();
+    st.evolucoes = st.evolucoes.filter(function (v) { return v.id !== id; });
+    save(st);
+  });
 
   // ---------- nova ----------
   $("btnNova").onclick = function () {
@@ -296,6 +343,18 @@
     } catch (e) {}
     $("dlgAval").showModal();
   };
+  $("btnDiario").onclick = function () {
+    $("dData").value = S.todayISO();
+    $("dAtividade").value = ""; $("dSentiu").value = ""; $("dDetalhe").value = "";
+    $("dlgDiario").showModal();
+  };
+  $("dlgDiario").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    var st = load();
+    st.evolucoes.push({ id: S.uid(), alunoId: alunoSel, data: $("dData").value, atividade: $("dAtividade").value.trim(),
+      sentiu: $("dSentiu").value, detalhe: $("dDetalhe").value.trim() });
+    save(st);
+  });
   $("dlgAval").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value === "cancel") return;
     var st = load();
