@@ -35,6 +35,8 @@
   <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
     <div class="campo"><label>Período — de</label><input id="fDe" type="date"></div>
     <div class="campo"><label>até</label><input id="fAte" type="date"></div>
+    <div class="campo"><label>Aparelhos (musc.)</label><input id="capMusc" type="number" min="0" placeholder="ex.: 40" style="width: 100px;"></div>
+    <div class="campo"><label>Aparelhos (cardio)</label><input id="capCardio" type="number" min="0" placeholder="ex.: 15" style="width: 100px;"></div>
     <button class="btn sec mini" id="btnExportar" type="button">⬇ Exportar</button>
     <button class="btn" id="btnNova">➕ Nova contagem</button>
   </div>
@@ -97,12 +99,23 @@
   }
 
   function render() {
+    var stC = load();
+    if (document.activeElement !== $("capMusc")) $("capMusc").value = stC.capMusc || "";
+    if (document.activeElement !== $("capCardio")) $("capCardio").value = stC.capCardio || "";
+    var capTotal = (+stC.capMusc || 0) + (+stC.capCardio || 0);
     var lista = filtradas();
-    var totalPico = 0, somaTotal = 0;
-    lista.forEach(function (c) { var t = totalDe(c); somaTotal += t; if (t > totalPico) totalPico = t; });
+    var totalPico = 0, somaTotal = 0, picoMusc = 0, picoCardio = 0;
+    lista.forEach(function (c) {
+      var t = totalDe(c); somaTotal += t; if (t > totalPico) totalPico = t;
+      if ((+c.musc || 0) > picoMusc) picoMusc = +c.musc || 0;
+      if ((+c.cardio || 0) > picoCardio) picoCardio = +c.cardio || 0;
+    });
+    var pct = function (n, cap) { return cap > 0 ? Math.round(n * 100 / cap) + "%" : "—"; };
     $("kpis").innerHTML =
       '<div class="kpi"><div class="rot">CONTAGENS</div><div class="val">' + lista.length + "</div></div>" +
-      '<div class="kpi"><div class="rot">PICO DE PESSOAS</div><div class="val">' + totalPico + "</div></div>" +
+      '<div class="kpi"><div class="rot">PICO DE PESSOAS</div><div class="val">' + totalPico + (capTotal ? " · " + pct(totalPico, capTotal) : "") + "</div></div>" +
+      '<div class="kpi"><div class="rot">OCUPAÇÃO PICO MUSC.</div><div class="val">' + pct(picoMusc, +stC.capMusc || 0) + "</div></div>" +
+      '<div class="kpi"><div class="rot">OCUPAÇÃO PICO CARDIO</div><div class="val">' + pct(picoCardio, +stC.capCardio || 0) + "</div></div>" +
       '<div class="kpi"><div class="rot">MÉDIA POR CONTAGEM</div><div class="val">' + (lista.length ? Math.round(somaTotal / lista.length) : 0) + "</div></div>";
 
     $("tabela").innerHTML = "<tr><th>DATA</th><th>DIA DA SEMANA</th><th>HORÁRIO</th><th class=\"num\">MUSCULAÇÃO</th><th class=\"num\">CARDIO</th><th class=\"num\">OUTRAS</th><th class=\"num\">TOTAL</th><th>PREENCHIDO POR</th><th></th></tr>" +
@@ -131,6 +144,14 @@
       }).join("") : '<tr><td class="muted" style="padding: 14px;">Sem dados para calcular a média.</td></tr>';
   }
   ["fDe", "fAte"].forEach(function (id) { $(id).addEventListener("input", render); });
+  ["capMusc", "capCardio"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var st = load();
+      st[id] = +this.value || 0;
+      S.write("contagens", st);
+      render();
+    });
+  });
 
   $("btnNova").onclick = function () {
     $("cData").value = S.todayISO();
