@@ -43,6 +43,12 @@
   </div>
 
   <div id="lista"></div>
+
+  <div class="card" id="cardRepo" hidden>
+    <h2>📅 Reposições em aberto</h2>
+    <p class="muted" style="font-size: 12.5px; margin: 4px 0 10px;">Falta justificada gera reposição com validade de 30 dias (regra do EVO). Quando o aluno repuser a aula, marque como usada.</p>
+    <div id="listaRepo"></div>
+  </div>
 </main>
 
 <dialog id="dlg">
@@ -115,6 +121,7 @@
           return '<div class="aluno-linha"><label><input type="checkbox" data-ch="' + t.id + '" value="' + esc(a) + '"' +
             (presentes.indexOf(a) !== -1 ? " checked" : "") + ">" + esc(a) + "</label>" +
             "<span>" + (f != null ? '<span class="freq">' + f + "% presença</span> " : "") +
+            '<button class="btn sec mini" data-just="' + t.id + "|" + esc(a) + '" title="Falta justificada — gera reposição (30 dias)" style="padding: 2px 8px;">📅 Justificar</button> ' +
             '<button class="btn perigo mini" data-rma="' + t.id + "|" + esc(a) + '" style="padding: 2px 8px;">✕</button></span></div>';
         }).join("") +
         (alunos.length ? "" : '<div class="muted" style="padding: 10px 16px;">Turma vazia — adicione os alunos.</div>') +
@@ -194,7 +201,50 @@
   };
 
   S.equipeDatalist(["fProf"]);
-  S.onChange(function (k) { if (k === "turmas" || k === "alunos") render(); });
+  // ---------- reposições (falta justificada, regra do EVO) ----------
+  function repoStore() { return S.read("reposicoes", { itens: [] }); }
+  function renderRepo() {
+    var hoje = S.todayISO();
+    var itens = repoStore().itens.filter(function (r) { return !r.usadaEm; });
+    $("cardRepo").hidden = !itens.length;
+    $("listaRepo").innerHTML = itens.map(function (r) {
+      var vencida = r.validade < hoje;
+      return '<div class="aluno-linha"><span><strong>' + esc(r.aluno) + "</strong> · " + esc(r.turmaNome) + " · falta de " + S.fmtData(r.data) +
+        " · vale até " + S.fmtData(r.validade) + (vencida ? ' <span class="tag erro">VENCIDA</span>' : ' <span class="tag ok">VÁLIDA</span>') + "</span>" +
+        '<span><button class="btn ok mini" data-usarepo="' + r.id + '">✓ Usada</button> <button class="btn perigo mini" data-delrepo="' + r.id + '" style="padding: 2px 8px;">✕</button></span></div>';
+    }).join("");
+  }
+  $("lista").addEventListener("click", function (e) {
+    var alvo = e.target.getAttribute && e.target.getAttribute("data-just");
+    if (!alvo) return;
+    var p = alvo.split("|");
+    var st = load();
+    var t = st.turmas.find(function (x) { return x.id === p[0]; });
+    if (!t) return;
+    var hoje = S.todayISO();
+    var rep = repoStore();
+    if (rep.itens.some(function (r) { return r.aluno === p[1] && r.turmaNome === t.nome && r.data === hoje; })) { alert("Já existe reposição desta falta."); return; }
+    if (!confirm("Registrar FALTA JUSTIFICADA de " + p[1] + " hoje e gerar 1 reposição válida por 30 dias?")) return;
+    var val = new Date(); val.setDate(val.getDate() + 30);
+    rep.itens.push({ id: S.uid(), aluno: p[1], turmaNome: t.nome, data: hoje, validade: S.todayISO(val) });
+    S.write("reposicoes", rep);
+    renderRepo();
+  });
+  $("listaRepo").addEventListener("click", function (e) {
+    var t = e.target;
+    var id = t.getAttribute && (t.getAttribute("data-usarepo") || t.getAttribute("data-delrepo"));
+    if (!id) return;
+    var rep = repoStore();
+    if (t.hasAttribute("data-usarepo")) {
+      var r = rep.itens.find(function (x) { return x.id === id; });
+      if (r) r.usadaEm = S.todayISO();
+    } else rep.itens = rep.itens.filter(function (x) { return x.id !== id; });
+    S.write("reposicoes", rep);
+    renderRepo();
+  });
+  renderRepo();
+
+  S.onChange(function (k) { if (k === "turmas" || k === "alunos") render(); if (k === "reposicoes") renderRepo(); });
   render();
 })();
 </script>

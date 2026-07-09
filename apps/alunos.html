@@ -110,6 +110,7 @@
           <option value="recorrente">Recorrente</option>
           <option value="avista">À vista</option>
           <option value="agregador">Agregador</option>
+          <option value="adicional">Adicional (área kids, armário…)</option>
         </select>
         <button class="btn mini" id="pAdd">+ Criar</button>
       </div>
@@ -337,7 +338,8 @@
 
   // ---------- domínio ----------
   function contratoAtivo(a) {
-    return (a.contratos || []).find(function (c) { return c.status === "ativo" || c.status === "congelado"; }) || null;
+    // adicionais (principalId) não contam como contrato principal
+    return (a.contratos || []).find(function (c) { return (c.status === "ativo" || c.status === "congelado") && !c.principalId; }) || null;
   }
   function recebiveisDo(st, alunoId) {
     return st.recebiveis.filter(function (r) { return r.alunoId === alunoId; })
@@ -559,6 +561,7 @@
     if (!c) acoes.push('<button class="btn mini" data-facao="matricular">📝 Matricular</button>');
     if (c && c.status === "ativo") acoes.push('<button class="btn sec mini" data-facao="congelar">❄ Congelar</button>');
     if (c && c.status === "congelado") acoes.push('<button class="btn sec mini" data-facao="descongelar">▶ Reativar</button>');
+    if (c && st.planos.some(function (p) { return p.tipo === "adicional"; })) acoes.push('<button class="btn mini" data-facao="adicional">➕ Vender adicional</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="dias" title="Creditar/debitar dias no contrato">± Dias</button>');
     if (c) acoes.push('<button class="btn perigo mini" data-facao="cancelar">✕ Cancelar contrato</button>');
     var cancelado = !c && (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })
@@ -836,6 +839,26 @@
     if (acao === "editar") {
       abreCadastro(a); return;
     }
+    if (acao === "adicional") {
+      var adicionais = st.planos.filter(function (p) { return p.tipo === "adicional"; });
+      var nomes = adicionais.map(function (p, i) { return (i + 1) + ") " + p.nome + " — " + S.fmtBRL(p.valor) + "/mês"; }).join("\n");
+      var escolha = parseInt(prompt("CONTRATO ADICIONAL (regra do EVO: acompanha o principal e termina junto)\n\n" + nomes + "\n\nDigite o número:", "1"), 10);
+      var plAd = adicionais[escolha - 1];
+      if (!plAd) return;
+      // vigência proporcional: do mês atual até o fim do contrato principal
+      var fimP = new Date((c.inicio || S.todayISO()) + "T12:00");
+      fimP.setMonth(fimP.getMonth() + (c.meses || 1));
+      fimP.setDate(fimP.getDate() + (+c.diasCreditados || 0));
+      var hoje9 = new Date(S.todayISO() + "T12:00");
+      var mesesRest = Math.max(1, Math.round((fimP - hoje9) / 2592e6));
+      if (!confirm("Vender \"" + plAd.nome + "\" (" + S.fmtBRL(plAd.valor) + "/mês) por " + mesesRest + " mês(es) — proporcional ao contrato principal, terminando junto com ele?")) return;
+      var cAd = { id: S.uid(), planoId: plAd.id, inicio: S.todayISO(), diaVenc: c.diaVenc || 5, meses: mesesRest, valor: plAd.valor, status: "ativo", principalId: c.id };
+      a.contratos.push(cAd);
+      geraRecebiveis(st, a, cAd, plAd);
+      save(st); abreFicha(fichaId);
+      alert("Adicional vendido! Ele pode ser cancelado separadamente, mas termina junto com o principal.");
+      return;
+    }
     if (acao === "mesclar") {
       var nomeDup = prompt("MESCLAR CADASTROS (regra do EVO)\n\nEste cadastro (" + a.nome + ") será o PERFIL BASE.\nDigite o nome completo do cadastro DUPLICADO (que será excluído):") || "";
       var dup = st.alunos.find(function (x) { return x.id !== a.id && x.nome.trim().toLowerCase() === nomeDup.trim().toLowerCase(); });
@@ -1007,6 +1030,15 @@
     c.status = "cancelado";
     c.canceladoEm = data;
     c.motivoCancel = $("ccMotivo").value + ($("ccObs").value.trim() ? " — " + $("ccObs").value.trim() : "");
+    // adicionais vinculados acompanham o principal (regra do EVO)
+    (a.contratos || []).forEach(function (cAd) {
+      if (cAd.principalId === c.id && cAd.status === "ativo") {
+        cAd.status = "cancelado"; cAd.canceladoEm = data; cAd.motivoCancel = "Acompanhou o cancelamento do contrato principal";
+        st.recebiveis = st.recebiveis.filter(function (r) {
+          return !(r.contratoId === cAd.id && r.status === "aberto" && r.vencimento > data);
+        });
+      }
+    });
     if ($("ccCredito").checked) {
       var cred = creditoDiasRestantes(st, c, data);
       if (cred > 0) {
