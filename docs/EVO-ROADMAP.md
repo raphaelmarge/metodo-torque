@@ -1,19 +1,14 @@
 # Estudo completo da Central de Ajuda do EVO — 579 artigos lidos na íntegra
 
 > ## Progresso da implementação (atualizado)
-> ✅ **TODOS os itens 🔴 alta prioridade concluídos.** Blocos entregues:
-> 1 (nome preferencial, notificação, opt-in de canais, temperatura de lead) ·
-> 2 (transferência de contrato entre clientes, convidados com cota, níveis/graduação) ·
-> 3 (capacidade + fila de espera + bonificação por assiduidade) ·
-> 4 (prontuário/diário de evolução) · 5 (comissão competência×caixa, transferência entre contas) ·
-> 6a (crescimento com 12 categorias) · 6b (contrato VIP/especial fora dos ativos) ·
-> 7 (Log Geral de auditoria) · 8 (regras de pontuação — catálogo de prêmios já existia) ·
-> 9 (restrição de venda por gênero/idade + suspensão configurável por contrato).
+> ✅ **TODOS os 🔴 alta prioridade concluídos** + refinos 🟡 já entregues:
+> Blocos 1–9 (todos os 🔴) · 10 (limite de entradas + horário de contrato) ·
+> 11 (Tabela de Preços dinâmica) · 12 (multa de cancelamento em 2 modos).
 >
-> **Restante (menor prioridade):** 2FA (TOTP) e os refinos 🟡/⚪ listados abaixo
-> (multa em 2 modos, horário de contrato, anuidade data-fixa/período, plano de contas hierárquico,
-> PAR-Q com regras, estilos de série na prescrição, aulas virtuais, combinações de horário,
-> caixa oculto, fornecedores↔lançamentos, ocupação por área, tabela de preços dinâmica, etc.).
+> **Refinos ainda pendentes (🟡/⚪, cada um pequeno e isolado):** anuidade data-fixa/período ·
+> plano de contas hierárquico · PAR-Q com regras completas · estilos de série na prescrição ·
+> aulas virtuais na grade · combinações de horário · caixa oculto · fornecedores↔lançamentos ·
+> ocupação por área · contrato com fim determinado · 2FA (TOTP). Detalhes nas seções abaixo.
 
 
 > Leitura integral das 92 coleções (`ajuda-md/`) por 6 leitores em paralelo, cruzada com o
