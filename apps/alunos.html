@@ -871,6 +871,11 @@
       }
       if (dInfo) {
         contrato.desconto = dInfo;
+        // registra no controle de teto (Gerencial - Desconto/Créditos do EVO)
+        var descMensal = dInfo.tipo === "pct" ? Math.round(contrato.valor * dInfo.valor) / 100 : Math.min(dInfo.valor, contrato.valor);
+        var ap9 = S.read("aprovacoes", { itens: [] });
+        ap9.itens.push({ id: S.uid(), tipo: "desconto", alunoId: a.id, nome: a.nome, valor: Math.round(descMensal * 100) / 100, desc: dInfo.desc, em: S.todayISO(), status: "aprovado" });
+        S.write("aprovacoes", ap9);
         var parcelas = st.recebiveis.filter(function (r) { return r.contratoId === contrato.id; })
           .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; });
         parcelas.forEach(function (r, idx) {
