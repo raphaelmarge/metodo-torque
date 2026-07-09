@@ -46,6 +46,7 @@
       <label style="margin:0; font-size: 13px;">Prazo de renovação (dias)</label>
       <input id="prazoRenov" type="number" min="0" value="30" style="width: 80px;">
     </div>
+    <div class="stats" id="movCards" style="margin-bottom: 12px;"></div>
     <div style="overflow-x: auto;"><table class="tabela" id="tabMov" style="width:100%; border-collapse: collapse;"></table></div>
   </div>
 
@@ -181,6 +182,14 @@
     });
     var totalEnt = cat.novos + cat.renovados + cat.retornos + cat.retSusp;
     var totalSai = cat.cancelados + cat.vencidos + cat.desistencias + cat.suspensos;
+    var churn = cat.ativoIni ? Math.round(totalSai / cat.ativoIni * 1000) / 10 : 0;
+    var cresc = cat.ativoFim - cat.ativoIni;
+    var crescPct = cat.ativoIni ? Math.round(cresc / cat.ativoIni * 1000) / 10 : 0;
+    $("movCards").innerHTML =
+      '<div class="card" style="background:#e9f7ef;"><div class="n" style="color:var(--ok);">' + totalEnt + '</div><div class="muted">Total de entradas</div></div>' +
+      '<div class="card" style="background:#fdecec;"><div class="n" style="color:var(--erro);">' + totalSai + '</div><div class="muted">Total de saídas</div></div>' +
+      '<div class="card" style="background:#fff6e6;"><div class="n" style="color:var(--alerta);">' + String(churn).replace(".", ",") + '%</div><div class="muted">Churn</div></div>' +
+      '<div class="card"><div class="n" style="color:' + (cresc >= 0 ? "var(--ok)" : "var(--erro)") + ';">' + (cresc >= 0 ? "+" : "") + cresc + " (" + (crescPct >= 0 ? "+" : "") + String(crescPct).replace(".", ",") + '%)</div><div class="muted">Crescimento</div></div>';
     function lin(rot, val, cor) { return "<tr><td style='padding:6px 10px;border-bottom:1px solid var(--fundo);'>" + rot + "</td><td style='padding:6px 10px;border-bottom:1px solid var(--fundo);text-align:right;font-weight:700;" + (cor ? "color:" + cor + ";" : "") + "'>" + val + "</td></tr>"; }
     $("tabMov").innerHTML =
       lin("Ativos no início do mês", cat.ativoIni) +
