@@ -123,7 +123,8 @@
     var hoje = S.todayISO();
     var stA = S.read("alunos", { alunos: [], recebiveis: [] });
     var restrito = function (a) { return a.restrito && (!a.restrito.ate || a.restrito.ate >= hoje); };
-    var ativos = stA.alunos.filter(function (a) { return a.status !== "inativo" && a.zap && !restrito(a); });
+    var optZap = function (a) { return !a.optContato || a.optContato.zap !== false; };
+    var ativos = stA.alunos.filter(function (a) { return a.status !== "inativo" && a.zap && !restrito(a) && optZap(a); });
     var out = [];
     if (gatilho === "aniversario") {
       ativos.forEach(function (a) { if ((a.nasc || "").slice(5, 10) === hoje.slice(5, 10)) out.push({ a: a, dias: 0, valor: 0 }); });
@@ -163,7 +164,7 @@
       ativos.forEach(function (a) { if (dev[a.id]) out.push({ a: a, dias: 0, valor: dev[a.id] }); });
     }
     if (gatilho === "aniversario_inativo") {
-      stA.alunos.filter(function (a) { return a.status === "inativo" && a.zap && !restrito(a); }).forEach(function (a) {
+      stA.alunos.filter(function (a) { return a.status === "inativo" && a.zap && !restrito(a) && optZap(a); }).forEach(function (a) {
         if ((a.nasc || "").slice(5, 10) === hoje.slice(5, 10)) out.push({ a: a, dias: 0, valor: 0 });
       });
     }

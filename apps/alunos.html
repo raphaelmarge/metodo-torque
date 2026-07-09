@@ -164,6 +164,11 @@
     </div>
     <div class="grid-2">
       <div class="campo"><label>Nome da pessoa responsável</label><input id="aResp" placeholder="se menor de idade"></div>
+      <div class="campo"><label>Responsável financeiro</label>
+        <select id="aRespTipo"><option value="PF">Pessoa Física</option><option value="PJ">Pessoa Jurídica</option></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Nome preferencial (nome social/apelido)</label><input id="aApelido" placeholder="usado nas telas e no atendimento"></div>
       <div class="campo"><label>Wellhub ID / TotalPass</label><input id="aWellhub"></div>
     </div>
 
@@ -203,6 +208,14 @@
     <div class="grid-2">
       <div class="campo"><label>Indicação</label><input id="aIndicacao" placeholder="quem indicou"></div>
       <div class="campo"><label>Consultor(a)</label><input id="aConsultor" placeholder="quem atendeu"></div>
+    </div>
+    <div class="campo"><label>Canais de contato permitidos (opt-in)</label>
+      <div class="linha-flex" style="gap: 14px; flex-wrap: wrap; font-size: 13.5px; padding-top: 4px;">
+        <label class="linha-flex" style="gap: 5px; margin: 0;"><input type="checkbox" id="aOptZap" checked> WhatsApp</label>
+        <label class="linha-flex" style="gap: 5px; margin: 0;"><input type="checkbox" id="aOptEmail" checked> E-mail</label>
+        <label class="linha-flex" style="gap: 5px; margin: 0;"><input type="checkbox" id="aOptSms" checked> SMS</label>
+        <label class="linha-flex" style="gap: 5px; margin: 0;"><input type="checkbox" id="aOptLig" checked> Ligações</label>
+      </div>
     </div>
     <div class="campo"><label>Observações</label><input id="aObs" placeholder="restrição médica, metas…"></div>
 
@@ -550,7 +563,7 @@
     var plano = c && st.planos.find(function (p) { return p.id === c.planoId; });
 
     $("fAvatar").textContent = a.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
-    $("fNome").textContent = a.nome;
+    $("fNome").textContent = a.nome + (a.apelido ? ' ("' + a.apelido + '")' : "");
     var endereco = [a.endereco, a.numero, a.bairro, a.cidade && (a.cidade + (a.uf ? "/" + a.uf : ""))].filter(Boolean).join(", ");
     $("fSub").textContent = [(a.cpf ? "CPF " + a.cpf : ""), a.zap, a.email, endereco,
       (a.comoConheceu ? "veio por: " + a.comoConheceu : ""), (a.consultor ? "consultor(a): " + a.consultor : ""), (a.obs || "")].filter(Boolean).join(" · ");
@@ -573,9 +586,16 @@
       .sort(function (x, y) { return (x.canceladoEm || "") < (y.canceladoEm || "") ? -1 : 1; }).pop();
     if (cancelado) acoes.push('<button class="btn sec mini" data-facao="anular" data-cid="' + cancelado.id + '">↩ Anular cancelamento</button>');
     acoes.push('<button class="btn sec mini" data-facao="editar">✎ Editar dados</button>');
+    acoes.push('<button class="btn sec mini" data-facao="notificacao" title="Nota fixa visível a quem abrir o perfil">📌 Notificação</button>');
     acoes.push('<button class="btn sec mini" data-facao="mesclar" title="Unificar com um cadastro duplicado">⇄ Mesclar</button>');
     if (a.status !== "inativo" && !c) acoes.push('<button class="btn sec mini" data-facao="inativar">Arquivar aluno</button>');
     $("fAcoes").innerHTML = acoes.join("");
+    var notas = (a.notificacoes || []).slice(-5).reverse();
+    var notasHtml = notas.length ? '<div style="background: #fff7d6; border: 1px solid #e6d27a; padding: 8px 12px; font-size: 13px; margin-top: 6px;">📌 ' +
+      notas.map(function (n) { return esc(n.txt) + ' <span class="muted" style="font-size:11px;">(' + S.fmtData(n.em) + ")</span>"; }).join("<br>") + "</div>" : "";
+    var elNota = document.getElementById("fNotificacao");
+    if (!elNota) { elNota = document.createElement("div"); elNota.id = "fNotificacao"; $("fAcoes").parentNode.insertBefore(elNota, $("fAcoes").nextSibling); }
+    elNota.innerHTML = notasHtml;
 
     $("fContrato").innerHTML = c ?
       "<div><strong>" + esc(plano ? plano.nome : "?") + "</strong> · " + S.fmtBRL(c.valor) + '/mês</div>' +
@@ -677,7 +697,7 @@
     }, function () { alert("Não foi possível carregar a foto."); });
   });
 
-  var CAMPOS_A = { aNome: "pnome", aSobrenome: "sobrenome", aCpf: "cpf", aNasc: "nasc", aGenero: "genero", aRg: "rg", aResp: "responsavel", aWellhub: "wellhub", aCep: "cep", aEndereco: "endereco", aNumero: "numero", aComplemento: "complemento", aBairro: "bairro", aCidade: "cidade", aUf: "uf", aDdi: "ddi", aZap: "zap", aEmail: "email", aTipoVisita: "tipoVisita", aIndicacao: "indicacao", aConsultor: "consultor", aObs: "obs" };
+  var CAMPOS_A = { aNome: "pnome", aSobrenome: "sobrenome", aCpf: "cpf", aNasc: "nasc", aGenero: "genero", aRg: "rg", aResp: "responsavel", aApelido: "apelido", aRespTipo: "respTipo", aWellhub: "wellhub", aCep: "cep", aEndereco: "endereco", aNumero: "numero", aComplemento: "complemento", aBairro: "bairro", aCidade: "cidade", aUf: "uf", aDdi: "ddi", aZap: "zap", aEmail: "email", aTipoVisita: "tipoVisita", aIndicacao: "indicacao", aConsultor: "consultor", aObs: "obs" };
 
   // novo/editar aluno
   var editandoId = null;
@@ -694,6 +714,11 @@
       $(id).value = v;
     });
     preencheComo(a ? a.comoConheceu : "");
+    var oc = (a && a.optContato) || {};
+    $("aOptZap").checked = oc.zap !== false;
+    $("aOptEmail").checked = oc.email !== false;
+    $("aOptSms").checked = oc.sms !== false;
+    $("aOptLig").checked = oc.ligacao !== false;
     $("aFotoPrev").hidden = true; $("aFotoVazia").hidden = false;
     if (a && a.fotoId) S.getPhoto(a.fotoId).then(function (data) {
       if (data) { $("aFotoPrev").src = data; $("aFotoPrev").hidden = false; $("aFotoVazia").hidden = true; }
@@ -717,6 +742,7 @@
       alvo[CAMPOS_A[id]] = $(id).value.trim();
     });
     alvo.comoConheceu = $("aComoConheceu").value;
+    alvo.optContato = { zap: $("aOptZap").checked, email: $("aOptEmail").checked, sms: $("aOptSms").checked, ligacao: $("aOptLig").checked };
     alvo.nome = (alvo.pnome + " " + alvo.sobrenome).trim();
     if (fotoPendente) alvo.fotoId = fotoPendente;
     save(st);
@@ -844,6 +870,14 @@
     }
     if (acao === "editar") {
       abreCadastro(a); return;
+    }
+    if (acao === "notificacao") {
+      var txtNota = prompt("Notificação no cadastro (nota fixa, máx. 150 caracteres — vazio remove a última):", "");
+      if (txtNota === null) return;
+      a.notificacoes = a.notificacoes || [];
+      if (txtNota.trim()) a.notificacoes.push({ txt: txtNota.trim().slice(0, 150), em: S.todayISO() });
+      else a.notificacoes.pop();
+      save(st); abreFicha(fichaId); return;
     }
     if (acao === "adicional") {
       var adicionais = st.planos.filter(function (p) { return p.tipo === "adicional"; });
