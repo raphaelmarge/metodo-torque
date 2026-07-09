@@ -145,6 +145,7 @@
         if (c.status === "ativo") {
           var f = new Date((c.inicio || "2000-01-01") + "T12:00");
           f.setMonth(f.getMonth() + (c.meses || 1));
+        f.setDate(f.getDate() + (+c.diasCreditados || 0));
           var fim = S.todayISO(f);
           var em30 = new Date(); em30.setDate(em30.getDate() + 30);
           if (fim >= hoje && fim <= S.todayISO(em30)) aVencer++;

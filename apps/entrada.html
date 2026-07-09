@@ -90,10 +90,15 @@
       ativos.forEach(function (c) {
         var f = new Date((c.inicio || "2000-01-01") + "T12:00");
         f.setMonth(f.getMonth() + (c.meses || 1));
+        f.setDate(f.getDate() + (+c.diasCreditados || 0));
         var iso = S.todayISO(f);
         if (!fimMax || iso > fimMax) fimMax = iso;
       });
       if (fimMax < hoje) { avisos.push({ t: "erro", txt: "Contrato vencido em " + S.fmtData(fimMax) + " — encaminhar para renovação." }); nivel = "bloq"; }
+      if (ativos.every(function (c) { return (c.inicio || "") > hoje; })) {
+        avisos.push({ t: "erro", txt: "Contrato NA FILA — começa em " + S.fmtData(ativos[0].inicio) + ". Aluno inativo até lá (regra do EVO)." });
+        nivel = "bloq";
+      }
       if (ativos.some(function (c) { return c.status === "congelado"; }) && ativos.every(function (c) { return c.status === "congelado"; })) {
         avisos.push({ t: "alerta", txt: "Plano congelado — confirmar reativação na ficha do aluno." });
         if (nivel === "ok") nivel = "atencao";

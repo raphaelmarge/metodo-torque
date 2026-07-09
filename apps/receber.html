@@ -121,6 +121,7 @@
   }
 
   function descDe(r, m) {
+    if (r.desc) return r.desc;
     var c = m.contrato[r.contratoId];
     var p = c && m.plano[c.planoId];
     return "Mensalidade — " + (p ? p.nome : "plano");
