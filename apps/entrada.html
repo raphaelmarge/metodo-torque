@@ -155,8 +155,27 @@
       avisos.push({ t: "alerta", txt: "Mensalidade em atraso: " + S.fmtBRL(atraso) + " — lembrar na saída." });
       if (nivel === "ok") nivel = "atencao";
     }
-    var parq = (S.read("parq", { fichas: {} }).fichas || {})[a.id];
-    if (!parq) avisos.push({ t: "info", txt: "PAR-Q ainda não preenchido — aproveitar para fazer hoje." });
+    var stParq = S.read("parq", { fichas: {}, config: {} });
+    var parq = (stParq.fichas || {})[a.id];
+    var cfgP = stParq.config || {};
+    var parqVencido = false;
+    if (parq && +cfgP.validadeMeses) {
+      var vP = new Date(parq.data + "T12:00"); vP.setMonth(vP.getMonth() + (+cfgP.validadeMeses));
+      parqVencido = S.todayISO(vP) < hoje;
+    }
+    var modoP = cfgP.bloqueio || "aviso";
+    if (modoP !== "off") {
+      if (!parq) {
+        if (modoP === "bloqueia") { avisos.push({ t: "erro", txt: "PAR-Q não preenchido — obrigatório antes de liberar (regra do EVO)." }); nivel = "bloq"; }
+        else avisos.push({ t: "info", txt: "PAR-Q ainda não preenchido — aproveitar para fazer hoje." });
+      } else if (parqVencido) {
+        if (modoP === "bloqueia") { avisos.push({ t: "erro", txt: "PAR-Q VENCIDO — refazer antes de liberar." }); nivel = "bloq"; }
+        else { avisos.push({ t: "alerta", txt: "PAR-Q vencido — pedir para refazer." }); if (nivel === "ok") nivel = "atencao"; }
+      } else if (parq.temSim) {
+        avisos.push({ t: "alerta", txt: "PAR-Q com 'Sim' — confirmar avaliação médica antes do treino." });
+        if (nivel === "ok") nivel = "atencao";
+      }
+    }
     var jaHoje = (a.checkins || []).some(function (t) { return (t || "").slice(0, 10) === hoje; });
     if (jaHoje) avisos.push({ t: "info", txt: "Já tem check-in registrado hoje." });
     return { avisos: avisos, nivel: nivel };

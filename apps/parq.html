@@ -42,6 +42,13 @@
 </header>
 
 <main class="corpo">
+  <div class="card linha-flex no-print" style="justify-content: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; align-items: flex-end;">
+    <div class="campo"><label>Validade do PAR-Q (meses)</label><input id="cfgValidade" type="number" min="0" max="36" placeholder="0 = não vence" style="width: 130px;"></div>
+    <div class="campo"><label>Bloqueio no acesso</label>
+      <select id="cfgBloqueio"><option value="aviso">Só avisa quando falta/vence</option><option value="bloqueia">Bloqueia a entrada sem PAR-Q válido</option><option value="off">Não controla no acesso</option></select>
+    </div>
+    <p class="muted" style="font-size: 12px; max-width: 340px; margin: 0;">Regra do EVO: PAR-Q com "Sim" em qualquer pergunta exige avaliação médica antes de treinar; vencido conta como pendente.</p>
+  </div>
   <div class="duas">
     <div class="card" style="padding: 0;">
       <div style="padding: 12px;"><input id="busca" placeholder="Pesquisar aluno…"></div>
@@ -74,7 +81,14 @@
     "Você conhece alguma outra razão pela qual não deveria praticar atividade física?",
   ];
 
-  function load() { return S.read("parq", { fichas: {} }); }
+  function load() { var st = S.read("parq", { fichas: {}, config: {} }); st.config = st.config || {}; return st; }
+  function vencido(f, cfg) {
+    if (!f) return true;
+    var meses = +(cfg && cfg.validadeMeses) || 0;
+    if (!meses) return false;
+    var venc = new Date(f.data + "T12:00"); venc.setMonth(venc.getMonth() + meses);
+    return S.todayISO(venc) < S.todayISO();
+  }
   var busca = "", alunoSel = null;
 
   function alunosAtivos() {
@@ -82,18 +96,27 @@
       .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
   }
 
+  var cfgBound = false;
   function renderLista() {
     var st = load();
+    if (!cfgBound) {
+      cfgBound = true;
+      $("cfgValidade").value = st.config.validadeMeses || "";
+      $("cfgBloqueio").value = st.config.bloqueio || "aviso";
+      $("cfgValidade").addEventListener("change", function () { var s2 = load(); s2.config.validadeMeses = +this.value || 0; S.write("parq", s2); renderLista(); renderPainel(); });
+      $("cfgBloqueio").addEventListener("change", function () { var s2 = load(); s2.config.bloqueio = this.value; S.write("parq", s2); });
+    }
     var q = busca.trim().toLowerCase();
     var alunos = alunosAtivos().filter(function (a) { return !q || a.nome.toLowerCase().indexOf(q) !== -1; });
     // sem PAR-Q primeiro
     alunos.sort(function (a, b) { return (st.fichas[a.id] ? 1 : 0) - (st.fichas[b.id] ? 1 : 0); });
     $("listaAlunos").innerHTML = alunos.length ? alunos.map(function (a) {
       var f = st.fichas[a.id];
+      var venc = vencido(f, st.config);
       return '<div class="al' + (a.id === alunoSel ? " ativo" : "") + '" data-al="' + a.id + '">' +
         '<div class="info"><strong>' + esc(a.nome) + '</strong><span class="sub">' +
         (f ? "preenchido em " + S.fmtData(f.data) : "sem PAR-Q") + "</span></div>" +
-        (f ? (f.temSim ? '<span class="tag erro">AVAL. MÉDICA</span>' : '<span class="tag ok">APTO ✓</span>') :
+        (f ? (venc ? '<span class="tag alerta">VENCIDO</span>' : f.temSim ? '<span class="tag erro">AVAL. MÉDICA</span>' : '<span class="tag ok">APTO ✓</span>') :
           '<span class="tag alerta">PENDENTE</span>') + "</div>";
     }).join("") : '<div class="vazio" style="margin: 12px;">Nenhum aluno.</div>';
   }
@@ -117,8 +140,8 @@
           "</div></div>";
       }).join("") +
       (f
-        ? '<div class="veredito ' + (f.temSim ? "medico" : "apto") + '">' +
-          (f.temSim ? "⚠ ENCAMINHAR PARA AVALIAÇÃO MÉDICA antes de treinar" : "✅ APTO PARA ATIVIDADE FÍSICA") +
+        ? '<div class="veredito ' + (vencido(f, st.config) ? "medico" : f.temSim ? "medico" : "apto") + '">' +
+          (vencido(f, st.config) ? "⚠ PAR-Q VENCIDO — refazer antes de liberar o treino" : f.temSim ? "⚠ ENCAMINHAR PARA AVALIAÇÃO MÉDICA antes de treinar" : "✅ APTO PARA ATIVIDADE FÍSICA") +
           '</div><p class="muted" style="margin-top: 10px;">Preenchido em ' + S.fmtData(f.data) + " · declarado por: " + esc(f.assinatura) + "</p>"
         : '<div class="no-print" style="margin-top: 16px;">' +
           '<div class="campo"><label>Declaro que as respostas são verdadeiras (digite o nome completo) *</label><input id="fAssinatura" placeholder="' + esc(aluno.nome) + '"></div>' +
