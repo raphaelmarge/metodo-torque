@@ -8,9 +8,21 @@
 <link href="../assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps.css" rel="stylesheet">
 <style>
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-  .stats .card { text-align: center; padding: 14px; }
-  .stats .n { font-size: 26px; font-weight: 800; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .kpi { border-radius: 8px; padding: 18px 20px; }
+  .kpi .rot { font-size: 14px; color: #555; }
+  .kpi .n { font-size: 24px; font-weight: 800; margin-top: 4px; }
+  .kpi.ent { background: #eaf6ec; } .kpi.ent .n { color: #2e7d32; }
+  .kpi.sai { background: #fdecec; } .kpi.sai .n { color: #c62828; }
+  .kpi.chu { background: #fff6e5; } .kpi.chu .n { color: #b26a00; }
+  .kpi.cre { background: #f0f0f2; } .kpi.cre .n { color: #333; }
+  .mov { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .mov th, .mov td { padding: 12px 14px; font-size: 13.5px; text-align: right; border-bottom: 1px solid var(--linha); }
+  .mov th { color: var(--cinza); font-weight: 600; font-size: 12.5px; }
+  .mov th:first-child, .mov td:first-child { text-align: left; font-weight: 700; }
+  .mov td.num { color: #6d4bd8; }
+  .mov .colEnt { background: #eaf6ec; } .mov .colEnt.h { color: #2e7d32; }
+  .mov .colSai { background: #fdecec; } .mov .colSai.h { color: #c62828; }
   .grafico svg { width: 100%; height: auto; display: block; }
   .leg { display: flex; gap: 18px; font-size: 12px; color: var(--cinza); justify-content: center; margin: 2px 0 10px; flex-wrap: wrap; }
   .leg i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: -1px; }
@@ -37,17 +49,29 @@
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
 
-  <div class="stats" id="stats"></div>
-
-  <div class="card">
-    <h2>Movimentação do mês — categorias do EVO</h2>
-    <p class="muted" style="font-size: 12.5px; margin: 4px 0 10px;">Renovado = inativo que voltou dentro do prazo de renovação; Retorno = voltou fora do prazo; Vencido = venceu mas ainda no prazo; Desistência = venceu/cancelou fora do prazo.</p>
-    <div class="linha-flex" style="gap: 8px; align-items: center; margin-bottom: 8px;">
-      <label style="margin:0; font-size: 13px;">Prazo de renovação (dias)</label>
-      <input id="prazoRenov" type="number" min="0" value="30" style="width: 80px;">
+  <div class="card linha-flex" style="justify-content: space-between; gap: 10px;">
+    <div class="linha-flex" style="gap: 14px; align-items: center;">
+      <div class="campo" style="margin:0;"><label>Período</label>
+        <select id="fPeriodo">
+          <option value="3">Últimos 3 meses</option>
+          <option value="6">Últimos 6 meses</option>
+          <option value="12">Últimos 12 meses</option>
+        </select>
+      </div>
+      <div class="campo" style="margin:0;"><label>Prazo de renovação (dias)</label>
+        <input id="prazoRenov" type="number" min="0" value="30" style="width: 80px;">
+      </div>
     </div>
-    <div class="stats" id="movCards" style="margin-bottom: 12px;"></div>
-    <div style="overflow-x: auto;"><table class="tabela" id="tabMov" style="width:100%; border-collapse: collapse;"></table></div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="mov" id="tabMov"></table>
+  </div>
+
+  <div class="card" style="padding: 12px 16px;">
+    <p class="muted" style="font-size: 12.5px; margin: 0;">Renovado = inativo que voltou dentro do prazo de renovação · Retorno = voltou fora do prazo · Vencido = venceu mas ainda no prazo · Desistência = venceu/cancelou fora do prazo.</p>
   </div>
 
   <div class="card">
@@ -100,6 +124,8 @@
     var espId = {}; (st.planos || []).forEach(function (p) { if (p.especial) espId[p.id] = true; });
     var pr = document.getElementById("prazoRenov");
     if (pr && !pr._bound) { pr._bound = true; pr.addEventListener("change", render); }
+    var fp = document.getElementById("fPeriodo");
+    if (fp && !fp._bound) { fp._bound = true; fp.addEventListener("change", render); }
     var meses = meses12();
     var novos = [], cancelados = [], ativosFim = [];
     var cancList = [];
@@ -130,81 +156,78 @@
     });
     cancList.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
 
-    var mesAtual = meses[11], saldo = novos[11] - cancelados[11];
-    $("stats").innerHTML =
-      '<div class="card"><div class="n">' + ativosFim[11] + '</div><div class="muted">ativos hoje (contratos)</div></div>' +
-      '<div class="card"><div class="n" style="color:var(--ok)">+' + novos[11] + '</div><div class="muted">novos no mês</div></div>' +
-      '<div class="card"><div class="n" style="color:var(--erro)">−' + cancelados[11] + '</div><div class="muted">cancelados no mês</div></div>' +
-      '<div class="card"><div class="n" style="color:' + (saldo >= 0 ? "var(--ok)" : "var(--erro)") + '">' + (saldo >= 0 ? "+" : "") + saldo + '</div><div class="muted">saldo do mês</div></div>' +
-      '<div class="card"><div class="n">' + (ativosFim[11] - ativosFim[0] >= 0 ? "+" : "") + (ativosFim[11] - ativosFim[0]) + '</div><div class="muted">crescimento em 12 meses</div></div>';
-
-    // ---------- movimentação do mês (12 categorias do EVO) ----------
+    // ---------- movimentação por mês (categorias do EVO) ----------
     var prazo = +($("prazoRenov") && $("prazoRenov").value) || 30;
-    var mc = meses[11].chave;
-    var iniMes = mc + "-01";
-    var fimMes = mc + "-31";
+    var nPer = +($("fPeriodo") && $("fPeriodo").value) || 3;
     function dias(d1, d2) { return Math.round((new Date(d2) - new Date(d1)) / 864e5); }
-    var cat = { ativoIni: 0, novos: 0, renovados: 0, retornos: 0, retSusp: 0, cancelados: 0, vencidos: 0, desistencias: 0, suspensos: 0, ativoFim: 0 };
-    st.alunos.forEach(function (a) {
-      var cts = (a.contratos || []).slice().filter(function (x) { return !espId[x.planoId] && !x.principalId; }).sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
-      cts.forEach(function (ct, idx) {
-        var fim = fimContrato(ct);
-        var ativoAntes = (ct.inicio || "") < iniMes && (!ct.canceladoEm || ct.canceladoEm >= iniMes) && fim >= iniMes;
-        if (ativoAntes) cat.ativoIni++;
-        var ativoFimM = (ct.inicio || "") <= fimMes && (!ct.canceladoEm || ct.canceladoEm > fimMes) && fim > fimMes;
-        if (ativoFimM) cat.ativoFim++;
-        // ENTRADAS: contrato iniciado no mês
-        if ((ct.inicio || "").slice(0, 7) === mc) {
-          var anterior = cts[idx - 1];
-          if (!anterior) cat.novos++;
-          else {
-            var fimAnt = fimContrato(anterior);
-            var refAnt = anterior.canceladoEm && anterior.canceladoEm < fimAnt ? anterior.canceladoEm : fimAnt;
-            var gap = dias(refAnt, ct.inicio);
-            if (gap <= prazo) cat.renovados++; else cat.retornos++;
+
+    // categorias de um mês específico
+    function catMes(mc) {
+      var iniMes = mc + "-01", fimMes = mc + "-31";
+      var cat = { ativoIni: 0, novos: 0, renovados: 0, retornos: 0, retSusp: 0, cancelados: 0, vencidos: 0, desistencias: 0, suspensos: 0, ativoFim: 0 };
+      st.alunos.forEach(function (a) {
+        var cts = (a.contratos || []).slice().filter(function (x) { return !espId[x.planoId] && !x.principalId; }).sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+        cts.forEach(function (ct, idx) {
+          var fim = fimContrato(ct);
+          if ((ct.inicio || "") < iniMes && (!ct.canceladoEm || ct.canceladoEm >= iniMes) && fim >= iniMes) cat.ativoIni++;
+          if ((ct.inicio || "") <= fimMes && (!ct.canceladoEm || ct.canceladoEm > fimMes) && fim > fimMes) cat.ativoFim++;
+          if ((ct.inicio || "").slice(0, 7) === mc) {
+            var anterior = cts[idx - 1];
+            if (!anterior) cat.novos++;
+            else {
+              var fimAnt = fimContrato(anterior);
+              var refAnt = anterior.canceladoEm && anterior.canceladoEm < fimAnt ? anterior.canceladoEm : fimAnt;
+              if (dias(refAnt, ct.inicio) <= prazo) cat.renovados++; else cat.retornos++;
+            }
           }
-        }
-        // SAÍDAS: cancelamento no mês
-        if ((ct.canceladoEm || "").slice(0, 7) === mc) {
-          var renovouDepois = cts.slice(idx + 1).some(function (x) { return dias(ct.canceladoEm, x.inicio || "9999") <= prazo; });
-          if (renovouDepois) { /* conta como renovado na entrada */ } else cat.desistencias++;
-        }
-        // vencimento no mês (não cancelado): dentro do prazo = vencido, fora = desistência
-        else if (fim.slice(0, 7) === mc && (!ct.canceladoEm)) {
-          var renovou = cts.slice(idx + 1).some(function (x) { return dias(fim, x.inicio || "9999") <= prazo; });
-          if (!renovou) cat.vencidos++;
-        }
+          if ((ct.canceladoEm || "").slice(0, 7) === mc) {
+            var renovouDepois = cts.slice(idx + 1).some(function (x) { return dias(ct.canceladoEm, x.inicio || "9999") <= prazo; });
+            if (!renovouDepois) cat.desistencias++;
+          } else if (fim.slice(0, 7) === mc && !ct.canceladoEm) {
+            var renovou = cts.slice(idx + 1).some(function (x) { return dias(fim, x.inicio || "9999") <= prazo; });
+            if (!renovou) cat.vencidos++;
+          }
+        });
       });
-    });
-    S.read("suspensoes", { itens: [] }).itens.forEach(function (sp) {
-      if ((sp.inicio || "").slice(0, 7) === mc && !sp.finalizadaEm) cat.suspensos++;
-      if ((sp.finalizadaEm || "").slice(0, 7) === mc) cat.retSusp++;
-    });
-    var totalEnt = cat.novos + cat.renovados + cat.retornos + cat.retSusp;
-    var totalSai = cat.cancelados + cat.vencidos + cat.desistencias + cat.suspensos;
-    var churn = cat.ativoIni ? Math.round(totalSai / cat.ativoIni * 1000) / 10 : 0;
-    var cresc = cat.ativoFim - cat.ativoIni;
-    var crescPct = cat.ativoIni ? Math.round(cresc / cat.ativoIni * 1000) / 10 : 0;
-    $("movCards").innerHTML =
-      '<div class="card" style="background:#e9f7ef;"><div class="n" style="color:var(--ok);">' + totalEnt + '</div><div class="muted">Total de entradas</div></div>' +
-      '<div class="card" style="background:#fdecec;"><div class="n" style="color:var(--erro);">' + totalSai + '</div><div class="muted">Total de saídas</div></div>' +
-      '<div class="card" style="background:#fff6e6;"><div class="n" style="color:var(--alerta);">' + String(churn).replace(".", ",") + '%</div><div class="muted">Churn</div></div>' +
-      '<div class="card"><div class="n" style="color:' + (cresc >= 0 ? "var(--ok)" : "var(--erro)") + ';">' + (cresc >= 0 ? "+" : "") + cresc + " (" + (crescPct >= 0 ? "+" : "") + String(crescPct).replace(".", ",") + '%)</div><div class="muted">Crescimento</div></div>';
-    function lin(rot, val, cor) { return "<tr><td style='padding:6px 10px;border-bottom:1px solid var(--fundo);'>" + rot + "</td><td style='padding:6px 10px;border-bottom:1px solid var(--fundo);text-align:right;font-weight:700;" + (cor ? "color:" + cor + ";" : "") + "'>" + val + "</td></tr>"; }
-    $("tabMov").innerHTML =
-      lin("Ativos no início do mês", cat.ativoIni) +
-      lin("(+) Novos (1ª compra)", cat.novos, "var(--ok)") +
-      lin("(+) Renovados (dentro do prazo)", cat.renovados, "var(--ok)") +
-      lin("(+) Retornos (fora do prazo)", cat.retornos, "var(--ok)") +
-      lin("(+) Retorno de suspensões", cat.retSusp, "var(--ok)") +
-      lin("<strong>= Total de entradas</strong>", totalEnt) +
-      lin("(−) Cancelados", cat.cancelados, "var(--erro)") +
-      lin("(−) Vencidos (dentro do prazo)", cat.vencidos, "var(--erro)") +
-      lin("(−) Desistências (fora do prazo)", cat.desistencias, "var(--erro)") +
-      lin("(−) Suspensos", cat.suspensos, "var(--alerta)") +
-      lin("<strong>= Total de saídas</strong>", totalSai) +
-      lin("<strong>Ativos no fim do mês</strong>", cat.ativoFim) +
-      lin("<strong>Crescimento</strong>", (cat.ativoFim - cat.ativoIni >= 0 ? "+" : "") + (cat.ativoFim - cat.ativoIni), cat.ativoFim - cat.ativoIni >= 0 ? "var(--ok)" : "var(--erro)");
+      S.read("suspensoes", { itens: [] }).itens.forEach(function (sp) {
+        if ((sp.inicio || "").slice(0, 7) === mc && !sp.finalizadaEm) cat.suspensos++;
+        if ((sp.finalizadaEm || "").slice(0, 7) === mc) cat.retSusp++;
+      });
+      cat.totalEnt = cat.novos + cat.renovados + cat.retornos + cat.retSusp;
+      cat.totalSai = cat.cancelados + cat.vencidos + cat.desistencias + cat.suspensos;
+      return cat;
+    }
+
+    var mesesPer = meses.slice(12 - nPer);
+    var linhas = mesesPer.map(function (m) { return { m: m, c: catMes(m.chave) }; });
+
+    var somaEnt = 0, somaSai = 0, somaAtivoIni = 0;
+    linhas.forEach(function (r) { somaEnt += r.c.totalEnt; somaSai += r.c.totalSai; somaAtivoIni += r.c.ativoIni; });
+    var cresc = somaEnt - somaSai;
+    var churn = (somaAtivoIni + somaEnt) ? (somaSai / (somaAtivoIni + somaEnt) * 100) : 0;
+    var crescPct = somaAtivoIni ? (cresc / somaAtivoIni * 100) : 0;
+    function fmtPct(v) { return (Math.round(v * 10) / 10).toString().replace(".", ",") + "%"; }
+
+    $("kpis").innerHTML =
+      '<div class="kpi ent"><div class="rot">Total de entradas</div><div class="n">' + somaEnt + '</div></div>' +
+      '<div class="kpi sai"><div class="rot">Total de saídas</div><div class="n">' + somaSai + '</div></div>' +
+      '<div class="kpi chu"><div class="rot">Churn</div><div class="n">' + fmtPct(churn) + '</div></div>' +
+      '<div class="kpi cre"><div class="rot">Crescimento</div><div class="n">' + (cresc >= 0 ? "+" : "") + cresc + ' (' + (crescPct >= 0 ? "+" : "") + fmtPct(crescPct) + ')</div></div>';
+
+    var cols = ["Ativos início", "Novos", "Renovados", "Retornos", "Retorno suspensões", "Total entradas", "Cancelados", "Vencidos", "Desistências", "Suspensos", "Total Saídas"];
+    var head = "<thead><tr><th>Mês/Ano</th>" + cols.map(function (c, i) {
+      var cls = (i === 5) ? " class='colEnt'" : (i === 10) ? " class='colSai'" : "";
+      return "<th" + cls + ">" + c + "</th>";
+    }).join("") + "</tr></thead>";
+    var body = "<tbody>" + linhas.map(function (r) {
+      var c = r.c;
+      var cell = function (v, extra) { return "<td class='num" + (extra || "") + "'>" + v + "</td>"; };
+      return "<tr><td>" + r.m.rotulo + "</td>" +
+        cell(c.ativoIni) + cell(c.novos) + cell(c.renovados) + cell(c.retornos) + cell(c.retSusp) +
+        cell(c.totalEnt, " colEnt h") + cell(c.cancelados) + cell(c.vencidos) + cell(c.desistencias) + cell(c.suspensos) +
+        cell(c.totalSai, " colSai h") + "</tr>";
+    }).join("") + "</tbody>";
+    $("tabMov").innerHTML = head + body;
 
     // gráfico: barras novos (verde) e cancelados (vermelho) + linha de ativos (roxa)
     var W = 780, H = 250, pL = 46, pR = 40, pT = 14, pB = 26;
