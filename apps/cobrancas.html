@@ -116,20 +116,60 @@
   }
   function renderRecorrencia() {
     var lista = coletaAssinaturas();
-    var programado = 0, ativas = 0, canceladas = 0;
+    var st = stAlunos();
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+
+    // transações do mês: 1 recebível por assinatura ativa (competência ou vencimento no mês)
+    var trans = [];
     lista.forEach(function (x) {
-      if (x.asn.statusCancelada) canceladas++;
-      else { ativas++; programado += +x.contrato.valor || 0; }
+      if (x.asn.statusCancelada) return;
+      var recs = st.recebiveis.filter(function (r) {
+        return r.contratoId === x.contrato.id &&
+          ((r.competencia || "") === mes || (r.vencimento || "").slice(0, 7) === mes);
+      });
+      if (!recs.length) {
+        trans.push({ x: x, r: null, status: "programada" });
+        return;
+      }
+      recs.forEach(function (r) {
+        var status;
+        if (r.status === "pago") status = "pago";
+        else if (r.vencimento >= hoje) status = "programada";
+        // cartão tenta por ~1 semana; depois disso consideramos tentativas excedidas (padrão EVO)
+        else status = dias(r.vencimento, hoje) <= 7 ? "cobranca" : "excedida";
+        trans.push({ x: x, r: r, status: status });
+      });
     });
-    $("kpis").innerHTML = kpi("PROGRAMADAS (MÊS)", brl(programado), "azul") + kpi("ASSINATURAS ATIVAS", ativas, "verde") + kpi("CANCELADAS", canceladas, "vermelho");
-    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>PRÓXIMA COBRANÇA</th><th class=\"num\">VALOR ORIGINAL</th><th>STATUS DA TRANSAÇÃO</th><th>PAGAMENTO ORIGINAL</th><th>CARTÃO</th></tr>" +
-      (lista.length ? lista.map(function (x) {
-        return "<tr><td><strong>" + esc(x.aluno.nome) + "</strong></td><td>" + (x.asn.proximaCobranca ? S.fmtData(String(x.asn.proximaCobranca).slice(0, 10)) : "—") +
-          '</td><td class="num">' + brl(+x.contrato.valor || 0) + "</td><td>" +
-          (x.asn.statusCancelada ? '<span class="tag erro">CANCELADA</span>' : '<span class="tag roxo">PROGRAMADA</span>') +
-          "</td><td>Cartão de Crédito</td><td>" + esc(x.asn.cartao || "—") + "</td></tr>";
-      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma assinatura recorrente. Cadastre o cartão do aluno no Perfil do Aluno → Cadastro → Formas de pagamento (com Pagar.me conectado ou modo demonstração ligado em Integrações).</td></tr>');
-    $("rodape").textContent = "Cada assinatura cobra o cartão do aluno todo mês no dia do vencimento, direto na Pagar.me — igual à recorrência do EVO.";
+
+    var tot = { pago: 0, cobranca: 0, excedida: 0, programada: 0 };
+    trans.forEach(function (t) {
+      var v = t.r ? ((t.r.valorBaixa != null && t.status === "pago" ? +t.r.valorBaixa : +t.r.valor) || 0) : (+t.x.contrato.valor || 0);
+      tot[t.status] += v;
+    });
+    var total = tot.pago + tot.cobranca + tot.excedida + tot.programada;
+    $("kpis").innerHTML =
+      kpi("PAGO", brl(tot.pago), "verde") +
+      kpi("EM COBRANÇA", brl(tot.cobranca), "laranja") +
+      kpi("TENTATIVAS EXCEDIDAS", brl(tot.excedida), "vermelho") +
+      kpi("PROGRAMADAS", brl(tot.programada), "azul") +
+      kpi("TOTAL", brl(total));
+
+    var TAG = {
+      pago: '<span class="tag ok">PAGA</span>',
+      cobranca: '<span class="tag alerta">EM COBRANÇA</span>',
+      excedida: '<span class="tag erro">TENTATIVAS EXCEDIDAS</span>',
+      programada: '<span class="tag roxo">PROGRAMADA</span>',
+    };
+    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>PROGRAMADA</th><th>EFETIVADA</th><th class=\"num\">VALOR ORIGINAL</th><th>STATUS DA TRANSAÇÃO</th><th>PAGAMENTO ORIGINAL</th><th>CARTÃO</th></tr>" +
+      (trans.length ? trans.map(function (t) {
+        var prog = t.r ? t.r.vencimento : (t.x.asn.proximaCobranca ? String(t.x.asn.proximaCobranca).slice(0, 10) : "");
+        return "<tr><td><strong>" + esc(t.x.aluno.nome) + "</strong></td><td>" + (prog ? S.fmtData(prog) : "—") +
+          "</td><td>" + (t.r && t.r.pagoEm ? S.fmtData(t.r.pagoEm) : "—") +
+          '</td><td class="num">' + brl(t.r ? (+t.r.valor || 0) : (+t.x.contrato.valor || 0)) + "</td><td>" +
+          TAG[t.status] + "</td><td>Cartão de Crédito</td><td>" + esc(t.x.asn.cartao || "—") + "</td></tr>";
+      }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px; white-space: normal;">Nenhuma assinatura recorrente. Cadastre o cartão do aluno no Perfil do Aluno → Cadastro → Formas de pagamento (com Pagar.me conectado ou modo demonstração ligado em Integrações).</td></tr>');
+    $("rodape").textContent = "Transações do mês das assinaturas de cartão: pagas, em cobrança (vencida há até 7 dias, ainda tentando), tentativas excedidas (7+ dias) e programadas — igual à Recorrência do EVO.";
   }
 
   // ---------- INADIMPLÊNCIA: recuperação e atraso ----------
