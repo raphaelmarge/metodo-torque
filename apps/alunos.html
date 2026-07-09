@@ -330,6 +330,13 @@
       <div class="campo"><label>até</label><input id="rgHoraAte" type="time"></div>
     </div>
     <p class="muted" style="font-size: 11.5px; margin: -6px 0 0;">Deixe dias/horários vazios para acesso livre. Os limites viram aviso/bloqueio no Controle de Entradas.</p>
+    <strong style="font-size: 12px; letter-spacing: .06em; color: var(--cinza);">MULTA DE CANCELAMENTO</strong>
+    <div class="grid-2">
+      <div class="campo"><label>Modo</label>
+        <select id="rgMultaModo"><option value="">Sem multa automática</option><option value="restante">% sobre o saldo remanescente a pagar</option><option value="cumprido">% proporcional ao valor já pago</option></select>
+      </div>
+      <div class="campo"><label>Percentual (%)</label><input id="rgMultaPct" type="number" min="0" max="100" step="0.5" placeholder="ex.: 30"></div>
+    </div>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
       <button class="btn" value="ok">Salvar regras</button>
@@ -1202,13 +1209,27 @@
     var restantes = Math.max(0, Math.round((fim - new Date(dataCancel + "T12:00")) / 864e5));
     return Math.round(pago / vigencia * restantes * 100) / 100;
   }
+  function multaSugerida(st, c) {
+    var plano = st.planos.find(function (p) { return p.id === c.planoId; });
+    var r = (plano && plano.regras) || {};
+    if (!r.multaModo || !r.multaPct) return 0;
+    var meses = plano && plano.tipo === "avista" ? 1 : (c.meses || 1);
+    var total = (+c.valor || 0) * meses;
+    var pago = st.recebiveis.filter(function (x) { return x.contratoId === c.id && x.status === "pago"; })
+      .reduce(function (t, x) { return t + ((x.valorBaixa != null ? +x.valorBaixa : +x.valor) || 0); }, 0);
+    var base = r.multaModo === "restante" ? Math.max(0, total - pago) : pago;
+    return Math.round(base * r.multaPct / 100 * 100) / 100;
+  }
   function abreCancelamento(a, c) {
     cancelCtx = { alunoId: a.id, contratoId: c.id };
     $("ccQuem").textContent = a.nome + " — o contrato fica válido até o fim do dia escolhido.";
     $("ccData").value = S.todayISO();
     $("ccObs").value = ""; $("ccFuturos").checked = true; $("ccCredito").checked = false;
-    $("ccMultaChk").checked = false; $("ccMulta").value = ""; $("ccMulta").disabled = true;
     var st = load();
+    var mult = multaSugerida(st, c);
+    $("ccMultaChk").checked = mult > 0;
+    $("ccMulta").value = mult > 0 ? mult : "";
+    $("ccMulta").disabled = !(mult > 0);
     $("ccCreditoValor").textContent = S.fmtBRL(creditoDiasRestantes(st, c, $("ccData").value));
     $("dlgCancel").showModal();
   }
@@ -1301,6 +1322,8 @@ $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvi
       $("rgEntradaQtd").value = r.entradaQtd || "";
       $("rgHoraDe").value = r.horaDe || "";
       $("rgHoraAte").value = r.horaAte || "";
+      $("rgMultaModo").value = r.multaModo || "";
+      $("rgMultaPct").value = r.multaPct || "";
       var diasSel = r.dias || [];
       $("rgDias").innerHTML = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(function (d, i) {
         return '<label style="display:flex;gap:4px;margin:0;font-weight:400;"><input type="checkbox" class="rgDia" value="' + i + '"' + (diasSel.indexOf(i) >= 0 ? " checked" : "") + " style='width:auto;'> " + d + "</label>";
@@ -1333,6 +1356,8 @@ $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvi
       dias: dias,
       horaDe: $("rgHoraDe").value,
       horaAte: $("rgHoraAte").value,
+      multaModo: $("rgMultaModo").value,
+      multaPct: +$("rgMultaPct").value || 0,
     };
     save(st);
   });
