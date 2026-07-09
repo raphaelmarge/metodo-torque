@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabela de Preços — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11px; letter-spacing: .06em; }
+  .tabela td.num, .tabela th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .secao-tit { font-size: 12px; letter-spacing: .08em; color: var(--cinza); font-weight: 800; margin: 18px 0 8px; }
+  .destaque { font-size: 16px; font-weight: 800; color: var(--roxo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · VENDAS</span>
+    <h1>Tabela de Preços</h1>
+    </div>
+  </div>
+  <p>A tabela de preços do EVO, sempre atualizada sozinha: planos, produtos e o valor do dia da equipe de vendas. Mudou o valor no cadastro, muda aqui na hora — sem tabela impressa desatualizada.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 8px;">
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <input id="busca" placeholder="Buscar plano ou produto…" style="flex: 1; max-width: 320px;">
+    <div class="linha-flex">
+      <button class="btn sec mini" id="btnImprimir">🖨 Imprimir</button>
+      <button class="btn mini" id="btnExportar">⬇ Exportar CSV</button>
+    </div>
+  </div>
+  <div id="conteudo"></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var TIPO = { recorrente: "Recorrente", avista: "À vista", agregador: "Agregador", adicional: "Adicional" };
+
+  function planos() { return (S.read("alunos", { planos: [] }).planos || []); }
+  function produtos() { return (S.read("produtos", { itens: [] }).itens || []); }
+
+  function render() {
+    var q = $("busca").value.trim().toLowerCase();
+    var pls = planos().filter(function (p) { return !q || p.nome.toLowerCase().indexOf(q) >= 0; });
+    var prods = produtos().filter(function (p) { return !q || p.nome.toLowerCase().indexOf(q) >= 0; });
+
+    var html = "";
+    html += '<div class="secao-tit">PLANOS E CONTRATOS</div>';
+    html += '<div class="card" style="padding:0; overflow-x:auto;"><table class="tabela"><tr><th>Plano</th><th>Tipo</th><th class="num">Valor/mês</th><th class="num">Duração</th><th class="num">Total do contrato</th></tr>' +
+      (pls.length ? pls.map(function (p) {
+        var meses = p.tipo === "avista" ? 1 : (p.meses || 1);
+        var total = p.tipo === "agregador" ? 0 : (+p.valor || 0) * meses;
+        return "<tr><td><strong>" + esc(p.nome) + "</strong>" + (p.especial ? ' <span class="tag neutro" style="font-size:10px;">VIP</span>' : "") + "</td><td>" + (TIPO[p.tipo] || p.tipo || "—") +
+          '</td><td class="num destaque">' + (p.tipo === "agregador" ? "—" : S.fmtBRL(p.valor)) + '</td><td class="num">' + (p.meses || 1) + " mês(es)</td>" +
+          '<td class="num">' + (p.tipo === "agregador" ? "—" : S.fmtBRL(total)) + "</td></tr>";
+      }).join("") : '<tr><td colspan="5" class="muted" style="padding:16px;">Nenhum plano cadastrado.</td></tr>') + "</table></div>";
+
+    if (prods.length || !q) {
+      html += '<div class="secao-tit">PRODUTOS</div>';
+      html += '<div class="card" style="padding:0; overflow-x:auto;"><table class="tabela"><tr><th>Produto</th><th class="num">Preço</th><th class="num">Estoque</th></tr>' +
+        (prods.length ? prods.map(function (p) {
+          return "<tr><td><strong>" + esc(p.nome) + '</strong></td><td class="num destaque">' + S.fmtBRL(p.preco) + '</td><td class="num">' + (p.estoque != null ? p.estoque : "—") + "</td></tr>";
+        }).join("") : '<tr><td colspan="3" class="muted" style="padding:16px;">Nenhum produto cadastrado.</td></tr>') + "</table></div>";
+    }
+    $("conteudo").innerHTML = html;
+  }
+
+  $("busca").addEventListener("input", render);
+  $("btnImprimir").onclick = function () { window.print(); };
+  $("btnExportar").onclick = function () {
+    var linhas = [["Categoria", "Nome", "Tipo", "Valor", "Duração/Estoque", "Total"]];
+    planos().forEach(function (p) {
+      var meses = p.tipo === "avista" ? 1 : (p.meses || 1);
+      var total = p.tipo === "agregador" ? "" : (+p.valor || 0) * meses;
+      linhas.push(["Plano", p.nome, TIPO[p.tipo] || p.tipo || "", p.tipo === "agregador" ? "" : (+p.valor || 0), (p.meses || 1) + " meses", total]);
+    });
+    produtos().forEach(function (p) { linhas.push(["Produto", p.nome, "", +p.preco || 0, p.estoque != null ? p.estoque : "", ""]); });
+    var csv = linhas.map(function (l) { return l.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(";"); }).join("\n");
+    var a = document.createElement("a");
+    a.href = "data:text/csv;charset=utf-8," + encodeURIComponent("﻿" + csv);
+    a.download = "tabela-precos.csv";
+    a.click();
+  };
+
+  S.onChange(function (k) { if (k === "alunos" || k === "produtos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

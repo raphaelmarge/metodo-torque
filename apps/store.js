@@ -24,8 +24,42 @@
   }
 
   var ouvintes = [];
+  var LOG_KEY = PREFIX + "logGeral";
+  var LOG_MAX = 400;
+  var SEM_LOG = { logGeral: 1, logo: 1, academia: 1 };
+  window.__MT_IMPORTANDO = window.__MT_IMPORTANDO || false;
+
+  function contaRegistros(v) {
+    if (Array.isArray(v)) return v.length;
+    if (v && typeof v === "object") {
+      var maior = null;
+      Object.keys(v).forEach(function (k) { if (Array.isArray(v[k]) && (maior == null || v[k].length > maior)) maior = v[k].length; });
+      return maior;
+    }
+    return null;
+  }
+  function registraLog(key, antes, depois) {
+    if (SEM_LOG[key] || window.__MT_IMPORTANDO) return;
+    try {
+      var por = "";
+      try { por = (JSON.parse(localStorage.getItem(PREFIX + "perfil")) || {}).nome || ""; } catch (e) {}
+      var na = contaRegistros(antes), nd = contaRegistros(depois);
+      var resumo = na == null || nd == null ? "atualizado" :
+        na === nd ? na + " registro(s) — editado" :
+        nd > na ? "incluído (" + na + " → " + nd + ")" : "excluído (" + na + " → " + nd + ")";
+      var log = [];
+      try { log = JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch (e) {}
+      log.push({ k: key, por: por, em: new Date().toISOString(), resumo: resumo });
+      if (log.length > LOG_MAX) log = log.slice(-LOG_MAX);
+      localStorage.setItem(LOG_KEY, JSON.stringify(log));
+    } catch (e) {}
+  }
+
   function write(key, value) {
+    var antes;
+    try { var raw = localStorage.getItem(PREFIX + key); antes = raw ? JSON.parse(raw) : null; } catch (e) { antes = null; }
     localStorage.setItem(PREFIX + key, JSON.stringify(value));
+    registraLog(key, antes, value);
     marcaTs(PREFIX + key);
     agendaEnvio(PREFIX + key);
     ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });
@@ -148,7 +182,7 @@
   }
 
   // ---------- backup ----------
-  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "config", "logo"];
+  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "niveis", "convidados", "config", "logo"];
 
   function exportBackup() {
     var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString() };
@@ -165,7 +199,9 @@
     return file.text().then(function (txt) {
       var data = JSON.parse(txt);
       if (data.formato !== "metodo-torque-backup") throw new Error("arquivo não é um backup do Método Torque");
-      BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); });
+      window.__MT_IMPORTANDO = true;
+      try { BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); }); }
+      finally { window.__MT_IMPORTANDO = false; }
     });
   }
 
@@ -357,8 +393,23 @@
     }, function () {});
   }
 
+  // ---------- clientes ativos (regra do EVO: contrato especial/VIP não conta) ----------
+  // recebe o objeto do aluno e a lista de planos; retorna o contrato "ativo que conta" ou null
+  function contratoAtivoConta(aluno, planos) {
+    planos = planos || (read("alunos", { planos: [] }).planos || []);
+    var espId = {};
+    planos.forEach(function (p) { if (p.especial) espId[p.id] = true; });
+    return (aluno.contratos || []).find(function (c) {
+      return (c.status === "ativo" || c.status === "congelado") && !c.principalId && !espId[c.planoId];
+    }) || null;
+  }
+  function ehClienteAtivo(aluno, planos) {
+    return aluno.status !== "inativo" && !!contratoAtivoConta(aluno, planos);
+  }
+
   window.MTStore = {
     read: read, write: write, uid: uid,
+    contratoAtivoConta: contratoAtivoConta, ehClienteAtivo: ehClienteAtivo,
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,
     savePhoto: savePhoto, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,

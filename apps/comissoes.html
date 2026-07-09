@@ -47,10 +47,11 @@
       <strong id="mLabel" style="text-transform: capitalize;"></strong>
       <button class="btn sec mini" id="mProx">›</button>
     </div>
-    <div class="linha-flex">
+    <div class="linha-flex" style="gap: 10px;">
+      <label style="margin: 0; font-size: 13px;">Regime</label>
+      <select id="regime" style="width: auto;"><option value="competencia">Competência (integral na venda)</option><option value="caixa">Caixa (sobre o recebido)</option></select>
       <label style="margin: 0; font-size: 13px;">% padrão</label>
       <input id="pctPadrao" type="number" step="0.5" min="0" style="width: 80px; text-align: right;">
-      <span class="muted">sobre o valor cheio do contrato</span>
     </div>
   </div>
 
@@ -81,12 +82,31 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
-  function cfg() { return S.read("comissoes", { pctPadrao: 5, pct: {}, lancadas: {} }); }
+  function cfg() { var c = S.read("comissoes", { pctPadrao: 5, pct: {}, lancadas: {}, regime: "competencia" }); c.regime = c.regime || "competencia"; return c; }
   var mes = S.monthKey(new Date());
 
   function vendasDoMes() {
-    var st = S.read("alunos", { alunos: [], planos: [] });
+    var st = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var regime = cfg().regime;
     var mapa = {};
+    if (regime === "caixa") {
+      // base = mensalidades efetivamente RECEBIDAS no mês, atribuídas ao consultor do aluno
+      var alunoPorId = {}, planoPorContrato = {};
+      st.alunos.forEach(function (a) {
+        alunoPorId[a.id] = a;
+        (a.contratos || []).forEach(function (c) { planoPorContrato[c.id] = st.planos.find(function (p) { return p.id === c.planoId; }) || {}; });
+      });
+      (st.recebiveis || []).forEach(function (r) {
+        if (r.status !== "pago" || (r.pagoEm || "").slice(0, 7) !== mes) return;
+        var a = alunoPorId[r.alunoId]; if (!a) return;
+        var pl = planoPorContrato[r.contratoId] || {};
+        if (pl.tipo === "agregador") return;
+        var quem = (a.consultor || "").trim() || "Sem consultor";
+        var val = r.valorBaixa != null ? +r.valorBaixa : +r.valor || 0;
+        (mapa[quem] = mapa[quem] || []).push({ aluno: a.nome, plano: (pl.nome || "—") + " — " + (r.competencia || ""), inicio: r.pagoEm, valor: val });
+      });
+      return mapa;
+    }
     st.alunos.forEach(function (a) {
       (a.contratos || []).forEach(function (c) {
         if ((c.inicio || "").slice(0, 7) !== mes) return;
@@ -105,6 +125,7 @@
   function render() {
     var c = cfg();
     $("pctPadrao").value = c.pctPadrao;
+    $("regime").value = c.regime;
     $("mLabel").textContent = new Date(mes + "-01T12:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
     var mapa = vendasDoMes();
     var nomes = Object.keys(mapa).sort(function (a, b) {
@@ -132,12 +153,20 @@
     }).join("") : '<div class="vazio">Nenhum contrato vendido neste mês ainda.</div>';
 
     $("totalComissoes").textContent = S.fmtBRL(totalCom);
-    $("totalSub").textContent = totalContratos + " contrato(s) · " + S.fmtBRL(totalVendido) + " vendidos no mês";
+    $("totalSub").textContent = c.regime === "caixa"
+      ? totalContratos + " recebimento(s) · " + S.fmtBRL(totalVendido) + " recebidos no mês (regime caixa)"
+      : totalContratos + " contrato(s) · " + S.fmtBRL(totalVendido) + " vendidos no mês (regime competência)";
     var lanc = c.lancadas[mes];
     $("btnLancar").disabled = !totalCom || !!lanc;
     $("btnLancar").textContent = lanc ? "✓ Lançada nas Contas a Pagar" : "Lançar nas Contas a Pagar";
   }
 
+  $("regime").addEventListener("change", function () {
+    var c = cfg();
+    c.regime = this.value;
+    S.write("comissoes", c);
+    render();
+  });
   $("pctPadrao").addEventListener("change", function () {
     var c = cfg();
     if (c.pctPadrao === (+this.value || 0)) return;

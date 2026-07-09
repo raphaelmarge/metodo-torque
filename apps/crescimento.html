@@ -40,6 +40,16 @@
   <div class="stats" id="stats"></div>
 
   <div class="card">
+    <h2>Movimentação do mês — categorias do EVO</h2>
+    <p class="muted" style="font-size: 12.5px; margin: 4px 0 10px;">Renovado = inativo que voltou dentro do prazo de renovação; Retorno = voltou fora do prazo; Vencido = venceu mas ainda no prazo; Desistência = venceu/cancelou fora do prazo.</p>
+    <div class="linha-flex" style="gap: 8px; align-items: center; margin-bottom: 8px;">
+      <label style="margin:0; font-size: 13px;">Prazo de renovação (dias)</label>
+      <input id="prazoRenov" type="number" min="0" value="30" style="width: 80px;">
+    </div>
+    <div style="overflow-x: auto;"><table class="tabela" id="tabMov" style="width:100%; border-collapse: collapse;"></table></div>
+  </div>
+
+  <div class="card">
     <h2>Últimos 12 meses</h2>
     <div class="grafico" id="graf" style="margin-top: 10px;"></div>
   </div>
@@ -85,7 +95,10 @@
   }
 
   function render() {
-    var st = S.read("alunos", { alunos: [] });
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var espId = {}; (st.planos || []).forEach(function (p) { if (p.especial) espId[p.id] = true; });
+    var pr = document.getElementById("prazoRenov");
+    if (pr && !pr._bound) { pr._bound = true; pr.addEventListener("change", render); }
     var meses = meses12();
     var novos = [], cancelados = [], ativosFim = [];
     var cancList = [];
@@ -95,6 +108,7 @@
       var n = 0, c = 0, at = 0;
       st.alunos.forEach(function (a) {
         (a.contratos || []).forEach(function (ct) {
+          if (espId[ct.planoId] || ct.principalId) return;
           if ((ct.inicio || "").slice(0, 7) === m.chave) n++;
           if ((ct.canceladoEm || "").slice(0, 7) === m.chave) c++;
           // ativo no fim do mês: começou até lá, não cancelado antes, e não vencido antes
@@ -122,6 +136,66 @@
       '<div class="card"><div class="n" style="color:var(--erro)">−' + cancelados[11] + '</div><div class="muted">cancelados no mês</div></div>' +
       '<div class="card"><div class="n" style="color:' + (saldo >= 0 ? "var(--ok)" : "var(--erro)") + '">' + (saldo >= 0 ? "+" : "") + saldo + '</div><div class="muted">saldo do mês</div></div>' +
       '<div class="card"><div class="n">' + (ativosFim[11] - ativosFim[0] >= 0 ? "+" : "") + (ativosFim[11] - ativosFim[0]) + '</div><div class="muted">crescimento em 12 meses</div></div>';
+
+    // ---------- movimentação do mês (12 categorias do EVO) ----------
+    var prazo = +($("prazoRenov") && $("prazoRenov").value) || 30;
+    var mc = meses[11].chave;
+    var iniMes = mc + "-01";
+    var fimMes = mc + "-31";
+    function dias(d1, d2) { return Math.round((new Date(d2) - new Date(d1)) / 864e5); }
+    var cat = { ativoIni: 0, novos: 0, renovados: 0, retornos: 0, retSusp: 0, cancelados: 0, vencidos: 0, desistencias: 0, suspensos: 0, ativoFim: 0 };
+    st.alunos.forEach(function (a) {
+      var cts = (a.contratos || []).slice().filter(function (x) { return !espId[x.planoId] && !x.principalId; }).sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+      cts.forEach(function (ct, idx) {
+        var fim = fimContrato(ct);
+        var ativoAntes = (ct.inicio || "") < iniMes && (!ct.canceladoEm || ct.canceladoEm >= iniMes) && fim >= iniMes;
+        if (ativoAntes) cat.ativoIni++;
+        var ativoFimM = (ct.inicio || "") <= fimMes && (!ct.canceladoEm || ct.canceladoEm > fimMes) && fim > fimMes;
+        if (ativoFimM) cat.ativoFim++;
+        // ENTRADAS: contrato iniciado no mês
+        if ((ct.inicio || "").slice(0, 7) === mc) {
+          var anterior = cts[idx - 1];
+          if (!anterior) cat.novos++;
+          else {
+            var fimAnt = fimContrato(anterior);
+            var refAnt = anterior.canceladoEm && anterior.canceladoEm < fimAnt ? anterior.canceladoEm : fimAnt;
+            var gap = dias(refAnt, ct.inicio);
+            if (gap <= prazo) cat.renovados++; else cat.retornos++;
+          }
+        }
+        // SAÍDAS: cancelamento no mês
+        if ((ct.canceladoEm || "").slice(0, 7) === mc) {
+          var renovouDepois = cts.slice(idx + 1).some(function (x) { return dias(ct.canceladoEm, x.inicio || "9999") <= prazo; });
+          if (renovouDepois) { /* conta como renovado na entrada */ } else cat.desistencias++;
+        }
+        // vencimento no mês (não cancelado): dentro do prazo = vencido, fora = desistência
+        else if (fim.slice(0, 7) === mc && (!ct.canceladoEm)) {
+          var renovou = cts.slice(idx + 1).some(function (x) { return dias(fim, x.inicio || "9999") <= prazo; });
+          if (!renovou) cat.vencidos++;
+        }
+      });
+    });
+    S.read("suspensoes", { itens: [] }).itens.forEach(function (sp) {
+      if ((sp.inicio || "").slice(0, 7) === mc && !sp.finalizadaEm) cat.suspensos++;
+      if ((sp.finalizadaEm || "").slice(0, 7) === mc) cat.retSusp++;
+    });
+    var totalEnt = cat.novos + cat.renovados + cat.retornos + cat.retSusp;
+    var totalSai = cat.cancelados + cat.vencidos + cat.desistencias + cat.suspensos;
+    function lin(rot, val, cor) { return "<tr><td style='padding:6px 10px;border-bottom:1px solid var(--fundo);'>" + rot + "</td><td style='padding:6px 10px;border-bottom:1px solid var(--fundo);text-align:right;font-weight:700;" + (cor ? "color:" + cor + ";" : "") + "'>" + val + "</td></tr>"; }
+    $("tabMov").innerHTML =
+      lin("Ativos no início do mês", cat.ativoIni) +
+      lin("(+) Novos (1ª compra)", cat.novos, "var(--ok)") +
+      lin("(+) Renovados (dentro do prazo)", cat.renovados, "var(--ok)") +
+      lin("(+) Retornos (fora do prazo)", cat.retornos, "var(--ok)") +
+      lin("(+) Retorno de suspensões", cat.retSusp, "var(--ok)") +
+      lin("<strong>= Total de entradas</strong>", totalEnt) +
+      lin("(−) Cancelados", cat.cancelados, "var(--erro)") +
+      lin("(−) Vencidos (dentro do prazo)", cat.vencidos, "var(--erro)") +
+      lin("(−) Desistências (fora do prazo)", cat.desistencias, "var(--erro)") +
+      lin("(−) Suspensos", cat.suspensos, "var(--alerta)") +
+      lin("<strong>= Total de saídas</strong>", totalSai) +
+      lin("<strong>Ativos no fim do mês</strong>", cat.ativoFim) +
+      lin("<strong>Crescimento</strong>", (cat.ativoFim - cat.ativoIni >= 0 ? "+" : "") + (cat.ativoFim - cat.ativoIni), cat.ativoFim - cat.ativoIni >= 0 ? "var(--ok)" : "var(--erro)");
 
     // gráfico: barras novos (verde) e cancelados (vermelho) + linha de ativos (roxa)
     var W = 780, H = 250, pL = 46, pR = 40, pT = 14, pB = 26;

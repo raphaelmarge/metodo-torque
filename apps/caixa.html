@@ -49,7 +49,10 @@
       <button class="btn sec mini" id="dHoje">Hoje</button>
       <span class="status-caixa" id="statusCaixa"></span>
     </div>
-    <div class="linha-flex" id="acoesCaixa"></div>
+    <div class="linha-flex">
+      <label class="linha-flex no-print" style="gap: 5px; font-size: 12.5px; margin: 0 10px 0 0;"><input type="checkbox" id="chkCego" style="width:auto;"> 🙈 Caixa cego</label>
+      <div class="linha-flex" id="acoesCaixa"></div>
+    </div>
   </div>
 
   <div class="cards-caixa" id="cards"></div>
@@ -136,25 +139,30 @@
     $("formMov").hidden = !d || d.fechado;
 
     var t = totais(d);
+    var cego = !!(S.read("caixa", {}).cego);
+    $("chkCego").checked = cego;
+    var ocultar = cego && d && !d.fechado; // esconde o acumulado enquanto aberto
+    var oculto = '<div class="card"><div class="n">🙈</div><div class="muted">oculto (caixa cego)</div></div>';
     $("cards").innerHTML =
       '<div class="card"><div class="n">' + S.fmtBRL(d ? +d.abertura || 0 : 0) + '</div><div class="muted">troco inicial</div></div>' +
-      '<div class="card"><div class="n" style="color:var(--ok)">' + S.fmtBRL(t.entradas) + '</div><div class="muted">entradas do dia</div></div>' +
+      (ocultar ? oculto : '<div class="card"><div class="n" style="color:var(--ok)">' + S.fmtBRL(t.entradas) + '</div><div class="muted">entradas do dia</div></div>') +
       '<div class="card"><div class="n" style="color:var(--erro)">' + S.fmtBRL(t.saidas) + '</div><div class="muted">saídas + sangrias</div></div>' +
-      '<div class="card"><div class="n" style="color:var(--roxo)">' + S.fmtBRL(t.dinheiro) + '</div><div class="muted">dinheiro esperado na gaveta</div></div>' +
+      (ocultar ? oculto : '<div class="card"><div class="n" style="color:var(--roxo)">' + S.fmtBRL(t.dinheiro) + '</div><div class="muted">dinheiro esperado na gaveta</div></div>') +
       (d && d.fechado ? '<div class="card"><div class="n" style="color:' + (Math.abs(d.quebra) < 0.005 ? "var(--ok)" : "var(--erro)") + '">' +
         (d.quebra > 0 ? "+" : "") + S.fmtBRL(d.quebra) + '</div><div class="muted">quebra de caixa (contado − esperado)</div></div>' : "");
 
     var autos = automaticas();
     var movs = ((d && d.movs) || []).slice();
+    var vv = function (txt) { return ocultar ? "•••" : txt; };
     var linhas = autos.map(function (m) {
       return '<div class="mov entrada auto"><span class="hora">' + (m.hora || "auto") + '</span>' +
         '<div class="desc">' + esc(m.desc) + '<div class="sub">lançado automaticamente (' + m.origem + ')</div></div>' +
-        '<span class="tag neutro">' + esc(m.forma) + '</span><span class="valor">+ ' + S.fmtBRL(m.valor) + "</span></div>";
+        '<span class="tag neutro">' + esc(m.forma) + '</span><span class="valor">' + vv("+ " + S.fmtBRL(m.valor)) + "</span></div>";
     }).join("") + movs.map(function (m, i) {
       return '<div class="mov ' + m.tipo + '"><span class="hora">' + m.hora + '</span>' +
         '<div class="desc">' + esc(m.desc) + (m.tipo === "sangria" ? '<div class="sub">sangria (retirada da gaveta)</div>' : "") + "</div>" +
         '<span class="tag neutro">' + esc(m.forma) + "</span>" +
-        '<span class="valor">' + (m.tipo === "entrada" ? "+ " : "− ") + S.fmtBRL(m.valor) + "</span>" +
+        '<span class="valor">' + vv((m.tipo === "entrada" ? "+ " : "− ") + S.fmtBRL(m.valor)) + "</span>" +
         (!d.fechado ? '<button class="btn perigo mini" data-rm="' + i + '" style="padding:3px 8px;">✕</button>' : "") + "</div>";
     }).join("");
     $("listaMovs").innerHTML = linhas || '<div class="vazio">Nenhuma movimentação neste dia ainda.</div>';
@@ -223,6 +231,11 @@
   $("dProx").onclick = function () { mudaDia(1); };
   $("dHoje").onclick = function () { dia = S.todayISO(); render(); };
 
+  $("chkCego").addEventListener("change", function () {
+    var st = load();
+    st.cego = this.checked;
+    S.write("caixa", st);
+  });
   S.onChange(function (k) { if (k === "caixa" || k === "produtos" || k === "alunos") render(); });
   render();
 })();

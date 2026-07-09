@@ -29,10 +29,37 @@
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
   <div class="card linha-flex" style="justify-content: space-between;">
     <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativas" type="checkbox"> mostrar inativas</label>
-    <button class="btn" id="btnNova">➕ Nova conta</button>
+    <div class="linha-flex">
+      <button class="btn sec" id="btnTransf">⇄ Transferência entre contas</button>
+      <button class="btn" id="btnNova">➕ Nova conta</button>
+    </div>
   </div>
   <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+  <div class="card" id="cardTransf" hidden>
+    <h2>⇄ Transferências entre contas</h2>
+    <p class="muted" style="font-size: 12.5px; margin: 4px 0 10px;">Movimento interno entre duas contas — não é receita nem despesa (regra do EVO). Gera um "a receber" na conta de destino e um "a pagar" na de origem, no mesmo valor.</p>
+    <div style="overflow-x: auto;"><table class="tabela" id="tabTransf"></table></div>
+  </div>
 </main>
+
+<dialog id="dlgTransf">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 460px; max-width: 100%;">
+    <h2>Transferência entre contas</h2>
+    <div class="grid-2">
+      <div class="campo"><label>De (origem) *</label><select id="tDe" required></select></div>
+      <div class="campo"><label>Para (destino) *</label><select id="tPara" required></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Valor (R$) *</label><input id="tValor" type="number" min="0.01" step="0.01" required></div>
+      <div class="campo"><label>Data *</label><input id="tData" type="date" required></div>
+    </div>
+    <div class="campo"><label>Observação</label><input id="tObs" placeholder="opcional"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">✓ Registrar transferência</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="dlg">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 480px; max-width: 100%;">
@@ -75,7 +102,7 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
-  function load() { return S.read("bancos", { contas: [] }); }
+  function load() { var st = S.read("bancos", { contas: [], transferencias: [] }); st.transferencias = st.transferencias || []; return st; }
   function save(st) { S.write("bancos", st); render(); }
 
   function render() {
@@ -88,6 +115,15 @@
           "<td>" + (c.status === "inativo" ? '<span class="tag neutro">INATIVA</span>' : '<span class="tag ok">ATIVA</span>') + "</td>" +
           '<td><button class="btn sec mini" data-edit="' + c.id + '">✏</button></td></tr>';
       }).join("") : '<tr><td colspan="8" class="muted" style="padding: 20px;">Nenhuma conta cadastrada — clique em ➕ Nova conta.</td></tr>');
+    var ts = st.transferencias.slice().sort(function (a, b) { return (a.data + a.id) < (b.data + b.id) ? 1 : -1; });
+    $("cardTransf").hidden = !ts.length;
+    var nomeConta = function (id) { var c = st.contas.find(function (x) { return x.id === id; }); return c ? c.desc : "?"; };
+    $("tabTransf").innerHTML = "<tr><th>DATA</th><th>DE</th><th>PARA</th><th class='num'>VALOR</th><th>OBS</th><th></th></tr>" +
+      ts.map(function (t) {
+        return "<tr><td>" + S.fmtData(t.data) + "</td><td>" + esc(nomeConta(t.de)) + "</td><td>" + esc(nomeConta(t.para)) +
+          "</td><td class='num'><strong>" + S.fmtBRL(t.valor) + "</strong></td><td>" + esc(t.obs || "—") +
+          "</td><td><button class='btn perigo mini' data-delt='" + t.id + "'>✕</button></td></tr>";
+      }).join("");
   }
   $("fInativas").addEventListener("change", render);
 
@@ -106,6 +142,32 @@
     $("dlg").showModal();
   }
   $("btnNova").onclick = function () { abre(null); };
+  $("btnTransf").onclick = function () {
+    var st = load();
+    var ativas = st.contas.filter(function (c) { return c.status !== "inativo"; });
+    if (ativas.length < 2) { alert("Cadastre pelo menos 2 contas ativas para transferir."); return; }
+    var opts = ativas.map(function (c) { return '<option value="' + c.id + '">' + esc(c.desc) + "</option>"; }).join("");
+    $("tDe").innerHTML = opts; $("tPara").innerHTML = opts;
+    $("tPara").selectedIndex = 1;
+    $("tValor").value = ""; $("tObs").value = ""; $("tData").value = S.todayISO();
+    $("dlgTransf").showModal();
+  };
+  $("dlgTransf").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value === "cancel") return;
+    if ($("tDe").value === $("tPara").value) { e.preventDefault(); alert("Origem e destino têm de ser contas diferentes."); return; }
+    var valor = +$("tValor").value || 0;
+    if (valor <= 0) return;
+    var st = load();
+    st.transferencias.push({ id: S.uid(), de: $("tDe").value, para: $("tPara").value, valor: valor, data: $("tData").value, obs: $("tObs").value.trim() });
+    save(st);
+  });
+  $("tabTransf").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-delt");
+    if (!id || !confirm("Excluir esta transferência?")) return;
+    var st = load();
+    st.transferencias = st.transferencias.filter(function (t) { return t.id !== id; });
+    save(st);
+  });
   $("tabela").addEventListener("click", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-edit");
     if (id) abre(load().contas.find(function (c) { return c.id === id; }));

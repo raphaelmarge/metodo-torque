@@ -70,6 +70,9 @@
       </div>
       <div class="campo"><label>Interesse</label><input id="nInteresse" placeholder="ex.: musculação, manhã"></div>
     </div>
+    <div class="campo"><label>Temperatura</label>
+      <select id="nTemp"><option value="morno">🌤 Morno</option><option value="quente">🔥 Quente</option><option value="frio">❄ Frio</option><option value="gelado">🧊 Gelado</option></select>
+    </div>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
       <button class="btn" value="ok">Adicionar ao funil</button>
@@ -154,15 +157,18 @@
     }).join("") : '<span class="muted">Nenhum fechamento ainda neste mês.</span>';
   }
 
+  var TEMPS = ["quente", "morno", "frio", "gelado"];
+  function tempIcone(t) { return { quente: "🔥", morno: "🌤", frio: "❄", gelado: "🧊" }[t || "morno"] || "🌤"; }
   function cardLead(l) {
     var atr = atrasado(l);
     var dias = Math.round((new Date(S.todayISO()) - new Date(l.criado)) / 864e5);
     return '<div class="lead' + (atr ? " atrasado" : "") + '" data-id="' + l.id + '">' +
-      '<div class="nome"><span>' + esc(l.nome) + '</span><span class="tag neutro" style="font-size:10px;">' + esc(l.origem || "") + "</span></div>" +
+      '<div class="nome"><span>' + tempIcone(l.temperatura) + " " + esc(l.nome) + '</span><span class="tag neutro" style="font-size:10px;">' + esc(l.origem || "") + "</span></div>" +
       '<div class="info">' + (l.interesse ? esc(l.interesse) + " · " : "") + dias + "d no funil" +
       (l.proximo ? " · próx. contato <strong" + (atr ? ' style="color:var(--erro);"' : "") + ">" + S.fmtData(l.proximo) + "</strong>" : "") + "</div>" +
       '<div class="acoes">' +
       (l.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(l.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFollow(l)) + '">💬' + (atr ? " Cobrar" : "") + "</a>" : "") +
+      '<button class="btn sec" data-acao="temp" title="Trocar temperatura">' + tempIcone(l.temperatura) + '</button>' +
       '<button class="btn sec" data-acao="proximo">📅 Próx.</button>' +
       (l.status === "novo" ? '<button class="btn sec" data-acao="avancar">→ Conversa</button>' : "") +
       (l.status === "contato" ? '<button class="btn sec" data-acao="agendar">📅 Agendar aula</button>' : "") +
@@ -174,7 +180,7 @@
 
   // ---------- eventos ----------
   $("btnNovo").onclick = function () {
-    $("nNome").value = ""; $("nZap").value = ""; $("nInteresse").value = "";
+    $("nNome").value = ""; $("nZap").value = ""; $("nInteresse").value = ""; $("nTemp").value = "morno";
     $("dlgNovo").showModal();
   };
   $("dlgNovo").addEventListener("close", function () {
@@ -182,7 +188,7 @@
     var st = load();
     st.leads.unshift({
       id: S.uid(), nome: $("nNome").value.trim(), zap: $("nZap").value.trim(),
-      origem: $("nOrigem").value, interesse: $("nInteresse").value.trim(),
+      origem: $("nOrigem").value, interesse: $("nInteresse").value.trim(), temperatura: $("nTemp").value,
       status: "novo", criado: S.todayISO(), proximo: S.todayISO(),
     });
     save(st);
@@ -193,6 +199,11 @@
     var id = e.target.closest("[data-id]").getAttribute("data-id");
     var st = load();
     var l = st.leads.find(function (x) { return x.id === id; });
+    if (l && b.getAttribute("data-acao") === "temp") {
+      var it = TEMPS.indexOf(l.temperatura || "morno");
+      l.temperatura = TEMPS[(it + 1) % TEMPS.length];
+      save(st); return;
+    }
     if (!l) return;
     var acao = b.getAttribute("data-acao");
     var hoje = S.todayISO();

@@ -59,6 +59,10 @@
       <div class="campo"><label>Professor(a)</label><input id="fProf"></div>
       <div class="campo"><label>Horário</label><input id="fHora" placeholder="ex.: Seg/Qua 18h"></div>
     </div>
+    <div class="grid-2">
+      <div class="campo"><label>Capacidade (vagas)</label><input id="fCapac" type="number" min="0" placeholder="0 = sem limite"></div>
+      <div class="campo"><label>Bônus: presenças seguidas p/ sessão extra</label><input id="fBonus" type="number" min="0" placeholder="0 = desligado"></div>
+    </div>
     <div class="linha-flex" style="justify-content: space-between;">
       <button type="button" class="btn perigo mini" id="fExcluir" hidden>Excluir turma</button>
       <div class="linha-flex">
@@ -100,6 +104,18 @@
     return total ? Math.round(veio / total * 100) : null;
   }
 
+  function presencasSeguidas(st, turma, aluno) {
+    var datas = Object.keys(st.chamadas).filter(function (k) { return k.indexOf(turma.id + "|") === 0; })
+      .map(function (k) { return k.split("|")[1]; }).sort();
+    if (datas.indexOf(hoje) === -1) datas.push(hoje);
+    datas.sort();
+    var seguidas = 0;
+    for (var i = datas.length - 1; i >= 0; i--) {
+      var pres = datas[i] === hoje ? (st.chamadas[turma.id + "|" + hoje] || []) : (st.chamadas[turma.id + "|" + datas[i]] || []);
+      if (pres.indexOf(aluno) !== -1) seguidas++; else break;
+    }
+    return seguidas;
+  }
   function render() {
     var st = load();
     $("resumo").textContent = st.turmas.length + " turma(s) · chamada de hoje: " + S.fmtData(hoje);
@@ -108,11 +124,16 @@
       var chaveHoje = t.id + "|" + hoje;
       var presentes = st.chamadas[chaveHoje] || [];
       var alunos = t.alunos || [];
+      var cap = +t.capacidade || 0;
+      var lotada = cap > 0 && alunos.length >= cap;
+      var espera = t.espera || [];
       return '<details class="turma"><summary>' +
         '<div class="quem"><strong>' + esc(t.nome) + '</strong><div class="sub">' +
-        (t.prof ? esc(t.prof) + " · " : "") + (t.hora ? esc(t.hora) + " · " : "") + alunos.length + " aluno(s)" +
+        (t.prof ? esc(t.prof) + " · " : "") + (t.hora ? esc(t.hora) + " · " : "") + alunos.length + (cap ? "/" + cap : "") + " aluno(s)" +
+        (espera.length ? " · " + espera.length + " na fila" : "") +
         (st.chamadas[chaveHoje] ? " · chamada de hoje: " + presentes.length + "/" + alunos.length : "") + "</div></div>" +
-        (st.chamadas[chaveHoje] ? '<span class="tag ok">CHAMADA FEITA</span>' : '<span class="tag neutro">SEM CHAMADA HOJE</span>') +
+        (lotada ? '<span class="tag erro">LOTADA</span>' : cap ? '<span class="tag ok">' + (cap - alunos.length) + " VAGA(S)</span>" : "") +
+        (st.chamadas[chaveHoje] ? ' <span class="tag ok">CHAMADA FEITA</span>' : ' <span class="tag neutro">SEM CHAMADA HOJE</span>') +
         ' <button class="btn sec mini" data-edit="' + t.id + '">✎</button></summary>' +
         '<div class="chamada-cab"><span>CHAMADA DE HOJE (' + S.fmtData(hoje) + ')</span>' +
         '<button class="btn mini" data-salvar="' + t.id + '">💾 Salvar chamada</button></div>' +
@@ -125,8 +146,14 @@
             '<button class="btn perigo mini" data-rma="' + t.id + "|" + esc(a) + '" style="padding: 2px 8px;">✕</button></span></div>';
         }).join("") +
         (alunos.length ? "" : '<div class="muted" style="padding: 10px 16px;">Turma vazia — adicione os alunos.</div>') +
-        '<div class="add-aluno"><input list="alunosLista" placeholder="Adicionar aluno…" data-addinput="' + t.id + '" style="flex: 1;">' +
-        '<button class="btn mini" data-addbtn="' + t.id + '">Adicionar</button></div>' +
+        (espera.length ? '<div class="chamada-cab" style="background:#f4f0ff;"><span>📋 FILA DE ESPERA (' + espera.length + ")</span></div>" +
+          espera.map(function (nm) {
+            return '<div class="aluno-linha"><span>' + esc(nm) + (lotada ? "" : ' <span class="tag ok" style="font-size:10px;">vaga disponível!</span>') + "</span>" +
+              "<span>" + (lotada ? "" : '<button class="btn ok mini" data-promove="' + t.id + "|" + esc(nm) + '">↑ Chamar</button> ') +
+              '<button class="btn perigo mini" data-saifila="' + t.id + "|" + esc(nm) + '" style="padding:2px 8px;">✕</button></span></div>';
+          }).join("") : "") +
+        '<div class="add-aluno"><input list="alunosLista" placeholder="' + (lotada ? "Turma lotada — entra na fila de espera…" : "Adicionar aluno…") + '" data-addinput="' + t.id + '" style="flex: 1;">' +
+        '<button class="btn mini" data-addbtn="' + t.id + '">' + (lotada ? "→ Fila de espera" : "Adicionar") + "</button></div>" +
         "</details>";
     }).join("") : '<div class="vazio">Nenhuma turma ainda — crie a primeira (Kids, Muay Thai, FitDance…).</div>');
   }
@@ -134,7 +161,7 @@
   $("btnNova").onclick = function () {
     editId = null;
     $("dlgTitulo").textContent = "Nova turma";
-    $("fNome").value = ""; $("fProf").value = ""; $("fHora").value = "";
+    $("fNome").value = ""; $("fProf").value = ""; $("fHora").value = ""; $("fCapac").value = ""; $("fBonus").value = "";
     $("fExcluir").hidden = true;
     $("dlg").showModal();
   };
@@ -147,6 +174,7 @@
       editId = id;
       $("dlgTitulo").textContent = "Editar turma";
       $("fNome").value = t.nome; $("fProf").value = t.prof || ""; $("fHora").value = t.hora || "";
+      $("fCapac").value = t.capacidade || ""; $("fBonus").value = t.bonusSeguidas || "";
       $("fExcluir").hidden = false;
       $("dlg").showModal();
       return;
@@ -158,9 +186,19 @@
       if (!nome) return;
       var t2 = st.turmas.find(function (x) { return x.id === id; });
       t2.alunos = t2.alunos || [];
+      t2.espera = t2.espera || [];
       if (t2.alunos.indexOf(nome) !== -1) { alert("Já está na turma."); return; }
-      t2.alunos.push(nome);
-      save(st);
+      if (t2.espera.indexOf(nome) !== -1) { alert("Já está na fila de espera."); return; }
+      var cap2 = +t2.capacidade || 0;
+      if (cap2 > 0 && t2.alunos.length >= cap2) {
+        t2.espera.push(nome);
+        save(st);
+        alert("Turma lotada — " + nome + " entrou na FILA DE ESPERA. Você é avisado quando abrir vaga.");
+      } else {
+        t2.alunos.push(nome);
+        save(st);
+      }
+      inp.value = "";
       return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-rma");
@@ -169,6 +207,25 @@
       var t3 = st.turmas.find(function (x) { return x.id === pp[0]; });
       t3.alunos = (t3.alunos || []).filter(function (a) { return a !== pp[1]; });
       save(st);
+      if ((t3.espera || []).length) alert("Abriu vaga! Há " + t3.espera.length + " na fila de espera de \"" + t3.nome + "\" — chame o próximo.");
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-promove");
+    if (id) {
+      var pm = id.split("|");
+      var tp = st.turmas.find(function (x) { return x.id === pm[0]; });
+      tp.espera = (tp.espera || []).filter(function (n) { return n !== pm[1]; });
+      tp.alunos = tp.alunos || [];
+      if (tp.alunos.indexOf(pm[1]) === -1) tp.alunos.push(pm[1]);
+      save(st);
+      return;
+    }
+    id = e.target.getAttribute && e.target.getAttribute("data-saifila");
+    if (id) {
+      var sf = id.split("|");
+      var tf = st.turmas.find(function (x) { return x.id === sf[0]; });
+      tf.espera = (tf.espera || []).filter(function (n) { return n !== sf[1]; });
+      save(st);
       return;
     }
     id = e.target.getAttribute && e.target.getAttribute("data-salvar");
@@ -176,8 +233,27 @@
       var marcados = [];
       Array.prototype.forEach.call(document.querySelectorAll('[data-ch="' + id + '"]:checked'), function (c) { marcados.push(c.value); });
       st.chamadas[id + "|" + hoje] = marcados;
+      var tb = st.turmas.find(function (x) { return x.id === id; });
+      var bonusN = +tb.bonusSeguidas || 0;
+      var premiados = [];
+      if (bonusN > 0) {
+        marcados.forEach(function (nomeAl) {
+          var seguidas = presencasSeguidas(st, tb, nomeAl);
+          if (seguidas > 0 && seguidas % bonusN === 0) {
+            var stAl = S.read("alunos", { alunos: [] });
+            var al = stAl.alunos.find(function (x) { return x.nome === nomeAl; });
+            if (al) {
+              al.bonusSessoes = (al.bonusSessoes || 0) + 1;
+              al.bonusLog = al.bonusLog || [];
+              al.bonusLog.push({ turma: tb.nome, em: hoje, motivo: seguidas + " presenças seguidas" });
+              S.write("alunos", stAl);
+              premiados.push(nomeAl);
+            }
+          }
+        });
+      }
       save(st);
-      alert("Chamada salva: " + marcados.length + " presente(s).");
+      alert("Chamada salva: " + marcados.length + " presente(s)." + (premiados.length ? "\n\n🎁 Sessão extra de bonificação para: " + premiados.join(", ") : ""));
     }
   });
   $("dlg").querySelector("form").addEventListener("submit", function (e) {
@@ -186,8 +262,9 @@
     if (editId) {
       var t = st.turmas.find(function (x) { return x.id === editId; });
       t.nome = $("fNome").value.trim(); t.prof = $("fProf").value.trim(); t.hora = $("fHora").value.trim();
+      t.capacidade = +$("fCapac").value || 0; t.bonusSeguidas = +$("fBonus").value || 0;
     } else {
-      st.turmas.push({ id: S.uid(), nome: $("fNome").value.trim(), prof: $("fProf").value.trim(), hora: $("fHora").value.trim(), alunos: [] });
+      st.turmas.push({ id: S.uid(), nome: $("fNome").value.trim(), prof: $("fProf").value.trim(), hora: $("fHora").value.trim(), capacidade: +$("fCapac").value || 0, bonusSeguidas: +$("fBonus").value || 0, alunos: [], espera: [] });
     }
     save(st);
   });

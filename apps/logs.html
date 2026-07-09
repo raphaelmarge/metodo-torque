@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log Geral — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tabela { width: 100%; border-collapse: collapse; background: #fff; }
+  .tabela th, .tabela td { padding: 8px 10px; border-bottom: 1px solid var(--linha); font-size: 13px; text-align: left; white-space: nowrap; }
+  .tabela th { background: var(--escuro); color: #fff; font-size: 11px; letter-spacing: .06em; }
+  .filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .tag-k { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--fundo); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Log Geral</h1>
+    </div>
+  </div>
+  <p>A trilha de auditoria do EVO: cada alteração de dados fica registrada com o que mudou, quando e quem estava logado. Guarda as últimas 400 ações neste dispositivo.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
+  <div class="card filtros">
+    <div class="campo" style="flex: 1 1 200px;"><label>Buscar</label><input id="fBusca" placeholder="tela, colaborador ou ação"></div>
+    <div class="campo"><label>Tela</label><select id="fTela"><option value="">Todas</option></select></div>
+    <div class="campo"><label>De</label><input id="fDe" type="date"></div>
+    <div class="campo"><label>até</label><input id="fAte" type="date"></div>
+    <button class="btn sec mini" id="btnLimpar" type="button">Limpar</button>
+    <button class="btn perigo mini" id="btnZerar" type="button">Zerar log</button>
+  </div>
+  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  // nomes amigáveis das telas (chaves de store)
+  var NOMES = { alunos: "Clientes / Contratos", niveis: "Níveis e Graduação", convidados: "Convidados", turmas: "Turmas",
+    saude: "Avaliações / Evolução", suspensoes: "Suspensões", inad: "Inadimplência", comissoes: "Comissões",
+    bancos: "Contas bancárias", contas: "Contas a pagar", caixa: "Caixa", produtos: "Produtos", descontos: "Descontos",
+    aprovacoes: "Aprovações de crédito", reposicoes: "Reposições", funil: "Funil de vendas", exper: "Aulas experimentais",
+    metas: "Metas", recompensas: "Clube de Recompensas", nps: "NPS", automacao: "Automação", equipe: "Equipe",
+    treinos: "Treinos", agenda: "Agenda", armarios: "Armários", vouchers: "Vouchers", convenios: "Convênios",
+    personais: "Personais", fornecedores: "Fornecedores", parq: "PAR-Q", indicacoes: "Indicações", reajustes: "Reajustes",
+    docs: "Documentos", contagens: "Contagem de clientes", wod: "WOD", perfil: "Perfil da academia", config: "Configurações" };
+  function nomeTela(k) { return NOMES[k] || k; }
+
+  function logs() { try { return JSON.parse(localStorage.getItem("mtapp:logGeral")) || []; } catch (e) { return []; } }
+
+  function preencheTelas() {
+    var ks = {};
+    logs().forEach(function (l) { ks[l.k] = true; });
+    $("fTela").innerHTML = '<option value="">Todas</option>' + Object.keys(ks).sort(function (a, b) { return nomeTela(a) < nomeTela(b) ? -1 : 1; })
+      .map(function (k) { return '<option value="' + k + '">' + esc(nomeTela(k)) + "</option>"; }).join("");
+  }
+
+  function render() {
+    var q = $("fBusca").value.trim().toLowerCase();
+    var tela = $("fTela").value, de = $("fDe").value, ate = $("fAte").value;
+    var lista = logs().slice().reverse().filter(function (l) {
+      var dia = (l.em || "").slice(0, 10);
+      if (tela && l.k !== tela) return false;
+      if (de && dia < de) return false;
+      if (ate && dia > ate) return false;
+      if (q) {
+        var alvo = (nomeTela(l.k) + " " + (l.por || "") + " " + (l.resumo || "")).toLowerCase();
+        if (alvo.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+    $("tabela").innerHTML = "<tr><th>QUANDO</th><th>TELA</th><th>AÇÃO</th><th>COLABORADOR(A)</th></tr>" +
+      (lista.length ? lista.map(function (l) {
+        var d = new Date(l.em);
+        var quando = S.fmtData(l.em.slice(0, 10)) + " " + d.toTimeString().slice(0, 5);
+        return "<tr><td>" + quando + "</td><td><span class='tag-k'>" + esc(nomeTela(l.k)) + "</span></td><td>" +
+          esc(l.resumo || "") + "</td><td>" + esc(l.por || "—") + "</td></tr>";
+      }).join("") : '<tr><td colspan="4" class="muted" style="padding: 20px;">Nenhuma alteração registrada ainda (o log começa a partir de agora).</td></tr>');
+  }
+
+  ["fBusca", "fTela", "fDe", "fAte"].forEach(function (id) { $(id).addEventListener("input", render); });
+  $("btnLimpar").onclick = function () { $("fBusca").value = ""; $("fTela").value = ""; $("fDe").value = ""; $("fAte").value = ""; render(); };
+  $("btnZerar").onclick = function () {
+    if (!confirm("Apagar todo o histórico de alterações deste dispositivo?")) return;
+    localStorage.removeItem("mtapp:logGeral");
+    preencheTelas(); render();
+  };
+
+  S.onChange(function () { preencheTelas(); render(); });
+  preencheTelas();
+  render();
+})();
+</script>
+</body>
+</html>

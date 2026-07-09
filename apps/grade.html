@@ -131,6 +131,12 @@
       <div class="campo"><label>Início *</label><input id="gInicio" type="time" required value="06:00"></div>
       <div class="campo"><label>Duração (min)</label><input id="gDur" type="number" min="10" step="5" value="60"></div>
     </div>
+    <div class="grid-2">
+      <div class="campo"><label>Aula virtual</label>
+        <select id="gVirtual"><option value="">Presencial</option><option value="vivo">Virtual — ao vivo</option><option value="gravada">Virtual — gravada</option></select>
+      </div>
+      <div class="campo"><label>Link da transmissão/vídeo</label><input id="gLink" placeholder="YouTube, Zoom, Meet…"></div>
+    </div>
     <div class="campo"><label>Cor na grade</label>
       <div class="cores" id="gCores"></div>
     </div>
@@ -251,8 +257,10 @@
     var cls = n === 0 ? "" : n >= vagas ? "cheia" : "tem";
     return '<div class="aula-card' + (o.avulsa ? " avulsa" : "") + '" data-chave="' + o.chave + '" data-dia="' + iso + '" style="border-left-color:' + (o.a.cor || "#7c3aed") + '">' +
       '<div class="linha1"><span>' + o.a.inicio + " - " + fimDe(o.a) + '</span><span class="vagas ' + cls + '">' + n + "/" + vagas + "</span></div>" +
-      '<div class="nome">' + esc(o.a.nome) + (o.avulsa ? " ✦" : "") + "</div>" +
-      '<div class="sub">' + esc(o.a.prof || "") + (o.a.sala ? "<br>" + esc(o.a.sala) : "") + "</div></div>";
+      '<div class="nome">' + esc(o.a.nome) + (o.avulsa ? " ✦" : "") + (o.a.virtual ? (o.a.virtual === "vivo" ? " 🔴" : " 🎬") : "") + "</div>" +
+      '<div class="sub">' + esc(o.a.prof || "") + (o.a.sala ? "<br>" + esc(o.a.sala) : "") +
+      (o.a.virtual && o.a.link ? '<br><a href="' + esc(o.a.link) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + (o.a.virtual === "vivo" ? "▶ entrar ao vivo" : "🎬 assistir") + "</a>" : (o.a.virtual ? "<br><span class='muted'>" + (o.a.virtual === "vivo" ? "ao vivo" : "gravada") + "</span>" : "")) +
+      "</div></div>";
   }
 
   function render() {
@@ -326,6 +334,8 @@
     $("gVagas").value = a ? a.vagas : 14;
     $("gInicio").value = a ? a.inicio : "06:00";
     $("gDur").value = a ? a.dur : 60;
+    $("gVirtual").value = a ? (a.virtual || "") : "";
+    $("gLink").value = a ? (a.link || "") : "";
     Array.prototype.forEach.call(document.querySelectorAll("#gDias input"), function (c) {
       c.checked = a ? (a.dias || []).indexOf(+c.value) !== -1 : false;
     });
@@ -345,7 +355,7 @@
     var dados = {
       nome: $("gNome").value.trim(), prof: $("gProf").value.trim(), sala: $("gSala").value.trim(),
       vagas: +$("gVagas").value || 14, inicio: $("gInicio").value, dur: +$("gDur").value || 60,
-      dias: dias, cor: cor,
+      dias: dias, cor: cor, virtual: $("gVirtual").value, link: $("gLink").value.trim(),
     };
     if (editandoId) {
       var a = st.aulas.find(function (x) { return x.id === editandoId; });
