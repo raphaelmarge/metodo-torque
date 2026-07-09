@@ -47,6 +47,7 @@ self.MT_APPS = [
   { slug: "app-crescimento", file: "apps/crescimento.html", icone: "🌱", title: "Crescimento e Cancelamentos", desc: "Novos × cancelados mês a mês, a curva de alunos ativos e os motivos de quem saiu." },
   { slug: "app-cancelamentos", file: "apps/cancelamentos.html", icone: "🚫", title: "Cancelamentos", desc: "Cada contrato cancelado no período: quem saiu, o motivo, a permanência e o valor perdido — com o ranking de motivos." },
   { slug: "app-contratos", file: "apps/contratos.html", icone: "📄", title: "Contratos", desc: "A base de contratos por situação (ativos, suspensos, especiais, inativos), o ranking por plano e a lista detalhada com vigências." },
+  { slug: "app-gastos", file: "apps/gastos.html", icone: "💸", title: "Gastos por Centro de Custos", desc: "A soma das Contas a Pagar por centro de custo no período, do maior para o menor, com o total gasto." },
   { slug: "app-renovacao", file: "apps/renovacao.html", icone: "🔁", title: "Renovação e Rematrícula", desc: "Contratos vencendo ou vencidos com renovação em 2 cliques: novo contrato emendado e mensalidades geradas na hora." },
   { slug: "app-treino-ia", file: "apps/treino-ia.html", icone: "🤖", title: "Central de Treinos com IA", desc: "Prompt pronto com avaliação, PAR-Q e exercícios da academia — cole a resposta da IA e vire ficha na hora." },
   { slug: "app-pagina-vendas", file: "apps/pagina-vendas.html", icone: "📣", title: "Página de Vendas", desc: "Mini-site de divulgação com seus planos e botão de WhatsApp — baixe o arquivo e mande para quem pediu informação." },

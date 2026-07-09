@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gastos por Centro de Custos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .gc { width: 100%; border-collapse: collapse; }
+  .gc th, .gc td { padding: 11px 14px; border-bottom: 1px solid var(--linha); font-size: 14px; }
+  .gc td:last-child, .gc th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .gc th { background: #5a6b8c; color: #fff; font-size: 12.5px; font-weight: 600; }
+  .gc tbody tr:nth-child(even) { background: #fafafb; }
+  .gc .barrinha { height: 6px; background: var(--fundo); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+  .gc .barrinha i { display: block; height: 100%; background: var(--erro); }
+  .gc tfoot td { font-weight: 800; background: var(--fundo); }
+  .totbadge { background: #5a6b8c; color: #fff; padding: 8px 14px; border-radius: 6px; font-weight: 700; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Gastos por Centro de Custos</h1>
+    </div>
+  </div>
+  <p>Quanto saiu em cada centro de custo no período: soma das Contas a Pagar por centro, do maior para o menor, com o total do período.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+    <div class="linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+      <div class="campo" style="margin:0;"><label>De</label><input id="fDe" type="date"></div>
+      <div class="campo" style="margin:0;"><label>Até</label><input id="fAte" type="date"></div>
+      <div class="campo" style="margin:0;"><label>Base da data</label>
+        <select id="fBase"><option value="vencimento">Data de vencimento</option><option value="pagoEm">Data de pagamento</option></select>
+      </div>
+      <div class="campo" style="margin:0;"><label>Situação</label>
+        <select id="fStatus"><option value="">Todas</option><option value="pago">Pagas</option><option value="aberto">Em aberto</option></select>
+      </div>
+    </div>
+    <span class="totbadge" id="total">Valor total no período: R$ 0,00</span>
+  </div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="gc" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  $("fDe").value = hoje.slice(0, 8) + "01";
+  $("fAte").value = hoje;
+
+  function render() {
+    var contas = S.read("contas", { contas: [] }).contas;
+    var de = $("fDe").value, ate = $("fAte").value;
+    var base = $("fBase").value, filtroSt = $("fStatus").value;
+
+    var porCentro = {};
+    var total = 0;
+    contas.forEach(function (c) {
+      if (c.status === "cancelado") return;
+      if (filtroSt && c.status !== filtroSt) return;
+      var d = (c[base] || "").slice(0, 10);
+      if (base === "pagoEm" && c.status !== "pago") return;
+      if (!d || d < de || d > ate) return;
+      var k = c.centro || "Sem centro de custo";
+      porCentro[k] = (porCentro[k] || 0) + (+c.valor || 0);
+      total += +c.valor || 0;
+    });
+
+    var arr = Object.keys(porCentro).map(function (k) { return { centro: k, valor: porCentro[k] }; })
+      .sort(function (a, b) { return b.valor - a.valor; });
+    var max = arr.length ? arr[0].valor : 1;
+
+    $("total").textContent = "Valor total no período: " + S.fmtBRL(total);
+
+    var cab = "<thead><tr><th>Centro de custo</th><th>Valor</th></tr></thead>";
+    var corpo = arr.length ? arr.map(function (x) {
+      var pct = total ? Math.round(x.valor / total * 100) : 0;
+      return "<tr><td>" + esc(x.centro) + ' <span class="muted" style="font-size:12px;">(' + pct + "%)</span>" +
+        '<div class="barrinha"><i style="width:' + Math.round(x.valor / max * 100) + '%"></i></div></td>' +
+        "<td>" + S.fmtBRL(x.valor) + "</td></tr>";
+    }).join("") : '<tr><td colspan="2" class="muted" style="text-align:center; padding:20px;">Nenhum gasto no período.</td></tr>';
+    var rodape = arr.length ? '<tfoot><tr><td>Total</td><td>' + S.fmtBRL(total) + "</td></tr></tfoot>" : "";
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>" + rodape;
+  }
+
+  ["fDe", "fAte", "fBase", "fStatus"].forEach(function (id) { $(id).addEventListener("change", render); });
+  S.onChange(function (k) { if (k === "contas") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
