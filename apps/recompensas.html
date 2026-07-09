@@ -43,6 +43,8 @@
       <div class="campo"><label>Por indicação</label><input id="pIndicacao" type="number" min="0" style="width: 90px;"></div>
       <div class="campo"><label>Por renovação</label><input id="pRenovacao" type="number" min="0" style="width: 90px;"></div>
       <div class="campo"><label>Por avaliação física</label><input id="pAvaliacao" type="number" min="0" style="width: 90px;"></div>
+      <div class="campo"><label>Por nova matrícula (1º plano)</label><input id="pMatricula" type="number" min="0" style="width: 90px;"></div>
+      <div class="campo"><label>Por sessão de graduação</label><input id="pGraduacao" type="number" min="0" style="width: 90px;"></div>
     </div>
   </div>
 
@@ -88,11 +90,11 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
-  var PADRAO = { pontos: { checkin: 1, indicacao: 10, renovacao: 20, avaliacao: 5 }, premios: [], resgates: [] };
+  var PADRAO = { pontos: { checkin: 1, indicacao: 10, renovacao: 20, avaliacao: 5, matricula: 15, graduacao: 30 }, premios: [], resgates: [] };
   function load() { return S.read("recompensas", JSON.parse(JSON.stringify(PADRAO))); }
   function save(st) { S.write("recompensas", st); render(); }
 
-  ["pCheckin", "pIndicacao", "pRenovacao", "pAvaliacao"].forEach(function (id) {
+  ["pCheckin", "pIndicacao", "pRenovacao", "pAvaliacao", "pMatricula", "pGraduacao"].forEach(function (id) {
     $(id).addEventListener("change", function () {
       var st = load();
       var k = id.slice(1).toLowerCase();
@@ -107,6 +109,11 @@
     var ganhos = (a.checkins || []).length * p.checkin;
     ganhos += (a.contratos || []).filter(function (c) { return c.renovacaoDe; }).length * p.renovacao;
     ganhos += S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; }).length * p.avaliacao;
+    // nova matrícula: 1 vez, se o aluno tem ao menos um contrato que não é renovação
+    var temPrimeiro = (a.contratos || []).some(function (c) { return !c.renovacaoDe; });
+    ganhos += (temPrimeiro ? 1 : 0) * (+p.matricula || 0);
+    // bônus de graduação por assiduidade (bloco 3)
+    ganhos += (+a.bonusSessoes || 0) * (+p.graduacao || 0);
     var indicados = stA.alunos.filter(function (x) { return (x.indicacao || "").toLowerCase() === a.nome.toLowerCase(); }).length;
     ganhos += indicados * p.indicacao;
     var gastos = st.resgates.filter(function (r) { return r.alunoId === a.id; })
@@ -122,6 +129,8 @@
     $("pIndicacao").value = st.pontos.indicacao;
     $("pRenovacao").value = st.pontos.renovacao;
     $("pAvaliacao").value = st.pontos.avaliacao;
+    $("pMatricula").value = st.pontos.matricula != null ? st.pontos.matricula : 15;
+    $("pGraduacao").value = st.pontos.graduacao != null ? st.pontos.graduacao : 30;
 
     var lista = stA.alunos.filter(function (a) { return a.status !== "inativo"; })
       .map(function (a) { var pt = pontosDe(a, st, stA); return { a: a, pt: pt }; })
