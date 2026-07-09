@@ -420,7 +420,19 @@
     }
     if (secao === "contratos") {
       var todos = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? 1 : -1; });
-      html = '<div class="card"><h2>Histórico de contratos</h2>' +
+      var dependentes = [];
+      stA().alunos.forEach(function (a9) {
+        (a9.contratos || []).forEach(function (c9) {
+          if (c9.titularId === a.id && c9.status === "ativo") dependentes.push(a9.nome);
+        });
+      });
+      var titularDe = (a.contratos || []).map(function (c9) { return c9.titularNome && c9.status === "ativo" ? c9.titularNome : null; }).filter(Boolean)[0];
+      var familiaHTML = (dependentes.length || titularDe) ?
+        '<div class="card" style="margin-bottom: 12px;"><h2>👨‍👩‍👧 Plano família</h2>' +
+        (titularDe ? '<div class="kv"><span>Responsável financeiro</span><span>' + esc(titularDe) + " (as mensalidades são cobradas dele)</span></div>" : "") +
+        (dependentes.length ? '<div class="kv"><span>Dependentes vinculados</span><span>' + esc(dependentes.join(", ")) + "</span></div>" : "") +
+        "</div>" : "";
+      html = familiaHTML + '<div class="card"><h2>Histórico de contratos</h2>' +
         (todos.length ? '<table class="tabela"><tr><th>PLANO</th><th>PERÍODO</th><th>VALOR</th><th>STATUS</th></tr>' + todos.map(function (c) {
           var p = st.planos.find(function (x) { return x.id === c.planoId; }) || {};
           var tag = c.status === "ativo" ? '<span class="tag ok">ATIVO</span>' :

@@ -294,6 +294,11 @@
       <div class="campo" id="mLivreCampo" hidden><label>Desconto livre (R$/mês)</label><input id="mLivre" type="number" min="0" step="0.01"></div>
     </div>
     <p class="muted" id="mDescontoInfo" style="font-size: 12px; margin: -6px 0 0;"></p>
+    <div class="campo"><label>Contrato família — responsável financeiro (opcional)</label>
+      <input id="mTitular" list="listaTitulares" placeholder="deixe vazio se o próprio aluno paga">
+      <datalist id="listaTitulares"></datalist>
+    </div>
+    <p class="muted" style="font-size: 12px; margin: -8px 0 0;">Como no EVO: no plano família as mensalidades são cobradas do titular; o dependente treina normalmente.</p>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
       <button class="btn" value="ok">Matricular →</button>
@@ -560,6 +565,7 @@
       .sort(function (x, y) { return (x.canceladoEm || "") < (y.canceladoEm || "") ? -1 : 1; }).pop();
     if (cancelado) acoes.push('<button class="btn sec mini" data-facao="anular" data-cid="' + cancelado.id + '">↩ Anular cancelamento</button>');
     acoes.push('<button class="btn sec mini" data-facao="editar">✎ Editar dados</button>');
+    acoes.push('<button class="btn sec mini" data-facao="mesclar" title="Unificar com um cadastro duplicado">⇄ Mesclar</button>');
     if (a.status !== "inativo" && !c) acoes.push('<button class="btn sec mini" data-facao="inativar">Arquivar aluno</button>');
     $("fAcoes").innerHTML = acoes.join("");
 
@@ -762,6 +768,9 @@
     $("mLivreCampo").hidden = true;
     $("mLivre").value = "";
     $("mDescontoInfo").textContent = "";
+    $("mTitular").value = "";
+    $("listaTitulares").innerHTML = st.alunos.filter(function (x) { return x.id !== fichaId && x.status !== "inativo"; })
+      .map(function (x) { return '<option value="' + esc(x.nome) + '">'; }).join("");
     $("dlgMatricula").showModal();
   }
 
@@ -827,6 +836,60 @@
     if (acao === "editar") {
       abreCadastro(a); return;
     }
+    if (acao === "mesclar") {
+      var nomeDup = prompt("MESCLAR CADASTROS (regra do EVO)\n\nEste cadastro (" + a.nome + ") será o PERFIL BASE.\nDigite o nome completo do cadastro DUPLICADO (que será excluído):") || "";
+      var dup = st.alunos.find(function (x) { return x.id !== a.id && x.nome.trim().toLowerCase() === nomeDup.trim().toLowerCase(); });
+      if (!dup) { if (nomeDup.trim()) alert("Cadastro não encontrado — digite o nome exatamente como está na lista."); return; }
+      var resumo = (dup.contratos || []).length + " contrato(s), " +
+        st.recebiveis.filter(function (r) { return r.alunoId === dup.id; }).length + " lançamento(s), " +
+        ((dup.checkins || []).length) + " check-in(s) e " + S.fmtBRL(+dup.saldoCredor || 0) + " de saldo credor";
+      if (!confirm("Mesclar \"" + dup.nome + "\" para dentro de \"" + a.nome + "\"?\n\nVem junto: " + resumo + ".\nDados pessoais valem os do perfil base; o duplicado é EXCLUÍDO. Não dá para desfazer.")) return;
+      // dados pessoais: base manda; só preenche o que estiver vazio
+      ["cpf", "rg", "zap", "email", "nasc", "genero", "cep", "endereco", "numero", "complemento", "bairro", "cidade", "uf",
+       "comoConheceu", "origem", "consultor", "obs", "responsavel", "emergenciaNome", "emergenciaFone", "apelido", "wellhub"].forEach(function (k) {
+        if (!a[k] && dup[k]) a[k] = dup[k];
+      });
+      a.exames = a.exames || {};
+      Object.keys(dup.exames || {}).forEach(function (k) { if (!a.exames[k]) a.exames[k] = dup.exames[k]; });
+      // somam: contratos, frequência, relacionamento, financeiro (credor)
+      a.contratos = (a.contratos || []).concat(dup.contratos || []);
+      a.checkins = (a.checkins || []).concat(dup.checkins || []).sort();
+      a.contatos = (a.contatos || []).concat(dup.contatos || []);
+      a.saldoCredor = Math.round(((+a.saldoCredor || 0) + (+dup.saldoCredor || 0)) * 100) / 100;
+      a.creditos = (a.creditos || []).concat(dup.creditos || []);
+      if (a.status === "inativo" && dup.status !== "inativo") a.status = dup.status;
+      // reatribui lançamentos e registros nos outros programas
+      st.recebiveis.forEach(function (r) { if (r.alunoId === dup.id) r.alunoId = a.id; });
+      var stInad = S.read("inad", { config: {}, devedores: [] });
+      (stInad.devedores || []).forEach(function (d2) { if (d2.alunoId === dup.id) d2.alunoId = a.id; });
+      S.write("inad", stInad);
+      var stSusp = S.read("suspensoes", { itens: [] });
+      stSusp.itens.forEach(function (s2) { if (s2.alunoId === dup.id) { s2.alunoId = a.id; s2.nome = a.nome; } });
+      S.write("suspensoes", stSusp);
+      var stTr = S.read("treinos", null);
+      if (stTr && stTr.prescricoes) {
+        var baseTemTreino = stTr.prescricoes.some(function (p) { return p.alunoId === a.id; });
+        stTr.prescricoes.forEach(function (p) { if (p.alunoId === dup.id && !baseTemTreino) p.alunoId = a.id; });
+        stTr.prescricoes = stTr.prescricoes.filter(function (p) { return p.alunoId !== dup.id; });
+        S.write("treinos", stTr);
+      }
+      var stSa = S.read("saude", null);
+      if (stSa && stSa.avaliacoes) {
+        stSa.avaliacoes.forEach(function (v) { if (v.alunoId === dup.id) v.alunoId = a.id; });
+        S.write("saude", stSa);
+      }
+      var stPq = S.read("parq", null);
+      if (stPq && stPq.fichas && stPq.fichas[dup.id]) {
+        if (!stPq.fichas[a.id]) stPq.fichas[a.id] = stPq.fichas[dup.id];
+        delete stPq.fichas[dup.id];
+        S.write("parq", stPq);
+      }
+      // exclui o duplicado (FitCoins: só do perfil base, como no EVO — pontos do 2º perfil não migram)
+      st.alunos = st.alunos.filter(function (x) { return x.id !== dup.id; });
+      save(st); abreFicha(a.id);
+      alert("Cadastros mesclados! \"" + dup.nome + "\" foi excluído e tudo dele agora está em \"" + a.nome + "\".");
+      return;
+    }
     if (acao === "inativar") {
       a.status = "inativo";
       save(st);
@@ -851,9 +914,21 @@
       valor: +$("mValor").value || plano.valor, status: "ativo",
     };
     a.contratos = a.contratos || [];
+    var nomeTit = $("mTitular").value.trim();
+    var titular = nomeTit ? st.alunos.find(function (x) { return x.id !== a.id && x.nome.trim().toLowerCase() === nomeTit.toLowerCase(); }) : null;
+    if (nomeTit && !titular) { alert("Responsável financeiro não encontrado — matrícula feita SEM vínculo família."); }
+    if (titular) { contrato.titularId = titular.id; contrato.titularNome = titular.nome; }
     a.contratos.push(contrato);
     a.status = "ativo";
     geraRecebiveis(st, a, contrato, plano);
+    if (titular) {
+      // contrato família (EVO): um responsável financeiro — as mensalidades do dependente são cobradas do titular
+      st.recebiveis.forEach(function (r) {
+        if (r.contratoId !== contrato.id) return;
+        r.alunoId = titular.id;
+        r.desc = "Mensalidade família — dependente " + a.nome.split(" ")[0];
+      });
+    }
     // desconto na venda (como no EVO: em recorrente vale só na 1ª parcela, salvo desconto recorrente)
     var dSel = $("mDesconto").value;
     if (dSel) {
