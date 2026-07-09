@@ -1,16 +1,15 @@
 # Estudo completo da Central de Ajuda do EVO — 579 artigos lidos na íntegra
 
 > ## Progresso da implementação (atualizado)
-> **Entregues:** Bloco 1 (cadastro/CRM: nome preferencial, notificação, opt-in de canais, temperatura de lead) ·
+> **Entregues (todos os 🔴 alta, exceto 2 marcados abaixo):** Bloco 1 (nome preferencial, notificação, opt-in de canais, temperatura de lead) ·
 > Bloco 2 (transferência de contrato entre clientes, convidados com cota, níveis/graduação) ·
-> Bloco 3 (capacidade + fila de espera + bonificação por assiduidade nas turmas) ·
+> Bloco 3 (capacidade + fila de espera + bonificação por assiduidade) ·
 > Bloco 4 (prontuário/diário de evolução) · Bloco 5 (comissão competência×caixa, transferência entre contas) ·
-> Bloco 8 (mais regras de pontuação no clube — o catálogo de prêmios resgatáveis já existia).
+> Bloco 6a (crescimento com 12 categorias) · Bloco 6b (contrato VIP/especial fora dos ativos) ·
+> Bloco 7 (Log Geral de auditoria) · Bloco 8 (regras de pontuação — catálogo de prêmios já existia).
 >
-> **A fazer (mais invasivos, cada um merece um passe cuidadoso):**
-> Bloco 6 — Gerencial: crescimento com 12 categorias (Renovados×Retornos, Vencidos×Desistências), fórmulas exatas do painel Gestor, contrato VIP/especial fora da contagem de ativos (cross-cutting em todos os KPIs).
-> Bloco 7 — Auditoria/segurança: Log Geral (de→para de cada alteração) e 2FA (TOTP).
-> Refinos 🟡/⚪ diversos listados abaixo (multa em 2 modos, horário de contrato, plano de contas hierárquico, PAR-Q com regras, combinações de horário, aulas virtuais, etc.).
+> **🔴 ainda pendentes:** suspensão configurável por contrato (nº vezes/tempo/carência) · restrição de venda por gênero e faixa etária no contrato.
+> **Pendentes de menor prioridade:** 2FA (TOTP); refinos 🟡/⚪ diversos abaixo (multa em 2 modos, horário de contrato, plano de contas hierárquico, PAR-Q com regras, aulas virtuais, combinações de horário, etc.).
 
 
 > Leitura integral das 92 coleções (`ajuda-md/`) por 6 leitores em paralelo, cruzada com o
