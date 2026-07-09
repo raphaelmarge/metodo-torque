@@ -104,6 +104,16 @@
 </main>
 
 <!-- novo produto -->
+<dialog id="dlgVerVenda">
+  <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 480px; max-width: 100%;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="verTitulo" style="margin: 0; font-size: 16px; text-transform: none; letter-spacing: 0;">Detalhes da venda</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div id="verCorpo"></div>
+  </div>
+</dialog>
+
 <dialog id="dlgProd">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 440px; max-width: 100%;">
     <h2 id="prodTitulo">Novo produto</h2>
@@ -299,6 +309,7 @@
         (v.cliente ? '<div class="muted" style="font-size: 12px;">' + esc(v.cliente) + "</div>" : "") + "</div>" +
         '<span class="tag neutro">' + esc(v.forma) + "</span>" +
         "<strong>" + S.fmtBRL(v.total) + "</strong>" +
+        '<button class="btn sec mini" data-ver="' + v.id + '" title="Detalhes da venda">👁</button>' +
         '<button class="btn perigo mini" data-est="' + v.id + '" title="Estornar (devolve o estoque)">↩</button></div>';
     }).join("") : '<div class="vazio">Nenhuma venda neste dia.</div>';
   }
@@ -312,6 +323,22 @@
   $("hProx").onclick = function () { mudaDia(1); };
   $("hHoje").onclick = function () { diaHist = S.todayISO(); renderHistorico(); };
   $("listaVendas").addEventListener("click", function (e) {
+    var vid = e.target.getAttribute && e.target.getAttribute("data-ver");
+    if (vid) {
+      var v0 = load().vendas.find(function (x) { return x.id === vid; });
+      if (!v0) return;
+      var kv = function (k, val) { return '<div class="kv"><span>' + k + "</span><span>" + val + "</span></div>"; };
+      var itensHtml = '<table class="tabela" style="width:100%;margin-top:6px;"><tr><th>ITEM</th><th class="num">QTD</th><th class="num">UNIT.</th><th class="num">SUBTOTAL</th></tr>' +
+        v0.itens.map(function (i) { return "<tr><td>" + esc(i.nome) + '</td><td class="num">' + i.qtd + '</td><td class="num">' + S.fmtBRL(i.preco) + '</td><td class="num">' + S.fmtBRL(i.preco * i.qtd) + "</td></tr>"; }).join("") + "</table>";
+      $("verCorpo").innerHTML = kv("Data", S.fmtData(v0.data) + " às " + v0.hora) +
+        (v0.cliente ? kv("Cliente", esc(v0.cliente)) : kv("Cliente", "avulso")) +
+        kv("Forma de pagamento", esc(v0.forma)) +
+        kv("Total", S.fmtBRL(v0.total)) + itensHtml +
+        (v0.estornada ? '<p class="tag erro" style="margin-top:8px;">ESTORNADA</p>' : "");
+      $("verTitulo").textContent = "Venda de " + S.fmtData(v0.data);
+      $("dlgVerVenda").showModal();
+      return;
+    }
     var id = e.target.getAttribute && e.target.getAttribute("data-est");
     if (!id) return;
     if (!confirm("Estornar esta venda? O estoque volta.")) return;

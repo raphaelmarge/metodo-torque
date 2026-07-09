@@ -78,6 +78,16 @@
   </section>
 </main>
 
+<dialog id="dlgVer">
+  <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 480px; max-width: 100%;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="verTitulo" style="margin: 0; font-size: 16px; text-transform: none; letter-spacing: 0;">Detalhes da conta</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div id="verCorpo"></div>
+  </div>
+</dialog>
+
 <dialog id="dlgBaixa">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 420px; max-width: 100%;">
     <h2>✓ Baixar conta</h2>
@@ -186,6 +196,7 @@
         var acoes = "";
         if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-venc="' + r.id + '" title="Alterar vencimento">📅</button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
         acoes += ' <button class="btn sec mini" data-copia="' + r.id + '" title="Copiar conta">⧉</button>';
+        acoes += ' <button class="btn sec mini" data-ver="' + r.id + '" title="Detalhes da conta">👁</button>';
         return "<tr><td><strong>" + esc(a.nome || "?") + "</strong></td><td>" + esc(a.cpf || "—") + "</td><td>" + esc(descDe(r, f.m)) +
           "</td><td>" + esc(r.competencia || "—") + "</td><td>" + S.fmtData(r.vencimento) + "</td><td>" + (r.pagoEm ? S.fmtData(r.pagoEm) : "—") +
           '</td><td class="num">' + brl(+r.valor || 0) + '</td><td class="num">' + (r.status === "pago" ? brl(r.valorBaixa != null ? +r.valorBaixa : +r.valor) : "—") +
@@ -256,11 +267,38 @@
   var baixaId = null;
   $("tabela").addEventListener("click", function (e) {
     var t = e.target;
-    var id = t.getAttribute && (t.getAttribute("data-baixa") || t.getAttribute("data-cancela") || t.getAttribute("data-copia") || t.getAttribute("data-venc"));
+    var id = t.getAttribute && (t.getAttribute("data-baixa") || t.getAttribute("data-cancela") || t.getAttribute("data-copia") || t.getAttribute("data-venc") || t.getAttribute("data-ver"));
     if (!id) return;
     var st = load();
     var r = st.recebiveis.find(function (x) { return x.id === id; });
     if (!r) return;
+    if (t.hasAttribute("data-ver")) {
+      var m = mapas(st);
+      var a0 = m.aluno[r.alunoId] || {};
+      var c0 = m.contrato[r.contratoId];
+      var p0 = c0 && m.plano[c0.planoId];
+      var out = [];
+      var kv = function (k, v) { return '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>"; };
+      out.push(kv("Aluno", esc(a0.nome || "?") + (a0.cpf ? " · CPF " + esc(a0.cpf) : "")));
+      out.push(kv("Descrição", esc(descDe(r, m))));
+      out.push(kv("Contrato", c0 ? esc((p0 && p0.nome) || "plano") + " (início " + S.fmtData(c0.inicio) + ")" : "avulso"));
+      out.push(kv("Competência", esc(r.competencia || "—")));
+      out.push(kv("Vencimento", S.fmtData(r.vencimento)));
+      out.push(kv("Valor", brl(+r.valor || 0)));
+      out.push(kv("Status", statusHTML(r, S.todayISO())));
+      if (r.status === "pago") {
+        out.push(kv("Recebido em", S.fmtData(r.pagoEm)));
+        out.push(kv("Forma", esc(r.forma || "—")));
+        out.push(kv("Valor de baixa", brl(r.valorBaixa != null ? +r.valorBaixa : +r.valor)));
+        var dif = (r.valorBaixa != null ? +r.valorBaixa : +r.valor) - (+r.valor || 0);
+        if (Math.abs(dif) >= 0.005) out.push(kv(dif < 0 ? "Desconto/juros" : "Acréscimo", brl(dif)));
+      }
+      if (r.canceladaEm) out.push(kv("Cancelada em", S.fmtData(r.canceladaEm)));
+      $("verCorpo").innerHTML = out.join("");
+      $("verTitulo").textContent = "Detalhes da conta — " + (a0.nome || "?");
+      $("dlgVer").showModal();
+      return;
+    }
     if (t.hasAttribute("data-baixa")) {
       baixaId = id;
       var a = st.alunos.find(function (x) { return x.id === r.alunoId; }) || {};

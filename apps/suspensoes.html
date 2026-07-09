@@ -47,6 +47,16 @@
   <p class="muted" style="font-size: 12.5px;">Enquanto a suspensão está vigente, o Controle de Entradas bloqueia o check-in e a ficha do aluno mostra o aviso. Reativar encerra a suspensão hoje.</p>
 </main>
 
+<dialog id="dlgVerSusp">
+  <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 480px; max-width: 100%;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="verTitulo" style="margin: 0; font-size: 16px; text-transform: none; letter-spacing: 0;">Detalhes da suspensão</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div id="verCorpo"></div>
+  </div>
+</dialog>
+
 <dialog id="dlg">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
     <h2>⏸ Nova suspensão</h2>
@@ -122,12 +132,43 @@
           "</td><td>" + (fimReal(s) ? S.fmtData(fimReal(s)) : "—") + "</td><td>" + (stt === "programada" ? "—" : dias(s.inicio, ate)) +
           "</td><td style='white-space: normal; max-width: 220px;'>" + esc(s.motivo || "") + "</td><td>" + tag + "</td><td>" +
           (stt !== "finalizada" ? '<button class="btn ok mini" data-reativa="' + s.id + '">▶ Reativar</button> ' : "") +
+          '<button class="btn sec mini" data-ver="' + s.id + '" title="Detalhes / histórico">👁</button> ' +
           '<button class="btn perigo mini" data-excluir="' + s.id + '">✕</button></td></tr>';
       }).join("") : '<tr><td colspan="11" class="muted" style="padding: 20px;">Nenhuma suspensão — use ⏸ Nova suspensão quando um aluno precisar congelar o plano.</td></tr>');
   }
   ["fBusca", "fStatus"].forEach(function (id) { $(id).addEventListener("input", render); });
 
   $("tabela").addEventListener("click", function (e) {
+    var vid = e.target.getAttribute && e.target.getAttribute("data-ver");
+    if (vid) {
+      var stS = load();
+      var s0 = stS.itens.find(function (x) { return x.id === vid; });
+      if (!s0) return;
+      var hoje = S.todayISO();
+      var kv = function (k, v) { return '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>"; };
+      var atE = fimReal(s0) || hoje;
+      var out = kv("Aluno", esc(s0.nome)) +
+        kv("Contrato", esc(s0.contratoNome || "—")) +
+        kv("Tipo", esc(s0.tipo || "Indeterminada")) +
+        kv("Suspenso por", esc(s0.por || "—")) +
+        kv("Incluída em", S.fmtData(s0.incluidaEm)) +
+        kv("Início", S.fmtData(s0.inicio)) +
+        kv("Fim", fimReal(s0) ? S.fmtData(fimReal(s0)) : "—") +
+        kv("Dias suspensos", statusDe(s0, hoje) === "programada" ? "0 (ainda não iniciou)" : dias(s0.inicio, atE)) +
+        kv("Motivo", esc(s0.motivo || "—")) +
+        (s0.finalizadaEm ? kv("Reativado em", S.fmtData(s0.finalizadaEm)) : "");
+      // histórico do mesmo aluno
+      var hist = stS.itens.filter(function (x) { return x.alunoId === s0.alunoId && x.id !== s0.id; });
+      if (hist.length) {
+        out += '<h3 style="font-size:12px;color:var(--cinza);margin:10px 0 4px;">Histórico de suspensões deste aluno</h3>' +
+          hist.map(function (h) { return '<div class="kv"><span>' + S.fmtData(h.inicio) + (h.fim ? " → " + S.fmtData(h.fim) : "") + "</span><span>" + esc(h.motivo || "") + "</span></div>"; }).join("");
+      }
+      if (s0.alunoId) out += '<p style="margin-top:10px;"><a class="btn sec mini" href="perfil-aluno.html?id=' + s0.alunoId + '">Abrir perfil do aluno →</a></p>';
+      $("verCorpo").innerHTML = out;
+      $("verTitulo").textContent = "Suspensão — " + s0.nome;
+      $("dlgVerSusp").showModal();
+      return;
+    }
     var t = e.target;
     var id = t.getAttribute && (t.getAttribute("data-reativa") || t.getAttribute("data-excluir"));
     if (!id) return;

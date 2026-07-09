@@ -35,6 +35,16 @@
   <p>A central de cobrança como no EVO: extrato das cobranças geradas, recorrências programadas no cartão, painel de inadimplência com recuperação e os cartões cadastrados.</p>
 </header>
 
+<dialog id="dlgVerCob">
+  <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 480px; max-width: 100%;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="verTitulo" style="margin: 0; font-size: 16px; text-transform: none; letter-spacing: 0;">Detalhes da cobrança</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div id="verCorpo"></div>
+  </div>
+</dialog>
+
 <main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
   <div class="abas">
     <button class="ativa" data-aba="extrato">EXTRATO</button>
@@ -79,7 +89,7 @@
       if (d.status === "pago") pago += +d.valor || 0; else pendente += +d.valor || 0;
     });
     $("kpis").innerHTML = kpi("COBRANÇAS GERADAS", lista.length) + kpi("APROVADO / PAGO", brl(pago), "verde") + kpi("AGUARDANDO PAGAMENTO", brl(pendente), "laranja");
-    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>CRIADA EM</th><th>MÉTODO</th><th class=\"num\">VALOR</th><th>STATUS</th><th>CÓDIGO / LINK</th></tr>" +
+    $("tabela").innerHTML = "<tr><th>CLIENTE</th><th>CRIADA EM</th><th>MÉTODO</th><th class=\"num\">VALOR</th><th>STATUS</th><th>CÓDIGO / LINK</th><th></th></tr>" +
       (lista.length ? lista.map(function (d) {
         var c = d.cobranca;
         var metodo = c.metodo === "pix" ? "PIX" : c.metodo === "boleto" ? "Boleto" : "Cartão (link)";
@@ -87,8 +97,9 @@
         return "<tr><td><strong>" + esc(d.nome || nomeDe[d.alunoId] || "?") + "</strong></td><td>" + S.fmtData((c.criadoEm || "").slice(0, 10)) +
           "</td><td>" + metodo + '</td><td class="num">' + brl(+d.valor || 0) + "</td><td>" +
           (d.status === "pago" ? '<span class="tag ok">APROVADO</span>' : '<span class="tag alerta">EM ABERTO</span>') + "</td><td>" +
-          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener">abrir página de pagamento</a>' : (c.pixCopiaECola ? "PIX copia e cola gerado" : "—")) + "</td></tr>";
-      }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — com o Pagar.me conectado ou com o modo demonstração ligado em Integrações.</td></tr>');
+          (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener">abrir página de pagamento</a>' : (c.pixCopiaECola ? "PIX copia e cola gerado" : "—")) + "</td>" +
+          '<td style="text-align:right;"><button class="btn sec mini" data-vercob="' + d.id + '" title="Detalhes da cobrança">👁</button></td></tr>';
+      }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — com o Pagar.me conectado ou com o modo demonstração ligado em Integrações.</td></tr>');
     $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUESYS via Pagar.me (Fase 2). No EVO essa aba lista as tentativas de cartão da adquirente.";
   }
 
@@ -179,6 +190,30 @@
     document.querySelectorAll(".abas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-aba") === a); });
     render();
   });
+  $("tabela").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-vercob");
+    if (!id) return;
+    var d = stInad().devedores.find(function (x) { return x.id === id; });
+    if (!d || !d.cobranca) return;
+    var c = d.cobranca;
+    var kv = function (k, v) { return '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>"; };
+    var metodo = c.metodo === "pix" ? "PIX" : c.metodo === "boleto" ? "Boleto" : "Cartão (link)";
+    var out = kv("Cliente", esc(d.nome || "?")) +
+      kv("Método", metodo) +
+      kv("Valor", brl(+d.valor || 0)) +
+      kv("Criada em", S.fmtData((c.criadoEm || "").slice(0, 10))) +
+      kv("Status", d.status === "pago" ? "APROVADO / PAGO" : "EM ABERTO") +
+      (c.transactionId ? kv("ID da transação", esc(c.transactionId)) : "") +
+      (c.linkPagamento || c.boletoUrl ? '<div class="kv"><span>Link</span><span><a href="' + esc(c.linkPagamento || c.boletoUrl) + '" target="_blank" rel="noopener">abrir página</a></span></div>' : "");
+    if (c.pixCopiaECola) {
+      out += '<div style="margin-top:8px;"><label style="font-size:11px;color:var(--cinza);">PIX copia e cola</label>' +
+        '<textarea readonly style="width:100%;height:60px;font-size:11px;" onclick="this.select()">' + esc(c.pixCopiaECola) + "</textarea></div>";
+    }
+    $("verCorpo").innerHTML = out;
+    $("verTitulo").textContent = "Cobrança — " + (d.nome || "?");
+    $("dlgVerCob").showModal();
+  });
+
   S.onChange(function (k) { if (k === "alunos" || k === "inad") render(); });
   render();
 })();
