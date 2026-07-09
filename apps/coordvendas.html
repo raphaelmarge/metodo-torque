@@ -138,7 +138,7 @@
 
     // renovações: contratos que vencem nos próximos 30 dias + renovados no mês (contrato novo de aluno que já tinha contrato anterior)
     var hoje = S.todayISO();
-    var aVencer = 0, renovacoes = 0, rematriculas = 0;
+    var aVencer = 0, renovacoes = 0, rematriculas = 0, renovAtrasadas = 0;
     st.alunos.forEach(function (a) {
       var cs = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
       cs.forEach(function (c, idx) {
@@ -149,6 +149,8 @@
           var fim = S.todayISO(f);
           var em30 = new Date(); em30.setDate(em30.getDate() + 30);
           if (fim >= hoje && fim <= S.todayISO(em30)) aVencer++;
+          // renovação atrasada: contrato ativo que já venceu e não foi renovado
+          if (fim < hoje) renovAtrasadas++;
         }
         if ((c.inicio || "").slice(0, 7) === mes && idx > 0) {
           if ((a.status || "") === "inativo") rematriculas++; else renovacoes++;
@@ -168,7 +170,9 @@
     var h = "";
     h += '<div class="painel" style="grid-column: 1 / -1;"><h2>VENDAS — ACUMULADO DO MÊS × META</h2>' +
       '<div class="linha-flex" style="justify-content: space-between; flex-wrap: wrap;"><div><div class="grande" id="pvTotal">' + brl(totalVendido) + '</div>' +
-      '<div class="meta-linha">Meta: ' + brl(metaMes) + (metaMes ? " · " + Math.round(totalVendido / metaMes * 100) + "% atingido" : " (defina em Metas de Vendas)") + "</div></div>" +
+      '<div class="meta-linha">Faturamento · Meta: ' + brl(metaMes) + (metaMes ? " · " + Math.round(totalVendido / metaMes * 100) + "% atingido" : " (defina em Metas de Vendas)") + "</div>" +
+      '<div style="margin-top:8px;"><span class="grande" style="font-size:22px;">' + contratosMes.length + '</span> <span class="meta-linha">número de contratos vendidos</span></div>' +
+      '</div>' +
       '<div style="flex: 1; min-width: 300px; max-width: 560px;"><div class="barras">' + serie.map(function (x) {
         return '<div class="barra"><i style="height:' + Math.max(2, Math.round(x.total / maxSerie * 100)) + 'px"></i><small>' + x.mes.slice(5) + "/" + x.mes.slice(2, 4) + "</small></div>";
       }).join("") + "</div></div></div></div>";
@@ -191,9 +195,10 @@
         top.map(function (x, i2) { return "<tr><td>" + (i2 + 1) + "º</td><td>" + esc(x.nome) + '</td><td class="num"><strong>' + x.qt + "</strong></td></tr>"; }).join("") + "</table>"
         : '<p class="muted" style="font-size: 12.5px;">Nenhum contrato vendido no mês.</p>') + "</div>";
 
-    h += '<div class="painel"><h2>RENOVAÇÕES</h2><div class="conv">' +
+    h += '<div class="painel"><h2>RENOVAÇÕES</h2><div class="conv" style="flex-wrap:wrap; gap:16px;">' +
       '<div><div class="n">' + aVencer + '</div><div class="rot">A VENCER (30D)</div></div>' +
       '<div><div class="n">' + renovacoes + '</div><div class="rot">RENOVAÇÕES</div></div>' +
+      '<div><div class="n" style="color:' + (renovAtrasadas ? "var(--erro)" : "inherit") + '">' + renovAtrasadas + '</div><div class="rot">RENOV. ATRASADAS</div></div>' +
       '<div><div class="n">' + rematriculas + '</div><div class="rot">REMATRÍCULAS</div></div></div>' +
       '<p class="muted" style="font-size: 12.5px; margin-top: 10px;">Detalhes na página <a href="renovacao.html">Renovação de Contratos</a>.</p></div>';
 

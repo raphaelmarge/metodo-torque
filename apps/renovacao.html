@@ -111,7 +111,22 @@
     var todos = candidatos();
     var vencidos = todos.filter(function (x) { return x.dias < 0; });
     var vencendo = todos.filter(function (x) { return x.dias >= 0; });
+
+    // KPIs de renovação (padrão EVO): total de contratos, renovados, taxa e valor renovado
+    var st0 = stA();
+    var qtdTotal = 0, qtdRenovados = 0, valorRenovado = 0;
+    st0.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        qtdTotal++;
+        if (c.renovacaoDe) { qtdRenovados++; valorRenovado += (+c.valor || 0) * (c.meses || 1); }
+      });
+    });
+    var taxa = qtdTotal ? (qtdRenovados / qtdTotal * 100) : 0;
+
     $("stats").innerHTML =
+      '<div class="card"><div class="n" style="color:var(--ok)">' + (Math.round(taxa * 100) / 100).toString().replace(".", ",") + '%</div><div class="muted">taxa de renovação</div></div>' +
+      '<div class="card"><div class="n">' + qtdTotal + '</div><div class="muted">quantidade total de contratos</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--roxo)">' + qtdRenovados + '</div><div class="muted">contratos renovados</div></div>' +
       '<div class="card"><div class="n" style="color:var(--erro)">' + vencidos.length + '</div><div class="muted">já vencidos</div></div>' +
       '<div class="card"><div class="n" style="color:var(--alerta)">' + vencendo.length + '</div><div class="muted">vencem em 30 dias</div></div>' +
       '<div class="card"><div class="n" style="color:var(--roxo)">' + S.fmtBRL(todos.reduce(function (t, x) { return t + (+x.c.valor || 0) * (x.c.meses || 1); }, 0)) + '</div><div class="muted">receita em jogo (renovações)</div></div>';

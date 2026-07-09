@@ -11,13 +11,15 @@
   .fx { width: 100%; border-collapse: collapse; background: #fff; }
   .fx td, .fx th { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .fx td:first-child, .fx th:first-child { text-align: left; }
-  .fx th { background: var(--escuro); color: #fff; font-size: 12px; letter-spacing: .06em; }
+  .fx th { background: #5a6b8c; color: #fff; font-size: 12px; letter-spacing: .04em; font-weight: 600; }
   .fx tr.neg td { background: #fdeaea; }
-  .fx .hoje td:first-child::after { content: " · semana atual"; color: var(--roxo); font-size: 11px; font-weight: 700; }
+  .fx tr.total td { font-weight: 800; background: var(--fundo); }
+  .fx .hoje td:first-child::after { content: " · hoje"; color: var(--roxo); font-size: 11px; font-weight: 700; }
   .graf { display: flex; gap: 8px; align-items: flex-end; height: 130px; padding-top: 8px; }
   .graf .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
   .graf .b { width: 60%; max-width: 46px; border-radius: 3px 3px 0 0; min-height: 2px; }
   .graf .rotulo { font-size: 10.5px; color: var(--cinza); white-space: nowrap; }
+  .aviso { background: #fdeaea; color: #a12; font-size: 12.5px; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -27,28 +29,52 @@
     <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
     <div>
     <span class="kicker">PROGRAMA · FINANCEIRO</span>
-    <h1>Fluxo de Caixa — 8 Semanas</h1>
+    <h1>Fluxo de Caixa</h1>
     </div>
   </div>
-  <p>A projeção automática das próximas 8 semanas: mensalidades a receber contra contas a pagar, semana a semana, para o caixa nunca te pegar de surpresa.</p>
+  <p>O caixa dia a dia (realizado) e a projeção das próximas semanas: entradas contra saídas, com saldo inicial e final por período — igual ao EVO.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
 
-  <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end;">
-    <div class="campo" style="max-width: 240px;"><label>Saldo em caixa hoje (R$)</label>
-      <input id="fSaldo" type="number" step="0.01" placeholder="0,00">
+  <div class="abas" id="abas">
+    <button data-t="diario" class="ativa">Fluxo de caixa</button>
+    <button data-t="previsao">Previsão de fluxo de caixa</button>
+  </div>
+
+  <!-- ABA: Fluxo de caixa (diário/realizado) -->
+  <div id="viewDiario">
+    <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+      <div class="linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="campo" style="margin:0;"><label>De</label><input id="fDe" type="date"></div>
+        <div class="campo" style="margin:0;"><label>Até</label><input id="fAte" type="date"></div>
+        <div class="campo" style="margin:0;"><label>Conta bancária</label><select id="fConta"></select></div>
+      </div>
+      <div class="campo" style="margin:0; max-width: 200px;"><label>Saldo inicial do período (R$)</label>
+        <input id="fSaldo" type="number" step="0.01" placeholder="0,00">
+      </div>
     </div>
-    <span class="muted" id="atrasados"></span>
+    <div class="aviso">É considerado como “saldo inicial” o valor informado acima; cada dia acumula entradas (recebimentos) e saídas (pagamentos) realizados no período.</div>
+    <div class="card" style="padding: 0; overflow-x: auto;">
+      <table class="fx" id="tabDiario"></table>
+    </div>
   </div>
 
-  <div class="card" style="padding: 0; overflow-x: auto;">
-    <table class="fx" id="tabela"></table>
-  </div>
-
-  <div class="card">
-    <h2>Saldo acumulado projetado</h2>
-    <div class="graf" id="graf"></div>
+  <!-- ABA: Previsão (projeção 8 semanas) -->
+  <div id="viewPrevisao" hidden>
+    <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end;">
+      <div class="campo" style="max-width: 240px; margin:0;"><label>Saldo em caixa hoje (R$)</label>
+        <input id="fSaldoProj" type="number" step="0.01" placeholder="0,00">
+      </div>
+      <span class="muted" id="atrasados"></span>
+    </div>
+    <div class="card" style="padding: 0; overflow-x: auto; margin-top: 12px;">
+      <table class="fx" id="tabProj"></table>
+    </div>
+    <div class="card" style="margin-top: 12px;">
+      <h2>Saldo acumulado projetado</h2>
+      <div class="graf" id="graf"></div>
+    </div>
   </div>
 </main>
 
@@ -63,30 +89,96 @@
   var $ = function (id) { return document.getElementById(id); };
 
   function cfg() { return S.read("fluxo", { saldoInicial: 0 }); }
+
+  // ---------- filtros do diário ----------
+  var hoje = S.todayISO();
+  var ini = hoje.slice(0, 8) + "01";
+  $("fDe").value = ini;
+  $("fAte").value = hoje;
   $("fSaldo").value = cfg().saldoInicial || "";
+  $("fSaldoProj").value = cfg().saldoInicial || "";
+
+  // contas bancárias (do módulo Bancos), com opção "Todas"
+  function contasBancarias() {
+    var b = S.read("bancos", { contas: [] });
+    return b.contas || [];
+  }
+  var cbs = contasBancarias();
+  $("fConta").innerHTML = '<option value="">Todas as contas</option>' +
+    cbs.map(function (c) { return '<option value="' + c.id + '">' + (c.nome || c.banco || "Conta") + "</option>"; }).join("");
+
+  ["fDe", "fAte", "fConta"].forEach(function (id) { $(id).addEventListener("change", renderDiario); });
   $("fSaldo").addEventListener("change", function () {
-    var st = cfg();
-    if (st.saldoInicial === (+this.value || 0)) return;
-    st.saldoInicial = +this.value || 0;
-    S.write("fluxo", st);
-    render();
+    var st = cfg(); st.saldoInicial = +this.value || 0; S.write("fluxo", st);
+    $("fSaldoProj").value = st.saldoInicial || ""; renderDiario();
+  });
+  $("fSaldoProj").addEventListener("change", function () {
+    var st = cfg(); st.saldoInicial = +this.value || 0; S.write("fluxo", st);
+    $("fSaldo").value = st.saldoInicial || ""; renderPrevisao();
   });
 
-  // segunda-feira da semana atual
+  function noPeriodo(dataISO, de, ate) { return dataISO && dataISO >= de && dataISO <= ate; }
+  function contaBate(mov, contaId) { return !contaId || mov.contaId === contaId || mov.banco === contaId; }
+
+  // ---------- ABA diário (realizado) ----------
+  function renderDiario() {
+    var de = $("fDe").value || ini, ate = $("fAte").value || hoje;
+    var contaId = $("fConta").value;
+    var recebiveis = S.read("alunos", { recebiveis: [] }).recebiveis;
+    var contas = S.read("contas", { contas: [] }).contas;
+
+    // agrupa entradas/saídas realizadas por dia
+    var porDia = {};
+    function dia(d) { return (porDia[d] = porDia[d] || { entra: 0, sai: 0 }); }
+    recebiveis.forEach(function (r) {
+      var d = (r.pagoEm || "").slice(0, 10);
+      if (r.status === "pago" && noPeriodo(d, de, ate) && contaBate(r, contaId)) dia(d).entra += +r.valor || 0;
+    });
+    contas.forEach(function (c) {
+      var d = (c.pagoEm || "").slice(0, 10);
+      if (c.status === "pago" && noPeriodo(d, de, ate) && contaBate(c, contaId)) dia(d).sai += +c.valor || 0;
+    });
+
+    var dias = Object.keys(porDia).sort();
+    var saldo = cfg().saldoInicial || 0;
+    var totE = 0, totS = 0;
+    var linhas = dias.map(function (d) {
+      var m = porDia[d];
+      var ini = saldo;
+      var fim = ini + m.entra - m.sai;
+      saldo = fim;
+      totE += m.entra; totS += m.sai;
+      return '<tr class="' + (fim < 0 ? "neg " : "") + (d === hoje ? "hoje" : "") + '">' +
+        "<td>" + S.fmtData(d) + "</td>" +
+        "<td>" + S.fmtBRL(ini) + "</td>" +
+        '<td style="color:var(--ok)">' + S.fmtBRL(m.entra) + "</td>" +
+        '<td style="color:var(--erro)">' + S.fmtBRL(m.sai) + "</td>" +
+        '<td style="font-weight:800; color:' + (fim < 0 ? "var(--erro)" : "inherit") + '">' + S.fmtBRL(fim) + "</td></tr>";
+    }).join("");
+    var cab = "<tr><th>Data</th><th>Saldo inicial</th><th>Entradas</th><th>Saídas</th><th>Saldo final</th></tr>";
+    if (!dias.length) {
+      $("tabDiario").innerHTML = cab + '<tr><td colspan="5" class="muted" style="text-align:center; padding:20px;">Nenhum movimento realizado no período.</td></tr>';
+      return;
+    }
+    var totRow = '<tr class="total"><td>Total do período</td><td>—</td>' +
+      '<td style="color:var(--ok)">' + S.fmtBRL(totE) + "</td>" +
+      '<td style="color:var(--erro)">' + S.fmtBRL(totS) + "</td>" +
+      '<td style="color:' + (saldo < 0 ? "var(--erro)" : "inherit") + '">' + S.fmtBRL(saldo) + "</td></tr>";
+    $("tabDiario").innerHTML = cab + linhas + totRow;
+  }
+
+  // ---------- ABA previsão (projeção 8 semanas) ----------
   function segundaAtual() {
-    var d = new Date(S.todayISO() + "T12:00");
+    var d = new Date(hoje + "T12:00");
     d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
     return d;
   }
-
-  function render() {
-    var hoje = S.todayISO();
+  function renderPrevisao() {
     var recebiveis = S.read("alunos", { recebiveis: [] }).recebiveis;
     var contas = S.read("contas", { contas: [] }).contas;
     var seg = segundaAtual();
     var iniProj = S.todayISO(seg);
 
-    // atrasados de antes da projeção: dinheiro que ainda pode entrar
     var atras = recebiveis.filter(function (r) { return r.status === "aberto" && r.vencimento < iniProj; })
       .reduce(function (t, r) { return t + (+r.valor || 0); }, 0);
     $("atrasados").innerHTML = atras
@@ -111,16 +203,17 @@
 
     var saldo = cfg().saldoInicial || 0;
     var linhas = semanas.map(function (s, i) {
+      var ini = saldo;
       saldo += s.entra - s.sai;
       s.acum = saldo;
       return '<tr class="' + (s.acum < 0 ? "neg " : "") + (s.atual ? "hoje" : "") + '">' +
         "<td>Semana " + (i + 1) + " · " + S.fmtData(s.ia) + " a " + S.fmtData(s.ib) + "</td>" +
+        "<td>" + S.fmtBRL(ini) + "</td>" +
         '<td style="color:var(--ok)">' + S.fmtBRL(s.entra) + "</td>" +
         '<td style="color:var(--erro)">' + S.fmtBRL(s.sai) + "</td>" +
-        "<td>" + S.fmtBRL(s.entra - s.sai) + "</td>" +
         '<td style="font-weight:800; color:' + (s.acum < 0 ? "var(--erro)" : "inherit") + '">' + S.fmtBRL(s.acum) + "</td></tr>";
     }).join("");
-    $("tabela").innerHTML = "<tr><th>Semana</th><th>Entradas</th><th>Saídas</th><th>Saldo da semana</th><th>Acumulado</th></tr>" + linhas;
+    $("tabProj").innerHTML = "<tr><th>Semana</th><th>Saldo inicial</th><th>Entradas</th><th>Saídas</th><th>Saldo final</th></tr>" + linhas;
 
     var max = Math.max.apply(null, semanas.map(function (s) { return Math.abs(s.acum); }).concat([1]));
     $("graf").innerHTML = semanas.map(function (s, i) {
@@ -131,8 +224,19 @@
     }).join("");
   }
 
-  S.onChange(function (k) { if (k === "alunos" || k === "contas" || k === "fluxo") render(); });
-  render();
+  // ---------- abas ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    var t = b.getAttribute("data-t");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    $("viewDiario").hidden = t !== "diario";
+    $("viewPrevisao").hidden = t !== "previsao";
+    if (t === "previsao") renderPrevisao(); else renderDiario();
+  });
+
+  S.onChange(function (k) { if (k === "alunos" || k === "contas" || k === "fluxo" || k === "bancos") { renderDiario(); renderPrevisao(); } });
+  renderDiario();
+  renderPrevisao();
 })();
 </script>
 </body>
