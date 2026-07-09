@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recebimentos por Centro de Receita — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .gc { width: 100%; border-collapse: collapse; }
+  .gc th, .gc td { padding: 11px 14px; border-bottom: 1px solid var(--linha); font-size: 14px; }
+  .gc td:last-child, .gc th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .gc th { background: #3f7a52; color: #fff; font-size: 12.5px; font-weight: 600; }
+  .gc tbody tr:nth-child(even) { background: #fafafb; }
+  .gc .barrinha { height: 6px; background: var(--fundo); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+  .gc .barrinha i { display: block; height: 100%; background: var(--ok); }
+  .gc tfoot td { font-weight: 800; background: var(--fundo); }
+  .totbadge { background: #3f7a52; color: #fff; padding: 8px 14px; border-radius: 6px; font-weight: 700; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · FINANCEIRO</span>
+    <h1>Recebimentos por Centro de Receita</h1>
+    </div>
+  </div>
+  <p>Quanto entrou em cada centro de receita no período: mensalidades, produtos e locações somados por origem, do maior para o menor, com o total.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+    <div class="linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+      <div class="campo" style="margin:0;"><label>De</label><input id="fDe" type="date"></div>
+      <div class="campo" style="margin:0;"><label>Até</label><input id="fAte" type="date"></div>
+      <div class="campo" style="margin:0;"><label>Base da data</label>
+        <select id="fBase"><option value="pago">Data de recebimento (recebido)</option><option value="vencimento">Data de vencimento (previsto)</option></select>
+      </div>
+    </div>
+    <span class="totbadge" id="total">Valor total no período: R$ 0,00</span>
+  </div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="gc" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  $("fDe").value = hoje.slice(0, 8) + "01";
+  $("fAte").value = hoje;
+
+  function render() {
+    var de = $("fDe").value, ate = $("fAte").value, base = $("fBase").value;
+    var porCentro = {}, total = 0;
+    function add(centro, v) { porCentro[centro] = (porCentro[centro] || 0) + v; total += v; }
+
+    // mensalidades / serviços (recebíveis dos alunos)
+    var recebiveis = S.read("alunos", { recebiveis: [] }).recebiveis;
+    recebiveis.forEach(function (r) {
+      var d;
+      if (base === "pago") { if (r.status !== "pago") return; d = (r.pagoEm || "").slice(0, 10); }
+      else { d = (r.vencimento || "").slice(0, 10); }
+      if (!d || d < de || d > ate) return;
+      var centro = r.centroReceita || (r.tipo === "produto" ? "Produtos" : "Mensalidades / Serviços");
+      add(centro, r.valorBaixa != null ? +r.valorBaixa : +r.valor || 0);
+    });
+
+    // vendas de produtos
+    S.read("produtos", { vendas: [] }).vendas.forEach(function (v) {
+      var d = (v.data || "").slice(0, 10);
+      if (!d || d < de || d > ate) return;
+      add("Produtos", +v.total || 0);
+    });
+
+    // locações de armários (recebidas no período)
+    S.read("armarios", { locacoes: [] }).locacoes.forEach(function (l) {
+      var d = (l.pagoEm || l.inicio || "").slice(0, 10);
+      if (!d || d < de || d > ate) return;
+      add("Locação de Armários", +l.valor || 0);
+    });
+
+    var arr = Object.keys(porCentro).map(function (k) { return { centro: k, valor: porCentro[k] }; })
+      .sort(function (a, b) { return b.valor - a.valor; });
+    var max = arr.length ? arr[0].valor : 1;
+
+    $("total").textContent = "Valor total no período: " + S.fmtBRL(total);
+    var cab = "<thead><tr><th>Centro de receita</th><th>Valor</th></tr></thead>";
+    var corpo = arr.length ? arr.map(function (x) {
+      var pct = total ? Math.round(x.valor / total * 100) : 0;
+      return "<tr><td>" + esc(x.centro) + ' <span class="muted" style="font-size:12px;">(' + pct + "%)</span>" +
+        '<div class="barrinha"><i style="width:' + Math.round(x.valor / max * 100) + '%"></i></div></td>' +
+        "<td>" + S.fmtBRL(x.valor) + "</td></tr>";
+    }).join("") : '<tr><td colspan="2" class="muted" style="text-align:center; padding:20px;">Nenhum recebimento no período.</td></tr>';
+    var rodape = arr.length ? '<tfoot><tr><td>Total</td><td>' + S.fmtBRL(total) + "</td></tr></tfoot>" : "";
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>" + rodape;
+  }
+
+  ["fDe", "fAte", "fBase"].forEach(function (id) { $(id).addEventListener("change", render); });
+  S.onChange(function (k) { if (k === "alunos" || k === "produtos" || k === "armarios") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
