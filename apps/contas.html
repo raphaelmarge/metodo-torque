@@ -99,6 +99,16 @@
 </dialog>
 
 <!-- centros de despesa -->
+<dialog id="dlgVerConta">
+  <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 460px; max-width: 100%;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="verTitulo" style="margin: 0; font-size: 16px; text-transform: none; letter-spacing: 0;">Detalhes da conta</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div id="verCorpo"></div>
+  </div>
+</dialog>
+
 <dialog id="dlgCentros">
   <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 420px; max-width: 100%;">
     <h2>Centros de despesa</h2>
@@ -174,6 +184,7 @@
         (c.status === "aberto" ? '<button class="btn ok mini" data-pagar="' + c.id + '">✓ Pagar</button> ' +
           '<button class="btn sec mini" data-cancelar="' + c.id + '">✕</button>' :
           '<button class="btn sec mini" data-reabrir="' + c.id + '">↩</button>') +
+        ' <button class="btn sec mini" data-ver="' + c.id + '" title="Detalhes da conta">👁</button>' +
         "</td></tr>";
     }).join("");
   }
@@ -188,6 +199,25 @@
 
   $("linhas").addEventListener("click", function (e) {
     var st = load();
+    var vid = e.target.getAttribute && e.target.getAttribute("data-ver");
+    if (vid) {
+      var cv = st.contas.find(function (x) { return x.id === vid; });
+      if (!cv) return;
+      var kv = function (k, v) { return '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>"; };
+      var atrasada = cv.status === "aberto" && cv.vencimento < S.todayISO();
+      var out = kv("Descrição", esc(cv.desc)) +
+        (cv.forn ? kv("Fornecedor", esc(cv.forn)) : "") +
+        kv("Centro de despesa", esc(cv.centro || "—")) +
+        kv("Vencimento", S.fmtData(cv.vencimento)) +
+        kv("Valor", S.fmtBRL(+cv.valor || 0)) +
+        kv("Status", cv.status === "pago" ? "PAGA" : cv.status === "cancelado" ? "CANCELADA" : atrasada ? "VENCIDA" : "EM ABERTO") +
+        (cv.status === "pago" && cv.pagoEm ? kv("Paga em", S.fmtData(cv.pagoEm)) : "") +
+        (cv.grupoRecorrente ? kv("Recorrência", "faz parte de um lançamento recorrente") : "");
+      $("verCorpo").innerHTML = out;
+      $("verTitulo").textContent = "Detalhes — " + cv.desc;
+      $("dlgVerConta").showModal();
+      return;
+    }
     var id = e.target.getAttribute && e.target.getAttribute("data-pagar");
     if (id) {
       var c = st.contas.find(function (x) { return x.id === id; });
