@@ -47,6 +47,16 @@
   <div id="lista"></div>
 </main>
 
+<dialog id="dlgVerPt">
+  <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 460px; max-width: 100%;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="verTitulo" style="margin: 0; font-size: 16px; text-transform: none; letter-spacing: 0;">Detalhes do personal</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div id="verCorpo"></div>
+  </div>
+</dialog>
+
 <dialog id="dlg">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 460px; max-width: 100%;">
     <h2 id="dlgTitulo">Novo personal</h2>
@@ -116,6 +126,7 @@
           ? '<span class="tag ok">PAGO ' + S.fmtData(pago) + '</span><button class="btn sec mini" data-desfaz="' + p.id + '">↩</button>'
           : '<span class="tag erro">PENDENTE</span><button class="btn mini" data-paga="' + p.id + '">✓ Receber</button>' +
             (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "")) : "") +
+        '<button class="btn sec mini" data-ver="' + p.id + '" title="Detalhes do personal">👁</button>' +
         '<button class="btn sec mini" data-edita="' + p.id + '">✏</button></div>';
     }).join("") : '<div class="vazio">Nenhum personal cadastrado. Clique em ➕ Novo personal.</div>';
   }
@@ -136,6 +147,26 @@
   $("lista").addEventListener("click", function (e) {
     var t = e.target;
     var st = load();
+    var vid = t.getAttribute && t.getAttribute("data-ver");
+    if (vid) {
+      var p0 = st.lista.find(function (x) { return x.id === vid; });
+      if (!p0) return;
+      var kv = function (k, v) { return '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>"; };
+      // histórico de pagamentos dos últimos meses
+      var histY = [];
+      Object.keys(st.pagamentos || {}).sort().reverse().slice(0, 12).forEach(function (m) {
+        if ((st.pagamentos[m] || {})[p0.id]) histY.push(kv(m, "pago em " + S.fmtData(st.pagamentos[m][p0.id])));
+      });
+      $("verCorpo").innerHTML = kv("Nome", esc(p0.nome)) +
+        (p0.cref ? kv("CREF", esc(p0.cref)) : "") +
+        (p0.zap ? kv("WhatsApp", esc(p0.zap)) : "") +
+        kv("Taxa mensal", S.fmtBRL(+p0.taxa || 0)) +
+        kv("Situação", p0.status === "inativo" ? "INATIVO" : "ATIVO") +
+        (histY.length ? '<h3 style="font-size:12px;color:var(--cinza);margin:10px 0 4px;">Histórico de pagamentos</h3>' + histY.join("") : '<p class="muted" style="margin-top:8px;">Sem pagamentos registrados ainda.</p>');
+      $("verTitulo").textContent = "Personal — " + p0.nome;
+      $("dlgVerPt").showModal();
+      return;
+    }
     if (t.getAttribute && t.getAttribute("data-paga")) {
       (st.pagamentos[mes] = st.pagamentos[mes] || {})[t.getAttribute("data-paga")] = S.todayISO();
       save(st); return;
