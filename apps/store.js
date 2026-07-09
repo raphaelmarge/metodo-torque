@@ -24,8 +24,42 @@
   }
 
   var ouvintes = [];
+  var LOG_KEY = PREFIX + "logGeral";
+  var LOG_MAX = 400;
+  var SEM_LOG = { logGeral: 1, logo: 1, academia: 1 };
+  window.__MT_IMPORTANDO = window.__MT_IMPORTANDO || false;
+
+  function contaRegistros(v) {
+    if (Array.isArray(v)) return v.length;
+    if (v && typeof v === "object") {
+      var maior = null;
+      Object.keys(v).forEach(function (k) { if (Array.isArray(v[k]) && (maior == null || v[k].length > maior)) maior = v[k].length; });
+      return maior;
+    }
+    return null;
+  }
+  function registraLog(key, antes, depois) {
+    if (SEM_LOG[key] || window.__MT_IMPORTANDO) return;
+    try {
+      var por = "";
+      try { por = (JSON.parse(localStorage.getItem(PREFIX + "perfil")) || {}).nome || ""; } catch (e) {}
+      var na = contaRegistros(antes), nd = contaRegistros(depois);
+      var resumo = na == null || nd == null ? "atualizado" :
+        na === nd ? na + " registro(s) — editado" :
+        nd > na ? "incluído (" + na + " → " + nd + ")" : "excluído (" + na + " → " + nd + ")";
+      var log = [];
+      try { log = JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch (e) {}
+      log.push({ k: key, por: por, em: new Date().toISOString(), resumo: resumo });
+      if (log.length > LOG_MAX) log = log.slice(-LOG_MAX);
+      localStorage.setItem(LOG_KEY, JSON.stringify(log));
+    } catch (e) {}
+  }
+
   function write(key, value) {
+    var antes;
+    try { var raw = localStorage.getItem(PREFIX + key); antes = raw ? JSON.parse(raw) : null; } catch (e) { antes = null; }
     localStorage.setItem(PREFIX + key, JSON.stringify(value));
+    registraLog(key, antes, value);
     marcaTs(PREFIX + key);
     agendaEnvio(PREFIX + key);
     ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });
@@ -165,7 +199,9 @@
     return file.text().then(function (txt) {
       var data = JSON.parse(txt);
       if (data.formato !== "metodo-torque-backup") throw new Error("arquivo não é um backup do Método Torque");
-      BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); });
+      window.__MT_IMPORTANDO = true;
+      try { BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); }); }
+      finally { window.__MT_IMPORTANDO = false; }
     });
   }
 
