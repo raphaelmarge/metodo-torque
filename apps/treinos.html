@@ -34,10 +34,10 @@
   .ficha { border: 1px solid var(--linha); margin-top: 12px; }
   .ficha-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--fundo); padding: 9px 12px; }
   .ficha-cab input { font-weight: 700; border: none; background: none; padding: 4px; flex: 1; }
-  .ex-linha { display: grid; grid-template-columns: 2.4fr .7fr .7fr .9fr .9fr auto; gap: 6px; padding: 6px 10px; border-top: 1px solid var(--fundo); align-items: center; }
+  .ex-linha { display: grid; grid-template-columns: 2.1fr 1fr .7fr .7fr .9fr .9fr auto; gap: 6px; padding: 6px 10px; border-top: 1px solid var(--fundo); align-items: center; }
   .ex-linha input { padding: 7px 8px; font-size: 13px; }
   .ex-linha .rm { background: none; border: none; color: var(--erro); cursor: pointer; font-size: 14px; }
-  .ex-cab { display: grid; grid-template-columns: 2.4fr .7fr .7fr .9fr .9fr auto; gap: 6px; padding: 6px 10px; font-size: 10.5px; letter-spacing: .08em; color: var(--cinza-2); }
+  .ex-cab { display: grid; grid-template-columns: 2.1fr 1fr .7fr .7fr .9fr .9fr auto; gap: 6px; padding: 6px 10px; font-size: 10.5px; letter-spacing: .08em; color: var(--cinza-2); }
   @media (max-width: 700px) {
     .ex-linha, .ex-cab { grid-template-columns: 1fr 1fr 1fr; }
     .ex-linha input:first-child { grid-column: 1 / -1; }
@@ -207,7 +207,7 @@
     return { rot: "EM DIA", cls: "ok" };
   }
   function fichaVazia(n) { return { nome: "Ficha " + n, itens: [] }; }
-  function itemVazio() { return { ex: "", series: "3", reps: "12", carga: "", descanso: "60s" }; }
+  function itemVazio() { return { ex: "", estilo: "Normal", series: "3", reps: "12", carga: "", descanso: "60s" }; }
 
   var busca = "";
   var alunoSel = null;
@@ -251,10 +251,14 @@
         '<div class="ficha-cab"><input value="' + esc(f.nome) + '" data-fnome="' + fi + '" placeholder="Nome da ficha (ex.: A — Peito e tríceps)">' +
         (editavel ? '<button class="btn sec mini" data-additem="' + fi + '">+ Exercício</button>' +
           '<button class="btn perigo mini" data-rmficha="' + fi + '" style="padding: 4px 8px;">✕</button>' : "") + "</div>" +
-        '<div class="ex-cab"><span>EXERCÍCIO</span><span>SÉRIES</span><span>REPS</span><span>CARGA</span><span>DESCANSO</span><span></span></div>' +
+        '<div class="ex-cab"><span>EXERCÍCIO</span><span>ESTILO</span><span>SÉRIES</span><span>REPS</span><span>CARGA</span><span>DESCANSO</span><span></span></div>' +
         f.itens.map(function (it, ii) {
           return '<div class="ex-linha">' +
             '<input list="exLista" value="' + esc(it.ex) + '" data-c="ex" data-fi="' + fi + '" data-ii="' + ii + '" placeholder="exercício">' +
+            '<select data-c="estilo" data-fi="' + fi + '" data-ii="' + ii + '">' +
+              ["Normal", "Conjugado", "Progressivo", "Drop-set", "Bi-set", "Isometria"].map(function (op) {
+                return '<option' + ((it.estilo || "Normal") === op ? " selected" : "") + ">" + op + "</option>";
+              }).join("") + "</select>" +
             '<input value="' + esc(it.series) + '" data-c="series" data-fi="' + fi + '" data-ii="' + ii + '">' +
             '<input value="' + esc(it.reps) + '" data-c="reps" data-fi="' + fi + '" data-ii="' + ii + '">' +
             '<input value="' + esc(it.carga) + '" data-c="carga" data-fi="' + fi + '" data-ii="' + ii + '" placeholder="kg">' +
@@ -354,7 +358,7 @@
         (p2.descricao ? "\n📝 " + p2.descricao + "\n" : "") +
         p2.fichas.map(function (f) {
           return "\n▪ " + (f.nome || "Ficha").toUpperCase() + "\n" + f.itens.map(function (i) {
-            return "  • " + (i.ex || "exercício") + " — " + (i.series || "?") + "x" + (i.reps || "?") +
+            return "  • " + (i.ex || "exercício") + (i.estilo && i.estilo !== "Normal" ? " [" + i.estilo + "]" : "") + " — " + (i.series || "?") + "x" + (i.reps || "?") +
               (i.carga ? " (" + i.carga + ")" : "") + (i.descanso ? " · desc. " + i.descanso : "");
           }).join("\n");
         }).join("\n") +
