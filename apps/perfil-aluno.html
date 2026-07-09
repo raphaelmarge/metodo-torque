@@ -571,8 +571,21 @@
       var motivo = prompt("Motivo do crédito (ex.: cortesia, compensação, adiantamento):") || "crédito manual";
       var st2 = stA();
       var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+      // teto de créditos (regra do EVO): acima do teto do mês fica pendente de aprovação
+      var teto = +(S.read("config", { dados: {} }).tetoCreditos || 0);
+      var ap = S.read("aprovacoes", { itens: [] });
+      var m = S.todayISO().slice(0, 7);
+      var usado = ap.itens.reduce(function (t, x) { return t + (x.status === "aprovado" && (x.em || "").slice(0, 7) === m ? +x.valor || 0 : 0); }, 0);
+      if (teto && usado + v > teto) {
+        ap.itens.push({ id: S.uid(), tipo: "credito", alunoId: a2.id, nome: a2.nome, valor: Math.round(v * 100) / 100, desc: motivo.trim(), em: S.todayISO(), status: "pendente" });
+        S.write("aprovacoes", ap);
+        alert("⚠ Acima do teto do mês (" + S.fmtBRL(teto) + ") — o crédito foi para a fila de APROVAÇÕES em Descontos (regra do EVO). Só entra no saldo do aluno depois de aprovado.");
+        return;
+      }
       registraCredito(a2, v, motivo.trim());
       S.write("alunos", st2);
+      ap.itens.push({ id: S.uid(), tipo: "credito", alunoId: a2.id, nome: a2.nome, valor: Math.round(v * 100) / 100, desc: motivo.trim(), em: S.todayISO(), status: "aprovado" });
+      S.write("aprovacoes", ap);
       render();
     };
     var bCrUsar = $("crUsar");

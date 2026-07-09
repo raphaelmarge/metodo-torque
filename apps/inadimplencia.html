@@ -38,6 +38,7 @@
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
+  <div id="autoCancel"></div>
 
   <div class="stats" id="stats"></div>
 
@@ -86,6 +87,10 @@
     <h2>Dados usados nas mensagens</h2>
     <div class="campo"><label>Nome da academia</label><input id="cAcad" placeholder="ex.: Academia Corpo em Forma"></div>
     <div class="campo"><label>Link de pagamento</label><input id="cLink" placeholder="ex.: https://pag.ae/..."></div>
+    <div class="campo"><label>Cancelamento automático após quantos meses sem pagamento? (0 = desligado)</label>
+      <input id="cAutoMeses" type="number" min="0" max="12" placeholder="ex.: 2">
+    </div>
+    <p class="muted" style="font-size: 12px; margin: -6px 0 0;">Regra do EVO: contrato de aluno que não paga há N meses é cancelado para não contar como ativo. Aqui o sistema mostra os candidatos num aviso e você cancela com um clique.</p>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn" value="ok">Salvar</button>
     </div>
@@ -237,13 +242,14 @@
   $("btnCfg").onclick = function () {
     var st = load();
     $("cAcad").value = st.config.acad || "";
+    $("cAutoMeses").value = st.config.autoMeses || "";
     $("cLink").value = st.config.link || "";
     $("dlgCfg").showModal();
   };
   $("dlgCfg").addEventListener("close", function () {
     if ($("dlgCfg").returnValue !== "ok") return;
     var st = load();
-    st.config = { acad: $("cAcad").value.trim(), link: $("cLink").value.trim() };
+    st.config = { acad: $("cAcad").value.trim(), link: $("cLink").value.trim(), autoMeses: +$("cAutoMeses").value || 0 };
     save(st);
   });
 
@@ -476,7 +482,55 @@
     $("roteiro").close();
   };
 
-  S.onChange(function () { render(); });
+  // ---------- cancelamento automático por inadimplência (regra do EVO) ----------
+  function candidatosAutoCancel() {
+    var meses = (load().config || {}).autoMeses || 0;
+    if (!meses) return [];
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var limite = new Date();
+    limite.setMonth(limite.getMonth() - meses);
+    var limiteISO = S.todayISO(limite);
+    var out = [];
+    stA.alunos.forEach(function (a) {
+      var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+      if (!c) return;
+      var vencidas = stA.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "aberto" && r.vencimento <= limiteISO; });
+      var pagouDepois = stA.recebiveis.some(function (r) { return r.alunoId === a.id && r.status === "pago" && (r.pagoEm || "") > limiteISO; });
+      if (vencidas.length && !pagouDepois) out.push({ a: a, c: c, maisAntiga: vencidas.sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; })[0] });
+    });
+    return out;
+  }
+  function renderAutoCancel() {
+    var cands = candidatosAutoCancel();
+    var meses = (load().config || {}).autoMeses || 0;
+    $("autoCancel").innerHTML = cands.length ?
+      '<div class="card" style="border-color: rgba(220,38,38,.5); background: rgba(220,38,38,.04);">' +
+      "<strong>🤖 Cancelamento automático:</strong> " + cands.length + " contrato(s) sem pagamento há " + meses + "+ meses — " +
+      cands.map(function (x) { return esc(x.a.nome); }).join(", ") +
+      ' <button class="btn perigo mini" id="btnAutoCancel" style="margin-left: 8px;">Cancelar contratos agora</button></div>' : "";
+    var b = $("btnAutoCancel");
+    if (b) b.onclick = function () {
+      if (!confirm("Cancelar " + cands.length + " contrato(s) por inadimplência? As parcelas futuras em aberto são removidas; as vencidas continuam no saldo devedor (como no EVO).")) return;
+      var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+      var hoje = S.todayISO();
+      cands.forEach(function (x) {
+        var a2 = stA.alunos.find(function (z) { return z.id === x.a.id; });
+        var c2 = (a2.contratos || []).find(function (z) { return z.id === x.c.id; });
+        if (!c2) return;
+        c2.status = "cancelado"; c2.canceladoEm = hoje;
+        c2.motivoCancel = "Cancelamento automático — " + meses + "+ meses sem pagamento";
+        stA.recebiveis = stA.recebiveis.filter(function (r) {
+          return !(r.contratoId === c2.id && r.status === "aberto" && r.vencimento > hoje);
+        });
+      });
+      S.write("alunos", stA);
+      renderAutoCancel();
+      alert(cands.length + " contrato(s) cancelado(s) por inadimplência. Os devedores continuam na régua até quitar ou você excluir.");
+    };
+  }
+  renderAutoCancel();
+
+  S.onChange(function () { render(); renderAutoCancel(); });
   render();
 })();
 </script>

@@ -12,6 +12,9 @@
   .tabela th, .tabela td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
   .tabela th { background: var(--escuro); color: #fff; font-size: 11.5px; letter-spacing: .07em; }
   .regras { display: flex; gap: 4px; flex-wrap: wrap; }
+  .kpi { border: 1px solid var(--linha); padding: 10px 14px; background: #fff; }
+  .kpi .rot { font-size: 11px; letter-spacing: .08em; font-weight: 700; color: var(--cinza); }
+  .kpi .val { font-size: 20px; font-weight: 800; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -28,11 +31,29 @@
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
-  <div class="card linha-flex" style="justify-content: space-between;">
-    <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativos" type="checkbox"> mostrar inativos</label>
-    <button class="btn" id="btnNovo">➕ Novo desconto</button>
+  <div class="abas">
+    <button class="ativa" data-aba="descontos">DESCONTOS</button>
+    <button data-aba="aprovacoes">APROVAÇÕES E TETO</button>
   </div>
-  <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+
+  <section id="secDescontos" style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="card linha-flex" style="justify-content: space-between;">
+      <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativos" type="checkbox"> mostrar inativos</label>
+      <button class="btn" id="btnNovo">➕ Novo desconto</button>
+    </div>
+    <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
+  </section>
+
+  <section id="secAprovacoes" hidden style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="card linha-flex" style="align-items: flex-end; gap: 14px; flex-wrap: wrap;">
+      <div class="campo"><label>Teto mensal de créditos/descontos (R$) — 0 desliga</label>
+        <input id="tetoValor" type="number" min="0" step="0.01" style="width: 160px;">
+      </div>
+      <p class="muted" style="font-size: 12.5px; flex: 1; min-width: 260px;">Como no EVO: créditos (saldo credor) acima do teto do mês ficam <strong>pendentes de aprovação</strong> aqui. Descontos na venda também debitam do teto quando marcados.</p>
+    </div>
+    <div class="kpis" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;" id="kpisTeto"></div>
+    <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabAprov"></table></div>
+  </section>
 </main>
 
 <dialog id="dlg">
@@ -66,6 +87,7 @@
       <label class="linha-flex" style="gap: 6px;"><input id="dRecorrente" type="checkbox"> Aplicar desconto recorrente (em todas as parcelas)</label>
       <label class="linha-flex" style="gap: 6px;"><input id="dAutorizacao" type="checkbox"> Necessita de autorização do gestor</label>
       <label class="linha-flex" style="gap: 6px;"><input id="dFamiliares" type="checkbox"> Desconto para familiares</label>
+      <label class="linha-flex" style="gap: 6px;"><input id="dTeto" type="checkbox"> Debitar valor do teto de desconto</label>
       <label class="linha-flex" style="gap: 6px;"><input id="dInativo" type="checkbox"> Inativo</label>
     </div>
     <div class="campo"><label>Quem pode aplicar (cargo)</label>
@@ -136,6 +158,7 @@
     $("dRecorrente").checked = !!(d && d.recorrente);
     $("dAutorizacao").checked = !!(d && d.autorizacao);
     $("dFamiliares").checked = !!(d && d.familiares);
+    $("dTeto").checked = !!(d && d.debitarTeto);
     $("dInativo").checked = !!(d && d.inativo);
     $("dCargo").value = d ? d.cargo || "" : "";
     $("dObs").value = d ? d.obs || "" : "";
@@ -162,7 +185,7 @@
       maxMes: +$("dMaxMes").value || 0, vigDe: $("dVigDe").value, vigAte: $("dVigAte").value,
       idadeDe: +$("dIdadeDe").value || 0, idadeAte: +$("dIdadeAte").value || 0,
       recorrente: $("dRecorrente").checked, autorizacao: $("dAutorizacao").checked,
-      familiares: $("dFamiliares").checked, inativo: $("dInativo").checked,
+      familiares: $("dFamiliares").checked, debitarTeto: $("dTeto").checked, inativo: $("dInativo").checked,
       cargo: $("dCargo").value, obs: $("dObs").value.trim(),
     };
     if (!dados.desc) return;
@@ -175,7 +198,81 @@
     }
     save(st);
   });
-  S.onChange(function (k) { if (k === "descontos") render(); });
+  // ---------- aprovações e teto (Gerencial - Desconto/Créditos do EVO) ----------
+  function cfg() { return S.read("config", { dados: {} }); }
+  function aprovacoes() { return S.read("aprovacoes", { itens: [] }); }
+  function mesKey() { return S.todayISO().slice(0, 7); }
+  function usoMes(ap) {
+    var m = mesKey();
+    var cred = 0, desc2 = 0;
+    ap.itens.forEach(function (x) {
+      if (x.status !== "aprovado" || (x.em || "").slice(0, 7) !== m) return;
+      if (x.tipo === "credito") cred += +x.valor || 0; else desc2 += +x.valor || 0;
+    });
+    return { cred: cred, desc: desc2 };
+  }
+  function renderAprov() {
+    var teto = +(cfg().tetoCreditos || 0);
+    $("tetoValor").value = teto || "";
+    var ap = aprovacoes();
+    var uso = usoMes(ap);
+    var disponivel = teto ? Math.max(0, teto - uso.cred - uso.desc) : 0;
+    $("kpisTeto").innerHTML =
+      '<div class="kpi"><div class="rot">CRÉDITO APROVADO (MÊS)</div><div class="val" style="color: var(--ok);">' + S.fmtBRL(uso.cred) + "</div></div>" +
+      '<div class="kpi"><div class="rot">DESCONTO APROVADO (MÊS)</div><div class="val">' + S.fmtBRL(uso.desc) + "</div></div>" +
+      '<div class="kpi"><div class="rot">DISPONÍVEL DO TETO</div><div class="val" style="color: ' + (teto ? "var(--alerta)" : "var(--cinza)") + ';">' + (teto ? S.fmtBRL(disponivel) : "sem teto") + "</div></div>";
+    var pend = ap.itens.filter(function (x) { return x.status === "pendente"; });
+    var hist = ap.itens.filter(function (x) { return x.status !== "pendente" && (x.em || "").slice(0, 7) === mesKey(); }).slice(-15).reverse();
+    $("tabAprov").innerHTML = "<tr><th>CLIENTE</th><th>TIPO</th><th>DESCRIÇÃO</th><th>SOLICITADO POR</th><th>DATA</th><th>VALOR</th><th>STATUS</th><th></th></tr>" +
+      (pend.length || hist.length ? pend.concat(hist).map(function (x) {
+        return "<tr><td><strong>" + esc(x.nome || "?") + "</strong></td><td>" + (x.tipo === "credito" ? "Saldo credor" : "Desconto") +
+          "</td><td>" + esc(x.desc || "—") + "</td><td>" + esc(x.por || "—") + "</td><td>" + S.fmtData(x.em) +
+          "</td><td><strong>" + S.fmtBRL(+x.valor || 0) + "</strong></td><td>" +
+          (x.status === "pendente" ? '<span class="tag alerta">PENDENTE</span>' : x.status === "aprovado" ? '<span class="tag ok">APROVADO</span>' : '<span class="tag erro">REPROVADO</span>') +
+          "</td><td>" + (x.status === "pendente" ? '<button class="btn ok mini" data-aprova="' + x.id + '">✓ Aprovar</button> <button class="btn perigo mini" data-reprova="' + x.id + '">✕ Reprovar</button>' : "") + "</td></tr>";
+      }).join("") : '<tr><td colspan="8" class="muted" style="padding: 20px;">Não existem pendências para aprovação.</td></tr>');
+  }
+  $("tetoValor").addEventListener("change", function () {
+    var st = cfg();
+    st.tetoCreditos = +this.value || 0;
+    S.write("config", st);
+    renderAprov();
+  });
+  $("tabAprov").addEventListener("click", function (e) {
+    var t = e.target;
+    var id = t.getAttribute && (t.getAttribute("data-aprova") || t.getAttribute("data-reprova"));
+    if (!id) return;
+    var ap = aprovacoes();
+    var x = ap.itens.find(function (z) { return z.id === id; });
+    if (!x) return;
+    if (t.hasAttribute("data-aprova")) {
+      x.status = "aprovado";
+      x.em = S.todayISO();
+      if (x.tipo === "credito" && x.alunoId) {
+        var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+        var a = stA.alunos.find(function (z) { return z.id === x.alunoId; });
+        if (a) {
+          a.saldoCredor = Math.round(((+a.saldoCredor || 0) + (+x.valor || 0)) * 100) / 100;
+          a.creditos = a.creditos || [];
+          a.creditos.push({ valor: +x.valor || 0, motivo: (x.desc || "crédito") + " (aprovado)", em: S.todayISO() });
+          S.write("alunos", stA);
+        }
+      }
+    } else x.status = "reprovado";
+    S.write("aprovacoes", ap);
+    renderAprov();
+  });
+  document.querySelector(".abas").addEventListener("click", function (e) {
+    var aba = e.target.getAttribute && e.target.getAttribute("data-aba");
+    if (!aba) return;
+    document.querySelectorAll(".abas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-aba") === aba); });
+    $("secDescontos").hidden = aba !== "descontos";
+    $("secAprovacoes").hidden = aba !== "aprovacoes";
+    if (aba === "aprovacoes") renderAprov();
+  });
+  renderAprov();
+
+  S.onChange(function (k) { if (k === "descontos") render(); if (k === "aprovacoes" || k === "config" || k === "alunos") renderAprov(); });
   render();
 })();
 </script>
