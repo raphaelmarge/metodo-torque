@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cancelamentos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .kpi { background: #f4f4f7; border-radius: 8px; padding: 16px 18px; }
+  .kpi .rot { font-size: 12.5px; color: var(--cinza); } .kpi .n { font-size: 22px; font-weight: 800; }
+  .cc { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .cc th, .cc td { padding: 10px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: right; }
+  .cc th { background: #5a6b8c; color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .03em; }
+  .cc th:first-child, .cc td:first-child, .cc th.txt, .cc td.txt { text-align: left; }
+  .cc tbody tr:nth-child(even) { background: #fafafb; }
+  .motivo-linha { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--fundo); font-size: 14px; }
+  .motivo-linha .barra { flex: 1; height: 8px; background: var(--fundo); border-radius: 4px; overflow: hidden; }
+  .motivo-linha .barra i { display: block; height: 100%; background: var(--erro); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Cancelamentos</h1>
+    </div>
+  </div>
+  <p>Cada contrato cancelado no período: quem saiu, o motivo, quanto tempo ficou e o valor que deixou de entrar — para atacar a causa e reverter.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="abas" id="abas">
+    <button data-t="lista" class="ativa">Cancelamentos</button>
+    <button data-t="motivos">Motivos de cancelamento</button>
+  </div>
+
+  <div class="card linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="campo" style="margin:0;"><label>De</label><input id="fDe" type="date"></div>
+    <div class="campo" style="margin:0;"><label>Até</label><input id="fAte" type="date"></div>
+    <span class="muted">O motivo é registrado na hora do cancelamento, na ficha do aluno.</span>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <!-- ABA lista -->
+  <div id="viewLista" class="card" style="padding: 0; overflow-x: auto;">
+    <table class="cc" id="tabela"></table>
+  </div>
+
+  <!-- ABA motivos -->
+  <div id="viewMotivos" class="card" hidden>
+    <h2>Por motivo (no período)</h2>
+    <div id="motivos" style="margin-top: 8px;"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  $("fDe").value = hoje.slice(0, 8) + "01";
+  $("fAte").value = hoje;
+  var aba = "lista";
+
+  function mesesEntre(ini, fim) {
+    if (!ini || !fim) return 0;
+    var a = new Date(ini + "T12:00"), b = new Date(fim + "T12:00");
+    return Math.max(0, Math.round((b - a) / (30.44 * 864e5)));
+  }
+
+  function cancelados() {
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var de = $("fDe").value, ate = $("fAte").value;
+    var lista = [];
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        var dt = (c.canceladoEm || "").slice(0, 10);
+        if (c.status !== "cancelado" || !dt || dt < de || dt > ate) return;
+        var plano = (st.planos || []).find(function (p) { return p.id === c.planoId; }) || {};
+        var mensal = +c.valor || 0;
+        var meses = c.meses || 1;
+        var perman = mesesEntre(c.inicio, dt);
+        var valorContrato = mensal * meses;
+        var valorPerdido = Math.max(0, mensal * (meses - perman));
+        lista.push({
+          nome: a.nome, contrato: plano.nome || "contrato", data: dt,
+          por: c.canceladoPor || a.consultor || "—", motivo: c.motivoCancel || "não informado",
+          perman: perman, valorContrato: valorContrato, valorPerdido: valorPerdido,
+        });
+      });
+    });
+    return lista.sort(function (x, y) { return x.data < y.data ? 1 : -1; });
+  }
+
+  function render() {
+    var lista = cancelados();
+    var totalPerdido = lista.reduce(function (t, x) { return t + x.valorPerdido; }, 0);
+    var permMedia = lista.length ? lista.reduce(function (t, x) { return t + x.perman; }, 0) / lista.length : 0;
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">Cancelamentos no período</div><div class="n" style="color:var(--erro)">' + lista.length + '</div></div>' +
+      '<div class="kpi"><div class="rot">Valor perdido (contratos)</div><div class="n" style="color:var(--erro)">' + S.fmtBRL(totalPerdido) + '</div></div>' +
+      '<div class="kpi"><div class="rot">Permanência média</div><div class="n">' + (Math.round(permMedia * 10) / 10).toString().replace(".", ",") + ' meses</div></div>';
+
+    // tabela
+    var cab = '<thead><tr><th class="txt">Nome</th><th class="txt">Contrato</th><th>Cancelamento</th><th class="txt">Cancelado por</th><th class="txt">Motivo</th><th>Meses de permanência</th><th>Valor total do contrato</th><th>Valor perdido</th></tr></thead>';
+    var corpo = lista.length ? lista.map(function (x) {
+      return "<tr><td class='txt'><strong>" + esc(x.nome) + "</strong></td>" +
+        "<td class='txt'>" + esc(x.contrato) + "</td>" +
+        "<td>" + S.fmtData(x.data) + "</td>" +
+        "<td class='txt'>" + esc(x.por) + "</td>" +
+        "<td class='txt'>" + esc(x.motivo) + "</td>" +
+        "<td>" + x.perman + "</td>" +
+        "<td>" + S.fmtBRL(x.valorContrato) + "</td>" +
+        "<td style='color:var(--erro); font-weight:700;'>" + S.fmtBRL(x.valorPerdido) + "</td></tr>";
+    }).join("") : '<tr><td colspan="8" class="muted" style="text-align:center; padding:20px;">Nenhum cancelamento no período. 🎉</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+
+    // motivos
+    var porMotivo = {};
+    lista.forEach(function (x) { porMotivo[x.motivo] = (porMotivo[x.motivo] || 0) + 1; });
+    var motivos = Object.keys(porMotivo).sort(function (a, b) { return porMotivo[b] - porMotivo[a]; });
+    var maxM = motivos.length ? porMotivo[motivos[0]] : 1;
+    $("motivos").innerHTML = motivos.length ? motivos.map(function (mo) {
+      var q = porMotivo[mo], pct = Math.round(q / lista.length * 100);
+      return '<div class="motivo-linha"><span style="min-width:200px;">' + esc(mo) + "</span>" +
+        '<div class="barra"><i style="width:' + Math.round(q / maxM * 100) + '%"></i></div>' +
+        "<strong style='min-width:70px; text-align:right;'>" + q + " (" + pct + "%)</strong></div>";
+    }).join("") : '<div class="muted">Sem cancelamentos no período.</div>';
+  }
+
+  ["fDe", "fAte"].forEach(function (id) { $(id).addEventListener("change", render); });
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-t");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    $("viewLista").hidden = aba !== "lista";
+    $("viewMotivos").hidden = aba !== "motivos";
+  });
+
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
