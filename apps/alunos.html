@@ -253,6 +253,33 @@
 </dialog>
 
 <!-- MATRICULAR -->
+<dialog id="dlgCancel">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
+    <h2>✕ Cancelar contrato</h2>
+    <p class="muted" id="ccQuem" style="font-size: 13px;"></p>
+    <div class="grid-2">
+      <div class="campo"><label>Motivo do cancelamento *</label>
+        <select id="ccMotivo">
+          <option>Financeiro</option><option>Mudança de cidade/bairro</option><option>Insatisfação</option>
+          <option>Lesão / saúde</option><option>Falta de tempo</option><option>Troca de plano</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="campo"><label>Cancelar a partir de</label><input id="ccData" type="date"></div>
+    </div>
+    <div class="campo"><label>Observação</label><input id="ccObs" placeholder="opcional"></div>
+    <label class="linha-flex" style="gap: 6px; font-size: 13.5px;"><input id="ccFuturos" type="checkbox" checked> Cancelar os lançamentos futuros em aberto</label>
+    <label class="linha-flex" style="gap: 6px; font-size: 13.5px;"><input id="ccCredito" type="checkbox"> Converter dias restantes em saldo credor (<strong id="ccCreditoValor">R$ 0,00</strong>)</label>
+    <div class="linha-flex" style="gap: 6px; align-items: center; font-size: 13.5px;">
+      <label class="linha-flex" style="gap: 6px; margin: 0;"><input id="ccMultaChk" type="checkbox"> Aplicar multa por cancelamento</label>
+      <input id="ccMulta" type="number" min="0" step="0.01" placeholder="R$" style="width: 110px;" disabled>
+    </div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Voltar</button>
+      <button class="btn perigo" value="ok">✕ Confirmar cancelamento</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dlgMatricula">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
     <h2>Matricular no plano</h2>
@@ -262,6 +289,11 @@
       <div class="campo"><label>Dia de vencimento</label><input id="mDia" type="number" min="1" max="28" value="5" required></div>
     </div>
     <div class="campo"><label>Valor negociado (R$/mês)</label><input id="mValor" type="number" min="0" step="0.01" placeholder="deixe vazio p/ valor do plano"></div>
+    <div class="grid-2">
+      <div class="campo"><label>Desconto</label><select id="mDesconto"><option value="">Sem desconto</option></select></div>
+      <div class="campo" id="mLivreCampo" hidden><label>Desconto livre (R$/mês)</label><input id="mLivre" type="number" min="0" step="0.01"></div>
+    </div>
+    <p class="muted" id="mDescontoInfo" style="font-size: 12px; margin: -6px 0 0;"></p>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
       <button class="btn" value="ok">Matricular →</button>
@@ -522,7 +554,11 @@
     if (!c) acoes.push('<button class="btn mini" data-facao="matricular">📝 Matricular</button>');
     if (c && c.status === "ativo") acoes.push('<button class="btn sec mini" data-facao="congelar">❄ Congelar</button>');
     if (c && c.status === "congelado") acoes.push('<button class="btn sec mini" data-facao="descongelar">▶ Reativar</button>');
+    if (c) acoes.push('<button class="btn sec mini" data-facao="dias" title="Creditar/debitar dias no contrato">± Dias</button>');
     if (c) acoes.push('<button class="btn perigo mini" data-facao="cancelar">✕ Cancelar contrato</button>');
+    var cancelado = !c && (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })
+      .sort(function (x, y) { return (x.canceladoEm || "") < (y.canceladoEm || "") ? -1 : 1; }).pop();
+    if (cancelado) acoes.push('<button class="btn sec mini" data-facao="anular" data-cid="' + cancelado.id + '">↩ Anular cancelamento</button>');
     acoes.push('<button class="btn sec mini" data-facao="editar">✎ Editar dados</button>');
     if (a.status !== "inativo" && !c) acoes.push('<button class="btn sec mini" data-facao="inativar">Arquivar aluno</button>');
     $("fAcoes").innerHTML = acoes.join("");
@@ -713,6 +749,19 @@
     }).join("");
     $("mInicio").value = S.todayISO();
     $("mValor").value = "";
+    var hj = S.todayISO();
+    var descs = S.read("descontos", { itens: [] }).itens.filter(function (d) {
+      if (d.inativo) return false;
+      if (d.vigDe && hj < d.vigDe) return false;
+      if (d.vigAte && hj > d.vigAte) return false;
+      return true;
+    });
+    $("mDesconto").innerHTML = '<option value="">Sem desconto</option>' + descs.map(function (d) {
+      return '<option value="' + d.id + '">' + esc(d.desc) + " (" + (d.tipo === "pct" ? (+d.valor || 0) + "%" : S.fmtBRL(+d.valor || 0)) + (d.recorrente ? " · recorrente" : " · só 1ª parcela") + ")</option>";
+    }).join("") + '<option value="__livre">Desconto livre (digitar valor)</option>';
+    $("mLivreCampo").hidden = true;
+    $("mLivre").value = "";
+    $("mDescontoInfo").textContent = "";
     $("dlgMatricula").showModal();
   }
 
@@ -743,15 +792,36 @@
       c.status = "ativo"; c.congeladoEm = "";
       save(st); abreFicha(fichaId); return;
     }
-    if (acao === "cancelar") {
-      if (!confirm("Cancelar o contrato de " + a.nome + "? As mensalidades futuras em aberto serão removidas.")) return;
-      var motivo = prompt("Qual o motivo do cancelamento? (ex.: mudança, financeiro, insatisfação, lesão)") || "";
-      c.status = "cancelado"; c.canceladoEm = S.todayISO();
-      c.motivoCancel = motivo.trim() || "não informado";
-      var hoje = S.todayISO();
-      st.recebiveis = st.recebiveis.filter(function (r) {
-        return !(r.contratoId === c.id && r.status === "aberto" && r.vencimento > hoje);
-      });
+    if (acao === "cancelar") { abreCancelamento(a, c); return; }
+    if (acao === "dias") {
+      var n = parseInt(prompt("Quantos dias? (positivo CREDITA e estende o contrato; negativo DEBITA)", "7"), 10);
+      if (!n) return;
+      var motivoD = prompt("Motivo do " + (n > 0 ? "crédito" : "débito") + " de dias (ex.: suspensão, cortesia, ajuste):") || "";
+      c.diasCreditados = (+c.diasCreditados || 0) + n;
+      c.diasLog = c.diasLog || [];
+      c.diasLog.push({ dias: n, motivo: motivoD.trim(), em: S.todayISO() });
+      save(st); abreFicha(fichaId);
+      alert((n > 0 ? "+" : "") + n + " dia(s) no contrato — novo total de ajuste: " + c.diasCreditados + " dia(s).");
+      return;
+    }
+    if (acao === "anular") {
+      var cid = e.target.getAttribute("data-cid");
+      var cc = (a.contratos || []).find(function (x) { return x.id === cid; });
+      if (!cc || !confirm("Anular o cancelamento e reativar o contrato de " + a.nome + "? As parcelas futuras que faltarem serão relançadas (agendamentos de aula precisam ser refeitos manualmente).")) return;
+      cc.status = "ativo"; cc.canceladoEm = ""; cc.motivoCancel = "";
+      a.status = "ativo";
+      // relança as parcelas que faltam até o fim do contrato
+      var ini2 = new Date(cc.inicio + "T12:00");
+      var hoje2 = S.todayISO();
+      for (var i2 = 0; i2 < (cc.meses || 1); i2++) {
+        var comp2 = new Date(ini2.getFullYear(), ini2.getMonth() + i2, 1).toISOString().slice(0, 7);
+        var venc2 = S.todayISO(new Date(ini2.getFullYear(), ini2.getMonth() + i2, Math.min(cc.diaVenc || 5, 28)));
+        var jaPagouMes = st.recebiveis.some(function (r) { return !r.desc && r.contratoId === cc.id && r.competencia === comp2 && r.status === "pago"; });
+        if (venc2 < hoje2 && jaPagouMes) continue;
+        if (venc2 < hoje2) venc2 = hoje2; // mês corrente volta a valer hoje
+        var ja = st.recebiveis.some(function (r) { return !r.desc && r.contratoId === cc.id && r.competencia === comp2; });
+        if (!ja) st.recebiveis.push({ id: S.uid(), alunoId: a.id, contratoId: cc.id, competencia: comp2, vencimento: venc2, valor: cc.valor, status: "aberto" });
+      }
       save(st); abreFicha(fichaId); return;
     }
     if (acao === "editar") {
@@ -762,6 +832,12 @@
       save(st);
       document.getElementById("fichaDlg").close();
     }
+  });
+
+  $("mDesconto").addEventListener("change", function () {
+    $("mLivreCampo").hidden = this.value !== "__livre";
+    var d0 = S.read("descontos", { itens: [] }).itens.find(function (x) { return x.id === $("mDesconto").value; });
+    $("mDescontoInfo").textContent = d0 && d0.autorizacao ? "🔒 Este desconto exige autorização do gestor na confirmação." : "";
   });
 
   $("dlgMatricula").addEventListener("close", function () {
@@ -778,8 +854,98 @@
     a.contratos.push(contrato);
     a.status = "ativo";
     geraRecebiveis(st, a, contrato, plano);
+    // desconto na venda (como no EVO: em recorrente vale só na 1ª parcela, salvo desconto recorrente)
+    var dSel = $("mDesconto").value;
+    if (dSel) {
+      var dInfo = null;
+      if (dSel === "__livre") {
+        var vLivre = +$("mLivre").value || 0;
+        if (vLivre > 0 && confirm("Desconto livre de " + S.fmtBRL(vLivre) + "/mês exige autorização do gestor. Confirmar?")) {
+          dInfo = { desc: "Desconto livre", tipo: "valor", valor: vLivre, recorrente: true };
+        }
+      } else {
+        var d0 = S.read("descontos", { itens: [] }).itens.find(function (x) { return x.id === dSel; });
+        if (d0 && (!d0.autorizacao || confirm('O desconto "' + d0.desc + '" necessita de autorização do gestor. Confirmar a autorização?'))) {
+          dInfo = { desc: d0.desc, tipo: d0.tipo, valor: +d0.valor || 0, recorrente: !!d0.recorrente };
+        }
+      }
+      if (dInfo) {
+        contrato.desconto = dInfo;
+        var parcelas = st.recebiveis.filter(function (r) { return r.contratoId === contrato.id; })
+          .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; });
+        parcelas.forEach(function (r, idx) {
+          if (idx > 0 && !dInfo.recorrente) return;
+          var v = +r.valor || 0;
+          r.valor = Math.max(0, dInfo.tipo === "pct" ? v * (1 - dInfo.valor / 100) : v - dInfo.valor);
+          r.valor = Math.round(r.valor * 100) / 100;
+        });
+      }
+    }
     save(st);
     abreFicha(fichaId);
+  });
+
+  // ---------- cancelamento completo (regras do EVO) ----------
+  var cancelCtx = null;
+  function creditoDiasRestantes(st, c, dataCancel) {
+    // EVO: valor pago pelo contrato ÷ dias de vigência × dias restantes
+    var pago = st.recebiveis.filter(function (r) { return r.contratoId === c.id && r.status === "pago"; })
+      .reduce(function (t, r) { return t + ((r.valorBaixa != null ? +r.valorBaixa : +r.valor) || 0); }, 0);
+    var ini = new Date(c.inicio + "T12:00");
+    var fim = new Date(c.inicio + "T12:00");
+    fim.setMonth(fim.getMonth() + (c.meses || 1));
+    fim.setDate(fim.getDate() + (+c.diasCreditados || 0));
+    var vigencia = Math.max(1, Math.round((fim - ini) / 864e5));
+    var restantes = Math.max(0, Math.round((fim - new Date(dataCancel + "T12:00")) / 864e5));
+    return Math.round(pago / vigencia * restantes * 100) / 100;
+  }
+  function abreCancelamento(a, c) {
+    cancelCtx = { alunoId: a.id, contratoId: c.id };
+    $("ccQuem").textContent = a.nome + " — o contrato fica válido até o fim do dia escolhido.";
+    $("ccData").value = S.todayISO();
+    $("ccObs").value = ""; $("ccFuturos").checked = true; $("ccCredito").checked = false;
+    $("ccMultaChk").checked = false; $("ccMulta").value = ""; $("ccMulta").disabled = true;
+    var st = load();
+    $("ccCreditoValor").textContent = S.fmtBRL(creditoDiasRestantes(st, c, $("ccData").value));
+    $("dlgCancel").showModal();
+  }
+  $("ccData").addEventListener("change", function () {
+    if (!cancelCtx) return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === cancelCtx.alunoId; });
+    var c = (a.contratos || []).find(function (x) { return x.id === cancelCtx.contratoId; });
+    if (c) $("ccCreditoValor").textContent = S.fmtBRL(creditoDiasRestantes(st, c, this.value || S.todayISO()));
+  });
+  $("ccMultaChk").addEventListener("change", function () { $("ccMulta").disabled = !this.checked; });
+  $("dlgCancel").addEventListener("close", function () {
+    if ($("dlgCancel").returnValue !== "ok" || !cancelCtx) return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === cancelCtx.alunoId; });
+    var c = (a.contratos || []).find(function (x) { return x.id === cancelCtx.contratoId; });
+    if (!c) return;
+    var data = $("ccData").value || S.todayISO();
+    c.status = "cancelado";
+    c.canceladoEm = data;
+    c.motivoCancel = $("ccMotivo").value + ($("ccObs").value.trim() ? " — " + $("ccObs").value.trim() : "");
+    if ($("ccCredito").checked) {
+      var cred = creditoDiasRestantes(st, c, data);
+      if (cred > 0) {
+        a.saldoCredor = Math.round(((+a.saldoCredor || 0) + cred) * 100) / 100;
+        a.creditos = a.creditos || [];
+        a.creditos.push({ valor: cred, motivo: "Dias restantes do contrato cancelado", em: S.todayISO() });
+      }
+    }
+    if ($("ccFuturos").checked) {
+      st.recebiveis = st.recebiveis.filter(function (r) {
+        return !(r.contratoId === c.id && r.status === "aberto" && r.vencimento > data);
+      });
+    }
+    if ($("ccMultaChk").checked && +$("ccMulta").value > 0) {
+      st.recebiveis.push({ id: S.uid(), alunoId: a.id, contratoId: c.id, desc: "Multa de cancelamento",
+        competencia: data.slice(0, 7), vencimento: data, valor: +$("ccMulta").value, status: "aberto" });
+    }
+    cancelCtx = null;
+    save(st); abreFicha(fichaId);
   });
 
   function darBaixa(recebivelId) {

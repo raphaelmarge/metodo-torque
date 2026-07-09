@@ -72,6 +72,7 @@
   function fimDe(c) {
     var f = new Date((c.inicio || "2000-01-01") + "T12:00");
     f.setMonth(f.getMonth() + (c.meses || 1));
+        f.setDate(f.getDate() + (+c.diasCreditados || 0));
     return S.todayISO(f);
   }
 
@@ -101,7 +102,10 @@
     var hoje = S.todayISO();
     var out = { bloqueios: [], avisos: [], badge: "SEM CONTRATO", badgeCls: "erro" };
     var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
-    if (ativos.length) {
+    if (ativos.length && ativos.every(function (c) { return (c.inicio || "") > hoje; })) {
+      out.badge = "NA FILA 🕓"; out.badgeCls = "roxo";
+      out.avisos.push("Contrato na fila — começa em " + S.fmtData(ativos[0].inicio) + " (aluno inativo até lá, como no EVO).");
+    } else if (ativos.length) {
       var fimMax = null;
       ativos.forEach(function (c) { var f = fimDe(c); if (!fimMax || f > fimMax) fimMax = f; });
       if (fimMax < hoje) { out.badge = "CONTRATO VENCIDO"; out.badgeCls = "erro"; out.bloqueios.push("Contrato vencido em " + S.fmtData(fimMax) + " — encaminhar para renovação."); }
@@ -401,7 +405,14 @@
       if (subFin === "credor") {
         html += '<div class="card"><h2>Saldo credor</h2>' +
           '<div class="kv"><span>Crédito disponível</span><span style="font-weight:800; color:var(--ok);">' + S.fmtBRL(+(a.saldoCredor || 0)) + "</span></div>" +
-          '<p class="muted" style="margin-top:8px;">Crédito do aluno (ex.: pagamento adiantado ou compensação de congelamento). Ajuste o valor no cadastro pela Gestão de Alunos.</p></div>';
+          '<div class="linha-flex" style="margin-top: 10px;">' +
+          '<button class="btn mini" id="crAdd">➕ Adicionar crédito</button>' +
+          ((+a.saldoCredor || 0) > 0 ? '<button class="btn ok mini" id="crUsar">✓ Usar p/ quitar parcela</button><button class="btn sec mini" id="crTransf">⇄ Transferir p/ outro aluno</button>' : "") +
+          "</div>" +
+          ((a.creditos || []).length ? '<h2 style="margin-top: 14px;">Movimentações do crédito</h2>' + a.creditos.slice().reverse().map(function (cr) {
+            return '<div class="kv"><span>' + S.fmtData(cr.em) + " · " + esc(cr.motivo || "crédito") + "</span><span style='color:" + (cr.valor >= 0 ? "var(--ok)" : "var(--erro)") + ";'>" + (cr.valor >= 0 ? "+" : "") + S.fmtBRL(cr.valor) + "</span></div>";
+          }).join("") : "") +
+          '<p class="muted" style="margin-top:8px;">Como no EVO: dá para inserir crédito sem venda (com motivo), usar para quitar a parcela mais antiga em aberto e transferir para outro aluno.</p></div>';
       }
       if (subFin === "boletos") {
         html += '<div class="card"><div class="vazio">Boletos, PIX automático e transações de cartão fazem parte da <strong>Fase 2</strong> — dependem do gateway de cobrança (Stone/Pagar.me/Asaas).<br>Por enquanto, use o botão de cobrança no WhatsApp.</div></div>';
@@ -545,6 +556,54 @@
         S.write("alunos", st2);
         alert("Recorrência cancelada no Pagar.me.");
       }).catch(function (e) { $("asnAviso").textContent = "erro: " + e.message; });
+    };
+
+    // saldo credor (regras do EVO): adicionar / usar / transferir
+    function registraCredito(a9, valor, motivo) {
+      a9.saldoCredor = Math.round(((+a9.saldoCredor || 0) + valor) * 100) / 100;
+      a9.creditos = a9.creditos || [];
+      a9.creditos.push({ valor: Math.round(valor * 100) / 100, motivo: motivo, em: S.todayISO() });
+    }
+    var bCrAdd = $("crAdd");
+    if (bCrAdd) bCrAdd.onclick = function () {
+      var v = parseFloat(String(prompt("Valor do crédito (R$):", "50")).replace(",", "."));
+      if (!v || v <= 0) return;
+      var motivo = prompt("Motivo do crédito (ex.: cortesia, compensação, adiantamento):") || "crédito manual";
+      var st2 = stA();
+      var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+      registraCredito(a2, v, motivo.trim());
+      S.write("alunos", st2);
+      render();
+    };
+    var bCrUsar = $("crUsar");
+    if (bCrUsar) bCrUsar.onclick = function () {
+      var st2 = stA();
+      var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+      var abertas = st2.recebiveis.filter(function (r) { return r.alunoId === a2.id && r.status === "aberto"; })
+        .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; });
+      if (!abertas.length) { alert("Nenhuma parcela em aberto."); return; }
+      var r = abertas[0];
+      var saldo = +a2.saldoCredor || 0;
+      if (saldo < +r.valor) { alert("Crédito (" + S.fmtBRL(saldo) + ") menor que a parcela mais antiga (" + S.fmtBRL(+r.valor) + ") — adicione crédito ou receba a diferença na recepção."); return; }
+      if (!confirm("Quitar a parcela de " + S.fmtBRL(+r.valor) + " (vence " + S.fmtData(r.vencimento) + ") com o saldo credor?")) return;
+      r.status = "pago"; r.pagoEm = S.todayISO(); r.forma = "Saldo credor"; r.valorBaixa = +r.valor;
+      registraCredito(a2, -r.valor, "Quitação da parcela " + (r.competencia || ""));
+      S.write("alunos", st2);
+      render();
+    };
+    var bCrTransf = $("crTransf");
+    if (bCrTransf) bCrTransf.onclick = function () {
+      var st2 = stA();
+      var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+      var nome = prompt("Nome do aluno que vai RECEBER o crédito:") || "";
+      var destino = st2.alunos.find(function (x) { return x.id !== a2.id && x.nome.toLowerCase() === nome.trim().toLowerCase(); });
+      if (!destino) { alert("Aluno não encontrado — digite o nome completo igual ao cadastro."); return; }
+      var v = parseFloat(String(prompt("Valor a transferir (disponível: " + S.fmtBRL(+a2.saldoCredor || 0) + "):", String(a2.saldoCredor || 0))).replace(",", "."));
+      if (!v || v <= 0 || v > (+a2.saldoCredor || 0)) { alert("Valor inválido."); return; }
+      registraCredito(a2, -v, "Transferido para " + destino.nome);
+      registraCredito(destino, v, "Recebido de " + a2.nome);
+      S.write("alunos", st2);
+      render();
     };
 
     // relacionamento: registrar/excluir contato

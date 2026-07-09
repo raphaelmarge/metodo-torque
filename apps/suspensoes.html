@@ -137,6 +137,18 @@
     if (t.hasAttribute("data-reativa")) {
       if (!confirm("Reativar " + s.nome + "? A suspensão encerra hoje e o aluno volta a entrar normalmente.")) return;
       s.finalizadaEm = S.todayISO();
+      var diasSusp = s.inicio <= s.finalizadaEm ? dias(s.inicio, s.finalizadaEm) : 0;
+      if (diasSusp > 0 && s.alunoId && confirm("Creditar os " + diasSusp + " dia(s) suspensos no contrato? (posterga a vigência, como no EVO)")) {
+        var stAl = stA();
+        var al = stAl.alunos.find(function (x) { return x.id === s.alunoId; });
+        var ct = al && (al.contratos || []).find(function (c) { return c.status === "ativo"; });
+        if (ct) {
+          ct.diasCreditados = (+ct.diasCreditados || 0) + diasSusp;
+          ct.diasLog = ct.diasLog || [];
+          ct.diasLog.push({ dias: diasSusp, motivo: "Suspensão (" + (s.motivo || "") + ")", em: S.todayISO() });
+          S.write("alunos", stAl);
+        } else alert("Sem contrato ativo para creditar — anote para ajustar depois.");
+      }
     } else {
       if (!confirm("Excluir este registro de suspensão?")) return;
       st.itens = st.itens.filter(function (x) { return x.id !== id; });

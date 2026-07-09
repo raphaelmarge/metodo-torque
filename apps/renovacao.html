@@ -84,6 +84,7 @@
   function fimDe(c) {
     var f = new Date((c.inicio || "2000-01-01") + "T12:00");
     f.setMonth(f.getMonth() + (c.meses || 1));
+        f.setDate(f.getDate() + (+c.diasCreditados || 0));
     return S.todayISO(f);
   }
   var filtro = "tudo";
