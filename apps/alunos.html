@@ -356,6 +356,7 @@
     return pior;
   }
   function situacao(st, a) {
+    if (a.restrito && (!a.restrito.ate || a.restrito.ate >= S.todayISO())) return { rot: "RESTRITO 🚫", cls: "erro" };
     if (a.status === "inativo") return { rot: "INATIVO", cls: "neutro" };
     var c = contratoAtivo(a);
     if (!c) return { rot: "SEM CONTRATO", cls: "neutro" };
@@ -562,7 +563,11 @@
     if (c && c.status === "ativo") acoes.push('<button class="btn sec mini" data-facao="congelar">❄ Congelar</button>');
     if (c && c.status === "congelado") acoes.push('<button class="btn sec mini" data-facao="descongelar">▶ Reativar</button>');
     if (c && st.planos.some(function (p) { return p.tipo === "adicional"; })) acoes.push('<button class="btn mini" data-facao="adicional">➕ Vender adicional</button>');
+    if (c) acoes.push('<button class="btn sec mini" data-facao="trocar" title="Trocar de plano com crédito dos dias restantes">⇆ Trocar plano</button>');
+    if (c) acoes.push('<button class="btn sec mini" data-facao="altcontrato" title="Alterar início ou dia de vencimento">✎ Alterar contrato</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="dias" title="Creditar/debitar dias no contrato">± Dias</button>');
+    if (!c && !a.restrito) acoes.push('<button class="btn perigo mini" data-facao="restringir" title="Bloquear compras, acesso e comunicação (regra do EVO)">🚫 Restringir</button>');
+    if (a.restrito) acoes.push('<button class="btn ok mini" data-facao="liberarrestricao">✓ Remover restrição</button>');
     if (c) acoes.push('<button class="btn perigo mini" data-facao="cancelar">✕ Cancelar contrato</button>');
     var cancelado = !c && (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })
       .sort(function (x, y) { return (x.canceladoEm || "") < (y.canceladoEm || "") ? -1 : 1; }).pop();
@@ -793,6 +798,7 @@
     var c = contratoAtivo(a);
 
     if (acao === "matricular") {
+      if (a.restrito && (!a.restrito.ate || a.restrito.ate >= S.todayISO())) { alert("Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + " — remova a restrição antes de vender."); return; }
       abrirMatricula();
       return;
     }
@@ -857,6 +863,69 @@
       geraRecebiveis(st, a, cAd, plAd);
       save(st); abreFicha(fichaId);
       alert("Adicional vendido! Ele pode ser cancelado separadamente, mas termina junto com o principal.");
+      return;
+    }
+    if (acao === "trocar") {
+      var principais = st.planos.filter(function (p) { return p.tipo !== "adicional" && p.id !== c.planoId; });
+      if (!principais.length) { alert("Cadastre outro plano primeiro."); return; }
+      var lista = principais.map(function (p, i) { return (i + 1) + ") " + p.nome + " — " + S.fmtBRL(p.valor) + "/mês × " + p.meses; }).join("\n");
+      var esc9 = parseInt(prompt("TROCAR PLANO (regra do EVO)\nO contrato atual é cancelado com os dias restantes virando SALDO CREDOR, e o novo começa no lugar.\n\n" + lista + "\n\nDigite o número do novo plano:", "1"), 10);
+      var plNovo = principais[esc9 - 1];
+      if (!plNovo) return;
+      var manterVig = confirm("Manter a vigência original? \n\nOK = o novo contrato começa na data do antigo (" + S.fmtData(c.inicio) + ").\nCancelar = começa hoje.");
+      var credito = creditoDiasRestantes(st, c, S.todayISO());
+      if (!confirm("Resumo da troca:\n\n• Cancela \"" + (st.planos.find(function (p) { return p.id === c.planoId; }) || {}).nome + "\" hoje → " + S.fmtBRL(credito) + " de saldo credor (dias restantes)\n• Novo: \"" + plNovo.nome + "\" (" + S.fmtBRL(plNovo.valor) + "/mês × " + plNovo.meses + ") começando " + (manterVig ? S.fmtData(c.inicio) : "hoje") + "\n\nConfirmar?")) return;
+      c.status = "cancelado"; c.canceladoEm = S.todayISO(); c.motivoCancel = "Troca de plano";
+      st.recebiveis = st.recebiveis.filter(function (r) { return !(r.contratoId === c.id && r.status === "aberto" && r.vencimento > S.todayISO()); });
+      if (credito > 0) {
+        a.saldoCredor = Math.round(((+a.saldoCredor || 0) + credito) * 100) / 100;
+        a.creditos = a.creditos || [];
+        a.creditos.push({ valor: credito, motivo: "Troca de plano — dias restantes", em: S.todayISO() });
+      }
+      var cNovo = { id: S.uid(), planoId: plNovo.id, inicio: manterVig ? c.inicio : S.todayISO(), diaVenc: c.diaVenc || 5, meses: plNovo.meses, valor: plNovo.valor, status: "ativo" };
+      a.contratos.push(cNovo);
+      geraRecebiveis(st, a, cNovo, plNovo);
+      if (manterVig) {
+        // parcelas de meses já passados não são cobradas de novo
+        st.recebiveis = st.recebiveis.filter(function (r) { return !(r.contratoId === cNovo.id && r.vencimento < S.todayISO()); });
+      }
+      save(st); abreFicha(fichaId);
+      alert("Plano trocado! " + (credito > 0 ? S.fmtBRL(credito) + " de crédito disponíveis no saldo credor (dá para quitar as novas parcelas com ele no Perfil → Financeiro)." : ""));
+      return;
+    }
+    if (acao === "altcontrato") {
+      var novoInicio = prompt("Data de INÍCIO do contrato (AAAA-MM-DD) — Enter mantém " + c.inicio + ":", c.inicio) || c.inicio;
+      var novoDia = parseInt(prompt("DIA DE VENCIMENTO das mensalidades (1 a 28) — Enter mantém " + (c.diaVenc || 5) + ":", String(c.diaVenc || 5)), 10) || c.diaVenc || 5;
+      novoDia = Math.min(Math.max(novoDia, 1), 28);
+      if (novoInicio === c.inicio && novoDia === (c.diaVenc || 5)) return;
+      c.inicio = novoInicio;
+      var diaAntigo = c.diaVenc || 5;
+      c.diaVenc = novoDia;
+      if (novoDia !== diaAntigo) {
+        st.recebiveis.forEach(function (r) {
+          if (r.contratoId !== c.id || r.status !== "aberto") return;
+          var v = new Date(r.vencimento + "T12:00");
+          r.vencimento = S.todayISO(new Date(v.getFullYear(), v.getMonth(), Math.min(novoDia, 28)));
+        });
+      }
+      save(st); abreFicha(fichaId);
+      alert("Contrato alterado: início " + S.fmtData(c.inicio) + ", vencimento dia " + novoDia + " (parcelas em aberto ajustadas).");
+      return;
+    }
+    if (acao === "restringir") {
+      var meses9 = prompt("RESTRIÇÃO DE CLIENTE (regra do EVO): bloqueia matrícula, entrada e mensagens automáticas.\n\nPor quantos MESES? (0 ou vazio = tempo indeterminado)", "0");
+      if (meses9 === null) return;
+      var ate = null;
+      if (+meses9 > 0) { var dAte = new Date(); dAte.setMonth(dAte.getMonth() + +meses9); ate = S.todayISO(dAte); }
+      a.restrito = { em: S.todayISO(), ate: ate };
+      a.status = "inativo";
+      save(st); abreFicha(fichaId);
+      return;
+    }
+    if (acao === "liberarrestricao") {
+      if (!confirm("Remover a restrição de " + a.nome + "?")) return;
+      delete a.restrito;
+      save(st); abreFicha(fichaId);
       return;
     }
     if (acao === "mesclar") {

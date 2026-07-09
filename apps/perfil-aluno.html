@@ -101,6 +101,10 @@
   function situacao(a, st) {
     var hoje = S.todayISO();
     var out = { bloqueios: [], avisos: [], badge: "SEM CONTRATO", badgeCls: "erro" };
+    if (a.restrito && (!a.restrito.ate || a.restrito.ate >= hoje)) {
+      out.badge = "RESTRITO 🚫"; out.badgeCls = "erro";
+      out.bloqueios.push("Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + (a.restrito.ate ? " até " + S.fmtData(a.restrito.ate) : " (indeterminado)") + " — sem compras, acesso ou mensagens (regra do EVO).");
+    }
     var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
     if (ativos.length && ativos.every(function (c) { return (c.inicio || "") > hoje; })) {
       out.badge = "NA FILA 🕓"; out.badgeCls = "roxo";

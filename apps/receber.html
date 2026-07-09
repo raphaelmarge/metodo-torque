@@ -184,7 +184,7 @@
       (f.lista.length ? f.lista.map(function (r) {
         var a = f.m.aluno[r.alunoId] || {};
         var acoes = "";
-        if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
+        if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-venc="' + r.id + '" title="Alterar vencimento">📅</button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
         acoes += ' <button class="btn sec mini" data-copia="' + r.id + '" title="Copiar conta">⧉</button>';
         return "<tr><td><strong>" + esc(a.nome || "?") + "</strong></td><td>" + esc(a.cpf || "—") + "</td><td>" + esc(descDe(r, f.m)) +
           "</td><td>" + esc(r.competencia || "—") + "</td><td>" + S.fmtData(r.vencimento) + "</td><td>" + (r.pagoEm ? S.fmtData(r.pagoEm) : "—") +
@@ -256,7 +256,7 @@
   var baixaId = null;
   $("tabela").addEventListener("click", function (e) {
     var t = e.target;
-    var id = t.getAttribute && (t.getAttribute("data-baixa") || t.getAttribute("data-cancela") || t.getAttribute("data-copia"));
+    var id = t.getAttribute && (t.getAttribute("data-baixa") || t.getAttribute("data-cancela") || t.getAttribute("data-copia") || t.getAttribute("data-venc"));
     if (!id) return;
     var st = load();
     var r = st.recebiveis.find(function (x) { return x.id === id; });
@@ -268,6 +268,14 @@
       $("bxData").value = S.todayISO();
       $("bxValor").value = (+r.valor || 0).toFixed(2);
       $("dlgBaixa").showModal();
+      return;
+    }
+    if (t.hasAttribute("data-venc")) {
+      var nova = prompt("Novo vencimento (AAAA-MM-DD) — regra do EVO: reprogramar o débito sem receber:", r.vencimento);
+      if (!nova || !/^\d{4}-\d{2}-\d{2}$/.test(nova)) return;
+      r.vencimento = nova;
+      S.write("alunos", st);
+      render();
       return;
     }
     if (t.hasAttribute("data-cancela")) {
