@@ -124,20 +124,60 @@
     $("dica").textContent = regime === "caixa"
       ? "Só o que foi de fato recebido e pago no mês."
       : "Tudo que pertence ao mês, mesmo que ainda não tenha sido pago.";
+    // ---------- cascata do DRE (estrutura do EVO) ----------
+    // classifica cada receita nas linhas de Receita Operacional Bruta
+    var recBuckets = { "Prestação de Serviços": 0, "Vendas de contratos": 0, "Vendas de Produtos": 0, "Receitas de Aluguéis": 0 };
+    d.receitas.forEach(function (x) {
+      var n = (x.nome || "").toLowerCase();
+      if (n.indexOf("produto") >= 0) recBuckets["Vendas de Produtos"] += x.valor;
+      else if (n.indexOf("armár") >= 0 || n.indexOf("aluguel") >= 0 || n.indexOf("aluguéis") >= 0 || n.indexOf("locaç") >= 0) recBuckets["Receitas de Aluguéis"] += x.valor;
+      else if (n.indexOf("serviç") >= 0) recBuckets["Prestação de Serviços"] += x.valor;
+      else recBuckets["Vendas de contratos"] += x.valor;
+    });
+    // classifica cada despesa (centro) nos grupos de Despesas Operacionais do EVO
+    function grupoDespesa(centro) {
+      var c = (centro || "").toLowerCase();
+      if (c.indexOf("folha") >= 0 || c.indexOf("salár") >= 0 || c.indexOf("pessoal") >= 0 || c.indexOf("comiss") >= 0) return "Despesas com Pessoal";
+      if (c.indexOf("marketing") >= 0 || c.indexOf("venda") >= 0 || c.indexOf("comercial") >= 0) return "Despesas Com Vendas";
+      if (c.indexOf("imposto") >= 0 || c.indexOf("tribut") >= 0 || c.indexOf("taxa") >= 0) return "Despesas Tributárias";
+      if (c.indexOf("aluguel") >= 0 || c.indexOf("energia") >= 0 || c.indexOf("água") >= 0 || c.indexOf("agua") >= 0 || c.indexOf("manuten") >= 0 || c.indexOf("equipam") >= 0 || c.indexOf("sistema") >= 0 || c.indexOf("software") >= 0 || c.indexOf("administ") >= 0) return "Despesas Administrativas";
+      return "Outras Despesas Operacionais";
+    }
+    var despBuckets = { "Despesas Administrativas": 0, "Despesas com Pessoal": 0, "Despesas Com Vendas": 0, "Despesas Tributárias": 0, "Outras Despesas Operacionais": 0 };
+    d.despesas.forEach(function (x) { despBuckets[grupoDespesa(x.nome)] += x.valor; });
+
+    var recBruta = recBuckets["Prestação de Serviços"] + recBuckets["Vendas de contratos"] + recBuckets["Vendas de Produtos"] + recBuckets["Receitas de Aluguéis"];
+    var deducoes = 0;
+    var recLiquida = recBruta - deducoes;
+    var custos = 0;
+    var resBruto = recLiquida - custos;
+    var despOp = despBuckets["Despesas Administrativas"] + despBuckets["Despesas com Pessoal"] + despBuckets["Despesas Com Vendas"] + despBuckets["Despesas Tributárias"] + despBuckets["Outras Despesas Operacionais"];
+    var resOpLiq = resBruto - despOp;
+    var lucroLiquido = resOpLiq; // sem despesas financeiras/outras/IR neste modo offline
+
+    function grupo(sinal, titulo, valor) { return '<tr class="secao"><td>' + sinal + titulo + '</td><td>' + S.fmtBRL(valor) + "</td></tr>"; }
+    function item(nome, valor, cor) { return '<tr><td style="padding-left:26px;color:' + (cor || "var(--texto)") + ';">' + esc(nome) + "</td><td>" + S.fmtBRL(valor) + "</td></tr>"; }
+    function subtot(titulo, valor) { return '<tr class="total"><td>' + titulo + '</td><td style="color:' + (valor >= 0 ? "var(--ok)" : "var(--erro)") + '">' + S.fmtBRL(valor) + "</td></tr>"; }
+
     $("tabela").innerHTML =
-      '<tr class="secao"><td colspan="2">RECEITAS</td></tr>' +
-      (d.receitas.map(function (x) {
-        return "<tr><td>" + esc(x.nome) + "</td><td>" + S.fmtBRL(x.valor) + "</td></tr>";
-      }).join("") || '<tr><td colspan="2" class="muted">nenhuma receita no mês</td></tr>') +
-      '<tr class="total"><td>Total de receitas</td><td style="color:var(--ok)">' + S.fmtBRL(totR) + "</td></tr>" +
-      '<tr class="secao"><td colspan="2">DESPESAS' + (regime === "competencia" ? " (com vencimento no mês)" : "") + "</td></tr>" +
-      (d.despesas.map(function (x) {
-        var pct = totD ? Math.round((x.valor / totD) * 100) : 0;
-        return "<tr><td>" + esc(x.nome) + ' <span class="muted">(' + pct + "%)</span></td><td>" + S.fmtBRL(x.valor) + "</td></tr>";
-      }).join("") || '<tr><td colspan="2" class="muted">nenhuma despesa no mês</td></tr>') +
-      '<tr class="total"><td>Total de despesas</td><td style="color:var(--erro)">' + S.fmtBRL(totD) + "</td></tr>" +
-      '<tr class="resultado"><td>RESULTADO DO MÊS</td><td style="color:' + (res >= 0 ? "var(--ok)" : "var(--erro)") + '">' +
-      S.fmtBRL(res) + ' <span class="muted" style="font-size:12px">(margem ' + margem + "%)</span></td></tr>";
+      grupo("(+) ", "RECEITA OPERACIONAL BRUTA", recBruta) +
+      item("Prestação de Serviços", recBuckets["Prestação de Serviços"], "var(--ok)") +
+      item("Vendas de contratos", recBuckets["Vendas de contratos"], "var(--ok)") +
+      item("Vendas de Produtos", recBuckets["Vendas de Produtos"], "var(--ok)") +
+      item("Receitas de Aluguéis", recBuckets["Receitas de Aluguéis"], "var(--ok)") +
+      grupo("(−) ", "DEDUÇÕES DA RECEITA BRUTA", deducoes) +
+      subtot("(=) RECEITA OPERACIONAL LÍQUIDA", recLiquida) +
+      grupo("(−) ", "CUSTOS DAS VENDAS", custos) +
+      subtot("(=) RESULTADO OPERACIONAL BRUTO", resBruto) +
+      grupo("(−) ", "DESPESAS OPERACIONAIS", despOp) +
+      item("Despesas Administrativas", despBuckets["Despesas Administrativas"], "var(--erro)") +
+      item("Despesas com Pessoal", despBuckets["Despesas com Pessoal"], "var(--erro)") +
+      item("Despesas Com Vendas", despBuckets["Despesas Com Vendas"], "var(--erro)") +
+      item("Despesas Tributárias", despBuckets["Despesas Tributárias"], "var(--erro)") +
+      item("Outras Despesas Operacionais", despBuckets["Outras Despesas Operacionais"], "var(--erro)") +
+      subtot("(=) RESULTADO OPERACIONAL LÍQUIDO", resOpLiq) +
+      '<tr class="resultado"><td>(=) RESULTADO LÍQUIDO DO EXERCÍCIO</td><td style="color:' + (lucroLiquido >= 0 ? "var(--ok)" : "var(--erro)") + '">' +
+      S.fmtBRL(lucroLiquido) + ' <span class="muted" style="font-size:12px">(margem ' + margem + "%)</span></td></tr>";
 
     // histórico 12 meses (regime de caixa)
     var meses = [];
