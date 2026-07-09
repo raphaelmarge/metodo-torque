@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contratos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .donut-wrap { display: flex; gap: 30px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 12px 0; }
+  .donut { width: 260px; height: 260px; }
+  .leg { display: flex; flex-direction: column; gap: 10px; }
+  .leg .item { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .leg .sw { width: 14px; height: 14px; border-radius: 3px; flex: none; }
+  .leg .item strong { min-width: 46px; text-align: right; font-variant-numeric: tabular-nums; }
+  .leg .item .pc { color: var(--cinza); font-size: 12.5px; }
+  .ct { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .ct th, .ct td { padding: 10px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: right; }
+  .ct th { background: var(--fundo); font-size: 12px; color: var(--cinza); font-weight: 600; }
+  .ct th:first-child, .ct td:first-child, .ct .txt { text-align: left; }
+  .ct tbody tr:nth-child(even) { background: #fafafb; }
+  .tag-st { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .st-ativo { background: #eaf6ec; color: #2e7d32; }
+  .st-susp { background: #fff3e2; color: #b26a00; }
+  .st-esp { background: #eef; color: #4a4ad8; }
+  .st-inativo { background: #f0f0f2; color: #777; }
+  .barh { display: flex; flex-direction: column; gap: 8px; }
+  .barh .lin { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+  .barh .lin .nome { min-width: 160px; }
+  .barh .lin .b { flex: 1; height: 14px; background: var(--fundo); border-radius: 7px; overflow: hidden; }
+  .barh .lin .b i { display: block; height: 100%; background: var(--roxo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Contratos</h1>
+    </div>
+  </div>
+  <p>A base de contratos como no EVO: a distribuição por situação (ativos, suspensos, especiais, inativos), o ranking por plano e a lista detalhada com vigências.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="abas" id="abas">
+    <button data-t="clientes" class="ativa">Clientes</button>
+    <button data-t="porcontrato">Clientes por contratos</button>
+    <button data-t="detalhado">Detalhado</button>
+  </div>
+
+  <!-- Clientes: donut por situação -->
+  <div id="viewClientes" class="card">
+    <div class="donut-wrap">
+      <svg class="donut" id="donut" viewBox="0 0 42 42"></svg>
+      <div class="leg" id="legenda"></div>
+    </div>
+  </div>
+
+  <!-- Por contrato: ranking por plano -->
+  <div id="viewPorContrato" class="card" hidden>
+    <h2>Contratos ativos por plano</h2>
+    <div class="barh" id="ranking" style="margin-top: 10px;"></div>
+  </div>
+
+  <!-- Detalhado: tabela -->
+  <div id="viewDetalhado" hidden>
+    <div class="card linha-flex" style="gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+      <div class="campo" style="margin:0;"><label>Situação</label>
+        <select id="fSituacao">
+          <option value="">Todas</option>
+          <option value="ativo">Ativos</option>
+          <option value="suspenso">Suspensos</option>
+          <option value="especial">Especiais</option>
+          <option value="inativo">Inativos</option>
+        </select>
+      </div>
+      <span class="muted" id="contador"></span>
+    </div>
+    <div class="card" style="padding: 0; overflow-x: auto;">
+      <table class="ct" id="tabela"></table>
+    </div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var aba = "clientes";
+
+  function fimDe(c) {
+    var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+    f.setMonth(f.getMonth() + (c.meses || 1));
+    f.setDate(f.getDate() + (+c.diasCreditados || 0));
+    return S.todayISO(f);
+  }
+
+  // classifica cada aluno/contrato na situação do EVO
+  function dados() {
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var espId = {}; (st.planos || []).forEach(function (p) { if (p.especial) espId[p.id] = true; });
+    var planoNome = {}; (st.planos || []).forEach(function (p) { planoNome[p.id] = p.nome; });
+    var linhas = [];
+    var cont = { ativo: 0, suspenso: 0, especial: 0, inativo: 0 };
+    st.alunos.forEach(function (a) {
+      var ativo = (a.contratos || []).find(function (c) { return (c.status === "ativo" || c.status === "congelado") && !c.principalId; });
+      var sit, ctr = ativo;
+      if (a.status === "inativo" || !ativo) sit = "inativo";
+      else if (espId[ativo.planoId]) sit = "especial";
+      else if (ativo.status === "congelado") sit = "suspenso";
+      else sit = "ativo";
+      cont[sit]++;
+      linhas.push({
+        nome: a.nome, sit: sit,
+        plano: ctr ? (planoNome[ctr.planoId] || "—") : "—",
+        inicio: ctr ? ctr.inicio : "", fim: ctr ? fimDe(ctr) : "",
+        valor: ctr ? (+ctr.valor || 0) : 0,
+      });
+    });
+    return { linhas: linhas, cont: cont };
+  }
+
+  var CORES = { ativo: "#8bc34a", suspenso: "#43a047", especial: "#2e7d32", inativo: "#1b5e20" };
+  var ROT = { ativo: "Ativos", suspenso: "Suspensos", especial: "Especiais", inativo: "Inativos" };
+
+  function renderDonut(cont) {
+    var total = cont.ativo + cont.suspenso + cont.especial + cont.inativo;
+    var svg = "", legenda = "";
+    var off = 25; // começa no topo
+    var ordem = ["ativo", "suspenso", "especial", "inativo"];
+    ordem.forEach(function (k) {
+      var v = cont[k], frac = total ? v / total : 0, len = frac * 100;
+      svg += '<circle cx="21" cy="21" r="15.915" fill="transparent" stroke="' + CORES[k] +
+        '" stroke-width="8" stroke-dasharray="' + len + " " + (100 - len) + '" stroke-dashoffset="' + off + '"></circle>';
+      off = (off - len + 100) % 100;
+      legenda += '<div class="item"><span class="sw" style="background:' + CORES[k] + '"></span>' +
+        "<span>" + ROT[k] + "</span><strong>" + v + '</strong><span class="pc">(' + (total ? Math.round(frac * 100) : 0) + "%)</span></div>";
+    });
+    $("donut").innerHTML = svg +
+      '<text x="21" y="20" text-anchor="middle" font-size="6" font-weight="800" fill="#222">' + total + "</text>" +
+      '<text x="21" y="26" text-anchor="middle" font-size="2.6" fill="#888">contratos</text>';
+    $("legenda").innerHTML = legenda;
+  }
+
+  function renderRanking(linhas) {
+    var porPlano = {};
+    linhas.forEach(function (l) {
+      if (l.sit === "inativo") return;
+      porPlano[l.plano] = (porPlano[l.plano] || 0) + 1;
+    });
+    var arr = Object.keys(porPlano).map(function (k) { return { nome: k, q: porPlano[k] }; })
+      .sort(function (a, b) { return b.q - a.q; });
+    var max = arr.length ? arr[0].q : 1;
+    $("ranking").innerHTML = arr.length ? arr.map(function (x) {
+      return '<div class="lin"><span class="nome">' + esc(x.nome) + '</span>' +
+        '<div class="b"><i style="width:' + Math.round(x.q / max * 100) + '%"></i></div>' +
+        "<strong>" + x.q + "</strong></div>";
+    }).join("") : '<div class="muted">Nenhum contrato ativo.</div>';
+  }
+
+  function renderTabela(linhas) {
+    var f = $("fSituacao").value;
+    var lista = f ? linhas.filter(function (l) { return l.sit === f; }) : linhas;
+    lista = lista.slice().sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    $("contador").textContent = lista.length + " contrato(s)";
+    var cls = { ativo: "st-ativo", suspenso: "st-susp", especial: "st-esp", inativo: "st-inativo" };
+    var cab = '<thead><tr><th class="txt">Cliente</th><th class="txt">Contrato</th><th>Início</th><th>Fim</th><th>Valor mensal</th><th class="txt">Situação</th></tr></thead>';
+    var corpo = lista.length ? lista.map(function (l) {
+      return "<tr><td class='txt'><strong>" + esc(l.nome) + "</strong></td>" +
+        "<td class='txt'>" + esc(l.plano) + "</td>" +
+        "<td>" + (l.inicio ? S.fmtData(l.inicio) : "—") + "</td>" +
+        "<td>" + (l.fim ? S.fmtData(l.fim) : "—") + "</td>" +
+        "<td>" + (l.valor ? S.fmtBRL(l.valor) : "—") + "</td>" +
+        "<td class='txt'><span class='tag-st " + cls[l.sit] + "'>" + ROT[l.sit].replace(/s$/, "").toUpperCase() + "</span></td></tr>";
+    }).join("") : '<tr><td colspan="6" class="muted" style="text-align:center; padding:20px;">Nenhum contrato nesta situação.</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+  }
+
+  function render() {
+    var d = dados();
+    renderDonut(d.cont);
+    renderRanking(d.linhas);
+    renderTabela(d.linhas);
+  }
+
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-t");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    $("viewClientes").hidden = aba !== "clientes";
+    $("viewPorContrato").hidden = aba !== "porcontrato";
+    $("viewDetalhado").hidden = aba !== "detalhado";
+  });
+  $("fSituacao").addEventListener("change", function () { renderTabela(dados().linhas); });
+
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
