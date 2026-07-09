@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Movimentação Financeira — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .graf { display: flex; gap: 14px; align-items: flex-end; height: 190px; padding: 14px 8px 4px; }
+  .graf .mesCol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .graf .duo { display: flex; gap: 4px; align-items: flex-end; height: 150px; }
+  .graf .b { width: 26px; border-radius: 3px 3px 0 0; min-height: 2px; }
+  .graf .b.rec { background: #26c6da; }
+  .graf .b.desp { background: #37474f; }
+  .graf .rotulo { font-size: 11px; color: var(--cinza); }
+  .leg { display: flex; gap: 18px; font-size: 12px; color: var(--cinza); justify-content: flex-end; }
+  .leg i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: -1px; }
+  .mv { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .mv th, .mv td { padding: 9px 14px; border-bottom: 1px solid var(--linha); font-size: 13.5px; }
+  .mv td:not(:first-child), .mv th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+  .mv th { background: #e9e9ee; font-size: 12px; color: #444; font-weight: 700; text-align: left; }
+  .mv .secao td { background: var(--fundo); font-weight: 800; }
+  .mv .sub td:first-child { padding-left: 34px; color: #555; }
+  .mv .total td { font-weight: 800; background: #f2f2f6; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Movimentação Financeira</h1>
+    </div>
+  </div>
+  <p>A movimentação consolidada como no EVO: receitas × despesas mês a mês no gráfico e a árvore de centros de receitas e de despesas com os totais do período.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="campo" style="margin:0;"><label>De (mês)</label><input id="fDe" type="month"></div>
+    <div class="campo" style="margin:0;"><label>Até (mês)</label><input id="fAte" type="month"></div>
+    <div class="campo" style="margin:0;"><label>Tipo</label>
+      <select id="fTipo">
+        <option value="competencia">Competência (do mês)</option>
+        <option value="caixa">Caixa (recebido/pago)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Movimentação Financeira Consolidada</h2>
+    <div class="leg"><span><i style="background:#26c6da"></i>Receitas</span><span><i style="background:#37474f"></i>Despesas</span></div>
+    <div class="graf" id="graf"></div>
+  </div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="mv" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  var hoje = S.todayISO();
+  var anoIni = hoje.slice(0, 5) + "01";
+  $("fDe").value = anoIni;
+  $("fAte").value = hoje.slice(0, 7);
+
+  function mesesEntre(de, ate) {
+    var out = [];
+    var d = new Date(de + "-15T12:00");
+    var lim = new Date(ate + "-15T12:00");
+    var guarda = 0;
+    while (d <= lim && guarda++ < 24) {
+      out.push(d.getFullYear() + "-" + pad(d.getMonth() + 1));
+      d.setMonth(d.getMonth() + 1);
+    }
+    return out;
+  }
+  function rotuloMes(m) {
+    return new Date(m + "-15T12:00").toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+  }
+
+  // { receitas: {centro: {mes: v}}, despesas: {centro: {mes: v}}, totR: {mes}, totD: {mes} }
+  function apura(meses, tipo) {
+    var recC = {}, despC = {}, totR = {}, totD = {};
+    meses.forEach(function (m) { totR[m] = 0; totD[m] = 0; });
+    function addR(centro, m, v) {
+      if (totR[m] == null) return;
+      (recC[centro] = recC[centro] || {})[m] = ((recC[centro] || {})[m] || 0) + v;
+      totR[m] += v;
+    }
+    function addD(centro, m, v) {
+      if (totD[m] == null) return;
+      (despC[centro] = despC[centro] || {})[m] = ((despC[centro] || {})[m] || 0) + v;
+      totD[m] += v;
+    }
+
+    var stA = S.read("alunos", { recebiveis: [] });
+    stA.recebiveis.forEach(function (r) {
+      var m = tipo === "caixa"
+        ? (r.status === "pago" ? (r.pagoEm || "").slice(0, 7) : "")
+        : (r.competencia || (r.vencimento || "").slice(0, 7));
+      if (!m) return;
+      var centro = r.centroReceita || (r.tipo === "produto" ? "Produtos" :
+        r.tipo === "adesao" || r.tipo === "matricula" ? "Adesão" : "Mensalidade");
+      var v = tipo === "caixa" && r.valorBaixa != null ? +r.valorBaixa : +r.valor || 0;
+      addR(centro, m, v);
+    });
+    S.read("produtos", { vendas: [] }).vendas.forEach(function (v) {
+      var m = (v.data || "").slice(0, 7);
+      addR("Produtos / Loja", m, +v.total || 0);
+    });
+    S.read("armarios", { locacoes: [] }).locacoes.forEach(function (l) {
+      var m = ((l.pagoEm || l.inicio) || "").slice(0, 7);
+      addR("Aluguel (armários)", m, +l.valor || 0);
+    });
+
+    S.read("contas", { contas: [] }).contas.forEach(function (c) {
+      if (c.status === "cancelado") return;
+      var m = tipo === "caixa"
+        ? (c.status === "pago" ? (c.pagoEm || "").slice(0, 7) : "")
+        : (c.vencimento || "").slice(0, 7);
+      if (!m) return;
+      addD(c.centro || "Outros", m, +c.valor || 0);
+    });
+
+    return { recC: recC, despC: despC, totR: totR, totD: totD };
+  }
+
+  function render() {
+    var de = $("fDe").value || anoIni, ate = $("fAte").value || hoje.slice(0, 7);
+    if (de > ate) { var t = de; de = ate; ate = t; }
+    var meses = mesesEntre(de, ate);
+    var d = apura(meses, $("fTipo").value);
+
+    // gráfico consolidado
+    var max = 1;
+    meses.forEach(function (m) { max = Math.max(max, d.totR[m], d.totD[m]); });
+    $("graf").innerHTML = meses.map(function (m) {
+      return '<div class="mesCol"><div class="duo">' +
+        '<div class="b rec" style="height:' + Math.round(d.totR[m] / max * 100) + '%" title="Receitas ' + S.fmtBRL(d.totR[m]) + '"></div>' +
+        '<div class="b desp" style="height:' + Math.round(d.totD[m] / max * 100) + '%" title="Despesas ' + S.fmtBRL(d.totD[m]) + '"></div></div>' +
+        '<span class="rotulo">' + rotuloMes(m) + "</span></div>";
+    }).join("");
+
+    // tabela em árvore: Centro de Receitas → centros → total; Centro de Despesas idem
+    function linha(cls, nome, mapa) {
+      return '<tr class="' + cls + '"><td>' + nome + "</td>" +
+        meses.map(function (m) { return "<td>" + S.fmtBRL((mapa && mapa[m]) || 0) + "</td>"; }).join("") + "</tr>";
+    }
+    var somaTot = function (tot) { return meses.reduce(function (t, m) { return t + tot[m]; }, 0); };
+
+    var html = "<thead><tr><th>Período</th>" + meses.map(function (m) {
+      return "<th>" + rotuloMes(m).charAt(0).toUpperCase() + rotuloMes(m).slice(1) + "/" + m.slice(2, 4) + "</th>";
+    }).join("") + "</tr></thead><tbody>";
+
+    html += linha("secao", "Centro de Receitas", d.totR);
+    Object.keys(d.recC).sort(function (a, b) {
+      var s = function (c) { return meses.reduce(function (t, m) { return t + (d.recC[c][m] || 0); }, 0); };
+      return s(b) - s(a);
+    }).forEach(function (c) { html += linha("sub", esc(c), d.recC[c]); });
+    html += '<tr class="total"><td>Total de Receitas: ' + S.fmtBRL(somaTot(d.totR)) + "</td>" +
+      meses.map(function (m) { return "<td>" + S.fmtBRL(d.totR[m]) + "</td>"; }).join("") + "</tr>";
+
+    html += linha("secao", "Centro de Despesas", d.totD);
+    Object.keys(d.despC).sort(function (a, b) {
+      var s = function (c) { return meses.reduce(function (t, m) { return t + (d.despC[c][m] || 0); }, 0); };
+      return s(b) - s(a);
+    }).forEach(function (c) { html += linha("sub", esc(c), d.despC[c]); });
+    html += '<tr class="total"><td>Total de despesas: ' + S.fmtBRL(somaTot(d.totD)) + "</td>" +
+      meses.map(function (m) { return "<td>" + S.fmtBRL(d.totD[m]) + "</td>"; }).join("") + "</tr>";
+
+    html += "</tbody>";
+    $("tabela").innerHTML = html;
+  }
+
+  ["fDe", "fAte", "fTipo"].forEach(function (id) { $(id).addEventListener("change", render); });
+  S.onChange(function (k) { if (["alunos", "contas", "produtos", "armarios"].indexOf(k) >= 0) render(); });
+  render();
+})();
+</script>
+</body>
+</html>
