@@ -174,15 +174,28 @@
     var mes = S.todayISO().slice(0, 7);
     var abertos = st.devedores.filter(function (d) { return d.status === "aberto"; });
     var totAberto = abertos.reduce(function (a, d) { return a + (+d.valor || 0); }, 0);
-    var recuperado = st.devedores.filter(function (d) { return d.status === "pago" && (d.pagoEm || "").slice(0, 7) === mes; })
-      .reduce(function (a, d) { return a + (+d.valor || 0); }, 0);
+    var pagosMes = st.devedores.filter(function (d) { return d.status === "pago" && (d.pagoEm || "").slice(0, 7) === mes; });
+    var recuperado = pagosMes.reduce(function (a, d) { return a + (+d.valor || 0); }, 0);
     var criticos = abertos.filter(function (d) { return diasAtraso(d) >= 30; }).length;
 
+    // média de recuperação (dias entre vencimento e pagamento dos recuperados no mês)
+    var mediaRec = 0;
+    if (pagosMes.length) {
+      var somaRec = pagosMes.reduce(function (a, d) {
+        return a + Math.max(0, Math.round((new Date(d.pagoEm) - new Date(d.vencimento)) / 864e5));
+      }, 0);
+      mediaRec = Math.round(somaRec / pagosMes.length);
+    }
+    // média de atraso (dias dos que estão em aberto hoje)
+    var mediaAtraso = abertos.length ? Math.round(abertos.reduce(function (a, d) { return a + diasAtraso(d); }, 0) / abertos.length) : 0;
+
     $("stats").innerHTML =
-      '<div class="card"><div class="n" style="color:var(--erro);">' + S.fmtBRL(totAberto) + '</div><div class="muted">em aberto</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--ok);">' + S.fmtBRL(recuperado) + '</div><div class="muted">valor recuperado (mês)</div></div>' +
+      '<div class="card"><div class="n">' + mediaRec + ' <span style="font-size:14px;">dias</span></div><div class="muted">média de recuperação</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--erro);">' + S.fmtBRL(totAberto) + '</div><div class="muted">valor em aberto</div></div>' +
+      '<div class="card"><div class="n" style="color:var(--alerta);">' + mediaAtraso + ' <span style="font-size:14px;">dias</span></div><div class="muted">média de atraso</div></div>' +
       '<div class="card"><div class="n">' + abertos.length + '</div><div class="muted">alunos pendentes</div></div>' +
-      '<div class="card"><div class="n" style="color:var(--alerta);">' + criticos + '</div><div class="muted">há 30+ dias (crítico)</div></div>' +
-      '<div class="card"><div class="n" style="color:var(--ok);">' + S.fmtBRL(recuperado) + '</div><div class="muted">recuperado no mês</div></div>';
+      '<div class="card"><div class="n" style="color:var(--alerta);">' + criticos + '</div><div class="muted">há 30+ dias (crítico)</div></div>';
 
     var vis = st.devedores.filter(function (d) {
       if (filtro === "pago") return d.status === "pago" && (d.pagoEm || "").slice(0, 7) === mes;
