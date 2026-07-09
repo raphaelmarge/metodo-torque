@@ -24,6 +24,11 @@
   .venda-det { display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--fundo); font-size: 13.5px; flex-wrap: wrap; }
   .totalzao { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
   .totalzao .n { font-size: 24px; font-weight: 800; color: var(--roxo); }
+  .kpisCom { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .kpiCom { background: #f4f4f7; border-radius: 8px; padding: 16px 18px; display: flex; gap: 12px; align-items: center; }
+  .kpiCom .cifra { width: 34px; height: 34px; border-radius: 50%; background: #e3e0ee; color: var(--roxo); display: flex; align-items: center; justify-content: center; font-weight: 800; flex: none; }
+  .kpiCom .rot { font-size: 12.5px; color: var(--cinza); }
+  .kpiCom .val { font-size: 17px; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -54,6 +59,8 @@
       <input id="pctPadrao" type="number" step="0.5" min="0" style="width: 80px; text-align: right;">
     </div>
   </div>
+
+  <div class="kpisCom" id="kpisCom"></div>
 
   <div id="listaConsultores"></div>
 
@@ -151,6 +158,16 @@
             "<span><strong>" + S.fmtBRL(v.valor) + "</strong> → comissão " + S.fmtBRL(v.valor * pct / 100) + "</span></div>";
         }).join("") + "</details>";
     }).join("") : '<div class="vazio">Nenhum contrato vendido neste mês ainda.</div>';
+
+    // KPIs no topo (padrão EVO). No nosso modelo a comissão é do consultor(a);
+    // professor/vendedor ficam separados para quando houver essas regras.
+    var comProfessor = 0, comVendedor = 0;
+    $("kpisCom").innerHTML =
+      '<div class="kpiCom"><span class="cifra">$</span><div><div class="rot">Comissões consultor</div><div class="val">' + S.fmtBRL(totalCom) + '</div></div></div>' +
+      '<div class="kpiCom"><span class="cifra">$</span><div><div class="rot">Comissões professor</div><div class="val">' + S.fmtBRL(comProfessor) + '</div></div></div>' +
+      '<div class="kpiCom"><span class="cifra">$</span><div><div class="rot">Comissões vendedor</div><div class="val">' + S.fmtBRL(comVendedor) + '</div></div></div>' +
+      '<div class="kpiCom"><span class="cifra">$</span><div><div class="rot">Total de comissões</div><div class="val" style="color:var(--ok)">' + S.fmtBRL(totalCom + comProfessor + comVendedor) + '</div></div></div>' +
+      '<div class="kpiCom"><span class="cifra">$</span><div><div class="rot">Total de vendas</div><div class="val">' + S.fmtBRL(totalVendido) + '</div></div></div>';
 
     $("totalComissoes").textContent = S.fmtBRL(totalCom);
     $("totalSub").textContent = c.regime === "caixa"

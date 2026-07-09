@@ -11,6 +11,14 @@
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
   .stats .card { text-align: center; padding: 14px; }
   .stats .n { font-size: 26px; font-weight: 800; }
+  .funil { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .funil .et { flex: 1; min-width: 150px; border-radius: 8px; padding: 16px 18px; display: flex; gap: 12px; align-items: center; }
+  .funil .et .ico { font-size: 22px; }
+  .funil .et .rot { font-size: 13px; color: #555; } .funil .et .val { font-size: 20px; font-weight: 800; }
+  .funil .et.cad { background: #efeafb; } .funil .et.vis { background: #e6f2fb; }
+  .funil .et.conv { background: #eaf6ec; } .funil .et.valor { background: #f2f2f4; } .funil .et.pend { background: #fff3e2; }
+  .funil .seta { display: flex; align-items: center; padding: 0 6px; font-size: 12px; font-weight: 800; color: var(--cinza); white-space: nowrap; }
+  @media (max-width: 760px) { .funil .seta { width: 100%; justify-content: center; padding: 4px 0; } }
   .indicador { border: 1px solid var(--linha); background: #fff; margin-bottom: 12px; }
   .indicador summary { display: flex; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer; list-style: none; flex-wrap: wrap; }
   .indicador summary::-webkit-details-marker { display: none; }
@@ -84,11 +92,29 @@
       mapa[n].forEach(function (a) { if (!c.entregues[n + "|" + a.nome]) pendentes++; });
     });
 
+    // funil de indicação (padrão EVO): Cadastros → Visitas → Conversões, + Valor total e Pendentes
+    var cadastros = totalInd, visitas = 0, conversoes = 0, valorTotal = 0;
+    nomes.forEach(function (n) {
+      mapa[n].forEach(function (a) {
+        var visitou = (a.checkins || []).length > 0 || (a.contratos || []).length > 0;
+        if (visitou) visitas++;
+        var ct = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+        if (a.status !== "inativo" && ct) {
+          conversoes++;
+          valorTotal += (+ct.valor || 0) * (ct.meses || 1);
+        }
+      });
+    });
+    var pc = function (num, den) { return den ? Math.round(num / den * 100) : 0; };
+    $("stats").className = "funil";
     $("stats").innerHTML =
-      '<div class="card"><div class="n" style="color:var(--roxo)">' + nomes.length + '</div><div class="muted">indicadores</div></div>' +
-      '<div class="card"><div class="n">' + totalInd + '</div><div class="muted">alunos indicados</div></div>' +
-      '<div class="card"><div class="n" style="color:var(--ok)">' + ativos + '</div><div class="muted">indicados ativos hoje</div></div>' +
-      '<div class="card"><div class="n" style="color:' + (pendentes ? "var(--alerta)" : "var(--cinza-2)") + '">' + pendentes + '</div><div class="muted">recompensas pendentes</div></div>';
+      '<div class="et cad"><span class="ico">📇</span><div><div class="rot">Cadastros</div><div class="val">' + cadastros + '</div></div></div>' +
+      '<div class="seta">▶ ' + pc(visitas, cadastros) + '%</div>' +
+      '<div class="et vis"><span class="ico">🚶</span><div><div class="rot">Visitas</div><div class="val">' + visitas + '</div></div></div>' +
+      '<div class="seta">▶ ' + pc(conversoes, visitas) + '%</div>' +
+      '<div class="et conv"><span class="ico">✅</span><div><div class="rot">Conversões</div><div class="val">' + conversoes + '</div></div></div>' +
+      '<div class="et valor"><span class="ico">💰</span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(valorTotal) + '</div></div></div>' +
+      '<div class="et pend"><span class="ico">🎁</span><div><div class="rot">Pendentes</div><div class="val">' + pendentes + '</div></div></div>';
 
     $("lista").innerHTML = nomes.length ? nomes.map(function (n, idx) {
       var indicados = mapa[n];
