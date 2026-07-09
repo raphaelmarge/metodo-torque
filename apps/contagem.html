@@ -118,13 +118,14 @@
       '<div class="kpi"><div class="rot">OCUPAÇÃO PICO CARDIO</div><div class="val">' + pct(picoCardio, +stC.capCardio || 0) + "</div></div>" +
       '<div class="kpi"><div class="rot">MÉDIA POR CONTAGEM</div><div class="val">' + (lista.length ? Math.round(somaTotal / lista.length) : 0) + "</div></div>";
 
-    $("tabela").innerHTML = "<tr><th>DATA</th><th>DIA DA SEMANA</th><th>HORÁRIO</th><th class=\"num\">MUSCULAÇÃO</th><th class=\"num\">CARDIO</th><th class=\"num\">OUTRAS</th><th class=\"num\">TOTAL</th><th>PREENCHIDO POR</th><th></th></tr>" +
+    $("tabela").innerHTML = "<tr><th>DATA</th><th>DIA DA SEMANA</th><th>HORÁRIO</th><th class=\"num\">MUSCULAÇÃO</th><th class=\"num\">CARDIO</th><th class=\"num\">OUTRAS</th><th class=\"num\">TOTAL DE CLIENTES</th><th class=\"num\">% OCUPAÇÃO TOTAL</th><th>PREENCHIDO POR</th><th></th></tr>" +
       (lista.length ? lista.map(function (c) {
+        var t = totalDe(c);
         return "<tr><td>" + S.fmtData(c.data) + "</td><td>" + diaSemana(c.data) + "</td><td>" + esc(c.hora) +
           '</td><td class="num">' + (+c.musc || 0) + '</td><td class="num">' + (+c.cardio || 0) + '</td><td class="num">' + (+c.outras || 0) +
-          '</td><td class="num"><strong>' + totalDe(c) + "</strong></td><td>" + esc(c.quem || "—") +
+          '</td><td class="num"><strong>' + t + '</strong></td><td class="num">' + pct(t, capTotal) + "</td><td>" + esc(c.quem || "—") +
           '</td><td><button class="btn perigo mini" data-excluir="' + c.id + '">✕</button></td></tr>';
-      }).join("") : '<tr><td colspan="9" class="muted" style="padding: 20px;">Nenhuma contagem no período — registre com ➕ Nova contagem (ex.: toda hora cheia).</td></tr>');
+      }).join("") : '<tr><td colspan="10" class="muted" style="padding: 20px;">Nenhuma contagem no período — registre com ➕ Nova contagem (ex.: toda hora cheia).</td></tr>');
 
     // média por horário (hora cheia)
     var porHora = {};
