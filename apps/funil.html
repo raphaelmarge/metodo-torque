@@ -80,6 +80,25 @@
   </form>
 </dialog>
 
+<!-- detalhe do lead (padrão Oportunidades do EVO) -->
+<dialog id="dlgVerLead">
+  <div class="card" style="display: flex; flex-direction: column; gap: 10px; width: 520px; max-width: 100%;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="verLeadTitulo" style="margin: 0; font-size: 16px; text-transform: none; letter-spacing: 0;">Oportunidade</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div id="verLeadCorpo"></div>
+    <h3 style="font-size: 12px; color: var(--cinza); margin: 6px 0 0;">REGISTRAR CONTATO</h3>
+    <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+      <select id="ctTipo" style="width: auto;">
+        <option>Ligação</option><option>WhatsApp</option><option>Visita</option><option>E-mail</option>
+      </select>
+      <input id="ctObs" placeholder="observação (ex.: pediu pra ligar semana que vem)" style="flex: 1; min-width: 180px;">
+      <button class="btn mini" id="ctAdd">➕ Registrar</button>
+    </div>
+  </div>
+</dialog>
+
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
@@ -168,6 +187,7 @@
       (l.proximo ? " · próx. contato <strong" + (atr ? ' style="color:var(--erro);"' : "") + ">" + S.fmtData(l.proximo) + "</strong>" : "") + "</div>" +
       '<div class="acoes">' +
       (l.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(l.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFollow(l)) + '">💬' + (atr ? " Cobrar" : "") + "</a>" : "") +
+      '<button class="btn sec" data-acao="ver" title="Detalhes da oportunidade">👁</button>' +
       '<button class="btn sec" data-acao="temp" title="Trocar temperatura">' + tempIcone(l.temperatura) + '</button>' +
       '<button class="btn sec" data-acao="proximo">📅 Próx.</button>' +
       (l.status === "novo" ? '<button class="btn sec" data-acao="avancar">→ Conversa</button>' : "") +
@@ -194,11 +214,48 @@
     save(st);
   });
 
+  // ---------- detalhe da oportunidade (padrão EVO) ----------
+  var vendoLead = null;
+  var ROT_ST = { novo: "NOVO", contato: "EM CONVERSA", agendado: "AULA AGENDADA", visitou: "VISITOU", matriculado: "MATRICULADO", perdido: "PERDIDO" };
+  function abreVerLead(l) {
+    vendoLead = l.id;
+    var kv = function (k, v) { return '<div class="kv" style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--fundo);font-size:13.5px;"><span style="color:var(--cinza);">' + k + "</span><span>" + v + "</span></div>"; };
+    var hist = (l.contatos || []).slice().reverse().map(function (c) {
+      return kv(S.fmtData(c.data) + " · " + esc(c.tipo), esc(c.obs || "—"));
+    }).join("");
+    $("verLeadCorpo").innerHTML =
+      kv("Nome", "<strong>" + esc(l.nome) + "</strong>") +
+      (l.zap ? kv("Celular", esc(l.zap)) : "") +
+      kv("Origem", esc(l.origem || "—")) +
+      kv("Temperatura", tempIcone(l.temperatura) + " " + esc(l.temperatura || "morno")) +
+      kv("Status", ROT_ST[l.status] || l.status) +
+      kv("Cadastrada em", S.fmtData(l.criado)) +
+      (l.agendouEm ? kv("Aula agendada em", S.fmtData(l.agendouEm)) : "") +
+      (l.visitouEm ? kv("Visitou em", S.fmtData(l.visitouEm)) : "") +
+      (l.matriculouEm ? kv("Matriculou em", S.fmtData(l.matriculouEm)) : "") +
+      (l.proximo ? kv("Próximo contato", S.fmtData(l.proximo)) : "") +
+      '<h3 style="font-size:12px;color:var(--cinza);margin:10px 0 2px;">LIGAÇÕES / CONTATOS REALIZADOS</h3>' +
+      (hist || '<p class="muted" style="font-size:12.5px;margin:4px 0 0;">Nenhum contato registrado ainda.</p>');
+    $("verLeadTitulo").textContent = "Oportunidade — " + l.nome;
+    $("dlgVerLead").showModal();
+  }
+  $("ctAdd").onclick = function () {
+    if (!vendoLead) return;
+    var st = load();
+    var l = st.leads.find(function (x) { return x.id === vendoLead; });
+    if (!l) return;
+    (l.contatos = l.contatos || []).push({ data: S.todayISO(), tipo: $("ctTipo").value, obs: $("ctObs").value.trim() });
+    $("ctObs").value = "";
+    S.write("funil", st);
+    abreVerLead(l);
+  };
+
   $("kanban").addEventListener("click", function (e) {
     var b = e.target.closest("[data-acao]"); if (!b) return;
     var id = e.target.closest("[data-id]").getAttribute("data-id");
     var st = load();
     var l = st.leads.find(function (x) { return x.id === id; });
+    if (l && b.getAttribute("data-acao") === "ver") { abreVerLead(l); return; }
     if (l && b.getAttribute("data-acao") === "temp") {
       var it = TEMPS.indexOf(l.temperatura || "morno");
       l.temperatura = TEMPS[(it + 1) % TEMPS.length];
