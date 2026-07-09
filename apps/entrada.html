@@ -108,6 +108,38 @@
       avisos.push({ t: "erro", txt: "Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + " — não liberar (regra do EVO). Procure a gestão." });
       nivel = "bloq";
     }
+    // regras de acesso do contrato (limite de entradas + horário permitido, regra do EVO)
+    var contratoAcesso = ativos.find(function (c) { return !c.principalId; }) || ativos[0];
+    var planoAc = contratoAcesso && (st.planos || []).find(function (p) { return p.id === contratoAcesso.planoId; });
+    var rAc = (planoAc && planoAc.regras) || {};
+    if (rAc.entradaModo && rAc.entradaQtd) {
+      var agora = new Date();
+      var desde;
+      if (rAc.entradaModo === "dia") desde = hoje;
+      else if (rAc.entradaModo === "semana") { var w = new Date(agora); w.setDate(w.getDate() - w.getDay()); desde = S.todayISO(w); }
+      else desde = hoje.slice(0, 7);
+      var usados = (a.checkins || []).filter(function (t) {
+        var d = (t || "").slice(0, 10);
+        return rAc.entradaModo === "mes" ? d.slice(0, 7) === desde : d >= desde;
+      }).length;
+      if (usados >= rAc.entradaQtd) {
+        avisos.push({ t: "erro", txt: "Limite de entradas do contrato atingido (" + rAc.entradaQtd + " por " + rAc.entradaModo + ") — " + usados + " nesta janela." });
+        nivel = "bloq";
+      } else {
+        avisos.push({ t: "info", txt: "Entradas: " + usados + "/" + rAc.entradaQtd + " por " + rAc.entradaModo + "." });
+      }
+    }
+    if ((rAc.dias && rAc.dias.length) || rAc.horaDe || rAc.horaAte) {
+      var ag = new Date();
+      var diaOk = !rAc.dias || !rAc.dias.length || rAc.dias.indexOf(ag.getDay()) >= 0;
+      var hhmm = ag.toTimeString().slice(0, 5);
+      var horaOk = (!rAc.horaDe || hhmm >= rAc.horaDe) && (!rAc.horaAte || hhmm <= rAc.horaAte);
+      if (!diaOk || !horaOk) {
+        var faixa = (rAc.horaDe || "00:00") + "–" + (rAc.horaAte || "23:59");
+        avisos.push({ t: "erro", txt: "Fora do horário de contrato — este plano libera só " + (rAc.dias && rAc.dias.length ? ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"].filter(function (_, i) { return rAc.dias.indexOf(i) >= 0; }).join("/") + " " : "") + faixa + "." });
+        nivel = "bloq";
+      }
+    }
     var susp = S.read("suspensoes", { itens: [] }).itens.find(function (s2) {
       return s2.alunoId === a.id && !s2.finalizadaEm && s2.inicio <= hoje && (!s2.fim || s2.fim >= hoje);
     });

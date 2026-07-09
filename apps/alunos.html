@@ -315,6 +315,21 @@
       <div class="campo"><label>Tempo total (dias)</label><input id="rgSuspDias" type="number" min="0" placeholder="0 = sem limite"></div>
     </div>
     <div class="campo"><label>Carência da 1ª suspensão (meses após o início)</label><input id="rgSuspCarencia" type="number" min="0" placeholder="0"></div>
+    <strong style="font-size: 12px; letter-spacing: .06em; color: var(--cinza);">ACESSO</strong>
+    <div class="grid-2">
+      <div class="campo"><label>Limite de entradas</label>
+        <select id="rgEntradaModo"><option value="">Ilimitado</option><option value="dia">Por dia</option><option value="semana">Por semana</option><option value="mes">Por mês</option></select>
+      </div>
+      <div class="campo"><label>Quantidade</label><input id="rgEntradaQtd" type="number" min="0" placeholder="ex.: 3"></div>
+    </div>
+    <div class="campo"><label>Horário de contrato — dias permitidos</label>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; font-size: 12.5px; padding-top: 4px;" id="rgDias"></div>
+    </div>
+    <div class="grid-2">
+      <div class="campo"><label>Das</label><input id="rgHoraDe" type="time"></div>
+      <div class="campo"><label>até</label><input id="rgHoraAte" type="time"></div>
+    </div>
+    <p class="muted" style="font-size: 11.5px; margin: -6px 0 0;">Deixe dias/horários vazios para acesso livre. Os limites viram aviso/bloqueio no Controle de Entradas.</p>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
       <button class="btn" value="ok">Salvar regras</button>
@@ -1282,6 +1297,14 @@ $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvi
       $("rgSuspVezes").value = r.suspVezes || "";
       $("rgSuspDias").value = r.suspDias || "";
       $("rgSuspCarencia").value = r.suspCarencia || "";
+      $("rgEntradaModo").value = r.entradaModo || "";
+      $("rgEntradaQtd").value = r.entradaQtd || "";
+      $("rgHoraDe").value = r.horaDe || "";
+      $("rgHoraAte").value = r.horaAte || "";
+      var diasSel = r.dias || [];
+      $("rgDias").innerHTML = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(function (d, i) {
+        return '<label style="display:flex;gap:4px;margin:0;font-weight:400;"><input type="checkbox" class="rgDia" value="' + i + '"' + (diasSel.indexOf(i) >= 0 ? " checked" : "") + " style='width:auto;'> " + d + "</label>";
+      }).join("");
       $("dlgRegras").showModal();
       return;
     }
@@ -1296,6 +1319,8 @@ $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvi
     var st = load();
     var p = st.planos.find(function (x) { return x.id === regrasPlanoId; });
     if (!p) return;
+    var dias = [];
+    Array.prototype.forEach.call(document.querySelectorAll(".rgDia:checked"), function (c) { dias.push(+c.value); });
     p.regras = {
       genero: $("rgGenero").value,
       idadeMin: +$("rgIdadeMin").value || 0,
@@ -1303,6 +1328,11 @@ $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvi
       suspVezes: +$("rgSuspVezes").value || 0,
       suspDias: +$("rgSuspDias").value || 0,
       suspCarencia: +$("rgSuspCarencia").value || 0,
+      entradaModo: $("rgEntradaModo").value,
+      entradaQtd: +$("rgEntradaQtd").value || 0,
+      dias: dias,
+      horaDe: $("rgHoraDe").value,
+      horaAte: $("rgHoraAte").value,
     };
     save(st);
   });
