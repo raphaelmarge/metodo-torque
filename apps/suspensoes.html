@@ -174,6 +174,27 @@
     var cAtivo = a && (a.contratos || []).find(function (c) { return c.status === "ativo"; });
     var pl = cAtivo && (stAl.planos || []).find(function (p) { return p.id === cAtivo.planoId; });
     var st = load();
+    // regras de suspensão do contrato (regra do EVO): nº de vezes, tempo total, carência da 1ª
+    var reg = (pl && pl.regras) || {};
+    if (a && cAtivo && (reg.suspVezes || reg.suspDias || reg.suspCarencia)) {
+      var jaFeitas = st.itens.filter(function (x) { return x.alunoId === a.id; });
+      if (reg.suspVezes && jaFeitas.length >= reg.suspVezes) {
+        alert("Este contrato permite no máximo " + reg.suspVezes + " suspensão(ões) — " + a.nome + " já usou " + jaFeitas.length + "."); e.preventDefault(); return;
+      }
+      if (reg.suspCarencia) {
+        var libera = new Date(cAtivo.inicio + "T12:00"); libera.setMonth(libera.getMonth() + reg.suspCarencia);
+        if ($("sInicio").value < S.todayISO(libera)) {
+          alert("A 1ª suspensão só é liberada " + reg.suspCarencia + " mês(es) após o início do contrato (a partir de " + S.fmtData(S.todayISO(libera)) + ")."); e.preventDefault(); return;
+        }
+      }
+      if (reg.suspDias && $("sInicio").value && $("sFim").value && !$("campoFim").hidden) {
+        var usados = jaFeitas.reduce(function (t, x) { return t + (x.inicio && x.fim ? Math.max(0, Math.round((new Date(x.fim) - new Date(x.inicio)) / 864e5)) : 0); }, 0);
+        var novos = Math.max(0, Math.round((new Date($("sFim").value) - new Date($("sInicio").value)) / 864e5));
+        if (usados + novos > reg.suspDias) {
+          alert("Tempo total de suspensão do contrato é " + reg.suspDias + " dias. Já usados: " + usados + "; este pedido: " + novos + " — excede o limite."); e.preventDefault(); return;
+        }
+      }
+    }
     st.itens.push({
       id: S.uid(), alunoId: a ? a.id : "", nome: a ? a.nome : nome,
       contratoNome: pl ? pl.nome : (cAtivo ? "contrato ativo" : "—"),

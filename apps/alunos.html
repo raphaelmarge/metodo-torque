@@ -296,6 +296,32 @@
   </form>
 </dialog>
 
+<dialog id="dlgRegras">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 500px; max-width: 100%;">
+    <h2>Regras do contrato — <span id="rgNome"></span></h2>
+    <strong style="font-size: 12px; letter-spacing: .06em; color: var(--cinza);">RESTRIÇÃO DE VENDA</strong>
+    <div class="grid-2">
+      <div class="campo"><label>Só para o gênero</label>
+        <select id="rgGenero"><option value="">Sem restrição</option><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option></select>
+      </div>
+      <div class="linha-flex" style="gap: 8px;">
+        <div class="campo"><label>Idade mínima</label><input id="rgIdadeMin" type="number" min="0" max="120" placeholder="—"></div>
+        <div class="campo"><label>Idade máxima</label><input id="rgIdadeMax" type="number" min="0" max="120" placeholder="—"></div>
+      </div>
+    </div>
+    <strong style="font-size: 12px; letter-spacing: .06em; color: var(--cinza);">SUSPENSÃO / TRANCAMENTO</strong>
+    <div class="grid-2">
+      <div class="campo"><label>Quantas vezes pode suspender</label><input id="rgSuspVezes" type="number" min="0" placeholder="0 = sem limite"></div>
+      <div class="campo"><label>Tempo total (dias)</label><input id="rgSuspDias" type="number" min="0" placeholder="0 = sem limite"></div>
+    </div>
+    <div class="campo"><label>Carência da 1ª suspensão (meses após o início)</label><input id="rgSuspCarencia" type="number" min="0" placeholder="0"></div>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar regras</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dlgMatricula">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 480px; max-width: 100%;">
     <h2>Matricular no plano</h2>
@@ -532,6 +558,7 @@
       var tipo = { recorrente: "Recorrente", avista: "À vista", agregador: "Agregador" }[p.tipo];
       return "<tr><td><strong>" + esc(p.nome) + "</strong></td><td>" + (p.tipo === "agregador" ? "—" : S.fmtBRL(p.valor)) + "</td><td>" +
         p.meses + " mês(es)</td><td>" + tipo + "</td><td>" + n + '</td><td style="text-align:right;">' +
+        '<button class="btn sec mini" data-pregras="' + p.id + '" title="Restrições e suspensão">⚙</button> ' +
         (n === 0 ? '<button class="btn perigo mini" data-pdel="' + p.id + '">excluir</button>' : "") + "</td></tr>";
     }).join("");
   }
@@ -1077,6 +1104,18 @@
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === fichaId; });
     var plano = st.planos.find(function (p) { return p.id === $("mPlano").value; });
+    // restrição de venda por gênero e faixa etária (regra do EVO)
+    var reg = plano.regras || {};
+    if (reg.genero && a.genero && a.genero !== reg.genero) {
+      alert("Este contrato é exclusivo para o gênero " + reg.genero + " — " + a.nome + " não pode ser matriculado nele.");
+      return;
+    }
+    if ((reg.idadeMin || reg.idadeMax) && a.nasc) {
+      var hj = new Date(S.todayISO()), nsc = new Date(a.nasc + "T12:00");
+      var idade = hj.getFullYear() - nsc.getFullYear() - ((hj.getMonth() < nsc.getMonth() || (hj.getMonth() === nsc.getMonth() && hj.getDate() < nsc.getDate())) ? 1 : 0);
+      if (reg.idadeMin && idade < reg.idadeMin) { alert("Este contrato é para " + reg.idadeMin + "+ anos — " + a.nome + " tem " + idade + "."); return; }
+      if (reg.idadeMax && idade > reg.idadeMax) { alert("Este contrato é para até " + reg.idadeMax + " anos — " + a.nome + " tem " + idade + "."); return; }
+    }
     var contrato = {
       id: S.uid(), planoId: plano.id, inicio: $("mInicio").value,
       diaVenc: Math.min(+$("mDia").value || 5, 28), meses: plano.meses,
@@ -1227,11 +1266,44 @@
 $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvidados").value = ""; $("pEspecial").checked = false;
     save(st);
   };
+  var regrasPlanoId = null;
   $("pLinhas").addEventListener("click", function (e) {
+    var rid = e.target.getAttribute && e.target.getAttribute("data-pregras");
+    if (rid) {
+      var st0 = load();
+      var p = st0.planos.find(function (x) { return x.id === rid; });
+      if (!p) return;
+      regrasPlanoId = rid;
+      var r = p.regras || {};
+      $("rgNome").textContent = p.nome;
+      $("rgGenero").value = r.genero || "";
+      $("rgIdadeMin").value = r.idadeMin || "";
+      $("rgIdadeMax").value = r.idadeMax || "";
+      $("rgSuspVezes").value = r.suspVezes || "";
+      $("rgSuspDias").value = r.suspDias || "";
+      $("rgSuspCarencia").value = r.suspCarencia || "";
+      $("dlgRegras").showModal();
+      return;
+    }
     var id = e.target.getAttribute && e.target.getAttribute("data-pdel");
     if (!id) return;
     var st = load();
     st.planos = st.planos.filter(function (p) { return p.id !== id; });
+    save(st);
+  });
+  $("dlgRegras").addEventListener("close", function () {
+    if ($("dlgRegras").returnValue !== "ok" || !regrasPlanoId) return;
+    var st = load();
+    var p = st.planos.find(function (x) { return x.id === regrasPlanoId; });
+    if (!p) return;
+    p.regras = {
+      genero: $("rgGenero").value,
+      idadeMin: +$("rgIdadeMin").value || 0,
+      idadeMax: +$("rgIdadeMax").value || 0,
+      suspVezes: +$("rgSuspVezes").value || 0,
+      suspDias: +$("rgSuspDias").value || 0,
+      suspCarencia: +$("rgSuspCarencia").value || 0,
+    };
     save(st);
   });
 
