@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Níveis e Graduação — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .grupo { border: 1px solid var(--linha); border-left: 4px solid var(--roxo); background: #fff; margin-bottom: 14px; }
+  .grupo > .cab { display: flex; gap: 10px; align-items: center; padding: 12px 16px; flex-wrap: wrap; }
+  .grupo .cab strong { font-size: 15px; }
+  .escada { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 16px 12px; }
+  .faixa { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; color: #fff; font-weight: 700; }
+  .aluno-linha { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 16px; border-top: 1px solid var(--fundo); font-size: 13.5px; flex-wrap: wrap; }
+  .pill { font-size: 11px; padding: 2px 9px; border-radius: 12px; color: #fff; font-weight: 700; }
+  .prog { height: 6px; background: var(--fundo); border-radius: 3px; overflow: hidden; width: 120px; }
+  .prog i { display: block; height: 100%; background: var(--roxo); }
+  .tabela { width: 100%; border-collapse: collapse; }
+  .tabela th, .tabela td { padding: 7px 10px; border-bottom: 1px solid var(--fundo); font-size: 13px; text-align: left; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CLIENTES</span>
+    <h1>Níveis e Graduação</h1>
+    </div>
+  </div>
+  <p>As "faixas" do EVO: crie trilhas de graduação (jiu-jitsu, funcional, kids), com progresso por sessões ou por dias. O aluno sobe de nível quando bate o limiar — e vira gatilho de comemoração.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+  <div class="card linha-flex" style="justify-content: space-between;">
+    <span class="muted" id="resumo"></span>
+    <button class="btn" id="btnNovo">+ Nova trilha de níveis</button>
+  </div>
+  <div id="lista"></div>
+</main>
+
+<dialog id="dlgGrupo">
+  <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 560px; max-width: 100%;">
+    <h2>Trilha de níveis</h2>
+    <div class="grid-2">
+      <div class="campo"><label>Nome da trilha</label><input id="gNome" placeholder="ex.: Faixas Jiu-Jitsu" required></div>
+      <div class="campo"><label>Progresso por</label>
+        <select id="gModo"><option value="sessoes">Sessões (check-ins)</option><option value="dias">Dias desde o início</option></select>
+      </div>
+    </div>
+    <p class="muted" style="font-size: 12.5px; margin: 0;">Um nível por linha: nome, cor e o limiar (nº de sessões ou dias) para chegar nele. Deixe o primeiro com limiar 0.</p>
+    <div id="gNiveis" style="display: flex; flex-direction: column; gap: 6px;"></div>
+    <button type="button" class="btn sec mini" id="gAddNivel" style="align-self: flex-start;">+ Adicionar nível</button>
+    <div class="linha-flex" style="justify-content: flex-end;">
+      <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+      <button class="btn" value="ok">Salvar trilha</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() { return S.read("niveis", { grupos: [] }); }
+  function save(st) { S.write("niveis", st); render(); }
+  function stA() { return S.read("alunos", { alunos: [] }); }
+
+  var CORES = ["#9ca3af", "#3b82f6", "#a855f7", "#f59e0b", "#8b5cf6", "#ef4444", "#111827"];
+
+  // progresso do aluno no grupo
+  function progresso(a, g) {
+    if (g.modo === "dias") {
+      var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+      if (!c) return 0;
+      return Math.max(0, Math.round((new Date(S.todayISO()) - new Date(c.inicio)) / 864e5));
+    }
+    return (a.checkins || []).length + (((a.niveis || {})[g.id] || {}).bonus || 0);
+  }
+  function nivelAtual(a, g) {
+    var p = progresso(a, g);
+    var niveisOrd = g.niveis.slice().sort(function (x, y) { return x.limiar - y.limiar; });
+    var atual = niveisOrd[0], prox = null;
+    for (var i = 0; i < niveisOrd.length; i++) {
+      if (p >= niveisOrd[i].limiar) { atual = niveisOrd[i]; prox = niveisOrd[i + 1] || null; }
+    }
+    return { atual: atual, prox: prox, p: p };
+  }
+
+  function render() {
+    var st = load();
+    var alunos = stA().alunos.filter(function (a) { return a.status !== "inativo"; });
+    $("resumo").textContent = st.grupos.length + " trilha(s) de níveis";
+    $("lista").innerHTML = st.grupos.length ? st.grupos.map(function (g) {
+      var niveisOrd = g.niveis.slice().sort(function (x, y) { return x.limiar - y.limiar; });
+      var membros = alunos.filter(function (a) { return ((a.niveis || {})[g.id]); });
+      return '<div class="grupo"><div class="cab"><strong>' + esc(g.nome) + "</strong>" +
+        '<span class="muted" style="font-size:12px;">progresso por ' + (g.modo === "dias" ? "dias" : "sessões") + " · " + membros.length + " aluno(s)</span>" +
+        '<span style="margin-left:auto;"><button class="btn sec mini" data-add="' + g.id + '">+ Incluir aluno</button> ' +
+        '<button class="btn sec mini" data-del="' + g.id + '">✕</button></span></div>' +
+        '<div class="escada">' + niveisOrd.map(function (n) {
+          return '<span class="faixa" style="background:' + n.cor + '">' + esc(n.nome) + " · " + n.limiar + (g.modo === "dias" ? "d" : "s") + "</span>";
+        }).join("→ ") + "</div>" +
+        (membros.length ? membros.map(function (a) {
+          var na = nivelAtual(a, g);
+          var pct = na.prox ? Math.min(100, Math.round((na.p - na.atual.limiar) / (na.prox.limiar - na.atual.limiar) * 100)) : 100;
+          return '<div class="aluno-linha"><span style="flex:1;min-width:140px;">' + esc(a.nome) +
+            ' <span class="pill" style="background:' + na.atual.cor + '">' + esc(na.atual.nome) + "</span></span>" +
+            '<span class="muted" style="font-size:12px;">' + na.p + (g.modo === "dias" ? " dias" : " sessões") +
+            (na.prox ? " · faltam " + Math.max(0, na.prox.limiar - na.p) + " p/ " + esc(na.prox.nome) : " · nível máximo") + "</span>" +
+            '<span class="prog"><i style="width:' + pct + '%"></i></span>' +
+            (g.modo === "sessoes" ? '<button class="btn sec mini" data-bonus="' + g.id + "|" + a.id + '" title="Creditar 1 sessão de graduação">+1</button>' : "") +
+            '<button class="btn perigo mini" data-rem="' + g.id + "|" + a.id + '">−</button></div>';
+        }).join("") : '<div class="aluno-linha muted">Ninguém incluído nesta trilha ainda.</div>');
+    }).join("") : '<div class="vazio">Nenhuma trilha ainda — crie a primeira (ex.: Faixas Jiu-Jitsu, Níveis Funcional).</div>';
+  }
+
+  // ---------- editor de níveis ----------
+  function linhaNivel(n, i) {
+    n = n || { nome: "", cor: CORES[i % CORES.length], limiar: i === 0 ? 0 : "" };
+    var div = document.createElement("div");
+    div.className = "linha-flex";
+    div.style.gap = "6px";
+    div.innerHTML = '<input class="nvNome" placeholder="Nome do nível" value="' + esc(n.nome) + '" style="flex:2;">' +
+      '<input class="nvCor" type="color" value="' + n.cor + '" style="width:44px;padding:2px;">' +
+      '<input class="nvLim" type="number" min="0" placeholder="limiar" value="' + (n.limiar === "" ? "" : n.limiar) + '" style="width:90px;">' +
+      '<button type="button" class="btn perigo mini nvDel">✕</button>';
+    div.querySelector(".nvDel").onclick = function () { div.remove(); };
+    return div;
+  }
+  var editId = null;
+  $("btnNovo").onclick = function () {
+    editId = null;
+    $("gNome").value = ""; $("gModo").value = "sessoes";
+    $("gNiveis").innerHTML = "";
+    [{ nome: "Iniciante", cor: CORES[0], limiar: 0 }, { nome: "Intermediário", cor: CORES[1], limiar: 20 }, { nome: "Avançado", cor: CORES[2], limiar: 50 }].forEach(function (n, i) {
+      $("gNiveis").appendChild(linhaNivel(n, i));
+    });
+    $("dlgGrupo").showModal();
+  };
+  $("gAddNivel").onclick = function () { $("gNiveis").appendChild(linhaNivel(null, $("gNiveis").children.length)); };
+
+  $("dlgGrupo").addEventListener("close", function () {
+    if ($("dlgGrupo").returnValue !== "ok") return;
+    var nome = $("gNome").value.trim();
+    if (!nome) return;
+    var niveis = [];
+    Array.prototype.forEach.call($("gNiveis").children, function (row) {
+      var nm = row.querySelector(".nvNome").value.trim();
+      if (!nm) return;
+      niveis.push({ nome: nm, cor: row.querySelector(".nvCor").value, limiar: +row.querySelector(".nvLim").value || 0 });
+    });
+    if (!niveis.length) { alert("Adicione pelo menos um nível."); return; }
+    var st = load();
+    if (editId) {
+      var g = st.grupos.find(function (x) { return x.id === editId; });
+      g.nome = nome; g.modo = $("gModo").value; g.niveis = niveis;
+    } else {
+      st.grupos.push({ id: S.uid(), nome: nome, modo: $("gModo").value, niveis: niveis });
+    }
+    save(st);
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    var t = e.target;
+    var st = load();
+    var gid = t.getAttribute("data-add") || t.getAttribute("data-del");
+    if (t.hasAttribute("data-del")) {
+      if (!confirm("Excluir esta trilha de níveis? Os alunos deixam de ter graduação nela.")) return;
+      st.grupos = st.grupos.filter(function (x) { return x.id !== gid; });
+      var stAl = stA();
+      stAl.alunos.forEach(function (a) { if (a.niveis) delete a.niveis[gid]; });
+      S.write("alunos", stAl);
+      save(st); return;
+    }
+    if (t.hasAttribute("data-add")) {
+      var nome = prompt("Nome do aluno a incluir nesta trilha:") || "";
+      var stAl = stA();
+      var a = stAl.alunos.find(function (x) { return x.nome.trim().toLowerCase() === nome.trim().toLowerCase(); });
+      if (!a) { if (nome.trim()) alert("Aluno não encontrado."); return; }
+      a.niveis = a.niveis || {};
+      a.niveis[gid] = { desde: S.todayISO(), bonus: 0 };
+      S.write("alunos", stAl); render(); return;
+    }
+    var bonus = t.getAttribute("data-bonus");
+    if (bonus) {
+      var pb = bonus.split("|");
+      var stAl2 = stA();
+      var a2 = stAl2.alunos.find(function (x) { return x.id === pb[1]; });
+      if (a2 && a2.niveis && a2.niveis[pb[0]]) {
+        var g0 = load().grupos.find(function (x) { return x.id === pb[0]; });
+        var antes = nivelAtual(a2, g0).atual.nome;
+        a2.niveis[pb[0]].bonus = (a2.niveis[pb[0]].bonus || 0) + 1;
+        var depois = nivelAtual(a2, g0).atual.nome;
+        S.write("alunos", stAl2); render();
+        if (antes !== depois) alert("🎉 " + a2.nome + " subiu para " + depois + "!");
+      }
+      return;
+    }
+    var rem = t.getAttribute("data-rem");
+    if (rem) {
+      var pr = rem.split("|");
+      var stAl3 = stA();
+      var a3 = stAl3.alunos.find(function (x) { return x.id === pr[1]; });
+      if (a3 && a3.niveis) { delete a3.niveis[pr[0]]; S.write("alunos", stAl3); render(); }
+    }
+  });
+
+  S.onChange(function (k) { if (k === "niveis" || k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

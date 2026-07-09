@@ -57,6 +57,7 @@ self.MT_APPS = [
   { slug: "app-entrada", file: "apps/entrada.html", icone: "🚪", title: "Controle de Entradas", desc: "A catraca virtual: busca o aluno, mostra na hora se está tudo em dia (mensalidade, contrato, PAR-Q) e libera com um toque." },
   { slug: "app-cartao-aluno", file: "apps/cartao-aluno.html", icone: "🪪", title: "Cartão do Aluno", desc: "Mini-app pessoal para o WhatsApp do aluno: treino atual, plano com vencimento e horários — funciona offline no celular." },
   { slug: "app-perfil-aluno", file: "apps/perfil-aluno.html", icone: "👤", title: "Perfil do Aluno", desc: "A ficha completa estilo EVO: bloqueios e pendências, contratos, cobranças, compras, frequência e risco de abandono." },
+  { slug: "app-niveis", file: "apps/niveis.html", icone: "🥋", title: "Níveis e Graduação", desc: "As faixas do EVO: trilhas de graduação com progresso por sessões ou dias, e comemoração quando o aluno sobe de nível." },
   { slug: "app-timeline", file: "apps/timeline.html", icone: "🧭", title: "Timeline", desc: "O feed de tudo que acontece: matrículas, renovações, cancelamentos, vendas, contatos, avaliações, NPS e check-ins." },
   { slug: "app-recompensas", file: "apps/recompensas.html", icone: "🏆", title: "Clube de Recompensas", desc: "TorqueCoins: pontos por treino, indicação e renovação, catálogo de prêmios e resgates — retenção que vira jogo." },
   { slug: "app-acessos", file: "apps/acessos.html", icone: "🕐", title: "Log de Acessos", desc: "Todos os check-ins dia a dia: quem entrou, a que horas e o total — com atalho para o perfil do aluno." },

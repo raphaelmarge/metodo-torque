@@ -106,6 +106,7 @@
         <input id="pNome" placeholder="Nome do plano" style="flex: 2; min-width: 140px;">
         <input id="pValor" type="number" min="0" step="0.01" placeholder="Valor mensal R$" style="flex: 1; min-width: 110px;">
         <input id="pMeses" type="number" min="1" max="36" placeholder="Meses" style="width: 90px;">
+        <input id="pConvidados" type="number" min="0" max="31" placeholder="Convid./mês" title="Convidados que o aluno pode trazer por mês" style="width: 100px;">
         <select id="pTipo" style="width: auto;">
           <option value="recorrente">Recorrente</option>
           <option value="avista">À vista</option>
@@ -577,6 +578,7 @@
     if (c && c.status === "congelado") acoes.push('<button class="btn sec mini" data-facao="descongelar">▶ Reativar</button>');
     if (c && st.planos.some(function (p) { return p.tipo === "adicional"; })) acoes.push('<button class="btn mini" data-facao="adicional">➕ Vender adicional</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="trocar" title="Trocar de plano com crédito dos dias restantes">⇆ Trocar plano</button>');
+    if (c) acoes.push('<button class="btn sec mini" data-facao="transferir" title="Transferir este contrato para outro cliente">⇄ Transferir contrato</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="altcontrato" title="Alterar início ou dia de vencimento">✎ Alterar contrato</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="dias" title="Creditar/debitar dias no contrato">± Dias</button>');
     if (!c && !a.restrito) acoes.push('<button class="btn perigo mini" data-facao="restringir" title="Bloquear compras, acesso e comunicação (regra do EVO)">🚫 Restringir</button>');
@@ -927,6 +929,46 @@
       alert("Plano trocado! " + (credito > 0 ? S.fmtBRL(credito) + " de crédito disponíveis no saldo credor (dá para quitar as novas parcelas com ele no Perfil → Financeiro)." : ""));
       return;
     }
+    if (acao === "transferir") {
+      var nomeDest = prompt("TRANSFERIR CONTRATO (regra do EVO)\n\nO contrato de " + a.nome + " sai daqui e vai para outro cadastro (já cliente).\nDívidas/cobranças em aberto NÃO vão junto — ficam com " + a.nome + ".\n\nNome completo do cliente que vai RECEBER:") || "";
+      var dest = st.alunos.find(function (x) { return x.id !== a.id && x.nome.trim().toLowerCase() === nomeDest.trim().toLowerCase(); });
+      if (!dest) { if (nomeDest.trim()) alert("Cliente não encontrado — digite o nome exatamente como está no cadastro."); return; }
+      if (dest.restrito && (!dest.restrito.ate || dest.restrito.ate >= S.todayISO())) { alert(dest.nome + " está RESTRITO — não pode receber contrato."); return; }
+      var credT = creditoDiasRestantes(st, c, S.todayISO());
+      var modo = prompt("Como transferir para " + dest.nome + "?\n\n1) Transferência completa (o contrato passa a ser de " + dest.nome + ")\n2) Somar os dias restantes como SALDO CREDOR para " + dest.nome + " (" + S.fmtBRL(credT) + ")\n\nDigite 1 ou 2:", "1");
+      if (modo !== "1" && modo !== "2") return;
+      if (modo === "1") {
+        if (!confirm("Transferir o contrato completo de " + a.nome + " para " + dest.nome + "? As mensalidades em aberto continuam com " + a.nome + " (regra do EVO).")) return;
+        // move o contrato; parcelas em aberto ficam com a origem, parcelas futuras passam a ser do destino
+        c.transferidoDe = a.nome;
+        dest.contratos = dest.contratos || [];
+        dest.contratos.push(c);
+        a.contratos = a.contratos.filter(function (x) { return x.id !== c.id; });
+        // recebíveis pagos/vencidos ficam na origem; os ainda por vencer vão para o destino
+        var hojeT = S.todayISO();
+        st.recebiveis.forEach(function (r) {
+          if (r.contratoId === c.id && r.status === "aberto" && r.vencimento > hojeT) r.alunoId = dest.id;
+        });
+        if (!contratoAtivo(a)) a.status = a.status === "inativo" ? "inativo" : "ativo";
+        dest.status = "ativo";
+        save(st);
+        alert("Contrato transferido para " + dest.nome + ". As parcelas futuras agora são cobradas dele; as vencidas seguem com " + a.nome + ".");
+        abreFicha(fichaId);
+        return;
+      }
+      // modo 2: cancela aqui e credita os dias restantes ao destino
+      if (!confirm("Cancelar o contrato de " + a.nome + " e dar " + S.fmtBRL(credT) + " de saldo credor para " + dest.nome + "?")) return;
+      c.status = "cancelado"; c.canceladoEm = S.todayISO(); c.motivoCancel = "Transferência de dias para " + dest.nome;
+      st.recebiveis = st.recebiveis.filter(function (r) { return !(r.contratoId === c.id && r.status === "aberto" && r.vencimento > S.todayISO()); });
+      if (credT > 0) {
+        dest.saldoCredor = Math.round(((+dest.saldoCredor || 0) + credT) * 100) / 100;
+        dest.creditos = dest.creditos || [];
+        dest.creditos.push({ valor: credT, motivo: "Dias transferidos do contrato de " + a.nome, em: S.todayISO() });
+      }
+      save(st); abreFicha(fichaId);
+      alert(S.fmtBRL(credT) + " creditados para " + dest.nome + ".");
+      return;
+    }
     if (acao === "altcontrato") {
       var novoInicio = prompt("Data de INÍCIO do contrato (AAAA-MM-DD) — Enter mantém " + c.inicio + ":", c.inicio) || c.inicio;
       var novoDia = parseInt(prompt("DIA DE VENCIMENTO das mensalidades (1 a 28) — Enter mantém " + (c.diaVenc || 5) + ":", String(c.diaVenc || 5)), 10) || c.diaVenc || 5;
@@ -1180,8 +1222,8 @@
     var nome = $("pNome").value.trim();
     if (!nome) return;
     var st = load();
-    st.planos.push({ id: S.uid(), nome: nome, valor: +$("pValor").value || 0, meses: +$("pMeses").value || 1, tipo: $("pTipo").value });
-    $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = "";
+    st.planos.push({ id: S.uid(), nome: nome, valor: +$("pValor").value || 0, meses: +$("pMeses").value || 1, tipo: $("pTipo").value, convidadosMes: +$("pConvidados").value || 0 });
+$("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvidados").value = "";
     save(st);
   };
   $("pLinhas").addEventListener("click", function (e) {

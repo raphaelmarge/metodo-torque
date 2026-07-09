@@ -158,7 +158,10 @@
       s.avisos.map(function (v) { return '<div class="aviso ' + v.t + '">' + esc(v.txt) + "</div>"; }).join("") +
       '<div class="linha-flex" style="margin-top: 14px; justify-content: flex-end;">' +
       '<a class="btn sec mini" href="perfil-aluno.html?id=' + a.id + '">Abrir perfil</a>' +
+      convidBtn(a) +
       '<button class="btn" id="btnLiberar">✓ Liberar entrada</button></div></div>';
+    var bConv = $("btnConvidado");
+    if (bConv) bConv.onclick = function () { registrarConvidado(a); };
     $("btnLiberar").onclick = function () {
       var st = stA();
       var al = st.alunos.find(function (x) { return x.id === selId; });
@@ -170,6 +173,34 @@
     };
   }
 
+  function cotaConvidados(a) {
+    var st = stA();
+    var c = (a.contratos || []).find(function (x) { return x.status === "ativo"; });
+    var pl = c && (st.planos || []).find(function (p) { return p.id === c.planoId; });
+    var total = (pl && +pl.convidadosMes) || 0;
+    var mes = S.todayISO().slice(0, 7);
+    var usados = S.read("convidados", { itens: [] }).itens.filter(function (x) {
+      return x.anfitriaoId === a.id && (x.data || "").slice(0, 7) === mes;
+    }).length;
+    return { total: total, usados: usados, resta: Math.max(0, total - usados) };
+  }
+  function convidBtn(a) {
+    var q = cotaConvidados(a);
+    if (!q.total) return "";
+    return '<button class="btn sec mini" id="btnConvidado" title="Convidados restantes neste mês: ' + q.resta + '">👥 Convidado (' + q.resta + "/" + q.total + ")</button>";
+  }
+  function registrarConvidado(a) {
+    var q = cotaConvidados(a);
+    if (q.resta <= 0) { alert("Cota de convidados esgotada neste mês (" + q.total + "/mês). Renova no dia 1º."); return; }
+    var nome = prompt("Nome do convidado de " + a.nome + " (cota: " + q.resta + " restante(s) neste mês):") || "";
+    if (!nome.trim()) return;
+    var st = S.read("convidados", { itens: [] });
+    st.itens.push({ id: S.uid(), anfitriaoId: a.id, anfitriao: a.nome, nome: nome.trim(), data: S.todayISO(), hora: new Date().toTimeString().slice(0, 5) });
+    S.write("convidados", st);
+    alert("Convidado " + nome.trim() + " liberado hoje (até 23:59). Lembre de conferir o PAR-Q antes do treino, como no EVO.");
+    renderPainel(); renderHoje();
+  }
+
   function renderHoje() {
     var hoje = S.todayISO();
     var entradas = [];
@@ -178,10 +209,13 @@
         if ((t || "").slice(0, 10) === hoje) entradas.push({ nome: a.nome, hora: new Date(t).toTimeString().slice(0, 5) });
       });
     });
+    S.read("convidados", { itens: [] }).itens.forEach(function (g) {
+      if ((g.data || "") === hoje) entradas.push({ nome: g.nome + " (convidado de " + (g.anfitriao || "?").split(" ")[0] + ")", hora: g.hora || "--:--", convidado: true });
+    });
     entradas.sort(function (x, y) { return x.hora < y.hora ? 1 : -1; });
     $("totalHoje").textContent = entradas.length;
     $("listaHoje").innerHTML = entradas.length ? entradas.map(function (e) {
-      return '<div class="entrada-linha"><span class="hora">' + e.hora + "</span><span>" + esc(e.nome) + "</span></div>";
+      return '<div class="entrada-linha"' + (e.convidado ? ' style="background:#f4f0ff;"' : "") + '><span class="hora">' + e.hora + "</span><span>" + (e.convidado ? "👥 " : "") + esc(e.nome) + "</span></div>";
     }).join("") : '<div class="vazio">Nenhuma entrada registrada hoje ainda.</div>';
   }
 
