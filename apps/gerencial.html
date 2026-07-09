@@ -208,7 +208,21 @@
       });
     });
     var mensalMedia = vendidosMes.length ? vendidosMes.reduce(function (t, v) { return t + v; }, 0) / vendidosMes.length : 0;
+    // ICV1 (conversão na 1ª visita) / ICV2 (a partir da 2ª visita) — do Funil
+    var funil = S.read("funil", { leads: [] });
+    var oportsMes = funil.leads.filter(function (l) { return (l.criado || "").slice(0, 7) === mes || (l.visitouEm || "").slice(0, 7) === mes; });
+    var convMes = funil.leads.filter(function (l) { return (l.matriculouEm || "").slice(0, 7) === mes; });
+    var conv1 = convMes.filter(function (l) { return l.visitouEm && l.matriculouEm && l.matriculouEm === l.visitouEm; }).length;
+    var conv2 = convMes.length - conv1;
+    var baseOp = oportsMes.length || funil.leads.length || 1;
+    var icv1 = Math.round(conv1 / baseOp * 1000) / 10;
+    var icv2 = Math.round(conv2 / baseOp * 1000) / 10;
+    // Cliente por m² — usa a metragem configurada (Configurações), senão mostra dica
+    var metragem = +(S.read("config", { dados: {} }).dados || {}).metragem || 0;
     $("bInd").innerHTML =
+      kv("ICV1 (conversão na 1ª visita)", String(icv1).replace(".", ",") + "%") +
+      kv("ICV2 (a partir da 2ª visita)", String(icv2).replace(".", ",") + "%") +
+      kv("Cliente por m²", metragem ? (Math.round(ativos / metragem * 100) / 100).toString().replace(".", ",") : "defina a metragem") +
       kv("Ticket médio", S.fmtBRL(ticket)) +
       kv("Custo por cliente", S.fmtBRL(custoCliente)) +
       kv("Mensalidade média dos contratos vendidos", S.fmtBRL(mensalMedia)) +

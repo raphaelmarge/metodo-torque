@@ -34,6 +34,7 @@
     <div class="campo" style="max-width: 200px;"><label>Mês</label><input id="fMes" type="month"></div>
     <span class="muted">Os dados vêm da Grade (presenças por aula), das Turmas (chamadas) e da Avaliação Física (avaliador).</span>
   </div>
+  <div class="stats" id="faixas" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;"></div>
   <div id="lista"></div>
 </main>
 
@@ -57,7 +58,7 @@
     function P(nome) {
       var k = (nome || "").trim();
       if (!k) k = "Sem professor";
-      return (profs[k] = profs[k] || { aulas: 0, presencas: 0, chamadas: 0, presTurma: 0, avaliacoes: 0 });
+      return (profs[k] = profs[k] || { aulas: 0, presencas: 0, chamadas: 0, presTurma: 0, avaliacoes: 0, vagas: 0 });
     }
     var g = S.read("grade", { aulas: [], avulsas: [], presencas: {} });
     var aulaDe = {};
@@ -70,6 +71,7 @@
       var p = P(a.prof);
       p.aulas++;
       p.presencas += (g.presencas[k] || []).length;
+      p.vagas += (+a.vagas || 0);
     });
     var t = S.read("turmas", { turmas: [], chamadas: {} });
     var turmaDe = {};
@@ -92,14 +94,24 @@
       var p = profs[nome];
       p.total = p.presencas + p.presTurma;
       p.media = p.aulas ? Math.round((p.presencas / p.aulas) * 10) / 10 : 0;
+      // % de ocupação = presenças / vagas oferecidas (regra do EVO); faixas alta ≥55, média 25-55, baixa <25
+      p.ocup = p.vagas ? Math.round(p.presencas / p.vagas * 100) : 0;
+      p.faixa = p.ocup >= 55 ? "alta" : p.ocup >= 25 ? "media" : "baixa";
       return { nome: nome, p: p };
-    }).sort(function (x, y) { return y.p.total - x.p.total; });
+    }).sort(function (x, y) { return y.p.ocup - x.p.ocup; });
+    var cont = { alta: 0, media: 0, baixa: 0 };
+    lista.forEach(function (x) { if (x.p.vagas) cont[x.p.faixa]++; });
+    $("faixas").innerHTML =
+      '<div class="card" style="background:#e9f7ef;"><div class="n" style="font-size:26px;font-weight:800;color:var(--ok);">👍 ' + cont.alta + '</div><div class="muted">Performance alta (≥55% ocupação)</div></div>' +
+      '<div class="card" style="background:#fff6e6;"><div class="n" style="font-size:26px;font-weight:800;color:var(--alerta);">👌 ' + cont.media + '</div><div class="muted">Performance média (25–55%)</div></div>' +
+      '<div class="card" style="background:#fdecec;"><div class="n" style="font-size:26px;font-weight:800;color:var(--erro);">👎 ' + cont.baixa + '</div><div class="muted">Performance baixa (<25%)</div></div>';
 
     $("lista").innerHTML = lista.length ? lista.map(function (x, i) {
       return '<div class="prof"><span style="font-weight:800;color:var(--roxo);width:26px;">' + (i + 1) + 'º</span>' +
         '<span class="avatar">' + esc(ini(x.nome)) + '</span>' +
-        '<div class="quem"><strong>' + esc(x.nome) + '</strong><div class="muted" style="font-size:12px;">' +
-        x.p.total + " presença(s) recebidas no mês</div></div>" +
+        '<div class="quem"><strong>' + esc(x.nome) + '</strong> ' +
+        (x.p.vagas ? '<span class="tag ' + (x.p.faixa === "alta" ? "ok" : x.p.faixa === "media" ? "alerta" : "erro") + '" style="font-size:10px;">' + x.p.ocup + '% ' + x.p.faixa.toUpperCase() + "</span>" : "") +
+        '<div class="muted" style="font-size:12px;">' + x.p.total + " presença(s) recebidas no mês</div></div>" +
         '<div class="kpi"><div class="n">' + x.p.aulas + '</div><div class="l">AULAS (GRADE)</div></div>' +
         '<div class="kpi"><div class="n">' + x.p.media + '</div><div class="l">MÉDIA/AULA</div></div>' +
         '<div class="kpi"><div class="n">' + x.p.chamadas + '</div><div class="l">CHAMADAS TURMA</div></div>' +
