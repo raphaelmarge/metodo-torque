@@ -357,8 +357,23 @@
     }, function () {});
   }
 
+  // ---------- clientes ativos (regra do EVO: contrato especial/VIP não conta) ----------
+  // recebe o objeto do aluno e a lista de planos; retorna o contrato "ativo que conta" ou null
+  function contratoAtivoConta(aluno, planos) {
+    planos = planos || (read("alunos", { planos: [] }).planos || []);
+    var espId = {};
+    planos.forEach(function (p) { if (p.especial) espId[p.id] = true; });
+    return (aluno.contratos || []).find(function (c) {
+      return (c.status === "ativo" || c.status === "congelado") && !c.principalId && !espId[c.planoId];
+    }) || null;
+  }
+  function ehClienteAtivo(aluno, planos) {
+    return aluno.status !== "inativo" && !!contratoAtivoConta(aluno, planos);
+  }
+
   window.MTStore = {
     read: read, write: write, uid: uid,
+    contratoAtivoConta: contratoAtivoConta, ehClienteAtivo: ehClienteAtivo,
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,
     savePhoto: savePhoto, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,

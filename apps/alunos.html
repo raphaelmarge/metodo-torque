@@ -115,6 +115,7 @@
         </select>
         <button class="btn mini" id="pAdd">+ Criar</button>
       </div>
+      <label class="linha-flex" style="gap: 6px; font-size: 13px; margin-bottom: 10px;"><input type="checkbox" id="pEspecial" style="width:auto;"> Contrato especial / VIP — não conta nos clientes ativos (regra do EVO)</label>
       <table class="tabela"><thead><tr><th>Plano</th><th>Valor/mês</th><th>Duração</th><th>Tipo</th><th>Alunos ativos</th><th></th></tr></thead><tbody id="pLinhas"></tbody></table>
     </div>
   </section>
@@ -1222,8 +1223,8 @@
     var nome = $("pNome").value.trim();
     if (!nome) return;
     var st = load();
-    st.planos.push({ id: S.uid(), nome: nome, valor: +$("pValor").value || 0, meses: +$("pMeses").value || 1, tipo: $("pTipo").value, convidadosMes: +$("pConvidados").value || 0 });
-$("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvidados").value = "";
+    st.planos.push({ id: S.uid(), nome: nome, valor: +$("pValor").value || 0, meses: +$("pMeses").value || 1, tipo: $("pTipo").value, convidadosMes: +$("pConvidados").value || 0, especial: $("pEspecial").checked });
+$("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvidados").value = ""; $("pEspecial").checked = false;
     save(st);
   };
   $("pLinhas").addEventListener("click", function (e) {

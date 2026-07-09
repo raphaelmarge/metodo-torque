@@ -119,11 +119,15 @@
       kv("Saldo (recebido − pago)", S.fmtBRL(recebido - pagas), recebido - pagas >= 0 ? "verde" : "vermelho");
 
     // ---------- STATUS ----------
-    var ativos = 0, suspensos = 0, inativos = 0;
+    var ativos = 0, suspensos = 0, inativos = 0, especiais = 0;
+    var planosG = alunosSt.planos || [];
+    var espIdG = {}; planosG.forEach(function (p) { if (p.especial) espIdG[p.id] = true; });
     alunosSt.alunos.forEach(function (a) {
       if (a.status === "inativo") { inativos++; return; }
-      var c = (a.contratos || []).find(function (x) { return x.status === "ativo" || x.status === "congelado"; });
+      var c = (a.contratos || []).find(function (x) { return (x.status === "ativo" || x.status === "congelado") && !x.principalId; });
       if (!c) { inativos++; return; }
+      // contrato especial/VIP não conta como ativo (regra do EVO)
+      if (espIdG[c.planoId]) { especiais++; return; }
       ativos++;
       if (c.status === "congelado") suspensos++;
     });
@@ -132,7 +136,8 @@
       kv("Visitas no mês", visitas) +
       kv("Clientes ativos", ativos, "verde") +
       kv("Clientes inativos / sem contrato", inativos) +
-      kv("Clientes suspensos", suspensos);
+      kv("Clientes suspensos", suspensos) +
+      (especiais ? kv("Contratos especiais / VIP (fora dos ativos)", especiais) : "");
 
     // ---------- MOVIMENTAÇÃO ----------
     var conversoes = exper.filter(function (a) { return (a.data || "").slice(0, 7) === mes && a.status === "matriculado"; }).length;

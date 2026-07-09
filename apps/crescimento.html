@@ -95,7 +95,8 @@
   }
 
   function render() {
-    var st = S.read("alunos", { alunos: [] });
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var espId = {}; (st.planos || []).forEach(function (p) { if (p.especial) espId[p.id] = true; });
     var pr = document.getElementById("prazoRenov");
     if (pr && !pr._bound) { pr._bound = true; pr.addEventListener("change", render); }
     var meses = meses12();
@@ -107,6 +108,7 @@
       var n = 0, c = 0, at = 0;
       st.alunos.forEach(function (a) {
         (a.contratos || []).forEach(function (ct) {
+          if (espId[ct.planoId] || ct.principalId) return;
           if ((ct.inicio || "").slice(0, 7) === m.chave) n++;
           if ((ct.canceladoEm || "").slice(0, 7) === m.chave) c++;
           // ativo no fim do mês: começou até lá, não cancelado antes, e não vencido antes
@@ -143,7 +145,7 @@
     function dias(d1, d2) { return Math.round((new Date(d2) - new Date(d1)) / 864e5); }
     var cat = { ativoIni: 0, novos: 0, renovados: 0, retornos: 0, retSusp: 0, cancelados: 0, vencidos: 0, desistencias: 0, suspensos: 0, ativoFim: 0 };
     st.alunos.forEach(function (a) {
-      var cts = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+      var cts = (a.contratos || []).slice().filter(function (x) { return !espId[x.planoId] && !x.principalId; }).sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
       cts.forEach(function (ct, idx) {
         var fim = fimContrato(ct);
         var ativoAntes = (ct.inicio || "") < iniMes && (!ct.canceladoEm || ct.canceladoEm >= iniMes) && fim >= iniMes;
