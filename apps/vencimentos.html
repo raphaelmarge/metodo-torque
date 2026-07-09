@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vencimentos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { background: #f4f4f7; border-radius: 8px; padding: 14px 16px; }
+  .kpi .rot { font-size: 12.5px; color: var(--cinza); } .kpi .n { font-size: 22px; font-weight: 800; }
+  .vc { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .vc th, .vc td { padding: 10px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .vc th { background: #5a6b8c; color: #fff; font-size: 12px; font-weight: 600; }
+  .vc tbody tr:nth-child(even) { background: #fafafb; }
+  .vc td.dias { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .tp { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .tp-contrato { background: #eef; color: #4a4ad8; }
+  .tp-avaliacao { background: #eaf6ec; color: #2e7d32; }
+  .tp-treino { background: #fff3e2; color: #b26a00; }
+  .venc { color: var(--erro); } .prox { color: var(--alerta); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Vencimentos</h1>
+    </div>
+  </div>
+  <p>Tudo que vence num só lugar, como os relatórios "Vencimento de…" do EVO: contratos, avaliações físicas e fichas de treino no período — com contato pronto no WhatsApp.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="campo" style="margin:0;"><label>Vencimento de</label><input id="fDe" type="date"></div>
+    <div class="campo" style="margin:0;"><label>até</label><input id="fAte" type="date"></div>
+    <div class="campo" style="margin:0;"><label>Tipo</label>
+      <select id="fTipo">
+        <option value="">Todos</option>
+        <option value="contrato">Contrato</option>
+        <option value="avaliacao">Avaliação física</option>
+        <option value="treino">Treino / ficha</option>
+      </select>
+    </div>
+    <div class="campo" style="margin:0;"><label>Validade da avaliação (dias)</label><input id="fValAv" type="number" min="0" value="90" style="width: 90px;"></div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="vc" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  $("fDe").value = hoje;
+  var em30 = new Date(hoje + "T12:00"); em30.setDate(em30.getDate() + 30);
+  $("fAte").value = S.todayISO(em30);
+
+  function fimContrato(c) {
+    var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+    f.setMonth(f.getMonth() + (c.meses || 1));
+    f.setDate(f.getDate() + (+c.diasCreditados || 0));
+    return S.todayISO(f);
+  }
+  function addDias(iso, d) {
+    var x = new Date(iso + "T12:00"); x.setDate(x.getDate() + d); return S.todayISO(x);
+  }
+
+  function coleta() {
+    var st = S.read("alunos", { alunos: [] });
+    var alunoDe = {}; st.alunos.forEach(function (a) { alunoDe[a.id] = a; });
+    var itens = [];
+
+    // contratos ativos
+    st.alunos.forEach(function (a) {
+      if (a.status === "inativo") return;
+      (a.contratos || []).forEach(function (c) {
+        if ((c.status === "ativo" || c.status === "congelado") && !c.principalId) {
+          itens.push({ tipo: "contrato", aluno: a, venc: fimContrato(c), det: "contrato" });
+        }
+      });
+    });
+
+    // avaliações físicas → próxima = última + validade
+    var validade = +$("fValAv").value || 90;
+    var ultAval = {};
+    S.read("saude", { avaliacoes: [] }).avaliacoes.forEach(function (v) {
+      if (!v.alunoId || !v.data) return;
+      if (!ultAval[v.alunoId] || v.data > ultAval[v.alunoId]) ultAval[v.alunoId] = v.data;
+    });
+    Object.keys(ultAval).forEach(function (aid) {
+      var a = alunoDe[aid]; if (!a || a.status === "inativo") return;
+      itens.push({ tipo: "avaliacao", aluno: a, venc: addDias(ultAval[aid], validade), det: "avaliação física" });
+    });
+
+    // fichas de treino com vencimento
+    (S.read("treinos", { prescricoes: [] }).prescricoes || []).forEach(function (p) {
+      if (!p.vencimento) return;
+      var a = alunoDe[p.alunoId]; if (!a || a.status === "inativo") return;
+      itens.push({ tipo: "treino", aluno: a, venc: p.vencimento, det: "ficha de treino" });
+    });
+
+    return itens;
+  }
+
+  function render() {
+    var de = $("fDe").value, ate = $("fAte").value, tipo = $("fTipo").value;
+    var itens = coleta().filter(function (x) {
+      if (tipo && x.tipo !== tipo) return false;
+      return x.venc >= de && x.venc <= ate;
+    }).sort(function (a, b) { return a.venc < b.venc ? -1 : 1; });
+
+    var porTipo = { contrato: 0, avaliacao: 0, treino: 0 };
+    itens.forEach(function (x) { porTipo[x.tipo]++; });
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">Total no período</div><div class="n">' + itens.length + '</div></div>' +
+      '<div class="kpi"><div class="rot">Contratos</div><div class="n" style="color:#4a4ad8">' + porTipo.contrato + '</div></div>' +
+      '<div class="kpi"><div class="rot">Avaliações físicas</div><div class="n" style="color:#2e7d32">' + porTipo.avaliacao + '</div></div>' +
+      '<div class="kpi"><div class="rot">Treinos / fichas</div><div class="n" style="color:#b26a00">' + porTipo.treino + '</div></div>';
+
+    var ROT = { contrato: "CONTRATO", avaliacao: "AVALIAÇÃO", treino: "TREINO" };
+    var CLS = { contrato: "tp-contrato", avaliacao: "tp-avaliacao", treino: "tp-treino" };
+    var cab = "<thead><tr><th>Tipo</th><th>Aluno</th><th>Vencimento</th><th style='text-align:right;'>Dias</th><th>Contato</th></tr></thead>";
+    var corpo = itens.length ? itens.map(function (x) {
+      var dias = Math.round((new Date(x.venc + "T12:00") - new Date(hoje + "T12:00")) / 864e5);
+      var cls = dias < 0 ? "venc" : dias <= 7 ? "prox" : "";
+      var msg = "Oi " + x.aluno.nome.split(" ")[0] + "! Passando para lembrar do vencimento do seu " + x.det +
+        " em " + S.fmtData(x.venc) + ". Bora resolver? 💜";
+      return "<tr><td><span class='tp " + CLS[x.tipo] + "'>" + ROT[x.tipo] + "</span></td>" +
+        "<td><strong>" + esc(x.aluno.nome) + "</strong></td>" +
+        "<td class='" + cls + "'>" + S.fmtData(x.venc) + "</td>" +
+        "<td class='dias " + cls + "'>" + (dias < 0 ? "há " + Math.abs(dias) + "d" : dias + "d") + "</td>" +
+        "<td>" + (x.aluno.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+          String(x.aluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : '<span class="muted">—</span>') + "</td></tr>";
+    }).join("") : '<tr><td colspan="5" class="muted" style="text-align:center; padding:20px;">Nada vencendo neste período/tipo. 🎉</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+  }
+
+  ["fDe", "fAte", "fTipo", "fValAv"].forEach(function (id) { $(id).addEventListener("change", render); });
+  S.onChange(function (k) { if (k === "alunos" || k === "saude" || k === "treinos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
