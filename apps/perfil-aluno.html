@@ -45,6 +45,17 @@
 
 <main class="corpo" id="corpo" style="padding-top: 20px;"></main>
 
+<dialog id="dlgContrato" style="max-width: min(680px, 95vw);">
+  <div class="card" style="display: flex; flex-direction: column; gap: 12px; width: 640px; max-width: 100%; max-height: 88vh; overflow-y: auto;">
+    <div class="linha-flex" style="justify-content: space-between;">
+      <h2 id="ctTitulo" style="margin: 0; font-size: 17px; text-transform: none; letter-spacing: 0;">Detalhes do contrato</h2>
+      <button class="btn sec mini" onclick="this.closest('dialog').close()">Fechar</button>
+    </div>
+    <div class="abas" id="ctAbas"></div>
+    <div id="ctCorpo"></div>
+  </div>
+</dialog>
+
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
@@ -437,14 +448,15 @@
         (dependentes.length ? '<div class="kv"><span>Dependentes vinculados</span><span>' + esc(dependentes.join(", ")) + "</span></div>" : "") +
         "</div>" : "";
       html = familiaHTML + '<div class="card"><h2>Histórico de contratos</h2>' +
-        (todos.length ? '<table class="tabela"><tr><th>PLANO</th><th>PERÍODO</th><th>VALOR</th><th>STATUS</th></tr>' + todos.map(function (c) {
+        (todos.length ? '<table class="tabela"><tr><th>PLANO</th><th>PERÍODO</th><th>VALOR</th><th>STATUS</th><th></th></tr>' + todos.map(function (c) {
           var p = st.planos.find(function (x) { return x.id === c.planoId; }) || {};
           var tag = c.status === "ativo" ? '<span class="tag ok">ATIVO</span>' :
             c.status === "congelado" ? '<span class="tag roxo">CONGELADO</span>' :
             '<span class="tag erro">CANCELADO' + (c.canceladoEm ? " " + S.fmtData(c.canceladoEm) : "") + "</span>";
-          return "<tr><td><strong>" + esc(p.nome || "plano") + "</strong>" + (c.renovacaoDe ? ' <span class="tag neutro">RENOVAÇÃO</span>' : "") + "</td>" +
+          return "<tr><td><strong>" + esc(p.nome || "plano") + "</strong>" + (c.renovacaoDe ? ' <span class="tag neutro">RENOVAÇÃO</span>' : "") + (c.principalId ? ' <span class="tag neutro">ADICIONAL</span>' : "") + "</td>" +
             "<td>" + S.fmtData(c.inicio) + " → " + S.fmtData(fimDe(c)) + "</td><td>" + S.fmtBRL(+c.valor || 0) + "/mês</td>" +
-            "<td>" + tag + (c.motivoCancel ? '<div class="muted" style="font-size:11.5px;">motivo: ' + esc(c.motivoCancel) + "</div>" : "") + "</td></tr>";
+            "<td>" + tag + (c.motivoCancel ? '<div class="muted" style="font-size:11.5px;">motivo: ' + esc(c.motivoCancel) + "</div>" : "") + "</td>" +
+            '<td style="text-align:right;"><button class="btn sec mini" data-verct="' + c.id + '" title="Detalhes do contrato" style="padding:3px 9px;">👁</button></td></tr>';
         }).join("") + "</table>" : '<p class="muted">Nenhum contrato registrado.</p>') + "</div>";
     }
     if (secao === "turmas") {
@@ -685,7 +697,78 @@
   });
 
   // delegate único: sub-abas + excluir contato do relacionamento
+  var ctId = null, ctAba = "geral";
+  function abreContrato(id) {
+    ctId = id; ctAba = "geral";
+    document.getElementById("dlgContrato").showModal();
+    renderContrato();
+  }
+  function renderContrato() {
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    var c = a && (a.contratos || []).find(function (x) { return x.id === ctId; });
+    if (!c) { document.getElementById("dlgContrato").close(); return; }
+    var p = st.planos.find(function (x) { return x.id === c.planoId; }) || {};
+    $("ctTitulo").textContent = "Contrato — " + (p.nome || "plano");
+    var abas = [["geral", "Geral"], ["mensalidades", "Mensalidades"], ["suspensoes", "Suspensões"], ["adicionais", "Adicionais"], ["historico", "Histórico"]];
+    $("ctAbas").innerHTML = abas.map(function (x) {
+      return '<button data-ct="' + x[0] + '"' + (ctAba === x[0] ? ' class="ativa"' : "") + ">" + x[1] + "</button>";
+    }).join("");
+    var kv = function (k, v) { return '<div class="kv"><span>' + k + "</span><span>" + v + "</span></div>"; };
+    var html = "";
+    if (ctAba === "geral") {
+      var stCfg = (p.regras || {});
+      html = kv("Plano", esc(p.nome || "—") + (p.especial ? " (VIP)" : "")) +
+        kv("Status", c.status.toUpperCase()) +
+        kv("Início", S.fmtData(c.inicio)) +
+        kv("Fim previsto", S.fmtData(fimDe(c))) +
+        kv("Duração", (c.meses || 1) + " mês(es)" + ((+c.diasCreditados) ? " + " + c.diasCreditados + " dia(s)" : "")) +
+        kv("Valor", S.fmtBRL(+c.valor || 0) + "/mês") +
+        kv("Dia de vencimento", "dia " + (c.diaVenc || "—")) +
+        (c.desconto ? kv("Desconto", esc(c.desconto.desc) + " (" + (c.desconto.tipo === "pct" ? c.desconto.valor + "%" : S.fmtBRL(c.desconto.valor)) + (c.desconto.recorrente ? ", recorrente" : ", 1ª parcela") + ")") : "") +
+        (c.titularNome ? kv("Responsável financeiro", esc(c.titularNome)) : "") +
+        (c.transferidoDe ? kv("Transferido de", esc(c.transferidoDe)) : "") +
+        (c.renovacaoDe ? kv("Renovação de", "contrato anterior") : "") +
+        (c.principalId ? kv("Tipo", "Adicional (vinculado a um contrato principal)") : "") +
+        (c.canceladoEm ? kv("Cancelado em", S.fmtData(c.canceladoEm) + (c.motivoCancel ? " — " + esc(c.motivoCancel) : "")) : "") +
+        (stCfg.genero || stCfg.idadeMin || stCfg.entradaModo || (stCfg.dias && stCfg.dias.length) ? '<div class="kv"><span>Regras do plano</span><span>' +
+          [stCfg.genero ? "só " + stCfg.genero : "", (stCfg.idadeMin || stCfg.idadeMax) ? "idade " + (stCfg.idadeMin || 0) + "-" + (stCfg.idadeMax || "∞") : "",
+           stCfg.entradaModo ? stCfg.entradaQtd + " entrada(s)/" + stCfg.entradaModo : "", (stCfg.dias && stCfg.dias.length) ? "dias restritos" : ""].filter(Boolean).join(" · ") + "</span></div>" : "");
+    } else if (ctAba === "mensalidades") {
+      var recs = st.recebiveis.filter(function (r) { return r.contratoId === c.id; }).sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; });
+      html = recs.length ? '<table class="tabela"><tr><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>VALOR</th><th>STATUS</th></tr>' + recs.map(function (r) {
+        return "<tr><td>" + esc(r.competencia || (r.desc || "avulso")) + "</td><td>" + S.fmtData(r.vencimento) + "</td><td>" + S.fmtBRL(+r.valor || 0) + "</td><td>" +
+          (r.status === "pago" ? '<span class="tag ok">PAGO ' + (r.pagoEm ? S.fmtData(r.pagoEm) : "") + "</span>" : r.vencimento < S.todayISO() ? '<span class="tag erro">ATRASADO</span>' : '<span class="tag alerta">EM ABERTO</span>') + "</td></tr>";
+      }).join("") + "</table>" : '<p class="muted">Sem mensalidades geradas para este contrato.</p>';
+    } else if (ctAba === "suspensoes") {
+      var sus = S.read("suspensoes", { itens: [] }).itens.filter(function (s2) { return s2.alunoId === a.id; });
+      html = sus.length ? '<table class="tabela"><tr><th>INÍCIO</th><th>FIM</th><th>TIPO</th><th>MOTIVO</th></tr>' + sus.map(function (s2) {
+        return "<tr><td>" + S.fmtData(s2.inicio) + "</td><td>" + (s2.fim ? S.fmtData(s2.fim) : (s2.finalizadaEm ? "reativado " + S.fmtData(s2.finalizadaEm) : "—")) + "</td><td>" + esc(s2.tipo || "") + "</td><td>" + esc(s2.motivo || "") + "</td></tr>";
+      }).join("") + "</table>" : '<p class="muted">Nenhuma suspensão neste contrato.</p>';
+    } else if (ctAba === "adicionais") {
+      var adic = (a.contratos || []).filter(function (x) { return x.principalId === c.id; });
+      html = adic.length ? adic.map(function (x) {
+        var pa = st.planos.find(function (pp) { return pp.id === x.planoId; }) || {};
+        return '<div class="kv"><span>' + esc(pa.nome || "adicional") + " (" + x.status + ")</span><span>" + S.fmtBRL(+x.valor || 0) + "/mês · " + x.meses + " mês(es)</span></div>";
+      }).join("") : '<p class="muted">Nenhum contrato adicional vinculado a este.</p>';
+    } else {
+      var log = (c.diasLog || []);
+      html = (c.diasLog && c.diasLog.length ? '<h3 style="font-size:12px;color:var(--cinza);">Crédito/débito de dias</h3>' + log.map(function (l) {
+        return '<div class="kv"><span>' + S.fmtData(l.em) + " — " + esc(l.motivo || "") + "</span><span>" + (l.dias > 0 ? "+" : "") + l.dias + " dia(s)</span></div>";
+      }).join("") : "") +
+      (c.desconto ? '<h3 style="font-size:12px;color:var(--cinza);margin-top:8px;">Desconto aplicado</h3><div class="kv"><span>' + esc(c.desconto.desc) + "</span><span>" + (c.desconto.tipo === "pct" ? c.desconto.valor + "%" : S.fmtBRL(c.desconto.valor)) + "</span></div>" : "") +
+      (!(c.diasLog && c.diasLog.length) && !c.desconto ? '<p class="muted">Sem histórico de ajustes (dias/descontos) neste contrato.</p>' : "");
+    }
+    $("ctCorpo").innerHTML = html;
+  }
+  document.getElementById("ctAbas").addEventListener("click", function (e) {
+    var t = e.target.getAttribute("data-ct");
+    if (t) { ctAba = t; renderContrato(); }
+  });
+
   $("corpo").addEventListener("click", function (e) {
+    var vc = e.target.getAttribute && e.target.getAttribute("data-verct");
+    if (vc) { abreContrato(vc); return; }
     var sf = e.target.getAttribute && e.target.getAttribute("data-sf");
     if (sf) { subFin = sf; render(); return; }
     var sc = e.target.getAttribute && e.target.getAttribute("data-sc");
