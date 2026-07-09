@@ -114,12 +114,19 @@
       movs.filter(function (m) { return m.tipo === "entrada"; }).reduce(function (t, m) { return t + m.valor; }, 0);
     var saidas = movs.filter(function (m) { return m.tipo !== "entrada"; }).reduce(function (t, m) { return t + m.valor; }, 0);
     var dinheiro = (d ? +d.abertura || 0 : 0);
+    // breakdown por forma de pagamento (cards do Caixa do EVO)
+    var formas = { dinheiro: 0, pix: 0, cartoes: 0, outros: 0 };
     autos.concat(movs).forEach(function (m) {
-      var ehDin = (m.forma || "").toLowerCase().indexOf("dinheiro") !== -1 || m.origem === "mensalidade";
-      if (!ehDin) return;
-      dinheiro += m.tipo === "entrada" ? m.valor : -m.valor;
+      var f = (m.forma || "").toLowerCase();
+      var ehDin = f.indexOf("dinheiro") !== -1 || m.origem === "mensalidade";
+      if (ehDin) dinheiro += m.tipo === "entrada" ? m.valor : -m.valor;
+      if (m.tipo !== "entrada") return;
+      if (ehDin) formas.dinheiro += m.valor;
+      else if (f.indexOf("pix") !== -1) formas.pix += m.valor;
+      else if (f.indexOf("cart") !== -1) formas.cartoes += m.valor;
+      else formas.outros += m.valor;
     });
-    return { entradas: entradas, saidas: saidas, dinheiro: dinheiro };
+    return { entradas: entradas, saidas: saidas, dinheiro: dinheiro, formas: formas };
   }
 
   function render() {
@@ -145,8 +152,12 @@
     var oculto = '<div class="card"><div class="n">🙈</div><div class="muted">oculto (caixa cego)</div></div>';
     $("cards").innerHTML =
       '<div class="card"><div class="n">' + S.fmtBRL(d ? +d.abertura || 0 : 0) + '</div><div class="muted">troco inicial</div></div>' +
-      (ocultar ? oculto : '<div class="card"><div class="n" style="color:var(--ok)">' + S.fmtBRL(t.entradas) + '</div><div class="muted">entradas do dia</div></div>') +
-      '<div class="card"><div class="n" style="color:var(--erro)">' + S.fmtBRL(t.saidas) + '</div><div class="muted">saídas + sangrias</div></div>' +
+      (ocultar ? oculto : '<div class="card"><div class="n">' + S.fmtBRL(t.formas.dinheiro) + '</div><div class="muted">dinheiro</div></div>') +
+      (ocultar ? oculto : '<div class="card"><div class="n">' + S.fmtBRL(t.formas.pix) + '</div><div class="muted">PIX</div></div>') +
+      (ocultar ? oculto : '<div class="card"><div class="n">' + S.fmtBRL(t.formas.cartoes) + '</div><div class="muted">cartões</div></div>') +
+      (t.formas.outros ? (ocultar ? oculto : '<div class="card"><div class="n">' + S.fmtBRL(t.formas.outros) + '</div><div class="muted">outros</div></div>') : "") +
+      (ocultar ? oculto : '<div class="card"><div class="n" style="color:var(--ok)">' + S.fmtBRL(t.entradas) + '</div><div class="muted">total de recebimentos</div></div>') +
+      '<div class="card"><div class="n" style="color:var(--erro)">' + S.fmtBRL(t.saidas) + '</div><div class="muted">total de saídas</div></div>' +
       (ocultar ? oculto : '<div class="card"><div class="n" style="color:var(--roxo)">' + S.fmtBRL(t.dinheiro) + '</div><div class="muted">dinheiro esperado na gaveta</div></div>') +
       (d && d.fechado ? '<div class="card"><div class="n" style="color:' + (Math.abs(d.quebra) < 0.005 ? "var(--ok)" : "var(--erro)") + '">' +
         (d.quebra > 0 ? "+" : "") + S.fmtBRL(d.quebra) + '</div><div class="muted">quebra de caixa (contado − esperado)</div></div>' : "");
