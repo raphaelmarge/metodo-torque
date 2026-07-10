@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aniversariantes — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .an { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .an th, .an td { padding: 10px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .an th { background: #5a6b8c; color: #fff; font-size: 12px; font-weight: 600; }
+  .an tbody tr:nth-child(even) { background: #fafafb; }
+  .an .dia { font-weight: 800; font-size: 15px; text-align: center; width: 54px; }
+  .an tr.hoje td { background: #efeafb; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { background: #f4f4f7; border-radius: 8px; padding: 14px 16px; }
+  .kpi .rot { font-size: 12.5px; color: var(--cinza); } .kpi .n { font-size: 22px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CRM</span>
+    <h1>Aniversariantes</h1>
+    </div>
+  </div>
+  <p>Os aniversariantes do mês em ordem de dia, como no EVO — com a mensagem de parabéns pronta no WhatsApp. Aniversário lembrado é aluno que fica.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="gap: 14px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="campo" style="margin:0;"><label>Selecione o mês</label>
+      <select id="fMes"></select>
+    </div>
+    <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fAtivos" type="checkbox" checked> ativos</label>
+    <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativos" type="checkbox"> inativos</label>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="an" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  var MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  $("fMes").innerHTML = MESES.map(function (m, i) {
+    var v = (i + 1 < 10 ? "0" : "") + (i + 1);
+    return '<option value="' + v + '"' + (v === hoje.slice(5, 7) ? " selected" : "") + ">" + m + "</option>";
+  }).join("");
+
+  function ehAtivo(a) {
+    return a.status !== "inativo" && (a.contratos || []).some(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+  }
+
+  function render() {
+    var st = S.read("alunos", { alunos: [] });
+    var mes = $("fMes").value;
+    var querAtivos = $("fAtivos").checked, querInativos = $("fInativos").checked;
+    var anoAtual = +hoje.slice(0, 4);
+
+    var lista = st.alunos.filter(function (a) {
+      if (!a.nasc || a.nasc.slice(5, 7) !== mes) return false;
+      var ativo = ehAtivo(a);
+      return (ativo && querAtivos) || (!ativo && querInativos);
+    }).map(function (a) {
+      return { a: a, dia: +a.nasc.slice(8, 10), idade: anoAtual - (+a.nasc.slice(0, 4)), ativo: ehAtivo(a) };
+    }).sort(function (x, y) { return x.dia - y.dia || x.a.nome.localeCompare(y.a.nome); });
+
+    var hojeDia = hoje.slice(5, 7) === mes ? +hoje.slice(8, 10) : 0;
+    var doDia = lista.filter(function (x) { return x.dia === hojeDia; }).length;
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">Aniversariantes no mês</div><div class="n">' + lista.length + '</div></div>' +
+      (hojeDia ? '<div class="kpi"><div class="rot">Fazem aniversário hoje</div><div class="n" style="color:var(--roxo)">🎂 ' + doDia + '</div></div>' : "");
+
+    var cab = "<thead><tr><th class='dia'>Dia</th><th>Nome</th><th>Idade que faz</th><th>Situação</th><th>Parabéns</th><th></th></tr></thead>";
+    var corpo = lista.length ? lista.map(function (x) {
+      var msg = "Parabéns, " + x.a.nome.split(" ")[0] + "! 🎉🎂 Toda a equipe da academia te deseja um ano incrível — bora comemorar com um treino especial hoje? 💪";
+      return "<tr" + (x.dia === hojeDia ? ' class="hoje"' : "") + "><td class='dia'>" + x.dia + "</td>" +
+        "<td><strong>" + esc(x.a.nome) + "</strong></td>" +
+        "<td>" + (x.idade > 0 && x.idade < 120 ? x.idade + " anos" : "—") + "</td>" +
+        "<td>" + (x.ativo ? '<span class="tag ok">ATIVO</span>' : '<span class="tag neutro">INATIVO</span>') + "</td>" +
+        "<td>" + (x.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+          String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 🎉</a>' : '<span class="muted">—</span>') + "</td>" +
+        '<td><a class="btn sec mini" href="perfil-aluno.html?id=' + encodeURIComponent(x.a.id) + '" title="Ver perfil">👁</a></td></tr>';
+    }).join("") : '<tr><td colspan="6" class="muted" style="text-align:center; padding:20px;">Nenhum aniversariante neste mês com os filtros atuais — confira se a data de nascimento está preenchida no cadastro.</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+  }
+
+  ["fMes", "fAtivos", "fInativos"].forEach(function (id) { $(id).addEventListener("change", render); });
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
