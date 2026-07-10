@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agregadores — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .ag { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .ag th, .ag td { padding: 10px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .ag th { background: #5a6b8c; color: #fff; font-size: 12px; font-weight: 600; }
+  .ag td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .ag tbody tr:nth-child(even) { background: #fafafb; }
+  .resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .agg { background: #fff; border: 1px solid var(--linha); border-radius: 8px; padding: 14px 16px; }
+  .agg h3 { margin: 0 0 8px; font-size: 15px; }
+  .agg .lin { display: flex; justify-content: space-between; font-size: 13.5px; padding: 3px 0; }
+  .agg .lin strong { font-variant-numeric: tabular-nums; }
+  .agg input { width: 90px; padding: 4px 8px; text-align: right; }
+  .agg .rep { border-top: 1px solid var(--fundo); margin-top: 6px; padding-top: 8px; font-weight: 800; color: var(--roxo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Agregadores</h1>
+    </div>
+  </div>
+  <p>Gympass/Wellhub, TotalPass e afins: alunos vinculados, check-ins do mês e o repasse estimado — para conferir o extrato da plataforma sem surpresa.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="campo" style="margin:0;"><label>Mês</label><input id="fMes" type="month"></div>
+    <span class="muted">Aluno de agregador = contrato ativo em plano do tipo "agregador" (Gestão de Alunos → Planos). Informe o R$ por check-in de cada plataforma para estimar o repasse.</span>
+  </div>
+
+  <div class="resumo" id="resumo"></div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="ag" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function brl2(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }); }
+
+  var mes = S.todayISO().slice(0, 7);
+  $("fMes").value = mes;
+  $("fMes").addEventListener("change", function () { if (this.value) { mes = this.value; render(); } });
+
+  function cfg() { return S.read("agregadores", { valores: {} }); }
+
+  function render() {
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var c = cfg();
+    var aggs = (st.planos || []).filter(function (p) { return p.tipo === "agregador"; });
+
+    // alunos por agregador + check-ins do mês
+    var dados = aggs.map(function (p) { return { plano: p, alunos: [], checkins: 0 }; });
+    var porPlano = {}; dados.forEach(function (d) { porPlano[d.plano.id] = d; });
+    var linhas = [];
+    st.alunos.forEach(function (a) {
+      if (a.status === "inativo") return;
+      var ct = (a.contratos || []).find(function (x) { return (x.status === "ativo" || x.status === "congelado") && porPlano[x.planoId]; });
+      if (!ct) return;
+      var d = porPlano[ct.planoId];
+      var cks = (a.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === mes; });
+      var ultimo = cks.length ? cks[cks.length - 1] : "";
+      d.alunos.push(a);
+      d.checkins += cks.length;
+      linhas.push({ nome: a.nome, agg: d.plano.nome, n: cks.length, ultimo: ultimo });
+    });
+
+    $("resumo").innerHTML = dados.length ? dados.map(function (d) {
+      var val = +((c.valores || {})[d.plano.id]) || 0;
+      var rep = d.checkins * val;
+      return '<div class="agg"><h3>' + esc(d.plano.nome) + "</h3>" +
+        '<div class="lin"><span>Alunos vinculados</span><strong>' + d.alunos.length + "</strong></div>" +
+        '<div class="lin"><span>Check-ins no mês</span><strong>' + d.checkins + "</strong></div>" +
+        '<div class="lin"><span>R$ por check-in</span><span><input type="number" step="0.01" min="0" data-val="' + d.plano.id + '" value="' + (val || "") + '" placeholder="0,00"></span></div>' +
+        '<div class="lin rep"><span>Repasse estimado</span><strong>' + brl2(rep) + "</strong></div></div>";
+    }).join("") : '<div class="vazio">Nenhum plano do tipo "agregador" cadastrado — crie em Gestão de Alunos → Planos (ex.: Gympass, TotalPass).</div>';
+
+    linhas.sort(function (a, b) { return b.n - a.n || a.nome.localeCompare(b.nome); });
+    var cab = "<thead><tr><th>Nome</th><th>Agregador</th><th class='num'>Check-ins no mês</th><th>Último check-in</th></tr></thead>";
+    var corpo = linhas.length ? linhas.map(function (x) {
+      return "<tr><td><strong>" + esc(x.nome) + "</strong></td>" +
+        "<td>" + esc(x.agg) + "</td>" +
+        "<td class='num'>" + x.n + "</td>" +
+        "<td>" + (x.ultimo ? S.fmtData(x.ultimo.slice(0, 10)) + " " + (x.ultimo.slice(11, 16) || "") : "—") + "</td></tr>";
+    }).join("") : '<tr><td colspan="4" class="muted" style="text-align:center; padding:20px;">Nenhum aluno de agregador com atividade neste mês.</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+  }
+
+  $("resumo").addEventListener("change", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-val");
+    if (!id) return;
+    var c = cfg();
+    c.valores = c.valores || {};
+    c.valores[id] = +e.target.value || 0;
+    S.write("agregadores", c);
+    render();
+  });
+
+  S.onChange(function (k) { if (k === "alunos" || k === "agregadores") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
