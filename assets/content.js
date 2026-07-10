@@ -55,6 +55,7 @@ self.MT_APPS = [
   { slug: "app-loja", file: "apps/loja.html", icone: "🛒", title: "Loja On-line", desc: "Monte a loja com os seus produtos por categoria e baixe a página com carrinho que fecha o pedido no seu WhatsApp." },
   { slug: "app-vendas", file: "apps/vendas.html", icone: "🧾", title: "Vendas", desc: "Todas as vendas do período (contratos e produtos) agrupadas por colaborador, com resumo por item e total geral." },
   { slug: "app-dias-creditados", file: "apps/dias-creditados.html", icone: "➕", title: "Dias Creditados", desc: "Todos os créditos e débitos de dias nos contratos: quem recebeu, quantos dias, quando e por quê." },
+  { slug: "app-agregadores", file: "apps/agregadores.html", icone: "🔗", title: "Agregadores", desc: "Gympass/TotalPass: alunos vinculados, check-ins do mês e repasse estimado por plataforma." },
   { slug: "app-campos", file: "apps/campos.html", icone: "☑️", title: "Campos Obrigatórios", desc: "Escolha quais campos do cadastro de alunos são obrigatórios — o Novo Cadastro só salva com eles preenchidos." },
   { slug: "app-renovacao", file: "apps/renovacao.html", icone: "🔁", title: "Renovação e Rematrícula", desc: "Contratos vencendo ou vencidos com renovação em 2 cliques: novo contrato emendado e mensalidades geradas na hora." },
   { slug: "app-treino-ia", file: "apps/treino-ia.html", icone: "🤖", title: "Central de Treinos com IA", desc: "Prompt pronto com avaliação, PAR-Q e exercícios da academia — cole a resposta da IA e vire ficha na hora." },

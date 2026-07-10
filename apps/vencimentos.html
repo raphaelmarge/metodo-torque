@@ -20,6 +20,7 @@
   .tp-contrato { background: #eef; color: #4a4ad8; }
   .tp-avaliacao { background: #eaf6ec; color: #2e7d32; }
   .tp-treino { background: #fff3e2; color: #b26a00; }
+  .tp-exame { background: #f3e5f5; color: #8e24aa; }
   .venc { color: var(--erro); } .prox { color: var(--alerta); }
 </style>
 </head>
@@ -47,6 +48,9 @@
         <option value="contrato">Contrato</option>
         <option value="avaliacao">Avaliação física</option>
         <option value="treino">Treino / ficha</option>
+        <option value="medico">Exame médico</option>
+        <option value="nutricional">Aval. nutricional</option>
+        <option value="dermato">Exame dermatológico</option>
       </select>
     </div>
     <div class="campo" style="margin:0;"><label>Validade da avaliação (dias)</label><input id="fValAv" type="number" min="0" value="90" style="width: 90px;"></div>
@@ -119,6 +123,16 @@
       itens.push({ tipo: "treino", aluno: a, venc: p.vencimento, det: "ficha de treino" });
     });
 
+    // exames (médico/nutricional/dermatológico) → último + 1 ano, como no perfil do aluno
+    var EXAMES = [["medico", "exame médico"], ["nutricional", "avaliação nutricional"], ["dermato", "exame dermatológico"]];
+    st.alunos.forEach(function (a) {
+      if (a.status === "inativo" || !a.exames) return;
+      EXAMES.forEach(function (ex) {
+        var d = a.exames[ex[0]];
+        if (d) itens.push({ tipo: ex[0], aluno: a, venc: addDias(d, 365), det: ex[1] });
+      });
+    });
+
     return itens;
   }
 
@@ -129,16 +143,18 @@
       return x.venc >= de && x.venc <= ate;
     }).sort(function (a, b) { return a.venc < b.venc ? -1 : 1; });
 
-    var porTipo = { contrato: 0, avaliacao: 0, treino: 0 };
+    var porTipo = { contrato: 0, avaliacao: 0, treino: 0, medico: 0, nutricional: 0, dermato: 0 };
     itens.forEach(function (x) { porTipo[x.tipo]++; });
+    var exames = porTipo.medico + porTipo.nutricional + porTipo.dermato;
     $("kpis").innerHTML =
       '<div class="kpi"><div class="rot">Total no período</div><div class="n">' + itens.length + '</div></div>' +
       '<div class="kpi"><div class="rot">Contratos</div><div class="n" style="color:#4a4ad8">' + porTipo.contrato + '</div></div>' +
       '<div class="kpi"><div class="rot">Avaliações físicas</div><div class="n" style="color:#2e7d32">' + porTipo.avaliacao + '</div></div>' +
-      '<div class="kpi"><div class="rot">Treinos / fichas</div><div class="n" style="color:#b26a00">' + porTipo.treino + '</div></div>';
+      '<div class="kpi"><div class="rot">Treinos / fichas</div><div class="n" style="color:#b26a00">' + porTipo.treino + '</div></div>' +
+      '<div class="kpi"><div class="rot">Exames</div><div class="n" style="color:#8e24aa">' + exames + '</div></div>';
 
-    var ROT = { contrato: "CONTRATO", avaliacao: "AVALIAÇÃO", treino: "TREINO" };
-    var CLS = { contrato: "tp-contrato", avaliacao: "tp-avaliacao", treino: "tp-treino" };
+    var ROT = { contrato: "CONTRATO", avaliacao: "AVALIAÇÃO", treino: "TREINO", medico: "EX. MÉDICO", nutricional: "NUTRICIONAL", dermato: "DERMATO" };
+    var CLS = { contrato: "tp-contrato", avaliacao: "tp-avaliacao", treino: "tp-treino", medico: "tp-exame", nutricional: "tp-exame", dermato: "tp-exame" };
     var cab = "<thead><tr><th>Tipo</th><th>Aluno</th><th>Vencimento</th><th style='text-align:right;'>Dias</th><th>Contato</th></tr></thead>";
     var corpo = itens.length ? itens.map(function (x) {
       var dias = Math.round((new Date(x.venc + "T12:00") - new Date(hoje + "T12:00")) / 864e5);
