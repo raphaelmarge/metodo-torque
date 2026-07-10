@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vendas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .vd { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .vd th, .vd td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .vd th { background: #5a6b8c; color: #fff; font-size: 12px; font-weight: 600; }
+  .vd td.num, .vd th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .vd tr.grupo td { background: var(--fundo); font-weight: 800; }
+  .vd tr.total td { background: #f2f2f6; font-weight: 800; }
+  .tp { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .tp-contrato { background: #eef; color: #4a4ad8; }
+  .tp-produto { background: #eaf6ec; color: #2e7d32; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .kpi { background: #f4f4f7; border-radius: 8px; padding: 14px 16px; }
+  .kpi .rot { font-size: 12.5px; color: var(--cinza); } .kpi .n { font-size: 21px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Vendas</h1>
+    </div>
+  </div>
+  <p>Todas as vendas do período como no EVO: contratos e produtos numa lista só, agrupados por colaborador, com o resumo por tipo e o total geral.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="abas" id="abas">
+    <button data-t="det" class="ativa">Vendas detalhadas</button>
+    <button data-t="res">Vendas resumidas</button>
+  </div>
+
+  <div class="card linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="campo" style="margin:0;"><label>De</label><input id="fDe" type="date"></div>
+    <div class="campo" style="margin:0;"><label>Até</label><input id="fAte" type="date"></div>
+    <div class="campo" style="margin:0;"><label>Tipo</label>
+      <select id="fTipo"><option value="">Todos</option><option value="contrato">Contrato</option><option value="produto">Produto</option></select>
+    </div>
+    <div class="campo" style="margin:0;"><label>Colaborador</label><select id="fColab"><option value="">Todos</option></select></div>
+    <span class="muted" style="margin-left:auto;">As <a href="metas.html">Metas por consultor</a> ficam no programa Metas de Vendas.</span>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="vd" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  $("fDe").value = hoje.slice(0, 8) + "01";
+  $("fAte").value = hoje;
+  var aba = "det";
+
+  // coleta contratos + produtos vendidos no período numa lista unificada
+  function coleta() {
+    var de = $("fDe").value, ate = $("fAte").value;
+    var lista = [];
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var planoNome = {}; (st.planos || []).forEach(function (p) { planoNome[p.id] = p.nome; });
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        var d = (c.inicio || "").slice(0, 10);
+        if (!d || d < de || d > ate) return;
+        lista.push({
+          tipo: "contrato", cliente: a.nome, item: planoNome[c.planoId] || "contrato",
+          qtd: 1, valor: (+c.valor || 0) * (c.meses || 1), data: d,
+          forma: c.forma || "—", colab: (a.consultor || "").trim() || "Sem colaborador",
+        });
+      });
+    });
+    S.read("produtos", { vendas: [] }).vendas.forEach(function (v) {
+      var d = (v.data || "").slice(0, 10);
+      if (!d || d < de || d > ate) return;
+      var itens = (v.itens || []);
+      lista.push({
+        tipo: "produto", cliente: v.cliente || "Venda balcão",
+        item: itens.map(function (i) { return (i.qtd || 1) + "× " + (i.nome || "item"); }).join(", ") || "produtos",
+        qtd: itens.reduce(function (t, i) { return t + (+i.qtd || 1); }, 0) || 1,
+        valor: +v.total || 0, data: d, forma: v.forma || "—",
+        colab: (v.vendedora || v.colab || "").trim() || "Sem colaborador",
+      });
+    });
+    var fT = $("fTipo").value, fC = $("fColab").value;
+    return lista.filter(function (x) {
+      if (fT && x.tipo !== fT) return false;
+      if (fC && x.colab !== fC) return false;
+      return true;
+    });
+  }
+
+  function render() {
+    var lista = coleta();
+
+    // popula filtro de colaborador preservando a seleção
+    var colabs = {};
+    lista.forEach(function (x) { colabs[x.colab] = 1; });
+    var sel = $("fColab").value;
+    $("fColab").innerHTML = '<option value="">Todos</option>' + Object.keys(colabs).sort().map(function (c) {
+      return '<option' + (c === sel ? " selected" : "") + ">" + esc(c) + "</option>";
+    }).join("");
+
+    var total = lista.reduce(function (t, x) { return t + x.valor; }, 0);
+    var nContr = lista.filter(function (x) { return x.tipo === "contrato"; });
+    var nProd = lista.filter(function (x) { return x.tipo === "produto"; });
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">Vendas no período</div><div class="n">' + lista.length + '</div></div>' +
+      '<div class="kpi"><div class="rot">Contratos</div><div class="n" style="color:#4a4ad8">' + nContr.length + ' · ' + S.fmtBRL(nContr.reduce(function (t, x) { return t + x.valor; }, 0)) + '</div></div>' +
+      '<div class="kpi"><div class="rot">Produtos</div><div class="n" style="color:#2e7d32">' + nProd.length + ' · ' + S.fmtBRL(nProd.reduce(function (t, x) { return t + x.valor; }, 0)) + '</div></div>' +
+      '<div class="kpi"><div class="rot">Total geral</div><div class="n" style="color:var(--roxo)">' + S.fmtBRL(total) + '</div></div>';
+
+    if (aba === "det") renderDetalhadas(lista, total);
+    else renderResumidas(lista);
+  }
+
+  // detalhadas: agrupadas por colaborador com subtotal (como o "arraste a coluna" do EVO)
+  function renderDetalhadas(lista, total) {
+    var porColab = {};
+    lista.forEach(function (x) { (porColab[x.colab] = porColab[x.colab] || []).push(x); });
+    var cab = "<thead><tr><th>Tipo</th><th>Cliente</th><th>Item</th><th class='num'>Quantidade</th><th class='num'>Valor</th><th>Data da venda</th><th>Forma de pagamento</th></tr></thead>";
+    var corpo = "";
+    Object.keys(porColab).sort().forEach(function (colab) {
+      var vs = porColab[colab].sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+      var sub = vs.reduce(function (t, x) { return t + x.valor; }, 0);
+      corpo += '<tr class="grupo"><td colspan="4">↑ ' + esc(colab) + " (" + vs.length + ")</td><td class='num'>" + S.fmtBRL(sub) + "</td><td colspan='2'></td></tr>";
+      corpo += vs.map(function (x) {
+        return "<tr><td><span class='tp tp-" + x.tipo + "'>" + (x.tipo === "contrato" ? "CONTRATO" : "PRODUTO") + "</span></td>" +
+          "<td><strong>" + esc(x.cliente) + "</strong></td>" +
+          "<td>" + esc(x.item) + "</td>" +
+          "<td class='num'>" + x.qtd + "</td>" +
+          "<td class='num'>" + S.fmtBRL(x.valor) + "</td>" +
+          "<td>" + S.fmtData(x.data) + "</td>" +
+          "<td>" + esc(x.forma) + "</td></tr>";
+      }).join("");
+    });
+    if (!lista.length) corpo = '<tr><td colspan="7" class="muted" style="text-align:center; padding:20px;">Nenhuma venda no período.</td></tr>';
+    else corpo += '<tr class="total"><td colspan="4">Total geral</td><td class="num">' + S.fmtBRL(total) + "</td><td colspan='2'></td></tr>";
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+  }
+
+  // resumidas: por item (plano/produto) com quantidade e valor
+  function renderResumidas(lista) {
+    var porItem = {};
+    lista.forEach(function (x) {
+      var k = (x.tipo === "contrato" ? "Contrato — " : "Produto — ") + x.item;
+      porItem[k] = porItem[k] || { tipo: x.tipo, qtd: 0, valor: 0 };
+      porItem[k].qtd += x.qtd;
+      porItem[k].valor += x.valor;
+    });
+    var arr = Object.keys(porItem).map(function (k) { return { nome: k, d: porItem[k] }; })
+      .sort(function (a, b) { return b.d.valor - a.d.valor; });
+    var cab = "<thead><tr><th>Item</th><th class='num'>Quantidade</th><th class='num'>Valor</th></tr></thead>";
+    var total = arr.reduce(function (t, x) { return t + x.d.valor; }, 0);
+    var corpo = arr.length ? arr.map(function (x) {
+      return "<tr><td>" + esc(x.nome) + "</td><td class='num'>" + x.d.qtd + "</td><td class='num'>" + S.fmtBRL(x.d.valor) + "</td></tr>";
+    }).join("") + '<tr class="total"><td>Total geral</td><td></td><td class="num">' + S.fmtBRL(total) + "</td></tr>"
+      : '<tr><td colspan="3" class="muted" style="text-align:center; padding:20px;">Nenhuma venda no período.</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+  }
+
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    aba = b.getAttribute("data-t");
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
+    render();
+  });
+  ["fDe", "fAte", "fTipo", "fColab"].forEach(function (id) { $(id).addEventListener("change", render); });
+  S.onChange(function (k) { if (k === "alunos" || k === "produtos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
