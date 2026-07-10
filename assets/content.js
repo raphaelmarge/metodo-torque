@@ -53,6 +53,7 @@ self.MT_APPS = [
   { slug: "app-movimentacao", file: "apps/movimentacao.html", icone: "📊", title: "Movimentação Financeira", desc: "Receitas × despesas mês a mês no gráfico consolidado e a árvore de centros de receitas e despesas com os totais do período." },
   { slug: "app-aniversariantes", file: "apps/aniversariantes.html", icone: "🎂", title: "Aniversariantes", desc: "Os aniversariantes do mês em ordem de dia, com idade, situação e a mensagem de parabéns pronta no WhatsApp." },
   { slug: "app-loja", file: "apps/loja.html", icone: "🛒", title: "Loja On-line", desc: "Monte a loja com os seus produtos por categoria e baixe a página com carrinho que fecha o pedido no seu WhatsApp." },
+  { slug: "app-vendas", file: "apps/vendas.html", icone: "🧾", title: "Vendas", desc: "Todas as vendas do período (contratos e produtos) agrupadas por colaborador, com resumo por item e total geral." },
   { slug: "app-renovacao", file: "apps/renovacao.html", icone: "🔁", title: "Renovação e Rematrícula", desc: "Contratos vencendo ou vencidos com renovação em 2 cliques: novo contrato emendado e mensalidades geradas na hora." },
   { slug: "app-treino-ia", file: "apps/treino-ia.html", icone: "🤖", title: "Central de Treinos com IA", desc: "Prompt pronto com avaliação, PAR-Q e exercícios da academia — cole a resposta da IA e vire ficha na hora." },
   { slug: "app-pagina-vendas", file: "apps/pagina-vendas.html", icone: "📣", title: "Página de Vendas", desc: "Mini-site de divulgação com seus planos e botão de WhatsApp — baixe o arquivo e mande para quem pediu informação." },
