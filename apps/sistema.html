@@ -234,6 +234,8 @@
       <summary><span class="ico">💬</span>CRM</summary>
       <div class="sub">
         <a class="item" data-url="radar.html">Radar de Retenção</a>
+        <a class="item" data-url="aniversariantes.html">Aniversariantes</a>
+        <a class="item" data-url="vencimentos.html">Vencimentos (contrato, exames, treino)</a>
         <a class="item" data-url="risco.html">Risco de Abandono</a>
         <a class="item" data-url="timeline.html">Timeline</a>
         <a class="item" data-url="segmentacao.html">Segmentação de Clientes</a>
@@ -260,6 +262,9 @@
         <a class="item" data-url="fluxo.html">Fluxo de Caixa (automático)</a>
         <a class="item" data-url="dre.html">DRE Automático</a>
         <a class="item" data-url="bancos.html">Contas Bancárias</a>
+        <a class="item" data-url="gastos.html">Gastos por Centro de Custos</a>
+        <a class="item" data-url="recebimentos.html">Recebimentos por Centro de Receita</a>
+        <a class="item" data-url="movimentacao.html">Movimentação Financeira</a>
         <a class="item" data-url="../docs/fluxo-caixa.html">Fluxo de Caixa (planilha)</a>
         <a class="item" data-url="../docs/planilha-dre.html">DRE da Academia (planilha)</a>
       </div>
@@ -267,27 +272,32 @@
     <details class="grupo">
       <summary><span class="ico">📊</span>Gerencial</summary>
       <div class="sub">
-        <a class="item" data-url="convenios.html">Agregadores (Gympass/TotalPass)</a>
+        <a class="item" data-url="agregadores.html">Agregadores (Gympass/TotalPass)</a>
         <a class="item" data-url="turmas.html">Atividades (chamada e ocupação)</a>
         <a class="item" data-url="experimentais.html">Aulas Experimentais</a>
-        <a class="item" data-url="crescimento.html">Cancelamentos e Crescimento</a>
+        <a class="item" data-url="cancelamentos.html">Cancelamentos</a>
+        <a class="item" data-url="crescimento.html">Crescimento</a>
         <a class="item" data-url="logs.html">Log Geral (auditoria)</a>
         <a class="item" data-url="carteiras.html">Carteiras</a>
         <a class="item" data-url="carteiras.html">Histórico de Carteiras</a>
         <a class="item" data-url="alunos.html">Clientes</a>
         <a class="item" data-url="comissoes.html">Comissões e Remuneração</a>
-        <a class="item" data-url="renovacao.html">Contratos (vigências)</a>
+        <a class="item" data-url="contratos.html">Contratos</a>
         <a class="item" data-url="entrada.html">Controle de Entradas</a>
         <a class="item" data-url="convenios.html">Convênios</a>
         <a class="item" data-url="coordvendas.html">Coord. de Vendas / Gestor</a>
         <a class="item" data-url="precos.html">Tabela de Preços</a>
         <a class="item" data-url="descontos.html">Desconto / Créditos</a>
-        <a class="item" data-url="dre.html">DRE e Movimentação Financeira</a>
+        <a class="item" data-url="dre.html">DRE</a>
+        <a class="item" data-url="movimentacao.html">Movimentação Financeira</a>
         <a class="item" data-url="automacao.html">Envio de Mensagens</a>
         <a class="item" data-url="fluxo.html">Fluxo de Caixa</a>
         <a class="item" data-url="equipe.html">Funcionários (salários)</a>
-        <a class="item" data-url="contas.html">Gastos por Centro de Custos</a>
+        <a class="item" data-url="gastos.html">Gastos por Centro de Custos</a>
+        <a class="item" data-url="recebimentos.html">Recebimentos por Centro de Receita</a>
+        <a class="item" data-url="dias-creditados.html">Dias Creditados</a>
         <a class="item" data-url="cobrancas.html">Inadimplência (relatório)</a>
+        <a class="item" data-url="vencimentos.html">Vencimentos</a>
         <a class="item" data-url="indicacoes.html">Indicações</a>
         <a class="item" data-url="integracoes.html">Integrações</a>
         <a class="item" data-url="tarefas.html">Ligações a Fazer</a>
@@ -307,7 +317,8 @@
         <a class="item" data-url="suspensoes.html">Suspensões</a>
         <a class="item" data-url="alunos.html?aba=planos">Tabela de Preços</a>
         <a class="item" data-url="treinos.html">Treinos</a>
-        <a class="item" data-url="metas.html">Vendas (metas por consultor)</a>
+        <a class="item" data-url="vendas.html">Vendas</a>
+        <a class="item" data-url="metas.html">Metas por Consultor</a>
         <a class="item" data-url="convenios.html">Wellhub / Gympass</a>
         <a class="item" data-url="diario.html">Diário &amp; Relatório IA</a>
         <a class="item" data-url="../docs/planilha-7-numeros.html">Planilha dos 7 Números</a>
@@ -356,7 +367,20 @@
         <a class="item" data-url="../docs/contratacao-segura.html">Contratação Segura</a>
       </div>
     </details>
-    <a class="item" data-pg="config"><span class="ico">⚙️</span>Configurações</a>
+    <details class="grupo">
+      <summary><span class="ico">⚙️</span>Configurações</summary>
+      <div class="sub">
+        <a class="item" data-pg="config">Inicial (empresa, logo, backup)</a>
+        <a class="item" data-url="entrada.html">Controle de Acesso</a>
+        <a class="item" data-url="importar.html">Importar Dados</a>
+        <a class="item" data-url="documentos.html">Documentos</a>
+        <a class="item" data-url="pagina-vendas.html">Página de Vendas / Site</a>
+        <a class="item" data-url="integracoes.html">Integrações</a>
+        <a class="item" data-url="campos.html">Campos Obrigatórios</a>
+        <a class="item" data-url="loja.html">Loja On-line</a>
+        <a class="item" data-url="cartao-aluno.html">Aplicativo (Cartão do Aluno)</a>
+      </div>
+    </details>
   </nav>
   <div class="rodape">
     <a class="item" data-url="../index.html" data-nova-aba="1"><span class="ico">🎓</span>Curso Método Torque ↗</a>
