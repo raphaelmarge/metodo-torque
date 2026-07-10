@@ -19,7 +19,15 @@
   function read(key, fallback) {
     try {
       var raw = localStorage.getItem(PREFIX + key);
-      return raw ? JSON.parse(raw) : fallback;
+      if (!raw) return fallback;
+      var val = JSON.parse(raw);
+      // dados parciais (sync/importação/versões antigas) não podem derrubar telas:
+      // se o fallback é objeto plano, garante as chaves padrão que faltarem
+      if (val && fallback && typeof val === "object" && typeof fallback === "object" &&
+          !Array.isArray(val) && !Array.isArray(fallback)) {
+        for (var k in fallback) { if (val[k] == null) val[k] = fallback[k]; }
+      }
+      return val;
     } catch (e) { return fallback; }
   }
 
