@@ -467,12 +467,20 @@
       <input type="file" id="cfgBkFile" accept="application/json" hidden>
     </div>
     <div class="cfg-bloco">
-      <h3>🏢 Dados da academia</h3>
+      <h3>🏢 Dados da academia (como a aba Empresa do EVO)</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 640px;">
-        <div><label style="font-size:12px; font-weight:600;">Nome de exibição</label><input id="cfgNome" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">Nome fantasia (exibição)</label><input id="cfgNome" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">CNPJ</label><input id="cfgCnpj" inputmode="numeric" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">Razão social</label><input id="cfgRazao" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
         <div><label style="font-size:12px; font-weight:600;">WhatsApp / telefone</label><input id="cfgZap" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
-        <div><label style="font-size:12px; font-weight:600;">Endereço</label><input id="cfgEnd" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">Endereço (rua e número)</label><input id="cfgEnd" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">CEP</label><input id="cfgCep" inputmode="numeric" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">Cidade / UF</label><input id="cfgCidade" placeholder="ex.: Rio de Janeiro / RJ" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">Metragem (m²) — usada no "Cliente por m²" do Gerencial</label><input id="cfgMetragem" type="number" min="0" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">Data de inauguração</label><input id="cfgInaug" type="date" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">E-mail</label><input id="cfgEmail" type="email" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
         <div><label style="font-size:12px; font-weight:600;">Instagram</label><input id="cfgInsta" placeholder="@suaacademia" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
+        <div><label style="font-size:12px; font-weight:600;">Facebook</label><input id="cfgFace" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
       </div>
       <button class="btnzinho" id="cfgSalvarDados" style="margin-top: 10px;">Salvar dados</button>
     </div>
@@ -1039,9 +1047,17 @@
   (function () {
     var c = cfgLoad();
     $("cfgNome").value = c.dados.nome || "";
+    $("cfgCnpj").value = c.dados.cnpj || "";
+    $("cfgRazao").value = c.dados.razao || "";
     $("cfgZap").value = c.dados.zap || "";
     $("cfgEnd").value = c.dados.endereco || "";
+    $("cfgCep").value = c.dados.cep || "";
+    $("cfgCidade").value = c.dados.cidade || "";
+    $("cfgMetragem").value = c.dados.metragem || "";
+    $("cfgInaug").value = c.dados.inauguracao || "";
+    $("cfgEmail").value = c.dados.email || "";
     $("cfgInsta").value = c.dados.instagram || "";
+    $("cfgFace").value = c.dados.facebook || "";
     $("cfgHorarios").innerHTML = DIAS_CFG.map(function (d, i) {
       var h = c.horarios[i] || {};
       return '<div style="border: 1px solid var(--linha); border-radius: 4px; padding: 8px 10px;">' +
@@ -1054,7 +1070,20 @@
   })();
   $("cfgSalvarDados").onclick = function () {
     var c = cfgLoad();
-    c.dados = { nome: $("cfgNome").value.trim(), zap: $("cfgZap").value.trim(), endereco: $("cfgEnd").value.trim(), instagram: $("cfgInsta").value.trim() };
+    // merge: nunca sobrescreve chaves que outras telas gravam em c.dados
+    c.dados = c.dados || {};
+    c.dados.nome = $("cfgNome").value.trim();
+    c.dados.cnpj = $("cfgCnpj").value.trim();
+    c.dados.razao = $("cfgRazao").value.trim();
+    c.dados.zap = $("cfgZap").value.trim();
+    c.dados.endereco = $("cfgEnd").value.trim();
+    c.dados.cep = $("cfgCep").value.trim();
+    c.dados.cidade = $("cfgCidade").value.trim();
+    c.dados.metragem = +$("cfgMetragem").value || 0;
+    c.dados.inauguracao = $("cfgInaug").value;
+    c.dados.email = $("cfgEmail").value.trim();
+    c.dados.instagram = $("cfgInsta").value.trim();
+    c.dados.facebook = $("cfgFace").value.trim();
     S.write("config", c);
     if (c.dados.nome) $("topAcad").textContent = c.dados.nome;
     alert("Dados salvos!");

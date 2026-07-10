@@ -43,6 +43,7 @@
 <main class="corpo" style="display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; align-items: start;">
 
   <div style="display: flex; flex-direction: column; gap: 14px;">
+    <div id="flashOk" hidden style="background: #eaf6ec; border: 1px solid rgba(22,163,74,.4); color: #2e7d32; padding: 14px 16px; border-radius: 6px; font-weight: 700; font-size: 15px;"></div>
     <div class="card busca-grande">
       <div class="campo"><label>Aluno</label>
         <input id="busca" placeholder="digite o nome…" autocomplete="off">
@@ -50,6 +51,11 @@
       <div id="resultados" style="margin-top: 10px;"></div>
     </div>
     <div id="painel"></div>
+    <div class="card">
+      <div class="campo" style="margin: 0;"><label>Mensagem de boas-vindas (aparece ao liberar — Controle de Acesso do EVO)</label>
+        <input id="cfgMsgAcesso" placeholder="Olá, seja bem-vindo e tenha um ótimo treino!">
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -218,6 +224,13 @@
       var al = st.alunos.find(function (x) { return x.id === selId; });
       (al.checkins = al.checkins || []).push(new Date().toISOString());
       S.write("alunos", st);
+      // mensagem de boas-vindas configurável (Controle de Acesso do EVO)
+      var msg = (S.read("config", { dados: {} }).msgAcesso || "").trim() || "Olá, seja bem-vindo e tenha um ótimo treino!";
+      var fl = $("flashOk");
+      fl.textContent = "✅ " + al.nome.split(" ")[0] + " — " + msg;
+      fl.hidden = false;
+      clearTimeout(fl._t);
+      fl._t = setTimeout(function () { fl.hidden = true; }, 5000);
       selId = null;
       $("busca").value = "";
       renderResultados(); renderPainel(); renderHoje();
@@ -271,6 +284,12 @@
   }
 
   $("busca").addEventListener("input", function () { selId = null; renderPainel(); renderResultados(); });
+  $("cfgMsgAcesso").value = S.read("config", { dados: {} }).msgAcesso || "";
+  $("cfgMsgAcesso").addEventListener("change", function () {
+    var c = S.read("config", { dados: {} });
+    c.msgAcesso = this.value.trim();
+    S.write("config", c);
+  });
   $("resultados").addEventListener("click", function (e) {
     var r = e.target.closest("[data-sel]"); if (!r) return;
     selId = r.getAttribute("data-sel");
