@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dias Creditados — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .dc { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  .dc th, .dc td { padding: 10px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .dc th { background: #5a6b8c; color: #fff; font-size: 12px; font-weight: 600; }
+  .dc td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .dc tbody tr:nth-child(even) { background: #fafafb; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .kpi { background: #f4f4f7; border-radius: 8px; padding: 14px 16px; }
+  .kpi .rot { font-size: 12.5px; color: var(--cinza); } .kpi .n { font-size: 22px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Dias Creditados</h1>
+    </div>
+  </div>
+  <p>Todos os créditos e débitos de dias nos contratos, como no EVO: quem recebeu, quantos dias, quando e por quê — suspensões, cortesias e ajustes num relatório só.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card linha-flex" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="campo" style="margin:0;"><label>De</label><input id="fDe" type="date"></div>
+    <div class="campo" style="margin:0;"><label>Até</label><input id="fAte" type="date"></div>
+    <span class="muted">Os dias são creditados na ficha do aluno (Gestão de Alunos → contrato → ± dias) ou ao finalizar uma suspensão.</span>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="dc" id="tabela"></table>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  var m3 = new Date(hoje + "T12:00"); m3.setMonth(m3.getMonth() - 3);
+  $("fDe").value = S.todayISO(m3);
+  $("fAte").value = hoje;
+
+  function coleta() {
+    var de = $("fDe").value, ate = $("fAte").value;
+    var st = S.read("alunos", { alunos: [], planos: [] });
+    var planoNome = {}; (st.planos || []).forEach(function (p) { planoNome[p.id] = p.nome; });
+    var lista = [];
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        (c.diasLog || []).forEach(function (l) {
+          var d = (l.em || "").slice(0, 10);
+          if (!d || d < de || d > ate) return;
+          lista.push({ nome: a.nome, contrato: planoNome[c.planoId] || "contrato", dias: +l.dias || 0, em: d, motivo: l.motivo || "—" });
+        });
+      });
+    });
+    return lista.sort(function (x, y) { return x.em < y.em ? 1 : -1; });
+  }
+
+  function render() {
+    var lista = coleta();
+    var cred = lista.filter(function (x) { return x.dias > 0; }).reduce(function (t, x) { return t + x.dias; }, 0);
+    var deb = lista.filter(function (x) { return x.dias < 0; }).reduce(function (t, x) { return t + x.dias; }, 0);
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">Lançamentos no período</div><div class="n">' + lista.length + '</div></div>' +
+      '<div class="kpi"><div class="rot">Dias creditados</div><div class="n" style="color:var(--ok)">+' + cred + '</div></div>' +
+      '<div class="kpi"><div class="rot">Dias debitados</div><div class="n" style="color:var(--erro)">' + deb + '</div></div>' +
+      '<div class="kpi"><div class="rot">Saldo</div><div class="n">' + (cred + deb >= 0 ? "+" : "") + (cred + deb) + ' dias</div></div>';
+
+    var cab = "<thead><tr><th>Nome</th><th>Contrato</th><th class='num' style='text-align:right;'>Dias</th><th>Inclusão</th><th>Motivo</th></tr></thead>";
+    var corpo = lista.length ? lista.map(function (x) {
+      return "<tr><td><strong>" + esc(x.nome) + "</strong></td>" +
+        "<td>" + esc(x.contrato) + "</td>" +
+        "<td class='num' style='color:" + (x.dias >= 0 ? "var(--ok)" : "var(--erro)") + "'>" + (x.dias > 0 ? "+" : "") + x.dias + "</td>" +
+        "<td>" + S.fmtData(x.em) + "</td>" +
+        "<td>" + esc(x.motivo) + "</td></tr>";
+    }).join("") : '<tr><td colspan="5" class="muted" style="text-align:center; padding:20px;">Nenhum crédito de dias no período.</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+  }
+
+  ["fDe", "fAte"].forEach(function (id) { $(id).addEventListener("change", render); });
+  S.onChange(function (k) { if (k === "alunos") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

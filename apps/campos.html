@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campos Obrigatórios — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .grp { border: 1px solid var(--linha); background: #fff; margin-bottom: 14px; }
+  .grp h3 { margin: 0; padding: 10px 14px; background: var(--fundo); border-bottom: 1px solid var(--linha); font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--cinza); display: flex; justify-content: space-between; }
+  .grp h3 span:last-child { letter-spacing: 0; }
+  .campo-lin { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--fundo); font-size: 14px; }
+  .campo-lin:last-child { border-bottom: none; }
+  .campo-lin input { width: 18px; height: 18px; }
+  .campo-lin.fixo { opacity: .55; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CONFIGURAÇÕES</span>
+    <h1>Campos Obrigatórios</h1>
+    </div>
+  </div>
+  <p>Escolha quais campos do cadastro de alunos são obrigatórios, como no EVO: o Novo Cadastro só salva com eles preenchidos.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 4px; max-width: 760px;">
+  <div id="grupos"></div>
+  <p class="muted">💡 Vale para o Novo Cadastro e a edição na Gestão de Alunos. Nome e sobrenome são sempre obrigatórios.</p>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var GRUPOS = [
+    { titulo: "CAMPOS FIXOS", fixos: true, campos: [["pnome", "Nome"], ["sobrenome", "Sobrenome"]] },
+    { titulo: "INFORMAÇÕES", campos: [["nasc", "Data de nascimento"], ["cpf", "CPF"], ["rg", "RG"], ["genero", "Gênero"]] },
+    { titulo: "ENDEREÇO", campos: [["cep", "CEP"], ["endereco", "Endereço"], ["numero", "Número"], ["bairro", "Bairro"], ["cidade", "Cidade"], ["uf", "UF"]] },
+    { titulo: "CONTATO", campos: [["zap", "Celular / WhatsApp"], ["email", "E-mail"]] },
+    { titulo: "RESPONSÁVEL", campos: [["responsavel", "Responsável pelo cliente"]] },
+    { titulo: "INTERAÇÕES", campos: [["comoConheceu", "Como conheceu"], ["consultor", "Consultor(a)"], ["indicacao", "Indicação"]] },
+    { titulo: "OUTROS", campos: [["wellhub", "Wellhub / Gympass"]] },
+  ];
+
+  function cfg() { return S.read("config", { dados: {}, camposObrig: {} }); }
+
+  function render() {
+    var obrig = cfg().camposObrig || {};
+    $("grupos").innerHTML = GRUPOS.map(function (g) {
+      return '<div class="grp"><h3><span>' + g.titulo + "</span><span>Obrigatório</span></h3>" +
+        g.campos.map(function (c) {
+          if (g.fixos) return '<div class="campo-lin fixo"><span>' + c[1] + '</span><input type="checkbox" checked disabled></div>';
+          return '<div class="campo-lin"><span>' + c[1] + '</span><input type="checkbox" data-campo="' + c[0] + '"' + (obrig[c[0]] ? " checked" : "") + "></div>";
+        }).join("") + "</div>";
+    }).join("");
+  }
+
+  $("grupos").addEventListener("change", function (e) {
+    var campo = e.target.getAttribute && e.target.getAttribute("data-campo");
+    if (!campo) return;
+    var c = cfg();
+    c.camposObrig = c.camposObrig || {};
+    c.camposObrig[campo] = e.target.checked;
+    S.write("config", c);
+  });
+
+  S.onChange(function (k) { if (k === "config") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

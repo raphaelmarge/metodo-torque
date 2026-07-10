@@ -801,6 +801,27 @@
     if (editandoId && fichaId) abreFicha(fichaId);
   });
 
+  // campos obrigatórios do cadastro (Configurações → Campos Obrigatórios, como no EVO)
+  var ROT_OBRIG = { nasc: "Data de nascimento", cpf: "CPF", rg: "RG", genero: "Gênero", cep: "CEP", endereco: "Endereço", numero: "Número", bairro: "Bairro", cidade: "Cidade", uf: "UF", zap: "Celular/WhatsApp", email: "E-mail", responsavel: "Responsável", comoConheceu: "Como conheceu", consultor: "Consultor(a)", indicacao: "Indicação", wellhub: "Wellhub" };
+  $("dlgAluno").querySelector("form").addEventListener("submit", function (e) {
+    if (e.submitter && e.submitter.value !== "ok") return;
+    var obrig = (S.read("config", { camposObrig: {} }).camposObrig) || {};
+    var idPorCampo = {};
+    Object.keys(CAMPOS_A).forEach(function (id) { idPorCampo[CAMPOS_A[id]] = id; });
+    idPorCampo.comoConheceu = "aComoConheceu";
+    var faltam = [];
+    Object.keys(obrig).forEach(function (campo) {
+      if (!obrig[campo]) return;
+      var el = idPorCampo[campo] && $(idPorCampo[campo]);
+      if (el && !el.value.trim()) faltam.push({ campo: campo, el: el });
+    });
+    if (faltam.length) {
+      e.preventDefault();
+      alert("Preencha os campos obrigatórios: " + faltam.map(function (f) { return ROT_OBRIG[f.campo] || f.campo; }).join(", ") + ".");
+      faltam[0].el.focus();
+    }
+  });
+
   // ---------- nova venda (estilo EVO) ----------
   function renderVendaBusca() {
     var st = load();
