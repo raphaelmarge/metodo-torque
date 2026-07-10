@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loja On-line — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .lj { width: 100%; border-collapse: collapse; }
+  .lj th, .lj td { padding: 9px 12px; border-bottom: 1px solid var(--linha); font-size: 13.5px; text-align: left; }
+  .lj th { background: #5a6b8c; color: #fff; font-size: 12px; font-weight: 600; }
+  .lj td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .lj input[type="text"] { width: 100%; max-width: 180px; padding: 5px 8px; }
+  .lj tr.oculto td { opacity: .45; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CONFIGURAÇÕES</span>
+    <h1>Loja On-line</h1>
+    </div>
+  </div>
+  <p>Escolha o que vender, organize por categoria e baixe a loja pronta: uma página com carrinho que fecha o pedido direto no seu WhatsApp — mande o arquivo ou hospede onde quiser.</p>
+</header>
+
+<main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
+
+  <div class="card">
+    <h2>Dados da loja</h2>
+    <div class="linha-flex" style="margin-top: 10px; gap: 12px; flex-wrap: wrap;">
+      <div class="campo" style="flex: 1; min-width: 200px;"><label>Nome da loja</label><input id="cfgNome" placeholder="ex.: Loja TORQUE FIT"></div>
+      <div class="campo" style="min-width: 180px;"><label>WhatsApp dos pedidos</label><input id="cfgZap" inputmode="numeric" placeholder="31999998888"></div>
+      <div class="campo" style="flex: 1; min-width: 220px;"><label>Aviso no rodapé (opcional)</label><input id="cfgAviso" placeholder="ex.: retirada na recepção · PIX ou dinheiro"></div>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="lj" id="tabela"></table>
+  </div>
+
+  <div class="card linha-flex" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+    <span class="muted" id="resumo"></span>
+    <div class="linha-flex">
+      <button class="btn sec" id="btnPreview">👁 Visualizar</button>
+      <button class="btn" id="btnBaixar">⬇ Baixar loja (HTML)</button>
+    </div>
+  </div>
+
+  <p class="muted">💡 Os produtos vêm do programa <a href="produtos.html">Produtos e Vendas</a>. O arquivo baixado funciona sozinho (offline): o cliente monta o carrinho e o pedido chega no seu WhatsApp com itens, quantidades e total.</p>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  function cfg() { return S.read("loja", { nome: "", zap: "", aviso: "", exibir: {}, categorias: {} }); }
+  function produtos() { return S.read("produtos", { itens: [], vendas: [] }).itens || []; }
+
+  function render() {
+    var c = cfg();
+    if (document.activeElement !== $("cfgNome")) $("cfgNome").value = c.nome || "";
+    if (document.activeElement !== $("cfgZap")) $("cfgZap").value = c.zap || "";
+    if (document.activeElement !== $("cfgAviso")) $("cfgAviso").value = c.aviso || "";
+
+    var itens = produtos();
+    var cab = "<thead><tr><th>Exibir</th><th>Item</th><th>Categoria</th><th class='num'>Preço</th><th class='num'>Estoque</th></tr></thead>";
+    var corpo = itens.length ? itens.map(function (p) {
+      var on = c.exibir[p.id] !== false; // padrão: exibir
+      return "<tr class='" + (on ? "" : "oculto") + "'>" +
+        '<td><input type="checkbox" data-ex="' + p.id + '"' + (on ? " checked" : "") + "></td>" +
+        "<td><strong>" + esc(p.nome) + "</strong></td>" +
+        '<td><input type="text" data-cat="' + p.id + '" value="' + esc(c.categorias[p.id] || "") + '" placeholder="ex.: Suplementos"></td>' +
+        "<td class='num'>" + S.fmtBRL(+p.preco || 0) + "</td>" +
+        "<td class='num'>" + (+p.estoque || 0) + "</td></tr>";
+    }).join("") : '<tr><td colspan="5" class="muted" style="text-align:center; padding:20px;">Nenhum produto cadastrado — cadastre em Produtos e Vendas.</td></tr>';
+    $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
+
+    var visiveis = itens.filter(function (p) { return c.exibir[p.id] !== false; }).length;
+    $("resumo").textContent = visiveis + " de " + itens.length + " produto(s) exibidos na loja.";
+  }
+
+  ["cfgNome", "cfgZap", "cfgAviso"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var c = cfg();
+      c.nome = $("cfgNome").value.trim();
+      c.zap = $("cfgZap").value.replace(/\D/g, "");
+      c.aviso = $("cfgAviso").value.trim();
+      S.write("loja", c);
+      render();
+    });
+  });
+  $("tabela").addEventListener("change", function (e) {
+    var c = cfg();
+    var ex = e.target.getAttribute && e.target.getAttribute("data-ex");
+    var cat = e.target.getAttribute && e.target.getAttribute("data-cat");
+    if (ex) c.exibir[ex] = e.target.checked;
+    else if (cat != null) c.categorias[cat] = e.target.value.trim();
+    else return;
+    S.write("loja", c);
+    render();
+  });
+
+  // ---------- geração da loja standalone ----------
+  function geraHTML() {
+    var c = cfg();
+    var acad = (S.read("config", { dados: {} }).dados || {}).nome || "";
+    var nome = c.nome || ("Loja " + (acad || "da academia"));
+    var itens = produtos().filter(function (p) { return c.exibir[p.id] !== false && +p.preco > 0; });
+    // agrupa por categoria (sem categoria → "Produtos")
+    var grupos = {};
+    itens.forEach(function (p) {
+      var g = c.categorias[p.id] || "Produtos";
+      (grupos[g] = grupos[g] || []).push(p);
+    });
+    var dados = Object.keys(grupos).sort().map(function (g) {
+      return { cat: g, itens: grupos[g].map(function (p) {
+        return { id: p.id, nome: p.nome, preco: Math.round((+p.preco || 0) * 100) / 100, estoque: +p.estoque || 0 };
+      }) };
+    });
+
+    return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+      "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
+      "<title>" + esc(nome) + "</title><style>" +
+      "*{box-sizing:border-box;margin:0}body{font-family:system-ui,-apple-system,sans-serif;background:#f4f4f7;color:#1c1b22}" +
+      "header{background:#17161c;color:#fff;padding:26px 20px;text-align:center}header h1{font-size:22px}" +
+      "header p{color:#b9b6c3;font-size:13px;margin-top:4px}" +
+      "main{max-width:860px;margin:0 auto;padding:16px 14px 120px}" +
+      "h2{font-size:13px;letter-spacing:.1em;color:#6e6a78;margin:22px 4px 10px;text-transform:uppercase}" +
+      ".grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}" +
+      ".prod{background:#fff;border:1px solid #e4e2ea;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px}" +
+      ".prod .n{font-weight:700;font-size:14.5px}.prod .p{font-size:16px;font-weight:800;color:#5b21b6}" +
+      ".prod button{margin-top:auto;background:#5b21b6;color:#fff;border:0;border-radius:6px;padding:9px;font-weight:700;cursor:pointer;font-size:13px}" +
+      ".prod button:disabled{background:#c9c6d4}" +
+      ".prod .sem{font-size:11px;color:#b91c1c;font-weight:700}" +
+      "#barra{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #5b21b6;padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}" +
+      "#barra .tot{font-weight:800}#barra .itens{font-size:12.5px;color:#6e6a78}" +
+      "#barra a{background:#16a34a;color:#fff;text-decoration:none;padding:11px 18px;border-radius:6px;font-weight:800;font-size:14px}" +
+      "#barra button{background:none;border:0;color:#b91c1c;cursor:pointer;font-size:12px}" +
+      ".qtd{display:flex;gap:6px;align-items:center;justify-content:center}.qtd button{width:30px;padding:6px 0}" +
+      "footer{padding:18px;text-align:center;font-size:12px;color:#6e6a78}" +
+      "</style></head><body>" +
+      "<header><h1>" + esc(nome) + "</h1>" + (acad ? "<p>" + esc(acad) + "</p>" : "") + "</header><main id='m'></main>" +
+      "<div id='barra'><div><div class='tot' id='tot'></div><div class='itens' id='its'></div><button onclick='limpa()'>limpar carrinho</button></div>" +
+      "<a id='ped' target='_blank' rel='noopener'>Fazer pedido no WhatsApp 💬</a></div>" +
+      "<footer>" + esc(c.aviso || "Pedidos pelo WhatsApp · retirada na recepção") + "</footer>" +
+      "<script>var DADOS=" + JSON.stringify(dados) + ";var ZAP='" + (c.zap || "") + "';var car={};" +
+      "function brl(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}" +
+      "function tudo(){var o=[];DADOS.forEach(function(g){g.itens.forEach(function(p){o.push(p)})});return o}" +
+      "function render(){var m=document.getElementById('m');m.innerHTML=DADOS.map(function(g){" +
+      "return '<h2>'+g.cat+'</h2><div class=grid>'+g.itens.map(function(p){var q=car[p.id]||0;var sem=p.estoque<=0;" +
+      "return '<div class=prod><div class=n>'+p.nome+'</div><div class=p>'+brl(p.preco)+'</div>'+(sem?'<span class=sem>SEM ESTOQUE</span>':'')+" +
+      "(q?'<div class=qtd><button onclick=\"add(\\''+p.id+'\\',-1)\">−</button><strong>'+q+'</strong><button onclick=\"add(\\''+p.id+'\\',1)\">+</button></div>':" +
+      "'<button '+(sem?'disabled':'')+' onclick=\"add(\\''+p.id+'\\',1)\">Adicionar</button>')+'</div>'}).join('')+'</div>'}).join('');barra()}" +
+      "function add(id,d){car[id]=(car[id]||0)+d;if(car[id]<=0)delete car[id];render()}" +
+      "function limpa(){car={};render()}" +
+      "function barra(){var ids=Object.keys(car);var b=document.getElementById('barra');if(!ids.length){b.style.display='none';return}" +
+      "var tot=0,linhas=[];ids.forEach(function(id){var p=tudo().find(function(x){return x.id===id});if(!p)return;var q=car[id];tot+=p.preco*q;linhas.push(q+'x '+p.nome+' ('+brl(p.preco*q)+')')});" +
+      "b.style.display='flex';document.getElementById('tot').textContent='Total: '+brl(tot);" +
+      "document.getElementById('its').textContent=linhas.join(' · ');" +
+      "var msg='Oi! Quero fazer um pedido na loja:%0A%0A'+linhas.map(function(l){return '• '+l}).join('%0A')+'%0A%0ATotal: '+brl(tot);" +
+      "document.getElementById('ped').href='https://wa.me/55'+ZAP+'?text='+msg}" +
+      "render();<\/script></body></html>";
+  }
+
+  $("btnPreview").onclick = function () {
+    var w = window.open("", "_blank");
+    if (!w) { alert("Libere pop-ups para visualizar."); return; }
+    w.document.write(geraHTML());
+    w.document.close();
+  };
+  $("btnBaixar").onclick = function () {
+    var c = cfg();
+    if (!c.zap) { alert("Preencha o WhatsApp dos pedidos primeiro — é para lá que o carrinho vai."); return; }
+    var blob = new Blob([geraHTML()], { type: "text/html;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "loja-" + (c.nome || "online").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
+    a.click();
+  };
+
+  S.onChange(function (k) { if (k === "produtos" || k === "loja") render(); });
+  render();
+})();
+</script>
+</body>
+</html>
