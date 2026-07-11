@@ -264,12 +264,31 @@
         faceapi.nets.faceLandmark68TinyNet.loadFromUri(M),
         faceapi.nets.faceRecognitionNet.loadFromUri(M),
       ]);
+    }).then(function () {
+      // WebGL = placa de vídeo; sem isso a IA cai na CPU e fica MUITO lenta
+      var p;
+      try { p = Promise.resolve(faceapi.tf.setBackend("webgl")); } catch (e) { p = Promise.resolve(false); }
+      return p.catch(function () { return false; }).then(function () { return faceapi.tf.ready(); });
+    }).then(function () {
+      // aquecimento: a 1ª análise compila a IA (demora segundos) — fazemos
+      // isso agora, num quadro vazio, pra câmera já começar respondendo rápido
+      var cv = document.createElement("canvas");
+      cv.width = 224; cv.height = 224;
+      cv.getContext("2d").fillRect(0, 0, 224, 224);
+      return Promise.resolve()
+        .then(function () { return faceapi.detectSingleFace(cv, opDet(160)).withFaceLandmarks(true).withFaceDescriptor(); })
+        .then(function () {}, function () {});
     });
     return faceReady;
   }
-  function opDet() { return new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }); }
-  function detecta(video) {
-    return faceapi.detectSingleFace(video, opDet()).withFaceLandmarks(true).withFaceDescriptor();
+  function opDet(tam) { return new faceapi.TinyFaceDetectorOptions({ inputSize: tam || 224, scoreThreshold: 0.5 }); }
+  // varredura leve: só acha o rosto (rápida — roda o tempo todo na catraca)
+  function detectaRapido(video) {
+    return faceapi.detectSingleFace(video, opDet(160));
+  }
+  // análise completa: rosto + pontos + código de 128 números (mais pesada)
+  function detecta(video, tam) {
+    return faceapi.detectSingleFace(video, opDet(tam || 224)).withFaceLandmarks(true).withFaceDescriptor();
   }
 
   // ---------- câmera ----------
@@ -350,7 +369,7 @@
     var btn = this;
     btn.disabled = true;
     $("stCad").textContent = "Analisando rosto…";
-    detecta($("vidCad")).then(function (det) {
+    detecta($("vidCad"), 320).then(function (det) {
       if (!det) { $("stCad").textContent = "Nenhum rosto encontrado — aproxime e melhore a luz."; btn.disabled = false; return; }
       capturas.push(Array.prototype.slice.call(det.descriptor));
       atualizaCap();
@@ -475,21 +494,28 @@
   function cicloCatraca() {
     var v = $("vidCat");
     if (!v.srcObject) return;
-    detecta(v).then(function (det) {
-      if (det) {
-        var m = melhorMatch(det.descriptor, stBio().faces, LIMIAR);
-        if (m) {
-          var agora = Date.now();
-          if (!vistoRecentemente[m.alunoId] || agora - vistoRecentemente[m.alunoId] > COOLDOWN) {
-            vistoRecentemente[m.alunoId] = agora;
-            processaReconhecido(m);
-          }
-        } else {
-          flash("", "Rosto não reconhecido", "Se você é aluno, faça o cadastro facial na recepção.");
+    var proximo = 350; // ritmo da varredura quando não tem ninguém
+    // fase 1: varredura leve — só procura um rosto (barata, roda direto)
+    detectaRapido(v).then(function (tem) {
+      if (!tem) return null;
+      // fase 2: só agora roda a análise completa (a parte pesada)
+      return detecta(v, 224);
+    }).then(function (det) {
+      if (!det) return;
+      var m = melhorMatch(det.descriptor, stBio().faces, LIMIAR);
+      if (m) {
+        var agora = Date.now();
+        if (!vistoRecentemente[m.alunoId] || agora - vistoRecentemente[m.alunoId] > COOLDOWN) {
+          vistoRecentemente[m.alunoId] = agora;
+          processaReconhecido(m);
         }
+        proximo = 2000; // reconheceu: dá um respiro com a mensagem na tela
+      } else {
+        flash("", "Rosto não reconhecido", "Se você é aluno, faça o cadastro facial na recepção.");
+        proximo = 900;
       }
     }).catch(function () { /* segue o ciclo */ }).then(function () {
-      catracaTimer = setTimeout(cicloCatraca, 700);
+      catracaTimer = setTimeout(cicloCatraca, proximo);
     });
   }
 
