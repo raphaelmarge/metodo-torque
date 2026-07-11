@@ -136,8 +136,12 @@
         var status;
         if (r.status === "pago") status = "pago";
         else if (r.vencimento >= hoje) status = "programada";
-        // cartão tenta por ~1 semana; depois disso consideramos tentativas excedidas (padrão EVO)
-        else status = dias(r.vencimento, hoje) <= 7 ? "cobranca" : "excedida";
+        // janela de cobrança = tentativas × intervalo (Configurações → Financeiro e Venda); padrão 7 dias
+        else {
+          var cfgF = S.read("config", { dados: {} }).fin || {};
+          var janela = (+cfgF.tentativas || 0) * (+cfgF.intervalo || 0) || 7;
+          status = dias(r.vencimento, hoje) <= janela ? "cobranca" : "excedida";
+        }
         trans.push({ x: x, r: r, status: status });
       });
     });

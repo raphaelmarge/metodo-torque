@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configurações · Avançado — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .abas button { border: 1px solid var(--linha); background: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; }
+  .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .chk { display: flex; gap: 8px; align-items: center; font-size: 13.5px; padding: 5px 0; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CONFIGURAÇÕES</span>
+    <h1>Avançado</h1>
+    </div>
+  </div>
+  <p>A tela Avançado do EVO: regras de treino (WOD, validade da avaliação, sessões), risco de abandono, limites de convidados, segurança e suspensões. Tudo salva sozinho.</p>
+</header>
+
+<main class="corpo">
+  <div class="abas">
+    <button data-aba="treinos" class="ativa">🏋️ Treinos</button>
+    <button data-aba="outros">⚙️ Outros</button>
+  </div>
+
+  <section id="abaTreinos">
+    <div class="card" style="max-width: 720px;">
+      <h2>Treinos</h2>
+      <div style="margin-top: 8px;">
+        <label class="chk"><input type="checkbox" id="avWod"> Ativar WOD (treino do dia no painel e na TV)</label>
+        <label class="chk"><input type="checkbox" id="avProfMonta"> O "professor responsável" é quem monta o treino</label>
+        <label class="chk"><input type="checkbox" id="avTreinoInativo"> Permitir impressão de treino para clientes inativos</label>
+      </div>
+      <div class="linha-flex" style="gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+        <div class="campo" style="margin:0;"><label>Validade da avaliação física (dias)</label>
+          <input id="avAvalDias" type="number" min="1" style="width: 110px;"></div>
+        <div class="campo" style="margin:0;"><label>Nº máximo de sessões por treino (0 = livre)</label>
+          <input id="avMaxSessoes" type="number" min="0" style="width: 110px;"></div>
+      </div>
+      <p class="muted" style="font-size: 12.5px; margin-top: 10px;">A validade da avaliação é a mesma usada em Dados de Saúde, Perfil do Aluno, Radar e Vencimentos (é um número só pro sistema todo).</p>
+    </div>
+  </section>
+
+  <section id="abaOutros" hidden>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;" class="g2">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>Risco de abandono</h2>
+          <div class="campo" style="margin-top: 8px;"><label>Média de presença semanal mínima (abaixo disso = risco)</label>
+            <input id="avRiscoSemanal" type="number" step="0.5" min="0" style="width: 110px;" placeholder="ex.: 1"></div>
+          <p class="muted" style="font-size: 12.5px;">Usada como referência no <a href="risco.html">Risco de Abandono</a> e no <a href="radar.html">Radar de Retenção</a>.</p>
+          <label class="chk" style="margin-top: 6px;"><input type="checkbox" id="avSuspAtivo"> Considerar cliente suspenso como ativo nos relatórios</label>
+        </div>
+        <div class="card">
+          <h2>Convidados de cliente</h2>
+          <div class="linha-flex" style="gap: 12px; margin-top: 8px; flex-wrap: wrap;">
+            <div class="campo" style="margin:0;"><label>Mesma pessoa pode ser convidada até (vezes/mês, 0 = livre)</label>
+              <input id="avConvPessoaMes" type="number" min="0" style="width: 110px;"></div>
+            <div class="campo" style="margin:0;"><label>Convidados por cliente por dia (0 = livre)</label>
+              <input id="avConvPorDia" type="number" min="0" style="width: 110px;"></div>
+          </div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Os limites valem na hora de registrar convidado no <a href="entrada.html">Controle de Entradas</a> (além da cota mensal do plano).</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>Segurança</h2>
+          <div style="margin-top: 8px;">
+            <label class="chk"><input type="checkbox" id="avSegDispositivo"> Restringir o uso a um único dispositivo por usuário</label>
+            <label class="chk"><input type="checkbox" id="avSeg2fa"> Autenticação em duas etapas para login</label>
+          </div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Anotado como política da academia — o bloqueio técnico por login individual entra na Fase 2 (Supabase Auth já dá o caminho).</p>
+        </div>
+        <div class="card">
+          <h2>Suspensões</h2>
+          <div style="margin-top: 8px;">
+            <label class="chk"><input type="checkbox" id="avSuspMedico"> Não consumir dias de suspensão em afastamento médico</label>
+            <label class="chk"><input type="checkbox" id="avSuspCarencia"> Considerar data de início do contrato na carência de próximas suspensões</label>
+          </div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Regras de referência pra tela de <a href="suspensoes.html">Suspensões</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function cfg() { return S.read("config", { dados: {} }); }
+  function salva(fn) { var c = cfg(); fn(c); S.write("config", c); }
+
+  document.querySelectorAll(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+      $("abaTreinos").hidden = b.dataset.aba !== "treinos";
+      $("abaOutros").hidden = b.dataset.aba !== "outros";
+    });
+  });
+
+  var av = cfg().avancado || {};
+  // treinos
+  $("avWod").checked = av.wod !== false;
+  $("avProfMonta").checked = !!av.profMonta;
+  $("avTreinoInativo").checked = !!av.treinoInativo;
+  $("avAvalDias").value = +(cfg().avaliacaoDias) || 90; // mesma chave usada em Dados de Saúde
+  $("avMaxSessoes").value = av.maxSessoes != null ? av.maxSessoes : 0;
+  // outros
+  $("avRiscoSemanal").value = av.riscoSemanal != null ? av.riscoSemanal : "";
+  $("avSuspAtivo").checked = !!av.suspAtivo;
+  $("avConvPessoaMes").value = av.convPessoaMes != null ? av.convPessoaMes : 0;
+  $("avConvPorDia").value = av.convPorDia != null ? av.convPorDia : 0;
+  $("avSegDispositivo").checked = !!av.segDispositivo;
+  $("avSeg2fa").checked = !!av.seg2fa;
+  $("avSuspMedico").checked = !!av.suspMedico;
+  $("avSuspCarencia").checked = !!av.suspCarencia;
+
+  [["avWod", "wod"], ["avProfMonta", "profMonta"], ["avTreinoInativo", "treinoInativo"], ["avSuspAtivo", "suspAtivo"],
+   ["avSegDispositivo", "segDispositivo"], ["avSeg2fa", "seg2fa"], ["avSuspMedico", "suspMedico"], ["avSuspCarencia", "suspCarencia"]].forEach(function (par) {
+    $(par[0]).addEventListener("change", function () {
+      var v = this.checked;
+      salva(function (c) { c.avancado = c.avancado || {}; c.avancado[par[1]] = v; });
+    });
+  });
+  [["avMaxSessoes", "maxSessoes"], ["avRiscoSemanal", "riscoSemanal"], ["avConvPessoaMes", "convPessoaMes"], ["avConvPorDia", "convPorDia"]].forEach(function (par) {
+    $(par[0]).addEventListener("change", function () {
+      var v = +this.value || 0;
+      salva(function (c) { c.avancado = c.avancado || {}; c.avancado[par[1]] = v; });
+    });
+  });
+  $("avAvalDias").addEventListener("change", function () {
+    var v = +this.value || 90;
+    salva(function (c) { c.avaliacaoDias = v; });
+  });
+})();
+</script>
+</body>
+</html>

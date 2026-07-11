@@ -312,6 +312,18 @@
     var nome = prompt("Nome do convidado de " + a.nome + " (cota: " + q.resta + " restante(s) neste mês):") || "";
     if (!nome.trim()) return;
     var st = S.read("convidados", { itens: [] });
+    // limites globais de convidados (Configurações → Avançado, como no EVO)
+    var av = S.read("config", { dados: {} }).avancado || {};
+    var hoje2 = S.todayISO(), mes2 = hoje2.slice(0, 7);
+    var nomeNorm = nome.trim().toLowerCase();
+    if (+av.convPorDia > 0) {
+      var doDia = st.itens.filter(function (x) { return x.anfitriaoId === a.id && x.data === hoje2; }).length;
+      if (doDia >= +av.convPorDia) { alert("Limite de convidados por dia atingido (" + av.convPorDia + "/dia por cliente — Configurações → Avançado)."); return; }
+    }
+    if (+av.convPessoaMes > 0) {
+      var vezes = st.itens.filter(function (x) { return (x.nome || "").trim().toLowerCase() === nomeNorm && (x.data || "").slice(0, 7) === mes2; }).length;
+      if (vezes >= +av.convPessoaMes) { alert(nome.trim() + " já foi convidado(a) " + vezes + "x neste mês — limite de " + av.convPessoaMes + "x/mês por pessoa (Configurações → Avançado)."); return; }
+    }
     st.itens.push({ id: S.uid(), anfitriaoId: a.id, anfitriao: a.nome, nome: nome.trim(), data: S.todayISO(), hora: new Date().toTimeString().slice(0, 5) });
     S.write("convidados", st);
     alert("Convidado " + nome.trim() + " liberado hoje (até 23:59). Lembre de conferir o PAR-Q antes do treino, como no EVO.");

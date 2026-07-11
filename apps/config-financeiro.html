@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configurações · Financeiro e Venda — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .abas button { border: 1px solid var(--linha); background: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; }
+  .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .chk { display: flex; gap: 8px; align-items: center; font-size: 13.5px; padding: 5px 0; cursor: pointer; }
+  .formas { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2px 14px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CONFIGURAÇÕES</span>
+    <h1>Financeiro e Venda</h1>
+    </div>
+  </div>
+  <p>As regras financeiras e de venda da Configuração Inicial do EVO: formas de pagamento aceitas, multa e juros por atraso, régua de inadimplência, recorrência e as regras de venda e recibo. Tudo salva sozinho.</p>
+</header>
+
+<main class="corpo">
+  <div class="abas">
+    <button data-aba="fin" class="ativa">💰 Financeiro</button>
+    <button data-aba="venda">🛒 Venda</button>
+  </div>
+
+  <section id="abaFin">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;" class="g2">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>Formas de pagamento aceitas</h2>
+          <div class="formas" style="margin-top: 8px;" id="formas"></div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Aparecem como opção nas vendas e no caixa.</p>
+        </div>
+        <div class="card">
+          <h2>Multa e juros por atraso</h2>
+          <div class="linha-flex" style="gap: 12px; margin-top: 8px;">
+            <div class="campo" style="margin:0;"><label>Multa (%) após o vencimento</label>
+              <input id="finMulta" type="number" step="0.1" min="0" style="width: 120px;"></div>
+            <div class="campo" style="margin:0;"><label>Juros (%) por dia de atraso</label>
+              <input id="finJuros" type="number" step="0.01" min="0" style="width: 120px;"></div>
+          </div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Com isso preenchido, a Inadimplência mostra o <strong>valor atualizado</strong> de cada pendência (original + multa + juros).</p>
+        </div>
+        <div class="card">
+          <h2>Caixa</h2>
+          <div class="campo" style="margin-top: 8px;"><label>Fechar o caixa automaticamente</label>
+            <select id="finFechaCaixa">
+              <option value="">Não fechar sozinho</option>
+              <option value="00:00">00:00 — todos os dias à meia-noite</option>
+              <option value="22:00">22:00</option>
+              <option value="23:00">23:00</option>
+            </select></div>
+          <p class="muted" style="font-size: 12.5px;">Lembrete visual no Caixa do Dia após o horário (o fechamento em si continua conferido por você).</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>Régua de inadimplência</h2>
+          <div class="campo" style="margin-top: 8px;"><label>Considerar cliente inadimplente após quantos dias de atraso?</label>
+            <input id="finInadDias" type="number" min="0" style="width: 120px;" placeholder="0 = no dia seguinte"></div>
+          <div class="campo"><label>Sinalizar cancelamento de contrato após quantos dias inadimplente? (0 = nunca)</label>
+            <input id="finCancelaDias" type="number" min="0" style="width: 120px;"></div>
+          <p class="muted" style="font-size: 12.5px;">O bloqueio de acesso por inadimplência é configurado no <a href="entrada.html">Controle de Acesso</a> — aqui é a régua de cobrança/relatórios.</p>
+        </div>
+        <div class="card">
+          <h2>Débito recorrente (cartão)</h2>
+          <div class="linha-flex" style="gap: 12px; margin-top: 8px;">
+            <div class="campo" style="margin:0;"><label>Tentativas de cobrança</label>
+              <input id="finTentativas" type="number" min="1" max="10" style="width: 100px;"></div>
+            <div class="campo" style="margin:0;"><label>Dias de intervalo entre tentativas</label>
+              <input id="finIntervalo" type="number" min="1" max="10" style="width: 100px;"></div>
+          </div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Define a janela "em cobrança" × "tentativas excedidas" dos KPIs de <a href="cobrancas.html">Cobranças</a> (padrão: 7 dias).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="abaVenda" hidden>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;" class="g2">
+      <div class="card">
+        <h2>Regras de venda</h2>
+        <div style="margin-top: 8px;">
+          <label class="chk"><input type="checkbox" id="vdReciboAuto"> Enviar recibo ao registrar pagamento (WhatsApp/impressão)</label>
+          <label class="chk"><input type="checkbox" id="vdReciboCancel"> Gerar recibo de cancelamento de contrato</label>
+          <label class="chk"><input type="checkbox" id="vdNovaRenovacao"> Considerar nova venda do mesmo aluno como renovação</label>
+          <label class="chk"><input type="checkbox" id="vdContratoArmario"> Exigir contrato ativo para locação de armário</label>
+          <label class="chk"><input type="checkbox" id="vdSemDecimais"> Excluir casas decimais no recibo e contrato</label>
+        </div>
+        <div class="linha-flex" style="gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+          <div class="campo" style="margin:0;"><label>Dias antes do fim do contrato considerados renovação</label>
+            <input id="vdDiasRenov" type="number" min="0" style="width: 110px;"></div>
+          <div class="campo" style="margin:0;"><label>Teto de desconto por venda (R$) — 0 sem teto</label>
+            <input id="vdTetoDesc" type="number" min="0" style="width: 110px;"></div>
+          <div class="campo" style="margin:0;"><label>Link de venda expira em (dias)</label>
+            <input id="vdPrazoLink" type="number" min="0" style="width: 110px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Onde cada regra age</h2>
+        <ul style="font-size: 13.5px; line-height: 1.8; margin: 8px 0 0 18px;">
+          <li><strong>Recibo</strong>: os modelos ficam em <a href="documentos.html">Documentos</a> (incluindo o recibo de cancelamento).</li>
+          <li><strong>Renovação</strong>: a janela de dias alimenta o relatório <a href="renovacao.html">Renovação e Rematrícula</a>.</li>
+          <li><strong>Teto de desconto</strong>: os descontos cadastrados ficam em <a href="descontos.html">Descontos</a>.</li>
+          <li><strong>Armários</strong>: a exigência de contrato vale na <a href="armarios.html">Locação de Armários</a>.</li>
+          <li><strong>Link de venda</strong>: o prazo aparece na <a href="pagina-vendas.html">Página de Vendas</a>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var FORMAS = [["dinheiro", "Dinheiro"], ["pix", "PIX"], ["debito", "Cartão de débito"], ["credito", "Cartão de crédito"], ["transferencia", "Transferência"], ["boleto", "Boleto"], ["cheque", "Cheque"]];
+
+  function cfg() { return S.read("config", { dados: {} }); }
+  function salva(fn) {
+    var c = cfg();
+    fn(c);
+    S.write("config", c);
+  }
+
+  document.querySelectorAll(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+      $("abaFin").hidden = b.dataset.aba !== "fin";
+      $("abaVenda").hidden = b.dataset.aba !== "venda";
+    });
+  });
+
+  // ---- financeiro ----
+  var fin = cfg().fin || {};
+  $("formas").innerHTML = FORMAS.map(function (f) {
+    var on = !fin.formas || fin.formas[f[0]] !== false; // padrão: tudo aceito
+    return '<label class="chk"><input type="checkbox" data-forma="' + f[0] + '"' + (on ? " checked" : "") + "> " + f[1] + "</label>";
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-forma]"), function (cb) {
+    cb.addEventListener("change", function () {
+      salva(function (c) {
+        c.fin = c.fin || {};
+        c.fin.formas = c.fin.formas || {};
+        c.fin.formas[cb.getAttribute("data-forma")] = cb.checked;
+      });
+    });
+  });
+  $("finMulta").value = fin.multaPct != null ? fin.multaPct : "";
+  $("finJuros").value = fin.jurosDiaPct != null ? fin.jurosDiaPct : "";
+  $("finFechaCaixa").value = fin.fechaCaixa || "";
+  $("finInadDias").value = fin.inadDias != null ? fin.inadDias : "";
+  $("finCancelaDias").value = fin.cancelaDias != null ? fin.cancelaDias : "";
+  $("finTentativas").value = fin.tentativas != null ? fin.tentativas : 3;
+  $("finIntervalo").value = fin.intervalo != null ? fin.intervalo : 2;
+  [["finMulta", "multaPct", 1], ["finJuros", "jurosDiaPct", 1], ["finInadDias", "inadDias", 1], ["finCancelaDias", "cancelaDias", 1], ["finTentativas", "tentativas", 1], ["finIntervalo", "intervalo", 1], ["finFechaCaixa", "fechaCaixa", 0]].forEach(function (par) {
+    $(par[0]).addEventListener("change", function () {
+      var v = par[2] ? (+this.value || 0) : this.value;
+      salva(function (c) { c.fin = c.fin || {}; c.fin[par[1]] = v; });
+    });
+  });
+
+  // ---- venda ----
+  var vd = cfg().venda || {};
+  $("vdReciboAuto").checked = vd.reciboAuto !== false;
+  $("vdReciboCancel").checked = vd.reciboCancel !== false;
+  $("vdNovaRenovacao").checked = !!vd.novaRenovacao;
+  $("vdContratoArmario").checked = !!vd.contratoArmario;
+  $("vdSemDecimais").checked = !!vd.semDecimais;
+  $("vdDiasRenov").value = vd.diasRenov != null ? vd.diasRenov : 30;
+  $("vdTetoDesc").value = vd.tetoDesc != null ? vd.tetoDesc : "";
+  $("vdPrazoLink").value = vd.prazoLink != null ? vd.prazoLink : 2;
+  [["vdReciboAuto", "reciboAuto"], ["vdReciboCancel", "reciboCancel"], ["vdNovaRenovacao", "novaRenovacao"], ["vdContratoArmario", "contratoArmario"], ["vdSemDecimais", "semDecimais"]].forEach(function (par) {
+    $(par[0]).addEventListener("change", function () {
+      var v = this.checked;
+      salva(function (c) { c.venda = c.venda || {}; c.venda[par[1]] = v; });
+    });
+  });
+  [["vdDiasRenov", "diasRenov"], ["vdTetoDesc", "tetoDesc"], ["vdPrazoLink", "prazoLink"]].forEach(function (par) {
+    $(par[0]).addEventListener("change", function () {
+      var v = +this.value || 0;
+      salva(function (c) { c.venda = c.venda || {}; c.venda[par[1]] = v; });
+    });
+  });
+})();
+</script>
+</body>
+</html>
