@@ -209,6 +209,15 @@
   function tpl(st, dev) {
     var dias = diasAtraso(dev);
     var passo = passoAtual(dev);
+    // valor original + multa + juros/dia (Configurações → Financeiro e Venda)
+    function valorAtualizado(v, d) {
+      var f = S.read("config", { dados: {} }).fin || {};
+      var multa = +f.multaPct || 0, juros = +f.jurosDiaPct || 0;
+      if (!v || (!multa && !juros)) return "";
+      var atual = v * (1 + multa / 100 + (juros / 100) * d);
+      if (Math.round(atual) <= Math.round(v)) return "";
+      return ' · hoje: <strong style="color:var(--erro);">' + S.fmtBRL(atual) + "</strong> (multa+juros)";
+    }
     var passosHtml = REGUA.map(function (p) {
       var feito = dev.envios && dev.envios[p.id];
       var agora = passo && p.id === passo.id && !feito;
@@ -217,7 +226,7 @@
     var pend = dev.status === "aberto";
     return '<div class="card dev' + (dias >= 30 && pend ? " critico" : "") + '" data-id="' + dev.id + '">' +
       '<div class="cab"><div><h3>' + esc(dev.nome) + '</h3><div class="sub">' + S.fmtBRL(+dev.valor) + " · venceu " + S.fmtData(dev.vencimento) +
-      (pend ? " · <strong>" + dias + " dia(s) de atraso</strong>" : dev.status === "pago" ? " · pago em " + S.fmtData(dev.pagoEm) : " · em acordo") + "</div></div>" +
+      (pend ? " · <strong>" + dias + " dia(s) de atraso</strong>" + valorAtualizado(+dev.valor || 0, dias) : dev.status === "pago" ? " · pago em " + S.fmtData(dev.pagoEm) : " · em acordo") + "</div></div>" +
       (pend && passo ? '<span class="tag ' + (dias >= 30 ? "erro" : dias >= 13 ? "alerta" : "roxo") + '">PASSO ATUAL: ' + passo.rotulo + " · " + passo.titulo.toUpperCase() + "</span>" : "") + "</div>" +
       '<div class="passos">' + passosHtml + "</div>" +
       '<div class="acoes">' +
