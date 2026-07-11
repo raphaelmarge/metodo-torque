@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wellhub e TotalPass — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .abas button { border: 1px solid var(--linha); background: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; }
+  .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .resultado { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); cursor: pointer; }
+  .resultado + .resultado { margin-top: -1px; }
+  .resultado:hover { background: var(--fundo); }
+  .flash-ok { background: #eaf6ec; border: 1px solid rgba(22,163,74,.4); color: #2e7d32; padding: 12px 16px; font-weight: 700; }
+  .linha-ck { display: flex; gap: 10px; align-items: center; padding: 8px 12px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .linha-ck + .linha-ck { margin-top: -1px; }
+  .tag.wellhub { background: #e8e0ff; color: #5b21b6; }
+  .tag.totalpass { background: #ffe8d9; color: #c2410c; }
+  .concilia { padding: 8px 12px; border: 1px solid var(--linha); background: #fff; font-size: 13.5px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .concilia + .concilia { margin-top: -1px; }
+  .aviso-api { padding: 10px 14px; border: 1px solid rgba(217,119,6,.4); background: rgba(217,119,6,.06); color: var(--alerta); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · AGREGADORES</span>
+    <h1>Wellhub e TotalPass</h1>
+    </div>
+  </div>
+  <p>A operação dos agregadores como no EVO: valide o check-in do app na recepção, importe os acessos do portal do parceiro (CSV) com conciliação automática e acompanhe tudo — o repasse estimado fica no relatório Agregadores.</p>
+</header>
+
+<main class="corpo">
+  <div class="abas">
+    <button data-aba="checkin" class="ativa">✅ Check-in na recepção</button>
+    <button data-aba="lista">📋 Check-ins registrados</button>
+    <button data-aba="importar">📥 Importar do portal (CSV)</button>
+    <button data-aba="config">⚙️ Configuração e API</button>
+  </div>
+
+  <!-- ===== CHECK-IN ===== -->
+  <section id="abaCheckin">
+    <div style="display:grid; grid-template-columns: 1.1fr .9fr; gap:16px; align-items:start;" class="grid-wh">
+      <div class="card">
+        <div id="flashOk" class="flash-ok" hidden style="margin-bottom: 12px;"></div>
+        <h2>Validar check-in do app</h2>
+        <p class="muted" style="font-size: 13px; margin: 6px 0 10px;">O aluno mostra o check-in no app (Wellhub ou TotalPass), você confere o código/token na tela dele e registra aqui. Vale só pra aluno com plano de agregador.</p>
+        <div class="campo"><label>Aluno</label><input id="busca" placeholder="digite o nome…" autocomplete="off"></div>
+        <div id="resultados" style="margin-top: 8px;"></div>
+        <div id="painelSel" hidden>
+          <div class="linha-flex" style="gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 10px;">
+            <div class="campo" style="margin:0; flex:1; min-width: 160px;"><label>Token/código do app (opcional)</label>
+              <input id="token" placeholder="ex.: 8842-1190"></div>
+            <button class="btn" id="btnValidar">✓ Validar e registrar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Aluno de agregador novo?</h2>
+        <p class="muted" style="font-size: 13px; margin: 6px 0 10px;">Primeira visita de um usuário Wellhub/TotalPass: cadastre rapidinho — já entra com o contrato do agregador certo.</p>
+        <div class="grid-2">
+          <div class="campo"><label>Nome completo *</label><input id="nvNome"></div>
+          <div class="campo"><label>WhatsApp</label><input id="nvZap" placeholder="(21) 9…"></div>
+        </div>
+        <div class="linha-flex" style="gap: 8px; align-items: flex-end; flex-wrap: wrap;">
+          <div class="campo" style="margin:0; flex:1;"><label>Agregador</label><select id="nvPlano"></select></div>
+          <button class="btn sec" id="btnNovoAluno">+ Cadastrar e registrar 1º check-in</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== LISTA ===== -->
+  <section id="abaLista" hidden>
+    <div class="card">
+      <div class="linha-flex" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <h2>Check-ins de agregador</h2>
+        <div class="linha-flex" style="gap: 8px;">
+          <select id="fAgg"><option value="">Todos os agregadores</option></select>
+          <select id="fPeriodo"><option value="hoje">Hoje</option><option value="mes" selected>Este mês</option><option value="tudo">Tudo</option></select>
+          <button class="btn sec mini" id="btnCsvExport">⬇ CSV</button>
+        </div>
+      </div>
+      <div class="linha-flex" id="kpis" style="gap: 10px; margin: 12px 0; flex-wrap: wrap;"></div>
+      <div id="listaCk"></div>
+      <p class="muted" style="font-size: 12.5px; margin-top: 10px;">💰 O repasse estimado (R$ por check-in de cada plataforma) fica em <a href="agregadores.html">Agregadores</a>.</p>
+    </div>
+  </section>
+
+  <!-- ===== IMPORTAR ===== -->
+  <section id="abaImportar" hidden>
+    <div class="card">
+      <h2>Importar check-ins do portal do parceiro</h2>
+      <p class="muted" style="font-size: 13px; margin: 6px 0 10px;">
+        No portal <strong>Wellhub Partners</strong> (ou no portal do <strong>TotalPass</strong>), exporte o relatório de check-ins e cole aqui (ou envie o arquivo CSV). O sistema encontra cada aluno pelo nome e registra os check-ins que faltam — sem duplicar.
+      </p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+        <div class="campo" style="margin:0;"><label>Agregador do arquivo</label>
+          <select id="impAgg"><option>Wellhub</option><option>TotalPass</option></select></div>
+        <div class="campo" style="margin:0;"><label>Arquivo CSV</label><input id="impFile" type="file" accept=".csv,text/csv"></div>
+      </div>
+      <div class="campo" style="margin-top: 10px;"><label>…ou cole o conteúdo (1ª linha = cabeçalho; precisa ter colunas de data e nome)</label>
+        <textarea id="impTexto" rows="6" placeholder="data,nome&#10;2026-07-10,MARIA SILVA&#10;10/07/2026 08:31,JOAO SOUZA"></textarea></div>
+      <button class="btn" id="btnPrevia">🔍 Conferir antes de importar</button>
+      <div id="previa" style="margin-top: 14px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== CONFIG ===== -->
+  <section id="abaConfig" hidden>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;" class="grid-wh">
+      <div class="card">
+        <h2>Wellhub (Gympass)</h2>
+        <div class="campo" style="margin-top: 8px;"><label>Gym ID (ID da academia no Wellhub)</label><input id="cfgWhGym" placeholder="ex.: 123456"></div>
+        <div class="campo"><label>Chave da API de parceiros (Partners API)</label><input id="cfgWhKey" type="password" placeholder="Bearer token do portal de parceiros"></div>
+        <button class="btn sec" id="btnWhTestar">🔌 Testar conexão Wellhub</button>
+        <h2 style="margin-top: 18px;">TotalPass</h2>
+        <div class="campo" style="margin-top: 8px;"><label>Código da unidade no TotalPass</label><input id="cfgTpUnidade"></div>
+        <div class="campo"><label>Token/credencial do parceiro</label><input id="cfgTpToken" type="password"></div>
+        <button class="btn sec" id="btnTpTestar">🔌 Testar conexão TotalPass</button>
+        <div class="cid-log" id="apiLog" style="background:#16161d; color:#d7d7e0; font-family:ui-monospace,monospace; font-size:12.5px; padding:12px 14px; min-height:60px; margin-top: 12px; white-space:pre-wrap;">As credenciais ficam salvas só neste dispositivo.</div>
+      </div>
+      <div>
+        <div class="aviso-api">
+          ⚠ <strong>Como funciona a integração:</strong> as APIs oficiais do Wellhub e do TotalPass são feitas pra servidor (o navegador é bloqueado por segurança/CORS na maioria das chamadas). Por isso os dois caminhos <strong>garantidos</strong> aqui são: ① validar o check-in do app na recepção e ② importar o CSV do portal do parceiro — os mesmos dados, sem depender de servidor. O teste de conexão ao lado tenta a API real e mostra a resposta honesta.
+        </div>
+        <div class="card" style="margin-top: 14px;">
+          <h2>Passo a passo rápido</h2>
+          <ol style="font-size: 13.5px; line-height: 1.7; margin: 8px 0 0 18px;">
+            <li>Crie os planos <strong>Gympass / Wellhub</strong> e <strong>TotalPass</strong> (tipo "agregador") — já vêm de fábrica em Gestão de Alunos → Planos.</li>
+            <li>Usuário novo do app chegou? Cadastre no card da direita da aba Check-in — já entra no plano certo.</li>
+            <li>Todo dia: o aluno mostra o check-in no app e você registra na aba <strong>Check-in na recepção</strong>.</li>
+            <li>Toda semana (conferência): exporte o CSV do portal do parceiro e importe na aba <strong>Importar</strong> — o que faltou entra, nada duplica.</li>
+            <li>Fim do mês: confira o repasse estimado em <a href="agregadores.html">Agregadores</a> (R$ por check-in de cada plataforma).</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+  function norm(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+
+  function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  function stW() { return S.read("wellhub", { checkins: [], config: {} }); }
+
+  // agregador do aluno = nome do plano tipo "agregador" do contrato ativo
+  function aggDoAluno(a, st) {
+    st = st || stA();
+    var c = (a.contratos || []).find(function (x) {
+      if (x.status !== "ativo") return false;
+      var pl = (st.planos || []).find(function (p) { return p.id === x.planoId; });
+      return pl && pl.tipo === "agregador";
+    });
+    if (!c) return null;
+    var pl = (st.planos || []).find(function (p) { return p.id === c.planoId; });
+    return pl ? pl.nome : null;
+  }
+  function tagAgg(nome) {
+    var cls = /total/i.test(nome || "") ? "totalpass" : /well|gym/i.test(nome || "") ? "wellhub" : "roxo";
+    return '<span class="tag ' + cls + '">' + esc(nome || "?") + "</span>";
+  }
+
+  // registra check-in: no aluno (conta em tudo) + no log do agregador (auditoria)
+  function registra(aluno, agg, quandoISO, token, origem) {
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === aluno.id; });
+    if (!a) return false;
+    var iso = quandoISO || new Date().toISOString();
+    a.checkins = a.checkins || [];
+    if (a.checkins.indexOf(iso) >= 0) return false; // sem duplicar
+    a.checkins.push(iso);
+    S.write("alunos", st);
+    var w = stW();
+    w.checkins.push({ id: S.uid(), alunoId: a.id, nome: a.nome, agregador: agg, quando: iso, token: token || "", origem: origem || "recepcao" });
+    S.write("wellhub", w);
+    return true;
+  }
+
+  // ---------- abas ----------
+  document.querySelectorAll(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+      $("abaCheckin").hidden = b.dataset.aba !== "checkin";
+      $("abaLista").hidden = b.dataset.aba !== "lista";
+      $("abaImportar").hidden = b.dataset.aba !== "importar";
+      $("abaConfig").hidden = b.dataset.aba !== "config";
+      if (b.dataset.aba === "lista") renderLista();
+    });
+  });
+
+  // ---------- aba check-in ----------
+  var selId = null;
+  $("busca").addEventListener("input", function () {
+    selId = null;
+    $("painelSel").hidden = true;
+    var q = norm(this.value);
+    if (q.length < 2) { $("resultados").innerHTML = ""; return; }
+    var st = stA();
+    var lista = st.alunos.filter(function (a) {
+      return a.status !== "inativo" && norm(a.nome).indexOf(q) >= 0;
+    }).slice(0, 8);
+    $("resultados").innerHTML = lista.map(function (a) {
+      var agg = aggDoAluno(a, st);
+      return '<div class="resultado" data-sel="' + a.id + '"><strong style="flex:1;">' + esc(a.nome) + "</strong>" +
+        (agg ? tagAgg(agg) : '<span class="tag neutro">sem plano de agregador</span>') + "</div>";
+    }).join("") || '<div class="vazio">Nenhum aluno ativo com esse nome — cadastre no card ao lado.</div>';
+  });
+  $("resultados").addEventListener("click", function (e) {
+    var r = e.target.closest("[data-sel]"); if (!r) return;
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === r.getAttribute("data-sel"); });
+    if (!a) return;
+    if (!aggDoAluno(a, st)) { alert("Esse aluno não tem contrato ativo em plano de agregador. Coloque no plano Gympass/Wellhub ou TotalPass primeiro (Clientes → contratos)."); return; }
+    selId = a.id;
+    $("painelSel").hidden = false;
+    $("token").focus();
+  });
+  $("btnValidar").addEventListener("click", function () {
+    if (!selId) return;
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === selId; });
+    var agg = aggDoAluno(a, st);
+    var jaHoje = stW().checkins.some(function (k) { return k.alunoId === a.id && (k.quando || "").slice(0, 10) === S.todayISO(); });
+    if (jaHoje && !confirm(a.nome.split(" ")[0] + " já tem check-in de agregador hoje. Registrar outro?")) return;
+    registra(a, agg, null, $("token").value.trim(), "recepcao");
+    var fl = $("flashOk");
+    fl.textContent = "✅ Check-in " + agg + " registrado pra " + a.nome.split(" ")[0] + "! Bom treino.";
+    fl.hidden = false;
+    clearTimeout(fl._t); fl._t = setTimeout(function () { fl.hidden = true; }, 5000);
+    selId = null; $("busca").value = ""; $("token").value = ""; $("resultados").innerHTML = ""; $("painelSel").hidden = true;
+  });
+
+  // cadastro rápido de usuário do app
+  function planosAgg() { return (stA().planos || []).filter(function (p) { return p.tipo === "agregador"; }); }
+  function renderPlanosSel() {
+    $("nvPlano").innerHTML = planosAgg().map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + "</option>"; }).join("") ||
+      "<option value=''>crie um plano tipo agregador primeiro</option>";
+  }
+  $("btnNovoAluno").addEventListener("click", function () {
+    var nome = $("nvNome").value.trim();
+    var planoId = $("nvPlano").value;
+    if (!nome) { alert("Preencha o nome."); return; }
+    if (!planoId) { alert("Crie um plano do tipo agregador primeiro (Gestão de Alunos → Planos)."); return; }
+    var st = stA();
+    var a = {
+      id: S.uid(), nome: nome, zap: $("nvZap").value.trim(), status: "ativo", desde: S.todayISO(),
+      contratos: [{ id: S.uid(), planoId: planoId, inicio: S.todayISO(), meses: 12, status: "ativo", valor: 0 }],
+      checkins: [],
+    };
+    st.alunos.push(a);
+    S.write("alunos", st);
+    var pl = (st.planos || []).find(function (p) { return p.id === planoId; });
+    registra(a, pl ? pl.nome : "?", null, "", "recepcao");
+    var fl = $("flashOk");
+    fl.textContent = "✅ " + nome.split(" ")[0] + " cadastrado no " + (pl ? pl.nome : "agregador") + " com o 1º check-in registrado!";
+    fl.hidden = false;
+    clearTimeout(fl._t); fl._t = setTimeout(function () { fl.hidden = true; }, 6000);
+    $("nvNome").value = ""; $("nvZap").value = "";
+  });
+
+  // ---------- aba lista ----------
+  function renderLista() {
+    var w = stW();
+    var per = $("fPeriodo").value;
+    var agg = $("fAgg").value;
+    var hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    var aggs = {};
+    w.checkins.forEach(function (k) { aggs[k.agregador] = 1; });
+    $("fAgg").innerHTML = '<option value="">Todos os agregadores</option>' + Object.keys(aggs).sort().map(function (n) {
+      return "<option" + (n === agg ? " selected" : "") + ">" + esc(n) + "</option>";
+    }).join("");
+    var lista = w.checkins.filter(function (k) {
+      var d = (k.quando || "").slice(0, 10);
+      if (per === "hoje" && d !== hoje) return false;
+      if (per === "mes" && d.slice(0, 7) !== mes) return false;
+      if (agg && k.agregador !== agg) return false;
+      return true;
+    }).sort(function (a, b) { return a.quando < b.quando ? 1 : -1; });
+    var porAgg = {};
+    lista.forEach(function (k) { porAgg[k.agregador] = (porAgg[k.agregador] || 0) + 1; });
+    $("kpis").innerHTML = '<span class="tag roxo" style="font-size:13px;">Total: ' + lista.length + "</span>" +
+      Object.keys(porAgg).sort().map(function (n) { return tagAgg(n).replace("</span>", ": " + porAgg[n] + "</span>"); }).join("");
+    $("listaCk").innerHTML = lista.length ? lista.slice(0, 200).map(function (k) {
+      var d = new Date(k.quando);
+      return '<div class="linha-ck"><strong style="min-width:120px;">' + S.fmtData((k.quando || "").slice(0, 10)) + " " + d.toTimeString().slice(0, 5) + "</strong>" +
+        '<span style="flex:1;">' + esc(k.nome) + "</span>" + tagAgg(k.agregador) +
+        (k.token ? '<span class="muted">token ' + esc(k.token) + "</span>" : "") +
+        '<span class="tag ' + (k.origem === "csv" ? "neutro" : "ok") + '">' + (k.origem === "csv" ? "importado" : "recepção") + "</span></div>";
+    }).join("") : '<div class="vazio">Nenhum check-in de agregador no período.</div>';
+  }
+  $("fPeriodo").addEventListener("change", renderLista);
+  $("fAgg").addEventListener("change", renderLista);
+  $("btnCsvExport").addEventListener("click", function () {
+    var w = stW();
+    var linhas = ["data,hora,nome,agregador,token,origem"].concat(w.checkins.map(function (k) {
+      var d = new Date(k.quando);
+      return [(k.quando || "").slice(0, 10), d.toTimeString().slice(0, 5), '"' + k.nome + '"', k.agregador, k.token || "", k.origem].join(",");
+    }));
+    var blob = new Blob([linhas.join("\n")], { type: "text/csv" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "checkins-agregadores.csv";
+    a.click();
+  });
+
+  // ---------- aba importar ----------
+  function parseCSV(txt) {
+    var linhas = txt.split(/\r?\n/).filter(function (l) { return l.trim(); });
+    if (linhas.length < 2) return null;
+    var sep = linhas[0].indexOf(";") >= 0 ? ";" : ",";
+    function celulas(l) {
+      var out = [], cur = "", dentro = false;
+      for (var i = 0; i < l.length; i++) {
+        var ch = l[i];
+        if (ch === '"') { dentro = !dentro; continue; }
+        if (ch === sep && !dentro) { out.push(cur); cur = ""; continue; }
+        cur += ch;
+      }
+      out.push(cur);
+      return out.map(function (c) { return c.trim(); });
+    }
+    var cab = celulas(linhas[0]).map(norm);
+    function acha(pedacos) {
+      for (var i = 0; i < cab.length; i++) {
+        for (var j = 0; j < pedacos.length; j++) if (cab[i].indexOf(pedacos[j]) >= 0) return i;
+      }
+      return -1;
+    }
+    var iData = acha(["data", "date", "check-in", "checkin"]);
+    var iNome = acha(["nome", "name", "usuario", "user", "aluno", "cliente"]);
+    if (iData < 0 || iNome < 0) return { erro: "não achei as colunas de data e nome no cabeçalho: " + cab.join(" | ") };
+    return {
+      itens: linhas.slice(1).map(function (l) {
+        var c = celulas(l);
+        return { data: c[iData] || "", nome: c[iNome] || "" };
+      }).filter(function (x) { return x.nome; }),
+    };
+  }
+  function dataISO(txt) {
+    txt = String(txt).trim();
+    var m = txt.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return m[1] + "-" + m[2] + "-" + m[3] + "T" + (txt.match(/(\d{2}:\d{2})/) ? txt.match(/(\d{2}:\d{2})/)[1] : "12:00") + ":00.000Z";
+    m = txt.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m) return m[3] + "-" + m[2] + "-" + m[1] + "T" + (txt.match(/(\d{2}:\d{2})/) ? txt.match(/(\d{2}:\d{2})/)[1] : "12:00") + ":00.000Z";
+    return null;
+  }
+
+  var previaItens = null;
+  $("impFile").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { $("impTexto").value = r.result; };
+    r.readAsText(f, "utf-8");
+  });
+  $("btnPrevia").addEventListener("click", function () {
+    var res = parseCSV($("impTexto").value);
+    if (!res) { $("previa").innerHTML = '<div class="vazio">Cole o CSV com cabeçalho + linhas.</div>'; return; }
+    if (res.erro) { $("previa").innerHTML = '<div class="vazio">' + esc(res.erro) + "</div>"; return; }
+    var st = stA();
+    var w = stW();
+    var porNome = {};
+    st.alunos.forEach(function (a) { if (a.status !== "inativo") porNome[norm(a.nome)] = a; });
+    var jaTem = {};
+    w.checkins.forEach(function (k) { jaTem[k.alunoId + "|" + (k.quando || "").slice(0, 16)] = 1; });
+    previaItens = res.itens.map(function (x) {
+      var a = porNome[norm(x.nome)];
+      var iso = dataISO(x.data);
+      var dup = a && iso && jaTem[a.id + "|" + iso.slice(0, 16)];
+      return { nome: x.nome, iso: iso, aluno: a || null, dup: !!dup };
+    });
+    var ok = previaItens.filter(function (x) { return x.aluno && x.iso && !x.dup; }).length;
+    var semAluno = previaItens.filter(function (x) { return !x.aluno; }).length;
+    var dups = previaItens.filter(function (x) { return x.dup; }).length;
+    var semData = previaItens.filter(function (x) { return x.aluno && !x.iso; }).length;
+    $("previa").innerHTML =
+      '<div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">' +
+      '<span class="tag ok">' + ok + " novos pra importar</span>" +
+      (dups ? '<span class="tag neutro">' + dups + " já registrados (pulam)</span>" : "") +
+      (semData ? '<span class="tag alerta">' + semData + " com data ilegível</span>" : "") +
+      (semAluno ? '<span class="tag erro">' + semAluno + " sem aluno correspondente</span>" : "") + "</div>" +
+      previaItens.slice(0, 60).map(function (x) {
+        var stTag = !x.aluno ? '<span class="tag erro">não achei o aluno</span>' :
+          !x.iso ? '<span class="tag alerta">data ilegível</span>' :
+          x.dup ? '<span class="tag neutro">já registrado</span>' : '<span class="tag ok">vai importar</span>';
+        return '<div class="concilia"><strong style="flex:1;">' + esc(x.nome) + "</strong>" +
+          '<span class="muted">' + (x.iso ? S.fmtData(x.iso.slice(0, 10)) : "?") + "</span>" + stTag + "</div>";
+      }).join("") +
+      (previaItens.length > 60 ? '<p class="muted" style="margin-top:6px;">…e mais ' + (previaItens.length - 60) + " linha(s).</p>" : "") +
+      (ok ? '<div class="linha-flex" style="margin-top: 12px;"><button class="btn" id="btnImportar">📥 Importar ' + ok + " check-in(s)</button></div>" : "") +
+      (semAluno ? '<p class="muted" style="font-size: 12.5px; margin-top: 8px;">Quem não foi encontrado: confira se o nome no portal é igual ao do cadastro, ou cadastre o aluno na aba Check-in.</p>' : "");
+    var bi = $("btnImportar");
+    if (bi) bi.onclick = function () {
+      var agg = $("impAgg").value;
+      var feitos = 0;
+      previaItens.forEach(function (x) {
+        if (x.aluno && x.iso && !x.dup) { if (registra(x.aluno, agg, x.iso, "", "csv")) feitos++; }
+      });
+      alert("✅ " + feitos + " check-in(s) do " + agg + " importados!");
+      previaItens = null;
+      $("previa").innerHTML = "";
+      $("impTexto").value = "";
+    };
+  });
+
+  // ---------- aba config ----------
+  (function () {
+    var c = stW().config || {};
+    $("cfgWhGym").value = c.whGym || "";
+    $("cfgWhKey").value = c.whKey || "";
+    $("cfgTpUnidade").value = c.tpUnidade || "";
+    $("cfgTpToken").value = c.tpToken || "";
+  })();
+  ["cfgWhGym", "cfgWhKey", "cfgTpUnidade", "cfgTpToken"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var w = stW();
+      w.config = w.config || {};
+      w.config.whGym = $("cfgWhGym").value.trim();
+      w.config.whKey = $("cfgWhKey").value;
+      w.config.tpUnidade = $("cfgTpUnidade").value.trim();
+      w.config.tpToken = $("cfgTpToken").value;
+      S.write("wellhub", w);
+    });
+  });
+  function apiLog(msg) { $("apiLog").textContent = msg; }
+  function testaAPI(nome, url, headers) {
+    apiLog("Chamando a API do " + nome + "…");
+    var ctl = new AbortController();
+    var to = setTimeout(function () { ctl.abort(); }, 8000);
+    fetch(url, { headers: headers, signal: ctl.signal }).then(function (r) {
+      clearTimeout(to);
+      apiLog((r.ok ? "✅" : "❌") + " " + nome + " respondeu " + r.status + (r.ok ? " — credenciais aceitas!" : " — confira a chave/credencial."));
+    }).catch(function (e) {
+      clearTimeout(to);
+      apiLog("❌ " + nome + ": o navegador não conseguiu chamar a API (" + (e.name === "AbortError" ? "sem resposta" : "bloqueio CORS/rede") + ").\n" +
+        "Isso é esperado: a API oficial é servidor-a-servidor. Use o check-in na recepção + a importação CSV — o resultado é o mesmo.");
+    });
+  }
+  $("btnWhTestar").addEventListener("click", function () {
+    var c = stW().config || {};
+    if (!c.whKey) { apiLog("Preencha a chave da API do Wellhub primeiro."); return; }
+    testaAPI("Wellhub", "https://api.partners.gympass.com/access/v1/gyms/" + encodeURIComponent(c.whGym || "0"), { Authorization: "Bearer " + c.whKey });
+  });
+  $("btnTpTestar").addEventListener("click", function () {
+    var c = stW().config || {};
+    if (!c.tpToken) { apiLog("Preencha o token do TotalPass primeiro."); return; }
+    testaAPI("TotalPass", "https://api.totalpass.com/v1/partners/units/" + encodeURIComponent(c.tpUnidade || "0"), { Authorization: "Bearer " + c.tpToken });
+  });
+
+  // ---------- boot ----------
+  renderPlanosSel();
+  S.onChange(function (k) { if (k === "alunos") renderPlanosSel(); if (k === "wellhub") renderLista(); });
+})();
+</script>
+</body>
+</html>
