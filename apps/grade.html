@@ -109,7 +109,7 @@
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 540px; max-width: 100%;">
     <h2 id="dlgAulaTitulo">Nova aula da grade</h2>
     <div class="grid-2">
-      <div class="campo"><label>Atividade *</label><input id="gNome" required placeholder="ex.: CROSSFIT, SPINNING, GAP"></div>
+      <div class="campo"><label>Atividade *</label><input id="gNome" required placeholder="ex.: CROSSFIT, SPINNING, GAP" list="gAtividades"><datalist id="gAtividades"></datalist></div>
       <div class="campo"><label>Professor(a) *</label><input id="gProf" required></div>
     </div>
     <div class="grid-2">
@@ -205,7 +205,7 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
-  var CORES = ["#7c3aed", "#0ea5a5", "#f59e0b", "#dc2626", "#16a34a", "#2563eb", "#db2777", "#57534e"];
+  var CORES = ["#7c3aed", "#0ea5a5", "#f59e0b", "#dc2626", "#16a34a", "#2563eb", "#db2777", "#57534e", "#ea580c", "#111111", "#eab308", "#78350f"];
   var DIAS = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
   var DIAS_CURTO = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
 
@@ -323,6 +323,26 @@
   $("gCores").innerHTML = CORES.map(function (c, i) {
     return '<label><input type="radio" name="gCor" value="' + c + '"' + (i === 0 ? " checked" : "") + '><span style="background:' + c + '"></span></label>';
   }).join("");
+
+  // catálogo de Atividades (Administrativo): sugere o nome e puxa a cor sozinho
+  function catalogoAtividades() {
+    return (S.read("atividades", { itens: [] }).itens || []).filter(function (x) { return x.ativa !== false; });
+  }
+  function atualizaDatalist() {
+    $("gAtividades").innerHTML = catalogoAtividades().map(function (x) {
+      return "<option>" + String(x.nome).replace(/[<>&"]/g, "") + "</option>";
+    }).join("");
+  }
+  atualizaDatalist();
+  S.onChange(function (k) { if (k === "atividades") atualizaDatalist(); });
+  $("gNome").addEventListener("change", function () {
+    var nome = this.value.trim().toLowerCase();
+    var atv = catalogoAtividades().find(function (x) { return x.nome.toLowerCase() === nome; });
+    if (atv && atv.cor) {
+      var r = document.querySelector('[name="gCor"][value="' + atv.cor + '"]');
+      if (r) r.checked = true;
+    }
+  });
 
   function abreAula(a) {
     editandoId = a ? a.id : null;

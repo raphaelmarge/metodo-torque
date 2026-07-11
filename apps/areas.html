@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Áreas — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .linha-area { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .linha-area + .linha-area { margin-top: -1px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Áreas</h1>
+    </div>
+  </div>
+  <p>As áreas da academia como no EVO — sala de musculação, box, sala de bike, área kids — com capacidade e equipamentos de cada uma. Servem de referência pra grade, turmas e contagem de ocupação.</p>
+</header>
+
+<main class="corpo">
+  <div class="card">
+    <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+      <div class="campo" style="margin:0; flex:1; min-width: 180px;"><label>Nome da área *</label><input id="nvNome" placeholder="ex.: SALA DE MUSCULAÇÃO"></div>
+      <div class="campo" style="margin:0;"><label>Capacidade (pessoas)</label><input id="nvCap" type="number" min="0" style="width: 110px;"></div>
+      <div class="campo" style="margin:0; flex:1; min-width: 160px;"><label>Equipamentos (resumo)</label><input id="nvEquip" placeholder="ex.: 12 esteiras, 8 bikes"></div>
+      <button class="btn" id="btnNova">+ Nova área</button>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between; margin: 14px 0 8px;">
+      <h2 style="margin:0;"><span id="qtd">0</span> resultados</h2>
+      <input id="busca" placeholder="🔍 Pesquisar…" style="width: 200px;">
+    </div>
+    <div id="lista"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  function load() { return S.read("areas", { itens: [] }); }
+
+  function render() {
+    var st = load();
+    var q = $("busca").value.trim().toLowerCase();
+    var lista = st.itens.filter(function (a) { return !q || a.nome.toLowerCase().indexOf(q) >= 0; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    $("qtd").textContent = lista.length;
+    $("lista").innerHTML = lista.length ? lista.map(function (a) {
+      return '<div class="linha-area"><strong style="flex:1; min-width: 160px;">' + esc(a.nome) + "</strong>" +
+        '<span class="muted">Capacidade: ' + (a.capacidade || "—") + "</span>" +
+        '<span class="muted" style="flex:1;">' + esc(a.equipamentos || "—") + "</span>" +
+        '<button class="btn sec mini" data-ed="' + a.id + '">✎</button>' +
+        '<button class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
+    }).join("") : '<div class="vazio">Nenhuma área ainda — cadastre as suas (ex.: SALA DE MUSCULAÇÃO, CROSSFIT BOX, SALA DE BIKE, SALA DE GINÁSTICA, Sala de avaliação, area kids).</div>';
+  }
+
+  $("btnNova").addEventListener("click", function () {
+    var nome = $("nvNome").value.trim();
+    if (!nome) { alert("Preencha o nome da área."); return; }
+    var st = load();
+    if (st.itens.some(function (a) { return a.nome.toLowerCase() === nome.toLowerCase(); })) { alert("Essa área já existe."); return; }
+    st.itens.push({ id: S.uid(), nome: nome, capacidade: +$("nvCap").value || 0, equipamentos: $("nvEquip").value.trim() });
+    S.write("areas", st);
+    $("nvNome").value = ""; $("nvCap").value = ""; $("nvEquip").value = "";
+    render();
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    var ed = e.target.closest("[data-ed]");
+    var rm = e.target.closest("[data-rm]");
+    var st = load();
+    if (ed) {
+      var a = st.itens.find(function (x) { return x.id === ed.getAttribute("data-ed"); });
+      if (!a) return;
+      var nome = (prompt("Nome da área:", a.nome) || "").trim();
+      if (!nome) return;
+      var cap = prompt("Capacidade (pessoas):", a.capacidade || "");
+      var eq = prompt("Equipamentos (resumo):", a.equipamentos || "");
+      a.nome = nome;
+      if (cap !== null) a.capacidade = +cap || 0;
+      if (eq !== null) a.equipamentos = eq.trim();
+      S.write("areas", st);
+      render();
+    }
+    if (rm) {
+      var a2 = st.itens.find(function (x) { return x.id === rm.getAttribute("data-rm"); });
+      if (!a2 || !confirm("Excluir a área \"" + a2.nome + "\"?")) return;
+      st.itens = st.itens.filter(function (x) { return x.id !== a2.id; });
+      S.write("areas", st);
+      render();
+    }
+  });
+
+  $("busca").addEventListener("input", render);
+  render();
+})();
+</script>
+</body>
+</html>
