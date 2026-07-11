@@ -58,8 +58,11 @@
           <div class="linha-flex" style="gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 10px;">
             <div class="campo" style="margin:0; flex:1; min-width: 160px;"><label>Token/código do app (opcional)</label>
               <input id="token" placeholder="ex.: 8842-1190"></div>
+            <div class="campo" style="margin:0; flex:1; min-width: 160px;"><label>ID do aluno no app (fixa o vínculo)</label>
+              <input id="aggId" placeholder="ID/matrícula no Wellhub ou TotalPass"></div>
             <button class="btn" id="btnValidar">✓ Validar e registrar</button>
           </div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 6px;">💡 Com o ID salvo, a importação (CSV/API) encontra o aluno sozinha mesmo que o nome no portal esteja diferente — e a diária do dia libera a entrada automaticamente.</p>
         </div>
       </div>
       <div class="card">
@@ -68,6 +71,7 @@
         <div class="grid-2">
           <div class="campo"><label>Nome completo *</label><input id="nvNome"></div>
           <div class="campo"><label>WhatsApp</label><input id="nvZap" placeholder="(21) 9…"></div>
+          <div class="campo"><label>ID no app (recomendado)</label><input id="nvAggId" placeholder="ID/matrícula no app"></div>
         </div>
         <div class="linha-flex" style="gap: 8px; align-items: flex-end; flex-wrap: wrap;">
           <div class="campo" style="margin:0; flex:1;"><label>Agregador</label><select id="nvPlano"></select></div>
@@ -125,6 +129,9 @@
         <div class="campo" style="margin-top: 8px;"><label>Código da unidade no TotalPass</label><input id="cfgTpUnidade"></div>
         <div class="campo"><label>Token/credencial do parceiro</label><input id="cfgTpToken" type="password"></div>
         <button class="btn sec" id="btnTpTestar">🔌 Testar conexão TotalPass</button>
+        <div class="linha-flex" style="margin-top: 12px;">
+          <button class="btn" id="btnBuscarAPI">🔄 Buscar check-ins de hoje (API)</button>
+        </div>
         <div class="cid-log" id="apiLog" style="background:#16161d; color:#d7d7e0; font-family:ui-monospace,monospace; font-size:12.5px; padding:12px 14px; min-height:60px; margin-top: 12px; white-space:pre-wrap;">As credenciais ficam salvas só neste dispositivo.</div>
       </div>
       <div>
@@ -135,9 +142,10 @@
           <h2>Passo a passo rápido</h2>
           <ol style="font-size: 13.5px; line-height: 1.7; margin: 8px 0 0 18px;">
             <li>Crie os planos <strong>Gympass / Wellhub</strong> e <strong>TotalPass</strong> (tipo "agregador") — já vêm de fábrica em Gestão de Alunos → Planos.</li>
-            <li>Usuário novo do app chegou? Cadastre no card da direita da aba Check-in — já entra no plano certo.</li>
-            <li>Todo dia: o aluno mostra o check-in no app e você registra na aba <strong>Check-in na recepção</strong>.</li>
-            <li>Toda semana (conferência): exporte o CSV do portal do parceiro e importe na aba <strong>Importar</strong> — o que faltou entra, nada duplica.</li>
+            <li>Usuário novo do app chegou? Cadastre no card da direita da aba Check-in <strong>com o ID dele no app</strong> — já entra no plano certo.</li>
+            <li>Todo dia: o aluno faz o check-in no app → você valida o token (ou a API/CSV traz sozinho) → vira a <strong>diária do dia</strong>.</li>
+            <li>🔓 <strong>A diária desbloqueia a entrada automaticamente</strong>: no Controle de Entradas e na catraca facial, aluno de agregador SEM check-in do app hoje fica bloqueado; COM check-in, entra direto até 23:59.</li>
+            <li>Toda semana (conferência): importe o CSV do portal — concilia pelo ID do app (ou pelo nome), sem duplicar.</li>
             <li>Fim do mês: confira o repasse estimado em <a href="agregadores.html">Agregadores</a> (R$ por check-in de cada plataforma).</li>
           </ol>
         </div>
@@ -231,7 +239,16 @@
     if (!aggDoAluno(a, st)) { alert("Esse aluno não tem contrato ativo em plano de agregador. Coloque no plano Gympass/Wellhub ou TotalPass primeiro (Clientes → contratos)."); return; }
     selId = a.id;
     $("painelSel").hidden = false;
+    $("aggId").value = a.aggId || "";
     $("token").focus();
+  });
+  $("aggId").addEventListener("change", function () {
+    if (!selId) return;
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === selId; });
+    if (!a) return;
+    a.aggId = this.value.trim();
+    S.write("alunos", st);
   });
   $("btnValidar").addEventListener("click", function () {
     if (!selId) return;
@@ -261,7 +278,7 @@
     if (!planoId) { alert("Crie um plano do tipo agregador primeiro (Gestão de Alunos → Planos)."); return; }
     var st = stA();
     var a = {
-      id: S.uid(), nome: nome, zap: $("nvZap").value.trim(), status: "ativo", desde: S.todayISO(),
+      id: S.uid(), nome: nome, zap: $("nvZap").value.trim(), aggId: $("nvAggId").value.trim(), status: "ativo", desde: S.todayISO(),
       contratos: [{ id: S.uid(), planoId: planoId, inicio: S.todayISO(), meses: 12, status: "ativo", valor: 0 }],
       checkins: [],
     };
@@ -346,12 +363,13 @@
     }
     var iData = acha(["data", "date", "check-in", "checkin"]);
     var iNome = acha(["nome", "name", "usuario", "user", "aluno", "cliente"]);
-    if (iData < 0 || iNome < 0) return { erro: "não achei as colunas de data e nome no cabeçalho: " + cab.join(" | ") };
+    var iId = acha(["id", "matricula", "matrícula", "gympass", "wellhub", "totalpass", "codigo", "código"]);
+    if (iData < 0 || (iNome < 0 && iId < 0)) return { erro: "não achei as colunas de data e nome/ID no cabeçalho: " + cab.join(" | ") };
     return {
       itens: linhas.slice(1).map(function (l) {
         var c = celulas(l);
-        return { data: c[iData] || "", nome: c[iNome] || "" };
-      }).filter(function (x) { return x.nome; }),
+        return { data: c[iData] || "", nome: iNome >= 0 ? (c[iNome] || "") : "", aggId: iId >= 0 ? (c[iId] || "").trim() : "" };
+      }).filter(function (x) { return x.nome || x.aggId; }),
     };
   }
   function dataISO(txt) {
@@ -377,15 +395,20 @@
     if (res.erro) { $("previa").innerHTML = '<div class="vazio">' + esc(res.erro) + "</div>"; return; }
     var st = stA();
     var w = stW();
-    var porNome = {};
-    st.alunos.forEach(function (a) { if (a.status !== "inativo") porNome[norm(a.nome)] = a; });
+    var porNome = {}, porAggId = {};
+    st.alunos.forEach(function (a) {
+      if (a.status === "inativo") return;
+      porNome[norm(a.nome)] = a;
+      if (a.aggId) porAggId[String(a.aggId).trim()] = a;
+    });
     var jaTem = {};
     w.checkins.forEach(function (k) { jaTem[k.alunoId + "|" + (k.quando || "").slice(0, 16)] = 1; });
     previaItens = res.itens.map(function (x) {
-      var a = porNome[norm(x.nome)];
+      // o ID do app tem prioridade — acha o aluno mesmo com nome diferente no portal
+      var a = (x.aggId && porAggId[x.aggId]) || porNome[norm(x.nome)];
       var iso = dataISO(x.data);
       var dup = a && iso && jaTem[a.id + "|" + iso.slice(0, 16)];
-      return { nome: x.nome, iso: iso, aluno: a || null, dup: !!dup };
+      return { nome: x.nome || ("ID " + x.aggId), iso: iso, aluno: a || null, dup: !!dup };
     });
     var ok = previaItens.filter(function (x) { return x.aluno && x.iso && !x.dup; }).length;
     var semAluno = previaItens.filter(function (x) { return !x.aluno; }).length;
@@ -463,6 +486,59 @@
     var c = stW().config || {};
     if (!c.tpToken) { apiLog("Preencha o token do TotalPass primeiro."); return; }
     testaAPI("TotalPass", "https://api.totalpass.com/v1/partners/units/" + encodeURIComponent(c.tpUnidade || "0"), { Authorization: "Bearer " + c.tpToken });
+  });
+
+  // busca automática: tenta puxar os check-ins de hoje das APIs e casa pelo
+  // ID do app salvo no aluno — cada um vira a diária que libera a entrada
+  function extraiCheckins(json) {
+    var arr = json && (json.checkins || json.check_ins || json.bookings || json.data || json.results || (Array.isArray(json) ? json : null));
+    if (!arr || !arr.length) return [];
+    return arr.map(function (it) {
+      return {
+        aggId: String(it.user_id || it.userId || it.gympass_id || it.member_id || it.id || "").trim(),
+        quando: it.timestamp || it.checkin_at || it.created_at || it.date || null,
+      };
+    }).filter(function (x) { return x.aggId; });
+  }
+  function buscaAPI(nome, agg, url, headers) {
+    return fetch(url, { headers: headers }).then(function (r) {
+      if (!r.ok) throw new Error(nome + " respondeu " + r.status);
+      return r.json();
+    }).then(function (json) {
+      var itens = extraiCheckins(json);
+      var st = stA();
+      var porAggId = {};
+      st.alunos.forEach(function (a) { if (a.aggId && a.status !== "inativo") porAggId[String(a.aggId).trim()] = a; });
+      var hoje = S.todayISO();
+      var w = stW();
+      var feitos = 0;
+      itens.forEach(function (x) {
+        var a = porAggId[x.aggId];
+        if (!a) return;
+        var iso = x.quando ? new Date(x.quando).toISOString() : new Date().toISOString();
+        if (iso.slice(0, 10) !== hoje) return;
+        var ja = w.checkins.some(function (k) { return k.alunoId === a.id && (k.quando || "").slice(0, 10) === hoje; });
+        if (ja) return;
+        w.checkins.push({ id: S.uid(), alunoId: a.id, nome: a.nome, agregador: agg, quando: iso, token: "", origem: "api" });
+        feitos++;
+      });
+      if (feitos) S.write("wellhub", w);
+      return nome + ": " + itens.length + " check-in(s) na API, " + feitos + " diária(s) nova(s) liberada(s).";
+    });
+  }
+  $("btnBuscarAPI").addEventListener("click", function () {
+    var c = stW().config || {};
+    var tarefas = [];
+    if (c.whKey) tarefas.push(buscaAPI("Wellhub", "Wellhub", "https://api.partners.gympass.com/access/v1/gyms/" + encodeURIComponent(c.whGym || "0") + "/checkins", { Authorization: "Bearer " + c.whKey }));
+    if (c.tpToken) tarefas.push(buscaAPI("TotalPass", "TotalPass", "https://api.totalpass.com/v1/partners/units/" + encodeURIComponent(c.tpUnidade || "0") + "/checkins", { Authorization: "Bearer " + c.tpToken }));
+    if (!tarefas.length) { apiLog("Preencha as credenciais de pelo menos uma plataforma primeiro."); return; }
+    apiLog("Buscando check-ins de hoje…");
+    Promise.allSettled(tarefas).then(function (rs) {
+      apiLog(rs.map(function (r) {
+        return r.status === "fulfilled" ? "✅ " + r.value :
+          "❌ " + (r.reason && r.reason.message || r.reason) + "\n   (se foi bloqueio CORS, é o esperado no navegador — use o token na recepção ou o CSV; a diária funciona igual)";
+      }).join("\n"));
+    });
   });
 
   // ---------- boot ----------
