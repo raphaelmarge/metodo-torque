@@ -50,11 +50,12 @@
       <button data-a="recibo" class="ativa">🧾 Recibo de pagamento</button>
       <button data-a="contrato">📄 Contrato de matrícula</button>
       <button data-a="cancelamento">✕ Recibo de cancelamento</button>
+      <button data-a="termos">📜 Termos e políticas</button>
     </div>
     <button class="btn" id="btnImprimir" hidden>🖨 Imprimir</button>
   </div>
 
-  <div class="card no-print">
+  <div class="card no-print" id="cardSel">
     <div class="linha-flex" style="align-items: flex-end;">
       <div class="campo" style="min-width: 260px;"><label>Aluno</label>
         <input id="selAluno" list="alunosLista" placeholder="digite o nome…"><datalist id="alunosLista"></datalist>
@@ -125,7 +126,9 @@
     aba = b.getAttribute("data-a");
     Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("ativa", x === b); });
     $("campoPag").style.display = aba === "recibo" ? "" : "none";
+    $("cardSel").style.display = aba === "termos" ? "none" : "";
     $("docArea").innerHTML = ""; $("btnImprimir").hidden = true;
+    if (aba === "termos") renderTermos();
   });
 
   $("alunosLista").innerHTML = alunosSt().alunos.filter(function (a) { return a.status !== "inativo"; })
@@ -140,6 +143,52 @@
     $("selPag").innerHTML = pagos.length ? pagos.map(function (r) {
       return '<option value="' + r.id + '">' + r.competencia + " · pago em " + S.fmtData(r.pagoEm) + " · " + brl2(+r.valor) + "</option>";
     }).join("") : '<option value="">— nenhum pagamento registrado —</option>';
+  });
+
+  // ---------- termos e políticas (Configurações → Documentos do EVO) ----------
+  var TERMOS = [
+    ["acesso", "Termos de acesso", "Declaro estar apto(a) à prática de atividades físicas e me comprometo a seguir as regras da academia: apresentar-se com vestuário adequado, respeitar os horários contratados, zelar pelos equipamentos e seguir as orientações da equipe. O acesso é pessoal e intransferível; o compartilhamento de carteirinha/credencial implica bloqueio."],
+    ["privacidade", "Política de privacidade", "Os dados pessoais coletados no cadastro (nome, contato, documentos e dados de saúde autodeclarados) são usados exclusivamente para a gestão da relação contratual, controle de acesso, comunicação sobre serviços e obrigações legais, conforme a LGPD (Lei 13.709/2018). Não vendemos nem compartilhamos dados com terceiros fora dessas finalidades. O titular pode solicitar acesso, correção ou exclusão dos dados na recepção."],
+    ["uso", "Termos de uso", "O plano contratado dá direito ao uso das áreas e horários previstos no contrato. Mensalidades vencidas podem gerar bloqueio de acesso conforme as regras vigentes. Cancelamentos e suspensões seguem o contrato assinado. A academia não se responsabiliza por objetos deixados fora dos armários. O uso das instalações implica concordância com estes termos."],
+  ];
+  function renderTermos() {
+    var d = docs();
+    var t = d.termos || {};
+    $("docArea").innerHTML = '<div class="card no-print" style="display:flex; flex-direction:column; gap:16px;">' +
+      TERMOS.map(function (x) {
+        var val = t[x[0]] != null ? t[x[0]] : x[2];
+        return '<div><div class="linha-flex" style="justify-content:space-between; margin-bottom:6px;">' +
+          "<strong>" + x[1] + '</strong><button class="btn sec mini" data-imprime="' + x[0] + '">🖨 Gerar para impressão</button></div>' +
+          '<textarea data-termo="' + x[0] + '" style="width:100%; min-height:110px; padding:10px; border:1px solid var(--linha); font-family:inherit; font-size:13.5px; line-height:1.5;">' + esc(val) + "</textarea></div>";
+      }).join("") +
+      '<p class="muted" style="margin:0;">O texto salva sozinho ao sair do campo. Estes documentos também valem para a Página de Vendas e a Loja On-line.</p></div>';
+  }
+  $("docArea").addEventListener("change", function (e) {
+    var k = e.target.getAttribute && e.target.getAttribute("data-termo");
+    if (!k) return;
+    var d = docs();
+    d.termos = d.termos || {};
+    d.termos[k] = e.target.value;
+    S.write("docs", d);
+  });
+  $("docArea").addEventListener("click", function (e) {
+    var k = e.target.getAttribute && e.target.getAttribute("data-imprime");
+    if (!k) return;
+    var meta = TERMOS.find(function (x) { return x[0] === k; });
+    var d = docs();
+    var txt = (d.termos || {})[k] != null ? d.termos[k] : meta[2];
+    var ac = academia();
+    $("docArea").innerHTML = '<div class="card" style="max-width: 720px; margin: 0 auto; padding: 34px;">' +
+      '<div style="text-align:center; margin-bottom: 18px;"><strong style="font-size:18px;">' + esc(ac.nome) + "</strong>" +
+      (ac.endereco ? '<div class="muted" style="font-size:12px;">' + esc(ac.endereco) + "</div>" : "") + "</div>" +
+      '<h2 style="text-align:center; font-size:16px; margin: 0 0 16px;">' + esc(meta[1]).toUpperCase() + "</h2>" +
+      '<div style="font-size:13.5px; line-height:1.7; white-space:pre-wrap;">' + esc(txt) + "</div>" +
+      '<div style="margin-top: 48px; display:flex; gap: 40px;">' +
+      '<div style="flex:1; border-top:1px solid #333; text-align:center; padding-top:6px; font-size:12px;">Assinatura do cliente</div>' +
+      '<div style="flex:1; border-top:1px solid #333; text-align:center; padding-top:6px; font-size:12px;">' + esc(ac.nome) + "</div></div>" +
+      '<p class="muted" style="text-align:center; font-size:11px; margin-top: 20px;">Emitido em ' + S.fmtData(S.todayISO()) + "</p></div>";
+    $("btnImprimir").hidden = false;
+    window.scrollTo({ top: 0 });
   });
 
   // ---------- gerar ----------
