@@ -32,7 +32,10 @@
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
 
   <div class="card">
-    <div class="passo"><span class="num">PASSO 1</span><h2 style="margin-top: 2px;">Escolha o arquivo CSV</h2></div>
+    <div class="passo"><span class="num">PASSO 1</span><h2 style="margin-top: 2px;">Escolha o que importar e o arquivo CSV</h2></div>
+    <div class="campo" style="max-width: 260px;"><label>O que importar</label>
+      <select id="tipoImp"><option value="alunos">Alunos</option><option value="vendas">Vendas (histórico)</option></select>
+    </div>
     <p class="muted" style="margin: 4px 0 12px;">Exporte do sistema antigo em CSV (ou salve a planilha como CSV). A primeira linha deve ter os nomes das colunas.</p>
     <div class="linha-flex">
       <input type="file" id="arquivo" accept=".csv,text/csv,.txt" style="max-width: 340px;">
@@ -72,7 +75,7 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
-  var CAMPOS = [
+  var CAMPOS_ALUNOS = [
     ["nome", "Nome completo *", ["nome", "name", "aluno", "cliente"]],
     ["zap", "WhatsApp / telefone", ["zap", "whats", "celular", "telefone", "phone", "fone"]],
     ["email", "E-mail", ["email", "e-mail", "mail"]],
@@ -82,6 +85,17 @@
     ["indicacao", "Indicado por", ["indica", "referral"]],
     ["obs", "Observações", ["obs", "observa", "nota"]],
   ];
+  // Importar Vendas (Configurações do EVO): histórico de vendas para os relatórios
+  var CAMPOS_VENDAS = [
+    ["data", "Data da venda *", ["data", "dt", "venda", "date"]],
+    ["valor", "Valor total *", ["valor", "total", "preço", "preco", "amount"]],
+    ["cliente", "Cliente", ["cliente", "nome", "pagador", "aluno"]],
+    ["item", "Item / descrição", ["item", "produto", "descri", "plano"]],
+    ["qtd", "Quantidade", ["qtd", "quant", "qty"]],
+    ["forma", "Forma de pagamento", ["forma", "pagamento", "método", "metodo"]],
+  ];
+  var tipoImp = "alunos";
+  function CAMPOSatual() { return tipoImp === "vendas" ? CAMPOS_VENDAS : CAMPOS_ALUNOS; }
 
   var linhas = [], cabecalhos = [];
 
@@ -143,7 +157,7 @@
 
   function montaMapa() {
     $("cardMapa").hidden = false;
-    $("mapa").innerHTML = CAMPOS.map(function (c) {
+    $("mapa").innerHTML = CAMPOSatual().map(function (c) {
       var chute = chuta(c[2]);
       return '<div class="campo"><label>' + c[1] + '</label><select data-campo="' + c[0] + '">' +
         '<option value="-1">— não importar —</option>' +
@@ -168,8 +182,22 @@
       nasc: normalizaData(v("nasc")), consultor: v("consultor"), indicacao: v("indicacao"), obs: v("obs"),
     };
   }
+  function numBR(t) {
+    t = (t || "").replace(/[R$\s]/g, "");
+    if (t.indexOf(",") !== -1 && t.indexOf(".") !== -1) t = t.replace(/\./g, "").replace(",", ".");
+    else t = t.replace(",", ".");
+    return +t || 0;
+  }
+  function extraiVenda(linha, m) {
+    function v(campo) { return m[campo] >= 0 ? (linha[m[campo]] || "").trim() : ""; }
+    return {
+      data: normalizaData(v("data")), valor: numBR(v("valor")), cliente: v("cliente"),
+      item: v("item"), qtd: +v("qtd") || 1, forma: v("forma"),
+    };
+  }
 
   function montaPrevia() {
+    if (tipoImp === "vendas") { montaPreviaVendas(); return; }
     var m = mapeamento();
     if (m.nome < 0) { $("cardPrevia").hidden = true; return; }
     $("cardPrevia").hidden = false;
@@ -194,7 +222,54 @@
   }
   $("mapa").addEventListener("change", montaPrevia);
 
+  function montaPreviaVendas() {
+    var m = mapeamento();
+    if (m.data < 0 || m.valor < 0) { $("cardPrevia").hidden = true; return; }
+    $("cardPrevia").hidden = false;
+    var ok = 0, ruim = 0;
+    linhas.forEach(function (l) {
+      var d = extraiVenda(l, m);
+      if (d.data && d.valor > 0) ok++; else ruim++;
+    });
+    var mostra = linhas.slice(0, 5).map(function (l) { return extraiVenda(l, m); });
+    $("previa").innerHTML = "<tr><th>Data</th><th>Cliente</th><th>Item</th><th>Qtd</th><th>Valor</th><th>Forma</th></tr>" +
+      mostra.map(function (d) {
+        return "<tr><td>" + (d.data ? S.fmtData(d.data) : "⚠ sem data") + "</td><td>" + esc(d.cliente) + "</td><td>" + esc(d.item) +
+          "</td><td>" + d.qtd + "</td><td>" + (d.valor ? d.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "⚠") + "</td><td>" + esc(d.forma) + "</td></tr>";
+      }).join("");
+    $("resumoImp").textContent = ok + " venda(s) válidas" + (ruim ? " · " + ruim + " sem data/valor (ignoradas)" : "");
+    $("btnImportar").disabled = !ok;
+  }
+  function importaVendas() {
+    var m = mapeamento();
+    var st = S.read("produtos", { itens: [], vendas: [] });
+    var importadas = 0, total = 0;
+    linhas.forEach(function (l) {
+      var d = extraiVenda(l, m);
+      if (!d.data || !(d.valor > 0)) return;
+      st.vendas.push({
+        id: S.uid(), data: d.data, total: Math.round(d.valor * 100) / 100,
+        forma: d.forma || "Importada", cliente: d.cliente,
+        itens: [{ nome: d.item || "venda importada", qtd: d.qtd, preco: Math.round(d.valor / d.qtd * 100) / 100 }],
+        origem: "importacao",
+      });
+      importadas++; total += d.valor;
+    });
+    S.write("produtos", st);
+    $("cardFeito").hidden = false;
+    $("resultado").innerHTML = "✅ <strong>" + importadas + " venda(s) importadas</strong> (" +
+      total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) + ")<br>" +
+      '<span class="muted">Elas já contam nos relatórios: Vendas, Caixa, DRE, Movimentação e Recebimentos por Centro de Receita.</span>';
+    $("btnImportar").disabled = true;
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }
+  $("tipoImp").addEventListener("change", function () {
+    tipoImp = this.value;
+    if (cabecalhos.length) montaMapa();
+  });
+
   $("btnImportar").onclick = function () {
+    if (tipoImp === "vendas") { importaVendas(); return; }
     var m = mapeamento();
     var st = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
     var existentes = {};

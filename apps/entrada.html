@@ -52,8 +52,17 @@
     </div>
     <div id="painel"></div>
     <div class="card">
-      <div class="campo" style="margin: 0;"><label>Mensagem de boas-vindas (aparece ao liberar — Controle de Acesso do EVO)</label>
+      <h2 style="margin-bottom: 8px;">Controle de acesso (como no EVO)</h2>
+      <div class="campo"><label>Mensagem de boas-vindas (aparece ao liberar)</label>
         <input id="cfgMsgAcesso" placeholder="Olá, seja bem-vindo e tenha um ótimo treino!">
+      </div>
+      <div class="linha-flex" style="gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="campo" style="margin:0;"><label>Bloquear por inadimplência após (dias) — 0 desliga</label>
+          <input id="cfgInadDias" type="number" min="0" max="90" style="width: 110px;">
+        </div>
+        <div class="campo" style="flex:1; min-width: 220px; margin:0;"><label>Mensagem de bloqueio por inadimplência</label>
+          <input id="cfgMsgInad" placeholder="Acesso bloqueado por pendência — procure a recepção.">
+        </div>
       </div>
     </div>
   </div>
@@ -153,13 +162,25 @@
       avisos.push({ t: "erro", txt: "Contrato SUSPENSO desde " + S.fmtData(susp.inicio) + (susp.motivo ? " (" + susp.motivo + ")" : "") + " — reativar em Suspensões antes de liberar." });
       nivel = "bloq";
     }
-    var atraso = 0;
+    var atraso = 0, maiorAtrasoDias = 0;
     st.recebiveis.forEach(function (r) {
-      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) atraso += +r.valor || 0;
+      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
+        atraso += +r.valor || 0;
+        var dd = Math.round((new Date(hoje) - new Date(r.vencimento)) / 864e5);
+        if (dd > maiorAtrasoDias) maiorAtrasoDias = dd;
+      }
     });
     if (atraso > 0) {
-      avisos.push({ t: "alerta", txt: "Mensalidade em atraso: " + S.fmtBRL(atraso) + " — lembrar na saída." });
-      if (nivel === "ok") nivel = "atencao";
+      // bloqueio por inadimplência após N dias (Controle de Acesso do EVO)
+      var cfgB = S.read("config", { dados: {} }).bloqueio || {};
+      var lim = +cfgB.inadDias || 0;
+      if (lim > 0 && maiorAtrasoDias >= lim) {
+        avisos.push({ t: "erro", txt: (cfgB.msgInad || "Acesso bloqueado por inadimplência") + " — " + S.fmtBRL(atraso) + " em aberto há " + maiorAtrasoDias + " dia(s)." });
+        nivel = "bloq";
+      } else {
+        avisos.push({ t: "alerta", txt: "Mensalidade em atraso: " + S.fmtBRL(atraso) + " — lembrar na saída." });
+        if (nivel === "ok") nivel = "atencao";
+      }
     }
     var stParq = S.read("parq", { fichas: {}, config: {} });
     var parq = (stParq.fichas || {})[a.id];
@@ -289,6 +310,20 @@
     var c = S.read("config", { dados: {} });
     c.msgAcesso = this.value.trim();
     S.write("config", c);
+  });
+  (function () {
+    var c0 = S.read("config", { dados: {} }).bloqueio || {};
+    $("cfgInadDias").value = c0.inadDias != null ? c0.inadDias : 15;
+    $("cfgMsgInad").value = c0.msgInad || "";
+  })();
+  ["cfgInadDias", "cfgMsgInad"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var c = S.read("config", { dados: {} });
+      c.bloqueio = c.bloqueio || {};
+      c.bloqueio.inadDias = +$("cfgInadDias").value || 0;
+      c.bloqueio.msgInad = $("cfgMsgInad").value.trim();
+      S.write("config", c);
+    });
   });
   $("resultados").addEventListener("click", function (e) {
     var r = e.target.closest("[data-sel]"); if (!r) return;
