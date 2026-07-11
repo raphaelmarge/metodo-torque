@@ -27,6 +27,12 @@
   .aviso-http { padding: 10px 14px; border: 1px solid rgba(217,119,6,.4); background: rgba(217,119,6,.06); color: var(--alerta); font-size: 13.5px; }
   .cid-log { background: #16161d; color: #d7d7e0; font-family: ui-monospace, monospace; font-size: 12.5px; padding: 12px 14px; min-height: 90px; max-height: 260px; overflow: auto; white-space: pre-wrap; }
   .contador-cap { font-size: 26px; font-weight: 800; }
+  .passos { counter-reset: passo; display: flex; flex-direction: column; gap: 0; }
+  .passo { display: flex; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; line-height: 1.55; }
+  .passo + .passo { margin-top: -1px; }
+  .passo::before { counter-increment: passo; content: counter(passo); flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--roxo); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .passo code { background: var(--fundo); border: 1px solid var(--linha); padding: 1px 5px; font-size: 12.5px; }
+  .guia-nota { padding: 10px 14px; border: 1px solid var(--linha); background: var(--fundo); font-size: 13px; margin-top: 10px; }
   @media (max-width: 900px) { main.corpo .grid2 { display: flex !important; flex-direction: column; } }
 </style>
 </head>
@@ -49,6 +55,7 @@
     <button data-aba="cadastro" class="ativa">🪪 Cadastro facial</button>
     <button data-aba="catraca">📷 Modo catraca (facial)</button>
     <button data-aba="controlid">🔗 Catraca Control iD</button>
+    <button data-aba="guia">📖 Passo a passo</button>
   </div>
 
   <!-- ============ ABA CADASTRO ============ -->
@@ -110,7 +117,7 @@
   <!-- ============ ABA CONTROL ID ============ -->
   <section id="abaControlid" hidden>
     <div id="avisoHttps" class="aviso-http" hidden style="margin-bottom:14px;">
-      ⚠ Este site está aberto em <strong>HTTPS</strong> e o navegador bloqueia chamadas para equipamentos na rede local (HTTP). Para conversar com a catraca Control iD, abra o sistema pelo computador da recepção em modo local (ex.: <code>http://localhost</code> com a pasta do sistema) — ou use a exportação/importação de backup.
+      ⚠ Este site está aberto em <strong>HTTPS</strong> e, por padrão, o navegador bloqueia chamadas para equipamentos na rede local (HTTP). A solução leva 1 minuto: clique no <strong>cadeado 🔒</strong> ao lado do endereço → <em>Configurações do site</em> → <strong>Conteúdo inseguro</strong> → <strong>Permitir</strong> → recarregue. O caminho completo está na aba <strong>📖 Passo a passo</strong> (Parte 3).
     </div>
     <div class="grid2" style="display:grid; grid-template-columns: .9fr 1.1fr; gap:16px; align-items:start;">
       <div class="card">
@@ -143,6 +150,62 @@
           <div class="cid-log" id="cidLog">Pronto. Configure o equipamento ao lado e use os botões acima.</div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ ABA PASSO A PASSO ============ -->
+  <section id="abaGuia" hidden>
+    <div class="grid2" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;">
+
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>🪪 Parte 1 — Cadastrar o rosto do aluno</h2>
+          <div class="passos" style="margin-top:10px;">
+            <div class="passo">Na aba <strong>Cadastro facial</strong>, busque o aluno pelo nome e toque em <em>selecionar</em>.</div>
+            <div class="passo">Clique em <strong>📷 Ligar câmera</strong> e autorize a câmera quando o navegador pedir (só na primeira vez).</div>
+            <div class="passo">Peça pro aluno olhar de frente, com boa luz no rosto (evite janela forte atrás dele).</div>
+            <div class="passo">Clique em <strong>✓ Capturar</strong> 3 vezes — entre uma e outra, peça pra virar o rosto <em>levemente</em> pra cada lado.</div>
+            <div class="passo">Quando marcar <strong>3/3</strong>, clique em <strong>💾 Salvar cadastro facial</strong>. Pronto: o aluno aparece na lista ao lado.</div>
+          </div>
+          <div class="guia-nota">🔒 O sistema não guarda foto nenhuma — o rosto vira um código de 128 números que só serve pra comparação, salvo neste dispositivo. Pra refazer, é só cadastrar de novo (substitui o anterior).</div>
+        </div>
+
+        <div class="card">
+          <h2>📷 Parte 2 — Deixar o modo catraca rodando na entrada</h2>
+          <div class="passos" style="margin-top:10px;">
+            <div class="passo">Num computador ou tablet com webcam apontada pra entrada, abra esta página e vá na aba <strong>Modo catraca (facial)</strong>.</div>
+            <div class="passo">Clique em <strong>▶ Iniciar modo catraca</strong> e deixe a tela aberta o dia todo.</div>
+            <div class="passo">Quando o aluno olhar pra câmera: <strong style="color:#2e7d32">verde</strong> = liberado com check-in automático e mensagem de boas-vindas; <strong style="color:#b45309">amarelo</strong> = liberado com aviso (ex.: mensalidade atrasada); <strong style="color:#b91c1c">vermelho</strong> = bloqueado, com o motivo na tela.</div>
+            <div class="passo">As regras são as mesmas do Controle de Entradas: contrato vencido, suspensão, cliente restrito e o bloqueio por inadimplência que você configura lá (dias de atraso e mensagem).</div>
+          </div>
+          <div class="guia-nota">💡 O mesmo aluno não gera check-in duplicado: depois de reconhecido, ele fica 1 minuto sem contar de novo.</div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>🔗 Parte 3 — Conectar a catraca Control iD</h2>
+          <p class="muted" style="font-size:13px; margin:6px 0 10px;">Feito uma vez só, no computador da recepção (que precisa estar na mesma rede Wi-Fi/cabo da catraca).</p>
+          <div class="passos">
+            <div class="passo">Descubra o <strong>IP da catraca</strong>: no próprio aparelho, entre no menu de configurações → rede. Anote algo como <code>192.168.0.129</code>.</div>
+            <div class="passo"><strong>Libere o navegador</strong> pra falar com a catraca (só na primeira vez): clique no <strong>cadeado 🔒</strong> ao lado do endereço do site → <em>Configurações do site</em> → procure <strong>“Conteúdo inseguro”</strong> → mude para <strong>Permitir</strong> → volte e recarregue a página. Isso é necessário porque o site é seguro (HTTPS) e a catraca fala HTTP na rede local.</div>
+            <div class="passo">Na aba <strong>Catraca Control iD</strong>, preencha IP, porta (normalmente <code>80</code>), usuário e senha do aparelho (padrão de fábrica: <code>admin</code> / <code>admin</code>).</div>
+            <div class="passo">Clique em <strong>🔌 Testar conexão</strong> — tem que aparecer <em>✅ Conectado!</em>.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🔁 Parte 4 — Rotina com a Control iD</h2>
+          <div class="passos" style="margin-top:10px;">
+            <div class="passo"><strong>Aluno novo?</strong> Cadastre ele normalmente em Clientes e clique em <strong>⬆ Enviar alunos ativos p/ catraca</strong> — o sistema manda só quem ainda não está lá.</div>
+            <div class="passo">Depois de enviar, <strong>colete a digital ou a face no próprio aparelho</strong> (menu do equipamento → usuários → localizar pela matrícula → cadastrar biometria). A matrícula na catraca é o código do aluno aqui do sistema.</div>
+            <div class="passo">Uma vez por dia (ex.: no fechamento), clique em <strong>⬇ Importar acessos</strong> — cada passagem liberada na catraca vira check-in no aluno certo, sem duplicar.</div>
+            <div class="passo">Confira a frequência normalmente no Perfil do Aluno, no Log de Acessos e no Radar de Retenção — o check-in importado conta igual ao manual.</div>
+          </div>
+          <div class="guia-nota">⚠ Se “Testar conexão” falhar: confira se o computador está na mesma rede da catraca, se o IP não mudou (vale fixar o IP do aparelho no roteador) e se o passo do “Conteúdo inseguro” foi feito neste navegador.</div>
+        </div>
+      </div>
+
     </div>
   </section>
 </main>
@@ -231,6 +294,7 @@
       $("abaCadastro").hidden = b.dataset.aba !== "cadastro";
       $("abaCatraca").hidden = b.dataset.aba !== "catraca";
       $("abaControlid").hidden = b.dataset.aba !== "controlid";
+      $("abaGuia").hidden = b.dataset.aba !== "guia";
       if (b.dataset.aba !== "cadastro") { desligaCamera($("vidCad")); $("stCad").textContent = "Câmera desligada."; $("btnCapturar").disabled = true; }
       if (b.dataset.aba !== "catraca") paraCatraca();
     });
