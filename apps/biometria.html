@@ -244,7 +244,7 @@
     if (melhor && melhor.dist <= (limiar || LIMIAR)) return melhor;
     return null;
   }
-  window.__bio = { dist: distEuclid, match: melhorMatch }; // usado nos testes
+  window.__bio = { dist: distEuclid, match: melhorMatch, situacao: function (a) { return situacaoCatraca(a); } }; // usado nos testes
 
   // ---------- carregamento preguiçoso da IA (1,3 MB + modelos) ----------
   var faceReady = null;
@@ -439,6 +439,24 @@
       return s2.alunoId === a.id && !s2.finalizadaEm && s2.inicio <= hoje && (!s2.fim || s2.fim >= hoje);
     });
     if (susp) { motivos.push("Contrato suspenso — reative na recepção"); nivel = "bloq"; }
+    // agregadores (Wellhub/TotalPass): só entra com o check-in do app validado
+    // hoje — a "diária" liberada na recepção/importação desbloqueia sozinha
+    var planoAgg = null;
+    ativos.forEach(function (c2) {
+      var pl = (st.planos || []).find(function (p) { return p.id === c2.planoId; });
+      if (pl && pl.tipo === "agregador") planoAgg = pl;
+    });
+    if (planoAgg) {
+      var diaria = S.read("wellhub", { checkins: [] }).checkins.some(function (k) {
+        return k.alunoId === a.id && (k.quando || "").slice(0, 10) === hoje;
+      });
+      if (!diaria) {
+        motivos.push("Faça o check-in no app " + planoAgg.nome + " e valide na recepção");
+        nivel = "bloq";
+      } else {
+        motivos.push("Diária " + planoAgg.nome + " do dia liberada ✓");
+      }
+    }
     var atraso = 0, maiorAtrasoDias = 0;
     (st.recebiveis || []).forEach(function (r) {
       if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
@@ -529,9 +547,13 @@
       flash("bloq", "⛔ " + primeiro + " — acesso bloqueado", s.motivos.join(" · "));
       return;
     }
-    // libera + check-in automático
-    (a.checkins = a.checkins || []).push(new Date().toISOString());
-    S.write("alunos", st);
+    // libera + check-in automático (1 por dia — não infla a frequência)
+    a.checkins = a.checkins || [];
+    var hoje = S.todayISO();
+    if (!a.checkins.some(function (t) { return (t || "").slice(0, 10) === hoje; })) {
+      a.checkins.push(new Date().toISOString());
+      S.write("alunos", st);
+    }
     var msg = (S.read("config", { dados: {} }).msgAcesso || "").trim() || "Olá, seja bem-vindo e tenha um ótimo treino!";
     if (s.nivel === "atencao") flash("atencao", "⚠ " + primeiro + " — liberado com aviso", s.motivos.join(" · "));
     else flash("ok", "✅ " + primeiro + " — " + msg);

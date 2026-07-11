@@ -123,6 +123,27 @@
       avisos.push({ t: "erro", txt: "Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + " — não liberar (regra do EVO). Procure a gestão." });
       nivel = "bloq";
     }
+    // agregadores (Wellhub/TotalPass): a entrada do dia é liberada pelo
+    // check-in do app — validado, vira uma "diária" que desbloqueia até 23:59
+    var pedirTokenAgg = null;
+    var planoAgg = null;
+    ativos.forEach(function (c) {
+      var pl = (st.planos || []).find(function (p) { return p.id === c.planoId; });
+      if (pl && pl.tipo === "agregador") planoAgg = pl;
+    });
+    if (planoAgg) {
+      var diaria = S.read("wellhub", { checkins: [] }).checkins.find(function (k) {
+        return k.alunoId === a.id && (k.quando || "").slice(0, 10) === hoje;
+      });
+      if (diaria) {
+        var hDia = new Date(diaria.quando).toTimeString().slice(0, 5);
+        avisos.push({ t: "info", txt: "✅ Diária " + planoAgg.nome + " liberada — check-in do app validado às " + hDia + " (vale até 23:59)." });
+      } else {
+        avisos.push({ t: "erro", txt: "Aluno " + planoAgg.nome + " SEM check-in do app hoje — peça pra fazer o check-in no aplicativo e valide o token abaixo." });
+        nivel = "bloq";
+        pedirTokenAgg = planoAgg.nome;
+      }
+    }
     // regras de acesso do contrato (limite de entradas + horário permitido, regra do EVO)
     var contratoAcesso = ativos.find(function (c) { return !c.principalId; }) || ativos[0];
     var planoAc = contratoAcesso && (st.planos || []).find(function (p) { return p.id === contratoAcesso.planoId; });
@@ -205,7 +226,7 @@
     }
     var jaHoje = (a.checkins || []).some(function (t) { return (t || "").slice(0, 10) === hoje; });
     if (jaHoje) avisos.push({ t: "info", txt: "Já tem check-in registrado hoje." });
-    return { avisos: avisos, nivel: nivel };
+    return { avisos: avisos, nivel: nivel, pedirTokenAgg: pedirTokenAgg };
   }
 
   var selId = null;
@@ -237,7 +258,18 @@
       '<div class="linha-flex" style="margin-top: 14px; justify-content: flex-end;">' +
       '<a class="btn sec mini" href="perfil-aluno.html?id=' + a.id + '">Abrir perfil</a>' +
       convidBtn(a) +
+      (s.pedirTokenAgg ? '<button class="btn" id="btnTokenAgg">📲 Validar check-in do app (' + esc(s.pedirTokenAgg) + ")</button>" : "") +
       '<button class="btn" id="btnLiberar">✓ Liberar entrada</button></div></div>';
+    var bAgg = $("btnTokenAgg");
+    if (bAgg) bAgg.onclick = function () {
+      var token = prompt("Token/código do check-in no app " + s.pedirTokenAgg + " (confira na tela do aluno):");
+      if (token === null) return;
+      token = token.trim();
+      var w = S.read("wellhub", { checkins: [], config: {} });
+      w.checkins.push({ id: S.uid(), alunoId: a.id, nome: a.nome, agregador: s.pedirTokenAgg, quando: new Date().toISOString(), token: token, origem: "recepcao" });
+      S.write("wellhub", w);
+      renderPainel(); // agora a diária existe — o painel libera sozinho
+    };
     var bConv = $("btnConvidado");
     if (bConv) bConv.onclick = function () { registrarConvidado(a); };
     $("btnLiberar").onclick = function () {
