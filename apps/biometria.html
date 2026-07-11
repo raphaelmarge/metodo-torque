@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biometria e Catraca — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .abas button { border: 1px solid var(--linha); background: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; }
+  .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .video-box { position: relative; background: #111; border: 1px solid var(--linha); width: 100%; max-width: 560px; }
+  .video-box video { width: 100%; display: block; }
+  .video-box .status-cam { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.65); color: #fff; padding: 8px 12px; font-size: 13.5px; }
+  .flash-catraca { padding: 22px 18px; border: 2px solid var(--linha); background: #fff; font-size: 17px; font-weight: 700; text-align: center; }
+  .flash-catraca.ok { border-color: var(--ok); background: #eaf6ec; color: #2e7d32; }
+  .flash-catraca.atencao { border-color: var(--alerta); background: #fdf3e4; color: #b45309; }
+  .flash-catraca.bloq { border-color: var(--erro); background: #fdeaea; color: #b91c1c; }
+  .flash-catraca .sub { font-size: 13.5px; font-weight: 500; margin-top: 6px; }
+  .face-linha { display: flex; gap: 10px; align-items: center; padding: 8px 12px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; }
+  .face-linha + .face-linha { margin-top: -1px; }
+  .resultado { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); cursor: pointer; }
+  .resultado + .resultado { margin-top: -1px; }
+  .resultado:hover { background: var(--fundo); }
+  .aviso-http { padding: 10px 14px; border: 1px solid rgba(217,119,6,.4); background: rgba(217,119,6,.06); color: var(--alerta); font-size: 13.5px; }
+  .cid-log { background: #16161d; color: #d7d7e0; font-family: ui-monospace, monospace; font-size: 12.5px; padding: 12px 14px; min-height: 90px; max-height: 260px; overflow: auto; white-space: pre-wrap; }
+  .contador-cap { font-size: 26px; font-weight: 800; }
+  @media (max-width: 900px) { main.corpo .grid2 { display: flex !important; flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · CONTROLE DE ACESSO</span>
+    <h1>Biometria e Catraca</h1>
+    </div>
+  </div>
+  <p>Reconhecimento facial pela webcam (a IA roda no navegador, sem internet) e integração com a catraca Control iD: cadastro do rosto, modo catraca com check-in automático e importação dos acessos do equipamento.</p>
+</header>
+
+<main class="corpo">
+
+  <div class="abas">
+    <button data-aba="cadastro" class="ativa">🪪 Cadastro facial</button>
+    <button data-aba="catraca">📷 Modo catraca (facial)</button>
+    <button data-aba="controlid">🔗 Catraca Control iD</button>
+  </div>
+
+  <!-- ============ ABA CADASTRO ============ -->
+  <section id="abaCadastro">
+    <div class="grid2" style="display:grid; grid-template-columns: 1.1fr .9fr; gap:16px; align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>1 · Escolha o aluno</h2>
+          <div class="campo" style="margin-top:8px;"><label>Aluno</label>
+            <input id="buscaAluno" placeholder="digite o nome…" autocomplete="off">
+          </div>
+          <div id="resAluno" style="margin-top:8px;"></div>
+          <div id="alunoSel" class="muted" style="margin-top:8px;"></div>
+        </div>
+        <div class="card">
+          <h2>2 · Capture o rosto (3 fotos)</h2>
+          <p class="muted" style="font-size:13px; margin:6px 0 10px;">Peça para o aluno olhar de frente, com boa luz. Capture 3 vezes mudando levemente o ângulo — isso deixa o reconhecimento mais confiável.</p>
+          <div class="video-box"><video id="vidCad" autoplay muted playsinline></video><div class="status-cam" id="stCad">Câmera desligada.</div></div>
+          <div class="linha-flex" style="margin-top:10px; gap:8px; flex-wrap:wrap; align-items:center;">
+            <button class="btn sec" id="btnCamCad">📷 Ligar câmera</button>
+            <button class="btn" id="btnCapturar" disabled>✓ Capturar</button>
+            <span class="contador-cap" id="capCount">0/3</span>
+            <button class="btn sec mini" id="btnSalvarFace" disabled>💾 Salvar cadastro facial</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="linha-flex" style="justify-content:space-between;">
+          <h2>Rostos cadastrados</h2>
+          <span class="tag roxo" id="totalFaces">0</span>
+        </div>
+        <div id="listaFaces" style="margin-top:10px;"></div>
+        <p class="muted" style="font-size:12.5px; margin-top:10px;">O rosto vira um código matemático (128 números) salvo só neste dispositivo — nenhuma foto é guardada nem enviada pra internet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ABA CATRACA (FACIAL) ============ -->
+  <section id="abaCatraca" hidden>
+    <div class="grid2" style="display:grid; grid-template-columns: 1.1fr .9fr; gap:16px; align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div id="flashCatraca" class="flash-catraca">Aguardando… ligue a câmera para começar.</div>
+        <div class="video-box"><video id="vidCat" autoplay muted playsinline></video><div class="status-cam" id="stCat">Câmera desligada.</div></div>
+        <div class="linha-flex" style="gap:8px;">
+          <button class="btn" id="btnCatraca">▶ Iniciar modo catraca</button>
+        </div>
+        <p class="muted" style="font-size:12.5px;">Deixe esta tela aberta num computador/tablet na entrada. Ao reconhecer o rosto, o sistema confere contrato, suspensão e inadimplência (mesmas regras do Controle de Entradas) e registra o check-in sozinho.</p>
+      </div>
+      <div class="card">
+        <div class="linha-flex" style="justify-content:space-between;">
+          <h2>Entradas de hoje</h2>
+          <span class="tag roxo" id="totalHoje">0</span>
+        </div>
+        <div id="listaHoje" style="margin-top:10px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ABA CONTROL ID ============ -->
+  <section id="abaControlid" hidden>
+    <div id="avisoHttps" class="aviso-http" hidden style="margin-bottom:14px;">
+      ⚠ Este site está aberto em <strong>HTTPS</strong> e o navegador bloqueia chamadas para equipamentos na rede local (HTTP). Para conversar com a catraca Control iD, abra o sistema pelo computador da recepção em modo local (ex.: <code>http://localhost</code> com a pasta do sistema) — ou use a exportação/importação de backup.
+    </div>
+    <div class="grid2" style="display:grid; grid-template-columns: .9fr 1.1fr; gap:16px; align-items:start;">
+      <div class="card">
+        <h2>Equipamento Control iD</h2>
+        <p class="muted" style="font-size:13px; margin:6px 0 10px;">Funciona com iDAccess, iDFace e iDFlex na mesma rede da academia (API local do equipamento). O IP aparece no menu do próprio aparelho.</p>
+        <div class="campo"><label>IP do equipamento na rede</label><input id="cidIp" placeholder="192.168.0.129"></div>
+        <div class="linha-flex" style="gap:10px;">
+          <div class="campo" style="flex:0 0 110px;"><label>Porta</label><input id="cidPorta" placeholder="80"></div>
+          <div class="campo" style="flex:1;"><label>Usuário (login do aparelho)</label><input id="cidLogin" placeholder="admin"></div>
+        </div>
+        <div class="campo"><label>Senha</label><input id="cidSenha" type="password" placeholder="admin"></div>
+        <div class="linha-flex" style="gap:8px; flex-wrap:wrap; margin-top:6px;">
+          <button class="btn sec" id="btnCidTestar">🔌 Testar conexão</button>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h2>Sincronizar com a catraca</h2>
+          <div class="linha-flex" style="gap:8px; flex-wrap:wrap; margin-top:8px;">
+            <button class="btn" id="btnCidEnviar">⬆ Enviar alunos ativos p/ catraca</button>
+            <button class="btn" id="btnCidImportar">⬇ Importar acessos (vira check-in)</button>
+          </div>
+          <p class="muted" style="font-size:12.5px; margin-top:8px;">
+            <strong>Enviar alunos:</strong> cadastra na catraca quem ainda não está lá (a matrícula enviada é o código do aluno aqui do sistema — a digital/face é coletada no próprio aparelho).<br>
+            <strong>Importar acessos:</strong> puxa os acessos liberados pela catraca e registra como check-in no aluno certo, sem duplicar. <span id="cidUltImp"></span>
+          </p>
+        </div>
+        <div class="card">
+          <h2>Resultado</h2>
+          <div class="cid-log" id="cidLog">Pronto. Configure o equipamento ao lado e use os botões acima.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var LIMIAR = 0.5; // distância euclidiana máxima pra considerar a mesma pessoa
+
+  function stA() { return S.read("alunos", { alunos: [], planos: [], recebiveis: [] }); }
+  function stBio() { return S.read("biometria", { faces: {}, controlid: {} }); }
+
+  // ---------- matemática do reconhecimento (pura, testável) ----------
+  function distEuclid(a, b) {
+    var s = 0;
+    for (var i = 0; i < a.length; i++) { var d = a[i] - b[i]; s += d * d; }
+    return Math.sqrt(s);
+  }
+  // desc: Float32Array/array 128d · faces: {alunoId: {nome, descs: [[...]]}}
+  function melhorMatch(desc, faces, limiar) {
+    var melhor = null;
+    Object.keys(faces || {}).forEach(function (id) {
+      (faces[id].descs || []).forEach(function (ref) {
+        var d = distEuclid(desc, ref);
+        if (!melhor || d < melhor.dist) melhor = { alunoId: id, nome: faces[id].nome, dist: d };
+      });
+    });
+    if (melhor && melhor.dist <= (limiar || LIMIAR)) return melhor;
+    return null;
+  }
+  window.__bio = { dist: distEuclid, match: melhorMatch }; // usado nos testes
+
+  // ---------- carregamento preguiçoso da IA (1,3 MB + modelos) ----------
+  var faceReady = null;
+  function carregaFaceApi() {
+    if (faceReady) return faceReady;
+    faceReady = new Promise(function (res, rej) {
+      if (window.faceapi) return res();
+      var sc = document.createElement("script");
+      sc.src = "../assets/vendor/faceapi/face-api.js";
+      sc.onload = res;
+      sc.onerror = function () { rej(new Error("não consegui carregar a IA facial (face-api.js)")); };
+      document.head.appendChild(sc);
+    }).then(function () {
+      var M = "../assets/vendor/faceapi/model";
+      return Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(M),
+        faceapi.nets.faceLandmark68TinyNet.loadFromUri(M),
+        faceapi.nets.faceRecognitionNet.loadFromUri(M),
+      ]);
+    });
+    return faceReady;
+  }
+  function opDet() { return new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }); }
+  function detecta(video) {
+    return faceapi.detectSingleFace(video, opDet()).withFaceLandmarks(true).withFaceDescriptor();
+  }
+
+  // ---------- câmera ----------
+  function ligaCamera(video, stEl) {
+    return navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" }, audio: false })
+      .then(function (stream) {
+        video.srcObject = stream;
+        stEl.textContent = "Câmera ligada — carregando IA…";
+        return stream;
+      });
+  }
+  function desligaCamera(video) {
+    var s = video.srcObject;
+    if (s) s.getTracks().forEach(function (t) { t.stop(); });
+    video.srcObject = null;
+  }
+
+  // ---------- abas ----------
+  document.querySelectorAll(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+      $("abaCadastro").hidden = b.dataset.aba !== "cadastro";
+      $("abaCatraca").hidden = b.dataset.aba !== "catraca";
+      $("abaControlid").hidden = b.dataset.aba !== "controlid";
+      if (b.dataset.aba !== "cadastro") { desligaCamera($("vidCad")); $("stCad").textContent = "Câmera desligada."; $("btnCapturar").disabled = true; }
+      if (b.dataset.aba !== "catraca") paraCatraca();
+    });
+  });
+
+  // ================= ABA 1 · CADASTRO =================
+  var selAluno = null;
+  var capturas = [];
+
+  $("buscaAluno").addEventListener("input", function () {
+    var q = this.value.trim().toLowerCase();
+    if (q.length < 2) { $("resAluno").innerHTML = ""; return; }
+    var lista = stA().alunos.filter(function (a) { return a.status !== "inativo" && a.nome.toLowerCase().indexOf(q) >= 0; }).slice(0, 6);
+    $("resAluno").innerHTML = lista.map(function (a) {
+      return '<div class="resultado" data-sel="' + a.id + '"><strong style="flex:1">' + esc(a.nome) + "</strong><span class='muted'>selecionar →</span></div>";
+    }).join("") || '<div class="vazio">Nenhum aluno ativo com esse nome.</div>';
+  });
+  $("resAluno").addEventListener("click", function (e) {
+    var r = e.target.closest("[data-sel]"); if (!r) return;
+    var a = stA().alunos.find(function (x) { return x.id === r.getAttribute("data-sel"); });
+    if (!a) return;
+    selAluno = { id: a.id, nome: a.nome };
+    capturas = [];
+    atualizaCap();
+    $("resAluno").innerHTML = "";
+    $("buscaAluno").value = "";
+    var tem = stBio().faces[a.id];
+    $("alunoSel").innerHTML = "Selecionado: <strong>" + esc(a.nome) + "</strong>" + (tem ? ' <span class="tag alerta">já tem rosto cadastrado — salvar substitui</span>' : "");
+  });
+
+  function atualizaCap() {
+    $("capCount").textContent = capturas.length + "/3";
+    $("btnSalvarFace").disabled = !(selAluno && capturas.length >= 3);
+  }
+
+  $("btnCamCad").addEventListener("click", function () {
+    var v = $("vidCad");
+    if (v.srcObject) { desligaCamera(v); $("stCad").textContent = "Câmera desligada."; $("btnCapturar").disabled = true; this.textContent = "📷 Ligar câmera"; return; }
+    var self = this;
+    ligaCamera(v, $("stCad")).then(function () {
+      self.textContent = "⏹ Desligar câmera";
+      return carregaFaceApi();
+    }).then(function () {
+      $("stCad").textContent = "Pronto — enquadre o rosto e clique em Capturar.";
+      $("btnCapturar").disabled = false;
+    }).catch(function (e) {
+      $("stCad").textContent = "Erro: " + (e && e.message || "câmera indisponível") + " — confira a permissão da câmera no navegador.";
+    });
+  });
+
+  $("btnCapturar").addEventListener("click", function () {
+    if (!selAluno) { alert("Escolha o aluno primeiro (busque pelo nome acima)."); return; }
+    var btn = this;
+    btn.disabled = true;
+    $("stCad").textContent = "Analisando rosto…";
+    detecta($("vidCad")).then(function (det) {
+      if (!det) { $("stCad").textContent = "Nenhum rosto encontrado — aproxime e melhore a luz."; btn.disabled = false; return; }
+      capturas.push(Array.prototype.slice.call(det.descriptor));
+      atualizaCap();
+      $("stCad").textContent = "Captura " + capturas.length + "/3 feita ✓" + (capturas.length < 3 ? " — mude levemente o ângulo e capture de novo." : " — pode salvar!");
+      btn.disabled = false;
+    }).catch(function (e) {
+      $("stCad").textContent = "Erro na análise: " + (e && e.message || e);
+      btn.disabled = false;
+    });
+  });
+
+  $("btnSalvarFace").addEventListener("click", function () {
+    if (!selAluno || capturas.length < 3) return;
+    var b = stBio();
+    b.faces[selAluno.id] = { nome: selAluno.nome, descs: capturas.slice(0, 3), em: new Date().toISOString() };
+    S.write("biometria", b);
+    $("alunoSel").innerHTML = "✅ Rosto de <strong>" + esc(selAluno.nome) + "</strong> cadastrado.";
+    selAluno = null; capturas = [];
+    atualizaCap();
+    renderFaces();
+  });
+
+  function renderFaces() {
+    var faces = stBio().faces || {};
+    var ids = Object.keys(faces);
+    $("totalFaces").textContent = ids.length;
+    $("listaFaces").innerHTML = ids.length ? ids.map(function (id) {
+      return '<div class="face-linha"><strong style="flex:1">' + esc(faces[id].nome) + "</strong>" +
+        '<span class="muted">' + S.fmtData((faces[id].em || "").slice(0, 10)) + "</span>" +
+        '<button class="btn sec mini" data-rm="' + id + '">remover</button></div>';
+    }).join("") : '<div class="vazio">Nenhum rosto cadastrado ainda.</div>';
+  }
+  $("listaFaces").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-rm]"); if (!b) return;
+    var id = b.getAttribute("data-rm");
+    var bio = stBio();
+    if (!confirm("Remover o cadastro facial de " + (bio.faces[id] && bio.faces[id].nome || "?") + "?")) return;
+    delete bio.faces[id];
+    S.write("biometria", bio);
+    renderFaces();
+  });
+
+  // ================= ABA 2 · MODO CATRACA =================
+  // regras de liberação — as mesmas do Controle de Entradas (versão automática)
+  function situacaoCatraca(a) {
+    var st = stA();
+    var hoje = S.todayISO();
+    var cfg = S.read("config", { dados: {} });
+    var motivos = [];
+    var nivel = "ok";
+    var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+    if (!ativos.length) { motivos.push("Sem contrato ativo"); nivel = "bloq"; }
+    else {
+      var fimMax = null;
+      ativos.forEach(function (c) {
+        var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+        f.setMonth(f.getMonth() + (c.meses || 1));
+        f.setDate(f.getDate() + (+c.diasCreditados || 0));
+        var iso = S.todayISO(f);
+        if (!fimMax || iso > fimMax) fimMax = iso;
+      });
+      if (fimMax < hoje) { motivos.push("Contrato vencido em " + S.fmtData(fimMax)); nivel = "bloq"; }
+      if (ativos.every(function (c) { return (c.inicio || "") > hoje; })) { motivos.push("Contrato ainda não começou"); nivel = "bloq"; }
+    }
+    if (a.restrito && (!a.restrito.ate || a.restrito.ate >= hoje)) { motivos.push("Cliente restrito — procure a recepção"); nivel = "bloq"; }
+    var susp = S.read("suspensoes", { itens: [] }).itens.find(function (s2) {
+      return s2.alunoId === a.id && !s2.finalizadaEm && s2.inicio <= hoje && (!s2.fim || s2.fim >= hoje);
+    });
+    if (susp) { motivos.push("Contrato suspenso — reative na recepção"); nivel = "bloq"; }
+    var atraso = 0, maiorAtrasoDias = 0;
+    (st.recebiveis || []).forEach(function (r) {
+      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
+        atraso += +r.valor || 0;
+        var dd = Math.round((new Date(hoje) - new Date(r.vencimento)) / 864e5);
+        if (dd > maiorAtrasoDias) maiorAtrasoDias = dd;
+      }
+    });
+    if (atraso > 0) {
+      var cfgB = cfg.bloqueio || {};
+      var lim = +cfgB.inadDias || 0;
+      if (lim > 0 && maiorAtrasoDias >= lim) {
+        motivos.push(cfgB.msgInad || "Acesso bloqueado por pendência — procure a recepção");
+        nivel = "bloq";
+      } else {
+        motivos.push("Mensalidade em atraso: " + S.fmtBRL(atraso));
+        if (nivel === "ok") nivel = "atencao";
+      }
+    }
+    return { nivel: nivel, motivos: motivos };
+  }
+
+  var catracaTimer = null;
+  var vistoRecentemente = {}; // alunoId -> timestamp (evita check-in repetido)
+  var COOLDOWN = 60 * 1000;
+
+  function paraCatraca() {
+    if (catracaTimer) { clearTimeout(catracaTimer); catracaTimer = null; }
+    desligaCamera($("vidCat"));
+    $("stCat").textContent = "Câmera desligada.";
+    $("btnCatraca").textContent = "▶ Iniciar modo catraca";
+  }
+
+  $("btnCatraca").addEventListener("click", function () {
+    if (catracaTimer) { paraCatraca(); flash("", "Aguardando… ligue a câmera para começar."); return; }
+    var v = $("vidCat");
+    ligaCamera(v, $("stCat")).then(function () { return carregaFaceApi(); }).then(function () {
+      $("stCat").textContent = "Reconhecendo…";
+      $("btnCatraca").textContent = "⏹ Parar";
+      flash("", "Olhe para a câmera…");
+      cicloCatraca();
+    }).catch(function (e) {
+      $("stCat").textContent = "Erro: " + (e && e.message || "câmera indisponível");
+    });
+  });
+
+  function flash(nivel, titulo, sub) {
+    var f = $("flashCatraca");
+    f.className = "flash-catraca" + (nivel ? " " + nivel : "");
+    f.innerHTML = esc(titulo) + (sub ? '<div class="sub">' + esc(sub) + "</div>" : "");
+  }
+
+  function cicloCatraca() {
+    var v = $("vidCat");
+    if (!v.srcObject) return;
+    detecta(v).then(function (det) {
+      if (det) {
+        var m = melhorMatch(det.descriptor, stBio().faces, LIMIAR);
+        if (m) {
+          var agora = Date.now();
+          if (!vistoRecentemente[m.alunoId] || agora - vistoRecentemente[m.alunoId] > COOLDOWN) {
+            vistoRecentemente[m.alunoId] = agora;
+            processaReconhecido(m);
+          }
+        } else {
+          flash("", "Rosto não reconhecido", "Se você é aluno, faça o cadastro facial na recepção.");
+        }
+      }
+    }).catch(function () { /* segue o ciclo */ }).then(function () {
+      catracaTimer = setTimeout(cicloCatraca, 700);
+    });
+  }
+
+  function processaReconhecido(m) {
+    var st = stA();
+    var a = st.alunos.find(function (x) { return x.id === m.alunoId; });
+    if (!a) { flash("bloq", "Cadastro não encontrado", "O aluno do rosto cadastrado não existe mais."); return; }
+    var s = situacaoCatraca(a);
+    var primeiro = a.nome.split(" ")[0];
+    if (s.nivel === "bloq") {
+      flash("bloq", "⛔ " + primeiro + " — acesso bloqueado", s.motivos.join(" · "));
+      return;
+    }
+    // libera + check-in automático
+    (a.checkins = a.checkins || []).push(new Date().toISOString());
+    S.write("alunos", st);
+    var msg = (S.read("config", { dados: {} }).msgAcesso || "").trim() || "Olá, seja bem-vindo e tenha um ótimo treino!";
+    if (s.nivel === "atencao") flash("atencao", "⚠ " + primeiro + " — liberado com aviso", s.motivos.join(" · "));
+    else flash("ok", "✅ " + primeiro + " — " + msg);
+    renderHoje();
+  }
+
+  function renderHoje() {
+    var hoje = S.todayISO();
+    var entradas = [];
+    stA().alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        if ((t || "").slice(0, 10) === hoje) entradas.push({ nome: a.nome, hora: new Date(t).toTimeString().slice(0, 5) });
+      });
+    });
+    entradas.sort(function (x, y) { return x.hora < y.hora ? 1 : -1; });
+    $("totalHoje").textContent = entradas.length;
+    $("listaHoje").innerHTML = entradas.length ? entradas.map(function (e) {
+      return '<div class="face-linha"><strong style="font-variant-numeric:tabular-nums;">' + e.hora + "</strong><span>" + esc(e.nome) + "</span></div>";
+    }).join("") : '<div class="vazio">Nenhuma entrada registrada hoje ainda.</div>';
+  }
+
+  // ================= ABA 3 · CONTROL ID =================
+  if (location.protocol === "https:") $("avisoHttps").hidden = false;
+
+  function cidCfg() { return stBio().controlid || {}; }
+  (function () {
+    var c = cidCfg();
+    $("cidIp").value = c.ip || "";
+    $("cidPorta").value = c.porta || "80";
+    $("cidLogin").value = c.login || "admin";
+    $("cidSenha").value = c.senha || "";
+    mostraUltImp();
+  })();
+  ["cidIp", "cidPorta", "cidLogin", "cidSenha"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var b = stBio();
+      b.controlid = b.controlid || {};
+      b.controlid.ip = $("cidIp").value.trim();
+      b.controlid.porta = $("cidPorta").value.trim() || "80";
+      b.controlid.login = $("cidLogin").value.trim();
+      b.controlid.senha = $("cidSenha").value;
+      S.write("biometria", b);
+    });
+  });
+  function mostraUltImp() {
+    var t = +cidCfg().ultImport || 0;
+    $("cidUltImp").textContent = t ? "Última importação: " + new Date(t * 1000).toLocaleString("pt-BR") + "." : "";
+  }
+
+  function cidLog(msg) {
+    var el = $("cidLog");
+    el.textContent += (el.textContent ? "\n" : "") + msg;
+    el.scrollTop = el.scrollHeight;
+  }
+  function cidLimpa(msg) { $("cidLog").textContent = msg || ""; }
+
+  function cidUrl(caminho) {
+    var c = cidCfg();
+    return "http://" + c.ip + ":" + (c.porta || "80") + "/" + caminho;
+  }
+  function cidFetch(caminho, corpo) {
+    var ctl = new AbortController();
+    var to = setTimeout(function () { ctl.abort(); }, 8000);
+    return fetch(cidUrl(caminho), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo || {}),
+      signal: ctl.signal,
+    }).then(function (r) {
+      clearTimeout(to);
+      if (!r.ok) throw new Error("equipamento respondeu " + r.status);
+      return r.json();
+    }, function (e) {
+      clearTimeout(to);
+      if (e.name === "AbortError") throw new Error("sem resposta em 8s — confira IP, porta e se o computador está na mesma rede");
+      throw e;
+    });
+  }
+  function cidLoginSess() {
+    var c = cidCfg();
+    if (!c.ip) return Promise.reject(new Error("preencha o IP do equipamento"));
+    return cidFetch("login.fcgi", { login: c.login || "admin", password: c.senha || "" }).then(function (r) {
+      if (!r || !r.session) throw new Error("login recusado — confira usuário e senha do aparelho");
+      return r.session;
+    });
+  }
+
+  $("btnCidTestar").addEventListener("click", function () {
+    cidLimpa("Conectando em " + (cidCfg().ip || "?") + "…");
+    cidLoginSess().then(function (sess) {
+      cidLog("✅ Conectado! Sessão aberta com o equipamento (" + sess.slice(0, 8) + "…).");
+      return cidFetch("session_is_valid.fcgi?session=" + sess, {}).catch(function () { return null; });
+    }).catch(function (e) {
+      cidLog("❌ Falhou: " + e.message);
+      if (location.protocol === "https:") cidLog("Lembrete: em HTTPS o navegador bloqueia a rede local — veja o aviso amarelo acima.");
+    });
+  });
+
+  $("btnCidEnviar").addEventListener("click", function () {
+    cidLimpa("Enviando alunos ativos para a catraca…");
+    var ativos = stA().alunos.filter(function (a) { return a.status !== "inativo"; });
+    if (!ativos.length) { cidLog("Nenhum aluno ativo pra enviar."); return; }
+    var sess;
+    cidLoginSess().then(function (s2) {
+      sess = s2;
+      return cidFetch("load_objects.fcgi?session=" + sess, { object: "users" });
+    }).then(function (r) {
+      var jaTem = {};
+      ((r && r.users) || []).forEach(function (u) { if (u.registration) jaTem[String(u.registration)] = true; });
+      var novos = ativos.filter(function (a) { return !jaTem[String(a.id)]; });
+      cidLog("Na catraca: " + Object.keys(jaTem).length + " matrícula(s). Novos pra enviar: " + novos.length + ".");
+      if (!novos.length) { cidLog("✅ Todo mundo já está na catraca."); return null; }
+      return cidFetch("create_objects.fcgi?session=" + sess, {
+        object: "users",
+        values: novos.map(function (a) { return { name: a.nome, registration: String(a.id) }; }),
+      }).then(function () {
+        cidLog("✅ " + novos.length + " aluno(s) enviados. Agora colete a digital/face de cada um no próprio aparelho.");
+      });
+    }).catch(function (e) { cidLog("❌ Falhou: " + e.message); });
+  });
+
+  $("btnCidImportar").addEventListener("click", function () {
+    cidLimpa("Importando acessos da catraca…");
+    var sess, mapa = {};
+    var desde = +cidCfg().ultImport || 0;
+    cidLoginSess().then(function (s2) {
+      sess = s2;
+      return cidFetch("load_objects.fcgi?session=" + sess, { object: "users" });
+    }).then(function (r) {
+      ((r && r.users) || []).forEach(function (u) { if (u.registration) mapa[u.id] = String(u.registration); });
+      var corpo = { object: "access_logs" };
+      if (desde) corpo.where = { access_logs: { time: { ">": desde } } };
+      return cidFetch("load_objects.fcgi?session=" + sess, corpo);
+    }).then(function (r) {
+      var logs = ((r && r.access_logs) || []).filter(function (l) { return +l.event === 7 && l.user_id && mapa[l.user_id]; });
+      cidLog("Acessos liberados novos: " + logs.length + ".");
+      if (!logs.length) { cidLog("✅ Nada novo pra importar."); return; }
+      var st = stA();
+      var porId = {};
+      st.alunos.forEach(function (a) { porId[String(a.id)] = a; });
+      var feitos = 0, maxT = desde;
+      logs.forEach(function (l) {
+        var a = porId[mapa[l.user_id]];
+        if (+l.time > maxT) maxT = +l.time;
+        if (!a) return;
+        var iso = new Date(+l.time * 1000).toISOString();
+        a.checkins = a.checkins || [];
+        if (a.checkins.indexOf(iso) < 0) { a.checkins.push(iso); feitos++; }
+      });
+      S.write("alunos", st);
+      var b = stBio();
+      b.controlid = b.controlid || {};
+      b.controlid.ultImport = maxT;
+      S.write("biometria", b);
+      mostraUltImp();
+      cidLog("✅ " + feitos + " check-in(s) registrados nos alunos.");
+    }).catch(function (e) { cidLog("❌ Falhou: " + e.message); });
+  });
+
+  // ---------- boot ----------
+  renderFaces();
+  renderHoje();
+  S.onChange(function (k) { if (k === "alunos") renderHoje(); if (k === "biometria") renderFaces(); });
+})();
+</script>
+</body>
+</html>
