@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atividades — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .linha-atv { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .linha-atv + .linha-atv { margin-top: -1px; }
+  .bola { width: 18px; height: 18px; border-radius: 50%; flex: none; border: 1px solid rgba(0,0,0,.15); }
+  .cores { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cores label { display: inline-flex; }
+  .cores input { display: none; }
+  .cores span { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; display: inline-block; }
+  .cores input:checked + span { border-color: var(--escuro); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Atividades</h1>
+    </div>
+  </div>
+  <p>O catálogo de modalidades da grade, como no EVO: cada atividade com sua cor e grupo (BOXE, CROSSFIT, DANÇA, HIIT, Muay Thai…). Ao criar aula na Grade, o nome sugere destas e a cor vem sozinha.</p>
+</header>
+
+<main class="corpo">
+  <div class="card">
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+      <div class="campo" style="margin:0; flex:1; min-width: 160px;"><label>Nome da atividade *</label><input id="nvNome" placeholder="ex.: CROSSFIT"></div>
+      <div class="campo" style="margin:0;"><label>Grupo</label><input id="nvGrupo" placeholder="COLETIVAS" list="grupos" style="width: 150px;"><datalist id="grupos"><option>COLETIVAS</option><option>LUTAS</option><option>KIDS</option><option>PERSONAL</option></datalist></div>
+      <div class="campo" style="margin:0;"><label>Cor</label><div class="cores" id="nvCores"></div></div>
+      <button class="btn" id="btnNova">+ Nova atividade</button>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between; margin: 14px 0 8px;">
+      <h2 style="margin:0;"><span id="qtd">0</span> resultados</h2>
+      <div class="linha-flex" style="gap: 8px;">
+        <input id="busca" placeholder="🔍 atividade ou grupo…" style="width: 190px;">
+        <label style="font-size: 13px; display:flex; gap:6px; align-items:center;"><input type="checkbox" id="verInativas"> inativas</label>
+      </div>
+    </div>
+    <div id="lista"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  // mesma paleta da Grade — a cor da atividade é aplicada sozinha ao criar a aula
+  var CORES = ["#7c3aed", "#0ea5a5", "#f59e0b", "#dc2626", "#16a34a", "#2563eb", "#db2777", "#57534e", "#ea580c", "#111111", "#eab308", "#78350f"];
+  function load() { return S.read("atividades", { itens: [] }); }
+
+  $("nvCores").innerHTML = CORES.map(function (c, i) {
+    return '<label><input type="radio" name="nvCor" value="' + c + '"' + (i === 7 ? " checked" : "") + '><span style="background:' + c + '"></span></label>';
+  }).join("");
+
+  function render() {
+    var st = load();
+    var q = $("busca").value.trim().toLowerCase();
+    var verIn = $("verInativas").checked;
+    var lista = st.itens.filter(function (a) {
+      if (!verIn && a.ativa === false) return false;
+      return !q || (a.nome + " " + (a.grupo || "")).toLowerCase().indexOf(q) >= 0;
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    $("qtd").textContent = lista.length;
+    $("lista").innerHTML = lista.length ? lista.map(function (a) {
+      return '<div class="linha-atv"><span class="bola" style="background:' + (a.cor || "#7c3aed") + '"></span>' +
+        '<strong style="flex:1; min-width: 140px;">' + esc(a.nome) + "</strong>" +
+        '<span class="muted">' + esc(a.grupo || "COLETIVAS") + "</span>" +
+        '<span class="tag ' + (a.ativa === false ? "neutro" : "ok") + '">' + (a.ativa === false ? "Inativa" : "Ativa") + "</span>" +
+        '<button class="btn sec mini" data-tgl="' + a.id + '">' + (a.ativa === false ? "reativar" : "inativar") + "</button>" +
+        '<button class="btn sec mini" data-dup="' + a.id + '" title="duplicar">⧉</button>' +
+        '<button class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
+    }).join("") : '<div class="vazio">Nenhuma atividade — cadastre as modalidades (ex.: BOXE, CROSSFIT, DANÇA, GAP, HIIT, HYROX, JUMP, Muay Thai).</div>';
+  }
+
+  $("btnNova").addEventListener("click", function () {
+    var nome = $("nvNome").value.trim();
+    if (!nome) { alert("Preencha o nome da atividade."); return; }
+    var st = load();
+    if (st.itens.some(function (a) { return a.nome.toLowerCase() === nome.toLowerCase(); })) { alert("Essa atividade já existe."); return; }
+    var cor = (document.querySelector('[name="nvCor"]:checked') || {}).value || "#7c3aed";
+    st.itens.push({ id: S.uid(), nome: nome, grupo: $("nvGrupo").value.trim() || "COLETIVAS", cor: cor, ativa: true });
+    S.write("atividades", st);
+    $("nvNome").value = "";
+    render();
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    var st = load();
+    var tgl = e.target.closest("[data-tgl]");
+    var dup = e.target.closest("[data-dup]");
+    var rm = e.target.closest("[data-rm]");
+    if (tgl) {
+      var a = st.itens.find(function (x) { return x.id === tgl.getAttribute("data-tgl"); });
+      if (a) { a.ativa = a.ativa === false; S.write("atividades", st); render(); }
+    }
+    if (dup) {
+      var o = st.itens.find(function (x) { return x.id === dup.getAttribute("data-dup"); });
+      if (o) { st.itens.push({ id: S.uid(), nome: o.nome + " (cópia)", grupo: o.grupo, cor: o.cor, ativa: true }); S.write("atividades", st); render(); }
+    }
+    if (rm) {
+      var a2 = st.itens.find(function (x) { return x.id === rm.getAttribute("data-rm"); });
+      if (!a2 || !confirm("Excluir a atividade \"" + a2.nome + "\"?")) return;
+      st.itens = st.itens.filter(function (x) { return x.id !== a2.id; });
+      S.write("atividades", st);
+      render();
+    }
+  });
+
+  $("busca").addEventListener("input", render);
+  $("verInativas").addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>

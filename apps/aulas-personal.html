@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aulas de Personal — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .linha-ap { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .linha-ap + .linha-ap { margin-top: -1px; }
+  .bola { width: 16px; height: 16px; border-radius: 50%; flex: none; border: 1px solid rgba(0,0,0,.15); }
+  dialog { border: 1px solid var(--linha); padding: 20px; max-width: 560px; width: 94vw; }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .cores { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cores label { display: inline-flex; }
+  .cores input { display: none; }
+  .cores span { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; display: inline-block; }
+  .cores input:checked + span { border-color: var(--escuro); }
+  .chk { display: flex; gap: 8px; align-items: center; font-size: 13.5px; padding: 4px 0; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Aulas de Personal</h1>
+    </div>
+  </div>
+  <p>O catálogo de aulas de personal como no EVO: nome, cor, preço interno e externo, meia aula, aula teste e máximo de clientes por aula. Os personais externos e a taxa de uso ficam em Personal Trainers.</p>
+</header>
+
+<main class="corpo">
+  <div class="card">
+    <div class="linha-flex" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <input id="busca" placeholder="🔍 Pesquise por nome da aula…" style="flex:1; min-width: 200px;">
+      <button class="btn" id="btnNova">+ Nova aula</button>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between; margin: 14px 0 8px;">
+      <h2 style="margin:0;"><span id="qtd">0</span> resultados</h2>
+    </div>
+    <div id="lista"></div>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <h2 id="dlgTitulo">Nova aula de personal</h2>
+  <div class="grid-2" style="margin-top: 10px;">
+    <div class="campo"><label>Nome da aula *</label><input id="apNome" placeholder="ex.: Personal Funcional"></div>
+    <div class="campo"><label>Máx. de clientes por aula</label><input id="apMax" type="number" min="1" value="1"></div>
+    <div class="campo"><label>Preço interno (R$) — aluno da academia</label><input id="apPrecoInt" type="number" step="0.01" min="0"></div>
+    <div class="campo"><label>Preço externo (R$) — não aluno</label><input id="apPrecoExt" type="number" step="0.01" min="0"></div>
+  </div>
+  <div class="campo"><label>Cor</label><div class="cores" id="apCores"></div></div>
+  <label class="chk"><input type="checkbox" id="apMeia"> Permite meia aula (30 min, meio preço)</label>
+  <label class="chk"><input type="checkbox" id="apTeste"> Permite aula teste (primeira aula grátis/promocional)</label>
+  <div class="linha-flex" style="justify-content: flex-end; gap: 8px; margin-top: 16px;">
+    <button class="btn sec" id="btnCancelar">Cancelar</button>
+    <button class="btn" id="btnSalvar">Salvar</button>
+  </div>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+  function brl(v) { return (+v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }); }
+
+  var CORES = ["#7c3aed", "#dc2626", "#16a34a", "#0284c7", "#ea580c", "#eab308", "#0d9488", "#111111"];
+  function load() { return S.read("aulasPersonal", { itens: [] }); }
+  var editId = null;
+
+  function render() {
+    var st = load();
+    var q = $("busca").value.trim().toLowerCase();
+    var lista = st.itens.filter(function (a) { return !q || a.nome.toLowerCase().indexOf(q) >= 0; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    $("qtd").textContent = lista.length;
+    $("lista").innerHTML = lista.length ? lista.map(function (a) {
+      return '<div class="linha-ap"><span class="bola" style="background:' + (a.cor || "#7c3aed") + '"></span>' +
+        '<strong style="flex:1; min-width: 150px;">' + esc(a.nome) + "</strong>" +
+        '<span class="muted">Interno: <strong>' + brl(a.precoInt) + "</strong></span>" +
+        '<span class="muted">Externo: <strong>' + brl(a.precoExt) + "</strong></span>" +
+        (a.meia ? '<span class="tag roxo">meia aula</span>' : "") +
+        (a.teste ? '<span class="tag ok">aula teste</span>' : "") +
+        '<span class="muted">máx. ' + (a.max || 1) + "</span>" +
+        '<button class="btn sec mini" data-ed="' + a.id + '">✎</button>' +
+        '<button class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
+    }).join("") : '<div class="vazio">Nenhuma aula de personal cadastrada — clique em "+ Nova aula".</div>';
+  }
+
+  function abreDlg(a) {
+    editId = a ? a.id : null;
+    $("dlgTitulo").textContent = a ? "Editar aula" : "Nova aula de personal";
+    $("apNome").value = a ? a.nome : "";
+    $("apMax").value = a ? (a.max || 1) : 1;
+    $("apPrecoInt").value = a ? (+a.precoInt || "") : "";
+    $("apPrecoExt").value = a ? (+a.precoExt || "") : "";
+    $("apMeia").checked = !!(a && a.meia);
+    $("apTeste").checked = !!(a && a.teste);
+    var corSel = (a && a.cor) || CORES[0];
+    $("apCores").innerHTML = CORES.map(function (c) {
+      return '<label><input type="radio" name="apCor" value="' + c + '"' + (c === corSel ? " checked" : "") + '><span style="background:' + c + '"></span></label>';
+    }).join("");
+    $("dlg").showModal();
+  }
+
+  $("btnNova").addEventListener("click", function () { abreDlg(null); });
+  $("btnCancelar").addEventListener("click", function () { $("dlg").close(); });
+  $("btnSalvar").addEventListener("click", function () {
+    var nome = $("apNome").value.trim();
+    if (!nome) { alert("Dê um nome pra aula."); return; }
+    var st = load();
+    var dados = {
+      nome: nome,
+      max: +$("apMax").value || 1,
+      precoInt: +$("apPrecoInt").value || 0,
+      precoExt: +$("apPrecoExt").value || 0,
+      meia: $("apMeia").checked,
+      teste: $("apTeste").checked,
+      cor: (document.querySelector('[name="apCor"]:checked') || {}).value || CORES[0],
+    };
+    if (editId) {
+      var a = st.itens.find(function (x) { return x.id === editId; });
+      if (a) Object.keys(dados).forEach(function (k) { a[k] = dados[k]; });
+    } else {
+      dados.id = S.uid();
+      st.itens.push(dados);
+    }
+    S.write("aulasPersonal", st);
+    $("dlg").close();
+    render();
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    var st = load();
+    var ed = e.target.closest("[data-ed]");
+    var rm = e.target.closest("[data-rm]");
+    if (ed) {
+      var a = st.itens.find(function (x) { return x.id === ed.getAttribute("data-ed"); });
+      if (a) abreDlg(a);
+    }
+    if (rm) {
+      var a2 = st.itens.find(function (x) { return x.id === rm.getAttribute("data-rm"); });
+      if (!a2 || !confirm("Excluir a aula \"" + a2.nome + "\"?")) return;
+      st.itens = st.itens.filter(function (x) { return x.id !== a2.id; });
+      S.write("aulasPersonal", st);
+      render();
+    }
+  });
+
+  $("busca").addEventListener("input", render);
+  render();
+})();
+</script>
+</body>
+</html>
