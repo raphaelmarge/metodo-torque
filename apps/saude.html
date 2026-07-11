@@ -58,7 +58,9 @@
           <button data-a="evolucao">Comparativo e evolução</button>
           <button data-a="diario">Diário de evolução</button>
         </div>
-        <span>
+        <span class="linha-flex" style="gap: 8px; align-items: center;">
+          <label class="muted" style="font-size: 12px;" title="Validade da avaliação física — vale para o Radar, o Perfil do Aluno e os Vencimentos (Configurações → Avançado do EVO)">vence em
+            <input id="cfgAvalDias" type="number" min="1" max="365" style="width: 62px; padding: 4px 6px; margin: 0 3px;"> dias</label>
           <button class="btn" id="btnDiario" hidden>+ Registro do dia</button>
           <button class="btn" id="btnNova" hidden>+ Nova avaliação</button>
         </span>
@@ -128,6 +130,21 @@
 <script>
 (function () {
   "use strict";
+  // validade global da avaliação física (padrão 90 dias)
+  (function () {
+    var boot = function () {
+      var el = document.getElementById("cfgAvalDias");
+      if (!el) return;
+      var c0 = window.MTStore.read("config", { dados: {} });
+      el.value = +c0.avaliacaoDias || 90;
+      el.addEventListener("change", function () {
+        var c = window.MTStore.read("config", { dados: {} });
+        c.avaliacaoDias = Math.max(1, +this.value || 90);
+        window.MTStore.write("config", c);
+      });
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+  })();
   var S = window.MTStore;
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }

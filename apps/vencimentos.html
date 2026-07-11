@@ -75,6 +75,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
   var hoje = S.todayISO();
+  $("fValAv").value = +(S.read("config", { dados: {} }).avaliacaoDias) || 90;
   $("fDe").value = hoje;
   var em30 = new Date(hoje + "T12:00"); em30.setDate(em30.getDate() + 30);
   $("fAte").value = S.todayISO(em30);

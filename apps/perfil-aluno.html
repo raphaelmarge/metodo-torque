@@ -141,7 +141,8 @@
     if (!parq) out.avisos.push("Preenchimento PAR-Q pendente.");
     var avs = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; });
     var ult = avs.map(function (v) { return v.data; }).sort().pop();
-    if (!ult || diasDesde(ult) >= 90) out.avisos.push(ult ? "Avaliação física vencida (última há " + diasDesde(ult) + " dias)." : "Nunca fez avaliação física.");
+    var valAval = +(S.read("config", { dados: {} }).avaliacaoDias) || 90;
+    if (!ult || diasDesde(ult) >= valAval) out.avisos.push(ult ? "Avaliação física vencida (última há " + diasDesde(ult) + " dias)." : "Nunca fez avaliação física.");
     return out;
   }
 
@@ -341,7 +342,7 @@
         "</div><div>" +
         '<div class="card" style="margin-bottom:12px;"><h2>Vencimento de exames</h2>' +
         '<div class="kv"><span>Avaliação física</span><span>' + (ultAv ?
-          (diasDesde(ultAv) >= 90 ? '<span class="tag alerta">VENCIDA — ' + S.fmtData(ultAv) + "</span>" : '<span class="tag ok">EM DIA — ' + S.fmtData(ultAv) + "</span>")
+          (diasDesde(ultAv) >= (+(S.read("config", { dados: {} }).avaliacaoDias) || 90) ? '<span class="tag alerta">VENCIDA — ' + S.fmtData(ultAv) + "</span>" : '<span class="tag ok">EM DIA — ' + S.fmtData(ultAv) + "</span>")
           : '<span class="tag erro">NUNCA FEZ</span>') + "</span></div>" +
         '<div class="kv"><span>PAR-Q</span><span>' + (parq2 ?
           (parq2.temSim ? '<span class="tag alerta">RISCO — aval. médica</span>' : '<span class="tag ok">APTO' + (parq2.data ? " — " + S.fmtData(parq2.data) : "") + "</span>")
@@ -354,7 +355,7 @@
           return '<div class="kv"><span>' + ex[1] + "</span><span>" + tag +
             ' <input type="date" data-exame="' + ex[0] + '" value="' + esc(d) + '" style="width: 140px; padding: 2px 6px; font-size: 12px;"></span></div>';
         }).join("") +
-        '<p class="muted" style="margin-top:8px;">Avaliação física a cada 90 dias (agende pela <a href="saude.html">Avaliação Física</a>); exames valem por 1 ano — a data salva sozinha.</p></div>' +
+        '<p class="muted" style="margin-top:8px;">Avaliação física a cada " + ((+(S.read("config", { dados: {} }).avaliacaoDias) || 90)) + " dias (agende pela <a href="saude.html">Avaliação Física</a>); exames valem por 1 ano — a data salva sozinha.</p></div>' +
         '<div class="card"><h2>Origem e observações</h2>' +
         [["Como conheceu", a.comoConheceu || a.origem], ["Indicado por", a.indicacao], ["Consultor(a)", a.consultor],
          ["Tipo de visita", a.tipoVisita], ["Cliente desde", a.criado ? S.fmtData(a.criado) : ""], ["Observações", a.obs]].map(function (kv) {
