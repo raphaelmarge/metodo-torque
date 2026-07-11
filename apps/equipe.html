@@ -128,6 +128,10 @@
       return true;
     }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
 
+    // etiqueta de permissão como na lista de Colaboradores do EVO
+    var perfis = {};
+    (S.read("permissoes", { perfis: null }).perfis || []).forEach(function (p) { perfis[p.id] = p.nome; });
+
     $("lista").innerHTML = lista.length ? lista.map(function (c) {
       var ini = c.nome.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
       var cor = CORES[Math.abs(c.nome.length * 7 + (c.cargo || "").length) % CORES.length];
@@ -135,6 +139,7 @@
         '<span class="avatar" style="background:' + cor + '">' + esc(ini) + "</span>" +
         '<div class="quem"><strong>' + esc(c.nome) + '</strong><div class="sub">' + esc(c.cargo) +
         (c.admissao ? " · desde " + S.fmtData(c.admissao) : "") + "</div></div>" +
+        '<span class="tag ' + (perfis[c.permissaoId] ? "roxo" : "neutro") + '" title="permissão (defina na ficha)">' + esc(perfis[c.permissaoId] || "Sem permissão") + "</span> " +
         (c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') +
         (c.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '">💬</a>' : "") +
         ' <a class="btn mini" href="colaborador.html?id=' + c.id + '">👔 Ficha</a>' +

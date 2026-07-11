@@ -52,12 +52,6 @@
   var colId = new URLSearchParams(location.search).get("id") || null;
   var aba = "cadastro";
   var DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-  var PERFIS = [
-    ["admin", "Administrador", "vê e mexe em tudo, inclusive Financeiro, DRE e Configurações."],
-    ["gerente", "Gerente", "operação completa + relatórios gerenciais; sem Configurações do sistema."],
-    ["recepcao", "Recepção", "entradas, alunos, caixa, vendas, agenda e tarefas do dia."],
-    ["professor", "Professor(a)", "treinos, turmas, grade, avaliações e WOD."],
-  ];
 
   function renderSeletor() {
     var lista = load().colaboradores.slice().sort(function (x, y) { return x.nome < y.nome ? -1 : 1; });
@@ -110,11 +104,13 @@
       '<div class="tgl"><span>À catraca</span><input type="checkbox" id="tglCatraca"' + (c.acessoCatraca !== false ? " checked" : "") + "></div>" +
       '<div class="tgl"><span>Fora do horário de trabalho</span><input type="checkbox" id="tglFora"' + (c.acessoForaHorario ? " checked" : "") + "></div>" +
       '<div class="tgl"><span>Utiliza teclado para acesso</span><input type="checkbox" id="tglTeclado"' + (c.acessoTeclado ? " checked" : "") + "></div>" +
+      '<div class="tgl"><span>Bloquear acesso ao sistema</span><input type="checkbox" id="tglBloqSis"' + (c.bloqueioSistema ? " checked" : "") + "></div>" +
+      '<div class="tgl"><span>Exibir na grade de horário</span><input type="checkbox" id="tglGrade"' + (c.exibeGrade !== false ? " checked" : "") + "></div>" +
       "</div></div>" +
 
       // painel direito com abas
       '<div><div class="abas" style="margin-bottom: 12px;" id="abas">' +
-      [["cadastro", "Cadastro"], ["contratacao", "Contratação"], ["horario", "Horário"], ["permissoes", "Permissões"]].map(function (x) {
+      [["cadastro", "Cadastro"], ["contratacao", "Contratação"], ["horario", "Horário"], ["permissoes", "Permissões"], ["carteira", "Carteira"], ["metas", "Metas"]].map(function (x) {
         return '<button data-ab="' + x[0] + '"' + (aba === x[0] ? ' class="ativa"' : "") + ">" + x[1] + "</button>";
       }).join("") + "</div><div id='painelAba'></div></div></div>";
 
@@ -131,6 +127,8 @@
     tgl("tglCatraca", "acessoCatraca", false);
     tgl("tglFora", "acessoForaHorario", false);
     tgl("tglTeclado", "acessoTeclado", false);
+    tgl("tglBloqSis", "bloqueioSistema", false);
+    tgl("tglGrade", "exibeGrade", false);
 
     var p = "";
     if (aba === "cadastro") {
@@ -145,6 +143,14 @@
         '<div class="campo"><label>Admissão</label><input id="cAdmissao" type="date" value="' + esc(c.admissao || "") + '"></div>' +
         '<div class="campo"><label>Endereço</label><input id="cEndereco" value="' + esc(c.endereco || "") + '" placeholder="rua, nº, bairro"></div>' +
         '<div class="campo"><label>CPF</label><input id="cCpf" value="' + esc(c.cpf || "") + '"></div>' +
+        '<div class="campo"><label>Nascimento</label><input id="cNasc" type="date" value="' + esc(c.nascimento || "") + '"></div>' +
+        '<div class="campo"><label>CREF</label><input id="cCref" value="' + esc(c.cref || "") + '" placeholder="registro profissional"></div>' +
+        '<div class="campo"><label>PIS</label><input id="cPis" value="' + esc(c.pis || "") + '"></div>' +
+        '<div class="campo"><label>Carteirinha (nº de acesso)</label><input id="cCarteirinha" value="' + esc(c.carteirinha || "") + '"></div>' +
+        '<div class="campo"><label>Função</label><select id="cFuncao">' +
+        ["", "Professor", "Estagiário", "Recepcionista", "Consultor", "Gerente", "Coordenador", "Outro"].map(function (f) {
+          return "<option" + (f === (c.funcao || "") ? " selected" : "") + ">" + f + "</option>";
+        }).join("") + "</select></div>" +
         "</div><h2 style='margin-top: 16px;'>Emergência</h2><div class='grid-2' style='margin-top: 10px;'>" +
         '<div class="campo"><label>Contato de emergência</label><input id="cEmgNome" value="' + esc(c.emergenciaNome || "") + '"></div>' +
         '<div class="campo"><label>Telefone</label><input id="cEmgFone" value="' + esc(c.emergenciaFone || "") + '"></div>' +
@@ -176,19 +182,60 @@
         }).join("") + "</div>";
     }
     if (aba === "permissoes") {
-      p = '<div class="card"><h2>Perfil de acesso</h2><p class="muted" style="margin: 4px 0 10px;">Define o que esse colaborador deve usar no sistema. (O bloqueio real por login individual entra na Fase 2 — hoje vale como orientação da equipe.)</p>' +
-        PERFIS.map(function (pf) {
+      // perfis vêm da tela Permissões (como no EVO: Acesso Total, Consultor, Coord., Financeiro…)
+      var stP = S.read("permissoes", { perfis: null });
+      var perfis = (stP.perfis || []).filter(function (x) { return x.ativa !== false; });
+      p = '<div class="card"><h2>Permissão</h2><p class="muted" style="margin: 4px 0 10px;">O perfil define as telas que esse colaborador usa. Crie e edite perfis em <a href="permissoes.html">Permissões</a>. (O bloqueio real por login individual entra na Fase 2 — hoje vale como orientação da equipe.)</p>' +
+        (perfis.length ? perfis.map(function (pf) {
+          var telas = Object.keys(pf.telas || {}).length;
           return '<label class="linha-flex" style="gap: 8px; padding: 7px 0; align-items: flex-start; cursor: pointer;">' +
-            '<input type="radio" name="perfil" value="' + pf[0] + '"' + ((c.perfilAcesso || "recepcao") === pf[0] ? " checked" : "") + ">" +
-            "<span><strong>" + pf[1] + "</strong><br><span class='muted' style='font-size: 12.5px;'>" + pf[2] + "</span></span></label>";
-        }).join("") + "</div>";
+            '<input type="radio" name="perfil" value="' + pf.id + '"' + (c.permissaoId === pf.id ? " checked" : "") + ">" +
+            "<span><strong>" + esc(pf.nome) + (pf.nome === "Acesso Total" ? " 🔑" : "") + "</strong><br><span class='muted' style='font-size: 12.5px;'>" + esc(pf.desc || "") + " · " + telas + " área(s) liberada(s)</span></span></label>";
+        }).join("") : '<div class="vazio">Abra a tela <a href="permissoes.html">Permissões</a> uma vez pra criar os perfis padrão.</div>') +
+        (c.permissaoId ? '<div class="linha-flex" style="margin-top:8px;"><button class="btn sec mini" id="btnSemPerm">Remover permissão (sem permissão)</button></div>' : "") +
+        "</div>";
+    }
+    if (aba === "carteira") {
+      // carteira = alunos ativos atendidos por esse colaborador (campo consultor do aluno)
+      var stAl = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+      var hoje = S.todayISO();
+      var meus = stAl.alunos.filter(function (a) {
+        return a.status !== "inativo" && (a.consultor || "").trim().toLowerCase() === c.nome.trim().toLowerCase();
+      });
+      var inadIds = {};
+      stAl.recebiveis.forEach(function (r) { if (r.status === "aberto" && r.vencimento < hoje) inadIds[r.alunoId] = 1; });
+      var novosMes = meus.filter(function (a) { return (a.desde || "").slice(0, 7) === hoje.slice(0, 7); }).length;
+      p = '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Carteira de clientes</h2>' +
+        '<span class="tag roxo">' + meus.length + " ativo(s)</span></div>" +
+        '<p class="muted" style="margin: 4px 0 10px; font-size: 13px;">Alunos com ' + esc(c.nome.split(" ")[0]) + " como consultor(a) no cadastro. Novos no mês: " + novosMes + ". Visão geral em <a href='carteiras.html'>Carteiras</a>.</p>" +
+        (meus.length ? meus.sort(function (a, b) { return a.nome.localeCompare(b.nome); }).map(function (a) {
+          return '<div class="linha-flex" style="gap: 10px; padding: 7px 0; border-top: 1px solid var(--linha); align-items: center;">' +
+            '<a href="perfil-aluno.html?id=' + a.id + '" style="flex:1; font-weight:600;">' + esc(a.nome) + "</a>" +
+            (inadIds[a.id] ? '<span class="tag erro">em atraso</span>' : '<span class="tag ok">em dia</span>') + "</div>";
+        }).join("") : '<div class="vazio">Nenhum aluno na carteira — preencha o campo consultor(a) no cadastro do aluno (Clientes → editar).</div>') +
+        "</div>";
+    }
+    if (aba === "metas") {
+      var metas = c.metas || [];
+      p = '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Metas do colaborador</h2>' +
+        '<button class="btn mini" id="btnMeta">+ Nova meta</button></div>' +
+        '<p class="muted" style="margin: 4px 0 10px; font-size: 13px;">Metas individuais como no EVO (ex.: 20 vendas no mês, 90% de renovação). Metas de vendas por equipe ficam em <a href="metas.html">Metas de Vendas</a>.</p>' +
+        (metas.length ? metas.map(function (m) {
+          return '<div class="linha-flex" style="gap: 10px; padding: 7px 0; border-top: 1px solid var(--linha); align-items: center;">' +
+            '<input type="checkbox" data-metaok="' + m.id + '"' + (m.feito ? " checked" : "") + ">" +
+            '<span style="flex:1;' + (m.feito ? "text-decoration:line-through; color:var(--cinza);" : "") + '">' + esc(m.titulo) +
+            (m.prazo ? ' <span class="muted">(até ' + S.fmtData(m.prazo) + ")</span>" : "") + "</span>" +
+            '<button class="btn sec mini" data-metarm="' + m.id + '">🗑</button></div>';
+        }).join("") : '<div class="vazio">Nenhuma meta ainda — combine as metas do mês com o colaborador.</div>') +
+        "</div>";
     }
     $("painelAba").innerHTML = p;
 
     // salvar campos da aba ativa
     [["cNome", "nome"], ["cGenero", "genero"], ["cEmail", "email"], ["cZap", "zap"], ["cCargo", "cargo"],
      ["cAdmissao", "admissao"], ["cEndereco", "endereco"], ["cCpf", "cpf"], ["cEmgNome", "emergenciaNome"],
-     ["cEmgFone", "emergenciaFone"], ["cTipo", "tipoContrato"], ["cBanco", "banco"], ["cObsC", "obsContratacao"]]
+     ["cEmgFone", "emergenciaFone"], ["cTipo", "tipoContrato"], ["cBanco", "banco"], ["cObsC", "obsContratacao"],
+     ["cNasc", "nascimento"], ["cCref", "cref"], ["cPis", "pis"], ["cCarteirinha", "carteirinha"], ["cFuncao", "funcao"]]
       .forEach(function (par) { salvaCampo(par[0], par[1]); });
     salvaCampo("cSalario", "salario", function (el) { return +el.value || 0; });
     salvaCampo("cValorHora", "valorHora", function (el) { return +el.value || 0; });
@@ -207,8 +254,47 @@
       r.addEventListener("change", function () {
         var st2 = load();
         var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
-        c2.perfilAcesso = this.value;
+        c2.permissaoId = this.value;
         S.write("equipe", st2);
+      });
+    });
+    var bSP = $("btnSemPerm");
+    if (bSP) bSP.onclick = function () {
+      var st2 = load();
+      var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+      delete c2.permissaoId;
+      S.write("equipe", st2);
+      render();
+    };
+
+    // metas do colaborador
+    var bM = $("btnMeta");
+    if (bM) bM.onclick = function () {
+      var titulo = (prompt("Qual a meta? (ex.: 20 vendas no mês)") || "").trim();
+      if (!titulo) return;
+      var prazo = (prompt("Prazo (AAAA-MM-DD) — pode deixar vazio:") || "").trim();
+      var st2 = load();
+      var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+      (c2.metas = c2.metas || []).push({ id: S.uid(), titulo: titulo, prazo: prazo, feito: false });
+      S.write("equipe", st2);
+      render();
+    };
+    Array.prototype.forEach.call(document.querySelectorAll("[data-metaok]"), function (cb) {
+      cb.addEventListener("change", function () {
+        var st2 = load();
+        var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+        var m = (c2.metas || []).find(function (y) { return y.id === cb.getAttribute("data-metaok"); });
+        if (m) { m.feito = cb.checked; S.write("equipe", st2); render(); }
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-metarm]"), function (bt) {
+      bt.addEventListener("click", function () {
+        if (!confirm("Excluir essa meta?")) return;
+        var st2 = load();
+        var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
+        c2.metas = (c2.metas || []).filter(function (y) { return y.id !== bt.getAttribute("data-metarm"); });
+        S.write("equipe", st2);
+        render();
       });
     });
 

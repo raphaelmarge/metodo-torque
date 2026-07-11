@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Horários de Funcionamento — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .abas button { border: 1px solid var(--linha); background: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; }
+  .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .linha-dia { display: flex; gap: 10px; align-items: center; padding: 7px 0; font-size: 13.5px; flex-wrap: wrap; }
+  .linha-dia .dia { width: 90px; font-weight: 700; }
+  .linha-dia input[type="time"] { width: 105px; }
+  .linha-fer { display: flex; gap: 12px; align-items: center; padding: 9px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; }
+  .linha-fer + .linha-fer { margin-top: -1px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Horários de Funcionamento</h1>
+    </div>
+  </div>
+  <p>O funcionamento da unidade como no EVO: horário de cada dia da semana (com segunda faixa opcional, ex.: fecha no almoço) e o cadastro de feriados com horário especial.</p>
+</header>
+
+<main class="corpo">
+  <div class="abas">
+    <button data-aba="func" class="ativa">🕐 Funcionamento da unidade</button>
+    <button data-aba="feriados">📅 Feriados</button>
+  </div>
+
+  <section id="abaFunc">
+    <div class="card">
+      <h2>Horários de funcionamento da unidade</h2>
+      <p class="muted" style="font-size: 13px; margin: 6px 0 10px;">Deixe em branco os dias fechados. A 2ª faixa é opcional (ex.: 06:00–12:00 e 14:00–22:00).</p>
+      <div id="dias"></div>
+    </div>
+  </section>
+
+  <section id="abaFeriados" hidden>
+    <div class="card">
+      <h2>Feriados e horários especiais</h2>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 10px;">
+        <div class="campo" style="margin:0;"><label>Data</label><input id="ferData" type="date"></div>
+        <div class="campo" style="margin:0; flex:1; min-width: 180px;"><label>Nome do feriado</label><input id="ferNome" placeholder="ex.: Natal"></div>
+        <div class="campo" style="margin:0;"><label>Abre às (vazio = fechado)</label><input id="ferDe" type="time"></div>
+        <div class="campo" style="margin:0;"><label>Fecha às</label><input id="ferAte" type="time"></div>
+        <button class="btn" id="btnFer">+ Adicionar</button>
+      </div>
+      <div id="listaFer" style="margin-top: 14px;"></div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  function load() { return S.read("funcionamento", { dias: {}, feriados: [] }); }
+
+  document.querySelectorAll(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+      $("abaFunc").hidden = b.dataset.aba !== "func";
+      $("abaFeriados").hidden = b.dataset.aba !== "feriados";
+    });
+  });
+
+  function renderDias() {
+    var d = load().dias || {};
+    $("dias").innerHTML = DIAS.map(function (nome, i) {
+      var h = d[i] || {};
+      function inp(campo) { return '<input type="time" data-d="' + i + '" data-c="' + campo + '" value="' + esc(h[campo] || "") + '">'; }
+      return '<div class="linha-dia"><span class="dia">' + nome + "</span>" +
+        inp("de") + " às " + inp("ate") +
+        '<span class="muted" style="margin-left:8px;">2ª faixa:</span> ' + inp("de2") + " às " + inp("ate2") + "</div>";
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-d]"), function (el) {
+      el.addEventListener("change", function () {
+        var st = load();
+        st.dias = st.dias || {};
+        var i = this.getAttribute("data-d");
+        (st.dias[i] = st.dias[i] || {})[this.getAttribute("data-c")] = this.value;
+        S.write("funcionamento", st);
+      });
+    });
+  }
+
+  function renderFeriados() {
+    var lista = load().feriados.slice().sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+    $("listaFer").innerHTML = lista.length ? lista.map(function (f) {
+      var hor = f.de ? f.de + "–" + (f.ate || "?") : "fechado";
+      return '<div class="linha-fer"><strong>' + S.fmtData(f.data) + "</strong><span style='flex:1;'>" + esc(f.nome) +
+        "</span><span class='tag " + (f.de ? "roxo" : "neutro") + "'>" + hor + "</span>" +
+        '<button class="btn sec mini" data-rm="' + f.id + '">🗑</button></div>';
+    }).join("") : '<div class="vazio">Nenhum feriado cadastrado ainda.</div>';
+  }
+
+  $("btnFer").addEventListener("click", function () {
+    var data = $("ferData").value, nome = $("ferNome").value.trim();
+    if (!data || !nome) { alert("Preencha a data e o nome do feriado."); return; }
+    var st = load();
+    st.feriados.push({ id: S.uid(), data: data, nome: nome, de: $("ferDe").value, ate: $("ferAte").value });
+    S.write("funcionamento", st);
+    $("ferData").value = ""; $("ferNome").value = ""; $("ferDe").value = ""; $("ferAte").value = "";
+    renderFeriados();
+  });
+  $("listaFer").addEventListener("click", function (e) {
+    var rm = e.target.closest("[data-rm]"); if (!rm) return;
+    var st = load();
+    st.feriados = st.feriados.filter(function (f) { return f.id !== rm.getAttribute("data-rm"); });
+    S.write("funcionamento", st);
+    renderFeriados();
+  });
+
+  renderDias();
+  renderFeriados();
+})();
+</script>
+</body>
+</html>

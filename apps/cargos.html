@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cargos — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .linha-cargo { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; }
+  .linha-cargo + .linha-cargo { margin-top: -1px; }
+  .linha-cargo .total a { color: var(--roxo); font-weight: 700; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Cargos</h1>
+    </div>
+  </div>
+  <p>Os cargos da equipe como no EVO: crie, renomeie e veja quantos colaboradores tem em cada um. O cargo aparece na ficha e nos filtros de Colaboradores.</p>
+</header>
+
+<main class="corpo">
+  <div class="card">
+    <div class="linha-flex" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div class="campo" style="margin: 0; flex: 1; min-width: 220px;"><label>Pesquisar por cargo</label>
+        <input id="busca" placeholder="ex.: professor…"></div>
+      <div class="campo" style="margin: 0; flex: 1; min-width: 220px;"><label>Novo cargo</label>
+        <div class="linha-flex" style="gap: 8px;"><input id="novoNome" placeholder="ex.: Head coach" style="flex:1;">
+        <button class="btn" id="btnNovo">+ Novo cargo</button></div></div>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between; margin: 14px 0 8px;">
+      <h2 style="margin:0;"><span id="qtd">0</span> resultados</h2>
+    </div>
+    <div id="lista"></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  function load() {
+    var st = S.read("equipe", { cargos: [], colaboradores: [] });
+    st.cargos = st.cargos || []; st.colaboradores = st.colaboradores || [];
+    return st;
+  }
+
+  function render() {
+    var st = load();
+    var q = $("busca").value.trim().toLowerCase();
+    var totais = {};
+    st.colaboradores.forEach(function (c) {
+      if (c.ativo === false) return;
+      if (c.cargo) totais[c.cargo] = (totais[c.cargo] || 0) + 1;
+    });
+    var lista = st.cargos.slice().sort(function (a, b) { return a.localeCompare(b); })
+      .filter(function (cg) { return !q || cg.toLowerCase().indexOf(q) >= 0; });
+    $("qtd").textContent = lista.length;
+    $("lista").innerHTML = lista.length ? lista.map(function (cg) {
+      var n = totais[cg] || 0;
+      return '<div class="linha-cargo"><strong style="flex:1;">' + esc(cg) + "</strong>" +
+        '<span class="total"><a href="equipe.html" title="ver colaboradores">' + n + " colaborador(es)</a></span>" +
+        '<button class="btn sec mini" data-ed="' + esc(cg) + '">✎ renomear</button>' +
+        '<button class="btn sec mini" data-rm="' + esc(cg) + '">🗑</button></div>';
+    }).join("") : '<div class="vazio">Nenhum cargo ainda — crie o primeiro acima (ex.: Professor musculação, Recepcionista, Gerente).</div>';
+  }
+
+  $("btnNovo").addEventListener("click", function () {
+    var nome = $("novoNome").value.trim();
+    if (!nome) { alert("Escreva o nome do cargo."); return; }
+    var st = load();
+    if (st.cargos.some(function (c) { return c.toLowerCase() === nome.toLowerCase(); })) { alert("Esse cargo já existe."); return; }
+    st.cargos.push(nome);
+    S.write("equipe", st);
+    $("novoNome").value = "";
+    render();
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    var ed = e.target.closest("[data-ed]");
+    var rm = e.target.closest("[data-rm]");
+    if (ed) {
+      var atual = ed.getAttribute("data-ed");
+      var novo = (prompt("Novo nome para o cargo \"" + atual + "\":", atual) || "").trim();
+      if (!novo || novo === atual) return;
+      var st = load();
+      if (st.cargos.some(function (c) { return c.toLowerCase() === novo.toLowerCase(); })) { alert("Já existe um cargo com esse nome."); return; }
+      st.cargos = st.cargos.map(function (c) { return c === atual ? novo : c; });
+      st.colaboradores.forEach(function (c) { if (c.cargo === atual) c.cargo = novo; });
+      S.write("equipe", st);
+      render();
+    }
+    if (rm) {
+      var nome = rm.getAttribute("data-rm");
+      var st2 = load();
+      var emUso = st2.colaboradores.filter(function (c) { return c.cargo === nome && c.ativo !== false; }).length;
+      if (emUso) { alert("Tem " + emUso + " colaborador(es) ativos com esse cargo — troque o cargo deles antes de excluir."); return; }
+      if (!confirm("Excluir o cargo \"" + nome + "\"?")) return;
+      st2.cargos = st2.cargos.filter(function (c) { return c !== nome; });
+      S.write("equipe", st2);
+      render();
+    }
+  });
+
+  $("busca").addEventListener("input", render);
+  S.onChange(function (k) { if (k === "equipe") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Permissões — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .linha-perm { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .linha-perm + .linha-perm { margin-top: -1px; }
+  .linha-perm .nome { color: var(--roxo); font-weight: 700; cursor: pointer; }
+  .telas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 14px; margin-top: 10px; }
+  .telas-grid label { display: flex; gap: 8px; align-items: center; font-size: 13.5px; cursor: pointer; }
+  dialog { border: 1px solid var(--linha); padding: 20px; max-width: 640px; width: 94vw; }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Permissões</h1>
+    </div>
+  </div>
+  <p>Defina as telas e funcionalidades que os colaboradores podem acessar, como no EVO. Você pode criar, duplicar e editar permissões — o perfil é escolhido na ficha de cada colaborador.</p>
+</header>
+
+<main class="corpo">
+  <div class="card">
+    <div class="linha-flex" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div class="campo" style="margin:0; flex:1; min-width: 220px;"><label>Pesquisar por nome</label>
+        <input id="busca" placeholder="ex.: professor…"></div>
+      <button class="btn" id="btnNova" style="align-self: flex-end;">+ Nova permissão</button>
+    </div>
+    <div class="linha-flex" style="justify-content: space-between; margin: 14px 0 8px;">
+      <h2 style="margin:0;"><span id="qtd">0</span> resultados</h2>
+      <label style="font-size: 13px; display:flex; gap:6px; align-items:center;"><input type="checkbox" id="verInativas"> mostrar inativas</label>
+    </div>
+    <div id="lista"></div>
+    <p class="muted" style="font-size: 12.5px; margin-top: 10px;">🔑 O perfil "Acesso Total" é o dono do sistema. Os demais servem de orientação da equipe e alimentam a etiqueta de permissão na lista de Colaboradores.</p>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <h2 id="dlgTitulo">Nova permissão</h2>
+  <div class="grid-2" style="margin-top: 10px;">
+    <div class="campo"><label>Nome *</label><input id="pNome"></div>
+    <div class="campo"><label>Descrição</label><input id="pDesc"></div>
+  </div>
+  <label style="font-size: 13.5px; display:flex; gap:6px; align-items:center;"><input type="checkbox" id="pAtiva" checked> Ativa</label>
+  <h2 style="margin-top: 14px;">Telas liberadas</h2>
+  <div class="telas-grid" id="pTelas"></div>
+  <div class="linha-flex" style="justify-content: flex-end; gap: 8px; margin-top: 16px;">
+    <button class="btn sec" id="btnCancelar">Cancelar</button>
+    <button class="btn" id="btnSalvar">Salvar</button>
+  </div>
+</dialog>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  var TELAS = [
+    ["recepcao", "Recepção (entradas, biometria, agenda)"],
+    ["clientes", "Clientes e Perfil do Aluno"],
+    ["crm", "CRM (funil, oportunidades, disparos)"],
+    ["financeiro", "Financeiro (caixa, contas, cobranças)"],
+    ["gerencial", "Gerencial (relatórios e DRE)"],
+    ["treinos", "Treinos e prescrição"],
+    ["saude", "Dados de saúde (avaliações, PAR-Q)"],
+    ["administrativo", "Administrativo (equipe, produtos)"],
+    ["config", "Configurações do sistema"],
+  ];
+  // perfis que o EVO traz de fábrica (os mesmos da academia)
+  function padrao() {
+    function p(nome, desc, telas) { return { id: S.uid(), nome: nome, desc: desc, ativa: true, telas: telas }; }
+    return [
+      p("Acesso Total", "Acesso Total", { recepcao: 1, clientes: 1, crm: 1, financeiro: 1, gerencial: 1, treinos: 1, saude: 1, administrativo: 1, config: 1 }),
+      p("Consultor", "Consultor", { recepcao: 1, clientes: 1, crm: 1 }),
+      p("Coord. Técnico", "Coord. Técnico", { recepcao: 1, clientes: 1, treinos: 1, saude: 1, administrativo: 1 }),
+      p("Coord. Vendas", "Coord. Vendas", { recepcao: 1, clientes: 1, crm: 1, gerencial: 1 }),
+      p("Financeiro", "Financeiro", { financeiro: 1, gerencial: 1 }),
+      p("Professor", "Professor", { recepcao: 1, treinos: 1, saude: 1 }),
+      p("Recepção", "Recepção", { recepcao: 1, clientes: 1, financeiro: 1 }),
+    ];
+  }
+  function load() {
+    var st = S.read("permissoes", { perfis: null });
+    if (!st.perfis) { st.perfis = padrao(); S.write("permissoes", st); }
+    return st;
+  }
+  function equipe() { return S.read("equipe", { cargos: [], colaboradores: [] }); }
+
+  var editId = null;
+
+  function render() {
+    var st = load();
+    var q = $("busca").value.trim().toLowerCase();
+    var verIn = $("verInativas").checked;
+    var usaPerfil = {};
+    (equipe().colaboradores || []).forEach(function (c) {
+      if (c.ativo !== false && c.permissaoId) usaPerfil[c.permissaoId] = (usaPerfil[c.permissaoId] || 0) + 1;
+    });
+    var lista = st.perfis.filter(function (p) {
+      if (!verIn && p.ativa === false) return false;
+      return !q || p.nome.toLowerCase().indexOf(q) >= 0;
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    $("qtd").textContent = lista.length;
+    $("lista").innerHTML = lista.length ? lista.map(function (p) {
+      var chave = p.nome === "Acesso Total" ? " 🔑" : "";
+      return '<div class="linha-perm">' +
+        '<span class="nome" data-ed="' + p.id + '" style="flex:1; min-width: 140px;">' + esc(p.nome) + chave + "</span>" +
+        '<span class="muted" style="flex:1; min-width: 140px;">' + esc(p.desc || "-") + "</span>" +
+        '<span class="muted">' + (usaPerfil[p.id] || 0) + " colab.</span>" +
+        '<span class="tag ' + (p.ativa === false ? "neutro" : "ok") + '">' + (p.ativa === false ? "Inativa" : "Ativa") + "</span>" +
+        '<button class="btn sec mini" data-dup="' + p.id + '" title="duplicar">⧉</button>' +
+        '<button class="btn sec mini" data-ed="' + p.id + '">✎</button>' +
+        '<button class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
+    }).join("") : '<div class="vazio">Nenhuma permissão encontrada.</div>';
+  }
+
+  function abreDlg(p) {
+    editId = p ? p.id : null;
+    $("dlgTitulo").textContent = p ? "Editar permissão" : "Nova permissão";
+    $("pNome").value = p ? p.nome : "";
+    $("pDesc").value = p ? (p.desc || "") : "";
+    $("pAtiva").checked = !p || p.ativa !== false;
+    $("pTelas").innerHTML = TELAS.map(function (t) {
+      var on = p && p.telas && p.telas[t[0]];
+      return '<label><input type="checkbox" data-t="' + t[0] + '"' + (on ? " checked" : "") + "> " + t[1] + "</label>";
+    }).join("");
+    $("dlg").showModal();
+  }
+
+  $("btnNova").addEventListener("click", function () { abreDlg(null); });
+  $("btnCancelar").addEventListener("click", function () { $("dlg").close(); });
+  $("btnSalvar").addEventListener("click", function () {
+    var nome = $("pNome").value.trim();
+    if (!nome) { alert("Dê um nome pra permissão."); return; }
+    var st = load();
+    var telas = {};
+    Array.prototype.forEach.call(document.querySelectorAll("#pTelas [data-t]"), function (cb) {
+      if (cb.checked) telas[cb.getAttribute("data-t")] = 1;
+    });
+    if (editId) {
+      var p = st.perfis.find(function (x) { return x.id === editId; });
+      if (p) { p.nome = nome; p.desc = $("pDesc").value.trim(); p.ativa = $("pAtiva").checked; p.telas = telas; }
+    } else {
+      st.perfis.push({ id: S.uid(), nome: nome, desc: $("pDesc").value.trim(), ativa: $("pAtiva").checked, telas: telas });
+    }
+    S.write("permissoes", st);
+    $("dlg").close();
+    render();
+  });
+
+  $("lista").addEventListener("click", function (e) {
+    var ed = e.target.closest("[data-ed]");
+    var dup = e.target.closest("[data-dup]");
+    var rm = e.target.closest("[data-rm]");
+    var st = load();
+    if (dup) {
+      var o = st.perfis.find(function (x) { return x.id === dup.getAttribute("data-dup"); });
+      if (o) {
+        st.perfis.push({ id: S.uid(), nome: o.nome + " (cópia)", desc: o.desc, ativa: true, telas: JSON.parse(JSON.stringify(o.telas || {})) });
+        S.write("permissoes", st);
+        render();
+      }
+      return;
+    }
+    if (rm) {
+      var id = rm.getAttribute("data-rm");
+      var emUso = (equipe().colaboradores || []).filter(function (c) { return c.permissaoId === id && c.ativo !== false; }).length;
+      if (emUso) { alert("Tem " + emUso + " colaborador(es) com essa permissão — troque na ficha deles antes de excluir."); return; }
+      if (!confirm("Excluir essa permissão?")) return;
+      st.perfis = st.perfis.filter(function (x) { return x.id !== id; });
+      S.write("permissoes", st);
+      render();
+      return;
+    }
+    if (ed) {
+      var p = st.perfis.find(function (x) { return x.id === ed.getAttribute("data-ed"); });
+      if (p) abreDlg(p);
+    }
+  });
+
+  $("busca").addEventListener("input", render);
+  $("verInativas").addEventListener("change", render);
+  S.onChange(function (k) { if (k === "permissoes" || k === "equipe") render(); });
+  render();
+})();
+</script>
+</body>
+</html>

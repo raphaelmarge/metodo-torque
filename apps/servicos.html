@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serviços — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .abas button { border: 1px solid var(--linha); background: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; }
+  .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .grid-serv { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .grid-serv { display: flex; flex-direction: column; } }
+  .linha-serv { display: flex; gap: 10px; align-items: center; padding: 9px 12px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; cursor: pointer; }
+  .linha-serv + .linha-serv { margin-top: -1px; }
+  .linha-serv.sel { background: #f4f0ff; border-color: var(--roxo); }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Serviços</h1>
+    </div>
+  </div>
+  <p>Os serviços avulsos como no EVO — diária, avaliação física, consulta de nutrição, aula experimental, multa de cancelamento — com os dados financeiros de cada um e reajuste de valores em lote.</p>
+</header>
+
+<main class="corpo">
+  <div class="abas">
+    <button data-aba="servicos" class="ativa">🧾 Serviços</button>
+    <button data-aba="reajuste">📈 Reajuste de valores</button>
+  </div>
+
+  <section id="abaServicos">
+    <div class="grid-serv">
+      <div class="card">
+        <div class="linha-flex" style="gap: 8px;">
+          <input id="busca" placeholder="Pesquisar…" style="flex:1;">
+          <button class="btn" id="btnNovo">Novo</button>
+        </div>
+        <div id="lista" style="margin-top: 10px;"></div>
+      </div>
+      <div class="card" id="painel">
+        <div class="vazio">Escolha um serviço à esquerda ou clique em Novo.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="abaReajuste" hidden>
+    <div class="card">
+      <h2>Reajuste de valores</h2>
+      <p class="muted" style="font-size: 13px; margin: 6px 0 10px;">Aplica um percentual sobre o valor de todos os serviços de uma vez (arredonda para o real).</p>
+      <div class="linha-flex" style="gap: 10px; align-items: flex-end;">
+        <div class="campo" style="margin:0;"><label>Percentual (%)</label><input id="rjPct" type="number" step="0.1" style="width: 110px;" placeholder="ex.: 10"></div>
+        <button class="btn" id="btnReajustar">Aplicar reajuste</button>
+      </div>
+      <div id="rjPrevia" style="margin-top: 12px;"></div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
+
+  function load() { return S.read("servicos", { itens: [] }); }
+  var selId = null;
+
+  function render() {
+    var st = load();
+    var q = $("busca").value.trim().toLowerCase();
+    var lista = st.itens.filter(function (s2) { return !q || s2.desc.toLowerCase().indexOf(q) >= 0; })
+      .sort(function (a, b) { return a.desc.localeCompare(b.desc); });
+    $("lista").innerHTML = lista.length ? lista.map(function (s2) {
+      return '<div class="linha-serv' + (s2.id === selId ? " sel" : "") + '" data-sel="' + s2.id + '">' +
+        '<strong style="flex:1;">' + esc(s2.desc) + "</strong>" +
+        '<span class="muted">' + (s2.valor ? S.fmtBRL(s2.valor) : "-") + "</span></div>";
+    }).join("") : '<div class="vazio">Nenhum serviço ainda — clique em Novo (ex.: Diária, Avaliação Física, Aula Experimental).</div>';
+    renderPainel();
+  }
+
+  function renderPainel() {
+    var st = load();
+    var s2 = st.itens.find(function (x) { return x.id === selId; });
+    if (!s2) { $("painel").innerHTML = '<div class="vazio">Escolha um serviço à esquerda ou clique em Novo.</div>'; return; }
+    $("painel").innerHTML = '<div class="linha-flex" style="justify-content: space-between;"><h2>Dados</h2>' +
+      '<button class="btn sec mini" id="btnExcluir">🗑 Excluir</button></div>' +
+      '<div class="grid-2" style="margin-top: 10px;">' +
+      '<div class="campo"><label>Descrição *</label><input id="sDesc" value="' + esc(s2.desc) + '"></div>' +
+      '<div class="campo"><label>Valor (R$)</label><input id="sValor" type="number" step="0.01" min="0" value="' + (+s2.valor || "") + '"></div>' +
+      "</div>" +
+      '<label style="font-size:13.5px; display:flex; gap:6px; align-items:center;"><input type="checkbox" id="sSemRecibo"' + (s2.semRecibo ? " checked" : "") + "> Não exibe no recibo/extrato</label>" +
+      '<h2 style="margin-top: 16px;">Financeiro</h2><div class="grid-2" style="margin-top: 10px;">' +
+      '<div class="campo"><label>Centro de receita</label><input id="sCentro" value="' + esc(s2.centro || "") + '" placeholder="ex.: Serviços avulsos"></div>' +
+      '<div class="campo"><label>Código contábil</label><input id="sCodigo" value="' + esc(s2.codigo || "") + '"></div>' +
+      "</div>" +
+      '<div class="campo"><label>Observações</label><textarea id="sObs" rows="3">' + esc(s2.obs || "") + "</textarea></div>" +
+      '<p class="muted" style="font-size: 12.5px;">Os campos salvam sozinhos. O valor aparece na venda avulsa e nos relatórios por centro de receita.</p>';
+
+    function salva(id, campo, num) {
+      $(id).addEventListener("change", function () {
+        var st2 = load();
+        var x = st2.itens.find(function (y) { return y.id === selId; });
+        if (!x) return;
+        x[campo] = num ? (+this.value || 0) : (this.type === "checkbox" ? this.checked : this.value.trim());
+        S.write("servicos", st2);
+        if (campo === "desc" || campo === "valor") render();
+      });
+    }
+    salva("sDesc", "desc"); salva("sValor", "valor", true); salva("sSemRecibo", "semRecibo");
+    salva("sCentro", "centro"); salva("sCodigo", "codigo"); salva("sObs", "obs");
+    $("btnExcluir").onclick = function () {
+      if (!confirm("Excluir o serviço \"" + s2.desc + "\"?")) return;
+      var st2 = load();
+      st2.itens = st2.itens.filter(function (y) { return y.id !== selId; });
+      S.write("servicos", st2);
+      selId = null;
+      render();
+    };
+  }
+
+  $("btnNovo").addEventListener("click", function () {
+    var st = load();
+    var novo = { id: S.uid(), desc: "Novo serviço", valor: 0 };
+    st.itens.push(novo);
+    S.write("servicos", st);
+    selId = novo.id;
+    render();
+    var i = $("sDesc"); if (i) { i.focus(); i.select(); }
+  });
+  $("lista").addEventListener("click", function (e) {
+    var r = e.target.closest("[data-sel]"); if (!r) return;
+    selId = r.getAttribute("data-sel");
+    render();
+  });
+  $("busca").addEventListener("input", render);
+
+  // ---- reajuste em lote ----
+  document.querySelectorAll(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+      $("abaServicos").hidden = b.dataset.aba !== "servicos";
+      $("abaReajuste").hidden = b.dataset.aba !== "reajuste";
+      if (b.dataset.aba === "reajuste") previa();
+    });
+  });
+  function previa() {
+    var pct = +$("rjPct").value || 0;
+    var itens = load().itens;
+    $("rjPrevia").innerHTML = itens.length ? itens.map(function (s2) {
+      var novo = Math.round((+s2.valor || 0) * (1 + pct / 100));
+      return '<div class="linha-serv"><strong style="flex:1;">' + esc(s2.desc) + "</strong>" +
+        '<span class="muted">' + S.fmtBRL(+s2.valor || 0) + "</span> → <strong>" + S.fmtBRL(novo) + "</strong></div>";
+    }).join("") : '<div class="vazio">Cadastre serviços primeiro.</div>';
+  }
+  $("rjPct").addEventListener("input", previa);
+  $("btnReajustar").addEventListener("click", function () {
+    var pct = +$("rjPct").value;
+    if (!pct) { alert("Preencha o percentual."); return; }
+    if (!confirm("Aplicar " + pct + "% em todos os serviços?")) return;
+    var st = load();
+    st.itens.forEach(function (s2) { s2.valor = Math.round((+s2.valor || 0) * (1 + pct / 100)); });
+    S.write("servicos", st);
+    previa();
+    render();
+    alert("Reajuste aplicado!");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
