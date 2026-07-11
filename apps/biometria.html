@@ -102,6 +102,18 @@
         <div class="linha-flex" style="gap:8px;">
           <button class="btn" id="btnCatraca">▶ Iniciar modo catraca</button>
         </div>
+        <div class="card">
+          <h2>Aparência e manutenção (Controle de Acesso do EVO)</h2>
+          <div class="campo" style="margin-top: 8px;"><label>Frase de espera na tela da catraca</label>
+            <input id="bioTitulo" placeholder="ex.: TORQUE FIT — olhe para a câmera"></div>
+          <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
+            <label style="font-size: 13.5px; display: flex; gap: 6px; align-items: center; cursor: pointer;">
+              <input type="checkbox" id="bioAutoLimpa"> Remover sozinho o rosto de aluno inativado
+            </label>
+            <button class="btn sec mini" id="btnLimpaInativos">🧹 Remover rostos de inativos agora</button>
+          </div>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Como a "validade da biometria nos equipamentos" do EVO: quem foi inativado não fica com o rosto guardado no dispositivo.</p>
+        </div>
         <p class="muted" style="font-size:12.5px;">Deixe esta tela aberta num computador/tablet na entrada. Ao reconhecer o rosto, o sistema confere contrato, suspensão e inadimplência (mesmas regras do Controle de Entradas) e registra o check-in sozinho.</p>
       </div>
       <div class="card">
@@ -490,18 +502,54 @@
     $("btnCatraca").textContent = "▶ Iniciar modo catraca";
   }
 
+  function fraseEspera() {
+    return (stBio().aparencia || {}).titulo || "Olhe para a câmera…";
+  }
   $("btnCatraca").addEventListener("click", function () {
     if (catracaTimer) { paraCatraca(); flash("", "Aguardando… ligue a câmera para começar."); return; }
     var v = $("vidCat");
     ligaCamera(v, $("stCat")).then(function () { return carregaFaceApi(); }).then(function () {
       $("stCat").textContent = "Reconhecendo…";
       $("btnCatraca").textContent = "⏹ Parar";
-      flash("", "Olhe para a câmera…");
+      flash("", fraseEspera());
       cicloCatraca();
     }).catch(function (e) {
       $("stCat").textContent = "Erro: " + (e && e.message || "câmera indisponível");
     });
   });
+
+  // aparência + manutenção (aba Configurações do Controle de Acesso do EVO)
+  (function () {
+    var ap = stBio().aparencia || {};
+    $("bioTitulo").value = ap.titulo || "";
+    $("bioAutoLimpa").checked = !!ap.autoLimpa;
+  })();
+  ["bioTitulo", "bioAutoLimpa"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var b = stBio();
+      b.aparencia = b.aparencia || {};
+      b.aparencia.titulo = $("bioTitulo").value.trim();
+      b.aparencia.autoLimpa = $("bioAutoLimpa").checked;
+      S.write("biometria", b);
+    });
+  });
+  // remove o rosto de quem está inativo ou não existe mais
+  function limpaInativos() {
+    var b = stBio();
+    var st = stA();
+    var removidos = 0;
+    Object.keys(b.faces || {}).forEach(function (id) {
+      var a = st.alunos.find(function (x) { return x.id === id; });
+      if (!a || a.status === "inativo") { delete b.faces[id]; removidos++; }
+    });
+    if (removidos) { S.write("biometria", b); renderFaces(); }
+    return removidos;
+  }
+  $("btnLimpaInativos").addEventListener("click", function () {
+    var n = limpaInativos();
+    alert(n ? "🧹 " + n + " rosto(s) de alunos inativos removidos." : "Nenhum rosto de aluno inativo — tudo limpo.");
+  });
+  if ((stBio().aparencia || {}).autoLimpa) limpaInativos();
 
   function flash(nivel, titulo, sub) {
     var f = $("flashCatraca");
