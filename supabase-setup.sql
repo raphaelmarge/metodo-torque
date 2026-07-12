@@ -174,3 +174,87 @@ as $$
 $$;
 
 grant execute on function public.app_aluno_busca(text) to anon, authenticated;
+
+-- ==================== AGENDAMENTO PELO APP DO ALUNO ====================
+-- O aluno agenda a aula pelo app (validado pelo token); a Grade da academia
+-- puxa os pendentes e coloca o nome na lista de participantes.
+-- Bloco idempotente — pode rodar mais de uma vez.
+
+create table if not exists public.app_agendamentos (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  aluno text not null default '',
+  aula_id text not null,
+  aula_nome text not null default '',
+  data date not null,
+  status text not null default 'pendente',
+  criado timestamptz not null default now()
+);
+
+alter table public.app_agendamentos enable row level security;
+
+drop policy if exists "app_agend_membros" on public.app_agendamentos;
+create policy "app_agend_membros" on public.app_agendamentos
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- aluno agenda (token válido = existe em app_aluno); evita duplicar
+create or replace function public.app_aluno_agenda(t text, p_aula_id text, p_aula_nome text, p_data date, p_nome text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_id uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if exists (select 1 from app_agendamentos
+             where token = t and aula_id = p_aula_id and data = p_data
+               and status in ('pendente', 'confirmado')) then
+    return json_build_object('erro', 'ja_agendado');
+  end if;
+  insert into app_agendamentos (academia_id, token, aluno, aula_id, aula_nome, data)
+    values (v_acad, t, coalesce(p_nome, ''), p_aula_id, coalesce(p_aula_nome, ''), p_data)
+    returning id into v_id;
+  return json_build_object('ok', true, 'id', v_id);
+end;
+$$;
+
+-- aluno vê os próprios agendamentos
+create or replace function public.app_aluno_agendamentos(t text)
+returns json
+language sql security definer stable
+set search_path = public
+as $$
+  select coalesce(json_agg(json_build_object(
+      'id', id, 'aula', aula_nome, 'data', data, 'status', status)
+      order by data desc, criado desc), '[]'::json)
+  from (select * from app_agendamentos
+        where token = t and status <> 'cancelado_ok'
+        order by data desc, criado desc limit 30) s
+$$;
+
+-- aluno cancela um agendamento próprio
+create or replace function public.app_aluno_cancela(t text, p_id uuid)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  update app_agendamentos set status = 'cancelado'
+    where id = p_id and token = t and status in ('pendente', 'confirmado');
+  if not found then
+    return json_build_object('erro', 'nao_encontrado');
+  end if;
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.app_aluno_agenda(text, text, text, date, text) to anon, authenticated;
+grant execute on function public.app_aluno_agendamentos(text) to anon, authenticated;
+grant execute on function public.app_aluno_cancela(text, uuid) to anon, authenticated;
