@@ -483,6 +483,60 @@
 
   S.equipeDatalist(["gProf", "dProf"]);
   S.onChange(function (k) { if (k === "grade" || k === "alunos") render(); });
+
+  // ---------- agendamentos vindos do App do Aluno (nuvem) ----------
+  function puxaAgendamentosApp() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return Promise.resolve(0);
+    return nuvem.client.from("app_agendamentos").select("id,aluno,aula_id,data,status")
+      .in("status", ["pendente", "cancelado"]).then(function (r) {
+      if (r.error || !r.data || !r.data.length) return 0;
+      var st = load();
+      var aplicados = [], cancelados = [], mudou = false;
+      r.data.forEach(function (g) {
+        var chave = g.aula_id + "|" + g.data;
+        var lista = st.presencas[chave] || [];
+        var nome = (g.aluno || "Aluno do app") + " 📲";
+        if (g.status === "pendente") {
+          if (lista.indexOf(nome) === -1) { lista.push(nome); st.presencas[chave] = lista; mudou = true; }
+          aplicados.push(g.id);
+        } else {
+          var i = lista.indexOf(nome);
+          if (i >= 0) { lista.splice(i, 1); st.presencas[chave] = lista; mudou = true; }
+          cancelados.push(g.id);
+        }
+      });
+      if (mudou) S.write("grade", st);
+      var fila = Promise.resolve();
+      if (aplicados.length) fila = fila.then(function () { return nuvem.client.from("app_agendamentos").update({ status: "confirmado" }).in("id", aplicados); });
+      if (cancelados.length) fila = fila.then(function () { return nuvem.client.from("app_agendamentos").update({ status: "cancelado_ok" }).in("id", cancelados); });
+      return fila.then(function () {
+        if (aplicados.length || cancelados.length) {
+          avisoApp((aplicados.length ? "📲 " + aplicados.length + " agendamento(s) do app entraram na grade. " : "") +
+                   (cancelados.length ? "🚫 " + cancelados.length + " cancelamento(s) aplicados." : ""));
+          render();
+        }
+        return aplicados.length + cancelados.length;
+      });
+    }, function () { return 0; });
+  }
+  window.__gradeApp = puxaAgendamentosApp; // usado nos testes
+  function avisoApp(txt) {
+    var el = document.getElementById("avisoAppFlutuante");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "avisoAppFlutuante";
+      el.style.cssText = "position:fixed;bottom:18px;right:18px;background:#7c3aed;color:#fff;padding:12px 18px;border-radius:8px;font-weight:700;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:99;max-width:340px;";
+      document.body.appendChild(el);
+    }
+    el.textContent = txt;
+    el.hidden = false;
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.hidden = true; }, 6000);
+  }
+  setTimeout(puxaAgendamentosApp, 3000); // a nuvem sobe assíncrona
+  setInterval(puxaAgendamentosApp, 60000);
+  window.addEventListener("focus", puxaAgendamentosApp);
   render();
 })();
 </script>
