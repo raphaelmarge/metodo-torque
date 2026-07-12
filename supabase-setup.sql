@@ -142,3 +142,35 @@ $$;
 
 grant execute on function public.criar_academia(text, text) to authenticated;
 grant execute on function public.entrar_na_equipe(text, text) to authenticated;
+
+-- ==================== APP DO ALUNO (conectado) ====================
+-- A academia publica o app de cada aluno aqui; o app no celular do aluno
+-- busca a versão nova pelo token secreto (função RPC — sem listar a tabela).
+-- Este bloco pode rodar mais de uma vez sem problema.
+
+create table if not exists public.app_aluno (
+  token text primary key,
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  dados jsonb,
+  atualizado timestamptz not null default now()
+);
+
+alter table public.app_aluno enable row level security;
+
+-- só membros da academia escrevem/leem pela API normal (o aluno usa a RPC)
+drop policy if exists "app_aluno_membros" on public.app_aluno;
+create policy "app_aluno_membros" on public.app_aluno
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- o app do aluno chama esta função com o token (chave secreta e única);
+-- security definer: devolve só a linha daquele token, nunca a tabela
+create or replace function public.app_aluno_busca(t text)
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select dados from public.app_aluno where token = t
+$$;
+
+grant execute on function public.app_aluno_busca(text) to anon, authenticated;

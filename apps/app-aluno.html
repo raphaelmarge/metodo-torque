@@ -55,12 +55,20 @@
           <p class="muted" style="font-size: 13px; margin-top: 10px;">O app junta tudo que o sistema sabe: plano, treino, avaliação, WOD do dia + histórico, grade da semana e o mural — na estrutura do app do EVO.</p>
         </div>
         <div class="card" id="cardEnvio" hidden>
-          <h2>2 · Envie pro aluno</h2>
+          <h2>2 · Envie pro aluno (uma vez só)</h2>
           <div class="linha-flex" style="margin-top: 10px;">
             <button class="btn" id="btnBaixar">⬇ Baixar app (HTML)</button>
             <a class="btn whats" id="btnZap" target="_blank" rel="noopener" hidden>💬 Abrir WhatsApp do aluno</a>
           </div>
-          <p class="muted" style="margin-top: 8px; font-size: 13px;">Baixe e anexe na conversa do WhatsApp. No celular, o aluno abre e usa "Adicionar à tela inicial" — vira um app. Quando trocar o treino ou renovar o plano, gere e mande de novo.</p>
+          <p class="muted" style="margin-top: 8px; font-size: 13px;">Baixe e anexe na conversa do WhatsApp. No celular, o aluno abre e usa "Adicionar à tela inicial" — vira um app. <strong>Com a nuvem ligada, esse envio é único:</strong> depois o app se atualiza sozinho.</p>
+        </div>
+        <div class="card">
+          <h2>🔗 App conectado (atualiza sozinho)</h2>
+          <p class="muted" style="font-size: 13px; margin: 6px 0 10px;">Com você logado na nuvem, o sistema publica a versão nova do app de <strong>todos os alunos ativos</strong> — treino trocado, WOD do dia, grade, avisos, pendências. Quando o aluno abre o app com internet, ele baixa a versão nova e se atualiza na hora, sem reenviar nada.</p>
+          <div class="linha-flex" style="gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button class="btn" id="btnPublicar">🔄 Publicar apps de todos os alunos agora</button>
+            <span id="pubStatus" class="muted" style="font-size: 13px;"></span>
+          </div>
         </div>
       </div>
       <div class="card" id="cardPrevia" hidden>
@@ -173,17 +181,30 @@
   // ---------- gerar ----------
   $("alunosLista").innerHTML = alunos().map(function (a) { return "<option>" + a.nome.replace(/[<>&]/g, "") + "</option>"; }).join("");
 
-  function gera() {
-    var a = alunos().find(function (x) { return x.nome === $("fAluno").value.trim(); });
-    if (!a) { alert("Escolha um aluno da lista."); return; }
-    alunoAtual = a;
+  // token secreto e estável por aluno — é a "senha" do app conectado
+  function garanteTokens(lista) {
+    var st = S.read("alunos", { alunos: [] });
+    var mudou = false;
+    lista.forEach(function (a) {
+      var real = st.alunos.find(function (x) { return x.id === a.id; });
+      if (real && !real.appToken) { real.appToken = S.uid() + S.uid(); mudou = true; }
+      if (real) a.appToken = real.appToken;
+    });
+    if (mudou) S.write("alunos", st);
+  }
+  function nomeAcademia() {
+    var cfg = S.read("config", { dados: {} });
+    var n = cfg.dados.nome;
+    try { n = n || (JSON.parse(localStorage.getItem("mtapp:academia")) || {}).nome; } catch (e) {}
+    return n || "Academia";
+  }
+
+  function montaApp(a, stamp) {
     var st = S.read("alunos", { planos: [], recebiveis: [] });
     var cfg = S.read("config", { dados: {} });
     var app = cfgApp();
     var cor = app.cor || "#7c3aed";
-    var nomeAcad = cfg.dados.nome;
-    try { nomeAcad = nomeAcad || (JSON.parse(localStorage.getItem("mtapp:academia")) || {}).nome; } catch (e) {}
-    nomeAcad = nomeAcad || "Academia";
+    var nomeAcad = nomeAcademia();
     var zapAcad = String(cfg.dados.zap || "").replace(/\D/g, "");
     var hoje = S.todayISO();
     var mes = hoje.slice(0, 7);
@@ -255,7 +276,7 @@
     }
 
     // ============================== O APP ==============================
-    htmlGerado = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+    var html = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
       "<meta name='theme-color' content='" + cor + "'>" +
       "<title>" + esc(primeiro) + " · " + esc(nomeAcad) + "</title><style>" +
@@ -447,7 +468,70 @@
       "chips.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;sel=+b.dataset.i;pintaChips();pintaAulas();});" +
       "pintaChips();pintaAulas();" +
       "var tg=document.getElementById('tglTema');if(tg)tg.addEventListener('change',function(){document.body.classList.toggle('claro',this.checked);});" +
+      atualizadorHTML(a.appToken, stamp) +
       "<\/script></body></html>";
+    return html;
+  }
+
+  // o app busca a versão nova na nuvem pelo token e se substitui sozinho
+  function atualizadorHTML(token, stamp) {
+    var nuvem = self.MT_CLOUD || {};
+    if (!nuvem.url || !nuvem.anonKey || !token) return "";
+    return "var STAMP=" + JSON.stringify(stamp || "") + ";" +
+      "try{if(navigator.onLine){fetch(" + JSON.stringify(nuvem.url + "/rest/v1/rpc/app_aluno_busca") + ",{method:'POST'," +
+      "headers:{apikey:" + JSON.stringify(nuvem.anonKey) + ",Authorization:'Bearer '+" + JSON.stringify(nuvem.anonKey) + ",'Content-Type':'application/json'}," +
+      "body:JSON.stringify({t:" + JSON.stringify(token) + "})})" +
+      ".then(function(r){return r.ok?r.json():null;}).then(function(d){" +
+      "if(d&&d.html&&d.stamp&&d.stamp>STAMP){document.open();document.write(d.html);document.close();}" +
+      "}).catch(function(){});}}catch(e){}";
+  }
+
+  // ---------- publicação na nuvem (app conectado) ----------
+  function statusPub(msg, cor) {
+    var el = $("pubStatus");
+    if (el) { el.textContent = msg; el.style.color = cor || "var(--cinza)"; }
+  }
+  function publicaTodos(auto) {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      statusPub(auto ? "⚪ Publicação automática: entre com seu login da nuvem pra ligar." :
+        "Entre com seu login da nuvem primeiro (portal → Entrar) pra publicar os apps.");
+      return Promise.resolve(false);
+    }
+    var lista = alunos();
+    if (!lista.length) { statusPub("Nenhum aluno ativo pra publicar."); return Promise.resolve(false); }
+    garanteTokens(lista);
+    statusPub("⏳ Publicando " + lista.length + " app(s)…");
+    var agora = new Date().toISOString();
+    var linhas = lista.filter(function (a) { return a.appToken; }).map(function (a) {
+      return { token: a.appToken, academia_id: nuvem.aid, dados: { html: montaApp(a, agora), stamp: agora }, atualizado: agora };
+    });
+    return nuvem.client.from("app_aluno").upsert(linhas).then(function (r) {
+      if (r.error) {
+        var m = String(r.error.message || "");
+        statusPub(m.indexOf("app_aluno") >= 0 || m.indexOf("relation") >= 0 ?
+          "❌ Falta criar a tabela na nuvem: rode o bloco 'APP DO ALUNO' do supabase-setup.sql no SQL Editor do Supabase (1 min)." :
+          "❌ Não consegui publicar: " + m, "var(--erro)");
+        return false;
+      }
+      statusPub("✅ " + linhas.length + " app(s) publicados às " + new Date().toTimeString().slice(0, 5) + " — os alunos recebem a versão nova ao abrir o app com internet.", "var(--ok)");
+      return true;
+    }, function (e) {
+      statusPub("❌ Sem conexão com a nuvem agora (" + (e && e.message || "rede") + ") — tento de novo quando você publicar.", "var(--erro)");
+      return false;
+    });
+  }
+  window.__appPub = publicaTodos; // usado nos testes
+
+  function gera() {
+    var a = alunos().find(function (x) { return x.nome === $("fAluno").value.trim(); });
+    if (!a) { alert("Escolha um aluno da lista."); return; }
+    alunoAtual = a;
+    garanteTokens([a]);
+    htmlGerado = montaApp(a, new Date().toISOString());
+    var nomeAcad = nomeAcademia();
+    var primeiro = a.nome.split(" ")[0];
+    publicaTodos(true); // mantém a nuvem em dia sempre que gerar
 
     $("cardPrevia").hidden = false;
     $("cardEnvio").hidden = false;
@@ -469,7 +553,10 @@
     el.download = "app-" + (alunoAtual ? alunoAtual.nome : "aluno").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
     el.click();
   };
-  window.__appAluno = { gera: gera, html: function () { return htmlGerado; } }; // usado nos testes
+  $("btnPublicar").onclick = function () { publicaTodos(false); };
+  // publicação automática ao abrir a tela (a conexão da nuvem sobe assíncrona)
+  setTimeout(function () { publicaTodos(true); }, 2500);
+  window.__appAluno = { gera: gera, html: function () { return htmlGerado; }, monta: montaApp }; // usado nos testes
 })();
 </script>
 </body>
