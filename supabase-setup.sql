@@ -318,3 +318,8 @@ drop policy if exists "chat_config_membros" on public.chat_config;
 create policy "chat_config_membros" on public.chat_config
   for all using (academia_id in (select public.minhas_academias()))
   with check (academia_id in (select public.minhas_academias()));
+
+-- Chatbot de menu (boas-vindas + opções numeradas) — colunas extras.
+-- Idempotente: pode rodar de novo mesmo se o bloco acima já foi rodado antes.
+alter table public.chat_config    add column if not exists bot jsonb;
+alter table public.chat_conversas add column if not exists bot_estado text not null default '';

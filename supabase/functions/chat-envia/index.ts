@@ -142,6 +142,21 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  // simulador do chatbot: responde com a IA usando um histórico de teste
+  // (não envia nada para a Meta, não grava nada)
+  if (corpo.acao === "testar") {
+    const uid = usuarioDoToken(req);
+    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    const m = (r.ok ? await r.json() : [])[0];
+    if (!m) return json({ erro: "sem permissão" }, 403);
+    r = await sb(`chat_config?select=prompt&academia_id=eq.${m.academia_id}`);
+    const prompt = ((r.ok ? await r.json() : [])[0] || {}).prompt || "";
+    const hist = Array.isArray(corpo.historico) ? corpo.historico.slice(-20) : [];
+    const texto = await respostaIA(hist, prompt);
+    if (!texto) return json({ erro: "IA indisponível — confira o secret ANTHROPIC_API_KEY." }, 502);
+    return json({ ok: true, texto });
+  }
+
   if (!corpo.conversa_id) return json({ erro: "conversa_id obrigatório" }, 400);
 
   // conversa + confirmação de que quem chama é membro da academia dela
