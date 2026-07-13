@@ -48,12 +48,30 @@
 
   .grade-bot { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   @media (max-width: 900px) { .grade-bot { grid-template-columns: 1fr; } }
-  .op-row { display: grid; grid-template-columns: 22px 1fr 170px 26px; gap: 6px; align-items: start; padding: 8px; border: 1px solid var(--linha); background: var(--fundo); margin-bottom: 6px; }
-  .op-row .num-op { font-weight: 800; color: var(--roxo); padding-top: 8px; }
-  .op-row input, .op-row textarea, .op-row select { border: 1px solid var(--linha); padding: 7px 9px; font-family: inherit; font-size: 13px; width: 100%; }
-  .op-row textarea { resize: vertical; min-height: 34px; margin-top: 4px; }
-  .op-row .tira { border: 0; background: none; color: #b91c1c; font-weight: 800; cursor: pointer; font-size: 15px; padding-top: 6px; }
-  .sim-box { height: 300px; overflow: auto; border: 1px solid var(--linha); background: var(--fundo); padding: 12px; display: flex; flex-direction: column; }
+  .bloco-card { border: 1px solid var(--linha); background: var(--fundo); padding: 10px; margin-bottom: 10px; position: relative; }
+  .bloco-card.inicio-sim { border-left: 4px solid var(--roxo); }
+  .bloco-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .bloco-head .ini { display: flex; gap: 4px; align-items: center; font-size: 11.5px; font-weight: 800; color: var(--roxo); cursor: pointer; white-space: nowrap; }
+  .bloco-head .b-nome { flex: 1; min-width: 120px; font-weight: 700; }
+  .tipo-chip { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+  .tipo-mensagem { background: #e0edff; color: #1d4ed8; }
+  .tipo-menu { background: #e8e0ff; color: #5b21b6; }
+  .tipo-pergunta { background: #fff1cc; color: #92600a; }
+  .tipo-nota { background: #fef9c3; color: #854d0e; }
+  .tipo-ia { background: #dcfce7; color: #15803d; }
+  .tipo-equipe { background: #ffe2ef; color: #b0257a; }
+  .bloco-card input, .bloco-card textarea, .bloco-card select { border: 1px solid var(--linha); padding: 7px 9px; font-family: inherit; font-size: 13px; width: 100%; background: #fff; }
+  .bloco-card textarea { resize: vertical; min-height: 34px; }
+  .depois { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 12px; font-weight: 700; color: #555; }
+  .depois select { width: auto; flex: 1; }
+  .op-row { display: grid; grid-template-columns: 20px 1fr 170px 24px; gap: 6px; align-items: center; margin-top: 6px; }
+  .op-row .num-op { font-weight: 800; color: var(--roxo); text-align: center; }
+  .tira { border: 0; background: none; color: #b91c1c; font-weight: 800; cursor: pointer; font-size: 15px; }
+  .mapa-fluxo { border: 1px solid var(--linha); background: #fff; padding: 12px; font-size: 12.5px; line-height: 1.9; overflow-x: auto; }
+  .mapa-fluxo .seta { color: #999; padding: 0 4px; }
+  .mapa-fluxo .mini-chip { font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 99px; }
+  .balao.nota { background: #fef9c3; border: 1px dashed #ca8a04; color: #713f12; align-self: center; max-width: 92%; font-size: 12.5px; }
+  .sim-box { height: 340px; overflow: auto; border: 1px solid var(--linha); background: var(--fundo); padding: 12px; display: flex; flex-direction: column; }
   .passo { display: flex; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; line-height: 1.55; }
   .passo + .passo { margin-top: -1px; }
   .passo .num { font-weight: 800; color: var(--roxo); font-size: 16px; }
@@ -121,29 +139,34 @@
     </div>
   </section>
 
-  <!-- ============ CHATBOT DE MENU ============ -->
+  <!-- ============ CHATBOT (FLUXO DE BLOCOS) ============ -->
   <section id="aba-bot" hidden>
     <div class="grade-bot">
       <div class="card">
-        <h2>🤖 Chatbot de menu</h2>
-        <p class="mut">Atendimento automático imediato: na primeira mensagem, o robô manda as boas-vindas e um menu numerado. Cada opção pode <b>responder um texto fixo</b>, <b>passar a conversa para a IA</b> (Claude) ou <b>chamar a equipe</b>.</p>
+        <h2>🤖 Chatbot — fluxo de blocos</h2>
+        <p class="mut">Monte o atendimento como um fluxograma: cada cartão é um <b>bloco</b>, e o campo “depois vai para…” liga um bloco no outro. Tipos: <b>💬 mensagem</b> (envia e segue), <b>🔢 menu</b> (opções numeradas, cada uma leva a um bloco), <b>❓ pergunta</b> (espera a resposta do cliente e segue), <b>📝 nota interna</b> (só a equipe vê), <b>🤖 IA</b> (o Claude assume a conversa) e <b>🙋 equipe</b> (chama atendimento humano). A conversa começa pelo bloco marcado com ▶.</p>
         <label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:10px 0">
           <input type="checkbox" id="botAtivo"> Ligar o chatbot para toda conversa nova
         </label>
-        <label style="display:block;font-weight:700;margin-top:8px">Mensagem de boas-vindas</label>
-        <textarea id="botBoasvindas" rows="2" style="width:100%;border:1px solid var(--linha);padding:10px;font-family:inherit;font-size:13.5px" placeholder="Olá! 👋 Bem-vindo(a) à TORQUE FIT! Sou o assistente automático."></textarea>
-        <label style="display:block;font-weight:700;margin-top:12px">Opções do menu</label>
-        <p class="mut" style="margin:4px 0 8px">O cliente responde com o número. “Passar para a IA” sem texto fixo faz o Claude responder na hora.</p>
-        <div id="botOpcoes"></div>
-        <button class="btn sec mini" id="btnAddOpcao" style="margin-top:8px">+ Adicionar opção</button>
+        <div id="botBlocos"></div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn sec mini" data-add="mensagem">+ 💬 Mensagem</button>
+          <button class="btn sec mini" data-add="menu">+ 🔢 Menu</button>
+          <button class="btn sec mini" data-add="pergunta">+ ❓ Pergunta</button>
+          <button class="btn sec mini" data-add="nota">+ 📝 Nota interna</button>
+          <button class="btn sec mini" data-add="ia">+ 🤖 IA</button>
+          <button class="btn sec mini" data-add="equipe">+ 🙋 Equipe</button>
+        </div>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" id="btnSalvarBot">Salvar chatbot</button>
         </div>
         <p id="botStatus" class="mut" style="margin-top:8px"></p>
+        <h2 style="margin-top:18px">🗺 Mapa do fluxo</h2>
+        <div id="botMapa" class="mapa-fluxo"></div>
       </div>
       <div class="card">
         <h2>🧪 Simulador — converse com o seu robô</h2>
-        <p class="mut">Teste aqui como o cliente vai ver, antes de ligar. Usa o que está no formulário ao lado (mesmo sem salvar). As opções “Passar para a IA” chamam o Claude de verdade, se a chave já estiver configurada.</p>
+        <p class="mut">Teste como o cliente vai ver, antes de ligar — usa os blocos do editor mesmo sem salvar. Blocos de IA chamam o Claude de verdade se a chave já estiver configurada.</p>
         <div class="sim-box" id="simBox"><div class="vazio">Escreva “oi” para começar 👇</div></div>
         <div class="composer" style="border:1px solid var(--linha);border-top:0">
           <textarea id="simTxt" placeholder="Escreva como se fosse o cliente…"></textarea>
@@ -342,8 +365,8 @@
         var box = $("#msgs");
         var noFim = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
         box.innerHTML = (rows || []).map(function (m) {
-          var quem = m.de === "cliente" ? "cliente" : (m.de === "ia" ? "ia" : "equipe");
-          var rot = m.de === "ia" ? "🤖 IA" : (m.de === "equipe" ? "Equipe" : "");
+          var quem = m.de === "cliente" ? "cliente" : (m.de === "ia" ? "ia" : (m.de === "nota" ? "nota" : "equipe"));
+          var rot = m.de === "ia" ? "🤖 IA" : (m.de === "equipe" ? "Equipe" : (m.de === "nota" ? "📝 Nota interna — o cliente não vê" : ""));
           var hora = (m.criado || "").slice(11, 16);
           return '<div class="balao ' + quem + '">' + esc(m.texto) +
             '<span class="meta-msg">' + rot + (rot ? " · " : "") + hora + "</span></div>";
@@ -412,109 +435,262 @@
         if (c) {
           $("#cfgAutoGlobal").checked = !!c.auto_global;
           $("#cfgPrompt").value = c.prompt || "";
-          if (c.bot) preencheBot(c.bot);
+          // só carrega o fluxo salvo uma vez, e nunca por cima de edição em andamento
+          if (c.bot && !botCarregado && !botTocado) { preencheBot(c.bot); botCarregado = true; }
         }
       }).catch(function () {});
   }
 
-  // ---------- chatbot de menu: editor ----------
+  // ---------- chatbot: fluxo de blocos (estilo fluxograma) ----------
+  var TIPOS = {
+    mensagem: { icone: "💬", nome: "Mensagem" },
+    menu: { icone: "🔢", nome: "Menu de opções" },
+    pergunta: { icone: "❓", nome: "Pergunta" },
+    nota: { icone: "📝", nome: "Nota interna" },
+    ia: { icone: "🤖", nome: "Passar para a IA" },
+    equipe: { icone: "🙋", nome: "Chamar a equipe" },
+  };
+
   var BOT_PADRAO = {
     ativo: false,
-    boasvindas: "Olá! 👋 Bem-vindo(a) à TORQUE FIT! Sou o assistente automático.",
-    opcoes: [
-      { rotulo: "Planos e preços", resposta: "Nossos planos: Mensal R$ 149 · Trimestral R$ 399 · Anual R$ 1.188. Quer uma aula experimental grátis? É só responder 3! 😉", acao: "resposta" },
-      { rotulo: "Horários de funcionamento", resposta: "Funcionamos de segunda a sexta das 6h às 22h e sábado das 8h às 12h. 💪", acao: "resposta" },
-      { rotulo: "Falar com a atendente virtual (IA)", resposta: "", acao: "ia" },
-      { rotulo: "Falar com alguém da equipe", resposta: "", acao: "humano" },
+    inicio: "b1",
+    blocos: [
+      { id: "b1", nome: "Boas-vindas", tipo: "menu",
+        texto: "Olá! 👋 Bem-vindo(a) à TORQUE FIT! Sou o assistente automático. Como posso ajudar?",
+        opcoes: [
+          { rotulo: "Planos e preços", destino: "b2" },
+          { rotulo: "Horários de funcionamento", destino: "b3" },
+          { rotulo: "Agendar aula experimental grátis", destino: "b4" },
+          { rotulo: "Falar com a atendente virtual (IA)", destino: "b7" },
+          { rotulo: "Falar com alguém da equipe", destino: "b8" },
+        ] },
+      { id: "b2", nome: "Preços", tipo: "mensagem", texto: "Nossos planos: Mensal R$ 149 · Trimestral R$ 399 · Anual R$ 1.188. 💪", destino: "b1" },
+      { id: "b3", nome: "Horários", tipo: "mensagem", texto: "Funcionamos de segunda a sexta das 6h às 22h e sábado das 8h às 12h.", destino: "b1" },
+      { id: "b4", nome: "Aula experimental", tipo: "pergunta", texto: "Boa escolha! 🎉 Me diz seu nome e o melhor dia/horário para a sua aula experimental grátis:", destino: "b5" },
+      { id: "b5", nome: "Aviso para a equipe", tipo: "nota", texto: "Lead pediu aula experimental — confirmar o horário com ele!", destino: "b6" },
+      { id: "b6", nome: "Confirmação", tipo: "equipe", texto: "Anotado! 🙌 A equipe já vai confirmar seu horário por aqui." },
+      { id: "b7", nome: "Atendente virtual", tipo: "ia", texto: "" },
+      { id: "b8", nome: "Atendimento humano", tipo: "equipe", texto: "" },
     ],
   };
 
-  function linhaOpcao(o, i) {
-    return '<div class="op-row" data-i="' + i + '">' +
-      '<span class="num-op">' + (i + 1) + '</span>' +
-      '<div><input class="op-rotulo" placeholder="Texto da opção (ex.: Planos e preços)" value="' + esc(o.rotulo || "") + '">' +
-      '<textarea class="op-resposta" placeholder="Resposta fixa (opcional para IA/equipe)">' + esc(o.resposta || "") + '</textarea></div>' +
-      '<select class="op-acao">' +
-      '<option value="resposta"' + (o.acao === "resposta" || !o.acao ? " selected" : "") + '>Responder o texto</option>' +
-      '<option value="ia"' + (o.acao === "ia" ? " selected" : "") + '>Passar para a IA 🤖</option>' +
-      '<option value="humano"' + (o.acao === "humano" ? " selected" : "") + '>Chamar a equipe 🙋</option>' +
-      '</select>' +
-      '<button class="tira" title="Remover opção">✕</button></div>';
+  var botAtual = JSON.parse(JSON.stringify(BOT_PADRAO));
+  var botCarregado = false; // fluxo salvo na nuvem já foi carregado?
+  var botTocado = false;    // o usuário já mexeu no editor?
+
+  // formato antigo (menu único do primeiro chatbot) → fluxo de blocos
+  function botCompat(bot) {
+    if (!bot) return null;
+    if (bot.blocos) return bot;
+    var blocos = [{ id: "menu", nome: "Boas-vindas", tipo: "menu", texto: bot.boasvindas || "Olá! 👋", opcoes: [] }];
+    (bot.opcoes || []).forEach(function (o, i) {
+      var id = "op" + (i + 1);
+      var tipo = o.acao === "ia" ? "ia" : (o.acao === "humano" ? "equipe" : "mensagem");
+      var b = { id: id, nome: o.rotulo || ("Opção " + (i + 1)), tipo: tipo, texto: o.resposta || "" };
+      if (tipo === "mensagem") b.destino = "menu";
+      blocos.push(b);
+      blocos[0].opcoes.push({ rotulo: o.rotulo, destino: id });
+    });
+    return { ativo: !!bot.ativo, inicio: "menu", blocos: blocos };
+  }
+
+  function achaBloco(bot, id) {
+    return (bot.blocos || []).find(function (b) { return b.id === id; });
+  }
+
+  function novoId() {
+    var i = 1;
+    while (botAtual.blocos.some(function (b) { return b.id === "b" + i; })) i++;
+    return "b" + i;
+  }
+
+  function selDestino(valor, cls, dataAttr) {
+    var ops = ['<option value="">— encerrar conversa —</option>'].concat(
+      botAtual.blocos.map(function (b) {
+        return '<option value="' + b.id + '"' + (b.id === valor ? " selected" : "") + ">" +
+          esc(TIPOS[b.tipo].icone + " " + (b.nome || b.id)) + "</option>";
+      }));
+    return '<select class="' + cls + '"' + (dataAttr || "") + ">" + ops.join("") + "</select>";
+  }
+
+  function desenhaBlocos() {
+    $("#botBlocos").innerHTML = botAtual.blocos.map(function (b) {
+      var h = '<div class="bloco-card' + (botAtual.inicio === b.id ? " inicio-sim" : "") + '" data-id="' + b.id + '">' +
+        '<div class="bloco-head">' +
+        '<label class="ini" title="A conversa começa por este bloco"><input type="radio" name="botInicio" class="b-inicio"' +
+        (botAtual.inicio === b.id ? " checked" : "") + "> ▶</label>" +
+        '<span class="tipo-chip tipo-' + b.tipo + '">' + TIPOS[b.tipo].icone + " " + TIPOS[b.tipo].nome + "</span>" +
+        '<input class="b-nome" placeholder="Nome do bloco" value="' + esc(b.nome || "") + '">' +
+        '<button class="tira b-remove" title="Remover bloco">✕</button></div>';
+      if (b.tipo !== "ia" || b.texto) {
+        h += '<textarea class="b-texto" placeholder="' +
+          (b.tipo === "nota" ? "Texto da nota (só a equipe vê)" :
+           b.tipo === "equipe" ? "Mensagem antes de chamar a equipe (opcional)" :
+           b.tipo === "ia" ? "Mensagem antes de a IA assumir (opcional)" : "Texto que o robô envia") +
+          '">' + esc(b.texto || "") + "</textarea>";
+      } else {
+        h += '<textarea class="b-texto" placeholder="Mensagem antes de a IA assumir (opcional — vazio: o Claude já responde direto)"></textarea>';
+      }
+      if (b.tipo === "menu") {
+        h += (b.opcoes || []).map(function (o, i) {
+          return '<div class="op-row" data-i="' + i + '"><span class="num-op">' + (i + 1) + "</span>" +
+            '<input class="op-rotulo" placeholder="Texto da opção" value="' + esc(o.rotulo || "") + '">' +
+            selDestino(o.destino, "op-dest") +
+            '<button class="tira op-tira" title="Remover opção">✕</button></div>';
+        }).join("") +
+        '<button class="btn sec mini op-add" style="margin-top:8px">+ opção</button>';
+      } else if (b.tipo !== "equipe" && b.tipo !== "ia") {
+        h += '<div class="depois">depois vai para… ' + selDestino(b.destino, "b-destino") + "</div>";
+      }
+      return h + "</div>";
+    }).join("");
+    desenhaMapa();
+  }
+
+  function nomeDe(id) {
+    var b = achaBloco(botAtual, id);
+    return b ? TIPOS[b.tipo].icone + " " + (b.nome || b.id) : "⏹ encerrar";
+  }
+
+  function desenhaMapa() {
+    var linhas = botAtual.blocos.map(function (b) {
+      var ini = botAtual.inicio === b.id ? "▶ " : "&nbsp;&nbsp;&nbsp;";
+      var l = ini + '<span class="mini-chip tipo-' + b.tipo + '">' + TIPOS[b.tipo].icone + "</span> <b>" + esc(b.nome || b.id) + "</b>";
+      if (b.tipo === "menu") {
+        l += (b.opcoes || []).map(function (o, i) {
+          return '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + (i + 1) + " " + esc(o.rotulo || "") +
+            '<span class="seta">→</span>' + esc(nomeDe(o.destino));
+        }).join("");
+      } else if (b.tipo === "equipe") {
+        l += '<span class="seta">→</span>🙋 equipe assume';
+      } else if (b.tipo === "ia") {
+        l += '<span class="seta">→</span>🤖 Claude assume';
+      } else {
+        l += '<span class="seta">→</span>' + esc(nomeDe(b.destino));
+      }
+      return l;
+    });
+    $("#botMapa").innerHTML = linhas.join("<br>") || '<span class="mut">Sem blocos ainda.</span>';
   }
 
   function preencheBot(bot) {
-    $("#botAtivo").checked = !!bot.ativo;
-    $("#botBoasvindas").value = bot.boasvindas || "";
-    $("#botOpcoes").innerHTML = (bot.opcoes || []).map(linhaOpcao).join("");
+    botCarregado = true;
+    botAtual = JSON.parse(JSON.stringify(botCompat(bot) || BOT_PADRAO));
+    if (!botAtual.blocos) botAtual.blocos = [];
+    $("#botAtivo").checked = !!botAtual.ativo;
+    desenhaBlocos();
   }
 
   function coletaBot() {
-    var opcoes = [];
-    document.querySelectorAll("#botOpcoes .op-row").forEach(function (row) {
-      var rotulo = row.querySelector(".op-rotulo").value.trim();
-      if (!rotulo) return;
-      opcoes.push({
-        rotulo: rotulo,
-        resposta: row.querySelector(".op-resposta").value.trim(),
-        acao: row.querySelector(".op-acao").value,
-      });
-    });
-    return { ativo: $("#botAtivo").checked, boasvindas: $("#botBoasvindas").value.trim(), opcoes: opcoes };
+    botAtual.ativo = $("#botAtivo").checked;
+    return botAtual;
   }
 
-  $("#botOpcoes").addEventListener("click", function (e) {
-    if (e.target.classList.contains("tira")) {
-      e.target.closest(".op-row").remove();
-      // renumera
-      document.querySelectorAll("#botOpcoes .num-op").forEach(function (n, i) { n.textContent = i + 1; });
+  // edição dos blocos (tudo delegado; o modelo botAtual é a fonte da verdade)
+  $("#botBlocos").addEventListener("input", function (e) {
+    botTocado = true;
+    var card = e.target.closest(".bloco-card");
+    if (!card) return;
+    var b = achaBloco(botAtual, card.dataset.id);
+    if (!b) return;
+    if (e.target.classList.contains("b-nome")) b.nome = e.target.value;
+    if (e.target.classList.contains("b-texto")) b.texto = e.target.value;
+    if (e.target.classList.contains("op-rotulo")) {
+      var i = +e.target.closest(".op-row").dataset.i;
+      if (b.opcoes && b.opcoes[i]) b.opcoes[i].rotulo = e.target.value;
+    }
+  });
+  $("#botBlocos").addEventListener("change", function (e) {
+    var card = e.target.closest(".bloco-card");
+    if (!card) return;
+    var b = achaBloco(botAtual, card.dataset.id);
+    if (!b) return;
+    if (e.target.classList.contains("b-destino")) b.destino = e.target.value;
+    if (e.target.classList.contains("op-dest")) {
+      var i = +e.target.closest(".op-row").dataset.i;
+      if (b.opcoes && b.opcoes[i]) b.opcoes[i].destino = e.target.value;
+    }
+    if (e.target.classList.contains("b-inicio")) { botAtual.inicio = b.id; desenhaBlocos(); return; }
+    if (e.target.classList.contains("b-nome")) desenhaBlocos();
+    else desenhaMapa();
+  });
+  $("#botBlocos").addEventListener("click", function (e) {
+    botTocado = true;
+    var card = e.target.closest(".bloco-card");
+    if (!card) return;
+    var b = achaBloco(botAtual, card.dataset.id);
+    if (!b) return;
+    if (e.target.classList.contains("b-remove")) {
+      botAtual.blocos = botAtual.blocos.filter(function (x) { return x.id !== b.id; });
+      // limpa as ligações que apontavam para ele
+      botAtual.blocos.forEach(function (x) {
+        if (x.destino === b.id) x.destino = "";
+        (x.opcoes || []).forEach(function (o) { if (o.destino === b.id) o.destino = ""; });
+      });
+      if (botAtual.inicio === b.id) botAtual.inicio = botAtual.blocos.length ? botAtual.blocos[0].id : "";
+      desenhaBlocos(); return;
+    }
+    if (e.target.classList.contains("op-tira")) {
+      var i = +e.target.closest(".op-row").dataset.i;
+      b.opcoes.splice(i, 1); desenhaBlocos(); return;
+    }
+    if (e.target.classList.contains("op-add")) {
+      (b.opcoes = b.opcoes || []).push({ rotulo: "", destino: "" });
+      desenhaBlocos(); return;
     }
   });
 
-  $("#btnAddOpcao").addEventListener("click", function () {
-    var i = document.querySelectorAll("#botOpcoes .op-row").length;
-    $("#botOpcoes").insertAdjacentHTML("beforeend", linhaOpcao({ rotulo: "", resposta: "", acao: "resposta" }, i));
+  document.querySelectorAll("[data-add]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var tipo = btn.dataset.add;
+      var b = { id: novoId(), nome: TIPOS[tipo].nome, tipo: tipo, texto: "" };
+      if (tipo === "menu") b.opcoes = [{ rotulo: "", destino: "" }];
+      botAtual.blocos.push(b);
+      if (!botAtual.inicio) botAtual.inicio = b.id;
+      desenhaBlocos();
+    });
   });
 
   $("#btnSalvarBot").addEventListener("click", function () {
     if (!temNuvem()) { $("#botStatus").textContent = "Entre com a sua conta da nuvem primeiro."; return; }
     var bot = coletaBot();
-    if (bot.ativo && !bot.opcoes.length) { $("#botStatus").textContent = "Adicione pelo menos uma opção antes de ligar."; return; }
+    if (bot.ativo && !bot.blocos.length) { $("#botStatus").textContent = "Monte pelo menos um bloco antes de ligar."; return; }
+    if (bot.ativo && !achaBloco(bot, bot.inicio)) { $("#botStatus").textContent = "Marque com ▶ o bloco onde a conversa começa."; return; }
     rest("chat_config?on_conflict=academia_id", {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates" },
       body: JSON.stringify({ academia_id: nuvem.aid, bot: bot, atualizado: new Date().toISOString() }),
     }).then(function (r) {
       $("#botStatus").textContent = r.ok
-        ? (bot.ativo ? "✅ Salvo e LIGADO. Toda conversa nova recebe o menu." : "✅ Salvo (desligado — ligue a chavinha acima quando quiser).")
+        ? (bot.ativo ? "✅ Salvo e LIGADO. Toda conversa nova entra pelo bloco ▶." : "✅ Salvo (desligado — ligue a chavinha acima quando quiser).")
         : "⚠️ Não deu para salvar (" + r.status + "). Rode o SQL novo do supabase-setup.sql (alter table ... bot).";
     }).catch(function () { $("#botStatus").textContent = "Sem conexão com a nuvem agora."; });
   });
 
-  // ---------- simulador ----------
-  var sim = { historico: [], estado: "novo", modoIa: false };
+  // ---------- simulador (anda pelos blocos, igual ao webhook) ----------
+  var sim = { historico: [], estado: "", modoIa: false };
 
-  function textoMenu(bot) {
-    var linhas = (bot.opcoes || []).map(function (o, i) { return (i + 1) + " — " + (o.rotulo || ""); });
-    return (bot.boasvindas || "Olá! 👋 Sou o assistente automático.") +
-      "\n\n" + linhas.join("\n") + "\n\nResponda com o número da opção. 😉";
+  function textoMenuBloco(b) {
+    var linhas = (b.opcoes || []).map(function (o, i) { return (i + 1) + " — " + (o.rotulo || ""); });
+    return (b.texto || "Escolha uma opção:") + "\n\n" + linhas.join("\n") + "\n\nResponda com o número da opção. 😉";
   }
 
   function simBalao(de, texto) {
     var box = $("#simBox");
     if (box.querySelector(".vazio")) box.innerHTML = "";
-    var quem = de === "cliente" ? "cliente" : "ia";
+    var quem = de === "cliente" ? "cliente" : (de === "nota" ? "nota" : "ia");
     box.insertAdjacentHTML("beforeend",
       '<div class="balao ' + quem + '">' + esc(texto) +
-      (de === "cliente" ? "" : '<span class="meta-msg">🤖 robô</span>') + "</div>");
+      (de === "cliente" ? "" : '<span class="meta-msg">' + (de === "nota" ? "📝 nota interna (o cliente não vê)" : "🤖 robô") + "</span>") + "</div>");
     box.scrollTop = box.scrollHeight;
-    sim.historico.push({ de: de === "cliente" ? "cliente" : "ia", texto: texto });
+    if (de !== "nota") sim.historico.push({ de: de === "cliente" ? "cliente" : "ia", texto: texto });
   }
 
   function simIA() {
-    simBalao("ia", "…"); // placeholder
     var box = $("#simBox");
+    if (box.querySelector(".vazio")) box.innerHTML = "";
+    box.insertAdjacentHTML("beforeend", '<div class="balao ia">…</div>');
     var alvo = box.lastElementChild;
-    sim.historico.pop(); // tira o placeholder do histórico
     funcao({ acao: "testar", historico: sim.historico }).then(function (d) {
       var t = (d && d.ok && d.texto) ? d.texto
         : "(simulação: a IA de verdade responderia aqui — " + ((d && d.erro) || "publique a função chat-envia e configure a ANTHROPIC_API_KEY") + ")";
@@ -528,37 +704,60 @@
     });
   }
 
+  function simExecuta(bot, id) {
+    var hops = 0;
+    while (id && hops++ < 12) {
+      var b = achaBloco(bot, id);
+      if (!b) break;
+      if (b.tipo === "mensagem") { if (b.texto) simBalao("ia", b.texto); id = b.destino; continue; }
+      if (b.tipo === "nota") { simBalao("nota", b.texto || "(nota interna vazia)"); id = b.destino; continue; }
+      if (b.tipo === "menu") { simBalao("ia", textoMenuBloco(b)); sim.estado = "menu:" + b.id; return; }
+      if (b.tipo === "pergunta") { simBalao("ia", b.texto || "?"); sim.estado = "perg:" + b.id; return; }
+      if (b.tipo === "ia") {
+        sim.estado = "ia"; sim.modoIa = true;
+        if (b.texto) simBalao("ia", b.texto); else simIA();
+        return;
+      }
+      if (b.tipo === "equipe") {
+        sim.estado = "humano"; sim.modoIa = false;
+        simBalao("ia", b.texto || "Perfeito! Já chamei alguém da equipe — te respondemos em instantes. 🙌");
+        return;
+      }
+      break;
+    }
+    sim.estado = "fim";
+    simBalao("nota", "Fim do fluxo — a conversa fica com a equipe.");
+  }
+
   function simEnvia() {
     var t = $("#simTxt").value.trim();
     if (!t) return;
     $("#simTxt").value = "";
     simBalao("cliente", t);
     var bot = coletaBot();
+    if (!bot.blocos.length) { simBalao("nota", "Sem blocos ainda — monte o fluxo ao lado."); return; }
 
-    if (!bot.ativo && !bot.opcoes.length) { simBalao("ia", "(o chatbot está sem opções — preencha o formulário ao lado)"); return; }
-
-    var n = parseInt(t, 10);
-    var escolhida = (!isNaN(n) && bot.opcoes[n - 1]) ? bot.opcoes[n - 1]
-      : bot.opcoes.find(function (o) { return o.rotulo && t.toLowerCase() === o.rotulo.toLowerCase(); });
-
-    if (escolhida) {
-      if (escolhida.acao === "humano") {
-        sim.estado = "humano"; sim.modoIa = false;
-        simBalao("ia", escolhida.resposta || "Perfeito! Já chamei alguém da equipe — te respondemos em instantes. 🙌");
+    if (sim.estado.indexOf("menu:") === 0) {
+      var b = achaBloco(bot, sim.estado.slice(5));
+      if (b) {
+        var n = parseInt(t, 10);
+        var op = (!isNaN(n) && (b.opcoes || [])[n - 1]) ||
+          (b.opcoes || []).find(function (o) { return o.rotulo && t.toLowerCase() === o.rotulo.toLowerCase(); });
+        if (op) simExecuta(bot, op.destino);
+        else simBalao("ia", "Não entendi 🤔\n\n" + textoMenuBloco(b));
         return;
       }
-      if (escolhida.acao === "ia") {
-        sim.estado = "ia"; sim.modoIa = true;
-        if (escolhida.resposta) { simBalao("ia", escolhida.resposta); return; }
-        simIA(); return;
-      }
-      simBalao("ia", escolhida.resposta || "(esta opção está sem resposta — preencha no formulário)");
+      sim.estado = "";
+    }
+    if (sim.estado.indexOf("perg:") === 0) {
+      var bp = achaBloco(bot, sim.estado.slice(5));
+      simExecuta(bot, bp ? bp.destino : "");
       return;
     }
-    if (sim.estado === "novo") { sim.estado = "menu"; simBalao("ia", textoMenu(bot)); return; }
-    if (sim.modoIa) { simIA(); return; }
-    if (sim.estado === "humano") { simBalao("ia", "(a partir daqui quem responde é a equipe, na aba Conversas)"); return; }
-    simBalao("ia", "Não entendi 🤔\n\n" + textoMenu(bot));
+    if (sim.modoIa || sim.estado === "ia") { simIA(); return; }
+    if (sim.estado === "humano") { simBalao("nota", "A partir daqui quem responde é a equipe, na aba Conversas."); return; }
+    if (sim.estado === "fim") { simBalao("nota", "O fluxo terminou — recomece com ↺ para testar de novo."); return; }
+    simExecuta(bot, bot.inicio || (bot.blocos[0] && bot.blocos[0].id));
   }
 
   $("#btnSimEnviar").addEventListener("click", simEnvia);
@@ -566,11 +765,12 @@
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); simEnvia(); }
   });
   $("#btnSimZerar").addEventListener("click", function () {
-    sim = { historico: [], estado: "novo", modoIa: false };
+    sim = { historico: [], estado: "", modoIa: false };
     $("#simBox").innerHTML = '<div class="vazio">Escreva “oi” para começar 👇</div>';
   });
 
   preencheBot(BOT_PADRAO);
+  botCarregado = false; // o modelo padrão não conta: o fluxo salvo na nuvem ainda pode entrar
 
   $("#btnSalvarCfg").addEventListener("click", function () {
     if (!temNuvem()) { $("#cfgStatus").textContent = "Entre com a sua conta da nuvem primeiro."; return; }
