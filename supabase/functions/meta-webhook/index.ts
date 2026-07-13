@@ -142,13 +142,94 @@ async function enviaMeta(canal: string, contato: string, texto: string): Promise
   return r.ok;
 }
 
-// ---------- chatbot de menu (boas-vindas + opções numeradas) ----------
-function textoMenu(bot: any): string {
-  const linhas = (bot.opcoes || []).map(function (o: any, i: number) {
+// ---------- chatbot: fluxo de blocos (fluxograma) ----------
+// bot = { ativo, inicio, blocos: [{ id, nome, tipo, texto, destino, opcoes: [{rotulo, destino}] }] }
+// tipos: mensagem | menu | pergunta | nota | ia | equipe
+
+function achaBloco(bot: any, id: string) {
+  return (bot.blocos || []).find(function (b: any) { return b.id === id; });
+}
+
+function textoMenuBloco(b: any): string {
+  const linhas = (b.opcoes || []).map(function (o: any, i: number) {
     return (i + 1) + " — " + (o.rotulo || "");
   });
-  return (bot.boasvindas || "Olá! 👋 Sou o assistente automático.") +
+  return (b.texto || "Escolha uma opção:") +
     "\n\n" + linhas.join("\n") + "\n\nResponda com o número da opção. 😉";
+}
+
+// compatibilidade: formato antigo (menu único) → fluxo de blocos
+function botCompat(bot: any): any {
+  if (!bot) return null;
+  if (bot.blocos) return bot;
+  const blocos: any[] = [{ id: "menu", nome: "Boas-vindas", tipo: "menu", texto: bot.boasvindas || "Olá! 👋", opcoes: [] }];
+  (bot.opcoes || []).forEach(function (o: any, i: number) {
+    const id = "op" + (i + 1);
+    const tipo = o.acao === "ia" ? "ia" : (o.acao === "humano" ? "equipe" : "mensagem");
+    const b: any = { id, nome: o.rotulo || ("Opção " + (i + 1)), tipo, texto: o.resposta || "" };
+    if (tipo === "mensagem") b.destino = "menu";
+    blocos.push(b);
+    blocos[0].opcoes.push({ rotulo: o.rotulo, destino: id });
+  });
+  return { ativo: !!bot.ativo, inicio: "menu", blocos };
+}
+
+// anda pelos blocos a partir de um id; devolve "ia" quando o Claude deve
+// responder a mensagem atual (bloco IA sem texto fixo)
+async function executaFluxo(
+  bot: any, id: string, conversa: any, aid: string, canal: string, contato: string,
+): Promise<string | void> {
+  let hops = 0;
+  while (id && hops++ < 12) {
+    const b = achaBloco(bot, id);
+    if (!b) break;
+    if (b.tipo === "mensagem") {
+      if (b.texto) await respondeAuto(conversa, aid, canal, contato, b.texto);
+      id = b.destino; continue;
+    }
+    if (b.tipo === "nota") {
+      await sb("chat_mensagens", {
+        method: "POST",
+        body: JSON.stringify({ conversa_id: conversa.id, academia_id: aid, de: "nota", texto: b.texto || "" }),
+      });
+      id = b.destino; continue;
+    }
+    if (b.tipo === "menu") {
+      await respondeAuto(conversa, aid, canal, contato, textoMenuBloco(b));
+      await sb(`chat_conversas?id=eq.${conversa.id}`, {
+        method: "PATCH", body: JSON.stringify({ bot_estado: "menu:" + b.id }),
+      });
+      return;
+    }
+    if (b.tipo === "pergunta") {
+      await respondeAuto(conversa, aid, canal, contato, b.texto || "?");
+      await sb(`chat_conversas?id=eq.${conversa.id}`, {
+        method: "PATCH", body: JSON.stringify({ bot_estado: "perg:" + b.id }),
+      });
+      return;
+    }
+    if (b.tipo === "ia") {
+      await sb(`chat_conversas?id=eq.${conversa.id}`, {
+        method: "PATCH", body: JSON.stringify({ modo_auto: true, bot_estado: "ia" }),
+      });
+      if (b.texto) { await respondeAuto(conversa, aid, canal, contato, b.texto); return; }
+      conversa.modo_auto = true;
+      return "ia";
+    }
+    if (b.tipo === "equipe") {
+      await sb(`chat_conversas?id=eq.${conversa.id}`, {
+        method: "PATCH", body: JSON.stringify({ modo_auto: false, bot_estado: "humano" }),
+      });
+      await respondeAuto(conversa, aid, canal, contato,
+        b.texto || "Perfeito! Já chamei alguém da equipe — te respondemos em instantes. 🙌");
+      return;
+    }
+    break;
+  }
+  // fluxo terminou (destino vazio): a conversa fica com a equipe, em silêncio
+  await sb(`chat_conversas?id=eq.${conversa.id}`, {
+    method: "PATCH", body: JSON.stringify({ bot_estado: "fim" }),
+  });
 }
 
 // responde pelo canal e registra como mensagem do robô/IA
@@ -208,48 +289,47 @@ async function processa(canal: string, contato: string, nome: string, texto: str
   });
   if (!r.ok) { console.error("mensagem duplicada ou erro", r.status); return; }
 
-  // ---- chatbot de menu: roda antes da IA ----
-  const bot = cfg.bot && cfg.bot.ativo ? cfg.bot : null;
-  if (bot) {
-    const opcoes = bot.opcoes || [];
-    const n = parseInt((texto || "").trim(), 10);
-    const escolhida = (!isNaN(n) && opcoes[n - 1]) ? opcoes[n - 1]
-      : opcoes.find(function (o: any) {
-          return o.rotulo && texto.trim().toLowerCase() === String(o.rotulo).toLowerCase();
-        });
+  // ---- chatbot (fluxo de blocos): roda antes da IA ----
+  const bot = botCompat(cfg.bot);
+  if (bot && bot.ativo && (bot.blocos || []).length) {
+    let estado = conversa.bot_estado || "";
+    if (estado === "menu") estado = "menu:" + bot.inicio; // estado da versão antiga
 
-    if (escolhida) {
-      if (escolhida.acao === "humano") {
-        await sb(`chat_conversas?id=eq.${conversa.id}`, {
-          method: "PATCH", body: JSON.stringify({ modo_auto: false, bot_estado: "humano" }),
-        });
-        await respondeAuto(conversa, cfg.aid, canal, contato,
-          escolhida.resposta || "Perfeito! Já chamei alguém da equipe — te respondemos em instantes. 🙌");
-        return;
-      }
-      if (escolhida.acao === "ia") {
-        await sb(`chat_conversas?id=eq.${conversa.id}`, {
-          method: "PATCH", body: JSON.stringify({ modo_auto: true, bot_estado: "ia" }),
-        });
-        if (escolhida.resposta) { await respondeAuto(conversa, cfg.aid, canal, contato, escolhida.resposta); return; }
-        conversa.modo_auto = true; // sem resposta fixa: a IA assume já nesta mensagem
+    if (estado.startsWith("menu:")) {
+      const b = achaBloco(bot, estado.slice(5));
+      if (b) {
+        const n = parseInt((texto || "").trim(), 10);
+        const op = (!isNaN(n) && (b.opcoes || [])[n - 1]) ||
+          (b.opcoes || []).find(function (o: any) {
+            return o.rotulo && texto.trim().toLowerCase() === String(o.rotulo).toLowerCase();
+          });
+        if (op) {
+          const r2 = await executaFluxo(bot, op.destino, conversa, cfg.aid, canal, contato);
+          if (r2 !== "ia") return;
+        } else {
+          await respondeAuto(conversa, cfg.aid, canal, contato, "Não entendi 🤔\n\n" + textoMenuBloco(b));
+          return;
+        }
       } else {
-        await respondeAuto(conversa, cfg.aid, canal, contato, escolhida.resposta || "");
-        return;
+        const r2 = await executaFluxo(bot, bot.inicio, conversa, cfg.aid, canal, contato);
+        if (r2 !== "ia") return;
       }
+    } else if (estado.startsWith("perg:")) {
+      // a resposta do cliente já foi guardada acima; segue o fluxo
+      const b = achaBloco(bot, estado.slice(5));
+      const r2 = await executaFluxo(bot, b ? b.destino : "", conversa, cfg.aid, canal, contato);
+      if (r2 !== "ia") return;
+    } else if (estado === "humano" || estado === "fim") {
+      return; // a equipe assume — o robô fica em silêncio
+    } else if (estado === "ia" || conversa.modo_auto) {
+      // cai na IA abaixo
     } else if (nova) {
-      // primeira mensagem: manda as boas-vindas + menu
-      await sb(`chat_conversas?id=eq.${conversa.id}`, {
-        method: "PATCH", body: JSON.stringify({ bot_estado: "menu" }),
-      });
-      await respondeAuto(conversa, cfg.aid, canal, contato, textoMenu(bot));
-      return;
-    } else if (conversa.bot_estado === "menu" && !conversa.modo_auto) {
-      // ainda no menu e não escolheu nada válido: repete as opções
-      await respondeAuto(conversa, cfg.aid, canal, contato, "Não entendi 🤔\n\n" + textoMenu(bot));
-      return;
+      // primeira mensagem: entra pelo bloco marcado com ▶
+      const r2 = await executaFluxo(
+        bot, bot.inicio || (bot.blocos[0] && bot.blocos[0].id), conversa, cfg.aid, canal, contato,
+      );
+      if (r2 !== "ia") return;
     }
-    // bot_estado "humano": silêncio (a equipe responde) · "ia": cai na IA abaixo
   }
 
   if (!conversa.modo_auto) return;
