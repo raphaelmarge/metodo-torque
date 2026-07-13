@@ -46,6 +46,14 @@
   .tag-canal.whatsapp { background: #d8f5df; color: #1b7f3b; }
   .tag-canal.instagram { background: #ffe2ef; color: #b0257a; }
 
+  .grade-bot { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 900px) { .grade-bot { grid-template-columns: 1fr; } }
+  .op-row { display: grid; grid-template-columns: 22px 1fr 170px 26px; gap: 6px; align-items: start; padding: 8px; border: 1px solid var(--linha); background: var(--fundo); margin-bottom: 6px; }
+  .op-row .num-op { font-weight: 800; color: var(--roxo); padding-top: 8px; }
+  .op-row input, .op-row textarea, .op-row select { border: 1px solid var(--linha); padding: 7px 9px; font-family: inherit; font-size: 13px; width: 100%; }
+  .op-row textarea { resize: vertical; min-height: 34px; margin-top: 4px; }
+  .op-row .tira { border: 0; background: none; color: #b91c1c; font-weight: 800; cursor: pointer; font-size: 15px; padding-top: 6px; }
+  .sim-box { height: 300px; overflow: auto; border: 1px solid var(--linha); background: var(--fundo); padding: 12px; display: flex; flex-direction: column; }
   .passo { display: flex; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; line-height: 1.55; }
   .passo + .passo { margin-top: -1px; }
   .passo .num { font-weight: 800; color: var(--roxo); font-size: 16px; }
@@ -77,7 +85,8 @@
 
   <div class="abas">
     <button data-aba="conversas" class="ativa">💬 Conversas</button>
-    <button data-aba="ia">🤖 IA e automação</button>
+    <button data-aba="bot">🤖 Chatbot (menu)</button>
+    <button data-aba="ia">✨ IA e automação</button>
     <button data-aba="instalar">🔌 Instalação (passo a passo)</button>
   </div>
 
@@ -107,6 +116,39 @@
           <textarea id="txtMsg" placeholder="Escreva a resposta… (Enter envia, Shift+Enter quebra linha)"></textarea>
           <button class="sec" id="btnSugerir" title="A IA escreve uma sugestão; você revisa antes de enviar">✨ Sugerir</button>
           <button id="btnEnviar">Enviar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHATBOT DE MENU ============ -->
+  <section id="aba-bot" hidden>
+    <div class="grade-bot">
+      <div class="card">
+        <h2>🤖 Chatbot de menu</h2>
+        <p class="mut">Atendimento automático imediato: na primeira mensagem, o robô manda as boas-vindas e um menu numerado. Cada opção pode <b>responder um texto fixo</b>, <b>passar a conversa para a IA</b> (Claude) ou <b>chamar a equipe</b>.</p>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:10px 0">
+          <input type="checkbox" id="botAtivo"> Ligar o chatbot para toda conversa nova
+        </label>
+        <label style="display:block;font-weight:700;margin-top:8px">Mensagem de boas-vindas</label>
+        <textarea id="botBoasvindas" rows="2" style="width:100%;border:1px solid var(--linha);padding:10px;font-family:inherit;font-size:13.5px" placeholder="Olá! 👋 Bem-vindo(a) à TORQUE FIT! Sou o assistente automático."></textarea>
+        <label style="display:block;font-weight:700;margin-top:12px">Opções do menu</label>
+        <p class="mut" style="margin:4px 0 8px">O cliente responde com o número. “Passar para a IA” sem texto fixo faz o Claude responder na hora.</p>
+        <div id="botOpcoes"></div>
+        <button class="btn sec mini" id="btnAddOpcao" style="margin-top:8px">+ Adicionar opção</button>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="btnSalvarBot">Salvar chatbot</button>
+        </div>
+        <p id="botStatus" class="mut" style="margin-top:8px"></p>
+      </div>
+      <div class="card">
+        <h2>🧪 Simulador — converse com o seu robô</h2>
+        <p class="mut">Teste aqui como o cliente vai ver, antes de ligar. Usa o que está no formulário ao lado (mesmo sem salvar). As opções “Passar para a IA” chamam o Claude de verdade, se a chave já estiver configurada.</p>
+        <div class="sim-box" id="simBox"><div class="vazio">Escreva “oi” para começar 👇</div></div>
+        <div class="composer" style="border:1px solid var(--linha);border-top:0">
+          <textarea id="simTxt" placeholder="Escreva como se fosse o cliente…"></textarea>
+          <button id="btnSimEnviar">Enviar</button>
+          <button class="sec" id="btnSimZerar" title="Recomeça a simulação">↺</button>
         </div>
       </div>
     </div>
@@ -204,7 +246,7 @@
   document.querySelectorAll(".abas button").forEach(function (b) {
     b.addEventListener("click", function () {
       document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
-      ["conversas", "ia", "instalar"].forEach(function (a) {
+      ["conversas", "bot", "ia", "instalar"].forEach(function (a) {
         $("#aba-" + a).hidden = (a !== b.dataset.aba);
       });
     });
@@ -363,13 +405,172 @@
   // ---------- IA e automação ----------
   function carregaCfg() {
     if (!temNuvem()) return;
-    rest("chat_config?select=auto_global,prompt&academia_id=eq." + nuvem.aid)
+    rest("chat_config?select=auto_global,prompt,bot&academia_id=eq." + nuvem.aid)
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (rows) {
         var c = rows && rows[0];
-        if (c) { $("#cfgAutoGlobal").checked = !!c.auto_global; $("#cfgPrompt").value = c.prompt || ""; }
+        if (c) {
+          $("#cfgAutoGlobal").checked = !!c.auto_global;
+          $("#cfgPrompt").value = c.prompt || "";
+          if (c.bot) preencheBot(c.bot);
+        }
       }).catch(function () {});
   }
+
+  // ---------- chatbot de menu: editor ----------
+  var BOT_PADRAO = {
+    ativo: false,
+    boasvindas: "Olá! 👋 Bem-vindo(a) à TORQUE FIT! Sou o assistente automático.",
+    opcoes: [
+      { rotulo: "Planos e preços", resposta: "Nossos planos: Mensal R$ 149 · Trimestral R$ 399 · Anual R$ 1.188. Quer uma aula experimental grátis? É só responder 3! 😉", acao: "resposta" },
+      { rotulo: "Horários de funcionamento", resposta: "Funcionamos de segunda a sexta das 6h às 22h e sábado das 8h às 12h. 💪", acao: "resposta" },
+      { rotulo: "Falar com a atendente virtual (IA)", resposta: "", acao: "ia" },
+      { rotulo: "Falar com alguém da equipe", resposta: "", acao: "humano" },
+    ],
+  };
+
+  function linhaOpcao(o, i) {
+    return '<div class="op-row" data-i="' + i + '">' +
+      '<span class="num-op">' + (i + 1) + '</span>' +
+      '<div><input class="op-rotulo" placeholder="Texto da opção (ex.: Planos e preços)" value="' + esc(o.rotulo || "") + '">' +
+      '<textarea class="op-resposta" placeholder="Resposta fixa (opcional para IA/equipe)">' + esc(o.resposta || "") + '</textarea></div>' +
+      '<select class="op-acao">' +
+      '<option value="resposta"' + (o.acao === "resposta" || !o.acao ? " selected" : "") + '>Responder o texto</option>' +
+      '<option value="ia"' + (o.acao === "ia" ? " selected" : "") + '>Passar para a IA 🤖</option>' +
+      '<option value="humano"' + (o.acao === "humano" ? " selected" : "") + '>Chamar a equipe 🙋</option>' +
+      '</select>' +
+      '<button class="tira" title="Remover opção">✕</button></div>';
+  }
+
+  function preencheBot(bot) {
+    $("#botAtivo").checked = !!bot.ativo;
+    $("#botBoasvindas").value = bot.boasvindas || "";
+    $("#botOpcoes").innerHTML = (bot.opcoes || []).map(linhaOpcao).join("");
+  }
+
+  function coletaBot() {
+    var opcoes = [];
+    document.querySelectorAll("#botOpcoes .op-row").forEach(function (row) {
+      var rotulo = row.querySelector(".op-rotulo").value.trim();
+      if (!rotulo) return;
+      opcoes.push({
+        rotulo: rotulo,
+        resposta: row.querySelector(".op-resposta").value.trim(),
+        acao: row.querySelector(".op-acao").value,
+      });
+    });
+    return { ativo: $("#botAtivo").checked, boasvindas: $("#botBoasvindas").value.trim(), opcoes: opcoes };
+  }
+
+  $("#botOpcoes").addEventListener("click", function (e) {
+    if (e.target.classList.contains("tira")) {
+      e.target.closest(".op-row").remove();
+      // renumera
+      document.querySelectorAll("#botOpcoes .num-op").forEach(function (n, i) { n.textContent = i + 1; });
+    }
+  });
+
+  $("#btnAddOpcao").addEventListener("click", function () {
+    var i = document.querySelectorAll("#botOpcoes .op-row").length;
+    $("#botOpcoes").insertAdjacentHTML("beforeend", linhaOpcao({ rotulo: "", resposta: "", acao: "resposta" }, i));
+  });
+
+  $("#btnSalvarBot").addEventListener("click", function () {
+    if (!temNuvem()) { $("#botStatus").textContent = "Entre com a sua conta da nuvem primeiro."; return; }
+    var bot = coletaBot();
+    if (bot.ativo && !bot.opcoes.length) { $("#botStatus").textContent = "Adicione pelo menos uma opção antes de ligar."; return; }
+    rest("chat_config?on_conflict=academia_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates" },
+      body: JSON.stringify({ academia_id: nuvem.aid, bot: bot, atualizado: new Date().toISOString() }),
+    }).then(function (r) {
+      $("#botStatus").textContent = r.ok
+        ? (bot.ativo ? "✅ Salvo e LIGADO. Toda conversa nova recebe o menu." : "✅ Salvo (desligado — ligue a chavinha acima quando quiser).")
+        : "⚠️ Não deu para salvar (" + r.status + "). Rode o SQL novo do supabase-setup.sql (alter table ... bot).";
+    }).catch(function () { $("#botStatus").textContent = "Sem conexão com a nuvem agora."; });
+  });
+
+  // ---------- simulador ----------
+  var sim = { historico: [], estado: "novo", modoIa: false };
+
+  function textoMenu(bot) {
+    var linhas = (bot.opcoes || []).map(function (o, i) { return (i + 1) + " — " + (o.rotulo || ""); });
+    return (bot.boasvindas || "Olá! 👋 Sou o assistente automático.") +
+      "\n\n" + linhas.join("\n") + "\n\nResponda com o número da opção. 😉";
+  }
+
+  function simBalao(de, texto) {
+    var box = $("#simBox");
+    if (box.querySelector(".vazio")) box.innerHTML = "";
+    var quem = de === "cliente" ? "cliente" : "ia";
+    box.insertAdjacentHTML("beforeend",
+      '<div class="balao ' + quem + '">' + esc(texto) +
+      (de === "cliente" ? "" : '<span class="meta-msg">🤖 robô</span>') + "</div>");
+    box.scrollTop = box.scrollHeight;
+    sim.historico.push({ de: de === "cliente" ? "cliente" : "ia", texto: texto });
+  }
+
+  function simIA() {
+    simBalao("ia", "…"); // placeholder
+    var box = $("#simBox");
+    var alvo = box.lastElementChild;
+    sim.historico.pop(); // tira o placeholder do histórico
+    funcao({ acao: "testar", historico: sim.historico }).then(function (d) {
+      var t = (d && d.ok && d.texto) ? d.texto
+        : "(simulação: a IA de verdade responderia aqui — " + ((d && d.erro) || "publique a função chat-envia e configure a ANTHROPIC_API_KEY") + ")";
+      alvo.innerHTML = esc(t) + '<span class="meta-msg">🤖 IA</span>';
+      sim.historico.push({ de: "ia", texto: t });
+      box.scrollTop = box.scrollHeight;
+    }).catch(function () {
+      var t = "(simulação: a IA de verdade responderia aqui — publique a função chat-envia, aba Instalação)";
+      alvo.innerHTML = esc(t) + '<span class="meta-msg">🤖 IA</span>';
+      sim.historico.push({ de: "ia", texto: t });
+    });
+  }
+
+  function simEnvia() {
+    var t = $("#simTxt").value.trim();
+    if (!t) return;
+    $("#simTxt").value = "";
+    simBalao("cliente", t);
+    var bot = coletaBot();
+
+    if (!bot.ativo && !bot.opcoes.length) { simBalao("ia", "(o chatbot está sem opções — preencha o formulário ao lado)"); return; }
+
+    var n = parseInt(t, 10);
+    var escolhida = (!isNaN(n) && bot.opcoes[n - 1]) ? bot.opcoes[n - 1]
+      : bot.opcoes.find(function (o) { return o.rotulo && t.toLowerCase() === o.rotulo.toLowerCase(); });
+
+    if (escolhida) {
+      if (escolhida.acao === "humano") {
+        sim.estado = "humano"; sim.modoIa = false;
+        simBalao("ia", escolhida.resposta || "Perfeito! Já chamei alguém da equipe — te respondemos em instantes. 🙌");
+        return;
+      }
+      if (escolhida.acao === "ia") {
+        sim.estado = "ia"; sim.modoIa = true;
+        if (escolhida.resposta) { simBalao("ia", escolhida.resposta); return; }
+        simIA(); return;
+      }
+      simBalao("ia", escolhida.resposta || "(esta opção está sem resposta — preencha no formulário)");
+      return;
+    }
+    if (sim.estado === "novo") { sim.estado = "menu"; simBalao("ia", textoMenu(bot)); return; }
+    if (sim.modoIa) { simIA(); return; }
+    if (sim.estado === "humano") { simBalao("ia", "(a partir daqui quem responde é a equipe, na aba Conversas)"); return; }
+    simBalao("ia", "Não entendi 🤔\n\n" + textoMenu(bot));
+  }
+
+  $("#btnSimEnviar").addEventListener("click", simEnvia);
+  $("#simTxt").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); simEnvia(); }
+  });
+  $("#btnSimZerar").addEventListener("click", function () {
+    sim = { historico: [], estado: "novo", modoIa: false };
+    $("#simBox").innerHTML = '<div class="vazio">Escreva “oi” para começar 👇</div>';
+  });
+
+  preencheBot(BOT_PADRAO);
 
   $("#btnSalvarCfg").addEventListener("click", function () {
     if (!temNuvem()) { $("#cfgStatus").textContent = "Entre com a sua conta da nuvem primeiro."; return; }
@@ -443,6 +644,9 @@
 
   // usado nos testes
   window.__chat = {
+    coletaBot: coletaBot,
+    preencheBot: preencheBot,
+    simEnvia: simEnvia,
     carregaConversas: carregaConversas,
     abre: abre,
     envia: envia,

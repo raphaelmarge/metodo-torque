@@ -50,13 +50,18 @@ function sb(path: string, init: RequestInit = {}): Promise<Response> {
 }
 
 // ---------- academia + configuração ----------
-async function pegaConfig(): Promise<{ aid: string; auto_global: boolean; prompt: string } | null> {
-  let r = await sb("chat_config?select=academia_id,auto_global,prompt&limit=1");
+async function pegaConfig(): Promise<{ aid: string; auto_global: boolean; prompt: string; bot: any } | null> {
+  let r = await sb("chat_config?select=academia_id,auto_global,prompt,bot&limit=1");
   let rows = r.ok ? await r.json() : [];
-  if (rows.length) return { aid: rows[0].academia_id, auto_global: !!rows[0].auto_global, prompt: rows[0].prompt || "" };
+  if (rows.length) {
+    return {
+      aid: rows[0].academia_id, auto_global: !!rows[0].auto_global,
+      prompt: rows[0].prompt || "", bot: rows[0].bot || null,
+    };
+  }
   r = await sb("academias?select=id&limit=1");
   rows = r.ok ? await r.json() : [];
-  if (rows.length) return { aid: rows[0].id, auto_global: false, prompt: "" };
+  if (rows.length) return { aid: rows[0].id, auto_global: false, prompt: "", bot: null };
   return null;
 }
 
@@ -137,6 +142,30 @@ async function enviaMeta(canal: string, contato: string, texto: string): Promise
   return r.ok;
 }
 
+// ---------- chatbot de menu (boas-vindas + opções numeradas) ----------
+function textoMenu(bot: any): string {
+  const linhas = (bot.opcoes || []).map(function (o: any, i: number) {
+    return (i + 1) + " — " + (o.rotulo || "");
+  });
+  return (bot.boasvindas || "Olá! 👋 Sou o assistente automático.") +
+    "\n\n" + linhas.join("\n") + "\n\nResponda com o número da opção. 😉";
+}
+
+// responde pelo canal e registra como mensagem do robô/IA
+async function respondeAuto(conversa: any, aid: string, canal: string, contato: string, texto: string) {
+  const enviou = await enviaMeta(canal, contato, texto);
+  if (!enviou) return false;
+  await sb("chat_mensagens", {
+    method: "POST",
+    body: JSON.stringify({ conversa_id: conversa.id, academia_id: aid, de: "ia", texto }),
+  });
+  await sb(`chat_conversas?id=eq.${conversa.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ ultima_msg: "🤖 " + texto.slice(0, 120), atualizado: new Date().toISOString() }),
+  });
+  return true;
+}
+
 // ---------- processa uma mensagem recebida ----------
 async function processa(canal: string, contato: string, nome: string, texto: string, mid: string) {
   const cfg = await pegaConfig();
@@ -144,10 +173,11 @@ async function processa(canal: string, contato: string, nome: string, texto: str
 
   // conversa: cria (herdando o modo automático global) ou atualiza
   let r = await sb(
-    `chat_conversas?select=id,modo_auto,nao_lidas&academia_id=eq.${cfg.aid}&canal=eq.${canal}&contato_id=eq.${encodeURIComponent(contato)}`,
+    `chat_conversas?select=id,modo_auto,nao_lidas,bot_estado&academia_id=eq.${cfg.aid}&canal=eq.${canal}&contato_id=eq.${encodeURIComponent(contato)}`,
   );
   let rows = r.ok ? await r.json() : [];
   let conversa = rows[0];
+  const nova = !conversa;
   if (!conversa) {
     r = await sb("chat_conversas", {
       method: "POST",
@@ -178,6 +208,50 @@ async function processa(canal: string, contato: string, nome: string, texto: str
   });
   if (!r.ok) { console.error("mensagem duplicada ou erro", r.status); return; }
 
+  // ---- chatbot de menu: roda antes da IA ----
+  const bot = cfg.bot && cfg.bot.ativo ? cfg.bot : null;
+  if (bot) {
+    const opcoes = bot.opcoes || [];
+    const n = parseInt((texto || "").trim(), 10);
+    const escolhida = (!isNaN(n) && opcoes[n - 1]) ? opcoes[n - 1]
+      : opcoes.find(function (o: any) {
+          return o.rotulo && texto.trim().toLowerCase() === String(o.rotulo).toLowerCase();
+        });
+
+    if (escolhida) {
+      if (escolhida.acao === "humano") {
+        await sb(`chat_conversas?id=eq.${conversa.id}`, {
+          method: "PATCH", body: JSON.stringify({ modo_auto: false, bot_estado: "humano" }),
+        });
+        await respondeAuto(conversa, cfg.aid, canal, contato,
+          escolhida.resposta || "Perfeito! Já chamei alguém da equipe — te respondemos em instantes. 🙌");
+        return;
+      }
+      if (escolhida.acao === "ia") {
+        await sb(`chat_conversas?id=eq.${conversa.id}`, {
+          method: "PATCH", body: JSON.stringify({ modo_auto: true, bot_estado: "ia" }),
+        });
+        if (escolhida.resposta) { await respondeAuto(conversa, cfg.aid, canal, contato, escolhida.resposta); return; }
+        conversa.modo_auto = true; // sem resposta fixa: a IA assume já nesta mensagem
+      } else {
+        await respondeAuto(conversa, cfg.aid, canal, contato, escolhida.resposta || "");
+        return;
+      }
+    } else if (nova) {
+      // primeira mensagem: manda as boas-vindas + menu
+      await sb(`chat_conversas?id=eq.${conversa.id}`, {
+        method: "PATCH", body: JSON.stringify({ bot_estado: "menu" }),
+      });
+      await respondeAuto(conversa, cfg.aid, canal, contato, textoMenu(bot));
+      return;
+    } else if (conversa.bot_estado === "menu" && !conversa.modo_auto) {
+      // ainda no menu e não escolheu nada válido: repete as opções
+      await respondeAuto(conversa, cfg.aid, canal, contato, "Não entendi 🤔\n\n" + textoMenu(bot));
+      return;
+    }
+    // bot_estado "humano": silêncio (a equipe responde) · "ia": cai na IA abaixo
+  }
+
   if (!conversa.modo_auto) return;
 
   // modo automático: monta o histórico e pede a resposta ao Claude
@@ -185,18 +259,7 @@ async function processa(canal: string, contato: string, nome: string, texto: str
   const hist = (r.ok ? await r.json() : []).reverse();
   const resposta = await respostaIA(hist, cfg.prompt);
   if (!resposta) return;
-
-  const enviou = await enviaMeta(canal, contato, resposta);
-  if (!enviou) return;
-
-  await sb("chat_mensagens", {
-    method: "POST",
-    body: JSON.stringify({ conversa_id: conversa.id, academia_id: cfg.aid, de: "ia", texto: resposta }),
-  });
-  await sb(`chat_conversas?id=eq.${conversa.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ ultima_msg: "🤖 " + resposta.slice(0, 120), atualizado: new Date().toISOString() }),
-  });
+  await respondeAuto(conversa, cfg.aid, canal, contato, resposta);
 }
 
 // ---------- extrai as mensagens do payload da Meta ----------
