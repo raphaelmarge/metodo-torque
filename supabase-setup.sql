@@ -258,3 +258,63 @@ $$;
 grant execute on function public.app_aluno_agenda(text, text, text, date, text) to anon, authenticated;
 grant execute on function public.app_aluno_agendamentos(text) to anon, authenticated;
 grant execute on function public.app_aluno_cancela(text, uuid) to anon, authenticated;
+
+-- ============================================================
+-- CHAT UNIFICADO (WhatsApp + Instagram + IA)  — rode uma vez
+-- As mensagens entram pelas Edge Functions (pasta supabase/functions):
+--   meta-webhook  → recebe da Meta e, no modo automático, responde com IA
+--   chat-envia    → envio manual pela equipe + sugestão de resposta
+-- ============================================================
+
+create table if not exists public.chat_conversas (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias(id) on delete cascade,
+  canal text not null default 'whatsapp',        -- whatsapp | instagram
+  contato_id text not null,                      -- telefone (WhatsApp) ou ID do Instagram
+  nome text not null default '',
+  modo_auto boolean not null default false,      -- IA responde sozinha NESTA conversa
+  nao_lidas integer not null default 0,
+  ultima_msg text not null default '',
+  atualizado timestamptz not null default now(),
+  unique (academia_id, canal, contato_id)
+);
+
+create table if not exists public.chat_mensagens (
+  id uuid primary key default gen_random_uuid(),
+  conversa_id uuid not null references public.chat_conversas(id) on delete cascade,
+  academia_id uuid not null references public.academias(id) on delete cascade,
+  de text not null default 'cliente',            -- cliente | equipe | ia
+  texto text not null default '',
+  mid text not null default '',                  -- id da mensagem na Meta (evita duplicar)
+  criado timestamptz not null default now()
+);
+create index if not exists chat_mensagens_conversa
+  on public.chat_mensagens (conversa_id, criado);
+create unique index if not exists chat_mensagens_mid
+  on public.chat_mensagens (mid) where mid <> '';
+
+create table if not exists public.chat_config (
+  academia_id uuid primary key references public.academias(id) on delete cascade,
+  auto_global boolean not null default false,    -- IA responde toda conversa (salvo desligadas)
+  prompt text not null default '',               -- instruções extras para a IA
+  atualizado timestamptz not null default now()
+);
+
+alter table public.chat_conversas enable row level security;
+alter table public.chat_mensagens enable row level security;
+alter table public.chat_config    enable row level security;
+
+drop policy if exists "chat_conversas_membros" on public.chat_conversas;
+create policy "chat_conversas_membros" on public.chat_conversas
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+drop policy if exists "chat_mensagens_membros" on public.chat_mensagens;
+create policy "chat_mensagens_membros" on public.chat_mensagens
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+drop policy if exists "chat_config_membros" on public.chat_config;
+create policy "chat_config_membros" on public.chat_config
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
