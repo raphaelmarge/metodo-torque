@@ -94,12 +94,14 @@
     exame_medico: "🧑‍⚕️ Exame médico vencido (1 ano)",
     exame_dermato: "🔬 Exame dermatológico vencido (1 ano)",
     exame_nutricional: "🥗 Avaliação nutricional vencida (1 ano)",
+    avaliacao_google: "⭐ Convite para avaliar no Google (20+ check-ins, uma vez só)",
   };
   var TPL_PADRAO = [
     { id: "tp1", nome: "Aniversário", texto: "Feliz aniversário, {nome}! 🎉 A equipe toda te deseja um ano incrível — passa aqui hoje que tem treino especial! 💜" },
     { id: "tp2", nome: "Sentimos sua falta", texto: "Oi {nome}! Já faz {dias} dias que você não aparece 😢 Bora voltar essa semana? Seu treino te espera! 💪" },
     { id: "tp3", nome: "Renovação", texto: "Oi {nome}! Seu plano vence em {dias} dia(s). Bora renovar e garantir sua vaga e o valor atual? 💜" },
     { id: "tp4", nome: "Cobrança amigável", texto: "Oi {nome}! Passando pra lembrar da mensalidade em aberto ({valor}). Consegue regularizar essa semana? Qualquer coisa me chama! 💜" },
+    { id: "tp5", nome: "Avaliação no Google", texto: "Oi {nome}! 🎉 Você já completou {dias} treinos com a gente — que orgulho! Se estiver curtindo a TORQUE FIT, nos ajuda demais deixando uma avaliação no Google (leva 1 minuto): COLE-AQUI-O-LINK-DO-SEU-GOOGLE 💜" },
   ];
   function load() {
     var st = S.read("automacao", null);
@@ -112,6 +114,14 @@
       S.write("automacao", st);
     }
     st.historico = st.historico || {};
+    // semeia a régua de avaliação no Google (em lojas novas E em quem já usava)
+    var mudouSeed = false;
+    if (!st.templates.some(function (t) { return t.id === "tp5"; })) { st.templates.push(TPL_PADRAO[4]); mudouSeed = true; }
+    if (!st.regras.some(function (r) { return r.gatilho === "avaliacao_google"; })) {
+      st.regras.push({ id: "rg4", nome: "Avaliação no Google (edite o link no template!)", gatilho: "avaliacao_google", templateId: "tp5", ativo: false });
+      mudouSeed = true;
+    }
+    if (mudouSeed) S.write("automacao", st);
     return st;
   }
   function save(st) { S.write("automacao", st); render(); }
@@ -211,6 +221,23 @@
       ativos.forEach(function (a) {
         var d = (a.exames || {})[campo];
         if (d && diasDesde(d) >= 365) out.push({ a: a, dias: diasDesde(d), valor: 0 });
+      });
+    }
+    if (gatilho === "avaliacao_google") {
+      // dispara UMA vez por aluno na vida: quem já recebeu (qualquer dia do
+      // histórico, por qualquer régua deste gatilho) fica de fora
+      var stAuto = load();
+      var convidados = {};
+      Object.keys(stAuto.historico).forEach(function (dia) {
+        Object.keys(stAuto.historico[dia] || {}).forEach(function (ch) {
+          var partes = ch.split("|");
+          var rg = (stAuto.regras || []).find(function (r) { return r.id === partes[0]; });
+          if (rg && rg.gatilho === "avaliacao_google") convidados[partes[1]] = true;
+        });
+      });
+      ativos.forEach(function (a) {
+        var n = (a.checkins || []).length;
+        if (n >= 20 && !convidados[a.id]) out.push({ a: a, dias: n, valor: 0 });
       });
     }
     if (gatilho === "aval_vencida") {
