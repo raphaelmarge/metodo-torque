@@ -112,6 +112,7 @@
       <div class="linha-flex">
         <input id="novoExNome" placeholder="Novo exercício…" style="width: 200px;">
         <input id="novoExGrupo" placeholder="Grupo (ex.: Peito)" style="width: 140px;">
+        <input id="novoExVideo" placeholder="Link do vídeo (YouTube, opcional)" style="width: 220px;">
         <button class="btn mini" id="addEx">Adicionar</button>
       </div>
     </div>
@@ -511,8 +512,11 @@
     var lista = st.exercicios.filter(function (x) { return !q || (x.nome + " " + x.grupo).toLowerCase().indexOf(q) !== -1; })
       .sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); });
     $("linhasEx").innerHTML = lista.map(function (x) {
-      return "<tr><td>" + esc(x.nome) + "</td><td><span class='grupo-ex' style='margin:0'>" + esc(x.grupo) + "</span></td>" +
-        "<td style='text-align:right'><button class='btn perigo mini' data-delex='" + x.id + "'>✕</button></td></tr>";
+      return "<tr><td>" + esc(x.nome) +
+        (x.video ? " <a href='" + esc(x.video) + "' target='_blank' rel='noopener' title='Ver vídeo de execução'>🎬</a>" : "") +
+        "</td><td><span class='grupo-ex' style='margin:0'>" + esc(x.grupo) + "</span></td>" +
+        "<td style='text-align:right'><button class='btn sec mini' data-videx='" + x.id + "' title='Definir o link do vídeo de execução'>🎬</button> " +
+        "<button class='btn perigo mini' data-delex='" + x.id + "'>✕</button></td></tr>";
     }).join("");
     if (aba === "exercicios") $("resumoAba").textContent = st.exercicios.length + " exercício(s) na biblioteca";
   }
@@ -521,12 +525,22 @@
     var n = $("novoExNome").value.trim();
     if (!n) return;
     var st = load();
-    st.exercicios.push({ id: S.uid(), nome: n, grupo: $("novoExGrupo").value.trim() || "Outros" });
+    st.exercicios.push({ id: S.uid(), nome: n, grupo: $("novoExGrupo").value.trim() || "Outros", video: $("novoExVideo").value.trim() });
     save(st);
     $("novoExNome").value = ""; $("novoExGrupo").value = "";
     renderEx();
   };
   $("linhasEx").addEventListener("click", function (e) {
+    var bv = e.target.closest("[data-videx]");
+    if (bv) {
+      var st2 = load();
+      var ex2 = st2.exercicios.find(function (x) { return x.id === bv.dataset.videx; });
+      if (ex2) {
+        var v = prompt("Link do vídeo de execução (YouTube) — vazio remove:", ex2.video || "");
+        if (v !== null) { ex2.video = v.trim(); save(st2); }
+      }
+      return;
+    }
     var id = e.target.getAttribute && e.target.getAttribute("data-delex");
     if (!id) return;
     var st = load();

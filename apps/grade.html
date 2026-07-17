@@ -488,12 +488,14 @@
   function puxaAgendamentosApp() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return Promise.resolve(0);
-    return nuvem.client.from("app_agendamentos").select("id,aluno,aula_id,data,status")
-      .in("status", ["pendente", "cancelado"]).then(function (r) {
+    return nuvem.client.from("app_agendamentos").select("id,aluno,aula_id,data,status,criado")
+      .in("status", ["pendente", "cancelado", "espera"]).then(function (r) {
       if (r.error || !r.data || !r.data.length) return 0;
       var st = load();
       var aplicados = [], cancelados = [], mudou = false;
+      var liberadas = {}; // aula|dia que teve cancelamento (pode promover a fila)
       r.data.forEach(function (g) {
+        if (g.status === "espera") return; // a fila só anda quando alguém cancela
         var chave = g.aula_id + "|" + g.data;
         var lista = st.presencas[chave] || [];
         var nome = (g.aluno || "Aluno do app") + " 📲";
@@ -504,19 +506,40 @@
           var i = lista.indexOf(nome);
           if (i >= 0) { lista.splice(i, 1); st.presencas[chave] = lista; mudou = true; }
           cancelados.push(g.id);
+          liberadas[chave] = true;
         }
       });
+
+      // lista de espera: cancelou → o primeiro da fila daquela aula|dia sobe
+      var esperas = r.data.filter(function (g) { return g.status === "espera"; })
+        .sort(function (x, y) { return (x.criado || "") < (y.criado || "") ? -1 : 1; });
+      var promovidos = [];
+      Object.keys(liberadas).forEach(function (chave) {
+        var aula = (st.aulas || []).find(function (x) { return x.id === chave.split("|")[0]; });
+        var cap = aula ? (+aula.vagas || 0) : 0;
+        var lista = st.presencas[chave] || [];
+        esperas.filter(function (g) { return (g.aula_id + "|" + g.data) === chave; }).some(function (g) {
+          if (cap && lista.length >= cap) return true; // encheu de novo, fila para
+          var nome = (g.aluno || "Aluno do app") + " 📲";
+          if (lista.indexOf(nome) === -1) { lista.push(nome); st.presencas[chave] = lista; mudou = true; }
+          promovidos.push(g);
+          return !!(cap && lista.length >= cap);
+        });
+      });
+
       if (mudou) S.write("grade", st);
       var fila = Promise.resolve();
       if (aplicados.length) fila = fila.then(function () { return nuvem.client.from("app_agendamentos").update({ status: "confirmado" }).in("id", aplicados); });
       if (cancelados.length) fila = fila.then(function () { return nuvem.client.from("app_agendamentos").update({ status: "cancelado_ok" }).in("id", cancelados); });
+      if (promovidos.length) fila = fila.then(function () { return nuvem.client.from("app_agendamentos").update({ status: "confirmado" }).in("id", promovidos.map(function (g) { return g.id; })); });
       return fila.then(function () {
-        if (aplicados.length || cancelados.length) {
+        if (aplicados.length || cancelados.length || promovidos.length) {
           avisoApp((aplicados.length ? "📲 " + aplicados.length + " agendamento(s) do app entraram na grade. " : "") +
-                   (cancelados.length ? "🚫 " + cancelados.length + " cancelamento(s) aplicados." : ""));
+                   (cancelados.length ? "🚫 " + cancelados.length + " cancelamento(s) aplicados. " : "") +
+                   (promovidos.length ? "🕗 Da lista de espera: " + promovidos.map(function (g) { return (g.aluno || "aluno").split(" ")[0]; }).join(", ") + " entrou na aula — avise no WhatsApp!" : ""));
           render();
         }
-        return aplicados.length + cancelados.length;
+        return aplicados.length + cancelados.length + promovidos.length;
       });
     }, function () { return 0; });
   }

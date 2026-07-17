@@ -200,7 +200,7 @@
   }
 
   function montaApp(a, stamp) {
-    var st = S.read("alunos", { planos: [], recebiveis: [] });
+    var st = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
     var cfg = S.read("config", { dados: {} });
     var app = cfgApp();
     var cor = app.cor || "#7c3aed";
@@ -227,7 +227,10 @@
     var emDia = !atrasados.length;
 
     // treino, avaliação, sessões
-    var presc = S.read("treinos", { prescricoes: [] }).prescricoes.find(function (p) { return p.alunoId === a.id; });
+    var stTr = S.read("treinos", { prescricoes: [], exercicios: [] });
+    var presc = stTr.prescricoes.find(function (p) { return p.alunoId === a.id; });
+    var videoDe = {};
+    (stTr.exercicios || []).forEach(function (x) { if (x.video) videoDe[(x.nome || "").toLowerCase()] = x.video; });
     var avs = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? 1 : -1; });
     var av = avs[0];
@@ -236,12 +239,51 @@
     if (av) { var d2 = new Date(av.data + "T12:00"); d2.setDate(d2.getDate() + avalDias); proxAv = S.todayISO(d2); }
     var sessoesMes = (a.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === mes; }).length;
 
+    // gamificação: total, sequência de semanas e ranking do mês da academia
+    var totalCk = (a.checkins || []).length;
+    function semanaDe(iso) { // segunda-feira da semana daquele dia
+      var dS = new Date(iso + "T12:00");
+      dS.setDate(dS.getDate() - ((dS.getDay() + 6) % 7));
+      return S.todayISO(dS);
+    }
+    var temSemana = {};
+    (a.checkins || []).forEach(function (t) { var dC = (t || "").slice(0, 10); if (dC) temSemana[semanaDe(dC)] = true; });
+    var sequencia = 0, semCursor = semanaDe(hoje);
+    while (temSemana[semCursor]) {
+      sequencia++;
+      var vS = new Date(semCursor + "T12:00"); vS.setDate(vS.getDate() - 7);
+      semCursor = S.todayISO(vS);
+    }
+    var MEDALHAS = [[10, "🥉", "10 treinos"], [25, "🏅", "25 treinos"], [50, "🥈", "50 treinos"], [100, "🥇", "100 treinos"], [250, "💎", "250 treinos"]];
+    var conquistadas = MEDALHAS.filter(function (m) { return totalCk >= m[0]; });
+    var proxMedalha = MEDALHAS.find(function (m) { return totalCk < m[0]; });
+    if (sequencia >= 4) conquistadas = conquistadas.concat([[0, "🔥", sequencia + " semanas seguidas"]]);
+    var ranking = (st.alunos || []).filter(function (x) { return x.status !== "inativo"; }).map(function (x) {
+      var ps = (x.nome || "?").split(" ");
+      return { id: x.id, nome: ps[0] + (ps[1] ? " " + ps[1][0].toUpperCase() + "." : ""),
+        n: (x.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === mes; }).length };
+    }).filter(function (x) { return x.n > 0; }).sort(function (x, y) { return y.n - x.n; });
+    var minhaPos = ranking.map(function (x) { return x.id; }).indexOf(a.id) + 1;
+    var top10 = ranking.slice(0, 10);
+    var shareTxt = "💪 Já são " + totalCk + " treinos na " + nomeAcad +
+      (sequencia >= 2 ? " e " + sequencia + " semanas seguidas sem falhar" : "") + "! Bora treinar comigo?";
+
     // grade (embutida como dados: o seletor de dias funciona dentro do app)
     var aulas = (S.read("grade", { aulas: [] }).aulas || []).map(function (x) {
       return { id: x.id, n: x.nome, p: x.prof || "", s: x.sala || "", d: x.dias || [], i: x.inicio || "", m: +x.dur || 60, v: +x.vagas || 0, c: x.cor || cor };
     });
     var nuvemCfg = self.MT_CLOUD || {};
     var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && a.appToken);
+
+    // lotação por aula|dia (próximos 7 dias) para a lista de espera
+    var presGrade = S.read("grade", { presencas: {} }).presencas || {};
+    var lot = {};
+    var d7 = new Date(hoje + "T12:00"); d7.setDate(d7.getDate() + 7);
+    var lim7 = S.todayISO(d7);
+    Object.keys(presGrade).forEach(function (k) {
+      var dt = (k.split("|")[1] || "");
+      if (dt >= hoje && dt <= lim7) lot[k] = (presGrade[k] || []).length;
+    });
 
     // WOD: hoje + histórico do mês
     var wodDias = S.read("wod", { dias: {} }).dias || {};
@@ -270,7 +312,10 @@
         presc.fichas.map(function (fx) {
           return "<div class='ficha'><h3>" + esc(fx.nome || "Ficha") + "</h3>" +
             (fx.itens || []).map(function (it) {
-              return "<div class='ex'><b>" + esc(it.ex || "") + "</b><span>" + esc(it.series || "?") + "×" + esc(it.reps || "?") +
+              var vid = videoDe[(it.ex || "").toLowerCase()];
+              return "<div class='ex'><b>" + esc(it.ex || "") +
+                (vid ? " <a href='" + esc(vid) + "' target='_blank' rel='noopener' style='text-decoration:none'>▶️</a>" : "") +
+                "</b><span>" + esc(it.series || "?") + "×" + esc(it.reps || "?") +
                 (it.carga ? " · " + esc(it.carga) : "") + "</span></div>";
             }).join("") + "</div>";
         }).join("") +
@@ -331,6 +376,15 @@
       ".post .mini{width:36px;height:36px;border-radius:50%;background:var(--cor);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:none}" +
       ".post .autor{font-weight:700;font-size:14px}.post .data{color:var(--txt2);font-size:12px}" +
       ".post .txt{font-size:14.5px;line-height:1.5}" +
+      ".gamerow{display:flex;text-align:center;padding:4px 0 8px}" +
+      ".gamerow .gnum{flex:1;font-size:24px;font-weight:800;color:var(--cor)}" +
+      ".gamerow .gnum span{display:block;font-size:11px;font-weight:600;color:var(--txt2)}" +
+      ".medals{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 10px}" +
+      ".medal{background:var(--fundo2,#f4f1fb);border:1px solid var(--linha);border-radius:12px;padding:5px 10px;font-size:18px;display:flex;align-items:center;gap:6px}" +
+      ".medal small{font-size:10.5px;font-weight:700;color:var(--txt2)}" +
+      ".rk{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--linha);font-size:14px}" +
+      ".rk:last-child{border-bottom:none}.rk .pos{width:34px;font-weight:800;text-align:center}" +
+      ".rk.eu{background:linear-gradient(90deg,transparent,rgba(124,58,237,.10));font-weight:800;color:var(--cor)}" +
       "nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;display:flex;background:var(--card);border-top:1px solid var(--linha);padding-bottom:env(safe-area-inset-bottom)}" +
       "nav button{flex:1;background:none;border:none;color:var(--txt2);font-family:inherit;font-size:11.5px;font-weight:700;padding:8px 4px 10px;cursor:pointer}" +
       "nav button .ic{display:block;font-size:20px;margin-bottom:2px}" +
@@ -348,6 +402,28 @@
       "<div class='fav' data-ir='Perfil' data-abrir='dDados'><span class='ic'>👤</span>Dados pessoais</div>" +
       "<div class='fav' data-ir='Perfil' data-abrir='dPlanos'><span class='ic'>📄</span>Planos e serviços</div>" +
       "</div>" +
+      "<div class='secTit'>Minha evolução</div>" +
+      "<div class='cardx'>" +
+      "<div class='gamerow'><div class='gnum'>" + sessoesMes + "<span>treinos no mês</span></div>" +
+      "<div class='gnum'>" + totalCk + "<span>no total</span></div>" +
+      "<div class='gnum'>" + sequencia + "<span>semana(s) seguidas</span></div></div>" +
+      (conquistadas.length ? "<div class='medals'>" + conquistadas.map(function (m) {
+        return "<span class='medal'>" + m[1] + "<small>" + m[2] + "</small></span>";
+      }).join("") + "</div>" : "") +
+      (proxMedalha ? "<div style='font-size:12.5px;color:var(--txt2);padding-bottom:10px;'>Faltam <b>" +
+        (proxMedalha[0] - totalCk) + "</b> treinos para " + proxMedalha[1] + " <b>" + proxMedalha[2] + "</b>!</div>" : "") +
+      "<button class='btnx' id='btnShare' data-share=\"" + esc(shareTxt) + "\" style='display:block;width:100%;text-align:center;border:none;cursor:pointer;font-family:inherit;'>📣 Compartilhar minha evolução</button>" +
+      "</div>" +
+      (top10.length ? "<div class='secTit'>Ranking do mês 🏆</div><div class='cardx'>" +
+        top10.map(function (r2, i2) {
+          var pos2 = i2 + 1;
+          var ico2 = pos2 === 1 ? "🥇" : pos2 === 2 ? "🥈" : pos2 === 3 ? "🥉" : pos2 + "º";
+          return "<div class='rk" + (r2.id === a.id ? " eu" : "") + "'><span class='pos'>" + ico2 + "</span>" +
+            "<span style='flex:1'>" + esc(r2.nome) + (r2.id === a.id ? " (você)" : "") + "</span><b>" + r2.n + "</b></div>";
+        }).join("") +
+        (minhaPos > 10 ? "<div class='rk eu'><span class='pos'>" + minhaPos + "º</span><span style='flex:1'>" +
+          esc(primeiro) + " (você)</span><b>" + sessoesMes + "</b></div>" : "") +
+        "</div>" : "") +
       "<div class='secTit'>Programa de indicação</div>" +
       "<div class='cardx linha'><span style='flex:1;font-weight:600;'>👤 Convide seus amigos</span>" +
       "<a class='btnx' href='https://wa.me/?text=" + encodeURIComponent(convite) + "' target='_blank' rel='noopener'>Convidar</a></div>" +
@@ -451,13 +527,15 @@
       "<button data-pg='Perfil'><span class='ic'>👤</span>Perfil</button>" +
       "</nav>" +
 
-      "<script>var AULAS=" + JSON.stringify(aulas) + ";" +
+      "<script>var AULAS=" + JSON.stringify(aulas) + ",LOT=" + JSON.stringify(lot) + ";" +
       "function vai(pg){['Inicio','Timeline','Wod','Grade','Perfil'].forEach(function(p){document.getElementById('pg'+p).style.display=p===pg?'':'none';});" +
       "document.querySelectorAll('nav button').forEach(function(x){x.classList.toggle('on',x.dataset.pg===pg);});window.scrollTo(0,0);}" +
       "document.querySelector('nav').addEventListener('click',function(e){var b=e.target.closest('button');if(b)vai(b.dataset.pg);});" +
       "document.querySelectorAll('[data-ir]').forEach(function(el){el.addEventListener('click',function(){vai(el.dataset.ir);" +
       "if(el.dataset.abrir){var d=document.getElementById(el.dataset.abrir);if(d){d.open=true;d.scrollIntoView();}}" +
       "if(el.hasAttribute('data-wodhist')){document.querySelectorAll('#pgWod .wodtabs button')[1].click();}});});" +
+      "var bs=document.getElementById('btnShare');if(bs)bs.addEventListener('click',function(){var t=bs.getAttribute('data-share')||'';" +
+      "if(navigator.share){navigator.share({text:t}).catch(function(){});}else{window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');}});" +
       "var fc=document.querySelector('[data-convidar]');if(fc)fc.addEventListener('click',function(){window.open('https://wa.me/?text=" + encodeURIComponent(convite).replace(/'/g, "%27") + "','_blank');});" +
       "document.querySelectorAll('#pgWod .wodtabs button').forEach(function(b,i){b.addEventListener('click',function(){" +
       "document.querySelectorAll('#pgWod .wodtabs button').forEach(function(x){x.classList.toggle('on',x===b);});" +
@@ -466,11 +544,13 @@
       "var semana=[];for(var i=0;i<7;i++){var d=new Date(hoje);d.setDate(d.getDate()-hoje.getDay()+i);semana.push(d);}" +
       "function pintaChips(){chips.innerHTML=semana.map(function(d,i){return \"<button class='\"+(i===sel?'on':'')+\"' data-i='\"+i+\"'>\"+['D','S','T','Q','Q','S','S'][i]+\"<span class='num'>\"+d.getDate()+\"</span></button>\";}).join('');}" +
       "function pintaAulas(){var doDia=AULAS.filter(function(a){return (a.d||[]).indexOf(sel)>=0;}).sort(function(x,y){return x.i<y.i?-1:1;});" +
+      "var dI=semana[sel];var isoDia=dI.getFullYear()+'-'+('0'+(dI.getMonth()+1)).slice(-2)+'-'+('0'+dI.getDate()).slice(-2);" +
       "document.getElementById('aulasDia').innerHTML=doDia.length?doDia.map(function(a){" +
       "var fim='';if(a.i){var p=a.i.split(':');var t=(+p[0])*60+(+p[1])+(a.m||60);fim=('0'+Math.floor(t/60)%24).slice(-2)+':'+('0'+t%60).slice(-2);}" +
+      "var ocup=LOT[a.id+'|'+isoDia]||0;var lotada=a.v>0&&ocup>=a.v;" +
       "return \"<div class='aula'><div class='l1'><span><span class='dot' style='background:\"+a.c+\"'></span>\"+a.n+\"</span><span class='vg'>\"+a.i+(fim?' - '+fim:'')+\"</span></div>\"+" +
-      "\"<div class='sub'>\"+(a.p?a.p:'')+(a.v?' · 👥 até '+a.v+' vagas':'')+(a.s?'<br>📍 '+a.s:'')+\"</div>\"+" +
-      (temNuvem ? "\"<div style='margin-top:10px;text-align:right;'><button class='btnx' style='padding:8px 18px;font-size:13px' data-ag='\"+a.id+\"' data-nm='\"+a.n+\"'>Agendar</button></div>\"+" : "") +
+      "\"<div class='sub'>\"+(a.p?a.p:'')+(a.v?' · 👥 '+ocup+'/'+a.v+(lotada?' — LOTADA':'')+' vagas':'')+(a.s?'<br>📍 '+a.s:'')+\"</div>\"+" +
+      (temNuvem ? "\"<div style='margin-top:10px;text-align:right;'><button class='btnx' style='padding:8px 18px;font-size:13px\"+(lotada?';background:#d97706':'')+\"' data-ag='\"+a.id+\"' data-nm='\"+a.n+\"' data-esp='\"+(lotada?1:0)+\"'>\"+(lotada?'🕗 Lista de espera':'Agendar')+\"</button></div>\"+" : "") +
       "\"</div>\";}).join('')" +
       ":\"<div class='vz' style='padding:30px 0;'>Sem aulas na grade neste dia.</div>\";}" +
       "chips.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;sel=+b.dataset.i;pintaChips();pintaAulas();});" +
@@ -486,16 +566,23 @@
         "document.getElementById('aulasDia').addEventListener('click',function(e){var b=e.target.closest('[data-ag]');if(!b)return;" +
         "var d=semana[sel];var iso=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);" +
         "b.disabled=true;b.textContent='⏳…';" +
-        "rpc('app_aluno_agenda',{t:TOKEN,p_aula_id:b.dataset.ag,p_aula_nome:b.dataset.nm,p_data:iso,p_nome:NOME}).then(function(r){" +
-        "if(r&&r.ok){b.textContent='✅ Agendado';}else if(r&&r.erro==='ja_agendado'){b.textContent='Já agendado';}" +
+        "var fn=b.dataset.esp==='1'?'app_aluno_espera':'app_aluno_agenda';" +
+        "rpc(fn,{t:TOKEN,p_aula_id:b.dataset.ag,p_aula_nome:b.dataset.nm,p_data:iso,p_nome:NOME}).then(function(r){" +
+        "if(r&&r.ok){b.textContent=r.espera?'🕗 Na fila!':'✅ Agendado';}else if(r&&r.erro==='ja_agendado'){b.textContent='Já agendado';}" +
         "else{b.textContent='Tentar de novo';b.disabled=false;}});});" +
         "window.minhaAgenda=function(){var el=document.getElementById('minhaLista');" +
         "rpc('app_aluno_agendamentos',{t:TOKEN}).then(function(l){if(!l||!l.length){el.innerHTML=\"<div class='vz' style='padding:26px 0;'>Nenhum agendamento ainda — escolha uma aula em Horários. 😉</div>\";return;}" +
-        "el.innerHTML=l.map(function(g){var st2=g.status==='confirmado'?'✅ confirmado':g.status==='pendente'?'⏳ aguardando recepção':'🚫 cancelado';" +
+        "el.innerHTML=l.map(function(g){var st2=g.status==='confirmado'?'✅ confirmado':g.status==='pendente'?'⏳ aguardando recepção':g.status==='espera'?'🕗 lista de espera':'🚫 cancelado';" +
         "var pd=g.data?String(g.data).split('-'):[];var dd=pd.length===3?pd[2]+'/'+pd[1]:g.data;" +
         "return \"<div class='aula'><div class='l1'><span>\"+g.aula+\"</span><span class='vg'>\"+dd+\"</span></div><div class='sub'>\"+st2+\"</div>\"+" +
-        "(g.status!=='cancelado'?\"<div style='margin-top:8px;text-align:right;'><button class='btnx' style='background:#57534e;padding:7px 16px;font-size:12.5px' data-cx='\"+g.id+\"'>Cancelar</button></div>\":'')+\"</div>\";}).join('');});};" +
-        "document.getElementById('minhaLista').addEventListener('click',function(e){var b=e.target.closest('[data-cx]');if(!b)return;b.disabled=true;" +
+        "(g.status!=='cancelado'?\"<div style='margin-top:8px;text-align:right;'><button class='btnx' style='background:#0369a1;padding:7px 12px;font-size:12.5px;margin-right:6px' data-ics='\"+g.aula+'|'+g.data+\"' title='Adicionar ao calendário'>📆</button><button class='btnx' style='background:#57534e;padding:7px 16px;font-size:12.5px' data-cx='\"+g.id+\"'>Cancelar</button></div>\":'')+\"</div>\";}).join('');});};" +
+        "document.getElementById('minhaLista').addEventListener('click',function(e){" +
+        "var bi=e.target.closest('[data-ics]');if(bi){var pi=bi.dataset.ics.split('|');var au=AULAS.filter(function(x){return x.n===pi[0];})[0];" +
+        "var hi=(au&&au.i)||'08:00';var hm=hi.split(':');var t0=(+hm[0])*60+(+hm[1]);var t1=t0+((au&&au.m)||60);" +
+        "function hh(t){return ('0'+Math.floor(t/60)%24).slice(-2)+('0'+t%60).slice(-2);}var dt=String(pi[1]).replace(/-/g,'');" +
+        "var ics='BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nBEGIN:VEVENT\\r\\nUID:'+dt+'-'+Math.random().toString(36).slice(2)+'@torque\\r\\nDTSTART:'+dt+'T'+hh(t0)+'00\\r\\nDTEND:'+dt+'T'+hh(t1)+'00\\r\\nSUMMARY:'+pi[0]+'\\r\\nEND:VEVENT\\r\\nEND:VCALENDAR';" +
+        "var a2=document.createElement('a');a2.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);a2.download='aula.ics';a2.click();return;}" +
+        "var b=e.target.closest('[data-cx]');if(!b)return;b.disabled=true;" +
         "rpc('app_aluno_cancela',{t:TOKEN,p_id:b.dataset.cx}).then(function(){minhaAgenda();});});"
       :
         "window.minhaAgenda=function(){document.getElementById('minhaLista').innerHTML=\"<div class='vz' style='padding:26px 0;'>Agendamento disponível quando a academia liga a nuvem. 😉</div>\";};"

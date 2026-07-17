@@ -323,3 +323,76 @@ create policy "chat_config_membros" on public.chat_config
 -- Idempotente: pode rodar de novo mesmo se o bloco acima já foi rodado antes.
 alter table public.chat_config    add column if not exists bot jsonb;
 alter table public.chat_conversas add column if not exists bot_estado text not null default '';
+
+-- ==================== LISTA DE ESPERA NAS AULAS ====================
+-- Aula lotada: o aluno entra na fila pelo app; quando alguém cancela, a
+-- Grade promove o primeiro da fila. Bloco idempotente.
+
+create or replace function public.app_aluno_espera(t text, p_aula_id text, p_aula_nome text, p_data date, p_nome text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_id uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if exists (select 1 from app_agendamentos
+             where token = t and aula_id = p_aula_id and data = p_data
+               and status in ('pendente', 'confirmado', 'espera')) then
+    return json_build_object('erro', 'ja_agendado');
+  end if;
+  insert into app_agendamentos (academia_id, token, aluno, aula_id, aula_nome, data, status)
+    values (v_acad, t, coalesce(p_nome, ''), p_aula_id, coalesce(p_aula_nome, ''), p_data, 'espera')
+    returning id into v_id;
+  return json_build_object('ok', true, 'id', v_id, 'espera', true);
+end;
+$$;
+
+-- agendar também não pode duplicar quem já está na fila de espera
+create or replace function public.app_aluno_agenda(t text, p_aula_id text, p_aula_nome text, p_data date, p_nome text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_id uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if exists (select 1 from app_agendamentos
+             where token = t and aula_id = p_aula_id and data = p_data
+               and status in ('pendente', 'confirmado', 'espera')) then
+    return json_build_object('erro', 'ja_agendado');
+  end if;
+  insert into app_agendamentos (academia_id, token, aluno, aula_id, aula_nome, data)
+    values (v_acad, t, coalesce(p_nome, ''), p_aula_id, coalesce(p_aula_nome, ''), p_data)
+    returning id into v_id;
+  return json_build_object('ok', true, 'id', v_id);
+end;
+$$;
+
+-- o aluno também pode sair da lista de espera
+create or replace function public.app_aluno_cancela(t text, p_id uuid)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  update app_agendamentos set status = 'cancelado'
+    where id = p_id and token = t and status in ('pendente', 'confirmado', 'espera');
+  if not found then
+    return json_build_object('erro', 'nao_encontrado');
+  end if;
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.app_aluno_espera(text, text, text, date, text) to anon, authenticated;
