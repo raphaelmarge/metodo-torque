@@ -71,6 +71,14 @@
       <div class="campo"><label>WhatsApp</label><input id="fZap" inputmode="numeric" placeholder="31999998888"></div>
       <div class="campo"><label>E-mail</label><input id="fEmail" type="email"></div>
     </div>
+    <div class="campo"><label>Vínculo</label>
+      <select id="fTipo">
+        <option value="">— definir depois na ficha —</option>
+        <option>CLT</option><option>PJ</option><option>Estágio</option>
+        <option>Horista</option><option>Diarista</option>
+      </select>
+      <small class="muted" id="fTipoNota" style="display:block;margin-top:4px;"></small>
+    </div>
     <div class="linha-flex" style="justify-content: space-between;">
       <button type="button" class="btn perigo mini" id="fDesativar" hidden>Desativar</button>
       <div class="linha-flex">
@@ -103,6 +111,12 @@
   function save(st) { S.write("equipe", st); render(); }
 
   var busca = "", filtroCargo = "", verInativos = false, editId = null;
+  function ehHorista(c) { return /horista|diarista/i.test(c.tipoContrato || ""); }
+  function tagVinculo(c) {
+    if (ehHorista(c)) return '<span class="tag" style="background:rgba(245,158,11,.15);color:#b45309;" title="Sem salário fixo — recebe por hora batida no ponto">⏱ HORISTA</span> ';
+    if (c.tipoContrato) return '<span class="tag neutro" title="Recebe salário fixo mensal (' + esc(c.tipoContrato) + ')">💼 SALÁRIO FIXO</span> ';
+    return "";
+  }
 
   function render() {
     var st = load();
@@ -139,6 +153,7 @@
         '<span class="avatar" style="background:' + cor + '">' + esc(ini) + "</span>" +
         '<div class="quem"><strong>' + esc(c.nome) + '</strong><div class="sub">' + esc(c.cargo) +
         (c.admissao ? " · desde " + S.fmtData(c.admissao) : "") + "</div></div>" +
+        tagVinculo(c) +
         '<span class="tag ' + (perfis[c.permissaoId] ? "roxo" : "neutro") + '" title="permissão (defina na ficha)">' + esc(perfis[c.permissaoId] || "Sem permissão") + "</span> " +
         (c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') +
         (c.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '">💬</a>' : "") +
@@ -146,21 +161,53 @@
         ' <button class="btn sec mini" data-edit="' + c.id + '">✎</button></div>';
     }).join("") : '<div class="vazio">Ninguém aqui ainda — cadastre a equipe.</div>';
 
-    // relatório de salários (tela "Funcionários" do menu Gerencial do EVO)
+    // relatório de salários — mensalistas (salário fixo) separados dos horistas (horas × valor hora)
     var comSalario = st.colaboradores.filter(function (c) { return verInativos || c.ativo !== false; })
       .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
-    var totalFolha = 0;
-    $("salarios").innerHTML = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
-      "<tr><th style='text-align:left; padding: 6px 8px;'>NOME</th><th style='text-align:left;'>CARGO</th><th style='text-align:left;'>TIPO</th><th style='text-align:right;'>SALÁRIO MENSAL</th><th style='text-align:right;'>VALOR HORA</th><th style='text-align:left; padding-left: 12px;'>STATUS</th></tr>" +
-      comSalario.map(function (c) {
-        totalFolha += c.ativo === false ? 0 : (+c.salario || 0);
+    var mesAtual = S.todayISO().slice(0, 7);
+    function horasDoMes(nome) {
+      var pts = (st.ponto || []).filter(function (pt) { return pt.nome === nome && (pt.quando || "").slice(0, 7) === mesAtual; })
+        .sort(function (a, b) { return a.quando < b.quando ? -1 : 1; });
+      var h = 0, aberta = null;
+      pts.forEach(function (pt) {
+        if (pt.tipo === "entrada") aberta = pt.quando;
+        else if (pt.tipo === "saida" && aberta && aberta.slice(0, 10) === pt.quando.slice(0, 10)) {
+          h += (new Date(pt.quando) - new Date(aberta)) / 36e5;
+          aberta = null;
+        }
+      });
+      return Math.round(h * 100) / 100;
+    }
+    var mensalistas = comSalario.filter(function (c) { return !ehHorista(c); });
+    var horistas = comSalario.filter(ehHorista);
+    var totalFixo = 0, totalHoristas = 0;
+    function stTag(c) { return c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>'; }
+    var html = "<h3 style='margin:4px 0 6px;font-size:13px;'>💼 Salário fixo (mensalistas)</h3>" +
+      '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
+      "<tr><th style='text-align:left; padding: 6px 8px;'>NOME</th><th style='text-align:left;'>CARGO</th><th style='text-align:left;'>TIPO</th><th style='text-align:right;'>SALÁRIO MENSAL</th><th style='text-align:left; padding-left: 12px;'>STATUS</th></tr>" +
+      (mensalistas.length ? mensalistas.map(function (c) {
+        totalFixo += c.ativo === false ? 0 : (+c.salario || 0);
         return "<tr style='border-top: 1px solid var(--linha);'><td style='padding: 6px 8px;'><strong>" + esc(c.nome) + "</strong></td><td>" + esc(c.cargo || "—") +
           "</td><td>" + esc(c.tipoContrato || "—") + "</td><td style='text-align:right;'>" + (+c.salario ? S.fmtBRL(+c.salario) : "—") +
-          "</td><td style='text-align:right;'>" + (+c.valorHora ? S.fmtBRL(+c.valorHora) : "—") + "</td><td style='padding-left: 12px;'>" +
-          (c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') + "</td></tr>";
-      }).join("") +
-      "<tr style='border-top: 2px solid var(--escuro);'><td style='padding: 8px;' colspan='3'><strong>FOLHA MENSAL (ativos)</strong></td><td style='text-align:right;'><strong>" + S.fmtBRL(totalFolha) + "</strong></td><td></td><td></td></tr></table>" +
-      '<p class="muted" style="font-size: 12px; margin-top: 8px;">Salário e valor-hora vêm da aba Contratação da ficha de cada colaborador(a). O botão "Lançar na folha" da ficha manda para Contas a Pagar.</p>';
+          "</td><td style='padding-left: 12px;'>" + stTag(c) + "</td></tr>";
+      }).join("") : "<tr><td colspan='5' style='padding:8px;' class='muted'>Nenhum mensalista.</td></tr>") +
+      "<tr style='border-top: 2px solid var(--escuro);'><td style='padding: 8px;' colspan='3'><strong>FOLHA FIXA (ativos)</strong></td><td style='text-align:right;'><strong>" + S.fmtBRL(totalFixo) + "</strong></td><td></td></tr></table>" +
+      "<h3 style='margin:16px 0 6px;font-size:13px;'>⏱ Horistas e diaristas — sem salário fixo (mês " + mesAtual.split("-").reverse().join("/") + ")</h3>" +
+      '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
+      "<tr><th style='text-align:left; padding: 6px 8px;'>NOME</th><th style='text-align:left;'>CARGO</th><th style='text-align:left;'>TIPO</th><th style='text-align:right;'>VALOR HORA</th><th style='text-align:right;'>HORAS NO MÊS</th><th style='text-align:right;'>A PAGAR NO MÊS</th><th style='text-align:left; padding-left: 12px;'>STATUS</th></tr>" +
+      (horistas.length ? horistas.map(function (c) {
+        var h = horasDoMes(c.nome);
+        var vlr = Math.round(h * (+c.valorHora || 0) * 100) / 100;
+        totalHoristas += c.ativo === false ? 0 : vlr;
+        return "<tr style='border-top: 1px solid var(--linha);'><td style='padding: 6px 8px;'><strong>" + esc(c.nome) + "</strong></td><td>" + esc(c.cargo || "—") +
+          "</td><td>" + esc(c.tipoContrato || "—") + "</td><td style='text-align:right;'>" + (+c.valorHora ? S.fmtBRL(+c.valorHora) : "<span style='color:#b45309;'>defina na ficha!</span>") +
+          "</td><td style='text-align:right;'>" + String(h).replace(".", ",") + "h</td><td style='text-align:right;'><strong>" + S.fmtBRL(vlr) + "</strong></td>" +
+          "<td style='padding-left: 12px;'>" + stTag(c) + "</td></tr>";
+      }).join("") : "<tr><td colspan='7' style='padding:8px;' class='muted'>Nenhum horista — marque o vínculo Horista/Diarista na ficha de quem recebe por hora.</td></tr>") +
+      "<tr style='border-top: 2px solid var(--escuro);'><td style='padding: 8px;' colspan='5'><strong>HORISTAS NO MÊS (ativos)</strong></td><td style='text-align:right;'><strong>" + S.fmtBRL(totalHoristas) + "</strong></td><td></td></tr></table>" +
+      "<div style='margin-top:10px;padding:10px 12px;background:var(--fundo);border-radius:8px;font-size:13.5px;'><strong>FOLHA TOTAL DO MÊS: " + S.fmtBRL(totalFixo + totalHoristas) + "</strong> <span class='muted'>(fixa + horistas até agora)</span></div>" +
+      '<p class="muted" style="font-size: 12px; margin-top: 8px;">Horista recebe pelas horas batidas no <b>Ponto do dia</b> (entrada 🟢 e saída 🔴) × valor hora da ficha. Salário e valor-hora vêm da aba Contratação; o botão "Lançar na folha" da ficha manda o valor certo para Contas a Pagar.</p>';
+    $("salarios").innerHTML = html;
   }
 
   $("busca").addEventListener("input", function () { busca = this.value; render(); });
@@ -178,9 +225,18 @@
     $("fAdmissao").value = c ? (c.admissao || "") : S.todayISO();
     $("fZap").value = c ? (c.zap || "") : "";
     $("fEmail").value = c ? (c.email || "") : "";
+    $("fTipo").value = c ? (c.tipoContrato || "") : "";
+    atualizaNotaTipo();
     $("fDesativar").hidden = !c || c.ativo === false;
     $("dlg").showModal();
   }
+  function atualizaNotaTipo() {
+    var v = $("fTipo").value;
+    $("fTipoNota").textContent = /horista|diarista/i.test(v)
+      ? "⏱ Sem salário fixo — recebe por hora batida no ponto (defina o valor hora na ficha)."
+      : v ? "💼 Salário fixo mensal (defina o valor na ficha)." : "";
+  }
+  $("fTipo").addEventListener("change", atualizaNotaTipo);
   $("btnNovo").onclick = function () { abre(null); };
   $("lista").addEventListener("click", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-edit");
@@ -202,6 +258,7 @@
     var dados = {
       nome: $("fNome").value.trim(), cargo: $("fCargoSel").value,
       admissao: $("fAdmissao").value, zap: $("fZap").value.replace(/\D/g, ""), email: $("fEmail").value.trim(),
+      tipoContrato: $("fTipo").value,
     };
     if (editId) {
       var c = st.colaboradores.find(function (x) { return x.id === editId; });
