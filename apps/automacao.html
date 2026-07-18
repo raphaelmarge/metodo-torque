@@ -38,6 +38,17 @@
   </div>
   <div id="painel"></div>
   <div class="card">
+    <h2>🛤 Jornada do aluno novo</h2>
+    <p class="mut" style="margin:4px 0 10px;">A sequência automática dos primeiros dias — o segredo de retenção dos sistemas de elite: dia 1 boas-vindas, dia 3 como foi o treino, dia 7 convite às coletivas, dia 30 pedir avaliação. Edite os textos e os dias; cada aluno recebe cada etapa <b>uma única vez</b>, no dia certo (com 2 dias de tolerância se o sistema ficar fechado).</p>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:700;margin-bottom:10px;">
+      <input type="checkbox" id="jornadaAtiva"> Ligar a jornada para alunos novos
+    </label>
+    <div id="jornadaEtapas"></div>
+    <button class="btn sec mini" id="jornadaAdd" style="margin-top:8px;">+ etapa</button>
+    <span class="mut" id="jornadaStatus" style="margin-left:10px;font-size:12.5px;"></span>
+  </div>
+
+  <div class="card">
     <h2>📊 Resumo diário do dono</h2>
     <p class="mut" style="margin:4px 0 10px;">Todo dia, ao abrir o sistema, o dono recebe no WhatsApp o resumo de ontem: check-ins, vendas, novos alunos, cancelamentos e atrasos. Um envio por dia (com o WhatsApp oficial configurado em Integrações, ou modo demonstração).</p>
     <div class="linha-flex" style="gap:12px;align-items:flex-end;flex-wrap:wrap;">
@@ -108,6 +119,7 @@
     exame_dermato: "🔬 Exame dermatológico vencido (1 ano)",
     exame_nutricional: "🥗 Avaliação nutricional vencida (1 ano)",
     avaliacao_google: "⭐ Convite para avaliar no Google (20+ check-ins, uma vez só)",
+    jornada: "🛤 Jornada do aluno novo (sequência de boas-vindas)",
     venc_mensalidade: "💜 Mensalidade vence em até 2 dias (lembrete com link de pagamento)",
   };
   var TPL_PADRAO = [
@@ -139,6 +151,15 @@
     }
     if (!st.regras.some(function (r) { return r.gatilho === "avaliacao_google"; })) {
       st.regras.push({ id: "rg4", nome: "Avaliação no Google (edite o link no template!)", gatilho: "avaliacao_google", templateId: "tp5", ativo: false });
+      mudouSeed = true;
+    }
+    if (!st.jornada) {
+      st.jornada = { ativa: false, etapas: [
+        { dia: 1, texto: "Oi {nome}! 🎉 Seja muito bem-vindo(a) à TORQUE FIT! Qualquer dúvida sobre horários ou treinos, é só responder aqui. Bora começar com tudo! 💪" },
+        { dia: 3, texto: "E aí {nome}, como foi o primeiro treino? 😄 Se sentiu falta de alguma coisa ou quiser ajustar a ficha, me fala que a gente resolve!" },
+        { dia: 7, texto: "{nome}, primeira semana completa! 👏 Já conhece nossas aulas coletivas? Dá uma olhada na grade pelo app e agenda uma — é a melhor forma de fazer amigos por aqui. 💜" },
+        { dia: 30, texto: "{nome}, um mês de TORQUE FIT! 🥳 Que orgulho de ter você com a gente. Topa deixar uma avaliação no Google? Ajuda demais: COLE-AQUI-O-LINK" },
+      ] };
       mudouSeed = true;
     }
     if (mudouSeed) S.write("automacao", st);
@@ -299,6 +320,33 @@
     var hoje = S.todayISO();
     var feitos = st.historico[hoje] || {};
     var lista = [];
+    // jornada do aluno novo: etapas por dias desde a matrícula (janela de 2 dias)
+    if (st.jornada && st.jornada.ativa) {
+      var jaJornada = {};
+      Object.keys(st.historico).forEach(function (dia) {
+        Object.keys(st.historico[dia] || {}).forEach(function (ch) {
+          if (ch.indexOf("jn|") === 0) jaJornada[ch] = true;
+        });
+      });
+      var stA2 = S.read("alunos", { alunos: [] });
+      stA2.alunos.filter(function (a) { return a.status !== "inativo" && a.zap; }).forEach(function (a) {
+        var cs = (a.contratos || []).filter(function (c) { return c.status === "ativo"; })
+          .sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+        if (!cs.length) return;
+        var diasM = diasDesde(cs[0].inicio || hoje);
+        (st.jornada.etapas || []).forEach(function (et, i) {
+          if (diasM < +et.dia || diasM > +et.dia + 2) return; // janela de 2 dias de tolerância
+          var ch = "jn|" + a.id + "|" + i;
+          if (jaJornada[ch] && !feitos[ch]) return; // já foi em outro dia
+          lista.push({
+            chave: ch, regra: { id: "jornada", gatilho: "jornada", nome: "Jornada dia " + et.dia },
+            alvo: { a: a, dias: diasM, valor: 0 },
+            msg: renderiza(et.texto, { a: a, dias: diasM, valor: 0 }),
+            enviado: !!feitos[ch],
+          });
+        });
+      });
+    }
     st.regras.filter(function (r) { return r.ativo !== false; }).forEach(function (r) {
       var tpl = st.templates.find(function (t) { return t.id === r.templateId; });
       if (!tpl) return;
@@ -442,6 +490,54 @@
   }
   setTimeout(geraPixPendentes, 2500);
   window.__geraPix = geraPixPendentes; // testes
+
+  // ---------- editor da jornada ----------
+  function renderJornada() {
+    var st = load();
+    var j = st.jornada || { ativa: false, etapas: [] };
+    $("jornadaAtiva").checked = !!j.ativa;
+    $("jornadaEtapas").innerHTML = (j.etapas || []).map(function (et, i) {
+      return '<div class="linha-flex" style="gap:8px;align-items:flex-start;margin-top:6px;flex-wrap:wrap;" data-et="' + i + '">' +
+        '<span style="font-weight:800;padding-top:8px;">Dia</span>' +
+        '<input type="number" min="0" value="' + (+et.dia || 0) + '" data-jdia="' + i + '" style="width:64px;">' +
+        '<textarea data-jtexto="' + i + '" rows="2" style="flex:1;min-width:260px;border:1px solid var(--linha);padding:8px;font-family:inherit;font-size:13px;">' + et.texto.replace(/</g, "&lt;") + "</textarea>" +
+        '<button class="btn perigo mini" data-jdel="' + i + '">✕</button></div>';
+    }).join("");
+  }
+  function salvaJornada() {
+    var st = load();
+    st.jornada = st.jornada || { etapas: [] };
+    st.jornada.ativa = $("jornadaAtiva").checked;
+    document.querySelectorAll("[data-jdia]").forEach(function (inp) {
+      var i = +inp.dataset.jdia;
+      if (st.jornada.etapas[i]) st.jornada.etapas[i].dia = +inp.value || 0;
+    });
+    document.querySelectorAll("[data-jtexto]").forEach(function (tx) {
+      var i = +tx.dataset.jtexto;
+      if (st.jornada.etapas[i]) st.jornada.etapas[i].texto = tx.value;
+    });
+    st.jornada.etapas.sort(function (a, b) { return a.dia - b.dia; });
+    S.write("automacao", st);
+    $("jornadaStatus").textContent = "✅ Salvo.";
+  }
+  $("jornadaAtiva").addEventListener("change", salvaJornada);
+  $("jornadaEtapas").addEventListener("change", salvaJornada);
+  $("jornadaEtapas").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-jdel]");
+    if (!b) return;
+    var st = load();
+    st.jornada.etapas.splice(+b.dataset.jdel, 1);
+    S.write("automacao", st);
+    renderJornada();
+  });
+  $("jornadaAdd").addEventListener("click", function () {
+    var st = load();
+    (st.jornada = st.jornada || { ativa: false, etapas: [] }).etapas.push({ dia: 14, texto: "Oi {nome}! " });
+    S.write("automacao", st);
+    renderJornada();
+  });
+  renderJornada();
+  window.__jornada = renderJornada; // testes
 
   // ---------- render ----------
   var aba = "disparos";
