@@ -280,5 +280,81 @@
   render();
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var hoje = S.todayISO();
+
+  function fimContrato(c) {
+    var f = new Date((c.inicio || "2000-01-01") + "T12:00");
+    f.setMonth(f.getMonth() + (c.meses || 1));
+    return S.todayISO(f);
+  }
+
+  // safra = mês do PRIMEIRO contrato do aluno; ativo no mês M se algum
+  // contrato cobre aquele mês (inicio <= fim do mês e término > início do mês)
+  window.calculaSafras = function () {
+    var alunos = S.read("alunos", { alunos: [] }).alunos;
+    var safras = {};
+    alunos.forEach(function (a) {
+      var cs = (a.contratos || []).slice().sort(function (x, y) { return (x.inicio || "") < (y.inicio || "") ? -1 : 1; });
+      if (!cs.length || !cs[0].inicio) return;
+      var safra = cs[0].inicio.slice(0, 7);
+      (safras[safra] = safras[safra] || []).push(a);
+    });
+    var meses = [];
+    for (var i = 6; i >= 1; i--) {
+      var d = new Date(hoje + "T12:00");
+      d.setMonth(d.getMonth() - i + 1);
+      meses.push(S.todayISO(d).slice(0, 7));
+    }
+    var linhas = [];
+    meses.forEach(function (safra) {
+      var grupo = safras[safra] || [];
+      if (!grupo.length) { linhas.push({ safra: safra, n: 0, ret: [] }); return; }
+      var ret = [];
+      for (var k = 0; k < 6; k++) {
+        var alvoD = new Date(safra + "-15T12:00");
+        alvoD.setMonth(alvoD.getMonth() + k);
+        var alvo = S.todayISO(alvoD).slice(0, 7);
+        if (alvo > hoje.slice(0, 7)) { ret.push(null); continue; }
+        var vivos = grupo.filter(function (a) {
+          return (a.contratos || []).some(function (c) {
+            return (c.inicio || "").slice(0, 7) <= alvo && fimContrato(c).slice(0, 7) >= alvo && c.status !== "cancelado";
+          });
+        }).length;
+        ret.push(Math.round(vivos * 100 / grupo.length));
+      }
+      linhas.push({ safra: safra, n: grupo.length, ret: ret });
+    });
+    return linhas;
+  };
+
+  function corDe(p) {
+    if (p == null) return "background:#f6f5f9;color:#bbb;";
+    if (p >= 85) return "background:rgba(22,163,74,.22);color:#14532d;";
+    if (p >= 65) return "background:rgba(22,163,74,.10);color:#166534;";
+    if (p >= 45) return "background:rgba(217,119,6,.14);color:#92400e;";
+    return "background:rgba(220,38,38,.14);color:#991b1b;";
+  }
+
+  var linhas = window.calculaSafras();
+  var card = document.createElement("div");
+  card.className = "card";
+  card.style.marginTop = "16px";
+  card.innerHTML = "<h2>📊 Retenção por safra (cohort)</h2>" +
+    "<p class='muted' style='margin:4px 0 10px;'>Dos alunos que entraram em cada mês, quantos % seguiam com contrato ativo nos meses seguintes. Verde forte = retenção de elite; vermelho = a safra vazou — investigue o que aconteceu naquele mês (professor? preço? onboarding?).</p>" +
+    "<div style='overflow-x:auto;'><table class='tabela'><thead><tr><th>Safra</th><th>Alunos</th>" +
+    "<th>Mês 0</th><th>+1</th><th>+2</th><th>+3</th><th>+4</th><th>+5</th></tr></thead><tbody>" +
+    linhas.map(function (l) {
+      return "<tr><td><b>" + l.safra.split("-").reverse().join("/") + "</b></td><td>" + l.n + "</td>" +
+        l.ret.map(function (p) {
+          return "<td style='text-align:center;font-weight:800;" + corDe(p) + "'>" + (p == null ? "—" : p + "%") + "</td>";
+        }).join("") +
+        (l.ret.length ? "" : "<td colspan='6' class='muted'>sem alunos nesta safra</td>") + "</tr>";
+    }).join("") + "</tbody></table></div>";
+  document.querySelector("main").appendChild(card);
+})();
+</script>
 </body>
 </html>
