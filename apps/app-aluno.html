@@ -585,7 +585,13 @@
         kv("Status", emDia ? "Ativo ✅" : "Com pendência ⚠") : "<div class='vz'>Sem plano ativo.</div>") + "</div></details>" +
       "<details id='dSessoes'><summary><span class='ic'>📆</span>Sessões e presenças</summary><div class='dcorpo'>" +
       kv("Presenças neste mês", sessoesMes + "x") +
-      kv("Total registrado", (a.checkins || []).length + " check-in(s)") + "</div></details>" +
+      kv("Total registrado", (a.checkins || []).length + " check-in(s)") +
+      (meusPacotes.length ? meusPacotes.map(function (pp) {
+        return "<div style='border:1px dashed var(--cor);border-radius:10px;padding:10px;margin-top:8px;font-size:13px;'>🎟 <b>Personal:</b> " +
+          pp.saldo + " de " + pp.qtd + " sessão(ões) restantes" +
+          (pp.validade ? " · válido até " + S.fmtData(pp.validade) : "") +
+          (pp.saldo <= 2 ? " — <b>renove com a equipe!</b>" : "") + "</div>";
+      }).join("") : "") + "</div></details>" +
       "<details id='dAval'><summary><span class='ic'>🩺</span>Avaliação física</summary><div class='dcorpo'>" +
       (av ? kv("Última", S.fmtData(av.data)) + (av.peso ? kv("Peso", av.peso + " kg") : "") +
         (av.gordura ? kv("% de gordura", av.gordura + "%") : "") + (proxAv ? kv("Próxima", S.fmtData(proxAv)) : "")

@@ -45,6 +45,19 @@
     </div>
     <div id="lista"></div>
   </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>🎟 Pacotes de sessões (saldo por aluno)</h2>
+    <p class="mut" style="margin:4px 0 12px;">Venda "10 sessões de personal", debite uma a cada sessão feita e acompanhe o saldo — quando restar pouco, é hora de renovar. O saldo aparece também no app do aluno depois de republicar.</p>
+    <div class="linha-flex" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="campo" style="margin:0;"><label>Aluno</label><input id="pcAluno" list="pcAlunos" placeholder="nome do aluno" style="width:220px;"><datalist id="pcAlunos"></datalist></div>
+      <div class="campo" style="margin:0;"><label>Sessões</label><input id="pcQtd" type="number" min="1" value="10" style="width:80px;"></div>
+      <div class="campo" style="margin:0;"><label>Valor total (R$)</label><input id="pcValor" type="number" min="0" step="0.01" style="width:110px;"></div>
+      <div class="campo" style="margin:0;"><label>Válido até</label><input id="pcValidade" type="date" style="width:150px;"></div>
+      <button class="btn" id="pcVender">Vender pacote</button>
+    </div>
+    <div id="pcLista" style="margin-top:14px;"></div>
+  </div>
 </main>
 
 <dialog id="dlg">
@@ -161,6 +174,81 @@
 
   $("busca").addEventListener("input", render);
   render();
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function loadP() {
+    var st = S.read("aulasPersonal", { itens: [] });
+    st.pacotes = st.pacotes || [];
+    return st;
+  }
+  $("pcAlunos").innerHTML = S.read("alunos", { alunos: [] }).alunos
+    .filter(function (a) { return a.status !== "inativo"; })
+    .map(function (a) { return "<option>" + esc(a.nome) + "</option>"; }).join("");
+
+  function renderPacotes() {
+    var st = loadP();
+    var hoje = S.todayISO();
+    var vivos = st.pacotes.slice().sort(function (x, y) { return (x.criado || "") < (y.criado || "") ? 1 : -1; });
+    $("pcLista").innerHTML = vivos.length ? vivos.map(function (p) {
+      var saldo = (+p.qtd || 0) - (p.sessoes || []).length;
+      var vencido = p.validade && p.validade < hoje;
+      var cor = vencido ? "#b91c1c" : saldo <= 2 ? "#b45309" : "#16a34a";
+      return '<div class="linha-flex" style="justify-content:space-between;border:1px solid var(--linha);background:#fff;padding:10px 14px;margin-top:-1px;flex-wrap:wrap;gap:8px;">' +
+        "<div><b>" + esc(p.aluno) + "</b> · " + p.qtd + " sessões" + (p.valor ? " · R$ " + (+p.valor).toLocaleString("pt-BR") : "") +
+        (p.validade ? " · até " + S.fmtData(p.validade) : "") +
+        '<br><span style="color:' + cor + ';font-weight:800;">' +
+        (vencido ? "⛔ VENCIDO" : "Saldo: " + saldo + " sessão(ões)" + (saldo <= 2 && saldo > 0 ? " — hora de renovar! 🔔" : saldo <= 0 ? " — ESGOTADO, venda o próximo!" : "")) +
+        "</span></div>" +
+        '<div class="linha-flex" style="gap:6px;">' +
+        (saldo > 0 && !vencido ? '<button class="btn mini" data-usa="' + p.id + '">− Usar 1 sessão</button>' : "") +
+        '<button class="btn sec mini" data-hist="' + p.id + '">📋</button>' +
+        '<button class="btn perigo mini" data-del="' + p.id + '">✕</button></div></div>';
+    }).join("") : '<p class="mut">Nenhum pacote vendido ainda.</p>';
+  }
+
+  $("pcVender").addEventListener("click", function () {
+    var nome = $("pcAluno").value.trim();
+    if (!nome) { alert("Escolha o aluno."); return; }
+    var st = loadP();
+    st.pacotes.push({
+      id: S.uid(), aluno: nome, qtd: +$("pcQtd").value || 10, valor: +$("pcValor").value || 0,
+      validade: $("pcValidade").value || "", sessoes: [], criado: S.todayISO(),
+    });
+    S.write("aulasPersonal", st);
+    $("pcAluno").value = ""; $("pcValor").value = "";
+    renderPacotes();
+  });
+
+  $("pcLista").addEventListener("click", function (e) {
+    var st = loadP();
+    var usa = e.target.closest("[data-usa]");
+    if (usa) {
+      var p = st.pacotes.find(function (x) { return x.id === usa.dataset.usa; });
+      if (p) { (p.sessoes = p.sessoes || []).push({ data: S.todayISO() }); S.write("aulasPersonal", st); renderPacotes(); }
+      return;
+    }
+    var hist = e.target.closest("[data-hist]");
+    if (hist) {
+      var p2 = st.pacotes.find(function (x) { return x.id === hist.dataset.hist; });
+      if (p2) alert(p2.aluno + " — sessões usadas:\n" + ((p2.sessoes || []).map(function (sx) { return "• " + S.fmtData(sx.data); }).join("\n") || "nenhuma ainda"));
+      return;
+    }
+    var del = e.target.closest("[data-del]");
+    if (del && confirm("Remover este pacote?")) {
+      st.pacotes = st.pacotes.filter(function (x) { return x.id !== del.dataset.del; });
+      S.write("aulasPersonal", st);
+      renderPacotes();
+    }
+  });
+
+  window.__pacotes = renderPacotes; // testes
+  renderPacotes();
 })();
 </script>
 </body>
