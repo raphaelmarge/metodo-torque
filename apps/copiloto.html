@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copiloto IA — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { background: #fff; border: 1px solid var(--linha); padding: 14px; }
+  .kpi .rot { font-size: 11.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
+  .kpi .val { font-size: 26px; font-weight: 800; margin-top: 2px; }
+  .kpi.alto .val { color: #dc2626; } .kpi.medio .val { color: #d97706; } .kpi.ok .val { color: #16a34a; }
+  .risco { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid var(--linha); padding: 12px 14px; }
+  .risco + .risco { margin-top: -1px; }
+  .score { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: #fff; flex: none; }
+  .score.alto { background: #dc2626; } .score.medio { background: #d97706; } .score.baixo { background: #16a34a; }
+  .risco .nome { font-weight: 800; font-size: 15px; }
+  .risco .motivos { font-size: 12.5px; color: #555; margin-top: 3px; line-height: 1.5; }
+  .risco .acoes { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .analise { background: #f6f2fd; border: 1px solid rgba(124,58,237,.35); padding: 16px 18px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+  .aviso-api { padding: 10px 14px; border: 1px solid rgba(217,119,6,.4); background: rgba(217,119,6,.06); color: var(--alerta); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GESTÃO</span>
+    <h1>Copiloto IA</h1>
+    </div>
+  </div>
+  <p>O radar de cancelamento dos sistemas de elite: quem está em risco de sair, por quê, e o que fazer — com análise do Claude sobre a sua base e a mensagem certa pronta para cada aluno.</p>
+</header>
+
+<main class="corpo">
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="linha-flex" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <h2 style="margin:0;">🧠 Análise do Claude</h2>
+      <button class="btn" id="btnAnalisar">Analisar minha base agora</button>
+    </div>
+    <p class="mut" style="margin:6px 0 0;">O Claude recebe os números (sem dados sensíveis além de primeiro nome e situação) e devolve a leitura da semana: o que atacar primeiro e como abordar cada aluno em risco. Requer a função <b>chat-envia</b> publicada e a <b>ANTHROPIC_API_KEY</b> configurada.</p>
+    <div class="analise" id="analise" style="margin-top:12px;" hidden></div>
+    <p class="mut" id="analiseInfo" style="margin-top:6px;"></p>
+  </div>
+
+  <h2 style="margin:22px 0 10px;font-size:15px;letter-spacing:.1em;color:var(--cinza);">ALUNOS EM RISCO (maior primeiro)</h2>
+  <div id="listaRisco"></div>
+
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var hoje = S.todayISO();
+  var mes = hoje.slice(0, 7);
+  var mesPassado = (function () { var d = new Date(hoje + "T12:00"); d.setMonth(d.getMonth() - 1); return S.todayISO(d).slice(0, 7); })();
+  var diaDoMes = +hoje.slice(8, 10);
+
+  function diasDesde(iso) { return Math.floor((new Date(hoje) - new Date(iso)) / 864e5); }
+
+  // ---------- o motor de risco (heurística transparente) ----------
+  function calculaRiscos() {
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var nps = S.read("nps", { respostas: [] }).respostas || [];
+    var saida = [];
+    stA.alunos.forEach(function (a) {
+      if (a.status === "inativo") return;
+      var contrato = (a.contratos || []).find(function (c) { return c.status === "ativo"; });
+      if (!contrato) return;
+      var pontos = 0, motivos = [];
+
+      // 1. sumiço
+      var ult = null;
+      (a.checkins || []).forEach(function (t) { var d = (t || "").slice(0, 10); if (!ult || d > ult) ult = d; });
+      var dias = ult ? diasDesde(ult) : diasDesde(contrato.inicio || hoje);
+      if (dias >= 14) { pontos += 40; motivos.push("😶 " + dias + " dias sem treinar"); }
+      else if (dias >= 7) { pontos += 20; motivos.push("😐 " + dias + " dias sem treinar"); }
+
+      // 2. frequência caindo (mês atual proporcional vs mês passado)
+      var freqAtual = (a.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === mes; }).length;
+      var freqPassada = (a.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === mesPassado; }).length;
+      var esperado = freqPassada * (diaDoMes / 30);
+      if (freqPassada >= 4 && freqAtual < esperado * 0.5) {
+        pontos += 20;
+        motivos.push("📉 frequência caiu (" + freqAtual + " este mês vs " + freqPassada + " no anterior)");
+      }
+
+      // 3. mensalidade atrasada
+      var atraso = 0, valorAtraso = 0;
+      stA.recebiveis.forEach(function (r) {
+        if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
+          var dAtr = diasDesde(r.vencimento);
+          if (dAtr > atraso) atraso = dAtr;
+          valorAtraso += +r.valor || 0;
+        }
+      });
+      if (atraso > 15) { pontos += 35; motivos.push("💸 atraso de " + atraso + " dias (R$ " + valorAtraso.toLocaleString("pt-BR") + ")"); }
+      else if (atraso > 0) { pontos += 25; motivos.push("💸 mensalidade atrasada há " + atraso + " dias"); }
+
+      // 4. contrato acabando sem renovação
+      var f = new Date((contrato.inicio || hoje) + "T12:00");
+      f.setMonth(f.getMonth() + (contrato.meses || 1));
+      var diasFim = Math.round((f - new Date(hoje + "T12:00")) / 864e5);
+      if (diasFim >= 0 && diasFim <= 15) { pontos += 25; motivos.push("📄 contrato termina em " + diasFim + " dia(s)"); }
+
+      // 5. detrator no NPS
+      var minhaNota = nps.filter(function (n) { return n.alunoId === a.id; }).sort(function (x, y) { return (x.data || "") < (y.data || "") ? 1 : -1; })[0];
+      if (minhaNota && +minhaNota.nota <= 6) { pontos += 15; motivos.push("👎 NPS detrator (nota " + minhaNota.nota + ")"); }
+
+      if (pontos > 0) {
+        saida.push({ a: a, pontos: Math.min(100, pontos), motivos: motivos, dias: dias });
+      }
+    });
+    saida.sort(function (x, y) { return y.pontos - x.pontos; });
+    return saida;
+  }
+
+  function nivel(p) { return p >= 60 ? "alto" : p >= 30 ? "medio" : "baixo"; }
+
+  function msgPara(r) {
+    var nome = r.a.nome.split(" ")[0];
+    if (r.motivos.some(function (m) { return m.indexOf("atras") !== -1; })) {
+      return "Oi " + nome + "! Passando pra lembrar da mensalidade em aberto — consegue regularizar essa semana? Qualquer dificuldade me chama que a gente resolve junto. 💜";
+    }
+    if (r.dias >= 7) {
+      return "Oi " + nome + "! Sentimos sua falta por aqui 😢 Que tal voltar essa semana? Seu treino está te esperando — se precisar reagendar horário ou trocar a ficha, é só falar! 💪";
+    }
+    return "Oi " + nome + "! Tudo bem? Queria saber como está sendo sua experiência na academia — tem algo que a gente possa melhorar pra você? 💜";
+  }
+
+  function render() {
+    var riscos = calculaRiscos();
+    var alto = riscos.filter(function (r) { return nivel(r.pontos) === "alto"; }).length;
+    var medio = riscos.filter(function (r) { return nivel(r.pontos) === "medio"; }).length;
+    var ativos = S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; }).length;
+    $("kpis").innerHTML =
+      '<div class="kpi"><div class="rot">Alunos ativos</div><div class="val">' + ativos + "</div></div>" +
+      '<div class="kpi alto"><div class="rot">🔴 Risco alto</div><div class="val">' + alto + "</div></div>" +
+      '<div class="kpi medio"><div class="rot">🟡 Risco médio</div><div class="val">' + medio + "</div></div>" +
+      '<div class="kpi ok"><div class="rot">🟢 Saudáveis</div><div class="val">' + Math.max(0, ativos - riscos.length) + "</div></div>";
+
+    $("listaRisco").innerHTML = riscos.length ? riscos.map(function (r) {
+      var zap = String(r.a.zap || "").replace(/\D/g, "");
+      return '<div class="risco"><div class="score ' + nivel(r.pontos) + '">' + r.pontos + '</div>' +
+        '<div><div class="nome">' + esc(r.a.nome) + '</div><div class="motivos">' + r.motivos.join(" · ") + "</div></div>" +
+        '<div class="acoes">' +
+        (zap ? '<a class="btn mini" target="_blank" rel="noopener" href="https://wa.me/55' + zap + "?text=" + encodeURIComponent(msgPara(r)) + '">💬 WhatsApp</a>' : "") +
+        "</div></div>";
+    }).join("") : '<div class="card" style="text-align:center;color:#16a34a;font-weight:700;">🎉 Nenhum aluno em risco detectado — base saudável!</div>';
+    return riscos;
+  }
+
+  // ---------- análise com o Claude ----------
+  function resumoParaIA(riscos) {
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var ativos = stA.alunos.filter(function (a) { return a.status !== "inativo"; });
+    var ckMes = 0;
+    ativos.forEach(function (a) { ckMes += (a.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === mes; }).length; });
+    var atrasoTotal = 0, atrasoN = 0;
+    stA.recebiveis.forEach(function (r) { if (r.status === "aberto" && r.vencimento < hoje) { atrasoN++; atrasoTotal += +r.valor || 0; } });
+    var linhas = [
+      "Academia: " + ativos.length + " alunos ativos. Check-ins no mês: " + ckMes + ".",
+      "Inadimplência: " + atrasoN + " mensalidades em atraso somando R$ " + atrasoTotal.toLocaleString("pt-BR") + ".",
+      "Alunos em risco de cancelamento (score 0-100 e motivos):",
+    ];
+    riscos.slice(0, 15).forEach(function (r) {
+      linhas.push("- " + r.a.nome.split(" ")[0] + " (score " + r.pontos + "): " + r.motivos.join("; "));
+    });
+    if (!riscos.length) linhas.push("- nenhum");
+    linhas.push("", "Me dê o diagnóstico da semana e o plano de ação.");
+    return linhas.join("\n");
+  }
+
+  $("btnAnalisar").addEventListener("click", function () {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !self.MT_CLOUD || !MT_CLOUD.url) {
+      $("analiseInfo").textContent = "☁️ Entre com a sua conta da nuvem para usar a análise do Claude (a lista de risco acima funciona sempre).";
+      return;
+    }
+    var btn = $("btnAnalisar");
+    btn.disabled = true; btn.textContent = "🧠 Analisando…";
+    var riscos = calculaRiscos();
+    nuvem.client.auth.getSession().then(function (sess) {
+      var tok = (sess && sess.data && sess.data.session && sess.data.session.access_token) || "";
+      return fetch(MT_CLOUD.url + "/functions/v1/chat-envia", {
+        method: "POST",
+        headers: { apikey: MT_CLOUD.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "analisar", dados: resumoParaIA(riscos) }),
+      });
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      btn.disabled = false; btn.textContent = "Analisar minha base agora";
+      if (d && d.ok && d.texto) {
+        $("analise").hidden = false;
+        $("analise").textContent = d.texto;
+        $("analiseInfo").textContent = "Análise de " + new Date().toLocaleString("pt-BR") + ".";
+        var st = S.read("copiloto", {});
+        st.ultima = { texto: d.texto, quando: new Date().toISOString() };
+        S.write("copiloto", st);
+      } else {
+        $("analiseInfo").textContent = "⚠️ " + ((d && d.erro) || "Função chat-envia não respondeu — confira a publicação e a ANTHROPIC_API_KEY.");
+      }
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = "Analisar minha base agora";
+      $("analiseInfo").textContent = "⚠️ Sem conexão com a função chat-envia (veja o passo a passo em Chat e IA → Instalação).";
+    });
+  });
+
+  // última análise salva
+  var salva = S.read("copiloto", {}).ultima;
+  if (salva && salva.texto) {
+    $("analise").hidden = false;
+    $("analise").textContent = salva.texto;
+    $("analiseInfo").textContent = "Última análise: " + new Date(salva.quando).toLocaleString("pt-BR") + ".";
+  }
+
+  render();
+  window.__copiloto = { calculaRiscos: calculaRiscos, render: render, resumoParaIA: resumoParaIA }; // testes
+})();
+</script>
+</body>
+</html>

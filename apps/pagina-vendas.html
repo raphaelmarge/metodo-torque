@@ -52,6 +52,17 @@
     </div>
     <p class="muted" style="margin-top: 8px;">O arquivo é independente: abre em qualquer celular/computador, dá para anexar no WhatsApp ou hospedar em qualquer serviço.</p>
   </div>
+  <div class="card" style="margin-top:16px;">
+    <h2>🛒 Matrícula online (link público)</h2>
+    <p class="mut" style="margin:4px 0 10px;">Publique os planos na nuvem e divulgue o link: o interessado escolhe o plano, deixa o contato e cai direto no seu Funil Comercial como lead quente — com a chave Pix na tela para já adiantar o pagamento.</p>
+    <div class="linha-flex" style="gap:12px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="campo" style="margin:0;"><label>Chave Pix (opcional)</label><input id="moPix" placeholder="CNPJ, e-mail ou aleatória" style="width:220px;"></div>
+      <div class="campo" style="margin:0;"><label>WhatsApp da academia</label><input id="moZap" placeholder="31999990000" style="width:160px;"></div>
+      <button class="btn" id="btnPubMatricula">Publicar matrícula online</button>
+    </div>
+    <p class="mut" id="moStatus" style="margin-top:8px;"></p>
+    <p style="margin-top:8px;font-size:13.5px;">🔗 Link para divulgar: <b id="moLink"></b></p>
+  </div>
 </main>
 
 <script src="../assets/access-config.js"></script>
@@ -145,6 +156,40 @@
     navigator.clipboard.writeText(t).then(function () { alert("Texto copiado! Cole no WhatsApp, status ou bio do Instagram."); },
       function () { prompt("Copie o texto:", t); });
   };
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  var salvo = S.read("matriculaOnline", {});
+  $("moPix").value = salvo.pix || "";
+  $("moZap").value = salvo.zap || "";
+  $("moLink").textContent = location.origin + location.pathname.replace(/apps\/.*$/, "") + "matricula.html";
+  $("btnPubMatricula").addEventListener("click", function () {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { $("moStatus").textContent = "☁️ Entre com a sua conta da nuvem primeiro."; return; }
+    var stA = S.read("alunos", { planos: [] });
+    var planos = (stA.planos || []).map(function (p) {
+      return { nome: p.nome, valor: +p.valor || 0, desc: p.desc || p.descricao || "" };
+    }).filter(function (p) { return p.nome; });
+    if (!planos.length) { $("moStatus").textContent = "Cadastre os planos em Gestão de Alunos → Planos primeiro."; return; }
+    var cfg = S.read("config", { dados: {} });
+    var dados = {
+      nome: (cfg.dados && cfg.dados.nome) || "TORQUE FIT",
+      planos: planos,
+      pix: $("moPix").value.trim(),
+      zap: $("moZap").value.replace(/\D/g, ""),
+    };
+    S.write("matriculaOnline", { pix: dados.pix, zap: dados.zap });
+    nuvem.client.from("matricula_config").upsert({
+      academia_id: nuvem.aid, dados: dados, atualizado: new Date().toISOString(),
+    }).then(function (r) {
+      $("moStatus").textContent = r.error
+        ? "⚠️ " + (r.error.message.indexOf("does not exist") !== -1 ? "Rode o bloco MATRÍCULA ONLINE do supabase-setup.sql primeiro." : r.error.message)
+        : "✅ Publicado! " + planos.length + " plano(s) no ar — divulgue o link acima.";
+    });
+  });
 })();
 </script>
 </body>

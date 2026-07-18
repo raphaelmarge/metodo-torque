@@ -711,6 +711,15 @@
         "if(sb){var po2=sb.closest('.post');var inp=po2.querySelector('.pinput input');var tx=inp.value.trim();if(!tx)return;sb.disabled=true;" +
         "rpc('app_aluno_reage',{t:TOKEN,p_post:po2.querySelector('.pacts').dataset.post,p_tipo:'coment',p_nome:NOME,p_texto:tx}).then(function(){inp.value='';sb.disabled=false;po2.querySelector('.pcoms').hidden=false;carregaReacoes();});return;}});" +
         "carregaReacoes();" +
+        // treino sincronizado: manda séries feitas e cargas para o professor ver
+        "var syncT=null;function agendaSyncTreino(){clearTimeout(syncT);syncT=setTimeout(enviaTreino,2500);}" +
+        "function enviaTreino(){var dia=new Date().toISOString().slice(0,10);" +
+        "var f2=tqL('tqd_'+dia,{}),c2=tqL('tq_carga',{});var itens=[];" +
+        "document.querySelectorAll('.sfeita').forEach(function(b){var k=b.dataset.ex;" +
+        "if(f2[k]||c2[k])itens.push({ex:k,f:f2[k]||0,c:c2[k]||''});});" +
+        "if(itens.length)rpc('app_aluno_treino_reg',{t:TOKEN,p_dia:dia,p_itens:itens});}" +
+        "document.addEventListener('click',function(e){if(e.target.closest('.sfeita'))agendaSyncTreino();});" +
+        "document.addEventListener('change',function(e){if(e.target.closest('.cargain'))agendaSyncTreino();});" +
         // notificações locais: lembrete das aulas de hoje ao abrir o app
         "function lembreteAulas(){if(!('Notification'in window)||Notification.permission!=='granted')return;" +
         "rpc('app_aluno_agendamentos',{t:TOKEN}).then(function(l){if(!Array.isArray(l))return;var hj=new Date().toISOString().slice(0,10);" +
