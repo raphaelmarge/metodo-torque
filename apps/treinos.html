@@ -74,6 +74,7 @@
       <button data-a="padroes">Treinos Padrão</button>
       <button data-a="exercicios">Exercícios</button>
       <button data-a="execucao">📈 Execução dos alunos</button>
+      <button data-a="videoteca">🎥 Videoteca</button>
     </div>
     <span class="muted" id="resumoAba"></span>
   </div>
@@ -131,6 +132,20 @@
     </div>
     <div id="execLista" style="margin-top:14px;"></div>
   </section>
+
+  <section id="vVideoteca" hidden>
+    <div class="card">
+      <p class="mut" style="margin:0 0 12px;">Biblioteca de aulas gravadas que aparece no <b>app do aluno</b> (🎥 Aulas gravadas): alongamento, mobilidade, treino em viagem… Use links do YouTube (pode ser vídeo "não listado"). Republique os apps depois de mexer aqui.</p>
+      <div class="linha-flex" style="gap:8px;flex-wrap:wrap;">
+        <input id="vtTitulo" placeholder="Título (ex.: Mobilidade de quadril 10min)" style="flex:2;min-width:220px;">
+        <input id="vtCategoria" placeholder="Categoria (ex.: Mobilidade)" style="flex:1;min-width:140px;" list="vtCats">
+        <datalist id="vtCats"><option>Mobilidade</option><option>Alongamento</option><option>Treino em casa</option><option>Técnica</option></datalist>
+        <input id="vtUrl" placeholder="Link do YouTube" style="flex:2;min-width:220px;">
+        <button class="btn" id="vtAdd">+ Adicionar</button>
+      </div>
+    </div>
+    <div id="vtLista" style="margin-top:14px;"></div>
+  </section>
 </main>
 
 <!-- editor de treino padrão -->
@@ -186,7 +201,9 @@
     $("vPadroes").hidden = aba !== "padroes";
     $("vExercicios").hidden = aba !== "exercicios";
     $("vExecucao").hidden = aba !== "execucao";
+    $("vVideoteca").hidden = aba !== "videoteca";
     if (aba === "execucao") carregaExecucao();
+    if (aba === "videoteca") renderVideoteca();
     Array.prototype.forEach.call(document.querySelectorAll("#abas button"), function (b) {
       b.classList.toggle("ativa", b.getAttribute("data-a") === aba);
     });
@@ -575,6 +592,45 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
+  // ---------- videoteca (aulas on-demand no app) ----------
+  function stVideoteca() { return S.read("videoteca", { videos: [] }); }
+  window.renderVideoteca = function () {
+    var el = $("vtLista");
+    var vids = stVideoteca().videos;
+    if (!$("vVideoteca").hidden) $("resumoAba").textContent = vids.length + " vídeo(s) na videoteca";
+    if (!vids.length) { el.innerHTML = '<div class="card mut">Nenhum vídeo ainda — adicione o primeiro acima.</div>'; return; }
+    var porCat = {};
+    vids.forEach(function (v) { (porCat[v.categoria || "Geral"] = porCat[v.categoria || "Geral"] || []).push(v); });
+    el.innerHTML = Object.keys(porCat).sort().map(function (cat) {
+      return '<div class="card" style="margin-bottom:12px;"><h2>' + esc(cat) + "</h2>" +
+        porCat[cat].map(function (v) {
+          return '<div class="linha-flex" style="justify-content:space-between;border-top:1px solid var(--linha);padding:7px 0;">' +
+            '<a href="' + esc(v.url) + '" target="_blank" rel="noopener" style="font-weight:700;">▶ ' + esc(v.titulo) + "</a>" +
+            '<button class="btn sec mini" data-vtdel="' + v.id + '">✕</button></div>';
+        }).join("") + "</div>";
+    }).join("");
+  };
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "vtAdd") {
+      var t = $("vtTitulo").value.trim(), u = $("vtUrl").value.trim();
+      if (!t || !u) { alert("Preencha título e link."); return; }
+      if (!/^https?:\/\//.test(u)) { alert("O link precisa começar com https://"); return; }
+      var st = stVideoteca();
+      st.videos.push({ id: S.uid(), titulo: t, categoria: $("vtCategoria").value.trim() || "Geral", url: u });
+      S.write("videoteca", st);
+      $("vtTitulo").value = ""; $("vtUrl").value = "";
+      renderVideoteca();
+      return;
+    }
+    var del = e.target && e.target.getAttribute && e.target.getAttribute("data-vtdel");
+    if (del) {
+      var st2 = stVideoteca();
+      st2.videos = st2.videos.filter(function (v) { return v.id !== del; });
+      S.write("videoteca", st2);
+      renderVideoteca();
+    }
+  });
+
   window.carregaExecucao = function () {
     var el = $("execLista");
     var nuvem = S.cloud && S.cloud();
@@ -602,6 +658,22 @@
         }
         var nomeDe = {};
         S.read("alunos", { alunos: [] }).alunos.forEach(function (a) { if (a.appToken) nomeDe[a.appToken] = a.nome; });
+        // 🏅 destaques (maiores cargas dos últimos 7 dias) — o Modo TV mostra
+        try {
+          var d7 = new Date(); d7.setDate(d7.getDate() - 7);
+          var iso7 = d7.toISOString().slice(0, 10);
+          var melhor = {};
+          logs.forEach(function (l) {
+            if (l.dia < iso7 || !l.carga) return;
+            var kg = parseFloat(String(l.carga).replace(",", "."));
+            if (!kg || kg <= 0) return;
+            var k = (nomeDe[l.token] || "?") + "|" + l.exercicio;
+            if (!melhor[k] || kg > melhor[k].kg) melhor[k] = { nome: nomeDe[l.token] || "Aluno", exercicio: l.exercicio, kg: kg, dia: l.dia };
+          });
+          var itens = Object.keys(melhor).map(function (k) { return melhor[k]; })
+            .sort(function (a, b) { return b.kg - a.kg; }).slice(0, 8);
+          S.write("treinoDestaques", { itens: itens, atualizado: new Date().toISOString() });
+        } catch (e) {}
         var porAluno = {};
         logs.forEach(function (l) {
           var nome = nomeDe[l.token] || "Aluno (token " + l.token.slice(0, 6) + "…)";

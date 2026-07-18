@@ -54,6 +54,12 @@
     <h2>Fechados no mês</h2>
     <div class="fim" id="fechados"></div>
   </div>
+
+  <div class="card">
+    <h2>🤝 Indicações de alunos</h2>
+    <p class="muted" style="margin: 4px 0 10px;">Cada aluno tem um link "Indique um amigo" no app dele. Quando alguém se matricula por esse link, aparece aqui — combine e entregue a recompensa (ex.: mês com desconto pros dois).</p>
+    <div id="indicacoes" class="muted">Nenhuma indicação ainda.</div>
+  </div>
 </main>
 
 <!-- novo lead -->
@@ -303,21 +309,42 @@
   function puxaMatriculasOnline() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return Promise.resolve(0);
-    return nuvem.client.from("matriculas_online").select("id,nome,zap,email,plano,criado")
+    return nuvem.client.from("matriculas_online").select("id,nome,zap,email,plano,criado,indicacao")
       .eq("status", "novo").then(function (r) {
+        if (r.error && /indicacao/.test(r.error.message || "")) {
+          // banco ainda sem a coluna (SQL novo não rodado): segue sem indicação
+          return nuvem.client.from("matriculas_online").select("id,nome,zap,email,plano,criado").eq("status", "novo");
+        }
+        return r;
+      }).then(function (r) {
         if (r.error || !r.data || !r.data.length) return 0;
         var st = S.read("funil", { leads: [] });
+        var stI = S.read("indicacoes", { itens: [] });
+        var alunos = S.read("alunos", { alunos: [] }).alunos;
         var novos = 0;
         r.data.forEach(function (m) {
+          var quem = null;
+          if (m.indicacao) {
+            quem = alunos.find(function (a) { return codigoAluno(a) === m.indicacao; }) || null;
+          }
           st.leads.push({
             id: S.uid(), nome: m.nome, zap: m.zap || "", email: m.email || "",
-            etapa: "novo", origem: "🛒 Matrícula online", obs: "Plano escolhido: " + (m.plano || "?"),
+            etapa: "novo", origem: quem ? "🤝 Indicação de " + quem.nome : "🛒 Matrícula online",
+            obs: "Plano escolhido: " + (m.plano || "?"),
             criado: (m.criado || "").slice(0, 10) || S.todayISO(),
             proximoContato: S.todayISO(),
           });
+          if (m.indicacao) {
+            stI.itens.push({
+              id: S.uid(), quando: S.todayISO(), leadNome: m.nome, codigo: m.indicacao,
+              alunoId: quem ? quem.id : "", alunoNome: quem ? quem.nome : "código " + m.indicacao,
+              recompensado: false,
+            });
+          }
           novos++;
         });
         if (novos) S.write("funil", st);
+        if (stI.itens.length) S.write("indicacoes", stI);
         return nuvem.client.from("matriculas_online").update({ status: "importado" })
           .in("id", r.data.map(function (m) { return m.id; })).then(function () {
             var el = document.createElement("div");
@@ -329,7 +356,38 @@
           });
       }, function () { return 0; });
   }
+  function codigoAluno(a) { return String(a.id).replace(/[^a-z0-9]/gi, "").slice(-8).toUpperCase(); }
+
+  function renderIndicacoes() {
+    var el = document.getElementById("indicacoes");
+    if (!el) return;
+    var itens = S.read("indicacoes", { itens: [] }).itens.slice().reverse();
+    if (!itens.length) { el.textContent = "Nenhuma indicação ainda."; return; }
+    var porAluno = {};
+    itens.forEach(function (i) { porAluno[i.alunoNome] = (porAluno[i.alunoNome] || 0) + 1; });
+    var top = Object.keys(porAluno).sort(function (a, b) { return porAluno[b] - porAluno[a]; }).slice(0, 3)
+      .map(function (n) { return "<b>" + n + "</b> (" + porAluno[n] + ")"; }).join(" · ");
+    el.innerHTML = '<div class="muted" style="margin-bottom:8px;">🏆 Quem mais indica: ' + top + "</div>" +
+      itens.slice(0, 20).map(function (i) {
+        return '<div class="linha-flex" style="justify-content:space-between;border-top:1px solid var(--linha);padding:7px 0;">' +
+          "<span><b>" + i.leadNome + "</b> <span class='muted'>indicado por " + i.alunoNome + " em " + S.fmtData(i.quando) + "</span></span>" +
+          (i.recompensado ? '<span class="tag verde">🎁 recompensado</span>'
+            : '<button class="btn sec mini" data-recompensa="' + i.id + '">🎁 Marcar recompensa</button>') +
+          "</div>";
+      }).join("");
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-recompensa]");
+    if (!b) return;
+    var stI = S.read("indicacoes", { itens: [] });
+    var it = stI.itens.find(function (x) { return x.id === b.dataset.recompensa; });
+    if (it) { it.recompensado = true; S.write("indicacoes", stI); renderIndicacoes(); }
+  });
+  S.onChange(function (k) { if (k === "indicacoes") renderIndicacoes(); });
+  renderIndicacoes();
+
   window.__matriculasOnline = puxaMatriculasOnline; // testes
+  window.__indicacoes = renderIndicacoes; // testes
   setTimeout(puxaMatriculasOnline, 3000);
   setInterval(puxaMatriculasOnline, 60000);
 })();

@@ -182,8 +182,23 @@
   }
 
   // ---------- rotação ----------
-  var paineis = { metas: painelMetas, manutencao: painelManutencao, checklist: painelChecklist };
+  function painelDestaques() {
+    var st = S.read("treinoDestaques", { itens: [] });
+    var itens = (st.itens || []).slice(0, 6);
+    if (!itens.length) return { titulo: "Destaques de treino 🏅", html: '<div class="aviso-vazio">Os recordes da semana dos alunos (registrados pelo app) aparecem aqui.</div>' };
+    return {
+      titulo: "Destaques da semana 🏅",
+      html: '<div class="rank">' + itens.map(function (l, i) {
+        return '<div class="rk"><span class="pos' + (i === 0 ? " p1" : "") + '">' + (i + 1) + "º</span>" +
+          "<span>" + String(l.nome).split(" ")[0] + " · " + l.exercicio + "</span>" +
+          "<span></span><span><b>" + String(l.kg).replace(".", ",") + " kg</b></span></div>";
+      }).join("") + "</div>",
+    };
+  }
+
+  var paineis = { metas: painelMetas, manutencao: painelManutencao, checklist: painelChecklist, destaques: painelDestaques };
   var ordem = fixo && paineis[fixo] ? [fixo] : ["metas", "manutencao", "checklist"];
+  if (!fixo && (S.read("treinoDestaques", { itens: [] }).itens || []).length) ordem.push("destaques");
   var idx = 0;
 
   function mostra() {

@@ -110,6 +110,17 @@
       }
     });
     if (inadDias > 0 && pior > inadDias) return { ok: false, motivo: "Mensalidade em aberto há " + pior + " dias — passa na recepção rapidinho. 💜" };
+    // horário de contrato do plano (dias/faixa), igual ao Controle de Entradas
+    var planos = S.read("alunos", { planos: [] }).planos || [];
+    var rAc = ((planos.find(function (pl) { return pl.id === ativos[0].planoId; }) || {}).regras) || {};
+    if ((rAc.dias && rAc.dias.length) || rAc.horaDe || rAc.horaAte) {
+      var ag = new Date();
+      var hhmm = ("0" + ag.getHours()).slice(-2) + ":" + ("0" + ag.getMinutes()).slice(-2);
+      var diaOk = !(rAc.dias && rAc.dias.length) || rAc.dias.indexOf(ag.getDay()) >= 0;
+      var horaOk = (!rAc.horaDe || hhmm >= rAc.horaDe) && (!rAc.horaAte || hhmm <= rAc.horaAte);
+      if (!diaOk) return { ok: false, motivo: "Seu plano não dá acesso neste dia da semana — fale com a recepção. 💜" };
+      if (!horaOk) return { ok: false, motivo: "Seu plano vale das " + (rAc.horaDe || "00:00") + " às " + (rAc.horaAte || "23:59") + " — fora da janela agora." };
+    }
     return { ok: true };
   }
 
