@@ -236,12 +236,28 @@
     var emDia = !atrasados.length;
 
     // treino, avaliação, sessões
+    var meusPacotes = (S.read("aulasPersonal", { itens: [] }).pacotes || [])
+      .filter(function (p) { return p.aluno === a.nome; })
+      .map(function (p) { return { qtd: +p.qtd || 0, saldo: (+p.qtd || 0) - (p.sessoes || []).length, validade: p.validade || "" }; });
     var stTr = S.read("treinos", { prescricoes: [], exercicios: [] });
     var presc = stTr.prescricoes.find(function (p) { return p.alunoId === a.id; });
     var videoDe = {};
     (stTr.exercicios || []).forEach(function (x) { if (x.video) videoDe[(x.nome || "").toLowerCase()] = x.video; });
     var avs = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? 1 : -1; });
+    var comFoto = avs.filter(function (v) { return v.fotos && (v.fotos.frente || v.fotos.lado); });
+    var fotoAntes = comFoto.length ? comFoto[comFoto.length - 1] : null;
+    var fotoDepois = comFoto.length > 1 ? comFoto[0] : null;
+    function blocoFoto(rot, av2) {
+      if (!av2) return "";
+      var fx = av2.fotos.frente || av2.fotos.lado;
+      return "<div style=\"flex:1;text-align:center;\"><div style=\"font-size:11px;font-weight:800;color:var(--txt2);\">" +
+        rot + " · " + S.fmtData(av2.data) +
+        "</div><img src=\"" + fx + "\" style=\"max-width:100%;border-radius:10px;margin-top:4px;\"></div>";
+    }
+    var antesDepoisHTML = fotoAntes
+      ? "<div style=\"display:flex;gap:10px;margin-top:10px;\">" + blocoFoto("ANTES", fotoAntes) + blocoFoto("DEPOIS", fotoDepois) + "</div>"
+      : "";
     var av = avs[0];
     var avalDias = +(cfg.avaliacaoDias) || 90;
     var proxAv = null;
@@ -595,7 +611,7 @@
       "<details id='dAval'><summary><span class='ic'>🩺</span>Avaliação física</summary><div class='dcorpo'>" +
       (av ? kv("Última", S.fmtData(av.data)) + (av.peso ? kv("Peso", av.peso + " kg") : "") +
         (av.gordura ? kv("% de gordura", av.gordura + "%") : "") + (proxAv ? kv("Próxima", S.fmtData(proxAv)) : "")
-        : "<div class='vz'>Nenhuma avaliação ainda — agenda a sua! 📊</div>") + "</div></details>" +
+        : "<div class='vz'>Nenhuma avaliação ainda — agenda a sua! 📊</div>") + antesDepoisHTML + "</div></details>" +
       "<details id='dTreino'><summary><span class='ic'>🏋️</span>Meu treino" + (presc && presc.nome ? " — " + esc(presc.nome) : "") + "</summary><div class='dcorpo'>" + fichasHTML() + "</div></details>" +
       "<details id='dDados'><summary><span class='ic'>👤</span>Dados pessoais</summary><div class='dcorpo'>" +
       (a.zap ? kv("Celular", esc(a.zap)) : "") + (a.email ? kv("E-mail", esc(a.email)) : "") +
