@@ -410,7 +410,14 @@
         var prod = st.itens.find(function (i) { return i.nome === x.n; });
         if (prod) prod.estoque = Math.max(0, (+prod.estoque || 0) - (+x.q || 0));
       });
-      st.vendas.push({ id: S.uid(), quando: new Date().toISOString().slice(0, 16), itens: pedido.itens, total: +pedido.total || 0, origem: "app 📲", cliente: pedido.aluno || "" });
+      st.vendas.push({
+        id: S.uid(), data: S.todayISO(), hora: new Date().toTimeString().slice(0, 5),
+        itens: (pedido.itens || []).map(function (x) {
+          var prod2 = st.itens.find(function (i) { return i.nome === x.n; });
+          return { produtoId: prod2 ? prod2.id : "", nome: x.n, qtd: +x.q || 0, preco: +x.v || 0 };
+        }),
+        total: +pedido.total || 0, forma: "a receber (app)", cliente: pedido.aluno || "",
+      });
       S.write("produtos", st);
     }
     nuvem.client.from("app_pedidos").update({ status: ent ? "entregue" : "cancelado" }).eq("id", id)

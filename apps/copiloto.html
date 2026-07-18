@@ -120,7 +120,8 @@
       if (diasFim >= 0 && diasFim <= 15) { pontos += 25; motivos.push("📄 contrato termina em " + diasFim + " dia(s)"); }
 
       // 5. detrator no NPS
-      var minhaNota = nps.filter(function (n) { return n.alunoId === a.id; }).sort(function (x, y) { return (x.data || "") < (y.data || "") ? 1 : -1; })[0];
+      var minhaNota = nps.filter(function (n) { return n.alunoId === a.id || n.aluno === a.nome; })
+        .sort(function (x, y) { return (x.data || "") < (y.data || "") ? 1 : -1; })[0];
       if (minhaNota && +minhaNota.nota <= 6) { pontos += 15; motivos.push("👎 NPS detrator (nota " + minhaNota.nota + ")"); }
 
       if (pontos > 0) {

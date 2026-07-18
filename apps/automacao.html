@@ -402,8 +402,10 @@
   function geraPixPendentes() {
     var urlPg = integ().pagarmeUrl || "";
     if (!urlPg && !demoOn()) return;
-    var st = load();
-    st.linksPix = st.linksPix || {};
+    // NUNCA gerar cobrança com a régua desligada
+    var temRegra = load().regras.some(function (r) { return r.gatilho === "venc_mensalidade" && r.ativo !== false; });
+    if (!temRegra) return;
+    var st = { linksPix: {} }; // só os links novos; mescla no final sem pisar no histórico
     var alvos = alvosDe("venc_mensalidade").filter(function (a) { return !a.link; }).slice(0, 10);
     if (!alvos.length) return;
     var fila = Promise.resolve();
@@ -430,7 +432,13 @@
         }).catch(function () {});
       });
     });
-    fila.then(function () { S.write("automacao", st); render(); });
+    fila.then(function () {
+      var fresco = load();
+      fresco.linksPix = fresco.linksPix || {};
+      Object.keys(st.linksPix).forEach(function (k) { fresco.linksPix[k] = st.linksPix[k]; });
+      S.write("automacao", fresco);
+      render();
+    });
   }
   setTimeout(geraPixPendentes, 2500);
   window.__geraPix = geraPixPendentes; // testes

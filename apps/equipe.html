@@ -291,7 +291,8 @@
     var nome = $("pontoSel").value;
     if (!nome) { alert("Escolha o colaborador."); return; }
     var st = stE();
-    st.ponto.push({ nome: nome, tipo: tipo, quando: new Date().toISOString().slice(0, 16) });
+    var ag = new Date();
+    st.ponto.push({ nome: nome, tipo: tipo, quando: S.todayISO() + "T" + ag.toTimeString().slice(0, 5) });
     if (st.ponto.length > 2000) st.ponto = st.ponto.slice(-2000);
     S.write("equipe", st);
     renderPonto();

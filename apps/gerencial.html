@@ -264,7 +264,7 @@
     });
     var vendasProd = 0;
     (S.read("produtos", { vendas: [] }).vendas || []).forEach(function (v) {
-      if ((v.quando || "").slice(0, 7) === mes) vendasProd += +v.total || 0;
+      if (((v.data || v.quando || "")).slice(0, 7) === mes) vendasProd += +v.total || 0;
     });
     var churn = ativos.length ? Math.round(cancelados * 1000 / ativos.length) / 10 : 0;
     var nomeAcad = (S.read("config", { dados: {} }).dados || {}).nome || "TORQUE FIT";
