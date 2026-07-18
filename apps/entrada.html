@@ -46,7 +46,14 @@
     <div id="flashOk" hidden style="background: #eaf6ec; border: 1px solid rgba(22,163,74,.4); color: #2e7d32; padding: 14px 16px; border-radius: 6px; font-weight: 700; font-size: 15px;"></div>
     <div class="card busca-grande">
       <div class="campo"><label>Aluno</label>
-        <input id="busca" placeholder="digite o nome…" autocomplete="off">
+        <div class="linha-flex" style="gap:8px;">
+          <input id="busca" placeholder="digite o nome…" autocomplete="off" style="flex:1;">
+          <button class="btn sec" id="btnQR" title="Ler o QR da carteirinha do app do aluno">📷 Ler QR</button>
+        </div>
+      </div>
+      <div id="areaQR" hidden style="position:relative;margin-top:10px;">
+        <video id="videoQR" playsinline muted style="width:100%;max-height:280px;background:#000;border-radius:8px;object-fit:cover;"></video>
+        <p class="muted" id="qrStatus" style="margin-top:6px;font-size:13px;">Aponte a câmera para o QR da carteirinha…</p>
       </div>
       <div id="resultados" style="margin-top: 10px;"></div>
     </div>
@@ -369,6 +376,50 @@
       S.write("config", c);
     });
   });
+  // leitor do QR da carteirinha (código de 8 caracteres do aluno)
+  var qrStream = null, qrTimer = null;
+  function codigoDe(a) { return String(a.id).replace(/[^a-z0-9]/gi, "").slice(-8).toUpperCase(); }
+  function paraQR() {
+    clearInterval(qrTimer);
+    if (qrStream) { qrStream.getTracks().forEach(function (t) { t.stop(); }); qrStream = null; }
+    $("areaQR").hidden = true;
+    $("btnQR").textContent = "📷 Ler QR";
+  }
+  $("btnQR").addEventListener("click", function () {
+    if (qrStream) { paraQR(); return; }
+    if (!("BarcodeDetector" in window)) {
+      alert("Este navegador não tem leitor de QR embutido (use o Chrome no computador ou Android). O aluno também pode ditar o código de 8 letras que aparece na carteirinha.");
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function (stream) {
+      qrStream = stream;
+      $("areaQR").hidden = false;
+      $("btnQR").textContent = "✕ Fechar câmera";
+      var v = $("videoQR");
+      v.srcObject = stream;
+      v.play();
+      var det = new BarcodeDetector({ formats: ["qr_code"] });
+      qrTimer = setInterval(function () {
+        det.detect(v).then(function (codes) {
+          if (!codes || !codes.length) return;
+          var lido = String(codes[0].rawValue || "").trim().toUpperCase();
+          if (!lido) return;
+          var a = stA().alunos.find(function (x) { return codigoDe(x) === lido; });
+          if (a) {
+            paraQR();
+            selId = a.id;
+            $("busca").value = a.nome;
+            renderPainel();
+          } else {
+            $("qrStatus").textContent = "QR lido (" + lido + ") mas não achei o aluno — confira o cadastro.";
+          }
+        }).catch(function () {});
+      }, 400);
+    }).catch(function () {
+      alert("Não consegui acessar a câmera — confira a permissão do navegador.");
+    });
+  });
+
   $("resultados").addEventListener("click", function (e) {
     var r = e.target.closest("[data-sel]"); if (!r) return;
     selId = r.getAttribute("data-sel");

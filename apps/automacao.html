@@ -37,6 +37,19 @@
     <button data-a="templates">📝 Templates</button>
   </div>
   <div id="painel"></div>
+  <div class="card">
+    <h2>📊 Resumo diário do dono</h2>
+    <p class="mut" style="margin:4px 0 10px;">Todo dia, ao abrir o sistema, o dono recebe no WhatsApp o resumo de ontem: check-ins, vendas, novos alunos, cancelamentos e atrasos. Um envio por dia (com o WhatsApp oficial configurado em Integrações, ou modo demonstração).</p>
+    <div class="linha-flex" style="gap:12px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="campo" style="margin:0;"><label>WhatsApp do dono (DDD + número)</label>
+        <input id="resumoZap" placeholder="31999990000" style="width:180px;"></div>
+      <label style="display:flex;gap:6px;align-items:center;font-weight:700;">
+        <input type="checkbox" id="resumoAtivo"> Enviar automaticamente todo dia
+      </label>
+      <button class="btn sec" id="btnResumoAgora">Enviar resumo de ontem agora</button>
+      <span class="mut" id="resumoStatus" style="font-size:12.5px;"></span>
+    </div>
+  </div>
 </main>
 
 <dialog id="dlgRegra">
@@ -95,12 +108,14 @@
     exame_dermato: "🔬 Exame dermatológico vencido (1 ano)",
     exame_nutricional: "🥗 Avaliação nutricional vencida (1 ano)",
     avaliacao_google: "⭐ Convite para avaliar no Google (20+ check-ins, uma vez só)",
+    venc_mensalidade: "💜 Mensalidade vence em até 2 dias (lembrete com link de pagamento)",
   };
   var TPL_PADRAO = [
     { id: "tp1", nome: "Aniversário", texto: "Feliz aniversário, {nome}! 🎉 A equipe toda te deseja um ano incrível — passa aqui hoje que tem treino especial! 💜" },
     { id: "tp2", nome: "Sentimos sua falta", texto: "Oi {nome}! Já faz {dias} dias que você não aparece 😢 Bora voltar essa semana? Seu treino te espera! 💪" },
     { id: "tp3", nome: "Renovação", texto: "Oi {nome}! Seu plano vence em {dias} dia(s). Bora renovar e garantir sua vaga e o valor atual? 💜" },
     { id: "tp4", nome: "Cobrança amigável", texto: "Oi {nome}! Passando pra lembrar da mensalidade em aberto ({valor}). Consegue regularizar essa semana? Qualquer coisa me chama! 💜" },
+    { id: "tp6", nome: "Mensalidade vencendo", texto: "Oi {nome}! Sua mensalidade de {valor} vence em {dias} dia(s). 😉 Pague sem fila: {link}" },
     { id: "tp5", nome: "Avaliação no Google", texto: "Oi {nome}! 🎉 Você já completou {dias} treinos com a gente — que orgulho! Se estiver curtindo a TORQUE FIT, nos ajuda demais deixando uma avaliação no Google (leva 1 minuto): COLE-AQUI-O-LINK-DO-SEU-GOOGLE 💜" },
   ];
   function load() {
@@ -117,6 +132,11 @@
     // semeia a régua de avaliação no Google (em lojas novas E em quem já usava)
     var mudouSeed = false;
     if (!st.templates.some(function (t) { return t.id === "tp5"; })) { st.templates.push(TPL_PADRAO[4]); mudouSeed = true; }
+    if (!st.templates.some(function (t) { return t.id === "tp6"; })) { st.templates.push(TPL_PADRAO.find(function (t) { return t.id === "tp6"; })); mudouSeed = true; }
+    if (!st.regras.some(function (r) { return r.gatilho === "venc_mensalidade"; })) {
+      st.regras.push({ id: "rg5", nome: "Cobrança automática (D-2 até o vencimento)", gatilho: "venc_mensalidade", templateId: "tp6", ativo: false });
+      mudouSeed = true;
+    }
     if (!st.regras.some(function (r) { return r.gatilho === "avaliacao_google"; })) {
       st.regras.push({ id: "rg4", nome: "Avaliação no Google (edite o link no template!)", gatilho: "avaliacao_google", templateId: "tp5", ativo: false });
       mudouSeed = true;
@@ -223,6 +243,21 @@
         if (d && diasDesde(d) >= 365) out.push({ a: a, dias: diasDesde(d), valor: 0 });
       });
     }
+    if (gatilho === "venc_mensalidade") {
+      var lim2 = new Date(hoje + "T12:00"); lim2.setDate(lim2.getDate() + 2);
+      var lim2Iso = S.todayISO(lim2);
+      var inadSt = S.read("inad", { devedores: [] });
+      ativos.forEach(function (a) {
+        var recs = stA.recebiveis.filter(function (r) {
+          return r.alunoId === a.id && r.status === "aberto" && r.vencimento >= hoje && r.vencimento <= lim2Iso;
+        });
+        if (!recs.length) return;
+        var total = recs.reduce(function (soma, r) { return soma + (+r.valor || 0); }, 0);
+        var dias = Math.round((new Date(recs[0].vencimento) - new Date(hoje)) / 864e5);
+        var dev = (inadSt.devedores || []).find(function (d) { return d.alunoId === a.id && d.cobranca && d.cobranca.linkPagamento; });
+        out.push({ a: a, dias: dias, valor: total, link: dev ? dev.cobranca.linkPagamento : "" });
+      });
+    }
     if (gatilho === "avaliacao_google") {
       // dispara UMA vez por aluno na vida: quem já recebeu (qualquer dia do
       // histórico, por qualquer régua deste gatilho) fica de fora
@@ -255,7 +290,8 @@
     return String(texto || "")
       .replace(/\{nome\}/g, alvo.a.nome.split(" ")[0])
       .replace(/\{valor\}/g, S.fmtBRL(alvo.valor || 0))
-      .replace(/\{dias\}/g, String(alvo.dias || 0));
+      .replace(/\{dias\}/g, String(alvo.dias || 0))
+      .replace(/\{link\}/g, alvo.link || "(peça o link na recepção)");
   }
   function disparosDeHoje() {
     var st = load();
@@ -273,6 +309,27 @@
     return lista;
   }
 
+  // UI do resumo do dono + envio automático (1x por dia, ao abrir a página)
+  (function () {
+    var st = load();
+    var cfgR = st.resumoDono || {};
+    $("resumoZap").value = cfgR.zap || "";
+    $("resumoAtivo").checked = !!cfgR.ativo;
+    function salvaR() {
+      var st2 = load();
+      st2.resumoDono = st2.resumoDono || {};
+      st2.resumoDono.zap = $("resumoZap").value.replace(/\D/g, "");
+      st2.resumoDono.ativo = $("resumoAtivo").checked;
+      S.write("automacao", st2);
+    }
+    $("resumoZap").addEventListener("change", salvaR);
+    $("resumoAtivo").addEventListener("change", salvaR);
+    $("btnResumoAgora").addEventListener("click", function () { enviaResumoDono(true); });
+    if (cfgR.ativo && cfgR.zap && cfgR.ultimo !== S.todayISO() && (integ().whatsappUrl || demoOn())) {
+      setTimeout(function () { enviaResumoDono(false); }, 1500);
+    }
+  })();
+
   function demoOn() {
     var c = S.read("config", { dados: {} });
     return !!(c.integracoes && c.integracoes.demo);
@@ -288,6 +345,56 @@
     return fetch(integ().whatsappUrl, { method: "POST", headers: headers,
       body: JSON.stringify({ acao: "enviar", para: "55" + String(para).replace(/\D/g, ""), texto: texto }) })
       .then(function (r) { return r.json(); });
+  }
+
+  // ---------- resumo diário do dono ----------
+  function montaResumo(dia) {
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var hoje = S.todayISO();
+    var ck = 0, novos = 0, vendas = 0, vendasVal = 0, cancel = 0;
+    var atrasoN = 0, atrasoVal = 0, aniv = 0;
+    stA.alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) { if ((t || "").slice(0, 10) === dia) ck++; });
+      if ((a.criado || "") === dia) novos++;
+      if ((a.nasc || "").slice(5, 10) === hoje.slice(5, 10) && a.status !== "inativo") aniv++;
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "") === dia) { vendas++; vendasVal += +c.valor || 0; }
+        if ((c.canceladoEm || "") === dia) cancel++;
+      });
+    });
+    stA.recebiveis.forEach(function (r) {
+      if (r.status === "aberto" && r.vencimento < hoje) { atrasoN++; atrasoVal += +r.valor || 0; }
+    });
+    return "📊 TORQUE FIT — resumo de " + S.fmtData(dia) + "\n\n" +
+      "🏋️ Check-ins: " + ck + "\n" +
+      "🆕 Novos alunos: " + novos + "\n" +
+      "💰 Contratos vendidos: " + vendas + (vendasVal ? " (" + S.fmtBRL(vendasVal) + ")" : "") + "\n" +
+      "🚫 Cancelamentos: " + cancel + "\n" +
+      "💸 Em atraso hoje: " + atrasoN + " mensalidade(s)" + (atrasoVal ? " (" + S.fmtBRL(atrasoVal) + ")" : "") + "\n" +
+      "🎂 Aniversariantes de hoje: " + aniv + "\n\n" +
+      "Enviado automaticamente pelo TORQUESYS 💜";
+  }
+  function enviaResumoDono(manual) {
+    var st = load();
+    var cfgR = st.resumoDono || {};
+    if (!cfgR.zap) { if (manual) alert("Preencha o WhatsApp do dono primeiro."); return; }
+    var hoje = S.todayISO();
+    var ontem = new Date(hoje + "T12:00"); ontem.setDate(ontem.getDate() - 1);
+    var texto = montaResumo(S.todayISO(ontem));
+    enviaWa(cfgR.zap, texto).then(function (r) {
+      var ok = r && (r.ok || r.sucesso || r.demo);
+      if (ok) {
+        st = load();
+        st.resumoDono = st.resumoDono || {};
+        st.resumoDono.ultimo = hoje;
+        S.write("automacao", st);
+      }
+      $("resumoStatus").textContent = ok
+        ? "✅ Resumo de ontem enviado" + (r.demo ? " (simulação)" : "") + "."
+        : "⚠️ Não deu para enviar — confira o WhatsApp oficial em Integrações.";
+    }).catch(function () {
+      $("resumoStatus").textContent = "⚠️ Sem conexão com a função do WhatsApp (Integrações).";
+    });
   }
 
   // ---------- render ----------
