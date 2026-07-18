@@ -165,8 +165,9 @@
         '<div class="campo"><label>Salário mensal (R$)</label><input id="cSalario" type="number" step="0.01" min="0" value="' + (+c.salario || "") + '"></div>' +
         '<div class="campo"><label>Valor hora (R$)</label><input id="cValorHora" type="number" step="0.01" min="0" value="' + (+c.valorHora || "") + '"></div>' +
         "</div>" +
+        '<p class="muted" id="hintVinculo" style="margin: 6px 0 0;"></p>' +
         '<div class="linha-flex" style="margin-top: 8px;"><button class="btn" id="btnFolha">💲 Lançar salário do mês em Contas a Pagar</button>' +
-        '<span class="muted">entra no centro "Folha de pagamento", vencimento dia 5 do mês seguinte</span></div>' +
+        '<span class="muted" id="folhaNota">entra no centro "Folha de pagamento", vencimento dia 5 do mês seguinte</span></div>' +
         "<h2 style='margin-top: 18px;'>Informações complementares</h2><div class='grid-2' style='margin-top: 10px;'>" +
         '<div class="campo"><label>Conta bancária / PIX</label><input id="cBanco" value="' + esc(c.banco || "") + '"></div>' +
         '<div class="campo"><label>Observações (benefícios, documentos, exames)</label><input id="cObsC" value="' + esc(c.obsContratacao || "") + '"></div>' +
@@ -239,6 +240,29 @@
       .forEach(function (par) { salvaCampo(par[0], par[1]); });
     salvaCampo("cSalario", "salario", function (el) { return +el.value || 0; });
     salvaCampo("cValorHora", "valorHora", function (el) { return +el.value || 0; });
+    // horista/diarista não tem salário fixo: o campo trava e a folha vira horas × valor hora
+    function ajustaVinculo() {
+      var sel = $("cTipo");
+      if (!sel) return;
+      var horista = /horista|diarista/i.test(sel.value);
+      var sal = $("cSalario"), hint = $("hintVinculo"), bF2 = $("btnFolha"), nota = $("folhaNota");
+      if (sal) {
+        sal.disabled = horista;
+        if (horista) sal.value = "";
+        sal.style.opacity = horista ? ".45" : "1";
+      }
+      if (hint) hint.textContent = horista
+        ? "⏱ HORISTA: não recebe salário fixo — preencha o VALOR HORA. O pagamento do mês sai das horas batidas no ponto (Colaboradores → Ponto do dia)."
+        : (sel.value ? "💼 Salário fixo mensal — preencha o campo Salário mensal." : "");
+      if (bF2) bF2.textContent = horista ? "💲 Lançar horas do mês em Contas a Pagar" : "💲 Lançar salário do mês em Contas a Pagar";
+      if (nota) nota.textContent = horista
+        ? "calcula horas batidas no ponto × valor hora; centro Folha de pagamento, vencimento dia 5"
+        : 'entra no centro "Folha de pagamento", vencimento dia 5 do mês seguinte';
+    }
+    if ($("cTipo")) {
+      $("cTipo").addEventListener("change", ajustaVinculo);
+      ajustaVinculo();
+    }
 
     Array.prototype.forEach.call(document.querySelectorAll("[data-h]"), function (inp) {
       inp.addEventListener("change", function () {
@@ -302,17 +326,39 @@
     if (bF) bF.onclick = function () {
       var st2 = load();
       var c2 = st2.colaboradores.find(function (x) { return x.id === colId; });
-      if (!+c2.salario) { alert("Preencha o salário mensal primeiro."); return; }
+      var horista = /horista|diarista/i.test(c2.tipoContrato || "");
+      var comp = S.todayISO().slice(0, 7);
+      var valor, desc;
+      if (horista) {
+        if (!+c2.valorHora) { alert("Preencha o valor hora primeiro — horista não tem salário fixo."); return; }
+        var horas = 0;
+        var pontos = (st2.ponto || []).filter(function (pt) { return pt.nome === c2.nome && (pt.quando || "").slice(0, 7) === comp; })
+          .sort(function (a, b) { return a.quando < b.quando ? -1 : 1; });
+        var aberta = null;
+        pontos.forEach(function (pt) {
+          if (pt.tipo === "entrada") aberta = pt.quando;
+          else if (pt.tipo === "saida" && aberta && aberta.slice(0, 10) === pt.quando.slice(0, 10)) {
+            horas += (new Date(pt.quando) - new Date(aberta)) / 36e5;
+            aberta = null;
+          }
+        });
+        horas = Math.round(horas * 100) / 100;
+        if (!horas) { alert("Nenhuma hora batida no ponto em " + comp + " — registre entrada e saída em Colaboradores → Ponto do dia."); return; }
+        valor = Math.round(horas * +c2.valorHora * 100) / 100;
+        desc = "Horas " + comp + " (" + String(horas).replace(".", ",") + "h × " + S.fmtBRL(+c2.valorHora) + ") — " + c2.nome;
+      } else {
+        if (!+c2.salario) { alert("Preencha o salário mensal primeiro."); return; }
+        valor = +c2.salario;
+        desc = "Salário " + comp + " — " + c2.nome;
+      }
       var hoje = new Date(S.todayISO() + "T12:00");
       var venc = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 5);
-      var comp = S.todayISO().slice(0, 7);
-      var desc = "Salário " + comp + " — " + c2.nome;
       var stC = S.read("contas", { centros: [], contas: [] });
-      if (stC.contas.some(function (x) { return x.desc === desc; })) { alert("O salário de " + comp + " já foi lançado."); return; }
+      if (stC.contas.some(function (x) { return x.desc === desc; })) { alert("Este lançamento de " + comp + " já foi feito."); return; }
       stC.contas.push({ id: S.uid(), desc: desc, forn: c2.nome, centro: "Folha de pagamento",
-        valor: +c2.salario, vencimento: S.todayISO(venc), status: "aberto" });
+        valor: valor, vencimento: S.todayISO(venc), status: "aberto" });
       S.write("contas", stC);
-      alert("Lançado! " + desc + " (" + S.fmtBRL(+c2.salario) + ") nas Contas a Pagar, vencimento " + S.fmtData(S.todayISO(venc)) + ".");
+      alert("Lançado! " + desc + " (" + S.fmtBRL(valor) + ") nas Contas a Pagar, vencimento " + S.fmtData(S.todayISO(venc)) + ".");
     };
 
     $("abas").addEventListener("click", function (e) {
