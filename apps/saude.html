@@ -98,6 +98,11 @@
       <div class="campo"><label>Panturrilha</label><input id="mPant" type="number" step="0.5"></div>
     </div>
     <div class="campo"><label>Observações</label><input id="vObs" placeholder="postura, objetivos, restrições…"></div>
+    <div class="grid-2">
+      <div class="campo"><label>📸 Foto de frente (opcional)</label><input id="vFotoF" type="file" accept="image/*" capture="environment"></div>
+      <div class="campo"><label>📸 Foto de perfil (opcional)</label><input id="vFotoL" type="file" accept="image/*" capture="environment"></div>
+    </div>
+    <p class="mut" style="margin:0;font-size:12px;">As fotos são comprimidas e ficam no cadastro — o comparador antes × depois aparece no histórico e no app do aluno.</p>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
       <button class="btn" value="ok">Salvar avaliação</button>
@@ -235,7 +240,7 @@
     var el = e.target.closest("[data-al]");
     if (!el) return;
     alunoSel = el.getAttribute("data-al");
-    renderLista(); renderPainel();
+    renderLista(); renderPainel(); renderPainelComparador();
   });
 
   // ---------- abas ----------
@@ -247,6 +252,15 @@
   });
 
   // ---------- painel ----------
+  function renderPainelComparador() {
+    var alvo = document.getElementById("comparadorBox");
+    if (!alvo) {
+      alvo = document.createElement("div");
+      alvo.id = "comparadorBox";
+      document.querySelector("main").appendChild(alvo);
+    }
+    alvo.innerHTML = (window.comparadorHTML && alunoSel) ? window.comparadorHTML(alunoSel) : "";
+  }
   function renderPainel() {
     var st = load();
     var aluno = alunosAtivos().find(function (a) { return a.id === alunoSel; });
@@ -383,8 +397,10 @@
     st.avaliacoes.push({
       id: S.uid(), alunoId: alunoSel, data: $("vData").value, avaliador: $("vAvaliador").value.trim(),
       peso: +$("vPeso").value || 0, altura: +$("vAltura").value || 0, gordura: +$("vGordura").value || "",
-      medidas: medidas, obs: $("vObs").value.trim(),
+      medidas: medidas, obs: $("vObs").value.trim(), fotos: fotosPendentes,
     });
+    fotosPendentes = {};
+    $("vFotoF").value = ""; $("vFotoL").value = "";
     save(st);
   });
 
@@ -392,6 +408,49 @@
   S.equipeDatalist(["vAvaliador"]);
   S.onChange(function (k) { if (k === "saude" || k === "alunos") render(); });
   render();
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  window.fotosPendentes = {};
+
+  // comprime para no máx. 480px e guarda como dataURL (cabe na sincronização)
+  function comprime(arquivo, chave) {
+    var leitor = new FileReader();
+    leitor.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var esc2 = Math.min(1, 480 / Math.max(img.width, img.height));
+        var cv = document.createElement("canvas");
+        cv.width = Math.round(img.width * esc2);
+        cv.height = Math.round(img.height * esc2);
+        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+        fotosPendentes[chave] = cv.toDataURL("image/jpeg", 0.72);
+      };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(arquivo);
+  }
+  $("vFotoF").addEventListener("change", function () { if (this.files[0]) comprime(this.files[0], "frente"); });
+  $("vFotoL").addEventListener("change", function () { if (this.files[0]) comprime(this.files[0], "lado"); });
+
+  // comparador antes × depois no painel do aluno selecionado
+  window.comparadorHTML = function (alunoId) {
+    var avs = S.read("saude", { avaliacoes: [] }).avaliacoes
+      .filter(function (v) { return v.alunoId === alunoId && v.fotos && (v.fotos.frente || v.fotos.lado); })
+      .sort(function (x, y) { return (x.data || "") < (y.data || "") ? -1 : 1; });
+    if (avs.length < 1) return "";
+    var antes = avs[0], depois = avs[avs.length - 1];
+    function bloco(av, rot) {
+      return '<div style="flex:1;text-align:center;min-width:130px;"><div style="font-weight:800;font-size:12px;color:var(--cinza);">' + rot + " · " + S.fmtData(av.data) + "</div>" +
+        (av.fotos.frente ? '<img src="' + av.fotos.frente + '" style="max-width:100%;max-height:220px;border-radius:8px;margin-top:6px;">' : "") +
+        (av.fotos.lado ? '<img src="' + av.fotos.lado + '" style="max-width:100%;max-height:220px;border-radius:8px;margin-top:6px;">' : "") + "</div>";
+    }
+    return '<div class="card" style="margin-top:14px;"><h2>📸 Antes × Depois</h2><div class="linha-flex" style="gap:14px;align-items:flex-start;flex-wrap:wrap;">' +
+      bloco(antes, "ANTES") + (depois !== antes ? bloco(depois, "DEPOIS") : "") + "</div></div>";
+  };
 })();
 </script>
 </body>

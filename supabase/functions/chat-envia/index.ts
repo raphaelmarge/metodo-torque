@@ -157,6 +157,37 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, texto });
   }
 
+  // copiloto do dono: análise de gestão com o Claude (não envia nada a ninguém)
+  if (corpo.acao === "analisar") {
+    const uid = usuarioDoToken(req);
+    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    const m = (r.ok ? await r.json() : [])[0];
+    if (!m) return json({ erro: "sem permissão" }, 403);
+    const chave = env("ANTHROPIC_API_KEY");
+    if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
+    const dados = String(corpo.dados || "").slice(0, 12000);
+    const r2 = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-opus-4-8",
+        max_tokens: 1500,
+        thinking: { type: "adaptive" },
+        system: "Você é um consultor sênior de gestão de academias no Brasil. Recebe os números e a lista " +
+          "de alunos em risco de uma academia e devolve um diagnóstico curto e ACIONÁVEL em português: " +
+          "1) leitura geral em 2-3 frases; 2) os 3 movimentos mais importantes desta semana, em ordem de impacto, " +
+          "cada um com o passo concreto; 3) para os alunos de maior risco, a abordagem certa (tom e argumento). " +
+          "Seja direto, use os números recebidos, não invente dados. Sem markdown pesado — texto corrido com quebras.",
+        messages: [{ role: "user", content: dados }],
+      }),
+    });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
+    const d2 = await r2.json();
+    let texto = "";
+    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
+    return json({ ok: true, texto: texto.trim() });
+  }
+
   if (!corpo.conversa_id) return json({ erro: "conversa_id obrigatório" }, 400);
 
   // conversa + confirmação de que quem chama é membro da academia dela

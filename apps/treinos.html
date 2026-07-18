@@ -73,6 +73,7 @@
       <button data-a="presc" class="ativa">Prescrição de Treinos</button>
       <button data-a="padroes">Treinos Padrão</button>
       <button data-a="exercicios">Exercícios</button>
+      <button data-a="execucao">📈 Execução dos alunos</button>
     </div>
     <span class="muted" id="resumoAba"></span>
   </div>
@@ -122,6 +123,13 @@
         <tbody id="linhasEx"></tbody>
       </table>
     </div>
+  </section>
+  <!-- ============ EXECUÇÃO DOS ALUNOS (nuvem) ============ -->
+  <section id="vExecucao" hidden>
+    <div class="card">
+      <p class="mut" style="margin:0;">O que os alunos registraram <b>pelo app</b> nos últimos 14 dias: séries feitas e carga usada em cada exercício. É a evolução real, não o que está no papel — use para ajustar as fichas. Requer a nuvem ligada e os apps republicados.</p>
+    </div>
+    <div id="execLista" style="margin-top:14px;"></div>
   </section>
 </main>
 
@@ -177,6 +185,8 @@
     $("vPresc").hidden = aba !== "presc";
     $("vPadroes").hidden = aba !== "padroes";
     $("vExercicios").hidden = aba !== "exercicios";
+    $("vExecucao").hidden = aba !== "execucao";
+    if (aba === "execucao") carregaExecucao();
     Array.prototype.forEach.call(document.querySelectorAll("#abas button"), function (b) {
       b.classList.toggle("ativa", b.getAttribute("data-a") === aba);
     });
@@ -557,6 +567,62 @@
   S.equipeDatalist(["pProf"]);
   S.onChange(function (k) { if (k === "treinos" || k === "alunos") render(); });
   mostraAba();
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  window.carregaExecucao = function () {
+    var el = $("execLista");
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      el.innerHTML = '<div class="card" style="color:#b45309;">☁️ Entre com a sua conta da nuvem para ver a execução dos alunos.</div>';
+      return;
+    }
+    el.innerHTML = '<div class="card">Carregando registros…</div>';
+    var d14 = new Date(); d14.setDate(d14.getDate() - 14);
+    var iso14 = d14.toISOString().slice(0, 10);
+    nuvem.client.from("app_treino_log").select("token,dia,exercicio,feitas,carga")
+      .gte("dia", iso14).order("dia", { ascending: false }).limit(1000)
+      .then(function (r) {
+        if (r.error) {
+          el.innerHTML = '<div class="card" style="color:#b45309;">⚠️ ' +
+            (String(r.error.message).indexOf("does not exist") !== -1
+              ? "Rode o bloco TREINO SINCRONIZADO do supabase-setup.sql."
+              : esc(r.error.message)) + "</div>";
+          return;
+        }
+        var logs = r.data || [];
+        if (!logs.length) {
+          el.innerHTML = '<div class="card">Nenhum registro ainda — os apps mandam sozinhos quando o aluno marca as séries ou anota a carga. Republique os apps se acabou de atualizar.</div>';
+          return;
+        }
+        var nomeDe = {};
+        S.read("alunos", { alunos: [] }).alunos.forEach(function (a) { if (a.appToken) nomeDe[a.appToken] = a.nome; });
+        var porAluno = {};
+        logs.forEach(function (l) {
+          var nome = nomeDe[l.token] || "Aluno (token " + l.token.slice(0, 6) + "…)";
+          (porAluno[nome] = porAluno[nome] || []).push(l);
+        });
+        el.innerHTML = Object.keys(porAluno).sort().map(function (nome) {
+          var ls = porAluno[nome];
+          var dias = {};
+          ls.forEach(function (l) { (dias[l.dia] = dias[l.dia] || []).push(l); });
+          var diasOrd = Object.keys(dias).sort().reverse();
+          return '<div class="card" style="margin-bottom:12px;"><h2>' + esc(nome) +
+            ' <small class="muted">· ' + diasOrd.length + " treino(s) em 14 dias</small></h2>" +
+            diasOrd.slice(0, 5).map(function (dia) {
+              return '<div style="margin-top:8px;"><b style="font-size:13px;">' + dia.split("-").reverse().slice(0, 2).join("/") + "</b> — " +
+                dias[dia].map(function (l) {
+                  return esc(l.exercicio) + " <b>" + l.feitas + "×</b>" + (l.carga ? " (" + esc(l.carga) + ")" : "");
+                }).join(" · ") + "</div>";
+            }).join("") + "</div>";
+        }).join("");
+      });
+  };
 })();
 </script>
 </body>

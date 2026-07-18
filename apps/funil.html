@@ -297,5 +297,42 @@
   render();
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  function puxaMatriculasOnline() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return Promise.resolve(0);
+    return nuvem.client.from("matriculas_online").select("id,nome,zap,email,plano,criado")
+      .eq("status", "novo").then(function (r) {
+        if (r.error || !r.data || !r.data.length) return 0;
+        var st = S.read("funil", { leads: [] });
+        var novos = 0;
+        r.data.forEach(function (m) {
+          st.leads.push({
+            id: S.uid(), nome: m.nome, zap: m.zap || "", email: m.email || "",
+            etapa: "novo", origem: "🛒 Matrícula online", obs: "Plano escolhido: " + (m.plano || "?"),
+            criado: (m.criado || "").slice(0, 10) || S.todayISO(),
+            proximoContato: S.todayISO(),
+          });
+          novos++;
+        });
+        if (novos) S.write("funil", st);
+        return nuvem.client.from("matriculas_online").update({ status: "importado" })
+          .in("id", r.data.map(function (m) { return m.id; })).then(function () {
+            var el = document.createElement("div");
+            el.style.cssText = "position:fixed;bottom:18px;right:18px;background:#7c3aed;color:#fff;padding:12px 18px;border-radius:8px;font-weight:700;font-size:14px;z-index:99;";
+            el.textContent = "🛒 " + novos + " matrícula(s) online viraram leads — chame no WhatsApp AGORA (lead quente esfria em 1h)!";
+            document.body.appendChild(el);
+            setTimeout(function () { el.remove(); }, 9000);
+            location.reload();
+          });
+      }, function () { return 0; });
+  }
+  window.__matriculasOnline = puxaMatriculasOnline; // testes
+  setTimeout(puxaMatriculasOnline, 3000);
+  setInterval(puxaMatriculasOnline, 60000);
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Totem de Autoatendimento — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: #121016; color: #f5f4f7; min-height: 100vh; display: flex; flex-direction: column; }
+  header { text-align: center; padding: 26px 16px 10px; }
+  header h1 { font-size: 30px; font-weight: 800; }
+  #relogio { font-size: 52px; font-weight: 800; color: #a78bfa; letter-spacing: .02em; }
+  main { flex: 1; max-width: 640px; width: 100%; margin: 0 auto; padding: 10px 18px 40px; }
+  .busca { display: flex; gap: 10px; margin-top: 14px; }
+  input { flex: 1; background: #1c1826; border: 2px solid #2c2739; border-radius: 14px; color: #fff; padding: 18px; font-family: inherit; font-size: 20px; text-align: center; }
+  input:focus { outline: none; border-color: #7c3aed; }
+  .btn-qr { background: #7c3aed; border: none; border-radius: 14px; color: #fff; font-size: 26px; padding: 0 24px; cursor: pointer; }
+  .sug { margin-top: 8px; }
+  .sug button { display: block; width: 100%; background: #1c1826; border: 1px solid #2c2739; border-radius: 10px; color: #fff; font-family: inherit; font-size: 18px; padding: 14px; margin-top: 6px; cursor: pointer; }
+  #painel { margin-top: 18px; border-radius: 18px; padding: 26px; text-align: center; display: none; }
+  #painel.ok { background: rgba(22,163,74,.15); border: 2px solid #16a34a; }
+  #painel.bloq { background: rgba(220,38,38,.14); border: 2px solid #dc2626; }
+  #painel .emj { font-size: 60px; }
+  #painel h2 { font-size: 26px; margin: 8px 0 4px; }
+  #painel p { color: #cfc9dd; font-size: 15px; line-height: 1.5; }
+  #videoQR { width: 100%; max-height: 300px; background: #000; border-radius: 14px; object-fit: cover; margin-top: 12px; display: none; }
+  .wod { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 18px; margin-top: 22px; }
+  .wod h3 { color: #a78bfa; font-size: 13px; letter-spacing: .12em; margin-bottom: 8px; }
+  .wod pre { font-family: inherit; white-space: pre-wrap; font-size: 15px; line-height: 1.55; }
+  .aviso { background: #1c1826; border-left: 4px solid #7c3aed; border-radius: 10px; padding: 12px 14px; margin-top: 10px; font-size: 14px; }
+  .rodape { text-align: center; color: #6f6a7d; font-size: 12px; padding: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div id="relogio">--:--</div>
+  <h1 id="tNome">💪 Bem-vindo(a)!</h1>
+  <p style="color:#b9b3c6;margin-top:4px;">Toque no seu nome ou mostre o QR da carteirinha 👇</p>
+</header>
+
+<main>
+  <div class="busca">
+    <input id="busca" placeholder="Digite seu nome…" autocomplete="off">
+    <button class="btn-qr" id="btnQR" title="Ler QR da carteirinha">📷</button>
+  </div>
+  <video id="videoQR" playsinline muted></video>
+  <div class="sug" id="sug"></div>
+  <div id="painel"></div>
+
+  <div class="wod" id="wodBox" hidden>
+    <h3>🔥 WOD DE HOJE</h3>
+    <b id="wodNome" style="font-size:18px;"></b>
+    <pre id="wodTreino"></pre>
+  </div>
+  <div id="avisos"></div>
+</main>
+
+<p class="rodape">TORQUESYS · modo totem — toque em qualquer lugar para recomeçar após o check-in</p>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var hoje = S.todayISO();
+
+  // relógio + nome da academia
+  function tic() {
+    var d = new Date();
+    $("relogio").textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+  }
+  tic(); setInterval(tic, 15000);
+  var nomeAcad = (S.read("config", { dados: {} }).dados || {}).nome;
+  if (nomeAcad) $("tNome").textContent = "💪 " + nomeAcad;
+
+  // WOD do dia + avisos do mural
+  var wod = ((S.read("wod", { dias: {} }).dias || {})[hoje]) || null;
+  if (wod && (wod.treino || wod.nome)) {
+    $("wodBox").hidden = false;
+    $("wodNome").textContent = wod.nome || "WOD do dia";
+    $("wodTreino").textContent = wod.treino || "";
+  }
+  var posts = (S.read("appAluno", { posts: [] }).posts || []).slice(-3).reverse();
+  $("avisos").innerHTML = posts.map(function (p) {
+    return '<div class="aviso"><b>' + esc(p.titulo) + "</b>" + (p.texto ? "<br>" + esc(p.texto) : "") + "</div>";
+  }).join("");
+
+  // regras de liberação (mesmo espírito da tela Entrada, resumidas para o totem)
+  function situacaoTotem(a) {
+    var cfgB = (S.read("config", { dados: {} }).bloqueio) || {};
+    var inadDias = cfgB.inadDias != null ? +cfgB.inadDias : 15;
+    if (a.status === "inativo") return { ok: false, motivo: "Cadastro inativo — fale com a recepção." };
+    if (a.restrito && (!a.restrito.ate || a.restrito.ate >= hoje)) return { ok: false, motivo: "Acesso restrito — procure a recepção." };
+    var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo"; });
+    if (!ativos.length) return { ok: false, motivo: "Sem plano ativo — bora renovar na recepção? 💜" };
+    var st = S.read("alunos", { recebiveis: [] });
+    var pior = 0;
+    st.recebiveis.forEach(function (r) {
+      if (r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje) {
+        var dd = Math.floor((new Date(hoje) - new Date(r.vencimento)) / 864e5);
+        if (dd > pior) pior = dd;
+      }
+    });
+    if (inadDias > 0 && pior > inadDias) return { ok: false, motivo: "Mensalidade em aberto há " + pior + " dias — passa na recepção rapidinho. 💜" };
+    return { ok: true };
+  }
+
+  function checkin(a) {
+    var s = situacaoTotem(a);
+    var painel = $("painel");
+    painel.style.display = "block";
+    if (!s.ok) {
+      painel.className = "bloq";
+      painel.innerHTML = '<div class="emj">🚫</div><h2>' + esc(a.nome.split(" ")[0]) + ", quase!</h2><p>" + esc(s.motivo) + "</p>";
+    } else {
+      var st = S.read("alunos", { alunos: [] });
+      var al = st.alunos.find(function (x) { return x.id === a.id; });
+      var agora = new Date().toISOString().slice(0, 16);
+      var jaHoje = (al.checkins || []).some(function (t) { return (t || "").slice(0, 10) === hoje; });
+      if (!jaHoje) { (al.checkins = al.checkins || []).push(agora); S.write("alunos", st); }
+      var n = (al.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === hoje.slice(0, 7); }).length;
+      painel.className = "ok";
+      painel.innerHTML = '<div class="emj">✅</div><h2>Bom treino, ' + esc(a.nome.split(" ")[0]) + "!</h2>" +
+        "<p>" + (jaHoje ? "Check-in de hoje já estava registrado. " : "Check-in registrado! ") +
+        "Este é o seu <b>" + n + "º treino do mês</b>. 💪</p>";
+    }
+    $("busca").value = "";
+    $("sug").innerHTML = "";
+    clearTimeout(window.__limpa);
+    window.__limpa = setTimeout(function () { painel.style.display = "none"; }, 8000);
+  }
+
+  // busca por nome
+  $("busca").addEventListener("input", function () {
+    var q = this.value.trim().toLowerCase();
+    if (q.length < 2) { $("sug").innerHTML = ""; return; }
+    var achados = S.read("alunos", { alunos: [] }).alunos
+      .filter(function (a) { return a.nome.toLowerCase().indexOf(q) !== -1; }).slice(0, 5);
+    $("sug").innerHTML = achados.map(function (a) {
+      return '<button data-id="' + a.id + '">' + esc(a.nome) + "</button>";
+    }).join("");
+  });
+  $("sug").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-id]");
+    if (!b) return;
+    var a = S.read("alunos", { alunos: [] }).alunos.find(function (x) { return x.id === b.dataset.id; });
+    if (a) checkin(a);
+  });
+
+  // QR da carteirinha
+  var stream = null, timer = null;
+  function codigoDe(a) { return String(a.id).replace(/[^a-z0-9]/gi, "").slice(-8).toUpperCase(); }
+  $("btnQR").addEventListener("click", function () {
+    if (stream) {
+      clearInterval(timer);
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      stream = null;
+      $("videoQR").style.display = "none";
+      return;
+    }
+    if (!("BarcodeDetector" in window)) { alert("Este aparelho não tem leitor de QR no navegador — use a busca pelo nome."); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }).then(function (s2) {
+      stream = s2;
+      var v = $("videoQR");
+      v.style.display = "block";
+      v.srcObject = s2;
+      v.play();
+      var det = new BarcodeDetector({ formats: ["qr_code"] });
+      timer = setInterval(function () {
+        det.detect(v).then(function (codes) {
+          if (!codes || !codes.length) return;
+          var lido = String(codes[0].rawValue || "").trim().toUpperCase();
+          var a = S.read("alunos", { alunos: [] }).alunos.find(function (x) { return codigoDe(x) === lido; });
+          if (a) {
+            clearInterval(timer);
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            stream = null;
+            $("videoQR").style.display = "none";
+            checkin(a);
+          }
+        }).catch(function () {});
+      }, 400);
+    }).catch(function () { alert("Sem acesso à câmera — confira a permissão."); });
+  });
+
+  window.__totem = { checkin: checkin, situacaoTotem: situacaoTotem }; // testes
+})();
+</script>
+</body>
+</html>

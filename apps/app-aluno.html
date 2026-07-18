@@ -236,12 +236,28 @@
     var emDia = !atrasados.length;
 
     // treino, avaliação, sessões
+    var meusPacotes = (S.read("aulasPersonal", { itens: [] }).pacotes || [])
+      .filter(function (p) { return p.aluno === a.nome; })
+      .map(function (p) { return { qtd: +p.qtd || 0, saldo: (+p.qtd || 0) - (p.sessoes || []).length, validade: p.validade || "" }; });
     var stTr = S.read("treinos", { prescricoes: [], exercicios: [] });
     var presc = stTr.prescricoes.find(function (p) { return p.alunoId === a.id; });
     var videoDe = {};
     (stTr.exercicios || []).forEach(function (x) { if (x.video) videoDe[(x.nome || "").toLowerCase()] = x.video; });
     var avs = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? 1 : -1; });
+    var comFoto = avs.filter(function (v) { return v.fotos && (v.fotos.frente || v.fotos.lado); });
+    var fotoAntes = comFoto.length ? comFoto[comFoto.length - 1] : null;
+    var fotoDepois = comFoto.length > 1 ? comFoto[0] : null;
+    function blocoFoto(rot, av2) {
+      if (!av2) return "";
+      var fx = av2.fotos.frente || av2.fotos.lado;
+      return "<div style=\"flex:1;text-align:center;\"><div style=\"font-size:11px;font-weight:800;color:var(--txt2);\">" +
+        rot + " · " + S.fmtData(av2.data) +
+        "</div><img src=\"" + fx + "\" style=\"max-width:100%;border-radius:10px;margin-top:4px;\"></div>";
+    }
+    var antesDepoisHTML = fotoAntes
+      ? "<div style=\"display:flex;gap:10px;margin-top:10px;\">" + blocoFoto("ANTES", fotoAntes) + blocoFoto("DEPOIS", fotoDepois) + "</div>"
+      : "";
     var av = avs[0];
     var avalDias = +(cfg.avaliacaoDias) || 90;
     var proxAv = null;
@@ -585,11 +601,17 @@
         kv("Status", emDia ? "Ativo ✅" : "Com pendência ⚠") : "<div class='vz'>Sem plano ativo.</div>") + "</div></details>" +
       "<details id='dSessoes'><summary><span class='ic'>📆</span>Sessões e presenças</summary><div class='dcorpo'>" +
       kv("Presenças neste mês", sessoesMes + "x") +
-      kv("Total registrado", (a.checkins || []).length + " check-in(s)") + "</div></details>" +
+      kv("Total registrado", (a.checkins || []).length + " check-in(s)") +
+      (meusPacotes.length ? meusPacotes.map(function (pp) {
+        return "<div style='border:1px dashed var(--cor);border-radius:10px;padding:10px;margin-top:8px;font-size:13px;'>🎟 <b>Personal:</b> " +
+          pp.saldo + " de " + pp.qtd + " sessão(ões) restantes" +
+          (pp.validade ? " · válido até " + S.fmtData(pp.validade) : "") +
+          (pp.saldo <= 2 ? " — <b>renove com a equipe!</b>" : "") + "</div>";
+      }).join("") : "") + "</div></details>" +
       "<details id='dAval'><summary><span class='ic'>🩺</span>Avaliação física</summary><div class='dcorpo'>" +
       (av ? kv("Última", S.fmtData(av.data)) + (av.peso ? kv("Peso", av.peso + " kg") : "") +
         (av.gordura ? kv("% de gordura", av.gordura + "%") : "") + (proxAv ? kv("Próxima", S.fmtData(proxAv)) : "")
-        : "<div class='vz'>Nenhuma avaliação ainda — agenda a sua! 📊</div>") + "</div></details>" +
+        : "<div class='vz'>Nenhuma avaliação ainda — agenda a sua! 📊</div>") + antesDepoisHTML + "</div></details>" +
       "<details id='dTreino'><summary><span class='ic'>🏋️</span>Meu treino" + (presc && presc.nome ? " — " + esc(presc.nome) : "") + "</summary><div class='dcorpo'>" + fichasHTML() + "</div></details>" +
       "<details id='dDados'><summary><span class='ic'>👤</span>Dados pessoais</summary><div class='dcorpo'>" +
       (a.zap ? kv("Celular", esc(a.zap)) : "") + (a.email ? kv("E-mail", esc(a.email)) : "") +
@@ -711,6 +733,15 @@
         "if(sb){var po2=sb.closest('.post');var inp=po2.querySelector('.pinput input');var tx=inp.value.trim();if(!tx)return;sb.disabled=true;" +
         "rpc('app_aluno_reage',{t:TOKEN,p_post:po2.querySelector('.pacts').dataset.post,p_tipo:'coment',p_nome:NOME,p_texto:tx}).then(function(){inp.value='';sb.disabled=false;po2.querySelector('.pcoms').hidden=false;carregaReacoes();});return;}});" +
         "carregaReacoes();" +
+        // treino sincronizado: manda séries feitas e cargas para o professor ver
+        "var syncT=null;function agendaSyncTreino(){clearTimeout(syncT);syncT=setTimeout(enviaTreino,2500);}" +
+        "function enviaTreino(){var dia=new Date().toISOString().slice(0,10);" +
+        "var f2=tqL('tqd_'+dia,{}),c2=tqL('tq_carga',{});var itens=[];" +
+        "document.querySelectorAll('.sfeita').forEach(function(b){var k=b.dataset.ex;" +
+        "if(f2[k]||c2[k])itens.push({ex:k,f:f2[k]||0,c:c2[k]||''});});" +
+        "if(itens.length)rpc('app_aluno_treino_reg',{t:TOKEN,p_dia:dia,p_itens:itens});}" +
+        "document.addEventListener('click',function(e){if(e.target.closest('.sfeita'))agendaSyncTreino();});" +
+        "document.addEventListener('change',function(e){if(e.target.closest('.cargain'))agendaSyncTreino();});" +
         // notificações locais: lembrete das aulas de hoje ao abrir o app
         "function lembreteAulas(){if(!('Notification'in window)||Notification.permission!=='granted')return;" +
         "rpc('app_aluno_agendamentos',{t:TOKEN}).then(function(l){if(!Array.isArray(l))return;var hj=new Date().toISOString().slice(0,10);" +
