@@ -157,6 +157,45 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, texto });
   }
 
+  // central de ajuda: o Claude responde dúvidas de uso com base no manual
+  if (corpo.acao === "ajuda") {
+    const uid = usuarioDoToken(req);
+    let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    if (!(r.ok ? await r.json() : []).length) return json({ erro: "sem permissão" }, 403);
+    const chave = env("ANTHROPIC_API_KEY");
+    if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
+    const manual = String(corpo.contexto || "").slice(0, 24000);
+    const hist = Array.isArray(corpo.historico) ? corpo.historico.slice(-8) : [];
+    const msgs: { role: "user" | "assistant"; content: string }[] = [];
+    for (const m of hist) {
+      const role = m.de === "eu" ? "user" : "assistant";
+      const ultimo = msgs[msgs.length - 1];
+      if (ultimo && ultimo.role === role) ultimo.content += "\n" + m.texto;
+      else msgs.push({ role, content: String(m.texto || "").slice(0, 2000) });
+    }
+    if (!msgs.length || msgs[msgs.length - 1].role !== "user") return json({ erro: "pergunta vazia" }, 400);
+    const r2 = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-opus-4-8",
+        max_tokens: 900,
+        thinking: { type: "adaptive" },
+        system: "Você é o assistente de suporte do TORQUESYS, o sistema de gestão da academia TORQUE FIT. " +
+          "Responda em português do Brasil, curto e direto, SEMPRE com base no manual abaixo. " +
+          "Cite o caminho do menu exatamente como está no manual (ex.: Sistema → Operação → Entrada). " +
+          "Se a resposta não estiver no manual, diga honestamente que esse recurso não existe (ou ainda não) " +
+          "e aponte o tutorial mais próximo. Nunca invente telas, botões ou passos.\n\n=== MANUAL ===\n" + manual,
+        messages: msgs,
+      }),
+    });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
+    const d2 = await r2.json();
+    let texto = "";
+    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
+    return json({ ok: true, texto: texto.trim() });
+  }
+
   // copiloto do dono: análise de gestão com o Claude (não envia nada a ninguém)
   if (corpo.acao === "analisar") {
     const uid = usuarioDoToken(req);

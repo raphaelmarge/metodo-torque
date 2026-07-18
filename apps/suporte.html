@@ -27,6 +27,19 @@
   .primeiros { background: linear-gradient(135deg, #f6f2fd, #fff); border: 2px solid var(--roxo); padding: 18px 20px; }
   .primeiros ol { padding-left: 20px; font-size: 14.5px; line-height: 2; }
   mark { background: #fde68a; }
+  .ia-card { border: 2px solid var(--roxo); background: linear-gradient(135deg, #f6f2fd, #fff); padding: 0; overflow: hidden; margin-top: 16px; }
+  .ia-topo { display: flex; gap: 10px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--linha); font-weight: 800; }
+  .ia-msgs { height: 320px; overflow: auto; padding: 14px 16px; display: flex; flex-direction: column; background: #fff; }
+  .ia-b { max-width: 82%; padding: 9px 13px; border-radius: 12px; margin-bottom: 8px; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
+  .ia-b.eu { background: var(--roxo); color: #fff; align-self: flex-end; border-bottom-right-radius: 3px; }
+  .ia-b.bot { background: #f3f0fa; align-self: flex-start; border-bottom-left-radius: 3px; }
+  .ia-b.bot .fonte { display: block; font-size: 11px; color: var(--roxo); margin-top: 5px; font-weight: 700; }
+  .ia-form { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--linha); background: #fff; }
+  .ia-form input { flex: 1; border: 1px solid var(--linha); padding: 11px 13px; font-family: inherit; font-size: 14px; }
+  .ia-form button { border: 0; background: var(--roxo); color: #fff; font-weight: 800; padding: 11px 18px; cursor: pointer; font-family: inherit; }
+  .ia-form button:disabled { opacity: .5; }
+  .ia-sugestoes { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 16px 12px; background: #fff; }
+  .ia-sugestoes button { border: 1px solid var(--linha); background: var(--fundo); border-radius: 99px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -45,6 +58,23 @@
 <main class="corpo">
 
   <div class="busca-ajuda"><input id="busca" placeholder="🔍 O que você quer aprender? (ex.: check-in, Pix, treino, chatbot…)"></div>
+
+  <div class="ia-card">
+    <div class="ia-topo">🤖 Pergunte para a IA <span class="mut" style="font-weight:400;font-size:12.5px;">— ela responde com base nos tutoriais desta página</span></div>
+    <div class="ia-msgs" id="iaMsgs">
+      <div class="ia-b bot">Oi! 👋 Sou o assistente do TORQUESYS. Pergunta como fazer qualquer coisa — ex.: "como cobro um aluno atrasado?" ou "como ligo o chatbot do WhatsApp?"</div>
+    </div>
+    <div class="ia-sugestoes" id="iaSug">
+      <button>Como faço o check-in por QR?</button>
+      <button>Como cobrar um aluno atrasado?</button>
+      <button>Como publicar o app do aluno?</button>
+      <button>Como montar o chatbot?</button>
+    </div>
+    <div class="ia-form">
+      <input id="iaTxt" placeholder="Escreva sua dúvida… (Enter envia)">
+      <button id="iaEnviar">Perguntar</button>
+    </div>
+  </div>
 
   <div class="primeiros" id="primeirosPassos">
     <h2 style="margin-bottom:6px;">🚀 Primeiros passos (nesta ordem)</h2>
@@ -166,7 +196,93 @@
     $("nada").style.display = achou ? "none" : "block";
   });
 
-  window.__suporte = { total: TUTORIAIS.length }; // testes
+  // ---------- assistente por chat (IA com o manual como base) ----------
+  var S = window.MTStore;
+  var iaHist = [];
+
+  function textoPlano(html) {
+    var div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent.replace(/\s+/g, " ").trim();
+  }
+  var MANUAL = TUTORIAIS.map(function (t) {
+    return "## " + textoPlano(t[1]) + " (categoria: " + t[0] + ")\n" + textoPlano(t[2]);
+  }).join("\n\n");
+
+  function iaBalao(de, texto, fonte) {
+    var box = $("iaMsgs");
+    var div = document.createElement("div");
+    div.className = "ia-b " + (de === "eu" ? "eu" : "bot");
+    div.textContent = texto;
+    if (fonte) {
+      var f = document.createElement("span");
+      f.className = "fonte";
+      f.textContent = fonte;
+      div.appendChild(f);
+    }
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+
+  // fallback local: acha os tutoriais que mais batem com a pergunta
+  function respostaLocal(q) {
+    var termos = q.toLowerCase().split(/\s+/).filter(function (t) { return t.length > 3; });
+    var melhor = null, melhorPts = 0;
+    TUTORIAIS.forEach(function (t) {
+      var txt = (textoPlano(t[1]) + " " + textoPlano(t[2])).toLowerCase();
+      var pts = 0;
+      termos.forEach(function (tm) { if (txt.indexOf(tm) !== -1) pts++; });
+      if (pts > melhorPts) { melhorPts = pts; melhor = t; }
+    });
+    if (!melhor) return "Não achei nada sobre isso nos tutoriais — tenta outra palavra, ou use a busca acima. 🤔";
+    return "Encontrei este tutorial que deve resolver:\n\n📖 " + textoPlano(melhor[1]) + "\n\n" + textoPlano(melhor[2]).slice(0, 500) +
+      "\n\n(O tutorial completo está na lista abaixo — use a busca para abri-lo.)";
+  }
+
+  function iaPergunta(q) {
+    if (!q) return;
+    $("iaTxt").value = "";
+    iaBalao("eu", q);
+    iaHist.push({ de: "eu", texto: q });
+    var pensando = iaBalao("bot", "…");
+    var btn = $("iaEnviar");
+    btn.disabled = true;
+
+    var nuvem = S.cloud && S.cloud();
+    var pronto = function (texto, fonte) {
+      pensando.remove();
+      iaBalao("bot", texto, fonte);
+      iaHist.push({ de: "bot", texto: texto });
+      btn.disabled = false;
+    };
+    if (!nuvem || !self.MT_CLOUD || !MT_CLOUD.url) {
+      pronto(respostaLocal(q), "🔎 resposta da busca local — entre na nuvem para respostas da IA");
+      return;
+    }
+    nuvem.client.auth.getSession().then(function (sess) {
+      var tok = (sess && sess.data && sess.data.session && sess.data.session.access_token) || "";
+      return fetch(MT_CLOUD.url + "/functions/v1/chat-envia", {
+        method: "POST",
+        headers: { apikey: MT_CLOUD.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "ajuda", historico: iaHist.slice(-8), contexto: MANUAL }),
+      });
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok && d.texto) pronto(d.texto, "🤖 Claude · com base no manual do TORQUESYS");
+      else pronto(respostaLocal(q), "🔎 busca local — a IA não respondeu (" + ((d && d.erro) || "confira a função chat-envia") + ")");
+    }).catch(function () {
+      pronto(respostaLocal(q), "🔎 busca local — sem conexão com a função chat-envia");
+    });
+  }
+
+  $("iaEnviar").addEventListener("click", function () { iaPergunta($("iaTxt").value.trim()); });
+  $("iaTxt").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); iaPergunta(this.value.trim()); } });
+  $("iaSug").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (b) iaPergunta(b.textContent);
+  });
+
+  window.__suporte = { total: TUTORIAIS.length, iaPergunta: iaPergunta, respostaLocal: respostaLocal }; // testes
 })();
 </script>
 </body>
