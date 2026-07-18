@@ -425,6 +425,7 @@
     iniciaSync: iniciaSync,
     // acesso à conexão da nuvem (para publicações como o App do Aluno)
     cloud: function () { return sync.client ? { client: sync.client, aid: sync.aid } : null; },
+    backupKeys: function () { return BACKUP_KEYS.slice(); },
   };
 
   // nas páginas de programas e no modo TV, inicia a sincronização sozinho

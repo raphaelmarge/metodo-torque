@@ -368,5 +368,68 @@
   mostra();
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function puxaPedidosApp() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    nuvem.client.from("app_pedidos").select("id,aluno,itens,total,status,criado")
+      .eq("status", "novo").order("criado", { ascending: true }).then(function (r) {
+        var box = document.getElementById("pedidosAppBox");
+        if (r.error || !box) return;
+        var lista = r.data || [];
+        box.hidden = !lista.length;
+        if (!lista.length) return;
+        document.getElementById("pedidosAppLista").innerHTML = lista.map(function (p) {
+          return '<div class="linha-flex" style="justify-content:space-between;border:1px solid var(--linha);background:#fff;padding:10px 14px;margin-top:-1px;flex-wrap:wrap;gap:8px;">' +
+            "<div><b>" + esc(p.aluno || "Aluno do app") + "</b> · R$ " + (+p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) +
+            '<br><span class="muted" style="font-size:12.5px;">' +
+            (p.itens || []).map(function (x) { return x.q + "x " + esc(x.n); }).join(", ") + "</span></div>" +
+            '<div class="linha-flex" style="gap:6px;">' +
+            '<button class="btn mini" data-entrega="' + p.id + '">✔ Entregue (baixa estoque)</button>' +
+            '<button class="btn perigo mini" data-cancela="' + p.id + '">✕</button></div></div>';
+        }).join("");
+        window.__pedidosApp = lista; // testes
+      });
+  }
+
+  document.addEventListener("click", function (e) {
+    var ent = e.target.closest("[data-entrega]");
+    var can = e.target.closest("[data-cancela]");
+    if (!ent && !can) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var id = (ent || can).getAttribute(ent ? "data-entrega" : "data-cancela");
+    var pedido = (window.__pedidosApp || []).find(function (p) { return p.id === id; });
+    if (ent && pedido) {
+      var st = S.read("produtos", { itens: [], vendas: [] });
+      (pedido.itens || []).forEach(function (x) {
+        var prod = st.itens.find(function (i) { return i.nome === x.n; });
+        if (prod) prod.estoque = Math.max(0, (+prod.estoque || 0) - (+x.q || 0));
+      });
+      st.vendas.push({ id: S.uid(), quando: new Date().toISOString().slice(0, 16), itens: pedido.itens, total: +pedido.total || 0, origem: "app 📲", cliente: pedido.aluno || "" });
+      S.write("produtos", st);
+    }
+    nuvem.client.from("app_pedidos").update({ status: ent ? "entregue" : "cancelado" }).eq("id", id)
+      .then(function () { puxaPedidosApp(); location.reload(); });
+  });
+
+  var main = document.querySelector("main");
+  var card = document.createElement("div");
+  card.className = "card";
+  card.id = "pedidosAppBox";
+  card.hidden = true;
+  card.style.marginTop = "16px";
+  card.innerHTML = "<h2>📲 Pedidos da Lojinha do app</h2><p class='muted' style='margin:4px 0 10px;'>Chegaram pelo app do aluno — separe, marque como entregue (o estoque baixa e a venda entra) e receba na recepção.</p><div id='pedidosAppLista'></div>";
+  main.appendChild(card);
+
+  window.__puxaPedidosApp = puxaPedidosApp; // testes
+  setTimeout(puxaPedidosApp, 3000);
+  setInterval(puxaPedidosApp, 60000);
+})();
+</script>
 </body>
 </html>

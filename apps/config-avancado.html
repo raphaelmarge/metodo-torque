@@ -151,5 +151,82 @@
   });
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function baixaJSON(nomeArq, dados) {
+    var a = document.createElement("a");
+    a.href = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dados, null, 2));
+    a.download = nomeArq;
+    a.click();
+  }
+
+  // exportação LGPD: tudo de UM aluno num arquivo
+  window.exportaLGPD = function (nome) {
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var a = stA.alunos.find(function (x) { return x.nome === String(nome || "").trim(); });
+    if (!a) return null;
+    var pacote = {
+      exportadoEm: new Date().toISOString(),
+      cadastro: a,
+      recebiveis: stA.recebiveis.filter(function (r) { return r.alunoId === a.id; }),
+      avaliacoes: S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; }),
+      treino: S.read("treinos", { prescricoes: [] }).prescricoes.filter(function (p) { return p.alunoId === a.id; }),
+      agenda: (S.read("agenda", { compromissos: [] }).compromissos || []).filter(function (c) { return c.cliente === a.nome; }),
+      checkinsAgregador: (S.read("wellhub", { checkins: [] }).checkins || []).filter(function (c) { return c.alunoId === a.id; }),
+      faltasAulas: (S.read("grade", { faltas: {} }).faltas || {})[a.nome] || [],
+      pacotesPersonal: (S.read("aulasPersonal", { pacotes: [] }).pacotes || []).filter(function (p) { return p.aluno === a.nome; }),
+    };
+    baixaJSON("lgpd-" + a.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".json", pacote);
+    return pacote;
+  };
+
+  // backup completo (todas as lojas) + automático semanal
+  window.backupCompleto = function () {
+    var dados = { geradoEm: new Date().toISOString(), versao: "torquesys" };
+    (S.backupKeys ? S.backupKeys() : []).forEach(function (k) { dados[k] = S.read(k, null); });
+    baixaJSON("backup-torquesys-" + S.todayISO() + ".json", dados);
+    var cfg = S.read("config", { dados: {} });
+    cfg.backupUltimo = S.todayISO();
+    S.write("config", cfg);
+  };
+
+  var main = document.querySelector("main");
+  var card = document.createElement("div");
+  card.className = "card";
+  card.style.marginTop = "16px";
+  card.innerHTML = "<h2>🔒 LGPD e backup</h2>" +
+    "<p class='mut' style='margin:4px 0 10px;'>Pela LGPD, o aluno pode pedir uma cópia de todos os dados dele — exporte aqui em um clique. E deixe o backup semanal ligado: ao abrir o sistema, se o último tiver mais de 7 dias, um arquivo completo é baixado sozinho.</p>" +
+    "<div class='linha-flex' style='gap:10px;flex-wrap:wrap;align-items:flex-end;'>" +
+    "<div class='campo' style='margin:0;'><label>Dados de um aluno (LGPD)</label><input id='lgpdNome' list='lgpdLista' placeholder='nome exato do aluno' style='width:240px;'><datalist id='lgpdLista'></datalist></div>" +
+    "<button class='btn sec' id='btnLGPD'>⬇ Exportar dados do aluno</button>" +
+    "<button class='btn sec' id='btnBackupJa'>💾 Backup completo agora</button>" +
+    "<label style='display:flex;gap:6px;align-items:center;font-weight:700;'><input type='checkbox' id='backupAuto'> Backup automático semanal</label>" +
+    "<span class='mut' id='lgpdStatus' style='font-size:12.5px;'></span></div>";
+  main.appendChild(card);
+
+  $("lgpdLista").innerHTML = S.read("alunos", { alunos: [] }).alunos
+    .map(function (a) { return "<option>" + a.nome.replace(/[<>&]/g, "") + "</option>"; }).join("");
+  var cfg0 = S.read("config", { dados: {} });
+  $("backupAuto").checked = !!cfg0.backupAuto;
+
+  $("btnLGPD").onclick = function () {
+    var ok = window.exportaLGPD($("lgpdNome").value);
+    $("lgpdStatus").textContent = ok ? "✅ Arquivo baixado — entregue ao aluno." : "Aluno não encontrado — use o nome exato.";
+  };
+  $("btnBackupJa").onclick = function () {
+    window.backupCompleto();
+    $("lgpdStatus").textContent = "✅ Backup baixado.";
+  };
+  $("backupAuto").addEventListener("change", function () {
+    var cfg = S.read("config", { dados: {} });
+    cfg.backupAuto = this.checked;
+    S.write("config", cfg);
+    $("lgpdStatus").textContent = this.checked ? "✅ Ligado — roda ao abrir o Sistema." : "Desligado.";
+  });
+})();
+</script>
 </body>
 </html>

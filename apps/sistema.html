@@ -1160,5 +1160,28 @@
   renderHoje();
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  // backup automático semanal: baixa o arquivo sozinho ao abrir o sistema
+  setTimeout(function () {
+    try {
+      var cfg = S.read("config", { dados: {} });
+      if (!cfg.backupAuto) return;
+      var ultimo = cfg.backupUltimo || "2000-01-01";
+      var dias = Math.floor((new Date(S.todayISO()) - new Date(ultimo)) / 864e5);
+      if (dias < 7) return;
+      var dados = { geradoEm: new Date().toISOString(), versao: "torquesys" };
+      (S.backupKeys ? S.backupKeys() : []).forEach(function (k) { dados[k] = S.read(k, null); });
+      var a = document.createElement("a");
+      a.href = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dados));
+      a.download = "backup-torquesys-" + S.todayISO() + ".json";
+      a.click();
+      cfg.backupUltimo = S.todayISO();
+      S.write("config", cfg);
+    } catch (e) {}
+  }, 4000);
+})();
+</script>
 </body>
 </html>
