@@ -625,3 +625,100 @@ end;
 $$;
 
 grant execute on function public.app_aluno_treino_reg(text, date, jsonb) to anon, authenticated;
+
+-- ==================== PUSH DE VERDADE (Web Push) ====================
+-- O app hospedado (site/app/?t=TOKEN) registra a inscrição de push aqui;
+-- a função push-envia manda as notificações. Bloco idempotente.
+
+create table if not exists public.push_subs (
+  token text primary key,
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  sub jsonb not null,
+  criado timestamptz not null default now()
+);
+
+alter table public.push_subs enable row level security;
+
+drop policy if exists "push_subs_membros" on public.push_subs;
+create policy "push_subs_membros" on public.push_subs
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+create or replace function public.app_aluno_push(t text, p_sub jsonb)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  insert into push_subs (token, academia_id, sub) values (t, v_acad, p_sub)
+    on conflict (token) do update set sub = excluded.sub, criado = now();
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.app_aluno_push(text, jsonb) to anon, authenticated;
+
+-- ==================== LOJA NO APP ====================
+-- O aluno pede produtos pelo app; a tela de Produtos recebe, entrega e
+-- baixa o estoque. Bloco idempotente.
+
+create table if not exists public.app_pedidos (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  aluno text not null default '',
+  itens jsonb not null default '[]'::jsonb,      -- [{n: nome, q: qtd, v: valor unit}]
+  total numeric not null default 0,
+  status text not null default 'novo',           -- novo | entregue | cancelado
+  criado timestamptz not null default now()
+);
+
+alter table public.app_pedidos enable row level security;
+
+drop policy if exists "app_pedidos_membros" on public.app_pedidos;
+create policy "app_pedidos_membros" on public.app_pedidos
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+create or replace function public.app_aluno_pedido(t text, p_itens jsonb, p_total numeric, p_nome text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_id uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if jsonb_array_length(coalesce(p_itens, '[]'::jsonb)) = 0 then
+    return json_build_object('erro', 'vazio');
+  end if;
+  insert into app_pedidos (academia_id, token, aluno, itens, total)
+    values (v_acad, t, coalesce(p_nome, ''), p_itens, coalesce(p_total, 0))
+    returning id into v_id;
+  return json_build_object('ok', true, 'id', v_id);
+end;
+$$;
+
+create or replace function public.app_aluno_pedidos(t text)
+returns json
+language sql security definer stable
+set search_path = public
+as $$
+  select coalesce(json_agg(json_build_object(
+      'id', id, 'itens', itens, 'total', total, 'status', status,
+      'criado', to_char(criado, 'DD/MM')) order by criado desc), '[]'::json)
+  from (select * from app_pedidos where token = t order by criado desc limit 20) s
+$$;
+
+grant execute on function public.app_aluno_pedido(text, jsonb, numeric, text) to anon, authenticated;
+grant execute on function public.app_aluno_pedidos(text) to anon, authenticated;
