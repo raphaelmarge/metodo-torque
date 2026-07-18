@@ -16,7 +16,24 @@ function ok(cond, nome) {
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
 
   const hoje = new Date().toISOString().slice(0, 10);
-  await ctx.addInitScript(([hoje]) => {
+  // datas determinísticas do mês corrente: uma segunda-feira comum, o 1º domingo e um feriado municipal
+  const FIXOS = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
+  function isoOf(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  const base = new Date(); base.setDate(1); base.setHours(12, 0, 0, 0);
+  let segunda = null, domingo = null;
+  for (let i = 0; i < 14 && (!segunda || !domingo); i++) {
+    const d = new Date(base); d.setDate(1 + i);
+    const iso = isoOf(d);
+    if (!domingo && d.getDay() === 0) domingo = iso;
+    if (!segunda && d.getDay() === 1 && FIXOS.indexOf(iso.slice(5)) === -1) segunda = iso;
+  }
+  // feriado municipal: um dia útil ≥ 20 que não seja domingo (marcado como extra, vale mesmo se coincidir com nacional)
+  let feriadoExtra = null;
+  for (let i = 20; i <= 27; i++) {
+    const d = new Date(base); d.setDate(i);
+    if (d.getDay() !== 0 && isoOf(d) !== segunda) { feriadoExtra = isoOf(d); break; }
+  }
+  await ctx.addInitScript(([hoje, segunda, domingo, feriadoExtra]) => {
     if (window !== window.top) return;
     if (localStorage.getItem("mtapp:seeded")) return;
     localStorage.setItem("mtapp:seeded", "1");
@@ -25,18 +42,21 @@ function ok(cond, nome) {
       cargos: ["Recepção", "Professor(a)"],
       colaboradores: [
         { id: "co1", nome: "Bia Mensal", cargo: "Recepção", ativo: true, tipoContrato: "CLT", salario: 2400 },
-        { id: "co2", nome: "Carlos Hora", cargo: "Professor(a)", ativo: true, tipoContrato: "Horista", valorHora: 50 },
+        { id: "co2", nome: "Carlos Hora", cargo: "Professor(a)", ativo: true, tipoContrato: "Horista", valorHora: 50, valorHoraDF: 80 },
       ],
       escala: {},
-      // Carlos bateu 2 turnos de 4h este mês = 8h × R$50 = R$400
+      // Carlos: 4h na segunda comum (×50 = 200) + 3h no domingo + 2h no feriado municipal (5h ×80 = 400) → total 600
       ponto: [
-        { nome: "Carlos Hora", tipo: "entrada", quando: hoje + "T08:00" },
-        { nome: "Carlos Hora", tipo: "saida", quando: hoje + "T12:00" },
-        { nome: "Carlos Hora", tipo: "entrada", quando: hoje + "T14:00" },
-        { nome: "Carlos Hora", tipo: "saida", quando: hoje + "T18:00" },
+        { nome: "Carlos Hora", tipo: "entrada", quando: segunda + "T08:00" },
+        { nome: "Carlos Hora", tipo: "saida", quando: segunda + "T12:00" },
+        { nome: "Carlos Hora", tipo: "entrada", quando: domingo + "T08:00" },
+        { nome: "Carlos Hora", tipo: "saida", quando: domingo + "T11:00" },
+        { nome: "Carlos Hora", tipo: "entrada", quando: feriadoExtra + "T08:00" },
+        { nome: "Carlos Hora", tipo: "saida", quando: feriadoExtra + "T10:00" },
       ],
     }));
-  }, [hoje]);
+    localStorage.setItem("mtapp:feriados", JSON.stringify({ datas: [feriadoExtra] }));
+  }, [hoje, segunda, domingo, feriadoExtra]);
 
   const erros = [];
 
@@ -56,10 +76,13 @@ function ok(cond, nome) {
   const folha = await p.evaluate(() => document.getElementById("salarios").textContent);
   ok(/Salário fixo \(mensalistas\)/.test(folha) && /Horistas e diaristas/.test(folha), "duas seções separadas");
   ok(/Bia Mensal/.test(folha) && folha.indexOf("Bia Mensal") < folha.indexOf("Horistas"), "Bia na seção de mensalistas");
-  ok(/8h/.test(folha), "horas do mês do Carlos calculadas (8h)");
-  ok(/R\$\s?400/.test(folha), "a pagar do Carlos = R$ 400 (8h × R$50)");
+  ok(/4h/.test(folha), "horas normais do Carlos = 4h");
+  ok(/5h/.test(folha), "horas dom/feriado do Carlos = 5h (domingo 3h + feriado municipal 2h)");
+  ok(/R\$\s?80/.test(folha), "valor hora dom/feriado (R$ 80) aparece");
+  ok(/R\$\s?600/.test(folha), "a pagar do Carlos = R$ 600 (4h×50 + 5h×80)");
   ok(/2\.400/.test(folha), "folha fixa soma o salário da Bia");
-  ok(/FOLHA TOTAL DO MÊS/.test(folha) && /2\.800/.test(folha), "total geral = fixa + horistas (R$ 2.800)");
+  ok(/FOLHA TOTAL DO MÊS/.test(folha) && /3\.000/.test(folha), "total geral = fixa + horistas (R$ 3.000)");
+  ok(/Feriados extras/.test(folha), "editor de feriados extras presente");
 
   // ---------- 3) cadastro rápido tem vínculo ----------
   await p.click("#btnNovo");
@@ -91,7 +114,7 @@ function ok(cond, nome) {
     const c = JSON.parse(localStorage.getItem("mtapp:contas") || "{}");
     return (c.contas || [])[0] || null;
   });
-  ok(conta && conta.valor === 400 && /Horas/.test(conta.desc) && /8h/.test(conta.desc), "lançou R$ 400 de horas em Contas a Pagar");
+  ok(conta && conta.valor === 600 && /Horas/.test(conta.desc) && /dom\/fer/.test(conta.desc), "lançou R$ 600 (com dom/fer na descrição) em Contas a Pagar");
 
   // mensalista continua com salário habilitado
   await p.goto(BASE + "/apps/colaborador.html?id=co1");

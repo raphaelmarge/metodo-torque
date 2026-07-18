@@ -209,7 +209,7 @@
   }
 
   // ---------- backup ----------
-  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "niveis", "convidados", "config", "logo", "loja", "agregadores", "biometria", "permissoes", "funcionamento", "servicos", "wellhub", "areas", "atividades", "aulasPersonal", "appAluno", "auditoria"];
+  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "niveis", "convidados", "config", "logo", "loja", "agregadores", "biometria", "permissoes", "funcionamento", "servicos", "wellhub", "areas", "atividades", "aulasPersonal", "appAluno", "auditoria", "feriados", "videoteca", "metasNegocio", "treinoDestaques"];
 
   function exportBackup() {
     var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString() };
@@ -435,7 +435,57 @@
     return aluno.status !== "inativo" && !!contratoAtivoConta(aluno, planos);
   }
 
+  // ---------- feriados e horas de ponto (horista dom/feriado) ----------
+  // Páscoa (algoritmo de Gauss) para os feriados móveis
+  function pascoaDe(ano) {
+    var a = ano % 19, b = Math.floor(ano / 100), c = ano % 100;
+    var d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+    var g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+    var i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+    var m = Math.floor((a + 11 * h + 22 * l) / 451);
+    var mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(ano, mes - 1, dia, 12);
+  }
+  function isoDe(dt) {
+    return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2);
+  }
+  function feriadosDoAno(ano) {
+    var fixos = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
+    var set = {};
+    fixos.forEach(function (md) { set[ano + "-" + md] = 1; });
+    var pas = pascoaDe(ano);
+    [-47, -2, 60].forEach(function (delta) { // Carnaval (terça), Sexta-feira Santa, Corpus Christi
+      var d = new Date(pas); d.setDate(d.getDate() + delta);
+      set[isoDe(d)] = 1;
+    });
+    return set;
+  }
+  function ehDomingoOuFeriado(iso) {
+    if (!iso) return false;
+    var d = new Date(iso.slice(0, 10) + "T12:00");
+    if (d.getDay() === 0) return true;
+    if (feriadosDoAno(d.getFullYear())[iso.slice(0, 10)]) return true;
+    var extras = read("feriados", { datas: [] }).datas || [];
+    return extras.indexOf(iso.slice(0, 10)) !== -1;
+  }
+  // soma horas batidas (pares entrada→saída no mesmo dia) separando dom/feriado
+  function horasPonto(ponto, nome, mesKey) {
+    var pts = (ponto || []).filter(function (pt) { return pt.nome === nome && (pt.quando || "").slice(0, 7) === mesKey; })
+      .sort(function (a, b) { return a.quando < b.quando ? -1 : 1; });
+    var norm = 0, domfer = 0, aberta = null;
+    pts.forEach(function (pt) {
+      if (pt.tipo === "entrada") aberta = pt.quando;
+      else if (pt.tipo === "saida" && aberta && aberta.slice(0, 10) === pt.quando.slice(0, 10)) {
+        var h = (new Date(pt.quando) - new Date(aberta)) / 36e5;
+        if (h > 0) { if (ehDomingoOuFeriado(aberta)) domfer += h; else norm += h; }
+        aberta = null;
+      }
+    });
+    return { norm: Math.round(norm * 100) / 100, domfer: Math.round(domfer * 100) / 100 };
+  }
+
   window.MTStore = {
+    ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,
     read: read, write: write, uid: uid,
     contratoAtivoConta: contratoAtivoConta, ehClienteAtivo: ehClienteAtivo,
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,
