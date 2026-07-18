@@ -227,14 +227,13 @@ async function respostaIA(
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
-      body: JSON.stringify({
+      body: JSON.stringify(Object.assign({
         model: "claude-opus-4-8",
         max_tokens: 900,
         thinking: { type: "adaptive" },
         system: sistema,
-        tools: ctx ? FERRAMENTAS : [],
         messages: mensagens,
-      }),
+      }, ctx ? { tools: FERRAMENTAS } : {})),
     });
     if (!r.ok) {
       console.error("anthropic", r.status, await r.text());
