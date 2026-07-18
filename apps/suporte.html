@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Central de Ajuda — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .busca-ajuda { position: sticky; top: 0; z-index: 5; background: var(--fundo); padding: 10px 0; }
+  .busca-ajuda input { width: 100%; padding: 14px 18px; font-size: 16px; border: 2px solid var(--roxo); }
+  .cat { margin-top: 26px; }
+  .cat h2 { font-size: 14px; letter-spacing: .12em; color: var(--roxo); text-transform: uppercase; margin-bottom: 10px; }
+  details.tut { background: #fff; border: 1px solid var(--linha); margin-top: -1px; }
+  details.tut summary { cursor: pointer; padding: 14px 16px; font-weight: 800; font-size: 14.5px; list-style: none; display: flex; gap: 10px; align-items: center; }
+  details.tut summary::-webkit-details-marker { display: none; }
+  details.tut summary .seta { margin-left: auto; transition: transform .15s; color: var(--cinza); }
+  details.tut[open] summary .seta { transform: rotate(90deg); }
+  details.tut .corpo-tut { padding: 0 18px 16px 46px; font-size: 14px; line-height: 1.7; }
+  details.tut ol { padding-left: 18px; margin: 6px 0; }
+  details.tut ol li { margin-bottom: 5px; }
+  details.tut .dica { background: #f6f2fd; border-left: 3px solid var(--roxo); padding: 8px 12px; margin-top: 8px; font-size: 13px; }
+  details.tut .atencao { background: rgba(217,119,6,.07); border-left: 3px solid var(--alerta); padding: 8px 12px; margin-top: 8px; font-size: 13px; }
+  details.tut b.caminho { color: var(--roxo); }
+  .nada { display: none; text-align: center; color: var(--cinza); padding: 40px; }
+  .primeiros { background: linear-gradient(135deg, #f6f2fd, #fff); border: 2px solid var(--roxo); padding: 18px 20px; }
+  .primeiros ol { padding-left: 20px; font-size: 14.5px; line-height: 2; }
+  mark { background: #fde68a; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · AJUDA</span>
+    <h1>Central de Ajuda</h1>
+    </div>
+  </div>
+  <p>Tudo que existe no TORQUESYS em formato de tutorial passo a passo. Pesquise pelo que você quer fazer — ex.: "cobrar", "QR", "chatbot", "publicar app".</p>
+</header>
+
+<main class="corpo">
+
+  <div class="busca-ajuda"><input id="busca" placeholder="🔍 O que você quer aprender? (ex.: check-in, Pix, treino, chatbot…)"></div>
+
+  <div class="primeiros" id="primeirosPassos">
+    <h2 style="margin-bottom:6px;">🚀 Primeiros passos (nesta ordem)</h2>
+    <ol>
+      <li><b>Ligue a nuvem:</b> na página inicial do portal, crie sua conta e a academia (você recebe o código da equipe para os funcionários entrarem).</li>
+      <li><b>Configure o Supabase:</b> siga o passo a passo da aba <b>Instalação</b> em Sistema → CRM → Chat e IA (SQL + funções + chaves).</li>
+      <li><b>Cadastre os planos e os alunos:</b> Gestão de Alunos → Planos, depois Alunos (ou importe o CSV do sistema antigo em Importar Alunos).</li>
+      <li><b>Monte a grade de aulas</b> e os horários de funcionamento.</li>
+      <li><b>Publique o App do Aluno</b> e entregue o link para cada aluno.</li>
+      <li><b>Ligue as automações</b> (aniversário, sumidos, cobrança) e o resumo diário do dono.</li>
+    </ol>
+  </div>
+
+  <div id="tutoriais"></div>
+  <p class="nada" id="nada">Nada encontrado com esse termo — tenta outra palavra? 🤔</p>
+
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+
+  // [categoria, ícone+título, passos HTML]
+  var TUTORIAIS = [
+
+    // ================= OPERAÇÃO DIÁRIA =================
+    ["Operação diária", "🚪 Fazer o check-in de um aluno (recepção)", "<ol><li>Abra <b class='caminho'>Sistema → Operação → Entrada / Check-in</b>.</li><li>Digite o nome do aluno OU clique em <b>📷 Ler QR</b> e aponte a câmera para o QR da carteirinha do app.</li><li>O painel mostra a situação: verde libera, amarelo pede atenção, vermelho bloqueia (com o motivo).</li><li>Se estiver tudo certo, confirme o check-in — ele conta na frequência, no ranking e no bloqueio automático.</li></ol><div class='dica'>💡 Aluno de Wellhub/TotalPass: o sistema pede o token do app do parceiro e libera uma diária.</div>"],
+    ["Operação diária", "🖥 Deixar um tablet de autoatendimento na entrada (Totem)", "<ol><li>No tablet, abra <b class='caminho'>Sistema → Operação → Totem de Autoatendimento</b> (abre em tela própria).</li><li>Deixe a página aberta em tela cheia — tem relógio, WOD do dia e os avisos do mural.</li><li>O aluno faz o check-in sozinho: digita o nome ou mostra o QR da carteirinha.</li><li>Bloqueios aparecem na hora (sem plano, atraso, restrito) com orientação para procurar a recepção.</li></ol><div class='dica'>💡 O totem não duplica: se o aluno já fez check-in no dia, ele só avisa.</div>"],
+    ["Operação diária", "💵 Abrir e fechar o Caixa do Dia", "<ol><li>Abra <b class='caminho'>Sistema → Financeiro → Caixa do Dia</b>.</li><li>Clique em <b>Abrir caixa</b> e informe o troco inicial.</li><li>Mensalidades e vendas de produtos entram sozinhas; lance saídas e sangrias pelo botão correspondente.</li><li>No fim do dia, clique em <b>Fechar caixa</b>, confira o valor contado contra o esperado e registre a diferença, se houver.</li></ol>"],
+    ["Operação diária", "📅 Montar a grade de aulas da semana", "<ol><li>Abra <b class='caminho'>Sistema → Operação → Grade de Aulas</b>.</li><li>Clique em <b>+ Nova aula da grade</b>: atividade, professor, sala, vagas, dias da semana e horário.</li><li>Clique numa aula para ver os participantes do dia, adicionar nomes ou marcar falta (👻).</li><li>Use <b>Agendar sob demanda</b> para aulas avulsas fora da grade.</li></ol><div class='dica'>💡 Os agendamentos feitos pelos alunos no app entram sozinhos com o símbolo 📲.</div>"],
+    ["Operação diária", "⚙️ Definir as regras de agendamento do app (cancelamento, faltas, limite)", "<ol><li>Na <b class='caminho'>Grade de Aulas</b>, abra o card <b>⚙️ Regras de agendamento</b> no fim da página.</li><li>Defina: horas mínimas para cancelar, máximo de agendamentos ativos, faltas para suspender e dias de suspensão.</li><li>Clique em <b>Salvar regras</b> e depois <b>republique os apps</b> (App do Aluno → Publicar).</li><li>Para registrar uma falta: abra a aula, clique no 👻 ao lado do nome de quem agendou e não veio.</li></ol>"],
+    ["Operação diária", "🗓 Agendar avaliações e compromissos (Agenda)", "<ol><li>Abra <b class='caminho'>Sistema → Operação → Agenda</b>.</li><li>Clique em <b>+ Encontrar horário</b>: tipo (avaliação, visita, reunião…), cliente, data, hora e duração.</li><li>Use o botão de WhatsApp do compromisso para enviar o lembrete pronto.</li><li>Quer no seu celular? <b>📆 Exportar (.ics)</b> baixa os compromissos para o Google Calendar/iPhone.</li></ol>"],
+
+    // ================= ALUNOS E VENDAS =================
+    ["Alunos e vendas", "🏋 Matricular um aluno novo", "<ol><li>Abra <b class='caminho'>Sistema → Alunos → Gestão de Alunos</b>.</li><li>Antes do primeiro: cadastre os <b>Planos</b> (aba própria) com nome, valor e duração.</li><li>Clique em <b>+ Novo aluno</b>: nome, WhatsApp, nascimento e o que mais quiser.</li><li>Na ficha do aluno, crie o <b>contrato</b> escolhendo o plano — as mensalidades (recebíveis) nascem sozinhas.</li><li>Publique o app dele em App do Aluno → Publicar e envie o link.</li></ol>"],
+    ["Alunos e vendas", "🛒 Ativar a matrícula online (link público)", "<ol><li>Abra <b class='caminho'>Sistema → Alunos → Página de Vendas</b> e desça até <b>🛒 Matrícula online</b>.</li><li>Preencha a chave Pix (opcional) e o WhatsApp da academia.</li><li>Clique em <b>Publicar matrícula online</b> — os planos cadastrados vão para o ar.</li><li>Divulgue o link mostrado (…/matricula.html) no Instagram, anúncios e bio.</li><li>Cada matrícula cai sozinha no <b>Funil Comercial</b> como lead quente — chame no WhatsApp em até 1h!</li></ol><div class='atencao'>⚠️ Requer o bloco MATRÍCULA ONLINE do supabase-setup.sql rodado.</div>"],
+    ["Alunos e vendas", "🧲 Trabalhar os leads no Funil Comercial", "<ol><li>Abra <b class='caminho'>Sistema → CRM → Funil Comercial</b>.</li><li>Cada lead tem etapa, dono e data do próximo contato — contato atrasado fica vermelho.</li><li>Clique no botão de WhatsApp para abrir a mensagem pronta daquela etapa.</li><li>Avance a etapa a cada resposta; marque <b>matriculado</b> ou <b>perdido</b> no fim.</li></ol>"],
+    ["Alunos e vendas", "🗓 Agendar e converter aulas experimentais", "<ol><li>Abra <b class='caminho'>Sistema → Alunos → Aulas Experimentais</b>.</li><li>Agende a aula grátis com nome, WhatsApp, data e professor.</li><li>Confirme por WhatsApp na véspera (botão pronto) e marque a presença no dia.</li><li>Se fechou, use o botão de conversão para virar matrícula.</li></ol>"],
+    ["Alunos e vendas", "📥 Importar a base do sistema antigo (CSV)", "<ol><li>Exporte os alunos do sistema antigo em CSV.</li><li>Abra <b class='caminho'>Sistema → Alunos → Importar Alunos (CSV)</b> e solte o arquivo.</li><li>Confira o mapeamento das colunas (nome, WhatsApp, nascimento…).</li><li>Clique em importar — duplicados são detectados pelo nome.</li></ol>"],
+    ["Alunos e vendas", "✍️ Colher a assinatura digital do contrato", "<ol><li>Abra <b class='caminho'>Sistema → Financeiro → Recibos e Contratos</b>, aba <b>Contrato de matrícula</b>.</li><li>Escolha o aluno e gere o contrato.</li><li>Clique em <b>✍️ Assinar na tela</b> e peça para o cliente assinar com o dedo (celular/tablet) ou mouse.</li><li>Salve — a assinatura fica no cadastro e aparece no contrato impresso com a data.</li></ol>"],
+
+    // ================= FINANCEIRO =================
+    ["Financeiro", "💜 Cobrar mensalidades (manual e automático)", "<ol><li><b>Manual:</b> em <b class='caminho'>Sistema → Financeiro → Inadimplência</b>, cada devedor tem o botão de WhatsApp com a mensagem pronta e o <b>💳 Gerar PIX/boleto</b> (com a função pagarme configurada).</li><li><b>Automático:</b> em <b class='caminho'>CRM → Automação de Mensagens</b>, ligue as réguas <b>Cobrança em atraso</b> e <b>Cobrança automática (D-2)</b> — esta manda o lembrete com o link Pix 2 dias antes de vencer.</li><li>Os valores atualizados com multa e juros aparecem na própria tela de Inadimplência.</li></ol>"],
+    ["Financeiro", "💠 Gerar um link de pagamento Pix", "<ol><li>Configure a função <b>pagarme</b> no Supabase (Secret PAGARME_SECRET_KEY) e cole a URL dela em <b class='caminho'>Administrativo → Integrações</b>.</li><li>Em <b class='caminho'>Inadimplência</b>, clique em <b>💳 Gerar PIX/boleto</b> no devedor.</li><li>Copie o link/código copia-e-cola e envie pelo WhatsApp (ou deixe a régua D-2 enviar sozinha).</li></ol><div class='dica'>💡 Sem Pagar.me? Ligue o modo demonstração em Integrações para testar o fluxo sem cobrar de verdade.</div>"],
+    ["Financeiro", "📤 Controlar contas a pagar e gastos", "<ol><li>Abra <b class='caminho'>Sistema → Financeiro → Contas a Pagar</b>.</li><li>Lance cada gasto com vencimento e centro de despesa.</li><li>Acompanhe por centro de custos em <b>Gastos por Centro de Custos</b> e o consolidado no <b>Resumo Gerencial</b>.</li></ol>"],
+    ["Financeiro", "🤝 Pagar comissões das vendas", "<ol><li>Abra <b class='caminho'>Sistema → Financeiro → Comissões</b>.</li><li>Defina o % de cada consultor(a).</li><li>O sistema calcula a comissão do mês pelos contratos vendidos; lance o pagamento nas Contas a Pagar com um clique.</li></ol>"],
+
+    // ================= APP DO ALUNO =================
+    ["App do Aluno", "📲 Publicar o app e entregar aos alunos", "<ol><li>Abra <b class='caminho'>Sistema → Alunos → App do Aluno</b>.</li><li>Na aba <b>🎨 Personalização</b>: cor, boas-vindas, banner, convite de indicação e o <b>Desafio do mês</b>.</li><li>Na aba <b>📲 Gerar app</b>: clique em <b>Publicar</b> (card App conectado) — todos os apps sobem para a nuvem.</li><li>Envie o link individual de cada aluno pelo botão de WhatsApp.</li><li>O aluno abre no celular e usa <b>Adicionar à tela inicial</b> — vira um app de verdade.</li></ol><div class='atencao'>⚠️ Sempre que mudar grade, treino, regras ou personalização: <b>publique de novo</b>. Os celulares se atualizam sozinhos depois.</div>"],
+    ["App do Aluno", "🏋️ O que o aluno faz no app (tour completo)", "<b>Início:</b> desafio do mês, evolução (treinos, medalhas, semanas seguidas), ranking, compartilhar, indicação e lembretes 🔔.<br><b>Timeline:</b> avisos do mural com ❤️ curtidas e 💬 comentários.<br><b>Wod:</b> o treino do dia e o histórico.<br><b>Grade:</b> agendar aula, entrar na lista de espera quando lotar (🕗), Minha agenda com 📆 para salvar no calendário.<br><b>Perfil:</b> carteirinha com QR do check-in, planos, sessões (com saldo de personal), avaliação com fotos antes×depois, treino interativo (séries ✓, carga com histórico 📈, cronômetro ⏱) e dados pessoais."],
+    ["App do Aluno", "🕗 Como funciona a lista de espera das aulas", "<ol><li>Aula lotada mostra 👥 X/X — LOTADA e o botão vira <b>Lista de espera</b>.</li><li>O aluno entra na fila; o status aparece na Minha agenda.</li><li>Quando alguém cancela, o primeiro da fila entra automaticamente na Grade e o sistema avisa a equipe para comunicar.</li></ol>"],
+    ["App do Aluno", "❤️ Curtidas e comentários na Timeline", "<ol><li>Publique avisos em <b class='caminho'>App do Aluno → Personalização → + Novo aviso</b>.</li><li>Os alunos curtem e comentam pelo app — todos veem.</li><li>Requer o bloco TIMELINE SOCIAL do supabase-setup.sql e os apps republicados.</li></ol>"],
+
+    // ================= CHAT E IA =================
+    ["Chat e IA", "💬 Receber WhatsApp e Instagram dentro do sistema", "<ol><li>Abra <b class='caminho'>Sistema → CRM → Chat e IA</b>.</li><li>Siga a aba <b>🔌 Instalação</b> uma única vez (SQL, funções meta-webhook e chat-envia, Secrets e webhook da Meta).</li><li>Pronto: toda mensagem de cliente cai na aba <b>💬 Conversas</b>, com badge de não lidas.</li><li>Responda direto pelo sistema — sai pelo canal certo (WhatsApp ou Instagram).</li></ol>"],
+    ["Chat e IA", "🤖 Montar o chatbot no canvas (fluxograma)", "<ol><li>Na aba <b>🤖 Chatbot (menu)</b>, arraste os balões pela tela para organizar o fluxo.</li><li>Para ligar um passo no outro: <b>pegue a bolinha roxa e arraste a linha até o balão de destino</b>.</li><li>Tipos de balão: 💬 mensagem, 🔢 menu, ❓ pergunta, 📝 nota interna, 🤖 IA e 🙋 equipe. O ▶ marca onde a conversa começa.</li><li>Teste no <b>🧪 Simulador</b> ao lado (funciona sem salvar) e depois <b>Salvar chatbot</b> + ligar a chavinha.</li></ol><div class='dica'>💡 Clique na linha para desligar uma ligação; 🪄 Organizar arruma os balões sozinho.</div>"],
+    ["Chat e IA", "✨ Deixar a IA (Claude) responder sozinha", "<ol><li>Na aba <b>✨ IA e automação</b>, escreva as instruções (preços, horários, regras) — a IA só usa o que estiver ali.</li><li>Ligue por conversa (chavinha 🤖 dentro da conversa) ou para todas (modo global).</li><li>Sem certeza? Use o botão <b>✨ Sugerir</b> no chat: a IA escreve e você revisa antes de enviar.</li><li><b>🔎 Testar conexões</b> confere cada chave configurada.</li></ol>"],
+    ["Chat e IA", "🧠 Usar o Copiloto IA (risco de cancelamento)", "<ol><li>Abra <b class='caminho'>Sistema → CRM → Copiloto IA</b>.</li><li>A lista mostra cada aluno em risco com o score (0–100) e os motivos: sumiço, queda de frequência, atraso, contrato acabando, NPS baixo.</li><li>Clique no botão de WhatsApp do aluno — a mensagem certa para o caso já vem pronta.</li><li>Clique em <b>Analisar minha base agora</b> para o Claude devolver o diagnóstico da semana com plano de ação.</li></ol>"],
+
+    // ================= AUTOMAÇÃO =================
+    ["Automação", "⚡ Ligar as réguas de mensagens automáticas", "<ol><li>Abra <b class='caminho'>Sistema → CRM → Automação de Mensagens</b>.</li><li>Réguas prontas: aniversário, sumidos (7 e 15 dias), renovação, cobrança, pós-matrícula, pós-cancelamento, avaliação vencida, <b>⭐ avaliação no Google</b> (20+ check-ins, uma vez só) e <b>💜 mensalidade D-2</b> com link.</li><li>Edite os templates ({nome}, {valor}, {dias}, {link} são preenchidos sozinhos) e ligue cada régua.</li><li>Ao abrir a página, os disparos do dia são calculados — envie um a um ou <b>🚀 Enviar todos</b> pela API oficial.</li></ol><div class='atencao'>⚠️ Na régua do Google, troque o COLE-AQUI-O-LINK pelo seu link real antes de ligar.</div>"],
+    ["Automação", "📊 Receber o resumo diário no seu WhatsApp (dono)", "<ol><li>Na própria <b class='caminho'>Automação de Mensagens</b>, desça até <b>📊 Resumo diário do dono</b>.</li><li>Preencha seu WhatsApp e marque <b>Enviar automaticamente todo dia</b>.</li><li>Todo dia, ao abrir o sistema, você recebe: check-ins, vendas, novos alunos, cancelamentos, atrasos e aniversariantes de ontem.</li></ol>"],
+
+    // ================= TREINOS E SAÚDE =================
+    ["Treinos e saúde", "🏋 Prescrever treino com fichas A/B/C", "<ol><li>Abra <b class='caminho'>Sistema → Treino → Treinos</b>.</li><li>Monte <b>Treinos Padrão</b> uma vez e aplique em segundos, ou crie do zero por aluno.</li><li>Cada exercício tem séries, repetições, carga e descanso; a biblioteca aceita <b>link de vídeo do YouTube (🎬)</b> que vira ▶️ na ficha do app.</li><li>Republique o app do aluno para a ficha nova chegar no celular.</li></ol>"],
+    ["Treinos e saúde", "📈 Ver a execução real dos alunos (cargas e séries)", "<ol><li>Em <b class='caminho'>Treinos</b>, abra a aba <b>📈 Execução dos alunos</b>.</li><li>Tudo que o aluno marcou no app (séries ✓ e cargas) aparece por dia, nos últimos 14 dias.</li><li>Use para ajustar a ficha com dado real — e para cobrar quem sumiu do treino.</li></ol><div class='atencao'>⚠️ Requer o bloco TREINO SINCRONIZADO do supabase-setup.sql e os apps republicados.</div>"],
+    ["Treinos e saúde", "🫀 Fazer avaliação física com fotos antes × depois", "<ol><li>Abra <b class='caminho'>Sistema → Treino → Avaliação Física</b>.</li><li>Na nova avaliação: peso, medidas, % de gordura e as <b>📸 fotos de frente e perfil</b> (comprimidas sozinhas).</li><li>O comparador <b>Antes × Depois</b> aparece no painel do aluno e no app dele.</li><li>O sistema avisa quando a reavaliação vence (padrão 90 dias, configurável).</li></ol>"],
+    ["Treinos e saúde", "🎟 Vender pacotes de personal com saldo", "<ol><li>Abra <b class='caminho'>Sistema → Operação → Aulas de Personal</b>, card <b>🎟 Pacotes de sessões</b>.</li><li>Venda o pacote: aluno, quantidade, valor e validade.</li><li>A cada sessão feita, clique em <b>− Usar 1 sessão</b> — o saldo baixa e avisa quando restar pouco.</li><li>O aluno acompanha o saldo no app (Perfil → Sessões).</li></ol>"],
+    ["Treinos e saúde", "🔥 Publicar o WOD do dia", "<ol><li>Abra <b class='caminho'>Sistema → Treino → WOD</b>.</li><li>Monte o treino do dia (aquecimento, treino, observações).</li><li>Ele aparece no app dos alunos, no Totem e no Modo TV; registre os resultados para o placar.</li></ol>"],
+
+    // ================= ACESSO E BIOMETRIA =================
+    ["Acesso e biometria", "📷 Ativar o reconhecimento facial", "<ol><li>Abra <b class='caminho'>Sistema → Operação → Biometria e Catraca</b>.</li><li>Na aba de cadastro, capture 3 fotos do rosto de cada aluno.</li><li>Ligue o <b>modo quiosque</b> num computador com webcam apontada para a entrada: reconheceu, liberou e registrou o check-in.</li><li>A IA roda no próprio navegador — funciona sem internet.</li></ol>"],
+    ["Acesso e biometria", "🎛 Integrar com a catraca Control iD", "<ol><li>Na <b class='caminho'>Biometria e Catraca</b>, aba Control iD: informe IP, usuário e senha do equipamento.</li><li>Envie os alunos para a catraca com um clique e importe os acessos de volta.</li></ol><div class='atencao'>⚠️ Site em HTTPS acessando catraca em HTTP local: libere em Chrome → cadeado → Configurações do site → Conteúdo inseguro: Permitir.</div>"],
+    ["Acesso e biometria", "🤝 Atender alunos de Wellhub e TotalPass", "<ol><li>Cadastre o ID do agregador na ficha do aluno (<b class='caminho'>Wellhub e TotalPass</b> → validação).</li><li>Na entrada, o sistema pede o token do app do parceiro e libera a diária do dia.</li><li>Importe o CSV do portal do parceiro para conciliar os acessos do mês (bate por ID e por nome).</li></ol>"],
+
+    // ================= RELATÓRIOS E GESTÃO =================
+    ["Relatórios e gestão", "📊 Acompanhar os números da academia", "<b class='caminho'>Dashboard</b> (na home do Sistema): visão do dia. <b class='caminho'>Resumo Gerencial</b>: fechamento do mês numa página. <b class='caminho'>Crescimento e Cancelamentos</b>: novos × saídas e motivos. <b class='caminho'>Presenças e Ocupação</b>: mapa de calor dos horários. <b class='caminho'>NPS</b>: satisfação com tratamento de detratores. <b class='caminho'>Radar de Retenção</b>: quem sumiu, aniversários e vencimentos com mensagem pronta."],
+    ["Relatórios e gestão", "🎯 Definir metas de vendas por consultora", "<ol><li>Abra <b class='caminho'>Sistema → Alunos → Metas de Vendas</b>.</li><li>Defina a meta mensal de cada vendedora.</li><li>Lance as vendas em segundos — ranking e projeção do mês se atualizam sozinhos.</li></ol>"],
+    ["Relatórios e gestão", "📺 Ligar o Modo TV no telão", "<ol><li>Numa TV/telão com navegador, abra o <b class='caminho'>Modo TV</b> pelo portal.</li><li>Ele alterna WOD do dia, avisos e placar — ideal para a área de treino.</li></ol>"],
+
+    // ================= CONFIGURAÇÕES E NUVEM =================
+    ["Configurações e nuvem", "☁️ Ligar a nuvem e trazer a equipe", "<ol><li>Na página inicial do portal, clique em <b>Entrar</b> → crie sua conta e a academia.</li><li>Você recebe um <b>código de equipe</b> de 6 letras.</li><li>Cada funcionário cria a própria conta e entra com esse código — todos veem os mesmos dados, em tempo real.</li><li>Sem internet? Tudo continua funcionando no aparelho e sincroniza quando voltar.</li></ol>"],
+    ["Configurações e nuvem", "🔌 Configurar o Supabase (uma vez)", "<ol><li>Rode o <b>supabase-setup.sql</b> inteiro no SQL Editor (pode rodar de novo quando o sistema atualizar).</li><li>Publique as 4 funções: whatsapp, pagarme, chat-envia (JWT ligado) e meta-webhook (JWT <b>desligado</b>).</li><li>Preencha os Secrets: ANTHROPIC_API_KEY, META_VERIFY_TOKEN, WHATSAPP_TOKEN, WHATSAPP_PHONE_ID, INSTAGRAM_TOKEN, PAGARME_SECRET_KEY.</li><li>Aponte o webhook da Meta para …/functions/v1/meta-webhook.</li></ol><div class='dica'>💡 O passo a passo detalhado com links está em Chat e IA → aba Instalação.</div>"],
+    ["Configurações e nuvem", "⚙️ Configurações gerais, cargos e permissões", "<b class='caminho'>Administrativo → Configurações</b>: dados da academia, financeiro, vendas e avançado. <b class='caminho'>Cargos e Permissões</b>: 7 perfis prontos (Acesso Total 🔑, recepção, professor…). <b class='caminho'>Horários de Funcionamento</b> e <b class='caminho'>Serviços</b> completam o cadastro."],
+    ["Configurações e nuvem", "💾 Backup dos dados", "<ol><li>Com a nuvem ligada, tudo já fica salvo no Supabase automaticamente.</li><li>Para um arquivo local: na página inicial do portal, use exportar backup — baixa um arquivo com todos os dados.</li><li>Para restaurar, importe o mesmo arquivo.</li></ol>"],
+  ];
+
+  // ---------- render ----------
+  var porCat = {};
+  TUTORIAIS.forEach(function (t) { (porCat[t[0]] = porCat[t[0]] || []).push(t); });
+  $("tutoriais").innerHTML = Object.keys(porCat).map(function (cat) {
+    return '<div class="cat" data-cat><h2>' + cat + "</h2>" +
+      porCat[cat].map(function (t) {
+        return '<details class="tut"><summary>' + t[1] + '<span class="seta">›</span></summary><div class="corpo-tut">' + t[2] + "</div></details>";
+      }).join("") + "</div>";
+  }).join("");
+
+  // ---------- busca ----------
+  $("busca").addEventListener("input", function () {
+    var q = this.value.trim().toLowerCase();
+    var achou = 0;
+    document.querySelectorAll("details.tut").forEach(function (d) {
+      var mostra = !q || d.textContent.toLowerCase().indexOf(q) !== -1;
+      d.style.display = mostra ? "" : "none";
+      if (mostra) achou++;
+      if (q && mostra) d.open = true;
+      if (!q) d.open = false;
+    });
+    document.querySelectorAll("[data-cat]").forEach(function (c) {
+      var vivos = Array.prototype.some.call(c.querySelectorAll("details.tut"), function (d) { return d.style.display !== "none"; });
+      c.style.display = vivos ? "" : "none";
+    });
+    $("primeirosPassos").style.display = q ? "none" : "";
+    $("nada").style.display = achou ? "none" : "block";
+  });
+
+  window.__suporte = { total: TUTORIAIS.length }; // testes
+})();
+</script>
+</body>
+</html>
