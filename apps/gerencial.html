@@ -239,5 +239,68 @@
   render();
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+
+  window.fechamentoPDF = function () {
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var ativos = stA.alunos.filter(function (a) { return a.status !== "inativo"; });
+    var receita = 0, emAtraso = 0, atrasoN = 0;
+    stA.recebiveis.forEach(function (r) {
+      if (r.status === "pago" && (r.pagoEm || r.vencimento || "").slice(0, 7) === mes) receita += +r.valor || 0;
+      if (r.status === "aberto" && r.vencimento < hoje) { emAtraso += +r.valor || 0; atrasoN++; }
+    });
+    var novos = 0, cancelados = 0, ck = 0;
+    ativos.forEach(function (a) { ck += (a.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === mes; }).length; });
+    stA.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) === mes) novos++;
+        if ((c.canceladoEm || "").slice(0, 7) === mes) cancelados++;
+      });
+    });
+    var vendasProd = 0;
+    (S.read("produtos", { vendas: [] }).vendas || []).forEach(function (v) {
+      if ((v.quando || "").slice(0, 7) === mes) vendasProd += +v.total || 0;
+    });
+    var churn = ativos.length ? Math.round(cancelados * 1000 / ativos.length) / 10 : 0;
+    var nomeAcad = (S.read("config", { dados: {} }).dados || {}).nome || "TORQUE FIT";
+    var w = window.open("", "_blank");
+    w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Fechamento " + mes + "</title>" +
+      "<style>body{font-family:system-ui,sans-serif;max-width:700px;margin:40px auto;color:#1a1a2e;}" +
+      "h1{border-bottom:3px solid #7c3aed;padding-bottom:8px;}h1 small{color:#7c3aed;display:block;font-size:14px;}" +
+      ".grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px;}" +
+      ".kpi{border:1px solid #ddd;border-radius:10px;padding:16px;}" +
+      ".kpi .r{font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.08em;}" +
+      ".kpi .v{font-size:26px;font-weight:800;margin-top:4px;}" +
+      "footer{margin-top:30px;font-size:11px;color:#999;text-align:center;}@media print{body{margin:10mm;}}</style></head><body>" +
+      "<h1>" + nomeAcad + "<small>Fechamento do mês · " + mes.split("-").reverse().join("/") + "</small></h1>" +
+      "<div class='grid'>" +
+      "<div class='kpi'><div class='r'>Receita de mensalidades</div><div class='v'>" + brl(receita) + "</div></div>" +
+      "<div class='kpi'><div class='r'>Vendas de produtos</div><div class='v'>" + brl(vendasProd) + "</div></div>" +
+      "<div class='kpi'><div class='r'>Alunos ativos</div><div class='v'>" + ativos.length + "</div></div>" +
+      "<div class='kpi'><div class='r'>Check-ins no mês</div><div class='v'>" + ck + "</div></div>" +
+      "<div class='kpi'><div class='r'>Novos contratos</div><div class='v'>" + novos + "</div></div>" +
+      "<div class='kpi'><div class='r'>Cancelamentos (churn " + churn + "%)</div><div class='v'>" + cancelados + "</div></div>" +
+      "<div class='kpi'><div class='r'>Inadimplência hoje</div><div class='v'>" + brl(emAtraso) + " <small style='font-size:13px'>(" + atrasoN + ")</small></div></div>" +
+      "<div class='kpi'><div class='r'>Receita por aluno</div><div class='v'>" + brl(ativos.length ? receita / ativos.length : 0) + "</div></div>" +
+      "</div><footer>Gerado pelo TORQUESYS em " + new Date().toLocaleString("pt-BR") + " — imprima ou salve como PDF (Ctrl+P)</footer>" +
+      "<scr" + "ipt>window.print();</scr" + "ipt></body></html>");
+    w.document.close();
+  };
+
+  var barra = document.querySelector("main .card") || document.querySelector("main");
+  var btn = document.createElement("button");
+  btn.className = "btn";
+  btn.id = "btnPDF";
+  btn.textContent = "📄 Fechamento do mês (PDF)";
+  btn.style.margin = "10px 0";
+  btn.onclick = window.fechamentoPDF;
+  barra.parentNode.insertBefore(btn, barra);
+})();
+</script>
 </body>
 </html>

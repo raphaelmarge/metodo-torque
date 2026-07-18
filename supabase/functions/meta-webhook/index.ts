@@ -65,57 +65,198 @@ async function pegaConfig(): Promise<{ aid: string; auto_global: boolean; prompt
   return null;
 }
 
+// ---------- dados da academia (para as ferramentas da IA) ----------
+async function leDados(aid: string, chave: string): Promise<any> {
+  const r = await sb(`dados?select=valor&academia_id=eq.${aid}&chave=eq.${encodeURIComponent(chave)}`);
+  const rows = r.ok ? await r.json() : [];
+  return rows.length ? rows[0].valor : null;
+}
+
+function achaAlunoPorFone(alunosVal: any, fone: string): any {
+  const sufixo = String(fone).replace(/\D/g, "").slice(-8);
+  if (!sufixo) return null;
+  return ((alunosVal && alunosVal.alunos) || []).find(function (a: any) {
+    const z = String(a.zap || "").replace(/\D/g, "");
+    return z && z.slice(-8) === sufixo && a.status !== "inativo";
+  });
+}
+
+const DIAS_PT = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+// as ferramentas que o Claude pode usar durante a conversa
+const FERRAMENTAS = [
+  { name: "consultar_grade",
+    description: "Lista as aulas da grade de uma data (AAAA-MM-DD): nome, horário, professor e vagas restantes. Use antes de agendar.",
+    input_schema: { type: "object", properties: { data: { type: "string", description: "Data no formato AAAA-MM-DD" } }, required: ["data"] } },
+  { name: "agendar_aula",
+    description: "Agenda o cliente (identificado pelo telefone da conversa) numa aula da grade em uma data. Se estiver lotada, entra na lista de espera automaticamente.",
+    input_schema: { type: "object", properties: { aula: { type: "string", description: "Nome (ou parte do nome) da aula" }, data: { type: "string", description: "Data AAAA-MM-DD" } }, required: ["aula", "data"] } },
+  { name: "minhas_pendencias",
+    description: "Consulta o plano ativo e as mensalidades em aberto do cliente desta conversa.",
+    input_schema: { type: "object", properties: {} } },
+  { name: "horario_funcionamento",
+    description: "Horários de funcionamento da academia por dia da semana.",
+    input_schema: { type: "object", properties: {} } },
+];
+
+async function executaFerramenta(nome: string, entrada: any, ctx: { aid: string; contato: string }): Promise<string> {
+  try {
+    if (nome === "horario_funcionamento") {
+      const f = await leDados(ctx.aid, "funcionamento");
+      const dias = (f && f.dias) || {};
+      const linhas: string[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = dias[i] || dias[String(i)];
+        if (d && (d.abre || d.inicio)) linhas.push(DIAS_PT[i] + ": " + (d.abre || d.inicio) + " às " + (d.fecha || d.fim || "?"));
+      }
+      return linhas.length ? linhas.join("\n") : "Horários não cadastrados no sistema — oriente a falar com a recepção.";
+    }
+
+    if (nome === "consultar_grade") {
+      const data = String(entrada.data || "").slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return "Data inválida — use AAAA-MM-DD.";
+      const grade = await leDados(ctx.aid, "grade");
+      if (!grade || !(grade.aulas || []).length) return "A grade de aulas não está cadastrada.";
+      const dow = new Date(data + "T12:00:00").getDay();
+      const doDia = (grade.aulas || []).filter(function (a: any) { return (a.dias || []).indexOf(dow) !== -1; });
+      if (!doDia.length) return "Nenhuma aula na grade em " + data + " (" + DIAS_PT[dow] + ").";
+      return doDia.map(function (a: any) {
+        const ocup = ((grade.presencas || {})[a.id + "|" + data] || []).length;
+        const vagas = +a.vagas || 0;
+        return a.nome + " às " + a.inicio + (a.prof ? " com " + a.prof : "") +
+          (vagas ? " — " + Math.max(0, vagas - ocup) + " vaga(s) livre(s)" + (ocup >= vagas ? " (LOTADA)" : "") : "");
+      }).join("\n");
+    }
+
+    if (nome === "minhas_pendencias") {
+      const alunosVal = await leDados(ctx.aid, "alunos");
+      const aluno = achaAlunoPorFone(alunosVal, ctx.contato);
+      if (!aluno) return "Não encontrei cadastro com este número de WhatsApp — oriente a confirmar o número com a recepção.";
+      const contrato = (aluno.contratos || []).find(function (c: any) { return c.status === "ativo"; });
+      const abertos = ((alunosVal && alunosVal.recebiveis) || []).filter(function (r: any) {
+        return r.alunoId === aluno.id && r.status === "aberto";
+      });
+      const hoje = new Date().toISOString().slice(0, 10);
+      const linhas = ["Cliente: " + aluno.nome, contrato ? "Plano ativo: sim" : "SEM plano ativo"];
+      if (!abertos.length) linhas.push("Nenhuma mensalidade em aberto. Tudo em dia! ✅");
+      else abertos.forEach(function (r: any) {
+        linhas.push("Mensalidade de R$ " + (+r.valor || 0).toFixed(2) + " — vence " + r.vencimento + (r.vencimento < hoje ? " (EM ATRASO)" : ""));
+      });
+      return linhas.join("\n");
+    }
+
+    if (nome === "agendar_aula") {
+      const data = String(entrada.data || "").slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return "Data inválida — use AAAA-MM-DD.";
+      if (data < new Date().toISOString().slice(0, 10)) return "Essa data já passou — peça uma data futura.";
+      const alunosVal = await leDados(ctx.aid, "alunos");
+      const aluno = achaAlunoPorFone(alunosVal, ctx.contato);
+      if (!aluno) return "Não encontrei cadastro com este número — o agendamento pela conversa só funciona com o WhatsApp cadastrado. Oriente a falar com a recepção.";
+      if (!aluno.appToken) return "O cadastro existe mas o app do cliente ainda não foi publicado — a recepção resolve em 1 minuto.";
+      const grade = await leDados(ctx.aid, "grade");
+      const busca = String(entrada.aula || "").toLowerCase();
+      const dow = new Date(data + "T12:00:00").getDay();
+      const aula = (grade && grade.aulas || []).find(function (a: any) {
+        return a.nome.toLowerCase().indexOf(busca) !== -1 && (a.dias || []).indexOf(dow) !== -1;
+      });
+      if (!aula) return "Não achei a aula '" + entrada.aula + "' na grade de " + data + " (" + DIAS_PT[dow] + "). Use consultar_grade para ver as opções.";
+      // já agendado?
+      let r = await sb(`app_agendamentos?select=id,status&token=eq.${encodeURIComponent(aluno.appToken)}&aula_id=eq.${encodeURIComponent(aula.id)}&data=eq.${data}`);
+      const jaTem = (r.ok ? await r.json() : []).find(function (g: any) { return ["pendente", "confirmado", "espera"].indexOf(g.status) !== -1; });
+      if (jaTem) return "Este cliente já está " + (jaTem.status === "espera" ? "na lista de espera" : "agendado") + " nessa aula.";
+      // lotação (presenças da grade + agendamentos pendentes)
+      const ocupGrade = ((grade.presencas || {})[aula.id + "|" + data] || []).length;
+      r = await sb(`app_agendamentos?select=id&aula_id=eq.${encodeURIComponent(aula.id)}&data=eq.${data}&status=eq.pendente`);
+      const ocupPend = (r.ok ? await r.json() : []).length;
+      const vagas = +aula.vagas || 0;
+      const lotada = vagas > 0 && (ocupGrade + ocupPend) >= vagas;
+      await sb("app_agendamentos", {
+        method: "POST",
+        body: JSON.stringify({
+          academia_id: ctx.aid, token: aluno.appToken, aluno: aluno.nome,
+          aula_id: aula.id, aula_nome: aula.nome, data: data, status: lotada ? "espera" : "pendente",
+        }),
+      });
+      return lotada
+        ? "A aula " + aula.nome + " de " + data + " está LOTADA — coloquei o cliente na LISTA DE ESPERA (se alguém cancelar, entra automaticamente)."
+        : "AGENDADO: " + aula.nome + " às " + aula.inicio + " em " + data + " para " + aluno.nome + ". A recepção confirma na grade.";
+    }
+  } catch (e) {
+    console.error("ferramenta", nome, e);
+  }
+  return "Não consegui executar agora — oriente a falar com a recepção.";
+}
+
 // ---------- IA (Claude / Anthropic) ----------
 async function respostaIA(
   historico: { de: string; texto: string }[],
   promptExtra: string,
+  ctx?: { aid: string; contato: string },
 ): Promise<string> {
   const chave = env("ANTHROPIC_API_KEY");
   if (!chave) return "";
 
-  // A API exige papéis alternados user/assistant: junta mensagens seguidas
-  // do mesmo lado e garante que a conversa começa com o cliente.
-  const msgs: { role: "user" | "assistant"; content: string }[] = [];
+  const msgs: any[] = [];
   for (const m of historico) {
     const role = m.de === "cliente" ? "user" : "assistant";
     const ultimo = msgs[msgs.length - 1];
-    if (ultimo && ultimo.role === role) ultimo.content += "\n" + m.texto;
+    if (ultimo && ultimo.role === role && typeof ultimo.content === "string") ultimo.content += "\n" + m.texto;
     else msgs.push({ role, content: m.texto });
   }
   if (!msgs.length) return "";
   if (msgs[0].role === "assistant") msgs.unshift({ role: "user", content: "(início da conversa)" });
 
+  const hoje = new Date().toISOString().slice(0, 10);
   const sistema =
     "Você é o atendente virtual de uma academia (TORQUE FIT) respondendo clientes " +
     "pelo WhatsApp e pelo Instagram. Responda em português do Brasil, de forma curta, " +
     "simpática e objetiva, como uma mensagem de chat (sem markdown, sem listas longas). " +
+    "Hoje é " + hoje + ". Você tem FERRAMENTAS reais: consultar a grade, AGENDAR aulas " +
+    "(inclusive lista de espera), ver as pendências do cliente e os horários — USE-AS em vez " +
+    "de inventar. Antes de agendar, confirme a aula e a data com o cliente. " +
     "Nunca invente preços, horários ou promoções que não estejam nas instruções abaixo — " +
     "se não souber, diga que a equipe já vai responder. Não peça dados sensíveis." +
     (promptExtra ? "\n\nInstruções da academia:\n" + promptExtra : "");
 
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": chave,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-opus-4-8",
-      max_tokens: 700,
-      thinking: { type: "adaptive" },
-      system: sistema,
-      messages: msgs.slice(-20),
-    }),
-  });
-  if (!r.ok) {
-    console.error("anthropic", r.status, await r.text());
-    return "";
+  let mensagens = msgs.slice(-20);
+  for (let volta = 0; volta < 4; volta++) {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": chave,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-opus-4-8",
+        max_tokens: 900,
+        thinking: { type: "adaptive" },
+        system: sistema,
+        tools: ctx ? FERRAMENTAS : [],
+        messages: mensagens,
+      }),
+    });
+    if (!r.ok) {
+      console.error("anthropic", r.status, await r.text());
+      return "";
+    }
+    const d = await r.json();
+    const usos = (d.content || []).filter(function (b: any) { return b.type === "tool_use"; });
+    if (!usos.length || d.stop_reason !== "tool_use" || !ctx) {
+      let texto = "";
+      for (const b of d.content || []) if (b.type === "text") texto += b.text;
+      return texto.trim();
+    }
+    // executa as ferramentas pedidas e devolve os resultados ao modelo
+    mensagens = mensagens.concat([{ role: "assistant", content: d.content }]);
+    const resultados: any[] = [];
+    for (const u of usos) {
+      const saida = await executaFerramenta(u.name, u.input || {}, ctx);
+      resultados.push({ type: "tool_result", tool_use_id: u.id, content: saida });
+    }
+    mensagens = mensagens.concat([{ role: "user", content: resultados }]);
   }
-  const d = await r.json();
-  let texto = "";
-  for (const b of d.content || []) if (b.type === "text") texto += b.text;
-  return texto.trim();
+  return "Já anotei tudo aqui! A equipe confirma com você em instantes. 💜";
 }
 
 // ---------- envio pela Meta ----------
@@ -337,7 +478,7 @@ async function processa(canal: string, contato: string, nome: string, texto: str
   // modo automático: monta o histórico e pede a resposta ao Claude
   r = await sb(`chat_mensagens?select=de,texto&conversa_id=eq.${conversa.id}&order=criado.desc&limit=20`);
   const hist = (r.ok ? await r.json() : []).reverse();
-  const resposta = await respostaIA(hist, cfg.prompt);
+  const resposta = await respostaIA(hist, cfg.prompt, { aid: cfg.aid, contato: contato });
   if (!resposta) return;
   await respondeAuto(conversa, cfg.aid, canal, contato, resposta);
 }

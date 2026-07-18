@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu app — TORQUE FIT</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<style>
+  body { font-family: system-ui, sans-serif; background: #121016; color: #f5f4f7; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; text-align: center; }
+  .box { padding: 30px; } .box .e { font-size: 46px; }
+</style>
+</head>
+<body>
+<div class="box"><div class="e">💜</div><p id="msg">Abrindo seu app…</p></div>
+<script src="../assets/cloud-config.js"></script>
+<script>
+(function () {
+  var t = new URLSearchParams(location.search).get("t") || "";
+  var cfg = self.MT_CLOUD || {};
+  if (!t || !cfg.url) {
+    document.getElementById("msg").textContent = "Link incompleto — peça o seu link do app na recepção. 💜";
+    return;
+  }
+  try { localStorage.setItem("tq_app_token", t); } catch (e) {}
+  fetch(cfg.url + "/rest/v1/rpc/app_aluno_busca", {
+    method: "POST",
+    headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ t: t }),
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    if (d && d.html) {
+      document.open();
+      document.write(d.html);
+      document.close();
+    } else {
+      document.getElementById("msg").textContent = "App não encontrado — peça para a academia publicar de novo. 💜";
+    }
+  }).catch(function () {
+    document.getElementById("msg").textContent = "Sem internet agora — tenta de novo em instantes.";
+  });
+})();
+</script>
+</body>
+</html>

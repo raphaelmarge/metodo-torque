@@ -255,7 +255,8 @@
         var total = recs.reduce(function (soma, r) { return soma + (+r.valor || 0); }, 0);
         var dias = Math.round((new Date(recs[0].vencimento) - new Date(hoje)) / 864e5);
         var dev = (inadSt.devedores || []).find(function (d) { return d.alunoId === a.id && d.cobranca && d.cobranca.linkPagamento; });
-        out.push({ a: a, dias: dias, valor: total, link: dev ? dev.cobranca.linkPagamento : "" });
+        var gerado = (S.read("automacao", { }).linksPix || {})[a.id];
+        out.push({ a: a, dias: dias, valor: total, link: dev ? dev.cobranca.linkPagamento : (gerado ? gerado.link : "") });
       });
     }
     if (gatilho === "avaliacao_google") {
@@ -396,6 +397,43 @@
       $("resumoStatus").textContent = "⚠️ Sem conexão com a função do WhatsApp (Integrações).";
     });
   }
+
+  // gera o link Pix sozinho para os disparos D-2 que ainda não têm (máx. 10/dia)
+  function geraPixPendentes() {
+    var urlPg = integ().pagarmeUrl || "";
+    if (!urlPg && !demoOn()) return;
+    var st = load();
+    st.linksPix = st.linksPix || {};
+    var alvos = alvosDe("venc_mensalidade").filter(function (a) { return !a.link; }).slice(0, 10);
+    if (!alvos.length) return;
+    var fila = Promise.resolve();
+    alvos.forEach(function (alvo) {
+      fila = fila.then(function () {
+        if (!urlPg && demoOn()) {
+          st.linksPix[alvo.a.id] = { link: "https://exemplo.dev/pix-demo-" + alvo.a.id.slice(-5), criadoEm: S.todayISO() };
+          return null;
+        }
+        var headers = { "Content-Type": "application/json" };
+        if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
+          headers.apikey = window.MT_CLOUD.anonKey;
+          headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
+        }
+        return fetch(urlPg, { method: "POST", headers: headers, body: JSON.stringify({
+          acao: "criar", metodo: "pix",
+          valorCentavos: Math.round((+alvo.valor || 0) * 100),
+          descricao: "Mensalidade — venc. em " + alvo.dias + " dia(s)",
+          nome: alvo.a.nome, vencimento: S.todayISO(), parcelas: 1,
+        }) }).then(function (r) { return r.json(); }).then(function (r) {
+          if (r && r.ok && (r.linkPagamento || r.pixCopiaECola)) {
+            st.linksPix[alvo.a.id] = { link: r.linkPagamento || r.pixCopiaECola, criadoEm: S.todayISO() };
+          }
+        }).catch(function () {});
+      });
+    });
+    fila.then(function () { S.write("automacao", st); render(); });
+  }
+  setTimeout(geraPixPendentes, 2500);
+  window.__geraPix = geraPixPendentes; // testes
 
   // ---------- render ----------
   var aba = "disparos";

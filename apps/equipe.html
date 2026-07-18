@@ -224,5 +224,85 @@
   render();
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  function stE() {
+    var st = S.read("equipe", { pessoas: [], colaboradores: [], itens: [] });
+    st.escala = st.escala || {};
+    st.ponto = st.ponto || [];
+    return st;
+  }
+  function pessoas(st) { return st.pessoas || st.colaboradores || st.itens || []; }
+
+  function renderEscala() {
+    var st = stE();
+    var ps = pessoas(st);
+    if (!ps.length) { $("escalaBox").innerHTML = "<p class='muted'>Cadastre os colaboradores acima primeiro.</p>"; return; }
+    $("escalaBox").innerHTML = "<div style='overflow-x:auto;'><table class='tabela'><thead><tr><th>Colaborador</th>" +
+      DIAS.map(function (d) { return "<th>" + d + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      ps.map(function (p) {
+        var linha = st.escala[p.id] || {};
+        return "<tr><td><b>" + esc(p.nome) + "</b></td>" + DIAS.map(function (_, i) {
+          return "<td><input data-esc='" + p.id + ":" + i + "' value='" + esc(linha[i] || "") + "' placeholder='—' style='width:76px;font-size:12px;padding:5px;'></td>";
+        }).join("") + "</tr>";
+      }).join("") + "</tbody></table></div><p class='muted' style='font-size:12px;margin-top:6px;'>Escreva o turno (ex.: 06-14, 14-22, folga). Salva sozinho ao sair do campo.</p>";
+  }
+
+  function renderPonto() {
+    var st = stE();
+    var hoje = S.todayISO();
+    var doDia = st.ponto.filter(function (p) { return p.quando.slice(0, 10) === hoje; }).reverse();
+    $("pontoSel").innerHTML = "<option value=''>— colaborador —</option>" +
+      pessoas(st).map(function (p) { return "<option value='" + esc(p.nome) + "'>" + esc(p.nome) + "</option>"; }).join("");
+    $("pontoLista").innerHTML = doDia.length ? doDia.map(function (p) {
+      return "<div style='padding:6px 10px;border-bottom:1px solid var(--linha);font-size:13.5px;'><b>" +
+        p.quando.slice(11, 16) + "</b> · " + esc(p.nome) + " · " + (p.tipo === "saida" ? "🔴 saída" : "🟢 entrada") + "</div>";
+    }).join("") : "<p class='muted'>Nenhum registro hoje.</p>";
+  }
+
+  var main = document.querySelector("main");
+  var card = document.createElement("div");
+  card.className = "card";
+  card.style.marginTop = "16px";
+  card.innerHTML = "<h2>🗓 Escala da semana</h2><div id='escalaBox'></div>" +
+    "<h2 style='margin-top:20px;'>⏰ Ponto do dia</h2>" +
+    "<div class='linha-flex' style='gap:8px;flex-wrap:wrap;align-items:center;'>" +
+    "<select id='pontoSel' style='min-width:200px;'></select>" +
+    "<button class='btn mini' id='pontoEntrada'>🟢 Entrada</button>" +
+    "<button class='btn sec mini' id='pontoSaida'>🔴 Saída</button></div>" +
+    "<div id='pontoLista' style='margin-top:10px;'></div>";
+  main.appendChild(card);
+
+  document.addEventListener("change", function (e) {
+    var alvo = e.target.closest("[data-esc]");
+    if (!alvo) return;
+    var partes = alvo.dataset.esc.split(":");
+    var st = stE();
+    st.escala[partes[0]] = st.escala[partes[0]] || {};
+    st.escala[partes[0]][partes[1]] = alvo.value.trim();
+    S.write("equipe", st);
+  });
+  function bate(tipo) {
+    var nome = $("pontoSel").value;
+    if (!nome) { alert("Escolha o colaborador."); return; }
+    var st = stE();
+    st.ponto.push({ nome: nome, tipo: tipo, quando: new Date().toISOString().slice(0, 16) });
+    if (st.ponto.length > 2000) st.ponto = st.ponto.slice(-2000);
+    S.write("equipe", st);
+    renderPonto();
+  }
+  $("pontoEntrada").onclick = function () { bate("entrada"); };
+  $("pontoSaida").onclick = function () { bate("saida"); };
+
+  window.__escala = { renderEscala: renderEscala, renderPonto: renderPonto }; // testes
+  renderEscala();
+  renderPonto();
+})();
+</script>
 </body>
 </html>

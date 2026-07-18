@@ -61,6 +61,7 @@
             <a class="btn whats" id="btnZap" target="_blank" rel="noopener" hidden>💬 Abrir WhatsApp do aluno</a>
           </div>
           <p class="muted" style="margin-top: 8px; font-size: 13px;">Baixe e anexe na conversa do WhatsApp. No celular, o aluno abre e usa "Adicionar à tela inicial" — vira um app. <strong>Com a nuvem ligada, esse envio é único:</strong> depois o app se atualiza sozinho.</p>
+          <p style="margin-top: 8px; font-size: 13px;">✨ <b>Melhor ainda (recomendado):</b> mande só o LINK instalável — <b id="linkHospedado" style="word-break:break-all;color:var(--roxo);"></b> <button class="btn mini sec" id="btnCopiaLink" hidden>copiar</button><br><span class="muted" style="font-size:12px;">Pelo link, o app abre no navegador, instala na tela inicial e recebe <b>notificações push</b> (Android/desktop; iPhone só instalado, iOS 16.4+).</span></p>
         </div>
         <div class="card">
           <h2>🔗 App conectado (atualiza sozinho)</h2>
@@ -236,6 +237,11 @@
     var emDia = !atrasados.length;
 
     // treino, avaliação, sessões
+    var loja = (S.read("produtos", { itens: [] }).itens || [])
+      .filter(function (p) { return p.nome && (+p.preco || 0) > 0 && (+p.estoque || 0) > 0; })
+      .slice(0, 24)
+      .map(function (p) { return { n: p.nome, v: +p.preco }; });
+    var pixLoja = (S.read("matriculaOnline", {}).pix) || "";
     var meusPacotes = (S.read("aulasPersonal", { itens: [] }).pacotes || [])
       .filter(function (p) { return p.aluno === a.nome; })
       .map(function (p) { return { qtd: +p.qtd || 0, saldo: (+p.qtd || 0) - (p.sessoes || []).length, validade: p.validade || "" }; });
@@ -520,6 +526,21 @@
       "<div class='secTit'>Programa de indicação</div>" +
       "<div class='cardx linha'><span style='flex:1;font-weight:600;'>👤 Convide seus amigos</span>" +
       "<a class='btnx' href='https://wa.me/?text=" + encodeURIComponent(convite) + "' target='_blank' rel='noopener'>Convidar</a></div>" +
+      (temNuvem && loja.length ? "<div class='secTit'>Lojinha 🛍</div><div class='cardx' id='lojaBox'>" +
+        loja.map(function (p, i) {
+          return "<div class='lj' data-i='" + i + "' style='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--linha);'>" +
+            "<span style='flex:1;font-weight:600;font-size:13.5px;'>" + esc(p.n) + "</span>" +
+            "<b style='color:var(--cor);font-size:13px;'>R$ " + p.v.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) + "</b>" +
+            "<button class='lj-m' style='width:30px;height:30px;border-radius:8px;border:1px solid var(--linha);background:var(--card);color:var(--txt);font-weight:800;cursor:pointer;'>−</button>" +
+            "<span class='lj-q' style='width:20px;text-align:center;font-weight:800;'>0</span>" +
+            "<button class='lj-p' style='width:30px;height:30px;border-radius:8px;border:1px solid var(--linha);background:var(--cor);color:#fff;font-weight:800;cursor:pointer;'>+</button></div>";
+        }).join("") +
+        "<div style='display:flex;justify-content:space-between;align-items:center;margin-top:10px;'>" +
+        "<b id='ljTotal'>Total: R$ 0,00</b>" +
+        "<button class='btnx' id='ljPedir' disabled style='border:none;cursor:pointer;font-family:inherit;opacity:.5;'>🛍 Enviar pedido</button></div>" +
+        "<div id='ljOk' style='display:none;font-size:12.5px;margin-top:8px;color:#16a34a;font-weight:700;'>✅ Pedido enviado! Retire e pague na recepção" +
+        (pixLoja ? " (ou adiante no Pix: " + esc(pixLoja) + ")" : "") + ". 💜</div>" +
+        "</div>" : "") +
       "<div class='secTit'>WOD</div>" +
       "<div style='display:flex;gap:10px;padding:0 16px;'>" +
       "<div class='fav' style='flex:1' data-ir='Wod'><span class='ic'>⭐</span>WOD do dia</div>" +
@@ -608,6 +629,7 @@
           (pp.validade ? " · válido até " + S.fmtData(pp.validade) : "") +
           (pp.saldo <= 2 ? " — <b>renove com a equipe!</b>" : "") + "</div>";
       }).join("") : "") + "</div></details>" +
+      (temNuvem && loja.length ? "<details id='dPedidos'><summary><span class='ic'>🛍</span>Meus pedidos</summary><div class='dcorpo' id='pedidosBox'>…</div></details>" : "") +
       "<details id='dAval'><summary><span class='ic'>🩺</span>Avaliação física</summary><div class='dcorpo'>" +
       (av ? kv("Última", S.fmtData(av.data)) + (av.peso ? kv("Peso", av.peso + " kg") : "") +
         (av.gordura ? kv("% de gordura", av.gordura + "%") : "") + (proxAv ? kv("Próxima", S.fmtData(proxAv)) : "")
@@ -733,6 +755,30 @@
         "if(sb){var po2=sb.closest('.post');var inp=po2.querySelector('.pinput input');var tx=inp.value.trim();if(!tx)return;sb.disabled=true;" +
         "rpc('app_aluno_reage',{t:TOKEN,p_post:po2.querySelector('.pacts').dataset.post,p_tipo:'coment',p_nome:NOME,p_texto:tx}).then(function(){inp.value='';sb.disabled=false;po2.querySelector('.pcoms').hidden=false;carregaReacoes();});return;}});" +
         "carregaReacoes();" +
+        // lojinha: carrinho simples e pedido via nuvem
+        "var LOJA=" + JSON.stringify(loja) + ",carrinho={};" +
+        "var lojaBox=document.getElementById('lojaBox');" +
+        "if(lojaBox){lojaBox.addEventListener('click',function(e){" +
+        "var row=e.target.closest('.lj');if(!row)return;var i=+row.dataset.i;" +
+        "if(e.target.closest('.lj-p'))carrinho[i]=(carrinho[i]||0)+1;" +
+        "else if(e.target.closest('.lj-m'))carrinho[i]=Math.max(0,(carrinho[i]||0)-1);else return;" +
+        "row.querySelector('.lj-q').textContent=carrinho[i]||0;" +
+        "var tot=0;Object.keys(carrinho).forEach(function(k){tot+=(carrinho[k]||0)*LOJA[k].v;});" +
+        "document.getElementById('ljTotal').textContent='Total: R$ '+tot.toLocaleString('pt-BR',{minimumFractionDigits:2});" +
+        "var bp=document.getElementById('ljPedir');bp.disabled=tot<=0;bp.style.opacity=tot>0?'1':'.5';});" +
+        "document.getElementById('ljPedir').addEventListener('click',function(){" +
+        "var itens=[],tot=0;Object.keys(carrinho).forEach(function(k){if(carrinho[k]>0){itens.push({n:LOJA[k].n,q:carrinho[k],v:LOJA[k].v});tot+=carrinho[k]*LOJA[k].v;}});" +
+        "if(!itens.length)return;var bp=this;bp.disabled=true;bp.textContent='Enviando…';" +
+        "rpc('app_aluno_pedido',{t:TOKEN,p_itens:itens,p_total:tot,p_nome:NOME}).then(function(r){" +
+        "if(r&&r.ok){document.getElementById('ljOk').style.display='block';carrinho={};" +
+        "lojaBox.querySelectorAll('.lj-q').forEach(function(q){q.textContent='0';});" +
+        "document.getElementById('ljTotal').textContent='Total: R$ 0,00';bp.textContent='🛍 Enviar pedido';carregaPedidos();}" +
+        "else{bp.textContent='Tentar de novo';bp.disabled=false;}});});}" +
+        "function carregaPedidos(){var pb=document.getElementById('pedidosBox');if(!pb)return;" +
+        "rpc('app_aluno_pedidos',{t:TOKEN}).then(function(l){if(!Array.isArray(l)||!l.length){pb.innerHTML='Nenhum pedido ainda — confere a Lojinha no Início! 😉';return;}" +
+        "pb.innerHTML=l.map(function(p){var st3=p.status==='entregue'?'✅ entregue':p.status==='cancelado'?'🚫 cancelado':'⏳ separando';" +
+        "return \"<div style='border-bottom:1px solid var(--linha);padding:7px 0;font-size:13px;'><b>\"+p.criado+\"</b> · R$ \"+(+p.total).toLocaleString('pt-BR',{minimumFractionDigits:2})+\" · \"+st3+\"<br><span style='color:var(--txt2)'>\"+(p.itens||[]).map(function(x){return x.q+'x '+x.n;}).join(', ')+\"</span></div>\";}).join('');});}" +
+        "carregaPedidos();" +
         // treino sincronizado: manda séries feitas e cargas para o professor ver
         "var syncT=null;function agendaSyncTreino(){clearTimeout(syncT);syncT=setTimeout(enviaTreino,2500);}" +
         "function enviaTreino(){var dia=new Date().toISOString().slice(0,10);" +
@@ -748,9 +794,16 @@
         "l.forEach(function(g){if(g.data===hj&&(g.status==='confirmado'||g.status==='pendente')){" +
         "var auN=AULAS.filter(function(x){return x.n===g.aula;})[0];" +
         "try{new Notification('\ud83d\udcaa '+g.aula+' hoje'+((auN&&auN.i)?' \u00e0s '+auN.i:'')+' \u2014 te esperamos!');}catch(en){}}});});}" +
-        "if('Notification'in window){if(Notification.permission==='granted')lembreteAulas();" +
+        "var VAPID_PUB='BHUSgtixkEk1ueTwUhCKqhp5vdjH0zSUvm52ZAiMlxscfCfiCJrya2XQZcIOZa6cyKaPYi8pU4kVfM5ve9gzkoY';" +
+        "function vapidArr(str){var pad=new Array((4-str.length%4)%4+1).join('=');var b=(str+pad).replace(/-/g,'+').replace(/_/g,'/');" +
+        "var raw=atob(b);var arr=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);return arr;}" +
+        "function tentaPush(){if(!('serviceWorker'in navigator)||!('PushManager'in window)||location.protocol!=='https:')return;" +
+        "navigator.serviceWorker.register('app-sw.js').then(function(reg){" +
+        "return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:vapidArr(VAPID_PUB)});" +
+        "}).then(function(sub){rpc('app_aluno_push',{t:TOKEN,p_sub:sub.toJSON()});}).catch(function(e){});}" +
+        "if('Notification'in window){if(Notification.permission==='granted'){lembreteAulas();tentaPush();}" +
         "else if(Notification.permission==='default'){var cw=document.getElementById('cardNotifWrap');var bn=document.getElementById('btnNotif');" +
-        "if(cw&&bn){cw.hidden=false;bn.addEventListener('click',function(){Notification.requestPermission().then(function(pp){cw.hidden=true;if(pp==='granted')lembreteAulas();});});}}}" +
+        "if(cw&&bn){cw.hidden=false;bn.addEventListener('click',function(){Notification.requestPermission().then(function(pp){cw.hidden=true;if(pp==='granted'){lembreteAulas();tentaPush();}});});}}}" +
         "document.getElementById('minhaLista').addEventListener('click',function(e){" +
         "var bi=e.target.closest('[data-ics]');if(bi){var pi=bi.dataset.ics.split('|');var au=AULAS.filter(function(x){return x.n===pi[0];})[0];" +
         "var hi=(au&&au.i)||'08:00';var hm=hi.split(':');var t0=(+hm[0])*60+(+hm[1]);var t1=t0+((au&&au.m)||60);" +
@@ -830,6 +883,13 @@
     $("cardPrevia").hidden = false;
     $("cardEnvio").hidden = false;
     $("quadroPrevia").srcdoc = htmlGerado;
+    var base = location.origin + location.pathname.replace(/apps\/[^/]*$/, "") + "app/?t=";
+    var linkH = alunoAtual && alunoAtual.appToken ? base + alunoAtual.appToken : "";
+    $("linkHospedado").textContent = linkH || "(publique os apps primeiro)";
+    $("btnCopiaLink").hidden = !linkH;
+    $("btnCopiaLink").onclick = function () {
+      navigator.clipboard.writeText(linkH).then(function () { $("btnCopiaLink").textContent = "copiado!"; setTimeout(function () { $("btnCopiaLink").textContent = "copiar"; }, 1500); });
+    };
     var bz = $("btnZap");
     if (a.zap) {
       bz.hidden = false;
