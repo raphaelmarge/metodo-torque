@@ -165,19 +165,6 @@
     var comSalario = st.colaboradores.filter(function (c) { return verInativos || c.ativo !== false; })
       .sort(function (a, b) { return a.nome.localeCompare(b.nome); });
     var mesAtual = S.todayISO().slice(0, 7);
-    function horasDoMes(nome) {
-      var pts = (st.ponto || []).filter(function (pt) { return pt.nome === nome && (pt.quando || "").slice(0, 7) === mesAtual; })
-        .sort(function (a, b) { return a.quando < b.quando ? -1 : 1; });
-      var h = 0, aberta = null;
-      pts.forEach(function (pt) {
-        if (pt.tipo === "entrada") aberta = pt.quando;
-        else if (pt.tipo === "saida" && aberta && aberta.slice(0, 10) === pt.quando.slice(0, 10)) {
-          h += (new Date(pt.quando) - new Date(aberta)) / 36e5;
-          aberta = null;
-        }
-      });
-      return Math.round(h * 100) / 100;
-    }
     var mensalistas = comSalario.filter(function (c) { return !ehHorista(c); });
     var horistas = comSalario.filter(ehHorista);
     var totalFixo = 0, totalHoristas = 0;
@@ -194,21 +181,53 @@
       "<tr style='border-top: 2px solid var(--escuro);'><td style='padding: 8px;' colspan='3'><strong>FOLHA FIXA (ativos)</strong></td><td style='text-align:right;'><strong>" + S.fmtBRL(totalFixo) + "</strong></td><td></td></tr></table>" +
       "<h3 style='margin:16px 0 6px;font-size:13px;'>⏱ Horistas e diaristas — sem salário fixo (mês " + mesAtual.split("-").reverse().join("/") + ")</h3>" +
       '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
-      "<tr><th style='text-align:left; padding: 6px 8px;'>NOME</th><th style='text-align:left;'>CARGO</th><th style='text-align:left;'>TIPO</th><th style='text-align:right;'>VALOR HORA</th><th style='text-align:right;'>HORAS NO MÊS</th><th style='text-align:right;'>A PAGAR NO MÊS</th><th style='text-align:left; padding-left: 12px;'>STATUS</th></tr>" +
+      "<tr><th style='text-align:left; padding: 6px 8px;'>NOME</th><th style='text-align:left;'>CARGO</th><th style='text-align:right;'>VALOR HORA</th><th style='text-align:right;'>V.H. DOM/FER</th><th style='text-align:right;'>HORAS</th><th style='text-align:right;'>HORAS DOM/FER</th><th style='text-align:right;'>A PAGAR NO MÊS</th><th style='text-align:left; padding-left: 12px;'>STATUS</th></tr>" +
       (horistas.length ? horistas.map(function (c) {
-        var h = horasDoMes(c.nome);
-        var vlr = Math.round(h * (+c.valorHora || 0) * 100) / 100;
+        var hh = S.horasPonto(st.ponto, c.nome, mesAtual);
+        var vDF = +c.valorHoraDF || +c.valorHora || 0;
+        var vlr = Math.round((hh.norm * (+c.valorHora || 0) + hh.domfer * vDF) * 100) / 100;
         totalHoristas += c.ativo === false ? 0 : vlr;
-        return "<tr style='border-top: 1px solid var(--linha);'><td style='padding: 6px 8px;'><strong>" + esc(c.nome) + "</strong></td><td>" + esc(c.cargo || "—") +
-          "</td><td>" + esc(c.tipoContrato || "—") + "</td><td style='text-align:right;'>" + (+c.valorHora ? S.fmtBRL(+c.valorHora) : "<span style='color:#b45309;'>defina na ficha!</span>") +
-          "</td><td style='text-align:right;'>" + String(h).replace(".", ",") + "h</td><td style='text-align:right;'><strong>" + S.fmtBRL(vlr) + "</strong></td>" +
+        return "<tr style='border-top: 1px solid var(--linha);'><td style='padding: 6px 8px;'><strong>" + esc(c.nome) + "</strong> <span class='muted'>" + esc(c.tipoContrato || "") + "</span></td><td>" + esc(c.cargo || "—") +
+          "</td><td style='text-align:right;'>" + (+c.valorHora ? S.fmtBRL(+c.valorHora) : "<span style='color:#b45309;'>defina na ficha!</span>") +
+          "</td><td style='text-align:right;'>" + (+c.valorHoraDF ? "<strong style='color:#b45309;'>" + S.fmtBRL(+c.valorHoraDF) + "</strong>" : "<span class='muted' title='vazio = usa o valor hora normal'>= normal</span>") +
+          "</td><td style='text-align:right;'>" + String(hh.norm).replace(".", ",") + "h</td>" +
+          "<td style='text-align:right;'>" + (hh.domfer ? "<strong style='color:#b45309;'>" + String(hh.domfer).replace(".", ",") + "h</strong>" : "0h") + "</td>" +
+          "<td style='text-align:right;'><strong>" + S.fmtBRL(vlr) + "</strong></td>" +
           "<td style='padding-left: 12px;'>" + stTag(c) + "</td></tr>";
-      }).join("") : "<tr><td colspan='7' style='padding:8px;' class='muted'>Nenhum horista — marque o vínculo Horista/Diarista na ficha de quem recebe por hora.</td></tr>") +
-      "<tr style='border-top: 2px solid var(--escuro);'><td style='padding: 8px;' colspan='5'><strong>HORISTAS NO MÊS (ativos)</strong></td><td style='text-align:right;'><strong>" + S.fmtBRL(totalHoristas) + "</strong></td><td></td></tr></table>" +
+      }).join("") : "<tr><td colspan='8' style='padding:8px;' class='muted'>Nenhum horista — marque o vínculo Horista/Diarista na ficha de quem recebe por hora.</td></tr>") +
+      "<tr style='border-top: 2px solid var(--escuro);'><td style='padding: 8px;' colspan='6'><strong>HORISTAS NO MÊS (ativos)</strong></td><td style='text-align:right;'><strong>" + S.fmtBRL(totalHoristas) + "</strong></td><td></td></tr></table>" +
       "<div style='margin-top:10px;padding:10px 12px;background:var(--fundo);border-radius:8px;font-size:13.5px;'><strong>FOLHA TOTAL DO MÊS: " + S.fmtBRL(totalFixo + totalHoristas) + "</strong> <span class='muted'>(fixa + horistas até agora)</span></div>" +
-      '<p class="muted" style="font-size: 12px; margin-top: 8px;">Horista recebe pelas horas batidas no <b>Ponto do dia</b> (entrada 🟢 e saída 🔴) × valor hora da ficha. Salário e valor-hora vêm da aba Contratação; o botão "Lançar na folha" da ficha manda o valor certo para Contas a Pagar.</p>';
+      '<p class="muted" style="font-size: 12px; margin-top: 8px;">Horista recebe pelas horas batidas no <b>Ponto do dia</b> (🟢/🔴) × valor hora da ficha — <b>domingos e feriados</b> pagam o "valor hora dom/feriado" (se preenchido). Feriados nacionais (incluindo Carnaval, Sexta-feira Santa e Corpus Christi) já são reconhecidos sozinhos.</p>' +
+      (function () {
+        var extras = (S.read("feriados", { datas: [] }).datas || []).slice().sort();
+        return '<div style="margin-top:10px;padding:10px 12px;border:1px dashed var(--linha);border-radius:8px;">' +
+          '<b style="font-size:12.5px;">🗓 Feriados extras (municipais/estaduais)</b> ' +
+          '<input id="ferData" type="date" style="width:auto;margin:0 6px;"> <button class="btn sec mini" id="ferAdd">+ Adicionar</button><div style="margin-top:6px;font-size:12.5px;">' +
+          (extras.length ? extras.map(function (d) {
+            return '<span class="tag neutro" style="margin:2px 4px 2px 0;">' + d.split("-").reverse().join("/") + ' <a href="#" data-ferdel="' + d + '" style="color:#dc2626;text-decoration:none;">✕</a></span>';
+          }).join("") : '<span class="muted">Nenhum — os nacionais já contam automaticamente.</span>') + "</div></div>";
+      })();
     $("salarios").innerHTML = html;
   }
+
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "ferAdd") {
+      var d = $("ferData").value;
+      if (!d) { alert("Escolha a data do feriado."); return; }
+      var stF = S.read("feriados", { datas: [] });
+      if (stF.datas.indexOf(d) === -1) { stF.datas.push(d); S.write("feriados", stF); }
+      render();
+      return;
+    }
+    var del = e.target && e.target.getAttribute && e.target.getAttribute("data-ferdel");
+    if (del) {
+      e.preventDefault();
+      var stF2 = S.read("feriados", { datas: [] });
+      stF2.datas = stF2.datas.filter(function (x) { return x !== del; });
+      S.write("feriados", stF2);
+      render();
+    }
+  });
 
   $("busca").addEventListener("input", function () { busca = this.value; render(); });
   $("fCargo").addEventListener("change", function () { filtroCargo = this.value; render(); });
