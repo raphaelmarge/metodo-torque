@@ -504,3 +504,124 @@ begin
   return json_build_object('ok', true, 'id', v_id);
 end;
 $$;
+
+-- ==================== MATRÍCULA ONLINE ====================
+-- Página pública (matricula.html na raiz do site): o interessado escolhe o
+-- plano e deixa os dados; cai no Funil Comercial como lead quente.
+-- Bloco idempotente.
+
+create table if not exists public.matricula_config (
+  academia_id uuid primary key references public.academias (id) on delete cascade,
+  dados jsonb,
+  atualizado timestamptz not null default now()
+);
+
+create table if not exists public.matriculas_online (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  nome text not null,
+  zap text not null default '',
+  email text not null default '',
+  plano text not null default '',
+  status text not null default 'novo',          -- novo | importado
+  criado timestamptz not null default now()
+);
+
+alter table public.matricula_config enable row level security;
+alter table public.matriculas_online enable row level security;
+
+drop policy if exists "matricula_config_membros" on public.matricula_config;
+create policy "matricula_config_membros" on public.matricula_config
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+drop policy if exists "matriculas_online_membros" on public.matriculas_online;
+create policy "matriculas_online_membros" on public.matriculas_online
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- página pública lê os planos publicados (sem login)
+create or replace function public.matricula_info()
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select dados from matricula_config order by atualizado desc limit 1
+$$;
+
+-- página pública registra o interessado (mínimo necessário; limitado a 400 chars)
+create or replace function public.matricula_nova(p_nome text, p_zap text, p_email text, p_plano text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from matricula_config order by atualizado desc limit 1;
+  if v_acad is null then
+    return json_build_object('erro', 'sem_config');
+  end if;
+  if length(trim(coalesce(p_nome, ''))) < 2 then
+    return json_build_object('erro', 'nome');
+  end if;
+  insert into matriculas_online (academia_id, nome, zap, email, plano)
+    values (v_acad, left(trim(p_nome), 120), left(coalesce(p_zap, ''), 20),
+            left(coalesce(p_email, ''), 120), left(coalesce(p_plano, ''), 120));
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.matricula_info() to anon, authenticated;
+grant execute on function public.matricula_nova(text, text, text, text) to anon, authenticated;
+
+-- ==================== TREINO SINCRONIZADO ====================
+-- O app do aluno envia as séries feitas e as cargas; o professor vê a
+-- execução real na tela de Treinos. Bloco idempotente.
+
+create table if not exists public.app_treino_log (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  dia date not null,
+  exercicio text not null,
+  feitas integer not null default 0,
+  carga text not null default '',
+  criado timestamptz not null default now()
+);
+create index if not exists app_treino_log_dia on public.app_treino_log (academia_id, dia);
+create unique index if not exists app_treino_log_unico on public.app_treino_log (token, dia, exercicio);
+
+alter table public.app_treino_log enable row level security;
+
+drop policy if exists "app_treino_log_membros" on public.app_treino_log;
+create policy "app_treino_log_membros" on public.app_treino_log
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- o app envia o dia inteiro de uma vez (upsert por exercício)
+create or replace function public.app_aluno_treino_reg(t text, p_dia date, p_itens jsonb)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  it jsonb;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  for it in select * from jsonb_array_elements(coalesce(p_itens, '[]'::jsonb)) loop
+    insert into app_treino_log (academia_id, token, dia, exercicio, feitas, carga)
+      values (v_acad, t, p_dia, left(coalesce(it->>'ex', ''), 120),
+              coalesce((it->>'f')::int, 0), left(coalesce(it->>'c', ''), 30))
+    on conflict (token, dia, exercicio) do update
+      set feitas = excluded.feitas, carga = excluded.carga, criado = now();
+  end loop;
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.app_aluno_treino_reg(text, date, jsonb) to anon, authenticated;
