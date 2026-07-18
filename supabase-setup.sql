@@ -396,3 +396,111 @@ end;
 $$;
 
 grant execute on function public.app_aluno_espera(text, text, text, date, text) to anon, authenticated;
+
+-- ==================== TIMELINE SOCIAL (curtidas e comentários) ====================
+-- O aluno curte e comenta os posts do mural pelo app (validado pelo token).
+-- Bloco idempotente.
+
+create table if not exists public.app_reacoes (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  post_id text not null,
+  tipo text not null default 'like',            -- like | coment
+  nome text not null default '',
+  texto text not null default '',
+  criado timestamptz not null default now()
+);
+create index if not exists app_reacoes_post on public.app_reacoes (academia_id, post_id);
+
+alter table public.app_reacoes enable row level security;
+
+drop policy if exists "app_reacoes_membros" on public.app_reacoes;
+create policy "app_reacoes_membros" on public.app_reacoes
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- curtir (de novo = descurtir) ou comentar
+create or replace function public.app_aluno_reage(t text, p_post text, p_tipo text, p_nome text, p_texto text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if p_tipo = 'like' then
+    if exists (select 1 from app_reacoes where token = t and post_id = p_post and tipo = 'like') then
+      delete from app_reacoes where token = t and post_id = p_post and tipo = 'like';
+      return json_build_object('ok', true, 'curtiu', false);
+    end if;
+    insert into app_reacoes (academia_id, token, post_id, tipo, nome)
+      values (v_acad, t, p_post, 'like', coalesce(p_nome, ''));
+    return json_build_object('ok', true, 'curtiu', true);
+  end if;
+  if length(trim(coalesce(p_texto, ''))) = 0 then
+    return json_build_object('erro', 'texto_vazio');
+  end if;
+  insert into app_reacoes (academia_id, token, post_id, tipo, nome, texto)
+    values (v_acad, t, p_post, 'coment', coalesce(p_nome, ''), left(trim(p_texto), 400));
+  return json_build_object('ok', true);
+end;
+$$;
+
+-- curtidas e comentários de todos os posts (para pintar a Timeline)
+create or replace function public.app_aluno_reacoes(t text)
+returns json
+language sql security definer stable
+set search_path = public
+as $$
+  select coalesce(json_agg(json_build_object(
+      'post', post_id, 'tipo', tipo, 'nome', nome, 'texto', texto,
+      'meu', (token = t), 'criado', criado) order by criado), '[]'::json)
+  from app_reacoes
+  where academia_id = (select academia_id from app_aluno where token = t)
+$$;
+
+grant execute on function public.app_aluno_reage(text, text, text, text, text) to anon, authenticated;
+grant execute on function public.app_aluno_reacoes(text) to anon, authenticated;
+
+-- ==================== LIMITE DE AGENDAMENTOS SIMULTÂNEOS ====================
+-- Regras de reserva: máximo de agendamentos futuros ativos por aluno
+-- (configurável na Grade → Regras de agendamento; padrão 3).
+
+create or replace function public.app_aluno_agenda(t text, p_aula_id text, p_aula_nome text, p_data date, p_nome text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_id uuid;
+  v_max int;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if exists (select 1 from app_agendamentos
+             where token = t and aula_id = p_aula_id and data = p_data
+               and status in ('pendente', 'confirmado', 'espera')) then
+    return json_build_object('erro', 'ja_agendado');
+  end if;
+  select coalesce((valor->'config'->>'maxAtivos')::int, 3) into v_max
+    from dados where academia_id = v_acad and chave = 'grade';
+  if v_max is null then v_max := 3; end if;
+  if v_max > 0 and (select count(*) from app_agendamentos
+      where token = t and status in ('pendente', 'confirmado')
+        and data >= current_date) >= v_max then
+    return json_build_object('erro', 'limite', 'max', v_max);
+  end if;
+  insert into app_agendamentos (academia_id, token, aluno, aula_id, aula_nome, data)
+    values (v_acad, t, coalesce(p_nome, ''), p_aula_id, coalesce(p_aula_nome, ''), p_data)
+    returning id into v_id;
+  return json_build_object('ok', true, 'id', v_id);
+end;
+$$;
