@@ -350,6 +350,18 @@
       var dt = (k.split("|")[1] || "");
       if (dt >= hoje && dt <= lim7) lot[k] = (presGrade[k] || []).length;
     });
+    // horários fixos semanais contam na lotação de todos os dias da aula
+    (stGrade.aulas || []).forEach(function (au) {
+      var nF = (au.fixos || []).length;
+      if (!nF) return;
+      for (var dI2 = 0; dI2 < 8; dI2++) {
+        var dd2 = new Date(hoje + "T12:00");
+        dd2.setDate(dd2.getDate() + dI2);
+        if ((au.dias || []).indexOf(dd2.getDay()) === -1) continue;
+        var kk = au.id + "|" + S.todayISO(dd2);
+        lot[kk] = (lot[kk] || 0) + nF;
+      }
+    });
 
     // WOD: hoje + histórico do mês
     var wodDias = S.read("wod", { dias: {} }).dias || {};

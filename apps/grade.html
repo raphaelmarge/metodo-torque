@@ -285,7 +285,7 @@
   }
 
   function cardAula(st, o, iso) {
-    var n = (st.presencas[o.chave] || []).length;
+    var n = (st.presencas[o.chave] || []).length + (o.a.fixos || []).length;
     var vagas = +o.a.vagas || 0;
     var cls = n === 0 ? "" : n >= vagas ? "cheia" : "tem";
     return '<div class="aula-card' + (o.avulsa ? " avulsa" : "") + '" data-chave="' + o.chave + '" data-dia="' + iso + '" style="border-left-color:' + (o.a.cor || "#7c3aed") + '">' +
@@ -471,15 +471,21 @@
     var lista = st.presencas[chaveAberta] || [];
     var id = chaveAberta.split("|")[0];
     var aula = st.aulas.find(function (x) { return x.id === id; }) || st.avulsas.find(function (x) { return x.id === id; }) || {};
-    $("partLista").innerHTML = lista.length
+    var fixos = aula.fixos || [];
+    var fixosHTML = fixos.map(function (n, i) {
+      return '<div class="p" style="background:#f1ebff;"><span>⭐ ' + esc(n) + ' <span class="muted" style="font-size:11px;">horário fixo semanal</span></span>' +
+        '<button data-rmfixo="' + i + '" title="Tirar o horário fixo">✕</button></div>';
+    }).join("");
+    $("partLista").innerHTML = fixosHTML + (lista.length
       ? lista.map(function (n, i) {
           var iso = chaveAberta.split("|")[1];
           var faltou = ((st.faltas || {})[n] || []).indexOf(iso) !== -1;
           return '<div class="p"><span>' + esc(n) + (faltou ? ' <span class="tag alerta" style="margin-left:6px">👻 faltou</span>' : "") +
-            '</span><span><button data-falta="' + i + '" title="Marcar/desmarcar falta (agendou e não veio)" style="color:#b45309">👻</button> ' +
+            '</span><span><button data-fixo="' + i + '" title="Tornar horário fixo (entra toda semana nesta aula)" style="color:#7c3aed">⭐</button> ' +
+            '<button data-falta="' + i + '" title="Marcar/desmarcar falta (agendou e não veio)" style="color:#b45309">👻</button> ' +
             '<button data-rm="' + i + '" title="Remover">✕</button></span></div>';
         }).join("")
-      : '<div class="muted">Ninguém marcado ainda — ' + (+aula.vagas || 0) + " vagas livres.</div>";
+      : (fixos.length ? "" : '<div class="muted">Ninguém marcado ainda — ' + (+aula.vagas || 0) + " vagas livres.</div>"));
     $("partNome").value = "";
   }
   $("partAdd").onclick = function () {
@@ -498,6 +504,33 @@
   };
   $("partNome").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("partAdd").click(); } });
   $("partLista").addEventListener("click", function (e) {
+    var fx = e.target.getAttribute && e.target.getAttribute("data-fixo");
+    if (fx != null) {
+      var stX = load();
+      var idX = chaveAberta.split("|")[0];
+      var aulaX = stX.aulas.find(function (x) { return x.id === idX; });
+      var nomeX = (stX.presencas[chaveAberta] || [])[+fx];
+      if (aulaX && nomeX) {
+        aulaX.fixos = aulaX.fixos || [];
+        var limpo = nomeX.replace(" 📲", "");
+        if (aulaX.fixos.indexOf(limpo) === -1) aulaX.fixos.push(limpo);
+        stX.presencas[chaveAberta].splice(+fx, 1); // sai da lista do dia: agora é fixo em todas
+        S.write("grade", stX);
+        renderPart(); render();
+      }
+      return;
+    }
+    var rf = e.target.getAttribute && e.target.getAttribute("data-rmfixo");
+    if (rf != null) {
+      var stY = load();
+      var aulaY = stY.aulas.find(function (x) { return x.id === chaveAberta.split("|")[0]; });
+      if (aulaY && aulaY.fixos) {
+        aulaY.fixos.splice(+rf, 1);
+        S.write("grade", stY);
+        renderPart(); render();
+      }
+      return;
+    }
     var f = e.target.getAttribute && e.target.getAttribute("data-falta");
     if (f != null) {
       var stF = load();
@@ -570,13 +603,14 @@
       Object.keys(liberadas).forEach(function (chave) {
         var aula = (st.aulas || []).find(function (x) { return x.id === chave.split("|")[0]; });
         var cap = aula ? (+aula.vagas || 0) : 0;
+        var nFixos = aula ? (aula.fixos || []).length : 0;
         var lista = st.presencas[chave] || [];
         esperas.filter(function (g) { return (g.aula_id + "|" + g.data) === chave; }).some(function (g) {
-          if (cap && lista.length >= cap) return true; // encheu de novo, fila para
+          if (cap && lista.length + nFixos >= cap) return true; // encheu de novo, fila para
           var nome = (g.aluno || "Aluno do app") + " 📲";
           if (lista.indexOf(nome) === -1) { lista.push(nome); st.presencas[chave] = lista; mudou = true; }
           promovidos.push(g);
-          return !!(cap && lista.length >= cap);
+          return !!(cap && lista.length + nFixos >= cap);
         });
       });
 
