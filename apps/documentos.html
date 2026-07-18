@@ -52,6 +52,7 @@
       <button data-a="cancelamento">✕ Recibo de cancelamento</button>
       <button data-a="termos">📜 Termos e políticas</button>
     </div>
+    <button class="btn sec" id="btnAssinar" hidden>✍️ Assinar na tela</button>
     <button class="btn" id="btnImprimir" hidden>🖨 Imprimir</button>
   </div>
 
@@ -69,6 +70,19 @@
 
   <div id="docArea"></div>
 </main>
+
+<dialog id="dlgAssina">
+  <div class="card" style="width:520px;max-width:96vw;">
+    <h2>✍️ Assinatura do cliente</h2>
+    <p class="mut" style="margin:4px 0 10px;">Peça para o cliente assinar com o dedo (celular/tablet) ou com o mouse. A assinatura fica gravada no cadastro e entra no contrato impresso.</p>
+    <canvas id="cvAssina" width="480" height="180" style="border:1.5px dashed #999;background:#fff;touch-action:none;width:100%;"></canvas>
+    <div class="linha-flex" style="margin-top:10px;gap:8px;justify-content:flex-end;">
+      <button class="btn sec" id="assLimpa">Limpar</button>
+      <button class="btn sec" id="assFecha">Cancelar</button>
+      <button class="btn" id="assSalva">Salvar assinatura</button>
+    </div>
+  </div>
+</dialog>
 
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
@@ -185,7 +199,10 @@
       '<h2 style="text-align:center; font-size:16px; margin: 0 0 16px;">' + esc(meta[1]).toUpperCase() + "</h2>" +
       '<div style="font-size:13.5px; line-height:1.7; white-space:pre-wrap;">' + esc(txt) + "</div>" +
       '<div style="margin-top: 48px; display:flex; gap: 40px;">' +
-      '<div style="flex:1; border-top:1px solid #333; text-align:center; padding-top:6px; font-size:12px;">Assinatura do cliente</div>' +
+      '<div style="flex:1; text-align:center; font-size:12px;">' +
+      (assinaturaDe($("selAluno").value)
+        ? '<img src="' + assinaturaDe($("selAluno").value).img + '" style="height:60px;display:block;margin:0 auto;"><span style="border-top:1px solid #333;display:block;padding-top:4px;">Assinado digitalmente em ' + S.fmtData(assinaturaDe($("selAluno").value).data) + "</span>"
+        : '<span style="border-top:1px solid #333;display:block;padding-top:6px;">Assinatura do cliente</span>') + "</div>" +
       '<div style="flex:1; border-top:1px solid #333; text-align:center; padding-top:6px; font-size:12px;">' + esc(ac.nome) + "</div></div>" +
       '<p class="muted" style="text-align:center; font-size:11px; margin-top: 20px;">Emitido em ' + S.fmtData(S.todayISO()) + "</p></div>";
     $("btnImprimir").hidden = false;
@@ -305,6 +322,51 @@
   }
 
   $("btnImprimir").onclick = function () { window.print(); };
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+
+  window.assinaturaDe = function (nome) {
+    var a = S.read("alunos", { alunos: [] }).alunos.find(function (x) { return x.nome === String(nome || "").trim(); });
+    return (a && a.assinatura && a.assinatura.img) ? a.assinatura : null;
+  };
+
+  // mostra o botão Assinar sempre que o Imprimir aparecer
+  new MutationObserver(function () {
+    $("btnAssinar").hidden = $("btnImprimir").hidden;
+  }).observe($("btnImprimir"), { attributes: true, attributeFilter: ["hidden"] });
+
+  var cv = $("cvAssina"), ctx = cv.getContext("2d"), tracando = false, vazio = true;
+  ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.strokeStyle = "#1a1a2e";
+  function ponto(e) {
+    var r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) };
+  }
+  cv.addEventListener("pointerdown", function (e) { e.preventDefault(); tracando = true; var p = ponto(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove", function (e) { if (!tracando) return; var p = ponto(e); ctx.lineTo(p.x, p.y); ctx.stroke(); vazio = false; });
+  cv.addEventListener("pointerup", function () { tracando = false; });
+
+  $("btnAssinar").addEventListener("click", function () {
+    var a = S.read("alunos", { alunos: [] }).alunos.find(function (x) { return x.nome === $("selAluno").value.trim(); });
+    if (!a) { alert("Escolha o aluno primeiro."); return; }
+    ctx.clearRect(0, 0, cv.width, cv.height); vazio = true;
+    $("dlgAssina").showModal();
+  });
+  $("assLimpa").onclick = function () { ctx.clearRect(0, 0, cv.width, cv.height); vazio = true; };
+  $("assFecha").onclick = function () { $("dlgAssina").close(); };
+  $("assSalva").onclick = function () {
+    if (vazio) { alert("O cliente ainda não assinou. 😉"); return; }
+    var st = S.read("alunos", { alunos: [] });
+    var a = st.alunos.find(function (x) { return x.nome === $("selAluno").value.trim(); });
+    if (!a) return;
+    a.assinatura = { img: cv.toDataURL("image/png"), data: S.todayISO() };
+    S.write("alunos", st);
+    $("dlgAssina").close();
+    alert("✅ Assinatura gravada! Gere o contrato de novo para vê-la no documento.");
+  };
 })();
 </script>
 </body>
