@@ -63,6 +63,25 @@
     } catch (e) {}
   }
 
+  var AUD_IGNORA = { auditoria: 1, config: 0 };
+  function auditoria(chave) {
+    try {
+      if (chave === "auditoria") return;
+      var quem = (sync.email || (JSON.parse(localStorage.getItem("mtapp:perfil") || "{}").nome) || "aparelho local");
+      var log = read("auditoria", { registros: [] });
+      var ult = log.registros[log.registros.length - 1];
+      var agora = new Date();
+      var quando = todayISO() + "T" + agora.toTimeString().slice(0, 5);
+      // não spam: mesma pessoa + mesmo módulo dentro do mesmo minuto = 1 registro
+      if (ult && ult.k === chave && ult.quem === quem && ult.q === quando) return;
+      log.registros.push({ q: quando, k: chave, quem: quem });
+      if (log.registros.length > 800) log.registros = log.registros.slice(-800);
+      try { localStorage.setItem(PREFIX + "auditoria", JSON.stringify(log)); } catch (e) {}
+      marcaTs("auditoria");
+      agendaEnvio("auditoria");
+    } catch (e) {}
+  }
+
   function write(key, value) {
     var antes;
     try { var raw = localStorage.getItem(PREFIX + key); antes = raw ? JSON.parse(raw) : null; } catch (e) { antes = null; }
@@ -70,7 +89,7 @@
     registraLog(key, antes, value);
     marcaTs(PREFIX + key);
     agendaEnvio(PREFIX + key);
-    ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });
+    ouvintes.forEach(function (cb) { try { cb(key); } catch (e) {} });    auditoria(key);
   }
 
   function uid() {
@@ -190,7 +209,7 @@
   }
 
   // ---------- backup ----------
-  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "niveis", "convidados", "config", "logo", "loja", "agregadores", "biometria", "permissoes", "funcionamento", "servicos", "wellhub", "areas", "atividades", "aulasPersonal", "appAluno"];
+  var BACKUP_KEYS = ["alunos", "metas", "manut", "checklist", "funil", "exper", "inad", "diario", "grade", "agenda", "contas", "treinos", "saude", "nps", "produtos", "caixa", "comissoes", "docs", "armarios", "wod", "equipe", "convenios", "vouchers", "turmas", "reajustes", "indicacoes", "parq", "fluxo", "personais", "fornecedores", "recompensas", "automacao", "bancos", "descontos", "adquirentes", "suspensoes", "contagens", "aprovacoes", "reposicoes", "niveis", "convidados", "config", "logo", "loja", "agregadores", "biometria", "permissoes", "funcionamento", "servicos", "wellhub", "areas", "atividades", "aulasPersonal", "appAluno", "auditoria"];
 
   function exportBackup() {
     var data = { formato: "metodo-torque-backup", versao: 1, exportado: new Date().toISOString() };
@@ -353,6 +372,7 @@
     client.auth.getSession().then(function (r) {
       var sess = r.data && r.data.session;
       if (!sess) return; // sem login, sem sync
+      sync.email = (sess.user && sess.user.email) || "";
 
       // resolve a academia do usuário (cache local para funcionar offline)
       var acad = null;
@@ -426,9 +446,44 @@
     // acesso à conexão da nuvem (para publicações como o App do Aluno)
     cloud: function () { return sync.client ? { client: sync.client, aid: sync.aid } : null; },
     backupKeys: function () { return BACKUP_KEYS.slice(); },
+    usuario: function () {
+      var acad = null, perfil = null;
+      try { acad = JSON.parse(localStorage.getItem("mtapp:academia")); } catch (e) {}
+      try { perfil = JSON.parse(localStorage.getItem("mtapp:perfil")); } catch (e) {}
+      return {
+        email: sync.email || "",
+        papel: (acad && acad.papel) || "",
+        nome: (perfil && perfil.nome) || "",
+        logado: !!sync.email,
+      };
+    },
   };
 
   // nas páginas de programas e no modo TV, inicia a sincronização sozinho
+  // telemetria: erros de JS vão para a nuvem (página Auditoria e Saúde)
+  var errosEnviados = 0;
+  function reportaErro(msg, pilha) {
+    try {
+      if (errosEnviados >= 5 || !sync.client || !sync.aid) return;
+      errosEnviados++;
+      sync.client.from("erros_js").insert({
+        academia_id: sync.aid,
+        pagina: location.pathname.split("/").pop() || "index",
+        msg: String(msg || "").slice(0, 300),
+        pilha: String(pilha || "").slice(0, 800),
+        navegador: (navigator.userAgent || "").slice(0, 160),
+        quem: sync.email || "",
+      }).then(function () {}, function () {});
+    } catch (e) {}
+  }
+  window.addEventListener("error", function (e) {
+    reportaErro(e.message, e.error && e.error.stack);
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e.reason || {};
+    reportaErro(r.message || String(r), r.stack);
+  });
+
   if (document.readyState !== "loading") iniciaSync();
   else document.addEventListener("DOMContentLoaded", iniciaSync);
 

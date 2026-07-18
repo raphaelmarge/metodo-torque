@@ -722,3 +722,26 @@ $$;
 
 grant execute on function public.app_aluno_pedido(text, jsonb, numeric, text) to anon, authenticated;
 grant execute on function public.app_aluno_pedidos(text) to anon, authenticated;
+
+-- ==================== TELEMETRIA DE ERROS ====================
+-- As páginas do sistema reportam erros de JavaScript aqui; a página
+-- Auditoria e Saúde mostra o que quebrou. Bloco idempotente.
+
+create table if not exists public.erros_js (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  pagina text not null default '',
+  msg text not null default '',
+  pilha text not null default '',
+  navegador text not null default '',
+  quem text not null default '',
+  criado timestamptz not null default now()
+);
+create index if not exists erros_js_criado on public.erros_js (academia_id, criado desc);
+
+alter table public.erros_js enable row level security;
+
+drop policy if exists "erros_js_membros" on public.erros_js;
+create policy "erros_js_membros" on public.erros_js
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));

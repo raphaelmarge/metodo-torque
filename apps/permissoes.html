@@ -201,5 +201,83 @@
   render();
 })();
 </script>
+<script>
+(function () {
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function stP() {
+    var st = S.read("permissoes", { perfis: [] });
+    st.vinculos = st.vinculos || {};
+    return st;
+  }
+
+  var main = document.querySelector("main");
+  var card = document.createElement("div");
+  card.className = "card";
+  card.style.marginTop = "16px";
+  card.innerHTML = "<h2>🔐 Vincular colaboradores aos perfis (valendo de verdade)</h2>" +
+    "<p class='muted' style='margin:4px 0 10px;'>Cada pessoa da equipe entra com a própria conta. Vincule o e-mail dela a um perfil: o menu do Sistema passa a mostrar só o que o perfil permite. O dono sempre vê tudo; quem não estiver vinculado também vê tudo (não trancamos ninguém por engano).</p>" +
+    "<div id='vinculosLista'></div>" +
+    "<div class='linha-flex' style='gap:8px;margin-top:10px;flex-wrap:wrap;'>" +
+    "<input id='vincEmail' placeholder='e-mail do colaborador' style='width:240px;'>" +
+    "<select id='vincPerfil' style='min-width:180px;'></select>" +
+    "<button class='btn' id='vincAdd'>Vincular</button>" +
+    "<span class='muted' id='vincStatus' style='font-size:12.5px;'></span></div>";
+  main.appendChild(card);
+
+  function renderVinculos() {
+    var st = stP();
+    $("vincPerfil").innerHTML = st.perfis.filter(function (p) { return p.ativa !== false; })
+      .map(function (p) { return "<option value='" + p.id + "'>" + esc(p.nome) + "</option>"; }).join("");
+    var emails = Object.keys(st.vinculos);
+    $("vinculosLista").innerHTML = emails.length ? emails.map(function (em) {
+      var p = st.perfis.find(function (x) { return x.id === st.vinculos[em]; });
+      return "<div class='linha-flex' style='justify-content:space-between;border:1px solid var(--linha);background:#fff;padding:8px 12px;margin-top:-1px;'>" +
+        "<span><b>" + esc(em) + "</b> → " + esc(p ? p.nome : "(perfil removido)") + "</span>" +
+        "<button class='btn perigo mini' data-desvincula='" + esc(em) + "'>✕</button></div>";
+    }).join("") : "<p class='muted'>Ninguém vinculado ainda — todos veem tudo.</p>";
+    // sugere os e-mails da equipe (nuvem)
+    var nuvem = S.cloud && S.cloud();
+    if (nuvem && !window.__equipeSugerida) {
+      window.__equipeSugerida = true;
+      nuvem.client.from("membros").select("email,nome,papel").then(function (r) {
+        if (r.error || !r.data || !r.data.length) return;
+        $("vincStatus").textContent = "Equipe na nuvem: " + r.data.map(function (m) {
+          return m.nome || m.email;
+        }).join(", ");
+        var dl = document.createElement("datalist");
+        dl.id = "equipeEmails";
+        dl.innerHTML = r.data.map(function (m) { return "<option>" + esc(m.email) + "</option>"; }).join("");
+        document.body.appendChild(dl);
+        $("vincEmail").setAttribute("list", "equipeEmails");
+      });
+    }
+  }
+
+  $("vincAdd").addEventListener("click", function () {
+    var em = $("vincEmail").value.trim().toLowerCase();
+    if (!em || em.indexOf("@") === -1) { $("vincStatus").textContent = "E-mail inválido."; return; }
+    var st = stP();
+    st.vinculos[em] = $("vincPerfil").value;
+    S.write("permissoes", st);
+    $("vincEmail").value = "";
+    renderVinculos();
+    $("vincStatus").textContent = "✅ Vinculado — vale no próximo acesso ao Sistema.";
+  });
+  card.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-desvincula]");
+    if (!b) return;
+    var st = stP();
+    delete st.vinculos[b.getAttribute("data-desvincula")];
+    S.write("permissoes", st);
+    renderVinculos();
+  });
+
+  window.__vinculos = renderVinculos; // testes
+  renderVinculos();
+})();
+</script>
 </body>
 </html>

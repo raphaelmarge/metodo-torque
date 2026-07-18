@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoria e Saúde — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .abas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .abas button { border: 1px solid var(--linha); background: #fff; padding: 9px 14px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; }
+  .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  .reg { display: flex; gap: 12px; align-items: center; background: #fff; border: 1px solid var(--linha); padding: 9px 14px; margin-top: -1px; font-size: 13.5px; }
+  .reg .q { width: 130px; flex: none; font-weight: 700; color: var(--cinza); font-size: 12.5px; }
+  .reg .mod { background: #f1ebff; color: #5b21b6; font-weight: 800; font-size: 11.5px; padding: 2px 9px; border-radius: 99px; }
+  .erro-item { background: #fff; border: 1px solid rgba(220,38,38,.35); border-left: 4px solid #dc2626; padding: 10px 14px; margin-top: 8px; font-size: 13px; }
+  .erro-item .pilha { font-family: monospace; font-size: 11px; color: #666; white-space: pre-wrap; margin-top: 4px; max-height: 80px; overflow: auto; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · ADMINISTRATIVO</span>
+    <h1>Auditoria e Saúde</h1>
+    </div>
+  </div>
+  <p>Quem mexeu em quê (trilha de auditoria da equipe) e o que quebrou (erros de JavaScript reportados pelas telas) — a visibilidade que os sistemas de elite têm.</p>
+</header>
+
+<main class="corpo">
+  <div class="abas">
+    <button data-aba="trilha" class="ativa">📝 Trilha de auditoria</button>
+    <button data-aba="saude">🩺 Saúde do sistema (erros)</button>
+  </div>
+
+  <section id="aba-trilha">
+    <div class="card linha-flex" style="gap:10px;flex-wrap:wrap;">
+      <input id="fQuem" placeholder="filtrar por pessoa…" style="max-width:220px;">
+      <input id="fMod" placeholder="filtrar por módulo (ex.: alunos, caixa)…" style="max-width:260px;">
+      <span class="muted" id="resumo"></span>
+    </div>
+    <div id="listaTrilha" style="margin-top:12px;"></div>
+  </section>
+
+  <section id="aba-saude" hidden>
+    <p class="muted" id="saudeInfo" style="margin-bottom:10px;"></p>
+    <div id="listaErros"></div>
+  </section>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var NOMES = {
+    alunos: "Alunos e contratos", grade: "Grade de aulas", agenda: "Agenda", caixa: "Caixa",
+    produtos: "Produtos", treinos: "Treinos", saude: "Avaliação física", inad: "Inadimplência",
+    automacao: "Automação", funil: "Funil", equipe: "Colaboradores", config: "Configurações",
+    appAluno: "App do Aluno", wod: "WOD", wellhub: "Agregadores", permissoes: "Permissões",
+  };
+
+  document.querySelectorAll(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+      $("aba-trilha").hidden = b.dataset.aba !== "trilha";
+      $("aba-saude").hidden = b.dataset.aba !== "saude";
+      if (b.dataset.aba === "saude") carregaErros();
+    });
+  });
+
+  function renderTrilha() {
+    var regs = (S.read("auditoria", { registros: [] }).registros || []).slice().reverse();
+    var fq = $("fQuem").value.trim().toLowerCase();
+    var fm = $("fMod").value.trim().toLowerCase();
+    var vistos = regs.filter(function (r) {
+      return (!fq || String(r.quem).toLowerCase().indexOf(fq) !== -1) &&
+             (!fm || String(r.k).toLowerCase().indexOf(fm) !== -1);
+    }).slice(0, 300);
+    $("resumo").textContent = vistos.length + " registro(s)" + (regs.length > 300 ? " (mostrando os 300 últimos)" : "");
+    $("listaTrilha").innerHTML = vistos.length ? vistos.map(function (r) {
+      return '<div class="reg"><span class="q">' + esc((r.q || "").replace("T", " ")) + "</span>" +
+        '<span class="mod">' + esc(NOMES[r.k] || r.k) + "</span>" +
+        "<span>alterado por <b>" + esc(r.quem) + "</b></span></div>";
+    }).join("") : '<div class="card muted">Nenhum registro ainda — a trilha começa a gravar a partir de agora, a cada alteração salva.</div>';
+  }
+  $("fQuem").addEventListener("input", renderTrilha);
+  $("fMod").addEventListener("input", renderTrilha);
+
+  function carregaErros() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      $("saudeInfo").textContent = "☁️ Entre com a sua conta da nuvem para ver os erros reportados pelas telas.";
+      return;
+    }
+    $("saudeInfo").textContent = "Carregando…";
+    var d7 = new Date(); d7.setDate(d7.getDate() - 7);
+    nuvem.client.from("erros_js").select("pagina,msg,pilha,navegador,quem,criado")
+      .gte("criado", d7.toISOString()).order("criado", { ascending: false }).limit(100)
+      .then(function (r) {
+        if (r.error) {
+          $("saudeInfo").textContent = String(r.error.message).indexOf("does not exist") !== -1
+            ? "⚠️ Rode o bloco TELEMETRIA DE ERROS do supabase-setup.sql."
+            : "⚠️ " + r.error.message;
+          return;
+        }
+        var erros = r.data || [];
+        $("saudeInfo").textContent = erros.length
+          ? erros.length + " erro(s) nos últimos 7 dias — o de cima é o mais recente."
+          : "🎉 Nenhum erro de JavaScript reportado nos últimos 7 dias — sistema saudável!";
+        $("listaErros").innerHTML = erros.map(function (e) {
+          return '<div class="erro-item"><b>' + esc(e.pagina) + "</b> · " +
+            new Date(e.criado).toLocaleString("pt-BR") + (e.quem ? " · " + esc(e.quem) : "") +
+            "<br>" + esc(e.msg) +
+            (e.pilha ? '<div class="pilha">' + esc(e.pilha) + "</div>" : "") +
+            '<div class="muted" style="font-size:11px;margin-top:4px;">' + esc(e.navegador) + "</div></div>";
+        }).join("");
+      });
+  }
+
+  window.__auditoria = { renderTrilha: renderTrilha }; // testes
+  renderTrilha();
+  S.onChange(function (k) { if (k === "auditoria") renderTrilha(); });
+})();
+</script>
+</body>
+</html>

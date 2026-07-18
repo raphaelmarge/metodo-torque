@@ -217,7 +217,7 @@
     <a class="item" data-url="niveis.html"><span class="ico">🥋</span>Níveis e Graduação</a>
     <a class="item" data-url="acessos.html"><span class="ico">🕐</span>Log de Acessos</a>
 
-    <details class="grupo" open>
+    <details class="grupo" data-telas="clientes,recepcao" open>
       <summary><span class="ico">🧲</span>CRM 2.0</summary>
       <div class="sub">
         <a class="item" data-url="automacao.html">Automação de Mensagens</a>
@@ -233,7 +233,7 @@
         <a class="item" data-url="app-aluno.html">App do Aluno</a>
       </div>
     </details>
-    <details class="grupo">
+    <details class="grupo" data-telas="crm">
       <summary><span class="ico">💬</span>CRM</summary>
       <div class="sub">
         <a class="item" data-url="suporte.html">📚 Central de Ajuda (tutoriais)</a>
@@ -253,7 +253,7 @@
         <a class="item" data-url="../docs/kit-whatsapp.html">Kit WhatsApp</a>
       </div>
     </details>
-    <details class="grupo">
+    <details class="grupo" data-telas="financeiro">
       <summary><span class="ico">💲</span>Financeiro</summary>
       <div class="sub">
         <a class="item" data-url="caixa.html">Caixa do Dia</a>
@@ -275,7 +275,7 @@
         <a class="item" data-url="../docs/planilha-dre.html">DRE da Academia (planilha)</a>
       </div>
     </details>
-    <details class="grupo">
+    <details class="grupo" data-telas="gerencial">
       <summary><span class="ico">📊</span>Gerencial</summary>
       <div class="sub">
         <a class="item" data-url="agregadores.html">Agregadores (Gympass/TotalPass)</a>
@@ -332,7 +332,7 @@
         <a class="item" data-url="tv.html" data-nova-aba="1">Modo TV (telão) ↗</a>
       </div>
     </details>
-    <details class="grupo">
+    <details class="grupo" data-telas="treinos">
       <summary><span class="ico">⏱</span>Treinos</summary>
       <div class="sub">
         <a class="item" data-url="treinos.html">Prescrição de Treinos</a>
@@ -346,7 +346,7 @@
         <a class="item" data-url="../docs/cronograma-coletivas.html">Aulas Coletivas</a>
       </div>
     </details>
-    <details class="grupo">
+    <details class="grupo" data-telas="saude">
       <summary><span class="ico">🫀</span>Dados de saúde</summary>
       <div class="sub">
         <a class="item" data-url="saude.html">Avaliação Física</a>
@@ -355,7 +355,7 @@
         <a class="item" data-url="../docs/onboarding-90-dias.html">Onboarding 90 Dias</a>
       </div>
     </details>
-    <details class="grupo">
+    <details class="grupo" data-telas="administrativo">
       <summary><span class="ico">🗄</span>Administrativo</summary>
       <div class="sub">
         <a class="item" data-url="equipe.html">Colaboradores e Cargos</a>
@@ -364,6 +364,7 @@
         <a class="item" data-url="areas.html">Áreas</a>
         <a class="item" data-url="atividades.html">Atividades</a>
         <a class="item" data-url="aulas-personal.html">Aulas de Personal</a>
+        <a class="item" data-url="auditoria.html">Auditoria e Saúde</a>
         <a class="item" data-url="permissoes.html">Permissões</a>
         <a class="item" data-url="horarios-funcionamento.html">Horários de Funcionamento</a>
         <a class="item" data-url="servicos.html">Serviços</a>
@@ -381,7 +382,7 @@
         <a class="item" data-url="../docs/contratacao-segura.html">Contratação Segura</a>
       </div>
     </details>
-    <details class="grupo">
+    <details class="grupo" data-telas="config">
       <summary><span class="ico">⚙️</span>Configurações</summary>
       <div class="sub">
         <a class="item" data-pg="config">Inicial (empresa, logo, backup)</a>
@@ -1181,6 +1182,42 @@
       S.write("config", cfg);
     } catch (e) {}
   }, 4000);
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  // permissões valendo: filtra o menu pelo perfil vinculado ao e-mail logado
+  function aplicaPermissoes() {
+    try {
+      var u = S.usuario ? S.usuario() : {};
+      if (!u.logado || u.papel === "dono") return; // dono e modo local veem tudo
+      var stP = S.read("permissoes", { perfis: [], vinculos: {} });
+      var perfilId = (stP.vinculos || {})[String(u.email).toLowerCase()];
+      if (!perfilId) return; // não vinculado ainda: não tranca ninguém
+      var perfil = (stP.perfis || []).find(function (p) { return p.id === perfilId && p.ativa !== false; });
+      if (!perfil) return;
+      var escondidos = 0;
+      document.querySelectorAll(".grupo[data-telas]").forEach(function (g) {
+        var ok = g.dataset.telas.split(",").some(function (t) { return perfil.telas && perfil.telas[t]; });
+        if (!ok) { g.style.display = "none"; escondidos++; }
+      });
+      if (escondidos) {
+        var aviso = document.createElement("div");
+        aviso.style.cssText = "padding:8px 14px;font-size:11.5px;color:#8b8697;";
+        aviso.textContent = "🔐 Menu filtrado pelo perfil " + perfil.nome;
+        var menu = document.querySelector(".menu");
+        if (menu) menu.appendChild(aviso);
+      }
+    } catch (e) {}
+  }
+  // a nuvem sobe assíncrona: tenta algumas vezes
+  var tent = 0;
+  var t = setInterval(function () {
+    var u = S.usuario ? S.usuario() : {};
+    if (u.logado || ++tent > 8) { clearInterval(t); aplicaPermissoes(); }
+  }, 1000);
+  window.__permissoes = aplicaPermissoes; // testes
 })();
 </script>
 </body>
