@@ -745,3 +745,35 @@ drop policy if exists "erros_js_membros" on public.erros_js;
 create policy "erros_js_membros" on public.erros_js
   for all using (academia_id in (select public.minhas_academias()))
   with check (academia_id in (select public.minhas_academias()));
+
+-- ==================== INDIQUE UM AMIGO ====================
+-- A matrícula online pode chegar com o código de indicação de um aluno
+-- (o mesmo código da carteirinha). Bloco idempotente.
+
+alter table public.matriculas_online add column if not exists indicacao text not null default '';
+
+drop function if exists public.matricula_nova(text, text, text, text);
+create or replace function public.matricula_nova(p_nome text, p_zap text, p_email text, p_plano text, p_indicacao text default '')
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from matricula_config order by atualizado desc limit 1;
+  if v_acad is null then
+    return json_build_object('erro', 'sem_config');
+  end if;
+  if length(trim(coalesce(p_nome, ''))) < 2 then
+    return json_build_object('erro', 'nome');
+  end if;
+  insert into matriculas_online (academia_id, nome, zap, email, plano, indicacao)
+    values (v_acad, left(trim(p_nome), 120), left(coalesce(p_zap, ''), 20),
+            left(coalesce(p_email, ''), 120), left(coalesce(p_plano, ''), 120),
+            left(upper(coalesce(p_indicacao, '')), 12));
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.matricula_nova(text, text, text, text, text) to anon, authenticated;

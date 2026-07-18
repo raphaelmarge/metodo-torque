@@ -54,6 +54,19 @@
     <strong id="tituloRel"></strong>
   </div>
 
+  <div class="bloco" style="margin-bottom: 16px;">
+    <h3>🎯 METAS DO MÊS &amp; PROJEÇÃO</h3>
+    <div class="corpo-bloco">
+      <div class="linha-flex no-print" style="gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+        <label style="margin:0;font-size:12.5px;">Meta de faturamento (R$) <input id="mtFat" type="number" min="0" style="width:130px;"></label>
+        <label style="margin:0;font-size:12.5px;">Meta de novos alunos <input id="mtNovos" type="number" min="0" style="width:90px;"></label>
+        <label style="margin:0;font-size:12.5px;">Churn máximo (%) <input id="mtChurn" type="number" min="0" max="100" style="width:80px;"></label>
+        <button class="btn sec mini" id="mtSalvar">Salvar metas</button>
+      </div>
+      <div id="mtPainel" class="muted">Defina as metas acima — a projeção usa o ritmo do mês até agora (run-rate).</div>
+    </div>
+  </div>
+
   <div class="colunas">
     <div>
       <div class="bloco"><h3>CONTAS</h3><div class="corpo-bloco" id="bContas"></div></div>
@@ -81,6 +94,92 @@
   function kv(rot, val, cls) { return '<div class="kv"><span>' + rot + '</span><strong class="' + (cls || "") + '">' + val + "</strong></div>"; }
 
   var mes = S.monthKey(new Date());
+
+  // ---------- metas do negócio (PushPress/ABC Ignite) ----------
+  function metasNegocio() { return S.read("metasNegocio", { faturamento: 0, novos: 0, churnMax: 0 }); }
+  function renderMetas() {
+    var mt = metasNegocio();
+    if ($("mtFat") && document.activeElement !== $("mtFat")) $("mtFat").value = mt.faturamento || "";
+    if ($("mtNovos") && document.activeElement !== $("mtNovos")) $("mtNovos").value = mt.novos || "";
+    if ($("mtChurn") && document.activeElement !== $("mtChurn")) $("mtChurn").value = mt.churnMax || "";
+    var st = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var vendasSt = S.read("produtos", { vendas: [] });
+    var mesAtual = S.monthKey(new Date());
+    var hoje = new Date();
+    var diaAtual = hoje.getDate();
+    var diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+
+    // faturamento do mês corrente: mensalidades pagas + vendas de produtos
+    var fat = st.recebiveis.filter(function (r) { return r.status === "pago" && (r.pagoEm || "").slice(0, 7) === mesAtual; })
+      .reduce(function (t, r) { return t + +r.valor; }, 0);
+    (vendasSt.vendas || []).forEach(function (v) {
+      if (((v.data || v.quando || "")).slice(0, 7) === mesAtual) fat += +v.total || 0;
+    });
+    var novos = 0, cancelados = 0, ativosIni = 0;
+    var mrr = 0, ativosAgora = 0;
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) === mesAtual) novos++;
+        if (c.status === "cancelado" && (c.canceladoEm || "").slice(0, 7) === mesAtual) cancelados++;
+      });
+      var ativo = (a.contratos || []).some(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+      if (ativo) {
+        ativosAgora++;
+        var c0 = (a.contratos || []).find(function (c) { return c.status === "ativo"; });
+        if (c0) {
+          var pl = (st.planos || []).find(function (p) { return p.id === c0.planoId; });
+          mrr += pl ? (+pl.valor || 0) : 0;
+        }
+      }
+    });
+    ativosIni = ativosAgora + cancelados - novos;
+    var churn = ativosIni > 0 ? 100 * cancelados / ativosIni : 0;
+    var projFat = diaAtual ? fat / diaAtual * diasNoMes : 0;
+    var projNovos = diaAtual ? Math.round(novos / diaAtual * diasNoMes) : 0;
+    var ticket = ativosAgora ? mrr / ativosAgora : 0;
+
+    // vida média (meses) dos contratos cancelados; sem histórico, assume 12
+    var somaVida = 0, nVida = 0;
+    st.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if (c.status === "cancelado" && c.inicio && c.canceladoEm) {
+          var m = (new Date(c.canceladoEm) - new Date(c.inicio)) / (30.4 * 864e5);
+          if (m > 0 && m < 120) { somaVida += m; nVida++; }
+        }
+      });
+    });
+    var vidaMedia = nVida >= 3 ? somaVida / nVida : 12;
+    var ltv = ticket * vidaMedia;
+
+    function linhaMeta(rot, atual, proj, meta, fmt, invertido) {
+      var pct = meta > 0 ? Math.round(100 * (invertido ? meta / Math.max(proj, 0.001) : proj / meta)) : 0;
+      var ok = meta > 0 ? (invertido ? proj <= meta : proj >= meta) : null;
+      var cor = ok == null ? "var(--cinza)" : ok ? "#16a34a" : "#dc2626";
+      return '<div class="kv"><span>' + rot + (meta > 0 ? ' <small style="color:var(--cinza)">(meta ' + fmt(meta) + ")</small>" : "") + "</span>" +
+        '<strong style="color:' + cor + '">' + fmt(atual) + ' <small style="font-weight:600">→ projeção ' + fmt(proj) +
+        (ok == null ? "" : ok ? " ✅" : " ⚠️") + "</small></strong></div>";
+    }
+    var brl2 = function (v) { return S.fmtBRL(v); };
+    var num2 = function (v) { return String(Math.round(v)); };
+    var pct2 = function (v) { return v.toFixed(1).replace(".", ",") + "%"; };
+    $("mtPainel").innerHTML =
+      linhaMeta("Faturamento do mês (mensalidades pagas + vendas)", fat, projFat, +mt.faturamento || 0, brl2) +
+      linhaMeta("Novos contratos no mês", novos, projNovos, +mt.novos || 0, num2) +
+      linhaMeta("Churn do mês (cancelados ÷ base inicial)", churn, churn, +mt.churnMax || 0, pct2, true) +
+      '<div class="kv" style="border-top:1px solid var(--linha);margin-top:6px;padding-top:8px;"><span>MRR (receita recorrente da base ativa)</span><strong>' + S.fmtBRL(mrr) + "</strong></div>" +
+      '<div class="kv"><span>Ticket médio</span><strong>' + S.fmtBRL(ticket) + "</strong></div>" +
+      '<div class="kv"><span>LTV estimado <small style="color:var(--cinza)">(ticket × vida média de ' + vidaMedia.toFixed(1).replace(".", ",") + " meses)</small></span><strong>" + S.fmtBRL(ltv) + "</strong></div>" +
+      ((+mt.faturamento || 0) > projFat && diaAtual < diasNoMes && (+mt.faturamento || 0) > 0 && ticket > 0
+        ? '<p class="muted" style="margin:8px 0 0;">💡 No ritmo atual faltam <b>' + S.fmtBRL((+mt.faturamento || 0) - projFat) + "</b> para a meta — ≈ <b>" +
+          Math.ceil(((+mt.faturamento || 0) - projFat) / ticket) + " matrículas</b> até o fim do mês.</p>" : "");
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "mtSalvar") {
+      S.write("metasNegocio", { faturamento: +$("mtFat").value || 0, novos: +$("mtNovos").value || 0, churnMax: +$("mtChurn").value || 0 });
+      renderMetas();
+    }
+  });
+  window.__metasNegocio = renderMetas; // testes
 
   function meses12() {
     var arr = [], d = new Date();
@@ -235,8 +334,9 @@
   }).join("");
   $("selMes").addEventListener("change", function () { mes = this.value; render(); });
 
-  S.onChange(function () { render(); });
+  S.onChange(function () { render(); renderMetas(); });
   render();
+  renderMetas();
 })();
 </script>
 <script>

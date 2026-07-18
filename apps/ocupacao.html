@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ocupação e Horários — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .mapa { border-collapse: collapse; width: 100%; font-size: 12px; }
+  .mapa th, .mapa td { border: 1px solid var(--linha); padding: 5px 4px; text-align: center; }
+  .mapa th { background: var(--fundo); color: var(--cinza); font-size: 11px; }
+  .mapa td { min-width: 34px; font-weight: 700; }
+  .bar-out { background: var(--fundo); border-radius: 8px; height: 10px; flex: 1; min-width: 120px; overflow: hidden; }
+  .bar-in { height: 100%; border-radius: 8px; background: var(--roxo); }
+  .ocup-linha { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .ocup-linha .nm { min-width: 220px; font-weight: 700; }
+  .ocup-linha .pc { width: 52px; font-weight: 800; text-align: right; }
+  .tabela-prof { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .tabela-prof th, .tabela-prof td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--linha); }
+  .tabela-prof th { color: var(--cinza); font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Ocupação e Horários</h1>
+    </div>
+  </div>
+  <p>Mapa de calor dos check-ins (onde a academia lota e onde sobra espaço), taxa de ocupação por aula e desempenho por professor — decisão de grade com dado, não com achismo.</p>
+</header>
+
+<main class="corpo">
+  <div class="card">
+    <h2>🔥 Mapa de calor — check-ins das últimas 4 semanas</h2>
+    <p class="muted" style="margin: 4px 0 12px;">Cada célula é a média de check-ins naquele dia da semana e hora. Quanto mais roxo, mais cheio. Use para abrir/fechar horários de aula e ajustar a escala da equipe.</p>
+    <div style="overflow-x: auto;"><table class="mapa" id="mapa"></table></div>
+    <p class="muted" id="mapaVazio" hidden style="margin-top: 8px;">Ainda não há check-ins registrados nas últimas 4 semanas.</p>
+  </div>
+
+  <div class="card">
+    <h2>📊 Taxa de ocupação por aula (últimas 4 semanas)</h2>
+    <p class="muted" style="margin: 4px 0 8px;">Presenças (incluindo horários fixos ⭐) ÷ vagas, na média das aulas que aconteceram. Abaixo de 40% = repense o horário; acima de 90% = candidata a abrir mais uma turma.</p>
+    <div id="ocupacao" class="muted">Sem aulas na grade ainda.</div>
+  </div>
+
+  <div class="card">
+    <h2>🧑‍🏫 Desempenho por professor</h2>
+    <p class="muted" style="margin: 4px 0 8px;">Média de alunos por aula dada no período — compare professores no MESMO horário/modalidade antes de tirar conclusão.</p>
+    <div style="overflow-x: auto;"><table class="tabela-prof" id="profs"></table></div>
+    <p class="muted" id="profVazio" hidden>Cadastre o professor nas aulas da grade para ver este quadro.</p>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  var DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  var N_SEMANAS = 4;
+
+  function limiteISO() {
+    var d = new Date();
+    d.setDate(d.getDate() - N_SEMANAS * 7);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function renderMapa() {
+    var corte = limiteISO();
+    var grade = [];
+    for (var h = 5; h <= 23; h++) grade.push(h);
+    var cont = {}; // "dow|hora" -> total
+    var total = 0;
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        var iso = (t || "").slice(0, 10);
+        if (iso < corte) return;
+        var dt = new Date(t);
+        if (isNaN(dt)) return;
+        var k = dt.getDay() + "|" + dt.getHours();
+        cont[k] = (cont[k] || 0) + 1;
+        total++;
+      });
+    });
+    if (!total) { $("mapa").innerHTML = ""; $("mapaVazio").hidden = false; return; }
+    var max = 0;
+    Object.keys(cont).forEach(function (k) { if (cont[k] > max) max = cont[k]; });
+    var html = "<tr><th></th>" + grade.map(function (h) { return "<th>" + h + "h</th>"; }).join("") + "</tr>";
+    DIAS.forEach(function (nome, dow) {
+      html += "<tr><th>" + nome + "</th>" + grade.map(function (h) {
+        var v = cont[dow + "|" + h] || 0;
+        var media = (v / N_SEMANAS).toFixed(v ? 1 : 0).replace(".0", "");
+        var alfa = v ? (0.12 + 0.78 * (v / max)) : 0;
+        var cor = v ? "rgba(124,58,237," + alfa.toFixed(2) + ")" : "transparent";
+        var txt = v && alfa > 0.55 ? "#fff" : "var(--txt)";
+        return '<td style="background:' + cor + ";color:" + txt + '" title="' + nome + " " + h + "h — " + v + ' check-ins no período">' + (v ? media : "·") + "</td>";
+      }).join("") + "</tr>";
+    });
+    $("mapa").innerHTML = html;
+    $("mapaVazio").hidden = true;
+  }
+
+  // ocorrências de cada aula nas últimas 4 semanas, com presenças do dia
+  function ocorrencias() {
+    var st = S.read("grade", { aulas: [], presencas: {}, config: {} });
+    var lista = [];
+    var d = new Date();
+    for (var i = 0; i < N_SEMANAS * 7; i++) {
+      var iso = d.toISOString().slice(0, 10);
+      var dow = d.getDay();
+      st.aulas.forEach(function (a) {
+        if ((a.dias || []).indexOf(dow) === -1) return;
+        var n = (st.presencas[a.id + "|" + iso] || []).length + (a.fixos || []).length;
+        lista.push({ aula: a, iso: iso, n: n });
+      });
+      d.setDate(d.getDate() - 1);
+    }
+    return lista;
+  }
+
+  function renderOcupacao() {
+    var oc = ocorrencias();
+    if (!oc.length) { $("ocupacao").textContent = "Sem aulas na grade ainda."; return; }
+    var porAula = {};
+    oc.forEach(function (o) {
+      var k = o.aula.id;
+      porAula[k] = porAula[k] || { aula: o.aula, soma: 0, vezes: 0 };
+      porAula[k].soma += o.n;
+      porAula[k].vezes++;
+    });
+    var linhas = Object.keys(porAula).map(function (k) {
+      var x = porAula[k];
+      var vagas = +x.aula.vagas || 1;
+      var media = x.soma / x.vezes;
+      return { aula: x.aula, media: media, pct: Math.min(100, Math.round(100 * media / vagas)) };
+    }).sort(function (a, b) { return b.pct - a.pct; });
+    $("ocupacao").innerHTML = linhas.map(function (l) {
+      var cor = l.pct >= 90 ? "#16a34a" : l.pct < 40 ? "#dc2626" : "var(--roxo)";
+      var nota = l.pct >= 90 ? " 🔥" : l.pct < 40 ? " ⚠️" : "";
+      return '<div class="ocup-linha"><span class="nm">' + esc(l.aula.nome) + " · " + esc(l.aula.inicio || "") +
+        ' <span class="muted">' + (l.aula.prof ? "(" + esc(l.aula.prof) + ")" : "") + "</span></span>" +
+        '<div class="bar-out"><div class="bar-in" style="width:' + l.pct + "%;background:" + cor + ';"></div></div>' +
+        '<span class="pc" style="color:' + cor + ';">' + l.pct + "%</span>" +
+        '<span class="muted">média ' + l.media.toFixed(1) + " / " + (+l.aula.vagas || 0) + " vagas" + nota + "</span></div>";
+    }).join("");
+  }
+
+  function renderProfs() {
+    var oc = ocorrencias().filter(function (o) { return (o.aula.prof || "").trim(); });
+    if (!oc.length) { $("profs").innerHTML = ""; $("profVazio").hidden = false; return; }
+    var porProf = {};
+    oc.forEach(function (o) {
+      var k = o.aula.prof.trim();
+      porProf[k] = porProf[k] || { soma: 0, vezes: 0, aulas: {} };
+      porProf[k].soma += o.n;
+      porProf[k].vezes++;
+      porProf[k].aulas[o.aula.nome] = 1;
+    });
+    var linhas = Object.keys(porProf).map(function (k) {
+      var x = porProf[k];
+      return { prof: k, media: x.soma / x.vezes, vezes: x.vezes, modalidades: Object.keys(x.aulas).join(", ") };
+    }).sort(function (a, b) { return b.media - a.media; });
+    $("profs").innerHTML = "<tr><th>Professor</th><th>Média de alunos/aula</th><th>Aulas no período</th><th>Modalidades</th></tr>" +
+      linhas.map(function (l) {
+        return "<tr><td><b>" + esc(l.prof) + "</b></td><td>" + l.media.toFixed(1) + "</td><td>" + l.vezes + "</td><td class='muted'>" + esc(l.modalidades) + "</td></tr>";
+      }).join("");
+    $("profVazio").hidden = true;
+  }
+
+  function render() { renderMapa(); renderOcupacao(); renderProfs(); }
+  S.onChange(function (k) { if (k === "alunos" || k === "grade") render(); });
+  render();
+  window.__ocupacao = { render: render, ocorrencias: ocorrencias }; // testes
+})();
+</script>
+</body>
+</html>

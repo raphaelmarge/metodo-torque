@@ -68,6 +68,8 @@
   function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
   var cfg = self.MT_CLOUD || {};
   var info = null, planoSel = null;
+  var indicadoPor = "";
+  try { indicadoPor = (new URLSearchParams(location.search).get("ind") || "").replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 12); } catch (e) {}
 
   function rpc(fn, corpo) {
     return fetch(cfg.url + "/rest/v1/rpc/" + fn, {
@@ -94,6 +96,12 @@
       }).join("");
       $("carregando").hidden = true;
       $("form").hidden = false;
+      if (indicadoPor) {
+        var nb = document.createElement("div");
+        nb.style.cssText = "background:#2a1f47;border:1px solid #7c3aed;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13.5px;";
+        nb.textContent = "🤝 Você veio pela indicação de um amigo — os dois ganham quando a matrícula fechar!";
+        $("form").insertBefore(nb, $("form").firstChild);
+      }
       $("planos").addEventListener("click", function (e) {
         var el = e.target.closest(".plano");
         if (!el) return;
@@ -113,7 +121,13 @@
     if (zap.length < 10) { alert("Confere o WhatsApp (DDD + número)."); $("fZap").focus(); return; }
     var btn = $("btnEnviar");
     btn.disabled = true; btn.textContent = "Enviando…";
-    rpc("matricula_nova", { p_nome: nome, p_zap: zap, p_email: $("fEmail").value.trim(), p_plano: planoSel.nome + " (R$ " + planoSel.valor + ")" })
+    var corpo = { p_nome: nome, p_zap: zap, p_email: $("fEmail").value.trim(), p_plano: planoSel.nome + " (R$ " + planoSel.valor + ")" };
+    if (indicadoPor) corpo.p_indicacao = indicadoPor;
+    rpc("matricula_nova", corpo)
+      .then(function (d) {
+        if ((!d || !d.ok) && indicadoPor) { delete corpo.p_indicacao; return rpc("matricula_nova", corpo); }
+        return d;
+      })
       .then(function (d) {
         if (!d || !d.ok) throw new Error("erro");
         $("form").hidden = true;

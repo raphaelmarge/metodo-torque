@@ -304,6 +304,10 @@
       return { id: x.id, n: x.nome, p: x.prof || "", s: x.sala || "", d: x.dias || [], i: x.inicio || "", m: +x.dur || 60, v: +x.vagas || 0, c: x.cor || cor };
     });
     var nuvemCfg = self.MT_CLOUD || {};
+    var videoteca = (S.read("videoteca", { videos: [] }).videos || []).slice(0, 40);
+    // link público de matrícula com o código do aluno (Indique um amigo)
+    var urlMatricula = "";
+    try { urlMatricula = location.href.replace(/apps\/[^/]*$/, "") + "matricula.html?ind=" + codigo; } catch (e) {}
     var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && a.appToken);
 
     // QR da carteirinha (gerado aqui na publicação — nada de lib dentro do app)
@@ -646,6 +650,23 @@
       (av ? kv("Última", S.fmtData(av.data)) + (av.peso ? kv("Peso", av.peso + " kg") : "") +
         (av.gordura ? kv("% de gordura", av.gordura + "%") : "") + (proxAv ? kv("Próxima", S.fmtData(proxAv)) : "")
         : "<div class='vz'>Nenhuma avaliação ainda — agenda a sua! 📊</div>") + antesDepoisHTML + "</div></details>" +
+      "<details id='dRecordes'><summary><span class='ic'>🏅</span>Meus recordes (PRs)</summary><div class='dcorpo' id='recordesBox'><div class='vz'>Anote as cargas nos exercícios do treino — seus recordes aparecem aqui. 💪</div></div></details>" +
+      (urlMatricula ? "<details id='dIndique'><summary><span class='ic'>🤝</span>Indique um amigo</summary><div class='dcorpo'>" +
+        "<div class='vz' style='padding:6px 0;'>Chame um amigo pra treinar: quando ele se matricular pelo SEU link, os dois ganham! 🎁</div>" +
+        "<div style='border:1px dashed var(--cor);border-radius:10px;padding:10px;margin:8px 0;font-size:12.5px;word-break:break-all;'>" + esc(urlMatricula) + "</div>" +
+        "<button class='btnx' id='btnIndica' style='width:100%'>💬 Mandar meu link no WhatsApp</button>" +
+        "<div style='font-size:11.5px;color:var(--txt2);margin-top:6px;'>Seu código de indicação: <b>" + codigo + "</b></div></div></details>" : "") +
+      (videoteca.length ? "<details id='dVideos'><summary><span class='ic'>🎥</span>Aulas gravadas</summary><div class='dcorpo'>" +
+        (function () {
+          var porCat = {};
+          videoteca.forEach(function (v) { (porCat[v.categoria || "Geral"] = porCat[v.categoria || "Geral"] || []).push(v); });
+          return Object.keys(porCat).sort().map(function (cat) {
+            return "<div style='font-weight:800;font-size:12px;letter-spacing:.05em;color:var(--txt2);margin:10px 0 4px;'>" + esc(cat).toUpperCase() + "</div>" +
+              porCat[cat].map(function (v) {
+                return "<a href='" + esc(v.url) + "' target='_blank' rel='noopener' style='display:block;padding:9px 0;border-bottom:1px solid var(--linha);color:var(--txt);font-weight:700;text-decoration:none;'>▶ " + esc(v.titulo) + "</a>";
+              }).join("");
+          }).join("");
+        })() + "</div></details>" : "") +
       "<details id='dTreino'><summary><span class='ic'>🏋️</span>Meu treino" + (presc && presc.nome ? " — " + esc(presc.nome) : "") + "</summary><div class='dcorpo'>" + fichasHTML() + "</div></details>" +
       "<details id='dDados'><summary><span class='ic'>👤</span>Dados pessoais</summary><div class='dcorpo'>" +
       (a.zap ? kv("Celular", esc(a.zap)) : "") + (a.email ? kv("E-mail", esc(a.email)) : "") +
@@ -676,6 +697,9 @@
       "document.querySelectorAll('[data-ir]').forEach(function(el){el.addEventListener('click',function(){vai(el.dataset.ir);" +
       "if(el.dataset.abrir){var d=document.getElementById(el.dataset.abrir);if(d){d.open=true;d.scrollIntoView();}}" +
       "if(el.hasAttribute('data-wodhist')){document.querySelectorAll('#pgWod .wodtabs button')[1].click();}});});" +
+      (urlMatricula ? "var bi=document.getElementById('btnIndica');if(bi)bi.addEventListener('click',function(){window.open(" +
+        JSON.stringify("https://wa.me/?text=" + encodeURIComponent("Bora treinar comigo na " + nomeAcad + "? 💪 Matrícula por aqui (fala que fui eu que indiquei!): " + urlMatricula)) +
+        ",'_blank');});" : "") +
       "var bs=document.getElementById('btnShare');if(bs)bs.addEventListener('click',function(){var t=bs.getAttribute('data-share')||'';" +
       "if(navigator.share){navigator.share({text:t}).catch(function(){});}else{window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');}});" +
       "var fc=document.querySelector('[data-convidar]');if(fc)fc.addEventListener('click',function(){window.open('https://wa.me/?text=" + encodeURIComponent(convite).replace(/'/g, "%27") + "','_blank');});" +
@@ -711,10 +735,26 @@
       "var t=e.target.closest('.timerbtn');if(t){iniciaTimer(+t.dataset.s||60);return;}" +
       "var h=e.target.closest('.histbtn');if(h){var l=histC[h.dataset.ex]||[];" +
       "alert(h.dataset.ex+'\\n\\nHist\u00f3rico de carga:\\n'+(l.length?l.map(function(x){return x.d.slice(8,10)+'/'+x.d.slice(5,7)+': '+x.c;}).join('\\n'):'Sem registros ainda \u2014 anote a carga no campo kg.'));return;}});" +
+      "function numC(x){var n=parseFloat(String(x==null?'':x).replace(',','.'));return isFinite(n)?n:0;}" +
+      "function celebraPR(ex,v){var prs=tqL('tq_pr',[]);prs.push({ex:ex,c:v,d:new Date().toISOString().slice(0,10)});if(prs.length>60)prs.shift();tqS('tq_pr',prs);" +
+      "if(navigator.vibrate)navigator.vibrate([100,60,100,60,220]);" +
+      "var el=document.createElement('div');el.style.cssText='position:fixed;top:18px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--cor),#a78bfa);color:#fff;padding:14px 22px;border-radius:14px;font-weight:800;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.45);text-align:center;max-width:90vw;';" +
+      "el.innerHTML='\ud83c\udf89 NOVO RECORDE!<br><span style=\"font-size:12.5px;font-weight:600\">'+ex+': '+v+'</span>';document.body.appendChild(el);setTimeout(function(){el.remove();},4000);}" +
+      "function pintaRecordes(){var box=document.getElementById('recordesBox');if(!box)return;var h2=tqL('tq_hist',{}),c3=tqL('tq_carga',{}),tops=[];" +
+      "Object.keys(h2).forEach(function(k){var mx=numC(c3[k]);(h2[k]||[]).forEach(function(x){var n=numC(x.c);if(n>mx)mx=n;});if(mx>0)tops.push({ex:k,kg:mx});});" +
+      "Object.keys(c3).forEach(function(k){if(!h2[k]&&numC(c3[k])>0)tops.push({ex:k,kg:numC(c3[k])});});" +
+      "if(!tops.length)return;tops.sort(function(a,b){return b.kg-a.kg;});" +
+      "var prs=tqL('tq_pr',[]).slice(-3).reverse();" +
+      "box.innerHTML=tops.slice(0,12).map(function(t){return \"<div style='display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--linha);font-size:13.5px;'><span>\"+t.ex+\"</span><b>\"+String(t.kg).replace('.',',')+\" kg</b></div>\";}).join('')+" +
+      "(prs.length?\"<div style='font-size:11.5px;color:var(--txt2);margin-top:8px;'>\ud83c\udf89 \u00daltimos PRs: \"+prs.map(function(p){return p.ex+' ('+p.c+')';}).join(' \u00b7 ')+\"</div>\":'');}" +
+      "pintaRecordes();" +
       "document.addEventListener('change',function(e){var i=e.target.closest('.cargain');if(!i)return;" +
       "var k=i.dataset.ex,v=i.value.trim();if(!v)return;cargas[k]=v;tqS('tq_carga',cargas);" +
       "var l=histC[k]||[];var dH=new Date().toISOString().slice(0,10);" +
-      "if(!l.length||l[l.length-1].c!==v){l.push({d:dH,c:v});if(l.length>40)l.shift();histC[k]=l;tqS('tq_hist',histC);}});" +
+      "var nv=numC(v),mx=0;l.forEach(function(x){var n2=numC(x.c);if(n2>mx)mx=n2;});" +
+      "if(nv>0&&mx>0&&nv>mx)celebraPR(k,v);" +
+      "if(!l.length||l[l.length-1].c!==v){l.push({d:dH,c:v});if(l.length>40)l.shift();histC[k]=l;tqS('tq_hist',histC);}" +
+      "pintaRecordes();});" +
       "var tmr=null;function iniciaTimer(sg){var bar=document.getElementById('timerBar');clearInterval(tmr);var resta=sg;" +
       "bar.style.display='block';bar.textContent='\u23f1 Descanso: '+resta+'s';" +
       "tmr=setInterval(function(){resta--;if(resta<=0){clearInterval(tmr);bar.textContent='\ud83d\udcaa Bora! Pr\u00f3xima s\u00e9rie!';" +

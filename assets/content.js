@@ -45,6 +45,7 @@ self.MT_APPS = [
   { slug: "app-parq", file: "apps/parq.html", icone: "🩺", title: "PAR-Q Digital", desc: "O questionário de prontidão antes do primeiro treino, com parecer automático e registro assinado." },
   { slug: "app-importar", file: "apps/importar.html", icone: "📥", title: "Importar Alunos (CSV)", desc: "Traga a base do sistema antigo: solte o CSV, confira o mapeamento e importe tudo de uma vez." },
   { slug: "app-crescimento", file: "apps/crescimento.html", icone: "🌱", title: "Crescimento e Cancelamentos", desc: "Novos × cancelados mês a mês, a curva de alunos ativos e os motivos de quem saiu." },
+  { slug: "app-ocupacao", file: "apps/ocupacao.html", icone: "🔥", title: "Ocupação e Horários", desc: "Mapa de calor dos check-ins, taxa de ocupação por aula e desempenho por professor — decida a grade com dado." },
   { slug: "app-cancelamentos", file: "apps/cancelamentos.html", icone: "🚫", title: "Cancelamentos", desc: "Cada contrato cancelado no período: quem saiu, o motivo, a permanência e o valor perdido — com o ranking de motivos." },
   { slug: "app-contratos", file: "apps/contratos.html", icone: "📄", title: "Contratos", desc: "A base de contratos por situação (ativos, suspensos, especiais, inativos), o ranking por plano e a lista detalhada com vigências." },
   { slug: "app-gastos", file: "apps/gastos.html", icone: "💸", title: "Gastos por Centro de Custos", desc: "A soma das Contas a Pagar por centro de custo no período, do maior para o menor, com o total gasto." },
