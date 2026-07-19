@@ -8,17 +8,19 @@
 <link href="../assets/fonts/archivo.css" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; }
-  body { font-family: "Archivo", system-ui, sans-serif; background: #121016; color: #f5f4f7; min-height: 100vh; display: flex; flex-direction: column; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.22), transparent 60%), #121016; color: #f5f4f7; min-height: 100vh; display: flex; flex-direction: column; }
   header { text-align: center; padding: 26px 16px 10px; }
   header h1 { font-size: 30px; font-weight: 800; }
   #relogio { font-size: 52px; font-weight: 800; color: #a78bfa; letter-spacing: .02em; }
   main { flex: 1; max-width: 640px; width: 100%; margin: 0 auto; padding: 10px 18px 40px; }
   .busca { display: flex; gap: 10px; margin-top: 14px; }
   input { flex: 1; background: #1c1826; border: 2px solid #2c2739; border-radius: 14px; color: #fff; padding: 18px; font-family: inherit; font-size: 20px; text-align: center; }
-  input:focus { outline: none; border-color: #7c3aed; }
-  .btn-qr { background: #7c3aed; border: none; border-radius: 14px; color: #fff; font-size: 26px; padding: 0 24px; cursor: pointer; }
+  input:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124,58,237,.2); }
+  .btn-qr { background: #7c3aed; border: none; border-radius: 14px; color: #fff; font-size: 26px; padding: 0 24px; cursor: pointer; transition: transform .15s ease, box-shadow .2s ease; }
+  .btn-qr:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -8px rgba(124,58,237,.6); }
   .sug { margin-top: 8px; }
-  .sug button { display: block; width: 100%; background: #1c1826; border: 1px solid #2c2739; border-radius: 10px; color: #fff; font-family: inherit; font-size: 18px; padding: 14px; margin-top: 6px; cursor: pointer; }
+  .sug button { display: block; width: 100%; background: #1c1826; border: 1px solid #2c2739; border-radius: 10px; color: #fff; font-family: inherit; font-size: 18px; padding: 14px; margin-top: 6px; cursor: pointer; transition: border-color .12s ease, background .12s ease; }
+  .sug button:hover { border-color: #7c3aed; background: #221b31; }
   #painel { margin-top: 18px; border-radius: 18px; padding: 26px; text-align: center; display: none; }
   #painel.ok { background: rgba(22,163,74,.15); border: 2px solid #16a34a; }
   #painel.bloq { background: rgba(220,38,38,.14); border: 2px solid #dc2626; }
@@ -26,7 +28,7 @@
   #painel h2 { font-size: 26px; margin: 8px 0 4px; }
   #painel p { color: #cfc9dd; font-size: 15px; line-height: 1.5; }
   #videoQR { width: 100%; max-height: 300px; background: #000; border-radius: 14px; object-fit: cover; margin-top: 12px; display: none; }
-  .wod { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 18px; margin-top: 22px; }
+  .wod { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 18px; margin-top: 22px; box-shadow: 0 10px 30px -12px rgba(0,0,0,.4); }
   .wod h3 { color: #a78bfa; font-size: 13px; letter-spacing: .12em; margin-bottom: 8px; }
   .wod pre { font-family: inherit; white-space: pre-wrap; font-size: 15px; line-height: 1.55; }
   .aviso { background: #1c1826; border-left: 4px solid #7c3aed; border-radius: 10px; padding: 12px 14px; margin-top: 10px; font-size: 14px; }
@@ -78,10 +80,15 @@
     var d = new Date();
     $("relogio").textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
     try {
-      var ab = S.abertoAgora();
-      var rot = ab.hoje.fechado ? "fechado hoje" : ab.hoje.faixas.map(function (f) { return f.de + "–" + f.ate; }).join(" e ");
-      $("funcHoje").textContent = "🕐 Hoje" + (ab.hoje.feriado ? " (" + ab.hoje.feriado + ")" : "") + ": " + rot +
-        (ab.hoje.fechado || ab.aberto ? "" : " · ⛔ fechado agora");
+      var stF = S.read("funcionamento", { dias: {}, feriados: [] });
+      var temCfg = Object.keys(stF.dias || {}).some(function (k) { return stF.dias[k] && stF.dias[k].de; }) || (stF.feriados || []).length;
+      if (!temCfg) { $("funcHoje").textContent = ""; }
+      else {
+        var ab = S.abertoAgora();
+        var rot = ab.hoje.fechado ? "fechado hoje" : ab.hoje.faixas.map(function (f) { return f.de + "–" + f.ate; }).join(" e ");
+        $("funcHoje").textContent = "🕐 Hoje" + (ab.hoje.feriado ? " (" + ab.hoje.feriado + ")" : "") + ": " + rot +
+          (ab.hoje.fechado || ab.aberto ? "" : " · ⛔ fechado agora");
+      }
     } catch (e) {}
   }
   tic(); setInterval(tic, 15000);

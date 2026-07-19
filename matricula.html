@@ -9,19 +9,21 @@
 <style>
   * { box-sizing: border-box; margin: 0; }
   body { font-family: "Archivo", system-ui, sans-serif; background: #121016; color: #f5f4f7; min-height: 100vh; }
-  .topo { background: linear-gradient(135deg, #1c1724, #2a1f3d); padding: 34px 20px 26px; text-align: center; }
+  .topo { background: radial-gradient(120% 160% at 50% -40%, rgba(124,58,237,.35), transparent 60%), #121016; border-bottom: 1px solid #2c2739; padding: 38px 20px 28px; text-align: center; }
   .topo h1 { font-size: 26px; font-weight: 800; }
   .topo p { color: #b9b3c6; margin-top: 6px; font-size: 14.5px; }
   .corpo { max-width: 560px; margin: 0 auto; padding: 22px 16px 60px; }
-  .plano { background: #1c1826; border: 2px solid #2c2739; border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: border-color .15s; }
-  .plano.sel { border-color: #7c3aed; background: #221b31; }
+  .plano { background: #1c1826; border: 2px solid #2c2739; border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: border-color .15s ease, transform .15s ease, box-shadow .2s ease; }
+  .plano:hover { transform: translateY(-1px); border-color: #4c3f6b; }
+  .plano.sel { border-color: #7c3aed; background: #221b31; box-shadow: 0 8px 24px -10px rgba(124,58,237,.5); }
   .plano .nm { font-weight: 800; font-size: 16px; }
   .plano .ds { color: #b9b3c6; font-size: 12.5px; margin-top: 3px; }
   .plano .vl { font-size: 20px; font-weight: 800; color: #a78bfa; white-space: nowrap; }
   label { display: block; font-size: 12.5px; font-weight: 700; color: #b9b3c6; margin: 14px 0 5px; }
   input { width: 100%; background: #1c1826; border: 1.5px solid #2c2739; border-radius: 10px; color: #fff; padding: 13px 14px; font-family: inherit; font-size: 15px; }
-  input:focus { outline: none; border-color: #7c3aed; }
-  .btn { width: 100%; background: #7c3aed; color: #fff; border: none; border-radius: 12px; padding: 16px; font-family: inherit; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 20px; }
+  input:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,.2); }
+  .btn { width: 100%; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none; border-radius: 12px; padding: 16px; font-family: inherit; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 20px; transition: transform .15s ease, box-shadow .2s ease; }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 26px -10px rgba(124,58,237,.6); }
   .btn:disabled { opacity: .6; }
   .ok { text-align: center; padding: 40px 10px; }
   .ok .emj { font-size: 54px; }
