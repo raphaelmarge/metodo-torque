@@ -9,11 +9,11 @@
 <style>
   :root { --roxo: #7c3aed; --lilas: #a78bfa; --ok: #22c55e; --erro: #f87171; --alerta: #fbbf24; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: #121016; color: #fff; font-family: "Archivo", system-ui, sans-serif; overflow: hidden; }
+  html, body { margin: 0; height: 100%; background: radial-gradient(110% 70% at 85% -20%, rgba(124,58,237,.2), transparent 60%), #121016; color: #fff; font-family: "Archivo", system-ui, sans-serif; overflow: hidden; }
   .tela { height: 100vh; display: flex; flex-direction: column; padding: 3.5vh 4vw; }
   .cab { display: flex; justify-content: space-between; align-items: center; }
   .marca { display: flex; align-items: center; gap: 14px; font-size: 2.2vh; font-weight: 700; letter-spacing: .2em; color: var(--lilas); }
-  .marca::before { content: ""; width: 3.5vw; height: .55vh; background: var(--roxo); }
+  .marca::before { content: ""; width: 3.5vw; height: .55vh; background: linear-gradient(90deg, var(--roxo), var(--lilas)); border-radius: 4px; }
   .relogio { font-size: 3.2vh; font-weight: 800; font-variant-numeric: tabular-nums; }
   h1 { margin: 2.2vh 0 0; font-size: 5.6vh; font-weight: 800; letter-spacing: -.01em; }
   .conteudo { flex: 1; margin-top: 3vh; overflow: hidden; }
@@ -27,20 +27,20 @@
   .rotulo { font-size: 2vh; font-weight: 700; letter-spacing: .16em; color: #a09aae; }
   .num { font-size: 6.4vh; font-weight: 800; margin: .6vh 0; }
   .num small { font-size: 2.6vh; color: #a09aae; font-weight: 600; }
-  .barra { height: 2.2vh; background: #1b1822; border: 1px solid #2e2a38; }
-  .barra > div { height: 100%; background: linear-gradient(90deg, var(--roxo), var(--lilas)); }
+  .barra { height: 2.2vh; background: #1b1822; border: 1px solid #2e2a38; border-radius: 999px; overflow: hidden; }
+  .barra > div { height: 100%; background: linear-gradient(90deg, var(--roxo), var(--lilas)); border-radius: 999px; transition: width .5s cubic-bezier(.22,1,.36,1); }
   .barra.cheia > div { background: var(--ok); }
   .rank { display: flex; flex-direction: column; gap: 1.6vh; }
   .rk { display: grid; grid-template-columns: 6vh 1fr 22vw 16vw; gap: 2vw; align-items: center; font-size: 3.4vh; }
   .rk .pos { font-weight: 800; color: var(--lilas); }
-  .rk .pos.p1 { color: #fff; background: var(--roxo); text-align: center; }
+  .rk .pos.p1 { color: #fff; background: linear-gradient(135deg, var(--roxo), var(--lilas)); text-align: center; border-radius: 12px; box-shadow: 0 8px 20px -8px rgba(124,58,237,.6); }
   .rk .nome { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rk .val { text-align: right; font-variant-numeric: tabular-nums; font-size: 3vh; }
   .rk .val strong { color: var(--ok); }
 
   /* listas (manutenção / checklist) */
   .lin { display: flex; align-items: center; gap: 1.6vw; padding: 1.6vh 0; border-bottom: 1px solid #2e2a38; font-size: 3.2vh; }
-  .lin .tag { font-size: 1.9vh; font-weight: 800; letter-spacing: .08em; padding: .5vh 1vw; flex: none; }
+  .lin .tag { font-size: 1.9vh; font-weight: 800; letter-spacing: .08em; padding: .5vh 1vw; flex: none; border-radius: 999px; }
   .tag.erro { background: rgba(248,113,113,.15); color: var(--erro); }
   .tag.alerta { background: rgba(251,191,36,.14); color: var(--alerta); }
   .tag.roxo { background: rgba(124,58,237,.2); color: var(--lilas); }
