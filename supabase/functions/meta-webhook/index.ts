@@ -105,10 +105,31 @@ async function executaFerramenta(nome: string, entrada: any, ctx: { aid: string;
       const f = await leDados(ctx.aid, "funcionamento");
       const dias = (f && f.dias) || {};
       const linhas: string[] = [];
+      const faixa = (d: any) => {
+        if (!d) return "";
+        const de = d.de || d.abre || d.inicio, ate = d.ate || d.fecha || d.fim;
+        if (!de) return "";
+        let r = de + " às " + (ate || "?");
+        if (d.de2 && d.ate2) r += " e " + d.de2 + " às " + d.ate2;
+        return r;
+      };
       for (let i = 0; i < 7; i++) {
-        const d = dias[i] || dias[String(i)];
-        if (d && (d.abre || d.inicio)) linhas.push(DIAS_PT[i] + ": " + (d.abre || d.inicio) + " às " + (d.fecha || d.fim || "?"));
+        const r = faixa(dias[i] || dias[String(i)]);
+        if (r) linhas.push(DIAS_PT[i] + ": " + r);
       }
+      // hoje (fuso de Brasília), considerando feriado cadastrado com horário especial
+      const hojeISO = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+      const fer = ((f && f.feriados) || []).find((x: any) => x.data === hojeISO);
+      if (fer) {
+        linhas.push("HOJE (" + (fer.nome || "feriado") + "): " + (faixa(fer) || "FECHADO"));
+      }
+      const proximos = ((f && f.feriados) || [])
+        .filter((x: any) => x.data > hojeISO)
+        .sort((a: any, b: any) => (a.data < b.data ? -1 : 1))
+        .slice(0, 3)
+        .map((x: any) => x.data.split("-").reverse().slice(0, 2).join("/") + " (" + (x.nome || "feriado") + "): " + (faixa(x) || "fechado"));
+      if (proximos.length) linhas.push("Horários especiais próximos: " + proximos.join("; "));
+      if (linhas.length && !fer) linhas.push("Obs.: em feriados nacionais vale o horário de domingo, salvo aviso.");
       return linhas.length ? linhas.join("\n") : "Horários não cadastrados no sistema — oriente a falar com a recepção.";
     }
 

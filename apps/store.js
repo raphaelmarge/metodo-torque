@@ -466,8 +466,47 @@
     if (d.getDay() === 0) return true;
     if (feriadosDoAno(d.getFullYear())[iso.slice(0, 10)]) return true;
     var extras = read("feriados", { datas: [] }).datas || [];
-    return extras.indexOf(iso.slice(0, 10)) !== -1;
+    if (extras.indexOf(iso.slice(0, 10)) !== -1) return true;
+    var cadastrados = read("funcionamento", { feriados: [] }).feriados || [];
+    return cadastrados.some(function (f) { return f.data === iso.slice(0, 10); });
   }
+  // horário de funcionamento do dia: feriado cadastrado > feriado nacional (segue domingo) > dia da semana
+  function horarioDoDia(iso) {
+    iso = (iso || todayISO()).slice(0, 10);
+    var f = read("funcionamento", { dias: {}, feriados: [], config: {} });
+    function faixasDe(h) {
+      var fx = [];
+      if (h && h.de && h.ate) fx.push({ de: h.de, ate: h.ate });
+      if (h && h.de2 && h.ate2) fx.push({ de: h.de2, ate: h.ate2 });
+      return fx;
+    }
+    var fer = (f.feriados || []).find(function (x) { return x.data === iso; });
+    if (fer) {
+      var fx0 = faixasDe(fer.de ? { de: fer.de, ate: fer.ate } : null);
+      return { faixas: fx0, fechado: !fx0.length, feriado: fer.nome || "feriado" };
+    }
+    var d = new Date(iso + "T12:00");
+    var extras = read("feriados", { datas: [] }).datas || [];
+    var nacional = !!feriadosDoAno(d.getFullYear())[iso] || extras.indexOf(iso) !== -1;
+    var dias = f.dias || {};
+    var cfg = f.config || {};
+    if (nacional && cfg.feriadoComoDomingo !== false) {
+      var hd = dias[0] || dias["0"];
+      var fx1 = faixasDe(hd);
+      return { faixas: fx1, fechado: !fx1.length, feriado: "feriado" };
+    }
+    var h = dias[d.getDay()] || dias[String(d.getDay())];
+    var fx = faixasDe(h);
+    return { faixas: fx, fechado: !fx.length, feriado: nacional ? "feriado" : "" };
+  }
+  function abertoAgora() {
+    var hd = horarioDoDia(todayISO());
+    var ag = new Date();
+    var hhmm = ("0" + ag.getHours()).slice(-2) + ":" + ("0" + ag.getMinutes()).slice(-2);
+    var aberto = hd.faixas.some(function (fx) { return hhmm >= fx.de && hhmm <= fx.ate; });
+    return { aberto: aberto, hoje: hd };
+  }
+
   // soma horas batidas (pares entrada→saída no mesmo dia) separando dom/feriado
   function horasPonto(ponto, nome, mesKey) {
     var pts = (ponto || []).filter(function (pt) { return pt.nome === nome && (pt.quando || "").slice(0, 7) === mesKey; })
@@ -486,6 +525,7 @@
 
   window.MTStore = {
     ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,
+    horarioDoDia: horarioDoDia, abertoAgora: abertoAgora,
     read: read, write: write, uid: uid,
     contratoAtivoConta: contratoAtivoConta, ehClienteAtivo: ehClienteAtivo,
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,

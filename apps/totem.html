@@ -37,6 +37,7 @@
 
 <header>
   <div id="relogio">--:--</div>
+  <div id="funcHoje" style="font-size:16px;color:#b9b3c6;margin-top:2px;"></div>
   <h1 id="tNome">💪 Bem-vindo(a)!</h1>
   <p style="color:#b9b3c6;margin-top:4px;">Toque no seu nome ou mostre o QR da carteirinha 👇</p>
 </header>
@@ -76,6 +77,12 @@
   function tic() {
     var d = new Date();
     $("relogio").textContent = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    try {
+      var ab = S.abertoAgora();
+      var rot = ab.hoje.fechado ? "fechado hoje" : ab.hoje.faixas.map(function (f) { return f.de + "–" + f.ate; }).join(" e ");
+      $("funcHoje").textContent = "🕐 Hoje" + (ab.hoje.feriado ? " (" + ab.hoje.feriado + ")" : "") + ": " + rot +
+        (ab.hoje.fechado || ab.aberto ? "" : " · ⛔ fechado agora");
+    } catch (e) {}
   }
   tic(); setInterval(tic, 15000);
   var nomeAcad = (S.read("config", { dados: {} }).dados || {}).nome;

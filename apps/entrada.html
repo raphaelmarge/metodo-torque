@@ -286,8 +286,16 @@
       S.write("alunos", st);
       // mensagem de boas-vindas configurável (Controle de Acesso do EVO)
       var msg = (S.read("config", { dados: {} }).msgAcesso || "").trim() || "Olá, seja bem-vindo e tenha um ótimo treino!";
+      var avisoFunc = "";
+      try {
+        var abFn = S.abertoAgora();
+        if (!abFn.aberto) {
+          var rotF = abFn.hoje.fechado ? "fechado hoje" : abFn.hoje.faixas.map(function (f) { return f.de + "–" + f.ate; }).join(" e ");
+          avisoFunc = " · ⏰ fora do horário de funcionamento (" + rotF + ")";
+        }
+      } catch (eF) {}
       var fl = $("flashOk");
-      fl.textContent = "✅ " + al.nome.split(" ")[0] + " — " + msg;
+      fl.textContent = "✅ " + al.nome.split(" ")[0] + " — " + msg + avisoFunc;
       fl.hidden = false;
       clearTimeout(fl._t);
       fl._t = setTimeout(function () { fl.hidden = true; }, 5000);

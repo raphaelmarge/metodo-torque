@@ -305,6 +305,14 @@
     });
     var nuvemCfg = self.MT_CLOUD || {};
     var videoteca = (S.read("videoteca", { videos: [] }).videos || []).slice(0, 40);
+    var stFunc = S.read("funcionamento", { dias: {}, feriados: [], config: {} });
+    var anoFunc = new Date().getFullYear();
+    var funcApp = {
+      dias: stFunc.dias || {},
+      fer: (stFunc.feriados || []).map(function (f) { return { data: f.data, nome: f.nome, de: f.de, ate: f.ate, de2: f.de2, ate2: f.ate2 }; }),
+      cfg: stFunc.config || {},
+      nac: Object.keys(S.feriadosDoAno(anoFunc)).concat(Object.keys(S.feriadosDoAno(anoFunc + 1))),
+    };
     // link público de matrícula com o código do aluno (Indique um amigo)
     var urlMatricula = "";
     try { urlMatricula = location.href.replace(/apps\/[^/]*$/, "") + "matricula.html?ind=" + codigo; } catch (e) {}
@@ -499,6 +507,7 @@
       // ===== INÍCIO =====
       "<div id='pgInicio'>" +
       "<h1>Início</h1>" +
+      "<div id='funcHoje' style='font-size:12.5px;color:var(--txt2);margin:-4px 0 10px;'></div>" +
       (app.banner ? "<div class='banner'>" + esc(app.banner) + "</div>" : "") +
       "<div class='secTit'>Favoritos</div>" +
       "<div class='favs'>" +
@@ -760,6 +769,17 @@
       "tmr=setInterval(function(){resta--;if(resta<=0){clearInterval(tmr);bar.textContent='\ud83d\udcaa Bora! Pr\u00f3xima s\u00e9rie!';" +
       "if(navigator.vibrate)navigator.vibrate([200,100,200]);setTimeout(function(){bar.style.display='none';},2500);}" +
       "else{bar.textContent='\u23f1 Descanso: '+resta+'s';}},1000);}" +
+      "var FUNC=" + JSON.stringify(funcApp) + ";" +
+      "(function(){var el=document.getElementById('funcHoje');if(!el)return;" +
+      "var d=new Date();var iso=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);" +
+      "function fa(h){var a=[];if(h&&h.de&&h.ate)a.push(h.de+'\u2013'+h.ate);if(h&&h.de2&&h.ate2)a.push(h.de2+'\u2013'+h.ate2);return a;}" +
+      "var fx=[],nome='';var f=FUNC.fer.filter(function(x){return x.data===iso;})[0];" +
+      "if(f){fx=fa(f.de?f:null);nome=f.nome||'feriado';}" +
+      "else{var nac=FUNC.nac.indexOf(iso)>=0;" +
+      "if(nac&&FUNC.cfg.feriadoComoDomingo!==false){fx=fa(FUNC.dias[0]||FUNC.dias['0']);nome='feriado';}" +
+      "else{fx=fa(FUNC.dias[d.getDay()]||FUNC.dias[String(d.getDay())]);if(nac)nome='feriado';}}" +
+      "var temCfg=Object.keys(FUNC.dias||{}).length||FUNC.fer.length;if(!temCfg)return;" +
+      "el.textContent='\ud83d\udd52 Hoje'+(nome?' ('+nome+')':'')+': '+(fx.length?fx.join(' e '):'fechado');})();" +
       "var tg=document.getElementById('tglTema');if(tg)tg.addEventListener('change',function(){document.body.classList.toggle('claro',this.checked);});" +
       "document.querySelectorAll('#pgGrade .wodtabs button').forEach(function(b,i){b.addEventListener('click',function(){" +
       "document.querySelectorAll('#pgGrade .wodtabs button').forEach(function(x){x.classList.toggle('on',x===b);});" +

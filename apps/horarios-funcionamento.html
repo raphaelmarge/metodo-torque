@@ -42,6 +42,11 @@
       <h2>Horários de funcionamento da unidade</h2>
       <p class="muted" style="font-size: 13px; margin: 6px 0 10px;">Deixe em branco os dias fechados. A 2ª faixa é opcional (ex.: 06:00–12:00 e 14:00–22:00).</p>
       <div id="dias"></div>
+      <label class="linha-flex" style="gap: 8px; font-size: 13.5px; margin-top: 12px; border-top: 1px solid var(--linha); padding-top: 12px;">
+        <input type="checkbox" id="ferDom" style="width: auto;">
+        <span><b>Feriados nacionais seguem o horário de domingo.</b> Carnaval, Sexta-feira Santa, Corpus Christi e os demais nacionais já são reconhecidos sozinhos — cadastre na aba 📅 Feriados só os que tiverem horário diferente (ou os municipais).</span>
+      </label>
+      <p class="muted" id="previewHoje" style="margin-top: 10px; font-size: 13px;"></p>
     </div>
   </section>
 
@@ -72,7 +77,18 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); }
 
   var DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-  function load() { return S.read("funcionamento", { dias: {}, feriados: [] }); }
+  function load() { var st = S.read("funcionamento", { dias: {}, feriados: [], config: {} }); st.config = st.config || {}; return st; }
+
+  // primeira vez: começa com o padrão da TORQUE FIT (seg–sex 06–23, sáb 08–16, dom/feriado 08–14)
+  (function () {
+    var st = load();
+    var temAlgo = Object.keys(st.dias || {}).some(function (k) { return st.dias[k] && (st.dias[k].de || st.dias[k].ate); });
+    if (temAlgo) return;
+    st.dias = { 0: { de: "08:00", ate: "14:00" }, 6: { de: "08:00", ate: "16:00" } };
+    for (var i = 1; i <= 5; i++) st.dias[i] = { de: "06:00", ate: "23:00" };
+    st.config.feriadoComoDomingo = true;
+    S.write("funcionamento", st);
+  })();
 
   document.querySelectorAll(".abas button").forEach(function (b) {
     b.addEventListener("click", function () {
@@ -129,8 +145,26 @@
     renderFeriados();
   });
 
+  function renderExtras() {
+    var st = load();
+    $("ferDom").checked = st.config.feriadoComoDomingo !== false;
+    var hd = S.horarioDoDia(S.todayISO());
+    var rot = hd.fechado ? "fechado" : hd.faixas.map(function (f) { return f.de + "–" + f.ate; }).join(" e ");
+    $("previewHoje").textContent = "🕐 Hoje" + (hd.feriado ? " (" + hd.feriado + ")" : "") + ": " + rot +
+      " — é isso que o totem, o app do aluno e o robô do WhatsApp respondem.";
+  }
+  $("ferDom").addEventListener("change", function () {
+    var st = load();
+    st.config.feriadoComoDomingo = this.checked;
+    S.write("funcionamento", st);
+    renderExtras();
+  });
+
   renderDias();
   renderFeriados();
+  renderExtras();
+  S.onChange(function (k) { if (k === "funcionamento") { renderFeriados(); renderExtras(); } });
+  window.__funcionamento = { renderExtras: renderExtras }; // testes
 })();
 </script>
 </body>
