@@ -119,7 +119,7 @@ function ok(cond, nome) {
   // treinos: salva e monta link de WhatsApp
   await p.click('[data-a="treinos"]');
   await p.selectOption("#tAluno", { index: 1 });
-  await p.fill("#tTexto", "A — Peito\nSupino 4x10");
+  await p.fill("#tTexto", "A — Peito\nSupino 4x10\n🎬 Supino guiado https://youtube.com/watch?v=abc123");
   await p.waitForTimeout(900);
   const salvo = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")));
   const idAluno = salvo.alunos[0].id;
@@ -157,13 +157,35 @@ function ok(cond, nome) {
     return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
   });
   ok(/Supino 4x10/.test(appHtml), "app leva o treino do aluno");
+  ok(/▶ ver vídeo/.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "linha com link vira botão ▶ ver vídeo");
+  ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
   ok(/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "app tem diário de cargas com recorde");
   ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
+  // dá um token pro aluno pra ligar o modo nuvem do app (RPCs serão mockadas)
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.alunos[0].appTokenP = "tok-teste-chat";
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+  const appHtml2 = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+  });
   const pApp = await ctx.newPage();
   const errosApp = [];
   pApp.on("pageerror", (e) => errosApp.push(String(e)));
+  const chatDB = [];
+  await pApp.route("**/rest/v1/rpc/app_chat_lista", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(chatDB) }));
+  await pApp.route("**/rest/v1/rpc/app_chat_envia", (r) => {
+    const corpo = JSON.parse(r.request().postData() || "{}");
+    chatDB.push({ de: "aluno", texto: corpo.p_texto, criado: new Date().toISOString() });
+    r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+  await pApp.route("**/rest/v1/rpc/app_aluno_treino_reg", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await pApp.route("**/rest/v1/rpc/app_aluno_checkin", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
+  await pApp.route("**/rest/v1/rpc/app_aluno_busca", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(null) }));
   // serve via http (setContent teria origem opaca, sem localStorage)
-  await pApp.route("**/app-teste-personal.html", (r) => r.fulfill({ contentType: "text/html", body: appHtml }));
+  await pApp.route("**/app-teste-personal.html", (r) => r.fulfill({ contentType: "text/html", body: appHtml2 }));
   await pApp.goto(BASE + "/app-teste-personal.html", { waitUntil: "domcontentloaded" });
   await pApp.fill("#dcEx", "Agachamento");
   await pApp.fill("#dcKg", "80");
@@ -196,12 +218,25 @@ function ok(cond, nome) {
 
   const evo = await pApp.evaluate(() => document.getElementById("evoBox").textContent);
   ok(/84/.test(evo) && /-6/.test(evo.replace("−", "-")), "evolução mostra peso atual e delta");
+  // chat: aluno manda mensagem → aparece no thread (RPC mockada)
+  await pApp.fill("#chTexto", "Professor, dúvida no supino!");
+  await pApp.click("#chEnvia");
+  await pApp.waitForTimeout(400);
+  const thread = await pApp.evaluate(() => document.getElementById("chMsgs").textContent);
+  ok(/dúvida no supino/.test(thread), "mensagem do aluno aparece no chat do app");
+
   ok(errosApp.length === 0, "app do aluno abre sem erros de JS" + (errosApp.length ? " — " + errosApp[0] : ""));
   await pApp.close();
 
   // conta / ilha
   const conta = await p.evaluate(() => document.getElementById("contaStatus").textContent);
   ok(/Crie sua conta|Conectado/.test(conta), "card da ilha mostra o status da conta");
+
+  // aba chat do módulo (sem nuvem → aviso educado)
+  await p.click('[data-a="chat"]');
+  await p.waitForTimeout(300);
+  const chatMod = await p.evaluate(() => document.getElementById("chatMsgs").textContent);
+  ok(/precisa da sua conta/.test(chatMod), "chat do módulo sem nuvem explica o que falta");
 
   // aba assessoria (sem nuvem → aviso educado)
   await p.click('[data-a="assessoria"]');
