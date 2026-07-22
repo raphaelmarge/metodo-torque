@@ -109,18 +109,46 @@
 
   <!-- TREINOS -->
   <section id="vTreinos" hidden>
-    <div class="card">
-      <h2>Treino por aluno</h2>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>📋 Montar treino (por seleção)</h2>
       <div class="linha-flex" style="margin: 8px 0 10px;">
         <select id="tAluno" style="min-width: 200px;"></select>
-        <button class="btn sec" id="tVideo">🎬 Inserir vídeo</button>
+        <button class="btn sec" id="tFicha">+ Nova ficha (A, B, C…)</button>
         <button class="btn sec" id="tZap">💬 Enviar no WhatsApp</button>
       </div>
-      <textarea id="tTexto" rows="12" placeholder="Escreva o treino aqui (ex.:&#10;A — Peito/Tríceps&#10;Supino reto 4x10&#10;Crucifixo 3x12&#10;…)&#10;&#10;Salva sozinho enquanto você digita." style="font-family: inherit;"></textarea>
-      <p class="muted" id="tStatus" style="margin: 6px 0 0; font-size: 12.5px;"></p>
-      <p class="muted" style="margin: 6px 0 0; font-size: 12.5px;">🎬 Cole um link do YouTube em qualquer linha (ou use o botão) — no app do aluno ele vira um botão <b>▶ ver vídeo</b> ao lado do exercício.</p>
+      <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo.</p>
+    </div>
+
+    <div class="card">
+      <h2>📚 Biblioteca de exercícios</h2>
+      <div class="linha-flex" style="margin: 8px 0 10px;">
+        <input id="exNome" placeholder="Nome do exercício *" style="flex: 2; min-width: 170px;">
+        <input id="exGrupo" placeholder="Grupo (ex.: Peito)" list="exGrupos" style="flex: 1; min-width: 120px;">
+        <datalist id="exGrupos"><option>Peito</option><option>Costas</option><option>Pernas</option><option>Ombros</option><option>Braços</option><option>Core</option><option>Cardio</option></datalist>
+        <input id="exVideo" placeholder="Link do vídeo (YouTube)" style="flex: 2; min-width: 170px;">
+        <button class="btn" id="exAdd">+ Adicionar</button>
+      </div>
+      <div id="exLista"></div>
     </div>
   </section>
+
+  <dialog id="dlgEx">
+    <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
+      <h2 id="dlgExTitulo" style="text-transform: none; letter-spacing: 0; font-size: 16px;">Exercício</h2>
+      <div class="campo"><label>Nome *</label><input id="dxNome" required></div>
+      <div class="grid-2">
+        <div class="campo"><label>Grupo muscular</label><input id="dxGrupo" list="exGrupos"></div>
+        <div class="campo"><label>Link do vídeo (YouTube)</label><input id="dxVideo" placeholder="https://…"></div>
+      </div>
+      <div class="campo"><label>Descrição / execução (o aluno vê no app)</label>
+        <textarea id="dxDesc" rows="5" placeholder="Ex.: Pegada na largura dos ombros, desça controlando até o peito, suba explosivo. Cotovelos a 45°."></textarea></div>
+      <div class="linha-flex" style="justify-content: flex-end;">
+        <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
+        <button class="btn" value="ok">Salvar</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- AVALIAÇÕES -->
   <section id="vAvaliacoes" hidden>
@@ -199,6 +227,22 @@
   function load() {
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
     st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || [];
+    st.exercicios = st.exercicios || []; st.treinosV2 = st.treinosV2 || {};
+    if (!st.exercicios.length && !st._exSeed) {
+      st._exSeed = 1;
+      [["Supino reto", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
+       ["Agachamento livre", "Pernas", "Pés na largura dos ombros, desça até a coxa passar da paralela mantendo o peito aberto e o calcanhar no chão."],
+       ["Levantamento terra", "Costas", "Barra rente à canela, costas neutras, empurre o chão com as pernas e finalize com o quadril."],
+       ["Puxada aberta", "Costas", "Puxe a barra até a parte alta do peito, cotovelos apontando para baixo, sem balançar o tronco."],
+       ["Desenvolvimento", "Ombros", "Suba os halteres até estender os cotovelos sem bater, desça controlando até a altura das orelhas."],
+       ["Rosca direta", "Braços", "Cotovelos colados no tronco, suba sem balançar e desça em 2 segundos."],
+       ["Tríceps corda", "Braços", "Cotovelos fixos, estenda até o fim e abra a corda no final do movimento."],
+       ["Leg press", "Pernas", "Desça até 90° sem tirar o quadril do banco e empurre com o pé inteiro."],
+       ["Prancha", "Core", "Corpo alinhado da cabeça ao calcanhar, abdômen e glúteo contraídos — segure o tempo marcado."],
+       ["Remada curvada", "Costas", "Tronco a ~45°, puxe a barra na direção do umbigo e aperte as escápulas no topo."]
+      ].forEach(function (e) { st.exercicios.push({ id: S.uid(), nome: e[0], grupo: e[1], video: "", descricao: e[2] }); });
+      S.write("ptStudio", st);
+    }
     return st;
   }
   function save(st) { S.write("ptStudio", st); render(); }
@@ -352,42 +396,185 @@
     save(st);
   });
 
-  // ---------- treinos ----------
-  var salvaT = null;
-  $("tAluno").addEventListener("change", function () {
-    var st = load();
-    $("tTexto").value = st.treinos[this.value] || "";
-    $("tStatus").textContent = "";
-  });
-  $("tTexto").addEventListener("input", function () {
+  // ---------- treinos por seleção (biblioteca + fichas) ----------
+  function exPorId(st, id) { return (st.exercicios || []).find(function (e) { return e.id === id; }); }
+  function treinoDe(st, alunoId) {
+    st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
+    return st.treinosV2[alunoId];
+  }
+  function treinoTexto(st, alunoId) {
+    var t = (st.treinosV2 || {})[alunoId];
+    if (!t || !t.fichas.length) return (st.treinos || {})[alunoId] || "";
+    return t.fichas.map(function (f) {
+      return f.titulo + "\n" + f.itens.map(function (it) {
+        var ex = exPorId(st, it.exId) || { nome: "?" };
+        return "• " + ex.nome + " — " + it.series + "x" + it.reps + (it.obs ? " (" + it.obs + ")" : "");
+      }).join("\n");
+    }).join("\n\n");
+  }
+  function renderFichas() {
+    var el = $("fichasBox");
     var alunoId = $("tAluno").value;
-    if (!alunoId) { $("tStatus").textContent = "Escolha o aluno primeiro."; return; }
-    clearTimeout(salvaT);
-    var v = this.value;
-    salvaT = setTimeout(function () {
-      var st = load();
-      st.treinos[alunoId] = v;
-      S.write("ptStudio", st);
-      $("tStatus").textContent = "💾 Salvo.";
-    }, 600);
+    if (!alunoId) { el.innerHTML = '<span class="muted">Escolha o aluno e crie a primeira ficha.</span>'; return; }
+    var st = load();
+    var t = (st.treinosV2 || {})[alunoId];
+    var exOpts = (st.exercicios || []).slice().sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); })
+      .map(function (e) { return '<option value="' + e.id + '">' + esc((e.grupo ? e.grupo + " · " : "") + e.nome) + "</option>"; }).join("");
+    if (!t || !t.fichas.length) {
+      el.innerHTML = '<span class="muted">Nenhuma ficha ainda — clique em <b>+ Nova ficha</b>.' +
+        ((st.treinos || {})[alunoId] ? " (O texto antigo deste aluno continua no app até você montar as fichas.)" : "") + "</span>";
+      return;
+    }
+    el.innerHTML = t.fichas.map(function (f) {
+      return '<div style="border:1px solid var(--linha);border-radius:12px;padding:14px;margin-bottom:10px;">' +
+        '<div class="linha-flex" style="justify-content:space-between;margin-bottom:8px;">' +
+        '<b style="font-size:14.5px;">' + esc(f.titulo) + "</b>" +
+        '<button class="btn sec mini" data-rmficha="' + f.id + '">✕ ficha</button></div>' +
+        (f.itens.length ? f.itens.map(function (it, i) {
+          var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
+          return '<div class="sessao-pt"><b>' + esc(ex.nome) + "</b><span>" + it.series + "×" + it.reps + "</span>" +
+            (it.obs ? '<span class="muted">' + esc(it.obs) + "</span>" : "") +
+            (ex.video ? "<span title='tem vídeo'>🎬</span>" : "") +
+            '<span style="margin-left:auto;"></span>' +
+            (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '">↑</button>' : "") +
+            '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '">✕</button></div>';
+        }).join("") : '<div class="muted" style="padding:4px 0;">Ficha vazia — adicione o primeiro exercício.</div>') +
+        '<div class="linha-flex" style="margin-top:10px;">' +
+        '<select data-exsel="' + f.id + '" style="flex:2;min-width:170px;"><option value="">— exercício da biblioteca —</option>' + exOpts + "</select>" +
+        '<input data-exser="' + f.id + '" type="number" min="1" value="3" style="width:64px;" title="séries">' +
+        '<span class="muted">×</span>' +
+        '<input data-exrep="' + f.id + '" value="12" style="width:74px;" title="repetições (ex.: 12 ou 30s)">' +
+        '<input data-exobs="' + f.id + '" placeholder="obs (opcional)" style="flex:1;min-width:110px;">' +
+        '<button class="btn mini" data-additem="' + f.id + '">+ Adicionar</button></div></div>';
+    }).join("");
+  }
+  $("tAluno").addEventListener("change", renderFichas);
+  $("tFicha").addEventListener("click", function () {
+    var alunoId = $("tAluno").value;
+    if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
+    var st = load();
+    var t = treinoDe(st, alunoId);
+    var sug = ["A — ", "B — ", "C — ", "D — "][t.fichas.length] || "";
+    var titulo = prompt("Nome da ficha (ex.: A — Peito/Tríceps):", sug);
+    if (!titulo || !titulo.trim()) return;
+    t.fichas.push({ id: S.uid(), titulo: titulo.trim(), itens: [] });
+    S.write("ptStudio", st);
+    renderFichas();
   });
-  $("tVideo").addEventListener("click", function () {
-    if (!$("tAluno").value) { alert("Escolha o aluno primeiro."); return; }
-    var url = prompt("Cole o link do vídeo (YouTube):");
-    if (!url || !/^https?:\/\//.test(url.trim())) { if (url) alert("O link precisa começar com https://"); return; }
-    var ta = $("tTexto");
-    var pos = ta.selectionStart != null ? ta.selectionStart : ta.value.length;
-    ta.value = ta.value.slice(0, pos) + (pos && ta.value[pos - 1] !== "\n" ? "\n" : "") + "🎬 " + url.trim() + "\n" + ta.value.slice(pos);
-    ta.dispatchEvent(new Event("input"));
-    ta.focus();
+  $("fichasBox").addEventListener("click", function (e) {
+    var add = e.target.getAttribute && e.target.getAttribute("data-additem");
+    var rmF = e.target.getAttribute && e.target.getAttribute("data-rmficha");
+    var rmI = e.target.getAttribute && e.target.getAttribute("data-rmitem");
+    var sob = e.target.getAttribute && e.target.getAttribute("data-sobe");
+    if (!add && !rmF && !rmI && !sob) return;
+    var alunoId = $("tAluno").value;
+    var st = load();
+    var t = treinoDe(st, alunoId);
+    if (add) {
+      var sel = document.querySelector('[data-exsel="' + add + '"]');
+      if (!sel.value) { alert("Escolha um exercício da biblioteca."); return; }
+      var f = t.fichas.find(function (x) { return x.id === add; });
+      f.itens.push({
+        exId: sel.value,
+        series: +document.querySelector('[data-exser="' + add + '"]').value || 3,
+        reps: document.querySelector('[data-exrep="' + add + '"]').value.trim() || "12",
+        obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
+      });
+    }
+    if (rmF) {
+      if (!confirm("Remover esta ficha inteira?")) return;
+      t.fichas = t.fichas.filter(function (x) { return x.id !== rmF; });
+    }
+    if (rmI) {
+      var pi = rmI.split(":");
+      var fi = t.fichas.find(function (x) { return x.id === pi[0]; });
+      if (fi) fi.itens.splice(+pi[1], 1);
+    }
+    if (sob) {
+      var ps = sob.split(":");
+      var fs = t.fichas.find(function (x) { return x.id === ps[0]; });
+      var idx = +ps[1];
+      if (fs && idx > 0) { var tmp = fs.itens[idx - 1]; fs.itens[idx - 1] = fs.itens[idx]; fs.itens[idx] = tmp; }
+    }
+    S.write("ptStudio", st);
+    renderFichas();
   });
   $("tZap").addEventListener("click", function () {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === $("tAluno").value; });
     if (!a) { alert("Escolha o aluno."); return; }
-    var texto = "🏋️ Treino — " + a.nome.split(" ")[0] + "\n\n" + ($("tTexto").value || "").trim();
+    var texto = "🏋️ Treino — " + a.nome.split(" ")[0] + "\n\n" + treinoTexto(st, a.id).trim();
     window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto), "_blank");
   });
+
+  // ---------- biblioteca de exercícios ----------
+  var exEditando = null;
+  function renderBiblioteca() {
+    var st = load();
+    var el = $("exLista");
+    if (!st.exercicios.length) { el.innerHTML = '<div class="muted">Cadastre o primeiro exercício acima.</div>'; return; }
+    var porGrupo = {};
+    st.exercicios.forEach(function (e) { (porGrupo[e.grupo || "Geral"] = porGrupo[e.grupo || "Geral"] || []).push(e); });
+    el.innerHTML = Object.keys(porGrupo).sort().map(function (g) {
+      return "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;'>" + esc(g) + "</div>" +
+        porGrupo[g].map(function (e) {
+          return '<div class="sessao-pt"><b>' + esc(e.nome) + "</b>" +
+            (e.video ? "<span title='tem vídeo'>🎬</span>" : '<span class="muted" style="font-size:11.5px;">sem vídeo</span>') +
+            (e.descricao ? "" : '<span class="tag alerta" style="font-size:10px;">sem descrição</span>') +
+            '<span style="margin-left:auto;"></span>' +
+            '<button class="btn sec mini" data-exedit="' + e.id + '">✎ Abrir</button>' +
+            '<button class="btn sec mini" data-exrm="' + e.id + '">✕</button></div>';
+        }).join("");
+    }).join("");
+  }
+  $("exAdd").addEventListener("click", function () {
+    var nome = $("exNome").value.trim();
+    if (!nome) { alert("Escreva o nome do exercício."); return; }
+    var st = load();
+    st.exercicios.push({ id: S.uid(), nome: nome, grupo: $("exGrupo").value.trim(), video: $("exVideo").value.trim(), descricao: "" });
+    $("exNome").value = ""; $("exVideo").value = "";
+    S.write("ptStudio", st);
+    renderBiblioteca(); renderFichas();
+  });
+  $("exLista").addEventListener("click", function (e) {
+    var ed = e.target.getAttribute && e.target.getAttribute("data-exedit");
+    var rm = e.target.getAttribute && e.target.getAttribute("data-exrm");
+    if (ed) {
+      var st = load();
+      var ex = exPorId(st, ed);
+      if (!ex) return;
+      exEditando = ed;
+      $("dlgExTitulo").textContent = "📄 " + ex.nome;
+      $("dxNome").value = ex.nome; $("dxGrupo").value = ex.grupo || "";
+      $("dxVideo").value = ex.video || ""; $("dxDesc").value = ex.descricao || "";
+      $("dlgEx").showModal();
+    }
+    if (rm) {
+      if (!confirm("Remover este exercício da biblioteca? (Ele some das fichas que o usam.)")) return;
+      var st2 = load();
+      st2.exercicios = st2.exercicios.filter(function (x) { return x.id !== rm; });
+      Object.keys(st2.treinosV2 || {}).forEach(function (aid) {
+        (st2.treinosV2[aid].fichas || []).forEach(function (f) {
+          f.itens = f.itens.filter(function (it) { return it.exId !== rm; });
+        });
+      });
+      S.write("ptStudio", st2);
+      renderBiblioteca(); renderFichas();
+    }
+  });
+  $("dlgEx").addEventListener("close", function () {
+    if ($("dlgEx").returnValue !== "ok" || !exEditando) return;
+    var st = load();
+    var ex = exPorId(st, exEditando);
+    if (!ex) return;
+    ex.nome = $("dxNome").value.trim() || ex.nome;
+    ex.grupo = $("dxGrupo").value.trim();
+    ex.video = $("dxVideo").value.trim();
+    ex.descricao = $("dxDesc").value.trim();
+    S.write("ptStudio", st);
+    renderBiblioteca(); renderFichas();
+  });
+  window.__biblioteca = { renderBiblioteca: renderBiblioteca, renderFichas: renderFichas }; // testes
 
   // ---------- avaliações ----------
   function renderAvaliacoes(st) {
@@ -493,6 +680,13 @@
     var zapPersonal = (st.config || {}).zap || "";
     var metaSemana = +a.metaSemana || 3;
     var treino = (st.treinos || {})[a.id] || "";
+    var t2 = (st.treinosV2 || {})[a.id];
+    var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
+      return { titulo: f.titulo, itens: f.itens.map(function (it) {
+        var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
+        return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, obs: it.obs || "" };
+      }) };
+    }) : null;
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
@@ -528,7 +722,21 @@
       "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>✅ Treinei hoje!</button>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>🏋️ Meu treino</h2>" +
-      (treino ? "<div style='font-size:14.5px;line-height:1.7;'>" + treino.split("\n").map(function (ln) {
+      (fichasApp ? fichasApp.map(function (f) {
+        return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
+          f.itens.map(function (it) {
+            return "<details style='background:#14121a;border:1px solid #322e3d;border-radius:11px;margin:6px 0;overflow:hidden;'>" +
+              "<summary style='padding:11px 13px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
+              "<b>" + esc(it.nome) + "</b><span style='color:#a9a4b5;white-space:nowrap;'>" + it.series + "×" + esc(String(it.reps)) + " ›</span></summary>" +
+              "<div style='padding:0 13px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
+              (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
+              (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>📌 " + esc(it.obs) + "</div>" : "") +
+              (it.video ? "<a href='" + esc(it.video) + "' target='_blank' rel='noopener' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:12px;padding:4px 14px;border-radius:99px;display:inline-block;'>▶ ver vídeo</a>" : "") +
+              ((!it.desc && !it.video && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;'>Faça com capricho — dúvidas, chama no chat! 💬</span>" : "") +
+              "</div></details>";
+          }).join("");
+      }).join("")
+      : treino ? "<div style='font-size:14.5px;line-height:1.7;'>" + treino.split("\n").map(function (ln) {
         var m = ln.match(/(https?:\/\/\S+)/);
         if (m) {
           var rot = esc(ln.replace(m[1], "").replace(/🎬/g, "").trim());
@@ -538,7 +746,8 @@
         return ln.trim() ? "<div>" + esc(ln) + "</div>" : "<div style='height:8px;'></div>";
       }).join("") + "</div>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal. 😉</div>") + "</div>" +
       "<div class='cardx'><h2>📈 Diário de cargas</h2>" +
-      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' placeholder='Exercício' style='flex:2;min-width:0'>" +
+      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
+      "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
       "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><button class='btnx' id='dcAdd'>+</button></div>" +
       "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui. 💪</div></div>" +
       "<div class='cardx'><h2>📏 Minha evolução</h2><div id='evoBox'></div></div>" +
@@ -842,6 +1051,7 @@
     renderAgenda(st);
     renderPagamentos(st);
     renderAvaliacoes(st);
+    renderBiblioteca();
     renderConta();
   }
   $("cfgZap").addEventListener("change", function () {

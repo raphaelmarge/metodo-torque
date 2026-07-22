@@ -116,14 +116,43 @@ function ok(cond, nome) {
   const kpis = await p.evaluate(() => document.getElementById("kpis").textContent);
   ok(/1/.test(kpis) && /400/.test(kpis), "KPIs: 1 aluno ativo e R$ 400 no mês");
 
-  // treinos: salva e monta link de WhatsApp
+  // treinos por seleção: biblioteca semeada + editar exercício (sub-página) + montar ficha
   await p.click('[data-a="treinos"]');
+  const bib = await p.evaluate(() => document.getElementById("exLista").textContent);
+  ok(/Supino reto/.test(bib) && /Agachamento livre/.test(bib), "biblioteca vem semeada com básicos");
+
+  // abre a sub-página do Supino e coloca vídeo
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const supino = st.exercicios.find((e) => e.nome === "Supino reto");
+    window.__supinoId = supino.id;
+  });
+  const supinoId = await p.evaluate(() => window.__supinoId);
+  await p.click('[data-exedit="' + supinoId + '"]');
+  await p.fill("#dxVideo", "https://youtube.com/watch?v=abc123");
+  await p.click('#dlgEx button[value="ok"]');
+  await p.waitForTimeout(200);
+  const comVideo = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st.exercicios.find((e) => e.nome === "Supino reto").video;
+  });
+  ok(/abc123/.test(comVideo), "sub-página do exercício salva o vídeo");
+
+  // monta ficha A com o Supino selecionado
   await p.selectOption("#tAluno", { index: 1 });
-  await p.fill("#tTexto", "A — Peito\nSupino 4x10\n🎬 Supino guiado https://youtube.com/watch?v=abc123");
-  await p.waitForTimeout(900);
-  const salvo = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")));
-  const idAluno = salvo.alunos[0].id;
-  ok(salvo.treinos[idAluno] && /Supino 4x10/.test(salvo.treinos[idAluno]), "treino salvo sozinho na loja ptStudio");
+  await p.evaluate(() => { window.prompt = () => "A — Peito/Tríceps"; });
+  await p.click("#tFicha");
+  await p.waitForTimeout(200);
+  const fichaId = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st.treinosV2[st.alunos[0].id].fichas[0].id;
+  });
+  await p.selectOption('[data-exsel="' + fichaId + '"]', supinoId);
+  await p.fill('[data-exser="' + fichaId + '"]', "4");
+  await p.fill('[data-exrep="' + fichaId + '"]', "10");
+  await p.click('[data-additem="' + fichaId + '"]');
+  const fichas = await p.evaluate(() => document.getElementById("fichasBox").textContent);
+  ok(/Supino reto/.test(fichas) && /4×10/.test(fichas), "ficha montada por seleção (Supino 4×10)");
 
   // avaliações: registra 2 e vê evolução
   await p.click('[data-a="avaliacoes"]');
@@ -156,8 +185,10 @@ function ok(cond, nome) {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
   });
-  ok(/Supino 4x10/.test(appHtml), "app leva o treino do aluno");
-  ok(/▶ ver vídeo/.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "linha com link vira botão ▶ ver vídeo");
+  ok(/A — Peito\/Tríceps/.test(appHtml) && /Supino reto/.test(appHtml) && /4×10/.test(appHtml), "app leva a ficha estruturada (Supino 4×10)");
+  ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
+  ok(/▶ ver vídeo/.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão ▶ ver vídeo");
+  ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
   ok(/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "app tem diário de cargas com recorde");
   ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
