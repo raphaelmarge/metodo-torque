@@ -153,6 +153,13 @@
     </div>
   </section>
   <div class="card" style="margin-top: 16px;">
+    <h2>🔄 Cancelou o plano e virou agregador</h2>
+    <p class="muted" style="margin: 4px 0 10px;">Ex-alunos que cancelaram o plano próprio e continuam entrando por Gympass/Wellhub, TotalPass etc. Se a curva subir, o agregador está trocando mensalidade cheia por repasse — hora de rever preço, plano de fidelidade ou o contrato com o agregador.</p>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnMigraCSV">📤 CSV</button></div>
+    <div id="migracao" class="muted">Nenhuma migração detectada ainda.</div>
+  </div>
+
+  <div class="card" style="margin-top: 16px;">
     <h2>🤝 Agregadores × alunos próprios (últimos 90 dias)</h2>
     <p class="muted" style="margin: 4px 0 10px;">O agregador traz volume que vale o repasse, ou está canibalizando matrícula própria? Compare o peso de cada origem nos check-ins.</p>
     <div id="aggComparativo" class="muted">Sem check-ins no período.</div>
@@ -591,9 +598,84 @@
       }).join("") + "</table>" +
       '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">💡 Agregador acima de ~30% do movimento merece conta na ponta do lápis: repasse por visita × mensalidade cheia — e uma oferta de migração pros frequentes.</p>';
   }
-  S.onChange(function (k) { if (k === "wellhub" || k === "alunos") renderAggComparativo(); });
+  // migração pós-cancelamento: ex-aluno sem contrato ativo com check-in de agregador depois do cancelamento
+  function dadosMigracao() {
+    var corte = new Date(); corte.setFullYear(corte.getFullYear() - 1);
+    var corteISO = corte.toISOString().slice(0, 10);
+    var wh = S.read("wellhub", { checkins: [] }).checkins || [];
+    var linhas = [];
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) {
+      var temAtivo = (a.contratos || []).some(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+      if (temAtivo) return;
+      var cancelados = (a.contratos || []).filter(function (c) { return c.status === "cancelado" && c.canceladoEm; });
+      if (!cancelados.length) return;
+      var ultimoCancel = cancelados.map(function (c) { return c.canceladoEm; }).sort().pop();
+      if (ultimoCancel < corteISO) return;
+      var depois = wh.filter(function (w) {
+        return (w.alunoId === a.id || w.nome === a.nome) && (w.quando || "").slice(0, 10) > ultimoCancel;
+      });
+      if (!depois.length) return;
+      var porAgg = {};
+      depois.forEach(function (w) { porAgg[w.agregador || "Agregador"] = (porAgg[w.agregador || "Agregador"] || 0) + 1; });
+      var principal = Object.keys(porAgg).sort(function (x, y) { return porAgg[y] - porAgg[x]; })[0];
+      linhas.push({
+        nome: a.nome, cancelou: ultimoCancel, agregador: principal,
+        visitas: depois.length,
+        primeira: depois.map(function (w) { return (w.quando || "").slice(0, 10); }).sort()[0],
+      });
+    });
+    return linhas.sort(function (x, y) { return x.cancelou < y.cancelou ? 1 : -1; });
+  }
+  function renderMigracao() {
+    var el = document.getElementById("migracao");
+    if (!el) return;
+    var linhas = dadosMigracao();
+    if (!linhas.length) { el.textContent = "Nenhuma migração detectada ainda — bom sinal. 🎉"; return; }
+    // tendência: migrações por mês de cancelamento (últimos 6 meses)
+    var porMes = {};
+    linhas.forEach(function (l) { var m = l.cancelou.slice(0, 7); porMes[m] = (porMes[m] || 0) + 1; });
+    var meses = [];
+    var d0 = new Date();
+    for (var i = 5; i >= 0; i--) {
+      var dm = new Date(d0.getFullYear(), d0.getMonth() - i, 1);
+      var chave = S.monthKey(dm);
+      meses.push({ chave: chave, rotulo: chave.slice(5) + "/" + chave.slice(2, 4), n: porMes[chave] || 0 });
+    }
+    var max = Math.max.apply(null, meses.map(function (m) { return m.n; })) || 1;
+    var ult = meses[meses.length - 1].n, ant = meses[meses.length - 2].n;
+    el.innerHTML =
+      '<p style="margin:0 0 10px;font-size:14px;"><b>' + linhas.length + ' ex-aluno(s) viraram agregador nos últimos 12 meses</b>' +
+      (ult > ant ? ' · <span style="color:#dc2626;font-weight:700;">📈 tendência subindo</span>' : ult < ant ? ' · <span style="color:#16a34a;font-weight:700;">📉 caindo</span>' : "") + "</p>" +
+      '<div style="display:flex;gap:10px;align-items:flex-end;height:70px;max-width:420px;margin-bottom:12px;">' +
+      meses.map(function (m) {
+        var h = Math.round(52 * m.n / max);
+        return '<div style="flex:1;text-align:center;" title="' + m.chave + ": " + m.n + '">' +
+          '<div style="height:' + (52 - h) + 'px;"></div>' +
+          '<div style="height:' + h + "px;background:" + (m.n ? "#dc2626" : "var(--linha)") + ';border-radius:4px 4px 0 0;min-height:2px;"></div>' +
+          '<div style="font-size:10.5px;color:var(--cinza);margin-top:4px;">' + m.rotulo + "</div></div>";
+      }).join("") + "</div>" +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+      "<tr><th style='text-align:left;padding:6px 8px;'>EX-ALUNO</th><th style='text-align:left;'>CANCELOU EM</th><th style='text-align:left;'>VIROU</th><th style='text-align:right;'>VISITAS DEPOIS</th><th style='text-align:left;padding-left:12px;'>1ª VISITA COMO AGREGADOR</th></tr>" +
+      linhas.slice(0, 15).map(function (l) {
+        return "<tr style='border-top:1px solid var(--linha);'><td style='padding:6px 8px;'><b>" + escA(l.nome) +
+          "</b></td><td>" + S.fmtData(l.cancelou) + "</td><td><span class='tag alerta'>" + escA(l.agregador) +
+          "</span></td><td style='text-align:right;'>" + l.visitas + "</td><td style='padding-left:12px;' class='muted'>" + S.fmtData(l.primeira) + "</td></tr>";
+      }).join("") + "</table>" +
+      '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">💡 Esses ex-alunos ainda treinam AQUI — estão a uma boa oferta de voltar pra mensalidade (plano anual com desconto vence o repasse do agregador).</p>';
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "btnMigraCSV") {
+      var csv = [["Ex-aluno", "Cancelou em", "Agregador", "Visitas depois", "1ª visita como agregador"]];
+      dadosMigracao().forEach(function (l) { csv.push([l.nome, l.cancelou, l.agregador, l.visitas, l.primeira]); });
+      S.baixaCSV("migracao-para-agregador", csv);
+    }
+  });
+
+  S.onChange(function (k) { if (k === "wellhub" || k === "alunos") { renderAggComparativo(); renderMigracao(); } });
   renderAggComparativo();
+  renderMigracao();
   window.__aggComparativo = renderAggComparativo; // testes
+  window.__migracao = renderMigracao; // testes
 })();
 </script>
 </body>

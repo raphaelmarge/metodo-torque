@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORQUESYS Personal — gestão para personal trainers</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps/apps.css" rel="stylesheet">
+<style>
+  .abas-pt { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .abas-pt button { border: 1px solid var(--linha); background: #fff; padding: 10px 16px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; border-radius: 999px; transition: all .15s ease; }
+  .abas-pt button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); box-shadow: var(--sombra-roxo); }
+  .kpi-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .kpi-pt .card { text-align: center; padding: 16px; }
+  .kpi-pt .n { font-size: 28px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .aluno-pt { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  .aluno-pt .quem { flex: 1; min-width: 160px; }
+  .sessao-pt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .sessao-pt.feita { opacity: .55; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <div>
+    <span class="kicker">TORQUESYS · PERSONAL</span>
+    <h1>💪 Meu Studio</h1>
+    </div>
+  </div>
+  <p>A gestão do personal trainer em uma tela: seus alunos, agenda de sessões, pagamentos e treinos com envio por WhatsApp — funciona offline e sincroniza entre seus aparelhos.</p>
+</header>
+
+<main class="corpo">
+  <div class="kpi-pt" id="kpis"></div>
+
+  <div class="abas-pt" id="abas">
+    <button data-a="alunos" class="ativa">👥 Alunos</button>
+    <button data-a="agenda">📅 Agenda</button>
+    <button data-a="pagamentos">💰 Pagamentos</button>
+    <button data-a="treinos">🏋️ Treinos</button>
+  </div>
+
+  <!-- ALUNOS -->
+  <section id="vAlunos">
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Novo aluno</h2>
+      <div class="linha-flex" style="margin-top: 8px;">
+        <input id="aNome" placeholder="Nome *" style="flex: 2; min-width: 180px;">
+        <input id="aZap" placeholder="WhatsApp (DDD + número)" inputmode="numeric" style="flex: 1; min-width: 150px;">
+        <input id="aValor" type="number" min="0" step="0.01" placeholder="Valor combinado R$" title="Por mês ou por sessão — como você combinar" style="width: 150px;">
+        <select id="aModo" style="width: auto;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select>
+        <button class="btn" id="aAdd">+ Adicionar</button>
+      </div>
+    </div>
+    <div id="listaAlunos"></div>
+  </section>
+
+  <!-- AGENDA -->
+  <section id="vAgenda" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Agendar sessão</h2>
+      <div class="linha-flex" style="margin-top: 8px;">
+        <select id="sAluno" style="min-width: 180px;"></select>
+        <input id="sData" type="date" style="width: auto;">
+        <input id="sHora" type="time" style="width: auto;">
+        <button class="btn" id="sAdd">+ Agendar</button>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Marque ✅ quando a sessão acontecer — sessões feitas contam no fechamento de quem paga por sessão.</p>
+    </div>
+    <div class="card"><h2>Próximas sessões</h2><div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div></div>
+  </section>
+
+  <!-- PAGAMENTOS -->
+  <section id="vPagamentos" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Registrar pagamento</h2>
+      <div class="linha-flex" style="margin-top: 8px;">
+        <select id="pAluno" style="min-width: 180px;"></select>
+        <input id="pValor" type="number" min="0" step="0.01" placeholder="Valor R$" style="width: 130px;">
+        <select id="pForma" style="width: auto;"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option></select>
+        <button class="btn" id="pAdd">💰 Registrar</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>⚠️ Quem ainda não pagou este mês</h2>
+      <div id="pendentes" class="muted">Todo mundo em dia. 🎉</div>
+    </div>
+    <div class="card"><h2>Histórico</h2><div id="listaPagamentos" class="muted">Nenhum pagamento registrado.</div></div>
+  </section>
+
+  <!-- TREINOS -->
+  <section id="vTreinos" hidden>
+    <div class="card">
+      <h2>Treino por aluno</h2>
+      <div class="linha-flex" style="margin: 8px 0 10px;">
+        <select id="tAluno" style="min-width: 200px;"></select>
+        <button class="btn sec" id="tZap">💬 Enviar no WhatsApp</button>
+      </div>
+      <textarea id="tTexto" rows="12" placeholder="Escreva o treino aqui (ex.:&#10;A — Peito/Tríceps&#10;Supino reto 4x10&#10;Crucifixo 3x12&#10;…)&#10;&#10;Salva sozinho enquanto você digita." style="font-family: inherit;"></textarea>
+      <p class="muted" id="tStatus" style="margin: 6px 0 0; font-size: 12.5px;"></p>
+    </div>
+  </section>
+</main>
+
+<script src="assets/cloud-config.js"></script>
+<script src="assets/vendor/supabase.js"></script>
+<script src="apps/store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  function load() {
+    var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
+    st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {};
+    return st;
+  }
+  function save(st) { S.write("ptStudio", st); render(); }
+  var mesAtual = S.todayISO().slice(0, 7);
+
+  // ---------- abas ----------
+  $("abas").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    document.querySelectorAll("#abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+    $("vAlunos").hidden = b.dataset.a !== "alunos";
+    $("vAgenda").hidden = b.dataset.a !== "agenda";
+    $("vPagamentos").hidden = b.dataset.a !== "pagamentos";
+    $("vTreinos").hidden = b.dataset.a !== "treinos";
+  });
+
+  // ---------- kpis ----------
+  function renderKpis(st) {
+    var receitaMes = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mesAtual; })
+      .reduce(function (t, p) { return t + +p.valor; }, 0);
+    var hoje = S.todayISO();
+    var fim = new Date(hoje + "T12:00"); fim.setDate(fim.getDate() + 7);
+    var fimISO = S.todayISO(fim);
+    var semana = st.sessoes.filter(function (x) { return !x.feita && x.data >= hoje && x.data <= fimISO; }).length;
+    var feitasMes = st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === mesAtual; }).length;
+    $("kpis").innerHTML =
+      '<div class="card"><div class="n">' + st.alunos.filter(function (a) { return a.ativo !== false; }).length + '</div><div class="muted">aluno(s) ativo(s)</div></div>' +
+      '<div class="card"><div class="n">' + S.fmtBRL(receitaMes) + '</div><div class="muted">recebido no mês</div></div>' +
+      '<div class="card"><div class="n">' + semana + '</div><div class="muted">sessões nos próximos 7 dias</div></div>' +
+      '<div class="card"><div class="n">' + feitasMes + '</div><div class="muted">sessões dadas no mês</div></div>';
+  }
+
+  // ---------- alunos ----------
+  function renderAlunos(st) {
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    $("listaAlunos").innerHTML = ativos.length ? ativos.map(function (a) {
+      var pagoMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      return '<div class="aluno-pt"><div class="quem"><strong>' + esc(a.nome) + "</strong>" +
+        '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
+        (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
+        (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        ' <button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div>';
+    }).join("") : '<div class="vazio">Cadastre seu primeiro aluno acima. 💪</div>';
+  }
+  $("aAdd").addEventListener("click", function () {
+    var nome = $("aNome").value.trim();
+    if (!nome) { alert("Escreva o nome do aluno."); return; }
+    var st = load();
+    st.alunos.push({ id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), valor: +$("aValor").value || 0, modo: $("aModo").value, ativo: true, desde: S.todayISO() });
+    $("aNome").value = ""; $("aZap").value = ""; $("aValor").value = "";
+    save(st);
+  });
+  $("listaAlunos").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-rm");
+    if (!id || !confirm("Encerrar este aluno? O histórico fica guardado.")) return;
+    var st = load();
+    (st.alunos.find(function (a) { return a.id === id; }) || {}).ativo = false;
+    save(st);
+  });
+
+  // ---------- agenda ----------
+  function renderAgenda(st) {
+    var opts = st.alunos.filter(function (a) { return a.ativo !== false; })
+      .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
+    ["sAluno", "pAluno", "tAluno"].forEach(function (id) {
+      var sel = $(id);
+      var atual = sel.value;
+      sel.innerHTML = "<option value=''>— aluno —</option>" + opts;
+      if (atual) sel.value = atual;
+    });
+    var hoje = S.todayISO();
+    var prox = st.sessoes.filter(function (x) { return x.data >= hoje || !x.feita; })
+      .sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; }).slice(0, 20);
+    var nomeDe = {};
+    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    $("listaSessoes").innerHTML = prox.length ? prox.map(function (x) {
+      return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '"><b>' + S.fmtData(x.data) + " " + (x.hora || "") + "</b>" +
+        "<span>" + esc(nomeDe[x.alunoId] || "?") + "</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        (x.feita ? '<span class="tag ok">FEITA ✅</span>' : '<button class="btn mini" data-feita="' + x.id + '">✅ Feita</button>') +
+        '<button class="btn sec mini" data-cx="' + x.id + '">✕</button></div>';
+    }).join("") : "Nenhuma sessão agendada.";
+  }
+  $("sAdd").addEventListener("click", function () {
+    if (!$("sAluno").value || !$("sData").value) { alert("Escolha o aluno e a data."); return; }
+    var st = load();
+    st.sessoes.push({ id: S.uid(), alunoId: $("sAluno").value, data: $("sData").value, hora: $("sHora").value || "", feita: false });
+    save(st);
+  });
+  $("listaSessoes").addEventListener("click", function (e) {
+    var f = e.target.getAttribute && e.target.getAttribute("data-feita");
+    var c = e.target.getAttribute && e.target.getAttribute("data-cx");
+    if (!f && !c) return;
+    var st = load();
+    if (f) (st.sessoes.find(function (x) { return x.id === f; }) || {}).feita = true;
+    if (c) st.sessoes = st.sessoes.filter(function (x) { return x.id !== c; });
+    save(st);
+  });
+
+  // ---------- pagamentos ----------
+  function renderPagamentos(st) {
+    var nomeDe = {};
+    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var lista = st.pagamentos.slice().reverse().slice(0, 30);
+    $("listaPagamentos").innerHTML = lista.length ? lista.map(function (p) {
+      return '<div class="sessao-pt"><b>' + S.fmtData(p.data) + "</b><span>" + esc(nomeDe[p.alunoId] || "?") + "</span>" +
+        '<span class="muted">' + esc(p.forma || "") + '</span><b style="margin-left:auto;">' + S.fmtBRL(+p.valor) + "</b></div>";
+    }).join("") : "Nenhum pagamento registrado.";
+    var pend = st.alunos.filter(function (a) {
+      if (a.ativo === false) return false;
+      return !st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+    });
+    $("pendentes").innerHTML = pend.length ? pend.map(function (a) {
+      var msg = "Oi " + a.nome.split(" ")[0] + "! Passando pra combinar o pagamento deste mês" + (+a.valor ? " (" + S.fmtBRL(+a.valor) + ")" : "") + " — Pix ou como preferir. 💪";
+      return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" + (+a.valor ? '<span class="muted">' + S.fmtBRL(+a.valor) + "</span>" : "") +
+        '<span style="margin-left:auto;"></span>' +
+        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Cobrar</a>' : "") + "</div>";
+    }).join("") : "Todo mundo em dia. 🎉";
+  }
+  $("pAdd").addEventListener("click", function () {
+    if (!$("pAluno").value || !+$("pValor").value) { alert("Escolha o aluno e o valor."); return; }
+    var st = load();
+    st.pagamentos.push({ id: S.uid(), alunoId: $("pAluno").value, valor: +$("pValor").value, forma: $("pForma").value, data: S.todayISO() });
+    $("pValor").value = "";
+    save(st);
+  });
+
+  // ---------- treinos ----------
+  var salvaT = null;
+  $("tAluno").addEventListener("change", function () {
+    var st = load();
+    $("tTexto").value = st.treinos[this.value] || "";
+    $("tStatus").textContent = "";
+  });
+  $("tTexto").addEventListener("input", function () {
+    var alunoId = $("tAluno").value;
+    if (!alunoId) { $("tStatus").textContent = "Escolha o aluno primeiro."; return; }
+    clearTimeout(salvaT);
+    var v = this.value;
+    salvaT = setTimeout(function () {
+      var st = load();
+      st.treinos[alunoId] = v;
+      S.write("ptStudio", st);
+      $("tStatus").textContent = "💾 Salvo.";
+    }, 600);
+  });
+  $("tZap").addEventListener("click", function () {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === $("tAluno").value; });
+    if (!a) { alert("Escolha o aluno."); return; }
+    var texto = "🏋️ Treino — " + a.nome.split(" ")[0] + "\n\n" + ($("tTexto").value || "").trim();
+    window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto), "_blank");
+  });
+
+  function render() {
+    var st = load();
+    renderKpis(st);
+    renderAlunos(st);
+    renderAgenda(st);
+    renderPagamentos(st);
+  }
+  $("sData").value = S.todayISO();
+  S.onChange(function (k) { if (k === "ptStudio") render(); });
+  render();
+  window.__ptStudio = { load: load, render: render }; // testes
+})();
+</script>
+</body>
+</html>
