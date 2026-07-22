@@ -55,6 +55,7 @@
     <button data-a="avaliacoes">📏 Avaliações</button>
     <button data-a="relatorios">📊 Relatórios</button>
     <button data-a="assessoria">🛰 Assessoria</button>
+    <button data-a="chat">💬 Chat</button>
   </div>
 
   <!-- ALUNOS -->
@@ -112,10 +113,12 @@
       <h2>Treino por aluno</h2>
       <div class="linha-flex" style="margin: 8px 0 10px;">
         <select id="tAluno" style="min-width: 200px;"></select>
+        <button class="btn sec" id="tVideo">🎬 Inserir vídeo</button>
         <button class="btn sec" id="tZap">💬 Enviar no WhatsApp</button>
       </div>
       <textarea id="tTexto" rows="12" placeholder="Escreva o treino aqui (ex.:&#10;A — Peito/Tríceps&#10;Supino reto 4x10&#10;Crucifixo 3x12&#10;…)&#10;&#10;Salva sozinho enquanto você digita." style="font-family: inherit;"></textarea>
       <p class="muted" id="tStatus" style="margin: 6px 0 0; font-size: 12.5px;"></p>
+      <p class="muted" style="margin: 6px 0 0; font-size: 12.5px;">🎬 Cole um link do YouTube em qualquer linha (ou use o botão) — no app do aluno ele vira um botão <b>▶ ver vídeo</b> ao lado do exercício.</p>
     </div>
   </section>
 
@@ -151,6 +154,25 @@
       <p class="muted" style="margin: 4px 0 0;">O que os alunos de assessoria registram pelo app chega aqui: treinos feitos, sequência, meta da semana e o check-in semanal (nota + peso + como foi). Quem apagar fica vermelho — mensagem pronta a um clique mantém o aluno perto mesmo longe.</p>
     </div>
     <div id="assessoriaLista" class="muted"><div class="card">Carregando…</div></div>
+  </section>
+
+  <!-- CHAT -->
+  <section id="vChat" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>💬 Conversas com os alunos</h2>
+      <p class="muted" style="margin: 4px 0 0;">O aluno escreve pelo app dele e a mensagem cai aqui — responda sem misturar com o seu WhatsApp pessoal. Bolinha roxa = mensagem nova.</p>
+    </div>
+    <div class="linha-flex" style="align-items: flex-start; gap: 14px;">
+      <div id="chatAlunos" style="flex: 0 0 240px; min-width: 200px;"></div>
+      <div class="card" style="flex: 1; min-width: 280px;">
+        <h2 id="chatTitulo">Escolha um aluno</h2>
+        <div id="chatMsgs" style="max-height: 420px; overflow-y: auto; margin: 10px 0; display: flex; flex-direction: column; gap: 6px;"></div>
+        <div class="linha-flex" id="chatEnvio" hidden>
+          <input id="chatTexto" placeholder="Escreva sua mensagem…" style="flex: 1; min-width: 150px;">
+          <button class="btn" id="chatEnviar">Enviar</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <div class="card" id="cardConta" style="margin-top: 20px;">
@@ -212,8 +234,10 @@
     $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
     $("vRelatorios").hidden = b.dataset.a !== "relatorios";
     $("vAssessoria").hidden = b.dataset.a !== "assessoria";
+    $("vChat").hidden = b.dataset.a !== "chat";
     if (b.dataset.a === "relatorios") renderRelatorios();
     if (b.dataset.a === "assessoria") renderAssessoria();
+    if (b.dataset.a === "chat") renderChatPT();
   });
 
   // ---------- kpis ----------
@@ -346,6 +370,16 @@
       S.write("ptStudio", st);
       $("tStatus").textContent = "💾 Salvo.";
     }, 600);
+  });
+  $("tVideo").addEventListener("click", function () {
+    if (!$("tAluno").value) { alert("Escolha o aluno primeiro."); return; }
+    var url = prompt("Cole o link do vídeo (YouTube):");
+    if (!url || !/^https?:\/\//.test(url.trim())) { if (url) alert("O link precisa começar com https://"); return; }
+    var ta = $("tTexto");
+    var pos = ta.selectionStart != null ? ta.selectionStart : ta.value.length;
+    ta.value = ta.value.slice(0, pos) + (pos && ta.value[pos - 1] !== "\n" ? "\n" : "") + "🎬 " + url.trim() + "\n" + ta.value.slice(pos);
+    ta.dispatchEvent(new Event("input"));
+    ta.focus();
   });
   $("tZap").addEventListener("click", function () {
     var st = load();
@@ -494,7 +528,15 @@
       "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>✅ Treinei hoje!</button>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>🏋️ Meu treino</h2>" +
-      (treino ? "<pre>" + esc(treino) + "</pre>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal. 😉</div>") + "</div>" +
+      (treino ? "<div style='font-size:14.5px;line-height:1.7;'>" + treino.split("\n").map(function (ln) {
+        var m = ln.match(/(https?:\/\/\S+)/);
+        if (m) {
+          var rot = esc(ln.replace(m[1], "").replace(/🎬/g, "").trim());
+          return "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:3px 0;'>" + (rot ? "<span>" + rot + "</span>" : "") +
+            "<a href='" + esc(m[1]) + "' target='_blank' rel='noopener' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:12px;padding:3px 12px;border-radius:99px;'>▶ ver vídeo</a></div>";
+        }
+        return ln.trim() ? "<div>" + esc(ln) + "</div>" : "<div style='height:8px;'></div>";
+      }).join("") + "</div>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal. 😉</div>") + "</div>" +
       "<div class='cardx'><h2>📈 Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><button class='btnx' id='dcAdd'>+</button></div>" +
@@ -507,6 +549,10 @@
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
       "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in 📨</button></div></div>" +
+      "<div class='cardx'><h2>💬 Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
+      "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
+      "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
+      "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 💜</div>" +
       "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
       ",NUVEM=" + JSON.stringify((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
@@ -553,6 +599,21 @@
       "else{var msg='\ud83d\udcdd Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[ckNota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
       "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
       "pintaSemana();" +
+      // chat aluno ↔ personal
+      "function pintaChat(msgs){var el=document.getElementById('chMsgs');" +
+      "if(!msgs||!msgs.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
+      "el.innerHTML=msgs.map(function(m){var minha=m.de==='aluno';" +
+      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,#7c3aed,#6d28d9)':'#14121a')+\";border:1px solid #322e3d;border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      "el.scrollTop=el.scrollHeight;}" +
+      "function carregaChat(){if(!NUVEM){pintaChat(L('ptchat',[]));return;}" +
+      "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptchat',l);pintaChat(l);}else{pintaChat(L('ptchat',[]));}});}" +
+      "document.getElementById('chEnvia').addEventListener('click',function(){" +
+      "var inp=document.getElementById('chTexto');var tx=inp.value.trim();if(!tx)return;" +
+      "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_chat_envia',{t:TOKEN,p_texto:tx}).then(function(r){btn.disabled=false;" +
+      "if(r&&r.ok){inp.value='';carregaChat();}else{alert('Não deu pra enviar agora — tenta de novo.');}});}" +
+      "else{window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(tx),'_blank');inp.value='';}});" +
+      "document.getElementById('chTexto').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('chEnvia').click();});" +
+      "carregaChat();setInterval(function(){if(NUVEM)carregaChat();},30000);" +
       "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
       "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
       "return \"<div class='kv'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\" registro(s))</small></span></div>\";}).join('');}" +
@@ -687,6 +748,79 @@
     });
   }
   window.__assessoria = renderAssessoria; // testes
+
+  // ---------- chat interno (aluno ↔ personal) ----------
+  var chatAluno = null;
+  var chatTimer = null;
+  function renderChatPT() {
+    var el = $("chatAlunos");
+    var st = load();
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      el.innerHTML = "";
+      $("chatTitulo").textContent = "Chat interno";
+      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">☁️ O chat interno precisa da sua conta (card lá embaixo) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os alunos pelo 💬 WhatsApp da aba Alunos.</div>';
+      $("chatEnvio").hidden = true;
+      return;
+    }
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false && a.appTokenP; });
+    if (!ativos.length) {
+      el.innerHTML = '<div class="card muted">Gere o 📲 App dos alunos primeiro — o chat vive dentro dele.</div>';
+      return;
+    }
+    nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).then(function (r) {
+      var novas = {};
+      (r.data || []).forEach(function (m) { if (m.de === "aluno" && !m.lida) novas[m.token] = (novas[m.token] || 0) + 1; });
+      el.innerHTML = ativos.map(function (a) {
+        var n = novas[a.appTokenP] || 0;
+        return '<div class="aluno-pt" data-chat="' + a.id + '" style="cursor:pointer;' + (chatAluno === a.id ? "border-color:var(--roxo);" : "") + '">' +
+          '<div class="quem"><strong>' + esc(a.nome) + "</strong></div>" +
+          (n ? '<span class="tag roxo">' + n + " nova(s)</span>" : "") + "</div>";
+      }).join("");
+    });
+  }
+  function abreChat(id) {
+    chatAluno = id;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === id; });
+    var nuvem = S.cloud && S.cloud();
+    if (!a || !nuvem) return;
+    $("chatTitulo").textContent = "💬 " + a.nome;
+    $("chatEnvio").hidden = false;
+    nuvem.client.from("app_chat").select("de,texto,criado").eq("token", a.appTokenP)
+      .order("criado", { ascending: true }).limit(80).then(function (r) {
+        var msgs = r.data || [];
+        $("chatMsgs").innerHTML = msgs.length ? msgs.map(function (m) {
+          var minha = m.de === "personal";
+          return '<div style="align-self:' + (minha ? "flex-end" : "flex-start") + ";background:" + (minha ? "var(--roxo)" : "var(--fundo)") +
+            ";color:" + (minha ? "#fff" : "var(--texto)") + ';border-radius:12px;padding:8px 12px;max-width:80%;font-size:13.5px;">' +
+            esc(m.texto) + '<div style="font-size:10.5px;opacity:.7;margin-top:2px;">' + String(m.criado).slice(11, 16) + "</div></div>";
+        }).join("") : '<div class="muted">Nenhuma mensagem ainda — puxe o assunto! 😉</div>';
+        $("chatMsgs").scrollTop = $("chatMsgs").scrollHeight;
+        // marca como lidas
+        nuvem.client.from("app_chat").update({ lida: true }).eq("token", a.appTokenP).eq("de", "aluno").eq("lida", false).then(function () { renderChatPT(); });
+      });
+  }
+  $("chatAlunos").addEventListener("click", function (e) {
+    var d = e.target.closest("[data-chat]");
+    if (d) abreChat(d.getAttribute("data-chat"));
+  });
+  $("chatEnviar").addEventListener("click", function () {
+    var texto = $("chatTexto").value.trim();
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === chatAluno; });
+    var nuvem = S.cloud && S.cloud();
+    if (!texto || !a || !nuvem) return;
+    $("chatTexto").value = "";
+    nuvem.client.from("app_chat").insert({ academia_id: nuvem.aid, token: a.appTokenP, de: "personal", texto: texto.slice(0, 1000), lida: true })
+      .then(function () { abreChat(chatAluno); });
+  });
+  $("chatTexto") && $("chatTexto").addEventListener("keydown", function (e) { if (e.key === "Enter") $("chatEnviar").click(); });
+  clearInterval(chatTimer);
+  chatTimer = setInterval(function () {
+    if (!$("vChat").hidden) { if (chatAluno) abreChat(chatAluno); else renderChatPT(); }
+  }, 25000);
+  window.__chatPT = { render: renderChatPT, abre: abreChat }; // testes
 
   // ---------- conta / ilha ----------
   function renderConta() {

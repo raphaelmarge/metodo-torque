@@ -824,3 +824,63 @@ end;
 $$;
 
 grant execute on function public.app_aluno_checkin(text, integer, text, numeric) to anon, authenticated;
+
+-- ==================== CHAT DO PERSONAL ====================
+-- Conversa direta aluno ↔ personal dentro do app e do módulo. Bloco idempotente.
+
+create table if not exists public.app_chat (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  de text not null check (de in ('aluno', 'personal')),
+  texto text not null,
+  lida boolean not null default false,
+  criado timestamptz not null default now()
+);
+create index if not exists app_chat_token on public.app_chat (token, criado desc);
+create index if not exists app_chat_acad on public.app_chat (academia_id, criado desc);
+
+alter table public.app_chat enable row level security;
+
+drop policy if exists "app_chat_membros" on public.app_chat;
+create policy "app_chat_membros" on public.app_chat
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- aluno envia pelo token do app
+create or replace function public.app_chat_envia(t text, p_texto text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if length(trim(coalesce(p_texto, ''))) = 0 then
+    return json_build_object('erro', 'vazio');
+  end if;
+  insert into app_chat (academia_id, token, de, texto)
+    values (v_acad, t, 'aluno', left(trim(p_texto), 1000));
+  return json_build_object('ok', true);
+end;
+$$;
+
+-- aluno lista a conversa dele (últimas 60)
+create or replace function public.app_chat_lista(t text)
+returns json
+language sql security definer
+set search_path = public
+as $$
+  select coalesce(json_agg(x order by x.criado), '[]'::json) from (
+    select de, texto, criado from app_chat
+    where token = t
+    order by criado desc limit 60
+  ) x
+$$;
+
+grant execute on function public.app_chat_envia(text, text) to anon, authenticated;
+grant execute on function public.app_chat_lista(text) to anon, authenticated;
