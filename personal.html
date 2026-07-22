@@ -52,6 +52,8 @@
     <button data-a="agenda">📅 Agenda</button>
     <button data-a="pagamentos">💰 Pagamentos</button>
     <button data-a="treinos">🏋️ Treinos</button>
+    <button data-a="avaliacoes">📏 Avaliações</button>
+    <button data-a="relatorios">📊 Relatórios</button>
   </div>
 
   <!-- ALUNOS -->
@@ -114,6 +116,37 @@
       <p class="muted" id="tStatus" style="margin: 6px 0 0; font-size: 12.5px;"></p>
     </div>
   </section>
+
+  <!-- AVALIAÇÕES -->
+  <section id="vAvaliacoes" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Nova avaliação física</h2>
+      <div class="linha-flex" style="margin-top: 8px;">
+        <select id="avAluno" style="min-width: 180px;"></select>
+        <input id="avData" type="date" style="width: auto;">
+        <input id="avPeso" type="number" step="0.1" min="0" placeholder="Peso kg" style="width: 100px;">
+        <input id="avGord" type="number" step="0.1" min="0" placeholder="% gordura" style="width: 110px;">
+        <input id="avCintura" type="number" step="0.1" min="0" placeholder="Cintura cm" style="width: 110px;">
+        <input id="avBraco" type="number" step="0.1" min="0" placeholder="Braço cm" style="width: 100px;">
+        <button class="btn" id="avAdd">📏 Registrar</button>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A evolução (com setas verde/vermelha) aparece aqui e no app do aluno.</p>
+    </div>
+    <div class="card"><h2>Histórico e evolução</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
+  </section>
+
+  <!-- RELATÓRIOS -->
+  <section id="vRelatorios" hidden>
+    <div class="card" style="margin-bottom: 14px;"><h2>💰 Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>📅 Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
+    <div class="card"><h2>🏃 Assiduidade (sessões feitas nos últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
+  </section>
+
+  <div class="card" id="cardConta" style="margin-top: 20px;">
+    <h2>☁️ Sua ilha no TORQUESYS</h2>
+    <p class="muted" id="contaStatus" style="margin: 6px 0 10px;"></p>
+    <a class="btn sec" id="btnConta" href="index.html">Criar minha conta / Entrar</a>
+  </div>
 </main>
 
 <script src="assets/cloud-config.js"></script>
@@ -128,7 +161,7 @@
 
   function load() {
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
-    st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {};
+    st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || [];
     return st;
   }
   function save(st) { S.write("ptStudio", st); render(); }
@@ -161,6 +194,9 @@
     $("vAgenda").hidden = b.dataset.a !== "agenda";
     $("vPagamentos").hidden = b.dataset.a !== "pagamentos";
     $("vTreinos").hidden = b.dataset.a !== "treinos";
+    $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
+    $("vRelatorios").hidden = b.dataset.a !== "relatorios";
+    if (b.dataset.a === "relatorios") renderRelatorios();
   });
 
   // ---------- kpis ----------
@@ -188,6 +224,7 @@
         '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
         (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
         (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        ' <button class="btn mini" data-app="' + a.id + '">📲 App do aluno</button>' +
         ' <button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div>';
     }).join("") : '<div class="vazio">Cadastre seu primeiro aluno acima. 💪</div>';
   }
@@ -211,7 +248,7 @@
   function renderAgenda(st) {
     var opts = st.alunos.filter(function (a) { return a.ativo !== false; })
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
-    ["sAluno", "pAluno", "tAluno"].forEach(function (id) {
+    ["sAluno", "pAluno", "tAluno", "avAluno"].forEach(function (id) {
       var sel = $(id);
       var atual = sel.value;
       sel.innerHTML = "<option value=''>— aluno —</option>" + opts;
@@ -301,14 +338,227 @@
     window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto), "_blank");
   });
 
+  // ---------- avaliações ----------
+  function renderAvaliacoes(st) {
+    var el = $("listaAvaliacoes");
+    var avs = st.avaliacoes || [];
+    if (!avs.length) { el.textContent = "Nenhuma avaliação registrada."; return; }
+    var nomeDe = {};
+    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var porAluno = {};
+    avs.forEach(function (v) { (porAluno[v.alunoId] = porAluno[v.alunoId] || []).push(v); });
+    function delta(atual, anterior, invertido) {
+      if (anterior == null || atual == null) return "";
+      var d = Math.round((atual - anterior) * 10) / 10;
+      if (!d) return " <span class='muted'>=</span>";
+      var bom = invertido ? d > 0 : d < 0;
+      return " <b style='color:" + (bom ? "#16a34a" : "#dc2626") + ";font-size:12px;'>" + (d > 0 ? "+" : "") + String(d).replace(".", ",") + "</b>";
+    }
+    el.innerHTML = Object.keys(porAluno).map(function (id) {
+      var lista = porAluno[id].slice().sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+      return "<div style='margin-bottom:14px;'><b style='font-size:14.5px;'>" + esc(nomeDe[id] || "?") + "</b>" +
+        lista.map(function (v, i) {
+          var ant = i > 0 ? lista[i - 1] : {};
+          return '<div class="sessao-pt"><b>' + S.fmtData(v.data) + "</b>" +
+            (v.peso ? "<span>⚖ " + String(v.peso).replace(".", ",") + " kg" + delta(v.peso, ant.peso) + "</span>" : "") +
+            (v.gordura ? "<span>🧈 " + String(v.gordura).replace(".", ",") + "%" + delta(v.gordura, ant.gordura) + "</span>" : "") +
+            (v.cintura ? "<span>📏 cintura " + String(v.cintura).replace(".", ",") + delta(v.cintura, ant.cintura) + "</span>" : "") +
+            (v.braco ? "<span>💪 braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
+            '<span style="margin-left:auto;"></span><button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
+        }).join("") + "</div>";
+    }).join("");
+  }
+  $("avAdd").addEventListener("click", function () {
+    if (!$("avAluno").value) { alert("Escolha o aluno."); return; }
+    var st = load();
+    st.avaliacoes = st.avaliacoes || [];
+    st.avaliacoes.push({
+      id: S.uid(), alunoId: $("avAluno").value, data: $("avData").value || S.todayISO(),
+      peso: +$("avPeso").value || null, gordura: +$("avGord").value || null,
+      cintura: +$("avCintura").value || null, braco: +$("avBraco").value || null,
+    });
+    ["avPeso", "avGord", "avCintura", "avBraco"].forEach(function (id) { $(id).value = ""; });
+    save(st);
+  });
+  $("listaAvaliacoes").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-avrm");
+    if (!id || !confirm("Remover esta avaliação?")) return;
+    var st = load();
+    st.avaliacoes = (st.avaliacoes || []).filter(function (v) { return v.id !== id; });
+    save(st);
+  });
+
+  // ---------- relatórios ----------
+  function barras(el, itens, cor, fmt) {
+    var max = Math.max.apply(null, itens.map(function (x) { return x.v; })) || 1;
+    el.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-end;height:110px;max-width:520px;">' +
+      itens.map(function (x) {
+        var h = Math.round(78 * x.v / max);
+        return '<div style="flex:1;text-align:center;" title="' + x.rot + ": " + (fmt ? fmt(x.v) : x.v) + '">' +
+          '<div style="font-size:11px;font-weight:700;color:var(--cinza);">' + (x.v ? (fmt ? fmt(x.v) : x.v) : "") + "</div>" +
+          '<div style="height:' + (78 - h) + 'px;"></div>' +
+          '<div style="height:' + h + "px;background:" + cor + ';border-radius:6px 6px 0 0;min-height:2px;"></div>' +
+          '<div style="font-size:10.5px;color:var(--cinza);margin-top:4px;">' + x.rot + "</div></div>";
+      }).join("") + "</div>";
+  }
+  function renderRelatorios() {
+    var st = load();
+    var meses = [];
+    for (var i = 5; i >= 0; i--) {
+      var d = new Date(); d.setMonth(d.getMonth() - i, 1);
+      meses.push({ chave: S.monthKey(d), rot: S.monthKey(d).slice(5) + "/" + S.monthKey(d).slice(2, 4) });
+    }
+    var rec = meses.map(function (m) {
+      return { rot: m.rot, v: st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === m.chave; }).reduce(function (t, p) { return t + +p.valor; }, 0) };
+    });
+    if (rec.some(function (x) { return x.v; })) barras($("relReceita"), rec, "var(--roxo)", function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); });
+    else $("relReceita").textContent = "Sem pagamentos ainda.";
+    var ses = meses.map(function (m) {
+      return { rot: m.rot, v: st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === m.chave; }).length };
+    });
+    if (ses.some(function (x) { return x.v; })) barras($("relSessoes"), ses, "#16a34a");
+    else $("relSessoes").textContent = "Sem sessões feitas ainda.";
+    var corte = new Date(); corte.setDate(corte.getDate() - 30);
+    var corteISO = S.todayISO(corte);
+    var nomeDe = {};
+    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var porAluno = {};
+    st.sessoes.forEach(function (x) {
+      if (x.feita && x.data >= corteISO) porAluno[x.alunoId] = (porAluno[x.alunoId] || 0) + 1;
+    });
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    $("relAssiduidade").innerHTML = ativos.length ? ativos.map(function (a) {
+      var n = porAluno[a.id] || 0;
+      var cor = n >= 8 ? "#16a34a" : n >= 4 ? "var(--roxo)" : n >= 1 ? "#d97706" : "#dc2626";
+      return '<div class="sessao-pt"><b>' + esc(a.nome) + '</b><span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + n + " sessão(ões)</span>" +
+        (n === 0 ? ' <span class="tag erro">sumido — chame!</span>' : "") + "</div>";
+    }).join("") : "Cadastre alunos primeiro.";
+  }
+
+  // ---------- app do aluno do personal ----------
+  function montaAppAluno(a, stamp) {
+    var st = load();
+    var studio = (st.config || {}).nome || "Meu Personal";
+    var treino = (st.treinos || {})[a.id] || "";
+    var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
+      .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
+    var nuvemCfg = self.MT_CLOUD || {};
+    var atualizador = "";
+    if (nuvemCfg.url && nuvemCfg.anonKey && a.appTokenP) {
+      atualizador = "var STAMP=" + JSON.stringify(stamp) + ";" +
+        "try{if(navigator.onLine){fetch(" + JSON.stringify(nuvemCfg.url + "/rest/v1/rpc/app_aluno_busca") + ",{method:'POST'," +
+        "headers:{apikey:" + JSON.stringify(nuvemCfg.anonKey) + ",Authorization:'Bearer '+" + JSON.stringify(nuvemCfg.anonKey) + ",'Content-Type':'application/json'}," +
+        "body:JSON.stringify({t:" + JSON.stringify(a.appTokenP) + "})})" +
+        ".then(function(r){return r.ok?r.json():null;}).then(function(d){" +
+        "if(d&&d.html&&d.stamp&&d.stamp>STAMP){document.open();document.write(d.html);document.close();}}).catch(function(){});}}catch(e){}";
+    }
+    return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+      "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
+      "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(studio) + "</title>" +
+      "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0d0c10;color:#fff;max-width:480px;margin:0 auto;padding:0 0 40px}" +
+      ".topo{padding:26px 18px 14px;background:radial-gradient(120% 160% at 50% -40%,rgba(124,58,237,.35),transparent 60%)}" +
+      ".topo .k{font-size:11px;letter-spacing:.2em;color:#a78bfa;font-weight:700;text-transform:uppercase}" +
+      ".topo h1{font-size:24px;font-weight:800;margin-top:6px}" +
+      ".cardx{background:#1d1a24;border:1px solid #322e3d;border-radius:14px;margin:10px 14px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.2)}" +
+      ".cardx h2{font-size:12px;letter-spacing:.14em;color:#a9a4b5;text-transform:uppercase;margin-bottom:8px}" +
+      "pre{white-space:pre-wrap;font-family:inherit;font-size:14.5px;line-height:1.6}" +
+      "input,select{background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#fff;padding:10px 12px;font-family:inherit;font-size:15px}" +
+      ".btnx{background:#7c3aed;color:#fff;border:none;border-radius:20px;padding:10px 18px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 6px 16px -8px #7c3aed}" +
+      ".kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #322e3d}" +
+      ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
+      ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
+      "<div class='topo'><div class='k'>" + esc(studio).toUpperCase() + " · TORQUESYS PERSONAL</div><h1>💪 " + esc(a.nome.split(" ")[0]) + "</h1></div>" +
+      "<div class='cardx'><h2>🏋️ Meu treino</h2>" +
+      (treino ? "<pre>" + esc(treino) + "</pre>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal. 😉</div>") + "</div>" +
+      "<div class='cardx'><h2>📈 Diário de cargas</h2>" +
+      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' placeholder='Exercício' style='flex:2;min-width:0'>" +
+      "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><button class='btnx' id='dcAdd'>+</button></div>" +
+      "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui. 💪</div></div>" +
+      "<div class='cardx'><h2>📏 Minha evolução</h2><div id='evoBox'></div></div>" +
+      "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 💜</div>" +
+      "<script>var AVS=" + JSON.stringify(avs) + ";" +
+      "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
+      "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}" +
+      "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
+      "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
+      "return \"<div class='kv'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\" registro(s))</small></span></div>\";}).join('');}" +
+      "document.getElementById('dcAdd').addEventListener('click',function(){" +
+      "var ex=document.getElementById('dcEx').value.trim(),kg=parseFloat(document.getElementById('dcKg').value.replace(',','.'));" +
+      "if(!ex||!kg){alert('Preencha exercício e carga.');return;}" +
+      "var h=L('ptdc',{});var l=h[ex]||[];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
+      "l.push({d:new Date().toISOString().slice(0,10),kg:kg});if(l.length>60)l.shift();h[ex]=l;Sv('ptdc',h);" +
+      "if(max>0&&kg>max){if(navigator.vibrate)navigator.vibrate([120,60,220]);" +
+      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
+      "t.innerHTML='\ud83c\udf89 NOVO RECORDE!<br><small>'+ex+': '+kg+' kg</small>';document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}" +
+      "document.getElementById('dcKg').value='';pintaDC();});pintaDC();" +
+      "(function(){var el=document.getElementById('evoBox');if(!AVS.length){el.innerHTML=\"<div class='vz'>Suas avaliações físicas aparecem aqui quando o personal registrar. 📏</div>\";return;}" +
+      "function linha(rot,campo,inv){var com=AVS.filter(function(v){return v[campo]!=null;});if(com.length<1)return '';" +
+      "var pri=com[0][campo],ult=com[com.length-1][campo];var d=Math.round((ult-pri)*10)/10;" +
+      "var bom=inv?d>0:d<0;var seta=d?(\" <b class='\"+(bom?'up':'down')+\"'>\"+(d>0?'+':'')+String(d).replace('.',',')+\"</b>\"):'';" +
+      "return \"<div class='kv'><span>\"+rot+\"</span><span><b>\"+String(ult).replace('.',',')+\"</b>\"+seta+\"</span></div>\";}" +
+      "el.innerHTML=linha('⚖ Peso (kg)','peso')+linha('🧈 Gordura (%)','gordura')+linha('📏 Cintura (cm)','cintura')+linha('💪 Braço (cm)','braco',true)+" +
+      "\"<div class='vz'>\"+AVS.length+\" avaliação(ões) · última em \"+AVS[AVS.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
+      atualizador +
+      "</" + "script></body></html>";
+  }
+  $("listaAlunos").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-app");
+    if (!id) return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === id; });
+    if (!a) return;
+    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
+    var stamp = new Date().toISOString();
+    var html = montaAppAluno(a, stamp);
+    // baixa o arquivo
+    var blob = new Blob([html], { type: "text/html" });
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "app-" + a.nome.split(" ")[0].toLowerCase() + ".html";
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); link.remove(); }, 800);
+    // se logado, publica na nuvem e mostra o link online
+    var nuvem = S.cloud && S.cloud();
+    if (nuvem) {
+      nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: { html: html, stamp: stamp }, atualizado: stamp }])
+        .then(function (r) {
+          if (r.error) { alert("Baixei o arquivo, mas a publicação online falhou: " + r.error.message); return; }
+          var url = location.origin + location.pathname.replace(/personal\.html$/, "") + "app/?t=" + a.appTokenP;
+          var msg = "Oi " + a.nome.split(" ")[0] + "! 💪 Seu app de treino tá pronto: " + url + " — abre no navegador e usa 'Adicionar à tela inicial'.";
+          if (confirm("App publicado! Mandar o link pro " + a.nome.split(" ")[0] + " no WhatsApp agora?")) {
+            window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
+          }
+        });
+    } else {
+      alert("Arquivo do app baixado! Envie pelo WhatsApp do aluno.\n\n💡 Criando sua conta (card lá embaixo), o app ganha link online que se atualiza sozinho.");
+    }
+  });
+  window.__montaAppAluno = montaAppAluno; // testes
+
+  // ---------- conta / ilha ----------
+  function renderConta() {
+    var u = S.usuario ? S.usuario() : {};
+    if (u.logado) {
+      $("contaStatus").innerHTML = "✅ <b>Conectado como " + esc(u.email) + "</b> — seus dados sincronizam entre os seus aparelhos e ficam na SUA ilha, separados de qualquer outro personal ou academia.";
+      $("btnConta").textContent = "Gerenciar conta no portal";
+    } else {
+      $("contaStatus").innerHTML = "🔒 Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> (leva 1 minuto) para ter a sua ilha na nuvem: sincroniza celular ↔ computador e libera o app dos seus alunos com link online.";
+    }
+  }
+
   function render() {
     var st = load();
     renderKpis(st);
     renderAlunos(st);
     renderAgenda(st);
     renderPagamentos(st);
+    renderAvaliacoes(st);
+    renderConta();
   }
   $("sData").value = S.todayISO();
+  $("avData").value = S.todayISO();
   S.onChange(function (k) { if (k === "ptStudio") render(); });
   verificaOnboarding();
   render();
