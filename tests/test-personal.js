@@ -125,6 +125,60 @@ function ok(cond, nome) {
   const idAluno = salvo.alunos[0].id;
   ok(salvo.treinos[idAluno] && /Supino 4x10/.test(salvo.treinos[idAluno]), "treino salvo sozinho na loja ptStudio");
 
+  // avaliações: registra 2 e vê evolução
+  await p.click('[data-a="avaliacoes"]');
+  await p.selectOption("#avAluno", { index: 1 });
+  await p.fill("#avPeso", "90");
+  await p.fill("#avGord", "25");
+  await p.click("#avAdd");
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const antes = new Date(); antes.setDate(antes.getDate() - 60);
+    st.avaliacoes[0].data = antes.toISOString().slice(0, 10);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+  await p.selectOption("#avAluno", { index: 1 });
+  await p.fill("#avPeso", "84");
+  await p.fill("#avGord", "19.5");
+  await p.click("#avAdd");
+  const avs = await p.evaluate(() => document.getElementById("listaAvaliacoes").textContent);
+  ok(/João Cliente/.test(avs) && /-6/.test(avs.replace("−", "-")), "avaliações com delta de peso (-6 kg)");
+
+  // relatórios
+  await p.click('[data-a="relatorios"]');
+  const relR = await p.evaluate(() => document.getElementById("relReceita").textContent);
+  ok(/R\$\s?400/.test(relR), "relatório de receita mostra os R$ 400 do mês");
+  const relA = await p.evaluate(() => document.getElementById("relAssiduidade").textContent);
+  ok(/João Cliente/.test(relA) && /1 sessão/.test(relA), "assiduidade conta a sessão feita");
+
+  // app do aluno gerado
+  const appHtml = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+  });
+  ok(/Supino 4x10/.test(appHtml), "app leva o treino do aluno");
+  ok(/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "app tem diário de cargas com recorde");
+  ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
+  const pApp = await ctx.newPage();
+  const errosApp = [];
+  pApp.on("pageerror", (e) => errosApp.push(String(e)));
+  // serve via http (setContent teria origem opaca, sem localStorage)
+  await pApp.route("**/app-teste-personal.html", (r) => r.fulfill({ contentType: "text/html", body: appHtml }));
+  await pApp.goto(BASE + "/app-teste-personal.html", { waitUntil: "domcontentloaded" });
+  await pApp.fill("#dcEx", "Agachamento");
+  await pApp.fill("#dcKg", "80");
+  await pApp.click("#dcAdd");
+  const dc = await pApp.evaluate(() => document.getElementById("dcLista").textContent);
+  ok(/Agachamento/.test(dc) && /80/.test(dc), "aluno registra carga no diário");
+  const evo = await pApp.evaluate(() => document.getElementById("evoBox").textContent);
+  ok(/84/.test(evo) && /-6/.test(evo.replace("−", "-")), "evolução mostra peso atual e delta");
+  ok(errosApp.length === 0, "app do aluno abre sem erros de JS" + (errosApp.length ? " — " + errosApp[0] : ""));
+  await pApp.close();
+
+  // conta / ilha
+  const conta = await p.evaluate(() => document.getElementById("contaStatus").textContent);
+  ok(/Crie sua conta|Conectado/.test(conta), "card da ilha mostra o status da conta");
+
   // aluno "Encerrar" some da lista
   await p.click('[data-a="alunos"]');
   await p.click("[data-rm]");
