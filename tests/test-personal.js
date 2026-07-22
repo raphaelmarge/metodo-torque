@@ -72,6 +72,14 @@ function ok(cond, nome) {
   await p.goto(BASE + "/personal.html");
   await p.waitForFunction(() => window.__ptStudio);
 
+  // onboarding do módulo
+  const obVisivel = await p.evaluate(() => !document.getElementById("boasVindas").hidden);
+  ok(obVisivel, "onboarding aparece na primeira abertura");
+  await p.fill("#obNome", "Léo Personal");
+  await p.click("#obOk");
+  const titulo = await p.evaluate(() => document.getElementById("tituloStudio").textContent);
+  ok(/Studio Léo/.test(titulo), "título vira 'Studio Léo' após onboarding");
+
   // aluno novo
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aZap", "31999990000");
@@ -124,6 +132,17 @@ function ok(cond, nome) {
   ok(/primeiro aluno/.test(lista), "encerrar aluno esvazia a lista (histórico preservado)");
   const guardado = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.length);
   ok(guardado === 1, "aluno encerrado continua guardado (ativo=false)");
+  await p.close();
+
+  // ---------- 3) página de vendas do módulo ----------
+  console.log("Página de vendas:");
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  await p.goto(BASE + "/personal-vendas.html?zap=5531999990000");
+  const cta = await p.evaluate(() => document.getElementById("ctaZap").href);
+  ok(/wa\.me\/5531999990000/.test(cta), "CTA aponta pro WhatsApp do vendedor (?zap=)");
+  const corpo = await p.evaluate(() => document.body.textContent);
+  ok(/personal trainer/.test(corpo) && /Pagamentos/.test(corpo), "landing com pitch e features");
   await p.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
