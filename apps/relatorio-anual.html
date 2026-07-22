@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório Anual e Futuro — Método Torque</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .tab-rel { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tab-rel th { text-align: right; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--cinza-2); border-bottom: 2px solid var(--linha); }
+  .tab-rel th:first-child, .tab-rel td:first-child { text-align: left; }
+  .tab-rel td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--linha); font-variant-numeric: tabular-nums; }
+  .tab-rel tr.melhor td { background: rgba(22,163,74,.07); }
+  .tab-rel tr.pior td { background: rgba(220,38,38,.06); }
+  .tab-rel tr.total td { font-weight: 800; border-top: 2px solid var(--escuro); }
+  @media print { .no-print { display: none !important; } .card { box-shadow: none; border-color: #ccc; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <img id="logoCliente" class="logo-cliente" alt="Logo da academia" hidden>
+    <div>
+    <span class="kicker">PROGRAMA · GERENCIAL</span>
+    <h1>Relatório Anual e Futuro</h1>
+    </div>
+  </div>
+  <p>O ano numa página (mês a mês), a receita já contratada dos próximos meses e o desempenho de cada plano — os relatórios que os sistemas de elite cobram caro para mostrar.</p>
+</header>
+
+<main class="corpo">
+  <div class="card linha-flex no-print" style="justify-content: space-between; margin-bottom: 16px;">
+    <div class="linha-flex">
+      <label style="margin: 0;">Ano</label>
+      <select id="selAno" style="width: auto;"></select>
+    </div>
+    <div class="linha-flex">
+      <button class="btn sec" id="btnCSV">📤 Exportar CSV</button>
+      <button class="btn sec" onclick="window.print()">🖨 Imprimir</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <h2>📅 O ano mês a mês</h2>
+    <p class="muted" style="margin: 4px 0 12px;">Receita = mensalidades pagas + vendas de produtos no mês. Churn = cancelados ÷ ativos no início do mês. Linha verde = melhor mês de receita; vermelha = pior (dos meses com movimento).</p>
+    <div style="overflow-x: auto;"><table class="tab-rel" id="tabAno"></table></div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <h2>💰 Receita futura já contratada (próximos 6 meses)</h2>
+    <p class="muted" style="margin: 4px 0 12px;">Quanto entra se todo mundo cumprir o contrato atual: soma das mensalidades dos contratos ativos enquanto durarem. A linha "vencendo" mostra quanto depende de renovação naquele mês — é aí que a régua de renovação trabalha.</p>
+    <div style="overflow-x: auto;"><table class="tab-rel" id="tabFuturo"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>📦 Desempenho por plano</h2>
+    <p class="muted" style="margin: 4px 0 12px;">Qual plano rende e segura aluno: ativos, receita mensal recorrente, vida média (dos contratos encerrados) e churn dos últimos 12 meses. Plano barato que segura pouco pode estar custando caro.</p>
+    <div style="overflow-x: auto;"><table class="tab-rel" id="tabPlanos"></table></div>
+  </div>
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  var MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  var anoSel = new Date().getFullYear();
+
+  function dadosDoAno(ano) {
+    var stA = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var vendasP = S.read("produtos", { vendas: [] }).vendas || [];
+    var linhas = [];
+    for (var m = 0; m < 12; m++) {
+      var chave = ano + "-" + ("0" + (m + 1)).slice(-2);
+      var receita = 0, novos = 0, cancelados = 0, checkins = 0, ativosFim = 0;
+      stA.recebiveis.forEach(function (r) {
+        if (r.status === "pago" && (r.pagoEm || "").slice(0, 7) === chave) receita += +r.valor || 0;
+      });
+      vendasP.forEach(function (v) {
+        if (((v.data || v.quando || "")).slice(0, 7) === chave) receita += +v.total || 0;
+      });
+      var fimMes = chave + "-31";
+      stA.alunos.forEach(function (a) {
+        (a.checkins || []).forEach(function (t) { if ((t || "").slice(0, 7) === chave) checkins++; });
+        var ativoNoFim = false;
+        (a.contratos || []).forEach(function (c) {
+          if ((c.inicio || "").slice(0, 7) === chave) novos++;
+          if (c.status === "cancelado" && (c.canceladoEm || "").slice(0, 7) === chave) cancelados++;
+          var fimC = c.status === "cancelado" ? (c.canceladoEm || "") : "9999";
+          if ((c.inicio || "9999") <= fimMes && fimC >= fimMes) ativoNoFim = true;
+        });
+        if (ativoNoFim) ativosFim++;
+      });
+      var base = ativosFim + cancelados;
+      linhas.push({
+        mes: chave, rotulo: MESES[m] + "/" + String(ano).slice(2),
+        receita: receita, novos: novos, cancelados: cancelados,
+        churn: base > 0 ? 100 * cancelados / base : 0,
+        checkins: checkins, ativos: ativosFim,
+        ticket: ativosFim > 0 ? receita / ativosFim : 0,
+      });
+    }
+    return linhas;
+  }
+
+  function renderAno() {
+    var linhas = dadosDoAno(anoSel);
+    var comMov = linhas.filter(function (l) { return l.receita > 0 || l.novos > 0 || l.checkins > 0; });
+    var melhor = comMov.length ? comMov.reduce(function (a, b) { return b.receita > a.receita ? b : a; }) : null;
+    var pior = comMov.length > 1 ? comMov.reduce(function (a, b) { return b.receita < a.receita ? b : a; }) : null;
+    var tot = { receita: 0, novos: 0, cancelados: 0, checkins: 0 };
+    linhas.forEach(function (l) { tot.receita += l.receita; tot.novos += l.novos; tot.cancelados += l.cancelados; tot.checkins += l.checkins; });
+    $("tabAno").innerHTML =
+      "<tr><th>Mês</th><th>Receita</th><th>Novos</th><th>Cancelados</th><th>Churn</th><th>Check-ins</th><th>Ativos (fim)</th><th>Ticket médio</th></tr>" +
+      linhas.map(function (l) {
+        var cls = melhor && l.mes === melhor.mes ? "melhor" : pior && l.mes === pior.mes ? "pior" : "";
+        return "<tr class='" + cls + "'><td><b>" + l.rotulo + "</b>" +
+          (melhor && l.mes === melhor.mes ? " 🏆" : "") + (pior && l.mes === pior.mes ? " ⚠️" : "") + "</td>" +
+          "<td>" + S.fmtBRL(l.receita) + "</td><td>" + l.novos + "</td><td>" + l.cancelados + "</td>" +
+          "<td>" + l.churn.toFixed(1).replace(".", ",") + "%</td><td>" + l.checkins + "</td>" +
+          "<td>" + l.ativos + "</td><td>" + S.fmtBRL(l.ticket) + "</td></tr>";
+      }).join("") +
+      "<tr class='total'><td>TOTAL " + anoSel + "</td><td>" + S.fmtBRL(tot.receita) + "</td><td>" + tot.novos +
+      "</td><td>" + tot.cancelados + "</td><td>—</td><td>" + tot.checkins + "</td><td>—</td><td>—</td></tr>";
+    return linhas;
+  }
+
+  // receita contratada: cada contrato ativo contribui com o valor do plano até o fim (inicio + meses do plano)
+  function renderFuturo() {
+    var stA = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var hoje = new Date();
+    var meses = [];
+    for (var i = 0; i < 6; i++) {
+      var d = new Date(hoje.getFullYear(), hoje.getMonth() + 1 + i, 1);
+      meses.push({ chave: S.monthKey(d), rotulo: MESES[d.getMonth()] + "/" + String(d.getFullYear()).slice(2), garantida: 0, vencendo: 0, nVencendo: 0 });
+    }
+    stA.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if (c.status !== "ativo" && c.status !== "congelado") return;
+        var pl = (stA.planos || []).find(function (p) { return p.id === c.planoId; }) || {};
+        var valor = +c.valor || +pl.valor || 0;
+        if (!valor || !c.inicio) return;
+        var ini = new Date(c.inicio + "T12:00");
+        var fim = new Date(ini); fim.setMonth(fim.getMonth() + (+pl.meses || 12));
+        var fimChave = S.monthKey(fim);
+        meses.forEach(function (mm) {
+          if (mm.chave < fimChave) mm.garantida += valor;
+          else if (mm.chave === fimChave) { mm.vencendo += valor; mm.nVencendo++; }
+        });
+      });
+    });
+    $("tabFuturo").innerHTML =
+      "<tr><th>Mês</th>" + meses.map(function (m) { return "<th>" + m.rotulo + "</th>"; }).join("") + "</tr>" +
+      "<tr><td><b>💜 Garantida (contratos vigentes)</b></td>" + meses.map(function (m) { return "<td><b>" + S.fmtBRL(m.garantida) + "</b></td>"; }).join("") + "</tr>" +
+      "<tr><td>⏳ Vencendo no mês (depende de renovar)</td>" + meses.map(function (m) {
+        return "<td>" + (m.vencendo ? S.fmtBRL(m.vencendo) + " <span class='muted'>(" + m.nVencendo + ")</span>" : "—") + "</td>";
+      }).join("") + "</tr>";
+    return meses;
+  }
+
+  function renderPlanos() {
+    var stA = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var corte = new Date(); corte.setFullYear(corte.getFullYear() - 1);
+    var corteISO = corte.toISOString().slice(0, 10);
+    var porPlano = {};
+    (stA.planos || []).forEach(function (p) { porPlano[p.id] = { plano: p, ativos: 0, mrr: 0, cancel12: 0, passaram: 0, somaVida: 0, nVida: 0 }; });
+    stA.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        var x = porPlano[c.planoId];
+        if (!x) return;
+        x.passaram++;
+        var pl = x.plano;
+        var valor = +c.valor || +pl.valor || 0;
+        if (c.status === "ativo" || c.status === "congelado") { x.ativos++; x.mrr += valor; }
+        if (c.status === "cancelado" && (c.canceladoEm || "") >= corteISO) x.cancel12++;
+        if (c.status === "cancelado" && c.inicio && c.canceladoEm) {
+          var v = (new Date(c.canceladoEm) - new Date(c.inicio)) / (30.4 * 864e5);
+          if (v > 0 && v < 120) { x.somaVida += v; x.nVida++; }
+        }
+      });
+    });
+    var linhas = Object.keys(porPlano).map(function (k) { return porPlano[k]; })
+      .filter(function (x) { return x.passaram > 0; })
+      .sort(function (a, b) { return b.mrr - a.mrr; });
+    $("tabPlanos").innerHTML = linhas.length ?
+      "<tr><th>Plano</th><th>Valor</th><th>Ativos</th><th>Receita/mês</th><th>Vida média</th><th>Cancel. 12m</th></tr>" +
+      linhas.map(function (x) {
+        return "<tr><td><b>" + esc(x.plano.nome) + "</b></td><td>" + S.fmtBRL(+x.plano.valor || 0) +
+          "</td><td>" + x.ativos + "</td><td><b>" + S.fmtBRL(x.mrr) + "</b></td>" +
+          "<td>" + (x.nVida ? (x.somaVida / x.nVida).toFixed(1).replace(".", ",") + " meses" : "—") + "</td>" +
+          "<td>" + x.cancel12 + "</td></tr>";
+      }).join("")
+      : "<tr><td class='muted'>Cadastre planos e contratos para ver este quadro.</td></tr>";
+  }
+
+  function render() {
+    var anos = [];
+    var esteAno = new Date().getFullYear();
+    for (var a = esteAno; a >= esteAno - 4; a--) anos.push(a);
+    $("selAno").innerHTML = anos.map(function (a) { return "<option" + (a === anoSel ? " selected" : "") + ">" + a + "</option>"; }).join("");
+    renderAno();
+    renderFuturo();
+    renderPlanos();
+  }
+
+  $("selAno").addEventListener("change", function () { anoSel = +this.value; render(); });
+  $("btnCSV").addEventListener("click", function () {
+    var linhas = dadosDoAno(anoSel);
+    var csv = [["Mês", "Receita", "Novos", "Cancelados", "Churn %", "Check-ins", "Ativos fim", "Ticket médio"]];
+    linhas.forEach(function (l) {
+      csv.push([l.rotulo, l.receita.toFixed(2).replace(".", ","), l.novos, l.cancelados,
+        l.churn.toFixed(1).replace(".", ","), l.checkins, l.ativos, l.ticket.toFixed(2).replace(".", ",")]);
+    });
+    S.baixaCSV("relatorio-anual-" + anoSel, csv);
+  });
+  S.onChange(function (k) { if (k === "alunos" || k === "produtos") render(); });
+  render();
+  window.__relAnual = { dadosDoAno: dadosDoAno, render: render }; // testes
+})();
+</script>
+</body>
+</html>

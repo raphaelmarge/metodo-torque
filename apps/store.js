@@ -523,7 +523,25 @@
     return { norm: Math.round(norm * 100) / 100, domfer: Math.round(domfer * 100) / 100 };
   }
 
+  // exporta linhas (array de arrays) como CSV que o Excel abre direto (BOM + ;)
+  function baixaCSV(nomeArquivo, linhas) {
+    var txt = "\ufeff" + linhas.map(function (l) {
+      return l.map(function (c) {
+        var v = String(c == null ? "" : c).replace(/"/g, '""');
+        return /[;"\n]/.test(v) ? '"' + v + '"' : v;
+      }).join(";");
+    }).join("\n");
+    var blob = new Blob([txt], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = nomeArquivo.replace(/\.csv$/i, "") + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  }
+
   window.MTStore = {
+    baixaCSV: baixaCSV,
     ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,
     horarioDoDia: horarioDoDia, abertoAgora: abertoAgora,
     read: read, write: write, uid: uid,

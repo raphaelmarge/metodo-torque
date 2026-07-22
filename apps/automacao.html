@@ -57,7 +57,11 @@
       <label style="display:flex;gap:6px;align-items:center;font-weight:700;">
         <input type="checkbox" id="resumoAtivo"> Enviar automaticamente todo dia
       </label>
+      <label style="display:flex;gap:6px;align-items:center;font-weight:700;">
+        <input type="checkbox" id="resumoSemAtivo"> 📬 Fechamento semanal (domingo)
+      </label>
       <button class="btn sec" id="btnResumoAgora">Enviar resumo de ontem agora</button>
+      <button class="btn sec" id="btnSemanalAgora">Enviar fechamento da semana</button>
       <span class="mut" id="resumoStatus" style="font-size:12.5px;"></span>
     </div>
   </div>
@@ -143,8 +147,12 @@
     st.historico = st.historico || {};
     // semeia a régua de avaliação no Google (em lojas novas E em quem já usava)
     var mudouSeed = false;
-    if (!st.templates.some(function (t) { return t.id === "tp5"; })) { st.templates.push(TPL_PADRAO[4]); mudouSeed = true; }
-    if (!st.templates.some(function (t) { return t.id === "tp6"; })) { st.templates.push(TPL_PADRAO.find(function (t) { return t.id === "tp6"; })); mudouSeed = true; }
+    ["tp5", "tp6"].forEach(function (tid) {
+      if (!st.templates.some(function (t) { return t && t.id === tid; })) {
+        var tpl = TPL_PADRAO.find(function (t) { return t.id === tid; });
+        if (tpl) { st.templates.push(tpl); mudouSeed = true; }
+      }
+    });
     if (!st.regras.some(function (r) { return r.gatilho === "venc_mensalidade"; })) {
       st.regras.push({ id: "rg5", nome: "Cobrança automática (D-2 até o vencimento)", gatilho: "venc_mensalidade", templateId: "tp6", ativo: false });
       mudouSeed = true;
@@ -364,18 +372,29 @@
     var cfgR = st.resumoDono || {};
     $("resumoZap").value = cfgR.zap || "";
     $("resumoAtivo").checked = !!cfgR.ativo;
+    $("resumoSemAtivo").checked = !!cfgR.semanal;
     function salvaR() {
       var st2 = load();
       st2.resumoDono = st2.resumoDono || {};
       st2.resumoDono.zap = $("resumoZap").value.replace(/\D/g, "");
       st2.resumoDono.ativo = $("resumoAtivo").checked;
+      st2.resumoDono.semanal = $("resumoSemAtivo").checked;
       S.write("automacao", st2);
     }
     $("resumoZap").addEventListener("change", salvaR);
     $("resumoAtivo").addEventListener("change", salvaR);
+    $("resumoSemAtivo").addEventListener("change", salvaR);
     $("btnResumoAgora").addEventListener("click", function () { enviaResumoDono(true); });
+    $("btnSemanalAgora").addEventListener("click", function () { enviaResumoSemanal(true); });
     if (cfgR.ativo && cfgR.zap && cfgR.ultimo !== S.todayISO() && (integ().whatsappUrl || demoOn())) {
       setTimeout(function () { enviaResumoDono(false); }, 1500);
+    }
+    // fechamento semanal: dispara no domingo (ou na 1ª abertura depois dele), no máx. 1x por semana
+    if (cfgR.semanal && cfgR.zap && (integ().whatsappUrl || demoOn())) {
+      var hj = new Date(S.todayISO() + "T12:00");
+      var ultimo = cfgR.ultimoSemanal || "";
+      var diasDesde = ultimo ? Math.floor((hj - new Date(ultimo + "T12:00")) / 864e5) : 99;
+      if (hj.getDay() === 0 && diasDesde >= 6) setTimeout(function () { enviaResumoSemanal(false); }, 2500);
     }
   })();
 
@@ -423,6 +442,75 @@
       "🎂 Aniversariantes de hoje: " + aniv + "\n\n" +
       "Enviado automaticamente pelo TORQUESYS 💜";
   }
+  // fechamento semanal comparativo: esta semana (seg–dom) vs a anterior
+  function metricasPeriodo(iniISO, fimISO) {
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var vendasP = S.read("produtos", { vendas: [] }).vendas || [];
+    var m = { receita: 0, checkins: 0, novos: 0, cancelados: 0 };
+    stA.recebiveis.forEach(function (r) {
+      var d = (r.pagoEm || "").slice(0, 10);
+      if (r.status === "pago" && d >= iniISO && d <= fimISO) m.receita += +r.valor || 0;
+    });
+    vendasP.forEach(function (v) {
+      var d = ((v.data || v.quando || "")).slice(0, 10);
+      if (d >= iniISO && d <= fimISO) m.receita += +v.total || 0;
+    });
+    stA.alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        var d = (t || "").slice(0, 10);
+        if (d >= iniISO && d <= fimISO) m.checkins++;
+      });
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "") >= iniISO && (c.inicio || "") <= fimISO) m.novos++;
+        if (c.status === "cancelado" && (c.canceladoEm || "") >= iniISO && (c.canceladoEm || "") <= fimISO) m.cancelados++;
+      });
+    });
+    return m;
+  }
+  function montaResumoSemanal() {
+    var hoje = new Date(S.todayISO() + "T12:00");
+    // semana atual = últimos 7 dias terminando ontem; anterior = os 7 antes
+    var fimAtual = new Date(hoje); fimAtual.setDate(fimAtual.getDate() - 1);
+    var iniAtual = new Date(fimAtual); iniAtual.setDate(iniAtual.getDate() - 6);
+    var fimAnt = new Date(iniAtual); fimAnt.setDate(fimAnt.getDate() - 1);
+    var iniAnt = new Date(fimAnt); iniAnt.setDate(iniAnt.getDate() - 6);
+    var A = metricasPeriodo(S.todayISO(iniAtual), S.todayISO(fimAtual));
+    var B = metricasPeriodo(S.todayISO(iniAnt), S.todayISO(fimAnt));
+    function seta(a, b, fmt) {
+      var dif = a - b;
+      var pct = b > 0 ? Math.round(100 * dif / b) : (a > 0 ? 100 : 0);
+      var ico = dif > 0 ? "▲" : dif < 0 ? "▼" : "•";
+      return (fmt ? fmt(a) : a) + " (" + ico + " " + (pct >= 0 ? "+" : "") + pct + "% vs semana anterior)";
+    }
+    return "📬 TORQUE FIT — fechamento da semana (" + S.fmtData(S.todayISO(iniAtual)) + " a " + S.fmtData(S.todayISO(fimAtual)) + ")\n\n" +
+      "💰 Receita: " + seta(A.receita, B.receita, S.fmtBRL) + "\n" +
+      "🏋️ Check-ins: " + seta(A.checkins, B.checkins) + "\n" +
+      "🆕 Novos contratos: " + seta(A.novos, B.novos) + "\n" +
+      "🚫 Cancelamentos: " + seta(A.cancelados, B.cancelados) + "\n\n" +
+      "Semana anterior: " + S.fmtBRL(B.receita) + " · " + B.checkins + " check-ins · " + B.novos + " novos · " + B.cancelados + " cancel.\n" +
+      "Enviado automaticamente pelo TORQUESYS 💜";
+  }
+  function enviaResumoSemanal(manual) {
+    var st = load();
+    var cfgR = st.resumoDono || {};
+    if (!cfgR.zap) { if (manual) alert("Preencha o WhatsApp do dono primeiro."); return; }
+    var texto = montaResumoSemanal();
+    enviaWa(cfgR.zap, texto).then(function (r) {
+      var ok = r && (r.ok || r.sucesso || r.demo);
+      if (ok) {
+        st = load();
+        st.resumoDono = st.resumoDono || {};
+        st.resumoDono.ultimoSemanal = S.todayISO();
+        S.write("automacao", st);
+      }
+      $("resumoStatus").textContent = ok
+        ? "✅ Fechamento semanal enviado" + (r.demo ? " (simulação)" : "") + "."
+        : "⚠️ Não deu para enviar — confira o WhatsApp oficial em Integrações.";
+    }).catch(function () {
+      $("resumoStatus").textContent = "⚠️ Sem conexão com a função do WhatsApp (Integrações).";
+    });
+  }
+
   function enviaResumoDono(manual) {
     var st = load();
     var cfgR = st.resumoDono || {};
@@ -445,6 +533,8 @@
       $("resumoStatus").textContent = "⚠️ Sem conexão com a função do WhatsApp (Integrações).";
     });
   }
+
+  window.__resumoSemanal = { monta: montaResumoSemanal, envia: enviaResumoSemanal }; // testes
 
   // gera o link Pix sozinho para os disparos D-2 que ainda não têm (máx. 10/dia)
   function geraPixPendentes() {

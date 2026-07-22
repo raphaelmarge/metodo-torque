@@ -42,6 +42,13 @@
 
   <div class="stats" id="stats"></div>
 
+  <div class="card">
+    <h2>⏳ Idade da dívida (aging)</h2>
+    <p class="muted" style="margin: 4px 0 10px;">Mensalidades em aberto por tempo de atraso. Até 30 dias resolve com WhatsApp; 90+ pede acordo — quanto mais velha a dívida, menor a chance de receber.</p>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnAgingCSV">📤 CSV</button></div>
+    <div id="aging" class="muted" style="overflow-x: auto;">Nenhuma pendência em aberto. 🎉</div>
+  </div>
+
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="abas" id="abas">
       <button data-f="aberto" class="ativa">Em aberto</button>
@@ -554,6 +561,57 @@
 
   S.onChange(function () { render(); renderAutoCancel(); });
   render();
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  function dadosAging() {
+    var hoje = S.todayISO();
+    var faixas = [
+      { rot: "1–29 dias", min: 1, max: 29, n: 0, val: 0, nomes: [] },
+      { rot: "30–59 dias", min: 30, max: 59, n: 0, val: 0, nomes: [] },
+      { rot: "60–89 dias", min: 60, max: 89, n: 0, val: 0, nomes: [] },
+      { rot: "90+ dias", min: 90, max: 99999, n: 0, val: 0, nomes: [] },
+    ];
+    var stA = S.read("alunos", { alunos: [], recebiveis: [] });
+    var nomeDe = {};
+    stA.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    stA.recebiveis.forEach(function (r) {
+      if (r.status !== "aberto" || !r.vencimento || r.vencimento >= hoje) return;
+      var dias = Math.floor((new Date(hoje) - new Date(r.vencimento)) / 864e5);
+      var f = faixas.find(function (x) { return dias >= x.min && dias <= x.max; });
+      if (f) { f.n++; f.val += +r.valor || 0; if (nomeDe[r.alunoId]) f.nomes.push(nomeDe[r.alunoId]); }
+    });
+    return faixas;
+  }
+  function renderAging() {
+    var el = document.getElementById("aging");
+    if (!el) return;
+    var faixas = dadosAging();
+    var total = faixas.reduce(function (t, f) { return t + f.val; }, 0);
+    if (!total && !faixas.some(function (f) { return f.n; })) { el.textContent = "Nenhuma pendência em aberto. 🎉"; return; }
+    var cores = ["#d97706", "#ea580c", "#dc2626", "#7f1d1d"];
+    el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+      "<tr><th style='text-align:left;padding:6px 8px;'>ATRASO</th><th style='text-align:right;'>MENSALIDADES</th><th style='text-align:right;'>VALOR</th><th style='text-align:right;'>% DO TOTAL</th></tr>" +
+      faixas.map(function (f, i) {
+        var pct = total ? Math.round(100 * f.val / total) : 0;
+        return "<tr style='border-top:1px solid var(--linha);'><td style='padding:6px 8px;'><b style='color:" + cores[i] + ";'>" + f.rot +
+          "</b></td><td style='text-align:right;'>" + f.n + "</td><td style='text-align:right;'><b>" + S.fmtBRL(f.val) +
+          "</b></td><td style='text-align:right;'>" + pct + "%</td></tr>";
+      }).join("") +
+      "<tr style='border-top:2px solid var(--escuro);'><td style='padding:8px;'><b>TOTAL EM ABERTO</b></td><td></td><td style='text-align:right;'><b>" + S.fmtBRL(total) + "</b></td><td></td></tr></table>";
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "btnAgingCSV") {
+      var csv = [["Faixa de atraso", "Mensalidades", "Valor", "Alunos"]];
+      dadosAging().forEach(function (f) { csv.push([f.rot, f.n, f.val.toFixed(2).replace(".", ","), f.nomes.join(", ")]); });
+      S.baixaCSV("aging-inadimplencia", csv);
+    }
+  });
+  S.onChange(function (k) { if (k === "alunos") renderAging(); });
+  renderAging();
+  window.__aging = renderAging; // testes
 })();
 </script>
 </body>
