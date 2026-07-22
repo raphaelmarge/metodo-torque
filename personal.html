@@ -54,6 +54,7 @@
     <button data-a="treinos">🏋️ Treinos</button>
     <button data-a="avaliacoes">📏 Avaliações</button>
     <button data-a="relatorios">📊 Relatórios</button>
+    <button data-a="assessoria">🛰 Assessoria</button>
   </div>
 
   <!-- ALUNOS -->
@@ -65,6 +66,7 @@
         <input id="aZap" placeholder="WhatsApp (DDD + número)" inputmode="numeric" style="flex: 1; min-width: 150px;">
         <input id="aValor" type="number" min="0" step="0.01" placeholder="Valor combinado R$" title="Por mês ou por sessão — como você combinar" style="width: 150px;">
         <select id="aModo" style="width: auto;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select>
+        <select id="aMeta" style="width: auto;" title="Meta de treinos por semana (motivação no app)"><option value="3">meta 3×/sem</option><option value="2">meta 2×/sem</option><option value="4">meta 4×/sem</option><option value="5">meta 5×/sem</option><option value="6">meta 6×/sem</option></select>
         <button class="btn" id="aAdd">+ Adicionar</button>
       </div>
     </div>
@@ -142,9 +144,22 @@
     <div class="card"><h2>🏃 Assiduidade (sessões feitas nos últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
   </section>
 
+  <!-- ASSESSORIA -->
+  <section id="vAssessoria" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>🛰 Acompanhamento a distância</h2>
+      <p class="muted" style="margin: 4px 0 0;">O que os alunos de assessoria registram pelo app chega aqui: treinos feitos, sequência, meta da semana e o check-in semanal (nota + peso + como foi). Quem apagar fica vermelho — mensagem pronta a um clique mantém o aluno perto mesmo longe.</p>
+    </div>
+    <div id="assessoriaLista" class="muted"><div class="card">Carregando…</div></div>
+  </section>
+
   <div class="card" id="cardConta" style="margin-top: 20px;">
     <h2>☁️ Sua ilha no TORQUESYS</h2>
     <p class="muted" id="contaStatus" style="margin: 6px 0 10px;"></p>
+    <div class="linha-flex" style="margin-bottom: 10px;">
+      <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (os alunos falam com você por ele)
+        <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 170px; display: block; margin-top: 4px;"></label>
+    </div>
     <a class="btn sec" id="btnConta" href="index.html">Criar minha conta / Entrar</a>
   </div>
 </main>
@@ -196,7 +211,9 @@
     $("vTreinos").hidden = b.dataset.a !== "treinos";
     $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
     $("vRelatorios").hidden = b.dataset.a !== "relatorios";
+    $("vAssessoria").hidden = b.dataset.a !== "assessoria";
     if (b.dataset.a === "relatorios") renderRelatorios();
+    if (b.dataset.a === "assessoria") renderAssessoria();
   });
 
   // ---------- kpis ----------
@@ -232,7 +249,7 @@
     var nome = $("aNome").value.trim();
     if (!nome) { alert("Escreva o nome do aluno."); return; }
     var st = load();
-    st.alunos.push({ id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), valor: +$("aValor").value || 0, modo: $("aModo").value, ativo: true, desde: S.todayISO() });
+    st.alunos.push({ id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), valor: +$("aValor").value || 0, modo: $("aModo").value, metaSemana: +$("aMeta").value || 3, ativo: true, desde: S.todayISO() });
     $("aNome").value = ""; $("aZap").value = ""; $("aValor").value = "";
     save(st);
   });
@@ -439,6 +456,8 @@
   function montaAppAluno(a, stamp) {
     var st = load();
     var studio = (st.config || {}).nome || "Meu Personal";
+    var zapPersonal = (st.config || {}).zap || "";
+    var metaSemana = +a.metaSemana || 3;
     var treino = (st.treinos || {})[a.id] || "";
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
@@ -469,6 +488,11 @@
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
       "<div class='topo'><div class='k'>" + esc(studio).toUpperCase() + " · TORQUESYS PERSONAL</div><h1>💪 " + esc(a.nome.split(" ")[0]) + "</h1></div>" +
+      "<div class='cardx'><h2>🔥 Minha semana</h2>" +
+      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
+      "<div id='metaBox' style='margin-bottom:12px;'></div>" +
+      "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>✅ Treinei hoje!</button>" +
+      "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>🏋️ Meu treino</h2>" +
       (treino ? "<pre>" + esc(treino) + "</pre>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal. 😉</div>") + "</div>" +
       "<div class='cardx'><h2>📈 Diário de cargas</h2>" +
@@ -476,10 +500,59 @@
       "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><button class='btnx' id='dcAdd'>+</button></div>" +
       "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui. 💪</div></div>" +
       "<div class='cardx'><h2>📏 Minha evolução</h2><div id='evoBox'></div></div>" +
+      "<div class='cardx'><h2>📝 Check-in da semana</h2>" +
+      "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem! 💜</div>" +
+      "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
+      "<div id='ckNotas' style='display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;'></div>" +
+      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
+      "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
+      "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in 📨</button></div></div>" +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 💜</div>" +
-      "<script>var AVS=" + JSON.stringify(avs) + ";" +
+      "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
+      ",NUVEM=" + JSON.stringify((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
+      ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}" +
+      "function isoHj(){return new Date().toISOString().slice(0,10);}" +
+      "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
+      "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +
+      // semana: bolinhas seg-dom + meta + streak + medalhas
+      "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
+      "var rot=['S','T','Q','Q','S','S','D'];var html='';var naSem=0;" +
+      "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=d.toISOString().slice(0,10);var fez=!!f[iso];if(fez)naSem++;" +
+      "var hoje=iso===isoHj();html+=\"<div style='flex:1;text-align:center;'><div style='width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;\"+(fez?'background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#6e6a78;')+(hoje?'outline:2px solid #a78bfa;outline-offset:2px;':'')+\"'>\"+(fez?'✓':rot[i])+\"</div></div>\";}" +
+      "document.getElementById('diasSem').innerHTML=html;" +
+      "var pct=Math.min(100,Math.round(100*naSem/META));" +
+      "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+(naSem>=META?' 🔥':'')+\"</b></div><div style='height:10px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:99px;transition:width .5s;'></div></div>\";" +
+      "var total=Object.keys(f).length;var marcos=[[100,'💎'],[50,'🏆'],[25,'🥇'],[10,'🥈'],[5,'🥉']];var tem=[];" +
+      "marcos.forEach(function(m){if(total>=m[0])tem.push(m[1]+' '+m[0]);});" +
+      "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j][0]){falta=marcos[j];break;}}" +
+      "document.getElementById('medalhas').innerHTML='<b>'+total+' treino(s) registrados</b>'+(tem.length?' · '+tem.join(' '):'')+(falta?\"<br><small>faltam \"+(falta[0]-total)+\" pra medalha \"+falta[1]+\"</small>\":'');}" +
+      "document.getElementById('btnFeito').addEventListener('click',function(){var f=L('ptfeitos',{});var iso=isoHj();" +
+      "if(f[iso]){alert('Treino de hoje já registrado! Descansa que amanhã tem mais. 😉');return;}" +
+      "f[iso]=1;Sv('ptfeitos',f);pintaSemana();" +
+      "var naSem=0;var seg=new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
+      "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[d.toISOString().slice(0,10)])naSem++;}" +
+      "if(navigator.vibrate)navigator.vibrate(naSem>=META?[120,60,120,60,260]:[140]);" +
+      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
+      "t.innerHTML=naSem>=META?'\ud83d\udd25 META DA SEMANA BATIDA!<br><small>'+naSem+' treinos — orgulho define</small>':'\ud83d\udcaa Treino registrado!<br><small>'+naSem+' de '+META+' na semana</small>';" +
+      "document.body.appendChild(t);setTimeout(function(){t.remove();},3500);" +
+      "rpcApp('app_aluno_treino_reg',{t:TOKEN,p_dia:iso,p_itens:[{ex:'__feito',f:1,c:''}]});});" +
+      // check-in semanal
+      "var ckNota=0;var EMO=['😫','😕','😐','🙂','🤩'];" +
+      "document.getElementById('ckNotas').innerHTML=EMO.map(function(e,i){return \"<button data-n='\"+(i+1)+\"' style='flex:1;background:#14121a;border:1px solid #322e3d;border-radius:11px;font-size:22px;padding:9px 0;cursor:pointer;'>\"+e+\"</button>\";}).join('');" +
+      "document.getElementById('ckNotas').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;ckNota=+b.dataset.n;" +
+      "this.querySelectorAll('button').forEach(function(x){x.style.background=x===b?'linear-gradient(135deg,#7c3aed,#a78bfa)':'#14121a';x.style.borderColor=x===b?'#a78bfa':'#322e3d';});});" +
+      "function semanaCK(){var d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);}" +
+      "if(L('ptck','')===semanaCK()){document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';}" +
+      "document.getElementById('ckEnvia').addEventListener('click',function(){if(!ckNota){alert('Escolhe uma carinha pra semana. 😉');return;}" +
+      "var peso=parseFloat((document.getElementById('ckPeso').value||'').replace(',','.'))||null;var texto=document.getElementById('ckTexto').value.trim();" +
+      "var fim=function(){Sv('ptck',semanaCK());document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';};" +
+      "if(NUVEM){rpcApp('app_aluno_checkin',{t:TOKEN,p_nota:ckNota,p_texto:texto,p_peso:peso}).then(function(r){" +
+      "if(r&&r.ok){fim();}else{alert('Não deu pra enviar agora — tenta de novo em instantes.');}});}" +
+      "else{var msg='\ud83d\udcdd Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[ckNota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
+      "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
+      "pintaSemana();" +
       "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
       "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
       "return \"<div class='kv'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\" registro(s))</small></span></div>\";}).join('');}" +
@@ -537,8 +610,88 @@
   });
   window.__montaAppAluno = montaAppAluno; // testes
 
+  // ---------- assessoria (adesão remota) ----------
+  function renderAssessoria() {
+    var el = $("assessoriaLista");
+    var st = load();
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    if (!ativos.length) { el.innerHTML = '<div class="card muted">Cadastre alunos primeiro.</div>'; return; }
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      el.innerHTML = '<div class="card" style="border-left:4px solid #d97706;"><b>☁️ A assessoria a distância precisa da sua conta.</b><p class="muted" style="margin:6px 0 0;">Crie sua conta (card lá embaixo) e gere o app dos alunos — os treinos feitos e check-ins deles passam a chegar aqui sozinhos.</p></div>';
+      return;
+    }
+    var tokens = ativos.filter(function (a) { return a.appTokenP; }).map(function (a) { return a.appTokenP; });
+    if (!tokens.length) {
+      el.innerHTML = '<div class="card muted">Gere o 📲 App de cada aluno (aba Alunos) — o acompanhamento começa aí.</div>';
+      return;
+    }
+    var corte = new Date(); corte.setDate(corte.getDate() - 28);
+    var iso28 = S.todayISO(corte);
+    Promise.all([
+      nuvem.client.from("app_treino_log").select("token,dia,exercicio").gte("dia", iso28).in("token", tokens).limit(2000),
+      nuvem.client.from("app_checkin").select("token,dia,nota,texto,peso").gte("dia", iso28).in("token", tokens).order("dia", { ascending: false }).limit(200),
+    ]).then(function (rs) {
+      var logs = (rs[0].data || []);
+      var checks = rs[1].error ? null : (rs[1].data || []);
+      var hoje = S.todayISO();
+      var seg = new Date(hoje + "T12:00"); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+      var iniSemana = S.todayISO(seg);
+      el.innerHTML = ativos.map(function (a) {
+        if (!a.appTokenP) {
+          return '<div class="card" style="margin-bottom:10px;"><b>' + esc(a.nome) + '</b> <span class="muted">— gere o 📲 App dele na aba Alunos pra acompanhar.</span></div>';
+        }
+        var meus = logs.filter(function (l) { return l.token === a.appTokenP; });
+        var dias = {};
+        meus.forEach(function (l) { dias[l.dia] = 1; });
+        var listaDias = Object.keys(dias).sort();
+        var ultimo = listaDias.length ? listaDias[listaDias.length - 1] : null;
+        var diasSem = ultimo ? Math.round((new Date(hoje) - new Date(ultimo)) / 864e5) : null;
+        var naSemana = listaDias.filter(function (d) { return d >= iniSemana; }).length;
+        var meta = +a.metaSemana || 3;
+        var stAtu, cor, msg;
+        var primeiro = a.nome.split(" ")[0];
+        if (ultimo == null) {
+          stAtu = "⚪ sem registros ainda"; cor = "var(--cinza)";
+          msg = "Oi " + primeiro + "! Já instalou seu app de treino? Qualquer dúvida pra abrir eu te ajudo — bora começar! 💪";
+        } else if (diasSem >= 5) {
+          stAtu = "🚨 parado há " + diasSem + " dias"; cor = "#dc2626";
+          msg = "Oi " + primeiro + "! Senti sua falta nos treinos 😢 Aconteceu alguma coisa? Se a planilha ficou pesada ou a rotina mudou, me fala que eu ajusto — o importante é não parar. Bora retomar essa semana? 💪";
+        } else if (naSemana >= meta) {
+          stAtu = "🔥 meta da semana batida (" + naSemana + "/" + meta + ")"; cor = "#16a34a";
+          msg = "AEEE " + primeiro + "! 🔥 Meta da semana batida (" + naSemana + " treinos)! Tô acompanhando tudo por aqui e o comprometimento tá impecável — segue assim que o resultado não tem pra onde correr. 👏";
+        } else {
+          stAtu = "🙂 " + naSemana + "/" + meta + " treinos na semana"; cor = "var(--roxo)";
+          msg = "Oi " + primeiro + "! Vi seus treinos da semana por aqui (" + naSemana + " de " + meta + ") — faltou pouco pra meta! Consegue encaixar mais " + (meta - naSemana) + "? Qualquer coisa eu adapto o treino pra caber na sua rotina. 💜";
+        }
+        var meusChecks = checks == null ? [] : checks.filter(function (c) { return c.token === a.appTokenP; }).slice(0, 3);
+        var NOTAS = ["", "😫", "😕", "😐", "🙂", "🤩"];
+        var checksHTML = checks == null
+          ? '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">📝 Check-ins semanais: rode o bloco ASSESSORIA ONLINE do supabase-setup.sql pra recebê-los.</p>'
+          : (meusChecks.length
+            ? '<div style="margin-top:8px;">' + meusChecks.map(function (c) {
+                return '<div class="sessao-pt">' + (NOTAS[c.nota] || "📝") + " <b>" + S.fmtData(c.dia) + "</b>" +
+                  (c.peso ? "<span>⚖ " + String(c.peso).replace(".", ",") + " kg</span>" : "") +
+                  (c.texto ? '<span class="muted">"' + esc(c.texto) + '"</span>' : "") + "</div>";
+              }).join("") + "</div>"
+            : '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Nenhum check-in semanal ainda.</p>');
+        return '<div class="card" style="margin-bottom:10px;border-left:4px solid ' + cor + ';">' +
+          '<div class="linha-flex" style="justify-content:space-between;flex-wrap:wrap;">' +
+          "<div><b style='font-size:15px;'>" + esc(a.nome) + "</b><div style='color:" + cor + ";font-weight:700;font-size:13.5px;margin-top:2px;'>" + stAtu + "</div>" +
+          (ultimo ? "<div class='muted' style='font-size:12.5px;'>último treino: " + S.fmtData(ultimo) + " · " + listaDias.length + " treino(s) em 28 dias</div>" : "") + "</div>" +
+          (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Mensagem pronta</a>' : "") +
+          "</div>" + checksHTML + "</div>";
+      }).join("");
+    }, function () {
+      el.innerHTML = '<div class="card" style="color:#b45309;">⚠️ Sem conexão com a nuvem agora — tente de novo em instantes.</div>';
+    });
+  }
+  window.__assessoria = renderAssessoria; // testes
+
   // ---------- conta / ilha ----------
   function renderConta() {
+    var st = load();
+    if (document.activeElement !== $("cfgZap")) $("cfgZap").value = (st.config || {}).zap || "";
     var u = S.usuario ? S.usuario() : {};
     if (u.logado) {
       $("contaStatus").innerHTML = "✅ <b>Conectado como " + esc(u.email) + "</b> — seus dados sincronizam entre os seus aparelhos e ficam na SUA ilha, separados de qualquer outro personal ou academia.";
@@ -557,6 +710,12 @@
     renderAvaliacoes(st);
     renderConta();
   }
+  $("cfgZap").addEventListener("change", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.zap = this.value.replace(/\D/g, "");
+    S.write("ptStudio", st);
+  });
   $("sData").value = S.todayISO();
   $("avData").value = S.todayISO();
   S.onChange(function (k) { if (k === "ptStudio") render(); });

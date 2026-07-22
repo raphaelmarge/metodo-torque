@@ -170,6 +170,30 @@ function ok(cond, nome) {
   await pApp.click("#dcAdd");
   const dc = await pApp.evaluate(() => document.getElementById("dcLista").textContent);
   ok(/Agachamento/.test(dc) && /80/.test(dc), "aluno registra carga no diário");
+  // motivação: treinei hoje → bolinha, meta e toast
+  pApp.on("dialog", (d) => d.accept());
+  await pApp.click("#btnFeito");
+  await pApp.waitForTimeout(200);
+  const semana = await pApp.evaluate(() => document.getElementById("diasSem").textContent);
+  ok(/✓/.test(semana), "bolinha do dia marcada após 'Treinei hoje'");
+  const metaTxt = await pApp.evaluate(() => document.getElementById("metaBox").textContent);
+  ok(/1 de 3/.test(metaTxt), "meta da semana mostra 1 de 3");
+  const medal = await pApp.evaluate(() => document.getElementById("medalhas").textContent);
+  ok(/1 treino/.test(medal) && /faltam 4/.test(medal), "contador de medalhas (faltam 4 pra 🥉)");
+  // clicar de novo no mesmo dia não duplica
+  await pApp.click("#btnFeito");
+  const feitos = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos")));
+  ok(Object.keys(feitos).length === 1, "mesmo dia não duplica o registro");
+  // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
+  await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
+  await pApp.click("#ckNotas button:nth-child(4)");
+  await pApp.fill("#ckPeso", "84,5");
+  await pApp.fill("#ckTexto", "Semana boa!");
+  await pApp.click("#ckEnvia");
+  await pApp.waitForTimeout(200);
+  const ckOk = await pApp.evaluate(() => document.getElementById("ckOk").style.display !== "none");
+  ok(ckOk, "check-in enviado marca a semana como feita");
+
   const evo = await pApp.evaluate(() => document.getElementById("evoBox").textContent);
   ok(/84/.test(evo) && /-6/.test(evo.replace("−", "-")), "evolução mostra peso atual e delta");
   ok(errosApp.length === 0, "app do aluno abre sem erros de JS" + (errosApp.length ? " — " + errosApp[0] : ""));
@@ -178,6 +202,12 @@ function ok(cond, nome) {
   // conta / ilha
   const conta = await p.evaluate(() => document.getElementById("contaStatus").textContent);
   ok(/Crie sua conta|Conectado/.test(conta), "card da ilha mostra o status da conta");
+
+  // aba assessoria (sem nuvem → aviso educado)
+  await p.click('[data-a="assessoria"]');
+  await p.waitForTimeout(300);
+  const asse = await p.evaluate(() => document.getElementById("assessoriaLista").textContent);
+  ok(/precisa da sua conta/.test(asse), "assessoria sem nuvem explica o que falta");
 
   // aluno "Encerrar" some da lista
   await p.click('[data-a="alunos"]');

@@ -777,3 +777,50 @@ end;
 $$;
 
 grant execute on function public.matricula_nova(text, text, text, text, text) to anon, authenticated;
+
+-- ==================== ASSESSORIA ONLINE (Personal) ====================
+-- Check-in semanal do aluno de assessoria: nota da semana, peso e comentário.
+-- O "treinei hoje" reaproveita app_treino_log (exercicio __feito). Bloco idempotente.
+
+create table if not exists public.app_checkin (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  dia date not null,
+  nota integer not null default 0,
+  texto text not null default '',
+  peso numeric,
+  criado timestamptz not null default now()
+);
+create index if not exists app_checkin_dia on public.app_checkin (academia_id, dia desc);
+create unique index if not exists app_checkin_unico on public.app_checkin (token, dia);
+
+alter table public.app_checkin enable row level security;
+
+drop policy if exists "app_checkin_membros" on public.app_checkin;
+create policy "app_checkin_membros" on public.app_checkin
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+create or replace function public.app_aluno_checkin(t text, p_nota integer, p_texto text, p_peso numeric default null)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  insert into app_checkin (academia_id, token, dia, nota, texto, peso)
+    values (v_acad, t, current_date, greatest(1, least(5, coalesce(p_nota, 3))),
+            left(coalesce(p_texto, ''), 500), p_peso)
+  on conflict (token, dia) do update
+    set nota = excluded.nota, texto = excluded.texto, peso = excluded.peso, criado = now();
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.app_aluno_checkin(text, integer, text, numeric) to anon, authenticated;
