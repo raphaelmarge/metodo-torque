@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORQUESYS Personal — o sistema do personal trainer</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.25), transparent 60%), #121016; color: #f5f4f7; min-height: 100vh; }
+  .topo { text-align: center; padding: 52px 20px 34px; }
+  .topo .kicker { font-size: 12px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+  .topo h1 { font-size: 34px; font-weight: 800; letter-spacing: -.02em; margin: 12px 0 10px; }
+  .topo p { color: #b9b3c6; font-size: 16px; max-width: 520px; margin: 0 auto; line-height: 1.6; }
+  .corpo { max-width: 680px; margin: 0 auto; padding: 10px 18px 70px; }
+  .feat { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 18px 20px; margin-bottom: 12px; display: flex; gap: 16px; align-items: flex-start; box-shadow: 0 10px 30px -12px rgba(0,0,0,.4); }
+  .feat .ic { font-size: 28px; flex: none; }
+  .feat b { font-size: 15.5px; display: block; margin-bottom: 3px; }
+  .feat p { color: #b9b3c6; font-size: 13.5px; line-height: 1.55; }
+  .cta { display: block; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; font-weight: 800; font-size: 17px; padding: 17px; border-radius: 14px; margin: 26px 0 10px; transition: transform .15s ease, box-shadow .2s ease; }
+  .cta:hover { transform: translateY(-1px); box-shadow: 0 12px 30px -10px rgba(124,58,237,.6); }
+  .cta.sec { background: none; border: 1.5px solid #4c3f6b; font-size: 14.5px; padding: 13px; }
+  .nota { text-align: center; color: #8a8695; font-size: 12.5px; margin-top: 14px; line-height: 1.6; }
+  .selo { display: inline-block; background: rgba(124,58,237,.18); border: 1px solid #7c3aed; color: #d6c9f5; font-size: 12.5px; font-weight: 700; padding: 5px 14px; border-radius: 999px; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="kicker">TORQUESYS · Módulo Personal</div>
+  <h1>💪 O sistema do<br>personal trainer</h1>
+  <p>Chega de agenda no papel e cobrança esquecida: seus alunos, sessões, pagamentos e treinos em um app só — que funciona até sem internet.</p>
+  <span class="selo">✓ Instala no celular como app · sem mensalidade de servidor</span>
+</header>
+
+<main class="corpo">
+  <div class="feat"><span class="ic">👥</span><div><b>Seus alunos organizados</b><p>Cadastro com valor combinado (por mês ou por sessão), etiqueta de quem já pagou o mês e WhatsApp a um toque.</p></div></div>
+  <div class="feat"><span class="ic">📅</span><div><b>Agenda de sessões</b><p>Agende, marque ✅ quando acontecer e veja a semana na hora — sessões feitas contam no fechamento de quem paga por sessão.</p></div></div>
+  <div class="feat"><span class="ic">💰</span><div><b>Pagamentos sem constrangimento</b><p>Registre em 3 toques e veja quem ainda não pagou o mês — o botão 💬 Cobrar abre o WhatsApp com a mensagem pronta e educada.</p></div></div>
+  <div class="feat"><span class="ic">🏋️</span><div><b>Treinos com envio por WhatsApp</b><p>O treino de cada aluno salvo no app, atualizado quando quiser e enviado com um clique.</p></div></div>
+  <div class="feat"><span class="ic">📊</span><div><b>Seu negócio em números</b><p>Alunos ativos, recebido no mês e sessões dadas — os números do SEU negócio na primeira tela.</p></div></div>
+  <div class="feat"><span class="ic">🔒</span><div><b>Seus dados são seus</b><p>Tudo fica no seu aparelho e funciona offline. Criando conta, sincroniza entre celular e computador.</p></div></div>
+
+  <a class="cta" id="ctaZap" href="personal.html">🚀 Quero o TORQUESYS Personal</a>
+  <a class="cta sec" href="personal.html">Já tenho acesso — abrir meu Studio</a>
+  <p class="nota">Feito com o mesmo motor do TORQUESYS que gere a TORQUE FIT.<br>Dúvidas? Chama no WhatsApp pelo botão acima. 💜</p>
+</main>
+
+<script>
+(function () {
+  // o vendedor compartilha o link com o próprio número: personal-vendas.html?zap=5531999990000
+  try {
+    var zap = (new URLSearchParams(location.search).get("zap") || "").replace(/\D/g, "");
+    if (zap) {
+      var cta = document.getElementById("ctaZap");
+      cta.href = "https://wa.me/" + zap + "?text=" + encodeURIComponent("Oi! Quero o TORQUESYS Personal 💪 Como funciona?");
+      cta.target = "_blank";
+      cta.rel = "noopener";
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

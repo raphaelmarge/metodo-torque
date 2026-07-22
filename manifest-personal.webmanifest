@@ -1,0 +1,21 @@
+{
+  "name": "TORQUESYS Personal",
+  "short_name": "TQS Personal",
+  "description": "Gestão do personal trainer: alunos, agenda, pagamentos e treinos.",
+  "start_url": "personal.html",
+  "display": "standalone",
+  "background_color": "#121016",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

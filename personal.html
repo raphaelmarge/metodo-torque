@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TORQUESYS Personal — gestão para personal trainers</title>
 <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest-personal.webmanifest">
+<meta name="theme-color" content="#7c3aed">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps/apps.css" rel="stylesheet">
 <style>
@@ -25,14 +27,24 @@
 <header class="topo">
   <div class="topo-marca">
     <div>
-    <span class="kicker">TORQUESYS · PERSONAL</span>
-    <h1>💪 Meu Studio</h1>
+    <span class="kicker">TORQUESYS · MÓDULO PERSONAL</span>
+    <h1 id="tituloStudio">💪 Meu Studio</h1>
     </div>
   </div>
   <p>A gestão do personal trainer em uma tela: seus alunos, agenda de sessões, pagamentos e treinos com envio por WhatsApp — funciona offline e sincroniza entre seus aparelhos.</p>
 </header>
 
 <main class="corpo">
+  <div class="card" id="boasVindas" hidden style="margin-bottom: 16px; border-left: 4px solid var(--roxo);">
+    <h2>👋 Bem-vindo(a) ao TORQUESYS Personal</h2>
+    <p class="muted" style="margin: 6px 0 10px;">Este é o SEU sistema: alunos, agenda, pagamentos e treinos — funciona sem internet e os dados ficam neste aparelho (com conta, sincroniza entre celular e computador). Como você se chama?</p>
+    <div class="linha-flex">
+      <input id="obNome" placeholder="Seu nome (ex.: Léo Personal)" style="max-width: 280px;">
+      <button class="btn" id="obOk">Começar 💪</button>
+    </div>
+    <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">📲 Dica: no celular, use <b>Adicionar à tela inicial</b> — vira um app de verdade, com ícone e tudo.</p>
+  </div>
+
   <div class="kpi-pt" id="kpis"></div>
 
   <div class="abas-pt" id="abas">
@@ -120,6 +132,24 @@
     return st;
   }
   function save(st) { S.write("ptStudio", st); render(); }
+
+  // onboarding do módulo: pergunta o nome do personal na primeira abertura
+  function verificaOnboarding() {
+    var st = load();
+    var nome = (st.config || {}).nome;
+    $("boasVindas").hidden = !!nome;
+    if (nome) $("tituloStudio").textContent = "💪 Studio " + nome.split(" ")[0];
+  }
+  $("obOk").addEventListener("click", function () {
+    var nome = $("obNome").value.trim();
+    if (!nome) { alert("Escreva seu nome. 😉"); return; }
+    var st = load();
+    st.config = st.config || {};
+    st.config.nome = nome;
+    S.write("ptStudio", st);
+    verificaOnboarding();
+    render();
+  });
   var mesAtual = S.todayISO().slice(0, 7);
 
   // ---------- abas ----------
@@ -280,6 +310,7 @@
   }
   $("sData").value = S.todayISO();
   S.onChange(function (k) { if (k === "ptStudio") render(); });
+  verificaOnboarding();
   render();
   window.__ptStudio = { load: load, render: render }; // testes
 })();
