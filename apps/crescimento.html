@@ -90,6 +90,11 @@
       <p class="muted" style="margin-top: 12px;">💡 O motivo é perguntado na hora do cancelamento, na ficha do aluno.</p>
     </div>
   </div>
+  <div class="card" style="margin-top: 16px;">
+    <h2>🧲 Retenção por atividade (coletivas × treino solto)</h2>
+    <p class="muted" style="margin: 4px 0 10px;">O dado mais famoso do setor: quem participa de aulas coletivas cria vínculo e cancela menos. Se a diferença aparecer aí embaixo, a regra é clara — todo aluno novo sai da recepção com uma aula agendada.</p>
+    <div id="retAtividade" class="muted">Sem dados suficientes ainda.</div>
+  </div>
 </main>
 
 <script src="../assets/access-config.js"></script>
@@ -354,6 +359,51 @@
         (l.ret.length ? "" : "<td colspan='6' class='muted'>sem alunos nesta safra</td>") + "</tr>";
     }).join("") + "</tbody></table></div>";
   document.querySelector("main").appendChild(card);
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  function renderRetAtividade() {
+    var el = document.getElementById("retAtividade");
+    if (!el) return;
+    var stG = S.read("grade", { presencas: {}, aulas: [] });
+    var fez = {};
+    Object.keys(stG.presencas || {}).forEach(function (k) {
+      (stG.presencas[k] || []).forEach(function (n) { fez[String(n).replace(" 📲", "").trim()] = 1; });
+    });
+    (stG.aulas || []).forEach(function (a) { (a.fixos || []).forEach(function (n) { fez[String(n).trim()] = 1; }); });
+    var corte = new Date(); corte.setFullYear(corte.getFullYear() - 1);
+    var corteISO = corte.toISOString().slice(0, 10);
+    var grupos = { coletiva: { total: 0, cancel: 0 }, solto: { total: 0, cancel: 0 } };
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) {
+      var tem = (a.contratos || []).length;
+      if (!tem) return;
+      var g = fez[a.nome] ? grupos.coletiva : grupos.solto;
+      g.total++;
+      if ((a.contratos || []).some(function (c) { return c.status === "cancelado" && (c.canceladoEm || "") >= corteISO; })) g.cancel++;
+    });
+    if (grupos.coletiva.total + grupos.solto.total < 2) { el.textContent = "Sem dados suficientes ainda — marque presenças nas aulas da Grade."; return; }
+    function linha(rot, ico, g, cor) {
+      var churn = g.total ? 100 * g.cancel / g.total : 0;
+      return '<div style="display:flex;gap:14px;align-items:center;padding:9px 0;border-top:1px solid var(--linha);font-size:13.5px;flex-wrap:wrap;">' +
+        '<span style="min-width:250px;font-weight:700;">' + ico + " " + rot + "</span>" +
+        "<span>" + g.total + " aluno(s)</span><span>" + g.cancel + " cancelamento(s) em 12m</span>" +
+        '<span style="margin-left:auto;font-weight:800;color:' + cor + ';">churn ' + churn.toFixed(1).replace(".", ",") + "%</span></div>";
+    }
+    var cC = grupos.coletiva.total ? grupos.coletiva.cancel / grupos.coletiva.total : 0;
+    var cS = grupos.solto.total ? grupos.solto.cancel / grupos.solto.total : 0;
+    el.innerHTML =
+      linha("Frequenta aulas coletivas", "🧲", grupos.coletiva, "#16a34a") +
+      linha("Só treino solto (nunca em aula)", "🏋️", grupos.solto, cS > cC ? "#dc2626" : "var(--texto)") +
+      (grupos.solto.total && grupos.coletiva.total && cS > cC
+        ? '<p class="muted" style="margin:10px 0 0;">💡 Quem treina solto cancela <b>' +
+          (cC > 0 ? (cS / cC).toFixed(1).replace(".", ",") + "× mais" : "muito mais") +
+          "</b> — bora agendar uma coletiva pra cada um deles?</p>" : "");
+  }
+  S.onChange(function (k) { if (k === "alunos" || k === "grade") renderRetAtividade(); });
+  renderRetAtividade();
+  window.__retAtividade = renderRetAtividade; // testes
 })();
 </script>
 </body>

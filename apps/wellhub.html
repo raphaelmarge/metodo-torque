@@ -152,6 +152,11 @@
       </div>
     </div>
   </section>
+  <div class="card" style="margin-top: 16px;">
+    <h2>🤝 Agregadores × alunos próprios (últimos 90 dias)</h2>
+    <p class="muted" style="margin: 4px 0 10px;">O agregador traz volume que vale o repasse, ou está canibalizando matrícula própria? Compare o peso de cada origem nos check-ins.</p>
+    <div id="aggComparativo" class="muted">Sem check-ins no período.</div>
+  </div>
 </main>
 
 <script src="../assets/access-config.js"></script>
@@ -544,6 +549,51 @@
   // ---------- boot ----------
   renderPlanosSel();
   S.onChange(function (k) { if (k === "alunos") renderPlanosSel(); if (k === "wellhub") renderLista(); });
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  function escA(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function renderAggComparativo() {
+    var el = document.getElementById("aggComparativo");
+    if (!el) return;
+    var corte = new Date(); corte.setDate(corte.getDate() - 90);
+    var corteISO = corte.toISOString().slice(0, 10);
+    var porOrigem = {};
+    (S.read("wellhub", { checkins: [] }).checkins || []).forEach(function (c) {
+      if ((c.quando || "").slice(0, 10) < corteISO) return;
+      var o = c.agregador || "Agregador";
+      porOrigem[o] = porOrigem[o] || { n: 0, unicos: {} };
+      porOrigem[o].n++;
+      porOrigem[o].unicos[c.nome || c.alunoId] = 1;
+    });
+    var proprios = { n: 0, unicos: {} };
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        if ((t || "").slice(0, 10) < corteISO) return;
+        proprios.n++;
+        proprios.unicos[a.id] = 1;
+      });
+    });
+    var linhas = [{ origem: "💜 Alunos próprios", n: proprios.n, unicos: Object.keys(proprios.unicos).length }]
+      .concat(Object.keys(porOrigem).map(function (o) {
+        return { origem: "🤝 " + o, n: porOrigem[o].n, unicos: Object.keys(porOrigem[o].unicos).length };
+      }));
+    var total = linhas.reduce(function (t, l) { return t + l.n; }, 0);
+    if (!total) { el.textContent = "Sem check-ins no período."; return; }
+    el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+      "<tr><th style='text-align:left;padding:6px 8px;'>ORIGEM</th><th style='text-align:right;'>CHECK-INS 90D</th><th style='text-align:right;'>PESSOAS ÚNICAS</th><th style='text-align:right;'>% DO MOVIMENTO</th></tr>" +
+      linhas.sort(function (a, b) { return b.n - a.n; }).map(function (l) {
+        return "<tr style='border-top:1px solid var(--linha);'><td style='padding:6px 8px;'><b>" + escA(l.origem) +
+          "</b></td><td style='text-align:right;'>" + l.n + "</td><td style='text-align:right;'>" + l.unicos +
+          "</td><td style='text-align:right;'><b>" + Math.round(100 * l.n / total) + "%</b></td></tr>";
+      }).join("") + "</table>" +
+      '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">💡 Agregador acima de ~30% do movimento merece conta na ponta do lápis: repasse por visita × mensalidade cheia — e uma oferta de migração pros frequentes.</p>';
+  }
+  S.onChange(function (k) { if (k === "wellhub" || k === "alunos") renderAggComparativo(); });
+  renderAggComparativo();
+  window.__aggComparativo = renderAggComparativo; // testes
 })();
 </script>
 </body>

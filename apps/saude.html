@@ -70,6 +70,12 @@
       </div>
     </div>
   </div>
+  <div class="card" style="margin-top: 16px;">
+    <h2>📈 Resultados dos alunos (evolução entre avaliações)</h2>
+    <p class="muted" style="margin: 4px 0 10px;">Da base com 2+ avaliações: quem evoluiu, quanto em média, e os maiores progressos. Aluno que VÊ resultado renova — e print de evolução é o melhor marketing que existe.</p>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnEvoCSV">📤 CSV</button></div>
+    <div id="resultados" class="muted">Ainda não há alunos com 2+ avaliações.</div>
+  </div>
 </main>
 
 <!-- nova avaliação -->
@@ -451,6 +457,76 @@
     return '<div class="card" style="margin-top:14px;"><h2>📸 Antes × Depois</h2><div class="linha-flex" style="gap:14px;align-items:flex-start;flex-wrap:wrap;">' +
       bloco(antes, "ANTES") + (depois !== antes ? bloco(depois, "DEPOIS") : "") + "</div></div>";
   };
+})();
+</script>
+<script>
+(function () {
+  var S = window.MTStore;
+  function escE(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function dadosEvolucao() {
+    var avs = S.read("saude", { avaliacoes: [] }).avaliacoes || [];
+    var nomeDe = {};
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var porAluno = {};
+    avs.forEach(function (v) { (porAluno[v.alunoId] = porAluno[v.alunoId] || []).push(v); });
+    var linhas = [];
+    Object.keys(porAluno).forEach(function (id) {
+      var lista = porAluno[id].slice().sort(function (a, b) { return (a.data || "") < (b.data || "") ? -1 : 1; });
+      if (lista.length < 2) return;
+      var pri = lista[0], ult = lista[lista.length - 1];
+      var dPeso = (+ult.peso && +pri.peso) ? +ult.peso - +pri.peso : null;
+      var dGord = (+ult.gordura && +pri.gordura) ? +ult.gordura - +pri.gordura : null;
+      if (dPeso == null && dGord == null) return;
+      linhas.push({
+        nome: nomeDe[id] || "Aluno", n: lista.length, de: pri.data, ate: ult.data,
+        dPeso: dPeso, dGord: dGord,
+        melhorou: (dGord != null ? dGord < 0 : dPeso < 0),
+      });
+    });
+    return linhas;
+  }
+  function renderResultados() {
+    var el = document.getElementById("resultados");
+    if (!el) return;
+    var linhas = dadosEvolucao();
+    if (!linhas.length) { el.textContent = "Ainda não há alunos com 2+ avaliações."; return; }
+    var melhoraram = linhas.filter(function (l) { return l.melhorou; });
+    var comGord = linhas.filter(function (l) { return l.dGord != null; });
+    var mediaGord = comGord.length ? comGord.reduce(function (t, l) { return t + l.dGord; }, 0) / comGord.length : null;
+    var top = comGord.slice().sort(function (a, b) { return a.dGord - b.dGord; }).slice(0, 3);
+    function fx(v, unid) {
+      if (v == null) return "—";
+      var sinal = v > 0 ? "+" : "";
+      var cor = v < 0 ? "#16a34a" : v > 0 ? "#dc2626" : "var(--cinza)";
+      return "<b style='color:" + cor + ";'>" + sinal + v.toFixed(1).replace(".", ",") + unid + "</b>";
+    }
+    el.innerHTML = '<p style="margin:0 0 10px;font-size:14px;"><b>' + melhoraram.length + " de " + linhas.length +
+      " aluno(s) (" + Math.round(100 * melhoraram.length / linhas.length) + "%) evoluíram</b>" +
+      (mediaGord != null ? " · média de gordura: " + fx(mediaGord, " pt") : "") + "</p>" +
+      (top.length ? '<p class="muted" style="margin:0 0 8px;">🏆 Maiores progressos: ' +
+        top.map(function (l) { return "<b>" + escE(l.nome.split(" ")[0]) + "</b> (" + l.dGord.toFixed(1).replace(".", ",") + " pt de gordura)"; }).join(" · ") + "</p>" : "") +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+      "<tr><th style='text-align:left;padding:6px 8px;'>ALUNO</th><th style='text-align:right;'>AVALIAÇÕES</th><th style='text-align:right;'>PESO</th><th style='text-align:right;'>GORDURA</th><th style='text-align:left;padding-left:12px;'>PERÍODO</th></tr>" +
+      linhas.sort(function (a, b) { return (a.dGord == null ? 99 : a.dGord) - (b.dGord == null ? 99 : b.dGord); }).slice(0, 15).map(function (l) {
+        return "<tr style='border-top:1px solid var(--linha);'><td style='padding:6px 8px;'><b>" + escE(l.nome) + "</b></td>" +
+          "<td style='text-align:right;'>" + l.n + "</td><td style='text-align:right;'>" + fx(l.dPeso, " kg") +
+          "</td><td style='text-align:right;'>" + fx(l.dGord, " pt") + "</td>" +
+          "<td style='padding-left:12px;' class='muted'>" + S.fmtData(l.de) + " → " + S.fmtData(l.ate) + "</td></tr>";
+      }).join("") + "</table>";
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "btnEvoCSV") {
+      var csv = [["Aluno", "Avaliações", "Δ Peso kg", "Δ Gordura pt", "De", "Até"]];
+      dadosEvolucao().forEach(function (l) {
+        csv.push([l.nome, l.n, l.dPeso == null ? "" : l.dPeso.toFixed(1).replace(".", ","),
+          l.dGord == null ? "" : l.dGord.toFixed(1).replace(".", ","), l.de, l.ate]);
+      });
+      S.baixaCSV("resultados-dos-alunos", csv);
+    }
+  });
+  S.onChange(function (k) { if (k === "saude" || k === "alunos") renderResultados(); });
+  renderResultados();
+  window.__resultados = renderResultados; // testes
 })();
 </script>
 </body>

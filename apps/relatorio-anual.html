@@ -55,6 +55,13 @@
     <div style="overflow-x: auto;"><table class="tab-rel" id="tabFuturo"></table></div>
   </div>
 
+  <div class="card" style="margin-bottom: 16px;">
+    <h2>💸 Vazamento de preço (descontos concedidos)</h2>
+    <p class="muted" style="margin: 4px 0 12px;">Contratos ativos pagando menos que a tabela do plano. Desconto tem hora pra acabar — use a lista no reajuste anual.</p>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnVazaCSV">📤 CSV</button></div>
+    <div style="overflow-x: auto;"><table class="tab-rel" id="tabVaza"></table></div>
+  </div>
+
   <div class="card">
     <h2>📦 Desempenho por plano</h2>
     <p class="muted" style="margin: 4px 0 12px;">Qual plano rende e segura aluno: ativos, receita mensal recorrente, vida média (dos contratos encerrados) e churn dos últimos 12 meses. Plano barato que segura pouco pode estar custando caro.</p>
@@ -202,6 +209,47 @@
       : "<tr><td class='muted'>Cadastre planos e contratos para ver este quadro.</td></tr>";
   }
 
+  function dadosVazamento() {
+    var stA = S.read("alunos", { alunos: [], planos: [] });
+    var linhas = [];
+    stA.alunos.forEach(function (a) {
+      (a.contratos || []).forEach(function (c) {
+        if (c.status !== "ativo" && c.status !== "congelado") return;
+        var pl = (stA.planos || []).find(function (x) { return x.id === c.planoId; });
+        if (!pl || !+pl.valor || !+c.valor) return;
+        if (+c.valor < +pl.valor) {
+          linhas.push({ aluno: a.nome, plano: pl.nome, tabela: +pl.valor, pago: +c.valor, dif: +pl.valor - +c.valor });
+        }
+      });
+    });
+    return linhas.sort(function (x, y) { return y.dif - x.dif; });
+  }
+  function renderVazamento() {
+    var linhas = dadosVazamento();
+    if (!linhas.length) {
+      $("tabVaza").innerHTML = "<tr><td class='muted'>Nenhum contrato abaixo da tabela — preço redondo. 🎉</td></tr>";
+      return;
+    }
+    var total = linhas.reduce(function (t, l) { return t + l.dif; }, 0);
+    $("tabVaza").innerHTML =
+      "<tr><th>Aluno</th><th>Plano</th><th>Tabela</th><th>Paga</th><th>Desconto/mês</th></tr>" +
+      linhas.slice(0, 30).map(function (l) {
+        return "<tr><td><b>" + esc(l.aluno) + "</b></td><td>" + esc(l.plano) + "</td><td>" + S.fmtBRL(l.tabela) +
+          "</td><td>" + S.fmtBRL(l.pago) + "</td><td style='color:#dc2626;'><b>−" + S.fmtBRL(l.dif) + "</b></td></tr>";
+      }).join("") +
+      (linhas.length > 30 ? "<tr><td colspan='5' class='muted'>… e mais " + (linhas.length - 30) + " contrato(s) no CSV</td></tr>" : "") +
+      "<tr class='total'><td colspan='4'>VAZAMENTO TOTAL (" + linhas.length + " contratos)</td><td style='color:#dc2626;'>−" + S.fmtBRL(total) + "/mês = −" + S.fmtBRL(total * 12) + "/ano</td></tr>";
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "btnVazaCSV") {
+      var csv = [["Aluno", "Plano", "Tabela", "Paga", "Desconto/mês"]];
+      dadosVazamento().forEach(function (l) {
+        csv.push([l.aluno, l.plano, l.tabela.toFixed(2).replace(".", ","), l.pago.toFixed(2).replace(".", ","), l.dif.toFixed(2).replace(".", ",")]);
+      });
+      S.baixaCSV("vazamento-de-preco", csv);
+    }
+  });
+
   function render() {
     var anos = [];
     var esteAno = new Date().getFullYear();
@@ -209,6 +257,7 @@
     $("selAno").innerHTML = anos.map(function (a) { return "<option" + (a === anoSel ? " selected" : "") + ">" + a + "</option>"; }).join("");
     renderAno();
     renderFuturo();
+    renderVazamento();
     renderPlanos();
   }
 

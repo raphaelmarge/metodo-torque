@@ -56,6 +56,18 @@
   </div>
 
   <div class="card">
+    <h2>👻 No-show de agendamentos (últimos 60 dias)</h2>
+    <p class="muted" style="margin: 4px 0 8px;">Faltas marcadas 👻 na Grade: taxa geral e os faltões recorrentes. Falta em aula lotada é vaga que outro aluno queria — cobre confirmação de quem repete.</p>
+    <div id="noshow" class="muted">Nenhuma falta marcada ainda — use o 👻 na lista de participantes da Grade.</div>
+  </div>
+
+  <div class="card">
+    <h2>⏰ Pico de movimento × escala da equipe</h2>
+    <p class="muted" style="margin: 4px 0 8px;">Check-ins das últimas 4 semanas cruzados com a escala semanal dos Colaboradores: dia lotado com pouca gente escalada = atendimento sofre; dia vazio com equipe cheia = custo parado.</p>
+    <div style="overflow-x: auto;"><table class="tabela-prof" id="picoEscala"></table></div>
+  </div>
+
+  <div class="card">
     <h2>🧑‍🏫 Desempenho por professor</h2>
     <p class="muted" style="margin: 4px 0 8px;">Média de alunos por aula dada no período — compare professores no MESMO horário/modalidade antes de tirar conclusão.</p>
     <div style="overflow-x: auto;"><table class="tabela-prof" id="profs"></table></div>
@@ -218,8 +230,69 @@
         faixas.parados.slice(0, 12).map(esc).join(", ") + (faixas.parados.length > 12 ? "…" : "") + "</p>" : "");
   }
 
-  function render() { renderMapa(); renderOcupacao(); renderEngajamento(); renderProfs(); }
-  S.onChange(function (k) { if (k === "alunos" || k === "grade") render(); });
+  function renderNoShow() {
+    var el = $("noshow");
+    var corte = new Date(); corte.setDate(corte.getDate() - 60);
+    var corteISO = corte.toISOString().slice(0, 10);
+    var stG = S.read("grade", { presencas: {}, faltas: {} });
+    var faltas = [];
+    Object.keys(stG.faltas || {}).forEach(function (nome) {
+      var ds = (stG.faltas[nome] || []).filter(function (d) { return d >= corteISO; });
+      if (ds.length) faltas.push({ nome: nome, n: ds.length, ultima: ds.slice().sort().pop() });
+    });
+    var presencas = 0;
+    Object.keys(stG.presencas || {}).forEach(function (k) {
+      if ((k.split("|")[1] || "") >= corteISO) presencas += (stG.presencas[k] || []).length;
+    });
+    var totalFaltas = faltas.reduce(function (t, f) { return t + f.n; }, 0);
+    if (!totalFaltas) { el.textContent = "Nenhuma falta marcada ainda — use o 👻 na lista de participantes da Grade."; return; }
+    var taxa = presencas + totalFaltas ? 100 * totalFaltas / (presencas + totalFaltas) : 0;
+    el.innerHTML = '<p style="margin:0 0 8px;font-size:14px;"><b>Taxa de no-show: ' + taxa.toFixed(1).replace(".", ",") + "%</b> <span class='muted'>(" +
+      totalFaltas + " falta(s) para " + presencas + " presença(s))</span></p>" +
+      faltas.sort(function (a, b) { return b.n - a.n; }).slice(0, 10).map(function (f) {
+        return '<div class="ocup-linha"><span class="nm">' + esc(f.nome) + "</span>" +
+          "<span>👻 " + f.n + " falta(s)</span><span class='muted'>última em " + S.fmtData(f.ultima) + "</span>" +
+          (f.n >= 3 ? '<span class="tag alerta">recorrente — confirme antes</span>' : "") + "</div>";
+      }).join("");
+  }
+
+  function renderPicoEscala() {
+    var el = $("picoEscala");
+    var corte = limiteISO();
+    var porDia = [0, 0, 0, 0, 0, 0, 0];
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) {
+      (a.checkins || []).forEach(function (t) {
+        if ((t || "").slice(0, 10) < corte) return;
+        var dt = new Date(t);
+        if (!isNaN(dt)) porDia[dt.getDay()]++;
+      });
+    });
+    var stE = S.read("equipe", { colaboradores: [], escala: {} });
+    var escalados = [0, 0, 0, 0, 0, 0, 0];
+    Object.keys(stE.escala || {}).forEach(function (pid) {
+      for (var i = 0; i < 7; i++) {
+        var t = String((stE.escala[pid] || {})[i] || "").trim().toLowerCase();
+        if (t && t !== "folga" && t !== "-" && t !== "—") escalados[i]++;
+      }
+    });
+    var totalCk = porDia.reduce(function (t, v) { return t + v; }, 0);
+    if (!totalCk) { el.innerHTML = "<tr><td class='muted'>Sem check-ins no período.</td></tr>"; return; }
+    var maxCk = Math.max.apply(null, porDia);
+    el.innerHTML = "<tr><th>Dia</th><th>Check-ins (4 sem)</th><th>Média/dia</th><th>Equipe escalada</th><th>Leitura</th></tr>" +
+      DIAS.map(function (nome, i) {
+        var media = porDia[i] / N_SEMANAS;
+        var carga = maxCk ? porDia[i] / maxCk : 0;
+        var leitura = "";
+        if (carga >= 0.7 && escalados[i] <= 1) leitura = "<span class='tag erro'>⚠️ pico com equipe mínima</span>";
+        else if (carga <= 0.25 && escalados[i] >= 3) leitura = "<span class='tag alerta'>💸 equipe cheia em dia fraco</span>";
+        else if (carga >= 0.7) leitura = "<span class='tag roxo'>🔥 dia de pico</span>";
+        return "<tr><td><b>" + nome + "</b></td><td>" + porDia[i] + "</td><td>" + media.toFixed(1).replace(".", ",") +
+          "</td><td>" + escalados[i] + " pessoa(s)</td><td>" + leitura + "</td></tr>";
+      }).join("");
+  }
+
+  function render() { renderMapa(); renderOcupacao(); renderEngajamento(); renderNoShow(); renderPicoEscala(); renderProfs(); }
+  S.onChange(function (k) { if (k === "alunos" || k === "grade" || k === "equipe") render(); });
   render();
   window.__ocupacao = { render: render, ocorrencias: ocorrencias }; // testes
 })();
