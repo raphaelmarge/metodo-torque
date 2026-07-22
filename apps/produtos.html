@@ -433,6 +433,68 @@
   card.innerHTML = "<h2>📲 Pedidos da Lojinha do app</h2><p class='muted' style='margin:4px 0 10px;'>Chegaram pelo app do aluno — separe, marque como entregue (o estoque baixa e a venda entra) e receba na recepção.</p><div id='pedidosAppLista'></div>";
   main.appendChild(card);
 
+  // curva ABC dos últimos 90 dias
+  var cardABC = document.createElement("div");
+  cardABC.className = "card";
+  cardABC.style.marginTop = "16px";
+  cardABC.innerHTML = "<h2>🛒 Curva ABC de produtos (últimos 90 dias)</h2>" +
+    "<p class='muted' style='margin:4px 0 10px;'>A = os campeões que carregam a receita (até 80%); B = os que andam; C = os que só ocupam prateleira — repense compra e exposição dos C.</p>" +
+    "<div class='linha-flex no-print' style='margin-bottom:8px;'><button class='btn sec mini' id='btnABCCSV'>📤 CSV</button></div>" +
+    "<div id='abcBox' class='muted' style='overflow-x:auto;'>Sem vendas nos últimos 90 dias.</div>";
+  main.appendChild(cardABC);
+
+  function dadosABC() {
+    var corte = new Date(); corte.setDate(corte.getDate() - 90);
+    var corteISO = corte.toISOString().slice(0, 10);
+    var porProd = {};
+    (S.read("produtos", { vendas: [] }).vendas || []).forEach(function (v) {
+      var dia = ((v.data || v.quando || "")).slice(0, 10);
+      if (dia < corteISO) return;
+      (v.itens ? Object.keys(v.itens).map(function (k) { return v.itens[k]; }) : []).forEach(function (it) {
+        var nome = it.nome || "Produto";
+        porProd[nome] = porProd[nome] || { qtd: 0, receita: 0 };
+        porProd[nome].qtd += +it.qtd || +it.q || 1;
+        porProd[nome].receita += (+it.preco || +it.v || 0) * (+it.qtd || +it.q || 1);
+      });
+    });
+    var linhas = Object.keys(porProd).map(function (n) { return { nome: n, qtd: porProd[n].qtd, receita: porProd[n].receita }; })
+      .sort(function (a, b) { return b.receita - a.receita; });
+    var total = linhas.reduce(function (t, l) { return t + l.receita; }, 0);
+    var acum = 0;
+    linhas.forEach(function (l) {
+      acum += l.receita;
+      l.pctAcum = total ? 100 * acum / total : 0;
+      l.classe = l.pctAcum <= 80 ? "A" : l.pctAcum <= 95 ? "B" : "C";
+    });
+    return { linhas: linhas, total: total };
+  }
+  function renderABC() {
+    var el = document.getElementById("abcBox");
+    if (!el) return;
+    var d = dadosABC();
+    if (!d.linhas.length) { el.textContent = "Sem vendas nos últimos 90 dias."; return; }
+    var corDe = { A: "#16a34a", B: "#d97706", C: "#dc2626" };
+    el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+      "<tr><th style='text-align:left;padding:6px 8px;'>CLASSE</th><th style='text-align:left;'>PRODUTO</th><th style='text-align:right;'>QTD</th><th style='text-align:right;'>RECEITA</th><th style='text-align:right;'>% ACUM.</th></tr>" +
+      d.linhas.map(function (l) {
+        return "<tr style='border-top:1px solid var(--linha);'><td style='padding:6px 8px;'><b style='color:" + corDe[l.classe] + ";'>" + l.classe +
+          "</b></td><td><b>" + esc(l.nome) + "</b></td><td style='text-align:right;'>" + l.qtd +
+          "</td><td style='text-align:right;'><b>" + S.fmtBRL(l.receita) + "</b></td><td style='text-align:right;'>" + l.pctAcum.toFixed(0) + "%</td></tr>";
+      }).join("") +
+      "<tr style='border-top:2px solid var(--escuro);'><td colspan='3' style='padding:8px;'><b>RECEITA TOTAL 90 DIAS</b></td><td style='text-align:right;'><b>" + S.fmtBRL(d.total) + "</b></td><td></td></tr></table>";
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "btnABCCSV") {
+      var d = dadosABC();
+      var csv = [["Classe", "Produto", "Quantidade", "Receita", "% acumulado"]];
+      d.linhas.forEach(function (l) { csv.push([l.classe, l.nome, l.qtd, l.receita.toFixed(2).replace(".", ","), l.pctAcum.toFixed(0)]); });
+      S.baixaCSV("curva-abc-produtos", csv);
+    }
+  });
+  S.onChange(function (k) { if (k === "produtos") renderABC(); });
+  renderABC();
+  window.__abc = renderABC; // testes
+
   window.__puxaPedidosApp = puxaPedidosApp; // testes
   setTimeout(puxaPedidosApp, 3000);
   setInterval(puxaPedidosApp, 60000);

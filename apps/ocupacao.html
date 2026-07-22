@@ -50,6 +50,12 @@
   </div>
 
   <div class="card">
+    <h2>🏃 Engajamento da base (últimas 4 semanas)</h2>
+    <p class="muted" style="margin: 4px 0 8px;">Frequência dos alunos ativos: quem treina 3+ vezes/semana fica; quem cai abaixo de 1×/semana é o próximo cancelamento. Os "parados" merecem mensagem HOJE (o Copiloto IA lista um a um).</p>
+    <div id="engajamento" class="muted">Sem alunos ativos ainda.</div>
+  </div>
+
+  <div class="card">
     <h2>🧑‍🏫 Desempenho por professor</h2>
     <p class="muted" style="margin: 4px 0 8px;">Média de alunos por aula dada no período — compare professores no MESMO horário/modalidade antes de tirar conclusão.</p>
     <div style="overflow-x: auto;"><table class="tabela-prof" id="profs"></table></div>
@@ -179,7 +185,40 @@
     $("profVazio").hidden = true;
   }
 
-  function render() { renderMapa(); renderOcupacao(); renderProfs(); }
+  function renderEngajamento() {
+    var el = $("engajamento");
+    var corte = limiteISO();
+    var faixas = { alta: [], media: [], baixa: [], parados: [] };
+    var ativos = 0;
+    S.read("alunos", { alunos: [] }).alunos.forEach(function (a) {
+      if (a.status === "inativo") return;
+      var temContrato = (a.contratos || []).some(function (c) { return c.status === "ativo" || c.status === "congelado"; });
+      if (!temContrato) return;
+      ativos++;
+      var n = (a.checkins || []).filter(function (t) { return (t || "").slice(0, 10) >= corte; }).length;
+      if (n >= 12) faixas.alta.push(a.nome);
+      else if (n >= 4) faixas.media.push(a.nome);
+      else if (n >= 1) faixas.baixa.push(a.nome);
+      else faixas.parados.push(a.nome);
+    });
+    if (!ativos) { el.textContent = "Sem alunos ativos ainda."; return; }
+    function linha(rot, cor, lista, nota) {
+      var pct = Math.round(100 * lista.length / ativos);
+      return '<div class="ocup-linha"><span class="nm" style="color:' + cor + ';">' + rot + "</span>" +
+        '<div class="bar-out"><div class="bar-in" style="width:' + pct + "%;background:" + cor + ';"></div></div>' +
+        '<span class="pc" style="color:' + cor + ';">' + pct + "%</span>" +
+        '<span class="muted">' + lista.length + " aluno(s)" + (nota || "") + "</span></div>";
+    }
+    el.innerHTML =
+      linha("🔥 3+ treinos/semana", "#16a34a", faixas.alta) +
+      linha("🙂 1–2 treinos/semana", "var(--roxo)", faixas.media) +
+      linha("😬 Menos de 1×/semana", "#d97706", faixas.baixa, " — risco alto de cancelar") +
+      linha("🚨 Parados (0 no período)", "#dc2626", faixas.parados, " — chame HOJE") +
+      (faixas.parados.length ? '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Parados: ' +
+        faixas.parados.slice(0, 12).map(esc).join(", ") + (faixas.parados.length > 12 ? "…" : "") + "</p>" : "");
+  }
+
+  function render() { renderMapa(); renderOcupacao(); renderEngajamento(); renderProfs(); }
   S.onChange(function (k) { if (k === "alunos" || k === "grade") render(); });
   render();
   window.__ocupacao = { render: render, ocorrencias: ocorrencias }; // testes

@@ -56,6 +56,13 @@
   </div>
 
   <div class="card">
+    <h2>📣 De onde vêm os alunos (canais de aquisição)</h2>
+    <p class="muted" style="margin: 4px 0 10px;">Leads e matrículas por origem nos últimos 90 dias — invista no canal que CONVERTE, não no que só enche o funil.</p>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnCanaisCSV">📤 CSV</button></div>
+    <div id="canais" class="muted" style="overflow-x: auto;">Sem leads ainda.</div>
+  </div>
+
+  <div class="card">
     <h2>🤝 Indicações de alunos</h2>
     <p class="muted" style="margin: 4px 0 10px;">Cada aluno tem um link "Indique um amigo" no app dele. Quando alguém se matricula por esse link, aparece aqui — combine e entregue a recompensa (ex.: mês com desconto pros dois).</p>
     <div id="indicacoes" class="muted">Nenhuma indicação ainda.</div>
@@ -385,6 +392,47 @@
   });
   S.onChange(function (k) { if (k === "indicacoes") renderIndicacoes(); });
   renderIndicacoes();
+
+  function dadosCanais() {
+    var corte = new Date(); corte.setDate(corte.getDate() - 90);
+    var corteISO = corte.toISOString().slice(0, 10);
+    var leads = S.read("funil", { leads: [] }).leads.filter(function (l) { return (l.criado || "") >= corteISO; });
+    var porOrigem = {};
+    leads.forEach(function (l) {
+      var o = (l.origem || "Não informado").trim() || "Não informado";
+      porOrigem[o] = porOrigem[o] || { leads: 0, matriculas: 0 };
+      porOrigem[o].leads++;
+      if (l.status === "matriculado") porOrigem[o].matriculas++;
+    });
+    return Object.keys(porOrigem).map(function (o) {
+      var x = porOrigem[o];
+      return { origem: o, leads: x.leads, matriculas: x.matriculas, taxa: x.leads ? 100 * x.matriculas / x.leads : 0 };
+    }).sort(function (a, b) { return b.matriculas - a.matriculas || b.leads - a.leads; });
+  }
+  function renderCanais() {
+    var el = document.getElementById("canais");
+    if (!el) return;
+    var linhas = dadosCanais();
+    if (!linhas.length) { el.textContent = "Sem leads nos últimos 90 dias."; return; }
+    el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+      "<tr><th style='text-align:left;padding:6px 8px;'>ORIGEM</th><th style='text-align:right;'>LEADS</th><th style='text-align:right;'>MATRÍCULAS</th><th style='text-align:right;'>CONVERSÃO</th></tr>" +
+      linhas.map(function (l) {
+        var cor = l.taxa >= 30 ? "#16a34a" : l.taxa >= 10 ? "var(--texto)" : "#b45309";
+        return "<tr style='border-top:1px solid var(--linha);'><td style='padding:6px 8px;'><b>" + l.origem +
+          "</b></td><td style='text-align:right;'>" + l.leads + "</td><td style='text-align:right;'><b>" + l.matriculas +
+          "</b></td><td style='text-align:right;color:" + cor + ";font-weight:700;'>" + l.taxa.toFixed(0) + "%</td></tr>";
+      }).join("") + "</table>";
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "btnCanaisCSV") {
+      var csv = [["Origem", "Leads 90d", "Matrículas", "Conversão %"]];
+      dadosCanais().forEach(function (l) { csv.push([l.origem, l.leads, l.matriculas, l.taxa.toFixed(1).replace(".", ",")]); });
+      S.baixaCSV("canais-de-aquisicao", csv);
+    }
+  });
+  renderCanais();
+  S.onChange(function (k) { if (k === "funil") renderCanais(); });
+  window.__canais = renderCanais; // testes
 
   window.__matriculasOnline = puxaMatriculasOnline; // testes
   window.__indicacoes = renderIndicacoes; // testes
