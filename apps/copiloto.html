@@ -51,6 +51,12 @@
     <p class="mut" id="analiseInfo" style="margin-top:6px;"></p>
   </div>
 
+  <div class="card" style="margin-top:16px;">
+    <h2>🧠 Tendência de risco (semana a semana)</h2>
+    <p class="mut" style="margin:4px 0 10px;">Um retrato por semana de quantos alunos estão em risco alto/médio. Curva subindo = o churn do mês que vem avisando — aja antes.</p>
+    <div id="tendencia" class="mut">O primeiro retrato é salvo sozinho quando esta tela abre — volte na próxima semana para ver a curva.</div>
+  </div>
+
   <h2 style="margin:22px 0 10px;font-size:15px;letter-spacing:.1em;color:var(--cinza);">ALUNOS EM RISCO (maior primeiro)</h2>
   <div id="listaRisco"></div>
 
@@ -231,7 +237,59 @@
   }
 
   render();
-  window.__copiloto = { calculaRiscos: calculaRiscos, render: render, resumoParaIA: resumoParaIA }; // testes
+  // retrato semanal do risco (para a curva de tendência)
+  function segundaDaSemana(d) {
+    var x = new Date(d);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return x.toISOString().slice(0, 10);
+  }
+  function salvaSnapshotRisco() {
+    var riscos = calculaRiscos();
+    var alto = 0, medio = 0;
+    riscos.forEach(function (r) {
+      var nv = nivel(r.pontos);
+      if (nv === "alto") alto++;
+      else if (nv === "medio") medio++;
+    });
+    var st = S.read("riscoHist", { snapshots: [] });
+    var semana = segundaDaSemana(new Date());
+    var jaTem = st.snapshots.find(function (x) { return x.semana === semana; });
+    var atual = { semana: semana, alto: alto, medio: medio, total: riscos.length };
+    if (jaTem) { jaTem.alto = alto; jaTem.medio = medio; jaTem.total = riscos.length; }
+    else st.snapshots.push(atual);
+    if (st.snapshots.length > 26) st.snapshots = st.snapshots.slice(-26);
+    S.write("riscoHist", st);
+    return st.snapshots;
+  }
+  function renderTendencia() {
+    var el = document.getElementById("tendencia");
+    if (!el) return;
+    var snaps = salvaSnapshotRisco().slice(-8);
+    if (snaps.length < 2) {
+      el.innerHTML = "Primeiro retrato salvo (" + snaps[0].alto + " em risco alto, " + snaps[0].medio + " médio). Volte na próxima semana para ver a curva. 📅";
+      return;
+    }
+    var max = Math.max.apply(null, snaps.map(function (x) { return x.alto + x.medio; })) || 1;
+    var ant = snaps[snaps.length - 2], atu = snaps[snaps.length - 1];
+    var dif = atu.alto - ant.alto;
+    el.innerHTML = '<div style="display:flex;gap:10px;align-items:flex-end;height:90px;">' +
+      snaps.map(function (x) {
+        var hA = Math.round(70 * x.alto / max), hM = Math.round(70 * x.medio / max);
+        return '<div style="flex:1;text-align:center;" title="' + x.semana + ": " + x.alto + " alto / " + x.medio + ' médio">' +
+          '<div style="height:' + (70 - hA - hM) + 'px;"></div>' +
+          '<div style="height:' + hM + 'px;background:#d97706;border-radius:4px 4px 0 0;"></div>' +
+          '<div style="height:' + hA + 'px;background:#dc2626;' + (hM ? "" : "border-radius:4px 4px 0 0;") + '"></div>' +
+          '<div style="font-size:10.5px;color:var(--cinza);margin-top:4px;">' + x.semana.slice(8, 10) + "/" + x.semana.slice(5, 7) + "</div></div>";
+      }).join("") + "</div>" +
+      '<p style="margin:10px 0 0;font-size:13.5px;">' +
+      (dif > 0 ? "📈 <b style='color:#dc2626;'>Risco alto subiu de " + ant.alto + " para " + atu.alto + "</b> — o churn de amanhã está avisando: ataque a lista abaixo."
+        : dif < 0 ? "📉 <b style='color:#16a34a;'>Risco alto caiu de " + ant.alto + " para " + atu.alto + "</b> — o trabalho de retenção está funcionando."
+        : "➡️ Risco alto estável em " + atu.alto + " aluno(s).") +
+      ' <span class="mut">Barras: 🔴 alto + 🟠 médio por semana.</span></p>';
+  }
+  renderTendencia();
+
+  window.__copiloto = { calculaRiscos: calculaRiscos, render: render, resumoParaIA: resumoParaIA, renderTendencia: renderTendencia }; // testes
 })();
 </script>
 </body>
