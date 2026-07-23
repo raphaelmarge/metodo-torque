@@ -724,17 +724,23 @@
   };
 
   // ---------- CEP → endereço automático (ViaCEP) ----------
-  $("aCep").addEventListener("change", function () {
-    var cep = this.value.replace(/\D/g, "");
-    if (cep.length !== 8) return;
+  // dispara no 8º dígito (sem precisar sair do campo) e pula pro Número
+  var cepBuscado = "";
+  function buscaCep() {
+    var cep = $("aCep").value.replace(/\D/g, "");
+    if (cep.length !== 8 || cep === cepBuscado) return;
+    cepBuscado = cep;
     fetch("https://viacep.com.br/ws/" + cep + "/json/").then(function (r) { return r.json(); }).then(function (d) {
-      if (d.erro) return;
-      if (!$("aEndereco").value) $("aEndereco").value = d.logradouro || "";
-      if (!$("aBairro").value) $("aBairro").value = d.bairro || "";
-      if (!$("aCidade").value) $("aCidade").value = d.localidade || "";
-      if (!$("aUf").value) $("aUf").value = d.uf || "";
-    }).catch(function () {});
-  });
+      if (d.erro) { cepBuscado = ""; return; }
+      $("aEndereco").value = d.logradouro || $("aEndereco").value;
+      $("aBairro").value = d.bairro || $("aBairro").value;
+      $("aCidade").value = d.localidade || $("aCidade").value;
+      $("aUf").value = d.uf || $("aUf").value;
+      $("aNumero").focus(); // só falta o número — o cursor já cai nele
+    }).catch(function () { cepBuscado = ""; });
+  }
+  $("aCep").addEventListener("input", buscaCep);
+  $("aCep").addEventListener("change", buscaCep);
 
   // ---------- foto de perfil ----------
   var fotoPendente = null; // id salvo no IndexedDB
