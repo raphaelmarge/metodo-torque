@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v159";
+var VERSION = "mt-v160";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
@@ -42,6 +42,8 @@ var CORE = [
   "personal.html",
   "personal-vendas.html",
   "manifest-personal.webmanifest",
+  "torquesys.html",
+  "apps/hq.html",
 ];
 
 var DOC_PAGES = (self.MT_DOCS || []).map(function (d) { return "docs/" + d.slug + ".html"; })

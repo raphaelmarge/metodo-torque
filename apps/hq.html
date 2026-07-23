@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORQUESYS HQ — comando do negócio</title>
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link href="../assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps.css" rel="stylesheet">
+<style>
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .kpi { background: #fff; border: 1px solid var(--linha); padding: 14px; border-radius: 12px; }
+  .kpi .rot { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
+  .kpi .val { font-size: 24px; font-weight: 800; margin-top: 2px; }
+  .cli { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid var(--linha); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+  .cli b.nome { font-size: 15px; }
+  .cli .mut { color: var(--cinza); font-size: 12.5px; }
+  .tag { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; }
+  .tag.tipo { background: #ede9fe; color: #6d28d9; }
+  .tag.ativo { background: #dcfce7; color: #15803d; }
+  .tag.trial { background: #fef3c7; color: #b45309; }
+  .tag.pausado { background: #e5e7eb; color: #374151; }
+  .tag.cancelado { background: #fee2e2; color: #b91c1c; }
+  .lead { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; }
+  dialog { border: 0; border-radius: 14px; padding: 22px; max-width: 430px; width: 92vw; box-shadow: 0 24px 60px -20px rgba(0,0,0,.45); }
+  dialog::backdrop { background: rgba(18,16,22,.55); }
+  dialog h2 { margin-bottom: 12px; }
+  dialog label { display: block; font-size: 12.5px; font-weight: 700; color: var(--cinza); margin: 10px 0 3px; }
+  dialog input, dialog select, dialog textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 9px; font-family: inherit; font-size: 14px; }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filtros input, .filtros select { padding: 9px 12px; border: 1px solid var(--linha); border-radius: 9px; font-family: inherit; font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-marca">
+    <div>
+      <span class="kicker">TORQUESYS · HQ</span>
+      <h1>Comando do negócio</h1>
+    </div>
+  </div>
+  <p>O painel do DONO do TORQUESYS: todas as empresas clientes (academias, studios, box e personals), planos, mensalidades e o funil de vendas — sem nunca entrar nos dados de nenhum cliente.</p>
+</header>
+
+<main class="corpo">
+
+  <div class="card" id="hqLock" style="border-left: 4px solid #d97706;">
+    <b>🔐 Área restrita ao administrador do TORQUESYS.</b>
+    <p class="muted" id="hqLockMsg" style="margin-top:6px;">Verificando seu acesso…</p>
+    <p style="margin-top:10px;"><a class="btn" href="../index.html">Ir para o portal e entrar</a></p>
+    <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;">Como me torno administrador?</summary>
+      <p class="muted" style="font-size:13px;margin-top:6px;">Rode o bloco <b>TORQUESYS HQ (SaaS)</b> do supabase-setup.sql e depois, no SQL Editor do Supabase:<br>
+      <code style="font-size:12px;">insert into public.saas_admins (user_id) select id from auth.users where email = 'SEU_EMAIL';</code></p>
+    </details>
+  </div>
+
+  <div id="hqPainel" hidden>
+
+    <div class="kpis" id="hqKpis"></div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h2>🏢 Empresas clientes</h2>
+      <div class="filtros">
+        <input id="fBusca" placeholder="🔍 Buscar por nome…" style="flex: 1; min-width: 160px;">
+        <select id="fStatus"><option value="">— status —</option><option>trial</option><option>ativo</option><option>pausado</option><option>cancelado</option></select>
+        <select id="fTipo"><option value="">— tipo —</option><option>academia</option><option>studio</option><option>box</option><option>personal</option><option>outro</option></select>
+      </div>
+      <div id="hqClientes" class="muted">Carregando…</div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h2>💠 Pix das mensalidades (sua chave)</h2>
+      <p class="muted" style="font-size: 13px;">Configure uma vez — o botão 💠 de cada cliente gera o Pix copia-e-cola com o valor do plano dele.</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+        <label style="margin:0;font-size:12.5px;">Chave Pix<input id="hqPixChave" placeholder="CPF, e-mail, celular ou aleatória" style="width:220px;display:block;margin-top:4px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;"></label>
+        <label style="margin:0;font-size:12.5px;">Nome do recebedor<input id="hqPixNome" placeholder="Como está no banco" style="width:180px;display:block;margin-top:4px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;"></label>
+        <label style="margin:0;font-size:12.5px;">Cidade<input id="hqPixCidade" placeholder="ex.: Belo Horizonte" style="width:150px;display:block;margin-top:4px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;"></label>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h2>🛒 Funil de vendas do TORQUESYS</h2>
+      <p class="muted" style="font-size: 13px;">Interessados que ainda não viraram clientes. Fica só na sua conta e sincroniza entre os seus aparelhos.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0;">
+        <input id="ldNome" placeholder="Nome (ex.: Academia Ferro)" style="flex:2;min-width:150px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;">
+        <input id="ldContato" placeholder="WhatsApp / Instagram" style="flex:1;min-width:130px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;">
+        <select id="ldTipo" style="padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;"><option>academia</option><option>studio</option><option>box</option><option>personal</option></select>
+        <button class="btn" id="ldAdd">+ Lead</button>
+      </div>
+      <div id="ldLista" class="muted">Nenhum lead ainda — anote aqui todo interessado.</div>
+    </div>
+
+  </div>
+
+  <dialog id="dlgCli">
+    <h2 id="dcNome">Cliente</h2>
+    <form method="dialog">
+      <label>Tipo</label>
+      <select id="dcTipo"><option>academia</option><option>studio</option><option>box</option><option>personal</option><option>outro</option></select>
+      <label>Plano (nome)</label>
+      <input id="dcPlano" placeholder="ex.: Academia, Studio & Box, Personal">
+      <label>Mensalidade (R$)</label>
+      <input id="dcValor" type="number" min="0" step="0.01">
+      <label>Status</label>
+      <select id="dcStatus"><option>trial</option><option>ativo</option><option>pausado</option><option>cancelado</option></select>
+      <label>Observações</label>
+      <textarea id="dcObs" rows="2" placeholder="ex.: fechou anual com 20% off"></textarea>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn" value="ok" style="flex:1;">Salvar</button>
+        <button class="btn sec" value="cancel">Cancelar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlgPixHQ">
+    <h2 id="pixHQTitulo">💠 Pix</h2>
+    <div id="pixHQQr" style="display:flex;justify-content:center;"></div>
+    <textarea id="pixHQCode" rows="4" readonly style="font-family:monospace;font-size:11px;margin-top:10px;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn" id="pixHQCopiar" style="flex:1;">📋 Copiar código</button>
+      <form method="dialog" style="flex:1;"><button class="btn sec" style="width:100%;">Fechar</button></form>
+    </div>
+  </dialog>
+
+</main>
+
+<script src="../assets/access-config.js"></script>
+<script src="../assets/cloud-config.js"></script>
+<script src="../assets/vendor/supabase.js"></script>
+<script src="../assets/vendor/qrcode.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var S = window.MTStore;
+  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var fmtR = function (v) { return "R$ " + Math.round(+v || 0).toLocaleString("pt-BR"); };
+
+  // ---------- Pix BR Code (mesmo padrão EMV do módulo Personal) ----------
+  function semAcento(t) {
+    return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function crc16(str) {
+    var crc = 0xFFFF;
+    for (var i = 0; i < str.length; i++) {
+      crc ^= str.charCodeAt(i) << 8;
+      for (var j = 0; j < 8; j++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return ("0000" + crc.toString(16).toUpperCase()).slice(-4);
+  }
+  function tlv(id, v) { return id + ("0" + v.length).slice(-2) + v; }
+  function pixPayload(chave, nome, cidade, valor, txid) {
+    nome = semAcento(nome).toUpperCase().slice(0, 25) || "RECEBEDOR";
+    cidade = semAcento(cidade).toUpperCase().slice(0, 15) || "BRASIL";
+    txid = String(txid || "***").replace(/[^A-Za-z0-9]/g, "").slice(0, 25) || "***";
+    var mai = tlv("00", "br.gov.bcb.pix") + tlv("01", String(chave).trim());
+    var p = tlv("00", "01") + tlv("26", mai) + tlv("52", "0000") + tlv("53", "986") +
+      (valor > 0 ? tlv("54", (+valor).toFixed(2)) : "") +
+      tlv("58", "BR") + tlv("59", nome) + tlv("60", cidade) + tlv("62", tlv("05", txid)) + "6304";
+    return p + crc16(p);
+  }
+  window.__pixHQ = { payload: pixPayload, crc16: crc16 }; // testes
+
+  // ---------- config do Pix do HQ (local + sync da conta) ----------
+  function hqCfg() { return S.read("hqConfig", {}); }
+  [["hqPixChave", "pixChave"], ["hqPixNome", "pixNome"], ["hqPixCidade", "pixCidade"]].forEach(function (par) {
+    $(par[0]).value = hqCfg()[par[1]] || "";
+    $(par[0]).addEventListener("change", function () {
+      var c = hqCfg(); c[par[1]] = this.value.trim(); S.write("hqConfig", c);
+    });
+  });
+
+  // ---------- conexão e trava ----------
+  var cli = null;
+  var clientes = [];
+  function lock(msg) { $("hqLockMsg").innerHTML = msg; }
+  function initHQ() {
+    var cfg = self.MT_CLOUD || {};
+    if (window.MT_supabase) cli = window.MT_supabase;
+    else if (cfg.url && cfg.anonKey && window.supabase) cli = window.supabase.createClient(cfg.url, cfg.anonKey);
+    if (!cli) { lock("A nuvem não está configurada (assets/cloud-config.js)."); return; }
+    cli.auth.getSession().then(function (r) {
+      var sess = r.data && r.data.session;
+      if (!sess) { lock("Você não está logado. Entre no portal com a SUA conta de administrador e volte aqui."); return; }
+      cli.rpc("hq_sou_admin").then(function (r2) {
+        if (r2.error) { lock("O banco ainda não tem o bloco TORQUESYS HQ — rode o supabase-setup.sql. (" + esc(r2.error.message) + ")"); return; }
+        if (r2.data !== true) { lock("A conta <b>" + esc(sess.user && sess.user.email) + "</b> não é administradora do TORQUESYS. Veja abaixo como se cadastrar."); return; }
+        $("hqLock").hidden = true;
+        $("hqPainel").hidden = false;
+        carrega();
+      });
+    });
+  }
+
+  function carrega() {
+    cli.rpc("hq_kpis").then(function (r) {
+      var k = r.data || {};
+      $("hqKpis").innerHTML = [
+        { rot: "Empresas clientes", val: k.clientes || 0 },
+        { rot: "Ativas (pagantes)", val: k.ativos || 0, cor: "#16a34a" },
+        { rot: "Em trial", val: k.trial || 0, cor: "#d97706" },
+        { rot: "MRR do TORQUESYS", val: fmtR(k.mrr), cor: "var(--roxo)" },
+        { rot: "Recebido no mês", val: fmtR(k.recebido_mes), cor: "#16a34a" },
+        { rot: "Novas em 30 dias", val: k.novos_30d || 0 },
+      ].map(function (x) {
+        return '<div class="kpi"><div class="rot">' + x.rot + '</div><div class="val"' + (x.cor ? ' style="color:' + x.cor + ';"' : "") + ">" + x.val + "</div></div>";
+      }).join("");
+    });
+    cli.rpc("hq_clientes").then(function (r) {
+      clientes = r.data || [];
+      renderClientes();
+    });
+  }
+
+  function renderClientes() {
+    var busca = ($("fBusca").value || "").toLowerCase();
+    var fSt = $("fStatus").value, fTp = $("fTipo").value;
+    var vis = clientes.filter(function (c) {
+      if (busca && (c.nome || "").toLowerCase().indexOf(busca) === -1) return false;
+      if (fSt && c.status !== fSt) return false;
+      if (fTp && c.tipo !== fTp) return false;
+      return true;
+    });
+    var cfg = hqCfg();
+    $("hqClientes").innerHTML = vis.length ? vis.map(function (c) {
+      var ICONE = { academia: "🏢", studio: "🤸", box: "🥊", personal: "💪", outro: "🏷" };
+      return '<div class="cli"><b class="nome">' + (ICONE[c.tipo] || "🏷") + " " + esc(c.nome) + "</b>" +
+        '<span class="tag tipo">' + esc(c.tipo) + "</span>" +
+        '<span class="tag ' + esc(c.status) + '">' + esc(c.status) + "</span>" +
+        '<span class="mut">' + (c.membros || 0) + " usuário(s) · desde " + esc(String(c.criada || "").slice(0, 10)) + "</span>" +
+        '<span class="mut">' + esc(c.plano) + " " + (c.valor ? fmtR(c.valor) + "/mês" : "") + "</span>" +
+        '<span class="mut">pagou ' + fmtR(c.total_pago) + " no total" + (c.ultimo_pgto ? " · último " + esc(String(c.ultimo_pgto).slice(0, 10)) : "") + "</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-edit="' + c.id + '">✎ Plano</button>' +
+        '<button class="btn sec mini" data-pgto="' + c.id + '">💰 Pagou</button>' +
+        (cfg.pixChave && +c.valor > 0 ? '<button class="btn mini" data-pix="' + c.id + '">💠 Pix</button>' : "") +
+        "</div>";
+    }).join("") : '<div class="muted">Nenhuma empresa com esse filtro.</div>';
+  }
+  ["fBusca", "fStatus", "fTipo"].forEach(function (id) { $(id).addEventListener("input", renderClientes); });
+
+  var editando = null;
+  $("hqClientes").addEventListener("click", function (e) {
+    var ed = e.target.getAttribute && e.target.getAttribute("data-edit");
+    var pg = e.target.getAttribute && e.target.getAttribute("data-pgto");
+    var px = e.target.getAttribute && e.target.getAttribute("data-pix");
+    if (ed) {
+      editando = clientes.find(function (c) { return c.id === ed; });
+      if (!editando) return;
+      $("dcNome").textContent = "✎ " + editando.nome;
+      $("dcTipo").value = editando.tipo || "academia";
+      $("dcPlano").value = editando.plano || "";
+      $("dcValor").value = editando.valor || "";
+      $("dcStatus").value = editando.status || "trial";
+      $("dcObs").value = editando.obs || "";
+      $("dlgCli").showModal();
+    }
+    if (pg) {
+      var c = clientes.find(function (x) { return x.id === pg; });
+      if (!c) return;
+      var v = prompt("Valor recebido de " + c.nome + " (R$):", c.valor || "");
+      if (!v || !+String(v).replace(",", ".")) return;
+      cli.rpc("hq_pagamento_reg", { p_academia: c.id, p_valor: +String(v).replace(",", "."), p_forma: "pix", p_data: S.todayISO() })
+        .then(function (r) {
+          if (r.error) { alert("Não deu: " + r.error.message); return; }
+          carrega();
+        });
+    }
+    if (px) {
+      var cp = clientes.find(function (x) { return x.id === px; });
+      var cfg = hqCfg();
+      if (!cp || !cfg.pixChave) return;
+      var txid = "TQHQ" + S.todayISO().replace(/-/g, "").slice(0, 8) + semAcento(cp.nome).replace(/ /g, "").slice(0, 8);
+      var payload = pixPayload(cfg.pixChave, cfg.pixNome, cfg.pixCidade, +cp.valor, txid);
+      $("pixHQTitulo").textContent = "💠 Pix de " + fmtR(cp.valor) + " — " + cp.nome;
+      $("pixHQCode").value = payload;
+      try {
+        var q = qrcode(0, "M"); q.addData(payload); q.make();
+        $("pixHQQr").innerHTML = "<img src='" + q.createDataURL(4, 8) + "' style='width:200px;height:200px;image-rendering:pixelated;background:#fff;padding:8px;border-radius:10px;'>";
+      } catch (err) { $("pixHQQr").innerHTML = ""; }
+      $("dlgPixHQ").showModal();
+    }
+  });
+  $("pixHQCopiar").addEventListener("click", function () {
+    $("pixHQCode").select();
+    try { document.execCommand("copy"); this.textContent = "✅ Copiado!"; } catch (e) {}
+    var b = this;
+    setTimeout(function () { b.textContent = "📋 Copiar código"; }, 1800);
+  });
+  $("dlgCli").addEventListener("close", function () {
+    if ($("dlgCli").returnValue !== "ok" || !editando) return;
+    cli.rpc("hq_cliente_set", {
+      p_academia: editando.id,
+      p_tipo: $("dcTipo").value,
+      p_plano: $("dcPlano").value.trim() || "trial",
+      p_valor: +$("dcValor").value || 0,
+      p_status: $("dcStatus").value,
+      p_obs: $("dcObs").value.trim(),
+    }).then(function (r) {
+      if (r.error) { alert("Não deu: " + r.error.message); return; }
+      carrega();
+    });
+  });
+
+  // ---------- funil de vendas (local, sincroniza pela SUA conta) ----------
+  var ETAPAS = ["novo", "contato", "demo", "proposta", "fechado", "perdido"];
+  function leads() { return S.read("hqLeads", { itens: [] }); }
+  function renderLeads() {
+    var ls = leads().itens;
+    $("ldLista").innerHTML = ls.length ? ls.map(function (l) {
+      var idx = ETAPAS.indexOf(l.etapa);
+      return '<div class="lead"><b>' + esc(l.nome) + '</b><span class="tag tipo">' + esc(l.tipo) + "</span>" +
+        '<span class="tag ' + (l.etapa === "fechado" ? "ativo" : l.etapa === "perdido" ? "cancelado" : "trial") + '">' + esc(l.etapa) + "</span>" +
+        (l.contato ? '<span class="mut">' + esc(l.contato) + "</span>" : "") +
+        '<span style="margin-left:auto;"></span>' +
+        (idx >= 0 && idx < 4 ? '<button class="btn sec mini" data-avanca="' + l.id + '">→ ' + ETAPAS[idx + 1] + "</button>" : "") +
+        (l.etapa !== "perdido" && l.etapa !== "fechado" ? '<button class="btn sec mini" data-perde="' + l.id + '">✕</button>' : "") +
+        "</div>";
+    }).join("") : "Nenhum lead ainda — anote aqui todo interessado.";
+  }
+  $("ldAdd").addEventListener("click", function () {
+    var nome = $("ldNome").value.trim();
+    if (!nome) { alert("Escreva o nome do interessado."); return; }
+    var st = leads();
+    st.itens.unshift({ id: S.uid(), nome: nome, contato: $("ldContato").value.trim(), tipo: $("ldTipo").value, etapa: "novo", criado: S.todayISO() });
+    S.write("hqLeads", st);
+    $("ldNome").value = ""; $("ldContato").value = "";
+    renderLeads();
+  });
+  $("ldLista").addEventListener("click", function (e) {
+    var av = e.target.getAttribute && e.target.getAttribute("data-avanca");
+    var pd = e.target.getAttribute && e.target.getAttribute("data-perde");
+    if (!av && !pd) return;
+    var st = leads();
+    var l = st.itens.find(function (x) { return x.id === (av || pd); });
+    if (!l) return;
+    if (av) l.etapa = ETAPAS[Math.min(ETAPAS.indexOf(l.etapa) + 1, 4)];
+    if (pd && confirm("Marcar " + l.nome + " como perdido?")) l.etapa = "perdido";
+    S.write("hqLeads", st);
+    renderLeads();
+  });
+  renderLeads();
+  S.onChange(function (k) { if (k === "hqLeads") renderLeads(); if (k === "hqConfig") renderClientes(); });
+
+  window.__hq = { renderClientes: renderClientes, renderLeads: renderLeads, carrega: carrega }; // testes
+  initHQ();
+})();
+</script>
+</body>
+</html>

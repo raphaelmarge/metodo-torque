@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORQUESYS — o sistema que roda sua academia, studio, box ou consultoria</title>
+<meta name="description" content="Sistema completo de gestão para academias, studios, box de CrossFit e personal trainers. Cada empresa na sua própria ilha: login e senha, dados isolados, app do aluno, cobranças e relatórios.">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.25), transparent 60%), #121016; color: #f5f4f7; min-height: 100vh; }
+  a { color: inherit; }
+  .topo { text-align: center; padding: 54px 20px 30px; }
+  .topo .kicker { font-size: 12px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+  .topo h1 { font-size: 38px; font-weight: 800; letter-spacing: -.02em; margin: 12px 0 10px; }
+  .topo p { color: #b9b3c6; font-size: 16.5px; max-width: 620px; margin: 0 auto; line-height: 1.6; }
+  .corpo { max-width: 860px; margin: 0 auto; padding: 10px 18px 70px; }
+  h2.sec { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: #a78bfa; margin: 40px 0 14px; text-align: center; }
+  .segs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .seg { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px -12px rgba(0,0,0,.4); display: flex; flex-direction: column; }
+  .seg .ic { font-size: 34px; }
+  .seg h3 { font-size: 18px; margin: 10px 0 6px; }
+  .seg p { color: #b9b3c6; font-size: 13.5px; line-height: 1.6; flex: 1; }
+  .seg ul { color: #b9b3c6; font-size: 13px; line-height: 1.9; padding-left: 18px; margin: 8px 0 14px; flex: 1; }
+  .btn { display: block; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; font-weight: 800; font-size: 15px; padding: 13px; border-radius: 12px; transition: transform .15s ease, box-shadow .2s ease; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px -10px rgba(124,58,237,.6); }
+  .btn.sec { background: none; border: 1.5px solid #4c3f6b; font-size: 13.5px; margin-top: 8px; }
+  .ilha { background: #1c1826; border: 1px solid #7c3aed; border-radius: 16px; padding: 24px; display: flex; gap: 18px; align-items: flex-start; }
+  .ilha .ic { font-size: 38px; flex: none; }
+  .ilha b { font-size: 16.5px; display: block; margin-bottom: 6px; }
+  .ilha p { color: #b9b3c6; font-size: 14px; line-height: 1.65; }
+  .feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 10px; }
+  .feat { background: #1c1826; border: 1px solid #2c2739; border-radius: 13px; padding: 15px 16px; }
+  .feat b { font-size: 14px; display: block; margin-bottom: 3px; }
+  .feat p { color: #b9b3c6; font-size: 12.5px; line-height: 1.5; }
+  .planos { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px; }
+  .plano { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 22px; text-align: center; }
+  .plano.destaque { border-color: #7c3aed; box-shadow: 0 0 0 1px #7c3aed, 0 16px 40px -18px rgba(124,58,237,.55); }
+  .plano .tag-pop { display: inline-block; background: #7c3aed; color: #fff; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; padding: 4px 12px; border-radius: 99px; margin-bottom: 10px; text-transform: uppercase; }
+  .plano h3 { font-size: 16px; }
+  .plano .preco { font-size: 34px; font-weight: 800; margin: 10px 0 2px; }
+  .plano .preco small { font-size: 13px; font-weight: 400; color: #b9b3c6; }
+  .plano ul { text-align: left; color: #b9b3c6; font-size: 12.5px; line-height: 2; padding-left: 18px; margin: 12px 0 16px; }
+  .passos { counter-reset: p; }
+  .passo { background: #1c1826; border: 1px solid #2c2739; border-radius: 13px; padding: 16px 18px 16px 58px; position: relative; margin-bottom: 10px; }
+  .passo::before { counter-increment: p; content: counter(p); position: absolute; left: 16px; top: 14px; width: 28px; height: 28px; border-radius: 50%; background: #7c3aed; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .passo b { font-size: 14.5px; display: block; margin-bottom: 2px; }
+  .passo p { color: #b9b3c6; font-size: 13px; line-height: 1.55; }
+  details.faq { background: #1c1826; border: 1px solid #2c2739; border-radius: 12px; margin-bottom: 8px; }
+  details.faq summary { cursor: pointer; padding: 14px 18px; font-weight: 700; font-size: 14px; list-style: none; }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq div { padding: 0 18px 14px; color: #b9b3c6; font-size: 13.5px; line-height: 1.65; }
+  .nota { text-align: center; color: #8a8695; font-size: 12.5px; margin-top: 16px; line-height: 1.6; }
+  .entrar-bar { position: sticky; top: 0; z-index: 9; background: rgba(18,16,22,.92); backdrop-filter: blur(8px); border-bottom: 1px solid #2c2739; padding: 10px 18px; display: flex; align-items: center; gap: 12px; }
+  .entrar-bar .marca { font-weight: 800; letter-spacing: .06em; font-size: 15px; }
+  .entrar-bar .marca span { color: #a78bfa; }
+  .entrar-bar a.mini { margin-left: auto; font-size: 13px; font-weight: 700; text-decoration: none; border: 1.5px solid #4c3f6b; padding: 8px 16px; border-radius: 99px; }
+  .entrar-bar a.mini + a.mini { margin-left: 8px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border: 0; }
+</style>
+</head>
+<body>
+
+<div class="entrar-bar">
+  <div class="marca">TORQUE<span>SYS</span></div>
+  <a class="mini" id="entrarPersonal" href="personal.html">Sou personal → entrar</a>
+  <a class="mini" id="entrarEmpresa" href="index.html">Entrar na minha empresa</a>
+</div>
+
+<header class="topo">
+  <div class="kicker">TORQUESYS · SISTEMA DE GESTÃO</div>
+  <h1>O sistema que roda o seu negócio fitness inteiro.</h1>
+  <p>Gestão de alunos, cobranças, check-in, grade de aulas, app do aluno, CRM, automações de WhatsApp e mais de 17 relatórios — para <b>academias, studios, box de CrossFit e personal trainers</b>. Funciona até sem internet.</p>
+</header>
+
+<main class="corpo">
+
+  <h2 class="sec" id="paraQuem">Feito para o seu formato</h2>
+  <div class="segs">
+    <div class="seg" id="segAcademia">
+      <div class="ic">🏢</div>
+      <h3>Academia</h3>
+      <ul>
+        <li>Alunos, planos, contratos e recebíveis</li>
+        <li>Check-in com QR + totem de autoatendimento</li>
+        <li>Inadimplência com régua de cobrança</li>
+        <li>Equipe com escala, ponto e comissões</li>
+        <li>Painel do dono, metas e 17+ relatórios</li>
+      </ul>
+      <a class="btn" href="index.html">Criar a conta da minha academia</a>
+    </div>
+    <div class="seg" id="segStudio">
+      <div class="ic">🤸</div>
+      <h3>Studio &amp; Box de CrossFit</h3>
+      <ul>
+        <li>Grade de aulas com vagas e lista de espera</li>
+        <li>WOD do dia no telão (modo TV)</li>
+        <li>Agendamento pelo app do aluno</li>
+        <li>Wellhub/TotalPass sob controle</li>
+        <li>Ranking, medalhas e retenção por turma</li>
+      </ul>
+      <a class="btn" href="index.html">Criar a conta do meu studio/box</a>
+    </div>
+    <div class="seg" id="segPersonal">
+      <div class="ic">💪</div>
+      <h3>Personal Trainer</h3>
+      <ul>
+        <li>Alunos, agenda de sessões e pagamentos</li>
+        <li>Fichas de treino por seleção + biblioteca</li>
+        <li>App do aluno com cargas, evolução e chat</li>
+        <li>Pix copia-e-cola gerado na hora</li>
+        <li>Assessoria online a distância</li>
+      </ul>
+      <a class="btn" href="personal.html">Começar meu TORQUESYS Personal</a>
+      <a class="btn sec" href="personal-vendas.html">Ver a página do Personal →</a>
+    </div>
+  </div>
+
+  <h2 class="sec">Sua empresa, sua ilha</h2>
+  <div class="ilha" id="ilhaBox">
+    <div class="ic">🏝</div>
+    <div>
+      <b>Cada empresa entra com o próprio login e cai NA SUA ilha.</b>
+      <p>Você cria a conta, recebe um <b>código de equipe</b> e seus funcionários entram nele. Os dados da sua empresa ficam isolados de qualquer outra academia, studio ou personal — ninguém vê nada de ninguém. Tudo sincroniza entre os seus aparelhos e continua funcionando <b>offline</b>: caiu a internet, a recepção não para.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">O que vem dentro</h2>
+  <div class="feats">
+    <div class="feat"><b>📇 Gestão completa de alunos</b><p>Planos, contratos, congelamento, recebíveis e importação do sistema antigo por CSV.</p></div>
+    <div class="feat"><b>💸 Cobrança que se cobra</b><p>Régua de inadimplência no WhatsApp, aging, link de pagamento e Pix.</p></div>
+    <div class="feat"><b>📲 App do aluno</b><p>Carteirinha com QR, treinos, agendamento de aulas, avaliação e mural.</p></div>
+    <div class="feat"><b>🤖 Automação de WhatsApp</b><p>Aniversário, sumidos, boas-vindas, resumo diário do dono — sozinho.</p></div>
+    <div class="feat"><b>🧠 CRM com Copiloto IA</b><p>Risco de cancelamento por aluno e a lista do que fazer hoje.</p></div>
+    <div class="feat"><b>📊 17+ relatórios</b><p>Anual, forecast, ocupação, churn por safra, curva ABC, canais e mais.</p></div>
+    <div class="feat"><b>📺 Modo TV</b><p>Telão com WOD, ranking e avisos — e painel privado do dono.</p></div>
+    <div class="feat"><b>🔒 Offline-first</b><p>Instala como app no celular e no PC. Internet caiu? Segue rodando.</p></div>
+  </div>
+
+  <h2 class="sec" id="planos">Planos</h2>
+  <div class="planos">
+    <div class="plano">
+      <h3>💪 Personal</h3>
+      <div class="preco">R$ 49<small>/mês</small></div>
+      <ul>
+        <li>Módulo TORQUESYS Personal completo</li>
+        <li>App para todos os seus alunos</li>
+        <li>Pix na hora + assessoria online</li>
+        <li>Sua ilha na nuvem</li>
+      </ul>
+      <a class="btn" href="personal.html">Começar agora</a>
+    </div>
+    <div class="plano destaque">
+      <div class="tag-pop">Mais vendido</div>
+      <h3>🤸 Studio &amp; Box</h3>
+      <div class="preco">R$ 147<small>/mês</small></div>
+      <ul>
+        <li>Tudo do sistema, sem limite de alunos</li>
+        <li>Grade de aulas + app com agendamento</li>
+        <li>Modo TV com WOD</li>
+        <li>Equipe ilimitada com código</li>
+      </ul>
+      <a class="btn" href="index.html">Começar agora</a>
+    </div>
+    <div class="plano">
+      <h3>🏢 Academia</h3>
+      <div class="preco">R$ 197<small>/mês</small></div>
+      <ul>
+        <li>Tudo do Studio &amp; Box</li>
+        <li>Totem, catraca-check-in QR e biometria</li>
+        <li>Automação + Copiloto IA + HQ de relatórios</li>
+        <li>Suporte prioritário na implantação</li>
+      </ul>
+      <a class="btn" href="index.html">Começar agora</a>
+    </div>
+  </div>
+  <p class="nota">Valores de tabela — planos anuais e redes com várias unidades têm condição especial. <a id="zapPlanos" href="#" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:700;">Chama no WhatsApp 💬</a></p>
+
+  <h2 class="sec">Como funciona</h2>
+  <div class="passos">
+    <div class="passo"><b>Crie a conta da sua empresa</b><p>E-mail e senha no portal (ou direto no módulo Personal). Sua ilha nasce na hora, com 7 dias grátis pra testar tudo.</p></div>
+    <div class="passo"><b>Configure em minutos</b><p>Importe os alunos por CSV, cadastre os planos e monte a grade. O Central de Ajuda tem tutorial passo a passo de tudo — e uma IA que responde.</p></div>
+    <div class="passo"><b>Chame a equipe</b><p>Cada funcionário entra com o código da equipe e cai na SUA empresa, com permissões por função.</p></div>
+    <div class="passo"><b>Entregue o app aos alunos</b><p>Link do app do aluno no WhatsApp: carteirinha QR, treinos, agendamento e mural. Pronto — o sistema roda sozinho.</p></div>
+  </div>
+
+  <h2 class="sec">Perguntas frequentes</h2>
+  <details class="faq"><summary>Meus dados se misturam com os de outra academia?</summary><div>Nunca. Cada empresa é uma ilha com isolamento no banco de dados (RLS): seu login só enxerga a SUA empresa. Nem outro cliente, nem o personal do lado — ninguém acessa seus dados.</div></details>
+  <details class="faq"><summary>Preciso de internet para usar?</summary><div>Não. O TORQUESYS é offline-first: instala como aplicativo e continua funcionando sem internet. Quando a conexão volta, tudo sincroniza sozinho entre os seus aparelhos.</div></details>
+  <details class="faq"><summary>Consigo migrar do meu sistema atual (EVO, Tecnofit…)?</summary><div>Sim — exporte os alunos em CSV no sistema antigo e importe no TORQUESYS em Gestão de Alunos → Importar. Planos e valores vêm juntos.</div></details>
+  <details class="faq"><summary>Sou personal e atendo em várias academias. Funciona?</summary><div>Perfeitamente: o TORQUESYS Personal é a SUA ilha, independente de qualquer academia. Seus alunos, seus treinos, seus pagamentos — e o app de cada aluno com seu nome.</div></details>
+  <details class="faq"><summary>Como pago o TORQUESYS?</summary><div>Assinatura mensal por Pix ou cartão, direto com a gente no WhatsApp. Sem fidelidade: cancelou, seus dados são seus (dá pra exportar tudo).</div></details>
+
+  <a class="btn" id="ctaZap" href="#" target="_blank" rel="noopener" style="margin-top:34px;font-size:17px;padding:17px;">💬 Falar com a gente no WhatsApp</a>
+  <p class="nota">TORQUESYS · feito por quem vive academia todos os dias 💜</p>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+  // ?zap=5531999990000 personaliza os botões de WhatsApp (mesmo esquema da página do Personal)
+  var zap = new URLSearchParams(location.search).get("zap") || "";
+  var msg = encodeURIComponent("Oi! Quero saber mais sobre o TORQUESYS para o meu negócio 💪");
+  var href = "https://wa.me/" + zap.replace(/\D/g, "") + "?text=" + msg;
+  ["ctaZap", "zapPlanos"].forEach(function (id) {
+    document.getElementById(id).href = href;
+  });
+  window.__torquesys = { zap: zap }; // testes
+})();
+</script>
+</body>
+</html>
