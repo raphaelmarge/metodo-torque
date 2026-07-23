@@ -104,6 +104,74 @@ function ok(cond, nome) {
   await p.click('[data-a="pagamentos"]');
   let pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
   ok(/João Cliente/.test(pend) && /Cobrar/.test(pend), "pendente com botão de cobrança WhatsApp");
+
+  // ---------- pagamentos: plano, contrato e Pix BR Code ----------
+  await p.fill("#plNome", "Mensal 3x");
+  await p.fill("#plValor", "450");
+  await p.selectOption("#plCiclo", "1");
+  await p.fill("#plLink", "https://mpago.la/assinatura-teste");
+  await p.click("#plAdd");
+  const planos = await p.evaluate(() => document.getElementById("plLista").textContent);
+  ok(/Mensal 3x/.test(planos) && /450/.test(planos), "plano do studio criado (R$ 450/mês)");
+  ok(/recorrente/.test(planos), "plano com link de gateway ganha a etiqueta 🔁 recorrente");
+
+  // contrato: vencimento escolhido pra testar o atraso de forma determinística
+  const diaHoje = new Date().getDate();
+  const diaVenc = diaHoje > 1 ? 1 : 28;
+  await p.selectOption("#ctAluno", { index: 1 });
+  await p.selectOption("#ctPlano", { index: 1 });
+  await p.fill("#ctDia", String(diaVenc));
+  await p.click("#ctAdd");
+  const cts = await p.evaluate(() => document.getElementById("ctLista").textContent);
+  ok(/João Cliente/.test(cts) && /Mensal 3x/.test(cts) && new RegExp("vence dia " + diaVenc).test(cts), "contrato fechado (aluno + plano + vencimento)");
+
+  // pendência agora usa o valor do CONTRATO, não o do cadastro
+  pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
+  ok(/450/.test(pend) && new RegExp("vence dia " + diaVenc).test(pend), "pendência mostra o valor do plano e o dia de vencimento");
+  if (diaHoje > 1) ok(/ATRASADO/.test(pend), "passou do vencimento → etiqueta ATRASADO");
+  else ok(!/ATRASADO/.test(pend), "dia 1 do mês: ainda sem atraso");
+  ok(/Assinatura/.test(pend), "botão 🔁 Assinatura (link recorrente do gateway do personal)");
+  let temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
+  ok(!temPix, "sem chave Pix configurada não há botão 💠");
+
+  // chave Pix no card da ilha
+  await p.fill("#cfgPixChave", "raphael@torquefit.com.br");
+  await p.fill("#cfgPixNome", "Raphael Margé");
+  await p.fill("#cfgPixCidade", "Belo Horizonte");
+  await p.evaluate(() => document.getElementById("cfgPixCidade").blur());
+  await p.waitForTimeout(250);
+  temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
+  ok(temPix, "com a chave configurada o botão 💠 Pix aparece");
+
+  // abre o Pix e valida o BR Code oficial (EMV do BC + CRC16)
+  await p.evaluate(() => document.querySelector("#pendentes [data-pix]").click());
+  await p.waitForFunction(() => document.getElementById("dlgPix").open);
+  const pix = await p.evaluate(() => ({
+    titulo: document.getElementById("pixTitulo").textContent,
+    code: document.getElementById("pixCode").value,
+    temQr: !!document.querySelector("#pixQr img"),
+    zap: document.getElementById("pixZap").href,
+  }));
+  ok(/450/.test(pix.titulo) && /João/.test(pix.titulo), "dialog do Pix com valor e nome do aluno");
+  ok(/^000201/.test(pix.code) && /6304[0-9A-F]{4}$/.test(pix.code), "BR Code começa 000201 e termina 6304+CRC");
+  ok(pix.code.includes("br.gov.bcb.pix") && pix.code.includes("raphael@torquefit.com.br"), "payload leva a chave Pix do personal");
+  ok(pix.code.includes("5406450.00"), "campo 54 (valor) = 450.00");
+  ok(pix.code.includes("RAPHAEL MARGE") && pix.code.includes("BELO HORIZONTE"), "nome e cidade sem acento e maiúsculos");
+  // CRC16-CCITT reimplementado aqui no Node, validado contra o vetor padrão
+  function crcNode(s) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < s.length; i++) {
+      crc ^= s.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return ("0000" + crc.toString(16).toUpperCase()).slice(-4);
+  }
+  ok(crcNode("123456789") === "29B1", "CRC16-CCITT bate com o vetor de teste padrão (0x29B1)");
+  ok(crcNode(pix.code.slice(0, -4)) === pix.code.slice(-4), "CRC do payload confere na reimplementação independente");
+  ok(pix.temQr, "QR Code renderizado no dialog");
+  ok(/wa\.me/.test(pix.zap) && /000201/.test(decodeURIComponent(pix.zap)), "mensagem do WhatsApp leva o copia-e-cola");
+  await p.evaluate(() => document.getElementById("dlgPix").close());
+
   await p.selectOption("#pAluno", { index: 1 });
   await p.fill("#pValor", "400");
   await p.click("#pAdd");
@@ -258,6 +326,12 @@ function ok(cond, nome) {
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
   ok(/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "app tem diário de cargas com recorde");
   ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
+  ok(/💳 Meu plano/.test(appHtml) && /Mensal 3x/.test(appHtml) && new RegExp("todo dia " + diaVenc).test(appHtml), "app tem o card 💳 Meu plano (plano + vencimento)");
+  ok(/pixAluno/.test(appHtml) && /pixCopiaAluno/.test(appHtml), "app com Pix copia-e-cola e botão de copiar");
+  ok(/data:image\/gif/.test(appHtml), "QR Code do Pix embutido no app");
+  const pixAppCode = (appHtml.match(/id='pixAluno'[^>]*>([^<]+)<\/textarea>/) || [])[1] || "";
+  ok(/^000201/.test(pixAppCode) && crcNode(pixAppCode.slice(0, -4)) === pixAppCode.slice(-4), "BR Code do app é válido (CRC confere)");
+  ok(/Assinar no cartão/.test(appHtml) && /mpago\.la\/assinatura-teste/.test(appHtml), "link 🔁 de assinatura recorrente chega no app");
   // dá um token pro aluno pra ligar o modo nuvem do app (RPCs serão mockadas)
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));

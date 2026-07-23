@@ -92,6 +92,31 @@
   <!-- PAGAMENTOS -->
   <section id="vPagamentos" hidden>
     <div class="card" style="margin-bottom: 14px;">
+      <h2>📋 Planos do studio</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Monte seus planos (mensal, trimestral…) e feche contrato com o aluno logo abaixo. Cartão recorrente/boleto: cole o link de assinatura do SEU gateway (Mercado Pago, InfinitePay, PagSeguro…) — o Pix o sistema gera sozinho.</p>
+      <div class="linha-flex" style="margin-bottom: 8px;">
+        <input id="plNome" placeholder="Nome (ex.: Mensal 3x/sem)" style="flex: 2; min-width: 170px;">
+        <input id="plValor" type="number" min="0" step="0.01" placeholder="Valor R$/mês" style="width: 130px;">
+        <select id="plCiclo" style="width: auto;"><option value="1">mensal</option><option value="3">trimestral</option><option value="6">semestral</option><option value="12">anual</option></select>
+        <input id="plLink" placeholder="Link de assinatura recorrente (opcional)" style="flex: 2; min-width: 180px;">
+        <button class="btn" id="plAdd">+ Plano</button>
+      </div>
+      <div id="plLista" class="muted">Nenhum plano ainda.</div>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>📄 Contratos</h2>
+      <div class="linha-flex" style="margin-bottom: 8px;">
+        <select id="ctAluno" style="min-width: 170px;"></select>
+        <select id="ctPlano" style="min-width: 170px;"></select>
+        <label style="margin: 0; font-size: 12.5px;">vence dia
+          <input id="ctDia" type="number" min="1" max="28" value="5" style="width: 70px; display: inline-block; margin-left: 4px;"></label>
+        <button class="btn" id="ctAdd">✍️ Fechar contrato</button>
+      </div>
+      <div id="ctLista" class="muted">Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.</div>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
       <h2>Registrar pagamento</h2>
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="pAluno" style="min-width: 180px;"></select>
@@ -145,6 +170,20 @@
       <div id="vtpLista" class="muted">Nenhum conteúdo ainda.</div>
     </div>
   </section>
+
+  <dialog id="dlgPix">
+    <div class="card" style="display: flex; flex-direction: column; gap: 12px; width: 420px; max-width: 100%; text-align: center;">
+      <h2 id="pixTitulo" style="text-transform: none; letter-spacing: 0; font-size: 16px;">Cobrança Pix</h2>
+      <div id="pixQr" style="display: flex; justify-content: center;"></div>
+      <textarea id="pixCode" rows="4" readonly style="font-family: monospace; font-size: 11px;"></textarea>
+      <div class="linha-flex" style="justify-content: center;">
+        <button class="btn" id="pixCopiar">📋 Copiar código</button>
+        <a class="btn whats" id="pixZap" target="_blank" rel="noopener">💬 Mandar no WhatsApp</a>
+        <button class="btn sec" onclick="this.closest('dialog').close()">Fechar</button>
+      </div>
+      <p class="muted" style="font-size: 11.5px; margin: 0;">Pix estático com valor — o aluno paga escaneando o QR ou colando o código no app do banco. Confirme o recebimento e registre o pagamento acima.</p>
+    </div>
+  </dialog>
 
   <dialog id="dlgEx">
     <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 12px; width: 520px; max-width: 100%;">
@@ -238,14 +277,21 @@
   <div class="card" id="cardConta" style="margin-top: 20px;">
     <h2>☁️ Sua ilha no TORQUESYS</h2>
     <p class="muted" id="contaStatus" style="margin: 6px 0 10px;"></p>
-    <div class="linha-flex" style="margin-bottom: 10px;">
+    <div class="linha-flex" style="margin-bottom: 10px; gap: 14px;">
       <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (os alunos falam com você por ele)
         <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 170px; display: block; margin-top: 4px;"></label>
+      <label style="margin: 0; font-size: 12.5px;">💠 Sua chave Pix (pra gerar cobranças)
+        <input id="cfgPixChave" placeholder="CPF, e-mail, celular ou aleatória" style="width: 220px; display: block; margin-top: 4px;"></label>
+      <label style="margin: 0; font-size: 12.5px;">Nome do recebedor
+        <input id="cfgPixNome" placeholder="Como está no banco" style="width: 180px; display: block; margin-top: 4px;"></label>
+      <label style="margin: 0; font-size: 12.5px;">Cidade
+        <input id="cfgPixCidade" placeholder="ex.: Belo Horizonte" style="width: 150px; display: block; margin-top: 4px;"></label>
     </div>
     <a class="btn sec" id="btnConta" href="index.html">Criar minha conta / Entrar</a>
   </div>
 </main>
 
+<script src="assets/vendor/qrcode.js"></script>
 <script src="assets/cloud-config.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="apps/store.js"></script>
@@ -260,6 +306,7 @@
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
     st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || [];
     st.exercicios = st.exercicios || []; st.treinosV2 = st.treinosV2 || {}; st.videoteca = st.videoteca || [];
+    st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
     if (!st.exercicios.length && !st._exSeed) {
       st._exSeed = 1;
       [["Supino reto", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
@@ -409,17 +456,35 @@
       return '<div class="sessao-pt"><b>' + S.fmtData(p.data) + "</b><span>" + esc(nomeDe[p.alunoId] || "?") + "</span>" +
         '<span class="muted">' + esc(p.forma || "") + '</span><b style="margin-left:auto;">' + S.fmtBRL(+p.valor) + "</b></div>";
     }).join("") : "Nenhum pagamento registrado.";
+    var diaHoje = +S.todayISO().slice(8, 10);
     var pend = st.alunos.filter(function (a) {
       if (a.ativo === false) return false;
       return !st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
     });
     $("pendentes").innerHTML = pend.length ? pend.map(function (a) {
-      var msg = "Oi " + a.nome.split(" ")[0] + "! Passando pra combinar o pagamento deste mês" + (+a.valor ? " (" + S.fmtBRL(+a.valor) + ")" : "") + " — Pix ou como preferir. 💪";
-      return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" + (+a.valor ? '<span class="muted">' + S.fmtBRL(+a.valor) + "</span>" : "") +
+      var ct = contratoDe(st, a.id);
+      var pl = ct ? planoDe(st, ct.planoId) : null;
+      var valor = pl ? +pl.valor : +a.valor || 0;
+      var atrasado = ct && diaHoje > ct.diaVenc;
+      var msg = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano deste mês" + (valor ? " (" + S.fmtBRL(valor) + ")" : "") +
+        (ct ? " — vence dia " + ct.diaVenc : "") + ". Te mando o Pix? 💪";
+      return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
+        (valor ? "<span>" + S.fmtBRL(valor) + "</span>" : "") +
+        (ct ? '<span class="muted">vence dia ' + ct.diaVenc + "</span>" : '<span class="muted">sem contrato</span>') +
+        (atrasado ? '<span class="tag erro">ATRASADO</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
+        (valor && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + valor + '">💠 Pix</button>' : "") +
+        (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">🔁 Assinatura</a>' : "") +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Cobrar</a>' : "") + "</div>";
     }).join("") : "Todo mundo em dia. 🎉";
   }
+  $("pendentes").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-pix]");
+    if (!b) return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === b.getAttribute("data-pix"); });
+    if (a) abrePix(a, +b.getAttribute("data-v"));
+  });
   $("pAdd").addEventListener("click", function () {
     if (!$("pAluno").value || !+$("pValor").value) { alert("Escolha o aluno e o valor."); return; }
     var st = load();
@@ -640,6 +705,130 @@
 
   window.__biblioteca = { renderBiblioteca: renderBiblioteca, renderFichas: renderFichas, renderVideotecaPT: renderVideotecaPT }; // testes
 
+  // ---------- Pix BR Code estático (EMV "copia e cola" + CRC16-CCITT) ----------
+  function semAcento(t) {
+    return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function crc16(str) {
+    var crc = 0xFFFF;
+    for (var i = 0; i < str.length; i++) {
+      crc ^= str.charCodeAt(i) << 8;
+      for (var j = 0; j < 8; j++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return ("0000" + crc.toString(16).toUpperCase()).slice(-4);
+  }
+  function tlv(id, v) { return id + ("0" + v.length).slice(-2) + v; }
+  function pixPayload(chave, nome, cidade, valor, txid) {
+    nome = semAcento(nome).toUpperCase().slice(0, 25) || "RECEBEDOR";
+    cidade = semAcento(cidade).toUpperCase().slice(0, 15) || "BRASIL";
+    txid = String(txid || "***").replace(/[^A-Za-z0-9]/g, "").slice(0, 25) || "***";
+    var mai = tlv("00", "br.gov.bcb.pix") + tlv("01", String(chave).trim());
+    var p = tlv("00", "01") + tlv("26", mai) + tlv("52", "0000") + tlv("53", "986") +
+      (valor > 0 ? tlv("54", (+valor).toFixed(2)) : "") +
+      tlv("58", "BR") + tlv("59", nome) + tlv("60", cidade) + tlv("62", tlv("05", txid)) + "6304";
+    return p + crc16(p);
+  }
+  function pixQRDataURL(payload) {
+    try {
+      var q = qrcode(0, "M");
+      q.addData(payload);
+      q.make();
+      return q.createDataURL(4, 8);
+    } catch (e) { return ""; }
+  }
+  function abrePix(aluno, valor) {
+    var st = load();
+    var cfg = st.config || {};
+    if (!cfg.pixChave) { alert("Configure sua chave Pix no card ☁️ Sua ilha (lá embaixo)."); return; }
+    var txid = "TQP" + S.todayISO().replace(/-/g, "").slice(0, 8) + semAcento(aluno.nome.split(" ")[0]).slice(0, 8);
+    var payload = pixPayload(cfg.pixChave, cfg.pixNome || cfg.nome, cfg.pixCidade, valor, txid);
+    $("pixTitulo").textContent = "💠 Pix de " + S.fmtBRL(valor) + " — " + aluno.nome.split(" ")[0];
+    $("pixCode").value = payload;
+    var uri = pixQRDataURL(payload);
+    $("pixQr").innerHTML = uri ? "<img src='" + uri + "' style='width:200px;height:200px;image-rendering:pixelated;background:#fff;padding:8px;border-radius:10px;'>" : "";
+    var msg = "Oi " + aluno.nome.split(" ")[0] + "! Segue o Pix de " + S.fmtBRL(valor) + " do seu plano 😉\n\nPix copia e cola:\n" + payload;
+    $("pixZap").href = "https://wa.me/" + (aluno.zap ? "55" + String(aluno.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg);
+    $("dlgPix").showModal();
+  }
+  $("pixCopiar").addEventListener("click", function () {
+    $("pixCode").select();
+    try { document.execCommand("copy"); this.textContent = "✅ Copiado!"; } catch (e) {}
+    var b = this;
+    setTimeout(function () { b.textContent = "📋 Copiar código"; }, 1800);
+  });
+  window.__pix = { payload: pixPayload, crc16: crc16 }; // testes
+
+  // ---------- planos e contratos do studio ----------
+  function planoDe(st, id) { return (st.planosPT || []).find(function (x) { return x.id === id; }); }
+  function contratoDe(st, alunoId) {
+    return (st.contratosPT || []).find(function (c) { return c.alunoId === alunoId && c.status === "ativo"; });
+  }
+  function renderPlanosPT() {
+    var st = load();
+    var el = $("plLista");
+    el.innerHTML = st.planosPT.length ? st.planosPT.map(function (pl) {
+      var n = st.contratosPT.filter(function (c) { return c.planoId === pl.id && c.status === "ativo"; }).length;
+      return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) + "/mês</span>" +
+        '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>" +
+        (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">🔁 recorrente</span>' : "") +
+        "<span class='muted'>" + n + " contrato(s)</span>" +
+        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-plrm="' + pl.id + '">✕</button></div>';
+    }).join("") : "Nenhum plano ainda.";
+    var opts = st.planosPT.map(function (pl) { return '<option value="' + pl.id + '">' + esc(pl.nome + " — " + S.fmtBRL(+pl.valor)) + "</option>"; }).join("");
+    var atual = $("ctPlano").value;
+    $("ctPlano").innerHTML = "<option value=''>— plano —</option>" + opts;
+    if (atual) $("ctPlano").value = atual;
+    var atualA = $("ctAluno").value;
+    $("ctAluno").innerHTML = "<option value=''>— aluno —</option>" + st.alunos.filter(function (a) { return a.ativo !== false; })
+      .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
+    if (atualA) $("ctAluno").value = atualA;
+    var nomeDe = {};
+    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var ativos = st.contratosPT.filter(function (c) { return c.status === "ativo"; });
+    $("ctLista").innerHTML = ativos.length ? ativos.map(function (c) {
+      var pl = planoDe(st, c.planoId) || {};
+      return '<div class="sessao-pt"><b>' + esc(nomeDe[c.alunoId] || "?") + "</b><span>" + esc(pl.nome || "?") + "</span>" +
+        "<span>" + S.fmtBRL(+pl.valor || 0) + "/mês</span><span class='muted'>vence dia " + c.diaVenc + " · desde " + S.fmtData(c.inicio) + "</span>" +
+        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-ctrm="' + c.id + '">Encerrar</button></div>';
+    }).join("") : "Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.";
+  }
+  $("plAdd").addEventListener("click", function () {
+    var nome = $("plNome").value.trim();
+    if (!nome || !+$("plValor").value) { alert("Preencha nome e valor do plano."); return; }
+    var st = load();
+    st.planosPT.push({ id: S.uid(), nome: nome, valor: +$("plValor").value, ciclo: +$("plCiclo").value || 1, linkRec: $("plLink").value.trim() });
+    $("plNome").value = ""; $("plValor").value = ""; $("plLink").value = "";
+    S.write("ptStudio", st);
+    renderPlanosPT(); render();
+  });
+  $("plLista").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-plrm");
+    if (!rm) return;
+    var st = load();
+    if (st.contratosPT.some(function (c) { return c.planoId === rm && c.status === "ativo"; })) { alert("Tem contrato ativo nesse plano — encerre antes."); return; }
+    st.planosPT = st.planosPT.filter(function (x) { return x.id !== rm; });
+    S.write("ptStudio", st);
+    renderPlanosPT();
+  });
+  $("ctAdd").addEventListener("click", function () {
+    if (!$("ctAluno").value || !$("ctPlano").value) { alert("Escolha o aluno e o plano."); return; }
+    var st = load();
+    var jaTem = contratoDe(st, $("ctAluno").value);
+    if (jaTem) jaTem.status = "encerrado";
+    st.contratosPT.push({ id: S.uid(), alunoId: $("ctAluno").value, planoId: $("ctPlano").value, diaVenc: Math.min(28, Math.max(1, +$("ctDia").value || 5)), inicio: S.todayISO(), status: "ativo" });
+    S.write("ptStudio", st);
+    renderPlanosPT(); render();
+  });
+  $("ctLista").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-ctrm");
+    if (!rm || !confirm("Encerrar este contrato?")) return;
+    var st = load();
+    (st.contratosPT.find(function (c) { return c.id === rm; }) || {}).status = "encerrado";
+    S.write("ptStudio", st);
+    renderPlanosPT(); render();
+  });
+  window.__planosPT = renderPlanosPT; // testes
+
   // ---------- dobras cutâneas (Pollock 3 e 7, Guedes + Siri) ----------
   var DOBRAS = {
     p3: { M: ["Peitoral", "Abdominal", "Coxa"], F: ["Tríceps", "Suprailíaca", "Coxa"] },
@@ -814,6 +1003,14 @@
       .sort(function (x, y) { return (x.data + x.hora) < (y.data + y.hora) ? -1 : 1; }).slice(0, 5)
       .map(function (x) { return { d: x.data, h: x.hora || "" }; });
     var vidsApp = (st.videoteca || []).slice(0, 30).map(function (v) { return { t: v.titulo, c: v.categoria || "Geral", u: v.url }; });
+    var ctApp = contratoDe(st, a.id);
+    var plApp = ctApp ? planoDe(st, ctApp.planoId) : null;
+    var pixApp = null;
+    if (plApp && (st.config || {}).pixChave) {
+      var payloadApp = pixPayload(st.config.pixChave, st.config.pixNome || st.config.nome, st.config.pixCidade, +plApp.valor,
+        "TQP" + semAcento(a.nome.split(" ")[0]).slice(0, 10));
+      pixApp = { code: payloadApp, qr: pixQRDataURL(payloadApp) };
+    }
 
     var treino = (st.treinos || {})[a.id] || "";
     var t2 = (st.treinosV2 || {})[a.id];
@@ -930,6 +1127,15 @@
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
       "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in 📨</button></div></div>" +
+      (plApp ? "<div class='cardx'><h2>💳 Meu plano</h2>" +
+        "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
+        "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
+        (pixApp ? "<div style='text-align:center;margin-top:10px;'>" +
+          (pixApp.qr ? "<img src='" + pixApp.qr + "' style='width:170px;height:170px;image-rendering:pixelated;background:#fff;padding:7px;border-radius:12px;'>" : "") +
+          "<textarea id='pixAluno' rows='3' readonly style='width:100%;margin-top:8px;background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#a9a4b5;font-family:monospace;font-size:10px;padding:8px;'>" + pixApp.code + "</textarea>" +
+          "<button class='btnx' id='pixCopiaAluno' style='width:100%;margin-top:8px;'>📋 Copiar Pix copia e cola</button></div>" : "") +
+        (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:#14121a;border:1px solid #7c3aed;box-shadow:none;'>🔁 Assinar no cartão (débito automático)</a>" : "") +
+        "<div class='vz' style='font-size:11px;'>Pagou? Avisa no chat que " + esc(studio.split(" ")[0]) + " confirma. 💜</div></div>" : "") +
       "<div class='cardx'><h2>💬 Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
@@ -1060,6 +1266,9 @@
       "else{window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(tx),'_blank');inp.value='';}});" +
       "document.getElementById('chTexto').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('chEnvia').click();});" +
       "carregaChat();setInterval(function(){if(NUVEM)carregaChat();},30000);" +
+      "var pca=document.getElementById('pixCopiaAluno');if(pca)pca.addEventListener('click',function(){" +
+      "var ta=document.getElementById('pixAluno');ta.select();try{document.execCommand('copy');pca.textContent='✅ Copiado! Cola no app do banco';}catch(e){}" +
+      "setTimeout(function(){pca.textContent='📋 Copiar Pix copia e cola';},2500);});" +
       "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
       "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
       "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>📈 \"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +
@@ -1272,6 +1481,9 @@
   function renderConta() {
     var st = load();
     if (document.activeElement !== $("cfgZap")) $("cfgZap").value = (st.config || {}).zap || "";
+    [["cfgPixChave", "pixChave"], ["cfgPixNome", "pixNome"], ["cfgPixCidade", "pixCidade"]].forEach(function (par) {
+      if (document.activeElement !== $(par[0])) $(par[0]).value = (st.config || {})[par[1]] || "";
+    });
     var u = S.usuario ? S.usuario() : {};
     if (u.logado) {
       $("contaStatus").innerHTML = "✅ <b>Conectado como " + esc(u.email) + "</b> — seus dados sincronizam entre os seus aparelhos e ficam na SUA ilha, separados de qualquer outro personal ou academia.";
@@ -1290,6 +1502,7 @@
     renderAvaliacoes(st);
     renderBiblioteca();
     renderVideotecaPT();
+    renderPlanosPT();
     renderConta();
   }
   $("cfgZap").addEventListener("change", function () {
@@ -1297,6 +1510,14 @@
     st.config = st.config || {};
     st.config.zap = this.value.replace(/\D/g, "");
     S.write("ptStudio", st);
+  });
+  [["cfgPixChave", "pixChave"], ["cfgPixNome", "pixNome"], ["cfgPixCidade", "pixCidade"]].forEach(function (par) {
+    $(par[0]).addEventListener("change", function () {
+      var st = load();
+      st.config = st.config || {};
+      st.config[par[1]] = this.value.trim();
+      S.write("ptStudio", st);
+    });
   });
   $("sData").value = S.todayISO();
   $("avData").value = S.todayISO();
