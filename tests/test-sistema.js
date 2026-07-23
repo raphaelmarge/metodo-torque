@@ -202,6 +202,22 @@ const SEED = {
   assert(!!card, "card do Sistema aparece no portal (nova aba)");
   assert(card && (await card.getAttribute("target")) === "_blank", "card abre em nova aba (standalone)");
 
+  console.log("— CEP preenche o endereço na hora —");
+  const pCep = await ctx.newPage();
+  await pCep.route("**/viacep.com.br/ws/30130010/json/", (r) => r.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ cep: "30130-010", logradouro: "Avenida Afonso Pena", bairro: "Centro", localidade: "Belo Horizonte", uf: "MG" }),
+  }));
+  await pCep.goto(BASE + "/apps/alunos.html?acao=novo");
+  await pCep.waitForSelector("#aCep");
+  await pCep.fill("#aCep", "30130010"); // 8º dígito dispara sem sair do campo
+  await pCep.waitForFunction(() => document.getElementById("aEndereco").value !== "");
+  assert((await pCep.$eval("#aEndereco", (e) => e.value)) === "Avenida Afonso Pena", "endereço aparece ao digitar o CEP");
+  assert((await pCep.$eval("#aBairro", (e) => e.value)) === "Centro" && (await pCep.$eval("#aCidade", (e) => e.value)) === "Belo Horizonte", "bairro e cidade preenchidos");
+  assert((await pCep.$eval("#aUf", (e) => e.value)) === "MG", "UF preenchida");
+  assert(await pCep.evaluate(() => document.activeElement === document.getElementById("aNumero")), "cursor pula direto pro campo Número");
+  await pCep.close();
+
   console.log("— erros de página —");
   const errosReais = erros.filter((e) => !/service.?worker|Failed to register/i.test(e));
   assert(errosReais.length === 0, "zero erros de JS (" + errosReais.join(" | ").slice(0, 300) + ")");

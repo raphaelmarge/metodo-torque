@@ -1147,6 +1147,24 @@
     if (c.dados.nome) $("topAcad").textContent = c.dados.nome;
     alert("Dados salvos!");
   };
+  // CEP da academia → endereço na hora (ViaCEP), cursor no fim pra completar o número
+  var cfgCepBuscado = "";
+  function cfgBuscaCep() {
+    var cep = $("cfgCep").value.replace(/\D/g, "");
+    if (cep.length !== 8 || cep === cfgCepBuscado) return;
+    cfgCepBuscado = cep;
+    fetch("https://viacep.com.br/ws/" + cep + "/json/").then(function (r) { return r.json(); }).then(function (d) {
+      if (d.erro) { cfgCepBuscado = ""; return; }
+      var partes = [d.logradouro, d.bairro].filter(Boolean).join(", ");
+      if (partes) $("cfgEnd").value = partes + ", ";
+      if (d.localidade) $("cfgCidade").value = d.localidade + (d.uf ? "/" + d.uf : "");
+      var el = $("cfgEnd");
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length); // só falta digitar o número
+    }).catch(function () { cfgCepBuscado = ""; });
+  }
+  $("cfgCep").addEventListener("input", cfgBuscaCep);
+  $("cfgCep").addEventListener("change", cfgBuscaCep);
   $("cfgSalvarHorarios").onclick = function () {
     var c = cfgLoad();
     c.horarios = {};
