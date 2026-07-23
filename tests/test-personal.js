@@ -131,7 +131,8 @@ function ok(cond, nome) {
   await p.click('[data-exedit="' + supinoId + '"]');
   await p.fill("#dxVideo", "https://youtube.com/watch?v=abc123");
   await p.click('#dlgEx button[value="ok"]');
-  await p.waitForTimeout(200);
+  await p.waitForFunction(() => !document.getElementById("dlgEx").open);
+  await p.waitForTimeout(150);
   const comVideo = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return st.exercicios.find((e) => e.nome === "Supino reto").video;
@@ -153,6 +154,25 @@ function ok(cond, nome) {
   await p.click('[data-additem="' + fichaId + '"]');
   const fichas = await p.evaluate(() => document.getElementById("fichasBox").textContent);
   ok(/Supino reto/.test(fichas) && /4×10/.test(fichas), "ficha montada por seleção (Supino 4×10)");
+
+  // videoteca do studio
+  await p.fill("#vtpTitulo", "Mobilidade de quadril");
+  await p.fill("#vtpCat", "Mobilidade");
+  await p.fill("#vtpUrl", "https://youtube.com/watch?v=mob1");
+  await p.click("#vtpAdd");
+  const vtp = await p.evaluate(() => document.getElementById("vtpLista").textContent);
+  ok(/Mobilidade de quadril/.test(vtp), "videoteca do studio cadastra conteúdo");
+
+  // agenda uma sessão futura pro app mostrar
+  await p.click('[data-a="agenda"]');
+  await p.selectOption("#sAluno", { index: 1 });
+  await p.evaluate(() => {
+    const d = new Date(); d.setDate(d.getDate() + 2);
+    document.getElementById("sData").value = d.toISOString().slice(0, 10);
+  });
+  await p.fill("#sHora", "07:30");
+  await p.click("#sAdd");
+  await p.click('[data-a="treinos"]');
 
   // avaliações: registra 2 e vê evolução
   await p.click('[data-a="avaliacoes"]');
@@ -189,6 +209,10 @@ function ok(cond, nome) {
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
   ok(/▶ ver vídeo/.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão ▶ ver vídeo");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
+  ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
+  ok(/Minhas sessões/.test(appHtml) && /07:30/.test(appHtml), "próximas sessões embutidas no app");
+  ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
+  ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
   ok(/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "app tem diário de cargas com recorde");
   ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
@@ -223,17 +247,53 @@ function ok(cond, nome) {
   await pApp.click("#dcAdd");
   const dc = await pApp.evaluate(() => document.getElementById("dcLista").textContent);
   ok(/Agachamento/.test(dc) && /80/.test(dc), "aluno registra carga no diário");
+  // séries: 4 cliques no Supino (4 séries) e completa os demais → dia marca sozinho
+  const nBtns = await pApp.evaluate(() => document.querySelectorAll(".setbtn").length);
+  ok(nBtns >= 1, "botões de séries renderizados (" + nBtns + ")");
+  await pApp.evaluate(() => {
+    document.querySelectorAll(".setbtn").forEach((b) => {
+      const max = +b.dataset.n;
+      for (let i = 0; i < max; i++) b.click();
+    });
+  });
+  await pApp.waitForTimeout(400);
+  const feitoAuto = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos") || "{}"));
+  ok(Object.keys(feitoAuto).length === 1, "completar todas as séries marca 'treinei hoje' sozinho");
+  // cronômetro (o botão vive dentro do <details> fechado — clica via JS)
+  await pApp.evaluate(() => document.querySelector(".tmrbtn").click());
+  await pApp.waitForTimeout(300);
+  const tmr = await pApp.evaluate(() => document.getElementById("tmrBar").textContent);
+  ok(/Descanso/.test(tmr), "cronômetro de descanso liga");
+  // gráfico de carga: clica na linha do diário
+  await pApp.fill("#dcEx", "Supino reto");
+  await pApp.fill("#dcKg", "72");
+  await pApp.click("#dcAdd");
+  await pApp.evaluate(() => document.querySelector('[data-dcx="Supino reto"]').click());
+  const graf = await pApp.evaluate(() => document.getElementById("dcGraf").textContent);
+  ok(/Supino reto/.test(graf) && /★/.test(graf), "gráfico de carga abre com PR ★");
+  // peso diário
+  await pApp.fill("#pzKg", "83,4");
+  await pApp.click("#pzAdd");
+  const pz = await pApp.evaluate(() => document.getElementById("pzGraf").textContent);
+  ok(/83,4/.test(pz), "peso registrado com curva");
+  // hábitos: marca 3 e confere streak
+  await pApp.evaluate(() => {
+    document.querySelectorAll("[data-hab]")[0].click();
+    document.querySelectorAll("[data-hab]")[1].click();
+    document.querySelectorAll("[data-hab]")[2].click();
+  });
+  const hab = await pApp.evaluate(() => document.getElementById("habStreak").textContent);
+  ok(/1 dia/.test(hab), "streak de hábitos conta o dia com 3+");
+
   // motivação: treinei hoje → bolinha, meta e toast
   pApp.on("dialog", (d) => d.accept());
-  await pApp.click("#btnFeito");
-  await pApp.waitForTimeout(200);
   const semana = await pApp.evaluate(() => document.getElementById("diasSem").textContent);
-  ok(/✓/.test(semana), "bolinha do dia marcada após 'Treinei hoje'");
+  ok(/✓/.test(semana), "bolinha do dia marcada (auto pelo treino completo)");
   const metaTxt = await pApp.evaluate(() => document.getElementById("metaBox").textContent);
   ok(/1 de 3/.test(metaTxt), "meta da semana mostra 1 de 3");
   const medal = await pApp.evaluate(() => document.getElementById("medalhas").textContent);
   ok(/1 treino/.test(medal) && /faltam 4/.test(medal), "contador de medalhas (faltam 4 pra 🥉)");
-  // clicar de novo no mesmo dia não duplica
+  // clicar manualmente no mesmo dia não duplica
   await pApp.click("#btnFeito");
   const feitos = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos")));
   ok(Object.keys(feitos).length === 1, "mesmo dia não duplica o registro");

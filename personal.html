@@ -131,6 +131,19 @@
       </div>
       <div id="exLista"></div>
     </div>
+
+    <div class="card" style="margin-top: 14px;">
+      <h2>📚 Conteúdos extras (videoteca do seu studio)</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Alongamento, mobilidade, aquecimento, dicas — aparecem no app de TODOS os seus alunos, agrupados por categoria. Valor percebido da assinatura. 😉</p>
+      <div class="linha-flex" style="margin-bottom: 10px;">
+        <input id="vtpTitulo" placeholder="Título (ex.: Mobilidade de quadril 10min)" style="flex: 2; min-width: 200px;">
+        <input id="vtpCat" placeholder="Categoria" list="vtpCats" style="flex: 1; min-width: 130px;">
+        <datalist id="vtpCats"><option>Mobilidade</option><option>Alongamento</option><option>Aquecimento</option><option>Dicas</option></datalist>
+        <input id="vtpUrl" placeholder="Link do YouTube" style="flex: 2; min-width: 200px;">
+        <button class="btn" id="vtpAdd">+ Adicionar</button>
+      </div>
+      <div id="vtpLista" class="muted">Nenhum conteúdo ainda.</div>
+    </div>
   </section>
 
   <dialog id="dlgEx">
@@ -227,7 +240,7 @@
   function load() {
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
     st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || [];
-    st.exercicios = st.exercicios || []; st.treinosV2 = st.treinosV2 || {};
+    st.exercicios = st.exercicios || []; st.treinosV2 = st.treinosV2 || {}; st.videoteca = st.videoteca || [];
     if (!st.exercicios.length && !st._exSeed) {
       st._exSeed = 1;
       [["Supino reto", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
@@ -574,7 +587,39 @@
     S.write("ptStudio", st);
     renderBiblioteca(); renderFichas();
   });
-  window.__biblioteca = { renderBiblioteca: renderBiblioteca, renderFichas: renderFichas }; // testes
+  function renderVideotecaPT() {
+    var st = load();
+    var el = $("vtpLista");
+    if (!st.videoteca.length) { el.innerHTML = "Nenhum conteúdo ainda."; return; }
+    var porCat = {};
+    st.videoteca.forEach(function (v) { (porCat[v.categoria || "Geral"] = porCat[v.categoria || "Geral"] || []).push(v); });
+    el.innerHTML = Object.keys(porCat).sort().map(function (c) {
+      return "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:10px 0 4px;text-transform:uppercase;'>" + esc(c) + "</div>" +
+        porCat[c].map(function (v) {
+          return '<div class="sessao-pt"><a href="' + esc(v.url) + '" target="_blank" rel="noopener" style="font-weight:700;">▶ ' + esc(v.titulo) + "</a>" +
+            '<span style="margin-left:auto;"></span><button class="btn sec mini" data-vtprm="' + v.id + '">✕</button></div>';
+        }).join("");
+    }).join("");
+  }
+  $("vtpAdd").addEventListener("click", function () {
+    var t = $("vtpTitulo").value.trim(), u = $("vtpUrl").value.trim();
+    if (!t || !/^https?:\/\//.test(u)) { alert("Preencha o título e um link começando com https://"); return; }
+    var st = load();
+    st.videoteca.push({ id: S.uid(), titulo: t, categoria: $("vtpCat").value.trim() || "Geral", url: u });
+    $("vtpTitulo").value = ""; $("vtpUrl").value = "";
+    S.write("ptStudio", st);
+    renderVideotecaPT();
+  });
+  $("vtpLista").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-vtprm");
+    if (!rm) return;
+    var st = load();
+    st.videoteca = st.videoteca.filter(function (v) { return v.id !== rm; });
+    S.write("ptStudio", st);
+    renderVideotecaPT();
+  });
+
+  window.__biblioteca = { renderBiblioteca: renderBiblioteca, renderFichas: renderFichas, renderVideotecaPT: renderVideotecaPT }; // testes
 
   // ---------- avaliações ----------
   function renderAvaliacoes(st) {
@@ -679,6 +724,12 @@
     var studio = (st.config || {}).nome || "Meu Personal";
     var zapPersonal = (st.config || {}).zap || "";
     var metaSemana = +a.metaSemana || 3;
+    var hojeISO = S.todayISO();
+    var sessApp = (st.sessoes || []).filter(function (x) { return x.alunoId === a.id && !x.feita && x.data >= hojeISO; })
+      .sort(function (x, y) { return (x.data + x.hora) < (y.data + y.hora) ? -1 : 1; }).slice(0, 5)
+      .map(function (x) { return { d: x.data, h: x.hora || "" }; });
+    var vidsApp = (st.videoteca || []).slice(0, 30).map(function (v) { return { t: v.titulo, c: v.categoria || "Geral", u: v.url }; });
+
     var treino = (st.treinos || {})[a.id] || "";
     var t2 = (st.treinosV2 || {})[a.id];
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
@@ -687,6 +738,10 @@
         return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, obs: it.obs || "" };
       }) };
     }) : null;
+    var fexs = [];
+    if (fichasApp) fichasApp.forEach(function (f) {
+      f.itens.forEach(function (it) { fexs.push({ n: it.nome, s: +it.series || 3 }); });
+    });
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
@@ -721,6 +776,11 @@
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>✅ Treinei hoje!</button>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
+      (sessApp.length ? "<div class='cardx'><h2>🗓 Minhas sessões com " + esc(studio.split(" ")[0]) + "</h2>" +
+        sessApp.map(function (x) {
+          var pd = x.d.split("-");
+          return "<div class='kv'><span>📅 " + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero! 💪</span></div>";
+        }).join("") + "</div>" : "") +
       "<div class='cardx'><h2>🏋️ Meu treino</h2>" +
       (fichasApp ? fichasApp.map(function (f) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
@@ -733,7 +793,11 @@
               (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>📌 " + esc(it.obs) + "</div>" : "") +
               (it.video ? "<a href='" + esc(it.video) + "' target='_blank' rel='noopener' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:12px;padding:4px 14px;border-radius:99px;display:inline-block;'>▶ ver vídeo</a>" : "") +
               ((!it.desc && !it.video && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;'>Faça com capricho — dúvidas, chama no chat! 💬</span>" : "") +
-              "</div></details>";
+              "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
+              "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:#1d1a24;border:1px solid #7c3aed;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
+              "<button class='tmrbtn' data-s='60' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>⏱ 60s</button>" +
+              "<button class='tmrbtn' data-s='90' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>⏱ 90s</button>" +
+              "</div></div></details>";
           }).join("");
       }).join("")
       : treino ? "<div style='font-size:14.5px;line-height:1.7;'>" + treino.split("\n").map(function (ln) {
@@ -749,8 +813,31 @@
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
       "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><button class='btnx' id='dcAdd'>+</button></div>" +
-      "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui. 💪</div></div>" +
+      "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui. 💪</div>" +
+      "<div id='dcGraf' style='display:none;margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>📏 Minha evolução</h2><div id='evoBox'></div></div>" +
+      "<div class='cardx'><h2>⚖ Meu peso</h2>" +
+      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
+      "<div id='pzGraf' class='vz'>Registre o peso de hoje — a curva aparece aqui. 📉</div></div>" +
+      "<div class='cardx'><h2>💧 Hábitos de hoje</h2>" +
+      "<div id='habBox' style='display:flex;flex-direction:column;gap:8px;'></div>" +
+      "<div id='habStreak' class='vz' style='margin-top:8px;'></div></div>" +
+      "<div class='cardx'><h2>📸 Fotos de progresso</h2>" +
+      "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer. 😉</div>" +
+      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>📸 Adicionar foto de hoje" +
+      "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
+      "<div class='vz' style='font-size:11px;'>As fotos ficam SÓ neste aparelho — ninguém mais vê.</div></div>" +
+      (vidsApp.length ? "<div class='cardx'><h2>📚 Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
+        (function () {
+          var porCat = {};
+          vidsApp.forEach(function (v) { (porCat[v.c] = porCat[v.c] || []).push(v); });
+          return Object.keys(porCat).sort().map(function (c) {
+            return "<div style='font-weight:800;font-size:11.5px;letter-spacing:.1em;color:#a9a4b5;margin:8px 0 4px;text-transform:uppercase;'>" + esc(c) + "</div>" +
+              porCat[c].map(function (v) {
+                return "<a href='" + esc(v.u) + "' target='_blank' rel='noopener' style='display:block;padding:9px 0;border-bottom:1px solid #322e3d;color:#fff;font-weight:700;text-decoration:none;font-size:14px;'>▶ " + esc(v.t) + "</a>";
+              }).join("");
+          }).join("");
+        })() + "</div>" : "") +
       "<div class='cardx'><h2>📝 Check-in da semana</h2>" +
       "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem! 💜</div>" +
       "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
@@ -762,6 +849,7 @@
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
       "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
+      "<div id='tmrBar' style='display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 💜</div>" +
       "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
       ",NUVEM=" + JSON.stringify((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
@@ -808,6 +896,70 @@
       "else{var msg='\ud83d\udcdd Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[ckNota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
       "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
       "pintaSemana();" +
+      "var FEXS=" + JSON.stringify(fexs) + ";" +
+      // séries por exercício + cronômetro + auto-completar o dia
+      "function pintaSets(){var st=L('ptsets_'+isoHj(),{});document.querySelectorAll('.setbtn').forEach(function(b){" +
+      "var n=st[b.dataset.ex]||0,max=+b.dataset.n;b.textContent=n+'/'+max+' séries ✓';" +
+      "b.style.background=n>=max?'linear-gradient(135deg,#7c3aed,#a78bfa)':'#1d1a24';});}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('.setbtn');" +
+      "if(b){var st=L('ptsets_'+isoHj(),{});var max=+b.dataset.n;var n=(st[b.dataset.ex]||0)+1;if(n>max)n=0;st[b.dataset.ex]=n;Sv('ptsets_'+isoHj(),st);pintaSets();" +
+      "if(n===max&&navigator.vibrate)navigator.vibrate(90);" +
+      "if(FEXS.length&&FEXS.every(function(x){return (st[x.n]||0)>=x.s;})){var f=L('ptfeitos',{});if(!f[isoHj()]){document.getElementById('btnFeito').click();}}return;}" +
+      "var t=e.target.closest('.tmrbtn');if(t){iniciaTmr(+t.dataset.s);return;}});" +
+      "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;" +
+      "bar.style.display='block';bar.textContent='⏱ Descanso: '+resta+'s';" +
+      "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='💪 Bora! Próxima série!';" +
+      "if(navigator.vibrate)navigator.vibrate([200,100,200]);setTimeout(function(){bar.style.display='none';},2200);}" +
+      "else{bar.textContent='⏱ Descanso: '+resta+'s';}},1000);}" +
+      "pintaSets();" +
+      // gráfico de carga por exercício (clique na linha do diário)
+      "function grafCarga(ex){var h=L('ptdc',{});var l=(h[ex]||[]).slice(-12);var g=document.getElementById('dcGraf');" +
+      "if(!l.length){g.style.display='none';return;}var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
+      "g.style.display='block';g.innerHTML=\"<div style='font-size:12px;color:#a9a4b5;margin-bottom:6px;'>📈 \"+ex+\" — últimas cargas</div>\"+" +
+      "\"<div style='display:flex;gap:6px;align-items:flex-end;height:90px;'>\"+l.map(function(x){var hh=Math.round(60*(+x.kg)/max);var pr=+x.kg===max;" +
+      "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(pr?'#a78bfa':'#6e6a78')+\";'>\"+String(x.kg).replace('.',',')+(pr?'★':'')+\"</div><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:\"+(pr?'linear-gradient(180deg,#a78bfa,#7c3aed)':'#3a3346')+\";border-radius:4px 4px 0 0;min-height:3px;'></div><div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+x.d.slice(8,10)+'/'+x.d.slice(5,7)+\"</div></div>\";}).join('')+\"</div>\";}" +
+      "document.getElementById('dcLista').addEventListener('click',function(e){var r=e.target.closest('[data-dcx]');if(r)grafCarga(r.dataset.dcx);});" +
+      // peso diário
+      "function pintaPeso(){var pz=L('ptpeso',{});var ks=Object.keys(pz).sort();var g=document.getElementById('pzGraf');" +
+      "if(!ks.length){return;}var l=ks.slice(-14);var vals=l.map(function(k){return +pz[k];});var max=Math.max.apply(null,vals),min=Math.min.apply(null,vals);var faixa=(max-min)||1;" +
+      "var dif=Math.round((vals[vals.length-1]-(+pz[ks[0]]))*10)/10;" +
+      "g.className='';g.innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;'><span>Hoje: <b>\"+String(vals[vals.length-1]).replace('.',',')+\" kg</b></span><span style='color:\"+(dif<0?'#4ade80':dif>0?'#f87171':'#a9a4b5')+\";font-weight:800;'>\"+(dif>0?'+':'')+String(dif).replace('.',',')+\" kg desde o início</span></div>\"+" +
+      "\"<div style='display:flex;gap:4px;align-items:flex-end;height:70px;'>\"+l.map(function(k){var v=+pz[k];var hh=Math.round(14+46*(v-min)/faixa);" +
+      "return \"<div style='flex:1;text-align:center;' title='\"+k+': '+v+\" kg'><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:#3a3346;border-radius:4px 4px 0 0;'></div><div style='font-size:8.5px;color:#6e6a78;margin-top:2px;'>\"+k.slice(8,10)+\"</div></div>\";}).join('')+\"</div>\";}" +
+      "document.getElementById('pzAdd').addEventListener('click',function(){var v=parseFloat((document.getElementById('pzKg').value||'').replace(',','.'));" +
+      "if(!v||v<20||v>400){alert('Confere o peso. 😉');return;}var pz=L('ptpeso',{});pz[isoHj()]=v;Sv('ptpeso',pz);document.getElementById('pzKg').value='';pintaPeso();" +
+      "var ck=document.getElementById('ckPeso');if(ck&&!ck.value)ck.value=String(v).replace('.',',');});" +
+      "pintaPeso();" +
+      // hábitos diários com streak
+      "var HABS=[['💧','Água em dia'],['🍎','Alimentação no plano'],['😴','Dormi 7h+'],['🏃','Cardio / passos']];" +
+      "function pintaHab(){var h=L('pthab',{});var hoje=h[isoHj()]||{};" +
+      "document.getElementById('habBox').innerHTML=HABS.map(function(x,i){var on=!!hoje[i];" +
+      "return \"<button data-hab='\"+i+\"' style='display:flex;align-items:center;gap:10px;background:\"+(on?'rgba(124,58,237,.22)':'#14121a')+\";border:1px solid \"+(on?'#7c3aed':'#322e3d')+\";border-radius:11px;padding:11px 14px;color:#fff;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;'><span style='font-size:18px;'>\"+x[0]+\"</span> \"+x[1]+\"<span style='margin-left:auto;font-size:16px;'>\"+(on?'✅':'⬜')+\"</span></button>\";}).join('');" +
+      "var streak=0;var d=new Date();" +
+      "for(var i=0;i<90;i++){var iso=d.toISOString().slice(0,10);var dia=h[iso]||{};var n=0;HABS.forEach(function(_,j){if(dia[j])n++;});" +
+      "if(n>=3)streak++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}" +
+      "document.getElementById('habStreak').innerHTML=streak?'🔥 <b>'+streak+' dia(s) seguidos</b> com 3+ hábitos — constância é o segredo!':'Marque pelo menos 3 pra contar o dia. 💜';}" +
+      "document.getElementById('habBox').addEventListener('click',function(e){var b=e.target.closest('[data-hab]');if(!b)return;" +
+      "var h=L('pthab',{});var hoje=h[isoHj()]||{};hoje[b.dataset.hab]=!hoje[b.dataset.hab];h[isoHj()]=hoje;Sv('pthab',h);pintaHab();});" +
+      "pintaHab();" +
+      // fotos de progresso (só no aparelho)
+      "function pintaFotos(){var fs=L('ptfotos',[]);var box=document.getElementById('fotosBox');if(!fs.length)return;" +
+      "var pri=fs[0],ult=fs[fs.length-1];box.className='';" +
+      "box.innerHTML=\"<div style='display:flex;gap:10px;'>\"+" +
+      "\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:12px;'></div>\"+" +
+      "(fs.length>1?\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</div><img src='\"+ult.img+\"' style='width:100%;border-radius:12px;'></div>\":'')+\"</div>\"+" +
+      "\"<div class='vz' style='font-size:11.5px;'>\"+fs.length+\" foto(s) guardadas</div>\";" +
+      "var dias=Math.round((new Date()-new Date(ult.d))/864e5);" +
+      "if(dias>=30)document.getElementById('fotoBtn').firstChild.textContent='📸 Faz '+dias+' dias — hora da foto do mês! ';}" +
+      "document.getElementById('fotoInput').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;" +
+      "var img=new Image();var rd=new FileReader();rd.onload=function(){img.onload=function(){" +
+      "var c=document.createElement('canvas');var esc2=480/Math.max(img.width,img.height);if(esc2>1)esc2=1;" +
+      "c.width=Math.round(img.width*esc2);c.height=Math.round(img.height*esc2);" +
+      "c.getContext('2d').drawImage(img,0,0,c.width,c.height);" +
+      "var fs=L('ptfotos',[]);fs.push({d:isoHj(),img:c.toDataURL('image/jpeg',.68)});if(fs.length>12)fs.shift();" +
+      "try{Sv('ptfotos',fs);}catch(e){alert('Memória de fotos cheia — apague fotos antigas do app.');return;}pintaFotos();};" +
+      "img.src=rd.result;};rd.readAsDataURL(f);this.value='';});" +
+      "pintaFotos();" +
       // chat aluno ↔ personal
       "function pintaChat(msgs){var el=document.getElementById('chMsgs');" +
       "if(!msgs||!msgs.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
@@ -825,7 +977,7 @@
       "carregaChat();setInterval(function(){if(NUVEM)carregaChat();},30000);" +
       "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
       "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      "return \"<div class='kv'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\" registro(s))</small></span></div>\";}).join('');}" +
+      "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>📈 \"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +
       "document.getElementById('dcAdd').addEventListener('click',function(){" +
       "var ex=document.getElementById('dcEx').value.trim(),kg=parseFloat(document.getElementById('dcKg').value.replace(',','.'));" +
       "if(!ex||!kg){alert('Preencha exercício e carga.');return;}" +
@@ -1052,6 +1204,7 @@
     renderPagamentos(st);
     renderAvaliacoes(st);
     renderBiblioteca();
+    renderVideotecaPT();
     renderConta();
   }
   $("cfgZap").addEventListener("change", function () {
