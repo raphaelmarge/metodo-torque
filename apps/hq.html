@@ -59,12 +59,25 @@
 
     <div class="kpis" id="hqKpis"></div>
 
+    <div class="card" style="margin-top: 16px;" id="cardCobrancas">
+      <h2>🧾 Cobranças do mês</h2>
+      <p class="muted" style="font-size: 13px;">Clientes ativos que ainda não pagaram a mensalidade deste mês — a rotina de faturamento de todo dia 1º, no estilo Stripe Billing.</p>
+      <div id="hqCobrancas" class="muted" style="margin-top: 8px;">Carregando…</div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;" id="cardReceita12" hidden>
+      <h2>📈 Receita do SaaS (12 meses)</h2>
+      <div id="hqReceita12" class="muted">Sem pagamentos ainda.</div>
+    </div>
+
     <div class="card" style="margin-top: 16px;">
       <h2>🏢 Empresas clientes</h2>
       <div class="filtros">
         <input id="fBusca" placeholder="🔍 Buscar por nome…" style="flex: 1; min-width: 160px;">
         <select id="fStatus"><option value="">— status —</option><option>trial</option><option>ativo</option><option>pausado</option><option>cancelado</option></select>
         <select id="fTipo"><option value="">— tipo —</option><option>academia</option><option>studio</option><option>box</option><option>personal</option><option>outro</option></select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin:0;"><input type="checkbox" id="fRisco" style="width:auto;">só em risco 🔴</label>
+        <button class="btn sec mini" id="hqCSV">⬇ CSV</button>
       </div>
       <div id="hqClientes" class="muted">Carregando…</div>
     </div>
@@ -104,6 +117,8 @@
       <input id="dcValor" type="number" min="0" step="0.01">
       <label>Status</label>
       <select id="dcStatus"><option>trial</option><option>ativo</option><option>pausado</option><option>cancelado</option></select>
+      <label>WhatsApp do responsável (para cobrança)</label>
+      <input id="dcZap" placeholder="ex.: 31999990000" inputmode="numeric">
       <label>Observações</label>
       <textarea id="dcObs" rows="2" placeholder="ex.: fechou anual com 20% off"></textarea>
       <div style="display:flex;gap:8px;margin-top:16px;">
@@ -197,11 +212,13 @@
   function carrega() {
     cli.rpc("hq_kpis").then(function (r) {
       var k = r.data || {};
+      var arpu = k.ativos ? (k.mrr || 0) / k.ativos : 0;
       $("hqKpis").innerHTML = [
         { rot: "Empresas clientes", val: k.clientes || 0 },
         { rot: "Ativas (pagantes)", val: k.ativos || 0, cor: "#16a34a" },
         { rot: "Em trial", val: k.trial || 0, cor: "#d97706" },
         { rot: "MRR do TORQUESYS", val: fmtR(k.mrr), cor: "var(--roxo)" },
+        { rot: "ARPU (por cliente)", val: arpu ? fmtR(arpu) : "—" },
         { rot: "Recebido no mês", val: fmtR(k.recebido_mes), cor: "#16a34a" },
         { rot: "Novas em 30 dias", val: k.novos_30d || 0 },
       ].map(function (x) {
@@ -211,38 +228,125 @@
     cli.rpc("hq_clientes").then(function (r) {
       clientes = r.data || [];
       renderClientes();
+      renderCobrancas();
     });
+    // receita 12 meses (v2 do SQL — se ainda não rodou, o card fica escondido)
+    cli.rpc("hq_receita_mensal").then(function (r) {
+      if (r.error || !r.data || !r.data.length) { $("cardReceita12").hidden = true; return; }
+      $("cardReceita12").hidden = false;
+      var itens = r.data.map(function (m) { return { rot: String(m.mes).slice(5) + "/" + String(m.mes).slice(2, 4), v: +m.total || 0 }; });
+      var max = Math.max.apply(null, itens.map(function (x) { return x.v; })) || 1;
+      $("hqReceita12").innerHTML = '<div style="display:flex;gap:8px;align-items:flex-end;height:120px;max-width:720px;">' +
+        itens.map(function (x) {
+          var h = Math.round(84 * x.v / max);
+          return '<div style="flex:1;text-align:center;" title="' + x.rot + ": " + fmtR(x.v) + '">' +
+            '<div style="font-size:10.5px;font-weight:700;color:var(--cinza);">' + (x.v ? fmtR(x.v) : "") + "</div>" +
+            '<div style="height:' + (84 - h) + 'px;"></div>' +
+            '<div style="height:' + h + 'px;background:var(--roxo);border-radius:6px 6px 0 0;min-height:2px;"></div>' +
+            '<div style="font-size:10px;color:var(--cinza);margin-top:4px;">' + x.rot + "</div></div>";
+        }).join("") + "</div>";
+    }, function () { $("cardReceita12").hidden = true; });
   }
+
+  // ---------- health score (estilo Customer Success: sinais de churn) ----------
+  function saudeDe(c) {
+    var hoje = S.todayISO();
+    var motivos = [];
+    var diaHoje = +hoje.slice(8, 10);
+    var diasDesde = Math.floor((new Date(hoje) - new Date(String(c.criada || hoje).slice(0, 10))) / 86400000);
+    if (c.status === "ativo" && +c.valor > 0 && !(+c.pago_mes > 0) && diaHoje > 10) motivos.push("💸 mensalidade do mês em aberto");
+    if (c.status === "trial" && diasDesde > 7) motivos.push("⏳ trial vencido há " + (diasDesde - 7) + " dia(s) — converter ou pausar");
+    if (c.ultima_atividade) {
+      var diasAt = Math.floor((new Date(hoje) - new Date(String(c.ultima_atividade).slice(0, 10))) / 86400000);
+      if (diasAt > 14) motivos.push("👻 sem usar o sistema há " + diasAt + " dias");
+    }
+    if (c.status === "ativo" && c.tipo !== "personal" && (+c.membros || 0) <= 1) motivos.push("👥 equipe ainda não entrou (só 1 usuário)");
+    return motivos;
+  }
+  function ehRisco(c) {
+    if (c.status === "cancelado") return false;
+    var m = saudeDe(c);
+    return m.length >= 2 || /💸|⏳/.test(m.join(""));
+  }
+  window.__hqSaude = saudeDe; // testes
 
   function renderClientes() {
     var busca = ($("fBusca").value || "").toLowerCase();
-    var fSt = $("fStatus").value, fTp = $("fTipo").value;
+    var fSt = $("fStatus").value, fTp = $("fTipo").value, soRisco = $("fRisco").checked;
     var vis = clientes.filter(function (c) {
       if (busca && (c.nome || "").toLowerCase().indexOf(busca) === -1) return false;
       if (fSt && c.status !== fSt) return false;
       if (fTp && c.tipo !== fTp) return false;
+      if (soRisco && !ehRisco(c)) return false;
       return true;
     });
     var cfg = hqCfg();
     $("hqClientes").innerHTML = vis.length ? vis.map(function (c) {
       var ICONE = { academia: "🏢", studio: "🤸", box: "🥊", personal: "💪", outro: "🏷" };
-      return '<div class="cli"><b class="nome">' + (ICONE[c.tipo] || "🏷") + " " + esc(c.nome) + "</b>" +
+      var motivos = c.status === "cancelado" ? [] : saudeDe(c);
+      var farol = c.status === "cancelado" ? "" : ehRisco(c) ? "🔴" : motivos.length ? "🟡" : "🟢";
+      var msgResgate = motivos.length
+        ? "Oi! Aqui é o Raphael, do TORQUESYS 👋 " + (motivos[0].indexOf("💸") === 0
+          ? "Passando pra lembrar da mensalidade deste mês (" + fmtR(c.valor) + "). Te mando o Pix?"
+          : motivos[0].indexOf("⏳") === 0
+            ? "Seu período de teste terminou — bora ativar seu plano e seguir com tudo funcionando? Me chama que libero agora 😉"
+            : "Vi que faz uns dias que vocês não usam o sistema — posso ajudar em algo? Tenho tutoriais e faço um tour com você em 10 min!")
+        : "Oi! Aqui é o Raphael, do TORQUESYS 👋 Tudo certo com o sistema? Qualquer coisa me chama!";
+      return '<div class="cli">' + (farol ? '<span title="' + esc(motivos.join(" · ") || "saudável") + '">' + farol + "</span>" : "") +
+        '<b class="nome">' + (ICONE[c.tipo] || "🏷") + " " + esc(c.nome) + "</b>" +
         '<span class="tag tipo">' + esc(c.tipo) + "</span>" +
         '<span class="tag ' + esc(c.status) + '">' + esc(c.status) + "</span>" +
         '<span class="mut">' + (c.membros || 0) + " usuário(s) · desde " + esc(String(c.criada || "").slice(0, 10)) + "</span>" +
         '<span class="mut">' + esc(c.plano) + " " + (c.valor ? fmtR(c.valor) + "/mês" : "") + "</span>" +
         '<span class="mut">pagou ' + fmtR(c.total_pago) + " no total" + (c.ultimo_pgto ? " · último " + esc(String(c.ultimo_pgto).slice(0, 10)) : "") + "</span>" +
+        (motivos.length ? '<span style="flex-basis:100%;font-size:12px;color:#b45309;font-weight:600;">' + esc(motivos.join(" · ")) + "</span>" : "") +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-edit="' + c.id + '">✎ Plano</button>' +
         '<button class="btn sec mini" data-pgto="' + c.id + '">💰 Pagou</button>' +
         (cfg.pixChave && +c.valor > 0 ? '<button class="btn mini" data-pix="' + c.id + '">💠 Pix</button>' : "") +
+        (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgResgate) + '">💬</a>' : "") +
         "</div>";
     }).join("") : '<div class="muted">Nenhuma empresa com esse filtro.</div>';
   }
-  ["fBusca", "fStatus", "fTipo"].forEach(function (id) { $(id).addEventListener("input", renderClientes); });
+  ["fBusca", "fStatus", "fTipo", "fRisco"].forEach(function (id) { $(id).addEventListener("input", renderClientes); });
+
+  // ---------- cobranças do mês (rotina de faturamento) ----------
+  function renderCobrancas() {
+    var cfg = hqCfg();
+    var devem = clientes.filter(function (c) { return c.status === "ativo" && +c.valor > 0 && !(+c.pago_mes > 0); });
+    var total = devem.reduce(function (t, c) { return t + +c.valor; }, 0);
+    $("hqCobrancas").innerHTML = devem.length
+      ? '<div style="font-size:13.5px;margin-bottom:8px;"><b>' + devem.length + " cliente(s)</b> devendo <b>" + fmtR(total) + "</b> este mês.</div>" +
+        devem.map(function (c) {
+          var msg = "Oi! Aqui é o Raphael, do TORQUESYS 👋 Segue a mensalidade deste mês (" + fmtR(c.valor) + ").";
+          if (cfg.pixChave) {
+            var txid = "TQHQ" + S.todayISO().replace(/-/g, "").slice(0, 8) + semAcento(c.nome).replace(/ /g, "").slice(0, 8);
+            msg += "\n\nPix copia e cola:\n" + pixPayload(cfg.pixChave, cfg.pixNome, cfg.pixCidade, +c.valor, txid);
+          }
+          return '<div class="lead"><b>' + esc(c.nome) + "</b><span>" + fmtR(c.valor) + "</span>" +
+            '<span style="margin-left:auto;"></span>' +
+            (cfg.pixChave ? '<button class="btn mini" data-pix="' + c.id + '">💠 Pix</button>' : "") +
+            (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Cobrar</a>' : "") +
+            '<button class="btn sec mini" data-pgto="' + c.id + '">💰 Pagou</button></div>';
+        }).join("")
+      : "Todo mundo em dia este mês. 🎉";
+  }
+
+  // ---------- CSV dos clientes ----------
+  $("hqCSV").addEventListener("click", function () {
+    var linhas = [["Empresa", "Tipo", "Plano", "Mensalidade", "Status", "Usuários", "Desde", "Total pago", "Último pagamento", "Última atividade", "WhatsApp", "Saúde"]];
+    clientes.forEach(function (c) {
+      var m = c.status === "cancelado" ? [] : saudeDe(c);
+      linhas.push([c.nome, c.tipo, c.plano, String(c.valor || 0).replace(".", ","), c.status, c.membros || 0,
+        String(c.criada || "").slice(0, 10), String(c.total_pago || 0).replace(".", ","),
+        c.ultimo_pgto || "", String(c.ultima_atividade || "").slice(0, 10), c.zap || "",
+        m.length ? m.join(" | ") : "ok"]);
+    });
+    S.baixaCSV("clientes-torquesys.csv", linhas);
+  });
 
   var editando = null;
-  $("hqClientes").addEventListener("click", function (e) {
+  function cliqueCliente(e) {
     var ed = e.target.getAttribute && e.target.getAttribute("data-edit");
     var pg = e.target.getAttribute && e.target.getAttribute("data-pgto");
     var px = e.target.getAttribute && e.target.getAttribute("data-pix");
@@ -254,6 +358,7 @@
       $("dcPlano").value = editando.plano || "";
       $("dcValor").value = editando.valor || "";
       $("dcStatus").value = editando.status || "trial";
+      $("dcZap").value = editando.zap || "";
       $("dcObs").value = editando.obs || "";
       $("dlgCli").showModal();
     }
@@ -282,7 +387,9 @@
       } catch (err) { $("pixHQQr").innerHTML = ""; }
       $("dlgPixHQ").showModal();
     }
-  });
+  }
+  $("hqClientes").addEventListener("click", cliqueCliente);
+  $("hqCobrancas").addEventListener("click", cliqueCliente);
   $("pixHQCopiar").addEventListener("click", function () {
     $("pixHQCode").select();
     try { document.execCommand("copy"); this.textContent = "✅ Copiado!"; } catch (e) {}
@@ -298,6 +405,7 @@
       p_valor: +$("dcValor").value || 0,
       p_status: $("dcStatus").value,
       p_obs: $("dcObs").value.trim(),
+      p_zap: $("dcZap").value.replace(/\D/g, ""),
     }).then(function (r) {
       if (r.error) { alert("Não deu: " + r.error.message); return; }
       carrega();
@@ -342,7 +450,7 @@
     renderLeads();
   });
   renderLeads();
-  S.onChange(function (k) { if (k === "hqLeads") renderLeads(); if (k === "hqConfig") renderClientes(); });
+  S.onChange(function (k) { if (k === "hqLeads") renderLeads(); if (k === "hqConfig") { renderClientes(); renderCobrancas(); } });
 
   window.__hq = { renderClientes: renderClientes, renderLeads: renderLeads, carrega: carrega }; // testes
   initHQ();
