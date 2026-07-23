@@ -72,7 +72,7 @@
       $("gSenha").required = !vinculando;
 
       $("gateIntro").textContent = vinculando
-        ? "Você está logado como " + (emailLogado || "(conta sem e-mail)") + ", mas essa conta ainda não está ligada a uma academia. Crie a sua academia, entre na equipe de uma existente — ou saia e entre com a conta certa."
+        ? "Você está logado como " + (emailLogado || "(conta sem e-mail)") + ", mas essa conta ainda não está ligada a uma academia. Crie a sua academia, entre na equipe — ou toque em ENTRAR para usar a conta certa (login e senha)."
         : criar ? "Para o DONO: crie a conta da sua academia com o código de acesso do curso. Você recebe um código da equipe para cadastrar seus funcionários."
         : equipe ? "Para a EQUIPE: crie seu login com o código da equipe que o dono da academia te passou."
         : "Entre com seu e-mail e senha. Os dados da sua academia sincronizam em todos os aparelhos.";
@@ -85,13 +85,23 @@
       Array.prototype.forEach.call($("gateAbas").querySelectorAll("button"), function (b) {
         var a = b.getAttribute("data-aba");
         b.classList.toggle("ativa", a === aba);
-        b.style.display = vinculando && a === "entrar" ? "none" : "";
+        b.style.display = ""; // a aba Entrar aparece SEMPRE — inclusive presa no vínculo
+      });
+    }
+    function sairEEntrar() {
+      sb.auth.signOut().finally(function () {
+        localStorage.removeItem(LS_PERFIL);
+        localStorage.removeItem(LS_ACAD);
+        localStorage.removeItem(LS_INTENTO);
+        location.reload();
       });
     }
     $("gateAbas").addEventListener("click", function (e) {
       var b = e.target.closest("button");
       if (!b) return;
       aba = b.getAttribute("data-aba");
+      // preso numa conta sem academia? tocar em Entrar desconecta e abre o login normal
+      if (vinculando && aba === "entrar") { sairEEntrar(); return; }
       aplicaAba();
     });
     aplicaAba();
@@ -152,14 +162,7 @@
     }
 
     // beco sem saída resolvido: no estado "vinculando" dá pra trocar de conta
-    $("gateSair").addEventListener("click", function () {
-      sb.auth.signOut().finally(function () {
-        localStorage.removeItem(LS_PERFIL);
-        localStorage.removeItem(LS_ACAD);
-        localStorage.removeItem(LS_INTENTO);
-        location.reload();
-      });
-    });
+    $("gateSair").addEventListener("click", sairEEntrar);
 
     window.MT_sair = function () {
       if (!confirm("Sair da sua conta neste aparelho?")) return;
