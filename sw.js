@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v166";
+var VERSION = "mt-v167";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
@@ -53,7 +53,11 @@ var DOC_PAGES = (self.MT_DOCS || []).map(function (d) { return "docs/" + d.slug 
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(PRECACHE).then(function (cache) {
-      return cache.addAll(CORE.concat(DOC_PAGES));
+      // cache: "reload" ignora o cache HTTP do navegador — cada versão nova
+      // nasce 100% fresca (sem misturar página nova com script velho)
+      return cache.addAll(CORE.concat(DOC_PAGES).map(function (u) {
+        return new Request(u, { cache: "reload" });
+      }));
     }).then(function () { return self.skipWaiting(); })
   );
 });
