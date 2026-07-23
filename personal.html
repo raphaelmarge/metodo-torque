@@ -241,9 +241,17 @@
 
   <!-- RELATÓRIOS -->
   <section id="vRelatorios" hidden>
+    <div class="card" style="margin-bottom: 14px;"><h2>🎯 Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>🔮 Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
     <div class="card" style="margin-bottom: 14px;"><h2>💰 Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>📈 Crescimento da carteira (novos × encerrados)</h2><div id="relCarteira" class="muted">Sem dados ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;"><h2>📅 Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
-    <div class="card"><h2>🏃 Assiduidade (sessões feitas nos últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>🗓 Ocupação da agenda (últimas 8 semanas)</h2><div id="relOcupacao" class="muted">Sem sessões ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>🏃 Assiduidade e presença (últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>📏 Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>💎 Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
+      <div style="margin-top: 10px;"><button class="btn sec mini" id="relCSV">⬇ Baixar CSV (receita por aluno)</button></div></div>
+    <div class="card"><h2>🚨 Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
   </section>
 
   <!-- ASSESSORIA -->
@@ -404,7 +412,8 @@
     var id = e.target.getAttribute && e.target.getAttribute("data-rm");
     if (!id || !confirm("Encerrar este aluno? O histórico fica guardado.")) return;
     var st = load();
-    (st.alunos.find(function (a) { return a.id === id; }) || {}).ativo = false;
+    var enc = st.alunos.find(function (a) { return a.id === id; });
+    if (enc) { enc.ativo = false; enc.fim = S.todayISO(); }
     save(st);
   });
 
@@ -958,39 +967,221 @@
           '<div style="font-size:10.5px;color:var(--cinza);margin-top:4px;">' + x.rot + "</div></div>";
       }).join("") + "</div>";
   }
+  function kpiRow(el, itens) {
+    el.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap;">' + itens.map(function (k) {
+      return '<div style="flex:1;min-width:130px;background:#faf9fc;border:1px solid var(--linha);border-radius:10px;padding:10px 12px;">' +
+        '<div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--cinza);font-weight:700;">' + k.t + "</div>" +
+        '<div style="font-size:20px;font-weight:800;' + (k.cor ? "color:" + k.cor + ";" : "") + '">' + k.v + "</div>" +
+        (k.sub ? '<div style="font-size:11.5px;color:var(--cinza);">' + k.sub + "</div>" : "") + "</div>";
+    }).join("") + "</div>";
+  }
+  function valorMensalDe(st, a) {
+    var ct = contratoDe(st, a.id);
+    var pl = ct ? planoDe(st, ct.planoId) : null;
+    return pl ? +pl.valor : +a.valor || 0;
+  }
   function renderRelatorios() {
     var st = load();
+    var hoje = S.todayISO();
+    var mesAtual = hoje.slice(0, 7);
+    var fmtR = function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); };
+    var nomeDe = {};
+    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     var meses = [];
     for (var i = 5; i >= 0; i--) {
       var d = new Date(); d.setMonth(d.getMonth() - i, 1);
       meses.push({ chave: S.monthKey(d), rot: S.monthKey(d).slice(5) + "/" + S.monthKey(d).slice(2, 4) });
     }
+
+    // ---- 🎯 resumo do mês ----
+    var pagsMes = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mesAtual; });
+    var recebidoMes = pagsMes.reduce(function (t, p) { return t + +p.valor; }, 0);
+    var pagantes = {};
+    pagsMes.forEach(function (p) { pagantes[p.alunoId] = 1; });
+    var nPagantes = Object.keys(pagantes).length;
+    var previstoMes = ativos.reduce(function (t, a) { return t + valorMensalDe(st, a); }, 0);
+    var sessMes = st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === mesAtual; }).length;
+    kpiRow($("relResumo"), [
+      { t: "Alunos ativos", v: ativos.length },
+      { t: "Recebido no mês", v: fmtR(recebidoMes), cor: "#16a34a" },
+      { t: "Falta receber", v: fmtR(Math.max(0, previstoMes - recebidoMes)), cor: previstoMes > recebidoMes ? "#d97706" : "#16a34a" },
+      { t: "Sessões no mês", v: sessMes },
+      { t: "Ticket médio", v: nPagantes ? fmtR(recebidoMes / nPagantes) : "—", sub: nPagantes ? nPagantes + " pagante(s)" : "" },
+    ]);
+
+    // ---- 🔮 previsto × recebido ----
+    if (ativos.length) {
+      var pct = previstoMes ? Math.min(100, Math.round(100 * recebidoMes / previstoMes)) : 0;
+      var faltam = ativos.filter(function (a) {
+        return !st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      });
+      $("relPrevisto").innerHTML =
+        '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px;">' +
+        "<span>Recebido: " + fmtR(recebidoMes) + "</span><span>Previsto: " + fmtR(previstoMes) + "</span></div>" +
+        '<div style="height:14px;background:#eee;border-radius:99px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--roxo),#a78bfa);"></div></div>' +
+        '<div style="font-size:12px;color:var(--cinza);margin:4px 0 10px;">' + pct + "% da receita prevista já entrou.</div>" +
+        (faltam.length ? faltam.map(function (a) {
+          var ct = contratoDe(st, a.id);
+          return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b><span>" + fmtR(valorMensalDe(st, a)) + "</span>" +
+            (ct ? '<span class="muted">vence dia ' + ct.diaVenc + "</span>" : '<span class="muted">sem contrato</span>') + "</div>";
+        }).join("") : '<div class="muted">Todo mundo pagou este mês. 🎉</div>');
+    } else $("relPrevisto").textContent = "Cadastre alunos e contratos para ver a previsão.";
+
+    // ---- 💰 receita 6 meses ----
     var rec = meses.map(function (m) {
       return { rot: m.rot, v: st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === m.chave; }).reduce(function (t, p) { return t + +p.valor; }, 0) };
     });
     if (rec.some(function (x) { return x.v; })) barras($("relReceita"), rec, "var(--roxo)", function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); });
     else $("relReceita").textContent = "Sem pagamentos ainda.";
+
+    // ---- 📈 carteira: novos × encerrados por mês ----
+    var linhasCart = meses.map(function (m) {
+      var novos = st.alunos.filter(function (a) { return (a.desde || "").slice(0, 7) === m.chave; }).length;
+      var sairam = st.alunos.filter(function (a) { return a.ativo === false && (a.fim || "").slice(0, 7) === m.chave; }).length;
+      return { rot: m.rot, novos: novos, sairam: sairam };
+    });
+    if (linhasCart.some(function (l) { return l.novos || l.sairam; })) {
+      $("relCarteira").innerHTML = linhasCart.map(function (l) {
+        var saldo = l.novos - l.sairam;
+        return '<div class="sessao-pt"><b style="width:56px;">' + l.rot + "</b>" +
+          '<span style="color:#16a34a;font-weight:700;">+' + l.novos + " novo(s)</span>" +
+          '<span style="color:#dc2626;font-weight:700;">−' + l.sairam + " encerrado(s)</span>" +
+          '<span style="margin-left:auto;font-weight:800;color:' + (saldo >= 0 ? "#16a34a" : "#dc2626") + ';">saldo ' + (saldo >= 0 ? "+" : "") + saldo + "</span></div>";
+      }).join("");
+    } else $("relCarteira").textContent = "Sem dados ainda.";
+
+    // ---- 📅 sessões por mês ----
     var ses = meses.map(function (m) {
       return { rot: m.rot, v: st.sessoes.filter(function (x) { return x.feita && (x.data || "").slice(0, 7) === m.chave; }).length };
     });
     if (ses.some(function (x) { return x.v; })) barras($("relSessoes"), ses, "#16a34a");
     else $("relSessoes").textContent = "Sem sessões feitas ainda.";
+
+    // ---- 🗓 ocupação da agenda (8 semanas): dia da semana + horários mais usados ----
+    var corte56 = new Date(); corte56.setDate(corte56.getDate() - 56);
+    var iso56 = S.todayISO(corte56);
+    var ses56 = st.sessoes.filter(function (x) { return x.data >= iso56 && x.data <= hoje; });
+    if (ses56.length) {
+      var DIAS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+      var porDia = [0, 0, 0, 0, 0, 0, 0];
+      var porHora = {};
+      ses56.forEach(function (x) {
+        porDia[new Date(x.data + "T12:00").getDay()]++;
+        if (x.hora) porHora[x.hora.slice(0, 2) + "h"] = (porHora[x.hora.slice(0, 2) + "h"] || 0) + 1;
+      });
+      barras($("relOcupacao"), DIAS.map(function (r, idx) { return { rot: r, v: porDia[idx] }; }), "#0891b2");
+      var topH = Object.keys(porHora).sort(function (a, b) { return porHora[b] - porHora[a]; }).slice(0, 5);
+      var menor = 1;
+      for (var di = 2; di <= 6; di++) if (porDia[di] < porDia[menor]) menor = di;
+      $("relOcupacao").innerHTML += '<div style="font-size:12.5px;color:var(--cinza);margin-top:10px;">⏰ Horários mais usados: ' +
+        (topH.length ? topH.map(function (h) { return "<b>" + h + "</b> (" + porHora[h] + ")"; }).join(" · ") : "—") + "</div>" +
+        '<div style="font-size:12.5px;color:var(--cinza);">💡 Dia com mais espaço pra vender horário: <b>' + DIAS[menor] + "</b></div>";
+    } else $("relOcupacao").textContent = "Sem sessões ainda.";
+
+    // ---- 🏃 assiduidade + presença 30d ----
     var corte = new Date(); corte.setDate(corte.getDate() - 30);
     var corteISO = S.todayISO(corte);
-    var nomeDe = {};
-    st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
-    var porAluno = {};
+    var porAluno = {}, faltasDe = {};
     st.sessoes.forEach(function (x) {
-      if (x.feita && x.data >= corteISO) porAluno[x.alunoId] = (porAluno[x.alunoId] || 0) + 1;
+      if (x.data < corteISO || x.data > hoje) return;
+      if (x.feita) porAluno[x.alunoId] = (porAluno[x.alunoId] || 0) + 1;
+      else if (x.data < hoje) faltasDe[x.alunoId] = (faltasDe[x.alunoId] || 0) + 1;
     });
-    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     $("relAssiduidade").innerHTML = ativos.length ? ativos.map(function (a) {
       var n = porAluno[a.id] || 0;
+      var f = faltasDe[a.id] || 0;
       var cor = n >= 8 ? "#16a34a" : n >= 4 ? "var(--roxo)" : n >= 1 ? "#d97706" : "#dc2626";
-      return '<div class="sessao-pt"><b>' + esc(a.nome) + '</b><span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + n + " sessão(ões)</span>" +
+      var taxa = n + f ? Math.round(100 * n / (n + f)) : null;
+      return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
+        (taxa !== null ? '<span class="muted">presença ' + taxa + "%</span>" : "") +
+        (f ? '<span style="color:#d97706;font-weight:700;">' + f + " falta(s)</span>" : "") +
+        '<span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + n + " sessão(ões)</span>" +
         (n === 0 ? ' <span class="tag erro">sumido — chame!</span>' : "") + "</div>";
     }).join("") : "Cadastre alunos primeiro.";
+
+    // ---- 📏 resultados (1ª × última avaliação) ----
+    var evols = [];
+    ativos.forEach(function (a) {
+      var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
+        .sort(function (x, y) { return (x.data || "") < (y.data || "") ? -1 : 1; });
+      if (avs.length < 2) return;
+      var pri = avs[0], ult = avs[avs.length - 1];
+      var dPeso = ult.peso && pri.peso ? +(ult.peso - pri.peso).toFixed(1) : null;
+      var dGord = ult.gordura && pri.gordura ? +(ult.gordura - pri.gordura).toFixed(1) : null;
+      evols.push({ nome: a.nome, dPeso: dPeso, dGord: dGord, n: avs.length });
+    });
+    if (evols.length) {
+      var melhoraram = evols.filter(function (e) { return (e.dPeso !== null && e.dPeso < 0) || (e.dGord !== null && e.dGord < 0); }).length;
+      $("relResultados").innerHTML =
+        '<div style="font-size:13px;margin-bottom:8px;"><b>' + melhoraram + " de " + evols.length + "</b> aluno(s) com evolução (peso ou % gordura caiu) — prova social pronta pro Instagram. 📸</div>" +
+        evols.sort(function (x, y) { return (x.dPeso || 0) - (y.dPeso || 0); }).map(function (e) {
+          return '<div class="sessao-pt"><b>' + esc(e.nome) + "</b>" +
+            (e.dPeso !== null ? '<span style="font-weight:800;color:' + (e.dPeso <= 0 ? "#16a34a" : "#d97706") + ';">' + (e.dPeso > 0 ? "+" : "") + String(e.dPeso).replace(".", ",") + " kg</span>" : "") +
+            (e.dGord !== null ? '<span style="font-weight:700;color:' + (e.dGord <= 0 ? "#16a34a" : "#d97706") + ';">' + (e.dGord > 0 ? "+" : "") + String(e.dGord).replace(".", ",") + "% gordura</span>" : "") +
+            '<span class="muted" style="margin-left:auto;">' + e.n + " avaliações</span></div>";
+        }).join("");
+    } else $("relResultados").textContent = "Registre pelo menos 2 avaliações por aluno para ver a evolução.";
+
+    // ---- 💎 LTV: receita por aluno ----
+    var ltv = st.alunos.map(function (a) {
+      var pags = st.pagamentos.filter(function (p) { return p.alunoId === a.id; });
+      var total = pags.reduce(function (t, p) { return t + +p.valor; }, 0);
+      var mesesCasa = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2592000000)) : 1;
+      return { nome: a.nome, total: total, n: pags.length, mesesCasa: mesesCasa, ativo: a.ativo !== false };
+    }).filter(function (l) { return l.total > 0; }).sort(function (x, y) { return y.total - x.total; });
+    if (ltv.length) {
+      $("relLTV").innerHTML = ltv.map(function (l, idx) {
+        return '<div class="sessao-pt">' + (idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "") + "<b>" + esc(l.nome) + "</b>" +
+          (!l.ativo ? '<span class="tag">encerrado</span>' : "") +
+          '<span class="muted">' + l.n + " pagamento(s) · " + l.mesesCasa + " mês(es) de casa</span>" +
+          '<span style="margin-left:auto;font-weight:800;">' + fmtR(l.total) + "</span></div>";
+      }).join("");
+    } else $("relLTV").textContent = "Sem pagamentos ainda.";
+
+    // ---- 🚨 alertas ----
+    var diaHoje = +hoje.slice(8, 10);
+    var alertas = [];
+    ativos.forEach(function (a) {
+      var ct = contratoDe(st, a.id);
+      var pagouMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      if (ct && !pagouMes && diaHoje > ct.diaVenc) alertas.push({ tipo: "erro", txt: "💸 <b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + ct.diaVenc + ")." });
+      var ultimaFeita = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; })
+        .map(function (x) { return x.data; }).sort().pop() || a.desde || "";
+      var corte14 = new Date(); corte14.setDate(corte14.getDate() - 14);
+      if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", txt: "👻 <b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate." });
+      var ultimaAv = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; }).map(function (v) { return v.data; }).sort().pop();
+      var corte60 = new Date(); corte60.setDate(corte60.getDate() - 60);
+      if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", txt: "📏 <b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução." });
+      var temFicha = st.treinosV2 && st.treinosV2[a.id] && (st.treinosV2[a.id].fichas || []).length;
+      if (!temFicha && !(st.treinos || {})[a.id]) alertas.push({ tipo: "info", txt: "📋 <b>" + esc(a.nome) + "</b> ainda não tem ficha de treino montada." });
+      if (ct) {
+        var pl = planoDe(st, ct.planoId);
+        if (pl && +pl.ciclo > 1 && ct.inicio) {
+          var fimCiclo = new Date(ct.inicio + "T12:00"); fimCiclo.setMonth(fimCiclo.getMonth() + +pl.ciclo);
+          var em30 = new Date(); em30.setDate(em30.getDate() + 30);
+          if (fimCiclo <= em30) alertas.push({ tipo: "aviso", txt: "🔄 O contrato de <b>" + esc(a.nome) + "</b> (" + esc(pl.nome) + ") completa o ciclo em " + S.fmtData(S.todayISO(fimCiclo)) + " — hora de renovar." });
+        }
+      }
+    });
+    $("relAlertas").innerHTML = alertas.length ? alertas.map(function (al) {
+      var borda = al.tipo === "erro" ? "#dc2626" : al.tipo === "aviso" ? "#d97706" : "var(--roxo)";
+      return '<div style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:#faf9fc;border-radius:0 8px 8px 0;font-size:13.5px;">' + al.txt + "</div>";
+    }).join("") : "Tudo em ordem — nenhum alerta hoje. 🎉";
   }
+  $("relCSV").addEventListener("click", function () {
+    var st = load();
+    var hoje = S.todayISO();
+    var linhas = [["Aluno", "Situação", "Total pago (R$)", "Pagamentos", "Meses de casa", "Cliente desde"]];
+    st.alunos.forEach(function (a) {
+      var pags = st.pagamentos.filter(function (p) { return p.alunoId === a.id; });
+      var total = pags.reduce(function (t, p) { return t + +p.valor; }, 0);
+      var mesesCasa = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2592000000)) : 1;
+      linhas.push([a.nome, a.ativo !== false ? "ativo" : "encerrado", String(total).replace(".", ","), pags.length, mesesCasa, a.desde || ""]);
+    });
+    S.baixaCSV("receita-por-aluno.csv", linhas);
+  });
+  window.__relPT = renderRelatorios; // testes
 
   // ---------- app do aluno do personal ----------
   function montaAppAluno(a, stamp) {

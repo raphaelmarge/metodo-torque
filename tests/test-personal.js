@@ -309,6 +309,53 @@ function ok(cond, nome) {
   ok(/R\$\s?400/.test(relR), "relatório de receita mostra os R$ 400 do mês");
   const relA = await p.evaluate(() => document.getElementById("relAssiduidade").textContent);
   ok(/João Cliente/.test(relA) && /1 sessão/.test(relA), "assiduidade conta a sessão feita");
+  ok(/presença 100%/.test(relA), "taxa de presença 100% (1 feita, 0 faltas)");
+
+  // pacote novo de relatórios
+  const resumo = await p.evaluate(() => document.getElementById("relResumo").textContent);
+  ok(/Alunos ativos/.test(resumo) && /Recebido no mês/.test(resumo) && /400/.test(resumo), "resumo do mês: recebido R$ 400");
+  ok(/Falta receber/.test(resumo) && /50/.test(resumo), "resumo: falta receber R$ 50 (contrato 450 − pago 400)");
+  ok(/Ticket médio/.test(resumo) && /1 pagante/.test(resumo), "resumo: ticket médio com nº de pagantes");
+  const relPrev = await p.evaluate(() => document.getElementById("relPrevisto").textContent);
+  ok(/Previsto: R\$\s?450/.test(relPrev) && /Recebido: R\$\s?400/.test(relPrev), "previsto×recebido usa o valor do CONTRATO (450)");
+  ok(/89%/.test(relPrev), "barra de progresso da receita (400/450 = 89%)");
+  ok(/Todo mundo pagou/.test(relPrev), "quem pagou some da lista de falta");
+  const relCart = await p.evaluate(() => document.getElementById("relCarteira").textContent);
+  ok(/\+1 novo/.test(relCart) && /saldo \+1/.test(relCart), "carteira: João conta como novo no mês");
+  const relOc = await p.evaluate(() => document.getElementById("relOcupacao").textContent);
+  ok(/Horários mais usados/.test(relOc) && /07h/.test(relOc), "ocupação: horário mais usado (07h)");
+  ok(/espaço pra vender/.test(relOc), "ocupação sugere o dia com mais espaço");
+  const relRes = await p.evaluate(() => document.getElementById("relResultados").textContent);
+  ok(/1 de 1/.test(relRes) && /-6/.test(relRes.replace(/−/g, "-")), "resultados: João evoluiu −6 kg (1ª × última avaliação)");
+  const relL = await p.evaluate(() => document.getElementById("relLTV").textContent);
+  ok(/João Cliente/.test(relL) && /400/.test(relL) && /1 pagamento/.test(relL), "LTV: João com R$ 400 no histórico");
+  const relAl0 = await p.evaluate(() => document.getElementById("relAlertas").textContent);
+  ok(/Tudo em ordem/.test(relAl0), "studio saudável → nenhum alerta");
+  // injeta uma aluna problemática (sumida, sem ficha, sem pagar) e re-renderiza
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const d = new Date(); d.setDate(d.getDate() - 40);
+    st.alunos.push({ id: "maria-t", nome: "Maria Sumida", valor: 300, ativo: true, desde: d.toISOString().slice(0, 10) });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__relPT();
+  });
+  const relAl = await p.evaluate(() => document.getElementById("relAlertas").textContent);
+  ok(/Maria Sumida/.test(relAl) && /14 dias/.test(relAl), "alerta 👻 de aluna sumida (14+ dias)");
+  ok(/ficha de treino/.test(relAl), "alerta 📋 de aluna sem ficha montada");
+  const resumo2 = await p.evaluate(() => document.getElementById("relResumo").textContent);
+  ok(/350/.test(resumo2), "falta receber recalcula com a aluna nova (R$ 350)");
+  // CSV de receita por aluno
+  const dlRel = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+  await p.click("#relCSV");
+  const arqRel = await dlRel;
+  ok(!!arqRel && /receita-por-aluno/.test(arqRel.suggestedFilename()), "CSV de receita por aluno baixa");
+  // limpa a aluna de teste pra não interferir no resto
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.alunos = st.alunos.filter((a) => a.id !== "maria-t");
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__relPT();
+  });
 
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
