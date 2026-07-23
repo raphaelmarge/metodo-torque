@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar — Aluno · TORQUESYS</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.28), transparent 60%), #121016; color: #f5f4f7; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .cartao { width: 100%; max-width: 400px; background: #1c1826; border: 1px solid #2c2739; border-radius: 18px; padding: 30px 26px; box-shadow: 0 20px 60px -20px rgba(0,0,0,.6); }
+  .kicker { font-size: 11px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; text-align: center; display: block; }
+  h1 { font-size: 24px; text-align: center; margin: 8px 0 6px; }
+  .sub { color: #b9b3c6; font-size: 13.5px; text-align: center; line-height: 1.55; margin-bottom: 20px; }
+  label { display: block; font-size: 12.5px; font-weight: 700; color: #b9b3c6; margin: 14px 0 5px; }
+  input { width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid #322e3d; background: #14121a; color: #fff; font-size: 15px; font-family: inherit; }
+  input:focus { outline: none; border-color: #7c3aed; }
+  button { width: 100%; margin-top: 20px; padding: 15px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; font-family: inherit; }
+  button:disabled { opacity: .6; }
+  .erro { display: none; background: rgba(220,38,38,.12); border: 1px solid rgba(220,38,38,.4); color: #fca5a5; font-size: 13px; padding: 10px 12px; border-radius: 10px; margin-top: 14px; line-height: 1.5; }
+  .nota { color: #8a8695; font-size: 12px; text-align: center; margin-top: 18px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="cartao">
+  <span class="kicker">TORQUESYS · ÁREA DO ALUNO</span>
+  <h1>Entrar no meu app 💪</h1>
+  <p class="sub">Para alunos de academias, studios e personals que usam o TORQUESYS.</p>
+  <form id="frm">
+    <label for="lg">E-mail ou celular (o que você cadastrou no app)</label>
+    <input id="lg" autocomplete="username" placeholder="voce@email.com ou 31999998888" required>
+    <label for="sn">Senha</label>
+    <input id="sn" type="password" autocomplete="current-password" placeholder="a senha que você criou no app" required minlength="6">
+    <p class="erro" id="erro"></p>
+    <button id="btn">Entrar →</button>
+  </form>
+  <p class="nota">Primeira vez? Abra o app pelo LINK que sua academia ou personal te mandou no WhatsApp e crie sua senha no card <b>🔑 Meu login</b>. Esqueceu a senha? Peça um link novo a eles e crie outra.</p>
+</div>
+
+<script src="assets/cloud-config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  function erro(m) { $("erro").textContent = m; $("erro").style.display = "block"; }
+  $("frm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("erro").style.display = "none";
+    var cfg = self.MT_CLOUD || {};
+    if (!cfg.url || !cfg.anonKey) { erro("A nuvem não está configurada."); return; }
+    $("btn").disabled = true;
+    fetch(cfg.url + "/rest/v1/rpc/aluno_login", {
+      method: "POST",
+      headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_login: $("lg").value.trim(), p_senha: $("sn").value }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      $("btn").disabled = false;
+      if (d && d.ok && d.token) {
+        try { localStorage.setItem("mt_aluno_token", d.token); } catch (err) {}
+        location.href = "app/?t=" + encodeURIComponent(d.token);
+        return;
+      }
+      erro((d && d.erro) || "Não deu para entrar agora — tenta de novo em instantes.");
+    }).catch(function () {
+      $("btn").disabled = false;
+      erro("Sem conexão. Confira a internet e tente de novo.");
+    });
+  });
+  // já entrou antes neste aparelho? vai direto
+  try {
+    var t = localStorage.getItem("mt_aluno_token");
+    if (t && new URLSearchParams(location.search).get("sair") === null) {
+      var aviso = document.createElement("p");
+      aviso.className = "nota";
+      aviso.innerHTML = "Você já entrou neste aparelho — <a href='app/?t=" + encodeURIComponent(t) + "' style='color:#a78bfa;font-weight:700;'>abrir meu app →</a>";
+      document.querySelector(".cartao").appendChild(aviso);
+    }
+  } catch (err) {}
+  window.__alunoLogin = true; // testes
+})();
+</script>
+</body>
+</html>
