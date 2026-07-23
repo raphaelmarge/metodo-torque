@@ -1031,3 +1031,88 @@ grant execute on function public.hq_clientes() to authenticated;
 grant execute on function public.hq_cliente_set(uuid, text, text, numeric, text, text) to authenticated;
 grant execute on function public.hq_pagamento_reg(uuid, numeric, text, date) to authenticated;
 grant execute on function public.hq_kpis() to authenticated;
+
+-- ============================================================
+-- TORQUESYS HQ v2 — melhorias de classe mundial no SaaS
+-- (rode por cima do bloco anterior; tudo idempotente)
+-- • WhatsApp do cliente para cobrança/resgate
+-- • Última atividade real de cada empresa (sinal de churn)
+-- • Receita do SaaS mês a mês (12 meses)
+-- ============================================================
+
+alter table public.saas_clientes add column if not exists zap text not null default '';
+
+-- v2: lista de clientes agora traz o WhatsApp e a última atividade
+-- (max(atualizado) dos dados da empresa — sem nunca ler o conteúdo)
+create or replace function public.hq_clientes()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUESYS';
+  end if;
+  return coalesce((select json_agg(x order by x.criada desc) from (
+    select a.id, a.nome, a.criada,
+      coalesce(c.tipo, 'academia') as tipo,
+      coalesce(c.plano, 'trial') as plano,
+      coalesce(c.valor, 0) as valor,
+      coalesce(c.status, 'trial') as status,
+      coalesce(c.obs, '') as obs,
+      coalesce(c.zap, '') as zap,
+      (select count(*) from membros m where m.academia_id = a.id) as membros,
+      (select coalesce(sum(p.valor), 0) from saas_pagamentos p where p.academia_id = a.id) as total_pago,
+      (select max(p.data) from saas_pagamentos p where p.academia_id = a.id) as ultimo_pgto,
+      (select coalesce(sum(p.valor), 0) from saas_pagamentos p
+        where p.academia_id = a.id and to_char(p.data, 'YYYY-MM') = to_char(current_date, 'YYYY-MM')) as pago_mes,
+      (select max(d.atualizado) from dados d where d.academia_id = a.id) as ultima_atividade
+    from academias a
+    left join saas_clientes c on c.academia_id = a.id
+  ) x), '[]'::json);
+end;
+$$;
+
+-- v2: classificar cliente agora inclui o WhatsApp
+drop function if exists public.hq_cliente_set(uuid, text, text, numeric, text, text);
+create or replace function public.hq_cliente_set(p_academia uuid, p_tipo text, p_plano text, p_valor numeric, p_status text, p_obs text, p_zap text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUESYS';
+  end if;
+  insert into saas_clientes (academia_id, tipo, plano, valor, status, obs, zap, atualizado)
+    values (p_academia, coalesce(p_tipo, 'academia'), coalesce(p_plano, 'trial'),
+            coalesce(p_valor, 0), coalesce(p_status, 'trial'), coalesce(p_obs, ''),
+            coalesce(p_zap, ''), now())
+    on conflict (academia_id) do update
+      set tipo = excluded.tipo, plano = excluded.plano, valor = excluded.valor,
+          status = excluded.status, obs = excluded.obs, zap = excluded.zap, atualizado = now();
+  return json_build_object('ok', true);
+end;
+$$;
+
+-- receita do SaaS mês a mês (últimos 12 meses)
+create or replace function public.hq_receita_mensal()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUESYS';
+  end if;
+  return coalesce((select json_agg(x order by x.mes) from (
+    select to_char(data, 'YYYY-MM') as mes, sum(valor) as total
+    from saas_pagamentos
+    where data >= (date_trunc('month', current_date) - interval '11 months')
+    group by 1
+  ) x), '[]'::json);
+end;
+$$;
+
+grant execute on function public.hq_cliente_set(uuid, text, text, numeric, text, text, text) to authenticated;
+grant execute on function public.hq_receita_mensal() to authenticated;

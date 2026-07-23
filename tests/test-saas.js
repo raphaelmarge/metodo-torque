@@ -37,6 +37,7 @@ function crcNode(s) {
   ok(/hq_sou_admin/.test(sql) && /hq_clientes/.test(sql) && /hq_cliente_set/.test(sql) && /hq_pagamento_reg/.test(sql) && /hq_kpis/.test(sql), "as 5 funções hq_* existem");
   ok((sql.match(/acesso restrito ao administrador/g) || []).length >= 4, "toda função hq_* de dados exige admin");
   ok(!/create policy[^;]*saas_/.test(sql), "tabelas saas_* sem policy (bloqueadas pra API — só as funções acessam)");
+  ok(/hq_receita_mensal/.test(sql) && /add column if not exists zap/.test(sql) && /ultima_atividade/.test(sql), "v2: receita mensal, WhatsApp e última atividade no SQL");
 
   // ---------- 1) site comercial ----------
   console.log("Site comercial (torquesys.html):");
@@ -48,6 +49,7 @@ function crcNode(s) {
   ok(/Academia/.test(corpo) && /Box de CrossFit/.test(corpo) && /Personal Trainer/.test(corpo), "os 3 segmentos apresentados");
   ok(/ilha/.test(corpo) && /isolados/.test(corpo), "seção de isolamento (ilha) presente");
   ok(/R\$ 49/.test(corpo) && /R\$ 147/.test(corpo) && /R\$ 197/.test(corpo), "tabela de planos com os 3 preços");
+  ok(/sistemas tradicionais/i.test(corpo) && /Funciona sem internet/.test(corpo) && /sem fidelidade/.test(corpo), "tabela comparativa TORQUESYS × tradicionais");
   const links = await p.evaluate(() => ({
     empresa: document.getElementById("entrarEmpresa").getAttribute("href"),
     personal: document.getElementById("entrarPersonal").getAttribute("href"),
@@ -83,10 +85,12 @@ function crcNode(s) {
   p.on("dialog", (d) => d.accept("197"));
   await p.addInitScript(() => {
     window.__rpcLog = [];
+    const dISO = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString(); };
     const CLIENTES = [
-      { id: "acad-1", nome: "Academia Ferro Pesado", criada: "2026-05-01T10:00:00Z", tipo: "academia", plano: "Academia", valor: 197, status: "ativo", obs: "", membros: 4, total_pago: 591, ultimo_pgto: "2026-07-05", pago_mes: 197 },
-      { id: "stud-2", nome: "Studio Pilates Vida", criada: "2026-06-20T10:00:00Z", tipo: "studio", plano: "trial", valor: 0, status: "trial", obs: "", membros: 1, total_pago: 0, ultimo_pgto: null, pago_mes: 0 },
-      { id: "pers-3", nome: "Studio Léo Personal", criada: "2026-07-01T10:00:00Z", tipo: "personal", plano: "Personal", valor: 49, status: "ativo", obs: "", membros: 1, total_pago: 49, ultimo_pgto: "2026-07-02", pago_mes: 49 },
+      { id: "acad-1", nome: "Academia Ferro Pesado", criada: dISO(-80), tipo: "academia", plano: "Academia", valor: 197, status: "ativo", obs: "", zap: "31988881111", membros: 4, total_pago: 591, ultimo_pgto: dISO(-5).slice(0, 10), pago_mes: 197, ultima_atividade: dISO(-1) },
+      { id: "stud-2", nome: "Studio Pilates Vida", criada: dISO(-20), tipo: "studio", plano: "trial", valor: 0, status: "trial", obs: "", zap: "", membros: 1, total_pago: 0, ultimo_pgto: null, pago_mes: 0, ultima_atividade: dISO(-2) },
+      { id: "pers-3", nome: "Studio Léo Personal", criada: dISO(-25), tipo: "personal", plano: "Personal", valor: 49, status: "ativo", obs: "", zap: "31977772222", membros: 1, total_pago: 49, ultimo_pgto: dISO(-20).slice(0, 10), pago_mes: 49, ultima_atividade: dISO(-3) },
+      { id: "sumi-4", nome: "Academia Sumida", criada: dISO(-90), tipo: "academia", plano: "Academia", valor: 197, status: "ativo", obs: "", zap: "31966663333", membros: 1, total_pago: 394, ultimo_pgto: dISO(-40).slice(0, 10), pago_mes: 0, ultima_atividade: dISO(-20) },
     ];
     window.MT_supabase = {
       auth: {
@@ -97,8 +101,9 @@ function crcNode(s) {
       rpc: (nome, args) => {
         window.__rpcLog.push({ nome, args });
         if (nome === "hq_sou_admin") return Promise.resolve({ data: true });
-        if (nome === "hq_kpis") return Promise.resolve({ data: { clientes: 3, ativos: 2, trial: 1, mrr: 246, recebido_mes: 246, novos_30d: 2 } });
+        if (nome === "hq_kpis") return Promise.resolve({ data: { clientes: 4, ativos: 3, trial: 1, mrr: 443, recebido_mes: 246, novos_30d: 2 } });
         if (nome === "hq_clientes") return Promise.resolve({ data: CLIENTES });
+        if (nome === "hq_receita_mensal") return Promise.resolve({ data: [{ mes: "2026-01", total: 100 }, { mes: "2026-02", total: 350 }] });
         return Promise.resolve({ data: { ok: true } });
       },
     };
@@ -106,27 +111,55 @@ function crcNode(s) {
   await p.goto(BASE + "/apps/hq.html");
   await p.waitForFunction(() => !document.getElementById("hqPainel").hidden, null, { timeout: 8000 });
   const kpis = await p.evaluate(() => document.getElementById("hqKpis").textContent);
-  ok(/MRR/.test(kpis) && /246/.test(kpis), "KPIs mostram o MRR do TORQUESYS (R$ 246)");
-  ok(/Empresas clientes/.test(kpis) && /3/.test(kpis), "KPI de total de empresas");
+  ok(/MRR/.test(kpis) && /443/.test(kpis), "KPIs mostram o MRR do TORQUESYS (R$ 443)");
+  ok(/ARPU/.test(kpis) && /148/.test(kpis), "ARPU calculado (443/3 ≈ R$ 148) — métrica ChartMogul");
+  ok(/Empresas clientes/.test(kpis) && /4/.test(kpis), "KPI de total de empresas");
   let lista = await p.evaluate(() => document.getElementById("hqClientes").textContent);
-  ok(/Academia Ferro Pesado/.test(lista) && /Studio Pilates Vida/.test(lista) && /Studio Léo Personal/.test(lista), "as 3 empresas listadas");
+  ok(/Academia Ferro Pesado/.test(lista) && /Studio Pilates Vida/.test(lista) && /Academia Sumida/.test(lista), "as empresas listadas");
   ok(/ATIVO/i.test(lista) && /TRIAL/i.test(lista), "etiquetas de status");
   ok(/pagou R\$ 591/.test(lista), "total pago por cliente aparece");
+  // health score (estilo Customer Success)
+  ok(/🟢/.test(lista) && /🔴/.test(lista), "farol de saúde nas empresas (🟢 e 🔴)");
+  ok(/sem usar o sistema há/.test(lista), "motivo 👻 de inatividade aparece (última atividade real)");
+  ok(/trial vencido/.test(lista), "motivo ⏳ de trial vencido aparece");
+  ok(/equipe ainda não entrou/.test(lista), "motivo 👥 de ativação (equipe não entrou)");
+  // filtro só em risco
+  await p.check("#fRisco");
+  lista = await p.evaluate(() => document.getElementById("hqClientes").textContent);
+  ok(/Sumida/.test(lista) && !/Ferro Pesado/.test(lista), "filtro 'só em risco' esconde os saudáveis");
+  await p.uncheck("#fRisco");
+  // resgate via WhatsApp com mensagem contextual
+  const zapResgate = await p.evaluate(() => decodeURIComponent(document.querySelector('.cli a[href*="wa.me/5531966663333"]').href));
+  ok(/não usam o sistema|mensalidade deste mês/.test(zapResgate), "💬 de resgate tem mensagem contextual pronta");
+  // cobranças do mês (rotina Stripe Billing)
+  let cob = await p.evaluate(() => document.getElementById("hqCobrancas").textContent);
+  ok(/1 cliente\(s\)/.test(cob) && /197/.test(cob) && /Sumida/.test(cob), "cobranças do mês: só quem não pagou (Sumida, R$ 197)");
+  ok(!/Ferro Pesado/.test(cob), "quem pagou não entra na cobrança");
+  // receita 12 meses
+  const rec12 = await p.evaluate(() => ({ hidden: document.getElementById("cardReceita12").hidden, txt: document.getElementById("hqReceita12").textContent }));
+  ok(!rec12.hidden && /350/.test(rec12.txt), "card de receita 12 meses com as barras");
   // filtro por tipo
   await p.selectOption("#fTipo", "personal");
   lista = await p.evaluate(() => document.getElementById("hqClientes").textContent);
   ok(/Léo/.test(lista) && !/Ferro Pesado/.test(lista), "filtro por tipo personal funciona");
   await p.selectOption("#fTipo", "");
-  // editar plano → rpc hq_cliente_set
+  // editar plano → rpc hq_cliente_set (agora com WhatsApp)
   await p.evaluate(() => document.querySelector('[data-edit="stud-2"]').click());
   await p.waitForFunction(() => document.getElementById("dlgCli").open);
   await p.selectOption("#dcStatus", "ativo");
   await p.fill("#dcPlano", "Studio & Box");
   await p.fill("#dcValor", "147");
+  await p.fill("#dcZap", "31955554444");
   await p.evaluate(() => { document.getElementById("dlgCli").returnValue = "ok"; document.getElementById("dlgCli").close("ok"); });
   await p.waitForTimeout(300);
   const setCall = await p.evaluate(() => window.__rpcLog.find((c) => c.nome === "hq_cliente_set"));
   ok(!!setCall && setCall.args.p_academia === "stud-2" && setCall.args.p_valor === 147 && setCall.args.p_status === "ativo", "salvar plano chama hq_cliente_set (147/ativo)");
+  ok(setCall.args.p_zap === "31955554444", "WhatsApp do responsável vai junto (p_zap)");
+  // CSV de clientes
+  const dlCli = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+  await p.click("#hqCSV");
+  const arqCli = await dlCli;
+  ok(!!arqCli && /clientes-torquesys/.test(arqCli.suggestedFilename()), "CSV de clientes baixa");
   // registrar pagamento → rpc hq_pagamento_reg (prompt devolve 197)
   await p.evaluate(() => document.querySelector('[data-pgto="acad-1"]').click());
   await p.waitForTimeout(300);
