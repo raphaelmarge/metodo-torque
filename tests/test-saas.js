@@ -108,7 +108,10 @@ function crcNode(s) {
         if (nome === "hq_receita_mensal") return Promise.resolve({ data: [{ mes: "2026-01", total: 100 }, { mes: "2026-02", total: 350 }] });
         if (nome === "hq_suporte_threads") return Promise.resolve({ data: [{ academia_id: "acad-1", nome: "Academia Ferro Pesado", ultima: dISO(0), ultima_msg: "O totem travou aqui", nao_lidas: 2 }] });
         if (nome === "hq_suporte_lista") return Promise.resolve({ data: [{ de: "cliente", quem: "dono@ferro.com", texto: "O totem travou aqui", criado: dISO(0) }] });
-        if (nome === "hq_erros") return Promise.resolve({ data: [{ academia_id: "sumi-4", nome: "Academia Sumida", erros: 3, ultimo: dISO(0), ultima_msg: "x is not defined", ultima_pagina: "apps/totem.html" }] });
+        if (nome === "hq_erros") return Promise.resolve({ data: [
+          { academia_id: "sumi-4", nome: "Academia Sumida", erros: 3, ultimo: dISO(0), ultima_msg: "x is not defined", ultima_pagina: "apps/totem.html" },
+          { academia_id: "acad-1", nome: "Academia Ferro Pesado", erros: 1, ultimo: dISO(0), ultima_msg: "TypeError no leitor de QR", ultima_pagina: "apps/entrada.html" },
+        ] });
         return Promise.resolve({ data: { ok: true } });
       },
     };
@@ -146,10 +149,17 @@ function crcNode(s) {
   // tickets de suporte
   let tks = await p.evaluate(() => document.getElementById("hqTickets").textContent);
   ok(/Ferro Pesado/.test(tks) && /2 nova\(s\)/.test(tks) && /totem travou/.test(tks), "ticket do cliente com etiqueta de não lidas");
+  const badge = await p.evaluate(() => ({ hidden: document.getElementById("tkBadge").hidden, txt: document.getElementById("tkBadge").textContent }));
+  ok(!badge.hidden && /2 nova/.test(badge.txt), "badge de não lidas no título do card");
   await p.evaluate(() => document.querySelector("[data-ticket]").click());
   await p.waitForFunction(() => document.getElementById("dlgTicket").open);
   const thread = await p.evaluate(() => document.getElementById("tkMsgs").textContent);
   ok(/O totem travou aqui/.test(thread) && /dono@ferro\.com/.test(thread), "thread abre com a mensagem do cliente");
+  const tkCtx = await p.evaluate(() => document.getElementById("tkErros").textContent);
+  ok(/1 erro\(s\)/.test(tkCtx) && /TypeError no leitor de QR/.test(tkCtx), "erros recentes do cliente aparecem no próprio ticket (contexto)");
+  await p.selectOption("#tkMacros", { index: 1 });
+  const macro = await p.evaluate(() => document.getElementById("tkTxt").value);
+  ok(/correção já está no ar/.test(macro), "⚡ macro preenche a resposta com 1 clique");
   await p.fill("#tkTxt", "Reinicia o tablet que resolve — e já subi uma correção 😉");
   await p.click("#tkEnviar");
   await p.waitForTimeout(300);
@@ -247,13 +257,27 @@ function crcNode(s) {
   await p.waitForTimeout(500);
   let supMsgs = await p.evaluate(() => document.getElementById("supMsgs").textContent);
   ok(/como posso ajudar/.test(supMsgs), "resposta do suporte aparece no card do cliente");
-  await p.fill("#supTxt", "O totem não lê o QR!");
+  // triagem automática (deflection): o robô sugere o tutorial ANTES de abrir chamado
+  await p.fill("#supTxt", "O totem não lê o QR do check-in!");
   await p.click("#supEnviar");
+  await p.waitForTimeout(300);
+  supMsgs = await p.evaluate(() => document.getElementById("supMsgs").textContent);
+  ok(/Isso pode resolver agora/.test(supMsgs) && /📖/.test(supMsgs), "robô sugere o tutorial que resolve antes de abrir chamado");
+  const semRpc = await p.evaluate(() => window.__rpcLogSup.filter((c) => c.nome === "suporte_envia").length);
+  ok(semRpc === 0, "nada é enviado enquanto a sugestão está na tela");
+  await p.click("#supInsiste");
   await p.waitForTimeout(400);
   const enviaCall = await p.evaluate(() => window.__rpcLogSup.find((c) => c.nome === "suporte_envia"));
-  ok(!!enviaCall && /QR/.test(enviaCall.args.p_texto), "mensagem do cliente sai via suporte_envia");
+  ok(!!enviaCall && /QR/.test(enviaCall.args.p_texto), "cliente insistiu → chamado sai via suporte_envia");
+  ok(/🔧 diag automático/.test(enviaCall.args.p_texto), "1ª mensagem leva o diagnóstico anexado sozinho");
   supMsgs = await p.evaluate(() => document.getElementById("supMsgs").textContent);
   ok(/totem não lê o QR/.test(supMsgs), "mensagem enviada aparece na conversa");
+  // mensagem sem tutorial correspondente vai direto (sem diag — já não é a 1ª)
+  await p.fill("#supTxt", "zzzzz wwwww qqqqq");
+  await p.click("#supEnviar");
+  await p.waitForTimeout(400);
+  const chamadas = await p.evaluate(() => window.__rpcLogSup.filter((c) => c.nome === "suporte_envia"));
+  ok(chamadas.length === 2 && !/🔧/.test(chamadas[1].args.p_texto), "sem tutorial que ajude, envia direto (e sem repetir o diagnóstico)");
   const zapEscondido = await p.evaluate(() => document.getElementById("supZap").hidden);
   ok(zapEscondido, "botão de WhatsApp fica escondido sem suporteZap configurado");
   await p.click("#supDiag");

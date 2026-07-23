@@ -66,7 +66,7 @@
     </div>
 
     <div class="card" style="margin-top: 16px;" id="cardTickets">
-      <h2>🆘 Tickets de suporte</h2>
+      <h2>🆘 Tickets de suporte <span id="tkBadge" class="tag cancelado" hidden></span></h2>
       <p class="muted" style="font-size: 13px;">Mensagens que os clientes mandam pelo card 🆘 do Central de Ajuda deles. Responda aqui — a resposta aparece lá.</p>
       <div id="hqTickets" class="muted" style="margin-top: 8px;">Carregando…</div>
     </div>
@@ -152,7 +152,16 @@
 
   <dialog id="dlgTicket" style="max-width: 540px;">
     <h2 id="tkNome">Ticket</h2>
-    <div id="tkMsgs" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
+    <div id="tkErros" class="muted" style="font-size: 12px; margin-bottom: 8px;"></div>
+    <div id="tkMsgs" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
+    <select id="tkMacros" style="margin-bottom: 8px;">
+      <option value="">⚡ Resposta pronta…</option>
+      <option>Fecha e abre o sistema (ou atualiza a página) — a correção já está no ar e chega sozinha. Me avisa se continuar! 💜</option>
+      <option>Consegue clicar em 📋 Copiar relatório de diagnóstico (no card 🆘 do Central de Ajuda) e colar aqui? Assim vejo exatamente o que houve.</option>
+      <option>Me conta qual tela você estava e o que clicou quando deu o problema? Se tiver como, manda um print no WhatsApp.</option>
+      <option>Esse recurso precisa de um bloco novo do banco de dados: abre o supabase-setup.sql e rode o bloco indicado no tutorial — leva 2 minutos. Se quiser, faço com você em uma chamada.</option>
+      <option>Resolvido! 🎉 Fechei o chamado — qualquer coisa é só chamar aqui de novo.</option>
+    </select>
     <div style="display: flex; gap: 8px;">
       <input id="tkTxt" placeholder="Responder ao cliente…" style="flex: 1;">
       <button class="btn" id="tkEnviar" style="width: auto;">➤</button>
@@ -227,6 +236,7 @@
         $("hqLock").hidden = true;
         $("hqPainel").hidden = false;
         carrega();
+        setInterval(function () { carregaTickets(); carregaErros(); }, 60000); // tickets/erros sempre frescos
       });
     });
   }
@@ -442,6 +452,9 @@
     cli.rpc("hq_suporte_threads").then(function (r) {
       if (r.error) { $("hqTickets").innerHTML = '<span class="muted">Rode o bloco ASSISTÊNCIA TÉCNICA do supabase-setup.sql para ligar os tickets.</span>'; return; }
       var ts = r.data || [];
+      var naoLidas = ts.reduce(function (t, x) { return t + (+x.nao_lidas || 0); }, 0);
+      $("tkBadge").hidden = !naoLidas;
+      $("tkBadge").textContent = naoLidas + " nova(s)";
       $("hqTickets").innerHTML = ts.length ? ts.map(function (t) {
         return '<div class="lead" style="cursor:pointer;" data-ticket="' + t.academia_id + '" data-tknome="' + esc(t.nome) + '"><b>' + esc(t.nome) + "</b>" +
           (+t.nao_lidas ? '<span class="tag cancelado">' + t.nao_lidas + " nova(s)</span>" : "") +
@@ -458,6 +471,11 @@
     abreTicket();
   });
   function abreTicket() {
+    // contexto técnico do cliente na mesma tela (erros recentes da telemetria)
+    var errosDele = errosCache.filter(function (x) { return x.academia_id === ticketAtual; });
+    $("tkErros").innerHTML = errosDele.length
+      ? "🩺 " + errosDele.map(function (x) { return x.erros + " erro(s) 7d · " + esc(x.ultima_pagina || "") + " — " + esc(String(x.ultima_msg || "").slice(0, 80)); }).join(" · ")
+      : "🩺 Nenhum erro de JS desta empresa nos últimos 7 dias.";
     cli.rpc("hq_suporte_lista", { p_academia: ticketAtual }).then(function (r) {
       var ms = r.data || [];
       $("tkMsgs").innerHTML = ms.length ? ms.map(function (m) {
@@ -482,11 +500,20 @@
   });
   $("tkTxt").addEventListener("keydown", function (e) { if (e.key === "Enter") $("tkEnviar").click(); });
 
+  $("tkMacros").addEventListener("change", function () {
+    if (!this.value) return;
+    $("tkTxt").value = this.value;
+    this.value = "";
+    $("tkTxt").focus();
+  });
+
   // ---------- 🩺 saúde técnica dos clientes (Sentry do TORQUESYS) ----------
+  var errosCache = [];
   function carregaErros() {
     cli.rpc("hq_erros").then(function (r) {
       if (r.error) { $("hqErros").innerHTML = '<span class="muted">Requer os blocos TELEMETRIA DE ERROS e ASSISTÊNCIA TÉCNICA do supabase-setup.sql.</span>'; return; }
       var es = r.data || [];
+      errosCache = es;
       $("hqErros").innerHTML = es.length ? es.map(function (x) {
         return '<div class="lead"><b>' + esc(x.nome) + '</b><span class="tag cancelado">' + x.erros + " erro(s)</span>" +
           '<span class="mut" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(x.ultima_pagina || "") + " — " + esc(x.ultima_msg || "") + "</span>" +
