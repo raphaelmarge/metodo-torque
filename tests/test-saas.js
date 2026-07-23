@@ -61,6 +61,25 @@ function crcNode(s) {
   ok(/index\.html/.test(links.empresa), "'Entrar na minha empresa' vai pro portal");
   ok(/personal\.html/.test(links.personal) && /personal\.html/.test(links.segPersonal), "caminho do personal vai pro módulo Personal");
   ok(/wa\.me\/5531988887777/.test(links.zap), "CTA de WhatsApp usa o ?zap= do link");
+  ok(/Sou ALUNO/.test(corpo) && /link do app do aluno/.test(corpo), "FAQ explica que aluno entra pelo link do app (sem senha)");
+  await p.close();
+
+  // ---------- 1b) gate do portal: título, nota do aluno e saída do vínculo ----------
+  console.log("Portal (gate de entrada):");
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  await p.goto(BASE + "/index.html");
+  await p.waitForSelector("#gate", { state: "attached" });
+  const gate = await p.evaluate(() => ({
+    titulo: document.querySelector("#gate h1").textContent,
+    aluno: document.getElementById("gateAluno").textContent,
+    temSair: !!document.getElementById("gateSair"),
+  }));
+  ok(/Portal TORQUESYS/.test(gate.titulo), "gate com o título Portal TORQUESYS");
+  ok(/aluno da academia ou de um personal/i.test(gate.aluno) && /LINK do app/.test(gate.aluno), "nota fixa explica o acesso do aluno (link, sem senha)");
+  ok(gate.temSair, "botão 'Sair e entrar com outra conta' existe pro estado de vínculo");
+  // o gate sem sessão apaga o perfil local (comportamento real) — recoloca pros próximos testes
+  await p.evaluate(() => localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" })));
   await p.close();
 
   // ---------- 2) HQ travado sem admin ----------
