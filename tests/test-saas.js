@@ -79,6 +79,10 @@ function crcNode(s) {
   ok(/Portal TORQUESYS/.test(gate.titulo), "gate com o título Portal TORQUESYS");
   ok(/aluno da academia ou de um personal/i.test(gate.aluno) && /LINK do app/.test(gate.aluno), "nota fixa explica o acesso do aluno (link, sem senha)");
   ok(gate.temSair, "botão 'Sair e entrar com outra conta' existe pro estado de vínculo");
+  const abasVisiveis = await p.evaluate(() => Array.from(document.querySelectorAll("#gateAbas button")).filter((b) => b.style.display !== "none").map((b) => b.textContent));
+  ok(abasVisiveis.length === 3 && /Entrar/.test(abasVisiveis.join(",")), "as 3 abas (Entrar/Criar/Equipe) sempre visíveis");
+  const temSaida = await p.evaluate(() => fetch("assets/access.js").then((r) => r.text()).then((t) => t.includes("vinculando && aba === \"entrar\"") && t.includes("sairEEntrar")));
+  ok(temSaida, "tocar em Entrar no estado preso desconecta e abre o login normal");
   ok(/login e senha de aluno/.test(gate.aluno), "nota do gate aponta pra página de login do aluno");
   // o gate sem sessão apaga o perfil local (comportamento real) — recoloca pros próximos testes
   await p.evaluate(() => localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" })));
