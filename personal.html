@@ -1327,6 +1327,12 @@
           "<button class='btnx' id='pixCopiaAluno' style='width:100%;margin-top:8px;'>📋 Copiar Pix copia e cola</button></div>" : "") +
         (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:#14121a;border:1px solid #7c3aed;box-shadow:none;'>🔁 Assinar no cartão (débito automático)</a>" : "") +
         "<div class='vz' style='font-size:11px;'>Pagou? Avisa no chat que " + esc(studio.split(" ")[0]) + " confirma. 💜</div></div>" : "") +
+      (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP ? "<div class='cardx'><h2>🔑 Meu login</h2>" +
+        "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para abrir seu app de QUALQUER aparelho (página Entrar do aluno).</div>" +
+        "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
+        "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;'>" +
+        "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button>" +
+        "<div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
       "<div class='cardx'><h2>💬 Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
@@ -1460,6 +1466,12 @@
       "var pca=document.getElementById('pixCopiaAluno');if(pca)pca.addEventListener('click',function(){" +
       "var ta=document.getElementById('pixAluno');ta.select();try{document.execCommand('copy');pca.textContent='✅ Copiado! Cola no app do banco';}catch(e){}" +
       "setTimeout(function(){pca.textContent='📋 Copiar Pix copia e cola';},2500);});" +
+      "var lgB=document.getElementById('lgSalva');if(lgB)lgB.addEventListener('click',function(){" +
+      "var lg=document.getElementById('lgLogin').value.trim(),sn=document.getElementById('lgSenha').value;" +
+      "if(lg.length<5||sn.length<6){alert('Preencha o login (e-mail ou celular) e uma senha de 6+ caracteres.');return;}" +
+      "var b=this;b.disabled=true;rpcApp('aluno_define_login',{t:TOKEN,p_login:lg,p_senha:sn}).then(function(r){b.disabled=false;" +
+      "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='✅ Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha, na página Entrar do aluno.';document.getElementById('lgSenha').value='';}" +
+      "else{alert((r&&r.erro)||'Não deu agora — confere a internet e tenta de novo.');}});});" +
       "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
       "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
       "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>📈 \"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +

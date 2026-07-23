@@ -389,6 +389,7 @@ function ok(cond, nome) {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
   });
+  ok(/🔑 Meu login/.test(appHtml2) && /aluno_define_login/.test(appHtml2), "app com token ganha o card 🔑 pra criar login e senha");
   const pApp = await ctx.newPage();
   const errosApp = [];
   pApp.on("pageerror", (e) => errosApp.push(String(e)));

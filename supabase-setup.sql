@@ -1275,3 +1275,70 @@ grant execute on function public.hq_suporte_threads() to authenticated;
 grant execute on function public.hq_suporte_lista(uuid) to authenticated;
 grant execute on function public.hq_suporte_envia(uuid, text) to authenticated;
 grant execute on function public.hq_erros() to authenticated;
+
+-- ============================================================
+-- LOGIN E SENHA DO ALUNO
+-- O link do app continua funcionando (é como o app chega ao
+-- aluno), e além dele o aluno pode CRIAR uma senha dentro do
+-- próprio app e depois entrar de qualquer aparelho em
+-- aluno-login.html. Senha guardada com bcrypt (pgcrypto).
+-- Bloco idempotente.
+-- ============================================================
+
+create extension if not exists pgcrypto;
+
+alter table public.app_aluno add column if not exists login text not null default '';
+alter table public.app_aluno add column if not exists senha text not null default '';
+create unique index if not exists app_aluno_login_unico
+  on public.app_aluno (lower(login)) where login <> '';
+
+-- o aluno (já dentro do app, identificado pelo token) cria/troca o login e a senha
+create or replace function public.aluno_define_login(t text, p_login text, p_senha text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_tem uuid;
+begin
+  select academia_id into v_tem from app_aluno where token = t;
+  if v_tem is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  p_login := lower(trim(coalesce(p_login, '')));
+  if length(p_login) < 5 then
+    return json_build_object('erro', 'Use seu e-mail ou celular com DDD como login.');
+  end if;
+  if length(coalesce(p_senha, '')) < 6 then
+    return json_build_object('erro', 'A senha precisa de pelo menos 6 caracteres.');
+  end if;
+  if exists (select 1 from app_aluno where lower(login) = p_login and token <> t) then
+    return json_build_object('erro', 'Esse e-mail/celular já está em uso — use outro ou fale com sua academia.');
+  end if;
+  update app_aluno set login = p_login, senha = crypt(p_senha, gen_salt('bf'))
+    where token = t;
+  return json_build_object('ok', true, 'login', p_login);
+end;
+$$;
+
+-- entra com login + senha de qualquer aparelho; devolve o token do app
+create or replace function public.aluno_login(p_login text, p_senha text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v record;
+begin
+  select token, senha into v from app_aluno
+    where lower(login) = lower(trim(coalesce(p_login, ''))) and login <> '';
+  if v.token is null or v.senha = '' or v.senha <> crypt(coalesce(p_senha, ''), v.senha) then
+    -- mesma resposta para login inexistente e senha errada (não vaza quem existe)
+    return json_build_object('erro', 'Login ou senha incorretos. Esqueceu? Peça um link novo à sua academia ou personal.');
+  end if;
+  return json_build_object('ok', true, 'token', v.token);
+end;
+$$;
+
+grant execute on function public.aluno_define_login(text, text, text) to anon, authenticated;
+grant execute on function public.aluno_login(text, text) to anon, authenticated;

@@ -39,6 +39,7 @@ function crcNode(s) {
   ok(!/create policy[^;]*saas_/.test(sql), "tabelas saas_* sem policy (bloqueadas pra API — só as funções acessam)");
   ok(/hq_receita_mensal/.test(sql) && /add column if not exists zap/.test(sql) && /ultima_atividade/.test(sql), "v2: receita mensal, WhatsApp e última atividade no SQL");
   ok(/saas_tickets/.test(sql) && /suporte_envia/.test(sql) && /suporte_lista/.test(sql), "assistência: tabela e RPCs do cliente");
+  ok(/aluno_define_login/.test(sql) && /aluno_login/.test(sql) && /gen_salt\('bf'\)/.test(sql) && /pgcrypto/.test(sql), "login do aluno: RPCs com bcrypt no SQL");
   ok(/hq_suporte_threads/.test(sql) && /hq_suporte_lista/.test(sql) && /hq_suporte_envia/.test(sql) && /hq_erros/.test(sql), "assistência: RPCs do HQ (tickets + erros)");
 
   // ---------- 1) site comercial ----------
@@ -78,8 +79,37 @@ function crcNode(s) {
   ok(/Portal TORQUESYS/.test(gate.titulo), "gate com o título Portal TORQUESYS");
   ok(/aluno da academia ou de um personal/i.test(gate.aluno) && /LINK do app/.test(gate.aluno), "nota fixa explica o acesso do aluno (link, sem senha)");
   ok(gate.temSair, "botão 'Sair e entrar com outra conta' existe pro estado de vínculo");
+  ok(/login e senha de aluno/.test(gate.aluno), "nota do gate aponta pra página de login do aluno");
   // o gate sem sessão apaga o perfil local (comportamento real) — recoloca pros próximos testes
   await p.evaluate(() => localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" })));
+  await p.close();
+
+  // ---------- 1c) página de login do aluno ----------
+  console.log("Login do aluno (aluno-login.html):");
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  await p.route("**/rest/v1/rpc/aluno_login", (r) => {
+    const corpo = JSON.parse(r.request().postData() || "{}");
+    const ok2 = corpo.p_login === "rafa@email.com" && corpo.p_senha === "senha123";
+    r.fulfill({ contentType: "application/json", body: JSON.stringify(ok2 ? { ok: true, token: "tok-aluno-teste" } : { erro: "Login ou senha incorretos. Esqueceu? Peça um link novo à sua academia ou personal." }) });
+  });
+  await p.route("**/app/?t=tok-aluno-teste*", (r) => r.fulfill({ contentType: "text/html", body: "<title>app</title>APP DO ALUNO OK" }));
+  await p.goto(BASE + "/aluno-login.html");
+  await p.waitForFunction(() => window.__alunoLogin);
+  // senha errada → mensagem
+  await p.fill("#lg", "rafa@email.com");
+  await p.fill("#sn", "errada99");
+  await p.click("#btn");
+  await p.waitForTimeout(400);
+  const msgErro = await p.evaluate(() => document.getElementById("erro").textContent);
+  ok(/incorretos/.test(msgErro), "senha errada mostra o aviso (sem vazar quem existe)");
+  // senha certa → redireciona pro app com o token
+  await p.fill("#sn", "senha123");
+  await p.click("#btn");
+  await p.waitForFunction(() => document.body.textContent.indexOf("APP DO ALUNO OK") !== -1, null, { timeout: 8000 });
+  ok(true, "login certo redireciona para app/?t=TOKEN");
+  const tokenGuardado = await p.evaluate(() => localStorage.getItem("mt_aluno_token"));
+  ok(tokenGuardado === "tok-aluno-teste", "token fica lembrado no aparelho");
   await p.close();
 
   // ---------- 2) HQ travado sem admin ----------

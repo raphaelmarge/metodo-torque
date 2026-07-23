@@ -687,6 +687,12 @@
       (emDia ? "<div class='vz' style='padding:22px 0;font-size:15px;'>🧘<br><br><strong>Pode relaxar!</strong><br>Você não possui pendências.</div>"
         : atrasados.map(function (r) { return kv("Vencida em " + S.fmtData(r.vencimento), "R$ " + (+r.valor).toLocaleString("pt-BR")); }).join("") +
         "<div class='vz'>Regularize na recepção ou pelo WhatsApp. 💜</div>") + "</div></details>" +
+      (temNuvem ? "<details id='dLogin'><summary><span class='ic'>🔑</span>Meu login e senha</summary><div class='dcorpo'>" +
+        "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para entrar no seu app de QUALQUER aparelho (página Entrar do aluno no site da academia).</div>" +
+        "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;padding:12px;border-radius:10px;border:1px solid var(--linha2,#322e3d);background:transparent;color:inherit;font-family:inherit;'>" +
+        "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;padding:12px;border-radius:10px;border:1px solid var(--linha2,#322e3d);background:transparent;color:inherit;font-family:inherit;'>" +
+        "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button>" +
+        "<div id='lgOk' class='vz' style='display:none;'></div></div></details>" : "") +
       "<div class='cardx tgl' style='margin-top:10px;'><span>🌓 Usar tema claro</span><input type='checkbox' id='tglTema' style='width:22px;height:22px;'></div>" +
       "<div class='vz'>Gerado em " + S.fmtData(hoje) + " · peça a versão nova quando trocar seu treino</div>" +
       "</div>" +
@@ -853,6 +859,13 @@
         "pb.innerHTML=l.map(function(p){var st3=p.status==='entregue'?'✅ entregue':p.status==='cancelado'?'🚫 cancelado':'⏳ separando';" +
         "return \"<div style='border-bottom:1px solid var(--linha);padding:7px 0;font-size:13px;'><b>\"+p.criado+\"</b> · R$ \"+(+p.total).toLocaleString('pt-BR',{minimumFractionDigits:2})+\" · \"+st3+\"<br><span style='color:var(--txt2)'>\"+(p.itens||[]).map(function(x){return x.q+'x '+x.n;}).join(', ')+\"</span></div>\";}).join('');});}" +
         "carregaPedidos();" +
+        // login e senha do aluno (entrar de qualquer aparelho)
+        "var lgB=document.getElementById('lgSalva');if(lgB)lgB.addEventListener('click',function(){" +
+        "var lg=document.getElementById('lgLogin').value.trim(),sn=document.getElementById('lgSenha').value;" +
+        "if(lg.length<5||sn.length<6){alert('Preencha o login (e-mail ou celular) e uma senha de 6+ caracteres.');return;}" +
+        "var b=this;b.disabled=true;rpc('aluno_define_login',{t:TOKEN,p_login:lg,p_senha:sn}).then(function(r){b.disabled=false;" +
+        "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='✅ Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha, na página Entrar do aluno.';document.getElementById('lgSenha').value='';}" +
+        "else{alert((r&&r.erro)||'Não deu agora — confere a internet e tenta de novo.');}});});" +
         // treino sincronizado: manda séries feitas e cargas para o professor ver
         "var syncT=null;function agendaSyncTreino(){clearTimeout(syncT);syncT=setTimeout(enviaTreino,2500);}" +
         "function enviaTreino(){var dia=new Date().toISOString().slice(0,10);" +
