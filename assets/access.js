@@ -50,6 +50,7 @@
 
     var aba = "entrar";
     var vinculando = false; // logado mas ainda sem academia
+    var emailLogado = "";
     $("gateAbas").hidden = false;
 
     function aplicaAba() {
@@ -71,10 +72,11 @@
       $("gSenha").required = !vinculando;
 
       $("gateIntro").textContent = vinculando
-        ? "Sua conta ainda não está ligada a uma academia. Crie a sua academia ou entre na equipe de uma existente."
+        ? "Você está logado como " + (emailLogado || "(conta sem e-mail)") + ", mas essa conta ainda não está ligada a uma academia. Crie a sua academia, entre na equipe de uma existente — ou saia e entre com a conta certa."
         : criar ? "Para o DONO: crie a conta da sua academia com o código de acesso do curso. Você recebe um código da equipe para cadastrar seus funcionários."
         : equipe ? "Para a EQUIPE: crie seu login com o código da equipe que o dono da academia te passou."
         : "Entre com seu e-mail e senha. Os dados da sua academia sincronizam em todos os aparelhos.";
+      $("gateSair").hidden = !vinculando;
       $("gateBtn").textContent = vinculando ? "Vincular →" : criar ? "Criar academia →" : equipe ? "Entrar na equipe →" : "Entrar →";
       $("gateRodape").textContent = criar ? "Não tem o código do curso? Fale com o suporte do Método Torque."
         : equipe ? "Sem o código da equipe? Peça ao dono ou gerente da academia."
@@ -107,6 +109,7 @@
 
     // confere/estabelece o vínculo com uma academia
     function garanteVinculo(user) {
+      emailLogado = (user && user.email) || "";
       return sb.from("membros").select("academia_id, papel, nome, academias(nome, codigo_equipe)").then(function (r) {
         var m = r.data && r.data[0];
         if (m) {
@@ -147,6 +150,16 @@
       aplicaAba();
       if (msg) erro(msg);
     }
+
+    // beco sem saída resolvido: no estado "vinculando" dá pra trocar de conta
+    $("gateSair").addEventListener("click", function () {
+      sb.auth.signOut().finally(function () {
+        localStorage.removeItem(LS_PERFIL);
+        localStorage.removeItem(LS_ACAD);
+        localStorage.removeItem(LS_INTENTO);
+        location.reload();
+      });
+    });
 
     window.MT_sair = function () {
       if (!confirm("Sair da sua conta neste aparelho?")) return;
