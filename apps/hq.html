@@ -65,6 +65,18 @@
       <div id="hqCobrancas" class="muted" style="margin-top: 8px;">Carregando…</div>
     </div>
 
+    <div class="card" style="margin-top: 16px;" id="cardTickets">
+      <h2>🆘 Tickets de suporte</h2>
+      <p class="muted" style="font-size: 13px;">Mensagens que os clientes mandam pelo card 🆘 do Central de Ajuda deles. Responda aqui — a resposta aparece lá.</p>
+      <div id="hqTickets" class="muted" style="margin-top: 8px;">Carregando…</div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;" id="cardErros">
+      <h2>🩺 Saúde técnica dos clientes (7 dias)</h2>
+      <p class="muted" style="font-size: 13px;">Erros de JavaScript reportados automaticamente pelas telas de cada cliente — você fica sabendo do problema antes de o cliente reclamar (estilo Sentry).</p>
+      <div id="hqErros" class="muted" style="margin-top: 8px;">Carregando…</div>
+    </div>
+
     <div class="card" style="margin-top: 16px;" id="cardReceita12" hidden>
       <h2>📈 Receita do SaaS (12 meses)</h2>
       <div id="hqReceita12" class="muted">Sem pagamentos ainda.</div>
@@ -136,6 +148,16 @@
       <button class="btn" id="pixHQCopiar" style="flex:1;">📋 Copiar código</button>
       <form method="dialog" style="flex:1;"><button class="btn sec" style="width:100%;">Fechar</button></form>
     </div>
+  </dialog>
+
+  <dialog id="dlgTicket" style="max-width: 540px;">
+    <h2 id="tkNome">Ticket</h2>
+    <div id="tkMsgs" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
+    <div style="display: flex; gap: 8px;">
+      <input id="tkTxt" placeholder="Responder ao cliente…" style="flex: 1;">
+      <button class="btn" id="tkEnviar" style="width: auto;">➤</button>
+    </div>
+    <form method="dialog" style="margin-top: 10px;"><button class="btn sec" style="width: 100%;">Fechar</button></form>
   </dialog>
 
 </main>
@@ -230,6 +252,8 @@
       renderClientes();
       renderCobrancas();
     });
+    carregaTickets();
+    carregaErros();
     // receita 12 meses (v2 do SQL — se ainda não rodou, o card fica escondido)
     cli.rpc("hq_receita_mensal").then(function (r) {
       if (r.error || !r.data || !r.data.length) { $("cardReceita12").hidden = true; return; }
@@ -411,6 +435,65 @@
       carrega();
     });
   });
+
+  // ---------- 🆘 tickets de suporte (Zendesk do TORQUESYS) ----------
+  var ticketAtual = null;
+  function carregaTickets() {
+    cli.rpc("hq_suporte_threads").then(function (r) {
+      if (r.error) { $("hqTickets").innerHTML = '<span class="muted">Rode o bloco ASSISTÊNCIA TÉCNICA do supabase-setup.sql para ligar os tickets.</span>'; return; }
+      var ts = r.data || [];
+      $("hqTickets").innerHTML = ts.length ? ts.map(function (t) {
+        return '<div class="lead" style="cursor:pointer;" data-ticket="' + t.academia_id + '" data-tknome="' + esc(t.nome) + '"><b>' + esc(t.nome) + "</b>" +
+          (+t.nao_lidas ? '<span class="tag cancelado">' + t.nao_lidas + " nova(s)</span>" : "") +
+          '<span class="mut" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(t.ultima_msg || "") + "</span>" +
+          '<span class="mut">' + String(t.ultima || "").slice(0, 10) + "</span></div>";
+      }).join("") : "Nenhum ticket aberto — seus clientes estão tranquilos. 🎉";
+    }, function () {});
+  }
+  $("hqTickets").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-ticket]");
+    if (!el) return;
+    ticketAtual = el.getAttribute("data-ticket");
+    $("tkNome").textContent = "🆘 " + el.getAttribute("data-tknome");
+    abreTicket();
+  });
+  function abreTicket() {
+    cli.rpc("hq_suporte_lista", { p_academia: ticketAtual }).then(function (r) {
+      var ms = r.data || [];
+      $("tkMsgs").innerHTML = ms.length ? ms.map(function (m) {
+        var eu = m.de === "suporte";
+        return '<div style="max-width:85%;padding:8px 12px;border-radius:11px;font-size:13.5px;line-height:1.5;align-self:' +
+          (eu ? "flex-end;background:var(--roxo);color:#fff;" : "flex-start;background:#f3f0fa;") + '">' + esc(m.texto) +
+          '<div style="font-size:10.5px;opacity:.7;margin-top:3px;">' + esc(m.quem || "") + " · " + String(m.criado || "").slice(0, 16).replace("T", " ") + "</div></div>";
+      }).join("") : '<div class="muted">Sem mensagens ainda.</div>';
+      $("tkMsgs").scrollTop = $("tkMsgs").scrollHeight;
+      if (!$("dlgTicket").open) $("dlgTicket").showModal();
+      carregaTickets(); // zera a etiqueta de não lidas
+    });
+  }
+  $("tkEnviar").addEventListener("click", function () {
+    var t = $("tkTxt").value.trim();
+    if (!t || !ticketAtual) return;
+    $("tkTxt").value = "";
+    cli.rpc("hq_suporte_envia", { p_academia: ticketAtual, p_texto: t }).then(function (r) {
+      if (r.error) { alert("Não deu: " + r.error.message); return; }
+      abreTicket();
+    });
+  });
+  $("tkTxt").addEventListener("keydown", function (e) { if (e.key === "Enter") $("tkEnviar").click(); });
+
+  // ---------- 🩺 saúde técnica dos clientes (Sentry do TORQUESYS) ----------
+  function carregaErros() {
+    cli.rpc("hq_erros").then(function (r) {
+      if (r.error) { $("hqErros").innerHTML = '<span class="muted">Requer os blocos TELEMETRIA DE ERROS e ASSISTÊNCIA TÉCNICA do supabase-setup.sql.</span>'; return; }
+      var es = r.data || [];
+      $("hqErros").innerHTML = es.length ? es.map(function (x) {
+        return '<div class="lead"><b>' + esc(x.nome) + '</b><span class="tag cancelado">' + x.erros + " erro(s)</span>" +
+          '<span class="mut" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(x.ultima_pagina || "") + " — " + esc(x.ultima_msg || "") + "</span>" +
+          '<span class="mut">' + String(x.ultimo || "").slice(0, 10) + "</span></div>";
+      }).join("") : "Nenhum erro reportado nos últimos 7 dias — sistemas saudáveis. ✅";
+    }, function () {});
+  }
 
   // ---------- funil de vendas (local, sincroniza pela SUA conta) ----------
   var ETAPAS = ["novo", "contato", "demo", "proposta", "fechado", "perdido"];
