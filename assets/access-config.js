@@ -15,4 +15,7 @@ self.MT_ACCESS = {
   // Preencha com o seu e-mail e confirme o e-mail de ativação que o serviço
   // envia no primeiro cadastro. Deixe "" para desativar.
   notificarEmail: "",
+  // WhatsApp do suporte TORQUESYS (aparece no card 🆘 do Central de Ajuda).
+  // Só números com DDI+DDD, ex.: "5531999990000". Deixe "" para esconder o botão.
+  suporteZap: "",
 };

@@ -38,6 +38,8 @@ function crcNode(s) {
   ok((sql.match(/acesso restrito ao administrador/g) || []).length >= 4, "toda função hq_* de dados exige admin");
   ok(!/create policy[^;]*saas_/.test(sql), "tabelas saas_* sem policy (bloqueadas pra API — só as funções acessam)");
   ok(/hq_receita_mensal/.test(sql) && /add column if not exists zap/.test(sql) && /ultima_atividade/.test(sql), "v2: receita mensal, WhatsApp e última atividade no SQL");
+  ok(/saas_tickets/.test(sql) && /suporte_envia/.test(sql) && /suporte_lista/.test(sql), "assistência: tabela e RPCs do cliente");
+  ok(/hq_suporte_threads/.test(sql) && /hq_suporte_lista/.test(sql) && /hq_suporte_envia/.test(sql) && /hq_erros/.test(sql), "assistência: RPCs do HQ (tickets + erros)");
 
   // ---------- 1) site comercial ----------
   console.log("Site comercial (torquesys.html):");
@@ -104,6 +106,9 @@ function crcNode(s) {
         if (nome === "hq_kpis") return Promise.resolve({ data: { clientes: 4, ativos: 3, trial: 1, mrr: 443, recebido_mes: 246, novos_30d: 2 } });
         if (nome === "hq_clientes") return Promise.resolve({ data: CLIENTES });
         if (nome === "hq_receita_mensal") return Promise.resolve({ data: [{ mes: "2026-01", total: 100 }, { mes: "2026-02", total: 350 }] });
+        if (nome === "hq_suporte_threads") return Promise.resolve({ data: [{ academia_id: "acad-1", nome: "Academia Ferro Pesado", ultima: dISO(0), ultima_msg: "O totem travou aqui", nao_lidas: 2 }] });
+        if (nome === "hq_suporte_lista") return Promise.resolve({ data: [{ de: "cliente", quem: "dono@ferro.com", texto: "O totem travou aqui", criado: dISO(0) }] });
+        if (nome === "hq_erros") return Promise.resolve({ data: [{ academia_id: "sumi-4", nome: "Academia Sumida", erros: 3, ultimo: dISO(0), ultima_msg: "x is not defined", ultima_pagina: "apps/totem.html" }] });
         return Promise.resolve({ data: { ok: true } });
       },
     };
@@ -138,6 +143,22 @@ function crcNode(s) {
   // receita 12 meses
   const rec12 = await p.evaluate(() => ({ hidden: document.getElementById("cardReceita12").hidden, txt: document.getElementById("hqReceita12").textContent }));
   ok(!rec12.hidden && /350/.test(rec12.txt), "card de receita 12 meses com as barras");
+  // tickets de suporte
+  let tks = await p.evaluate(() => document.getElementById("hqTickets").textContent);
+  ok(/Ferro Pesado/.test(tks) && /2 nova\(s\)/.test(tks) && /totem travou/.test(tks), "ticket do cliente com etiqueta de não lidas");
+  await p.evaluate(() => document.querySelector("[data-ticket]").click());
+  await p.waitForFunction(() => document.getElementById("dlgTicket").open);
+  const thread = await p.evaluate(() => document.getElementById("tkMsgs").textContent);
+  ok(/O totem travou aqui/.test(thread) && /dono@ferro\.com/.test(thread), "thread abre com a mensagem do cliente");
+  await p.fill("#tkTxt", "Reinicia o tablet que resolve — e já subi uma correção 😉");
+  await p.click("#tkEnviar");
+  await p.waitForTimeout(300);
+  const respCall = await p.evaluate(() => window.__rpcLog.find((c) => c.nome === "hq_suporte_envia"));
+  ok(!!respCall && respCall.args.p_academia === "acad-1" && /correção/.test(respCall.args.p_texto), "resposta sai via hq_suporte_envia");
+  await p.evaluate(() => document.getElementById("dlgTicket").close());
+  // saúde técnica (Sentry)
+  const errosCard = await p.evaluate(() => document.getElementById("hqErros").textContent);
+  ok(/Academia Sumida/.test(errosCard) && /3 erro\(s\)/.test(errosCard) && /apps\/totem\.html/.test(errosCard), "monitor de erros mostra cliente, contagem e tela");
   // filtro por tipo
   await p.selectOption("#fTipo", "personal");
   lista = await p.evaluate(() => document.getElementById("hqClientes").textContent);
@@ -198,6 +219,46 @@ function crcNode(s) {
   ok(/contato/.test(funil), "lead avança de etapa (novo → contato)");
   const guardou = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:hqLeads")).itens.length);
   ok(guardou === 1, "funil guardado no store (sincroniza pela conta)");
+  await p.close();
+
+  // ---------- 4) widget 🆘 do cliente (Central de Ajuda) ----------
+  console.log("Suporte no Central de Ajuda (lado do cliente):");
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  await p.addInitScript(() => {
+    window.__rpcLogSup = [];
+    const chatDB = [{ de: "suporte", texto: "Olá! Vi seu chamado — como posso ajudar?", criado: new Date().toISOString() }];
+    window.MT_supabase = {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: { user: { email: "dono@ferro.com" } } } }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+      },
+      from: () => ({ select: () => Promise.resolve({ data: [] }), upsert: () => Promise.resolve({ data: [] }) }),
+      rpc: (nome, args) => {
+        window.__rpcLogSup.push({ nome, args });
+        if (nome === "suporte_lista") return Promise.resolve({ data: chatDB.slice() });
+        if (nome === "suporte_envia") { chatDB.push({ de: "cliente", texto: args.p_texto, criado: new Date().toISOString() }); return Promise.resolve({ data: { ok: true } }); }
+        return Promise.resolve({ data: { ok: true } });
+      },
+    };
+  });
+  await p.goto(BASE + "/apps/suporte.html");
+  await p.waitForFunction(() => window.__suporteSaaS);
+  await p.waitForTimeout(500);
+  let supMsgs = await p.evaluate(() => document.getElementById("supMsgs").textContent);
+  ok(/como posso ajudar/.test(supMsgs), "resposta do suporte aparece no card do cliente");
+  await p.fill("#supTxt", "O totem não lê o QR!");
+  await p.click("#supEnviar");
+  await p.waitForTimeout(400);
+  const enviaCall = await p.evaluate(() => window.__rpcLogSup.find((c) => c.nome === "suporte_envia"));
+  ok(!!enviaCall && /QR/.test(enviaCall.args.p_texto), "mensagem do cliente sai via suporte_envia");
+  supMsgs = await p.evaluate(() => document.getElementById("supMsgs").textContent);
+  ok(/totem não lê o QR/.test(supMsgs), "mensagem enviada aparece na conversa");
+  const zapEscondido = await p.evaluate(() => document.getElementById("supZap").hidden);
+  ok(zapEscondido, "botão de WhatsApp fica escondido sem suporteZap configurado");
+  await p.click("#supDiag");
+  const diagTxt = await p.evaluate(() => document.getElementById("supDiag").textContent);
+  ok(/Copiado/.test(diagTxt), "relatório de diagnóstico é copiado com um clique");
   await p.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));

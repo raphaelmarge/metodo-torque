@@ -1116,3 +1116,162 @@ $$;
 
 grant execute on function public.hq_cliente_set(uuid, text, text, numeric, text, text, text) to authenticated;
 grant execute on function public.hq_receita_mensal() to authenticated;
+
+-- ============================================================
+-- ASSISTÊNCIA TÉCNICA (SaaS) — suporte dentro do sistema
+-- • O cliente fala com o suporte pelo card 🆘 do Central de Ajuda
+--   (as mensagens ficam na ilha dele; o suporte responde pelo HQ)
+-- • O HQ ganha a central de tickets e o monitor de erros de TODOS
+--   os clientes (estilo Zendesk + Sentry)
+-- Bloco idempotente; requer os blocos TORQUESYS HQ anteriores.
+-- ============================================================
+
+create table if not exists public.saas_tickets (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  de text not null check (de in ('cliente', 'suporte')),
+  quem text not null default '',
+  texto text not null,
+  lida boolean not null default false,
+  criado timestamptz not null default now()
+);
+create index if not exists saas_tickets_acad on public.saas_tickets (academia_id, criado desc);
+alter table public.saas_tickets enable row level security;
+-- sem policies: só as funções abaixo acessam.
+
+-- cliente envia mensagem pro suporte (academia resolvida pelo login)
+create or replace function public.suporte_envia(p_texto text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_email text;
+begin
+  select academia_id into v_acad from public.membros where user_id = auth.uid() limit 1;
+  if v_acad is null then
+    raise exception 'faça login e crie sua conta antes';
+  end if;
+  if length(trim(coalesce(p_texto, ''))) = 0 then
+    raise exception 'mensagem vazia';
+  end if;
+  select email into v_email from auth.users where id = auth.uid();
+  insert into saas_tickets (academia_id, de, quem, texto)
+    values (v_acad, 'cliente', coalesce(v_email, ''), left(trim(p_texto), 2000));
+  return json_build_object('ok', true);
+end;
+$$;
+
+-- cliente lista a conversa dele (e marca respostas do suporte como lidas)
+create or replace function public.suporte_lista()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from public.membros where user_id = auth.uid() limit 1;
+  if v_acad is null then
+    return '[]'::json;
+  end if;
+  update saas_tickets set lida = true where academia_id = v_acad and de = 'suporte' and not lida;
+  return coalesce((select json_agg(x order by x.criado) from (
+    select de, texto, criado from saas_tickets
+    where academia_id = v_acad
+    order by criado desc limit 100
+  ) x), '[]'::json);
+end;
+$$;
+
+-- HQ: threads de suporte (uma por empresa, com contagem de não lidas)
+create or replace function public.hq_suporte_threads()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUESYS';
+  end if;
+  return coalesce((select json_agg(x order by x.ultima desc) from (
+    select t.academia_id, a.nome,
+      max(t.criado) as ultima,
+      (select texto from saas_tickets u where u.academia_id = t.academia_id order by criado desc limit 1) as ultima_msg,
+      count(*) filter (where t.de = 'cliente' and not t.lida) as nao_lidas
+    from saas_tickets t
+    join academias a on a.id = t.academia_id
+    group by t.academia_id, a.nome
+  ) x), '[]'::json);
+end;
+$$;
+
+-- HQ: conversa de uma empresa (marca as do cliente como lidas)
+create or replace function public.hq_suporte_lista(p_academia uuid)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUESYS';
+  end if;
+  update saas_tickets set lida = true where academia_id = p_academia and de = 'cliente' and not lida;
+  return coalesce((select json_agg(x order by x.criado) from (
+    select de, quem, texto, criado from saas_tickets
+    where academia_id = p_academia
+    order by criado desc limit 200
+  ) x), '[]'::json);
+end;
+$$;
+
+-- HQ: responde um ticket
+create or replace function public.hq_suporte_envia(p_academia uuid, p_texto text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUESYS';
+  end if;
+  if length(trim(coalesce(p_texto, ''))) = 0 then
+    raise exception 'mensagem vazia';
+  end if;
+  insert into saas_tickets (academia_id, de, quem, texto)
+    values (p_academia, 'suporte', 'Suporte TORQUESYS', left(trim(p_texto), 2000));
+  return json_build_object('ok', true);
+end;
+$$;
+
+-- HQ: monitor de erros de TODOS os clientes (estilo Sentry) — últimos 7 dias
+create or replace function public.hq_erros()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUESYS';
+  end if;
+  return coalesce((select json_agg(x order by x.erros desc) from (
+    select e.academia_id, a.nome,
+      count(*) as erros,
+      max(e.criado) as ultimo,
+      (select msg from erros_js u where u.academia_id = e.academia_id order by criado desc limit 1) as ultima_msg,
+      (select pagina from erros_js u where u.academia_id = e.academia_id order by criado desc limit 1) as ultima_pagina
+    from erros_js e
+    join academias a on a.id = e.academia_id
+    where e.criado >= now() - interval '7 days'
+    group by e.academia_id, a.nome
+  ) x), '[]'::json);
+end;
+$$;
+
+grant execute on function public.suporte_envia(text) to authenticated;
+grant execute on function public.suporte_lista() to authenticated;
+grant execute on function public.hq_suporte_threads() to authenticated;
+grant execute on function public.hq_suporte_lista(uuid) to authenticated;
+grant execute on function public.hq_suporte_envia(uuid, text) to authenticated;
+grant execute on function public.hq_erros() to authenticated;
