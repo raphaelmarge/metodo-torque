@@ -91,6 +91,21 @@
       <div class="campo"><label>Altura (cm)</label><input id="vAltura" type="number" step="0.5" min="0"></div>
       <div class="campo"><label>% Gordura</label><input id="vGordura" type="number" step="0.1" min="0"></div>
     </div>
+    <details style="border: 1px dashed var(--linha); border-radius: 10px; padding: 10px 14px;">
+      <summary style="cursor: pointer; font-weight: 700; font-size: 13px;">📐 Calcular % de gordura por dobras cutâneas (Pollock 3 · Pollock 7 · Guedes)</summary>
+      <div class="linha-flex" style="margin: 10px 0;">
+        <select id="dbMetodo" style="width: auto;">
+          <option value="p3">Pollock 3 dobras</option>
+          <option value="p7">Pollock 7 dobras</option>
+          <option value="guedes">Guedes 3 dobras</option>
+        </select>
+        <select id="dbSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
+        <input id="dbIdade" type="number" min="10" max="99" placeholder="Idade" style="width: 90px;">
+        <button type="button" class="btn sec mini" id="dbCalc">🧮 Calcular</button>
+      </div>
+      <div id="dbCampos" class="linha-flex" style="margin-bottom: 8px;"></div>
+      <span id="dbResultado" style="font-weight: 700; font-size: 13px;"></span>
+    </details>
     <strong style="font-size: 12.5px; letter-spacing: .08em; color: var(--cinza);">MEDIDAS (cm)</strong>
     <div class="med-grid">
       <div class="campo"><label>Tórax</label><input id="mTorax" type="number" step="0.5"></div>
@@ -527,6 +542,54 @@
   S.onChange(function (k) { if (k === "saude" || k === "alunos") renderResultados(); });
   renderResultados();
   window.__resultados = renderResultados; // testes
+})();
+</script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var DOBRAS = {
+    p3: { M: ["Peitoral", "Abdominal", "Coxa"], F: ["Tríceps", "Suprailíaca", "Coxa"] },
+    p7: { M: ["Peitoral", "Axilar média", "Tríceps", "Subescapular", "Abdominal", "Suprailíaca", "Coxa"],
+          F: ["Peitoral", "Axilar média", "Tríceps", "Subescapular", "Abdominal", "Suprailíaca", "Coxa"] },
+    guedes: { M: ["Tríceps", "Suprailíaca", "Abdominal"], F: ["Subescapular", "Suprailíaca", "Coxa"] },
+  };
+  function renderCampos() {
+    var lista = DOBRAS[$("dbMetodo").value][$("dbSexo").value];
+    $("dbCampos").innerHTML = lista.map(function (n) {
+      return '<label style="margin:0;font-size:12px;color:var(--cinza);">' + n +
+        ' (mm)<input class="dbIn" type="number" step="0.5" min="1" max="80" style="width:105px;display:block;margin-top:3px;"></label>';
+    }).join("");
+    $("dbResultado").textContent = "";
+  }
+  $("dbMetodo").addEventListener("change", renderCampos);
+  $("dbSexo").addEventListener("change", renderCampos);
+  $("dbCalc").addEventListener("click", function () {
+    var metodo = $("dbMetodo").value, sexo = $("dbSexo").value, idade = +$("dbIdade").value;
+    var vals = Array.prototype.map.call(document.querySelectorAll(".dbIn"), function (i) { return parseFloat(String(i.value).replace(",", ".")); });
+    if (vals.some(function (v) { return !v || v <= 0; })) { alert("Preencha todas as dobras (em mm)."); return; }
+    if ((metodo === "p3" || metodo === "p7") && (!idade || idade < 10)) { alert("Pollock precisa da idade."); return; }
+    var S3 = vals.reduce(function (t, v) { return t + v; }, 0);
+    var D;
+    if (metodo === "p3") {
+      D = sexo === "M"
+        ? 1.10938 - 0.0008267 * S3 + 0.0000016 * S3 * S3 - 0.0002574 * idade
+        : 1.0994921 - 0.0009929 * S3 + 0.0000023 * S3 * S3 - 0.0001392 * idade;
+    } else if (metodo === "p7") {
+      D = sexo === "M"
+        ? 1.112 - 0.00043499 * S3 + 0.00000055 * S3 * S3 - 0.00028826 * idade
+        : 1.097 - 0.00046971 * S3 + 0.00000056 * S3 * S3 - 0.00012828 * idade;
+    } else {
+      D = sexo === "M" ? 1.17136 - 0.06706 * Math.log10(S3) : 1.1665 - 0.07063 * Math.log10(S3);
+    }
+    var pct = Math.round((4.95 / D - 4.5) * 1000) / 10;
+    if (!isFinite(pct) || pct <= 0 || pct >= 60) { alert("Resultado fora da faixa esperada — confira as medidas."); return; }
+    var ROT = { p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" };
+    $("dbResultado").innerHTML = "🎯 <b>" + String(pct).replace(".", ",") + "%</b> <span class='muted'>(Σ " +
+      String(Math.round(S3 * 10) / 10).replace(".", ",") + " mm · " + ROT[metodo] + " + Siri) — preenchi o campo % Gordura.</span>";
+    $("vGordura").value = pct;
+  });
+  renderCampos();
+  window.__dobrasAcad = renderCampos; // testes
 })();
 </script>
 </body>

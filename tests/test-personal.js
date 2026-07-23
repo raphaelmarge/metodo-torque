@@ -174,6 +174,48 @@ function ok(cond, nome) {
   await p.click("#sAdd");
   await p.click('[data-a="treinos"]');
 
+  // dobras cutâneas: Pollock 3 (M, 30 anos, 10+20+15mm → ~13,6%) e Guedes (→ ~16,8%)
+  await p.click('[data-a="avaliacoes"]');
+  await p.selectOption("#dbMetodo", "p3");
+  await p.selectOption("#dbSexo", "M");
+  await p.fill("#dbIdade", "30");
+  const campos = await p.evaluate(() => Array.from(document.querySelectorAll("#dbCampos label")).map((l) => l.textContent));
+  ok(/Peitoral/.test(campos[0]) && /Abdominal/.test(campos[1]) && /Coxa/.test(campos[2]), "Pollock 3 masculino pede peitoral/abdominal/coxa");
+  await p.evaluate(() => {
+    const ins = document.querySelectorAll(".dbIn");
+    ins[0].value = "10"; ins[1].value = "20"; ins[2].value = "15";
+  });
+  await p.click("#dbCalc");
+  let resDb = await p.evaluate(() => document.getElementById("dbResultado").textContent);
+  ok(/13,6%/.test(resDb), "Pollock 3 + Siri = 13,6% (conferido à mão)");
+  const gordPreenchida = await p.evaluate(() => document.getElementById("avGord").value);
+  ok(gordPreenchida === "13.6", "resultado preenche o campo % gordura da avaliação");
+  // Guedes com as mesmas somas
+  await p.selectOption("#dbMetodo", "guedes");
+  await p.evaluate(() => {
+    const ins = document.querySelectorAll(".dbIn");
+    ins[0].value = "10"; ins[1].value = "20"; ins[2].value = "15";
+  });
+  await p.click("#dbCalc");
+  resDb = await p.evaluate(() => document.getElementById("dbResultado").textContent);
+  ok(/16,8%/.test(resDb), "Guedes + Siri = 16,8% (conferido à mão)");
+  // registra a avaliação com as dobras anexadas
+  await p.selectOption("#avAluno", { index: 1 });
+  await p.click("#avAdd");
+  const comDobras = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st.avaliacoes[st.avaliacoes.length - 1];
+  });
+  ok(comDobras.metodoDobras === "guedes" && comDobras.dobras && comDobras.gordura === 16.8, "avaliação salva com as dobras e o método");
+  const histDb = await p.evaluate(() => document.getElementById("listaAvaliacoes").textContent);
+  ok(/Guedes/.test(histDb), "histórico mostra a etiqueta 📐 do protocolo");
+  // limpa pra não interferir nos testes de evolução seguintes
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.avaliacoes = [];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+
   // avaliações: registra 2 e vê evolução
   await p.click('[data-a="avaliacoes"]');
   await p.selectOption("#avAluno", { index: 1 });
