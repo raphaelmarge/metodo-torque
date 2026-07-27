@@ -370,6 +370,24 @@
   </form>
 </dialog>
 
+<dialog id="dlgContrato" style="max-width: 620px; width: 94vw;">
+  <h2 style="margin-bottom: 10px;">✍️ Contrato digital</h2>
+  <div id="ctrAceito" hidden style="background: #dcfce7; border: 1px solid #86efac; color: #15803d; padding: 10px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 10px;"></div>
+  <div id="ctrTexto" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--linha); border-radius: 10px; padding: 14px 16px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; background: #faf9fc;"></div>
+  <div id="ctrAceitar" style="margin-top: 12px;">
+    <label style="font-size: 12.5px; font-weight: 700; color: var(--cinza);">Nome completo de quem aceita (o aluno digita)</label>
+    <input id="ctrNome" placeholder="Nome igual ao documento" style="width: 100%; margin-top: 4px;">
+    <button class="btn" id="ctrOk" style="width: 100%; margin-top: 10px;">Li e ACEITO o contrato ✓</button>
+  </div>
+  <div class="linha-flex" style="justify-content: space-between; margin-top: 12px; flex-wrap: wrap; gap: 8px;">
+    <button class="btn sec mini" id="ctrEditar">✎ Editar modelo do contrato</button>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn sec mini" id="ctrImprimir">🖨 Imprimir</button>
+      <form method="dialog"><button class="btn sec mini">Fechar</button></form>
+    </div>
+  </div>
+</dialog>
+
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
@@ -637,6 +655,7 @@
     var cancelado = !c && (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })
       .sort(function (x, y) { return (x.canceladoEm || "") < (y.canceladoEm || "") ? -1 : 1; }).pop();
     if (cancelado) acoes.push('<button class="btn sec mini" data-facao="anular" data-cid="' + cancelado.id + '">↩ Anular cancelamento</button>');
+    acoes.push('<button class="btn sec mini" data-facao="contrato" title="Contrato digital com registro de aceite">✍️ Contrato' + (a.aceite ? " ✓" : "") + "</button>");
     acoes.push('<button class="btn sec mini" data-facao="editar">✎ Editar dados</button>');
     acoes.push('<button class="btn sec mini" data-facao="notificacao" title="Nota fixa visível a quem abrir o perfil">📌 Notificação</button>');
     acoes.push('<button class="btn sec mini" data-facao="mesclar" title="Unificar com um cadastro duplicado">⇄ Mesclar</button>');
@@ -902,6 +921,7 @@
     var a = st.alunos.find(function (x) { return x.id === fichaId; });
     var c = contratoAtivo(a);
 
+    if (acao === "contrato") { abreContrato(a, c); return; }
     if (acao === "matricular") {
       if (a.restrito && (!a.restrito.ate || a.restrito.ate >= S.todayISO())) { alert("Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + " — remova a restrição antes de vender."); return; }
       abrirMatricula();
@@ -1429,6 +1449,77 @@ $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvi
     if (acao === "novo") setTimeout(function () { abreCadastro(null); }, 50);
     if (acao === "venda") setTimeout(function () { $("btnNovaVenda").click(); }, 50);
   })();
+
+  // ---------- ✍️ contrato digital com aceite ----------
+  var CONTRATO_PADRAO = "CONTRATO DE PRESTAÇÃO DE SERVIÇOS — {academia}\n\nCONTRATANTE: {nome}\nPLANO: {plano} — R$ {valor}/mês\nINÍCIO: {inicio} · VENCIMENTO: todo dia {vencimento}\n\n1. O CONTRATANTE tem direito ao uso das instalações e dos serviços incluídos no plano contratado, dentro dos horários de funcionamento.\n2. O atraso superior a 5 dias no pagamento pode suspender o acesso até a regularização.\n3. O cancelamento pode ser solicitado a qualquer momento na recepção; valores do mês em curso não são reembolsados.\n4. Congelamento de plano conforme a política vigente da academia.\n5. O CONTRATANTE declara estar apto à prática de atividades físicas (PAR-Q) e se compromete a zelar pelos equipamentos.\n6. A academia não se responsabiliza por objetos deixados fora dos armários.\n\nAo aceitar, o CONTRATANTE declara ter lido e concordado com todos os termos acima.";
+  var contratoAlunoId = null, editandoModelo = false;
+  function modeloContrato(st) { return (st.config && st.config.contratoModelo) || CONTRATO_PADRAO; }
+  function textoContrato(a, c) {
+    var st = load();
+    var cfgA = (S.read("config", { dados: {} }).dados || {});
+    var pl = c ? st.planos.find(function (p) { return p.id === c.planoId; }) : null;
+    return modeloContrato(st)
+      .replace(/{academia}/g, cfgA.nome || "Academia").replace(/{nome}/g, a.nome)
+      .replace(/{plano}/g, pl ? pl.nome : "—")
+      .replace(/{valor}/g, c && c.valor != null ? String(c.valor) : pl ? String(pl.valor) : "—")
+      .replace(/{inicio}/g, c ? S.fmtData(c.inicio) : "—")
+      .replace(/{vencimento}/g, String((c && c.diaVenc) || 5));
+  }
+  function abreContrato(a, c) {
+    contratoAlunoId = a.id;
+    editandoModelo = false;
+    $("ctrTexto").contentEditable = "false";
+    $("ctrTexto").style.borderColor = "";
+    $("ctrEditar").textContent = "✎ Editar modelo do contrato";
+    $("ctrTexto").textContent = textoContrato(a, c);
+    $("ctrAceito").hidden = !a.aceite;
+    if (a.aceite) $("ctrAceito").textContent = "✓ Aceito por " + a.aceite.nome + " em " + S.fmtData((a.aceite.em || "").slice(0, 10)) + " às " + (a.aceite.em || "").slice(11, 16) + " — registrado no cadastro.";
+    $("ctrAceitar").hidden = !!a.aceite;
+    $("ctrNome").value = "";
+    $("dlgContrato").showModal();
+  }
+  $("ctrOk").addEventListener("click", function () {
+    var nome = $("ctrNome").value.trim();
+    if (nome.split(" ").length < 2) { alert("Peça pro aluno digitar o nome COMPLETO (é o registro do aceite)."); return; }
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === contratoAlunoId; });
+    if (!a) return;
+    var agora = new Date();
+    a.aceite = { nome: nome, em: S.todayISO() + "T" + ("0" + agora.getHours()).slice(-2) + ":" + ("0" + agora.getMinutes()).slice(-2) };
+    save(st);
+    abreContrato(a, contratoAtivo(a));
+    abreFicha(contratoAlunoId);
+  });
+  $("ctrEditar").addEventListener("click", function () {
+    var st = load();
+    if (!editandoModelo) {
+      editandoModelo = true;
+      $("ctrTexto").textContent = modeloContrato(st); // mostra o MODELO cru (com {nome}, {plano}…)
+      $("ctrTexto").contentEditable = "true";
+      $("ctrTexto").style.borderColor = "var(--roxo)";
+      this.textContent = "💾 Salvar modelo";
+      $("ctrTexto").focus();
+    } else {
+      st.config = st.config || {};
+      st.config.contratoModelo = $("ctrTexto").textContent;
+      S.write("alunos", st);
+      var a = st.alunos.find(function (x) { return x.id === contratoAlunoId; });
+      if (a) abreContrato(a, contratoAtivo(a));
+    }
+  });
+  $("ctrImprimir").addEventListener("click", function () {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === contratoAlunoId; });
+    if (!a) return;
+    var w = window.open("", "_blank");
+    w.document.write("<pre style='font-family:system-ui,sans-serif;white-space:pre-wrap;font-size:13px;line-height:1.7;max-width:700px;margin:40px auto;'>" +
+      $("ctrTexto").textContent.replace(/[<>&]/g, "") +
+      (a.aceite ? "\n\n———\nACEITE DIGITAL: " + a.aceite.nome + " em " + a.aceite.em.replace("T", " às ") : "\n\n\nAssinatura: ______________________________  Data: ____/____/______") +
+      "</pre>");
+    w.document.close();
+    w.print();
+  });
+  window.__contrato = { abre: abreContrato, texto: textoContrato }; // testes
 
   render();
 })();

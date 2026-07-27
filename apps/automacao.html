@@ -65,6 +65,28 @@
       <span class="mut" id="resumoStatus" style="font-size:12.5px;"></span>
     </div>
   </div>
+  <div class="card" style="margin-top: 16px;">
+    <h2>📣 Campanha relâmpago (disparo segmentado)</h2>
+    <p class="muted" style="font-size: 13px;">Escolha um público, escreva a mensagem (use {nome}) e dispare um a um pelo WhatsApp — promoção, reativação, aviso. Estilo Intercom, sem mensalidade de ferramenta.</p>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0;">
+      <select id="cpSegmento" style="min-width: 220px;">
+        <option value="ativos">Todos os alunos ativos</option>
+        <option value="aniversariantes">🎂 Aniversariantes do mês</option>
+        <option value="vencendo">⏳ Contratos vencendo em 30 dias</option>
+        <option value="sumidos">👻 Sumidos há 30+ dias</option>
+        <option value="agregadores">🤝 Alunos de agregador (Wellhub etc.)</option>
+        <option value="inadimplentes">💸 Com mensalidade em aberto</option>
+      </select>
+      <button class="btn sec" id="cpVer">👀 Ver público</button>
+    </div>
+    <textarea id="cpMsg" rows="3" style="width: 100%;" placeholder="Oi {nome}! Semana que vem tem aulão especial às 19h — bora? 💪"></textarea>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center;">
+      <button class="btn" id="cpGerar">📣 Gerar disparos</button>
+      <span id="cpResumo" class="muted" style="font-size: 13px;"></span>
+    </div>
+    <div id="cpLista" style="margin-top: 10px;"></div>
+  </div>
+
 </main>
 
 <dialog id="dlgRegra">
@@ -535,6 +557,69 @@
   }
 
   window.__resumoSemanal = { monta: montaResumoSemanal, envia: enviaResumoSemanal }; // testes
+
+  // ---------- 📣 campanha relâmpago (disparo segmentado) ----------
+  function publicoCampanha(seg) {
+    var stA = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var hoje = S.todayISO(), mesN = hoje.slice(5, 7);
+    var ativos = (stA.alunos || []).filter(function (a) { return a.status !== "inativo"; });
+    function contAtivo(a) { return (a.contratos || []).find(function (c) { return c.status === "ativo"; }); }
+    if (seg === "aniversariantes") return ativos.filter(function (a) { return (a.nasc || "").slice(5, 7) === mesN; });
+    if (seg === "vencendo") {
+      var em30 = new Date(); em30.setDate(em30.getDate() + 30);
+      var lim = S.todayISO(em30);
+      return ativos.filter(function (a) {
+        var c = contAtivo(a);
+        if (!c || !c.inicio || !c.meses) return false;
+        var fim = new Date(c.inicio + "T12:00"); fim.setMonth(fim.getMonth() + +c.meses);
+        var fimISO = S.todayISO(fim);
+        return fimISO >= hoje && fimISO <= lim;
+      });
+    }
+    if (seg === "sumidos") {
+      var corte = new Date(); corte.setDate(corte.getDate() - 30);
+      var cISO = corte.toISOString();
+      return ativos.filter(function (a) {
+        var ult = (a.checkins || []).slice().sort().pop();
+        return !ult || ult < cISO;
+      });
+    }
+    if (seg === "agregadores") {
+      return ativos.filter(function (a) {
+        var c = contAtivo(a);
+        var pl = c && (stA.planos || []).find(function (p) { return p.id === c.planoId; });
+        return pl && pl.tipo === "agregador";
+      });
+    }
+    if (seg === "inadimplentes") {
+      return ativos.filter(function (a) {
+        return (stA.recebiveis || []).some(function (r) { return r.alunoId === a.id && r.status === "aberto" && r.vencimento < hoje; });
+      });
+    }
+    return ativos;
+  }
+  function pintaCampanha(disparar) {
+    var pub = publicoCampanha($("cpSegmento").value);
+    var msg = $("cpMsg").value.trim();
+    $("cpResumo").textContent = pub.length + " pessoa(s) neste público" + (pub.filter(function (a) { return a.zap; }).length < pub.length ? " (" + pub.filter(function (a) { return !a.zap; }).length + " sem WhatsApp cadastrado)" : "");
+    $("cpLista").innerHTML = pub.length ? pub.map(function (a) {
+      var texto = msg.replace(/{nome}/g, (a.nome || "").split(" ")[0]);
+      return '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--linha);font-size:13.5px;">' +
+        "<b>" + esc(a.nome) + "</b>" +
+        (disparar && a.zap && texto ? '<a class="btn whats mini" style="margin-left:auto;" target="_blank" rel="noopener" data-cpok href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(texto) + '">💬 Enviar</a>'
+          : '<span class="muted" style="margin-left:auto;">' + (a.zap ? "" : "sem WhatsApp") + "</span>") + "</div>";
+    }).join("") : '<div class="muted">Ninguém neste público hoje. 🎉</div>';
+  }
+  $("cpVer").addEventListener("click", function () { pintaCampanha(false); });
+  $("cpGerar").addEventListener("click", function () {
+    if (!$("cpMsg").value.trim()) { alert("Escreva a mensagem da campanha (dica: use {nome})."); return; }
+    pintaCampanha(true);
+  });
+  $("cpLista").addEventListener("click", function (e) {
+    var a2 = e.target.closest("[data-cpok]");
+    if (a2) { a2.textContent = "✓ Enviado"; a2.style.opacity = ".55"; }
+  });
+  window.__campanha = { publico: publicoCampanha }; // testes
 
   // gera o link Pix sozinho para os disparos D-2 que ainda não têm (máx. 10/dia)
   function geraPixPendentes() {

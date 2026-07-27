@@ -73,6 +73,12 @@
     <div style="overflow-x: auto;"><table class="tabela-prof" id="profs"></table></div>
     <p class="muted" id="profVazio" hidden>Cadastre o professor nas aulas da grade para ver este quadro.</p>
   </div>
+  <div class="card" style="margin-top: 16px;">
+    <h2>⭐ Satisfação das aulas (avaliação pelo app do aluno)</h2>
+    <p class="muted" style="font-size: 13px;">Depois da aula agendada, o app pede nota de 1 a 5. Média por aula = onde investir e onde agir. Requer o bloco AVALIAÇÃO DAS AULAS do supabase-setup.sql e conta conectada.</p>
+    <div id="satisfacao" class="muted" style="margin-top: 8px;">Carregando…</div>
+  </div>
+
 </main>
 
 <script src="../assets/access-config.js"></script>
@@ -295,6 +301,42 @@
   S.onChange(function (k) { if (k === "alunos" || k === "grade" || k === "equipe") render(); });
   render();
   window.__ocupacao = { render: render, ocorrencias: ocorrencias }; // testes
+
+  // ---------- ⭐ satisfação das aulas (avaliações do app, na nuvem) ----------
+  function renderSatisfacao() {
+    var el = document.getElementById("satisfacao");
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { el.innerHTML = "Conecte sua conta (nuvem) para receber as avaliações dos alunos."; return; }
+    nuvem.client.from("app_aval_aula").select("aula, nota, texto, aluno, criado").order("criado", { ascending: false }).limit(400)
+      .then(function (r) {
+        if (r.error) { el.innerHTML = "Rode o bloco AVALIAÇÃO DAS AULAS do supabase-setup.sql para ligar este relatório."; return; }
+        var l = r.data || [];
+        if (!l.length) { el.innerHTML = "Nenhuma avaliação ainda — elas chegam sozinhas depois das aulas agendadas pelo app."; return; }
+        var por = {};
+        l.forEach(function (av) {
+          var p = por[av.aula] = por[av.aula] || { soma: 0, n: 0, ruins: 0 };
+          p.soma += +av.nota; p.n++;
+          if (+av.nota <= 2) p.ruins++;
+        });
+        var geral = l.reduce(function (t, av) { return t + +av.nota; }, 0) / l.length;
+        el.innerHTML = '<div style="font-size:13.5px;margin-bottom:8px;">Média geral: <b>' + geral.toFixed(1).replace(".", ",") + " ⭐</b> em " + l.length + " avaliação(ões)</div>" +
+          Object.keys(por).sort(function (x, y) { return por[x].soma / por[x].n - por[y].soma / por[y].n; }).map(function (aula) {
+            var p = por[aula];
+            var media = p.soma / p.n;
+            var cor = media >= 4.5 ? "#16a34a" : media >= 3.5 ? "var(--roxo)" : media >= 2.5 ? "#d97706" : "#dc2626";
+            return '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--linha);font-size:13.5px;">' +
+              "<b>" + aula.replace(/[<>&]/g, "") + "</b><span class='muted'>" + p.n + " avaliação(ões)</span>" +
+              (p.ruins ? '<span style="color:#dc2626;font-weight:700;">' + p.ruins + " nota(s) baixa(s) — investigue</span>" : "") +
+              '<span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + media.toFixed(1).replace(".", ",") + " ⭐</span></div>";
+          }).join("") +
+          (l.filter(function (av) { return av.texto; }).length ? "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:10px 0 4px;text-transform:uppercase;'>Comentários recentes</div>" +
+            l.filter(function (av) { return av.texto; }).slice(0, 8).map(function (av) {
+              return '<div style="padding:6px 0;border-top:1px solid var(--linha);font-size:13px;">"' + String(av.texto).replace(/[<>&]/g, "") + '" <span class="muted">— ' + String(av.aluno || "aluno").replace(/[<>&]/g, "").split(" ")[0] + " · " + av.nota + "⭐</span></div>";
+            }).join("") : "");
+      });
+  }
+  setTimeout(renderSatisfacao, 1200); // espera a nuvem ligar
+  window.__satisfacao = renderSatisfacao; // testes
 })();
 </script>
 </body>

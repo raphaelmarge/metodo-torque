@@ -1342,3 +1342,53 @@ $$;
 
 grant execute on function public.aluno_define_login(text, text, text) to anon, authenticated;
 grant execute on function public.aluno_login(text, text) to anon, authenticated;
+
+-- ============================================================
+-- AVALIAÇÃO DAS AULAS (⭐ pelo app do aluno)
+-- Depois da aula agendada, o app pede nota 1–5 + comentário.
+-- O relatório de satisfação por aula/professor fica em
+-- Ocupação e Horários. Bloco idempotente.
+-- ============================================================
+
+create table if not exists public.app_aval_aula (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  aluno text not null default '',
+  aula text not null,
+  data date not null,
+  nota int not null check (nota between 1 and 5),
+  texto text not null default '',
+  criado timestamptz not null default now(),
+  unique (token, aula, data)
+);
+alter table public.app_aval_aula enable row level security;
+
+drop policy if exists "aval_aula_membros" on public.app_aval_aula;
+create policy "aval_aula_membros" on public.app_aval_aula
+  for select using (academia_id in (select public.minhas_academias()));
+
+-- aluno avalia a aula (identificado pelo token do app)
+create or replace function public.app_aluno_avalia(t text, p_aula text, p_data date, p_nota int, p_texto text, p_nome text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if coalesce(p_nota, 0) not between 1 and 5 then
+    return json_build_object('erro', 'nota_invalida');
+  end if;
+  insert into app_aval_aula (academia_id, token, aluno, aula, data, nota, texto)
+    values (v_acad, t, coalesce(p_nome, ''), coalesce(p_aula, 'Aula'), coalesce(p_data, current_date), p_nota, left(coalesce(p_texto, ''), 400))
+    on conflict (token, aula, data) do update set nota = excluded.nota, texto = excluded.texto;
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.app_aluno_avalia(text, text, date, int, text, text) to anon, authenticated;
