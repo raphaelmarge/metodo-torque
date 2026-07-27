@@ -95,6 +95,19 @@
     <p class="muted" style="margin: 4px 0 10px;">O dado mais famoso do setor: quem participa de aulas coletivas cria vínculo e cancela menos. Se a diferença aparecer aí embaixo, a regra é clara — todo aluno novo sai da recepção com uma aula agendada.</p>
     <div id="retAtividade" class="muted">Sem dados suficientes ainda.</div>
   </div>
+  <div class="card">
+    <h2>🏆 Desafio do mês (gamificação no app do aluno)</h2>
+    <p class="muted" style="font-size: 13px;">Crie um desafio (ex.: 12 treinos no mês) — ele aparece no app de TODOS os alunos com barra de progresso e medalha. Aluno engajado em desafio não cancela.</p>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0;">
+      <input id="dsfTitulo" placeholder="Nome (ex.: Desafio Julho Insano)" style="flex: 2; min-width: 180px;">
+      <input id="dsfMeta" type="number" min="1" max="31" placeholder="Treinos" style="width: 100px;" title="Quantos check-ins no mês completam o desafio">
+      <input id="dsfMedalha" placeholder="🥇" maxlength="4" style="width: 70px;" title="Emoji da medalha">
+      <button class="btn" id="dsfAdd">Lançar desafio</button>
+    </div>
+    <div id="dsfLista" class="muted">Nenhum desafio ainda.</div>
+    <p class="muted" style="font-size: 12px; margin-top: 8px;">⚠️ Depois de lançar, republique o app dos alunos para o desafio chegar neles.</p>
+  </div>
+
 </main>
 
 <script src="../assets/access-config.js"></script>
@@ -404,6 +417,43 @@
   S.onChange(function (k) { if (k === "alunos" || k === "grade") renderRetAtividade(); });
   renderRetAtividade();
   window.__retAtividade = renderRetAtividade; // testes
+
+  // ---------- 🏆 desafio do mês ----------
+  function escD(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function mesAtualKey() { return S.todayISO().slice(0, 7); }
+  function renderDesafios() {
+    var st = S.read("desafios", { itens: [] });
+    var el = document.getElementById("dsfLista");
+    el.innerHTML = st.itens.length ? st.itens.slice().reverse().map(function (d) {
+      var ativo = d.mes === mesAtualKey();
+      return '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--linha);font-size:13.5px;">' +
+        "<b>" + (d.medalha || "🏆") + " " + escD(d.titulo) + "</b>" +
+        "<span>" + d.meta + " treinos em " + d.mes.slice(5) + "/" + d.mes.slice(2, 4) + "</span>" +
+        (ativo ? '<span class="tag" style="background:#dcfce7;color:#15803d;font-weight:800;">NO AR</span>' : '<span class="muted">encerrado</span>') +
+        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-dsfrm="' + d.id + '">✕</button></div>';
+    }).join("") : "Nenhum desafio ainda.";
+  }
+  document.getElementById("dsfAdd").addEventListener("click", function () {
+    var titulo = document.getElementById("dsfTitulo").value.trim();
+    var meta = +document.getElementById("dsfMeta").value;
+    if (!titulo || !meta) { alert("Preencha o nome e a meta de treinos."); return; }
+    var st = S.read("desafios", { itens: [] });
+    st.itens = st.itens.filter(function (d) { return d.mes !== mesAtualKey(); }); // 1 por mês
+    st.itens.push({ id: S.uid(), titulo: titulo, meta: Math.min(31, meta), medalha: document.getElementById("dsfMedalha").value.trim() || "🏆", mes: mesAtualKey() });
+    S.write("desafios", st);
+    document.getElementById("dsfTitulo").value = ""; document.getElementById("dsfMeta").value = ""; document.getElementById("dsfMedalha").value = "";
+    renderDesafios();
+  });
+  document.getElementById("dsfLista").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-dsfrm");
+    if (!rm || !confirm("Remover este desafio?")) return;
+    var st = S.read("desafios", { itens: [] });
+    st.itens = st.itens.filter(function (d) { return d.id !== rm; });
+    S.write("desafios", st);
+    renderDesafios();
+  });
+  renderDesafios();
+  window.__desafios = renderDesafios; // testes
 })();
 </script>
 </body>

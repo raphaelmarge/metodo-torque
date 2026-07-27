@@ -141,8 +141,12 @@
         <button class="btn sec" id="tFicha">+ Nova ficha (A, B, C…)</button>
         <button class="btn sec" id="tZap">💬 Enviar no WhatsApp</button>
       </div>
+      <div class="linha-flex" style="margin: 0 0 10px;">
+        <select id="tplSel" style="min-width: 220px;"><option value="">📚 Ficha pronta (template)…</option></select>
+        <button class="btn" id="tplAplicar">⚡ Aplicar no aluno</button>
+      </div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo.</p>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os templates criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
     <div class="card">
@@ -567,6 +571,57 @@
     S.write("ptStudio", st);
     renderFichas();
   });
+
+  // ---------- 📚 fichas prontas (templates estilo Trainerize) ----------
+  // cada item: [nome do exercício na biblioteca, séries, reps]; exercício que faltar é criado na hora
+  var TEMPLATES_FICHA = {
+    fullbody: { nome: "Full Body iniciante (3x/semana)", fichas: [
+      ["Treino único — Full Body", [["Agachamento livre", 3, "12"], ["Supino reto", 3, "12"], ["Remada curvada", 3, "12"], ["Desenvolvimento", 3, "12"], ["Prancha", 3, "30s"]]],
+    ] },
+    abc: { nome: "ABC hipertrofia", fichas: [
+      ["A — Peito/Tríceps", [["Supino reto", 4, "10"], ["Desenvolvimento", 3, "10"], ["Tríceps corda", 4, "12"]]],
+      ["B — Costas/Bíceps", [["Puxada aberta", 4, "10"], ["Remada curvada", 4, "10"], ["Rosca direta", 4, "12"]]],
+      ["C — Pernas/Core", [["Agachamento livre", 4, "10"], ["Leg press", 4, "12"], ["Levantamento terra", 3, "8"], ["Prancha", 3, "40s"]]],
+    ] },
+    inferior: { nome: "Foco em pernas e glúteo (AB)", fichas: [
+      ["A — Quadríceps", [["Agachamento livre", 4, "10"], ["Leg press", 4, "12"], ["Prancha", 3, "40s"]]],
+      ["B — Posterior/Glúteo", [["Levantamento terra", 4, "8"], ["Leg press", 3, "15"], ["Prancha", 3, "40s"]]],
+    ] },
+    funcional: { nome: "Funcional / condicionamento", fichas: [
+      ["Circuito — 3 voltas", [["Agachamento livre", 3, "15"], ["Prancha", 3, "45s"], ["Remada curvada", 3, "15"], ["Desenvolvimento", 3, "12"]]],
+    ] },
+  };
+  (function () {
+    var sel = $("tplSel");
+    Object.keys(TEMPLATES_FICHA).forEach(function (k) {
+      var o = document.createElement("option");
+      o.value = k; o.textContent = "📚 " + TEMPLATES_FICHA[k].nome;
+      sel.appendChild(o);
+    });
+  })();
+  function exercicioPorNome(st, nome) {
+    var ex = (st.exercicios || []).find(function (e) { return e.nome.toLowerCase() === nome.toLowerCase(); });
+    if (!ex) { ex = { id: S.uid(), nome: nome, grupo: "", video: "", descricao: "" }; st.exercicios.push(ex); }
+    return ex;
+  }
+  $("tplAplicar").addEventListener("click", function () {
+    var alunoId = $("tAluno").value, tpl = TEMPLATES_FICHA[$("tplSel").value];
+    if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
+    if (!tpl) { alert("Escolha uma ficha pronta na lista."); return; }
+    var st = load();
+    var t = treinoDe(st, alunoId);
+    if (t.fichas.length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Adicionar o template " + tpl.nome + " por cima?")) return;
+    tpl.fichas.forEach(function (f) {
+      t.fichas.push({ id: S.uid(), titulo: f[0], itens: f[1].map(function (it) {
+        return { exId: exercicioPorNome(st, it[0]).id, series: it[1], reps: it[2], obs: "" };
+      }) });
+    });
+    S.write("ptStudio", st);
+    renderFichas();
+    renderBiblioteca();
+    alert("⚡ " + tpl.fichas.length + " ficha(s) criadas! Ajuste séries/cargas e publique o app do aluno.");
+  });
+  window.__templates = TEMPLATES_FICHA; // testes
   $("fichasBox").addEventListener("click", function (e) {
     var add = e.target.getAttribute && e.target.getAttribute("data-additem");
     var rmF = e.target.getAttribute && e.target.getAttribute("data-rmficha");
@@ -1483,6 +1538,12 @@
       "if(max>0&&kg>max){if(navigator.vibrate)navigator.vibrate([120,60,220]);" +
       "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
       "t.innerHTML='\ud83c\udf89 NOVO RECORDE!<br><small>'+ex+': '+kg+' kg</small>';document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}" +
+      // progress\u00e3o sugerida (estilo Hevy): 3 registros seguidos na MESMA carga \u2192 hora de subir
+      "else{var ult3=l.slice(-3);if(ult3.length===3&&ult3.every(function(x){return +x.kg===kg;})){" +
+      "var sug=kg<20?1:2.5;var t2=document.createElement('div');" +
+      "t2.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#0891b2,#22d3ee);color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
+      "t2.innerHTML='\ud83d\udcc8 3 treinos em '+kg+' kg!<br><small>Bora tentar '+String(kg+sug).replace('.',',')+' kg no pr\u00f3ximo? \ud83d\udcaa</small>';" +
+      "document.body.appendChild(t2);setTimeout(function(){t2.remove();},4500);window.__sugestaoProg=kg+sug;}}" +
       "document.getElementById('dcKg').value='';pintaDC();});pintaDC();" +
       "(function(){var el=document.getElementById('evoBox');if(!AVS.length){el.innerHTML=\"<div class='vz'>Suas avaliações físicas aparecem aqui quando o personal registrar. 📏</div>\";return;}" +
       "function linha(rot,campo,inv){var com=AVS.filter(function(v){return v[campo]!=null;});if(com.length<1)return '';" +

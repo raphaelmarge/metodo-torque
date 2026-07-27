@@ -353,6 +353,34 @@
         pct: Math.min(100, Math.round(somaMes * 100 / +app.desafioMeta)) };
     }
 
+    // desafio PESSOAL do mês (Crescimento → 🏆 Desafio do mês): progresso individual + medalha
+    var stDesaf = S.read("desafios", { itens: [] });
+    var desafioP = null;
+    (stDesaf.itens || []).forEach(function (d) { if (d.mes === mes) desafioP = d; });
+    if (desafioP) {
+      desafioP = { titulo: desafioP.titulo, medalha: desafioP.medalha || "🏆", meta: +desafioP.meta,
+        atual: Math.min(sessoesMes, +desafioP.meta), pct: Math.min(100, Math.round(sessoesMes * 100 / +desafioP.meta)) };
+    }
+
+    // retrospectiva do ano (Spotify Wrapped da academia)
+    var anoAtual = hoje.slice(0, 4);
+    var ckAno = (a.checkins || []).filter(function (t) { return (t || "").slice(0, 4) === anoAtual; });
+    var retro = null;
+    if (ckAno.length >= 5) {
+      var rPorMes = {}, rPorDia = [0, 0, 0, 0, 0, 0, 0], rPorHora = {};
+      ckAno.forEach(function (t) {
+        rPorMes[t.slice(5, 7)] = (rPorMes[t.slice(5, 7)] || 0) + 1;
+        var dt = new Date(t);
+        if (!isNaN(dt)) { rPorDia[dt.getDay()]++; rPorHora[dt.getHours()] = (rPorHora[dt.getHours()] || 0) + 1; }
+      });
+      var rTopMes = Object.keys(rPorMes).sort(function (x, y) { return rPorMes[y] - rPorMes[x]; })[0];
+      var rTopHora = Object.keys(rPorHora).sort(function (x, y) { return rPorHora[y] - rPorHora[x]; })[0];
+      var MESES_N = ["", "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+      retro = { ano: anoAtual, total: ckAno.length,
+        mesTop: MESES_N[+rTopMes] || "", diaTop: ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][rPorDia.indexOf(Math.max.apply(null, rPorDia))] || "",
+        horaTop: rTopHora != null ? rTopHora + "h" : "", medalhas: conquistadas.length };
+    }
+
     // lotação por aula|dia (próximos 7 dias) para a lista de espera
     var presGrade = stGrade.presencas || {};
     var lot = {};
@@ -526,6 +554,15 @@
         "<span><b>" + desafio.pct + "%</b></span></div>" +
         (desafio.pct >= 100 ? "<div style='font-weight:800;color:#16a34a;margin-top:6px;'>🎉 META BATIDA! Parabéns, comunidade!</div>" : "") +
         "</div>" : "") +
+      (desafioP ? "<div class='secTit'>Meu desafio " + desafioP.medalha + "</div>" +
+        "<div class='cardx'><b style='font-size:15px;'>" + esc(desafioP.titulo) + "</b>" +
+        "<div class='dsf-barra'><div class='dsf-fill' style='width:" + desafioP.pct + "%'></div></div>" +
+        "<div style='display:flex;justify-content:space-between;font-size:12.5px;color:var(--txt2);'>" +
+        "<span><b style='color:var(--cor)'>" + desafioP.atual + "</b> de " + desafioP.meta + " treinos SEUS</span><span><b>" + desafioP.pct + "%</b></span></div>" +
+        (desafioP.pct >= 100 ? "<div style='font-weight:800;color:#16a34a;margin-top:6px;'>" + desafioP.medalha + " DESAFIO COMPLETO! Você é outro nível.</div>"
+          : "<div style='font-size:12px;color:var(--txt2);margin-top:4px;'>Complete e ganhe a medalha " + desafioP.medalha + "</div>") +
+        "<button class='btnx' id='btnCardDesafio' style='display:block;width:100%;text-align:center;margin-top:8px;border:none;cursor:pointer;font-family:inherit;'>📸 Gerar card pro Stories</button>" +
+        "</div>" : "") +
       "<div class='secTit'>Minha evolução</div>" +
       "<div class='cardx'>" +
       "<div class='gamerow'><div class='gnum'>" + sessoesMes + "<span>treinos no mês</span></div>" +
@@ -687,6 +724,12 @@
       (emDia ? "<div class='vz' style='padding:22px 0;font-size:15px;'>🧘<br><br><strong>Pode relaxar!</strong><br>Você não possui pendências.</div>"
         : atrasados.map(function (r) { return kv("Vencida em " + S.fmtData(r.vencimento), "R$ " + (+r.valor).toLocaleString("pt-BR")); }).join("") +
         "<div class='vz'>Regularize na recepção ou pelo WhatsApp. 💜</div>") + "</div></details>" +
+      (retro ? "<details id='dRetro'><summary><span class='ic'>🎁</span>Minha retrospectiva " + retro.ano + "</summary><div class='dcorpo'>" +
+        kv("Treinos no ano", retro.total) + kv("Mês mais forte", retro.mesTop) +
+        kv("Dia favorito", retro.diaTop) + kv("Horário favorito", retro.horaTop) +
+        kv("Medalhas conquistadas", retro.medalhas) +
+        "<button class='btnx' id='btnCardRetro' style='display:block;width:100%;text-align:center;margin-top:8px;border:none;cursor:pointer;font-family:inherit;'>📸 Gerar card pro Stories</button>" +
+        "</div></details>" : "") +
       (temNuvem ? "<details id='dLogin'><summary><span class='ic'>🔑</span>Meu login e senha</summary><div class='dcorpo'>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para entrar no seu app de QUALQUER aparelho (página Entrar do aluno no site da academia).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;padding:12px;border-radius:10px;border:1px solid var(--linha2,#322e3d);background:transparent;color:inherit;font-family:inherit;'>" +
@@ -717,8 +760,26 @@
       (urlMatricula ? "var bi=document.getElementById('btnIndica');if(bi)bi.addEventListener('click',function(){window.open(" +
         JSON.stringify("https://wa.me/?text=" + encodeURIComponent("Bora treinar comigo na " + nomeAcad + "? 💪 Matrícula por aqui (fala que fui eu que indiquei!): " + urlMatricula)) +
         ",'_blank');});" : "") +
+      "var ACADN=" + JSON.stringify(nomeAcad) + ",NOMECARD=" + JSON.stringify(a.nome) +
+      ",CARDD=" + JSON.stringify(desafioP ? { t: desafioP.titulo, l: [desafioP.atual + " de " + desafioP.meta + " treinos", desafioP.pct + "% do desafio", desafioP.pct >= 100 ? desafioP.medalha + " COMPLETO!" : "rumo à medalha " + desafioP.medalha] } : null) +
+      ",CARDR=" + JSON.stringify(retro ? { t: "Meu " + retro.ano + " na academia", l: [retro.total + " treinos no ano", "mês mais forte: " + retro.mesTop, "dia favorito: " + retro.diaTop, retro.medalhas + " medalha(s)"] } : null) + ";" +
       "var bs=document.getElementById('btnShare');if(bs)bs.addEventListener('click',function(){var t=bs.getAttribute('data-share')||'';" +
       "if(navigator.share){navigator.share({text:t}).catch(function(){});}else{window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');}});" +
+      // card de conquista pro Stories (canvas 1080×1080, estilo Strava)
+      "function cardImg(dd){var c=document.createElement('canvas');c.width=1080;c.height=1080;var g=c.getContext('2d');" +
+      "var gr=g.createLinearGradient(0,0,1080,1080);gr.addColorStop(0,'#1c1826');gr.addColorStop(1,'#4c1d95');g.fillStyle=gr;g.fillRect(0,0,1080,1080);" +
+      "g.fillStyle='#a78bfa';g.font='700 42px Archivo,system-ui,sans-serif';g.textAlign='center';g.fillText(ACADN.toUpperCase().slice(0,30),540,150);" +
+      "g.fillStyle='#fff';g.font='800 72px Archivo,system-ui,sans-serif';" +
+      "var tit=dd.t;if(tit.length>22){var mid=tit.lastIndexOf(' ',22);if(mid<8)mid=22;g.fillText(tit.slice(0,mid),540,320);g.fillText(tit.slice(mid+1,mid+24),540,410);}else{g.fillText(tit,540,360);}" +
+      "g.font='600 52px Archivo,system-ui,sans-serif';g.fillStyle='#e9d5ff';" +
+      "dd.l.forEach(function(li,i){g.fillText(li.slice(0,34),540,560+i*95);});" +
+      "g.fillStyle='#a78bfa';g.font='700 34px Archivo,system-ui,sans-serif';g.fillText('💜 '+NOMECARD.split(' ')[0]+' · TORQUESYS',540,990);" +
+      "c.toBlob(function(bl){var f=new File([bl],'conquista.png',{type:'image/png'});" +
+      "if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});}" +
+      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='conquista.png';a2.click();}});}" +
+      "var bcd=document.getElementById('btnCardDesafio');if(bcd&&CARDD)bcd.addEventListener('click',function(){cardImg(CARDD);});" +
+      "var bcr=document.getElementById('btnCardRetro');if(bcr&&CARDR)bcr.addEventListener('click',function(){cardImg(CARDR);});" +
+      "window.__cardImg=cardImg;" +
       "var fc=document.querySelector('[data-convidar]');if(fc)fc.addEventListener('click',function(){window.open('https://wa.me/?text=" + encodeURIComponent(convite).replace(/'/g, "%27") + "','_blank');});" +
       "document.querySelectorAll('#pgWod .wodtabs button').forEach(function(b,i){b.addEventListener('click',function(){" +
       "document.querySelectorAll('#pgWod .wodtabs button').forEach(function(x){x.classList.toggle('on',x===b);});" +
@@ -812,9 +873,16 @@
         "var pd=g.data?String(g.data).split('-'):[];var dd=pd.length===3?pd[2]+'/'+pd[1]:g.data;" +
         "var pode=true;if(REGRAS.ch>0&&g.status!=='espera'){var auC=AULAS.filter(function(x){return x.n===g.aula;})[0];" +
         "var dtC=new Date(g.data+'T'+((auC&&auC.i)||'23:59'));if(dtC-Date.now()<REGRAS.ch*3600000)pode=false;}" +
+        "var passou=g.data&&g.data<new Date().toISOString().slice(0,10);" +
         "return \"<div class='aula'><div class='l1'><span>\"+g.aula+\"</span><span class='vg'>\"+dd+\"</span></div><div class='sub'>\"+st2+\"</div>\"+" +
-        "(g.status!=='cancelado'?\"<div style='margin-top:8px;text-align:right;'><button class='btnx' style='background:#0369a1;padding:7px 12px;font-size:12.5px;margin-right:6px' data-ics='\"+g.aula+'|'+g.data+\"' title='Adicionar ao calendário'>📆</button>\"+" +
-        "(pode?\"<button class='btnx' style='background:#57534e;padding:7px 16px;font-size:12.5px' data-cx='\"+g.id+\"'>Cancelar</button>\":\"<span style='font-size:11.5px;color:var(--txt2)'>🔒 cancele com a recepção (até \"+REGRAS.ch+\"h antes)</span>\")+\"</div>\":'')+\"</div>\";}).join('');});};" +
+        "(g.status!=='cancelado'&&!passou?\"<div style='margin-top:8px;text-align:right;'><button class='btnx' style='background:#0369a1;padding:7px 12px;font-size:12.5px;margin-right:6px' data-ics='\"+g.aula+'|'+g.data+\"' title='Adicionar ao calendário'>📆</button>\"+" +
+        "(pode?\"<button class='btnx' style='background:#57534e;padding:7px 16px;font-size:12.5px' data-cx='\"+g.id+\"'>Cancelar</button>\":\"<span style='font-size:11.5px;color:var(--txt2)'>🔒 cancele com a recepção (até \"+REGRAS.ch+\"h antes)</span>\")+\"</div>\":'')+" +
+        "(passou&&g.status!=='cancelado'&&g.status!=='espera'?\"<div data-ava='\"+g.aula+'|'+g.data+\"' style='margin-top:6px;font-size:13px;color:var(--txt2);'>Como foi? \"+[1,2,3,4,5].map(function(n){return \"<button class='star' data-n='\"+n+\"' style='background:none;border:none;font-size:20px;cursor:pointer;padding:2px;'>☆</button>\";}).join('')+\"</div>\":'')+\"</div>\";}).join('');});};" +
+        // ⭐ avaliação da aula (vai pro relatório de satisfação da academia)
+        "document.getElementById('minhaLista').addEventListener('click',function(e){var s=e.target.closest('.star');if(!s)return;" +
+        "var w=s.closest('[data-ava]');var pa=w.getAttribute('data-ava').split('|');var n=+s.dataset.n;w.textContent='Enviando…';" +
+        "rpc('app_aluno_avalia',{t:TOKEN,p_aula:pa[0],p_data:pa[1],p_nota:n,p_texto:'',p_nome:NOME}).then(function(r){" +
+        "w.textContent=(r&&r.ok)?'Valeu! '+'⭐'.repeat(n):'Não deu agora — tenta de novo.';});});" +
         // Timeline social: pinta curtidas/comentários e reage
         "function carregaReacoes(){rpc('app_aluno_reacoes',{t:TOKEN}).then(function(l){if(!Array.isArray(l))return;" +
         "document.querySelectorAll('.pacts').forEach(function(w){var pid=w.dataset.post;" +
