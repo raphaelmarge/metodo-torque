@@ -37,9 +37,14 @@ function ok(cond, nome) {
   const titulo = await p.evaluate(() => document.getElementById("tituloStudio").textContent);
   ok(/Nutri Ana Costa/.test(titulo), "título vira o nome do consultório");
 
-  // banco de alimentos semeado
-  const alimentos = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ntStudio")).alimentos.length);
-  ok(alimentos >= 20, "banco de alimentos vem semeado (" + alimentos + " itens)");
+  // banco de alimentos gigante (catálogo)
+  const catalogo = await p.evaluate(() => (window.MT_ALIMENTOS || []).length);
+  ok(catalogo >= 300, "catálogo gigante de alimentos carregado (" + catalogo + " itens)");
+  const temCategorias = await p.evaluate(() => {
+    const cats = new Set((window.MT_ALIMENTOS || []).map((a) => a.c));
+    return cats.has("Fast food") && cats.has("Snacks e industrializados") && cats.has("Suplementos") && cats.size >= 12;
+  });
+  ok(temCategorias, "catálogo cobre processados, fast food e suplementos (12+ categorias)");
 
   // paciente novo (M, 30 anos, 80 kg, 180 cm, sedentário, manter → TMB 1780, alvo 2140)
   await p.fill("#pNome", "Bruno Paciente");
@@ -105,16 +110,38 @@ function ok(cond, nome) {
     const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
     return st.dietas[st.pacientes[0].id].refeicoes.find((r) => r.titulo === "Ceia").id;
   });
-  await p.evaluate((id) => {
-    const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
-    const ovo = st.alimentos.find((a) => a.nome === "Ovo cozido");
-    document.querySelector('[data-alsel="' + id + '"]').value = ovo.id;
-  }, ceiaId);
+  await p.fill('[data-alsel="' + ceiaId + '"]', "Ovo cozido");
   await p.fill('[data-alqtd="' + ceiaId + '"]', "2");
   await p.click('[data-additem="' + ceiaId + '"]');
   await p.waitForTimeout(200);
   const comOvo = await p.evaluate(() => document.getElementById("refeicoesBox").textContent);
-  ok(/Ovo cozido/.test(comOvo) && /140 kcal/.test(comOvo), "item na refeição com kcal calculada (2 ovos = 140)");
+  ok(/Ovo cozido/.test(comOvo) && /140 kcal/.test(comOvo), "busca no catálogo adiciona item com kcal (2 ovos = 140)");
+
+  // curadoria: desativa "Big Mac (tipo)" e a categoria Fast food
+  const antesCur = await p.evaluate(() => document.getElementById("dlAlimentos").innerHTML.includes("Big Mac"));
+  ok(antesCur, "catálogo entra na busca das dietas (Big Mac disponível)");
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+    (window.MT_ALIMENTOS || []).forEach((a) => { if (a.c === "Fast food") st.catalogoOff[a.n] = 1; });
+    localStorage.setItem("mtapp:ntStudio", JSON.stringify(st));
+  });
+  await p.selectOption("#dAluno", { index: 1 });
+  await p.waitForTimeout(200);
+  const depoisCur = await p.evaluate(() => document.getElementById("dlAlimentos").innerHTML.includes("Big Mac"));
+  ok(!depoisCur, "curadoria: categoria Fast food desativada some da busca");
+
+  // código de barras (Open Food Facts mockado)
+  await p.route("**/world.openfoodfacts.org/**", (r) => r.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ status: 1, product: { product_name_pt: "Biscoito Recheado Sabor Chocolate", brands: "MarcaX", nutriments: { "energy-kcal_100g": 480, proteins_100g: 5.2 } } }),
+  }));
+  await p.evaluate(() => window.__buscaOFF("7891000100103"));
+  await p.waitForTimeout(400);
+  const doCodigo = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+    return st.alimentos.find((a) => a.codigo === "7891000100103");
+  });
+  ok(!!doCodigo && doCodigo.kcal === 480 && /MarcaX/.test(doCodigo.nome), "código de barras traz o produto do Open Food Facts (480 kcal/100g)");
 
   // app do paciente
   const appHtml = await p.evaluate(() => {
@@ -147,6 +174,26 @@ function ok(cond, nome) {
   ok(/1 de 6/.test(prog), "refeição marcada conta no progresso (1 de 6)");
   const kcalDia = await pApp.evaluate(() => document.getElementById("kcalDia").textContent);
   ok(/^[1-9]\d* kcal/.test(kcalDia), "kcal do dia soma a refeição feita (" + kcalDia + ")");
+  // 🍎 diário alimentar: registra uma banana e o total cresce
+  const dbApp = await pApp.evaluate(() => window.ALDB.length);
+  ok(dbApp >= 250, "banco embutido no app pra busca offline (" + dbApp + " alimentos)");
+  await pApp.fill("#diBusca", "Banana prata");
+  await pApp.fill("#diQtd", "2");
+  await pApp.click("#diAdd");
+  await pApp.waitForTimeout(200);
+  const diario = await pApp.evaluate(() => ({
+    lista: document.getElementById("diLista").textContent,
+    kcalDiario: document.getElementById("kcalDiario").textContent,
+    total: document.getElementById("kcalDia").textContent,
+    ref: document.getElementById("kcalRef").textContent,
+  }));
+  ok(/Banana prata/.test(diario.lista) && /128 kcal/.test(diario.kcalDiario), "diário registra 2 bananas (128 kcal)");
+  ok(parseInt(diario.total) === parseInt(diario.ref) + 128, "total do dia = refeições feitas + diário");
+  // remove do diário
+  await pApp.evaluate(() => document.querySelector("[data-dirm]").click());
+  const dep = await pApp.evaluate(() => document.getElementById("kcalDiario").textContent);
+  ok(/^0 kcal/.test(dep), "item removido do diário zera a soma");
+  ok(/código de barras/i.test(await pApp.evaluate(() => document.body.textContent)), "app tem o botão de código de barras");
   const prox = await pApp.evaluate(() => document.getElementById("proxRef").textContent);
   ok(prox.length > 3, "próxima refeição calculada (" + prox.slice(0, 40) + ")");
   await pApp.fill("#pzKg", "79,5");
