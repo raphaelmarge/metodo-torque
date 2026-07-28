@@ -106,13 +106,34 @@
       </div>
       <div id="refeicoesBox" class="muted">Escolha o paciente e monte (ou gere) a dieta.</div>
       <div id="dTotais" style="margin-top: 10px; font-size: 13.5px; font-weight: 700;"></div>
+      <datalist id="dlAlimentos"></datalist>
     </div>
   </div>
 
   <div id="vAlimentos" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>🥗 Banco de alimentos</h2>
-      <p class="muted" style="font-size: 13px;">Já vem com os básicos (kcal e proteína por porção). Adicione os seus — eles aparecem na montagem das dietas.</p>
+      <h2>🥗 Banco de alimentos (curadoria)</h2>
+      <p class="muted" style="font-size: 13px;">Banco brasileiro com centenas de itens — do arroz ao fast food e industrializados. <b>Desmarque o que você NÃO quer</b> que apareça nas dietas e no app dos pacientes; marque de volta quando quiser.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+        <input id="alBusca" placeholder="🔍 Buscar alimento…" style="flex: 2; min-width: 180px;">
+        <select id="alCat" style="min-width: 180px;"><option value="">Todas as categorias</option></select>
+        <button class="btn sec mini" id="alCatOn">✓ Ativar categoria</button>
+        <button class="btn sec mini" id="alCatOff">✕ Desativar categoria</button>
+      </div>
+      <div id="alResumo" class="muted" style="font-size: 12.5px; margin-top: 8px;"></div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>📷 Código de barras (Open Food Facts)</h2>
+      <p class="muted" style="font-size: 13px;">Digite o código de barras de um produto (ou escaneie, em celulares compatíveis) — buscamos no maior banco aberto do mundo e ele entra nos seus alimentos com as kcal do rótulo. Requer internet.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+        <input id="cbCodigo" inputmode="numeric" placeholder="ex.: 7891000100103" style="width: 200px;">
+        <button class="btn verde" id="cbBuscar">🔍 Buscar produto</button>
+        <button class="btn sec" id="cbCamera" hidden>📷 Escanear com a câmera</button>
+        <span id="cbStatus" class="muted" style="font-size: 13px;"></span>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>➕ Alimento próprio</h2>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
         <input id="alNome" placeholder="Alimento" style="flex: 2; min-width: 150px;">
         <input id="alPorcao" placeholder="Porção (ex.: 100 g)" style="width: 130px;">
@@ -138,6 +159,7 @@
 
 <script src="assets/access-config.js"></script>
 <script src="assets/cloud-config.js"></script>
+<script src="assets/alimentos-db.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="apps/store.js"></script>
 <script>
@@ -148,27 +170,35 @@
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
   // ---------- store ----------
+  var CATALOGO = self.MT_ALIMENTOS || []; // banco gigante (assets/alimentos-db.js)
   function load() {
-    var st = S.read("ntStudio", { config: {}, pacientes: [], dietas: {}, alimentos: [] });
-    st.config = st.config || {}; st.pacientes = st.pacientes || []; st.dietas = st.dietas || {}; st.alimentos = st.alimentos || [];
-    if (!st.alimentos.length && !st._alSeed) {
-      st._alSeed = 1;
-      [["Arroz branco cozido", "100 g", 130, 2.5], ["Arroz integral cozido", "100 g", 124, 2.6], ["Feijão cozido", "1 concha (80 g)", 76, 4.8],
-       ["Peito de frango grelhado", "100 g", 165, 31], ["Carne magra (patinho)", "100 g", 190, 27], ["Tilápia grelhada", "100 g", 96, 20],
-       ["Ovo cozido", "1 unidade", 70, 6], ["Batata-doce cozida", "100 g", 86, 1.6], ["Aveia em flocos", "30 g", 117, 4],
-       ["Banana", "1 unidade", 90, 1.1], ["Maçã", "1 unidade", 60, 0.3], ["Mamão", "150 g", 60, 0.7],
-       ["Pão integral", "1 fatia", 70, 3], ["Tapioca", "50 g", 170, 0], ["Leite desnatado", "200 ml", 70, 6.8],
-       ["Iogurte natural", "1 pote (170 g)", 90, 6], ["Queijo minas", "30 g", 80, 5], ["Requeijão light", "1 c. sopa", 35, 1.5],
-       ["Salada de folhas", "à vontade", 15, 1], ["Brócolis cozido", "100 g", 35, 2.8], ["Azeite de oliva", "1 c. sopa", 90, 0],
-       ["Castanhas", "20 g", 130, 3], ["Whey protein", "1 dose (30 g)", 120, 24], ["Café sem açúcar", "1 xícara", 2, 0]
-      ].forEach(function (a) { st.alimentos.push({ id: S.uid(), nome: a[0], porcao: a[1], kcal: a[2], prot: a[3] }); });
-      S.write("ntStudio", st);
-    }
+    var st = S.read("ntStudio", { config: {}, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {} });
+    st.config = st.config || {}; st.pacientes = st.pacientes || []; st.dietas = st.dietas || {};
+    st.alimentos = st.alimentos || []; st.catalogoOff = st.catalogoOff || {};
     return st;
   }
   function save(st) { S.write("ntStudio", st); render(); }
-  function alimPorId(st, id) { return st.alimentos.find(function (a) { return a.id === id; }); }
-  function alimPorNome(st, nome) { return st.alimentos.find(function (a) { return a.nome.toLowerCase() === nome.toLowerCase(); }); }
+  // catálogo ativo (curadoria do nutricionista) + alimentos próprios
+  function alimentosAtivos(st) {
+    return CATALOGO.filter(function (a) { return !st.catalogoOff[a.n]; })
+      .map(function (a) { return { id: "cat:" + a.n, nome: a.n, porcao: a.p, kcal: a.k, prot: a.pt, cat: a.c }; })
+      .concat(st.alimentos.map(function (a) { return { id: a.id, nome: a.nome, porcao: a.porcao, kcal: a.kcal, prot: a.prot, cat: "Meus alimentos", custom: true }; }));
+  }
+  function alimPorId(st, id) {
+    if (String(id).indexOf("cat:") === 0) {
+      var nome = String(id).slice(4);
+      var c = CATALOGO.find(function (a) { return a.n === nome; });
+      return c ? { id: id, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt } : null;
+    }
+    return st.alimentos.find(function (a) { return a.id === id; });
+  }
+  function alimPorNome(st, nome) {
+    var lower = String(nome).toLowerCase();
+    var c = CATALOGO.find(function (a) { return a.n.toLowerCase() === lower; });
+    if (c) return { id: "cat:" + c.n, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt };
+    var m = st.alimentos.find(function (a) { return a.nome.toLowerCase() === lower; });
+    return m ? { id: m.id, nome: m.nome, porcao: m.porcao, kcal: m.kcal, prot: m.prot } : null;
+  }
   function dietaDe(st, pid) {
     st.dietas[pid] = st.dietas[pid] || { aguaMl: 2000, refeicoes: [] };
     return st.dietas[pid];
@@ -188,10 +218,10 @@
 
   // ---------- dieta automática (motor de regras + banco de alimentos) ----------
   var REF_MODELOS = [
-    { hora: "07:00", titulo: "Café da manhã", pct: 20, itens: [["Ovo cozido", 2], ["Pão integral", 2], ["Mamão", 1], ["Café sem açúcar", 1]] },
-    { hora: "10:00", titulo: "Lanche da manhã", pct: 10, itens: [["Banana", 1], ["Castanhas", 1]] },
-    { hora: "12:30", titulo: "Almoço", pct: 30, itens: [["Arroz branco cozido", 1], ["Feijão cozido", 1], ["Peito de frango grelhado", 1], ["Salada de folhas", 1], ["Azeite de oliva", 1]] },
-    { hora: "16:00", titulo: "Lanche da tarde", pct: 15, itens: [["Iogurte natural", 1], ["Aveia em flocos", 1], ["Maçã", 1]] },
+    { hora: "07:00", titulo: "Café da manhã", pct: 20, itens: [["Ovo cozido", 2], ["Pão de forma integral", 2], ["Mamão papaia", 1], ["Café sem açúcar", 1]] },
+    { hora: "10:00", titulo: "Lanche da manhã", pct: 10, itens: [["Banana prata", 1], ["Mix de castanhas", 1]] },
+    { hora: "12:30", titulo: "Almoço", pct: 30, itens: [["Arroz branco cozido", 1], ["Feijão carioca cozido", 1], ["Peito de frango grelhado", 1], ["Salada de folhas (alface/rúcula)", 1], ["Azeite de oliva", 1]] },
+    { hora: "16:00", titulo: "Lanche da tarde", pct: 15, itens: [["Iogurte natural integral", 1], ["Aveia em flocos", 1], ["Maçã", 1]] },
     { hora: "19:30", titulo: "Jantar", pct: 25, itens: [["Batata-doce cozida", 1], ["Tilápia grelhada", 1], ["Brócolis cozido", 1], ["Azeite de oliva", 1]] },
   ];
   function gerarDieta(st, p) {
@@ -322,7 +352,10 @@
       (p.restricoes ? ' · <span class="tagn ambar">⚠ ' + esc(p.restricoes) + "</span>" : "") +
       (dieta.geradaAuto ? ' · <span class="tagn">🤖 gerada automática em ' + S.fmtData(dieta.geradaEm) + " — revise!</span>" : "");
     if (document.activeElement !== $("dAgua")) $("dAgua").value = dieta.aguaMl || Math.round(p.peso * 35 / 50) * 50;
-    var opts = st.alimentos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + " (" + esc(a.porcao) + " · " + a.kcal + " kcal)</option>"; }).join("");
+    // datalist única com o catálogo curado + alimentos próprios (busca digitando)
+    $("dlAlimentos").innerHTML = alimentosAtivos(st).map(function (a) {
+      return '<option value="' + esc(a.nome) + '">' + esc(a.porcao) + " · " + a.kcal + " kcal</option>";
+    }).join("");
     $("refeicoesBox").innerHTML = (dieta.refeicoes || []).length ? dieta.refeicoes.map(function (r) {
       var kcalRef = 0;
       var itensHtml = (r.itens || []).map(function (it, i) {
@@ -337,7 +370,7 @@
         "<b>⏰ " + esc(r.hora) + " — " + esc(r.titulo) + '</b><span style="font-weight:800;color:var(--verde-2);">' + kcalRef + " kcal</span>" +
         '<button class="btn sec mini" data-rmref="' + r.id + '">✕ refeição</button></div>' + itensHtml +
         '<div class="linha-flex" style="gap:8px;margin-top:8px;flex-wrap:wrap;">' +
-        '<select data-alsel="' + r.id + '" style="flex:2;min-width:180px;">' + opts + "</select>" +
+        '<input data-alsel="' + r.id + '" list="dlAlimentos" placeholder="🔍 Digite pra buscar no banco (' + alimentosAtivos(st).length + ' alimentos)…" style="flex:2;min-width:200px;">' +
         '<input data-alqtd="' + r.id + '" type="number" min="0.5" step="0.5" value="1" style="width:80px;" title="Quantidade de porções">' +
         '<button class="btn mini verde" data-additem="' + r.id + '">+ Adicionar</button></div></div>';
     }).join("") : '<div class="muted">Sem refeições ainda — gere a dieta automática ou adicione refeições acima.</div>';
@@ -387,8 +420,10 @@
     if (add) {
       var sel = document.querySelector('[data-alsel="' + add + '"]');
       var qtd = +document.querySelector('[data-alqtd="' + add + '"]').value || 1;
+      var achado = alimPorNome(st, sel.value.trim());
+      if (!achado) { alert("Escolha um alimento da lista (digite e selecione uma das sugestões)."); return; }
       var r = dieta.refeicoes.find(function (x) { return x.id === add; });
-      if (r && sel.value) r.itens.push({ alimId: sel.value, qtd: qtd });
+      if (r) r.itens.push({ alimId: achado.id, qtd: qtd });
     }
     if (rmR && confirm("Remover esta refeição?")) dieta.refeicoes = dieta.refeicoes.filter(function (x) { return x.id !== rmR; });
     if (rmI) {
@@ -417,14 +452,123 @@
     window.open("https://wa.me/" + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(linhas.join("\n")), "_blank");
   });
 
-  // ---------- alimentos ----------
+  // ---------- alimentos (catálogo + curadoria + próprios) ----------
+  (function () {
+    var cats = [];
+    CATALOGO.forEach(function (a) { if (cats.indexOf(a.c) === -1) cats.push(a.c); });
+    $("alCat").innerHTML = '<option value="">Todas as categorias</option>' +
+      cats.map(function (c) { return '<option>' + esc(c) + "</option>"; }).join("") +
+      "<option>Meus alimentos</option>";
+  })();
   function renderAlimentos() {
     var st = load();
-    $("alLista").innerHTML = st.alimentos.map(function (a) {
-      return '<div class="linha-nt"><b>' + esc(a.nome) + '</b><span class="muted">' + esc(a.porcao) + "</span>" +
-        '<span style="margin-left:auto;">' + a.kcal + " kcal · " + (a.prot || 0) + " g prot</span>" +
-        '<button class="btn sec mini" data-alrm="' + a.id + '">✕</button></div>';
-    }).join("");
+    var busca = ($("alBusca").value || "").toLowerCase();
+    var cat = $("alCat").value;
+    var ativosN = CATALOGO.filter(function (a) { return !st.catalogoOff[a.n]; }).length;
+    $("alResumo").textContent = CATALOGO.length + " alimentos no catálogo (" + ativosN + " ativos) + " + st.alimentos.length + " seus.";
+    var doCatalogo = CATALOGO.filter(function (a) {
+      if (cat && cat !== "Meus alimentos" && a.c !== cat) return false;
+      if (cat === "Meus alimentos") return false;
+      if (busca && a.n.toLowerCase().indexOf(busca) === -1) return false;
+      return true;
+    }).slice(0, 80);
+    var proprios = (cat && cat !== "Meus alimentos") ? [] : st.alimentos.filter(function (a) {
+      return !busca || a.nome.toLowerCase().indexOf(busca) !== -1;
+    });
+    $("alLista").innerHTML =
+      proprios.map(function (a) {
+        return '<div class="linha-nt"><span class="tagn roxa">meu</span><b>' + esc(a.nome) + '</b><span class="muted">' + esc(a.porcao) + "</span>" +
+          '<span style="margin-left:auto;">' + a.kcal + " kcal · " + (a.prot || 0) + " g prot</span>" +
+          '<button class="btn sec mini" data-alrm="' + a.id + '">✕</button></div>';
+      }).join("") +
+      doCatalogo.map(function (a) {
+        var off = !!st.catalogoOff[a.n];
+        return '<div class="linha-nt"' + (off ? ' style="opacity:.45;"' : "") + '><label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;">' +
+          '<input type="checkbox" data-altg="' + esc(a.n) + '" ' + (off ? "" : "checked") + ' style="width:17px;height:17px;">' +
+          "<b>" + esc(a.n) + "</b></label>" +
+          '<span class="muted" style="font-size:12px;">' + esc(a.c) + " · " + esc(a.p) + "</span>" +
+          '<span style="margin-left:auto;">' + a.k + " kcal · " + (a.pt || 0) + " g prot</span></div>";
+      }).join("") +
+      (doCatalogo.length === 80 ? '<div class="muted" style="padding:8px 0;">Mostrando 80 — refine a busca pra ver o resto. 🔍</div>' : "");
+  }
+  $("alBusca").addEventListener("input", renderAlimentos);
+  $("alCat").addEventListener("change", renderAlimentos);
+  $("alCatOn").addEventListener("click", function () { mudaCategoria(false); });
+  $("alCatOff").addEventListener("click", function () { mudaCategoria(true); });
+  function mudaCategoria(desativa) {
+    var cat = $("alCat").value;
+    if (!cat || cat === "Meus alimentos") { alert("Escolha uma categoria do catálogo primeiro."); return; }
+    var st = load();
+    CATALOGO.forEach(function (a) {
+      if (a.c === cat) {
+        if (desativa) st.catalogoOff[a.n] = 1; else delete st.catalogoOff[a.n];
+      }
+    });
+    S.write("ntStudio", st);
+    renderAlimentos();
+  }
+  $("alLista").addEventListener("change", function (e) {
+    var tg = e.target.getAttribute && e.target.getAttribute("data-altg");
+    if (!tg) return;
+    var st = load();
+    if (e.target.checked) delete st.catalogoOff[tg]; else st.catalogoOff[tg] = 1;
+    S.write("ntStudio", st);
+    renderAlimentos();
+  });
+
+  // ---------- código de barras (Open Food Facts) ----------
+  function buscaOFF(codigo) {
+    codigo = String(codigo).replace(/\D/g, "");
+    if (codigo.length < 8) { $("cbStatus").textContent = "Código inválido — digite os números do código de barras."; return; }
+    $("cbStatus").textContent = "Buscando…";
+    fetch("https://world.openfoodfacts.org/api/v2/product/" + codigo + ".json")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.status !== 1 || !d.product) { $("cbStatus").textContent = "Produto não encontrado no Open Food Facts. Cadastre como alimento próprio."; return; }
+        var pr = d.product;
+        var nome = pr.product_name_pt || pr.product_name || "Produto " + codigo;
+        var marca = (pr.brands || "").split(",")[0];
+        if (marca && nome.toLowerCase().indexOf(marca.toLowerCase()) === -1) nome += " (" + marca + ")";
+        var nut = pr.nutriments || {};
+        var kcal = Math.round(+nut["energy-kcal_100g"] || (+nut.energy_100g || 0) / 4.184);
+        var prot = Math.round((+nut.proteins_100g || 0) * 10) / 10;
+        if (!kcal) { $("cbStatus").textContent = "Achei \"" + nome + "\", mas sem kcal no rótulo — cadastre manualmente."; return; }
+        var st = load();
+        if (st.alimentos.some(function (a) { return a.nome === nome; })) { $("cbStatus").textContent = "\"" + nome + "\" já está nos seus alimentos. ✓"; return; }
+        st.alimentos.push({ id: S.uid(), nome: nome, porcao: "100 g", kcal: kcal, prot: prot, codigo: codigo });
+        S.write("ntStudio", st);
+        $("cbStatus").textContent = "✅ \"" + nome + "\" adicionado: " + kcal + " kcal/100 g.";
+        $("cbCodigo").value = "";
+        renderAlimentos();
+      })
+      .catch(function () { $("cbStatus").textContent = "Sem conexão agora — tente de novo online."; });
+  }
+  $("cbBuscar").addEventListener("click", function () { buscaOFF($("cbCodigo").value); });
+  window.__buscaOFF = buscaOFF; // testes
+  if ("BarcodeDetector" in window) {
+    $("cbCamera").hidden = false;
+    $("cbCamera").addEventListener("click", function () {
+      var det = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a"] });
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function (stream) {
+        var v = document.createElement("video");
+        v.srcObject = stream; v.play();
+        v.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;object-fit:cover;z-index:99;";
+        document.body.appendChild(v);
+        $("cbStatus").textContent = "Aponte pro código de barras…";
+        var tick = setInterval(function () {
+          det.detect(v).then(function (codes) {
+            if (codes.length) {
+              clearInterval(tick);
+              stream.getTracks().forEach(function (t) { t.stop(); });
+              v.remove();
+              $("cbCodigo").value = codes[0].rawValue;
+              buscaOFF(codes[0].rawValue);
+            }
+          }).catch(function () {});
+        }, 400);
+        v.addEventListener("click", function () { clearInterval(tick); stream.getTracks().forEach(function (t) { t.stop(); }); v.remove(); });
+      }).catch(function () { $("cbStatus").textContent = "Câmera indisponível — digite o código."; });
+    });
   }
   $("alAdd").addEventListener("click", function () {
     var nome = $("alNome").value.trim();
@@ -466,6 +610,8 @@
     var aguaMl = dieta.aguaMl || 2000;
     var nuvemCfg = self.MT_CLOUD || {};
     var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && p.appTokenN);
+    // banco de alimentos curado embutido no app (busca offline no diário)
+    var aldb = alimentosAtivos(st).slice(0, 900).map(function (a) { return { n: a.nome, k: a.kcal, p: a.porcao }; });
 
     return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#14532d'>" +
@@ -499,7 +645,16 @@
           r.itens.map(function (it) { return "<div class='kv'><span>" + esc(it.n) + "</span><span style='color:#9fb8a6'>" + esc(it.q) + " · " + it.k + " kcal</span></div>"; }).join("") +
           "<button class='refok off' data-refok='" + r.id + "' data-k='" + r.k + "' style='width:100%;margin-top:10px;'>Marcar como feita ✓</button></div></details>";
       }).join("") : "<div class='vz'>Sua dieta aparece aqui quando " + esc(primeiro === p.nome ? "o nutricionista" : studio.split(" ")[0]) + " montar. 🥦</div>") + "</div>" +
-      "<div class='cardx'><h2>📊 Meu dia</h2><div class='kv'><span>Calorias das refeições feitas</span><b id='kcalDia'>0 kcal</b></div>" +
+      "<div class='cardx'><h2>🍎 Registrar o que comi</h2>" +
+      "<div class='vz' style='text-align:left;padding:0 0 8px;'>Comeu algo fora da dieta? Busque no banco (" + aldb.length + " alimentos) e registre — entra na contagem do dia.</div>" +
+      "<input id='diBusca' list='dlApp' placeholder='🔍 O que você comeu?' style='width:100%;margin-bottom:8px;'>" +
+      "<datalist id='dlApp'></datalist>" +
+      "<div style='display:flex;gap:8px;'><input id='diQtd' type='number' min='0.5' step='0.5' value='1' style='width:90px;' title='porções'><button class='btnx' id='diAdd' style='flex:1;'>+ Registrar</button></div>" +
+      "<button class='btnx' id='diCodigo' style='width:100%;margin-top:8px;background:#0e7490;'>📷 Registrar por código de barras</button>" +
+      "<div id='diLista' style='margin-top:10px;'></div></div>" +
+      "<div class='cardx'><h2>📊 Meu dia</h2><div class='kv'><span>Refeições da dieta feitas</span><b id='kcalRef'>0 kcal</b></div>" +
+      "<div class='kv'><span>Diário (o que registrei)</span><b id='kcalDiario'>0 kcal</b></div>" +
+      "<div class='kv'><span><b>Total consumido</b></span><b id='kcalDia' style='color:#86efac'>0 kcal</b></div>" +
       "<div class='kv'><span>Meta do dia</span><span>" + alvo.alvo + " kcal</span></div></div>" +
       "<div class='cardx'><h2>⚖️ Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
@@ -512,6 +667,7 @@
       (zapN ? "<a class='btnx' style='display:block;text-align:center;text-decoration:none;background:#15803d;' href='https://wa.me/55" + String(zapN).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi! Sou " + p.nome + ", sobre minha dieta:") + "' target='_blank' rel='noopener'>💬 Falar com " + esc(studio.split(" ")[0]) + "</a>" : "") +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 🥗</div>" +
       "<script>var REFS=" + JSON.stringify(refs.map(function (r) { return { id: r.id, h: r.h, t: r.t, k: r.k }; })) +
+      ",ALDB=" + JSON.stringify(aldb) +
       ",AGUAML=" + aguaMl + ",KCALMETA=" + alvo.alvo +
       ",NUVEM=" + JSON.stringify(temNuvem ? { u: nuvemCfg.url, k: nuvemCfg.anonKey } : null) +
       ",TOKEN=" + JSON.stringify(p.appTokenN || "") + ";" +
@@ -534,16 +690,40 @@
       "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('💧 Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);});});" +
       "if(L('ntlembra',0)&&('Notification' in window)&&Notification.permission==='granted'){document.getElementById('agLembrete').textContent='🔔 Lembretes ligados (a cada hora)';document.getElementById('agLembrete').disabled=true;" +
       "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('💧 Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);}" +
+      // diário alimentar (registrar o que comeu — MyFitnessPal style)
+      "document.getElementById('dlApp').innerHTML=ALDB.map(function(a){return \"<option value='\"+a.n.replace(/'/g,'&#39;')+\"'>\"+a.p+' · '+a.k+' kcal</option>';}).join('');" +
+      "function kcalDiario(){return L('ntdi_'+isoHj(),[]).reduce(function(t,x){return t+x.k;},0);}" +
+      "function pintaDiario(){var l=L('ntdi_'+isoHj(),[]);var el=document.getElementById('diLista');" +
+      "el.innerHTML=l.length?l.map(function(x,i){return \"<div class='kv'><span>\"+x.n+' ('+String(x.q).replace('.',',')+'x)</span><span>'+x.k+\" kcal <button data-dirm='\"+i+\"' style='background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;'>✕</button></span></div>\";}).join(''):'';" +
+      "document.getElementById('kcalDiario').textContent=kcalDiario()+' kcal';pintaRefs();}" +
+      "document.getElementById('diAdd').addEventListener('click',function(){var nome=document.getElementById('diBusca').value.trim();" +
+      "var al=ALDB.filter(function(a){return a.n.toLowerCase()===nome.toLowerCase();})[0];" +
+      "if(!al){alert('Digite e escolha um alimento da lista de sugestões.');return;}" +
+      "var q=+document.getElementById('diQtd').value||1;var l=L('ntdi_'+isoHj(),[]);" +
+      "l.push({n:al.n,q:q,k:Math.round(al.k*q)});Sv('ntdi_'+isoHj(),l);" +
+      "document.getElementById('diBusca').value='';document.getElementById('diQtd').value='1';pintaDiario();});" +
+      "document.getElementById('diLista').addEventListener('click',function(e){var i=e.target.getAttribute&&e.target.getAttribute('data-dirm');if(i==null)return;" +
+      "var l=L('ntdi_'+isoHj(),[]);l.splice(+i,1);Sv('ntdi_'+isoHj(),l);pintaDiario();});" +
+      "document.getElementById('diCodigo').addEventListener('click',function(){var cod=prompt('Digite o código de barras do produto (os números embaixo das barrinhas):');" +
+      "if(!cod)return;cod=cod.replace(/\\D/g,'');if(cod.length<8){alert('Código inválido.');return;}" +
+      "fetch('https://world.openfoodfacts.org/api/v2/product/'+cod+'.json').then(function(r){return r.json();}).then(function(d){" +
+      "if(!d||d.status!==1||!d.product){alert('Produto não encontrado — registra pela busca mesmo. 😉');return;}" +
+      "var nut=d.product.nutriments||{};var k=Math.round(+nut['energy-kcal_100g']||(+nut.energy_100g||0)/4.184);" +
+      "var nome=d.product.product_name_pt||d.product.product_name||('Produto '+cod);" +
+      "if(!k){alert('Achei \\''+nome+'\\' mas sem kcal no rótulo.');return;}" +
+      "var l=L('ntdi_'+isoHj(),[]);l.push({n:nome+' (100 g)',q:1,k:k});Sv('ntdi_'+isoHj(),l);pintaDiario();" +
+      "}).catch(function(){alert('Precisa de internet pra buscar o código — registra pela busca. 😉');});});" +
       // refeições feitas + kcal do dia + próxima
       "function pintaRefs(){var f=L('ntref_'+isoHj(),{});var kc=0,n=0;" +
       "document.querySelectorAll('[data-refok]').forEach(function(b){var ok=!!f[b.dataset.refok];b.classList.toggle('off',!ok);b.textContent=ok?'✓ Feita!':'Marcar como feita ✓';if(ok){kc+=+b.dataset.k;n++;}});" +
-      "document.getElementById('kcalDia').textContent=kc+' kcal';" +
+      "document.getElementById('kcalRef').textContent=kc+' kcal';" +
+      "document.getElementById('kcalDia').textContent=(kc+kcalDiario())+' kcal';" +
       "document.getElementById('refProg').innerHTML=REFS.length?('<b style=\"color:#86efac\">'+n+' de '+REFS.length+'</b> refeições feitas hoje'+(n===REFS.length&&REFS.length?' — dia perfeito! 🎉':'')):'';" +
       "var ag=new Date();var hm=('0'+ag.getHours()).slice(-2)+':'+('0'+ag.getMinutes()).slice(-2);" +
       "var prox=REFS.filter(function(r){return r.h>=hm&&!f[r.id];})[0]||REFS.filter(function(r){return !f[r.id];})[0];" +
       "document.getElementById('proxRef').textContent=prox?('⏰ '+prox.h+' — '+prox.t+' ('+prox.k+' kcal)'):(REFS.length?'Todas as refeições de hoje feitas! 🎉':'Sem dieta ainda.');}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-refok]');if(!b)return;" +
-      "var f=L('ntref_'+isoHj(),{});if(f[b.dataset.refok])delete f[b.dataset.refok];else f[b.dataset.refok]=1;Sv('ntref_'+isoHj(),f);pintaRefs();});pintaRefs();" +
+      "var f=L('ntref_'+isoHj(),{});if(f[b.dataset.refok])delete f[b.dataset.refok];else f[b.dataset.refok]=1;Sv('ntref_'+isoHj(),f);pintaRefs();});pintaRefs();pintaDiario();" +
       // peso
       "function pintaPz(){var l=L('ntpeso',[]);if(!l.length)return;var el=document.getElementById('pzGraf');" +
       "el.innerHTML=l.slice(-10).map(function(x){return \"<div class='kv'><span>\"+x.d.split('-').reverse().slice(0,2).join('/')+\"</span><b>\"+String(x.kg).replace('.',',')+\" kg</b></div>\";}).join('');}" +
