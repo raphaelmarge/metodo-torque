@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORQUESYS Nutrição — o sistema do nutricionista</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest-nutricao.webmanifest">
+<meta name="theme-color" content="#16a34a">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<link href="apps/apps.css" rel="stylesheet">
+<style>
+  :root { --verde: #16a34a; --verde-2: #15803d; }
+  .abas-nt { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .abas-nt button { border: 1px solid var(--linha); background: #fff; padding: 10px 16px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; border-radius: 999px; transition: all .15s ease; }
+  .abas-nt button.ativa { background: var(--verde); color: #fff; border-color: var(--verde); box-shadow: 0 8px 20px -8px rgba(22,163,74,.5); }
+  .pac { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  .linha-nt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; background: #dcfce7; color: #15803d; }
+  .tagn.roxa { background: #ede9fe; color: #6d28d9; }
+  .tagn.ambar { background: #fef3c7; color: #b45309; }
+  .btn.verde { background: var(--verde); }
+  .btn.verde:hover { background: var(--verde-2); }
+  .ref-card { border: 1px solid var(--linha); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: #fff; }
+  .kpis-nt { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi-nt { background: #fff; border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
+  .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
+  .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: var(--verde-2); }
+</style>
+</head>
+<body>
+
+<header class="topo" style="background: linear-gradient(135deg, #14532d, #166534);">
+  <div class="topo-marca">
+    <div>
+      <span class="kicker" style="color: #86efac;">TORQUESYS · NUTRIÇÃO</span>
+      <h1 id="tituloStudio">Meu consultório</h1>
+    </div>
+  </div>
+  <p>O sistema do nutricionista: pacientes, dietas por refeição com kcal, dieta automática e o app do paciente com água, alertas e adesão — cada nutricionista na sua própria ilha.</p>
+</header>
+
+<main class="corpo">
+
+  <div class="card" id="boasVindas" hidden style="margin-bottom: 16px; border-left: 4px solid var(--verde);">
+    <h2>🥗 Bem-vindo(a) ao TORQUESYS Nutrição!</h2>
+    <p class="muted" style="margin: 6px 0 10px;">Como quer chamar o seu consultório? (aparece no app dos seus pacientes)</p>
+    <div class="linha-flex">
+      <input id="obNome" placeholder="ex.: Nutri Ana Costa" style="flex: 1; min-width: 200px;">
+      <button class="btn verde" id="obOk">Começar →</button>
+    </div>
+  </div>
+
+  <div class="kpis-nt" id="kpisN"></div>
+
+  <div class="abas-nt" id="abasNt">
+    <button data-a="pacientes" class="ativa">🧑‍🤝‍🧑 Pacientes</button>
+    <button data-a="dietas">🍽 Dietas</button>
+    <button data-a="alimentos">🥗 Alimentos</button>
+  </div>
+
+  <div id="vPacientes">
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Novo paciente</h2>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+        <input id="pNome" placeholder="Nome completo" style="flex: 2; min-width: 170px;">
+        <input id="pZap" inputmode="numeric" placeholder="WhatsApp (31 9…)" style="width: 150px;">
+        <select id="pSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
+        <input id="pIdade" type="number" min="10" max="99" placeholder="Idade" style="width: 80px;">
+        <input id="pPeso" type="number" min="30" max="300" step="0.1" placeholder="Peso kg" style="width: 95px;">
+        <input id="pAltura" type="number" min="120" max="230" placeholder="Altura cm" style="width: 100px;">
+        <select id="pAtiv" style="width: auto;" title="Nível de atividade física">
+          <option value="sed">Sedentário</option><option value="leve">Ativo leve (1-3x/sem)</option>
+          <option value="mod">Moderado (3-5x/sem)</option><option value="alto">Intenso (6-7x/sem)</option>
+        </select>
+        <select id="pObjetivo" style="width: auto;">
+          <option value="emagrecer">🔥 Emagrecer</option><option value="manter">⚖️ Manter</option><option value="ganhar">💪 Ganhar massa</option>
+        </select>
+        <input id="pRestr" placeholder="Restrições/alergias (ex.: lactose, amendoim)" style="flex: 2; min-width: 180px;">
+        <button class="btn verde" id="pAdd">+ Adicionar</button>
+      </div>
+    </div>
+    <div id="listaPacientes" class="muted">Cadastre o primeiro paciente. 🥦</div>
+  </div>
+
+  <div id="vDietas" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>🍽 Dieta do paciente</h2>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+        <select id="dAluno" style="min-width: 220px;"></select>
+        <button class="btn verde" id="dGerar" title="Mifflin-St Jeor + objetivo + banco de alimentos">🤖 Gerar dieta automática</button>
+        <button class="btn sec" id="dZap">💬 Enviar resumo no WhatsApp</button>
+      </div>
+      <div id="dResumo" class="muted" style="margin-top: 10px; font-size: 13.5px;"></div>
+      <div class="linha-flex" style="gap: 8px; margin-top: 10px; align-items: center;">
+        <label style="margin: 0; font-size: 13px; font-weight: 700;">💧 Meta de água (ml/dia)
+          <input id="dAgua" type="number" min="500" max="6000" step="50" style="width: 110px; display: inline-block; margin-left: 6px;"></label>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Refeições</h2>
+      <div class="linha-flex" style="gap: 8px; margin-bottom: 10px;">
+        <input id="dRefHora" type="time" value="07:00" style="width: 110px;">
+        <input id="dRefTitulo" placeholder="ex.: Café da manhã" style="flex: 1; min-width: 160px;">
+        <button class="btn sec" id="dRefAdd">+ Refeição</button>
+      </div>
+      <div id="refeicoesBox" class="muted">Escolha o paciente e monte (ou gere) a dieta.</div>
+      <div id="dTotais" style="margin-top: 10px; font-size: 13.5px; font-weight: 700;"></div>
+    </div>
+  </div>
+
+  <div id="vAlimentos" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>🥗 Banco de alimentos</h2>
+      <p class="muted" style="font-size: 13px;">Já vem com os básicos (kcal e proteína por porção). Adicione os seus — eles aparecem na montagem das dietas.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+        <input id="alNome" placeholder="Alimento" style="flex: 2; min-width: 150px;">
+        <input id="alPorcao" placeholder="Porção (ex.: 100 g)" style="width: 130px;">
+        <input id="alKcal" type="number" min="0" placeholder="kcal" style="width: 90px;">
+        <input id="alProt" type="number" min="0" step="0.1" placeholder="prot (g)" style="width: 90px;">
+        <button class="btn verde" id="alAdd">+ Alimento</button>
+      </div>
+    </div>
+    <div class="card"><div id="alLista" class="muted">Carregando…</div></div>
+  </div>
+
+  <div class="card" style="margin-top: 20px; border-left: 4px solid var(--verde);">
+    <h2>☁️ Sua ilha na nuvem</h2>
+    <div id="contaStatus" class="muted" style="margin: 6px 0 10px;"></div>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+      <a class="btn sec" id="btnConta" href="index.html" target="_blank" rel="noopener">Criar minha conta / entrar</a>
+      <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (para o app dos pacientes)
+        <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 160px; display: block; margin-top: 4px;"></label>
+    </div>
+  </div>
+
+</main>
+
+<script src="assets/access-config.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/vendor/supabase.js"></script>
+<script src="apps/store.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.MTStore;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  // ---------- store ----------
+  function load() {
+    var st = S.read("ntStudio", { config: {}, pacientes: [], dietas: {}, alimentos: [] });
+    st.config = st.config || {}; st.pacientes = st.pacientes || []; st.dietas = st.dietas || {}; st.alimentos = st.alimentos || [];
+    if (!st.alimentos.length && !st._alSeed) {
+      st._alSeed = 1;
+      [["Arroz branco cozido", "100 g", 130, 2.5], ["Arroz integral cozido", "100 g", 124, 2.6], ["Feijão cozido", "1 concha (80 g)", 76, 4.8],
+       ["Peito de frango grelhado", "100 g", 165, 31], ["Carne magra (patinho)", "100 g", 190, 27], ["Tilápia grelhada", "100 g", 96, 20],
+       ["Ovo cozido", "1 unidade", 70, 6], ["Batata-doce cozida", "100 g", 86, 1.6], ["Aveia em flocos", "30 g", 117, 4],
+       ["Banana", "1 unidade", 90, 1.1], ["Maçã", "1 unidade", 60, 0.3], ["Mamão", "150 g", 60, 0.7],
+       ["Pão integral", "1 fatia", 70, 3], ["Tapioca", "50 g", 170, 0], ["Leite desnatado", "200 ml", 70, 6.8],
+       ["Iogurte natural", "1 pote (170 g)", 90, 6], ["Queijo minas", "30 g", 80, 5], ["Requeijão light", "1 c. sopa", 35, 1.5],
+       ["Salada de folhas", "à vontade", 15, 1], ["Brócolis cozido", "100 g", 35, 2.8], ["Azeite de oliva", "1 c. sopa", 90, 0],
+       ["Castanhas", "20 g", 130, 3], ["Whey protein", "1 dose (30 g)", 120, 24], ["Café sem açúcar", "1 xícara", 2, 0]
+      ].forEach(function (a) { st.alimentos.push({ id: S.uid(), nome: a[0], porcao: a[1], kcal: a[2], prot: a[3] }); });
+      S.write("ntStudio", st);
+    }
+    return st;
+  }
+  function save(st) { S.write("ntStudio", st); render(); }
+  function alimPorId(st, id) { return st.alimentos.find(function (a) { return a.id === id; }); }
+  function alimPorNome(st, nome) { return st.alimentos.find(function (a) { return a.nome.toLowerCase() === nome.toLowerCase(); }); }
+  function dietaDe(st, pid) {
+    st.dietas[pid] = st.dietas[pid] || { aguaMl: 2000, refeicoes: [] };
+    return st.dietas[pid];
+  }
+
+  // ---------- ciência: kcal alvo (Mifflin-St Jeor) ----------
+  function kcalAlvo(p) {
+    var tmb = p.sexo === "F"
+      ? 10 * p.peso + 6.25 * p.altura - 5 * p.idade - 161
+      : 10 * p.peso + 6.25 * p.altura - 5 * p.idade + 5;
+    var fator = { sed: 1.2, leve: 1.375, mod: 1.55, alto: 1.725 }[p.atividade] || 1.2;
+    var kcal = tmb * fator;
+    if (p.objetivo === "emagrecer") kcal *= 0.8;
+    if (p.objetivo === "ganhar") kcal *= 1.15;
+    return { tmb: Math.round(tmb), alvo: Math.round(kcal / 10) * 10 };
+  }
+
+  // ---------- dieta automática (motor de regras + banco de alimentos) ----------
+  var REF_MODELOS = [
+    { hora: "07:00", titulo: "Café da manhã", pct: 20, itens: [["Ovo cozido", 2], ["Pão integral", 2], ["Mamão", 1], ["Café sem açúcar", 1]] },
+    { hora: "10:00", titulo: "Lanche da manhã", pct: 10, itens: [["Banana", 1], ["Castanhas", 1]] },
+    { hora: "12:30", titulo: "Almoço", pct: 30, itens: [["Arroz branco cozido", 1], ["Feijão cozido", 1], ["Peito de frango grelhado", 1], ["Salada de folhas", 1], ["Azeite de oliva", 1]] },
+    { hora: "16:00", titulo: "Lanche da tarde", pct: 15, itens: [["Iogurte natural", 1], ["Aveia em flocos", 1], ["Maçã", 1]] },
+    { hora: "19:30", titulo: "Jantar", pct: 25, itens: [["Batata-doce cozida", 1], ["Tilápia grelhada", 1], ["Brócolis cozido", 1], ["Azeite de oliva", 1]] },
+  ];
+  function gerarDieta(st, p) {
+    var alvo = kcalAlvo(p).alvo;
+    var restr = (p.restricoes || "").toLowerCase();
+    var refeicoes = REF_MODELOS.map(function (m) {
+      var itens = m.itens.slice();
+      if (p.objetivo === "ganhar" && m.titulo === "Lanche da manhã") itens.push(["Whey protein", 1]);
+      // respeita restrições: remove alimento citado nelas (ex.: "lactose" tira leite/iogurte/queijo)
+      itens = itens.filter(function (it) {
+        var nome = it[0].toLowerCase();
+        if (restr.indexOf("lactose") !== -1 && /leite|iogurte|queijo|requeijão|whey/.test(nome)) return false;
+        if (restr && restr.split(/[,;]/).some(function (r) { return r.trim() && nome.indexOf(r.trim()) !== -1; })) return false;
+        return true;
+      });
+      var base = 0;
+      itens.forEach(function (it) {
+        var al = alimPorNome(st, it[0]);
+        if (al) base += al.kcal * it[1];
+      });
+      var alvoRef = alvo * m.pct / 100;
+      var mult = base ? Math.min(3, Math.max(0.5, Math.round(alvoRef / base * 2) / 2)) : 1;
+      return { id: S.uid(), hora: m.hora, titulo: m.titulo,
+        itens: itens.map(function (it) {
+          var al = alimPorNome(st, it[0]);
+          return { alimId: al ? al.id : null, qtd: Math.round(it[1] * mult * 2) / 2 };
+        }).filter(function (x) { return x.alimId; }) };
+    });
+    return { aguaMl: Math.round(p.peso * 35 / 50) * 50, refeicoes: refeicoes, geradaAuto: true, geradaEm: S.todayISO() };
+  }
+  function kcalDaDieta(st, dieta) {
+    var t = 0;
+    (dieta.refeicoes || []).forEach(function (r) {
+      (r.itens || []).forEach(function (it) {
+        var al = alimPorId(st, it.alimId);
+        if (al) t += al.kcal * (+it.qtd || 1);
+      });
+    });
+    return Math.round(t);
+  }
+  window.__nutri = { kcalAlvo: kcalAlvo, gerarDieta: gerarDieta, kcalDaDieta: kcalDaDieta }; // testes
+
+  // ---------- abas ----------
+  document.getElementById("abasNt").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    document.querySelectorAll("#abasNt button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+    $("vPacientes").hidden = b.dataset.a !== "pacientes";
+    $("vDietas").hidden = b.dataset.a !== "dietas";
+    $("vAlimentos").hidden = b.dataset.a !== "alimentos";
+    if (b.dataset.a === "dietas") renderDietas();
+    if (b.dataset.a === "alimentos") renderAlimentos();
+  });
+
+  // ---------- onboarding ----------
+  function checaOnboarding() {
+    var st = load();
+    $("boasVindas").hidden = !!(st.config && st.config.nome);
+    $("tituloStudio").textContent = (st.config && st.config.nome) || "Meu consultório";
+  }
+  $("obOk").addEventListener("click", function () {
+    var nome = $("obNome").value.trim();
+    if (!nome) { alert("Escreva o nome do consultório."); return; }
+    var st = load();
+    st.config.nome = nome;
+    save(st);
+    checaOnboarding();
+  });
+
+  // ---------- pacientes ----------
+  function renderPacientes(st) {
+    var ativos = st.pacientes.filter(function (p) { return p.ativo !== false; });
+    $("listaPacientes").innerHTML = ativos.length ? ativos.map(function (p) {
+      var d = st.dietas[p.id];
+      var temDieta = d && (d.refeicoes || []).length;
+      var alvo = kcalAlvo(p);
+      return '<div class="pac"><b style="font-size:15px;">' + esc(p.nome) + "</b>" +
+        '<span class="tagn' + (p.objetivo === "ganhar" ? " roxa" : p.objetivo === "emagrecer" ? " ambar" : "") + '">' +
+        (p.objetivo === "emagrecer" ? "🔥 emagrecer" : p.objetivo === "ganhar" ? "💪 ganhar" : "⚖️ manter") + "</span>" +
+        '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
+        (temDieta ? '<span class="tagn">🍽 dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn verde mini" data-app="' + p.id + '">📲 App do paciente</button>' +
+        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></div>';
+    }).join("") : "Cadastre o primeiro paciente. 🥦";
+  }
+  $("pAdd").addEventListener("click", function () {
+    var nome = $("pNome").value.trim();
+    if (!nome || !+$("pPeso").value || !+$("pAltura").value || !+$("pIdade").value) { alert("Preencha nome, idade, peso e altura."); return; }
+    var st = load();
+    st.pacientes.push({ id: S.uid(), nome: nome, zap: $("pZap").value.replace(/\D/g, ""), sexo: $("pSexo").value,
+      idade: +$("pIdade").value, peso: +$("pPeso").value, altura: +$("pAltura").value,
+      atividade: $("pAtiv").value, objetivo: $("pObjetivo").value, restricoes: $("pRestr").value.trim(),
+      ativo: true, desde: S.todayISO(), appTokenN: S.uid() + S.uid() });
+    ["pNome", "pZap", "pIdade", "pPeso", "pAltura", "pRestr"].forEach(function (id) { $(id).value = ""; });
+    save(st);
+  });
+  $("listaPacientes").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-rm");
+    var ap = e.target.getAttribute && e.target.getAttribute("data-app");
+    if (rm && confirm("Encerrar este paciente? O histórico fica guardado.")) {
+      var st = load();
+      var p = st.pacientes.find(function (x) { return x.id === rm; });
+      if (p) { p.ativo = false; p.fim = S.todayISO(); }
+      save(st);
+    }
+    if (ap) publicaApp(ap);
+  });
+
+  // ---------- dietas ----------
+  function pacienteSel() {
+    var st = load();
+    return st.pacientes.find(function (p) { return p.id === $("dAluno").value; });
+  }
+  function renderDietas() {
+    var st = load();
+    var atual = $("dAluno").value;
+    $("dAluno").innerHTML = "<option value=''>— paciente —</option>" +
+      st.pacientes.filter(function (p) { return p.ativo !== false; })
+        .map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + "</option>"; }).join("");
+    if (atual) $("dAluno").value = atual;
+    var p = pacienteSel();
+    if (!p) { $("dResumo").textContent = "Escolha o paciente."; $("refeicoesBox").innerHTML = "Escolha o paciente e monte (ou gere) a dieta."; $("dTotais").textContent = ""; return; }
+    var alvo = kcalAlvo(p);
+    var dieta = dietaDe(st, p.id);
+    $("dResumo").innerHTML = "TMB (Mifflin-St Jeor): <b>" + alvo.tmb + " kcal</b> · Gasto com atividade e objetivo (" + esc(p.objetivo) + "): <b style='color:var(--verde-2);'>" + alvo.alvo + " kcal/dia</b>" +
+      (p.restricoes ? ' · <span class="tagn ambar">⚠ ' + esc(p.restricoes) + "</span>" : "") +
+      (dieta.geradaAuto ? ' · <span class="tagn">🤖 gerada automática em ' + S.fmtData(dieta.geradaEm) + " — revise!</span>" : "");
+    if (document.activeElement !== $("dAgua")) $("dAgua").value = dieta.aguaMl || Math.round(p.peso * 35 / 50) * 50;
+    var opts = st.alimentos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + " (" + esc(a.porcao) + " · " + a.kcal + " kcal)</option>"; }).join("");
+    $("refeicoesBox").innerHTML = (dieta.refeicoes || []).length ? dieta.refeicoes.map(function (r) {
+      var kcalRef = 0;
+      var itensHtml = (r.itens || []).map(function (it, i) {
+        var al = alimPorId(st, it.alimId);
+        if (!al) return "";
+        var k = Math.round(al.kcal * (+it.qtd || 1));
+        kcalRef += k;
+        return '<div class="linha-nt"><span>' + esc(al.nome) + '</span><span class="muted">' + String(it.qtd).replace(".", ",") + " × " + esc(al.porcao) + "</span>" +
+          '<span style="margin-left:auto;font-weight:700;">' + k + ' kcal</span><button class="btn sec mini" data-rmitem="' + r.id + ":" + i + '">✕</button></div>';
+      }).join("");
+      return '<div class="ref-card"><div class="linha-flex" style="justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
+        "<b>⏰ " + esc(r.hora) + " — " + esc(r.titulo) + '</b><span style="font-weight:800;color:var(--verde-2);">' + kcalRef + " kcal</span>" +
+        '<button class="btn sec mini" data-rmref="' + r.id + '">✕ refeição</button></div>' + itensHtml +
+        '<div class="linha-flex" style="gap:8px;margin-top:8px;flex-wrap:wrap;">' +
+        '<select data-alsel="' + r.id + '" style="flex:2;min-width:180px;">' + opts + "</select>" +
+        '<input data-alqtd="' + r.id + '" type="number" min="0.5" step="0.5" value="1" style="width:80px;" title="Quantidade de porções">' +
+        '<button class="btn mini verde" data-additem="' + r.id + '">+ Adicionar</button></div></div>';
+    }).join("") : '<div class="muted">Sem refeições ainda — gere a dieta automática ou adicione refeições acima.</div>';
+    var total = kcalDaDieta(st, dieta);
+    var pct = alvo.alvo ? Math.round(100 * total / alvo.alvo) : 0;
+    $("dTotais").innerHTML = "Total da dieta: <b style='color:var(--verde-2);'>" + total + " kcal</b> de " + alvo.alvo + " kcal alvo (" + pct + "%)" +
+      (pct >= 90 && pct <= 110 ? " ✅" : " — ajuste as porções");
+  }
+  $("dAluno").addEventListener("change", renderDietas);
+  $("dAgua").addEventListener("change", function () {
+    var p = pacienteSel();
+    if (!p) return;
+    var st = load();
+    dietaDe(st, p.id).aguaMl = +this.value || 2000;
+    S.write("ntStudio", st);
+  });
+  $("dGerar").addEventListener("click", function () {
+    var p = pacienteSel();
+    if (!p) { alert("Escolha o paciente primeiro."); return; }
+    var st = load();
+    if ((dietaDe(st, p.id).refeicoes || []).length && !confirm("Este paciente já tem dieta. Substituir pela gerada automaticamente?")) return;
+    st.dietas[p.id] = gerarDieta(st, p);
+    S.write("ntStudio", st);
+    renderDietas();
+    alert("🤖 Dieta gerada com " + st.dietas[p.id].refeicoes.length + " refeições para " + kcalAlvo(p).alvo + " kcal.\n\n⚠️ Revise e ajuste — a decisão final é sempre do profissional.");
+  });
+  $("dRefAdd").addEventListener("click", function () {
+    var p = pacienteSel();
+    if (!p) { alert("Escolha o paciente primeiro."); return; }
+    if (!$("dRefTitulo").value.trim()) { alert("Dê um nome à refeição."); return; }
+    var st = load();
+    dietaDe(st, p.id).refeicoes.push({ id: S.uid(), hora: $("dRefHora").value || "12:00", titulo: $("dRefTitulo").value.trim(), itens: [] });
+    dietaDe(st, p.id).refeicoes.sort(function (a, b) { return a.hora < b.hora ? -1 : 1; });
+    $("dRefTitulo").value = "";
+    S.write("ntStudio", st);
+    renderDietas();
+  });
+  $("refeicoesBox").addEventListener("click", function (e) {
+    var add = e.target.getAttribute && e.target.getAttribute("data-additem");
+    var rmR = e.target.getAttribute && e.target.getAttribute("data-rmref");
+    var rmI = e.target.getAttribute && e.target.getAttribute("data-rmitem");
+    if (!add && !rmR && !rmI) return;
+    var p = pacienteSel();
+    if (!p) return;
+    var st = load();
+    var dieta = dietaDe(st, p.id);
+    if (add) {
+      var sel = document.querySelector('[data-alsel="' + add + '"]');
+      var qtd = +document.querySelector('[data-alqtd="' + add + '"]').value || 1;
+      var r = dieta.refeicoes.find(function (x) { return x.id === add; });
+      if (r && sel.value) r.itens.push({ alimId: sel.value, qtd: qtd });
+    }
+    if (rmR && confirm("Remover esta refeição?")) dieta.refeicoes = dieta.refeicoes.filter(function (x) { return x.id !== rmR; });
+    if (rmI) {
+      var pr = rmI.split(":");
+      var r2 = dieta.refeicoes.find(function (x) { return x.id === pr[0]; });
+      if (r2) r2.itens.splice(+pr[1], 1);
+    }
+    S.write("ntStudio", st);
+    renderDietas();
+  });
+  $("dZap").addEventListener("click", function () {
+    var p = pacienteSel();
+    if (!p) { alert("Escolha o paciente primeiro."); return; }
+    var st = load();
+    var dieta = dietaDe(st, p.id);
+    var linhas = ["🥗 Sua dieta — " + ((st.config || {}).nome || "Nutrição") + "\n"];
+    (dieta.refeicoes || []).forEach(function (r) {
+      linhas.push("⏰ " + r.hora + " — " + r.titulo);
+      (r.itens || []).forEach(function (it) {
+        var al = alimPorId(st, it.alimId);
+        if (al) linhas.push("  • " + al.nome + " (" + String(it.qtd).replace(".", ",") + " × " + al.porcao + ")");
+      });
+    });
+    linhas.push("\n💧 Água: " + (dieta.aguaMl || 2000) + " ml/dia");
+    linhas.push("Total: ~" + kcalDaDieta(st, dieta) + " kcal/dia");
+    window.open("https://wa.me/" + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(linhas.join("\n")), "_blank");
+  });
+
+  // ---------- alimentos ----------
+  function renderAlimentos() {
+    var st = load();
+    $("alLista").innerHTML = st.alimentos.map(function (a) {
+      return '<div class="linha-nt"><b>' + esc(a.nome) + '</b><span class="muted">' + esc(a.porcao) + "</span>" +
+        '<span style="margin-left:auto;">' + a.kcal + " kcal · " + (a.prot || 0) + " g prot</span>" +
+        '<button class="btn sec mini" data-alrm="' + a.id + '">✕</button></div>';
+    }).join("");
+  }
+  $("alAdd").addEventListener("click", function () {
+    var nome = $("alNome").value.trim();
+    if (!nome || !+$("alKcal").value) { alert("Preencha o alimento e as kcal da porção."); return; }
+    var st = load();
+    st.alimentos.push({ id: S.uid(), nome: nome, porcao: $("alPorcao").value.trim() || "1 porção", kcal: +$("alKcal").value, prot: +$("alProt").value || 0 });
+    ["alNome", "alPorcao", "alKcal", "alProt"].forEach(function (id) { $(id).value = ""; });
+    S.write("ntStudio", st);
+    renderAlimentos();
+  });
+  $("alLista").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-alrm");
+    if (!rm || !confirm("Remover este alimento?")) return;
+    var st = load();
+    st.alimentos = st.alimentos.filter(function (a) { return a.id !== rm; });
+    S.write("ntStudio", st);
+    renderAlimentos();
+  });
+
+  // ---------- app do paciente ----------
+  function montaAppNutri(p, stamp) {
+    var st = load();
+    var studio = (st.config || {}).nome || "Minha Nutri";
+    var zapN = (st.config || {}).zap || "";
+    var primeiro = (p.nome || "").split(" ")[0];
+    var dieta = dietaDe(st, p.id);
+    var alvo = kcalAlvo(p);
+    var refs = (dieta.refeicoes || []).map(function (r) {
+      var kcalRef = 0;
+      var itens = (r.itens || []).map(function (it) {
+        var al = alimPorId(st, it.alimId);
+        if (!al) return null;
+        var k = Math.round(al.kcal * (+it.qtd || 1));
+        kcalRef += k;
+        return { n: al.nome, q: String(it.qtd).replace(".", ",") + " × " + al.porcao, k: k };
+      }).filter(Boolean);
+      return { id: r.id, h: r.hora, t: r.titulo, k: kcalRef, itens: itens };
+    });
+    var aguaMl = dieta.aguaMl || 2000;
+    var nuvemCfg = self.MT_CLOUD || {};
+    var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && p.appTokenN);
+
+    return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+      "<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#14532d'>" +
+      "<title>" + esc(primeiro) + " · " + esc(studio) + "</title><style>" +
+      "*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0f1a12;color:#eef7f0;max-width:480px;margin:0 auto;padding:16px 14px 60px}" +
+      ".cardx{background:#16241a;border:1px solid #29402f;border-radius:16px;padding:16px;margin-bottom:12px}" +
+      "h1{font-size:20px}h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#86efac;margin-bottom:10px}" +
+      ".btnx{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:11px;padding:12px 16px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}" +
+      ".vz{color:#9fb8a6;font-size:12.5px;text-align:center;padding:8px 0}" +
+      ".kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #29402f;font-size:14px}" +
+      "input{background:#0f1a12;border:1px solid #29402f;border-radius:10px;color:#fff;padding:11px;font-family:inherit;font-size:14px}" +
+      "details{border:1px solid #29402f;border-radius:12px;margin-bottom:8px;background:#101c14}summary{padding:12px 14px;cursor:pointer;font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:8px}" +
+      ".agua-bar{height:16px;background:#0f1a12;border-radius:99px;overflow:hidden;border:1px solid #29402f;margin:8px 0}" +
+      ".agua-fill{height:100%;background:linear-gradient(90deg,#0891b2,#22d3ee);transition:width .3s}" +
+      ".refok{background:#16a34a;border:none;color:#fff;border-radius:9px;padding:8px 14px;font-weight:800;cursor:pointer;font-family:inherit}" +
+      ".refok.off{background:#29402f;color:#9fb8a6}" +
+      "</style></head><body>" +
+      "<div style='text-align:center;padding:8px 0 14px;'><span style='font-size:11px;letter-spacing:.2em;color:#86efac;font-weight:700;'>" + esc(studio).toUpperCase() + " 🥗</span>" +
+      "<h1>Oi, " + esc(primeiro) + "!</h1><div class='vz' style='padding:2px 0;'>Meta: <b style='color:#86efac'>" + alvo.alvo + " kcal</b> · 💧 " + aguaMl + " ml/dia</div></div>" +
+      "<div class='cardx'><h2>⏰ Próxima refeição</h2><div id='proxRef' class='vz' style='font-size:15px;color:#fff;font-weight:700;'></div></div>" +
+      "<div class='cardx'><h2>💧 Água de hoje</h2>" +
+      "<div class='agua-bar'><div class='agua-fill' id='agFill' style='width:0%'></div></div>" +
+      "<div style='display:flex;justify-content:space-between;align-items:center;'><span id='agTxt' class='vz' style='padding:0;'></span>" +
+      "<button class='btnx' id='agAdd'>+ 1 copo (250 ml)</button></div>" +
+      "<button class='btnx' id='agLembrete' style='width:100%;margin-top:10px;background:#0e7490;'>🔔 Me lembrar de beber água</button>" +
+      "<div class='vz' id='agNota' style='font-size:11px;'>Com o app aberto, avisamos a cada hora. 💧</div></div>" +
+      "<div class='cardx'><h2>🍽 Minhas refeições</h2><div id='refProg' class='vz' style='padding:0 0 8px;'></div>" +
+      (refs.length ? refs.map(function (r) {
+        return "<details><summary><span>⏰ " + esc(r.h) + " · " + esc(r.t) + "</span><span style='color:#86efac'>" + r.k + " kcal</span></summary>" +
+          "<div style='padding:0 14px 12px;'>" +
+          r.itens.map(function (it) { return "<div class='kv'><span>" + esc(it.n) + "</span><span style='color:#9fb8a6'>" + esc(it.q) + " · " + it.k + " kcal</span></div>"; }).join("") +
+          "<button class='refok off' data-refok='" + r.id + "' data-k='" + r.k + "' style='width:100%;margin-top:10px;'>Marcar como feita ✓</button></div></details>";
+      }).join("") : "<div class='vz'>Sua dieta aparece aqui quando " + esc(primeiro === p.nome ? "o nutricionista" : studio.split(" ")[0]) + " montar. 🥦</div>") + "</div>" +
+      "<div class='cardx'><h2>📊 Meu dia</h2><div class='kv'><span>Calorias das refeições feitas</span><b id='kcalDia'>0 kcal</b></div>" +
+      "<div class='kv'><span>Meta do dia</span><span>" + alvo.alvo + " kcal</span></div></div>" +
+      "<div class='cardx'><h2>⚖️ Meu peso</h2>" +
+      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
+      "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
+      (temNuvem ? "<div class='cardx'><h2>🔑 Meu login</h2>" +
+        "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie login e senha para abrir seu app de qualquer aparelho (página Entrar do aluno).</div>" +
+        "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
+        "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;'>" +
+        "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button><div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
+      (zapN ? "<a class='btnx' style='display:block;text-align:center;text-decoration:none;background:#15803d;' href='https://wa.me/55" + String(zapN).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi! Sou " + p.nome + ", sobre minha dieta:") + "' target='_blank' rel='noopener'>💬 Falar com " + esc(studio.split(" ")[0]) + "</a>" : "") +
+      "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 🥗</div>" +
+      "<script>var REFS=" + JSON.stringify(refs.map(function (r) { return { id: r.id, h: r.h, t: r.t, k: r.k }; })) +
+      ",AGUAML=" + aguaMl + ",KCALMETA=" + alvo.alvo +
+      ",NUVEM=" + JSON.stringify(temNuvem ? { u: nuvemCfg.url, k: nuvemCfg.anonKey } : null) +
+      ",TOKEN=" + JSON.stringify(p.appTokenN || "") + ";" +
+      "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
+      "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}" +
+      "function isoHj(){return new Date().toISOString().slice(0,10);}" +
+      "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
+      "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +
+      // água
+      "function pintaAgua(){var ml=L('ntag_'+isoHj(),0);var pct=Math.min(100,Math.round(ml*100/AGUAML));" +
+      "document.getElementById('agFill').style.width=pct+'%';" +
+      "document.getElementById('agTxt').innerHTML='<b style=\"color:#22d3ee\">'+ml+' ml</b> de '+AGUAML+' ml ('+pct+'%)'+(pct>=100?' 🎉':'');}" +
+      "document.getElementById('agAdd').addEventListener('click',function(){Sv('ntag_'+isoHj(),L('ntag_'+isoHj(),0)+250);pintaAgua();" +
+      "if(navigator.vibrate)navigator.vibrate(60);});pintaAgua();" +
+      // lembretes de água (notificação local com o app aberto)
+      "var agTimer=null;document.getElementById('agLembrete').addEventListener('click',function(){var b=this;" +
+      "if(!('Notification' in window)){alert('Este navegador não permite notificações — deixa o app aberto que a barra de água te lembra. 💧');return;}" +
+      "Notification.requestPermission().then(function(perm){if(perm!=='granted'){alert('Permissão negada — ative nas configurações do navegador.');return;}" +
+      "b.textContent='🔔 Lembretes ligados (a cada hora)';b.disabled=true;Sv('ntlembra',1);" +
+      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('💧 Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);});});" +
+      "if(L('ntlembra',0)&&('Notification' in window)&&Notification.permission==='granted'){document.getElementById('agLembrete').textContent='🔔 Lembretes ligados (a cada hora)';document.getElementById('agLembrete').disabled=true;" +
+      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('💧 Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);}" +
+      // refeições feitas + kcal do dia + próxima
+      "function pintaRefs(){var f=L('ntref_'+isoHj(),{});var kc=0,n=0;" +
+      "document.querySelectorAll('[data-refok]').forEach(function(b){var ok=!!f[b.dataset.refok];b.classList.toggle('off',!ok);b.textContent=ok?'✓ Feita!':'Marcar como feita ✓';if(ok){kc+=+b.dataset.k;n++;}});" +
+      "document.getElementById('kcalDia').textContent=kc+' kcal';" +
+      "document.getElementById('refProg').innerHTML=REFS.length?('<b style=\"color:#86efac\">'+n+' de '+REFS.length+'</b> refeições feitas hoje'+(n===REFS.length&&REFS.length?' — dia perfeito! 🎉':'')):'';" +
+      "var ag=new Date();var hm=('0'+ag.getHours()).slice(-2)+':'+('0'+ag.getMinutes()).slice(-2);" +
+      "var prox=REFS.filter(function(r){return r.h>=hm&&!f[r.id];})[0]||REFS.filter(function(r){return !f[r.id];})[0];" +
+      "document.getElementById('proxRef').textContent=prox?('⏰ '+prox.h+' — '+prox.t+' ('+prox.k+' kcal)'):(REFS.length?'Todas as refeições de hoje feitas! 🎉':'Sem dieta ainda.');}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-refok]');if(!b)return;" +
+      "var f=L('ntref_'+isoHj(),{});if(f[b.dataset.refok])delete f[b.dataset.refok];else f[b.dataset.refok]=1;Sv('ntref_'+isoHj(),f);pintaRefs();});pintaRefs();" +
+      // peso
+      "function pintaPz(){var l=L('ntpeso',[]);if(!l.length)return;var el=document.getElementById('pzGraf');" +
+      "el.innerHTML=l.slice(-10).map(function(x){return \"<div class='kv'><span>\"+x.d.split('-').reverse().slice(0,2).join('/')+\"</span><b>\"+String(x.kg).replace('.',',')+\" kg</b></div>\";}).join('');}" +
+      "document.getElementById('pzAdd').addEventListener('click',function(){var kg=parseFloat(document.getElementById('pzKg').value.replace(',','.'));if(!kg)return;" +
+      "var l=L('ntpeso',[]);l.push({d:isoHj(),kg:kg});if(l.length>90)l.shift();Sv('ntpeso',l);document.getElementById('pzKg').value='';pintaPz();});pintaPz();" +
+      // login e senha do aluno
+      "var lgB=document.getElementById('lgSalva');if(lgB)lgB.addEventListener('click',function(){" +
+      "var lg=document.getElementById('lgLogin').value.trim(),sn=document.getElementById('lgSenha').value;" +
+      "if(lg.length<5||sn.length<6){alert('Preencha o login (e-mail ou celular) e uma senha de 6+ caracteres.');return;}" +
+      "var b=this;b.disabled=true;rpcApp('aluno_define_login',{t:TOKEN,p_login:lg,p_senha:sn}).then(function(r){b.disabled=false;" +
+      "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='✅ Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha.';document.getElementById('lgSenha').value='';}" +
+      "else{alert((r&&r.erro)||'Não deu agora — tenta de novo.');}});});" +
+      "window.__appNutri=true;" +
+      "<\/script></body></html>";
+  }
+  window.__montaAppNutri = montaAppNutri; // testes
+
+  function publicaApp(pid) {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pid; });
+    if (!p) return;
+    if (!p.appTokenN) { p.appTokenN = S.uid() + S.uid(); S.write("ntStudio", st); }
+    var stamp = new Date().toISOString();
+    var html = montaAppNutri(p, stamp);
+    var blob = new Blob([html], { type: "text/html" });
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "app-" + (p.nome || "paciente").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); link.remove(); }, 800);
+    var nuvem = S.cloud && S.cloud();
+    if (nuvem) {
+      nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: { html: html, stamp: stamp }, atualizado: stamp }])
+        .then(function (r) {
+          if (r.error) { alert("Baixei o arquivo, mas a publicação online falhou: " + r.error.message); return; }
+          var url = location.origin + location.pathname.replace(/nutricao\.html$/, "") + "app/?t=" + p.appTokenN;
+          var msg = "Oi " + p.nome.split(" ")[0] + "! 🥗 Seu app de dieta está pronto: " + url + " — abre no navegador e usa 'Adicionar à tela inicial'.";
+          if (confirm("App publicado! Mandar o link pro " + p.nome.split(" ")[0] + " no WhatsApp agora?")) {
+            window.open("https://wa.me/" + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
+          }
+        });
+    } else {
+      alert("Arquivo do app baixado! Envie pelo WhatsApp do paciente.\n\n💡 Criando sua conta (card lá embaixo), o app ganha link online que se atualiza sozinho quando você mudar a dieta.");
+    }
+  }
+
+  // ---------- kpis + conta ----------
+  function renderKpis(st) {
+    var ativos = st.pacientes.filter(function (p) { return p.ativo !== false; });
+    var comDieta = ativos.filter(function (p) { return (st.dietas[p.id] && (st.dietas[p.id].refeicoes || []).length); });
+    $("kpisN").innerHTML = [
+      { rot: "Pacientes ativos", val: ativos.length },
+      { rot: "Com dieta entregue", val: comDieta.length },
+      { rot: "Sem dieta ainda", val: ativos.length - comDieta.length },
+      { rot: "Alimentos no banco", val: st.alimentos.length },
+    ].map(function (k) { return '<div class="kpi-nt"><div class="rot">' + k.rot + '</div><div class="val">' + k.val + "</div></div>"; }).join("");
+  }
+  function renderConta() {
+    var st = load();
+    if (document.activeElement !== $("cfgZap")) $("cfgZap").value = (st.config || {}).zap || "";
+    var u = S.usuario ? S.usuario() : {};
+    $("contaStatus").innerHTML = u.logado
+      ? "✅ <b>Conectado como " + esc(u.email) + "</b> — seus pacientes e dietas sincronizam entre os seus aparelhos, na SUA ilha, separados de qualquer outro profissional."
+      : "🔒 Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> para ter a sua ilha na nuvem e publicar o app dos pacientes com link online.";
+  }
+  $("cfgZap").addEventListener("change", function () {
+    var st = load();
+    st.config.zap = this.value.replace(/\D/g, "");
+    S.write("ntStudio", st);
+  });
+
+  function render() {
+    var st = load();
+    renderKpis(st);
+    renderPacientes(st);
+    renderConta();
+  }
+  S.onChange(function (k) { if (k === "ntStudio") render(); });
+  window.__ntStudio = render; // testes
+  checaOnboarding();
+  render();
+})();
+</script>
+</body>
+</html>
