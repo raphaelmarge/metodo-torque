@@ -1577,21 +1577,32 @@
     document.body.appendChild(link);
     link.click();
     setTimeout(function () { URL.revokeObjectURL(link.href); link.remove(); }, 800);
-    // se logado, publica na nuvem e mostra o link online
-    var nuvem = S.cloud && S.cloud();
-    if (nuvem) {
+    // se logado, publica na nuvem e mostra o link online.
+    // a conexão da nuvem sobe assíncrona depois do login — espera por ela antes
+    // de concluir que não tem conta (senão o app não era salvo logo após entrar)
+    var espera = function (vezes) {
+      var n = S.cloud && S.cloud();
+      if (n || !vezes) return Promise.resolve(n || null);
+      if (S.iniciaSync) S.iniciaSync();
+      return new Promise(function (res) { setTimeout(function () { res(espera(vezes - 1)); }, window.__nuvemTickMs || 700); });
+    };
+    espera(6).then(function (nuvem) {
+      if (!nuvem) {
+        alert("Arquivo do app baixado! Envie pelo WhatsApp do aluno.\n\n💡 Criando sua conta (card lá embaixo), o app ganha link online que se atualiza sozinho.");
+        return;
+      }
       nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: { html: html, stamp: stamp }, atualizado: stamp }])
         .then(function (r) {
-          if (r.error) { alert("Baixei o arquivo, mas a publicação online falhou: " + r.error.message); return; }
+          if (r.error) { alert("⚠️ Baixei o arquivo, mas o app NÃO foi salvo na nuvem: " + r.error.message + "\n\nO link online não vai funcionar até publicar de novo com internet."); return; }
           var url = location.origin + location.pathname.replace(/personal\.html$/, "") + "app/?t=" + a.appTokenP;
           var msg = "Oi " + a.nome.split(" ")[0] + "! 💪 Seu app de treino tá pronto: " + url + " — abre no navegador e usa 'Adicionar à tela inicial'.";
           if (confirm("App publicado! Mandar o link pro " + a.nome.split(" ")[0] + " no WhatsApp agora?")) {
             window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
           }
+        }, function (e) {
+          alert("⚠️ Baixei o arquivo, mas o app NÃO foi salvo na nuvem (sem conexão: " + ((e && e.message) || "rede") + "). Gere de novo com internet pra ativar o link online.");
         });
-    } else {
-      alert("Arquivo do app baixado! Envie pelo WhatsApp do aluno.\n\n💡 Criando sua conta (card lá embaixo), o app ganha link online que se atualiza sozinho.");
-    }
+    });
   });
   window.__montaAppAluno = montaAppAluno; // testes
 

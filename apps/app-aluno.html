@@ -993,35 +993,65 @@
     var el = $("pubStatus");
     if (el) { el.textContent = msg; el.style.color = cor || "var(--cinza)"; }
   }
-  function publicaTodos(auto) {
+  // a conexão da nuvem sobe assíncrona (sessão → academia); espera por ela antes
+  // de concluir que não tem login — era isso que fazia a publicação "não salvar"
+  function esperaNuvem(vezes) {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) {
-      statusPub(auto ? "⚪ Publicação automática: entre com seu login da nuvem pra ligar." :
-        "Entre com seu login da nuvem primeiro (portal → Entrar) pra publicar os apps.");
-      return Promise.resolve(false);
-    }
-    var lista = alunos();
-    if (!lista.length) { statusPub("Nenhum aluno ativo pra publicar."); return Promise.resolve(false); }
-    garanteTokens(lista);
-    statusPub("⏳ Publicando " + lista.length + " app(s)…");
-    var agora = new Date().toISOString();
-    var linhas = lista.filter(function (a) { return a.appToken; }).map(function (a) {
-      return { token: a.appToken, academia_id: nuvem.aid, dados: { html: montaApp(a, agora), stamp: agora }, atualizado: agora };
+    if (nuvem || !vezes) return Promise.resolve(nuvem || null);
+    if (S.iniciaSync) S.iniciaSync();
+    return new Promise(function (res) {
+      setTimeout(function () { res(esperaNuvem(vezes - 1)); }, window.__nuvemTickMs || 700);
     });
-    return nuvem.client.from("app_aluno").upsert(linhas).then(function (r) {
-      if (r.error) {
-        var m = String(r.error.message || "");
-        statusPub(m.indexOf("app_aluno") >= 0 || m.indexOf("relation") >= 0 ?
-          "❌ Falta criar a tabela na nuvem: rode o bloco 'APP DO ALUNO' do supabase-setup.sql no SQL Editor do Supabase (1 min)." :
-          "❌ Não consegui publicar: " + m, "var(--erro)");
+  }
+  function publicaMesmo(auto) {
+    return esperaNuvem(auto ? 10 : 5).then(function (nuvem) {
+      if (!nuvem) {
+        statusPub(auto ? "⚪ Publicação automática: entre com seu login da nuvem pra ligar." :
+          "❌ Entre com seu login da nuvem primeiro (portal → Entrar) pra publicar os apps.", auto ? null : "var(--erro)");
         return false;
       }
-      statusPub("✅ " + linhas.length + " app(s) publicados às " + new Date().toTimeString().slice(0, 5) + " — os alunos recebem a versão nova ao abrir o app com internet.", "var(--ok)");
-      return true;
-    }, function (e) {
-      statusPub("❌ Sem conexão com a nuvem agora (" + (e && e.message || "rede") + ") — tento de novo quando você publicar.", "var(--erro)");
-      return false;
+      var lista = alunos();
+      if (!lista.length) { statusPub("Nenhum aluno ativo pra publicar."); return false; }
+      garanteTokens(lista);
+      var agora = new Date().toISOString();
+      var linhas = lista.filter(function (a) { return a.appToken; }).map(function (a) {
+        return { token: a.appToken, academia_id: nuvem.aid, dados: { html: montaApp(a, agora), stamp: agora }, atualizado: agora };
+      });
+      // envia em lotes pequenos: requisição gigante estoura/estoura tempo com muitos alunos
+      var lotes = [];
+      for (var i = 0; i < linhas.length; i += 8) lotes.push(linhas.slice(i, i + 8));
+      var feitos = 0, falha = null;
+      var fila = Promise.resolve();
+      lotes.forEach(function (lote) {
+        fila = fila.then(function () {
+          if (falha) return;
+          statusPub("⏳ Publicando… " + feitos + "/" + linhas.length);
+          return nuvem.client.from("app_aluno").upsert(lote).then(function (r) {
+            if (r.error) { falha = String(r.error.message || "erro"); return; }
+            feitos += lote.length;
+          }, function (e) { falha = (e && e.message) || "rede"; });
+        });
+      });
+      return fila.then(function () {
+        if (falha) {
+          statusPub(falha.indexOf("app_aluno") >= 0 || falha.indexOf("relation") >= 0 ?
+            "❌ Falta criar a tabela na nuvem: rode o bloco 'APP DO ALUNO' do supabase-setup.sql no SQL Editor do Supabase (1 min)." :
+            "❌ Não consegui publicar (" + feitos + " de " + linhas.length + " foram): " + falha, "var(--erro)");
+          return false;
+        }
+        statusPub("✅ " + feitos + " app(s) publicados às " + new Date().toTimeString().slice(0, 5) + " — os alunos recebem a versão nova ao abrir o app com internet.", "var(--ok)");
+        return true;
+      });
     });
+  }
+  // publicações entram numa fila (nunca em paralelo): o "Gerar app" de um aluno
+  // novo espera a publicação em andamento acabar e roda de novo já com o token dele
+  var filaPub = Promise.resolve();
+  function publicaTodos(auto) {
+    var roda = function () { return publicaMesmo(auto); };
+    var pr = filaPub.then(roda, roda);
+    filaPub = pr;
+    return pr;
   }
   window.__appPub = publicaTodos; // usado nos testes
 
@@ -1033,18 +1063,31 @@
     htmlGerado = montaApp(a, new Date().toISOString());
     var nomeAcad = nomeAcademia();
     var primeiro = a.nome.split(" ")[0];
-    publicaTodos(true); // mantém a nuvem em dia sempre que gerar
 
     $("cardPrevia").hidden = false;
     $("cardEnvio").hidden = false;
     $("quadroPrevia").srcdoc = htmlGerado;
     var base = location.origin + location.pathname.replace(/apps\/[^/]*$/, "") + "app/?t=";
-    var linkH = alunoAtual && alunoAtual.appToken ? base + alunoAtual.appToken : "";
-    $("linkHospedado").textContent = linkH || "(publique os apps primeiro)";
-    $("btnCopiaLink").hidden = !linkH;
-    $("btnCopiaLink").onclick = function () {
-      navigator.clipboard.writeText(linkH).then(function () { $("btnCopiaLink").textContent = "copiado!"; setTimeout(function () { $("btnCopiaLink").textContent = "copiar"; }, 1500); });
-    };
+    var linkH = a.appToken ? base + a.appToken : "";
+    var elL = $("linkHospedado");
+    elL.textContent = "⏳ publicando o app na nuvem…";
+    elL.style.color = "";
+    $("btnCopiaLink").hidden = true;
+    // só oferece o link quando a publicação SALVOU de verdade — antes, o link era
+    // mostrado mesmo com a nuvem desligada e o aluno recebia "app não encontrado"
+    publicaTodos(true).then(function (salvou) {
+      if (salvou && linkH) {
+        elL.textContent = linkH;
+        elL.style.color = "var(--roxo)";
+        $("btnCopiaLink").hidden = false;
+        $("btnCopiaLink").onclick = function () {
+          navigator.clipboard.writeText(linkH).then(function () { $("btnCopiaLink").textContent = "copiado!"; setTimeout(function () { $("btnCopiaLink").textContent = "copiar"; }, 1500); });
+        };
+      } else {
+        elL.textContent = "⚠️ ainda não salvo na nuvem — veja o motivo no card 🔗 App conectado (o link só funciona depois de publicar; o arquivo baixado funciona normal).";
+        elL.style.color = "var(--erro)";
+      }
+    });
     var bz = $("btnZap");
     if (a.zap) {
       bz.hidden = false;
