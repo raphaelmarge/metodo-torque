@@ -299,7 +299,11 @@
       <label style="margin: 0; font-size: 12.5px;">Cidade
         <input id="cfgPixCidade" placeholder="ex.: Belo Horizonte" style="width: 150px; display: block; margin-top: 4px;"></label>
     </div>
-    <a class="btn sec" id="btnConta" href="index.html">Criar minha conta / Entrar</a>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+      <button class="btn" id="btnContaEntrar">🔑 Entrar na minha conta</button>
+      <button class="btn sec" id="btnContaCriar">Criar conta TORQUE PERSONAL</button>
+      <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
+    </div>
   </div>
 </main>
 
@@ -307,6 +311,7 @@
 <script src="assets/cloud-config.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="apps/store.js"></script>
+<script src="assets/modulo-conta.js"></script>
 <script>
 (function () {
   "use strict";
@@ -1749,9 +1754,11 @@
       if (document.activeElement !== $(par[0])) $(par[0]).value = (st.config || {})[par[1]] || "";
     });
     var u = S.usuario ? S.usuario() : {};
+    $("btnContaEntrar").hidden = u.logado;
+    $("btnContaCriar").hidden = u.logado;
+    $("btnContaSair").hidden = !u.logado;
     if (u.logado) {
       $("contaStatus").innerHTML = "✅ <b>Conectado como " + esc(u.email) + "</b> — seus dados sincronizam entre os seus aparelhos e ficam na SUA ilha, separados de qualquer outro personal ou academia.";
-      $("btnConta").textContent = "Gerenciar conta no portal";
     } else {
       $("contaStatus").innerHTML = "🔒 Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> (leva 1 minuto) para ter a sua ilha na nuvem: sincroniza celular ↔ computador e libera o app dos seus alunos com link online.";
     }
@@ -1789,6 +1796,26 @@
   S.onChange(function (k) { if (k === "ptStudio") render(); });
   verificaOnboarding();
   render();
+
+  // ---------- login próprio do TORQUE PERSONAL ----------
+  var contaP = self.MT_moduloConta({
+    marca: "PERSONAL",
+    corTag: "#a78bfa",
+    grad: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+    fundo: "#121016",
+    cardBg: "#1c1826",
+    borda: "#2c2739",
+    sub: "O sistema do personal trainer. Entre na SUA conta — seus alunos e treinos ficam na sua ilha, separados de todo mundo.",
+    flag: "mtapp:ptSemConta",
+    nomeCampo: "Nome do seu studio (ex.: Studio Léo)",
+    nomeIlha: function () { return (load().config || {}).nome || ""; },
+    salvaNome: function (nome) { var st = load(); if (!st.config.nome) { st.config.nome = nome; S.write("ptStudio", st); } },
+    depois: function () { verificaOnboarding(); render(); },
+  });
+  $("btnContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
+  $("btnContaCriar").addEventListener("click", function () { contaP.abre("criar"); });
+  $("btnContaSair").addEventListener("click", contaP.sair);
+
   window.__ptStudio = { load: load, render: render }; // testes
 })();
 </script>

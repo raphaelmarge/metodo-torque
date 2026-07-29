@@ -19,6 +19,8 @@ function ok(cond, nome) {
     if (localStorage.getItem("mtapp:seeded")) return;
     localStorage.setItem("mtapp:seeded", "1");
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+    localStorage.setItem("mtapp:ptSemConta", "1");
+    localStorage.setItem("mtapp:ntSemConta", "1");
   });
   const erros = [];
 
@@ -222,6 +224,21 @@ function ok(cond, nome) {
   const corpo = await pSite.evaluate(() => document.body.textContent);
   ok(/Nutricionista/.test(corpo) && /Dieta automática/.test(corpo), "segmento Nutricionista no site comercial");
   await pSite.close();
+
+  // login próprio do TORQUE NUTRI (gate verde do módulo)
+  const ctxG = await b.newContext({ viewport: { width: 1360, height: 900 } });
+  await ctxG.addInitScript(() => localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "R" })));
+  const pG = await ctxG.newPage();
+  pG.on("pageerror", (e) => erros.push(String(e)));
+  await pG.goto(BASE + "/nutricao.html");
+  await pG.waitForFunction(() => document.getElementById("gateModulo") && !document.getElementById("gateModulo").hidden, null, { timeout: 8000 });
+  const gateTxt = await pG.evaluate(() => document.getElementById("gateModulo").textContent);
+  ok(/TORQUE/.test(gateTxt) && /NUTRI/.test(gateTxt) && /Entrar/.test(gateTxt), "tela de entrada com a marca TORQUE NUTRI (não manda pro portal)");
+  await pG.click("#mgLocal");
+  const fechou = await pG.evaluate(() => document.getElementById("gateModulo").hidden);
+  ok(fechou, "'experimentar sem conta' libera o módulo");
+  await pG.close();
+  await ctxG.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 

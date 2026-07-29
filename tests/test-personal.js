@@ -20,6 +20,8 @@ function ok(cond, nome) {
     if (localStorage.getItem("mtapp:seeded")) return;
     localStorage.setItem("mtapp:seeded", "1");
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+    localStorage.setItem("mtapp:ptSemConta", "1");
+    localStorage.setItem("mtapp:ntSemConta", "1");
     function d(off) { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); }
     localStorage.setItem("mtapp:alunos", JSON.stringify({
       alunos: [
@@ -518,6 +520,28 @@ function ok(cond, nome) {
   const corpo = await p.evaluate(() => document.body.textContent);
   ok(/personal trainer/.test(corpo) && /Pagamentos/.test(corpo), "landing com pitch e features");
   await p.close();
+
+  // ---------- 4) login próprio do TORQUE PERSONAL (gate do módulo) ----------
+  console.log("Login próprio do módulo:");
+  const ctxG = await b.newContext({ viewport: { width: 1360, height: 900 } });
+  await ctxG.addInitScript(() => localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "R" })));
+  const pG = await ctxG.newPage();
+  pG.on("pageerror", (e) => erros.push(String(e)));
+  await pG.goto(BASE + "/personal.html");
+  await pG.waitForFunction(() => document.getElementById("gateModulo") && !document.getElementById("gateModulo").hidden, null, { timeout: 8000 });
+  const gateTxt = await pG.evaluate(() => document.getElementById("gateModulo").textContent);
+  ok(/TORQUE/.test(gateTxt) && /PERSONAL/.test(gateTxt), "tela de entrada com a marca TORQUE PERSONAL (não manda pro portal)");
+  ok(/Entrar/.test(gateTxt) && /Criar conta/.test(gateTxt) && /Experimentar sem conta/.test(gateTxt), "abas Entrar/Criar conta + modo local");
+  await pG.click("#mgAbaCriar");
+  const nomeVisivel = await pG.evaluate(() => !document.getElementById("mgNome").hidden);
+  ok(nomeVisivel, "criar conta pede o nome do studio");
+  await pG.click("#mgLocal");
+  const fechou = await pG.evaluate(() => document.getElementById("gateModulo").hidden && !document.getElementById("boasVindas").hidden);
+  ok(fechou, "'experimentar sem conta' fecha o gate e abre o onboarding");
+  const temBotoes = await pG.evaluate(() => !!document.getElementById("btnContaEntrar") && !!document.getElementById("btnContaSair"));
+  ok(temBotoes, "card da ilha com botões Entrar/Criar/Sair próprios do módulo");
+  await pG.close();
+  await ctxG.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
