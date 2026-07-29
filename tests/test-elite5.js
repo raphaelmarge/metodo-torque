@@ -21,6 +21,8 @@ function ok(cond, nome) {
     if (localStorage.getItem("mtapp:seeded")) return;
     localStorage.setItem("mtapp:seeded", "1");
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+    localStorage.setItem("mtapp:ptSemConta", "1");
+    localStorage.setItem("mtapp:ntSemConta", "1");
     localStorage.setItem("mtapp:config", JSON.stringify({ dados: { nome: "TORQUE FIT" } }));
     const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString(); };
     // 8 check-ins no mês (desafio meta 12 → 67%) e 30+ no ano (retrospectiva)
