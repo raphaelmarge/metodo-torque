@@ -175,6 +175,61 @@ function ok(cond, nome) {
   await p2.close();
   await p.close();
 
+  // ---------- 6b) Publicação na nuvem: só oferece o link quando salvou ----------
+  console.log("Publicação do app (nuvem):");
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  await p.goto(BASE + "/apps/app-aluno.html");
+  await p.waitForFunction(() => window.__appPub);
+  // sem login → publicar avisa e o link do aluno NÃO é oferecido
+  let pubOk = await p.evaluate(() => {
+    window.__nuvemTickMs = 5; // acelera a espera pela nuvem nos testes
+    window.MTStore.cloud = () => null;
+    window.MTStore.iniciaSync = () => {};
+    return window.__appPub(false);
+  });
+  ok(pubOk === false, "sem login na nuvem, publicar devolve falso");
+  let stPub = await p.evaluate(() => document.getElementById("pubStatus").textContent);
+  ok(/Entre com seu login/.test(stPub), "status explica que precisa entrar na nuvem");
+  await p.evaluate(() => { document.getElementById("fAluno").value = "Rafa Silva"; window.__appAluno.gera(); });
+  await p.waitForFunction(() => /ainda não salvo/.test(document.getElementById("linkHospedado").textContent));
+  ok(true, "gerar sem nuvem mostra aviso no lugar do link (antes mandava link morto)");
+  let copiaEsc = await p.evaluate(() => document.getElementById("btnCopiaLink").hidden);
+  ok(copiaEsc === true, "botão copiar fica escondido enquanto não salvou");
+  // com a nuvem (simulada) → upsert em app_aluno e o link aparece
+  pubOk = await p.evaluate(() => {
+    window.__upserts = [];
+    window.MTStore.cloud = () => ({
+      aid: "acad-teste",
+      client: { from: (t) => ({ upsert: (linhas) => { window.__upserts.push({ t, linhas }); return Promise.resolve({ data: linhas, error: null }); } }) },
+    });
+    return window.__appPub(false);
+  });
+  ok(pubOk === true, "com nuvem, publicar devolve verdadeiro");
+  const ups = await p.evaluate(() => window.__upserts);
+  const linhasPub = ups.flatMap((u) => u.linhas);
+  ok(ups.length >= 1 && ups.every((u) => u.t === "app_aluno") && linhasPub.length >= 2, "upsert na tabela app_aluno cobre os 2 alunos ativos");
+  ok(linhasPub.every((l) => l.token && l.academia_id === "acad-teste" && l.dados && /<html/i.test(l.dados.html || "") && l.dados.stamp), "cada linha tem token, academia e o HTML do app");
+  stPub = await p.evaluate(() => document.getElementById("pubStatus").textContent);
+  ok(/✅ 2 app/.test(stPub), "status confirma 2 apps publicados");
+  await p.evaluate(() => { document.getElementById("fAluno").value = "Rafa Silva"; window.__appAluno.gera(); });
+  await p.waitForFunction(() => /app\/\?t=tok-rafa/.test(document.getElementById("linkHospedado").textContent));
+  ok(true, "com a publicação salva, o link hospedado do aluno aparece");
+  copiaEsc = await p.evaluate(() => document.getElementById("btnCopiaLink").hidden);
+  ok(copiaEsc === false, "botão copiar aparece junto com o link");
+  // erro da nuvem → status honesto de falha
+  pubOk = await p.evaluate(() => {
+    window.MTStore.cloud = () => ({
+      aid: "acad-teste",
+      client: { from: () => ({ upsert: () => Promise.resolve({ error: { message: "permission denied" } }) }) },
+    });
+    return window.__appPub(false);
+  });
+  ok(pubOk === false, "erro da nuvem devolve falso");
+  stPub = await p.evaluate(() => document.getElementById("pubStatus").textContent);
+  ok(/Não consegui publicar/.test(stPub), "status mostra o erro da publicação");
+  await p.close();
+
   // ---------- 7) Totem respeita faixa de horário do plano ----------
   console.log("Totem × faixa de horário:");
   p = await ctx.newPage();
