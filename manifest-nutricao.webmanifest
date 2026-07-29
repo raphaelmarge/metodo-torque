@@ -1,13 +1,21 @@
 {
-  "name": "TORQUESYS Nutrição",
-  "short_name": "TQS Nutri",
-  "description": "O sistema do nutricionista: pacientes, dietas, dieta automática e app do paciente com água e alertas.",
+  "id": "torque-nutri",
+  "name": "TORQUE NUTRI — Nutrição e Dietas",
+  "short_name": "TQ Nutri",
+  "description": "O sistema do nutricionista: pacientes, dietas com banco de 339 alimentos, dieta automática para revisão profissional, diário alimentar com código de barras e app do paciente com lembretes de água.",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "nutricao.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f1a12",
   "theme_color": "#16a34a",
+  "categories": ["health", "food", "medical"],
   "icons": [
-    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "assets/icons/icon-nutri.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icons/icon-nutri-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-nutri-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-nutri-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
