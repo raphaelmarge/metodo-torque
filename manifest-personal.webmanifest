@@ -1,21 +1,21 @@
 {
-  "name": "TORQUESYS Personal",
-  "short_name": "TQS Personal",
-  "description": "Gestão do personal trainer: alunos, agenda, pagamentos e treinos.",
+  "id": "torque-personal",
+  "name": "TORQUE PERSONAL — Gestão do Personal Trainer",
+  "short_name": "TQ Personal",
+  "description": "O escritório do personal trainer: alunos, agenda, fichas de treino com progressão, pagamentos por Pix, relatórios e o app de cada aluno com acompanhamento a distância.",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "personal.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#121016",
   "theme_color": "#7c3aed",
+  "categories": ["fitness", "health", "business"],
   "icons": [
-    {
-      "src": "assets/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "assets/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "assets/icons/icon-personal.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icons/icon-personal-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-personal-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-personal-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

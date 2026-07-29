@@ -1,0 +1,26 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.torquesys.academia",
+      "sha256_cert_fingerprints": ["COLE_AQUI_O_SHA256_DO_PLAY_CONSOLE_DO_APP_ACADEMIA"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.torquesys.personal",
+      "sha256_cert_fingerprints": ["COLE_AQUI_O_SHA256_DO_PLAY_CONSOLE_DO_APP_PERSONAL"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.torquesys.nutri",
+      "sha256_cert_fingerprints": ["COLE_AQUI_O_SHA256_DO_PLAY_CONSOLE_DO_APP_NUTRI"]
+    }
+  }
+]
