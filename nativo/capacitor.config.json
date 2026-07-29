@@ -1,0 +1,12 @@
+{
+  "appId": "com.torquesys.academia",
+  "appName": "TORQUESYS",
+  "webDir": "www",
+  "backgroundColor": "#121016",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
