@@ -62,5 +62,25 @@ console.log("Guia de publicação:");
 const guia = fs.readFileSync(path.join(RAIZ, "PUBLICAR-NAS-LOJAS.md"), "utf8");
 ok(/pwabuilder/i.test(guia) && /play\.google\.com\/console/.test(guia) && /assetlinks/.test(guia) && /App Store/.test(guia), "PUBLICAR-NAS-LOJAS.md cobre Play, Apple e assetlinks");
 
+console.log("App nativo (Capacitor):");
+const pkgNativo = lerJson("nativo/package.json");
+ok(!!pkgNativo && !!(pkgNativo.dependencies || {})["@capacitor/core"] && !!(pkgNativo.dependencies || {})["@capacitor/android"], "nativo/package.json com Capacitor core + android");
+const capCfg = lerJson("nativo/capacitor.config.json");
+ok(!!capCfg && capCfg.appId === "com.torquesys.academia" && capCfg.webDir === "www", "capacitor.config.json com appId com.torquesys.academia e webDir www");
+for (const a of ["nativo/assets/icon.png", "nativo/assets/splash.png", "nativo/assets/splash-dark.png"]) {
+  ok(fs.existsSync(path.join(RAIZ, a)) && fs.statSync(path.join(RAIZ, a)).size > 10000, "asset nativo existe — " + a);
+}
+const wf = fs.readFileSync(path.join(RAIZ, ".github/workflows/app-nativo.yml"), "utf8");
+ok(/cap add android/.test(wf) && /assembleDebug/.test(wf) && /upload-artifact/.test(wf) && /workflow_dispatch/.test(wf), "workflow compila o APK e publica como artefato");
+// o copia-www monta o miolo do app sem faltar as portas de entrada
+const { execFileSync } = require("child_process");
+try {
+  execFileSync(process.execPath, [path.join(RAIZ, "nativo/copia-www.js")], { stdio: "pipe" });
+  ok(fs.existsSync(path.join(RAIZ, "nativo/www/index.html")) && fs.existsSync(path.join(RAIZ, "nativo/www/apps/store.js")), "copia-www monta o www com o sistema completo");
+  ok(!fs.existsSync(path.join(RAIZ, "nativo/www/supabase-setup.sql")) && !fs.existsSync(path.join(RAIZ, "nativo/www/tests")), "www não leva arquivos de servidor/testes");
+} catch (e) {
+  ok(false, "copia-www roda sem erro — " + String(e).slice(0, 120));
+}
+
 console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);
