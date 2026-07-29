@@ -44,6 +44,14 @@ console.log("Política de privacidade:");
 const priv = fs.readFileSync(path.join(RAIZ, "privacidade.html"), "utf8");
 ok(/Política de Privacidade/.test(priv) && /LGPD/.test(priv) && /Supabase/.test(priv), "privacidade.html cobre coleta, nuvem e LGPD");
 
+console.log("Cara de app nativo:");
+const manAcad = lerJson("manifest.webmanifest");
+ok(Array.isArray(manAcad.shortcuts) && manAcad.shortcuts.length >= 3, "academia tem atalhos de ícone (segurar o ícone → Sistema/Grade/Alunos)");
+for (const [arq, titulo] of [["index.html", "TORQUESYS"], ["personal.html", "TQ Personal"], ["nutricao.html", "TQ Nutri"]]) {
+  const htm = fs.readFileSync(path.join(RAIZ, arq), "utf8");
+  ok(htm.includes('apple-mobile-web-app-capable" content="yes"') && htm.includes('apple-mobile-web-app-title" content="' + titulo + '"'), arq + " abre em tela cheia no iPhone com título " + titulo);
+}
+
 console.log("Ícones por produto nas páginas:");
 const per = fs.readFileSync(path.join(RAIZ, "personal.html"), "utf8");
 const nut = fs.readFileSync(path.join(RAIZ, "nutricao.html"), "utf8");

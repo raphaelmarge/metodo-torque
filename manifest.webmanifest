@@ -12,6 +12,11 @@
   "background_color": "#121016",
   "theme_color": "#121016",
   "categories": ["business", "fitness", "productivity"],
+  "shortcuts": [
+    { "name": "Sistema da academia", "short_name": "Sistema", "url": "apps/sistema.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Grade de aulas", "short_name": "Grade", "url": "apps/grade.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Alunos", "short_name": "Alunos", "url": "apps/alunos.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ],
   "icons": [
     { "src": "assets/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
     { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
