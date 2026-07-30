@@ -62,6 +62,7 @@
     <button data-a="pacientes" class="ativa">🧑‍🤝‍🧑 Pacientes</button>
     <button data-a="dietas">🍽 Dietas</button>
     <button data-a="alimentos">🥗 Alimentos</button>
+    <button data-a="receitas">🍳 Receitas</button>
   </div>
 
   <div id="vPacientes">
@@ -113,6 +114,19 @@
       <div id="dTotais" style="margin-top: 10px; font-size: 13.5px; font-weight: 700;"></div>
       <datalist id="dlAlimentos"></datalist>
     </div>
+  </div>
+
+  <div id="vReceitas" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>🍳 Receitas fitness</h2>
+      <p class="muted" style="font-size: 13px;">Receitas com macros por porção (valores de referência — revise antes de prescrever). Use <b>+ Usar na dieta</b> pra receita virar um item do seu banco de alimentos e entrar nas refeições do paciente. Este blog cresce toda semana.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+        <input id="rcBusca" placeholder="🔍 Buscar receita ou ingrediente…" style="flex: 2; min-width: 180px;">
+        <select id="rcCat" style="min-width: 170px;"><option value="">Todas as categorias</option></select>
+      </div>
+      <div id="rcResumo" class="muted" style="font-size: 12.5px; margin-top: 8px;"></div>
+    </div>
+    <div id="rcLista"></div>
   </div>
 
   <div id="vAlimentos" hidden>
@@ -167,6 +181,7 @@
 <script src="assets/access-config.js"></script>
 <script src="assets/cloud-config.js"></script>
 <script src="assets/alimentos-db.js"></script>
+<script src="assets/receitas-db.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="apps/store.js"></script>
 <script src="assets/modulo-conta.js"></script>
@@ -280,8 +295,10 @@
     $("vPacientes").hidden = b.dataset.a !== "pacientes";
     $("vDietas").hidden = b.dataset.a !== "dietas";
     $("vAlimentos").hidden = b.dataset.a !== "alimentos";
+    $("vReceitas").hidden = b.dataset.a !== "receitas";
     if (b.dataset.a === "dietas") renderDietas();
     if (b.dataset.a === "alimentos") renderAlimentos();
+    if (b.dataset.a === "receitas") renderReceitas();
   });
 
   // ---------- onboarding ----------
@@ -595,6 +612,77 @@
     S.write("ntStudio", st);
     renderAlimentos();
   });
+
+  // ---------- blog de receitas fitness ----------
+  var RECEITAS = self.MT_RECEITAS || [];
+  function renderReceitas() {
+    var sel = $("rcCat");
+    if (sel.options.length <= 1) {
+      var cats = [];
+      RECEITAS.forEach(function (r) { if (cats.indexOf(r.cat) < 0) cats.push(r.cat); });
+      cats.sort().forEach(function (c) {
+        var o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o);
+      });
+    }
+    var busca = ($("rcBusca").value || "").toLowerCase();
+    var cat = sel.value;
+    var st = load();
+    var jaTem = {};
+    (st.alimentos || []).forEach(function (a) { jaTem[(a.nome || "").toLowerCase()] = 1; });
+    var lista = RECEITAS.filter(function (r) {
+      if (cat && r.cat !== cat) return false;
+      if (!busca) return true;
+      return (r.n + " " + r.ing.join(" ")).toLowerCase().indexOf(busca) >= 0;
+    });
+    $("rcResumo").textContent = lista.length + " de " + RECEITAS.length + " receitas";
+    $("rcLista").innerHTML = lista.map(function (r) {
+      var naDieta = jaTem[("receita: " + r.n).toLowerCase()];
+      return '<div class="card" style="margin-bottom: 10px;">' +
+        '<details><summary style="cursor: pointer; list-style: none; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">' +
+        '<b style="font-size: 15px; flex: 1; min-width: 180px;">' + esc(r.n) + "</b>" +
+        '<span class="muted" style="font-size: 12px;">' + esc(r.cat) + " · " + r.tempo + " min · rende " + r.rende + "</span>" +
+        '<span style="font-size: 12.5px; font-weight: 700; color: var(--verde);">' + r.k + " kcal · " + r.pt + " g prot <small class=\"muted\">/porção</small></span>" +
+        "</summary>" +
+        '<div style="margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px;">' +
+        "<div><b style=\"font-size: 13px;\">Ingredientes</b><ul style=\"margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.8; color: #555;\">" +
+        r.ing.map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("") + "</ul></div>" +
+        "<div><b style=\"font-size: 13px;\">Modo de preparo</b><ol style=\"margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.8; color: #555;\">" +
+        r.modo.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ol></div>" +
+        "</div>" +
+        '<p class="muted" style="font-size: 12.5px; margin-top: 10px;">💡 ' + esc(r.dica) + "</p>" +
+        '<div class="linha-flex" style="gap: 8px; margin-top: 10px;">' +
+        (naDieta ? '<span class="muted" style="font-size: 13px;">✓ Já está no seu banco de alimentos</span>' :
+          '<button class="btn verde mini" data-rcusa="' + r.id + '">+ Usar na dieta (vira alimento)</button>') +
+        '<a class="btn sec mini" data-rczap="' + r.id + '" href="#">💬 Mandar pro paciente</a>' +
+        "</div></details></div>";
+    }).join("") || '<div class="card muted">Nenhuma receita com esse filtro.</div>';
+  }
+  $("rcBusca").addEventListener("input", renderReceitas);
+  $("rcCat").addEventListener("change", renderReceitas);
+  $("rcLista").addEventListener("click", function (e) {
+    var usa = e.target.getAttribute && e.target.getAttribute("data-rcusa");
+    var zap = e.target.getAttribute && e.target.getAttribute("data-rczap");
+    if (usa) {
+      var r = RECEITAS.find(function (x) { return x.id === usa; });
+      if (!r) return;
+      var st = load();
+      st.alimentos.push({ id: S.uid(), nome: "Receita: " + r.n, porcao: "1 porção", kcal: r.k, prot: r.pt });
+      S.write("ntStudio", st);
+      renderReceitas();
+      alert('"' + r.n + '" entrou no seu banco de alimentos — já dá pra usar nas refeições da dieta. 🍳');
+    }
+    if (zap) {
+      e.preventDefault();
+      var rz = RECEITAS.find(function (x) { return x.id === zap; });
+      if (!rz) return;
+      var txt = "🍳 *" + rz.n + "* (" + rz.k + " kcal/porção · " + rz.pt + " g proteína)\n\n*Ingredientes:*\n" +
+        rz.ing.map(function (i) { return "• " + i; }).join("\n") + "\n\n*Preparo:*\n" +
+        rz.modo.map(function (m, i) { return (i + 1) + ". " + m; }).join("\n") + "\n\n💡 " + rz.dica;
+      window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
+    }
+  });
+  window.__receitas = { total: function () { return RECEITAS.length; }, render: renderReceitas }; // testes
+
 
   // ---------- app do paciente ----------
   function montaAppNutri(p, stamp) {

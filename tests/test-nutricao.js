@@ -218,6 +218,33 @@ function ok(cond, nome) {
   const zapUrl = await p.evaluate(() => decodeURIComponent(window.__zapUrl || ""));
   ok(/wa\.me\/5531988887777/.test(zapUrl) && /Sua dieta/.test(zapUrl) && /Água: 2800/.test(zapUrl), "resumo da dieta vai pro WhatsApp do paciente");
 
+  // blog de receitas fitness
+  console.log("Receitas fitness (blog):");
+  await p.click('[data-a="receitas"]');
+  const totalRc = await p.evaluate(() => window.__receitas.total());
+  ok(totalRc >= 20, "banco de receitas tem 20+ receitas (" + totalRc + ")");
+  let rcTxt = await p.evaluate(() => document.getElementById("rcLista").textContent);
+  ok(/Panqueca de banana com aveia/.test(rcTxt) && /kcal/.test(rcTxt), "receitas listadas com macros por porção");
+  await p.fill("#rcBusca", "atum");
+  rcTxt = await p.evaluate(() => document.getElementById("rcLista").textContent);
+  ok(/atum/i.test(rcTxt) && !/Panqueca de banana/.test(rcTxt), "busca por ingrediente filtra as receitas");
+  await p.fill("#rcBusca", "");
+  await p.selectOption("#rcCat", "Doces fit");
+  rcTxt = await p.evaluate(() => document.getElementById("rcLista").textContent);
+  ok(/Mousse de chocolate com abacate/.test(rcTxt), "filtro por categoria funciona (Doces fit)");
+  await p.evaluate(() => { window.alert = () => {}; });
+  await p.click("#rcLista details summary"); // abre a primeira receita do filtro
+  await p.click('[data-rcusa]');
+  const rcAlim = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ntStudio")).alimentos.find((a) => /^Receita: /.test(a.nome)));
+  ok(!!rcAlim && rcAlim.kcal > 0 && rcAlim.porcao === "1 porção", "'+ Usar na dieta' vira alimento com kcal por porção");
+  rcTxt = await p.evaluate(() => document.getElementById("rcLista").textContent);
+  ok(/Já está no seu banco de alimentos/.test(rcTxt), "receita usada mostra que já está no banco");
+  const rcIds = await p.evaluate(() => (self.MT_RECEITAS || []).map((r) => r.id));
+  const rcNomes = await p.evaluate(() => (self.MT_RECEITAS || []).map((r) => r.n));
+  ok(new Set(rcIds).size === rcIds.length && new Set(rcNomes).size === rcNomes.length, "ids e nomes de receitas são únicos");
+  const rcCampos = await p.evaluate(() => (self.MT_RECEITAS || []).every((r) => r.n && r.cat && r.k > 0 && r.pt >= 0 && r.ing.length >= 2 && r.modo.length >= 2 && r.dica));
+  ok(rcCampos, "toda receita tem ingredientes, preparo, macros e dica");
+
   // site comercial tem o segmento
   const pSite = await ctx.newPage();
   await pSite.goto(BASE + "/torqueon.html");
