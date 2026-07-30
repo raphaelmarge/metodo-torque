@@ -1392,3 +1392,126 @@ end;
 $$;
 
 grant execute on function public.app_aluno_avalia(text, text, date, int, text, text) to anon, authenticated;
+
+-- ==================== PROVISIONAMENTO PELO HQ (fim do código de equipe) ====================
+-- O fluxo comercial agora é: o admin do TORQUE ON cadastra o cliente na central
+-- de comando (HQ) com e-mail + senha aleatória; a conta já nasce com a ilha e o
+-- dono prontos. O dono cria os logins dos colaboradores dentro do sistema.
+-- Autoatendimento no site fica só para o ALUNO. Este bloco pode rodar de novo sem problema.
+
+-- o tipo do cliente agora inclui 'nutri'
+alter table public.saas_clientes drop constraint if exists saas_clientes_tipo_check;
+alter table public.saas_clientes
+  add constraint saas_clientes_tipo_check check (tipo in ('academia', 'studio', 'box', 'personal', 'nutri', 'outro'));
+
+-- cria um usuário de login (interno — sem grant pra ninguém de fora)
+create or replace function public._torque_cria_usuario(p_email text, p_senha text, p_nome text)
+returns uuid
+language plpgsql security definer
+set search_path = public, auth, extensions
+as $$
+declare
+  v_uid uuid := gen_random_uuid();
+begin
+  p_email := lower(trim(p_email));
+  if p_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
+    raise exception 'e-mail inválido';
+  end if;
+  if length(coalesce(p_senha, '')) < 8 then
+    raise exception 'senha muito curta';
+  end if;
+  if exists (select 1 from auth.users where lower(email) = p_email) then
+    raise exception 'já existe uma conta com o e-mail %', p_email;
+  end if;
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change)
+  values ('00000000-0000-0000-0000-000000000000', v_uid, 'authenticated', 'authenticated', p_email,
+    extensions.crypt(p_senha, extensions.gen_salt('bf')), now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    jsonb_build_object('nome', coalesce(p_nome, '')),
+    now(), now(), '', '', '', '');
+  insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
+  values (gen_random_uuid(), v_uid, p_email, 'email',
+    jsonb_build_object('sub', v_uid::text, 'email', p_email, 'email_verified', true),
+    now(), now(), now());
+  return v_uid;
+end;
+$$;
+revoke all on function public._torque_cria_usuario(text, text, text) from public, anon, authenticated;
+
+-- HQ: cadastra um cliente novo — conta + ilha + dono + ficha no SaaS, tudo de uma vez
+create or replace function public.hq_cliente_provisiona(p_email text, p_senha text, p_empresa text, p_tipo text, p_zap text)
+returns json
+language plpgsql security definer
+set search_path = public, auth, extensions
+as $$
+declare
+  v_uid uuid;
+  v_acad uuid;
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
+  end if;
+  if coalesce(trim(p_empresa), '') = '' then
+    raise exception 'informe o nome da empresa';
+  end if;
+  v_uid := public._torque_cria_usuario(p_email, p_senha, p_empresa);
+  insert into academias (nome, codigo_equipe)
+    values (trim(p_empresa), upper(substr(md5(gen_random_uuid()::text), 1, 6)))
+    returning id into v_acad;
+  insert into membros (academia_id, user_id, papel, nome, email)
+    values (v_acad, v_uid, 'dono', '', lower(trim(p_email)));
+  insert into saas_clientes (academia_id, tipo, plano, valor, status, obs, zap, atualizado)
+    values (v_acad, coalesce(nullif(p_tipo, ''), 'academia'), 'trial', 0, 'trial', 'provisionado pelo HQ', coalesce(p_zap, ''), now())
+    on conflict (academia_id) do nothing;
+  return json_build_object('ok', true, 'academia_id', v_acad, 'email', lower(trim(p_email)));
+end;
+$$;
+grant execute on function public.hq_cliente_provisiona(text, text, text, text, text) to authenticated;
+
+-- HQ: troca a senha de um cliente (esqueceu / reonboarding)
+create or replace function public.hq_cliente_reseta_senha(p_email text, p_senha text)
+returns json
+language plpgsql security definer
+set search_path = public, auth, extensions
+as $$
+begin
+  if not exists (select 1 from saas_admins where user_id = auth.uid()) then
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
+  end if;
+  if length(coalesce(p_senha, '')) < 8 then
+    raise exception 'senha muito curta';
+  end if;
+  update auth.users set encrypted_password = extensions.crypt(p_senha, extensions.gen_salt('bf')), updated_at = now()
+    where lower(email) = lower(trim(p_email));
+  if not found then
+    raise exception 'não achei conta com esse e-mail';
+  end if;
+  return json_build_object('ok', true);
+end;
+$$;
+grant execute on function public.hq_cliente_reseta_senha(text, text) to authenticated;
+
+-- DONO: cria o login de um colaborador na própria ilha (fim do código de equipe)
+create or replace function public.equipe_cria_login(p_email text, p_senha text, p_nome text, p_papel text)
+returns json
+language plpgsql security definer
+set search_path = public, auth, extensions
+as $$
+declare
+  v_acad uuid;
+  v_uid uuid;
+begin
+  select academia_id into v_acad from membros
+    where user_id = auth.uid() and papel = 'dono' limit 1;
+  if v_acad is null then
+    raise exception 'apenas o dono da conta cria logins de colaboradores';
+  end if;
+  v_uid := public._torque_cria_usuario(p_email, p_senha, p_nome);
+  insert into membros (academia_id, user_id, papel, nome, email)
+    values (v_acad, v_uid, coalesce(nullif(p_papel, ''), 'equipe'), coalesce(p_nome, ''), lower(trim(p_email)));
+  return json_build_object('ok', true, 'email', lower(trim(p_email)));
+end;
+$$;
+grant execute on function public.equipe_cria_login(text, text, text, text) to authenticated;

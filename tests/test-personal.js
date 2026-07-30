@@ -531,15 +531,13 @@ function ok(cond, nome) {
   await pG.waitForFunction(() => document.getElementById("gateModulo") && !document.getElementById("gateModulo").hidden, null, { timeout: 8000 });
   const gateTxt = await pG.evaluate(() => document.getElementById("gateModulo").textContent);
   ok(/TORQUE/.test(gateTxt) && /PERSONAL/.test(gateTxt), "tela de entrada com a marca TORQUE PERSONAL (não manda pro portal)");
-  ok(/Entrar/.test(gateTxt) && /Criar conta/.test(gateTxt) && /Experimentar sem conta/.test(gateTxt), "abas Entrar/Criar conta + modo local");
-  await pG.click("#mgAbaCriar");
-  const nomeVisivel = await pG.evaluate(() => !document.getElementById("mgNome").hidden);
-  ok(nomeVisivel, "criar conta pede o nome do studio");
+  ok(/Entrar/.test(gateTxt) && /Experimentar sem conta/.test(gateTxt), "gate com Entrar + modo local");
+  ok(!/Criar conta/.test(gateTxt) && /equipe TORQUE ON/.test(gateTxt), "sem autoatendimento: conta é criada pela equipe TORQUE ON (fim do código)");
   await pG.click("#mgLocal");
   const fechou = await pG.evaluate(() => document.getElementById("gateModulo").hidden && !document.getElementById("boasVindas").hidden);
   ok(fechou, "'experimentar sem conta' fecha o gate e abre o onboarding");
-  const temBotoes = await pG.evaluate(() => !!document.getElementById("btnContaEntrar") && !!document.getElementById("btnContaSair"));
-  ok(temBotoes, "card da ilha com botões Entrar/Criar/Sair próprios do módulo");
+  const temBotoes = await pG.evaluate(() => !!document.getElementById("btnContaEntrar") && !!document.getElementById("btnContaSair") && !!document.getElementById("btnContaEquipe"));
+  ok(temBotoes, "card da ilha com botões Entrar/Sair/Colaborador próprios do módulo");
   await pG.close();
   await ctxG.close();
 

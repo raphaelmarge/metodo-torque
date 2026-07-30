@@ -52,6 +52,7 @@
     var vinculando = false; // logado mas ainda sem academia
     var emailLogado = "";
     $("gateAbas").hidden = false;
+    if ($("gateContrate")) $("gateContrate").hidden = false;
 
     function aplicaAba() {
       var criar = aba === "criar", equipe = aba === "equipe", entrar = aba === "entrar";

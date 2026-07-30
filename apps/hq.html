@@ -88,6 +88,31 @@
     </div>
 
     <div class="card" style="margin-top: 16px;">
+      <h2>Novo cliente (provisionar acesso)</h2>
+      <p class="muted" style="font-size: 13px;">Fechou contrato? Cadastre aqui: o sistema cria a conta com senha aleatória, a ilha já nasce pronta e você manda o acesso no WhatsApp. O cliente cria os logins dos colaboradores dele dentro do sistema — sem código de equipe.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+        <input id="pvEmpresa" placeholder="Nome da empresa *" style="flex: 2; min-width: 170px;">
+        <input id="pvEmail" type="email" placeholder="E-mail do cliente (será o login) *" style="flex: 2; min-width: 200px;">
+        <select id="pvTipo" style="width: auto;">
+          <option value="academia">Academia</option><option value="studio">Studio</option>
+          <option value="box">Box de Cross</option><option value="personal">Personal</option>
+          <option value="nutri">Nutricionista</option>
+        </select>
+        <input id="pvZap" inputmode="numeric" placeholder="WhatsApp (31 9…)" style="width: 150px;">
+        <button class="btn" id="pvCriar">Criar acesso</button>
+      </div>
+      <div id="pvResultado" hidden style="margin-top: 12px; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.35); border-radius: 12px; padding: 14px;">
+        <b style="font-size: 14px;">Acesso criado. Envie pro cliente:</b>
+        <pre id="pvCred" style="white-space: pre-wrap; font-size: 13px; margin: 8px 0; font-family: inherit;"></pre>
+        <div class="linha-flex" style="gap: 8px;">
+          <button class="btn sec mini" id="pvCopiar">Copiar</button>
+          <a class="btn mini" id="pvZapLink" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+        </div>
+      </div>
+      <p id="pvErro" class="muted" hidden style="color:#dc2626; font-size: 13px; margin-top: 8px;"></p>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
       <h2>Empresas clientes</h2>
       <div class="filtros">
         <input id="fBusca" placeholder="Buscar por nome…" style="flex: 1; min-width: 160px;">
@@ -263,6 +288,38 @@
       btn.disabled = false;
       $("hqLoginErro").textContent = "Sem conexão com a nuvem agora — tente de novo.";
       $("hqLoginErro").hidden = false;
+    });
+  });
+
+  function geraSenha() {
+    // 10 caracteres sem ambiguidade (sem 0/O/1/l)
+    var chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    var out = "";
+    var rnd = new Uint32Array(10);
+    (window.crypto || {}).getRandomValues ? crypto.getRandomValues(rnd) : rnd.forEach(function (_, i) { rnd[i] = Math.floor(Math.random() * 1e9); });
+    for (var i = 0; i < 10; i++) out += chars[rnd[i] % chars.length];
+    return out;
+  }
+  document.getElementById("pvCriar").addEventListener("click", function () {
+    var empresa = $("pvEmpresa").value.trim(), email = $("pvEmail").value.trim();
+    $("pvErro").hidden = true; $("pvResultado").hidden = true;
+    if (!empresa || !email) { $("pvErro").textContent = "Preencha a empresa e o e-mail."; $("pvErro").hidden = false; return; }
+    var senha = geraSenha();
+    var btn = $("pvCriar"); btn.disabled = true;
+    cli.rpc("hq_cliente_provisiona", { p_email: email, p_senha: senha, p_empresa: empresa, p_tipo: $("pvTipo").value, p_zap: $("pvZap").value.trim() }).then(function (r) {
+      btn.disabled = false;
+      if (r.error) { $("pvErro").textContent = "Não deu: " + r.error.message; $("pvErro").hidden = false; return; }
+      var msg = "Bem-vindo ao TORQUE ON, " + empresa + "!\n\nSeu acesso:\nSite: https://www.torqueon.com.br" +
+        ($("pvTipo").value === "personal" ? "/personal.html" : $("pvTipo").value === "nutri" ? "/nutricao.html" : "/?portal=1") +
+        "\nLogin: " + email.toLowerCase() + "\nSenha: " + senha +
+        "\n\nDica: troque a senha depois de entrar e crie os logins da sua equipe dentro do sistema.";
+      window.__pvMsg = msg; // testes
+      $("pvCred").textContent = msg;
+      $("pvResultado").hidden = false;
+      $("pvZapLink").href = "https://wa.me/" + ($("pvZap").value ? "55" + $("pvZap").value.replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg);
+      $("pvCopiar").onclick = function () { navigator.clipboard.writeText(msg); $("pvCopiar").textContent = "Copiado!"; setTimeout(function () { $("pvCopiar").textContent = "Copiar"; }, 1500); };
+      ["pvEmpresa", "pvEmail", "pvZap"].forEach(function (id) { $(id).value = ""; });
+      carrega(); // a lista de clientes já mostra o novo
     });
   });
 
