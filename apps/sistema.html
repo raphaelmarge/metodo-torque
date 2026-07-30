@@ -203,12 +203,12 @@
 <body>
 
 <header class="topo">
-  <button class="hamb" id="btnMenu" aria-label="Abrir menu"></button>
+  <button class="hamb" id="btnMenu" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
   <span class="marca"><img src="../assets/icons/icon.svg" alt=""><span>TORQUE<span style="color:var(--lilas)">&nbsp;ON</span></span></span>
   <div class="buscaGlobal"><input id="buscaGlobal" placeholder="Pesquise por nome, sobrenome, e-mail, CPF (CIN) ou carteirinha"></div>
   <div class="acoes-topo">
-    <button title="Novo cadastro" data-abrir="alunos.html?acao=novo"></button>
-    <button title="Nova venda" data-abrir="alunos.html?acao=venda"></button>
+    <button title="Novo cadastro" data-abrir="alunos.html?acao=novo">👤➕</button>
+    <button title="Nova venda" data-abrir="alunos.html?acao=venda">🛒</button>
   </div>
   <div class="direita">
     <div><strong id="topNome">—</strong><small id="topAcad"></small></div>
@@ -219,21 +219,21 @@
 <aside class="menu">
   <div class="pesquisaMenu"><input id="pesquisaMenu" placeholder="Pesquisar no menu"></div>
   <nav id="nav">
-    <a class="item" data-pg="home"><span class="ico"></span>Home</a>
-    <a class="item" data-pg="dashboard"><span class="ico"></span>Dashboard</a>
-    <a class="item" data-url="alunos.html"><span class="ico"></span>Clientes</a>
-    <a class="item" data-url="perfil-aluno.html"><span class="ico"></span>Perfil do Aluno</a>
-    <a class="item" data-url="grade.html"><span class="ico"></span>Grade</a>
-    <a class="item" data-url="agenda.html"><span class="ico"></span>Agenda</a>
-    <a class="item" data-url="tarefas.html"><span class="ico"></span>Tarefas do Dia</a>
+    <a class="item" data-pg="home"><span class="ico">🏠</span>Home</a>
+    <a class="item" data-pg="dashboard"><span class="ico">📈</span>Dashboard</a>
+    <a class="item" data-url="alunos.html"><span class="ico">👥</span>Clientes</a>
+    <a class="item" data-url="perfil-aluno.html"><span class="ico">👤</span>Perfil do Aluno</a>
+    <a class="item" data-url="grade.html"><span class="ico">🗓</span>Grade</a>
+    <a class="item" data-url="agenda.html"><span class="ico">📅</span>Agenda</a>
+    <a class="item" data-url="tarefas.html"><span class="ico">☑️</span>Tarefas do Dia</a>
     <a class="item" data-url="totem.html" target="_blank">Totem de Autoatendimento</a>
-        <a class="item" data-url="entrada.html"><span class="ico"></span>Controle de Entradas</a>
-    <a class="item" data-url="biometria.html"><span class="ico"></span>Biometria e Catraca</a>
-    <a class="item" data-url="niveis.html"><span class="ico"></span>Níveis e Graduação</a>
-    <a class="item" data-url="acessos.html"><span class="ico"></span>Log de Acessos</a>
+        <a class="item" data-url="entrada.html"><span class="ico">🚪</span>Controle de Entradas</a>
+    <a class="item" data-url="biometria.html"><span class="ico">📷</span>Biometria e Catraca</a>
+    <a class="item" data-url="niveis.html"><span class="ico">🥋</span>Níveis e Graduação</a>
+    <a class="item" data-url="acessos.html"><span class="ico">🕐</span>Log de Acessos</a>
 
     <details class="grupo" data-telas="clientes,recepcao" open>
-      <summary><span class="ico"></span>CRM 2.0</summary>
+      <summary><span class="ico">🧲</span>CRM 2.0</summary>
       <div class="sub">
         <a class="item" data-url="automacao.html">Automação de Mensagens</a>
         <a class="item" data-url="funil.html">Funil de Vendas</a>
@@ -249,7 +249,7 @@
       </div>
     </details>
     <details class="grupo" data-telas="crm">
-      <summary><span class="ico"></span>CRM</summary>
+      <summary><span class="ico">💬</span>CRM</summary>
       <div class="sub">
         <a class="item" data-url="suporte.html">Central de Ajuda (tutoriais)</a>
         <a class="item" data-url="copiloto.html">Copiloto IA (risco de cancelamento)</a>
@@ -269,7 +269,7 @@
       </div>
     </details>
     <details class="grupo" data-telas="financeiro">
-      <summary><span class="ico"></span>Financeiro</summary>
+      <summary><span class="ico">💲</span>Financeiro</summary>
       <div class="sub">
         <a class="item" data-url="caixa.html">Caixa do Dia</a>
         <a class="item" data-url="receber.html">Contas a Receber</a>
@@ -291,7 +291,7 @@
       </div>
     </details>
     <details class="grupo" data-telas="gerencial">
-      <summary><span class="ico"></span>Gerencial</summary>
+      <summary><span class="ico">📊</span>Gerencial</summary>
       <div class="sub">
         <a class="item" data-url="agregadores.html">Agregadores (Gympass/TotalPass)</a>
         <a class="item" data-url="wellhub.html">Wellhub e TotalPass (check-ins)</a>
@@ -364,7 +364,7 @@
       </div>
     </details>
     <details class="grupo" data-telas="saude">
-      <summary><span class="ico"></span>Dados de saúde</summary>
+      <summary><span class="ico">⏱</span>Dados de saúde</summary>
       <div class="sub">
         <a class="item" data-url="saude.html">Avaliação Física</a>
         <a class="item" data-url="parq.html">PAR-Q Digital</a>
@@ -373,7 +373,7 @@
       </div>
     </details>
     <details class="grupo" data-telas="administrativo">
-      <summary><span class="ico"></span>Administrativo</summary>
+      <summary><span class="ico">🫀</span>Administrativo</summary>
       <div class="sub">
         <a class="item" data-url="equipe.html">Colaboradores e Cargos</a>
         <a class="item" data-url="colaborador.html">Ficha do Colaborador</a>
@@ -400,7 +400,7 @@
       </div>
     </details>
     <details class="grupo" data-telas="config">
-      <summary><span class="ico"></span>Configurações</summary>
+      <summary><span class="ico">🗄</span>Configurações</summary>
       <div class="sub">
         <a class="item" data-pg="config">Inicial (empresa, logo, backup)</a>
         <a class="item" data-url="config-financeiro.html">Financeiro e Venda</a>
@@ -418,8 +418,8 @@
     </details>
   </nav>
   <div class="rodape">
-    <a class="item" data-url="../index.html" data-nova-aba="1"><span class="ico"></span>Curso Método Torque ↗</a>
-    <a class="item" data-url="../docs/trilha-guiada.html"><span class="ico"></span>Central de ajuda</a>
+    <a class="item" data-url="../index.html" data-nova-aba="1"><span class="ico">⚙️</span>Curso Método Torque ↗</a>
+    <a class="item" data-url="../docs/trilha-guiada.html"><span class="ico">🎓</span>Central de ajuda</a>
   </div>
 </aside>
 <div class="menu-fundo" id="fundoMenu"></div>

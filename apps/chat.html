@@ -345,7 +345,7 @@
       var icone = c.canal === "instagram" ? "📷" : "💬";
       var direita = c.nao_lidas > 0
         ? '<span class="badge">' + c.nao_lidas + "</span>"
-        : (c.modo_auto ? '<span class="robo" title="IA respondendo sozinha"></span>' : "");
+        : (c.modo_auto ? '<span class="robo" title="IA respondendo sozinha">🤖</span>' : "");
       return '<div class="conv' + (atual && atual.id === c.id ? " sel" : "") + '" data-id="' + c.id + '">' +
         '<span class="icone">' + icone + "</span>" +
         '<div style="min-width:0"><div class="quem">' + esc(c.nome || c.contato_id) + "</div>" +

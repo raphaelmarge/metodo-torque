@@ -167,7 +167,7 @@
         "<td class='" + cls + "'>" + S.fmtData(x.venc) + "</td>" +
         "<td class='dias " + cls + "'>" + (dias < 0 ? "há " + Math.abs(dias) + "d" : dias + "d") + "</td>" +
         "<td>" + (x.aluno.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-          String(x.aluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '"></a>' : '<span class="muted">—</span>') + "</td></tr>";
+          String(x.aluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : '<span class="muted">—</span>') + "</td></tr>";
     }).join("") : '<tr><td colspan="5" class="muted" style="text-align:center; padding:20px;">Nada vencendo neste período/tipo. 🎉</td></tr>';
     $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
   }

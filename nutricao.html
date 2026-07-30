@@ -330,7 +330,7 @@
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn verde mini" data-app="' + p.id + '">App do paciente</button>' +
-        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '"></a>' : "") +
+        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">💬</a>' : "") +
         '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></div>';
     }).join("") : "Cadastre o primeiro paciente. 🥦";
   }

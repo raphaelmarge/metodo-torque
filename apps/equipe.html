@@ -156,9 +156,9 @@
         tagVinculo(c) +
         '<span class="tag ' + (perfis[c.permissaoId] ? "roxo" : "neutro") + '" title="permissão (defina na ficha)">' + esc(perfis[c.permissaoId] || "Sem permissão") + "</span> " +
         (c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') +
-        (c.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '"></a>' : "") +
+        (c.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '">💬</a>' : "") +
         ' <a class="btn mini" href="colaborador.html?id=' + c.id + '">Ficha</a>' +
-        ' <button class="btn sec mini" data-edit="' + c.id + '"></button></div>';
+        ' <button class="btn sec mini" data-edit="' + c.id + '">✎</button></div>';
     }).join("") : '<div class="vazio">Ninguém aqui ainda — cadastre a equipe.</div>';
 
     // relatório de salários — mensalistas (salário fixo) separados dos horistas (horas × valor hora)

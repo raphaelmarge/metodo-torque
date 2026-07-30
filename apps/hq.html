@@ -194,7 +194,7 @@
     </select>
     <div style="display: flex; gap: 8px;">
       <input id="tkTxt" placeholder="Responder ao cliente…" style="flex: 1;">
-      <button class="btn" id="tkEnviar" style="width: auto;"></button>
+      <button class="btn" id="tkEnviar" style="width: auto;">➤</button>
     </div>
     <form method="dialog" style="margin-top: 10px;"><button class="btn sec" style="width: 100%;">Fechar</button></form>
   </dialog>
@@ -420,7 +420,7 @@
         '<button class="btn sec mini" data-edit="' + c.id + '">Plano</button>' +
         '<button class="btn sec mini" data-pgto="' + c.id + '">Pagou</button>' +
         (cfg.pixChave && +c.valor > 0 ? '<button class="btn mini" data-pix="' + c.id + '">Pix</button>' : "") +
-        (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgResgate) + '"></a>' : "") +
+        (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgResgate) + '">💬</a>' : "") +
         "</div>";
     }).join("") : '<div class="muted">Nenhuma empresa com esse filtro.</div>';
   }

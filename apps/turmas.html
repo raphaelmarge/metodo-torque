@@ -134,7 +134,7 @@
         (st.chamadas[chaveHoje] ? " · chamada de hoje: " + presentes.length + "/" + alunos.length : "") + "</div></div>" +
         (lotada ? '<span class="tag erro">LOTADA</span>' : cap ? '<span class="tag ok">' + (cap - alunos.length) + " VAGA(S)</span>" : "") +
         (st.chamadas[chaveHoje] ? ' <span class="tag ok">CHAMADA FEITA</span>' : ' <span class="tag neutro">SEM CHAMADA HOJE</span>') +
-        ' <button class="btn sec mini" data-edit="' + t.id + '"></button></summary>' +
+        ' <button class="btn sec mini" data-edit="' + t.id + '">✎</button></summary>' +
         '<div class="chamada-cab"><span>CHAMADA DE HOJE (' + S.fmtData(hoje) + ')</span>' +
         '<button class="btn mini" data-salvar="' + t.id + '">Salvar chamada</button></div>' +
         alunos.map(function (a) {

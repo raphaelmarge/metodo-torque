@@ -133,7 +133,7 @@
         (e.contato ? " · contato: " + esc(e.contato) : "") + "</div></div>" +
         '<span class="desconto">' + (+e.desconto || 0) + "% off</span>" +
         (e.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(e.zap).replace(/\D/g, "") + '">RH</a>' : "") +
-        ' <button class="btn sec mini" data-edit="' + e.id + '"></button></summary>' +
+        ' <button class="btn sec mini" data-edit="' + e.id + '">✎</button></summary>' +
         vincs.map(function (v) {
           return '<div class="vinculo"><span>' + esc(v.aluno) + '</span><button class="btn perigo mini" data-rmv="' + v.id + '" style="padding: 3px 8px;">✕</button></div>';
         }).join("") +

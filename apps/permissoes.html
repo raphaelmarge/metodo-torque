@@ -126,8 +126,8 @@
         '<span class="muted">' + (usaPerfil[p.id] || 0) + " colab.</span>" +
         '<span class="tag ' + (p.ativa === false ? "neutro" : "ok") + '">' + (p.ativa === false ? "Inativa" : "Ativa") + "</span>" +
         '<button class="btn sec mini" data-dup="' + p.id + '" title="duplicar">⧉</button>' +
-        '<button class="btn sec mini" data-ed="' + p.id + '"></button>' +
-        '<button class="btn sec mini" data-rm="' + p.id + '"></button></div>';
+        '<button class="btn sec mini" data-ed="' + p.id + '">✎</button>' +
+        '<button class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhuma permissão encontrada.</div>';
   }
 

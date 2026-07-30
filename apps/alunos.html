@@ -146,7 +146,7 @@
 
     <div class="linha-flex" style="gap: 14px;">
       <img id="aFotoPrev" alt="" hidden style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--roxo);">
-      <span id="aFotoVazia" class="avatar" style="width: 56px; height: 56px;"></span>
+      <span id="aFotoVazia" class="avatar" style="width: 56px; height: 56px;">📷</span>
       <label class="btn sec mini" style="cursor: pointer;">Foto de perfil
         <input id="aFoto" type="file" accept="image/*" capture="user" hidden></label>
     </div>
@@ -598,7 +598,7 @@
       var tipo = { recorrente: "Recorrente", avista: "À vista", agregador: "Agregador" }[p.tipo];
       return "<tr><td><strong>" + esc(p.nome) + "</strong></td><td>" + (p.tipo === "agregador" ? "—" : S.fmtBRL(p.valor)) + "</td><td>" +
         p.meses + " mês(es)</td><td>" + tipo + "</td><td>" + n + '</td><td style="text-align:right;">' +
-        '<button class="btn sec mini" data-pregras="' + p.id + '" title="Restrições e suspensão"></button> ' +
+        '<button class="btn sec mini" data-pregras="' + p.id + '" title="Restrições e suspensão">⚙</button> ' +
         (n === 0 ? '<button class="btn perigo mini" data-pdel="' + p.id + '">excluir</button>' : "") + "</td></tr>";
     }).join("");
   }
