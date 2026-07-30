@@ -82,5 +82,14 @@ try {
   ok(false, "copia-www roda sem erro — " + String(e).slice(0, 120));
 }
 
+console.log("Domínio próprio (www.torquesys.com.br):");
+const idxHtml = fs.readFileSync(path.join(RAIZ, "index.html"), "utf8");
+ok(/torquesys\\?\.com\\?\.br/.test(idxHtml) && /location\.replace\("torquesys\.html"\)/.test(idxHtml), "index.html manda visitante do domínio pro site de vendas");
+ok(/portal/.test(idxHtml.split("torquesys.com.br")[1] || ""), "dá pra forçar o portal com ?portal=1");
+const tqs = fs.readFileSync(path.join(RAIZ, "torquesys.html"), "utf8");
+ok(/og:title/.test(tqs) && /og:description/.test(tqs) && /og:image/.test(tqs), "torquesys.html tem Open Graph (preview bonito no WhatsApp)");
+const dom = fs.readFileSync(path.join(RAIZ, "DOMINIO.md"), "utf8");
+ok(/registro\.br/.test(dom) && /185\.199\.108\.153/.test(dom) && /CNAME/.test(dom) && /Enforce HTTPS/.test(dom), "DOMINIO.md cobre registro, DNS e ativação no Pages");
+
 console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);
