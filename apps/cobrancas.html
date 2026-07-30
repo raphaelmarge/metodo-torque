@@ -98,7 +98,7 @@
           "</td><td>" + metodo + '</td><td class="num">' + brl(+d.valor || 0) + "</td><td>" +
           (d.status === "pago" ? '<span class="tag ok">APROVADO</span>' : '<span class="tag alerta">EM ABERTO</span>') + "</td><td>" +
           (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener">abrir página de pagamento</a>' : (c.pixCopiaECola ? "PIX copia e cola gerado" : "—")) + "</td>" +
-          '<td style="text-align:right;"><button class="btn sec mini" data-vercob="' + d.id + '" title="Detalhes da cobrança"></button></td></tr>';
+          '<td style="text-align:right;"><button class="btn sec mini" data-vercob="' + d.id + '" title="Detalhes da cobrança">👁</button></td></tr>';
       }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — com o Pagar.me conectado ou com o modo demonstração ligado em Integrações.</td></tr>');
     $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUE ON via Pagar.me (Fase 2). No EVO essa aba lista as tentativas de cartão da adquirente.";
   }

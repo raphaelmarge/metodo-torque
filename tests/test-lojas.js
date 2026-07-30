@@ -103,5 +103,16 @@ ok(perEx.includes("assets/exercicios-db.js") && perEx.includes("dlExCat"), "TORQ
 const trEx = fs.readFileSync(path.join(RAIZ, "apps/treinos.html"), "utf8");
 ok(trEx.includes("../assets/exercicios-db.js") && trEx.includes("catalogo"), "TORQUE ON academia usa o catálogo na busca das fichas");
 
+console.log("Nenhum botão sem rótulo (regressão da limpeza de emojis):");
+const glob2 = fs.readdirSync(path.join(RAIZ, "apps")).filter((f) => f.endsWith(".html")).map((f) => "apps/" + f);
+const paginas = ["index.html", "nutricao.html", "personal.html", "personal-vendas.html", "aluno-login.html", "matricula.html", "torqueon.html"].concat(glob2);
+let vazios = [];
+for (const pg of paginas) {
+  const t = fs.readFileSync(path.join(RAIZ, pg), "utf8");
+  const m = t.match(/<(button|a)\b[^>]*>\s*<\/\1>/g);
+  if (m) vazios.push(pg + " (" + m.length + ")");
+}
+ok(vazios.length === 0, "nenhum botão/link vazio nas " + paginas.length + " páginas" + (vazios.length ? " — " + vazios.join(", ") : ""));
+
 console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);

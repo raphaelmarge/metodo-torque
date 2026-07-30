@@ -481,8 +481,8 @@
           var iso = chaveAberta.split("|")[1];
           var faltou = ((st.faltas || {})[n] || []).indexOf(iso) !== -1;
           return '<div class="p"><span>' + esc(n) + (faltou ? ' <span class="tag alerta" style="margin-left:6px">faltou</span>' : "") +
-            '</span><span><button data-fixo="' + i + '" title="Tornar horário fixo (entra toda semana nesta aula)" style="color:#7c3aed"></button> ' +
-            '<button data-falta="' + i + '" title="Marcar/desmarcar falta (agendou e não veio)" style="color:#b45309"></button> ' +
+            '</span><span><button data-fixo="' + i + '" title="Tornar horário fixo (entra toda semana nesta aula)" style="color:#7c3aed">⭐</button> ' +
+            '<button data-falta="' + i + '" title="Marcar/desmarcar falta (agendou e não veio)" style="color:#b45309">👻</button> ' +
             '<button data-rm="' + i + '" title="Remover">✕</button></span></div>';
         }).join("")
       : (fixos.length ? "" : '<div class="muted">Ninguém marcado ainda — ' + (+aula.vagas || 0) + " vagas livres.</div>"));

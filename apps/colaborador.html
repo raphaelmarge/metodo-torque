@@ -98,7 +98,7 @@
       '<div class="tgl"><span>Inativar</span><input type="checkbox" id="tglInativo"' + (c.ativo === false ? " checked" : "") + "></div>" +
       (c.email ? '<div class="kv"><span>E-mail</span><span>' + esc(c.email) + "</span></div>" : "") +
       (c.zap ? '<div class="kv"><span>Celular</span><span>' + esc(c.zap) +
-        ' <a class="btn whats mini" style="padding:1px 7px;" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '"></a></span></div>' : "") +
+        ' <a class="btn whats mini" style="padding:1px 7px;" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '">💬</a></span></div>' : "") +
       "</div>" +
       '<div class="bloco-esq"><h3>PERMITIR ACESSO</h3>' +
       '<div class="tgl"><span>À catraca</span><input type="checkbox" id="tglCatraca"' + (c.acessoCatraca !== false ? " checked" : "") + "></div>" +
@@ -227,7 +227,7 @@
             '<input type="checkbox" data-metaok="' + m.id + '"' + (m.feito ? " checked" : "") + ">" +
             '<span style="flex:1;' + (m.feito ? "text-decoration:line-through; color:var(--cinza);" : "") + '">' + esc(m.titulo) +
             (m.prazo ? ' <span class="muted">(até ' + S.fmtData(m.prazo) + ")</span>" : "") + "</span>" +
-            '<button class="btn sec mini" data-metarm="' + m.id + '"></button></div>';
+            '<button class="btn sec mini" data-metarm="' + m.id + '">🗑</button></div>';
         }).join("") : '<div class="vazio">Nenhuma meta ainda — combine as metas do mês com o colaborador.</div>') +
         "</div>";
     }

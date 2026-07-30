@@ -108,13 +108,13 @@
     var pc = function (num, den) { return den ? Math.round(num / den * 100) : 0; };
     $("stats").className = "funil";
     $("stats").innerHTML =
-      '<div class="et cad"><span class="ico"></span><div><div class="rot">Cadastros</div><div class="val">' + cadastros + '</div></div></div>' +
+      '<div class="et cad"><span class="ico">📇</span><div><div class="rot">Cadastros</div><div class="val">' + cadastros + '</div></div></div>' +
       '<div class="seta">▶ ' + pc(visitas, cadastros) + '%</div>' +
-      '<div class="et vis"><span class="ico"></span><div><div class="rot">Visitas</div><div class="val">' + visitas + '</div></div></div>' +
+      '<div class="et vis"><span class="ico">🚶</span><div><div class="rot">Visitas</div><div class="val">' + visitas + '</div></div></div>' +
       '<div class="seta">▶ ' + pc(conversoes, visitas) + '%</div>' +
-      '<div class="et conv"><span class="ico"></span><div><div class="rot">Conversões</div><div class="val">' + conversoes + '</div></div></div>' +
-      '<div class="et valor"><span class="ico"></span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(valorTotal) + '</div></div></div>' +
-      '<div class="et pend"><span class="ico"></span><div><div class="rot">Pendentes</div><div class="val">' + pendentes + '</div></div></div>';
+      '<div class="et conv"><span class="ico">✅</span><div><div class="rot">Conversões</div><div class="val">' + conversoes + '</div></div></div>' +
+      '<div class="et valor"><span class="ico">💰</span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(valorTotal) + '</div></div></div>' +
+      '<div class="et pend"><span class="ico">🎁</span><div><div class="rot">Pendentes</div><div class="val">' + pendentes + '</div></div></div>';
 
     $("lista").innerHTML = nomes.length ? nomes.map(function (n, idx) {
       var indicados = mapa[n];

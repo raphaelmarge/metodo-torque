@@ -194,9 +194,9 @@
       (f.lista.length ? f.lista.map(function (r) {
         var a = f.m.aluno[r.alunoId] || {};
         var acoes = "";
-        if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-venc="' + r.id + '" title="Alterar vencimento"></button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
+        if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-venc="' + r.id + '" title="Alterar vencimento">📅</button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
         acoes += ' <button class="btn sec mini" data-copia="' + r.id + '" title="Copiar conta">⧉</button>';
-        acoes += ' <button class="btn sec mini" data-ver="' + r.id + '" title="Detalhes da conta"></button>';
+        acoes += ' <button class="btn sec mini" data-ver="' + r.id + '" title="Detalhes da conta">👁</button>';
         return "<tr><td><strong>" + esc(a.nome || "?") + "</strong></td><td>" + esc(a.cpf || "—") + "</td><td>" + esc(descDe(r, f.m)) +
           "</td><td>" + esc(r.competencia || "—") + "</td><td>" + S.fmtData(r.vencimento) + "</td><td>" + (r.pagoEm ? S.fmtData(r.pagoEm) : "—") +
           '</td><td class="num">' + brl(+r.valor || 0) + '</td><td class="num">' + (r.status === "pago" ? brl(r.valorBaixa != null ? +r.valorBaixa : +r.valor) : "—") +

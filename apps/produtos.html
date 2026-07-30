@@ -244,7 +244,7 @@
         "<td style='text-align:right'>" + (baixo ? "<span style='color:var(--erro); font-weight:700'>" + p.estoque + " ⚠</span>" : p.estoque) + "</td>" +
         "<td style='text-align:right; white-space:nowrap'>" +
         '<button class="btn sec mini" data-rep="' + p.id + '" title="Repor estoque">+ estoque</button> ' +
-        '<button class="btn sec mini" data-edit="' + p.id + '"></button> ' +
+        '<button class="btn sec mini" data-edit="' + p.id + '">✎</button> ' +
         '<button class="btn perigo mini" data-del="' + p.id + '">✕</button></td></tr>';
     }).join("");
   }
@@ -309,7 +309,7 @@
         (v.cliente ? '<div class="muted" style="font-size: 12px;">' + esc(v.cliente) + "</div>" : "") + "</div>" +
         '<span class="tag neutro">' + esc(v.forma) + "</span>" +
         "<strong>" + S.fmtBRL(v.total) + "</strong>" +
-        '<button class="btn sec mini" data-ver="' + v.id + '" title="Detalhes da venda"></button>' +
+        '<button class="btn sec mini" data-ver="' + v.id + '" title="Detalhes da venda">👁</button>' +
         '<button class="btn perigo mini" data-est="' + v.id + '" title="Estornar (devolve o estoque)">↩</button></div>';
     }).join("") : '<div class="vazio">Nenhuma venda neste dia.</div>';
   }

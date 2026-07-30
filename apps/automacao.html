@@ -755,7 +755,7 @@
         '<button class="btn" id="btnNovoTpl">Novo template</button></div>' +
         st.templates.map(function (t) {
           return '<div class="lin"><div class="quem"><strong>' + esc(t.nome) + '</strong><div class="msg">' + esc(t.texto) + "</div></div>" +
-            '<button class="btn sec mini" data-edt="' + t.id + '"></button>' +
+            '<button class="btn sec mini" data-edt="' + t.id + '">✏</button>' +
             '<button class="btn perigo mini" data-delt="' + t.id + '">✕</button></div>';
         }).join("");
     }

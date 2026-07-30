@@ -200,7 +200,7 @@
       (l.proximo ? " · próx. contato <strong" + (atr ? ' style="color:var(--erro);"' : "") + ">" + S.fmtData(l.proximo) + "</strong>" : "") + "</div>" +
       '<div class="acoes">' +
       (l.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(l.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFollow(l)) + '">' + (atr ? " Cobrar" : "") + "</a>" : "") +
-      '<button class="btn sec" data-acao="ver" title="Detalhes da oportunidade"></button>' +
+      '<button class="btn sec" data-acao="ver" title="Detalhes da oportunidade">👁</button>' +
       '<button class="btn sec" data-acao="temp" title="Trocar temperatura">' + tempIcone(l.temperatura) + '</button>' +
       '<button class="btn sec" data-acao="proximo">Próx.</button>' +
       (l.status === "novo" ? '<button class="btn sec" data-acao="avancar">→ Conversa</button>' : "") +

@@ -169,7 +169,7 @@
         (r.nota <= 6 ? (r.tratado
           ? '<span class="tag ok">TRATADO ✓</span>'
           : '<button class="btn mini" data-tratar="' + r.id + '">Marquei a ligação</button>' +
-            (al && al.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(al.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '"></a>' : "")) : "") +
+            (al && al.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(al.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "")) : "") +
         '<button class="btn perigo mini" data-del="' + r.id + '" style="padding: 4px 9px;">✕</button></div>';
     }).join("") : '<div class="vazio">Nenhuma resposta ' + (filtro ? "nesse grupo " : "") + "neste mês.</div>";
   }

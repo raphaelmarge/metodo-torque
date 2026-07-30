@@ -144,7 +144,7 @@
         (x.dias < 0 ? "<strong style='color:var(--erro)'>venceu há " + Math.abs(x.dias) + " dia(s)</strong>" :
           "vence " + S.fmtData(x.fim) + " (" + x.dias + "d)") + "</div></div>" +
         (x.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-          String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '"></a>' : "") +
+          String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "") +
         '<button class="btn mini" data-renovar="' + x.a.id + "|" + x.c.id + '">Renovar</button></div>';
     }).join("") : '<div class="vazio">Nada para renovar neste filtro. 🎉</div>';
   }

@@ -284,7 +284,7 @@
         '<div class="ficha-cab"><input value="' + esc(f.nome) + '" data-fnome="' + fi + '" placeholder="Nome da ficha (ex.: A — Peito e tríceps)">' +
         (editavel ? '<button class="btn sec mini" data-additem="' + fi + '">+ Exercício</button>' +
           '<button class="btn perigo mini" data-rmficha="' + fi + '" style="padding: 4px 8px;">✕</button>' : "") + "</div>" +
-        '<div class="ex-cab"><span>EXERCÍCIO</span><span>ESTILO</span><span>SÉRIES</span><span>REPS</span><span>CARGA</span><span>DESCANSO</span><span></span></div>' +
+        '<div class="ex-cab"><span>EXERCÍCIO</span><span>ESTILO</span><span>SÉRIES</span><span>REPS</span><span>CARGA</span><span>DESCANSO</span><span>EXERCÍCIO</span></div>' +
         f.itens.map(function (it, ii) {
           return '<div class="ex-linha">' +
             '<input list="exLista" value="' + esc(it.ex) + '" data-c="ex" data-fi="' + fi + '" data-ii="' + ii + '" placeholder="exercício">' +
@@ -459,7 +459,7 @@
       return "<tr><td><strong>" + esc(m.nome) + "</strong></td><td>" + esc(m.criadoPor || "—") + "</td>" +
         "<td>" + m.fichas.length + " ficha(s) · " + m.fichas.reduce(function (t, f) { return t + f.itens.length; }, 0) + " exercícios</td>" +
         "<td style='text-align:right; white-space:nowrap'>" +
-        '<button class="btn sec mini" data-edit="' + m.id + '"></button> ' +
+        '<button class="btn sec mini" data-edit="' + m.id + '">✎</button> ' +
         '<button class="btn sec mini" data-dup="' + m.id + '" title="Duplicar">⧉</button> ' +
         '<button class="btn perigo mini" data-del="' + m.id + '">✕</button></td></tr>';
     }).join("");
@@ -545,9 +545,9 @@
       .sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); });
     $("linhasEx").innerHTML = lista.map(function (x) {
       return "<tr><td>" + esc(x.nome) +
-        (x.video ? " <a href='" + esc(x.video) + "' target='_blank' rel='noopener' title='Ver vídeo de execução'></a>" : "") +
+        (x.video ? " <a href='" + esc(x.video) + "' target='_blank' rel='noopener' title='Ver vídeo de execução'>🎬</a>" : "") +
         "</td><td><span class='grupo-ex' style='margin:0'>" + esc(x.grupo) + "</span></td>" +
-        "<td style='text-align:right'><button class='btn sec mini' data-videx='" + x.id + "' title='Definir o link do vídeo de execução'></button> " +
+        "<td style='text-align:right'><button class='btn sec mini' data-videx='" + x.id + "' title='Definir o link do vídeo de execução'>🎬</button> " +
         "<button class='btn perigo mini' data-delex='" + x.id + "'>✕</button></td></tr>";
     }).join("");
     if (aba === "exercicios") $("resumoAba").textContent = st.exercicios.length + " exercício(s) seus + " + (self.MT_EXERCICIOS || []).length + " no catálogo TORQUE (aparecem na busca das fichas)";

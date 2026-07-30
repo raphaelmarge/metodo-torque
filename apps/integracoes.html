@@ -33,7 +33,7 @@
 <main class="corpo" style="display: flex; flex-direction: column; gap: 4px;">
 
   <div class="integ" style="border-color: rgba(217,119,6,.5);">
-    <header><span class="ico"></span><h2>Modo demonstração</h2><span id="stDemo" class="tag neutro">DESLIGADO</span></header>
+    <header><span class="ico">🎭</span><h2>Modo demonstração</h2><span id="stDemo" class="tag neutro">DESLIGADO</span></header>
     <p class="muted" style="margin: 8px 0 10px;">Liga <strong>toda a Fase 2 sem precisar do Pagar.me nem da Meta</strong>: a régua gera PIX/boleto/link de mentira (com uma página de pagamento de demonstração), o cartão recorrente cadastra uma assinatura simulada e o WhatsApp automático registra o envio. <strong>Nada é cobrado nem enviado de verdade.</strong> Quando contratar o Pagar.me, preencha os campos abaixo — as chaves reais têm prioridade e você pode desligar a demonstração.</p>
     <label class="linha-flex" style="gap: 8px; align-items: center; font-size: 14px; font-weight: 700;">
       <input id="tgDemo" type="checkbox" style="width: 18px; height: 18px;"> Ativar modo demonstração
@@ -41,7 +41,7 @@
   </div>
 
   <div class="integ">
-    <header><span class="ico"></span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
+    <header><span class="ico">💳</span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
     <p class="muted" style="margin: 8px 0 10px;">Gera PIX (copia e cola), boleto e <strong>link de cartão de crédito</strong> (checkout seguro do Pagar.me, até 3×) para cada mensalidade em atraso, direto da régua de cobrança — e confere sozinho se foi pago.</p>
     <div class="linha-flex" style="align-items: flex-end;">
       <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → pagarme)</label>
@@ -69,7 +69,7 @@
   </div>
 
   <div class="integ">
-    <header><span class="ico"></span><h2>WhatsApp oficial (API da Meta)</h2><span id="stWa" class="tag neutro">NÃO CONFIGURADA</span></header>
+    <header><span class="ico">💬</span><h2>WhatsApp oficial (API da Meta)</h2><span id="stWa" class="tag neutro">NÃO CONFIGURADA</span></header>
     <p class="muted" style="margin: 8px 0 10px;">O sistema <strong>envia as mensagens sozinho</strong> (cobrança, lembretes) sem abrir o WhatsApp. Texto livre vale na janela de 24h após o aluno falar com o número; fora dela a Meta exige um <strong>template aprovado</strong>.</p>
     <div class="linha-flex" style="align-items: flex-end;">
       <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → whatsapp)</label>
@@ -101,11 +101,11 @@
     </details>
   </div>
   <div class="integ" style="opacity:.65;">
-    <header><span class="ico"></span><h2>Notas fiscais (NFS-e)</h2><span class="tag neutro">PRÓXIMA</span></header>
+    <header><span class="ico">🧾</span><h2>Notas fiscais (NFS-e)</h2><span class="tag neutro">PRÓXIMA</span></header>
     <p class="muted" style="margin-top: 8px;">Emissão automática por mensalidade via eNotas/FocusNFe. Exige certificado digital A1 e cadastro na prefeitura.</p>
   </div>
   <div class="integ" style="opacity:.65;">
-    <header><span class="ico"></span><h2>Catraca / biometria</h2><span class="tag neutro">PRÓXIMA</span></header>
+    <header><span class="ico">🚪</span><h2>Catraca / biometria</h2><span class="tag neutro">PRÓXIMA</span></header>
     <p class="muted" style="margin-top: 8px;">Liberação física integrada ao Controle de Entradas (ex.: Control iD). Depende do hardware da recepção.</p>
   </div>
 </main>

@@ -200,7 +200,7 @@
     $("resumoDia").textContent = lista.length ? lista.length + " compromisso(s) · " + pend + " pendente(s)" : "";
 
     if (!lista.length) {
-      $("quadroAgenda").innerHTML = '<div class="dia-lista"><div class="sem-expediente"><span class="ico"></span>' +
+      $("quadroAgenda").innerHTML = '<div class="dia-lista"><div class="sem-expediente"><span class="ico">🗓</span>' +
         (turno || busca ? "Nada neste período com esses filtros." : "Sem expediente — nenhum compromisso neste dia.") +
         "</div></div>";
       return;

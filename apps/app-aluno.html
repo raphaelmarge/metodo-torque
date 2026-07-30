@@ -167,7 +167,7 @@
     $("listaPosts").innerHTML = posts.length ? posts.slice().reverse().map(function (p) {
       return '<div class="post"><div style="flex:1;"><strong>' + esc(p.titulo) + "</strong>" +
         '<div class="muted" style="font-size:12.5px;">' + esc(p.texto || "") + " · " + S.fmtData(p.data) + "</div></div>" +
-        '<button class="btn sec mini" data-rm="' + p.id + '"></button></div>';
+        '<button class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhum aviso — crie o primeiro (ex.: horário especial de feriado, aula nova).</div>';
   }
   $("btnPost").addEventListener("click", function () {
@@ -441,7 +441,7 @@
                 "<button class='sfeita' data-ex='" + chaveEx + "' data-max='" + nSeries + "'>0/" + nSeries + " ✓</button>" +
                 "<input class='cargain' data-ex='" + chaveEx + "' inputmode='decimal' placeholder='" + esc(it.carga || "kg") + "'>" +
                 "<button class='timerbtn' data-s='" + descSeg + "'>⏱ " + descSeg + "s</button>" +
-                "<button class='histbtn' data-ex='" + chaveEx + "'></button>" +
+                "<button class='histbtn' data-ex='" + chaveEx + "'>📈</button>" +
                 "</div></div>";
             }).join("") + "</div>";
         }).join("") +
@@ -541,10 +541,10 @@
       (app.banner ? "<div class='banner'>" + esc(app.banner) + "</div>" : "") +
       "<div class='secTit'>Favoritos</div>" +
       "<div class='favs'>" +
-      "<div class='fav' data-ir='Perfil' data-abrir='dTreino'><span class='ic'></span>Meu treino</div>" +
-      "<div class='fav' data-convidar><span class='ic'></span>Convide seus amigos</div>" +
-      "<div class='fav' data-ir='Perfil' data-abrir='dDados'><span class='ic'></span>Dados pessoais</div>" +
-      "<div class='fav' data-ir='Perfil' data-abrir='dPlanos'><span class='ic'></span>Planos e serviços</div>" +
+      "<div class='fav' data-ir='Perfil' data-abrir='dTreino'><span class='ic'>🏋️</span>Meu treino</div>" +
+      "<div class='fav' data-convidar><span class='ic'>👥</span>Convide seus amigos</div>" +
+      "<div class='fav' data-ir='Perfil' data-abrir='dDados'><span class='ic'>👤</span>Dados pessoais</div>" +
+      "<div class='fav' data-ir='Perfil' data-abrir='dPlanos'><span class='ic'>📄</span>Planos e serviços</div>" +
       "</div>" +
       (desafio ? "<div class='secTit'>Desafio do mês 🏁</div>" +
         "<div class='cardx'><b style='font-size:15px;'>" + esc(desafio.titulo) + "</b>" +
@@ -607,8 +607,8 @@
         "</div>" : "") +
       "<div class='secTit'>WOD</div>" +
       "<div style='display:flex;gap:10px;padding:0 16px;'>" +
-      "<div class='fav' style='flex:1' data-ir='Wod'><span class='ic'></span>WOD do dia</div>" +
-      "<div class='fav' style='flex:1' data-ir='Wod' data-wodhist><span class='ic'></span>Histórico</div>" +
+      "<div class='fav' style='flex:1' data-ir='Wod'><span class='ic'>⭐</span>WOD do dia</div>" +
+      "<div class='fav' style='flex:1' data-ir='Wod' data-wodhist><span class='ic'>🏆</span>Histórico</div>" +
       "</div>" +
       (horarios.length ? "<div class='secTit'>Horários da academia</div><div class='cardx'>" +
         horarios.map(function (h2) { return kv(h2[0], esc(h2[1])); }).join("") + "</div>" : "") +
@@ -628,7 +628,7 @@
             "<button class='plike'><span>0</span></button>" +
             "<button class='pcbtn'><span>0</span></button></div>" +
             "<div class='pcoms' hidden></div>" +
-            "<div class='pinput' hidden><input maxlength='400' placeholder='Escreva um comentário…'><button></button></div>" : "") +
+            "<div class='pinput' hidden><input maxlength='400' placeholder='Escreva um comentário…'><button>➤</button></div>" : "") +
           "</div>";
       }).join("") : "<div class='vz'>Sem publicações no momento. 😉</div>") +
       "</div></div>" +
@@ -673,18 +673,18 @@
       "<h1>Perfil</h1>" +
       "<div class='perfilTopo'><span class='avat'>" + esc(iniciais) + "</span>" +
       "<div class='idl'>ID " + codigo + "</div><div class='nm'>" + esc(a.nome) + "</div><div class='ac'>" + esc(nomeAcad).toUpperCase() + "</div></div>" +
-      "<details id='dCarteira'><summary><span class='ic'></span>Carteira</summary><div class='dcorpo'>" +
+      "<details id='dCarteira'><summary><span class='ic'>🪪</span>Carteira</summary><div class='dcorpo'>" +
       "<div class='cart' style='margin:0;'><div class='rot'>CARTEIRINHA DIGITAL · " + esc(nomeAcad).toUpperCase() + "</div>" +
       "<div class='nm'>" + esc(a.nome) + "</div><div class='cod'>" + codigo + "</div>" +
       (qrUri ? "<div style='background:#fff;border-radius:10px;padding:10px;display:inline-block;margin:8px 0;'><img src='" + qrUri + "' alt='QR do check-in' style='width:150px;height:150px;display:block;image-rendering:pixelated;'></div><div style='font-size:11.5px;opacity:.8;'>Mostre este QR na recepção para o check-in 📷</div>" : "") +
       "<span class='stt'>" + (emDia ? "✅ EM DIA" : "⚠ PENDÊNCIA — fale com a recepção") + "</span></div></div></details>" +
-      "<details id='dPlanos'><summary><span class='ic'></span>Planos e serviços</summary><div class='dcorpo'>" +
+      "<details id='dPlanos'><summary><span class='ic'>📄</span>Planos e serviços</summary><div class='dcorpo'>" +
       (plano ? kv("Plano", esc(plano.nome || "—")) +
         (c && c.valor ? kv("Valor", "R$ " + (+c.valor).toLocaleString("pt-BR")) : "") +
         (fimContrato ? kv("Termina em", S.fmtData(fimContrato)) : "") +
         (proxVenc ? kv("Próximo vencimento", S.fmtData(proxVenc)) : "") +
         kv("Status", emDia ? "Ativo ✅" : "Com pendência ⚠") : "<div class='vz'>Sem plano ativo.</div>") + "</div></details>" +
-      "<details id='dSessoes'><summary><span class='ic'></span>Sessões e presenças</summary><div class='dcorpo'>" +
+      "<details id='dSessoes'><summary><span class='ic'>📆</span>Sessões e presenças</summary><div class='dcorpo'>" +
       kv("Presenças neste mês", sessoesMes + "x") +
       kv("Total registrado", (a.checkins || []).length + " check-in(s)") +
       (meusPacotes.length ? meusPacotes.map(function (pp) {
@@ -693,18 +693,18 @@
           (pp.validade ? " · válido até " + S.fmtData(pp.validade) : "") +
           (pp.saldo <= 2 ? " — <b>renove com a equipe!</b>" : "") + "</div>";
       }).join("") : "") + "</div></details>" +
-      (temNuvem && loja.length ? "<details id='dPedidos'><summary><span class='ic'></span>Meus pedidos</summary><div class='dcorpo' id='pedidosBox'>…</div></details>" : "") +
-      "<details id='dAval'><summary><span class='ic'></span>Avaliação física</summary><div class='dcorpo'>" +
+      (temNuvem && loja.length ? "<details id='dPedidos'><summary><span class='ic'>🛍</span>Meus pedidos</summary><div class='dcorpo' id='pedidosBox'>…</div></details>" : "") +
+      "<details id='dAval'><summary><span class='ic'>🩺</span>Avaliação física</summary><div class='dcorpo'>" +
       (av ? kv("Última", S.fmtData(av.data)) + (av.peso ? kv("Peso", av.peso + " kg") : "") +
         (av.gordura ? kv("% de gordura", av.gordura + "%") : "") + (proxAv ? kv("Próxima", S.fmtData(proxAv)) : "")
         : "<div class='vz'>Nenhuma avaliação ainda — agenda a sua! 📊</div>") + antesDepoisHTML + "</div></details>" +
-      "<details id='dRecordes'><summary><span class='ic'></span>Meus recordes (PRs)</summary><div class='dcorpo' id='recordesBox'><div class='vz'>Anote as cargas nos exercícios do treino — seus recordes aparecem aqui. 💪</div></div></details>" +
-      (urlMatricula ? "<details id='dIndique'><summary><span class='ic'></span>Indique um amigo</summary><div class='dcorpo'>" +
+      "<details id='dRecordes'><summary><span class='ic'>🏅</span>Meus recordes (PRs)</summary><div class='dcorpo' id='recordesBox'><div class='vz'>Anote as cargas nos exercícios do treino — seus recordes aparecem aqui. 💪</div></div></details>" +
+      (urlMatricula ? "<details id='dIndique'><summary><span class='ic'>🤝</span>Indique um amigo</summary><div class='dcorpo'>" +
         "<div class='vz' style='padding:6px 0;'>Chame um amigo pra treinar: quando ele se matricular pelo SEU link, os dois ganham! 🎁</div>" +
         "<div style='border:1px dashed var(--cor);border-radius:10px;padding:10px;margin:8px 0;font-size:12.5px;word-break:break-all;'>" + esc(urlMatricula) + "</div>" +
         "<button class='btnx' id='btnIndica' style='width:100%'>Mandar meu link no WhatsApp</button>" +
         "<div style='font-size:11.5px;color:var(--txt2);margin-top:6px;'>Seu código de indicação: <b>" + codigo + "</b></div></div></details>" : "") +
-      (videoteca.length ? "<details id='dVideos'><summary><span class='ic'></span>Aulas gravadas</summary><div class='dcorpo'>" +
+      (videoteca.length ? "<details id='dVideos'><summary><span class='ic'>🎥</span>Aulas gravadas</summary><div class='dcorpo'>" +
         (function () {
           var porCat = {};
           videoteca.forEach(function (v) { (porCat[v.categoria || "Geral"] = porCat[v.categoria || "Geral"] || []).push(v); });
@@ -715,22 +715,22 @@
               }).join("");
           }).join("");
         })() + "</div></details>" : "") +
-      "<details id='dTreino'><summary><span class='ic'></span>Meu treino" + (presc && presc.nome ? " — " + esc(presc.nome) : "") + "</summary><div class='dcorpo'>" + fichasHTML() + "</div></details>" +
-      "<details id='dDados'><summary><span class='ic'></span>Dados pessoais</summary><div class='dcorpo'>" +
+      "<details id='dTreino'><summary><span class='ic'>🏋️</span>Meu treino" + (presc && presc.nome ? " — " + esc(presc.nome) : "") + "</summary><div class='dcorpo'>" + fichasHTML() + "</div></details>" +
+      "<details id='dDados'><summary><span class='ic'>👤</span>Dados pessoais</summary><div class='dcorpo'>" +
       (a.zap ? kv("Celular", esc(a.zap)) : "") + (a.email ? kv("E-mail", esc(a.email)) : "") +
       (a.desde ? kv("Aluno(a) desde", S.fmtData(a.desde)) : "") +
       "<div class='vz'>Pra atualizar seus dados, fala com a recepção. 😉</div></div></details>" +
-      "<details id='dPend'><summary><span class='ic'></span>Bloqueios e pendências</summary><div class='dcorpo'>" +
+      "<details id='dPend'><summary><span class='ic'>⚠️</span>Bloqueios e pendências</summary><div class='dcorpo'>" +
       (emDia ? "<div class='vz' style='padding:22px 0;font-size:15px;'><br><br><strong>Pode relaxar!</strong><br>Você não possui pendências.</div>"
         : atrasados.map(function (r) { return kv("Vencida em " + S.fmtData(r.vencimento), "R$ " + (+r.valor).toLocaleString("pt-BR")); }).join("") +
         "<div class='vz'>Regularize na recepção ou pelo WhatsApp. 💜</div>") + "</div></details>" +
-      (retro ? "<details id='dRetro'><summary><span class='ic'></span>Minha retrospectiva " + retro.ano + "</summary><div class='dcorpo'>" +
+      (retro ? "<details id='dRetro'><summary><span class='ic'>🎁</span>Minha retrospectiva " + retro.ano + "</summary><div class='dcorpo'>" +
         kv("Treinos no ano", retro.total) + kv("Mês mais forte", retro.mesTop) +
         kv("Dia favorito", retro.diaTop) + kv("Horário favorito", retro.horaTop) +
         kv("Medalhas conquistadas", retro.medalhas) +
         "<button class='btnx' id='btnCardRetro' style='display:block;width:100%;text-align:center;margin-top:8px;border:none;cursor:pointer;font-family:inherit;'>Gerar card pro Stories</button>" +
         "</div></details>" : "") +
-      (temNuvem ? "<details id='dLogin'><summary><span class='ic'></span>Meu login e senha</summary><div class='dcorpo'>" +
+      (temNuvem ? "<details id='dLogin'><summary><span class='ic'>🔑</span>Meu login e senha</summary><div class='dcorpo'>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para entrar no seu app de QUALQUER aparelho (página Entrar do aluno no site da academia).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;padding:12px;border-radius:10px;border:1px solid var(--linha2,#322e3d);background:transparent;color:inherit;font-family:inherit;'>" +
         "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;padding:12px;border-radius:10px;border:1px solid var(--linha2,#322e3d);background:transparent;color:inherit;font-family:inherit;'>" +
@@ -743,11 +743,11 @@
       // ===== NAV =====
       "<div id='timerBar'></div>" +
       "<nav>" +
-      "<button class='on' data-pg='Inicio'><span class='ic'></span>Início</button>" +
+      "<button class='on' data-pg='Inicio'><span class='ic'>🏠</span>Início</button>" +
       "<button data-pg='Timeline'><span class='ic'>▦</span>Timeline</button>" +
-      "<button data-pg='Wod'><span class='ic'></span>Wod</button>" +
-      "<button data-pg='Grade'><span class='ic'></span>Grade</button>" +
-      "<button data-pg='Perfil'><span class='ic'></span>Perfil</button>" +
+      "<button data-pg='Wod'><span class='ic'>▦</span>Wod</button>" +
+      "<button data-pg='Grade'><span class='ic'>🏆</span>Grade</button>" +
+      "<button data-pg='Perfil'><span class='ic'>📅</span>Perfil</button>" +
       "</nav>" +
 
       "<script>var AULAS=" + JSON.stringify(aulas) + ",LOT=" + JSON.stringify(lot) + ";" +
@@ -875,9 +875,9 @@
         "var dtC=new Date(g.data+'T'+((auC&&auC.i)||'23:59'));if(dtC-Date.now()<REGRAS.ch*3600000)pode=false;}" +
         "var passou=g.data&&g.data<new Date().toISOString().slice(0,10);" +
         "return \"<div class='aula'><div class='l1'><span>\"+g.aula+\"</span><span class='vg'>\"+dd+\"</span></div><div class='sub'>\"+st2+\"</div>\"+" +
-        "(g.status!=='cancelado'&&!passou?\"<div style='margin-top:8px;text-align:right;'><button class='btnx' style='background:#0369a1;padding:7px 12px;font-size:12.5px;margin-right:6px' data-ics='\"+g.aula+'|'+g.data+\"' title='Adicionar ao calendário'></button>\"+" +
+        "(g.status!=='cancelado'&&!passou?\"<div style='margin-top:8px;text-align:right;'><button class='btnx' style='background:#0369a1;padding:7px 12px;font-size:12.5px;margin-right:6px' data-ics='\"+g.aula+'|'+g.data+\"' title='Adicionar ao calendário'>📆</button>\"+" +
         "(pode?\"<button class='btnx' style='background:#57534e;padding:7px 16px;font-size:12.5px' data-cx='\"+g.id+\"'>Cancelar</button>\":\"<span style='font-size:11.5px;color:var(--txt2)'>cancele com a recepção (até \"+REGRAS.ch+\"h antes)</span>\")+\"</div>\":'')+" +
-        "(passou&&g.status!=='cancelado'&&g.status!=='espera'?\"<div data-ava='\"+g.aula+'|'+g.data+\"' style='margin-top:6px;font-size:13px;color:var(--txt2);'>Como foi? \"+[1,2,3,4,5].map(function(n){return \"<button class='star' data-n='\"+n+\"' style='background:none;border:none;font-size:20px;cursor:pointer;padding:2px;'></button>\";}).join('')+\"</div>\":'')+\"</div>\";}).join('');});};" +
+        "(passou&&g.status!=='cancelado'&&g.status!=='espera'?\"<div data-ava='\"+g.aula+'|'+g.data+\"' style='margin-top:6px;font-size:13px;color:var(--txt2);'>Como foi? \"+[1,2,3,4,5].map(function(n){return \"<button class='star' data-n='\"+n+\"' style='background:none;border:none;font-size:20px;cursor:pointer;padding:2px;'>☆</button>\";}).join('')+\"</div>\":'')+\"</div>\";}).join('');});};" +
         // ⭐ avaliação da aula (vai pro relatório de satisfação da academia)
         "document.getElementById('minhaLista').addEventListener('click',function(e){var s=e.target.closest('.star');if(!s)return;" +
         "var w=s.closest('[data-ava]');var pa=w.getAttribute('data-ava').split('|');var n=+s.dataset.n;w.textContent='Enviando…';" +

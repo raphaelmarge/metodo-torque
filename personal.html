@@ -411,7 +411,7 @@
       return '<div class="aluno-pt"><div class="quem"><strong>' + esc(a.nome) + "</strong>" +
         '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
         (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
-        (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '"></a>' : "") +
+        (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
         ' <button class="btn mini" data-app="' + a.id + '">App do aluno</button>' +
         ' <button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div>';
     }).join("") : '<div class="vazio">Cadastre seu primeiro aluno acima. 💪</div>';
@@ -556,7 +556,7 @@
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
           return '<div class="sessao-pt"><b>' + esc(ex.nome) + "</b><span>" + it.series + "×" + it.reps + "</span>" +
             (it.obs ? '<span class="muted">' + esc(it.obs) + "</span>" : "") +
-            (ex.video ? "<span title='tem vídeo'></span>" : "") +
+            (ex.video ? "<span title='tem vídeo'>🎬</span>" : "") +
             '<span style="margin-left:auto;"></span>' +
             (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '">↑</button>' : "") +
             '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '">✕</button></div>';
@@ -696,7 +696,7 @@
       return "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;'>" + esc(g) + "</div>" +
         porGrupo[g].map(function (e) {
           return '<div class="sessao-pt"><b>' + esc(e.nome) + "</b>" +
-            (e.video ? "<span title='tem vídeo'></span>" : '<span class="muted" style="font-size:11.5px;">sem vídeo</span>') +
+            (e.video ? "<span title='tem vídeo'>🎬</span>" : '<span class="muted" style="font-size:11.5px;">sem vídeo</span>') +
             (e.descricao ? "" : '<span class="tag alerta" style="font-size:10px;">sem descrição</span>') +
             '<span style="margin-left:auto;"></span>' +
             '<button class="btn sec mini" data-exedit="' + e.id + '">Abrir</button>' +
@@ -1407,7 +1407,7 @@
       "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
-      "<button class='btnx' id='chEnvia'></button></div></div>" +
+      "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
       "<div id='tmrBar' style='display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 💜</div>" +
       "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
