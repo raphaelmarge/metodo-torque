@@ -48,7 +48,12 @@
   <div class="card" id="hqLock" style="border-left: 4px solid #d97706;">
     <b>Área restrita ao administrador do TORQUE ON.</b>
     <p class="muted" id="hqLockMsg" style="margin-top:6px;">Verificando seu acesso…</p>
-    <p style="margin-top:10px;"><a class="btn" href="../index.html">Ir para o portal e entrar</a></p>
+    <form id="hqLoginForm" hidden style="margin-top:12px; max-width: 360px;">
+      <input id="hqEmail" type="email" placeholder="Seu e-mail de administrador" required autocomplete="username" style="width:100%; margin-bottom:8px;">
+      <input id="hqSenha" type="password" placeholder="Senha" required autocomplete="current-password" style="width:100%; margin-bottom:8px;">
+      <p id="hqLoginErro" class="muted" hidden style="color:#dc2626; font-size:13px; margin:4px 0;"></p>
+      <button class="btn" id="hqEntrar" style="width:100%;">Entrar na central</button>
+    </form>
     <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;">Como me torno administrador?</summary>
       <p class="muted" style="font-size:13px;margin-top:6px;">Rode o bloco <b>TORQUE ON HQ (SaaS)</b> do supabase-setup.sql e depois, no SQL Editor do Supabase:<br>
       <code style="font-size:12px;">insert into public.saas_admins (user_id) select id from auth.users where email = 'SEU_EMAIL';</code></p>
@@ -229,7 +234,11 @@
     if (!cli) { lock("A nuvem não está configurada (assets/cloud-config.js)."); return; }
     cli.auth.getSession().then(function (r) {
       var sess = r.data && r.data.session;
-      if (!sess) { lock("Você não está logado. Entre no portal com a SUA conta de administrador e volte aqui."); return; }
+      if (!sess) {
+        lock("Entre com a sua conta de administrador:");
+        $("hqLoginForm").hidden = false;
+        return;
+      }
       cli.rpc("hq_sou_admin").then(function (r2) {
         if (r2.error) { lock("O banco ainda não tem o bloco TORQUE ON HQ — rode o supabase-setup.sql. (" + esc(r2.error.message) + ")"); return; }
         if (r2.data !== true) { lock("A conta <b>" + esc(sess.user && sess.user.email) + "</b> não é administradora do TORQUE ON. Veja abaixo como se cadastrar."); return; }
@@ -240,6 +249,22 @@
       });
     });
   }
+
+  document.getElementById("hqLoginForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var btn = $("hqEntrar"); btn.disabled = true;
+    $("hqLoginErro").hidden = true;
+    cli.auth.signInWithPassword({ email: $("hqEmail").value.trim(), password: $("hqSenha").value }).then(function (r) {
+      btn.disabled = false;
+      if (r.error) { $("hqLoginErro").textContent = "Login ou senha incorretos."; $("hqLoginErro").hidden = false; return; }
+      $("hqLoginForm").hidden = true;
+      initHQ();
+    }, function () {
+      btn.disabled = false;
+      $("hqLoginErro").textContent = "Sem conexão com a nuvem agora — tente de novo.";
+      $("hqLoginErro").hidden = false;
+    });
+  });
 
   function carrega() {
     cli.rpc("hq_kpis").then(function (r) {

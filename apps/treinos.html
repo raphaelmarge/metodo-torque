@@ -169,6 +169,7 @@
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="store.js"></script>
+<script src="../assets/exercicios-db.js"></script>
 <script>
 (function () {
   "use strict";
@@ -273,7 +274,11 @@
   // ---------- PRESCRIÇÃO: painel do aluno ----------
   function fichasHTML(fichas, editavel) {
     var st = load();
-    var dl = '<datalist id="exLista">' + st.exercicios.map(function (x) { return "<option>" + esc(x.nome) + "</option>"; }).join("") + "</datalist>";
+    var jaTem = {};
+    st.exercicios.forEach(function (x) { jaTem[x.nome.toLowerCase()] = 1; });
+    var catalogo = (self.MT_EXERCICIOS || []).filter(function (c) { return !jaTem[c.n.toLowerCase()]; });
+    var dl = '<datalist id="exLista">' + st.exercicios.map(function (x) { return "<option>" + esc(x.nome) + "</option>"; }).join("") +
+      catalogo.map(function (c) { return "<option value=\"" + esc(c.n) + "\">" + esc(c.g) + "</option>"; }).join("") + "</datalist>";
     return dl + fichas.map(function (f, fi) {
       return '<div class="ficha" data-fi="' + fi + '">' +
         '<div class="ficha-cab"><input value="' + esc(f.nome) + '" data-fnome="' + fi + '" placeholder="Nome da ficha (ex.: A — Peito e tríceps)">' +
@@ -545,7 +550,7 @@
         "<td style='text-align:right'><button class='btn sec mini' data-videx='" + x.id + "' title='Definir o link do vídeo de execução'></button> " +
         "<button class='btn perigo mini' data-delex='" + x.id + "'>✕</button></td></tr>";
     }).join("");
-    if (aba === "exercicios") $("resumoAba").textContent = st.exercicios.length + " exercício(s) na biblioteca";
+    if (aba === "exercicios") $("resumoAba").textContent = st.exercicios.length + " exercício(s) seus + " + (self.MT_EXERCICIOS || []).length + " no catálogo TORQUE (aparecem na busca das fichas)";
   }
   $("buscaEx").addEventListener("input", function () { buscaEx = this.value; renderEx(); });
   $("addEx").onclick = function () {

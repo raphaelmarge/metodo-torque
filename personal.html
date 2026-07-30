@@ -157,7 +157,8 @@
     <div class="card">
       <h2>Biblioteca de exercícios</h2>
       <div class="linha-flex" style="margin: 8px 0 10px;">
-        <input id="exNome" placeholder="Nome do exercício *" style="flex: 2; min-width: 170px;">
+        <input id="exNome" list="dlExCat" placeholder="Nome do exercício * (busque no catálogo TORQUE)" style="flex: 2; min-width: 170px;">
+        <datalist id="dlExCat"></datalist>
         <input id="exGrupo" placeholder="Grupo (ex.: Peito)" list="exGrupos" style="flex: 1; min-width: 120px;">
         <datalist id="exGrupos"><option>Peito</option><option>Costas</option><option>Pernas</option><option>Ombros</option><option>Braços</option><option>Core</option><option>Cardio</option></datalist>
         <input id="exVideo" placeholder="Link do vídeo (YouTube)" style="flex: 2; min-width: 170px;">
@@ -316,6 +317,7 @@
 <script src="assets/cloud-config.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="apps/store.js"></script>
+<script src="assets/exercicios-db.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
 (function () {
@@ -611,7 +613,11 @@
   })();
   function exercicioPorNome(st, nome) {
     var ex = (st.exercicios || []).find(function (e) { return e.nome.toLowerCase() === nome.toLowerCase(); });
-    if (!ex) { ex = { id: S.uid(), nome: nome, grupo: "", video: "", descricao: "" }; st.exercicios.push(ex); }
+    if (!ex) {
+      var cat = (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nome.toLowerCase(); });
+      ex = { id: S.uid(), nome: cat ? cat.n : nome, grupo: (cat && cat.g) || "", video: "", descricao: (cat && cat.d) || "" };
+      st.exercicios.push(ex);
+    }
     return ex;
   }
   $("tplAplicar").addEventListener("click", function () {
@@ -1609,6 +1615,11 @@
         });
     });
   });
+  // catálogo TORQUE de exercícios no autocompletar
+  (function () {
+    var dl = document.getElementById("dlExCat");
+    if (dl && self.MT_EXERCICIOS) dl.innerHTML = self.MT_EXERCICIOS.map(function (x) { return "<option value=\"" + esc(x.n) + "\">" + esc(x.g) + "</option>"; }).join("");
+  })();
   window.__montaAppAluno = montaAppAluno; // testes
 
   // ---------- assessoria (adesão remota) ----------

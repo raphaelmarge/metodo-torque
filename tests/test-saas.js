@@ -116,22 +116,44 @@ function crcNode(s) {
   ok(tokenGuardado === "tok-aluno-teste", "token fica lembrado no aparelho");
   await p.close();
 
-  // ---------- 2) HQ travado sem admin ----------
-  console.log("HQ (trava de acesso):");
-  p = await ctx.newPage();
+  // ---------- 2) HQ travado sem admin (com login direto na tela) ----------
+  console.log("HQ (trava de acesso + login direto):");
+  const ctxHq = await b.newContext({ viewport: { width: 1360, height: 900 } }); // SEM mtapp:perfil
+  p = await ctxHq.newPage();
   p.on("pageerror", (e) => erros.push(String(e)));
+  await p.addInitScript(() => {
+    window.MT_supabase = {
+      auth: {
+        getSession: async () => ({ data: { session: null } }),
+        signInWithPassword: async (c) => { window.__cred = c; return { error: { message: "Invalid login" } }; },
+      },
+      rpc: async () => ({ data: null }),
+    };
+  });
   await p.goto(BASE + "/apps/hq.html");
   await p.waitForTimeout(900);
+  ok(/hq\.html/.test(await p.evaluate(() => location.pathname)), "HQ abre direto SEM cadastro no portal (não redireciona mais)");
   const trava = await p.evaluate(() => ({
     lockVisivel: !document.getElementById("hqLock").hidden,
     painelEscondido: document.getElementById("hqPainel").hidden,
-    msg: document.getElementById("hqLockMsg").textContent,
+    formVisivel: !document.getElementById("hqLoginForm").hidden,
   }));
   ok(trava.lockVisivel && trava.painelEscondido, "sem login o painel fica travado");
-  ok(/não está logado|nuvem não está configurada/.test(trava.msg), "mensagem explica o que falta");
+  ok(trava.formVisivel, "formulário de login aparece na própria tela do HQ");
+  await p.fill("#hqEmail", "dono@torqueon.com.br");
+  await p.fill("#hqSenha", "senha-errada");
+  await p.click("#hqEntrar");
+  await p.waitForTimeout(400);
+  const loginTeste = await p.evaluate(() => ({
+    erro: document.getElementById("hqLoginErro").textContent,
+    cred: window.__cred,
+  }));
+  ok(/incorretos/.test(loginTeste.erro), "senha errada mostra erro na tela");
+  ok(loginTeste.cred && loginTeste.cred.email === "dono@torqueon.com.br", "login usa o e-mail digitado");
   const comoAdmin = await p.evaluate(() => document.body.textContent);
   ok(/saas_admins/.test(comoAdmin), "instrução de como virar admin na tela");
   await p.close();
+  await ctxHq.close();
 
   // ---------- 3) HQ com admin (cliente supabase mockado) ----------
   console.log("HQ (painel do dono):");

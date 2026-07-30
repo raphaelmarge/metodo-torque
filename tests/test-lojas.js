@@ -91,5 +91,17 @@ ok(/og:title/.test(tqs) && /og:description/.test(tqs) && /og:image/.test(tqs), "
 const dom = fs.readFileSync(path.join(RAIZ, "DOMINIO.md"), "utf8");
 ok(/registro\.br/.test(dom) && /185\.199\.108\.153/.test(dom) && /CNAME/.test(dom) && /Enforce HTTPS/.test(dom), "DOMINIO.md cobre registro, DNS e ativação no Pages");
 
+console.log("Banco de exercícios compartilhado:");
+const exSrc = fs.readFileSync(path.join(RAIZ, "assets/exercicios-db.js"), "utf8");
+const exLista = JSON.parse(exSrc.slice(exSrc.indexOf("["), exSrc.lastIndexOf("]") + 1));
+ok(exLista.length >= 100, "catálogo tem 100+ exercícios (" + exLista.length + ")");
+ok(new Set(exLista.map((e) => e.n.toLowerCase())).size === exLista.length, "nomes de exercícios são únicos");
+ok(exLista.every((e) => e.n && e.g && e.eq && e.d && e.d.length > 15), "todo exercício tem nome, grupo, equipamento e dica de execução");
+ok(new Set(exLista.map((e) => e.g)).size >= 9, "9+ grupos musculares/modalidades");
+const perEx = fs.readFileSync(path.join(RAIZ, "personal.html"), "utf8");
+ok(perEx.includes("assets/exercicios-db.js") && perEx.includes("dlExCat"), "TORQUE PERSONAL usa o catálogo (autocompletar da biblioteca)");
+const trEx = fs.readFileSync(path.join(RAIZ, "apps/treinos.html"), "utf8");
+ok(trEx.includes("../assets/exercicios-db.js") && trEx.includes("catalogo"), "TORQUE ON academia usa o catálogo na busca das fichas");
+
 console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);
