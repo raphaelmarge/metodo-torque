@@ -1,4 +1,4 @@
-// TORQUESYS — Chat unificado · webhook da Meta (WhatsApp + Instagram)
+// TORQUE ON — Chat unificado · webhook da Meta (WhatsApp + Instagram)
 //
 // Esta função RECEBE as mensagens que os clientes mandam no WhatsApp e no
 // Instagram da academia, guarda tudo na caixa de entrada unificada
@@ -22,7 +22,7 @@
 //      - URL do callback:  https://SEU-PROJETO.supabase.co/functions/v1/meta-webhook
 //      - Verify token:     o mesmo META_VERIFY_TOKEN
 //      - Assine os campos: WhatsApp → "messages" · Instagram → "messages"
-//   5. No TORQUESYS: Sistema → CRM → Chat e IA. Pronto.
+//   5. No TORQUE ON: Sistema → CRM → Chat e IA. Pronto.
 //
 // A resposta 200 é devolvida NA HORA (a Meta reenvia se demorar) e o
 // processamento continua em segundo plano com EdgeRuntime.waitUntil.

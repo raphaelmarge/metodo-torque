@@ -4,9 +4,9 @@ Os três produtos já são PWAs prontos pra empacotar. Cada um vira **um app sep
 
 | App | Endereço (URL) | Pacote Android sugerido |
 |---|---|---|
-| 🏢 TORQUESYS (academia) | `https://raphaelmarge.github.io/metodo-torque/` | `com.torquesys.academia` |
-| 💪 TORQUE PERSONAL | `https://raphaelmarge.github.io/metodo-torque/personal.html` | `com.torquesys.personal` |
-| 🥗 TORQUE NUTRI | `https://raphaelmarge.github.io/metodo-torque/nutricao.html` | `com.torquesys.nutri` |
+| 🏢 TORQUE ON (academia) | `https://raphaelmarge.github.io/metodo-torque/` | `com.torqueon.academia` |
+| 💪 TORQUE PERSONAL | `https://raphaelmarge.github.io/metodo-torque/personal.html` | `com.torqueon.personal` |
+| 🥗 TORQUE NUTRI | `https://raphaelmarge.github.io/metodo-torque/nutricao.html` | `com.torqueon.nutri` |
 
 **O que já está pronto no site** (você não precisa mexer): manifests com nome/descrição/categorias, ícones próprios de cada app (roxo com haltere, verde com folha), ícones maskable, funcionamento offline (service worker) e a página de política de privacidade: `https://raphaelmarge.github.io/metodo-torque/privacidade.html` — as lojas pedem esse link.
 
@@ -26,13 +26,13 @@ Os três produtos já são PWAs prontos pra empacotar. Cada um vira **um app sep
 2. Cole a URL do app (comece pelo da academia: `https://raphaelmarge.github.io/metodo-torque/`) e clique **Start**.
 3. Ele dá uma nota do seu PWA → clique **Package for stores** → **Android** → **Generate package**.
 4. Na tela de opções preencha:
-   - **Package ID**: `com.torquesys.academia`
-   - **App name**: TORQUESYS
+   - **Package ID**: `com.torqueon.academia`
+   - **App name**: TORQUE ON
    - **Signing key**: deixe **"Create new"** (o PWABuilder cria a chave de assinatura pra você). ⚠️ **GUARDE o arquivo de chave e as senhas que vierem no download** — sem eles você nunca mais consegue atualizar o app.
 5. Baixe o **.zip**. Dentro vem: o **`.aab`** (o app que sobe na loja), a chave de assinatura e um **`assetlinks.json`**.
 
 ### Passo 3 · Subir na Play Console (~30 min)
-1. Na Play Console: **Criar app** → nome "TORQUESYS — Gestão de Academias", idioma Português (Brasil), tipo **App**, **Gratuito**.
+1. Na Play Console: **Criar app** → nome "TORQUE ON — Gestão de Academias", idioma Português (Brasil), tipo **App**, **Gratuito**.
 2. Menu **Testes → Teste interno** (recomendo começar aqui) → **Criar versão** → arraste o arquivo **`.aab`** → salvar e avançar.
 3. Preencha a **Ficha da loja**: descrição curta e longa (pode copiar do manifest/site), **ícone 512×512** (use `assets/icons/icon-512.png` do repositório — baixe do GitHub), e **prints de tela**: abra o app no seu celular e tire 4–8 capturas (obrigatório: pelo menos 2).
 4. Em **Política do app**: cole o link da privacidade `https://raphaelmarge.github.io/metodo-torque/privacidade.html`, responda os questionários (classificação: Livre; sem anúncios; coleta de dados: nome/e-mail para login, criptografados).
@@ -47,8 +47,8 @@ Sem este passo o app abre com a barra de endereço em cima (feio). Com ele, abre
 
 ### Passo 5 · Repetir pros outros dois
 Repita os passos 2–4 com:
-- `https://raphaelmarge.github.io/metodo-torque/personal.html` → pacote `com.torquesys.personal` → nome "TORQUE PERSONAL"
-- `https://raphaelmarge.github.io/metodo-torque/nutricao.html` → pacote `com.torquesys.nutri` → nome "TORQUE NUTRI"
+- `https://raphaelmarge.github.io/metodo-torque/personal.html` → pacote `com.torqueon.personal` → nome "TORQUE PERSONAL"
+- `https://raphaelmarge.github.io/metodo-torque/nutricao.html` → pacote `com.torqueon.nutri` → nome "TORQUE NUTRI"
 
 ---
 
@@ -66,7 +66,7 @@ Repita os passos 2–4 com:
 ---
 
 ## Ordem que eu recomendo
-1. ✅ Play Console (US$ 25) → TORQUESYS academia no teste interno ainda esta semana.
+1. ✅ Play Console (US$ 25) → TORQUE ON academia no teste interno ainda esta semana.
 2. ✅ assetlinks (Passo 4) pra ficar tela cheia.
 3. ✅ Personal e Nutri na Play.
 4. 🍎 Apple por último (precisa do Mac e custa mais).

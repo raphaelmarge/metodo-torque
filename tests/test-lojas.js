@@ -14,7 +14,7 @@ function lerJson(rel) {
 
 console.log("Manifests prontos pra loja:");
 const MANIFESTS = [
-  ["manifest.webmanifest", "torquesys-academia", "icon-512.png"],
+  ["manifest.webmanifest", "torqueon-academia", "icon-512.png"],
   ["manifest-personal.webmanifest", "torque-personal", "icon-personal-512.png"],
   ["manifest-nutricao.webmanifest", "torque-nutri", "icon-nutri-512.png"],
 ];
@@ -37,7 +37,7 @@ const al = lerJson(".well-known/assetlinks.json");
 ok(Array.isArray(al) && al.length === 3, "assetlinks.json é JSON válido com 3 apps");
 if (Array.isArray(al)) {
   const pacotes = al.map((x) => x.target && x.target.package_name);
-  ok(pacotes.includes("com.torquesys.academia") && pacotes.includes("com.torquesys.personal") && pacotes.includes("com.torquesys.nutri"), "pacotes com.torquesys.{academia,personal,nutri}");
+  ok(pacotes.includes("com.torqueon.academia") && pacotes.includes("com.torqueon.personal") && pacotes.includes("com.torqueon.nutri"), "pacotes com.torqueon.{academia,personal,nutri}");
 }
 
 console.log("Política de privacidade:");
@@ -47,7 +47,7 @@ ok(/Política de Privacidade/.test(priv) && /LGPD/.test(priv) && /Supabase/.test
 console.log("Cara de app nativo:");
 const manAcad = lerJson("manifest.webmanifest");
 ok(Array.isArray(manAcad.shortcuts) && manAcad.shortcuts.length >= 3, "academia tem atalhos de ícone (segurar o ícone → Sistema/Grade/Alunos)");
-for (const [arq, titulo] of [["index.html", "TORQUESYS"], ["personal.html", "TQ Personal"], ["nutricao.html", "TQ Nutri"]]) {
+for (const [arq, titulo] of [["index.html", "TORQUE ON"], ["personal.html", "TQ Personal"], ["nutricao.html", "TQ Nutri"]]) {
   const htm = fs.readFileSync(path.join(RAIZ, arq), "utf8");
   ok(htm.includes('apple-mobile-web-app-capable" content="yes"') && htm.includes('apple-mobile-web-app-title" content="' + titulo + '"'), arq + " abre em tela cheia no iPhone com título " + titulo);
 }
@@ -66,7 +66,7 @@ console.log("App nativo (Capacitor):");
 const pkgNativo = lerJson("nativo/package.json");
 ok(!!pkgNativo && !!(pkgNativo.dependencies || {})["@capacitor/core"] && !!(pkgNativo.dependencies || {})["@capacitor/android"], "nativo/package.json com Capacitor core + android");
 const capCfg = lerJson("nativo/capacitor.config.json");
-ok(!!capCfg && capCfg.appId === "com.torquesys.academia" && capCfg.webDir === "www", "capacitor.config.json com appId com.torquesys.academia e webDir www");
+ok(!!capCfg && capCfg.appId === "com.torqueon.academia" && capCfg.webDir === "www", "capacitor.config.json com appId com.torqueon.academia e webDir www");
 for (const a of ["nativo/assets/icon.png", "nativo/assets/splash.png", "nativo/assets/splash-dark.png"]) {
   ok(fs.existsSync(path.join(RAIZ, a)) && fs.statSync(path.join(RAIZ, a)).size > 10000, "asset nativo existe — " + a);
 }
@@ -82,12 +82,12 @@ try {
   ok(false, "copia-www roda sem erro — " + String(e).slice(0, 120));
 }
 
-console.log("Domínio próprio (www.torquesys.com.br):");
+console.log("Domínio próprio (www.torqueon.com.br):");
 const idxHtml = fs.readFileSync(path.join(RAIZ, "index.html"), "utf8");
-ok(/torquesys\\?\.com\\?\.br/.test(idxHtml) && /location\.replace\("torquesys\.html"\)/.test(idxHtml), "index.html manda visitante do domínio pro site de vendas");
-ok(/portal/.test(idxHtml.split("torquesys.com.br")[1] || ""), "dá pra forçar o portal com ?portal=1");
-const tqs = fs.readFileSync(path.join(RAIZ, "torquesys.html"), "utf8");
-ok(/og:title/.test(tqs) && /og:description/.test(tqs) && /og:image/.test(tqs), "torquesys.html tem Open Graph (preview bonito no WhatsApp)");
+ok(/torqueon\\?\.com\\?\.br/.test(idxHtml) && /location\.replace\("torqueon\.html"\)/.test(idxHtml), "index.html manda visitante do domínio pro site de vendas");
+ok(/portal/.test(idxHtml.split("torqueon.com.br")[1] || ""), "dá pra forçar o portal com ?portal=1");
+const tqs = fs.readFileSync(path.join(RAIZ, "torqueon.html"), "utf8");
+ok(/og:title/.test(tqs) && /og:description/.test(tqs) && /og:image/.test(tqs), "torqueon.html tem Open Graph (preview bonito no WhatsApp)");
 const dom = fs.readFileSync(path.join(RAIZ, "DOMINIO.md"), "utf8");
 ok(/registro\.br/.test(dom) && /185\.199\.108\.153/.test(dom) && /CNAME/.test(dom) && /Enforce HTTPS/.test(dom), "DOMINIO.md cobre registro, DNS e ativação no Pages");
 

@@ -1,4 +1,4 @@
-// Suíte do TORQUESYS — pacote de funcionalidades (roda local e no CI).
+// Suíte do TORQUE ON — pacote de funcionalidades (roda local e no CI).
 let chromium;
 try { chromium = require("playwright").chromium; }
 catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }

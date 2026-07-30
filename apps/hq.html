@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TORQUESYS HQ — comando do negócio</title>
+<title>TORQUE ON HQ — comando do negócio</title>
 <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
 <link href="../assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps.css" rel="stylesheet">
@@ -36,21 +36,21 @@
 <header class="topo">
   <div class="topo-marca">
     <div>
-      <span class="kicker">TORQUESYS · HQ</span>
+      <span class="kicker">TORQUE ON · HQ</span>
       <h1>Comando do negócio</h1>
     </div>
   </div>
-  <p>O painel do DONO do TORQUESYS: todas as empresas clientes (academias, studios, box e personals), planos, mensalidades e o funil de vendas — sem nunca entrar nos dados de nenhum cliente.</p>
+  <p>O painel do DONO do TORQUE ON: todas as empresas clientes (academias, studios, box e personals), planos, mensalidades e o funil de vendas — sem nunca entrar nos dados de nenhum cliente.</p>
 </header>
 
 <main class="corpo">
 
   <div class="card" id="hqLock" style="border-left: 4px solid #d97706;">
-    <b>🔐 Área restrita ao administrador do TORQUESYS.</b>
+    <b>🔐 Área restrita ao administrador do TORQUE ON.</b>
     <p class="muted" id="hqLockMsg" style="margin-top:6px;">Verificando seu acesso…</p>
     <p style="margin-top:10px;"><a class="btn" href="../index.html">Ir para o portal e entrar</a></p>
     <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;">Como me torno administrador?</summary>
-      <p class="muted" style="font-size:13px;margin-top:6px;">Rode o bloco <b>TORQUESYS HQ (SaaS)</b> do supabase-setup.sql e depois, no SQL Editor do Supabase:<br>
+      <p class="muted" style="font-size:13px;margin-top:6px;">Rode o bloco <b>TORQUE ON HQ (SaaS)</b> do supabase-setup.sql e depois, no SQL Editor do Supabase:<br>
       <code style="font-size:12px;">insert into public.saas_admins (user_id) select id from auth.users where email = 'SEU_EMAIL';</code></p>
     </details>
   </div>
@@ -105,7 +105,7 @@
     </div>
 
     <div class="card" style="margin-top: 16px;">
-      <h2>🛒 Funil de vendas do TORQUESYS</h2>
+      <h2>🛒 Funil de vendas do TORQUE ON</h2>
       <p class="muted" style="font-size: 13px;">Interessados que ainda não viraram clientes. Fica só na sua conta e sincroniza entre os seus aparelhos.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0;">
         <input id="ldNome" placeholder="Nome (ex.: Academia Ferro)" style="flex:2;min-width:150px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;">
@@ -231,8 +231,8 @@
       var sess = r.data && r.data.session;
       if (!sess) { lock("Você não está logado. Entre no portal com a SUA conta de administrador e volte aqui."); return; }
       cli.rpc("hq_sou_admin").then(function (r2) {
-        if (r2.error) { lock("O banco ainda não tem o bloco TORQUESYS HQ — rode o supabase-setup.sql. (" + esc(r2.error.message) + ")"); return; }
-        if (r2.data !== true) { lock("A conta <b>" + esc(sess.user && sess.user.email) + "</b> não é administradora do TORQUESYS. Veja abaixo como se cadastrar."); return; }
+        if (r2.error) { lock("O banco ainda não tem o bloco TORQUE ON HQ — rode o supabase-setup.sql. (" + esc(r2.error.message) + ")"); return; }
+        if (r2.data !== true) { lock("A conta <b>" + esc(sess.user && sess.user.email) + "</b> não é administradora do TORQUE ON. Veja abaixo como se cadastrar."); return; }
         $("hqLock").hidden = true;
         $("hqPainel").hidden = false;
         carrega();
@@ -249,7 +249,7 @@
         { rot: "Empresas clientes", val: k.clientes || 0 },
         { rot: "Ativas (pagantes)", val: k.ativos || 0, cor: "#16a34a" },
         { rot: "Em trial", val: k.trial || 0, cor: "#d97706" },
-        { rot: "MRR do TORQUESYS", val: fmtR(k.mrr), cor: "var(--roxo)" },
+        { rot: "MRR do TORQUE ON", val: fmtR(k.mrr), cor: "var(--roxo)" },
         { rot: "ARPU (por cliente)", val: arpu ? fmtR(arpu) : "—" },
         { rot: "Recebido no mês", val: fmtR(k.recebido_mes), cor: "#16a34a" },
         { rot: "Novas em 30 dias", val: k.novos_30d || 0 },
@@ -320,12 +320,12 @@
       var motivos = c.status === "cancelado" ? [] : saudeDe(c);
       var farol = c.status === "cancelado" ? "" : ehRisco(c) ? "🔴" : motivos.length ? "🟡" : "🟢";
       var msgResgate = motivos.length
-        ? "Oi! Aqui é o Raphael, do TORQUESYS 👋 " + (motivos[0].indexOf("💸") === 0
+        ? "Oi! Aqui é o Raphael, do TORQUE ON 👋 " + (motivos[0].indexOf("💸") === 0
           ? "Passando pra lembrar da mensalidade deste mês (" + fmtR(c.valor) + "). Te mando o Pix?"
           : motivos[0].indexOf("⏳") === 0
             ? "Seu período de teste terminou — bora ativar seu plano e seguir com tudo funcionando? Me chama que libero agora 😉"
             : "Vi que faz uns dias que vocês não usam o sistema — posso ajudar em algo? Tenho tutoriais e faço um tour com você em 10 min!")
-        : "Oi! Aqui é o Raphael, do TORQUESYS 👋 Tudo certo com o sistema? Qualquer coisa me chama!";
+        : "Oi! Aqui é o Raphael, do TORQUE ON 👋 Tudo certo com o sistema? Qualquer coisa me chama!";
       return '<div class="cli">' + (farol ? '<span title="' + esc(motivos.join(" · ") || "saudável") + '">' + farol + "</span>" : "") +
         '<b class="nome">' + (ICONE[c.tipo] || "🏷") + " " + esc(c.nome) + "</b>" +
         '<span class="tag tipo">' + esc(c.tipo) + "</span>" +
@@ -352,7 +352,7 @@
     $("hqCobrancas").innerHTML = devem.length
       ? '<div style="font-size:13.5px;margin-bottom:8px;"><b>' + devem.length + " cliente(s)</b> devendo <b>" + fmtR(total) + "</b> este mês.</div>" +
         devem.map(function (c) {
-          var msg = "Oi! Aqui é o Raphael, do TORQUESYS 👋 Segue a mensalidade deste mês (" + fmtR(c.valor) + ").";
+          var msg = "Oi! Aqui é o Raphael, do TORQUE ON 👋 Segue a mensalidade deste mês (" + fmtR(c.valor) + ").";
           if (cfg.pixChave) {
             var txid = "TQHQ" + S.todayISO().replace(/-/g, "").slice(0, 8) + semAcento(c.nome).replace(/ /g, "").slice(0, 8);
             msg += "\n\nPix copia e cola:\n" + pixPayload(cfg.pixChave, cfg.pixNome, cfg.pixCidade, +c.valor, txid);
@@ -376,7 +376,7 @@
         c.ultimo_pgto || "", String(c.ultima_atividade || "").slice(0, 10), c.zap || "",
         m.length ? m.join(" | ") : "ok"]);
     });
-    S.baixaCSV("clientes-torquesys.csv", linhas);
+    S.baixaCSV("clientes-torqueon.csv", linhas);
   });
 
   var editando = null;
@@ -446,7 +446,7 @@
     });
   });
 
-  // ---------- 🆘 tickets de suporte (Zendesk do TORQUESYS) ----------
+  // ---------- 🆘 tickets de suporte (Zendesk do TORQUE ON) ----------
   var ticketAtual = null;
   function carregaTickets() {
     cli.rpc("hq_suporte_threads").then(function (r) {
@@ -507,7 +507,7 @@
     $("tkTxt").focus();
   });
 
-  // ---------- 🩺 saúde técnica dos clientes (Sentry do TORQUESYS) ----------
+  // ---------- 🩺 saúde técnica dos clientes (Sentry do TORQUE ON) ----------
   var errosCache = [];
   function carregaErros() {
     cli.rpc("hq_erros").then(function (r) {

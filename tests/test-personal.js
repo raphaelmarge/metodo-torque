@@ -1,4 +1,4 @@
-// Migração pós-cancelamento (wellhub) + TORQUESYS Personal (produto para personal trainers)
+// Migração pós-cancelamento (wellhub) + TORQUE ON Personal (produto para personal trainers)
 let chromium;
 try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }
 const fs = require("fs");
@@ -66,8 +66,8 @@ function ok(cond, nome) {
   ok(/3/.test(mig) && /Wellhub/.test(mig), "3 visitas depois, agregador Wellhub");
   await p.close();
 
-  // ---------- 2) TORQUESYS Personal ----------
-  console.log("TORQUESYS Personal:");
+  // ---------- 2) TORQUE ON Personal ----------
+  console.log("TORQUE ON Personal:");
   p = await ctx.newPage();
   p.on("pageerror", (e) => erros.push(String(e)));
   p.on("dialog", (d) => d.accept());

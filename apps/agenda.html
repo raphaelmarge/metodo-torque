@@ -152,7 +152,7 @@
     var fut = (st.compromissos || []).filter(function (c) { return c.data >= hoje && !c.concluido; })
       .sort(function (x, y) { return (x.data + x.inicio) < (y.data + y.inicio) ? -1 : 1; });
     if (!fut.length) { alert("Nenhum compromisso futuro para exportar."); return; }
-    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//TORQUESYS//Agenda//PT"];
+    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//TORQUE ON//Agenda//PT"];
     fut.forEach(function (c) {
       var hi = c.inicio || "08:00";
       var p = hi.split(":");
@@ -160,7 +160,7 @@
       function hh(t) { return ("0" + Math.floor(t / 60) % 24).slice(-2) + ("0" + t % 60).slice(-2); }
       var dt = c.data.replace(/-/g, "");
       L.push("BEGIN:VEVENT",
-        "UID:" + c.id + "@torquesys",
+        "UID:" + c.id + "@torqueon",
         "DTSTART:" + dt + "T" + hh(t0) + "00",
         "DTEND:" + dt + "T" + hh(t1) + "00",
         "SUMMARY:" + String((c.tipo || "Compromisso") + (c.cliente ? " - " + c.cliente : "")).replace(/[\n,;]/g, " "),

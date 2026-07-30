@@ -1,4 +1,4 @@
-/* TORQUESYS Nutrição — banco brasileiro de alimentos (valores médios por porção,
+/* TORQUE ON Nutrição — banco brasileiro de alimentos (valores médios por porção,
  * base TACO + rótulos; itens de marca são 'tipo', com valores típicos da categoria).
  * Curadoria: o nutricionista ativa/desativa cada item no módulo. */
 self.MT_ALIMENTOS = [

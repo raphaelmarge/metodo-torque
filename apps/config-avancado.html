@@ -185,9 +185,9 @@
 
   // backup completo (todas as lojas) + automático semanal
   window.backupCompleto = function () {
-    var dados = { geradoEm: new Date().toISOString(), versao: "torquesys" };
+    var dados = { geradoEm: new Date().toISOString(), versao: "torqueon" };
     (S.backupKeys ? S.backupKeys() : []).forEach(function (k) { dados[k] = S.read(k, null); });
-    baixaJSON("backup-torquesys-" + S.todayISO() + ".json", dados);
+    baixaJSON("backup-torqueon-" + S.todayISO() + ".json", dados);
     var cfg = S.read("config", { dados: {} });
     cfg.backupUltimo = S.todayISO();
     S.write("config", cfg);

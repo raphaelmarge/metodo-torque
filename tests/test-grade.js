@@ -1,4 +1,4 @@
-// Suíte do TORQUESYS — roda local (Claude/dev) e no CI (GitHub Actions).
+// Suíte do TORQUE ON — roda local (Claude/dev) e no CI (GitHub Actions).
 let chromium;
 try { chromium = require("playwright").chromium; }
 catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }

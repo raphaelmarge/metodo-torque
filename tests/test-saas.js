@@ -1,4 +1,4 @@
-// SaaS TORQUESYS: site comercial, painel HQ (trava, clientes, plano, pagamento, Pix, funil) e SQL
+// SaaS TORQUE ON: site comercial, painel HQ (trava, clientes, plano, pagamento, Pix, funil) e SQL
 let chromium;
 try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }
 const fs = require("fs");
@@ -31,7 +31,7 @@ function crcNode(s) {
   const erros = [];
 
   // ---------- 0) o SQL tem o bloco do HQ ----------
-  console.log("SQL do TORQUESYS HQ:");
+  console.log("SQL do TORQUE ON HQ:");
   const sql = fs.readFileSync(__dirname + "/../supabase-setup.sql", "utf8");
   ok(/saas_admins/.test(sql) && /saas_clientes/.test(sql) && /saas_pagamentos/.test(sql), "tabelas saas_admins/clientes/pagamentos no setup");
   ok(/hq_sou_admin/.test(sql) && /hq_clientes/.test(sql) && /hq_cliente_set/.test(sql) && /hq_pagamento_reg/.test(sql) && /hq_kpis/.test(sql), "as 5 funções hq_* existem");
@@ -43,16 +43,16 @@ function crcNode(s) {
   ok(/hq_suporte_threads/.test(sql) && /hq_suporte_lista/.test(sql) && /hq_suporte_envia/.test(sql) && /hq_erros/.test(sql), "assistência: RPCs do HQ (tickets + erros)");
 
   // ---------- 1) site comercial ----------
-  console.log("Site comercial (torquesys.html):");
+  console.log("Site comercial (torqueon.html):");
   let p = await ctx.newPage();
   p.on("pageerror", (e) => erros.push(String(e)));
-  await p.goto(BASE + "/torquesys.html?zap=5531988887777");
-  await p.waitForFunction(() => window.__torquesys);
+  await p.goto(BASE + "/torqueon.html?zap=5531988887777");
+  await p.waitForFunction(() => window.__torqueon);
   const corpo = await p.evaluate(() => document.body.textContent);
   ok(/Academia/.test(corpo) && /Box de CrossFit/.test(corpo) && /Personal Trainer/.test(corpo), "os 3 segmentos apresentados");
   ok(/ilha/.test(corpo) && /isolados/.test(corpo), "seção de isolamento (ilha) presente");
   ok(/R\$ 49/.test(corpo) && /R\$ 147/.test(corpo) && /R\$ 197/.test(corpo), "tabela de planos com os 3 preços");
-  ok(/sistemas tradicionais/i.test(corpo) && /Funciona sem internet/.test(corpo) && /sem fidelidade/.test(corpo), "tabela comparativa TORQUESYS × tradicionais");
+  ok(/sistemas tradicionais/i.test(corpo) && /Funciona sem internet/.test(corpo) && /sem fidelidade/.test(corpo), "tabela comparativa TORQUE ON × tradicionais");
   const links = await p.evaluate(() => ({
     empresa: document.getElementById("entrarEmpresa").getAttribute("href"),
     personal: document.getElementById("entrarPersonal").getAttribute("href"),
@@ -76,7 +76,7 @@ function crcNode(s) {
     aluno: document.getElementById("gateAluno").textContent,
     temSair: !!document.getElementById("gateSair"),
   }));
-  ok(/Portal TORQUESYS/.test(gate.titulo), "gate com o título Portal TORQUESYS");
+  ok(/Portal TORQUE ON/.test(gate.titulo), "gate com o título Portal TORQUE ON");
   ok(/aluno da academia ou de um personal/i.test(gate.aluno) && /LINK do app/.test(gate.aluno), "nota fixa explica o acesso do aluno (link, sem senha)");
   ok(gate.temSair, "botão 'Sair e entrar com outra conta' existe pro estado de vínculo");
   const abasVisiveis = await p.evaluate(() => Array.from(document.querySelectorAll("#gateAbas button")).filter((b) => b.style.display !== "none").map((b) => b.textContent));
@@ -172,7 +172,7 @@ function crcNode(s) {
   await p.goto(BASE + "/apps/hq.html");
   await p.waitForFunction(() => !document.getElementById("hqPainel").hidden, null, { timeout: 8000 });
   const kpis = await p.evaluate(() => document.getElementById("hqKpis").textContent);
-  ok(/MRR/.test(kpis) && /443/.test(kpis), "KPIs mostram o MRR do TORQUESYS (R$ 443)");
+  ok(/MRR/.test(kpis) && /443/.test(kpis), "KPIs mostram o MRR do TORQUE ON (R$ 443)");
   ok(/ARPU/.test(kpis) && /148/.test(kpis), "ARPU calculado (443/3 ≈ R$ 148) — métrica ChartMogul");
   ok(/Empresas clientes/.test(kpis) && /4/.test(kpis), "KPI de total de empresas");
   let lista = await p.evaluate(() => document.getElementById("hqClientes").textContent);
@@ -243,7 +243,7 @@ function crcNode(s) {
   const dlCli = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
   await p.click("#hqCSV");
   const arqCli = await dlCli;
-  ok(!!arqCli && /clientes-torquesys/.test(arqCli.suggestedFilename()), "CSV de clientes baixa");
+  ok(!!arqCli && /clientes-torqueon/.test(arqCli.suggestedFilename()), "CSV de clientes baixa");
   // registrar pagamento → rpc hq_pagamento_reg (prompt devolve 197)
   await p.evaluate(() => document.querySelector('[data-pgto="acad-1"]').click());
   await p.waitForTimeout(300);

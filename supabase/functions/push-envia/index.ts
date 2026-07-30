@@ -1,4 +1,4 @@
-// TORQUESYS — Push de verdade (Web Push) · envia notificações aos apps
+// TORQUE ON — Push de verdade (Web Push) · envia notificações aos apps
 //
 // Envia notificações push para os alunos que ativaram os lembretes no app
 // HOSPEDADO (site/app/?t=TOKEN). O app baixado (arquivo .html) não recebe

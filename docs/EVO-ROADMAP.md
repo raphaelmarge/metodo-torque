@@ -14,7 +14,7 @@
 
 
 > Leitura integral das 92 coleções (`ajuda-md/`) por 6 leitores em paralelo, cruzada com o
-> que o TORQUESYS já tem. Aqui ficam **só os achados replicáveis offline** (sem hardware,
+> que o TORQUE ON já tem. Aqui ficam **só os achados replicáveis offline** (sem hardware,
 > app nativo ou integração de terceiros). Itens de catraca/biometria/gateway/NF/app estão
 > mapeados para a Fase 2 e não entram aqui.
 

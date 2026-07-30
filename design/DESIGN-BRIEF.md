@@ -1,4 +1,4 @@
-# TORQUESYS — Briefing de Design (para redesenho da interface)
+# TORQUE ON — Briefing de Design (para redesenho da interface)
 
 > Cole este documento inteiro na ferramenta de design. Ele descreve o produto, a
 > identidade atual, os tokens, os componentes e TODAS as telas — e no fim as
@@ -8,7 +8,7 @@
 
 ## 1. O produto
 
-**TORQUESYS** é o sistema de gestão da academia **TORQUE FIT** (Raphael Marge).
+**TORQUE ON** é o sistema de gestão da academia **TORQUE FIT** (Raphael Marge).
 É um PWA 100% estático (HTML/CSS/JS puros, sem frameworks), offline-first
 (localStorage + fotos em IndexedDB), com sincronização em nuvem (Supabase) e
 publicação automática no GitHub Pages. Concorre com o EVO/W12, Tecnofit,

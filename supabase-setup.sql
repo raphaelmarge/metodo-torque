@@ -886,7 +886,7 @@ grant execute on function public.app_chat_envia(text, text) to anon, authenticat
 grant execute on function public.app_chat_lista(text) to anon, authenticated;
 
 -- ============================================================
--- TORQUESYS HQ (SaaS) — painel de comando do dono do TORQUESYS
+-- TORQUE ON HQ (SaaS) — painel de comando do dono do TORQUE ON
 -- Permite acompanhar TODAS as empresas clientes (academias,
 -- studios, box e personals), classificar plano/status e registrar
 -- as mensalidades do SaaS. Nenhum cliente enxerga nada disso:
@@ -927,7 +927,7 @@ create table if not exists public.saas_pagamentos (
 );
 alter table public.saas_pagamentos enable row level security;
 
--- sou o administrador do TORQUESYS?
+-- sou o administrador do TORQUE ON?
 create or replace function public.hq_sou_admin()
 returns boolean
 language sql security definer
@@ -944,7 +944,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   return coalesce((select json_agg(x order by x.criada desc) from (
     select a.id, a.nome, a.criada,
@@ -972,7 +972,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   insert into saas_clientes (academia_id, tipo, plano, valor, status, obs, atualizado)
     values (p_academia, coalesce(p_tipo, 'academia'), coalesce(p_plano, 'trial'),
@@ -992,7 +992,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   if coalesce(p_valor, 0) <= 0 then
     raise exception 'valor inválido';
@@ -1011,7 +1011,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   return json_build_object(
     'clientes', (select count(*) from academias),
@@ -1033,7 +1033,7 @@ grant execute on function public.hq_pagamento_reg(uuid, numeric, text, date) to 
 grant execute on function public.hq_kpis() to authenticated;
 
 -- ============================================================
--- TORQUESYS HQ v2 — melhorias de classe mundial no SaaS
+-- TORQUE ON HQ v2 — melhorias de classe mundial no SaaS
 -- (rode por cima do bloco anterior; tudo idempotente)
 -- • WhatsApp do cliente para cobrança/resgate
 -- • Última atividade real de cada empresa (sinal de churn)
@@ -1051,7 +1051,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   return coalesce((select json_agg(x order by x.criada desc) from (
     select a.id, a.nome, a.criada,
@@ -1082,7 +1082,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   insert into saas_clientes (academia_id, tipo, plano, valor, status, obs, zap, atualizado)
     values (p_academia, coalesce(p_tipo, 'academia'), coalesce(p_plano, 'trial'),
@@ -1103,7 +1103,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   return coalesce((select json_agg(x order by x.mes) from (
     select to_char(data, 'YYYY-MM') as mes, sum(valor) as total
@@ -1123,7 +1123,7 @@ grant execute on function public.hq_receita_mensal() to authenticated;
 --   (as mensagens ficam na ilha dele; o suporte responde pelo HQ)
 -- • O HQ ganha a central de tickets e o monitor de erros de TODOS
 --   os clientes (estilo Zendesk + Sentry)
--- Bloco idempotente; requer os blocos TORQUESYS HQ anteriores.
+-- Bloco idempotente; requer os blocos TORQUE ON HQ anteriores.
 -- ============================================================
 
 create table if not exists public.saas_tickets (
@@ -1193,7 +1193,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   return coalesce((select json_agg(x order by x.ultima desc) from (
     select t.academia_id, a.nome,
@@ -1215,7 +1215,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   update saas_tickets set lida = true where academia_id = p_academia and de = 'cliente' and not lida;
   return coalesce((select json_agg(x order by x.criado) from (
@@ -1234,13 +1234,13 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   if length(trim(coalesce(p_texto, ''))) = 0 then
     raise exception 'mensagem vazia';
   end if;
   insert into saas_tickets (academia_id, de, quem, texto)
-    values (p_academia, 'suporte', 'Suporte TORQUESYS', left(trim(p_texto), 2000));
+    values (p_academia, 'suporte', 'Suporte TORQUE ON', left(trim(p_texto), 2000));
   return json_build_object('ok', true);
 end;
 $$;
@@ -1253,7 +1253,7 @@ set search_path = public
 as $$
 begin
   if not exists (select 1 from saas_admins where user_id = auth.uid()) then
-    raise exception 'acesso restrito ao administrador do TORQUESYS';
+    raise exception 'acesso restrito ao administrador do TORQUE ON';
   end if;
   return coalesce((select json_agg(x order by x.erros desc) from (
     select e.academia_id, a.nome,
