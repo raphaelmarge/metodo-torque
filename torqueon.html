@@ -24,7 +24,10 @@
   h2.sec { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: #a78bfa; margin: 40px 0 14px; text-align: center; }
   .segs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
   .seg { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px -12px rgba(0,0,0,.4); display: flex; flex-direction: column; }
-  .seg .ic { font-size: 34px; }
+  .seg .ic, .ilha .ic { width: 46px; height: 46px; border-radius: 13px; background: rgba(124,58,237,.16); color: #a78bfa; display: flex; align-items: center; justify-content: center; flex: none; }
+  .ic.verde { background: rgba(34,197,94,.14); color: #4ade80; }
+  .sim { color: #22c55e; font-weight: 700; }
+  .nao { color: #6e6a78; }
   .seg h3 { font-size: 18px; margin: 10px 0 6px; }
   .seg p { color: #b9b3c6; font-size: 13.5px; line-height: 1.6; flex: 1; }
   .seg ul { color: #b9b3c6; font-size: 13px; line-height: 1.9; padding-left: 18px; margin: 8px 0 14px; flex: 1; }
@@ -32,8 +35,7 @@
   .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px -10px rgba(124,58,237,.6); }
   .btn.sec { background: none; border: 1.5px solid #4c3f6b; font-size: 13.5px; margin-top: 8px; }
   .ilha { background: #1c1826; border: 1px solid #7c3aed; border-radius: 16px; padding: 24px; display: flex; gap: 18px; align-items: flex-start; }
-  .ilha .ic { font-size: 38px; flex: none; }
-  .ilha b { font-size: 16.5px; display: block; margin-bottom: 6px; }
+  .ilha b.tit { font-size: 16.5px; display: block; margin-bottom: 6px; }
   .ilha p { color: #b9b3c6; font-size: 14px; line-height: 1.65; }
   .feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 10px; }
   .feat { background: #1c1826; border: 1px solid #2c2739; border-radius: 13px; padding: 15px 16px; }
@@ -61,16 +63,17 @@
   .entrar-bar .marca { font-weight: 800; letter-spacing: .06em; font-size: 15px; }
   .entrar-bar .marca span { color: #a78bfa; }
   .entrar-bar a.mini { margin-left: auto; font-size: 13px; font-weight: 700; text-decoration: none; border: 1.5px solid #4c3f6b; padding: 8px 16px; border-radius: 99px; }
-  .entrar-bar a.mini + a.mini { margin-left: 8px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border: 0; }
+  .entrar-bar a.mini + a.mini { margin-left: 8px; }
+  .entrar-bar a.mini.cheio { background: linear-gradient(135deg, #7c3aed, #6d28d9); border: 0; }
 </style>
 </head>
 <body>
 
 <div class="entrar-bar">
   <div class="marca">TORQUE<span>&nbsp;ON</span></div>
-  <a class="mini" id="entrarPersonal" href="personal.html">💪 Personal</a>
-  <a class="mini" id="entrarNutri" href="nutricao.html" style="margin-left: 8px;">🥗 Nutri</a>
-  <a class="mini" id="entrarEmpresa" href="index.html">🏢 Academia</a>
+  <a class="mini" id="entrarPersonal" href="personal.html">Personal</a>
+  <a class="mini" id="entrarNutri" href="nutricao.html" style="margin-left: 8px;">Nutri</a>
+  <a class="mini cheio" id="entrarEmpresa" href="index.html">Academia</a>
 </div>
 
 <header class="topo">
@@ -84,7 +87,7 @@
   <h2 class="sec" id="paraQuem">Feito para o seu formato</h2>
   <div class="segs">
     <div class="seg" id="segAcademia">
-      <div class="ic">🏢</div>
+      <div class="ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7.5h1.5M13.5 7.5H15M9 11.5h1.5M13.5 11.5H15M10.5 21v-3.5h3V21"/></svg></div>
       <h3>Academia</h3>
       <ul>
         <li>Alunos, planos, contratos e recebíveis</li>
@@ -96,7 +99,7 @@
       <a class="btn" href="index.html">Criar a conta da minha academia</a>
     </div>
     <div class="seg" id="segStudio">
-      <div class="ic">🤸</div>
+      <div class="ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg></div>
       <h3>Studio &amp; Box de CrossFit</h3>
       <ul>
         <li>Grade de aulas com vagas e lista de espera</li>
@@ -108,7 +111,7 @@
       <a class="btn" href="index.html">Criar a conta do meu studio/box</a>
     </div>
     <div class="seg" id="segPersonal">
-      <div class="ic">💪</div>
+      <div class="ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7v10M17 7v10M3.5 9.5v5M20.5 9.5v5M7 12h10"/></svg></div>
       <h3>Personal Trainer</h3>
       <ul>
         <li>Alunos, agenda de sessões e pagamentos</li>
@@ -121,12 +124,12 @@
       <a class="btn sec" href="personal-vendas.html">Ver a página do Personal →</a>
     </div>
     <div class="seg" id="segNutri">
-      <div class="ic">🥗</div>
+      <div class="ic verde"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 6.8 7.4C10 4.6 14.5 4 19.5 4c0 5-.6 9.5-3.4 12.7A7 7 0 0 1 11 20Z"/><path d="M4.5 19.5c2-6 6-10 12-12"/></svg></div>
       <h3>Nutricionista</h3>
       <ul>
         <li>Pacientes e dietas por refeição com kcal</li>
         <li>Dieta automática (Mifflin-St Jeor + banco de alimentos)</li>
-        <li>App do paciente: água com lembretes e refeições ✓</li>
+        <li>App do paciente: água com lembretes e refeições marcadas</li>
         <li>Adesão do dia (kcal e refeições feitas)</li>
         <li>Sua ilha própria — nada se mistura</li>
       </ul>
@@ -136,23 +139,23 @@
 
   <h2 class="sec">Sua empresa, sua ilha</h2>
   <div class="ilha" id="ilhaBox">
-    <div class="ic">🏝</div>
+    <div class="ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.4 7.9-8 9-4.6-1.1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg></div>
     <div>
-      <b>Cada empresa entra com o próprio login e cai NA SUA ilha.</b>
+      <b class="tit">Cada empresa entra com o próprio login e cai NA SUA ilha.</b>
       <p>Você cria a conta, recebe um <b>código de equipe</b> e seus funcionários entram nele. Os dados da sua empresa ficam isolados de qualquer outra academia, studio ou personal — ninguém vê nada de ninguém. Tudo sincroniza entre os seus aparelhos e continua funcionando <b>offline</b>: caiu a internet, a recepção não para.</p>
     </div>
   </div>
 
   <h2 class="sec">O que vem dentro</h2>
   <div class="feats">
-    <div class="feat"><b>📇 Gestão completa de alunos</b><p>Planos, contratos, congelamento, recebíveis e importação do sistema antigo por CSV.</p></div>
-    <div class="feat"><b>💸 Cobrança que se cobra</b><p>Régua de inadimplência no WhatsApp, aging, link de pagamento e Pix.</p></div>
-    <div class="feat"><b>📲 App do aluno</b><p>Carteirinha com QR, treinos, agendamento de aulas, avaliação e mural.</p></div>
-    <div class="feat"><b>🤖 Automação de WhatsApp</b><p>Aniversário, sumidos, boas-vindas, resumo diário do dono — sozinho.</p></div>
-    <div class="feat"><b>🧠 CRM com Copiloto IA</b><p>Risco de cancelamento por aluno e a lista do que fazer hoje.</p></div>
-    <div class="feat"><b>📊 17+ relatórios</b><p>Anual, forecast, ocupação, churn por safra, curva ABC, canais e mais.</p></div>
-    <div class="feat"><b>📺 Modo TV</b><p>Telão com WOD, ranking e avisos — e painel privado do dono.</p></div>
-    <div class="feat"><b>🔒 Offline-first</b><p>Instala como app no celular e no PC. Internet caiu? Segue rodando.</p></div>
+    <div class="feat"><b>Gestão completa de alunos</b><p>Planos, contratos, congelamento, recebíveis e importação do sistema antigo por CSV.</p></div>
+    <div class="feat"><b>Cobrança que se cobra</b><p>Régua de inadimplência no WhatsApp, aging, link de pagamento e Pix.</p></div>
+    <div class="feat"><b>App do aluno</b><p>Carteirinha com QR, treinos, agendamento de aulas, avaliação e mural.</p></div>
+    <div class="feat"><b>Automação de WhatsApp</b><p>Aniversário, sumidos, boas-vindas, resumo diário do dono — sozinho.</p></div>
+    <div class="feat"><b>CRM com Copiloto IA</b><p>Risco de cancelamento por aluno e a lista do que fazer hoje.</p></div>
+    <div class="feat"><b>17+ relatórios</b><p>Anual, forecast, ocupação, churn por safra, curva ABC, canais e mais.</p></div>
+    <div class="feat"><b>Modo TV</b><p>Telão com WOD, ranking e avisos — e painel privado do dono.</p></div>
+    <div class="feat"><b>Offline-first</b><p>Instala como app no celular e no PC. Internet caiu? Segue rodando.</p></div>
   </div>
 
   <h2 class="sec" id="comparativo">TORQUE ON × sistemas tradicionais</h2>
@@ -164,12 +167,12 @@
         <th style="padding:13px 10px;color:#8a8695;">Sistemas tradicionais</th>
       </tr></thead>
       <tbody>
-        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Funciona sem internet</td><td style="text-align:center;">✅ sempre</td><td style="text-align:center;color:#8a8695;">❌ trava tudo</td></tr>
-        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Fidelidade / multa de saída</td><td style="text-align:center;">✅ sem fidelidade</td><td style="text-align:center;color:#8a8695;">⚠️ contratos de 12 meses</td></tr>
-        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">App do aluno incluso</td><td style="text-align:center;">✅ sem custo extra</td><td style="text-align:center;color:#8a8695;">💰 módulo à parte</td></tr>
-        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Limite de alunos ou usuários</td><td style="text-align:center;">✅ ilimitado</td><td style="text-align:center;color:#8a8695;">⚠️ cobra por faixa</td></tr>
-        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Seus dados são seus</td><td style="text-align:center;">✅ exporta tudo</td><td style="text-align:center;color:#8a8695;">⚠️ refém do fornecedor</td></tr>
-        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Atendimento</td><td style="text-align:center;">✅ WhatsApp direto</td><td style="text-align:center;color:#8a8695;">📞 fila do 0800</td></tr>
+        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Funciona sem internet</td><td style="text-align:center;"><span class="sim">✓</span> sempre</td><td style="text-align:center;color:#8a8695;"><span class="nao">✕ trava tudo</span></td></tr>
+        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Fidelidade / multa de saída</td><td style="text-align:center;"><span class="sim">✓</span> sem fidelidade</td><td style="text-align:center;color:#8a8695;"><span class="nao">contratos de 12 meses</span></td></tr>
+        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">App do aluno incluso</td><td style="text-align:center;"><span class="sim">✓</span> sem custo extra</td><td style="text-align:center;color:#8a8695;"><span class="nao">módulo pago à parte</span></td></tr>
+        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Limite de alunos ou usuários</td><td style="text-align:center;"><span class="sim">✓</span> ilimitado</td><td style="text-align:center;color:#8a8695;"><span class="nao">cobra por faixa</span></td></tr>
+        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Seus dados são seus</td><td style="text-align:center;"><span class="sim">✓</span> exporta tudo</td><td style="text-align:center;color:#8a8695;"><span class="nao">refém do fornecedor</span></td></tr>
+        <tr style="border-top:1px solid #2c2739;"><td style="padding:11px 16px;color:#b9b3c6;">Atendimento</td><td style="text-align:center;"><span class="sim">✓</span> WhatsApp direto</td><td style="text-align:center;color:#8a8695;"><span class="nao">fila do 0800</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -177,7 +180,7 @@
   <h2 class="sec" id="planos">Planos</h2>
   <div class="planos">
     <div class="plano">
-      <h3>💪 Personal</h3>
+      <h3>Personal</h3>
       <div class="preco">R$ 49<small>/mês</small></div>
       <ul>
         <li>Módulo TORQUE ON Personal completo</li>
@@ -189,7 +192,7 @@
     </div>
     <div class="plano destaque">
       <div class="tag-pop">Mais vendido</div>
-      <h3>🤸 Studio &amp; Box</h3>
+      <h3>Studio &amp; Box</h3>
       <div class="preco">R$ 147<small>/mês</small></div>
       <ul>
         <li>Tudo do sistema, sem limite de alunos</li>
@@ -200,7 +203,7 @@
       <a class="btn" href="index.html">Começar agora</a>
     </div>
     <div class="plano">
-      <h3>🏢 Academia</h3>
+      <h3>Academia</h3>
       <div class="preco">R$ 197<small>/mês</small></div>
       <ul>
         <li>Tudo do Studio &amp; Box</li>
@@ -211,7 +214,7 @@
       <a class="btn" href="index.html">Começar agora</a>
     </div>
   </div>
-  <p class="nota">Valores de tabela — planos anuais e redes com várias unidades têm condição especial. <a id="zapPlanos" href="#" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:700;">Chama no WhatsApp 💬</a></p>
+  <p class="nota">Valores de tabela — planos anuais e redes com várias unidades têm condição especial. <a id="zapPlanos" href="#" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:700;">Chamar no WhatsApp →</a></p>
 
   <h2 class="sec">Como funciona</h2>
   <div class="passos">
@@ -226,11 +229,11 @@
   <details class="faq"><summary>Preciso de internet para usar?</summary><div>Não. O TORQUE ON é offline-first: instala como aplicativo e continua funcionando sem internet. Quando a conexão volta, tudo sincroniza sozinho entre os seus aparelhos.</div></details>
   <details class="faq"><summary>Consigo migrar do meu sistema atual (EVO, Tecnofit…)?</summary><div>Sim — exporte os alunos em CSV no sistema antigo e importe no TORQUE ON em Gestão de Alunos → Importar. Planos e valores vêm juntos.</div></details>
   <details class="faq"><summary>Sou personal e atendo em várias academias. Funciona?</summary><div>Perfeitamente: o TORQUE ON Personal é a SUA ilha, independente de qualquer academia. Seus alunos, seus treinos, seus pagamentos — e o app de cada aluno com seu nome.</div></details>
-  <details class="faq"><summary>Sou ALUNO de uma academia (ou de um personal) que usa o TORQUE ON. Como entro?</summary><div>De dois jeitos: ① pelo <b>link do app do aluno</b> que a academia ou o seu personal te manda no WhatsApp (abra e toque em "Adicionar à tela inicial"); ② com <b>login e senha</b> na <a href="aluno-login.html" style="color:#a78bfa;font-weight:700;">página de entrada do aluno</a> — você cria a sua senha dentro do próprio app, no card <b>🔑 Meu login</b>, e depois entra de qualquer aparelho. O login desta página aqui em cima é só para o DONO e a EQUIPE da empresa.</div></details>
+  <details class="faq"><summary>Sou ALUNO de uma academia (ou de um personal) que usa o TORQUE ON. Como entro?</summary><div>De dois jeitos: ① pelo <b>link do app do aluno</b> que a academia ou o seu personal te manda no WhatsApp (abra e toque em "Adicionar à tela inicial"); ② com <b>login e senha</b> na <a href="aluno-login.html" style="color:#a78bfa;font-weight:700;">página de entrada do aluno</a> — você cria a sua senha dentro do próprio app, no card <b>Meu login</b>, e depois entra de qualquer aparelho. O login desta página aqui em cima é só para o DONO e a EQUIPE da empresa.</div></details>
   <details class="faq"><summary>Como pago o TORQUE ON?</summary><div>Assinatura mensal por Pix ou cartão, direto com a gente no WhatsApp. Sem fidelidade: cancelou, seus dados são seus (dá pra exportar tudo).</div></details>
 
-  <a class="btn" id="ctaZap" href="#" target="_blank" rel="noopener" style="margin-top:34px;font-size:17px;padding:17px;">💬 Falar com a gente no WhatsApp</a>
-  <p class="nota">TORQUE ON · feito por quem vive academia todos os dias 💜</p>
+  <a class="btn" id="ctaZap" href="#" target="_blank" rel="noopener" style="margin-top:34px;font-size:17px;padding:17px;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-4px;margin-right:8px;"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H7l-4 3V11.5A8.5 8.5 0 0 1 11.5 3h1A8.5 8.5 0 0 1 21 11.5Z"/></svg>Falar com a gente no WhatsApp</a>
+  <p class="nota">TORQUE ON · feito por quem vive academia todos os dias.</p>
 
 </main>
 
