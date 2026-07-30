@@ -9,6 +9,7 @@
   try {
     if (self.MT_ACCESS && self.MT_ACCESS.exigirCadastro &&
         location.pathname.indexOf("/apps/") !== -1 &&
+        location.pathname.indexOf("/hq.html") === -1 && // HQ tem tranca própria de administrador
         !localStorage.getItem("mtapp:perfil")) {
       window.top.location.replace("../index.html");
     }
