@@ -73,8 +73,8 @@
       <button data-a="presc" class="ativa">Prescrição de Treinos</button>
       <button data-a="padroes">Treinos Padrão</button>
       <button data-a="exercicios">Exercícios</button>
-      <button data-a="execucao">📈 Execução dos alunos</button>
-      <button data-a="videoteca">🎥 Videoteca</button>
+      <button data-a="execucao">Execução dos alunos</button>
+      <button data-a="videoteca">Videoteca</button>
     </div>
     <span class="muted" id="resumoAba"></span>
   </div>
@@ -325,8 +325,8 @@
       '<div class="linha-flex no-print" style="justify-content: space-between;">' +
       "<h2 style='font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--texto); margin: 0;'>" + esc(aluno.nome) + "</h2>" +
       '<div class="linha-flex">' +
-      '<button class="btn sec mini" id="btnImprimir">🖨 Imprimir ficha</button>' +
-      (aluno.zap ? '<button class="btn whats mini" id="btnZapFicha">💬 Enviar ficha</button>' : "") +
+      '<button class="btn sec mini" id="btnImprimir">Imprimir ficha</button>' +
+      (aluno.zap ? '<button class="btn whats mini" id="btnZapFicha">Enviar ficha</button>' : "") +
       '<button class="btn perigo mini" id="btnExcluirTreino">Excluir treino</button></div></div>' +
       '<div class="plan-grid" style="margin-top: 14px;">' +
       '<div class="campo"><label>Nome do treino</label><input id="tNome" value="' + esc(p.nome) + '"></div>' +
@@ -454,7 +454,7 @@
       return "<tr><td><strong>" + esc(m.nome) + "</strong></td><td>" + esc(m.criadoPor || "—") + "</td>" +
         "<td>" + m.fichas.length + " ficha(s) · " + m.fichas.reduce(function (t, f) { return t + f.itens.length; }, 0) + " exercícios</td>" +
         "<td style='text-align:right; white-space:nowrap'>" +
-        '<button class="btn sec mini" data-edit="' + m.id + '">✎</button> ' +
+        '<button class="btn sec mini" data-edit="' + m.id + '"></button> ' +
         '<button class="btn sec mini" data-dup="' + m.id + '" title="Duplicar">⧉</button> ' +
         '<button class="btn perigo mini" data-del="' + m.id + '">✕</button></td></tr>';
     }).join("");
@@ -540,9 +540,9 @@
       .sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); });
     $("linhasEx").innerHTML = lista.map(function (x) {
       return "<tr><td>" + esc(x.nome) +
-        (x.video ? " <a href='" + esc(x.video) + "' target='_blank' rel='noopener' title='Ver vídeo de execução'>🎬</a>" : "") +
+        (x.video ? " <a href='" + esc(x.video) + "' target='_blank' rel='noopener' title='Ver vídeo de execução'></a>" : "") +
         "</td><td><span class='grupo-ex' style='margin:0'>" + esc(x.grupo) + "</span></td>" +
-        "<td style='text-align:right'><button class='btn sec mini' data-videx='" + x.id + "' title='Definir o link do vídeo de execução'>🎬</button> " +
+        "<td style='text-align:right'><button class='btn sec mini' data-videx='" + x.id + "' title='Definir o link do vídeo de execução'></button> " +
         "<button class='btn perigo mini' data-delex='" + x.id + "'>✕</button></td></tr>";
     }).join("");
     if (aba === "exercicios") $("resumoAba").textContent = st.exercicios.length + " exercício(s) na biblioteca";
@@ -635,7 +635,7 @@
     var el = $("execLista");
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
-      el.innerHTML = '<div class="card" style="color:#b45309;">☁️ Entre com a sua conta da nuvem para ver a execução dos alunos.</div>';
+      el.innerHTML = '<div class="card" style="color:#b45309;">Entre com a sua conta da nuvem para ver a execução dos alunos.</div>';
       return;
     }
     el.innerHTML = '<div class="card">Carregando registros…</div>';
@@ -645,7 +645,7 @@
       .gte("dia", iso14).order("dia", { ascending: false }).limit(1000)
       .then(function (r) {
         if (r.error) {
-          el.innerHTML = '<div class="card" style="color:#b45309;">⚠️ ' +
+          el.innerHTML = '<div class="card" style="color:#b45309;">' +
             (String(r.error.message).indexOf("does not exist") !== -1
               ? "Rode o bloco TREINO SINCRONIZADO do supabase-setup.sql."
               : esc(r.error.message)) + "</div>";

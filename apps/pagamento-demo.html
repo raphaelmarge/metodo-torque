@@ -20,7 +20,7 @@
 <body>
 
 <div class="checkout" id="caixa">
-  <div class="faixa">🎭 PÁGINA DE DEMONSTRAÇÃO — nenhum valor real é cobrado</div>
+  <div class="faixa">PÁGINA DE DEMONSTRAÇÃO — nenhum valor real é cobrado</div>
   <span class="kicker">PAGAMENTO DA MENSALIDADE</span>
   <div id="conteudo"><p class="muted">carregando…</p></div>
 </div>
@@ -53,7 +53,7 @@
     }
     var d = r.dev;
     if (d.status === "pago" || (d.cobranca && d.cobranca.statusPago)) {
-      $("conteudo").innerHTML = '<div class="valor" style="color: var(--ok);">✅ Pago</div>' +
+      $("conteudo").innerHTML = '<div class="valor" style="color: var(--ok);">Pago</div>' +
         "<p>" + esc(d.nome) + " — " + brl(+d.valor || 0) + "</p>" +
         '<p class="muted" style="margin-top: 10px;">Pagamento simulado aprovado. Volte na Inadimplência ou nas Cobranças para ver o status atualizado.</p>';
       return;
@@ -61,7 +61,7 @@
     $("conteudo").innerHTML =
       '<div class="valor">' + brl(+d.valor || 0) + "</div>" +
       '<p class="muted">' + esc(d.nome) + " · Mensalidade — venc. " + S.fmtData(d.vencimento) + "</p>" +
-      '<div class="metodos"><span class="on">💳 Cartão</span><span>◈ PIX</span><span>📄 Boleto</span></div>' +
+      '<div class="metodos"><span class="on">Cartão</span><span>◈ PIX</span><span>Boleto</span></div>' +
       '<p class="muted" style="font-size: 12.5px;">No Pagar.me de verdade, o aluno digita o cartão aqui (ou escolhe PIX/boleto). Nesta demonstração, clique abaixo para simular a aprovação:</p>' +
       '<button class="btn" id="btnPagar" style="width: 100%; margin-top: 12px;">✓ Simular pagamento aprovado</button>';
     $("btnPagar").onclick = function () {

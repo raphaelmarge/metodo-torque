@@ -39,10 +39,10 @@
 
 <main class="corpo">
   <div class="abas">
-    <button data-aba="checkin" class="ativa">✅ Check-in na recepção</button>
-    <button data-aba="lista">📋 Check-ins registrados</button>
-    <button data-aba="importar">📥 Importar do portal (CSV)</button>
-    <button data-aba="config">⚙️ Configuração e API</button>
+    <button data-aba="checkin" class="ativa">Check-in na recepção</button>
+    <button data-aba="lista">Check-ins registrados</button>
+    <button data-aba="importar">Importar do portal (CSV)</button>
+    <button data-aba="config">Configuração e API</button>
   </div>
 
   <!-- ===== CHECK-IN ===== -->
@@ -62,7 +62,7 @@
               <input id="aggId" placeholder="ID/matrícula no Wellhub ou TotalPass"></div>
             <button class="btn" id="btnValidar">✓ Validar e registrar</button>
           </div>
-          <p class="muted" style="font-size: 12.5px; margin-top: 6px;">💡 Com o ID salvo, a importação (CSV/API) encontra o aluno sozinha mesmo que o nome no portal esteja diferente — e a diária do dia libera a entrada automaticamente.</p>
+          <p class="muted" style="font-size: 12.5px; margin-top: 6px;">Com o ID salvo, a importação (CSV/API) encontra o aluno sozinha mesmo que o nome no portal esteja diferente — e a diária do dia libera a entrada automaticamente.</p>
         </div>
       </div>
       <div class="card">
@@ -89,12 +89,12 @@
         <div class="linha-flex" style="gap: 8px;">
           <select id="fAgg"><option value="">Todos os agregadores</option></select>
           <select id="fPeriodo"><option value="hoje">Hoje</option><option value="mes" selected>Este mês</option><option value="tudo">Tudo</option></select>
-          <button class="btn sec mini" id="btnCsvExport">⬇ CSV</button>
+          <button class="btn sec mini" id="btnCsvExport">CSV</button>
         </div>
       </div>
       <div class="linha-flex" id="kpis" style="gap: 10px; margin: 12px 0; flex-wrap: wrap;"></div>
       <div id="listaCk"></div>
-      <p class="muted" style="font-size: 12.5px; margin-top: 10px;">💰 O repasse estimado (R$ por check-in de cada plataforma) fica em <a href="agregadores.html">Agregadores</a>.</p>
+      <p class="muted" style="font-size: 12.5px; margin-top: 10px;">O repasse estimado (R$ por check-in de cada plataforma) fica em <a href="agregadores.html">Agregadores</a>.</p>
     </div>
   </section>
 
@@ -112,7 +112,7 @@
       </div>
       <div class="campo" style="margin-top: 10px;"><label>…ou cole o conteúdo (1ª linha = cabeçalho; precisa ter colunas de data e nome)</label>
         <textarea id="impTexto" rows="6" placeholder="data,nome&#10;2026-07-10,MARIA SILVA&#10;10/07/2026 08:31,JOAO SOUZA"></textarea></div>
-      <button class="btn" id="btnPrevia">🔍 Conferir antes de importar</button>
+      <button class="btn" id="btnPrevia">Conferir antes de importar</button>
       <div id="previa" style="margin-top: 14px;"></div>
     </div>
   </section>
@@ -124,19 +124,19 @@
         <h2>Wellhub (Gympass)</h2>
         <div class="campo" style="margin-top: 8px;"><label>Gym ID (ID da academia no Wellhub)</label><input id="cfgWhGym" placeholder="ex.: 123456"></div>
         <div class="campo"><label>Chave da API de parceiros (Partners API)</label><input id="cfgWhKey" type="password" placeholder="Bearer token do portal de parceiros"></div>
-        <button class="btn sec" id="btnWhTestar">🔌 Testar conexão Wellhub</button>
+        <button class="btn sec" id="btnWhTestar">Testar conexão Wellhub</button>
         <h2 style="margin-top: 18px;">TotalPass</h2>
         <div class="campo" style="margin-top: 8px;"><label>Código da unidade no TotalPass</label><input id="cfgTpUnidade"></div>
         <div class="campo"><label>Token/credencial do parceiro</label><input id="cfgTpToken" type="password"></div>
-        <button class="btn sec" id="btnTpTestar">🔌 Testar conexão TotalPass</button>
+        <button class="btn sec" id="btnTpTestar">Testar conexão TotalPass</button>
         <div class="linha-flex" style="margin-top: 12px;">
-          <button class="btn" id="btnBuscarAPI">🔄 Buscar check-ins de hoje (API)</button>
+          <button class="btn" id="btnBuscarAPI">Buscar check-ins de hoje (API)</button>
         </div>
         <div class="cid-log" id="apiLog" style="background:#16161d; color:#d7d7e0; font-family:ui-monospace,monospace; font-size:12.5px; padding:12px 14px; min-height:60px; margin-top: 12px; white-space:pre-wrap;">As credenciais ficam salvas só neste dispositivo.</div>
       </div>
       <div>
         <div class="aviso-api">
-          ⚠ <strong>Como funciona a integração:</strong> as APIs oficiais do Wellhub e do TotalPass são feitas pra servidor (o navegador é bloqueado por segurança/CORS na maioria das chamadas). Por isso os dois caminhos <strong>garantidos</strong> aqui são: ① validar o check-in do app na recepção e ② importar o CSV do portal do parceiro — os mesmos dados, sem depender de servidor. O teste de conexão ao lado tenta a API real e mostra a resposta honesta.
+          <strong>Como funciona a integração:</strong> as APIs oficiais do Wellhub e do TotalPass são feitas pra servidor (o navegador é bloqueado por segurança/CORS na maioria das chamadas). Por isso os dois caminhos <strong>garantidos</strong> aqui são: ① validar o check-in do app na recepção e ② importar o CSV do portal do parceiro — os mesmos dados, sem depender de servidor. O teste de conexão ao lado tenta a API real e mostra a resposta honesta.
         </div>
         <div class="card" style="margin-top: 14px;">
           <h2>Passo a passo rápido</h2>
@@ -144,7 +144,7 @@
             <li>Crie os planos <strong>Gympass / Wellhub</strong> e <strong>TotalPass</strong> (tipo "agregador") — já vêm de fábrica em Gestão de Alunos → Planos.</li>
             <li>Usuário novo do app chegou? Cadastre no card da direita da aba Check-in <strong>com o ID dele no app</strong> — já entra no plano certo.</li>
             <li>Todo dia: o aluno faz o check-in no app → você valida o token (ou a API/CSV traz sozinho) → vira a <strong>diária do dia</strong>.</li>
-            <li>🔓 <strong>A diária desbloqueia a entrada automaticamente</strong>: no Controle de Entradas e na catraca facial, aluno de agregador SEM check-in do app hoje fica bloqueado; COM check-in, entra direto até 23:59.</li>
+            <li><strong>A diária desbloqueia a entrada automaticamente</strong>: no Controle de Entradas e na catraca facial, aluno de agregador SEM check-in do app hoje fica bloqueado; COM check-in, entra direto até 23:59.</li>
             <li>Toda semana (conferência): importe o CSV do portal — concilia pelo ID do app (ou pelo nome), sem duplicar.</li>
             <li>Fim do mês: confira o repasse estimado em <a href="agregadores.html">Agregadores</a> (R$ por check-in de cada plataforma).</li>
           </ol>
@@ -153,14 +153,14 @@
     </div>
   </section>
   <div class="card" style="margin-top: 16px;">
-    <h2>🔄 Cancelou o plano e virou agregador</h2>
+    <h2>Cancelou o plano e virou agregador</h2>
     <p class="muted" style="margin: 4px 0 10px;">Ex-alunos que cancelaram o plano próprio e continuam entrando por Gympass/Wellhub, TotalPass etc. Se a curva subir, o agregador está trocando mensalidade cheia por repasse — hora de rever preço, plano de fidelidade ou o contrato com o agregador.</p>
-    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnMigraCSV">📤 CSV</button></div>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnMigraCSV">CSV</button></div>
     <div id="migracao" class="muted">Nenhuma migração detectada ainda.</div>
   </div>
 
   <div class="card" style="margin-top: 16px;">
-    <h2>🤝 Agregadores × alunos próprios (últimos 90 dias)</h2>
+    <h2>Agregadores × alunos próprios (últimos 90 dias)</h2>
     <p class="muted" style="margin: 4px 0 10px;">O agregador traz volume que vale o repasse, ou está canibalizando matrícula própria? Compare o peso de cada origem nos check-ins.</p>
     <div id="aggComparativo" class="muted">Sem check-ins no período.</div>
   </div>
@@ -440,7 +440,7 @@
           '<span class="muted">' + (x.iso ? S.fmtData(x.iso.slice(0, 10)) : "?") + "</span>" + stTag + "</div>";
       }).join("") +
       (previaItens.length > 60 ? '<p class="muted" style="margin-top:6px;">…e mais ' + (previaItens.length - 60) + " linha(s).</p>" : "") +
-      (ok ? '<div class="linha-flex" style="margin-top: 12px;"><button class="btn" id="btnImportar">📥 Importar ' + ok + " check-in(s)</button></div>" : "") +
+      (ok ? '<div class="linha-flex" style="margin-top: 12px;"><button class="btn" id="btnImportar">Importar ' + ok + " check-in(s)</button></div>" : "") +
       (semAluno ? '<p class="muted" style="font-size: 12.5px; margin-top: 8px;">Quem não foi encontrado: confira se o nome no portal é igual ao do cadastro, ou cadastre o aluno na aba Check-in.</p>' : "");
     var bi = $("btnImportar");
     if (bi) bi.onclick = function () {
@@ -596,7 +596,7 @@
           "</b></td><td style='text-align:right;'>" + l.n + "</td><td style='text-align:right;'>" + l.unicos +
           "</td><td style='text-align:right;'><b>" + Math.round(100 * l.n / total) + "%</b></td></tr>";
       }).join("") + "</table>" +
-      '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">💡 Agregador acima de ~30% do movimento merece conta na ponta do lápis: repasse por visita × mensalidade cheia — e uma oferta de migração pros frequentes.</p>';
+      '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Agregador acima de ~30% do movimento merece conta na ponta do lápis: repasse por visita × mensalidade cheia — e uma oferta de migração pros frequentes.</p>';
   }
   // migração pós-cancelamento: ex-aluno sem contrato ativo com check-in de agregador depois do cancelamento
   function dadosMigracao() {
@@ -645,7 +645,7 @@
     var ult = meses[meses.length - 1].n, ant = meses[meses.length - 2].n;
     el.innerHTML =
       '<p style="margin:0 0 10px;font-size:14px;"><b>' + linhas.length + ' ex-aluno(s) viraram agregador nos últimos 12 meses</b>' +
-      (ult > ant ? ' · <span style="color:#dc2626;font-weight:700;">📈 tendência subindo</span>' : ult < ant ? ' · <span style="color:#16a34a;font-weight:700;">📉 caindo</span>' : "") + "</p>" +
+      (ult > ant ? ' · <span style="color:#dc2626;font-weight:700;">tendência subindo</span>' : ult < ant ? ' · <span style="color:#16a34a;font-weight:700;">caindo</span>' : "") + "</p>" +
       '<div style="display:flex;gap:10px;align-items:flex-end;height:70px;max-width:420px;margin-bottom:12px;">' +
       meses.map(function (m) {
         var h = Math.round(52 * m.n / max);
@@ -661,7 +661,7 @@
           "</b></td><td>" + S.fmtData(l.cancelou) + "</td><td><span class='tag alerta'>" + escA(l.agregador) +
           "</span></td><td style='text-align:right;'>" + l.visitas + "</td><td style='padding-left:12px;' class='muted'>" + S.fmtData(l.primeira) + "</td></tr>";
       }).join("") + "</table>" +
-      '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">💡 Esses ex-alunos ainda treinam AQUI — estão a uma boa oferta de voltar pra mensalidade (plano anual com desconto vence o repasse do agregador).</p>';
+      '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Esses ex-alunos ainda treinam AQUI — estão a uma boa oferta de voltar pra mensalidade (plano anual com desconto vence o repasse do agregador).</p>';
   }
   document.addEventListener("click", function (e) {
     if (e.target && e.target.id === "btnMigraCSV") {

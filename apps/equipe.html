@@ -49,7 +49,7 @@
   <div id="lista"></div>
 
   <details class="card" id="cardSalarios">
-    <summary style="cursor: pointer; font-weight: 800;">💰 Salários de colaboradores (relatório do EVO)</summary>
+    <summary style="cursor: pointer; font-weight: 800;">Salários de colaboradores (relatório do EVO)</summary>
     <div id="salarios" style="margin-top: 12px; overflow-x: auto;"></div>
   </details>
 </main>
@@ -114,7 +114,7 @@
   function ehHorista(c) { return /horista|diarista/i.test(c.tipoContrato || ""); }
   function tagVinculo(c) {
     if (ehHorista(c)) return '<span class="tag" style="background:rgba(245,158,11,.15);color:#b45309;" title="Sem salário fixo — recebe por hora batida no ponto">⏱ HORISTA</span> ';
-    if (c.tipoContrato) return '<span class="tag neutro" title="Recebe salário fixo mensal (' + esc(c.tipoContrato) + ')">💼 SALÁRIO FIXO</span> ';
+    if (c.tipoContrato) return '<span class="tag neutro" title="Recebe salário fixo mensal (' + esc(c.tipoContrato) + ')">SALÁRIO FIXO</span> ';
     return "";
   }
 
@@ -156,9 +156,9 @@
         tagVinculo(c) +
         '<span class="tag ' + (perfis[c.permissaoId] ? "roxo" : "neutro") + '" title="permissão (defina na ficha)">' + esc(perfis[c.permissaoId] || "Sem permissão") + "</span> " +
         (c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') +
-        (c.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '">💬</a>' : "") +
-        ' <a class="btn mini" href="colaborador.html?id=' + c.id + '">👔 Ficha</a>' +
-        ' <button class="btn sec mini" data-edit="' + c.id + '">✎</button></div>';
+        (c.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + '"></a>' : "") +
+        ' <a class="btn mini" href="colaborador.html?id=' + c.id + '">Ficha</a>' +
+        ' <button class="btn sec mini" data-edit="' + c.id + '"></button></div>';
     }).join("") : '<div class="vazio">Ninguém aqui ainda — cadastre a equipe.</div>';
 
     // relatório de salários — mensalistas (salário fixo) separados dos horistas (horas × valor hora)
@@ -169,7 +169,7 @@
     var horistas = comSalario.filter(ehHorista);
     var totalFixo = 0, totalHoristas = 0;
     function stTag(c) { return c.ativo === false ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>'; }
-    var html = "<h3 style='margin:4px 0 6px;font-size:13px;'>💼 Salário fixo (mensalistas)</h3>" +
+    var html = "<h3 style='margin:4px 0 6px;font-size:13px;'>Salário fixo (mensalistas)</h3>" +
       '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
       "<tr><th style='text-align:left; padding: 6px 8px;'>NOME</th><th style='text-align:left;'>CARGO</th><th style='text-align:left;'>TIPO</th><th style='text-align:right;'>SALÁRIO MENSAL</th><th style='text-align:left; padding-left: 12px;'>STATUS</th></tr>" +
       (mensalistas.length ? mensalistas.map(function (c) {
@@ -201,7 +201,7 @@
       (function () {
         var extras = (S.read("feriados", { datas: [] }).datas || []).slice().sort();
         return '<div style="margin-top:10px;padding:10px 12px;border:1px dashed var(--linha);border-radius:8px;">' +
-          '<b style="font-size:12.5px;">🗓 Feriados extras (municipais/estaduais)</b> ' +
+          '<b style="font-size:12.5px;">Feriados extras (municipais/estaduais)</b> ' +
           '<input id="ferData" type="date" style="width:auto;margin:0 6px;"> <button class="btn sec mini" id="ferAdd">+ Adicionar</button><div style="margin-top:6px;font-size:12.5px;">' +
           (extras.length ? extras.map(function (d) {
             return '<span class="tag neutro" style="margin:2px 4px 2px 0;">' + d.split("-").reverse().join("/") + ' <a href="#" data-ferdel="' + d + '" style="color:#dc2626;text-decoration:none;">✕</a></span>';
@@ -345,12 +345,12 @@
   var card = document.createElement("div");
   card.className = "card";
   card.style.marginTop = "16px";
-  card.innerHTML = "<h2>🗓 Escala da semana</h2><div id='escalaBox'></div>" +
+  card.innerHTML = "<h2>Escala da semana</h2><div id='escalaBox'></div>" +
     "<h2 style='margin-top:20px;'>⏰ Ponto do dia</h2>" +
     "<div class='linha-flex' style='gap:8px;flex-wrap:wrap;align-items:center;'>" +
     "<select id='pontoSel' style='min-width:200px;'></select>" +
-    "<button class='btn mini' id='pontoEntrada'>🟢 Entrada</button>" +
-    "<button class='btn sec mini' id='pontoSaida'>🔴 Saída</button></div>" +
+    "<button class='btn mini' id='pontoEntrada'>Entrada</button>" +
+    "<button class='btn sec mini' id='pontoSaida'>Saída</button></div>" +
     "<div id='pontoLista' style='margin-top:10px;'></div>";
   main.appendChild(card);
 

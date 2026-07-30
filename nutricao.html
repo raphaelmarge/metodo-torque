@@ -48,7 +48,7 @@
 <main class="corpo">
 
   <div class="card" id="boasVindas" hidden style="margin-bottom: 16px; border-left: 4px solid var(--verde);">
-    <h2>🥗 Bem-vindo(a) ao TORQUE ON Nutrição!</h2>
+    <h2>Bem-vindo(a) ao TORQUE ON Nutrição!</h2>
     <p class="muted" style="margin: 6px 0 10px;">Como quer chamar o seu consultório? (aparece no app dos seus pacientes)</p>
     <div class="linha-flex">
       <input id="obNome" placeholder="ex.: Nutri Ana Costa" style="flex: 1; min-width: 200px;">
@@ -59,10 +59,10 @@
   <div class="kpis-nt" id="kpisN"></div>
 
   <div class="abas-nt" id="abasNt">
-    <button data-a="pacientes" class="ativa">🧑‍🤝‍🧑 Pacientes</button>
-    <button data-a="dietas">🍽 Dietas</button>
-    <button data-a="alimentos">🥗 Alimentos</button>
-    <button data-a="receitas">🍳 Receitas</button>
+    <button data-a="pacientes" class="ativa">Pacientes</button>
+    <button data-a="dietas">Dietas</button>
+    <button data-a="alimentos">Alimentos</button>
+    <button data-a="receitas">Receitas</button>
   </div>
 
   <div id="vPacientes">
@@ -80,7 +80,7 @@
           <option value="mod">Moderado (3-5x/sem)</option><option value="alto">Intenso (6-7x/sem)</option>
         </select>
         <select id="pObjetivo" style="width: auto;">
-          <option value="emagrecer">🔥 Emagrecer</option><option value="manter">⚖️ Manter</option><option value="ganhar">💪 Ganhar massa</option>
+          <option value="emagrecer">Emagrecer</option><option value="manter">Manter</option><option value="ganhar">Ganhar massa</option>
         </select>
         <input id="pRestr" placeholder="Restrições/alergias (ex.: lactose, amendoim)" style="flex: 2; min-width: 180px;">
         <button class="btn verde" id="pAdd">+ Adicionar</button>
@@ -91,15 +91,15 @@
 
   <div id="vDietas" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>🍽 Dieta do paciente</h2>
+      <h2>Dieta do paciente</h2>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
         <select id="dAluno" style="min-width: 220px;"></select>
-        <button class="btn verde" id="dGerar" title="Mifflin-St Jeor + objetivo + banco de alimentos">🤖 Gerar dieta automática</button>
-        <button class="btn sec" id="dZap">💬 Enviar resumo no WhatsApp</button>
+        <button class="btn verde" id="dGerar" title="Mifflin-St Jeor + objetivo + banco de alimentos">Gerar dieta automática</button>
+        <button class="btn sec" id="dZap">Enviar resumo no WhatsApp</button>
       </div>
       <div id="dResumo" class="muted" style="margin-top: 10px; font-size: 13.5px;"></div>
       <div class="linha-flex" style="gap: 8px; margin-top: 10px; align-items: center;">
-        <label style="margin: 0; font-size: 13px; font-weight: 700;">💧 Meta de água (ml/dia)
+        <label style="margin: 0; font-size: 13px; font-weight: 700;">Meta de água (ml/dia)
           <input id="dAgua" type="number" min="500" max="6000" step="50" style="width: 110px; display: inline-block; margin-left: 6px;"></label>
       </div>
     </div>
@@ -118,10 +118,10 @@
 
   <div id="vReceitas" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>🍳 Receitas fitness</h2>
+      <h2>Receitas fitness</h2>
       <p class="muted" style="font-size: 13px;">Receitas com macros por porção (valores de referência — revise antes de prescrever). Use <b>+ Usar na dieta</b> pra receita virar um item do seu banco de alimentos e entrar nas refeições do paciente. Este blog cresce toda semana.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-        <input id="rcBusca" placeholder="🔍 Buscar receita ou ingrediente…" style="flex: 2; min-width: 180px;">
+        <input id="rcBusca" placeholder="Buscar receita ou ingrediente…" style="flex: 2; min-width: 180px;">
         <select id="rcCat" style="min-width: 170px;"><option value="">Todas as categorias</option></select>
       </div>
       <div id="rcResumo" class="muted" style="font-size: 12.5px; margin-top: 8px;"></div>
@@ -131,10 +131,10 @@
 
   <div id="vAlimentos" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>🥗 Banco de alimentos (curadoria)</h2>
+      <h2>Banco de alimentos (curadoria)</h2>
       <p class="muted" style="font-size: 13px;">Banco brasileiro com centenas de itens — do arroz ao fast food e industrializados. <b>Desmarque o que você NÃO quer</b> que apareça nas dietas e no app dos pacientes; marque de volta quando quiser.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-        <input id="alBusca" placeholder="🔍 Buscar alimento…" style="flex: 2; min-width: 180px;">
+        <input id="alBusca" placeholder="Buscar alimento…" style="flex: 2; min-width: 180px;">
         <select id="alCat" style="min-width: 180px;"><option value="">Todas as categorias</option></select>
         <button class="btn sec mini" id="alCatOn">✓ Ativar categoria</button>
         <button class="btn sec mini" id="alCatOff">✕ Desativar categoria</button>
@@ -142,17 +142,17 @@
       <div id="alResumo" class="muted" style="font-size: 12.5px; margin-top: 8px;"></div>
     </div>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>📷 Código de barras (Open Food Facts)</h2>
+      <h2>Código de barras (Open Food Facts)</h2>
       <p class="muted" style="font-size: 13px;">Digite o código de barras de um produto (ou escaneie, em celulares compatíveis) — buscamos no maior banco aberto do mundo e ele entra nos seus alimentos com as kcal do rótulo. Requer internet.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
         <input id="cbCodigo" inputmode="numeric" placeholder="ex.: 7891000100103" style="width: 200px;">
-        <button class="btn verde" id="cbBuscar">🔍 Buscar produto</button>
-        <button class="btn sec" id="cbCamera" hidden>📷 Escanear com a câmera</button>
+        <button class="btn verde" id="cbBuscar">Buscar produto</button>
+        <button class="btn sec" id="cbCamera" hidden>Escanear com a câmera</button>
         <span id="cbStatus" class="muted" style="font-size: 13px;"></span>
       </div>
     </div>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>➕ Alimento próprio</h2>
+      <h2>Alimento próprio</h2>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
         <input id="alNome" placeholder="Alimento" style="flex: 2; min-width: 150px;">
         <input id="alPorcao" placeholder="Porção (ex.: 100 g)" style="width: 130px;">
@@ -165,10 +165,10 @@
   </div>
 
   <div class="card" style="margin-top: 20px; border-left: 4px solid var(--verde);">
-    <h2>☁️ Sua ilha na nuvem</h2>
+    <h2>Sua ilha na nuvem</h2>
     <div id="contaStatus" class="muted" style="margin: 6px 0 10px;"></div>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
-      <button class="btn verde" id="btnContaEntrar">🔑 Entrar na minha conta</button>
+      <button class="btn verde" id="btnContaEntrar">Entrar na minha conta</button>
       <button class="btn sec" id="btnContaCriar">Criar conta TORQUE NUTRI</button>
       <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
       <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (para o app dos pacientes)
@@ -327,10 +327,10 @@
         '<span class="tagn' + (p.objetivo === "ganhar" ? " roxa" : p.objetivo === "emagrecer" ? " ambar" : "") + '">' +
         (p.objetivo === "emagrecer" ? "🔥 emagrecer" : p.objetivo === "ganhar" ? "💪 ganhar" : "⚖️ manter") + "</span>" +
         '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
-        (temDieta ? '<span class="tagn">🍽 dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
+        (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn verde mini" data-app="' + p.id + '">📲 App do paciente</button>' +
-        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        '<button class="btn verde mini" data-app="' + p.id + '">App do paciente</button>' +
+        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '"></a>' : "") +
         '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></div>';
     }).join("") : "Cadastre o primeiro paciente. 🥦";
   }
@@ -374,8 +374,8 @@
     var alvo = kcalAlvo(p);
     var dieta = dietaDe(st, p.id);
     $("dResumo").innerHTML = "TMB (Mifflin-St Jeor): <b>" + alvo.tmb + " kcal</b> · Gasto com atividade e objetivo (" + esc(p.objetivo) + "): <b style='color:var(--verde-2);'>" + alvo.alvo + " kcal/dia</b>" +
-      (p.restricoes ? ' · <span class="tagn ambar">⚠ ' + esc(p.restricoes) + "</span>" : "") +
-      (dieta.geradaAuto ? ' · <span class="tagn">🤖 gerada automática em ' + S.fmtData(dieta.geradaEm) + " — revise!</span>" : "");
+      (p.restricoes ? ' · <span class="tagn ambar">' + esc(p.restricoes) + "</span>" : "") +
+      (dieta.geradaAuto ? ' · <span class="tagn">gerada automática em ' + S.fmtData(dieta.geradaEm) + " — revise!</span>" : "");
     if (document.activeElement !== $("dAgua")) $("dAgua").value = dieta.aguaMl || Math.round(p.peso * 35 / 50) * 50;
     // datalist única com o catálogo curado + alimentos próprios (busca digitando)
     $("dlAlimentos").innerHTML = alimentosAtivos(st).map(function (a) {
@@ -395,7 +395,7 @@
         "<b>⏰ " + esc(r.hora) + " — " + esc(r.titulo) + '</b><span style="font-weight:800;color:var(--verde-2);">' + kcalRef + " kcal</span>" +
         '<button class="btn sec mini" data-rmref="' + r.id + '">✕ refeição</button></div>' + itensHtml +
         '<div class="linha-flex" style="gap:8px;margin-top:8px;flex-wrap:wrap;">' +
-        '<input data-alsel="' + r.id + '" list="dlAlimentos" placeholder="🔍 Digite pra buscar no banco (' + alimentosAtivos(st).length + ' alimentos)…" style="flex:2;min-width:200px;">' +
+        '<input data-alsel="' + r.id + '" list="dlAlimentos" placeholder="Digite pra buscar no banco (' + alimentosAtivos(st).length + ' alimentos)…" style="flex:2;min-width:200px;">' +
         '<input data-alqtd="' + r.id + '" type="number" min="0.5" step="0.5" value="1" style="width:80px;" title="Quantidade de porções">' +
         '<button class="btn mini verde" data-additem="' + r.id + '">+ Adicionar</button></div></div>';
     }).join("") : '<div class="muted">Sem refeições ainda — gere a dieta automática ou adicione refeições acima.</div>';
@@ -649,11 +649,11 @@
         "<div><b style=\"font-size: 13px;\">Modo de preparo</b><ol style=\"margin: 6px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.8; color: #555;\">" +
         r.modo.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ol></div>" +
         "</div>" +
-        '<p class="muted" style="font-size: 12.5px; margin-top: 10px;">💡 ' + esc(r.dica) + "</p>" +
+        '<p class="muted" style="font-size: 12.5px; margin-top: 10px;">' + esc(r.dica) + "</p>" +
         '<div class="linha-flex" style="gap: 8px; margin-top: 10px;">' +
         (naDieta ? '<span class="muted" style="font-size: 13px;">✓ Já está no seu banco de alimentos</span>' :
           '<button class="btn verde mini" data-rcusa="' + r.id + '">+ Usar na dieta (vira alimento)</button>') +
-        '<a class="btn sec mini" data-rczap="' + r.id + '" href="#">💬 Mandar pro paciente</a>' +
+        '<a class="btn sec mini" data-rczap="' + r.id + '" href="#">Mandar pro paciente</a>' +
         "</div></details></div>";
     }).join("") || '<div class="card muted">Nenhuma receita com esse filtro.</div>';
   }
@@ -728,39 +728,39 @@
       "<div style='text-align:center;padding:8px 0 14px;'><span style='font-size:11px;letter-spacing:.2em;color:#86efac;font-weight:700;'>" + esc(studio).toUpperCase() + " 🥗</span>" +
       "<h1>Oi, " + esc(primeiro) + "!</h1><div class='vz' style='padding:2px 0;'>Meta: <b style='color:#86efac'>" + alvo.alvo + " kcal</b> · 💧 " + aguaMl + " ml/dia</div></div>" +
       "<div class='cardx'><h2>⏰ Próxima refeição</h2><div id='proxRef' class='vz' style='font-size:15px;color:#fff;font-weight:700;'></div></div>" +
-      "<div class='cardx'><h2>💧 Água de hoje</h2>" +
+      "<div class='cardx'><h2>Água de hoje</h2>" +
       "<div class='agua-bar'><div class='agua-fill' id='agFill' style='width:0%'></div></div>" +
       "<div style='display:flex;justify-content:space-between;align-items:center;'><span id='agTxt' class='vz' style='padding:0;'></span>" +
       "<button class='btnx' id='agAdd'>+ 1 copo (250 ml)</button></div>" +
-      "<button class='btnx' id='agLembrete' style='width:100%;margin-top:10px;background:#0e7490;'>🔔 Me lembrar de beber água</button>" +
+      "<button class='btnx' id='agLembrete' style='width:100%;margin-top:10px;background:#0e7490;'>Me lembrar de beber água</button>" +
       "<div class='vz' id='agNota' style='font-size:11px;'>Com o app aberto, avisamos a cada hora. 💧</div></div>" +
-      "<div class='cardx'><h2>🍽 Minhas refeições</h2><div id='refProg' class='vz' style='padding:0 0 8px;'></div>" +
+      "<div class='cardx'><h2>Minhas refeições</h2><div id='refProg' class='vz' style='padding:0 0 8px;'></div>" +
       (refs.length ? refs.map(function (r) {
         return "<details><summary><span>⏰ " + esc(r.h) + " · " + esc(r.t) + "</span><span style='color:#86efac'>" + r.k + " kcal</span></summary>" +
           "<div style='padding:0 14px 12px;'>" +
           r.itens.map(function (it) { return "<div class='kv'><span>" + esc(it.n) + "</span><span style='color:#9fb8a6'>" + esc(it.q) + " · " + it.k + " kcal</span></div>"; }).join("") +
           "<button class='refok off' data-refok='" + r.id + "' data-k='" + r.k + "' style='width:100%;margin-top:10px;'>Marcar como feita ✓</button></div></details>";
       }).join("") : "<div class='vz'>Sua dieta aparece aqui quando " + esc(primeiro === p.nome ? "o nutricionista" : studio.split(" ")[0]) + " montar. 🥦</div>") + "</div>" +
-      "<div class='cardx'><h2>🍎 Registrar o que comi</h2>" +
+      "<div class='cardx'><h2>Registrar o que comi</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Comeu algo fora da dieta? Busque no banco (" + aldb.length + " alimentos) e registre — entra na contagem do dia.</div>" +
       "<input id='diBusca' list='dlApp' placeholder='🔍 O que você comeu?' style='width:100%;margin-bottom:8px;'>" +
       "<datalist id='dlApp'></datalist>" +
       "<div style='display:flex;gap:8px;'><input id='diQtd' type='number' min='0.5' step='0.5' value='1' style='width:90px;' title='porções'><button class='btnx' id='diAdd' style='flex:1;'>+ Registrar</button></div>" +
-      "<button class='btnx' id='diCodigo' style='width:100%;margin-top:8px;background:#0e7490;'>📷 Registrar por código de barras</button>" +
+      "<button class='btnx' id='diCodigo' style='width:100%;margin-top:8px;background:#0e7490;'>Registrar por código de barras</button>" +
       "<div id='diLista' style='margin-top:10px;'></div></div>" +
-      "<div class='cardx'><h2>📊 Meu dia</h2><div class='kv'><span>Refeições da dieta feitas</span><b id='kcalRef'>0 kcal</b></div>" +
+      "<div class='cardx'><h2>Meu dia</h2><div class='kv'><span>Refeições da dieta feitas</span><b id='kcalRef'>0 kcal</b></div>" +
       "<div class='kv'><span>Diário (o que registrei)</span><b id='kcalDiario'>0 kcal</b></div>" +
       "<div class='kv'><span><b>Total consumido</b></span><b id='kcalDia' style='color:#86efac'>0 kcal</b></div>" +
       "<div class='kv'><span>Meta do dia</span><span>" + alvo.alvo + " kcal</span></div></div>" +
-      "<div class='cardx'><h2>⚖️ Meu peso</h2>" +
+      "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
-      (temNuvem ? "<div class='cardx'><h2>🔑 Meu login</h2>" +
+      (temNuvem ? "<div class='cardx'><h2>Meu login</h2>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie login e senha para abrir seu app de qualquer aparelho (página Entrar do aluno).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
         "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;'>" +
         "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button><div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
-      (zapN ? "<a class='btnx' style='display:block;text-align:center;text-decoration:none;background:#15803d;' href='https://wa.me/55" + String(zapN).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi! Sou " + p.nome + ", sobre minha dieta:") + "' target='_blank' rel='noopener'>💬 Falar com " + esc(studio.split(" ")[0]) + "</a>" : "") +
+      (zapN ? "<a class='btnx' style='display:block;text-align:center;text-decoration:none;background:#15803d;' href='https://wa.me/55" + String(zapN).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi! Sou " + p.nome + ", sobre minha dieta:") + "' target='_blank' rel='noopener'>Falar com " + esc(studio.split(" ")[0]) + "</a>" : "") +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 🥗</div>" +
       "<script>var REFS=" + JSON.stringify(refs.map(function (r) { return { id: r.id, h: r.h, t: r.t, k: r.k }; })) +
       ",ALDB=" + JSON.stringify(aldb) +

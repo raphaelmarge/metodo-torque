@@ -41,7 +41,7 @@
   <div class="stats" id="stats"></div>
 
   <details class="card" id="cardTotal">
-    <summary style="cursor: pointer; font-weight: 700; list-style: none;">📊 Total de clientes por convênio</summary>
+    <summary style="cursor: pointer; font-weight: 700; list-style: none;">Total de clientes por convênio</summary>
     <div id="totalConv" style="margin-top: 10px;"></div>
   </details>
 
@@ -132,14 +132,14 @@
         '<div class="quem"><strong>' + esc(e.nome) + '</strong><div class="sub">' + vincs.length + " funcionário(s) matriculado(s)" +
         (e.contato ? " · contato: " + esc(e.contato) : "") + "</div></div>" +
         '<span class="desconto">' + (+e.desconto || 0) + "% off</span>" +
-        (e.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(e.zap).replace(/\D/g, "") + '">💬 RH</a>' : "") +
-        ' <button class="btn sec mini" data-edit="' + e.id + '">✎</button></summary>' +
+        (e.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(e.zap).replace(/\D/g, "") + '">RH</a>' : "") +
+        ' <button class="btn sec mini" data-edit="' + e.id + '"></button></summary>' +
         vincs.map(function (v) {
           return '<div class="vinculo"><span>' + esc(v.aluno) + '</span><button class="btn perigo mini" data-rmv="' + v.id + '" style="padding: 3px 8px;">✕</button></div>';
         }).join("") +
         '<div class="add-aluno"><input list="alunosLista" placeholder="Vincular aluno…" data-addinput="' + e.id + '" style="flex: 1;">' +
         '<button class="btn mini" data-addbtn="' + e.id + '">Vincular</button></div>' +
-        (e.obs ? '<div class="vinculo" style="border-top: 1px solid var(--fundo); color: var(--cinza);">📝 ' + esc(e.obs) + "</div>" : "") +
+        (e.obs ? '<div class="vinculo" style="border-top: 1px solid var(--fundo); color: var(--cinza);">' + esc(e.obs) + "</div>" : "") +
         "</details>";
     }).join("") : '<div class="vazio">Nenhuma empresa parceira ainda — feche a primeira!</div>');
   }

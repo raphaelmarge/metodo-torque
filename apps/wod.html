@@ -45,8 +45,8 @@
       <button class="btn sec mini" id="dHoje">Hoje</button>
     </div>
     <div class="linha-flex">
-      <button class="btn sec" id="btnImprimir">🖨 Imprimir</button>
-      <button class="btn" id="btnEditar">✎ Montar / editar WOD</button>
+      <button class="btn sec" id="btnImprimir">Imprimir</button>
+      <button class="btn" id="btnEditar">Montar / editar WOD</button>
     </div>
   </div>
 
@@ -110,7 +110,7 @@
     $("dLabel").textContent = DIAS[d.getDay()] + " · " + S.fmtData(dia);
     var w = wodDe(st);
     if (!w) {
-      $("quadroWod").innerHTML = '<div class="vazio">Nenhum WOD montado para este dia. Clique em <strong>✎ Montar / editar WOD</strong>.</div>';
+      $("quadroWod").innerHTML = '<div class="vazio">Nenhum WOD montado para este dia. Clique em <strong>Montar / editar WOD</strong>.</div>';
     } else {
       $("quadroWod").innerHTML = '<div class="wod-folha">' +
         '<div class="dia">' + DIAS[d.getDay()] + " · " + S.fmtData(dia) + "</div>" +

@@ -47,13 +47,13 @@
 
   <div class="card linha-flex no-print" style="justify-content: space-between;">
     <div class="abas" id="abas">
-      <button data-a="recibo" class="ativa">🧾 Recibo de pagamento</button>
-      <button data-a="contrato">📄 Contrato de matrícula</button>
+      <button data-a="recibo" class="ativa">Recibo de pagamento</button>
+      <button data-a="contrato">Contrato de matrícula</button>
       <button data-a="cancelamento">✕ Recibo de cancelamento</button>
-      <button data-a="termos">📜 Termos e políticas</button>
+      <button data-a="termos">Termos e políticas</button>
     </div>
-    <button class="btn sec" id="btnAssinar" hidden>✍️ Assinar na tela</button>
-    <button class="btn" id="btnImprimir" hidden>🖨 Imprimir</button>
+    <button class="btn sec" id="btnAssinar" hidden>Assinar na tela</button>
+    <button class="btn" id="btnImprimir" hidden>Imprimir</button>
   </div>
 
   <div class="card no-print" id="cardSel">
@@ -73,7 +73,7 @@
 
 <dialog id="dlgAssina">
   <div class="card" style="width:520px;max-width:96vw;">
-    <h2>✍️ Assinatura do cliente</h2>
+    <h2>Assinatura do cliente</h2>
     <p class="mut" style="margin:4px 0 10px;">Peça para o cliente assinar com o dedo (celular/tablet) ou com o mouse. A assinatura fica gravada no cadastro e entra no contrato impresso.</p>
     <canvas id="cvAssina" width="480" height="180" style="border:1.5px dashed #999;background:#fff;touch-action:none;width:100%;"></canvas>
     <div class="linha-flex" style="margin-top:10px;gap:8px;justify-content:flex-end;">
@@ -173,7 +173,7 @@
       TERMOS.map(function (x) {
         var val = t[x[0]] != null ? t[x[0]] : x[2];
         return '<div><div class="linha-flex" style="justify-content:space-between; margin-bottom:6px;">' +
-          "<strong>" + x[1] + '</strong><button class="btn sec mini" data-imprime="' + x[0] + '">🖨 Gerar para impressão</button></div>' +
+          "<strong>" + x[1] + '</strong><button class="btn sec mini" data-imprime="' + x[0] + '">Gerar para impressão</button></div>' +
           '<textarea data-termo="' + x[0] + '" style="width:100%; min-height:110px; padding:10px; border:1px solid var(--linha); font-family:inherit; font-size:13.5px; line-height:1.5;">' + esc(val) + "</textarea></div>";
       }).join("") +
       '<p class="muted" style="margin:0;">O texto salva sozinho ao sair do campo. Estes documentos também valem para a Página de Vendas e a Loja On-line.</p></div>';

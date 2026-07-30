@@ -45,7 +45,7 @@
   <div class="card">
     <h2>⏳ Idade da dívida (aging)</h2>
     <p class="muted" style="margin: 4px 0 10px;">Mensalidades em aberto por tempo de atraso. Até 30 dias resolve com WhatsApp; 90+ pede acordo — quanto mais velha a dívida, menor a chance de receber.</p>
-    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnAgingCSV">📤 CSV</button></div>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnAgingCSV">CSV</button></div>
     <div id="aging" class="muted" style="overflow-x: auto;">Nenhuma pendência em aberto. 🎉</div>
   </div>
 
@@ -56,7 +56,7 @@
       <button data-f="pago">Pagos no mês</button>
     </div>
     <div class="linha-flex">
-      <button class="btn sec" id="btnCfg">⚙ Academia e link</button>
+      <button class="btn sec" id="btnCfg">Academia e link</button>
       <button class="btn" id="btnNovo">+ Nova pendência</button>
     </div>
   </div>
@@ -107,7 +107,7 @@
 <!-- roteiro de ligação -->
 <dialog id="dlgCob">
   <div class="card" style="width: 560px; max-width: 100%; display: flex; flex-direction: column; gap: 12px;">
-    <h2 id="cobTitulo">💳 Cobrança automática</h2>
+    <h2 id="cobTitulo">Cobrança automática</h2>
     <div id="cobCorpo"></div>
     <div style="text-align: right;"><button class="btn sec" onclick="this.closest('dialog').close()">Fechar</button></div>
   </div>
@@ -238,12 +238,12 @@
       '<div class="passos">' + passosHtml + "</div>" +
       '<div class="acoes">' +
       (pend && passo ? (passo.canal === "fone" ?
-          '<button class="btn" data-acao="ligar">📞 Ver roteiro da ligação</button>' :
-          (dev.zap ? '<a class="btn whats" target="_blank" rel="noopener" data-acao="zap" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(passo.msg(dev.nome.split(" ")[0], ctxMsg(st, dev))) + '">💬 Enviar ' + passo.rotulo + "</a>" +
-            ((whatsappUrl() || demoOn()) ? ' <button class="btn mini" data-acao="zapauto">🚀 Automático</button>' : "")
+          '<button class="btn" data-acao="ligar">Ver roteiro da ligação</button>' :
+          (dev.zap ? '<a class="btn whats" target="_blank" rel="noopener" data-acao="zap" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(passo.msg(dev.nome.split(" ")[0], ctxMsg(st, dev))) + '">Enviar ' + passo.rotulo + "</a>" +
+            ((whatsappUrl() || demoOn()) ? ' <button class="btn mini" data-acao="zapauto">Automático</button>' : "")
             : '<span class="muted">sem WhatsApp cadastrado</span>')) : "") +
-      (pend && (pagarmeUrl() || demoOn()) ? '<button class="btn mini" data-acao="cobranca">💳 ' + (dev.cobranca ? "Ver PIX/boleto" : "Gerar PIX/boleto") + "</button>" : "") +
-      (pend ? '<button class="btn ok mini" data-acao="pago">✓ Recebido</button><button class="btn sec mini" data-acao="acordo">🤝 Acordo</button>' :
+      (pend && (pagarmeUrl() || demoOn()) ? '<button class="btn mini" data-acao="cobranca">' + (dev.cobranca ? "Ver PIX/boleto" : "Gerar PIX/boleto") + "</button>" : "") +
+      (pend ? '<button class="btn ok mini" data-acao="pago">✓ Recebido</button><button class="btn sec mini" data-acao="acordo">Acordo</button>' :
         '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir</button>') +
       '<button class="btn perigo mini" data-acao="excluir">excluir</button>' +
       "</div></div>";
@@ -416,7 +416,7 @@
   function renderCob(dev) {
     var c = dev.cobranca;
     $("cobTitulo").textContent = "💳 Cobrança — " + dev.nome;
-    var demoTag = (demoOn() && !pagarmeUrl()) ? '<p class="tag alerta" style="margin-bottom: 8px;">🎭 MODO DEMONSTRAÇÃO — nada é cobrado de verdade</p>' : "";
+    var demoTag = (demoOn() && !pagarmeUrl()) ? '<p class="tag alerta" style="margin-bottom: 8px;">MODO DEMONSTRAÇÃO — nada é cobrado de verdade</p>' : "";
     if (!c) {
       $("cobCorpo").innerHTML = demoTag + '<p class="muted">Gerar cobrança de <strong>' + S.fmtBRL(+dev.valor) + "</strong> para " + esc(dev.nome) + ":</p>" +
         '<div class="linha-flex" style="margin-top: 10px;">' +
@@ -442,14 +442,14 @@
       (c.metodo === "pix" && c.pixCopiaECola ?
         '<div class="campo" style="margin-top: 10px;"><label>PIX copia e cola</label><textarea id="cobCodigo" readonly style="min-height: 80px; font-size: 12px;">' + esc(c.pixCopiaECola) + "</textarea></div>" : "") +
       (c.metodo === "cartao" && c.linkPagamento ?
-        '<p style="margin-top: 10px;"><a class="btn" target="_blank" rel="noopener" href="' + esc(c.linkPagamento) + '">💳 Abrir página de pagamento</a></p>' : "") +
+        '<p style="margin-top: 10px;"><a class="btn" target="_blank" rel="noopener" href="' + esc(c.linkPagamento) + '">Abrir página de pagamento</a></p>' : "") +
       (c.metodo === "boleto" && c.boletoUrl ?
-        '<p style="margin-top: 10px;"><a class="btn sec" target="_blank" rel="noopener" href="' + esc(c.boletoUrl) + '">📄 Abrir boleto</a>' +
+        '<p style="margin-top: 10px;"><a class="btn sec" target="_blank" rel="noopener" href="' + esc(c.boletoUrl) + '">Abrir boleto</a>' +
         (c.linhaDigitavel ? ' <span class="muted">linha: ' + esc(c.linhaDigitavel) + "</span>" : "") + "</p>" : "") +
       '<div class="linha-flex" style="margin-top: 12px;">' +
-      (c.metodo === "pix" && c.pixCopiaECola ? '<button class="btn sec mini" id="cobCopiar">📋 Copiar PIX</button>' : "") +
-      (dev.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(zapMsg) + '">💬 Enviar no WhatsApp</a>' : "") +
-      (!c.statusPago ? '<button class="btn mini" id="cobVerificar">🔄 Verificar pagamento</button>' : "") +
+      (c.metodo === "pix" && c.pixCopiaECola ? '<button class="btn sec mini" id="cobCopiar">Copiar PIX</button>' : "") +
+      (dev.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(dev.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(zapMsg) + '">Enviar no WhatsApp</a>' : "") +
+      (!c.statusPago ? '<button class="btn mini" id="cobVerificar">Verificar pagamento</button>' : "") +
       '<span class="muted" id="cobAviso"></span></div>';
     var bc = $("cobCopiar");
     if (bc) bc.onclick = function () {
@@ -534,7 +534,7 @@
     var meses = (load().config || {}).autoMeses || 0;
     $("autoCancel").innerHTML = cands.length ?
       '<div class="card" style="border-color: rgba(220,38,38,.5); background: rgba(220,38,38,.04);">' +
-      "<strong>🤖 Cancelamento automático:</strong> " + cands.length + " contrato(s) sem pagamento há " + meses + "+ meses — " +
+      "<strong>Cancelamento automático:</strong> " + cands.length + " contrato(s) sem pagamento há " + meses + "+ meses — " +
       cands.map(function (x) { return esc(x.a.nome); }).join(", ") +
       ' <button class="btn perigo mini" id="btnAutoCancel" style="margin-left: 8px;">Cancelar contratos agora</button></div>' : "";
     var b = $("btnAutoCancel");

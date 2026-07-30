@@ -47,13 +47,13 @@
     <div class="passo"><span class="num">PASSO 2</span><h2 style="margin-top: 2px;">Prévia</h2></div>
     <iframe id="quadroPrevia" title="Prévia da página"></iframe>
     <div class="linha-flex" style="margin-top: 12px;">
-      <button class="btn" id="btnBaixar">⬇ Baixar página (HTML)</button>
-      <button class="btn sec" id="btnTexto">📋 Copiar texto para WhatsApp/bio</button>
+      <button class="btn" id="btnBaixar">Baixar página (HTML)</button>
+      <button class="btn sec" id="btnTexto">Copiar texto para WhatsApp/bio</button>
     </div>
     <p class="muted" style="margin-top: 8px;">O arquivo é independente: abre em qualquer celular/computador, dá para anexar no WhatsApp ou hospedar em qualquer serviço.</p>
   </div>
   <div class="card" style="margin-top:16px;">
-    <h2>🛒 Matrícula online (link público)</h2>
+    <h2>Matrícula online (link público)</h2>
     <p class="mut" style="margin:4px 0 10px;">Publique os planos na nuvem e divulgue o link: o interessado escolhe o plano, deixa o contato e cai direto no seu Funil Comercial como lead quente — com a chave Pix na tela para já adiantar o pagamento.</p>
     <div class="linha-flex" style="gap:12px;flex-wrap:wrap;align-items:flex-end;">
       <div class="campo" style="margin:0;"><label>Chave Pix (opcional)</label><input id="moPix" placeholder="CNPJ, e-mail ou aleatória" style="width:220px;"></div>
@@ -61,7 +61,7 @@
       <button class="btn" id="btnPubMatricula">Publicar matrícula online</button>
     </div>
     <p class="mut" id="moStatus" style="margin-top:8px;"></p>
-    <p style="margin-top:8px;font-size:13.5px;">🔗 Link para divulgar: <b id="moLink"></b></p>
+    <p style="margin-top:8px;font-size:13.5px;">Link para divulgar: <b id="moLink"></b></p>
   </div>
 </main>
 
@@ -118,7 +118,7 @@
       "<div class='topo'>" +
       (d.logo ? "<img src='" + d.logo + "' alt=''><br>" : "") +
       "<h1>" + esc(titulo) + "</h1><div class='sub'>" + esc(sub) + "</div>" +
-      (zap ? "<a class='cta' href='https://wa.me/55" + zap + "?text=" + msgZap + "'>💬 Falar no WhatsApp agora</a>" : "") +
+      (zap ? "<a class='cta' href='https://wa.me/55" + zap + "?text=" + msgZap + "'>Falar no WhatsApp agora</a>" : "") +
       "</div>" +
       (d.planos.length ? "<div class='planos'>" + d.planos.map(function (p) {
         return "<div class='plano'><div class='nome'>" + esc(p.nome) + "</div>" +
@@ -130,7 +130,7 @@
       "<strong style='color:#fff'>" + esc(d.nome) + "</strong><br>" +
       (d.cfg.dados.endereco ? "📍 " + esc(d.cfg.dados.endereco) + "<br>" : "") +
       (d.cfg.dados.instagram ? "📸 " + esc(d.cfg.dados.instagram) + "<br>" : "") +
-      (horarios.length ? "<br>🕐 " + horarios.join(" · ") : "") +
+      (horarios.length ? "<br>" + horarios.join(" · ") : "") +
       "</div></body></html>";
 
     $("cardPrevia").hidden = false;

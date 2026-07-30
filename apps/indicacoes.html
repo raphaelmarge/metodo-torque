@@ -46,7 +46,7 @@
 
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="campo" style="flex: 1; max-width: 480px; margin: 0;">
-      <label>🎁 Recompensa por indicação (aparece na mensagem)</label>
+      <label>Recompensa por indicação (aparece na mensagem)</label>
       <input id="premio" placeholder="ex.: 1 semana grátis para os dois">
     </div>
     <span class="muted">A indicação vem do campo "Indicado por" no cadastro do aluno.</span>
@@ -108,13 +108,13 @@
     var pc = function (num, den) { return den ? Math.round(num / den * 100) : 0; };
     $("stats").className = "funil";
     $("stats").innerHTML =
-      '<div class="et cad"><span class="ico">📇</span><div><div class="rot">Cadastros</div><div class="val">' + cadastros + '</div></div></div>' +
+      '<div class="et cad"><span class="ico"></span><div><div class="rot">Cadastros</div><div class="val">' + cadastros + '</div></div></div>' +
       '<div class="seta">▶ ' + pc(visitas, cadastros) + '%</div>' +
-      '<div class="et vis"><span class="ico">🚶</span><div><div class="rot">Visitas</div><div class="val">' + visitas + '</div></div></div>' +
+      '<div class="et vis"><span class="ico"></span><div><div class="rot">Visitas</div><div class="val">' + visitas + '</div></div></div>' +
       '<div class="seta">▶ ' + pc(conversoes, visitas) + '%</div>' +
-      '<div class="et conv"><span class="ico">✅</span><div><div class="rot">Conversões</div><div class="val">' + conversoes + '</div></div></div>' +
-      '<div class="et valor"><span class="ico">💰</span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(valorTotal) + '</div></div></div>' +
-      '<div class="et pend"><span class="ico">🎁</span><div><div class="rot">Pendentes</div><div class="val">' + pendentes + '</div></div></div>';
+      '<div class="et conv"><span class="ico"></span><div><div class="rot">Conversões</div><div class="val">' + conversoes + '</div></div></div>' +
+      '<div class="et valor"><span class="ico"></span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(valorTotal) + '</div></div></div>' +
+      '<div class="et pend"><span class="ico"></span><div><div class="rot">Pendentes</div><div class="val">' + pendentes + '</div></div></div>';
 
     $("lista").innerHTML = nomes.length ? nomes.map(function (n, idx) {
       var indicados = mapa[n];
@@ -125,9 +125,9 @@
       return '<details class="indicador"' + (idx === 0 ? " open" : "") + '><summary>' +
         '<span class="avatar">' + esc(ini) + "</span>" +
         '<div class="quem"><strong>' + esc(n) + '</strong><div class="muted" style="font-size: 12px;">' + indicados.length + " indicação(ões)</div></div>" +
-        (idx === 0 ? '<span class="tag roxo">🏆 TOP INDICADOR</span>' : "") +
+        (idx === 0 ? '<span class="tag roxo">TOP INDICADOR</span>' : "") +
         (indicadorAluno && indicadorAluno.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-          String(indicadorAluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Avisar recompensa</a>' : "") +
+          String(indicadorAluno.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Avisar recompensa</a>' : "") +
         "</summary>" +
         indicados.map(function (a) {
           var chave = n + "|" + a.nome;
@@ -135,7 +135,7 @@
           return '<div class="indicado"><span>' + esc(a.nome) + " " +
             (ativo ? '<span class="tag ok">ATIVO</span>' : '<span class="tag neutro">SEM CONTRATO</span>') + "</span>" +
             (c.entregues[chave] ? '<span class="tag ok">RECOMPENSA ENTREGUE ✓</span>' :
-              '<button class="btn mini" data-entregar="' + esc(chave) + '">🎁 Marcar recompensa entregue</button>') +
+              '<button class="btn mini" data-entregar="' + esc(chave) + '">Marcar recompensa entregue</button>') +
             "</div>";
         }).join("") + "</details>";
     }).join("") : '<div class="vazio">Nenhuma indicação registrada ainda — preencha o campo "Indicado por" ao cadastrar alunos novos.</div>';

@@ -175,12 +175,12 @@
       (a.prof ? "prof. " + esc(a.prof) + " · " : "") + esc(a.origem || "") + (a.leadId ? " · veio do funil" : "") + "</div></div>" +
       (stTag ? '<span class="tag ' + stTag[1] + '">' + stTag[0] + "</span>" : "") +
       '<div class="acoes">' +
-      (pend && a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgConfirma(a)) + '">💬 Confirmar</a>' : "") +
-      (pend ? '<button class="btn ok" data-acao="compareceu">✓ Veio</button><button class="btn sec" data-acao="faltou">✗ Faltou</button>' : "") +
-      (a.status === "compareceu" ? '<button class="btn ok" data-acao="matriculou">🎉 Matriculou</button>' +
-        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgPosAula(a)) + '">💬 Pós-aula</a>' : "") : "") +
-      (a.status === "faltou" ? '<button class="btn sec" data-acao="remarcar">📅 Remarcar</button>' +
-        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFalta(a)) + '">💬 Reconquistar</a>' : "") : "") +
+      (pend && a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgConfirma(a)) + '">Confirmar</a>' : "") +
+      (pend ? '<button class="btn ok" data-acao="compareceu">✓ Veio</button><button class="btn sec" data-acao="faltou">Faltou</button>' : "") +
+      (a.status === "compareceu" ? '<button class="btn ok" data-acao="matriculou">Matriculou</button>' +
+        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgPosAula(a)) + '">Pós-aula</a>' : "") : "") +
+      (a.status === "faltou" ? '<button class="btn sec" data-acao="remarcar">Remarcar</button>' +
+        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFalta(a)) + '">Reconquistar</a>' : "") : "") +
       '<button class="btn perigo" data-acao="excluir">✕</button>' +
       "</div></div>";
   }

@@ -56,14 +56,14 @@
   </div>
 
   <div class="card">
-    <h2>📣 De onde vêm os alunos (canais de aquisição)</h2>
+    <h2>De onde vêm os alunos (canais de aquisição)</h2>
     <p class="muted" style="margin: 4px 0 10px;">Leads e matrículas por origem nos últimos 90 dias — invista no canal que CONVERTE, não no que só enche o funil.</p>
-    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnCanaisCSV">📤 CSV</button></div>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnCanaisCSV">CSV</button></div>
     <div id="canais" class="muted" style="overflow-x: auto;">Sem leads ainda.</div>
   </div>
 
   <div class="card">
-    <h2>🤝 Indicações de alunos</h2>
+    <h2>Indicações de alunos</h2>
     <p class="muted" style="margin: 4px 0 10px;">Cada aluno tem um link "Indique um amigo" no app dele. Quando alguém se matricula por esse link, aparece aqui — combine e entregue a recompensa (ex.: mês com desconto pros dois).</p>
     <div id="indicacoes" class="muted">Nenhuma indicação ainda.</div>
   </div>
@@ -84,7 +84,7 @@
       <div class="campo"><label>Interesse</label><input id="nInteresse" placeholder="ex.: musculação, manhã"></div>
     </div>
     <div class="campo"><label>Temperatura</label>
-      <select id="nTemp"><option value="morno">🌤 Morno</option><option value="quente">🔥 Quente</option><option value="frio">❄ Frio</option><option value="gelado">🧊 Gelado</option></select>
+      <select id="nTemp"><option value="morno">Morno</option><option value="quente">Quente</option><option value="frio">Frio</option><option value="gelado">Gelado</option></select>
     </div>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
@@ -107,7 +107,7 @@
         <option>Ligação</option><option>WhatsApp</option><option>Visita</option><option>E-mail</option>
       </select>
       <input id="ctObs" placeholder="observação (ex.: pediu pra ligar semana que vem)" style="flex: 1; min-width: 180px;">
-      <button class="btn mini" id="ctAdd">➕ Registrar</button>
+      <button class="btn mini" id="ctAdd">Registrar</button>
     </div>
   </div>
 </dialog>
@@ -167,7 +167,7 @@
 
     var nAtras = ativos.filter(atrasado).length;
     $("alertaFollow").innerHTML = nAtras ?
-      '<strong style="color:var(--erro);">⚠ ' + nAtras + " lead(s) com follow-up atrasado</strong> — responda hoje: lead esfria em 48h." :
+      '<strong style="color:var(--erro);">' + nAtras + " lead(s) com follow-up atrasado</strong> — responda hoje: lead esfria em 48h." :
       "Nenhum follow-up atrasado. Lead novo tem que receber contato em até 1 hora.";
 
     // kanban
@@ -199,14 +199,14 @@
       '<div class="info">' + (l.interesse ? esc(l.interesse) + " · " : "") + dias + "d no funil" +
       (l.proximo ? " · próx. contato <strong" + (atr ? ' style="color:var(--erro);"' : "") + ">" + S.fmtData(l.proximo) + "</strong>" : "") + "</div>" +
       '<div class="acoes">' +
-      (l.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(l.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFollow(l)) + '">💬' + (atr ? " Cobrar" : "") + "</a>" : "") +
-      '<button class="btn sec" data-acao="ver" title="Detalhes da oportunidade">👁</button>' +
+      (l.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(l.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFollow(l)) + '">' + (atr ? " Cobrar" : "") + "</a>" : "") +
+      '<button class="btn sec" data-acao="ver" title="Detalhes da oportunidade"></button>' +
       '<button class="btn sec" data-acao="temp" title="Trocar temperatura">' + tempIcone(l.temperatura) + '</button>' +
-      '<button class="btn sec" data-acao="proximo">📅 Próx.</button>' +
+      '<button class="btn sec" data-acao="proximo">Próx.</button>' +
       (l.status === "novo" ? '<button class="btn sec" data-acao="avancar">→ Conversa</button>' : "") +
-      (l.status === "contato" ? '<button class="btn sec" data-acao="agendar">📅 Agendar aula</button>' : "") +
+      (l.status === "contato" ? '<button class="btn sec" data-acao="agendar">Agendar aula</button>' : "") +
       (l.status === "agendado" ? '<button class="btn sec" data-acao="visitou">✓ Visitou</button>' : "") +
-      (l.status === "visitou" ? '<button class="btn ok" data-acao="matricular">🎉 Matriculou</button>' : "") +
+      (l.status === "visitou" ? '<button class="btn ok" data-acao="matricular">Matriculou</button>' : "") +
       '<button class="btn perigo" data-acao="perdido">✕</button>' +
       "</div></div>";
   }
@@ -374,12 +374,12 @@
     itens.forEach(function (i) { porAluno[i.alunoNome] = (porAluno[i.alunoNome] || 0) + 1; });
     var top = Object.keys(porAluno).sort(function (a, b) { return porAluno[b] - porAluno[a]; }).slice(0, 3)
       .map(function (n) { return "<b>" + n + "</b> (" + porAluno[n] + ")"; }).join(" · ");
-    el.innerHTML = '<div class="muted" style="margin-bottom:8px;">🏆 Quem mais indica: ' + top + "</div>" +
+    el.innerHTML = '<div class="muted" style="margin-bottom:8px;">Quem mais indica: ' + top + "</div>" +
       itens.slice(0, 20).map(function (i) {
         return '<div class="linha-flex" style="justify-content:space-between;border-top:1px solid var(--linha);padding:7px 0;">' +
           "<span><b>" + i.leadNome + "</b> <span class='muted'>indicado por " + i.alunoNome + " em " + S.fmtData(i.quando) + "</span></span>" +
-          (i.recompensado ? '<span class="tag verde">🎁 recompensado</span>'
-            : '<button class="btn sec mini" data-recompensa="' + i.id + '">🎁 Marcar recompensa</button>') +
+          (i.recompensado ? '<span class="tag verde">recompensado</span>'
+            : '<button class="btn sec mini" data-recompensa="' + i.id + '">Marcar recompensa</button>') +
           "</div>";
       }).join("");
   }

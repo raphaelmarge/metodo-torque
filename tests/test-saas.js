@@ -315,7 +315,7 @@ function crcNode(s) {
   await p.click("#supEnviar");
   await p.waitForTimeout(300);
   supMsgs = await p.evaluate(() => document.getElementById("supMsgs").textContent);
-  ok(/Isso pode resolver agora/.test(supMsgs) && /📖/.test(supMsgs), "robô sugere o tutorial que resolve antes de abrir chamado");
+  ok(/Isso pode resolver agora/.test(supMsgs), "robô sugere o tutorial que resolve antes de abrir chamado");
   const semRpc = await p.evaluate(() => window.__rpcLogSup.filter((c) => c.nome === "suporte_envia").length);
   ok(semRpc === 0, "nada é enviado enquanto a sugestão está na tela");
   await p.click("#supInsiste");

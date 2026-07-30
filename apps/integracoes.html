@@ -33,7 +33,7 @@
 <main class="corpo" style="display: flex; flex-direction: column; gap: 4px;">
 
   <div class="integ" style="border-color: rgba(217,119,6,.5);">
-    <header><span class="ico">🎭</span><h2>Modo demonstração</h2><span id="stDemo" class="tag neutro">DESLIGADO</span></header>
+    <header><span class="ico"></span><h2>Modo demonstração</h2><span id="stDemo" class="tag neutro">DESLIGADO</span></header>
     <p class="muted" style="margin: 8px 0 10px;">Liga <strong>toda a Fase 2 sem precisar do Pagar.me nem da Meta</strong>: a régua gera PIX/boleto/link de mentira (com uma página de pagamento de demonstração), o cartão recorrente cadastra uma assinatura simulada e o WhatsApp automático registra o envio. <strong>Nada é cobrado nem enviado de verdade.</strong> Quando contratar o Pagar.me, preencha os campos abaixo — as chaves reais têm prioridade e você pode desligar a demonstração.</p>
     <label class="linha-flex" style="gap: 8px; align-items: center; font-size: 14px; font-weight: 700;">
       <input id="tgDemo" type="checkbox" style="width: 18px; height: 18px;"> Ativar modo demonstração
@@ -41,7 +41,7 @@
   </div>
 
   <div class="integ">
-    <header><span class="ico">💳</span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
+    <header><span class="ico"></span><h2>Cobrança automática — Pagar.me / Stone</h2><span id="stPagarme" class="tag neutro">NÃO CONFIGURADA</span></header>
     <p class="muted" style="margin: 8px 0 10px;">Gera PIX (copia e cola), boleto e <strong>link de cartão de crédito</strong> (checkout seguro do Pagar.me, até 3×) para cada mensalidade em atraso, direto da régua de cobrança — e confere sozinho se foi pago.</p>
     <div class="linha-flex" style="align-items: flex-end;">
       <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → pagarme)</label>
@@ -50,17 +50,17 @@
       <div class="campo" style="flex: 1; min-width: 240px;"><label>Chave PÚBLICA do Pagar.me (pk_...) — para cartão recorrente</label>
         <input id="pgPk" placeholder="pk_...">
       </div>
-      <button class="btn" id="btnTestar">🔌 Testar conexão</button>
-      <button class="btn sec" id="btnCodigo">📋 Copiar código da função</button>
+      <button class="btn" id="btnTestar">Testar conexão</button>
+      <button class="btn sec" id="btnCodigo">Copiar código da função</button>
     </div>
     <div id="resultadoTeste" style="margin-top: 8px;"></div>
     <details class="passo-g">
-      <summary>📖 Passo a passo da instalação (uma vez só, ~10 minutos)</summary>
+      <summary>Passo a passo da instalação (uma vez só, ~10 minutos)</summary>
       <ol>
         <li><strong>Crie a conta no Pagar.me</strong> (pagar.me → Criar conta). Se você já usa maquininha Stone, dá para vincular na mesma conta e unificar o repasse.</li>
         <li>No painel do Pagar.me, vá em <strong>Configurações → Chaves</strong> e copie a <strong>chave secreta</strong> (começa com <code>sk_</code>). <em>Não me mande essa chave nem cole no site — ela vai só no Supabase.</em></li>
         <li>Abra o painel do <strong>Supabase</strong> (supabase.com) → seu projeto → <strong>Edge Functions</strong> → <strong>Deploy new function</strong> → nome <code>pagarme</code>.</li>
-        <li>Clique em <strong>📋 Copiar código da função</strong> aqui em cima e cole no editor do Supabase. Clique em <strong>Deploy</strong>.</li>
+        <li>Clique em <strong>Copiar código da função</strong> aqui em cima e cole no editor do Supabase. Clique em <strong>Deploy</strong>.</li>
         <li>Na função <code>pagarme</code> → <strong>Secrets</strong> → adicione <code>PAGARME_SECRET_KEY</code> com a chave <code>sk_...</code> do passo 2.</li>
         <li>Copie a <strong>URL da função</strong> (aparece na página dela) e cole no campo acima. Clique em <strong>Testar conexão</strong> — tem que ficar verde. ✅</li>
         <li><em>Para cartão recorrente:</em> em Configurações → Chaves do Pagar.me copie também a <strong>chave pública</strong> (<code>pk_...</code>) e cole no campo acima. Ela é pública mesmo — serve só para o navegador do sistema tokenizar o cartão direto no Pagar.me (o número nunca fica aqui).</li>
@@ -69,7 +69,7 @@
   </div>
 
   <div class="integ">
-    <header><span class="ico">💬</span><h2>WhatsApp oficial (API da Meta)</h2><span id="stWa" class="tag neutro">NÃO CONFIGURADA</span></header>
+    <header><span class="ico"></span><h2>WhatsApp oficial (API da Meta)</h2><span id="stWa" class="tag neutro">NÃO CONFIGURADA</span></header>
     <p class="muted" style="margin: 8px 0 10px;">O sistema <strong>envia as mensagens sozinho</strong> (cobrança, lembretes) sem abrir o WhatsApp. Texto livre vale na janela de 24h após o aluno falar com o número; fora dela a Meta exige um <strong>template aprovado</strong>.</p>
     <div class="linha-flex" style="align-items: flex-end;">
       <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → whatsapp)</label>
@@ -78,34 +78,34 @@
       <div class="campo" style="min-width: 220px;"><label>Template de cobrança aprovado (opcional)</label>
         <input id="waTemplate" placeholder="cobranca_mensalidade">
       </div>
-      <button class="btn" id="btnTestarWa">🔌 Testar conexão</button>
-      <button class="btn sec" id="btnCodigoWa">📋 Copiar código da função</button>
+      <button class="btn" id="btnTestarWa">Testar conexão</button>
+      <button class="btn sec" id="btnCodigoWa">Copiar código da função</button>
     </div>
     <div class="linha-flex" style="align-items: flex-end; margin-top: 8px;">
       <div class="campo" style="min-width: 220px;"><label>Enviar mensagem de teste para (DDI+DDD+número)</label>
         <input id="waTeste" placeholder="5531999990000">
       </div>
-      <button class="btn sec" id="btnEnviarTeste">📨 Enviar teste</button>
+      <button class="btn sec" id="btnEnviarTeste">Enviar teste</button>
       <span id="resultadoWa" class="muted"></span>
     </div>
     <details class="passo-g">
-      <summary>📖 Passo a passo da instalação</summary>
+      <summary>Passo a passo da instalação</summary>
       <ol>
         <li>Entre em <strong>developers.facebook.com</strong> → Meus apps → <strong>Criar app</strong> (tipo Business) e adicione o produto <strong>WhatsApp</strong>.</li>
         <li>Na tela <strong>API Setup</strong> a Meta te dá um número de teste na hora (dá pra cadastrar até 5 números receptores pra testar hoje mesmo). Para usar o número da academia em produção, é preciso <strong>verificar a empresa</strong> no Business Manager e migrar/registrar o número (ele não pode estar ativo no app comum do WhatsApp).</li>
         <li>Copie o <strong>Phone number ID</strong> e o <strong>token</strong> (para produção, gere um token permanente em Business Settings → System Users). <em>Não me mande o token — ele vai só no Supabase.</em></li>
-        <li>No <strong>Supabase</strong>: Edge Functions → nova função <code>whatsapp</code> → clique em <strong>📋 Copiar código da função</strong> acima, cole e Deploy. Em <strong>Secrets</strong>: <code>WHATSAPP_TOKEN</code> e <code>WHATSAPP_PHONE_ID</code>.</li>
+        <li>No <strong>Supabase</strong>: Edge Functions → nova função <code>whatsapp</code> → clique em <strong>Copiar código da função</strong> acima, cole e Deploy. Em <strong>Secrets</strong>: <code>WHATSAPP_TOKEN</code> e <code>WHATSAPP_PHONE_ID</code>.</li>
         <li>Cole a URL da função acima, <strong>Testar conexão</strong> e mande um <strong>teste</strong> pro seu celular. ✅</li>
         <li>No <strong>WhatsApp Manager → Message templates</strong>, crie o template <code>cobranca_mensalidade</code> (pt_BR) com o corpo: <em>"Oi {{1}}! Sua mensalidade de {{2}} está em aberto. Qualquer dúvida é só responder por aqui. 💜"</em> — quando aprovar, informe o nome no campo acima. Com ele, a cobrança chega mesmo fora da janela de 24h.</li>
       </ol>
     </details>
   </div>
   <div class="integ" style="opacity:.65;">
-    <header><span class="ico">🧾</span><h2>Notas fiscais (NFS-e)</h2><span class="tag neutro">PRÓXIMA</span></header>
+    <header><span class="ico"></span><h2>Notas fiscais (NFS-e)</h2><span class="tag neutro">PRÓXIMA</span></header>
     <p class="muted" style="margin-top: 8px;">Emissão automática por mensalidade via eNotas/FocusNFe. Exige certificado digital A1 e cadastro na prefeitura.</p>
   </div>
   <div class="integ" style="opacity:.65;">
-    <header><span class="ico">🚪</span><h2>Catraca / biometria</h2><span class="tag neutro">PRÓXIMA</span></header>
+    <header><span class="ico"></span><h2>Catraca / biometria</h2><span class="tag neutro">PRÓXIMA</span></header>
     <p class="muted" style="margin-top: 8px;">Liberação física integrada ao Controle de Entradas (ex.: Control iD). Depende do hardware da recepção.</p>
   </div>
 </main>
@@ -182,7 +182,7 @@
     fetch(url, { method: "POST", headers: headers, body: JSON.stringify({ acao: "ping" }) })
       .then(function (r) { return r.json().then(function (j) { return { st: r.status, j: j }; }); })
       .then(function (r) {
-        if (r.j && r.j.ok && r.j.chaveConfigurada) out.innerHTML = '<span class="tag ok">✅ Conectado — chave do Pagar.me configurada. Cobrança automática LIGADA.</span>';
+        if (r.j && r.j.ok && r.j.chaveConfigurada) out.innerHTML = '<span class="tag ok">Conectado — chave do Pagar.me configurada. Cobrança automática LIGADA.</span>';
         else if (r.j && r.j.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas falta o secret PAGARME_SECRET_KEY (passo 5 do guia).</span>';
         else out.innerHTML = '<span class="tag erro">Resposta inesperada (' + r.st + "): " + (r.j && r.j.erro ? r.j.erro : "confira a URL") + "</span>";
       })
@@ -226,7 +226,7 @@
     if (!$("waUrl").value.trim()) { out.innerHTML = '<span class="tag alerta">Cole a URL da função primeiro.</span>'; return; }
     out.textContent = "testando…";
     chamaWa({ acao: "ping" }).then(function (r) {
-      if (r && r.ok && r.tokenConfigurado && r.foneConfigurado) out.innerHTML = '<span class="tag ok">✅ Conectado — token e número configurados.</span>';
+      if (r && r.ok && r.tokenConfigurado && r.foneConfigurado) out.innerHTML = '<span class="tag ok">Conectado — token e número configurados.</span>';
       else if (r && r.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas faltam os Secrets (passo 4).</span>';
       else out.innerHTML = '<span class="tag erro">' + ((r && r.erro) || "resposta inesperada") + "</span>";
     }).catch(function (e) { out.innerHTML = '<span class="tag erro">Não alcancei a função: ' + e.message + "</span>"; });
@@ -238,7 +238,7 @@
     out.textContent = "enviando…";
     chamaWa({ acao: "enviar", para: num, texto: "Teste do TORQUE ON ✅ — o WhatsApp oficial da academia está funcionando!" })
       .then(function (r) {
-        if (r && r.ok) out.innerHTML = '<span class="tag ok">📨 Enviada! Confira o celular.</span>';
+        if (r && r.ok) out.innerHTML = '<span class="tag ok">Enviada! Confira o celular.</span>';
         else out.innerHTML = '<span class="tag erro">' + ((r && r.erro) || "falhou") + (r && r.precisaTemplate ? " — fora da janela de 24h: use o template." : "") + "</span>";
       }).catch(function (e) { out.innerHTML = '<span class="tag erro">erro: ' + e.message + "</span>"; });
   };

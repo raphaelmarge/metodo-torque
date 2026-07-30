@@ -40,21 +40,21 @@
 <header>
   <div id="relogio">--:--</div>
   <div id="funcHoje" style="font-size:16px;color:#b9b3c6;margin-top:2px;"></div>
-  <h1 id="tNome">💪 Bem-vindo(a)!</h1>
+  <h1 id="tNome">Bem-vindo(a)!</h1>
   <p style="color:#b9b3c6;margin-top:4px;">Toque no seu nome ou mostre o QR da carteirinha 👇</p>
 </header>
 
 <main>
   <div class="busca">
     <input id="busca" placeholder="Digite seu nome…" autocomplete="off">
-    <button class="btn-qr" id="btnQR" title="Ler QR da carteirinha">📷</button>
+    <button class="btn-qr" id="btnQR" title="Ler QR da carteirinha"></button>
   </div>
   <video id="videoQR" playsinline muted></video>
   <div class="sug" id="sug"></div>
   <div id="painel"></div>
 
   <div class="wod" id="wodBox" hidden>
-    <h3>🔥 WOD DE HOJE</h3>
+    <h3>WOD DE HOJE</h3>
     <b id="wodNome" style="font-size:18px;"></b>
     <pre id="wodTreino"></pre>
   </div>
@@ -144,7 +144,7 @@
     painel.style.display = "block";
     if (!s.ok) {
       painel.className = "bloq";
-      painel.innerHTML = '<div class="emj">🚫</div><h2>' + esc(a.nome.split(" ")[0]) + ", quase!</h2><p>" + esc(s.motivo) + "</p>";
+      painel.innerHTML = '<div class="emj"></div><h2>' + esc(a.nome.split(" ")[0]) + ", quase!</h2><p>" + esc(s.motivo) + "</p>";
     } else {
       var st = S.read("alunos", { alunos: [] });
       var al = st.alunos.find(function (x) { return x.id === a.id; });
@@ -153,7 +153,7 @@
       if (!jaHoje) { (al.checkins = al.checkins || []).push(agora); S.write("alunos", st); }
       var n = (al.checkins || []).filter(function (t) { return (t || "").slice(0, 7) === hoje.slice(0, 7); }).length;
       painel.className = "ok";
-      painel.innerHTML = '<div class="emj">✅</div><h2>Bom treino, ' + esc(a.nome.split(" ")[0]) + "!</h2>" +
+      painel.innerHTML = '<div class="emj"></div><h2>Bom treino, ' + esc(a.nome.split(" ")[0]) + "!</h2>" +
         "<p>" + (jaHoje ? "Check-in de hoje já estava registrado. " : "Check-in registrado! ") +
         "Este é o seu <b>" + n + "º treino do mês</b>. 💪</p>";
     }

@@ -42,7 +42,7 @@
       <label style="font-size: 13px; display:flex; gap:6px; align-items:center;"><input type="checkbox" id="verInativas"> mostrar inativas</label>
     </div>
     <div id="lista"></div>
-    <p class="muted" style="font-size: 12.5px; margin-top: 10px;">🔑 O perfil "Acesso Total" é o dono do sistema. Os demais servem de orientação da equipe e alimentam a etiqueta de permissão na lista de Colaboradores.</p>
+    <p class="muted" style="font-size: 12.5px; margin-top: 10px;">O perfil "Acesso Total" é o dono do sistema. Os demais servem de orientação da equipe e alimentam a etiqueta de permissão na lista de Colaboradores.</p>
   </div>
 </main>
 
@@ -126,8 +126,8 @@
         '<span class="muted">' + (usaPerfil[p.id] || 0) + " colab.</span>" +
         '<span class="tag ' + (p.ativa === false ? "neutro" : "ok") + '">' + (p.ativa === false ? "Inativa" : "Ativa") + "</span>" +
         '<button class="btn sec mini" data-dup="' + p.id + '" title="duplicar">⧉</button>' +
-        '<button class="btn sec mini" data-ed="' + p.id + '">✎</button>' +
-        '<button class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
+        '<button class="btn sec mini" data-ed="' + p.id + '"></button>' +
+        '<button class="btn sec mini" data-rm="' + p.id + '"></button></div>';
     }).join("") : '<div class="vazio">Nenhuma permissão encontrada.</div>';
   }
 
@@ -217,7 +217,7 @@
   var card = document.createElement("div");
   card.className = "card";
   card.style.marginTop = "16px";
-  card.innerHTML = "<h2>🔐 Vincular colaboradores aos perfis (valendo de verdade)</h2>" +
+  card.innerHTML = "<h2>Vincular colaboradores aos perfis (valendo de verdade)</h2>" +
     "<p class='muted' style='margin:4px 0 10px;'>Cada pessoa da equipe entra com a própria conta. Vincule o e-mail dela a um perfil: o menu do Sistema passa a mostrar só o que o perfil permite. O dono sempre vê tudo; quem não estiver vinculado também vê tudo (não trancamos ninguém por engano).</p>" +
     "<div id='vinculosLista'></div>" +
     "<div class='linha-flex' style='gap:8px;margin-top:10px;flex-wrap:wrap;'>" +

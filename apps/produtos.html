@@ -44,9 +44,9 @@
 
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="abas" id="abas">
-      <button data-a="vender" class="ativa">🛒 Vender</button>
-      <button data-a="produtos">📦 Produtos e estoque</button>
-      <button data-a="historico">📋 Vendas</button>
+      <button data-a="vender" class="ativa">Vender</button>
+      <button data-a="produtos">Produtos e estoque</button>
+      <button data-a="historico">Vendas</button>
     </div>
     <span class="muted" id="resumoTopo"></span>
   </div>
@@ -244,7 +244,7 @@
         "<td style='text-align:right'>" + (baixo ? "<span style='color:var(--erro); font-weight:700'>" + p.estoque + " ⚠</span>" : p.estoque) + "</td>" +
         "<td style='text-align:right; white-space:nowrap'>" +
         '<button class="btn sec mini" data-rep="' + p.id + '" title="Repor estoque">+ estoque</button> ' +
-        '<button class="btn sec mini" data-edit="' + p.id + '">✎</button> ' +
+        '<button class="btn sec mini" data-edit="' + p.id + '"></button> ' +
         '<button class="btn perigo mini" data-del="' + p.id + '">✕</button></td></tr>';
     }).join("");
   }
@@ -309,7 +309,7 @@
         (v.cliente ? '<div class="muted" style="font-size: 12px;">' + esc(v.cliente) + "</div>" : "") + "</div>" +
         '<span class="tag neutro">' + esc(v.forma) + "</span>" +
         "<strong>" + S.fmtBRL(v.total) + "</strong>" +
-        '<button class="btn sec mini" data-ver="' + v.id + '" title="Detalhes da venda">👁</button>' +
+        '<button class="btn sec mini" data-ver="' + v.id + '" title="Detalhes da venda"></button>' +
         '<button class="btn perigo mini" data-est="' + v.id + '" title="Estornar (devolve o estoque)">↩</button></div>';
     }).join("") : '<div class="vazio">Nenhuma venda neste dia.</div>';
   }
@@ -430,16 +430,16 @@
   card.id = "pedidosAppBox";
   card.hidden = true;
   card.style.marginTop = "16px";
-  card.innerHTML = "<h2>📲 Pedidos da Lojinha do app</h2><p class='muted' style='margin:4px 0 10px;'>Chegaram pelo app do aluno — separe, marque como entregue (o estoque baixa e a venda entra) e receba na recepção.</p><div id='pedidosAppLista'></div>";
+  card.innerHTML = "<h2>Pedidos da Lojinha do app</h2><p class='muted' style='margin:4px 0 10px;'>Chegaram pelo app do aluno — separe, marque como entregue (o estoque baixa e a venda entra) e receba na recepção.</p><div id='pedidosAppLista'></div>";
   main.appendChild(card);
 
   // curva ABC dos últimos 90 dias
   var cardABC = document.createElement("div");
   cardABC.className = "card";
   cardABC.style.marginTop = "16px";
-  cardABC.innerHTML = "<h2>🛒 Curva ABC de produtos (últimos 90 dias)</h2>" +
+  cardABC.innerHTML = "<h2>Curva ABC de produtos (últimos 90 dias)</h2>" +
     "<p class='muted' style='margin:4px 0 10px;'>A = os campeões que carregam a receita (até 80%); B = os que andam; C = os que só ocupam prateleira — repense compra e exposição dos C.</p>" +
-    "<div class='linha-flex no-print' style='margin-bottom:8px;'><button class='btn sec mini' id='btnABCCSV'>📤 CSV</button></div>" +
+    "<div class='linha-flex no-print' style='margin-bottom:8px;'><button class='btn sec mini' id='btnABCCSV'>CSV</button></div>" +
     "<div id='abcBox' class='muted' style='overflow-x:auto;'>Sem vendas nos últimos 90 dias.</div>";
   main.appendChild(cardABC);
 

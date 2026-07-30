@@ -156,7 +156,7 @@ function ok(cond, nome) {
   ok(/Marcar como feita/.test(appHtml) && /kcalDia/.test(appHtml), "refeições marcáveis + kcal do dia");
   ok(/2140 kcal/.test(appHtml) && /2800 ml/.test(appHtml), "metas de kcal e água embutidas");
   ok(/Meu peso/.test(appHtml) && /pzAdd/.test(appHtml), "card de peso presente");
-  ok(/aluno_define_login/.test(appHtml) && /🔑 Meu login/.test(appHtml), "app do paciente tem login e senha");
+  ok(/aluno_define_login/.test(appHtml) && /Meu login/.test(appHtml), "app do paciente tem login e senha");
   ok(/Nutri Ana Costa/.test(appHtml), "marca do consultório no app");
 
   // abre o app e usa: água, refeição feita, peso

@@ -165,9 +165,9 @@
     var pago = lista.filter(function (c) { return c.status === "pago"; }).reduce(function (t, c) { return t + (+c.valor || 0); }, 0);
 
     $("resumo").innerHTML =
-      '<div class="cr azul"><span class="ico">💲</span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(total) + "</div></div></div>" +
-      '<div class="cr verde"><span class="ico">✅</span><div><div class="rot">Valor pago</div><div class="val">' + S.fmtBRL(pago) + "</div></div></div>" +
-      '<div class="cr laranja"><span class="ico">📄</span><div><div class="rot">Quantidade de contas</div><div class="val">' + lista.length + "</div></div></div>";
+      '<div class="cr azul"><span class="ico"></span><div><div class="rot">Valor total</div><div class="val">' + S.fmtBRL(total) + "</div></div></div>" +
+      '<div class="cr verde"><span class="ico"></span><div><div class="rot">Valor pago</div><div class="val">' + S.fmtBRL(pago) + "</div></div></div>" +
+      '<div class="cr laranja"><span class="ico"></span><div><div class="rot">Quantidade de contas</div><div class="val">' + lista.length + "</div></div></div>";
 
     $("vazio").hidden = !!lista.length;
     $("linhas").innerHTML = lista.map(function (c) {
@@ -184,7 +184,7 @@
         (c.status === "aberto" ? '<button class="btn ok mini" data-pagar="' + c.id + '">✓ Pagar</button> ' +
           '<button class="btn sec mini" data-cancelar="' + c.id + '">✕</button>' :
           '<button class="btn sec mini" data-reabrir="' + c.id + '">↩</button>') +
-        ' <button class="btn sec mini" data-ver="' + c.id + '" title="Detalhes da conta">👁</button>' +
+        ' <button class="btn sec mini" data-ver="' + c.id + '" title="Detalhes da conta"></button>' +
         "</td></tr>";
     }).join("");
   }

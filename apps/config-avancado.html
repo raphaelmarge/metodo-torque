@@ -29,8 +29,8 @@
 
 <main class="corpo">
   <div class="abas">
-    <button data-aba="treinos" class="ativa">🏋️ Treinos</button>
-    <button data-aba="outros">⚙️ Outros</button>
+    <button data-aba="treinos" class="ativa">Treinos</button>
+    <button data-aba="outros">Outros</button>
   </div>
 
   <section id="abaTreinos">
@@ -197,12 +197,12 @@
   var card = document.createElement("div");
   card.className = "card";
   card.style.marginTop = "16px";
-  card.innerHTML = "<h2>🔒 LGPD e backup</h2>" +
+  card.innerHTML = "<h2>LGPD e backup</h2>" +
     "<p class='mut' style='margin:4px 0 10px;'>Pela LGPD, o aluno pode pedir uma cópia de todos os dados dele — exporte aqui em um clique. E deixe o backup semanal ligado: ao abrir o sistema, se o último tiver mais de 7 dias, um arquivo completo é baixado sozinho.</p>" +
     "<div class='linha-flex' style='gap:10px;flex-wrap:wrap;align-items:flex-end;'>" +
     "<div class='campo' style='margin:0;'><label>Dados de um aluno (LGPD)</label><input id='lgpdNome' list='lgpdLista' placeholder='nome exato do aluno' style='width:240px;'><datalist id='lgpdLista'></datalist></div>" +
-    "<button class='btn sec' id='btnLGPD'>⬇ Exportar dados do aluno</button>" +
-    "<button class='btn sec' id='btnBackupJa'>💾 Backup completo agora</button>" +
+    "<button class='btn sec' id='btnLGPD'>Exportar dados do aluno</button>" +
+    "<button class='btn sec' id='btnBackupJa'>Backup completo agora</button>" +
     "<label style='display:flex;gap:6px;align-items:center;font-weight:700;'><input type='checkbox' id='backupAuto'> Backup automático semanal</label>" +
     "<span class='mut' id='lgpdStatus' style='font-size:12.5px;'></span></div>";
   main.appendChild(card);

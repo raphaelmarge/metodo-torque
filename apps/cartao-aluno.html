@@ -42,8 +42,8 @@
     <div class="passo"><span class="num">PASSO 2</span><h2 style="margin-top: 2px;">Prévia (como o aluno vê no celular)</h2></div>
     <iframe id="quadroPrevia" title="Prévia do cartão"></iframe>
     <div class="linha-flex" style="margin-top: 12px;">
-      <button class="btn" id="btnBaixar">⬇ Baixar cartão (HTML)</button>
-      <a class="btn whats" id="btnZap" target="_blank" rel="noopener" hidden>💬 Abrir WhatsApp do aluno</a>
+      <button class="btn" id="btnBaixar">Baixar cartão (HTML)</button>
+      <a class="btn whats" id="btnZap" target="_blank" rel="noopener" hidden>Abrir WhatsApp do aluno</a>
     </div>
     <p class="muted" style="margin-top: 8px;">Baixe o arquivo e anexe na conversa do aluno no WhatsApp — ele abre direto no navegador do celular e funciona offline.</p>
   </div>
@@ -129,17 +129,17 @@
                 (i.carga ? " · " + esc(i.carga) : "") + (i.descanso ? " · " + esc(i.descanso) : "") + "</span></div>";
             }).join("") + "</div>";
         }).join("") +
-        (presc.restricoes ? "<div class='sub' style='margin-top:10px'>⚠ " + esc(presc.restricoes) + "</div>" : "") +
+        (presc.restricoes ? "<div class='sub' style='margin-top:10px'>" + esc(presc.restricoes) + "</div>" : "") +
         "</div>" : "") +
 
       (horarios.length ? "<div class='sec'><h2>HORÁRIOS DA ACADEMIA</h2>" +
         horarios.map(function (h) { return "<div class='kv'><span>" + esc(h.split(":")[0]) + "</span><span>" + esc(h.split(/:(.+)/)[1].trim()) + "</span></div>"; }).join("") +
         "</div>" : "") +
 
-      (zapAcad ? "<a class='cta' href='https://wa.me/55" + zapAcad + "'>💬 Falar com a academia</a>" : "") +
+      (zapAcad ? "<a class='cta' href='https://wa.me/55" + zapAcad + "'>Falar com a academia</a>" : "") +
       "<div class='rodape'>" + esc(nome) +
-      (cfg.dados.endereco ? "<br>📍 " + esc(cfg.dados.endereco) : "") +
-      (cfg.dados.instagram ? "<br>📸 " + esc(cfg.dados.instagram) : "") +
+      (cfg.dados.endereco ? "<br>" + esc(cfg.dados.endereco) : "") +
+      (cfg.dados.instagram ? "<br>" + esc(cfg.dados.instagram) : "") +
       "</div></body></html>";
 
     $("cardPrevia").hidden = false;

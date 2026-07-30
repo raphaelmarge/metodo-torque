@@ -45,9 +45,9 @@
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="abas" id="abasCat">
       <button data-cat="" class="ativa">Tudo</button>
-      <button data-cat="aparelho">🏋 Aparelhos</button>
-      <button data-cat="predial">🏢 Predial</button>
-      <button data-cat="limpeza">🧽 Limpeza</button>
+      <button data-cat="aparelho">Aparelhos</button>
+      <button data-cat="predial">Predial</button>
+      <button data-cat="limpeza">Limpeza</button>
     </div>
     <div class="linha-flex">
       <select id="filtroStatus" style="width: auto;">
@@ -70,7 +70,7 @@
     <h2>Novo chamado</h2>
     <div class="grid-2">
       <div class="campo"><label>Categoria</label>
-        <select id="nCat"><option value="aparelho">🏋 Aparelho</option><option value="predial">🏢 Predial</option><option value="limpeza">🧽 Limpeza</option></select>
+        <select id="nCat"><option value="aparelho">Aparelho</option><option value="predial">Predial</option><option value="limpeza">Limpeza</option></select>
       </div>
       <div class="campo"><label>Prioridade</label>
         <select id="nPrio"><option value="alta">Alta — risco/parado</option><option value="media" selected>Média</option><option value="baixa">Baixa</option></select>
@@ -181,9 +181,9 @@
       '<div class="acoes">' +
       (c.status !== "resolvido" ?
         '<button class="btn ok mini" data-acao="resolver">✓ Resolver</button>' +
-        '<button class="btn sec mini" data-acao="agendar">📅 ' + (c.agendado ? "Reagendar / retorno" : "Agendar") + "</button>" +
-        '<button class="btn sec mini" data-acao="foto">📷 Foto</button>' +
-        '<button class="btn sec mini" data-acao="nota">✎ Anotação</button>'
+        '<button class="btn sec mini" data-acao="agendar">' + (c.agendado ? "Reagendar / retorno" : "Agendar") + "</button>" +
+        '<button class="btn sec mini" data-acao="foto">Foto</button>' +
+        '<button class="btn sec mini" data-acao="nota">Anotação</button>'
         : '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir (retorno)</button>') +
       '<button class="btn perigo mini" data-acao="excluir">excluir</button>' +
       '<input type="file" accept="image/*" capture="environment" data-fotoinput hidden>' +

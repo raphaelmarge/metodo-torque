@@ -37,7 +37,7 @@
 <main class="corpo">
   <div class="card">
     <div class="linha-flex" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-      <input id="busca" placeholder="🔍 Pesquise por nome da aula…" style="flex:1; min-width: 200px;">
+      <input id="busca" placeholder="Pesquise por nome da aula…" style="flex:1; min-width: 200px;">
       <button class="btn" id="btnNova">+ Nova aula</button>
     </div>
     <div class="linha-flex" style="justify-content: space-between; margin: 14px 0 8px;">
@@ -47,7 +47,7 @@
   </div>
 
   <div class="card" style="margin-top:16px;">
-    <h2>🎟 Pacotes de sessões (saldo por aluno)</h2>
+    <h2>Pacotes de sessões (saldo por aluno)</h2>
     <p class="mut" style="margin:4px 0 12px;">Venda "10 sessões de personal", debite uma a cada sessão feita e acompanhe o saldo — quando restar pouco, é hora de renovar. O saldo aparece também no app do aluno depois de republicar.</p>
     <div class="linha-flex" style="gap:10px;flex-wrap:wrap;align-items:flex-end;">
       <div class="campo" style="margin:0;"><label>Aluno</label><input id="pcAluno" list="pcAlunos" placeholder="nome do aluno" style="width:220px;"><datalist id="pcAlunos"></datalist></div>
@@ -107,8 +107,8 @@
         (a.meia ? '<span class="tag roxo">meia aula</span>' : "") +
         (a.teste ? '<span class="tag ok">aula teste</span>' : "") +
         '<span class="muted">máx. ' + (a.max || 1) + "</span>" +
-        '<button class="btn sec mini" data-ed="' + a.id + '">✎</button>' +
-        '<button class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
+        '<button class="btn sec mini" data-ed="' + a.id + '"></button>' +
+        '<button class="btn sec mini" data-rm="' + a.id + '"></button></div>';
     }).join("") : '<div class="vazio">Nenhuma aula de personal cadastrada — clique em "+ Nova aula".</div>';
   }
 
@@ -207,7 +207,7 @@
         "</span></div>" +
         '<div class="linha-flex" style="gap:6px;">' +
         (saldo > 0 && !vencido ? '<button class="btn mini" data-usa="' + p.id + '">− Usar 1 sessão</button>' : "") +
-        '<button class="btn sec mini" data-hist="' + p.id + '">📋</button>' +
+        '<button class="btn sec mini" data-hist="' + p.id + '"></button>' +
         '<button class="btn perigo mini" data-del="' + p.id + '">✕</button></div></div>';
     }).join("") : '<p class="mut">Nenhum pacote vendido ainda.</p>';
   }

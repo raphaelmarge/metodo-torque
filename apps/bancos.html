@@ -31,7 +31,7 @@
     <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativas" type="checkbox"> mostrar inativas</label>
     <div class="linha-flex">
       <button class="btn sec" id="btnTransf">⇄ Transferência entre contas</button>
-      <button class="btn" id="btnNova">➕ Nova conta</button>
+      <button class="btn" id="btnNova">Nova conta</button>
     </div>
   </div>
   <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
@@ -113,7 +113,7 @@
         return "<tr><td><strong>" + esc(c.desc) + "</strong></td><td>" + esc(c.banco || "—") + "</td><td>" + esc(c.tipo || "—") +
           "</td><td>" + esc(c.ag || "—") + "</td><td>" + esc(c.conta || "—") + "</td><td>" + esc(c.pix || "—") + "</td>" +
           "<td>" + (c.status === "inativo" ? '<span class="tag neutro">INATIVA</span>' : '<span class="tag ok">ATIVA</span>') + "</td>" +
-          '<td><button class="btn sec mini" data-edit="' + c.id + '">✏</button></td></tr>';
+          '<td><button class="btn sec mini" data-edit="' + c.id + '"></button></td></tr>';
       }).join("") : '<tr><td colspan="8" class="muted" style="padding: 20px;">Nenhuma conta cadastrada — clique em ➕ Nova conta.</td></tr>');
     var ts = st.transferencias.slice().sort(function (a, b) { return (a.data + a.id) < (b.data + b.id) ? 1 : -1; });
     $("cardTransf").hidden = !ts.length;

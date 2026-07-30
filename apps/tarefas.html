@@ -51,7 +51,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
   function wa(zap, msg) {
     var n = String(zap || "").replace(/\D/g, "");
-    return n ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + n + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "";
+    return n ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + n + "?text=" + encodeURIComponent(msg) + '"></a>' : "";
   }
   function pnome(n) { return String(n || "").split(" ")[0]; }
   function diasDesde(iso) { return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5); }

@@ -60,7 +60,7 @@
       <div class="campo"><label>Valor mín.</label><input id="fVmin" type="number" step="0.01" style="width: 90px;"></div>
       <div class="campo"><label>Valor máx.</label><input id="fVmax" type="number" step="0.01" style="width: 90px;"></div>
       <button class="btn sec mini" id="btnLimpar" type="button">Limpar filtros</button>
-      <button class="btn mini" id="btnExportar" type="button">⬇ Exportar</button>
+      <button class="btn mini" id="btnExportar" type="button">Exportar</button>
     </div>
 
     <div class="kpis" id="kpis"></div>
@@ -72,7 +72,7 @@
     <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end;">
       <div class="campo"><label>Competência</label><input id="cComp" type="month"></div>
       <p class="muted" style="font-size: 12.5px; max-width: 520px;">Recebimentos agrupados pelo centro de receita (plano do contrato ou venda avulsa), como no relatório do EVO.</p>
-      <button class="btn mini" id="btnExpCentros" type="button">⬇ Exportar</button>
+      <button class="btn mini" id="btnExpCentros" type="button">Exportar</button>
     </div>
     <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabCentros"></table></div>
   </section>
@@ -194,9 +194,9 @@
       (f.lista.length ? f.lista.map(function (r) {
         var a = f.m.aluno[r.alunoId] || {};
         var acoes = "";
-        if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-venc="' + r.id + '" title="Alterar vencimento">📅</button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
+        if (r.status === "aberto") acoes = '<button class="btn ok mini" data-baixa="' + r.id + '">✓ Baixar</button> <button class="btn sec mini" data-venc="' + r.id + '" title="Alterar vencimento"></button> <button class="btn sec mini" data-cancela="' + r.id + '" title="Cancelar conta">✕</button>';
         acoes += ' <button class="btn sec mini" data-copia="' + r.id + '" title="Copiar conta">⧉</button>';
-        acoes += ' <button class="btn sec mini" data-ver="' + r.id + '" title="Detalhes da conta">👁</button>';
+        acoes += ' <button class="btn sec mini" data-ver="' + r.id + '" title="Detalhes da conta"></button>';
         return "<tr><td><strong>" + esc(a.nome || "?") + "</strong></td><td>" + esc(a.cpf || "—") + "</td><td>" + esc(descDe(r, f.m)) +
           "</td><td>" + esc(r.competencia || "—") + "</td><td>" + S.fmtData(r.vencimento) + "</td><td>" + (r.pagoEm ? S.fmtData(r.pagoEm) : "—") +
           '</td><td class="num">' + brl(+r.valor || 0) + '</td><td class="num">' + (r.status === "pago" ? brl(r.valorBaixa != null ? +r.valorBaixa : +r.valor) : "—") +
