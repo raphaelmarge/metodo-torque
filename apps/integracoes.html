@@ -236,7 +236,7 @@
     var out = $("resultadoWa");
     if (num.length < 12) { out.innerHTML = '<span class="tag alerta">Número com DDI+DDD (ex.: 5531999990000).</span>'; return; }
     out.textContent = "enviando…";
-    chamaWa({ acao: "enviar", para: num, texto: "Teste do TORQUESYS ✅ — o WhatsApp oficial da academia está funcionando!" })
+    chamaWa({ acao: "enviar", para: num, texto: "Teste do TORQUE ON ✅ — o WhatsApp oficial da academia está funcionando!" })
       .then(function (r) {
         if (r && r.ok) out.innerHTML = '<span class="tag ok">📨 Enviada! Confira o celular.</span>';
         else out.innerHTML = '<span class="tag erro">' + ((r && r.erro) || "falhou") + (r && r.precisaTemplate ? " — fora da janela de 24h: use o template." : "") + "</span>";

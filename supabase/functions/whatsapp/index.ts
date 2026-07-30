@@ -1,4 +1,4 @@
-// TORQUESYS — Fase 2 · WhatsApp oficial (API Cloud da Meta)
+// TORQUE ON — Fase 2 · WhatsApp oficial (API Cloud da Meta)
 //
 // Esta função roda no SUPABASE e guarda o token do WhatsApp — o token NUNCA
 // vai para o site. Com ela o sistema ENVIA as mensagens sozinho (cobrança,
@@ -14,7 +14,7 @@
 //      cole este arquivo → Deploy. Em Secrets, adicione:
 //        WHATSAPP_TOKEN     = o token
 //        WHATSAPP_PHONE_ID  = o Phone number ID
-//   4. No TORQUESYS: Administrativo → Integrações → cole a URL da função e
+//   4. No TORQUE ON: Administrativo → Integrações → cole a URL da função e
 //      clique Testar. Envie a mensagem de teste para o seu número.
 //
 // IMPORTANTE (regra da Meta): mensagem LIVRE (texto) só chega se o aluno

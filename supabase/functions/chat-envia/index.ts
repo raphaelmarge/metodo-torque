@@ -1,4 +1,4 @@
-// TORQUESYS — Chat unificado · envio manual e sugestão de resposta (IA)
+// TORQUE ON — Chat unificado · envio manual e sugestão de resposta (IA)
 //
 // Chamada pela tela Sistema → CRM → Chat e IA quando a EQUIPE responde
 // uma conversa ou pede uma sugestão ao Claude. O token do WhatsApp, do
@@ -181,7 +181,7 @@ Deno.serve(async (req: Request) => {
         model: "claude-opus-4-8",
         max_tokens: 900,
         thinking: { type: "adaptive" },
-        system: "Você é o assistente de suporte do TORQUESYS, o sistema de gestão da academia TORQUE FIT. " +
+        system: "Você é o assistente de suporte do TORQUE ON, o sistema de gestão da academia TORQUE FIT. " +
           "Responda em português do Brasil, curto e direto, SEMPRE com base no manual abaixo. " +
           "Cite o caminho do menu exatamente como está no manual (ex.: Sistema → Operação → Entrada). " +
           "Se a resposta não estiver no manual, diga honestamente que esse recurso não existe (ou ainda não) " +

@@ -204,7 +204,7 @@
 
 <header class="topo">
   <button class="hamb" id="btnMenu" aria-label="Abrir menu">☰</button>
-  <span class="marca"><img src="../assets/icons/icon.svg" alt=""><span>TORQUE<span style="color:var(--lilas)">SYS</span></span></span>
+  <span class="marca"><img src="../assets/icons/icon.svg" alt=""><span>TORQUE<span style="color:var(--lilas)">&nbsp;ON</span></span></span>
   <div class="buscaGlobal">🔍 <input id="buscaGlobal" placeholder="Pesquise por nome, sobrenome, e-mail, CPF (CIN) ou carteirinha"></div>
   <div class="acoes-topo">
     <button title="Novo cadastro" data-abrir="alunos.html?acao=novo">👤➕</button>
@@ -1207,11 +1207,11 @@
       var ultimo = cfg.backupUltimo || "2000-01-01";
       var dias = Math.floor((new Date(S.todayISO()) - new Date(ultimo)) / 864e5);
       if (dias < 7) return;
-      var dados = { geradoEm: new Date().toISOString(), versao: "torquesys" };
+      var dados = { geradoEm: new Date().toISOString(), versao: "torqueon" };
       (S.backupKeys ? S.backupKeys() : []).forEach(function (k) { dados[k] = S.read(k, null); });
       var a = document.createElement("a");
       a.href = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dados));
-      a.download = "backup-torquesys-" + S.todayISO() + ".json";
+      a.download = "backup-torqueon-" + S.todayISO() + ".json";
       a.click();
       cfg.backupUltimo = S.todayISO();
       S.write("config", cfg);

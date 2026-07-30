@@ -1,4 +1,4 @@
-// Módulo TORQUESYS Nutrição: onboarding, pacientes, dieta automática, dietas manuais e app do paciente
+// Módulo TORQUE ON Nutrição: onboarding, pacientes, dieta automática, dietas manuais e app do paciente
 let chromium;
 try { chromium = require("playwright").chromium; } catch (e) { chromium = require("/opt/node22/lib/node_modules/playwright").chromium; }
 const fs = require("fs");
@@ -24,7 +24,7 @@ function ok(cond, nome) {
   });
   const erros = [];
 
-  console.log("TORQUESYS Nutrição (módulo):");
+  console.log("TORQUE ON Nutrição (módulo):");
   let p = await ctx.newPage();
   p.on("pageerror", (e) => erros.push(String(e)));
   p.on("dialog", (d) => d.accept());
@@ -220,7 +220,7 @@ function ok(cond, nome) {
 
   // site comercial tem o segmento
   const pSite = await ctx.newPage();
-  await pSite.goto(BASE + "/torquesys.html");
+  await pSite.goto(BASE + "/torqueon.html");
   const corpo = await pSite.evaluate(() => document.body.textContent);
   ok(/Nutricionista/.test(corpo) && /Dieta automática/.test(corpo), "segmento Nutricionista no site comercial");
   await pSite.close();

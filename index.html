@@ -12,17 +12,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TORQUESYS">
+<meta name="apple-mobile-web-app-title" content="TORQUE ON">
 <script>
-/* Domínio próprio (www.torquesys.com.br): visitante novo cai no site de vendas;
+/* Domínio próprio (www.torqueon.com.br): visitante novo cai no site de vendas;
  * cliente com cadastro neste aparelho segue direto pro portal.
  * Força o portal com ?portal=1. Fora do domínio, não faz nada. */
 (function () {
   try {
-    if (/(^|\.)torquesys\.com\.br$/.test(location.hostname) &&
+    if (/(^|\.)torqueon\.com\.br$/.test(location.hostname) &&
         !localStorage.getItem("mtapp:perfil") &&
         location.search.indexOf("portal") < 0) {
-      location.replace("torquesys.html");
+      location.replace("torqueon.html");
     }
   } catch (e) {}
 })();
@@ -36,7 +36,7 @@
 <div id="gate" hidden>
   <div class="gate-card">
     <img src="assets/icons/logo-torque-claro.svg" alt="Método Torque" class="gate-logo">
-    <h1>Portal TORQUESYS</h1>
+    <h1>Portal TORQUE ON</h1>
 
     <div class="gate-abas" id="gateAbas" hidden>
       <button type="button" data-aba="entrar" class="ativa">Entrar</button>

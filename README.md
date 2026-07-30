@@ -27,7 +27,7 @@ Portal web do curso **Método Torque · Gestão de Academias de Alta Performance
 - **📈 Diário do Curso** — cada módulo é preenchível e mensurável (status, autoavaliação 0–10 e os KPIs do módulo: churn, CAC, margem, conversão…). O Relatório Final cruza tudo com os dados vivos dos programas e gera: pontos positivos, pontos de atenção e conselhos com as referências do curso — mais um prompt completo para colar numa IA (Claude/ChatGPT) e receber o relatório aprofundado com plano de 90 dias e prioridades de investimento.
 - **📺 Modo TV** — abra `apps/tv.html` no navegador da TV/telão: painéis de metas, manutenção e checklist giram em tela cheia e se atualizam sozinhos.
 
-### TORQUESYS — o sistema completo estilo EVO (`apps/sistema.html`)
+### TORQUE ON — o sistema completo estilo EVO (`apps/sistema.html`)
 
 Réplica funcional do EVO construída a partir de 127 capturas reais de tela, com **50 páginas** organizadas no mesmo menu (CRM 2.0, CRM, Financeiro, Gerencial, Treinos, Dados de saúde, Administrativo):
 

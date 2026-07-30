@@ -1,4 +1,4 @@
-// TORQUESYS — Fase 2 · Cobrança automática via Pagar.me (grupo Stone)
+// TORQUE ON — Fase 2 · Cobrança automática via Pagar.me (grupo Stone)
 //
 // Esta função roda no SUPABASE (Edge Function) e é quem guarda a chave secreta
 // do Pagar.me — a chave NUNCA vai para o site, que é público.
@@ -9,7 +9,7 @@
 //   2. Ainda no painel: Edge Functions → pagarme → Secrets → adicione
 //      PAGARME_SECRET_KEY = sk_... (a chave SECRETA da sua conta Pagar.me,
 //      em Configurações → Chaves no painel do Pagar.me).
-//   3. No TORQUESYS: menu Administrativo → Integrações → cole a URL da função
+//   3. No TORQUE ON: menu Administrativo → Integrações → cole a URL da função
 //      (https://SEU-PROJETO.supabase.co/functions/v1/pagarme) e clique Testar.
 //
 // Ações aceitas (POST JSON):

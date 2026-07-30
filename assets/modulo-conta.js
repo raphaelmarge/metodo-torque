@@ -1,4 +1,4 @@
-/* TORQUESYS — conta própria dos módulos (TORQUE PERSONAL / TORQUE NUTRI).
+/* TORQUE ON — conta própria dos módulos (TORQUE PERSONAL / TORQUE NUTRI).
  * Cada produto tem a PRÓPRIA tela de entrar/criar conta, com a marca dele —
  * nada de mandar o personal ou o nutricionista para o portal da academia.
  * Por baixo, a conta continua sendo uma "ilha" exclusiva no Supabase
@@ -18,7 +18,7 @@ self.MT_moduloConta = function (cfg) {
   div.style.cssText = "position:fixed;inset:0;z-index:60;background:" + cfg.fundo + ";display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
   div.innerHTML =
     '<div style="width:100%;max-width:400px;background:' + cfg.cardBg + ";border:1px solid " + cfg.borda + ';border-radius:18px;padding:28px 24px;color:#fff;box-shadow:0 24px 70px -24px rgba(0,0,0,.7);">' +
-    '<div style="text-align:center;margin-bottom:16px;"><span style="font-size:11px;letter-spacing:.22em;color:' + cfg.corTag + ';font-weight:700;">TORQUESYS</span>' +
+    '<div style="text-align:center;margin-bottom:16px;"><span style="font-size:11px;letter-spacing:.22em;color:' + cfg.corTag + ';font-weight:700;">TORQUE ON</span>' +
     '<h2 style="font-size:24px;margin:4px 0 0;font-weight:800;color:#fff;">TORQUE <span style="color:' + cfg.corTag + ';">' + cfg.marca + "</span></h2>" +
     '<p style="color:#9b96a8;font-size:13px;margin-top:6px;line-height:1.5;">' + cfg.sub + "</p></div>" +
     '<div style="display:flex;gap:8px;margin-bottom:14px;">' +

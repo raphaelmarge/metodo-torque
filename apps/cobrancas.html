@@ -100,7 +100,7 @@
           (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener">abrir página de pagamento</a>' : (c.pixCopiaECola ? "PIX copia e cola gerado" : "—")) + "</td>" +
           '<td style="text-align:right;"><button class="btn sec mini" data-vercob="' + d.id + '" title="Detalhes da cobrança">👁</button></td></tr>';
       }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — com o Pagar.me conectado ou com o modo demonstração ligado em Integrações.</td></tr>');
-    $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUESYS via Pagar.me (Fase 2). No EVO essa aba lista as tentativas de cartão da adquirente.";
+    $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUE ON via Pagar.me (Fase 2). No EVO essa aba lista as tentativas de cartão da adquirente.";
   }
 
   // ---------- RECORRÊNCIA: assinaturas de cartão dos contratos ----------
@@ -217,7 +217,7 @@
           (x.asn.desde ? S.fmtData(x.asn.desde) : "—") + "</td><td>" + (x.asn.proximaCobranca ? S.fmtData(String(x.asn.proximaCobranca).slice(0, 10)) : "—") + "</td><td>" +
           (x.asn.statusCancelada ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') + "</td></tr>";
       }).join("") : '<tr><td colspan="5" class="muted" style="padding: 20px; white-space: normal;">Nenhum cartão cadastrado. O número do cartão nunca fica no sistema: a Pagar.me guarda e devolve só a bandeira e os 4 últimos dígitos.</td></tr>');
-    $("rodape").textContent = "Os cartões são tokenizados no navegador com a chave pública — o TORQUESYS só guarda \"bandeira •••• final\".";
+    $("rodape").textContent = "Os cartões são tokenizados no navegador com a chave pública — o TORQUE ON só guarda \"bandeira •••• final\".";
   }
 
   function render() {
