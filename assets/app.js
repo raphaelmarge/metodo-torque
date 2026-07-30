@@ -334,7 +334,6 @@
     var acad = window.MT_academia && window.MT_academia();
     if (!acad || !window.MT_supabase) return;
     el("eqaNome").textContent = "Equipe · " + (acad.nome || "sua academia");
-    el("eqaCodigo").textContent = acad.codigo_equipe || "——";
     el("eqaLinhas").innerHTML = '<tr><td colspan="4">Carregando…</td></tr>';
     document.getElementById("dlgEquipeAcad").showModal();
     window.MT_supabase.from("membros").select("user_id, papel, nome, email").eq("academia_id", acad.id).then(function (r) {
@@ -346,12 +345,30 @@
       }).join("") || '<tr><td colspan="4">Só você por enquanto — compartilhe o código acima com a equipe.</td></tr>';
     });
   });
-  el("eqaCopiar").addEventListener("click", function () {
-    var c = el("eqaCodigo").textContent;
-    (navigator.clipboard ? navigator.clipboard.writeText(c) : Promise.reject()).then(function () {
-      el("eqaCopiar").textContent = "✓ Copiado";
-      setTimeout(function () { el("eqaCopiar").textContent = "Copiar"; }, 2000);
-    }, function () {});
+  el("eqaCriarLogin").addEventListener("click", function () {
+    var nome = el("eqaNovoNome").value.trim(), email = el("eqaNovoEmail").value.trim();
+    el("eqaErro").hidden = true;
+    if (!nome || !email) { el("eqaErro").textContent = "Preencha o nome e o e-mail."; el("eqaErro").hidden = false; return; }
+    // senha aleatória legível (sem 0/O/1/l)
+    var chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789", senha = "";
+    var rnd = new Uint32Array(10);
+    (window.crypto && crypto.getRandomValues) ? crypto.getRandomValues(rnd) : null;
+    for (var i = 0; i < 10; i++) senha += chars[(rnd[i] || Math.floor(Math.random() * 1e9)) % chars.length];
+    el("eqaCriarLogin").disabled = true;
+    window.MT_supabase.rpc("equipe_cria_login", { p_email: email, p_senha: senha, p_nome: nome, p_papel: "equipe" }).then(function (r) {
+      el("eqaCriarLogin").disabled = false;
+      if (r.error) { el("eqaErro").textContent = "Não deu: " + r.error.message; el("eqaErro").hidden = false; return; }
+      var msg = "Seu acesso ao TORQUE ON:\nSite: https://www.torqueon.com.br/?portal=1\nLogin: " + email.toLowerCase() + "\nSenha: " + senha + "\n\nDica: troque a senha depois de entrar.";
+      window.__eqaMsg = msg; // testes
+      el("eqaCredTxt").textContent = msg;
+      el("eqaCred").hidden = false;
+      el("eqaCredZap").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+      el("eqaCredCopiar").onclick = function () { navigator.clipboard.writeText(msg); };
+      el("eqaNovoNome").value = ""; el("eqaNovoEmail").value = "";
+    }, function () {
+      el("eqaCriarLogin").disabled = false;
+      el("eqaErro").textContent = "Sem conexão com a nuvem agora."; el("eqaErro").hidden = false;
+    });
   });
   document.getElementById("dlgEquipeAcad").addEventListener("click", function (e) {
     var uid = e.target.getAttribute && e.target.getAttribute("data-uid");

@@ -22,31 +22,23 @@ self.MT_moduloConta = function (cfg) {
     '<h2 style="font-size:24px;margin:4px 0 0;font-weight:800;color:#fff;">TORQUE <span style="color:' + cfg.corTag + ';">' + cfg.marca + "</span></h2>" +
     '<p style="color:#9b96a8;font-size:13px;margin-top:6px;line-height:1.5;">' + cfg.sub + "</p></div>" +
     '<div style="display:flex;gap:8px;margin-bottom:14px;">' +
-    '<button type="button" id="mgAbaEntrar" style="flex:1;padding:10px;border-radius:10px;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;">Entrar</button>' +
-    '<button type="button" id="mgAbaCriar" style="flex:1;padding:10px;border-radius:10px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Criar conta</button></div>' +
+    '<button type="button" id="mgAbaEntrar" style="flex:1;padding:10px;border-radius:10px;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;background:' + cfg.grad + ';border:1px solid ' + cfg.corTag + ';">Entrar</button></div>' +
     '<form id="mgForm">' +
-    '<input id="mgNome" placeholder="' + cfg.nomeCampo + '" hidden style="' + inputCss + '">' +
+
     '<input id="mgEmail" type="email" placeholder="Seu e-mail" required autocomplete="username" style="' + inputCss + '">' +
     '<input id="mgSenha" type="password" placeholder="Senha (mínimo 6 caracteres)" required minlength="6" autocomplete="current-password" style="' + inputCss + '">' +
     '<p id="mgErro" hidden style="font-size:13px;margin:6px 0;line-height:1.5;"></p>' +
     '<button id="mgBtn" style="width:100%;padding:14px;border:none;border-radius:11px;background:' + cfg.grad + ';color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;">Entrar →</button></form>' +
-    '<button type="button" id="mgLocal" style="background:none;border:none;color:#8a8695;font-size:12.5px;margin-top:14px;cursor:pointer;width:100%;font-family:inherit;">→ Experimentar sem conta (dados só neste aparelho)</button></div>';
+    '<button type="button" id="mgLocal" style="background:none;border:none;color:#8a8695;font-size:12.5px;margin-top:14px;cursor:pointer;width:100%;font-family:inherit;">→ Experimentar sem conta (dados só neste aparelho)</button>' +
+    '<p style="font-size:12px;color:#8a8695;margin:12px 0 0;line-height:1.5;text-align:center;">Ainda não é cliente? Sua conta é criada pela equipe TORQUE ON — <a href="torqueon.html" style="color:' + cfg.corTag + ';font-weight:700;">conheça os planos</a>.</p></div>';
   document.body.appendChild(div);
 
   function erro(m, ok) { var el = $("mgErro"); el.innerHTML = m; el.style.color = ok ? "#86efac" : "#fca5a5"; el.hidden = false; }
   function aplica() {
-    $("mgNome").hidden = aba !== "criar";
-    $("mgNome").required = aba === "criar";
-    $("mgBtn").textContent = aba === "criar" ? "Criar minha conta →" : "Entrar →";
-    ["mgAbaEntrar", "mgAbaCriar"].forEach(function (id, i) {
-      var ativa = (i === 0) === (aba === "entrar");
-      $(id).style.background = ativa ? cfg.grad : "none";
-      $(id).style.border = "1px solid " + (ativa ? cfg.corTag : "#4a4458");
-    });
+    aba = "entrar";
+    $("mgBtn").textContent = "Entrar →";
     $("mgErro").hidden = true;
   }
-  $("mgAbaEntrar").addEventListener("click", function () { aba = "entrar"; aplica(); });
-  $("mgAbaCriar").addEventListener("click", function () { aba = "criar"; aplica(); });
 
   function fecha() { div.hidden = true; }
   function depois() {
@@ -67,7 +59,7 @@ self.MT_moduloConta = function (cfg) {
         return;
       }
       // conta sem ilha ainda: cria a ilha deste produto com o nome do studio/consultório
-      var nomeIlha = ($("mgNome").value || "").trim() || (cfg.nomeIlha && cfg.nomeIlha()) || cfg.marca + " de " + (user.email || "conta").split("@")[0];
+      var nomeIlha = (cfg.nomeIlha && cfg.nomeIlha()) || cfg.marca + " de " + (user.email || "conta").split("@")[0];
       return sb.rpc("criar_academia", { p_nome_academia: nomeIlha, p_nome_membro: "" }).then(function (rr) {
         if (rr.error) { div.hidden = false; erro("Não deu para criar sua conta: " + rr.error.message); return; }
         if (cfg.salvaNome) cfg.salvaNome(nomeIlha);
@@ -82,24 +74,11 @@ self.MT_moduloConta = function (cfg) {
     $("mgBtn").disabled = true;
     var fim = function () { $("mgBtn").disabled = false; };
     var email = $("mgEmail").value.trim(), senha = $("mgSenha").value;
-    if (aba === "entrar") {
-      sb.auth.signInWithPassword({ email: email, password: senha }).then(function (r) {
-        fim();
-        if (r.error) { erro("Login ou senha incorretos. Primeira vez? Use a aba Criar conta."); return; }
-        vincula(r.data.user);
-      });
-    } else {
-      var nome = $("mgNome").value.trim();
-      if (!nome) { fim(); erro("Escreva o nome que aparece pros seus alunos/pacientes."); return; }
-      if (cfg.salvaNome) cfg.salvaNome(nome);
-      sb.auth.signUp({ email: email, password: senha, options: { data: { nome: nome } } }).then(function (r) {
-        fim();
-        if (r.error) { erro(r.error.message.indexOf("already") !== -1 ? "Esse e-mail já tem conta — use a aba Entrar." : "Não deu: " + r.error.message); return; }
-        if (r.data && r.data.session) { vincula(r.data.user); return; }
-        aba = "entrar"; aplica();
-        erro("Conta criada! 🎉 Confirme o link que mandamos pro seu e-mail e depois entre aqui.", true);
-      });
-    }
+    sb.auth.signInWithPassword({ email: email, password: senha }).then(function (r) {
+      fim();
+      if (r.error) { erro("Login ou senha incorretos. Sua conta foi criada pela equipe TORQUE ON — confira o e-mail e a senha que te enviamos no WhatsApp."); return; }
+      vincula(r.data.user);
+    });
   });
   $("mgLocal").addEventListener("click", function () {
     try { localStorage.setItem(cfg.flag, "1"); } catch (e) {}
@@ -108,7 +87,21 @@ self.MT_moduloConta = function (cfg) {
   });
 
   var api = {
-    abre: function (qualAba) { if (!NUVEM) { alert("A nuvem não está configurada neste site."); return; } aba = qualAba || "entrar"; aplica(); div.hidden = false; },
+    abre: function (qualAba) { if (!NUVEM) { alert("A nuvem não está configurada neste site."); return; } aba = "entrar"; aplica(); div.hidden = false; },
+    criaColaborador: function () {
+      var nome = prompt("Nome do colaborador:"); if (!nome) return;
+      var email = prompt("E-mail do colaborador (será o login):"); if (!email) return;
+      var chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789", senha = "";
+      var rnd = new Uint32Array(10);
+      if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(rnd);
+      for (var i = 0; i < 10; i++) senha += chars[(rnd[i] || Math.floor(Math.random() * 1e9)) % chars.length];
+      sb.rpc("equipe_cria_login", { p_email: email.trim(), p_senha: senha, p_nome: nome.trim(), p_papel: "equipe" }).then(function (r) {
+        if (r.error) { alert("Não deu: " + r.error.message); return; }
+        var msg = "Seu acesso ao TORQUE ON:\nSite: " + location.origin + location.pathname + "\nLogin: " + email.trim().toLowerCase() + "\nSenha: " + senha + "\n\nDica: troque a senha depois de entrar.";
+        if (navigator.clipboard) navigator.clipboard.writeText(msg);
+        alert("Login criado e copiado! Cole no WhatsApp do colaborador:\n\n" + msg);
+      }, function () { alert("Sem conexão com a nuvem agora."); });
+    },
     sair: function () {
       if (!confirm("Sair da sua conta neste aparelho? (os dados locais continuam aqui)")) return;
       sb.auth.signOut().finally(function () {

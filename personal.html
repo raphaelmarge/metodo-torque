@@ -307,7 +307,7 @@
     </div>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <button class="btn" id="btnContaEntrar">Entrar na minha conta</button>
-      <button class="btn sec" id="btnContaCriar">Criar conta TORQUE PERSONAL</button>
+      <button class="btn sec" id="btnContaEquipe" hidden>+ Login de colaborador</button>
       <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
     </div>
   </div>
@@ -1782,7 +1782,7 @@
     });
     var u = S.usuario ? S.usuario() : {};
     $("btnContaEntrar").hidden = u.logado;
-    $("btnContaCriar").hidden = u.logado;
+    $("btnContaEquipe").hidden = !u.logado;
     $("btnContaSair").hidden = !u.logado;
     if (u.logado) {
       $("contaStatus").innerHTML = "✅ <b>Conectado como " + esc(u.email) + "</b> — seus dados sincronizam entre os seus aparelhos e ficam na SUA ilha, separados de qualquer outro personal ou academia.";
@@ -1840,7 +1840,7 @@
     depois: function () { verificaOnboarding(); render(); },
   });
   $("btnContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
-  $("btnContaCriar").addEventListener("click", function () { contaP.abre("criar"); });
+  $("btnContaEquipe").addEventListener("click", contaP.criaColaborador);
   $("btnContaSair").addEventListener("click", contaP.sair);
 
   window.__ptStudio = { load: load, render: render }; // testes

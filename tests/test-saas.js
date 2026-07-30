@@ -40,6 +40,9 @@ function crcNode(s) {
   ok(/hq_receita_mensal/.test(sql) && /add column if not exists zap/.test(sql) && /ultima_atividade/.test(sql), "v2: receita mensal, WhatsApp e última atividade no SQL");
   ok(/saas_tickets/.test(sql) && /suporte_envia/.test(sql) && /suporte_lista/.test(sql), "assistência: tabela e RPCs do cliente");
   ok(/aluno_define_login/.test(sql) && /aluno_login/.test(sql) && /gen_salt\('bf'\)/.test(sql) && /pgcrypto/.test(sql), "login do aluno: RPCs com bcrypt no SQL");
+  ok(/hq_cliente_provisiona/.test(sql) && /equipe_cria_login/.test(sql) && /hq_cliente_reseta_senha/.test(sql), "provisionamento: RPCs do HQ e do dono no SQL");
+  ok(/_torque_cria_usuario/.test(sql) && /revoke all on function public\._torque_cria_usuario/.test(sql), "criação de usuário é interna (revogada pra anon/authenticated)");
+  ok(/'nutri'/.test(sql.split("saas_clientes_tipo_check")[2] || ""), "tipo de cliente aceita nutri");
   ok(/hq_suporte_threads/.test(sql) && /hq_suporte_lista/.test(sql) && /hq_suporte_envia/.test(sql) && /hq_erros/.test(sql), "assistência: RPCs do HQ (tickets + erros)");
 
   // ---------- 1) site comercial ----------
@@ -79,8 +82,10 @@ function crcNode(s) {
   ok(/Portal TORQUE ON/.test(gate.titulo), "gate com o título Portal TORQUE ON");
   ok(/aluno da academia ou de um personal/i.test(gate.aluno) && /LINK do app/.test(gate.aluno), "nota fixa explica o acesso do aluno (link, sem senha)");
   ok(gate.temSair, "botão 'Sair e entrar com outra conta' existe pro estado de vínculo");
-  const abasVisiveis = await p.evaluate(() => Array.from(document.querySelectorAll("#gateAbas button")).filter((b) => b.style.display !== "none").map((b) => b.textContent));
-  ok(abasVisiveis.length === 3 && /Entrar/.test(abasVisiveis.join(",")), "as 3 abas (Entrar/Criar/Equipe) sempre visíveis");
+  const abasVisiveis = await p.evaluate(() => Array.from(document.querySelectorAll("#gateAbas button")).map((b) => b.textContent));
+  ok(abasVisiveis.length === 1 && /Entrar/.test(abasVisiveis[0]), "gate só com Entrar — criar conta/equipe agora é provisionado (fim do código)");
+  const notaContrate = await p.evaluate(() => document.getElementById("gateContrate").textContent);
+  ok(/equipe TORQUE ON/.test(notaContrate) && /planos/.test(notaContrate), "nota explica que a conta é criada pela equipe TORQUE ON");
   const temSaida = await p.evaluate(() => fetch("assets/access.js").then((r) => r.text()).then((t) => t.includes("vinculando && aba === \"entrar\"") && t.includes("sairEEntrar")));
   ok(temSaida, "tocar em Entrar no estado preso desconecta e abre o login normal");
   ok(/login e senha de aluno/.test(gate.aluno), "nota do gate aponta pra página de login do aluno");
@@ -197,6 +202,22 @@ function crcNode(s) {
   ok(/MRR/.test(kpis) && /443/.test(kpis), "KPIs mostram o MRR do TORQUE ON (R$ 443)");
   ok(/ARPU/.test(kpis) && /148/.test(kpis), "ARPU calculado (443/3 ≈ R$ 148) — métrica ChartMogul");
   ok(/Empresas clientes/.test(kpis) && /4/.test(kpis), "KPI de total de empresas");
+  // provisionamento de cliente novo direto do HQ
+  await p.fill("#pvEmpresa", "Academia Nova Era");
+  await p.fill("#pvEmail", "dono@novaera.com");
+  await p.selectOption("#pvTipo", "academia");
+  await p.fill("#pvZap", "31977776666");
+  await p.click("#pvCriar");
+  await p.waitForTimeout(300);
+  const prov = await p.evaluate(() => ({
+    chamada: window.__rpcLog.find((r) => r.nome === "hq_cliente_provisiona"),
+    msg: window.__pvMsg || "",
+    visivel: !document.getElementById("pvResultado").hidden,
+  }));
+  ok(!!prov.chamada && prov.chamada.args.p_email === "dono@novaera.com" && prov.chamada.args.p_empresa === "Academia Nova Era", "HQ chama hq_cliente_provisiona com e-mail e empresa");
+  ok(prov.chamada.args.p_senha && prov.chamada.args.p_senha.length >= 10, "senha aleatória gerada (10+ caracteres)");
+  ok(prov.visivel && /torqueon\.com\.br/.test(prov.msg) && /Senha: /.test(prov.msg) && /dono@novaera\.com/.test(prov.msg), "mensagem pronta pro WhatsApp com site, login e senha");
+
   let lista = await p.evaluate(() => document.getElementById("hqClientes").textContent);
   ok(/Academia Ferro Pesado/.test(lista) && /Studio Pilates Vida/.test(lista) && /Academia Sumida/.test(lista), "as empresas listadas");
   ok(/ATIVO/i.test(lista) && /TRIAL/i.test(lista), "etiquetas de status");
