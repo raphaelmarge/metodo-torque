@@ -33,8 +33,8 @@
 
 <main class="corpo">
   <div class="abas">
-    <button data-aba="servicos" class="ativa">🧾 Serviços</button>
-    <button data-aba="reajuste">📈 Reajuste de valores</button>
+    <button data-aba="servicos" class="ativa">Serviços</button>
+    <button data-aba="reajuste">Reajuste de valores</button>
   </div>
 
   <section id="abaServicos">
@@ -97,7 +97,7 @@
     var s2 = st.itens.find(function (x) { return x.id === selId; });
     if (!s2) { $("painel").innerHTML = '<div class="vazio">Escolha um serviço à esquerda ou clique em Novo.</div>'; return; }
     $("painel").innerHTML = '<div class="linha-flex" style="justify-content: space-between;"><h2>Dados</h2>' +
-      '<button class="btn sec mini" id="btnExcluir">🗑 Excluir</button></div>' +
+      '<button class="btn sec mini" id="btnExcluir">Excluir</button></div>' +
       '<div class="grid-2" style="margin-top: 10px;">' +
       '<div class="campo"><label>Descrição *</label><input id="sDesc" value="' + esc(s2.desc) + '"></div>' +
       '<div class="campo"><label>Valor (R$)</label><input id="sValor" type="number" step="0.01" min="0" value="' + (+s2.valor || "") + '"></div>' +

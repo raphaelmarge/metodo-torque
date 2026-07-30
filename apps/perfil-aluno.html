@@ -187,9 +187,9 @@
       (a.criado ? "<span>cliente há " + diasDesde(a.criado) + " dia(s)</span>" : "") +
       (a.consultor ? "<span>consultor(a): " + esc(a.consultor) + "</span>" : "") + "</div></div>" +
       '<div class="acoes">' +
-      '<a class="btn" href="alunos.html?acao=venda">🛒 Nova venda</a>' +
-      (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
-      '<a class="btn sec" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">✏ Editar cadastro</a></div></div>' +
+      '<a class="btn" href="alunos.html?acao=venda">Nova venda</a>' +
+      (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '"></a>' : "") +
+      '<a class="btn sec" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">Editar cadastro</a></div></div>' +
       '<div class="secoes" id="secoes">' +
       [["perfil", "Perfil"], ["cadastro", "Cadastro"], ["financeiro", "Financeiro"], ["relacionamento", "Relacionamento"], ["contratos", "Contratos"], ["turmas", "Turmas"], ["atividades", "Atividades"]].map(function (s) {
         return '<button data-s="' + s[0] + '"' + (secao === s[0] ? ' class="ativa"' : "") + ">" + s[1] + "</button>";
@@ -220,11 +220,11 @@
       var maxF = Math.max.apply(null, fs.map(function (x) { return x.n; }).concat([1]));
 
       html = '<div class="grid-perfil"><div>' +
-        (sit.bloqueios.length ? '<div class="alerta-bloq vermelho"><strong>🔒 Acesso bloqueado</strong>' +
+        (sit.bloqueios.length ? '<div class="alerta-bloq vermelho"><strong>Acesso bloqueado</strong>' +
           sit.bloqueios.map(function (b) { return "<span>" + esc(b) + "</span><br>"; }).join("") + "</div>" : "") +
-        (sit.avisos.length ? '<div class="alerta-bloq amarelo"><strong>⚠ Pendências</strong>' +
+        (sit.avisos.length ? '<div class="alerta-bloq amarelo"><strong>Pendências</strong>' +
           sit.avisos.map(function (b) { return "<span>" + esc(b) + "</span><br>"; }).join("") + "</div>" : "") +
-        (!sit.bloqueios.length && !sit.avisos.length ? '<div class="alerta-bloq verde"><strong>🕐 Cliente sem pendências</strong></div>' : "") +
+        (!sit.bloqueios.length && !sit.avisos.length ? '<div class="alerta-bloq verde"><strong>Cliente sem pendências</strong></div>' : "") +
 
         '<div class="card" style="margin-bottom:12px;"><h2>Contratos</h2>' +
         (contratosAtivos.length ? '<table class="tabela"><tr><th>CONTRATO</th><th>STATUS</th></tr>' + contratosAtivos.map(function (c) {
@@ -282,21 +282,21 @@
         } else if (cAtivo.assinatura) {
           var asn = cAtivo.assinatura;
           html += '<div class="card"><h2>Cartão recorrente</h2>' +
-            (String(asn.id || "").indexOf("sim_") === 0 ? '<p class="tag alerta" style="margin: 4px 0 8px;">🎭 SIMULAÇÃO — cadastrada no modo demonstração, nada é cobrado</p>' : "") +
-            '<div class="kv"><span>Cartão</span><span>💳 ' + esc(asn.cartao || "cadastrado") + "</span></div>" +
+            (String(asn.id || "").indexOf("sim_") === 0 ? '<p class="tag alerta" style="margin: 4px 0 8px;">SIMULAÇÃO — cadastrada no modo demonstração, nada é cobrado</p>' : "") +
+            '<div class="kv"><span>Cartão</span><span>' + esc(asn.cartao || "cadastrado") + "</span></div>" +
             '<div class="kv"><span>Situação</span><span class="tag ' + (asn.statusCancelada ? "neutro" : "ok") + '">' + (asn.statusCancelada ? "CANCELADA" : "ATIVA") + "</span></div>" +
             '<div class="kv"><span>Valor</span><span>' + S.fmtBRL(+cAtivo.valor || 0) + "/mês · todo dia " + (cAtivo.diaVenc || 5) + "</span></div>" +
             (asn.proximaCobranca ? '<div class="kv"><span>Próxima cobrança</span><span>' + S.fmtData(String(asn.proximaCobranca).slice(0, 10)) + "</span></div>" : "") +
             '<div class="linha-flex" style="margin-top: 12px;">' +
-            '<button class="btn sec mini" id="asnStatus">🔄 Atualizar situação</button>' +
+            '<button class="btn sec mini" id="asnStatus">Atualizar situação</button>' +
             (!asn.statusCancelada ? '<button class="btn perigo mini" id="asnCancelar">✕ Cancelar recorrência</button>' : "") +
             '<span class="muted" id="asnAviso"></span></div></div>';
         } else if (!integ.demo && (!integ.pagarmeUrl || !integ.pagarmePk)) {
           html += '<div class="card"><div class="vazio">Para cadastrar o cartão do aluno e cobrar todo mês sozinho, configure a URL da função e a <strong>chave pública (pk_)</strong> em <a href="integracoes.html">Integrações</a> — ou ative o <strong>modo demonstração</strong> lá para testar sem Pagar.me.</div></div>';
         } else {
           html += '<div class="card"><h2>Cadastrar cartão para cobrança recorrente</h2>' +
-            ((integ.demo && !integ.pagarmePk) ? '<p class="tag alerta" style="margin: 4px 0 8px;">🎭 MODO DEMONSTRAÇÃO — o cartão não é cadastrado de verdade e nada é cobrado</p>' : "") +
-            '<p class="muted" style="margin: 4px 0 10px;">🔒 Os dados do cartão vão <strong>direto do navegador para o Pagar.me</strong> — não ficam no sistema. A mensalidade de <strong>' +
+            ((integ.demo && !integ.pagarmePk) ? '<p class="tag alerta" style="margin: 4px 0 8px;">MODO DEMONSTRAÇÃO — o cartão não é cadastrado de verdade e nada é cobrado</p>' : "") +
+            '<p class="muted" style="margin: 4px 0 10px;">Os dados do cartão vão <strong>direto do navegador para o Pagar.me</strong> — não ficam no sistema. A mensalidade de <strong>' +
             S.fmtBRL(+cAtivo.valor || 0) + "</strong> (" + esc(pl ? pl.nome : "plano") + ") será cobrada automaticamente todo mês.</p>" +
             '<div class="grid-2">' +
             '<div class="campo"><label>Número do cartão</label><input id="ccNum" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000 0000"></div>' +
@@ -306,7 +306,7 @@
             '<div class="campo"><label>Dia da cobrança</label><input id="ccDia" type="number" min="1" max="28" value="' + (cAtivo.diaVenc || 5) + '" style="width: 90px;"></div>' +
             "</div>" +
             '<div class="linha-flex" style="margin-top: 12px;">' +
-            '<button class="btn" id="btnAssinar">🔒 Cadastrar cartão e ativar recorrência</button>' +
+            '<button class="btn" id="btnAssinar">Cadastrar cartão e ativar recorrência</button>' +
             '<span class="muted" id="asnAviso"></span></div></div>';
         }
       } else
@@ -316,9 +316,9 @@
             (parq2.temSim ? '<span class="tag alerta">RISCO — aval. médica</span>' : '<span class="tag ok">ASSINADO' + (parq2.data ? " — " + S.fmtData(parq2.data) : "") + "</span>")
             : '<span class="tag erro">PENDENTE</span>') + "</span></div>" +
           '<div class="linha-flex" style="margin-top: 14px;">' +
-          '<a class="btn" href="documentos.html">🧾 Gerar recibo de pagamento</a>' +
-          '<a class="btn sec" href="documentos.html">📄 Gerar contrato de matrícula</a>' +
-          '<a class="btn sec" href="parq.html">🩺 Aplicar PAR-Q</a></div>' +
+          '<a class="btn" href="documentos.html">Gerar recibo de pagamento</a>' +
+          '<a class="btn sec" href="documentos.html">Gerar contrato de matrícula</a>' +
+          '<a class="btn sec" href="parq.html">Aplicar PAR-Q</a></div>' +
           '<p class="muted" style="margin-top: 10px;">Os documentos são preenchidos automaticamente com os dados do aluno e do contrato em Recibos e Contratos.</p></div>';
       } else if (subCad === "responsaveis") {
         html += '<div class="card"><h2>Responsáveis e emergência</h2>' +
@@ -330,7 +330,7 @@
       } else
       html += '<div class="grid-perfil"><div>' +
         '<div class="card" style="margin-bottom:12px;"><div class="linha-flex" style="justify-content: space-between;"><h2>Dados pessoais</h2>' +
-        '<a class="btn sec mini" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">✏ Editar</a></div>' +
+        '<a class="btn sec mini" href="alunos.html?busca=' + encodeURIComponent(a.nome) + '">Editar</a></div>' +
         [["Nome completo", a.nome], ["Apelido", a.apelido], ["Gênero", a.genero], ["CPF (CIN)", a.cpf], ["RG", a.rg],
          ["Data de nascimento", a.nasc ? S.fmtData(a.nasc) : ""], ["Responsável", a.responsavel], ["Wellhub / Gympass", a.wellhub]].map(function (kv) {
           return kv[1] ? '<div class="kv"><span>' + kv[0] + "</span><span>" + esc(kv[1]) + "</span></div>" : "";
@@ -371,7 +371,7 @@
         '<div class="campo" style="flex:1; min-width: 220px;"><label>O que foi conversado</label><input id="ctTexto" placeholder="ex.: liguei para lembrar da renovação, vai passar aqui sábado"></div>' +
         '<div class="campo"><label>Quem registrou</label><input id="ctQuem" placeholder="nome"></div>' +
         '<button class="btn" id="btnRegistrar">✓ Registrar</button>' +
-        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬 Abrir WhatsApp</a>' : "") +
+        (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Abrir WhatsApp</a>' : "") +
         "</div></div>" +
         '<div class="card"><h2>Histórico de contatos</h2>' +
         (contatos.length ? contatos.map(function (ct) {
@@ -396,7 +396,7 @@
       if (subFin === "mov") {
         html += '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Movimentações</h2>' +
           '<span class="muted">pago: <strong style="color:var(--ok)">' + S.fmtBRL(pago) + '</strong> · em aberto: <strong style="color:var(--erro)">' + S.fmtBRL(aberto) + "</strong> " +
-          '<button class="btn sec mini" id="btnCsv">⬇ Exportar CSV</button></span></div>' +
+          '<button class="btn sec mini" id="btnCsv">Exportar CSV</button></span></div>' +
           (recs.length ? '<table class="tabela"><tr><th>COMPETÊNCIA</th><th>VENCIMENTO</th><th>VALOR</th><th>STATUS</th></tr>' + recs.map(function (r2) {
             var venc = r2.status === "aberto" && r2.vencimento < hoje;
             return "<tr><td>" + esc(r2.competencia || "—") + "</td><td>" + S.fmtData(r2.vencimento) + "</td><td>" + S.fmtBRL(+r2.valor) + "</td>" +
@@ -415,14 +415,14 @@
               diasDesde(r2.vencimento) + " dia(s)</strong></td><td>" + S.fmtBRL(+r2.valor) + "</td></tr>";
           }).join("") + "</table>" +
           (a.zap ? '<a class="btn whats" style="margin-top:12px;" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") +
-            "?text=" + encodeURIComponent("Oi " + a.nome.split(" ")[0] + "! Passando para lembrar da mensalidade em aberto (" + S.fmtBRL(devTotal) + "). Consegue regularizar essa semana? 💜") + '">💬 Cobrar no WhatsApp</a>' : "")
-          : '<div class="vazio">👍 Esse cliente está em dia com seus pagamentos!</div>') + "</div>";
+            "?text=" + encodeURIComponent("Oi " + a.nome.split(" ")[0] + "! Passando para lembrar da mensalidade em aberto (" + S.fmtBRL(devTotal) + "). Consegue regularizar essa semana? 💜") + '">Cobrar no WhatsApp</a>' : "")
+          : '<div class="vazio">Esse cliente está em dia com seus pagamentos!</div>') + "</div>";
       }
       if (subFin === "credor") {
         html += '<div class="card"><h2>Saldo credor</h2>' +
           '<div class="kv"><span>Crédito disponível</span><span style="font-weight:800; color:var(--ok);">' + S.fmtBRL(+(a.saldoCredor || 0)) + "</span></div>" +
           '<div class="linha-flex" style="margin-top: 10px;">' +
-          '<button class="btn mini" id="crAdd">➕ Adicionar crédito</button>' +
+          '<button class="btn mini" id="crAdd">Adicionar crédito</button>' +
           ((+a.saldoCredor || 0) > 0 ? '<button class="btn ok mini" id="crUsar">✓ Usar p/ quitar parcela</button><button class="btn sec mini" id="crTransf">⇄ Transferir p/ outro aluno</button>' : "") +
           "</div>" +
           ((a.creditos || []).length ? '<h2 style="margin-top: 14px;">Movimentações do crédito</h2>' + a.creditos.slice().reverse().map(function (cr) {
@@ -444,7 +444,7 @@
       });
       var titularDe = (a.contratos || []).map(function (c9) { return c9.titularNome && c9.status === "ativo" ? c9.titularNome : null; }).filter(Boolean)[0];
       var familiaHTML = (dependentes.length || titularDe) ?
-        '<div class="card" style="margin-bottom: 12px;"><h2>👨‍👩‍👧 Plano família</h2>' +
+        '<div class="card" style="margin-bottom: 12px;"><h2>Plano família</h2>' +
         (titularDe ? '<div class="kv"><span>Responsável financeiro</span><span>' + esc(titularDe) + " (as mensalidades são cobradas dele)</span></div>" : "") +
         (dependentes.length ? '<div class="kv"><span>Dependentes vinculados</span><span>' + esc(dependentes.join(", ")) + "</span></div>" : "") +
         "</div>" : "";
@@ -457,7 +457,7 @@
           return "<tr><td><strong>" + esc(p.nome || "plano") + "</strong>" + (c.renovacaoDe ? ' <span class="tag neutro">RENOVAÇÃO</span>' : "") + (c.principalId ? ' <span class="tag neutro">ADICIONAL</span>' : "") + "</td>" +
             "<td>" + S.fmtData(c.inicio) + " → " + S.fmtData(fimDe(c)) + "</td><td>" + S.fmtBRL(+c.valor || 0) + "/mês</td>" +
             "<td>" + tag + (c.motivoCancel ? '<div class="muted" style="font-size:11.5px;">motivo: ' + esc(c.motivoCancel) + "</div>" : "") + "</td>" +
-            '<td style="text-align:right;"><button class="btn sec mini" data-verct="' + c.id + '" title="Detalhes do contrato" style="padding:3px 9px;">👁</button></td></tr>';
+            '<td style="text-align:right;"><button class="btn sec mini" data-verct="' + c.id + '" title="Detalhes do contrato" style="padding:3px 9px;"></button></td></tr>';
         }).join("") + "</table>" : '<p class="muted">Nenhum contrato registrado.</p>') + "</div>";
     }
     if (secao === "turmas") {

@@ -50,7 +50,7 @@
       <span class="status-caixa" id="statusCaixa"></span>
     </div>
     <div class="linha-flex">
-      <label class="linha-flex no-print" style="gap: 5px; font-size: 12.5px; margin: 0 10px 0 0;"><input type="checkbox" id="chkCego" style="width:auto;"> 🙈 Caixa cego</label>
+      <label class="linha-flex no-print" style="gap: 5px; font-size: 12.5px; margin: 0 10px 0 0;"><input type="checkbox" id="chkCego" style="width:auto;"> Caixa cego</label>
       <div class="linha-flex" id="acoesCaixa"></div>
     </div>
   </div>
@@ -149,7 +149,7 @@
     var cego = !!(S.read("caixa", {}).cego);
     $("chkCego").checked = cego;
     var ocultar = cego && d && !d.fechado; // esconde o acumulado enquanto aberto
-    var oculto = '<div class="card"><div class="n">🙈</div><div class="muted">oculto (caixa cego)</div></div>';
+    var oculto = '<div class="card"><div class="n"></div><div class="muted">oculto (caixa cego)</div></div>';
     $("cards").innerHTML =
       '<div class="card"><div class="n">' + S.fmtBRL(d ? +d.abertura || 0 : 0) + '</div><div class="muted">troco inicial</div></div>' +
       (ocultar ? oculto : '<div class="card"><div class="n">' + S.fmtBRL(t.formas.dinheiro) + '</div><div class="muted">dinheiro</div></div>') +

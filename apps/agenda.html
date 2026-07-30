@@ -61,7 +61,7 @@
       <button class="btn sec mini" id="navHoje">Hoje</button>
     </div>
     <button class="btn" id="btnNovo">+ Encontrar horário</button>
-    <button class="btn sec" id="btnICS" title="Baixa um arquivo .ics para abrir no Google Calendar / calendário do celular">📆 Exportar (.ics)</button>
+    <button class="btn sec" id="btnICS" title="Baixa um arquivo .ics para abrir no Google Calendar / calendário do celular">Exportar (.ics)</button>
   </div>
 
   <div class="card linha-flex" style="justify-content: space-between;">
@@ -122,7 +122,7 @@
     <div class="linha-flex" style="justify-content: space-between;">
       <button class="btn perigo mini" id="detExcluir">Excluir</button>
       <div class="linha-flex">
-        <button class="btn sec mini" id="detEditar">✎ Editar</button>
+        <button class="btn sec mini" id="detEditar">Editar</button>
         <button class="btn sec" id="detFechar">Fechar</button>
       </div>
     </div>
@@ -200,7 +200,7 @@
     $("resumoDia").textContent = lista.length ? lista.length + " compromisso(s) · " + pend + " pendente(s)" : "";
 
     if (!lista.length) {
-      $("quadroAgenda").innerHTML = '<div class="dia-lista"><div class="sem-expediente"><span class="ico">🗓</span>' +
+      $("quadroAgenda").innerHTML = '<div class="dia-lista"><div class="sem-expediente"><span class="ico"></span>' +
         (turno || busca ? "Nada neste período com esses filtros." : "Sem expediente — nenhum compromisso neste dia.") +
         "</div></div>";
       return;
@@ -307,7 +307,7 @@
       (c.status !== "concluido" ? '<button class="btn ok mini" data-acao="concluir">✓ Compareceu</button>' :
         '<button class="btn sec mini" data-acao="reabrir">↩ Reabrir</button>') +
       (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + c.zap +
-        "?text=" + encodeURIComponent(msg) + '">💬 Lembrete WhatsApp</a>' : "");
+        "?text=" + encodeURIComponent(msg) + '">Lembrete WhatsApp</a>' : "");
     $("dlgDet").showModal();
   }
   $("quadroAgenda").addEventListener("click", function (e) {

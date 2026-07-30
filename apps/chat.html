@@ -121,20 +121,20 @@
 <main class="corpo">
 
   <div class="abas">
-    <button data-aba="conversas" class="ativa">💬 Conversas</button>
-    <button data-aba="bot">🤖 Chatbot (menu)</button>
-    <button data-aba="ia">✨ IA e automação</button>
-    <button data-aba="instalar">🔌 Instalação (passo a passo)</button>
+    <button data-aba="conversas" class="ativa">Conversas</button>
+    <button data-aba="bot">Chatbot (menu)</button>
+    <button data-aba="ia">IA e automação</button>
+    <button data-aba="instalar">Instalação (passo a passo)</button>
   </div>
 
   <!-- ============ CONVERSAS ============ -->
   <section id="aba-conversas">
     <div id="avisoNuvem" class="aviso-api" hidden>
-      ☁️ Para usar o chat, entre com a sua conta da nuvem (botão “Entrar” na página inicial do portal).
+      Para usar o chat, entre com a sua conta da nuvem (botão “Entrar” na página inicial do portal).
       As conversas ficam no Supabase e aparecem em todos os aparelhos da equipe.
     </div>
     <div id="avisoTabela" class="aviso-api" hidden style="margin-bottom:10px">
-      ⚠️ As tabelas do chat ainda não existem na nuvem. Rode o bloco “CHAT UNIFICADO” do arquivo
+      As tabelas do chat ainda não existem na nuvem. Rode o bloco “CHAT UNIFICADO” do arquivo
       <b>supabase-setup.sql</b> no SQL Editor do Supabase (aba Instalação, passo 1).
     </div>
     <div class="chatwrap" id="chatwrap" hidden>
@@ -145,13 +145,13 @@
           <span class="quem" id="tQuem"></span>
           <span class="tag-canal" id="tCanal"></span>
           <label class="auto-sw" title="Quando ligado, a IA responde sozinha esta conversa">
-            <input type="checkbox" id="swAuto"> 🤖 IA automática
+            <input type="checkbox" id="swAuto"> IA automática
           </label>
         </div>
         <div class="msgs" id="msgs"><div class="vazio">Escolha uma conversa ao lado.<br>Quando alguém mandar mensagem no WhatsApp ou no Instagram, ela aparece aqui.</div></div>
         <div class="composer" id="composer" hidden>
           <textarea id="txtMsg" placeholder="Escreva a resposta… (Enter envia, Shift+Enter quebra linha)"></textarea>
-          <button class="sec" id="btnSugerir" title="A IA escreve uma sugestão; você revisa antes de enviar">✨ Sugerir</button>
+          <button class="sec" id="btnSugerir" title="A IA escreve uma sugestão; você revisa antes de enviar">Sugerir</button>
           <button id="btnEnviar">Enviar</button>
         </div>
       </div>
@@ -162,7 +162,7 @@
   <section id="aba-bot" hidden>
     <div class="grade-bot">
       <div class="card">
-        <h2>🤖 Chatbot — fluxograma</h2>
+        <h2>Chatbot — fluxograma</h2>
         <p class="mut"><b>Arraste os balões</b> pela tela para organizar. Para ligar um passo no outro, <b>pegue a bolinha roxa 🟣 e arraste a linha até o balão de destino</b>. Para desligar uma ligação, clique na linha (ou solte a bolinha num espaço vazio). A conversa começa pelo balão com a borda roxa (clique em ▶ para trocar).</p>
         <label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:10px 0">
           <input type="checkbox" id="botAtivo"> Ligar o chatbot para toda conversa nova
@@ -175,7 +175,7 @@
           <button class="btn sec mini" data-add="ia">+ 🤖 IA</button>
           <button class="btn sec mini" data-add="equipe">+ 🙋 Equipe</button>
           <span style="flex:1"></span>
-          <button class="btn sec mini" id="btnOrganizar" title="Reorganiza os balões automaticamente">🪄 Organizar</button>
+          <button class="btn sec mini" id="btnOrganizar" title="Reorganiza os balões automaticamente">Organizar</button>
           <button class="btn sec mini" id="btnZoomMenos" title="Afastar">−</button>
           <button class="btn sec mini" id="btnZoomMais" title="Aproximar">+</button>
         </div>
@@ -188,7 +188,7 @@
         <p id="botStatus" class="mut" style="margin-top:8px"></p>
       </div>
       <div class="card">
-        <h2>🧪 Simulador — converse com o seu robô</h2>
+        <h2>Simulador — converse com o seu robô</h2>
         <p class="mut">Teste como o cliente vai ver, antes de ligar — usa os balões do canvas mesmo sem salvar. Balões de IA chamam o Claude de verdade se a chave já estiver configurada.</p>
         <div class="sim-box" id="simBox"><div class="vazio">Escreva “oi” para começar 👇</div></div>
         <div class="composer" style="border:1px solid var(--linha);border-top:0">
@@ -203,7 +203,7 @@
   <!-- ============ IA E AUTOMAÇÃO ============ -->
   <section id="aba-ia" hidden>
     <div class="card">
-      <h2>🤖 Resposta automática (Claude)</h2>
+      <h2>Resposta automática (Claude)</h2>
       <p class="mut">Com o modo automático ligado, toda mensagem recebida é respondida na hora pela IA — usando as instruções abaixo. Você pode ligar para todas as conversas novas (aqui) ou só para conversas específicas (chavinha dentro de cada conversa).</p>
       <label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:10px 0">
         <input type="checkbox" id="cfgAutoGlobal"> Ligar a IA automática para toda conversa nova
@@ -213,7 +213,7 @@
       <textarea id="cfgPrompt" rows="8" style="width:100%;border:1px solid var(--linha);padding:10px;font-family:inherit;font-size:13.5px" placeholder="Ex.: Horários: seg a sex 6h–22h, sáb 8h–12h. Planos: Mensal R$ 149, Trimestral R$ 399. Aula experimental grátis: peça nome e melhor horário e diga que a equipe confirma. Endereço: Rua X, 123."></textarea>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" id="btnSalvarCfg">Salvar</button>
-        <button class="btn sec" id="btnTestar">🔎 Testar conexões</button>
+        <button class="btn sec" id="btnTestar">Testar conexões</button>
       </div>
       <p id="cfgStatus" class="mut" style="margin-top:8px"></p>
     </div>
@@ -345,7 +345,7 @@
       var icone = c.canal === "instagram" ? "📷" : "💬";
       var direita = c.nao_lidas > 0
         ? '<span class="badge">' + c.nao_lidas + "</span>"
-        : (c.modo_auto ? '<span class="robo" title="IA respondendo sozinha">🤖</span>' : "");
+        : (c.modo_auto ? '<span class="robo" title="IA respondendo sozinha"></span>' : "");
       return '<div class="conv' + (atual && atual.id === c.id ? " sel" : "") + '" data-id="' + c.id + '">' +
         '<span class="icone">' + icone + "</span>" +
         '<div style="min-width:0"><div class="quem">' + esc(c.nome || c.contato_id) + "</div>" +
@@ -579,9 +579,9 @@
           '<span class="porta" data-porta="' + b.id + ":" + i + '" title="Arraste a linha até o balão de destino"></span></div>';
       }).join("") + '<button class="btn sec mini op-add" style="margin-top:6px">+ opção</button>';
     } else if (b.tipo === "ia") {
-      h += '<div class="no-saida">🤖 o Claude assume a conversa</div>';
+      h += '<div class="no-saida">o Claude assume a conversa</div>';
     } else if (b.tipo === "equipe") {
-      h += '<div class="no-saida">🙋 a equipe assume a conversa</div>';
+      h += '<div class="no-saida">a equipe assume a conversa</div>';
     } else {
       h += '<div class="no-saida">próximo passo <span class="porta" data-porta="' + b.id +
         '" title="Arraste a linha até o balão de destino"></span></div>';
@@ -836,12 +836,12 @@
     funcao({ acao: "testar", historico: sim.historico }).then(function (d) {
       var t = (d && d.ok && d.texto) ? d.texto
         : "(simulação: a IA de verdade responderia aqui — " + ((d && d.erro) || "publique a função chat-envia e configure a ANTHROPIC_API_KEY") + ")";
-      alvo.innerHTML = esc(t) + '<span class="meta-msg">🤖 IA</span>';
+      alvo.innerHTML = esc(t) + '<span class="meta-msg">IA</span>';
       sim.historico.push({ de: "ia", texto: t });
       box.scrollTop = box.scrollHeight;
     }).catch(function () {
       var t = "(simulação: a IA de verdade responderia aqui — publique a função chat-envia, aba Instalação)";
-      alvo.innerHTML = esc(t) + '<span class="meta-msg">🤖 IA</span>';
+      alvo.innerHTML = esc(t) + '<span class="meta-msg">IA</span>';
       sim.historico.push({ de: "ia", texto: t });
     });
   }

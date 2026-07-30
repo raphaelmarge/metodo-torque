@@ -44,11 +44,11 @@
 
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="abas" id="abas">
-      <button data-a="faltantes" class="ativa">😶 Faltantes</button>
-      <button data-a="aniver">🎂 Aniversariantes</button>
-      <button data-a="contratos">📄 Contratos vencendo</button>
+      <button data-a="faltantes" class="ativa">Faltantes</button>
+      <button data-a="aniver">Aniversariantes</button>
+      <button data-a="contratos">Contratos vencendo</button>
       <button data-a="treinos">⏱ Treinos vencendo</button>
-      <button data-a="avaliacoes">🩺 Avaliações vencidas</button>
+      <button data-a="avaliacoes">Avaliações vencidas</button>
     </div>
     <span class="muted" id="dica"></span>
   </div>
@@ -79,7 +79,7 @@
   function waLink(a, msg) {
     if (!a.zap) return "";
     var zap = String(a.zap).replace(/\D/g, "");
-    return '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + zap + "?text=" + encodeURIComponent(msg) + '">💬 WhatsApp</a>';
+    return '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + zap + "?text=" + encodeURIComponent(msg) + '">WhatsApp</a>';
   }
   function diasDesde(iso) {
     return Math.floor((new Date(S.todayISO()) - new Date(iso)) / 864e5);

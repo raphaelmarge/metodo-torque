@@ -34,11 +34,11 @@
     <div class="linha-flex" style="align-items: flex-end;">
       <div class="abas" id="abas">
         <button data-f="todos" class="ativa">Todos</button>
-        <button data-f="alto">🔴 Alto</button>
-        <button data-f="medio">🟡 Médio</button>
-        <button data-f="baixo">🟢 Baixo</button>
+        <button data-f="alto">Alto</button>
+        <button data-f="medio">Médio</button>
+        <button data-f="baixo">Baixo</button>
       </div>
-      <button class="btn sec mini" id="btnCsv">⬇ Exportar CSV</button>
+      <button class="btn sec mini" id="btnCsv">Exportar CSV</button>
     </div>
     <div class="media">Média de risco de abandono: <strong id="media">0</strong><span class="muted">/100</span></div>
   </div>
@@ -98,7 +98,7 @@
           "<td><strong>" + x.dias + "</strong></td>" +
           "<td>" + x.nota + "/100 " + tag + "</td>" +
           "<td>" + (x.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-            String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "") + "</td></tr>";
+            String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '"></a>' : "") + "</td></tr>";
       }).join("") : '<tr><td colspan="6" class="muted" style="padding: 20px;">Nenhum aluno nessa faixa. 🎉</td></tr>');
   }
 

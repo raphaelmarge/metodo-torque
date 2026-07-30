@@ -47,7 +47,7 @@
       <label style="margin: 0;">Selecione o mês</label>
       <select id="selMes" style="width: auto;"></select>
     </div>
-    <button class="btn sec" onclick="window.print()">🖨 Imprimir</button>
+    <button class="btn sec" onclick="window.print()">Imprimir</button>
   </div>
 
   <div style="text-align: center; margin-bottom: 12px;" class="only-print">
@@ -55,7 +55,7 @@
   </div>
 
   <div class="bloco" style="margin-bottom: 16px;">
-    <h3>🎯 METAS DO MÊS &amp; PROJEÇÃO</h3>
+    <h3>METAS DO MÊS &amp; PROJEÇÃO</h3>
     <div class="corpo-bloco">
       <div class="linha-flex no-print" style="gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
         <label style="margin:0;font-size:12.5px;">Meta de faturamento (R$) <input id="mtFat" type="number" min="0" style="width:130px;"></label>
@@ -170,7 +170,7 @@
       '<div class="kv"><span>Ticket médio</span><strong>' + S.fmtBRL(ticket) + "</strong></div>" +
       '<div class="kv"><span>LTV estimado <small style="color:var(--cinza)">(ticket × vida média de ' + vidaMedia.toFixed(1).replace(".", ",") + " meses)</small></span><strong>" + S.fmtBRL(ltv) + "</strong></div>" +
       ((+mt.faturamento || 0) > projFat && diaAtual < diasNoMes && (+mt.faturamento || 0) > 0 && ticket > 0
-        ? '<p class="muted" style="margin:8px 0 0;">💡 No ritmo atual faltam <b>' + S.fmtBRL((+mt.faturamento || 0) - projFat) + "</b> para a meta — ≈ <b>" +
+        ? '<p class="muted" style="margin:8px 0 0;">No ritmo atual faltam <b>' + S.fmtBRL((+mt.faturamento || 0) - projFat) + "</b> para a meta — ≈ <b>" +
           Math.ceil(((+mt.faturamento || 0) - projFat) / ticket) + " matrículas</b> até o fim do mês.</p>" : "");
   }
   document.addEventListener("click", function (e) {

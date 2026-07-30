@@ -47,7 +47,7 @@
       <div class="campo"><label>Consultor(a)</label><select id="fConsultor"><option value="">Todos</option></select></div>
       <div class="campo"><label style="visibility: hidden;">.</label>
         <label style="display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 600; font-size: 13px;">
-          <input type="checkbox" id="fAniver" style="width: auto;">🎂 aniversariantes do mês
+          <input type="checkbox" id="fAniver" style="width: auto;">aniversariantes do mês
         </label>
       </div>
     </div>
@@ -57,8 +57,8 @@
     <strong id="contagem" style="color: var(--roxo); font-size: 15px;"></strong>
     <div class="linha-flex">
       <div class="campo" style="min-width: 260px; margin: 0;"><input id="msgPadrao" placeholder="Mensagem para o WhatsApp (usa {nome})…"></div>
-      <button class="btn sec" id="btnCsv">⬇ Exportar CSV</button>
-      <button class="btn sec" id="btnCopiar">📋 Copiar telefones</button>
+      <button class="btn sec" id="btnCsv">Exportar CSV</button>
+      <button class="btn sec" id="btnCopiar">Copiar telefones</button>
     </div>
   </div>
 
@@ -146,7 +146,7 @@
         (ult ? "último treino " + S.fmtData(ult) : "nunca treinou") +
         (atras ? ' · <span style="color:var(--erro)">' + atras + "d de atraso</span>" : "") + "</div></div>" +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-          String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(texto) + '">💬 WhatsApp</a>' : '<span class="muted">sem zap</span>') +
+          String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(texto) + '">WhatsApp</a>' : '<span class="muted">sem zap</span>') +
         "</div>";
     }).join("") : '<div class="vazio">Nenhum cliente com esses filtros.</div>';
   }

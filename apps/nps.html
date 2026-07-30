@@ -65,9 +65,9 @@
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="abas" id="filtros">
       <button data-f="" class="ativa">Todas</button>
-      <button data-f="det">😠 Detratores (0-6)</button>
-      <button data-f="neu">😐 Neutros (7-8)</button>
-      <button data-f="pro">😍 Promotores (9-10)</button>
+      <button data-f="det">Detratores (0-6)</button>
+      <button data-f="neu">Neutros (7-8)</button>
+      <button data-f="pro">Promotores (9-10)</button>
     </div>
     <div class="linha-flex">
       <button class="btn sec mini" id="mesAnt">‹</button>
@@ -168,8 +168,8 @@
         '<div class="sub">' + S.fmtData(r.data) + (r.comentario ? ' · "' + esc(r.comentario) + '"' : "") + "</div></div>" +
         (r.nota <= 6 ? (r.tratado
           ? '<span class="tag ok">TRATADO ✓</span>'
-          : '<button class="btn mini" data-tratar="' + r.id + '">☎ Marquei a ligação</button>' +
-            (al && al.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(al.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "")) : "") +
+          : '<button class="btn mini" data-tratar="' + r.id + '">Marquei a ligação</button>' +
+            (al && al.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(al.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '"></a>' : "")) : "") +
         '<button class="btn perigo mini" data-del="' + r.id + '" style="padding: 4px 9px;">✕</button></div>';
     }).join("") : '<div class="vazio">Nenhuma resposta ' + (filtro ? "nesse grupo " : "") + "neste mês.</div>";
   }

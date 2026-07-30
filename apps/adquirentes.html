@@ -51,7 +51,7 @@
 
   <div class="card linha-flex" style="justify-content: space-between;">
     <p class="muted" style="font-size: 13px;">Taxas em % sobre a venda. No EVO essa tela é a "Cartões e Gateways de Pagamento", com a tabela por bandeira.</p>
-    <button class="btn" id="btnNova">➕ Nova adquirente</button>
+    <button class="btn" id="btnNova">Nova adquirente</button>
   </div>
   <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
 </main>
@@ -129,7 +129,7 @@
           '</td><td class="num">' + pct(+a.cred2 || 0) + '</td><td class="num">' + pct(+a.cred7 || 0) + "</td><td>" +
           (a.prazo ? "D+" + a.prazo : "—") + "</td><td>" +
           (a.status === "inativo" ? '<span class="tag neutro">INATIVA</span>' : '<span class="tag ok">ATIVA</span>') +
-          '</td><td><button class="btn sec mini" data-edit="' + a.id + '">✏</button></td></tr>';
+          '</td><td><button class="btn sec mini" data-edit="' + a.id + '"></button></td></tr>';
       }).join("") : '<tr><td colspan="8" class="muted" style="padding: 20px;">Nenhuma adquirente cadastrada — clique em ➕ Nova adquirente e copie as taxas do seu contrato com a maquininha.</td></tr>');
     simula();
   }

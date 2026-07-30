@@ -375,7 +375,7 @@ function ok(cond, nome) {
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
   ok(/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "app tem diário de cargas com recorde");
   ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
-  ok(/💳 Meu plano/.test(appHtml) && /Mensal 3x/.test(appHtml) && new RegExp("todo dia " + diaVenc).test(appHtml), "app tem o card 💳 Meu plano (plano + vencimento)");
+  ok(/Meu plano/.test(appHtml) && /Mensal 3x/.test(appHtml) && new RegExp("todo dia " + diaVenc).test(appHtml), "app tem o card Meu plano (plano + vencimento)");
   ok(/pixAluno/.test(appHtml) && /pixCopiaAluno/.test(appHtml), "app com Pix copia-e-cola e botão de copiar");
   ok(/data:image\/gif/.test(appHtml), "QR Code do Pix embutido no app");
   const pixAppCode = (appHtml.match(/id='pixAluno'[^>]*>([^<]+)<\/textarea>/) || [])[1] || "";
@@ -391,7 +391,7 @@ function ok(cond, nome) {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
   });
-  ok(/🔑 Meu login/.test(appHtml2) && /aluno_define_login/.test(appHtml2), "app com token ganha o card 🔑 pra criar login e senha");
+  ok(/Meu login/.test(appHtml2) && /aluno_define_login/.test(appHtml2), "app com token ganha o card pra criar login e senha");
   const pApp = await ctx.newPage();
   const errosApp = [];
   pApp.on("pageerror", (e) => errosApp.push(String(e)));

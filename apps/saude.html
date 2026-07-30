@@ -71,9 +71,9 @@
     </div>
   </div>
   <div class="card" style="margin-top: 16px;">
-    <h2>📈 Resultados dos alunos (evolução entre avaliações)</h2>
+    <h2>Resultados dos alunos (evolução entre avaliações)</h2>
     <p class="muted" style="margin: 4px 0 10px;">Da base com 2+ avaliações: quem evoluiu, quanto em média, e os maiores progressos. Aluno que VÊ resultado renova — e print de evolução é o melhor marketing que existe.</p>
-    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnEvoCSV">📤 CSV</button></div>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnEvoCSV">CSV</button></div>
     <div id="resultados" class="muted">Ainda não há alunos com 2+ avaliações.</div>
   </div>
 </main>
@@ -92,7 +92,7 @@
       <div class="campo"><label>% Gordura</label><input id="vGordura" type="number" step="0.1" min="0"></div>
     </div>
     <details style="border: 1px dashed var(--linha); border-radius: 10px; padding: 10px 14px;">
-      <summary style="cursor: pointer; font-weight: 700; font-size: 13px;">📐 Calcular % de gordura por dobras cutâneas (Pollock 3 · Pollock 7 · Guedes)</summary>
+      <summary style="cursor: pointer; font-weight: 700; font-size: 13px;">Calcular % de gordura por dobras cutâneas (Pollock 3 · Pollock 7 · Guedes)</summary>
       <div class="linha-flex" style="margin: 10px 0;">
         <select id="dbMetodo" style="width: auto;">
           <option value="p3">Pollock 3 dobras</option>
@@ -101,7 +101,7 @@
         </select>
         <select id="dbSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
         <input id="dbIdade" type="number" min="10" max="99" placeholder="Idade" style="width: 90px;">
-        <button type="button" class="btn sec mini" id="dbCalc">🧮 Calcular</button>
+        <button type="button" class="btn sec mini" id="dbCalc">Calcular</button>
       </div>
       <div id="dbCampos" class="linha-flex" style="margin-bottom: 8px;"></div>
       <span id="dbResultado" style="font-weight: 700; font-size: 13px;"></span>
@@ -120,8 +120,8 @@
     </div>
     <div class="campo"><label>Observações</label><input id="vObs" placeholder="postura, objetivos, restrições…"></div>
     <div class="grid-2">
-      <div class="campo"><label>📸 Foto de frente (opcional)</label><input id="vFotoF" type="file" accept="image/*" capture="environment"></div>
-      <div class="campo"><label>📸 Foto de perfil (opcional)</label><input id="vFotoL" type="file" accept="image/*" capture="environment"></div>
+      <div class="campo"><label>Foto de frente (opcional)</label><input id="vFotoF" type="file" accept="image/*" capture="environment"></div>
+      <div class="campo"><label>Foto de perfil (opcional)</label><input id="vFotoL" type="file" accept="image/*" capture="environment"></div>
     </div>
     <p class="mut" style="margin:0;font-size:12px;">As fotos são comprimidas e ficam no cadastro — o comparador antes × depois aparece no histórico e no app do aluno.</p>
     <div class="linha-flex" style="justify-content: flex-end;">
@@ -139,7 +139,7 @@
       <div class="campo"><label>Atividade / aula</label><input id="dAtividade" placeholder="ex.: Musculação — treino B"></div>
     </div>
     <div class="campo"><label>Como o cliente se sentiu?</label>
-      <select id="dSentiu"><option value="">—</option><option>😀 Muito bem</option><option>🙂 Bem</option><option>😐 Normal</option><option>😣 Cansado</option><option>🤕 Com dor/desconforto</option></select>
+      <select id="dSentiu"><option value="">—</option><option>Muito bem</option><option>Bem</option><option>Normal</option><option>Cansado</option><option>Com dor/desconforto</option></select>
     </div>
     <div class="campo"><label>Evolução / observações da sessão</label><input id="dDetalhe" placeholder="cargas, exercícios, o que evoluiu, o que ajustar"></div>
     <div class="linha-flex" style="justify-content: flex-end;">
@@ -316,7 +316,7 @@
             return "<div><span class='muted' style='font-size: 11px;'>" + m[1] + "</span><br><strong>" + val + " cm</strong> " +
               delta(val, anterior && (anterior.medidas || {})[m[0]]) + "</div>";
           }).join("") + "</div>" +
-          (v.obs ? '<div class="muted" style="margin-top: 10px;">📝 ' + esc(v.obs) + "</div>" : "") +
+          (v.obs ? '<div class="muted" style="margin-top: 10px;">' + esc(v.obs) + "</div>" : "") +
           "</div></div>";
       }).join("");
       return;
@@ -469,7 +469,7 @@
         (av.fotos.frente ? '<img src="' + av.fotos.frente + '" style="max-width:100%;max-height:220px;border-radius:8px;margin-top:6px;">' : "") +
         (av.fotos.lado ? '<img src="' + av.fotos.lado + '" style="max-width:100%;max-height:220px;border-radius:8px;margin-top:6px;">' : "") + "</div>";
     }
-    return '<div class="card" style="margin-top:14px;"><h2>📸 Antes × Depois</h2><div class="linha-flex" style="gap:14px;align-items:flex-start;flex-wrap:wrap;">' +
+    return '<div class="card" style="margin-top:14px;"><h2>Antes × Depois</h2><div class="linha-flex" style="gap:14px;align-items:flex-start;flex-wrap:wrap;">' +
       bloco(antes, "ANTES") + (depois !== antes ? bloco(depois, "DEPOIS") : "") + "</div></div>";
   };
 })();
@@ -518,7 +518,7 @@
     el.innerHTML = '<p style="margin:0 0 10px;font-size:14px;"><b>' + melhoraram.length + " de " + linhas.length +
       " aluno(s) (" + Math.round(100 * melhoraram.length / linhas.length) + "%) evoluíram</b>" +
       (mediaGord != null ? " · média de gordura: " + fx(mediaGord, " pt") : "") + "</p>" +
-      (top.length ? '<p class="muted" style="margin:0 0 8px;">🏆 Maiores progressos: ' +
+      (top.length ? '<p class="muted" style="margin:0 0 8px;">Maiores progressos: ' +
         top.map(function (l) { return "<b>" + escE(l.nome.split(" ")[0]) + "</b> (" + l.dGord.toFixed(1).replace(".", ",") + " pt de gordura)"; }).join(" · ") + "</p>" : "") +
       '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
       "<tr><th style='text-align:left;padding:6px 8px;'>ALUNO</th><th style='text-align:right;'>AVALIAÇÕES</th><th style='text-align:right;'>PESO</th><th style='text-align:right;'>GORDURA</th><th style='text-align:left;padding-left:12px;'>PERÍODO</th></tr>" +

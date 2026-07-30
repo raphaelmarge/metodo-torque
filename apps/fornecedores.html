@@ -40,7 +40,7 @@
 
   <div class="card linha-flex" style="justify-content: space-between;">
     <span class="muted">O gasto vem das Contas a Pagar cujo campo "Fornecedor" bate com o nome cadastrado.</span>
-    <button class="btn" id="btnNovo">➕ Novo fornecedor</button>
+    <button class="btn" id="btnNovo">Novo fornecedor</button>
   </div>
 
   <div id="lista"></div>
@@ -123,8 +123,8 @@
         '<div class="sub">' + [f.cnpj ? "CNPJ " + esc(f.cnpj) : "", f.obs ? esc(f.obs) : ""].filter(Boolean).join(" · ") + "</div></div>" +
         '<div class="gasto"><div class="v">' + S.fmtBRL(x.ano) + '</div><div class="l">12 MESES (' + x.qtd + ' conta(s))</div></div>' +
         '<div class="gasto"><div class="v">' + S.fmtBRL(x.mes) + '</div><div class="l">ESTE MÊS</div></div>' +
-        (f.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(f.zap).replace(/\D/g, "") + '">💬</a>' : "") +
-        '<button class="btn sec mini" data-edita="' + f.id + '">✏</button></div>';
+        (f.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(f.zap).replace(/\D/g, "") + '"></a>' : "") +
+        '<button class="btn sec mini" data-edita="' + f.id + '"></button></div>';
     }).join("") : '<div class="vazio">Nenhum fornecedor cadastrado. Clique em ➕ Novo fornecedor.</div>';
   }
 

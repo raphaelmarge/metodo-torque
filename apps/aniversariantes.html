@@ -89,7 +89,7 @@
     var doDia = lista.filter(function (x) { return x.dia === hojeDia; }).length;
     $("kpis").innerHTML =
       '<div class="kpi"><div class="rot">Aniversariantes no mês</div><div class="n">' + lista.length + '</div></div>' +
-      (hojeDia ? '<div class="kpi"><div class="rot">Fazem aniversário hoje</div><div class="n" style="color:var(--roxo)">🎂 ' + doDia + '</div></div>' : "");
+      (hojeDia ? '<div class="kpi"><div class="rot">Fazem aniversário hoje</div><div class="n" style="color:var(--roxo)">' + doDia + '</div></div>' : "");
 
     var cab = "<thead><tr><th class='dia'>Dia</th><th>Nome</th><th>Idade que faz</th><th>Situação</th><th>Parabéns</th><th></th></tr></thead>";
     var corpo = lista.length ? lista.map(function (x) {
@@ -99,8 +99,8 @@
         "<td>" + (x.idade > 0 && x.idade < 120 ? x.idade + " anos" : "—") + "</td>" +
         "<td>" + (x.ativo ? '<span class="tag ok">ATIVO</span>' : '<span class="tag neutro">INATIVO</span>') + "</td>" +
         "<td>" + (x.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' +
-          String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 🎉</a>' : '<span class="muted">—</span>') + "</td>" +
-        '<td><a class="btn sec mini" href="perfil-aluno.html?id=' + encodeURIComponent(x.a.id) + '" title="Ver perfil">👁</a></td></tr>';
+          String(x.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '"></a>' : '<span class="muted">—</span>') + "</td>" +
+        '<td><a class="btn sec mini" href="perfil-aluno.html?id=' + encodeURIComponent(x.a.id) + '" title="Ver perfil"></a></td></tr>';
     }).join("") : '<tr><td colspan="6" class="muted" style="text-align:center; padding:20px;">Nenhum aniversariante neste mês com os filtros atuais — confira se a data de nascimento está preenchida no cadastro.</td></tr>';
     $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
   }

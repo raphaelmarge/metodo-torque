@@ -87,25 +87,25 @@
     <div class="card">
       <h2>Por motivo (12 meses)</h2>
       <div id="motivos" style="margin-top: 6px;"></div>
-      <p class="muted" style="margin-top: 12px;">💡 O motivo é perguntado na hora do cancelamento, na ficha do aluno.</p>
+      <p class="muted" style="margin-top: 12px;">O motivo é perguntado na hora do cancelamento, na ficha do aluno.</p>
     </div>
   </div>
   <div class="card" style="margin-top: 16px;">
-    <h2>🧲 Retenção por atividade (coletivas × treino solto)</h2>
+    <h2>Retenção por atividade (coletivas × treino solto)</h2>
     <p class="muted" style="margin: 4px 0 10px;">O dado mais famoso do setor: quem participa de aulas coletivas cria vínculo e cancela menos. Se a diferença aparecer aí embaixo, a regra é clara — todo aluno novo sai da recepção com uma aula agendada.</p>
     <div id="retAtividade" class="muted">Sem dados suficientes ainda.</div>
   </div>
   <div class="card">
-    <h2>🏆 Desafio do mês (gamificação no app do aluno)</h2>
+    <h2>Desafio do mês (gamificação no app do aluno)</h2>
     <p class="muted" style="font-size: 13px;">Crie um desafio (ex.: 12 treinos no mês) — ele aparece no app de TODOS os alunos com barra de progresso e medalha. Aluno engajado em desafio não cancela.</p>
     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0;">
       <input id="dsfTitulo" placeholder="Nome (ex.: Desafio Julho Insano)" style="flex: 2; min-width: 180px;">
       <input id="dsfMeta" type="number" min="1" max="31" placeholder="Treinos" style="width: 100px;" title="Quantos check-ins no mês completam o desafio">
-      <input id="dsfMedalha" placeholder="🥇" maxlength="4" style="width: 70px;" title="Emoji da medalha">
+      <input id="dsfMedalha" placeholder="" maxlength="4" style="width: 70px;" title="Emoji da medalha">
       <button class="btn" id="dsfAdd">Lançar desafio</button>
     </div>
     <div id="dsfLista" class="muted">Nenhum desafio ainda.</div>
-    <p class="muted" style="font-size: 12px; margin-top: 8px;">⚠️ Depois de lançar, republique o app dos alunos para o desafio chegar neles.</p>
+    <p class="muted" style="font-size: 12px; margin-top: 8px;">Depois de lançar, republique o app dos alunos para o desafio chegar neles.</p>
   </div>
 
 </main>
@@ -360,7 +360,7 @@
   var card = document.createElement("div");
   card.className = "card";
   card.style.marginTop = "16px";
-  card.innerHTML = "<h2>📊 Retenção por safra (cohort)</h2>" +
+  card.innerHTML = "<h2>Retenção por safra (cohort)</h2>" +
     "<p class='muted' style='margin:4px 0 10px;'>Dos alunos que entraram em cada mês, quantos % seguiam com contrato ativo nos meses seguintes. Verde forte = retenção de elite; vermelho = a safra vazou — investigue o que aconteceu naquele mês (professor? preço? onboarding?).</p>" +
     "<div style='overflow-x:auto;'><table class='tabela'><thead><tr><th>Safra</th><th>Alunos</th>" +
     "<th>Mês 0</th><th>+1</th><th>+2</th><th>+3</th><th>+4</th><th>+5</th></tr></thead><tbody>" +
@@ -410,7 +410,7 @@
       linha("Frequenta aulas coletivas", "🧲", grupos.coletiva, "#16a34a") +
       linha("Só treino solto (nunca em aula)", "🏋️", grupos.solto, cS > cC ? "#dc2626" : "var(--texto)") +
       (grupos.solto.total && grupos.coletiva.total && cS > cC
-        ? '<p class="muted" style="margin:10px 0 0;">💡 Quem treina solto cancela <b>' +
+        ? '<p class="muted" style="margin:10px 0 0;">Quem treina solto cancela <b>' +
           (cC > 0 ? (cS / cC).toFixed(1).replace(".", ",") + "× mais" : "muito mais") +
           "</b> — bora agendar uma coletiva pra cada um deles?</p>" : "");
   }

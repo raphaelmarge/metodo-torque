@@ -51,9 +51,9 @@
     <h2 style="font-size: 18px; text-transform: none; letter-spacing: 0; color: var(--texto);" id="boasVindas">Que bom ter você aqui!</h2>
     <p class="muted" style="margin: 4px 0 14px;">Nesta tela estão os principais atalhos da operação.</p>
     <div class="linha-flex">
-      <button class="btn sec" id="atDashboard">📊 Dashboard</button>
-      <button class="btn sec" id="btnNovoAluno">👤+ Novo cadastro</button>
-      <button class="btn" id="btnNovaVenda">🛒 Nova venda</button>
+      <button class="btn sec" id="atDashboard">Dashboard</button>
+      <button class="btn sec" id="btnNovoAluno">+ Novo cadastro</button>
+      <button class="btn" id="btnNovaVenda">Nova venda</button>
     </div>
   </div>
 
@@ -61,10 +61,10 @@
 
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="abas" id="abas">
-      <button data-v="alunos" class="ativa">👥 Alunos</button>
-      <button data-v="receber">💳 A receber</button>
-      <button data-v="planos">🏷 Planos</button>
-      <button data-v="checkin">✅ Check-in</button>
+      <button data-v="alunos" class="ativa">Alunos</button>
+      <button data-v="receber">A receber</button>
+      <button data-v="planos">Planos</button>
+      <button data-v="checkin">Check-in</button>
     </div>
   </div>
 
@@ -128,7 +128,7 @@
       <div class="linha-flex">
         <input id="ckBusca" list="ckLista" placeholder="Nome do aluno…" style="flex: 1; min-width: 200px;">
         <datalist id="ckLista"></datalist>
-        <button class="btn" id="ckEntrar">✅ Registrar entrada</button>
+        <button class="btn" id="ckEntrar">Registrar entrada</button>
       </div>
       <div class="checkin-banner" id="ckBanner" style="margin-top: 12px;"></div>
     </div>
@@ -146,8 +146,8 @@
 
     <div class="linha-flex" style="gap: 14px;">
       <img id="aFotoPrev" alt="" hidden style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--roxo);">
-      <span id="aFotoVazia" class="avatar" style="width: 56px; height: 56px;">📷</span>
-      <label class="btn sec mini" style="cursor: pointer;">📷 Foto de perfil
+      <span id="aFotoVazia" class="avatar" style="width: 56px; height: 56px;"></span>
+      <label class="btn sec mini" style="cursor: pointer;">Foto de perfil
         <input id="aFoto" type="file" accept="image/*" capture="user" hidden></label>
     </div>
 
@@ -237,7 +237,7 @@
     <div id="vResultados" style="max-height: 220px; overflow-y: auto;"></div>
     <div style="border-top: 1px solid var(--linha); padding-top: 12px;">
       <span class="muted">Criar cadastro</span><br>
-      <button class="btn sec mini" id="vNovoCadastro" style="margin-top: 6px;">👤+ Novo cadastro</button>
+      <button class="btn sec mini" id="vNovoCadastro" style="margin-top: 6px;">+ Novo cadastro</button>
     </div>
     <div style="text-align: right;"><button class="btn sec" onclick="this.closest('dialog').close()">FECHAR</button></div>
   </div>
@@ -371,7 +371,7 @@
 </dialog>
 
 <dialog id="dlgContrato" style="max-width: 620px; width: 94vw;">
-  <h2 style="margin-bottom: 10px;">✍️ Contrato digital</h2>
+  <h2 style="margin-bottom: 10px;">Contrato digital</h2>
   <div id="ctrAceito" hidden style="background: #dcfce7; border: 1px solid #86efac; color: #15803d; padding: 10px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 10px;"></div>
   <div id="ctrTexto" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--linha); border-radius: 10px; padding: 14px 16px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; background: #faf9fc;"></div>
   <div id="ctrAceitar" style="margin-top: 12px;">
@@ -380,9 +380,9 @@
     <button class="btn" id="ctrOk" style="width: 100%; margin-top: 10px;">Li e ACEITO o contrato ✓</button>
   </div>
   <div class="linha-flex" style="justify-content: space-between; margin-top: 12px; flex-wrap: wrap; gap: 8px;">
-    <button class="btn sec mini" id="ctrEditar">✎ Editar modelo do contrato</button>
+    <button class="btn sec mini" id="ctrEditar">Editar modelo do contrato</button>
     <div style="display: flex; gap: 8px;">
-      <button class="btn sec mini" id="ctrImprimir">🖨 Imprimir</button>
+      <button class="btn sec mini" id="ctrImprimir">Imprimir</button>
       <form method="dialog"><button class="btn sec mini">Fechar</button></form>
     </div>
   </div>
@@ -598,7 +598,7 @@
       var tipo = { recorrente: "Recorrente", avista: "À vista", agregador: "Agregador" }[p.tipo];
       return "<tr><td><strong>" + esc(p.nome) + "</strong></td><td>" + (p.tipo === "agregador" ? "—" : S.fmtBRL(p.valor)) + "</td><td>" +
         p.meses + " mês(es)</td><td>" + tipo + "</td><td>" + n + '</td><td style="text-align:right;">' +
-        '<button class="btn sec mini" data-pregras="' + p.id + '" title="Restrições e suspensão">⚙</button> ' +
+        '<button class="btn sec mini" data-pregras="' + p.id + '" title="Restrições e suspensão"></button> ' +
         (n === 0 ? '<button class="btn perigo mini" data-pdel="' + p.id + '">excluir</button>' : "") + "</td></tr>";
     }).join("");
   }
@@ -639,30 +639,30 @@
     $("fStatus").innerHTML = '<span class="tag ' + sit.cls + '">' + sit.rot + "</span>";
 
     var acoes = [];
-    acoes.push('<a class="btn mini" href="perfil-aluno.html?id=' + a.id + '">👤 Perfil completo</a>');
-    if (a.zap) acoes.push('<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬 WhatsApp</a>');
-    if (!c) acoes.push('<button class="btn mini" data-facao="matricular">📝 Matricular</button>');
-    if (c && c.status === "ativo") acoes.push('<button class="btn sec mini" data-facao="congelar">❄ Congelar</button>');
+    acoes.push('<a class="btn mini" href="perfil-aluno.html?id=' + a.id + '">Perfil completo</a>');
+    if (a.zap) acoes.push('<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">WhatsApp</a>');
+    if (!c) acoes.push('<button class="btn mini" data-facao="matricular">Matricular</button>');
+    if (c && c.status === "ativo") acoes.push('<button class="btn sec mini" data-facao="congelar">Congelar</button>');
     if (c && c.status === "congelado") acoes.push('<button class="btn sec mini" data-facao="descongelar">▶ Reativar</button>');
-    if (c && st.planos.some(function (p) { return p.tipo === "adicional"; })) acoes.push('<button class="btn mini" data-facao="adicional">➕ Vender adicional</button>');
+    if (c && st.planos.some(function (p) { return p.tipo === "adicional"; })) acoes.push('<button class="btn mini" data-facao="adicional">Vender adicional</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="trocar" title="Trocar de plano com crédito dos dias restantes">⇆ Trocar plano</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="transferir" title="Transferir este contrato para outro cliente">⇄ Transferir contrato</button>');
-    if (c) acoes.push('<button class="btn sec mini" data-facao="altcontrato" title="Alterar início ou dia de vencimento">✎ Alterar contrato</button>');
+    if (c) acoes.push('<button class="btn sec mini" data-facao="altcontrato" title="Alterar início ou dia de vencimento">Alterar contrato</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="dias" title="Creditar/debitar dias no contrato">± Dias</button>');
-    if (!c && !a.restrito) acoes.push('<button class="btn perigo mini" data-facao="restringir" title="Bloquear compras, acesso e comunicação (regra do EVO)">🚫 Restringir</button>');
+    if (!c && !a.restrito) acoes.push('<button class="btn perigo mini" data-facao="restringir" title="Bloquear compras, acesso e comunicação (regra do EVO)">Restringir</button>');
     if (a.restrito) acoes.push('<button class="btn ok mini" data-facao="liberarrestricao">✓ Remover restrição</button>');
     if (c) acoes.push('<button class="btn perigo mini" data-facao="cancelar">✕ Cancelar contrato</button>');
     var cancelado = !c && (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })
       .sort(function (x, y) { return (x.canceladoEm || "") < (y.canceladoEm || "") ? -1 : 1; }).pop();
     if (cancelado) acoes.push('<button class="btn sec mini" data-facao="anular" data-cid="' + cancelado.id + '">↩ Anular cancelamento</button>');
-    acoes.push('<button class="btn sec mini" data-facao="contrato" title="Contrato digital com registro de aceite">✍️ Contrato' + (a.aceite ? " ✓" : "") + "</button>");
-    acoes.push('<button class="btn sec mini" data-facao="editar">✎ Editar dados</button>');
-    acoes.push('<button class="btn sec mini" data-facao="notificacao" title="Nota fixa visível a quem abrir o perfil">📌 Notificação</button>');
+    acoes.push('<button class="btn sec mini" data-facao="contrato" title="Contrato digital com registro de aceite">Contrato' + (a.aceite ? " ✓" : "") + "</button>");
+    acoes.push('<button class="btn sec mini" data-facao="editar">Editar dados</button>');
+    acoes.push('<button class="btn sec mini" data-facao="notificacao" title="Nota fixa visível a quem abrir o perfil">Notificação</button>');
     acoes.push('<button class="btn sec mini" data-facao="mesclar" title="Unificar com um cadastro duplicado">⇄ Mesclar</button>');
     if (a.status !== "inativo" && !c) acoes.push('<button class="btn sec mini" data-facao="inativar">Arquivar aluno</button>');
     $("fAcoes").innerHTML = acoes.join("");
     var notas = (a.notificacoes || []).slice(-5).reverse();
-    var notasHtml = notas.length ? '<div style="background: #fff7d6; border: 1px solid #e6d27a; padding: 8px 12px; font-size: 13px; margin-top: 6px;">📌 ' +
+    var notasHtml = notas.length ? '<div style="background: #fff7d6; border: 1px solid #e6d27a; padding: 8px 12px; font-size: 13px; margin-top: 6px;">' +
       notas.map(function (n) { return esc(n.txt) + ' <span class="muted" style="font-size:11px;">(' + S.fmtData(n.em) + ")</span>"; }).join("<br>") + "</div>" : "";
     var elNota = document.getElementById("fNotificacao");
     if (!elNota) { elNota = document.createElement("div"); elNota.id = "fNotificacao"; $("fAcoes").parentNode.insertBefore(elNota, $("fAcoes").nextSibling); }

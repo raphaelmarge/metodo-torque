@@ -102,9 +102,9 @@
     var cont = { alta: 0, media: 0, baixa: 0 };
     lista.forEach(function (x) { if (x.p.vagas) cont[x.p.faixa]++; });
     $("faixas").innerHTML =
-      '<div class="card" style="background:#e9f7ef;"><div class="n" style="font-size:26px;font-weight:800;color:var(--ok);">👍 ' + cont.alta + '</div><div class="muted">Performance alta (≥55% ocupação)</div></div>' +
-      '<div class="card" style="background:#fff6e6;"><div class="n" style="font-size:26px;font-weight:800;color:var(--alerta);">👌 ' + cont.media + '</div><div class="muted">Performance média (25–55%)</div></div>' +
-      '<div class="card" style="background:#fdecec;"><div class="n" style="font-size:26px;font-weight:800;color:var(--erro);">👎 ' + cont.baixa + '</div><div class="muted">Performance baixa (<25%)</div></div>';
+      '<div class="card" style="background:#e9f7ef;"><div class="n" style="font-size:26px;font-weight:800;color:var(--ok);">' + cont.alta + '</div><div class="muted">Performance alta (≥55% ocupação)</div></div>' +
+      '<div class="card" style="background:#fff6e6;"><div class="n" style="font-size:26px;font-weight:800;color:var(--alerta);">' + cont.media + '</div><div class="muted">Performance média (25–55%)</div></div>' +
+      '<div class="card" style="background:#fdecec;"><div class="n" style="font-size:26px;font-weight:800;color:var(--erro);">' + cont.baixa + '</div><div class="muted">Performance baixa (<25%)</div></div>';
 
     $("lista").innerHTML = lista.length ? lista.map(function (x, i) {
       return '<div class="prof"><span style="font-weight:800;color:var(--roxo);width:26px;">' + (i + 1) + 'º</span>' +

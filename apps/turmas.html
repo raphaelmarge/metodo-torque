@@ -45,7 +45,7 @@
   <div id="lista"></div>
 
   <div class="card" id="cardRepo" hidden>
-    <h2>📅 Reposições em aberto</h2>
+    <h2>Reposições em aberto</h2>
     <p class="muted" style="font-size: 12.5px; margin: 4px 0 10px;">Falta justificada gera reposição com validade de 30 dias (regra do EVO). Quando o aluno repuser a aula, marque como usada.</p>
     <div id="listaRepo"></div>
   </div>
@@ -134,19 +134,19 @@
         (st.chamadas[chaveHoje] ? " · chamada de hoje: " + presentes.length + "/" + alunos.length : "") + "</div></div>" +
         (lotada ? '<span class="tag erro">LOTADA</span>' : cap ? '<span class="tag ok">' + (cap - alunos.length) + " VAGA(S)</span>" : "") +
         (st.chamadas[chaveHoje] ? ' <span class="tag ok">CHAMADA FEITA</span>' : ' <span class="tag neutro">SEM CHAMADA HOJE</span>') +
-        ' <button class="btn sec mini" data-edit="' + t.id + '">✎</button></summary>' +
+        ' <button class="btn sec mini" data-edit="' + t.id + '"></button></summary>' +
         '<div class="chamada-cab"><span>CHAMADA DE HOJE (' + S.fmtData(hoje) + ')</span>' +
-        '<button class="btn mini" data-salvar="' + t.id + '">💾 Salvar chamada</button></div>' +
+        '<button class="btn mini" data-salvar="' + t.id + '">Salvar chamada</button></div>' +
         alunos.map(function (a) {
           var f = freqDe(st, t, a);
           return '<div class="aluno-linha"><label><input type="checkbox" data-ch="' + t.id + '" value="' + esc(a) + '"' +
             (presentes.indexOf(a) !== -1 ? " checked" : "") + ">" + esc(a) + "</label>" +
             "<span>" + (f != null ? '<span class="freq">' + f + "% presença</span> " : "") +
-            '<button class="btn sec mini" data-just="' + t.id + "|" + esc(a) + '" title="Falta justificada — gera reposição (30 dias)" style="padding: 2px 8px;">📅 Justificar</button> ' +
+            '<button class="btn sec mini" data-just="' + t.id + "|" + esc(a) + '" title="Falta justificada — gera reposição (30 dias)" style="padding: 2px 8px;">Justificar</button> ' +
             '<button class="btn perigo mini" data-rma="' + t.id + "|" + esc(a) + '" style="padding: 2px 8px;">✕</button></span></div>';
         }).join("") +
         (alunos.length ? "" : '<div class="muted" style="padding: 10px 16px;">Turma vazia — adicione os alunos.</div>') +
-        (espera.length ? '<div class="chamada-cab" style="background:#f4f0ff;"><span>📋 FILA DE ESPERA (' + espera.length + ")</span></div>" +
+        (espera.length ? '<div class="chamada-cab" style="background:#f4f0ff;"><span>FILA DE ESPERA (' + espera.length + ")</span></div>" +
           espera.map(function (nm) {
             return '<div class="aluno-linha"><span>' + esc(nm) + (lotada ? "" : ' <span class="tag ok" style="font-size:10px;">vaga disponível!</span>') + "</span>" +
               "<span>" + (lotada ? "" : '<button class="btn ok mini" data-promove="' + t.id + "|" + esc(nm) + '">↑ Chamar</button> ') +

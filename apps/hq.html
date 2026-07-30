@@ -46,7 +46,7 @@
 <main class="corpo">
 
   <div class="card" id="hqLock" style="border-left: 4px solid #d97706;">
-    <b>🔐 Área restrita ao administrador do TORQUE ON.</b>
+    <b>Área restrita ao administrador do TORQUE ON.</b>
     <p class="muted" id="hqLockMsg" style="margin-top:6px;">Verificando seu acesso…</p>
     <p style="margin-top:10px;"><a class="btn" href="../index.html">Ir para o portal e entrar</a></p>
     <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:13px;font-weight:700;">Como me torno administrador?</summary>
@@ -60,42 +60,42 @@
     <div class="kpis" id="hqKpis"></div>
 
     <div class="card" style="margin-top: 16px;" id="cardCobrancas">
-      <h2>🧾 Cobranças do mês</h2>
+      <h2>Cobranças do mês</h2>
       <p class="muted" style="font-size: 13px;">Clientes ativos que ainda não pagaram a mensalidade deste mês — a rotina de faturamento de todo dia 1º, no estilo Stripe Billing.</p>
       <div id="hqCobrancas" class="muted" style="margin-top: 8px;">Carregando…</div>
     </div>
 
     <div class="card" style="margin-top: 16px;" id="cardTickets">
-      <h2>🆘 Tickets de suporte <span id="tkBadge" class="tag cancelado" hidden></span></h2>
+      <h2>Tickets de suporte <span id="tkBadge" class="tag cancelado" hidden></span></h2>
       <p class="muted" style="font-size: 13px;">Mensagens que os clientes mandam pelo card 🆘 do Central de Ajuda deles. Responda aqui — a resposta aparece lá.</p>
       <div id="hqTickets" class="muted" style="margin-top: 8px;">Carregando…</div>
     </div>
 
     <div class="card" style="margin-top: 16px;" id="cardErros">
-      <h2>🩺 Saúde técnica dos clientes (7 dias)</h2>
+      <h2>Saúde técnica dos clientes (7 dias)</h2>
       <p class="muted" style="font-size: 13px;">Erros de JavaScript reportados automaticamente pelas telas de cada cliente — você fica sabendo do problema antes de o cliente reclamar (estilo Sentry).</p>
       <div id="hqErros" class="muted" style="margin-top: 8px;">Carregando…</div>
     </div>
 
     <div class="card" style="margin-top: 16px;" id="cardReceita12" hidden>
-      <h2>📈 Receita do SaaS (12 meses)</h2>
+      <h2>Receita do SaaS (12 meses)</h2>
       <div id="hqReceita12" class="muted">Sem pagamentos ainda.</div>
     </div>
 
     <div class="card" style="margin-top: 16px;">
-      <h2>🏢 Empresas clientes</h2>
+      <h2>Empresas clientes</h2>
       <div class="filtros">
-        <input id="fBusca" placeholder="🔍 Buscar por nome…" style="flex: 1; min-width: 160px;">
+        <input id="fBusca" placeholder="Buscar por nome…" style="flex: 1; min-width: 160px;">
         <select id="fStatus"><option value="">— status —</option><option>trial</option><option>ativo</option><option>pausado</option><option>cancelado</option></select>
         <select id="fTipo"><option value="">— tipo —</option><option>academia</option><option>studio</option><option>box</option><option>personal</option><option>outro</option></select>
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin:0;"><input type="checkbox" id="fRisco" style="width:auto;">só em risco 🔴</label>
-        <button class="btn sec mini" id="hqCSV">⬇ CSV</button>
+        <button class="btn sec mini" id="hqCSV">CSV</button>
       </div>
       <div id="hqClientes" class="muted">Carregando…</div>
     </div>
 
     <div class="card" style="margin-top: 16px;">
-      <h2>💠 Pix das mensalidades (sua chave)</h2>
+      <h2>Pix das mensalidades (sua chave)</h2>
       <p class="muted" style="font-size: 13px;">Configure uma vez — o botão 💠 de cada cliente gera o Pix copia-e-cola com o valor do plano dele.</p>
       <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
         <label style="margin:0;font-size:12.5px;">Chave Pix<input id="hqPixChave" placeholder="CPF, e-mail, celular ou aleatória" style="width:220px;display:block;margin-top:4px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;"></label>
@@ -105,7 +105,7 @@
     </div>
 
     <div class="card" style="margin-top: 16px;">
-      <h2>🛒 Funil de vendas do TORQUE ON</h2>
+      <h2>Funil de vendas do TORQUE ON</h2>
       <p class="muted" style="font-size: 13px;">Interessados que ainda não viraram clientes. Fica só na sua conta e sincroniza entre os seus aparelhos.</p>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0;">
         <input id="ldNome" placeholder="Nome (ex.: Academia Ferro)" style="flex:2;min-width:150px;padding:9px 12px;border:1px solid var(--linha);border-radius:9px;font-family:inherit;">
@@ -141,11 +141,11 @@
   </dialog>
 
   <dialog id="dlgPixHQ">
-    <h2 id="pixHQTitulo">💠 Pix</h2>
+    <h2 id="pixHQTitulo">Pix</h2>
     <div id="pixHQQr" style="display:flex;justify-content:center;"></div>
     <textarea id="pixHQCode" rows="4" readonly style="font-family:monospace;font-size:11px;margin-top:10px;"></textarea>
     <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="btn" id="pixHQCopiar" style="flex:1;">📋 Copiar código</button>
+      <button class="btn" id="pixHQCopiar" style="flex:1;">Copiar código</button>
       <form method="dialog" style="flex:1;"><button class="btn sec" style="width:100%;">Fechar</button></form>
     </div>
   </dialog>
@@ -155,7 +155,7 @@
     <div id="tkErros" class="muted" style="font-size: 12px; margin-bottom: 8px;"></div>
     <div id="tkMsgs" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
     <select id="tkMacros" style="margin-bottom: 8px;">
-      <option value="">⚡ Resposta pronta…</option>
+      <option value="">Resposta pronta…</option>
       <option>Fecha e abre o sistema (ou atualiza a página) — a correção já está no ar e chega sozinha. Me avisa se continuar! 💜</option>
       <option>Consegue clicar em 📋 Copiar relatório de diagnóstico (no card 🆘 do Central de Ajuda) e colar aqui? Assim vejo exatamente o que houve.</option>
       <option>Me conta qual tela você estava e o que clicou quando deu o problema? Se tiver como, manda um print no WhatsApp.</option>
@@ -164,7 +164,7 @@
     </select>
     <div style="display: flex; gap: 8px;">
       <input id="tkTxt" placeholder="Responder ao cliente…" style="flex: 1;">
-      <button class="btn" id="tkEnviar" style="width: auto;">➤</button>
+      <button class="btn" id="tkEnviar" style="width: auto;"></button>
     </div>
     <form method="dialog" style="margin-top: 10px;"><button class="btn sec" style="width: 100%;">Fechar</button></form>
   </dialog>
@@ -335,10 +335,10 @@
         '<span class="mut">pagou ' + fmtR(c.total_pago) + " no total" + (c.ultimo_pgto ? " · último " + esc(String(c.ultimo_pgto).slice(0, 10)) : "") + "</span>" +
         (motivos.length ? '<span style="flex-basis:100%;font-size:12px;color:#b45309;font-weight:600;">' + esc(motivos.join(" · ")) + "</span>" : "") +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-edit="' + c.id + '">✎ Plano</button>' +
-        '<button class="btn sec mini" data-pgto="' + c.id + '">💰 Pagou</button>' +
-        (cfg.pixChave && +c.valor > 0 ? '<button class="btn mini" data-pix="' + c.id + '">💠 Pix</button>' : "") +
-        (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgResgate) + '">💬</a>' : "") +
+        '<button class="btn sec mini" data-edit="' + c.id + '">Plano</button>' +
+        '<button class="btn sec mini" data-pgto="' + c.id + '">Pagou</button>' +
+        (cfg.pixChave && +c.valor > 0 ? '<button class="btn mini" data-pix="' + c.id + '">Pix</button>' : "") +
+        (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgResgate) + '"></a>' : "") +
         "</div>";
     }).join("") : '<div class="muted">Nenhuma empresa com esse filtro.</div>';
   }
@@ -359,9 +359,9 @@
           }
           return '<div class="lead"><b>' + esc(c.nome) + "</b><span>" + fmtR(c.valor) + "</span>" +
             '<span style="margin-left:auto;"></span>' +
-            (cfg.pixChave ? '<button class="btn mini" data-pix="' + c.id + '">💠 Pix</button>' : "") +
-            (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Cobrar</a>' : "") +
-            '<button class="btn sec mini" data-pgto="' + c.id + '">💰 Pagou</button></div>';
+            (cfg.pixChave ? '<button class="btn mini" data-pix="' + c.id + '">Pix</button>' : "") +
+            (c.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(c.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") +
+            '<button class="btn sec mini" data-pgto="' + c.id + '">Pagou</button></div>';
         }).join("")
       : "Todo mundo em dia este mês. 🎉";
   }

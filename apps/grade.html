@@ -95,7 +95,7 @@
   <div class="card controles no-print" style="justify-content: space-between;">
     <input id="busca" placeholder="Pesquise por aula, professor ou sala…" style="max-width: 340px;">
     <div class="linha-flex">
-      <button class="btn sec" id="btnImprimir">🖨 Imprimir</button>
+      <button class="btn sec" id="btnImprimir">Imprimir</button>
       <button class="btn sec" id="btnDemanda">Agendar sob demanda</button>
       <button class="btn" id="btnNova">+ Nova aula da grade</button>
     </div>
@@ -104,7 +104,7 @@
   <div id="quadroGrade"></div>
 
   <details class="card no-print">
-    <summary style="cursor:pointer;font-weight:800;">⚙️ Regras de agendamento (app do aluno)</summary>
+    <summary style="cursor:pointer;font-weight:800;">Regras de agendamento (app do aluno)</summary>
     <div class="linha-flex" style="gap:14px;flex-wrap:wrap;margin-top:12px;align-items:flex-end;">
       <div class="campo"><label>Cancelar até (horas antes)</label><input id="rgCancela" type="number" min="0" style="width:90px" value="2"></div>
       <div class="campo"><label>Máx. agendamentos ativos</label><input id="rgMax" type="number" min="0" style="width:90px" value="3"></div>
@@ -201,7 +201,7 @@
     </div>
     <div class="parts" id="partLista"></div>
     <div class="linha-flex" style="justify-content: space-between;">
-      <button class="btn sec mini" id="partEditar" hidden>✎ Editar aula</button>
+      <button class="btn sec mini" id="partEditar" hidden>Editar aula</button>
       <button class="btn sec" id="partFechar">Fechar</button>
     </div>
   </div>
@@ -473,16 +473,16 @@
     var aula = st.aulas.find(function (x) { return x.id === id; }) || st.avulsas.find(function (x) { return x.id === id; }) || {};
     var fixos = aula.fixos || [];
     var fixosHTML = fixos.map(function (n, i) {
-      return '<div class="p" style="background:#f1ebff;"><span>⭐ ' + esc(n) + ' <span class="muted" style="font-size:11px;">horário fixo semanal</span></span>' +
+      return '<div class="p" style="background:#f1ebff;"><span>' + esc(n) + ' <span class="muted" style="font-size:11px;">horário fixo semanal</span></span>' +
         '<button data-rmfixo="' + i + '" title="Tirar o horário fixo">✕</button></div>';
     }).join("");
     $("partLista").innerHTML = fixosHTML + (lista.length
       ? lista.map(function (n, i) {
           var iso = chaveAberta.split("|")[1];
           var faltou = ((st.faltas || {})[n] || []).indexOf(iso) !== -1;
-          return '<div class="p"><span>' + esc(n) + (faltou ? ' <span class="tag alerta" style="margin-left:6px">👻 faltou</span>' : "") +
-            '</span><span><button data-fixo="' + i + '" title="Tornar horário fixo (entra toda semana nesta aula)" style="color:#7c3aed">⭐</button> ' +
-            '<button data-falta="' + i + '" title="Marcar/desmarcar falta (agendou e não veio)" style="color:#b45309">👻</button> ' +
+          return '<div class="p"><span>' + esc(n) + (faltou ? ' <span class="tag alerta" style="margin-left:6px">faltou</span>' : "") +
+            '</span><span><button data-fixo="' + i + '" title="Tornar horário fixo (entra toda semana nesta aula)" style="color:#7c3aed"></button> ' +
+            '<button data-falta="' + i + '" title="Marcar/desmarcar falta (agendou e não veio)" style="color:#b45309"></button> ' +
             '<button data-rm="' + i + '" title="Remover">✕</button></span></div>';
         }).join("")
       : (fixos.length ? "" : '<div class="muted">Ninguém marcado ainda — ' + (+aula.vagas || 0) + " vagas livres.</div>"));

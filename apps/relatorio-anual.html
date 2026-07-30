@@ -38,32 +38,32 @@
       <select id="selAno" style="width: auto;"></select>
     </div>
     <div class="linha-flex">
-      <button class="btn sec" id="btnCSV">📤 Exportar CSV</button>
-      <button class="btn sec" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn sec" id="btnCSV">Exportar CSV</button>
+      <button class="btn sec" onclick="window.print()">Imprimir</button>
     </div>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
-    <h2>📅 O ano mês a mês</h2>
+    <h2>O ano mês a mês</h2>
     <p class="muted" style="margin: 4px 0 12px;">Receita = mensalidades pagas + vendas de produtos no mês. Churn = cancelados ÷ ativos no início do mês. Linha verde = melhor mês de receita; vermelha = pior (dos meses com movimento).</p>
     <div style="overflow-x: auto;"><table class="tab-rel" id="tabAno"></table></div>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
-    <h2>💰 Receita futura já contratada (próximos 6 meses)</h2>
+    <h2>Receita futura já contratada (próximos 6 meses)</h2>
     <p class="muted" style="margin: 4px 0 12px;">Quanto entra se todo mundo cumprir o contrato atual: soma das mensalidades dos contratos ativos enquanto durarem. A linha "vencendo" mostra quanto depende de renovação naquele mês — é aí que a régua de renovação trabalha.</p>
     <div style="overflow-x: auto;"><table class="tab-rel" id="tabFuturo"></table></div>
   </div>
 
   <div class="card" style="margin-bottom: 16px;">
-    <h2>💸 Vazamento de preço (descontos concedidos)</h2>
+    <h2>Vazamento de preço (descontos concedidos)</h2>
     <p class="muted" style="margin: 4px 0 12px;">Contratos ativos pagando menos que a tabela do plano. Desconto tem hora pra acabar — use a lista no reajuste anual.</p>
-    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnVazaCSV">📤 CSV</button></div>
+    <div class="linha-flex no-print" style="margin-bottom: 8px;"><button class="btn sec mini" id="btnVazaCSV">CSV</button></div>
     <div style="overflow-x: auto;"><table class="tab-rel" id="tabVaza"></table></div>
   </div>
 
   <div class="card">
-    <h2>📦 Desempenho por plano</h2>
+    <h2>Desempenho por plano</h2>
     <p class="muted" style="margin: 4px 0 12px;">Qual plano rende e segura aluno: ativos, receita mensal recorrente, vida média (dos contratos encerrados) e churn dos últimos 12 meses. Plano barato que segura pouco pode estar custando caro.</p>
     <div style="overflow-x: auto;"><table class="tab-rel" id="tabPlanos"></table></div>
   </div>
@@ -167,7 +167,7 @@
     });
     $("tabFuturo").innerHTML =
       "<tr><th>Mês</th>" + meses.map(function (m) { return "<th>" + m.rotulo + "</th>"; }).join("") + "</tr>" +
-      "<tr><td><b>💜 Garantida (contratos vigentes)</b></td>" + meses.map(function (m) { return "<td><b>" + S.fmtBRL(m.garantida) + "</b></td>"; }).join("") + "</tr>" +
+      "<tr><td><b>Garantida (contratos vigentes)</b></td>" + meses.map(function (m) { return "<td><b>" + S.fmtBRL(m.garantida) + "</b></td>"; }).join("") + "</tr>" +
       "<tr><td>⏳ Vencendo no mês (depende de renovar)</td>" + meses.map(function (m) {
         return "<td>" + (m.vencendo ? S.fmtBRL(m.vencendo) + " <span class='muted'>(" + m.nVencendo + ")</span>" : "—") + "</td>";
       }).join("") + "</tr>";

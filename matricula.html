@@ -37,7 +37,7 @@
 <body>
 
 <header class="topo">
-  <h1 id="tNome">💪 Matricule-se</h1>
+  <h1 id="tNome">Matricule-se</h1>
   <p>Escolha seu plano, deixe seu contato e garanta sua vaga — leva 1 minuto.</p>
 </header>
 
@@ -54,11 +54,11 @@
     <button class="btn" id="btnEnviar">Quero me matricular 🚀</button>
   </div>
   <div id="sucesso" class="ok" hidden>
-    <div class="emj">🎉</div>
+    <div class="emj"></div>
     <h2>Vaga reservada!</h2>
     <p>Recebemos sua matrícula, <b id="okNome"></b>! A equipe já foi avisada e vai te chamar no WhatsApp para confirmar tudo.</p>
     <div class="pix" id="pixBox" hidden></div>
-    <a class="zapbtn" id="okZap" hidden target="_blank" rel="noopener">💬 Falar com a academia agora</a>
+    <a class="zapbtn" id="okZap" hidden target="_blank" rel="noopener">Falar com a academia agora</a>
   </div>
 </main>
 
@@ -136,7 +136,7 @@
         $("okNome").textContent = nome.split(" ")[0];
         if (info.pix) {
           $("pixBox").hidden = false;
-          $("pixBox").innerHTML = "<b>💠 Adiantar o pagamento por Pix?</b><br>Chave: <b>" + esc(info.pix) + "</b><br><small>Valor do plano escolhido: R$ " + (+planoSel.valor || 0).toLocaleString("pt-BR") + " — mande o comprovante no WhatsApp.</small>";
+          $("pixBox").innerHTML = "<b>Adiantar o pagamento por Pix?</b><br>Chave: <b>" + esc(info.pix) + "</b><br><small>Valor do plano escolhido: R$ " + (+planoSel.valor || 0).toLocaleString("pt-BR") + " — mande o comprovante no WhatsApp.</small>";
         }
         if (info.zap) {
           $("okZap").hidden = false;

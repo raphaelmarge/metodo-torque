@@ -48,7 +48,7 @@
       <div class="campo"><label>Aluno</label>
         <div class="linha-flex" style="gap:8px;">
           <input id="busca" placeholder="digite o nome…" autocomplete="off" style="flex:1;">
-          <button class="btn sec" id="btnQR" title="Ler o QR da carteirinha do app do aluno">📷 Ler QR</button>
+          <button class="btn sec" id="btnQR" title="Ler o QR da carteirinha do app do aluno">Ler QR</button>
         </div>
       </div>
       <div id="areaQR" hidden style="position:relative;margin-top:10px;">
@@ -265,7 +265,7 @@
       '<div class="linha-flex" style="margin-top: 14px; justify-content: flex-end;">' +
       '<a class="btn sec mini" href="perfil-aluno.html?id=' + a.id + '">Abrir perfil</a>' +
       convidBtn(a) +
-      (s.pedirTokenAgg ? '<button class="btn" id="btnTokenAgg">📲 Validar check-in do app (' + esc(s.pedirTokenAgg) + ")</button>" : "") +
+      (s.pedirTokenAgg ? '<button class="btn" id="btnTokenAgg">Validar check-in do app (' + esc(s.pedirTokenAgg) + ")</button>" : "") +
       '<button class="btn" id="btnLiberar">✓ Liberar entrada</button></div></div>';
     var bAgg = $("btnTokenAgg");
     if (bAgg) bAgg.onclick = function () {
@@ -319,7 +319,7 @@
   function convidBtn(a) {
     var q = cotaConvidados(a);
     if (!q.total) return "";
-    return '<button class="btn sec mini" id="btnConvidado" title="Convidados restantes neste mês: ' + q.resta + '">👥 Convidado (' + q.resta + "/" + q.total + ")</button>";
+    return '<button class="btn sec mini" id="btnConvidado" title="Convidados restantes neste mês: ' + q.resta + '">Convidado (' + q.resta + "/" + q.total + ")</button>";
   }
   function registrarConvidado(a) {
     var q = cotaConvidados(a);

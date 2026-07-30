@@ -39,7 +39,7 @@
   <section id="secDescontos" style="display: flex; flex-direction: column; gap: 16px;">
     <div class="card linha-flex" style="justify-content: space-between;">
       <label class="linha-flex" style="gap: 6px; font-size: 13.5px; align-items: center;"><input id="fInativos" type="checkbox"> mostrar inativos</label>
-      <button class="btn" id="btnNovo">➕ Novo desconto</button>
+      <button class="btn" id="btnNovo">Novo desconto</button>
     </div>
     <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabela"></table></div>
   </section>
@@ -138,7 +138,7 @@
           (d.vigDe || d.vigAte ? (d.vigDe ? S.fmtData(d.vigDe) : "…") + " → " + (d.vigAte ? S.fmtData(d.vigAte) : "…") : "sempre") +
           '</td><td><div class="regras">' + (regras.length ? regras.map(function (r) { return '<span class="tag roxo">' + r + "</span>"; }).join("") : '<span class="muted">—</span>') + "</div></td><td>" +
           (d.inativo ? '<span class="tag neutro">INATIVO</span>' : '<span class="tag ok">ATIVO</span>') +
-          '</td><td><button class="btn sec mini" data-edit="' + d.id + '">✏</button></td></tr>';
+          '</td><td><button class="btn sec mini" data-edit="' + d.id + '"></button></td></tr>';
       }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px;">Nenhum desconto cadastrado — clique em ➕ Novo desconto.</td></tr>');
   }
   $("fInativos").addEventListener("change", render);

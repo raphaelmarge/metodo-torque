@@ -33,7 +33,7 @@
   <div class="topo-marca">
     <div>
     <span class="kicker">TORQUE ON · MÓDULO PERSONAL</span>
-    <h1 id="tituloStudio">💪 Meu Studio</h1>
+    <h1 id="tituloStudio">Meu Studio</h1>
     </div>
   </div>
   <p>A gestão do personal trainer em uma tela: seus alunos, agenda de sessões, pagamentos e treinos com envio por WhatsApp — funciona offline e sincroniza entre seus aparelhos.</p>
@@ -41,26 +41,26 @@
 
 <main class="corpo">
   <div class="card" id="boasVindas" hidden style="margin-bottom: 16px; border-left: 4px solid var(--roxo);">
-    <h2>👋 Bem-vindo(a) ao TORQUE ON Personal</h2>
+    <h2>Bem-vindo(a) ao TORQUE ON Personal</h2>
     <p class="muted" style="margin: 6px 0 10px;">Este é o SEU sistema: alunos, agenda, pagamentos e treinos — funciona sem internet e os dados ficam neste aparelho (com conta, sincroniza entre celular e computador). Como você se chama?</p>
     <div class="linha-flex">
       <input id="obNome" placeholder="Seu nome (ex.: Léo Personal)" style="max-width: 280px;">
       <button class="btn" id="obOk">Começar 💪</button>
     </div>
-    <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">📲 Dica: no celular, use <b>Adicionar à tela inicial</b> — vira um app de verdade, com ícone e tudo.</p>
+    <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Dica: no celular, use <b>Adicionar à tela inicial</b> — vira um app de verdade, com ícone e tudo.</p>
   </div>
 
   <div class="kpi-pt" id="kpis"></div>
 
   <div class="abas-pt" id="abas">
-    <button data-a="alunos" class="ativa">👥 Alunos</button>
-    <button data-a="agenda">📅 Agenda</button>
-    <button data-a="pagamentos">💰 Pagamentos</button>
-    <button data-a="treinos">🏋️ Treinos</button>
-    <button data-a="avaliacoes">📏 Avaliações</button>
-    <button data-a="relatorios">📊 Relatórios</button>
-    <button data-a="assessoria">🛰 Assessoria</button>
-    <button data-a="chat">💬 Chat</button>
+    <button data-a="alunos" class="ativa">Alunos</button>
+    <button data-a="agenda">Agenda</button>
+    <button data-a="pagamentos">Pagamentos</button>
+    <button data-a="treinos">Treinos</button>
+    <button data-a="avaliacoes">Avaliações</button>
+    <button data-a="relatorios">Relatórios</button>
+    <button data-a="assessoria">Assessoria</button>
+    <button data-a="chat">Chat</button>
   </div>
 
   <!-- ALUNOS -->
@@ -97,7 +97,7 @@
   <!-- PAGAMENTOS -->
   <section id="vPagamentos" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>📋 Planos do studio</h2>
+      <h2>Planos do studio</h2>
       <p class="muted" style="margin: 4px 0 10px;">Monte seus planos (mensal, trimestral…) e feche contrato com o aluno logo abaixo. Cartão recorrente/boleto: cole o link de assinatura do SEU gateway (Mercado Pago, InfinitePay, PagSeguro…) — o Pix o sistema gera sozinho.</p>
       <div class="linha-flex" style="margin-bottom: 8px;">
         <input id="plNome" placeholder="Nome (ex.: Mensal 3x/sem)" style="flex: 2; min-width: 170px;">
@@ -110,13 +110,13 @@
     </div>
 
     <div class="card" style="margin-bottom: 14px;">
-      <h2>📄 Contratos</h2>
+      <h2>Contratos</h2>
       <div class="linha-flex" style="margin-bottom: 8px;">
         <select id="ctAluno" style="min-width: 170px;"></select>
         <select id="ctPlano" style="min-width: 170px;"></select>
         <label style="margin: 0; font-size: 12.5px;">vence dia
           <input id="ctDia" type="number" min="1" max="28" value="5" style="width: 70px; display: inline-block; margin-left: 4px;"></label>
-        <button class="btn" id="ctAdd">✍️ Fechar contrato</button>
+        <button class="btn" id="ctAdd">Fechar contrato</button>
       </div>
       <div id="ctLista" class="muted">Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.</div>
     </div>
@@ -127,11 +127,11 @@
         <select id="pAluno" style="min-width: 180px;"></select>
         <input id="pValor" type="number" min="0" step="0.01" placeholder="Valor R$" style="width: 130px;">
         <select id="pForma" style="width: auto;"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option></select>
-        <button class="btn" id="pAdd">💰 Registrar</button>
+        <button class="btn" id="pAdd">Registrar</button>
       </div>
     </div>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>⚠️ Quem ainda não pagou este mês</h2>
+      <h2>Quem ainda não pagou este mês</h2>
       <div id="pendentes" class="muted">Todo mundo em dia. 🎉</div>
     </div>
     <div class="card"><h2>Histórico</h2><div id="listaPagamentos" class="muted">Nenhum pagamento registrado.</div></div>
@@ -140,22 +140,22 @@
   <!-- TREINOS -->
   <section id="vTreinos" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>📋 Montar treino (por seleção)</h2>
+      <h2>Montar treino (por seleção)</h2>
       <div class="linha-flex" style="margin: 8px 0 10px;">
         <select id="tAluno" style="min-width: 200px;"></select>
         <button class="btn sec" id="tFicha">+ Nova ficha (A, B, C…)</button>
-        <button class="btn sec" id="tZap">💬 Enviar no WhatsApp</button>
+        <button class="btn sec" id="tZap">Enviar no WhatsApp</button>
       </div>
       <div class="linha-flex" style="margin: 0 0 10px;">
-        <select id="tplSel" style="min-width: 220px;"><option value="">📚 Ficha pronta (template)…</option></select>
-        <button class="btn" id="tplAplicar">⚡ Aplicar no aluno</button>
+        <select id="tplSel" style="min-width: 220px;"><option value="">Ficha pronta (template)…</option></select>
+        <button class="btn" id="tplAplicar">Aplicar no aluno</button>
       </div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
       <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os templates criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
     <div class="card">
-      <h2>📚 Biblioteca de exercícios</h2>
+      <h2>Biblioteca de exercícios</h2>
       <div class="linha-flex" style="margin: 8px 0 10px;">
         <input id="exNome" placeholder="Nome do exercício *" style="flex: 2; min-width: 170px;">
         <input id="exGrupo" placeholder="Grupo (ex.: Peito)" list="exGrupos" style="flex: 1; min-width: 120px;">
@@ -167,7 +167,7 @@
     </div>
 
     <div class="card" style="margin-top: 14px;">
-      <h2>📚 Conteúdos extras (videoteca do seu studio)</h2>
+      <h2>Conteúdos extras (videoteca do seu studio)</h2>
       <p class="muted" style="margin: 4px 0 10px;">Alongamento, mobilidade, aquecimento, dicas — aparecem no app de TODOS os seus alunos, agrupados por categoria. Valor percebido da assinatura. 😉</p>
       <div class="linha-flex" style="margin-bottom: 10px;">
         <input id="vtpTitulo" placeholder="Título (ex.: Mobilidade de quadril 10min)" style="flex: 2; min-width: 200px;">
@@ -186,8 +186,8 @@
       <div id="pixQr" style="display: flex; justify-content: center;"></div>
       <textarea id="pixCode" rows="4" readonly style="font-family: monospace; font-size: 11px;"></textarea>
       <div class="linha-flex" style="justify-content: center;">
-        <button class="btn" id="pixCopiar">📋 Copiar código</button>
-        <a class="btn whats" id="pixZap" target="_blank" rel="noopener">💬 Mandar no WhatsApp</a>
+        <button class="btn" id="pixCopiar">Copiar código</button>
+        <a class="btn whats" id="pixZap" target="_blank" rel="noopener">Mandar no WhatsApp</a>
         <button class="btn sec" onclick="this.closest('dialog').close()">Fechar</button>
       </div>
       <p class="muted" style="font-size: 11.5px; margin: 0;">Pix estático com valor — o aluno paga escaneando o QR ou colando o código no app do banco. Confirme o recebimento e registre o pagamento acima.</p>
@@ -214,7 +214,7 @@
   <!-- AVALIAÇÕES -->
   <section id="vAvaliacoes" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>📐 Dobras cutâneas — Pollock 3 · Pollock 7 · Guedes</h2>
+      <h2>Dobras cutâneas — Pollock 3 · Pollock 7 · Guedes</h2>
       <p class="muted" style="margin: 4px 0 10px;">Meça com o adipômetro (mm), escolha o protocolo e o sistema calcula a densidade corporal e o % de gordura pela equação de Siri. O resultado preenche a avaliação abaixo.</p>
       <div class="linha-flex" style="margin-bottom: 10px;">
         <select id="dbMetodo" style="width: auto;">
@@ -227,7 +227,7 @@
       </div>
       <div id="dbCampos" class="linha-flex" style="margin-bottom: 10px;"></div>
       <div class="linha-flex">
-        <button class="btn" id="dbCalc">🧮 Calcular</button>
+        <button class="btn" id="dbCalc">Calcular</button>
         <span id="dbResultado" style="font-weight: 700;"></span>
       </div>
     </div>
@@ -241,7 +241,7 @@
         <input id="avGord" type="number" step="0.1" min="0" placeholder="% gordura" style="width: 110px;">
         <input id="avCintura" type="number" step="0.1" min="0" placeholder="Cintura cm" style="width: 110px;">
         <input id="avBraco" type="number" step="0.1" min="0" placeholder="Braço cm" style="width: 100px;">
-        <button class="btn" id="avAdd">📏 Registrar</button>
+        <button class="btn" id="avAdd">Registrar</button>
       </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A evolução (com setas verde/vermelha) aparece aqui e no app do aluno.</p>
     </div>
@@ -250,23 +250,23 @@
 
   <!-- RELATÓRIOS -->
   <section id="vRelatorios" hidden>
-    <div class="card" style="margin-bottom: 14px;"><h2>🎯 Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>🔮 Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>💰 Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>📈 Crescimento da carteira (novos × encerrados)</h2><div id="relCarteira" class="muted">Sem dados ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>📅 Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>🗓 Ocupação da agenda (últimas 8 semanas)</h2><div id="relOcupacao" class="muted">Sem sessões ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>🏃 Assiduidade e presença (últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>📏 Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>💎 Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
-      <div style="margin-top: 10px;"><button class="btn sec mini" id="relCSV">⬇ Baixar CSV (receita por aluno)</button></div></div>
-    <div class="card"><h2>🚨 Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Crescimento da carteira (novos × encerrados)</h2><div id="relCarteira" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Ocupação da agenda (últimas 8 semanas)</h2><div id="relOcupacao" class="muted">Sem sessões ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Assiduidade e presença (últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
+      <div style="margin-top: 10px;"><button class="btn sec mini" id="relCSV">Baixar CSV (receita por aluno)</button></div></div>
+    <div class="card"><h2>Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
   </section>
 
   <!-- ASSESSORIA -->
   <section id="vAssessoria" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>🛰 Acompanhamento a distância</h2>
+      <h2>Acompanhamento a distância</h2>
       <p class="muted" style="margin: 4px 0 0;">O que os alunos de assessoria registram pelo app chega aqui: treinos feitos, sequência, meta da semana e o check-in semanal (nota + peso + como foi). Quem apagar fica vermelho — mensagem pronta a um clique mantém o aluno perto mesmo longe.</p>
     </div>
     <div id="assessoriaLista" class="muted"><div class="card">Carregando…</div></div>
@@ -275,7 +275,7 @@
   <!-- CHAT -->
   <section id="vChat" hidden>
     <div class="card" style="margin-bottom: 14px;">
-      <h2>💬 Conversas com os alunos</h2>
+      <h2>Conversas com os alunos</h2>
       <p class="muted" style="margin: 4px 0 0;">O aluno escreve pelo app dele e a mensagem cai aqui — responda sem misturar com o seu WhatsApp pessoal. Bolinha roxa = mensagem nova.</p>
     </div>
     <div class="linha-flex" style="align-items: flex-start; gap: 14px;">
@@ -292,12 +292,12 @@
   </section>
 
   <div class="card" id="cardConta" style="margin-top: 20px;">
-    <h2>☁️ Sua ilha no TORQUE ON</h2>
+    <h2>Sua ilha no TORQUE ON</h2>
     <p class="muted" id="contaStatus" style="margin: 6px 0 10px;"></p>
     <div class="linha-flex" style="margin-bottom: 10px; gap: 14px;">
       <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (os alunos falam com você por ele)
         <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 170px; display: block; margin-top: 4px;"></label>
-      <label style="margin: 0; font-size: 12.5px;">💠 Sua chave Pix (pra gerar cobranças)
+      <label style="margin: 0; font-size: 12.5px;">Sua chave Pix (pra gerar cobranças)
         <input id="cfgPixChave" placeholder="CPF, e-mail, celular ou aleatória" style="width: 220px; display: block; margin-top: 4px;"></label>
       <label style="margin: 0; font-size: 12.5px;">Nome do recebedor
         <input id="cfgPixNome" placeholder="Como está no banco" style="width: 180px; display: block; margin-top: 4px;"></label>
@@ -305,7 +305,7 @@
         <input id="cfgPixCidade" placeholder="ex.: Belo Horizonte" style="width: 150px; display: block; margin-top: 4px;"></label>
     </div>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
-      <button class="btn" id="btnContaEntrar">🔑 Entrar na minha conta</button>
+      <button class="btn" id="btnContaEntrar">Entrar na minha conta</button>
       <button class="btn sec" id="btnContaCriar">Criar conta TORQUE PERSONAL</button>
       <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
     </div>
@@ -409,8 +409,8 @@
       return '<div class="aluno-pt"><div class="quem"><strong>' + esc(a.nome) + "</strong>" +
         '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
         (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
-        (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
-        ' <button class="btn mini" data-app="' + a.id + '">📲 App do aluno</button>' +
+        (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '"></a>' : "") +
+        ' <button class="btn mini" data-app="' + a.id + '">App do aluno</button>' +
         ' <button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div>';
     }).join("") : '<div class="vazio">Cadastre seu primeiro aluno acima. 💪</div>';
   }
@@ -450,7 +450,7 @@
       return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '"><b>' + S.fmtData(x.data) + " " + (x.hora || "") + "</b>" +
         "<span>" + esc(nomeDe[x.alunoId] || "?") + "</span>" +
         '<span style="margin-left:auto;"></span>' +
-        (x.feita ? '<span class="tag ok">FEITA ✅</span>' : '<button class="btn mini" data-feita="' + x.id + '">✅ Feita</button>') +
+        (x.feita ? '<span class="tag ok">FEITA ✅</span>' : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>') +
         '<button class="btn sec mini" data-cx="' + x.id + '">✕</button></div>';
     }).join("") : "Nenhuma sessão agendada.";
   }
@@ -496,9 +496,9 @@
         (ct ? '<span class="muted">vence dia ' + ct.diaVenc + "</span>" : '<span class="muted">sem contrato</span>') +
         (atrasado ? '<span class="tag erro">ATRASADO</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
-        (valor && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + valor + '">💠 Pix</button>' : "") +
-        (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">🔁 Assinatura</a>' : "") +
-        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Cobrar</a>' : "") + "</div>";
+        (valor && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + valor + '">Pix</button>' : "") +
+        (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">Assinatura</a>' : "") +
+        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") + "</div>";
     }).join("") : "Todo mundo em dia. 🎉";
   }
   $("pendentes").addEventListener("click", function (e) {
@@ -554,7 +554,7 @@
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
           return '<div class="sessao-pt"><b>' + esc(ex.nome) + "</b><span>" + it.series + "×" + it.reps + "</span>" +
             (it.obs ? '<span class="muted">' + esc(it.obs) + "</span>" : "") +
-            (ex.video ? "<span title='tem vídeo'>🎬</span>" : "") +
+            (ex.video ? "<span title='tem vídeo'></span>" : "") +
             '<span style="margin-left:auto;"></span>' +
             (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '">↑</button>' : "") +
             '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '">✕</button></div>';
@@ -690,10 +690,10 @@
       return "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;'>" + esc(g) + "</div>" +
         porGrupo[g].map(function (e) {
           return '<div class="sessao-pt"><b>' + esc(e.nome) + "</b>" +
-            (e.video ? "<span title='tem vídeo'>🎬</span>" : '<span class="muted" style="font-size:11.5px;">sem vídeo</span>') +
+            (e.video ? "<span title='tem vídeo'></span>" : '<span class="muted" style="font-size:11.5px;">sem vídeo</span>') +
             (e.descricao ? "" : '<span class="tag alerta" style="font-size:10px;">sem descrição</span>') +
             '<span style="margin-left:auto;"></span>' +
-            '<button class="btn sec mini" data-exedit="' + e.id + '">✎ Abrir</button>' +
+            '<button class="btn sec mini" data-exedit="' + e.id + '">Abrir</button>' +
             '<button class="btn sec mini" data-exrm="' + e.id + '">✕</button></div>';
         }).join("");
     }).join("");
@@ -844,7 +844,7 @@
       var n = st.contratosPT.filter(function (c) { return c.planoId === pl.id && c.status === "ativo"; }).length;
       return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) + "/mês</span>" +
         '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>" +
-        (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">🔁 recorrente</span>' : "") +
+        (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">recorrente</span>' : "") +
         "<span class='muted'>" + n + " contrato(s)</span>" +
         '<span style="margin-left:auto;"></span><button class="btn sec mini" data-plrm="' + pl.id + '">✕</button></div>';
     }).join("") : "Nenhum plano ainda.";
@@ -983,11 +983,11 @@
         lista.map(function (v, i) {
           var ant = i > 0 ? lista[i - 1] : {};
           return '<div class="sessao-pt"><b>' + S.fmtData(v.data) + "</b>" +
-            (v.peso ? "<span>⚖ " + String(v.peso).replace(".", ",") + " kg" + delta(v.peso, ant.peso) + "</span>" : "") +
-            (v.gordura ? "<span>🧈 " + String(v.gordura).replace(".", ",") + "%" + delta(v.gordura, ant.gordura) + "</span>" : "") +
-            (v.cintura ? "<span>📏 cintura " + String(v.cintura).replace(".", ",") + delta(v.cintura, ant.cintura) + "</span>" : "") +
-            (v.braco ? "<span>💪 braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
-            (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">📐 ' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
+            (v.peso ? "<span>" + String(v.peso).replace(".", ",") + " kg" + delta(v.peso, ant.peso) + "</span>" : "") +
+            (v.gordura ? "<span>" + String(v.gordura).replace(".", ",") + "%" + delta(v.gordura, ant.gordura) + "</span>" : "") +
+            (v.cintura ? "<span>cintura " + String(v.cintura).replace(".", ",") + delta(v.cintura, ant.cintura) + "</span>" : "") +
+            (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
+            (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
             '<span style="margin-left:auto;"></span><button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
         }).join("") + "</div>";
     }).join("");
@@ -1141,7 +1141,7 @@
       for (var di = 2; di <= 6; di++) if (porDia[di] < porDia[menor]) menor = di;
       $("relOcupacao").innerHTML += '<div style="font-size:12.5px;color:var(--cinza);margin-top:10px;">⏰ Horários mais usados: ' +
         (topH.length ? topH.map(function (h) { return "<b>" + h + "</b> (" + porHora[h] + ")"; }).join(" · ") : "—") + "</div>" +
-        '<div style="font-size:12.5px;color:var(--cinza);">💡 Dia com mais espaço pra vender horário: <b>' + DIAS[menor] + "</b></div>";
+        '<div style="font-size:12.5px;color:var(--cinza);">Dia com mais espaço pra vender horário: <b>' + DIAS[menor] + "</b></div>";
     } else $("relOcupacao").textContent = "Sem sessões ainda.";
 
     // ---- 🏃 assiduidade + presença 30d ----
@@ -1308,18 +1308,18 @@
       ".kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #322e3d}" +
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
-      "<div class='topo'><div class='k'>" + esc(studio).toUpperCase() + " · TORQUE ON PERSONAL</div><h1>💪 " + esc(a.nome.split(" ")[0]) + "</h1></div>" +
-      "<div class='cardx'><h2>🔥 Minha semana</h2>" +
+      "<div class='topo'><div class='k'>" + esc(studio).toUpperCase() + " · TORQUE ON PERSONAL</div><h1>" + esc(a.nome.split(" ")[0]) + "</h1></div>" +
+      "<div class='cardx'><h2>Minha semana</h2>" +
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
-      "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>✅ Treinei hoje!</button>" +
+      "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
-      (sessApp.length ? "<div class='cardx'><h2>🗓 Minhas sessões com " + esc(studio.split(" ")[0]) + "</h2>" +
+      (sessApp.length ? "<div class='cardx'><h2>Minhas sessões com " + esc(studio.split(" ")[0]) + "</h2>" +
         sessApp.map(function (x) {
           var pd = x.d.split("-");
-          return "<div class='kv'><span>📅 " + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero! 💪</span></div>";
+          return "<div class='kv'><span>" + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero! 💪</span></div>";
         }).join("") + "</div>" : "") +
-      "<div class='cardx'><h2>🏋️ Meu treino</h2>" +
+      "<div class='cardx'><h2>Meu treino</h2>" +
       (fichasApp ? fichasApp.map(function (f) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
           f.itens.map(function (it) {
@@ -1328,7 +1328,7 @@
               "<b>" + esc(it.nome) + "</b><span style='color:#a9a4b5;white-space:nowrap;'>" + it.series + "×" + esc(String(it.reps)) + " ›</span></summary>" +
               "<div style='padding:0 13px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
-              (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>📌 " + esc(it.obs) + "</div>" : "") +
+              (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
               (it.video ? "<a href='" + esc(it.video) + "' target='_blank' rel='noopener' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:12px;padding:4px 14px;border-radius:99px;display:inline-block;'>▶ ver vídeo</a>" : "") +
               ((!it.desc && !it.video && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;'>Faça com capricho — dúvidas, chama no chat! 💬</span>" : "") +
               "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
@@ -1347,25 +1347,25 @@
         }
         return ln.trim() ? "<div>" + esc(ln) + "</div>" : "<div style='height:8px;'></div>";
       }).join("") + "</div>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal. 😉</div>") + "</div>" +
-      "<div class='cardx'><h2>📈 Diário de cargas</h2>" +
+      "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
       "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><button class='btnx' id='dcAdd'>+</button></div>" +
       "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui. 💪</div>" +
       "<div id='dcGraf' style='display:none;margin-top:10px;'></div></div>" +
-      "<div class='cardx'><h2>📏 Minha evolução</h2><div id='evoBox'></div></div>" +
-      "<div class='cardx'><h2>⚖ Meu peso</h2>" +
+      "<div class='cardx'><h2>Minha evolução</h2><div id='evoBox'></div></div>" +
+      "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso de hoje — a curva aparece aqui. 📉</div></div>" +
-      "<div class='cardx'><h2>💧 Hábitos de hoje</h2>" +
+      "<div class='cardx'><h2>Hábitos de hoje</h2>" +
       "<div id='habBox' style='display:flex;flex-direction:column;gap:8px;'></div>" +
       "<div id='habStreak' class='vz' style='margin-top:8px;'></div></div>" +
-      "<div class='cardx'><h2>📸 Fotos de progresso</h2>" +
+      "<div class='cardx'><h2>Fotos de progresso</h2>" +
       "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer. 😉</div>" +
-      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>📸 Adicionar foto de hoje" +
+      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>Adicionar foto de hoje" +
       "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
       "<div class='vz' style='font-size:11px;'>As fotos ficam SÓ neste aparelho — ninguém mais vê.</div></div>" +
-      (vidsApp.length ? "<div class='cardx'><h2>📚 Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
+      (vidsApp.length ? "<div class='cardx'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
         (function () {
           var porCat = {};
           vidsApp.forEach(function (v) { (porCat[v.c] = porCat[v.c] || []).push(v); });
@@ -1376,32 +1376,32 @@
               }).join("");
           }).join("");
         })() + "</div>" : "") +
-      "<div class='cardx'><h2>📝 Check-in da semana</h2>" +
+      "<div class='cardx'><h2>Check-in da semana</h2>" +
       "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem! 💜</div>" +
       "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
       "<div id='ckNotas' style='display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
       "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in 📨</button></div></div>" +
-      (plApp ? "<div class='cardx'><h2>💳 Meu plano</h2>" +
+      (plApp ? "<div class='cardx'><h2>Meu plano</h2>" +
         "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
         "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
         (pixApp ? "<div style='text-align:center;margin-top:10px;'>" +
           (pixApp.qr ? "<img src='" + pixApp.qr + "' style='width:170px;height:170px;image-rendering:pixelated;background:#fff;padding:7px;border-radius:12px;'>" : "") +
           "<textarea id='pixAluno' rows='3' readonly style='width:100%;margin-top:8px;background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#a9a4b5;font-family:monospace;font-size:10px;padding:8px;'>" + pixApp.code + "</textarea>" +
-          "<button class='btnx' id='pixCopiaAluno' style='width:100%;margin-top:8px;'>📋 Copiar Pix copia e cola</button></div>" : "") +
-        (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:#14121a;border:1px solid #7c3aed;box-shadow:none;'>🔁 Assinar no cartão (débito automático)</a>" : "") +
+          "<button class='btnx' id='pixCopiaAluno' style='width:100%;margin-top:8px;'>Copiar Pix copia e cola</button></div>" : "") +
+        (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:#14121a;border:1px solid #7c3aed;box-shadow:none;'>Assinar no cartão (débito automático)</a>" : "") +
         "<div class='vz' style='font-size:11px;'>Pagou? Avisa no chat que " + esc(studio.split(" ")[0]) + " confirma. 💜</div></div>" : "") +
-      (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP ? "<div class='cardx'><h2>🔑 Meu login</h2>" +
+      (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP ? "<div class='cardx'><h2>Meu login</h2>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para abrir seu app de QUALQUER aparelho (página Entrar do aluno).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
         "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;'>" +
         "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button>" +
         "<div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
-      "<div class='cardx'><h2>💬 Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
+      "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
-      "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
+      "<button class='btnx' id='chEnvia'></button></div></div>" +
       "<div id='tmrBar' style='display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 💜</div>" +
       "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
@@ -1468,7 +1468,7 @@
       // gráfico de carga por exercício (clique na linha do diário)
       "function grafCarga(ex){var h=L('ptdc',{});var l=(h[ex]||[]).slice(-12);var g=document.getElementById('dcGraf');" +
       "if(!l.length){g.style.display='none';return;}var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      "g.style.display='block';g.innerHTML=\"<div style='font-size:12px;color:#a9a4b5;margin-bottom:6px;'>📈 \"+ex+\" — últimas cargas</div>\"+" +
+      "g.style.display='block';g.innerHTML=\"<div style='font-size:12px;color:#a9a4b5;margin-bottom:6px;'>\"+ex+\" — últimas cargas</div>\"+" +
       "\"<div style='display:flex;gap:6px;align-items:flex-end;height:90px;'>\"+l.map(function(x){var hh=Math.round(60*(+x.kg)/max);var pr=+x.kg===max;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(pr?'#a78bfa':'#6e6a78')+\";'>\"+String(x.kg).replace('.',',')+(pr?'★':'')+\"</div><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:\"+(pr?'linear-gradient(180deg,#a78bfa,#7c3aed)':'#3a3346')+\";border-radius:4px 4px 0 0;min-height:3px;'></div><div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+x.d.slice(8,10)+'/'+x.d.slice(5,7)+\"</div></div>\";}).join('')+\"</div>\";}" +
       "document.getElementById('dcLista').addEventListener('click',function(e){var r=e.target.closest('[data-dcx]');if(r)grafCarga(r.dataset.dcx);});" +
@@ -1539,7 +1539,7 @@
       "else{alert((r&&r.erro)||'Não deu agora — confere a internet e tenta de novo.');}});});" +
       "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
       "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>📈 \"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +
+      "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +
       "document.getElementById('dcAdd').addEventListener('click',function(){" +
       "var ex=document.getElementById('dcEx').value.trim(),kg=parseFloat(document.getElementById('dcKg').value.replace(',','.'));" +
       "if(!ex||!kg){alert('Preencha exercício e carga.');return;}" +
@@ -1619,7 +1619,7 @@
     if (!ativos.length) { el.innerHTML = '<div class="card muted">Cadastre alunos primeiro.</div>'; return; }
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
-      el.innerHTML = '<div class="card" style="border-left:4px solid #d97706;"><b>☁️ A assessoria a distância precisa da sua conta.</b><p class="muted" style="margin:6px 0 0;">Crie sua conta (card lá embaixo) e gere o app dos alunos — os treinos feitos e check-ins deles passam a chegar aqui sozinhos.</p></div>';
+      el.innerHTML = '<div class="card" style="border-left:4px solid #d97706;"><b>A assessoria a distância precisa da sua conta.</b><p class="muted" style="margin:6px 0 0;">Crie sua conta (card lá embaixo) e gere o app dos alunos — os treinos feitos e check-ins deles passam a chegar aqui sozinhos.</p></div>';
       return;
     }
     var tokens = ativos.filter(function (a) { return a.appTokenP; }).map(function (a) { return a.appTokenP; });
@@ -1668,11 +1668,11 @@
         var meusChecks = checks == null ? [] : checks.filter(function (c) { return c.token === a.appTokenP; }).slice(0, 3);
         var NOTAS = ["", "😫", "😕", "😐", "🙂", "🤩"];
         var checksHTML = checks == null
-          ? '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">📝 Check-ins semanais: rode o bloco ASSESSORIA ONLINE do supabase-setup.sql pra recebê-los.</p>'
+          ? '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Check-ins semanais: rode o bloco ASSESSORIA ONLINE do supabase-setup.sql pra recebê-los.</p>'
           : (meusChecks.length
             ? '<div style="margin-top:8px;">' + meusChecks.map(function (c) {
                 return '<div class="sessao-pt">' + (NOTAS[c.nota] || "📝") + " <b>" + S.fmtData(c.dia) + "</b>" +
-                  (c.peso ? "<span>⚖ " + String(c.peso).replace(".", ",") + " kg</span>" : "") +
+                  (c.peso ? "<span>" + String(c.peso).replace(".", ",") + " kg</span>" : "") +
                   (c.texto ? '<span class="muted">"' + esc(c.texto) + '"</span>' : "") + "</div>";
               }).join("") + "</div>"
             : '<p class="muted" style="margin:8px 0 0;font-size:12.5px;">Nenhum check-in semanal ainda.</p>');
@@ -1680,11 +1680,11 @@
           '<div class="linha-flex" style="justify-content:space-between;flex-wrap:wrap;">' +
           "<div><b style='font-size:15px;'>" + esc(a.nome) + "</b><div style='color:" + cor + ";font-weight:700;font-size:13.5px;margin-top:2px;'>" + stAtu + "</div>" +
           (ultimo ? "<div class='muted' style='font-size:12.5px;'>último treino: " + S.fmtData(ultimo) + " · " + listaDias.length + " treino(s) em 28 dias</div>" : "") + "</div>" +
-          (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬 Mensagem pronta</a>' : "") +
+          (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Mensagem pronta</a>' : "") +
           "</div>" + checksHTML + "</div>";
       }).join("");
     }, function () {
-      el.innerHTML = '<div class="card" style="color:#b45309;">⚠️ Sem conexão com a nuvem agora — tente de novo em instantes.</div>';
+      el.innerHTML = '<div class="card" style="color:#b45309;">Sem conexão com a nuvem agora — tente de novo em instantes.</div>';
     });
   }
   window.__assessoria = renderAssessoria; // testes
@@ -1699,7 +1699,7 @@
     if (!nuvem) {
       el.innerHTML = "";
       $("chatTitulo").textContent = "Chat interno";
-      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">☁️ O chat interno precisa da sua conta (card lá embaixo) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os alunos pelo 💬 WhatsApp da aba Alunos.</div>';
+      $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card lá embaixo) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os alunos pelo 💬 WhatsApp da aba Alunos.</div>';
       $("chatEnvio").hidden = true;
       return;
     }

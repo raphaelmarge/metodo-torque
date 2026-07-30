@@ -43,7 +43,7 @@
 
   <div class="card" style="margin-top:16px;">
     <div class="linha-flex" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
-      <h2 style="margin:0;">🧠 Análise do Claude</h2>
+      <h2 style="margin:0;">Análise do Claude</h2>
       <button class="btn" id="btnAnalisar">Analisar minha base agora</button>
     </div>
     <p class="mut" style="margin:6px 0 0;">O Claude recebe os números (sem dados sensíveis além de primeiro nome e situação) e devolve a leitura da semana: o que atacar primeiro e como abordar cada aluno em risco. Requer a função <b>chat-envia</b> publicada e a <b>ANTHROPIC_API_KEY</b> configurada.</p>
@@ -52,7 +52,7 @@
   </div>
 
   <div class="card" style="margin-top:16px;">
-    <h2>🧠 Tendência de risco (semana a semana)</h2>
+    <h2>Tendência de risco (semana a semana)</h2>
     <p class="mut" style="margin:4px 0 10px;">Um retrato por semana de quantos alunos estão em risco alto/médio. Curva subindo = o churn do mês que vem avisando — aja antes.</p>
     <div id="tendencia" class="mut">O primeiro retrato é salvo sozinho quando esta tela abre — volte na próxima semana para ver a curva.</div>
   </div>
@@ -158,18 +158,18 @@
     var ativos = S.read("alunos", { alunos: [] }).alunos.filter(function (a) { return a.status !== "inativo"; }).length;
     $("kpis").innerHTML =
       '<div class="kpi"><div class="rot">Alunos ativos</div><div class="val">' + ativos + "</div></div>" +
-      '<div class="kpi alto"><div class="rot">🔴 Risco alto</div><div class="val">' + alto + "</div></div>" +
-      '<div class="kpi medio"><div class="rot">🟡 Risco médio</div><div class="val">' + medio + "</div></div>" +
-      '<div class="kpi ok"><div class="rot">🟢 Saudáveis</div><div class="val">' + Math.max(0, ativos - riscos.length) + "</div></div>";
+      '<div class="kpi alto"><div class="rot">Risco alto</div><div class="val">' + alto + "</div></div>" +
+      '<div class="kpi medio"><div class="rot">Risco médio</div><div class="val">' + medio + "</div></div>" +
+      '<div class="kpi ok"><div class="rot">Saudáveis</div><div class="val">' + Math.max(0, ativos - riscos.length) + "</div></div>";
 
     $("listaRisco").innerHTML = riscos.length ? riscos.map(function (r) {
       var zap = String(r.a.zap || "").replace(/\D/g, "");
       return '<div class="risco"><div class="score ' + nivel(r.pontos) + '">' + r.pontos + '</div>' +
         '<div><div class="nome">' + esc(r.a.nome) + '</div><div class="motivos">' + r.motivos.join(" · ") + "</div></div>" +
         '<div class="acoes">' +
-        (zap ? '<a class="btn mini" target="_blank" rel="noopener" href="https://wa.me/55' + zap + "?text=" + encodeURIComponent(msgPara(r)) + '">💬 WhatsApp</a>' : "") +
+        (zap ? '<a class="btn mini" target="_blank" rel="noopener" href="https://wa.me/55' + zap + "?text=" + encodeURIComponent(msgPara(r)) + '">WhatsApp</a>' : "") +
         "</div></div>";
-    }).join("") : '<div class="card" style="text-align:center;color:#16a34a;font-weight:700;">🎉 Nenhum aluno em risco detectado — base saudável!</div>';
+    }).join("") : '<div class="card" style="text-align:center;color:#16a34a;font-weight:700;">Nenhum aluno em risco detectado — base saudável!</div>';
     return riscos;
   }
 
