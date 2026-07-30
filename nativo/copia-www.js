@@ -11,7 +11,7 @@ const DEST = path.join(__dirname, "www");
 const IGNORA = new Set([
   ".git", ".github", ".well-known", "nativo", "tests", "supabase",
   "node_modules", "README.md", "PUBLICAR-NAS-LOJAS.md", "APP-NATIVO.md",
-  "gerador-codigo.html", "supabase-setup.sql", "print-canvas-final.png", "design",
+  "gerador-codigo.html", "supabase-setup.sql", "print-canvas-final.png", "design", "marketing",
 ]);
 
 fs.rmSync(DEST, { recursive: true, force: true });
