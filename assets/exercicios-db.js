@@ -721,5 +721,305 @@ self.MT_EXERCICIOS = [
   "g": "Mobilidade e alongamento",
   "eq": "Livre",
   "d": "Deitado, mão na barriga; inspire 4 s, expire 6 s — fim de treino."
+ },
+ {
+  "n": "Agachamento pistol assistido",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo/TRX",
+  "d": "Segure num apoio à frente; desça numa perna só, controlando; evolua diminuindo a ajuda das mãos."
+ },
+ {
+  "n": "Leg press unilateral",
+  "g": "Quadríceps",
+  "eq": "Máquina",
+  "d": "Uma perna por vez, pé no centro da plataforma; desça até 90° sem girar o quadril."
+ },
+ {
+  "n": "Cadeira extensora unilateral",
+  "g": "Quadríceps",
+  "eq": "Máquina",
+  "d": "Uma perna por vez com metade da carga; segure 1 s no topo pra igualar os lados."
+ },
+ {
+  "n": "Stiff unilateral com haltere",
+  "g": "Posterior e glúteo",
+  "eq": "Halteres",
+  "d": "Haltere na mão oposta à perna de apoio; quadril quadrado e coluna neutra até alongar o posterior."
+ },
+ {
+  "n": "Elevação pélvica unilateral",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Uma perna estendida no ar; suba o quadril com a outra e segure 1 s no topo."
+ },
+ {
+  "n": "Remada unilateral na polia",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Em pé, tronco firme; puxe até a cintura sem girar o tronco e controle a volta."
+ },
+ {
+  "n": "Desenvolvimento unilateral com haltere",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Core contraído pra não inclinar o tronco; suba o haltere na linha da orelha."
+ },
+ {
+  "n": "Rosca unilateral na polia baixa",
+  "g": "Bíceps",
+  "eq": "Polia",
+  "d": "Cotovelo colado no corpo; um braço por vez com pico de contração de 1 s."
+ },
+ {
+  "n": "Panturrilha unilateral no degrau",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Uma perna no degrau, calcanhar desce abaixo da borda; suba na ponta máxima."
+ },
+ {
+  "n": "Prancha com remada (renegade row)",
+  "g": "Core",
+  "eq": "Halteres",
+  "d": "Em prancha sobre os halteres; reme um braço sem deixar o quadril girar."
+ },
+ {
+  "n": "Farmer walk unilateral (mala)",
+  "g": "Core",
+  "eq": "Halteres",
+  "d": "Peso num lado só; ande ereto resistindo à inclinação — anti-flexão lateral pura."
+ },
+ {
+  "n": "Passada lateral com peso",
+  "g": "Quadríceps",
+  "eq": "Halteres",
+  "d": "Passo largo pro lado, quadril pra trás; joelho da perna que trabalha alinhado com o pé."
+ },
+ {
+  "n": "Agachamento com mini band",
+  "g": "Quadríceps",
+  "eq": "Mini band",
+  "d": "Banda acima dos joelhos; empurre os joelhos pra fora durante toda a descida e subida."
+ },
+ {
+  "n": "Caminhada lateral com mini band",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Semiagachado, passos laterais curtos mantendo tensão constante na banda."
+ },
+ {
+  "n": "Monster walk",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Banda nos tornozelos; passos diagonais à frente, joelhos apontando pra fora."
+ },
+ {
+  "n": "Abdução deitado com mini band",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Deitado de lado, banda acima dos joelhos; abra a perna de cima sem rodar o quadril pra trás."
+ },
+ {
+  "n": "Remada com elástico sentado",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Elástico preso nos pés; puxe até a cintura apertando as escápulas."
+ },
+ {
+  "n": "Puxada de elástico por cima (lat pull)",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Elástico preso no alto; ajoelhe e puxe os cotovelos até as costelas."
+ },
+ {
+  "n": "Press de peito com elástico",
+  "g": "Peito",
+  "eq": "Elástico",
+  "d": "Elástico nas costas na altura do peito; empurre à frente até estender, sem os ombros subirem."
+ },
+ {
+  "n": "Elevação lateral com elástico",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Pise no elástico; suba até a linha dos ombros com cotovelos levemente flexionados."
+ },
+ {
+  "n": "Face pull com elástico",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Elástico na altura do rosto; puxe abrindo os cotovelos e apertando as escápulas."
+ },
+ {
+  "n": "Rosca direta com elástico",
+  "g": "Bíceps",
+  "eq": "Elástico",
+  "d": "Pise no elástico com os dois pés; cotovelos fixos, suba controlando a volta."
+ },
+ {
+  "n": "Tríceps com elástico por trás da cabeça",
+  "g": "Tríceps",
+  "eq": "Elástico",
+  "d": "Elástico preso embaixo atrás de você; estenda os braços acima da cabeça sem abrir os cotovelos."
+ },
+ {
+  "n": "Pull apart com elástico",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Braços estendidos à frente; abra o elástico até tocar o peito apertando as escápulas — ótimo pra postura."
+ },
+ {
+  "n": "Good morning com mini band",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Banda sob os pés e atrás do pescoço; quadril pra trás com joelhos semiflexionados."
+ },
+ {
+  "n": "Flexão inclinada (mãos no sofá)",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Mãos apoiadas em superfície alta facilita; corpo reto — o degrau de entrada da flexão."
+ },
+ {
+  "n": "Flexão declinada (pés no sofá)",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Pés elevados; foco na porção superior do peitoral — versão avançada da flexão."
+ },
+ {
+  "n": "Flexão hindu (dive bomber)",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Do pique, mergulhe o peito rente ao chão e suba com o tronco estendido; ombros e mobilidade juntos."
+ },
+ {
+  "n": "Flexão archer",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Mãos bem afastadas; desça deslocando o peso pra um braço, o outro quase estendido."
+ },
+ {
+  "n": "Remada australiana na mesa",
+  "g": "Costas",
+  "eq": "Peso do corpo",
+  "d": "Deite sob uma mesa firme, segure a borda; puxe o peito até a mesa com o corpo reto."
+ },
+ {
+  "n": "Agachamento na cadeira (sentar e levantar)",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Sente e levante sem usar as mãos; controle a descida — porta de entrada segura pra iniciantes e idosos."
+ },
+ {
+  "n": "Agachamento isométrico na parede",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Costas na parede, joelhos a 90°; segure o tempo prescrito respirando normal."
+ },
+ {
+  "n": "Afundo reverso",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Passo pra trás em vez de pra frente — menos estresse no joelho, mesmo estímulo."
+ },
+ {
+  "n": "Ponte de glúteo marchada",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "No topo da ponte, tire um pé do chão por vez sem deixar o quadril cair."
+ },
+ {
+  "n": "Superman (extensão lombar no chão)",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "De bruços, eleve braços e pernas 2-3 s; olhe pro chão pra não forçar o pescoço."
+ },
+ {
+  "n": "Bird dog",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Quatro apoios; estenda braço e perna opostos devagar sem balançar o quadril."
+ },
+ {
+  "n": "Hollow hold",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Deitado, lombar colada no chão; braços e pernas estendidos a 45° — base da ginástica."
+ },
+ {
+  "n": "Prancha com toque no ombro",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Em prancha alta, toque o ombro oposto sem deixar o quadril girar."
+ },
+ {
+  "n": "Escalador cruzado",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Mountain climber levando o joelho ao cotovelo oposto — ativa o oblíquo."
+ },
+ {
+  "n": "Burpee sem salto",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Versão de baixo impacto: apoie, estenda as pernas, volte e levante sem saltar."
+ },
+ {
+  "n": "Polichinelo",
+  "g": "Cardio",
+  "eq": "Peso do corpo",
+  "d": "Ritmo constante, joelhos levemente flexionados na aterrissagem."
+ },
+ {
+  "n": "Corrida estacionária com joelho alto",
+  "g": "Cardio",
+  "eq": "Peso do corpo",
+  "d": "Joelhos na linha do quadril, braços ativos; 30-60 s por rodada."
+ },
+ {
+  "n": "Sombra (shadow boxing)",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Jab, direto e esquiva no ar; gire o quadril junto com o soco — cardio e coordenação."
+ },
+ {
+  "n": "Subida no banco (step-up)",
+  "g": "Quadríceps",
+  "eq": "Banco/Caixa",
+  "d": "Suba empurrando pelo calcanhar da perna de cima, sem impulsionar com a de baixo."
+ },
+ {
+  "n": "Mergulho entre cadeiras",
+  "g": "Tríceps",
+  "eq": "Peso do corpo",
+  "d": "Duas cadeiras firmes; desça até 90° nos cotovelos com os ombros longe das orelhas."
+ },
+ {
+  "n": "Prancha lateral com elevação de quadril",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Da prancha lateral, desça e suba o quadril controlando — oblíquos sem pescoço."
+ },
+ {
+  "n": "Panturrilha em pé no chão (duas pernas)",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Suba na ponta dos pés com pausa de 2 s no topo; segure num apoio pra equilíbrio."
+ },
+ {
+  "n": "Caminhada do urso (bear crawl)",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Quatro apoios com joelhos a 2 dedos do chão; ande à frente e atrás sem balançar o quadril."
+ },
+ {
+  "n": "Sentadilha búlgara no sofá",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Peito ereto, pé de trás no sofá; desça até o joelho de trás quase tocar o chão."
+ },
+ {
+  "n": "Isometria de flexão (fundo)",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Segure na posição baixa da flexão, cotovelos a 45°, corpo reto — força de base."
  }
 ];
