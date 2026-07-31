@@ -202,7 +202,12 @@ function ok(cond, nome) {
   await p.fill("#dxVideo", "https://youtube.com/watch?v=abc123");
   await p.click('#dlgEx button[value="ok"]');
   await p.waitForFunction(() => !document.getElementById("dlgEx").open);
-  await p.waitForTimeout(150);
+  // espera o salvamento chegar no storage (150ms fixos flakavam sob carga)
+  await p.waitForFunction(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const e = (st.exercicios || []).find((x) => x.nome === "Supino reto");
+    return e && /abc123/.test(e.video || "");
+  }, null, { timeout: 5000 }).catch(() => {});
   const comVideo = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return st.exercicios.find((e) => e.nome === "Supino reto").video;
