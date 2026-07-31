@@ -505,5 +505,72 @@ self.MT_RECEITAS = [
    "Asse espalhadas a 200 °C por ~20 min, virando na metade."
   ],
   "dica": "Belisco crocante pra ver o jogo sem apelar pro pacote de salgadinho."
+ },
+ {
+  "id": "rc25",
+  "n": "Açaí bowl proteico",
+  "cat": "Lanches",
+  "tempo": 5,
+  "rende": 1,
+  "k": 320,
+  "pt": 22,
+  "ing": [
+   "100 g de polpa de açaí pura (sem xarope)",
+   "1 scoop de whey de baunilha",
+   "1/2 banana",
+   "1 col. sopa de granola",
+   "1 col. chá de pasta de amendoim"
+  ],
+  "modo": [
+   "Bata o açaí com o whey e um pouco de água até ficar cremoso.",
+   "Coloque na tigela e cubra com a banana em rodelas, a granola e a pasta de amendoim."
+  ],
+  "dica": "O açaí puro tem só 58 kcal/100 g — quem pesa é o xarope; com whey vira lanche pós-treino de verdade."
+ },
+ {
+  "id": "rc26",
+  "n": "Poke fit de atum",
+  "cat": "Almoço e jantar",
+  "tempo": 20,
+  "rende": 2,
+  "k": 450,
+  "pt": 34,
+  "ing": [
+   "200 g de atum fresco em cubos",
+   "1 xícara de arroz cozido",
+   "1/2 manga em cubos",
+   "1/2 pepino em rodelas",
+   "1 col. sopa de shoyu light",
+   "Gergelim e cebolinha"
+  ],
+  "modo": [
+   "Tempere o atum com o shoyu e deixe 10 min na geladeira.",
+   "Monte a tigela: arroz na base, atum, manga e pepino por cima.",
+   "Finalize com gergelim e cebolinha."
+  ],
+  "dica": "Atum fresco tem 33 g de proteína por filé com quase zero gordura — o poke é a marmita gourmet do verão."
+ },
+ {
+  "id": "rc27",
+  "n": "Moqueca fit de tilápia",
+  "cat": "Almoço e jantar",
+  "tempo": 40,
+  "rende": 3,
+  "k": 320,
+  "pt": 30,
+  "ing": [
+   "3 filés de tilápia",
+   "200 ml de leite de coco light",
+   "1 pimentão em rodelas",
+   "2 tomates em rodelas",
+   "1 cebola em rodelas",
+   "Coentro, limão e azeite de dendê (1 col. chá)"
+  ],
+  "modo": [
+   "Tempere os filés com limão e sal, 15 min.",
+   "Na panela, faça camadas de cebola, tomate, pimentão e peixe.",
+   "Regue com o leite de coco e o dendê; cozinhe tampado 20 min em fogo baixo e finalize com coentro."
+  ],
+  "dica": "Leite de coco light e 1 colher de dendê seguram o sabor baiano com metade da gordura da receita clássica."
  }
 ];
