@@ -85,6 +85,7 @@
     <button data-a="dietas">Dietas</button>
     <button data-a="alimentos">Alimentos</button>
     <button data-a="receitas">Receitas</button>
+    <button data-a="chat">Chat</button>
   </div>
 
   <div id="vPacientes">
@@ -184,6 +185,24 @@
       </div>
     </div>
     <div class="card"><div id="alLista" class="muted">Carregando…</div></div>
+  </div>
+
+  <div id="vChatN" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Conversas com os pacientes</h2>
+      <p class="muted" style="margin: 4px 0 0;">O paciente escreve pelo app dele e a mensagem cai aqui — responda sem misturar com o seu WhatsApp pessoal. Bolinha verde = mensagem nova.</p>
+    </div>
+    <div class="linha-flex" style="align-items: flex-start; gap: 14px;">
+      <div id="chatPacientes" style="flex: 0 0 240px; min-width: 200px;"></div>
+      <div class="card" style="flex: 1; min-width: 280px;">
+        <h2 id="chatTituloN">Escolha um paciente</h2>
+        <div id="chatMsgsN" style="max-height: 420px; overflow-y: auto; margin: 10px 0; display: flex; flex-direction: column; gap: 6px;"></div>
+        <div class="linha-flex" id="chatEnvioN" hidden>
+          <input id="chatTextoN" placeholder="Escreva sua mensagem…" style="flex: 1; min-width: 150px;">
+          <button class="btn verde" id="chatEnviarN">Enviar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="card" style="margin-top: 20px; border-left: 4px solid var(--verde);">
@@ -323,9 +342,11 @@
     $("vDietas").hidden = b.dataset.a !== "dietas";
     $("vAlimentos").hidden = b.dataset.a !== "alimentos";
     $("vReceitas").hidden = b.dataset.a !== "receitas";
+    $("vChatN").hidden = b.dataset.a !== "chat";
     if (b.dataset.a === "dietas") renderDietas();
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
+    if (b.dataset.a === "chat") renderChatNT();
   });
 
   // ---------- onboarding ----------
@@ -782,6 +803,10 @@
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
+      "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
+      "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
+      "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
+      "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
       (temNuvem ? "<div class='cardx'><h2>Meu login</h2>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie login e senha para abrir seu app de qualquer aparelho (página Entrar do aluno).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
@@ -793,7 +818,8 @@
       ",ALDB=" + JSON.stringify(aldb) +
       ",AGUAML=" + aguaMl + ",KCALMETA=" + alvo.alvo +
       ",NUVEM=" + JSON.stringify(temNuvem ? { u: nuvemCfg.url, k: nuvemCfg.anonKey } : null) +
-      ",TOKEN=" + JSON.stringify(p.appTokenN || "") + ";" +
+      ",TOKEN=" + JSON.stringify(p.appTokenN || "") +
+      ",ZAPN=" + JSON.stringify(String(zapN || "").replace(/\D/g, "")) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}" +
       "function isoHj(){return new Date().toISOString().slice(0,10);}" +
@@ -859,6 +885,21 @@
       "var b=this;b.disabled=true;rpcApp('aluno_define_login',{t:TOKEN,p_login:lg,p_senha:sn}).then(function(r){b.disabled=false;" +
       "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='✅ Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha.';document.getElementById('lgSenha').value='';}" +
       "else{alert((r&&r.erro)||'Não deu agora — tenta de novo.');}});});" +
+      // chat paciente ↔ nutricionista
+      "function pintaChat(msgs){var el=document.getElementById('chMsgs');" +
+      "if(!msgs||!msgs.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
+      "el.innerHTML=msgs.map(function(m){var minha=m.de==='aluno';" +
+      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,#16a34a,#15803d)':'#101c14')+\";border:1px solid #29402f;border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      "el.scrollTop=el.scrollHeight;}" +
+      "function carregaChat(){if(!NUVEM){pintaChat(L('ntchat',[]));return;}" +
+      "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ntchat',l);pintaChat(l);}else{pintaChat(L('ntchat',[]));}});}" +
+      "document.getElementById('chEnvia').addEventListener('click',function(){" +
+      "var inp=document.getElementById('chTexto');var tx=inp.value.trim();if(!tx)return;" +
+      "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_chat_envia',{t:TOKEN,p_texto:tx}).then(function(r){btn.disabled=false;" +
+      "if(r&&r.ok){inp.value='';carregaChat();}else{alert('Não deu pra enviar agora — tenta de novo.');}});}" +
+      "else{window.open('https://wa.me/'+(ZAPN?'55'+ZAPN:'')+'?text='+encodeURIComponent(tx),'_blank');inp.value='';}});" +
+      "document.getElementById('chTexto').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('chEnvia').click();});" +
+      "carregaChat();setInterval(function(){if(NUVEM)carregaChat();},30000);" +
       "window.__appNutri=true;" +
       "<\/script></body></html>";
   }
@@ -916,6 +957,78 @@
       { rot: "Alimentos no banco", val: st.alimentos.length },
     ].map(function (k) { return '<div class="kpi-nt"><div class="rot">' + k.rot + '</div><div class="val">' + k.val + "</div></div>"; }).join("");
   }
+  // ---------- chat interno (paciente ↔ nutricionista) ----------
+  var chatPaciente = null;
+  var chatTimerN = null;
+  function renderChatNT() {
+    var el = $("chatPacientes");
+    var st = load();
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      el.innerHTML = "";
+      $("chatTituloN").textContent = "Chat interno";
+      $("chatMsgsN").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card lá embaixo) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os pacientes pelo WhatsApp da aba Pacientes.</div>';
+      $("chatEnvioN").hidden = true;
+      return;
+    }
+    var ativos = st.pacientes.filter(function (p) { return p.ativo !== false && p.appTokenN; });
+    if (!ativos.length) {
+      el.innerHTML = '<div class="card muted">Gere o App do paciente primeiro (aba Pacientes) — o chat vive dentro dele.</div>';
+      return;
+    }
+    nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid).then(function (r) {
+      var novas = {};
+      (r.data || []).forEach(function (m) { if (m.de === "aluno" && !m.lida) novas[m.token] = (novas[m.token] || 0) + 1; });
+      el.innerHTML = ativos.map(function (p) {
+        var n = novas[p.appTokenN] || 0;
+        return '<div class="card" data-chat="' + p.id + '" style="cursor:pointer;padding:11px 14px;margin-bottom:8px;' + (chatPaciente === p.id ? "border-color:var(--verde);" : "") + '">' +
+          "<strong>" + esc(p.nome) + "</strong>" +
+          (n ? ' <span class="tag verde">' + n + " nova(s)</span>" : "") + "</div>";
+      }).join("");
+    });
+  }
+  function abreChatN(id) {
+    chatPaciente = id;
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === id; });
+    var nuvem = S.cloud && S.cloud();
+    if (!p || !nuvem) return;
+    $("chatTituloN").textContent = "💬 " + p.nome;
+    $("chatEnvioN").hidden = false;
+    nuvem.client.from("app_chat").select("de,texto,criado").eq("token", p.appTokenN)
+      .order("criado", { ascending: true }).limit(80).then(function (r) {
+        var msgs = r.data || [];
+        $("chatMsgsN").innerHTML = msgs.length ? msgs.map(function (m) {
+          var minha = m.de === "personal";
+          return '<div style="align-self:' + (minha ? "flex-end" : "flex-start") + ";background:" + (minha ? "var(--verde)" : "var(--fundo)") +
+            ";color:" + (minha ? "#fff" : "var(--texto)") + ';border-radius:12px;padding:8px 12px;max-width:80%;font-size:13.5px;">' +
+            esc(m.texto) + '<div style="font-size:10.5px;opacity:.7;margin-top:2px;">' + String(m.criado).slice(11, 16) + "</div></div>";
+        }).join("") : '<div class="muted">Nenhuma mensagem ainda — puxe o assunto! 😉</div>';
+        $("chatMsgsN").scrollTop = $("chatMsgsN").scrollHeight;
+        nuvem.client.from("app_chat").update({ lida: true }).eq("token", p.appTokenN).eq("de", "aluno").eq("lida", false).then(function () { renderChatNT(); });
+      });
+  }
+  $("chatPacientes").addEventListener("click", function (e) {
+    var d = e.target.closest("[data-chat]");
+    if (d) abreChatN(d.getAttribute("data-chat"));
+  });
+  $("chatEnviarN").addEventListener("click", function () {
+    var texto = $("chatTextoN").value.trim();
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === chatPaciente; });
+    var nuvem = S.cloud && S.cloud();
+    if (!texto || !p || !nuvem) return;
+    $("chatTextoN").value = "";
+    nuvem.client.from("app_chat").insert({ academia_id: nuvem.aid, token: p.appTokenN, de: "personal", texto: texto.slice(0, 1000), lida: true })
+      .then(function () { abreChatN(chatPaciente); });
+  });
+  $("chatTextoN").addEventListener("keydown", function (e) { if (e.key === "Enter") $("chatEnviarN").click(); });
+  clearInterval(chatTimerN);
+  chatTimerN = setInterval(function () {
+    if (!$("vChatN").hidden) { if (chatPaciente) abreChatN(chatPaciente); else renderChatNT(); }
+  }, 25000);
+  window.__chatNT = { render: renderChatNT, abre: abreChatN }; // testes
+
   function renderConta() {
     var st = load();
     if (document.activeElement !== $("cfgZap")) $("cfgZap").value = (st.config || {}).zap || "";
