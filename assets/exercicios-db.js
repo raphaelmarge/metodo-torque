@@ -1021,5 +1021,305 @@ self.MT_EXERCICIOS = [
   "g": "Peito",
   "eq": "Peso do corpo",
   "d": "Segure na posição baixa da flexão, cotovelos a 45°, corpo reto — força de base."
+ },
+ {
+  "n": "Clean com kettlebell",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Puxe o peso rente ao corpo e gire o punho no final para o kettlebell descansar no antebraço sem bater."
+ },
+ {
+  "n": "Snatch com kettlebell",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Um movimento só do chão até acima da cabeça: quadril explode, braço guia e o punho gira no topo para amortecer."
+ },
+ {
+  "n": "Press militar com kettlebell",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Com o peso na posição de rack, aperte o abdômen e empurre para cima sem inclinar o tronco para trás."
+ },
+ {
+  "n": "Levantamento turco",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Suba do chão até ficar em pé com o peso sempre acima da cabeça, por etapas — olhe para o kettlebell o tempo todo."
+ },
+ {
+  "n": "Halo com kettlebell",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Circule o peso ao redor da cabeça bem devagar, cotovelos apontando para cima e abdômen firme para não mexer o tronco."
+ },
+ {
+  "n": "Swing unilateral com kettlebell",
+  "g": "Posterior e glúteo",
+  "eq": "Kettlebell",
+  "d": "Igual ao swing, mas com uma mão: segure firme e não deixe o tronco girar quando o peso sobe."
+ },
+ {
+  "n": "Windmill com kettlebell",
+  "g": "Core",
+  "eq": "Kettlebell",
+  "d": "Peso no alto com o braço travado, desça a outra mão pela perna olhando para o kettlebell — quadril empurra para o lado."
+ },
+ {
+  "n": "Remada curvada com kettlebell",
+  "g": "Costas",
+  "eq": "Kettlebell",
+  "d": "Tronco inclinado e firme, puxe o peso até a cintura levando o cotovelo para trás, sem dar tranco."
+ },
+ {
+  "n": "Salto pliométrico lateral",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Salte de lado a lado sobre uma linha ou cone, aterrissando macio com joelhos levemente dobrados."
+ },
+ {
+  "n": "Salto com contramovimento",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Agache rápido e salte o mais alto possível — os braços ajudam jogando para cima; aterrisse sem barulho."
+ },
+ {
+  "n": "Salto em profundidade (drop jump)",
+  "g": "Funcional e Cross",
+  "eq": "Caixa",
+  "d": "Desça da caixa, toque o chão e salte imediatamente o mais alto que puder — contato mínimo com o solo."
+ },
+ {
+  "n": "Flexão pliométrica com palma",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Empurre o chão com força suficiente para as mãos saírem do solo e bata palma — punhos firmes na aterrissagem."
+ },
+ {
+  "n": "Salto unipodal na caixa",
+  "g": "Funcional e Cross",
+  "eq": "Caixa",
+  "d": "Salte para a caixa com uma perna só e aterrisse com o joelho alinhado ao pé — comece com caixa baixa."
+ },
+ {
+  "n": "Skipping alto no lugar",
+  "g": "Cardio",
+  "eq": "Peso do corpo",
+  "d": "Corra no lugar elevando os joelhos até a altura do quadril, braços coordenados e tronco levemente à frente."
+ },
+ {
+  "n": "Arremesso rotacional de medicine ball",
+  "g": "Core",
+  "eq": "Medicine ball",
+  "d": "Gire o quadril e arremesse a bola contra a parede na altura do peito — a força vem do tronco, não só dos braços."
+ },
+ {
+  "n": "Flexão arqueiro",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Mãos bem afastadas: desça o corpo para um lado com o outro braço esticado, alternando — meio caminho para a flexão a uma mão."
+ },
+ {
+  "n": "Flexão hindu",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Do pique, mergulhe o peito rente ao chão e suba de peito aberto olhando para frente, num movimento de onda contínuo."
+ },
+ {
+  "n": "Barra fixa com pegada mista",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Uma mão pronada e outra supinada: suba controlando e troque a pegada a cada série para equilibrar os lados."
+ },
+ {
+  "n": "Muscle-up na barra",
+  "g": "Funcional e Cross",
+  "eq": "Barra fixa",
+  "d": "Puxada explosiva até o peito passar da barra e transição empurrando para cima — domine antes a barra alta com peito na barra."
+ },
+ {
+  "n": "Parada de mão na parede",
+  "g": "Ombros",
+  "eq": "Peso do corpo",
+  "d": "Suba com os pés pela parede até ficar quase vertical, braços travados e abdômen apertado — desça devagar."
+ },
+ {
+  "n": "Dragon flag",
+  "g": "Core",
+  "eq": "Banco/Caixa",
+  "d": "Segure o banco atrás da cabeça e desça o corpo reto como uma tábua, tocando só os ombros no banco — avançado, desça devagar."
+ },
+ {
+  "n": "L-sit no chão",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Mãos no chão ao lado do quadril, pernas esticadas à frente sem tocar o solo — empurre os ombros para baixo e respire."
+ },
+ {
+  "n": "Remada australiana na barra baixa",
+  "g": "Costas",
+  "eq": "Barra",
+  "d": "Corpo reto embaixo da barra, puxe o peito até tocá-la apertando as escápulas — quanto mais horizontal, mais difícil."
+ },
+ {
+  "n": "Shadow boxing (jab e direto)",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Socos no ar com guarda alta: jab da mão da frente, direto da de trás girando o quadril — nunca cruze os pés."
+ },
+ {
+  "n": "Gancho alternado",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Cotovelo a 90 graus na altura do ombro, gire o corpo inteiro no soco curvo — o pé do mesmo lado gira junto."
+ },
+ {
+  "n": "Esquiva lateral (slip)",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Dobre levemente os joelhos e incline o tronco para fora da linha do soco, sem abaixar a guarda nem fechar os olhos."
+ },
+ {
+  "n": "Socos no saco pesado",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Punho alinhado com o antebraço e punhos enfaixados: bata em combinações curtas e volte sempre com a guarda."
+ },
+ {
+  "n": "Joelhada no saco",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Puxe o saco com as mãos e suba o joelho na diagonal, empurrando o quadril à frente — troque de perna a cada golpe."
+ },
+ {
+  "n": "Chute frontal (teep)",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Joelho alto primeiro, depois empurre com a planta do pé como quem afasta a porta — recolha rápido para não ser agarrado."
+ },
+ {
+  "n": "Sprawl (defesa de queda)",
+  "g": "Boxe e lutas",
+  "eq": "Peso do corpo",
+  "d": "Do combate em pé, jogue as pernas para trás batendo o quadril no chão e volte a ficar de pé rápido — mãos prontas."
+ },
+ {
+  "n": "Pulo de corda estilo boxeador",
+  "g": "Boxe e lutas",
+  "eq": "Corda",
+  "d": "Saltos baixos transferindo o peso de um pé pro outro, punhos girando a corda pelo punho, não pelo braço todo."
+ },
+ {
+  "n": "Corrida na água profunda",
+  "g": "Cardio",
+  "eq": "Piscina",
+  "d": "Com flutuador na cintura, corra sem tocar o fundo: joelho alto, braços coordenados, tronco levemente à frente."
+ },
+ {
+  "n": "Polichinelo aquático",
+  "g": "Cardio",
+  "eq": "Piscina",
+  "d": "Na água pelo peito, abra e feche pernas e braços contra a resistência da água — quanto mais rápido, mais intenso."
+ },
+ {
+  "n": "Chute de perna na borda",
+  "g": "Quadríceps",
+  "eq": "Piscina",
+  "d": "Segure a borda de costas e bata as pernas alternadas como no nado, ponta do pé esticada e joelho quase reto."
+ },
+ {
+  "n": "Remada aquática com palmar",
+  "g": "Costas",
+  "eq": "Piscina",
+  "d": "Na água pelo ombro, puxe os palmares para trás apertando as escápulas — a água faz o papel da polia."
+ },
+ {
+  "n": "Bicicleta aquática",
+  "g": "Cardio",
+  "eq": "Piscina",
+  "d": "Apoiado na borda ou flutuador, pedale na água com amplitude completa — ótimo cardio sem impacto nos joelhos."
+ },
+ {
+  "n": "Sentar e levantar da cadeira",
+  "g": "Quadríceps",
+  "eq": "Cadeira",
+  "d": "Pés afastados na largura do quadril, incline o tronco à frente e levante sem usar as mãos — desça devagar até quase sentar."
+ },
+ {
+  "n": "Elevação de calcanhares apoiado",
+  "g": "Quadríceps",
+  "eq": "Cadeira",
+  "d": "Segurando o encosto, suba na ponta dos pés e desça em 3 segundos — fortalece a panturrilha e o equilíbrio."
+ },
+ {
+  "n": "Marcha estacionária com apoio",
+  "g": "Cardio",
+  "eq": "Cadeira",
+  "d": "Ao lado da cadeira, marche no lugar elevando bem os joelhos — apoie a mão só quando precisar."
+ },
+ {
+  "n": "Equilíbrio unipodal com apoio",
+  "g": "Funcional e Cross",
+  "eq": "Cadeira",
+  "d": "Fique numa perna só ao lado da cadeira por 20 a 30 segundos — evolua soltando o apoio e depois fechando os olhos."
+ },
+ {
+  "n": "Caminhada calcanhar-ponta",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Ande em linha reta encostando o calcanhar na ponta do outro pé, olhando para frente — treino de equilíbrio e marcha."
+ },
+ {
+  "n": "Extensão de joelho sentado",
+  "g": "Quadríceps",
+  "eq": "Cadeira",
+  "d": "Sentado com a coluna encostada, estique um joelho por vez segurando 2 segundos no topo — use caneleira leve para evoluir."
+ },
+ {
+  "n": "Flexão de ombro com bastão",
+  "g": "Ombros",
+  "eq": "Bastão",
+  "d": "Segure o bastão com as duas mãos e leve-o à frente e acima da cabeça até onde for confortável — o lado bom ajuda o outro."
+ },
+ {
+  "n": "Rotação de tronco sentado com bastão",
+  "g": "Mobilidade e alongamento",
+  "eq": "Bastão",
+  "d": "Bastão apoiado nos ombros, gire o tronco para cada lado devagar mantendo o quadril parado no assento."
+ },
+ {
+  "n": "Apoio na parede com flexão de braços",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Mãos na parede na altura do peito, corpo reto: dobre os cotovelos aproximando o rosto da parede e empurre de volta."
+ },
+ {
+  "n": "Pullover na máquina",
+  "g": "Costas",
+  "eq": "Máquina",
+  "d": "Cotovelos quase estendidos, puxe o apoio de cima até a linha do quadril sentindo o dorsal alongar e contrair."
+ },
+ {
+  "n": "Crucifixo inverso unilateral na máquina",
+  "g": "Ombros",
+  "eq": "Máquina",
+  "d": "Um braço por vez: abra até a linha do ombro com pausa de 1 segundo — o lado livre segura o apoio para não girar."
+ },
+ {
+  "n": "Hack squat com pés altos",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Pés no topo da plataforma transferem o esforço para glúteo e posterior — desça fundo sem soltar a lombar do encosto."
+ },
+ {
+  "n": "Leg press com pés unidos",
+  "g": "Quadríceps",
+  "eq": "Máquina",
+  "d": "Pés juntos no centro da plataforma enfatizam o quadríceps externo — amplitude confortável, joelhos alinhados."
+ },
+ {
+  "n": "Remada na máquina com pegada aberta",
+  "g": "Costas",
+  "eq": "Máquina",
+  "d": "Pegada mais larga que os ombros, puxe levando os cotovelos abertos na linha do peito — foco no meio das costas."
  }
 ];
