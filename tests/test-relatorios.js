@@ -24,6 +24,9 @@ function ok(cond, nome) {
     localStorage.setItem("mtapp:seeded", "1");
     localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
     const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); };
+    // dm: como d(), mas nunca sai do mês atual — no começo do mês, d(-10) cairia
+    // no mês passado e a receita "deste mês" sumiria do relatório anual
+    const dm = (off) => { const x = d(off); return x.slice(0, 7) === mesAtual ? x : mesAtual + "-01"; };
     localStorage.setItem("mtapp:alunos", JSON.stringify({
       alunos: [
         { id: "a1", nome: "Rafa Silva", status: "ativo", checkins: [d(-1) + "T18:00", d(-3) + "T18:00", d(-5) + "T18:00", d(-8) + "T18:00", d(-10) + "T18:00", d(-12) + "T18:00", d(-15) + "T18:00", d(-17) + "T18:00", d(-19) + "T18:00", d(-22) + "T18:00", d(-24) + "T18:00", d(-26) + "T18:00"],
@@ -40,8 +43,8 @@ function ok(cond, nome) {
         { id: "pl2", nome: "Manhã", valor: 99, meses: 1 },
       ],
       recebiveis: [
-        { id: "r1", alunoId: "a1", valor: 150, status: "pago", pagoEm: d(-2), vencimento: d(-2), competencia: mesAtual },
-        { id: "r2", alunoId: "a2", valor: 150, status: "pago", pagoEm: d(-10), vencimento: d(-10), competencia: mesAtual },
+        { id: "r1", alunoId: "a1", valor: 150, status: "pago", pagoEm: dm(-2), vencimento: dm(-2), competencia: mesAtual },
+        { id: "r2", alunoId: "a2", valor: 150, status: "pago", pagoEm: dm(-10), vencimento: dm(-10), competencia: mesAtual },
         { id: "r3", alunoId: "a3", valor: 99, status: "aberto", vencimento: d(-10) },
         { id: "r4", alunoId: "a3", valor: 99, status: "aberto", vencimento: d(-45) },
         { id: "r5", alunoId: "a4", valor: 99, status: "aberto", vencimento: d(-100) },
@@ -54,8 +57,8 @@ function ok(cond, nome) {
     ] }));
     localStorage.setItem("mtapp:produtos", JSON.stringify({
       itens: [], vendas: [
-        { id: "v1", data: d(-5), hora: "10:00", itens: [{ produtoId: "p1", nome: "Whey", qtd: 3, preco: 120 }], total: 360, forma: "pix" },
-        { id: "v2", data: d(-15), hora: "10:00", itens: [{ produtoId: "p2", nome: "Água", qtd: 10, preco: 4 }], total: 40, forma: "dinheiro" },
+        { id: "v1", data: dm(-5), hora: "10:00", itens: [{ produtoId: "p1", nome: "Whey", qtd: 3, preco: 120 }], total: 360, forma: "pix" },
+        { id: "v2", data: dm(-15), hora: "10:00", itens: [{ produtoId: "p2", nome: "Água", qtd: 10, preco: 4 }], total: 40, forma: "dinheiro" },
       ],
     }));
     localStorage.setItem("mtapp:automacao", JSON.stringify({
