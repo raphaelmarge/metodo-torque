@@ -16,9 +16,28 @@
 <link href="apps/apps.css" rel="stylesheet">
 <style>
   :root { --verde: #16a34a; --verde-2: #15803d; }
-  .abas-nt { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-  .abas-nt button { border: 1px solid var(--linha); background: #fff; padding: 10px 16px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13.5px; border-radius: 999px; transition: all .15s ease; }
-  .abas-nt button.ativa { background: var(--verde); color: #fff; border-color: var(--verde); box-shadow: 0 8px 20px -8px rgba(22,163,74,.5); }
+  /* menu lateral (gaveta escura, igual ao do TORQUE ON academia) */
+  .hamb-nt { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.12); border: none; color: #fff; cursor: pointer; padding: 9px; border-radius: 10px; flex: none; transition: background .15s ease; }
+  .hamb-nt:hover { background: rgba(255,255,255,.22); }
+  .abas-nt {
+    position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
+    background: #121a14; border-right: 1px solid #24312a; display: flex; flex-direction: column;
+    padding: 14px 0 16px; overflow-y: auto; transform: translateX(-105%); transition: transform .22s ease;
+  }
+  body.menu-aberto .abas-nt { transform: none; box-shadow: 0 0 40px rgba(16,22,18,.45); }
+  .abas-nt .menu-cab { padding: 6px 18px 14px; color: #9fb3a6; font-size: 11.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; border-bottom: 1px solid #24312a; margin-bottom: 8px; }
+  .abas-nt .menu-cab b { display: block; color: #fff; font-size: 15px; letter-spacing: .04em; margin-top: 3px; }
+  .abas-nt button {
+    display: flex; align-items: center; gap: 12px; text-align: left;
+    background: none; border: none; border-left: 3px solid transparent;
+    padding: 12px 18px; margin-right: 8px; border-radius: 0 8px 8px 0;
+    color: #9fb3a6; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+  }
+  .abas-nt button:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .abas-nt button.ativa { color: #fff; border-left-color: var(--verde); background: rgba(22,163,74,.22); }
+  .menu-fundo { position: fixed; inset: 0; background: rgba(16,22,18,.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .22s; }
+  body.menu-aberto .menu-fundo { opacity: 1; pointer-events: auto; }
   .pac { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
   .linha-nt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
   .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; background: #dcfce7; color: #15803d; }
@@ -37,6 +56,7 @@
 
 <header class="topo" style="background: linear-gradient(135deg, #14532d, #166534);">
   <div class="topo-marca">
+    <button class="hamb-nt" id="btnMenuNt" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <div>
       <span class="kicker" style="color: #86efac;">TORQUE ON · NUTRIÇÃO</span>
       <h1 id="tituloStudio">Meu consultório</h1>
@@ -58,7 +78,9 @@
 
   <div class="kpis-nt" id="kpisN"></div>
 
+  <div class="menu-fundo" id="fundoMenuNt"></div>
   <div class="abas-nt" id="abasNt">
+    <div class="menu-cab">TORQUE ON<b>Módulo Nutrição</b></div>
     <button data-a="pacientes" class="ativa">Pacientes</button>
     <button data-a="dietas">Dietas</button>
     <button data-a="alimentos">Alimentos</button>
@@ -287,10 +309,15 @@
   }
   window.__nutri = { kcalAlvo: kcalAlvo, gerarDieta: gerarDieta, kcalDaDieta: kcalDaDieta }; // testes
 
+  // ---------- menu lateral ----------
+  document.getElementById("btnMenuNt").onclick = function () { document.body.classList.toggle("menu-aberto"); };
+  document.getElementById("fundoMenuNt").onclick = function () { document.body.classList.remove("menu-aberto"); };
+
   // ---------- abas ----------
   document.getElementById("abasNt").addEventListener("click", function (e) {
     var b = e.target.closest("button");
     if (!b) return;
+    document.body.classList.remove("menu-aberto");
     document.querySelectorAll("#abasNt button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
     $("vPacientes").hidden = b.dataset.a !== "pacientes";
     $("vDietas").hidden = b.dataset.a !== "dietas";
