@@ -113,6 +113,11 @@
       </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Marque ✅ quando a sessão acontecer — sessões feitas contam no fechamento de quem paga por sessão.</p>
     </div>
+    <div class="card" id="cardPedidosApp" hidden style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
+      <h2>Pedidos de horário pelo app</h2>
+      <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O aluno pede pela Agenda do app dele — confirme aqui e a sessão entra na sua agenda na hora.</p>
+      <div id="listaPedidosApp"></div>
+    </div>
     <div class="card"><h2>Próximas sessões</h2><div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div></div>
   </section>
 
@@ -482,7 +487,48 @@
         (x.feita ? '<span class="tag ok">FEITA ✅</span>' : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>') +
         '<button class="btn sec mini" data-cx="' + x.id + '">✕</button></div>';
     }).join("") : "Nenhuma sessão agendada.";
+    renderPedidosApp(st);
   }
+  // pedidos de horário vindos do app do aluno (nuvem)
+  function renderPedidosApp(st) {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { $("cardPedidosApp").hidden = true; return; }
+    nuvem.client.from("app_agenda").select("id,token,dia,hora,obs").eq("academia_id", nuvem.aid).eq("status", "pedido")
+      .gte("dia", S.todayISO()).order("dia").limit(30).then(function (r) {
+        var pedidos = r.data || [];
+        var alunoPorToken = {};
+        st.alunos.forEach(function (a) { if (a.appTokenP) alunoPorToken[a.appTokenP] = a; });
+        pedidos = pedidos.filter(function (p) { return alunoPorToken[p.token]; });
+        $("cardPedidosApp").hidden = !pedidos.length;
+        $("listaPedidosApp").innerHTML = pedidos.map(function (p) {
+          var a = alunoPorToken[p.token];
+          return '<div class="sessao-pt"><b>' + S.fmtData(p.dia) + " " + (p.hora || "") + "</b>" +
+            "<span>" + esc(a.nome) + (p.obs ? ' · <small class="muted">' + esc(p.obs) + "</small>" : "") + "</span>" +
+            '<span style="margin-left:auto;"></span>' +
+            '<button class="btn mini" data-agok="' + p.id + '" data-tok="' + esc(p.token) + '" data-dia="' + p.dia + '" data-hora="' + esc(p.hora || "") + '">Confirmar</button>' +
+            '<button class="btn sec mini" data-agno="' + p.id + '">Recusar</button></div>';
+        }).join("");
+      });
+  }
+  $("listaPedidosApp").addEventListener("click", function (e) {
+    var okId = e.target.getAttribute && e.target.getAttribute("data-agok");
+    var noId = e.target.getAttribute && e.target.getAttribute("data-agno");
+    if (!okId && !noId) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    if (okId) {
+      var st = load();
+      var a = st.alunos.find(function (x) { return x.appTokenP === e.target.getAttribute("data-tok"); });
+      if (a) {
+        st.sessoes.push({ id: S.uid(), alunoId: a.id, data: e.target.getAttribute("data-dia"), hora: e.target.getAttribute("data-hora") || "", feita: false });
+        save(st);
+      }
+      nuvem.client.from("app_agenda").update({ status: "confirmado" }).eq("id", okId).then(function () { renderAgenda(load()); });
+    } else {
+      nuvem.client.from("app_agenda").update({ status: "recusado" }).eq("id", noId).then(function () { renderAgenda(load()); });
+    }
+  });
+  window.__pedidosApp = renderPedidosApp; // testes
   $("sAdd").addEventListener("click", function () {
     if (!$("sAluno").value || !$("sData").value) { alert("Escolha o aluno e a data."); return; }
     var st = load();
@@ -1352,6 +1398,15 @@
           var pd = x.d.split("-");
           return "<div class='kv'><span>" + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero! 💪</span></div>";
         }).join("") + "</div>" : "") +
+      "<div class='cardx'><h2>Agenda</h2>" +
+      "<div id='agCal'></div><div id='agDia' style='margin-top:10px;'></div>" +
+      "<div id='agForm' style='display:none;margin-top:10px;'>" +
+      "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1'></select><button class='btnx' id='agPede'>Pedir horário</button></div>" +
+      "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'></div>" +
+      "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div></div>" +
+      "<div class='cardx'><h2>Conquistas</h2>" +
+      "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
+      "<div id='cqGraf' style='margin-top:14px;'></div></div>" +
       "<div class='cardx'><h2>Meu treino</h2>" +
       (fichasApp ? fichasApp.map(function (f) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
@@ -1482,6 +1537,60 @@
       "else{var msg='\ud83d\udcdd Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[ckNota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
       "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
       "pintaSemana();" +
+      // agenda estilo calendário (pede horário pela nuvem)
+      "var SESS=" + JSON.stringify(sessApp) + ";" +
+      "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
+      "var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];" +
+      "function agDados(){var l=L('ptagenda',[]);SESS.forEach(function(s){if(!l.some(function(x){return x.dia===s.d&&x.hora===(s.h||'')&&x.status==='confirmado';}))l.push({dia:s.d,hora:s.h||'',status:'confirmado',obs:'Sessão marcada'});});return l;}" +
+      "function carregaAgenda(){if(!NUVEM){pintaCal();return;}rpcApp('app_agenda_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptagenda',l);}pintaCal();});}" +
+      "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
+      "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
+      "var pontos={};l.forEach(function(x){pontos[x.dia]=x.status==='confirmado'?'confirmado':(pontos[x.dia]||x.status);});" +
+      "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' style='background:#14121a;border:1px solid #322e3d;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' style='background:#14121a;border:1px solid #322e3d;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
+      "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:#6e6a78;margin-bottom:4px;'>\"+['S','T','Q','Q','S','S','D'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';" +
+      "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
+      "for(var i=0;i<ini;i++)h+='<div></div>';" +
+      "for(var d2=1;d2<=nd;d2++){var iso=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d2).slice(-2);var st2=pontos[iso];var hoje2=iso===isoHj();" +
+      "h+=\"<div data-agdia='\"+iso+\"' style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;\"+(AGSEL===iso?'background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;':(hoje2?'border:1px solid #a78bfa;color:#fff;':'background:#14121a;border:1px solid #26222f;color:#d6d2df;'))+\"'>\"+d2+" +
+      "(st2?\"<span style='width:5px;height:5px;border-radius:50%;margin-top:2px;background:\"+(st2==='confirmado'?'#4ade80':st2==='pedido'?'#fbbf24':'#f87171')+\";'></span>\":\"<span style='height:7px;'></span>\")+'</div>';}" +
+      "h+='</div>';el.innerHTML=h;" +
+      "document.getElementById('agAnt').onclick=function(){AGMES.setMonth(AGMES.getMonth()-1);pintaCal();};" +
+      "document.getElementById('agProx').onclick=function(){AGMES.setMonth(AGMES.getMonth()+1);pintaCal();};pintaDia();}" +
+      "function pintaDia(){var box=document.getElementById('agDia');var form=document.getElementById('agForm');" +
+      "if(!AGSEL){box.innerHTML='';form.style.display='none';return;}" +
+      "var l=agDados().filter(function(x){return x.dia===AGSEL;});var pd=AGSEL.split('-');" +
+      "box.innerHTML=\"<div style='font-size:13px;font-weight:800;margin-bottom:6px;'>\"+pd[2]+'/'+pd[1]+\"</div>\"+(l.length?l.map(function(x){" +
+      "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
+      "var rot=x.status==='confirmado'?'confirmado':x.status==='pedido'?'aguardando':'não deu';" +
+      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><b style='color:\"+cor+\"'>\"+rot+'</b></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
+      "form.style.display=AGSEL>=isoHj()?'block':'none';}" +
+      "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
+      "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
+      "document.getElementById('agPede').addEventListener('click',function(){if(!AGSEL)return;var hr=document.getElementById('agHora').value;var ob=document.getElementById('agObs').value.trim();" +
+      "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_agenda_pede',{t:TOKEN,p_dia:AGSEL,p_hora:hr,p_obs:ob}).then(function(r){btn.disabled=false;" +
+      "if(r&&r.ok){var l=L('ptagenda',[]);l.push({dia:AGSEL,hora:hr,status:'pedido',obs:ob});Sv('ptagenda',l);document.getElementById('agObs').value='';pintaCal();" +
+      "alert('Pedido enviado! '+PRIMEIRO+', seu personal confirma em breve. 😉');}else{alert((r&&r.erro==='muitos_pedidos')?'Você já tem muitos pedidos aguardando — espere a confirmação.':'Não deu pra enviar agora — tenta de novo.');}});}" +
+      "else{var pd=AGSEL.split('-');window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent('Oi! Queria marcar horário dia '+pd[2]+'/'+pd[1]+' às '+hr+(ob?' — '+ob:'')),'_blank');}});" +
+      "carregaAgenda();" +
+      // conquistas: medalhas + gráfico de treinos por semana
+      "function seqMax(f){var ks=Object.keys(f).sort();var max2=0,seq=0,ant=null;ks.forEach(function(k){" +
+      "if(ant){var dif=(new Date(k)-new Date(ant))/864e5;seq=dif===1?seq+1:1;}else seq=1;if(seq>max2)max2=seq;ant=k;});return max2;}" +
+      "function pintaConquistas(){var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);" +
+      "var pz=Object.keys(L('ptpeso',{})).length;var dc=L('ptdc',{});var recs=Object.keys(dc).length;" +
+      "var semMeta=0;var porSem={};Object.keys(f).forEach(function(k){var d4=new Date(k);d4.setDate(d4.getDate()-((d4.getDay()+6)%7));var w=d4.toISOString().slice(0,10);porSem[w]=(porSem[w]||0)+1;});" +
+      "Object.keys(porSem).forEach(function(w){if(porSem[w]>=META)semMeta++;});" +
+      "var BADGES=[['🏁','Primeiro treino',total,1],['🔥','3 dias seguidos',seq,3],['⚡','7 dias seguidos',seq,7],['🏆','Semana com meta',semMeta,1],['💪','25 treinos',total,25],['💎','100 treinos',total,100],['📉','10 pesagens',pz,10],['🏋️','Carga anotada',recs,1],['🚀','10 semanas de meta',semMeta,10]];" +
+      "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b){var tem=b[2]>=b[3];" +
+      "return \"<div style='text-align:center;padding:10px 4px;border-radius:11px;\"+(tem?'background:rgba(124,58,237,.22);border:1px solid #7c3aed;':'background:#14121a;border:1px solid #26222f;opacity:.55;')+\"'>\"+" +
+      "\"<div style='font-size:22px;'>\"+b[0]+\"</div><div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
+      "(tem?\"<div style='font-size:9.5px;color:#a78bfa;font-weight:800;margin-top:2px;'>CONQUISTADA</div>\":\"<div style='font-size:9.5px;color:#6e6a78;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
+      "var bars='';var hj5=new Date();var seg5=new Date(hj5);seg5.setDate(seg5.getDate()-((seg5.getDay()+6)%7));var max5=1;var sems=[];" +
+      "for(var w2=7;w2>=0;w2--){var d5=new Date(seg5);d5.setDate(d5.getDate()-7*w2);var iso5=d5.toISOString().slice(0,10);var n5=porSem[iso5]||0;if(n5>max5)max5=n5;sems.push({d:d5,n:n5});}" +
+      "bars=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Treinos por semana (últimas 8)</div><div style='display:flex;gap:6px;align-items:flex-end;height:80px;'>\"+sems.map(function(s5){" +
+      "var hh5=Math.round(56*s5.n/max5);var bateu=s5.n>=META;" +
+      "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(bateu?'#a78bfa':'#6e6a78')+\";'>\"+(s5.n||'')+\"</div><div style='height:\"+(56-hh5)+\"px;'></div><div style='height:\"+hh5+\"px;background:\"+(bateu?'linear-gradient(180deg,#a78bfa,#7c3aed)':'#3a3346')+\";border-radius:4px 4px 0 0;min-height:2px;'></div><div style='font-size:8.5px;color:#6e6a78;margin-top:3px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
+      "document.getElementById('cqGraf').innerHTML=bars;}" +
+      "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(pintaConquistas,150);});" +
       "var FEXS=" + JSON.stringify(fexs) + ";" +
       // séries por exercício + cronômetro + auto-completar o dia
       "function pintaSets(){var st=L('ptsets_'+isoHj(),{});document.querySelectorAll('.setbtn').forEach(function(b){" +

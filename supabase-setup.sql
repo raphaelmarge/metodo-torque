@@ -1515,3 +1515,69 @@ begin
 end;
 $$;
 grant execute on function public.equipe_cria_login(text, text, text, text) to authenticated;
+
+-- ==================== AGENDA DO APP ====================
+-- Aluno/paciente pede horário pelo app; o profissional confirma no módulo.
+-- Bloco idempotente — pode rodar de novo sem medo.
+
+create table if not exists public.app_agenda (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,
+  dia date not null,
+  hora text not null default '',
+  status text not null default 'pedido' check (status in ('pedido', 'confirmado', 'recusado')),
+  obs text not null default '',
+  origem text not null default 'aluno' check (origem in ('aluno', 'profissional')),
+  criado timestamptz not null default now()
+);
+create index if not exists app_agenda_token on public.app_agenda (token, dia);
+create index if not exists app_agenda_acad on public.app_agenda (academia_id, status, dia);
+
+alter table public.app_agenda enable row level security;
+
+drop policy if exists "app_agenda_membros" on public.app_agenda;
+create policy "app_agenda_membros" on public.app_agenda
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- aluno/paciente pede um horário pelo token do app dele
+create or replace function public.app_agenda_pede(t text, p_dia date, p_hora text, p_obs text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if p_dia is null or p_dia < current_date then
+    return json_build_object('erro', 'dia_invalido');
+  end if;
+  if (select count(*) from app_agenda where token = t and status = 'pedido') >= 10 then
+    return json_build_object('erro', 'muitos_pedidos');
+  end if;
+  insert into app_agenda (academia_id, token, dia, hora, obs)
+    values (v_acad, t, p_dia, left(coalesce(p_hora, ''), 5), left(trim(coalesce(p_obs, '')), 200));
+  return json_build_object('ok', true);
+end;
+$$;
+
+-- aluno/paciente lista os horários dele (últimos 30 dias + futuro)
+create or replace function public.app_agenda_lista(t text)
+returns json
+language sql security definer
+set search_path = public
+as $$
+  select coalesce(json_agg(x order by x.dia, x.hora), '[]'::json) from (
+    select id, dia, hora, status, obs from app_agenda
+    where token = t and dia >= current_date - 30
+    order by dia, hora limit 120
+  ) x
+$$;
+
+grant execute on function public.app_agenda_pede(text, date, text, text) to anon, authenticated;
+grant execute on function public.app_agenda_lista(text) to anon, authenticated;
