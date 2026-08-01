@@ -197,6 +197,25 @@ async function abaPt(p, a) {
   const bib = await p.evaluate(() => document.getElementById("exLista").textContent);
   ok(/Supino reto/.test(bib) && /Agachamento livre/.test(bib), "biblioteca vem semeada com básicos");
 
+  // catálogo TORQUE alimenta o módulo: navegador na Biblioteca + seletor da ficha
+  const cat = await p.evaluate(() => ({
+    n: document.getElementById("catN").textContent,
+    lista: document.getElementById("catLista").textContent,
+    grupos: document.getElementById("catGrupo").options.length,
+  }));
+  ok(/2\d\d exercícios/.test(cat.n), "catálogo TORQUE anunciado com 200+ exercícios (" + cat.n.trim() + ")");
+  ok(/usar/.test(cat.lista) && cat.grupos >= 10, "navegador do catálogo com botão + usar e filtro de grupos");
+  await p.fill("#catBusca", "kettlebell");
+  await p.waitForTimeout(150);
+  const antesUsa = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length);
+  await p.click('#catLista [data-catusa]');
+  await p.waitForTimeout(150);
+  const depoisUsa = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length);
+  ok(depoisUsa === antesUsa + 1, "+ usar puxa o exercício do catálogo pra biblioteca (com grupo e dica)");
+  ok(await p.evaluate(() => /NA BIBLIOTECA/.test(document.getElementById("catLista").textContent)), "item usado ganha etiqueta NA BIBLIOTECA");
+  await p.fill("#catBusca", "");
+  await p.waitForTimeout(150);
+
   // abre a sub-página do Supino e coloca vídeo
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
@@ -235,6 +254,24 @@ async function abaPt(p, a) {
   await p.click('[data-additem="' + fichaId + '"]');
   const fichas = await p.evaluate(() => document.getElementById("fichasBox").textContent);
   ok(/Supino reto/.test(fichas) && /4×10/.test(fichas), "ficha montada por seleção (Supino 4×10)");
+
+  // o seletor da ficha oferece o catálogo TORQUE inteiro (optgroup) e materializa ao usar
+  const selCat = await p.evaluate((fid) => {
+    const sel = document.querySelector('[data-exsel="' + fid + '"]');
+    const grupos = Array.from(sel.querySelectorAll("optgroup")).map((g) => g.label);
+    const opCat = Array.from(sel.options).find((o) => o.value.indexOf("cat:") === 0);
+    return { grupos: grupos.join("|"), temCat: !!opCat, valor: opCat && opCat.value };
+  }, fichaId);
+  ok(/Meus exercícios/.test(selCat.grupos) && /Catálogo TORQUE/.test(selCat.grupos) && selCat.temCat, "seletor da ficha tem Meus exercícios + Catálogo TORQUE");
+  await p.selectOption('[data-exsel="' + fichaId + '"]', selCat.valor);
+  await p.click('[data-additem="' + fichaId + '"]');
+  await p.waitForTimeout(150);
+  const aposCat = await p.evaluate((nome) => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const ex = st.exercicios.find((e) => e.nome.toLowerCase() === nome.toLowerCase());
+    return { entrou: !!ex, comDica: !!(ex && ex.descricao), naFicha: document.getElementById("fichasBox").textContent.includes(nome) };
+  }, selCat.valor.slice(4));
+  ok(aposCat.entrou && aposCat.comDica && aposCat.naFicha, "exercício do catálogo entra na ficha e vira item da biblioteca com dica");
 
   // videoteca do studio
   await p.fill("#vtpTitulo", "Mobilidade de quadril");
