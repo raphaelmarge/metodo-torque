@@ -317,6 +317,16 @@
         </div>
       </div>
     </div>
+    <div class="card" style="margin-top: 14px; border-left: 4px solid var(--roxo);">
+      <h2>Robô de atendimento</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Igual ao chatbot do sistema da academia: dentro do app do aluno, o robô responde na hora as perguntas comuns (menu de atalhos) e encaminha pra você quando precisar de gente. Depois de mudar algo, republique os apps dos alunos.</p>
+      <label style="display: flex; gap: 8px; align-items: center; font-weight: 700; margin-bottom: 10px;"><input type="checkbox" id="botAtivoP" style="width: 17px; height: 17px;"> Ligado nos apps dos alunos</label>
+      <label style="font-size: 12.5px;">Mensagem de boas-vindas do robô
+        <input id="botOiP" style="width: 100%; margin: 4px 0 10px;"></label>
+      <label style="font-size: 12.5px;">Opções do menu — uma por linha, no formato <b>Rótulo | Resposta</b> (escreva <b>humano</b> na resposta pra encaminhar pra você)
+        <textarea id="botOpsP" rows="5" style="width: 100%; margin: 4px 0 10px; font-family: inherit; font-size: 13px; border: 1px solid var(--linha); border-radius: 8px; padding: 8px;"></textarea></label>
+      <div class="linha-flex"><button class="btn" id="botSalvaP">Salvar robô</button><span id="botOkP" class="muted"></span></div>
+    </div>
   </section>
 
   <div class="card" id="cardConta" style="margin-top: 20px;">
@@ -1362,6 +1372,14 @@
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
+    var botCfg = botDe(st);
+    var botApp = null;
+    if (botCfg.ativo !== false) {
+      botApp = { oi: botCfg.oi, ops: botCfg.ops.map(function (o) {
+        return { r: o.r, t: String(o.t).trim().toLowerCase() === "humano"
+          ? "Pode escrever aqui embaixo que " + studio.split(" ")[0] + " te responde assim que puder! 💬" : o.t };
+      }) };
+    }
     var nuvemCfg = self.MT_CLOUD || {};
     var atualizador = "";
     if (nuvemCfg.url && nuvemCfg.anonKey && a.appTokenP) {
@@ -1488,6 +1506,7 @@
         "<div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
       "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
+      "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
       "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
       "<div id='tmrBar' style='display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
@@ -1655,16 +1674,27 @@
       "try{Sv('ptfotos',fs);}catch(e){alert('Memória de fotos cheia — apague fotos antigas do app.');return;}pintaFotos();};" +
       "img.src=rd.result;};rd.readAsDataURL(f);this.value='';});" +
       "pintaFotos();" +
-      // chat aluno ↔ personal
-      "function pintaChat(msgs){var el=document.getElementById('chMsgs');" +
-      "if(!msgs||!msgs.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
-      "el.innerHTML=msgs.map(function(m){var minha=m.de==='aluno';" +
-      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,#7c3aed,#6d28d9)':'#14121a')+\";border:1px solid #322e3d;border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      // chat aluno ↔ personal (+ robô de atendimento)
+      "var BOT=" + JSON.stringify(botApp) + ";" +
+      "function botHist(){return L('ptbotmsgs',[]);}" +
+      "function botFala(tx){var h=botHist();h.push({de:'bot',texto:tx,criado:new Date().toISOString()});if(h.length>60)h.shift();Sv('ptbotmsgs',h);}" +
+      "function pintaChat(msgs){var el=document.getElementById('chMsgs');var all=(msgs||[]).concat(botHist());" +
+      "all.sort(function(a,b){return String(a.criado)<String(b.criado)?-1:1;});" +
+      "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
+      "el.innerHTML=all.map(function(m){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
+      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,#7c3aed,#6d28d9)':(bot?'#241b36':'#14121a'))+\";border:1px solid \"+(bot?'#7c3aed':'#322e3d')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:#a78bfa;font-weight:800;margin-bottom:2px;'>🤖 assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
       "el.scrollTop=el.scrollHeight;}" +
       "function carregaChat(){if(!NUVEM){pintaChat(L('ptchat',[]));return;}" +
       "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptchat',l);pintaChat(l);}else{pintaChat(L('ptchat',[]));}});}" +
+      "function pintaChips(){var el=document.getElementById('botChips');if(!BOT){el.style.display='none';return;}" +
+      "el.innerHTML=BOT.ops.map(function(o,i){return \"<button data-bop='\"+i+\"' style='background:#241b36;border:1px solid #7c3aed;color:#d6c9f5;border-radius:99px;padding:6px 13px;font-size:12px;font-family:inherit;cursor:pointer;'>\"+String(o.r).replace(/</g,'&lt;')+\"</button>\";}).join('');}" +
+      "function botEscolhe(i){var o=BOT&&BOT.ops[i];if(!o)return;var h=botHist();h.push({de:'aluno-local',texto:o.r,criado:new Date().toISOString()});Sv('ptbotmsgs',h);" +
+      "pintaChat(L('ptchat',[]));setTimeout(function(){botFala(o.t);pintaChat(L('ptchat',[]));},250);}" +
+      "document.getElementById('botChips').addEventListener('click',function(e){var b=e.target.closest('[data-bop]');if(b)botEscolhe(+b.dataset.bop);});" +
+      "if(BOT&&!botHist().length)botFala(BOT.oi);pintaChips();pintaChat(L('ptchat',[]));" +
       "document.getElementById('chEnvia').addEventListener('click',function(){" +
       "var inp=document.getElementById('chTexto');var tx=inp.value.trim();if(!tx)return;" +
+      "if(BOT&&/^[0-9]{1,2}$/.test(tx)&&+tx>=1&&+tx<=BOT.ops.length){inp.value='';botEscolhe(+tx-1);return;}" +
       "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_chat_envia',{t:TOKEN,p_texto:tx}).then(function(r){btn.disabled=false;" +
       "if(r&&r.ok){inp.value='';carregaChat();}else{alert('Não deu pra enviar agora — tenta de novo.');}});}" +
       "else{window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(tx),'_blank');inp.value='';}});" +
@@ -1835,6 +1865,44 @@
     });
   }
   window.__assessoria = renderAssessoria; // testes
+
+  // ---------- robô de atendimento (chatbot do app do aluno) ----------
+  function botPadraoP(st) {
+    var studio = (st.config || {}).nome || "Meu Personal";
+    return { ativo: true,
+      oi: "Oi! Eu sou o assistente do " + studio + ". Posso te ajudar rapidinho — escolhe uma opção 👇",
+      ops: [
+        { r: "Meus horários", t: "Seus horários confirmados ficam no card Agenda aqui do app — e dá pra pedir horário novo por lá. 😉" },
+        { r: "Pagamento", t: "No card Pagamento você encontra o valor e o Pix copia e cola. Qualquer coisa me chama!" },
+        { r: "Meu treino", t: "Seu treino completo tá no card Meu treino, com vídeos e marcação de séries. 💪" },
+        { r: "Falar com " + studio.split(" ")[0], t: "humano" },
+      ] };
+  }
+  function botDe(st) {
+    var b = (st.config || {}).bot;
+    return (b && b.ops && b.ops.length) ? b : botPadraoP(st);
+  }
+  function renderBotP() {
+    var bot = botDe(load());
+    $("botAtivoP").checked = bot.ativo !== false;
+    $("botOiP").value = bot.oi || "";
+    $("botOpsP").value = bot.ops.map(function (o) { return o.r + " | " + o.t; }).join("\n");
+  }
+  $("botSalvaP").addEventListener("click", function () {
+    var st = load();
+    var ops = $("botOpsP").value.split("\n").map(function (ln) {
+      var p = ln.split("|");
+      return { r: (p[0] || "").trim(), t: (p.slice(1).join("|") || "").trim() };
+    }).filter(function (o) { return o.r && o.t; });
+    if (!ops.length) { alert("Escreva pelo menos uma opção no formato Rótulo | Resposta."); return; }
+    st.config = st.config || {};
+    st.config.bot = { ativo: $("botAtivoP").checked, oi: $("botOiP").value.trim() || botPadraoP(st).oi, ops: ops };
+    save(st);
+    $("botOkP").textContent = "Robô salvo! Republique os apps dos alunos pra valer por lá.";
+    setTimeout(function () { $("botOkP").textContent = ""; }, 5000);
+  });
+  window.__botP = botDe; // testes
+  renderBotP();
 
   // ---------- chat interno (aluno ↔ personal) ----------
   var chatAluno = null;

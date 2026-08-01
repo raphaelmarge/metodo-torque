@@ -223,6 +223,16 @@
         </div>
       </div>
     </div>
+    <div class="card" style="margin-top: 14px; border-left: 4px solid var(--verde);">
+      <h2>Robô de atendimento</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Igual ao chatbot do sistema da academia: dentro do app do paciente, o robô responde na hora as dúvidas comuns (menu de atalhos) e encaminha pra você quando precisar de gente. Depois de mudar algo, republique os apps dos pacientes.</p>
+      <label style="display: flex; gap: 8px; align-items: center; font-weight: 700; margin-bottom: 10px;"><input type="checkbox" id="botAtivoN" style="width: 17px; height: 17px;"> Ligado nos apps dos pacientes</label>
+      <label style="font-size: 12.5px;">Mensagem de boas-vindas do robô
+        <input id="botOiN" style="width: 100%; margin: 4px 0 10px;"></label>
+      <label style="font-size: 12.5px;">Opções do menu — uma por linha, no formato <b>Rótulo | Resposta</b> (escreva <b>humano</b> na resposta pra encaminhar pra você)
+        <textarea id="botOpsN" rows="5" style="width: 100%; margin: 4px 0 10px; font-family: inherit; font-size: 13px; border: 1px solid var(--linha); border-radius: 8px; padding: 8px;"></textarea></label>
+      <div class="linha-flex"><button class="btn verde" id="botSalvaN">Salvar robô</button><span id="botOkN" class="muted"></span></div>
+    </div>
   </div>
 
   <div class="card" style="margin-top: 20px; border-left: 4px solid var(--verde);">
@@ -759,6 +769,14 @@
     var st = load();
     var studio = (st.config || {}).nome || "Minha Nutri";
     var zapN = (st.config || {}).zap || "";
+    var botCfg = botDeN(st);
+    var botApp = null;
+    if (botCfg.ativo !== false) {
+      botApp = { oi: botCfg.oi, ops: botCfg.ops.map(function (o) {
+        return { r: o.r, t: String(o.t).trim().toLowerCase() === "humano"
+          ? "Pode escrever aqui embaixo que " + studio.split(" ")[0] + " te responde assim que puder! 💬" : o.t };
+      }) };
+    }
     var primeiro = (p.nome || "").split(" ")[0];
     var dieta = dietaDe(st, p.id);
     var alvo = kcalAlvo(p);
@@ -836,6 +854,7 @@
       "<div id='cqGraf' style='margin-top:14px;'></div></div>" +
       "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
+      "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
       "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
       (temNuvem ? "<div class='cardx'><h2>Meu login</h2>" +
@@ -973,16 +992,27 @@
       "\"<div class='vz' style='font-size:10px;'>barra cheia = todas as refeições · número azul = água na meta 💧</div>\";" +
       "document.getElementById('cqGraf').innerHTML=bars;}" +
       "pintaConquistas();document.addEventListener('click',function(e){if(e.target.closest('[data-refok]')||e.target.id==='agAdd'||e.target.id==='pzAdd')setTimeout(pintaConquistas,150);});" +
-      // chat paciente ↔ nutricionista
-      "function pintaChat(msgs){var el=document.getElementById('chMsgs');" +
-      "if(!msgs||!msgs.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
-      "el.innerHTML=msgs.map(function(m){var minha=m.de==='aluno';" +
-      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,#16a34a,#15803d)':'#101c14')+\";border:1px solid #29402f;border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      // chat paciente ↔ nutricionista (+ robô de atendimento)
+      "var BOT=" + JSON.stringify(botApp) + ";" +
+      "function botHist(){return L('ntbotmsgs',[]);}" +
+      "function botFala(tx){var h=botHist();h.push({de:'bot',texto:tx,criado:new Date().toISOString()});if(h.length>60)h.shift();Sv('ntbotmsgs',h);}" +
+      "function pintaChat(msgs){var el=document.getElementById('chMsgs');var all=(msgs||[]).concat(botHist());" +
+      "all.sort(function(a,b){return String(a.criado)<String(b.criado)?-1:1;});" +
+      "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
+      "el.innerHTML=all.map(function(m){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
+      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,#16a34a,#15803d)':(bot?'#0e2417':'#101c14'))+\";border:1px solid \"+(bot?'#16a34a':'#29402f')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:#4ade80;font-weight:800;margin-bottom:2px;'>🤖 assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
       "el.scrollTop=el.scrollHeight;}" +
       "function carregaChat(){if(!NUVEM){pintaChat(L('ntchat',[]));return;}" +
       "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ntchat',l);pintaChat(l);}else{pintaChat(L('ntchat',[]));}});}" +
+      "function pintaChips(){var el=document.getElementById('botChips');if(!BOT){el.style.display='none';return;}" +
+      "el.innerHTML=BOT.ops.map(function(o,i){return \"<button data-bop='\"+i+\"' style='background:#0e2417;border:1px solid #16a34a;color:#bbf7d0;border-radius:99px;padding:6px 13px;font-size:12px;font-family:inherit;cursor:pointer;'>\"+String(o.r).replace(/</g,'&lt;')+\"</button>\";}).join('');}" +
+      "function botEscolhe(i){var o=BOT&&BOT.ops[i];if(!o)return;var h=botHist();h.push({de:'aluno-local',texto:o.r,criado:new Date().toISOString()});Sv('ntbotmsgs',h);" +
+      "pintaChat(L('ntchat',[]));setTimeout(function(){botFala(o.t);pintaChat(L('ntchat',[]));},250);}" +
+      "document.getElementById('botChips').addEventListener('click',function(e){var b=e.target.closest('[data-bop]');if(b)botEscolhe(+b.dataset.bop);});" +
+      "if(BOT&&!botHist().length)botFala(BOT.oi);pintaChips();pintaChat(L('ntchat',[]));" +
       "document.getElementById('chEnvia').addEventListener('click',function(){" +
       "var inp=document.getElementById('chTexto');var tx=inp.value.trim();if(!tx)return;" +
+      "if(BOT&&/^[0-9]{1,2}$/.test(tx)&&+tx>=1&&+tx<=BOT.ops.length){inp.value='';botEscolhe(+tx-1);return;}" +
       "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_chat_envia',{t:TOKEN,p_texto:tx}).then(function(r){btn.disabled=false;" +
       "if(r&&r.ok){inp.value='';carregaChat();}else{alert('Não deu pra enviar agora — tenta de novo.');}});}" +
       "else{window.open('https://wa.me/'+(ZAPN?'55'+ZAPN:'')+'?text='+encodeURIComponent(tx),'_blank');inp.value='';}});" +
@@ -1129,6 +1159,44 @@
     }
   });
   window.__agendaN = renderAgendaN; // testes
+
+  // ---------- robô de atendimento (chatbot do app do paciente) ----------
+  function botPadraoN(st) {
+    var studio = (st.config || {}).nome || st.nome || "Meu Nutricionista";
+    return { ativo: true,
+      oi: "Oi! Sou o assistente do " + studio + ". Escolhe uma opção que eu te ajudo 👇",
+      ops: [
+        { r: "Minha dieta", t: "Sua dieta completa tá no card Minhas refeições — marca cada uma como feita que a adesão conta nas Conquistas. 🥗" },
+        { r: "Consultas", t: "Suas consultas ficam no card Agenda — e dá pra pedir horário novo por lá. 📅" },
+        { r: "Registrar o que comi", t: "Usa o card Registrar o que comi: busca o alimento (ou código de barras) e ele entra na contagem do dia." },
+        { r: "Falar com " + studio.split(" ")[0], t: "humano" },
+      ] };
+  }
+  function botDeN(st) {
+    var b = (st.config || {}).bot;
+    return (b && b.ops && b.ops.length) ? b : botPadraoN(st);
+  }
+  function renderBotN() {
+    var bot = botDeN(load());
+    $("botAtivoN").checked = bot.ativo !== false;
+    $("botOiN").value = bot.oi || "";
+    $("botOpsN").value = bot.ops.map(function (o) { return o.r + " | " + o.t; }).join("\n");
+  }
+  $("botSalvaN").addEventListener("click", function () {
+    var st = load();
+    var ops = $("botOpsN").value.split("\n").map(function (ln) {
+      var p = ln.split("|");
+      return { r: (p[0] || "").trim(), t: (p.slice(1).join("|") || "").trim() };
+    }).filter(function (o) { return o.r && o.t; });
+    if (!ops.length) { alert("Escreva pelo menos uma opção no formato Rótulo | Resposta."); return; }
+    st.config = st.config || {};
+    st.config.bot = { ativo: $("botAtivoN").checked, oi: $("botOiN").value.trim() || botPadraoN(st).oi, ops: ops };
+    S.write("ntStudio", st);
+    $("botOkN").textContent = "Robô salvo! Republique os apps dos pacientes pra valer por lá.";
+    setTimeout(function () { $("botOkN").textContent = ""; }, 5000);
+  });
+  window.__botN = botDeN; // testes
+  renderBotN();
 
   // ---------- chat interno (paciente ↔ nutricionista) ----------
   var chatPaciente = null;

@@ -168,6 +168,17 @@ async function abaNt(p, a) {
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app do paciente tem agenda estilo calendário com pedido de horário");
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Adesão à dieta/.test(appHtml), "app do paciente tem conquistas com gráfico de adesão");
   ok(/Dia perfeito/.test(appHtml) && /7 dias de água/.test(appHtml) && /10 pesagens/.test(appHtml), "medalhas de adesão, água e pesagens no app");
+  ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app do paciente tem o robô de atendimento (chatbot de menu)");
+  ok(/Pode escrever aqui embaixo/.test(appHtml), "opção 'humano' vira encaminhamento pro nutricionista");
+  {
+    const botEd = await p.evaluate(() => ({
+      temCard: !!document.getElementById("botAtivoN"),
+      ativo: document.getElementById("botAtivoN").checked,
+      ops: document.getElementById("botOpsN").value,
+    }));
+    ok(botEd.temCard && botEd.ativo, "módulo tem o editor do robô, ligado por padrão");
+    ok(/\|/.test(botEd.ops) && /humano/.test(botEd.ops), "opções padrão no formato Rótulo | Resposta com encaminhamento humano");
+  }
 
   // agenda no módulo: marcar consulta local
   await abaNt(p, "agenda");
