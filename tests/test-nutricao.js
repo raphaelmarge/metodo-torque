@@ -11,6 +11,12 @@ function ok(cond, nome) {
   if (!cond) falhas++;
 }
 
+// abre o menu lateral e clica na aba (menu vira gaveta com hambúrguer)
+async function abaNt(p, a) {
+  await p.click("#btnMenuNt");
+  await p.click('#abasNt [data-a="' + a + '"]');
+}
+
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
@@ -70,7 +76,7 @@ function ok(cond, nome) {
   ok(calcF.alvo === 1670, "mulher 25a/60kg/165cm moderada emagrecendo → 1670 kcal");
 
   // dieta automática
-  await p.click('[data-a="dietas"]');
+  await abaNt(p, "dietas");
   await p.selectOption("#dAluno", { index: 1 });
   await p.click("#dGerar");
   await p.waitForTimeout(300);
@@ -220,7 +226,7 @@ function ok(cond, nome) {
 
   // blog de receitas fitness
   console.log("Receitas fitness (blog):");
-  await p.click('[data-a="receitas"]');
+  await abaNt(p, "receitas");
   const totalRc = await p.evaluate(() => window.__receitas.total());
   ok(totalRc >= 20, "banco de receitas tem 20+ receitas (" + totalRc + ")");
   let rcTxt = await p.evaluate(() => document.getElementById("rcLista").textContent);

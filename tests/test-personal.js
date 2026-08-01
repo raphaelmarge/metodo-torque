@@ -11,6 +11,12 @@ function ok(cond, nome) {
   if (!cond) falhas++;
 }
 
+// abre o menu lateral e clica na aba (menu vira gaveta com hambúrguer)
+async function abaPt(p, a) {
+  await p.click("#btnMenuPt");
+  await p.click('#abas [data-a="' + a + '"]');
+}
+
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
@@ -92,7 +98,7 @@ function ok(cond, nome) {
   ok(/SEM PAGAMENTO NO MÊS/.test(lista), "etiqueta de pendência antes do pagamento");
 
   // agenda: sessão hoje + marcar feita
-  await p.click('[data-a="agenda"]');
+  await abaPt(p, "agenda");
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "07:00");
   await p.click("#sAdd");
@@ -103,7 +109,7 @@ function ok(cond, nome) {
   ok(/FEITA/.test(ses), "sessão marcada como feita");
 
   // pagamento: registra e some da pendência
-  await p.click('[data-a="pagamentos"]');
+  await abaPt(p, "pagamentos");
   let pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
   ok(/João Cliente/.test(pend) && /Cobrar/.test(pend), "pendente com botão de cobrança WhatsApp");
 
@@ -187,7 +193,7 @@ function ok(cond, nome) {
   ok(/1/.test(kpis) && /400/.test(kpis), "KPIs: 1 aluno ativo e R$ 400 no mês");
 
   // treinos por seleção: biblioteca semeada + editar exercício (sub-página) + montar ficha
-  await p.click('[data-a="treinos"]');
+  await abaPt(p, "treinos");
   const bib = await p.evaluate(() => document.getElementById("exLista").textContent);
   ok(/Supino reto/.test(bib) && /Agachamento livre/.test(bib), "biblioteca vem semeada com básicos");
 
@@ -239,7 +245,7 @@ function ok(cond, nome) {
   ok(/Mobilidade de quadril/.test(vtp), "videoteca do studio cadastra conteúdo");
 
   // agenda uma sessão futura pro app mostrar
-  await p.click('[data-a="agenda"]');
+  await abaPt(p, "agenda");
   await p.selectOption("#sAluno", { index: 1 });
   await p.evaluate(() => {
     const d = new Date(); d.setDate(d.getDate() + 2);
@@ -247,10 +253,10 @@ function ok(cond, nome) {
   });
   await p.fill("#sHora", "07:30");
   await p.click("#sAdd");
-  await p.click('[data-a="treinos"]');
+  await abaPt(p, "treinos");
 
   // dobras cutâneas: Pollock 3 (M, 30 anos, 10+20+15mm → ~13,6%) e Guedes (→ ~16,8%)
-  await p.click('[data-a="avaliacoes"]');
+  await abaPt(p, "avaliacoes");
   await p.selectOption("#dbMetodo", "p3");
   await p.selectOption("#dbSexo", "M");
   await p.fill("#dbIdade", "30");
@@ -292,7 +298,7 @@ function ok(cond, nome) {
   });
 
   // avaliações: registra 2 e vê evolução
-  await p.click('[data-a="avaliacoes"]');
+  await abaPt(p, "avaliacoes");
   await p.selectOption("#avAluno", { index: 1 });
   await p.fill("#avPeso", "90");
   await p.fill("#avGord", "25");
@@ -311,7 +317,7 @@ function ok(cond, nome) {
   ok(/João Cliente/.test(avs) && /-6/.test(avs.replace("−", "-")), "avaliações com delta de peso (-6 kg)");
 
   // relatórios
-  await p.click('[data-a="relatorios"]');
+  await abaPt(p, "relatorios");
   const relR = await p.evaluate(() => document.getElementById("relReceita").textContent);
   ok(/R\$\s?400/.test(relR), "relatório de receita mostra os R$ 400 do mês");
   const relA = await p.evaluate(() => document.getElementById("relAssiduidade").textContent);
@@ -495,19 +501,19 @@ function ok(cond, nome) {
   ok(/Crie sua conta|Conectado/.test(conta), "card da ilha mostra o status da conta");
 
   // aba chat do módulo (sem nuvem → aviso educado)
-  await p.click('[data-a="chat"]');
+  await abaPt(p, "chat");
   await p.waitForTimeout(300);
   const chatMod = await p.evaluate(() => document.getElementById("chatMsgs").textContent);
   ok(/precisa da sua conta/.test(chatMod), "chat do módulo sem nuvem explica o que falta");
 
   // aba assessoria (sem nuvem → aviso educado)
-  await p.click('[data-a="assessoria"]');
+  await abaPt(p, "assessoria");
   await p.waitForTimeout(300);
   const asse = await p.evaluate(() => document.getElementById("assessoriaLista").textContent);
   ok(/precisa da sua conta/.test(asse), "assessoria sem nuvem explica o que falta");
 
   // aluno "Encerrar" some da lista
-  await p.click('[data-a="alunos"]');
+  await abaPt(p, "alunos");
   await p.click("[data-rm]");
   lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/primeiro aluno/.test(lista), "encerrar aluno esvazia a lista (histórico preservado)");

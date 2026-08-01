@@ -171,7 +171,8 @@ function ok(cond, nome) {
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aValor", "400");
   await p.click("#aAdd");
-  await p.click('[data-a="treinos"]');
+  await p.click("#btnMenuPt");
+  await p.click('#abas [data-a="treinos"]');
   await p.selectOption("#tAluno", { index: 1 });
   await p.selectOption("#tplSel", "abc");
   await p.click("#tplAplicar");
