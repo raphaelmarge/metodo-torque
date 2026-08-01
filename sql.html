@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atualizar o Supabase — TORQUE ON</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: #121016; color: #fff; min-height: 100vh; padding: 30px 16px 60px; }
+  .caixa { max-width: 640px; margin: 0 auto; }
+  .k { font-size: 12px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+  h1 { font-size: 26px; font-weight: 800; margin: 10px 0 6px; letter-spacing: -.02em; }
+  p { color: #a9a4b5; font-size: 14.5px; line-height: 1.6; }
+  .card { background: #1d1a24; border: 1px solid #322e3d; border-radius: 16px; padding: 20px; margin-top: 16px; }
+  .passo { display: flex; gap: 12px; margin: 14px 0; align-items: flex-start; }
+  .passo .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: #7c3aed; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+  .passo div p { margin-top: 2px; }
+  .btnx { display: block; width: 100%; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none; border-radius: 14px; padding: 18px; font-family: inherit; font-size: 17px; font-weight: 800; cursor: pointer; margin-top: 14px; box-shadow: 0 10px 30px -12px #7c3aed; }
+  .btnx:disabled { opacity: .6; }
+  .btnx.sec { background: #14121a; border: 1px solid #322e3d; box-shadow: none; font-weight: 700; font-size: 14px; padding: 13px; }
+  #status { text-align: center; margin-top: 12px; font-size: 14px; color: #4ade80; font-weight: 700; min-height: 20px; }
+  a { color: #a78bfa; }
+  textarea { width: 100%; height: 200px; background: #14121a; color: #cfcbdb; border: 1px solid #322e3d; border-radius: 12px; padding: 12px; font-size: 11px; font-family: ui-monospace, monospace; margin-top: 10px; }
+  .ok { color: #4ade80; } .avisa { color: #fbbf24; }
+</style>
+</head>
+<body>
+<div class="caixa">
+  <span class="k">TORQUE ON · manutenção</span>
+  <h1>Atualizar o banco (Supabase)</h1>
+  <p>Este SQL liga as funções novas do sistema: provisionamento de clientes pelo HQ, agenda dos apps e o robô no WhatsApp. <b style="color:#fff">Pode rodar quantas vezes quiser</b> — ele pula sozinho o que já existe.</p>
+
+  <div class="card">
+    <div class="passo"><span class="n">1</span><div><b>Copie o SQL</b><p>Toque no botão roxo abaixo — ele copia o arquivo inteiro (<span id="tam">carregando…</span>).</p></div></div>
+    <button class="btnx" id="btnCopiar" disabled>Copiar o SQL</button>
+    <div id="status"></div>
+    <div class="passo" style="margin-top:20px;"><span class="n">2</span><div><b>Abra o SQL Editor do Supabase</b><p>Entre em <a href="https://supabase.com/dashboard" target="_blank" rel="noopener">supabase.com/dashboard</a> → seu projeto → menu lateral <b style="color:#fff">SQL Editor</b> → <b style="color:#fff">+ New query</b>.</p></div></div>
+    <div class="passo"><span class="n">3</span><div><b>Cole e rode</b><p>Cole (toque e segure → Colar) e aperte <b style="color:#fff">Run</b>. Vai aparecer <span class="ok">Success</span> embaixo — pronto!</p></div></div>
+  </div>
+
+  <div class="card">
+    <p><b style="color:#fff">Depois de rodar, teste assim:</b> abra a Central de Comando → card <b style="color:#fff">Novo cliente (provisionar acesso)</b> → cadastre um cliente fictício com um e-mail seu. Se aparecer a senha gerada, tá tudo funcionando. 🎉</p>
+  </div>
+
+  <div class="card">
+    <p class="avisa" style="font-weight:700;">Botão de copiar não funcionou?</p>
+    <p>Toque no botão abaixo pra mostrar o texto, toque dentro da caixa → Selecionar tudo → Copiar.</p>
+    <button class="btnx sec" id="btnMostrar">Mostrar o SQL na tela</button>
+    <textarea id="caixaSql" hidden readonly></textarea>
+  </div>
+</div>
+<script>
+  var SQL = "";
+  var btn = document.getElementById("btnCopiar");
+  fetch("supabase-setup.sql", { cache: "no-cache" }).then(function (r) {
+    if (!r.ok) throw new Error(r.status);
+    return r.text();
+  }).then(function (t) {
+    SQL = t;
+    document.getElementById("tam").textContent = Math.round(t.length / 1000) + " mil caracteres";
+    btn.disabled = false;
+  }).catch(function () {
+    document.getElementById("tam").textContent = "erro ao carregar — confira a internet e recarregue";
+  });
+  btn.addEventListener("click", function () {
+    var fim = function (deu) {
+      document.getElementById("status").textContent = deu ? "✅ Copiado! Agora é só colar no SQL Editor." : "";
+      if (!deu) mostra();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(SQL).then(function () { fim(true); }, function () { fim(false); });
+    } else { fim(false); }
+  });
+  function mostra() {
+    var cx = document.getElementById("caixaSql");
+    cx.hidden = false;
+    cx.value = SQL;
+    cx.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  document.getElementById("btnMostrar").addEventListener("click", mostra);
+  window.__sqlPage = true; // testes
+</script>
+</body>
+</html>
