@@ -383,6 +383,44 @@ function crcNode(s) {
   ok(/Copiado/.test(diagTxt), "relatório de diagnóstico é copiado com um clique");
   await p.close();
 
+  // ---------- várias automações no Chat e IA (estilo ManyChat) ----------
+  console.log("Automações do chatbot (Chat e IA):");
+  ok(/add column if not exists bots/.test(sql), "SQL: coluna bots (lista de automações) no chat_config");
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  const respostas = ["Cobrança"];
+  p.on("dialog", (d) => d.accept(respostas.length ? respostas.shift() : ""));
+  await p.goto(BASE + "/apps/chat.html");
+  await p.waitForSelector("#botSel", { state: "attached" });
+  await p.click('[data-aba="bot"]');
+  let autos = await p.evaluate(() => window.__automacoes());
+  ok(autos.nomes.length === 1 && /principal/i.test(autos.nomes[0]), "começa com 1 automação (principal)");
+  const blocosAntes = await p.evaluate(() => document.querySelectorAll("#botBlocos .no").length || document.querySelectorAll("#botBlocos > div").length);
+  ok(blocosAntes >= 5, "quadro da principal vem com o fluxo modelo (" + blocosAntes + " balões)");
+  await p.click("#botNovo");
+  await p.waitForTimeout(200);
+  autos = await p.evaluate(() => window.__automacoes());
+  ok(autos.nomes.length === 2 && autos.nomes.includes("Cobrança") && autos.selecionada !== "a1", "+ Nova cria a automação Cobrança com quadro próprio");
+  const blocosNovo = await p.evaluate(() => document.querySelectorAll("#botBlocos > div").length);
+  ok(blocosNovo <= 2, "quadro novo começa quase vazio (" + blocosNovo + " balão)");
+  await p.click('[data-add="mensagem"]');
+  await p.click('[data-add="link"]');
+  await p.waitForTimeout(200);
+  const comLink = await p.evaluate(() => document.getElementById("botBlocos").textContent);
+  ok(/torqueon\.com\.br/.test(comLink), "ação + Link cria o balão de enviar link");
+  await p.click("#botPrincipal");
+  autos = await p.evaluate(() => window.__automacoes());
+  ok(autos.principal === autos.selecionada, "📶 marca a automação selecionada como a do WhatsApp");
+  await p.click("#botDuplicar");
+  await p.waitForTimeout(200);
+  autos = await p.evaluate(() => window.__automacoes());
+  ok(autos.nomes.length === 3 && autos.nomes.some((n) => /cópia/.test(n)), "Duplicar cria uma cópia editável");
+  await p.selectOption("#botSel", "a1");
+  await p.waitForTimeout(200);
+  const voltou = await p.evaluate(() => Array.from(document.querySelectorAll("#botBlocos textarea, #botBlocos input")).map((e) => e.value).join(" "));
+  ok(/Boas-vindas/.test(voltou) && /TORQUE FIT/.test(voltou), "trocar no seletor volta pro quadro da principal intacto");
+  await p.close();
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();
