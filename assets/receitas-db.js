@@ -572,5 +572,74 @@ self.MT_RECEITAS = [
    "Regue com o leite de coco e o dendê; cozinhe tampado 20 min em fogo baixo e finalize com coentro."
   ],
   "dica": "Leite de coco light e 1 colher de dendê seguram o sabor baiano com metade da gordura da receita clássica."
+ },
+ {
+  "id": "rc28",
+  "n": "Escondidinho fit de frango com batata-doce",
+  "cat": "Almoço e jantar",
+  "tempo": "40 min",
+  "rende": "4 porções",
+  "k": 360,
+  "pt": 32,
+  "ing": [
+   "400 g de peito de frango cozido e desfiado",
+   "600 g de batata-doce cozida",
+   "100 g de requeijão light",
+   "1 cebola picada e 2 dentes de alho",
+   "1 fio de azeite, sal e cheiro-verde"
+  ],
+  "modo": [
+   "Amasse a batata-doce ainda quente com um fio de azeite até virar um purê.",
+   "Refogue cebola e alho, junte o frango desfiado e tempere.",
+   "Monte num refratário: frango embaixo, requeijão no meio, purê por cima.",
+   "Leve ao forno a 200 °C por 15 minutos até dourar."
+  ],
+  "dica": "Rende 4 marmitas — congela por até 3 meses e resolve a semana."
+ },
+ {
+  "id": "rc29",
+  "n": "Panqueca de espinafre com ricota",
+  "cat": "Almoço e jantar",
+  "tempo": "30 min",
+  "rende": "2 porções",
+  "k": 300,
+  "pt": 19,
+  "ing": [
+   "2 ovos",
+   "40 g de aveia em flocos",
+   "1 xícara de espinafre fresco",
+   "120 g de ricota temperada",
+   "Sal, pimenta e noz-moscada"
+  ],
+  "modo": [
+   "Bata ovos, aveia e espinafre no liquidificador até ficar verde e homogêneo.",
+   "Faça 4 panquecas finas em frigideira antiaderente.",
+   "Recheie com a ricota temperada e enrole.",
+   "Aqueça 2 minutos com molho de tomate por cima, se quiser."
+  ],
+  "dica": "A massa verde rende sanduíche low carb também — faça em dobro."
+ },
+ {
+  "id": "rc30",
+  "n": "Mousse proteico de maracujá",
+  "cat": "Doces fit",
+  "tempo": "15 min + 2 h de geladeira",
+  "rende": "4 porções",
+  "k": 150,
+  "pt": 19,
+  "ing": [
+   "300 g de iogurte grego natural",
+   "60 g de whey de baunilha",
+   "100 ml de polpa de maracujá",
+   "1 envelope de gelatina incolor hidratada",
+   "Adoçante a gosto"
+  ],
+  "modo": [
+   "Bata o iogurte, o whey e a polpa até ficar cremoso.",
+   "Misture a gelatina hidratada e dissolvida.",
+   "Distribua em potinhos e leve à geladeira por 2 horas.",
+   "Finalize com sementes de maracujá por cima."
+  ],
+  "dica": "19 g de proteína por potinho — sobremesa que conta como ceia."
  }
 ];
