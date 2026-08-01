@@ -326,6 +326,14 @@
       <label style="font-size: 12.5px;">Opções do menu — uma por linha, no formato <b>Rótulo | Resposta</b> (escreva <b>humano</b> na resposta pra encaminhar pra você)
         <textarea id="botOpsP" rows="5" style="width: 100%; margin: 4px 0 10px; font-family: inherit; font-size: 13px; border: 1px solid var(--linha); border-radius: 8px; padding: 8px;"></textarea></label>
       <div class="linha-flex"><button class="btn" id="botSalvaP">Salvar robô</button><span id="botOkP" class="muted"></span></div>
+      <h2 style="margin-top: 18px;">Fluxograma do robô</h2>
+      <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O desenho atualiza sozinho enquanto você edita — cada linha mostra por onde a conversa anda, igual ao chatbot do sistema da academia.</p>
+      <div id="botFluxoP" style="position: relative; overflow-x: auto; border: 1px solid var(--linha); border-radius: 12px; background: #faf9fd;"></div>
+      <div class="linha-flex" style="margin-top: 12px;">
+        <button class="btn sec" id="botZapP">Usar no WhatsApp</button>
+        <span id="botZapOkP" class="muted" style="font-size: 12.5px;"></span>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">"Usar no WhatsApp" publica este fluxo na nuvem no mesmo formato do chatbot da academia — com a integração oficial do WhatsApp ligada (Chat e IA → Instalação), o robô responde as mensagens do seu número sozinho.</p>
     </div>
   </section>
 
@@ -426,7 +434,7 @@
     $("vChat").hidden = b.dataset.a !== "chat";
     if (b.dataset.a === "relatorios") renderRelatorios();
     if (b.dataset.a === "assessoria") renderAssessoria();
-    if (b.dataset.a === "chat") renderChatPT();
+    if (b.dataset.a === "chat") { renderBotP(); desenhaFluxoP(); renderChatPT(); }
   });
 
   // ---------- kpis ----------
@@ -1901,8 +1909,74 @@
     $("botOkP").textContent = "Robô salvo! Republique os apps dos alunos pra valer por lá.";
     setTimeout(function () { $("botOkP").textContent = ""; }, 5000);
   });
+  // fluxograma com linhas (mesmo desenho de blocos do chatbot da academia)
+  function botDoEditorP() {
+    var ops = $("botOpsP").value.split("\n").map(function (ln) {
+      var p = ln.split("|");
+      return { r: (p[0] || "").trim(), t: (p.slice(1).join("|") || "").trim() };
+    }).filter(function (o) { return o.r && o.t; });
+    return { ativo: $("botAtivoP").checked, oi: $("botOiP").value.trim(), ops: ops };
+  }
+  function fluxoDe(bot, nome) {
+    var blocos = [
+      { id: "b_oi", tipo: "mensagem", texto: bot.oi, prox: "b_menu", x: 20, y: 20 },
+      { id: "b_menu", tipo: "menu", texto: "Como posso ajudar?", x: 20, y: 170,
+        opcoes: bot.ops.map(function (o, i) { return { rotulo: o.r, prox: "b_r" + i }; }) },
+    ];
+    bot.ops.forEach(function (o, i) {
+      var humano = String(o.t).trim().toLowerCase() === "humano";
+      blocos.push(humano
+        ? { id: "b_r" + i, tipo: "equipe", texto: "Beleza! Já te passo pro " + nome + " — pode escrever. 😉", x: 380, y: 20 + i * 130 }
+        : { id: "b_r" + i, tipo: "mensagem", texto: o.t, prox: "b_menu", x: 380, y: 20 + i * 130 });
+    });
+    return { ativo: bot.ativo !== false, inicio: "b_oi", blocos: blocos };
+  }
+  function desenhaFluxoP() {
+    var bot = botDoEditorP();
+    if (!bot.ops.length) { $("botFluxoP").innerHTML = '<div class="muted" style="padding:20px;">Escreva as opções acima que o desenho aparece aqui.</div>'; return; }
+    var alt = Math.max(320, 40 + bot.ops.length * 130);
+    var linhas = '<path d="M130 96 C 130 120, 130 145, 130 168" fill="none" stroke="#7c3aed" stroke-width="2"/>';
+    var html = "";
+    var balao = function (x, y, tit, txt, cor) {
+      return '<div style="position:absolute;left:' + x + 'px;top:' + y + 'px;width:250px;background:#fff;border:1.5px solid ' + cor + ';border-radius:12px;padding:9px 12px;box-shadow:var(--sombra-1);">' +
+        '<div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:' + cor + ';text-transform:uppercase;margin-bottom:3px;">' + tit + "</div>" +
+        '<div style="font-size:11.5px;line-height:1.4;">' + esc(String(txt)).slice(0, 150) + "</div></div>";
+    };
+    html += balao(20, 20, "▶ Boas-vindas", bot.oi || "…", "#7c3aed");
+    html += balao(20, 170, "Menu · " + bot.ops.length + " opções", bot.ops.map(function (o, i) { return (i + 1) + " — " + o.r; }).join("  ·  "), "#7c3aed");
+    bot.ops.forEach(function (o, i) {
+      var humano = String(o.t).trim().toLowerCase() === "humano";
+      var y = 20 + i * 130;
+      html += balao(380, y, humano ? "🙋 Vai pra você" : "Resposta " + (i + 1), humano ? "A conversa é encaminhada pra você responder." : o.t, humano ? "#f59e0b" : "#a78bfa");
+      linhas += '<path d="M272 ' + (200 + i * 12) + " C 320 " + (200 + i * 12) + ", 330 " + (y + 34) + ", 378 " + (y + 34) + '" fill="none" stroke="#a78bfa" stroke-width="1.6"/>';
+      if (!humano) linhas += '<path d="M380 ' + (y + 58) + " C 300 " + (y + 78) + ", 290 " + (y + 78) + ", 250 220" + '" fill="none" stroke="#ddd6f3" stroke-width="1.4" stroke-dasharray="4 4"/>';
+    });
+    $("botFluxoP").style.height = alt + "px";
+    $("botFluxoP").innerHTML = '<div style="position:relative;width:650px;height:' + alt + 'px;">' +
+      '<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">' + linhas + "</svg>" + html + "</div>";
+  }
+  ["botOiP", "botOpsP", "botAtivoP"].forEach(function (id) { $(id).addEventListener("input", desenhaFluxoP); });
+  $("botZapP").addEventListener("click", function () {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { $("botZapOkP").textContent = "Entre na sua conta (card lá embaixo) primeiro."; return; }
+    var st = load();
+    var bot = botDoEditorP();
+    if (!bot.ops.length) { $("botZapOkP").textContent = "Escreva as opções do menu primeiro."; return; }
+    var fluxo = fluxoDe(bot, ((st.config || {}).nome || "o personal").split(" ")[0]);
+    var btn = this;
+    btn.disabled = true;
+    nuvem.client.from("chat_config").upsert([{ academia_id: nuvem.aid, bot: fluxo, atualizado: new Date().toISOString() }], { onConflict: "academia_id" })
+      .then(function (r) {
+        btn.disabled = false;
+        $("botZapOkP").textContent = r.error
+          ? "⚠️ Não deu pra publicar: " + r.error.message
+          : "✅ Fluxo publicado! Com a integração oficial do WhatsApp ligada, seu número responde com este robô.";
+      });
+  });
   window.__botP = botDe; // testes
+  window.__botFluxoP = fluxoDe; // testes
   renderBotP();
+  desenhaFluxoP();
 
   // ---------- chat interno (aluno ↔ personal) ----------
   var chatAluno = null;

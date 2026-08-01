@@ -178,6 +178,18 @@ async function abaNt(p, a) {
     }));
     ok(botEd.temCard && botEd.ativo, "módulo tem o editor do robô, ligado por padrão");
     ok(/\|/.test(botEd.ops) && /humano/.test(botEd.ops), "opções padrão no formato Rótulo | Resposta com encaminhamento humano");
+    const fluxo = await p.evaluate(() => {
+      const desenho = {
+        paths: document.querySelectorAll("#botFluxoN svg path").length,
+        baloes: document.querySelectorAll("#botFluxoN > div > div").length,
+        temZap: !!document.getElementById("botZapN"),
+      };
+      const f = window.__botFluxoN({ ativo: true, oi: "Oi!", ops: [{ r: "Dieta", t: "No card refeições." }, { r: "Falar comigo", t: "humano" }] }, "Ana");
+      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), voltaMenu: f.blocos[2].prox };
+    });
+    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "fluxograma desenhado com linhas e balões");
+    ok(fluxo.desenho.temZap, "botão Usar no WhatsApp presente");
+    ok(fluxo.inicio === "b_oi" && fluxo.tipos.join() === "mensagem,menu,mensagem,equipe" && fluxo.voltaMenu === "b_menu", "fluxo no formato do chatbot da academia");
   }
 
   // agenda no módulo: marcar consulta local
