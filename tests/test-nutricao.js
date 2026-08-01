@@ -164,6 +164,15 @@ async function abaNt(p, a) {
   ok(/Meu peso/.test(appHtml) && /pzAdd/.test(appHtml), "card de peso presente");
   ok(/aluno_define_login/.test(appHtml) && /Meu login/.test(appHtml), "app do paciente tem login e senha");
   ok(/Nutri Ana Costa/.test(appHtml), "marca do consultório no app");
+  ok(/chMsgs/.test(appHtml) && /chEnvia/.test(appHtml) && /app_chat_lista/.test(appHtml) && /app_chat_envia/.test(appHtml), "app do paciente tem o chat interno (mesma nuvem do personal)");
+
+  // chat no módulo (sem conta: orienta; estrutura pronta)
+  await abaNt(p, "chat");
+  ok(await p.evaluate(() => !document.getElementById("vChatN").hidden), "aba Chat abre a tela de conversas");
+  const chatTxt = await p.evaluate(() => document.getElementById("chatMsgsN").textContent);
+  ok(/conta/.test(chatTxt) && /supabase-setup/.test(chatTxt), "sem conta, o chat orienta a ativar a nuvem");
+  ok(await p.evaluate(() => !!window.__chatNT && typeof window.__chatNT.render === "function"), "chat do nutricionista exposto pra nuvem (render/abre)");
+  await abaNt(p, "dietas");
 
   // abre o app e usa: água, refeição feita, peso
   const pApp = await ctx.newPage();
