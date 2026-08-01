@@ -166,6 +166,7 @@ async function abaNt(p, a) {
   ok(/Nutri Ana Costa/.test(appHtml), "marca do consultório no app");
   ok(/chMsgs/.test(appHtml) && /chEnvia/.test(appHtml) && /app_chat_lista/.test(appHtml) && /app_chat_envia/.test(appHtml), "app do paciente tem o chat interno (mesma nuvem do personal)");
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app do paciente tem agenda estilo calendário com pedido de horário");
+  ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Adesão à dieta/.test(appHtml), "app do paciente tem conquistas com gráfico de adesão");
   ok(/Dia perfeito/.test(appHtml) && /7 dias de água/.test(appHtml) && /10 pesagens/.test(appHtml), "medalhas de adesão, água e pesagens no app");
   ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app do paciente tem o robô de atendimento (chatbot de menu)");
@@ -202,6 +203,18 @@ async function abaNt(p, a) {
   await p.waitForTimeout(200);
   const consultasTxt = await p.evaluate(() => document.getElementById("listaConsultas").textContent);
   ok(/Bruno Paciente/.test(consultasTxt) && /10:30/.test(consultasTxt), "consulta marcada aparece na lista do módulo");
+
+  // sincronizar com o calendário: exporta .ics das consultas futuras
+  {
+    const dl = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+    await p.click("#btnIcsN");
+    const arq = await dl;
+    ok(!!arq && /agenda-torque-nutri\.ics/.test(arq.suggestedFilename()), "botão 📅 baixa o arquivo .ics da agenda");
+    if (arq) {
+      const txt = fs.readFileSync(await arq.path(), "utf8");
+      ok(/BEGIN:VCALENDAR/.test(txt) && /Consulta — Bruno Paciente/.test(txt), "arquivo .ics tem o evento da consulta");
+    }
+  }
   ok(await p.evaluate(() => { const st = JSON.parse(localStorage.getItem("mtapp:ntStudio")); return (st.consultas || []).length === 1; }), "consulta salva no ntStudio");
 
   // chat no módulo (sem conta: orienta; estrutura pronta)
