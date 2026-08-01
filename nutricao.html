@@ -204,7 +204,12 @@
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O paciente pede pela Agenda do app dele — confirme aqui.</p>
       <div id="listaPedidosN"></div>
     </div>
-    <div class="card"><h2>Próximas consultas</h2><div id="listaConsultas" class="muted">Nenhuma consulta marcada.</div></div>
+    <div class="card"><h2>Próximas consultas</h2><div id="listaConsultas" class="muted">Nenhuma consulta marcada.</div>
+      <div class="linha-flex" style="margin-top: 12px;">
+        <button class="btn sec" id="btnIcsN">📅 Enviar pro meu calendário</button>
+        <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as consultas entram lá.</span>
+      </div>
+    </div>
   </div>
 
   <div id="vChatN" hidden>
@@ -968,10 +973,18 @@
       "box.innerHTML=\"<div style='font-size:13px;font-weight:800;margin-bottom:6px;'>\"+pd[2]+'/'+pd[1]+\"</div>\"+(l.length?l.map(function(x){" +
       "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
       "var rot=x.status==='confirmado'?'confirmada':x.status==='pedido'?'aguardando':'não deu';" +
-      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#9fb8a6'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><b style='color:\"+cor+\"'>\"+rot+'</b></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
+      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#9fb8a6'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:#0e2417;border:1px solid #16a34a;color:#bbf7d0;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:12px;'>📅</button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
       "form.style.display=AGSEL>=isoHj()?'block':'none';}" +
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
+      // salvar horário confirmado no calendário do celular (.ics)
+      "var AGTIT=" + JSON.stringify("Consulta com " + studio.split(" ")[0] + " (TORQUE NUTRI)") + ";" +
+      "document.getElementById('agDia').addEventListener('click',function(e){var d9=e.target.getAttribute&&e.target.getAttribute('data-agics');if(!d9)return;" +
+      "var p9=d9.split('|');var h9=p9[1]||'08:00';var i9=p9[0].replace(/-/g,'')+'T'+h9.replace(':','')+'00';" +
+      "var f9=new Date(p9[0]+'T'+h9+':00');f9.setMinutes(f9.getMinutes()+60);var p2=function(n){return('0'+n).slice(-2);};" +
+      "var s9=f9.getFullYear()+p2(f9.getMonth()+1)+p2(f9.getDate())+'T'+p2(f9.getHours())+p2(f9.getMinutes())+'00';" +
+      "var ics='BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//TORQUE ON//App//PT-BR\\r\\nBEGIN:VEVENT\\r\\nUID:'+Date.now()+'@torqueon.com.br\\r\\nDTSTART:'+i9+'\\r\\nDTEND:'+s9+'\\r\\nSUMMARY:'+AGTIT+'\\r\\nEND:VEVENT\\r\\nEND:VCALENDAR';" +
+      "var b9=new Blob([ics],{type:'text/calendar'});var a9=document.createElement('a');a9.href=URL.createObjectURL(b9);a9.download='consulta.ics';document.body.appendChild(a9);a9.click();setTimeout(function(){URL.revokeObjectURL(a9.href);a9.remove();},800);});" +
       "document.getElementById('agPede').addEventListener('click',function(){if(!AGSEL)return;var hr=document.getElementById('agHora').value;var ob=document.getElementById('agObs').value.trim();" +
       "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_agenda_pede',{t:TOKEN,p_dia:AGSEL,p_hora:hr,p_obs:ob}).then(function(r){btn.disabled=false;" +
       "if(r&&r.ok){var l=L('ntagenda',[]);l.push({dia:AGSEL,hora:hr,status:'pedido',obs:ob});Sv('ntagenda',l);document.getElementById('agObs').value='';pintaCal();" +
@@ -1127,6 +1140,39 @@
         }).join("");
       });
   }
+  // exporta a agenda pro calendário do celular/Google (arquivo .ics universal)
+  function baixaICSN(nomeArq, eventos) {
+    var pad = function (n) { return ("0" + n).slice(-2); };
+    var linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//TORQUE ON//Agenda//PT-BR"];
+    eventos.forEach(function (ev) {
+      var hora = ev.hora || "08:00";
+      var ini = ev.data.replace(/-/g, "") + "T" + hora.replace(":", "") + "00";
+      var fimD = new Date(ev.data + "T" + hora + ":00");
+      fimD.setMinutes(fimD.getMinutes() + (ev.dur || 60));
+      var fim = fimD.getFullYear() + pad(fimD.getMonth() + 1) + pad(fimD.getDate()) + "T" + pad(fimD.getHours()) + pad(fimD.getMinutes()) + "00";
+      linhas.push("BEGIN:VEVENT", "UID:" + ev.id + "@torqueon.com.br", "DTSTART:" + ini, "DTEND:" + fim,
+        "SUMMARY:" + String(ev.titulo).replace(/[\n,;]/g, " "), "END:VEVENT");
+    });
+    linhas.push("END:VCALENDAR");
+    var blob = new Blob([linhas.join("\r\n")], { type: "text/calendar" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = nomeArq;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  }
+  window.__baixaICS = baixaICSN; // testes
+  $("btnIcsN").addEventListener("click", function () {
+    var st = load();
+    var hoje = S.todayISO();
+    var nomeDe = {};
+    st.pacientes.forEach(function (p) { nomeDe[p.id] = p.nome; });
+    var eventos = (st.consultas || []).filter(function (c) { return c.data >= hoje; })
+      .map(function (c) { return { id: c.id, data: c.data, hora: c.hora, dur: 60, titulo: "Consulta — " + (nomeDe[c.pacienteId] || "paciente") + " (TORQUE NUTRI)" }; });
+    if (!eventos.length) { alert("Nenhuma consulta futura pra enviar — marque primeiro."); return; }
+    baixaICSN("agenda-torque-nutri.ics", eventos);
+  });
   $("cnAdd").addEventListener("click", function () {
     if (!$("cnPaciente").value || !$("cnData").value) { alert("Escolha o paciente e a data."); return; }
     var st = load();

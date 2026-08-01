@@ -104,6 +104,18 @@ async function abaPt(p, a) {
   await p.click("#sAdd");
   let ses = await p.evaluate(() => document.getElementById("listaSessoes").textContent);
   ok(/João Cliente/.test(ses) && /07:00/.test(ses), "sessão agendada aparece");
+
+  // sincronizar com o calendário: exporta .ics das sessões futuras
+  {
+    const dl = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+    await p.click("#btnIcsP");
+    const arq = await dl;
+    ok(!!arq && /agenda-torque-personal\.ics/.test(arq.suggestedFilename()), "botão 📅 baixa o arquivo .ics da agenda");
+    if (arq) {
+      const txt = fs.readFileSync(await arq.path(), "utf8");
+      ok(/BEGIN:VCALENDAR/.test(txt) && /Sessão — João Cliente/.test(txt) && /DTSTART/.test(txt), "arquivo .ics tem o evento da sessão (Google/iPhone entendem)");
+    }
+  }
   await p.click("[data-feita]");
   ses = await p.evaluate(() => document.getElementById("listaSessoes").textContent);
   ok(/FEITA/.test(ses), "sessão marcada como feita");
@@ -419,6 +431,7 @@ async function abaPt(p, a) {
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
   ok(/Minhas sessões/.test(appHtml) && /07:30/.test(appHtml), "próximas sessões embutidas no app");
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
+  ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Treinos por semana/.test(appHtml), "app tem painel de conquistas com gráfico de semanas");
   ok(/7 dias seguidos/.test(appHtml) && /100 treinos/.test(appHtml) && /CONQUISTADA/.test(appHtml), "medalhas de sequência e volume no app");
   ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app tem o robô de atendimento (chatbot de menu) no chat");
