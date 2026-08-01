@@ -43,6 +43,8 @@ function crcNode(s) {
   ok(/hq_cliente_provisiona/.test(sql) && /equipe_cria_login/.test(sql) && /hq_cliente_reseta_senha/.test(sql), "provisionamento: RPCs do HQ e do dono no SQL");
   ok(/_torque_cria_usuario/.test(sql) && /revoke all on function public\._torque_cria_usuario/.test(sql), "criação de usuário é interna (revogada pra anon/authenticated)");
   ok(/'nutri'/.test(sql.split("saas_clientes_tipo_check")[2] || ""), "tipo de cliente aceita nutri");
+  ok(/create table if not exists public\.app_agenda/.test(sql) && /app_agenda_pede/.test(sql) && /app_agenda_lista/.test(sql), "agenda do app: tabela e RPCs no SQL");
+  ok(/grant execute on function public\.app_agenda_pede/.test(sql) && /app_agenda_membros/.test(sql), "agenda do app: grants pro app e RLS pro módulo");
   ok(/hq_suporte_threads/.test(sql) && /hq_suporte_lista/.test(sql) && /hq_suporte_envia/.test(sql) && /hq_erros/.test(sql), "assistência: RPCs do HQ (tickets + erros)");
 
   // ---------- 1) site comercial ----------

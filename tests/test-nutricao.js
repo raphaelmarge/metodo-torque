@@ -165,6 +165,20 @@ async function abaNt(p, a) {
   ok(/aluno_define_login/.test(appHtml) && /Meu login/.test(appHtml), "app do paciente tem login e senha");
   ok(/Nutri Ana Costa/.test(appHtml), "marca do consultório no app");
   ok(/chMsgs/.test(appHtml) && /chEnvia/.test(appHtml) && /app_chat_lista/.test(appHtml) && /app_chat_envia/.test(appHtml), "app do paciente tem o chat interno (mesma nuvem do personal)");
+  ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app do paciente tem agenda estilo calendário com pedido de horário");
+  ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Adesão à dieta/.test(appHtml), "app do paciente tem conquistas com gráfico de adesão");
+  ok(/Dia perfeito/.test(appHtml) && /7 dias de água/.test(appHtml) && /10 pesagens/.test(appHtml), "medalhas de adesão, água e pesagens no app");
+
+  // agenda no módulo: marcar consulta local
+  await abaNt(p, "agenda");
+  await p.selectOption("#cnPaciente", { index: 1 });
+  await p.fill("#cnData", "2099-01-15");
+  await p.fill("#cnHora", "10:30");
+  await p.click("#cnAdd");
+  await p.waitForTimeout(200);
+  const consultasTxt = await p.evaluate(() => document.getElementById("listaConsultas").textContent);
+  ok(/Bruno Paciente/.test(consultasTxt) && /10:30/.test(consultasTxt), "consulta marcada aparece na lista do módulo");
+  ok(await p.evaluate(() => { const st = JSON.parse(localStorage.getItem("mtapp:ntStudio")); return (st.consultas || []).length === 1; }), "consulta salva no ntStudio");
 
   // chat no módulo (sem conta: orienta; estrutura pronta)
   await abaNt(p, "chat");

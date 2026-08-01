@@ -85,6 +85,7 @@
     <button data-a="dietas">Dietas</button>
     <button data-a="alimentos">Alimentos</button>
     <button data-a="receitas">Receitas</button>
+    <button data-a="agenda">Agenda</button>
     <button data-a="chat">Chat</button>
   </div>
 
@@ -185,6 +186,25 @@
       </div>
     </div>
     <div class="card"><div id="alLista" class="muted">Carregando…</div></div>
+  </div>
+
+  <div id="vAgendaN" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Marcar consulta</h2>
+      <div class="linha-flex" style="margin-top: 8px;">
+        <select id="cnPaciente" style="min-width: 180px;"></select>
+        <input id="cnData" type="date" style="width: auto;">
+        <input id="cnHora" type="time" style="width: auto;">
+        <button class="btn verde" id="cnAdd">+ Marcar</button>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A consulta aparece na Agenda do app do paciente (com conta na nuvem).</p>
+    </div>
+    <div class="card" id="cardPedidosN" hidden style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
+      <h2>Pedidos de horário pelo app</h2>
+      <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O paciente pede pela Agenda do app dele — confirme aqui.</p>
+      <div id="listaPedidosN"></div>
+    </div>
+    <div class="card"><h2>Próximas consultas</h2><div id="listaConsultas" class="muted">Nenhuma consulta marcada.</div></div>
   </div>
 
   <div id="vChatN" hidden>
@@ -342,10 +362,12 @@
     $("vDietas").hidden = b.dataset.a !== "dietas";
     $("vAlimentos").hidden = b.dataset.a !== "alimentos";
     $("vReceitas").hidden = b.dataset.a !== "receitas";
+    $("vAgendaN").hidden = b.dataset.a !== "agenda";
     $("vChatN").hidden = b.dataset.a !== "chat";
     if (b.dataset.a === "dietas") renderDietas();
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
+    if (b.dataset.a === "agenda") renderAgendaN();
     if (b.dataset.a === "chat") renderChatNT();
   });
 
@@ -803,6 +825,15 @@
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
+      "<div class='cardx'><h2>Agenda</h2>" +
+      "<div id='agCal'></div><div id='agDia' style='margin-top:10px;'></div>" +
+      "<div id='agForm' style='display:none;margin-top:10px;'>" +
+      "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1;background:#0f1a12;border:1px solid #29402f;border-radius:10px;color:#fff;padding:11px;font-family:inherit;font-size:14px;'></select><button class='btnx' id='agPede'>Pedir horário</button></div>" +
+      "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'></div>" +
+      "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver consultas ou pedir horário.</div></div>" +
+      "<div class='cardx'><h2>Conquistas</h2>" +
+      "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
+      "<div id='cqGraf' style='margin-top:14px;'></div></div>" +
       "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
@@ -885,6 +916,63 @@
       "var b=this;b.disabled=true;rpcApp('aluno_define_login',{t:TOKEN,p_login:lg,p_senha:sn}).then(function(r){b.disabled=false;" +
       "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='✅ Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha.';document.getElementById('lgSenha').value='';}" +
       "else{alert((r&&r.erro)||'Não deu agora — tenta de novo.');}});});" +
+      // agenda estilo calendário (pede consulta pela nuvem)
+      "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
+      "var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];" +
+      "function agDados(){return L('ntagenda',[]);}" +
+      "function carregaAgenda(){if(!NUVEM){pintaCal();return;}rpcApp('app_agenda_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ntagenda',l);}pintaCal();});}" +
+      "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
+      "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
+      "var pontos={};l.forEach(function(x){pontos[x.dia]=x.status==='confirmado'?'confirmado':(pontos[x.dia]||x.status);});" +
+      "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' style='background:#0f1a12;border:1px solid #29402f;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' style='background:#0f1a12;border:1px solid #29402f;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
+      "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:#5d7a66;margin-bottom:4px;'>\"+['S','T','Q','Q','S','S','D'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';" +
+      "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
+      "for(var i=0;i<ini;i++)h+='<div></div>';" +
+      "for(var d2=1;d2<=nd;d2++){var iso=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d2).slice(-2);var st2=pontos[iso];var hoje2=iso===isoHj();" +
+      "h+=\"<div data-agdia='\"+iso+\"' style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;\"+(AGSEL===iso?'background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;':(hoje2?'border:1px solid #4ade80;color:#fff;':'background:#0f1a12;border:1px solid #1f3126;color:#d7e8dc;'))+\"'>\"+d2+" +
+      "(st2?\"<span style='width:5px;height:5px;border-radius:50%;margin-top:2px;background:\"+(st2==='confirmado'?'#4ade80':st2==='pedido'?'#fbbf24':'#f87171')+\";'></span>\":\"<span style='height:7px;'></span>\")+'</div>';}" +
+      "h+='</div>';el.innerHTML=h;" +
+      "document.getElementById('agAnt').onclick=function(){AGMES.setMonth(AGMES.getMonth()-1);pintaCal();};" +
+      "document.getElementById('agProx').onclick=function(){AGMES.setMonth(AGMES.getMonth()+1);pintaCal();};pintaDia();}" +
+      "function pintaDia(){var box=document.getElementById('agDia');var form=document.getElementById('agForm');" +
+      "if(!AGSEL){box.innerHTML='';form.style.display='none';return;}" +
+      "var l=agDados().filter(function(x){return x.dia===AGSEL;});var pd=AGSEL.split('-');" +
+      "box.innerHTML=\"<div style='font-size:13px;font-weight:800;margin-bottom:6px;'>\"+pd[2]+'/'+pd[1]+\"</div>\"+(l.length?l.map(function(x){" +
+      "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
+      "var rot=x.status==='confirmado'?'confirmada':x.status==='pedido'?'aguardando':'não deu';" +
+      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#9fb8a6'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><b style='color:\"+cor+\"'>\"+rot+'</b></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
+      "form.style.display=AGSEL>=isoHj()?'block':'none';}" +
+      "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
+      "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
+      "document.getElementById('agPede').addEventListener('click',function(){if(!AGSEL)return;var hr=document.getElementById('agHora').value;var ob=document.getElementById('agObs').value.trim();" +
+      "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_agenda_pede',{t:TOKEN,p_dia:AGSEL,p_hora:hr,p_obs:ob}).then(function(r){btn.disabled=false;" +
+      "if(r&&r.ok){var l=L('ntagenda',[]);l.push({dia:AGSEL,hora:hr,status:'pedido',obs:ob});Sv('ntagenda',l);document.getElementById('agObs').value='';pintaCal();" +
+      "alert('Pedido enviado! Aguarde a confirmação da consulta. 😉');}else{alert((r&&r.erro==='muitos_pedidos')?'Você já tem muitos pedidos aguardando — espere a confirmação.':'Não deu pra enviar agora — tenta de novo.');}});}" +
+      "else{var pd=AGSEL.split('-');window.open('https://wa.me/'+(ZAPN?'55'+ZAPN:'')+'?text='+encodeURIComponent('Oi! Queria marcar consulta dia '+pd[2]+'/'+pd[1]+' às '+hr+(ob?' — '+ob:'')),'_blank');}});" +
+      "carregaAgenda();" +
+      // conquistas: medalhas + gráfico de adesão
+      "function diasCom(pf){var o={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf(pf)===0)o[k.slice(pf.length)]=1;}return o;}" +
+      "function seqMax(m){var ks=Object.keys(m).sort();var mx=0,seq=0,ant=null;ks.forEach(function(k){" +
+      "if(ant){var dif=(new Date(k)-new Date(ant))/864e5;seq=dif===1?seq+1:1;}else seq=1;if(seq>mx)mx=seq;ant=k;});return mx;}" +
+      "function pintaConquistas(){var ativos={};[diasCom('ntref_'),diasCom('ntag_'),diasCom('ntdi_')].forEach(function(o){Object.keys(o).forEach(function(k){ativos[k]=1;});});" +
+      "var nAtivos=Object.keys(ativos).length;var seq=seqMax(ativos);" +
+      "var perf=0;Object.keys(diasCom('ntref_')).forEach(function(d6){var f=L('ntref_'+d6,{});if(REFS.length&&Object.keys(f).length>=REFS.length)perf++;});" +
+      "var aguaOk=0;Object.keys(diasCom('ntag_')).forEach(function(d7){if(L('ntag_'+d7,0)>=AGUAML)aguaOk++;});" +
+      "var pesagens=L('ntpeso',[]).length;" +
+      "var BADGES=[['🏁','Primeiro dia',nAtivos,1],['✅','Dia perfeito',perf,1],['🔥','3 dias seguidos',seq,3],['⚡','7 dias seguidos',seq,7],['💧','7 dias de água',aguaOk,7],['🥗','30 dias ativos',nAtivos,30],['📉','10 pesagens',pesagens,10],['🏆','7 dias perfeitos',perf,7],['💎','30 dias perfeitos',perf,30]];" +
+      "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b){var tem=b[2]>=b[3];" +
+      "return \"<div style='text-align:center;padding:10px 4px;border-radius:11px;\"+(tem?'background:rgba(22,163,74,.22);border:1px solid #16a34a;':'background:#0f1a12;border:1px solid #1f3126;opacity:.55;')+\"'>\"+" +
+      "\"<div style='font-size:22px;'>\"+b[0]+\"</div><div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
+      "(tem?\"<div style='font-size:9.5px;color:#4ade80;font-weight:800;margin-top:2px;'>CONQUISTADA</div>\":\"<div style='font-size:9.5px;color:#5d7a66;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
+      "var bars='';var ds=[];for(var v2=13;v2>=0;v2--){var d8=new Date();d8.setDate(d8.getDate()-v2);var iso8=d8.toISOString().slice(0,10);" +
+      "var f8=L('ntref_'+iso8,{});var pct8=REFS.length?Math.min(100,Math.round(100*Object.keys(f8).length/REFS.length)):0;ds.push({d:d8,p:pct8,agua:L('ntag_'+iso8,0)>=AGUAML});}" +
+      "bars=\"<div style='font-size:11px;color:#9fb8a6;margin-bottom:6px;'>Adesão à dieta (últimos 14 dias)</div><div style='display:flex;gap:4px;align-items:flex-end;height:80px;'>\"+ds.map(function(s8){" +
+      "var hh8=Math.round(52*s8.p/100);" +
+      "return \"<div style='flex:1;text-align:center;'><div style='height:\"+(52-hh8)+\"px;'></div><div style='height:\"+hh8+\"px;background:\"+(s8.p>=100?'linear-gradient(180deg,#4ade80,#16a34a)':'#2b4433')+\";border-radius:3px 3px 0 0;min-height:2px;'></div>\"+" +
+      "\"<div style='font-size:8px;margin-top:3px;color:\"+(s8.agua?'#22d3ee':'#3d5a47')+\";'>\"+('0'+s8.d.getDate()).slice(-2)+'</div></div>';}).join('')+'</div>'+" +
+      "\"<div class='vz' style='font-size:10px;'>barra cheia = todas as refeições · número azul = água na meta 💧</div>\";" +
+      "document.getElementById('cqGraf').innerHTML=bars;}" +
+      "pintaConquistas();document.addEventListener('click',function(e){if(e.target.closest('[data-refok]')||e.target.id==='agAdd'||e.target.id==='pzAdd')setTimeout(pintaConquistas,150);});" +
       // chat paciente ↔ nutricionista
       "function pintaChat(msgs){var el=document.getElementById('chMsgs');" +
       "if(!msgs||!msgs.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
@@ -957,6 +1045,91 @@
       { rot: "Alimentos no banco", val: st.alimentos.length },
     ].map(function (k) { return '<div class="kpi-nt"><div class="rot">' + k.rot + '</div><div class="val">' + k.val + "</div></div>"; }).join("");
   }
+  // ---------- agenda de consultas ----------
+  function renderAgendaN() {
+    var st = load();
+    st.consultas = st.consultas || [];
+    var opts = st.pacientes.filter(function (p) { return p.ativo !== false; })
+      .map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + "</option>"; }).join("");
+    var sel = $("cnPaciente");
+    var atual = sel.value;
+    sel.innerHTML = "<option value=''>— paciente —</option>" + opts;
+    if (atual) sel.value = atual;
+    var hoje = S.todayISO();
+    var nomeDe = {};
+    st.pacientes.forEach(function (p) { nomeDe[p.id] = p.nome; });
+    var prox = st.consultas.filter(function (c) { return c.data >= hoje; })
+      .sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; }).slice(0, 20);
+    $("listaConsultas").innerHTML = prox.length ? prox.map(function (c) {
+      return '<div class="linha-flex" style="align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linha);"><b>' + S.fmtData(c.data) + " " + (c.hora || "") + "</b>" +
+        "<span>" + esc(nomeDe[c.pacienteId] || "?") + "</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-cnx="' + c.id + '">✕</button></div>';
+    }).join("") : "Nenhuma consulta marcada.";
+    renderPedidosN(st);
+  }
+  function renderPedidosN(st) {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { $("cardPedidosN").hidden = true; return; }
+    nuvem.client.from("app_agenda").select("id,token,dia,hora,obs").eq("academia_id", nuvem.aid).eq("status", "pedido")
+      .gte("dia", S.todayISO()).order("dia").limit(30).then(function (r) {
+        var pedidos = r.data || [];
+        var pacPorToken = {};
+        st.pacientes.forEach(function (p) { if (p.appTokenN) pacPorToken[p.appTokenN] = p; });
+        pedidos = pedidos.filter(function (p) { return pacPorToken[p.token]; });
+        $("cardPedidosN").hidden = !pedidos.length;
+        $("listaPedidosN").innerHTML = pedidos.map(function (p) {
+          var pac = pacPorToken[p.token];
+          return '<div class="linha-flex" style="align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linha);"><b>' + S.fmtData(p.dia) + " " + (p.hora || "") + "</b>" +
+            "<span>" + esc(pac.nome) + (p.obs ? ' · <small class="muted">' + esc(p.obs) + "</small>" : "") + "</span>" +
+            '<span style="margin-left:auto;"></span>' +
+            '<button class="btn verde mini" data-agok="' + p.id + '" data-tok="' + esc(p.token) + '" data-dia="' + p.dia + '" data-hora="' + esc(p.hora || "") + '">Confirmar</button>' +
+            '<button class="btn sec mini" data-agno="' + p.id + '">Recusar</button></div>';
+        }).join("");
+      });
+  }
+  $("cnAdd").addEventListener("click", function () {
+    if (!$("cnPaciente").value || !$("cnData").value) { alert("Escolha o paciente e a data."); return; }
+    var st = load();
+    st.consultas = st.consultas || [];
+    var pac = st.pacientes.find(function (p) { return p.id === $("cnPaciente").value; });
+    st.consultas.push({ id: S.uid(), pacienteId: $("cnPaciente").value, data: $("cnData").value, hora: $("cnHora").value || "" });
+    S.write("ntStudio", st);
+    var nuvem = S.cloud && S.cloud();
+    if (nuvem && pac && pac.appTokenN) {
+      nuvem.client.from("app_agenda").insert({ academia_id: nuvem.aid, token: pac.appTokenN, dia: $("cnData").value, hora: $("cnHora").value || "", status: "confirmado", origem: "profissional", obs: "Consulta marcada" }).then(function () {});
+    }
+    renderAgendaN();
+  });
+  $("listaConsultas").addEventListener("click", function (e) {
+    var cx = e.target.getAttribute && e.target.getAttribute("data-cnx");
+    if (!cx) return;
+    var st = load();
+    st.consultas = (st.consultas || []).filter(function (c) { return c.id !== cx; });
+    S.write("ntStudio", st);
+    renderAgendaN();
+  });
+  $("listaPedidosN").addEventListener("click", function (e) {
+    var okId = e.target.getAttribute && e.target.getAttribute("data-agok");
+    var noId = e.target.getAttribute && e.target.getAttribute("data-agno");
+    if (!okId && !noId) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    if (okId) {
+      var st = load();
+      st.consultas = st.consultas || [];
+      var pac = st.pacientes.find(function (p) { return p.appTokenN === e.target.getAttribute("data-tok"); });
+      if (pac) {
+        st.consultas.push({ id: S.uid(), pacienteId: pac.id, data: e.target.getAttribute("data-dia"), hora: e.target.getAttribute("data-hora") || "" });
+        S.write("ntStudio", st);
+      }
+      nuvem.client.from("app_agenda").update({ status: "confirmado" }).eq("id", okId).then(function () { renderAgendaN(); });
+    } else {
+      nuvem.client.from("app_agenda").update({ status: "recusado" }).eq("id", noId).then(function () { renderAgendaN(); });
+    }
+  });
+  window.__agendaN = renderAgendaN; // testes
+
   // ---------- chat interno (paciente ↔ nutricionista) ----------
   var chatPaciente = null;
   var chatTimerN = null;
