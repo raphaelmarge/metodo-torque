@@ -1581,3 +1581,10 @@ $$;
 
 grant execute on function public.app_agenda_pede(text, date, text, text) to anon, authenticated;
 grant execute on function public.app_agenda_lista(text) to anon, authenticated;
+
+-- ==================== VÁRIAS AUTOMAÇÕES DE CHATBOT ====================
+-- O Chat e IA agora guarda uma lista de automações (estilo ManyChat);
+-- a marcada como principal continua na coluna bot (o webhook não muda).
+-- Bloco idempotente.
+
+alter table public.chat_config add column if not exists bots jsonb;

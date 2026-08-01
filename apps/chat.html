@@ -164,6 +164,17 @@
       <div class="card">
         <h2>Chatbot — fluxograma</h2>
         <p class="mut"><b>Arraste os balões</b> pela tela para organizar. Para ligar um passo no outro, <b>pegue a bolinha roxa 🟣 e arraste a linha até o balão de destino</b>. Para desligar uma ligação, clique na linha (ou solte a bolinha num espaço vazio). A conversa começa pelo balão com a borda roxa (clique em ▶ para trocar).</p>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 12px 0; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 10px; background: #faf9fd;">
+          <b style="font-size: 12px; letter-spacing: .08em;">AUTOMAÇÕES</b>
+          <select id="botSel" style="min-width: 200px; padding: 6px 8px; font-family: inherit;"></select>
+          <button class="btn sec mini" id="botNovo">+ Nova</button>
+          <button class="btn sec mini" id="botRenomear">Renomear</button>
+          <button class="btn sec mini" id="botDuplicar">Duplicar</button>
+          <button class="btn sec mini" id="botExcluir" title="Excluir esta automação">✕</button>
+          <span style="flex: 1"></span>
+          <button class="btn mini" id="botPrincipal">📶 Usar esta no WhatsApp</button>
+        </div>
+        <p class="mut" style="margin: -4px 0 8px; font-size: 12px;">Crie quantas automações quiser (captação, cobrança, aula experimental…) e troque no seletor — cada uma tem seu próprio quadro. A marcada com 📶 é a que responde o WhatsApp.</p>
         <label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:10px 0">
           <input type="checkbox" id="botAtivo"> Ligar o chatbot para toda conversa nova
         </label>
@@ -174,6 +185,7 @@
           <button class="btn sec mini" data-add="nota">+ 📝 Nota interna</button>
           <button class="btn sec mini" data-add="ia">+ 🤖 IA</button>
           <button class="btn sec mini" data-add="equipe">+ 🙋 Equipe</button>
+          <button class="btn sec mini" data-add="link">+ 🔗 Link</button>
           <span style="flex:1"></span>
           <button class="btn sec mini" id="btnOrganizar" title="Reorganiza os balões automaticamente">Organizar</button>
           <button class="btn sec mini" id="btnZoomMenos" title="Afastar">−</button>
@@ -455,12 +467,31 @@
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (rows) {
         var c = rows && rows[0];
-        if (c) {
-          $("#cfgAutoGlobal").checked = !!c.auto_global;
-          $("#cfgPrompt").value = c.prompt || "";
-          // só carrega o fluxo salvo uma vez, e nunca por cima de edição em andamento
-          if (c.bot && !botCarregado && !botTocado) { preencheBot(c.bot); botCarregado = true; }
-        }
+        if (!c) return;
+        $("#cfgAutoGlobal").checked = !!c.auto_global;
+        $("#cfgPrompt").value = c.prompt || "";
+        if (botCarregado || botTocado) return;
+        // primeiro tenta a lista de automações (coluna nova); sem ela, cai no fluxo único
+        rest("chat_config?select=bots&academia_id=eq." + nuvem.aid)
+          .then(function (r2) { return r2.ok ? r2.json() : null; })
+          .then(function (rows2) {
+            if (botCarregado || botTocado) return;
+            var bs = rows2 && rows2[0] && rows2[0].bots;
+            if (bs && bs.lista && bs.lista.length) {
+              botsReg = { principal: bs.principal || bs.lista[0].id, lista: bs.lista.map(function (a) { return { id: a.id, nome: a.nome, dados: botCompat(a.dados) }; }) };
+              botSelId = botsReg.principal;
+              preencheBot(autoDe(botSelId).dados);
+            } else if (c.bot) {
+              botsReg = { principal: "a1", lista: [{ id: "a1", nome: "Automação principal", dados: botCompat(c.bot) }] };
+              botSelId = "a1";
+              preencheBot(autoDe("a1").dados);
+            }
+            pintaAutomacoes();
+            botCarregado = true;
+          })
+          .catch(function () {
+            if (c.bot && !botCarregado && !botTocado) { preencheBot(c.bot); botCarregado = true; pintaAutomacoes(); }
+          });
       }).catch(function () {});
   }
 
@@ -501,6 +532,89 @@
   var botAtual = JSON.parse(JSON.stringify(BOT_PADRAO));
   var botCarregado = false; // fluxo salvo na nuvem já foi carregado?
   var botTocado = false;    // o usuário já mexeu no editor?
+
+  // ---------- várias automações (estilo ManyChat): cada uma com seu quadro ----------
+  var botsReg = {
+    principal: "a1",
+    lista: [{ id: "a1", nome: "Automação principal", dados: JSON.parse(JSON.stringify(BOT_PADRAO)) }],
+  };
+  var botSelId = "a1";
+  function autoDe(id) { return botsReg.lista.find(function (a) { return a.id === id; }); }
+  function autoNovoId() {
+    var i = 1;
+    while (botsReg.lista.some(function (a) { return a.id === "a" + i; })) i++;
+    return "a" + i;
+  }
+  function guardaAutomacaoAberta() {
+    var a = autoDe(botSelId);
+    if (a) a.dados = JSON.parse(JSON.stringify(coletaBot()));
+  }
+  function pintaAutomacoes() {
+    $("#botSel").innerHTML = botsReg.lista.map(function (a) {
+      return '<option value="' + a.id + '">' + esc(a.nome) + (a.id === botsReg.principal ? " · 📶 WhatsApp" : "") + "</option>";
+    }).join("");
+    $("#botSel").value = botSelId;
+    $("#botPrincipal").textContent = botSelId === botsReg.principal ? "📶 Esta responde o WhatsApp" : "📶 Usar esta no WhatsApp";
+  }
+  function abreAutomacao(id) {
+    if (!autoDe(id)) return;
+    guardaAutomacaoAberta();
+    botSelId = id;
+    preencheBot(autoDe(id).dados);
+    pintaAutomacoes();
+  }
+  var FLUXO_VAZIO = { ativo: false, inicio: "b1", blocos: [
+    { id: "b1", nome: "Boas-vindas", tipo: "mensagem", texto: "Olá! 👋", pos: { x: 60, y: 60 } },
+  ] };
+  $("#botSel").addEventListener("change", function () { abreAutomacao(this.value); });
+  $("#botNovo").addEventListener("click", function () {
+    var nome = prompt("Nome da nova automação (ex.: Cobrança, Captação, Aula experimental):");
+    if (!nome || !nome.trim()) return;
+    botTocado = true;
+    guardaAutomacaoAberta();
+    var id = autoNovoId();
+    botsReg.lista.push({ id: id, nome: nome.trim(), dados: JSON.parse(JSON.stringify(FLUXO_VAZIO)) });
+    botSelId = id;
+    preencheBot(autoDe(id).dados);
+    pintaAutomacoes();
+  });
+  $("#botRenomear").addEventListener("click", function () {
+    var a = autoDe(botSelId);
+    var nome = prompt("Novo nome:", a.nome);
+    if (!nome || !nome.trim()) return;
+    botTocado = true;
+    a.nome = nome.trim();
+    pintaAutomacoes();
+  });
+  $("#botDuplicar").addEventListener("click", function () {
+    botTocado = true;
+    guardaAutomacaoAberta();
+    var a = autoDe(botSelId);
+    var id = autoNovoId();
+    botsReg.lista.push({ id: id, nome: a.nome + " (cópia)", dados: JSON.parse(JSON.stringify(a.dados)) });
+    botSelId = id;
+    preencheBot(autoDe(id).dados);
+    pintaAutomacoes();
+  });
+  $("#botExcluir").addEventListener("click", function () {
+    if (botsReg.lista.length <= 1) { alert("Essa é a única automação — crie outra antes de excluir."); return; }
+    var a = autoDe(botSelId);
+    if (!confirm('Excluir a automação "' + a.nome + '"?')) return;
+    botTocado = true;
+    botsReg.lista = botsReg.lista.filter(function (x) { return x.id !== botSelId; });
+    if (botsReg.principal === botSelId) botsReg.principal = botsReg.lista[0].id;
+    botSelId = botsReg.lista[0].id;
+    preencheBot(autoDe(botSelId).dados);
+    pintaAutomacoes();
+  });
+  $("#botPrincipal").addEventListener("click", function () {
+    botTocado = true;
+    botsReg.principal = botSelId;
+    pintaAutomacoes();
+    $("#botStatus").textContent = "📶 Marcada como a automação do WhatsApp — clique em Salvar chatbot pra valer.";
+  });
+  window.__automacoes = function () { return { principal: botsReg.principal, nomes: botsReg.lista.map(function (a) { return a.nome; }), selecionada: botSelId }; }; // testes
+  pintaAutomacoes();
   var escala = 1;
   var arraste = null;       // { tipo: "bloco"|"fio", ... }
 
@@ -767,7 +881,11 @@
       botTocado = true;
       var tipo = btn.dataset.add;
       var w = $("#fluxoWrap");
-      var b = { id: novoId(), nome: TIPOS[tipo].nome, tipo: tipo, texto: "",
+      // atalho de ação: Link é uma mensagem pré-pronta com endereço (o robô envia o link e segue)
+      var ehLink = tipo === "link";
+      if (ehLink) tipo = "mensagem";
+      var b = { id: novoId(), nome: ehLink ? "Enviar link" : TIPOS[tipo].nome, tipo: tipo,
+        texto: ehLink ? "Aqui está o link: https://www.torqueon.com.br" : "",
         pos: { x: Math.round((w.scrollLeft + 60) / escala), y: Math.round((w.scrollTop + 40) / escala) } };
       if (tipo === "menu") b.opcoes = [{ rotulo: "", destino: "" }];
       botAtual.blocos.push(b);
@@ -795,17 +913,33 @@
 
   $("#btnSalvarBot").addEventListener("click", function () {
     if (!temNuvem()) { $("#botStatus").textContent = "Entre com a sua conta da nuvem primeiro."; return; }
-    var bot = coletaBot();
-    if (bot.ativo && !bot.blocos.length) { $("#botStatus").textContent = "Monte pelo menos um balão antes de ligar."; return; }
-    if (bot.ativo && !achaBloco(bot, bot.inicio)) { $("#botStatus").textContent = "Marque com ▶ o balão onde a conversa começa."; return; }
-    rest("chat_config?on_conflict=academia_id", {
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify({ academia_id: nuvem.aid, bot: bot, atualizado: new Date().toISOString() }),
-    }).then(function (r) {
-      $("#botStatus").textContent = r.ok
-        ? (bot.ativo ? "✅ Salvo e LIGADO. Toda conversa nova entra pelo balão ▶." : "✅ Salvo (desligado — ligue a chavinha acima quando quiser).")
-        : "⚠️ Não deu para salvar (" + r.status + "). Rode o SQL novo do supabase-setup.sql (alter table ... bot).";
+    guardaAutomacaoAberta();
+    var prin = autoDe(botsReg.principal);
+    var bot = prin ? prin.dados : coletaBot();
+    if (bot.ativo && !bot.blocos.length) { $("#botStatus").textContent = "Monte pelo menos um balão na automação 📶 antes de ligar."; return; }
+    if (bot.ativo && !achaBloco(bot, bot.inicio)) { $("#botStatus").textContent = "Na automação 📶, marque com ▶ o balão onde a conversa começa."; return; }
+    var bots = { principal: botsReg.principal, lista: botsReg.lista.map(function (a) { return { id: a.id, nome: a.nome, dados: a.dados }; }) };
+    var grava = function (comBots) {
+      var corpo = { academia_id: nuvem.aid, bot: bot, atualizado: new Date().toISOString() };
+      if (comBots) corpo.bots = bots;
+      return rest("chat_config?on_conflict=academia_id", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates" },
+        body: JSON.stringify(corpo),
+      });
+    };
+    grava(true).then(function (r) {
+      if (r.ok) {
+        $("#botStatus").textContent = "✅ " + botsReg.lista.length + " automação(ões) salvas. " +
+          (bot.ativo ? "A 📶 está LIGADA no WhatsApp — toda conversa nova entra pelo balão ▶." : "A 📶 está desligada — ligue a chavinha quando quiser.");
+        return null;
+      }
+      // banco ainda sem a coluna de várias automações → salva pelo menos a principal
+      return grava(false).then(function (r2) {
+        $("#botStatus").textContent = r2.ok
+          ? "✅ A automação 📶 foi salva. Pra guardar VÁRIAS automações na nuvem, rode o SQL novo em www.torqueon.com.br/sql.html (1 minuto)."
+          : "⚠️ Não deu para salvar (" + r2.status + "). Rode o SQL de www.torqueon.com.br/sql.html e tente de novo.";
+      });
     }).catch(function () { $("#botStatus").textContent = "Sem conexão com a nuvem agora."; });
   });
 
