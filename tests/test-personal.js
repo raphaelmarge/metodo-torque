@@ -394,6 +394,19 @@ async function abaPt(p, a) {
     }));
     ok(botEd.temCard && botEd.ativo, "módulo tem o editor do robô, ligado por padrão");
     ok(/\|/.test(botEd.ops) && /humano/.test(botEd.ops), "opções padrão no formato Rótulo | Resposta com encaminhamento humano");
+    const fluxo = await p.evaluate(() => {
+      const desenho = {
+        paths: document.querySelectorAll("#botFluxoP svg path").length,
+        baloes: document.querySelectorAll("#botFluxoP > div > div").length,
+        temZap: !!document.getElementById("botZapP"),
+      };
+      const f = window.__botFluxoP({ ativo: true, oi: "Oi!", ops: [{ r: "Horários", t: "Na Agenda." }, { r: "Falar comigo", t: "humano" }] }, "Léo");
+      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), menuOps: f.blocos[1].opcoes.length, voltaMenu: f.blocos[2].prox };
+    });
+    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "fluxograma desenhado com linhas e balões");
+    ok(fluxo.desenho.temZap, "botão Usar no WhatsApp presente");
+    ok(fluxo.inicio === "b_oi" && fluxo.tipos.join() === "mensagem,menu,mensagem,equipe", "fluxo no formato do chatbot da academia (mensagem → menu → respostas/equipe)");
+    ok(fluxo.menuOps === 2 && fluxo.voltaMenu === "b_menu", "opções ligadas no menu e resposta volta pro menu");
   }
   {
     const perModulo = await p.evaluate(() => document.body.innerHTML);
