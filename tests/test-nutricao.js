@@ -181,14 +181,15 @@ async function abaNt(p, a) {
     const fluxo = await p.evaluate(() => {
       const desenho = {
         paths: document.querySelectorAll("#botFluxoN svg path").length,
-        baloes: document.querySelectorAll("#botFluxoN > div > div").length,
+        baloes: document.querySelectorAll("#botFluxoN .bb-bloco").length,
         temZap: !!document.getElementById("botZapN"),
+        temBar: !!document.querySelector("#botFluxoN #bbSel") && !!document.querySelector("#botFluxoN #bbNova"),
       };
       const f = window.__botFluxoN({ ativo: true, oi: "Oi!", ops: [{ r: "Dieta", t: "No card refeições." }, { r: "Falar comigo", t: "humano" }] }, "Ana");
-      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), voltaMenu: f.blocos[2].prox };
+      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), voltaMenu: f.blocos[2].destino };
     });
-    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "fluxograma desenhado com linhas e balões");
-    ok(fluxo.desenho.temZap, "botão Usar no WhatsApp presente");
+    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "construtor desenhado com linhas e balões arrastáveis");
+    ok(fluxo.desenho.temZap && fluxo.desenho.temBar, "barra de automações e Publicar no WhatsApp");
     ok(fluxo.inicio === "b_oi" && fluxo.tipos.join() === "mensagem,menu,mensagem,equipe" && fluxo.voltaMenu === "b_menu", "fluxo no formato do chatbot da academia");
   }
 

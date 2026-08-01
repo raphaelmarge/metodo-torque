@@ -434,16 +434,17 @@ async function abaPt(p, a) {
     const fluxo = await p.evaluate(() => {
       const desenho = {
         paths: document.querySelectorAll("#botFluxoP svg path").length,
-        baloes: document.querySelectorAll("#botFluxoP > div > div").length,
+        baloes: document.querySelectorAll("#botFluxoP .bb-bloco").length,
         temZap: !!document.getElementById("botZapP"),
+        temBar: !!document.querySelector("#botFluxoP #bbSel") && !!document.querySelector("#botFluxoP #bbNova") && !!document.querySelector("#botFluxoP #bbPrincipal"),
       };
       const f = window.__botFluxoP({ ativo: true, oi: "Oi!", ops: [{ r: "Horários", t: "Na Agenda." }, { r: "Falar comigo", t: "humano" }] }, "Léo");
-      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), menuOps: f.blocos[1].opcoes.length, voltaMenu: f.blocos[2].prox };
+      return { desenho, inicio: f.inicio, tipos: f.blocos.map((b) => b.tipo), menuOps: f.blocos[1].opcoes.length, voltaMenu: f.blocos[2].destino, opDestino: f.blocos[1].opcoes[0].destino, temPos: !!f.blocos[0].pos };
     });
-    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "fluxograma desenhado com linhas e balões");
-    ok(fluxo.desenho.temZap, "botão Usar no WhatsApp presente");
+    ok(fluxo.desenho.paths >= 5 && fluxo.desenho.baloes >= 6, "construtor desenhado com linhas e balões arrastáveis");
+    ok(fluxo.desenho.temZap && fluxo.desenho.temBar, "barra de automações (+ Nova, seletor, 📶) e Publicar no WhatsApp");
     ok(fluxo.inicio === "b_oi" && fluxo.tipos.join() === "mensagem,menu,mensagem,equipe", "fluxo no formato do chatbot da academia (mensagem → menu → respostas/equipe)");
-    ok(fluxo.menuOps === 2 && fluxo.voltaMenu === "b_menu", "opções ligadas no menu e resposta volta pro menu");
+    ok(fluxo.menuOps === 2 && fluxo.voltaMenu === "b_menu" && fluxo.opDestino === "b_r0" && fluxo.temPos, "destino/pos no formato que o webhook anda de verdade");
   }
   {
     const perModulo = await p.evaluate(() => document.body.innerHTML);
