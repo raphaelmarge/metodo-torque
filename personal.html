@@ -192,6 +192,15 @@
         <button class="btn" id="exAdd">+ Adicionar</button>
       </div>
       <div id="exLista"></div>
+      <div style="border-top: 1px solid var(--linha); margin-top: 14px; padding-top: 12px;">
+        <h2 style="font-size: 14px;">Catálogo TORQUE <span id="catN" class="muted" style="font-weight: 400;"></span></h2>
+        <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">Banco compartilhado que cresce todo dia — toque em <b>+ usar</b> e o exercício entra na sua biblioteca com grupo e dica de execução.</p>
+        <div class="linha-flex" style="margin: 8px 0 10px;">
+          <input id="catBusca" placeholder="Buscar (ex.: agachamento, kettlebell…)" style="flex: 2; min-width: 170px;">
+          <select id="catGrupo" style="flex: 1; min-width: 140px;"><option value="">Todos os grupos</option></select>
+        </div>
+        <div id="catLista"></div>
+      </div>
     </div>
 
     <div class="card" style="margin-top: 14px;">
@@ -633,6 +642,14 @@
     var t = (st.treinosV2 || {})[alunoId];
     var exOpts = (st.exercicios || []).slice().sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); })
       .map(function (e) { return '<option value="' + e.id + '">' + esc((e.grupo ? e.grupo + " · " : "") + e.nome) + "</option>"; }).join("");
+    // catálogo TORQUE inteiro no seletor — escolher um item dele adiciona na biblioteca na hora
+    var meusNomes = {};
+    (st.exercicios || []).forEach(function (e) { meusNomes[e.nome.toLowerCase()] = 1; });
+    var catalogo = (self.MT_EXERCICIOS || []).filter(function (c) { return !meusNomes[c.n.toLowerCase()]; });
+    var catOpts = catalogo.slice().sort(function (a, b) { return (a.g + a.n).localeCompare(b.g + b.n); })
+      .map(function (c) { return '<option value="cat:' + esc(c.n) + '">' + esc(c.g + " · " + c.n) + "</option>"; }).join("");
+    exOpts = (exOpts ? '<optgroup label="Meus exercícios">' + exOpts + "</optgroup>" : "") +
+      (catOpts ? '<optgroup label="Catálogo TORQUE (' + catalogo.length + ')">' + catOpts + "</optgroup>" : "");
     if (!t || !t.fichas.length) {
       el.innerHTML = '<span class="muted">Nenhuma ficha ainda — clique em <b>+ Nova ficha</b>.' +
         ((st.treinos || {})[alunoId] ? " (O texto antigo deste aluno continua no app até você montar as fichas.)" : "") + "</span>";
@@ -741,9 +758,14 @@
     if (add) {
       var sel = document.querySelector('[data-exsel="' + add + '"]');
       if (!sel.value) { alert("Escolha um exercício da biblioteca."); return; }
+      var exIdSel = sel.value;
+      if (exIdSel.indexOf("cat:") === 0) {
+        // veio do catálogo TORQUE — entra na biblioteca do personal na hora
+        exIdSel = exercicioPorNome(st, exIdSel.slice(4)).id;
+      }
       var f = t.fichas.find(function (x) { return x.id === add; });
       f.itens.push({
-        exId: sel.value,
+        exId: exIdSel,
         series: +document.querySelector('[data-exser="' + add + '"]').value || 3,
         reps: document.querySelector('[data-exrep="' + add + '"]').value.trim() || "12",
         obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
@@ -780,7 +802,7 @@
   function renderBiblioteca() {
     var st = load();
     var el = $("exLista");
-    if (!st.exercicios.length) { el.innerHTML = '<div class="muted">Cadastre o primeiro exercício acima.</div>'; return; }
+    if (!st.exercicios.length) { el.innerHTML = '<div class="muted">Sua biblioteca está vazia — puxe exercícios do Catálogo TORQUE logo abaixo (+ usar) ou cadastre um acima.</div>'; return; }
     var porGrupo = {};
     st.exercicios.forEach(function (e) { (porGrupo[e.grupo || "Geral"] = porGrupo[e.grupo || "Geral"] || []).push(e); });
     el.innerHTML = Object.keys(porGrupo).sort().map(function (g) {
@@ -795,6 +817,46 @@
         }).join("");
     }).join("");
   }
+  // navegador do catálogo TORQUE (banco compartilhado de exercícios)
+  (function () {
+    var grupos = {};
+    (self.MT_EXERCICIOS || []).forEach(function (c) { grupos[c.g] = 1; });
+    $("catGrupo").innerHTML = '<option value="">Todos os grupos</option>' +
+      Object.keys(grupos).sort().map(function (g) { return "<option>" + esc(g) + "</option>"; }).join("");
+    $("catN").textContent = "· " + (self.MT_EXERCICIOS || []).length + " exercícios";
+  })();
+  function renderCatalogo() {
+    var st = load();
+    var meus = {};
+    (st.exercicios || []).forEach(function (e) { meus[e.nome.toLowerCase()] = 1; });
+    var busca = ($("catBusca").value || "").trim().toLowerCase();
+    var grupo = $("catGrupo").value;
+    var lista = (self.MT_EXERCICIOS || []).filter(function (c) {
+      if (grupo && c.g !== grupo) return false;
+      if (busca && (c.n + " " + c.g + " " + c.eq).toLowerCase().indexOf(busca) === -1) return false;
+      return true;
+    });
+    var corte = lista.slice(0, 24);
+    $("catLista").innerHTML = (corte.map(function (c) {
+      var ja = meus[c.n.toLowerCase()];
+      return '<div class="sessao-pt"><b>' + esc(c.n) + '</b><span class="muted" style="font-size:12px;">' + esc(c.g + " · " + c.eq) + "</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        (ja ? '<span class="tag ok" style="font-size:10px;">NA BIBLIOTECA ✓</span>' : '<button class="btn mini" data-catusa="' + esc(c.n) + '">+ usar</button>') + "</div>";
+    }).join("") || '<div class="muted">Nada com essa busca — tente outra palavra.</div>') +
+      (lista.length > corte.length ? '<div class="muted" style="padding:8px 0;">Mostrando 24 de ' + lista.length + " — refine a busca pra ver o resto.</div>" : "");
+  }
+  $("catBusca").addEventListener("input", renderCatalogo);
+  $("catGrupo").addEventListener("change", renderCatalogo);
+  $("catLista").addEventListener("click", function (e) {
+    var usa = e.target.getAttribute && e.target.getAttribute("data-catusa");
+    if (!usa) return;
+    var st = load();
+    exercicioPorNome(st, usa);
+    S.write("ptStudio", st);
+    renderBiblioteca(); renderFichas(); renderCatalogo();
+  });
+  renderCatalogo();
+  window.__catalogoPT = renderCatalogo; // testes
   $("exAdd").addEventListener("click", function () {
     var nome = $("exNome").value.trim();
     if (!nome) { alert("Escreva o nome do exercício."); return; }
