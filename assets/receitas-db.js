@@ -641,5 +641,72 @@ self.MT_RECEITAS = [
    "Finalize com sementes de maracujá por cima."
   ],
   "dica": "19 g de proteína por potinho — sobremesa que conta como ceia."
+ },
+ {
+  "id": "rc31",
+  "n": "Overnight oats de banana e pasta de amendoim",
+  "cat": "Café da manhã",
+  "tempo": "5 min + geladeira",
+  "rende": "1 porção",
+  "k": 380,
+  "pt": 18,
+  "ing": [
+   "40 g de aveia em flocos",
+   "150 ml de leite (ou bebida vegetal)",
+   "1 banana amassada",
+   "1 colher de sopa de pasta de amendoim",
+   "Canela a gosto"
+  ],
+  "modo": [
+   "Misture tudo num pote com tampa.",
+   "Deixe na geladeira de um dia pro outro.",
+   "De manhã é só abrir e comer — frio mesmo."
+  ],
+  "dica": "Prepare 3 potes de uma vez — café da manhã pronto pra semana toda."
+ },
+ {
+  "id": "rc32",
+  "n": "Wrap de frango com requeijão light",
+  "cat": "Lanches",
+  "tempo": "15 min",
+  "rende": "2 porções",
+  "k": 320,
+  "pt": 27,
+  "ing": [
+   "2 pães folha (rap10 integral)",
+   "200 g de frango desfiado temperado",
+   "2 colheres de sopa de requeijão light",
+   "Alface e tomate em tiras",
+   "Orégano e pimenta-do-reino"
+  ],
+  "modo": [
+   "Passe o requeijão no pão folha.",
+   "Distribua o frango, a alface e o tomate.",
+   "Enrole apertado e doure 2 minutos na frigideira pra selar."
+  ],
+  "dica": "Enrolado em papel-alumínio vira marmita de bolsa — segura firme até a hora do lanche."
+ },
+ {
+  "id": "rc33",
+  "n": "Pudim proteico de chia com cacau",
+  "cat": "Doces fit",
+  "tempo": "10 min + 3 h de geladeira",
+  "rende": "3 porções",
+  "k": 190,
+  "pt": 14,
+  "ing": [
+   "4 colheres de sopa de chia (40 g)",
+   "300 ml de leite desnatado",
+   "30 g de whey de chocolate",
+   "1 colher de sopa de cacau em pó 100%",
+   "Adoçante a gosto"
+  ],
+  "modo": [
+   "Dissolva o whey e o cacau no leite.",
+   "Misture a chia e mexa bem por 1 minuto pra não empelotar.",
+   "Geladeira por 3 horas — vira um pudim de colher.",
+   "Sirva com frutas vermelhas por cima."
+  ],
+  "dica": "A chia incha e dá saciedade de verdade — ótima ceia pra quem belisca à noite."
  }
 ];
