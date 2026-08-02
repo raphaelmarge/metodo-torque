@@ -15,14 +15,18 @@
 <meta name="apple-mobile-web-app-title" content="TORQUE ON">
 <script>
 /* Domínio próprio (www.torqueon.com.br): visitante novo cai no site de vendas;
- * cliente com cadastro neste aparelho segue direto pro portal.
- * Força o portal com ?portal=1. Fora do domínio, não faz nada. */
+ * cliente com cadastro neste aparelho vai DIRETO pro sistema da academia.
+ * Força o portal com ?portal=1; a biblioteca de materiais abre com ?materiais=1. */
 (function () {
   try {
-    if (/(^|\.)torqueon\.com\.br$/.test(location.hostname) &&
-        !localStorage.getItem("mtapp:perfil") &&
-        location.search.indexOf("portal") < 0) {
+    var noDominio = /(^|\.)torqueon\.com\.br$/.test(location.hostname);
+    if (!noDominio) return;
+    var temPerfil = localStorage.getItem("mtapp:perfil");
+    if (!temPerfil && location.search.indexOf("portal") < 0) {
       location.replace("torqueon.html");
+    } else if (temPerfil && !/[?&](materiais|ajuda)=1/.test(location.search)) {
+      // entrar no sistema = abrir o sistema em si (os materiais ficam na Ajuda)
+      location.replace("apps/sistema.html");
     }
   } catch (e) {}
 })();
@@ -223,5 +227,24 @@
 <script src="assets/access.js"></script>
 <script src="apps/store.js"></script>
 <script src="assets/app.js"></script>
+<script>
+  // modo Ajuda e materiais (?materiais=1): o portal vira a biblioteca do Método
+  (function () {
+    if (!/[?&](materiais|ajuda)=1/.test(location.search)) return;
+    document.title = "Ajuda e materiais — TORQUE ON";
+    var hk = document.querySelector(".hero-kicker");
+    if (hk) {
+      hk.innerHTML = '<span class="brand-dash"></span>AJUDA E MATERIAIS<span class="brand-dash"></span>';
+      var h1 = hk.parentElement.querySelector("h1");
+      if (h1) h1.innerHTML = "Biblioteca do<br>Método Torque";
+      var volta = document.createElement("a");
+      volta.href = "apps/sistema.html";
+      volta.textContent = "← Voltar pro sistema";
+      volta.style.cssText = "display:inline-block;margin-top:14px;color:#a78bfa;font-weight:700;text-decoration:none;font-size:14px;";
+      hk.parentElement.appendChild(volta);
+    }
+    window.__modoMateriais = true; // testes
+  })();
+</script>
 </body>
 </html>
