@@ -202,6 +202,15 @@ const SEED = {
   assert(!!card, "card do Sistema aparece no portal (nova aba)");
   assert(card && (await card.getAttribute("target")) === "_blank", "card abre em nova aba (standalone)");
 
+  console.log("— modo Ajuda e materiais —");
+  await page.goto(BASE + "/index.html?materiais=1");
+  await page.waitForFunction(() => window.__modoMateriais);
+  const heroMat = await page.evaluate(() => document.querySelector(".hero-kicker").parentElement.textContent);
+  assert(/AJUDA E MATERIAIS/.test(heroMat) && /Biblioteca do/.test(heroMat), "portal vira a biblioteca 'Ajuda e materiais'");
+  assert(/Voltar pro sistema/.test(heroMat), "botão de voltar pro sistema presente");
+  await page.waitForSelector("#appGrid .app-card");
+  assert(true, "materiais e programas continuam listados na biblioteca");
+
   console.log("— CEP preenche o endereço na hora —");
   const pCep = await ctx.newPage();
   await pCep.route("**/viacep.com.br/ws/30130010/json/", (r) => r.fulfill({
