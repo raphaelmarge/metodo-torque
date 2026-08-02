@@ -248,10 +248,11 @@
     </div></div>
 
     <div class="passo"><span class="num">2</span><div>
-      <b>Publique as duas funções.</b> No Supabase → Edge Functions → Deploy new function:
-      crie <code>meta-webhook</code> (cole o arquivo <code>supabase/functions/meta-webhook/index.ts</code> e
-      <u>desligue “Verify JWT”</u> — a Meta chama sem login) e <code>chat-envia</code>
-      (cole <code>supabase/functions/chat-envia/index.ts</code>, deixe “Verify JWT” ligado).
+      <b>Publique as funções.</b> Abra
+      <a href="../funcoes.html" target="_blank" rel="noopener"><code>torqueon.com.br/funcoes.html</code></a> —
+      lá tem um botão que copia o código de cada função pronta pra colar no
+      Supabase → Edge Functions → Deploy new function (<code>meta-webhook</code> com
+      “Verify JWT” <u>desligado</u>; <code>chat-envia</code> e <code>whatsapp</code> com ele ligado).
     </div></div>
 
     <div class="passo"><span class="num">3</span><div>
