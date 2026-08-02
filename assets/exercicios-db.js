@@ -1321,5 +1321,305 @@ self.MT_EXERCICIOS = [
   "g": "Costas",
   "eq": "Máquina",
   "d": "Pegada mais larga que os ombros, puxe levando os cotovelos abertos na linha do peito — foco no meio das costas."
+ },
+ {
+  "n": "Hundred (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Deitado com as pernas em mesinha, bata os braços curtinho ao lado do corpo: inspire em 5 batidas, expire em 5, até chegar a 100."
+ },
+ {
+  "n": "Roll-up (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Suba do chão desenrolando a coluna vértebra por vértebra até alcançar os pés — sem impulso, o abdômen comanda."
+ },
+ {
+  "n": "Ponte articulada (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Suba o quadril desenrolando a coluna do chão vértebra a vértebra e desça na mesma cadência lenta."
+ },
+ {
+  "n": "Swimming (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "De bruços, eleve braço e perna opostos alternando como um nado — pescoço longo e olhar para o chão."
+ },
+ {
+  "n": "Teaser (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Suba tronco e pernas ao mesmo tempo formando um V com o corpo — dobre os joelhos para facilitar no começo."
+ },
+ {
+  "n": "Leg circles (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Deitado, desenhe círculos pequenos no ar com a perna esticada sem deixar o quadril balançar."
+ },
+ {
+  "n": "Cachorro olhando para baixo (yoga)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Quadril bem alto formando um triângulo, calcanhares buscando o chão e coluna longa — respire fundo na postura."
+ },
+ {
+  "n": "Guerreiro II (yoga)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Passada longa, joelho da frente a 90 graus em cima do tornozelo, braços abertos na linha dos ombros e olhar à frente."
+ },
+ {
+  "n": "Cadeira (yoga)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Pés juntos, dobre os joelhos como se fosse sentar no ar e suba os braços — o peso fica nos calcanhares."
+ },
+ {
+  "n": "Postura da cobra (yoga)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "De bruços, empurre o chão alongando a frente do tronco — ombros longe das orelhas e glúteos relaxados."
+ },
+ {
+  "n": "Postura da árvore (yoga)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Apoie o pé na parte interna da coxa (nunca no joelho), quadril neutro e olhar fixo num ponto pra equilibrar."
+ },
+ {
+  "n": "Saudação ao sol (sequência)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Encadeie prancha, cobra e cachorro olhando para baixo num fluxo contínuo guiado pela respiração."
+ },
+ {
+  "n": "Remada no TRX",
+  "g": "Costas",
+  "eq": "TRX",
+  "d": "Corpo reto inclinado para trás, puxe o peito até as alças apertando as escápulas — quanto mais deitado, mais difícil."
+ },
+ {
+  "n": "Flexão no TRX",
+  "g": "Peito",
+  "eq": "TRX",
+  "d": "Mãos nas alças instáveis: desça o peito controlando o tremor e suba sem deixar o quadril cair."
+ },
+ {
+  "n": "Pistola assistida no TRX",
+  "g": "Quadríceps",
+  "eq": "TRX",
+  "d": "Segure as alças e desça em uma perna só até embaixo — os braços ajudam só o necessário na subida."
+ },
+ {
+  "n": "Rosca bíceps no TRX",
+  "g": "Bíceps",
+  "eq": "TRX",
+  "d": "Inclinado para trás com palmas para cima, puxe a testa até as mãos dobrando só os cotovelos."
+ },
+ {
+  "n": "Extensão de tríceps no TRX",
+  "g": "Tríceps",
+  "eq": "TRX",
+  "d": "De frente para o ponto de fixação, deixe o corpo cair à frente e empurre de volta estendendo os cotovelos."
+ },
+ {
+  "n": "Pike no TRX",
+  "g": "Core",
+  "eq": "TRX",
+  "d": "Em prancha com os pés nas alças, suba o quadril levando os pés em direção às mãos — desça sem arquear a lombar."
+ },
+ {
+  "n": "Y-T-W no TRX",
+  "g": "Ombros",
+  "eq": "TRX",
+  "d": "Inclinado para trás, suba os braços desenhando as letras Y, T e W — fortalece a postura e o manguito."
+ },
+ {
+  "n": "Afundo com pé no TRX",
+  "g": "Quadríceps",
+  "eq": "TRX",
+  "d": "Pé de trás suspenso na alça: desça o joelho ao chão com o tronco ereto e suba pela perna da frente."
+ },
+ {
+  "n": "Press landmine em pé",
+  "g": "Ombros",
+  "eq": "Landmine",
+  "d": "Barra ancorada no chão: empurre a ponta para cima e à frente — mais amigável pro ombro que o press reto."
+ },
+ {
+  "n": "Remada landmine unilateral",
+  "g": "Costas",
+  "eq": "Landmine",
+  "d": "De lado para a barra, puxe a ponta até a cintura levando o cotovelo para trás — tronco firme."
+ },
+ {
+  "n": "Rotação de tronco landmine",
+  "g": "Core",
+  "eq": "Landmine",
+  "d": "Braços quase esticados segurando a ponta da barra, desenhe um arco de um quadril ao outro girando o tronco."
+ },
+ {
+  "n": "Agachamento landmine",
+  "g": "Quadríceps",
+  "eq": "Landmine",
+  "d": "Segure a ponta da barra junto ao peito e agache — a trajetória em arco ajuda a manter o tronco em pé."
+ },
+ {
+  "n": "Terra landmine",
+  "g": "Posterior e glúteo",
+  "eq": "Landmine",
+  "d": "Ao lado da barra, empurre o quadril para trás e levante a ponta com a coluna neutra — ótimo pra aprender o padrão."
+ },
+ {
+  "n": "Escada de agilidade (dois apoios)",
+  "g": "Cardio",
+  "eq": "Escada de agilidade",
+  "d": "Dois pés em cada quadrado, o mais rápido que conseguir — braços coordenados e olhar à frente."
+ },
+ {
+  "n": "Escada de agilidade lateral",
+  "g": "Cardio",
+  "eq": "Escada de agilidade",
+  "d": "Atravesse a escada de lado com passos curtos e rápidos, sem cruzar os pés."
+ },
+ {
+  "n": "Zigue-zague entre cones",
+  "g": "Funcional e Cross",
+  "eq": "Cones",
+  "d": "Contorne os cones acelerando e freando — desacelere dobrando os joelhos, nunca com o tronco jogado."
+ },
+ {
+  "n": "T-drill (sprint com mudança de direção)",
+  "g": "Cardio",
+  "eq": "Cones",
+  "d": "Sprint à frente, deslocamento lateral para os dois lados e volta de costas — toque cada cone com a mão."
+ },
+ {
+  "n": "Deslocamento defensivo lateral",
+  "g": "Funcional e Cross",
+  "eq": "Livre",
+  "d": "Como um defensor de basquete: joelhos dobrados, passos laterais rápidos sem juntar os pés."
+ },
+ {
+  "n": "Anfersen (calcanhar no glúteo)",
+  "g": "Cardio",
+  "eq": "Peso do corpo",
+  "d": "Corrida no lugar levando o calcanhar até o glúteo em ritmo rápido — educativo clássico de corrida."
+ },
+ {
+  "n": "Carioca (corrida lateral cruzada)",
+  "g": "Cardio",
+  "eq": "Peso do corpo",
+  "d": "Desloque-se de lado cruzando uma perna à frente e atrás da outra, com o quadril girando solto."
+ },
+ {
+  "n": "Bounding (passada saltada)",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Corra com passadas exageradas, buscando distância e tempo no ar em cada passo — aterrisse macio."
+ },
+ {
+  "n": "Corrida em progressão",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Comece trotando e acelere gradualmente até quase o máximo nos últimos metros — ótimo aquecimento de tiros."
+ },
+ {
+  "n": "Prancha com elevação de perna",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Na prancha, eleve uma perna esticada e segure alguns segundos sem girar o quadril — troque o lado."
+ },
+ {
+  "n": "Ponte unilateral isométrica",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Suba a ponte com uma perna só e segure 10 a 20 segundos com o quadril nivelado."
+ },
+ {
+  "n": "Dead hang (pendurado na barra)",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Fique pendurado com os braços esticados e ombros ativos — descomprime a coluna e fortalece a pegada."
+ },
+ {
+  "n": "Remada com toalha na porta",
+  "g": "Costas",
+  "eq": "Toalha",
+  "d": "Toalha firme na maçaneta, incline o corpo para trás e puxe o peito em direção à porta — corpo reto."
+ },
+ {
+  "n": "Salto duplo de corda",
+  "g": "Cardio",
+  "eq": "Corda",
+  "d": "A corda passa duas vezes por salto: pule mais alto e gire o punho mais rápido — domine o salto simples antes."
+ },
+ {
+  "n": "Suitcase carry",
+  "g": "Funcional e Cross",
+  "eq": "Halteres",
+  "d": "Caminhe com peso em UMA mão só, sem inclinar o tronco — o core trabalha pra te manter reto."
+ },
+ {
+  "n": "Good morning com elástico",
+  "g": "Posterior e glúteo",
+  "eq": "Elástico",
+  "d": "Elástico sob os pés e atrás do pescoço: empurre o quadril para trás com a coluna neutra e volte apertando o glúteo."
+ },
+ {
+  "n": "Abdução de quadril em pé com caneleira",
+  "g": "Posterior e glúteo",
+  "eq": "Caneleira",
+  "d": "Em pé com apoio, eleve a perna esticada para o lado sem inclinar o tronco — desça controlando."
+ },
+ {
+  "n": "Turkish sit-up com halter",
+  "g": "Core",
+  "eq": "Halteres",
+  "d": "Deitado com o halter para cima, sente-se mantendo o braço vertical o tempo todo — meio caminho do levantamento turco."
+ },
+ {
+  "n": "Flexão declinada com pés no banco",
+  "g": "Peito",
+  "eq": "Banco/Caixa",
+  "d": "Pés elevados no banco jogam o esforço para a parte de cima do peitoral — desça a testa em direção ao chão."
+ },
+ {
+  "n": "Pallof press ajoelhado",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "Ajoelhado de lado para a âncora, estique os braços à frente sem deixar o elástico girar seu tronco."
+ },
+ {
+  "n": "Caminhada na ponta dos pés com halteres",
+  "g": "Quadríceps",
+  "eq": "Halteres",
+  "d": "Ande na ponta dos pés carregando halteres — panturrilha e equilíbrio trabalham a cada passo."
+ },
+ {
+  "n": "Marcha inclinada na esteira com carga",
+  "g": "Cardio",
+  "eq": "Esteira",
+  "d": "Esteira bem inclinada, passo firme segurando halteres leves — cardio pesado sem impacto de corrida."
+ },
+ {
+  "n": "Superman com pausa",
+  "g": "Costas",
+  "eq": "Solo",
+  "d": "De bruços, eleve braços e pernas ao mesmo tempo e segure 3 segundos no topo antes de descer."
+ },
+ {
+  "n": "Prancha com arrasto de halter",
+  "g": "Core",
+  "eq": "Halteres",
+  "d": "Na prancha, arraste o halter de um lado pro outro por baixo do corpo sem girar o quadril."
+ },
+ {
+  "n": "Sprint na escada da arquibancada",
+  "g": "Cardio",
+  "eq": "Escada",
+  "d": "Suba a escada correndo degrau sim, degrau não, e desça andando pra recuperar — repita em tiros."
  }
 ];
