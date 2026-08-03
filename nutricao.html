@@ -268,6 +268,9 @@
       <label style="margin: 0; font-size: 12.5px;">Valor da consulta (R$, opcional)
         <input id="cfgPixValor" inputmode="decimal" placeholder="150" style="width: 100px; display: block; margin-top: 4px;"></label>
     </div>
+    <label style="display: block; margin: 10px 0 0; font-size: 12.5px;">📌 Mural dos pacientes — um aviso por linha (entra no app de todos quando você gerar/publicar de novo)
+      <textarea id="cfgMural" rows="3" placeholder="Agenda de dezembro aberta — garanta seu horário!
+Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px;"></textarea></label>
   </div>
 
 </main>
@@ -881,6 +884,12 @@
       "</style></head><body>" +
       "<div style='text-align:center;padding:8px 0 14px;'><span style='font-size:11px;letter-spacing:.2em;color:#86efac;font-weight:700;'>" + esc(studio).toUpperCase() + " 🥗</span>" +
       "<h1>Oi, " + esc(primeiro) + "!</h1><div class='vz' style='padding:2px 0;'>Meta: <b style='color:#86efac'>" + alvo.alvo + " kcal</b> · 💧 " + aguaMl + " ml/dia</div></div>" +
+      (((st.config || {}).mural || []).length
+        ? "<div class='cardx' style='border-color:#16a34a;'><h2>📌 Mural do consultório</h2>" +
+          ((st.config || {}).mural || []).map(function (av) {
+            return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed #29402f;'>📌 " + esc(av) + "</div>";
+          }).join("") + "</div>"
+        : "") +
       "<div class='cardx'><h2>⏰ Próxima refeição</h2><div id='proxRef' class='vz' style='font-size:15px;color:#fff;font-weight:700;'></div></div>" +
       "<div class='cardx'><h2>Água de hoje</h2>" +
       "<div class='agua-bar'><div class='agua-fill' id='agFill' style='width:0%'></div></div>" +
@@ -930,7 +939,8 @@
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver consultas ou pedir horário.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
-      "<div id='cqGraf' style='margin-top:14px;'></div></div>" +
+      "<div id='cqGraf' style='margin-top:14px;'></div>" +
+      "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories 📸</button></div>" +
       "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
@@ -1116,6 +1126,24 @@
       "\"<div class='vz' style='font-size:10px;'>barra cheia = todas as refeições · número azul = água na meta 💧</div>\";" +
       "document.getElementById('cqGraf').innerHTML=bars;}" +
       "pintaConquistas();document.addEventListener('click',function(e){if(e.target.closest('[data-refok]')||e.target.id==='agAdd'||e.target.id==='pzAdd')setTimeout(pintaConquistas,150);});" +
+      // card de conquista pro Stories (canvas 1080×1080 verde com a marca do consultório)
+      "var STUDION=" + JSON.stringify(studio) + ",PRIMEIRON=" + JSON.stringify(primeiro) + ";" +
+      "document.getElementById('btnCardStories').addEventListener('click',function(){" +
+      "var ativos={};[diasCom('ntref_'),diasCom('ntag_'),diasCom('ntdi_')].forEach(function(o){Object.keys(o).forEach(function(k){ativos[k]=1;});});" +
+      "var nAtivos=Object.keys(ativos).length;var seq=seqMax(ativos);var pesagens=L('ntpeso',[]).length;" +
+      "var c=document.createElement('canvas');c.width=1080;c.height=1080;var g=c.getContext('2d');" +
+      "var gr=g.createLinearGradient(0,0,1080,1080);gr.addColorStop(0,'#0f1a12');gr.addColorStop(1,'#14532d');g.fillStyle=gr;g.fillRect(0,0,1080,1080);" +
+      "g.fillStyle='#86efac';g.font='700 42px system-ui,sans-serif';g.textAlign='center';g.fillText(STUDION.toUpperCase().slice(0,30),540,150);" +
+      "g.fillStyle='#fff';g.font='800 84px system-ui,sans-serif';" +
+      "g.fillText(nAtivos>0?nAtivos+(nAtivos===1?' dia firme!':' dias firmes!'):'Começando hoje!',540,380);" +
+      "g.font='600 52px system-ui,sans-serif';g.fillStyle='#dcfce7';" +
+      "g.fillText('🥗 '+nAtivos+' dias cuidando da dieta',540,560);" +
+      "g.fillText('🔥 melhor sequência: '+seq+(seq===1?' dia':' dias'),540,655);" +
+      "if(pesagens)g.fillText('⚖️ '+pesagens+(pesagens===1?' pesagem':' pesagens'),540,750);" +
+      "g.fillStyle='#86efac';g.font='700 34px system-ui,sans-serif';g.fillText('🥦 '+PRIMEIRON+' · TORQUE NUTRI',540,990);" +
+      "c.toBlob(function(bl){var fl=new File([bl],'conquista.png',{type:'image/png'});" +
+      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
+      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='conquista.png';a2.click();}});});" +
       // chat paciente ↔ nutricionista (+ robô de atendimento)
       "var BOT=" + JSON.stringify(botApp) + ";" +
       "function botHist(){return L('ntbotmsgs',[]);}" +
@@ -1495,6 +1523,7 @@
     if (document.activeElement !== $("cfgPixNome")) $("cfgPixNome").value = cfgN.pixNome || "";
     if (document.activeElement !== $("cfgPixCidade")) $("cfgPixCidade").value = cfgN.pixCidade || "";
     if (document.activeElement !== $("cfgPixValor")) $("cfgPixValor").value = cfgN.pixValor || "";
+    if (document.activeElement !== $("cfgMural")) $("cfgMural").value = (cfgN.mural || []).join("\n");
     var u = S.usuario ? S.usuario() : {};
     $("btnContaEntrar").hidden = u.logado;
     $("btnContaEquipe").hidden = !u.logado;
@@ -1517,6 +1546,11 @@
       st.config.pixValor = parseFloat(($("cfgPixValor").value || "").replace(",", ".")) || 0;
       S.write("ntStudio", st);
     });
+  });
+  $("cfgMural").addEventListener("change", function () {
+    var st = load();
+    st.config.mural = this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 10);
+    S.write("ntStudio", st);
   });
 
   function render() {

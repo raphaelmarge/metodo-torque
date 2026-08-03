@@ -201,8 +201,25 @@ async function abaNt(p, a) {
       pix: document.getElementById("pixPac") ? document.getElementById("pixPac").value : "",
     }));
     ok(fotoUi.temFoto && /br\.gov\.bcb\.pix/.test(fotoUi.pix), "no app aberto: input de foto e código Pix prontos");
+    // card de conquista pro Stories baixa a imagem
+    const dlN = pApp2.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+    await pApp2.evaluate(() => document.getElementById("btnCardStories").click());
+    const cardN = await dlN;
+    ok(!!cardN && /conquista\.png/.test(cardN.suggestedFilename()), "Gerar card pro Stories baixa a imagem no app do paciente");
     ok(errosApp2.length === 0, "app do paciente abre sem erros de JS" + (errosApp2.length ? " — " + errosApp2[0] : ""));
     await pApp2.close();
+  }
+  // mural do consultório: aviso entra no app do paciente
+  {
+    const comMural = await p.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.config.mural = ["Agenda de dezembro aberta! 🗓️"];
+      window.MTStore.write("ntStudio", st);
+      return window.__montaAppNutri(window.MTStore.read("ntStudio", {}).pacientes[0], new Date().toISOString());
+    });
+    ok(/Mural do consultório/.test(comMural) && /Agenda de dezembro/.test(comMural), "aviso do mural entra no app do paciente");
+    ok(await p.evaluate(() => !!document.getElementById("cfgMural")), "módulo tem o campo 📌 Mural na ilha");
+    ok(/btnCardStories/.test(comMural), "app do paciente tem o botão de card pro Stories");
   }
   {
     const botEd = await p.evaluate(() => ({

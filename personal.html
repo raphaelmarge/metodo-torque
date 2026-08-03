@@ -364,6 +364,9 @@
       <label style="margin: 0; font-size: 12.5px;">Cidade
         <input id="cfgPixCidade" placeholder="ex.: Belo Horizonte" style="width: 150px; display: block; margin-top: 4px;"></label>
     </div>
+    <label style="display: block; margin: 10px 0; font-size: 12.5px;">📌 Mural dos alunos — um aviso por linha (entra no app de todos quando você gerar/publicar de novo)
+      <textarea id="cfgMural" rows="3" placeholder="Semana que vem: treino ao ar livre no sábado! 🌳
+Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"></textarea></label>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <button class="btn" id="btnContaEntrar">Entrar na minha conta</button>
       <button class="btn sec" id="btnContaEquipe" hidden>+ Login de colaborador</button>
@@ -1521,6 +1524,12 @@
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
       "<div class='topo'><div class='k'>" + esc(studio).toUpperCase() + " · TORQUE ON PERSONAL</div><h1>" + esc(a.nome.split(" ")[0]) + "</h1></div>" +
+      (((st.config || {}).mural || []).length
+        ? "<div class='cardx' style='border-color:#7c3aed;'><h2>📌 Mural do studio</h2>" +
+          ((st.config || {}).mural || []).map(function (av) {
+            return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed #322e3d;'>📌 " + esc(av) + "</div>";
+          }).join("") + "</div>"
+        : "") +
       "<div class='cardx'><h2>Minha semana</h2>" +
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
@@ -1539,7 +1548,8 @@
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
-      "<div id='cqGraf' style='margin-top:14px;'></div></div>" +
+      "<div id='cqGraf' style='margin-top:14px;'></div>" +
+      "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories 📸</button></div>" +
       "<div class='cardx'><h2>Meu treino</h2>" +
       (fichasApp ? fichasApp.map(function (f, gi) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
@@ -1634,7 +1644,7 @@
       "<input id='gCarga' inputmode='decimal' placeholder='carga de hoje (kg)' style='margin-top:14px;background:#1d1a24;border:1px solid #322e3d;border-radius:12px;color:#fff;padding:12px;font-size:15px;font-family:inherit;'>" +
       "<div id='gDesc' style='display:none;font-size:74px;font-weight:800;text-align:center;margin:auto 0;color:#a78bfa;'></div>" +
       "<div style='margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px;'>" +
-      "<button class='btnx' id='gSerie' style='font-size:17px;padding:16px;'></button>" +
+      "<button class='btnx' id='gSerie' style='font-size:17px;padding:16px;'>✔ Série feita</button>" +
       "<div style='display:flex;gap:8px;'>" +
       "<button id='gPular' class='btnx' style='flex:1;background:#1d1a24;color:#a9a4b5;box-shadow:none;border:1px solid #322e3d;'>Pular descanso</button>" +
       "<button id='gPularEx' class='btnx' style='flex:1;background:#1d1a24;color:#a9a4b5;box-shadow:none;border:1px solid #322e3d;'>Pular exercício</button>" +
@@ -1764,6 +1774,22 @@
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(bateu?'#a78bfa':'#6e6a78')+\";'>\"+(s5.n||'')+\"</div><div style='height:\"+(56-hh5)+\"px;'></div><div style='height:\"+hh5+\"px;background:\"+(bateu?'linear-gradient(180deg,#a78bfa,#7c3aed)':'#3a3346')+\";border-radius:4px 4px 0 0;min-height:2px;'></div><div style='font-size:8.5px;color:#6e6a78;margin-top:3px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
       "document.getElementById('cqGraf').innerHTML=bars;}" +
       "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(pintaConquistas,150);});" +
+      // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
+      "var STUDIO=" + JSON.stringify(studio) + ";" +
+      "document.getElementById('btnCardStories').addEventListener('click',function(){" +
+      "var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);" +
+      "var c=document.createElement('canvas');c.width=1080;c.height=1080;var g=c.getContext('2d');" +
+      "var gr=g.createLinearGradient(0,0,1080,1080);gr.addColorStop(0,'#1c1826');gr.addColorStop(1,'#4c1d95');g.fillStyle=gr;g.fillRect(0,0,1080,1080);" +
+      "g.fillStyle='#a78bfa';g.font='700 42px system-ui,sans-serif';g.textAlign='center';g.fillText(STUDIO.toUpperCase().slice(0,30),540,150);" +
+      "g.fillStyle='#fff';g.font='800 84px system-ui,sans-serif';" +
+      "g.fillText(total>0?total+(total===1?' treino!':' treinos!'):'Bora treinar!',540,380);" +
+      "g.font='600 52px system-ui,sans-serif';g.fillStyle='#e9d5ff';" +
+      "g.fillText('🏋️ '+total+' treinos registrados',540,560);" +
+      "g.fillText('🔥 melhor sequência: '+seq+(seq===1?' dia':' dias'),540,655);" +
+      "g.fillStyle='#a78bfa';g.font='700 34px system-ui,sans-serif';g.fillText('💜 '+PRIMEIRO+' · TORQUE PERSONAL',540,990);" +
+      "c.toBlob(function(bl){var fl=new File([bl],'conquista.png',{type:'image/png'});" +
+      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
+      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='conquista.png';a2.click();}});});" +
       "var FEXS=" + JSON.stringify(fexs) + ";" +
       // séries por exercício + cronômetro + auto-completar o dia
       "function pintaSets(){var st=L('ptsets_'+isoHj(),{});document.querySelectorAll('.setbtn').forEach(function(b){" +
@@ -2246,6 +2272,7 @@
     [["cfgPixChave", "pixChave"], ["cfgPixNome", "pixNome"], ["cfgPixCidade", "pixCidade"]].forEach(function (par) {
       if (document.activeElement !== $(par[0])) $(par[0]).value = (st.config || {})[par[1]] || "";
     });
+    if (document.activeElement !== $("cfgMural")) $("cfgMural").value = ((st.config || {}).mural || []).join("\n");
     var u = S.usuario ? S.usuario() : {};
     $("btnContaEntrar").hidden = u.logado;
     $("btnContaEquipe").hidden = !u.logado;
@@ -2282,6 +2309,12 @@
       st.config[par[1]] = this.value.trim();
       S.write("ptStudio", st);
     });
+  });
+  $("cfgMural").addEventListener("change", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.mural = this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 10);
+    S.write("ptStudio", st);
   });
   $("sData").value = S.todayISO();
   $("avData").value = S.todayISO();
