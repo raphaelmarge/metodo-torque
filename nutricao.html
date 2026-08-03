@@ -275,6 +275,57 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
 
 </main>
 
+<!-- perfil completo do paciente (estilo cadastro da academia) -->
+<dialog id="dlgPerfilN" style="max-width: 560px; width: 94vw; border: 1px solid var(--linha); border-radius: 18px; background: #fff; color: #1c2620; padding: 0;">
+  <div style="padding: 18px 20px; max-height: 84vh; overflow-y: auto;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h2 id="pnTitulo" style="font-size: 19px; margin: 0;">Perfil</h2>
+      <span id="pnDesde" class="muted" style="font-size: 12px;"></span>
+      <button class="btn sec mini" id="pnFechar" style="margin-left: auto;">✕ Fechar</button>
+    </div>
+
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 16px 0 8px;">Dados do paciente</h3>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+      <label style="font-size: 12px; margin: 0;">Nome<input id="pnNome" style="display:block; width: 190px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">WhatsApp<input id="pnZap" inputmode="numeric" style="display:block; width: 130px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Idade<input id="pnIdade" inputmode="numeric" style="display:block; width: 66px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pnAltura" inputmode="numeric" style="display:block; width: 84px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Objetivo<select id="pnObjetivo" style="display:block; width: 130px; margin-top: 3px;"><option value="emagrecer">🔥 emagrecer</option><option value="manter">⚖️ manter</option><option value="ganhar">💪 ganhar</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pnPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">💠 Pix</option><option value="dinheiro">💵 Dinheiro</option><option value="cartao">💳 Cartão</option><option value="plano">📄 Plano/pacote</option></select></label>
+    </div>
+    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Restrições e observações
+      <textarea id="pnObs" rows="2" style="width: 100%; margin-top: 3px;"></textarea></label>
+    <button class="btn verde mini" id="pnSalvar" style="margin-top: 8px;">💾 Salvar dados</button>
+    <span id="pnSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
+    <div id="pnAlvo" class="muted" style="font-size: 12.5px; margin-top: 6px;"></div>
+
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Financeiro (consultas)</h3>
+    <div id="pnFin" style="font-size: 13.5px; line-height: 1.7;"></div>
+    <div class="linha-flex" style="gap: 8px; margin-top: 6px; align-items: center;">
+      <input id="pnPgValor" inputmode="decimal" placeholder="Valor R$" style="width: 100px;">
+      <button class="btn verde mini" id="pnPgAdd">+ Registrar pagamento</button>
+    </div>
+
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Consultas</h3>
+    <div id="pnConsultas" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
+
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Evolução de peso</h3>
+    <div id="pnPeso" class="muted" style="font-size: 13px;"></div>
+    <div class="linha-flex" style="gap: 8px; margin-top: 6px; align-items: center;">
+      <input id="pnKg" inputmode="decimal" placeholder="Peso hoje (kg)" style="width: 130px;">
+      <button class="btn verde mini" id="pnKgAdd">+ Registrar pesagem</button>
+    </div>
+
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Dieta atual</h3>
+    <div id="pnDieta" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
+      <button class="btn verde mini" id="pnApp">📲 Gerar app</button>
+      <a class="btn whats mini" id="pnWhats" target="_blank" rel="noopener" style="display:none;">💬 WhatsApp</a>
+    </div>
+  </div>
+</dialog>
+
 <script src="assets/access-config.js"></script>
 <script src="assets/cloud-config.js"></script>
 <script src="assets/alimentos-db.js"></script>
@@ -437,6 +488,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
         '<span style="margin-left:auto;"></span>' +
+        '<button class="btn verde mini" data-perfil="' + p.id + '">👤 Perfil</button>' +
         '<button class="btn verde mini" data-app="' + p.id + '">App do paciente</button>' +
         (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">💬</a>' : "") +
         '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></div>';
@@ -456,6 +508,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
   $("listaPacientes").addEventListener("click", function (e) {
     var rm = e.target.getAttribute && e.target.getAttribute("data-rm");
     var ap = e.target.getAttribute && e.target.getAttribute("data-app");
+    var pf = e.target.getAttribute && e.target.getAttribute("data-perfil");
     if (rm && confirm("Encerrar este paciente? O histórico fica guardado.")) {
       var st = load();
       var p = st.pacientes.find(function (x) { return x.id === rm; });
@@ -463,7 +516,125 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       save(st);
     }
     if (ap) publicaApp(ap);
+    if (pf) abrePerfilN(pf);
   });
+
+  // ---------- perfil completo do paciente ----------
+  var perfilNId = null;
+  function abrePerfilN(id) {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === id; });
+    if (!p) return;
+    perfilNId = id;
+    $("pnTitulo").textContent = "👤 " + p.nome;
+    $("pnDesde").textContent = p.desde ? "paciente desde " + S.fmtData(p.desde) : "";
+    $("pnNome").value = p.nome; $("pnZap").value = p.zap || "";
+    $("pnIdade").value = p.idade || ""; $("pnAltura").value = p.altura || "";
+    $("pnObjetivo").value = p.objetivo || "manter"; $("pnPagto").value = p.pagto || "";
+    $("pnObs").value = p.restricoes || "";
+    $("pnSalvo").textContent = "";
+    var alvo = kcalAlvo(p);
+    $("pnAlvo").textContent = "TMB " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal (" +
+      (p.objetivo === "emagrecer" ? "déficit" : p.objetivo === "ganhar" ? "superávit" : "manutenção") + ")";
+    // financeiro
+    var pgs = (st.pagamentosN || []).filter(function (x) { return x.pacienteId === id; })
+      .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+    var ano = S.todayISO().slice(0, 4);
+    var totalAno = pgs.filter(function (x) { return (x.data || "").slice(0, 4) === ano; })
+      .reduce(function (s, x) { return s + (+x.valor || 0); }, 0);
+    var vPadrao = +((st.config || {}).pixValor) || 0;
+    $("pnPgValor").value = vPadrao || "";
+    $("pnFin").innerHTML = "Recebido em " + ano + ": <b>R$ " + totalAno.toFixed(2).replace(".", ",") + "</b>" +
+      (vPadrao ? " · consulta padrão R$ " + vPadrao.toFixed(2).replace(".", ",") : "") +
+      (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Últimos: " + pgs.slice(0, 5).map(function (x) {
+        return S.fmtData(x.data) + " (R$ " + (+x.valor).toFixed(2).replace(".", ",") + ")";
+      }).join(" · ") + "</div>" : "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Nenhum pagamento registrado ainda.</div>");
+    // consultas
+    var hoje = S.todayISO();
+    var cs = (st.consultas || []).filter(function (c) { return c.pacienteId === id; })
+      .sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+    var passadas = cs.filter(function (c) { return c.data < hoje; });
+    var futuras = cs.filter(function (c) { return c.data >= hoje; });
+    $("pnConsultas").innerHTML = passadas.length + " realizada(s)" +
+      (futuras.length ? " · próxima: <b>" + S.fmtData(futuras[0].data) + " " + (futuras[0].hora || "") + "</b>" : " · nenhuma marcada — agende na aba Agenda") +
+      (cs.length ? "<div class='muted' style='font-size:12.5px;margin-top:4px;'>" + cs.slice(-5).map(function (c) {
+        return S.fmtData(c.data) + " " + (c.hora || "");
+      }).join(" · ") + "</div>" : "");
+    pintaPesoPerfilN(st, p);
+    // dieta
+    var d = st.dietas[id];
+    $("pnDieta").innerHTML = (d && (d.refeicoes || []).length)
+      ? d.refeicoes.length + " refeição(ões) · 💧 " + (d.aguaMl || 2000) + " ml/dia" +
+        (d.geradaAuto ? " · gerada automática em " + S.fmtData(d.geradaEm) : "")
+      : "Sem dieta montada — monte na aba Dietas.";
+    var wa = $("pnWhats");
+    if (p.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(p.zap).replace(/\D/g, ""); }
+    else wa.style.display = "none";
+    if (!$("dlgPerfilN").open) $("dlgPerfilN").showModal();
+  }
+  function pintaPesoPerfilN(st, p) {
+    var ps = ((st.pesagens || {})[p.id] || []).slice(-10);
+    if (!ps.length && p.peso) ps = [{ d: p.desde || S.todayISO(), kg: p.peso }];
+    if (ps.length) {
+      var dif = Math.round((ps[ps.length - 1].kg - ps[0].kg) * 10) / 10;
+      $("pnPeso").innerHTML = ps.map(function (x) {
+        return "<span style='display:inline-block;background:#f2f7f3;border:1px solid var(--linha);border-radius:9px;padding:5px 10px;margin:2px;'>" +
+          S.fmtData(x.d).slice(0, 5) + " · <b>" + String(x.kg).replace(".", ",") + " kg</b></span>";
+      }).join("") + (ps.length > 1 ? "<div style='margin-top:6px;'>Variação: <b style='color:" +
+        (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" + (dif > 0 ? "+" : "") +
+        String(dif).replace(".", ",") + " kg</b> no período</div>" : "");
+    } else {
+      $("pnPeso").textContent = "Sem pesagens ainda — registre a primeira abaixo.";
+    }
+  }
+  $("pnFechar").addEventListener("click", function () { $("dlgPerfilN").close(); });
+  $("pnSalvar").addEventListener("click", function () {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (!p) return;
+    p.nome = $("pnNome").value.trim() || p.nome;
+    p.zap = $("pnZap").value.replace(/\D/g, "");
+    p.idade = +$("pnIdade").value || p.idade;
+    p.altura = +$("pnAltura").value || p.altura;
+    p.objetivo = $("pnObjetivo").value;
+    p.pagto = $("pnPagto").value;
+    p.restricoes = $("pnObs").value.trim();
+    save(st);
+    var alvo = kcalAlvo(p);
+    $("pnTitulo").textContent = "👤 " + p.nome;
+    $("pnAlvo").textContent = "TMB " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal";
+    $("pnSalvo").textContent = "✅ salvo!";
+    setTimeout(function () { $("pnSalvo").textContent = ""; }, 2000);
+  });
+  $("pnPgAdd").addEventListener("click", function () {
+    var v = parseFloat(($("pnPgValor").value || "").replace(",", "."));
+    if (!v || v <= 0) { alert("Escreva o valor da consulta."); return; }
+    var st = load();
+    st.pagamentosN = st.pagamentosN || [];
+    st.pagamentosN.push({ id: S.uid(), pacienteId: perfilNId, valor: v, data: S.todayISO() });
+    S.write("ntStudio", st);
+    abrePerfilN(perfilNId);
+  });
+  $("pnKgAdd").addEventListener("click", function () {
+    var v = parseFloat(($("pnKg").value || "").replace(",", "."));
+    if (!v || v <= 0) { alert("Escreva o peso em kg."); return; }
+    var st = load();
+    st.pesagens = st.pesagens || {};
+    var l = st.pesagens[perfilNId] || [];
+    l.push({ d: S.todayISO(), kg: v });
+    if (l.length > 60) l.shift();
+    st.pesagens[perfilNId] = l;
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (p) p.peso = v; // o cadastro acompanha a pesagem mais recente
+    S.write("ntStudio", st);
+    $("pnKg").value = "";
+    abrePerfilN(perfilNId);
+  });
+  $("pnApp").addEventListener("click", function () {
+    $("dlgPerfilN").close();
+    publicaApp(perfilNId);
+  });
+  window.__perfilNT = abrePerfilN; // testes
 
   // ---------- dietas ----------
   function pacienteSel() {

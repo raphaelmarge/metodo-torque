@@ -244,6 +244,41 @@ async function abaNt(p, a) {
     ok(fluxo.inicio === "b_oi" && fluxo.tipos.join() === "mensagem,menu,mensagem,equipe" && fluxo.voltaMenu === "b_menu", "fluxo no formato do chatbot da academia");
   }
 
+  // ---------- perfil completo do paciente ----------
+  console.log("Perfil do paciente:");
+  await abaNt(p, "pacientes");
+  ok(await p.evaluate(() => !!document.querySelector('[data-perfil]')), "lista tem o botão 👤 Perfil");
+  await p.evaluate(() => document.querySelector("[data-perfil]").click());
+  let perfilN = await p.evaluate(() => ({
+    aberto: document.getElementById("dlgPerfilN").open,
+    titulo: document.getElementById("pnTitulo").textContent,
+    alvo: document.getElementById("pnAlvo").textContent,
+    fin: document.getElementById("pnFin").textContent,
+  }));
+  ok(perfilN.aberto && /Bruno Paciente/.test(perfilN.titulo), "perfil abre com o nome do paciente");
+  ok(/TMB 1780/.test(perfilN.alvo) && /2140/.test(perfilN.alvo), "alvo calórico calculado no perfil");
+  ok(/Nenhum pagamento/.test(perfilN.fin), "financeiro começa sem pagamentos");
+  // registra pagamento e pesagem
+  await p.evaluate(() => {
+    document.getElementById("pnPgValor").value = "150";
+    document.getElementById("pnPgAdd").click();
+  });
+  await p.waitForTimeout(200);
+  await p.evaluate(() => {
+    document.getElementById("pnKg").value = "78,5";
+    document.getElementById("pnKgAdd").click();
+  });
+  await p.waitForTimeout(200);
+  perfilN = await p.evaluate(() => ({
+    fin: document.getElementById("pnFin").textContent,
+    peso: document.getElementById("pnPeso").textContent,
+    st: window.MTStore.read("ntStudio", {}),
+  }));
+  ok(/R\$ 150,00/.test(perfilN.fin), "pagamento de consulta registrado (R$ 150)");
+  ok(/78,5 kg/.test(perfilN.peso), "pesagem registrada aparece na evolução");
+  ok(perfilN.st.pacientes[0].peso === 78.5, "cadastro acompanha a pesagem mais recente");
+  await p.evaluate(() => document.getElementById("pnFechar").click());
+
   // agenda no módulo: marcar consulta local
   await abaNt(p, "agenda");
   await p.selectOption("#cnPaciente", { index: 1 });
