@@ -339,6 +339,29 @@ async function abaPt(p, a) {
   ok(comDobras.metodoDobras === "guedes" && comDobras.dobras && comDobras.gordura === 16.8, "avaliação salva com as dobras e o método");
   const histDb = await p.evaluate(() => document.getElementById("listaAvaliacoes").textContent);
   ok(/Guedes/.test(histDb), "histórico mostra a etiqueta 📐 do protocolo");
+
+  // circunferências: % gordura Marinha + RCQ (homem 175cm, pescoço 38, cintura 85, quadril 95)
+  await p.selectOption("#ccSexo", "M");
+  await p.fill("#ccAltura", "175");
+  await p.fill("#ccPescoco", "38");
+  await p.fill("#ccCintura", "85");
+  await p.fill("#ccQuadril", "95");
+  await p.fill("#ccCoxa", "58");
+  await p.click("#ccCalc");
+  const resCc = await p.evaluate(() => document.getElementById("ccResultado").textContent);
+  ok(/16,9% de gordura/.test(resCc), "Marinha (US Navy) = 16,9% (conferido à mão)");
+  ok(/RCQ 0,89/.test(resCc) && /risco baixo/.test(resCc), "RCQ 0,89 com classificação de risco baixo");
+  await p.evaluate(() => { document.getElementById("avGord").value = ""; document.getElementById("avCintura").value = ""; });
+  await p.click("#ccCalc");
+  const preencheu = await p.evaluate(() => ({ g: document.getElementById("avGord").value, c: document.getElementById("avCintura").value }));
+  ok(preencheu.g === "16.9" && preencheu.c === "85", "resultado das circunferências preenche a avaliação");
+  await p.selectOption("#avAluno", { index: 1 });
+  await p.click("#avAdd");
+  const comCirc = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st.avaliacoes[st.avaliacoes.length - 1];
+  });
+  ok(comCirc.rcq === 0.89 && comCirc.quadril === 95 && comCirc.circ && comCirc.circ.coxa === 58, "avaliação salva com circunferências, quadril e RCQ");
   // limpa pra não interferir nos testes de evolução seguintes
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
@@ -524,6 +547,27 @@ async function abaPt(p, a) {
   });
   ok(salvo.obj === "Hipertrofia" && salvo.pagto === "pix", "objetivo e método de pagamento salvos no cadastro");
   ok(salvo.email === "joao@email.com" && salvo.altura === 178 && salvo.prof === "Engenheiro" && /Maria/.test(salvo.emerg), "cadastro completo salva e-mail, altura, profissão e emergência");
+  // anamnese completa: PAR-Q + histórico + hábitos
+  ok(await p.evaluate(() => /não respondido/.test(document.getElementById("pfParqBadge").textContent)), "badge avisa que o PAR-Q não foi respondido");
+  await p.evaluate(() => {
+    document.getElementById("parq5").checked = true;
+    document.getElementById("anLesoes").value = "LCA em 2020";
+    document.getElementById("anNivel").value = "intermediário";
+    document.getElementById("anDias").value = "4";
+    document.getElementById("anSono").value = "7–8h";
+    document.getElementById("pfAnSalvar").click();
+  });
+  await p.waitForTimeout(200);
+  const anam = await p.evaluate(() => {
+    const st = window.MTStore.read("ptStudio", {});
+    const a = st.alunos.find((x) => x.ativo !== false);
+    return { an: a.anamnese, badge: document.getElementById("pfParqBadge").textContent };
+  });
+  ok(anam.an.parq5 === true && anam.an.lesoes === "LCA em 2020" && anam.an.nivel === "intermediário" && anam.an.dias === "4", "anamnese salva PAR-Q, lesões, nível e disponibilidade");
+  ok(/liberação médica/.test(anam.badge), "PAR-Q com SIM mostra alerta de liberação médica");
+  await p.evaluate(() => { document.getElementById("parq5").checked = false; document.getElementById("pfAnSalvar").click(); });
+  await p.waitForTimeout(200);
+  ok(await p.evaluate(() => /liberado/.test(document.getElementById("pfParqBadge").textContent)), "sem nenhum SIM, badge vira PAR-Q liberado");
   // dados do app do aluno sincronizados (nuvem simulada com retorno)
   {
     await p.evaluate(() => {
