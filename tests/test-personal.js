@@ -433,6 +433,18 @@ async function abaPt(p, a) {
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
+  ok(/btnCardStories/.test(appHtml) && /Gerar card pro Stories/.test(appHtml), "conquistas têm o botão de card pro Stories");
+  {
+    const comMural = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.config = st.config || {};
+      st.config.mural = ["Treinão de sábado 7h no parque! 🌳"];
+      window.MTStore.write("ptStudio", st);
+      return window.__montaAppAluno(window.MTStore.read("ptStudio", {}).alunos[0], new Date().toISOString());
+    });
+    ok(/Mural do studio/.test(comMural) && /Treinão de sábado/.test(comMural), "aviso do mural entra no app do aluno");
+    ok(await p.evaluate(() => !!document.getElementById("cfgMural")), "módulo tem o campo 📌 Mural na ilha");
+  }
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Treinos por semana/.test(appHtml), "app tem painel de conquistas com gráfico de semanas");
   ok(/7 dias seguidos/.test(appHtml) && /100 treinos/.test(appHtml) && /CONQUISTADA/.test(appHtml), "medalhas de sequência e volume no app");
   ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app tem o robô de atendimento (chatbot de menu) no chat");
@@ -543,6 +555,13 @@ async function abaPt(p, a) {
   guiP = await pApp.evaluate(() => document.getElementById("gEx").textContent);
   ok(/concluído/.test(guiP), "pular os exercícios chega no 🎉 treino concluído");
   await pApp.evaluate(() => document.getElementById("gFechar").click());
+  // card de conquista pro Stories baixa a imagem
+  {
+    const dlCard = pApp.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+    await pApp.evaluate(() => document.getElementById("btnCardStories").click());
+    const cardArq = await dlCard;
+    ok(!!cardArq && /conquista\.png/.test(cardArq.suggestedFilename()), "Gerar card pro Stories baixa a imagem da conquista");
+  }
   // gráfico de carga: clica na linha do diário
   await pApp.fill("#dcEx", "Supino reto");
   await pApp.fill("#dcKg", "72");
