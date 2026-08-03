@@ -1283,7 +1283,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     $("grAlunosPick").innerHTML = ativos.length
       ? "Quem entra no grupo novo: " + ativos.map(function (a) {
-          return '<label style="margin: 4px 12px 0 0; display: inline-block;"><input type="checkbox" class="grCheck" value="' + a.id + '"> ' + esc(a.nome) + "</label>";
+          return '<label style="margin: 4px 12px 0 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;"><input type="checkbox" class="grCheck" value="' + a.id + '" style="width: auto; margin: 0;"> ' + esc(a.nome) + "</label>";
         }).join("")
       : "";
     $("grLista").innerHTML = st.gruposPT.length ? st.gruposPT.map(function (g) {
