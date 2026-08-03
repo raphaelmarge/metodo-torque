@@ -867,6 +867,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       Object.keys(grupos).sort().map(function (g) { return "<option>" + esc(g) + "</option>"; }).join("");
     $("catN").textContent = "· " + (self.MT_EXERCICIOS || []).length + " exercícios";
   })();
+  // vídeo demonstrativo: busca pronta no YouTube quando não há vídeo próprio
+  // (nunca quebra — sempre existe demonstração pros nomes do catálogo)
+  function videoBusca(nome) {
+    return "https://www.youtube.com/results?search_query=" + encodeURIComponent("como fazer " + nome + " exercício execução correta");
+  }
+
   function renderCatalogo() {
     var st = load();
     var meus = {};
@@ -883,6 +889,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var ja = meus[c.n.toLowerCase()];
       return '<div class="sessao-pt"><b>' + esc(c.n) + '</b><span class="muted" style="font-size:12px;">' + esc(c.g + " · " + c.eq) + "</span>" +
         '<span style="margin-left:auto;"></span>' +
+        '<a class="btn mini sec" style="text-decoration:none;" target="_blank" rel="noopener" href="' + videoBusca(c.n) + '">▶ vídeo</a>' +
         (ja ? '<span class="tag ok" style="font-size:10px;">NA BIBLIOTECA ✓</span>' : '<button class="btn mini" data-catusa="' + esc(c.n) + '">+ usar</button>') + "</div>";
     }).join("") || '<div class="muted">Nada com essa busca — tente outra palavra.</div>') +
       (lista.length > corte.length ? '<div class="muted" style="padding:8px 0;">Mostrando 24 de ' + lista.length + " — refine a busca pra ver o resto.</div>" : "");
@@ -1484,7 +1491,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // dados enxutos pro modo treino guiado (conduz série a série com descanso)
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
-        return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: 60 };
+        return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: 60,
+          v: it.video || videoBusca(it.nome || "") };
       }) };
     });
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
@@ -1561,8 +1569,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               "<div style='padding:0 13px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
               (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
-              (it.video ? "<a href='" + esc(it.video) + "' target='_blank' rel='noopener' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:12px;padding:4px 14px;border-radius:99px;display:inline-block;'>▶ ver vídeo</a>" : "") +
-              ((!it.desc && !it.video && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;'>Faça com capricho — dúvidas, chama no chat! 💬</span>" : "") +
+              "<a href='" + esc(it.video || videoBusca(it.nome)) + "' target='_blank' rel='noopener' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:12px;padding:4px 14px;border-radius:99px;display:inline-block;'>▶ ver vídeo</a>" +
+              ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat! 💬</span>" : "") +
               "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
               "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:#1d1a24;border:1px solid #7c3aed;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
               "<button class='tmrbtn' data-s='60' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>⏱ 60s</button>" +
@@ -1641,6 +1649,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<span id='gProg'></span><button id='gFechar' style='background:none;border:none;color:#a9a4b5;font-size:22px;cursor:pointer;font-family:inherit;'>✕</button></div>" +
       "<div id='gEx' style='font-size:25px;font-weight:800;margin-top:16px;'></div>" +
       "<div id='gMeta' style='color:#a9a4b5;font-size:15px;margin-top:6px;'></div>" +
+      "<a id='gVideo' target='_blank' rel='noopener' style='display:none;margin-top:10px;background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:13px;padding:6px 16px;border-radius:99px;align-self:flex-start;'>▶ como fazer</a>" +
       "<input id='gCarga' inputmode='decimal' placeholder='carga de hoje (kg)' style='margin-top:14px;background:#1d1a24;border:1px solid #322e3d;border-radius:12px;color:#fff;padding:12px;font-size:15px;font-family:inherit;'>" +
       "<div id='gDesc' style='display:none;font-size:74px;font-weight:800;text-align:center;margin:auto 0;color:#a78bfa;'></div>" +
       "<div style='margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px;'>" +
@@ -1822,6 +1831,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "gEl('gProg').textContent=f.n+' · exercício '+(gv.e+1)+' de '+f.it.length;" +
       "gEl('gEx').textContent=it.e;" +
       "gEl('gMeta').textContent=it.s+' séries × '+(it.r||'?');" +
+      "var gvd=gEl('gVideo');if(gvd){gvd.href=it.v||'#';gvd.style.display=it.v?'inline-block':'none';}" +
       "var h=L('ptdc',{});var l=h[it.e]||[];gEl('gCarga').value=l.length?l[l.length-1].kg:'';" +
       "gEl('gDesc').style.display='none';gEl('gSerie').style.display='block';gEl('gPular').style.display='none';" +
       "gEl('gSerie').textContent='✔ Série feita ('+gv.s+'/'+it.s+')';}" +
@@ -1836,6 +1846,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "gEl('gProg').textContent='';gEl('gEx').textContent='🎉 Treino concluído!';" +
       "gEl('gMeta').textContent='Mandou bem demais. Alonga, hidrata e até a próxima! 💧';" +
       "gEl('gSerie').style.display='none';gEl('gDesc').style.display='none';gEl('gPular').style.display='none';" +
+      "var gvf=gEl('gVideo');if(gvf)gvf.style.display='none';" +
       "if(navigator.vibrate)navigator.vibrate([100,60,100,60,300]);beepG();setTimeout(fechaGuia,3500);}" +
       "document.addEventListener('click',function(e){" +
       "var gb=e.target.closest('.guiabtn');if(gb){abreGuia(+gb.dataset.g);return;}" +

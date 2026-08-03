@@ -188,6 +188,7 @@ function ok(cond, nome) {
     return window.__appAluno.monta(a, new Date().toISOString());
   });
   ok(/guiabtn/.test(htmlGuia) && /▶ Treino guiado/.test(htmlGuia), "ficha ganha o botão ▶ Treino guiado");
+  ok(/youtube\.com\/results\?search_query=/.test(htmlGuia) && /▶ como fazer/.test(htmlGuia), "exercícios sem vídeo próprio ganham demonstração automática (ficha e modo guiado)");
   const p3 = await ctx.newPage();
   const errosGuia = [];
   p3.on("pageerror", (e) => errosGuia.push(String(e)));
