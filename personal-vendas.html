@@ -3,48 +3,83 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TORQUE ON Personal — o sistema do personal trainer</title>
-<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<title>TORQUE PERSONAL — o sistema do personal trainer</title>
+<meta name="description" content="Alunos, treinos, agenda, pagamentos e um app com a sua marca pra cada aluno — por R$ 49/mês, sem fidelidade.">
+<link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; }
   body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(120% 90% at 50% -30%, rgba(124,58,237,.25), transparent 60%), #121016; color: #f5f4f7; min-height: 100vh; }
-  .topo { text-align: center; padding: 52px 20px 34px; }
+  .topo { text-align: center; padding: 52px 20px 30px; }
   .topo .kicker { font-size: 12px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
-  .topo h1 { font-size: 34px; font-weight: 800; letter-spacing: -.02em; margin: 12px 0 10px; }
-  .topo p { color: #b9b3c6; font-size: 16px; max-width: 520px; margin: 0 auto; line-height: 1.6; }
-  .corpo { max-width: 680px; margin: 0 auto; padding: 10px 18px 70px; }
+  .topo h1 { font-size: clamp(30px, 7vw, 42px); font-weight: 800; letter-spacing: -.02em; margin: 12px 0 12px; line-height: 1.1; }
+  .topo p { color: #b9b3c6; font-size: 16px; max-width: 540px; margin: 0 auto; line-height: 1.6; }
+  .selo { display: inline-block; background: rgba(124,58,237,.18); border: 1px solid #7c3aed; color: #d6c9f5; font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 999px; margin-top: 16px; }
+  .corpo { max-width: 680px; margin: 0 auto; padding: 6px 18px 70px; }
+  .sec-t { font-size: 12px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; text-align: center; margin: 34px 0 14px; }
   .feat { background: #1c1826; border: 1px solid #2c2739; border-radius: 16px; padding: 18px 20px; margin-bottom: 12px; display: flex; gap: 16px; align-items: flex-start; box-shadow: 0 10px 30px -12px rgba(0,0,0,.4); }
   .feat .ic { font-size: 28px; flex: none; }
   .feat b { font-size: 15.5px; display: block; margin-bottom: 3px; }
   .feat p { color: #b9b3c6; font-size: 13.5px; line-height: 1.55; }
-  .cta { display: block; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; font-weight: 800; font-size: 17px; padding: 17px; border-radius: 14px; margin: 26px 0 10px; transition: transform .15s ease, box-shadow .2s ease; }
+  .feat .novo { display: inline-block; background: #7c3aed; color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .08em; padding: 2px 8px; border-radius: 99px; vertical-align: 2px; margin-left: 6px; }
+  .faixa { background: #1c1826; border: 1px solid #7c3aed; border-radius: 16px; padding: 18px 20px; margin: 26px 0 8px; text-align: center; }
+  .faixa b { color: #a78bfa; }
+  .faixa p { color: #b9b3c6; font-size: 14.5px; line-height: 1.6; }
+  .preco-card { background: linear-gradient(160deg, #241d33, #1c1826); border: 1px solid #7c3aed; border-radius: 20px; padding: 26px 22px; margin: 26px 0 8px; text-align: center; box-shadow: 0 20px 60px -30px #7c3aed; }
+  .preco-card .p { font-size: 46px; font-weight: 800; letter-spacing: -.02em; margin-top: 6px; }
+  .preco-card .p small { font-size: 16px; color: #a9a4b5; font-weight: 600; }
+  .preco-card ul { list-style: none; padding: 0; margin: 14px 0 2px; color: #cfcbdb; font-size: 14.5px; line-height: 2; text-align: left; display: inline-block; }
+  .cta { display: block; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; font-weight: 800; font-size: 17px; padding: 17px; border-radius: 14px; margin: 20px 0 10px; transition: transform .15s ease, box-shadow .2s ease; }
   .cta:hover { transform: translateY(-1px); box-shadow: 0 12px 30px -10px rgba(124,58,237,.6); }
   .cta.sec { background: none; border: 1.5px solid #4c3f6b; font-size: 14.5px; padding: 13px; }
   .nota { text-align: center; color: #8a8695; font-size: 12.5px; margin-top: 14px; line-height: 1.6; }
-  .selo { display: inline-block; background: rgba(124,58,237,.18); border: 1px solid #7c3aed; color: #d6c9f5; font-size: 12.5px; font-weight: 700; padding: 5px 14px; border-radius: 999px; margin-top: 14px; }
 </style>
 </head>
 <body>
 
 <header class="topo">
-  <div class="kicker">TORQUE ON · Módulo Personal</div>
+  <div class="kicker">TORQUE ON · TORQUE PERSONAL</div>
   <h1>O sistema do<br>personal trainer</h1>
-  <p>Chega de agenda no papel e cobrança esquecida: seus alunos, sessões, pagamentos e treinos em um app só — que funciona até sem internet.</p>
-  <span class="selo">✓ Instala no celular como app · sem mensalidade de servidor</span>
+  <p>Alunos, treinos, agenda, cobrança e um <b style="color:#fff">app com a sua marca</b> no celular de cada aluno — tudo num lugar só, funcionando até sem internet.</p>
+  <span class="selo">R$ 49/mês · alunos ilimitados · sem fidelidade</span>
 </header>
 
 <main class="corpo">
-  <div class="feat"><span class="ic">👥</span><div><b>Seus alunos organizados</b><p>Cadastro com valor combinado (por mês ou por sessão), etiqueta de quem já pagou o mês e WhatsApp a um toque.</p></div></div>
-  <div class="feat"><span class="ic">📅</span><div><b>Agenda de sessões</b><p>Agende, marque ✅ quando acontecer e veja a semana na hora — sessões feitas contam no fechamento de quem paga por sessão.</p></div></div>
-  <div class="feat"><span class="ic">💰</span><div><b>Pagamentos sem constrangimento</b><p>Registre em 3 toques e veja quem ainda não pagou o mês — o botão 💬 Cobrar abre o WhatsApp com a mensagem pronta e educada.</p></div></div>
-  <div class="feat"><span class="ic">🏋️</span><div><b>Treinos com envio por WhatsApp</b><p>O treino de cada aluno salvo no app, atualizado quando quiser e enviado com um clique.</p></div></div>
-  <div class="feat"><span class="ic">📊</span><div><b>Seu negócio em números</b><p>Alunos ativos, recebido no mês e sessões dadas — os números do SEU negócio na primeira tela.</p></div></div>
-  <div class="feat"><span class="ic">🔒</span><div><b>Seus dados são seus</b><p>Tudo fica no seu aparelho e funciona offline. Criando conta, sincroniza entre celular e computador.</p></div></div>
 
-  <a class="cta" id="ctaZap" href="personal.html">Quero o TORQUE ON Personal</a>
+  <div class="sec-t">O app que seu aluno recebe</div>
+  <div class="feat"><span class="ic">📲</span><div><b>App com a SUA marca</b><p>Cada aluno recebe um link que instala na tela inicial com o nome do seu studio — e se atualiza sozinho quando você muda o treino.</p></div></div>
+  <div class="feat"><span class="ic">▶️</span><div><b>Treino guiado com cronômetro<span class="novo">NOVO</span></b><p>O aluno aperta o play e o app conduz série por série: o descanso conta sozinho, apita e já mostra o próximo exercício.</p></div></div>
+  <div class="feat"><span class="ic">📸</span><div><b>Fotos antes × depois e conquistas</b><p>Evolução visível motiva e renova contrato. As medalhas viram card pronto pro Stories — com a sua marca junto.</p></div></div>
+  <div class="feat"><span class="ic">📅</span><div><b>Agenda no app + calendário do celular</b><p>O aluno pede horário pelo app, você confirma, e a sessão entra no Google Agenda ou iPhone de vocês dois.</p></div></div>
+  <div class="feat"><span class="ic">💬</span><div><b>Chat com robô de atendimento</b><p>Dúvida às 22h? O robô responde na hora com o fluxo que você montar — e te chama quando é coisa séria.</p></div></div>
+  <div class="feat"><span class="ic">🔔</span><div><b>Notificações e mural</b><p>Lembrete de sessão no celular do aluno e mural de avisos no topo do app de todo mundo.</p></div></div>
+
+  <div class="sec-t">O sistema que trabalha por você</div>
+  <div class="feat"><span class="ic">🏋️</span><div><b>820 exercícios com vídeo</b><p>Catálogo TORQUE completo: monte fichas A/B/C em minutos, cada exercício com dica técnica e demonstração em vídeo.</p></div></div>
+  <div class="feat"><span class="ic">💠</span><div><b>Pix na hora, contrato em dia</b><p>Planos com vencimento, Pix copia e cola com QR e o botão 💬 Cobrar que abre o WhatsApp com mensagem pronta e educada.</p></div></div>
+  <div class="feat"><span class="ic">📊</span><div><b>Seu negócio em números</b><p>Alunos ativos, recebido do mês, sessões dadas e quem está devendo — na primeira tela, sem planilha.</p></div></div>
+  <div class="feat"><span class="ic">📈</span><div><b>Avaliações e evolução</b><p>Peso, dobras e medidas com gráficos — e o diário de cargas do aluno celebra cada recorde novo. 🎉</p></div></div>
+  <div class="feat"><span class="ic">📶</span><div><b>Funciona offline</b><p>Academia com internet ruim? O sistema segue funcionando e sincroniza quando a conexão voltar. Seus dados são seus.</p></div></div>
+
+  <div class="faixa">
+    <p><b>Alunos ilimitados pelo mesmo preço.</b><br>Outros apps cobram por aluno — aqui você cresce e a mensalidade não muda.</p>
+  </div>
+
+  <div class="preco-card">
+    <div class="kicker" style="font-size:11px;letter-spacing:.22em;color:#a78bfa;font-weight:700;text-transform:uppercase;">Plano TORQUE PERSONAL</div>
+    <div class="p">R$ 49<small>/mês</small></div>
+    <ul>
+      <li>✓ Alunos e fichas ilimitados</li>
+      <li>✓ App do aluno com a sua marca</li>
+      <li>✓ 820 exercícios com vídeo</li>
+      <li>✓ Agenda, Pix e cobrança no WhatsApp</li>
+      <li>✓ Sem fidelidade — cancele quando quiser</li>
+    </ul>
+  </div>
+
+  <a class="cta" id="ctaZap" href="personal.html">Quero o TORQUE PERSONAL 💪</a>
   <a class="cta sec" href="personal.html">Já tenho acesso — abrir meu Studio</a>
-  <p class="nota">Feito com o mesmo motor do TORQUE ON que gere a TORQUE FIT.<br>Dúvidas? Chama no WhatsApp pelo botão acima. 💜</p>
+  <p class="nota">Feito com o mesmo motor do TORQUE ON que roda a academia TORQUE FIT todos os dias.<br>Dúvidas? Chama no WhatsApp pelo botão acima. 💜</p>
 </main>
 
 <script>
@@ -54,7 +89,7 @@
     var zap = (new URLSearchParams(location.search).get("zap") || "").replace(/\D/g, "");
     if (zap) {
       var cta = document.getElementById("ctaZap");
-      cta.href = "https://wa.me/" + zap + "?text=" + encodeURIComponent("Oi! Quero o TORQUE ON Personal 💪 Como funciona?");
+      cta.href = "https://wa.me/" + zap + "?text=" + encodeURIComponent("Oi! Quero o TORQUE PERSONAL 💪 Como funciona?");
       cta.target = "_blank";
       cta.rel = "noopener";
     }
