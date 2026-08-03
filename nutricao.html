@@ -576,13 +576,24 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var ps = ((st.pesagens || {})[p.id] || []).slice(-10);
     if (!ps.length && p.peso) ps = [{ d: p.desde || S.todayISO(), kg: p.peso }];
     if (ps.length) {
-      var dif = Math.round((ps[ps.length - 1].kg - ps[0].kg) * 10) / 10;
-      $("pnPeso").innerHTML = ps.map(function (x) {
-        return "<span style='display:inline-block;background:#f2f7f3;border:1px solid var(--linha);border-radius:9px;padding:5px 10px;margin:2px;'>" +
-          S.fmtData(x.d).slice(0, 5) + " · <b>" + String(x.kg).replace(".", ",") + " kg</b></span>";
-      }).join("") + (ps.length > 1 ? "<div style='margin-top:6px;'>Variação: <b style='color:" +
-        (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" + (dif > 0 ? "+" : "") +
-        String(dif).replace(".", ",") + " kg</b> no período</div>" : "");
+      var vals = ps.map(function (x) { return +x.kg; });
+      var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
+      var faixa = (max - min) || 1;
+      var dif = Math.round((vals[vals.length - 1] - vals[0]) * 10) / 10;
+      var graf = ps.length > 1
+        ? "<div style='display:flex;gap:5px;align-items:flex-end;height:76px;margin-top:6px;'>" + ps.map(function (x) {
+            var h = Math.round(16 + 42 * (+x.kg - min) / faixa);
+            return "<div style='flex:1;text-align:center;min-width:0;'>" +
+              "<div style='font-size:9.5px;font-weight:800;color:var(--verde);'>" + String(x.kg).replace(".", ",") + "</div>" +
+              "<div style='height:" + (58 - h) + "px;'></div>" +
+              "<div style='height:" + h + "px;background:var(--verde);border-radius:4px 4px 0 0;opacity:.8;'></div>" +
+              "<div style='font-size:8.5px;color:#6b7280;margin-top:2px;'>" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + "</div></div>";
+          }).join("") + "</div>"
+        : "";
+      $("pnPeso").innerHTML = graf +
+        "<div style='margin-top:6px;'>Atual: <b>" + String(vals[vals.length - 1]).replace(".", ",") + " kg</b>" +
+        (ps.length > 1 ? " · Variação: <b style='color:" + (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" +
+          (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> no período (" + ps.length + " pesagens)" : " · registre a próxima na consulta") + "</div>";
     } else {
       $("pnPeso").textContent = "Sem pesagens ainda — registre a primeira abaixo.";
     }

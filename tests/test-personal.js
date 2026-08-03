@@ -496,7 +496,10 @@ async function abaPt(p, a) {
   ok(perfil.aberto && /João Cliente/.test(perfil.titulo), "perfil abre com o nome do aluno");
   ok(/Contrato/.test(perfil.fin) && /Mensal 3x/.test(perfil.fin) && /pago/.test(perfil.fin), "financeiro mostra contrato e status do mês");
   ok(/sessão\(ões\) feitas/.test(perfil.freq), "frequência de treino com gráfico de sessões");
-  ok(/kg/.test(perfil.peso), "evolução de peso com as avaliações");
+  ok(/Data/.test(perfil.peso) && /90 kg|84 kg/.test(perfil.peso), "relatório de avaliações em tabela (peso registrado)");
+  ok(/% gordura/.test(perfil.peso) && /25%|19,5%/.test(perfil.peso), "tabela traz % de gordura das avaliações");
+  ok(/Peso.*de 90 pra 84 kg/.test(perfil.peso.replace(/\s+/g, " ")) || (/de 90/.test(perfil.peso) && /84 kg/.test(perfil.peso)), "gráfico de evolução do peso (90 → 84 kg)");
+  ok(/% de gordura/.test(perfil.peso) && /-5,5|19,5/.test(perfil.peso), "gráfico de evolução da % de gordura");
   ok(/exercício/.test(perfil.ficha) || /Sem ficha/.test(perfil.ficha), "resumo da ficha atual presente");
   // edita dados e salva
   await p.evaluate(() => {
