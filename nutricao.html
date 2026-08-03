@@ -258,6 +258,16 @@
       <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (para o app dos pacientes)
         <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 160px; display: block; margin-top: 4px;"></label>
     </div>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+      <label style="margin: 0; font-size: 12.5px;">Chave Pix (aparece no app do paciente)
+        <input id="cfgPixChave" placeholder="CPF, e-mail ou aleatória" style="width: 200px; display: block; margin-top: 4px;"></label>
+      <label style="margin: 0; font-size: 12.5px;">Nome no Pix
+        <input id="cfgPixNome" placeholder="Seu nome completo" style="width: 180px; display: block; margin-top: 4px;"></label>
+      <label style="margin: 0; font-size: 12.5px;">Cidade
+        <input id="cfgPixCidade" placeholder="Belo Horizonte" style="width: 140px; display: block; margin-top: 4px;"></label>
+      <label style="margin: 0; font-size: 12.5px;">Valor da consulta (R$, opcional)
+        <input id="cfgPixValor" inputmode="decimal" placeholder="150" style="width: 100px; display: block; margin-top: 4px;"></label>
+    </div>
   </div>
 
 </main>
@@ -268,6 +278,7 @@
 <script src="assets/receitas-db.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/vendor/supabase.js"></script>
+<script src="assets/vendor/qrcode.js"></script>
 <script src="apps/store.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
@@ -779,6 +790,39 @@
 
 
   // ---------- app do paciente ----------
+  // ---------- Pix BR Code estático (mesmo formato do TORQUE PERSONAL) ----------
+  function semAcento(t) {
+    return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function crc16(str) {
+    var crc = 0xFFFF;
+    for (var i = 0; i < str.length; i++) {
+      crc ^= str.charCodeAt(i) << 8;
+      for (var j = 0; j < 8; j++) crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+    }
+    return ("0000" + crc.toString(16).toUpperCase()).slice(-4);
+  }
+  function tlv(id, v) { return id + ("0" + v.length).slice(-2) + v; }
+  function pixPayload(chave, nome, cidade, valor, txid) {
+    nome = semAcento(nome).toUpperCase().slice(0, 25) || "RECEBEDOR";
+    cidade = semAcento(cidade).toUpperCase().slice(0, 15) || "BRASIL";
+    txid = String(txid || "***").replace(/[^A-Za-z0-9]/g, "").slice(0, 25) || "***";
+    var mai = tlv("00", "br.gov.bcb.pix") + tlv("01", String(chave).trim());
+    var p = tlv("00", "01") + tlv("26", mai) + tlv("52", "0000") + tlv("53", "986") +
+      (valor > 0 ? tlv("54", (+valor).toFixed(2)) : "") +
+      tlv("58", "BR") + tlv("59", nome) + tlv("60", cidade) + tlv("62", tlv("05", txid)) + "6304";
+    return p + crc16(p);
+  }
+  function pixQRDataURL(payload) {
+    try {
+      var q = qrcode(0, "M");
+      q.addData(payload);
+      q.make();
+      return q.createDataURL(4, 8);
+    } catch (e) { return ""; }
+  }
+  window.__pixN = { payload: pixPayload }; // testes
+
   function montaAppNutri(p, stamp) {
     var st = load();
     var studio = (st.config || {}).nome || "Minha Nutri";
@@ -810,6 +854,14 @@
     var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && p.appTokenN);
     // banco de alimentos curado embutido no app (busca offline no diário)
     var aldb = alimentosAtivos(st).slice(0, 900).map(function (a) { return { n: a.nome, k: a.kcal, p: a.porcao }; });
+    // Pix do consultório embutido no app (copia e cola + QR)
+    var cfgPix = st.config || {};
+    var pixAppN = null;
+    if (cfgPix.pixChave) {
+      var plN = pixPayload(cfgPix.pixChave, cfgPix.pixNome || cfgPix.nome, cfgPix.pixCidade, +cfgPix.pixValor || 0,
+        "TQN" + semAcento(p.nome.split(" ")[0]).slice(0, 10));
+      pixAppN = { code: plN, qr: pixQRDataURL(plN), v: +cfgPix.pixValor || 0 };
+    }
 
     return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='#14532d'>" +
@@ -857,6 +909,19 @@
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
+      "<div class='cardx'><h2>Fotos de progresso</h2>" +
+      "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer. 😉</div>" +
+      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>Adicionar foto de hoje" +
+      "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
+      "<div class='vz' style='font-size:11px;'>As fotos ficam SÓ neste aparelho — ninguém mais vê.</div></div>" +
+      (pixAppN ? "<div class='cardx'><h2>Pagamento da consulta</h2>" +
+        (pixAppN.v ? "<div class='vz' style='padding:0 0 8px;'>Valor: <b style='color:#86efac'>R$ " + pixAppN.v.toFixed(2).replace(".", ",") + "</b></div>" : "") +
+        (pixAppN.qr ? "<div style='text-align:center;'><img src='" + pixAppN.qr + "' style='width:170px;height:170px;image-rendering:pixelated;background:#fff;padding:7px;border-radius:12px;'></div>" : "") +
+        "<textarea id='pixPac' rows='3' readonly style='width:100%;margin-top:8px;background:#0f1a12;border:1px solid #29402f;border-radius:9px;color:#9fb8a6;font-family:monospace;font-size:10px;padding:8px;'>" + pixAppN.code + "</textarea>" +
+        "<button class='btnx' id='pixCopiaPac' style='width:100%;margin-top:8px;'>Copiar Pix copia e cola</button></div>" : "") +
+      "<div class='cardx' id='cardNotif' style='display:none;'><h2>🔔 Lembretes</h2>" +
+      "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das consultas e recados por aqui.</div>" +
+      "<button class='btnx' id='btnNotif' style='width:100%;'>Ativar notificações</button></div>" +
       "<div class='cardx'><h2>Agenda</h2>" +
       "<div id='agCal'></div><div id='agDia' style='margin-top:10px;'></div>" +
       "<div id='agForm' style='display:none;margin-top:10px;'>" +
@@ -889,6 +954,43 @@
       "function isoHj(){return new Date().toISOString().slice(0,10);}" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +
+      // fotos de progresso (só no aparelho) — ANTES × AGORA
+      "function pintaFotos(){var fs=L('ntfotos',[]);var box=document.getElementById('fotosBox');if(!fs.length)return;" +
+      "var pri=fs[0],ult=fs[fs.length-1];box.className='';" +
+      "box.innerHTML=\"<div style='display:flex;gap:10px;'>\"+" +
+      "\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#9fb8a6;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:12px;'></div>\"+" +
+      "(fs.length>1?\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#9fb8a6;letter-spacing:.1em;margin-bottom:4px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</div><img src='\"+ult.img+\"' style='width:100%;border-radius:12px;'></div>\":'')+\"</div>\"+" +
+      "\"<div class='vz' style='font-size:11.5px;'>\"+fs.length+\" foto(s) guardadas</div>\";" +
+      "var dias=Math.round((new Date()-new Date(ult.d))/864e5);" +
+      "if(dias>=30)document.getElementById('fotoBtn').firstChild.textContent='📸 Faz '+dias+' dias — hora da foto do mês! ';}" +
+      "document.getElementById('fotoInput').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;" +
+      "var img=new Image();var rd=new FileReader();rd.onload=function(){img.onload=function(){" +
+      "var c=document.createElement('canvas');var esc2=480/Math.max(img.width,img.height);if(esc2>1)esc2=1;" +
+      "c.width=Math.round(img.width*esc2);c.height=Math.round(img.height*esc2);" +
+      "c.getContext('2d').drawImage(img,0,0,c.width,c.height);" +
+      "var fs=L('ntfotos',[]);fs.push({d:isoHj(),img:c.toDataURL('image/jpeg',.68)});if(fs.length>12)fs.shift();" +
+      "try{Sv('ntfotos',fs);}catch(e){alert('Memória de fotos cheia — apague fotos antigas do app.');return;}pintaFotos();};" +
+      "img.src=rd.result;};rd.readAsDataURL(f);this.value='';});" +
+      "pintaFotos();" +
+      // pix copia e cola
+      "var pcp=document.getElementById('pixCopiaPac');" +
+      "if(pcp)pcp.addEventListener('click',function(){var t=document.getElementById('pixPac');t.select();" +
+      "try{document.execCommand('copy');pcp.textContent='✅ Copiado! Cola no app do banco.';}catch(e){}" +
+      "setTimeout(function(){pcp.textContent='Copiar Pix copia e cola';},2200);});" +
+      // notificações push (quando o app abre pelo link hospedado)
+      "(function(){if(!NUVEM||!('Notification'in window))return;" +
+      "var VP='BHUSgtixkEk1ueTwUhCKqhp5vdjH0zSUvm52ZAiMlxscfCfiCJrya2XQZcIOZa6cyKaPYi8pU4kVfM5ve9gzkoY';" +
+      "function va(s){var pad=new Array((4-s.length%4)%4+1).join('=');var b=(s+pad).replace(/-/g,'+').replace(/_/g,'/');" +
+      "var raw=atob(b);var arr=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);return arr;}" +
+      "function tenta(){if(!('serviceWorker'in navigator)||!('PushManager'in window)||location.protocol!=='https:')return;" +
+      "navigator.serviceWorker.register('app-sw.js').then(function(reg){" +
+      "return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:va(VP)});" +
+      "}).then(function(sub){rpcApp('app_aluno_push',{t:TOKEN,p_sub:sub.toJSON()});}).catch(function(e){});}" +
+      "if(Notification.permission==='granted'){tenta();return;}" +
+      "if(Notification.permission!=='default')return;" +
+      "var card=document.getElementById('cardNotif'),btn=document.getElementById('btnNotif');" +
+      "if(card&&btn){card.style.display='block';btn.addEventListener('click',function(){" +
+      "Notification.requestPermission().then(function(p2){card.style.display='none';if(p2==='granted')tenta();});});}})();" +
       // água
       "function pintaAgua(){var ml=L('ntag_'+isoHj(),0);var pct=Math.min(100,Math.round(ml*100/AGUAML));" +
       "document.getElementById('agFill').style.width=pct+'%';" +
@@ -1388,6 +1490,11 @@
   function renderConta() {
     var st = load();
     if (document.activeElement !== $("cfgZap")) $("cfgZap").value = (st.config || {}).zap || "";
+    var cfgN = st.config || {};
+    if (document.activeElement !== $("cfgPixChave")) $("cfgPixChave").value = cfgN.pixChave || "";
+    if (document.activeElement !== $("cfgPixNome")) $("cfgPixNome").value = cfgN.pixNome || "";
+    if (document.activeElement !== $("cfgPixCidade")) $("cfgPixCidade").value = cfgN.pixCidade || "";
+    if (document.activeElement !== $("cfgPixValor")) $("cfgPixValor").value = cfgN.pixValor || "";
     var u = S.usuario ? S.usuario() : {};
     $("btnContaEntrar").hidden = u.logado;
     $("btnContaEquipe").hidden = !u.logado;
@@ -1400,6 +1507,16 @@
     var st = load();
     st.config.zap = this.value.replace(/\D/g, "");
     S.write("ntStudio", st);
+  });
+  ["cfgPixChave", "cfgPixNome", "cfgPixCidade", "cfgPixValor"].forEach(function (id) {
+    $(id).addEventListener("change", function () {
+      var st = load();
+      st.config.pixChave = $("cfgPixChave").value.trim();
+      st.config.pixNome = $("cfgPixNome").value.trim();
+      st.config.pixCidade = $("cfgPixCidade").value.trim();
+      st.config.pixValor = parseFloat(($("cfgPixValor").value || "").replace(",", ".")) || 0;
+      S.write("ntStudio", st);
+    });
   });
 
   function render() {

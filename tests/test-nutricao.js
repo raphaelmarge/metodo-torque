@@ -171,6 +171,39 @@ async function abaNt(p, a) {
   ok(/Dia perfeito/.test(appHtml) && /7 dias de água/.test(appHtml) && /10 pesagens/.test(appHtml), "medalhas de adesão, água e pesagens no app");
   ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app do paciente tem o robô de atendimento (chatbot de menu)");
   ok(/Pode escrever aqui embaixo/.test(appHtml), "opção 'humano' vira encaminhamento pro nutricionista");
+  // fotos de progresso, Pix e push (lote de melhorias dos apps)
+  ok(/Fotos de progresso/.test(appHtml) && /ntfotos/.test(appHtml) && /ANTES · /.test(appHtml), "app do paciente tem fotos de progresso ANTES × AGORA");
+  ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app do paciente registra push pelo link hospedado");
+  ok(!/Pagamento da consulta/.test(appHtml), "sem chave Pix configurada, o card de pagamento não aparece");
+  {
+    ok(await p.evaluate(() => !!document.getElementById("cfgPixChave") && !!document.getElementById("cfgPixValor")), "módulo tem os campos de Pix na ilha da nuvem");
+    const appPix = await p.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.config.pixChave = "ana@nutri.com";
+      st.config.pixNome = "Ana Costa";
+      st.config.pixCidade = "Belo Horizonte";
+      st.config.pixValor = 150;
+      window.MTStore.write("ntStudio", st);
+      return window.__montaAppNutri(window.MTStore.read("ntStudio", {}).pacientes[0], new Date().toISOString());
+    });
+    ok(/Pagamento da consulta/.test(appPix) && /R\$ 150,00/.test(appPix) && /pixCopiaPac/.test(appPix), "com a chave configurada, o app ganha o card Pix com valor");
+    const payload = await p.evaluate(() => window.__pixN.payload("ana@nutri.com", "Ana Costa", "Belo Horizonte", 150, "TQNBRUNO"));
+    ok(/br\.gov\.bcb\.pix/.test(payload) && /ana@nutri\.com/.test(payload) && /150\.00/.test(payload), "payload Pix EMV válido com chave e valor");
+    // o app do paciente abre sem erro de JS (com as novidades)
+    const pApp2 = await ctx.newPage();
+    const errosApp2 = [];
+    pApp2.on("pageerror", (e) => errosApp2.push(String(e)));
+    await pApp2.route("**/app-teste-nutri.html", (r) => r.fulfill({ contentType: "text/html", body: appPix }));
+    await pApp2.goto(BASE + "/app-teste-nutri.html", { waitUntil: "domcontentloaded" });
+    await pApp2.waitForTimeout(600);
+    const fotoUi = await pApp2.evaluate(() => ({
+      temFoto: !!document.getElementById("fotoInput"),
+      pix: document.getElementById("pixPac") ? document.getElementById("pixPac").value : "",
+    }));
+    ok(fotoUi.temFoto && /br\.gov\.bcb\.pix/.test(fotoUi.pix), "no app aberto: input de foto e código Pix prontos");
+    ok(errosApp2.length === 0, "app do paciente abre sem erros de JS" + (errosApp2.length ? " — " + errosApp2[0] : ""));
+    await pApp2.close();
+  }
   {
     const botEd = await p.evaluate(() => ({
       temCard: !!document.getElementById("botAtivoN"),
