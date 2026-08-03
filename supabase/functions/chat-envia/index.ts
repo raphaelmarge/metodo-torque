@@ -235,8 +235,9 @@ Deno.serve(async (req: Request) => {
   if (!conversa) return json({ erro: "conversa não encontrada" }, 404);
 
   const uid = usuarioDoToken(req);
-  r = await sb(`membros?select=user_id&academia_id=eq.${conversa.academia_id}&user_id=eq.${uid}`);
-  if (!(r.ok ? await r.json() : []).length) return json({ erro: "sem permissão nesta academia" }, 403);
+  r = await sb(`membros?select=user_id,nome,email&academia_id=eq.${conversa.academia_id}&user_id=eq.${uid}`);
+  const membro = (r.ok ? await r.json() : [])[0];
+  if (!membro) return json({ erro: "sem permissão nesta academia" }, 403);
 
   if (corpo.acao === "sugerir") {
     r = await sb(`chat_mensagens?select=de,texto&conversa_id=eq.${conversa.id}&order=criado.desc&limit=20`);
@@ -253,10 +254,15 @@ Deno.serve(async (req: Request) => {
     if (!texto) return json({ erro: "texto vazio" }, 400);
     const envio = await enviaMeta(conversa.canal, conversa.contato_id, texto);
     if (!envio.ok) return json({ erro: envio.erro }, 502);
-    await sb("chat_mensagens", {
-      method: "POST",
-      body: JSON.stringify({ conversa_id: conversa.id, academia_id: conversa.academia_id, de: "equipe", texto }),
-    });
+    // nome de quem respondeu (aparece no balão pra equipe toda saber quem falou)
+    const autor = String(membro.nome || membro.email || "").split("@")[0].slice(0, 60);
+    const linha: any = { conversa_id: conversa.id, academia_id: conversa.academia_id, de: "equipe", texto, autor };
+    let grava = await sb("chat_mensagens", { method: "POST", body: JSON.stringify(linha) });
+    if (!grava.ok) {
+      // banco ainda sem a coluna autor (SQL novo não rodou) — grava sem o nome
+      delete linha.autor;
+      await sb("chat_mensagens", { method: "POST", body: JSON.stringify(linha) });
+    }
     await sb(`chat_conversas?id=eq.${conversa.id}`, {
       method: "PATCH",
       body: JSON.stringify({ ultima_msg: texto.slice(0, 120), nao_lidas: 0, atualizado: new Date().toISOString() }),
