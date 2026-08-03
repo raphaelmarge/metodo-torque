@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v203";
+var VERSION = "mt-v204";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
