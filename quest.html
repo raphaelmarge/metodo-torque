@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check-in — TORQUE ON</title>
+<link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: #121016; color: #fff; min-height: 100vh; padding: 26px 16px 60px; max-width: 520px; margin: 0 auto; }
+  .k { font-size: 11px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+  h1 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin: 8px 0 4px; }
+  .sub { color: #a9a4b5; font-size: 14px; line-height: 1.6; }
+  .qcard { background: #1d1a24; border: 1px solid #322e3d; border-radius: 16px; padding: 16px 18px; margin-top: 14px; }
+  .qcard .titulo { font-weight: 800; font-size: 15.5px; margin-bottom: 10px; line-height: 1.45; }
+  .ops { display: flex; flex-direction: column; gap: 8px; }
+  .op { display: flex; align-items: center; gap: 12px; background: #14121a; border: 1px solid #322e3d; border-radius: 12px; padding: 11px 14px; cursor: pointer; font-size: 14.5px; transition: border-color .12s ease, background .12s ease; }
+  .op .emo { font-size: 22px; flex: none; }
+  .op.sel { border-color: #7c3aed; background: rgba(124,58,237,.16); }
+  .linear { display: flex; gap: 6px; flex-wrap: wrap; }
+  .linear button { flex: 1 0 34px; height: 42px; border-radius: 10px; border: 1px solid #322e3d; background: #14121a; color: #fff; font-family: inherit; font-weight: 800; font-size: 15px; cursor: pointer; }
+  .linear button.sel { background: #7c3aed; border-color: #7c3aed; }
+  .lrot { display: flex; justify-content: space-between; color: #8a8695; font-size: 11.5px; margin-top: 6px; }
+  textarea { width: 100%; background: #14121a; border: 1px solid #322e3d; border-radius: 12px; color: #fff; padding: 12px; font-family: inherit; font-size: 14.5px; min-height: 80px; }
+  .btnx { display: block; width: 100%; text-align: center; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none; border-radius: 14px; padding: 17px; font-family: inherit; font-size: 17px; font-weight: 800; cursor: pointer; margin-top: 18px; box-shadow: 0 10px 30px -12px #7c3aed; }
+  .btnx:disabled { opacity: .55; }
+  #fim { text-align: center; padding: 60px 10px; display: none; }
+  #fim .e { font-size: 54px; }
+  #erro { color: #fbbf24; font-size: 13.5px; text-align: center; margin-top: 12px; min-height: 18px; }
+</style>
+</head>
+<body>
+<div id="form">
+  <span class="k" id="marca">CHECK-IN</span>
+  <h1 id="qNome">Questionário</h1>
+  <p class="sub">Responde rapidinho — suas respostas vão direto pro seu treinador. 💜</p>
+  <div id="perguntas"></div>
+  <button class="btnx" id="btnEnviar">Enviar respostas ➤</button>
+  <div id="erro"></div>
+</div>
+<div id="fim"><div class="e">🎉</div><h1>Respostas enviadas!</h1><p class="sub">Valeu! Seu treinador já recebeu. Pode fechar esta página.</p></div>
+
+<script src="assets/cloud-config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var params = new URLSearchParams(location.search);
+  var TOKEN = params.get("t") || "";
+  var Q = null;
+  try {
+    Q = JSON.parse(decodeURIComponent(escape(atob((params.get("q") || "").replace(/-/g, "+").replace(/_/g, "/")))));
+  } catch (e) {}
+  if (!Q || !TOKEN || !(Q.ps || []).length) {
+    document.body.innerHTML = "<div style='text-align:center;padding:80px 20px;'><div style='font-size:44px;'>🤔</div>" +
+      "<h1 style='font-size:20px;margin-top:10px;'>Link incompleto</h1>" +
+      "<p style='color:#a9a4b5;margin-top:8px;'>Peça pro seu treinador enviar o link do questionário de novo.</p></div>";
+    return;
+  }
+  if (Q.marca) $("#marca").textContent = String(Q.marca).toUpperCase() + " · CHECK-IN";
+  $("#qNome").textContent = Q.nome || "Questionário";
+
+  var respostas = {};
+  $("#perguntas").innerHTML = Q.ps.map(function (p, i) {
+    var corpo = "";
+    if (p.tipo === "emoji") {
+      corpo = "<div class='ops'>" + (p.ops || []).map(function (o, j) {
+        return "<div class='op' data-p='" + i + "' data-o='" + j + "'><span class='emo'>" + o.e + "</span><span>" + o.r + "</span></div>";
+      }).join("") + "</div>";
+    } else if (p.tipo === "linear") {
+      corpo = "<div class='linear' data-p='" + i + "'>";
+      for (var n = 0; n <= 10; n++) corpo += "<button type='button' data-p='" + i + "' data-v='" + n + "'>" + n + "</button>";
+      corpo += "</div><div class='lrot'><span>" + (p.min || "0 = nada") + "</span><span>" + (p.max || "10 = máximo") + "</span></div>";
+    } else {
+      corpo = "<textarea data-p='" + i + "' placeholder='Escreva aqui…'></textarea>";
+    }
+    return "<div class='qcard'><div class='titulo'>" + (i + 1) + ". " + p.texto + "</div>" + corpo + "</div>";
+  }).join("");
+
+  document.addEventListener("click", function (e) {
+    var op = e.target.closest(".op");
+    if (op) {
+      var i = +op.dataset.p, j = +op.dataset.o;
+      document.querySelectorAll(".op[data-p='" + i + "']").forEach(function (x) { x.classList.remove("sel"); });
+      op.classList.add("sel");
+      var o = Q.ps[i].ops[j];
+      respostas[i] = { r: o.r, pontos: +o.p || 0 };
+      return;
+    }
+    var lb = e.target.closest(".linear button");
+    if (lb) {
+      var i2 = +lb.dataset.p;
+      document.querySelectorAll(".linear button[data-p='" + i2 + "']").forEach(function (x) { x.classList.remove("sel"); });
+      lb.classList.add("sel");
+      respostas[i2] = { r: lb.dataset.v, pontos: +lb.dataset.v };
+    }
+  });
+  document.addEventListener("input", function (e) {
+    if (e.target.matches("textarea[data-p]")) respostas[+e.target.dataset.p] = { r: e.target.value.trim(), pontos: null };
+  });
+
+  $("#btnEnviar").addEventListener("click", function () {
+    var faltam = Q.ps.filter(function (p, i) { return !respostas[i] || respostas[i].r === ""; });
+    if (faltam.length) { $("#erro").textContent = "Responde tudo primeiro — falta(m) " + faltam.length + " pergunta(s). 😉"; return; }
+    var total = 0, temPontos = false;
+    var lista = Q.ps.map(function (p, i) {
+      if (respostas[i].pontos != null) { total += respostas[i].pontos; temPontos = true; }
+      return { sigla: p.s || "", pergunta: p.texto, resposta: respostas[i].r, pontos: respostas[i].pontos };
+    });
+    var cfg = self.MT_CLOUD || {};
+    if (!cfg.url) { $("#erro").textContent = "Configuração da nuvem ausente — avisa seu treinador."; return; }
+    var btn = $("#btnEnviar");
+    btn.disabled = true; btn.textContent = "Enviando…";
+    fetch(cfg.url + "/rest/v1/rpc/app_quest_responde", {
+      method: "POST",
+      headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ t: TOKEN, p_nome: Q.nome || "", p_dados: { respostas: lista, pontuacao: temPontos ? total : null } }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok) { $("#form").style.display = "none"; $("#fim").style.display = "block"; window.scrollTo(0, 0); }
+      else { btn.disabled = false; btn.textContent = "Enviar respostas ➤"; $("#erro").textContent = (d && d.erro) ? d.erro : "Não deu — rode o SQL novo no Supabase (ou tente de novo)."; }
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = "Enviar respostas ➤";
+      $("#erro").textContent = "Sem internet agora — tenta de novo em instantes.";
+    });
+  });
+  window.__quest = { q: Q, respostas: respostas }; // testes
+})();
+</script>
+</body>
+</html>

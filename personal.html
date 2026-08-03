@@ -88,6 +88,7 @@
     <button data-a="pagamentos">Pagamentos</button>
     <button data-a="treinos">Treinos</button>
     <button data-a="avaliacoes">Avaliações</button>
+    <button data-a="quest">Questionários</button>
     <button data-a="relatorios">Relatórios</button>
     <button data-a="assessoria">Assessoria</button>
     <button data-a="chat">Chat</button>
@@ -322,7 +323,67 @@
     <div class="card"><h2>Histórico e evolução</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
   </section>
 
-  <!-- RELATÓRIOS -->
+  <!-- QUESTIONÁRIOS (check-ins personalizados, estilo LiveClin) -->
+  <section id="vQuest" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Minhas perguntas</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Crie perguntas com escala de emojis (com pontuação), escala de 0 a 10 ou resposta livre — e monte questionários pra mandar pros alunos.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <input id="qpSigla" placeholder="Sigla (ex.: MOTEX)" maxlength="5" style="width: 130px; text-transform: uppercase;">
+        <input id="qpTitulo" placeholder="Título (ex.: Motivação)" maxlength="30" style="width: 200px;">
+        <select id="qpTipo" style="width: auto;">
+          <option value="emoji">😍 Escala de emojis (com pontos)</option>
+          <option value="linear">🔢 Escala 0–10</option>
+          <option value="texto">✍️ Resposta livre</option>
+        </select>
+      </div>
+      <input id="qpTexto" placeholder="A pergunta em si (ex.: Qual foi sua motivação pra treinar nos últimos 7 dias?)" style="width: 100%; margin-top: 8px;">
+      <div id="qpOpsBox" style="margin-top: 8px;">
+        <p class="muted" style="font-size: 12px; margin-bottom: 4px;">Alternativas da escala (rótulo | pontos):</p>
+        <div class="linha-flex" style="flex-wrap: wrap; gap: 6px;">
+          <input class="qpOp" data-e="😍" value="Altíssimo | 2" style="width: 150px;">
+          <input class="qpOp" data-e="🙂" value="Alto | 1" style="width: 130px;">
+          <input class="qpOp" data-e="😐" value="Médio | 0" style="width: 130px;">
+          <input class="qpOp" data-e="🙁" value="Baixo | -1" style="width: 130px;">
+          <input class="qpOp" data-e="😫" value="Nenhum | -2" style="width: 140px;">
+        </div>
+      </div>
+      <button class="btn" id="qpAdd" style="margin-top: 10px;">+ Salvar pergunta</button>
+      <div id="qpLista" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhuma pergunta ainda.</div>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Questionários</h2>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+        <input id="qqNome" placeholder="Nome (ex.: Check-in semanal)" style="width: 240px;">
+        <button class="btn" id="qqAdd">+ Criar questionário</button>
+      </div>
+      <div id="qqPerguntas" class="muted" style="margin-top: 8px; font-size: 13px;"></div>
+      <div id="qqLista" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhum questionário ainda.</div>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Enviar pro aluno</h2>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+        <select id="qeAluno" style="min-width: 170px;"></select>
+        <select id="qeQuest" style="min-width: 190px;"></select>
+        <button class="btn" id="qeGerar">Gerar link</button>
+      </div>
+      <div id="qeSaida" hidden style="margin-top: 10px;">
+        <input id="qeLink" readonly style="width: 100%; font-size: 12px;">
+        <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
+          <a class="btn whats" id="qeZap" target="_blank" rel="noopener">💬 Mandar no WhatsApp</a>
+          <button class="btn sec" id="qeCopia">📋 Copiar link</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Respostas recebidas</h2>
+      <div id="qRespostas" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
+    </div>
+  </section>
+
   <section id="vRelatorios" hidden>
     <div class="card" style="margin-bottom: 14px;"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
@@ -588,6 +649,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vPagamentos").hidden = b.dataset.a !== "pagamentos";
     $("vTreinos").hidden = b.dataset.a !== "treinos";
     $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
+    $("vQuest").hidden = b.dataset.a !== "quest";
+    if (b.dataset.a === "quest") { renderQuest(); carregaRespostasQuest(); }
     $("vRelatorios").hidden = b.dataset.a !== "relatorios";
     $("vAssessoria").hidden = b.dataset.a !== "assessoria";
     $("vChat").hidden = b.dataset.a !== "chat";
@@ -778,7 +841,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (a.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, ""); }
     else wa.style.display = "none";
     // vira PÁGINA: esconde as outras seções e mostra o perfil
-    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vRelatorios", "vAssessoria", "vChat"].forEach(function (v) { $(v).hidden = true; });
+    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vRelatorios", "vAssessoria", "vChat"].forEach(function (v) { $(v).hidden = true; });
     $("vPerfil").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     pintaAppDados(a);
@@ -958,6 +1021,145 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     setTimeout(function () { $("buscaAlunoLista").hidden = true; }, 250);
   });
   window.__buscaPT = pintaBuscaAluno; // testes
+
+  // ---------- questionários personalizados (check-ins estilo LiveClin) ----------
+  function questSt(st) {
+    st.questPerguntas = st.questPerguntas || [];
+    st.questionarios = st.questionarios || [];
+    return st;
+  }
+  function renderQuest() {
+    var st = questSt(load());
+    $("qpLista").innerHTML = st.questPerguntas.length ? st.questPerguntas.map(function (p) {
+      var tipoRot = p.tipo === "emoji" ? "😍 emojis" : p.tipo === "linear" ? "🔢 0–10" : "✍️ livre";
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+        "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-qprm="' + p.id + '">🗑</button></div>';
+    }).join("") : "Nenhuma pergunta ainda — crie a primeira acima.";
+    $("qqPerguntas").innerHTML = st.questPerguntas.length
+      ? "Marque as perguntas do questionário novo:<br>" + st.questPerguntas.map(function (p) {
+          return '<label style="margin:4px 12px 0 0; display:inline-block;"><input type="checkbox" class="qqCheck" value="' + p.id + '"> ' + esc(p.sigla) + " · " + esc(p.titulo) + "</label>";
+        }).join("")
+      : "";
+    $("qqLista").innerHTML = st.questionarios.length ? st.questionarios.map(function (q) {
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+        "<b>📋 " + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-qqrm="' + q.id + '">🗑</button></div>';
+    }).join("") : "Nenhum questionário ainda.";
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    $("qeAluno").innerHTML = '<option value="">Aluno…</option>' + ativos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
+    $("qeQuest").innerHTML = '<option value="">Questionário…</option>' + st.questionarios.map(function (q) { return '<option value="' + q.id + '">' + esc(q.nome) + "</option>"; }).join("");
+  }
+  $("qpTipo").addEventListener("change", function () {
+    $("qpOpsBox").style.display = this.value === "emoji" ? "" : "none";
+  });
+  $("qpAdd").addEventListener("click", function () {
+    var sigla = $("qpSigla").value.trim().toUpperCase().slice(0, 5);
+    var titulo = $("qpTitulo").value.trim().slice(0, 30);
+    var texto = $("qpTexto").value.trim();
+    if (!sigla || !titulo || !texto) { alert("Preencha sigla, título e a pergunta."); return; }
+    var tipo = $("qpTipo").value;
+    var ops = [];
+    if (tipo === "emoji") {
+      document.querySelectorAll(".qpOp").forEach(function (i) {
+        var par = i.value.split("|");
+        var r = (par[0] || "").trim();
+        if (r) ops.push({ e: i.getAttribute("data-e"), r: r, p: parseFloat((par[1] || "0").replace(",", ".")) || 0 });
+      });
+      if (ops.length < 2) { alert("A escala precisa de pelo menos 2 alternativas."); return; }
+    }
+    var st = questSt(load());
+    st.questPerguntas.push({ id: S.uid(), sigla: sigla, titulo: titulo, texto: texto, tipo: tipo, ops: ops });
+    save(st);
+    $("qpSigla").value = ""; $("qpTitulo").value = ""; $("qpTexto").value = "";
+    renderQuest();
+  });
+  $("qpLista").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-qprm");
+    if (!id || !confirm("Excluir esta pergunta?")) return;
+    var st = questSt(load());
+    st.questPerguntas = st.questPerguntas.filter(function (p) { return p.id !== id; });
+    st.questionarios.forEach(function (q) { q.perguntas = q.perguntas.filter(function (x) { return x !== id; }); });
+    save(st); renderQuest();
+  });
+  $("qqAdd").addEventListener("click", function () {
+    var nome = $("qqNome").value.trim();
+    var ids = Array.from(document.querySelectorAll(".qqCheck:checked")).map(function (c) { return c.value; });
+    if (!nome) { alert("Dê um nome pro questionário (ex.: Check-in semanal)."); return; }
+    if (!ids.length) { alert("Marque pelo menos uma pergunta."); return; }
+    var st = questSt(load());
+    st.questionarios.push({ id: S.uid(), nome: nome, perguntas: ids });
+    save(st);
+    $("qqNome").value = "";
+    renderQuest();
+  });
+  $("qqLista").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-qqrm");
+    if (!id || !confirm("Excluir este questionário?")) return;
+    var st = questSt(load());
+    st.questionarios = st.questionarios.filter(function (q) { return q.id !== id; });
+    save(st); renderQuest();
+  });
+  function montaPayloadQuest(st, q) {
+    return {
+      marca: (st.config || {}).nome || "TORQUE PERSONAL",
+      nome: q.nome,
+      ps: q.perguntas.map(function (pid) {
+        var p = st.questPerguntas.find(function (x) { return x.id === pid; });
+        return p ? { s: p.sigla, texto: p.texto, tipo: p.tipo, ops: p.ops || [] } : null;
+      }).filter(Boolean),
+    };
+  }
+  $("qeGerar").addEventListener("click", function () {
+    var st = questSt(load());
+    var a = st.alunos.find(function (x) { return x.id === $("qeAluno").value; });
+    var q = st.questionarios.find(function (x) { return x.id === $("qeQuest").value; });
+    if (!a || !q) { alert("Escolha o aluno e o questionário."); return; }
+    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
+    var payload = montaPayloadQuest(st, q);
+    var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    var link = location.origin + location.pathname.replace(/personal\.html$/, "") + "quest.html?t=" + a.appTokenP + "&q=" + b64;
+    $("qeSaida").hidden = false;
+    $("qeLink").value = link;
+    var msg = "Oi " + a.nome.split(" ")[0] + "! Responde seu check-in rapidinho? 💜 " + link;
+    $("qeZap").href = "https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg);
+  });
+  $("qeCopia").addEventListener("click", function () {
+    $("qeLink").select();
+    try { document.execCommand("copy"); this.textContent = "✅ Copiado!"; } catch (e) {}
+    var b = this;
+    setTimeout(function () { b.textContent = "📋 Copiar link"; }, 1800);
+  });
+  function carregaRespostasQuest() {
+    var box = $("qRespostas");
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { box.textContent = "Entre com a sua conta da nuvem pra receber as respostas dos alunos."; return; }
+    box.textContent = "Carregando…";
+    nuvem.client.from("app_quest").select("token,questionario,dados,criado").order("criado", { ascending: false }).limit(60)
+      .then(function (r) {
+        if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os questionários."; return; }
+        var rows = (r && r.data) || [];
+        if (!rows.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima. 😉"; return; }
+        var st = load();
+        var nomePorToken = {};
+        st.alunos.forEach(function (a) { if (a.appTokenP) nomePorToken[a.appTokenP] = a.nome; });
+        box.innerHTML = rows.map(function (row) {
+          var d = row.dados || {};
+          var pts = d.pontuacao;
+          var corP = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
+          return '<div style="padding:10px 0;border-top:1px solid #322e3d;">' +
+            "<b>" + esc(nomePorToken[row.token] || "Aluno") + "</b> · " + esc(row.questionario || "Check-in") +
+            ' <span class="muted" style="font-size:12px;">' + S.fmtData((row.criado || "").slice(0, 10)) + "</span>" +
+            (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
+            '<div class="muted" style="font-size:12.5px;margin-top:4px;">' + (d.respostas || []).map(function (x) {
+              return esc(x.sigla || "") + ": <b>" + esc(String(x.resposta)) + "</b>";
+            }).join(" · ") + "</div></div>";
+        }).join("");
+      }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
+  }
+  window.__questPT = { render: renderQuest, payload: montaPayloadQuest, respostas: carregaRespostasQuest }; // testes
 
   // ---------- agenda ----------
   function renderAgenda(st) {

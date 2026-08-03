@@ -1616,3 +1616,45 @@ begin
   return json_build_object('ok', true);
 end $$;
 grant execute on function public.app_aluno_devolve(text, jsonb) to anon, authenticated;
+
+-- ==================== QUESTIONÁRIOS PERSONALIZADOS ====================
+-- O personal monta perguntas e questionários (estilo check-in do LiveClin),
+-- manda o link pro aluno e as respostas ficam salvas aqui, com pontuação.
+-- Bloco idempotente.
+
+create table if not exists public.app_quest (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias(id) on delete cascade,
+  token text not null,                          -- appTokenP do aluno
+  questionario text not null default '',        -- nome do questionário
+  dados jsonb not null default '{}'::jsonb,     -- respostas + pontuação
+  criado timestamptz not null default now()
+);
+create index if not exists app_quest_acad on public.app_quest (academia_id, criado desc);
+create index if not exists app_quest_token on public.app_quest (token, criado desc);
+
+alter table public.app_quest enable row level security;
+drop policy if exists "app_quest_membros" on public.app_quest;
+create policy "app_quest_membros" on public.app_quest
+  for select using (academia_id in (select public.minhas_academias()));
+
+create or replace function public.app_quest_responde(t text, p_nome text, p_dados jsonb)
+returns json language plpgsql security definer set search_path = public as $$
+declare v_acad uuid;
+begin
+  if t is null or length(t) < 10 then
+    return json_build_object('erro', 'token inválido');
+  end if;
+  select academia_id into v_acad from public.app_aluno where token = t limit 1;
+  if v_acad is null then
+    return json_build_object('erro', 'app não encontrado');
+  end if;
+  -- trava de spam: no máximo 20 respostas por token por dia
+  if (select count(*) from public.app_quest where token = t and criado > now() - interval '1 day') >= 20 then
+    return json_build_object('erro', 'muitas respostas hoje — tente amanhã');
+  end if;
+  insert into public.app_quest (academia_id, token, questionario, dados)
+  values (v_acad, t, coalesce(p_nome, ''), coalesce(p_dados, '{}'::jsonb));
+  return json_build_object('ok', true);
+end $$;
+grant execute on function public.app_quest_responde(text, text, jsonb) to anon, authenticated;
