@@ -1601,7 +1601,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return t.fichas.map(function (f) {
       return f.titulo + "\n" + f.itens.map(function (it) {
         var ex = exPorId(st, it.exId) || { nome: "?" };
-        return "• " + ex.nome + " — " + it.series + "x" + it.reps + (it.obs ? " (" + it.obs + ")" : "");
+        return "• " + ex.nome + " — " + it.series + "x" + it.reps + (it.descanso ? " · descanso " + it.descanso + "s" : "") + (it.obs ? " (" + it.obs + ")" : "");
       }).join("\n");
     }).join("\n\n");
   }
@@ -1634,6 +1634,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (f.itens.length ? f.itens.map(function (it, i) {
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
           return '<div class="sessao-pt"><b>' + esc(ex.nome) + "</b><span>" + it.series + "×" + it.reps + "</span>" +
+            '<button class="btn sec mini" data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">⏱ ' + (+it.descanso || 60) + "s</button>" +
             (it.obs ? '<span class="muted">' + esc(it.obs) + "</span>" : "") +
             (ex.video ? "<span title='tem vídeo'>🎬</span>" : "") +
             '<span style="margin-left:auto;"></span>' +
@@ -1645,6 +1646,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<input data-exser="' + f.id + '" type="number" min="1" value="3" style="width:64px;" title="séries">' +
         '<span class="muted">×</span>' +
         '<input data-exrep="' + f.id + '" value="12" style="width:74px;" title="repetições (ex.: 12 ou 30s)">' +
+        '<span class="muted" title="descanso entre séries">⏱</span>' +
+        '<input data-exdes="' + f.id + '" type="number" min="0" step="5" value="60" style="width:70px;" title="descanso entre séries (segundos)">' +
+        '<span class="muted">s</span>' +
         '<input data-exobs="' + f.id + '" placeholder="obs (opcional)" style="flex:1;min-width:110px;">' +
         '<button class="btn mini" data-additem="' + f.id + '">+ Adicionar</button></div></div>';
     }).join("");
@@ -1667,19 +1671,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // cada item: [nome do exercício na biblioteca, séries, reps]; exercício que faltar é criado na hora
   var TEMPLATES_FICHA = {
     fullbody: { nome: "Full Body iniciante (3x/semana)", fichas: [
-      ["Treino único — Full Body", [["Agachamento livre", 3, "12"], ["Supino reto", 3, "12"], ["Remada curvada", 3, "12"], ["Desenvolvimento", 3, "12"], ["Prancha", 3, "30s"]]],
+      ["Treino único — Full Body", [["Agachamento livre", 3, "12", 90], ["Supino reto", 3, "12", 90], ["Remada curvada", 3, "12", 90], ["Desenvolvimento", 3, "12", 60], ["Prancha", 3, "30s", 45]]],
     ] },
     abc: { nome: "ABC hipertrofia", fichas: [
-      ["A — Peito/Tríceps", [["Supino reto", 4, "10"], ["Desenvolvimento", 3, "10"], ["Tríceps corda", 4, "12"]]],
-      ["B — Costas/Bíceps", [["Puxada aberta", 4, "10"], ["Remada curvada", 4, "10"], ["Rosca direta", 4, "12"]]],
-      ["C — Pernas/Core", [["Agachamento livre", 4, "10"], ["Leg press", 4, "12"], ["Levantamento terra", 3, "8"], ["Prancha", 3, "40s"]]],
+      ["A — Peito/Tríceps", [["Supino reto", 4, "10", 90], ["Desenvolvimento", 3, "10", 60], ["Tríceps corda", 4, "12", 60]]],
+      ["B — Costas/Bíceps", [["Puxada aberta", 4, "10", 90], ["Remada curvada", 4, "10", 90], ["Rosca direta", 4, "12", 60]]],
+      ["C — Pernas/Core", [["Agachamento livre", 4, "10", 90], ["Leg press", 4, "12", 90], ["Levantamento terra", 3, "8", 120], ["Prancha", 3, "40s", 45]]],
     ] },
     inferior: { nome: "Foco em pernas e glúteo (AB)", fichas: [
-      ["A — Quadríceps", [["Agachamento livre", 4, "10"], ["Leg press", 4, "12"], ["Prancha", 3, "40s"]]],
-      ["B — Posterior/Glúteo", [["Levantamento terra", 4, "8"], ["Leg press", 3, "15"], ["Prancha", 3, "40s"]]],
+      ["A — Quadríceps", [["Agachamento livre", 4, "10", 90], ["Leg press", 4, "12", 90], ["Prancha", 3, "40s", 45]]],
+      ["B — Posterior/Glúteo", [["Levantamento terra", 4, "8", 120], ["Leg press", 3, "15", 60], ["Prancha", 3, "40s", 45]]],
     ] },
     funcional: { nome: "Funcional / condicionamento", fichas: [
-      ["Circuito — 3 voltas", [["Agachamento livre", 3, "15"], ["Prancha", 3, "45s"], ["Remada curvada", 3, "15"], ["Desenvolvimento", 3, "12"]]],
+      ["Circuito — 3 voltas", [["Agachamento livre", 3, "15", 45], ["Prancha", 3, "45s", 45], ["Remada curvada", 3, "15", 45], ["Desenvolvimento", 3, "12", 45]]],
     ] },
   };
   (function () {
@@ -1708,7 +1712,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (t.fichas.length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Adicionar o template " + tpl.nome + " por cima?")) return;
     tpl.fichas.forEach(function (f) {
       t.fichas.push({ id: S.uid(), titulo: f[0], itens: f[1].map(function (it) {
-        return { exId: exercicioPorNome(st, it[0]).id, series: it[1], reps: it[2], obs: "" };
+        return { exId: exercicioPorNome(st, it[0]).id, series: it[1], reps: it[2], descanso: it[3] || 60, obs: "" };
       }) });
     });
     S.write("ptStudio", st);
@@ -1722,7 +1726,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var rmF = e.target.getAttribute && e.target.getAttribute("data-rmficha");
     var rmI = e.target.getAttribute && e.target.getAttribute("data-rmitem");
     var sob = e.target.getAttribute && e.target.getAttribute("data-sobe");
-    if (!add && !rmF && !rmI && !sob) return;
+    var tds = e.target.getAttribute && e.target.getAttribute("data-tdesc");
+    if (!add && !rmF && !rmI && !sob && !tds) return;
     var alunoId = $("tAluno").value;
     var st = load();
     var t = treinoDe(st, alunoId);
@@ -1739,6 +1744,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         exId: exIdSel,
         series: +document.querySelector('[data-exser="' + add + '"]').value || 3,
         reps: document.querySelector('[data-exrep="' + add + '"]').value.trim() || "12",
+        descanso: Math.max(0, +document.querySelector('[data-exdes="' + add + '"]').value || 0) || 60,
         obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
       });
     }
@@ -1756,6 +1762,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var fs = t.fichas.find(function (x) { return x.id === ps[0]; });
       var idx = +ps[1];
       if (fs && idx > 0) { var tmp = fs.itens[idx - 1]; fs.itens[idx - 1] = fs.itens[idx]; fs.itens[idx] = tmp; }
+    }
+    if (tds) {
+      var pt2 = tds.split(":");
+      var ft = t.fichas.find(function (x) { return x.id === pt2[0]; });
+      var itd = ft && ft.itens[+pt2[1]];
+      if (!itd) return;
+      var novo = prompt("Descanso entre séries (segundos):", itd.descanso || 60);
+      if (novo === null) return;
+      itd.descanso = Math.max(0, parseInt(novo, 10) || 0) || 60;
     }
     S.write("ptStudio", st);
     renderFichas();
@@ -2463,7 +2478,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
       return { titulo: f.titulo, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
-        return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, obs: it.obs || "" };
+        return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "" };
       }) };
     }) : null;
     var fexs = [];
@@ -2473,7 +2488,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // dados enxutos pro modo treino guiado (conduz série a série com descanso)
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
-        return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: 60,
+        return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: +it.descanso || 60,
           v: it.video || videoBusca(it.nome || "") };
       }) };
     });
@@ -2562,9 +2577,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
           (f.itens.length ? "<button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;text-align:center;margin:2px 0 8px;'>▶ Treino guiado</button>" : "") +
           f.itens.map(function (it) {
+            var rst = +it.descanso || 60, rAlt = rst === 90 ? 60 : 90;
             return "<details style='background:#14121a;border:1px solid #322e3d;border-radius:11px;margin:6px 0;overflow:hidden;'>" +
               "<summary style='padding:11px 13px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
-              "<b>" + esc(it.nome) + "</b><span style='color:#a9a4b5;white-space:nowrap;'>" + it.series + "×" + esc(String(it.reps)) + " ›</span></summary>" +
+              "<b>" + esc(it.nome) + "</b><span style='color:#a9a4b5;white-space:nowrap;'>" + it.series + "×" + esc(String(it.reps)) + " · ⏱" + rst + "s ›</span></summary>" +
               "<div style='padding:0 13px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
               (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
@@ -2572,8 +2588,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat! 💬</span>" : "") +
               "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
               "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:#1d1a24;border:1px solid #7c3aed;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
-              "<button class='tmrbtn' data-s='60' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>⏱ 60s</button>" +
-              "<button class='tmrbtn' data-s='90' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>⏱ 90s</button>" +
+              "<button class='tmrbtn' data-s='" + rst + "' style='background:#14121a;border:1px solid #7c3aed;color:#d6c9f5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>⏱ Descanso " + rst + "s</button>" +
+              "<button class='tmrbtn' data-s='" + rAlt + "' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>⏱ " + rAlt + "s</button>" +
               "</div></div></details>";
           }).join("");
       }).join("")
@@ -2837,7 +2853,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];" +
       "gEl('gProg').textContent=f.n+' · exercício '+(gv.e+1)+' de '+f.it.length;" +
       "gEl('gEx').textContent=it.e;" +
-      "gEl('gMeta').textContent=it.s+' séries × '+(it.r||'?');" +
+      "gEl('gMeta').textContent=it.s+' séries × '+(it.r||'?')+' · descanso '+(it.d||60)+'s';" +
       "var gvd=gEl('gVideo');if(gvd){gvd.href=it.v||'#';gvd.style.display=it.v?'inline-block':'none';}" +
       "var h=L('ptdc',{});var l=h[it.e]||[];gEl('gCarga').value=l.length?l[l.length-1].kg:'';" +
       "gEl('gDesc').style.display='none';gEl('gSerie').style.display='block';gEl('gPular').style.display='none';" +
