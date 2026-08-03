@@ -598,6 +598,69 @@ async function abaPt(p, a) {
   }
   await p.evaluate(() => document.getElementById("pfFechar").click());
   ok(await p.evaluate(() => document.getElementById("vPerfil").hidden && !document.getElementById("vAlunos").hidden), "← Voltar retorna pra lista de alunos");
+
+  // ---------- questionários personalizados (estilo LiveClin) ----------
+  console.log("Questionários personalizados:");
+  await abaPt(p, "quest");
+  await p.fill("#qpSigla", "motex");
+  await p.fill("#qpTitulo", "Motivação");
+  await p.fill("#qpTexto", "Qual foi sua motivação pra treinar nos últimos 7 dias?");
+  await p.click("#qpAdd");
+  await p.fill("#qpSigla", "AEROB");
+  await p.fill("#qpTitulo", "Aeróbico");
+  await p.selectOption("#qpTipo", "linear");
+  await p.fill("#qpTexto", "De 0 a 10, quanto cardio você fez essa semana?");
+  await p.click("#qpAdd");
+  const qpTxt = await p.evaluate(() => document.getElementById("qpLista").textContent);
+  ok(/MOTEX/.test(qpTxt) && /AEROB/.test(qpTxt), "perguntas salvas com sigla em maiúsculas (MOTEX, AEROB)");
+  await p.fill("#qqNome", "Check-in semanal");
+  await p.evaluate(() => document.querySelectorAll(".qqCheck").forEach((c) => { c.checked = true; }));
+  await p.click("#qqAdd");
+  ok(/Check-in semanal/.test(await p.evaluate(() => document.getElementById("qqLista").textContent)), "questionário criado com as 2 perguntas");
+  await p.selectOption("#qeAluno", { index: 1 });
+  await p.selectOption("#qeQuest", { index: 1 });
+  await p.click("#qeGerar");
+  const linkQ = await p.evaluate(() => document.getElementById("qeLink").value);
+  ok(/quest\.html\?t=.+&q=/.test(linkQ), "link do questionário gerado com token e payload");
+  // o aluno abre o link e responde
+  {
+    const pq = await ctx.newPage();
+    let postado = null;
+    await pq.route("**/rest/v1/rpc/app_quest_responde", (r) => {
+      postado = JSON.parse(r.request().postData() || "{}");
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+    });
+    await pq.goto(linkQ);
+    const tela = await pq.evaluate(() => document.body.textContent);
+    ok(/Check-in semanal/.test(tela) && /motivação pra treinar/.test(tela), "página do aluno mostra o questionário");
+    await pq.evaluate(() => { if (!self.MT_CLOUD || !self.MT_CLOUD.url) self.MT_CLOUD = { url: "https://x.supabase.co", anonKey: "k" }; });
+    await pq.evaluate(() => document.querySelector(".op").click());               // 😍 Altíssimo (+2)
+    await pq.evaluate(() => document.querySelector(".linear button[data-v='8']").click()); // 8 pontos
+    await pq.click("#btnEnviar");
+    await pq.waitForSelector("#fim", { state: "visible" });
+    ok(postado && postado.p_dados && postado.p_dados.pontuacao === 10 && postado.p_dados.respostas.length === 2, "respostas enviadas com pontuação somada (2 + 8 = 10)");
+    await pq.close();
+  }
+  // respostas aparecem no módulo (nuvem simulada)
+  {
+    await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const a = st.alunos.find((x) => x.ativo !== false);
+      window.__cloudOrig2 = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({
+        aid: "x",
+        client: { from: () => ({ select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [{
+          token: a.appTokenP, questionario: "Check-in semanal", criado: new Date().toISOString(),
+          dados: { pontuacao: 10, respostas: [{ sigla: "MOTEX", resposta: "Altíssimo", pontos: 2 }, { sigla: "AEROB", resposta: "8", pontos: 8 }] },
+        }] }) }) }) }) },
+      });
+      window.__questPT.respostas();
+    });
+    await p.waitForTimeout(300);
+    const resp = await p.evaluate(() => document.getElementById("qRespostas").textContent);
+    ok(/João Cliente/.test(resp) && /\+10 pts/.test(resp) && /MOTEX/.test(resp), "resposta salva aparece com aluno, pontuação e siglas");
+    await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig2; });
+  }
   // busca de aluno no topo abre o perfil
   await p.fill("#buscaAluno", "joão");
   await p.waitForTimeout(150);
