@@ -278,6 +278,14 @@ async function abaNt(p, a) {
   ok(/78,5 kg/.test(perfilN.peso), "pesagem registrada aparece na evolução");
   ok(perfilN.st.pacientes[0].peso === 78.5, "cadastro acompanha a pesagem mais recente");
   await p.evaluate(() => document.getElementById("pnFechar").click());
+  // busca de paciente no topo abre o perfil
+  await p.fill("#buscaPac", "bruno");
+  await p.waitForTimeout(150);
+  ok(await p.evaluate(() => !document.getElementById("buscaPacLista").hidden && /Bruno Paciente/.test(document.getElementById("buscaPacLista").textContent)), "busca no topo acha o paciente");
+  await p.press("#buscaPac", "Enter");
+  ok(await p.evaluate(() => document.getElementById("dlgPerfilN").open), "Enter na busca abre o perfil do paciente");
+  await p.evaluate(() => document.getElementById("pnFechar").click());
+  await p.fill("#buscaPac", "");
 
   // agenda no módulo: marcar consulta local
   await abaNt(p, "agenda");

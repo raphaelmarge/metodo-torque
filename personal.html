@@ -55,6 +55,12 @@
     <span class="kicker">TORQUE ON · MÓDULO PERSONAL</span>
     <h1 id="tituloStudio">Meu Studio</h1>
     </div>
+    <div style="position: relative; margin-left: auto; min-width: 0;">
+      <input id="buscaAluno" placeholder="🔍 Buscar aluno…" autocomplete="off"
+        style="width: min(230px, 42vw); padding: 9px 12px; border-radius: 99px; border: 1px solid #322e3d; background: #14121a; color: #fff; font-family: inherit; font-size: 13.5px;">
+      <div id="buscaAlunoLista" hidden
+        style="position: absolute; top: 110%; right: 0; width: min(280px, 80vw); background: #1d1a24; border: 1px solid #322e3d; border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
+    </div>
   </div>
   <p>A gestão do personal trainer em uma tela: seus alunos, agenda de sessões, pagamentos e treinos com envio por WhatsApp — funciona offline e sincroniza entre seus aparelhos.</p>
 </header>
@@ -698,6 +704,43 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b) b.click();
   });
   window.__perfilPT = abrePerfil; // testes
+
+  // ---------- busca de aluno no topo ----------
+  function pintaBuscaAluno() {
+    var termo = $("buscaAluno").value.trim().toLowerCase();
+    var box = $("buscaAlunoLista");
+    if (!termo) { box.hidden = true; box.innerHTML = ""; return; }
+    var st = load();
+    var achou = st.alunos.filter(function (a) {
+      return a.ativo !== false && (a.nome || "").toLowerCase().indexOf(termo) >= 0;
+    }).slice(0, 8);
+    box.innerHTML = achou.length ? achou.map(function (a) {
+      var pagoMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid #322e3d;font-size:13.5px;'>" +
+        "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "#4ade80" : "#fbbf24") + ";'>" +
+        (pagoMes ? "· pago" : "· em aberto") + "</span></div>";
+    }).join("") : "<div style='padding:12px 14px;color:#8a8695;font-size:13px;'>Nenhum aluno com esse nome.</div>";
+    box.hidden = false;
+  }
+  $("buscaAluno").addEventListener("input", pintaBuscaAluno);
+  $("buscaAluno").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      var pri = $("buscaAlunoLista").querySelector("[data-busca-id]");
+      if (pri) { abrePerfil(pri.getAttribute("data-busca-id")); this.value = ""; $("buscaAlunoLista").hidden = true; }
+    }
+    if (e.key === "Escape") { $("buscaAlunoLista").hidden = true; }
+  });
+  $("buscaAlunoLista").addEventListener("mousedown", function (e) {
+    var el = e.target.closest("[data-busca-id]");
+    if (!el) return;
+    abrePerfil(el.getAttribute("data-busca-id"));
+    $("buscaAluno").value = "";
+    $("buscaAlunoLista").hidden = true;
+  });
+  $("buscaAluno").addEventListener("blur", function () {
+    setTimeout(function () { $("buscaAlunoLista").hidden = true; }, 250);
+  });
+  window.__buscaPT = pintaBuscaAluno; // testes
 
   // ---------- agenda ----------
   function renderAgenda(st) {
