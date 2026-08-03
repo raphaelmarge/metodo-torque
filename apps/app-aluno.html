@@ -249,6 +249,10 @@
     var presc = stTr.prescricoes.find(function (p) { return p.alunoId === a.id; });
     var videoDe = {};
     (stTr.exercicios || []).forEach(function (x) { if (x.video) videoDe[(x.nome || "").toLowerCase()] = x.video; });
+    // sem vídeo próprio cadastrado → busca pronta de demonstração no YouTube
+    function videoBuscaEx(nome) {
+      return "https://www.youtube.com/results?search_query=" + encodeURIComponent("como fazer " + nome + " exercício execução correta");
+    }
     var avs = S.read("saude", { avaliacoes: [] }).avaliacoes.filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? 1 : -1; });
     var comFoto = avs.filter(function (v) { return v.fotos && (v.fotos.frente || v.fotos.lado); });
@@ -427,7 +431,8 @@
     var guiaFichas = (presc && presc.fichas ? presc.fichas : []).map(function (fx) {
       return { n: fx.nome || "Ficha", it: (fx.itens || []).map(function (it) {
         return { e: (it.ex || "ex").replace(/'/g, ""), s: parseInt(it.series, 10) || 3, r: it.reps || "",
-          d: parseInt(String(it.descanso || "60").replace(/\D/g, ""), 10) || 60, c: it.carga || "" };
+          d: parseInt(String(it.descanso || "60").replace(/\D/g, ""), 10) || 60, c: it.carga || "",
+          v: videoDe[(it.ex || "").toLowerCase()] || videoBuscaEx(it.ex || "") };
       }) };
     });
     function fichasHTML() {
@@ -439,7 +444,7 @@
             (guiaFichas[gi] && guiaFichas[gi].it.length
               ? "<button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;text-align:center;margin:4px 0 8px;'>▶ Treino guiado</button>" : "") +
             (fx.itens || []).map(function (it, ii2) {
-              var vid = videoDe[(it.ex || "").toLowerCase()];
+              var vid = videoDe[(it.ex || "").toLowerCase()] || videoBuscaEx(it.ex || "");
               var chaveEx = esc((it.ex || "ex").replace(/'/g, ""));
               var nSeries = parseInt(it.series, 10) || 3;
               var descSeg = parseInt(String(it.descanso || "60").replace(/\D/g, ""), 10) || 60;
@@ -761,6 +766,7 @@
       "<div class='guia' id='guiaBox'><div class='top'><span id='gProg'></span>" +
       "<button id='gFechar' style='background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer;font-family:inherit'>✕</button></div>" +
       "<div class='exn' id='gEx'></div><div class='meta' id='gMeta'></div>" +
+      "<a id='gVideo' target='_blank' rel='noopener' style='display:none;margin-top:10px;background:var(--card);border:1px solid var(--cor);color:var(--cor);text-decoration:none;font-weight:700;font-size:13px;padding:6px 16px;border-radius:99px;align-self:flex-start'>▶ como fazer</a>" +
       "<input id='gCarga' inputmode='decimal' placeholder='carga de hoje (kg)' style='margin-top:14px;background:var(--card);border:1px solid var(--linha);border-radius:12px;color:var(--txt);padding:12px;font-size:15px;font-family:inherit'>" +
       "<div class='descnum' id='gDesc'></div>" +
       "<div class='acao'><button class='btnx' id='gSerie' style='font-size:17px;padding:16px'>✔ Série feita</button>" +
@@ -878,6 +884,7 @@
       "gEl('gProg').textContent=f.n+' \u00b7 exerc\u00edcio '+(gv.e+1)+' de '+f.it.length;" +
       "gEl('gEx').textContent=it.e;" +
       "gEl('gMeta').textContent=it.s+' s\u00e9ries \u00d7 '+(it.r||'?')+(it.c?' \u00b7 sugerido: '+it.c:'');" +
+      "var gvd=gEl('gVideo');if(gvd){gvd.href=it.v||'#';gvd.style.display=it.v?'inline-block':'none';}" +
       "gEl('gCarga').value=cargas[it.e]||'';" +
       "gEl('gDesc').style.display='none';gEl('gSerie').style.display='block';gEl('gPular').style.display='none';" +
       "gEl('gSerie').textContent='\u2714 S\u00e9rie feita ('+gv.s+'/'+it.s+')';}" +
@@ -893,6 +900,7 @@
       "gEl('gProg').textContent='';gEl('gEx').textContent='\ud83c\udf89 Treino conclu\u00eddo!';" +
       "gEl('gMeta').textContent='Mandou bem demais. Alonga, hidrata e at\u00e9 a pr\u00f3xima! \ud83d\udca7';" +
       "gEl('gSerie').style.display='none';gEl('gDesc').style.display='none';gEl('gPular').style.display='none';" +
+      "var gvf=gEl('gVideo');if(gvf)gvf.style.display='none';" +
       "if(navigator.vibrate)navigator.vibrate([100,60,100,60,300]);beepG();setTimeout(fechaGuia,3500);}" +
       "document.addEventListener('click',function(e){" +
       "var gb=e.target.closest('.guiabtn');if(gb){abreGuia(+gb.dataset.g);return;}" +

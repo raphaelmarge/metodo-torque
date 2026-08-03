@@ -427,6 +427,8 @@ async function abaPt(p, a) {
   ok(/A — Peito\/Tríceps/.test(appHtml) && /Supino reto/.test(appHtml) && /4×10/.test(appHtml), "app leva a ficha estruturada (Supino 4×10)");
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
   ok(/▶ ver vídeo/.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão ▶ ver vídeo");
+  ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
+  ok(/gVideo/.test(appHtml) && /▶ como fazer/.test(appHtml), "modo guiado tem o link ▶ como fazer");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
   ok(/Minhas sessões/.test(appHtml) && /07:30/.test(appHtml), "próximas sessões embutidas no app");
