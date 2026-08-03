@@ -173,6 +173,53 @@ function ok(cond, nome) {
   await p2.waitForTimeout(700);
   ok(errosApp.length === 0, "app gerado abre sem erros de JS" + (errosApp.length ? " — " + errosApp[0] : ""));
   await p2.close();
+
+  // ---------- 6a) treino guiado: com ficha prescrita, o app conduz série a série ----------
+  console.log("Treino guiado no app:");
+  const htmlGuia = await p.evaluate(() => {
+    const a = JSON.parse(localStorage.getItem("mtapp:alunos")).alunos[0];
+    a.appToken = "tok-rafa";
+    window.MTStore.write("treinos", { exercicios: [], prescricoes: [{
+      alunoId: a.id, freq: 3, fichas: [{ nome: "Ficha A", itens: [
+        { ex: "Supino reto", series: "2", reps: "10", descanso: "30s", carga: "20kg" },
+        { ex: "Agachamento livre", series: "2", reps: "12", descanso: "45s" },
+      ] }],
+    }] });
+    return window.__appAluno.monta(a, new Date().toISOString());
+  });
+  ok(/guiabtn/.test(htmlGuia) && /▶ Treino guiado/.test(htmlGuia), "ficha ganha o botão ▶ Treino guiado");
+  const p3 = await ctx.newPage();
+  const errosGuia = [];
+  p3.on("pageerror", (e) => errosGuia.push(String(e)));
+  await p3.setContent(htmlGuia, { waitUntil: "domcontentloaded" });
+  await p3.waitForTimeout(500);
+  await p3.evaluate(() => document.querySelector(".guiabtn").click());
+  let gui = await p3.evaluate(() => ({
+    on: document.getElementById("guiaBox").classList.contains("on"),
+    ex: document.getElementById("gEx").textContent,
+    prog: document.getElementById("gProg").textContent,
+    serie: document.getElementById("gSerie").textContent,
+  }));
+  ok(gui.on && gui.ex === "Supino reto" && /exercício 1 de 2/.test(gui.prog), "modo guiado abre no Supino (exercício 1 de 2)");
+  ok(/0\/2/.test(gui.serie), "botão mostra série 0/2");
+  await p3.click("#gSerie");
+  gui = await p3.evaluate(() => ({ desc: document.getElementById("gDesc").style.display, num: +document.getElementById("gDesc").textContent }));
+  ok(gui.desc === "block" && gui.num > 0 && gui.num <= 30, "série feita liga o descanso automático de 30s (" + gui.num + ")");
+  await p3.click("#gPular");
+  gui = await p3.evaluate(() => document.getElementById("gSerie").textContent);
+  ok(/1\/2/.test(gui), "pular descanso volta pro botão (série 1/2)");
+  await p3.click("#gSerie"); // 2/2 — fim do exercício → descanso com troca
+  await p3.click("#gPular");
+  gui = await p3.evaluate(() => document.getElementById("gEx").textContent);
+  ok(gui === "Agachamento livre", "fim das séries avança pro próximo exercício sozinho");
+  await p3.click("#gSerie");
+  await p3.click("#gPular");
+  await p3.click("#gSerie"); // última série do último exercício
+  gui = await p3.evaluate(() => ({ ex: document.getElementById("gEx").textContent, feitas: document.querySelector(".sfeita").textContent }));
+  ok(/concluído/.test(gui.ex), "última série fecha com 🎉 treino concluído");
+  ok(/2\/2/.test(gui.feitas), "séries do modo guiado marcam o contador da ficha (2/2)");
+  ok(errosGuia.length === 0, "modo guiado sem erros de JS" + (errosGuia.length ? " — " + errosGuia[0] : ""));
+  await p3.close();
   await p.close();
 
   // ---------- 6b) Publicação na nuvem: só oferece o link quando salvou ----------

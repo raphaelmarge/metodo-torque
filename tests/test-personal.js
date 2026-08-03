@@ -524,6 +524,24 @@ async function abaPt(p, a) {
   await pApp.waitForTimeout(300);
   const tmr = await pApp.evaluate(() => document.getElementById("tmrBar").textContent);
   ok(/Descanso/.test(tmr), "cronômetro de descanso liga");
+  // treino guiado: abre, conduz série → descanso automático → pular → concluir
+  await pApp.evaluate(() => document.querySelector(".guiabtn").click());
+  let guiP = await pApp.evaluate(() => ({
+    aberto: document.getElementById("guiaBox").style.display,
+    ex: document.getElementById("gEx").textContent,
+    prog: document.getElementById("gProg").textContent,
+  }));
+  ok(guiP.aberto === "flex" && guiP.ex.length > 1 && /exercício 1/.test(guiP.prog), "▶ Treino guiado abre no 1º exercício (" + guiP.ex + ")");
+  await pApp.click("#gSerie");
+  guiP = await pApp.evaluate(() => ({ desc: document.getElementById("gDesc").style.display, num: +document.getElementById("gDesc").textContent }));
+  ok(guiP.desc === "block" && guiP.num > 0, "série feita liga o descanso automático (" + guiP.num + "s)");
+  await pApp.click("#gPular");
+  guiP = await pApp.evaluate(() => document.getElementById("gSerie").textContent);
+  ok(/1\//.test(guiP), "pular descanso volta pro botão de série (1/N)");
+  await pApp.evaluate(() => { for (let i = 0; i < 12; i++) document.getElementById("gPularEx").click(); });
+  guiP = await pApp.evaluate(() => document.getElementById("gEx").textContent);
+  ok(/concluído/.test(guiP), "pular os exercícios chega no 🎉 treino concluído");
+  await pApp.evaluate(() => document.getElementById("gFechar").click());
   // gráfico de carga: clica na linha do diário
   await pApp.fill("#dcEx", "Supino reto");
   await pApp.fill("#dcKg", "72");
