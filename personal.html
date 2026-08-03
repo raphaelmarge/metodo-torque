@@ -2244,7 +2244,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ".kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #322e3d}" +
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
-      "<div class='topo'><div class='k'>" + esc(studio).toUpperCase() + " · TORQUE ON PERSONAL</div><h1>" + esc(a.nome.split(" ")[0]) + "</h1></div>" +
+      "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
+      "<button id='hambApp' aria-label='Abrir menu' style='flex:none;background:rgba(255,255,255,.12);border:none;color:#fff;cursor:pointer;padding:10px;border-radius:11px;font-size:0;'>" +
+      "<svg width='20' height='20' viewBox='0 0 20 20' fill='none'><path d='M3 5h14M3 10h14M3 15h14' stroke='currentColor' stroke-width='2' stroke-linecap='round'/></svg></button>" +
+      "<div><div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:#a78bfa;font-size:12.5px;font-weight:700;margin-top:2px;'></div></div></div>" +
+      // menu lateral (gaveta)
+      "<div id='menuFundo' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;'></div>" +
+      "<nav id='menuApp' style='position:fixed;top:0;left:-290px;bottom:0;width:270px;background:#17141d;border-right:1px solid #322e3d;z-index:71;transition:left .22s ease;padding:22px 14px;overflow-y:auto;'>" +
+      "<div style='font-size:11px;letter-spacing:.2em;color:#a78bfa;font-weight:800;margin:0 0 14px 10px;'>" + esc(studio).toUpperCase() + " 💜</div>" +
+      "<div id='menuItens'></div>" +
+      "</nav>" +
       (((st.config || {}).mural || []).length
         ? "<div class='cardx' style='border-color:#7c3aed;'><h2>📌 Mural do studio</h2>" +
           ((st.config || {}).mural || []).map(function (av) {
@@ -2694,6 +2703,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "return \"<div class='kv'><span>\"+rot+\"</span><span><b>\"+String(ult).replace('.',',')+\"</b>\"+seta+\"</span></div>\";}" +
       "el.innerHTML=linha('⚖ Peso (kg)','peso')+linha('🧈 Gordura (%)','gordura')+linha('📏 Cintura (cm)','cintura')+linha('💪 Braço (cm)','braco',true)+" +
       "\"<div class='vz'>\"+AVS.length+\" avaliação(ões) · última em \"+AVS[AVS.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
+      // menu lateral: agrupa os cards em seções e controla a gaveta
+      "(function(){var MENU=[['inicio','🏠','Início'],['treino','🏋️','Treino'],['evolucao','📈','Evolução'],['agenda','📅','Agenda'],['chat','💬','Chat'],['pagamento','💳','Pagamento']];" +
+      "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
+      "if(/Meu treino|Diário de cargas/.test(t))return 'treino';" +
+      "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
+      "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
+      "if(/Check-in|Fale com/.test(t))return 'chat';" +
+      "if(/Pagamento|Mensalidade/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
+      "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login/.test(t))return 'inicio';" +
+      "return null;}" +
+      "var IGNORA={hambApp:1,menuFundo:1,menuApp:1,tmrBar:1,guiaBox:1};" +
+      "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
+      "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
+      "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
+      "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
+      "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
+      "document.getElementById('menuItens').innerHTML=itens.map(function(m){" +
+      "return \"<div class='mitem' data-msec='\"+m[0]+\"' style='display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:12px;cursor:pointer;font-weight:700;font-size:14.5px;color:#cfcbdb;'>\"+" +
+      "\"<span style='font-size:19px;'>\"+m[1]+\"</span>\"+m[2]+\"</div>\";}).join('');" +
+      "var stSec=document.createElement('style');stSec.textContent='[data-sec-off]{display:none!important}';document.head.appendChild(stSec);" +
+      "function trocaSec(s){document.querySelectorAll('[data-sec]').forEach(function(el){" +
+      "if(el.getAttribute('data-sec')===s)el.removeAttribute('data-sec-off');else el.setAttribute('data-sec-off','1');});" +
+      "document.querySelectorAll('.mitem').forEach(function(mi){var on=mi.getAttribute('data-msec')===s;" +
+      "mi.style.background=on?'rgba(124,58,237,.2)':'';mi.style.color=on?'#fff':'#cfcbdb';});" +
+      "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
+      "document.getElementById('secTit').textContent=rot?rot[1]+' '+rot[2]:'';" +
+      "fechaMenu();window.scrollTo(0,0);}" +
+      "function abreMenu(){document.getElementById('menuFundo').style.display='block';document.getElementById('menuApp').style.left='0';}" +
+      "function fechaMenu(){document.getElementById('menuFundo').style.display='none';document.getElementById('menuApp').style.left='-290px';}" +
+      "document.getElementById('hambApp').addEventListener('click',abreMenu);" +
+      "document.getElementById('menuFundo').addEventListener('click',fechaMenu);" +
+      "document.getElementById('menuItens').addEventListener('click',function(e){var mi=e.target.closest('.mitem');if(mi)trocaSec(mi.getAttribute('data-msec'));});" +
+      "window.__trocaSec=trocaSec;trocaSec('inicio');})();" +
       atualizador +
       "</" + "script></body></html>";
   }
