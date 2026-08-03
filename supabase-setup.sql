@@ -1594,3 +1594,25 @@ alter table public.chat_config add column if not exists bots jsonb;
 -- (vem da tabela membros, pelo login). Bloco idempotente.
 
 alter table public.chat_mensagens add column if not exists autor text not null default '';
+
+-- ==================== RETORNO DO APP DO ALUNO ====================
+-- O app do aluno (TORQUE PERSONAL) devolve pro personal o que o aluno
+-- registra: peso na balança, diário de cargas, treinos feitos e as fotos
+-- antes/depois. Fica na coluna retorno do app_aluno e o perfil do aluno
+-- no módulo lê. Bloco idempotente.
+
+alter table public.app_aluno add column if not exists retorno jsonb;
+
+create or replace function public.app_aluno_devolve(t text, p_dados jsonb)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+  if t is null or length(t) < 10 then
+    return json_build_object('erro', 'token inválido');
+  end if;
+  update public.app_aluno set retorno = p_dados, atualizado = now() where token = t;
+  if not found then
+    return json_build_object('erro', 'app não encontrado');
+  end if;
+  return json_build_object('ok', true);
+end $$;
+grant execute on function public.app_aluno_devolve(text, jsonb) to anon, authenticated;

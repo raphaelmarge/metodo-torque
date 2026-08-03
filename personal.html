@@ -379,51 +379,71 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
     </div>
   </div>
-</main>
-
-<!-- perfil completo do aluno (estilo cadastro da academia) -->
-<dialog id="dlgPerfil" style="max-width: 560px; width: 94vw; border: 1px solid #322e3d; border-radius: 18px; background: #17141d; color: #fff; padding: 0;">
-  <div style="padding: 18px 20px; max-height: 84vh; overflow-y: auto;">
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <h2 id="pfTitulo" style="font-size: 19px; margin: 0;">Perfil</h2>
+<section id="vPerfil" hidden>
+  <div class="card" style="border-left: 4px solid var(--roxo);">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <button class="btn sec mini" id="pfFechar">← Voltar</button>
+      <h2 id="pfTitulo" style="font-size: 20px; margin: 0;">Perfil</h2>
       <span id="pfDesde" class="muted" style="font-size: 12px;"></span>
-      <button class="btn sec mini" id="pfFechar" style="margin-left: auto;">✕ Fechar</button>
-    </div>
-
-    <h3 style="font-size: 12px; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase; margin: 16px 0 8px;">Dados do aluno</h3>
-    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
-      <label style="font-size: 12px; margin: 0;">Nome<input id="pfNome" style="display:block; width: 200px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">WhatsApp<input id="pfZap" inputmode="numeric" style="display:block; width: 140px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Nascimento<input id="pfNasc" type="date" style="display:block; width: 150px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Valor (R$)<input id="pfValor" inputmode="decimal" style="display:block; width: 90px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Cobrança<select id="pfModo" style="display:block; width: 120px; margin-top: 3px;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pfPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">💠 Pix</option><option value="dinheiro">💵 Dinheiro</option><option value="cartao">💳 Cartão</option><option value="recorrente">🔁 Link recorrente</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Objetivo<input id="pfObjetivo" placeholder="ex.: hipertrofia" style="display:block; width: 170px; margin-top: 3px;"></label>
-    </div>
-    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Observações (lesões, restrições, preferências)
-      <textarea id="pfObs" rows="2" style="width: 100%; margin-top: 3px;"></textarea></label>
-    <button class="btn mini" id="pfSalvar" style="margin-top: 8px;">💾 Salvar dados</button>
-    <span id="pfSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
-
-    <h3 style="font-size: 12px; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase; margin: 18px 0 8px;">Financeiro</h3>
-    <div id="pfFin" style="font-size: 13.5px; line-height: 1.7;"></div>
-
-    <h3 style="font-size: 12px; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase; margin: 18px 0 8px;">Frequência de treino</h3>
-    <div id="pfFreq"></div>
-
-    <h3 style="font-size: 12px; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase; margin: 18px 0 8px;">Avaliações físicas — relatório e evolução</h3>
-    <div id="pfPeso" class="muted" style="font-size: 13px;"></div>
-
-    <h3 style="font-size: 12px; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase; margin: 18px 0 8px;">Ficha atual</h3>
-    <div id="pfFicha" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
-
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
+      <span style="margin-left: auto;"></span>
       <button class="btn mini" id="pfApp">📲 Gerar app</button>
       <button class="btn mini" id="pfPix">💠 Pix</button>
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none;">💬 WhatsApp</a>
     </div>
   </div>
-</dialog>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Cadastro completo</h2>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+      <label style="font-size: 12px; margin: 0;">Nome<input id="pfNome" style="display:block; width: 200px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">WhatsApp<input id="pfZap" inputmode="numeric" style="display:block; width: 140px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">E-mail<input id="pfEmail" type="email" style="display:block; width: 200px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Nascimento<input id="pfNasc" type="date" style="display:block; width: 150px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Sexo<select id="pfSexo" style="display:block; width: 110px; margin-top: 3px;"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pfAltura" inputmode="numeric" style="display:block; width: 90px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Profissão<input id="pfProfissao" style="display:block; width: 160px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Contato de emergência<input id="pfEmergencia" placeholder="nome e telefone" style="display:block; width: 210px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Valor (R$)<input id="pfValor" inputmode="decimal" style="display:block; width: 90px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Cobrança<select id="pfModo" style="display:block; width: 120px; margin-top: 3px;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pfPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">💠 Pix</option><option value="dinheiro">💵 Dinheiro</option><option value="cartao">💳 Cartão</option><option value="recorrente">🔁 Link recorrente</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Objetivo<input id="pfObjetivo" placeholder="ex.: hipertrofia" style="display:block; width: 170px; margin-top: 3px;"></label>
+    </div>
+    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Anamnese e observações (lesões, restrições, histórico, preferências)
+      <textarea id="pfObs" rows="3" style="width: 100%; margin-top: 3px;"></textarea></label>
+    <button class="btn mini" id="pfSalvar" style="margin-top: 8px;">💾 Salvar dados</button>
+    <span id="pfSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">📲 Direto do app do aluno</h2>
+    <p class="muted" style="font-size: 12.5px; margin: 4px 0 8px;">O que o aluno registra no app dele (peso na balança, cargas, treinos e fotos) aparece aqui sozinho quando os dois estão com internet.</p>
+    <div id="pfAppDados" class="muted" style="font-size: 13px;">Carregando…</div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Financeiro</h2>
+    <div id="pfFin" style="font-size: 13.5px; line-height: 1.7; margin-top: 6px;"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Frequência de treino</h2>
+    <div id="pfFreq" style="margin-top: 6px;"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Avaliações físicas — relatório e evolução</h2>
+    <div id="pfPeso" class="muted" style="font-size: 13px; margin-top: 6px;"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Ficha atual</h2>
+    <div id="pfFicha" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 6px;"></div>
+  </div>
+</section>
+</main>
+
+<!-- perfil completo do aluno (estilo cadastro da academia) -->
+
 
 <script src="assets/vendor/qrcode.js"></script>
 <script src="assets/cloud-config.js"></script>
@@ -500,6 +520,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vRelatorios").hidden = b.dataset.a !== "relatorios";
     $("vAssessoria").hidden = b.dataset.a !== "assessoria";
     $("vChat").hidden = b.dataset.a !== "chat";
+    $("vPerfil").hidden = true;
     if (b.dataset.a === "relatorios") renderRelatorios();
     if (b.dataset.a === "assessoria") renderAssessoria();
     if (b.dataset.a === "chat") { renderBotP(); montaBuilderP(); renderChatPT(); }
@@ -582,6 +603,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfNasc").value = a.nasc || ""; $("pfValor").value = a.valor || "";
     $("pfModo").value = a.modo || "mes"; $("pfPagto").value = a.pagto || "";
     $("pfObjetivo").value = a.objetivo || ""; $("pfObs").value = a.obs || "";
+    $("pfEmail").value = a.email || ""; $("pfSexo").value = a.sexo || "";
+    $("pfAltura").value = a.altura || ""; $("pfProfissao").value = a.profissao || "";
+    $("pfEmergencia").value = a.emergencia || "";
     $("pfSalvo").textContent = "";
     // financeiro: contrato + pagamentos
     var ct = contratoDe(st, id);
@@ -666,13 +690,88 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var wa = $("pfWhats");
     if (a.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, ""); }
     else wa.style.display = "none";
-    if (!$("dlgPerfil").open) $("dlgPerfil").showModal();
+    // vira PÁGINA: esconde as outras seções e mostra o perfil
+    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vRelatorios", "vAssessoria", "vChat"].forEach(function (v) { $(v).hidden = true; });
+    $("vPerfil").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    pintaAppDados(a);
+  }
+  // dados que o aluno registrou no app dele (sincronizados pela nuvem)
+  function pintaAppDados(a) {
+    var box = $("pfAppDados");
+    var nuvem = S.cloud && S.cloud();
+    if (!a.appTokenP) { box.textContent = "Gere o app do aluno primeiro — depois que ele usar, os dados aparecem aqui."; return; }
+    if (!nuvem) { box.textContent = "Entre com a sua conta da nuvem pra ver o que o aluno registrou no app."; return; }
+    box.textContent = "Carregando dados do app…";
+    nuvem.client.from("app_aluno").select("retorno").eq("token", a.appTokenP).limit(1)
+      .then(function (r) {
+        var ret = r && r.data && r.data[0] && r.data[0].retorno;
+        if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
+        if (!ret) { box.textContent = "O aluno ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui."; return; }
+        var html = "";
+        // peso na balança
+        var pz = ret.peso || {};
+        var ks = Object.keys(pz).sort();
+        if (ks.length) {
+          var l = ks.slice(-10);
+          var vals = l.map(function (k) { return +pz[k]; });
+          var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
+          var faixa = (max - min) || 1;
+          var dif = Math.round((vals[vals.length - 1] - (+pz[ks[0]])) * 10) / 10;
+          html += "<div style='margin:6px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>⚖️ Peso na balança (registrado pelo aluno)</b> — hoje <b>" +
+            String(vals[vals.length - 1]).replace(".", ",") + " kg</b> (<b style='color:" + (dif < 0 ? "#4ade80" : dif > 0 ? "#f87171" : "#a9a4b5") + ";'>" +
+            (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + "</b> desde o início)</div>" +
+            "<div style='display:flex;gap:5px;align-items:flex-end;height:70px;'>" + l.map(function (k) {
+              var h = Math.round(14 + 44 * ((+pz[k]) - min) / faixa);
+              return "<div style='flex:1;text-align:center;min-width:0;'><div style='font-size:9px;font-weight:800;color:#a78bfa;'>" + String(pz[k]).replace(".", ",") + "</div>" +
+                "<div style='height:" + (58 - h) + "px;'></div><div style='height:" + h + "px;background:#a78bfa;border-radius:4px 4px 0 0;opacity:.85;'></div>" +
+                "<div style='font-size:8.5px;color:#8a8695;margin-top:2px;'>" + k.slice(8, 10) + "/" + k.slice(5, 7) + "</div></div>";
+            }).join("") + "</div>";
+        }
+        // cargas
+        var dc = ret.cargas || {};
+        var exs = Object.keys(dc).filter(function (k) { return (dc[k] || []).length; });
+        if (exs.length) {
+          exs.sort(function (x, y) { return +(dc[y][dc[y].length - 1].kg) - +(dc[x][dc[x].length - 1].kg); });
+          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>🏋️ Evolução de carga (diário do aluno)</b></div>" +
+            exs.slice(0, 6).map(function (ex) {
+              var lst = dc[ex];
+              var pri = +lst[0].kg, ult = +lst[lst.length - 1].kg;
+              var d2 = Math.round((ult - pri) * 10) / 10;
+              return "<div style='display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed #322e3d;font-size:13px;'>" +
+                "<span>" + esc(ex) + "</span><span><b>" + String(ult).replace(".", ",") + " kg</b> " +
+                "<span style='color:" + (d2 > 0 ? "#4ade80" : "#a9a4b5") + ";font-size:11.5px;'>(" + (d2 > 0 ? "+" : "") + String(d2).replace(".", ",") + ")</span></span></div>";
+            }).join("");
+        }
+        // treinos feitos
+        var fe = ret.feitos || {};
+        var nTreinos = Object.keys(fe).length;
+        if (nTreinos) {
+          var porMes2 = {};
+          Object.keys(fe).forEach(function (k) { porMes2[k.slice(0, 7)] = (porMes2[k.slice(0, 7)] || 0) + 1; });
+          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>📆 Treinos marcados no app</b> — " + nTreinos + " no total</div>" + barrasMes(porMes2, "#4ade80");
+        }
+        // fotos antes × depois
+        if (ret.fotoAntes) {
+          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>📸 Fotos de progresso</b></div>" +
+            "<div style='display:flex;gap:10px;max-width:400px;'>" +
+            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (ret.fotoAntesD ? " · " + ret.fotoAntesD.slice(8, 10) + "/" + ret.fotoAntesD.slice(5, 7) : "") + "</div><img src='" + ret.fotoAntes + "' style='width:100%;border-radius:11px;'></div>" +
+            (ret.fotoDepois ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (ret.fotoDepoisD ? " · " + ret.fotoDepoisD.slice(8, 10) + "/" + ret.fotoDepoisD.slice(5, 7) : "") + "</div><img src='" + ret.fotoDepois + "' style='width:100%;border-radius:11px;'></div>" : "") +
+            "</div>";
+        }
+        box.innerHTML = html || "O aluno ainda não registrou nada no app. Assim que registrar peso, carga, treino ou foto, aparece aqui.";
+      }, function () { box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
   }
   $("listaAlunos").addEventListener("click", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-perfil");
     if (id) abrePerfil(id);
   });
-  $("pfFechar").addEventListener("click", function () { $("dlgPerfil").close(); });
+  function fechaPerfil() {
+    $("vPerfil").hidden = true;
+    var abaAlunos = document.querySelector('#abas [data-a="alunos"]');
+    if (abaAlunos) abaAlunos.click();
+  }
+  $("pfFechar").addEventListener("click", fechaPerfil);
   $("pfSalvar").addEventListener("click", function () {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === perfilId; });
@@ -685,6 +784,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     a.pagto = $("pfPagto").value;
     a.objetivo = $("pfObjetivo").value.trim();
     a.obs = $("pfObs").value.trim();
+    a.email = $("pfEmail").value.trim();
+    a.sexo = $("pfSexo").value;
+    a.altura = +$("pfAltura").value || 0;
+    a.profissao = $("pfProfissao").value.trim();
+    a.emergencia = $("pfEmergencia").value.trim();
     save(st);
     $("pfTitulo").textContent = "👤 " + a.nome;
     $("pfSalvo").textContent = "✅ salvo!";
@@ -699,7 +803,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     abrePix(a, (pl ? +pl.valor : +a.valor) || 0);
   });
   $("pfApp").addEventListener("click", function () {
-    $("dlgPerfil").close();
     var b = document.querySelector('[data-app="' + perfilId + '"]');
     if (b) b.click();
   });
@@ -1845,7 +1948,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer. 😉</div>" +
       "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>Adicionar foto de hoje" +
       "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
-      "<div class='vz' style='font-size:11px;'>As fotos ficam SÓ neste aparelho — ninguém mais vê.</div></div>" +
+      "<div class='vz' style='font-size:11px;'>Suas fotos ficam com você e com o seu personal — mais ninguém vê.</div></div>" +
       (vidsApp.length ? "<div class='cardx'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
         (function () {
           var porCat = {};
@@ -1907,7 +2010,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ",NUVEM=" + JSON.stringify((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
       ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
-      "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}" +
+      "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos')devolveApp();}" +
+      // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
+      "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
+      "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{})," +
+      "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
+      "atualizado:new Date().toISOString()}});},1800);}" +
+      "setTimeout(devolveApp,2500);" +
       "function isoHj(){return new Date().toISOString().slice(0,10);}" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +

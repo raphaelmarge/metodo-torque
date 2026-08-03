@@ -435,6 +435,8 @@ async function abaPt(p, a) {
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
+  ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
+  ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");
   ok(/btnCardStories/.test(appHtml) && /Gerar card pro Stories/.test(appHtml), "conquistas têm o botão de card pro Stories");
   {
     const comMural = await p.evaluate(() => {
@@ -486,14 +488,21 @@ async function abaPt(p, a) {
   ok(await p.evaluate(() => !!document.querySelector('[data-perfil]')), "lista tem o botão 👤 Perfil");
   await p.evaluate(() => document.querySelector("[data-perfil]").click());
   let perfil = await p.evaluate(() => ({
-    aberto: document.getElementById("dlgPerfil").open,
+    aberto: !document.getElementById("vPerfil").hidden && document.getElementById("vAlunos").hidden,
     titulo: document.getElementById("pfTitulo").textContent,
     fin: document.getElementById("pfFin").textContent,
     freq: document.getElementById("pfFreq").textContent,
     peso: document.getElementById("pfPeso").textContent,
     ficha: document.getElementById("pfFicha").textContent,
   }));
-  ok(perfil.aberto && /João Cliente/.test(perfil.titulo), "perfil abre com o nome do aluno");
+  ok(perfil.aberto && /João Cliente/.test(perfil.titulo), "perfil abre como PÁGINA própria (lista some) com o nome do aluno");
+  // cadastro completo: campos novos salvam
+  await p.evaluate(() => {
+    document.getElementById("pfEmail").value = "joao@email.com";
+    document.getElementById("pfAltura").value = "178";
+    document.getElementById("pfProfissao").value = "Engenheiro";
+    document.getElementById("pfEmergencia").value = "Maria 31 98888-0000";
+  });
   ok(/Contrato/.test(perfil.fin) && /Mensal 3x/.test(perfil.fin) && /pago/.test(perfil.fin), "financeiro mostra contrato e status do mês");
   ok(/sessão\(ões\) feitas/.test(perfil.freq), "frequência de treino com gráfico de sessões");
   ok(/Data/.test(perfil.peso) && /90 kg|84 kg/.test(perfil.peso), "relatório de avaliações em tabela (peso registrado)");
@@ -511,10 +520,40 @@ async function abaPt(p, a) {
   const salvo = await p.evaluate(() => {
     const st = window.MTStore.read("ptStudio", {});
     const a = st.alunos.find((x) => x.ativo !== false);
-    return { obj: a.objetivo, pagto: a.pagto };
+    return { obj: a.objetivo, pagto: a.pagto, email: a.email, altura: a.altura, prof: a.profissao, emerg: a.emergencia };
   });
   ok(salvo.obj === "Hipertrofia" && salvo.pagto === "pix", "objetivo e método de pagamento salvos no cadastro");
+  ok(salvo.email === "joao@email.com" && salvo.altura === 178 && salvo.prof === "Engenheiro" && /Maria/.test(salvo.emerg), "cadastro completo salva e-mail, altura, profissão e emergência");
+  // dados do app do aluno sincronizados (nuvem simulada com retorno)
+  {
+    await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const a = st.alunos.find((x) => x.ativo !== false);
+      a.appTokenP = "tok-sync-teste";
+      window.MTStore.write("ptStudio", st);
+      const px = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+      window.__cloudOrig = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({
+        aid: "x",
+        client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
+          peso: { "2026-07-01": 86, "2026-07-20": 84.2, "2026-08-01": 83.1 },
+          cargas: { "Supino reto": [{ d: "2026-07-01", kg: 60 }, { d: "2026-08-01", kg: 72.5 }] },
+          feitos: { "2026-07-02": 1, "2026-07-04": 1, "2026-08-01": 1 },
+          fotoAntes: px, fotoAntesD: "2026-05-01", fotoDepois: px, fotoDepoisD: "2026-08-01",
+        } }] }) }) }) }) },
+      });
+      window.__perfilPT(a.id);
+    });
+    await p.waitForTimeout(400);
+    const appDados = await p.evaluate(() => document.getElementById("pfAppDados").innerHTML);
+    ok(/Peso na balança/.test(appDados) && /83,1/.test(appDados), "peso da balança do app aparece no perfil (83,1 kg)");
+    ok(/Evolução de carga/.test(appDados) && /72,5 kg/.test(appDados) && /\+12,5/.test(appDados), "cargas do diário do aluno com delta (+12,5)");
+    ok(/Treinos marcados no app/.test(appDados) && /3 no total/.test(appDados), "treinos feitos no app contados");
+    ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
+    await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig; });
+  }
   await p.evaluate(() => document.getElementById("pfFechar").click());
+  ok(await p.evaluate(() => document.getElementById("vPerfil").hidden && !document.getElementById("vAlunos").hidden), "← Voltar retorna pra lista de alunos");
   // busca de aluno no topo abre o perfil
   await p.fill("#buscaAluno", "joão");
   await p.waitForTimeout(150);
@@ -524,7 +563,7 @@ async function abaPt(p, a) {
   }));
   ok(busca.aberta && /João Cliente/.test(busca.texto) && /pago/.test(busca.texto), "busca no topo acha o aluno com status");
   await p.press("#buscaAluno", "Enter");
-  ok(await p.evaluate(() => document.getElementById("dlgPerfil").open), "Enter na busca abre o perfil do aluno");
+  ok(await p.evaluate(() => !document.getElementById("vPerfil").hidden), "Enter na busca abre a página de perfil do aluno");
   await p.evaluate(() => document.getElementById("pfFechar").click());
   await p.fill("#buscaAluno", "zzz");
   await p.waitForTimeout(150);
