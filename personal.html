@@ -281,6 +281,30 @@
     </div>
 
     <div class="card" style="margin-bottom: 14px;">
+      <h2>Circunferências (fita métrica) — % gordura Marinha + RCQ</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Meça em cm e o sistema calcula o % de gordura pelo método da Marinha americana (US Navy) e a relação cintura-quadril com a classificação de risco. O resultado também preenche a avaliação abaixo.</p>
+      <div class="linha-flex" style="margin-bottom: 10px; flex-wrap: wrap;">
+        <select id="ccSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
+        <input id="ccAltura" type="number" step="0.5" min="0" placeholder="Altura cm" style="width: 100px;">
+        <input id="ccPescoco" type="number" step="0.1" min="0" placeholder="Pescoço cm" style="width: 110px;">
+        <input id="ccCintura" type="number" step="0.1" min="0" placeholder="Cintura cm" style="width: 105px;">
+        <input id="ccQuadril" type="number" step="0.1" min="0" placeholder="Quadril cm" style="width: 105px;">
+      </div>
+      <div class="linha-flex" style="margin-bottom: 10px; flex-wrap: wrap;">
+        <input id="ccTorax" type="number" step="0.1" min="0" placeholder="Tórax cm" style="width: 100px;">
+        <input id="ccAbdomen" type="number" step="0.1" min="0" placeholder="Abdômen cm" style="width: 110px;">
+        <input id="ccBraco" type="number" step="0.1" min="0" placeholder="Braço cm" style="width: 100px;">
+        <input id="ccAntebraco" type="number" step="0.1" min="0" placeholder="Antebraço cm" style="width: 115px;">
+        <input id="ccCoxa" type="number" step="0.1" min="0" placeholder="Coxa cm" style="width: 95px;">
+        <input id="ccPanturrilha" type="number" step="0.1" min="0" placeholder="Panturrilha cm" style="width: 125px;">
+      </div>
+      <div class="linha-flex">
+        <button class="btn" id="ccCalc">Calcular</button>
+        <span id="ccResultado" style="font-weight: 700;"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
       <h2>Nova avaliação física</h2>
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="avAluno" style="min-width: 180px;"></select>
@@ -408,10 +432,55 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pfPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">💠 Pix</option><option value="dinheiro">💵 Dinheiro</option><option value="cartao">💳 Cartão</option><option value="recorrente">🔁 Link recorrente</option></select></label>
       <label style="font-size: 12px; margin: 0;">Objetivo<input id="pfObjetivo" placeholder="ex.: hipertrofia" style="display:block; width: 170px; margin-top: 3px;"></label>
     </div>
-    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Anamnese e observações (lesões, restrições, histórico, preferências)
-      <textarea id="pfObs" rows="3" style="width: 100%; margin-top: 3px;"></textarea></label>
+    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Observações gerais
+      <textarea id="pfObs" rows="2" style="width: 100%; margin-top: 3px;"></textarea></label>
     <button class="btn mini" id="pfSalvar" style="margin-top: 8px;">💾 Salvar dados</button>
     <span id="pfSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Anamnese completa</h2>
+    <span id="pfParqBadge" style="font-size: 12.5px; font-weight: 800;"></span>
+
+    <p style="font-weight: 700; font-size: 13px; margin: 12px 0 4px;">PAR-Q — Questionário de prontidão (marque o que for SIM)</p>
+    <div style="display: grid; gap: 5px; font-size: 13px;">
+      <label style="margin:0;"><input type="checkbox" id="parq1"> Algum médico já disse que você tem problema cardíaco?</label>
+      <label style="margin:0;"><input type="checkbox" id="parq2"> Sente dor no peito quando faz atividade física?</label>
+      <label style="margin:0;"><input type="checkbox" id="parq3"> No último mês, sentiu dor no peito mesmo em repouso?</label>
+      <label style="margin:0;"><input type="checkbox" id="parq4"> Perde o equilíbrio por tontura ou já perdeu a consciência?</label>
+      <label style="margin:0;"><input type="checkbox" id="parq5"> Tem problema ósseo ou articular que pode piorar com exercício?</label>
+      <label style="margin:0;"><input type="checkbox" id="parq6"> Toma remédio pra pressão ou pro coração?</label>
+      <label style="margin:0;"><input type="checkbox" id="parq7"> Conhece alguma outra razão pra não fazer atividade física?</label>
+    </div>
+
+    <p style="font-weight: 700; font-size: 13px; margin: 14px 0 4px;">Histórico de saúde</p>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+      <label style="font-size: 12px; margin: 0;">Lesões e cirurgias anteriores<input id="anLesoes" placeholder="ex.: LCA em 2020, ombro D" style="display:block; width: 250px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Doenças crônicas<input id="anDoencas" placeholder="diabetes, hipertensão, asma…" style="display:block; width: 230px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Medicamentos em uso<input id="anMeds" style="display:block; width: 220px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Histórico familiar relevante<input id="anFamiliar" placeholder="cardiopatia, diabetes…" style="display:block; width: 220px; margin-top: 3px;"></label>
+    </div>
+
+    <p style="font-weight: 700; font-size: 13px; margin: 14px 0 4px;">Hábitos de vida</p>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+      <label style="font-size: 12px; margin: 0;">Sono<select id="anSono" style="display:block; width: 130px; margin-top: 3px;"><option value="">—</option><option>menos de 5h</option><option>5–6h</option><option>7–8h</option><option>mais de 8h</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Estresse<select id="anEstresse" style="display:block; width: 110px; margin-top: 3px;"><option value="">—</option><option>baixo</option><option>médio</option><option>alto</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Fuma?<select id="anFuma" style="display:block; width: 110px; margin-top: 3px;"><option value="">—</option><option>não</option><option>sim</option><option>parou</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Álcool<select id="anAlcool" style="display:block; width: 120px; margin-top: 3px;"><option value="">—</option><option>não bebe</option><option>social</option><option>frequente</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Alimentação (resumo)<input id="anAlimentacao" placeholder="ex.: pula café, janta tarde" style="display:block; width: 220px; margin-top: 3px;"></label>
+    </div>
+
+    <p style="font-weight: 700; font-size: 13px; margin: 14px 0 4px;">Histórico de treino</p>
+    <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+      <label style="font-size: 12px; margin: 0;">Nível<select id="anNivel" style="display:block; width: 140px; margin-top: 3px;"><option value="">—</option><option>iniciante</option><option>intermediário</option><option>avançado</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Tempo de treino (anos)<input id="anTempo" inputmode="decimal" style="display:block; width: 100px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Dias disponíveis/semana<select id="anDias" style="display:block; width: 100px; margin-top: 3px;"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Gosta de<input id="anGosta" placeholder="musculação, corrida…" style="display:block; width: 190px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Não gosta de<input id="anNaoGosta" placeholder="esteira, agachamento…" style="display:block; width: 190px; margin-top: 3px;"></label>
+    </div>
+
+    <button class="btn mini" id="pfAnSalvar" style="margin-top: 12px;">💾 Salvar anamnese</button>
+    <span id="pfAnSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
   </div>
 
   <div class="card">
@@ -607,6 +676,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfAltura").value = a.altura || ""; $("pfProfissao").value = a.profissao || "";
     $("pfEmergencia").value = a.emergencia || "";
     $("pfSalvo").textContent = "";
+    // anamnese
+    var an = a.anamnese || {};
+    for (var q = 1; q <= 7; q++) $("parq" + q).checked = !!an["parq" + q];
+    ["anLesoes", "anDoencas", "anMeds", "anFamiliar", "anSono", "anEstresse", "anFuma", "anAlcool",
+     "anAlimentacao", "anNivel", "anTempo", "anDias", "anGosta", "anNaoGosta"].forEach(function (id) {
+      $(id).value = an[id.slice(2).toLowerCase()] || "";
+    });
+    pintaParqBadge(an);
+    $("pfAnSalvo").textContent = "";
     // financeiro: contrato + pagamentos
     var ct = contratoDe(st, id);
     var pl = ct && planoDe(st, ct.planoId);
@@ -660,22 +738,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var temG = avs.some(function (v) { return v.gordura != null && v.gordura !== ""; });
       var temC = avs.some(function (v) { return v.cintura != null && v.cintura !== ""; });
       var temB = avs.some(function (v) { return v.braco != null && v.braco !== ""; });
+      var temQ = avs.some(function (v) { return v.quadril != null && v.quadril !== ""; });
+      var temR = avs.some(function (v) { return v.rcq; });
       var tabela = "<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:12.5px;'>" +
         "<tr style='color:#a78bfa;text-align:left;'><th style='padding:4px 8px 4px 0;'>Data</th><th style='padding:4px 8px;'>Peso</th>" +
         (temG ? "<th style='padding:4px 8px;'>% gordura</th>" : "") +
         (temC ? "<th style='padding:4px 8px;'>Cintura</th>" : "") +
+        (temQ ? "<th style='padding:4px 8px;'>Quadril</th>" : "") +
+        (temR ? "<th style='padding:4px 8px;'>RCQ</th>" : "") +
         (temB ? "<th style='padding:4px 8px;'>Braço</th>" : "") + "</tr>" +
         avs.slice(-8).map(function (v) {
           return "<tr style='border-top:1px solid #322e3d;'><td style='padding:5px 8px 5px 0;'>" + S.fmtData(v.data) + "</td>" +
             "<td style='padding:5px 8px;'><b>" + (v.peso != null && v.peso !== "" ? fmtN(+v.peso) + " kg" : "—") + "</b></td>" +
             (temG ? "<td style='padding:5px 8px;'>" + (v.gordura != null && v.gordura !== "" ? fmtN(+v.gordura) + "%" : "—") + "</td>" : "") +
             (temC ? "<td style='padding:5px 8px;'>" + (v.cintura != null && v.cintura !== "" ? fmtN(+v.cintura) + " cm" : "—") + "</td>" : "") +
+            (temQ ? "<td style='padding:5px 8px;'>" + (v.quadril != null && v.quadril !== "" ? fmtN(+v.quadril) + " cm" : "—") + "</td>" : "") +
+            (temR ? "<td style='padding:5px 8px;'>" + (v.rcq ? String(v.rcq).replace(".", ",") + (v.riscoRcq ? " <span style='font-size:10px;color:" + (v.riscoRcq === "alto" ? "#f87171" : v.riscoRcq === "moderado" ? "#fbbf24" : "#4ade80") + ";'>" + v.riscoRcq + "</span>" : "") : "—") + "</td>" : "") +
             (temB ? "<td style='padding:5px 8px;'>" + (v.braco != null && v.braco !== "" ? fmtN(+v.braco) + " cm" : "—") + "</td>" : "") + "</tr>";
         }).join("") + "</table></div>";
       $("pfPeso").innerHTML = tabela +
         grafMedida("Peso", "kg", "peso", "#a78bfa") +
         grafMedida("% de gordura", "%", "gordura", "#fbbf24") +
         grafMedida("Cintura", "cm", "cintura", "#38bdf8") +
+        grafMedida("Quadril", "cm", "quadril", "#f472b6") +
         grafMedida("Braço", "cm", "braco", "#4ade80") +
         "<div class='muted' style='font-size:11.5px;margin-top:6px;'>" + avs.length + " avaliação(ões) registradas — as novas entram por aqui automaticamente.</div>";
     } else {
@@ -766,6 +851,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var id = e.target.getAttribute && e.target.getAttribute("data-perfil");
     if (id) abrePerfil(id);
   });
+  function pintaParqBadge(an) {
+    var temSim = false;
+    for (var q = 1; q <= 7; q++) if (an["parq" + q]) temSim = true;
+    var respondido = Object.keys(an || {}).length > 0;
+    $("pfParqBadge").innerHTML = !respondido
+      ? '<span style="color:#a9a4b5;">PAR-Q ainda não respondido</span>'
+      : temSim
+        ? '<span style="color:#fbbf24;">⚠️ PAR-Q com resposta SIM — peça liberação médica antes de treinos intensos</span>'
+        : '<span style="color:#4ade80;">✅ PAR-Q liberado — nenhuma resposta SIM</span>';
+  }
+  $("pfAnSalvar").addEventListener("click", function () {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === perfilId; });
+    if (!a) return;
+    var an = {};
+    for (var q = 1; q <= 7; q++) an["parq" + q] = $("parq" + q).checked;
+    ["anLesoes", "anDoencas", "anMeds", "anFamiliar", "anSono", "anEstresse", "anFuma", "anAlcool",
+     "anAlimentacao", "anNivel", "anTempo", "anDias", "anGosta", "anNaoGosta"].forEach(function (id) {
+      an[id.slice(2).toLowerCase()] = $(id).value.trim();
+    });
+    a.anamnese = an;
+    save(st);
+    pintaParqBadge(an);
+    $("pfAnSalvo").textContent = "✅ anamnese salva!";
+    setTimeout(function () { $("pfAnSalvo").textContent = ""; }, 2000);
+  });
+
   function fechaPerfil() {
     $("vPerfil").hidden = true;
     var abaAlunos = document.querySelector('#abas [data-a="alunos"]');
@@ -1513,6 +1625,50 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__dobras = { calcula: calculaDobras, render: renderDobrasCampos }; // testes
 
+  // ---------- circunferências: % gordura Marinha (US Navy) + RCQ ----------
+  var circPend = null;
+  function calculaCirc() {
+    var sexo = $("ccSexo").value;
+    var alt = +$("ccAltura").value, pes = +$("ccPescoco").value;
+    var cin = +$("ccCintura").value, qua = +$("ccQuadril").value;
+    if (!alt || !pes || !cin || (sexo === "F" && !qua)) {
+      alert(sexo === "F" ? "Preencha altura, pescoço, cintura e quadril (cm)." : "Preencha altura, pescoço e cintura (cm)."); return null;
+    }
+    var log10 = function (x) { return Math.log(x) / Math.LN10; };
+    var pct = sexo === "M"
+      ? 495 / (1.0324 - 0.19077 * log10(cin - pes) + 0.15456 * log10(alt)) - 450
+      : 495 / (1.29579 - 0.35004 * log10(cin + qua - pes) + 0.22100 * log10(alt)) - 450;
+    pct = Math.round(pct * 10) / 10;
+    if (!isFinite(pct) || pct <= 0 || pct >= 70) { alert("Confere as medidas — o resultado saiu fora da realidade."); return null; }
+    var rcq = qua ? Math.round((cin / qua) * 100) / 100 : null;
+    var risco = "";
+    if (rcq) {
+      risco = sexo === "M"
+        ? (rcq < 0.90 ? "baixo" : rcq < 1.0 ? "moderado" : "alto")
+        : (rcq < 0.80 ? "baixo" : rcq < 0.85 ? "moderado" : "alto");
+    }
+    var circ = { pescoco: pes, cintura: cin };
+    [["ccQuadril", "quadril"], ["ccTorax", "torax"], ["ccAbdomen", "abdomen"], ["ccBraco", "braco"],
+     ["ccAntebraco", "antebraco"], ["ccCoxa", "coxa"], ["ccPanturrilha", "panturrilha"]].forEach(function (par) {
+      var v = +$(par[0]).value;
+      if (v) circ[par[1]] = v;
+    });
+    return { sexo: sexo, altura: alt, gordura: pct, rcq: rcq, risco: risco, circ: circ };
+  }
+  $("ccCalc").addEventListener("click", function () {
+    var r = calculaCirc();
+    if (!r) return;
+    circPend = r;
+    var corR = r.risco === "alto" ? "#f87171" : r.risco === "moderado" ? "#fbbf24" : "#4ade80";
+    $("ccResultado").innerHTML = "🎯 <b>" + String(r.gordura).replace(".", ",") + "% de gordura</b> (Marinha)" +
+      (r.rcq ? ' · RCQ <b>' + String(r.rcq).replace(".", ",") + '</b> <span style="color:' + corR + ';font-weight:800;">risco ' + r.risco + "</span>" : "") +
+      ' <span class="muted">— preenche a avaliação abaixo</span>';
+    if (!$("avGord").value) $("avGord").value = r.gordura;
+    if (!$("avCintura").value) $("avCintura").value = r.circ.cintura;
+    if (r.circ.braco && !$("avBraco").value) $("avBraco").value = r.circ.braco;
+  });
+  window.__circ = { calcula: calculaCirc }; // testes
+
   // ---------- avaliações ----------
   function renderAvaliacoes(st) {
     var el = $("listaAvaliacoes");
@@ -1559,6 +1715,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       reg.densidade = dobrasPend.densidade;
     }
     dobrasPend = null;
+    // circunferências calculadas entram na avaliação (quadril vira medida acompanhada)
+    if (circPend) {
+      reg.circ = circPend.circ;
+      reg.rcq = circPend.rcq;
+      reg.riscoRcq = circPend.risco;
+      if (circPend.circ.quadril) reg.quadril = circPend.circ.quadril;
+      if (!reg.gordura && circPend.gordura) reg.gordura = circPend.gordura;
+    }
+    circPend = null;
     st.avaliacoes.push(reg);
     ["avPeso", "avGord", "avCintura", "avBraco"].forEach(function (id) { $(id).value = ""; });
     save(st);
