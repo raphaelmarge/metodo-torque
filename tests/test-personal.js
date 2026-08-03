@@ -479,6 +479,39 @@ async function abaPt(p, a) {
     if (!/cardPedidosApp/.test(perModulo)) ok(false, "módulo tem o card de pedidos do app na Agenda");
     else ok(true, "módulo tem o card de pedidos do app na Agenda");
   }
+
+  // ---------- perfil completo do aluno ----------
+  console.log("Perfil do aluno:");
+  await abaPt(p, "alunos");
+  ok(await p.evaluate(() => !!document.querySelector('[data-perfil]')), "lista tem o botão 👤 Perfil");
+  await p.evaluate(() => document.querySelector("[data-perfil]").click());
+  let perfil = await p.evaluate(() => ({
+    aberto: document.getElementById("dlgPerfil").open,
+    titulo: document.getElementById("pfTitulo").textContent,
+    fin: document.getElementById("pfFin").textContent,
+    freq: document.getElementById("pfFreq").textContent,
+    peso: document.getElementById("pfPeso").textContent,
+    ficha: document.getElementById("pfFicha").textContent,
+  }));
+  ok(perfil.aberto && /João Cliente/.test(perfil.titulo), "perfil abre com o nome do aluno");
+  ok(/Contrato/.test(perfil.fin) && /Mensal 3x/.test(perfil.fin) && /pago/.test(perfil.fin), "financeiro mostra contrato e status do mês");
+  ok(/sessão\(ões\) feitas/.test(perfil.freq), "frequência de treino com gráfico de sessões");
+  ok(/kg/.test(perfil.peso), "evolução de peso com as avaliações");
+  ok(/exercício/.test(perfil.ficha) || /Sem ficha/.test(perfil.ficha), "resumo da ficha atual presente");
+  // edita dados e salva
+  await p.evaluate(() => {
+    document.getElementById("pfObjetivo").value = "Hipertrofia";
+    document.getElementById("pfPagto").value = "pix";
+    document.getElementById("pfSalvar").click();
+  });
+  await p.waitForTimeout(200);
+  const salvo = await p.evaluate(() => {
+    const st = window.MTStore.read("ptStudio", {});
+    const a = st.alunos.find((x) => x.ativo !== false);
+    return { obj: a.objetivo, pagto: a.pagto };
+  });
+  ok(salvo.obj === "Hipertrofia" && salvo.pagto === "pix", "objetivo e método de pagamento salvos no cadastro");
+  await p.evaluate(() => document.getElementById("pfFechar").click());
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
@@ -652,7 +685,7 @@ async function abaPt(p, a) {
   const cta = await p.evaluate(() => document.getElementById("ctaZap").href);
   ok(/wa\.me\/5531999990000/.test(cta), "CTA aponta pro WhatsApp do vendedor (?zap=)");
   const corpo = await p.evaluate(() => document.body.textContent);
-  ok(/personal trainer/.test(corpo) && /Pagamentos/.test(corpo), "landing com pitch e features");
+  ok(/personal trainer/.test(corpo) && /Treino guiado/.test(corpo) && /R\$ 49/.test(corpo) && /820 exercícios/.test(corpo), "landing com pitch, features atuais e preço");
   await p.close();
 
   // ---------- 4) login próprio do TORQUE PERSONAL (gate do módulo) ----------
