@@ -515,6 +515,21 @@ async function abaPt(p, a) {
   });
   ok(salvo.obj === "Hipertrofia" && salvo.pagto === "pix", "objetivo e método de pagamento salvos no cadastro");
   await p.evaluate(() => document.getElementById("pfFechar").click());
+  // busca de aluno no topo abre o perfil
+  await p.fill("#buscaAluno", "joão");
+  await p.waitForTimeout(150);
+  const busca = await p.evaluate(() => ({
+    aberta: !document.getElementById("buscaAlunoLista").hidden,
+    texto: document.getElementById("buscaAlunoLista").textContent,
+  }));
+  ok(busca.aberta && /João Cliente/.test(busca.texto) && /pago/.test(busca.texto), "busca no topo acha o aluno com status");
+  await p.press("#buscaAluno", "Enter");
+  ok(await p.evaluate(() => document.getElementById("dlgPerfil").open), "Enter na busca abre o perfil do aluno");
+  await p.evaluate(() => document.getElementById("pfFechar").click());
+  await p.fill("#buscaAluno", "zzz");
+  await p.waitForTimeout(150);
+  ok(/Nenhum aluno/.test(await p.evaluate(() => document.getElementById("buscaAlunoLista").textContent)), "busca sem resultado avisa educadamente");
+  await p.fill("#buscaAluno", "");
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");

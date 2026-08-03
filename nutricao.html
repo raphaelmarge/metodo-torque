@@ -61,6 +61,12 @@
       <span class="kicker" style="color: #86efac;">TORQUE ON · NUTRIÇÃO</span>
       <h1 id="tituloStudio">Meu consultório</h1>
     </div>
+    <div style="position: relative; margin-left: auto; min-width: 0;">
+      <input id="buscaPac" placeholder="🔍 Buscar paciente…" autocomplete="off"
+        style="width: min(230px, 42vw); padding: 9px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; font-family: inherit; font-size: 13.5px;">
+      <div id="buscaPacLista" hidden
+        style="position: absolute; top: 110%; right: 0; width: min(280px, 80vw); background: #fff; color: #1c2620; border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
+    </div>
   </div>
   <p>O sistema do nutricionista: pacientes, dietas por refeição com kcal, dieta automática e o app do paciente com água, alertas e adesão — cada nutricionista na sua própria ilha.</p>
 </header>
@@ -646,6 +652,44 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     publicaApp(perfilNId);
   });
   window.__perfilNT = abrePerfilN; // testes
+
+  // ---------- busca de paciente no topo ----------
+  function pintaBuscaPac() {
+    var termo = $("buscaPac").value.trim().toLowerCase();
+    var box = $("buscaPacLista");
+    if (!termo) { box.hidden = true; box.innerHTML = ""; return; }
+    var st = load();
+    var achou = st.pacientes.filter(function (p) {
+      return p.ativo !== false && (p.nome || "").toLowerCase().indexOf(termo) >= 0;
+    }).slice(0, 8);
+    box.innerHTML = achou.length ? achou.map(function (p) {
+      var d = st.dietas[p.id];
+      var temDieta = d && (d.refeicoes || []).length;
+      return "<div data-busca-id='" + p.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid #e5efe7;font-size:13.5px;'>" +
+        "<b>" + esc(p.nome) + "</b> <span style='font-size:11px;color:" + (temDieta ? "#16a34a" : "#b45309") + ";'>" +
+        (temDieta ? "· dieta ok" : "· sem dieta") + "</span></div>";
+    }).join("") : "<div style='padding:12px 14px;color:#6b7280;font-size:13px;'>Nenhum paciente com esse nome.</div>";
+    box.hidden = false;
+  }
+  $("buscaPac").addEventListener("input", pintaBuscaPac);
+  $("buscaPac").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      var pri = $("buscaPacLista").querySelector("[data-busca-id]");
+      if (pri) { abrePerfilN(pri.getAttribute("data-busca-id")); this.value = ""; $("buscaPacLista").hidden = true; }
+    }
+    if (e.key === "Escape") { $("buscaPacLista").hidden = true; }
+  });
+  $("buscaPacLista").addEventListener("mousedown", function (e) {
+    var el = e.target.closest("[data-busca-id]");
+    if (!el) return;
+    abrePerfilN(el.getAttribute("data-busca-id"));
+    $("buscaPac").value = "";
+    $("buscaPacLista").hidden = true;
+  });
+  $("buscaPac").addEventListener("blur", function () {
+    setTimeout(function () { $("buscaPacLista").hidden = true; }, 250);
+  });
+  window.__buscaNT = pintaBuscaPac; // testes
 
   // ---------- dietas ----------
   function pacienteSel() {
