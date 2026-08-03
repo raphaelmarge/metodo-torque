@@ -196,6 +196,25 @@
       <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os templates criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
+    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
+      <h2>👥 Enviar treino em grupo</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Monte grupos de alunos (turma da manhã, iniciantes…) e mande o mesmo treino pra todo mundo de uma vez — os apps publicados atualizam sozinhos.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <input id="grNome" placeholder="Nome do grupo (ex.: Turma 6h)" style="width: 200px;">
+        <button class="btn sec" id="grAdd">+ Criar grupo</button>
+      </div>
+      <div id="grAlunosPick" class="muted" style="margin-top: 6px; font-size: 13px;"></div>
+      <div id="grLista" class="muted" style="margin-top: 10px; font-size: 13.5px;">Nenhum grupo ainda.</div>
+      <hr style="border: none; border-top: 1px solid var(--linha); margin: 14px 0;">
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <select id="geOrigem" style="min-width: 200px;"></select>
+        <span class="muted" style="align-self: center;">→</span>
+        <select id="geGrupo" style="min-width: 170px;"></select>
+        <button class="btn" id="geEnviar">📤 Enviar treino pro grupo</button>
+      </div>
+      <p id="geStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+    </div>
+
     <div class="card">
       <h2>Biblioteca de exercícios</h2>
       <div class="linha-flex" style="margin: 8px 0 10px;">
@@ -674,6 +693,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vAgenda").hidden = b.dataset.a !== "agenda";
     $("vPagamentos").hidden = b.dataset.a !== "pagamentos";
     $("vTreinos").hidden = b.dataset.a !== "treinos";
+    if (b.dataset.a === "treinos") renderGrupos();
     $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
     $("vQuest").hidden = b.dataset.a !== "quest";
     if (b.dataset.a === "quest") { renderQuest(); carregaRespostasQuest(); }
@@ -1255,6 +1275,102 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
   }
   window.__desafioPT = { render: renderDesafio, ranking: carregaRankingDesafio, pinta: pintaRankingDesafio }; // testes
+
+  // ---------- grupos de alunos + envio de treino em grupo ----------
+  function renderGrupos() {
+    var st = load();
+    st.gruposPT = st.gruposPT || [];
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    $("grAlunosPick").innerHTML = ativos.length
+      ? "Quem entra no grupo novo: " + ativos.map(function (a) {
+          return '<label style="margin: 4px 12px 0 0; display: inline-block;"><input type="checkbox" class="grCheck" value="' + a.id + '"> ' + esc(a.nome) + "</label>";
+        }).join("")
+      : "";
+    $("grLista").innerHTML = st.gruposPT.length ? st.gruposPT.map(function (g) {
+      var nomes = g.alunoIds.map(function (id) {
+        var a = st.alunos.find(function (x) { return x.id === id; });
+        return a ? a.nome.split(" ")[0] : null;
+      }).filter(Boolean);
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+        "<b>👥 " + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nomes.join(", ") + ")</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-grrm="' + g.id + '">🗑</button></div>';
+    }).join("") : "Nenhum grupo ainda.";
+    $("geOrigem").innerHTML = '<option value="">Copiar o treino de…</option>' + ativos.map(function (a) {
+      var t2 = (st.treinosV2 || {})[a.id];
+      var n = (t2 && t2.fichas) ? t2.fichas.length : 0;
+      return n ? '<option value="' + a.id + '">' + esc(a.nome) + " (" + n + " ficha(s))</option>" : "";
+    }).join("");
+    $("geGrupo").innerHTML = '<option value="">Pro grupo…</option>' +
+      st.gruposPT.map(function (g) { return '<option value="' + g.id + '">👥 ' + esc(g.nome) + "</option>"; }).join("") +
+      '<option value="__todos">🌍 Todos os alunos ativos</option>';
+  }
+  $("grAdd").addEventListener("click", function () {
+    var nome = $("grNome").value.trim();
+    var ids = Array.from(document.querySelectorAll(".grCheck:checked")).map(function (c) { return c.value; });
+    if (!nome) { alert("Dê um nome pro grupo (ex.: Turma 6h)."); return; }
+    if (!ids.length) { alert("Marque pelo menos um aluno."); return; }
+    var st = load();
+    st.gruposPT = st.gruposPT || [];
+    st.gruposPT.push({ id: S.uid(), nome: nome, alunoIds: ids });
+    save(st);
+    $("grNome").value = "";
+    renderGrupos();
+  });
+  $("grLista").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-grrm");
+    if (!id || !confirm("Excluir este grupo? (os alunos continuam cadastrados)")) return;
+    var st = load();
+    st.gruposPT = (st.gruposPT || []).filter(function (g) { return g.id !== id; });
+    save(st); renderGrupos();
+  });
+  function enviaTreinoGrupo(origemId, grupoId) {
+    var st = load();
+    var fonte = (st.treinosV2 || {})[origemId];
+    if (!fonte || !(fonte.fichas || []).length) return { erro: "O aluno de origem não tem ficha montada." };
+    var ids = grupoId === "__todos"
+      ? st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) { return a.id; })
+      : ((st.gruposPT || []).find(function (g) { return g.id === grupoId; }) || {}).alunoIds || [];
+    ids = ids.filter(function (id) { return id !== origemId; });
+    if (!ids.length) return { erro: "O grupo está vazio." };
+    st.treinosV2 = st.treinosV2 || {};
+    ids.forEach(function (id) {
+      st.treinosV2[id] = JSON.parse(JSON.stringify(fonte));
+    });
+    S.write("ptStudio", st);
+    return { ok: true, ids: ids };
+  }
+  $("geEnviar").addEventListener("click", function () {
+    var origem = $("geOrigem").value, grupo = $("geGrupo").value;
+    if (!origem || !grupo) { alert("Escolha de quem copiar o treino e pra qual grupo enviar."); return; }
+    var r = enviaTreinoGrupo(origem, grupo);
+    if (r.erro) { alert(r.erro); return; }
+    $("geStatus").textContent = "✅ Treino copiado pra " + r.ids.length + " aluno(s). Atualizando os apps…";
+    // republica na nuvem os apps de quem já tem link
+    var st = load();
+    var nuvem = S.cloud && S.cloud();
+    var comToken = st.alunos.filter(function (a) { return r.ids.indexOf(a.id) >= 0 && a.appTokenP; });
+    if (!nuvem || !comToken.length) {
+      $("geStatus").textContent = "✅ Treino copiado pra " + r.ids.length + " aluno(s). " +
+        (comToken.length ? "Entre na nuvem pra atualizar os apps." : "Gere o app de cada um pra levar o treino novo.");
+      render();
+      return;
+    }
+    var stamp = new Date().toISOString();
+    var linhas = comToken.map(function (a) {
+      return { token: a.appTokenP, academia_id: nuvem.aid, dados: { html: montaAppAluno(a, stamp), stamp: stamp }, atualizado: stamp };
+    });
+    nuvem.client.from("app_aluno").upsert(linhas).then(function (res) {
+      $("geStatus").textContent = (res && res.error)
+        ? "✅ Treino copiado pra " + r.ids.length + " aluno(s), mas os apps NÃO atualizaram na nuvem (" + res.error.message + ")."
+        : "🎉 Treino enviado pra " + r.ids.length + " aluno(s) — " + linhas.length + " app(s) atualizados na nuvem!";
+      render();
+    }, function () {
+      $("geStatus").textContent = "✅ Treino copiado, mas sem conexão pra atualizar os apps agora.";
+      render();
+    });
+  });
+  window.__gruposPT = { render: renderGrupos, envia: enviaTreinoGrupo }; // testes
 
   // ---------- agenda ----------
   function renderAgenda(st) {

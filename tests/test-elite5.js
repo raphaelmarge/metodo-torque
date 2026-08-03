@@ -203,6 +203,7 @@ function ok(cond, nome) {
     localStorage.setItem("ptdc", JSON.stringify({ "Supino reto": [{ d: d(-7), kg: 60 }, { d: d(-4), kg: 60 }] }));
   });
   await pApp2.reload({ waitUntil: "domcontentloaded" });
+  await pApp2.evaluate(() => window.__trocaSec("treino"));
   await pApp2.fill("#dcEx", "Supino reto");
   await pApp2.fill("#dcKg", "60");
   await pApp2.click("#dcAdd");
