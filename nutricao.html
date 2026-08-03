@@ -18,6 +18,9 @@
   :root { --verde: #16a34a; --verde-2: #15803d; }
   /* menu lateral (gaveta escura, igual ao do TORQUE ON academia) */
   .hamb-nt { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.12); border: none; color: #fff; cursor: pointer; padding: 9px; border-radius: 10px; flex: none; transition: background .15s ease; }
+  .topo-marca { flex-wrap: wrap; }
+  .busca-topo { position: relative; margin-left: auto; flex: 1 1 170px; min-width: 150px; max-width: 260px; }
+  @media (max-width: 560px) { .busca-topo { flex-basis: 100%; max-width: 100%; margin-left: 0; margin-top: 4px; } }
   .hamb-nt:hover { background: rgba(255,255,255,.22); }
   .abas-nt {
     position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
@@ -58,14 +61,13 @@
   <div class="topo-marca">
     <button class="hamb-nt" id="btnMenuNt" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <div>
-      <span class="kicker" style="color: #86efac;">TORQUE ON · NUTRIÇÃO</span>
       <h1 id="tituloStudio">Meu consultório</h1>
     </div>
-    <div style="position: relative; margin-left: auto; min-width: 0;">
+    <div class="busca-topo">
       <input id="buscaPac" placeholder="🔍 Buscar paciente…" autocomplete="off"
-        style="width: min(230px, 42vw); padding: 9px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; font-family: inherit; font-size: 13.5px;">
+        style="width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; font-family: inherit; font-size: 13.5px;">
       <div id="buscaPacLista" hidden
-        style="position: absolute; top: 110%; right: 0; width: min(280px, 80vw); background: #fff; color: #1c2620; border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
+        style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: #fff; color: #1c2620; border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
     </div>
   </div>
   <p>O sistema do nutricionista: pacientes, dietas por refeição com kcal, dieta automática e o app do paciente com água, alertas e adesão — cada nutricionista na sua própria ilha.</p>
