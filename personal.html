@@ -89,6 +89,7 @@
     <button data-a="treinos">Treinos</button>
     <button data-a="avaliacoes">Avaliações</button>
     <button data-a="quest">Questionários</button>
+    <button data-a="desafio">Desafio 🏆</button>
     <button data-a="relatorios">Relatórios</button>
     <button data-a="assessoria">Assessoria</button>
     <button data-a="chat">Chat</button>
@@ -384,6 +385,31 @@
     </div>
   </section>
 
+  <!-- DESAFIO EM GRUPO (estilo GymRats) -->
+  <section id="vDesafio" hidden>
+    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
+      <h2>🏆 Desafio do studio (estilo GymRats)</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Crie um desafio com período e prêmio: cada "Treinei hoje!" que o aluno marcar no app conta ponto, e o placar aparece pra turma toda — no seu módulo e no app de cada aluno.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <input id="dsNome" placeholder="Nome (ex.: 30 dias TORQUE)" style="width: 220px;">
+        <label style="font-size: 12px; margin: 0;">Início<input id="dsIni" type="date" style="display:block; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Fim<input id="dsFim" type="date" style="display:block; margin-top: 3px;"></label>
+        <input id="dsPremio" placeholder="Prêmio (ex.: 1 mês grátis)" style="width: 200px;">
+      </div>
+      <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
+        <button class="btn" id="dsSalvar">💾 Salvar desafio</button>
+        <button class="btn sec" id="dsEncerrar">Encerrar desafio</button>
+        <span id="dsStatus" class="muted" style="font-size: 12.5px;"></span>
+      </div>
+      <p class="muted" style="font-size: 12px; margin-top: 8px;">Depois de salvar, <b>gere/publique os apps de novo</b> — o card do desafio entra no app de todo mundo.</p>
+    </div>
+    <div class="card">
+      <h2>Placar</h2>
+      <div id="dsRanking" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
+    </div>
+  </section>
+
+
   <section id="vRelatorios" hidden>
     <div class="card" style="margin-bottom: 14px;"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
@@ -651,6 +677,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
     $("vQuest").hidden = b.dataset.a !== "quest";
     if (b.dataset.a === "quest") { renderQuest(); carregaRespostasQuest(); }
+    $("vDesafio").hidden = b.dataset.a !== "desafio";
+    if (b.dataset.a === "desafio") { renderDesafio(); carregaRankingDesafio(); }
     $("vRelatorios").hidden = b.dataset.a !== "relatorios";
     $("vAssessoria").hidden = b.dataset.a !== "assessoria";
     $("vChat").hidden = b.dataset.a !== "chat";
@@ -841,7 +869,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (a.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, ""); }
     else wa.style.display = "none";
     // vira PÁGINA: esconde as outras seções e mostra o perfil
-    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vRelatorios", "vAssessoria", "vChat"].forEach(function (v) { $(v).hidden = true; });
+    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vDesafio", "vRelatorios", "vAssessoria", "vChat"].forEach(function (v) { $(v).hidden = true; });
     $("vPerfil").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     pintaAppDados(a);
@@ -1160,6 +1188,73 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
   }
   window.__questPT = { render: renderQuest, payload: montaPayloadQuest, respostas: carregaRespostasQuest }; // testes
+
+  // ---------- desafio em grupo (estilo GymRats) ----------
+  function renderDesafio() {
+    var st = load();
+    var d = st.desafio || {};
+    if (document.activeElement !== $("dsNome")) $("dsNome").value = d.nome || "";
+    if (document.activeElement !== $("dsIni")) $("dsIni").value = d.ini || "";
+    if (document.activeElement !== $("dsFim")) $("dsFim").value = d.fim || "";
+    if (document.activeElement !== $("dsPremio")) $("dsPremio").value = d.premio || "";
+    var hoje = S.todayISO();
+    $("dsStatus").textContent = !d.nome ? "sem desafio ativo"
+      : d.fim < hoje ? "⏹ encerrado em " + S.fmtData(d.fim)
+      : d.ini > hoje ? "🕐 começa em " + S.fmtData(d.ini)
+      : "🔥 rolando até " + S.fmtData(d.fim);
+  }
+  $("dsSalvar").addEventListener("click", function () {
+    var nome = $("dsNome").value.trim();
+    var ini = $("dsIni").value, fim = $("dsFim").value;
+    if (!nome || !ini || !fim) { alert("Preencha nome, início e fim do desafio."); return; }
+    if (fim < ini) { alert("O fim precisa ser depois do início. 😉"); return; }
+    var st = load();
+    st.desafio = { nome: nome, ini: ini, fim: fim, premio: $("dsPremio").value.trim() };
+    save(st);
+    renderDesafio();
+    carregaRankingDesafio();
+    alert("Desafio salvo! Agora gere/publique os apps de novo pra ele entrar no celular dos alunos. 🏆");
+  });
+  $("dsEncerrar").addEventListener("click", function () {
+    if (!confirm("Encerrar o desafio atual?")) return;
+    var st = load();
+    st.desafio = null;
+    save(st);
+    renderDesafio();
+    $("dsRanking").textContent = "Sem desafio ativo.";
+  });
+  function pintaRankingDesafio(el, ranking, premio) {
+    var med = ["🥇", "🥈", "🥉"];
+    var max = Math.max.apply(null, ranking.map(function (r) { return +r.dias; })) || 1;
+    el.innerHTML = ranking.map(function (r, i) {
+      var pct = Math.round(100 * (+r.dias) / max);
+      return "<div style='padding:8px 0;border-top:1px solid #322e3d;'>" +
+        "<div style='display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
+        "<span>" + (med[i] || (i + 1) + "º") + " <b>" + esc(r.nome || "Aluno") + "</b></span>" +
+        "<span><b>" + r.dias + "</b> treino(s)" + (r.ultimo ? " <span class='muted' style='font-size:11.5px;'>último " + r.ultimo.slice(8, 10) + "/" + r.ultimo.slice(5, 7) + "</span>" : "") + "</span></div>" +
+        "<div style='height:8px;background:#14121a;border-radius:99px;margin-top:5px;overflow:hidden;'>" +
+        "<div style='height:100%;width:" + pct + "%;background:linear-gradient(90deg,#7c3aed,#a78bfa);'></div></div></div>";
+    }).join("") + (premio ? "<div class='muted' style='margin-top:10px;font-size:12.5px;'>🎁 Prêmio: <b>" + esc(premio) + "</b></div>" : "");
+  }
+  function carregaRankingDesafio() {
+    var box = $("dsRanking");
+    var st = load();
+    var d = st.desafio;
+    if (!d || !d.nome) { box.textContent = "Sem desafio ativo — crie um ali em cima. 🏆"; return; }
+    var nuvem = S.cloud && S.cloud();
+    var comToken = st.alunos.find(function (a) { return a.ativo !== false && a.appTokenP; });
+    if (!nuvem || !comToken) { box.textContent = "Entre com a conta da nuvem (e publique os apps) pra ver o placar."; return; }
+    box.textContent = "Carregando placar…";
+    nuvem.client.rpc("app_desafio_ranking", { t: comToken.appTokenP, p_ini: d.ini, p_fim: d.fim })
+      .then(function (r) {
+        var dd = r && r.data;
+        if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar o desafio."; return; }
+        var ranking = (dd && dd.ranking) || [];
+        if (!ranking.length) { box.textContent = "Ninguém pontuou ainda — cada 'Treinei hoje!' no app conta. 💪"; return; }
+        pintaRankingDesafio(box, ranking, d.premio);
+      }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
+  }
+  window.__desafioPT = { render: renderDesafio, ranking: carregaRankingDesafio, pinta: pintaRankingDesafio }; // testes
 
   // ---------- agenda ----------
   function renderAgenda(st) {
@@ -2260,6 +2355,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed #322e3d;'>📌 " + esc(av) + "</div>";
           }).join("") + "</div>"
         : "") +
+      ((st.desafio && st.desafio.nome && st.desafio.fim >= S.todayISO())
+        ? "<div class='cardx' style='border-color:#a78bfa;background:linear-gradient(160deg,#241d33,#1d1a24);'><h2>🏆 Desafio: " + esc(st.desafio.nome) + "</h2>" +
+          "<div class='vz' style='text-align:left;padding:2px 0 8px;'>De " + st.desafio.ini.split("-").reverse().join("/") + " a " + st.desafio.fim.split("-").reverse().join("/") +
+          (st.desafio.premio ? " · 🎁 <b style='color:#fff'>" + esc(st.desafio.premio) + "</b>" : "") +
+          " — cada <b style='color:#a78bfa'>Treinei hoje!</b> conta ponto.</div>" +
+          "<div class='kv'><span>Seus treinos no desafio</span><b id='dsMeus' style='color:#a78bfa;'>0</b></div>" +
+          "<div id='dsPlacar' class='vz' style='font-size:12.5px;'>Carregando placar…</div></div>"
+        : "") +
       "<div class='cardx'><h2>Minha semana</h2>" +
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
@@ -2393,7 +2496,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{})," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{})," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
@@ -2703,6 +2806,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "return \"<div class='kv'><span>\"+rot+\"</span><span><b>\"+String(ult).replace('.',',')+\"</b>\"+seta+\"</span></div>\";}" +
       "el.innerHTML=linha('⚖ Peso (kg)','peso')+linha('🧈 Gordura (%)','gordura')+linha('📏 Cintura (cm)','cintura')+linha('💪 Braço (cm)','braco',true)+" +
       "\"<div class='vz'>\"+AVS.length+\" avaliação(ões) · última em \"+AVS[AVS.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
+      // desafio em grupo: meus pontos + placar da turma
+      ((st.desafio && st.desafio.nome && st.desafio.fim >= S.todayISO())
+        ? "var DESAFIO=" + JSON.stringify({ ini: st.desafio.ini, fim: st.desafio.fim }) + ";" +
+          "(function(){var f=L('ptfeitos',{});var meus=Object.keys(f).filter(function(k){return k>=DESAFIO.ini&&k<=DESAFIO.fim;}).length;" +
+          "var el=document.getElementById('dsMeus');if(el)el.textContent=meus;" +
+          "document.addEventListener('click',function(e){if(e.target&&e.target.id==='btnFeito')setTimeout(function(){" +
+          "var f2=L('ptfeitos',{});var m2=Object.keys(f2).filter(function(k){return k>=DESAFIO.ini&&k<=DESAFIO.fim;}).length;" +
+          "if(el)el.textContent=m2;},200);});" +
+          "rpcApp('app_desafio_ranking',{t:TOKEN,p_ini:DESAFIO.ini,p_fim:DESAFIO.fim}).then(function(d){" +
+          "var pl=document.getElementById('dsPlacar');if(!pl)return;" +
+          "var rk=d&&d.ranking;if(!rk||!rk.length){pl.textContent='Placar aparece quando a turma começar a treinar. 💪';return;}" +
+          "var med=['🥇','🥈','🥉'];pl.style.textAlign='left';" +
+          "pl.innerHTML=rk.slice(0,5).map(function(r,i){return \"<div style='display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #322e3d;'>\"+" +
+          "\"<span>\"+(med[i]||(i+1)+'º')+' '+(r.nome||'Aluno')+\"</span><b>\"+r.dias+\" treino(s)</b></div>\";}).join('');});})();"
+        : "") +
       // menu lateral: agrupa os cards em seções e controla a gaveta
       "(function(){var MENU=[['inicio','🏠','Início'],['treino','🏋️','Treino'],['evolucao','📈','Evolução'],['agenda','📅','Agenda'],['chat','💬','Chat'],['pagamento','💳','Pagamento']];" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
@@ -2711,7 +2829,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
       "if(/Pagamento|Mensalidade/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
-      "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login/.test(t))return 'inicio';" +
+      "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Desafio/.test(t))return 'inicio';" +
       "return null;}" +
       "var IGNORA={hambApp:1,menuFundo:1,menuApp:1,tmrBar:1,guiaBox:1};" +
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +

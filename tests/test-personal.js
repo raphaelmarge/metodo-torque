@@ -600,6 +600,37 @@ async function abaPt(p, a) {
   await p.evaluate(() => document.getElementById("pfFechar").click());
   ok(await p.evaluate(() => document.getElementById("vPerfil").hidden && !document.getElementById("vAlunos").hidden), "← Voltar retorna pra lista de alunos");
 
+  // ---------- desafio em grupo (estilo GymRats) ----------
+  console.log("Desafio em grupo:");
+  await abaPt(p, "desafio");
+  {
+    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); };
+    await p.fill("#dsNome", "30 dias TORQUE");
+    await p.fill("#dsIni", d(-10));
+    await p.fill("#dsFim", d(20));
+    await p.fill("#dsPremio", "1 mês grátis");
+    await p.click("#dsSalvar");
+    await p.waitForTimeout(200);
+    const ds = await p.evaluate(() => window.MTStore.read("ptStudio", {}).desafio);
+    ok(ds && ds.nome === "30 dias TORQUE" && ds.premio === "1 mês grátis", "desafio salvo com período e prêmio");
+    ok(/rolando até/.test(await p.evaluate(() => document.getElementById("dsStatus").textContent)), "status mostra desafio rolando");
+    // placar com ranking simulado
+    await p.evaluate(() => {
+      window.__desafioPT.pinta(document.getElementById("dsRanking"),
+        [{ nome: "João", dias: 12, ultimo: "2026-08-01" }, { nome: "Bia", dias: 9, ultimo: "2026-07-30" }, { nome: "Rafa", dias: 5, ultimo: null }], "1 mês grátis");
+    });
+    const placar = await p.evaluate(() => document.getElementById("dsRanking").textContent);
+    ok(/🥇 João/.test(placar) && /🥈 Bia/.test(placar) && /🥉 Rafa/.test(placar) && /12/.test(placar), "placar com medalhas e contagem de treinos");
+    ok(/1 mês grátis/.test(placar), "prêmio aparece no placar");
+    // o app gerado com desafio ativo ganha o card + placar via rpc
+    const appDesafio = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      return window.__montaAppAluno(st.alunos.find((x) => x.ativo !== false), new Date().toISOString());
+    });
+    ok(/🏆 Desafio: 30 dias TORQUE/.test(appDesafio) && /app_desafio_ranking/.test(appDesafio) && /dsMeus/.test(appDesafio), "app do aluno leva o card do desafio com placar via nuvem");
+    ok(/nome:PRIMEIRO/.test(appDesafio.replace(/\s/g, "")) || /nome:PRIMEIRO/.test(appDesafio), "app envia o nome do aluno pro ranking (devolve)");
+  }
+
   // ---------- questionários personalizados (estilo LiveClin) ----------
   console.log("Questionários personalizados:");
   await abaPt(p, "quest");

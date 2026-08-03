@@ -1658,3 +1658,40 @@ begin
   return json_build_object('ok', true);
 end $$;
 grant execute on function public.app_quest_responde(text, text, jsonb) to anon, authenticated;
+
+-- ==================== DESAFIO EM GRUPO (GYMRATS) ====================
+-- Ranking do desafio: conta os dias de treino que cada aluno marcou no
+-- app (retorno.feitos, enviado pelo app_aluno_devolve) dentro do período.
+-- Qualquer aluno da academia consulta pelo próprio token. Bloco idempotente.
+
+create or replace function public.app_desafio_ranking(t text, p_ini date, p_fim date)
+returns json language plpgsql security definer set search_path = public as $$
+declare v_acad uuid; v_out json;
+begin
+  if t is null or length(t) < 10 then
+    return json_build_object('erro', 'token inválido');
+  end if;
+  select academia_id into v_acad from public.app_aluno where token = t limit 1;
+  if v_acad is null then
+    return json_build_object('erro', 'app não encontrado');
+  end if;
+  select coalesce(json_agg(linha order by (linha->>'dias')::int desc), '[]'::json) into v_out
+  from (
+    select json_build_object(
+      'nome', coalesce(a.retorno->>'nome', 'Aluno'),
+      'dias', (
+        select count(*) from jsonb_object_keys(coalesce(a.retorno->'feitos', '{}'::jsonb)) k
+        where k::date between p_ini and p_fim
+      ),
+      'ultimo', (
+        select max(k) from jsonb_object_keys(coalesce(a.retorno->'feitos', '{}'::jsonb)) k
+        where k::date between p_ini and p_fim
+      )
+    ) as linha
+    from public.app_aluno a
+    where a.academia_id = v_acad and a.retorno is not null
+  ) sub
+  where (linha->>'dias')::int > 0;
+  return json_build_object('ok', true, 'ranking', v_out);
+end $$;
+grant execute on function public.app_desafio_ranking(text, date, date) to anon, authenticated;
