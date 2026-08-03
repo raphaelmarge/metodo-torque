@@ -340,13 +340,55 @@ async function abaPt(p, a) {
     return st2.treinosV2[st2.alunos[0].id].fichas[0].nome;
   });
   ok(!/MUDOU SÓ NA BIA/.test(independente), "cópia é independente — mexer na ficha da Bia não muda a do João");
+
+  // treino de DISPARO (pré-montado, sem aluno): monta com template e dispara pro grupo
+  await p.evaluate(() => { window.prompt = () => "Hipertrofia Agosto"; });
+  await p.click("#gtNovo");
+  await p.waitForTimeout(200);
+  const gtSel = await p.evaluate(() => ({
+    valor: document.getElementById("tAluno").value,
+    rotulo: document.getElementById("tAluno").selectedOptions[0].textContent,
+    lista: document.getElementById("gtLista").textContent,
+  }));
+  ok(/^gt/.test(gtSel.valor) && /Hipertrofia Agosto/.test(gtSel.rotulo), "criar treino de disparo já abre ele no montador de fichas");
+  ok(/Hipertrofia Agosto/.test(gtSel.lista) && /0 ficha/.test(gtSel.lista), "treino de disparo aparece na lista do card");
+  await p.selectOption("#tplSel", "abc");
+  await p.click("#tplAplicar");
+  await p.waitForTimeout(300);
+  const gtFichas = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st.treinosV2[st.treinosGrupo[0].id].fichas.length;
+  });
+  ok(gtFichas === 3, "template ABC montou as 3 fichas no treino de disparo (sem aluno)");
+  await p.evaluate(() => {
+    window.__gruposPT.render();
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    document.getElementById("geOrigem").value = st.treinosGrupo[0].id;
+    document.getElementById("geGrupo").value = st.gruposPT[0].id;
+  });
+  const geOrigemTxt = await p.evaluate(() => document.getElementById("geOrigem").innerHTML);
+  ok(/Treinos de disparo/.test(geOrigemTxt) && /Hipertrofia Agosto \(3 ficha/.test(geOrigemTxt), "seletor de envio oferece os treinos de disparo pré-montados");
+  await p.click("#geEnviar");
+  await p.waitForTimeout(200);
+  const posDisparo = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return {
+      status: document.getElementById("geStatus").textContent,
+      fichasBia: (st.treinosV2["al-bia-grupo"] || { fichas: [] }).fichas.length,
+    };
+  });
+  ok(/Treino copiado pra 1 aluno/.test(posDisparo.status) && posDisparo.fichasBia === 3, "disparo entrega o treino pré-montado pro grupo inteiro (Bia com as 3 fichas)");
+
   // limpa a aluna extra pra não afetar os testes seguintes
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     st.alunos = st.alunos.filter((a) => a.id !== "al-bia-grupo");
     delete st.treinosV2["al-bia-grupo"];
+    (st.treinosGrupo || []).forEach((g) => delete st.treinosV2[g.id]);
+    st.treinosGrupo = [];
     st.gruposPT = [];
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    document.getElementById("tAluno").value = st.alunos[0].id;
     window.__gruposPT.render();
   });
 

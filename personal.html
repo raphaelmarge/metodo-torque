@@ -198,7 +198,12 @@
 
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
       <h2>👥 Enviar treino em grupo</h2>
-      <p class="muted" style="margin: 4px 0 10px;">Monte grupos de alunos (turma da manhã, iniciantes…) e mande o mesmo treino pra todo mundo de uma vez — os apps publicados atualizam sozinhos.</p>
+      <p class="muted" style="margin: 4px 0 10px;">Funciona como uma lista de transmissão: <b>1)</b> monte um treino de disparo (pré-montado, sem estar preso a nenhum aluno), <b>2)</b> crie o grupo, <b>3)</b> dispare — todo mundo do grupo recebe o mesmo treino e os apps publicados atualizam sozinhos.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <button class="btn sec" id="gtNovo">🏋️ + Montar treino de disparo</button>
+      </div>
+      <div id="gtLista" class="muted" style="margin-top: 8px; font-size: 13.5px;">Nenhum treino de disparo ainda.</div>
+      <hr style="border: none; border-top: 1px solid var(--linha); margin: 14px 0;">
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
         <input id="grNome" placeholder="Nome do grupo (ex.: Turma 6h)" style="width: 200px;">
         <button class="btn sec" id="grAdd">+ Criar grupo</button>
@@ -1296,15 +1301,64 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-grrm="' + g.id + '">🗑</button></div>';
     }).join("") : "Nenhum grupo ainda.";
-    $("geOrigem").innerHTML = '<option value="">Copiar o treino de…</option>' + ativos.map(function (a) {
+    st.treinosGrupo = st.treinosGrupo || [];
+    $("gtLista").innerHTML = st.treinosGrupo.length ? st.treinosGrupo.map(function (g) {
+      var t2 = (st.treinosV2 || {})[g.id];
+      var nf = (t2 && t2.fichas) ? t2.fichas.length : 0;
+      var nex = (t2 && t2.fichas) ? t2.fichas.reduce(function (s, f) { return s + f.itens.length; }, 0) : 0;
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
+        "<b>📣 " + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nf + " ficha(s), " + nex + " exercício(s))</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-gtedit="' + g.id + '">✎ montar</button>' +
+        '<button class="btn sec mini" data-gtrm="' + g.id + '">🗑</button></div>';
+    }).join("") : "Nenhum treino de disparo ainda — clique em <b>🏋️ + Montar treino de disparo</b>.";
+    var opsGt = st.treinosGrupo.map(function (g) {
+      var t2 = (st.treinosV2 || {})[g.id];
+      var n = (t2 && t2.fichas) ? t2.fichas.length : 0;
+      return '<option value="' + g.id + '">📣 ' + esc(g.nome) + " (" + n + " ficha(s))</option>";
+    }).join("");
+    var opsAl = ativos.map(function (a) {
       var t2 = (st.treinosV2 || {})[a.id];
       var n = (t2 && t2.fichas) ? t2.fichas.length : 0;
       return n ? '<option value="' + a.id + '">' + esc(a.nome) + " (" + n + " ficha(s))</option>" : "";
     }).join("");
+    $("geOrigem").innerHTML = '<option value="">Qual treino enviar…</option>' +
+      (opsGt ? '<optgroup label="📣 Treinos de disparo (pré-montados)">' + opsGt + "</optgroup>" : "") +
+      (opsAl ? '<optgroup label="Copiar o treino de um aluno">' + opsAl + "</optgroup>" : "");
     $("geGrupo").innerHTML = '<option value="">Pro grupo…</option>' +
       st.gruposPT.map(function (g) { return '<option value="' + g.id + '">👥 ' + esc(g.nome) + "</option>"; }).join("") +
       '<option value="__todos">🌍 Todos os alunos ativos</option>';
   }
+  $("gtNovo").addEventListener("click", function () {
+    var nome = prompt("Nome do treino de disparo (ex.: Hipertrofia ABC agosto):", "");
+    if (!nome || !nome.trim()) return;
+    var st = load();
+    st.treinosGrupo = st.treinosGrupo || [];
+    var id = "gt" + S.uid();
+    st.treinosGrupo.push({ id: id, nome: nome.trim() });
+    st.treinosV2 = st.treinosV2 || {};
+    st.treinosV2[id] = { fichas: [] };
+    save(st);
+    $("tAluno").value = id;
+    renderFichas();
+    renderGrupos();
+    $("fichasBox").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  $("gtLista").addEventListener("click", function (e) {
+    var ed = e.target.getAttribute && e.target.getAttribute("data-gtedit");
+    var rm = e.target.getAttribute && e.target.getAttribute("data-gtrm");
+    if (ed) {
+      $("tAluno").value = ed;
+      renderFichas();
+      $("fichasBox").scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (!rm || !confirm("Excluir este treino de disparo? (os treinos já enviados pros alunos continuam)")) return;
+    var st = load();
+    st.treinosGrupo = (st.treinosGrupo || []).filter(function (g) { return g.id !== rm; });
+    if (st.treinosV2) delete st.treinosV2[rm];
+    save(st); renderGrupos();
+  });
   $("grAdd").addEventListener("click", function () {
     var nome = $("grNome").value.trim();
     var ids = Array.from(document.querySelectorAll(".grCheck:checked")).map(function (c) { return c.value; });
@@ -1327,7 +1381,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function enviaTreinoGrupo(origemId, grupoId) {
     var st = load();
     var fonte = (st.treinosV2 || {})[origemId];
-    if (!fonte || !(fonte.fichas || []).length) return { erro: "O aluno de origem não tem ficha montada." };
+    if (!fonte || !(fonte.fichas || []).length) return { erro: "Esse treino ainda não tem ficha montada — clique em ✎ montar e adicione os exercícios." };
     var ids = grupoId === "__todos"
       ? st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) { return a.id; })
       : ((st.gruposPT || []).find(function (g) { return g.id === grupoId; }) || {}).alunoIds || [];
@@ -1376,10 +1430,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderAgenda(st) {
     var opts = st.alunos.filter(function (a) { return a.ativo !== false; })
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
+    var opsGt = (st.treinosGrupo || []).map(function (g) {
+      return '<option value="' + g.id + '">📣 ' + esc(g.nome) + "</option>";
+    }).join("");
     ["sAluno", "pAluno", "tAluno", "avAluno"].forEach(function (id) {
       var sel = $(id);
       var atual = sel.value;
-      sel.innerHTML = "<option value=''>— aluno —</option>" + opts;
+      sel.innerHTML = "<option value=''>— aluno —</option>" + opts +
+        (id === "tAluno" && opsGt ? '<optgroup label="📣 Treinos de disparo (grupo)">' + opsGt + "</optgroup>" : "");
       if (atual) sel.value = atual;
     });
     var hoje = S.todayISO();
