@@ -215,7 +215,7 @@ async function abaPt(p, a) {
     lista: document.getElementById("catLista").textContent,
     grupos: document.getElementById("catGrupo").options.length,
   }));
-  ok(/2\d\d exercícios/.test(cat.n), "catálogo TORQUE anunciado com 200+ exercícios (" + cat.n.trim() + ")");
+  ok(+(cat.n.match(/\d+/) || [0])[0] >= 200, "catálogo TORQUE anunciado com 200+ exercícios (" + cat.n.trim() + ")");
   ok(/usar/.test(cat.lista) && cat.grupos >= 10, "navegador do catálogo com botão + usar e filtro de grupos");
   await p.fill("#catBusca", "kettlebell");
   await p.waitForTimeout(150);
