@@ -267,6 +267,20 @@ async function abaPt(p, a) {
   const fichas = await p.evaluate(() => document.getElementById("fichasBox").textContent);
   ok(/Supino reto/.test(fichas) && /4×10/.test(fichas), "ficha montada por seleção (Supino 4×10)");
 
+  // descanso entre séries: default 60s no item novo, editável pelo botão ⏱
+  ok(/⏱ 60s/.test(fichas), "item novo nasce com descanso padrão de 60s visível");
+  await p.evaluate(() => { window.prompt = () => "100"; });
+  await p.click('[data-tdesc="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+  const aposDesc = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return {
+      guardado: st.treinosV2[st.alunos[0].id].fichas[0].itens[0].descanso,
+      tela: document.getElementById("fichasBox").textContent,
+    };
+  });
+  ok(aposDesc.guardado === 100 && /⏱ 100s/.test(aposDesc.tela), "⏱ edita o descanso do exercício (60 → 100s)");
+
   // o seletor da ficha oferece o catálogo TORQUE inteiro (optgroup) e materializa ao usar
   const selCat = await p.evaluate((fid) => {
     const sel = document.querySelector('[data-exsel="' + fid + '"]');
@@ -553,6 +567,8 @@ async function abaPt(p, a) {
   ok(/gVideo/.test(appHtml) && /▶ como fazer/.test(appHtml), "modo guiado tem o link ▶ como fazer");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
+  ok(/⏱ Descanso 100s/.test(appHtml) && /⏱100s ›/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
+  ok(/"d":100/.test(appHtml), "treino guiado usa o descanso programado do exercício");
   ok(/Minhas sessões/.test(appHtml) && /07:30/.test(appHtml), "próximas sessões embutidas no app");
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
