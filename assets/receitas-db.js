@@ -708,5 +708,74 @@ self.MT_RECEITAS = [
    "Sirva com frutas vermelhas por cima."
   ],
   "dica": "A chia incha e dá saciedade de verdade — ótima ceia pra quem belisca à noite."
+ },
+ {
+  "id": "rc34",
+  "n": "Escondidinho fit de frango com mandioquinha",
+  "cat": "Almoço e jantar",
+  "tempo": "40 min",
+  "rende": "4 porções",
+  "k": 310,
+  "pt": 29,
+  "ing": [
+   "500 g de peito de frango desfiado",
+   "600 g de mandioquinha cozida e amassada",
+   "1 colher de sopa de requeijão light",
+   "1/2 cebola e 2 dentes de alho refogados",
+   "Molho de tomate caseiro (1/2 xícara)",
+   "30 g de queijo muçarela light ralado"
+  ],
+  "modo": [
+   "Refogue o frango desfiado com cebola, alho e o molho de tomate.",
+   "Misture o requeijão light no purê de mandioquinha.",
+   "Monte em um refratário: frango embaixo, purê por cima, queijo pra finalizar.",
+   "Forno a 200 °C por 15 minutos até gratinar."
+  ],
+  "dica": "A mandioquinha tem menos calorias que o purê de batata tradicional e dá cremosidade sem creme de leite."
+ },
+ {
+  "id": "rc35",
+  "n": "Overnight oats de cacau com pasta de amendoim",
+  "cat": "Café da manhã",
+  "tempo": "5 min + 1 noite de geladeira",
+  "rende": "1 porção",
+  "k": 390,
+  "pt": 24,
+  "ing": [
+   "40 g de aveia em flocos",
+   "150 ml de leite desnatado (ou vegetal)",
+   "1 colher de sopa de cacau em pó 100%",
+   "15 g de whey de chocolate ou baunilha",
+   "1 colher de sopa de pasta de amendoim",
+   "1/2 banana em rodelas"
+  ],
+  "modo": [
+   "Misture a aveia, o leite, o cacau e o whey num pote com tampa.",
+   "Deixe na geladeira de um dia pro outro.",
+   "De manhã, finalize com a pasta de amendoim e a banana por cima."
+  ],
+  "dica": "Pronto em 5 minutos na noite anterior — café da manhã de quem treina cedo e não tem tempo de cozinhar."
+ },
+ {
+  "id": "rc36",
+  "n": "Espetinho de frango com abacaxi na airfryer",
+  "cat": "Almoço e jantar",
+  "tempo": "25 min",
+  "rende": "2 porções",
+  "k": 280,
+  "pt": 34,
+  "ing": [
+   "400 g de peito de frango em cubos",
+   "1/2 abacaxi em cubos grandes",
+   "1 pimentão vermelho em quadrados",
+   "1 colher de sopa de shoyu light",
+   "Páprica defumada, alho em pó e pimenta-do-reino"
+  ],
+  "modo": [
+   "Tempere o frango com o shoyu e os temperos por 15 minutos.",
+   "Monte os espetos alternando frango, abacaxi e pimentão.",
+   "Airfryer a 200 °C por 12-14 minutos, virando na metade."
+  ],
+  "dica": "O abacaxi carameliza e amacia o frango — proteína alta com cara de churrasco, sem sair da dieta."
  }
 ];
