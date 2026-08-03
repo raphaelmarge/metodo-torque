@@ -293,6 +293,63 @@ async function abaPt(p, a) {
   const vtp = await p.evaluate(() => document.getElementById("vtpLista").textContent);
   ok(/Mobilidade de quadril/.test(vtp), "videoteca do studio cadastra conteúdo");
 
+  // envio de treino em grupo: cria grupo, copia a ficha do João pra Bia
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.alunos.push({ id: "al-bia-grupo", nome: "Bia Grupo", zap: "", ativo: true });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__gruposPT.render();
+  });
+  const pick = await p.evaluate(() => document.getElementById("grAlunosPick").textContent);
+  ok(/João Cliente/.test(pick) && /Bia Grupo/.test(pick), "criador de grupo lista os alunos ativos");
+  await p.check('.grCheck[value="al-bia-grupo"]');
+  await p.fill("#grNome", "Turma 6h");
+  await p.click("#grAdd");
+  const grLista = await p.evaluate(() => document.getElementById("grLista").textContent);
+  ok(/Turma 6h/.test(grLista) && /Bia/.test(grLista), "grupo criado aparece na lista com os membros");
+  const seletores = await p.evaluate(() => ({
+    origem: document.getElementById("geOrigem").textContent,
+    grupo: document.getElementById("geGrupo").textContent,
+  }));
+  ok(/João Cliente/.test(seletores.origem) && /ficha/.test(seletores.origem), "origem só oferece aluno com ficha montada");
+  ok(/Turma 6h/.test(seletores.grupo) && /Todos os alunos ativos/.test(seletores.grupo), "destino oferece o grupo e a opção Todos");
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    document.getElementById("geOrigem").value = st.alunos[0].id;
+    document.getElementById("geGrupo").value = st.gruposPT[0].id;
+  });
+  await p.click("#geEnviar");
+  await p.waitForTimeout(200);
+  const posEnvio = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const t = (st.treinosV2 || {})["al-bia-grupo"];
+    return {
+      status: document.getElementById("geStatus").textContent,
+      copiou: !!(t && t.fichas && t.fichas.length),
+      exercicio: t && t.fichas && t.fichas[0] ? JSON.stringify(t.fichas[0]) : "",
+    };
+  });
+  ok(/Treino copiado pra 1 aluno/.test(posEnvio.status), "envio em grupo confirma quantos alunos receberam");
+  ok(posEnvio.copiou && /Peito/.test(posEnvio.exercicio), "ficha do João foi copiada pra Bia (mesmo treino)");
+  // origem não se sobrescreve e a cópia é independente (deep copy)
+  const independente = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.treinosV2["al-bia-grupo"].fichas[0].nome = "MUDOU SÓ NA BIA";
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st2.treinosV2[st2.alunos[0].id].fichas[0].nome;
+  });
+  ok(!/MUDOU SÓ NA BIA/.test(independente), "cópia é independente — mexer na ficha da Bia não muda a do João");
+  // limpa a aluna extra pra não afetar os testes seguintes
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.alunos = st.alunos.filter((a) => a.id !== "al-bia-grupo");
+    delete st.treinosV2["al-bia-grupo"];
+    st.gruposPT = [];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__gruposPT.render();
+  });
+
   // agenda uma sessão futura pro app mostrar
   await abaPt(p, "agenda");
   await p.selectOption("#sAluno", { index: 1 });
