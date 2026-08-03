@@ -458,6 +458,7 @@ async function abaPt(p, a) {
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
+  ok(/menuApp/.test(appHtml) && /hambApp/.test(appHtml) && /trocaSec/.test(appHtml), "app tem menu lateral (gaveta) organizando as seções");
   ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
   ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");
   ok(/btnCardStories/.test(appHtml) && /Gerar card pro Stories/.test(appHtml), "conquistas têm o botão de card pro Stories");
@@ -714,6 +715,8 @@ async function abaPt(p, a) {
   // serve via http (setContent teria origem opaca, sem localStorage)
   await pApp.route("**/app-teste-personal.html", (r) => r.fulfill({ contentType: "text/html", body: appHtml2 }));
   await pApp.goto(BASE + "/app-teste-personal.html", { waitUntil: "domcontentloaded" });
+  // com o menu lateral, cada grupo de cards vive numa seção — troca antes de interagir
+  await pApp.evaluate(() => window.__trocaSec("treino"));
   await pApp.fill("#dcEx", "Agachamento");
   await pApp.fill("#dcKg", "80");
   await pApp.click("#dcAdd");
@@ -769,6 +772,7 @@ async function abaPt(p, a) {
   const graf = await pApp.evaluate(() => document.getElementById("dcGraf").textContent);
   ok(/Supino reto/.test(graf) && /★/.test(graf), "gráfico de carga abre com PR ★");
   // peso diário
+  await pApp.evaluate(() => window.__trocaSec("evolucao"));
   await pApp.fill("#pzKg", "83,4");
   await pApp.click("#pzAdd");
   const pz = await pApp.evaluate(() => document.getElementById("pzGraf").textContent);
@@ -791,11 +795,13 @@ async function abaPt(p, a) {
   const medal = await pApp.evaluate(() => document.getElementById("medalhas").textContent);
   ok(/1 treino/.test(medal) && /faltam 4/.test(medal), "contador de medalhas (faltam 4 pra 🥉)");
   // clicar manualmente no mesmo dia não duplica
+  await pApp.evaluate(() => window.__trocaSec("inicio"));
   await pApp.click("#btnFeito");
   const feitos = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos")));
   ok(Object.keys(feitos).length === 1, "mesmo dia não duplica o registro");
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
+  await pApp.evaluate(() => window.__trocaSec("chat"));
   await pApp.click("#ckNotas button:nth-child(4)");
   await pApp.fill("#ckPeso", "84,5");
   await pApp.fill("#ckTexto", "Semana boa!");
