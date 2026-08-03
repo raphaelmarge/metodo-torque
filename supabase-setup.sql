@@ -1588,3 +1588,9 @@ grant execute on function public.app_agenda_lista(text) to anon, authenticated;
 -- Bloco idempotente.
 
 alter table public.chat_config add column if not exists bots jsonb;
+
+-- ==================== NOME DE QUEM RESPONDE NO CHAT ====================
+-- Cada mensagem da equipe no Chat e IA guarda o nome de quem escreveu
+-- (vem da tabela membros, pelo login). Bloco idempotente.
+
+alter table public.chat_mensagens add column if not exists autor text not null default '';

@@ -391,18 +391,27 @@
     }
   }
 
+  var temAutor = true; // banco antigo (sem a coluna autor) cai pro select sem ela
+
   function carregaMsgs(rolar) {
     if (!atual || !temNuvem()) return Promise.resolve();
     var id = atual.id;
-    return rest("chat_mensagens?select=de,texto,criado&conversa_id=eq." + id + "&order=criado.asc&limit=200")
-      .then(function (r) { return r.ok ? r.json() : []; })
+    var campos = temAutor ? "de,texto,criado,autor" : "de,texto,criado";
+    return rest("chat_mensagens?select=" + campos + "&conversa_id=eq." + id + "&order=criado.asc&limit=200")
+      .then(function (r) {
+        if (!r.ok && temAutor) { temAutor = false; return carregaMsgs(rolar).then(function () { return null; }); }
+        return r.ok ? r.json() : [];
+      })
       .then(function (rows) {
+        if (rows === null) return;
         if (!atual || atual.id !== id) return;
         var box = $("#msgs");
         var noFim = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
         box.innerHTML = (rows || []).map(function (m) {
           var quem = m.de === "cliente" ? "cliente" : (m.de === "ia" ? "ia" : (m.de === "nota" ? "nota" : "equipe"));
-          var rot = m.de === "ia" ? "🤖 IA" : (m.de === "equipe" ? "Equipe" : (m.de === "nota" ? "📝 Nota interna — o cliente não vê" : ""));
+          var rot = m.de === "ia" ? "🤖 IA"
+            : (m.de === "equipe" ? "👤 " + esc(m.autor || "Equipe")
+            : (m.de === "nota" ? "📝 Nota interna — o cliente não vê" : ""));
           var hora = (m.criado || "").slice(11, 16);
           return '<div class="balao ' + quem + '">' + esc(m.texto) +
             '<span class="meta-msg">' + rot + (rot ? " · " : "") + hora + "</span></div>";
