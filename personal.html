@@ -102,11 +102,13 @@
       <div class="linha-flex" style="margin-top: 8px;">
         <input id="aNome" placeholder="Nome *" style="flex: 2; min-width: 180px;">
         <input id="aZap" placeholder="WhatsApp (DDD + número)" inputmode="numeric" style="flex: 1; min-width: 150px;">
+        <input id="aEmail" type="email" placeholder="E-mail (cria o acesso do app)" style="flex: 1; min-width: 180px;">
         <input id="aValor" type="number" min="0" step="0.01" placeholder="Valor combinado R$" title="Por mês ou por sessão — como você combinar" style="width: 150px;">
         <select id="aModo" style="width: auto;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select>
         <select id="aMeta" style="width: auto;" title="Meta de treinos por semana (motivação no app)"><option value="3">meta 3×/sem</option><option value="2">meta 2×/sem</option><option value="4">meta 4×/sem</option><option value="5">meta 5×/sem</option><option value="6">meta 6×/sem</option></select>
         <button class="btn" id="aAdd">+ Adicionar</button>
       </div>
+      <p id="aAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Com o e-mail preenchido, o aluno recebe o acesso do app na hora: o login é o e-mail dele e a senha (temporária) vai junto — ele troca dentro do app.</p>
     </div>
     <div id="listaAlunos"></div>
   </section>
@@ -523,7 +525,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <h2 id="pfTitulo" style="font-size: 20px; margin: 0;">Perfil</h2>
       <span id="pfDesde" class="muted" style="font-size: 12px;"></span>
       <span style="margin-left: auto;"></span>
-      <button class="btn mini" id="pfApp">📲 Gerar app</button>
+      <button class="btn mini" id="pfAcesso">📧 Enviar acesso do app</button>
+      <button class="btn sec mini" id="pfApp" title="baixa o arquivo do app (uso offline)">📲 Gerar app</button>
       <button class="btn mini" id="pfPix">💠 Pix</button>
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none;">💬 WhatsApp</a>
     </div>
@@ -746,10 +749,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("aAdd").addEventListener("click", function () {
     var nome = $("aNome").value.trim();
     if (!nome) { alert("Escreva o nome do aluno."); return; }
+    var email = $("aEmail").value.trim().toLowerCase();
     var st = load();
-    st.alunos.push({ id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), valor: +$("aValor").value || 0, modo: $("aModo").value, metaSemana: +$("aMeta").value || 3, ativo: true, desde: S.todayISO() });
-    $("aNome").value = ""; $("aZap").value = ""; $("aValor").value = "";
+    var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: +$("aValor").value || 0, modo: $("aModo").value, metaSemana: +$("aMeta").value || 3, ativo: true, desde: S.todayISO() };
+    st.alunos.push(novo);
+    $("aNome").value = ""; $("aZap").value = ""; $("aValor").value = ""; $("aEmail").value = "";
     save(st);
+    if (email) {
+      $("aAcessoStatus").textContent = "⏳ Publicando o app de " + nome.split(" ")[0] + " e enviando o acesso por e-mail…";
+      criaAcessoAluno(novo.id, function (r) { $("aAcessoStatus").innerHTML = msgAcesso(r, novo); });
+    }
   });
   $("listaAlunos").addEventListener("click", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-rm");
@@ -1035,6 +1044,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("pfApp").addEventListener("click", function () {
     var b = document.querySelector('[data-app="' + perfilId + '"]');
     if (b) b.click();
+  });
+  $("pfAcesso").addEventListener("click", function () {
+    if (!perfilId) return;
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === perfilId; });
+    if (!a) return;
+    // aproveita o e-mail digitado no cadastro, mesmo sem salvar ainda
+    var digitado = $("pfEmail").value.trim().toLowerCase();
+    if (digitado && digitado !== (a.email || "")) { a.email = digitado; S.write("ptStudio", st); }
+    var b = this;
+    b.disabled = true; b.textContent = "⏳ Enviando…";
+    criaAcessoAluno(perfilId, function (r) {
+      b.disabled = false; b.textContent = "📧 Enviar acesso do app";
+      var box = $("pfAppDados");
+      if (box) box.innerHTML = msgAcesso(r, a) + "<hr style='border:none;border-top:1px solid var(--linha);margin:10px 0;'>" + box.innerHTML;
+      if (r.erro) alert(r.erro);
+    });
   });
   window.__perfilPT = abrePerfil; // testes
 
@@ -3097,6 +3123,80 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (dl && self.MT_EXERCICIOS) dl.innerHTML = self.MT_EXERCICIOS.map(function (x) { return "<option value=\"" + esc(x.n) + "\">" + esc(x.g) + "</option>"; }).join("");
   })();
   window.__montaAppAluno = montaAppAluno; // testes
+
+  // ---------- acesso do aluno por e-mail (site com login e senha) ----------
+  function senhaAleatoria() {
+    var cs = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    var arr = new Uint32Array(10);
+    (window.crypto || {}).getRandomValues ? crypto.getRandomValues(arr) : arr.forEach(function (_, i) { arr[i] = Math.floor(Math.random() * 1e9); });
+    var s = "";
+    for (var i = 0; i < 10; i++) s += cs[arr[i] % cs.length];
+    return s;
+  }
+  function emailAcessoHtml(studio, primeiro, email, senha) {
+    var url = "https://www.torqueon.com.br/aluno-login.html";
+    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#121016;color:#fff;border-radius:16px;padding:28px;'>" +
+      "<div style='font-size:11px;letter-spacing:.2em;color:#a78bfa;font-weight:700;'>" + esc(studio.toUpperCase()) + "</div>" +
+      "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de treino está pronto, " + esc(primeiro) + "! 💪</h1>" +
+      "<p style='color:#a9a4b5;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b style='color:#fff'>Meu login</b>.</p>" +
+      "<div style='background:#1d1a24;border:1px solid #322e3d;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
+      "<div style='margin-bottom:6px;'><span style='color:#a9a4b5;'>Login:</span> <b>" + esc(email) + "</b></div>" +
+      "<div><span style='color:#a9a4b5;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
+      "<a href='" + url + "' style='display:block;text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;'>Entrar no meu app →</a>" +
+      "<p style='color:#6e6a78;font-size:12px;margin-top:14px;'>Dica: dentro do app, use “Adicionar à tela inicial” pra ele virar um aplicativo no seu celular. Este e-mail foi enviado por " + esc(studio) + " pelo TORQUE ON.</p></div>";
+  }
+  function enviaEmailFn(nuvem, para, assunto, html) {
+    var cfg = self.MT_CLOUD || {};
+    return nuvem.client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      return fetch(cfg.url + "/functions/v1/envia-email", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "enviar", para: para, assunto: assunto, html: html }),
+      }).then(function (r) { return r.json().then(function (d) { d.__status = r.status; return d; }); });
+    });
+  }
+  function criaAcessoAluno(alunoId, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) { cb({ erro: "Aluno não encontrado." }); return; }
+    var email = String(a.email || "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { cb({ erro: "Cadastre um e-mail válido pro aluno primeiro (perfil dele)." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { cb({ erro: "Entre na sua conta (card ☁️ Sua ilha) pra criar o acesso online." }); return; }
+    if (!a.appTokenP) { a.appTokenP = S.uid() + S.uid(); S.write("ptStudio", st); }
+    var stamp = new Date().toISOString();
+    var html = montaAppAluno(a, stamp);
+    var senha = senhaAleatoria();
+    nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: { html: html, stamp: stamp }, atualizado: stamp }])
+      .then(function (r) {
+        if (r && r.error) { cb({ erro: "Não deu pra publicar o app na nuvem: " + r.error.message }); return; }
+        nuvem.client.rpc("aluno_define_login", { t: a.appTokenP, p_login: email, p_senha: senha }).then(function (r2) {
+          var d = r2 && r2.data;
+          if (r2 && r2.error) { cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
+          if (d && d.erro) { cb({ erro: d.erro }); return; }
+          var studio = (load().config || {}).nome || "Seu personal";
+          enviaEmailFn(nuvem, email, "Seu acesso ao app de treino — " + studio, emailAcessoHtml(studio, a.nome.split(" ")[0], email, senha))
+            .then(function (r3) {
+              if (r3 && r3.ok) cb({ ok: true, email: email });
+              else cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: (r3 && r3.erro) || "publique a função envia-email (torqueon.com.br/funcoes.html)" });
+            }, function () {
+              cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: "sem conexão com a função envia-email" });
+            });
+        }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+      }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+  }
+  function msgAcesso(r, a) {
+    if (r.erro) return "⚠️ " + esc(r.erro);
+    if (r.semEmail) {
+      var texto = "Oi " + a.nome.split(" ")[0] + "! Seu app de treino tá pronto. 💪\nEntra em https://www.torqueon.com.br/aluno-login.html\nLogin: " + r.email + "\nSenha temporária: " + r.senha + "\n(troca a senha dentro do app, no card Meu login)";
+      return "✅ Acesso criado — mas o e-mail não saiu (" + esc(r.motivo) + ").<br>Login: <b>" + esc(r.email) + "</b> · senha temporária: <b style='font-family:monospace;'>" + esc(r.senha) + "</b> " +
+        '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/' + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto) + '">💬 Mandar no WhatsApp</a>';
+    }
+    return "📧 Acesso enviado pro e-mail <b>" + esc(r.email) + "</b>! O aluno entra em torqueon.com.br/aluno-login.html com o e-mail e a senha que chegou (e troca a senha no app).";
+  }
+  window.__acessoAluno = { cria: criaAcessoAluno, senha: senhaAleatoria, msg: msgAcesso }; // testes
 
   // ---------- assessoria (adesão remota) ----------
   function renderAssessoria() {

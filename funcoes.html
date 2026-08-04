@@ -55,7 +55,14 @@
   </div>
 
   <div class="card">
-    <p><b style="color:#fff">Depois das três publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
+    <h2>4 · envia-email <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <p>Envia o <b style="color:#fff">acesso do app</b> pro aluno/paciente por e-mail na hora do cadastro (login + senha temporária). Usa o Resend (resend.com, grátis até 3.000 e-mails/mês) — o passo a passo está no comentário do próprio código.</p>
+    <button class="btnx" data-copia="envia-email">Copiar o código (envia-email)</button>
+    <div class="status" data-st="envia-email"></div>
+  </div>
+
+  <div class="card">
+    <p><b style="color:#fff">Depois das quatro publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
   </div>
 
   <div class="card">
@@ -68,7 +75,7 @@
 <script>
   var COD = {};        // nome -> código
   var ultima = "meta-webhook";
-  var NOMES = ["meta-webhook", "chat-envia", "whatsapp"];
+  var NOMES = ["meta-webhook", "chat-envia", "whatsapp", "envia-email"];
   var prontas = 0;
 
   NOMES.forEach(function (n) {
