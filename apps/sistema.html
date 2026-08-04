@@ -476,7 +476,7 @@
           <div class="grafico" id="grafVendas"></div>
         </div>
         <div class="painel">
-          <h3>Mensal. média dos contratos vendidos</h3>
+          <h3>Mensalidade média dos contratos vendidos</h3>
           <div class="destaque-par" id="mensalDestaque"></div>
           <div class="grafico" id="grafMensalMedia"></div>
         </div>
@@ -949,7 +949,7 @@
 
     $("kpisVendas").innerHTML =
       kpi2("🛒", "Contratos vendidos", agora.length, agora.length ? "verde" : "", compara(agora.length, antes.length)) +
-      kpi2("📊", "Mensal. média dos contratos vendidos", S.fmtBRL(mensalMedia), "", compara(mensalMedia, mensalMediaAnt, S.fmtBRL)) +
+      kpi2("📊", "Mensalidade média dos contratos vendidos", S.fmtBRL(mensalMedia), "", compara(mensalMedia, mensalMediaAnt, S.fmtBRL)) +
       kpi2("⏱", "Tempo médio de contrato", tempoMedio.toFixed(1).replace(".", ",") + " <span style='font-size:16px'>meses</span>", "verde", compara(tempoMedio, tempoMedioAnt, function (x) { return x.toFixed(1).replace(".", ","); })) +
       kpi2("💰", "Total de vendas", S.fmtBRL(soma(agora)), soma(agora) ? "verde" : "", compara(soma(agora), soma(antes), S.fmtBRL)) +
       kpi2("🔁", "Vendas recorrentes", S.fmtBRL(soma(agora, "recorrente")), "", "planos com mensalidade automática") +
