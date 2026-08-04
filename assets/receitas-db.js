@@ -777,5 +777,78 @@ self.MT_RECEITAS = [
    "Airfryer a 200 °C por 12-14 minutos, virando na metade."
   ],
   "dica": "O abacaxi carameliza e amacia o frango — proteína alta com cara de churrasco, sem sair da dieta."
+ },
+ {
+  "id": "rc37",
+  "n": "Xinxim de galinha fit",
+  "cat": "Almoço e jantar",
+  "tempo": "40 min",
+  "rende": "4 porções",
+  "k": 290,
+  "pt": 32,
+  "ing": [
+   "600 g de sobrecoxa sem pele em pedaços",
+   "2 colheres de sopa de camarão seco triturado",
+   "1 cebola e 3 dentes de alho",
+   "2 colheres de sopa de castanha-de-caju triturada",
+   "100 ml de leite de coco light",
+   "1 colher de chá de azeite de dendê",
+   "Gengibre, coentro, sal e limão"
+  ],
+  "modo": [
+   "Tempere o frango com limão, sal e gengibre por 15 minutos.",
+   "Refogue cebola e alho, doure o frango e junte o camarão seco e a castanha.",
+   "Acrescente o leite de coco e o dendê, tampe e cozinhe 20 minutos em fogo baixo.",
+   "Finalize com coentro."
+  ],
+  "dica": "O clássico baiano em versão leve: dendê só no aroma e castanha no lugar do amendoim frito — 32 g de proteína por porção."
+ },
+ {
+  "id": "rc38",
+  "n": "Bowl de tempeh com legumes assados",
+  "cat": "Almoço e jantar",
+  "tempo": "35 min",
+  "rende": "2 porções",
+  "k": 420,
+  "pt": 26,
+  "ing": [
+   "200 g de tempeh em fatias",
+   "1 batata-doce média em cubos",
+   "1 abobrinha em meia-lua",
+   "1 xícara de brócolis",
+   "2 colheres de sopa de shoyu light",
+   "1 colher de sopa de azeite",
+   "Gergelim torrado e limão"
+  ],
+  "modo": [
+   "Marine o tempeh no shoyu com limão por 10 minutos.",
+   "Asse a batata-doce e os legumes com azeite a 200 °C por 25 minutos.",
+   "Grelhe o tempeh 3 minutos de cada lado até dourar.",
+   "Monte o bowl e finalize com gergelim."
+  ],
+  "dica": "Proteína vegana completa e fermentada: o tempeh tem mais proteína que o tofu e dá saciedade de verdade."
+ },
+ {
+  "id": "rc39",
+  "n": "Cuscuz nordestino proteico",
+  "cat": "Café da manhã",
+  "tempo": "15 min",
+  "rende": "2 porções",
+  "k": 310,
+  "pt": 22,
+  "ing": [
+   "1 xícara de flocão de milho",
+   "1/2 xícara de água",
+   "Sal a gosto",
+   "3 ovos mexidos",
+   "60 g de queijo coalho em cubos",
+   "Tomate e coentro picados"
+  ],
+  "modo": [
+   "Hidrate o flocão com a água e o sal por 5 minutos e cozinhe na cuscuzeira por 8 minutos.",
+   "Mexa os ovos na frigideira e doure os cubos de queijo coalho.",
+   "Sirva o cuscuz com os ovos, o queijo e a salsinha de tomate por cima."
+  ],
+  "dica": "O clássico do Nordeste virando café pré-treino: carboidrato de digestão tranquila com 22 g de proteína por porção."
  }
 ];
