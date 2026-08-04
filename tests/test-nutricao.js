@@ -257,6 +257,10 @@ async function abaNt(p, a) {
   }));
   ok(perfilN.aberto && /Bruno Paciente/.test(perfilN.titulo), "perfil abre com o nome do paciente");
   ok(/TMB 1780/.test(perfilN.alvo) && /2140/.test(perfilN.alvo), "alvo calórico calculado no perfil");
+  // acesso do paciente por e-mail (site com login e senha)
+  ok(await p.evaluate(() => !!document.getElementById("pEmail") && !!document.getElementById("pAcessoStatus")), "cadastro rápido tem o campo de e-mail que cria o acesso do app");
+  ok(await p.evaluate(() => !!document.getElementById("pnAcesso") && !!document.getElementById("pnEmail") && !!window.__acessoNutri), "perfil tem e-mail + botão 📧 Enviar acesso do app");
+  ok(await p.evaluate(() => { const s = window.__acessoNutri.senha(); return s.length === 10 && !/[0OIl1]/.test(s); }), "senha aleatória do acesso sem letras confusas");
   ok(/Nenhum pagamento/.test(perfilN.fin), "financeiro começa sem pagamentos");
   // registra pagamento e pesagem
   await p.evaluate(() => {

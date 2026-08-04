@@ -103,6 +103,7 @@
       <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
         <input id="pNome" placeholder="Nome completo" style="flex: 2; min-width: 170px;">
         <input id="pZap" inputmode="numeric" placeholder="WhatsApp (31 9…)" style="width: 150px;">
+        <input id="pEmail" type="email" placeholder="E-mail (cria o acesso do app)" style="width: 200px;">
         <select id="pSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
         <input id="pIdade" type="number" min="10" max="99" placeholder="Idade" style="width: 80px;">
         <input id="pPeso" type="number" min="30" max="300" step="0.1" placeholder="Peso kg" style="width: 95px;">
@@ -117,6 +118,7 @@
         <input id="pRestr" placeholder="Restrições/alergias (ex.: lactose, amendoim)" style="flex: 2; min-width: 180px;">
         <button class="btn verde" id="pAdd">+ Adicionar</button>
       </div>
+      <p id="pAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Com o e-mail preenchido, o paciente recebe o acesso do app na hora: o login é o e-mail dele e a senha (temporária) vai junto — ele troca dentro do app.</p>
     </div>
     <div id="listaPacientes" class="muted">Cadastre o primeiro paciente. 🥦</div>
   </div>
@@ -296,6 +298,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <label style="font-size: 12px; margin: 0;">Nome<input id="pnNome" style="display:block; width: 190px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">WhatsApp<input id="pnZap" inputmode="numeric" style="display:block; width: 130px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">E-mail<input id="pnEmail" type="email" style="display:block; width: 190px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Idade<input id="pnIdade" inputmode="numeric" style="display:block; width: 66px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pnAltura" inputmode="numeric" style="display:block; width: 84px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Objetivo<select id="pnObjetivo" style="display:block; width: 130px; margin-top: 3px;"><option value="emagrecer">🔥 emagrecer</option><option value="manter">⚖️ manter</option><option value="ganhar">💪 ganhar</option></select></label>
@@ -328,9 +331,11 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     <div id="pnDieta" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
 
     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
-      <button class="btn verde mini" id="pnApp">📲 Gerar app</button>
+      <button class="btn verde mini" id="pnAcesso">📧 Enviar acesso do app</button>
+      <button class="btn sec mini" id="pnApp" title="baixa o arquivo do app (uso offline)">📲 Gerar app</button>
       <a class="btn whats mini" id="pnWhats" target="_blank" rel="noopener" style="display:none;">💬 WhatsApp</a>
     </div>
+    <p id="pnAcessoInfo" class="muted" style="font-size: 12px; margin: 8px 0 0;"></p>
   </div>
 </dialog>
 
@@ -506,12 +511,18 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var nome = $("pNome").value.trim();
     if (!nome || !+$("pPeso").value || !+$("pAltura").value || !+$("pIdade").value) { alert("Preencha nome, idade, peso e altura."); return; }
     var st = load();
-    st.pacientes.push({ id: S.uid(), nome: nome, zap: $("pZap").value.replace(/\D/g, ""), sexo: $("pSexo").value,
+    var email = $("pEmail").value.trim().toLowerCase();
+    var novo = { id: S.uid(), nome: nome, zap: $("pZap").value.replace(/\D/g, ""), email: email, sexo: $("pSexo").value,
       idade: +$("pIdade").value, peso: +$("pPeso").value, altura: +$("pAltura").value,
       atividade: $("pAtiv").value, objetivo: $("pObjetivo").value, restricoes: $("pRestr").value.trim(),
-      ativo: true, desde: S.todayISO(), appTokenN: S.uid() + S.uid() });
-    ["pNome", "pZap", "pIdade", "pPeso", "pAltura", "pRestr"].forEach(function (id) { $(id).value = ""; });
+      ativo: true, desde: S.todayISO(), appTokenN: S.uid() + S.uid() };
+    st.pacientes.push(novo);
+    ["pNome", "pZap", "pEmail", "pIdade", "pPeso", "pAltura", "pRestr"].forEach(function (id) { $(id).value = ""; });
     save(st);
+    if (email) {
+      $("pAcessoStatus").textContent = "⏳ Publicando o app de " + nome.split(" ")[0] + " e enviando o acesso por e-mail…";
+      criaAcessoPaciente(novo.id, function (r) { $("pAcessoStatus").innerHTML = msgAcessoN(r, novo); });
+    }
   });
   $("listaPacientes").addEventListener("click", function (e) {
     var rm = e.target.getAttribute && e.target.getAttribute("data-rm");
@@ -536,7 +547,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     perfilNId = id;
     $("pnTitulo").textContent = "👤 " + p.nome;
     $("pnDesde").textContent = p.desde ? "paciente desde " + S.fmtData(p.desde) : "";
-    $("pnNome").value = p.nome; $("pnZap").value = p.zap || "";
+    $("pnNome").value = p.nome; $("pnZap").value = p.zap || ""; $("pnEmail").value = p.email || "";
     $("pnIdade").value = p.idade || ""; $("pnAltura").value = p.altura || "";
     $("pnObjetivo").value = p.objetivo || "manter"; $("pnPagto").value = p.pagto || "";
     $("pnObs").value = p.restricoes || "";
@@ -613,6 +624,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     if (!p) return;
     p.nome = $("pnNome").value.trim() || p.nome;
     p.zap = $("pnZap").value.replace(/\D/g, "");
+    p.email = $("pnEmail").value.trim().toLowerCase();
     p.idade = +$("pnIdade").value || p.idade;
     p.altura = +$("pnAltura").value || p.altura;
     p.objetivo = $("pnObjetivo").value;
@@ -1402,6 +1414,95 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       "<\/script></body></html>";
   }
   window.__montaAppNutri = montaAppNutri; // testes
+
+  // ---------- acesso do paciente por e-mail (site com login e senha) ----------
+  function senhaAleatoria() {
+    var cs = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    var arr = new Uint32Array(10);
+    (window.crypto || {}).getRandomValues ? crypto.getRandomValues(arr) : arr.forEach(function (_, i) { arr[i] = Math.floor(Math.random() * 1e9); });
+    var s = "";
+    for (var i = 0; i < 10; i++) s += cs[arr[i] % cs.length];
+    return s;
+  }
+  function emailAcessoHtmlN(consultorio, primeiro, email, senha) {
+    var url = "https://www.torqueon.com.br/aluno-login.html";
+    return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#f2f7f2;color:#1c2620;border-radius:16px;padding:28px;'>" +
+      "<div style='font-size:11px;letter-spacing:.2em;color:#16a34a;font-weight:700;'>" + esc(consultorio.toUpperCase()) + "</div>" +
+      "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de acompanhamento está pronto, " + esc(primeiro) + "! 🥗</h1>" +
+      "<p style='color:#54604f;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b>Meu login</b>.</p>" +
+      "<div style='background:#fff;border:1px solid #dbe5db;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
+      "<div style='margin-bottom:6px;'><span style='color:#54604f;'>Login:</span> <b>" + esc(email) + "</b></div>" +
+      "<div><span style='color:#54604f;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
+      "<a href='" + url + "' style='display:block;text-align:center;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;'>Entrar no meu app →</a>" +
+      "<p style='color:#8a948a;font-size:12px;margin-top:14px;'>Dica: dentro do app, use “Adicionar à tela inicial” pra ele virar um aplicativo no seu celular. Este e-mail foi enviado por " + esc(consultorio) + " pelo TORQUE ON.</p></div>";
+  }
+  function enviaEmailFn(nuvem, para, assunto, html) {
+    var cfg = self.MT_CLOUD || {};
+    return nuvem.client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      return fetch(cfg.url + "/functions/v1/envia-email", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "enviar", para: para, assunto: assunto, html: html }),
+      }).then(function (r) { return r.json().then(function (d) { d.__status = r.status; return d; }); });
+    });
+  }
+  function criaAcessoPaciente(pid, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pid; });
+    if (!p) { cb({ erro: "Paciente não encontrado." }); return; }
+    var email = String(p.email || "").trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { cb({ erro: "Cadastre um e-mail válido pro paciente primeiro (perfil dele)." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { cb({ erro: "Entre na sua conta (card ☁️ Sua ilha) pra criar o acesso online." }); return; }
+    if (!p.appTokenN) { p.appTokenN = S.uid() + S.uid(); S.write("ntStudio", st); }
+    var stamp = new Date().toISOString();
+    var html = montaAppNutri(p, stamp);
+    var senha = senhaAleatoria();
+    nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: { html: html, stamp: stamp }, atualizado: stamp }])
+      .then(function (r) {
+        if (r && r.error) { cb({ erro: "Não deu pra publicar o app na nuvem: " + r.error.message }); return; }
+        nuvem.client.rpc("aluno_define_login", { t: p.appTokenN, p_login: email, p_senha: senha }).then(function (r2) {
+          var d = r2 && r2.data;
+          if (r2 && r2.error) { cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
+          if (d && d.erro) { cb({ erro: d.erro }); return; }
+          var consultorio = (load().config || {}).nome || "Seu nutricionista";
+          enviaEmailFn(nuvem, email, "Seu acesso ao app de acompanhamento — " + consultorio, emailAcessoHtmlN(consultorio, p.nome.split(" ")[0], email, senha))
+            .then(function (r3) {
+              if (r3 && r3.ok) cb({ ok: true, email: email });
+              else cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: (r3 && r3.erro) || "publique a função envia-email (torqueon.com.br/funcoes.html)" });
+            }, function () {
+              cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: "sem conexão com a função envia-email" });
+            });
+        }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+      }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+  }
+  function msgAcessoN(r, p) {
+    if (r.erro) return "⚠️ " + esc(r.erro);
+    if (r.semEmail) {
+      var texto = "Oi " + p.nome.split(" ")[0] + "! Seu app de acompanhamento está pronto. 🥗\nEntra em https://www.torqueon.com.br/aluno-login.html\nLogin: " + r.email + "\nSenha temporária: " + r.senha + "\n(troca a senha dentro do app, no card Meu login)";
+      return "✅ Acesso criado — mas o e-mail não saiu (" + esc(r.motivo) + ").<br>Login: <b>" + esc(r.email) + "</b> · senha temporária: <b style='font-family:monospace;'>" + esc(r.senha) + "</b> " +
+        '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/' + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto) + '">💬 Mandar no WhatsApp</a>';
+    }
+    return "📧 Acesso enviado pro e-mail <b>" + esc(r.email) + "</b>! O paciente entra em torqueon.com.br/aluno-login.html com o e-mail e a senha que chegou (e troca a senha no app).";
+  }
+  $("pnAcesso").addEventListener("click", function () {
+    if (!perfilNId) return;
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (!p) return;
+    var digitado = $("pnEmail").value.trim().toLowerCase();
+    if (digitado && digitado !== (p.email || "")) { p.email = digitado; S.write("ntStudio", st); }
+    var b = this;
+    b.disabled = true; b.textContent = "⏳ Enviando…";
+    criaAcessoPaciente(perfilNId, function (r) {
+      b.disabled = false; b.textContent = "📧 Enviar acesso do app";
+      $("pnAcessoInfo").innerHTML = msgAcessoN(r, p);
+      if (r.erro) alert(r.erro);
+    });
+  });
+  window.__acessoNutri = { cria: criaAcessoPaciente, senha: senhaAleatoria, msg: msgAcessoN }; // testes
 
   function publicaApp(pid) {
     var st = load();
