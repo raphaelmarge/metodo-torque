@@ -4921,5 +4921,305 @@ self.MT_EXERCICIOS = [
   "g": "Core",
   "eq": "Solo",
   "d": "Execute o abdominal oblíquo normalmente, mas pare 2 segundos completos no ponto mais difícil — sem impulso, o músculo trabalha dobrado."
+ },
+ {
+  "n": "Pernada de crawl com prancha",
+  "g": "Cardio",
+  "eq": "Piscina",
+  "d": "Braços apoiados na prancha, bata as pernas a partir do quadril com joelhos quase esticados e tornozelos soltos, rosto na água soltando o ar."
+ },
+ {
+  "n": "Pernada de costas com prancha",
+  "g": "Cardio",
+  "eq": "Piscina",
+  "d": "De barriga para cima com a prancha abraçada ao peito, bata as pernas a partir do quadril mantendo o corpo alinhado na superfície."
+ },
+ {
+  "n": "Elevação lateral dentro da água",
+  "g": "Ombros",
+  "eq": "Piscina",
+  "d": "Com a água nos ombros, suba os braços esticados pelos lados até a superfície e desça devagar — a água resiste nos dois sentidos."
+ },
+ {
+  "n": "Educativo de respiração lateral com prancha",
+  "g": "Cardio",
+  "eq": "Piscina",
+  "d": "Batendo perna com a prancha à frente, gire só a cabeça para o lado para inspirar e volte o rosto pra água soltando o ar aos poucos."
+ },
+ {
+  "n": "Remada unilateral com elástico ancorado",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Ancore o elástico na altura do peito, puxe com um braço até a costela juntando a escápula e volte controlando — o tronco não gira."
+ },
+ {
+  "n": "Puxada alta com elástico sentado",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Sentado com o elástico ancorado no alto, puxe até a clavícula abrindo os cotovelos para baixo e para trás, sem encolher os ombros."
+ },
+ {
+  "n": "Crucifixo invertido com elástico em pé",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Segure o elástico esticado à frente na altura dos ombros e abra os braços até formar um T, apertando as escápulas no final."
+ },
+ {
+  "n": "Elevação frontal com mini band",
+  "g": "Ombros",
+  "eq": "Mini band",
+  "d": "Pise na mini band e suba o braço esticado à frente até a altura do ombro, sem balançar o tronco nem encolher o pescoço."
+ },
+ {
+  "n": "Ponte com mini band e abdução",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Na ponte de glúteo com a banda acima dos joelhos, suba o quadril e abra os joelhos contra a banda no topo antes de descer."
+ },
+ {
+  "n": "Bíceps com elástico pegada martelo",
+  "g": "Bíceps",
+  "eq": "Elástico",
+  "d": "Pise no elástico com as palmas viradas uma para a outra e flexione os cotovelos colados ao corpo — a tensão aumenta no topo."
+ },
+ {
+  "n": "Tríceps francês com elástico",
+  "g": "Tríceps",
+  "eq": "Elástico",
+  "d": "Com o elástico ancorado embaixo atrás de você, estenda os braços acima da cabeça mantendo os cotovelos apontados para a frente."
+ },
+ {
+  "n": "Abdominal em pé com elástico alto",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "De costas para a ancoragem alta, segure o elástico junto ao peito e flexione o tronco à frente contraindo o abdômen — não puxe com os braços."
+ },
+ {
+  "n": "Marcha com mini band nos pés",
+  "g": "Funcional e Cross",
+  "eq": "Mini band",
+  "d": "Com a banda envolvendo os dois pés, marche elevando os joelhos e mantendo tensão constante — o pé de apoio não desaba para dentro."
+ },
+ {
+  "n": "Sprint com elástico de resistência",
+  "g": "Cardio",
+  "eq": "Elástico",
+  "d": "Com o elástico na cintura preso atrás (ou segurado pelo parceiro), acelere à frente em passadas curtas e potentes, tronco inclinado."
+ },
+ {
+  "n": "Supino unilateral com halter no banco",
+  "g": "Peito",
+  "eq": "Barra/Halteres",
+  "d": "Deitado com um halter só, desça e suba de um lado enquanto o core impede o tronco de girar — segure firme o banco com a mão livre."
+ },
+ {
+  "n": "Rosca Scott unilateral com halter",
+  "g": "Bíceps",
+  "eq": "Banco Scott",
+  "d": "Apoie um braço no banco Scott e flexione o halter sem tirar o tríceps do apoio — estique quase tudo embaixo, sem travar o cotovelo."
+ },
+ {
+  "n": "Tríceps coice unilateral com apoio",
+  "g": "Tríceps",
+  "eq": "Barra/Halteres",
+  "d": "Com joelho e mão apoiados no banco, tronco paralelo ao chão, estenda o cotovelo para trás até o braço ficar reto — só o antebraço se move."
+ },
+ {
+  "n": "Elevação lateral unilateral na polia baixa",
+  "g": "Ombros",
+  "eq": "Polia",
+  "d": "De lado para a polia, suba o braço de fora esticado até a linha do ombro — o cabo mantém tensão desde o início do movimento."
+ },
+ {
+  "n": "Panturrilha em pé unilateral com halter",
+  "g": "Quadríceps",
+  "eq": "Barra/Halteres",
+  "d": "Em um pé só segurando um halter do mesmo lado, suba na ponta do pé o mais alto que der e desça o calcanhar abaixo do degrau, devagar."
+ },
+ {
+  "n": "Remada baixa na máquina com apoio de peito",
+  "g": "Costas",
+  "eq": "Máquina",
+  "d": "Peito colado no apoio, puxe as manoplas até a costela sem arrancar com o tronco — o apoio isola as costas e protege a lombar."
+ },
+ {
+  "n": "Supino inclinado na máquina articulada",
+  "g": "Peito",
+  "eq": "Máquina",
+  "d": "Ajuste o banco para as manoplas ficarem na linha do peito superior e empurre até quase estender, voltando em 2 segundos."
+ },
+ {
+  "n": "Desenvolvimento na máquina articulada",
+  "g": "Ombros",
+  "eq": "Máquina",
+  "d": "Costas apoiadas, empurre as manoplas para cima sem estender totalmente os cotovelos e desça até a linha das orelhas."
+ },
+ {
+  "n": "Panturrilha no leg press horizontal",
+  "g": "Quadríceps",
+  "eq": "Máquina",
+  "d": "Com a ponta dos pés na base da plataforma e joelhos quase estendidos, empurre com os tornozelos em amplitude completa, sem pressa."
+ },
+ {
+  "n": "Remada prona no banco inclinado com halteres",
+  "g": "Costas",
+  "eq": "Barra/Halteres",
+  "d": "De bruços no banco inclinado, reme os dois halteres até a linha da costela juntando as escápulas — o banco elimina o roubo de tronco."
+ },
+ {
+  "n": "Sentar e levantar com apoio de cadeira",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Sente e levante da cadeira usando o mínimo de apoio das mãos, pés afastados na largura do quadril — o melhor teste de força funcional que existe."
+ },
+ {
+  "n": "Elevação de panturrilha com apoio de parede",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Parede",
+  "d": "Mãos na parede, suba na ponta dos pés devagar e desça mais devagar ainda — fortalece a panturrilha e melhora o equilíbrio."
+ },
+ {
+  "n": "Equilíbrio tandem (pé na frente do outro)",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Solo",
+  "d": "Fique com um pé exatamente à frente do outro como numa linha e segure 20 segundos — perto de um apoio para segurança."
+ },
+ {
+  "n": "Flexão de punho com halter leve",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Barra/Halteres",
+  "d": "Antebraço apoiado na coxa com a mão para cima, suba e desça o halter leve só com o punho — fortalece o antebraço e protege contra quedas."
+ },
+ {
+  "n": "Tibial anterior em pé na parede",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Parede",
+  "d": "Costas na parede com os pés um passo à frente, levante as pontas dos pés do chão sem dobrar o joelho — previne canelite e tropeços."
+ },
+ {
+  "n": "Salto com contramovimento (CMJ)",
+  "g": "Funcional e Cross",
+  "eq": "Solo",
+  "d": "Agache rápido até meia altura e salte o mais alto possível, aterrissando macio com os joelhos alinhados aos pés."
+ },
+ {
+  "n": "Salto lateral sobre linha",
+  "g": "Funcional e Cross",
+  "eq": "Solo",
+  "d": "Salte de lado sobre uma linha ou cone baixo com os dois pés juntos, aterrissando macio e já emendando o próximo salto."
+ },
+ {
+  "n": "Arremesso de wall ball no alvo",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "Agache segurando a bola no peito e, ao subir, arremesse-a contra o alvo na parede — receba já agachando para o próximo arremesso."
+ },
+ {
+  "n": "Clean unilateral com kettlebell",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Puxe o kettlebell do chão em um movimento fluido até encaixá-lo no peito com o punho neutro — o cotovelo fecha rente ao corpo, sem bater no antebraço."
+ },
+ {
+  "n": "Remada renegada com kettlebells",
+  "g": "Costas",
+  "eq": "Kettlebell",
+  "d": "Em prancha segurando dois kettlebells, reme um braço de cada vez até a costela sem deixar o quadril girar — pés bem afastados ajudam."
+ },
+ {
+  "n": "Caminhada do garçom (waiter carry)",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Caminhe com o kettlebell estendido acima da cabeça como uma bandeja, punho firme e costela fechada — troca o lado na metade do percurso."
+ },
+ {
+  "n": "Flexão com pés no sofá",
+  "g": "Peito",
+  "eq": "Sem equipamento",
+  "d": "Pés apoiados no sofá e mãos no chão, desça o peito controlando — a inclinação joga o esforço para a parte superior do peito e ombros."
+ },
+ {
+  "n": "Cadeirinha na parede com elevação de braços",
+  "g": "Quadríceps",
+  "eq": "Parede",
+  "d": "Na posição de cadeirinha com as costas na parede, suba e desça os braços esticados — pernas seguram enquanto os ombros trabalham."
+ },
+ {
+  "n": "Escalador deslizante com toalha",
+  "g": "Core",
+  "eq": "Sem equipamento",
+  "d": "Em prancha alta com os pés sobre uma toalha no piso liso, deslize os joelhos ao peito alternando ou juntos — o core freia o retorno."
+ },
+ {
+  "n": "Abdominal canivete alternado",
+  "g": "Core",
+  "eq": "Solo",
+  "d": "Deitado, suba o tronco e uma perna esticada ao mesmo tempo tocando a mão no pé oposto — desça controlando e alterne os lados."
+ },
+ {
+  "n": "Agachamento no caixote (box squat)",
+  "g": "Quadríceps",
+  "eq": "Caixote",
+  "d": "Agache até sentar de leve no caixote atrás de você, pause 1 segundo sem relaxar e suba forte — ensina profundidade e tira o medo de sentar."
+ },
+ {
+  "n": "Supino nos pinos do rack (pin press)",
+  "g": "Peito",
+  "eq": "Barra/Halteres",
+  "d": "Deite no banco com a barra apoiada nos pinos na altura do peito e empurre a partir do zero — sem embalo, só força pura de arranque."
+ },
+ {
+  "n": "Floor press com halteres",
+  "g": "Peito",
+  "eq": "Barra/Halteres",
+  "d": "Deitado no chão, desça os halteres até os cotovelos tocarem o solo e empurre — a amplitude curta protege os ombros e foca o tríceps."
+ },
+ {
+  "n": "Remada meadows na landmine",
+  "g": "Costas",
+  "eq": "Landmine",
+  "d": "De lado para a barra na landmine, segure a ponta com pegada pronada e reme até a costela — o cotovelo sobe rente ao corpo."
+ },
+ {
+  "n": "Nórdico de posterior assistido (nordic curl)",
+  "g": "Posterior e glúteo",
+  "eq": "Sem equipamento",
+  "d": "Com os tornozelos presos e o corpo reto, desça à frente o mais devagar que conseguir freando com o posterior — use as mãos pra amortecer no fim."
+ },
+ {
+  "n": "Prancha de adutor Copenhagen",
+  "g": "Core",
+  "eq": "Banco",
+  "d": "De lado com o pé de cima apoiado no banco, suba o quadril e segure o corpo reto — o adutor da perna de cima sustenta tudo."
+ },
+ {
+  "n": "Hip thrust b-stance (apoio escalonado)",
+  "g": "Posterior e glúteo",
+  "eq": "Banco",
+  "d": "No hip thrust, adiante um pé deixando só o calcanhar no chão — a perna de trás vira a principal, quase unilateral com mais estabilidade."
+ },
+ {
+  "n": "Panturrilha burrinho (donkey calf raise)",
+  "g": "Quadríceps",
+  "eq": "Sem equipamento",
+  "d": "Tronco inclinado à frente com as mãos apoiadas no banco, suba na ponta dos pés com o quadril alto — o alongamento extra pega a panturrilha inteira."
+ },
+ {
+  "n": "Puxada escapular na barra fixa (scap pull)",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Pendurado na barra com os braços esticados, apenas deprima e junte as escápulas elevando um pouco o corpo — a base de toda barra fixa forte."
+ },
+ {
+  "n": "Esquiva pendular de boxe (slip)",
+  "g": "Boxe e lutas",
+  "eq": "Sem equipamento",
+  "d": "Em base de luta, incline o tronco levemente para fora da linha do golpe alternando os lados, joelhos soltos — o queixo continua protegido."
+ },
+ {
+  "n": "Soco cruzado com passo (cross com pivô)",
+  "g": "Boxe e lutas",
+  "eq": "Sem equipamento",
+  "d": "Gire o pé de trás e o quadril junto com o cruzado, transferindo o peso pra perna da frente — a força vem do chão, não do braço."
  }
 ];
