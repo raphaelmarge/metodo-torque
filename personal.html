@@ -54,7 +54,8 @@
 <header class="topo">
   <div class="topo-marca">
     <button class="hamb-pt" id="btnMenuPt" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-    <div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+    <img id="logoStudio" hidden alt="Logo do studio" style="height: 34px; border-radius: 8px;">
     <h1 id="tituloStudio">Meu Studio</h1>
     </div>
     <div class="busca-topo">
@@ -544,6 +545,19 @@
       <label style="margin: 0; font-size: 12.5px;">Cidade
         <input id="cfgPixCidade" placeholder="ex.: Belo Horizonte" style="width: 150px; display: block; margin-top: 4px;"></label>
     </div>
+    <div style="margin: 12px 0; padding: 10px 12px; border: 1px dashed #322e3d; border-radius: 12px;">
+      <b style="font-size: 13px;">🎨 A cara do seu studio</b>
+      <div class="linha-flex" style="gap: 12px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
+        <label style="margin: 0; font-size: 12.5px;">Cor principal (botões e app do aluno)
+          <input type="color" id="cfgCor" value="#7c3aed" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid #322e3d; border-radius: 8px; background: #14121a; cursor: pointer;"></label>
+        <button class="btn sec mini" id="cfgCorReset">Voltar ao roxo padrão</button>
+        <img id="cfgLogoPrev" hidden alt="Logo do studio" style="height: 34px; border-radius: 8px;">
+        <button class="btn sec mini" id="cfgLogoBtn">Enviar logo</button>
+        <button class="btn sec mini" id="cfgLogoDel" hidden>✕ tirar logo</button>
+        <input type="file" id="cfgLogoFile" accept="image/*" hidden>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Mudou a cara? Toque em <b>📤 Publicar apps atualizados</b> (aba Treinos) pros seus alunos verem a novidade no app. 😉</p>
+    </div>
     <label style="display: block; margin: 10px 0; font-size: 12.5px;">📌 Mural dos alunos — um aviso por linha (entra no app de todos quando você gerar/publicar de novo)
       <textarea id="cfgMural" rows="3" placeholder="Semana que vem: treino ao ar livre no sábado! 🌳
 Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"></textarea></label>
@@ -690,6 +704,35 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var S = window.MTStore;
   var $ = function (id) { return document.getElementById(id); };
   function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+
+  // ---------- tema do studio (cor principal + logo) ----------
+  function corOk(c) { return /^#[0-9a-fA-F]{6}$/.test(String(c || "")) ? String(c) : ""; }
+  function misturaCor(hex, alvo, f) {
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    r = Math.round(r + (alvo - r) * f); g = Math.round(g + (alvo - g) * f); b = Math.round(b + (alvo - b) * f);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+  function escurece(hex, f) { return misturaCor(hex, 0, f); }
+  function clareia(hex, f) { return misturaCor(hex, 255, f); }
+  // mesmo padrão anti-XSS do fotoOk: só dataURL de imagem, sem aspas/sinais
+  function logoOk(u) { u = String(u || ""); return /^data:image\//.test(u) && !/['"<>\\]/.test(u) ? u : ""; }
+  function aplicaTema(st) {
+    var cor = corOk((st.config || {}).cor);
+    if (cor) {
+      document.documentElement.style.setProperty("--roxo", cor);
+      document.documentElement.style.setProperty("--roxo-2", escurece(cor, .18));
+    } else {
+      document.documentElement.style.removeProperty("--roxo");
+      document.documentElement.style.removeProperty("--roxo-2");
+    }
+    var lg = logoOk((st.config || {}).logo);
+    var img = $("logoStudio");
+    if (img) {
+      if (lg) { img.src = lg; img.hidden = false; }
+      else { img.hidden = true; img.removeAttribute("src"); }
+    }
+  }
+  window.__tema = { corOk: corOk, escurece: escurece, clareia: clareia }; // testes
 
   function load() {
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
@@ -3043,6 +3086,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function montaAppAluno(a, stamp) {
     var st = load();
     var studio = (st.config || {}).nome || "Meu Personal";
+    // 🎨 tema do studio dentro do app gerado (cor válida ou padrão roxo)
+    var COR = corOk((st.config || {}).cor) || "#7c3aed";
+    var COR2 = corOk((st.config || {}).cor) ? escurece(COR, .18) : "#6d28d9";
+    var CORC = corOk((st.config || {}).cor) ? clareia(COR, .5) : "#a78bfa";
+    var LOGOAPP = logoOk((st.config || {}).logo);
     var zapPersonal = (st.config || {}).zap || "";
     var metaSemana = +a.metaSemana || 3;
     var hojeISO = S.todayISO();
@@ -3102,27 +3150,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
-      "<meta name='theme-color' content='#7c3aed'>" +
+      "<meta name='theme-color' content='" + COR + "'>" +
       "<link rel='manifest' href='/app/manifest.webmanifest'>" +
       "<link rel='icon' href='/assets/icons/icon-personal.svg' type='image/svg+xml'>" +
       "<link rel='apple-touch-icon' href='/assets/icons/icon-personal-192.png'>" +
       "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(studio) + "</title>" +
       "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0d0c10;color:#fff;max-width:480px;margin:0 auto;padding:0 0 40px}" +
       ".topo{padding:26px 18px 14px;background:radial-gradient(120% 160% at 50% -40%,rgba(124,58,237,.35),transparent 60%)}" +
-      ".topo .k{font-size:11px;letter-spacing:.2em;color:#a78bfa;font-weight:700;text-transform:uppercase}" +
+      ".topo .k{font-size:11px;letter-spacing:.2em;color:" + CORC + ";font-weight:700;text-transform:uppercase}" +
       ".topo h1{font-size:24px;font-weight:800;margin-top:6px}" +
       ".cardx{background:#1d1a24;border:1px solid #322e3d;border-radius:14px;margin:10px 14px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.2)}" +
       ".cardx h2{font-size:12px;letter-spacing:.14em;color:#a9a4b5;text-transform:uppercase;margin-bottom:8px}" +
       "pre{white-space:pre-wrap;font-family:inherit;font-size:14.5px;line-height:1.6}" +
       "input,select{background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#fff;padding:10px 12px;font-family:inherit;font-size:15px}" +
-      ".btnx{background:#7c3aed;color:#fff;border:none;border-radius:20px;padding:10px 18px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 6px 16px -8px #7c3aed}" +
+      ".btnx{background:" + COR + ";color:#fff;border:none;border-radius:20px;padding:10px 18px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 6px 16px -8px " + COR + "}" +
       ".kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #322e3d}" +
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<button id='hambApp' aria-label='Abrir menu' style='flex:none;background:rgba(255,255,255,.12);border:none;color:#fff;cursor:pointer;padding:10px;border-radius:11px;font-size:0;'>" +
       "<svg width='20' height='20' viewBox='0 0 20 20' fill='none'><path d='M3 5h14M3 10h14M3 15h14' stroke='currentColor' stroke-width='2' stroke-linecap='round'/></svg></button>" +
-      "<div><div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:#a78bfa;font-size:12.5px;font-weight:700;margin-top:2px;'></div></div></div>" +
+      "<div>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div></div>" +
       // menu lateral (gaveta)
       "<div id='menuFundo' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;'></div>" +
       "<nav id='menuApp' style='position:fixed;top:0;left:-290px;bottom:0;width:270px;background:#17141d;border-right:1px solid #322e3d;z-index:71;transition:left .22s ease;padding:22px 14px;overflow-y:auto;'>" +
@@ -3255,7 +3303,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
       "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
-      "<div id='tmrBar' style='display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
+      "<div id='tmrBar' style='display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       "<div id='guiaBox' style='display:none;position:fixed;inset:0;background:#121016;z-index:60;flex-direction:column;padding:22px 18px;max-width:480px;margin:0 auto;'>" +
       "<div style='display:flex;justify-content:space-between;align-items:center;color:#a9a4b5;font-size:13px;font-weight:700;gap:8px;'>" +
       "<span id='gProg'></span><button id='gFechar' style='background:none;border:none;color:#a9a4b5;font-size:22px;cursor:pointer;font-family:inherit;'>✕</button></div>" +
@@ -3308,10 +3356,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['S','T','Q','Q','S','S','D'];var html='';var naSem=0;" +
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=d.toISOString().slice(0,10);var fez=!!f[iso];if(fez)naSem++;" +
-      "var hoje=iso===isoHj();html+=\"<div style='flex:1;text-align:center;'><div style='width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;\"+(fez?'background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#6e6a78;')+(hoje?'outline:2px solid #a78bfa;outline-offset:2px;':'')+\"'>\"+(fez?'✓':rot[i])+\"</div></div>\";}" +
+      "var hoje=iso===isoHj();html+=\"<div style='flex:1;text-align:center;'><div style='width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;\"+(fez?'background:linear-gradient(135deg," + COR + "," + CORC + ");color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#6e6a78;')+(hoje?'outline:2px solid " + CORC + ";outline-offset:2px;':'')+\"'>\"+(fez?'✓':rot[i])+\"</div></div>\";}" +
       "document.getElementById('diasSem').innerHTML=html;" +
       "var pct=Math.min(100,Math.round(100*naSem/META));" +
-      "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+(naSem>=META?' 🔥':'')+\"</b></div><div style='height:10px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:99px;transition:width .5s;'></div></div>\";" +
+      "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+(naSem>=META?' 🔥':'')+\"</b></div><div style='height:10px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;transition:width .5s;'></div></div>\";" +
       "var total=Object.keys(f).length;var marcos=[[100,'💎'],[50,'🏆'],[25,'🥇'],[10,'🥈'],[5,'🥉']];var tem=[];" +
       "marcos.forEach(function(m){if(total>=m[0])tem.push(m[1]+' '+m[0]);});" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j][0]){falta=marcos[j];break;}}" +
@@ -3322,7 +3370,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var naSem=0;var seg=new Date();seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);if(f[d.toISOString().slice(0,10)])naSem++;}" +
       "if(navigator.vibrate)navigator.vibrate(naSem>=META?[120,60,120,60,260]:[140]);" +
-      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
+      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
       "t.innerHTML=naSem>=META?'\ud83d\udd25 META DA SEMANA BATIDA!<br><small>'+naSem+' treinos — orgulho define</small>':'\ud83d\udcaa Treino registrado!<br><small>'+naSem+' de '+META+' na semana</small>';" +
       "document.body.appendChild(t);setTimeout(function(){t.remove();},3500);" +
       "rpcApp('app_aluno_treino_reg',{t:TOKEN,p_dia:iso,p_itens:[{ex:'__feito',f:1,c:''}]});});" +
@@ -3330,7 +3378,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var ckNota=0;var EMO=['😫','😕','😐','🙂','🤩'];" +
       "document.getElementById('ckNotas').innerHTML=EMO.map(function(e,i){return \"<button data-n='\"+(i+1)+\"' style='flex:1;background:#14121a;border:1px solid #322e3d;border-radius:11px;font-size:22px;padding:9px 0;cursor:pointer;'>\"+e+\"</button>\";}).join('');" +
       "document.getElementById('ckNotas').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;ckNota=+b.dataset.n;" +
-      "this.querySelectorAll('button').forEach(function(x){x.style.background=x===b?'linear-gradient(135deg,#7c3aed,#a78bfa)':'#14121a';x.style.borderColor=x===b?'#a78bfa':'#322e3d';});});" +
+      "this.querySelectorAll('button').forEach(function(x){x.style.background=x===b?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.borderColor=x===b?'" + CORC + "':'#322e3d';});});" +
       "function semanaCK(){var d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10);}" +
       "if(L('ptck','')===semanaCK()){document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';}" +
       "document.getElementById('ckEnvia').addEventListener('click',function(){if(!ckNota){alert('Escolhe uma carinha pra semana. 😉');return;}" +
@@ -3355,7 +3403,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
       "for(var i=0;i<ini;i++)h+='<div></div>';" +
       "for(var d2=1;d2<=nd;d2++){var iso=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d2).slice(-2);var st2=pontos[iso];var hoje2=iso===isoHj();" +
-      "h+=\"<div data-agdia='\"+iso+\"' style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;\"+(AGSEL===iso?'background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;':(hoje2?'border:1px solid #a78bfa;color:#fff;':'background:#14121a;border:1px solid #26222f;color:#d6d2df;'))+\"'>\"+d2+" +
+      "h+=\"<div data-agdia='\"+iso+\"' style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;\"+(AGSEL===iso?'background:linear-gradient(135deg," + COR + "," + CORC + ");color:#fff;':(hoje2?'border:1px solid " + CORC + ";color:#fff;':'background:#14121a;border:1px solid #26222f;color:#d6d2df;'))+\"'>\"+d2+" +
       "(st2?\"<span style='width:5px;height:5px;border-radius:50%;margin-top:2px;background:\"+(st2==='confirmado'?'#4ade80':st2==='pedido'?'#fbbf24':'#f87171')+\";'></span>\":\"<span style='height:7px;'></span>\")+'</div>';}" +
       "h+='</div>';el.innerHTML=h;" +
       "document.getElementById('agAnt').onclick=function(){AGMES.setMonth(AGMES.getMonth()-1);pintaCal();};" +
@@ -3423,7 +3471,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // séries por exercício + cronômetro + auto-completar o dia
       "function pintaSets(){var st=L('ptsets_'+isoHj(),{});document.querySelectorAll('.setbtn').forEach(function(b){" +
       "var n=st[b.dataset.ex]||0,max=+b.dataset.n;b.textContent=n+'/'+max+' séries ✓';" +
-      "b.style.background=n>=max?'linear-gradient(135deg,#7c3aed,#a78bfa)':'#1d1a24';});}" +
+      "b.style.background=n>=max?'linear-gradient(135deg," + COR + "," + CORC + ")':'#1d1a24';});}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('.setbtn');" +
       "if(b){var st=L('ptsets_'+isoHj(),{});var max=+b.dataset.n;var n=(st[b.dataset.ex]||0)+1;if(n>max)n=0;st[b.dataset.ex]=n;Sv('ptsets_'+isoHj(),st);pintaSets();" +
       "if(n===max&&navigator.vibrate)navigator.vibrate(90);" +
@@ -3541,7 +3589,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "all.sort(function(a,b){return String(a.criado)<String(b.criado)?-1:1;});" +
       "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
       "el.innerHTML=all.map(function(m){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
-      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,#7c3aed,#6d28d9)':(bot?'#241b36':'#14121a'))+\";border:1px solid \"+(bot?'#7c3aed':'#322e3d')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:#a78bfa;font-weight:800;margin-bottom:2px;'>🤖 assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg," + COR + "," + COR2 + ")':(bot?'#241b36':'#14121a'))+\";border:1px solid \"+(bot?'" + COR + "':'#322e3d')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:" + CORC + ";font-weight:800;margin-bottom:2px;'>🤖 assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
       "el.scrollTop=el.scrollHeight;}" +
       "function carregaChat(){if(!NUVEM){pintaChat(L('ptchat',[]));return;}" +
       "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptchat',l);pintaChat(l);}else{pintaChat(L('ptchat',[]));}});}" +
@@ -3577,7 +3625,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var h=L('ptdc',{});var l=h[ex]||[];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
       "l.push({d:new Date().toISOString().slice(0,10),kg:kg});if(l.length>60)l.shift();h[ex]=l;Sv('ptdc',h);" +
       "if(max>0&&kg>max){if(navigator.vibrate)navigator.vibrate([120,60,220]);" +
-      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
+      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
       "t.innerHTML='\ud83c\udf89 NOVO RECORDE!<br><small>'+ex+': '+kg+' kg</small>';document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}" +
       // progress\u00e3o sugerida (estilo Hevy): 3 registros seguidos na MESMA carga \u2192 hora de subir
       "else{var ult3=l.slice(-3);if(ult3.length===3&&ult3.every(function(x){return +x.kg===kg;})){" +
@@ -4032,6 +4080,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- conta / ilha ----------
   function renderConta() {
     var st = load();
+    aplicaTema(st);
+    if (document.activeElement !== $("cfgCor")) $("cfgCor").value = corOk((st.config || {}).cor) || "#7c3aed";
+    var lgConta = logoOk((st.config || {}).logo);
+    if (lgConta) { $("cfgLogoPrev").src = lgConta; $("cfgLogoPrev").hidden = false; }
+    else { $("cfgLogoPrev").hidden = true; $("cfgLogoPrev").removeAttribute("src"); }
+    $("cfgLogoDel").hidden = !lgConta;
     if (document.activeElement !== $("cfgZap")) $("cfgZap").value = (st.config || {}).zap || "";
     [["cfgPixChave", "pixChave"], ["cfgPixNome", "pixNome"], ["cfgPixCidade", "pixCidade"]].forEach(function (par) {
       if (document.activeElement !== $(par[0])) $(par[0]).value = (st.config || {})[par[1]] || "";
@@ -4101,11 +4155,60 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.appEditGeralEm = new Date().toISOString(); // mural entra no app de todo mundo
     S.write("ptStudio", st);
   });
+  // 🎨 tema do studio: cor principal + logo
+  $("cfgCor").addEventListener("change", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.cor = corOk(this.value);
+    st.config.appEditGeralEm = new Date().toISOString(); // a cor entra no app de todo mundo
+    S.write("ptStudio", st);
+  });
+  $("cfgCorReset").addEventListener("click", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.cor = "";
+    st.config.appEditGeralEm = new Date().toISOString();
+    S.write("ptStudio", st);
+  });
+  $("cfgLogoBtn").addEventListener("click", function () { $("cfgLogoFile").click(); });
+  $("cfgLogoFile").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f) return;
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var fator = Math.min(1, 240 / Math.max(img.width || 1, img.height || 1));
+      var c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round((img.width || 1) * fator));
+      c.height = Math.max(1, Math.round((img.height || 1) * fator));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      var d = c.toDataURL("image/png");
+      if (d.length > 150 * 1024) { alert("Logo muito pesada — use uma imagem mais simples."); return; }
+      if (!logoOk(d)) { alert("Não consegui ler essa imagem — tenta outro arquivo? 🙏"); return; }
+      var st = load();
+      st.config = st.config || {};
+      st.config.logo = d;
+      st.config.appEditGeralEm = new Date().toISOString(); // a logo entra no app de todo mundo
+      S.write("ptStudio", st);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo? 🙏"); };
+    img.src = url;
+  });
+  $("cfgLogoDel").addEventListener("click", function () {
+    var st = load();
+    st.config = st.config || {};
+    delete st.config.logo;
+    st.config.appEditGeralEm = new Date().toISOString();
+    S.write("ptStudio", st);
+  });
   $("sData").value = S.todayISO();
   $("avData").value = S.todayISO();
   renderDobrasCampos();
   S.onChange(function (k) { if (k === "ptStudio") render(); });
   verificaOnboarding();
+  aplicaTema(load()); // tema no boot (a cor/logo do studio pintam o painel na hora)
   render();
 
   // ---------- login próprio do TORQUE PERSONAL ----------
