@@ -64,7 +64,6 @@
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: #1d1a24; border: 1px solid #322e3d; border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
   </div>
-  <p>A gestão do personal trainer em uma tela: seus alunos, agenda de sessões, pagamentos e treinos com envio por WhatsApp — funciona offline e sincroniza entre seus aparelhos.</p>
 </header>
 
 <main class="corpo">
@@ -712,6 +711,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vChat").hidden = b.dataset.a !== "chat";
     // o card da conta (ilha) só aparece na aba Alunos — não precisa repetir em todas
     $("cardConta").hidden = b.dataset.a !== "alunos";
+    $("kpis").hidden = b.dataset.a !== "alunos";
     $("vPerfil").hidden = true;
     if (b.dataset.a === "relatorios") renderRelatorios();
     if (b.dataset.a === "assessoria") renderAssessoria();
@@ -905,7 +905,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (a.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, ""); }
     else wa.style.display = "none";
     // vira PÁGINA: esconde as outras seções e mostra o perfil
-    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vDesafio", "vRelatorios", "vAssessoria", "vChat", "cardConta"].forEach(function (v) { $(v).hidden = true; });
+    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vDesafio", "vRelatorios", "vAssessoria", "vChat", "cardConta", "kpis"].forEach(function (v) { $(v).hidden = true; });
     $("vPerfil").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     pintaAppDados(a);

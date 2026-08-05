@@ -70,7 +70,6 @@
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: #fff; color: #1c2620; border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
     </div>
   </div>
-  <p>O sistema do nutricionista: pacientes, dietas por refeição com kcal, dieta automática e o app do paciente com água, alertas e adesão — cada nutricionista na sua própria ilha.</p>
 </header>
 
 <main class="corpo">
@@ -468,6 +467,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     $("vChatN").hidden = b.dataset.a !== "chat";
     // o card da conta (ilha) só aparece na aba Pacientes — não precisa repetir em todas
     $("cardContaN").hidden = b.dataset.a !== "pacientes";
+    $("kpisN").hidden = b.dataset.a !== "pacientes";
     if (b.dataset.a === "dietas") renderDietas();
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
