@@ -198,6 +198,28 @@
     </div>
 
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
+      <h2>🤖 Treino automático</h2>
+      <p class="muted" style="margin: 4px 0 10px;">O sistema lê a anamnese do aluno (nível, dias por semana, lesões, o que ele não gosta) e monta as fichas sozinho com o catálogo TORQUE. Você revisa, ajusta e envia — a decisão final é sempre sua.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <select id="taAluno" style="min-width: 180px;"></select>
+        <select id="taObjetivo" style="width: auto;">
+          <option value="hipertrofia">🏋️ Hipertrofia</option>
+          <option value="forca">⚡ Força</option>
+          <option value="emagrecimento">🔥 Emagrecimento</option>
+          <option value="condicionamento">❤️ Condicionamento geral</option>
+        </select>
+        <select id="taEquip" style="width: auto;">
+          <option value="academia">Academia completa</option>
+          <option value="casa">Halteres e elásticos (casa)</option>
+          <option value="corpo">Só o peso do corpo</option>
+        </select>
+        <button class="btn" id="taGerar">🤖 Gerar fichas</button>
+        <button class="btn sec" id="taEvoluir" title="evolui séries/reps da ficha atual (progressão dupla)">📈 Evoluir semana</button>
+      </div>
+      <p id="taStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
       <h2>👥 Enviar treino em grupo</h2>
       <p class="muted" style="margin: 4px 0 10px;">Funciona como uma lista de transmissão: <b>1)</b> monte um treino de disparo (pré-montado, sem estar preso a nenhum aluno), <b>2)</b> crie o grupo, <b>3)</b> dispare — todo mundo do grupo recebe o mesmo treino e os apps publicados atualizam sozinhos.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
@@ -1480,7 +1502,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var opsGt = (st.treinosGrupo || []).map(function (g) {
       return '<option value="' + g.id + '">📣 ' + esc(g.nome) + "</option>";
     }).join("");
-    ["sAluno", "pAluno", "tAluno", "avAluno"].forEach(function (id) {
+    ["sAluno", "pAluno", "tAluno", "avAluno", "taAluno"].forEach(function (id) {
       var sel = $(id);
       var atual = sel.value;
       sel.innerHTML = "<option value=''>— aluno —</option>" + opts +
@@ -1768,6 +1790,146 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     alert("⚡ " + tpl.fichas.length + " ficha(s) criadas! Ajuste séries/cargas e publique o app do aluno.");
   });
   window.__templates = TEMPLATES_FICHA; // testes
+
+  // ---------- 🤖 treino automático (motor de regras sobre a anamnese) ----------
+  var TA_SPLITS = {
+    1: [["Treino único — Full Body", [["Quadríceps", 2], ["Peito", 1], ["Costas", 1], ["Posterior e glúteo", 1], ["Ombros", 1], ["Core", 1]]]],
+    2: [["A — Corpo todo (ênfase superior)", [["Peito", 2], ["Costas", 2], ["Ombros", 1], ["Core", 1]]],
+       ["B — Corpo todo (ênfase inferior)", [["Quadríceps", 2], ["Posterior e glúteo", 2], ["Core", 2]]]],
+    3: [["A — Peito e Tríceps", [["Peito", 3], ["Tríceps", 2]]],
+       ["B — Costas e Bíceps", [["Costas", 3], ["Bíceps", 2]]],
+       ["C — Pernas e Core", [["Quadríceps", 2], ["Posterior e glúteo", 2], ["Core", 2]]]],
+    4: [["A — Peito e Tríceps", [["Peito", 3], ["Tríceps", 2]]],
+       ["B — Costas e Bíceps", [["Costas", 3], ["Bíceps", 2]]],
+       ["C — Pernas", [["Quadríceps", 3], ["Posterior e glúteo", 2]]],
+       ["D — Ombros e Core", [["Ombros", 3], ["Core", 2]]]],
+    5: [["A — Peito", [["Peito", 3], ["Tríceps", 1]]],
+       ["B — Costas", [["Costas", 3], ["Bíceps", 1]]],
+       ["C — Quadríceps", [["Quadríceps", 3], ["Core", 1]]],
+       ["D — Ombros e Core", [["Ombros", 3], ["Core", 2]]],
+       ["E — Posterior, glúteo e braços", [["Posterior e glúteo", 3], ["Bíceps", 1], ["Tríceps", 1]]]],
+  };
+  var TA_OBJ = {
+    hipertrofia: { s: 4, r: "10", d: 90, teto: 12, piso: 8 },
+    forca: { s: 5, r: "5", d: 120, teto: 6, piso: 4 },
+    emagrecimento: { s: 3, r: "15", d: 45, teto: 20, piso: 12 },
+    condicionamento: { s: 3, r: "12", d: 60, teto: 15, piso: 10 },
+  };
+  var TA_EQUIP = {
+    academia: null, // tudo liberado
+    casa: ["Barra/Halteres", "Elástico", "Mini band", "Solo", "Sem equipamento", "Parede", "Banco", "Kettlebell", "Cadeira", "Degrau", "Toalha", "Caneleira", "Bastão"],
+    corpo: ["Solo", "Sem equipamento", "Parede", "Barra fixa", "Cadeira", "Degrau", "Toalha", "Banco"],
+  };
+  // lesão citada na anamnese → exercícios que o gerador evita (o personal sempre revisa)
+  var TA_LESOES = [
+    [/joelho|menisco|lca|patela/i, /agachamento|afundo|avanço|passada|leg |búlgaro|salto|pistol|sissy|hack|extensora|pliometr/i],
+    [/ombro|manguito|luxa/i, /desenvolvimento|militar|acima da cabeça|overhead|arnold|elevação lateral|parada de mão|handstand|snatch|arranco/i],
+    [/lombar|coluna|hérnia|hernia|disco/i, /terra\b|stiff|bom dia|remada curvada|good morning|superman|hiperextens/i],
+  ];
+  function geraTreinoAuto(alunoId, objetivo, equip) {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) return { erro: "Escolha o aluno." };
+    var an = a.anamnese || {};
+    var dias = Math.min(5, Math.max(1, parseInt(an.dias, 10) || a.metaSemana || 3));
+    var obj = TA_OBJ[objetivo] || TA_OBJ.hipertrofia;
+    var nivel = an.nivel || "iniciante";
+    var series = nivel === "iniciante" ? Math.max(2, obj.s - 1) : obj.s;
+    // filtros: equipamento, lesões e "não gosta"
+    var eqOk = TA_EQUIP[equip] || null;
+    var vetos = [];
+    TA_LESOES.forEach(function (par) { if (par[0].test(an.lesoes || "")) vetos.push(par[1]); });
+    var naoGosta = String(an.naogosta || "").split(/[,;]/).map(function (s) { return s.trim().toLowerCase(); }).filter(function (s) { return s.length > 2; });
+    var usados = {};
+    function candidatos(grupo) {
+      var meus = (st.exercicios || []).map(function (e) { return { n: e.nome, g: e.grupo, eq: e.eq || "" }; });
+      var cat = (self.MT_EXERCICIOS || []).map(function (c) { return { n: c.n, g: c.g, eq: c.eq || "" }; });
+      return meus.concat(cat).filter(function (c) {
+        if (c.g !== grupo || usados[c.n.toLowerCase()]) return false;
+        if (eqOk && eqOk.indexOf(c.eq) < 0) return false;
+        if (vetos.some(function (v) { return v.test(c.n); })) return false;
+        if (naoGosta.some(function (s) { return c.n.toLowerCase().indexOf(s) >= 0; })) return false;
+        // variações de tempo/técnica avançada não entram na ficha automática
+        if (/pausa de 2|excêntrica de 4|isométrico$|1 e 1\/2/.test(c.n)) return false;
+        if (nivel === "iniciante" && /muscle-up|planche|front lever|back lever|human flag|pistol|dragon flag|snatch|arranco|clean|terra\b/i.test(c.n)) return false;
+        return true;
+      });
+    }
+    var plano = TA_SPLITS[dias];
+    var t = treinoDe(st, alunoId);
+    var fichasNovas = [];
+    var total = 0;
+    plano.forEach(function (f, fi) {
+      var itens = [];
+      f[1].forEach(function (par) {
+        var cands = candidatos(par[0]);
+        for (var i = 0; i < par[1] && cands.length; i++) {
+          // varia a escolha por ficha pra não repetir sempre os mesmos
+          var pick = cands.splice((fi + i * 3) % cands.length, 1)[0];
+          usados[pick.n.toLowerCase()] = 1;
+          var ex = exercicioPorNome(st, pick.n);
+          var core = par[0] === "Core";
+          itens.push({ exId: ex.id, series: core ? Math.max(2, series - 1) : series, reps: core ? "30s" : obj.r, descanso: core ? 45 : obj.d, obs: "" });
+          total++;
+        }
+      });
+      fichasNovas.push({ id: S.uid(), titulo: f[0], itens: itens });
+    });
+    if (!total) return { erro: "Não sobrou exercício com esses filtros — afrouxe o equipamento ou revise a anamnese." };
+    t.fichas = fichasNovas;
+    t.geradaAuto = new Date().toISOString();
+    t.objetivo = objetivo;
+    t.semana = 1;
+    S.write("ptStudio", st);
+    var avisos = [];
+    if (vetos.length) avisos.push("lesões da anamnese respeitadas");
+    if (naoGosta.length) avisos.push("preferências respeitadas");
+    return { ok: true, fichas: fichasNovas.length, exercicios: total, dias: dias, avisos: avisos };
+  }
+  // progressão dupla: sobe rep até o teto; no teto, volta pro piso e ganha 1 série (máx. 5)
+  function evoluiTreino(alunoId) {
+    var st = load();
+    var t = (st.treinosV2 || {})[alunoId];
+    if (!t || !(t.fichas || []).length) return { erro: "Esse aluno ainda não tem ficha montada." };
+    var obj = TA_OBJ[t.objetivo] || TA_OBJ.hipertrofia;
+    t.fichas.forEach(function (f) {
+      f.itens.forEach(function (it) {
+        var mTempo = String(it.reps).match(/^(\d+)\s*s$/i);
+        if (mTempo) { it.reps = Math.min(60, +mTempo[1] + 5) + "s"; return; }
+        var r = parseInt(it.reps, 10);
+        if (!isFinite(r)) return;
+        if (r < obj.teto) it.reps = String(r + 1);
+        else { it.reps = String(obj.piso); it.series = Math.min(5, (+it.series || 3) + 1); }
+      });
+    });
+    t.semana = (t.semana || 1) + 1;
+    S.write("ptStudio", st);
+    return { ok: true, semana: t.semana };
+  }
+  $("taGerar").addEventListener("click", function () {
+    var id = $("taAluno").value;
+    if (!id) { alert("Escolha o aluno."); return; }
+    var st = load();
+    var t = (st.treinosV2 || {})[id];
+    if (t && (t.fichas || []).length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Substituir pelas fichas geradas automaticamente?")) return;
+    var r = geraTreinoAuto(id, $("taObjetivo").value, $("taEquip").value);
+    if (r.erro) { $("taStatus").textContent = "⚠️ " + r.erro; return; }
+    $("taStatus").textContent = "⚡ " + r.fichas + " ficha(s) com " + r.exercicios + " exercícios geradas pra " + r.dias + " dia(s)/semana" +
+      (r.avisos.length ? " — " + r.avisos.join(" e ") : "") + ". Revise abaixo, ajuste e envie!";
+    $("tAluno").value = id;
+    renderFichas();
+    renderBiblioteca();
+  });
+  $("taEvoluir").addEventListener("click", function () {
+    var id = $("taAluno").value;
+    if (!id) { alert("Escolha o aluno."); return; }
+    var r = evoluiTreino(id);
+    if (r.erro) { $("taStatus").textContent = "⚠️ " + r.erro; return; }
+    $("taStatus").textContent = "📈 Ficha evoluída pra SEMANA " + r.semana + " (progressão dupla: reps sobem até o teto, aí voltam e ganha 1 série). Republique o app do aluno!";
+    $("tAluno").value = id;
+    renderFichas();
+  });
+  window.__treinoAuto = { gera: geraTreinoAuto, evolui: evoluiTreino }; // testes
   $("fichasBox").addEventListener("click", function (e) {
     var add = e.target.getAttribute && e.target.getAttribute("data-additem");
     var rmF = e.target.getAttribute && e.target.getAttribute("data-rmficha");
