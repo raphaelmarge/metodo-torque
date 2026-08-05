@@ -1036,6 +1036,51 @@ async function abaPt(p, a) {
   const asse = await p.evaluate(() => document.getElementById("assessoriaLista").textContent);
   ok(/precisa da sua conta/.test(asse), "assessoria sem nuvem explica o que falta");
 
+  // 🤖 treino automático + 📈 progressão (motor de regras sobre a anamnese)
+  console.log("Treino automático:");
+  {
+    const auto = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.alunos[0].anamnese = Object.assign({}, st.alunos[0].anamnese, { nivel: "intermediário", dias: "3", lesoes: "condropatia no joelho", naogosta: "burpee" });
+      window.MTStore.write("ptStudio", st);
+      const r = window.__treinoAuto.gera(st.alunos[0].id, "hipertrofia", "academia");
+      const st2 = window.MTStore.read("ptStudio", {});
+      const t = st2.treinosV2[st2.alunos[0].id];
+      const nomes = [];
+      t.fichas.forEach((f) => f.itens.forEach((it) => { const e = st2.exercicios.find((x) => x.id === it.exId); nomes.push(e ? e.nome : "?"); }));
+      return { r, fichas: t.fichas.length, titulos: t.fichas.map((f) => f.titulo).join("|"), nomes, semana: t.semana, item0: t.fichas[0].itens[0] };
+    });
+    ok(auto.r.ok && auto.fichas === 3 && /Peito e Tríceps/.test(auto.titulos) && /Pernas e Core/.test(auto.titulos), "gera divisão ABC pra 3 dias/semana lendo a anamnese");
+    ok(auto.item0.series === 4 && auto.item0.reps === "10" && auto.item0.descanso === 90, "hipertrofia sai com 4×10 e 90s de descanso");
+    ok(auto.nomes.length >= 12 && !auto.nomes.some((n) => /agachamento|afundo|leg |salto|extensora|búlgaro/i.test(n)), "lesão de joelho na anamnese tira agachamentos/afundos/saltos (" + auto.nomes.length + " exercícios)");
+    ok(!auto.nomes.some((n) => /burpee/i.test(n)), "'não gosta' da anamnese é respeitado");
+    const corpo = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const r = window.__treinoAuto.gera(st.alunos[0].id, "emagrecimento", "corpo");
+      const st2 = window.MTStore.read("ptStudio", {});
+      const t = st2.treinosV2[st2.alunos[0].id];
+      const eqs = new Set();
+      t.fichas.forEach((f) => f.itens.forEach((it) => { const e = st2.exercicios.find((x) => x.id === it.exId); if (e) eqs.add(e.nome); }));
+      return { r, primeiroReps: t.fichas[0].itens.find((i) => i.reps !== "30s")?.reps };
+    });
+    ok(corpo.r.ok && corpo.primeiroReps === "15", "emagrecimento com peso do corpo sai 15 reps e gera mesmo sem academia");
+    const evo = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      window.__treinoAuto.gera(st.alunos[0].id, "hipertrofia", "academia");
+      const r1 = window.__treinoAuto.evolui(st.alunos[0].id);
+      const st2 = window.MTStore.read("ptStudio", {});
+      const reps1 = st2.treinosV2[st2.alunos[0].id].fichas[0].itens[0].reps;
+      // evolui até estourar o teto (10→11→12→piso com +1 série)
+      window.__treinoAuto.evolui(st.alunos[0].id);
+      const r3 = window.__treinoAuto.evolui(st.alunos[0].id);
+      const st3 = window.MTStore.read("ptStudio", {});
+      const it3 = st3.treinosV2[st3.alunos[0].id].fichas[0].itens[0];
+      return { r1, reps1, r3, it3 };
+    });
+    ok(evo.r1.ok && evo.r1.semana === 2 && evo.reps1 === "11", "📈 evoluir semana sobe as reps (10 → 11)");
+    ok(evo.r3.semana === 4 && evo.it3.reps === "8" && evo.it3.series === 5, "no teto (12) as reps voltam pro piso (8) e ganha 1 série — progressão dupla");
+  }
+
   // aluno "Encerrar" some da lista
   await abaPt(p, "alunos");
   await p.click("[data-rm]");
