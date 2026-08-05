@@ -5221,5 +5221,305 @@ self.MT_EXERCICIOS = [
   "g": "Boxe e lutas",
   "eq": "Sem equipamento",
   "d": "Gire o pé de trás e o quadril junto com o cruzado, transferindo o peso pra perna da frente — a força vem do chão, não do braço."
+ },
+ {
+  "n": "Rosca no cabo deitado no banco",
+  "g": "Bíceps",
+  "eq": "Polia",
+  "d": "Deitado no banco de frente pra polia baixa, puxe a barra até a testa com os cotovelos fixos — a tensão não alivia em nenhum ponto."
+ },
+ {
+  "n": "Rosca alternada sentado no banco inclinado",
+  "g": "Bíceps",
+  "eq": "Barra/Halteres",
+  "d": "No banco a 45 graus com os braços pendurados atrás da linha do tronco, alterne as roscas sem balançar — alonga o bíceps na base."
+ },
+ {
+  "n": "Rosca direta na barra W",
+  "g": "Bíceps",
+  "eq": "Barra/Halteres",
+  "d": "A pegada inclinada da barra W poupa os punhos: suba até a contração cheia e desça em 2 segundos sem abrir os cotovelos."
+ },
+ {
+  "n": "Rosca martelo sentado com apoio no encosto",
+  "g": "Bíceps",
+  "eq": "Barra/Halteres",
+  "d": "Sentado com as costas no encosto alto, faça a rosca martelo simultânea — o encosto denuncia e impede o roubo de tronco."
+ },
+ {
+  "n": "Rosca de punho invertida na barra",
+  "g": "Bíceps",
+  "eq": "Barra/Halteres",
+  "d": "Antebraços apoiados no banco com as palmas pra baixo, suba a barra só com os punhos — antebraço forte protege cotovelo e pegada."
+ },
+ {
+  "n": "Rosca cross-body na polia baixa",
+  "g": "Bíceps",
+  "eq": "Polia",
+  "d": "De lado pra polia, puxe o pegador cruzando na frente do corpo até o ombro oposto — pega a cabeça longa por um ângulo novo."
+ },
+ {
+  "n": "Rosca direta ajoelhado na polia",
+  "g": "Bíceps",
+  "eq": "Polia",
+  "d": "Ajoelhado de frente pra polia baixa, o chão bloqueia a ajuda do quadril — só o bíceps sobe a barra, com o abdômen firme."
+ },
+ {
+  "n": "Tríceps francês unilateral com halter sentado",
+  "g": "Tríceps",
+  "eq": "Barra/Halteres",
+  "d": "Sentado com um halter acima da cabeça, desça atrás da nuca com o cotovelo apontando pro teto e estenda sem abrir o braço."
+ },
+ {
+  "n": "Tríceps testa no banco declinado",
+  "g": "Tríceps",
+  "eq": "Barra/Halteres",
+  "d": "No banco declinado, desça a barra até a testa com os cotovelos fechados — o declínio mantém tensão no alongamento máximo."
+ },
+ {
+  "n": "Tríceps na polia alta de costas (overhead)",
+  "g": "Tríceps",
+  "eq": "Polia",
+  "d": "De costas pra polia alta com a corda atrás da cabeça, dê um passo à frente e estenda os braços — alonga a cabeça longa por inteiro."
+ },
+ {
+  "n": "Tríceps mata-borrão no banco (tate press)",
+  "g": "Tríceps",
+  "eq": "Barra/Halteres",
+  "d": "Deitado com os halteres sobre o peito e palmas pra frente, dobre os cotovelos deixando os halteres caírem pro esterno e estenda."
+ },
+ {
+  "n": "Extensão de tríceps na parede em pé",
+  "g": "Tríceps",
+  "eq": "Parede",
+  "d": "Mãos na parede na altura do rosto, incline o corpo e deixe os cotovelos dobrarem até a testa quase encostar — estenda empurrando só com o tríceps."
+ },
+ {
+  "n": "Tríceps na polia com barra V",
+  "g": "Tríceps",
+  "eq": "Polia",
+  "d": "A barra em V deixa os punhos neutros: cotovelos colados, estenda até o final e segure 1 segundo na contração."
+ },
+ {
+  "n": "Supino fechado com halteres juntos",
+  "g": "Tríceps",
+  "eq": "Barra/Halteres",
+  "d": "Junte os dois halteres em pegada neutra sobre o peito e desça pressionando um contra o outro — o tríceps trabalha o tempo todo."
+ },
+ {
+  "n": "Flexão de um braço na parede",
+  "g": "Ginástica e calistenia",
+  "eq": "Parede",
+  "d": "Em pé de frente pra parede com uma mão só apoiada, flexione controlando o cotovelo junto ao corpo — o primeiro degrau da flexão de um braço."
+ },
+ {
+  "n": "Flexão explosiva com palmas no peito",
+  "g": "Ginástica e calistenia",
+  "eq": "Solo",
+  "d": "Empurre o chão com força suficiente pra tirar as mãos e tocar o peito no ar — aterrisse com os cotovelos levemente dobrados."
+ },
+ {
+  "n": "Dragon flag no banco",
+  "g": "Ginástica e calistenia",
+  "eq": "Banco",
+  "d": "Segure o banco atrás da cabeça e desça o corpo reto como uma tábua a partir dos ombros — desça só até onde a lombar não arquear."
+ },
+ {
+  "n": "Barra fixa em L (L-sit pull-up)",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Com as pernas esticadas à frente em 90 graus, puxe o queixo até a barra sem deixar as pernas caírem — core e costas juntos."
+ },
+ {
+  "n": "Flexão declinada com pés na parede",
+  "g": "Ginástica e calistenia",
+  "eq": "Parede",
+  "d": "Suba os pés na parede até o tronco ficar quase vertical e flexione — a ponte entre a flexão comum e a parada de mão."
+ },
+ {
+  "n": "Barra fixa com elevação de joelhos no topo",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Puxe o queixo acima da barra e, lá em cima, eleve os joelhos ao peito antes de descer — dois exercícios numa repetição só."
+ },
+ {
+  "n": "Prancha lateral com estrela (star plank)",
+  "g": "Ginástica e calistenia",
+  "eq": "Solo",
+  "d": "Na prancha lateral, eleve o braço e a perna de cima abrindo uma estrela — segure sem deixar o quadril afundar."
+ },
+ {
+  "n": "Flexão típex (typewriter push-up)",
+  "g": "Ginástica e calistenia",
+  "eq": "Solo",
+  "d": "Embaixo da flexão, deslize o peso de um braço pro outro rente ao chão antes de subir — controle total de ombro e peito."
+ },
+ {
+  "n": "Sissy squat segurando o batente",
+  "g": "Ginástica e calistenia",
+  "eq": "Sem equipamento",
+  "d": "Segurando o batente da porta, incline o tronco pra trás dobrando só os joelhos, calcanhares fora do chão — quadríceps em fogo."
+ },
+ {
+  "n": "Rolamento de vela pra agachamento",
+  "g": "Ginástica e calistenia",
+  "eq": "Solo",
+  "d": "Role de costas jogando as pernas por cima e volte com impulso pra aterrissar agachado — levante sem apoiar as mãos."
+ },
+ {
+  "n": "Mobilidade CARs de ombro",
+  "g": "Mobilidade e alongamento",
+  "eq": "Solo",
+  "d": "Em pé, desenhe o maior círculo possível com o braço esticado, bem devagar e sem mexer o tronco — uma volta completa por vez."
+ },
+ {
+  "n": "Alongamento de adutores em sapo (frog stretch)",
+  "g": "Mobilidade e alongamento",
+  "eq": "Solo",
+  "d": "Em quatro apoios com os joelhos bem abertos, empurre o quadril pra trás até sentir a parte interna das coxas — respire e afunde aos poucos."
+ },
+ {
+  "n": "Deslizamento na parede (wall slide)",
+  "g": "Mobilidade e alongamento",
+  "eq": "Parede",
+  "d": "Costas e braços colados na parede em W, deslize os braços pra cima sem descolar os cotovelos — mobilidade de ombro na prática."
+ },
+ {
+  "n": "Alongamento de escaleno e pescoço sentado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Solo",
+  "d": "Sentado, segure embaixo do banco com uma mão e incline a orelha oposta pro ombro — 30 segundos suaves de cada lado, sem puxar com força."
+ },
+ {
+  "n": "Mobilidade de coluna segmentada em pé",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Desça vértebra por vértebra como se descolasse a coluna da parede, braços soltos, e suba empilhando de baixo pra cima."
+ },
+ {
+  "n": "Abertura de peitoral no chão em T",
+  "g": "Mobilidade e alongamento",
+  "eq": "Solo",
+  "d": "De bruços com um braço aberto em T, role o corpo pra trás por cima dele até sentir o peitoral abrir — segure respirando fundo."
+ },
+ {
+  "n": "Alongamento dinâmico de perna em balanço",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Apoiado na parede, balance a perna esticada à frente e atrás em amplitude crescente — 15 balanços por perna antes do treino."
+ },
+ {
+  "n": "Mobilidade de quadril ajoelhado com afundo lateral",
+  "g": "Mobilidade e alongamento",
+  "eq": "Solo",
+  "d": "Ajoelhado com uma perna aberta de lado, desloque o quadril em direção ao pé aberto e volte — adutores e quadril soltos pro agachamento."
+ },
+ {
+  "n": "Single leg stretch (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Deitado com o tronco enrolado, puxe um joelho ao peito enquanto estica a outra perna a 45 graus e troque — o abdômen não desaba."
+ },
+ {
+  "n": "Double leg stretch (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Enrolado, estique braços e pernas ao mesmo tempo em direções opostas e recolha circulando os braços — o tronco fica imóvel."
+ },
+ {
+  "n": "Criss-cross (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Mãos atrás da cabeça, leve o cotovelo ao joelho oposto alternando devagar — gire o tronco, não o pescoço."
+ },
+ {
+  "n": "Shoulder bridge com elevação de perna (pilates)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Na ponte, estique uma perna pro teto e desça-a até a linha do joelho de apoio sem mexer o quadril — controle total da pelve."
+ },
+ {
+  "n": "Postura do camelo (ustrasana)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Ajoelhado, leve as mãos aos calcanhares abrindo o peito pro teto — empurre o quadril à frente e proteja a lombar alongando pra cima."
+ },
+ {
+  "n": "Postura do triângulo invertido (parivrtta trikonasana)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Pernas afastadas, gire o tronco levando a mão oposta ao pé da frente e o outro braço pro teto — quadril nivelado."
+ },
+ {
+  "n": "Prancha lateral de yoga (vasisthasana)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Da prancha, gire pro apoio de uma mão empilhando os pés e suba o braço livre — corpo numa linha só, pescoço longo."
+ },
+ {
+  "n": "Postura do dançarino (natarajasana)",
+  "g": "Pilates e yoga",
+  "eq": "Solo",
+  "d": "Em pé, segure o peito do pé atrás e incline o tronco à frente elevando a perna — equilíbrio, foco no ponto fixo à frente."
+ },
+ {
+  "n": "Agachamento frontal no smith",
+  "g": "Quadríceps",
+  "eq": "Smith",
+  "d": "Barra apoiada na frente dos ombros com os cotovelos altos, desça controlando — o trilho ajuda a aprender o padrão frontal com segurança."
+ },
+ {
+  "n": "Remada curvada no smith",
+  "g": "Costas",
+  "eq": "Smith",
+  "d": "Com o tronco a 45 graus, puxe a barra do trilho até a costela — o smith fixa o caminho e deixa você focar em apertar as costas."
+ },
+ {
+  "n": "Elevação pélvica no smith",
+  "g": "Posterior e glúteo",
+  "eq": "Smith",
+  "d": "Costas apoiadas no banco e barra sobre o quadril (com proteção), suba até alinhar joelho-quadril-ombro e segure 1 segundo."
+ },
+ {
+  "n": "Panturrilha em pé no smith com degrau",
+  "g": "Quadríceps",
+  "eq": "Smith",
+  "d": "Pontas dos pés no degrau sob a barra do smith, desça o calcanhar até alongar e suba na amplitude máxima, sem quicar."
+ },
+ {
+  "n": "Bom dia no smith",
+  "g": "Posterior e glúteo",
+  "eq": "Smith",
+  "d": "Barra nas costas, joelhos semiflexionados, incline o tronco à frente empurrando o quadril pra trás até sentir o posterior — suba apertando o glúteo."
+ },
+ {
+  "n": "Extensão de tronco no banco romano com anilha",
+  "g": "Core",
+  "eq": "Banco romano",
+  "d": "Abraçando uma anilha no peito, desça o tronco e suba até a linha do corpo — sem hiperestender no topo."
+ },
+ {
+  "n": "Abdominal declinado com giro e anilha",
+  "g": "Core",
+  "eq": "Banco romano",
+  "d": "No banco declinado com a anilha no peito, suba girando levemente pra um lado e alterne — desça sempre em 2 segundos."
+ },
+ {
+  "n": "Encolhimento de ombros na barra T",
+  "g": "Costas",
+  "eq": "Barra T",
+  "d": "Segure a barra T entre as pernas em pé e encolha os ombros direto pra cima, segurando 1 segundo — trapézio sem sobrecarregar a lombar."
+ },
+ {
+  "n": "Remada cavalinho com pegada aberta",
+  "g": "Costas",
+  "eq": "Barra T",
+  "d": "Na barra T com pegada mais larga, puxe até o peito com os cotovelos abertos — o alvo passa a ser a parte alta das costas."
+ },
+ {
+  "n": "Caneleira: extensão de quadril em pé",
+  "g": "Posterior e glúteo",
+  "eq": "Caneleira",
+  "d": "Com a caneleira e as mãos apoiadas, leve a perna esticada pra trás contraindo o glúteo sem inclinar o tronco — sobe até onde a lombar não compensa."
  }
 ];
