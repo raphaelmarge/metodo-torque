@@ -473,6 +473,31 @@ function crcNode(s) {
   }), "matrículas online importadas entram com status certo (aparecem no kanban)");
   await p.close();
 
+  // ---------- comissões de vendedor (balcão) e professor (aula dada) ----------
+  console.log("Comissões (vendedor e professor):");
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  p.on("dialog", (d) => d.accept());
+  await p.goto(BASE + "/apps/produtos.html");
+  ok(await p.evaluate(() => !!document.getElementById("vVendedor")), "venda de balcão tem o campo Vendedor(a) — pra comissão");
+  await p.evaluate(() => {
+    const S = window.MTStore;
+    const hoje = S.todayISO();
+    S.write("produtos", { itens: [], vendas: [{ id: "v1", data: hoje, hora: "10:00", itens: [], total: 200, forma: "Pix", cliente: "", vendedor: "Carla Vendedora" }] });
+    S.write("comissoes", { pctPadrao: 10, pct: {}, lancadas: {}, regime: "competencia", valorAula: 30 });
+    const chamadas = {};
+    chamadas["t1|" + hoje] = ["Aluno X"];
+    S.write("turmas", { turmas: [{ id: "t1", nome: "Cross", prof: "Pedro Prof", alunos: [] }], chamadas: chamadas });
+  });
+  await p.goto(BASE + "/apps/comissoes.html");
+  await p.waitForTimeout(400);
+  const kCom = await p.evaluate(() => document.getElementById("kpisCom").textContent);
+  ok(/Comissões vendedor\s*R\$\s?20\b/.test(kCom), "comissão do vendedor calculada (10% de R$ 200 = R$ 20)");
+  ok(/Comissões professor\s*R\$\s?30\b/.test(kCom), "comissão do professor por aula dada (1 × R$ 30)");
+  const quadroExtras = await p.evaluate(() => document.getElementById("listaExtras").textContent);
+  ok(/Carla Vendedora/.test(quadroExtras) && /Pedro Prof/.test(quadroExtras), "quadro lista vendedores e professores do mês");
+  await p.close();
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();

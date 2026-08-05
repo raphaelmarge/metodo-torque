@@ -95,6 +95,16 @@ async function abaNt(p, a) {
   const pctM = totais.match(/\((\d+)%\)/);
   ok(pctM && +pctM[1] >= 70 && +pctM[1] <= 130, "dieta gerada fica perto do alvo (" + (pctM ? pctM[1] : "?") + "%)");
 
+  // macros P/C/G (novo): alvo por g/kg + totais na tela
+  ok(/Proteína/.test(totais) && /Carbo/.test(totais) && /Gordura/.test(totais), "totais da dieta mostram P/C/G contra o alvo de macros");
+  const mAlvo = await p.evaluate(() => window.__nutri.macrosAlvo({ sexo: "M", idade: 30, peso: 80, altura: 180, atividade: "sed", objetivo: "manter" }));
+  ok(mAlvo.prot === 128 && mAlvo.gord === 59 && mAlvo.carb === 274, "alvo de macros: 1,6 g/kg proteína, 25% gordura, resto carbo (128/274/59)");
+  const mDieta = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+    return window.__nutri.macrosDaDieta(st, st.dietas[st.pacientes[0].id]);
+  });
+  ok(mDieta.prot > 0 && mDieta.carb > 0 && mDieta.gord > 0, "dieta gerada soma proteína, carbo e gordura do banco TACO");
+
   // restrição respeitada (lactose)
   const semLact = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
@@ -142,7 +152,7 @@ async function abaNt(p, a) {
   // código de barras (Open Food Facts mockado)
   await p.route("**/world.openfoodfacts.org/**", (r) => r.fulfill({
     contentType: "application/json",
-    body: JSON.stringify({ status: 1, product: { product_name_pt: "Biscoito Recheado Sabor Chocolate", brands: "MarcaX", nutriments: { "energy-kcal_100g": 480, proteins_100g: 5.2 } } }),
+    body: JSON.stringify({ status: 1, product: { product_name_pt: "Biscoito Recheado Sabor Chocolate", brands: "MarcaX", nutriments: { "energy-kcal_100g": 480, proteins_100g: 5.2, carbohydrates_100g: 65, fat_100g: 20 } } }),
   }));
   await p.evaluate(() => window.__buscaOFF("7891000100103"));
   await p.waitForTimeout(400);
@@ -151,6 +161,7 @@ async function abaNt(p, a) {
     return st.alimentos.find((a) => a.codigo === "7891000100103");
   });
   ok(!!doCodigo && doCodigo.kcal === 480 && /MarcaX/.test(doCodigo.nome), "código de barras traz o produto do Open Food Facts (480 kcal/100g)");
+  ok(doCodigo && doCodigo.carb === 65 && doCodigo.gord === 20, "código de barras captura carbo e gordura do rótulo");
 
   // app do paciente
   const appHtml = await p.evaluate(() => {
@@ -165,6 +176,17 @@ async function abaNt(p, a) {
   ok(/Meu peso/.test(appHtml) && /pzAdd/.test(appHtml), "card de peso presente");
   ok(/aluno_define_login/.test(appHtml) && /Meu login/.test(appHtml), "app do paciente tem login e senha");
   ok(/Nutri Ana Costa/.test(appHtml), "marca do consultório no app");
+  ok(/macroDia/.test(appHtml) && /Alvo de macros/.test(appHtml), "card Meu dia mostra P/C/G do dia contra o alvo");
+  ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/diário/refeições/água/fotos pro nutricionista");
+
+  // plano alimentar em PDF (imprimível)
+  const planoPdf = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+    return window.__planoPdf(st.pacientes[0].id);
+  });
+  ok(/PLANO ALIMENTAR/.test(planoPdf) && /Metas diárias/.test(planoPdf) && /Proteína/.test(planoPdf), "plano imprimível com metas de kcal e macros");
+  ok(/Almoço/.test(planoPdf) && /window\.print/.test(planoPdf) && /Nutricionista/.test(planoPdf), "plano lista as refeições, tem botão de imprimir e assinatura");
+  ok(await p.evaluate(() => !!document.getElementById("dPdf") && !!document.getElementById("pnAppDados")), "botão 🖨 Plano em PDF e card 'O que o paciente registrou' existem");
   ok(/chMsgs/.test(appHtml) && /chEnvia/.test(appHtml) && /app_chat_lista/.test(appHtml) && /app_chat_envia/.test(appHtml), "app do paciente tem o chat interno (mesma nuvem do personal)");
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app do paciente tem agenda estilo calendário com pedido de horário");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");

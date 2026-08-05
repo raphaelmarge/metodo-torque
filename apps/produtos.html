@@ -68,6 +68,7 @@
           <select id="vForma"><option>Dinheiro</option><option>Pix</option><option>Cartão de débito</option><option>Cartão de crédito</option></select>
         </div>
         <div class="campo"><label>Cliente (opcional)</label><input id="vCliente" list="alunosLista" placeholder="nome"><datalist id="alunosLista"></datalist></div>
+        <div class="campo"><label>Vendedor(a) — pra comissão</label><input id="vVendedor" placeholder="quem fez a venda"></div>
         <button class="btn" id="btnFinalizar" style="width: 100%; margin-top: 12px;">✓ Finalizar venda</button>
       </div>
     </div>
@@ -224,6 +225,7 @@
       id: S.uid(), data: S.todayISO(), hora: agora.toTimeString().slice(0, 5),
       itens: carrinho.map(function (c) { return { produtoId: c.produtoId, nome: c.nome, qtd: c.qtd, preco: c.preco }; }),
       total: total, forma: $("vForma").value, cliente: $("vCliente").value.trim(),
+      vendedor: $("vVendedor").value.trim(), // alimenta as comissões de vendedor
     });
     carrinho = [];
     $("vCliente").value = "";
@@ -365,6 +367,7 @@
   }
 
   S.onChange(function (k) { if (k === "produtos" || k === "alunos") render(); });
+  if (S.equipeDatalist) S.equipeDatalist(["vVendedor"]); // sugere os colaboradores no campo Vendedor(a)
   mostra();
 })();
 </script>
