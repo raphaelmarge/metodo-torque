@@ -154,12 +154,16 @@ async function abaPt(p, a) {
   let temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
   ok(!temPix, "sem chave Pix configurada não há botão 💠");
 
-  // chave Pix no card da ilha
+  // chave Pix no card da ilha (que agora vive só na aba Alunos)
+  await abaPt(p, "alunos");
+  ok(await p.evaluate(() => !document.getElementById("cardConta").hidden), "card da ilha aparece na aba Alunos");
   await p.fill("#cfgPixChave", "raphael@torquefit.com.br");
   await p.fill("#cfgPixNome", "Raphael Margé");
   await p.fill("#cfgPixCidade", "Belo Horizonte");
   await p.evaluate(() => document.getElementById("cfgPixCidade").blur());
   await p.waitForTimeout(250);
+  await abaPt(p, "pagamentos");
+  ok(await p.evaluate(() => document.getElementById("cardConta").hidden), "card da ilha some nas outras abas (sem repetir em toda página)");
   temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
   ok(temPix, "com a chave configurada o botão 💠 Pix aparece");
 
