@@ -850,5 +850,75 @@ self.MT_RECEITAS = [
    "Sirva o cuscuz com os ovos, o queijo e o tomate com coentro por cima."
   ],
   "dica": "O clássico do Nordeste virando café pré-treino: carboidrato de digestão tranquila com 22 g de proteína por porção."
+ },
+ {
+  "id": "rc40",
+  "n": "Poke de salmão com arroz integral",
+  "cat": "Almoço e jantar",
+  "tempo": "20 min",
+  "rende": "2 porções",
+  "k": 450,
+  "pt": 30,
+  "ing": [
+   "200 g de salmão fresco em cubos",
+   "1 xícara de arroz integral cozido",
+   "1/2 manga em cubos",
+   "1/2 pepino em meia-lua",
+   "1 colher de sopa de shoyu light",
+   "1 colher de chá de gergelim",
+   "Cebolinha e gengibre a gosto"
+  ],
+  "modo": [
+   "Tempere o salmão com o shoyu e o gengibre por 10 minutos na geladeira.",
+   "Monte a tigela: arroz na base, salmão, manga e pepino por cima.",
+   "Finalize com gergelim e cebolinha."
+  ],
+  "dica": "Ômega-3 do salmão + carboidrato integral: almoço completo em 20 minutos, sem fogão pra lavar."
+ },
+ {
+  "id": "rc41",
+  "n": "Casquinha de siri fit assada",
+  "cat": "Lanches",
+  "tempo": "30 min",
+  "rende": "4 porções",
+  "k": 150,
+  "pt": 14,
+  "ing": [
+   "300 g de carne de siri limpa",
+   "1 tomate e 1/2 cebola picados",
+   "2 colheres de sopa de leite de coco light",
+   "1 colher de sopa de farinha de aveia",
+   "Coentro, limão e pimenta-de-cheiro",
+   "1 colher de sopa de parmesão pra gratinar"
+  ],
+  "modo": [
+   "Refogue cebola e tomate, junte a carne de siri, o leite de coco e o coentro.",
+   "Engrosse com a farinha de aveia e ajuste o tempero com limão.",
+   "Divida em 4 potinhos, salpique o parmesão e leve ao forno a 200 °C por 10 minutos."
+  ],
+  "dica": "A clássica da praia em versão assada: 14 g de proteína por casquinha com um terço das calorias da frita."
+ },
+ {
+  "id": "rc42",
+  "n": "Brigadeiro proteico de cacau",
+  "cat": "Doces fit",
+  "tempo": "15 min",
+  "rende": "10 unidades",
+  "k": 60,
+  "pt": 4,
+  "ing": [
+   "1 scoop de whey de chocolate (30 g)",
+   "6 tâmaras sem caroço hidratadas",
+   "2 colheres de sopa de cacau em pó 100%",
+   "1 colher de sopa de pasta de amendoim",
+   "2 colheres de sopa de leite (ou bebida vegetal)",
+   "Cacau nibs pra enrolar"
+  ],
+  "modo": [
+   "Bata as tâmaras com o leite até virar pasta.",
+   "Misture o whey, o cacau e a pasta de amendoim até dar liga de brigadeiro.",
+   "Enrole 10 bolinhas e passe nos nibs de cacau. Geladeira por 30 minutos."
+  ],
+  "dica": "Mata a vontade de doce com 4 g de proteína por unidade — e sem uma grama de açúcar refinado."
  }
 ];
