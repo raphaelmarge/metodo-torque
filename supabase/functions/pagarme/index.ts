@@ -35,9 +35,25 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+
+// só usuário LOGADO (personal/academia) pode usar — a anon key pública não passa
+function usuarioLogado(req: Request): boolean {
+  try {
+    const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const corpo = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return corpo.role === "authenticated" && !!corpo.sub;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ erro: "use POST" }, 405);
+
+  if (!usuarioLogado(req)) {
+    return json({ erro: "Entre na sua conta do TORQUE ON para usar esta função (a chave pública não basta)." }, 401);
+  }
 
   let body: any;
   try {

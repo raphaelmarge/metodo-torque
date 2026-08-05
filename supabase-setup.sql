@@ -1695,3 +1695,47 @@ begin
   return json_build_object('ok', true, 'ranking', v_out);
 end $$;
 grant execute on function public.app_desafio_ranking(text, date, date) to anon, authenticated;
+
+
+-- ============================================================
+-- MATRÍCULA MULTI-ACADEMIA (2026-08)
+-- A página pública agora passa ?a=<academia_id> e as funções filtram
+-- por ele; sem o parâmetro (links antigos), cai no comportamento antigo.
+drop function if exists public.matricula_info();
+create or replace function public.matricula_info(p_academia uuid default null)
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select dados from matricula_config
+   where (p_academia is null or academia_id = p_academia)
+   order by atualizado desc limit 1
+$$;
+drop function if exists public.matricula_nova(text, text, text, text);
+drop function if exists public.matricula_nova(text, text, text, text, text);
+create or replace function public.matricula_nova(p_nome text, p_zap text, p_email text, p_plano text, p_indicacao text default '', p_academia uuid default null)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+begin
+  select academia_id into v_acad from matricula_config
+   where (p_academia is null or academia_id = p_academia)
+   order by atualizado desc limit 1;
+  if v_acad is null then
+    return json_build_object('erro', 'sem_config');
+  end if;
+  if length(trim(coalesce(p_nome, ''))) < 2 then
+    return json_build_object('erro', 'nome');
+  end if;
+  insert into matriculas_online (academia_id, nome, zap, email, plano, indicacao)
+    values (v_acad, left(trim(p_nome), 120), left(coalesce(p_zap, ''), 20),
+            left(coalesce(p_email, ''), 120), left(coalesce(p_plano, ''), 120),
+            left(upper(coalesce(p_indicacao, '')), 12));
+  return json_build_object('ok', true);
+end;
+$$;
+grant execute on function public.matricula_info(uuid) to anon, authenticated;
+grant execute on function public.matricula_nova(text, text, text, text, text, uuid) to anon, authenticated;

@@ -84,7 +84,12 @@
   if (!cfg.url || !cfg.anonKey) {
     $("carregando").textContent = "Página em configuração — volte em breve! 💜";
   } else {
-    rpc("matricula_info", {}).then(function (d) {
+    var acadUrl = new URLSearchParams(location.search).get("a") || "";
+    rpc("matricula_info", acadUrl ? { p_academia: acadUrl } : {}).then(function (d) {
+      // SQL antigo (sem o parâmetro) devolve erro — tenta do jeito antigo
+      if (acadUrl && (!d || d.code || d.message)) return rpc("matricula_info", {});
+      return d;
+    }).then(function (d) {
       if (!d || !d.planos || !d.planos.length) {
         $("carregando").innerHTML = "A matrícula online ainda não foi ativada.<br>Chama a gente no WhatsApp que resolvemos por lá! 💜";
         return;
@@ -125,7 +130,13 @@
     btn.disabled = true; btn.textContent = "Enviando…";
     var corpo = { p_nome: nome, p_zap: zap, p_email: $("fEmail").value.trim(), p_plano: planoSel.nome + " (R$ " + planoSel.valor + ")" };
     if (indicadoPor) corpo.p_indicacao = indicadoPor;
+    var acadUrl2 = new URLSearchParams(location.search).get("a") || "";
+    if (acadUrl2) corpo.p_academia = acadUrl2;
     rpc("matricula_nova", corpo)
+      .then(function (d) {
+        if ((!d || !d.ok) && corpo.p_academia) { delete corpo.p_academia; return rpc("matricula_nova", corpo); }
+        return d;
+      })
       .then(function (d) {
         if ((!d || !d.ok) && indicadoPor) { delete corpo.p_indicacao; return rpc("matricula_nova", corpo); }
         return d;
