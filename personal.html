@@ -1758,17 +1758,60 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (atrasado ? '<span class="tag erro">ATRASADO</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
         (valor && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + valor + '">Pix</button>' : "") +
+        (valor ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + valor + '" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto)">💳 Link de pagamento</button>' : "") +
         (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">Assinatura</a>' : "") +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") + "</div>";
     }).join("") : "Todo mundo em dia. 🎉";
   }
   $("pendentes").addEventListener("click", function (e) {
+    var pg = e.target.closest("[data-pgm]");
+    if (pg) {
+      pg.disabled = true;
+      pg.textContent = "⏳ Gerando…";
+      geraLinkPagamento(pg.getAttribute("data-pgm"), +pg.getAttribute("data-v"), function (r) {
+        pg.disabled = false;
+        pg.textContent = "💳 Link de pagamento";
+        if (r.erro) { alert(r.erro); return; }
+        var st2 = load();
+        var al2 = st2.alunos.find(function (x) { return x.id === pg.getAttribute("data-pgm"); });
+        var msg2 = "Oi " + (al2 ? al2.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar a mensalidade (cartão, Pix ou boleto): " + r.link;
+        if (confirm("Link gerado! Mandar pro aluno no WhatsApp agora?")) {
+          window.open("https://wa.me/" + (al2 && al2.zap ? "55" + String(al2.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg2), "_blank");
+        } else {
+          prompt("Copie o link de pagamento:", r.link);
+        }
+      });
+      return;
+    }
     var b = e.target.closest("[data-pix]");
     if (!b) return;
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === b.getAttribute("data-pix"); });
     if (a) abrePix(a, +b.getAttribute("data-v"));
   });
+  // 💳 Pagar.me: gera o link de checkout seguro (cartão/Pix/boleto) pela função da nuvem
+  function geraLinkPagamento(alunoId, valor, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) { cb({ erro: "Aluno não encontrado." }); return; }
+    if (!valor || valor < 1) { cb({ erro: "Valor inválido." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    var cfg = self.MT_CLOUD || {};
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card ☁️ Sua ilha) pra gerar o link de pagamento." }); return; }
+    nuvem.client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      return fetch(cfg.url + "/functions/v1/pagarme", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "criar", metodo: "cartao", valorCentavos: Math.round(valor * 100), descricao: "Mensalidade — " + ((st.config || {}).nome || "Personal"), nome: a.nome, email: a.email || undefined }),
+      }).then(function (r) { return r.json(); });
+    }).then(function (d) {
+      if (d && d.ok && d.linkPagamento) cb({ ok: true, link: d.linkPagamento });
+      else cb({ erro: (d && d.erro) || "Publique a função pagarme (torqueon.com.br/funcoes.html) e configure a PAGARME_SECRET_KEY." });
+    }, function () { cb({ erro: "Sem conexão com a função pagarme agora." }); });
+  }
+  window.__pagarmePT = geraLinkPagamento; // testes
   $("pAdd").addEventListener("click", function () {
     if (!$("pAluno").value || !+$("pValor").value) { alert("Escolha o aluno e o valor."); return; }
     var st = load();
@@ -2994,6 +3037,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;'>" +
         "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button>" +
         "<div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
+      "<div class='cardx'><h2>🎁 Indique um amigo</h2>" +
+      "<div class='vz' style='text-align:left;padding:0 0 10px;'>Treinar em dupla rende muito mais. Chama um amigo pro " + esc(studio.split(" ")[0]) + " — é só encaminhar o convite. 💜</div>" +
+      "<a class='btnx' style='display:block;text-align:center;text-decoration:none;' target='_blank' rel='noopener' href='https://wa.me/?text=" +
+      encodeURIComponent("Treino com " + studio + " e tô curtindo demais! 💪 Chama no WhatsApp pra fechar um horário: https://wa.me/" + (zapPersonal ? "55" + zapPersonal : "") + " — fala que quem indicou foi " + a.nome.split(" ")[0] + " 😉") +
+      "'>📣 Convidar no WhatsApp</a></div>" +
       "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
