@@ -1081,6 +1081,51 @@ async function abaPt(p, a) {
     ok(evo.r3.semana === 4 && evo.it3.reps === "8" && evo.it3.series === 5, "no teto (12) as reps voltam pro piso (8) e ganha 1 série — progressão dupla");
   }
 
+  // ⏰ validade da ficha + 📔 diário de sessões + 📄 relatório PDF
+  console.log("Validade, diário e relatório PDF:");
+  {
+    await abaPt(p, "treinos");
+    await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      document.getElementById("tAluno").value = st.alunos[0].id;
+      const v = document.getElementById("tValidade");
+      v.value = "2020-01-01";
+      v.dispatchEvent(new Event("change"));
+    });
+    const validade = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      return st.treinosV2[st.alunos[0].id].validade;
+    });
+    ok(validade === "2020-01-01", "campo ⏰ vale até grava a validade da ficha");
+    // um save qualquer re-renderiza tudo (lista + alertas)
+    await p.evaluate(() => { window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id); });
+    await p.click("#pfSalvar");
+    await p.waitForTimeout(250);
+    ok(await p.evaluate(() => /TREINO VENCIDO/.test(document.getElementById("listaAlunos").textContent)), "ficha vencida ganha a etiqueta ⏰ TREINO VENCIDO na lista");
+    await abaPt(p, "relatorios");
+    ok(await p.evaluate(() => /venceu em/.test(document.getElementById("relAlertas").textContent)), "alerta de renovação entra nos Alertas do studio");
+    await p.evaluate(() => { window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id); });
+    const appVencida = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    });
+    ok(/Sua ficha venceu em/.test(appVencida) && /cobra o treino novo/.test(appVencida), "app do aluno avisa que a ficha venceu");
+    // diário de sessões (perfil ainda aberto)
+    await p.fill("#pfDiarioTxt", "Evoluiu no supino, dor leve no ombro D");
+    await p.click("#pfDiarioAdd");
+    await p.waitForTimeout(150);
+    const diario = await p.evaluate(() => document.getElementById("pfDiarioLista").textContent);
+    ok(/Evoluiu no supino/.test(diario), "diário de sessões registra a anotação com data");
+    // relatório PDF (usa as avaliações já lançadas nos testes de dobras)
+    const rel = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      return window.__relPdf(st.alunos[0].id);
+    });
+    ok(/RELATÓRIO DE AVALIAÇÃO/.test(rel) && /João Cliente/.test(rel) && /Avaliações<\/h3>/.test(rel), "relatório PDF sai com a marca do studio e a tabela de avaliações");
+    ok(/Evoluiu no supino/.test(rel) && /Imprimir \/ salvar em PDF/.test(rel), "relatório inclui o diário recente e o botão de imprimir");
+    await p.evaluate(() => document.getElementById("pfFechar").click());
+  }
+
   // aluno "Encerrar" some da lista
   await abaPt(p, "alunos");
   await p.click("[data-rm]");

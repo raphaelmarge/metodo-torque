@@ -188,6 +188,8 @@
         <select id="tAluno" style="min-width: 200px;"></select>
         <button class="btn sec" id="tFicha">+ Nova ficha (A, B, C…)</button>
         <button class="btn sec" id="tZap">Enviar no WhatsApp</button>
+        <label class="muted" style="font-size: 12px; margin: 0; white-space: nowrap;">⏰ vale até
+          <input id="tValidade" type="date" style="width: 140px; display: inline-block; margin-left: 4px;" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
       </div>
       <div class="linha-flex" style="margin: 0 0 10px;">
         <select id="tplSel" style="min-width: 220px;"><option value="">Ficha pronta (template)…</option></select>
@@ -637,8 +639,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   </div>
 
   <div class="card">
-    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Avaliações físicas — relatório e evolução</h2>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase; margin: 0;">Avaliações físicas — relatório e evolução</h2>
+      <button class="btn mini" id="pfRelPdf" style="margin-left: auto;" title="abre o relatório pronto pra imprimir ou salvar em PDF">📄 Relatório PDF</button>
+    </div>
     <div id="pfPeso" class="muted" style="font-size: 13px; margin-top: 6px;"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">📔 Diário de sessões</h2>
+    <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
+      <input id="pfDiarioTxt" placeholder="ex.: evoluiu no supino, dor leve no ombro D, ajustar pegada" style="flex: 1; min-width: 200px;">
+      <button class="btn mini" id="pfDiarioAdd">+ Anotar</button>
+    </div>
+    <div id="pfDiarioLista" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 8px;">Nenhuma anotação ainda — anote em 10 segundos como foi a sessão de hoje.</div>
   </div>
 
   <div class="card">
@@ -670,6 +684,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || [];
     st.exercicios = st.exercicios || []; st.treinosV2 = st.treinosV2 || {}; st.videoteca = st.videoteca || [];
     st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
+    st.diarioPT = st.diarioPT || {};
     if (!st.exercicios.length && !st._exSeed) {
       st._exSeed = 1;
       [["Supino reto", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
@@ -761,9 +776,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     $("listaAlunos").innerHTML = ativos.length ? ativos.map(function (a) {
       var pagoMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      var tA = (st.treinosV2 || {})[a.id];
+      var fichaVencida = !!(tA && (tA.fichas || []).length && tA.validade && tA.validade < S.todayISO());
       return '<div class="aluno-pt"><div class="quem"><strong>' + esc(a.nome) + "</strong>" +
         '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
         (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
+        (fichaVencida ? ' <span class="tag alerta" title="a validade da ficha passou — gere a nova fase">⏰ TREINO VENCIDO</span>' : "") +
         (a.acessoEm ? ' <span class="tag ok" title="login e senha enviados por e-mail">📱 APP ✓</span>' : ' <button class="btn mini" data-acesso="' + a.id + '" title="cria o login e envia por e-mail">📧 Enviar acesso</button>') +
         ' <button class="btn mini" data-perfil="' + a.id + '">👤 Perfil</button>' +
         (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
@@ -950,7 +968,108 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vPerfil").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     pintaAppDados(a);
+    pintaDiario(id);
   }
+  // ---------- 📔 diário de sessões ----------
+  function pintaDiario(alunoId) {
+    var st = load();
+    var lista = (st.diarioPT || {})[alunoId] || [];
+    $("pfDiarioTxt").value = "";
+    $("pfDiarioLista").innerHTML = lista.length ? lista.slice().reverse().map(function (x, i) {
+      return '<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--linha);">' +
+        '<b style="white-space:nowrap;">' + S.fmtData(x.d) + "</b><span style='flex:1;'>" + esc(x.t) + "</span>" +
+        '<button class="btn sec mini" data-ddel="' + (lista.length - 1 - i) + '">✕</button></div>';
+    }).join("") : "Nenhuma anotação ainda — anote em 10 segundos como foi a sessão de hoje.";
+  }
+  $("pfDiarioAdd").addEventListener("click", function () {
+    if (!perfilId) return;
+    var txt = $("pfDiarioTxt").value.trim();
+    if (!txt) { alert("Escreva a anotação da sessão."); return; }
+    var st = load();
+    st.diarioPT[perfilId] = st.diarioPT[perfilId] || [];
+    st.diarioPT[perfilId].push({ d: S.todayISO(), t: txt });
+    if (st.diarioPT[perfilId].length > 200) st.diarioPT[perfilId].shift();
+    S.write("ptStudio", st);
+    pintaDiario(perfilId);
+  });
+  $("pfDiarioLista").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-ddel");
+    if (i == null || !confirm("Apagar esta anotação?")) return;
+    var st = load();
+    (st.diarioPT[perfilId] || []).splice(+i, 1);
+    S.write("ptStudio", st);
+    pintaDiario(perfilId);
+  });
+  // ---------- 📄 relatório de avaliação em PDF (imprimir/salvar) ----------
+  function montaRelatorioAv(alunoId) {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) return "";
+    var studio = (st.config || {}).nome || "Personal";
+    var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === alunoId; })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    var diario = ((st.diarioPT || {})[alunoId] || []).slice(-5).reverse();
+    function num(v) { return v == null || v === "" ? "—" : String(v).replace(".", ","); }
+    function linha(v) {
+      return "<tr><td>" + S.fmtData(v.data) + "</td><td>" + num(v.peso) + "</td><td>" + num(v.gordura) + "</td><td>" + num(v.cintura) + "</td><td>" + num(v.quadril) + "</td><td>" + num(v.braco) + "</td><td>" + num(v.rcq) + "</td></tr>";
+    }
+    var deltas = "";
+    if (avs.length >= 2) {
+      var pri = avs[0], ult = avs[avs.length - 1];
+      function delta(campo, unid, bomSeCai) {
+        var d1 = +pri[campo], d2 = +ult[campo];
+        if (!isFinite(d1) || !isFinite(d2)) return "";
+        var dif = Math.round((d2 - d1) * 10) / 10;
+        var bom = bomSeCai ? dif <= 0 : dif >= 0;
+        return "<div class='delta " + (bom ? "bom" : "ruim") + "'><b>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + unid + "</b><span>" + campo + "</span></div>";
+      }
+      deltas = "<div class='deltas'>" + delta("peso", " kg", true) + delta("gordura", "%", true) + delta("cintura", " cm", true) + delta("braco", " cm", false) + "</div>";
+    }
+    // gráfico simples de peso (SVG)
+    var graf = "";
+    var pesos = avs.map(function (v) { return +v.peso; }).filter(isFinite);
+    if (pesos.length >= 2) {
+      var min = Math.min.apply(null, pesos), max = Math.max.apply(null, pesos), faixa = (max - min) || 1;
+      var pts = pesos.map(function (v, i) {
+        return Math.round(i * (460 / (pesos.length - 1))) + "," + Math.round(78 - ((v - min) / faixa) * 60);
+      }).join(" ");
+      graf = "<h3>Evolução do peso (kg)</h3><svg viewBox='0 0 460 90' style='width:100%;max-width:460px;'>" +
+        "<polyline points='" + pts + "' fill='none' stroke='#7c3aed' stroke-width='3' stroke-linecap='round'/>" +
+        "<text x='0' y='88' font-size='11' fill='#777'>" + String(pesos[0]).replace(".", ",") + "</text>" +
+        "<text x='430' y='88' font-size='11' fill='#777'>" + String(pesos[pesos.length - 1]).replace(".", ",") + "</text></svg>";
+    }
+    return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'><title>Relatório — " + esc(a.nome) + "</title><style>" +
+      "body{font-family:system-ui,sans-serif;color:#1c1826;max-width:640px;margin:0 auto;padding:28px;}" +
+      ".k{font-size:11px;letter-spacing:.2em;color:#7c3aed;font-weight:700;text-transform:uppercase;}" +
+      "h1{font-size:24px;margin:6px 0 2px;} .sub{color:#666;font-size:13px;margin-bottom:18px;}" +
+      "h3{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#7c3aed;margin:22px 0 8px;}" +
+      "table{width:100%;border-collapse:collapse;font-size:13px;} th,td{padding:7px 8px;text-align:left;border-bottom:1px solid #e8e4f0;} th{color:#666;font-weight:700;font-size:11.5px;text-transform:uppercase;}" +
+      ".deltas{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;} .delta{border:1px solid #e8e4f0;border-radius:12px;padding:10px 16px;text-align:center;} .delta b{display:block;font-size:19px;} .delta span{font-size:11px;color:#666;text-transform:capitalize;} .delta.bom b{color:#16a34a;} .delta.ruim b{color:#d97706;}" +
+      ".diario div{border-bottom:1px solid #e8e4f0;padding:6px 0;font-size:13px;} .diario b{margin-right:8px;}" +
+      ".rodape{margin-top:26px;color:#999;font-size:11.5px;}" +
+      ".no-print{background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:18px;}" +
+      "@media print{.no-print{display:none;}}" +
+      "</style></head><body>" +
+      "<button class='no-print' onclick='window.print()'>🖨 Imprimir / salvar em PDF</button>" +
+      "<div class='k'>" + esc(studio.toUpperCase()) + " · RELATÓRIO DE AVALIAÇÃO FÍSICA</div>" +
+      "<h1>" + esc(a.nome) + "</h1>" +
+      "<div class='sub'>" + (a.nasc ? "nascimento " + S.fmtData(a.nasc) + " · " : "") + (a.altura ? a.altura + " cm · " : "") + (a.objetivo ? "objetivo: " + esc(a.objetivo) + " · " : "") + "gerado em " + S.fmtData(S.todayISO()) + "</div>" +
+      (avs.length ? "<h3>Avaliações</h3><table><tr><th>Data</th><th>Peso (kg)</th><th>Gordura (%)</th><th>Cintura (cm)</th><th>Quadril (cm)</th><th>Braço (cm)</th><th>RCQ</th></tr>" + avs.map(linha).join("") + "</table>" + deltas + graf
+        : "<p>Nenhuma avaliação registrada ainda.</p>") +
+      (diario.length ? "<h3>Últimas anotações do personal</h3><div class='diario'>" + diario.map(function (x) { return "<div><b>" + S.fmtData(x.d) + "</b>" + esc(x.t) + "</div>"; }).join("") + "</div>" : "") +
+      "<div class='rodape'>Relatório gerado pelo TORQUE PERSONAL · " + esc(studio) + " · www.torqueon.com.br</div>" +
+      "</body></html>";
+  }
+  $("pfRelPdf").addEventListener("click", function () {
+    if (!perfilId) return;
+    var html = montaRelatorioAv(perfilId);
+    var w = window.open("", "_blank");
+    if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
+    w.document.write(html);
+    w.document.close();
+  });
+  window.__relPdf = montaRelatorioAv; // testes
+  window.__diarioPT = pintaDiario; // testes
   // dados que o aluno registrou no app dele (sincronizados pela nuvem)
   function pintaAppDados(a) {
     var box = $("pfAppDados");
@@ -1677,9 +1796,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderFichas() {
     var el = $("fichasBox");
     var alunoId = $("tAluno").value;
-    if (!alunoId) { el.innerHTML = '<span class="muted">Escolha o aluno e crie a primeira ficha.</span>'; return; }
+    if (!alunoId) { el.innerHTML = '<span class="muted">Escolha o aluno e crie a primeira ficha.</span>'; $("tValidade").value = ""; return; }
     var st = load();
     var t = (st.treinosV2 || {})[alunoId];
+    $("tValidade").value = (t && t.validade) || "";
     var exOpts = (st.exercicios || []).slice().sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); })
       .map(function (e) { return '<option value="' + e.id + '">' + esc((e.grupo ? e.grupo + " · " : "") + e.nome) + "</option>"; }).join("");
     // catálogo TORQUE inteiro no seletor — escolher um item dele adiciona na biblioteca na hora
@@ -1723,6 +1843,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }).join("");
   }
   $("tAluno").addEventListener("change", renderFichas);
+  $("tValidade").addEventListener("change", function () {
+    var alunoId = $("tAluno").value;
+    if (!alunoId) return;
+    var st = load();
+    var t = treinoDe(st, alunoId);
+    t.validade = this.value || "";
+    S.write("ptStudio", st);
+  });
   $("tFicha").addEventListener("click", function () {
     var alunoId = $("tAluno").value;
     if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
@@ -2634,6 +2762,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", txt: "📏 <b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução." });
       var temFicha = st.treinosV2 && st.treinosV2[a.id] && (st.treinosV2[a.id].fichas || []).length;
       if (!temFicha && !(st.treinos || {})[a.id]) alertas.push({ tipo: "info", txt: "📋 <b>" + esc(a.nome) + "</b> ainda não tem ficha de treino montada." });
+      var tv = temFicha && st.treinosV2[a.id].validade;
+      if (tv && tv < hoje) alertas.push({ tipo: "aviso", txt: "⏰ O treino de <b>" + esc(a.nome) + "</b> venceu em " + S.fmtData(tv) + " — gere a nova fase (🤖 Treino automático ou 📈 Evoluir semana)." });
       if (ct) {
         var pl = planoDe(st, ct.planoId);
         if (pl && +pl.ciclo > 1 && ct.inicio) {
@@ -2684,6 +2814,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
     var treino = (st.treinos || {})[a.id] || "";
     var t2 = (st.treinosV2 || {})[a.id];
+    var fichaVenceApp = (t2 && (t2.fichas || []).length && t2.validade && t2.validade < S.todayISO()) ? t2.validade : "";
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
       return { titulo: f.titulo, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
@@ -2782,6 +2913,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories 📸</button></div>" +
       "<div class='cardx'><h2>Meu treino</h2>" +
+      (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:11px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>⏰ Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "! 😉</div>" : "") +
       (fichasApp ? fichasApp.map(function (f, gi) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
           (f.itens.length ? "<button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;text-align:center;margin:2px 0 8px;'>▶ Treino guiado</button>" : "") +
