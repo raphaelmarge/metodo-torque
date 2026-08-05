@@ -66,6 +66,7 @@ async function abaNt(p, a) {
   await p.click("#pAdd");
   let lista = await p.evaluate(() => document.getElementById("listaPacientes").textContent);
   ok(/Bruno Paciente/.test(lista) && /sem dieta/.test(lista), "paciente cadastrado com etiqueta 'sem dieta'");
+  ok(await p.evaluate(() => !!document.querySelector('#listaPacientes [data-acesso]')), "paciente sem acesso do app tem o botão 📧 Enviar acesso na lista");
   ok(/alvo 2140 kcal/.test(lista), "alvo calórico Mifflin-St Jeor = 2140 kcal (conferido à mão)");
 
   // matemática da TMB validada direto

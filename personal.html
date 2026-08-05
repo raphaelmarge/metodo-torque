@@ -742,6 +742,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="aluno-pt"><div class="quem"><strong>' + esc(a.nome) + "</strong>" +
         '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
         (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
+        (a.acessoEm ? ' <span class="tag ok" title="login e senha enviados por e-mail">📱 APP ✓</span>' : ' <button class="btn mini" data-acesso="' + a.id + '" title="cria o login e envia por e-mail">📧 Enviar acesso</button>') +
         ' <button class="btn mini" data-perfil="' + a.id + '">👤 Perfil</button>' +
         (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
         ' <button class="btn mini" data-app="' + a.id + '">App do aluno</button>' +
@@ -763,6 +764,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
   });
   $("listaAlunos").addEventListener("click", function (e) {
+    var ac = e.target.getAttribute && e.target.getAttribute("data-acesso");
+    if (ac) {
+      var st0 = load();
+      var al = st0.alunos.find(function (a) { return a.id === ac; });
+      if (!al) return;
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(al.email || "")) {
+        alert("Esse aluno ainda não tem e-mail no cadastro — abrindo o perfil pra você preencher.");
+        abrePerfil(ac);
+        return;
+      }
+      e.target.disabled = true;
+      e.target.textContent = "⏳ Enviando…";
+      criaAcessoAluno(ac, function (r) {
+        $("aAcessoStatus").innerHTML = msgAcesso(r, al);
+        render();
+      });
+      return;
+    }
     var id = e.target.getAttribute && e.target.getAttribute("data-rm");
     if (!id || !confirm("Encerrar este aluno? O histórico fica guardado.")) return;
     var st = load();
@@ -3178,6 +3197,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var d = r2 && r2.data;
           if (r2 && r2.error) { cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
           if (d && d.erro) { cb({ erro: d.erro }); return; }
+          // marca na lista que este aluno já tem o acesso do app (chip 📱 APP ✓)
+          var st3 = load();
+          var a3 = st3.alunos.find(function (x) { return x.id === alunoId; });
+          if (a3) { a3.acessoEm = stamp; S.write("ptStudio", st3); }
           var studio = (load().config || {}).nome || "Seu personal";
           enviaEmailFn(nuvem, email, "Seu acesso ao app de treino — " + studio, emailAcessoHtml(studio, a.nome.split(" ")[0], email, senha))
             .then(function (r3) {

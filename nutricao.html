@@ -502,6 +502,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         (p.objetivo === "emagrecer" ? "🔥 emagrecer" : p.objetivo === "ganhar" ? "💪 ganhar" : "⚖️ manter") + "</span>" +
         '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
+        (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">📱 app ✓</span>' : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail">📧 Enviar acesso</button>') +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn verde mini" data-perfil="' + p.id + '">👤 Perfil</button>' +
         '<button class="btn verde mini" data-app="' + p.id + '">App do paciente</button>' +
@@ -530,6 +531,24 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var rm = e.target.getAttribute && e.target.getAttribute("data-rm");
     var ap = e.target.getAttribute && e.target.getAttribute("data-app");
     var pf = e.target.getAttribute && e.target.getAttribute("data-perfil");
+    var ac = e.target.getAttribute && e.target.getAttribute("data-acesso");
+    if (ac) {
+      var st0 = load();
+      var pc = st0.pacientes.find(function (x) { return x.id === ac; });
+      if (!pc) return;
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pc.email || "")) {
+        alert("Esse paciente ainda não tem e-mail no cadastro — abrindo o perfil pra você preencher.");
+        abrePerfilN(ac);
+        return;
+      }
+      e.target.disabled = true;
+      e.target.textContent = "⏳ Enviando…";
+      criaAcessoPaciente(ac, function (r) {
+        $("pAcessoStatus").innerHTML = msgAcessoN(r, pc);
+        render();
+      });
+      return;
+    }
     if (rm && confirm("Encerrar este paciente? O histórico fica guardado.")) {
       var st = load();
       var p = st.pacientes.find(function (x) { return x.id === rm; });
@@ -1469,6 +1488,10 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
           var d = r2 && r2.data;
           if (r2 && r2.error) { cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
           if (d && d.erro) { cb({ erro: d.erro }); return; }
+          // marca na lista que este paciente já tem o acesso do app (chip 📱 app ✓)
+          var st3 = load();
+          var p3 = st3.pacientes.find(function (x) { return x.id === pid; });
+          if (p3) { p3.acessoEm = stamp; S.write("ntStudio", st3); }
           var consultorio = (load().config || {}).nome || "Seu nutricionista";
           enviaEmailFn(nuvem, email, "Seu acesso ao app de acompanhamento — " + consultorio, emailAcessoHtmlN(consultorio, p.nome.split(" ")[0], email, senha))
             .then(function (r3) {

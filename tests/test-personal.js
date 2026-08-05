@@ -96,6 +96,7 @@ async function abaPt(p, a) {
   let lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/João Cliente/.test(lista) && /400/.test(lista), "aluno cadastrado com valor mensal");
   ok(/SEM PAGAMENTO NO MÊS/.test(lista), "etiqueta de pendência antes do pagamento");
+  ok(await p.evaluate(() => !!document.querySelector('#listaAlunos [data-acesso]')), "aluno sem acesso do app tem o botão 📧 Enviar acesso direto na lista");
 
   // agenda: sessão hoje + marcar feita
   await abaPt(p, "agenda");
@@ -624,6 +625,7 @@ async function abaPt(p, a) {
     ok(acesso.chamadas.upsert >= 2 && acesso.chamadas.rpc.fn === "aluno_define_login" && acesso.chamadas.rpc.login === "joao.teste@email.com" && acesso.chamadas.rpc.temSenha, "acesso publica o app e cria o login com o e-mail + senha aleatória");
     ok(acesso.r.ok && !acesso.r.semEmail && acesso.chamadas.email && acesso.chamadas.email.para === "joao.teste@email.com" && /Seu acesso ao app/.test(acesso.chamadas.email.assunto) && /Senha temporária/.test(acesso.chamadas.email.html) && /aluno-login\.html/.test(acesso.chamadas.email.html), "e-mail de acesso sai com login, senha temporária e o link de entrada");
     ok(acesso.r2.ok && acesso.r2.semEmail && acesso.r2.senha && acesso.r2.email === "joao.teste@email.com", "sem a função de e-mail, o acesso é criado e a senha aparece pro personal mandar no WhatsApp");
+    ok(await p.evaluate(() => !!window.MTStore.read("ptStudio", {}).alunos[0].acessoEm), "acesso criado fica marcado no aluno (vira o selo 📱 APP ✓ na lista)");
     const msgFb = await p.evaluate(() => window.__acessoAluno.msg({ ok: true, semEmail: true, email: "a@b.com", senha: "Xy2Xy2Xy2X", motivo: "teste" }, { nome: "João Cliente", zap: "31988887777" }));
     ok(/Xy2Xy2Xy2X/.test(msgFb) && /wa\.me\/5531988887777/.test(msgFb), "mensagem de fallback traz a senha e o botão de WhatsApp");
   }
