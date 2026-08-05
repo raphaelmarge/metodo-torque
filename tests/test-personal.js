@@ -582,6 +582,7 @@ async function abaPt(p, a) {
   ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
   ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");
   ok(/btnCardStories/.test(appHtml) && /Gerar card pro Stories/.test(appHtml), "conquistas têm o botão de card pro Stories");
+  ok(/Indique um amigo/.test(appHtml) && /quem%20indicou%20foi/.test(appHtml) && /Convidar no WhatsApp/.test(appHtml), "app tem o card 🎁 Indique um amigo com convite pronto");
 
   // acesso do aluno por e-mail (site com login e senha)
   ok(await p.evaluate(() => !!document.getElementById("aEmail") && !!document.getElementById("aAcessoStatus")), "cadastro rápido tem o campo de e-mail que cria o acesso do app");
@@ -1079,6 +1080,34 @@ async function abaPt(p, a) {
     });
     ok(evo.r1.ok && evo.r1.semana === 2 && evo.reps1 === "11", "📈 evoluir semana sobe as reps (10 → 11)");
     ok(evo.r3.semana === 4 && evo.it3.reps === "8" && evo.it3.series === 5, "no teto (12) as reps voltam pro piso (8) e ganha 1 série — progressão dupla");
+  }
+
+  // 💳 link de pagamento Pagar.me (função mockada)
+  {
+    const pgm = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const semNuvem = await new Promise((res) => window.__pagarmePT(id, 400, res));
+      window.__cloudOrig = window.MTStore.cloud;
+      window.__fetchOrig = window.fetch;
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      let corpo = null;
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/pagarme")) {
+          corpo = JSON.parse(opts.body);
+          return Promise.resolve({ json: () => Promise.resolve({ ok: true, linkPagamento: "https://pagar.me/checkout/abc123" }) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      const comNuvem = await new Promise((res) => window.__pagarmePT(id, 400, res));
+      window.fetch = window.__fetchOrig;
+      window.MTStore.cloud = window.__cloudOrig;
+      return { semNuvem, comNuvem, corpo };
+    });
+    ok(/Entre na sua conta/.test(pgm.semNuvem.erro), "💳 sem nuvem o link de pagamento explica o que falta");
+    ok(pgm.comNuvem.ok && /pagar\.me\/checkout/.test(pgm.comNuvem.link), "💳 com a função no ar o link de checkout volta pro personal");
+    ok(pgm.corpo.acao === "criar" && pgm.corpo.metodo === "cartao" && pgm.corpo.valorCentavos === 40000 && /Mensalidade/.test(pgm.corpo.descricao), "cobrança vai pro Pagar.me com valor em centavos e descrição");
+    ok(await p.evaluate(async () => /data-pgm=/.test(await (await fetch("personal.html")).text())), "pendências ganham o botão 💳 Link de pagamento");
   }
 
   // ⏰ validade da ficha + 📔 diário de sessões + 📄 relatório PDF
