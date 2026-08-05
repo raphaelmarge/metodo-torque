@@ -55,9 +55,9 @@
     if ($("gateContrate")) $("gateContrate").hidden = false;
 
     function aplicaAba() {
-      var criar = aba === "criar", equipe = aba === "equipe", entrar = aba === "entrar";
+      var criar = aba === "criar", equipe = aba === "equipe", entrar = aba === "entrar", teste = aba === "teste";
       $("cCodigo").hidden = !criar;
-      $("cAcademia").hidden = !criar;
+      $("cAcademia").hidden = !(criar || teste);
       $("cEquipe").hidden = !equipe;
       $("cNome").hidden = entrar;
       $("cZap").hidden = entrar;
@@ -66,7 +66,7 @@
       $("gateEsqueci").hidden = !entrar || vinculando;
 
       $("gCodigo").required = criar && ACESSO.exigirCadastro;
-      $("gAcademia").required = criar;
+      $("gAcademia").required = criar || teste;
       $("gEquipe").required = equipe;
       $("gNome").required = !entrar;
       $("gEmail").required = !vinculando;
@@ -76,11 +76,13 @@
         ? "Você está logado como " + (emailLogado || "(conta sem e-mail)") + ", mas essa conta ainda não está ligada a uma academia. Crie a sua academia, entre na equipe — ou toque em ENTRAR para usar a conta certa (login e senha)."
         : criar ? "Para o DONO: crie a conta da sua academia com o código de acesso do curso. Você recebe um código da equipe para cadastrar seus funcionários."
         : equipe ? "Para a EQUIPE: crie seu login com o código da equipe que o dono da academia te passou."
+        : teste ? "Crie a conta da sua academia ou studio e use TUDO grátis por 7 dias — sem cartão e sem compromisso. Depois do teste, a equipe TORQUE ON fala com você pra ativar o plano."
         : "Entre com seu e-mail e senha. Os dados da sua academia sincronizam em todos os aparelhos.";
       $("gateSair").hidden = !vinculando;
-      $("gateBtn").textContent = vinculando ? "Vincular →" : criar ? "Criar academia →" : equipe ? "Entrar na equipe →" : "Entrar →";
+      $("gateBtn").textContent = vinculando ? "Vincular →" : criar ? "Criar academia →" : equipe ? "Entrar na equipe →" : teste ? "Começar meu teste grátis →" : "Entrar →";
       $("gateRodape").textContent = criar ? "Não tem o código do curso? Fale com o suporte do Método Torque."
         : equipe ? "Sem o código da equipe? Peça ao dono ou gerente da academia."
+        : teste ? "Sem pegadinha: o que você cadastrar no teste fica salvo e vira a sua conta definitiva se você assinar."
         : "Primeira vez? Use Criar academia (dono) ou Sou da equipe (funcionário).";
       $("gateErro").hidden = true;
       Array.prototype.forEach.call($("gateAbas").querySelectorAll("button"), function (b) {
@@ -193,6 +195,9 @@
             if (!ok) throw new Error("Código de acesso do curso inválido.");
             return sb.rpc("criar_academia", { p_nome_academia: $("gAcademia").value.trim(), p_nome_membro: nome });
           });
+        } else if (aba === "teste") {
+          // teste grátis: cria a ilha sem código do curso (nasce como trial no HQ)
+          acao = sb.rpc("criar_academia", { p_nome_academia: $("gAcademia").value.trim(), p_nome_membro: nome });
         } else {
           acao = sb.rpc("entrar_na_equipe", { p_codigo: $("gEquipe").value.trim(), p_nome: nome });
         }
@@ -222,7 +227,7 @@
         return;
       }
 
-      // criar academia (dono) ou entrar na equipe (funcionário)
+      // criar academia (dono), teste grátis ou entrar na equipe (funcionário)
       var preparo;
       if (aba === "criar") {
         preparo = (ACESSO.exigirCadastro
@@ -230,6 +235,11 @@
           : Promise.resolve(true)
         ).then(function (ok) {
           if (!ok) throw new Error("Código de acesso do curso inválido. Confira com quem te passou.");
+          lsSet(LS_INTENTO, { tipo: "criar", academia: $("gAcademia").value.trim(), nome: nome });
+        });
+      } else if (aba === "teste") {
+        preparo = Promise.resolve().then(function () {
+          if (!$("gAcademia").value.trim()) throw new Error("Digite o nome da sua academia ou studio.");
           lsSet(LS_INTENTO, { tipo: "criar", academia: $("gAcademia").value.trim(), nome: nome });
         });
       } else {

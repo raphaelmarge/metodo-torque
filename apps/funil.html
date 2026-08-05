@@ -336,10 +336,11 @@
           }
           st.leads.push({
             id: S.uid(), nome: m.nome, zap: m.zap || "", email: m.email || "",
-            etapa: "novo", origem: quem ? "🤝 Indicação de " + quem.nome : "🛒 Matrícula online",
-            obs: "Plano escolhido: " + (m.plano || "?"),
+            status: "novo", temperatura: "quente",
+            origem: quem ? "🤝 Indicação de " + quem.nome : "🛒 Matrícula online",
+            interesse: "Plano escolhido: " + (m.plano || "?"),
             criado: (m.criado || "").slice(0, 10) || S.todayISO(),
-            proximoContato: S.todayISO(),
+            proximo: S.todayISO(),
           });
           if (m.indicacao) {
             stI.itens.push({

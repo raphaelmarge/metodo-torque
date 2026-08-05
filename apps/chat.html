@@ -144,6 +144,7 @@
           <button class="btn-voltar" id="btnVoltar">← Voltar</button>
           <span class="quem" id="tQuem"></span>
           <span class="tag-canal" id="tCanal"></span>
+          <button class="btn sec mini" id="btnLeadFunil" type="button" title="Cria a oportunidade no Funil Comercial com nome e WhatsApp preenchidos">➕ Lead no Funil</button>
           <label class="auto-sw" title="Quando ligado, a IA responde sozinha esta conversa">
             <input type="checkbox" id="swAuto"> IA automática
           </label>
@@ -345,6 +346,7 @@
     }).then(function (rows) {
       conversas = rows || [];
       desenhaLista();
+      leadsAutomaticos();
     }).catch(function () {});
   }
 
@@ -435,6 +437,51 @@
     rest("chat_conversas?id=eq." + atual.id, { method: "PATCH", body: JSON.stringify({ modo_auto: liga }) })
       .then(function () { atual.modo_auto = liga; desenhaLista(); });
   });
+
+  // ---------- conversa vira lead no Funil Comercial ----------
+  var S = window.MTStore;
+
+  function criaLeadDoChat(c, avisa) {
+    if (!c || !S) return false;
+    var dig = String(c.contato_id || "").replace(/\D/g, "");
+    var zap = c.canal === "instagram" ? "" : dig.replace(/^55/, "");
+    var st = S.read("funil", { leads: [] });
+    var jah = st.leads.find(function (l) {
+      return l.chatId === c.id || (zap && String(l.zap || "").replace(/\D/g, "").slice(-8) === zap.slice(-8));
+    });
+    if (jah) { if (avisa) alert("Esse contato já está no Funil Comercial 😉"); return false; }
+    var alunos = S.read("alunos", { alunos: [] }).alunos || [];
+    var ehAluno = zap && alunos.some(function (a) {
+      var az = String(a.zap || "").replace(/\D/g, "");
+      return az && az.slice(-8) === zap.slice(-8);
+    });
+    if (ehAluno) { if (avisa) alert("Esse número já é de um aluno cadastrado — não precisa virar lead."); return false; }
+    st.leads.unshift({
+      id: S.uid(), nome: c.nome || c.contato_id || "Contato do chat", zap: zap,
+      origem: c.canal === "instagram" ? "📷 Instagram" : "💬 Chat WhatsApp",
+      interesse: String(c.ultima_msg || "").slice(0, 80), temperatura: "quente",
+      status: "novo", criado: S.todayISO(), proximo: S.todayISO(), chatId: c.id,
+    });
+    S.write("funil", st);
+    return true;
+  }
+
+  $("#btnLeadFunil").addEventListener("click", function () {
+    if (!atual) return;
+    if (criaLeadDoChat(atual, true)) {
+      alert("Lead criado no Funil Comercial! 🎯 Ele já aparece na coluna NOVO, com o WhatsApp pronto pro follow-up.");
+    }
+  });
+
+  // quem chega no chat e ainda não é aluno vira lead sozinho (conversas dos últimos 7 dias)
+  function leadsAutomaticos() {
+    try {
+      var corte = new Date(Date.now() - 7 * 864e5).toISOString();
+      conversas.forEach(function (c) {
+        if (String(c.atualizado || "") >= corte) criaLeadDoChat(c, false);
+      });
+    } catch (e) {}
+  }
 
   // ---------- envio manual ----------
   function envia() {
@@ -1144,6 +1191,7 @@
     liga: liga,
     setNuvem: function (n) { nuvem = n; },
     conversas: function () { return conversas; },
+    criaLead: criaLeadDoChat,
   };
 })();
 </script>
