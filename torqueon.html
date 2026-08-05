@@ -241,7 +241,8 @@
 (function () {
   "use strict";
   // ?zap=5531999990000 personaliza os botões de WhatsApp (mesmo esquema da página do Personal)
-  var zap = new URLSearchParams(location.search).get("zap") || "";
+  var ZAP_PADRAO = "5521994429198"; // sem ?zap= na URL, cai no WhatsApp oficial
+  var zap = new URLSearchParams(location.search).get("zap") || ZAP_PADRAO;
   var msg = encodeURIComponent("Oi! Quero saber mais sobre o TORQUE ON para o meu negócio 💪");
   var href = "https://wa.me/" + zap.replace(/\D/g, "") + "?text=" + msg;
   ["ctaZap", "zapPlanos"].forEach(function (id) {

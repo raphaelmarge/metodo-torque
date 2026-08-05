@@ -972,7 +972,7 @@
         "w.querySelector('.plike').classList.toggle('on',meu);" +
         "w.querySelector('.pcbtn').innerHTML='\ud83d\udcac <span>'+coms.length+'</span>';" +
         "var box=w.parentElement.querySelector('.pcoms');" +
-        "box.innerHTML=coms.map(function(c){return \"<div class='cm'><b>\"+String(c.nome||'aluno').split(' ')[0]+\"</b> \"+String(c.texto).replace(/</g,'&lt;')+\"</div>\";}).join('');});});}" +
+        "box.innerHTML=coms.map(function(c){return \"<div class='cm'><b>\"+String(c.nome||'aluno').split(' ')[0].replace(/</g,'&lt;')+\"</b> \"+String(c.texto).replace(/</g,'&lt;')+\"</div>\";}).join('');});});}" +
         "document.getElementById('pgTimeline').addEventListener('click',function(e){" +
         "var lk=e.target.closest('.plike');" +
         "if(lk){rpc('app_aluno_reage',{t:TOKEN,p_post:lk.closest('.pacts').dataset.post,p_tipo:'like',p_nome:NOME,p_texto:''}).then(carregaReacoes);return;}" +
