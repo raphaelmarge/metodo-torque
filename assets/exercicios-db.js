@@ -5283,7 +5283,7 @@ self.MT_EXERCICIOS = [
   "d": "De costas pra polia alta com a corda atrás da cabeça, dê um passo à frente e estenda os braços — alonga a cabeça longa por inteiro."
  },
  {
-  "n": "Tríceps mata-borrão no banco (tate press)",
+  "n": "Tate press com halteres no banco",
   "g": "Tríceps",
   "eq": "Barra/Halteres",
   "d": "Deitado com os halteres sobre o peito e palmas pra frente, dobre os cotovelos deixando os halteres caírem pro esterno e estenda."
@@ -5349,7 +5349,7 @@ self.MT_EXERCICIOS = [
   "d": "Na prancha lateral, eleve o braço e a perna de cima abrindo uma estrela — segure sem deixar o quadril afundar."
  },
  {
-  "n": "Flexão típex (typewriter push-up)",
+  "n": "Flexão máquina de escrever (typewriter push-up)",
   "g": "Ginástica e calistenia",
   "eq": "Solo",
   "d": "Embaixo da flexão, deslize o peso de um braço pro outro rente ao chão antes de subir — controle total de ombro e peito."
