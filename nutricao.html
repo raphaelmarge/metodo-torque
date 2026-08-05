@@ -258,7 +258,7 @@
     </div>
   </div>
 
-  <div class="card" style="margin-top: 20px; border-left: 4px solid var(--verde);">
+  <div class="card" id="cardContaN" style="margin-top: 20px; border-left: 4px solid var(--verde);">
     <h2>Sua ilha na nuvem</h2>
     <div id="contaStatus" class="muted" style="margin: 6px 0 10px;"></div>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
@@ -466,6 +466,8 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     $("vReceitas").hidden = b.dataset.a !== "receitas";
     $("vAgendaN").hidden = b.dataset.a !== "agenda";
     $("vChatN").hidden = b.dataset.a !== "chat";
+    // o card da conta (ilha) só aparece na aba Pacientes — não precisa repetir em todas
+    $("cardContaN").hidden = b.dataset.a !== "pacientes";
     if (b.dataset.a === "dietas") renderDietas();
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
