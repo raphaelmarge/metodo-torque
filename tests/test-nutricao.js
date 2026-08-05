@@ -244,6 +244,55 @@ async function abaNt(p, a) {
     ok(await p.evaluate(() => !!document.getElementById("cfgMural")), "módulo tem o campo 📌 Mural na ilha");
     ok(/btnCardStories/.test(comMural), "app do paciente tem o botão de card pro Stories");
   }
+  // 🎨 tema do consultório: cor principal + logo no painel e no app do paciente
+  {
+    const LOGO_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    ok(await p.evaluate(() => !!document.getElementById("cfgCorN") && !!document.getElementById("cfgLogoBtnN") && !!document.getElementById("cfgLogoFileN") && !!document.getElementById("cfgCorResetN") && !!window.__temaN), "card da conta tem o bloco 🎨 A cara do seu consultório");
+    const tema = await p.evaluate((logo) => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.config.cor = "#db2777";
+      st.config.logo = logo;
+      window.MTStore.write("ntStudio", st);
+      return {
+        app: window.__montaAppNutri(window.MTStore.read("ntStudio", {}).pacientes[0], new Date().toISOString()),
+        cor2: window.__temaN.escurece("#db2777", .18),
+        theme: window.__temaN.escurece("#db2777", .55),
+        acento: window.__temaN.clareia("#db2777", .5),
+        varVerde: document.documentElement.style.getPropertyValue("--verde"),
+        varVerde2: document.documentElement.style.getPropertyValue("--verde-2"),
+        prevOk: !document.getElementById("cfgLogoPrevN").hidden && !document.getElementById("cfgLogoDelN").hidden,
+        logoTopo: !!document.getElementById("logoTopoN"),
+      };
+    }, LOGO_PNG);
+    ok(tema.app.includes("linear-gradient(135deg,#db2777," + tema.cor2 + ")"), "cor escolhida entra no gradiente dos botões do app (" + tema.cor2 + ")");
+    ok(tema.app.includes("theme-color' content='" + tema.theme + "'"), "theme-color do app é a cor escolhida escurecida (" + tema.theme + ")");
+    ok(tema.app.includes("color:" + tema.acento) && !/#86efac/.test(tema.app), "acentos do app usam a cor clareada no lugar do verde-claro");
+    ok(tema.app.includes("<img src='" + LOGO_PNG + "'"), "logo do consultório entra no cabeçalho do app");
+    ok(tema.varVerde === "#db2777" && tema.varVerde2 === tema.cor2, "painel muda as variáveis CSS do verde pra cor escolhida");
+    ok(tema.prevOk && tema.logoTopo, "preview da logo, botão ✕ tirar logo e logo no topo do painel");
+    const invalido = await p.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.config.cor = "javascript:alert(1)";
+      st.config.logo = "data:image/png;base64,abc'onerror='alert(1)";
+      window.MTStore.write("ntStudio", st);
+      return window.__montaAppNutri(window.MTStore.read("ntStudio", {}).pacientes[0], new Date().toISOString());
+    });
+    ok(invalido.includes("linear-gradient(135deg,#16a34a,#15803d)") && invalido.includes("theme-color' content='#14532d'"), "cor inválida cai no verde padrão");
+    ok(!invalido.includes("onerror='alert(1)"), "logo maliciosa (com aspas) fica de fora do app");
+    // restaura o padrão pra não afetar o resto da suíte
+    const padrao = await p.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      st.config.cor = "";
+      delete st.config.logo;
+      window.MTStore.write("ntStudio", st);
+      return {
+        varVerde: document.documentElement.style.getPropertyValue("--verde"),
+        logoTopo: !!document.getElementById("logoTopoN"),
+        app: window.__montaAppNutri(window.MTStore.read("ntStudio", {}).pacientes[0], new Date().toISOString()),
+      };
+    });
+    ok(padrao.varVerde === "" && !padrao.logoTopo && padrao.app.includes("linear-gradient(135deg,#16a34a,#15803d)") && !padrao.app.includes(LOGO_PNG), "voltar ao padrão limpa o painel e o app volta ao verde");
+  }
   {
     const botEd = await p.evaluate(() => ({
       temCard: !!document.getElementById("botAtivoN"),

@@ -1141,6 +1141,81 @@ async function abaPt(p, a) {
   ok(errosApp.length === 0, "app do aluno abre sem erros de JS" + (errosApp.length ? " — " + errosApp[0] : ""));
   await pApp.close();
 
+  // ---------- 🎨 tema do studio: cor principal + logo ----------
+  console.log("Tema do studio (cor + logo):");
+  {
+    const PNG_MIN = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    // muda a cor pelo próprio campo (o handler real precisa marcar appEditGeralEm)
+    const aposCor = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.config = st.config || {};
+      delete st.config.appEditGeralEm;
+      window.MTStore.write("ptStudio", st);
+      const inp = document.getElementById("cfgCor");
+      inp.value = "#0ea5e9";
+      inp.dispatchEvent(new Event("change"));
+      const st2 = window.MTStore.read("ptStudio", {});
+      return {
+        cor: (st2.config || {}).cor,
+        marcou: !!(st2.config || {}).appEditGeralEm,
+        roxoVar: document.documentElement.style.getPropertyValue("--roxo"),
+        roxo2Var: document.documentElement.style.getPropertyValue("--roxo-2"),
+        roxo2Esperado: window.__tema.escurece("#0ea5e9", .18),
+      };
+    });
+    ok(aposCor.cor === "#0ea5e9" && aposCor.marcou, "mudar a cor salva em config.cor e marca os apps como pendentes (appEditGeralEm)");
+    ok(aposCor.roxoVar === "#0ea5e9" && aposCor.roxo2Var === aposCor.roxo2Esperado, "painel pinta na hora (--roxo = #0ea5e9 e --roxo-2 escurecida)");
+    // logo válida entra no painel e no app gerado
+    const tema = await p.evaluate((png) => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.config = st.config || {};
+      st.config.logo = png;
+      window.MTStore.write("ptStudio", st);
+      const st2 = window.MTStore.read("ptStudio", {});
+      return {
+        html: window.__montaAppAluno(st2.alunos[0], new Date().toISOString()),
+        prevVisivel: !document.getElementById("cfgLogoPrev").hidden,
+        delVisivel: !document.getElementById("cfgLogoDel").hidden,
+        topoVisivel: !document.getElementById("logoStudio").hidden && (document.getElementById("logoStudio").src || "").indexOf("data:image/png") === 0,
+      };
+    }, PNG_MIN);
+    ok(/<meta name='theme-color' content='#0ea5e9'>/.test(tema.html), "app gerado leva a cor nova no theme-color");
+    ok(/linear-gradient\(135deg,#0ea5e9,/.test(tema.html) && !/linear-gradient\(135deg,#7c3aed,/.test(tema.html), "botões do app usam o gradiente da cor nova (sem sobra do roxo)");
+    ok(tema.html.indexOf(PNG_MIN) !== -1, "logo (dataURL) entra no cabeçalho do app do aluno");
+    ok(tema.prevVisivel && tema.delVisivel && tema.topoVisivel, "painel mostra a logo no topo + preview com ✕ tirar logo");
+    // cor inválida e logo maliciosa não entram
+    const invalido = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.config = st.config || {};
+      st.config.cor = "red;x";
+      st.config.logo = "data:image/png;base64,x' onerror='hack";
+      window.MTStore.write("ptStudio", st);
+      return {
+        html: window.__montaAppAluno(window.MTStore.read("ptStudio", {}).alunos[0], new Date().toISOString()),
+        roxoVar: document.documentElement.style.getPropertyValue("--roxo"),
+      };
+    });
+    ok(/<meta name='theme-color' content='#7c3aed'>/.test(invalido.html), "cor inválida (red;x) cai no roxo padrão no app");
+    ok(invalido.roxoVar === "", "cor inválida não pinta o painel (volta pro padrão)");
+    ok(invalido.html.indexOf("onerror='hack") === -1 && invalido.html.indexOf("hack") === -1, "logo maliciosa (com aspas) fica de fora do app (anti-XSS)");
+    // restaura o padrão pra não afetar o resto da suíte
+    const limpo = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.config = st.config || {};
+      st.config.cor = "";
+      delete st.config.logo;
+      delete st.config.appEditGeralEm; // o teste da cor marcou apps pendentes — limpa o estado
+      window.MTStore.write("ptStudio", st);
+      return {
+        roxoVar: document.documentElement.style.getPropertyValue("--roxo"),
+        topoSumiu: document.getElementById("logoStudio").hidden,
+        prevSumiu: document.getElementById("cfgLogoPrev").hidden,
+        inputCor: document.getElementById("cfgCor").value,
+      };
+    });
+    ok(limpo.roxoVar === "" && limpo.topoSumiu && limpo.prevSumiu && limpo.inputCor === "#7c3aed", "voltar ao padrão limpa painel, logo e o campo de cor");
+  }
+
   // conta / ilha
   const conta = await p.evaluate(() => document.getElementById("contaStatus").textContent);
   ok(/Crie sua conta|Conectado/.test(conta), "card da ilha mostra o status da conta");
