@@ -342,11 +342,19 @@
 
   function puxa() {
     if (!sync.client) return Promise.resolve();
-    return sync.client.from("dados").select("chave,valor,atualizado").eq("academia_id", sync.aid).then(function (r) {
+    // 1ª puxada da sessão: completa (semeia o aparelho e acha chaves só-locais).
+    // Depois: só o que mudou desde a marca d'água — corta o tráfego dos ciclos de 30 s.
+    if (sync.marcaAid !== sync.aid) { sync.marca = ""; sync.marcaAid = sync.aid; }
+    var primeira = !sync.marca;
+    var consulta = sync.client.from("dados").select("chave,valor,atualizado").eq("academia_id", sync.aid);
+    if (!primeira) consulta = consulta.gt("atualizado", sync.marca);
+    return consulta.then(function (r) {
       if (r.error || !r.data) return;
       var m = tsMap();
       var mudou = [];
+      var maxTs = sync.marca || "";
       r.data.forEach(function (row) {
+        if (row.atualizado > maxTs) maxTs = row.atualizado;
         if (!sincronizavel(row.chave)) return;
         var local = m[row.chave];
         if (!local || row.atualizado > local) {
@@ -361,12 +369,15 @@
           sync.sujas[row.chave] = true; // local mais novo: manda de volta
         }
       });
-      // chaves locais que a nuvem ainda não tem
-      var remotas = {};
-      r.data.forEach(function (row) { remotas[row.chave] = 1; });
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (sincronizavel(k) && !remotas[k]) { marcaTs(k, tsMap()[k]); sync.sujas[k] = true; }
+      if (maxTs) sync.marca = maxTs;
+      // chaves locais que a nuvem ainda não tem (só faz sentido na puxada completa)
+      if (primeira) {
+        var remotas = {};
+        r.data.forEach(function (row) { remotas[row.chave] = 1; });
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (sincronizavel(k) && !remotas[k]) { marcaTs(k, tsMap()[k]); sync.sujas[k] = true; }
+        }
       }
       if (Object.keys(sync.sujas).length) enviaSujas();
       sync.ultima = new Date();

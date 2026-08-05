@@ -165,7 +165,12 @@
   var salvo = S.read("matriculaOnline", {});
   $("moPix").value = salvo.pix || "";
   $("moZap").value = salvo.zap || "";
-  $("moLink").textContent = location.origin + location.pathname.replace(/apps\/.*$/, "") + "matricula.html";
+  (function () {
+    var base = location.origin + location.pathname.replace(/apps\/.*$/, "") + "matricula.html";
+    var nv = S.cloud && S.cloud();
+    // com mais de uma academia no TORQUE ON, o ?a= garante que o lead cai na SUA ilha
+    $("moLink").textContent = nv && nv.aid ? base + "?a=" + nv.aid : base;
+  })();
   $("btnPubMatricula").addEventListener("click", function () {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { $("moStatus").textContent = "☁️ Entre com a sua conta da nuvem primeiro."; return; }

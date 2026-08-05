@@ -319,7 +319,11 @@
     };
     // link público de matrícula com o código do aluno (Indique um amigo)
     var urlMatricula = "";
-    try { urlMatricula = location.href.replace(/apps\/[^/]*$/, "") + "matricula.html?ind=" + codigo; } catch (e) {}
+    try {
+      var nvInd = S.cloud && S.cloud();
+      urlMatricula = location.href.replace(/apps\/[^/]*$/, "") + "matricula.html?ind=" + codigo +
+        (nvInd && nvInd.aid ? "&a=" + nvInd.aid : "");
+    } catch (e) {}
     var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && a.appToken);
 
     // QR da carteirinha (gerado aqui na publicação — nada de lib dentro do app)

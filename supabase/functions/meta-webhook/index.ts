@@ -548,8 +548,25 @@ Deno.serve(async (req: Request) => {
 
   if (req.method !== "POST") return new Response("ok", { status: 200 });
 
+  // assinatura da Meta (X-Hub-Signature-256): com META_APP_SECRET configurado,
+  // só POSTs realmente vindos da Meta passam — bloqueia payload forjado.
+  const bruto = await req.text();
+  const segredo = env("META_APP_SECRET");
+  if (segredo) {
+    const assinatura = req.headers.get("X-Hub-Signature-256") || "";
+    const chave = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+    );
+    const mac = await crypto.subtle.sign("HMAC", chave, new TextEncoder().encode(bruto));
+    const esperado = "sha256=" + Array.from(new Uint8Array(mac)).map((b) => b.toString(16).padStart(2, "0")).join("");
+    if (assinatura !== esperado) {
+      console.error("assinatura da Meta não confere — payload descartado");
+      return new Response("assinatura inválida", { status: 401 });
+    }
+  }
+
   let payload: any = {};
-  try { payload = await req.json(); } catch { /* corpo vazio */ }
+  try { payload = JSON.parse(bruto); } catch { /* corpo vazio */ }
 
   const msgs = extrai(payload);
   if (msgs.length) {
