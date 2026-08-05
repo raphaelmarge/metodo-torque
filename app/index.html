@@ -16,9 +16,17 @@
 <script src="../assets/cloud-config.js"></script>
 <script>
 (function () {
+  // token: da URL ou, se instalado/aberto sem ?t=, o último usado neste aparelho
   var t = new URLSearchParams(location.search).get("t") || "";
+  try { t = t || localStorage.getItem("tq_app_token") || ""; } catch (e) {}
   var cfg = self.MT_CLOUD || {};
+  function abre(html) { document.open(); document.write(html); document.close(); }
+  function copiaLocal() {
+    try { return localStorage.getItem("tq_app_html") || ""; } catch (e) { return ""; }
+  }
   if (!t || !cfg.url) {
+    var cop0 = copiaLocal();
+    if (cop0) { abre(cop0); return; }
     document.getElementById("msg").textContent = "Link incompleto — peça o seu link do app na recepção. 💜";
     return;
   }
@@ -29,15 +37,20 @@
     body: JSON.stringify({ t: t }),
   }).then(function (r) { return r.json(); }).then(function (d) {
     if (d && d.html) {
-      document.open();
-      document.write(d.html);
-      document.close();
+      // guarda a cópia pra abrir offline na próxima (o app se atualiza sozinho quando online)
+      try { localStorage.setItem("tq_app_html", d.html); localStorage.setItem("tq_app_stamp", d.stamp || ""); } catch (e) {}
+      abre(d.html);
     } else {
+      var cop1 = copiaLocal();
+      if (cop1) { abre(cop1); return; }
       document.getElementById("msg").textContent = "App não encontrado — peça para a academia publicar de novo. 💜";
     }
   }).catch(function () {
+    var cop = copiaLocal();
+    if (cop) { abre(cop); return; }
     document.getElementById("msg").textContent = "Sem internet agora — tenta de novo em instantes.";
   });
+  window.__appLoader = true; // testes
 })();
 </script>
 </body>

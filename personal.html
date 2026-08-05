@@ -1126,11 +1126,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>📆 Treinos marcados no app</b> — " + nTreinos + " no total</div>" + barrasMes(porMes2, "#4ade80");
         }
         // fotos antes × depois
-        if (ret.fotoAntes) {
+        // o retorno vem de RPC pública — só aceita foto data:image/https e data com dígitos (anti-XSS)
+        var fotoOk = function (u) { u = String(u || ""); return (/^data:image\//.test(u) || /^https:\/\//.test(u)) && !/['"<>\\]/.test(u) ? u : ""; };
+        var dataOk = function (d) { return String(d || "").replace(/[^0-9-]/g, ""); };
+        var fA = fotoOk(ret.fotoAntes), fD = fotoOk(ret.fotoDepois), fAd = dataOk(ret.fotoAntesD), fDd = dataOk(ret.fotoDepoisD);
+        if (fA) {
           html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>📸 Fotos de progresso</b></div>" +
             "<div style='display:flex;gap:10px;max-width:400px;'>" +
-            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (ret.fotoAntesD ? " · " + ret.fotoAntesD.slice(8, 10) + "/" + ret.fotoAntesD.slice(5, 7) : "") + "</div><img src='" + ret.fotoAntes + "' style='width:100%;border-radius:11px;'></div>" +
-            (ret.fotoDepois ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (ret.fotoDepoisD ? " · " + ret.fotoDepoisD.slice(8, 10) + "/" + ret.fotoDepoisD.slice(5, 7) : "") + "</div><img src='" + ret.fotoDepois + "' style='width:100%;border-radius:11px;'></div>" : "") +
+            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
+            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
             "</div>";
         }
         box.innerHTML = html || "O aluno ainda não registrou nada no app. Assim que registrar peso, carga, treino ou foto, aparece aqui.";
@@ -2898,6 +2902,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
+      "<meta name='theme-color' content='#7c3aed'>" +
+      "<link rel='manifest' href='/app/manifest.webmanifest'>" +
+      "<link rel='icon' href='/assets/icons/icon-personal.svg' type='image/svg+xml'>" +
+      "<link rel='apple-touch-icon' href='/assets/icons/icon-personal-192.png'>" +
       "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(studio) + "</title>" +
       "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0d0c10;color:#fff;max-width:480px;margin:0 auto;padding:0 0 40px}" +
       ".topo{padding:26px 18px 14px;background:radial-gradient(120% 160% at 50% -40%,rgba(124,58,237,.35),transparent 60%)}" +

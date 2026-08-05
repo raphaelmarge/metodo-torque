@@ -86,7 +86,16 @@
   function write(key, value) {
     var antes;
     try { var raw = localStorage.getItem(PREFIX + key); antes = raw ? JSON.parse(raw) : null; } catch (e) { antes = null; }
-    localStorage.setItem(PREFIX + key, JSON.stringify(value));
+    try {
+      localStorage.setItem(PREFIX + key, JSON.stringify(value));
+    } catch (e) {
+      // cota do navegador estourou — avisa uma vez e não derruba a página
+      if (!write._avisou) {
+        write._avisou = true;
+        alert("⚠️ A memória do navegador encheu e este dado NÃO foi salvo.\n\nApague fotos/avaliações antigas ou entre na sua conta da nuvem pra liberar espaço.");
+      }
+      return;
+    }
     registraLog(key, antes, value);
     marcaTs(PREFIX + key);
     agendaEnvio(PREFIX + key);
@@ -159,6 +168,18 @@
     });
   }
 
+  // guarda um dataURL já pronto no IndexedDB (fotos fora do localStorage/sync)
+  function savePhotoData(dataUrl) {
+    return openDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var id = uid();
+        var tx = db.transaction(STORE, "readwrite");
+        tx.objectStore(STORE).put(String(dataUrl), id);
+        tx.oncomplete = function () { resolve(id); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    });
+  }
   function getPhoto(id) {
     return openDB().then(function (db) {
       return new Promise(function (resolve) {
@@ -548,7 +569,7 @@
     read: read, write: write, uid: uid,
     contratoAtivoConta: contratoAtivoConta, ehClienteAtivo: ehClienteAtivo,
     todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,
-    savePhoto: savePhoto, getPhoto: getPhoto, deletePhoto: deletePhoto,
+    savePhoto: savePhoto, savePhotoData: savePhotoData, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,
     exportBackup: exportBackup, importBackup: importBackup, onChange: onChange, equipeDatalist: equipeDatalist,
     iniciaSync: iniciaSync,

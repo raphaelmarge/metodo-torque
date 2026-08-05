@@ -579,6 +579,11 @@ async function abaPt(p, a) {
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
   ok(/menuApp/.test(appHtml) && /hambApp/.test(appHtml) && /trocaSec/.test(appHtml), "app tem menu lateral (gaveta) organizando as seções");
+  ok(/manifest\.webmanifest/.test(appHtml) && /theme-color/.test(appHtml) && /apple-touch-icon/.test(appHtml), "app instala como PWA de verdade (manifest + theme-color + ícone iOS)");
+  ok(await p.evaluate(async () => {
+    const t = await (await fetch("app/index.html")).text();
+    return /tq_app_html/.test(t) && /localStorage\.getItem\("tq_app_token"\)/.test(t) && /copiaLocal/.test(t);
+  }), "abridor do app guarda cópia offline e reusa o token do aparelho");
   ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
   ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");
   ok(/btnCardStories/.test(appHtml) && /Gerar card pro Stories/.test(appHtml), "conquistas têm o botão de card pro Stories");
@@ -763,6 +768,16 @@ async function abaPt(p, a) {
     ok(/Evolução de carga/.test(appDados) && /72,5 kg/.test(appDados) && /\+12,5/.test(appDados), "cargas do diário do aluno com delta (+12,5)");
     ok(/Treinos marcados no app/.test(appDados) && /3 no total/.test(appDados), "treinos feitos no app contados");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
+    // aluno malicioso tentando injetar código pela foto/data do retorno
+    const xss = await p.evaluate(async () => {
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
+        fotoAntes: "x' onerror='window.__xssHit=1", fotoAntesD: "1234567'><b>9",
+      } }] }) }) }) }) } });
+      window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id);
+      await new Promise((r) => setTimeout(r, 350));
+      return { html: document.getElementById("pfAppDados").innerHTML, hit: !!window.__xssHit };
+    });
+    ok(!xss.hit && !/onerror/.test(xss.html) && !/Fotos de progresso/.test(xss.html), "foto maliciosa vinda do app é descartada (anti-XSS)");
     await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig; });
   }
   await p.evaluate(() => document.getElementById("pfFechar").click());
@@ -1172,7 +1187,16 @@ async function abaPt(p, a) {
   const cta = await p.evaluate(() => document.getElementById("ctaZap").href);
   ok(/wa\.me\/5531999990000/.test(cta), "CTA aponta pro WhatsApp do vendedor (?zap=)");
   const corpo = await p.evaluate(() => document.body.textContent);
-  ok(/personal trainer/.test(corpo) && /Treino guiado/.test(corpo) && /R\$ 49/.test(corpo) && /820 exercícios/.test(corpo), "landing com pitch, features atuais e preço");
+  ok(/personal trainer/.test(corpo) && /Treino guiado/.test(corpo) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
+  {
+    // o número de exercícios anunciado nunca pode ficar acima do banco real
+    const anunciado = +((corpo.match(/(\d{3,4})\+? exercícios/) || [])[1] || 0);
+    const real = await p.evaluate(async () => {
+      const t = await (await fetch("assets/exercicios-db.js")).text();
+      return (t.match(/"n":/g) || []).length;
+    });
+    ok(anunciado >= 900 && anunciado <= real, "landing anuncia " + anunciado + " exercícios e o banco tem " + real + " (anúncio nunca acima do real)");
+  }
   await p.close();
 
   // ---------- 4) login próprio do TORQUE PERSONAL (gate do módulo) ----------
