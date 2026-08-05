@@ -24,6 +24,7 @@
 // Ações (POST JSON):
 //   { acao: "aulas_hoje" }                       → lembrete das aulas agendadas de hoje
 //   { acao: "aviso", titulo: "...", corpo: "..." } → aviso geral para todos os inscritos
+//   { acao: "para", token: "...", titulo, corpo }  → notificação para UM aluno (pelo token do app)
 //   { acao: "ping" }                             → confere secrets
 
 import webpush from "npm:web-push@3.6.7";
@@ -55,6 +56,18 @@ function sb(path: string, init: RequestInit = {}): Promise<Response> {
   });
 }
 
+// só usuário logado (equipe/personal) ou o cron com a service key podem disparar push —
+// a anonKey pública sozinha não passa (evita spam nas notificações dos alunos)
+function chamadorConfiavel(req: Request): boolean {
+  try {
+    const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const corpo = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return (corpo.role === "authenticated" && !!corpo.sub) || corpo.role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
 async function envia(subRow: any, titulo: string, corpo: string): Promise<boolean> {
   try {
     await webpush.sendNotification(subRow.sub, JSON.stringify({ t: titulo, b: corpo }));
@@ -81,6 +94,7 @@ Deno.serve(async (req: Request) => {
   if (corpo.acao === "ping") {
     return json({ ok: true, vapid: !!(pub && priv) });
   }
+  if (!chamadorConfiavel(req)) return json({ erro: "Entre na sua conta para enviar notificações." }, 401);
   if (!pub || !priv) return json({ erro: "Configure VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY nos Secrets." }, 502);
   webpush.setVapidDetails("mailto:contato@torquefit.com.br", pub, priv);
 
@@ -89,6 +103,17 @@ Deno.serve(async (req: Request) => {
   if (!subs.length) return json({ ok: true, enviados: 0, motivo: "nenhum aluno com push ativado ainda" });
 
   let enviados = 0;
+
+  if (corpo.acao === "para") {
+    const token = String(corpo.token || "");
+    const titulo = String(corpo.titulo || "TORQUE ON").slice(0, 80);
+    const texto = String(corpo.corpo || "").slice(0, 200);
+    if (!token || !texto) return json({ erro: "token/corpo vazio" }, 400);
+    for (const s of subs) {
+      if (s.token === token && await envia(s, titulo, texto)) enviados++;
+    }
+    return json({ ok: true, enviados });
+  }
 
   if (corpo.acao === "aviso") {
     const titulo = String(corpo.titulo || "TORQUE FIT").slice(0, 80);
