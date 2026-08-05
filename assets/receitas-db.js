@@ -847,7 +847,7 @@ self.MT_RECEITAS = [
   "modo": [
    "Hidrate o flocão com a água e o sal por 5 minutos e cozinhe na cuscuzeira por 8 minutos.",
    "Mexa os ovos na frigideira e doure os cubos de queijo coalho.",
-   "Sirva o cuscuz com os ovos, o queijo e a salsinha de tomate por cima."
+   "Sirva o cuscuz com os ovos, o queijo e o tomate com coentro por cima."
   ],
   "dica": "O clássico do Nordeste virando café pré-treino: carboidrato de digestão tranquila com 22 g de proteína por porção."
  }
