@@ -62,7 +62,14 @@
   </div>
 
   <div class="card">
-    <p><b style="color:#fff">Depois das quatro publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
+    <h2>5 · push-envia <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <p>Manda as <b style="color:#fff">notificações push</b> pro celular do aluno: treino novo, mensagem do personal, horário confirmado e o lembrete diário das aulas. Precisa dos secrets <code>VAPID_PUBLIC_KEY</code> e <code>VAPID_PRIVATE_KEY</code> (o passo a passo está no comentário do próprio código).</p>
+    <button class="btnx" data-copia="push-envia">Copiar o código (push-envia)</button>
+    <div class="status" data-st="push-envia"></div>
+  </div>
+
+  <div class="card">
+    <p><b style="color:#fff">Depois das cinco publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
   </div>
 
   <div class="card">
@@ -75,7 +82,7 @@
 <script>
   var COD = {};        // nome -> código
   var ultima = "meta-webhook";
-  var NOMES = ["meta-webhook", "chat-envia", "whatsapp", "envia-email"];
+  var NOMES = ["meta-webhook", "chat-envia", "whatsapp", "envia-email", "push-envia"];
   var prontas = 0;
 
   NOMES.forEach(function (n) {

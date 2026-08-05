@@ -129,6 +129,40 @@ async function abaPt(p, a) {
   await p.click("[data-feita]");
   ses = await p.evaluate(() => document.getElementById("listaSessoes").textContent);
   ok(/FEITA/.test(ses), "sessão marcada como feita");
+  ok(/Hoje/.test(ses), "lista agrupada por dia (cabeçalho Hoje)");
+
+  // 🔁 recorrência semanal: 4 sessões de uma vez a partir de amanhã
+  await p.evaluate(() => {
+    document.getElementById("sData").value = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    document.getElementById("sRepAte").value = new Date(Date.now() + 22 * 864e5).toISOString().slice(0, 10);
+    document.getElementById("sRep").checked = true;
+  });
+  await p.selectOption("#sAluno", { index: 1 });
+  await p.fill("#sHora", "08:00");
+  await p.click("#sAdd");
+  const rec = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
+  ok(rec === 4, "🔁 repetir toda semana gera as 4 sessões de uma vez");
+  ok(await p.evaluate(() => document.getElementById("listaSessoes").textContent.includes("Amanhã")), "cabeçalho Amanhã no agrupamento");
+
+  // choque de horário: agendar amanhã às 08:00 de novo pede confirmação
+  await p.evaluate(() => {
+    document.getElementById("sRep").checked = false;
+    window.confirm = (m) => { window.__choqueMsg = m; return false; };
+  });
+  await p.click("#sAdd");
+  const choque = await p.evaluate(() => window.__choqueMsg || "");
+  ok(/mesmo horário/.test(choque) && /08:00/.test(choque) && /João Cliente/.test(choque), "choque de horário avisa antes de agendar");
+  const aposChoque = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
+  ok(aposChoque === 4, "cancelar no aviso de choque não duplica a sessão");
+  await p.evaluate(() => { window.confirm = () => true; });
+
+  // Faltou: falta explícita com etiqueta
+  await p.click("[data-faltou]");
+  const faltouSt = await p.evaluate(() => ({
+    faltas: JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.faltou).length,
+    tela: document.getElementById("listaSessoes").textContent,
+  }));
+  ok(faltouSt.faltas === 1 && /FALTOU/.test(faltouSt.tela), "botão Faltou marca a falta explícita do aluno");
 
   // pagamento: registra e some da pendência
   await abaPt(p, "pagamentos");
@@ -295,6 +329,57 @@ async function abaPt(p, a) {
   });
   ok(aposDesc.guardado === 100 && /⏱ 100s/.test(aposDesc.tela), "⏱ edita o descanso do exercício (60 → 100s)");
 
+  // séries×reps e obs editáveis por prompt (sem apagar e recriar)
+  await p.evaluate(() => { const seq = ["5", "8"]; window.prompt = () => seq.shift(); });
+  await p.click('[data-tsr="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+  const aposSR = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const it = st.treinosV2[st.alunos[0].id].fichas[0].itens[0];
+    return { series: it.series, reps: it.reps, tela: document.getElementById("fichasBox").textContent };
+  });
+  ok(aposSR.series === 5 && aposSR.reps === "8" && /5×8/.test(aposSR.tela), "séries×reps editável por prompt (4×10 → 5×8)");
+  await p.evaluate(() => { window.prompt = () => "pegada fechada"; });
+  await p.click('[data-tobs="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+  const aposObs = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return { obs: st.treinosV2[st.alunos[0].id].fichas[0].itens[0].obs, tela: document.getElementById("fichasBox").textContent };
+  });
+  ok(aposObs.obs === "pegada fechada" && /pegada fechada/.test(aposObs.tela), "obs do exercício editável por prompt (📝)");
+  // volta pro 4×10 sem obs — o resto da suíte depende desse estado
+  await p.evaluate(() => { const seq = ["4", "10"]; window.prompt = () => seq.shift(); });
+  await p.click('[data-tsr="' + fichaId + ':0"]');
+  await p.evaluate(() => { window.prompt = () => ""; });
+  await p.click('[data-tobs="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+
+  // a edição marca o app do aluno como pendente de publicar
+  const pendApp = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    return {
+      editEm: a.appEditEm,
+      semToken: window.__appsPendentes.pendente(st, a),
+      comToken: window.__appsPendentes.pendente(st, Object.assign({}, a, { appTokenP: "tok123" })),
+      publicado: window.__appsPendentes.pendente(st, Object.assign({}, a, { appTokenP: "tok123", appPubEm: new Date(Date.now() + 60000).toISOString() })),
+      temBotao: !!document.getElementById("btnPubPendentes"),
+    };
+  });
+  ok(!!pendApp.editEm && pendApp.comToken === true, "editar a ficha marca o app do aluno como pendente de publicar");
+  ok(pendApp.semToken === false && pendApp.publicado === false, "pendente só com link de app e some depois de publicar");
+  ok(pendApp.temBotao, "botão 📤 Publicar apps atualizados existe (lotes de 5 com progresso)");
+
+  // push nos eventos: módulo chama a função push-envia e ela tem envio direcionado com trava
+  ok(await p.evaluate(async () => {
+    const t = await (await fetch("personal.html")).text();
+    return /push-envia/.test(t) && /acao: "para"/.test(t) && /Mensagem do seu personal/.test(t) && /Horário confirmado/.test(t) && /Treino novo no app/.test(t);
+  }), "eventos disparam push pro aluno (app atualizado, chat do personal, horário confirmado)");
+  ok(await p.evaluate(async () => {
+    const t = await (await fetch("supabase/functions/push-envia/index.ts")).text();
+    return /acao === "para"/.test(t) && /chamadorConfiavel/.test(t);
+  }), "função push-envia com envio direcionado por token + trava de login");
+
   // o seletor da ficha oferece o catálogo TORQUE inteiro (optgroup) e materializa ao usar
   const selCat = await p.evaluate((fid) => {
     const sel = document.querySelector('[data-exsel="' + fid + '"]');
@@ -312,6 +397,17 @@ async function abaPt(p, a) {
     return { entrou: !!ex, comDica: !!(ex && ex.descricao), naFicha: document.getElementById("fichasBox").textContent.includes(nome) };
   }, selCat.valor.slice(4));
   ok(aposCat.entrou && aposCat.comDica && aposCat.naFicha, "exercício do catálogo entra na ficha e vira item da biblioteca com dica");
+
+  // botão ↓ desce o exercício na ficha (e ↑ volta)
+  await p.click('[data-desce="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+  const ordemDesce = await p.evaluate((sup) => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st.treinosV2[st.alunos[0].id].fichas[0].itens[1].exId === sup;
+  }, supinoId);
+  ok(ordemDesce, "botão ↓ desce o exercício na ficha");
+  await p.click('[data-sobe="' + fichaId + ':1"]');
+  await p.waitForTimeout(150);
 
   // videoteca do studio
   await p.fill("#vtpTitulo", "Mobilidade de quadril");
