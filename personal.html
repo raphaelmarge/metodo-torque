@@ -79,6 +79,12 @@
 
   <div class="kpi-pt" id="kpis"></div>
 
+  <div id="faixaTeste" hidden style="background: rgba(124,58,237,.14); border: 1px solid #7c3aed; border-radius: 12px; padding: 10px 14px; margin: 0 0 14px; font-size: 13px; line-height: 1.6; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <span id="faixaTesteTxt" style="flex: 1; min-width: 200px;"></span>
+    <a id="faixaTesteZap" class="btn mini" target="_blank" rel="noopener" href="#">Assinar — R$ 49/mês 💜</a>
+    <button class="btn sec mini" id="faixaTesteEntrar" type="button">Já tenho conta</button>
+  </div>
+
   <div class="menu-fundo" id="fundoMenuPt"></div>
   <div class="abas-pt" id="abas">
     <div class="menu-cab">TORQUE ON<b>Módulo Personal</b></div>
@@ -3839,7 +3845,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     } else {
       $("contaStatus").innerHTML = "🔒 Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> (leva 1 minuto) para ter a sua ilha na nuvem: sincroniza celular ↔ computador e libera o app dos seus alunos com link online.";
     }
+    renderFaixaTeste(u.logado);
   }
+
+  // faixa do modo teste (14 dias grátis) — some quando o personal entra na conta
+  function renderFaixaTeste(logado) {
+    var faixa = $("faixaTeste");
+    if (logado) { faixa.hidden = true; return; }
+    var desde = "";
+    try {
+      desde = localStorage.getItem("mtapp:ptTesteDesde") || "";
+      if (!desde) { desde = S.todayISO(); localStorage.setItem("mtapp:ptTesteDesde", desde); }
+    } catch (e) { desde = S.todayISO(); }
+    var dia = Math.floor((new Date(S.todayISO()) - new Date(desde)) / 864e5) + 1;
+    $("faixaTesteTxt").innerHTML = dia > 14
+      ? "🧪 <b>Seu teste grátis de 14 dias terminou.</b> Gostou? Assine e ganhe a sua ilha na nuvem: sincroniza entre aparelhos e libera o app online dos alunos."
+      : "🧪 <b>Modo teste — dia " + dia + " de 14.</b> Use tudo à vontade; seus dados ficam neste aparelho e viram a sua conta quando você assinar.";
+    $("faixaTesteZap").href = "https://wa.me/5521994429198?text=" + encodeURIComponent("Oi! Testei o TORQUE PERSONAL e quero assinar 💪");
+    faixa.hidden = false;
+  }
+  $("faixaTesteEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
 
   function render() {
     var st = load();

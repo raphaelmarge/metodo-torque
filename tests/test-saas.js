@@ -85,9 +85,24 @@ function crcNode(s) {
   ok(/aluno da academia ou de um personal/i.test(gate.aluno) && /LINK do app/.test(gate.aluno), "nota fixa explica o acesso do aluno (link, sem senha)");
   ok(gate.temSair, "botão 'Sair e entrar com outra conta' existe pro estado de vínculo");
   const abasVisiveis = await p.evaluate(() => Array.from(document.querySelectorAll("#gateAbas button")).map((b) => b.textContent));
-  ok(abasVisiveis.length === 1 && /Entrar/.test(abasVisiveis[0]), "gate só com Entrar — criar conta/equipe agora é provisionado (fim do código)");
+  ok(abasVisiveis.length === 2 && /Entrar/.test(abasVisiveis[0]) && /Criar conta grátis/.test(abasVisiveis[1]), "gate com Entrar + Criar conta grátis (autoatendimento do teste)");
   const notaContrate = await p.evaluate(() => document.getElementById("gateContrate").textContent);
-  ok(/equipe TORQUE ON/.test(notaContrate) && /planos/.test(notaContrate), "nota explica que a conta é criada pela equipe TORQUE ON");
+  ok(/Criar conta grátis/.test(notaContrate) && /7 dias/.test(notaContrate) && /planos/.test(notaContrate), "nota aponta pro teste grátis de 7 dias e pros planos");
+  // aba do teste grátis: campos certos e promessa de 7 dias sem cartão
+  await p.waitForFunction(() => !document.getElementById("gate").hidden, null, { timeout: 8000 });
+  await p.click('#gateAbas [data-aba="teste"]');
+  const abaTeste = await p.evaluate(() => ({
+    acad: !document.getElementById("cAcademia").hidden,
+    codigo: document.getElementById("cCodigo").hidden,
+    btn: document.getElementById("gateBtn").textContent,
+    intro: document.getElementById("gateIntro").textContent,
+  }));
+  ok(abaTeste.acad && abaTeste.codigo, "aba do teste pede o nome da academia e dispensa o código do curso");
+  ok(/teste grátis/.test(abaTeste.btn) && /7 dias/.test(abaTeste.intro) && /sem cartão/.test(abaTeste.intro), "aba do teste promete 7 dias grátis, sem cartão");
+  ok(await p.evaluate(async () => {
+    const t = await (await fetch("assets/access.js")).text();
+    return /aba === "teste"/.test(t) && /tipo: "criar"/.test(t);
+  }), "cadastro do teste usa o signUp + criar_academia (nasce como trial no HQ)");
   const temSaida = await p.evaluate(() => fetch("assets/access.js").then((r) => r.text()).then((t) => t.includes("vinculando && aba === \"entrar\"") && t.includes("sairEEntrar")));
   ok(temSaida, "tocar em Entrar no estado preso desconecta e abre o login normal");
   ok(/login e senha de aluno/.test(gate.aluno), "nota do gate aponta pra página de login do aluno");
@@ -419,6 +434,43 @@ function crcNode(s) {
   await p.waitForTimeout(200);
   const voltou = await p.evaluate(() => Array.from(document.querySelectorAll("#botBlocos textarea, #botBlocos input")).map((e) => e.value).join(" "));
   ok(/Boas-vindas/.test(voltou) && /TORQUE FIT/.test(voltou), "trocar no seletor volta pro quadro da principal intacto");
+
+  // ---------- conversa do chat vira lead no Funil Comercial ----------
+  console.log("Chat → lead no Funil:");
+  ok(await p.evaluate(() => !!document.getElementById("btnLeadFunil")), "botão ➕ Lead no Funil no topo da conversa");
+  const lead = await p.evaluate(() => {
+    localStorage.removeItem("mtapp:funil");
+    const S = window.MTStore;
+    const criou = window.__chat.criaLead({ id: "cv1", nome: "Maria Interessada", contato_id: "5531988887777", canal: "whatsapp", ultima_msg: "quero saber os planos" }, false);
+    const l = S.read("funil", { leads: [] }).leads[0] || {};
+    return {
+      criou, nome: l.nome, zap: l.zap, status: l.status, origem: l.origem, interesse: l.interesse,
+      dedupe: window.__chat.criaLead({ id: "cv1", nome: "Maria Interessada", contato_id: "5531988887777", canal: "whatsapp" }, false),
+      total: S.read("funil", { leads: [] }).leads.length,
+    };
+  });
+  ok(lead.criou && lead.status === "novo" && /Chat WhatsApp/.test(lead.origem), "conversa vira lead na coluna NOVO do funil");
+  ok(lead.zap === "31988887777" && /planos/.test(lead.interesse), "lead nasce com o WhatsApp (sem o 55) e o assunto da conversa");
+  ok(lead.dedupe === false && lead.total === 1, "mesma conversa não duplica o lead");
+  const naoLead = await p.evaluate(() => {
+    const S = window.MTStore;
+    S.write("alunos", { alunos: [{ id: "a9", nome: "Já Aluno", zap: "31977776666" }] });
+    return {
+      aluno: window.__chat.criaLead({ id: "cv2", nome: "Já Aluno", contato_id: "5531977776666", canal: "whatsapp" }, false),
+      insta: window.__chat.criaLead({ id: "cv3", nome: "seguidor.ig", contato_id: "178451234567890", canal: "instagram", ultima_msg: "aula experimental?" }, false),
+      instaLead: S.read("funil", { leads: [] }).leads[0] || {},
+    };
+  });
+  ok(naoLead.aluno === false, "quem já é aluno não vira lead");
+  ok(naoLead.insta === true && /Instagram/.test(naoLead.instaLead.origem) && naoLead.instaLead.zap === "", "conversa do Instagram vira lead com origem própria (sem WhatsApp)");
+  ok(await p.evaluate(async () => {
+    const t = await (await fetch("chat.html")).text();
+    return /leadsAutomaticos\(\)/.test(t);
+  }), "toda conversa nova de não-aluno vira lead sozinha (últimos 7 dias)");
+  ok(await p.evaluate(async () => {
+    const t = await (await fetch("funil.html")).text();
+    return !/proximoContato/.test(t) && /status: "novo", temperatura: "quente"/.test(t);
+  }), "matrículas online importadas entram com status certo (aparecem no kanban)");
   await p.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));

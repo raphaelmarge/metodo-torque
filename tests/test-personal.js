@@ -88,6 +88,15 @@ async function abaPt(p, a) {
   const titulo = await p.evaluate(() => document.getElementById("tituloStudio").textContent);
   ok(/Studio Léo/.test(titulo), "título vira 'Studio Léo' após onboarding");
 
+  // faixa do teste grátis (modo sem conta)
+  const faixa = await p.evaluate(() => {
+    const f = document.getElementById("faixaTeste");
+    return { visivel: !f.hidden, txt: f.textContent, zap: document.getElementById("faixaTesteZap").href, desde: localStorage.getItem("mtapp:ptTesteDesde") };
+  });
+  ok(faixa.visivel && /dia 1 de 14/.test(faixa.txt), "faixa do teste grátis aparece no modo sem conta (dia 1 de 14)");
+  ok(/wa\.me\/5521994429198/.test(faixa.zap) && /R\$ 49/.test(faixa.txt), "faixa tem o botão de assinar por R$ 49 no WhatsApp");
+  ok(!!faixa.desde, "início do teste fica registrado no aparelho");
+
   // aluno novo
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aZap", "31999990000");
@@ -1188,6 +1197,8 @@ async function abaPt(p, a) {
   ok(/wa\.me\/5531999990000/.test(cta), "CTA aponta pro WhatsApp do vendedor (?zap=)");
   const corpo = await p.evaluate(() => document.body.textContent);
   ok(/personal trainer/.test(corpo) && /Treino guiado/.test(corpo) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
+  ok(/14 dias grátis/.test(corpo) && /sem cartão/.test(corpo), "trial de 14 dias visível na landing (selo + preço)");
+  ok(await p.evaluate(() => [...document.querySelectorAll("a.cta")].some((a) => /Testar grátis/.test(a.textContent) && /personal\.html/.test(a.href))), "CTA 'Testar grátis' leva direto pro módulo");
   {
     // o número de exercícios anunciado nunca pode ficar acima do banco real
     const anunciado = +((corpo.match(/(\d{3,4})\+? exercícios/) || [])[1] || 0);
