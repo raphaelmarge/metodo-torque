@@ -57,12 +57,19 @@
       <select id="regime" style="width: auto;"><option value="competencia">Competência (integral na venda)</option><option value="caixa">Caixa (sobre o recebido)</option></select>
       <label style="margin: 0; font-size: 13px;">% padrão</label>
       <input id="pctPadrao" type="number" step="0.5" min="0" style="width: 80px; text-align: right;">
+      <label style="margin: 0; font-size: 13px;" title="valor pago ao professor por aula dada (chamada feita na Grade ou nas Turmas)">R$ por aula dada</label>
+      <input id="valorAula" type="number" step="0.5" min="0" style="width: 90px; text-align: right;">
     </div>
   </div>
 
   <div class="kpisCom" id="kpisCom"></div>
 
   <div id="listaConsultores"></div>
+
+  <div class="card" id="cardExtras" hidden style="margin-top: 12px;">
+    <h2 style="font-size: 15px;">Professores e vendedores do mês</h2>
+    <div id="listaExtras" style="margin-top: 8px; font-size: 13.5px;"></div>
+  </div>
 
   <div class="card totalzao">
     <div>
@@ -75,7 +82,7 @@
     </div>
   </div>
 
-  <p class="muted">O consultor de cada venda vem do campo "Consultor" no cadastro do aluno (Gestão de Alunos → Novo cadastro). Vendas sem consultor aparecem como "Sem consultor".</p>
+  <p class="muted">O consultor de cada venda vem do campo "Consultor" no cadastro do aluno (Gestão de Alunos → Novo cadastro). Vendas sem consultor aparecem como "Sem consultor". O vendedor de balcão vem do campo "Vendedor(a)" na Loja e Estoque, e o professor ganha por aula com chamada feita (Grade de Aulas e Turmas).</p>
 </main>
 
 <script src="../assets/access-config.js"></script>
@@ -129,9 +136,46 @@
   }
   function pctDe(c, nome) { return c.pct[nome] != null ? +c.pct[nome] : +c.pctPadrao || 0; }
 
+  // vendas de balcão (Loja e Estoque) com vendedor identificado → comissão de vendedor
+  function vendasBalcaoDoMes() {
+    var mapa = {}; // vendedor -> { total, n }
+    (S.read("produtos", { vendas: [] }).vendas || []).forEach(function (v) {
+      if ((v.data || "").slice(0, 7) !== mes || !(v.vendedor || "").trim()) return;
+      var quem = v.vendedor.trim();
+      mapa[quem] = mapa[quem] || { total: 0, n: 0 };
+      mapa[quem].total += +v.total || 0;
+      mapa[quem].n++;
+    });
+    return mapa;
+  }
+  // aulas dadas no mês (chamada feita) por professor — Grade + Turmas
+  function aulasDadasDoMes() {
+    var mapa = {}; // professor -> aulas
+    var tu = S.read("turmas", { turmas: [], chamadas: {} });
+    (tu.turmas || []).forEach(function (t) {
+      if (!(t.prof || "").trim()) return;
+      Object.keys(tu.chamadas || {}).forEach(function (k) {
+        var pi = k.split("|");
+        if (pi[0] === t.id && (pi[1] || "").slice(0, 7) === mes && (tu.chamadas[k] || []).length) {
+          mapa[t.prof.trim()] = (mapa[t.prof.trim()] || 0) + 1;
+        }
+      });
+    });
+    var gr = S.read("grade", { aulas: [], avulsas: [], presencas: {} });
+    var profDe = {};
+    (gr.aulas || []).concat(gr.avulsas || []).forEach(function (a) { if ((a.prof || "").trim()) profDe[a.id] = a.prof.trim(); });
+    Object.keys(gr.presencas || {}).forEach(function (k) {
+      var pi = k.split("|");
+      var prof = profDe[pi[0]];
+      if (prof && (pi[1] || "").slice(0, 7) === mes && (gr.presencas[k] || []).length) mapa[prof] = (mapa[prof] || 0) + 1;
+    });
+    return mapa;
+  }
+
   function render() {
     var c = cfg();
     $("pctPadrao").value = c.pctPadrao;
+    $("valorAula").value = c.valorAula || "";
     $("regime").value = c.regime;
     $("mLabel").textContent = new Date(mes + "-01T12:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
     var mapa = vendasDoMes();
@@ -159,9 +203,30 @@
         }).join("") + "</details>";
     }).join("") : '<div class="vazio">Nenhum contrato vendido neste mês ainda.</div>';
 
-    // KPIs no topo (padrão EVO). No nosso modelo a comissão é do consultor(a);
-    // professor/vendedor ficam separados para quando houver essas regras.
+    // KPIs no topo (padrão EVO): consultor (mensalidades), vendedor (balcão) e professor (aulas dadas)
     var comProfessor = 0, comVendedor = 0;
+    var extras = "";
+    var balcao = vendasBalcaoDoMes();
+    Object.keys(balcao).sort().forEach(function (nome) {
+      var pctV = pctDe(c, nome);
+      var comV = balcao[nome].total * pctV / 100;
+      comVendedor += comV;
+      extras += '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--linha);">' +
+        "<span>🛒 <strong>" + esc(nome) + "</strong> — " + balcao[nome].n + " venda(s) de balcão · " + S.fmtBRL(balcao[nome].total) + " (" + pctV + "%)</span>" +
+        "<strong>" + S.fmtBRL(comV) + "</strong></div>";
+    });
+    var aulas = aulasDadasDoMes();
+    var vAula = +c.valorAula || 0;
+    Object.keys(aulas).sort().forEach(function (nome) {
+      var comP = aulas[nome] * vAula;
+      comProfessor += comP;
+      extras += '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--linha);">' +
+        "<span>🏋️ <strong>" + esc(nome) + "</strong> — " + aulas[nome] + " aula(s) dada(s) × " + S.fmtBRL(vAula) + "</span>" +
+        "<strong>" + S.fmtBRL(comP) + "</strong></div>";
+    });
+    $("cardExtras").hidden = !extras;
+    $("listaExtras").innerHTML = extras +
+      (Object.keys(aulas).length && !vAula ? '<div class="muted" style="margin-top:6px;">Defina o "R$ por aula dada" lá em cima pra pagar os professores por aula.</div>' : "");
     $("kpisCom").innerHTML =
       '<div class="kpiCom"><span class="cifra">$</span><div><div class="rot">Comissões consultor</div><div class="val">' + S.fmtBRL(totalCom) + '</div></div></div>' +
       '<div class="kpiCom"><span class="cifra">$</span><div><div class="rot">Comissões professor</div><div class="val">' + S.fmtBRL(comProfessor) + '</div></div></div>' +
@@ -191,6 +256,13 @@
     S.write("comissoes", c);
     render();
   });
+  $("valorAula").addEventListener("change", function () {
+    var c = cfg();
+    if ((+c.valorAula || 0) === (+this.value || 0)) return;
+    c.valorAula = +this.value || 0;
+    S.write("comissoes", c);
+    render();
+  });
   $("listaConsultores").addEventListener("change", function (e) {
     var nome = e.target.getAttribute && e.target.getAttribute("data-pct");
     if (nome == null) return;
@@ -216,6 +288,11 @@
     Object.keys(mapa).forEach(function (nome) {
       total += mapa[nome].reduce(function (t, v) { return t + v.valor; }, 0) * pctDe(c, nome) / 100;
     });
+    // + vendedores de balcão e professores por aula dada
+    var balcao = vendasBalcaoDoMes();
+    Object.keys(balcao).forEach(function (nome) { total += balcao[nome].total * pctDe(c, nome) / 100; });
+    var aulas = aulasDadasDoMes();
+    Object.keys(aulas).forEach(function (nome) { total += aulas[nome] * (+c.valorAula || 0); });
     if (!total) return;
     if (!confirm("Lançar " + S.fmtBRL(total) + " de comissões como conta a pagar do mês?")) return;
     var contas = S.read("contas", { centros: [], contas: [] });

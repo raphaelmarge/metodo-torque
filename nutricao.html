@@ -129,6 +129,7 @@
         <select id="dAluno" style="min-width: 220px;"></select>
         <button class="btn verde" id="dGerar" title="Mifflin-St Jeor + objetivo + banco de alimentos">Gerar dieta automática</button>
         <button class="btn sec" id="dZap">Enviar resumo no WhatsApp</button>
+        <button class="btn sec" id="dPdf" title="plano alimentar imprimível — imprima ou salve em PDF pra entregar ao paciente">🖨 Plano em PDF</button>
       </div>
       <div id="dResumo" class="muted" style="margin-top: 10px; font-size: 13.5px;"></div>
       <div class="linha-flex" style="gap: 8px; margin-top: 10px; align-items: center;">
@@ -191,6 +192,8 @@
         <input id="alPorcao" placeholder="Porção (ex.: 100 g)" style="width: 130px;">
         <input id="alKcal" type="number" min="0" placeholder="kcal" style="width: 90px;">
         <input id="alProt" type="number" min="0" step="0.1" placeholder="prot (g)" style="width: 90px;">
+        <input id="alCarb" type="number" min="0" step="0.1" placeholder="carbo (g)" style="width: 90px;">
+        <input id="alGord" type="number" min="0" step="0.1" placeholder="gord (g)" style="width: 90px;">
         <button class="btn verde" id="alAdd">+ Alimento</button>
       </div>
     </div>
@@ -329,6 +332,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Dieta atual</h3>
     <div id="pnDieta" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
 
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">📱 O que o paciente registrou no app</h3>
+    <div id="pnAppDados" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
+
     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
       <button class="btn verde mini" id="pnAcesso">📧 Enviar acesso do app</button>
       <button class="btn sec mini" id="pnApp" title="baixa o arquivo do app (uso offline)">📲 Gerar app</button>
@@ -366,23 +372,23 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
   // catálogo ativo (curadoria do nutricionista) + alimentos próprios
   function alimentosAtivos(st) {
     return CATALOGO.filter(function (a) { return !st.catalogoOff[a.n]; })
-      .map(function (a) { return { id: "cat:" + a.n, nome: a.n, porcao: a.p, kcal: a.k, prot: a.pt, cat: a.c }; })
-      .concat(st.alimentos.map(function (a) { return { id: a.id, nome: a.nome, porcao: a.porcao, kcal: a.kcal, prot: a.prot, cat: "Meus alimentos", custom: true }; }));
+      .map(function (a) { return { id: "cat:" + a.n, nome: a.n, porcao: a.p, kcal: a.k, prot: a.pt, carb: a.cb || 0, gord: a.g || 0, cat: a.c }; })
+      .concat(st.alimentos.map(function (a) { return { id: a.id, nome: a.nome, porcao: a.porcao, kcal: a.kcal, prot: a.prot, carb: a.carb || 0, gord: a.gord || 0, cat: "Meus alimentos", custom: true }; }));
   }
   function alimPorId(st, id) {
     if (String(id).indexOf("cat:") === 0) {
       var nome = String(id).slice(4);
       var c = CATALOGO.find(function (a) { return a.n === nome; });
-      return c ? { id: id, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt } : null;
+      return c ? { id: id, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt, carb: c.cb || 0, gord: c.g || 0 } : null;
     }
     return st.alimentos.find(function (a) { return a.id === id; });
   }
   function alimPorNome(st, nome) {
     var lower = String(nome).toLowerCase();
     var c = CATALOGO.find(function (a) { return a.n.toLowerCase() === lower; });
-    if (c) return { id: "cat:" + c.n, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt };
+    if (c) return { id: "cat:" + c.n, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt, carb: c.cb || 0, gord: c.g || 0 };
     var m = st.alimentos.find(function (a) { return a.nome.toLowerCase() === lower; });
-    return m ? { id: m.id, nome: m.nome, porcao: m.porcao, kcal: m.kcal, prot: m.prot } : null;
+    return m ? { id: m.id, nome: m.nome, porcao: m.porcao, kcal: m.kcal, prot: m.prot, carb: m.carb || 0, gord: m.gord || 0 } : null;
   }
   function dietaDe(st, pid) {
     st.dietas[pid] = st.dietas[pid] || { aguaMl: 2000, refeicoes: [] };
@@ -399,6 +405,27 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     if (p.objetivo === "emagrecer") kcal *= 0.8;
     if (p.objetivo === "ganhar") kcal *= 1.15;
     return { tmb: Math.round(tmb), alvo: Math.round(kcal / 10) * 10 };
+  }
+  // alvo de macros: proteína por g/kg (padrão da prática), gordura 25% das kcal, carbo no resto
+  function macrosAlvo(p) {
+    var alvo = kcalAlvo(p).alvo;
+    var gkg = p.objetivo === "ganhar" ? 2.0 : p.objetivo === "emagrecer" ? 1.8 : 1.6;
+    var prot = Math.round((+p.peso || 0) * gkg);
+    var gord = Math.round(alvo * 0.25 / 9);
+    var carb = Math.round(Math.max(0, alvo - prot * 4 - gord * 9) / 4);
+    return { prot: prot, carb: carb, gord: gord };
+  }
+  function macrosDaDieta(st, dieta) {
+    var t = { prot: 0, carb: 0, gord: 0 };
+    (dieta.refeicoes || []).forEach(function (r) {
+      (r.itens || []).forEach(function (it) {
+        var al = alimPorId(st, it.alimId);
+        if (!al) return;
+        var q = +it.qtd || 1;
+        t.prot += (al.prot || 0) * q; t.carb += (al.carb || 0) * q; t.gord += (al.gord || 0) * q;
+      });
+    });
+    return { prot: Math.round(t.prot), carb: Math.round(t.carb), gord: Math.round(t.gord) };
   }
 
   // ---------- dieta automática (motor de regras + banco de alimentos) ----------
@@ -447,7 +474,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     });
     return Math.round(t);
   }
-  window.__nutri = { kcalAlvo: kcalAlvo, gerarDieta: gerarDieta, kcalDaDieta: kcalDaDieta }; // testes
+  window.__nutri = { kcalAlvo: kcalAlvo, gerarDieta: gerarDieta, kcalDaDieta: kcalDaDieta, macrosAlvo: macrosAlvo, macrosDaDieta: macrosDaDieta }; // testes
 
   // ---------- menu lateral ----------
   document.getElementById("btnMenuNt").onclick = function () { document.body.classList.toggle("menu-aberto"); };
@@ -601,6 +628,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         return S.fmtData(c.data) + " " + (c.hora || "");
       }).join(" · ") + "</div>" : "");
     pintaPesoPerfilN(st, p);
+    pintaAppDadosN(p);
     // dieta
     var d = st.dietas[id];
     $("pnDieta").innerHTML = (d && (d.refeicoes || []).length)
@@ -612,6 +640,56 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     else wa.style.display = "none";
     if (!$("dlgPerfilN").open) $("dlgPerfilN").showModal();
   }
+  // o que o paciente registrou no app dele (volta pela nuvem via app_aluno_devolve)
+  function pintaAppDadosN(p) {
+    var box = $("pnAppDados");
+    var nuvem = S.cloud && S.cloud();
+    if (!p.appTokenN) { box.textContent = "Gere o app do paciente primeiro — depois que ele usar, os registros aparecem aqui."; return; }
+    if (!nuvem) { box.textContent = "Entre com a sua conta da nuvem pra ver o que o paciente registrou no app."; return; }
+    box.textContent = "Carregando registros do app…";
+    nuvem.client.from("app_aluno").select("retorno").eq("token", p.appTokenN).limit(1)
+      .then(function (r) {
+        if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
+        var ret = r && r.data && r.data[0] && r.data[0].retorno;
+        if (!ret) { box.textContent = "O paciente ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui."; return; }
+        var html = "";
+        // peso registrado pelo próprio paciente
+        var pz = ret.peso || [];
+        if (pz.length) {
+          var ult = pz[pz.length - 1], pri = pz[0];
+          var dif = Math.round((+ult.kg - +pri.kg) * 10) / 10;
+          html += "<div><b>⚖️ Peso na balança (registrado por ele):</b> " + String(ult.kg).replace(".", ",") + " kg em " + S.fmtData(ult.d) +
+            (pz.length > 1 ? " (<b style='color:" + (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> desde o início · " + pz.length + " registros)" : "") + "</div>";
+        }
+        // adesão do dia: refeições + água
+        if (ret.dia) {
+          var hojeReg = ret.dia === S.todayISO();
+          html += "<div><b>🍽 Adesão" + (hojeReg ? " de hoje" : " em " + S.fmtData(ret.dia)) + ":</b> " +
+            (ret.refsTotal ? (ret.refsFeitas || 0) + " de " + ret.refsTotal + " refeições da dieta" : "sem dieta no app") +
+            " · 💧 " + (ret.agua || 0) + " de " + (ret.aguaMeta || 0) + " ml de água</div>";
+        }
+        // recordatório: o que ele registrou fora da dieta
+        var di = ret.diario || [];
+        if (di.length) {
+          var kcalDi = di.reduce(function (t, x) { return t + (+x.k || 0); }, 0);
+          html += "<div style='margin-top:4px;'><b>📝 Fora da dieta (diário):</b> " + di.map(function (x) {
+            return esc(x.n) + " (" + String(x.q).replace(".", ",") + "x · " + x.k + " kcal)";
+          }).join(" · ") + " — total " + kcalDi + " kcal</div>";
+        }
+        // fotos de progresso (sanitizadas — vêm de RPC pública)
+        var fotoOk = function (u) { u = String(u || ""); return (/^data:image\//.test(u) || /^https:\/\//.test(u)) && !/['"<>\\]/.test(u) ? u : ""; };
+        var dataOk = function (d2) { return String(d2 || "").replace(/[^0-9-]/g, ""); };
+        var fA = fotoOk(ret.fotoAntes), fD = fotoOk(ret.fotoDepois), fAd = dataOk(ret.fotoAntesD), fDd = dataOk(ret.fotoDepoisD);
+        if (fA) {
+          html += "<div style='margin-top:8px;'><b>📸 Fotos de progresso</b></div><div style='display:flex;gap:10px;max-width:360px;'>" +
+            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#6b7280;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
+            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#6b7280;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") + "</div>";
+        }
+        box.innerHTML = html || "O paciente ainda não registrou nada no app. Assim que registrar peso, refeição, diário ou foto, aparece aqui.";
+      }, function () { box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
+  }
+  window.__appDadosN = pintaAppDadosN; // testes
+
   function pintaPesoPerfilN(st, p) {
     var ps = ((st.pesagens || {})[p.id] || []).slice(-10);
     if (!ps.length && p.peso) ps = [{ d: p.desde || S.todayISO(), kg: p.peso }];
@@ -751,17 +829,19 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       return '<option value="' + esc(a.nome) + '">' + esc(a.porcao) + " · " + a.kcal + " kcal</option>";
     }).join("");
     $("refeicoesBox").innerHTML = (dieta.refeicoes || []).length ? dieta.refeicoes.map(function (r) {
-      var kcalRef = 0;
+      var kcalRef = 0, mRef = { prot: 0, carb: 0, gord: 0 };
       var itensHtml = (r.itens || []).map(function (it, i) {
         var al = alimPorId(st, it.alimId);
         if (!al) return "";
-        var k = Math.round(al.kcal * (+it.qtd || 1));
+        var q = +it.qtd || 1;
+        var k = Math.round(al.kcal * q);
         kcalRef += k;
+        mRef.prot += (al.prot || 0) * q; mRef.carb += (al.carb || 0) * q; mRef.gord += (al.gord || 0) * q;
         return '<div class="linha-nt"><span>' + esc(al.nome) + '</span><span class="muted">' + String(it.qtd).replace(".", ",") + " × " + esc(al.porcao) + "</span>" +
           '<span style="margin-left:auto;font-weight:700;">' + k + ' kcal</span><button class="btn sec mini" data-rmitem="' + r.id + ":" + i + '">✕</button></div>';
       }).join("");
       return '<div class="ref-card"><div class="linha-flex" style="justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
-        "<b>⏰ " + esc(r.hora) + " — " + esc(r.titulo) + '</b><span style="font-weight:800;color:var(--verde-2);">' + kcalRef + " kcal</span>" +
+        "<b>⏰ " + esc(r.hora) + " — " + esc(r.titulo) + '</b><span style="font-weight:800;color:var(--verde-2);">' + kcalRef + ' kcal <small class="muted" style="font-weight:600;">P ' + Math.round(mRef.prot) + " · C " + Math.round(mRef.carb) + " · G " + Math.round(mRef.gord) + " g</small></span>" +
         '<button class="btn sec mini" data-rmref="' + r.id + '">✕ refeição</button></div>' + itensHtml +
         '<div class="linha-flex" style="gap:8px;margin-top:8px;flex-wrap:wrap;">' +
         '<input data-alsel="' + r.id + '" list="dlAlimentos" placeholder="Digite pra buscar no banco (' + alimentosAtivos(st).length + ' alimentos)…" style="flex:2;min-width:200px;">' +
@@ -770,9 +850,72 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     }).join("") : '<div class="muted">Sem refeições ainda — gere a dieta automática ou adicione refeições acima.</div>';
     var total = kcalDaDieta(st, dieta);
     var pct = alvo.alvo ? Math.round(100 * total / alvo.alvo) : 0;
+    var mT = macrosDaDieta(st, dieta), mA = macrosAlvo(p);
+    var pctM = function (v, a) { return a ? Math.round(100 * v / a) : 0; };
     $("dTotais").innerHTML = "Total da dieta: <b style='color:var(--verde-2);'>" + total + " kcal</b> de " + alvo.alvo + " kcal alvo (" + pct + "%)" +
-      (pct >= 90 && pct <= 110 ? " ✅" : " — ajuste as porções");
+      (pct >= 90 && pct <= 110 ? " ✅" : " — ajuste as porções") +
+      "<div style='font-weight:600;font-size:13px;margin-top:4px;'>Macros: 🥩 Proteína <b>" + mT.prot + " g</b> de " + mA.prot + " g (" + pctM(mT.prot, mA.prot) + "%) · " +
+      "🍚 Carbo <b>" + mT.carb + " g</b> de " + mA.carb + " g (" + pctM(mT.carb, mA.carb) + "%) · " +
+      "🥑 Gordura <b>" + mT.gord + " g</b> de " + mA.gord + " g (" + pctM(mT.gord, mA.gord) + "%)</div>";
   }
+  // plano alimentar imprimível (o nutricionista imprime ou salva em PDF pra entregar)
+  function montaPlanoPDF(pid) {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pid; });
+    if (!p) return "";
+    var consultorio = (st.config || {}).nome || "TORQUE NUTRI";
+    var alvo = kcalAlvo(p), mA = macrosAlvo(p);
+    var dieta = dietaDe(st, p.id);
+    var mT = macrosDaDieta(st, dieta);
+    var total = kcalDaDieta(st, dieta);
+    var refsHtml = (dieta.refeicoes || []).map(function (r) {
+      var kcalRef = 0;
+      var linhas = (r.itens || []).map(function (it) {
+        var al = alimPorId(st, it.alimId);
+        if (!al) return "";
+        var k = Math.round(al.kcal * (+it.qtd || 1));
+        kcalRef += k;
+        return "<tr><td>" + esc(al.nome) + "</td><td>" + String(it.qtd).replace(".", ",") + " × " + esc(al.porcao) + "</td><td style='text-align:right;'>" + k + " kcal</td></tr>";
+      }).join("");
+      return "<h3>⏰ " + esc(r.hora) + " — " + esc(r.titulo) + " <small style='color:#4b5563;font-weight:600;'>(" + kcalRef + " kcal)</small></h3>" +
+        "<table><tr><th>Alimento</th><th>Quantidade</th><th style='text-align:right;'>Energia</th></tr>" + linhas + "</table>";
+    }).join("");
+    return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'><title>Plano alimentar — " + esc(p.nome) + "</title><style>" +
+      "body{font-family:system-ui,sans-serif;color:#111827;max-width:720px;margin:0 auto;padding:34px 22px;}" +
+      ".k{font-size:11px;letter-spacing:.2em;color:#15803d;font-weight:800;text-transform:uppercase;}" +
+      "h1{font-size:26px;margin:6px 0 2px;}h3{font-size:15px;margin:18px 0 6px;}" +
+      ".sub{color:#4b5563;font-size:13px;margin-bottom:14px;}" +
+      ".metas{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 16px;font-size:13.5px;line-height:1.8;margin:10px 0 6px;}" +
+      "table{width:100%;border-collapse:collapse;font-size:13px;}th,td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;}th{background:#f9fafb;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:#374151;}" +
+      ".rodape{margin-top:26px;color:#6b7280;font-size:11.5px;border-top:1px solid #e5e7eb;padding-top:10px;}" +
+      ".ass{margin-top:40px;text-align:center;}.ass .linha{border-top:1px solid #111827;width:280px;margin:0 auto;padding-top:6px;font-size:13px;}" +
+      ".no-print{background:#16a34a;color:#fff;border:none;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:18px;}" +
+      "@media print{.no-print{display:none;}}" +
+      "</style></head><body>" +
+      "<button class='no-print' onclick='window.print()'>🖨 Imprimir / salvar em PDF</button>" +
+      "<div class='k'>" + esc(consultorio.toUpperCase()) + " · PLANO ALIMENTAR</div>" +
+      "<h1>" + esc(p.nome) + "</h1>" +
+      "<div class='sub'>" + (p.idade ? p.idade + " anos · " : "") + (p.peso ? String(p.peso).replace(".", ",") + " kg · " : "") + (p.altura ? p.altura + " cm · " : "") +
+      "objetivo: " + esc(p.objetivo || "manter") + " · gerado em " + S.fmtData(S.todayISO()) + "</div>" +
+      "<div class='metas'><b>Metas diárias:</b> " + alvo.alvo + " kcal · 🥩 Proteína " + mA.prot + " g · 🍚 Carboidrato " + mA.carb + " g · 🥑 Gordura " + mA.gord + " g · 💧 Água " + (dieta.aguaMl || 2000) + " ml" +
+      "<br><b>Este plano soma:</b> " + total + " kcal · P " + mT.prot + " g · C " + mT.carb + " g · G " + mT.gord + " g" +
+      (p.restricoes ? "<br><b>Restrições/observações:</b> " + esc(p.restricoes) : "") + "</div>" +
+      (refsHtml || "<p>Sem refeições montadas ainda.</p>") +
+      "<div class='ass'><div class='linha'>" + esc(consultorio) + " — Nutricionista</div></div>" +
+      "<div class='rodape'>Plano gerado pelo TORQUE NUTRI · " + esc(consultorio) + " · www.torqueon.com.br — validade sugerida: 30 dias ou até a próxima consulta.</div>" +
+      "</body></html>";
+  }
+  $("dPdf").addEventListener("click", function () {
+    var p = pacienteSel();
+    if (!p) { alert("Escolha o paciente primeiro."); return; }
+    var html = montaPlanoPDF(p.id);
+    var w = window.open("", "_blank");
+    if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
+    w.document.write(html);
+    w.document.close();
+  });
+  window.__planoPdf = montaPlanoPDF; // testes
+
   $("dAluno").addEventListener("change", renderDietas);
   $("dAgua").addEventListener("change", function () {
     var p = pacienteSel();
@@ -926,10 +1069,12 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         var nut = pr.nutriments || {};
         var kcal = Math.round(+nut["energy-kcal_100g"] || (+nut.energy_100g || 0) / 4.184);
         var prot = Math.round((+nut.proteins_100g || 0) * 10) / 10;
+        var carb = Math.round((+nut.carbohydrates_100g || 0) * 10) / 10;
+        var gord = Math.round((+nut.fat_100g || 0) * 10) / 10;
         if (!kcal) { $("cbStatus").textContent = "Achei \"" + nome + "\", mas sem kcal no rótulo — cadastre manualmente."; return; }
         var st = load();
         if (st.alimentos.some(function (a) { return a.nome === nome; })) { $("cbStatus").textContent = "\"" + nome + "\" já está nos seus alimentos. ✓"; return; }
-        st.alimentos.push({ id: S.uid(), nome: nome, porcao: "100 g", kcal: kcal, prot: prot, codigo: codigo });
+        st.alimentos.push({ id: S.uid(), nome: nome, porcao: "100 g", kcal: kcal, prot: prot, carb: carb, gord: gord, codigo: codigo });
         S.write("ntStudio", st);
         $("cbStatus").textContent = "✅ \"" + nome + "\" adicionado: " + kcal + " kcal/100 g.";
         $("cbCodigo").value = "";
@@ -968,8 +1113,8 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var nome = $("alNome").value.trim();
     if (!nome || !+$("alKcal").value) { alert("Preencha o alimento e as kcal da porção."); return; }
     var st = load();
-    st.alimentos.push({ id: S.uid(), nome: nome, porcao: $("alPorcao").value.trim() || "1 porção", kcal: +$("alKcal").value, prot: +$("alProt").value || 0 });
-    ["alNome", "alPorcao", "alKcal", "alProt"].forEach(function (id) { $(id).value = ""; });
+    st.alimentos.push({ id: S.uid(), nome: nome, porcao: $("alPorcao").value.trim() || "1 porção", kcal: +$("alKcal").value, prot: +$("alProt").value || 0, carb: +$("alCarb").value || 0, gord: +$("alGord").value || 0 });
+    ["alNome", "alPorcao", "alKcal", "alProt", "alCarb", "alGord"].forEach(function (id) { $(id).value = ""; });
     S.write("ntStudio", st);
     renderAlimentos();
   });
@@ -1103,21 +1248,24 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var dieta = dietaDe(st, p.id);
     var alvo = kcalAlvo(p);
     var refs = (dieta.refeicoes || []).map(function (r) {
-      var kcalRef = 0;
+      var kcalRef = 0, mR = { pt: 0, cb: 0, gd: 0 };
       var itens = (r.itens || []).map(function (it) {
         var al = alimPorId(st, it.alimId);
         if (!al) return null;
-        var k = Math.round(al.kcal * (+it.qtd || 1));
+        var q = +it.qtd || 1;
+        var k = Math.round(al.kcal * q);
         kcalRef += k;
+        mR.pt += (al.prot || 0) * q; mR.cb += (al.carb || 0) * q; mR.gd += (al.gord || 0) * q;
         return { n: al.nome, q: String(it.qtd).replace(".", ",") + " × " + al.porcao, k: k };
       }).filter(Boolean);
-      return { id: r.id, h: r.hora, t: r.titulo, k: kcalRef, itens: itens };
+      return { id: r.id, h: r.hora, t: r.titulo, k: kcalRef, pt: Math.round(mR.pt), cb: Math.round(mR.cb), gd: Math.round(mR.gd), itens: itens };
     });
+    var macrosApp = macrosAlvo(p);
     var aguaMl = dieta.aguaMl || 2000;
     var nuvemCfg = self.MT_CLOUD || {};
     var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && p.appTokenN);
     // banco de alimentos curado embutido no app (busca offline no diário)
-    var aldb = alimentosAtivos(st).slice(0, 900).map(function (a) { return { n: a.nome, k: a.kcal, p: a.porcao }; });
+    var aldb = alimentosAtivos(st).slice(0, 900).map(function (a) { return { n: a.nome, k: a.kcal, p: a.porcao, pt: a.prot || 0, cb: a.carb || 0, gd: a.gord || 0 }; });
     // Pix do consultório embutido no app (copia e cola + QR)
     var cfgPix = st.config || {};
     var pixAppN = null;
@@ -1175,7 +1323,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       "<div class='cardx'><h2>Meu dia</h2><div class='kv'><span>Refeições da dieta feitas</span><b id='kcalRef'>0 kcal</b></div>" +
       "<div class='kv'><span>Diário (o que registrei)</span><b id='kcalDiario'>0 kcal</b></div>" +
       "<div class='kv'><span><b>Total consumido</b></span><b id='kcalDia' style='color:#86efac'>0 kcal</b></div>" +
-      "<div class='kv'><span>Meta do dia</span><span>" + alvo.alvo + " kcal</span></div></div>" +
+      "<div class='kv'><span>Meta do dia</span><span>" + alvo.alvo + " kcal</span></div>" +
+      "<div class='kv'><span>🥩🍚🥑 Proteína · Carbo · Gordura</span><b id='macroDia'>0 · 0 · 0 g</b></div>" +
+      "<div class='kv'><span>Alvo de macros</span><span>" + macrosApp.prot + " · " + macrosApp.carb + " · " + macrosApp.gord + " g</span></div></div>" +
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
@@ -1214,17 +1364,27 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button><div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
       (zapN ? "<a class='btnx' style='display:block;text-align:center;text-decoration:none;background:#15803d;' href='https://wa.me/55" + String(zapN).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi! Sou " + p.nome + ", sobre minha dieta:") + "' target='_blank' rel='noopener'>Falar com " + esc(studio.split(" ")[0]) + "</a>" : "") +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 🥗</div>" +
-      "<script>var REFS=" + JSON.stringify(refs.map(function (r) { return { id: r.id, h: r.h, t: r.t, k: r.k }; })) +
+      "<script>var REFS=" + JSON.stringify(refs.map(function (r) { return { id: r.id, h: r.h, t: r.t, k: r.k, pt: r.pt, cb: r.cb, gd: r.gd }; })) +
       ",ALDB=" + JSON.stringify(aldb) +
       ",AGUAML=" + aguaMl + ",KCALMETA=" + alvo.alvo +
       ",NUVEM=" + JSON.stringify(temNuvem ? { u: nuvemCfg.url, k: nuvemCfg.anonKey } : null) +
       ",TOKEN=" + JSON.stringify(p.appTokenN || "") +
       ",ZAPN=" + JSON.stringify(String(zapN || "").replace(/\D/g, "")) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
-      "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}" +
+      "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
+      "if(k==='ntpeso'||k==='ntfotos'||k.indexOf('ntdi_')===0||k.indexOf('ntref_')===0||k.indexOf('ntag_')===0)devolveApp();}" +
       "function isoHj(){return new Date().toISOString().slice(0,10);}" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +
+      // devolve pro nutricionista o que o paciente registra (peso, diário, refeições, água, fotos)
+      "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
+      "var fs=L('ntfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
+      "var rf=L('ntref_'+isoHj(),{});var nrf=0;for(var kk in rf)nrf++;" +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:" + JSON.stringify(primeiro) + ",peso:L('ntpeso',[]),diario:L('ntdi_'+isoHj(),[])," +
+      "refsFeitas:nrf,refsTotal:REFS.length,agua:L('ntag_'+isoHj(),0),aguaMeta:AGUAML,kcalMeta:KCALMETA,dia:isoHj()," +
+      "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
+      "atualizado:new Date().toISOString()}});},1800);}" +
+      "setTimeout(devolveApp,2500);" +
       // fotos de progresso (só no aparelho) — ANTES × AGORA
       "function pintaFotos(){var fs=L('ntfotos',[]);var box=document.getElementById('fotosBox');if(!fs.length)return;" +
       "var pri=fs[0],ult=fs[fs.length-1];box.className='';" +
@@ -1286,7 +1446,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       "var al=ALDB.filter(function(a){return a.n.toLowerCase()===nome.toLowerCase();})[0];" +
       "if(!al){alert('Digite e escolha um alimento da lista de sugestões.');return;}" +
       "var q=+document.getElementById('diQtd').value||1;var l=L('ntdi_'+isoHj(),[]);" +
-      "l.push({n:al.n,q:q,k:Math.round(al.k*q)});Sv('ntdi_'+isoHj(),l);" +
+      "l.push({n:al.n,q:q,k:Math.round(al.k*q),pt:Math.round((al.pt||0)*q),cb:Math.round((al.cb||0)*q),gd:Math.round((al.gd||0)*q)});Sv('ntdi_'+isoHj(),l);" +
       "document.getElementById('diBusca').value='';document.getElementById('diQtd').value='1';pintaDiario();});" +
       "document.getElementById('diLista').addEventListener('click',function(e){var i=e.target.getAttribute&&e.target.getAttribute('data-dirm');if(i==null)return;" +
       "var l=L('ntdi_'+isoHj(),[]);l.splice(+i,1);Sv('ntdi_'+isoHj(),l);pintaDiario();});" +
@@ -1304,6 +1464,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       "document.querySelectorAll('[data-refok]').forEach(function(b){var ok=!!f[b.dataset.refok];b.classList.toggle('off',!ok);b.textContent=ok?'✓ Feita!':'Marcar como feita ✓';if(ok){kc+=+b.dataset.k;n++;}});" +
       "document.getElementById('kcalRef').textContent=kc+' kcal';" +
       "document.getElementById('kcalDia').textContent=(kc+kcalDiario())+' kcal';" +
+      "var mp=0,mc=0,mg=0;REFS.forEach(function(r){if(f[r.id]){mp+=r.pt||0;mc+=r.cb||0;mg+=r.gd||0;}});" +
+      "L('ntdi_'+isoHj(),[]).forEach(function(x){mp+=x.pt||0;mc+=x.cb||0;mg+=x.gd||0;});" +
+      "var mdEl=document.getElementById('macroDia');if(mdEl)mdEl.textContent=Math.round(mp)+' · '+Math.round(mc)+' · '+Math.round(mg)+' g';" +
       "document.getElementById('refProg').innerHTML=REFS.length?('<b style=\"color:#86efac\">'+n+' de '+REFS.length+'</b> refeições feitas hoje'+(n===REFS.length&&REFS.length?' — dia perfeito! 🎉':'')):'';" +
       "var ag=new Date();var hm=('0'+ag.getHours()).slice(-2)+':'+('0'+ag.getMinutes()).slice(-2);" +
       "var prox=REFS.filter(function(r){return r.h>=hm&&!f[r.id];})[0]||REFS.filter(function(r){return !f[r.id];})[0];" +
