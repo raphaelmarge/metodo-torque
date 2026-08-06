@@ -164,6 +164,26 @@ async function abaPt(p, a) {
   }));
   ok(faltouSt.faltas === 1 && /FALTOU/.test(faltouSt.tela), "botão Faltou marca a falta explícita do aluno");
 
+  // vários dias da semana de uma vez (seg/qua/sex): 3 dias × 2 semanas = 6 sessões
+  await p.evaluate(() => {
+    document.getElementById("sData").value = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    document.getElementById("sRepAte").value = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
+    document.getElementById("sRep").checked = true;
+    document.querySelectorAll("#sRepDias .srd").forEach((c) => { c.checked = ["1", "3", "5"].includes(c.value); });
+  });
+  await p.selectOption("#sAluno", { index: 1 });
+  await p.fill("#sHora", "09:15");
+  await p.click("#sAdd");
+  const multi = await p.evaluate(() => {
+    const ses = JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "09:15");
+    return { n: ses.length, dows: [...new Set(ses.map((x) => new Date(x.data + "T12:00").getDay()))].sort().join(",") };
+  });
+  ok(multi.n === 6 && multi.dows === "1,3,5", "marcar S-Q-S agenda seg/qua/sex de uma vez (6 sessões em 2 semanas)");
+  await p.evaluate(() => {
+    document.getElementById("sRep").checked = false;
+    document.querySelectorAll("#sRepDias .srd").forEach((c) => { c.checked = false; });
+  });
+
   // pagamento: registra e some da pendência
   await abaPt(p, "pagamentos");
   let pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
