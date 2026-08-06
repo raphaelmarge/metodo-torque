@@ -451,6 +451,7 @@
           <a class="btn whats" id="qeZap" target="_blank" rel="noopener">💬 Mandar no WhatsApp</a>
           <button class="btn sec" id="qeCopia">📋 Copiar link</button>
         </div>
+        <p id="qeAviso" hidden class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
       </div>
     </div>
 
@@ -1438,6 +1439,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("qeLink").value = link;
     var msg = "Oi " + a.nome.split(" ")[0] + "! Responde seu check-in rapidinho? 💜 " + link;
     $("qeZap").href = "https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg);
+    // o envio das respostas exige o token publicado na nuvem — garante isso aqui,
+    // senão o aluno vê "app não encontrado" na hora de enviar
+    var nuvemQ = S.cloud && S.cloud();
+    var avisoQ = $("qeAviso");
+    avisoQ.hidden = false;
+    if (!nuvemQ) {
+      avisoQ.textContent = "⚠️ Entre na sua conta (card ☁️ Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do aluno não chegam.";
+    } else {
+      avisoQ.textContent = "⏳ Preparando o app do aluno na nuvem…";
+      var stampQ = new Date().toISOString();
+      nuvemQ.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvemQ.aid, dados: { html: montaAppAluno(a, stampQ), stamp: stampQ }, atualizado: stampQ }])
+        .then(function (r) {
+          if (r && r.error) { avisoQ.textContent = "⚠️ Não deu pra publicar o app do aluno (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
+          var stQ = load();
+          var aQ = stQ.alunos.find(function (x) { return x.id === a.id; });
+          if (aQ) { aQ.appPubEm = stampQ; S.write("ptStudio", stQ); }
+          avisoQ.textContent = "✅ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
+        }, function () {
+          avisoQ.textContent = "⚠️ Sem conexão agora — o aluno pode ver erro ao enviar. Gere o link de novo com internet.";
+        });
+    }
   });
   $("qeCopia").addEventListener("click", function () {
     $("qeLink").select();

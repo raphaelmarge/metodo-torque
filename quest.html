@@ -118,7 +118,13 @@
       body: JSON.stringify({ t: TOKEN, p_nome: Q.nome || "", p_dados: { respostas: lista, pontuacao: temPontos ? total : null } }),
     }).then(function (r) { return r.json(); }).then(function (d) {
       if (d && d.ok) { $("#form").style.display = "none"; $("#fim").style.display = "block"; window.scrollTo(0, 0); }
-      else { btn.disabled = false; btn.textContent = "Enviar respostas ➤"; $("#erro").textContent = (d && d.erro) ? d.erro : "Não deu — rode o SQL novo no Supabase (ou tente de novo)."; }
+      else {
+        btn.disabled = false; btn.textContent = "Enviar respostas ➤";
+        var eMsg = (d && d.erro) ? d.erro : "Não deu — tenta de novo em instantes.";
+        // erro técnico vira recado acionável pro aluno
+        if (/app não encontrado|token inválido/.test(eMsg)) eMsg = "Este link precisa ser gerado de novo pelo seu treinador (com a conta dele conectada) — manda um alô pra ele! 🙏";
+        $("#erro").textContent = eMsg;
+      }
     }).catch(function () {
       btn.disabled = false; btn.textContent = "Enviar respostas ➤";
       $("#erro").textContent = "Sem internet agora — tenta de novo em instantes.";
