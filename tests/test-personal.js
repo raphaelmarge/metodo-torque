@@ -962,6 +962,31 @@ async function abaPt(p, a) {
   await p.click("#qeGerar");
   const linkQ = await p.evaluate(() => document.getElementById("qeLink").value);
   ok(/quest\.html\?t=.+&q=/.test(linkQ), "link do questionário gerado com token e payload");
+  // sem conta: aviso honesto de que as respostas não chegam
+  ok(await p.evaluate(() => !document.getElementById("qeAviso").hidden && /Entre na sua conta/.test(document.getElementById("qeAviso").textContent)),
+    "sem nuvem, o gerador avisa que as respostas não vão chegar");
+  // com nuvem: gerar o link publica o app do aluno (senão o envio dá 'app não encontrado')
+  {
+    const pub = await p.evaluate(async () => {
+      window.__cloudOrigQ = window.MTStore.cloud;
+      let upsertRow = null;
+      window.MTStore.cloud = () => ({
+        aid: "acad-1",
+        client: { from: (tb) => ({ upsert: (rows) => { upsertRow = { tb, row: rows[0] }; return Promise.resolve({ error: null }); } }) },
+      });
+      document.getElementById("qeGerar").click();
+      await new Promise((res) => setTimeout(res, 300));
+      window.MTStore.cloud = window.__cloudOrigQ;
+      return {
+        tb: upsertRow && upsertRow.tb,
+        temHtml: !!(upsertRow && upsertRow.row.dados && upsertRow.row.dados.html && upsertRow.row.dados.html.length > 10000),
+        token: upsertRow && upsertRow.row.token,
+        aviso: document.getElementById("qeAviso").textContent,
+      };
+    });
+    ok(pub.tb === "app_aluno" && pub.temHtml && pub.token, "gerar o link com a nuvem publica o app do aluno (token passa a existir)");
+    ok(/Tudo pronto/.test(pub.aviso), "aviso confirma que as respostas vão chegar");
+  }
   // o aluno abre o link e responde
   {
     const pq = await ctx.newPage();
@@ -980,6 +1005,22 @@ async function abaPt(p, a) {
     await pq.waitForSelector("#fim", { state: "visible" });
     ok(postado && postado.p_dados && postado.p_dados.pontuacao === 10 && postado.p_dados.respostas.length === 2, "respostas enviadas com pontuação somada (2 + 8 = 10)");
     await pq.close();
+  }
+  // token não publicado: o aluno recebe recado acionável (não o erro técnico)
+  {
+    const pq2 = await ctx.newPage();
+    await pq2.route("**/rest/v1/rpc/app_quest_responde", (r) => {
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ erro: "app não encontrado" }) });
+    });
+    await pq2.goto(linkQ);
+    await pq2.evaluate(() => { if (!self.MT_CLOUD || !self.MT_CLOUD.url) self.MT_CLOUD = { url: "https://x.supabase.co", anonKey: "k" }; });
+    await pq2.evaluate(() => document.querySelector(".op").click());
+    await pq2.evaluate(() => document.querySelector(".linear button[data-v='5']").click());
+    await pq2.click("#btnEnviar");
+    await pq2.waitForTimeout(300);
+    const erroTela = await pq2.evaluate(() => document.getElementById("erro").textContent);
+    ok(/gerado de novo pelo seu treinador/.test(erroTela) && !/app não encontrado/.test(erroTela), "erro 'app não encontrado' vira recado amigável pro aluno");
+    await pq2.close();
   }
   // respostas aparecem no módulo (nuvem simulada)
   {
