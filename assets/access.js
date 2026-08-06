@@ -262,7 +262,7 @@
           return;
         }
         if (r.data.session) { garanteVinculo(r.data.user); return; }
-        aviso("Conta criada! Confirme o link enviado ao seu e-mail e depois entre na aba Entrar — o vínculo com a academia completa sozinho.");
+        aviso("Conta criada! Confirme o link enviado ao seu e-mail e depois entre na aba Entrar — o vínculo com a academia se completa sozinho.");
       }, function (err) { fim(); erro(err.message || "Não foi possível criar a conta."); });
     });
 
