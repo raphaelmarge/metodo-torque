@@ -204,11 +204,11 @@
           <input id="tValidade" type="date" style="width: 140px; display: inline-block; margin-left: 4px;" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
       </div>
       <div class="linha-flex" style="margin: 0 0 10px;">
-        <select id="tplSel" style="min-width: 220px;"><option value="">Ficha pronta (template)…</option></select>
+        <select id="tplSel" style="min-width: 220px;"><option value="">Ficha pronta (modelo)…</option></select>
         <button class="btn" id="tplAplicar">Aplicar no aluno</button>
       </div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os templates criam as fichas completas em 1 clique; depois é só ajustar.</p>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
@@ -490,7 +490,7 @@
   <section id="vAssessoria" hidden>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Acompanhamento a distância</h2>
-      <p class="muted" style="margin: 4px 0 0;">O que os alunos de assessoria registram pelo app chega aqui: treinos feitos, sequência, meta da semana e o check-in semanal (nota + peso + como foi). Quem apagar fica vermelho — mensagem pronta a um clique mantém o aluno perto mesmo longe.</p>
+      <p class="muted" style="margin: 4px 0 0;">O que os alunos de assessoria registram pelo app chega aqui: treinos feitos, sequência, meta da semana e o check-in semanal (nota + peso + como foi). Quem sumir fica vermelho — mensagem pronta a um clique mantém o aluno perto mesmo longe.</p>
     </div>
     <div id="assessoriaLista" class="muted"><div class="card">Carregando…</div></div>
   </section>
@@ -514,7 +514,7 @@
     </div>
     <div class="card" style="margin-top: 14px; border-left: 4px solid var(--roxo);">
       <h2>Robô de atendimento</h2>
-      <p class="muted" style="margin: 4px 0 10px;">Igual ao chatbot do sistema da academia: dentro do app do aluno, o robô responde na hora as perguntas comuns (menu de atalhos) e encaminha pra você quando precisar de gente. Depois de mudar algo, republique os apps dos alunos.</p>
+      <p class="muted" style="margin: 4px 0 10px;">Igual ao chatbot do sistema da academia: dentro do app do aluno, o robô responde na hora às perguntas comuns (menu de atalhos) e encaminha pra você quando precisar de gente. Depois de mudar algo, republique os apps dos alunos.</p>
       <label style="display: flex; gap: 8px; align-items: center; font-weight: 700; margin-bottom: 10px;"><input type="checkbox" id="botAtivoP" style="width: 17px; height: 17px;"> Ligado nos apps dos alunos</label>
       <label style="font-size: 12.5px;">Mensagem de boas-vindas do robô
         <input id="botOiP" style="width: 100%; margin: 4px 0 10px;"></label>
@@ -528,7 +528,7 @@
         <button class="btn sec" id="botZapP">Publicar no WhatsApp</button>
         <span id="botZapOkP" class="muted" style="font-size: 12.5px;"></span>
       </div>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">"Publicar no WhatsApp" salva as automações na nuvem no mesmo formato do chatbot da academia — com a integração oficial do WhatsApp ligada, o robô responde as mensagens do seu número com a automação 📶. O robô de dentro do app do aluno continua usando o card acima.</p>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">"Publicar no WhatsApp" salva as automações na nuvem no mesmo formato do chatbot da academia — com a integração oficial do WhatsApp ligada, o robô responde às mensagens do seu número com a automação 📶. O robô de dentro do app do aluno continua usando o card acima.</p>
     </div>
   </section>
 
@@ -2163,7 +2163,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!tpl) { alert("Escolha uma ficha pronta na lista."); return; }
     var st = load();
     var t = treinoDe(st, alunoId);
-    if (t.fichas.length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Adicionar o template " + tpl.nome + " por cima?")) return;
+    if (t.fichas.length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Adicionar o modelo " + tpl.nome + " por cima?")) return;
     tpl.fichas.forEach(function (f) {
       t.fichas.push({ id: S.uid(), titulo: f[0], itens: f[1].map(function (it) {
         return { exId: exercicioPorNome(st, it[0]).id, series: it[1], reps: it[2], descanso: it[3] || 60, obs: "" };
