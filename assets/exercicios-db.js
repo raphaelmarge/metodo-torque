@@ -5748,7 +5748,7 @@ self.MT_EXERCICIOS = [
    "n": "Elevação lateral unilateral inclinado na parede",
    "g": "Ombros",
    "eq": "Halteres",
-   "d": "Segure na parede e incline o corpo pra fora; a elevação lateral começa já com tensão — sobe até a linha do ombro."
+   "d": "Segure na parede e incline o corpo pra fora; a elevação lateral começa já com tensão — suba até a linha do ombro."
  },
  {
    "n": "Rosca martelo unilateral com pausa",
@@ -5784,7 +5784,7 @@ self.MT_EXERCICIOS = [
    "n": "Corrida lateral na água",
    "g": "Cardio",
    "eq": "Piscina",
-   "d": "Na água pelo peito, desloque-se de lado empurrando a água com passos rápidos — troque a direção a cada 10 passos."
+   "d": "Com a água pelo peito, desloque-se de lado empurrando a água com passos rápidos — troque a direção a cada 10 passos."
  },
  {
    "n": "Tesoura de pernas na água",
