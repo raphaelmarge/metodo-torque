@@ -318,12 +318,13 @@ function ok(cond, nome) {
     const em5h = new Date(agora.getTime() + 5 * 3600000);
     localStorage.setItem("mtapp:grade", JSON.stringify({
       aulas: [
-        { id: "g1", nome: "CROSSFIT", prof: "Pedro Coach", sala: "Sala 2", vagas: 14, inicio: hhmm(em10), dur: 60, dias: [0, 1, 2, 3, 4, 5, 6] },
+        { id: "g1", nome: "CROSSFIT", prof: "Pedro Coach", sala: "Sala 2", vagas: 14, inicio: hhmm(em10), dur: 60, dias: [0, 1, 2, 3, 4, 5, 6], fixos: ["João Fixo"] },
         { id: "g2", nome: "SPINNING", prof: "Carla", sala: "Sala 1", vagas: 20, inicio: hhmm(new Date(Math.min(em5h.getTime(), new Date(agora).setHours(23, 50)))), dur: 45, dias: [0, 1, 2, 3, 4, 5, 6] },
       ],
-      avulsas: [], presencas: {}, faltas: {}, config: {},
+      avulsas: [], presencas: (() => { const o = {}; o["g1|" + new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 10)] = ["Maria do App 📲"]; return o; })(), faltas: {}, config: {},
     }));
     localStorage.setItem("mtapp:tvAvisos", JSON.stringify({ itens: ["Sábado tem aulão de funcional às 9h 💪"] }));
+    localStorage.setItem("mtapp:wod", JSON.stringify({ dias: (() => { const o = {}; o[new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 10)] = { nome: "Filthy Fifty", tipo: "FOR TIME", treino: "50 box jumps\n50 wall balls\n50 burpees", resultados: [{ aluno: "Rafa", resultado: "22:10" }] }; return o; })() }));
   });
   await p.goto(BASE + "/apps/tv.html?painel=aulas");
   await p.waitForTimeout(600);
@@ -343,6 +344,26 @@ function ok(cond, nome) {
     const t = await (await fetch("grade.html")).text();
     return /tvAvisosTxt/.test(t) && /Avisos do telão/.test(t);
   }), "Grade de Aulas tem o card 📺 pra escrever os avisos do telão");
+
+  // telão por modalidade: ?atividade= filtra tudo e ganha treino do dia + quem vem
+  await p.goto(BASE + "/apps/tv.html?atividade=crossfit&painel=agendados");
+  await p.waitForTimeout(600);
+  const tvBox = await p.evaluate(() => ({
+    corpo: document.body.textContent,
+    alertaTxt: document.getElementById("alertaTxt").textContent,
+  }));
+  ok(/CROSSFIT — QUEM VEM HOJE/i.test(tvBox.corpo) && /João Fixo/.test(tvBox.corpo) && /Maria do App 📲/.test(tvBox.corpo), "telão da modalidade lista os alunos agendados por horário (fixos + app)");
+  ok(/2 \/ 14 aluno/.test(tvBox.corpo) && !/SPINNING/.test(tvBox.corpo), "contagem de vagas certa e outras modalidades ficam de fora");
+  ok(/CROSSFIT/.test(tvBox.alertaTxt) && !/SPINNING/.test(tvBox.alertaTxt), "alerta 🔔 do telão da sala só fala da modalidade dele");
+  await p.goto(BASE + "/apps/tv.html?atividade=crossfit&painel=woddia");
+  await p.waitForTimeout(600);
+  const tvWod = await p.evaluate(() => document.body.textContent);
+  ok(/CROSSFIT — TREINO DO DIA/i.test(tvWod) && /Filthy Fifty/.test(tvWod) && /50 wall balls/.test(tvWod), "telão da modalidade mostra o WOD do dia");
+  ok(/PLACAR DE HOJE/.test(tvWod) && /22:10/.test(tvWod), "placar do WOD entra no telão");
+  await p.goto(BASE + "/apps/tv.html?atividade=crossfit");
+  await p.waitForTimeout(600);
+  const pontosBox = await p.evaluate(() => document.querySelectorAll("#pontos span").length);
+  ok(pontosBox === 3, "rotação da modalidade: treino do dia + quem vem + avisos (" + pontosBox + " painéis)");
   await p.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));

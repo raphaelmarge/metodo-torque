@@ -62,6 +62,22 @@
   /* avisos da academia */
   .aviso-tv { display: flex; gap: 1.6vw; align-items: flex-start; background: rgba(28,24,38,.85); border: 1px solid #2c2739; border-left: .6vw solid var(--roxo); border-radius: 20px; padding: 2.4vh 2vw; margin-bottom: 2vh; font-size: 3.4vh; line-height: 1.4; }
 
+  /* telão por modalidade: quem vem + treino do dia */
+  .aula-bloco { background: rgba(28,24,38,.85); border: 1px solid #2c2739; border-radius: 20px; padding: 2vh 2vw; margin-bottom: 2vh; }
+  .aula-bloco .cab-aula { display: flex; align-items: baseline; gap: 1.6vw; font-size: 3.2vh; }
+  .aula-bloco .cab-aula .hr { font-weight: 800; font-size: 3.8vh; font-variant-numeric: tabular-nums; }
+  .aula-bloco .cab-aula .quem { color: #a09aae; font-size: 2.4vh; }
+  .aula-bloco .cab-aula .cont { margin-left: auto; color: #a09aae; font-size: 2.6vh; white-space: nowrap; }
+  .chips { display: flex; flex-wrap: wrap; gap: 1vh 0.8vw; margin-top: 1.4vh; }
+  .chip-tv { background: rgba(124,58,237,.16); border: 1px solid #3a3350; border-radius: 999px; padding: .7vh 1.4vw; font-size: 2.6vh; font-weight: 600; white-space: nowrap; }
+  .chip-tv.mais { background: none; color: #a09aae; }
+  .sem-gente { color: #6e6a78; font-size: 2.6vh; margin-top: 1.2vh; }
+  .wod-tv { display: flex; gap: 3vw; height: 100%; }
+  .wod-tv .col { flex: 1; min-width: 0; overflow: hidden; }
+  .wod-tv .rotulo { font-size: 2vh; font-weight: 700; letter-spacing: .16em; color: #a09aae; margin: 1.6vh 0 .6vh; }
+  .wod-tv pre { margin: 0; font-family: inherit; font-size: 3vh; line-height: 1.5; white-space: pre-wrap; }
+  .wod-tv .tipo-wod { display: inline-block; background: rgba(124,58,237,.2); color: var(--lilas); font-weight: 800; font-size: 2.2vh; letter-spacing: .1em; border-radius: 999px; padding: .6vh 1.6vw; margin-top: .6vh; }
+
   /* barra de alerta de aula (fixa em todos os painéis) */
   .alerta-aula { display: none; align-items: center; gap: 1.6vw; margin-top: 2vh; padding: 1.8vh 2.2vw; border-radius: 18px; font-size: 3vh; font-weight: 700; background: rgba(28,24,38,.9); border: 1px solid #2e2a38; }
   .alerta-aula.on { display: flex; }
@@ -99,7 +115,10 @@
 
   var INTERVALO = 12000; // troca de painel
   var params = new URLSearchParams(location.search);
-  var fixo = params.get("painel"); // ?painel=metas|manutencao|checklist para travar
+  var fixo = params.get("painel"); // ?painel=metas|manutencao|checklist|aulas|avisos|woddia|agendados para travar
+  // telão por modalidade: ?atividade=crossfit filtra aulas/alerta e liga o treino do dia + quem vem
+  var atividade = (params.get("atividade") || "").trim().toLowerCase();
+  function daAtividade(nome) { return !atividade || String(nome || "").toLowerCase().indexOf(atividade) !== -1; }
 
   function esc(s) { return String(s == null ? "" : s).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
 
@@ -279,18 +298,19 @@
     var lista = [];
     (gr.aulas || []).forEach(function (a) {
       if ((a.dias || []).indexOf(dow) !== -1 && a.inicio) {
-        lista.push({ hora: a.inicio, nome: a.nome, prof: a.prof || "", sala: a.sala || "", dur: +a.dur || 60 });
+        lista.push({ id: a.id, hora: a.inicio, nome: a.nome, prof: a.prof || "", sala: a.sala || "", dur: +a.dur || 60, vagas: +a.vagas || 0, fixos: a.fixos || [] });
       }
     });
     (gr.avulsas || []).forEach(function (a) {
       if (a.data === hoje && a.inicio) {
-        lista.push({ hora: a.inicio, nome: a.nome, prof: a.prof || "", sala: a.sala || "", dur: +a.dur || 60 });
+        lista.push({ id: a.id, hora: a.inicio, nome: a.nome, prof: a.prof || "", sala: a.sala || "", dur: +a.dur || 60, vagas: +a.vagas || 0, fixos: [] });
       }
     });
     (S.read("turmas", { turmas: [] }).turmas || []).forEach(function (t) {
-      if (t.hora) lista.push({ hora: t.hora, nome: t.nome, prof: t.prof || "", sala: "", dur: 60 });
+      if (t.hora) lista.push({ id: "", hora: t.hora, nome: t.nome, prof: t.prof || "", sala: "", dur: 60, vagas: +t.capacidade || 0, fixos: t.alunos || [] });
     });
-    return lista.sort(function (a, b) { return a.hora < b.hora ? -1 : 1; });
+    return lista.filter(function (a) { return daAtividade(a.nome); })
+      .sort(function (a, b) { return a.hora < b.hora ? -1 : 1; });
   }
   function painelAulas() {
     var lista = aulasDeHoje();
@@ -312,6 +332,57 @@
         '<span class="st">' + st + "</span></div>";
     }).join("");
     return { titulo: "Horários de hoje 🗓", html: html };
+  }
+
+  // ---------- telão por modalidade: quem vem hoje (agendados por horário) ----------
+  function painelAgendados() {
+    var lista = aulasDeHoje();
+    var rotuloAtiv = atividade ? atividade.toUpperCase() + " — " : "";
+    if (!lista.length) return { titulo: rotuloAtiv + "Quem vem hoje 🤝", html: '<div class="aviso-vazio">Sem aulas' + (atividade ? " de " + esc(atividade.toUpperCase()) : "") + ' na grade de hoje.</div>' };
+    var hoje = S.todayISO();
+    var presencas = S.read("grade", { presencas: {} }).presencas || {};
+    var agora = new Date();
+    var minAgora = agora.getHours() * 60 + agora.getMinutes();
+    var futuras = lista.filter(function (a) { var m = minutosDe(a.hora); return m === null || m + a.dur > minAgora; });
+    var mostrar = (futuras.length ? futuras : lista.slice(-2)).slice(0, 3);
+    var html = mostrar.map(function (a) {
+      var m = minutosDe(a.hora);
+      var st = "";
+      if (m !== null && m <= minAgora && m + a.dur > minAgora) st = '<span class="tag ok">AGORA</span>';
+      else if (m !== null && m > minAgora && m - minAgora <= 15) st = '<span class="tag alerta">EM ' + (m - minAgora) + ' MIN</span>';
+      var nomes = (a.fixos || []).concat(a.id ? (presencas[a.id + "|" + hoje] || []) : []);
+      nomes = nomes.filter(function (n, i) { return n && nomes.indexOf(n) === i; });
+      var chips = nomes.slice(0, 14).map(function (n) { return '<span class="chip-tv">' + esc(n) + "</span>"; }).join("") +
+        (nomes.length > 14 ? '<span class="chip-tv mais">+' + (nomes.length - 14) + "</span>" : "");
+      return '<div class="aula-bloco"><div class="cab-aula"><span class="hr">' + esc(a.hora) + "</span>" +
+        "<span><b>" + esc(a.nome) + '</b> <span class="quem">' + esc(a.prof) + (a.sala ? " · " + esc(a.sala) : "") + "</span></span>" +
+        st + '<span class="cont">' + nomes.length + (a.vagas ? " / " + a.vagas : "") + " aluno(s)</span></div>" +
+        (nomes.length ? '<div class="chips">' + chips + "</div>" : '<div class="sem-gente">Ninguém agendado ainda — bora chamar a galera! 📲</div>') +
+        "</div>";
+    }).join("");
+    return { titulo: rotuloAtiv + "Quem vem hoje 🤝", html: html };
+  }
+
+  // ---------- telão por modalidade: treino do dia (WOD) ----------
+  function painelWodDia() {
+    var w = (S.read("wod", { dias: {} }).dias || {})[S.todayISO()];
+    var rotuloAtiv = atividade ? atividade.toUpperCase() + " — " : "";
+    if (!w) return { titulo: rotuloAtiv + "Treino do dia 🏋️", html: '<div class="aviso-vazio">Monte o WOD de hoje no programa Treino do Dia (WOD).</div>' };
+    var placar = (w.resultados || []).slice(0, 5);
+    var html = '<div class="wod-tv"><div class="col">' +
+      "<div style='font-size:4.6vh;font-weight:800;'>" + esc(w.nome || "WOD do dia") + "</div>" +
+      (w.tipo ? '<span class="tipo-wod">' + esc(w.tipo) + "</span>" : "") +
+      (w.aquecimento ? '<div class="rotulo">AQUECIMENTO</div><pre>' + esc(w.aquecimento) + "</pre>" : "") +
+      '<div class="rotulo">TREINO</div><pre>' + esc(w.treino || "") + "</pre>" +
+      (w.obs ? '<div class="rotulo">ESCALAS / OBS</div><pre>' + esc(w.obs) + "</pre>" : "") +
+      "</div>" +
+      (placar.length ? '<div class="col" style="flex:.6;"><div class="rotulo">PLACAR DE HOJE 🏆</div>' +
+        placar.map(function (r, i) {
+          return '<div class="rk" style="grid-template-columns:5vh 1fr auto;font-size:3vh;padding:.8vh 0;"><span class="pos' + (i === 0 ? " p1" : "") + '">' + (i + 1) + "º</span>" +
+            '<span class="nome">' + esc(r.aluno) + "</span><span><b>" + esc(r.resultado) + "</b></span></div>";
+        }).join("") + "</div>" : "") +
+      "</div>";
+    return { titulo: rotuloAtiv + "Treino do dia 🏋️", html: html };
   }
 
   // ---------- avisos da academia (escritos na Grade de Aulas → card 📺) ----------
@@ -351,9 +422,17 @@
   }
   window.__tvAlerta = atualizaAlerta; // testes
 
-  var paineis = { metas: painelMetas, manutencao: painelManutencao, checklist: painelChecklist, destaques: painelDestaques, dono: painelDono, aulas: painelAulas, avisos: painelAvisos };
+  var paineis = { metas: painelMetas, manutencao: painelManutencao, checklist: painelChecklist, destaques: painelDestaques, dono: painelDono, aulas: painelAulas, avisos: painelAvisos, agendados: painelAgendados, woddia: painelWodDia };
   function montaOrdem() {
     if (fixo && paineis[fixo]) return [fixo];
+    if (atividade) {
+      // telão da sala/modalidade: treino do dia + quem vem + avisos gerais
+      var o2 = [];
+      if ((S.read("wod", { dias: {} }).dias || {})[S.todayISO()]) o2.push("woddia");
+      o2.push("agendados");
+      if (avisosAtivos().length) o2.push("avisos");
+      return o2;
+    }
     var o = [];
     if (aulasDeHoje().length) o.push("aulas");
     if (avisosAtivos().length) o.push("avisos");
