@@ -5521,5 +5521,305 @@ self.MT_EXERCICIOS = [
   "g": "Posterior e glúteo",
   "eq": "Caneleira",
   "d": "Com a caneleira e as mãos apoiadas, leve a perna esticada pra trás contraindo o glúteo sem inclinar o tronco — sobe até onde a lombar não compensa."
+ },
+ {
+   "n": "Supino com halteres na bola suíça",
+   "g": "Peito",
+   "eq": "Bola suíça",
+   "d": "Apoie a cabeça e as costas na bola com o quadril elevado; o instável ativa o core enquanto você faz o supino com amplitude normal."
+ },
+ {
+   "n": "Desenvolvimento sentado na bola suíça",
+   "g": "Ombros",
+   "eq": "Bola suíça",
+   "d": "Sentado no centro da bola com os pés firmes, contraia o abdômen e desenvolva os halteres sem arquear a lombar."
+ },
+ {
+   "n": "Mesa flexora na bola suíça",
+   "g": "Posterior e glúteo",
+   "eq": "Bola suíça",
+   "d": "Deitado com os calcanhares na bola, eleve o quadril e puxe a bola com os calcanhares flexionando os joelhos — desça controlando."
+ },
+ {
+   "n": "Remada com peito apoiado na bola suíça",
+   "g": "Costas",
+   "eq": "Bola suíça",
+   "d": "Peito apoiado na bola em prancha inclinada, reme os halteres juntando as escápulas — a bola tira a pressão da lombar."
+ },
+ {
+   "n": "Passe de bola suíça entre mãos e pés",
+   "g": "Core",
+   "eq": "Bola suíça",
+   "d": "Deitado, passe a bola das mãos pros pés no ponto alto do canivete, desça esticado e volte — lombar sempre colada no chão."
+ },
+ {
+   "n": "Hiperextensão reversa na bola suíça",
+   "g": "Posterior e glúteo",
+   "eq": "Bola suíça",
+   "d": "Barriga na bola e mãos no chão, suba as pernas esticadas até a linha do tronco contraindo o glúteo — sem chutar."
+ },
+ {
+   "n": "Abdominal na bola suíça",
+   "g": "Core",
+   "eq": "Bola suíça",
+   "d": "Lombar apoiada na bola e pés firmes, faça o crunch em amplitude maior que no solo — desça até sentir alongar o abdômen."
+ },
+ {
+   "n": "Prancha com antebraços na bola suíça",
+   "g": "Core",
+   "eq": "Bola suíça",
+   "d": "Antebraços na bola e corpo em linha; o tremor é normal — pequenos círculos com os cotovelos aumentam o desafio."
+ },
+ {
+   "n": "Halo com anilha em volta da cabeça",
+   "g": "Ombros",
+   "eq": "Anilha",
+   "d": "Em pé, circule a anilha rente à cabeça nos dois sentidos, cotovelos próximos — tronco firme, sem balançar o quadril."
+ },
+ {
+   "n": "Remada alta com anilha",
+   "g": "Ombros",
+   "eq": "Anilha",
+   "d": "Segure a anilha pelas laterais e puxe até a linha do peito com os cotovelos apontando pra cima — sem passar da altura dos ombros."
+ },
+ {
+   "n": "Agachamento goblet com anilha",
+   "g": "Quadríceps",
+   "eq": "Anilha",
+   "d": "Anilha abraçada junto ao peito, desça entre os joelhos mantendo o tronco ereto — o contrapeso ajuda a agachar fundo."
+ },
+ {
+   "n": "Pinch carry com anilhas",
+   "g": "Funcional e Cross",
+   "eq": "Anilha",
+   "d": "Segure uma anilha em cada mão só com a ponta dos dedos (pegada de pinça) e caminhe — fortalece o antebraço de verdade."
+ },
+ {
+   "n": "Abdominal com pressão de anilha pro teto",
+   "g": "Core",
+   "eq": "Anilha",
+   "d": "Deitado com braços esticados segurando a anilha, suba o tronco empurrando a anilha pro teto — pescoço neutro."
+ },
+ {
+   "n": "Flexão de joelho em pé com caneleira",
+   "g": "Posterior e glúteo",
+   "eq": "Caneleira",
+   "d": "Apoiado numa parede, dobre o joelho levando o calcanhar ao glúteo e desça devagar — o joelho de apoio fica macio."
+ },
+ {
+   "n": "Elevação lateral de perna deitado com caneleira",
+   "g": "Posterior e glúteo",
+   "eq": "Caneleira",
+   "d": "Deitado de lado com o corpo em linha, suba a perna de cima até uns 45° sem rodar o quadril pra trás."
+ },
+ {
+   "n": "Coice em quatro apoios com caneleira",
+   "g": "Posterior e glúteo",
+   "eq": "Caneleira",
+   "d": "Em quatro apoios, empurre o calcanhar pro teto com o joelho dobrado a 90° — contraia o glúteo no topo sem arquear a lombar."
+ },
+ {
+   "n": "Elevação frontal de perna sentado com caneleira",
+   "g": "Quadríceps",
+   "eq": "Caneleira",
+   "d": "Sentado na ponta da cadeira, estenda o joelho e depois eleve a perna inteira alguns centímetros — segure 2 segundos."
+ },
+ {
+   "n": "Marcha estacionária com caneleira",
+   "g": "Cardio",
+   "eq": "Caneleira",
+   "d": "Marche no lugar elevando bem os joelhos em ritmo constante — braços acompanham como numa caminhada acelerada."
+ },
+ {
+   "n": "Flexora deslizante com toalha",
+   "g": "Posterior e glúteo",
+   "eq": "Toalha",
+   "d": "Deitado com os calcanhares na toalha em chão liso, eleve o quadril e deslize os pés pra longe e de volta sem deixar o quadril cair."
+ },
+ {
+   "n": "Afundo reverso deslizante com toalha",
+   "g": "Quadríceps",
+   "eq": "Toalha",
+   "d": "Um pé sobre a toalha desliza pra trás enquanto o da frente segura o peso — o joelho da frente não passa muito do pé."
+ },
+ {
+   "n": "Pique lateral deslizante com toalha",
+   "g": "Quadríceps",
+   "eq": "Toalha",
+   "d": "Deslize uma perna pro lado descendo no agachamento unilateral e volte — o joelho da perna que agacha aponta pro pé."
+ },
+ {
+   "n": "Rollout com toalha",
+   "g": "Core",
+   "eq": "Toalha",
+   "d": "Ajoelhado com as mãos na toalha, deslize à frente até onde segurar a lombar neutra e volte contraindo o abdômen."
+ },
+ {
+   "n": "Sandbag shouldering",
+   "g": "Funcional e Cross",
+   "eq": "Sandbag",
+   "d": "Agache abraçando o saco, suba-o num movimento contínuo até o ombro trocando de lado a cada repetição — costas retas sempre."
+ },
+ {
+   "n": "Agachamento com sandbag no ombro",
+   "g": "Quadríceps",
+   "eq": "Sandbag",
+   "d": "Com o saco num ombro só, agache mantendo o tronco reto — o peso torto obriga o core a estabilizar; troque o lado na metade."
+ },
+ {
+   "n": "Remada curvada com sandbag",
+   "g": "Costas",
+   "eq": "Sandbag",
+   "d": "Tronco inclinado e joelhos macios, puxe o saco até a barriga pelas alças — as pegadas irregulares trabalham mais o grip."
+ },
+ {
+   "n": "Caminhada de fazendeiro com sandbag",
+   "g": "Funcional e Cross",
+   "eq": "Sandbag",
+   "d": "Abrace o saco junto ao peito e caminhe com passos firmes, respirando curto — postura alta, sem deixar o peso te dobrar."
+ },
+ {
+   "n": "Sled pull com corda",
+   "g": "Funcional e Cross",
+   "eq": "Trenó",
+   "d": "Sentado ou em pé, puxe o trenó mão sobre mão pela corda — quadril baixo e tronco firme; braços e costas fazem o trabalho."
+ },
+ {
+   "n": "Sled push lateral",
+   "g": "Funcional e Cross",
+   "eq": "Trenó",
+   "d": "Empurre o trenó andando de lado com passos cruzados curtos — troca o vetor de força e acorda glúteo médio e adutores."
+ },
+ {
+   "n": "Sled drag frontal",
+   "g": "Funcional e Cross",
+   "eq": "Trenó",
+   "d": "Cinto ou alças presas ao trenó atrás de você, caminhe à frente com passadas potentes — inclinação leve, sem corcunda."
+ },
+ {
+   "n": "Good morning com bastão",
+   "g": "Posterior e glúteo",
+   "eq": "Bastão",
+   "d": "Bastão apoiado nas costas, dobre o quadril pra trás com joelhos macios até o tronco quase paralelo — perfeito pra aprender o padrão do terra."
+ },
+ {
+   "n": "Agachamento overhead com bastão",
+   "g": "Mobilidade e alongamento",
+   "eq": "Bastão",
+   "d": "Braços esticados segurando o bastão acima da cabeça, agache fundo sem deixar o bastão vir à frente — grande teste de mobilidade."
+ },
+ {
+   "n": "Passada com rotação de tronco com bastão",
+   "g": "Funcional e Cross",
+   "eq": "Bastão",
+   "d": "No afundo, gire o tronco com o bastão nos ombros pro lado da perna da frente — volte ao centro antes de subir."
+ },
+ {
+   "n": "Passe de ombro com bastão",
+   "g": "Mobilidade e alongamento",
+   "eq": "Bastão",
+   "d": "Pegada bem aberta, leve o bastão da coxa por cima da cabeça até as costas e volte — encurte a pegada conforme o ombro soltar."
+ },
+ {
+   "n": "Supino no chão unilateral com halter",
+   "g": "Peito",
+   "eq": "Halteres",
+   "d": "Deitado no chão com um halter só, empurre sem deixar o tronco girar — a amplitude menor poupa o ombro e o core trava tudo."
+ },
+ {
+   "n": "Desenvolvimento unilateral em pé com halter",
+   "g": "Ombros",
+   "eq": "Halteres",
+   "d": "Empurre um halter só acima da cabeça com o abdômen travado — o lado livre não deixa o tronco inclinar."
+ },
+ {
+   "n": "Remada unilateral com mão no joelho",
+   "g": "Costas",
+   "eq": "Halteres",
+   "d": "Sem banco: apoie a mão livre no próprio joelho, costas retas, e reme o halter até a linha do quadril."
+ },
+ {
+   "n": "Stiff unilateral com halter contralateral",
+   "g": "Posterior e glúteo",
+   "eq": "Halteres",
+   "d": "Halter na mão oposta à perna de apoio, desça dobrando o quadril com a perna de trás esticada — quadril quadrado, sem abrir."
+ },
+ {
+   "n": "Elevação lateral unilateral inclinado na parede",
+   "g": "Ombros",
+   "eq": "Halteres",
+   "d": "Segure na parede e incline o corpo pra fora; a elevação lateral começa já com tensão — sobe até a linha do ombro."
+ },
+ {
+   "n": "Rosca martelo unilateral com pausa",
+   "g": "Bíceps",
+   "eq": "Halteres",
+   "d": "Um braço por vez, pegada neutra, pause 2 segundos no meio da subida — o outro braço descansa de verdade."
+ },
+ {
+   "n": "Caminhada em X com mini band",
+   "g": "Posterior e glúteo",
+   "eq": "Mini band",
+   "d": "Elástico nos tornozelos, passos em diagonal alternando frente e lado como um X — joelhos sempre empurrando o elástico pra fora."
+ },
+ {
+   "n": "Ponte com abdução de mini band",
+   "g": "Posterior e glúteo",
+   "eq": "Mini band",
+   "d": "Elástico acima dos joelhos, suba a ponte e abra os joelhos contra o elástico no topo — 2 segundos de abertura por repetição."
+ },
+ {
+   "n": "Flexão com mini band nas costas",
+   "g": "Peito",
+   "eq": "Mini band",
+   "d": "Elástico passado pelas mãos e pelas costas, faça a flexão — a resistência cresce justamente onde a flexão fica fácil."
+ },
+ {
+   "n": "Elevação lateral com mini band sob os pés",
+   "g": "Ombros",
+   "eq": "Mini band",
+   "d": "Pise no elástico e suba as mãos pelas laterais até a linha dos ombros — a tensão crescente protege o início do movimento."
+ },
+ {
+   "n": "Corrida lateral na água",
+   "g": "Cardio",
+   "eq": "Piscina",
+   "d": "Na água pelo peito, desloque-se de lado empurrando a água com passos rápidos — troque a direção a cada 10 passos."
+ },
+ {
+   "n": "Tesoura de pernas na água",
+   "g": "Core",
+   "eq": "Piscina",
+   "d": "De costas na borda com os braços apoiados, alterne as pernas esticadas em tesoura — a água resiste nos dois sentidos."
+ },
+ {
+   "n": "Chute frontal alternado na água",
+   "g": "Cardio",
+   "eq": "Piscina",
+   "d": "Com a água pelo peito, alterne chutes frontais controlados empurrando a água — braços em guarda ajudam o equilíbrio."
+ },
+ {
+   "n": "Caminhada calcanhar-ponta em linha",
+   "g": "Reabilitação e terceira idade",
+   "eq": "Sem equipamento",
+   "d": "Caminhe numa linha imaginária encostando o calcanhar na ponta do outro pé — perto de uma parede pra apoiar se precisar."
+ },
+ {
+   "n": "Transferência de peso em pé",
+   "g": "Reabilitação e terceira idade",
+   "eq": "Sem equipamento",
+   "d": "Pés afastados, transfira o peso devagar de uma perna pra outra sem tirar os pés do chão — base do equilíbrio pra caminhar seguro."
+ },
+ {
+   "n": "Marcha lateral segurando na cadeira",
+   "g": "Reabilitação e terceira idade",
+   "eq": "Cadeira",
+   "d": "Segurando o encosto, dê passos laterais pra um lado e volte — joelhos levemente dobrados, sem cruzar os pés."
+ },
+ {
+   "n": "Círculos de tornozelo sentado",
+   "g": "Reabilitação e terceira idade",
+   "eq": "Cadeira",
+   "d": "Sentado, desenhe círculos grandes com a ponta do pé nos dois sentidos — 10 por sentido em cada pé, todos os dias."
  }
 ];
