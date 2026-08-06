@@ -15,6 +15,9 @@
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps/apps.css" rel="stylesheet">
 <style>
+  /* dias da semana do repetir (agenda) — pílula acesa quando marcada */
+  #sRepDias label { cursor: pointer; }
+  #sRepDias label:has(.srd:checked) span { background: var(--roxo); color: #fff; border-color: var(--roxo); font-weight: 800; }
   /* menu lateral (gaveta escura, igual ao do TORQUE ON academia) */
   .hamb-pt { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.12); border: none; color: #fff; cursor: pointer; padding: 9px; border-radius: 10px; flex: none; transition: background .15s ease; }
   .topo-marca { flex-wrap: wrap; }
@@ -129,11 +132,21 @@
         <input id="sHora" type="time" style="width: auto;">
         <button class="btn" id="sAdd">+ Agendar</button>
       </div>
-      <label class="muted" style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; flex-wrap: wrap;">
-        <input type="checkbox" id="sRep" style="width: auto; margin: 0;"> 🔁 repetir toda semana até
+      <div class="muted" style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; flex-wrap: wrap;">
+        <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0;"><input type="checkbox" id="sRep" style="width: auto; margin: 0;"> 🔁 repetir até</label>
         <input id="sRepAte" type="date" style="width: auto;">
-        <span>(horário fixo semanal em 1 clique)</span>
-      </label>
+        <span>nos dias:</span>
+        <span id="sRepDias" style="display: inline-flex; gap: 4px;">
+          <label style="margin:0;"><input type="checkbox" class="srd" value="1" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">S</span></label>
+          <label style="margin:0;"><input type="checkbox" class="srd" value="2" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">T</span></label>
+          <label style="margin:0;"><input type="checkbox" class="srd" value="3" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">Q</span></label>
+          <label style="margin:0;"><input type="checkbox" class="srd" value="4" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">Q</span></label>
+          <label style="margin:0;"><input type="checkbox" class="srd" value="5" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">S</span></label>
+          <label style="margin:0;"><input type="checkbox" class="srd" value="6" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">S</span></label>
+          <label style="margin:0;"><input type="checkbox" class="srd" value="0" style="display:none;"><span class="btn sec mini" style="padding:4px 9px;">D</span></label>
+        </span>
+        <span>(sem dia marcado, repete o dia da data escolhida — ex.: marque S-Q-S pra agendar seg/qua/sex de uma vez)</span>
+      </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Marque ✅ quando a sessão acontecer — sessões feitas contam no fechamento de quem paga por sessão. Aluno que não veio? Marque <b>Faltou</b>: entra na assiduidade e a sessão sai da lista.</p>
     </div>
     <div class="card" id="cardPedidosApp" hidden style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
@@ -1894,14 +1907,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var alunoId = $("sAluno").value, hora = $("sHora").value || "";
     var datas = [$("sData").value];
-    // horário fixo: gera as sessões semanais até a data limite (máx. 1 ano)
+    // horário fixo: gera as sessões até a data limite (máx. 1 ano / 90 sessões)
     if ($("sRep").checked && $("sRepAte").value) {
+      var diasSel = Array.prototype.map.call(document.querySelectorAll("#sRepDias .srd:checked"), function (c) { return +c.value; });
       var d = new Date($("sData").value + "T12:00:00");
-      for (var i = 0; i < 52; i++) {
-        d.setDate(d.getDate() + 7);
-        var iso = d.toISOString().slice(0, 10);
-        if (iso > $("sRepAte").value) break;
-        datas.push(iso);
+      if (diasSel.length) {
+        // vários dias da semana de uma vez (ex.: seg/qua/sex)
+        datas = [];
+        for (var i = 0; i < 370 && datas.length < 90; i++) {
+          var iso = d.toISOString().slice(0, 10);
+          if (iso > $("sRepAte").value) break;
+          if (diasSel.indexOf(d.getDay()) !== -1) datas.push(iso);
+          d.setDate(d.getDate() + 1);
+        }
+        if (!datas.length) { alert("Nenhum dia marcado cai entre a data escolhida e a data limite — confira os dias da semana."); return; }
+      } else {
+        // sem dia marcado: repete toda semana no dia da data escolhida (como antes)
+        for (var i2 = 0; i2 < 52; i2++) {
+          d.setDate(d.getDate() + 7);
+          var iso2 = d.toISOString().slice(0, 10);
+          if (iso2 > $("sRepAte").value) break;
+          datas.push(iso2);
+        }
       }
     }
     // choque de horário: já existe sessão no mesmo dia + hora?
@@ -1918,7 +1945,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       st.sessoes.push({ id: S.uid(), alunoId: alunoId, data: dt, hora: hora, feita: false });
     });
     save(st);
-    if (datas.length > 1) alert("🔁 " + datas.length + " sessões semanais agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
+    if (datas.length > 1) alert("🔁 " + datas.length + " sessões agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
   });
   $("listaSessoes").addEventListener("click", function (e) {
     var f = e.target.getAttribute && e.target.getAttribute("data-feita");
