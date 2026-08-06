@@ -49,6 +49,26 @@
   .tudo-ok { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 2vh; color: var(--ok); font-size: 5vh; font-weight: 800; }
   .tudo-ok small { font-size: 2.4vh; color: #a09aae; font-weight: 600; }
   .aviso-vazio { color: #6e6a78; font-size: 3vh; padding-top: 6vh; text-align: center; }
+
+  /* quadro de horários */
+  .aula-tv { display: grid; grid-template-columns: 12vw 1fr 18vw; gap: 2vw; align-items: center; padding: 1.5vh 0; border-bottom: 1px solid #2e2a38; font-size: 3.2vh; }
+  .aula-tv .hr { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 3.8vh; }
+  .aula-tv.rolou { opacity: .38; }
+  .aula-tv.agora .hr { color: var(--ok); }
+  .aula-tv.logo .hr { color: var(--alerta); }
+  .aula-tv .quem { color: #a09aae; font-size: 2.6vh; }
+  .aula-tv .st { text-align: right; }
+
+  /* avisos da academia */
+  .aviso-tv { display: flex; gap: 1.6vw; align-items: flex-start; background: rgba(28,24,38,.85); border: 1px solid #2c2739; border-left: .6vw solid var(--roxo); border-radius: 20px; padding: 2.4vh 2vw; margin-bottom: 2vh; font-size: 3.4vh; line-height: 1.4; }
+
+  /* barra de alerta de aula (fixa em todos os painéis) */
+  .alerta-aula { display: none; align-items: center; gap: 1.6vw; margin-top: 2vh; padding: 1.8vh 2.2vw; border-radius: 18px; font-size: 3vh; font-weight: 700; background: rgba(28,24,38,.9); border: 1px solid #2e2a38; }
+  .alerta-aula.on { display: flex; }
+  .alerta-aula .sino { font-size: 4vh; }
+  .alerta-aula.urgente { background: rgba(251,191,36,.14); border-color: var(--alerta); animation: pulsa 1.6s ease-in-out infinite; }
+  .alerta-aula.urgente .txt b { color: var(--alerta); }
+  @keyframes pulsa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012); } }
 </style>
 </head>
 <body>
@@ -63,6 +83,7 @@
   </div>
   <h1 id="titulo"></h1>
   <div class="conteudo" id="conteudo"></div>
+  <div class="alerta-aula" id="alertaAula"><span class="sino">🔔</span><span class="txt" id="alertaTxt"></span></div>
   <div class="pontos" id="pontos"></div>
 </div>
 
@@ -246,18 +267,113 @@
     };
   }
 
-  var paineis = { metas: painelMetas, manutencao: painelManutencao, checklist: painelChecklist, destaques: painelDestaques, dono: painelDono };
-  var ordem = fixo && paineis[fixo] ? [fixo] : ["metas", "manutencao", "checklist"];
-  if (!fixo && (S.read("treinoDestaques", { itens: [] }).itens || []).length) ordem.push("destaques");
+  // ---------- quadro de horários de hoje (grade + turmas) ----------
+  function minutosDe(hhmm) {
+    var p2 = String(hhmm || "").split(":");
+    return p2.length === 2 ? (+p2[0]) * 60 + (+p2[1]) : null;
+  }
+  function aulasDeHoje() {
+    var hoje = S.todayISO();
+    var dow = new Date(hoje + "T12:00").getDay();
+    var gr = S.read("grade", { aulas: [], avulsas: [] });
+    var lista = [];
+    (gr.aulas || []).forEach(function (a) {
+      if ((a.dias || []).indexOf(dow) !== -1 && a.inicio) {
+        lista.push({ hora: a.inicio, nome: a.nome, prof: a.prof || "", sala: a.sala || "", dur: +a.dur || 60 });
+      }
+    });
+    (gr.avulsas || []).forEach(function (a) {
+      if (a.data === hoje && a.inicio) {
+        lista.push({ hora: a.inicio, nome: a.nome, prof: a.prof || "", sala: a.sala || "", dur: +a.dur || 60 });
+      }
+    });
+    (S.read("turmas", { turmas: [] }).turmas || []).forEach(function (t) {
+      if (t.hora) lista.push({ hora: t.hora, nome: t.nome, prof: t.prof || "", sala: "", dur: 60 });
+    });
+    return lista.sort(function (a, b) { return a.hora < b.hora ? -1 : 1; });
+  }
+  function painelAulas() {
+    var lista = aulasDeHoje();
+    if (!lista.length) return { titulo: "Horários de hoje 🗓", html: '<div class="aviso-vazio">Sem aulas na grade de hoje — monte a Grade de Aulas ou as Turmas no sistema.</div>' };
+    var agora = new Date();
+    var minAgora = agora.getHours() * 60 + agora.getMinutes();
+    // mostra as que estão rolando/por vir primeiro; passadas ficam apagadas no fim da tela
+    var futuras = lista.filter(function (a) { var m = minutosDe(a.hora); return m === null || m + a.dur > minAgora; });
+    var passadas = lista.filter(function (a) { var m = minutosDe(a.hora); return m !== null && m + a.dur <= minAgora; });
+    var mostrar = futuras.slice(0, 8).concat(passadas.slice(-Math.max(0, 8 - Math.min(8, futuras.length))));
+    var html = mostrar.map(function (a) {
+      var m = minutosDe(a.hora);
+      var cls = "", st = "";
+      if (m !== null && m <= minAgora && m + a.dur > minAgora) { cls = "agora"; st = '<span class="tag ok">AGORA</span>'; }
+      else if (m !== null && m > minAgora && m - minAgora <= 15) { cls = "logo"; st = '<span class="tag alerta">EM ' + (m - minAgora) + ' MIN</span>'; }
+      else if (m !== null && m + a.dur <= minAgora) { cls = "rolou"; st = '<span class="tag roxo">JÁ ROLOU</span>'; }
+      return '<div class="aula-tv ' + cls + '"><span class="hr">' + esc(a.hora) + "</span>" +
+        "<span><b>" + esc(a.nome) + "</b><div class='quem'>" + esc(a.prof) + (a.sala ? " · " + esc(a.sala) : "") + "</div></span>" +
+        '<span class="st">' + st + "</span></div>";
+    }).join("");
+    return { titulo: "Horários de hoje 🗓", html: html };
+  }
+
+  // ---------- avisos da academia (escritos na Grade de Aulas → card 📺) ----------
+  function avisosAtivos() {
+    return (S.read("tvAvisos", { itens: [] }).itens || []).filter(Boolean).slice(0, 6);
+  }
+  function painelAvisos() {
+    var itens = avisosAtivos();
+    return {
+      titulo: "Avisos da academia 📌",
+      html: itens.map(function (t) { return '<div class="aviso-tv"><span>📌</span><span>' + esc(t) + "</span></div>"; }).join("") ||
+        '<div class="aviso-vazio">Escreva os avisos no card 📺 da Grade de Aulas.</div>',
+    };
+  }
+
+  // ---------- alerta fixo: próxima aula (pulsa quando falta ≤ 15 min) ----------
+  function atualizaAlerta() {
+    var el = $("alertaAula");
+    var agora = new Date();
+    var minAgora = agora.getHours() * 60 + agora.getMinutes();
+    var prox = null;
+    aulasDeHoje().forEach(function (a) {
+      var m = minutosDe(a.hora);
+      if (m === null || m < minAgora) return;
+      if (!prox || m < prox.m) prox = { m: m, a: a };
+    });
+    if (!prox) { el.className = "alerta-aula"; return; }
+    var falta = prox.m - minAgora;
+    var quem = prox.a.nome + (prox.a.prof ? " com " + prox.a.prof : "") + (prox.a.sala ? " · " + prox.a.sala : "");
+    if (falta <= 15) {
+      el.className = "alerta-aula on urgente";
+      $("alertaTxt").innerHTML = "<b>COMEÇA " + (falta <= 0 ? "AGORA" : "EM " + falta + " MIN") + "</b> — " + esc(quem);
+    } else {
+      el.className = "alerta-aula on";
+      $("alertaTxt").innerHTML = "Próxima aula às <b>" + esc(prox.a.hora) + "</b> — " + esc(quem);
+    }
+  }
+  window.__tvAlerta = atualizaAlerta; // testes
+
+  var paineis = { metas: painelMetas, manutencao: painelManutencao, checklist: painelChecklist, destaques: painelDestaques, dono: painelDono, aulas: painelAulas, avisos: painelAvisos };
+  function montaOrdem() {
+    if (fixo && paineis[fixo]) return [fixo];
+    var o = [];
+    if (aulasDeHoje().length) o.push("aulas");
+    if (avisosAtivos().length) o.push("avisos");
+    o.push("metas", "manutencao", "checklist");
+    if ((S.read("treinoDestaques", { itens: [] }).itens || []).length) o.push("destaques");
+    return o;
+  }
+  var ordem = montaOrdem();
   var idx = 0;
 
   function mostra() {
+    ordem = montaOrdem();
+    if (idx >= ordem.length) idx = 0;
     var p = paineis[ordem[idx]]();
     $("titulo").textContent = p.titulo;
     $("conteudo").innerHTML = p.html;
     $("pontos").innerHTML = ordem.length > 1 ? ordem.map(function (_, i) {
       return '<span class="' + (i === idx ? "on" : "") + '"></span>';
     }).join("") : "";
+    atualizaAlerta();
   }
 
   function proximo() { idx = (idx + 1) % ordem.length; mostra(); }
@@ -270,7 +386,9 @@
 
   relogio(); mostra();
   setInterval(relogio, 10000);
-  if (ordem.length > 1) setInterval(proximo, INTERVALO);
+  setInterval(atualizaAlerta, 30000);
+  // rotaciona quando há mais de um painel; senão só re-renderiza (pega aula/aviso novo que chegar do sync)
+  setInterval(function () { if (ordem.length > 1) proximo(); else mostra(); }, INTERVALO);
   S.onChange(function () { mostra(); });
   document.addEventListener("click", function () {
     if (document.fullscreenElement) return;

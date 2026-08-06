@@ -104,6 +104,13 @@
   <div id="quadroGrade"></div>
 
   <details class="card no-print">
+    <summary style="cursor:pointer;font-weight:800;">📺 Avisos do telão (modo TV)</summary>
+    <p class="muted" style="font-size: 12.5px; margin: 10px 0 6px;">Um aviso por linha — aparece na TV da recepção junto com o quadro de horários de hoje e o alerta de aula começando. Apague a linha pra tirar do ar (máx. 6 avisos).</p>
+    <textarea id="tvAvisosTxt" rows="3" style="width: 100%;" placeholder="Sábado tem aulão de FUNCIONAL às 9h 💪
+Semana que vem: manutenção na área de peso livre"></textarea>
+  </details>
+
+  <details class="card no-print">
     <summary style="cursor:pointer;font-weight:800;">Regras de agendamento (app do aluno)</summary>
     <div class="linha-flex" style="gap:14px;flex-wrap:wrap;margin-top:12px;align-items:flex-end;">
       <div class="campo"><label>Cancelar até (horas antes)</label><input id="rgCancela" type="number" min="0" style="width:90px" value="2"></div>
@@ -350,6 +357,12 @@
   $("navHoje").onclick = function () { refDia = S.todayISO(); render(); };
   $("busca").addEventListener("input", function () { busca = this.value; render(); });
   $("btnImprimir").onclick = function () { window.print(); };
+
+  // avisos do telão (modo TV) — um por linha, sincroniza pela conta
+  $("tvAvisosTxt").value = (S.read("tvAvisos", { itens: [] }).itens || []).join("\n");
+  $("tvAvisosTxt").addEventListener("change", function () {
+    S.write("tvAvisos", { itens: this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 6) });
+  });
 
   // ---------- nova aula / editar ----------
   var editandoId = null;

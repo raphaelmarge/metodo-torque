@@ -306,6 +306,45 @@ function ok(cond, nome) {
   ok(/Destaques da semana/.test(tvTxt) && /Agachamento/.test(tvTxt) && /120 kg/.test(tvTxt), "painel 🏅 mostra o recorde do Rafa");
   await p.close();
 
+  // ---------- 8b) Modo TV: quadro de horários, avisos e alerta de aula ----------
+  p = await ctx.newPage();
+  p.on("pageerror", (e) => erros.push(String(e)));
+  await p.goto(BASE + "/apps/tv.html");
+  await p.evaluate(() => {
+    // grade de hoje: uma aula daqui a 10 min (alerta urgente) e uma bem mais tarde
+    const agora = new Date();
+    const hhmm = (d) => ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    const em10 = new Date(Math.min(agora.getTime() + 10 * 60000, new Date(agora).setHours(23, 58))); // não passa da meia-noite
+    const em5h = new Date(agora.getTime() + 5 * 3600000);
+    localStorage.setItem("mtapp:grade", JSON.stringify({
+      aulas: [
+        { id: "g1", nome: "CROSSFIT", prof: "Pedro Coach", sala: "Sala 2", vagas: 14, inicio: hhmm(em10), dur: 60, dias: [0, 1, 2, 3, 4, 5, 6] },
+        { id: "g2", nome: "SPINNING", prof: "Carla", sala: "Sala 1", vagas: 20, inicio: hhmm(new Date(Math.min(em5h.getTime(), new Date(agora).setHours(23, 50)))), dur: 45, dias: [0, 1, 2, 3, 4, 5, 6] },
+      ],
+      avulsas: [], presencas: {}, faltas: {}, config: {},
+    }));
+    localStorage.setItem("mtapp:tvAvisos", JSON.stringify({ itens: ["Sábado tem aulão de funcional às 9h 💪"] }));
+  });
+  await p.goto(BASE + "/apps/tv.html?painel=aulas");
+  await p.waitForTimeout(600);
+  const tvAulas = await p.evaluate(() => ({
+    corpo: document.body.textContent,
+    alerta: document.getElementById("alertaAula").className,
+    alertaTxt: document.getElementById("alertaTxt").textContent,
+  }));
+  ok(/Horários de hoje/.test(tvAulas.corpo) && /CROSSFIT/.test(tvAulas.corpo) && /Pedro Coach/.test(tvAulas.corpo) && /Sala 2/.test(tvAulas.corpo), "quadro de horários lista a aula de hoje com professor e sala");
+  ok(/EM \d+ MIN/.test(tvAulas.corpo), "aula chegando ganha a etiqueta EM X MIN no quadro");
+  ok(/urgente/.test(tvAulas.alerta) && /COMEÇA/.test(tvAulas.alertaTxt) && /CROSSFIT/.test(tvAulas.alertaTxt), "alerta 🔔 pulsante avisa a aula que está pra começar");
+  await p.goto(BASE + "/apps/tv.html?painel=avisos");
+  await p.waitForTimeout(600);
+  const tvAvisos = await p.evaluate(() => document.body.textContent);
+  ok(/Avisos da academia/.test(tvAvisos) && /aulão de funcional/.test(tvAvisos), "painel 📌 mostra os avisos escritos na Grade");
+  ok(await p.evaluate(async () => {
+    const t = await (await fetch("grade.html")).text();
+    return /tvAvisosTxt/.test(t) && /Avisos do telão/.test(t);
+  }), "Grade de Aulas tem o card 📺 pra escrever os avisos do telão");
+  await p.close();
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();
