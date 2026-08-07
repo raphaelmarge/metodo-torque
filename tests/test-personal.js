@@ -1685,6 +1685,45 @@ async function abaPt(p, a) {
   await pG.close();
   await ctxG.close();
 
+  // demo do studio preenchido (demo-personal.html)
+  console.log("Demo do studio preenchido:");
+  {
+    // contexto limpo: o demo semeia 8 alunos e abre o personal
+    const ctxD = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    const pD = await ctxD.newPage();
+    pD.on("pageerror", (e) => erros.push("demo: " + e));
+    pD.on("dialog", (d) => d.accept());
+    await pD.goto(BASE + "/demo-personal.html");
+    await pD.click("#btnDemo");
+    await pD.waitForFunction(() => window.__ptStudio);
+    await pD.waitForTimeout(600);
+    const demo = await pD.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      window.__perfilPT(st.alunos[0].id);
+      return new Promise((res) => setTimeout(() => res({
+        alunos: st.alunos.length,
+        fichas: Object.keys(st.treinosV2 || {}).length,
+        pagamentos: (st.pagamentos || []).length,
+        avaliacoes: (st.avaliacoes || []).length,
+        kpis: document.getElementById("kpisPt") ? document.getElementById("kpisPt").textContent : document.body.textContent.slice(0, 50),
+        app: document.getElementById("pfAppDados").innerHTML,
+      }), 400));
+    });
+    ok(demo.alunos === 8 && demo.fichas === 8 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 8 alunos com fichas, pagamentos e avaliações");
+    ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
+    // com dados existentes o demo NÃO sobrescreve
+    const pD2 = await ctxD.newPage();
+    await pD2.goto(BASE + "/demo-personal.html");
+    const aviso = await pD2.evaluate(() => !document.getElementById("alerta").hidden);
+    await pD2.click("#btnDemo");
+    await pD2.waitForTimeout(300);
+    const preservado = await pD2.evaluate(() => /personal\.html/.test(location.pathname) && JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.length === 8);
+    ok(aviso && preservado, "com dados já existentes o demo avisa e não sobrescreve nada");
+    await pD2.close();
+    await pD.close();
+    await ctxD.close();
+  }
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();

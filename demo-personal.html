@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo — TORQUE PERSONAL</title>
+<link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(80% 30% at 50% 0%, rgba(124,58,237,.16), transparent 70%), #0e0d12; color: #f2f0f6; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+  .cx { max-width: 480px; background: #141218; border: 1px solid #26222e; border-radius: 10px; padding: 28px 26px; text-align: center; }
+  .k { font-size: 11px; letter-spacing: .24em; color: #a78bfa; font-weight: 900; text-transform: uppercase; font-style: italic; }
+  h1 { font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 8px 0 10px; }
+  p { color: #9d98a8; font-size: 14px; line-height: 1.65; }
+  .btnx { display: inline-block; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none; border-radius: 5px; padding: 14px 26px; font-family: inherit; font-size: 13.5px; font-weight: 900; font-style: italic; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; margin-top: 18px; box-shadow: 0 12px 32px -12px #7c3aed; }
+  .aviso { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.4); border-radius: 6px; padding: 12px 14px; font-size: 13px; color: #fcd34d; margin-top: 16px; line-height: 1.6; text-align: left; }
+</style>
+</head>
+<body>
+<div class="cx">
+  <span class="k">TORQUE PERSONAL · Demonstração</span>
+  <h1>Studio de exemplo</h1>
+  <p>Preenche o TORQUE PERSONAL <b>neste navegador</b> com um studio fictício em pleno uso: 8 alunos com treinos, pagamentos, agenda, avaliações e os dados que eles registram no app (peso, cargas, hábitos e treinos feitos) — tudo em gráficos no perfil.</p>
+  <div id="alerta" class="aviso" hidden>⚠️ <b>Já existem dados do Personal neste navegador.</b> O demo NÃO vai mexer neles — abra esta página numa <b>guia anônima</b> (ou outro navegador) pra ver a demonstração sem risco.</div>
+  <button class="btnx" id="btnDemo">🚀 Abrir o studio de exemplo</button>
+</div>
+<script>
+(function () {
+  "use strict";
+  function leia(k) { try { return JSON.parse(localStorage.getItem("mtapp:" + k)); } catch (e) { return null; } }
+  var atual = leia("ptStudio");
+  var temDados = !!(atual && (atual.alunos || []).length);
+  if (temDados) {
+    document.getElementById("alerta").hidden = false;
+    document.getElementById("btnDemo").textContent = "Entendi — vou abrir numa guia anônima";
+    document.getElementById("btnDemo").onclick = function () { location.href = "personal.html"; };
+    return;
+  }
+
+  function iso(diasAtras) {
+    var d = new Date(Date.now() - diasAtras * 864e5);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  var svgFoto = function (rot, cor) {
+    return "data:image/svg+xml;base64," + btoa("<svg xmlns='http://www.w3.org/2000/svg' width='300' height='400'><rect width='300' height='400' fill='" + cor + "'/><circle cx='150' cy='140' r='55' fill='rgba(255,255,255,.25)'/><rect x='95' y='210' width='110' height='150' rx='40' fill='rgba(255,255,255,.25)'/><text x='150' y='385' font-family='sans-serif' font-size='22' font-weight='bold' fill='rgba(255,255,255,.85)' text-anchor='middle'>" + rot + "</text></svg>");
+  };
+  // série de peso descendo (ou subindo) com ruído determinístico
+  function seriePeso(inicio, delta, dias, passo) {
+    var m = {};
+    for (var i = dias; i >= 0; i -= passo) {
+      var prog = 1 - i / dias;
+      var ruido = Math.sin(i * 1.7) * 0.4;
+      m[iso(i)] = Math.round((inicio + delta * prog + ruido) * 10) / 10;
+    }
+    return m;
+  }
+  function serieFeitos(dias, freqSemana) {
+    var m = {};
+    for (var i = dias; i >= 0; i--) {
+      var dow = new Date(Date.now() - i * 864e5).getDay();
+      if ([1, 3, 5, 2, 4, 6, 0].slice(0, freqSemana).indexOf(dow) >= 0) m[iso(i)] = 1;
+    }
+    return m;
+  }
+  function serieHabitos(dias, capricho) {
+    var m = {};
+    for (var i = dias; i >= 0; i--) {
+      var d = {};
+      [0.9, 0.6, 0.75, 0.5].forEach(function (p, j) { if (Math.abs(Math.sin(i * 3.1 + j * 7)) < p * capricho) d[j] = true; });
+      m[iso(i)] = d;
+    }
+    return m;
+  }
+  function cargas(lista) {
+    var out = {};
+    lista.forEach(function (par) {
+      var nome = par[0], ini = par[1], fim = par[2], n = par[3];
+      out[nome] = [];
+      for (var i = 0; i < n; i++) out[nome].push({ d: iso((n - 1 - i) * 7), kg: Math.round((ini + (fim - ini) * i / (n - 1)) * 2) / 2 });
+    });
+    return out;
+  }
+
+  var EX = [
+    ["Supino reto com barra", "Peito"], ["Crucifixo com halteres", "Peito"], ["Agachamento livre", "Quadríceps"],
+    ["Leg press 45°", "Quadríceps"], ["Levantamento terra romeno", "Posterior e glúteo"], ["Elevação pélvica", "Posterior e glúteo"],
+    ["Remada curvada com barra", "Costas"], ["Puxada alta na polia", "Costas"], ["Desenvolvimento com halteres", "Ombros"],
+    ["Rosca direta com barra", "Bíceps"], ["Tríceps na polia", "Tríceps"], ["Prancha", "Core"],
+  ];
+  var exercicios = EX.map(function (par) { return { id: uid(), nome: par[0], grupo: par[1], eq: "", descricao: "Execução controlada, técnica antes de carga.", video: "" }; });
+  var exId = {};
+  exercicios.forEach(function (e) { exId[e.nome] = e.id; });
+  function ficha(titulo, nomes, series, reps, desc) {
+    return { id: uid(), titulo: titulo, itens: nomes.map(function (n) { return { exId: exId[n], series: series, reps: reps, descanso: desc, obs: "" }; }) };
+  }
+
+  var ALUNOS = [
+    { nome: "Ana Beatriz Souza", zap: "21988110001", valor: 450, objetivo: "Emagrecimento", meta: 4, desde: 210, peso: [82, -9, 120, 4], freq: 4, capricho: 1.15, cargas: [["Agachamento livre", 30, 55, 10], ["Leg press 45°", 80, 140, 9], ["Supino reto com barra", 20, 32.5, 8]], pago: true, rec: true },
+    { nome: "Bruno Ferraz", zap: "21988110002", valor: 400, objetivo: "Hipertrofia", meta: 5, desde: 320, peso: [71, 6, 150, 5], freq: 5, capricho: 1.0, cargas: [["Supino reto com barra", 50, 82.5, 12], ["Agachamento livre", 60, 105, 12], ["Remada curvada com barra", 40, 70, 10], ["Rosca direta com barra", 20, 35, 8]], pago: true },
+    { nome: "Carla Menezes", zap: "21988110003", valor: 380, objetivo: "Condicionamento", meta: 3, desde: 150, peso: [64, -2.5, 90, 5], freq: 3, capricho: 0.9, cargas: [["Elevação pélvica", 40, 80, 8], ["Levantamento terra romeno", 30, 50, 7]], pago: false },
+    { nome: "Diego Prado", zap: "21988110004", valor: 500, objetivo: "Força", meta: 4, desde: 400, peso: [88, 3, 180, 6], freq: 4, capricho: 0.85, cargas: [["Agachamento livre", 100, 150, 14], ["Levantamento terra romeno", 90, 140, 12], ["Supino reto com barra", 80, 110, 12]], pago: true },
+    { nome: "Elisa Martins", zap: "21988110005", valor: 450, objetivo: "Emagrecimento", meta: 3, desde: 90, peso: [77, -4.5, 80, 4], freq: 3, capricho: 1.1, cargas: [["Leg press 45°", 60, 100, 6], ["Puxada alta na polia", 25, 37.5, 6]], pago: true },
+    { nome: "Felipe Andrade", zap: "21988110006", valor: 400, objetivo: "Hipertrofia", meta: 4, desde: 60, peso: [66, 2, 55, 3], freq: 4, capricho: 0.95, cargas: [["Supino reto com barra", 35, 47.5, 5], ["Desenvolvimento com halteres", 12, 18, 5]], pago: false, falhou: true },
+    { nome: "Gabriela Nunes", zap: "21988110007", valor: 380, objetivo: "Saúde geral", meta: 2, desde: 45, peso: [59, -1, 40, 4], freq: 2, capricho: 0.8, cargas: [["Elevação pélvica", 25, 40, 4]], pago: true },
+    { nome: "Henrique Lopes", zap: "21988110008", valor: 420, objetivo: "Hipertrofia", meta: 5, desde: 240, peso: [79, 4.5, 160, 5], freq: 5, capricho: 1.05, cargas: [["Agachamento livre", 70, 110, 11], ["Remada curvada com barra", 45, 72.5, 10], ["Tríceps na polia", 25, 40, 9]], pago: true, rec: true },
+  ];
+
+  var alunos = [], pagamentos = [], avaliacoes = [], sessoes = [], treinosV2 = {}, diarioPT = {};
+  var FICHAS = {
+    Hipertrofia: [ficha("A — Peito e Tríceps", ["Supino reto com barra", "Crucifixo com halteres", "Tríceps na polia"], 4, "10", 90),
+      ficha("B — Costas e Bíceps", ["Remada curvada com barra", "Puxada alta na polia", "Rosca direta com barra"], 4, "10", 90),
+      ficha("C — Pernas e Core", ["Agachamento livre", "Leg press 45°", "Levantamento terra romeno", "Prancha"], 4, "10", 90)],
+    Outro: [ficha("A — Corpo todo (ênfase inferior)", ["Agachamento livre", "Elevação pélvica", "Leg press 45°", "Prancha"], 3, "12", 60),
+      ficha("B — Corpo todo (ênfase superior)", ["Supino reto com barra", "Puxada alta na polia", "Desenvolvimento com halteres"], 3, "12", 60)],
+  };
+  ALUNOS.forEach(function (cfg, idx) {
+    var id = "demo" + (idx + 1);
+    var a = {
+      id: id, nome: cfg.nome, zap: cfg.zap, valor: cfg.valor, modo: "mes", metaSemana: cfg.meta,
+      objetivo: cfg.objetivo, ativo: true, desde: iso(cfg.desde),
+      anamnese: { nivel: cfg.desde > 200 ? "intermediário" : "iniciante", dias: String(cfg.meta), sono: "7–8h", estresse: idx % 2 ? "médio" : "baixo",
+        lesoes: idx === 3 ? "condromalácia leve no joelho E" : "", naogosta: idx === 0 ? "burpee" : "", gosta: "musculação" },
+      demoRetorno: {
+        peso: seriePeso(cfg.peso[0], cfg.peso[1], cfg.peso[2], cfg.peso[3]),
+        feitos: serieFeitos(Math.min(cfg.desde, 120), cfg.freq),
+        habitos: serieHabitos(45, cfg.capricho),
+        cargas: cargas(cfg.cargas),
+        fotoAntes: svgFoto("ANTES", "#4c4560"), fotoAntesD: iso(Math.min(cfg.desde, 120)),
+        fotoDepois: svgFoto("AGORA", "#7c3aed"), fotoDepoisD: iso(2),
+      },
+    };
+    if (cfg.rec) a.assinaturaRec = { id: "sub_demo_" + id, desde: iso(60), valor: cfg.valor };
+    if (cfg.falhou) a.cartaoFalhouEm = iso(3);
+    alunos.push(a);
+    treinosV2[id] = { fichas: (cfg.objetivo === "Hipertrofia" ? FICHAS.Hipertrofia : FICHAS.Outro).map(function (f) {
+      return { id: uid(), titulo: f.titulo, itens: f.itens.map(function (it) { return { exId: it.exId, series: it.series, reps: it.reps, descanso: it.descanso, obs: "" }; }) };
+    }), objetivo: cfg.objetivo.toLowerCase(), semana: 3, validade: iso(-30) };
+    // pagamentos dos últimos 4 meses (o do mês atual conforme cfg.pago)
+    for (var m = 3; m >= 0; m--) {
+      if (m === 0 && !cfg.pago) continue;
+      var d = new Date(); d.setMonth(d.getMonth() - m, 5);
+      pagamentos.push({ id: uid(), alunoId: id, valor: cfg.valor, forma: cfg.rec ? "cartão 🔁" : (idx % 2 ? "pix" : "dinheiro"),
+        data: d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-05" });
+    }
+    // avaliações trimestrais coerentes com o peso
+    [90, 45, 7].forEach(function (dd, k) {
+      if (dd > cfg.desde) return;
+      var pesoNoDia = cfg.peso[0] + cfg.peso[1] * (1 - dd / cfg.peso[2]);
+      avaliacoes.push({ id: uid(), alunoId: id, data: iso(dd), peso: Math.round(pesoNoDia * 10) / 10,
+        gordura: Math.round((28 - k * 1.6 - idx) * 10) / 10, cintura: Math.round(92 - k * 2 - idx), braco: Math.round((30 + k * 0.7 + idx * 0.5) * 10) / 10 });
+    });
+    // agenda: semana passada (feitas) + próxima semana
+    for (var s2 = 0; s2 < cfg.meta; s2++) {
+      sessoes.push({ id: uid(), alunoId: id, data: iso(2 + s2), hora: String(6 + idx) + ":00", feita: s2 !== 1, faltou: s2 === 1 && idx === 2 });
+      sessoes.push({ id: uid(), alunoId: id, data: iso(-(1 + s2)), hora: String(6 + idx) + ":00", feita: false });
+    }
+    diarioPT[id] = [
+      { d: iso(9), t: "Evoluiu bem no " + (cfg.cargas[0] ? cfg.cargas[0][0].toLowerCase() : "treino") + " — subir carga na próxima." },
+      { d: iso(2), t: idx === 3 ? "Reclamou do joelho no agachamento — reduzi amplitude e encaixei mobilidade." : "Sessão forte, aluno motivado. Manter o ritmo." },
+    ];
+  });
+
+  var seed = {
+    config: { nome: "TORQUE Demo", zap: "21994429198", pixChave: "demo@torqueon.com.br", pixNome: "Studio TORQUE Demo", pixCidade: "Rio de Janeiro" },
+    alunos: alunos, exercicios: exercicios, treinosV2: treinosV2, pagamentos: pagamentos,
+    avaliacoes: avaliacoes, sessoes: sessoes, diarioPT: diarioPT, videoteca: [],
+    desafio: { nome: "30 dias TORQUE", ini: iso(20), fim: iso(-10), premio: "1 mês de assessoria grátis", ativo: true },
+  };
+
+  document.getElementById("btnDemo").onclick = function () {
+    try {
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(seed));
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+      localStorage.setItem("mtapp:seeded", "1");
+      localStorage.setItem("mtapp:ptDemo", "1");
+    } catch (e) { alert("Não deu pra gravar o demo neste navegador."); return; }
+    location.href = "personal.html";
+  };
+  window.__demoSeed = seed; // testes
+})();
+</script>
+</body>
+</html>
