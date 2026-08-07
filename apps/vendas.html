@@ -33,7 +33,7 @@
     <h1>Vendas</h1>
     </div>
   </div>
-  <p>Todas as vendas do período como no EVO: contratos e produtos numa lista só, agrupados por colaborador, com o resumo por tipo e o total geral.</p>
+  <p>Todas as vendas do período: contratos e produtos numa lista só, agrupados por colaborador, com o resumo por tipo e o total geral.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
@@ -137,7 +137,7 @@
     else renderResumidas(lista);
   }
 
-  // detalhadas: agrupadas por colaborador com subtotal (como o "arraste a coluna" do EVO)
+  // detalhadas: agrupadas por colaborador com subtotal (como o "arraste a coluna")
   function renderDetalhadas(lista, total) {
     var porColab = {};
     lista.forEach(function (x) { (porColab[x.colab] = porColab[x.colab] || []).push(x); });

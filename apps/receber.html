@@ -32,7 +32,7 @@
     <h1>Contas a Receber</h1>
     </div>
   </div>
-  <p>Todas as parcelas dos alunos como no EVO: filtros por período, baixa com forma de pagamento e valor líquido, exportação e visão por centro de receita.</p>
+  <p>Todas as parcelas dos alunos: filtros por período, baixa com forma de pagamento e valor líquido, exportação e visão por centro de receita.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
@@ -72,7 +72,7 @@
   <section id="secCentros" hidden style="display: flex; flex-direction: column; gap: 14px;">
     <div class="card linha-flex" style="justify-content: space-between; align-items: flex-end;">
       <div class="campo"><label>Competência</label><input id="cComp" type="month"></div>
-      <p class="muted" style="font-size: 12.5px; max-width: 520px;">Recebimentos agrupados pelo centro de receita (plano do contrato ou venda avulsa), como no relatório do EVO.</p>
+      <p class="muted" style="font-size: 12.5px; max-width: 520px;">Recebimentos agrupados pelo centro de receita (plano do contrato ou venda avulsa), como no relatório.</p>
       <button class="btn mini" id="btnExpCentros" type="button">Exportar</button>
     </div>
     <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabCentros"></table></div>
@@ -310,7 +310,7 @@
       return;
     }
     if (t.hasAttribute("data-venc")) {
-      var nova = prompt("Novo vencimento (AAAA-MM-DD) — regra do EVO: reprogramar o débito sem receber:", r.vencimento);
+      var nova = prompt("Novo vencimento (AAAA-MM-DD): reprogramar o débito sem receber:", r.vencimento);
       if (!nova || !/^\d{4}-\d{2}-\d{2}$/.test(nova)) return;
       r.vencimento = nova;
       S.write("alunos", st);

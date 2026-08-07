@@ -72,7 +72,7 @@
   </div>
 
   <details class="card" id="cardEmpresa">
-    <summary style="cursor: pointer; font-weight: 800;">Metas da Empresa (grade anual do EVO)</summary>
+    <summary style="cursor: pointer; font-weight: 800;">Metas da Empresa (grade anual)</summary>
     <div class="linha-flex" style="margin: 10px 0; align-items: center; gap: 8px;">
       <label style="font-size: 13px;">Ano</label>
       <input id="empAno" type="number" style="width: 90px;">
@@ -321,7 +321,7 @@
     render();
   });
 
-  // ---------- metas da empresa (grade indicadores × 12 meses, como no EVO) ----------
+  // ---------- metas da empresa (grade indicadores × 12 meses) ----------
   var INDICADORES = [["faturamento", "Faturamento (R$)"], ["clientesAtivos", "Clientes ativos (nº)"], ["contratosVendidos", "Contratos vendidos (nº)"], ["cancelamentos", "Contratos cancelados (nº)"]];
   var MESES_ROT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   function renderEmpresa() {

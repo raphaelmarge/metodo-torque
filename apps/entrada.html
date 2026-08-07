@@ -60,7 +60,7 @@
     </div>
     <div id="painel"></div>
     <div class="card">
-      <h2 style="margin-bottom: 8px;">Controle de acesso (como no EVO)</h2>
+      <h2 style="margin-bottom: 8px;">Controle de acesso</h2>
       <div class="campo"><label>Mensagem de boas-vindas (aparece ao liberar)</label>
         <input id="cfgMsgAcesso" placeholder="Olá, seja bem-vindo e tenha um ótimo treino!">
       </div>
@@ -119,7 +119,7 @@
       });
       if (fimMax < hoje) { avisos.push({ t: "erro", txt: "Contrato vencido em " + S.fmtData(fimMax) + " — encaminhar para renovação." }); nivel = "bloq"; }
       if (ativos.every(function (c) { return (c.inicio || "") > hoje; })) {
-        avisos.push({ t: "erro", txt: "Contrato NA FILA — começa em " + S.fmtData(ativos[0].inicio) + ". Aluno inativo até lá (regra do EVO)." });
+        avisos.push({ t: "erro", txt: "Contrato NA FILA — começa em " + S.fmtData(ativos[0].inicio) + ". Aluno inativo até lá." });
         nivel = "bloq";
       }
       if (ativos.some(function (c) { return c.status === "congelado"; }) && ativos.every(function (c) { return c.status === "congelado"; })) {
@@ -128,7 +128,7 @@
       }
     }
     if (a.restrito && (!a.restrito.ate || a.restrito.ate >= hoje)) {
-      avisos.push({ t: "erro", txt: "Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + " — não liberar (regra do EVO). Procure a gestão." });
+      avisos.push({ t: "erro", txt: "Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + " — não liberar. Procure a gestão." });
       nivel = "bloq";
     }
     // agregadores (Wellhub/TotalPass): a entrada do dia é liberada pelo
@@ -152,7 +152,7 @@
         pedirTokenAgg = planoAgg.nome;
       }
     }
-    // regras de acesso do contrato (limite de entradas + horário permitido, regra do EVO)
+    // regras de acesso do contrato (limite de entradas + horário permitido, regra)
     var contratoAcesso = ativos.find(function (c) { return !c.principalId; }) || ativos[0];
     var planoAc = contratoAcesso && (st.planos || []).find(function (p) { return p.id === contratoAcesso.planoId; });
     var rAc = (planoAc && planoAc.regras) || {};
@@ -200,7 +200,7 @@
       }
     });
     if (atraso > 0) {
-      // bloqueio por inadimplência após N dias (Controle de Acesso do EVO)
+      // bloqueio por inadimplência após N dias (Controle de Acesso)
       var cfgB = S.read("config", { dados: {} }).bloqueio || {};
       var lim = +cfgB.inadDias || 0;
       if (lim > 0 && maiorAtrasoDias >= lim) {
@@ -222,7 +222,7 @@
     var modoP = cfgP.bloqueio || "aviso";
     if (modoP !== "off") {
       if (!parq) {
-        if (modoP === "bloqueia") { avisos.push({ t: "erro", txt: "PAR-Q não preenchido — obrigatório antes de liberar (regra do EVO)." }); nivel = "bloq"; }
+        if (modoP === "bloqueia") { avisos.push({ t: "erro", txt: "PAR-Q não preenchido — obrigatório antes de liberar." }); nivel = "bloq"; }
         else avisos.push({ t: "info", txt: "PAR-Q ainda não preenchido — aproveitar para fazer hoje." });
       } else if (parqVencido) {
         if (modoP === "bloqueia") { avisos.push({ t: "erro", txt: "PAR-Q VENCIDO — refazer antes de liberar." }); nivel = "bloq"; }
@@ -285,7 +285,7 @@
       var al = st.alunos.find(function (x) { return x.id === selId; });
       (al.checkins = al.checkins || []).push(new Date().toISOString());
       S.write("alunos", st);
-      // mensagem de boas-vindas configurável (Controle de Acesso do EVO)
+      // mensagem de boas-vindas configurável (Controle de Acesso)
       var msg = (S.read("config", { dados: {} }).msgAcesso || "").trim() || "Olá, seja bem-vindo e tenha um ótimo treino!";
       var avisoFunc = "";
       try {
@@ -328,7 +328,7 @@
     var nome = prompt("Nome do convidado de " + a.nome + " (cota: " + q.resta + " restante(s) neste mês):") || "";
     if (!nome.trim()) return;
     var st = S.read("convidados", { itens: [] });
-    // limites globais de convidados (Configurações → Avançado, como no EVO)
+    // limites globais de convidados (Configurações → Avançado)
     var av = S.read("config", { dados: {} }).avancado || {};
     var hoje2 = S.todayISO(), mes2 = hoje2.slice(0, 7);
     var nomeNorm = nome.trim().toLowerCase();
@@ -342,7 +342,7 @@
     }
     st.itens.push({ id: S.uid(), anfitriaoId: a.id, anfitriao: a.nome, nome: nome.trim(), data: S.todayISO(), hora: new Date().toTimeString().slice(0, 5) });
     S.write("convidados", st);
-    alert("Convidado " + nome.trim() + " liberado hoje (até 23:59). Lembre de conferir o PAR-Q antes do treino, como no EVO.");
+    alert("Convidado " + nome.trim() + " liberado hoje (até 23:59). Lembre de conferir o PAR-Q antes do treino.");
     renderPainel(); renderHoje();
   }
 

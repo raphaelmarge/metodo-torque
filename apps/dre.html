@@ -125,7 +125,7 @@
     $("dica").textContent = regime === "caixa"
       ? "Só o que foi de fato recebido e pago no mês."
       : "Tudo que pertence ao mês, mesmo que ainda não tenha sido pago.";
-    // ---------- cascata do DRE (estrutura do EVO) ----------
+    // ---------- cascata do DRE (estrutura) ----------
     // classifica cada receita nas linhas de Receita Operacional Bruta
     var recBuckets = { "Prestação de Serviços": 0, "Vendas de contratos": 0, "Vendas de Produtos": 0, "Receitas de Aluguéis": 0 };
     d.receitas.forEach(function (x) {
@@ -135,7 +135,7 @@
       else if (n.indexOf("serviç") >= 0) recBuckets["Prestação de Serviços"] += x.valor;
       else recBuckets["Vendas de contratos"] += x.valor;
     });
-    // classifica cada despesa (centro) nos grupos de Despesas Operacionais do EVO
+    // classifica cada despesa (centro) nos grupos de Despesas Operacionais
     function grupoDespesa(centro) {
       var c = (centro || "").toLowerCase();
       if (c.indexOf("folha") >= 0 || c.indexOf("salár") >= 0 || c.indexOf("pessoal") >= 0 || c.indexOf("comiss") >= 0) return "Despesas com Pessoal";

@@ -39,7 +39,7 @@
     <h1>Resumo Gerencial</h1>
     </div>
   </div>
-  <p>O fechamento do mês numa página só, como no EVO: contas, status da base, movimentação, acessos por horário e os números que decidem o negócio.</p>
+  <p>O fechamento do mês numa página só: contas, status da base, movimentação, acessos por horário e os números que decidem o negócio.</p>
 </header>
 
 <main class="corpo">
@@ -237,7 +237,7 @@
       if (a.status === "inativo") { inativos++; return; }
       var c = (a.contratos || []).find(function (x) { return (x.status === "ativo" || x.status === "congelado") && !x.principalId; });
       if (!c) { inativos++; return; }
-      // contrato especial/VIP não conta como ativo (regra do EVO)
+      // contrato especial/VIP não conta como ativo
       if (espIdG[c.planoId]) { especiais++; return; }
       ativos++;
       if (c.status === "congelado") suspensos++;

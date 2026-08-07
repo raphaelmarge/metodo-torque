@@ -47,7 +47,7 @@
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 18px;">
 
-  <!-- boas-vindas + atalhos (estilo EVO) -->
+  <!-- boas-vindas + atalhos -->
   <div class="card">
     <h2 style="font-size: 18px; text-transform: none; letter-spacing: 0; color: var(--texto);" id="boasVindas">Que bom ter você aqui!</h2>
     <p class="muted" style="margin: 4px 0 14px;">Nesta tela estão os principais atalhos da operação.</p>
@@ -116,7 +116,7 @@
         </select>
         <button class="btn mini" id="pAdd">+ Criar</button>
       </div>
-      <label class="linha-flex" style="gap: 6px; font-size: 13px; margin-bottom: 10px;"><input type="checkbox" id="pEspecial" style="width:auto;"> Contrato especial / VIP — não conta nos clientes ativos (regra do EVO)</label>
+      <label class="linha-flex" style="gap: 6px; font-size: 13px; margin-bottom: 10px;"><input type="checkbox" id="pEspecial" style="width:auto;"> Contrato especial / VIP — não conta nos clientes ativos</label>
       <table class="tabela"><thead><tr><th>Plano</th><th>Valor/mês</th><th>Duração</th><th>Tipo</th><th>Alunos ativos</th><th></th></tr></thead><tbody id="pLinhas"></tbody></table>
     </div>
   </section>
@@ -140,7 +140,7 @@
   </section>
 </main>
 
-<!-- NOVO CADASTRO (completo, estilo EVO) -->
+<!-- NOVO CADASTRO (completo,) -->
 <dialog id="dlgAluno">
   <form class="card" method="dialog" style="display: flex; flex-direction: column; gap: 14px; width: 640px; max-width: 100%; max-height: 86vh; overflow-y: auto;">
     <h2 id="dlgAlunoTitulo">Novo cadastro</h2>
@@ -229,7 +229,7 @@
   </form>
 </dialog>
 
-<!-- NOVA VENDA (estilo EVO) -->
+<!-- NOVA VENDA -->
 <dialog id="dlgVenda">
   <div class="card" style="display: flex; flex-direction: column; gap: 14px; width: 520px; max-width: 100%;">
     <h2>Nova Venda</h2>
@@ -365,7 +365,7 @@
       <input id="mTitular" list="listaTitulares" placeholder="deixe vazio se o próprio aluno paga">
       <datalist id="listaTitulares"></datalist>
     </div>
-    <p class="muted" style="font-size: 12px; margin: -8px 0 0;">Como no EVO: no plano família as mensalidades são cobradas do titular; o dependente treina normalmente.</p>
+    <p class="muted" style="font-size: 12px; margin: -8px 0 0;">No plano família as mensalidades são cobradas do titular; o dependente treina normalmente.</p>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn sec" value="cancel" formnovalidate>Cancelar</button>
       <button class="btn" value="ok">Matricular →</button>
@@ -654,7 +654,7 @@
     if (c) acoes.push('<button class="btn sec mini" data-facao="transferir" title="Transferir este contrato para outro cliente">⇄ Transferir contrato</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="altcontrato" title="Alterar início ou dia de vencimento">Alterar contrato</button>');
     if (c) acoes.push('<button class="btn sec mini" data-facao="dias" title="Creditar/debitar dias no contrato">± Dias</button>');
-    if (!c && !a.restrito) acoes.push('<button class="btn perigo mini" data-facao="restringir" title="Bloquear compras, acesso e comunicação (regra do EVO)">Restringir</button>');
+    if (!c && !a.restrito) acoes.push('<button class="btn perigo mini" data-facao="restringir" title="Bloquear compras, acesso e comunicação">Restringir</button>');
     if (a.restrito) acoes.push('<button class="btn ok mini" data-facao="liberarrestricao">✓ Remover restrição</button>');
     if (c) acoes.push('<button class="btn perigo mini" data-facao="cancelar">✕ Cancelar contrato</button>');
     var cancelado = !c && (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })
@@ -845,7 +845,7 @@
     if (editandoId && fichaId) abreFicha(fichaId);
   });
 
-  // campos obrigatórios do cadastro (Configurações → Campos Obrigatórios, como no EVO)
+  // campos obrigatórios do cadastro (Configurações → Campos Obrigatórios)
   var ROT_OBRIG = { nasc: "Data de nascimento", cpf: "CPF", rg: "RG", genero: "Gênero", cep: "CEP", endereco: "Endereço", numero: "Número", bairro: "Bairro", cidade: "Cidade", uf: "UF", zap: "Celular/WhatsApp", email: "E-mail", responsavel: "Responsável", comoConheceu: "Como conheceu", consultor: "Consultor(a)", indicacao: "Indicação", wellhub: "Wellhub" };
   $("dlgAluno").querySelector("form").addEventListener("submit", function (e) {
     if (e.submitter && e.submitter.value !== "ok") return;
@@ -866,7 +866,7 @@
     }
   });
 
-  // ---------- nova venda (estilo EVO) ----------
+  // ---------- nova venda ----------
   function renderVendaBusca() {
     var st = load();
     var q = $("vBusca").value.trim().toLowerCase();
@@ -1061,7 +1061,7 @@
     if (acao === "adicional") {
       var adicionais = st.planos.filter(function (p) { return p.tipo === "adicional"; });
       var nomes = adicionais.map(function (p, i) { return (i + 1) + ") " + p.nome + " — " + S.fmtBRL(p.valor) + "/mês"; }).join("\n");
-      var escolha = parseInt(prompt("CONTRATO ADICIONAL (regra do EVO: acompanha o principal e termina junto)\n\n" + nomes + "\n\nDigite o número:", "1"), 10);
+      var escolha = parseInt(prompt("CONTRATO ADICIONAL (regra da casa: acompanha o principal e termina junto)\n\n" + nomes + "\n\nDigite o número:", "1"), 10);
       var plAd = adicionais[escolha - 1];
       if (!plAd) return;
       // vigência proporcional: do mês atual até o fim do contrato principal
@@ -1082,7 +1082,7 @@
       var principais = st.planos.filter(function (p) { return p.tipo !== "adicional" && p.id !== c.planoId; });
       if (!principais.length) { alert("Cadastre outro plano primeiro."); return; }
       var lista = principais.map(function (p, i) { return (i + 1) + ") " + p.nome + " — " + S.fmtBRL(p.valor) + "/mês × " + p.meses; }).join("\n");
-      var esc9 = parseInt(prompt("TROCAR PLANO (regra do EVO)\nO contrato atual é cancelado com os dias restantes virando SALDO CREDOR, e o novo começa no lugar.\n\n" + lista + "\n\nDigite o número do novo plano:", "1"), 10);
+      var esc9 = parseInt(prompt("TROCAR PLANO\nO contrato atual é cancelado com os dias restantes virando SALDO CREDOR, e o novo começa no lugar.\n\n" + lista + "\n\nDigite o número do novo plano:", "1"), 10);
       var plNovo = principais[esc9 - 1];
       if (!plNovo) return;
       var manterVig = confirm("Manter a vigência original? \n\nOK = o novo contrato começa na data do antigo (" + S.fmtData(c.inicio) + ").\nCancelar = começa hoje.");
@@ -1107,7 +1107,7 @@
       return;
     }
     if (acao === "transferir") {
-      var nomeDest = prompt("TRANSFERIR CONTRATO (regra do EVO)\n\nO contrato de " + a.nome + " sai daqui e vai para outro cadastro (já cliente).\nDívidas/cobranças em aberto NÃO vão junto — ficam com " + a.nome + ".\n\nNome completo do cliente que vai RECEBER:") || "";
+      var nomeDest = prompt("TRANSFERIR CONTRATO\n\nO contrato de " + a.nome + " sai daqui e vai para outro cadastro (já cliente).\nDívidas/cobranças em aberto NÃO vão junto — ficam com " + a.nome + ".\n\nNome completo do cliente que vai RECEBER:") || "";
       var dest = st.alunos.find(function (x) { return x.id !== a.id && x.nome.trim().toLowerCase() === nomeDest.trim().toLowerCase(); });
       if (!dest) { if (nomeDest.trim()) alert("Cliente não encontrado — digite o nome exatamente como está no cadastro."); return; }
       if (dest.restrito && (!dest.restrito.ate || dest.restrito.ate >= S.todayISO())) { alert(dest.nome + " está RESTRITO — não pode receber contrato."); return; }
@@ -1115,7 +1115,7 @@
       var modo = prompt("Como transferir para " + dest.nome + "?\n\n1) Transferência completa (o contrato passa a ser de " + dest.nome + ")\n2) Somar os dias restantes como SALDO CREDOR para " + dest.nome + " (" + S.fmtBRL(credT) + ")\n\nDigite 1 ou 2:", "1");
       if (modo !== "1" && modo !== "2") return;
       if (modo === "1") {
-        if (!confirm("Transferir o contrato completo de " + a.nome + " para " + dest.nome + "? As mensalidades em aberto continuam com " + a.nome + " (regra do EVO).")) return;
+        if (!confirm("Transferir o contrato completo de " + a.nome + " para " + dest.nome + "? As mensalidades em aberto continuam com " + a.nome + ".")) return;
         // move o contrato; parcelas em aberto ficam com a origem, parcelas futuras passam a ser do destino
         c.transferidoDe = a.nome;
         dest.contratos = dest.contratos || [];
@@ -1166,7 +1166,7 @@
       return;
     }
     if (acao === "restringir") {
-      var meses9 = prompt("RESTRIÇÃO DE CLIENTE (regra do EVO): bloqueia matrícula, entrada e mensagens automáticas.\n\nPor quantos MESES? (0 ou vazio = tempo indeterminado)", "0");
+      var meses9 = prompt("RESTRIÇÃO DE CLIENTE: bloqueia matrícula, entrada e mensagens automáticas.\n\nPor quantos MESES? (0 ou vazio = tempo indeterminado)", "0");
       if (meses9 === null) return;
       var ate = null;
       if (+meses9 > 0) { var dAte = new Date(); dAte.setMonth(dAte.getMonth() + +meses9); ate = S.todayISO(dAte); }
@@ -1182,7 +1182,7 @@
       return;
     }
     if (acao === "mesclar") {
-      var nomeDup = prompt("MESCLAR CADASTROS (regra do EVO)\n\nEste cadastro (" + a.nome + ") será o PERFIL BASE.\nDigite o nome completo do cadastro DUPLICADO (que será excluído):") || "";
+      var nomeDup = prompt("MESCLAR CADASTROS\n\nEste cadastro (" + a.nome + ") será o PERFIL BASE.\nDigite o nome completo do cadastro DUPLICADO (que será excluído):") || "";
       var dup = st.alunos.find(function (x) { return x.id !== a.id && x.nome.trim().toLowerCase() === nomeDup.trim().toLowerCase(); });
       if (!dup) { if (nomeDup.trim()) alert("Cadastro não encontrado — digite o nome exatamente como está na lista."); return; }
       var resumo = (dup.contratos || []).length + " contrato(s), " +
@@ -1229,7 +1229,7 @@
         delete stPq.fichas[dup.id];
         S.write("parq", stPq);
       }
-      // exclui o duplicado (FitCoins: só do perfil base, como no EVO — pontos do 2º perfil não migram)
+      // exclui o duplicado (FitCoins: só do perfil base — pontos do 2º perfil não migram)
       st.alunos = st.alunos.filter(function (x) { return x.id !== dup.id; });
       save(st); abreFicha(a.id);
       alert("Cadastros mesclados! \"" + dup.nome + "\" foi excluído e tudo dele agora está em \"" + a.nome + "\".");
@@ -1253,7 +1253,7 @@
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === fichaId; });
     var plano = st.planos.find(function (p) { return p.id === $("mPlano").value; });
-    // restrição de venda por gênero e faixa etária (regra do EVO)
+    // restrição de venda por gênero e faixa etária
     var reg = plano.regras || {};
     if (reg.genero && a.genero && a.genero !== reg.genero) {
       alert("Este contrato é exclusivo para o gênero " + reg.genero + " — " + a.nome + " não pode ser matriculado nele.");
@@ -1279,14 +1279,14 @@
     a.status = "ativo";
     geraRecebiveis(st, a, contrato, plano);
     if (titular) {
-      // contrato família (EVO): um responsável financeiro — as mensalidades do dependente são cobradas do titular
+      // contrato família: um responsável financeiro — as mensalidades do dependente são cobradas do titular
       st.recebiveis.forEach(function (r) {
         if (r.contratoId !== contrato.id) return;
         r.alunoId = titular.id;
         r.desc = "Mensalidade família — dependente " + a.nome.split(" ")[0];
       });
     }
-    // desconto na venda (como no EVO: em recorrente vale só na 1ª parcela, salvo desconto recorrente)
+    // desconto na venda (em recorrente vale só na 1ª parcela, salvo desconto recorrente)
     var dSel = $("mDesconto").value;
     if (dSel) {
       var dInfo = null;
@@ -1303,7 +1303,7 @@
       }
       if (dInfo) {
         contrato.desconto = dInfo;
-        // registra no controle de teto (Gerencial - Desconto/Créditos do EVO)
+        // registra no controle de teto (Gerencial - Desconto/Créditos)
         var descMensal = dInfo.tipo === "pct" ? Math.round(contrato.valor * dInfo.valor) / 100 : Math.min(dInfo.valor, contrato.valor);
         var ap9 = S.read("aprovacoes", { itens: [] });
         ap9.itens.push({ id: S.uid(), tipo: "desconto", alunoId: a.id, nome: a.nome, valor: Math.round(descMensal * 100) / 100, desc: dInfo.desc, em: S.todayISO(), status: "aprovado" });
@@ -1322,10 +1322,10 @@
     abreFicha(fichaId);
   });
 
-  // ---------- cancelamento completo (regras do EVO) ----------
+  // ---------- cancelamento completo (regras) ----------
   var cancelCtx = null;
   function creditoDiasRestantes(st, c, dataCancel) {
-    // EVO: valor pago pelo contrato ÷ dias de vigência × dias restantes
+    // regra: valor pago pelo contrato ÷ dias de vigência × dias restantes
     var pago = st.recebiveis.filter(function (r) { return r.contratoId === c.id && r.status === "pago"; })
       .reduce(function (t, r) { return t + ((r.valorBaixa != null ? +r.valorBaixa : +r.valor) || 0); }, 0);
     var ini = new Date(c.inicio + "T12:00");
@@ -1378,7 +1378,7 @@
     c.status = "cancelado";
     c.canceladoEm = data;
     c.motivoCancel = $("ccMotivo").value + ($("ccObs").value.trim() ? " — " + $("ccObs").value.trim() : "");
-    // adicionais vinculados acompanham o principal (regra do EVO)
+    // adicionais vinculados acompanham o principal
     (a.contratos || []).forEach(function (cAd) {
       if (cAd.principalId === c.id && cAd.status === "ativo") {
         cAd.status = "cancelado"; cAd.canceladoEm = data; cAd.motivoCancel = "Acompanhou o cancelamento do contrato principal";

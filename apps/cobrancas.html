@@ -33,7 +33,7 @@
     <h1>Cobranças</h1>
     </div>
   </div>
-  <p>A central de cobrança como no EVO: extrato das cobranças geradas, recorrências programadas no cartão, painel de inadimplência com recuperação e os cartões cadastrados.</p>
+  <p>A central de cobrança: extrato das cobranças geradas, recorrências programadas no cartão, painel de inadimplência com recuperação e os cartões cadastrados.</p>
 </header>
 
 <dialog id="dlgVerCob">
@@ -101,7 +101,7 @@
           (link ? '<a href="' + esc(link) + '" target="_blank" rel="noopener">abrir página de pagamento</a>' : (c.pixCopiaECola ? "PIX copia e cola gerado" : "—")) + "</td>" +
           '<td style="text-align:right;"><button class="btn sec mini" data-vercob="' + d.id + '" title="Detalhes da cobrança">👁</button></td></tr>';
       }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px; white-space: normal;">Nenhuma cobrança gerada ainda. Gere PIX, boleto ou link de cartão pelo botão 💳 na Inadimplência (régua) — com o Pagar.me conectado ou com o modo demonstração ligado em Integrações.</td></tr>');
-    $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUE ON via Pagar.me (Fase 2). No EVO essa aba lista as tentativas de cartão da adquirente.";
+    $("rodape").textContent = "O extrato mostra as cobranças geradas pelo TORQUE ON via Pagar.me (Fase 2).";
   }
 
   // ---------- RECORRÊNCIA: assinaturas de cartão dos contratos ----------
@@ -174,7 +174,7 @@
           '</td><td class="num">' + brl(t.r ? (+t.r.valor || 0) : (+t.x.contrato.valor || 0)) + "</td><td>" +
           TAG[t.status] + "</td><td>Cartão de Crédito</td><td>" + esc(t.x.asn.cartao || "—") + "</td></tr>";
       }).join("") : '<tr><td colspan="7" class="muted" style="padding: 20px; white-space: normal;">Nenhuma assinatura recorrente. Cadastre o cartão do aluno no Perfil do Aluno → Cadastro → Formas de pagamento (com Pagar.me conectado ou modo demonstração ligado em Integrações).</td></tr>');
-    $("rodape").textContent = "Transações do mês das assinaturas de cartão: pagas, em cobrança (vencida há até 7 dias, ainda tentando), tentativas excedidas (7+ dias) e programadas — igual à Recorrência do EVO.";
+    $("rodape").textContent = "Transações do mês das assinaturas de cartão: pagas, em cobrança (vencida há até 7 dias, ainda tentando), tentativas excedidas (7+ dias) e programadas — igual à Recorrência.";
   }
 
   // ---------- INADIMPLÊNCIA: recuperação e atraso ----------

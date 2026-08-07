@@ -64,7 +64,7 @@
     <h1>Treinos</h1>
     </div>
   </div>
-  <p>Prescreva a ficha de cada aluno como no EVO: treinos A/B/C, modelos prontos para aplicar em segundos e alerta de treino vencido.</p>
+  <p>Prescreva a ficha de cada aluno: treinos A/B/C, modelos prontos para aplicar em segundos e alerta de treino vencido.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
@@ -247,7 +247,7 @@
     var st = load();
     var q = busca.trim().toLowerCase();
     var alunos = alunosAtivos().filter(function (a) { return !q || a.nome.toLowerCase().indexOf(q) !== -1; });
-    // sem treino / vencidos primeiro (como o "Vencimento de treinos" do EVO)
+    // sem treino / vencidos primeiro (como o "Vencimento de treinos")
     alunos.sort(function (a, b) {
       var ordem = { sem: 0, vencido: 1, vencendo: 2, ok: 3 };
       return ordem[situacaoTreino(prescDe(st, a.id)).cls] - ordem[situacaoTreino(prescDe(st, b.id)).cls];
@@ -326,7 +326,7 @@
       };
       return;
     }
-    // planejamento (como o EVO: nome, frequência, semanas, início, vencimento, descrição, restrições)
+    // planejamento (nome, frequência, semanas, início, vencimento, descrição, restrições)
     $("painelAluno").innerHTML =
       '<div class="linha-flex no-print" style="justify-content: space-between;">' +
       "<h2 style='font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--texto); margin: 0;'>" + esc(aluno.nome) + "</h2>" +

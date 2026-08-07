@@ -23,7 +23,7 @@
   [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; font-family: "Archivo", system-ui, sans-serif; background: var(--fundo); color: var(--texto); }
 
-  /* ---------- topbar (escura, estilo EVO) ---------- */
+  /* ---------- topbar (escura,) ---------- */
   .topo {
     position: fixed; top: 0; left: 0; right: 0; z-index: 30; height: 54px;
     background: radial-gradient(140% 300% at 90% -80%, rgba(124,58,237,.25), transparent 55%), var(--escuro);
@@ -43,7 +43,7 @@
   .topo .direita small { display: block; color: var(--cinza-2); }
   .topo .logoAcad { max-height: 34px; max-width: 110px; object-fit: contain; background: #fff; padding: 2px 6px; border-radius: 3px; }
 
-  /* ---------- menu lateral (claro, estilo EVO) ---------- */
+  /* ---------- menu lateral (claro,) ---------- */
   .menu {
     position: fixed; top: 54px; bottom: 0; left: 0; width: 228px; z-index: 20;
     background: var(--menu); border-right: 1px solid var(--linha-escura); color: #a9a4b5;
@@ -547,7 +547,7 @@
       <input type="file" id="cfgBkFile" accept="application/json" hidden>
     </div>
     <div class="cfg-bloco">
-      <h3>Dados da academia (como a aba Empresa do EVO)</h3>
+      <h3>Dados da academia (como a aba Empresa)</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 640px;">
         <div><label style="font-size:12px; font-weight:600;">Nome fantasia (exibição)</label><input id="cfgNome" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>
         <div><label style="font-size:12px; font-weight:600;">CNPJ</label><input id="cfgCnpj" inputmode="numeric" style="width:100%; padding:8px 10px; border:1px solid var(--linha); border-radius:4px; font-family:inherit;"></div>

@@ -454,7 +454,7 @@
     }, function () {});
   }
 
-  // ---------- clientes ativos (regra do EVO: contrato especial/VIP não conta) ----------
+  // ---------- clientes ativos (contrato especial/VIP não conta) ----------
   // recebe o objeto do aluno e a lista de planos; retorna o contrato "ativo que conta" ou null
   function contratoAtivoConta(aluno, planos) {
     planos = planos || (read("alunos", { planos: [] }).planos || []);

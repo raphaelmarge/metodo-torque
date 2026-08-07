@@ -160,7 +160,7 @@
     }).join("") : '<option value="">— nenhum pagamento registrado —</option>';
   });
 
-  // ---------- termos e políticas (Configurações → Documentos do EVO) ----------
+  // ---------- termos e políticas (Configurações → Documentos) ----------
   var TERMOS = [
     ["acesso", "Termos de acesso", "Declaro estar apto(a) à prática de atividades físicas e me comprometo a seguir as regras da academia: apresentar-se com vestuário adequado, respeitar os horários contratados, zelar pelos equipamentos e seguir as orientações da equipe. O acesso é pessoal e intransferível; o compartilhamento de carteirinha/credencial implica bloqueio."],
     ["privacidade", "Política de privacidade", "Os dados pessoais coletados no cadastro (nome, contato, documentos e dados de saúde autodeclarados) são usados exclusivamente para a gestão da relação contratual, controle de acesso, comunicação sobre serviços e obrigações legais, conforme a LGPD (Lei 13.709/2018). Não vendemos nem compartilhamos dados com terceiros fora dessas finalidades. O titular pode solicitar acesso, correção ou exclusão dos dados na recepção."],
@@ -219,7 +219,7 @@
     else gerarContrato(a);
   };
 
-  // recibo de cancelamento — modelo do EVO (Configurações → Documentos)
+  // recibo de cancelamento — modelo (Configurações → Documentos)
   function gerarCancelamento(a) {
     var st = alunosSt();
     var c = (a.contratos || []).filter(function (x) { return x.status === "cancelado"; })

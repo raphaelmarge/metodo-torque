@@ -47,7 +47,7 @@
 
   <div class="card" id="cardRepo" hidden>
     <h2>Reposições em aberto</h2>
-    <p class="muted" style="font-size: 12.5px; margin: 4px 0 10px;">Falta justificada gera reposição com validade de 30 dias (regra do EVO). Quando o aluno repuser a aula, marque como usada.</p>
+    <p class="muted" style="font-size: 12.5px; margin: 4px 0 10px;">Falta justificada gera reposição com validade de 30 dias. Quando o aluno repuser a aula, marque como usada.</p>
     <div id="listaRepo"></div>
   </div>
 </main>
@@ -279,7 +279,7 @@
   };
 
   S.equipeDatalist(["fProf"]);
-  // ---------- reposições (falta justificada, regra do EVO) ----------
+  // ---------- reposições (falta justificada, regra) ----------
   function repoStore() { return S.read("reposicoes", { itens: [] }); }
   function renderRepo() {
     var hoje = S.todayISO();

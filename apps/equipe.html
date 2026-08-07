@@ -50,7 +50,7 @@
   <div id="lista"></div>
 
   <details class="card" id="cardSalarios">
-    <summary style="cursor: pointer; font-weight: 800;">Salários de colaboradores (relatório do EVO)</summary>
+    <summary style="cursor: pointer; font-weight: 800;">Salários de colaboradores (relatório)</summary>
     <div id="salarios" style="margin-top: 12px; overflow-x: auto;"></div>
   </details>
 </main>
@@ -143,7 +143,7 @@
       return true;
     }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
 
-    // etiqueta de permissão como na lista de Colaboradores do EVO
+    // etiqueta de permissão como na lista de Colaboradores
     var perfis = {};
     (S.read("permissoes", { perfis: null }).perfis || []).forEach(function (p) { perfis[p.id] = p.nome; });
 

@@ -127,7 +127,7 @@ const SEED = {
   assert(vd.includes("2 x 1"), "visitantes x conversões do mês = 2 x 1");
   assert(!!(await page.$("#grafVisit svg")), "gráfico visitantes x conversões (SVG)");
 
-  console.log("— controles estilo EVO —");
+  console.log("— controles —");
   assert((await page.inputValue("#dashDia")) === hojeISO, "seletor de data preenchido com hoje");
   assert(!!(await page.$(".dash-controles .btn-roxo")), "botão NOVO CADASTRO no dashboard");
   assert(!!(await page.$('.acoes-topo button[data-abrir="alunos.html?acao=novo"]')), "atalho de novo cadastro no topo");

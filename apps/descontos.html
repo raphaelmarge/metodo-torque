@@ -28,7 +28,7 @@
     <h1>Descontos</h1>
     </div>
   </div>
-  <p>Os descontos oficiais da academia com as regras do EVO: porcentagem ou valor, vigência, limite de idade, recorrência, autorização e quem pode aplicar.</p>
+  <p>Os descontos oficiais da academia com as regras: porcentagem ou valor, vigência, limite de idade, recorrência, autorização e quem pode aplicar.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
@@ -50,7 +50,7 @@
       <div class="campo"><label>Teto mensal de créditos/descontos (R$) — 0 desliga</label>
         <input id="tetoValor" type="number" min="0" step="0.01" style="width: 160px;">
       </div>
-      <p class="muted" style="font-size: 12.5px; flex: 1; min-width: 260px;">Como no EVO: créditos (saldo credor) acima do teto do mês ficam <strong>pendentes de aprovação</strong> aqui. Descontos na venda também debitam do teto quando marcados.</p>
+      <p class="muted" style="font-size: 12.5px; flex: 1; min-width: 260px;">Créditos (saldo credor) acima do teto do mês ficam <strong>pendentes de aprovação</strong> aqui. Descontos na venda também debitam do teto quando marcados.</p>
     </div>
     <div class="kpis" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;" id="kpisTeto"></div>
     <div class="card" style="padding: 0; overflow-x: auto;"><table class="tabela" id="tabAprov"></table></div>
@@ -199,7 +199,7 @@
     }
     save(st);
   });
-  // ---------- aprovações e teto (Gerencial - Desconto/Créditos do EVO) ----------
+  // ---------- aprovações e teto (Gerencial - Desconto/Créditos) ----------
   function cfg() { return S.read("config", { dados: {} }); }
   function aprovacoes() { return S.read("aprovacoes", { itens: [] }); }
   function mesKey() { return S.todayISO().slice(0, 7); }

@@ -104,7 +104,7 @@
           <button class="btn" id="btnCatraca">▶ Iniciar modo catraca</button>
         </div>
         <div class="card">
-          <h2>Aparência e manutenção (Controle de Acesso do EVO)</h2>
+          <h2>Aparência e manutenção (Controle de Acesso)</h2>
           <div class="campo" style="margin-top: 8px;"><label>Frase de espera na tela da catraca</label>
             <input id="bioTitulo" placeholder="ex.: TORQUE FIT — olhe para a câmera"></div>
           <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -113,7 +113,7 @@
             </label>
             <button class="btn sec mini" id="btnLimpaInativos">Remover rostos de inativos agora</button>
           </div>
-          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Como a "validade da biometria nos equipamentos" do EVO: quem foi inativado não fica com o rosto guardado no dispositivo.</p>
+          <p class="muted" style="font-size: 12.5px; margin-top: 8px;">Como a "validade da biometria nos equipamentos": quem foi inativado não fica com o rosto guardado no dispositivo.</p>
         </div>
         <p class="muted" style="font-size:12.5px;">Deixe esta tela aberta num computador/tablet na entrada. Ao reconhecer o rosto, o sistema confere contrato, suspensão e inadimplência (mesmas regras do Controle de Entradas) e registra o check-in sozinho.</p>
       </div>
@@ -519,7 +519,7 @@
     });
   });
 
-  // aparência + manutenção (aba Configurações do Controle de Acesso do EVO)
+  // aparência + manutenção (aba Configurações do Controle de Acesso)
   (function () {
     var ap = stBio().aparencia || {};
     $("bioTitulo").value = ap.titulo || "";
