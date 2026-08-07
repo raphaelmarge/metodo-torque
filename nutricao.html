@@ -93,6 +93,7 @@
     <button data-a="alimentos">Alimentos</button>
     <button data-a="receitas">Receitas</button>
     <button data-a="agenda">Agenda</button>
+    <button data-a="quest">Check-ins</button>
     <button data-a="chat">Chat</button>
   </div>
 
@@ -221,6 +222,68 @@
         <button class="btn sec" id="btnIcsN">📅 Enviar pro meu calendário</button>
         <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as consultas entram lá.</span>
       </div>
+    </div>
+  </div>
+
+  <!-- CHECK-INS (questionários pro paciente, estilo LiveClin) -->
+  <div id="vQuestN" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Minhas perguntas</h2>
+      <p class="muted" style="margin: 4px 0 10px;">Crie perguntas com escala de emojis (com pontuação), escala de 0 a 10 ou resposta livre — e monte check-ins pra acompanhar a semana do paciente. Já deixamos um Check-in semanal pronto (adesão, fome, sono, intestino e água).</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
+        <input id="qpSiglaN" placeholder="Sigla (ex.: FOME)" maxlength="5" style="width: 130px; text-transform: uppercase;">
+        <input id="qpTituloN" placeholder="Título (ex.: Fome)" maxlength="30" style="width: 200px;">
+        <select id="qpTipoN" style="width: auto;">
+          <option value="emoji">😍 Escala de emojis (com pontos)</option>
+          <option value="linear">🔢 Escala 0–10</option>
+          <option value="texto">✍️ Resposta livre</option>
+        </select>
+      </div>
+      <input id="qpTextoN" placeholder="A pergunta em si (ex.: Como foi sua fome nos últimos 7 dias?)" style="width: 100%; margin-top: 8px;">
+      <div id="qpOpsBoxN" style="margin-top: 8px;">
+        <p class="muted" style="font-size: 12px; margin-bottom: 4px;">Alternativas da escala (rótulo | pontos):</p>
+        <div class="linha-flex" style="flex-wrap: wrap; gap: 6px;">
+          <input class="qpOpN" data-e="😍" value="Ótimo | 2" style="width: 140px;">
+          <input class="qpOpN" data-e="🙂" value="Bom | 1" style="width: 120px;">
+          <input class="qpOpN" data-e="😐" value="Médio | 0" style="width: 120px;">
+          <input class="qpOpN" data-e="🙁" value="Ruim | -1" style="width: 120px;">
+          <input class="qpOpN" data-e="😫" value="Péssimo | -2" style="width: 140px;">
+        </div>
+      </div>
+      <button class="btn verde" id="qpAddN" style="margin-top: 10px;">+ Salvar pergunta</button>
+      <div id="qpListaN" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhuma pergunta ainda.</div>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Check-ins montados</h2>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+        <input id="qqNomeN" placeholder="Nome (ex.: Check-in semanal)" style="width: 240px;">
+        <button class="btn verde" id="qqAddN">+ Criar check-in</button>
+      </div>
+      <div id="qqPerguntasN" class="muted" style="margin-top: 8px; font-size: 13px;"></div>
+      <div id="qqListaN" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhum check-in ainda.</div>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Enviar pro paciente</h2>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
+        <select id="qePacienteN" style="min-width: 170px;"></select>
+        <select id="qeQuestN" style="min-width: 190px;"></select>
+        <button class="btn verde" id="qeGerarN">Gerar link</button>
+      </div>
+      <div id="qeSaidaN" hidden style="margin-top: 10px;">
+        <input id="qeLinkN" readonly style="width: 100%; font-size: 12px;">
+        <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
+          <a class="btn whats" id="qeZapN" target="_blank" rel="noopener">💬 Mandar no WhatsApp</a>
+          <button class="btn sec" id="qeCopiaN">📋 Copiar link</button>
+        </div>
+        <p id="qeAvisoN" hidden class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Respostas recebidas</h2>
+      <div id="qRespostasN" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
     </div>
   </div>
 
@@ -508,6 +571,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     $("vAlimentos").hidden = b.dataset.a !== "alimentos";
     $("vReceitas").hidden = b.dataset.a !== "receitas";
     $("vAgendaN").hidden = b.dataset.a !== "agenda";
+    $("vQuestN").hidden = b.dataset.a !== "quest";
     $("vChatN").hidden = b.dataset.a !== "chat";
     // o card da conta (ilha) só aparece na aba Pacientes — não precisa repetir em todas
     $("cardContaN").hidden = b.dataset.a !== "pacientes";
@@ -516,6 +580,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
     if (b.dataset.a === "agenda") renderAgendaN();
+    if (b.dataset.a === "quest") { renderQuestN(); carregaRespostasQuestN(); }
     if (b.dataset.a === "chat") { renderBotN(); montaBuilderN(); renderChatNT(); }
   });
 
@@ -2114,6 +2179,181 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     }
   });
   window.__agendaN = renderAgendaN; // testes
+
+  // ---------- check-ins do paciente (questionários estilo LiveClin, como no Personal) ----------
+  function questStN(st) {
+    if (!st.questPerguntas) {
+      // primeira visita: perguntas padrão de nutrição + um check-in semanal prontos
+      var ops = function () {
+        return [{ e: "😍", r: "Ótimo", p: 2 }, { e: "🙂", r: "Bom", p: 1 }, { e: "😐", r: "Médio", p: 0 }, { e: "🙁", r: "Ruim", p: -1 }, { e: "😫", r: "Péssimo", p: -2 }];
+      };
+      st.questPerguntas = [
+        { id: S.uid(), sigla: "ADES", titulo: "Adesão à dieta", texto: "Quanto você conseguiu seguir o plano alimentar nos últimos 7 dias?", tipo: "linear", ops: [] },
+        { id: S.uid(), sigla: "FOME", titulo: "Fome", texto: "Como foi sua fome entre as refeições nesta semana?", tipo: "emoji", ops: ops() },
+        { id: S.uid(), sigla: "SONO", titulo: "Sono", texto: "Como foi seu sono nos últimos 7 dias?", tipo: "emoji", ops: ops() },
+        { id: S.uid(), sigla: "INTES", titulo: "Intestino", texto: "Como está o funcionamento do seu intestino?", tipo: "emoji", ops: ops() },
+        { id: S.uid(), sigla: "AGUA", titulo: "Água", texto: "De 0 a 10, quanto você bebeu de água por dia nesta semana?", tipo: "linear", ops: [] },
+        { id: S.uid(), sigla: "LIVRE", titulo: "Como se sentiu", texto: "Conta pra mim: o que foi mais difícil (ou mais fácil) nesta semana?", tipo: "texto", ops: [] },
+      ];
+      st.questionarios = [{ id: S.uid(), nome: "Check-in semanal", perguntas: st.questPerguntas.map(function (p) { return p.id; }) }];
+      S.write("ntStudio", st);
+    }
+    st.questPerguntas = st.questPerguntas || [];
+    st.questionarios = st.questionarios || [];
+    return st;
+  }
+  function renderQuestN() {
+    var st = questStN(load());
+    $("qpListaN").innerHTML = st.questPerguntas.length ? st.questPerguntas.map(function (p) {
+      var tipoRot = p.tipo === "emoji" ? "😍 emojis" : p.tipo === "linear" ? "🔢 0–10" : "✍️ livre";
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e5e7eb22;">' +
+        "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-qprmn="' + p.id + '">🗑</button></div>';
+    }).join("") : "Nenhuma pergunta ainda — crie a primeira acima.";
+    $("qqPerguntasN").innerHTML = st.questPerguntas.length
+      ? "Marque as perguntas do check-in novo:<br>" + st.questPerguntas.map(function (p) {
+          return '<label style="margin:4px 12px 0 0; display:inline-block;"><input type="checkbox" class="qqCheckN" style="width:auto;margin:0 4px 0 0;" value="' + p.id + '"> ' + esc(p.sigla) + " · " + esc(p.titulo) + "</label>";
+        }).join("")
+      : "";
+    $("qqListaN").innerHTML = st.questionarios.length ? st.questionarios.map(function (q) {
+      return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e5e7eb22;">' +
+        "<b>📋 " + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-qqrmn="' + q.id + '">🗑</button></div>';
+    }).join("") : "Nenhum check-in ainda.";
+    var ativos = st.pacientes.filter(function (p) { return p.ativo !== false; });
+    $("qePacienteN").innerHTML = '<option value="">Paciente…</option>' + ativos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + "</option>"; }).join("");
+    $("qeQuestN").innerHTML = '<option value="">Check-in…</option>' + st.questionarios.map(function (q) { return '<option value="' + q.id + '">' + esc(q.nome) + "</option>"; }).join("");
+  }
+  $("qpTipoN").addEventListener("change", function () {
+    $("qpOpsBoxN").style.display = this.value === "emoji" ? "" : "none";
+  });
+  $("qpAddN").addEventListener("click", function () {
+    var sigla = $("qpSiglaN").value.trim().toUpperCase().slice(0, 5);
+    var titulo = $("qpTituloN").value.trim().slice(0, 30);
+    var texto = $("qpTextoN").value.trim();
+    if (!sigla || !titulo || !texto) { alert("Preencha sigla, título e a pergunta."); return; }
+    var tipo = $("qpTipoN").value;
+    var ops = [];
+    if (tipo === "emoji") {
+      document.querySelectorAll(".qpOpN").forEach(function (i) {
+        var par = i.value.split("|");
+        var r = (par[0] || "").trim();
+        if (r) ops.push({ e: i.getAttribute("data-e"), r: r, p: parseFloat((par[1] || "0").replace(",", ".")) || 0 });
+      });
+      if (ops.length < 2) { alert("A escala precisa de pelo menos 2 alternativas."); return; }
+    }
+    var st = questStN(load());
+    st.questPerguntas.push({ id: S.uid(), sigla: sigla, titulo: titulo, texto: texto, tipo: tipo, ops: ops });
+    S.write("ntStudio", st);
+    $("qpSiglaN").value = ""; $("qpTituloN").value = ""; $("qpTextoN").value = "";
+    renderQuestN();
+  });
+  $("qpListaN").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-qprmn");
+    if (!id || !confirm("Excluir esta pergunta?")) return;
+    var st = questStN(load());
+    st.questPerguntas = st.questPerguntas.filter(function (p) { return p.id !== id; });
+    st.questionarios.forEach(function (q) { q.perguntas = q.perguntas.filter(function (x) { return x !== id; }); });
+    S.write("ntStudio", st); renderQuestN();
+  });
+  $("qqAddN").addEventListener("click", function () {
+    var nome = $("qqNomeN").value.trim();
+    var ids = Array.from(document.querySelectorAll(".qqCheckN:checked")).map(function (c) { return c.value; });
+    if (!nome) { alert("Dê um nome pro check-in (ex.: Check-in semanal)."); return; }
+    if (!ids.length) { alert("Marque pelo menos uma pergunta."); return; }
+    var st = questStN(load());
+    st.questionarios.push({ id: S.uid(), nome: nome, perguntas: ids });
+    S.write("ntStudio", st);
+    $("qqNomeN").value = "";
+    renderQuestN();
+  });
+  $("qqListaN").addEventListener("click", function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute("data-qqrmn");
+    if (!id || !confirm("Excluir este check-in?")) return;
+    var st = questStN(load());
+    st.questionarios = st.questionarios.filter(function (q) { return q.id !== id; });
+    S.write("ntStudio", st); renderQuestN();
+  });
+  function montaPayloadQuestN(st, q) {
+    return {
+      marca: (st.config || {}).nome || "TORQUE NUTRI",
+      nome: q.nome,
+      quem: "nutricionista",
+      tema: "verde",
+      ps: q.perguntas.map(function (pid) {
+        var p = st.questPerguntas.find(function (x) { return x.id === pid; });
+        return p ? { s: p.sigla, texto: p.texto, tipo: p.tipo, ops: p.ops || [] } : null;
+      }).filter(Boolean),
+    };
+  }
+  $("qeGerarN").addEventListener("click", function () {
+    var st = questStN(load());
+    var p = st.pacientes.find(function (x) { return x.id === $("qePacienteN").value; });
+    var q = st.questionarios.find(function (x) { return x.id === $("qeQuestN").value; });
+    if (!p || !q) { alert("Escolha o paciente e o check-in."); return; }
+    if (!p.appTokenN) { p.appTokenN = S.uid() + S.uid(); S.write("ntStudio", st); }
+    var payload = montaPayloadQuestN(st, q);
+    var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    var link = location.origin + location.pathname.replace(/nutricao\.html$/, "") + "quest.html?t=" + p.appTokenN + "&q=" + b64;
+    $("qeSaidaN").hidden = false;
+    $("qeLinkN").value = link;
+    var msg = "Oi " + p.nome.split(" ")[0] + "! Responde seu check-in rapidinho? 💚 " + link;
+    $("qeZapN").href = "https://wa.me/" + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg);
+    // o envio das respostas exige o token publicado na nuvem — garante isso aqui,
+    // senão o paciente vê "app não encontrado" na hora de enviar
+    var nuvemQ = S.cloud && S.cloud();
+    var avisoQ = $("qeAvisoN");
+    avisoQ.hidden = false;
+    if (!nuvemQ) {
+      avisoQ.textContent = "⚠️ Entre na sua conta (card ☁️ Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do paciente não chegam.";
+    } else {
+      avisoQ.textContent = "⏳ Preparando o app do paciente na nuvem…";
+      var stampQ = new Date().toISOString();
+      nuvemQ.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvemQ.aid, dados: { html: montaAppNutri(p, stampQ), stamp: stampQ }, atualizado: stampQ }])
+        .then(function (r) {
+          if (r && r.error) { avisoQ.textContent = "⚠️ Não deu pra publicar o app do paciente (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
+          avisoQ.textContent = "✅ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
+        }, function () {
+          avisoQ.textContent = "⚠️ Sem conexão agora — o paciente pode ver erro ao enviar. Gere o link de novo com internet.";
+        });
+    }
+  });
+  $("qeCopiaN").addEventListener("click", function () {
+    $("qeLinkN").select();
+    try { document.execCommand("copy"); this.textContent = "✅ Copiado!"; } catch (e) {}
+    var b = this;
+    setTimeout(function () { b.textContent = "📋 Copiar link"; }, 1800);
+  });
+  function carregaRespostasQuestN() {
+    var box = $("qRespostasN");
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { box.textContent = "Entre com a sua conta da nuvem pra receber as respostas dos pacientes."; return; }
+    box.textContent = "Carregando…";
+    nuvem.client.from("app_quest").select("token,questionario,dados,criado").order("criado", { ascending: false }).limit(60)
+      .then(function (r) {
+        if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os check-ins."; return; }
+        var rows = (r && r.data) || [];
+        if (!rows.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima. 😉"; return; }
+        var st = load();
+        var nomePorToken = {};
+        st.pacientes.forEach(function (p) { if (p.appTokenN) nomePorToken[p.appTokenN] = p.nome; });
+        box.innerHTML = rows.map(function (row) {
+          var d = row.dados || {};
+          var pts = d.pontuacao;
+          var corP = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
+          return '<div style="padding:10px 0;border-top:1px solid #e5e7eb22;">' +
+            "<b>" + esc(nomePorToken[row.token] || "Paciente") + "</b> · " + esc(row.questionario || "Check-in") +
+            ' <span class="muted" style="font-size:12px;">' + S.fmtData((row.criado || "").slice(0, 10)) + "</span>" +
+            (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
+            '<div class="muted" style="font-size:12.5px;margin-top:4px;">' + (d.respostas || []).map(function (x) {
+              return esc(x.sigla || "") + ": <b>" + esc(String(x.resposta)) + "</b>";
+            }).join(" · ") + "</div></div>";
+        }).join("");
+      }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
+  }
+  window.__questNT = { render: renderQuestN, payload: montaPayloadQuestN, respostas: carregaRespostasQuestN }; // testes
 
   // ---------- robô de atendimento (chatbot do app do paciente) ----------
   function botPadraoN(st) {
