@@ -353,7 +353,7 @@ async function abaPt(p, a) {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return st.treinosV2[st.alunos[0].id].fichas[0].id;
   });
-  await p.selectOption('[data-exsel="' + fichaId + '"]', supinoId);
+  await p.selectOption('[data-exsel="' + fichaId + '"]', "Supino reto");
   await p.fill('[data-exser="' + fichaId + '"]', "4");
   await p.fill('[data-exrep="' + fichaId + '"]', "10");
   await p.click('[data-additem="' + fichaId + '"]');
@@ -425,22 +425,31 @@ async function abaPt(p, a) {
     return /acao === "para"/.test(t) && /chamadorConfiavel/.test(t);
   }), "função push-envia com envio direcionado por token + trava de login");
 
-  // o seletor da ficha oferece o catálogo TORQUE inteiro (optgroup) e materializa ao usar
-  const selCat = await p.evaluate((fid) => {
-    const sel = document.querySelector('[data-exsel="' + fid + '"]');
-    const grupos = Array.from(sel.querySelectorAll("optgroup")).map((g) => g.label);
-    const opCat = Array.from(sel.options).find((o) => o.value.indexOf("cat:") === 0);
-    return { grupos: grupos.join("|"), temCat: !!opCat, valor: opCat && opCat.value };
+  // cascata da ficha: tipo de treino → grupamento → exercício (catálogo inteiro filtrado)
+  const casc = await p.evaluate((fid) => {
+    const total = document.querySelector('[data-exsel="' + fid + '"]').options.length;
+    const mov = document.querySelector('[data-exmov="' + fid + '"]');
+    mov.value = "Dobradiça e quadril";
+    mov.dispatchEvent(new Event("change", { bubbles: true }));
+    const zona = document.querySelector('[data-exzona="' + fid + '"]');
+    const zonas = Array.from(zona.options).map((o) => o.value);
+    zona.value = "Posterior e glúteo";
+    zona.dispatchEvent(new Event("change", { bubbles: true }));
+    const ex = document.querySelector('[data-exsel="' + fid + '"]');
+    const alvo = Array.from(ex.options).find((o) => /terra/i.test(o.value));
+    return { total, depois: ex.options.length, zonas: zonas.join("|"), valor: alvo && alvo.value };
   }, fichaId);
-  ok(/Meus exercícios/.test(selCat.grupos) && /Catálogo TORQUE/.test(selCat.grupos) && selCat.temCat, "seletor da ficha tem Meus exercícios + Catálogo TORQUE");
-  await p.selectOption('[data-exsel="' + fichaId + '"]', selCat.valor);
+  ok(casc.total > 500 && casc.depois > 1 && casc.depois < 200, "cascata filtra: de " + (casc.total - 1) + " exercícios pra " + (casc.depois - 1) + " (tipo + grupamento)");
+  ok(/Posterior e glúteo/.test(casc.zonas) && !/^Peito$/m.test(casc.zonas.split("|").join("\n")), "grupamentos oferecidos seguem o tipo de treino escolhido");
+  ok(!!casc.valor, "lista filtrada traz os levantamentos terra");
+  await p.selectOption('[data-exsel="' + fichaId + '"]', casc.valor);
   await p.click('[data-additem="' + fichaId + '"]');
   await p.waitForTimeout(150);
   const aposCat = await p.evaluate((nome) => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const ex = st.exercicios.find((e) => e.nome.toLowerCase() === nome.toLowerCase());
     return { entrou: !!ex, comDica: !!(ex && ex.descricao), naFicha: document.getElementById("fichasBox").textContent.includes(nome) };
-  }, selCat.valor.slice(4));
+  }, casc.valor);
   ok(aposCat.entrou && aposCat.comDica && aposCat.naFicha, "exercício do catálogo entra na ficha e vira item da biblioteca com dica");
 
   // botão ↓ desce o exercício na ficha (e ↑ volta)

@@ -2473,16 +2473,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var t = (st.treinosV2 || {})[alunoId];
     $("tValidade").value = (t && t.validade) || "";
-    var exOpts = (st.exercicios || []).slice().sort(function (a, b) { return (a.grupo + a.nome).localeCompare(b.grupo + b.nome); })
-      .map(function (e) { return '<option value="' + e.id + '">' + esc((e.grupo ? e.grupo + " · " : "") + e.nome) + "</option>"; }).join("");
-    // catálogo TORQUE inteiro no seletor — escolher um item dele adiciona na biblioteca na hora
-    var meusNomes = {};
-    (st.exercicios || []).forEach(function (e) { meusNomes[e.nome.toLowerCase()] = 1; });
-    var catalogo = (self.MT_EXERCICIOS || []).filter(function (c) { return !meusNomes[c.n.toLowerCase()]; });
-    var catOpts = catalogo.slice().sort(function (a, b) { return (a.g + a.n).localeCompare(b.g + b.n); })
-      .map(function (c) { return '<option value="cat:' + esc(c.n) + '">' + esc(c.g + " · " + c.n) + "</option>"; }).join("");
-    exOpts = (exOpts ? '<optgroup label="Meus exercícios">' + exOpts + "</optgroup>" : "") +
-      (catOpts ? '<optgroup label="Catálogo TORQUE (' + catalogo.length + ')">' + catOpts + "</optgroup>" : "");
     if (!t || !t.fichas.length) {
       el.innerHTML = '<span class="muted">Nenhuma ficha ainda — clique em <b>+ Nova ficha</b>.' +
         ((st.treinos || {})[alunoId] ? " (O texto antigo deste aluno continua no app até você montar as fichas.)" : "") + "</span>";
@@ -2506,7 +2496,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '">✕</button></span></div>';
         }).join("") : '<div class="muted" style="padding:4px 0;">Ficha vazia — adicione o primeiro exercício.</div>') +
         '<div class="linha-flex" style="margin-top:10px;">' +
-        '<select data-exsel="' + f.id + '" style="flex:2;min-width:170px;"><option value="">— exercício da biblioteca —</option>' + exOpts + "</select>" +
+        // cascata: tipo de treino → grupamento → exercício (sem rolar 1000 itens)
+        '<select data-exmov="' + f.id + '" style="flex:1;min-width:140px;"><option value="">Tipo de treino…</option>' +
+        ["Empurrar", "Puxar", "Agachar e pernas", "Dobradiça e quadril", "Core e estabilidade", "Cardio e condicionamento", "Mobilidade e alongamento", "Habilidade e outros"].map(function (m) { return "<option>" + m + "</option>"; }).join("") + "</select>" +
+        '<select data-exzona="' + f.id + '" style="flex:1;min-width:140px;"><option value="">Grupamento…</option></select>' +
+        '<select data-exsel="' + f.id + '" style="flex:2;min-width:170px;"><option value="">Exercício…</option></select>' +
         '<input data-exser="' + f.id + '" type="number" min="1" value="3" style="width:64px;" title="séries">' +
         '<span class="muted">×</span>' +
         '<input data-exrep="' + f.id + '" value="12" style="width:74px;" title="repetições (ex.: 12 ou 30s)">' +
@@ -2516,7 +2510,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<input data-exobs="' + f.id + '" placeholder="obs (opcional)" style="flex:1;min-width:110px;">' +
         '<button class="btn mini" data-additem="' + f.id + '">+ Adicionar</button></div></div>';
     }).join("");
+    t.fichas.forEach(function (f) { populaCascata(f.id); });
   }
+  // cascata da ficha: tipo de treino filtra os grupamentos, que filtram o exercício
+  function populaCascata(fid) {
+    var movSel = document.querySelector('[data-exmov="' + fid + '"]');
+    var zonaSel = document.querySelector('[data-exzona="' + fid + '"]');
+    var exSel = document.querySelector('[data-exsel="' + fid + '"]');
+    if (!movSel || !zonaSel || !exSel) return;
+    var st = load();
+    var mov = movSel.value;
+    var itens = listaUnificada(st).filter(function (x) { return !mov || x.mov === mov; });
+    var zonas = {};
+    itens.forEach(function (x) { zonas[x.grupo] = 1; });
+    var zonaAtual = zonas[zonaSel.value] ? zonaSel.value : "";
+    zonaSel.innerHTML = '<option value="">Grupamento…</option>' +
+      Object.keys(zonas).sort().map(function (z) { return "<option>" + esc(z) + "</option>"; }).join("");
+    zonaSel.value = zonaAtual;
+    var lista = itens.filter(function (x) { return !zonaAtual || x.grupo === zonaAtual; });
+    lista.sort(function (a, b) {
+      if (a.seu !== b.seu) return a.seu ? -1 : 1;
+      return a.nome < b.nome ? -1 : 1;
+    });
+    var atual = exSel.value;
+    exSel.innerHTML = '<option value="">Exercício… (' + lista.length + ")</option>" +
+      lista.map(function (x) { return '<option value="' + esc(x.nome) + '">' + esc(x.nome) + (x.seu ? " — SEU" : "") + "</option>"; }).join("");
+    if (lista.some(function (x) { return x.nome === atual; })) exSel.value = atual;
+  }
+  $("fichasBox").addEventListener("change", function (e) {
+    var fid = e.target.getAttribute && (e.target.getAttribute("data-exmov") || e.target.getAttribute("data-exzona"));
+    if (fid) populaCascata(fid);
+  });
   $("tAluno").addEventListener("change", renderFichas);
   $("tValidade").addEventListener("change", function () {
     var alunoId = $("tAluno").value;
@@ -2884,12 +2908,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var t = treinoDe(st, alunoId);
     if (add) {
       var sel = document.querySelector('[data-exsel="' + add + '"]');
-      if (!sel.value) { alert("Escolha um exercício da biblioteca."); return; }
-      var exIdSel = sel.value;
-      if (exIdSel.indexOf("cat:") === 0) {
-        // veio do catálogo TORQUE — entra na biblioteca do personal na hora
-        exIdSel = exercicioPorNome(st, exIdSel.slice(4)).id;
-      }
+      var nomeSel = (sel.value || "").trim();
+      if (!nomeSel) { alert("Escolha o exercício nas listas (tipo de treino → grupamento → exercício)."); return; }
+      // resolve pelo nome exato: seu personalizado primeiro, senão o catálogo (cria a cópia na hora)
+      var achadoSel = (st.exercicios || []).find(function (x) { return x.nome.toLowerCase() === nomeSel.toLowerCase(); });
+      var catSel = achadoSel ? null : (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nomeSel.toLowerCase(); });
+      if (!achadoSel && !catSel) { alert('Não achei "' + nomeSel + '" — escolha um exercício da lista.'); return; }
+      var exIdSel = achadoSel ? achadoSel.id : exercicioPorNome(st, catSel.n).id;
       var f = t.fichas.find(function (x) { return x.id === add; });
       f.itens.push({
         exId: exIdSel,
