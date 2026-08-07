@@ -429,6 +429,12 @@
   <section class="pagina" id="pgHome">
     <h1 id="hOla">Que bom ter você aqui!</h1>
     <p class="sub">Nesta tela estão os principais atalhos da sua operação.</p>
+    <div id="bannerFech" hidden class="painel" style="border-left: 4px solid var(--roxo); margin: 0 0 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <span style="font-size: 24px;" aria-hidden="true">📊</span>
+      <div style="flex: 1; min-width: 220px;"><strong>O mês fechou!</strong><br><span id="bannerFechTxt" style="font-size: 13px; color: var(--cinza);"></span></div>
+      <button class="btn-roxo" id="bannerFechVer">Ver fechamento</button>
+      <button class="btnzinho" id="bannerFechX" title="Dispensar até o mês que vem">✕</button>
+    </div>
     <div class="atalhos">
       <button class="atalho" data-ir="dashboard">Dashboard</button>
       <button class="atalho" data-abrir="alunos.html?acao=novo">+ Novo cadastro</button>
@@ -687,7 +693,36 @@
       "<div><span>Mensalidades vencendo hoje</span><strong>" + vencemHoje.length + " (" + S.fmtBRL(vencemHoje.reduce(function (t, r) { return t + (+r.valor || 0); }, 0)) + ")</strong></div>" +
       "<div><span>Contas a pagar vencendo hoje</span><strong>" + pagarHoje.length + " (" + S.fmtBRL(pagarHoje.reduce(function (t, c) { return t + (+c.valor || 0); }, 0)) + ")</strong></div>" +
       "<div><span>Manutenções agendadas para hoje</span><strong>" + manut.length + "</strong></div>";
+    pintaBannerFech();
   }
+
+  // ---------- banner do fechamento do mês (aparece do dia 1 ao 5) ----------
+  function pintaBannerFech(hojeStr) {
+    var el = $("bannerFech");
+    if (!el) return;
+    var hoje = hojeStr ? new Date(hojeStr + "T12:00") : new Date();
+    var chave = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0");
+    var mostra = hoje.getDate() <= 5 && localStorage.getItem("mtapp:fechVisto") !== chave;
+    el.hidden = !mostra;
+    if (mostra) {
+      var mesAnt = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 15);
+      $("bannerFechTxt").textContent = "O resumo de " + mesAnt.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) +
+        " está pronto: receita, novos × cancelados, inadimplência e comissões — dá pra mandar direto pro seu WhatsApp ou e-mail.";
+    }
+  }
+  function dispensaBannerFech() {
+    var hoje = new Date();
+    localStorage.setItem("mtapp:fechVisto", hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0"));
+    $("bannerFech").hidden = true;
+  }
+  $("bannerFechVer").onclick = function () {
+    dispensaBannerFech();
+    var item = document.querySelector('.menu .item[data-url="gerencial.html"]');
+    if (item) item.click(); else abreUrl("gerencial.html");
+  };
+  $("bannerFechX").onclick = dispensaBannerFech;
+  window.__bannerFech = pintaBannerFech; // testes
+  pintaBannerFech();
 
   // ---------- DASHBOARD ----------
   var dvAtiva = "clientes";

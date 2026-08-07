@@ -92,6 +92,14 @@ function ok(cond, nome) {
   ok(/Ticket médio/.test(mt), "painel mostra ticket médio");
   const metaFat = await p.evaluate(() => document.getElementById("mtFat").value);
   ok(metaFat === "10000", "metas salvas aparecem nos campos");
+  // 📤 fechamento do mês enviável (WhatsApp / e-mail / copiar)
+  const fech = await p.evaluate(() => window.__fechamentoMsg());
+  ok(/Fechamento de/.test(fech) && /Recebido \(mensalidades\): R\$\s?150/.test(fech), "resumo do fechamento traz a receita do mês (R$ 150)");
+  ok(/Novos contratos: 1 × cancelamentos: 0/.test(fech), "resumo conta novos × cancelados");
+  ok(/Inadimplência/.test(fech) && /Comissões/.test(fech) && /Resultado/.test(fech), "resumo traz inadimplência, comissões e resultado");
+  ok(await p.evaluate(() => !!document.getElementById("btnFechZap") && !!document.getElementById("btnFechEmail") && !!document.getElementById("btnFechCopia")), "botões de enviar o fechamento (zap, e-mail, copiar) presentes");
+  await p.evaluate(() => document.getElementById("btnFechEmail").click());
+  ok(await p.evaluate(() => /Entre na sua conta/.test(document.getElementById("fechStatus").textContent)), "sem nuvem, o envio por e-mail explica o que falta");
   await p.close();
 
   // ---------- 3) Indicações no Funil ----------
