@@ -919,6 +919,19 @@ async function abaPt(p, a) {
     ok(!xss.hit && !/onerror/.test(xss.html) && !/Fotos de progresso/.test(xss.html), "foto maliciosa vinda do app é descartada (anti-XSS)");
     await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig; });
   }
+  // abas do perfil (pra tela não ficar tumultuada)
+  {
+    const abas = await p.evaluate(() => {
+      window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id);
+      const vis = (id) => !document.getElementById(id).closest("[data-pfsec]").hidden;
+      const antes = { app: vis("pfAppDados"), cadastro: vis("pfNome"), fin: vis("pfFin") };
+      document.querySelector('#pfAbas [data-pfa="cadastro"]').click();
+      const depois = { app: vis("pfAppDados"), cadastro: vis("pfNome"), ativa: document.querySelector("#pfAbas .ativa").getAttribute("data-pfa") };
+      return { antes, depois, nBotoes: document.querySelectorAll("#pfAbas button").length };
+    });
+    ok(abas.nBotoes === 6 && abas.antes.app && !abas.antes.cadastro && !abas.antes.fin, "perfil abre na aba 📲 App do aluno com as outras seções escondidas");
+    ok(abas.depois.cadastro && !abas.depois.app && abas.depois.ativa === "cadastro", "clicar em 👤 Cadastro troca a seção e marca a aba ativa");
+  }
   await p.evaluate(() => document.getElementById("pfFechar").click());
   ok(await p.evaluate(() => document.getElementById("vPerfil").hidden && !document.getElementById("vAlunos").hidden), "← Voltar retorna pra lista de alunos");
 
@@ -1592,7 +1605,7 @@ async function abaPt(p, a) {
     });
     ok(validade === "2020-01-01", "campo ⏰ vale até grava a validade da ficha");
     // um save qualquer re-renderiza tudo (lista + alertas)
-    await p.evaluate(() => { window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id); });
+    await p.evaluate(() => { window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id); window.__pfAba("cadastro"); });
     await p.click("#pfSalvar");
     await p.waitForTimeout(250);
     ok(await p.evaluate(() => /TREINO VENCIDO/.test(document.getElementById("listaAlunos").textContent)), "ficha vencida ganha a etiqueta ⏰ TREINO VENCIDO na lista");
@@ -1604,7 +1617,8 @@ async function abaPt(p, a) {
       return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
     });
     ok(/Sua ficha venceu em/.test(appVencida) && /cobra o treino novo/.test(appVencida), "app do aluno avisa que a ficha venceu");
-    // diário de sessões (perfil ainda aberto)
+    // diário de sessões (perfil ainda aberto — muda pra aba Frequência)
+    await p.evaluate(() => window.__pfAba("freq"));
     await p.fill("#pfDiarioTxt", "Evoluiu no supino, dor leve no ombro D");
     await p.click("#pfDiarioAdd");
     await p.waitForTimeout(150);
