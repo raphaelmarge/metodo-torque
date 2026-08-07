@@ -73,6 +73,26 @@ function usuarioLogado(req: Request): boolean {
   }
 }
 
+// descobre a academia do usuário logado (pra etiquetar cobranças no Pagar.me —
+// o webhook usa essa etiqueta pra dar baixa automática no lugar certo)
+async function academiaDoUsuario(req: Request): Promise<string> {
+  try {
+    const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const sub = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).sub || "";
+    if (!sub) return "";
+    const srv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const url = Deno.env.get("SUPABASE_URL") || "";
+    if (!srv || !url) return "";
+    const r = await fetch(url + "/rest/v1/membros?select=academia_id&user_id=eq." + encodeURIComponent(sub) + "&limit=1", {
+      headers: { apikey: srv, Authorization: "Bearer " + srv },
+    });
+    const rows = await r.json().catch(() => []);
+    return (Array.isArray(rows) && rows[0] && rows[0].academia_id) || "";
+  } catch {
+    return "";
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ erro: "use POST" }, 405);
@@ -160,6 +180,7 @@ Deno.serve(async (req: Request) => {
         items: [{ amount: valor, description: String(body.descricao || "Mensalidade"), quantity: 1, code: "mensalidade" }],
         customer,
         payments,
+        metadata: { academia_id: await academiaDoUsuario(req) },
       }),
     });
     const dados: any = await resp.json().catch(() => ({}));
@@ -214,6 +235,7 @@ Deno.serve(async (req: Request) => {
         pricing_scheme: { scheme_type: "unit", price: valor },
       }],
       customer,
+      metadata: { academia_id: await academiaDoUsuario(req) },
     };
     // caller antigo (perfil do aluno) escolhe o dia do vencimento
     const dia = Number(body.diaVencimento) || 0;

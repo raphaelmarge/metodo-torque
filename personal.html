@@ -1817,6 +1817,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__pushAluno = pushAluno; // testes
 
+  // 🔁 baixa automática: pagamentos do cartão que o webhook Pagar.me registrou na nuvem
+  function puxaPagamentosCartao() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var st0 = load();
+    var ids = st0.alunos.filter(function (a) { return a.assinaturaRec && a.assinaturaRec.id; })
+      .map(function (a) { return a.assinaturaRec.id; });
+    if (!ids.length) return;
+    nuvem.client.from("pagarme_eventos").select("id,tipo,valor_centavos,assinatura_id,criado")
+      .in("assinatura_id", ids).order("criado", { ascending: true }).limit(200).then(function (r) {
+        if (!r || r.error || !r.data || !r.data.length) return;
+        var st = load();
+        var vistos = {};
+        (st.pagamentos || []).forEach(function (p) { if (p.eventoId) vistos[p.eventoId] = 1; });
+        var mudou = false;
+        r.data.forEach(function (ev) {
+          var a = st.alunos.find(function (x) { return x.assinaturaRec && x.assinaturaRec.id === ev.assinatura_id; });
+          if (!a) return;
+          if (ev.tipo === "charge.paid" && !vistos[ev.id]) {
+            st.pagamentos.push({ id: S.uid(), alunoId: a.id, valor: (ev.valor_centavos || 0) / 100, forma: "cartão 🔁", data: String(ev.criado || "").slice(0, 10) || S.todayISO(), eventoId: ev.id });
+            vistos[ev.id] = 1;
+            a.cartaoFalhouEm = ""; // pagou → limpa o alerta de recusa
+            mudou = true;
+          }
+          if (ev.tipo === "charge.payment_failed") { a.cartaoFalhouEm = String(ev.criado || "").slice(0, 10) || S.todayISO(); mudou = true; }
+        });
+        if (mudou) S.write("ptStudio", st);
+      });
+  }
+  window.__pagAuto = puxaPagamentosCartao; // testes
+  setTimeout(puxaPagamentosCartao, 3000);
+  setInterval(puxaPagamentosCartao, 120000);
+
   function marcaAppPendente(st, alunoId) {
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (a) a.appEditEm = new Date().toISOString();
@@ -2091,6 +2124,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (ct ? '<span class="muted">vence dia ' + ct.diaVenc + "</span>" : '<span class="muted">sem contrato</span>') +
         (atrasado ? '<span class="tag erro">ATRASADO</span>' : "") +
         (a.assinaturaRec ? '<span class="tag ok">🔁 no cartão</span>' : "") +
+        (a.cartaoFalhouEm ? '<span class="tag erro">⚠️ cartão recusado</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
         (valor && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + valor + '">Pix</button>' : "") +
         (valor ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + valor + '" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto)">💳 Link de pagamento</button>' : "") +

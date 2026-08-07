@@ -76,7 +76,14 @@
   </div>
 
   <div class="card">
-    <p><b style="color:#fff">Depois das seis publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>, <code>PAGARME_SECRET_KEY</code>, <code>PAGARME_PUBLIC_KEY</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
+    <h2>7 · pagarme-webhook <span class="tag off">Verify JWT: DESLIGAR</span></h2>
+    <p>Recebe do Pagar.me o aviso de <b style="color:#fff">pagamento caiu</b> (ou cartão recusado) e o sistema dá <b style="color:#fff">baixa sozinho</b> no financeiro. Depois do deploy: (1) desligue "Verify JWT" (Details); (2) crie o secret <code>PAGARME_WEBHOOK_TOKEN</code> com uma senha longa que você inventa; (3) no painel do pagar.me → Configurações → Webhooks, cadastre a URL <code>https://SEU-PROJETO.supabase.co/functions/v1/pagarme-webhook?t=SUA-SENHA</code> marcando os eventos <code>charge.paid</code>, <code>charge.payment_failed</code> e <code>order.paid</code>.</p>
+    <button class="btnx" data-copia="pagarme-webhook">Copiar o código (pagarme-webhook)</button>
+    <div class="status" data-st="pagarme-webhook"></div>
+  </div>
+
+  <div class="card">
+    <p><b style="color:#fff">Depois das sete publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>, <code>PAGARME_SECRET_KEY</code>, <code>PAGARME_PUBLIC_KEY</code>, <code>PAGARME_WEBHOOK_TOKEN</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
   </div>
 
   <div class="card">
@@ -89,7 +96,7 @@
 <script>
   var COD = {};        // nome -> código
   var ultima = "meta-webhook";
-  var NOMES = ["meta-webhook", "chat-envia", "whatsapp", "envia-email", "push-envia", "pagarme"];
+  var NOMES = ["meta-webhook", "chat-envia", "whatsapp", "envia-email", "push-envia", "pagarme", "pagarme-webhook"];
   var prontas = 0;
 
   NOMES.forEach(function (n) {

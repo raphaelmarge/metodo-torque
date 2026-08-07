@@ -272,6 +272,37 @@ const SEED = {
     linha: document.querySelector('#listaAlunos [data-id="a1"]').textContent,
   }));
   assert(assDep.temAtivar && !/no cartão/.test(assDep.linha), "cancelar limpa a assinatura, tira o chip e volta o botão de ativar");
+
+  // 🔁 baixa automática: evento pago do webhook quita o recebível aberto mais antigo
+  const baixaAcad = await pAss.evaluate(async () => {
+    const st = window.MTStore.read("alunos", {});
+    const a = (st.alunos || []).find((x) => x.id === "a1");
+    a.assinaturaRec = { id: "sub_hook_a", desde: window.MTStore.todayISO(), valor: 120 };
+    st.recebiveis = st.recebiveis || [];
+    st.recebiveis.push({ id: "rcv1", alunoId: "a1", valor: 120, vencimento: "2026-08-05", status: "aberto" });
+    window.MTStore.write("alunos", st);
+    window.__cloudOrigBA = window.MTStore.cloud;
+    const eventos = [
+      { id: "eva1", tipo: "charge.paid", valor_centavos: 12000, assinatura_id: "sub_hook_a", criado: "2026-08-05T09:00:00Z" },
+    ];
+    window.MTStore.cloud = () => ({
+      aid: "x",
+      client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) },
+    });
+    window.__pagAutoAcad();
+    await new Promise((res) => setTimeout(res, 300));
+    window.__pagAutoAcad();
+    await new Promise((res) => setTimeout(res, 300));
+    window.MTStore.cloud = window.__cloudOrigBA;
+    const st2 = window.MTStore.read("alunos", {});
+    const rec = st2.recebiveis.find((x) => x.id === "rcv1");
+    const out = { status: rec.status, forma: rec.forma, valorBaixa: rec.valorBaixa, eventoId: rec.eventoId, qtosPagos: st2.recebiveis.filter((x) => x.eventoId === "eva1").length };
+    delete (st2.alunos.find((x) => x.id === "a1") || {}).assinaturaRec;
+    st2.recebiveis = st2.recebiveis.filter((x) => x.id !== "rcv1");
+    window.MTStore.write("alunos", st2);
+    return out;
+  });
+  assert(baixaAcad.status === "pago" && /cartão/.test(baixaAcad.forma) && baixaAcad.valorBaixa === 120 && baixaAcad.qtosPagos === 1, "webhook: mensalidade paga quita o recebível sozinho (sem duplicar)");
   await pAss.close();
 
   console.log("— erros de página —");
