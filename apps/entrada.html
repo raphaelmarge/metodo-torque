@@ -9,11 +9,11 @@
 <link href="apps.css" rel="stylesheet">
 <style>
   .busca-grande input { font-size: 18px; padding: 14px 16px; width: 100%; }
-  .resultado { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); cursor: pointer; flex-wrap: wrap; }
+  .resultado { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: 1px solid var(--linha); cursor: pointer; flex-wrap: wrap; }
   .resultado + .resultado { margin-top: -1px; }
   .resultado:hover { background: var(--fundo); }
   .resultado .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
-  .painel-lib { border: 2px solid var(--linha); background: #fff; padding: 18px; }
+  .painel-lib { border: 2px solid var(--linha); background: var(--card); padding: 18px; }
   .painel-lib.ok { border-color: var(--ok); }
   .painel-lib.atencao { border-color: var(--alerta); }
   .painel-lib.bloq { border-color: var(--erro); }
@@ -21,7 +21,7 @@
   .aviso.erro { color: var(--erro); border-color: rgba(220,38,38,.4); background: rgba(220,38,38,.05); }
   .aviso.alerta { color: var(--alerta); border-color: rgba(217,119,6,.4); background: rgba(217,119,6,.06); }
   .aviso.info { color: var(--cinza); border-color: var(--linha); background: var(--fundo); }
-  .entrada-linha { display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; }
+  .entrada-linha { display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: var(--card); border: 1px solid var(--linha); font-size: 13.5px; }
   .entrada-linha + .entrada-linha { margin-top: -1px; }
   .entrada-linha .hora { font-weight: 800; font-variant-numeric: tabular-nums; }
   @media (max-width: 900px) { main.corpo { display: flex !important; flex-direction: column; } }

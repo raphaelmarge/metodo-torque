@@ -10,7 +10,7 @@
 <style>
   .colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   @media (max-width: 800px) { .colunas { grid-template-columns: 1fr; } }
-  .bloco { border: 1px solid var(--linha); background: #fff; margin-bottom: 14px; }
+  .bloco { border: 1px solid var(--linha); background: var(--card); margin-bottom: 14px; }
   .bloco h3 {
     margin: 0; padding: 10px 14px; background: var(--fundo); border-bottom: 1px solid var(--linha);
     font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--cinza);
@@ -23,7 +23,7 @@
   .verde { color: var(--ok); } .vermelho { color: var(--erro); }
   @media print {
     .topo, .no-print { display: none !important; }
-    body { background: #fff; }
+    body { background: #fff; color: #111; }
     .corpo { padding: 0; max-width: none; }
   }
 </style>

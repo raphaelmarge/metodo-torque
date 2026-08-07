@@ -14,13 +14,13 @@
   .nota-botoes { display: flex; gap: 5px; flex-wrap: wrap; }
   .nota-botoes button {
     width: 42px; height: 42px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
-    border: 1.5px solid var(--linha); background: #fff; border-radius: 4px;
+    border: 1.5px solid var(--linha); background: var(--card); border-radius: 4px;
   }
   .nota-botoes button.sel { color: #fff; border-color: transparent; }
   .nota-botoes button.sel.det { background: var(--erro); }
   .nota-botoes button.sel.neu { background: var(--alerta); }
   .nota-botoes button.sel.pro { background: var(--ok); }
-  .resp { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .resp { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: 1px solid var(--linha); flex-wrap: wrap; }
   .resp + .resp { margin-top: -1px; }
   .resp .nota { width: 40px; height: 40px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; flex: none; }
   .resp .quem { flex: 1; min-width: 170px; }

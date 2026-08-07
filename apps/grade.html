@@ -13,7 +13,7 @@
   .nav-data { display: flex; align-items: center; gap: 6px; }
   .nav-data strong { font-size: 14px; min-width: 190px; text-align: center; text-transform: capitalize; }
   .nav-data .btn.mini { padding: 6px 10px; }
-  .semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 1px solid var(--linha); background: #fff; overflow-x: auto; }
+  .semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 1px solid var(--linha); background: var(--card); overflow-x: auto; }
   .semana .col { border-right: 1px solid var(--linha); min-width: 130px; }
   .semana .col:last-child { border-right: none; }
   .semana .col-cab { padding: 9px 8px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--cinza); border-bottom: 2px solid var(--linha); }
@@ -21,7 +21,7 @@
   .semana .col.hoje .col-cab { color: var(--roxo); }
   .col-corpo { display: flex; flex-direction: column; gap: 8px; padding: 8px; min-height: 60px; }
   .aula-card {
-    background: #fff; border: 1px solid var(--linha); border-left: 4px solid var(--roxo);
+    background: var(--card); border: 1px solid var(--linha); border-left: 4px solid var(--roxo);
     padding: 8px 10px; cursor: pointer; font-size: 12px;
   }
   .aula-card:hover { box-shadow: 0 2px 8px rgba(18,16,22,.12); }
@@ -32,7 +32,7 @@
   .aula-card .nome { font-size: 13px; font-weight: 800; margin: 3px 0 1px; text-transform: uppercase; }
   .aula-card .sub { color: var(--cinza); font-size: 11.5px; }
   .aula-card.avulsa { border-style: dashed; }
-  .dia-lista { display: flex; flex-direction: column; border: 1px solid var(--linha); background: #fff; }
+  .dia-lista { display: flex; flex-direction: column; border: 1px solid var(--linha); background: var(--card); }
   .dia-hora { display: flex; border-bottom: 1px solid var(--linha); }
   .dia-hora:last-child { border-bottom: none; }
   .dia-hora .rotulo { width: 64px; flex: none; padding: 12px 10px; font-size: 13px; font-weight: 700; color: var(--cinza); border-right: 1px solid var(--linha); }
@@ -53,7 +53,7 @@
   @media (max-width: 760px) { .nav-data strong { min-width: 0; } .dia-hora .aula-card { width: 100%; } }
   @media print {
     .topo, .controles, .no-print { display: none !important; }
-    body { background: #fff; }
+    body { background: #fff; color: #111; }
     .corpo { padding: 0; max-width: none; }
   }
 </style>
