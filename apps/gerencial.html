@@ -22,7 +22,9 @@
   .kv strong { font-variant-numeric: tabular-nums; }
   .kv .sub-rotulo { font-weight: 700; color: var(--roxo); }
   .verde { color: var(--ok); } .vermelho { color: var(--erro); }
+  .only-print { display: none; }
   @media print {
+    .only-print { display: block; }
     .topo, .no-print { display: none !important; }
     body { background: #fff; color: #111; }
     .corpo { padding: 0; max-width: none; }

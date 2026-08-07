@@ -63,6 +63,11 @@
     #pfTopo .btn { width: 100%; }
     #pfTopo #pfDesde { grid-column: 1 / -1; }
     #pfTopo #pfTopoEspaco { display: none; }
+    /* avaliação física e questionários: mesma grade organizada */
+    #vAval .card .linha-flex, #vQuest .card .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    #vAval .card .linha-flex > *, #vQuest .card .linha-flex > * { width: 100% !important; min-width: 0 !important; }
+    #vAval .card .linha-flex select, #vQuest .card .linha-flex select,
+    #vAval .card .linha-flex .btn:not(.mini):not(.sec), #vQuest .card .linha-flex .btn:not(.mini):not(.sec) { grid-column: 1 / -1; }
   }
   .aluno-pt .quem { flex: 1; min-width: 160px; }
   .sessao-pt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
@@ -82,7 +87,7 @@
       <input id="buscaAluno" placeholder="🔍 Buscar aluno…" autocomplete="off"
         style="width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid #322e3d; background: #14121a; color: #fff; font-family: inherit; font-size: 13.5px;">
       <div id="buscaAlunoLista" hidden
-        style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: #1d1a24; border: 1px solid #322e3d; border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
+        style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
     <button class="hamb-pt" id="btnTemaPt" title="Alternar entre modo escuro e claro" style="font-size: 15px; padding: 8px 10px;">☀️</button>
   </div>
@@ -1405,7 +1410,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }).slice(0, 8);
     box.innerHTML = achou.length ? achou.map(function (a) {
       var pagoMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
-      return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid #322e3d;font-size:13.5px;'>" +
+      return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
         "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "#4ade80" : "#fbbf24") + ";'>" +
         (pagoMes ? "· pago" : "· em aberto") + "</span></div>";
     }).join("") : "<div style='padding:12px 14px;color:#8a8695;font-size:13px;'>Nenhum aluno com esse nome.</div>";
