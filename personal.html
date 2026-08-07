@@ -313,24 +313,25 @@
     </div>
 
     <div class="card">
-      <h2>Biblioteca de exercícios</h2>
+      <h2>Exercícios <span id="catN" class="muted" style="font-weight: 400;"></span></h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Catálogo TORQUE e os seus exercícios numa lista só, separada por <b>zona do corpo</b> e <b>tipo de movimento</b>. Toque em <b>Abrir</b> pra personalizar vídeo e dica — o personalizado ganha a etiqueta SEU e vale na frente do catálogo.</p>
       <div class="linha-flex" style="margin: 8px 0 10px;">
-        <input id="exNome" list="dlExCat" placeholder="Nome do exercício * (busque no catálogo TORQUE)" style="flex: 2; min-width: 170px;">
-        <datalist id="dlExCat"></datalist>
-        <input id="exGrupo" placeholder="Grupo (ex.: Peito)" list="exGrupos" style="flex: 1; min-width: 120px;">
-        <datalist id="exGrupos"><option>Peito</option><option>Costas</option><option>Pernas</option><option>Ombros</option><option>Braços</option><option>Core</option><option>Cardio</option></datalist>
-        <input id="exVideo" placeholder="Link do vídeo (YouTube)" style="flex: 2; min-width: 170px;">
-        <button class="btn" id="exAdd">+ Adicionar</button>
+        <input id="catBusca" placeholder="Buscar (ex.: agachamento, kettlebell…)" style="flex: 2; min-width: 170px;">
+        <select id="catGrupo" style="flex: 1; min-width: 140px;"><option value="">Todas as zonas</option></select>
+        <select id="catMov" style="flex: 1; min-width: 150px;"><option value="">Todos os movimentos</option></select>
       </div>
       <div id="exLista"></div>
       <div style="border-top: 1px solid var(--linha); margin-top: 14px; padding-top: 12px;">
-        <h2 style="font-size: 14px;">Catálogo TORQUE <span id="catN" class="muted" style="font-weight: 400;"></span></h2>
-        <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">Banco compartilhado que cresce todo dia — toque em <b>+ usar</b> e o exercício entra na sua biblioteca com grupo e dica de execução.</p>
+        <h2 style="font-size: 14px;">Cadastrar um exercício seu</h2>
+        <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">Pra algo que não existe no catálogo (ex.: um circuito próprio do studio).</p>
         <div class="linha-flex" style="margin: 8px 0 10px;">
-          <input id="catBusca" placeholder="Buscar (ex.: agachamento, kettlebell…)" style="flex: 2; min-width: 170px;">
-          <select id="catGrupo" style="flex: 1; min-width: 140px;"><option value="">Todos os grupos</option></select>
+          <input id="exNome" list="dlExCat" placeholder="Nome do exercício *" style="flex: 2; min-width: 170px;">
+          <datalist id="dlExCat"></datalist>
+          <input id="exGrupo" placeholder="Zona (ex.: Peito)" list="exGrupos" style="flex: 1; min-width: 120px;">
+          <datalist id="exGrupos"><option>Peito</option><option>Costas</option><option>Pernas</option><option>Ombros</option><option>Braços</option><option>Core</option><option>Cardio</option></datalist>
+          <input id="exVideo" placeholder="Link do vídeo (YouTube)" style="flex: 2; min-width: 170px;">
+          <button class="btn" id="exAdd">+ Adicionar</button>
         </div>
-        <div id="catLista"></div>
       </div>
     </div>
 
@@ -2961,73 +2962,99 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     window.open("https://wa.me/" + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto), "_blank");
   });
 
-  // ---------- biblioteca de exercícios ----------
+  // ---------- exercícios: catálogo TORQUE + os seus, uma lista só ----------
   var exEditando = null;
-  function renderBiblioteca() {
-    var st = load();
-    var el = $("exLista");
-    if (!st.exercicios.length) { el.innerHTML = '<div class="muted">Sua biblioteca está vazia — puxe exercícios do Catálogo TORQUE logo abaixo (+ usar) ou cadastre um acima.</div>'; return; }
-    var porGrupo = {};
-    st.exercicios.forEach(function (e) { (porGrupo[e.grupo || "Geral"] = porGrupo[e.grupo || "Geral"] || []).push(e); });
-    el.innerHTML = Object.keys(porGrupo).sort().map(function (g) {
-      return "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;'>" + esc(g) + "</div>" +
-        porGrupo[g].map(function (e) {
-          return '<div class="sessao-pt"><b>' + esc(e.nome) + "</b>" +
-            (e.video ? "<span title='tem vídeo'>🎬</span>" : '<span class="muted" style="font-size:11.5px;">sem vídeo</span>') +
-            (e.descricao ? "" : '<span class="tag alerta" style="font-size:10px;">sem descrição</span>') +
-            '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
-            '<button class="btn sec mini" data-exedit="' + e.id + '">Abrir</button>' +
-            '<button class="btn sec mini" data-exrm="' + e.id + '">✕</button></span></div>';
-        }).join("");
-    }).join("");
+  // tipo de movimento derivado do nome (com reforço da zona/grupo)
+  function movimentoDe(nome, grupo) {
+    var n = " " + String(nome).toLowerCase() + " ";
+    var tem = function (ks) { return ks.some(function (k) { return n.indexOf(k) >= 0; }); };
+    if (tem(["alongamento", "mobilidade", "liberação", "rotação torácica", "cat-cow", "gato e camelo", "escorpião"])) return "Mobilidade e alongamento";
+    if (tem(["prancha", "abdominal", "hollow", "dead bug", "bird dog", "pallof", "rollout", "russian", "twist", "elevação de pernas", "canivete", "superman", "anti-rota", "ponte lateral"])) return "Core e estabilidade";
+    if (tem(["corrida", "esteira", "bike", "bicicleta", "elíptico", "transport", "ergômetro", "burpee", "polichinelo", "corda", "sprint", "tiro de", "escada", "mountain climber", "caminhada", "hiit", "circuito", "skipping", "jump"])) return "Cardio e condicionamento";
+    if (tem(["agachamento", "leg press", "afundo", "avanço", "passada", "búlgaro", "extensora", "hack", "pistol", "subida no banco", "step up", "sissy", "wall sit", "panturrilha"])) return "Agachar e pernas";
+    if (tem(["terra", "stiff", "romeno", "elevação pélvica", "hip thrust", "bom dia", "swing", "flexora", "glúteo", "coice", "abdução", "adução", "pull through", "hiperextensão", "ponte de"])) return "Dobradiça e quadril";
+    if (tem(["remada", "puxada", "barra fixa", "pull", "rosca", "encolhimento", "invertido", "serrote", "pulôver", "pullover"])) return "Puxar";
+    if (tem(["supino", "flexão de braço", "desenvolvimento", "press", "paralela", "mergulho", "crucifixo", "crossover", "cross over", "voador", "tríceps", "testa", "francês", "elevação lateral", "elevação frontal", "arnold", "push"])) return "Empurrar";
+    var G = { "Peito": "Empurrar", "Ombros": "Empurrar", "Tríceps": "Empurrar", "Costas": "Puxar", "Bíceps": "Puxar",
+      "Quadríceps": "Agachar e pernas", "Pernas": "Agachar e pernas", "Posterior e glúteo": "Dobradiça e quadril",
+      "Core": "Core e estabilidade", "Cardio": "Cardio e condicionamento", "Mobilidade e alongamento": "Mobilidade e alongamento" };
+    return G[grupo] || "Habilidade e outros";
   }
-  // navegador do catálogo TORQUE (banco compartilhado de exercícios)
-  (function () {
-    var grupos = {};
-    (self.MT_EXERCICIOS || []).forEach(function (c) { grupos[c.g] = 1; });
-    $("catGrupo").innerHTML = '<option value="">Todos os grupos</option>' +
-      Object.keys(grupos).sort().map(function (g) { return "<option>" + esc(g) + "</option>"; }).join("");
-    $("catN").textContent = "· " + (self.MT_EXERCICIOS || []).length + " exercícios";
-  })();
   // vídeo demonstrativo: busca pronta no YouTube quando não há vídeo próprio
   // (nunca quebra — sempre existe demonstração pros nomes do catálogo)
   function videoBusca(nome) {
     return "https://www.youtube.com/results?search_query=" + encodeURIComponent("como fazer " + nome + " exercício execução correta");
   }
-
-  function renderCatalogo() {
-    var st = load();
+  // lista única: os seus personalizados vencem o catálogo (mesmo nome)
+  function listaUnificada(st) {
     var meus = {};
     (st.exercicios || []).forEach(function (e) { meus[e.nome.toLowerCase()] = 1; });
+    // o personalizado herda o equipamento do catálogo (senão some da busca por "kettlebell" etc.)
+    var catPorNome = {};
+    (self.MT_EXERCICIOS || []).forEach(function (c) { catPorNome[c.n.toLowerCase()] = c; });
+    var itens = (st.exercicios || []).map(function (e) {
+      return { nome: e.nome, grupo: e.grupo || "Geral", eq: (catPorNome[e.nome.toLowerCase()] || {}).eq || "", video: e.video || "", id: e.id, seu: true, semDesc: !e.descricao, mov: movimentoDe(e.nome, e.grupo) };
+    });
+    (self.MT_EXERCICIOS || []).forEach(function (c) {
+      if (meus[c.n.toLowerCase()]) return;
+      itens.push({ nome: c.n, grupo: c.g, eq: c.eq || "", video: "", id: null, seu: false, semDesc: false, mov: movimentoDe(c.n, c.g) });
+    });
+    return itens;
+  }
+  function renderBiblioteca() {
+    var st = load();
     var busca = ($("catBusca").value || "").trim().toLowerCase();
-    var grupo = $("catGrupo").value;
-    var lista = (self.MT_EXERCICIOS || []).filter(function (c) {
-      if (grupo && c.g !== grupo) return false;
-      if (busca && (c.n + " " + c.g + " " + c.eq).toLowerCase().indexOf(busca) === -1) return false;
+    var zona = $("catGrupo").value;
+    var mov = $("catMov").value;
+    var itens = listaUnificada(st).filter(function (x) {
+      if (zona && x.grupo !== zona) return false;
+      if (mov && x.mov !== mov) return false;
+      if (busca && (x.nome + " " + x.grupo + " " + x.eq + " " + x.mov).toLowerCase().indexOf(busca) === -1) return false;
       return true;
     });
-    var corte = lista.slice(0, 24);
-    $("catLista").innerHTML = (corte.map(function (c) {
-      var ja = meus[c.n.toLowerCase()];
-      return '<div class="sessao-pt"><b>' + esc(c.n) + '</b><span class="muted" style="font-size:12px;">' + esc(c.g + " · " + c.eq) + "</span>" +
+    // os seus primeiro dentro de cada zona; depois ordem alfabética
+    itens.sort(function (a, b) {
+      if (a.grupo !== b.grupo) return a.grupo < b.grupo ? -1 : 1;
+      if (a.seu !== b.seu) return a.seu ? -1 : 1;
+      return a.nome < b.nome ? -1 : 1;
+    });
+    var corte = itens.slice(0, 40);
+    var html = "", zonaAtual = null;
+    corte.forEach(function (x) {
+      if (x.grupo !== zonaAtual) {
+        zonaAtual = x.grupo;
+        html += "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;'>" + esc(zonaAtual) + "</div>";
+      }
+      html += '<div class="sessao-pt"><b>' + esc(x.nome) + "</b>" +
+        '<span class="muted" style="font-size:12px;">' + esc(x.mov + (x.eq ? " · " + x.eq : "")) + "</span>" +
+        (x.seu ? '<span class="tag ok" style="font-size:10px;">SEU</span>' : "") +
+        (x.seu && x.semDesc ? '<span class="tag alerta" style="font-size:10px;">sem descrição</span>' : "") +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;align-items:center;">' +
-        '<a class="btn mini sec" style="text-decoration:none;" target="_blank" rel="noopener" href="' + videoBusca(c.n) + '">▶ vídeo</a>' +
-        (ja ? '<span class="tag ok" style="font-size:10px;">NA BIBLIOTECA ✓</span>' : '<button class="btn mini" data-catusa="' + esc(c.n) + '">+ usar</button>') + "</span></div>";
-    }).join("") || '<div class="muted">Nada com essa busca — tente outra palavra.</div>') +
-      (lista.length > corte.length ? '<div class="muted" style="padding:8px 0;">Mostrando 24 de ' + lista.length + " — refine a busca pra ver o resto.</div>" : "");
+        '<a class="btn mini sec" style="text-decoration:none;" target="_blank" rel="noopener" href="' + esc(x.video || videoBusca(x.nome)) + '">▶ vídeo</a>' +
+        (x.seu
+          ? '<button class="btn sec mini" data-exedit="' + x.id + '">Abrir</button><button class="btn sec mini" data-exrm="' + x.id + '">✕</button>'
+          : '<button class="btn sec mini" data-exabrir="' + esc(x.nome) + '">Abrir</button>') +
+        "</span></div>";
+    });
+    $("exLista").innerHTML = (html || '<div class="muted">Nada com esses filtros — tente outra busca.</div>') +
+      (itens.length > corte.length ? '<div class="muted" style="padding:8px 0;">Mostrando 40 de ' + itens.length + " — refine a busca ou os filtros pra ver o resto.</div>" : "");
   }
-  $("catBusca").addEventListener("input", renderCatalogo);
-  $("catGrupo").addEventListener("change", renderCatalogo);
-  $("catLista").addEventListener("click", function (e) {
-    var usa = e.target.getAttribute && e.target.getAttribute("data-catusa");
-    if (!usa) return;
-    var st = load();
-    exercicioPorNome(st, usa);
-    S.write("ptStudio", st);
-    renderBiblioteca(); renderFichas(); renderCatalogo();
-  });
-  renderCatalogo();
-  window.__catalogoPT = renderCatalogo; // testes
+  function renderCatalogo() { renderBiblioteca(); } // nome antigo — chamadas espalhadas continuam valendo
+  // filtros: zonas (grupos reais do banco) e tipos de movimento
+  (function () {
+    var zonas = {};
+    (self.MT_EXERCICIOS || []).forEach(function (c) { zonas[c.g] = 1; });
+    $("catGrupo").innerHTML = '<option value="">Todas as zonas</option>' +
+      Object.keys(zonas).sort().map(function (g) { return "<option>" + esc(g) + "</option>"; }).join("");
+    var movs = ["Empurrar", "Puxar", "Agachar e pernas", "Dobradiça e quadril", "Core e estabilidade", "Cardio e condicionamento", "Mobilidade e alongamento", "Habilidade e outros"];
+    $("catMov").innerHTML = '<option value="">Todos os movimentos</option>' + movs.map(function (m) { return "<option>" + esc(m) + "</option>"; }).join("");
+    $("catN").textContent = "· " + (self.MT_EXERCICIOS || []).length + " do catálogo TORQUE + os seus";
+  })();
+  $("catBusca").addEventListener("input", renderBiblioteca);
+  $("catGrupo").addEventListener("change", renderBiblioteca);
+  $("catMov").addEventListener("change", renderBiblioteca);
+  window.__catalogoPT = renderBiblioteca; // testes
+  window.__movimentoDe = movimentoDe; // testes
   $("exAdd").addEventListener("click", function () {
     var nome = $("exNome").value.trim();
     if (!nome) { alert("Escreva o nome do exercício."); return; }
@@ -3040,6 +3067,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("exLista").addEventListener("click", function (e) {
     var ed = e.target.getAttribute && e.target.getAttribute("data-exedit");
     var rm = e.target.getAttribute && e.target.getAttribute("data-exrm");
+    // Abrir num item do catálogo: vira cópia personalizada (SEU) e abre o editor
+    var abrir = e.target.getAttribute && e.target.getAttribute("data-exabrir");
+    if (abrir) {
+      var stAb = load();
+      var exAb = exercicioPorNome(stAb, abrir);
+      S.write("ptStudio", stAb);
+      renderBiblioteca(); renderFichas();
+      ed = exAb.id;
+    }
     if (ed) {
       var st = load();
       var ex = exPorId(st, ed);

@@ -272,27 +272,49 @@ async function abaPt(p, a) {
   const kpis = await p.evaluate(() => document.getElementById("kpis").textContent);
   ok(/1/.test(kpis) && /400/.test(kpis), "KPIs: 1 aluno ativo e R$ 400 no mês");
 
-  // treinos por seleção: biblioteca semeada + editar exercício (sub-página) + montar ficha
+  // exercícios: catálogo TORQUE + os seus numa lista só, por zona e movimento
   await abaPt(p, "treinos");
   const bib = await p.evaluate(() => document.getElementById("exLista").textContent);
-  ok(/Supino reto/.test(bib) && /Agachamento livre/.test(bib), "biblioteca vem semeada com básicos");
-
-  // catálogo TORQUE alimenta o módulo: navegador na Biblioteca + seletor da ficha
+  ok(/SEU/.test(bib) && /Mostrando 40 de/.test(bib), "lista única mostra os seus (etiqueta SEU) junto com o catálogo");
   const cat = await p.evaluate(() => ({
     n: document.getElementById("catN").textContent,
-    lista: document.getElementById("catLista").textContent,
-    grupos: document.getElementById("catGrupo").options.length,
+    zonas: document.getElementById("catGrupo").options.length,
+    movs: Array.from(document.getElementById("catMov").options).map((o) => o.value),
   }));
   ok(+(cat.n.match(/\d+/) || [0])[0] >= 200, "catálogo TORQUE anunciado com 200+ exercícios (" + cat.n.trim() + ")");
-  ok(/usar/.test(cat.lista) && cat.grupos >= 10, "navegador do catálogo com botão + usar e filtro de grupos");
+  ok(cat.zonas >= 10 && cat.movs.includes("Empurrar") && cat.movs.includes("Dobradiça e quadril"), "filtros de zona do corpo e tipo de movimento presentes");
+  // filtro por movimento: Puxar mostra remada e esconde supino
+  const porMov = await p.evaluate(() => {
+    document.getElementById("catMov").value = "Puxar";
+    window.__catalogoPT();
+    const t = document.getElementById("exLista").textContent;
+    document.getElementById("catMov").value = "";
+    return t;
+  });
+  ok(/Rosca|Remada|Puxada/.test(porMov) && !/Supino reto com barra/.test(porMov), "filtro por movimento funciona (Puxar mostra puxadas, esconde supino)");
+  // classificador de movimento acerta os padrões principais
+  const movs = await p.evaluate(() => [
+    window.__movimentoDe("Supino reto com barra", "Peito"),
+    window.__movimentoDe("Remada curvada com barra", "Costas"),
+    window.__movimentoDe("Levantamento terra romeno", "Posterior e glúteo"),
+    window.__movimentoDe("Agachamento búlgaro", "Quadríceps"),
+    window.__movimentoDe("Prancha com elevação", "Core"),
+  ]);
+  ok(movs[0] === "Empurrar" && movs[1] === "Puxar" && movs[2] === "Dobradiça e quadril" && movs[3] === "Agachar e pernas" && movs[4] === "Core e estabilidade",
+    "classificador: supino=Empurrar, remada=Puxar, terra=Dobradiça, búlgaro=Agachar, prancha=Core");
+  // Abrir num item do catálogo cria a cópia personalizada (SEU) e abre o editor
   await p.fill("#catBusca", "kettlebell");
   await p.waitForTimeout(150);
   const antesUsa = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length);
-  await p.click('#catLista [data-catusa]');
-  await p.waitForTimeout(150);
-  const depoisUsa = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length);
-  ok(depoisUsa === antesUsa + 1, "+ usar puxa o exercício do catálogo pra biblioteca (com grupo e dica)");
-  ok(await p.evaluate(() => /NA BIBLIOTECA/.test(document.getElementById("catLista").textContent)), "item usado ganha etiqueta NA BIBLIOTECA");
+  await p.click('#exLista [data-exabrir]');
+  await p.waitForTimeout(200);
+  const depoisUsa = await p.evaluate(() => ({
+    n: JSON.parse(localStorage.getItem("mtapp:ptStudio")).exercicios.length,
+    dlg: document.getElementById("dlgEx").open,
+  }));
+  ok(depoisUsa.n === antesUsa + 1 && depoisUsa.dlg, "Abrir no catálogo vira exercício SEU (com dica) e abre o editor");
+  await p.evaluate(() => document.getElementById("dlgEx").close());
+  ok(await p.evaluate(() => /SEU/.test(document.getElementById("exLista").textContent)), "item personalizado ganha etiqueta SEU na lista");
   await p.fill("#catBusca", "");
   await p.waitForTimeout(150);
 
@@ -303,6 +325,9 @@ async function abaPt(p, a) {
     window.__supinoId = supino.id;
   });
   const supinoId = await p.evaluate(() => window.__supinoId);
+  // a lista unificada corta em 40 — busca primeiro pro Supino aparecer
+  await p.fill("#catBusca", "Supino reto");
+  await p.waitForTimeout(200);
   await p.click('[data-exedit="' + supinoId + '"]');
   await p.fill("#dxVideo", "https://youtube.com/watch?v=abc123");
   await p.click('#dlgEx button[value="ok"]');
