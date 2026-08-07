@@ -34,12 +34,12 @@
 <div id="form">
   <span class="k" id="marca">CHECK-IN</span>
   <h1 id="qNome">Questionário</h1>
-  <p class="sub">Responde rapidinho — suas respostas vão direto pro seu treinador. 💜</p>
+  <p class="sub" id="subIntro">Responde rapidinho — suas respostas vão direto pro seu treinador. 💜</p>
   <div id="perguntas"></div>
   <button class="btnx" id="btnEnviar">Enviar respostas ➤</button>
   <div id="erro"></div>
 </div>
-<div id="fim"><div class="e">🎉</div><h1>Respostas enviadas!</h1><p class="sub">Valeu! Seu treinador já recebeu. Pode fechar esta página.</p></div>
+<div id="fim"><div class="e">🎉</div><h1>Respostas enviadas!</h1><p class="sub" id="subFim">Valeu! Seu treinador já recebeu. Pode fechar esta página.</p></div>
 
 <script src="assets/cloud-config.js"></script>
 <script>
@@ -55,11 +55,24 @@
   if (!Q || !TOKEN || !(Q.ps || []).length) {
     document.body.innerHTML = "<div style='text-align:center;padding:80px 20px;'><div style='font-size:44px;'>🤔</div>" +
       "<h1 style='font-size:20px;margin-top:10px;'>Link incompleto</h1>" +
-      "<p style='color:#a9a4b5;margin-top:8px;'>Peça pro seu treinador enviar o link do questionário de novo.</p></div>";
+      "<p style='color:#a9a4b5;margin-top:8px;'>Peça pra quem te acompanha enviar o link do questionário de novo.</p></div>";
     return;
   }
   if (Q.marca) $("#marca").textContent = String(Q.marca).toUpperCase() + " · CHECK-IN";
   $("#qNome").textContent = Q.nome || "Questionário";
+  // quem acompanha (treinador ou nutricionista) e tema do módulo (violeta ou verde)
+  var QUEM = String(Q.quem || "treinador").slice(0, 30);
+  var VERDE = Q.tema === "verde";
+  $("#subIntro").textContent = "Responde rapidinho — suas respostas vão direto pro seu " + QUEM + ". " + (VERDE ? "💚" : "💜");
+  $("#subFim").textContent = "Valeu! Seu " + QUEM + " já recebeu. Pode fechar esta página.";
+  if (VERDE) {
+    var estilo = document.createElement("style");
+    estilo.textContent = ".k{color:#4ade80!important;}" +
+      ".op.sel{border-color:#16a34a!important;background:rgba(22,163,74,.16)!important;}" +
+      ".linear button.sel{background:#16a34a!important;border-color:#16a34a!important;}" +
+      ".btnx{background:linear-gradient(135deg,#16a34a,#15803d)!important;box-shadow:0 10px 30px -12px #16a34a!important;}";
+    document.head.appendChild(estilo);
+  }
 
   var respostas = {};
   $("#perguntas").innerHTML = Q.ps.map(function (p, i) {
@@ -122,7 +135,7 @@
         btn.disabled = false; btn.textContent = "Enviar respostas ➤";
         var eMsg = (d && d.erro) ? d.erro : "Não deu — tenta de novo em instantes.";
         // erro técnico vira recado acionável pro aluno
-        if (/app não encontrado|token inválido/.test(eMsg)) eMsg = "Este link precisa ser gerado de novo pelo seu treinador (com a conta dele conectada) — manda um alô pra ele! 🙏";
+        if (/app não encontrado|token inválido/.test(eMsg)) eMsg = "Este link precisa ser gerado de novo pelo seu " + QUEM + " (com a conta conectada) — manda um alô! 🙏";
         $("#erro").textContent = eMsg;
       }
     }).catch(function () {

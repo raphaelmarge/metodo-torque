@@ -479,6 +479,73 @@ async function abaNt(p, a) {
   }
   ok(await p.evaluate(() => { const st = JSON.parse(localStorage.getItem("mtapp:ntStudio")); return (st.consultas || []).length === 1; }), "consulta salva no ntStudio");
 
+  // check-ins do paciente (questionários estilo LiveClin)
+  console.log("Check-ins do paciente:");
+  await abaNt(p, "quest");
+  ok(await p.evaluate(() => !document.getElementById("vQuestN").hidden), "aba Check-ins abre");
+  const qSeed = await p.evaluate(() => ({
+    perguntas: document.getElementById("qpListaN").textContent,
+    lista: document.getElementById("qqListaN").textContent,
+  }));
+  ok(/ADES/.test(qSeed.perguntas) && /FOME/.test(qSeed.perguntas) && /AGUA/.test(qSeed.perguntas) && /INTES/.test(qSeed.perguntas), "perguntas padrão de nutrição já vêm prontas (adesão, fome, intestino, água…)");
+  ok(/Check-in semanal/.test(qSeed.lista), "check-in semanal montado sozinho na primeira visita");
+  await p.fill("#qpSiglaN", "trein");
+  await p.fill("#qpTituloN", "Treino");
+  await p.selectOption("#qpTipoN", "linear");
+  await p.fill("#qpTextoN", "De 0 a 10, quanto você treinou essa semana?");
+  await p.click("#qpAddN");
+  ok(/TREIN/.test(await p.evaluate(() => document.getElementById("qpListaN").textContent)), "pergunta nova salva com sigla em maiúsculas (TREIN)");
+  await p.selectOption("#qePacienteN", { index: 1 });
+  await p.selectOption("#qeQuestN", { index: 1 });
+  await p.click("#qeGerarN");
+  const linkQN = await p.evaluate(() => document.getElementById("qeLinkN").value);
+  ok(/quest\.html\?t=.+&q=/.test(linkQN), "link do check-in gerado com token e payload");
+  ok(await p.evaluate(() => /Entre na sua conta/.test(document.getElementById("qeAvisoN").textContent)), "sem nuvem o gerador avisa que as respostas não chegam");
+  const payloadQN = await p.evaluate(() => {
+    const q = new URL(document.getElementById("qeLinkN").value).searchParams.get("q");
+    return JSON.parse(decodeURIComponent(escape(atob(q.replace(/-/g, "+").replace(/_/g, "/")))));
+  });
+  ok(payloadQN.quem === "nutricionista" && payloadQN.tema === "verde" && payloadQN.ps.length >= 6, "payload leva tema verde e fala 'nutricionista' (não treinador)");
+  // com nuvem: gerar o link publica o app do paciente junto
+  {
+    const pubN = await p.evaluate(async () => {
+      window.__cloudOrig = window.MTStore.cloud;
+      let upsertRow = null;
+      window.MTStore.cloud = () => ({ aid: "acad-n", client: { from: (tb) => ({ upsert: (rows) => { upsertRow = { tb, row: rows[0] }; return Promise.resolve({ error: null }); } }) } });
+      document.getElementById("qeGerarN").click();
+      await new Promise((res) => setTimeout(res, 300));
+      window.MTStore.cloud = window.__cloudOrig;
+      return { tb: upsertRow && upsertRow.tb, temHtml: !!(upsertRow && upsertRow.row.dados && upsertRow.row.dados.html && upsertRow.row.dados.html.length > 10000), aviso: document.getElementById("qeAvisoN").textContent };
+    });
+    ok(pubN.tb === "app_aluno" && pubN.temHtml && /Tudo pronto/.test(pubN.aviso), "gerar com a nuvem publica o app do paciente junto");
+  }
+  // paciente abre o link: tema verde e texto falando do nutricionista
+  {
+    const pqn = await ctx.newPage();
+    await pqn.goto(linkQN);
+    const telaN = await pqn.evaluate(() => document.body.textContent);
+    ok(/Check-in semanal/.test(telaN) && /nutricionista/.test(telaN) && /fome/i.test(telaN), "página do paciente mostra o check-in falando do nutricionista");
+    ok(await pqn.evaluate(() => getComputedStyle(document.querySelector(".btnx")).backgroundImage.includes("22, 163, 74")), "botão de enviar fica verde (tema do Nutri)");
+    await pqn.close();
+  }
+  // respostas aparecem no módulo (nuvem simulada)
+  {
+    await p.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      const pc = st.pacientes[0];
+      window.__cloudOrig = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [{
+        token: pc.appTokenN, questionario: "Check-in semanal", criado: new Date().toISOString(),
+        dados: { pontuacao: 3, respostas: [{ sigla: "FOME", resposta: "Bom", pontos: 1 }, { sigla: "AGUA", resposta: "2", pontos: 2 }] },
+      }] }) }) }) }) } });
+      window.__questNT.respostas();
+    });
+    await p.waitForTimeout(300);
+    const respN = await p.evaluate(() => document.getElementById("qRespostasN").textContent);
+    ok(/Bruno Paciente/.test(respN) && /\+3 pts/.test(respN) && /FOME/.test(respN), "resposta aparece com paciente, pontuação e siglas");
+    await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig; });
+  }
+
   // chat no módulo (sem conta: orienta; estrutura pronta)
   await abaNt(p, "chat");
   ok(await p.evaluate(() => !document.getElementById("vChatN").hidden), "aba Chat abre a tela de conversas");
