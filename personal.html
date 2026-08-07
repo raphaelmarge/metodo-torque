@@ -620,7 +620,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <div id="pfAssinaturaBox" style="margin-top: 10px; font-size: 13px;"></div>
   </div>
 
-  <div class="card">
+  <div class="abas" id="pfAbas" style="margin: 12px 0;">
+    <button data-pfa="app" class="ativa">📲 App do aluno</button>
+    <button data-pfa="cadastro">👤 Cadastro</button>
+    <button data-pfa="fin">💰 Financeiro</button>
+    <button data-pfa="freq">📅 Frequência</button>
+    <button data-pfa="aval">📈 Avaliações</button>
+    <button data-pfa="treino">🏋️ Treino</button>
+  </div>
+
+  <div class="card" data-pfsec="cadastro">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Cadastro completo</h2>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
       <label style="font-size: 12px; margin: 0;">Nome<input id="pfNome" style="display:block; width: 200px; margin-top: 3px;"></label>
@@ -642,7 +651,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <span id="pfSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
   </div>
 
-  <div class="card">
+  <div class="card" data-pfsec="cadastro">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Anamnese completa</h2>
     <span id="pfParqBadge" style="font-size: 12.5px; font-weight: 800;"></span>
 
@@ -687,23 +696,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <span id="pfAnSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
   </div>
 
-  <div class="card">
+  <div class="card" data-pfsec="app">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">📲 Direto do app do aluno</h2>
     <p class="muted" style="font-size: 12.5px; margin: 4px 0 8px;">O que o aluno registra no app dele (peso na balança, cargas, treinos e fotos) aparece aqui sozinho quando os dois estão com internet.</p>
     <div id="pfAppDados" class="muted" style="font-size: 13px;">Carregando…</div>
   </div>
 
-  <div class="card">
+  <div class="card" data-pfsec="fin">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Financeiro</h2>
     <div id="pfFin" style="font-size: 13.5px; line-height: 1.7; margin-top: 6px;"></div>
   </div>
 
-  <div class="card">
+  <div class="card" data-pfsec="freq">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Frequência de treino</h2>
     <div id="pfFreq" style="margin-top: 6px;"></div>
   </div>
 
-  <div class="card">
+  <div class="card" data-pfsec="aval">
     <div style="display: flex; align-items: center; gap: 10px;">
       <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase; margin: 0;">Avaliações físicas — relatório e evolução</h2>
       <button class="btn mini" id="pfRelPdf" style="margin-left: auto;" title="abre o relatório pronto pra imprimir ou salvar em PDF">📄 Relatório PDF</button>
@@ -711,7 +720,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <div id="pfPeso" class="muted" style="font-size: 13px; margin-top: 6px;"></div>
   </div>
 
-  <div class="card">
+  <div class="card" data-pfsec="freq">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">📔 Diário de sessões</h2>
     <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
       <input id="pfDiarioTxt" placeholder="ex.: evoluiu no supino, dor leve no ombro D, ajustar pegada" style="flex: 1; min-width: 200px;">
@@ -720,7 +729,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <div id="pfDiarioLista" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 8px;">Nenhuma anotação ainda — anote em 10 segundos como foi a sessão de hoje.</div>
   </div>
 
-  <div class="card">
+  <div class="card" data-pfsec="treino">
     <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Ficha atual</h2>
     <div id="pfFicha" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 6px;"></div>
   </div>
@@ -945,11 +954,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<div style='font-size:10px;color:#8a8695;margin-top:3px;'>" + m.rot + "</div></div>";
     }).join("") + "</div>";
   }
+  // abas do perfil (pra tela não ficar tumultuada — pedido do Raphael)
+  function mostraPfAba(aba) {
+    document.querySelectorAll("#vPerfil [data-pfsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pfsec") !== aba; });
+    document.querySelectorAll("#pfAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-pfa") === aba); });
+  }
+  $("pfAbas").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-pfa]");
+    if (b) mostraPfAba(b.getAttribute("data-pfa"));
+  });
+  window.__pfAba = mostraPfAba; // testes
+
   function abrePerfil(id) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     if (!a) return;
     perfilId = id;
+    mostraPfAba("app");
     $("pfTitulo").textContent = "👤 " + a.nome;
     $("pfDesde").textContent = a.desde ? "aluno desde " + S.fmtData(a.desde) : "";
     $("pfNome").value = a.nome; $("pfZap").value = a.zap || "";
