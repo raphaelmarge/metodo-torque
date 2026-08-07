@@ -86,11 +86,11 @@
   .atalhos { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 26px; }
   .atalho {
     display: flex; align-items: center; gap: 10px; padding: 16px 26px;
-    background: #fff; border: 1px solid var(--linha); border-radius: 12px; box-shadow: var(--sombra-1);
-    font-size: 14.5px; font-weight: 600; color: var(--roxo); cursor: pointer; font-family: inherit;
-    transition: transform .15s ease, box-shadow .2s ease, border-color .15s ease;
+    background: #fff; border: none; border-radius: var(--raio); box-shadow: var(--sombra-1);
+    font-size: 14.5px; font-weight: 700; color: var(--roxo); cursor: pointer; font-family: inherit;
+    transition: transform .15s ease, box-shadow .25s ease;
   }
-  .atalho:hover { border-color: var(--roxo); transform: translateY(-1px); box-shadow: var(--sombra-roxo); }
+  .atalho:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); }
 
   /* dashboard */
   .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
@@ -104,7 +104,7 @@
   .kpi .valor.verde { color: var(--ok); }
   .kpi .valor.vermelho { color: var(--erro); }
   .kpi .compara { font-size: 11.5px; color: var(--cinza-2); border-top: 1px solid var(--fundo); padding-top: 8px; margin-top: 6px; }
-  .painel { background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); padding: 18px; margin-top: 14px; box-shadow: var(--sombra-1); }
+  .painel { background: #fff; border: none; border-radius: var(--raio); padding: 18px; margin-top: 14px; box-shadow: var(--sombra-1); }
   .painel h3 { margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
   .lista-simples div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 13.5px; }
 
@@ -124,12 +124,12 @@
     border: 1px solid var(--linha); border-radius: 4px; background: #fff;
   }
   .btn-roxo {
-    display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
-    background: var(--roxo); color: #fff; border: none; border-radius: var(--raio-s);
-    font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: .04em; cursor: pointer;
-    transition: background .15s ease, transform .15s ease, box-shadow .2s ease;
+    display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px;
+    background: var(--roxo); color: #fff; border: none; border-radius: var(--raio-pill);
+    font-family: inherit; font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; cursor: pointer;
+    transition: background .15s ease, transform .15s ease, box-shadow .25s ease;
   }
-  .btn-roxo:hover { background: var(--roxo-2); transform: translateY(-1px); box-shadow: var(--sombra-roxo); }
+  .btn-roxo:hover { background: var(--roxo-2); transform: translateY(-2px); box-shadow: var(--sombra-roxo); }
   .btn-roxo:active { transform: none; box-shadow: none; }
   .mini-abas { display: inline-flex; align-items: center; gap: 14px; margin-left: auto; font-weight: 400; }
   .mini-abas button {
@@ -158,7 +158,7 @@
   /* config */
   .cfg-bloco { background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); padding: 18px; margin-bottom: 14px; box-shadow: var(--sombra-1); }
   .cfg-bloco h3 { margin: 0 0 10px; font-size: 14px; }
-  .btnzinho { padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 600; border: 1.5px solid #cfccd8; background: #fff; color: var(--texto); cursor: pointer; border-radius: var(--raio-s); transition: border-color .15s ease, color .15s ease, background .15s ease; }
+  .btnzinho { padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 700; border: 1.5px solid #d3d0dc; background: #fff; color: var(--texto); cursor: pointer; border-radius: var(--raio-pill); transition: border-color .15s ease, color .15s ease, background .15s ease; }
   .btnzinho:hover { border-color: var(--roxo); color: var(--roxo); }
 
   /* botão hambúrguer (só aparece no celular) */
