@@ -69,7 +69,14 @@
   </div>
 
   <div class="card">
-    <p><b style="color:#fff">Depois das cinco publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
+    <h2>6 · pagarme <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <p>Cuida das <b style="color:#fff">cobranças pelo Pagar.me</b>: gera o link de pagamento (PIX, boleto ou cartão) e agora também ativa a <b style="color:#fff">mensalidade automática no cartão</b> — o aluno cadastra o cartão uma vez e o Pagar.me cobra sozinho todo mês. Precisa dos secrets <code>PAGARME_SECRET_KEY</code> (chave secreta, sk_...) e <code>PAGARME_PUBLIC_KEY</code> (chave pública, pk_...) — as duas ficam no painel do pagar.me, em Configurações → Chaves. O número do cartão vai direto pro Pagar.me, nunca passa pelo TORQUE ON.</p>
+    <button class="btnx" data-copia="pagarme">Copiar o código (pagarme)</button>
+    <div class="status" data-st="pagarme"></div>
+  </div>
+
+  <div class="card">
+    <p><b style="color:#fff">Depois das seis publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code>, <code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>, <code>PAGARME_SECRET_KEY</code>, <code>PAGARME_PUBLIC_KEY</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
   </div>
 
   <div class="card">
@@ -82,7 +89,7 @@
 <script>
   var COD = {};        // nome -> código
   var ultima = "meta-webhook";
-  var NOMES = ["meta-webhook", "chat-envia", "whatsapp", "envia-email", "push-envia"];
+  var NOMES = ["meta-webhook", "chat-envia", "whatsapp", "envia-email", "push-envia", "pagarme"];
   var prontas = 0;
 
   NOMES.forEach(function (n) {

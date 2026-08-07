@@ -258,6 +258,8 @@
       <div class="bloco">
         <h3>CONTRATO ATUAL</h3>
         <div id="fContrato"></div>
+        <h3 style="margin-top: 8px;">🔁 MENSALIDADE NO CARTÃO</h3>
+        <div id="fAssinatura"></div>
       </div>
       <div class="bloco">
         <h3>MENSALIDADES</h3>
@@ -392,6 +394,7 @@
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="store.js"></script>
+<script src="../assets/pagarme-cartao.js"></script>
 <script>
 (function () {
   "use strict";
@@ -562,6 +565,7 @@
         '<div class="aluno-info"><strong>' + esc(a.nome) + '</strong><div class="sub">' +
         (plano ? esc(plano.nome) + (c.valor ? " · " + S.fmtBRL(c.valor) + "/mês" : "") : "sem plano") + "</div></div>" +
         '<span class="tag ' + sit.cls + '">' + sit.rot + "</span>" +
+        (a.assinaturaRec ? ' <span class="tag roxo" title="mensalidade automática no cartão (Pagar.me)">🔁 no cartão</span>' : "") +
         '<div class="venc">' + (prox ? "próx. venc.<br><strong>" + S.fmtData(prox.vencimento) + "</strong>" : "") + "</div></div>";
     }).join("") : '<div class="vazio">Nenhum aluno aqui. Cadastre o primeiro em “👤+ Novo cadastro”.</div>';
 
@@ -673,6 +677,20 @@
       '<div class="muted">Início ' + S.fmtData(c.inicio) + " · " + c.meses + " meses · vencimento dia " + c.diaVenc + "</div>" +
       (c.status === "congelado" ? '<div class="tag roxo" style="margin-top:6px;">CONGELADO desde ' + S.fmtData(c.congeladoEm) + "</div>" : "")
       : '<div class="muted">Sem contrato ativo. Todos os contratos: ' + (a.contratos || []).length + "</div>";
+
+    // 🔁 mensalidade no cartão (assinatura Pagar.me — módulo compartilhado)
+    if (a.assinaturaRec) {
+      $("fAssinatura").innerHTML =
+        "<div>🔁 Assinatura ativa desde " + S.fmtData(a.assinaturaRec.desde) + " (" + S.fmtBRL(a.assinaturaRec.valor) + "/mês) — cobrada direto no cartão.</div>" +
+        '<div class="linha-flex" style="gap: 6px; margin-top: 6px;">' +
+        '<button class="btn sec mini" id="fAssinaturaStatus">Ver status</button>' +
+        '<button class="btn perigo mini" id="fAssinaturaCancela">✕ Cancelar assinatura</button></div>' +
+        '<div class="muted" id="fAssinaturaInfo" style="font-size: 12px;"></div>';
+    } else {
+      $("fAssinatura").innerHTML =
+        '<button class="btn mini" id="fAssinar">🔁 Ativar mensalidade no cartão</button>' +
+        '<div class="muted" style="font-size: 12px;">Cobrança automática todo mês no cartão do aluno (Pagar.me) — sem boleto, sem esquecimento.</div>';
+    }
 
     var recs = recebiveisDo(st, a.id);
     var hoje = S.todayISO();
@@ -911,10 +929,71 @@
     if (linha) abreFicha(linha.getAttribute("data-id"));
   });
 
+  // 🔁 mensalidade no cartão (Pagar.me — módulo compartilhado assets/pagarme-cartao.js)
+  function abreAssinaturaCartao() {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === fichaId; });
+    if (!a) return;
+    if (!window.MT_cartaoRec) { alert("O módulo do cartão não carregou — recarrega a página e tenta de novo."); return; }
+    var c = contratoAtivo(a);
+    var plano = c && st.planos.find(function (p) { return p.id === c.planoId; });
+    var valor = (c && +c.valor) || (plano && +plano.valor) || 0;
+    if (!(valor >= 1)) { alert("Matricule o aluno num plano com valor (mínimo R$ 1) primeiro — a assinatura cobra a mensalidade dele todo mês."); return; }
+    var cfgA = (S.read("config", { dados: {} }).dados || {});
+    window.MT_cartaoRec.abre({
+      valor: valor,
+      descricao: "Mensalidade — " + (cfgA.nome || "Academia"),
+      nome: a.nome,
+      email: a.email || "",
+      zap: a.zap || "",
+      cor: "#7c3aed",
+      onOk: function (d) {
+        var st2 = load();
+        var a2 = st2.alunos.find(function (x) { return x.id === fichaId; });
+        if (!a2) return;
+        a2.assinaturaRec = { id: d.assinaturaId, desde: S.todayISO(), valor: valor };
+        save(st2);
+        abreFicha(fichaId);
+      },
+    });
+  }
+
   // ações da ficha
   document.getElementById("fichaDlg").addEventListener("click", function (e) {
     var baixa = e.target.getAttribute && e.target.getAttribute("data-baixa");
     if (baixa) { darBaixa(baixa); abreFicha(fichaId); return; }
+    // 🔁 assinatura no cartão
+    if (e.target.id === "fAssinar") { abreAssinaturaCartao(); return; }
+    if (e.target.id === "fAssinaturaStatus") {
+      var stS = load();
+      var aS = stS.alunos.find(function (x) { return x.id === fichaId; });
+      if (!aS || !aS.assinaturaRec || !window.MT_cartaoRec) return;
+      var info = $("fAssinaturaInfo");
+      if (info) info.textContent = "⏳ consultando o Pagar.me…";
+      window.MT_cartaoRec.status(aS.assinaturaRec.id).then(function (d) {
+        if (!info) return;
+        if (d && d.ok) {
+          info.textContent = "Status: " + (d.status === "active" ? "ativa ✓" : d.status) +
+            (d.proximaCobranca ? " · próxima cobrança " + S.fmtData(String(d.proximaCobranca).slice(0, 10)) : "") +
+            (d.valor ? " · " + S.fmtBRL(d.valor / 100) + "/mês" : "");
+        } else info.textContent = (d && d.erro) || "Não deu pra consultar agora — tenta de novo.";
+      });
+      return;
+    }
+    if (e.target.id === "fAssinaturaCancela") {
+      var stC = load();
+      var aC = stC.alunos.find(function (x) { return x.id === fichaId; });
+      if (!aC || !aC.assinaturaRec || !window.MT_cartaoRec) return;
+      if (!confirm("Cancelar a assinatura no cartão de " + aC.nome + "? A cobrança automática para na hora.")) return;
+      window.MT_cartaoRec.cancela(aC.assinaturaRec.id).then(function (d) {
+        if (d && d.erro) { alert(d.erro); return; }
+        var st2 = load();
+        var a2 = st2.alunos.find(function (x) { return x.id === fichaId; });
+        if (a2) { delete a2.assinaturaRec; save(st2); }
+        abreFicha(fichaId);
+      });
+      return;
+    }
     var acao = e.target.getAttribute && e.target.getAttribute("data-facao");
     if (!acao) return;
     var st = load();

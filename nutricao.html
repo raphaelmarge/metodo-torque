@@ -331,7 +331,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       <input id="pnPgValor" inputmode="decimal" placeholder="Valor R$" style="width: 100px;">
       <button class="btn verde mini" id="pnPgAdd">+ Registrar pagamento</button>
       <button class="btn sec mini" id="pnPgLink" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto) pra mandar no WhatsApp">💳 Link de pagamento</button>
+      <button class="btn sec mini" id="pnAssinar" title="cobrança automática todo mês no cartão do paciente (Pagar.me)">🔁 Assinatura mensal</button>
     </div>
+    <div id="pnAssinaturaBox" style="font-size: 13px; margin-top: 6px;"></div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Consultas</h3>
     <div id="pnConsultas" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
@@ -366,6 +368,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
 <script src="assets/vendor/supabase.js"></script>
 <script src="assets/vendor/qrcode.js"></script>
 <script src="apps/store.js"></script>
+<script src="assets/pagarme-cartao.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
 (function () {
@@ -630,6 +633,18 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Últimos: " + pgs.slice(0, 5).map(function (x) {
         return S.fmtData(x.data) + " (R$ " + (+x.valor).toFixed(2).replace(".", ",") + ")";
       }).join(" · ") + "</div>" : "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Nenhum pagamento registrado ainda.</div>");
+    // 🔁 assinatura mensal no cartão (Pagar.me — módulo compartilhado)
+    if (p.assinaturaRec) {
+      $("pnAssinar").style.display = "none";
+      $("pnAssinaturaBox").innerHTML = "🔁 Assinatura ativa desde " + S.fmtData(p.assinaturaRec.desde) +
+        " (R$ " + (+p.assinaturaRec.valor || 0).toFixed(2).replace(".", ",") + "/mês) " +
+        '<button class="btn sec mini" id="pnAssinaturaStatus">ver status</button> ' +
+        '<button class="btn sec mini" id="pnAssinaturaCancela">✕ cancelar</button>' +
+        '<div class="muted" id="pnAssinaturaInfo" style="font-size: 12px;"></div>';
+    } else {
+      $("pnAssinar").style.display = "";
+      $("pnAssinaturaBox").innerHTML = "";
+    }
     // consultas
     var hoje = S.todayISO();
     var cs = (st.consultas || []).filter(function (c) { return c.pacienteId === id; })
@@ -787,6 +802,59 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         window.open("https://wa.me/" + (p && p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
       } else if (navigator.clipboard) { navigator.clipboard.writeText(r.link); alert("Link copiado! 📋"); }
     });
+  });
+
+  // 🔁 assinatura mensal no cartão (módulo compartilhado assets/pagarme-cartao.js)
+  $("pnAssinar").addEventListener("click", function () {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (!p) return;
+    if (!window.MT_cartaoRec) { alert("O módulo do cartão não carregou — recarrega a página e tenta de novo."); return; }
+    var v = parseFloat(($("pnPgValor").value || "").replace(",", ".")) || +((st.config || {}).pixValor) || 0;
+    if (!v || v < 1) { alert("Escreva o valor mensal do acompanhamento primeiro."); return; }
+    window.MT_cartaoRec.abre({
+      valor: v,
+      descricao: "Acompanhamento — " + ((st.config || {}).nome || "Nutricionista"),
+      nome: p.nome,
+      email: p.email || "",
+      zap: p.zap || "",
+      cor: "#16a34a",
+      onOk: function (d) {
+        var st2 = load();
+        var p2 = st2.pacientes.find(function (x) { return x.id === perfilNId; });
+        if (!p2) return;
+        p2.assinaturaRec = { id: d.assinaturaId, desde: S.todayISO(), valor: v };
+        S.write("ntStudio", st2);
+        abrePerfilN(perfilNId);
+      },
+    });
+  });
+  $("pnAssinaturaBox").addEventListener("click", function (e) {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (!p || !p.assinaturaRec || !window.MT_cartaoRec) return;
+    if (e.target.id === "pnAssinaturaStatus") {
+      var info = $("pnAssinaturaInfo");
+      if (info) info.textContent = "⏳ consultando o Pagar.me…";
+      window.MT_cartaoRec.status(p.assinaturaRec.id).then(function (d) {
+        if (!info) return;
+        if (d && d.ok) {
+          info.textContent = "Status: " + (d.status === "active" ? "ativa ✓" : d.status) +
+            (d.proximaCobranca ? " · próxima cobrança " + S.fmtData(String(d.proximaCobranca).slice(0, 10)) : "") +
+            (d.valor ? " · R$ " + (d.valor / 100).toFixed(2).replace(".", ",") + "/mês" : "");
+        } else info.textContent = (d && d.erro) || "Não deu pra consultar agora — tenta de novo.";
+      });
+    }
+    if (e.target.id === "pnAssinaturaCancela") {
+      if (!confirm("Cancelar a assinatura mensal de " + p.nome.split(" ")[0] + "? A cobrança automática para na hora.")) return;
+      window.MT_cartaoRec.cancela(p.assinaturaRec.id).then(function (d) {
+        if (d && d.erro) { alert(d.erro); return; }
+        var st2 = load();
+        var p2 = st2.pacientes.find(function (x) { return x.id === perfilNId; });
+        if (p2) { delete p2.assinaturaRec; S.write("ntStudio", st2); }
+        abrePerfilN(perfilNId);
+      });
+    }
   });
 
   $("pnPgAdd").addEventListener("click", function () {
