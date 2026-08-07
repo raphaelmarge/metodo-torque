@@ -68,10 +68,27 @@
     #vAval .card .linha-flex > *, #vQuest .card .linha-flex > * { width: 100% !important; min-width: 0 !important; }
     #vAval .card .linha-flex select, #vQuest .card .linha-flex select,
     #vAval .card .linha-flex .btn:not(.mini):not(.sec), #vQuest .card .linha-flex .btn:not(.mini):not(.sec) { grid-column: 1 / -1; }
+    /* nome do aluno em linha própria no topo do perfil */
+    #pfTopo #pfTitulo { grid-column: 1 / -1; order: -1; font-size: 18px; }
+    /* abas do perfil em grade uniforme 3×2 */
+    #pfAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #pfAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
+    /* listas: as ações descem SEMPRE pra linha de baixo, alinhadas à direita (paralelismo) */
+    .sessao-pt > b { flex: 1 0 100%; }
+    .sessao-pt > span[style*="margin-left:auto"] { flex: 1 0 100%; justify-content: flex-end; }
+    /* editor de ficha: linha de adicionar exercício em grade */
+    #fichasBox .linha-flex[style*="margin-top"] { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    #fichasBox .linha-flex[style*="margin-top"] select { grid-column: 1 / -1; width: 100% !important; }
+    #fichasBox .linha-flex[style*="margin-top"] input { width: 100% !important; }
+    #fichasBox .linha-flex[style*="margin-top"] input[data-exobs] { grid-column: 1 / -1; }
+    #fichasBox .linha-flex[style*="margin-top"] .btn { grid-column: 1 / -1; }
+    #fichasBox .linha-flex[style*="margin-top"] span.muted { display: none; }
   }
   .aluno-pt .quem { flex: 1; min-width: 160px; }
   .sessao-pt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
   .sessao-pt.feita { opacity: .55; }
+  /* nome do aluno no topo do perfil sem o espaçamento largo do h2 padrão */
+  #pfTitulo { letter-spacing: .02em; }
 </style>
 </head>
 <body>
@@ -1446,9 +1463,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!box) return;
     var r = a.assinaturaRec;
     box.innerHTML = r
-      ? "🔁 Mensalidade no cartão <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(r.desde) + " (" + S.fmtBRL(+r.valor) + "/mês) " +
-        '<button class="btn sec mini" id="pfAssinaturaStatus">ver status</button> ' +
-        '<button class="btn sec mini" id="pfAssinaturaCancela">cancelar</button>'
+      ? "🔁 Mensalidade no cartão <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(r.desde) + " (" + S.fmtBRL(+r.valor) + "/mês)" +
+        '<div style="display:flex;gap:8px;margin-top:8px;">' +
+        '<button class="btn sec mini" id="pfAssinaturaStatus">ver status</button>' +
+        '<button class="btn sec mini" id="pfAssinaturaCancela">cancelar</button></div>'
       : '<button class="btn mini" id="pfAssinar">🔁 Ativar mensalidade no cartão</button>' +
         '<div class="muted" style="font-size:12px;margin-top:6px;">cobrança automática todo mês no cartão do aluno (Pagar.me)</div>';
   }
