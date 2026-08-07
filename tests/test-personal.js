@@ -881,7 +881,15 @@ async function abaPt(p, a) {
         client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
           peso: { "2026-07-01": 86, "2026-07-20": 84.2, "2026-08-01": 83.1 },
           cargas: { "Supino reto": [{ d: "2026-07-01", kg: 60 }, { d: "2026-08-01", kg: 72.5 }] },
-          feitos: { "2026-07-02": 1, "2026-07-04": 1, "2026-08-01": 1 },
+          feitos: { "2026-07-02": 1, "2026-07-03": 1, "2026-07-04": 1, "2026-08-01": 1 },
+          habitos: (() => {
+            const h = {};
+            for (let i = 0; i < 10; i++) {
+              const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
+              h[d] = { 0: true, 1: i % 2 === 0, 2: true, 3: false };
+            }
+            return h;
+          })(),
           fotoAntes: px, fotoAntesD: "2026-05-01", fotoDepois: px, fotoDepoisD: "2026-08-01",
         } }] }) }) }) }) },
       });
@@ -890,8 +898,14 @@ async function abaPt(p, a) {
     await p.waitForTimeout(400);
     const appDados = await p.evaluate(() => document.getElementById("pfAppDados").innerHTML);
     ok(/Peso na balança/.test(appDados) && /83,1/.test(appDados), "peso da balança do app aparece no perfil (83,1 kg)");
+    ok(/<svg/.test(appDados) && /polyline/.test(appDados) && /mín 83,1/.test(appDados) && /máx 86/.test(appDados), "⚖️ peso vira gráfico de linha com mín/máx");
+    ok(/Peso atual/.test(appDados) && /-2,9 kg/.test(appDados), "KPI de peso atual com a diferença desde o início (-2,9 kg)");
     ok(/Evolução de carga/.test(appDados) && /72,5 kg/.test(appDados) && /\+12,5/.test(appDados), "cargas do diário do aluno com delta (+12,5)");
-    ok(/Treinos marcados no app/.test(appDados) && /3 no total/.test(appDados), "treinos feitos no app contados");
+    ok(/stroke=["']#4ade80["']/.test(appDados), "cada exercício ganha um mini gráfico (sparkline) da carga");
+    ok(/Treinos marcados no app/.test(appDados) && /4 no total/.test(appDados), "treinos feitos no app contados");
+    ok(/Maior sequência/.test(appDados) && /3 dias/.test(appDados), "KPI de maior sequência de treinos (3 dias seguidos)");
+    ok(/Hábitos diários/.test(appDados) && /💧 Água/.test(appDados) && /100%/.test(appDados), "hábitos do aluno viram barras de % (água 100%)");
+    ok(/Hábitos em dia/.test(appDados) && /50%/.test(appDados), "KPI de dias com 3+ hábitos nos últimos 30 dias (50%)");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
     // aluno malicioso tentando injetar código pela foto/data do retorno
     const xss = await p.evaluate(async () => {

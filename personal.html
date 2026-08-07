@@ -743,7 +743,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   "use strict";
   var S = window.MTStore;
   var $ = function (id) { return document.getElementById(id); };
-  function esc(t) { return String(t == null ? "" : t).replace(/[<>&]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]; }); }
+  function esc(t) { return String(t == null ? "" : t).replace(/[<>&"']/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
   // ---------- tema do studio (cor principal + logo) ----------
   function corOk(c) { return /^#[0-9a-fA-F]{6}$/.test(String(c || "")) ? String(c) : ""; }
@@ -1180,47 +1180,124 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
         if (!ret) { box.textContent = "O aluno ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui."; return; }
         var html = "";
-        // peso na balança
+        try {
+        var dataRe = function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); };
+        var isoLocal = function (d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+        var num = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
+        var kpi = function (rot, val, sub) {
+          return "<div style='background:rgba(124,58,237,.08);border:1px solid var(--linha);border-radius:8px;padding:9px 11px;'>" +
+            "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a8695;text-transform:uppercase;'>" + rot + "</div>" +
+            "<div style='font-size:19px;font-weight:900;'>" + val + "</div>" +
+            (sub ? "<div style='font-size:10.5px;color:#a9a4b5;'>" + sub + "</div>" : "") + "</div>";
+        };
+        var titulo = function (t) { return "<div style='margin:14px 0 6px;font-size:12.5px;color:#cfcbdb;'><b>" + t + "</b></div>"; };
+        // séries validadas (tudo vem do aparelho do aluno — só números e datas passam)
         var pz = ret.peso || {};
-        var ks = Object.keys(pz).sort();
-        if (ks.length) {
-          var l = ks.slice(-10);
-          var vals = l.map(function (k) { return +pz[k]; });
-          var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
-          var faixa = (max - min) || 1;
-          var dif = Math.round((vals[vals.length - 1] - (+pz[ks[0]])) * 10) / 10;
-          html += "<div style='margin:6px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>⚖️ Peso na balança (registrado pelo aluno)</b> — hoje <b>" +
-            String(vals[vals.length - 1]).replace(".", ",") + " kg</b> (<b style='color:" + (dif < 0 ? "#4ade80" : dif > 0 ? "#f87171" : "#a9a4b5") + ";'>" +
-            (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + "</b> desde o início)</div>" +
-            "<div style='display:flex;gap:5px;align-items:flex-end;height:70px;'>" + l.map(function (k) {
-              var h = Math.round(14 + 44 * ((+pz[k]) - min) / faixa);
-              return "<div style='flex:1;text-align:center;min-width:0;'><div style='font-size:9px;font-weight:800;color:#a78bfa;'>" + String(pz[k]).replace(".", ",") + "</div>" +
-                "<div style='height:" + (58 - h) + "px;'></div><div style='height:" + h + "px;background:#a78bfa;border-radius:4px 4px 0 0;opacity:.85;'></div>" +
-                "<div style='font-size:8.5px;color:#8a8695;margin-top:2px;'>" + k.slice(8, 10) + "/" + k.slice(5, 7) + "</div></div>";
-            }).join("") + "</div>";
+        var ks = Object.keys(pz).filter(function (k) { return dataRe(k) && isFinite(+pz[k]) && +pz[k] > 20 && +pz[k] < 400; }).sort();
+        var fe = ret.feitos || {};
+        var diasTreino = Object.keys(fe).filter(dataRe).sort();
+        var hb = ret.habitos || {};
+        var diasHab = Object.keys(hb).filter(dataRe).sort();
+        var HABS = [["💧", "Água"], ["🍎", "Alimentação"], ["😴", "Sono 7h+"], ["🏃", "Cardio"]];
+        var corte30 = isoLocal(new Date(Date.now() - 29 * 864e5));
+        var ult30 = diasHab.filter(function (k) { return k >= corte30; });
+        var contHab = [0, 0, 0, 0], dias3 = 0;
+        ult30.forEach(function (k) {
+          // só objeto simples conta — string/array vindos de retorno adulterado não indexam
+          var dia = (hb[k] && typeof hb[k] === "object" && !Array.isArray(hb[k])) ? hb[k] : {}, n = 0;
+          HABS.forEach(function (_, i) { if (dia[i]) { contHab[i]++; n++; } });
+          if (n >= 3) dias3++;
+        });
+        // maior sequência de treinos (dias corridos com "Treinei hoje")
+        var seqMax = 0, seq = 0;
+        for (var si = 0; si < diasTreino.length; si++) {
+          seq = (si > 0 && (new Date(diasTreino[si]) - new Date(diasTreino[si - 1])) === 864e5) ? seq + 1 : 1;
+          if (seq > seqMax) seqMax = seq;
         }
-        // cargas
+        var mesAtualK = S.todayISO().slice(0, 7);
+        var treinosMes = diasTreino.filter(function (k) { return k.slice(0, 7) === mesAtualK; }).length;
+        // ---- KPIs no topo ----
+        var kpis = [];
+        if (ks.length) {
+          var difTot = Math.round((+pz[ks[ks.length - 1]] - (+pz[ks[0]])) * 10) / 10;
+          kpis.push(kpi("⚖️ Peso atual", num(+pz[ks[ks.length - 1]]) + " kg",
+            "<b style='color:" + (difTot < 0 ? "#4ade80" : difTot > 0 ? "#f87171" : "#a9a4b5") + ";'>" + (difTot > 0 ? "+" : "") + num(difTot) + " kg</b> desde o início"));
+        }
+        if (diasTreino.length) {
+          kpis.push(kpi("📆 Treinos no mês", treinosMes, diasTreino.length + " no total"));
+          kpis.push(kpi("🔥 Maior sequência", seqMax + " dia" + (seqMax > 1 ? "s" : ""), "treinos em dias seguidos"));
+        }
+        if (ult30.length) kpis.push(kpi("✅ Hábitos em dia", Math.round(100 * dias3 / ult30.length) + "%", "dias com 3+ hábitos (30d)"));
+        if (kpis.length) html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 2px;'>" + kpis.join("") + "</div>";
+        // ---- ⚖️ peso: gráfico de linha ----
+        if (ks.length) {
+          var l30 = ks.slice(-30);
+          var vals = l30.map(function (k) { return +pz[k]; });
+          var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+          var faixa = (max - min) || 1;
+          html += titulo("⚖️ Peso na balança (registrado pelo aluno)");
+          if (l30.length >= 2) {
+            var W = 340, H = 92, PAD = 8;
+            var pts = vals.map(function (v, i) {
+              return (PAD + Math.round((W - 2 * PAD) * i / (l30.length - 1))) + "," + (PAD + Math.round((H - 2 * PAD) * (1 - (v - min) / faixa)));
+            });
+            html += "<svg viewBox='0 0 " + W + " " + (H + 20) + "' style='width:100%;max-width:440px;display:block;' role='img' aria-label='Gráfico de peso'>" +
+              "<polygon points='" + PAD + "," + H + " " + pts.join(" ") + " " + (W - PAD) + "," + H + "' fill='rgba(167,139,250,.14)'/>" +
+              "<polyline points='" + pts.join(" ") + "' fill='none' stroke='#a78bfa' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/>" +
+              pts.map(function (p2) { return "<circle cx='" + p2.split(",")[0] + "' cy='" + p2.split(",")[1] + "' r='2.4' fill='#a78bfa'/>"; }).join("") +
+              "<text x='" + PAD + "' y='" + (H + 15) + "' font-size='10' fill='#8a8695'>" + l30[0].slice(8, 10) + "/" + l30[0].slice(5, 7) + " · mín " + num(min) + " · máx " + num(max) + "</text>" +
+              "<text x='" + (W - PAD) + "' y='" + (H + 15) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + l30[l30.length - 1].slice(8, 10) + "/" + l30[l30.length - 1].slice(5, 7) + "</text></svg>";
+          } else {
+            html += "<div class='muted' style='font-size:12.5px;'>Só 1 registro ainda (" + num(vals[0]) + " kg) — o gráfico aparece a partir do 2º.</div>";
+          }
+        }
+        // ---- 🏋️ cargas com sparkline ----
+        // retorno é controlado pelo aluno: só entra array com itens objeto e kg plausível
         var dc = ret.cargas || {};
-        var exs = Object.keys(dc).filter(function (k) { return (dc[k] || []).length; });
+        var exs = Object.keys(dc).map(function (k) {
+          var lst = (Array.isArray(dc[k]) ? dc[k] : []).filter(function (r2) {
+            return r2 && typeof r2 === "object" && isFinite(+r2.kg) && +r2.kg >= 0 && +r2.kg < 2000;
+          });
+          return { ex: k, lst: lst };
+        }).filter(function (x) { return x.lst.length; });
         if (exs.length) {
-          exs.sort(function (x, y) { return +(dc[y][dc[y].length - 1].kg) - +(dc[x][dc[x].length - 1].kg); });
-          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>🏋️ Evolução de carga (diário do aluno)</b></div>" +
-            exs.slice(0, 6).map(function (ex) {
-              var lst = dc[ex];
+          exs.sort(function (x, y) { return +y.lst[y.lst.length - 1].kg - +x.lst[x.lst.length - 1].kg; });
+          html += titulo("🏋️ Evolução de carga (diário do aluno)") +
+            exs.slice(0, 8).map(function (par) {
+              var ex = par.ex, lst = par.lst;
               var pri = +lst[0].kg, ult = +lst[lst.length - 1].kg;
               var d2 = Math.round((ult - pri) * 10) / 10;
-              return "<div style='display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed #322e3d;font-size:13px;'>" +
-                "<span>" + esc(ex) + "</span><span><b>" + String(ult).replace(".", ",") + " kg</b> " +
-                "<span style='color:" + (d2 > 0 ? "#4ade80" : "#a9a4b5") + ";font-size:11.5px;'>(" + (d2 > 0 ? "+" : "") + String(d2).replace(".", ",") + ")</span></span></div>";
+              var spark = "";
+              if (lst.length >= 2) {
+                var sv = lst.slice(-12).map(function (r2) { return +r2.kg; });
+                var smin = Math.min.apply(null, sv), sfx = (Math.max.apply(null, sv) - smin) || 1;
+                var sp = sv.map(function (v, i) { return (2 + Math.round(76 * i / (sv.length - 1))) + "," + (3 + Math.round(18 * (1 - (v - smin) / sfx))); });
+                spark = "<svg viewBox='0 0 80 24' style='width:80px;height:24px;flex:none;'><polyline points='" + sp.join(" ") + "' fill='none' stroke='#4ade80' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg>";
+              }
+              return "<div style='display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed var(--linha);font-size:13px;'>" +
+                "<span style='flex:1;min-width:0;'>" + esc(ex) + "</span>" + spark +
+                "<span style='flex:none;'><b>" + num(ult) + " kg</b> " +
+                "<span style='color:" + (d2 > 0 ? "#4ade80" : "#a9a4b5") + ";font-size:11.5px;'>(" + (d2 > 0 ? "+" : "") + num(d2) + ")</span></span></div>";
             }).join("");
         }
-        // treinos feitos
-        var fe = ret.feitos || {};
-        var nTreinos = Object.keys(fe).length;
-        if (nTreinos) {
+        // ---- 📆 treinos por mês ----
+        if (diasTreino.length) {
           var porMes2 = {};
-          Object.keys(fe).forEach(function (k) { porMes2[k.slice(0, 7)] = (porMes2[k.slice(0, 7)] || 0) + 1; });
-          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>📆 Treinos marcados no app</b> — " + nTreinos + " no total</div>" + barrasMes(porMes2, "#4ade80");
+          diasTreino.forEach(function (k) { porMes2[k.slice(0, 7)] = (porMes2[k.slice(0, 7)] || 0) + 1; });
+          html += titulo("📆 Treinos marcados no app — " + diasTreino.length + " no total") + barrasMes(porMes2, "#4ade80");
+        }
+        // ---- ✅ hábitos diários ----
+        if (ult30.length) {
+          html += titulo("✅ Hábitos diários (últimos 30 dias — registrados pelo aluno)") +
+            HABS.map(function (h2, i) {
+              var pct = Math.round(100 * contHab[i] / ult30.length);
+              return "<div style='display:flex;align-items:center;gap:10px;padding:4px 0;font-size:13px;'>" +
+                "<span style='flex:none;width:120px;'>" + h2[0] + " " + h2[1] + "</span>" +
+                "<div style='flex:1;height:9px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;'>" +
+                "<div style='width:" + pct + "%;height:100%;background:" + (pct >= 60 ? "#4ade80" : pct >= 30 ? "#fbbf24" : "#f87171") + ";border-radius:99px;'></div></div>" +
+                "<b style='flex:none;width:42px;text-align:right;'>" + pct + "%</b></div>";
+            }).join("") +
+            "<div class='muted' style='font-size:12px;margin-top:4px;'>" + dias3 + " de " + ult30.length + " dia(s) com 3+ hábitos batidos.</div>";
         }
         // fotos antes × depois
         // o retorno vem de RPC pública — só aceita foto data:image/https e data com dígitos (anti-XSS)
@@ -1233,6 +1310,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
             (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
             "</div>";
+        }
+        } catch (eApp) {
+          // retorno adulterado/malformado não pode travar o painel em "Carregando…"
+          box.textContent = "⚠️ Os dados do app deste aluno vieram num formato inesperado — peça pra ele abrir o app com internet que o sistema regrava tudo.";
+          return;
         }
         box.innerHTML = html || "O aluno ainda não registrou nada no app. Assim que registrar peso, carga, treino ou foto, aparece aqui.";
       }, function () { box.textContent = "Sem conexão com a nuvem agora — tenta de novo daqui a pouco."; });
@@ -3644,15 +3726,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos')devolveApp();}" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab')devolveApp();}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{})," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{})," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
-      "function isoHj(){return new Date().toISOString().slice(0,10);}" +
+      "function isoHj(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +
       // notificações push (quando o app abre pelo link hospedado)

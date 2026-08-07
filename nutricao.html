@@ -1709,7 +1709,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
       "if(k==='ntpeso'||k==='ntfotos'||k.indexOf('ntdi_')===0||k.indexOf('ntref_')===0||k.indexOf('ntag_')===0)devolveApp();}" +
-      "function isoHj(){return new Date().toISOString().slice(0,10);}" +
+      "function isoHj(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
       "function rpcApp(fn,corpo){if(!NUVEM)return Promise.resolve(null);" +
       "return fetch(NUVEM.u+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:NUVEM.k,Authorization:'Bearer '+NUVEM.k,'Content-Type':'application/json'},body:JSON.stringify(corpo)}).then(function(r){return r.json();}).catch(function(){return null;});}" +
       // devolve pro nutricionista o que o paciente registra (peso, diário, refeições, água, fotos)
