@@ -15,6 +15,7 @@
 //   { acao: "ping" }                                → confere quais secrets existem
 //   { acao: "enviar",  conversa_id: "...", texto }  → envia pelo canal da conversa
 //   { acao: "sugerir", conversa_id: "..." }         → devolve sugestão da IA (não envia)
+//   { acao: "ia_treino", dados: "anamnese+catálogo" } → IA monta as fichas de treino (JSON)
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -217,6 +218,41 @@ Deno.serve(async (req: Request) => {
           "1) leitura geral em 2-3 frases; 2) os 3 movimentos mais importantes desta semana, em ordem de impacto, " +
           "cada um com o passo concreto; 3) para os alunos de maior risco, a abordagem certa (tom e argumento). " +
           "Seja direto, use os números recebidos, não invente dados. Sem markdown pesado — texto corrido com quebras.",
+        messages: [{ role: "user", content: dados }],
+      }),
+    });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
+    const d2 = await r2.json();
+    let texto = "";
+    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
+    return json({ ok: true, texto: texto.trim() });
+  }
+
+  // ✨ IA prescritiva de treino: recebe a anamnese + catálogo e devolve as fichas em JSON
+  if (corpo.acao === "ia_treino") {
+    const uid = usuarioDoToken(req);
+    const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
+    const chave = env("ANTHROPIC_API_KEY");
+    if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
+    const dados = String(corpo.dados || "").slice(0, 30000);
+    if (!dados) return json({ erro: "dados vazios" }, 400);
+    const r2 = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-opus-4-8",
+        max_tokens: 6000,
+        thinking: { type: "adaptive" },
+        system: "Você é um personal trainer sênior que prescreve treinos de musculação individualizados. " +
+          "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
+          "JSON válido, sem markdown e sem comentários, neste formato exato: " +
+          '{"fichas":[{"titulo":"A — Nome da ficha","itens":[{"nome":"Exercício","series":3,"reps":"10","descanso":90,"obs":"dica curta"}]}],"resumo":"2 a 3 frases explicando as escolhas"} ' +
+          "Regras: use SOMENTE exercícios do catálogo recebido, com o nome EXATAMENTE igual; monte 1 ficha por dia " +
+          "disponível (máximo 6); 5 a 8 exercícios por ficha; respeite lesões, PAR-Q, nível, equipamento e " +
+          'preferências da anamnese; reps pode ser número ("10") ou tempo ("30s"); descanso em segundos; ' +
+          "obs é opcional e curta (técnica ou cuidado com a lesão). Se o PAR-Q tiver resposta SIM, seja conservador " +
+          "e avise no resumo que o aluno precisa de liberação médica antes de intensificar.",
         messages: [{ role: "user", content: dados }],
       }),
     });

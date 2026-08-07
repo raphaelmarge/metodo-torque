@@ -226,7 +226,7 @@
 
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
       <h2>🤖 Treino automático</h2>
-      <p class="muted" style="margin: 4px 0 10px;">O sistema lê a anamnese do aluno (nível, dias por semana, lesões, o que ele não gosta) e monta as fichas sozinho com o catálogo TORQUE. Você revisa, ajusta e envia — a decisão final é sempre sua.</p>
+      <p class="muted" style="margin: 4px 0 10px;">O sistema lê a anamnese do aluno (nível, dias por semana, lesões, o que ele não gosta) e monta as fichas sozinho com o catálogo TORQUE. O ✨ vai além: a IA da nuvem analisa a anamnese inteira (PAR-Q, saúde, hábitos) e prescreve um treino sob medida. Você revisa, ajusta e envia — a decisão final é sempre sua.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
         <select id="taAluno" style="min-width: 180px;"></select>
         <select id="taObjetivo" style="width: auto;">
@@ -241,6 +241,7 @@
           <option value="corpo">Só o peso do corpo</option>
         </select>
         <button class="btn" id="taGerar">🤖 Gerar fichas</button>
+        <button class="btn sec" id="taIA" title="a IA lê a anamnese completa e prescreve o treino (precisa da conta na nuvem)">✨ Gerar com IA</button>
         <button class="btn sec" id="taEvoluir" title="evolui séries/reps da ficha atual (progressão dupla)">📈 Evoluir semana</button>
       </div>
       <p id="taStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
@@ -2476,6 +2477,124 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderFichas();
   });
   window.__treinoAuto = { gera: geraTreinoAuto, evolui: evoluiTreino }; // testes
+
+  // ---------- ✨ IA prescritiva (o Claude lê a anamnese inteira e prescreve as fichas) ----------
+  var PARQ_RESUMO = ["problema cardíaco diagnosticado", "dor no peito em atividade física", "dor no peito em repouso no último mês",
+    "tontura ou perda de consciência", "problema ósseo/articular que piora com exercício", "usa remédio pra pressão/coração", "outra razão pra não treinar"];
+  function montaDadosIA(st, a, objetivo, equip) {
+    var an = a.anamnese || {};
+    var parqSim = [];
+    for (var q = 1; q <= 7; q++) if (an["parq" + q]) parqSim.push(PARQ_RESUMO[q - 1]);
+    var dias = Math.min(6, Math.max(1, parseInt(an.dias, 10) || a.metaSemana || 3));
+    var eqOk = TA_EQUIP[equip] || null;
+    var vistos = {};
+    var cands = (st.exercicios || []).map(function (e) { return { n: e.nome, g: e.grupo || "Outros", eq: e.eq || "" }; })
+      .concat((self.MT_EXERCICIOS || []).map(function (c) { return { n: c.n, g: c.g, eq: c.eq || "" }; }))
+      .filter(function (c) {
+        if (vistos[c.n.toLowerCase()]) return false;
+        vistos[c.n.toLowerCase()] = 1;
+        return !(eqOk && eqOk.indexOf(c.eq) < 0);
+      });
+    var porGrupo = {};
+    cands.forEach(function (c) { (porGrupo[c.g] = porGrupo[c.g] || []).push(c.n); });
+    var catalogo = Object.keys(porGrupo).map(function (g) { return g + ": " + porGrupo[g].slice(0, 25).join(" | "); }).join("\n");
+    var idade = "";
+    if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
+    return [
+      "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
+      "OBJETIVO: " + objetivo + " | EQUIPAMENTO: " + equip + " | DIAS/SEMANA: " + dias,
+      "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
+      "LESÕES/CIRURGIAS: " + (an.lesoes || "nenhuma informada"),
+      "DOENÇAS CRÔNICAS: " + (an.doencas || "nenhuma") + " | MEDICAMENTOS: " + (an.meds || "nenhum"),
+      "SONO: " + (an.sono || "?") + " | ESTRESSE: " + (an.estresse || "?") + " | FUMA: " + (an.fuma || "?") + " | ÁLCOOL: " + (an.alcool || "?"),
+      "NÍVEL: " + (an.nivel || "iniciante") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
+      "GOSTA DE: " + (an.gosta || "?") + " | NÃO GOSTA DE: " + (an.naogosta || "nada informado"),
+      "OBSERVAÇÕES DO PERSONAL: " + (a.obs || "—"),
+      "",
+      "CATÁLOGO DISPONÍVEL (use somente estes nomes, agrupados por grupo muscular):",
+      catalogo,
+    ].join("\n");
+  }
+  function parseFichasIA(texto) {
+    var s = String(texto || "").replace(/```json|```/g, "").trim();
+    var i = s.indexOf("{"), f = s.lastIndexOf("}");
+    if (i < 0 || f <= i) return null;
+    try { return JSON.parse(s.slice(i, f + 1)); } catch (e) { return null; }
+  }
+  function geraTreinoIA(alunoId, objetivo, equip, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) { cb({ erro: "Escolha o aluno." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    var cfg = self.MT_CLOUD || {};
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card ☁️ Sua ilha) pra usar a IA de treino — sem nuvem, use o 🤖 Gerar fichas." }); return; }
+    var dados = montaDadosIA(st, a, objetivo, equip);
+    nuvem.client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      return fetch(cfg.url + "/functions/v1/chat-envia", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "ia_treino", dados: dados }),
+      }).then(function (r) { return r.json(); });
+    }).then(function (d) {
+      if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "IA indisponível agora — publique a chat-envia (torqueon.com.br/funcoes.html) com a ANTHROPIC_API_KEY." }); return; }
+      var plano = parseFichasIA(d.texto);
+      if (!plano || !(plano.fichas || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
+      var st2 = load();
+      var t = treinoDe(st2, alunoId);
+      var fichas = [], total = 0, ignorados = 0;
+      plano.fichas.slice(0, 6).forEach(function (f) {
+        var itens = [];
+        (f.itens || []).slice(0, 10).forEach(function (it) {
+          var nome = String(it.nome || "").trim();
+          if (!nome) return;
+          // a IA só pode usar exercício que existe (catálogo ou biblioteca) — nada inventado
+          var existe = (st2.exercicios || []).some(function (e) { return e.nome.toLowerCase() === nome.toLowerCase(); }) ||
+            (self.MT_EXERCICIOS || []).some(function (c) { return c.n.toLowerCase() === nome.toLowerCase(); });
+          if (!existe) { ignorados++; return; }
+          var ex = exercicioPorNome(st2, nome);
+          itens.push({
+            exId: ex.id,
+            series: Math.min(6, Math.max(1, parseInt(it.series, 10) || 3)),
+            reps: String(it.reps || "10").slice(0, 8),
+            descanso: Math.min(300, Math.max(15, parseInt(it.descanso, 10) || 60)),
+            obs: String(it.obs || "").slice(0, 120),
+          });
+          total++;
+        });
+        if (itens.length) fichas.push({ id: S.uid(), titulo: String(f.titulo || "Treino").slice(0, 60), itens: itens });
+      });
+      if (!total) { cb({ erro: "A IA não devolveu exercícios do catálogo — tente de novo." }); return; }
+      t.fichas = fichas;
+      t.geradaAuto = new Date().toISOString();
+      t.geradaIA = true;
+      t.objetivo = objetivo;
+      t.semana = 1;
+      marcaAppPendente(st2, alunoId);
+      S.write("ptStudio", st2);
+      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, resumo: String(plano.resumo || "").slice(0, 400) });
+    }, function () { cb({ erro: "Sem conexão com a nuvem agora — tente de novo." }); });
+  }
+  window.__iaTreino = geraTreinoIA; // testes
+  $("taIA").addEventListener("click", function () {
+    var id = $("taAluno").value;
+    if (!id) { alert("Escolha o aluno."); return; }
+    var st = load();
+    var t = (st.treinosV2 || {})[id];
+    if (t && (t.fichas || []).length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Substituir pelo treino prescrito pela IA?")) return;
+    $("taStatus").textContent = "✨ A IA está lendo a anamnese e prescrevendo o treino… (leva uns 30 segundos)";
+    $("taIA").disabled = true;
+    geraTreinoIA(id, $("taObjetivo").value, $("taEquip").value, function (r) {
+      $("taIA").disabled = false;
+      if (r.erro) { $("taStatus").textContent = "⚠️ " + r.erro; return; }
+      $("taStatus").textContent = "✨ " + r.fichas + " ficha(s) com " + r.exercicios + " exercícios prescritas pela IA." +
+        (r.resumo ? " 🧠 " + r.resumo : "") + " Revise abaixo, ajuste e envie!";
+      $("tAluno").value = id;
+      renderFichas();
+      renderBiblioteca();
+    });
+  });
   $("fichasBox").addEventListener("click", function (e) {
     var add = e.target.getAttribute && e.target.getAttribute("data-additem");
     var rmF = e.target.getAttribute && e.target.getAttribute("data-rmficha");
