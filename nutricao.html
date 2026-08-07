@@ -60,6 +60,10 @@
     #dlgPerfilN .linha-flex label { width: 100% !important; min-width: 0 !important; }
     #dlgPerfilN .linha-flex label input, #dlgPerfilN .linha-flex label select { width: 100% !important; }
     #dlgPerfilN .linha-flex label:has(#pnNome), #dlgPerfilN .linha-flex label:has(#pnEmail) { grid-column: 1 / -1; }
+    /* check-ins: mesma grade organizada */
+    #vQuestN .card .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    #vQuestN .card .linha-flex > * { width: 100% !important; min-width: 0 !important; }
+    #vQuestN .card .linha-flex select, #vQuestN .card .linha-flex .btn:not(.mini):not(.sec) { grid-column: 1 / -1; }
   }
   /* ☀️ modo claro — chips do Nutri voltam pro pastel */
   html[data-tema="claro"] .tagn { background: #dcfce7; color: #15803d; border-color: rgba(22,163,74,.35); }
@@ -1013,7 +1017,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     box.innerHTML = achou.length ? achou.map(function (p) {
       var d = st.dietas[p.id];
       var temDieta = d && (d.refeicoes || []).length;
-      return "<div data-busca-id='" + p.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid #e5efe7;font-size:13.5px;'>" +
+      return "<div data-busca-id='" + p.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
         "<b>" + esc(p.nome) + "</b> <span style='font-size:11px;color:" + (temDieta ? "#16a34a" : "#b45309") + ";'>" +
         (temDieta ? "· dieta ok" : "· sem dieta") + "</span></div>";
     }).join("") : "<div style='padding:12px 14px;color:#6b7280;font-size:13px;'>Nenhum paciente com esse nome.</div>";
