@@ -330,6 +330,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     <div class="linha-flex" style="gap: 8px; margin-top: 6px; align-items: center;">
       <input id="pnPgValor" inputmode="decimal" placeholder="Valor R$" style="width: 100px;">
       <button class="btn verde mini" id="pnPgAdd">+ Registrar pagamento</button>
+      <button class="btn sec mini" id="pnPgLink" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto) pra mandar no WhatsApp">💳 Link de pagamento</button>
     </div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Consultas</h3>
@@ -749,6 +750,45 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     $("pnSalvo").textContent = "✅ salvo!";
     setTimeout(function () { $("pnSalvo").textContent = ""; }, 2000);
   });
+  // 💳 Pagar.me: link de checkout seguro da consulta (mesma função da nuvem dos outros módulos)
+  function geraLinkPagamentoN(pacienteId, valor, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === pacienteId; });
+    if (!p) { cb({ erro: "Paciente não encontrado." }); return; }
+    if (!valor || valor < 1) { cb({ erro: "Escreva o valor da consulta primeiro." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    var cfg = self.MT_CLOUD || {};
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card ☁️ Sua ilha) pra gerar o link de pagamento." }); return; }
+    nuvem.client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      return fetch(cfg.url + "/functions/v1/pagarme", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "criar", metodo: "cartao", valorCentavos: Math.round(valor * 100), descricao: "Consulta — " + ((st.config || {}).nome || "Nutricionista"), nome: p.nome, email: p.email || undefined }),
+      }).then(function (r) { return r.json(); });
+    }).then(function (d) {
+      if (d && d.ok && d.linkPagamento) cb({ ok: true, link: d.linkPagamento });
+      else cb({ erro: (d && d.erro) || "Publique a função pagarme (torqueon.com.br/funcoes.html) e configure a PAGARME_SECRET_KEY." });
+    }, function () { cb({ erro: "Sem conexão com a função pagarme agora." }); });
+  }
+  window.__pagarmeNT = geraLinkPagamentoN; // testes
+  $("pnPgLink").addEventListener("click", function () {
+    var v = parseFloat(($("pnPgValor").value || "").replace(",", "."));
+    var btn = this;
+    btn.disabled = true; btn.textContent = "⏳ Gerando…";
+    geraLinkPagamentoN(perfilNId, v, function (r) {
+      btn.disabled = false; btn.textContent = "💳 Link de pagamento";
+      if (r.erro) { alert(r.erro); return; }
+      var st = load();
+      var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+      var msg = "Oi " + (p ? p.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar a consulta (cartão, Pix ou boleto): " + r.link;
+      if (confirm("Link gerado! Mandar pro paciente no WhatsApp agora?")) {
+        window.open("https://wa.me/" + (p && p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
+      } else if (navigator.clipboard) { navigator.clipboard.writeText(r.link); alert("Link copiado! 📋"); }
+    });
+  });
+
   $("pnPgAdd").addEventListener("click", function () {
     var v = parseFloat(($("pnPgValor").value || "").replace(",", "."));
     if (!v || v <= 0) { alert("Escreva o valor da consulta."); return; }

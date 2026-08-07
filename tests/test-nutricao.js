@@ -187,6 +187,33 @@ async function abaNt(p, a) {
   ok(/PLANO ALIMENTAR/.test(planoPdf) && /Metas diárias/.test(planoPdf) && /Proteína/.test(planoPdf), "plano imprimível com metas de kcal e macros");
   ok(/Almoço/.test(planoPdf) && /window\.print/.test(planoPdf) && /Nutricionista/.test(planoPdf), "plano lista as refeições, tem botão de imprimir e assinatura");
   ok(await p.evaluate(() => !!document.getElementById("dPdf") && !!document.getElementById("pnAppDados")), "botão 🖨 Plano em PDF e card 'O que o paciente registrou' existem");
+
+  // 💳 link de pagamento da consulta (Pagar.me — mesma função da nuvem dos outros módulos)
+  {
+    const pgmN = await p.evaluate(async () => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+      const id = st.pacientes[0].id;
+      const semNuvem = await new Promise((res) => window.__pagarmeNT(id, 150, res));
+      window.__cloudOrigPg = window.MTStore.cloud;
+      window.__fetchOrigPg = window.fetch;
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      let corpo = null;
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/pagarme")) {
+          corpo = JSON.parse(opts.body);
+          return Promise.resolve({ json: () => Promise.resolve({ ok: true, linkPagamento: "https://pagar.me/checkout/n1" }) });
+        }
+        return window.__fetchOrigPg(url, opts);
+      };
+      const comNuvem = await new Promise((res) => window.__pagarmeNT(id, 150, res));
+      window.fetch = window.__fetchOrigPg;
+      window.MTStore.cloud = window.__cloudOrigPg;
+      return { semNuvem, comNuvem, corpo, temBotao: !!document.getElementById("pnPgLink") };
+    });
+    ok(/Entre na sua conta/.test(pgmN.semNuvem.erro), "💳 sem nuvem, o link de pagamento da consulta explica o que falta");
+    ok(pgmN.comNuvem.ok && /pagar\.me/.test(pgmN.comNuvem.link) && pgmN.temBotao, "💳 link de checkout da consulta volta pro nutricionista (botão no perfil)");
+    ok(pgmN.corpo.valorCentavos === 15000 && /Consulta/.test(pgmN.corpo.descricao) && pgmN.corpo.metodo === "cartao", "cobrança da consulta vai pro Pagar.me em centavos com a descrição certa");
+  }
   ok(/chMsgs/.test(appHtml) && /chEnvia/.test(appHtml) && /app_chat_lista/.test(appHtml) && /app_chat_envia/.test(appHtml), "app do paciente tem o chat interno (mesma nuvem do personal)");
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app do paciente tem agenda estilo calendário com pedido de horário");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
