@@ -71,8 +71,8 @@
     /* nome do aluno em linha própria no topo do perfil */
     #pfTopo #pfTitulo { grid-column: 1 / -1; order: -1; font-size: 18px; }
     /* abas do perfil em grade uniforme 3×2 */
-    #pfAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    #pfAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
+    #pfAbas, #trAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #pfAbas button, #trAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
     /* listas: as ações descem SEMPRE pra linha de baixo, alinhadas à direita (paralelismo) */
     .sessao-pt > b { flex: 1 0 100%; }
     .sessao-pt > span[style*="margin-left:auto"] { flex: 1 0 100%; justify-content: flex-end; }
@@ -247,7 +247,14 @@
 
   <!-- TREINOS -->
   <section id="vTreinos" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="trAbas" style="margin: 0 0 14px;">
+      <button data-tra="fichas" class="ativa">📝 Fichas do aluno</button>
+      <button data-tra="auto">🤖 Automático e IA</button>
+      <button data-tra="grupo">👥 Em grupo</button>
+      <button data-tra="ex">🏋️ Exercícios</button>
+      <button data-tra="videos">🎬 Conteúdos</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-trsec="fichas">
       <h2>Montar treino (por seleção)</h2>
       <div class="linha-flex" style="margin: 8px 0 10px;">
         <select id="tAluno" style="min-width: 200px;"></select>
@@ -264,7 +271,7 @@
       <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
-    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
+    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-trsec="auto">
       <h2>🤖 Treino automático</h2>
       <p class="muted" style="margin: 4px 0 10px;">O sistema lê a anamnese do aluno (nível, dias por semana, lesões, o que ele não gosta) e monta as fichas sozinho com o catálogo TORQUE. O ✨ vai além: a IA da nuvem analisa a anamnese inteira (PAR-Q, saúde, hábitos) e prescreve um treino sob medida. Você revisa, ajusta e envia — a decisão final é sempre sua.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
@@ -287,7 +294,7 @@
       <p id="taStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
 
-    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
+    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-trsec="grupo">
       <h2>👥 Enviar treino em grupo</h2>
       <p class="muted" style="margin: 4px 0 10px;">Funciona como uma lista de transmissão: <b>1)</b> monte um treino de disparo (pré-montado, sem estar preso a nenhum aluno), <b>2)</b> crie o grupo, <b>3)</b> dispare — todo mundo do grupo recebe o mesmo treino e os apps publicados atualizam sozinhos.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
@@ -312,7 +319,7 @@
       <p id="geStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
 
-    <div class="card">
+    <div class="card" data-trsec="ex">
       <h2>Exercícios <span id="catN" class="muted" style="font-weight: 400;"></span></h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Catálogo TORQUE e os seus exercícios numa lista só, separada por <b>zona do corpo</b> e <b>tipo de movimento</b>. Toque em <b>Abrir</b> pra personalizar vídeo e dica — o personalizado ganha a etiqueta SEU e vale na frente do catálogo.</p>
       <div class="linha-flex" style="margin: 8px 0 10px;">
@@ -335,7 +342,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top: 14px;">
+    <div class="card" style="margin-top: 14px;" data-trsec="videos">
       <h2>Conteúdos extras (videoteca do seu studio)</h2>
       <p class="muted" style="margin: 4px 0 10px;">Alongamento, mobilidade, aquecimento, dicas — aparecem no app de TODOS os seus alunos, agrupados por categoria. Valor percebido da assinatura. 😉</p>
       <div class="linha-flex" style="margin-bottom: 10px;">
@@ -866,6 +873,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vPagamentos").hidden = b.dataset.a !== "pagamentos";
     $("vTreinos").hidden = b.dataset.a !== "treinos";
     if (b.dataset.a === "treinos") renderGrupos();
+    if (b.dataset.a === "treinos") mostraTrAba(trAbaAtual);
     $("vAvaliacoes").hidden = b.dataset.a !== "avaliacoes";
     $("vQuest").hidden = b.dataset.a !== "quest";
     if (b.dataset.a === "quest") { renderQuest(); carregaRespostasQuest(); }
@@ -1962,6 +1970,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.treinosV2[id] = { fichas: [] };
     save(st);
     $("tAluno").value = id;
+    mostraTrAba("fichas"); // o montador vive no sub-link Fichas
     renderFichas();
     renderGrupos();
     $("fichasBox").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2541,6 +2550,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fid = e.target.getAttribute && (e.target.getAttribute("data-exmov") || e.target.getAttribute("data-exzona"));
     if (fid) populaCascata(fid);
   });
+  // sub-links da parte de treino: cada bloco vive na sua própria tela
+  var trAbaAtual = "fichas";
+  function mostraTrAba(aba) {
+    trAbaAtual = aba;
+    document.querySelectorAll("#vTreinos [data-trsec]").forEach(function (c) { c.hidden = c.getAttribute("data-trsec") !== aba; });
+    document.querySelectorAll("#trAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-tra") === aba); });
+  }
+  $("trAbas").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button[data-tra]");
+    if (b) mostraTrAba(b.getAttribute("data-tra"));
+  });
+  window.__trAba = mostraTrAba; // testes
+  mostraTrAba("fichas");
   $("tAluno").addEventListener("change", renderFichas);
   $("tValidade").addEventListener("change", function () {
     var alunoId = $("tAluno").value;
