@@ -8,7 +8,7 @@
 <link href="../assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps.css" rel="stylesheet">
 <style>
-  .linha-ap { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .linha-ap { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: var(--card); border: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
   .linha-ap + .linha-ap { margin-top: -1px; }
   .bola { width: 16px; height: 16px; border-radius: 50%; flex: none; border: 1px solid rgba(0,0,0,.15); }
   dialog { border: 1px solid var(--linha); padding: 20px; max-width: 560px; width: 94vw; }
@@ -199,7 +199,7 @@
       var saldo = (+p.qtd || 0) - (p.sessoes || []).length;
       var vencido = p.validade && p.validade < hoje;
       var cor = vencido ? "#b91c1c" : saldo <= 2 ? "#b45309" : "#16a34a";
-      return '<div class="linha-flex" style="justify-content:space-between;border:1px solid var(--linha);background:#fff;padding:10px 14px;margin-top:-1px;flex-wrap:wrap;gap:8px;">' +
+      return '<div class="linha-flex" style="justify-content:space-between;border:1px solid var(--linha);background:var(--card);padding:10px 14px;margin-top:-1px;flex-wrap:wrap;gap:8px;">' +
         "<div><b>" + esc(p.aluno) + "</b> · " + p.qtd + " sessões" + (p.valor ? " · R$ " + (+p.valor).toLocaleString("pt-BR") : "") +
         (p.validade ? " · até " + S.fmtData(p.validade) : "") +
         '<br><span style="color:' + cor + ';font-weight:800;">' +

@@ -41,18 +41,18 @@
   .abas-nt button.ativa { color: #fff; border-left-color: var(--verde); background: rgba(22,163,74,.22); }
   .menu-fundo { position: fixed; inset: 0; background: rgba(16,22,18,.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .22s; }
   body.menu-aberto .menu-fundo { opacity: 1; pointer-events: auto; }
-  .pac { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  .pac { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
   .linha-nt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
-  .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; background: #dcfce7; color: #15803d; }
-  .tagn.roxa { background: #ede9fe; color: #6d28d9; }
-  .tagn.ambar { background: #fef3c7; color: #b45309; }
+  .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 10px; border-radius: var(--raio-pill); text-transform: uppercase; background: rgba(34,197,94,.14); color: #4ade80; border: 1px solid rgba(34,197,94,.4); }
+  .tagn.roxa { background: rgba(124,58,237,.14); color: #a78bfa; border-color: rgba(124,58,237,.4); }
+  .tagn.ambar { background: rgba(245,158,11,.14); color: #fcd34d; border-color: rgba(245,158,11,.4); }
   .btn.verde { background: var(--verde); }
   .btn.verde:hover { background: var(--verde-2); }
-  .ref-card { border: 1px solid var(--linha); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: #fff; }
+  .ref-card { border: 1px solid var(--linha); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: var(--card); }
   .kpis-nt { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .kpi-nt { background: #fff; border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
+  .kpi-nt { background: var(--card); border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
   .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
-  .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: var(--verde-2); }
+  .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: #4ade80; }
 </style>
 </head>
 <body>
@@ -67,7 +67,7 @@
       <input id="buscaPac" placeholder="🔍 Buscar paciente…" autocomplete="off"
         style="width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; font-family: inherit; font-size: 13.5px;">
       <div id="buscaPacLista" hidden
-        style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: #fff; color: #1c2620; border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
+        style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
     </div>
   </div>
 </header>
@@ -364,7 +364,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
 </main>
 
 <!-- perfil completo do paciente (estilo cadastro da academia) -->
-<dialog id="dlgPerfilN" style="max-width: 560px; width: 94vw; border: 1px solid var(--linha); border-radius: 18px; background: #fff; color: #1c2620; padding: 0;">
+<dialog id="dlgPerfilN" style="max-width: 560px; width: 94vw; border: 1px solid var(--linha); border-radius: 18px; background: var(--card); color: var(--texto); padding: 0;">
   <div style="padding: 18px 20px; max-height: 84vh; overflow-y: auto;">
     <div style="display: flex; align-items: center; gap: 10px;">
       <h2 id="pnTitulo" style="font-size: 19px; margin: 0;">Perfil</h2>
@@ -1595,9 +1595,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       "<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='" + CORTHEME + "'>" +
       "<title>" + esc(primeiro) + " · " + esc(studio) + "</title><style>" +
       "*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0f1a12;color:#eef7f0;max-width:480px;margin:0 auto;padding:16px 14px 60px}" +
-      ".cardx{background:#16241a;border:1px solid #29402f;border-radius:18px;padding:16px;margin-bottom:12px}" +
+      ".cardx{background:#101a13;border:1px solid #29402f;border-radius:8px;padding:16px;margin-bottom:12px}" +
       "h1{font-size:20px}h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:" + CORC + ";margin-bottom:10px}" +
-      ".btnx{background:linear-gradient(135deg," + COR + "," + COR2 + ");color:#fff;border:none;border-radius:999px;padding:12px 18px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 12px 32px -12px " + COR + "}" +
+      ".btnx{background:linear-gradient(135deg," + COR + "," + COR2 + ");color:#fff;border:none;border-radius:5px;padding:12px 18px;font-weight:900;font-style:italic;letter-spacing:.04em;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 12px 32px -12px " + COR + "}" +
       ".vz{color:#9fb8a6;font-size:12.5px;text-align:center;padding:8px 0}" +
       ".kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #29402f;font-size:14px}" +
       "input{background:#0f1a12;border:1px solid #29402f;border-radius:10px;color:#fff;padding:11px;font-family:inherit;font-size:14px}" +
@@ -1932,7 +1932,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       "<div style='font-size:11px;letter-spacing:.2em;color:#16a34a;font-weight:700;'>" + esc(consultorio.toUpperCase()) + "</div>" +
       "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de acompanhamento está pronto, " + esc(primeiro) + "! 🥗</h1>" +
       "<p style='color:#54604f;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b>Meu login</b>.</p>" +
-      "<div style='background:#fff;border:1px solid #dbe5db;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
+      "<div style='background:var(--card);border:1px solid #dbe5db;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
       "<div style='margin-bottom:6px;'><span style='color:#54604f;'>Login:</span> <b>" + esc(email) + "</b></div>" +
       "<div><span style='color:#54604f;'>Senha temporária:</span> <b style='font-family:monospace;font-size:16px;letter-spacing:1px;'>" + esc(senha) + "</b></div></div>" +
       "<a href='" + url + "' style='display:block;text-align:center;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:14px;font-size:15px;'>Entrar no meu app →</a>" +

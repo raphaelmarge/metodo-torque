@@ -10,7 +10,7 @@
 <style>
   .grade-prod { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
   .prod {
-    background: #fff; border: 1px solid var(--linha); padding: 12px; cursor: pointer; text-align: center;
+    background: var(--card); border: 1px solid var(--linha); padding: 12px; cursor: pointer; text-align: center;
   }
   .prod:hover { border-color: var(--roxo); }
   .prod .nome { font-weight: 700; font-size: 13.5px; }
@@ -20,8 +20,8 @@
   .prod .est.baixo { color: var(--erro); font-weight: 700; }
   .carrinho-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--fundo); font-size: 13.5px; }
   .carrinho-item .qtd { display: flex; align-items: center; gap: 6px; }
-  .carrinho-item .qtd button { width: 24px; height: 24px; border: 1px solid var(--linha); background: #fff; cursor: pointer; font-weight: 700; }
-  .venda-linha { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid var(--linha); flex-wrap: wrap; }
+  .carrinho-item .qtd button { width: 24px; height: 24px; border: 1px solid var(--linha); background: var(--card); cursor: pointer; font-weight: 700; }
+  .venda-linha { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: var(--card); border: 1px solid var(--linha); flex-wrap: wrap; }
   .venda-linha + .venda-linha { margin-top: -1px; }
   .duas { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 860px) { .duas { grid-template-columns: 1fr; } }
@@ -387,7 +387,7 @@
         box.hidden = !lista.length;
         if (!lista.length) return;
         document.getElementById("pedidosAppLista").innerHTML = lista.map(function (p) {
-          return '<div class="linha-flex" style="justify-content:space-between;border:1px solid var(--linha);background:#fff;padding:10px 14px;margin-top:-1px;flex-wrap:wrap;gap:8px;">' +
+          return '<div class="linha-flex" style="justify-content:space-between;border:1px solid var(--linha);background:var(--card);padding:10px 14px;margin-top:-1px;flex-wrap:wrap;gap:8px;">' +
             "<div><b>" + esc(p.aluno || "Aluno do app") + "</b> · R$ " + (+p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) +
             '<br><span class="muted" style="font-size:12.5px;">' +
             (p.itens || []).map(function (x) { return x.q + "x " + esc(x.n); }).join(", ") + "</span></div>" +

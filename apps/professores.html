@@ -8,7 +8,7 @@
 <link href="../assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps.css" rel="stylesheet">
 <style>
-  .prof { border: 1px solid var(--linha); background: #fff; margin-bottom: 12px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .prof { border: 1px solid var(--linha); background: var(--card); margin-bottom: 12px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
   .prof .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--roxo); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; flex: none; }
   .prof .quem { flex: 1; min-width: 150px; }
   .prof .kpi { text-align: center; min-width: 86px; }
@@ -103,7 +103,7 @@
     lista.forEach(function (x) { if (x.p.vagas) cont[x.p.faixa]++; });
     $("faixas").innerHTML =
       '<div class="card" style="background:#e9f7ef;"><div class="n" style="font-size:26px;font-weight:800;color:var(--ok);">' + cont.alta + '</div><div class="muted">Performance alta (≥55% ocupação)</div></div>' +
-      '<div class="card" style="background:#fff6e6;"><div class="n" style="font-size:26px;font-weight:800;color:var(--alerta);">' + cont.media + '</div><div class="muted">Performance média (25–55%)</div></div>' +
+      '<div class="card" style="background:var(--card)6e6;"><div class="n" style="font-size:26px;font-weight:800;color:var(--alerta);">' + cont.media + '</div><div class="muted">Performance média (25–55%)</div></div>' +
       '<div class="card" style="background:#fdecec;"><div class="n" style="font-size:26px;font-weight:800;color:var(--erro);">' + cont.baixa + '</div><div class="muted">Performance baixa (<25%)</div></div>';
 
     $("lista").innerHTML = lista.length ? lista.map(function (x, i) {

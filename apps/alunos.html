@@ -11,7 +11,7 @@
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
   .stats .card { text-align: center; padding: 14px; }
   .stats .n { font-size: 26px; font-weight: 800; }
-  .aluno-linha { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #fff; border: 1px solid var(--linha); cursor: pointer; flex-wrap: wrap; }
+  .aluno-linha { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--card); border: 1px solid var(--linha); cursor: pointer; flex-wrap: wrap; }
   .aluno-linha + .aluno-linha { margin-top: -1px; }
   .aluno-linha:hover { border-color: var(--roxo); }
   .avatar { flex: none; width: 42px; height: 42px; border-radius: 50%; background: rgba(124,58,237,.12); color: var(--roxo); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
@@ -584,7 +584,7 @@
     $("resumoReceber").textContent = doMes.length + " cobranças · " + S.fmtBRL(pago) + " recebido de " + S.fmtBRL(tot);
     var hoje = S.todayISO();
     $("listaReceber").innerHTML = doMes.length ?
-      '<table class="tabela" style="background:#fff;"><thead><tr><th>Aluno</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>' +
+      '<table class="tabela" style="background:var(--card);"><thead><tr><th>Aluno</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>' +
       doMes.map(function (r) {
         var a = st.alunos.find(function (x) { return x.id === r.alunoId; });
         var atras = r.status === "aberto" && r.vencimento < hoje;
@@ -666,7 +666,7 @@
     if (a.status !== "inativo" && !c) acoes.push('<button class="btn sec mini" data-facao="inativar">Arquivar aluno</button>');
     $("fAcoes").innerHTML = acoes.join("");
     var notas = (a.notificacoes || []).slice(-5).reverse();
-    var notasHtml = notas.length ? '<div style="background: #fff7d6; border: 1px solid #e6d27a; padding: 8px 12px; font-size: 13px; margin-top: 6px;">' +
+    var notasHtml = notas.length ? '<div style="background: var(--card)7d6; border: 1px solid #e6d27a; padding: 8px 12px; font-size: 13px; margin-top: 6px;">' +
       notas.map(function (n) { return esc(n.txt) + ' <span class="muted" style="font-size:11px;">(' + S.fmtData(n.em) + ")</span>"; }).join("<br>") + "</div>" : "";
     var elNota = document.getElementById("fNotificacao");
     if (!elNota) { elNota = document.createElement("div"); elNota.id = "fNotificacao"; $("fAcoes").parentNode.insertBefore(elNota, $("fAcoes").nextSibling); }

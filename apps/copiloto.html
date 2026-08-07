@@ -9,11 +9,11 @@
 <link href="apps.css" rel="stylesheet">
 <style>
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .kpi { background: #fff; border: 1px solid var(--linha); padding: 14px; }
+  .kpi { background: var(--card); border: 1px solid var(--linha); padding: 14px; }
   .kpi .rot { font-size: 11.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
   .kpi .val { font-size: 26px; font-weight: 800; margin-top: 2px; }
   .kpi.alto .val { color: #dc2626; } .kpi.medio .val { color: #d97706; } .kpi.ok .val { color: #16a34a; }
-  .risco { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid var(--linha); padding: 12px 14px; }
+  .risco { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border: 1px solid var(--linha); padding: 12px 14px; }
   .risco + .risco { margin-top: -1px; }
   .score { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: #fff; flex: none; }
   .score.alto { background: #dc2626; } .score.medio { background: #d97706; } .score.baixo { background: #16a34a; }

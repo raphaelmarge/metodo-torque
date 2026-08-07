@@ -13,7 +13,7 @@
   .lista-alunos { display: flex; flex-direction: column; max-height: 70vh; overflow-y: auto; }
   .al {
     display: flex; gap: 10px; align-items: center; padding: 10px 12px;
-    border-bottom: 1px solid var(--linha); cursor: pointer; background: #fff;
+    border-bottom: 1px solid var(--linha); cursor: pointer; background: var(--card);
   }
   .al:hover { background: #f6f4fa; }
   .al.ativo { border-left: 3px solid var(--roxo); background: #f1ecfb; }
@@ -46,7 +46,7 @@
   .grupo-ex { display: inline-block; font-size: 10.5px; color: var(--cinza); background: var(--fundo); padding: 2px 8px; border-radius: 8px; margin-left: 6px; }
   @media print {
     .topo, .no-print, .lista-alunos, .abas { display: none !important; }
-    body { background: #fff; }
+    body { background: #fff; color: #111; }
     .corpo { padding: 0; max-width: none; }
     .duas-colunas { grid-template-columns: 1fr; }
     input { border: none !important; }
