@@ -48,6 +48,22 @@
   .kpi-pt .card { text-align: center; padding: 16px; }
   .kpi-pt .n { font-size: 28px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
   .aluno-pt { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  /* 📱 perfil do aluno no celular: campos em grade organizada (nada de largura fixa solta) */
+  @media (max-width: 640px) {
+    #vPerfil .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+    #vPerfil .linha-flex label { width: 100% !important; min-width: 0 !important; }
+    #vPerfil .linha-flex label input, #vPerfil .linha-flex label select { width: 100% !important; }
+    #vPerfil .linha-flex label:has(#pfNome), #vPerfil .linha-flex label:has(#pfEmail),
+    #vPerfil .linha-flex label:has(#pfEmergencia), #vPerfil .linha-flex label:has(#pfObjetivo),
+    #vPerfil .linha-flex label:has(#anLesoes), #vPerfil .linha-flex label:has(#anDoencas),
+    #vPerfil .linha-flex label:has(#anMeds), #vPerfil .linha-flex label:has(#anFamiliar),
+    #vPerfil .linha-flex label:has(#anAlimentacao), #vPerfil .linha-flex label:has(#anGosta),
+    #vPerfil .linha-flex label:has(#anNaoGosta) { grid-column: 1 / -1; }
+    #pfTopo { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; }
+    #pfTopo .btn { width: 100%; }
+    #pfTopo #pfDesde { grid-column: 1 / -1; }
+    #pfTopo #pfTopoEspaco { display: none; }
+  }
   .aluno-pt .quem { flex: 1; min-width: 160px; }
   .sessao-pt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
   .sessao-pt.feita { opacity: .55; }
@@ -586,11 +602,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   </div>
 <section id="vPerfil" hidden>
   <div class="card" style="border-left: 4px solid var(--roxo);">
-    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <div id="pfTopo" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <button class="btn sec mini" id="pfFechar">← Voltar</button>
       <h2 id="pfTitulo" style="font-size: 20px; margin: 0;">Perfil</h2>
       <span id="pfDesde" class="muted" style="font-size: 12px;"></span>
-      <span style="margin-left: auto;"></span>
+      <span id="pfTopoEspaco" style="margin-left: auto;"></span>
       <button class="btn mini" id="pfAcesso">📧 Enviar acesso do app</button>
       <button class="btn sec mini" id="pfApp" title="baixa o arquivo do app (uso offline)">📲 Gerar app</button>
       <button class="btn mini" id="pfPix">💠 Pix</button>
@@ -1314,7 +1330,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" id="pfAssinaturaStatus">ver status</button> ' +
         '<button class="btn sec mini" id="pfAssinaturaCancela">cancelar</button>'
       : '<button class="btn mini" id="pfAssinar">🔁 Ativar mensalidade no cartão</button>' +
-        '<span class="muted" style="font-size:12px;margin-left:8px;">cobrança automática todo mês no cartão do aluno (Pagar.me)</span>';
+        '<div class="muted" style="font-size:12px;margin-top:6px;">cobrança automática todo mês no cartão do aluno (Pagar.me)</div>';
   }
   $("pfAssinaturaBox").addEventListener("click", function (e) {
     var st = load();

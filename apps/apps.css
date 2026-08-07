@@ -166,6 +166,11 @@ html[data-tema="claro"] {
 html[data-tema="claro"] body { background: radial-gradient(80% 30% at 50% 0%, rgba(124,58,237,.06), transparent 70%), var(--fundo); }
 html[data-tema="claro"] a { color: var(--roxo); }
 html[data-tema="claro"] a:hover { color: var(--roxo-2); }
+/* links que são botões não herdam a cor de link (senão fica roxo no roxo) */
+html[data-tema="claro"] a.btn, html[data-tema="claro"] a.btn:hover { color: #fff; }
+html[data-tema="claro"] a.btn.sec { color: var(--texto); }
+html[data-tema="claro"] a.btn.sec:hover { color: var(--roxo); }
+html[data-tema="claro"] a.btn.perigo, html[data-tema="claro"] a.btn.perigo:hover { color: var(--erro); }
 html[data-tema="claro"] input, html[data-tema="claro"] select, html[data-tema="claro"] textarea { background: #fff; border-color: #d8d5e0; }
 html[data-tema="claro"] input:focus, html[data-tema="claro"] select:focus, html[data-tema="claro"] textarea:focus { background: #fff; border-color: var(--roxo); }
 html[data-tema="claro"] input[type="checkbox"], html[data-tema="claro"] input[type="radio"] { background: none; border: none; }
