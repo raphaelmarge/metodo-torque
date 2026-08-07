@@ -1485,6 +1485,39 @@ async function abaPt(p, a) {
       window.MTStore.cloud = window.__cloudOrig;
       document.getElementById("pfFechar").click();
     });
+
+    // 🔁 baixa automática: eventos do webhook viram pagamento registrado + alerta de recusa
+    const baixa = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.alunos[0].assinaturaRec = { id: "sub_hook_1", desde: window.MTStore.todayISO(), valor: 450 };
+      window.MTStore.write("ptStudio", st);
+      window.__cloudOrigB = window.MTStore.cloud;
+      const eventos = [
+        { id: "ev1", tipo: "charge.paid", valor_centavos: 45000, assinatura_id: "sub_hook_1", criado: "2026-08-01T10:00:00Z" },
+        { id: "ev2", tipo: "charge.payment_failed", valor_centavos: 45000, assinatura_id: "sub_hook_1", criado: "2026-08-06T10:00:00Z" },
+      ];
+      window.MTStore.cloud = () => ({
+        aid: "x",
+        client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) },
+      });
+      window.__pagAuto();
+      await new Promise((res) => setTimeout(res, 300));
+      window.__pagAuto(); // segunda chamada não pode duplicar
+      await new Promise((res) => setTimeout(res, 300));
+      window.MTStore.cloud = window.__cloudOrigB;
+      const st2 = window.MTStore.read("ptStudio", {});
+      const pgs = st2.pagamentos.filter((x) => x.eventoId === "ev1");
+      return { n: pgs.length, valor: pgs[0] && pgs[0].valor, forma: pgs[0] && pgs[0].forma, falhou: st2.alunos[0].cartaoFalhouEm };
+    });
+    ok(baixa.n === 1 && baixa.valor === 450 && /cartão/.test(baixa.forma), "webhook pago vira pagamento registrado sozinho (sem duplicar)");
+    ok(!!baixa.falhou, "cartão recusado marca o alerta no aluno");
+    await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      delete st.alunos[0].assinaturaRec;
+      st.alunos[0].cartaoFalhouEm = "";
+      st.pagamentos = st.pagamentos.filter((x) => !x.eventoId);
+      window.MTStore.write("ptStudio", st);
+    });
   }
 
   // ⏰ validade da ficha + 📔 diário de sessões + 📄 relatório PDF

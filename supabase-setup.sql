@@ -1739,3 +1739,28 @@ end;
 $$;
 grant execute on function public.matricula_info(uuid) to anon, authenticated;
 grant execute on function public.matricula_nova(text, text, text, text, text, uuid) to anon, authenticated;
+
+-- ==================== PAGAMENTOS AUTOMÁTICOS (WEBHOOK PAGAR.ME) (2026-08) ====================
+-- O webhook pagarme-webhook grava aqui cada cobrança paga/recusada; o sistema
+-- lê e dá baixa sozinho no financeiro. Bloco idempotente.
+
+create table if not exists public.pagarme_eventos (
+  id text primary key,                          -- id do evento no Pagar.me (idempotência)
+  academia_id uuid references public.academias (id) on delete cascade,
+  tipo text not null default '',                -- charge.paid, charge.payment_failed, order.paid…
+  status text not null default '',
+  valor_centavos integer not null default 0,
+  assinatura_id text not null default '',
+  pedido_id text not null default '',
+  cliente text not null default '',
+  email text not null default '',
+  criado timestamptz not null default now()
+);
+
+create index if not exists pagarme_eventos_acad on public.pagarme_eventos (academia_id, criado desc);
+
+alter table public.pagarme_eventos enable row level security;
+
+drop policy if exists "pagarme_eventos_membros" on public.pagarme_eventos;
+create policy "pagarme_eventos_membros" on public.pagarme_eventos
+  for select using (academia_id in (select public.minhas_academias()));

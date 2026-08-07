@@ -416,6 +416,36 @@ async function abaNt(p, a) {
   }));
   ok(!/Assinatura ativa/.test(assN2.box) && assN2.botaoVoltou, "cancelar limpa a assinatura e o botão de ativar volta");
 
+  // 🔁 baixa automática: evento pago do webhook vira pagamento da consulta (sem duplicar)
+  const baixaN = await p.evaluate(async () => {
+    const st = window.MTStore.read("ntStudio", {});
+    st.pacientes[0].assinaturaRec = { id: "sub_hook_n", desde: window.MTStore.todayISO(), valor: 150 };
+    window.MTStore.write("ntStudio", st);
+    window.__cloudOrigBN = window.MTStore.cloud;
+    const eventos = [
+      { id: "evn1", tipo: "charge.paid", valor_centavos: 15000, assinatura_id: "sub_hook_n", criado: "2026-08-01T10:00:00Z" },
+      { id: "evn2", tipo: "charge.payment_failed", valor_centavos: 15000, assinatura_id: "sub_hook_n", criado: "2026-08-06T10:00:00Z" },
+    ];
+    window.MTStore.cloud = () => ({
+      aid: "x",
+      client: { from: () => ({ select: () => ({ in: () => ({ order: () => ({ limit: () => Promise.resolve({ data: eventos }) }) }) }) }) },
+    });
+    window.__pagAutoN();
+    await new Promise((res) => setTimeout(res, 300));
+    window.__pagAutoN();
+    await new Promise((res) => setTimeout(res, 300));
+    window.MTStore.cloud = window.__cloudOrigBN;
+    const st2 = window.MTStore.read("ntStudio", {});
+    const pgs = (st2.pagamentosN || []).filter((x) => x.eventoId === "evn1");
+    const out = { n: pgs.length, valor: pgs[0] && pgs[0].valor, falhou: st2.pacientes[0].cartaoFalhouEm };
+    delete st2.pacientes[0].assinaturaRec;
+    st2.pacientes[0].cartaoFalhouEm = "";
+    st2.pagamentosN = (st2.pagamentosN || []).filter((x) => !x.eventoId);
+    window.MTStore.write("ntStudio", st2);
+    return out;
+  });
+  ok(baixaN.n === 1 && baixaN.valor === 150 && !!baixaN.falhou, "webhook: consulta paga entra sozinha e recusa marca alerta no paciente");
+
   await p.evaluate(() => document.getElementById("pnFechar").click());
   // busca de paciente no topo abre o perfil
   await p.fill("#buscaPac", "bruno");

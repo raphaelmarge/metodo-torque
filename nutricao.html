@@ -628,7 +628,8 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       .reduce(function (s, x) { return s + (+x.valor || 0); }, 0);
     var vPadrao = +((st.config || {}).pixValor) || 0;
     $("pnPgValor").value = vPadrao || "";
-    $("pnFin").innerHTML = "Recebido em " + ano + ": <b>R$ " + totalAno.toFixed(2).replace(".", ",") + "</b>" +
+    $("pnFin").innerHTML = (p.cartaoFalhouEm ? "<span style='color:#dc2626;font-weight:700;'>⚠️ Cartão recusado em " + S.fmtData(p.cartaoFalhouEm) + " — fala com o paciente.</span><br>" : "") +
+      "Recebido em " + ano + ": <b>R$ " + totalAno.toFixed(2).replace(".", ",") + "</b>" +
       (vPadrao ? " · consulta padrão R$ " + vPadrao.toFixed(2).replace(".", ",") : "") +
       (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Últimos: " + pgs.slice(0, 5).map(function (x) {
         return S.fmtData(x.data) + " (R$ " + (+x.valor).toFixed(2).replace(".", ",") + ")";
@@ -788,6 +789,40 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     }, function () { cb({ erro: "Sem conexão com a função pagarme agora." }); });
   }
   window.__pagarmeNT = geraLinkPagamentoN; // testes
+
+  // 🔁 baixa automática: assinaturas pagas no cartão (webhook Pagar.me) viram pagamento registrado
+  function puxaPagamentosCartaoN() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var st0 = load();
+    var ids = st0.pacientes.filter(function (p) { return p.assinaturaRec && p.assinaturaRec.id; })
+      .map(function (p) { return p.assinaturaRec.id; });
+    if (!ids.length) return;
+    nuvem.client.from("pagarme_eventos").select("id,tipo,valor_centavos,assinatura_id,criado")
+      .in("assinatura_id", ids).order("criado", { ascending: true }).limit(200).then(function (r) {
+        if (!r || r.error || !r.data || !r.data.length) return;
+        var st = load();
+        st.pagamentosN = st.pagamentosN || [];
+        var vistos = {};
+        st.pagamentosN.forEach(function (p) { if (p.eventoId) vistos[p.eventoId] = 1; });
+        var mudou = false;
+        r.data.forEach(function (ev) {
+          var p = st.pacientes.find(function (x) { return x.assinaturaRec && x.assinaturaRec.id === ev.assinatura_id; });
+          if (!p) return;
+          if (ev.tipo === "charge.paid" && !vistos[ev.id]) {
+            st.pagamentosN.push({ id: S.uid(), pacienteId: p.id, valor: (ev.valor_centavos || 0) / 100, data: String(ev.criado || "").slice(0, 10) || S.todayISO(), eventoId: ev.id });
+            vistos[ev.id] = 1;
+            p.cartaoFalhouEm = "";
+            mudou = true;
+          }
+          if (ev.tipo === "charge.payment_failed") { p.cartaoFalhouEm = String(ev.criado || "").slice(0, 10) || S.todayISO(); mudou = true; }
+        });
+        if (mudou) S.write("ntStudio", st);
+      });
+  }
+  window.__pagAutoN = puxaPagamentosCartaoN; // testes
+  setTimeout(puxaPagamentosCartaoN, 3000);
+  setInterval(puxaPagamentosCartaoN, 120000);
   $("pnPgLink").addEventListener("click", function () {
     var v = parseFloat(($("pnPgValor").value || "").replace(",", "."));
     var btn = this;

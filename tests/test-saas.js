@@ -46,6 +46,8 @@ function crcNode(s) {
   ok(/create table if not exists public\.app_agenda/.test(sql) && /app_agenda_pede/.test(sql) && /app_agenda_lista/.test(sql), "agenda do app: tabela e RPCs no SQL");
   ok(/grant execute on function public\.app_agenda_pede/.test(sql) && /app_agenda_membros/.test(sql), "agenda do app: grants pro app e RLS pro módulo");
   ok(/hq_suporte_threads/.test(sql) && /hq_suporte_lista/.test(sql) && /hq_suporte_envia/.test(sql) && /hq_erros/.test(sql), "assistência: RPCs do HQ (tickets + erros)");
+  ok(/pagarme_eventos/.test(sql) && /pagarme_eventos_membros/.test(sql), "webhook Pagar.me: tabela de eventos com RLS por academia no SQL");
+  ok(/PAGARME_WEBHOOK_TOKEN/.test(fs.readFileSync(__dirname + "/../supabase/functions/pagarme-webhook/index.ts", "utf8")), "função pagarme-webhook existe com a trava de senha na URL");
 
   // ---------- 1) site comercial ----------
   console.log("Site comercial (torqueon.html):");

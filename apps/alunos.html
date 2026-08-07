@@ -1514,6 +1514,49 @@ $("pNome").value = ""; $("pValor").value = ""; $("pMeses").value = ""; $("pConvi
   S.equipeDatalist(["aConsultor"]);
   S.onChange(function (k) { if (k === "alunos" || k === "inad") render(); });
 
+  // 🔁 baixa automática: mensalidades pagas no cartão (webhook Pagar.me) quitam o
+  // recebível aberto mais antigo do aluno; recusa marca alerta no aluno
+  function puxaPagamentosCartaoAcad() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var st0 = load();
+    var ids = st0.alunos.filter(function (a) { return a.assinaturaRec && a.assinaturaRec.id; })
+      .map(function (a) { return a.assinaturaRec.id; });
+    if (!ids.length) return;
+    nuvem.client.from("pagarme_eventos").select("id,tipo,valor_centavos,assinatura_id,criado")
+      .in("assinatura_id", ids).order("criado", { ascending: true }).limit(200).then(function (r) {
+        if (!r || r.error || !r.data || !r.data.length) return;
+        var st = load();
+        st.recebiveis = st.recebiveis || [];
+        var vistos = {};
+        st.recebiveis.forEach(function (x) { if (x.eventoId) vistos[x.eventoId] = 1; });
+        var mudou = false;
+        r.data.forEach(function (ev) {
+          var a = st.alunos.find(function (x) { return x.assinaturaRec && x.assinaturaRec.id === ev.assinatura_id; });
+          if (!a) return;
+          if (ev.tipo === "charge.paid" && !vistos[ev.id]) {
+            var rec = st.recebiveis.filter(function (x) { return x.alunoId === a.id && x.status === "aberto"; })
+              .sort(function (x, y) { return (x.vencimento || "") < (y.vencimento || "") ? -1 : 1; })[0];
+            if (rec) {
+              rec.status = "pago";
+              rec.pagoEm = String(ev.criado || "").slice(0, 10) || S.todayISO();
+              rec.valorBaixa = (ev.valor_centavos || 0) / 100;
+              rec.forma = "cartão 🔁";
+              rec.eventoId = ev.id;
+              vistos[ev.id] = 1;
+              a.cartaoFalhouEm = "";
+              mudou = true;
+            }
+          }
+          if (ev.tipo === "charge.payment_failed") { a.cartaoFalhouEm = String(ev.criado || "").slice(0, 10) || S.todayISO(); mudou = true; }
+        });
+        if (mudou) S.write("alunos", st);
+      });
+  }
+  window.__pagAutoAcad = puxaPagamentosCartaoAcad; // testes
+  setTimeout(puxaPagamentosCartaoAcad, 3000);
+  setInterval(puxaPagamentosCartaoAcad, 120000);
+
   // ---------- deep-links do Sistema (?aba= ?filtro= ?busca= ?acao=) ----------
   (function () {
     var q = new URLSearchParams(location.search);
