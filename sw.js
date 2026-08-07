@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v254";
+var VERSION = "mt-v255";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
@@ -39,6 +39,7 @@ var CORE = [
   "docs/deck-stage.js",
   "apps/store.js",
   "apps/apps.css",
+  "assets/pagarme-cartao.js",
   "personal.html",
   "personal-vendas.html",
   "manifest-personal.webmanifest",

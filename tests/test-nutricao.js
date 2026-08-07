@@ -380,6 +380,42 @@ async function abaNt(p, a) {
   ok(/R\$ 150,00/.test(perfilN.fin), "pagamento de consulta registrado (R$ 150)");
   ok(/78,5 kg/.test(perfilN.peso), "pesagem registrada aparece na evolução");
   ok(perfilN.st.pacientes[0].peso === 78.5, "cadastro acompanha a pesagem mais recente");
+
+  // 🔁 assinatura mensal no cartão (módulo compartilhado mockado)
+  ok(await p.evaluate(() => !!document.getElementById("pnAssinar") && !!document.getElementById("pnAssinaturaBox")), "perfil tem o botão 🔁 Assinatura mensal ao lado do link de pagamento");
+  await p.evaluate(() => {
+    window.MT_cartaoRec = {
+      abre: (o) => { window.__abriuCartao = o; o.onOk({ ok: true, assinaturaId: "sub_n1", status: "active" }); },
+      cancela: () => Promise.resolve({ ok: true }),
+      status: () => Promise.resolve({ ok: true, status: "active" }),
+    };
+    document.getElementById("pnPgValor").value = "150";
+    document.getElementById("pnAssinar").click();
+  });
+  await p.waitForTimeout(250);
+  const assN = await p.evaluate(() => ({
+    valor: window.__abriuCartao.valor,
+    descricao: window.__abriuCartao.descricao,
+    nome: window.__abriuCartao.nome,
+    cor: window.__abriuCartao.cor,
+    rec: window.MTStore.read("ntStudio", {}).pacientes[0].assinaturaRec,
+    box: document.getElementById("pnAssinaturaBox").textContent,
+    botaoSumiu: document.getElementById("pnAssinar").style.display === "none",
+  }));
+  ok(assN.valor === 150 && assN.descricao === "Acompanhamento — Nutri Ana Costa" && /Bruno Paciente/.test(assN.nome) && assN.cor === "#16a34a", "🔁 abre o cartão com valor, descrição do consultório, nome e cor verde");
+  ok(assN.rec && assN.rec.id === "sub_n1" && assN.rec.valor === 150 && !!assN.rec.desde, "assinaturaRec gravada no paciente (id, valor e data)");
+  ok(/Assinatura ativa desde/.test(assN.box) && /150,00/.test(assN.box) && assN.botaoSumiu, "perfil mostra 🔁 Assinatura ativa com data e valor (e esconde o botão)");
+  await p.evaluate(() => document.getElementById("pnAssinaturaStatus").click());
+  await p.waitForTimeout(250);
+  ok(await p.evaluate(() => /ativa/.test(document.getElementById("pnAssinaturaInfo").textContent)), "ver status consulta a nuvem (mock) e mostra 'ativa'");
+  await p.evaluate(() => document.getElementById("pnAssinaturaCancela").click()); // confirm aceito pelo handler global
+  await p.waitForFunction(() => !window.MTStore.read("ntStudio", {}).pacientes[0].assinaturaRec, null, { timeout: 5000 });
+  const assN2 = await p.evaluate(() => ({
+    box: document.getElementById("pnAssinaturaBox").textContent,
+    botaoVoltou: document.getElementById("pnAssinar").style.display !== "none",
+  }));
+  ok(!/Assinatura ativa/.test(assN2.box) && assN2.botaoVoltou, "cancelar limpa a assinatura e o botão de ativar volta");
+
   await p.evaluate(() => document.getElementById("pnFechar").click());
   // busca de paciente no topo abre o perfil
   await p.fill("#buscaPac", "bruno");

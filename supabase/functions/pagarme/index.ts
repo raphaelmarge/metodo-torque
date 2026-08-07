@@ -21,6 +21,15 @@
 //     na página segura do Pagar.me (nunca no nosso site) e pode escolher
 //     também PIX ou boleto no mesmo link.
 //   { acao: "status", orderId }                       → situação da cobrança
+//
+// MENSALIDADE AUTOMÁTICA no cartão (assinatura recorrente):
+//   { acao: "chave_publica" }                         → devolve a PAGARME_PUBLIC_KEY
+//     (o site usa pra tokenizar o cartão DIRETO no Pagar.me — o número do
+//      cartão nunca passa por aqui; precisa do secret PAGARME_PUBLIC_KEY = pk_...)
+//   { acao: "assinar", card_token, valorCentavos, descricao, nome,
+//     email?, documento? }                            → cria a assinatura mensal
+//   { acao: "assinatura_status", assinaturaId }       → situação da assinatura
+//   { acao: "assinatura_cancela", assinaturaId }      → cancela a assinatura
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +42,23 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { ...CORS, "Content-Type": "application/json" },
   });
+}
+
+// transforma a resposta de erro do Pagar.me em texto legível
+// (pega d.message e, quando houver, o primeiro item de d.errors)
+function erroPagarme(dados: any, statusHttp: number): string {
+  let detalhe = "";
+  try {
+    if (dados && dados.errors && typeof dados.errors === "object") {
+      const chave1 = Object.keys(dados.errors)[0];
+      const v = chave1 ? (dados.errors as any)[chave1] : null;
+      if (Array.isArray(v) && v.length) detalhe = typeof v[0] === "object" ? JSON.stringify(v[0]) : String(v[0]);
+      else if (v) detalhe = typeof v === "object" ? JSON.stringify(v) : String(v);
+    }
+  } catch { /* segue sem detalhe */ }
+  const msg = dados && dados.message ? String(dados.message) : "";
+  if (msg && detalhe && detalhe !== msg) return msg + " — " + detalhe;
+  return msg || detalhe || "erro " + statusHttp;
 }
 
 
@@ -67,6 +93,15 @@ Deno.serve(async (req: Request) => {
   if (body.acao === "ping") {
     return json({ ok: true, chaveConfigurada: !!chave });
   }
+
+  // ---------- chave pública (pra tokenizar o cartão no navegador) ----------
+  // Só devolve a chave PÚBLICA (pk_...) — a secreta nunca sai daqui.
+  if (body.acao === "chave_publica") {
+    const pk = Deno.env.get("PAGARME_PUBLIC_KEY") || "";
+    if (!pk) return json({ erro: "Configure a PAGARME_PUBLIC_KEY nos Secrets." }, 500);
+    return json({ ok: true, publicKey: pk });
+  }
+
   if (!chave) {
     return json({ erro: "PAGARME_SECRET_KEY não configurada nos Secrets da função." }, 500);
   }
@@ -151,42 +186,51 @@ Deno.serve(async (req: Request) => {
 
   // ---------- assinatura recorrente (cartão cadastrado, cobra todo mês) ----------
   // O cartão NUNCA passa por aqui: o site tokeniza direto no Pagar.me com a
-  // chave PÚBLICA e envia só o token (token_...), que vira assinatura.
+  // chave PÚBLICA (acao chave_publica) e envia só o token (card_token), que
+  // vira assinatura. Número de cartão NUNCA é aceito nesta função.
   if (body.acao === "assinar") {
     const valor = Math.round(Number(body.valorCentavos));
-    if (!valor || valor < 100) return json({ erro: "valorCentavos inválido." }, 400);
+    if (!valor || valor < 100) return json({ erro: "valorCentavos inválido (mínimo 100 = R$ 1,00)." }, 400);
+    const token = String(body.card_token || body.tokenCartao || "").trim();
+    if (!token) return json({ erro: "card_token é obrigatório (o cartão é tokenizado no navegador, direto no Pagar.me)." }, 400);
     const nome = String(body.nome || "").trim();
-    const token = String(body.tokenCartao || "").trim();
-    if (!nome || !token) return json({ erro: "nome e tokenCartao são obrigatórios." }, 400);
-    const cpf = String(body.cpf || "").replace(/\D/g, "");
-    const dia = Math.min(Math.max(Number(body.diaVencimento) || 5, 1), 28);
+    if (!nome) return json({ erro: "nome é obrigatório." }, 400);
+    const cpf = String(body.documento || body.cpf || "").replace(/\D/g, "");
 
     const customer: any = { name: nome, type: "individual" };
     if (cpf.length === 11) customer.document = cpf;
     if (body.email) customer.email = String(body.email).trim();
 
+    const assinatura: any = {
+      code: "tq_" + Date.now(),
+      payment_method: "credit_card",
+      card_token: token,
+      billing_type: "prepaid",
+      interval: "month",
+      interval_count: 1,
+      items: [{
+        description: String(body.descricao || "Mensalidade").slice(0, 64),
+        quantity: 1,
+        pricing_scheme: { scheme_type: "unit", price: valor },
+      }],
+      customer,
+    };
+    // caller antigo (perfil do aluno) escolhe o dia do vencimento
+    const dia = Number(body.diaVencimento) || 0;
+    if (dia >= 1) {
+      assinatura.billing_type = "exact_day";
+      assinatura.billing_day = Math.min(dia, 28);
+      assinatura.installments = 1;
+    }
+
     const resp = await fetch(API + "/subscriptions", {
       method: "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customer,
-        payment_method: "credit_card",
-        card_token: token,
-        interval: "month",
-        interval_count: 1,
-        billing_type: "exact_day",
-        billing_day: dia,
-        installments: 1,
-        items: [{
-          description: String(body.descricao || "Mensalidade"),
-          quantity: 1,
-          pricing_scheme: { scheme_type: "unit", price: valor },
-        }],
-      }),
+      body: JSON.stringify(assinatura),
     });
     const dados: any = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      return json({ erro: "Pagar.me recusou a assinatura: " + (dados?.message || resp.status), detalhe: dados }, 502);
+      return json({ erro: "Pagar.me recusou a assinatura: " + erroPagarme(dados, resp.status), detalhe: dados }, 502);
     }
     return json({
       ok: true,
@@ -195,6 +239,30 @@ Deno.serve(async (req: Request) => {
       proximaCobranca: dados.next_billing_at || null,
       cartao: dados.card ? (dados.card.brand || "") + " •••• " + (dados.card.last_four_digits || "") : null,
     });
+  }
+  if (body.acao === "assinatura_status") {
+    const id = String(body.assinaturaId || "").trim();
+    if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
+    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), { headers: { Authorization: auth } });
+    const dados: any = await resp.json().catch(() => ({}));
+    if (!resp.ok) return json({ erro: "Pagar.me recusou: " + erroPagarme(dados, resp.status) }, 502);
+    return json({
+      ok: true,
+      status: dados.status,
+      proximaCobranca: dados.next_billing_at || "",
+      valor: (dados.items && dados.items[0] && dados.items[0].pricing_scheme && dados.items[0].pricing_scheme.price) || 0,
+    });
+  }
+  if (body.acao === "assinatura_cancela") {
+    const id = String(body.assinaturaId || "").trim();
+    if (!id) return json({ erro: "assinaturaId é obrigatório." }, 400);
+    const resp = await fetch(API + "/subscriptions/" + encodeURIComponent(id), {
+      method: "DELETE",
+      headers: { Authorization: auth },
+    });
+    const dados: any = await resp.json().catch(() => ({}));
+    if (!resp.ok) return json({ erro: "Pagar.me recusou o cancelamento: " + erroPagarme(dados, resp.status) }, 502);
+    return json({ ok: true, status: (dados && dados.status) || "canceled" });
   }
   if (body.acao === "assinatura-status") {
     const id = String(body.assinaturaId || "").trim();
@@ -229,5 +297,5 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true, status: ch.status || dados.status, pagoEm: ch.paid_at || null });
   }
 
-  return json({ erro: "acao desconhecida (use ping, criar ou status)." }, 400);
+  return json({ erro: "acao desconhecida (use ping, chave_publica, criar, status, assinar, assinatura_status ou assinatura_cancela)." }, 400);
 });

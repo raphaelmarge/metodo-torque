@@ -593,6 +593,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn mini" id="pfPix">💠 Pix</button>
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none;">💬 WhatsApp</a>
     </div>
+    <div id="pfAssinaturaBox" style="margin-top: 10px; font-size: 13px;"></div>
   </div>
 
   <div class="card">
@@ -709,6 +710,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/cloud-config.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="apps/store.js"></script>
+<script src="assets/pagarme-cartao.js"></script>
 <script src="assets/exercicios-db.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
@@ -1038,6 +1040,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     window.scrollTo({ top: 0, behavior: "smooth" });
     pintaAppDados(a);
     pintaDiario(id);
+    pintaAssinatura(a);
   }
   // ---------- 📔 diário de sessões ----------
   function pintaDiario(alunoId) {
@@ -1296,6 +1299,78 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (box) box.innerHTML = msgAcesso(r, a) + "<hr style='border:none;border-top:1px solid var(--linha);margin:10px 0;'>" + box.innerHTML;
       if (r.erro) alert(r.erro);
     });
+  });
+  // ---------- 🔁 mensalidade no cartão (assinatura Pagar.me) ----------
+  function pintaAssinatura(a) {
+    var box = $("pfAssinaturaBox");
+    if (!box) return;
+    var r = a.assinaturaRec;
+    box.innerHTML = r
+      ? "🔁 Mensalidade no cartão <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(r.desde) + " (" + S.fmtBRL(+r.valor) + "/mês) " +
+        '<button class="btn sec mini" id="pfAssinaturaStatus">ver status</button> ' +
+        '<button class="btn sec mini" id="pfAssinaturaCancela">cancelar</button>'
+      : '<button class="btn mini" id="pfAssinar">🔁 Ativar mensalidade no cartão</button>' +
+        '<span class="muted" style="font-size:12px;margin-left:8px;">cobrança automática todo mês no cartão do aluno (Pagar.me)</span>';
+  }
+  $("pfAssinaturaBox").addEventListener("click", function (e) {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === perfilId; });
+    if (!a) return;
+    if (e.target.id === "pfAssinar") {
+      var ct = contratoDe(st, a.id);
+      var pl = ct && planoDe(st, ct.planoId);
+      var valor = (pl ? +pl.valor : 0) || +a.valor || 0;
+      if (!valor) { alert("Antes de ativar, defina o valor do aluno (campo Valor R$ do cadastro) ou feche um contrato com plano."); return; }
+      if (!window.MT_cartaoRec) { alert("O módulo do cartão ainda não carregou — recarrega a página e tenta de novo."); return; }
+      MT_cartaoRec.abre({
+        valor: valor,
+        descricao: "Mensalidade — " + ((st.config || {}).nome || "Personal"),
+        nome: a.nome,
+        email: a.email || "",
+        zap: a.zap || "",
+        cor: "#7c3aed",
+        onOk: function (d) {
+          var st2 = load();
+          var a2 = st2.alunos.find(function (x) { return x.id === perfilId; });
+          if (!a2) return;
+          a2.assinaturaRec = { id: d.assinaturaId, desde: S.todayISO(), valor: valor };
+          save(st2);
+          pintaAssinatura(a2);
+          alert("Prontinho! A mensalidade no cartão do " + a2.nome.split(" ")[0] + " está ativa — a cobrança agora é automática todo mês. 🔁");
+        },
+      });
+      return;
+    }
+    if (e.target.id === "pfAssinaturaStatus" && a.assinaturaRec) {
+      var bt = e.target;
+      bt.disabled = true;
+      MT_cartaoRec.status(a.assinaturaRec.id).then(function (d) {
+        bt.disabled = false;
+        if (!d || d.erro) { alert((d && d.erro) || "Não deu pra consultar agora — tenta de novo."); return; }
+        var mapa = { active: "✅ ativa", future: "🕐 agendada (começa na próxima cobrança)", past_due: "⚠️ pagamento atrasado", canceled: "❌ cancelada", failed: "⚠️ falhou — confere o cartão com o aluno" };
+        alert("Assinatura: " + (mapa[d.status] || d.status) +
+          (d.proximaCobranca ? "\nPróxima cobrança: " + S.fmtData(String(d.proximaCobranca).slice(0, 10)) : "") +
+          (d.valor ? "\nValor: " + S.fmtBRL(d.valor / 100) + "/mês" : ""));
+      });
+      return;
+    }
+    if (e.target.id === "pfAssinaturaCancela" && a.assinaturaRec) {
+      if (!confirm("Cancelar a mensalidade no cartão deste aluno? A cobrança automática para na hora.")) return;
+      var bc = e.target;
+      bc.disabled = true;
+      MT_cartaoRec.cancela(a.assinaturaRec.id).then(function (d) {
+        if (d && d.erro) { bc.disabled = false; alert(d.erro); return; }
+        var st2 = load();
+        var a2 = st2.alunos.find(function (x) { return x.id === perfilId; });
+        if (a2) {
+          delete a2.assinaturaRec;
+          save(st2);
+          pintaAssinatura(a2);
+        }
+        alert("Assinatura cancelada. A partir de agora a cobrança volta a ser manual. ✅");
+      });
+      return;
+    }
   });
   window.__perfilPT = abrePerfil; // testes
 
@@ -2015,6 +2090,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (valor ? "<span>" + S.fmtBRL(valor) + "</span>" : "") +
         (ct ? '<span class="muted">vence dia ' + ct.diaVenc + "</span>" : '<span class="muted">sem contrato</span>') +
         (atrasado ? '<span class="tag erro">ATRASADO</span>' : "") +
+        (a.assinaturaRec ? '<span class="tag ok">🔁 no cartão</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
         (valor && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + valor + '">Pix</button>' : "") +
         (valor ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + valor + '" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto)">💳 Link de pagamento</button>' : "") +

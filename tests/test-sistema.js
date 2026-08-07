@@ -227,6 +227,53 @@ const SEED = {
   assert(await pCep.evaluate(() => document.activeElement === document.getElementById("aNumero")), "cursor pula direto pro campo Número");
   await pCep.close();
 
+  console.log("— 🔁 mensalidade no cartão (ficha do aluno) —");
+  const pAss = await ctx.newPage();
+  pAss.on("dialog", (d) => d.accept());
+  await pAss.goto(BASE + "/apps/alunos.html");
+  await pAss.waitForSelector('#listaAlunos [data-id="a1"]');
+  await pAss.evaluate(() => {
+    // mock do módulo compartilhado (assets/pagarme-cartao.js) — a suíte não fala com a nuvem
+    window.MT_cartaoRec = {
+      abre: (o) => { window.__abriuCartao = o; o.onOk({ ok: true, assinaturaId: "sub_n1", status: "active" }); },
+      cancela: () => Promise.resolve({ ok: true }),
+      status: () => Promise.resolve({ ok: true, status: "active" }),
+    };
+    const cfg = window.MTStore.read("config", { dados: {} });
+    cfg.dados = cfg.dados || {};
+    cfg.dados.nome = "TORQUE FIT";
+    window.MTStore.write("config", cfg);
+  });
+  await pAss.click('#listaAlunos [data-id="a1"]');
+  await pAss.waitForSelector("#fichaDlg[open]");
+  assert(!!(await pAss.$("#fAssinar")), "ficha tem o botão 🔁 Ativar mensalidade no cartão");
+  await pAss.click("#fAssinar");
+  await pAss.waitForFunction(() => !!((window.MTStore.read("alunos", {}).alunos || []).find((x) => x.id === "a1") || {}).assinaturaRec, null, { timeout: 5000 });
+  const ass = await pAss.evaluate(() => ({
+    valor: window.__abriuCartao.valor,
+    descricao: window.__abriuCartao.descricao,
+    nome: window.__abriuCartao.nome,
+    cor: window.__abriuCartao.cor,
+    rec: (window.MTStore.read("alunos", {}).alunos || []).find((x) => x.id === "a1").assinaturaRec,
+    ficha: document.getElementById("fAssinatura").textContent,
+    linha: document.querySelector('#listaAlunos [data-id="a1"]').textContent,
+  }));
+  assert(ass.valor === 120 && ass.descricao === "Mensalidade — TORQUE FIT" && /Ana Silva/.test(ass.nome) && ass.cor === "#7c3aed", "abre o cartão com o valor do plano (R$120) e a descrição da academia");
+  assert(ass.rec && ass.rec.id === "sub_n1" && ass.rec.valor === 120 && !!ass.rec.desde, "assinaturaRec gravada no aluno (id, valor e data)");
+  assert(/Assinatura ativa desde/.test(ass.ficha) && /120/.test(ass.ficha), "ficha mostra 🔁 Assinatura ativa com data e valor");
+  assert(/no cartão/.test(ass.linha), "listagem ganha o chip 🔁 no cartão");
+  await pAss.click("#fAssinaturaStatus");
+  await pAss.waitForFunction(() => /ativa/.test(document.getElementById("fAssinaturaInfo").textContent), null, { timeout: 5000 });
+  assert(true, "ver status consulta a nuvem (mock) e mostra 'ativa'");
+  await pAss.click("#fAssinaturaCancela"); // confirm aceito pelo handler de dialog
+  await pAss.waitForFunction(() => !((window.MTStore.read("alunos", {}).alunos || []).find((x) => x.id === "a1") || {}).assinaturaRec, null, { timeout: 5000 });
+  const assDep = await pAss.evaluate(() => ({
+    temAtivar: !!document.getElementById("fAssinar"),
+    linha: document.querySelector('#listaAlunos [data-id="a1"]').textContent,
+  }));
+  assert(assDep.temAtivar && !/no cartão/.test(assDep.linha), "cancelar limpa a assinatura, tira o chip e volta o botão de ativar");
+  await pAss.close();
+
   console.log("— erros de página —");
   const errosReais = erros.filter((e) => !/service.?worker|Failed to register/i.test(e));
   assert(errosReais.length === 0, "zero erros de JS (" + errosReais.join(" | ").slice(0, 300) + ")");

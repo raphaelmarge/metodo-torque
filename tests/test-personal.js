@@ -1366,6 +1366,127 @@ async function abaPt(p, a) {
     ok(await p.evaluate(async () => /data-pgm=/.test(await (await fetch("personal.html")).text())), "pendências ganham o botão 💳 Link de pagamento");
   }
 
+  // 🔁 mensalidade no cartão (assinatura Pagar.me com tokenização no navegador)
+  console.log("Mensalidade no cartão:");
+  {
+    // nuvem + Pagar.me mockados: token no api.pagar.me, assinatura na função pagarme
+    await p.evaluate(() => {
+      window.__cloudOrig = window.MTStore.cloud;
+      window.__fetchOrig = window.fetch;
+      window.__cartaoChamadas = { token: null, funcao: [] };
+      // cadeia flexível: qualquer .select().eq().eq().limit()… resolve { data: [] }
+      const cadeia = () => {
+        const o = { then: (res, rej) => Promise.resolve({ data: [] }).then(res, rej) };
+        ["select", "eq", "neq", "gte", "lte", "in", "is", "not", "order", "limit", "single"].forEach((m) => { o[m] = () => o; });
+        return o;
+      };
+      window.MTStore.cloud = () => ({
+        aid: "x",
+        client: {
+          auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok-cartao" } } }) },
+          from: () => cadeia(),
+        },
+      });
+      window.fetch = (url, opts) => {
+        const u = String(url);
+        if (u.includes("api.pagar.me/core/v5/tokens")) {
+          window.__cartaoChamadas.token = { url: u, body: JSON.parse(opts.body) };
+          return Promise.resolve({ json: () => Promise.resolve({ id: "token_teste_1" }) });
+        }
+        if (u.includes("functions/v1/pagarme")) {
+          const corpo = JSON.parse(opts.body);
+          window.__cartaoChamadas.funcao.push(corpo);
+          if (corpo.acao === "chave_publica") return Promise.resolve({ json: () => Promise.resolve({ ok: true, publicKey: "pk_teste" }) });
+          if (corpo.acao === "assinar") return Promise.resolve({ json: () => Promise.resolve({ ok: true, assinaturaId: "sub_teste_1", status: "active" }) });
+          if (corpo.acao === "assinatura_status") return Promise.resolve({ json: () => Promise.resolve({ ok: true, status: "active", proximaCobranca: "2026-09-07T12:00:00Z", valor: 45000 }) });
+          return Promise.resolve({ json: () => Promise.resolve({ ok: true, status: "canceled" }) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id);
+    });
+    await p.waitForTimeout(250);
+    ok(await p.evaluate(() => {
+      const b = document.getElementById("pfAssinar");
+      return !!b && /Ativar mensalidade no cartão/.test(b.textContent);
+    }), "perfil sem assinatura tem o botão 🔁 Ativar mensalidade no cartão");
+    await p.click("#pfAssinar");
+    await p.waitForFunction(() => document.getElementById("dlgCartaoRec") && document.getElementById("dlgCartaoRec").open);
+    const dlgInfo = await p.evaluate(() => ({
+      txt: document.getElementById("dlgCartaoRec").textContent,
+      nome: document.getElementById("crNome").value,
+      email: document.getElementById("crEmail").value,
+    }));
+    ok(/direto pro Pagar\.me/.test(dlgInfo.txt) && /nunca vê nem guarda/.test(dlgInfo.txt), "dialog avisa que o cartão vai direto pro Pagar.me (PCI)");
+    ok(/João/.test(dlgInfo.nome) && /joao@email\.com/.test(dlgInfo.email), "nome e e-mail do aluno já vêm preenchidos");
+    await p.fill("#crNumero", "4111111111111111");
+    ok(await p.evaluate(() => document.getElementById("crNumero").value === "4111 1111 1111 1111"), "número do cartão formata em blocos de 4");
+    await p.fill("#crVal", "12/30");
+    await p.fill("#crCvv", "123");
+    await p.fill("#crCpf", "52998224725");
+    await p.fill("#crEmail", "joao@email.com");
+    await p.click("#crEnviar");
+    await p.waitForFunction(() => !document.getElementById("dlgCartaoRec").open, null, { timeout: 5000 });
+    const assinou = await p.evaluate(() => {
+      const ch = window.__cartaoChamadas;
+      const st = window.MTStore.read("ptStudio", {});
+      return {
+        tokenUrl: ch.token && ch.token.url,
+        tokenTipo: ch.token && ch.token.body.type,
+        tokenCard: ch.token && ch.token.body.card,
+        corposFuncao: JSON.stringify(ch.funcao),
+        assinar: ch.funcao.find((c) => c.acao === "assinar"),
+        rec: st.alunos[0].assinaturaRec,
+        box: document.getElementById("pfAssinaturaBox").textContent,
+      };
+    });
+    ok(/appId=pk_teste/.test(assinou.tokenUrl) && assinou.tokenTipo === "card" && assinou.tokenCard.number === "4111111111111111" && assinou.tokenCard.exp_month === 12 && assinou.tokenCard.exp_year === 2030 && assinou.tokenCard.cvv === "123", "número/validade/CVV vão DIRETO pro api.pagar.me com a chave pública");
+    ok(!assinou.corposFuncao.includes("4111111111111111") && !assinou.corposFuncao.includes("4111 1111"), "o número do cartão NUNCA vai pra nossa nuvem (só o card_token)");
+    ok(assinou.assinar && assinou.assinar.card_token === "token_teste_1" && assinou.assinar.valorCentavos === 45000 && assinou.assinar.documento === "52998224725" && /Mensalidade — Léo/.test(assinou.assinar.descricao), "assinar leva card_token, R$ 450 do contrato em centavos, CPF e a descrição do studio");
+    ok(assinou.rec && assinou.rec.id === "sub_teste_1" && assinou.rec.valor === 450 && !!assinou.rec.desde, "assinaturaRec gravada no aluno (id, valor e data)");
+    ok(/Mensalidade no cartão ativa desde/.test(assinou.box) && /450/.test(assinou.box), "perfil mostra 🔁 mensalidade ativa com data e valor");
+    // pendências: aluno com assinatura ganha o chip 🔁 no cartão
+    await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      window.__pgtosGuardados = st.pagamentos;
+      st.pagamentos = []; // sem pagamento no mês → João vira pendente
+      window.MTStore.write("ptStudio", st);
+      document.getElementById("pfSalvar").click(); // re-renderiza tudo (inclui pendências)
+    });
+    await p.waitForTimeout(250);
+    const pendCartao = await p.evaluate(() => document.getElementById("pendentes").innerHTML);
+    ok(/João Cliente/.test(pendCartao) && /🔁 no cartão/.test(pendCartao) && /tag ok/.test(pendCartao), "pendência de quem tem assinatura ganha o chip 🔁 no cartão");
+    await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.pagamentos = window.__pgtosGuardados;
+      window.MTStore.write("ptStudio", st);
+    });
+    // ver status → resposta traduzida pra pt-BR
+    await p.evaluate(() => { window.__alertOrig = window.alert; window.alert = (m) => { window.__stMsg = m; }; });
+    await p.click("#pfAssinaturaStatus");
+    await p.waitForFunction(() => !!window.__stMsg, null, { timeout: 5000 });
+    const stMsg = await p.evaluate(() => { const m = window.__stMsg; window.alert = window.__alertOrig; return m; });
+    ok(/ativa/.test(stMsg) && /07\/09\/2026/.test(stMsg) && /450/.test(stMsg), "ver status traduz pra pt-BR com a próxima cobrança e o valor");
+    // cancelar (confirm) remove a assinaturaRec
+    await p.evaluate(() => { window.__confirmOrig = window.confirm; window.confirm = () => true; });
+    await p.click("#pfAssinaturaCancela");
+    await p.waitForFunction(() => !window.MTStore.read("ptStudio", {}).alunos[0].assinaturaRec, null, { timeout: 5000 });
+    const cancelou = await p.evaluate(() => ({
+      rec: window.MTStore.read("ptStudio", {}).alunos[0].assinaturaRec,
+      box: document.getElementById("pfAssinaturaBox").textContent,
+      corpo: window.__cartaoChamadas.funcao.find((c) => c.acao === "assinatura_cancela"),
+    }));
+    ok(!cancelou.rec && /Ativar mensalidade no cartão/.test(cancelou.box), "cancelar (com confirmação) remove a assinaturaRec e volta o botão de ativar");
+    ok(cancelou.corpo && cancelou.corpo.assinaturaId === "sub_teste_1", "cancelamento chama a nuvem com o id da assinatura");
+    // restaura os originais pro resto da suíte
+    await p.evaluate(() => {
+      window.confirm = window.__confirmOrig;
+      window.fetch = window.__fetchOrig;
+      window.MTStore.cloud = window.__cloudOrig;
+      document.getElementById("pfFechar").click();
+    });
+  }
+
   // ⏰ validade da ficha + 📔 diário de sessões + 📄 relatório PDF
   console.log("Validade, diário e relatório PDF:");
   {
