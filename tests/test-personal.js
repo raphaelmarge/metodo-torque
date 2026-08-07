@@ -1227,6 +1227,25 @@ async function abaPt(p, a) {
     return { acesa, apagada: dot && dot.style.display === "none" };
   });
   ok(dotChat.acesa && dotChat.apagada, "recado novo acende a bolinha no Chat e abrir o chat apaga");
+  // home estilo app nativo: hero "treino de hoje", tiles de progresso e XP
+  const home = await pApp.evaluate(() => {
+    window.__trocaSec("inicio");
+    return {
+      rot: document.getElementById("htRot").textContent,
+      tit: document.getElementById("htTitulo").textContent,
+      sub: document.getElementById("htSub").textContent,
+      tiles: document.getElementById("pgTiles").textContent,
+      xp: document.getElementById("xpChip").textContent,
+    };
+  });
+  ok(/TREINO|FICHA/.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card 'HOJE · " + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
+  ok(/⚖️ Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
+  ok(/⚡ \d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp + ")");
+  const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
+  ok(await pApp.evaluate(() => {
+    document.getElementById("htVer").click();
+    return !document.querySelector("[data-sec='treino']").hasAttribute("data-sec-off");
+  }), "botão 'Ver treino ➜' do hero pula pra aba Treino");
   // com o menu de abas, cada grupo de cards vive numa seção — troca antes de interagir
   await pApp.evaluate(() => window.__trocaSec("treino"));
   await pApp.fill("#dcEx", "Agachamento");
@@ -1246,6 +1265,10 @@ async function abaPt(p, a) {
   await pApp.waitForTimeout(400);
   const feitoAuto = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos") || "{}"));
   ok(Object.keys(feitoAuto).length === 1, "completar todas as séries marca 'treinei hoje' sozinho");
+  {
+    const xp1 = parseInt(((await pApp.evaluate(() => document.getElementById("xpChip").textContent)).match(/\d+/) || ["0"])[0], 10);
+    ok(xp1 === xp0 + 10, "treino registrado rende +10 XP (" + xp0 + " → " + xp1 + ")");
+  }
   // cronômetro (o botão vive dentro do <details> fechado — clica via JS)
   await pApp.evaluate(() => document.querySelector(".tmrbtn").click());
   await pApp.waitForTimeout(300);
