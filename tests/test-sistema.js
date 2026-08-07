@@ -79,6 +79,15 @@ const SEED = {
   assert(resumo.includes("Check-ins"), "Home resume o dia (check-ins)");
   assert(resumo.includes("1"), "Home conta 1 check-in de hoje");
 
+  console.log("— banner do fechamento do mês —");
+  await page.evaluate(() => { localStorage.removeItem("mtapp:fechVisto"); window.__bannerFech("2026-09-02"); });
+  assert(await page.evaluate(() => !document.getElementById("bannerFech").hidden), "banner aparece nos primeiros dias do mês");
+  assert(/agosto/.test(await page.textContent("#bannerFechTxt")), "banner cita o mês que fechou (agosto)");
+  await page.evaluate(() => window.__bannerFech("2026-09-15"));
+  assert(await page.evaluate(() => document.getElementById("bannerFech").hidden), "depois do dia 5 o banner some sozinho");
+  await page.evaluate(() => { window.__bannerFech("2026-09-02"); document.getElementById("bannerFechX").click(); });
+  assert(await page.evaluate(() => document.getElementById("bannerFech").hidden), "✕ dispensa o banner");
+
   console.log("— Dashboard —");
   await page.click('.menu .item[data-pg="dashboard"]');
   await page.waitForSelector("#kpis .kpi");

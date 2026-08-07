@@ -54,6 +54,17 @@
     <strong id="tituloRel"></strong>
   </div>
 
+  <div class="card no-print" style="margin-bottom: 16px;">
+    <strong>📤 Enviar o fechamento do mês</strong>
+    <p class="muted" style="margin: 4px 0 10px; font-size: 13px;">Resumo prontinho do mês selecionado — receita, novos × cancelados, inadimplência e comissões — pra mandar pro seu WhatsApp, sócio ou contador.</p>
+    <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+      <button class="btn" id="btnFechZap">💬 Mandar no WhatsApp</button>
+      <button class="btn sec" id="btnFechEmail">📧 Mandar por e-mail</button>
+      <button class="btn sec" id="btnFechCopia">📋 Copiar resumo</button>
+    </div>
+    <p id="fechStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+  </div>
+
   <div class="bloco" style="margin-bottom: 16px;">
     <h3>METAS DO MÊS &amp; PROJEÇÃO</h3>
     <div class="corpo-bloco">
@@ -328,6 +339,137 @@
       kv("Resultado do mês (recebido − gastos)", S.fmtBRL(recebido - gastoMes), recebido - gastoMes >= 0 ? "verde" : "vermelho") +
       kv("Churn do mês", (ativos + cancelamentosMes ? (cancelamentosMes / (ativos + cancelamentosMes) * 100) : 0).toFixed(1).replace(".", ",") + "%");
   }
+
+  // ---------- 📤 enviar o fechamento (WhatsApp / e-mail / copiar) ----------
+  function comissoesDoMes(st, mesAlvo) {
+    var c = S.read("comissoes", { pctPadrao: 5, pct: {}, regime: "competencia" });
+    var pctDe = function (nome) { return c.pct && c.pct[nome] != null ? +c.pct[nome] : +c.pctPadrao || 0; };
+    var total = 0;
+    if ((c.regime || "competencia") === "caixa") {
+      var alunoPorId = {}, planoPorContrato = {};
+      st.alunos.forEach(function (a) {
+        alunoPorId[a.id] = a;
+        (a.contratos || []).forEach(function (ct) { planoPorContrato[ct.id] = (st.planos || []).find(function (p) { return p.id === ct.planoId; }) || {}; });
+      });
+      (st.recebiveis || []).forEach(function (r) {
+        if (r.status !== "pago" || (r.pagoEm || "").slice(0, 7) !== mesAlvo) return;
+        var a = alunoPorId[r.alunoId]; if (!a) return;
+        if ((planoPorContrato[r.contratoId] || {}).tipo === "agregador") return;
+        var val = r.valorBaixa != null ? +r.valorBaixa : +r.valor || 0;
+        total += val * pctDe((a.consultor || "").trim() || "Sem consultor") / 100;
+      });
+    } else {
+      st.alunos.forEach(function (a) {
+        (a.contratos || []).forEach(function (ct) {
+          if ((ct.inicio || "").slice(0, 7) !== mesAlvo) return;
+          var pl = (st.planos || []).find(function (p) { return p.id === ct.planoId; }) || {};
+          if (pl.tipo === "agregador") return;
+          var meses = pl.tipo === "avista" ? 1 : (ct.meses || 1);
+          total += (+ct.valor || 0) * meses * pctDe((a.consultor || "").trim() || "Sem consultor") / 100;
+        });
+      });
+    }
+    (S.read("produtos", { vendas: [] }).vendas || []).forEach(function (v) {
+      if ((v.data || "").slice(0, 7) !== mesAlvo || !(v.vendedor || "").trim()) return;
+      total += (+v.total || 0) * pctDe(v.vendedor.trim()) / 100;
+    });
+    var vAula = +c.valorAula || 0;
+    if (vAula) {
+      var tu = S.read("turmas", { turmas: [], chamadas: {} });
+      (tu.turmas || []).forEach(function (t) {
+        if (!(t.prof || "").trim()) return;
+        Object.keys(tu.chamadas || {}).forEach(function (k) {
+          var pi = k.split("|");
+          if (pi[0] === t.id && (pi[1] || "").slice(0, 7) === mesAlvo && (tu.chamadas[k] || []).length) total += vAula;
+        });
+      });
+      var gr = S.read("grade", { aulas: [], avulsas: [], presencas: {} });
+      var profDe = {};
+      (gr.aulas || []).concat(gr.avulsas || []).forEach(function (a) { if ((a.prof || "").trim()) profDe[a.id] = a.prof.trim(); });
+      Object.keys(gr.presencas || {}).forEach(function (k) {
+        var pi = k.split("|");
+        if (profDe[pi[0]] && (pi[1] || "").slice(0, 7) === mesAlvo && (gr.presencas[k] || []).length) total += vAula;
+      });
+    }
+    return total;
+  }
+  function resumoFechamento(mesAlvo) {
+    mesAlvo = mesAlvo || mes;
+    var st = S.read("alunos", { alunos: [], planos: [], recebiveis: [] });
+    var contasSt = S.read("contas", { contas: [] });
+    var hoje = S.todayISO();
+    var recebido = (st.recebiveis || []).filter(function (r) { return r.status === "pago" && (r.pagoEm || "").slice(0, 7) === mesAlvo; })
+      .reduce(function (t, r) { return t + (r.valorBaixa != null ? +r.valorBaixa : +r.valor || 0); }, 0);
+    var vendasProd = 0;
+    (S.read("produtos", { vendas: [] }).vendas || []).forEach(function (v) {
+      if (((v.data || v.quando || "")).slice(0, 7) === mesAlvo) vendasProd += +v.total || 0;
+    });
+    var novos = 0, cancelados = 0, ativos = 0;
+    st.alunos.forEach(function (a) {
+      if ((a.contratos || []).some(function (c) { return c.status === "ativo" || c.status === "congelado"; })) ativos++;
+      (a.contratos || []).forEach(function (c) {
+        if ((c.inicio || "").slice(0, 7) === mesAlvo) novos++;
+        if (c.status === "cancelado" && (c.canceladoEm || "").slice(0, 7) === mesAlvo) cancelados++;
+      });
+    });
+    var churn = ativos + cancelados ? Math.round(cancelados * 1000 / (ativos + cancelados)) / 10 : 0;
+    var emAtraso = 0, atrasoN = 0;
+    (st.recebiveis || []).forEach(function (r) { if (r.status === "aberto" && r.vencimento < hoje) { emAtraso += +r.valor || 0; atrasoN++; } });
+    var gastoMes = (contasSt.contas || []).filter(function (c) { return c.status === "pago" && (c.pagoEm || "").slice(0, 7) === mesAlvo; })
+      .reduce(function (t, c) { return t + +c.valor; }, 0);
+    var comissoes = comissoesDoMes(st, mesAlvo);
+    var rotulo = new Date(mesAlvo + "-15T12:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    var nomeAcad = (S.read("config", { dados: {} }).dados || {}).nome || "TORQUE FIT";
+    return [
+      "📊 Fechamento de " + rotulo + " — " + nomeAcad,
+      "",
+      "💰 Recebido (mensalidades): " + S.fmtBRL(recebido),
+      "🛒 Vendas de produtos: " + S.fmtBRL(vendasProd),
+      "📈 Novos contratos: " + novos + " × cancelamentos: " + cancelados + " (churn " + String(churn).replace(".", ",") + "%)",
+      "👥 Alunos ativos: " + ativos,
+      "⚠️ Inadimplência em aberto hoje: " + S.fmtBRL(emAtraso) + " (" + atrasoN + " cobrança(s))",
+      "🤝 Comissões do mês: " + S.fmtBRL(comissoes),
+      "💸 Contas pagas no mês: " + S.fmtBRL(gastoMes),
+      "✅ Resultado (recebido + vendas − contas): " + S.fmtBRL(recebido + vendasProd - gastoMes),
+      "",
+      "Gerado pelo TORQUE ON",
+    ].join("\n");
+  }
+  window.__fechamentoMsg = resumoFechamento; // testes
+  $("btnFechZap").addEventListener("click", function () {
+    window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamento(mes)), "_blank");
+  });
+  $("btnFechCopia").addEventListener("click", function () {
+    var ta = document.createElement("textarea");
+    ta.value = resumoFechamento(mes);
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); $("fechStatus").textContent = "✅ Resumo copiado — cola onde quiser."; } catch (e) {}
+    document.body.removeChild(ta);
+    setTimeout(function () { $("fechStatus").textContent = ""; }, 2500);
+  });
+  $("btnFechEmail").addEventListener("click", function () {
+    var nuvem = S.cloud && S.cloud();
+    var cfgN = self.MT_CLOUD || {};
+    if (!nuvem || !cfgN.url) { $("fechStatus").textContent = "⚠️ Entre na sua conta da nuvem pra mandar por e-mail — ou use o 📋 Copiar."; return; }
+    var padrao = (S.read("config", { dados: {} }).dados || {}).email || "";
+    var para = prompt("Mandar o fechamento pra qual e-mail?", padrao);
+    if (!para || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para.trim())) { if (para != null) $("fechStatus").textContent = "⚠️ E-mail inválido."; return; }
+    para = para.trim().toLowerCase();
+    var texto = resumoFechamento(mes);
+    $("fechStatus").textContent = "⏳ Enviando…";
+    nuvem.client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      return fetch(cfgN.url + "/functions/v1/envia-email", {
+        method: "POST",
+        headers: { apikey: cfgN.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "enviar", para: para, assunto: texto.split("\n")[0],
+          html: "<pre style='font-family:system-ui,sans-serif;font-size:14px;line-height:1.7;'>" + texto.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</pre>" }),
+      }).then(function (r) { return r.json(); });
+    }).then(function (d) {
+      $("fechStatus").textContent = d && d.ok ? "✅ Fechamento enviado pra " + para + "!"
+        : "⚠️ " + ((d && d.erro) || "Publique a função envia-email (torqueon.com.br/funcoes.html) com a RESEND_API_KEY.");
+    }, function () { $("fechStatus").textContent = "⚠️ Sem conexão com a função envia-email agora."; });
+  });
 
   $("selMes").innerHTML = meses12().map(function (m) {
     return '<option value="' + m.chave + '">' + m.rotulo + "</option>";
