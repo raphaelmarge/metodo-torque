@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="TQ Nutri">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps/apps.css" rel="stylesheet">
+<script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
   :root { --verde: #16a34a; --verde-2: #15803d; }
   /* menu lateral (gaveta escura, igual ao do TORQUE ON academia) */
@@ -53,6 +54,11 @@
   .kpi-nt { background: var(--card); border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
   .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
   .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: #4ade80; }
+  /* ☀️ modo claro — chips do Nutri voltam pro pastel */
+  html[data-tema="claro"] .tagn { background: #dcfce7; color: #15803d; border-color: rgba(22,163,74,.35); }
+  html[data-tema="claro"] .tagn.roxa { background: #ede9fe; color: #6d28d9; border-color: rgba(124,58,237,.35); }
+  html[data-tema="claro"] .tagn.ambar { background: #fef3c7; color: #b45309; border-color: rgba(245,158,11,.35); }
+  html[data-tema="claro"] .kpi-nt .val { color: var(--verde-2); }
 </style>
 </head>
 <body>
@@ -69,6 +75,7 @@
       <div id="buscaPacLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
     </div>
+    <button class="hamb-nt" id="btnTemaNt" title="Alternar entre modo escuro e claro" style="font-size: 15px; padding: 8px 10px;">☀️</button>
   </div>
 </header>
 
@@ -2179,6 +2186,20 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     }
   });
   window.__agendaN = renderAgendaN; // testes
+
+  // ---------- ☀️/🌙 alternar tema (vale pro sistema todo — mtapp:tema) ----------
+  function pintaBtnTemaNt() {
+    var claro = document.documentElement.dataset.tema === "claro";
+    $("btnTemaNt").textContent = claro ? "🌙" : "☀️";
+    $("btnTemaNt").title = claro ? "Voltar pro modo escuro" : "Mudar pro modo claro";
+  }
+  $("btnTemaNt").addEventListener("click", function () {
+    var claro = document.documentElement.dataset.tema === "claro";
+    document.documentElement.dataset.tema = claro ? "" : "claro";
+    try { localStorage.setItem("mtapp:tema", claro ? "escuro" : "claro"); } catch (e) {}
+    pintaBtnTemaNt();
+  });
+  pintaBtnTemaNt();
 
   // ---------- check-ins do paciente (questionários estilo LiveClin, como no Personal) ----------
   function questStN(st) {
