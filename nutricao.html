@@ -612,11 +612,11 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
         (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">📱 app ✓</span>' : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail">📧 Enviar acesso</button>') +
-        '<span style="margin-left:auto;"></span>' +
+        '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
         '<button class="btn verde mini" data-perfil="' + p.id + '">👤 Perfil</button>' +
         '<button class="btn verde mini" data-app="' + p.id + '">App do paciente</button>' +
         (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">💬</a>' : "") +
-        '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></div>';
+        '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></span></div>';
     }).join("") : "Cadastre o primeiro paciente. 🥦";
   }
   $("pAdd").addEventListener("click", function () {
@@ -2099,9 +2099,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
           var pac = pacPorToken[p.token];
           return '<div class="linha-flex" style="align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linha);"><b>' + S.fmtData(p.dia) + " " + (p.hora || "") + "</b>" +
             "<span>" + esc(pac.nome) + (p.obs ? ' · <small class="muted">' + esc(p.obs) + "</small>" : "") + "</span>" +
-            '<span style="margin-left:auto;"></span>' +
+            '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             '<button class="btn verde mini" data-agok="' + p.id + '" data-tok="' + esc(p.token) + '" data-dia="' + p.dia + '" data-hora="' + esc(p.hora || "") + '">Confirmar</button>' +
-            '<button class="btn sec mini" data-agno="' + p.id + '">Recusar</button></div>';
+            '<button class="btn sec mini" data-agno="' + p.id + '">Recusar</button></span></div>';
         }).join("");
       });
   }
