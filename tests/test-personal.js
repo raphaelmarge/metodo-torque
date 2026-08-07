@@ -692,12 +692,12 @@ async function abaPt(p, a) {
   });
   ok(/A — Peito\/Tríceps/.test(appHtml) && /Supino reto/.test(appHtml) && /4×10/.test(appHtml), "app leva a ficha estruturada (Supino 4×10)");
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
-  ok(/▶ ver vídeo/.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão ▶ ver vídeo");
+  ok(/>Ver vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão Ver vídeo");
   ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
-  ok(/gVideo/.test(appHtml) && /▶ como fazer/.test(appHtml), "modo guiado tem o link ▶ como fazer");
+  ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
-  ok(/⏱ Descanso 100s/.test(appHtml) && /⏱100s ›/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
+  ok(/>Descanso 100s</.test(appHtml) && /100s ›/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
   ok(/"d":100/.test(appHtml), "treino guiado usa o descanso programado do exercício");
   ok(/Minhas sessões/.test(appHtml) && /07:30/.test(appHtml), "próximas sessões embutidas no app");
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
@@ -773,7 +773,7 @@ async function abaPt(p, a) {
   }
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Treinos por semana/.test(appHtml), "app tem painel de conquistas com gráfico de semanas");
   ok(/7 dias seguidos/.test(appHtml) && /100 treinos/.test(appHtml) && /CONQUISTADA/.test(appHtml), "medalhas de sequência e volume no app");
-  ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app tem o robô de atendimento (chatbot de menu) no chat");
+  ok(/botChips/.test(appHtml) && />assistente</.test(appHtml) && /botEscolhe/.test(appHtml), "app tem o robô de atendimento (chatbot de menu) no chat");
   ok(/Pode escrever aqui embaixo/.test(appHtml), "opção 'humano' vira encaminhamento pro personal");
   {
     const botEd = await p.evaluate(() => ({
@@ -973,7 +973,7 @@ async function abaPt(p, a) {
       const st = window.MTStore.read("ptStudio", {});
       return window.__montaAppAluno(st.alunos.find((x) => x.ativo !== false), new Date().toISOString());
     });
-    ok(/🏆 Desafio: 30 dias TORQUE/.test(appDesafio) && /app_desafio_ranking/.test(appDesafio) && /dsMeus/.test(appDesafio), "app do aluno leva o card do desafio com placar via nuvem");
+    ok(/Desafio: 30 dias TORQUE/.test(appDesafio) && /app_desafio_ranking/.test(appDesafio) && /dsMeus/.test(appDesafio), "app do aluno leva o card do desafio com placar via nuvem");
     ok(/nome:PRIMEIRO/.test(appDesafio.replace(/\s/g, "")) || /nome:PRIMEIRO/.test(appDesafio), "app envia o nome do aluno pro ranking (devolve)");
   }
 
@@ -1120,7 +1120,7 @@ async function abaPt(p, a) {
     await pTrava.goto(BASE + "/app-quest-travado.html", { waitUntil: "domcontentloaded" });
     await pTrava.waitForTimeout(200);
     const travado = await pTrava.evaluate(() => document.getElementById("qaBox").textContent);
-    ok(/🔒/.test(travado) && /libera dia/.test(travado), "antes da data, o card no app aparece trancado com a data de liberação");
+    ok(/Seu personal mandou/.test(travado) && /libera dia/.test(travado), "antes da data, o card no app aparece trancado com a data de liberação");
     await pTrava.close();
     // na data certa: perguntas liberam, aluno responde e a resposta vai pra nuvem
     const htmlLivre = await p.evaluate(() => {
@@ -1151,7 +1151,7 @@ async function abaPt(p, a) {
       box: document.getElementById("qaBox").textContent,
       ptqa: JSON.parse(localStorage.getItem("ptqa") || "{}"),
     }));
-    ok(/✅ Respondido/.test(depois.box) && /próximo libera dia/.test(depois.box), "depois de responder o card confirma e mostra quando libera o próximo");
+    ok(/Respondido/.test(depois.box) && /próximo libera dia/.test(depois.box), "depois de responder o card confirma e mostra quando libera o próximo");
     ok(Object.keys(depois.ptqa).length === 1, "período respondido fica marcado no aparelho (não responde duas vezes)");
     await pLivre.close();
   }
@@ -1240,7 +1240,7 @@ async function abaPt(p, a) {
     };
   });
   ok(/TREINO|FICHA/.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card 'HOJE · " + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
-  ok(/⚖️ Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
+  ok(/Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
   ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
   ok(await pApp.evaluate(() => {
