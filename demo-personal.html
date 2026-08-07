@@ -150,19 +150,20 @@
     treinosV2[id] = { fichas: (cfg.objetivo === "Hipertrofia" ? FICHAS.Hipertrofia : FICHAS.Outro).map(function (f) {
       return { id: uid(), titulo: f.titulo, itens: f.itens.map(function (it) { return { exId: it.exId, series: it.series, reps: it.reps, descanso: it.descanso, obs: "" }; }) };
     }), objetivo: cfg.objetivo.toLowerCase(), semana: 3, validade: iso(-30) };
-    // pagamentos dos últimos 4 meses (o do mês atual conforme cfg.pago)
-    for (var m = 3; m >= 0; m--) {
+    // pagamentos desde a matrícula (até 8 meses; o do mês atual conforme cfg.pago)
+    var mesesPag = Math.min(8, Math.max(1, Math.floor(cfg.desde / 30)));
+    for (var m = mesesPag - 1; m >= 0; m--) {
       if (m === 0 && !cfg.pago) continue;
       var d = new Date(); d.setMonth(d.getMonth() - m, 5);
       pagamentos.push({ id: uid(), alunoId: id, valor: cfg.valor, forma: cfg.rec ? "cartão 🔁" : (idx % 2 ? "pix" : "dinheiro"),
         data: d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-05" });
     }
-    // avaliações trimestrais coerentes com o peso
-    [90, 45, 7].forEach(function (dd, k) {
+    // avaliações periódicas coerentes com o peso (histórico longo)
+    [210, 150, 90, 45, 7].forEach(function (dd, k) {
       if (dd > cfg.desde) return;
-      var pesoNoDia = cfg.peso[0] + cfg.peso[1] * (1 - dd / cfg.peso[2]);
+      var pesoNoDia = cfg.peso[0] + cfg.peso[1] * (1 - Math.min(dd, cfg.peso[2]) / cfg.peso[2]);
       avaliacoes.push({ id: uid(), alunoId: id, data: iso(dd), peso: Math.round(pesoNoDia * 10) / 10,
-        gordura: Math.round((28 - k * 1.6 - idx) * 10) / 10, cintura: Math.round(92 - k * 2 - idx), braco: Math.round((30 + k * 0.7 + idx * 0.5) * 10) / 10 });
+        gordura: Math.round((28 - k * 1.4 - idx) * 10) / 10, cintura: Math.round(94 - k * 1.5 - idx), braco: Math.round((30 + k * 0.6 + idx * 0.5) * 10) / 10 });
     });
     // agenda: semana passada (feitas) + próxima semana
     for (var s2 = 0; s2 < cfg.meta; s2++) {
@@ -175,10 +176,35 @@
     ];
   });
 
+  // planos e contratos fechados (studio rodando há meses)
+  var planosPT = [
+    { id: "plA", nome: "Mensal 3x/sem", valor: 400 },
+    { id: "plB", nome: "Mensal 5x/sem", valor: 500 },
+    { id: "plC", nome: "Premium acompanhamento total", valor: 650 },
+  ];
+  var contratosPT = alunos.map(function (a, i) {
+    return { id: "ct" + (i + 1), alunoId: a.id, planoId: a.valor >= 500 ? "plB" : "plA", status: "ativo", diaVenc: i % 2 ? 5 : 10 };
+  });
   var seed = {
-    config: { nome: "TORQUE Demo", zap: "21994429198", pixChave: "demo@torqueon.com.br", pixNome: "Studio TORQUE Demo", pixCidade: "Rio de Janeiro" },
+    config: {
+      nome: "TORQUE Demo", zap: "21994429198", pixChave: "demo@torqueon.com.br", pixNome: "Studio TORQUE Demo", pixCidade: "Rio de Janeiro",
+      mural: ["Sábado 7h tem treinão ao ar livre no parque — bora?", "Semana que vem começa o desafio de agosto. Prêmio: 1 mês grátis!"],
+    },
     alunos: alunos, exercicios: exercicios, treinosV2: treinosV2, pagamentos: pagamentos,
-    avaliacoes: avaliacoes, sessoes: sessoes, diarioPT: diarioPT, videoteca: [],
+    avaliacoes: avaliacoes, sessoes: sessoes, diarioPT: diarioPT,
+    planosPT: planosPT, contratosPT: contratosPT,
+    videoteca: [
+      { titulo: "Mobilidade de quadril em 8 minutos", categoria: "Mobilidade", url: "https://www.youtube.com/results?search_query=mobilidade+de+quadril" },
+      { titulo: "Como progredir no supino com segurança", categoria: "Técnica", url: "https://www.youtube.com/results?search_query=progredir+supino" },
+      { titulo: "Alongamento pós-treino completo", categoria: "Mobilidade", url: "https://www.youtube.com/results?search_query=alongamento+pos+treino" },
+    ],
+    questPerguntas: [
+      { id: "qp1", sigla: "MOTEX", titulo: "Motivação", texto: "Qual foi sua motivação pra treinar nos últimos 7 dias?", tipo: "emoji",
+        ops: [{ e: "🤩", r: "Altíssimo", p: 2 }, { e: "🙂", r: "Alto", p: 1 }, { e: "😐", r: "Médio", p: 0 }, { e: "😕", r: "Baixo", p: -1 }, { e: "😫", r: "Nenhum", p: -2 }] },
+      { id: "qp2", sigla: "CARDIO", titulo: "Cardio", texto: "De 0 a 10, quanto cardio você fez essa semana?", tipo: "linear", ops: [] },
+      { id: "qp3", sigla: "OBS", titulo: "Recado", texto: "Algum recado ou dor pra me contar?", tipo: "texto", ops: [] },
+    ],
+    questionarios: [{ id: "qq1", nome: "Check-in semanal", perguntas: ["qp1", "qp2", "qp3"] }],
     desafio: { nome: "30 dias TORQUE", ini: iso(20), fim: iso(-10), premio: "1 mês de assessoria grátis", ativo: true },
   };
 
