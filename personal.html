@@ -3708,7 +3708,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<link rel='icon' href='/assets/icons/icon-personal.svg' type='image/svg+xml'>" +
       "<link rel='apple-touch-icon' href='/assets/icons/icon-personal-192.png'>" +
       "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(studio) + "</title>" +
-      "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0d0c10;color:#fff;max-width:480px;margin:0 auto;padding:0 0 40px}" +
+      "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0d0c10;color:#fff;max-width:480px;margin:0 auto;padding:0 0 calc(92px + env(safe-area-inset-bottom,0px))}" +
       ".topo{padding:26px 18px 14px;background:radial-gradient(120% 160% at 50% -40%,rgba(124,58,237,.35),transparent 60%)}" +
       ".topo .k{font-size:11px;letter-spacing:.2em;color:" + CORC + ";font-weight:700;text-transform:uppercase}" +
       ".topo h1{font-size:24px;font-weight:800;margin-top:6px}" +
@@ -3722,15 +3722,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
-      "<button id='hambApp' aria-label='Abrir menu' style='flex:none;background:rgba(255,255,255,.12);border:none;color:#fff;cursor:pointer;padding:10px;border-radius:11px;font-size:0;'>" +
-      "<svg width='20' height='20' viewBox='0 0 20 20' fill='none'><path d='M3 5h14M3 10h14M3 15h14' stroke='currentColor' stroke-width='2' stroke-linecap='round'/></svg></button>" +
       "<div>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div></div>" +
-      // menu lateral (gaveta)
-      "<div id='menuFundo' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;'></div>" +
-      "<nav id='menuApp' style='position:fixed;top:0;left:-290px;bottom:0;width:270px;background:#17141d;border-right:1px solid #322e3d;z-index:71;transition:left .22s ease;padding:22px 14px;overflow-y:auto;'>" +
-      "<div style='font-size:11px;letter-spacing:.2em;color:#a78bfa;font-weight:800;margin:0 0 14px 10px;'>" + esc(studio).toUpperCase() + " 💜</div>" +
-      "<div id='menuItens'></div>" +
-      "</nav>" +
+      // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
+      "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(13,12,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #26222e;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'></nav>" +
       (((st.config || {}).mural || []).length
         ? "<div class='cardx' style='border-color:#7c3aed;'><h2>📌 Mural do studio</h2>" +
           ((st.config || {}).mural || []).map(function (av) {
@@ -3858,7 +3852,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
       "<button class='btnx' id='chEnvia'>➤</button></div></div>" +
-      "<div id='tmrBar' style='display:none;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
+      "<div id='tmrBar' style='display:none;position:fixed;bottom:calc(62px + env(safe-area-inset-bottom,0px));left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       "<div id='guiaBox' style='display:none;position:fixed;inset:0;background:#121016;z-index:60;flex-direction:column;padding:22px 18px;max-width:480px;margin:0 auto;'>" +
       "<div style='display:flex;justify-content:space-between;align-items:center;color:#a9a4b5;font-size:13px;font-weight:700;gap:8px;'>" +
       "<span id='gProg'></span><button id='gFechar' style='background:none;border:none;color:#a9a4b5;font-size:22px;cursor:pointer;font-family:inherit;'>✕</button></div>" +
@@ -4145,7 +4139,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
       "el.innerHTML=all.map(function(m){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
       "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg," + COR + "," + COR2 + ")':(bot?'#241b36':'#14121a'))+\";border:1px solid \"+(bot?'" + COR + "':'#322e3d')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:" + CORC + ";font-weight:800;margin-bottom:2px;'>🤖 assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
-      "el.scrollTop=el.scrollHeight;}" +
+      "el.scrollTop=el.scrollHeight;" +
+      "var ultP=null;all.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')ultP=m.criado;});" +
+      "if(window.__chatDot)window.__chatDot(ultP);}" +
       "function carregaChat(){if(!NUVEM){pintaChat(L('ptchat',[]));return;}" +
       "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptchat',l);pintaChat(l);}else{pintaChat(L('ptchat',[]));}});}" +
       "function pintaChips(){var el=document.getElementById('botChips');if(!BOT){el.style.display='none';return;}" +
@@ -4247,8 +4243,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
         "pinta();})();"
         : "") +
-      // menu lateral: agrupa os cards em seções e controla a gaveta
-      "(function(){var MENU=[['inicio','🏠','Início'],['treino','🏋️','Treino'],['evolucao','📈','Evolução'],['agenda','📅','Agenda'],['chat','💬','Chat'],['pagamento','💳','Pagamento']];" +
+      // barra de abas embaixo: agrupa os cards em seções e controla a navegação
+      "(function(){var MENU=[['inicio','🏠','Início'],['treino','🏋️','Treino'],['evolucao','📈','Evolução'],['agenda','📅','Agenda'],['chat','💬','Chat'],['pagamento','💳','Plano']];" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
@@ -4257,29 +4253,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(/Pagamento|Mensalidade/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
       "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Desafio/.test(t))return 'inicio';" +
       "return null;}" +
-      "var IGNORA={hambApp:1,menuFundo:1,menuApp:1,tmrBar:1,guiaBox:1};" +
+      "var IGNORA={navApp:1,tmrBar:1,guiaBox:1};" +
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
-      "document.getElementById('menuItens').innerHTML=itens.map(function(m){" +
-      "return \"<div class='mitem' data-msec='\"+m[0]+\"' style='display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:12px;cursor:pointer;font-weight:700;font-size:14.5px;color:#cfcbdb;'>\"+" +
-      "\"<span style='font-size:19px;'>\"+m[1]+\"</span>\"+m[2]+\"</div>\";}).join('');" +
+      "var nav=document.getElementById('navApp');" +
+      "nav.innerHTML=itens.map(function(m){" +
+      "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
+      "\"<span style='font-size:20px;line-height:1;'>\"+m[1]+\"</span>\"+" +
+      "\"<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;'>\"+m[2]+\"</span>\"+" +
+      "\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid #0d0c10;'></span></button>\";}).join('');" +
       "var stSec=document.createElement('style');stSec.textContent='[data-sec-off]{display:none!important}';document.head.appendChild(stSec);" +
-      "function trocaSec(s){document.querySelectorAll('[data-sec]').forEach(function(el){" +
+      "var SEC='inicio';" +
+      "function mostraDot(on){var d=document.querySelector(\".nitem[data-msec='chat'] .ndot\");if(d)d.style.display=on?'block':'none';}" +
+      "function trocaSec(s){SEC=s;document.querySelectorAll('[data-sec]').forEach(function(el){" +
       "if(el.getAttribute('data-sec')===s)el.removeAttribute('data-sec-off');else el.setAttribute('data-sec-off','1');});" +
-      "document.querySelectorAll('.mitem').forEach(function(mi){var on=mi.getAttribute('data-msec')===s;" +
-      "mi.style.background=on?'rgba(124,58,237,.2)':'';mi.style.color=on?'#fff':'#cfcbdb';});" +
+      "document.querySelectorAll('.nitem').forEach(function(mi){var on=mi.getAttribute('data-msec')===s;" +
+      "mi.style.background=on?'rgba(124,58,237,.16)':'none';mi.style.color=on?'" + CORC + "':'#8a8695';});" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[1]+' '+rot[2]:'';" +
-      "fechaMenu();window.scrollTo(0,0);}" +
-      "function abreMenu(){document.getElementById('menuFundo').style.display='block';document.getElementById('menuApp').style.left='0';}" +
-      "function fechaMenu(){document.getElementById('menuFundo').style.display='none';document.getElementById('menuApp').style.left='-290px';}" +
-      "document.getElementById('hambApp').addEventListener('click',abreMenu);" +
-      "document.getElementById('menuFundo').addEventListener('click',fechaMenu);" +
-      "document.getElementById('menuItens').addEventListener('click',function(e){var mi=e.target.closest('.mitem');if(mi)trocaSec(mi.getAttribute('data-msec'));});" +
-      "window.__trocaSec=trocaSec;trocaSec('inicio');})();" +
+      // entrou no chat = recados vistos; some a bolinha
+      "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);}" +
+      "window.scrollTo(0,0);}" +
+      "nav.addEventListener('click',function(e){var mi=e.target.closest('.nitem');if(!mi)return;" +
+      "if(navigator.vibrate)navigator.vibrate(8);trocaSec(mi.getAttribute('data-msec'));});" +
+      // bolinha 🔴 no Chat quando chega recado do personal que o aluno ainda não viu
+      "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);};" +
+      "window.__trocaSec=trocaSec;trocaSec('inicio');" +
+      "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
       "</" + "script></body></html>";
   }

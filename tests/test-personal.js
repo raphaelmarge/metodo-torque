@@ -703,7 +703,7 @@ async function abaPt(p, a) {
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
-  ok(/menuApp/.test(appHtml) && /hambApp/.test(appHtml) && /trocaSec/.test(appHtml), "app tem menu lateral (gaveta) organizando as seções");
+  ok(/navApp/.test(appHtml) && /trocaSec/.test(appHtml) && !/hambApp/.test(appHtml), "app tem barra de abas fixa embaixo (estilo app nativo, sem gaveta)");
   ok(/manifest\.webmanifest/.test(appHtml) && /theme-color/.test(appHtml) && /apple-touch-icon/.test(appHtml), "app instala como PWA de verdade (manifest + theme-color + ícone iOS)");
   ok(await p.evaluate(async () => {
     const t = await (await fetch("app/index.html")).text();
@@ -1208,7 +1208,26 @@ async function abaPt(p, a) {
   // serve via http (setContent teria origem opaca, sem localStorage)
   await pApp.route("**/app-teste-personal.html", (r) => r.fulfill({ contentType: "text/html", body: appHtml2 }));
   await pApp.goto(BASE + "/app-teste-personal.html", { waitUntil: "domcontentloaded" });
-  // com o menu lateral, cada grupo de cards vive numa seção — troca antes de interagir
+  // barra de abas embaixo: itens montados, Início ativo, e clicar troca a seção
+  const navAbas = await pApp.evaluate(() => {
+    const itens = Array.from(document.querySelectorAll("#navApp .nitem")).map((b) => b.getAttribute("data-msec"));
+    const secVisivel = (s) => !!document.querySelector("[data-sec='" + s + "']:not([data-sec-off])");
+    const antes = { inicio: secVisivel("inicio"), treino: secVisivel("treino") };
+    document.querySelector("#navApp .nitem[data-msec='treino']").click();
+    return { itens, antes, depois: { inicio: secVisivel("inicio"), treino: secVisivel("treino") }, tit: document.getElementById("secTit").textContent };
+  });
+  ok(navAbas.itens.length >= 5 && navAbas.itens[0] === "inicio", "barra de abas montada com as seções do app (" + navAbas.itens.length + " abas)");
+  ok(navAbas.antes.inicio && !navAbas.antes.treino && !navAbas.depois.inicio && navAbas.depois.treino && /Treino/.test(navAbas.tit), "tocar na aba troca a seção e o título do topo");
+  // recado do personal ainda não visto acende a bolinha 🔴 no Chat
+  const dotChat = await pApp.evaluate(() => {
+    window.__chatDot(new Date().toISOString());
+    const dot = document.querySelector(".nitem[data-msec='chat'] .ndot");
+    const acesa = dot && dot.style.display === "block";
+    window.__trocaSec("chat");
+    return { acesa, apagada: dot && dot.style.display === "none" };
+  });
+  ok(dotChat.acesa && dotChat.apagada, "recado novo acende a bolinha no Chat e abrir o chat apaga");
+  // com o menu de abas, cada grupo de cards vive numa seção — troca antes de interagir
   await pApp.evaluate(() => window.__trocaSec("treino"));
   await pApp.fill("#dcEx", "Agachamento");
   await pApp.fill("#dcKg", "80");
