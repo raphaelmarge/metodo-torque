@@ -876,9 +876,16 @@ async function abaPt(p, a) {
       window.MTStore.write("ptStudio", st);
       const px = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
       window.__cloudOrig = window.MTStore.cloud;
+      // respostas de questionário (tabela app_quest) que viram métricas no painel
+      const qRows = [
+        { questionario: "Check-in semanal", criado: "2026-08-03T10:00:00Z", dados: { pontuacao: 9, respostas: [{ sigla: "MOTEX", resposta: "Altíssimo", pontos: 2 }] } },
+        { questionario: "Check-in semanal", criado: "2026-07-27T10:00:00Z", dados: { pontuacao: 6, respostas: [] } },
+        { questionario: "Check-in semanal", criado: "2026-07-20T10:00:00Z", dados: { pontuacao: 2, respostas: [] } },
+      ];
+      const qMock = { select: () => ({ eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: qRows }) }) }) }) };
       window.MTStore.cloud = () => ({
         aid: "x",
-        client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
+        client: { from: (tb) => tb === "app_quest" ? qMock : ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
           peso: { "2026-07-01": 86, "2026-07-20": 84.2, "2026-08-01": 83.1 },
           cargas: { "Supino reto": [{ d: "2026-07-01", kg: 60 }, { d: "2026-08-01", kg: 72.5 }] },
           feitos: { "2026-07-02": 1, "2026-07-03": 1, "2026-07-04": 1, "2026-08-01": 1 },
@@ -907,6 +914,10 @@ async function abaPt(p, a) {
     ok(/Hábitos diários/.test(appDados) && /💧 Água/.test(appDados) && /100%/.test(appDados), "hábitos do aluno viram barras de % (água 100%)");
     ok(/Hábitos em dia/.test(appDados) && /50%/.test(appDados), "KPI de dias com 3+ hábitos nos últimos 30 dias (50%)");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
+    ok(/Check-ins respondidos no app/.test(appDados) && /3 no total/.test(appDados), "respostas de questionário (app_quest) viram seção de check-ins");
+    ok(/stroke=["']#fbbf24["']/.test(appDados) && /mín 2/.test(appDados) && /máx 9/.test(appDados), "pontuação dos check-ins vira gráfico de linha (mín 2 / máx 9)");
+    ok(/\+9 pts/.test(appDados) && /MOTEX/.test(appDados), "última resposta listada com pontuação e siglas");
+    ok(/📋 Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
     // aluno malicioso tentando injetar código pela foto/data do retorno
     const xss = await p.evaluate(async () => {
       window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
@@ -1068,6 +1079,81 @@ async function abaPt(p, a) {
     const resp = await p.evaluate(() => document.getElementById("qRespostas").textContent);
     ok(/João Cliente/.test(resp) && /\+10 pts/.test(resp) && /MOTEX/.test(resp), "resposta salva aparece com aluno, pontuação e siglas");
     await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig2; });
+  }
+  // questionário enviado DIRETO pro app do aluno: trava por data e vira métrica
+  {
+    const envio = await p.evaluate(async () => {
+      const sel = document.getElementById("qeAluno");
+      const selQ = document.getElementById("qeQuest");
+      sel.value = sel.options[1].value;
+      selQ.value = selQ.options[1].value;
+      const fut = new Date(Date.now() + 5 * 864e5);
+      const futIso = fut.getFullYear() + "-" + String(fut.getMonth() + 1).padStart(2, "0") + "-" + String(fut.getDate()).padStart(2, "0");
+      document.getElementById("qeData").value = futIso;
+      document.getElementById("qeSemanal").checked = true;
+      let upsert = null;
+      window.__cloudOrigQA = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({
+        aid: "acad-1",
+        client: { from: (tb) => ({ upsert: (rows) => { upsert = { tb, row: rows[0] }; return Promise.resolve({ error: null }); } }) },
+      });
+      document.getElementById("qeApp").click();
+      await new Promise((res) => setTimeout(res, 300));
+      window.MTStore.cloud = window.__cloudOrigQA;
+      const st = window.MTStore.read("ptStudio", {});
+      const a = st.alunos.find((x) => x.id === sel.value);
+      return {
+        qa: a.questApp, futIso,
+        tb: upsert && upsert.tb,
+        html: (upsert && upsert.row.dados && upsert.row.dados.html) || "",
+        aviso: document.getElementById("qeAppAviso").textContent,
+      };
+    });
+    ok(envio.qa && envio.qa.desde === envio.futIso && envio.qa.repete === true && envio.qa.ps.length === 2, "📲 mandar pro app salva o questionário no aluno com data e repetição semanal");
+    ok(envio.tb === "app_aluno" && /QUESTAPP/.test(envio.html) && /qaCard/.test(envio.html), "app do aluno é republicado já com o questionário embutido");
+    ok(/libera dia/.test(envio.aviso) && /toda semana/.test(envio.aviso), "aviso confirma data de liberação e repetição");
+    // no app, antes da data: card TRANCADO 🔒
+    const pTrava = await ctx.newPage();
+    pTrava.on("pageerror", (e) => erros.push("app-quest: " + e));
+    await pTrava.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
+    await pTrava.route("**/app-quest-travado.html", (r) => r.fulfill({ contentType: "text/html", body: envio.html }));
+    await pTrava.goto(BASE + "/app-quest-travado.html", { waitUntil: "domcontentloaded" });
+    await pTrava.waitForTimeout(200);
+    const travado = await pTrava.evaluate(() => document.getElementById("qaBox").textContent);
+    ok(/🔒/.test(travado) && /libera dia/.test(travado), "antes da data, o card no app aparece trancado com a data de liberação");
+    await pTrava.close();
+    // na data certa: perguntas liberam, aluno responde e a resposta vai pra nuvem
+    const htmlLivre = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const a = st.alunos.find((x) => x.questApp);
+      a.questApp.desde = new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0") + "-" + String(new Date().getDate()).padStart(2, "0");
+      window.MTStore.write("ptStudio", st);
+      return window.__montaAppAluno(a, new Date().toISOString());
+    });
+    const pLivre = await ctx.newPage();
+    pLivre.on("pageerror", (e) => erros.push("app-quest2: " + e));
+    let postadoApp = null;
+    await pLivre.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: "null" }));
+    await pLivre.route("**/rest/v1/rpc/app_quest_responde", (r) => {
+      postadoApp = JSON.parse(r.request().postData() || "{}");
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+    });
+    await pLivre.route("**/app-quest-livre.html", (r) => r.fulfill({ contentType: "text/html", body: htmlLivre }));
+    await pLivre.goto(BASE + "/app-quest-livre.html", { waitUntil: "domcontentloaded" });
+    await pLivre.waitForTimeout(200);
+    ok(await pLivre.evaluate(() => document.querySelectorAll("#qaBox button[data-qa]").length >= 12), "na data certa as perguntas aparecem (emoji + escala 0-10)");
+    await pLivre.evaluate(() => document.querySelector("#qaBox button[data-qa='0']").click());
+    await pLivre.evaluate(() => document.querySelector("#qaBox button[data-qa='1'][data-v='8']").click());
+    await pLivre.evaluate(() => document.getElementById("qaEnvia").click());
+    await pLivre.waitForTimeout(400);
+    ok(postadoApp && postadoApp.p_dados && postadoApp.p_dados.pontuacao === 10 && postadoApp.p_dados.respostas.length === 2, "resposta do app vai pra RPC app_quest_responde com pontuação somada (2 + 8 = 10)");
+    const depois = await pLivre.evaluate(() => ({
+      box: document.getElementById("qaBox").textContent,
+      ptqa: JSON.parse(localStorage.getItem("ptqa") || "{}"),
+    }));
+    ok(/✅ Respondido/.test(depois.box) && /próximo libera dia/.test(depois.box), "depois de responder o card confirma e mostra quando libera o próximo");
+    ok(Object.keys(depois.ptqa).length === 1, "período respondido fica marcado no aparelho (não responde duas vezes)");
+    await pLivre.close();
   }
   // busca de aluno no topo abre o perfil
   await p.fill("#buscaAluno", "joão");
@@ -1711,6 +1797,7 @@ async function abaPt(p, a) {
     });
     ok(demo.alunos === 8 && demo.fichas === 8 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 8 alunos com fichas, pagamentos e avaliações");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
+    ok(/Check-ins respondidos no app/.test(demo.app) && /stroke=["']#fbbf24["']/.test(demo.app), "demo também mostra os check-ins de questionário com gráfico de pontuação");
     // com dados existentes o demo NÃO sobrescreve
     const pD2 = await ctxD.newPage();
     await pD2.goto(BASE + "/demo-personal.html");

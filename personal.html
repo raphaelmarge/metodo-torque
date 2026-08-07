@@ -486,6 +486,12 @@
         <select id="qeQuest" style="min-width: 190px;"></select>
         <button class="btn" id="qeGerar">Gerar link</button>
       </div>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 10px; align-items: center;">
+        <label class="muted" style="font-size: 12.5px; display: flex; align-items: center; gap: 6px;">Libera em <input type="date" id="qeData" style="width: 150px;"></label>
+        <label class="muted" style="font-size: 12.5px; display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="qeSemanal"> repete toda semana</label>
+        <button class="btn sec" id="qeApp">📲 Mandar pro app do aluno</button>
+      </div>
+      <p id="qeAppAviso" hidden class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
       <div id="qeSaida" hidden style="margin-top: 10px;">
         <input id="qeLink" readonly style="width: 100%; font-size: 12px;">
         <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
@@ -1256,6 +1262,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           kpis.push(kpi("🔥 Maior sequência", seqMax + " dia" + (seqMax > 1 ? "s" : ""), "treinos em dias seguidos"));
         }
         if (ult30.length) kpis.push(kpi("✅ Hábitos em dia", Math.round(100 * dias3 / ult30.length) + "%", "dias com 3+ hábitos (30d)"));
+        // check-ins de questionário (respostas que chegaram pela tabela app_quest)
+        var cks = (Array.isArray(ret.checks) ? ret.checks : []).filter(function (c) {
+          return c && typeof c === "object" && dataRe(String(c.d || ""));
+        }).sort(function (x, y) { return x.d < y.d ? -1 : 1; });
+        if (cks.length) kpis.push(kpi("📋 Check-ins", cks.length, "último em " + cks[cks.length - 1].d.slice(8, 10) + "/" + cks[cks.length - 1].d.slice(5, 7)));
         if (kpis.length) html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 2px;'>" + kpis.join("") + "</div>";
         // ---- ⚖️ peso: gráfico de linha ----
         if (ks.length) {
@@ -1327,6 +1338,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             }).join("") +
             "<div class='muted' style='font-size:12px;margin-top:4px;'>" + dias3 + " de " + ult30.length + " dia(s) com 3+ hábitos batidos.</div>";
         }
+        // ---- 📋 check-ins de questionário: pontuação em linha + últimas respostas ----
+        if (cks.length) {
+          var comPts = cks.filter(function (c) { return c.pts != null && isFinite(+c.pts); });
+          html += titulo("📋 Check-ins respondidos no app — " + cks.length + " no total");
+          if (comPts.length >= 2) {
+            var cv = comPts.slice(-20).map(function (c) { return +c.pts; });
+            var cmin = Math.min.apply(null, cv), cmax = Math.max.apply(null, cv);
+            var cfx = (cmax - cmin) || 1;
+            var CW = 340, CH = 72, CP = 8;
+            var cpts = cv.map(function (v, i) {
+              return (CP + Math.round((CW - 2 * CP) * i / (cv.length - 1))) + "," + (CP + Math.round((CH - 2 * CP) * (1 - (v - cmin) / cfx)));
+            });
+            var cds = comPts.slice(-20);
+            html += "<svg viewBox='0 0 " + CW + " " + (CH + 20) + "' style='width:100%;max-width:440px;display:block;' role='img' aria-label='Pontuação dos check-ins'>" +
+              "<polyline points='" + cpts.join(" ") + "' fill='none' stroke='#fbbf24' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/>" +
+              cpts.map(function (p3) { return "<circle cx='" + p3.split(",")[0] + "' cy='" + p3.split(",")[1] + "' r='2.4' fill='#fbbf24'/>"; }).join("") +
+              "<text x='" + CP + "' y='" + (CH + 15) + "' font-size='10' fill='#8a8695'>" + cds[0].d.slice(8, 10) + "/" + cds[0].d.slice(5, 7) + " · mín " + num(cmin) + " · máx " + num(cmax) + " pts</text>" +
+              "<text x='" + (CW - CP) + "' y='" + (CH + 15) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + cds[cds.length - 1].d.slice(8, 10) + "/" + cds[cds.length - 1].d.slice(5, 7) + "</text></svg>";
+          }
+          html += cks.slice(-5).reverse().map(function (c) {
+            var pts = c.pts;
+            var corC = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
+            return "<div style='padding:6px 0;border-bottom:1px dashed var(--linha);font-size:12.5px;'>" +
+              "<b>" + c.d.slice(8, 10) + "/" + c.d.slice(5, 7) + "</b> · " + esc(String(c.nome || "Check-in")) +
+              (pts != null ? " <b style='color:" + corC + ";'>" + (pts > 0 ? "+" : "") + num(pts) + " pts</b>" : "") +
+              "<div class='muted' style='font-size:12px;margin-top:2px;'>" + (Array.isArray(c.respostas) ? c.respostas : []).map(function (x2) {
+                return x2 && typeof x2 === "object" ? esc(String(x2.sigla || "")) + ": <b>" + esc(String(x2.resposta == null ? "" : x2.resposta)) + "</b>" : "";
+              }).filter(Boolean).join(" · ") + "</div></div>";
+          }).join("");
+        }
         // fotos antes × depois
         // o retorno vem de RPC pública — só aceita foto data:image/https e data com dígitos (anti-XSS)
         var fotoOk = function (u) { u = String(u || ""); return (/^data:image\//.test(u) || /^https:\/\//.test(u)) && !/['"<>\\]/.test(u) ? u : ""; };
@@ -1353,10 +1394,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!a.appTokenP) { box.textContent = "Gere o app do aluno primeiro — depois que ele usar, os dados aparecem aqui."; return; }
     if (!nuvem) { box.textContent = "Entre com a sua conta da nuvem pra ver o que o aluno registrou no app."; return; }
     box.textContent = "Carregando dados do app…";
-    nuvem.client.from("app_aluno").select("retorno").eq("token", a.appTokenP).limit(1)
-      .then(function (r) {
+    // além do retorno do app, busca as respostas de questionário (app_quest)
+    // pra virarem métricas no mesmo painel — se a tabela não existir, só ignora
+    var qCk;
+    try {
+      qCk = nuvem.client.from("app_quest").select("questionario,dados,criado").eq("token", a.appTokenP).order("criado", { ascending: false }).limit(40)
+        .then(function (r2) { return r2; }, function () { return null; });
+    } catch (eCk) { qCk = Promise.resolve(null); }
+    Promise.all([
+      nuvem.client.from("app_aluno").select("retorno").eq("token", a.appTokenP).limit(1),
+      qCk,
+    ]).then(function (rs) {
+        var r = rs[0];
         var ret = r && r.data && r.data[0] && r.data[0].retorno;
+        var rowsQ = (rs[1] && !rs[1].error && rs[1].data) || [];
         if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
+        if (rowsQ.length) {
+          ret = (ret && typeof ret === "object") ? ret : {};
+          ret.checks = rowsQ.map(function (row) {
+            var dd = (row && row.dados && typeof row.dados === "object") ? row.dados : {};
+            return { d: String(row.criado || "").slice(0, 10), nome: row.questionario || "Check-in",
+              pts: (dd.pontuacao == null || !isFinite(+dd.pontuacao)) ? null : +dd.pontuacao,
+              respostas: Array.isArray(dd.respostas) ? dd.respostas : [] };
+          });
+        }
         if (!ret) { box.textContent = "O aluno ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui."; return; }
         var html = "";
         try {
@@ -1598,6 +1659,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     $("qeAluno").innerHTML = '<option value="">Aluno…</option>' + ativos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
     $("qeQuest").innerHTML = '<option value="">Questionário…</option>' + st.questionarios.map(function (q) { return '<option value="' + q.id + '">' + esc(q.nome) + "</option>"; }).join("");
+    if (!$("qeData").value) $("qeData").value = S.todayISO();
   }
   $("qpTipo").addEventListener("change", function () {
     $("qpOpsBox").style.display = this.value === "emoji" ? "" : "none";
@@ -1699,6 +1761,46 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     try { document.execCommand("copy"); this.textContent = "✅ Copiado!"; } catch (e) {}
     var b = this;
     setTimeout(function () { b.textContent = "📋 Copiar link"; }, 1800);
+  });
+  // manda o questionário DIRETO pro app do aluno: fica trancado até a data de
+  // liberação e as respostas viram métricas no perfil (aba 📲)
+  $("qeApp").addEventListener("click", function () {
+    var st = questSt(load());
+    var a = st.alunos.find(function (x) { return x.id === $("qeAluno").value; });
+    var q = st.questionarios.find(function (x) { return x.id === $("qeQuest").value; });
+    if (!a || !q) { alert("Escolha o aluno e o questionário."); return; }
+    if (!a.appTokenP) a.appTokenP = S.uid() + S.uid();
+    var payload = montaPayloadQuest(st, q);
+    a.questApp = {
+      nome: q.nome,
+      ps: payload.ps,
+      desde: $("qeData").value || S.todayISO(),
+      repete: $("qeSemanal").checked,
+      enviadoEm: new Date().toISOString(),
+    };
+    S.write("ptStudio", st);
+    var aviso = $("qeAppAviso");
+    aviso.hidden = false;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) {
+      aviso.textContent = "⚠️ Entre na sua conta (card ☁️ Sua ilha) e clique de novo — sem a nuvem o app do aluno não atualiza.";
+      return;
+    }
+    aviso.textContent = "⏳ Publicando o app do aluno com o questionário…";
+    var stamp = new Date().toISOString();
+    nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: { html: montaAppAluno(a, stamp), stamp: stamp }, atualizado: stamp }])
+      .then(function (r) {
+        if (r && r.error) { aviso.textContent = "⚠️ Não deu pra publicar o app (" + r.error.message + ") — tenta de novo."; return; }
+        var st2 = load();
+        var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
+        if (a2) { a2.appPubEm = stamp; S.write("ptStudio", st2); }
+        aviso.textContent = "✅ Enviado! O questionário " +
+          (a.questApp.desde <= S.todayISO() ? "já está liberado" : "libera dia " + S.fmtData(a.questApp.desde)) +
+          " no app do aluno" + (a.questApp.repete ? " e repete toda semana" : "") +
+          ". As respostas caem aqui embaixo e viram métricas no perfil (aba 📲).";
+      }, function () {
+        aviso.textContent = "⚠️ Sem conexão agora — tenta de novo com internet.";
+      });
   });
   function carregaRespostasQuest() {
     var box = $("qRespostas");
@@ -3547,6 +3649,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       .sort(function (x, y) { return (x.data + x.hora) < (y.data + y.hora) ? -1 : 1; }).slice(0, 5)
       .map(function (x) { return { d: x.data, h: x.hora || "" }; });
     var vidsApp = (st.videoteca || []).slice(0, 30).map(function (v) { return { t: v.titulo, c: v.categoria || "Geral", u: v.url }; });
+    // questionário enviado direto pro app (desbloqueia na data marcada)
+    var qa = (a.questApp && Array.isArray(a.questApp.ps) && a.questApp.ps.length) ? a.questApp : null;
     var ctApp = contratoDe(st, a.id);
     var plApp = ctApp ? planoDe(st, ctApp.planoId) : null;
     var pixApp = null;
@@ -3728,6 +3832,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
       "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in 📨</button></div></div>" +
+      (qa ? "<div class='cardx' id='qaCard'><h2>📋 " + esc(qa.nome || "Questionário") + "</h2><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
       (plApp ? "<div class='cardx'><h2>Meu plano</h2>" +
         "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
         "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
@@ -4106,13 +4211,49 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "pl.innerHTML=rk.slice(0,5).map(function(r,i){return \"<div style='display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #322e3d;'>\"+" +
           "\"<span>\"+(med[i]||(i+1)+'º')+' '+(r.nome||'Aluno')+\"</span><b>\"+r.dias+\" treino(s)</b></div>\";}).join('');});})();"
         : "") +
+      // questionário do personal: trancado até a data de liberação; respostas
+      // vão pela RPC pública app_quest_responde e viram métricas no perfil
+      (qa ? "var QUESTAPP=" + JSON.stringify({ nome: qa.nome || "Questionário", ps: qa.ps, desde: qa.desde || "", repete: !!qa.repete, env: qa.enviadoEm || "" }).replace(/</g, "\\u003c") + ";" +
+        "(function(){var el=document.getElementById('qaBox');if(!el)return;" +
+        "function eh(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return '&#'+c.charCodeAt(0)+';';});}" +
+        "function isoAdd(iso,n){var p=iso.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
+        "function diaBr(iso){return iso.slice(8,10)+'/'+iso.slice(5,7);}" +
+        "var hj=isoHj();var desde=/^\\d{4}-\\d{2}-\\d{2}$/.test(QUESTAPP.desde)?QUESTAPP.desde:hj;" +
+        "var per=desde;if(QUESTAPP.repete&&hj>=desde){per=isoAdd(desde,Math.floor((new Date(hj)-new Date(desde))/6048e5)*7);}" +
+        "var chave=(QUESTAPP.env||'')+'|'+per;var R={};" +
+        "function pinta(){var resp=L('ptqa',{});el.style.textAlign='left';" +
+        "if(hj<desde){el.innerHTML='🔒 Seu personal mandou esse questionário — ele libera dia <b>'+diaBr(desde)+'</b>. Volta aqui nesse dia! 💜';return;}" +
+        "if(resp[chave]){el.innerHTML='✅ Respondido — seu personal já recebeu.'+(QUESTAPP.repete?' O próximo libera dia <b>'+diaBr(isoAdd(per,7))+'</b>. 💜':' 💜');return;}" +
+        "el.className='';" +
+        "el.innerHTML=QUESTAPP.ps.map(function(p,i){var h=\"<div style='margin:10px 0 6px;font-weight:700;font-size:14px;'>\"+eh(p.texto)+\"</div>\";" +
+        "if(p.tipo==='emoji'){h+=\"<div style='display:flex;gap:6px;flex-wrap:wrap;'>\"+(p.ops||[]).map(function(o,j){return \"<button data-qa='\"+i+\"' data-j='\"+j+\"' style='flex:1;min-width:56px;background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#d6d2df;font-size:19px;padding:8px 4px;cursor:pointer;font-family:inherit;'>\"+eh(o.e)+\"<div style='font-size:9.5px;margin-top:2px;'>\"+eh(o.r)+\"</div></button>\";}).join('')+'</div>';}" +
+        "else if(p.tipo==='linear'){h+=\"<div style='display:flex;gap:4px;flex-wrap:wrap;'>\";for(var n=0;n<=10;n++)h+=\"<button data-qa='\"+i+\"' data-v='\"+n+\"' style='flex:1;min-width:26px;background:#14121a;border:1px solid #322e3d;border-radius:7px;color:#d6d2df;font-size:13px;padding:7px 0;cursor:pointer;font-family:inherit;'>\"+n+\"</button>\";h+='</div>';}" +
+        "else{h+=\"<input data-qat='\"+i+\"' placeholder='Escreva aqui…' style='width:100%;'>\";}" +
+        "return h;}).join('')+\"<button class='btnx' id='qaEnvia' style='width:100%;margin-top:12px;'>Enviar respostas ➤</button>\";}" +
+        "el.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('button[data-qa]');if(!b)return;var i=+b.dataset.qa;var p=QUESTAPP.ps[i]||{};" +
+        "if(b.dataset.j!=null){var o=(p.ops||[])[+b.dataset.j]||{};R[i]={r:o.r||o.e||'',p:+o.p||0};}else{R[i]={r:b.dataset.v,p:+b.dataset.v};}" +
+        "el.querySelectorAll(\"button[data-qa='\"+i+\"']\").forEach(function(x){var on=x===b;x.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.borderColor=on?'" + CORC + "':'#322e3d';x.style.color=on?'#fff':'#d6d2df';});});" +
+        "el.addEventListener('click',function(ev){if(ev.target.id!=='qaEnvia')return;" +
+        "var faltam=false;var lista=QUESTAPP.ps.map(function(p,i){" +
+        "if(p.tipo!=='emoji'&&p.tipo!=='linear'){var inp=el.querySelector(\"input[data-qat='\"+i+\"']\");var v=inp?inp.value.trim():'';if(!v)faltam=true;return {sigla:p.s||'',pergunta:p.texto,resposta:v,pontos:null};}" +
+        "if(!R[i]){faltam=true;return null;}return {sigla:p.s||'',pergunta:p.texto,resposta:R[i].r,pontos:R[i].p};});" +
+        "if(faltam){alert('Responde todas as perguntas antes de enviar. 😉');return;}" +
+        "var total=0,temP=false;lista.forEach(function(x){if(x&&x.pontos!=null){total+=x.pontos;temP=true;}});" +
+        "var btn=ev.target;btn.disabled=true;btn.textContent='Enviando…';" +
+        "var fim=function(){var resp=L('ptqa',{});resp[chave]=1;Sv('ptqa',resp);pinta();};" +
+        "if(NUVEM){rpcApp('app_quest_responde',{t:TOKEN,p_nome:QUESTAPP.nome,p_dados:{respostas:lista,pontuacao:temP?total:null}}).then(function(r){" +
+        "if(r&&r.ok){fim();}else{btn.disabled=false;btn.textContent='Enviar respostas ➤';alert((r&&r.erro)||'Não deu pra enviar agora — confere a internet e tenta de novo.');}});}" +
+        "else{var msg='📋 '+QUESTAPP.nome+' — '+PRIMEIRO+'\\n'+lista.map(function(x){return (x.sigla?x.sigla+': ':'')+x.resposta;}).join('\\n');" +
+        "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
+        "pinta();})();"
+        : "") +
       // menu lateral: agrupa os cards em seções e controla a gaveta
       "(function(){var MENU=[['inicio','🏠','Início'],['treino','🏋️','Treino'],['evolucao','📈','Evolução'],['agenda','📅','Agenda'],['chat','💬','Chat'],['pagamento','💳','Pagamento']];" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
-      "if(/Check-in|Fale com/.test(t))return 'chat';" +
+      "if(/Check-in|Fale com|📋/.test(t))return 'chat';" +
       "if(/Pagamento|Mensalidade/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
       "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Desafio/.test(t))return 'inicio';" +
       "return null;}" +
