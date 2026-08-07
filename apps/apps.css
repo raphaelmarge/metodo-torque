@@ -150,3 +150,39 @@ dialog .card { border: none; box-shadow: none; }
   .card { box-shadow: none; border-radius: 0; background: #fff; border-color: #ddd; }
   .btn, .abas { display: none !important; }
 }
+
+/* ═══ ☀️ MODO CLARO — mesmas formas esportivas, cores invertidas ═══
+   Ativado com html[data-tema="claro"] (botão ☀️/🌙 no topo; escolha salva em mtapp:tema) */
+html[data-tema="claro"] {
+  --escuro: #121016; --texto: #131118; --cinza: #6e6a78; --cinza-2: #8a8695;
+  --fundo: #f5f4f7; --card: #ffffff; --linha: #e2e0e8;
+  --ok: #16a34a; --alerta: #d97706; --erro: #dc2626;
+  --sombra-1: 0 1px 2px rgba(19,17,24,.05), 0 12px 32px -24px rgba(19,17,24,.16);
+  --sombra-2: 0 2px 8px rgba(19,17,24,.06), 0 24px 48px -24px rgba(19,17,24,.2);
+  --sombra-roxo: 0 10px 24px -10px rgba(124,58,237,.5);
+  --sombra-verde: 0 10px 24px -10px rgba(22,163,74,.45);
+  --anel: 0 0 0 3px rgba(124,58,237,.16);
+}
+html[data-tema="claro"] body { background: radial-gradient(80% 30% at 50% 0%, rgba(124,58,237,.06), transparent 70%), var(--fundo); }
+html[data-tema="claro"] a { color: var(--roxo); }
+html[data-tema="claro"] a:hover { color: var(--roxo-2); }
+html[data-tema="claro"] input, html[data-tema="claro"] select, html[data-tema="claro"] textarea { background: #fff; border-color: #d8d5e0; }
+html[data-tema="claro"] input:focus, html[data-tema="claro"] select:focus, html[data-tema="claro"] textarea:focus { background: #fff; border-color: var(--roxo); }
+html[data-tema="claro"] input[type="checkbox"], html[data-tema="claro"] input[type="radio"] { background: none; border: none; }
+html[data-tema="claro"] .btn.sec { border-color: #cfccd8; }
+html[data-tema="claro"] .btn.sec:hover { color: var(--roxo); background: rgba(124,58,237,.06); }
+html[data-tema="claro"] .btn.ok, html[data-tema="claro"] .btn.whats { color: #fff; }
+html[data-tema="claro"] .tag { background: rgba(124,58,237,.1); color: var(--roxo-2); border-color: rgba(124,58,237,.35); }
+html[data-tema="claro"] .tag.ok { background: rgba(22,163,74,.1); color: #15803d; border-color: rgba(22,163,74,.35); }
+html[data-tema="claro"] .tag.alerta { background: rgba(217,119,6,.1); color: #b45309; border-color: rgba(217,119,6,.35); }
+html[data-tema="claro"] .tag.erro { background: rgba(220,38,38,.08); color: #b91c1c; border-color: rgba(220,38,38,.35); }
+html[data-tema="claro"] .tag.neutro { color: var(--cinza); border-color: var(--linha); background: #fbfafc; }
+html[data-tema="claro"] .barra { background: #eceaf1; }
+html[data-tema="claro"] .vazio { border-color: #d8d5e0; background: #fbfafc; }
+html[data-tema="claro"] .abas button { background: #fff; }
+html[data-tema="claro"] .abas button:hover { border-color: #cfccd8; }
+html[data-tema="claro"] .abas button.ativa { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+html[data-tema="claro"] dialog { border-color: var(--linha); }
+html[data-tema="claro"] dialog::backdrop { background: rgba(18, 16, 22, .5); }
+html[data-tema="claro"] .tabela td { border-bottom-color: #edecf2; }
+html[data-tema="claro"] .tabela tbody tr:hover { background: #faf9fc; }

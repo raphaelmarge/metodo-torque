@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="TQ Personal">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps/apps.css" rel="stylesheet">
+<script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
   /* dias da semana do repetir (agenda) — pílula acesa quando marcada */
   #sRepDias label { cursor: pointer; }
@@ -67,6 +68,7 @@
       <div id="buscaAlunoLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: #1d1a24; border: 1px solid #322e3d; border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
+    <button class="hamb-pt" id="btnTemaPt" title="Alternar entre modo escuro e claro" style="font-size: 15px; padding: 8px 10px;">☀️</button>
   </div>
 </header>
 
@@ -2478,6 +2480,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderFichas();
   });
   window.__treinoAuto = { gera: geraTreinoAuto, evolui: evoluiTreino }; // testes
+
+  // ---------- ☀️/🌙 alternar tema (vale pro sistema todo — mtapp:tema) ----------
+  function pintaBtnTemaPt() {
+    var claro = document.documentElement.dataset.tema === "claro";
+    $("btnTemaPt").textContent = claro ? "🌙" : "☀️";
+    $("btnTemaPt").title = claro ? "Voltar pro modo escuro" : "Mudar pro modo claro";
+  }
+  $("btnTemaPt").addEventListener("click", function () {
+    var claro = document.documentElement.dataset.tema === "claro";
+    document.documentElement.dataset.tema = claro ? "" : "claro";
+    try { localStorage.setItem("mtapp:tema", claro ? "escuro" : "claro"); } catch (e) {}
+    pintaBtnTemaPt();
+  });
+  pintaBtnTemaPt();
 
   // ---------- ✨ IA prescritiva (o Claude lê a anamnese inteira e prescreve as fichas) ----------
   var PARQ_RESUMO = ["problema cardíaco diagnosticado", "dor no peito em atividade física", "dor no peito em repouso no último mês",

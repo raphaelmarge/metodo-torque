@@ -88,6 +88,14 @@ const SEED = {
   await page.evaluate(() => { window.__bannerFech("2026-09-02"); document.getElementById("bannerFechX").click(); });
   assert(await page.evaluate(() => document.getElementById("bannerFech").hidden), "✕ dispensa o banner");
 
+  console.log("— modo claro/escuro (☀️/🌙) —");
+  assert(await page.evaluate(() => !!document.getElementById("btnTema")), "botão de alternar tema no topo");
+  await page.click("#btnTema");
+  assert(await page.evaluate(() => document.documentElement.dataset.tema === "claro" && localStorage.getItem("mtapp:tema") === "claro"), "1º clique liga o modo claro e salva a escolha (mtapp:tema)");
+  assert(await page.evaluate(() => getComputedStyle(document.body).backgroundColor !== "rgb(14, 13, 18)"), "fundo sai do escuro no modo claro");
+  await page.click("#btnTema");
+  assert(await page.evaluate(() => document.documentElement.dataset.tema !== "claro" && localStorage.getItem("mtapp:tema") === "escuro"), "2º clique volta pro modo escuro");
+
   console.log("— Dashboard —");
   await page.click('.menu .item[data-pg="dashboard"]');
   await page.waitForSelector("#kpis .kpi");

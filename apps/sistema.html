@@ -6,6 +6,7 @@
 <title>Sistema da Academia — Método Torque</title>
 <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
 <link href="../assets/fonts/archivo.css" rel="stylesheet">
+<script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
   :root {
     --roxo: #7c3aed; --roxo-2: #6d28d9; --lilas: #a78bfa;
@@ -199,6 +200,18 @@
     #dvClientes > div[style], #dvVendas > div[style] { grid-template-columns: 1fr !important; }
     input, select { font-size: 16px; } /* evita zoom automático do iPhone */
   }
+
+  /* ☀️ modo claro do hub — mesmas formas, cores invertidas */
+  html[data-tema="claro"] {
+    --escuro: #121016; --texto: #2e2b36; --cinza: #6e6a78; --cinza-2: #9995a3;
+    --fundo: #f2f1f5; --card: #ffffff; --linha: #e4e2ea;
+    --ok: #16a34a; --erro: #dc2626; --alerta: #d97706;
+    --sombra-1: 0 1px 2px rgba(19,17,24,.05), 0 12px 32px -24px rgba(19,17,24,.16);
+    --sombra-2: 0 2px 8px rgba(19,17,24,.06), 0 24px 48px -24px rgba(19,17,24,.2);
+    --sombra-roxo: 0 10px 24px -10px rgba(124,58,237,.5);
+    --anel: 0 0 0 3px rgba(124,58,237,.16);
+  }
+  html[data-tema="claro"] .btnzinho { border-color: #cfccd8; }
 </style>
 </head>
 <body>
@@ -210,6 +223,7 @@
   <div class="acoes-topo">
     <button title="Novo cadastro" data-abrir="alunos.html?acao=novo">👤➕</button>
     <button title="Nova venda" data-abrir="alunos.html?acao=venda">🛒</button>
+    <button title="Alternar entre modo escuro e claro" id="btnTema">☀️</button>
   </div>
   <div class="direita">
     <div><strong id="topNome">—</strong><small id="topAcad"></small></div>
@@ -724,6 +738,23 @@
   $("bannerFechX").onclick = dispensaBannerFech;
   window.__bannerFech = pintaBannerFech; // testes
   pintaBannerFech();
+
+  // ---------- ☀️/🌙 alternar tema (vale pro sistema todo — mtapp:tema) ----------
+  function pintaBtnTema() {
+    var claro = document.documentElement.dataset.tema === "claro";
+    $("btnTema").textContent = claro ? "🌙" : "☀️";
+    $("btnTema").title = claro ? "Voltar pro modo escuro" : "Mudar pro modo claro";
+  }
+  $("btnTema").onclick = function () {
+    var claro = document.documentElement.dataset.tema === "claro";
+    document.documentElement.dataset.tema = claro ? "" : "claro";
+    try { localStorage.setItem("mtapp:tema", claro ? "escuro" : "claro"); } catch (e) {}
+    // recarrega a tela aberta no quadro pra ela acompanhar na hora
+    var q = $("quadro");
+    if (!q.hidden && q.getAttribute("src")) q.contentWindow.location.reload();
+    pintaBtnTema();
+  };
+  pintaBtnTema();
 
   // ---------- DASHBOARD ----------
   var dvAtiva = "clientes";
