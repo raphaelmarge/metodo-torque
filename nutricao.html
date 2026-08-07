@@ -54,6 +54,13 @@
   .kpi-nt { background: var(--card); border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
   .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
   .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: #4ade80; }
+  /* 📱 perfil do paciente no celular: campos em grade organizada */
+  @media (max-width: 640px) {
+    #dlgPerfilN .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+    #dlgPerfilN .linha-flex label { width: 100% !important; min-width: 0 !important; }
+    #dlgPerfilN .linha-flex label input, #dlgPerfilN .linha-flex label select { width: 100% !important; }
+    #dlgPerfilN .linha-flex label:has(#pnNome), #dlgPerfilN .linha-flex label:has(#pnEmail) { grid-column: 1 / -1; }
+  }
   /* ☀️ modo claro — chips do Nutri voltam pro pastel */
   html[data-tema="claro"] .tagn { background: #dcfce7; color: #15803d; border-color: rgba(22,163,74,.35); }
   html[data-tema="claro"] .tagn.roxa { background: #ede9fe; color: #6d28d9; border-color: rgba(124,58,237,.35); }
