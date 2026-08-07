@@ -32,7 +32,7 @@
     <h1>Ficha do Colaborador</h1>
     </div>
   </div>
-  <p>A ficha completa do funcionário, como no EVO: dados, contratação com salário, horário de trabalho, permissões e controle de acesso.</p>
+  <p>A ficha completa do funcionário: dados, contratação com salário, horário de trabalho, permissões e controle de acesso.</p>
 </header>
 
 <main class="corpo" id="corpo"></main>
@@ -90,7 +90,7 @@
     var h = c.horario || {};
 
     $("corpo").innerHTML = '<div class="grid-col">' +
-      // painel esquerdo (como no EVO)
+      // painel esquerdo
       '<div class="card painel-esq">' +
       '<div class="avatar">' + esc(ini(c.nome)) + "</div>" +
       "<div style='margin-top:8px;'><span class='tag " + (c.ativo === false ? "neutro" : "ok") + "'>" + (c.ativo === false ? "INATIVO" : "ATIVO") + "</span></div>" +
@@ -185,7 +185,7 @@
         }).join("") + "</div>";
     }
     if (aba === "permissoes") {
-      // perfis vêm da tela Permissões (como no EVO: Acesso Total, Consultor, Coord., Financeiro…)
+      // perfis vêm da tela Permissões (Acesso Total, Consultor, Coord., Financeiro…)
       var stP = S.read("permissoes", { perfis: null });
       var perfis = (stP.perfis || []).filter(function (x) { return x.ativa !== false; });
       p = '<div class="card"><h2>Permissão</h2><p class="muted" style="margin: 4px 0 10px;">O perfil define as telas que esse colaborador usa. Crie e edite perfis em <a href="permissoes.html">Permissões</a>. (O bloqueio real por login individual entra na Fase 2 — hoje vale como orientação da equipe.)</p>' +
@@ -222,7 +222,7 @@
       var metas = c.metas || [];
       p = '<div class="card"><div class="linha-flex" style="justify-content: space-between;"><h2>Metas do colaborador</h2>' +
         '<button class="btn mini" id="btnMeta">+ Nova meta</button></div>' +
-        '<p class="muted" style="margin: 4px 0 10px; font-size: 13px;">Metas individuais como no EVO (ex.: 20 vendas no mês, 90% de renovação). Metas de vendas por equipe ficam em <a href="metas.html">Metas de Vendas</a>.</p>' +
+        '<p class="muted" style="margin: 4px 0 10px; font-size: 13px;">Metas individuais (ex.: 20 vendas no mês, 90% de renovação). Metas de vendas por equipe ficam em <a href="metas.html">Metas de Vendas</a>.</p>' +
         (metas.length ? metas.map(function (m) {
           return '<div class="linha-flex" style="gap: 10px; padding: 7px 0; border-top: 1px solid var(--linha); align-items: center;">' +
             '<input type="checkbox" data-metaok="' + m.id + '"' + (m.feito ? " checked" : "") + ">" +

@@ -43,7 +43,7 @@
     <h1>Contratos</h1>
     </div>
   </div>
-  <p>A base de contratos como no EVO: a distribuição por situação (ativos, suspensos, especiais, inativos), o ranking por plano e a lista detalhada com vigências.</p>
+  <p>A base de contratos: a distribuição por situação (ativos, suspensos, especiais, inativos), o ranking por plano e a lista detalhada com vigências.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 16px;">
@@ -107,7 +107,7 @@
     return S.todayISO(f);
   }
 
-  // classifica cada aluno/contrato na situação do EVO
+  // classifica cada aluno/contrato na situação padrão
   function dados() {
     var st = S.read("alunos", { alunos: [], planos: [] });
     var espId = {}; (st.planos || []).forEach(function (p) { if (p.especial) espId[p.id] = true; });

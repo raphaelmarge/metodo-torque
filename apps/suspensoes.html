@@ -30,7 +30,7 @@
     <h1>Suspensões</h1>
     </div>
   </div>
-  <p>O congelamento de contrato do EVO: quem está suspenso (saúde, viagem, gravidez…), desde quando e por quê — com bloqueio automático na entrada enquanto durar.</p>
+  <p>O congelamento de contrato: quem está suspenso (saúde, viagem, gravidez…), desde quando e por quê — com bloqueio automático na entrada enquanto durar.</p>
 </header>
 
 <main class="corpo" style="display: flex; flex-direction: column; gap: 14px;">
@@ -180,7 +180,7 @@
       if (!confirm("Reativar " + s.nome + "? A suspensão encerra hoje e o aluno volta a entrar normalmente.")) return;
       s.finalizadaEm = S.todayISO();
       var diasSusp = s.inicio <= s.finalizadaEm ? dias(s.inicio, s.finalizadaEm) : 0;
-      if (diasSusp > 0 && s.alunoId && confirm("Creditar os " + diasSusp + " dia(s) suspensos no contrato? (posterga a vigência, como no EVO)")) {
+      if (diasSusp > 0 && s.alunoId && confirm("Creditar os " + diasSusp + " dia(s) suspensos no contrato? (posterga a vigência)")) {
         var stAl = stA();
         var al = stAl.alunos.find(function (x) { return x.id === s.alunoId; });
         var ct = al && (al.contratos || []).find(function (c) { return c.status === "ativo"; });
@@ -216,7 +216,7 @@
     var cAtivo = a && (a.contratos || []).find(function (c) { return c.status === "ativo"; });
     var pl = cAtivo && (stAl.planos || []).find(function (p) { return p.id === cAtivo.planoId; });
     var st = load();
-    // regras de suspensão do contrato (regra do EVO): nº de vezes, tempo total, carência da 1ª
+    // regras de suspensão do contrato: nº de vezes, tempo total, carência da 1ª
     var reg = (pl && pl.regras) || {};
     if (a && cAtivo && (reg.suspVezes || reg.suspDias || reg.suspCarencia)) {
       var jaFeitas = st.itens.filter(function (x) { return x.alunoId === a.id; });

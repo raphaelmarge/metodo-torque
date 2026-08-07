@@ -93,7 +93,7 @@
     document.title = "Perfil do Aluno — Método Torque";
     $("topoPerfil").innerHTML = '<header class="topo"><div class="topo-marca"><div>' +
       '<span class="kicker">PROGRAMA · CLIENTES</span><h1>Perfil do Aluno</h1></div></div>' +
-      "<p>A ficha completa estilo EVO: pendências, contratos, cobranças, frequência e risco de abandono.</p></header>";
+      "<p>A ficha completa: pendências, contratos, cobranças, frequência e risco de abandono.</p></header>";
     var lista = stA().alunos.filter(function (a) { return a.status !== "inativo"; })
       .sort(function (x, y) { return x.nome < y.nome ? -1 : 1; });
     $("corpo").innerHTML = '<div class="card"><div class="campo"><label>Escolha o aluno</label>' +
@@ -115,12 +115,12 @@
     var out = { bloqueios: [], avisos: [], badge: "SEM CONTRATO", badgeCls: "erro" };
     if (a.restrito && (!a.restrito.ate || a.restrito.ate >= hoje)) {
       out.badge = "RESTRITO 🚫"; out.badgeCls = "erro";
-      out.bloqueios.push("Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + (a.restrito.ate ? " até " + S.fmtData(a.restrito.ate) : " (indeterminado)") + " — sem compras, acesso ou mensagens (regra do EVO).");
+      out.bloqueios.push("Cliente RESTRITO desde " + S.fmtData(a.restrito.em) + (a.restrito.ate ? " até " + S.fmtData(a.restrito.ate) : " (indeterminado)") + " — sem compras, acesso ou mensagens.");
     }
     var ativos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
     if (ativos.length && ativos.every(function (c) { return (c.inicio || "") > hoje; })) {
       out.badge = "NA FILA 🕓"; out.badgeCls = "roxo";
-      out.avisos.push("Contrato na fila — começa em " + S.fmtData(ativos[0].inicio) + " (aluno inativo até lá, como no EVO).");
+      out.avisos.push("Contrato na fila — começa em " + S.fmtData(ativos[0].inicio) + " (aluno inativo até lá).");
     } else if (ativos.length) {
       var fimMax = null;
       ativos.forEach(function (c) { var f = fimDe(c); if (!fimMax || f > fimMax) fimMax = f; });
@@ -205,7 +205,7 @@
       var contratosAtivos = (a.contratos || []).filter(function (c) { return c.status === "ativo" || c.status === "congelado"; });
       var proximas = st.recebiveis.filter(function (r) { return r.alunoId === a.id && r.status === "aberto" && r.vencimento >= hoje; })
         .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; }).slice(0, 3);
-      // histórico de vendas = contratos + compras de produtos (como o EVO)
+      // histórico de vendas = contratos + compras de produtos
       var vendas = S.read("produtos", { vendas: [] }).vendas.filter(function (v) { return (v.cliente || "").toLowerCase() === a.nome.toLowerCase(); })
         .map(function (v) { return { data: v.data, desc: "Produtos — " + v.itens.map(function (i) { return i.qtd + "× " + i.nome; }).join(", "), valor: +v.total || 0 }; })
         .concat((a.contratos || []).map(function (c) {
@@ -429,7 +429,7 @@
           ((a.creditos || []).length ? '<h2 style="margin-top: 14px;">Movimentações do crédito</h2>' + a.creditos.slice().reverse().map(function (cr) {
             return '<div class="kv"><span>' + S.fmtData(cr.em) + " · " + esc(cr.motivo || "crédito") + "</span><span style='color:" + (cr.valor >= 0 ? "var(--ok)" : "var(--erro)") + ";'>" + (cr.valor >= 0 ? "+" : "") + S.fmtBRL(cr.valor) + "</span></div>";
           }).join("") : "") +
-          '<p class="muted" style="margin-top:8px;">Como no EVO: dá para inserir crédito sem venda (com motivo), usar para quitar a parcela mais antiga em aberto e transferir para outro aluno.</p></div>';
+          '<p class="muted" style="margin-top:8px;">Dá para inserir crédito sem venda (com motivo), usar para quitar a parcela mais antiga em aberto e transferir para outro aluno.</p></div>';
       }
       if (subFin === "boletos") {
         html += '<div class="card"><div class="vazio">Boletos, PIX automático e transações de cartão fazem parte da <strong>Fase 2</strong> — dependem do gateway de cobrança (Stone/Pagar.me/Asaas).<br>Por enquanto, use o botão de cobrança no WhatsApp.</div></div>';
@@ -588,7 +588,7 @@
       }).catch(function (e) { $("asnAviso").textContent = "erro: " + e.message; });
     };
 
-    // saldo credor (regras do EVO): adicionar / usar / transferir
+    // saldo credor (regras): adicionar / usar / transferir
     function registraCredito(a9, valor, motivo) {
       a9.saldoCredor = Math.round(((+a9.saldoCredor || 0) + valor) * 100) / 100;
       a9.creditos = a9.creditos || [];
@@ -601,7 +601,7 @@
       var motivo = prompt("Motivo do crédito (ex.: cortesia, compensação, adiantamento):") || "crédito manual";
       var st2 = stA();
       var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
-      // teto de créditos (regra do EVO): acima do teto do mês fica pendente de aprovação
+      // teto de créditos: acima do teto do mês fica pendente de aprovação
       var teto = +(S.read("config", { dados: {} }).tetoCreditos || 0);
       var ap = S.read("aprovacoes", { itens: [] });
       var m = S.todayISO().slice(0, 7);
@@ -609,7 +609,7 @@
       if (teto && usado + v > teto) {
         ap.itens.push({ id: S.uid(), tipo: "credito", alunoId: a2.id, nome: a2.nome, valor: Math.round(v * 100) / 100, desc: motivo.trim(), em: S.todayISO(), status: "pendente" });
         S.write("aprovacoes", ap);
-        alert("⚠ Acima do teto do mês (" + S.fmtBRL(teto) + ") — o crédito foi para a fila de APROVAÇÕES em Descontos (regra do EVO). Só entra no saldo do aluno depois de aprovado.");
+        alert("⚠ Acima do teto do mês (" + S.fmtBRL(teto) + ") — o crédito foi para a fila de APROVAÇÕES em Descontos. Só entra no saldo do aluno depois de aprovado.");
         return;
       }
       registraCredito(a2, v, motivo.trim());

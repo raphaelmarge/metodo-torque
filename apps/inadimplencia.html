@@ -98,7 +98,7 @@
     <div class="campo"><label>Cancelamento automático após quantos meses sem pagamento? (0 = desligado)</label>
       <input id="cAutoMeses" type="number" min="0" max="12" placeholder="ex.: 2">
     </div>
-    <p class="muted" style="font-size: 12px; margin: -6px 0 0;">Regra do EVO: contrato de aluno que não paga há N meses é cancelado para não contar como ativo. Aqui o sistema mostra os candidatos num aviso e você cancela com um clique.</p>
+    <p class="muted" style="font-size: 12px; margin: -6px 0 0;">Regra: contrato de aluno que não paga há N meses é cancelado para não contar como ativo. Aqui o sistema mostra os candidatos num aviso e você cancela com um clique.</p>
     <div class="linha-flex" style="justify-content: flex-end;">
       <button class="btn" value="ok">Salvar</button>
     </div>
@@ -521,7 +521,7 @@
     $("roteiro").close();
   };
 
-  // ---------- cancelamento automático por inadimplência (regra do EVO) ----------
+  // ---------- cancelamento automático por inadimplência ----------
   function candidatosAutoCancel() {
     var meses = (load().config || {}).autoMeses || 0;
     if (!meses) return [];
@@ -549,7 +549,7 @@
       ' <button class="btn perigo mini" id="btnAutoCancel" style="margin-left: 8px;">Cancelar contratos agora</button></div>' : "";
     var b = $("btnAutoCancel");
     if (b) b.onclick = function () {
-      if (!confirm("Cancelar " + cands.length + " contrato(s) por inadimplência? As parcelas futuras em aberto são removidas; as vencidas continuam no saldo devedor (como no EVO).")) return;
+      if (!confirm("Cancelar " + cands.length + " contrato(s) por inadimplência? As parcelas futuras em aberto são removidas; as vencidas continuam no saldo devedor.")) return;
       var stA = S.read("alunos", { alunos: [], recebiveis: [] });
       var hoje = S.todayISO();
       cands.forEach(function (x) {

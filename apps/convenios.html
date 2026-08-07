@@ -105,7 +105,7 @@
       '<div class="card"><div class="n">' + st.empresas.length + '</div><div class="muted">empresas parceiras</div></div>' +
       '<div class="card"><div class="n" style="color:var(--roxo)">' + st.vinculos.length + '</div><div class="muted">alunos conveniados</div></div>';
 
-    // Total de clientes por convênio (aba do EVO): ranking de empresas por nº de vínculos
+    // Total de clientes por convênio (aba): ranking de empresas por nº de vínculos
     var totCol = st.empresas.map(function (e) {
       return { nome: e.nome, desconto: +e.desconto || 0, qtd: st.vinculos.filter(function (v) { return v.empresaId === e.id; }).length };
     }).sort(function (a, b) { return b.qtd - a.qtd; });

@@ -95,7 +95,7 @@
       var p = profs[nome];
       p.total = p.presencas + p.presTurma;
       p.media = p.aulas ? Math.round((p.presencas / p.aulas) * 10) / 10 : 0;
-      // % de ocupação = presenças / vagas oferecidas (regra do EVO); faixas alta ≥55, média 25-55, baixa <25
+      // % de ocupação = presenças / vagas oferecidas; faixas alta ≥55, média 25-55, baixa <25
       p.ocup = p.vagas ? Math.round(p.presencas / p.vagas * 100) : 0;
       p.faixa = p.ocup >= 55 ? "alta" : p.ocup >= 25 ? "media" : "baixa";
       return { nome: nome, p: p };

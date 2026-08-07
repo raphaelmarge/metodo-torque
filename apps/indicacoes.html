@@ -93,7 +93,7 @@
       mapa[n].forEach(function (a) { if (!c.entregues[n + "|" + a.nome]) pendentes++; });
     });
 
-    // funil de indicação (padrão EVO): Cadastros → Visitas → Conversões, + Valor total e Pendentes
+    // funil de indicação: Cadastros → Visitas → Conversões, + Valor total e Pendentes
     var cadastros = totalInd, visitas = 0, conversoes = 0, valorTotal = 0;
     nomes.forEach(function (n) {
       mapa[n].forEach(function (a) {

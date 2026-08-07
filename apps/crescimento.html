@@ -175,7 +175,7 @@
     });
     cancList.sort(function (a, b) { return a.data < b.data ? 1 : -1; });
 
-    // ---------- movimentação por mês (categorias do EVO) ----------
+    // ---------- movimentação por mês (categorias) ----------
     var prazo = +($("prazoRenov") && $("prazoRenov").value) || 30;
     var nPer = +($("fPeriodo") && $("fPeriodo").value) || 3;
     function dias(d1, d2) { return Math.round((new Date(d2) - new Date(d1)) / 864e5); }

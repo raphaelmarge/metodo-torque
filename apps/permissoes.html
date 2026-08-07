@@ -28,7 +28,7 @@
     <h1>Permissões</h1>
     </div>
   </div>
-  <p>Defina as telas e funcionalidades que os colaboradores podem acessar, como no EVO. Você pode criar, duplicar e editar permissões — o perfil é escolhido na ficha de cada colaborador.</p>
+  <p>Defina as telas e funcionalidades que os colaboradores podem acessar. Você pode criar, duplicar e editar permissões — o perfil é escolhido na ficha de cada colaborador.</p>
 </header>
 
 <main class="corpo">
@@ -84,7 +84,7 @@
     ["administrativo", "Administrativo (equipe, produtos)"],
     ["config", "Configurações do sistema"],
   ];
-  // perfis que o EVO traz de fábrica (os mesmos da academia)
+  // perfis que os sistemas tradicionais traz de fábrica (os mesmos da academia)
   function padrao() {
     function p(nome, desc, telas) { return { id: S.uid(), nome: nome, desc: desc, ativa: true, telas: telas }; }
     return [

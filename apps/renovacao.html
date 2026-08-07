@@ -113,7 +113,7 @@
     var vencidos = todos.filter(function (x) { return x.dias < 0; });
     var vencendo = todos.filter(function (x) { return x.dias >= 0; });
 
-    // KPIs de renovação (padrão EVO): total de contratos, renovados, taxa e valor renovado
+    // KPIs de renovação: total de contratos, renovados, taxa e valor renovado
     var st0 = stA();
     var qtdTotal = 0, qtdRenovados = 0, valorRenovado = 0;
     st0.alunos.forEach(function (a) {
