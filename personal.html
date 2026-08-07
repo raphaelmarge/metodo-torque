@@ -3722,9 +3722,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
-      "<div>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div></div>" +
+      "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
+      "<span id='xpChip' style='flex:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>⚡ 0 XP</span></div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(13,12,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #26222e;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'></nav>" +
+      // card herói "treino de hoje" (estilo Prime) — a ficha do dia gira sozinha
+      (fichasApp ? "<div class='cardx' id='heroTreino' style='background:linear-gradient(150deg," + COR + "," + COR2 + " 78%);border-color:" + COR + ";box-shadow:0 18px 40px -18px " + COR + ";'>" +
+        "<div style='font-size:10.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
+        "<div id='htTitulo' style='font-size:23px;font-weight:900;font-style:italic;margin:6px 0 2px;text-transform:uppercase;'></div>" +
+        "<div id='htSub' style='font-size:12.5px;color:rgba(255,255,255,.8);'></div>" +
+        "<button id='htVer' style='margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:6px;padding:9px 18px;font-weight:900;font-style:italic;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.04em;'>Ver treino ➜</button></div>" : "") +
+      // progresso rápido (peso + treinos do mês)
+      "<div class='cardx'><h2>Progresso</h2><div id='pgTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'></div></div>" +
       (((st.config || {}).mural || []).length
         ? "<div class='cardx' style='border-color:#7c3aed;'><h2>📌 Mural do studio</h2>" +
           ((st.config || {}).mural || []).map(function (av) {
@@ -3876,7 +3885,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab')devolveApp();}" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab')devolveApp();" +
+      "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
@@ -3903,9 +3913,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "Notification.requestPermission().then(function(p2){card.style.display='none';if(p2==='granted')tentaPushP();});});}})();" +
       // semana: bolinhas seg-dom + meta + streak + medalhas
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
-      "var rot=['S','T','Q','Q','S','S','D'];var html='';var naSem=0;" +
+      "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=d.toISOString().slice(0,10);var fez=!!f[iso];if(fez)naSem++;" +
-      "var hoje=iso===isoHj();html+=\"<div style='flex:1;text-align:center;'><div style='width:34px;height:34px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;\"+(fez?'background:linear-gradient(135deg," + COR + "," + CORC + ");color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#6e6a78;')+(hoje?'outline:2px solid " + CORC + ";outline-offset:2px;':'')+\"'>\"+(fez?'✓':rot[i])+\"</div></div>\";}" +
+      "var hoje=iso===isoHj();html+=\"<div style='flex:1;min-width:0;'><div style='border-radius:9px;padding:7px 0 5px;text-align:center;\"+(fez?'background:linear-gradient(135deg," + COR + "," + CORC + ");':'background:#14121a;border:1px solid #26222f;')+(hoje?'outline:2px solid " + CORC + ";outline-offset:1px;':'')+\"'>\"+" +
+      "\"<div style='font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:\"+(fez?'rgba(255,255,255,.85)':'#6e6a78')+\";'>\"+rot[i]+\"</div>\"+" +
+      "\"<div style='font-size:14px;font-weight:800;margin-top:1px;color:\"+(fez?'#fff':'#d6d2df')+\";'>\"+d.getDate()+\"</div>\"+" +
+      "\"<div style='font-size:9px;line-height:1;margin-top:1px;color:\"+(fez?'#fff':'transparent')+\";'>✓</div></div></div>\";}" +
       "document.getElementById('diasSem').innerHTML=html;" +
       "var pct=Math.min(100,Math.round(100*naSem/META));" +
       "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+(naSem>=META?' 🔥':'')+\"</b></div><div style='height:10px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;transition:width .5s;'></div></div>\";" +
@@ -4243,6 +4256,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
         "pinta();})();"
         : "") +
+      // hero "treino de hoje" + progresso rápido + XP (estilo Prime)
+      "var FICHAS_META=" + JSON.stringify((fichasApp || []).map(function (f) { return { t: f.titulo || "Ficha", n: f.itens.length }; })).replace(/</g, "\\u003c") + ";" +
+      "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||!FICHAS_META.length)return;" +
+      "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
+      "var par=String(fm.t).split('—');var rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));var tit=par.length>1?par.slice(1).join('—').trim():fm.t;" +
+      "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
+      "document.getElementById('htSub').textContent=fm.n+' exercício(s) te esperando 💪';}" +
+      "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');});" +
+      "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
+      "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
+      "var pf=L('ptfeitos',{});var noMes=Object.keys(pf).filter(function(k){return k.slice(0,7)===mesK;}).length;" +
+      "function tile(rt,val,sub,cor){return \"<div style='background:#100e15;border:1px solid #26222e;border-radius:8px;padding:11px 13px;'>\"+" +
+      "\"<div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;'>\"+rt+\"</div>\"+" +
+      "\"<div style='font-size:21px;font-weight:900;margin-top:2px;'>\"+val+\"</div>\"+" +
+      "\"<div style='font-size:11px;color:\"+(cor||'#a9a4b5')+\";'>\"+sub+\"</div></div>\";}" +
+      "var t1;if(pks.length){var pUlt=+pz[pks[pks.length-1]];var pd=Math.round((pUlt-(+pz[pks[0]]))*10)/10;" +
+      "t1=tile('⚖️ Peso',String(pUlt).replace('.',',')+' kg',(pd>0?'+':'')+String(pd).replace('.',',')+' kg desde o início',pd<0?'#4ade80':pd>0?'#f87171':'#a9a4b5');}" +
+      "else{t1=tile('⚖️ Peso','—','registre na aba Evolução');}" +
+      "el.innerHTML=t1+tile('📆 Treinos no mês',noMes,Object.keys(pf).length+' no total');}" +
+      "function pintaXP(){var el=document.getElementById('xpChip');if(!el)return;" +
+      "var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
+      "var nq=Object.keys(L('ptqa',{})).length;" +
+      "el.textContent='⚡ '+(Object.keys(pf).length*10+nh*2+nq*20)+' XP';}" +
+      "pintaHero();pintaProgresso();pintaXP();" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       "(function(){var MENU=[['inicio','🏠','Início'],['treino','🏋️','Treino'],['evolucao','📈','Evolução'],['agenda','📅','Agenda'],['chat','💬','Chat'],['pagamento','💳','Plano']];" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
