@@ -1217,6 +1217,7 @@ async function abaPt(p, a) {
     return { itens, antes, depois: { inicio: secVisivel("inicio"), treino: secVisivel("treino") }, tit: document.getElementById("secTit").textContent };
   });
   ok(navAbas.itens.length >= 5 && navAbas.itens[0] === "inicio", "barra de abas montada com as seções do app (" + navAbas.itens.length + " abas)");
+  ok(await pApp.evaluate(() => document.querySelectorAll("#navApp .nitem svg").length >= 5 && !/[🏠🏋📈📅💬💳]/.test(document.getElementById("navApp").textContent)), "abas com ícones de traço (SVG), sem emoji");
   ok(navAbas.antes.inicio && !navAbas.antes.treino && !navAbas.depois.inicio && navAbas.depois.treino && /Treino/.test(navAbas.tit), "tocar na aba troca a seção e o título do topo");
   // recado do personal ainda não visto acende a bolinha 🔴 no Chat
   const dotChat = await pApp.evaluate(() => {
@@ -1240,7 +1241,7 @@ async function abaPt(p, a) {
   });
   ok(/TREINO|FICHA/.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card 'HOJE · " + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
   ok(/⚖️ Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
-  ok(/⚡ \d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp + ")");
+  ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
   ok(await pApp.evaluate(() => {
     document.getElementById("htVer").click();

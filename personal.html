@@ -3723,7 +3723,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
-      "<span id='xpChip' style='flex:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>⚡ 0 XP</span></div>" +
+      "<span id='xpChip' style='flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>" +
+      "<svg width='13' height='13' viewBox='0 0 24 24' fill='" + CORC + "' aria-hidden='true'><path d='M13 2 3 14h7l-1 8 10-12h-7z'/></svg>" +
+      "<span><b id='xpNum'>0</b> XP</span></span></div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(13,12,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #26222e;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'></nav>" +
       // card herói "treino de hoje" (estilo Prime) — a ficha do dia gira sozinha
@@ -4275,13 +4277,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "t1=tile('⚖️ Peso',String(pUlt).replace('.',',')+' kg',(pd>0?'+':'')+String(pd).replace('.',',')+' kg desde o início',pd<0?'#4ade80':pd>0?'#f87171':'#a9a4b5');}" +
       "else{t1=tile('⚖️ Peso','—','registre na aba Evolução');}" +
       "el.innerHTML=t1+tile('📆 Treinos no mês',noMes,Object.keys(pf).length+' no total');}" +
-      "function pintaXP(){var el=document.getElementById('xpChip');if(!el)return;" +
+      "function pintaXP(){var el=document.getElementById('xpNum');if(!el)return;" +
       "var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
       "var nq=Object.keys(L('ptqa',{})).length;" +
-      "el.textContent='⚡ '+(Object.keys(pf).length*10+nh*2+nq*20)+' XP';}" +
+      "el.textContent=Object.keys(pf).length*10+nh*2+nq*20;}" +
       "pintaHero();pintaProgresso();pintaXP();" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
-      "(function(){var MENU=[['inicio','🏠','Início'],['treino','🏋️','Treino'],['evolucao','📈','Evolução'],['agenda','📅','Agenda'],['chat','💬','Chat'],['pagamento','💳','Plano']];" +
+      // (ícones de traço em SVG — herdam a cor da aba via currentColor)
+      "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
+      "var MENU=[" +
+      "['inicio',\"<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>\",'Início']," +
+      "['treino',\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'Treino']," +
+      "['evolucao',\"<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>\",'Evolução']," +
+      "['agenda',\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\",'Agenda']," +
+      "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']," +
+      "['pagamento',\"<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>\",'Plano']];" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
@@ -4299,7 +4309,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var nav=document.getElementById('navApp');" +
       "nav.innerHTML=itens.map(function(m){" +
       "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
-      "\"<span style='font-size:20px;line-height:1;'>\"+m[1]+\"</span>\"+" +
+      "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span>\"+" +
       "\"<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;'>\"+m[2]+\"</span>\"+" +
       "\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid #0d0c10;'></span></button>\";}).join('');" +
       "var stSec=document.createElement('style');stSec.textContent='[data-sec-off]{display:none!important}';document.head.appendChild(stSec);" +
@@ -4310,7 +4320,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.querySelectorAll('.nitem').forEach(function(mi){var on=mi.getAttribute('data-msec')===s;" +
       "mi.style.background=on?'rgba(124,58,237,.16)':'none';mi.style.color=on?'" + CORC + "':'#8a8695';});" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
-      "document.getElementById('secTit').textContent=rot?rot[1]+' '+rot[2]:'';" +
+      "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // entrou no chat = recados vistos; some a bolinha
       "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);}" +
       "window.scrollTo(0,0);}" +
