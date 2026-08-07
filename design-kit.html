@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit de Design — TORQUE ON</title>
+<!--
+  ═══════════════════════════════════════════════════════════════════
+  KIT DE DESIGN DO TORQUE ON — arquivo pra reformular o visual com IA
+  ═══════════════════════════════════════════════════════════════════
+
+  COMO USAR (Raphael):
+  1. Envie ESTE arquivo pra sua ferramenta de design com IA.
+  2. Peça: "Reformule o visual desta página seguindo as REGRAS que
+     estão escritas nela. Me devolva o arquivo HTML completo."
+  3. Baixe o arquivo que a ferramenta devolver e me mande de volta
+     no Claude Code: "aplica esse visual novo no sistema".
+     Eu pego o novo estilo e espalho por todas as telas do TORQUE ON.
+
+  REGRAS PARA A IA DE DESIGN (não apague este bloco):
+  - MUDE APENAS O CSS (cores, fontes, sombras, cantos, espaçamentos,
+    gradientes, animações). NÃO mude a estrutura HTML.
+  - MANTENHA todos os ids, classes e textos em português exatamente
+    como estão — eles são usados pelo sistema real.
+  - O resultado deve continuar num ÚNICO arquivo HTML, sem imagens
+    externas, sem CDN, sem Google Fonts (o site funciona offline;
+    a fonte oficial do sistema é "Archivo", hospedada localmente —
+    pode usá-la no font-family que o sistema já a carrega).
+  - Existem TRÊS mundos visuais que precisam continuar existindo:
+    · CLARO VIOLETA  → Sistema da academia (fundo claro, roxo #7c3aed)
+    · ESCURO VIOLETA → TORQUE PERSONAL e app do aluno (fundo #121016)
+    · VERDE NUTRI    → TORQUE NUTRI (verde #16a34a)
+    Pode evoluir os tons, mas mantenha as três identidades separadas.
+  - Acessibilidade: contraste legível, botões com área de toque
+    confortável no celular, foco visível nos campos.
+  - O público é academia/fitness no Brasil: visual forte, moderno,
+    direto — sem parecer site de banco.
+-->
+<style>
+  /* ===== BASE (o que a IA deve reformular) ===== */
+  :root {
+    --roxo: #7c3aed; --roxo-2: #6d28d9; --lilas: #a78bfa;
+    --verde: #16a34a; --verde-claro: #4ade80;
+    --escuro: #121016; --card-escuro: #1d1a24; --borda-escura: #322e3d;
+    --fundo-claro: #f6f5f8; --texto: #2e2b36; --cinza: #6e6a78; --linha: #e5e2ea;
+    --ok: #16a34a; --erro: #dc2626; --alerta: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: var(--fundo-claro); color: var(--texto); padding: 24px 16px 80px; }
+  .kit { max-width: 980px; margin: 0 auto; }
+  .kit h1 { font-size: 26px; letter-spacing: -.02em; }
+  .kit h2.secao { font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--roxo); margin: 34px 0 12px; border-bottom: 2px solid var(--linha); padding-bottom: 6px; }
+  .aviso-topo { background: #fff; border: 1px solid var(--linha); border-left: 4px solid var(--roxo); border-radius: 12px; padding: 14px 16px; margin: 14px 0 8px; font-size: 14px; line-height: 1.6; }
+
+  /* paleta */
+  .paleta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cor { width: 130px; border-radius: 10px; overflow: hidden; border: 1px solid var(--linha); background: #fff; font-size: 11.5px; }
+  .cor .bloco { height: 54px; }
+  .cor .rot { padding: 6px 8px; }
+
+  /* componentes claros (Sistema da academia) */
+  .card { background: #fff; border: 1px solid var(--linha); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+  .card h3 { font-size: 15px; margin-bottom: 8px; }
+  .muted { color: var(--cinza); font-size: 13px; }
+  .btn { display: inline-block; background: var(--roxo); color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .btn.sec { background: #fff; color: var(--texto); border: 1px solid var(--linha); }
+  .btn.verde { background: var(--verde); }
+  .btn.whats { background: #25d366; }
+  .btn.mini { padding: 6px 12px; font-size: 12.5px; }
+  .linha-flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .kpi { background: #fff; border: 1px solid var(--linha); border-radius: 12px; padding: 12px 14px; }
+  .kpi .rot { font-size: 11px; color: var(--cinza); text-transform: uppercase; letter-spacing: .08em; }
+  .kpi .val { font-size: 24px; font-weight: 800; margin-top: 2px; }
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 3px 10px; background: #ede9fe; color: var(--roxo-2); }
+  .tag.ok { background: #dcfce7; color: #15803d; }
+  .tag.erro { background: #fee2e2; color: #b91c1c; }
+  .tag.alerta { background: #fef3c7; color: #b45309; }
+  table.lista { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--linha); border-radius: 12px; overflow: hidden; font-size: 13.5px; }
+  table.lista th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--cinza); padding: 10px 12px; background: var(--fundo-claro); }
+  table.lista td { padding: 10px 12px; border-top: 1px solid var(--linha); }
+  input, select, textarea { font-family: inherit; font-size: 14px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px; background: #fff; color: var(--texto); width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--roxo); box-shadow: 0 0 0 3px rgba(124, 58, 237, .18); }
+  label.campo { display: block; font-size: 12.5px; font-weight: 600; margin: 0; }
+  label.campo input, label.campo select { margin-top: 4px; }
+
+  /* mundo escuro (TORQUE PERSONAL / app do aluno) */
+  .mundo-escuro { background: var(--escuro); border-radius: 16px; padding: 20px; color: #fff; }
+  .mundo-escuro .card-e { background: var(--card-escuro); border: 1px solid var(--borda-escura); border-radius: 16px; padding: 16px 18px; margin-bottom: 12px; }
+  .mundo-escuro h3 { font-size: 15px; margin-bottom: 6px; }
+  .mundo-escuro .muted-e { color: #a9a4b5; font-size: 13px; }
+  .mundo-escuro .btn-e { display: inline-block; background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; border: none; border-radius: 12px; padding: 11px 20px; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 30px -12px var(--roxo); }
+  .mundo-escuro .btn-e.sec { background: transparent; border: 1px solid var(--borda-escura); box-shadow: none; }
+  .mundo-escuro .kicker { font-size: 11px; letter-spacing: .22em; color: var(--lilas); font-weight: 700; text-transform: uppercase; }
+  .mundo-escuro .item-treino { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--borda-escura); font-size: 14px; }
+
+  /* mundo verde (TORQUE NUTRI) */
+  .mundo-verde .btn { background: var(--verde); }
+  .mundo-verde .tag { background: #dcfce7; color: #15803d; }
+  .mundo-verde input:focus { border-color: var(--verde); box-shadow: 0 0 0 3px rgba(22, 163, 74, .18); }
+
+  /* dialog */
+  .dialogo { background: #fff; border: 1px solid var(--linha); border-radius: 16px; padding: 20px; max-width: 420px; box-shadow: 0 24px 60px -24px rgba(18, 16, 22, .35); }
+  .dialogo h3 { margin-bottom: 6px; }
+
+  @media (max-width: 640px) { body { padding: 16px 10px 60px; } }
+</style>
+</head>
+<body>
+<div class="kit">
+
+  <h1>🎨 Kit de Design — TORQUE ON</h1>
+  <div class="aviso-topo">
+    <strong>Para a IA de design:</strong> reformule o visual desta página (só o CSS!) seguindo as regras
+    do comentário no topo do arquivo. Mantenha estrutura, ids, classes e textos. Devolva o arquivo
+    HTML completo, num arquivo só, funcionando offline. Os três mundos (claro violeta, escuro violeta
+    e verde Nutri) precisam continuar com identidades separadas.
+  </div>
+
+  <h2 class="secao">1 · Paleta atual</h2>
+  <div class="paleta">
+    <div class="cor"><div class="bloco" style="background:#7c3aed;"></div><div class="rot"><b>Violeta TORQUE</b><br>#7c3aed</div></div>
+    <div class="cor"><div class="bloco" style="background:#6d28d9;"></div><div class="rot"><b>Violeta escuro</b><br>#6d28d9</div></div>
+    <div class="cor"><div class="bloco" style="background:#a78bfa;"></div><div class="rot"><b>Lilás</b><br>#a78bfa</div></div>
+    <div class="cor"><div class="bloco" style="background:#16a34a;"></div><div class="rot"><b>Verde Nutri</b><br>#16a34a</div></div>
+    <div class="cor"><div class="bloco" style="background:#121016;"></div><div class="rot"><b>Fundo escuro</b><br>#121016</div></div>
+    <div class="cor"><div class="bloco" style="background:#1d1a24;"></div><div class="rot"><b>Card escuro</b><br>#1d1a24</div></div>
+    <div class="cor"><div class="bloco" style="background:#f6f5f8;border-bottom:1px solid #e5e2ea;"></div><div class="rot"><b>Fundo claro</b><br>#f6f5f8</div></div>
+  </div>
+
+  <h2 class="secao">2 · Botões</h2>
+  <div class="card">
+    <div class="linha-flex">
+      <button class="btn">Salvar aluno</button>
+      <button class="btn sec">Cancelar</button>
+      <button class="btn verde">+ Criar check-in</button>
+      <button class="btn whats">💬 Mandar no WhatsApp</button>
+      <button class="btn mini">💾 Salvar</button>
+      <button class="btn sec mini">🗑 Excluir</button>
+    </div>
+  </div>
+
+  <h2 class="secao">3 · Cards e indicadores (Sistema da academia — mundo claro)</h2>
+  <div class="kpis" style="margin-bottom: 14px;">
+    <div class="kpi"><div class="rot">Alunos ativos</div><div class="val">128</div></div>
+    <div class="kpi"><div class="rot">Recebido no mês</div><div class="val">R$ 18.450</div></div>
+    <div class="kpi"><div class="rot">Inadimplentes</div><div class="val" style="color:var(--erro);">7</div></div>
+    <div class="kpi"><div class="rot">Check-ins hoje</div><div class="val" style="color:var(--ok);">64</div></div>
+  </div>
+  <div class="card">
+    <h3>Hoje na academia</h3>
+    <p class="muted">Nesta tela estão os principais atalhos da sua operação.</p>
+    <div class="linha-flex" style="margin-top: 10px;">
+      <span class="tag">🔁 no cartão</span>
+      <span class="tag ok">✅ em dia</span>
+      <span class="tag alerta">⏳ vence hoje</span>
+      <span class="tag erro">⚠️ cartão recusado</span>
+    </div>
+  </div>
+
+  <h2 class="secao">4 · Lista / tabela (financeiro)</h2>
+  <table class="lista">
+    <thead><tr><th>Aluno</th><th>Plano</th><th>Vencimento</th><th>Situação</th></tr></thead>
+    <tbody>
+      <tr><td>João Cliente</td><td>Livre — R$ 150</td><td>10/08</td><td><span class="tag ok">pago</span></td></tr>
+      <tr><td>Bruna Silva</td><td>Manhã — R$ 99</td><td>05/08</td><td><span class="tag erro">em atraso</span></td></tr>
+      <tr><td>Carlos Lima</td><td>Livre — R$ 150</td><td>15/08</td><td><span class="tag alerta">vence hoje</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="secao">5 · Formulário (cadastro)</h2>
+  <div class="card">
+    <div class="linha-flex">
+      <label class="campo" style="flex:1;min-width:180px;">Nome<input value="João Cliente" placeholder="Nome completo"></label>
+      <label class="campo" style="width:150px;">WhatsApp<input value="31 99999-0000" inputmode="numeric"></label>
+      <label class="campo" style="width:150px;">Plano<select><option>Livre — R$ 150</option><option>Manhã — R$ 99</option></select></label>
+    </div>
+    <button class="btn" style="margin-top: 12px;">💾 Salvar aluno</button>
+  </div>
+
+  <h2 class="secao">6 · TORQUE PERSONAL e app do aluno (mundo escuro)</h2>
+  <div class="mundo-escuro">
+    <span class="kicker">Studio Raphael · Meu treino</span>
+    <div class="card-e" style="margin-top: 10px;">
+      <h3>🏋️ Treino A — Peito e Tríceps</h3>
+      <p class="muted-e">Semana 3 · progressão dupla · toque no exercício pra ver o vídeo</p>
+      <div class="item-treino"><span>Supino reto com barra</span><b>4 × 10 · 90s</b></div>
+      <div class="item-treino"><span>Crucifixo com halteres</span><b>3 × 12 · 60s</b></div>
+      <div class="item-treino"><span>Tríceps na polia</span><b>3 × 12 · 60s</b></div>
+    </div>
+    <div class="linha-flex">
+      <button class="btn-e">✅ Treinei hoje!</button>
+      <button class="btn-e sec">📅 Minha agenda</button>
+    </div>
+  </div>
+
+  <h2 class="secao">7 · TORQUE NUTRI (mundo verde)</h2>
+  <div class="mundo-verde">
+    <div class="card">
+      <h3 style="color:var(--verde);">🥦 Check-in semanal</h3>
+      <p class="muted">Como foi sua fome entre as refeições nesta semana?</p>
+      <div class="linha-flex" style="margin-top: 10px;">
+        <span class="tag">😍 Ótimo</span>
+        <span class="tag">🙂 Bom</span>
+        <span class="tag">😐 Médio</span>
+      </div>
+      <button class="btn" style="margin-top: 12px;">Enviar respostas ➤</button>
+    </div>
+  </div>
+
+  <h2 class="secao">8 · Dialog / janela</h2>
+  <div class="dialogo">
+    <h3>💳 Ativar mensalidade no cartão</h3>
+    <p class="muted">O aluno digita o cartão uma vez e a mensalidade cai sozinha todo mês.</p>
+    <div class="linha-flex" style="margin-top: 12px;">
+      <button class="btn">Ativar — R$ 150/mês</button>
+      <button class="btn sec">Agora não</button>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top: 30px;">Kit gerado do sistema real — Sistema da academia (apps/), TORQUE PERSONAL (personal.html), TORQUE NUTRI (nutricao.html) e app do aluno. Textos sempre em pt-BR informal, com emojis.</p>
+
+</div>
+</body>
+</html>
