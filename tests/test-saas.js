@@ -48,6 +48,7 @@ function crcNode(s) {
   ok(/hq_suporte_threads/.test(sql) && /hq_suporte_lista/.test(sql) && /hq_suporte_envia/.test(sql) && /hq_erros/.test(sql), "assistência: RPCs do HQ (tickets + erros)");
   ok(/pagarme_eventos/.test(sql) && /pagarme_eventos_membros/.test(sql), "webhook Pagar.me: tabela de eventos com RLS por academia no SQL");
   ok(/PAGARME_WEBHOOK_TOKEN/.test(fs.readFileSync(__dirname + "/../supabase/functions/pagarme-webhook/index.ts", "utf8")), "função pagarme-webhook existe com a trava de senha na URL");
+  ok(/ia_treino/.test(fs.readFileSync(__dirname + "/../supabase/functions/chat-envia/index.ts", "utf8")), "função chat-envia tem a ação ia_treino (IA prescritiva de treino)");
 
   // ---------- 1) site comercial ----------
   console.log("Site comercial (torqueon.html):");

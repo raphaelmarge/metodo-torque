@@ -1366,6 +1366,47 @@ async function abaPt(p, a) {
     ok(await p.evaluate(async () => /data-pgm=/.test(await (await fetch("personal.html")).text())), "pendências ganham o botão 💳 Link de pagamento");
   }
 
+  // ✨ IA prescritiva de treino (função chat-envia mockada)
+  {
+    const ia = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const semNuvem = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
+      window.__cloudOrig = window.MTStore.cloud;
+      window.__fetchOrig = window.fetch;
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      const peito = self.MT_EXERCICIOS.find((c) => c.g === "Peito").n;
+      const costas = self.MT_EXERCICIOS.find((c) => c.g === "Costas").n;
+      let corpo = null;
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/chat-envia")) {
+          corpo = JSON.parse(opts.body);
+          const plano = { fichas: [{ titulo: "A — Peito e Costas", itens: [
+            { nome: peito, series: 4, reps: "10", descanso: 90, obs: "cotovelos a 45°" },
+            { nome: costas, series: 3, reps: "12", descanso: 60 },
+            { nome: "Exercício Inventado Xyz", series: 3, reps: "10", descanso: 60 },
+          ] }], resumo: "Foco em hipertrofia com volume moderado." };
+          return Promise.resolve({ json: () => Promise.resolve({ ok: true, texto: "```json\n" + JSON.stringify(plano) + "\n```" }) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      const comNuvem = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
+      window.fetch = window.__fetchOrig;
+      window.MTStore.cloud = window.__cloudOrig;
+      const st2 = window.MTStore.read("ptStudio", {});
+      const t = st2.treinosV2[id];
+      const a2 = st2.alunos.find((a) => a.id === id) || {};
+      return { semNuvem, comNuvem, corpo,
+        t: { fichas: t.fichas.length, item0: t.fichas[0].itens[0], nItens: t.fichas[0].itens.length, geradaIA: t.geradaIA, titulo: t.fichas[0].titulo },
+        pendente: !!a2.appEditEm };
+    });
+    ok(/Entre na sua conta/.test(ia.semNuvem.erro), "✨ sem nuvem a IA de treino explica o que falta");
+    ok(ia.corpo.acao === "ia_treino" && /PAR-Q/.test(ia.corpo.dados) && /CATÁLOGO DISPONÍVEL/.test(ia.corpo.dados), "anamnese e catálogo viajam pra função chat-envia (ação ia_treino)");
+    ok(ia.comNuvem.ok && ia.comNuvem.fichas === 1 && ia.comNuvem.exercicios === 2 && ia.comNuvem.ignorados === 1, "✨ IA prescreve a ficha e o exercício inventado é descartado");
+    ok(ia.t.geradaIA && ia.t.titulo === "A — Peito e Costas" && ia.t.nItens === 2 && ia.t.item0.series === 4 && ia.t.item0.reps === "10" && ia.t.item0.obs === "cotovelos a 45°", "ficha da IA entra no treinosV2 com séries, reps e observação técnica");
+    ok(ia.pendente, "app do aluno fica pendente de republicação depois do treino da IA");
+  }
+
   // 🔁 mensalidade no cartão (assinatura Pagar.me com tokenização no navegador)
   console.log("Mensalidade no cartão:");
   {
