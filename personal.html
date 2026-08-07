@@ -855,10 +855,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
         (fichaVencida ? ' <span class="tag alerta" title="a validade da ficha passou — gere a nova fase">⏰ TREINO VENCIDO</span>' : "") +
         (a.acessoEm ? ' <span class="tag ok" title="login e senha enviados por e-mail">📱 APP ✓</span>' : ' <button class="btn mini" data-acesso="' + a.id + '" title="cria o login e envia por e-mail">📧 Enviar acesso</button>') +
-        ' <button class="btn mini" data-perfil="' + a.id + '">👤 Perfil</button>' +
-        (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
-        ' <button class="btn mini" data-app="' + a.id + '">App do aluno</button>' +
-        ' <button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div>';
+        '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
+        '<button class="btn mini" data-perfil="' + a.id + '">👤 Perfil</button>' +
+        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        '<button class="btn mini" data-app="' + a.id + '">App do aluno</button>' +
+        '<button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></span></div>';
     }).join("") : '<div class="vazio">Cadastre seu primeiro aluno acima. 💪</div>';
   }
   $("aAdd").addEventListener("click", function () {
@@ -1670,9 +1671,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var nex = (t2 && t2.fichas) ? t2.fichas.reduce(function (s, f) { return s + f.itens.length; }, 0) : 0;
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
         "<b>📣 " + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nf + " ficha(s), " + nex + " exercício(s))</span>" +
-        '<span style="margin-left:auto;"></span>' +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
         '<button class="btn sec mini" data-gtedit="' + g.id + '">✎ montar</button>' +
-        '<button class="btn sec mini" data-gtrm="' + g.id + '">🗑</button></div>';
+        '<button class="btn sec mini" data-gtrm="' + g.id + '">🗑</button></span></div>';
     }).join("") : "Nenhum treino de disparo ainda — clique em <b>🏋️ + Montar treino de disparo</b>.";
     var opsGt = st.treinosGrupo.map(function (g) {
       var t2 = (st.treinosV2 || {})[g.id];
@@ -1944,12 +1945,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       htmlSes += '<div class="sessao-pt' + (x.feita ? " feita" : "") + '">' +
         '<button class="btn sec mini" data-shora="' + x.id + '" title="mudar a hora da sessão">' + (x.hora || "+ hora") + "</button>" +
         "<span>" + esc(nomeDe[x.alunoId] || "?") + "</span>" +
-        '<span style="margin-left:auto;"></span>' +
+        '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
         (x.feita ? '<span class="tag ok">FEITA ✅</span>'
           : x.faltou ? '<span class="tag erro">FALTOU</span>'
           : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
             '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
-        '<button class="btn sec mini" data-cx="' + x.id + '">✕</button></div>';
+        '<button class="btn sec mini" data-cx="' + x.id + '">✕</button></span></div>';
     });
     $("listaSessoes").innerHTML = htmlSes || "Nenhuma sessão agendada.";
     renderPedidosApp(st);
@@ -1969,9 +1970,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var a = alunoPorToken[p.token];
           return '<div class="sessao-pt"><b>' + S.fmtData(p.dia) + " " + (p.hora || "") + "</b>" +
             "<span>" + esc(a.nome) + (p.obs ? ' · <small class="muted">' + esc(p.obs) + "</small>" : "") + "</span>" +
-            '<span style="margin-left:auto;"></span>' +
+            '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             '<button class="btn mini" data-agok="' + p.id + '" data-tok="' + esc(p.token) + '" data-dia="' + p.dia + '" data-hora="' + esc(p.hora || "") + '">Confirmar</button>' +
-            '<button class="btn sec mini" data-agno="' + p.id + '" data-tok="' + esc(p.token) + '">Recusar</button></div>';
+            '<button class="btn sec mini" data-agno="' + p.id + '" data-tok="' + esc(p.token) + '">Recusar</button></span></div>';
         }).join("");
       });
   }
@@ -2126,11 +2127,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (atrasado ? '<span class="tag erro">ATRASADO</span>' : "") +
         (a.assinaturaRec ? '<span class="tag ok">🔁 no cartão</span>' : "") +
         (a.cartaoFalhouEm ? '<span class="tag erro">⚠️ cartão recusado</span>' : "") +
-        '<span style="margin-left:auto;"></span>' +
+        '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
         (valor && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + valor + '">Pix</button>' : "") +
         (valor ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + valor + '" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto)">💳 Link de pagamento</button>' : "") +
         (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">Assinatura</a>' : "") +
-        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") + "</div>";
+        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") + "</span></div>";
     }).join("") : "Todo mundo em dia. 🎉";
   }
   $("pendentes").addEventListener("click", function (e) {
@@ -2240,10 +2241,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<button class="btn sec mini" data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">⏱ ' + (+it.descanso || 60) + "s</button>" +
             '<button class="btn sec mini" data-tobs="' + f.id + ":" + i + '" title="editar a observação do exercício">' + (it.obs ? "📝 " + esc(it.obs) : "📝") + "</button>" +
             (ex.video ? "<span title='tem vídeo'>🎬</span>" : "") +
-            '<span style="margin-left:auto;"></span>' +
+            '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '" title="subir na ficha">↑</button>' : "") +
             (i < f.itens.length - 1 ? '<button class="btn sec mini" data-desce="' + f.id + ":" + i + '" title="descer na ficha">↓</button>' : "") +
-            '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '">✕</button></div>';
+            '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '">✕</button></span></div>';
         }).join("") : '<div class="muted" style="padding:4px 0;">Ficha vazia — adicione o primeiro exercício.</div>') +
         '<div class="linha-flex" style="margin-top:10px;">' +
         '<select data-exsel="' + f.id + '" style="flex:2;min-width:170px;"><option value="">— exercício da biblioteca —</option>' + exOpts + "</select>" +
@@ -2702,9 +2703,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return '<div class="sessao-pt"><b>' + esc(e.nome) + "</b>" +
             (e.video ? "<span title='tem vídeo'>🎬</span>" : '<span class="muted" style="font-size:11.5px;">sem vídeo</span>') +
             (e.descricao ? "" : '<span class="tag alerta" style="font-size:10px;">sem descrição</span>') +
-            '<span style="margin-left:auto;"></span>' +
+            '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             '<button class="btn sec mini" data-exedit="' + e.id + '">Abrir</button>' +
-            '<button class="btn sec mini" data-exrm="' + e.id + '">✕</button></div>';
+            '<button class="btn sec mini" data-exrm="' + e.id + '">✕</button></span></div>';
         }).join("");
     }).join("");
   }
@@ -2737,9 +2738,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("catLista").innerHTML = (corte.map(function (c) {
       var ja = meus[c.n.toLowerCase()];
       return '<div class="sessao-pt"><b>' + esc(c.n) + '</b><span class="muted" style="font-size:12px;">' + esc(c.g + " · " + c.eq) + "</span>" +
-        '<span style="margin-left:auto;"></span>' +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;align-items:center;">' +
         '<a class="btn mini sec" style="text-decoration:none;" target="_blank" rel="noopener" href="' + videoBusca(c.n) + '">▶ vídeo</a>' +
-        (ja ? '<span class="tag ok" style="font-size:10px;">NA BIBLIOTECA ✓</span>' : '<button class="btn mini" data-catusa="' + esc(c.n) + '">+ usar</button>') + "</div>";
+        (ja ? '<span class="tag ok" style="font-size:10px;">NA BIBLIOTECA ✓</span>' : '<button class="btn mini" data-catusa="' + esc(c.n) + '">+ usar</button>') + "</span></div>";
     }).join("") || '<div class="muted">Nada com essa busca — tente outra palavra.</div>') +
       (lista.length > corte.length ? '<div class="muted" style="padding:8px 0;">Mostrando 24 de ' + lista.length + " — refine a busca pra ver o resto.</div>" : "");
   }
