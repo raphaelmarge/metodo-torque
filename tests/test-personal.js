@@ -274,6 +274,7 @@ async function abaPt(p, a) {
 
   // exercícios: catálogo TORQUE + os seus numa lista só, por zona e movimento
   await abaPt(p, "treinos");
+  await p.evaluate(() => window.__trAba("ex"));
   const bib = await p.evaluate(() => document.getElementById("exLista").textContent);
   ok(/SEU/.test(bib) && /Mostrando 40 de/.test(bib), "lista única mostra os seus (etiqueta SEU) junto com o catálogo");
   const cat = await p.evaluate(() => ({
@@ -344,7 +345,8 @@ async function abaPt(p, a) {
   });
   ok(/abc123/.test(comVideo), "sub-página do exercício salva o vídeo");
 
-  // monta ficha A com o Supino selecionado
+  // monta ficha A com o Supino selecionado (sub-link Fichas)
+  await p.evaluate(() => window.__trAba("fichas"));
   await p.selectOption("#tAluno", { index: 1 });
   await p.evaluate(() => { window.prompt = () => "A — Peito/Tríceps"; });
   await p.click("#tFicha");
@@ -464,6 +466,7 @@ async function abaPt(p, a) {
   await p.waitForTimeout(150);
 
   // videoteca do studio
+  await p.evaluate(() => window.__trAba("videos"));
   await p.fill("#vtpTitulo", "Mobilidade de quadril");
   await p.fill("#vtpCat", "Mobilidade");
   await p.fill("#vtpUrl", "https://youtube.com/watch?v=mob1");
@@ -480,6 +483,7 @@ async function abaPt(p, a) {
   });
   const pick = await p.evaluate(() => document.getElementById("grAlunosPick").textContent);
   ok(/João Cliente/.test(pick) && /Bia Grupo/.test(pick), "criador de grupo lista os alunos ativos");
+  await p.evaluate(() => window.__trAba("grupo"));
   await p.check('.grCheck[value="al-bia-grupo"]');
   await p.fill("#grNome", "Turma 6h");
   await p.click("#grAdd");
@@ -546,6 +550,7 @@ async function abaPt(p, a) {
   });
   const geOrigemTxt = await p.evaluate(() => document.getElementById("geOrigem").innerHTML);
   ok(/Treinos de disparo/.test(geOrigemTxt) && /Hipertrofia Agosto \(3 ficha/.test(geOrigemTxt), "seletor de envio oferece os treinos de disparo pré-montados");
+  await p.evaluate(() => window.__trAba("grupo"));
   await p.click("#geEnviar");
   await p.waitForTimeout(200);
   const posDisparo = await p.evaluate(() => {
