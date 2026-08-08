@@ -54,7 +54,30 @@ async function abaNt(p, a) {
   });
   ok(temCategorias, "catálogo cobre processados, fast food e suplementos (12+ categorias)");
 
+  // aba Início (dashboard gerencial) é a padrão agora — igual ao Personal
+  ok(await p.evaluate(() => !document.getElementById("vDashN").hidden && document.getElementById("vPacientes").hidden),
+    "módulo abre na aba Início (dashboard)");
+  const dashN = await p.evaluate(() => ({
+    receb: document.getElementById("bRecebN").textContent,
+    base: document.getElementById("bBaseN").textContent,
+    ag: document.getElementById("bAgN").textContent,
+  }));
+  ok(/Recebido no mês/.test(dashN.receb) && /Projeção/.test(dashN.receb), "bloco Recebimentos renderiza");
+  ok(/Pacientes ativos/.test(dashN.base) && /Com dieta entregue/.test(dashN.base), "bloco Status da base renderiza");
+  ok(/Consultas no mês/.test(dashN.ag), "bloco Agenda de consultas renderiza");
+  await p.fill("#mtFatN", "5000");
+  await p.click("#mtSalvarN");
+  ok(await p.evaluate(() => /meta R\$\s?5\.000/.test(document.getElementById("mtPainelN").textContent) && /projeção/.test(document.getElementById("mtPainelN").textContent)),
+    "meta salva aparece com projeção run-rate");
+  const fchN = await p.evaluate(() => window.__dashN.resumo(new Date().toISOString().slice(0, 7)));
+  ok(/Receita: R\$/.test(fchN) && /Consultas no mês:/.test(fchN), "resumo de fechamento pronto pro WhatsApp");
+  ok(await p.evaluate(() => document.querySelectorAll("#navNt [data-nav]").length === 4 && !!document.getElementById("btnMenuNt").closest("#navNt")),
+    "menu inferior com 4 abas + botão Menu (☰) à direita");
+  ok(await p.evaluate(() => !/[🏠🥦📅💬📋]/.test(document.getElementById("abasNt").textContent) && document.querySelectorAll("#abasNt button svg").length >= 8),
+    "gaveta com ícones desenhados, sem emoji");
+
   // paciente novo (M, 30 anos, 80 kg, 180 cm, sedentário, manter → TMB 1780, alvo 2140)
+  await abaNt(p, "pacientes");
   await p.fill("#pNome", "Bruno Paciente");
   await p.fill("#pZap", "31988887777");
   await p.selectOption("#pSexo", "M");
