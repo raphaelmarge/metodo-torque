@@ -76,8 +76,8 @@
     /* nome do aluno em linha própria no topo do perfil */
     #pfTopo #pfTitulo { grid-column: 1 / -1; order: -1; font-size: 18px; }
     /* abas do perfil em grade uniforme 3×2 */
-    #pfAbas, #trAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    #pfAbas button, #trAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
+    #pfAbas, #trAbas, #pgAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #pfAbas button, #trAbas button, #pgAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
     /* listas: as ações descem SEMPRE pra linha de baixo, alinhadas à direita (paralelismo) */
     .sessao-pt > b { flex: 1 0 100%; }
     .sessao-pt > span[style*="margin-left:auto"] { flex: 1 0 100%; justify-content: flex-end; }
@@ -254,7 +254,12 @@
 
   <!-- PAGAMENTOS -->
   <section id="vPagamentos" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="pgAbas" style="margin: 0 0 14px;">
+      <button data-pga="receb" class="ativa">💰 Recebimentos</button>
+      <button data-pga="planos">📦 Planos</button>
+      <button data-pga="contratos">📄 Contratos</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="planos" hidden>
       <h2>Planos do studio</h2>
       <p class="muted" style="margin: 4px 0 10px;">Monte seus planos (mensal, trimestral…) e feche contrato com o aluno logo abaixo. Cartão recorrente/boleto: cole o link de assinatura do SEU gateway (Mercado Pago, InfinitePay, PagSeguro…) — o Pix o sistema gera sozinho.</p>
       <div class="linha-flex" style="margin-bottom: 8px;">
@@ -269,19 +274,13 @@
       <div id="plLista" class="muted">Nenhum plano ainda.</div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="contratos" hidden>
       <h2>Contratos</h2>
-      <div class="linha-flex" style="margin-bottom: 8px;">
-        <select id="ctAluno" style="min-width: 170px;"></select>
-        <select id="ctPlano" style="min-width: 170px;"></select>
-        <label style="margin: 0; font-size: 12.5px;">vence dia
-          <input id="ctDia" type="number" min="1" max="28" value="5" style="width: 70px; display: inline-block; margin-left: 4px;"></label>
-        <button class="btn" id="ctAdd">Fechar contrato</button>
-      </div>
+      <p class="muted" style="margin: 4px 0 10px;">O contrato é fechado no <b>perfil do aluno</b> (aba 💰 Financeiro). Aqui fica a visão geral de todos.</p>
       <div id="ctLista" class="muted">Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.</div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
       <h2>Registrar pagamento</h2>
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="pAluno" style="min-width: 180px;"></select>
@@ -290,11 +289,11 @@
         <button class="btn" id="pAdd">Registrar</button>
       </div>
     </div>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
       <h2>Quem ainda não pagou este mês</h2>
       <div id="pendentes" class="muted">Todo mundo em dia. 🎉</div>
     </div>
-    <div class="card"><h2>Histórico</h2><div id="listaPagamentos" class="muted">Nenhum pagamento registrado.</div></div>
+    <div class="card" data-pgsec="receb"><h2>Histórico</h2><div id="listaPagamentos" class="muted">Nenhum pagamento registrado.</div></div>
   </section>
 
   <!-- TREINOS -->
@@ -1181,9 +1180,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var totalAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; })
       .reduce(function (s, p) { return s + (+p.valor || 0); }, 0);
     var pagoMes = pgs.some(function (p) { return (p.data || "").slice(0, 7) === mesAtual; });
+    var ctBloco;
+    if (pl) {
+      ctBloco = "Contrato: <b>" + esc(pl.nome) + "</b> · " + S.fmtBRL(+pl.valor) + "/mês · vence dia " + ct.diaVenc +
+        (ct.inicio ? " · desde " + S.fmtData(ct.inicio) : "") +
+        ' <button class="btn sec mini" data-pfctrm="' + ct.id + '" style="margin-left:8px;">Encerrar contrato</button>';
+    } else {
+      var plOpts = (st.planosPT || []).map(function (p) {
+        return '<option value="' + p.id + '">' + esc(rotuloPlano(p)) + "</option>";
+      }).join("");
+      ctBloco = "Sem contrato ativo — valor atual: <b>" + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "a combinar") + "</b>" +
+        (plOpts
+          ? '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 2px;">' +
+            '<select id="pfCtPlano" style="flex:2;min-width:170px;"><option value="">Escolha o plano…</option>' + plOpts + "</select>" +
+            '<input id="pfCtDia" type="number" min="1" max="28" value="5" title="dia de vencimento" style="width:74px;" />' +
+            '<button class="btn mini" id="pfCtAdd">Fechar contrato</button></div>'
+          : "<div class='muted' style='font-size:12.5px;margin-top:6px;'>Crie um plano em Pagamentos → Planos pra fechar contrato.</div>");
+    }
     $("pfFin").innerHTML =
-      (pl ? "Contrato: <b>" + esc(pl.nome) + "</b> · " + S.fmtBRL(+pl.valor) + " · vence dia " + ct.dia
-        : "Sem contrato — valor combinado: <b>" + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "a combinar") + "</b>") +
+      ctBloco +
       "<br>Este mês: " + (pagoMes ? "<b style='color:#4ade80;'>✅ pago</b>" : "<b style='color:#fbbf24;'>⏳ em aberto</b>") +
       " · Recebido em " + ano + ": <b>" + S.fmtBRL(totalAno) + "</b>" +
       (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:6px;'>Últimos: " + pgs.slice(0, 5).map(function (p) {
@@ -1650,6 +1665,43 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfTitulo").textContent = "👤 " + a.nome;
     $("pfSalvo").textContent = "✅ salvo!";
     setTimeout(function () { $("pfSalvo").textContent = ""; }, 2000);
+  });
+  $("pfFin").addEventListener("click", function (e) {
+    var alvo = e.target.closest ? e.target.closest("button") : e.target;
+    if (!alvo || !perfilId) return;
+    if (alvo.id === "pfCtAdd") {
+      var planoId = $("pfCtPlano") && $("pfCtPlano").value;
+      if (!planoId) { alert("Escolha o plano."); return; }
+      var st = load();
+      var a = st.alunos.find(function (x) { return x.id === perfilId; });
+      if (!a) return;
+      var jaTem = contratoDe(st, perfilId);
+      if (jaTem) jaTem.status = "encerrado";
+      st.contratosPT = st.contratosPT || [];
+      st.contratosPT.push({ id: S.uid(), alunoId: perfilId, planoId: planoId,
+        diaVenc: Math.min(28, Math.max(1, +$("pfCtDia").value || 5)), inicio: S.todayISO(), status: "ativo" });
+      var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
+      if (plC) {
+        a.valor = +plC.valor || a.valor;
+        if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
+        a.modalidade = plC.modalidade || "";
+      }
+      save(st);
+      renderPlanosPT();
+      abrePerfil(perfilId);
+      mostraPfAba("fin");
+      return;
+    }
+    var rm = alvo.getAttribute && alvo.getAttribute("data-pfctrm");
+    if (rm) {
+      if (!confirm("Encerrar este contrato?")) return;
+      var st2 = load();
+      (st2.contratosPT.find(function (c) { return c.id === rm; }) || {}).status = "encerrado";
+      save(st2);
+      renderPlanosPT();
+      abrePerfil(perfilId);
+      mostraPfAba("fin");
+    }
   });
   $("pfPix").addEventListener("click", function () {
     var st = load();
@@ -2776,7 +2828,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sinc();
   }
   function sincronizaBusca(id) { if (buscaSinc[id]) buscaSinc[id](); }
-  ["sAluno", "pAluno", "avAluno", "taAluno", "qeAluno", "ctAluno"].forEach(function (id) { buscaEmSelect(id); });
+  ["sAluno", "pAluno", "avAluno", "taAluno", "qeAluno"].forEach(function (id) { buscaEmSelect(id); });
   buscaEmSelect("tAluno", "Digite o aluno (ou treino de disparo)…");
   // quais fichas estão abertas (recolhíveis — o re-render preserva)
   var fichasAbertas = {};
@@ -2797,6 +2849,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__trAba = mostraTrAba; // testes
   mostraTrAba("fichas");
+  // sub-links de Pagamentos: recebimentos, planos e contratos
+  function mostraPgAba(aba) {
+    document.querySelectorAll("#vPagamentos [data-pgsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pgsec") !== aba; });
+    document.querySelectorAll("#pgAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-pga") === aba); });
+  }
+  $("pgAbas").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button[data-pga]");
+    if (b) mostraPgAba(b.getAttribute("data-pga"));
+  });
+  window.__pgAba = mostraPgAba; // testes
+  mostraPgAba("receb");
   $("tAluno").addEventListener("change", renderFichas);
   $("tValidade").addEventListener("change", function () {
     var alunoId = $("tAluno").value;
@@ -3499,14 +3562,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<span class='muted'>" + n + " contrato(s)</span>" +
         '<span style="margin-left:auto;"></span><button class="btn sec mini" data-plrm="' + pl.id + '">✕</button></div>';
     }).join("") : "Nenhum plano ainda.";
-    var opts = st.planosPT.map(function (pl) { return '<option value="' + pl.id + '">' + esc(pl.nome + " — " + S.fmtBRL(+pl.valor)) + "</option>"; }).join("");
-    var atual = $("ctPlano").value;
-    $("ctPlano").innerHTML = "<option value=''>— plano —</option>" + opts;
-    if (atual) $("ctPlano").value = atual;
-    var atualA = $("ctAluno").value;
-    $("ctAluno").innerHTML = "<option value=''>— aluno —</option>" + st.alunos.filter(function (a) { return a.ativo !== false; })
-      .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
-    if (atualA) $("ctAluno").value = atualA;
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
     var ativos = st.contratosPT.filter(function (c) { return c.status === "ativo"; });
@@ -3535,15 +3590,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.planosPT = st.planosPT.filter(function (x) { return x.id !== rm; });
     S.write("ptStudio", st);
     renderPlanosPT();
-  });
-  $("ctAdd").addEventListener("click", function () {
-    if (!$("ctAluno").value || !$("ctPlano").value) { alert("Escolha o aluno e o plano."); return; }
-    var st = load();
-    var jaTem = contratoDe(st, $("ctAluno").value);
-    if (jaTem) jaTem.status = "encerrado";
-    st.contratosPT.push({ id: S.uid(), alunoId: $("ctAluno").value, planoId: $("ctPlano").value, diaVenc: Math.min(28, Math.max(1, +$("ctDia").value || 5)), inicio: S.todayISO(), status: "ativo" });
-    S.write("ptStudio", st);
-    renderPlanosPT(); render();
   });
   $("ctLista").addEventListener("click", function (e) {
     var rm = e.target.getAttribute && e.target.getAttribute("data-ctrm");
