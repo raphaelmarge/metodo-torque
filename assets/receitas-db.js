@@ -921,10 +921,210 @@ self.MT_RECEITAS = [
   ],
   "dica": "Mata a vontade de doce com 4 g de proteína por unidade — e sem uma grama de açúcar refinado."
  },
-  {"id":"rc43","n":"Strogonoff de cogumelos cremoso","cat":"Almoço e jantar","tempo":30,"rende":4,"k":210,"pt":8,"ing":["400 g de cogumelos variados (shimeji, shiitake, paris)","1 cebola picada","2 dentes de alho","1 col. sopa de azeite","2 col. sopa de extrato de tomate","1 col. sopa de mostarda","200 g de creme de ricota light","Salsinha e sal a gosto"],"modo":["Refogue a cebola e o alho no azeite até dourar.","Junte os cogumelos e refogue em fogo alto até secar a água e dourar.","Acrescente o extrato de tomate e a mostarda e misture bem.","Desligue o fogo, envolva o creme de ricota e ajuste o sal.","Finalize com salsinha e sirva com arroz integral."],"dica":"Versão vegetariana com metade das calorias do strogonoff tradicional — os cogumelos dão a textura de carne."},
-  {"id":"rc44","n":"Homus com palitos de legumes","cat":"Lanches","tempo":15,"rende":4,"k":165,"pt":6,"ing":["1 xícara de grão-de-bico cozido","1 col. sopa de tahine","Suco de 1/2 limão","1 dente de alho pequeno","2 col. sopa de azeite","Sal e páprica a gosto","1 cenoura e 1 pepino em palitos"],"modo":["Bata o grão-de-bico com o tahine, o limão, o alho e um pouco de água do cozimento até ficar cremoso.","Acrescente o azeite aos poucos com o processador ligado.","Ajuste o sal, polvilhe páprica e sirva com os palitos de legumes."],"dica":"Lanche de escritório perfeito: proteína vegetal + fibra que segura a fome até o jantar sem pesar."},
-  {"id":"rc45","n":"Brigadeiro fit de banana com cacau","cat":"Doces fit","tempo":20,"rende":8,"k":78,"pt":2,"ing":["3 bananas maduras","3 col. sopa de cacau em pó 100%","2 col. sopa de aveia em flocos finos","1 col. sopa de pasta de amendoim","Canela e cacau em pó pra enrolar"],"modo":["Cozinhe as bananas amassadas em panela antiaderente, mexendo até virar um doce espesso (uns 10 min).","Junte o cacau, a aveia e a pasta de amendoim e cozinhe mais 3 minutos, mexendo sempre.","Deixe esfriar na geladeira por 30 minutos, enrole as bolinhas e passe no cacau com canela."],"dica":"Sem açúcar e sem leite condensado — a banana bem madura adoça tudo. Dura 4 dias na geladeira."},
-  {"id": "rc46", "n": "Bobó vegano de cogumelos", "cat": "Almoço e jantar", "tempo": 40, "rende": 4, "k": 310, "pt": 9, "ing": ["400 g de cogumelo paris e shimeji", "2 bananas-da-terra maduras", "200 ml de leite de coco", "1 cebola e 2 dentes de alho", "1 pimentão amarelo", "Azeite de dendê (1 col. sopa), coentro, sal e pimenta"], "modo": ["Cozinhe as bananas-da-terra e bata no liquidificador com o leite de coco até virar um creme.", "Refogue cebola, alho e pimentão no azeite; junte os cogumelos e doure bem.", "Despeje o creme, tempere com o dendê, sal e pimenta e cozinhe 10 minutos; finalize com coentro."], "dica": "O cogumelo entra no lugar do camarão e o creme de banana-da-terra dá corpo — conforto brasileiro sem nada de origem animal."},
-  {"id": "rc47", "n": "Pescada em crosta de castanha com purê de baroa", "cat": "Almoço e jantar", "tempo": 35, "rende": 2, "k": 420, "pt": 34, "ing": ["2 filés de pescada (240 g)", "4 castanhas-do-pará trituradas", "2 col. sopa de farinha panko", "400 g de mandioquinha (baroa)", "1 fio de azeite, limão, sal e pimenta"], "modo": ["Tempere os filés com limão, sal e pimenta e cubra com a mistura de castanha e panko.", "Asse a 200 °C por 15 a 18 minutos até a crosta dourar.", "Cozinhe a mandioquinha e amasse com azeite e sal até virar um purê liso; sirva por baixo do peixe."], "dica": "A castanha dá crocância e gordura boa (selênio de bônus) — proteína alta com carboidrato de digestão tranquila pro jantar."},
-  {"id": "rc48", "n": "Bowl de tempeh teriyaki com edamame", "cat": "Almoço e jantar", "tempo": 30, "rende": 2, "k": 480, "pt": 28, "ing": ["200 g de tempeh em cubos", "1 xícara de edamame cozido", "1 xícara de arroz integral cozido", "2 col. sopa de molho shoyu light + 1 col. chá de mel e gengibre ralado", "1 cenoura em fitas e gergelim pra finalizar"], "modo": ["Doure o tempeh na frigideira com um fio de óleo até criar casquinha.", "Junte o shoyu com mel e gengibre e deixe reduzir 2 minutos até envolver os cubos.", "Monte o bowl: arroz, edamame, cenoura, tempeh por cima e gergelim torrado."], "dica": "Dupla vegana de soja fermentada + edamame: 28 g de proteína por porção com fibra e sem carne — pós-treino completo."}
+ {
+  "id": "rc43",
+  "n": "Strogonoff de cogumelos cremoso",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 4,
+  "k": 210,
+  "pt": 8,
+  "ing": [
+   "400 g de cogumelos variados (shimeji, shiitake, paris)",
+   "1 cebola picada",
+   "2 dentes de alho",
+   "1 col. sopa de azeite",
+   "2 col. sopa de extrato de tomate",
+   "1 col. sopa de mostarda",
+   "200 g de creme de ricota light",
+   "Salsinha e sal a gosto"
+  ],
+  "modo": [
+   "Refogue a cebola e o alho no azeite até dourar.",
+   "Junte os cogumelos e refogue em fogo alto até secar a água e dourar.",
+   "Acrescente o extrato de tomate e a mostarda e misture bem.",
+   "Desligue o fogo, envolva o creme de ricota e ajuste o sal.",
+   "Finalize com salsinha e sirva com arroz integral."
+  ],
+  "dica": "Versão vegetariana com metade das calorias do strogonoff tradicional — os cogumelos dão a textura de carne."
+ },
+ {
+  "id": "rc44",
+  "n": "Homus com palitos de legumes",
+  "cat": "Lanches",
+  "tempo": 15,
+  "rende": 4,
+  "k": 165,
+  "pt": 6,
+  "ing": [
+   "1 xícara de grão-de-bico cozido",
+   "1 col. sopa de tahine",
+   "Suco de 1/2 limão",
+   "1 dente de alho pequeno",
+   "2 col. sopa de azeite",
+   "Sal e páprica a gosto",
+   "1 cenoura e 1 pepino em palitos"
+  ],
+  "modo": [
+   "Bata o grão-de-bico com o tahine, o limão, o alho e um pouco de água do cozimento até ficar cremoso.",
+   "Acrescente o azeite aos poucos com o processador ligado.",
+   "Ajuste o sal, polvilhe páprica e sirva com os palitos de legumes."
+  ],
+  "dica": "Lanche de escritório perfeito: proteína vegetal + fibra que segura a fome até o jantar sem pesar."
+ },
+ {
+  "id": "rc45",
+  "n": "Brigadeiro fit de banana com cacau",
+  "cat": "Doces fit",
+  "tempo": 20,
+  "rende": 8,
+  "k": 78,
+  "pt": 2,
+  "ing": [
+   "3 bananas maduras",
+   "3 col. sopa de cacau em pó 100%",
+   "2 col. sopa de aveia em flocos finos",
+   "1 col. sopa de pasta de amendoim",
+   "Canela e cacau em pó pra enrolar"
+  ],
+  "modo": [
+   "Cozinhe as bananas amassadas em panela antiaderente, mexendo até virar um doce espesso (uns 10 min).",
+   "Junte o cacau, a aveia e a pasta de amendoim e cozinhe mais 3 minutos, mexendo sempre.",
+   "Deixe esfriar na geladeira por 30 minutos, enrole as bolinhas e passe no cacau com canela."
+  ],
+  "dica": "Sem açúcar e sem leite condensado — a banana bem madura adoça tudo. Dura 4 dias na geladeira."
+ },
+ {
+  "id": "rc46",
+  "n": "Bobó vegano de cogumelos",
+  "cat": "Almoço e jantar",
+  "tempo": 40,
+  "rende": 4,
+  "k": 310,
+  "pt": 9,
+  "ing": [
+   "400 g de cogumelo paris e shimeji",
+   "2 bananas-da-terra maduras",
+   "200 ml de leite de coco",
+   "1 cebola e 2 dentes de alho",
+   "1 pimentão amarelo",
+   "Azeite de dendê (1 col. sopa), coentro, sal e pimenta"
+  ],
+  "modo": [
+   "Cozinhe as bananas-da-terra e bata no liquidificador com o leite de coco até virar um creme.",
+   "Refogue cebola, alho e pimentão no azeite; junte os cogumelos e doure bem.",
+   "Despeje o creme, tempere com o dendê, sal e pimenta e cozinhe 10 minutos; finalize com coentro."
+  ],
+  "dica": "O cogumelo entra no lugar do camarão e o creme de banana-da-terra dá corpo — conforto brasileiro sem nada de origem animal."
+ },
+ {
+  "id": "rc47",
+  "n": "Pescada em crosta de castanha com purê de baroa",
+  "cat": "Almoço e jantar",
+  "tempo": 35,
+  "rende": 2,
+  "k": 420,
+  "pt": 34,
+  "ing": [
+   "2 filés de pescada (240 g)",
+   "4 castanhas-do-pará trituradas",
+   "2 col. sopa de farinha panko",
+   "400 g de mandioquinha (baroa)",
+   "1 fio de azeite, limão, sal e pimenta"
+  ],
+  "modo": [
+   "Tempere os filés com limão, sal e pimenta e cubra com a mistura de castanha e panko.",
+   "Asse a 200 °C por 15 a 18 minutos até a crosta dourar.",
+   "Cozinhe a mandioquinha e amasse com azeite e sal até virar um purê liso; sirva por baixo do peixe."
+  ],
+  "dica": "A castanha dá crocância e gordura boa (selênio de bônus) — proteína alta com carboidrato de digestão tranquila pro jantar."
+ },
+ {
+  "id": "rc48",
+  "n": "Bowl de tempeh teriyaki com edamame",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 2,
+  "k": 480,
+  "pt": 28,
+  "ing": [
+   "200 g de tempeh em cubos",
+   "1 xícara de edamame cozido",
+   "1 xícara de arroz integral cozido",
+   "2 col. sopa de molho shoyu light + 1 col. chá de mel e gengibre ralado",
+   "1 cenoura em fitas e gergelim pra finalizar"
+  ],
+  "modo": [
+   "Doure o tempeh na frigideira com um fio de óleo até criar casquinha.",
+   "Junte o shoyu com mel e gengibre e deixe reduzir 2 minutos até envolver os cubos.",
+   "Monte o bowl: arroz, edamame, cenoura, tempeh por cima e gergelim torrado."
+  ],
+  "dica": "Dupla vegana de soja fermentada + edamame: 28 g de proteína por porção com fibra e sem carne — pós-treino completo."
+ },
+ {
+  "id": "rc49",
+  "n": "Pirarucu grelhado com purê de macaxeira",
+  "cat": "Almoço e jantar",
+  "tempo": 35,
+  "rende": 2,
+  "k": 430,
+  "pt": 34,
+  "ing": [
+   "300 g de filé de pirarucu",
+   "300 g de macaxeira cozida",
+   "100 ml de leite desnatado",
+   "1 col. sopa de manteiga",
+   "Suco de 1 limão, alho, sal e cheiro-verde"
+  ],
+  "modo": [
+   "Tempere o pirarucu com limão, alho e sal e deixe pegar gosto por 15 minutos.",
+   "Grelhe o filé em frigideira quente por 4 a 5 minutos de cada lado, até dourar.",
+   "Amasse a macaxeira ainda quente com o leite e a manteiga até virar um purê cremoso.",
+   "Sirva o peixe sobre o purê e finalize com cheiro-verde."
+  ],
+  "dica": "O pirarucu é um dos peixes mais proteicos do Brasil e quase não tem espinha — ótimo pra quem está começando a comer peixe."
+ },
+ {
+  "id": "rc50",
+  "n": "Creme gelado de cupuaçu com whey",
+  "cat": "Doces fit",
+  "tempo": 10,
+  "rende": 2,
+  "k": 180,
+  "pt": 15,
+  "ing": [
+   "200 g de polpa de cupuaçu congelada",
+   "1 scoop (30 g) de whey de baunilha",
+   "100 ml de leite desnatado gelado",
+   "1 col. sopa de mel (opcional)"
+  ],
+  "modo": [
+   "Bata a polpa congelada com o leite no liquidificador até soltar.",
+   "Junte o whey e bata de novo só até incorporar, sem derreter demais.",
+   "Prove e ajuste com o mel se quiser mais doce; sirva na hora, bem gelado."
+  ],
+  "dica": "O azedinho do cupuaçu combina com a baunilha do whey — sobremesa de 15 g de proteína por porção sem açúcar refinado."
+ },
+ {
+  "id": "rc51",
+  "n": "Omelete de ora-pro-nóbis com queijo canastra",
+  "cat": "Café da manhã",
+  "tempo": 15,
+  "rende": 1,
+  "k": 310,
+  "pt": 22,
+  "ing": [
+   "2 ovos + 1 clara",
+   "1 punhado de folhas de ora-pro-nóbis rasgadas",
+   "30 g de queijo canastra em lascas",
+   "1 col. chá de azeite, sal e pimenta-do-reino"
+  ],
+  "modo": [
+   "Bata os ovos com a clara, o sal e a pimenta.",
+   "Refogue rapidinho o ora-pro-nóbis no azeite até murchar.",
+   "Despeje os ovos, espalhe o queijo por cima e cozinhe em fogo baixo com tampa até firmar.",
+   "Dobre ao meio e sirva."
+  ],
+  "dica": "Ora-pro-nóbis é uma folha rica em proteína e ferro — dupla mineira perfeita com o canastra, sem pesar nas calorias."
+ }
 ];
