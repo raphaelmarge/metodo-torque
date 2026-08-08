@@ -780,6 +780,19 @@ async function abaPt(p, a) {
   const avs = await p.evaluate(() => document.getElementById("listaAvaliacoes").textContent);
   ok(/João Cliente/.test(avs) && /-6/.test(avs.replace("−", "-")), "avaliações com delta de peso (-6 kg)");
 
+  // histórico recolhível por aluno: fechado por padrão, clicar no nome abre e fecha
+  await p.evaluate(() => window.__avAba("historico"));
+  ok(await p.evaluate(() => {
+    const d = document.querySelector('#listaAvaliacoes details[data-avdet]');
+    return !!d && !d.open;
+  }), "histórico agrupado por aluno começa fechado");
+  await p.click("#listaAvaliacoes details[data-avdet] summary");
+  ok(await p.evaluate(() => document.querySelector('#listaAvaliacoes details[data-avdet]').open), "clicar no nome do aluno abre o histórico dele");
+  // re-render (remove nada, só re-renderiza) preserva aberto — depois fecha de novo
+  await p.click("#listaAvaliacoes details[data-avdet] summary");
+  ok(await p.evaluate(() => !document.querySelector('#listaAvaliacoes details[data-avdet]').open), "clicar de novo fecha");
+  await p.evaluate(() => window.__avAba("avaliar"));
+
   // relatórios
   await abaPt(p, "relatorios");
   const relR = await p.evaluate(() => document.getElementById("relReceita").textContent);
