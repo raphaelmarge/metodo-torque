@@ -562,7 +562,15 @@ async function abaPt(p, a) {
   const pick = await p.evaluate(() => document.getElementById("grAlunosPick").textContent);
   ok(/João Cliente/.test(pick) && /Bia Grupo/.test(pick), "criador de grupo lista os alunos ativos");
   await p.evaluate(() => window.__trAba("grupo"));
+  // o seletor agora abre num quadrado com busca: filtra "bia" e marca
+  await p.click("#grQuemCab");
+  await p.fill("#grQuemBusca", "bia");
+  ok(await p.evaluate(() => {
+    const vis = Array.from(document.querySelectorAll("#grAlunosPick .msel-lista label")).filter((l) => l.style.display !== "none");
+    return vis.length === 1 && /Bia Grupo/.test(vis[0].textContent);
+  }), "buscar no quadrado filtra pra só a Bia");
   await p.check('.grCheck[value="al-bia-grupo"]');
+  ok(await p.evaluate(() => /1 selecionado/.test(document.getElementById("grQuemN").textContent)), "contador mostra 1 selecionado");
   await p.fill("#grNome", "Turma 6h");
   await p.click("#grAdd");
   const grLista = await p.evaluate(() => document.getElementById("grLista").textContent);

@@ -85,6 +85,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   #calAgenda .cal-dia.pend .cal-n { background: #f59e0b; }
   .menu-fundo { position: fixed; inset: 0; background: rgba(18,16,22,.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .22s; }
   body.menu-aberto .menu-fundo { opacity: 1; pointer-events: auto; }
+  /* seletor múltiplo com busca (quem entra no grupo) */
+  .msel-corpo { border: 1px solid var(--linha); border-radius: 12px; padding: 12px; margin-top: 8px; max-width: 440px; }
+  .msel-lista { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+  .msel-lista label { display: flex; align-items: center; gap: 9px; margin: 0; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13.5px; }
+  .msel-lista label:hover { background: rgba(255,255,255,.05); }
+  #grQuemCab .fseta { display: inline-block; transition: transform .15s; margin-left: 6px; }
   .colunas-dash { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 800px) { .colunas-dash { grid-template-columns: 1fr; } }
   .kv-pt { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--linha); font-size: 13.5px; }
@@ -2240,15 +2246,71 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__desafioPT = { render: renderDesafio, ranking: carregaRankingDesafio, pinta: pintaRankingDesafio }; // testes
 
   // ---------- grupos de alunos + envio de treino em grupo ----------
+  // seletor de quem entra no grupo: abre num quadrado com busca e vários marcados de uma vez
+  function pintaGrQuem(ativos) {
+    var cont = $("grAlunosPick");
+    var aberto = !!cont.querySelector(".msel-corpo") && !cont.querySelector(".msel-corpo").hidden;
+    var buscaAtual = (cont.querySelector("#grQuemBusca") || {}).value || "";
+    var marcados = {};
+    cont.querySelectorAll(".grCheck:checked").forEach(function (c) { marcados[c.value] = true; });
+    if (!ativos.length) { cont.innerHTML = ""; return; }
+    cont.innerHTML =
+      '<button type="button" class="btn sec" id="grQuemCab">Quem entra no grupo novo' +
+      ' <b id="grQuemN" style="color:var(--roxo);"></b><span class="fseta"' + (aberto ? ' style="transform:rotate(180deg);"' : "") + '>▾</span></button>' +
+      '<div class="msel-corpo"' + (aberto ? "" : " hidden") + ">" +
+      '<input id="grQuemBusca" placeholder="Digite pra achar o aluno…" autocomplete="off" value="' + esc(buscaAtual) + '">' +
+      '<div class="linha-flex" style="gap:8px;margin:8px 0 4px;">' +
+      '<button type="button" class="btn sec mini" id="grQuemTodos">Marcar os visíveis</button>' +
+      '<button type="button" class="btn sec mini" id="grQuemLimpa">Limpar</button></div>' +
+      '<div class="msel-lista">' + ativos.map(function (a) {
+        return '<label><input type="checkbox" class="grCheck" value="' + a.id + '"' + (marcados[a.id] ? " checked" : "") + ' style="width:auto;margin:0;"> ' + esc(a.nome) + "</label>";
+      }).join("") + "</div></div>";
+    filtraGrQuem();
+    pintaGrQuemN();
+  }
+  function filtraGrQuem() {
+    var b = $("grQuemBusca");
+    if (!b) return;
+    var q = b.value.trim().toLowerCase();
+    document.querySelectorAll("#grAlunosPick .msel-lista label").forEach(function (l) {
+      l.style.display = !q || l.textContent.toLowerCase().indexOf(q) !== -1 ? "" : "none";
+    });
+  }
+  function pintaGrQuemN() {
+    var n = document.querySelectorAll("#grAlunosPick .grCheck:checked").length;
+    var el = $("grQuemN");
+    if (el) el.textContent = n ? "· " + n + " selecionado(s)" : "";
+  }
+  $("grAlunosPick").addEventListener("click", function (e) {
+    var cab = e.target.closest && e.target.closest("#grQuemCab");
+    if (cab) {
+      var corpo = document.querySelector("#grAlunosPick .msel-corpo");
+      corpo.hidden = !corpo.hidden;
+      cab.querySelector(".fseta").style.transform = corpo.hidden ? "" : "rotate(180deg)";
+      if (!corpo.hidden) $("grQuemBusca").focus();
+      return;
+    }
+    if (e.target.id === "grQuemTodos") {
+      document.querySelectorAll("#grAlunosPick .msel-lista label").forEach(function (l) {
+        if (l.style.display !== "none") l.querySelector(".grCheck").checked = true;
+      });
+      pintaGrQuemN();
+    } else if (e.target.id === "grQuemLimpa") {
+      document.querySelectorAll("#grAlunosPick .grCheck").forEach(function (c) { c.checked = false; });
+      pintaGrQuemN();
+    }
+  });
+  $("grAlunosPick").addEventListener("input", function (e) {
+    if (e.target.id === "grQuemBusca") filtraGrQuem();
+  });
+  $("grAlunosPick").addEventListener("change", function (e) {
+    if (e.target.classList && e.target.classList.contains("grCheck")) pintaGrQuemN();
+  });
   function renderGrupos() {
     var st = load();
     st.gruposPT = st.gruposPT || [];
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
-    $("grAlunosPick").innerHTML = ativos.length
-      ? "Quem entra no grupo novo: " + ativos.map(function (a) {
-          return '<label style="margin: 4px 12px 0 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;"><input type="checkbox" class="grCheck" value="' + a.id + '" style="width: auto; margin: 0;"> ' + esc(a.nome) + "</label>";
-        }).join("")
-      : "";
+    pintaGrQuem(ativos);
     $("grLista").innerHTML = st.gruposPT.length ? st.gruposPT.map(function (g) {
       var nomes = g.alunoIds.map(function (id) {
         var a = st.alunos.find(function (x) { return x.id === id; });
@@ -2328,6 +2390,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.gruposPT.push({ id: S.uid(), nome: nome, alunoIds: ids });
     save(st);
     $("grNome").value = "";
+    document.querySelectorAll(".grCheck:checked").forEach(function (c) { c.checked = false; });
     renderGrupos();
   });
   $("grLista").addEventListener("click", function (e) {
