@@ -884,6 +884,120 @@ async function abaPt(p, a) {
   await p.click("#fchCopiaP");
   ok(await p.evaluate(() => /copiado/.test(document.getElementById("fchStatusP").textContent)), "copiar resumo confirma");
 
+  // ---------- gestão pro dia a dia: bloqueio, pacote, renovação, recibo, régua, aniversário ----------
+  console.log("Gestão pro dia a dia:");
+  // bloqueio de agenda: cria, risca o calendário e avisa; depois remove
+  await abaPt(p, "agenda");
+  await p.evaluate(() => window.__agAba("agendar"));
+  const hojeISO = await p.evaluate(() => new Date(Date.now() + 12 * 3600e3).toISOString().slice(0, 10));
+  await p.evaluate(() => {
+    document.querySelector("#vAgenda details").open = true;
+    document.getElementById("blDe").value = document.getElementById("sData").value || new Date().toISOString().slice(0, 10);
+    document.getElementById("blMotivo").value = "féria-teste";
+    document.getElementById("blDe").value = new Date().toISOString().slice(0, 10);
+  });
+  await p.click("#blAdd");
+  ok(await p.evaluate(() => /féria-teste/.test(document.getElementById("blLista").textContent)), "bloqueio criado aparece na lista");
+  ok(await p.evaluate(() => {
+    const iso = new Date().toISOString().slice(0, 10);
+    const cel = document.querySelector('#calAgenda .cal-dia[data-caldia="' + iso + '"]');
+    return !!cel && cel.classList.contains("bloq");
+  }), "dia bloqueado fica riscado no calendário");
+  await p.evaluate(() => document.querySelector("#blLista [data-blrm]").click());
+  ok(await p.evaluate(() => /Nenhum bloqueio/.test(document.getElementById("blLista").textContent)), "remover bloqueio limpa a lista");
+
+  // pacote de sessões: vende no perfil, registra pagamento e desconta na sessão feita
+  const joaoId2 = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente").id);
+  await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId2);
+  await p.evaluate(() => {
+    let n = 0;
+    window.__promptOrig = window.prompt;
+    window.prompt = () => { n++; return n === 1 ? "10" : "1200"; };
+  });
+  await p.click("[data-pfpacote]");
+  await p.waitForTimeout(250);
+  await p.evaluate(() => { window.prompt = window.__promptOrig; });
+  ok(await p.evaluate(() => /0 de 10 usadas/.test(document.getElementById("pfFin").textContent)), "pacote de 10 sessões vendido aparece no perfil");
+  ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).pagamentos.some((x) => /pacote/.test(x.forma || "") && +x.valor === 1200)), "venda do pacote registra o pagamento de R$ 1.200");
+  ok(await p.evaluate(() => /data-recibo/.test(document.getElementById("pfFin").innerHTML)), "pagamentos do perfil ganham o link de recibo");
+  // sessão feita desconta do pacote
+  await p.evaluate(() => document.getElementById("pfFechar").click());
+  await abaPt(p, "agenda");
+  await p.evaluate(() => window.__agAba("agendar"));
+  await p.evaluate(() => { document.getElementById("sData").value = new Date().toISOString().slice(0, 10); });
+  await p.selectOption("#sAluno", { index: 1 });
+  await p.fill("#sHora", "20:00");
+  await p.click("#sAdd");
+  await p.evaluate(() => { window.__agAba("sessoes"); window.__agDia(new Date().toISOString().slice(0, 10)); });
+  await p.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll("#listaSessoes [data-feita]"));
+    btns[btns.length - 1].click();
+  });
+  ok(await p.evaluate(() => {
+    const a = JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((x) => x.nome === "João Cliente");
+    return a.pacote && a.pacote.usadas === 1;
+  }), "sessão marcada como Feita desconta 1 do pacote");
+
+  // renovação de contrato com 1 toque
+  await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId2);
+  await p.click("[data-pfctrenova]");
+  await p.waitForTimeout(250);
+  ok(await p.evaluate(() => {
+    const ct = JSON.parse(localStorage.getItem("mtapp:ptStudio")).contratosPT.find((c) => c.status === "ativo");
+    return ct.inicio === new Date().toISOString().slice(0, 10);
+  }), "Renovar ciclo zera o início do contrato pra hoje");
+  await p.evaluate(() => document.getElementById("pfFechar").click());
+
+  // recibo também no histórico de pagamentos
+  await abaPt(p, "pagamentos");
+  ok(await p.evaluate(() => !!document.querySelector("#listaPagamentos [data-recibo]")), "histórico de pagamentos tem botão de recibo");
+  ok(await p.evaluate(() => document.getElementById("reguaOn").checked), "régua de cobrança vem ligada por padrão");
+
+  // régua/lembrete: com nuvem mockada, manda o push do treino do dia e não repete
+  const regua1 = await p.evaluate(async () => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.alunos.find((a) => a.nome === "João Cliente").appTokenP = "tok-joao";
+    st.sessoes.push({ id: "ses-regua", alunoId: st.alunos.find((a) => a.nome === "João Cliente").id, data: new Date().toISOString().slice(0, 10), hora: "21:30", feita: false });
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__cloudOrigRg = window.MTStore.cloud;
+    window.__mtCloudOrig = window.MT_CLOUD;
+    window.__fetchOrig = window.fetch;
+    window.__pushes = [];
+    window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
+    window.MTStore.cloud = () => ({ aid: "acad-1", client: { auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
+    window.fetch = async (url, opts) => { window.__pushes.push(JSON.parse(opts.body)); return { ok: true }; };
+    const r = window.__reguaPT();
+    await new Promise((res) => setTimeout(res, 120));
+    return { enviados: r.enviados, pushes: window.__pushes.length, titulo: (window.__pushes[0] || {}).titulo || "" };
+  });
+  ok(regua1.enviados >= 1 && /Hoje tem treino/.test(regua1.titulo), "lembrete de treino do dia sai pelo push do app");
+  const regua2 = await p.evaluate(async () => {
+    const r = window.__reguaPT();
+    await new Promise((res) => setTimeout(res, 60));
+    window.fetch = window.__fetchOrig;
+    window.MTStore.cloud = window.__cloudOrigRg;
+    window.MT_CLOUD = window.__mtCloudOrig;
+    return r.enviados;
+  });
+  ok(regua2 === 0, "rodar a régua de novo no mesmo dia não repete o aviso");
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.sessoes = st.sessoes.filter((x) => x.id !== "ses-regua");
+    delete st.alunos.find((a) => a.nome === "João Cliente").appTokenP;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+
+  // aniversários dos próximos 7 dias no Dashboard
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const d = new Date(); d.setDate(d.getDate() + 2);
+    st.alunos.find((a) => a.nome === "João Cliente").nasc = "1990" + d.toISOString().slice(4, 10);
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    window.__dashPT.render(st);
+  });
+  ok(await p.evaluate(() => /João Cliente/.test(document.getElementById("bNiverP").textContent) && /faz \d+ anos/.test(document.getElementById("bNiverP").textContent)),
+    "card de aniversários lista quem faz aniversário na semana");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
