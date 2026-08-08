@@ -165,7 +165,8 @@ async function abaPt(p, a) {
   await p.fill("#sHora", "07:00");
   await p.click("#sAdd");
   let ses = await p.evaluate(() => document.getElementById("listaSessoes").textContent);
-  ok(/João Cliente/.test(ses) && /07:00/.test(ses), "sessão agendada aparece");
+  ok(/João Cliente/.test(ses) && /07:00/.test(ses), "sessão agendada aparece no detalhe do dia");
+  ok(await p.evaluate(() => !!document.querySelector("#calAgenda .cal-dia.hoje .cal-n")), "calendário do mês marca hoje com a contagem de sessões");
 
   // sincronizar com o calendário: exporta .ics das sessões futuras
   await p.evaluate(() => window.__agAba("sessoes"));
@@ -196,7 +197,9 @@ async function abaPt(p, a) {
   await p.click("#sAdd");
   const rec = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.hora === "08:00").length);
   ok(rec === 4, "🔁 repetir toda semana gera as 4 sessões de uma vez");
-  ok(await p.evaluate(() => document.getElementById("listaSessoes").textContent.includes("Amanhã")), "cabeçalho Amanhã no agrupamento");
+  await p.evaluate(() => window.__agDia(new Date(Date.now() + 864e5).toISOString().slice(0, 10)));
+  ok(await p.evaluate(() => document.getElementById("listaSessoes").textContent.includes("Amanhã")), "clicar no dia de amanhã no calendário mostra o cabeçalho Amanhã");
+  ok(await p.evaluate(() => /08:00/.test(document.getElementById("listaSessoes").textContent)), "detalhe do dia lista horário e aluno da sessão");
 
   // choque de horário: agendar amanhã às 08:00 de novo pede confirmação
   await p.evaluate(() => {
@@ -210,8 +213,9 @@ async function abaPt(p, a) {
   ok(aposChoque === 4, "cancelar no aviso de choque não duplica a sessão");
   await p.evaluate(() => { window.confirm = () => true; });
 
-  // Faltou: falta explícita com etiqueta
+  // Faltou: falta explícita com etiqueta (no dia de amanhã do calendário)
   await p.evaluate(() => window.__agAba("sessoes"));
+  await p.evaluate(() => window.__agDia(new Date(Date.now() + 864e5).toISOString().slice(0, 10)));
   await p.click("[data-faltou]");
   const faltouSt = await p.evaluate(() => ({
     faltas: JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.faltou).length,

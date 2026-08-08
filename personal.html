@@ -42,6 +42,16 @@
   }
   .abas-pt button:hover { background: rgba(255,255,255,.06); color: #fff; }
   .abas-pt button.ativa { color: #fff; border-left-color: var(--roxo); background: rgba(124,58,237,.18); }
+  /* calendário da agenda */
+  #calAgenda .cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  #calAgenda .cal-sem { font-size: 10.5px; font-weight: 800; color: var(--cinza, #a9a4b5); text-transform: uppercase; padding: 4px 0; text-align: center; }
+  #calAgenda .cal-dia { position: relative; border: 1px solid var(--linha, #2a2536); background: transparent; color: inherit; border-radius: 10px; min-height: 44px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; }
+  #calAgenda .cal-dia:hover { border-color: var(--roxo); }
+  #calAgenda .cal-dia.hoje { border-color: var(--roxo); box-shadow: inset 0 0 0 1px var(--roxo); }
+  #calAgenda .cal-dia.sel { background: var(--roxo); color: #fff; border-color: var(--roxo); }
+  #calAgenda .cal-dia .cal-n { position: absolute; right: 3px; top: 3px; background: var(--roxo); color: #fff; font-size: 9.5px; font-weight: 800; border-radius: 999px; min-width: 15px; height: 15px; line-height: 15px; padding: 0 3px; }
+  #calAgenda .cal-dia.sel .cal-n { background: rgba(255,255,255,.28); }
+  #calAgenda .cal-dia.pend .cal-n { background: #f59e0b; }
   .menu-fundo { position: fixed; inset: 0; background: rgba(18,16,22,.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .22s; }
   body.menu-aberto .menu-fundo { opacity: 1; pointer-events: auto; }
   .kpi-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
@@ -76,6 +86,7 @@
     /* nome do aluno em linha própria no topo do perfil */
     #pfTopo #pfTitulo { grid-column: 1 / -1; order: -1; font-size: 18px; }
     /* abas do perfil em grade uniforme 3×2 */
+    #calAgenda .cal-dia { min-height: 38px; font-size: 12px; }
     #pfAbas, #trAbas, #pgAbas, #qtAbas, #relAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     #agAbas, #avAbas, #dsAbas, #chAbas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
     #pfAbas button, #trAbas button, #pgAbas button, #qtAbas button, #relAbas button,
@@ -250,7 +261,9 @@
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O aluno pede pela Agenda do app dele — confirme aqui e a sessão entra na sua agenda na hora.</p>
       <div id="listaPedidosApp"></div>
     </div>
-    <div class="card" data-agsec="sessoes"><h2>Próximas sessões</h2><div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div>
+    <div class="card" data-agsec="sessoes"><h2>Agenda do mês</h2>
+      <div id="calAgenda" style="margin: 10px 0 12px;"></div>
+      <div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div>
       <div class="linha-flex" style="margin-top: 12px;">
         <button class="btn sec" id="btnIcsP">📅 Enviar pro meu calendário</button>
         <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as sessões entram lá.</span>
@@ -2430,21 +2443,40 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var hoje = S.todayISO();
     var amanha = new Date(hoje + "T12:00:00"); amanha.setDate(amanha.getDate() + 1);
     var amanhaISO = amanha.toISOString().slice(0, 10);
-    // futuras + passadas ainda sem marcação (feita/faltou resolve e sai da lista)
-    var prox = st.sessoes.filter(function (x) { return x.data >= hoje ? true : (!x.feita && !x.faltou); })
-      .sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; }).slice(0, 30);
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
-    var htmlSes = "", diaAnt = "";
-    prox.forEach(function (x) {
-      if (x.data !== diaAnt) {
-        diaAnt = x.data;
-        var rot = x.data === hoje ? "📅 Hoje" : x.data === amanhaISO ? "Amanhã"
-          : S.fmtData(x.data) + (x.data < hoje ? " — marque ✅ ou Faltou" : "");
-        htmlSes += '<div style="font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:10px 0 4px;text-transform:uppercase;">' + rot + "</div>";
-      }
-      htmlSes += '<div class="sessao-pt' + (x.feita ? " feita" : "") + '">' +
+    // calendário do mês: clique num dia pra ver embaixo os horários e alunos
+    var diaSel = window.__calDiaPT || hoje;
+    var mesRef = window.__calMesPT || diaSel.slice(0, 7);
+    window.__calDiaPT = diaSel; window.__calMesPT = mesRef;
+    var porDia = {};
+    st.sessoes.forEach(function (x) { if (x.data) (porDia[x.data] = porDia[x.data] || []).push(x); });
+    var anoC = +mesRef.slice(0, 4), mesC = +mesRef.slice(5, 7);
+    var nDias = new Date(anoC, mesC, 0).getDate();
+    var iniCol = new Date(anoC, mesC - 1, 1).getDay();
+    var MESES_PT = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    var cal = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+      '<button class="btn sec mini" data-calnav="-1" title="mês anterior">‹</button>' +
+      '<b style="flex:1;text-align:center;">' + MESES_PT[mesC - 1] + " " + anoC + "</b>" +
+      '<button class="btn sec mini" data-calnav="1" title="próximo mês">›</button></div>' +
+      '<div class="cal-grade">' +
+      ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"].map(function (d) { return '<span class="cal-sem">' + d + "</span>"; }).join("");
+    for (var vz = 0; vz < iniCol; vz++) cal += "<span></span>";
+    for (var dd = 1; dd <= nDias; dd++) {
+      var iso = mesRef + "-" + ("0" + dd).slice(-2);
+      var doDia = porDia[iso] || [];
+      var temPend = iso < hoje && doDia.some(function (x) { return !x.feita && !x.faltou; });
+      cal += '<button class="cal-dia' + (iso === hoje ? " hoje" : "") + (iso === diaSel ? " sel" : "") + (temPend ? " pend" : "") +
+        '" data-caldia="' + iso + '" title="' + doDia.length + ' sessão(ões)">' + dd +
+        (doDia.length ? '<span class="cal-n">' + doDia.length + "</span>" : "") + "</button>";
+    }
+    cal += "</div>";
+    $("calAgenda").innerHTML = cal;
+    // detalhe do dia escolhido + sessões antigas sem marcação
+    function linhaSes(x, comData) {
+      return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '">' +
         '<button class="btn sec mini" data-shora="' + x.id + '" title="mudar a hora da sessão">' + (x.hora || "+ hora") + "</button>" +
+        (comData ? '<span class="muted" style="font-size:12px;">' + S.fmtData(x.data) + "</span>" : "") +
         "<span>" + esc(nomeDe[x.alunoId] || "?") + "</span>" +
         '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
         (x.feita ? '<span class="tag ok">FEITA ✅</span>'
@@ -2452,10 +2484,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
             '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
         '<button class="btn sec mini" data-cx="' + x.id + '">✕</button></span></div>';
-    });
-    $("listaSessoes").innerHTML = htmlSes || "Nenhuma sessão agendada.";
+    }
+    function cabDia(txt) {
+      return '<div style="font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;">' + txt + "</div>";
+    }
+    var rotSel = diaSel === hoje ? "📅 Hoje" : diaSel === amanhaISO ? "Amanhã" : S.fmtData(diaSel);
+    var doSel = (porDia[diaSel] || []).slice().sort(function (a, b) { return (a.hora || "") < (b.hora || "") ? -1 : 1; });
+    var htmlSes = cabDia(rotSel + (doSel.length ? " — " + doSel.length + " sessão(ões)" : "")) +
+      (doSel.length ? doSel.map(function (x) { return linhaSes(x, false); }).join("")
+        : '<p class="muted" style="margin:6px 0 0;">Nenhuma sessão nesse dia — toque em outro dia do calendário ou use ➕ Agendar.</p>');
+    var antigas = st.sessoes.filter(function (x) { return x.data < hoje && !x.feita && !x.faltou && x.data !== diaSel; })
+      .sort(function (a, b) { return (a.data + a.hora) < (b.data + b.hora) ? -1 : 1; }).slice(0, 15);
+    if (antigas.length) {
+      htmlSes += cabDia("Antigas sem marcação — marque ✅ ou Faltou") +
+        antigas.map(function (x) { return linhaSes(x, true); }).join("");
+    }
+    $("listaSessoes").innerHTML = htmlSes;
     renderPedidosApp(st);
   }
+  $("calAgenda").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button");
+    if (!b) return;
+    if (b.hasAttribute("data-caldia")) {
+      window.__calDiaPT = b.getAttribute("data-caldia");
+    } else if (b.hasAttribute("data-calnav")) {
+      var ref = window.__calMesPT || S.todayISO().slice(0, 7);
+      var dtn = new Date(+ref.slice(0, 4), +ref.slice(5, 7) - 1 + (+b.getAttribute("data-calnav")), 1);
+      window.__calMesPT = dtn.getFullYear() + "-" + ("0" + (dtn.getMonth() + 1)).slice(-2);
+    } else return;
+    renderAgenda(load());
+  });
+  window.__agDia = function (iso) { window.__calDiaPT = iso; window.__calMesPT = iso.slice(0, 7); renderAgenda(load()); }; // testes
   // pedidos de horário vindos do app do aluno (nuvem)
   function renderPedidosApp(st) {
     var nuvem = S.cloud && S.cloud();
