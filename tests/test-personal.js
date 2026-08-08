@@ -155,8 +155,12 @@ async function abaPt(p, a) {
   ok(/SEM PAGAMENTO NO MÊS/.test(lista), "etiqueta de pendência antes do pagamento");
   ok(await p.evaluate(() => !!document.querySelector('#listaAlunos [data-acesso]')), "aluno sem acesso do app tem o botão 📧 Enviar acesso direto na lista");
 
-  // agenda: sessão hoje + marcar feita
+  // agenda: sessão hoje + marcar feita (agora com sub-abas Sessões/Agendar)
   await abaPt(p, "agenda");
+  ok(await p.evaluate(() => ["agAbas", "avAbas", "qtAbas", "dsAbas", "relAbas", "chAbas"].every((id) => !!document.getElementById(id))),
+    "todas as seções grandes têm barra de sub-abas");
+  ok(await p.evaluate(() => document.querySelector('#agAbas button.ativa').textContent.includes("Sessões")), "Agenda abre na sub-aba Sessões");
+  await p.evaluate(() => window.__agAba("agendar"));
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "07:00");
   await p.click("#sAdd");
@@ -164,6 +168,7 @@ async function abaPt(p, a) {
   ok(/João Cliente/.test(ses) && /07:00/.test(ses), "sessão agendada aparece");
 
   // sincronizar com o calendário: exporta .ics das sessões futuras
+  await p.evaluate(() => window.__agAba("sessoes"));
   {
     const dl = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
     await p.click("#btnIcsP");
@@ -185,6 +190,7 @@ async function abaPt(p, a) {
     document.getElementById("sRepAte").value = new Date(Date.now() + 22 * 864e5).toISOString().slice(0, 10);
     document.getElementById("sRep").checked = true;
   });
+  await p.evaluate(() => window.__agAba("agendar"));
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "08:00");
   await p.click("#sAdd");
@@ -205,6 +211,7 @@ async function abaPt(p, a) {
   await p.evaluate(() => { window.confirm = () => true; });
 
   // Faltou: falta explícita com etiqueta
+  await p.evaluate(() => window.__agAba("sessoes"));
   await p.click("[data-faltou]");
   const faltouSt = await p.evaluate(() => ({
     faltas: JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.faltou).length,
@@ -219,6 +226,7 @@ async function abaPt(p, a) {
     document.getElementById("sRep").checked = true;
     document.querySelectorAll("#sRepDias .srd").forEach((c) => { c.checked = ["1", "3", "5"].includes(c.value); });
   });
+  await p.evaluate(() => window.__agAba("agendar"));
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "09:15");
   await p.click("#sAdd");
@@ -674,6 +682,7 @@ async function abaPt(p, a) {
 
   // agenda uma sessão futura pro app mostrar
   await abaPt(p, "agenda");
+  await p.evaluate(() => window.__agAba("agendar"));
   await p.selectOption("#sAluno", { index: 1 });
   await p.evaluate(() => {
     const d = new Date(); d.setDate(d.getDate() + 2);
@@ -1116,6 +1125,8 @@ async function abaPt(p, a) {
   // ---------- questionários personalizados (estilo LiveClin) ----------
   console.log("Questionários personalizados:");
   await abaPt(p, "quest");
+  ok(await p.evaluate(() => document.querySelector('#qtAbas button.ativa').textContent.includes("Enviar")), "Questionários abre na sub-aba Enviar");
+  await p.evaluate(() => window.__qtAba("montar"));
   await p.fill("#qpSigla", "motex");
   await p.fill("#qpTitulo", "Motivação");
   await p.fill("#qpTexto", "Qual foi sua motivação pra treinar nos últimos 7 dias?");
@@ -1131,6 +1142,7 @@ async function abaPt(p, a) {
   await p.evaluate(() => document.querySelectorAll(".qqCheck").forEach((c) => { c.checked = true; }));
   await p.click("#qqAdd");
   ok(/Check-in semanal/.test(await p.evaluate(() => document.getElementById("qqLista").textContent)), "questionário criado com as 2 perguntas");
+  await p.evaluate(() => window.__qtAba("enviar"));
   await p.selectOption("#qeAluno", { index: 1 });
   await p.selectOption("#qeQuest", { index: 1 });
   await p.click("#qeGerar");

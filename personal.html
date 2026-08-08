@@ -76,8 +76,10 @@
     /* nome do aluno em linha própria no topo do perfil */
     #pfTopo #pfTitulo { grid-column: 1 / -1; order: -1; font-size: 18px; }
     /* abas do perfil em grade uniforme 3×2 */
-    #pfAbas, #trAbas, #pgAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    #pfAbas button, #trAbas button, #pgAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
+    #pfAbas, #trAbas, #pgAbas, #qtAbas, #relAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #agAbas, #avAbas, #dsAbas, #chAbas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    #pfAbas button, #trAbas button, #pgAbas button, #qtAbas button, #relAbas button,
+    #agAbas button, #avAbas button, #dsAbas button, #chAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
     /* listas: as ações descem SEMPRE pra linha de baixo, alinhadas à direita (paralelismo) */
     .sessao-pt > b { flex: 1 0 100%; }
     .sessao-pt > span[style*="margin-left:auto"] { flex: 1 0 100%; justify-content: flex-end; }
@@ -214,7 +216,11 @@
 
   <!-- AGENDA -->
   <section id="vAgenda" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="agAbas" style="margin: 0 0 14px;">
+      <button data-aga="sessoes" class="ativa">📌 Sessões</button>
+      <button data-aga="agendar">➕ Agendar</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-agsec="agendar" hidden>
       <h2>Agendar sessão</h2>
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="sAluno" style="min-width: 180px;"></select>
@@ -239,12 +245,12 @@
       </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Marque ✅ quando a sessão acontecer — sessões feitas contam no fechamento de quem paga por sessão. Aluno que não veio? Marque <b>Faltou</b>: entra na assiduidade e a sessão sai da lista.</p>
     </div>
-    <div class="card" id="cardPedidosApp" hidden style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
+    <div class="card" id="cardPedidosApp" hidden data-agsec="sessoes" style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
       <h2>Pedidos de horário pelo app</h2>
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O aluno pede pela Agenda do app dele — confirme aqui e a sessão entra na sua agenda na hora.</p>
       <div id="listaPedidosApp"></div>
     </div>
-    <div class="card"><h2>Próximas sessões</h2><div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div>
+    <div class="card" data-agsec="sessoes"><h2>Próximas sessões</h2><div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div>
       <div class="linha-flex" style="margin-top: 12px;">
         <button class="btn sec" id="btnIcsP">📅 Enviar pro meu calendário</button>
         <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as sessões entram lá.</span>
@@ -440,7 +446,11 @@
 
   <!-- AVALIAÇÕES -->
   <section id="vAvaliacoes" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="avAbas" style="margin: 0 0 14px;">
+      <button data-ava="avaliar" class="ativa">📏 Avaliar</button>
+      <button data-ava="historico">📊 Histórico e evolução</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Dobras cutâneas — Pollock 3 · Pollock 7 · Guedes</h2>
       <p class="muted" style="margin: 4px 0 10px;">Meça com o adipômetro (mm), escolha o protocolo e o sistema calcula a densidade corporal e o % de gordura pela equação de Siri. O resultado preenche a avaliação abaixo.</p>
       <div class="linha-flex" style="margin-bottom: 10px;">
@@ -459,7 +469,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Circunferências (fita métrica) — % gordura Marinha + RCQ</h2>
       <p class="muted" style="margin: 4px 0 10px;">Meça em cm e o sistema calcula o % de gordura pelo método da Marinha americana (US Navy) e a relação cintura-quadril com a classificação de risco. O resultado também preenche a avaliação abaixo.</p>
       <div class="linha-flex" style="margin-bottom: 10px; flex-wrap: wrap;">
@@ -483,7 +493,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Nova avaliação física</h2>
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="avAluno" style="min-width: 180px;"></select>
@@ -496,12 +506,17 @@
       </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A evolução (com setas verde/vermelha) aparece aqui e no app do aluno.</p>
     </div>
-    <div class="card"><h2>Histórico e evolução</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
+    <div class="card" data-avsec="historico" hidden><h2>Histórico e evolução</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
   </section>
 
   <!-- QUESTIONÁRIOS (check-ins personalizados, estilo LiveClin) -->
   <section id="vQuest" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="qtAbas" style="margin: 0 0 14px;">
+      <button data-qta="enviar" class="ativa">📤 Enviar pro aluno</button>
+      <button data-qta="montar">📝 Perguntas e questionários</button>
+      <button data-qta="resp">📊 Respostas</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Minhas perguntas</h2>
       <p class="muted" style="margin: 4px 0 10px;">Crie perguntas com escala de emojis (com pontuação), escala de 0 a 10 ou resposta livre — e monte questionários pra mandar pros alunos.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
@@ -528,7 +543,7 @@
       <div id="qpLista" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhuma pergunta ainda.</div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Questionários</h2>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
         <input id="qqNome" placeholder="Nome (ex.: Check-in semanal)" style="width: 240px;">
@@ -538,7 +553,7 @@
       <div id="qqLista" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhum questionário ainda.</div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="enviar">
       <h2>Enviar pro aluno</h2>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
         <select id="qeAluno" style="min-width: 170px;"></select>
@@ -561,7 +576,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" data-qtsec="resp" hidden>
       <h2>Respostas recebidas</h2>
       <div id="qRespostas" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
     </div>
@@ -569,7 +584,11 @@
 
   <!-- DESAFIO EM GRUPO (estilo GymRats) -->
   <section id="vDesafio" hidden>
-    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);">
+    <div class="abas" id="dsAbas" style="margin: 0 0 14px;">
+      <button data-dsa="config" class="ativa">🏆 Desafio</button>
+      <button data-dsa="placar">📊 Placar</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-dssec="config">
       <h2>🏆 Desafio do studio (estilo GymRats)</h2>
       <p class="muted" style="margin: 4px 0 10px;">Crie um desafio com período e prêmio: cada "Treinei hoje!" que o aluno marcar no app conta ponto, e o placar aparece pra turma toda — no seu módulo e no app de cada aluno.</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
@@ -585,7 +604,7 @@
       </div>
       <p class="muted" style="font-size: 12px; margin-top: 8px;">Depois de salvar, <b>gere/publique os apps de novo</b> — o card do desafio entra no app de todo mundo.</p>
     </div>
-    <div class="card">
+    <div class="card" data-dssec="placar" hidden>
       <h2>Placar</h2>
       <div id="dsRanking" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
     </div>
@@ -593,15 +612,20 @@
 
 
   <section id="vRelatorios" hidden>
-    <div class="card" style="margin-bottom: 14px;"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Crescimento da carteira (novos × encerrados)</h2><div id="relCarteira" class="muted">Sem dados ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Ocupação da agenda (últimas 8 semanas)</h2><div id="relOcupacao" class="muted">Sem sessões ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Assiduidade e presença (últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
+    <div class="abas" id="relAbas" style="margin: 0 0 14px;">
+      <button data-rela="fin" class="ativa">💰 Financeiro</button>
+      <button data-rela="agenda">📅 Agenda e presença</button>
+      <button data-rela="alunos">📈 Alunos</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita dos últimos 6 meses</h2><div id="relReceita" class="muted">Sem pagamentos ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Crescimento da carteira (novos × encerrados)</h2><div id="relCarteira" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="agenda" hidden><h2>Sessões dadas por mês</h2><div id="relSessoes" class="muted">Sem sessões feitas ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="agenda" hidden><h2>Ocupação da agenda (últimas 8 semanas)</h2><div id="relOcupacao" class="muted">Sem sessões ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="agenda" hidden><h2>Assiduidade e presença (últimos 30 dias)</h2><div id="relAssiduidade" class="muted">Sem dados ainda.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
+    <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
       <div style="margin-top: 10px;"><button class="btn sec mini" id="relCSV">Baixar CSV (receita por aluno)</button></div></div>
   </section>
 
@@ -616,11 +640,15 @@
 
   <!-- CHAT -->
   <section id="vChat" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="chAbas" style="margin: 0 0 14px;">
+      <button data-cha="conversas" class="ativa">💬 Conversas</button>
+      <button data-cha="robo">🤖 Robô e automações</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-chsec="conversas">
       <h2>Conversas com os alunos</h2>
       <p class="muted" style="margin: 4px 0 0;">O aluno escreve pelo app dele e a mensagem cai aqui — responda sem misturar com o seu WhatsApp pessoal. Bolinha roxa = mensagem nova.</p>
     </div>
-    <div class="linha-flex" style="align-items: flex-start; gap: 14px;">
+    <div class="linha-flex" style="align-items: flex-start; gap: 14px;" data-chsec="conversas">
       <div id="chatAlunos" style="flex: 0 0 240px; min-width: 200px;"></div>
       <div class="card" style="flex: 1; min-width: 280px;">
         <h2 id="chatTitulo">Escolha um aluno</h2>
@@ -631,7 +659,7 @@
         </div>
       </div>
     </div>
-    <div class="card" style="margin-top: 14px; border-left: 4px solid var(--roxo);">
+    <div class="card" style="margin-top: 14px; border-left: 4px solid var(--roxo);" data-chsec="robo" hidden>
       <h2>Robô de atendimento</h2>
       <p class="muted" style="margin: 4px 0 10px;">Igual ao chatbot do sistema da academia: dentro do app do aluno, o robô responde na hora às perguntas comuns (menu de atalhos) e encaminha pra você quando precisar de gente. Depois de mudar algo, republique os apps dos alunos.</p>
       <label style="display: flex; gap: 8px; align-items: center; font-weight: 700; margin-bottom: 10px;"><input type="checkbox" id="botAtivoP" style="width: 17px; height: 17px;"> Ligado nos apps dos alunos</label>
@@ -2431,14 +2459,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // pedidos de horário vindos do app do aluno (nuvem)
   function renderPedidosApp(st) {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { $("cardPedidosApp").hidden = true; return; }
+    if (!nuvem) { $("cardPedidosApp").removeAttribute("data-tem"); $("cardPedidosApp").hidden = true; return; }
     nuvem.client.from("app_agenda").select("id,token,dia,hora,obs").eq("academia_id", nuvem.aid).eq("status", "pedido")
       .gte("dia", S.todayISO()).order("dia").limit(30).then(function (r) {
         var pedidos = r.data || [];
         var alunoPorToken = {};
         st.alunos.forEach(function (a) { if (a.appTokenP) alunoPorToken[a.appTokenP] = a; });
         pedidos = pedidos.filter(function (p) { return alunoPorToken[p.token]; });
-        $("cardPedidosApp").hidden = !pedidos.length;
+        $("cardPedidosApp").toggleAttribute("data-tem", pedidos.length > 0);
+        if (window.__agAba) window.__agAba(window.__agAba.atual || "sessoes");
+        else $("cardPedidosApp").hidden = !pedidos.length;
         $("listaPedidosApp").innerHTML = pedidos.map(function (p) {
           var a = alunoPorToken[p.token];
           return '<div class="sessao-pt"><b>' + S.fmtData(p.dia) + " " + (p.hora || "") + "</b>" +
@@ -2860,6 +2890,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__pgAba = mostraPgAba; // testes
   mostraPgAba("receb");
+  // sub-links genéricos das outras seções (Agenda, Avaliações, Questionários, Desafio, Relatórios, Chat)
+  function fazSubAbas(secId, abasId, dataAba, dataSec, inicial) {
+    function mostra(aba) {
+      mostra.atual = aba;
+      document.querySelectorAll("#" + secId + " [" + dataSec + "]").forEach(function (c) {
+        c.hidden = c.getAttribute(dataSec) !== aba ||
+          (c.id === "cardPedidosApp" && !c.hasAttribute("data-tem")); // pedidos só aparecem quando existem
+      });
+      document.querySelectorAll("#" + abasId + " button").forEach(function (b) {
+        b.classList.toggle("ativa", b.getAttribute(dataAba) === aba);
+      });
+    }
+    $(abasId).addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("button[" + dataAba + "]");
+      if (b) mostra(b.getAttribute(dataAba));
+    });
+    mostra(inicial);
+    return mostra;
+  }
+  window.__agAba = fazSubAbas("vAgenda", "agAbas", "data-aga", "data-agsec", "sessoes");
+  window.__avAba = fazSubAbas("vAvaliacoes", "avAbas", "data-ava", "data-avsec", "avaliar");
+  window.__qtAba = fazSubAbas("vQuest", "qtAbas", "data-qta", "data-qtsec", "enviar");
+  window.__dsAba = fazSubAbas("vDesafio", "dsAbas", "data-dsa", "data-dssec", "config");
+  window.__relAba = fazSubAbas("vRelatorios", "relAbas", "data-rela", "data-relsec", "fin");
+  window.__chAba = fazSubAbas("vChat", "chAbas", "data-cha", "data-chsec", "conversas");
   $("tAluno").addEventListener("change", renderFichas);
   $("tValidade").addEventListener("change", function () {
     var alunoId = $("tAluno").value;
