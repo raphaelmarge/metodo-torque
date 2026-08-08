@@ -350,6 +350,137 @@ async function abaPt(p, a) {
   const kpis = await p.evaluate(() => document.getElementById("kpis").textContent);
   ok(/1/.test(kpis) && /400/.test(kpis), "KPIs: 1 aluno ativo e R$ 400 no mês");
 
+  // ---------- financeiro turbinado: dívida acumulada, sessões a cobrar, Recebi, baixa do link ----------
+  console.log("Financeiro turbinado:");
+  {
+    // guarda o estado pra devolver no fim (os alunos injetados não podem vazar pros testes seguintes)
+    const stAntes = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+    const hoje = new Date().toISOString().slice(0, 10);
+    const diaHoje = +hoje.slice(8, 10);
+    const dIni = new Date(); dIni.setDate(1); dIni.setMonth(dIni.getMonth() - 3);
+    const ini = dIni.toISOString().slice(0, 10); // dia 1, três meses atrás
+    const expMeses = 3 + (diaHoje > 1 ? 1 : 0); // 3 meses cheios + o atual se já venceu (diaVenc 1)
+    const fin = await p.evaluate(([ini, hoje]) => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
+      st.planosPT.push({ id: "plx", nome: "Plano Cem", valor: 100 });
+      st.alunos.push(
+        { id: "axDev", nome: "Devedor Antigo", ativo: true, zap: "31988887777", desde: ini },
+        { id: "axSes", nome: "Paga Sessao", ativo: true, modo: "sessao", valor: 80 },
+        { id: "axPac", nome: "Pacote Estourado", ativo: true, pacote: { total: 5, usadas: 7 } });
+      st.contratosPT.push({ id: "ctx", alunoId: "axDev", planoId: "plx", status: "ativo", inicio: ini, diaVenc: 1 });
+      st.sessoes.push(
+        { id: "sx1", alunoId: "axSes", data: hoje, hora: "07:00", feita: true },
+        { id: "sx2", alunoId: "axSes", data: hoje, hora: "08:00", feita: true });
+      window.MTStore.write("ptStudio", st);
+      const F = window.__financeiroPT;
+      return {
+        div: F.divida(st, st.alunos.find((a) => a.id === "axDev")),
+        ses: F.sessoes(st, st.alunos.find((a) => a.id === "axSes")),
+        pac: F.sessoes(st, st.alunos.find((a) => a.id === "axPac")),
+      };
+    }, [ini, hoje]);
+    ok(fin.div.meses === expMeses && fin.div.total === expMeses * 100,
+      "dívida acumulada: contrato de 3 meses atrás sem pagar → deve " + expMeses + " meses (R$ " + expMeses * 100 + ")");
+    ok(fin.ses && fin.ses.n === 2 && fin.ses.total === 160 && !fin.ses.pacote, "quem paga por sessão: 2 feitas sem acerto → R$ 160 a cobrar");
+    ok(fin.pac && fin.pac.n === 2 && fin.pac.pacote, "pacote de 5 com 7 usadas → 2 sessões além do pacote");
+
+    await p.reload();
+    await p.waitForTimeout(600);
+    await abaPt(p, "pagamentos");
+    const pendHtml = await p.evaluate(() => document.getElementById("pendentes").innerHTML);
+    ok(new RegExp("deve " + expMeses + " meses").test(pendHtml) && /Devedor Antigo/.test(pendHtml), "pendência mostra a etiqueta 'deve N meses' no lugar do ATRASADO simples");
+    ok(/sessão\(ões\) a cobrar/.test(pendHtml) && /Paga Sessao/.test(pendHtml) && /data-receb="axSes"/.test(pendHtml), "linha própria de quem paga por sessão, com botão Recebi");
+    ok(/além do pacote/.test(pendHtml) && /data-abreperfil="axPac"/.test(pendHtml) && /Renovar pacote/.test(pendHtml), "pacote estourado aparece com botão Renovar pacote");
+    ok(new RegExp('data-receb="axDev" data-v="' + expMeses * 100 + '"').test(pendHtml), "botões de cobrança do devedor usam o TOTAL acumulado, não só o mês");
+
+    // botão Recebi registra com 1 toque (o confirm é auto-aceito pelo teste)
+    await p.evaluate(() => document.querySelector('#pendentes [data-receb="axSes"]').click());
+    await p.waitForTimeout(250);
+    const receb = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      return {
+        pg: st.pagamentos.find((x) => x.alunoId === "axSes"),
+        pend: document.getElementById("pendentes").textContent,
+      };
+    });
+    ok(receb.pg && receb.pg.forma === "recebido" && +receb.pg.valor === 160, "Recebi registra o pagamento (forma 'recebido', R$ 160)");
+    ok(!/Paga Sessao/.test(receb.pend), "após o Recebi a linha some das pendências");
+
+    // dialog do Pix ganhou o botão 'Já recebi' — registra e fecha
+    await p.evaluate(() => document.querySelector('#pendentes [data-pix="axDev"]').click());
+    await p.waitForFunction(() => document.getElementById("dlgPix").open);
+    ok(await p.evaluate((exp) => window.__pixCtx && window.__pixCtx.alunoId === "axDev" && +window.__pixCtx.valor === exp, expMeses * 100), "abrir o Pix guarda aluno e valor pro botão de baixa");
+    await p.click("#pixRecebi");
+    await p.waitForTimeout(250);
+    const pix2 = await p.evaluate(() => ({
+      aberto: document.getElementById("dlgPix").open,
+      pg: window.MTStore.read("ptStudio", {}).pagamentos.find((x) => x.alunoId === "axDev"),
+    }));
+    ok(!pix2.aberto && pix2.pg && pix2.pg.forma === "pix" && +pix2.pg.valor === expMeses * 100, "'Já recebi' no dialog do Pix registra o total e fecha");
+
+    // Renovar pacote leva direto pro financeiro do perfil
+    await p.evaluate(() => document.querySelector('#pendentes [data-abreperfil="axPac"]').click());
+    await p.waitForTimeout(250);
+    ok(await p.evaluate(() => !document.getElementById("vPerfil").hidden &&
+      document.getElementById("pfNome").value === "Pacote Estourado" &&
+      !document.querySelector('[data-pfsec="fin"]').hidden), "Renovar pacote abre o perfil já na aba Financeiro");
+    await p.click("#pfFechar");
+
+    // sessão Feita de quem paga por sessão oferece registrar o valor na hora
+    await p.evaluate((hoje) => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.sessoes.push({ id: "sx3", alunoId: "axSes", data: hoje, hora: "10:00" });
+      window.MTStore.write("ptStudio", st);
+    }, hoje);
+    await abaPt(p, "agenda");
+    await p.evaluate((hoje) => { window.__agAba("sessoes"); window.__agDia(hoje); }, hoje);
+    await p.evaluate(() => {
+      const r = Array.from(document.querySelectorAll("#listaSessoes .sessao-pt")).find((x) => /Paga Sessao/.test(x.textContent) && x.querySelector("[data-feita]"));
+      r.querySelector("[data-feita]").click();
+    });
+    await p.waitForTimeout(250);
+    ok(await p.evaluate(() => window.MTStore.read("ptStudio", {}).pagamentos.some((x) => x.alunoId === "axSes" && x.forma === "sessão" && +x.valor === 80)),
+      "Feita + confirmar registra a sessão de R$ 80 direto no financeiro");
+
+    // dashboard soma o que há pra receber (meses passados continuam devidos mesmo com o mês atual pago)
+    await abaPt(p, "dash");
+    ok(await p.evaluate(() => /A receber acumulado/.test(document.getElementById("bRecebP").textContent) && /R\$\s?300/.test(document.getElementById("bRecebP").textContent)),
+      "dashboard mostra 'A receber acumulado' com os 3 meses antigos do devedor (R$ 300)");
+
+    // baixa automática do link Pagar.me: casa o pedido guardado com o evento pago do webhook
+    const link = await p.evaluate((hoje) => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.alunos.find((a) => a.id === "axDev").pedidosPg = [{ id: "or_teste_1", v: 123.45, em: hoje }];
+      window.MTStore.write("ptStudio", st);
+      window.__cloudOrig = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({ client: { from: () => ({ select: () => ({ in: (col, ids) => {
+        window.__pagIds = ids.slice();
+        return { order: () => ({ limit: () => ({ then: (cb) => cb({ data: [
+          { id: "evt_falha", tipo: "order.payment_failed", valor_centavos: 12345, pedido_id: "or_teste_1", criado: hoje + "T11:00:00" },
+          { id: "evt_pago", tipo: "order.paid", valor_centavos: 12345, pedido_id: "or_teste_1", criado: hoje + "T12:00:00" },
+        ] }) }) }) };
+      } }) }) } });
+      window.__pagLink();
+      window.MTStore.cloud = window.__cloudOrig;
+      const st2 = window.MTStore.read("ptStudio", {});
+      return {
+        ids: window.__pagIds,
+        pg: st2.pagamentos.find((x) => x.eventoId === "evt_pago"),
+        falhou: st2.pagamentos.some((x) => x.eventoId === "evt_falha"),
+        pedidos: (st2.alunos.find((a) => a.id === "axDev").pedidosPg || []).length,
+      };
+    }, hoje);
+    ok(link.ids && link.ids.includes("or_teste_1"), "baixa do link consulta só os pedidos guardados nos alunos");
+    ok(link.pg && link.pg.forma === "link cartão" && +link.pg.valor === 123.45 && link.pg.alunoId === "axDev", "evento order.paid vira pagamento 'link cartão' de R$ 123,45");
+    ok(!link.falhou && link.pedidos === 0, "payment_failed é ignorado e o pedido pago sai da fila do aluno");
+
+    // devolve o estado como estava
+    await p.evaluate((s) => localStorage.setItem("mtapp:ptStudio", s), stAntes);
+    await p.reload();
+    await p.waitForTimeout(600);
+  }
+
   // exercícios: catálogo TORQUE + os seus numa lista só, por zona e movimento
   await abaPt(p, "treinos");
   await p.evaluate(() => window.__trAba("ex"));
