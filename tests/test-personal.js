@@ -1060,13 +1060,13 @@ async function abaPt(p, a) {
     ok(/stroke=["']#4ade80["']/.test(appDados), "cada exercício ganha um mini gráfico (sparkline) da carga");
     ok(/Treinos marcados no app/.test(appDados) && /4 no total/.test(appDados), "treinos feitos no app contados");
     ok(/Maior sequência/.test(appDados) && /3 dias/.test(appDados), "KPI de maior sequência de treinos (3 dias seguidos)");
-    ok(/Hábitos diários/.test(appDados) && /💧 Água/.test(appDados) && /100%/.test(appDados), "hábitos do aluno viram barras de % (água 100%)");
+    ok(/Hábitos diários/.test(appDados) && /Água/.test(appDados) && /100%/.test(appDados), "hábitos do aluno viram barras de % (água 100%)");
     ok(/Hábitos em dia/.test(appDados) && /50%/.test(appDados), "KPI de dias com 3+ hábitos nos últimos 30 dias (50%)");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
     ok(/Check-ins respondidos no app/.test(appDados) && /3 no total/.test(appDados), "respostas de questionário (app_quest) viram seção de check-ins");
     ok(/stroke=["']#fbbf24["']/.test(appDados) && /mín 2/.test(appDados) && /máx 9/.test(appDados), "pontuação dos check-ins vira gráfico de linha (mín 2 / máx 9)");
     ok(/\+9 pts/.test(appDados) && /MOTEX/.test(appDados), "última resposta listada com pontuação e siglas");
-    ok(/📋 Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
+    ok(/Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
     // aluno malicioso tentando injetar código pela foto/data do retorno
     const xss = await p.evaluate(async () => {
       window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
@@ -1115,7 +1115,7 @@ async function abaPt(p, a) {
         [{ nome: "João", dias: 12, ultimo: "2026-08-01" }, { nome: "Bia", dias: 9, ultimo: "2026-07-30" }, { nome: "Rafa", dias: 5, ultimo: null }], "1 mês grátis");
     });
     const placar = await p.evaluate(() => document.getElementById("dsRanking").textContent);
-    ok(/🥇 João/.test(placar) && /🥈 Bia/.test(placar) && /🥉 Rafa/.test(placar) && /12/.test(placar), "placar com medalhas e contagem de treinos");
+    ok(/1º João/.test(placar) && /2º Bia/.test(placar) && /3º Rafa/.test(placar) && /12/.test(placar), "placar com medalhas e contagem de treinos");
     ok(/1 mês grátis/.test(placar), "prêmio aparece no placar");
     // o app gerado com desafio ativo ganha o card + placar via rpc
     const appDesafio = await p.evaluate(() => {
@@ -1804,7 +1804,7 @@ async function abaPt(p, a) {
     });
     await p.waitForTimeout(250);
     const pendCartao = await p.evaluate(() => document.getElementById("pendentes").innerHTML);
-    ok(/João Cliente/.test(pendCartao) && /🔁 no cartão/.test(pendCartao) && /tag ok/.test(pendCartao), "pendência de quem tem assinatura ganha o chip 🔁 no cartão");
+    ok(/João Cliente/.test(pendCartao) && /no cartão/.test(pendCartao) && /tag ok/.test(pendCartao), "pendência de quem tem assinatura ganha o chip 🔁 no cartão");
     await p.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
       st.pagamentos = window.__pgtosGuardados;

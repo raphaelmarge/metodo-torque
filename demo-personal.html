@@ -155,7 +155,7 @@
     for (var m = mesesPag - 1; m >= 0; m--) {
       if (m === 0 && !cfg.pago) continue;
       var d = new Date(); d.setMonth(d.getMonth() - m, 5);
-      pagamentos.push({ id: uid(), alunoId: id, valor: cfg.valor, forma: cfg.rec ? "cartão 🔁" : (idx % 2 ? "pix" : "dinheiro"),
+      pagamentos.push({ id: uid(), alunoId: id, valor: cfg.valor, forma: cfg.rec ? "cartão auto" : (idx % 2 ? "pix" : "dinheiro"),
         data: d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-05" });
     }
     // avaliações periódicas coerentes com o peso (histórico longo)
