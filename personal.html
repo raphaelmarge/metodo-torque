@@ -67,6 +67,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   }
   .abas-pt button:hover { background: rgba(255,255,255,.06); color: #fff; }
   .abas-pt button.ativa { color: #fff; border-left-color: var(--roxo); background: rgba(124,58,237,.18); }
+  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px; margin-top: 6px; border-top: 1px solid #2a2536; color: #a9a4b5; font-size: 13.5px; font-weight: 700; }
+  .menu-tema span { display: inline-flex; align-items: center; gap: 9px; }
+  .menu-tema .sw { margin-left: auto; width: 44px; height: 24px; border-radius: 99px; border: 1px solid #3a3546; background: #24202e; position: relative; cursor: pointer; padding: 0; flex: none; transition: background .2s, border-color .2s; }
+  .menu-tema .sw .sw-bola { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #8a8695; transition: transform .2s, background .2s; }
+  .menu-tema .sw[aria-checked="true"] { background: var(--roxo); border-color: var(--roxo); }
+  .menu-tema .sw[aria-checked="true"] .sw-bola { transform: translateX(20px); background: #fff; }
   /* calendário da agenda */
   #calAgenda .cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   #calAgenda .cal-sem { font-size: 10.5px; font-weight: 800; color: var(--cinza, #a9a4b5); text-transform: uppercase; padding: 4px 0; text-align: center; }
@@ -148,7 +154,6 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div id="buscaAlunoLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
-    <button class="hamb-pt" id="btnTemaPt" title="Alternar entre modo escuro e claro" style="padding: 8px 10px;"><svg class='mi' viewBox='0 0 24 24' width='17' height='17' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg></button>
   </div>
 </header>
 
@@ -191,6 +196,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="relatorios"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg>Relatórios</button>
     <button data-a="assessoria"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/></svg>Assessoria</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
+    <div class="menu-tema">
+      <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
+      <button id="btnTemaPt" class="sw" role="switch" aria-checked="false" title="Mudar pro modo claro"><span class="sw-bola"></span></button>
+    </div>
   </div>
 
   <!-- DASHBOARD -->
@@ -997,7 +1006,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   $("abas").addEventListener("click", function (e) {
     var b = e.target.closest("button");
-    if (!b) return;
+    if (!b || !b.dataset.a) return; // o switch de tema também mora aqui — não é aba
     document.body.classList.remove("menu-aberto");
     document.querySelectorAll("#abas button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
     document.querySelectorAll("#navPt [data-nav]").forEach(function (x) { x.classList.toggle("ativa", x.dataset.nav === b.dataset.a); });
@@ -3239,7 +3248,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- /alternar tema (vale pro sistema todo — mtapp:tema) ----------
   function pintaBtnTemaPt() {
     var claro = document.documentElement.dataset.tema === "claro";
-    $("btnTemaPt").innerHTML = claro ? mi("lua", 17) : mi("sol", 17);
+    $("btnTemaPt").setAttribute("aria-checked", claro ? "true" : "false");
     $("btnTemaPt").title = claro ? "Voltar pro modo escuro" : "Mudar pro modo claro";
   }
   $("btnTemaPt").addEventListener("click", function () {
