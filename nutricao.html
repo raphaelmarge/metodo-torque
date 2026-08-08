@@ -14,6 +14,19 @@
 <meta name="apple-mobile-web-app-title" content="TQ Nutri">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
 <link href="apps/apps.css" rel="stylesheet">
+<script>
+// ícones desenhados do módulo (sem emoji) — também usados pelos renders dinâmicos
+window.MICO = {
+  sol: "<circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/>",
+  prancheta: "<rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/>",
+  balao: "<path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/>",
+  calendario: "<rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/>",
+  maca: "<path d='M12 7.5c-1-2-5.5-2.5-7 .5-1.8 3.6.5 9.5 3 11.5 1.2 1 2.3.3 4-.1 1.7.4 2.8 1.1 4 .1 2.5-2 4.8-7.9 3-11.5-1.5-3-6-2.5-7-.5z'/><path d='M12 7.5c0-2 1-3.5 2.5-4'/>",
+  pessoas: "<circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/>",
+  casa: "<path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/>"
+};
+window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width='" + (s || 15) + "' height='" + (s || 15) + "' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + (MICO[n] || "") + "</svg>"; };
+</script>
 <script>try{if(localStorage.getItem("mtapp:tema")==="claro")document.documentElement.dataset.tema="claro";addEventListener("storage",function(e){if(e.key==="mtapp:tema")document.documentElement.dataset.tema=e.newValue==="claro"?"claro":"";});}catch(e){}</script>
 <style>
   :root { --verde: #16a34a; --verde-2: #15803d; }
@@ -23,6 +36,26 @@
   .busca-topo { position: relative; margin-left: auto; flex: 1 1 170px; min-width: 150px; max-width: 260px; }
   @media (max-width: 560px) { .busca-topo { flex-basis: 100%; max-width: 100%; margin-left: 0; margin-top: 4px; } }
   .hamb-nt:hover { background: rgba(255,255,255,.22); }
+  .mi { vertical-align: -2.5px; }
+  .abas-nt button .mi { margin-right: 9px; vertical-align: -3px; }
+  #navNt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(16,20,17,.96); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid #23301f; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  #navNt button { background: none; border: 0; color: #8a9585; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
+  #navNt button.ativa { color: #4ade80; }
+  #navNt button:active { background: rgba(255,255,255,.06); }
+  .corpo { padding-bottom: 88px; }
+  html[data-tema="claro"] #navNt { background: rgba(255,255,255,.96); border-top-color: #dbe7d8; }
+  html[data-tema="claro"] #navNt button.ativa { color: var(--verde-2); }
+  .menu-tema { display: flex; align-items: center; gap: 10px; padding: 14px 18px; margin-top: 6px; border-top: 1px solid #2a3526; color: #a9b5a4; font-size: 13.5px; font-weight: 700; }
+  .menu-tema span { display: inline-flex; align-items: center; gap: 9px; }
+  .menu-tema .sw { margin-left: auto; width: 44px; height: 24px; border-radius: 99px; border: 1px solid #3a4636; background: #202b1d; position: relative; cursor: pointer; padding: 0; flex: none; transition: background .2s, border-color .2s; }
+  .menu-tema .sw .sw-bola { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #8a9585; transition: transform .2s, background .2s; }
+  .menu-tema .sw[aria-checked="true"] { background: var(--verde); border-color: var(--verde); }
+  .menu-tema .sw[aria-checked="true"] .sw-bola { transform: translateX(20px); background: #fff; }
+  .colunas-dash { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 800px) { .colunas-dash { grid-template-columns: 1fr; } }
+  .kv-nt { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--linha); font-size: 13.5px; }
+  .kv-nt:last-child { border-bottom: none; }
+  .kv-nt strong { font-variant-numeric: tabular-nums; text-align: right; }
   .abas-nt {
     position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
     background: #121a14; border-right: 1px solid #24312a; display: flex; flex-direction: column;
@@ -64,7 +97,7 @@
   .kpi-nt { background: var(--card); border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
   .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
   .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: #4ade80; }
-  /* 📱 perfil do paciente no celular: campos em grade organizada */
+  /* perfil do paciente no celular: campos em grade organizada */
   @media (max-width: 640px) {
     #qtAbasN { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     #alAbas, #agAbasN, #chAbasN { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
@@ -78,7 +111,7 @@
     #vQuestN .card .linha-flex > * { width: 100% !important; min-width: 0 !important; }
     #vQuestN .card .linha-flex select, #vQuestN .card .linha-flex .btn:not(.mini):not(.sec) { grid-column: 1 / -1; }
   }
-  /* ☀️ modo claro — chips do Nutri voltam pro pastel */
+  /* modo claro — chips do Nutri voltam pro pastel */
   html[data-tema="claro"] .tagn { background: #dcfce7; color: #15803d; border-color: rgba(22,163,74,.35); }
   html[data-tema="claro"] .tagn.roxa { background: #ede9fe; color: #6d28d9; border-color: rgba(124,58,237,.35); }
   html[data-tema="claro"] .tagn.ambar { background: #fef3c7; color: #b45309; border-color: rgba(245,158,11,.35); }
@@ -89,19 +122,25 @@
 
 <header class="topo" style="background: linear-gradient(135deg, #14532d, #166534);">
   <div class="topo-marca">
-    <button class="hamb-nt" id="btnMenuNt" aria-label="Abrir menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <div>
       <h1 id="tituloStudio">Meu consultório</h1>
     </div>
     <div class="busca-topo">
-      <input id="buscaPac" placeholder="🔍 Buscar paciente…" autocomplete="off"
+      <input id="buscaPac" placeholder="Buscar paciente…" autocomplete="off"
         style="width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; font-family: inherit; font-size: 13.5px;">
       <div id="buscaPacLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.35); z-index: 40; overflow: hidden;"></div>
     </div>
-    <button class="hamb-nt" id="btnTemaNt" title="Alternar entre modo escuro e claro" style="font-size: 15px; padding: 8px 10px;">☀️</button>
   </div>
 </header>
+
+<nav id="navNt" aria-label="Menu principal">
+  <button data-nav="dash" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/></svg><span>Início</span></button>
+  <button data-nav="pacientes"><svg class='mi' viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg><span>Pacientes</span></button>
+  <button data-nav="dietas"><svg class='mi' viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 7.5c-1-2-5.5-2.5-7 .5-1.8 3.6.5 9.5 3 11.5 1.2 1 2.3.3 4-.1 1.7.4 2.8 1.1 4 .1 2.5-2 4.8-7.9 3-11.5-1.5-3-6-2.5-7-.5z'/><path d='M12 7.5c0-2 1-3.5 2.5-4'/></svg><span>Dietas</span></button>
+  <button data-nav="agenda"><svg class='mi' viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg><span>Agenda</span></button>
+  <button id="btnMenuNt" aria-label="Abrir o menu com todas as abas"><svg class='mi' viewBox='0 0 24 24' width='19' height='19' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 6.5h16M4 12h16M4 17.5h16'/></svg><span>Menu</span></button>
+</nav>
 
 <main class="corpo">
 
@@ -114,21 +153,54 @@
     </div>
   </div>
 
-  <div class="kpis-nt" id="kpisN"></div>
-
   <div class="menu-fundo" id="fundoMenuNt"></div>
   <div class="abas-nt" id="abasNt">
     <div class="menu-cab">TORQUE ON<b>Módulo Nutrição</b></div>
-    <button data-a="pacientes" class="ativa">Pacientes</button>
-    <button data-a="dietas">Dietas</button>
-    <button data-a="alimentos">Alimentos</button>
-    <button data-a="receitas">Receitas</button>
-    <button data-a="agenda">Agenda</button>
-    <button data-a="quest">Check-ins</button>
-    <button data-a="chat">Chat</button>
+    <button data-a="dash" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/></svg>Início</button>
+    <button data-a="pacientes"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg>Pacientes</button>
+    <button data-a="dietas"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 7.5c-1-2-5.5-2.5-7 .5-1.8 3.6.5 9.5 3 11.5 1.2 1 2.3.3 4-.1 1.7.4 2.8 1.1 4 .1 2.5-2 4.8-7.9 3-11.5-1.5-3-6-2.5-7-.5z'/><path d='M12 7.5c0-2 1-3.5 2.5-4'/></svg>Dietas</button>
+    <button data-a="alimentos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11h16a8 8 0 0 1-16 0z'/><path d='M8 11V8.5M12 11V7M16 11V8.5M7 21h10M9 19l.5-4.2M15 19l-.5-4.2'/></svg>Alimentos</button>
+    <button data-a="receitas"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z'/><path d='M20 17v4H6.5A2.5 2.5 0 0 1 4 18.5'/></svg>Receitas</button>
+    <button data-a="agenda"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg>Agenda</button>
+    <button data-a="quest"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg>Check-ins</button>
+    <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
+    <div class="menu-tema">
+      <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
+      <button id="btnTemaNt" class="sw" role="switch" aria-checked="false" title="Mudar pro modo claro"><span class="sw-bola"></span></button>
+    </div>
   </div>
 
-  <div id="vPacientes">
+  <section id="vDashN">
+    <div class="kpis-nt" id="kpisN"></div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Metas do mês e projeção</h2>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin: 8px 0 10px;">
+        <label style="margin:0;font-size:12.5px;">Meta de faturamento (R$) <input id="mtFatN" type="number" min="0" style="width:130px;"></label>
+        <label style="margin:0;font-size:12.5px;">Meta de pacientes novos <input id="mtNovosN" type="number" min="0" style="width:90px;"></label>
+        <label style="margin:0;font-size:12.5px;">Meta de consultas <input id="mtConsN" type="number" min="0" style="width:90px;"></label>
+        <button class="btn sec mini" id="mtSalvarN">Salvar metas</button>
+      </div>
+      <div id="mtPainelN" class="muted" style="font-size:13.5px;">Defina as metas acima — a projeção usa o ritmo do mês até agora.</div>
+    </div>
+    <div class="colunas-dash">
+      <div class="card"><h2>Recebimentos</h2><div id="bRecebN" class="muted"></div></div>
+      <div class="card"><h2>Status da base</h2><div id="bBaseN" class="muted"></div></div>
+      <div class="card"><h2>Agenda de consultas</h2><div id="bAgN" class="muted"></div></div>
+      <div class="card"><h2>Dietas e app</h2><div id="bDietaN" class="muted"></div></div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Fechamento do mês</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Resumo prontinho do mês — receita, pacientes novos e consultas — pra mandar pro seu WhatsApp ou contador.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+        <select id="fchMesN" style="width: auto;"></select>
+        <button class="btn verde" id="fchZapN">Mandar no WhatsApp</button>
+        <button class="btn sec" id="fchCopiaN">Copiar resumo</button>
+      </div>
+      <p id="fchStatusN" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+    </div>
+  </section>
+
+  <div id="vPacientes" hidden>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Novo paciente</h2>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
@@ -151,7 +223,7 @@
       </div>
       <p id="pAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Com o e-mail preenchido, o paciente recebe o acesso do app na hora: o login é o e-mail dele e a senha (temporária) vai junto — ele troca dentro do app.</p>
     </div>
-    <div id="listaPacientes" class="muted">Cadastre o primeiro paciente. 🥦</div>
+    <div id="listaPacientes" class="muted">Cadastre o primeiro paciente.</div>
   </div>
 
   <div id="vDietas" hidden>
@@ -161,7 +233,7 @@
         <select id="dAluno" style="min-width: 220px;"></select>
         <button class="btn verde" id="dGerar" title="Mifflin-St Jeor + objetivo + banco de alimentos">Gerar dieta automática</button>
         <button class="btn sec" id="dZap">Enviar resumo no WhatsApp</button>
-        <button class="btn sec" id="dPdf" title="plano alimentar imprimível — imprima ou salve em PDF pra entregar ao paciente">🖨 Plano em PDF</button>
+        <button class="btn sec" id="dPdf" title="plano alimentar imprimível — imprima ou salve em PDF pra entregar ao paciente">Plano em PDF</button>
       </div>
       <div id="dResumo" class="muted" style="margin-top: 10px; font-size: 13.5px;"></div>
       <div class="linha-flex" style="gap: 8px; margin-top: 10px; align-items: center;">
@@ -197,8 +269,8 @@
 
   <div id="vAlimentos" hidden>
     <div class="abas" id="alAbas" style="margin: 0 0 14px;">
-      <button data-ala="banco" class="ativa">🥦 Banco de alimentos</button>
-      <button data-ala="add">➕ Adicionar alimento</button>
+      <button data-ala="banco" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11h16a8 8 0 0 1-16 0z'/><path d='M8 11V8.5M12 11V7M16 11V8.5M7 21h10M9 19l.5-4.2M15 19l-.5-4.2'/></svg> Banco de alimentos</button>
+      <button data-ala="add"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Adicionar alimento</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-alsec="banco">
       <h2>Banco de alimentos (curadoria)</h2>
@@ -238,8 +310,8 @@
 
   <div id="vAgendaN" hidden>
     <div class="abas" id="agAbasN" style="margin: 0 0 14px;">
-      <button data-aga="consultas" class="ativa">📌 Consultas</button>
-      <button data-aga="marcar">➕ Marcar</button>
+      <button data-aga="consultas" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 21c-3.6-3.2-6-6.5-6-9.8a6 6 0 0 1 12 0c0 3.3-2.4 6.6-6 9.8z'/><circle cx='12' cy='11' r='2.2'/></svg> Consultas</button>
+      <button data-aga="marcar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Marcar</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-agsec="marcar" hidden>
       <h2>Marcar consulta</h2>
@@ -260,7 +332,7 @@
       <div id="calAgendaN" style="margin: 10px 0 12px;"></div>
       <div id="listaConsultas" class="muted">Nenhuma consulta marcada.</div>
       <div class="linha-flex" style="margin-top: 12px;">
-        <button class="btn sec" id="btnIcsN">📅 Enviar pro meu calendário</button>
+        <button class="btn sec" id="btnIcsN"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Enviar pro meu calendário</button>
         <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as consultas entram lá.</span>
       </div>
     </div>
@@ -269,9 +341,9 @@
   <!-- CHECK-INS (questionários pro paciente, estilo LiveClin) -->
   <div id="vQuestN" hidden>
     <div class="abas" id="qtAbasN" style="margin: 0 0 14px;">
-      <button data-qta="enviar" class="ativa">📤 Enviar pro paciente</button>
-      <button data-qta="montar">📝 Perguntas e check-ins</button>
-      <button data-qta="resp">📊 Respostas</button>
+      <button data-qta="enviar" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro paciente</button>
+      <button data-qta="montar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4M9 12h6M9 15.5h4'/></svg> Perguntas e check-ins</button>
+      <button data-qta="resp"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Respostas</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Minhas perguntas</h2>
@@ -280,9 +352,9 @@
         <input id="qpSiglaN" placeholder="Sigla (ex.: FOME)" maxlength="5" style="width: 130px; text-transform: uppercase;">
         <input id="qpTituloN" placeholder="Título (ex.: Fome)" maxlength="30" style="width: 200px;">
         <select id="qpTipoN" style="width: auto;">
-          <option value="emoji">😍 Escala de emojis (com pontos)</option>
-          <option value="linear">🔢 Escala 0–10</option>
-          <option value="texto">✍️ Resposta livre</option>
+          <option value="emoji">Escala de carinhas (com pontos)</option>
+          <option value="linear">Escala 0–10</option>
+          <option value="texto">Resposta livre</option>
         </select>
       </div>
       <input id="qpTextoN" placeholder="A pergunta em si (ex.: Como foi sua fome nos últimos 7 dias?)" style="width: 100%; margin-top: 8px;">
@@ -320,8 +392,8 @@
       <div id="qeSaidaN" hidden style="margin-top: 10px;">
         <input id="qeLinkN" readonly style="width: 100%; font-size: 12px;">
         <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
-          <a class="btn whats" id="qeZapN" target="_blank" rel="noopener">💬 Mandar no WhatsApp</a>
-          <button class="btn sec" id="qeCopiaN">📋 Copiar link</button>
+          <a class="btn whats" id="qeZapN" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+          <button class="btn sec" id="qeCopiaN"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg> Copiar link</button>
         </div>
         <p id="qeAvisoN" hidden class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
       </div>
@@ -335,8 +407,8 @@
 
   <div id="vChatN" hidden>
     <div class="abas" id="chAbasN" style="margin: 0 0 14px;">
-      <button data-cha="conversas" class="ativa">💬 Conversas</button>
-      <button data-cha="robo">🤖 Robô e automações</button>
+      <button data-cha="conversas" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg> Conversas</button>
+      <button data-cha="robo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Robô e automações</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-chsec="conversas">
       <h2>Conversas com os pacientes</h2>
@@ -393,21 +465,21 @@
       <label style="margin: 0; font-size: 12.5px;">Valor da consulta (R$, opcional)
         <input id="cfgPixValor" inputmode="decimal" placeholder="150" style="width: 100px; display: block; margin-top: 4px;"></label>
     </div>
-    <label style="display: block; margin: 10px 0 0; font-size: 12.5px;">📌 Mural dos pacientes — um aviso por linha (entra no app de todos quando você gerar/publicar de novo)
+    <label style="display: block; margin: 10px 0 0; font-size: 12.5px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 21c-3.6-3.2-6-6.5-6-9.8a6 6 0 0 1 12 0c0 3.3-2.4 6.6-6 9.8z'/><circle cx='12' cy='11' r='2.2'/></svg> Mural dos pacientes — um aviso por linha (entra no app de todos quando você gerar/publicar de novo)
       <textarea id="cfgMural" rows="3" placeholder="Agenda de dezembro aberta — garanta seu horário!
-Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px;"></textarea></label>
+Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></textarea></label>
     <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--linha);">
-      <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 0 0 8px;">🎨 A cara do seu consultório</h3>
+      <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 0 0 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg> A cara do seu consultório</h3>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
         <label style="margin: 0; font-size: 12.5px;">Cor principal (botões e app do paciente)
           <input type="color" id="cfgCorN" value="#16a34a" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid var(--linha); border-radius: 8px; background: #fff; cursor: pointer;"></label>
         <button class="btn sec mini" id="cfgCorResetN">Voltar ao verde padrão</button>
         <img id="cfgLogoPrevN" alt="Logo do consultório" hidden style="height: 40px; border-radius: 8px; border: 1px solid var(--linha); background: #fff; padding: 2px;">
-        <button class="btn sec mini" id="cfgLogoBtnN">🖼 Enviar logo</button>
+        <button class="btn sec mini" id="cfgLogoBtnN">Enviar logo</button>
         <button class="btn sec mini" id="cfgLogoDelN" hidden>✕ tirar logo</button>
         <input type="file" id="cfgLogoFileN" accept="image/*" hidden>
       </div>
-      <p class="muted" style="font-size: 12px; margin: 8px 0 0;">Mudou a cara? Gere/publique o app dos pacientes de novo — a cor e a logo vão junto. 😉</p>
+      <p class="muted" style="font-size: 12px; margin: 8px 0 0;">Mudou a cara? Gere/publique o app dos pacientes de novo — a cor e a logo vão junto.</p>
     </div>
   </div>
 
@@ -429,12 +501,12 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       <label style="font-size: 12px; margin: 0;">E-mail<input id="pnEmail" type="email" style="display:block; width: 190px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Idade<input id="pnIdade" inputmode="numeric" style="display:block; width: 66px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pnAltura" inputmode="numeric" style="display:block; width: 84px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Objetivo<select id="pnObjetivo" style="display:block; width: 130px; margin-top: 3px;"><option value="emagrecer">🔥 emagrecer</option><option value="manter">⚖️ manter</option><option value="ganhar">💪 ganhar</option></select></label>
-      <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pnPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">💠 Pix</option><option value="dinheiro">💵 Dinheiro</option><option value="cartao">💳 Cartão</option><option value="plano">📄 Plano/pacote</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Objetivo<select id="pnObjetivo" style="display:block; width: 130px; margin-top: 3px;"><option value="emagrecer">emagrecer</option><option value="manter">manter</option><option value="ganhar">ganhar</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pnPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="plano">📄 Plano/pacote</option></select></label>
     </div>
     <label style="font-size: 12px; display: block; margin: 8px 0 0;">Restrições e observações
       <textarea id="pnObs" rows="2" style="width: 100%; margin-top: 3px;"></textarea></label>
-    <button class="btn verde mini" id="pnSalvar" style="margin-top: 8px;">💾 Salvar dados</button>
+    <button class="btn verde mini" id="pnSalvar" style="margin-top: 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar dados</button>
     <span id="pnSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
     <div id="pnAlvo" class="muted" style="font-size: 12.5px; margin-top: 6px;"></div>
 
@@ -443,8 +515,8 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     <div class="linha-flex" style="gap: 8px; margin-top: 6px; align-items: center;">
       <input id="pnPgValor" inputmode="decimal" placeholder="Valor R$" style="width: 100px;">
       <button class="btn verde mini" id="pnPgAdd">+ Registrar pagamento</button>
-      <button class="btn sec mini" id="pnPgLink" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto) pra mandar no WhatsApp">💳 Link de pagamento</button>
-      <button class="btn sec mini" id="pnAssinar" title="cobrança automática todo mês no cartão do paciente (Pagar.me)">🔁 Assinatura mensal</button>
+      <button class="btn sec mini" id="pnPgLink" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto) pra mandar no WhatsApp">Link de pagamento</button>
+      <button class="btn sec mini" id="pnAssinar" title="cobrança automática todo mês no cartão do paciente (Pagar.me)">Assinatura mensal</button>
     </div>
     <div id="pnAssinaturaBox" style="font-size: 13px; margin-top: 6px;"></div>
 
@@ -461,13 +533,13 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Dieta atual</h3>
     <div id="pnDieta" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
 
-    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">📱 O que o paciente registrou no app</h3>
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> O que o paciente registrou no app</h3>
     <div id="pnAppDados" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
 
     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
-      <button class="btn verde mini" id="pnAcesso">📧 Enviar acesso do app</button>
-      <button class="btn sec mini" id="pnApp" title="baixa o arquivo do app (uso offline)">📲 Gerar app</button>
-      <a class="btn whats mini" id="pnWhats" target="_blank" rel="noopener" style="display:none;">💬 WhatsApp</a>
+      <button class="btn verde mini" id="pnAcesso"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
+      <button class="btn sec mini" id="pnApp" title="baixa o arquivo do app (uso offline)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Gerar app</button>
+      <a class="btn whats mini" id="pnWhats" target="_blank" rel="noopener" style="display:none;">WhatsApp</a>
     </div>
     <p id="pnAcessoInfo" class="muted" style="font-size: 12px; margin: 8px 0 0;"></p>
   </div>
@@ -611,11 +683,20 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
   document.getElementById("fundoMenuNt").onclick = function () { document.body.classList.remove("menu-aberto"); };
 
   // ---------- abas ----------
+  document.querySelectorAll("#navNt [data-nav]").forEach(function (x) {
+    x.addEventListener("click", function () {
+      var alvo = document.querySelector('#abasNt [data-a="' + x.dataset.nav + '"]');
+      if (alvo) alvo.click();
+    });
+  });
   document.getElementById("abasNt").addEventListener("click", function (e) {
     var b = e.target.closest("button");
-    if (!b) return;
+    if (!b || !b.dataset.a) return; // o switch de tema também mora aqui — não é aba
     document.body.classList.remove("menu-aberto");
     document.querySelectorAll("#abasNt button").forEach(function (x) { x.classList.toggle("ativa", x === b); });
+    document.querySelectorAll("#navNt [data-nav]").forEach(function (x) { x.classList.toggle("ativa", x.dataset.nav === b.dataset.a); });
+    $("vDashN").hidden = b.dataset.a !== "dash";
+    if (b.dataset.a === "dash") renderDashN();
     $("vPacientes").hidden = b.dataset.a !== "pacientes";
     $("vDietas").hidden = b.dataset.a !== "dietas";
     $("vAlimentos").hidden = b.dataset.a !== "alimentos";
@@ -625,7 +706,6 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     $("vChatN").hidden = b.dataset.a !== "chat";
     // o card da conta (ilha) só aparece na aba Pacientes — não precisa repetir em todas
     $("cardContaN").hidden = b.dataset.a !== "pacientes";
-    $("kpisN").hidden = b.dataset.a !== "pacientes";
     if (b.dataset.a === "dietas") renderDietas();
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
@@ -682,16 +762,16 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       var alvo = kcalAlvo(p);
       return '<div class="pac"><b style="font-size:15px;">' + esc(p.nome) + "</b>" +
         '<span class="tagn' + (p.objetivo === "ganhar" ? " roxa" : p.objetivo === "emagrecer" ? " ambar" : "") + '">' +
-        (p.objetivo === "emagrecer" ? "🔥 emagrecer" : p.objetivo === "ganhar" ? "💪 ganhar" : "⚖️ manter") + "</span>" +
+        (p.objetivo === "emagrecer" ? "emagrecer" : p.objetivo === "ganhar" ? "ganhar" : "manter") + "</span>" +
         '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
-        (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">📱 app ✓</span>' : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail">📧 Enviar acesso</button>') +
+        (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">app ✓</span>' : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail"> Enviar acesso</button>') +
         '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
-        '<button class="btn verde mini" data-perfil="' + p.id + '">👤 Perfil</button>' +
+        '<button class="btn verde mini" data-perfil="' + p.id + '">Perfil</button>' +
         '<button class="btn verde mini" data-app="' + p.id + '">App do paciente</button>' +
-        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">💬</a>' : "") +
+        (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
         '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></span></div>';
-    }).join("") : "Cadastre o primeiro paciente. 🥦";
+    }).join("") : "Cadastre o primeiro paciente.";
   }
   $("pAdd").addEventListener("click", function () {
     var nome = $("pNome").value.trim();
@@ -749,7 +829,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var p = st.pacientes.find(function (x) { return x.id === id; });
     if (!p) return;
     perfilNId = id;
-    $("pnTitulo").textContent = "👤 " + p.nome;
+    $("pnTitulo").textContent = p.nome;
     $("pnDesde").textContent = p.desde ? "paciente desde " + S.fmtData(p.desde) : "";
     $("pnNome").value = p.nome; $("pnZap").value = p.zap || ""; $("pnEmail").value = p.email || "";
     $("pnIdade").value = p.idade || ""; $("pnAltura").value = p.altura || "";
@@ -767,16 +847,17 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       .reduce(function (s, x) { return s + (+x.valor || 0); }, 0);
     var vPadrao = +((st.config || {}).pixValor) || 0;
     $("pnPgValor").value = vPadrao || "";
-    $("pnFin").innerHTML = (p.cartaoFalhouEm ? "<span style='color:#dc2626;font-weight:700;'>⚠️ Cartão recusado em " + S.fmtData(p.cartaoFalhouEm) + " — fala com o paciente.</span><br>" : "") +
+    $("pnFin").innerHTML = (p.cartaoFalhouEm ? "<span style='color:#dc2626;font-weight:700;'>Cartão recusado em " + S.fmtData(p.cartaoFalhouEm) + " — fala com o paciente.</span><br>" : "") +
       "Recebido em " + ano + ": <b>R$ " + totalAno.toFixed(2).replace(".", ",") + "</b>" +
       (vPadrao ? " · consulta padrão R$ " + vPadrao.toFixed(2).replace(".", ",") : "") +
       (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Últimos: " + pgs.slice(0, 5).map(function (x) {
-        return S.fmtData(x.data) + " (R$ " + (+x.valor).toFixed(2).replace(".", ",") + ")";
+        return S.fmtData(x.data) + " (R$ " + (+x.valor).toFixed(2).replace(".", ",") +
+          ') <a href="#" data-recibo="' + x.id + '" style="color:var(--verde);">recibo</a>';
       }).join(" · ") + "</div>" : "<div class='muted' style='font-size:12.5px;margin-top:4px;'>Nenhum pagamento registrado ainda.</div>");
-    // 🔁 assinatura mensal no cartão (Pagar.me — módulo compartilhado)
+    // assinatura mensal no cartão (Pagar.me — módulo compartilhado)
     if (p.assinaturaRec) {
       $("pnAssinar").style.display = "none";
-      $("pnAssinaturaBox").innerHTML = "🔁 Assinatura ativa desde " + S.fmtData(p.assinaturaRec.desde) +
+      $("pnAssinaturaBox").innerHTML = "Assinatura ativa desde " + S.fmtData(p.assinaturaRec.desde) +
         " (R$ " + (+p.assinaturaRec.valor || 0).toFixed(2).replace(".", ",") + "/mês) " +
         '<button class="btn sec mini" id="pnAssinaturaStatus">ver status</button> ' +
         '<button class="btn sec mini" id="pnAssinaturaCancela">✕ cancelar</button>' +
@@ -801,7 +882,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     // dieta
     var d = st.dietas[id];
     $("pnDieta").innerHTML = (d && (d.refeicoes || []).length)
-      ? d.refeicoes.length + " refeição(ões) · 💧 " + (d.aguaMl || 2000) + " ml/dia" +
+      ? d.refeicoes.length + " refeição(ões) · água " + (d.aguaMl || 2000) + " ml/dia" +
         (d.geradaAuto ? " · gerada automática em " + S.fmtData(d.geradaEm) : "")
       : "Sem dieta montada — monte na aba Dietas.";
     var wa = $("pnWhats");
@@ -818,7 +899,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     box.textContent = "Carregando registros do app…";
     nuvem.client.from("app_aluno").select("retorno").eq("token", p.appTokenN).limit(1)
       .then(function (r) {
-        if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
+        if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
         var ret = r && r.data && r.data[0] && r.data[0].retorno;
         if (!ret) { box.textContent = "O paciente ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui."; return; }
         var html = "";
@@ -827,21 +908,21 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         if (pz.length) {
           var ult = pz[pz.length - 1], pri = pz[0];
           var dif = Math.round((+ult.kg - +pri.kg) * 10) / 10;
-          html += "<div><b>⚖️ Peso na balança (registrado por ele):</b> " + String(ult.kg).replace(".", ",") + " kg em " + S.fmtData(ult.d) +
+          html += "<div><b>Peso na balança (registrado por ele):</b> " + String(ult.kg).replace(".", ",") + " kg em " + S.fmtData(ult.d) +
             (pz.length > 1 ? " (<b style='color:" + (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> desde o início · " + pz.length + " registros)" : "") + "</div>";
         }
         // adesão do dia: refeições + água
         if (ret.dia) {
           var hojeReg = ret.dia === S.todayISO();
-          html += "<div><b>🍽 Adesão" + (hojeReg ? " de hoje" : " em " + S.fmtData(ret.dia)) + ":</b> " +
+          html += "<div><b>Adesão" + (hojeReg ? " de hoje" : " em " + S.fmtData(ret.dia)) + ":</b> " +
             (ret.refsTotal ? (ret.refsFeitas || 0) + " de " + ret.refsTotal + " refeições da dieta" : "sem dieta no app") +
-            " · 💧 " + (ret.agua || 0) + " de " + (ret.aguaMeta || 0) + " ml de água</div>";
+            " · água " + (ret.agua || 0) + " de " + (ret.aguaMeta || 0) + " ml de água</div>";
         }
         // recordatório: o que ele registrou fora da dieta
         var di = ret.diario || [];
         if (di.length) {
           var kcalDi = di.reduce(function (t, x) { return t + (+x.k || 0); }, 0);
-          html += "<div style='margin-top:4px;'><b>📝 Fora da dieta (diário):</b> " + di.map(function (x) {
+          html += "<div style='margin-top:4px;'><b>Fora da dieta (diário):</b> " + di.map(function (x) {
             return esc(x.n) + " (" + String(x.q).replace(".", ",") + "x · " + x.k + " kcal)";
           }).join(" · ") + " — total " + kcalDi + " kcal</div>";
         }
@@ -850,7 +931,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         var dataOk = function (d2) { return String(d2 || "").replace(/[^0-9-]/g, ""); };
         var fA = fotoOk(ret.fotoAntes), fD = fotoOk(ret.fotoDepois), fAd = dataOk(ret.fotoAntesD), fDd = dataOk(ret.fotoDepoisD);
         if (fA) {
-          html += "<div style='margin-top:8px;'><b>📸 Fotos de progresso</b></div><div style='display:flex;gap:10px;max-width:360px;'>" +
+          html += "<div style='margin-top:8px;'><b>Fotos de progresso</b></div><div style='display:flex;gap:10px;max-width:360px;'>" +
             "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#6b7280;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
             (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#6b7280;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") + "</div>";
         }
@@ -900,12 +981,12 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     p.restricoes = $("pnObs").value.trim();
     save(st);
     var alvo = kcalAlvo(p);
-    $("pnTitulo").textContent = "👤 " + p.nome;
+    $("pnTitulo").textContent = p.nome;
     $("pnAlvo").textContent = "TMB " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal";
-    $("pnSalvo").textContent = "✅ salvo!";
+    $("pnSalvo").textContent = "✓ salvo!";
     setTimeout(function () { $("pnSalvo").textContent = ""; }, 2000);
   });
-  // 💳 Pagar.me: link de checkout seguro da consulta (mesma função da nuvem dos outros módulos)
+  // Pagar.me: link de checkout seguro da consulta (mesma função da nuvem dos outros módulos)
   function geraLinkPagamentoN(pacienteId, valor, cb) {
     cb = cb || function () {};
     var st = load();
@@ -914,7 +995,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     if (!valor || valor < 1) { cb({ erro: "Escreva o valor da consulta primeiro." }); return; }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
-    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card ☁️ Sua ilha) pra gerar o link de pagamento." }); return; }
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra gerar o link de pagamento." }); return; }
     nuvem.client.auth.getSession().then(function (s) {
       var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
       return fetch(cfg.url + "/functions/v1/pagarme", {
@@ -929,7 +1010,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
   }
   window.__pagarmeNT = geraLinkPagamentoN; // testes
 
-  // 🔁 baixa automática: assinaturas pagas no cartão (webhook Pagar.me) viram pagamento registrado
+  // baixa automática: assinaturas pagas no cartão (webhook Pagar.me) viram pagamento registrado
   function puxaPagamentosCartaoN() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return;
@@ -967,18 +1048,18 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var btn = this;
     btn.disabled = true; btn.textContent = "⏳ Gerando…";
     geraLinkPagamentoN(perfilNId, v, function (r) {
-      btn.disabled = false; btn.textContent = "💳 Link de pagamento";
+      btn.disabled = false; btn.textContent = "Link de pagamento";
       if (r.erro) { alert(r.erro); return; }
       var st = load();
       var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
       var msg = "Oi " + (p ? p.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar a consulta (cartão, Pix ou boleto): " + r.link;
       if (confirm("Link gerado! Mandar pro paciente no WhatsApp agora?")) {
         window.open("https://wa.me/" + (p && p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
-      } else if (navigator.clipboard) { navigator.clipboard.writeText(r.link); alert("Link copiado! 📋"); }
+      } else if (navigator.clipboard) { navigator.clipboard.writeText(r.link); alert("Link copiado!"); }
     });
   });
 
-  // 🔁 assinatura mensal no cartão (módulo compartilhado assets/pagarme-cartao.js)
+  // assinatura mensal no cartão (módulo compartilhado assets/pagarme-cartao.js)
   $("pnAssinar").addEventListener("click", function () {
     var st = load();
     var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
@@ -1031,6 +1112,30 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     }
   });
 
+  function abreReciboN(pgId) {
+    var st = load();
+    var p = (st.pagamentosN || []).find(function (x) { return x.id === pgId; });
+    if (!p) return;
+    var pac = st.pacientes.find(function (x) { return x.id === p.pacienteId; }) || { nome: "—" };
+    var cfg = st.config || {};
+    var quem = cfg.nome || "Nutricionista";
+    var w = window.open("", "_blank");
+    w.document.write("<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'><title>Recibo</title>" +
+      "<style>body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#111;line-height:1.7;}" +
+      "h2{border-bottom:2px solid #111;padding-bottom:8px;}button{padding:10px 16px;margin-top:24px;cursor:pointer;}" +
+      "@media print{.no-print{display:none;}}</style></head><body>" +
+      "<h2>RECIBO — R$ " + (+p.valor).toFixed(2).replace(".", ",") + "</h2>" +
+      "<p>Recebi de <b>" + esc(pac.nome) + "</b> a quantia de <b>R$ " + (+p.valor).toFixed(2).replace(".", ",") +
+      "</b>, referente a atendimento nutricional, no dia " + S.fmtData(p.data) + ".</p>" +
+      "<p>" + S.fmtData(S.todayISO()) + ".</p>" +
+      "<br><br><p>_______________________________<br>" + esc(quem) + "</p>" +
+      "<button class='no-print' onclick='window.print()'>Imprimir / salvar em PDF</button></body></html>");
+    w.document.close();
+  }
+  $("pnFin").addEventListener("click", function (e) {
+    var rc = e.target.getAttribute && e.target.getAttribute("data-recibo");
+    if (rc) { e.preventDefault(); abreReciboN(rc); }
+  });
   $("pnPgAdd").addEventListener("click", function () {
     var v = parseFloat(($("pnPgValor").value || "").replace(",", "."));
     if (!v || v <= 0) { alert("Escreva o valor da consulta."); return; }
@@ -1148,7 +1253,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var mT = macrosDaDieta(st, dieta), mA = macrosAlvo(p);
     var pctM = function (v, a) { return a ? Math.round(100 * v / a) : 0; };
     $("dTotais").innerHTML = "Total da dieta: <b style='color:var(--verde-2);'>" + total + " kcal</b> de " + alvo.alvo + " kcal alvo (" + pct + "%)" +
-      (pct >= 90 && pct <= 110 ? " ✅" : " — ajuste as porções") +
+      (pct >= 90 && pct <= 110 ? " ✓" : " — ajuste as porções") +
       "<div style='font-weight:600;font-size:13px;margin-top:4px;'>Macros: 🥩 Proteína <b>" + mT.prot + " g</b> de " + mA.prot + " g (" + pctM(mT.prot, mA.prot) + "%) · " +
       "🍚 Carbo <b>" + mT.carb + " g</b> de " + mA.carb + " g (" + pctM(mT.carb, mA.carb) + "%) · " +
       "🥑 Gordura <b>" + mT.gord + " g</b> de " + mA.gord + " g (" + pctM(mT.gord, mA.gord) + "%)</div>";
@@ -1187,7 +1292,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       ".no-print{background:#16a34a;color:#fff;border:none;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:18px;}" +
       "@media print{.no-print{display:none;}}" +
       "</style></head><body>" +
-      "<button class='no-print' onclick='window.print()'>🖨 Imprimir / salvar em PDF</button>" +
+      "<button class='no-print' onclick='window.print()'>Imprimir / salvar em PDF</button>" +
       "<div class='k'>" + esc(consultorio.toUpperCase()) + " · PLANO ALIMENTAR</div>" +
       "<h1>" + esc(p.nome) + "</h1>" +
       "<div class='sub'>" + (p.idade ? p.idade + " anos · " : "") + (p.peso ? String(p.peso).replace(".", ",") + " kg · " : "") + (p.altura ? p.altura + " cm · " : "") +
@@ -1227,7 +1332,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     st.dietas[p.id] = gerarDieta(st, p);
     S.write("ntStudio", st);
     renderDietas();
-    alert("🤖 Dieta gerada com " + st.dietas[p.id].refeicoes.length + " refeições para " + kcalAlvo(p).alvo + " kcal.\n\n⚠️ Revise e ajuste — a decisão final é sempre do profissional.");
+    alert("Dieta gerada com " + st.dietas[p.id].refeicoes.length + " refeições para " + kcalAlvo(p).alvo + " kcal.\n\n⚠️ Revise e ajuste — a decisão final é sempre do profissional.");
   });
   $("dRefAdd").addEventListener("click", function () {
     var p = pacienteSel();
@@ -1371,7 +1476,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
         if (st.alimentos.some(function (a) { return a.nome === nome; })) { $("cbStatus").textContent = "\"" + nome + "\" já está nos seus alimentos. ✓"; return; }
         st.alimentos.push({ id: S.uid(), nome: nome, porcao: "100 g", kcal: kcal, prot: prot, carb: carb, gord: gord, codigo: codigo });
         S.write("ntStudio", st);
-        $("cbStatus").textContent = "✅ \"" + nome + "\" adicionado: " + kcal + " kcal/100 g.";
+        $("cbStatus").textContent = "✓ \"" + nome + "\" adicionado: " + kcal + " kcal/100 g.";
         $("cbCodigo").value = "";
         renderAlimentos();
       })
@@ -1478,7 +1583,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       st.alimentos.push({ id: S.uid(), nome: "Receita: " + r.n, porcao: "1 porção", kcal: r.k, prot: r.pt });
       S.write("ntStudio", st);
       renderReceitas();
-      alert('"' + r.n + '" entrou no seu banco de alimentos — já dá pra usar nas refeições da dieta. 🍳');
+      alert('"' + r.n + '" entrou no seu banco de alimentos — já dá pra usar nas refeições da dieta.');
     }
     if (zap) {
       e.preventDefault();
@@ -2004,7 +2109,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var url = "https://www.torqueon.com.br/aluno-login.html";
     return "<div style='font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;background:#f2f7f2;color:#1c2620;border-radius:16px;padding:28px;'>" +
       "<div style='font-size:11px;letter-spacing:.2em;color:#16a34a;font-weight:700;'>" + esc(consultorio.toUpperCase()) + "</div>" +
-      "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de acompanhamento está pronto, " + esc(primeiro) + "! 🥗</h1>" +
+      "<h1 style='font-size:22px;margin:8px 0 4px;'>Seu app de acompanhamento está pronto, " + esc(primeiro) + "!</h1>" +
       "<p style='color:#54604f;font-size:14px;line-height:1.6;'>É só entrar com o seu e-mail e a senha abaixo — depois troque a senha dentro do app, no card <b>Meu login</b>.</p>" +
       "<div style='background:var(--card);border:1px solid #dbe5db;border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;'>" +
       "<div style='margin-bottom:6px;'><span style='color:#54604f;'>Login:</span> <b>" + esc(email) + "</b></div>" +
@@ -2031,7 +2136,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var email = String(p.email || "").trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { cb({ erro: "Cadastre um e-mail válido pro paciente primeiro (perfil dele)." }); return; }
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { cb({ erro: "Entre na sua conta (card ☁️ Sua ilha) pra criar o acesso online." }); return; }
+    if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) pra criar o acesso online." }); return; }
     if (!p.appTokenN) { p.appTokenN = S.uid() + S.uid(); S.write("ntStudio", st); }
     var stamp = new Date().toISOString();
     var html = montaAppNutri(p, stamp);
@@ -2043,7 +2148,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
           var d = r2 && r2.data;
           if (r2 && r2.error) { cb({ erro: "Não deu pra criar o login: " + r2.error.message }); return; }
           if (d && d.erro) { cb({ erro: d.erro }); return; }
-          // marca na lista que este paciente já tem o acesso do app (chip 📱 app ✓)
+          // marca na lista que este paciente já tem o acesso do app (chip app ✓)
           var st3 = load();
           var p3 = st3.pacientes.find(function (x) { return x.id === pid; });
           if (p3) { p3.acessoEm = stamp; S.write("ntStudio", st3); }
@@ -2059,13 +2164,13 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
   }
   function msgAcessoN(r, p) {
-    if (r.erro) return "⚠️ " + esc(r.erro);
+    if (r.erro) return esc(r.erro);
     if (r.semEmail) {
       var texto = "Oi " + p.nome.split(" ")[0] + "! Seu app de acompanhamento está pronto. 🥗\nEntra em https://www.torqueon.com.br/aluno-login.html\nLogin: " + r.email + "\nSenha temporária: " + r.senha + "\n(troca a senha dentro do app, no card Meu login)";
-      return "✅ Acesso criado — mas o e-mail não saiu (" + esc(r.motivo) + ").<br>Login: <b>" + esc(r.email) + "</b> · senha temporária: <b style='font-family:monospace;'>" + esc(r.senha) + "</b> " +
-        '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/' + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto) + '">💬 Mandar no WhatsApp</a>';
+      return "✓ Acesso criado — mas o e-mail não saiu (" + esc(r.motivo) + ").<br>Login: <b>" + esc(r.email) + "</b> · senha temporária: <b style='font-family:monospace;'>" + esc(r.senha) + "</b> " +
+        '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/' + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto) + '">Mandar no WhatsApp</a>';
     }
-    return "📧 Acesso enviado pro e-mail <b>" + esc(r.email) + "</b>! O paciente entra em torqueon.com.br/aluno-login.html com o e-mail e a senha que chegou (e troca a senha no app).";
+    return "Acesso enviado pro e-mail <b>" + esc(r.email) + "</b>! O paciente entra em torqueon.com.br/aluno-login.html com o e-mail e a senha que chegou (e troca a senha no app).";
   }
   $("pnAcesso").addEventListener("click", function () {
     if (!perfilNId) return;
@@ -2077,7 +2182,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var b = this;
     b.disabled = true; b.textContent = "⏳ Enviando…";
     criaAcessoPaciente(perfilNId, function (r) {
-      b.disabled = false; b.textContent = "📧 Enviar acesso do app";
+      b.disabled = false; b.innerHTML = mi("envelope") + " Enviar acesso do app";
       $("pnAcessoInfo").innerHTML = msgAcessoN(r, p);
       if (r.erro) alert(r.erro);
     });
@@ -2108,19 +2213,19 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     };
     espera(6).then(function (nuvem) {
       if (!nuvem) {
-        alert("Arquivo do app baixado! Envie pelo WhatsApp do paciente.\n\n💡 Criando sua conta (card lá embaixo), o app ganha link online que se atualiza sozinho quando você mudar a dieta.");
+        alert("Arquivo do app baixado! Envie pelo WhatsApp do paciente.\n\nDica: criando sua conta (card lá embaixo), o app ganha link online que se atualiza sozinho quando você mudar a dieta.");
         return;
       }
       nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: { html: html, stamp: stamp }, atualizado: stamp }])
         .then(function (r) {
-          if (r.error) { alert("⚠️ Baixei o arquivo, mas o app NÃO foi salvo na nuvem: " + r.error.message + "\n\nO link online não vai funcionar até publicar de novo com internet."); return; }
+          if (r.error) { alert("Baixei o arquivo, mas o app NÃO foi salvo na nuvem: " + r.error.message + "\n\nO link online não vai funcionar até publicar de novo com internet."); return; }
           var url = location.origin + location.pathname.replace(/nutricao\.html$/, "") + "app/?t=" + p.appTokenN;
           var msg = "Oi " + p.nome.split(" ")[0] + "! 🥗 Seu app de dieta está pronto: " + url + " — abre no navegador e usa 'Adicionar à tela inicial'.";
           if (confirm("App publicado! Mandar o link pro " + p.nome.split(" ")[0] + " no WhatsApp agora?")) {
             window.open("https://wa.me/" + (p.zap ? "55" + String(p.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg), "_blank");
           }
         }, function (e) {
-          alert("⚠️ Baixei o arquivo, mas o app NÃO foi salvo na nuvem (sem conexão: " + ((e && e.message) || "rede") + "). Publique de novo com internet pra ativar o link online.");
+          alert("Baixei o arquivo, mas o app NÃO foi salvo na nuvem (sem conexão: " + ((e && e.message) || "rede") + "). Publique de novo com internet pra ativar o link online.");
         });
     });
   }
@@ -2176,7 +2281,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     cal += "</div>";
     $("calAgendaN").innerHTML = cal;
     var doSel = (porDia[diaSel] || []).slice().sort(function (a, b) { return (a.hora || "") < (b.hora || "") ? -1 : 1; });
-    var rotSel = diaSel === hoje ? "📅 Hoje" : S.fmtData(diaSel);
+    var rotSel = diaSel === hoje ? "Hoje" : S.fmtData(diaSel);
     $("listaConsultas").innerHTML =
       '<div style="font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;">' +
       rotSel + (doSel.length ? " — " + doSel.length + " consulta(s)" : "") + "</div>" +
@@ -2185,7 +2290,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
           "<span>" + esc(nomeDe[c.pacienteId] || "?") + "</span>" +
           '<span style="margin-left:auto;"></span>' +
           '<button class="btn sec mini" data-cnx="' + c.id + '">✕</button></div>';
-      }).join("") : '<p class="muted" style="margin:6px 0 0;">Nenhuma consulta nesse dia — toque em outro dia do calendário ou use ➕ Marcar.</p>');
+      }).join("") : '<p class="muted" style="margin:6px 0 0;">Nenhuma consulta nesse dia — toque em outro dia do calendário ou use a aba Marcar.</p>');
     renderPedidosN(st);
   }
   $("calAgendaN").addEventListener("click", function (e) {
@@ -2298,10 +2403,10 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
   });
   window.__agendaN = renderAgendaN; // testes
 
-  // ---------- ☀️/🌙 alternar tema (vale pro sistema todo — mtapp:tema) ----------
+  // ---------- alternar tema (vale pro sistema todo — mtapp:tema) ----------
   function pintaBtnTemaNt() {
     var claro = document.documentElement.dataset.tema === "claro";
-    $("btnTemaNt").textContent = claro ? "🌙" : "☀️";
+    $("btnTemaNt").setAttribute("aria-checked", claro ? "true" : "false");
     $("btnTemaNt").title = claro ? "Voltar pro modo escuro" : "Mudar pro modo claro";
   }
   $("btnTemaNt").addEventListener("click", function () {
@@ -2337,11 +2442,11 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
   function renderQuestN() {
     var st = questStN(load());
     $("qpListaN").innerHTML = st.questPerguntas.length ? st.questPerguntas.map(function (p) {
-      var tipoRot = p.tipo === "emoji" ? "😍 emojis" : p.tipo === "linear" ? "🔢 0–10" : "✍️ livre";
+      var tipoRot = p.tipo === "emoji" ? "carinhas" : p.tipo === "linear" ? "0–10" : "livre";
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e5e7eb22;">' +
         "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-qprmn="' + p.id + '">🗑</button></div>';
+        '<button class="btn sec mini" data-qprmn="' + p.id + '">✕</button></div>';
     }).join("") : "Nenhuma pergunta ainda — crie a primeira acima.";
     $("qqPerguntasN").innerHTML = st.questPerguntas.length
       ? "Marque as perguntas do check-in novo:<br>" + st.questPerguntas.map(function (p) {
@@ -2350,9 +2455,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       : "";
     $("qqListaN").innerHTML = st.questionarios.length ? st.questionarios.map(function (q) {
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e5e7eb22;">' +
-        "<b>📋 " + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
+        "<b>" + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-qqrmn="' + q.id + '">🗑</button></div>';
+        '<button class="btn sec mini" data-qqrmn="' + q.id + '">✕</button></div>';
     }).join("") : "Nenhum check-in ainda.";
     var ativos = st.pacientes.filter(function (p) { return p.ativo !== false; });
     $("qePacienteN").innerHTML = '<option value="">Paciente…</option>' + ativos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + "</option>"; }).join("");
@@ -2439,24 +2544,24 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var avisoQ = $("qeAvisoN");
     avisoQ.hidden = false;
     if (!nuvemQ) {
-      avisoQ.textContent = "⚠️ Entre na sua conta (card ☁️ Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do paciente não chegam.";
+      avisoQ.textContent = "Entre na sua conta (card Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do paciente não chegam.";
     } else {
       avisoQ.textContent = "⏳ Preparando o app do paciente na nuvem…";
       var stampQ = new Date().toISOString();
       nuvemQ.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvemQ.aid, dados: { html: montaAppNutri(p, stampQ), stamp: stampQ }, atualizado: stampQ }])
         .then(function (r) {
-          if (r && r.error) { avisoQ.textContent = "⚠️ Não deu pra publicar o app do paciente (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
-          avisoQ.textContent = "✅ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
+          if (r && r.error) { avisoQ.textContent = "Não deu pra publicar o app do paciente (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
+          avisoQ.textContent = "✓ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
         }, function () {
-          avisoQ.textContent = "⚠️ Sem conexão agora — o paciente pode ver erro ao enviar. Gere o link de novo com internet.";
+          avisoQ.textContent = "Sem conexão agora — o paciente pode ver erro ao enviar. Gere o link de novo com internet.";
         });
     }
   });
   $("qeCopiaN").addEventListener("click", function () {
     $("qeLinkN").select();
-    try { document.execCommand("copy"); this.textContent = "✅ Copiado!"; } catch (e) {}
+    try { document.execCommand("copy"); this.textContent = "✓ Copiado!"; } catch (e) {}
     var b = this;
-    setTimeout(function () { b.textContent = "📋 Copiar link"; }, 1800);
+    setTimeout(function () { b.innerHTML = mi("prancheta") + " Copiar link"; }, 1800);
   });
   function carregaRespostasQuestN() {
     var box = $("qRespostasN");
@@ -2465,9 +2570,9 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     box.textContent = "Carregando…";
     nuvem.client.from("app_quest").select("token,questionario,dados,criado").order("criado", { ascending: false }).limit(60)
       .then(function (r) {
-        if (r && r.error) { box.textContent = "⚠️ Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os check-ins."; return; }
+        if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar os check-ins."; return; }
         var rows = (r && r.data) || [];
-        if (!rows.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima. 😉"; return; }
+        if (!rows.length) { box.textContent = "Nenhuma resposta ainda — manda o primeiro link ali em cima."; return; }
         var st = load();
         var nomePorToken = {};
         st.pacientes.forEach(function (p) { if (p.appTokenN) nomePorToken[p.appTokenN] = p.nome; });
@@ -2571,12 +2676,12 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
       return nuvem.client.from("chat_config").upsert([corpo], { onConflict: "academia_id" });
     };
     grava(true).then(function (r) {
-      if (!r.error) { btn.disabled = false; $("botZapOkN").textContent = "✅ " + reg.lista.length + " automação(ões) publicadas! Com a integração oficial ligada, seu número responde com a 📶."; return; }
+      if (!r.error) { btn.disabled = false; $("botZapOkN").textContent = "✓ " + reg.lista.length + " automação(ões) publicadas! Com a integração oficial ligada, seu número responde com a 📶."; return; }
       grava(false).then(function (r2) {
         btn.disabled = false;
         $("botZapOkN").textContent = r2.error
-          ? "⚠️ Não deu pra publicar: " + r2.error.message
-          : "✅ A automação 📶 foi publicada. Pra guardar TODAS na nuvem, rode o SQL novo em www.torqueon.com.br/sql.html.";
+          ? "Não deu pra publicar: " + r2.error.message
+          : "✓ A automação 📶 foi publicada. Pra guardar TODAS na nuvem, rode o SQL novo em www.torqueon.com.br/sql.html.";
       });
     });
   });
@@ -2621,7 +2726,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     var p = st.pacientes.find(function (x) { return x.id === id; });
     var nuvem = S.cloud && S.cloud();
     if (!p || !nuvem) return;
-    $("chatTituloN").textContent = "💬 " + p.nome;
+    $("chatTituloN").textContent = p.nome;
     $("chatEnvioN").hidden = false;
     nuvem.client.from("app_chat").select("de,texto,criado").eq("token", p.appTokenN)
       .order("criado", { ascending: true }).limit(80).then(function (r) {
@@ -2631,7 +2736,7 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
           return '<div style="align-self:' + (minha ? "flex-end" : "flex-start") + ";background:" + (minha ? "var(--verde)" : "var(--fundo)") +
             ";color:" + (minha ? "#fff" : "var(--texto)") + ';border-radius:12px;padding:8px 12px;max-width:80%;font-size:13.5px;">' +
             esc(m.texto) + '<div style="font-size:10.5px;opacity:.7;margin-top:2px;">' + String(m.criado).slice(11, 16) + "</div></div>";
-        }).join("") : '<div class="muted">Nenhuma mensagem ainda — puxe o assunto! 😉</div>';
+        }).join("") : '<div class="muted">Nenhuma mensagem ainda — puxe o assunto!</div>';
         $("chatMsgsN").scrollTop = $("chatMsgsN").scrollHeight;
         nuvem.client.from("app_chat").update({ lida: true }).eq("token", p.appTokenN).eq("de", "aluno").eq("lida", false).then(function () { renderChatNT(); });
       });
@@ -2677,8 +2782,8 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     $("btnContaEquipe").hidden = !u.logado;
     $("btnContaSair").hidden = !u.logado;
     $("contaStatus").innerHTML = u.logado
-      ? "✅ <b>Conectado como " + esc(u.email) + "</b> — seus pacientes e dietas sincronizam entre os seus aparelhos, na SUA ilha, separados de qualquer outro profissional."
-      : "🔒 Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> para ter a sua ilha na nuvem e publicar o app dos pacientes com link online.";
+      ? "✓ <b>Conectado como " + esc(u.email) + "</b> — seus pacientes e dietas sincronizam entre os seus aparelhos, na SUA ilha, separados de qualquer outro profissional."
+      : "Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> para ter a sua ilha na nuvem e publicar o app dos pacientes com link online.";
   }
   $("cfgZap").addEventListener("change", function () {
     var st = load();
@@ -2701,11 +2806,177 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     S.write("ntStudio", st);
   });
 
+  // ---------- Início: dashboard gerencial do consultório (estilo Personal) ----------
+  function dadosMesN(st, mes) {
+    var ativos = st.pacientes.filter(function (p) { return p.ativo !== false; });
+    var pgs = (st.pagamentosN || []).filter(function (p) { return (p.data || "").slice(0, 7) === mes; });
+    var fat = pgs.reduce(function (t, p) { return t + (+p.valor || 0); }, 0);
+    var novos = st.pacientes.filter(function (p) { return (p.desde || "").slice(0, 7) === mes; }).length;
+    var consMes = (st.consultas || []).filter(function (c) { return (c.data || "").slice(0, 7) === mes; });
+    var hoje = S.todayISO();
+    var realizadas = consMes.filter(function (c) { return c.data <= hoje; }).length;
+    return { fat: fat, novos: novos, consMes: consMes.length, realizadas: realizadas, ativos: ativos };
+  }
+  function renderDashN() {
+    var st = load();
+    renderKpis(st);
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var diaAtual = +hoje.slice(8, 10) || 1;
+    var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
+    var fmtR = function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); };
+    function kv(rot, val, cor) {
+      return '<div class="kv-nt"><span>' + rot + "</span><strong" + (cor ? ' style="color:' + cor + ';"' : "") + ">" + val + "</strong></div>";
+    }
+    var d = dadosMesN(st, mes);
+    var ativos = d.ativos;
+    var projFat = d.fat / diaAtual * diasNoMes;
+    var vPadrao = +((st.config || {}).pixValor) || 0;
+    var comRec = ativos.filter(function (p) { return p.assinaturaRec; }).length;
+    var recusados = ativos.filter(function (p) { return p.cartaoFalhouEm; }).length;
+    $("bRecebN").innerHTML =
+      kv("Recebido no mês", fmtR(d.fat)) +
+      kv("Projeção no ritmo atual", fmtR(projFat)) +
+      (vPadrao ? kv("Consulta padrão", fmtR(vPadrao)) : "") +
+      kv("Assinaturas no cartão", comRec + " paciente(s)") +
+      kv("Cartão recusado", recusados + " paciente(s)", recusados ? "#f87171" : "#4ade80");
+    var comApp = ativos.filter(function (p) { return p.acessoEm; }).length;
+    var comDieta = ativos.filter(function (p) { return (st.dietas[p.id] && (st.dietas[p.id].refeicoes || []).length); }).length;
+    $("bBaseN").innerHTML =
+      kv("Pacientes ativos", ativos.length) +
+      kv("Pacientes novos no mês", d.novos, d.novos ? "#4ade80" : null) +
+      kv("Com dieta entregue", comDieta + " de " + ativos.length) +
+      kv("Sem dieta ainda", ativos.length - comDieta, ativos.length - comDieta ? "#fbbf24" : "#4ade80") +
+      kv("Com acesso do app", comApp + " de " + ativos.length, comApp < ativos.length ? "#fbbf24" : "#4ade80");
+    var fim7 = new Date(hoje + "T12:00"); fim7.setDate(fim7.getDate() + 7);
+    var prox7 = (st.consultas || []).filter(function (c) { return c.data >= hoje && c.data <= S.todayISO(fim7); }).length;
+    $("bAgN").innerHTML =
+      kv("Consultas no mês", d.consMes) +
+      kv("Já realizadas", d.realizadas) +
+      kv("Projeção no ritmo atual", Math.round(d.realizadas / diaAtual * diasNoMes)) +
+      kv("Próximos 7 dias", prox7 + " consulta(s)");
+    var semRetorno60 = 0;
+    var corte60 = new Date(hoje + "T12:00"); corte60.setDate(corte60.getDate() - 60);
+    ativos.forEach(function (p) {
+      var minhas = (st.consultas || []).filter(function (c) { return c.pacienteId === p.id && c.data <= hoje; })
+        .map(function (c) { return c.data; }).sort();
+      var ult = minhas[minhas.length - 1] || "";
+      if (!ult || ult < S.todayISO(corte60)) semRetorno60++;
+    });
+    $("bDietaN").innerHTML =
+      kv("Check-ins montados", (st.questionarios || []).length) +
+      kv("Sem consulta há 60+ dias", semRetorno60 + " paciente(s)", semRetorno60 ? "#fbbf24" : "#4ade80") +
+      kv("Receitas no blog", (self.MT_RECEITAS || []).length) +
+      kv("Alimentos ativos no banco", st.alimentos.length);
+    // metas com projeção run-rate
+    var metas = (st.config || {}).metasN || {};
+    if (!$("mtFatN").value && metas.fat) $("mtFatN").value = metas.fat;
+    if (!$("mtNovosN").value && metas.novos) $("mtNovosN").value = metas.novos;
+    if (!$("mtConsN").value && metas.cons) $("mtConsN").value = metas.cons;
+    function linhaMeta(rot, atual, proj, meta, fmt) {
+      var okM = meta > 0 ? proj >= meta : null;
+      var cor = okM == null ? null : okM ? "#4ade80" : "#f87171";
+      return kv(rot + (meta > 0 ? ' <small style="color:var(--cinza);">(meta ' + fmt(meta) + ")</small>" : ""),
+        fmt(atual) + ' <small style="font-weight:600;">→ projeção ' + fmt(proj) + (okM == null ? "" : okM ? " ✓" : " abaixo") + "</small>", cor);
+    }
+    $("mtPainelN").innerHTML =
+      linhaMeta("Faturamento", d.fat, projFat, +metas.fat || 0, fmtR) +
+      linhaMeta("Pacientes novos", d.novos, Math.round(d.novos / diaAtual * diasNoMes), +metas.novos || 0, String) +
+      linhaMeta("Consultas realizadas", d.realizadas, Math.round(d.realizadas / diaAtual * diasNoMes), +metas.cons || 0, String) +
+      (metas.fat || metas.novos || metas.cons ? "" : '<p class="muted" style="margin:6px 0 0;font-size:12.5px;">Salve suas metas ali em cima pra acompanhar se o mês vai bater.</p>');
+    var sel = $("fchMesN");
+    var atualSel = sel.value;
+    var ops = [];
+    for (var i = 0; i < 12; i++) {
+      var dRef = new Date(); dRef.setDate(1); dRef.setMonth(dRef.getMonth() - i);
+      var kM = dRef.getFullYear() + "-" + ("0" + (dRef.getMonth() + 1)).slice(-2);
+      ops.push('<option value="' + kM + '">' + kM.slice(5, 7) + "/" + kM.slice(0, 4) + "</option>");
+    }
+    sel.innerHTML = ops.join("");
+    if (atualSel) sel.value = atualSel;
+  }
+  function resumoFechamentoN(mes) {
+    var st = load();
+    var d = dadosMesN(st, mes);
+    var nome = ((st.config || {}).nome) || "meu consultório";
+    return "Fechamento " + mes.slice(5, 7) + "/" + mes.slice(0, 4) + " — " + nome + "\n" +
+      "Receita: R$ " + Math.round(d.fat).toLocaleString("pt-BR") + "\n" +
+      "Pacientes novos: " + d.novos + " · Consultas no mês: " + d.consMes + " (realizadas: " + d.realizadas + ")\n" +
+      "— TORQUE NUTRI";
+  }
+  $("mtSalvarN").addEventListener("click", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.metasN = { fat: +$("mtFatN").value || 0, novos: +$("mtNovosN").value || 0, cons: +$("mtConsN").value || 0 };
+    S.write("ntStudio", st);
+    renderDashN();
+  });
+  $("fchCopiaN").addEventListener("click", function () {
+    var ta = document.createElement("textarea");
+    ta.value = resumoFechamentoN($("fchMesN").value);
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    ta.remove();
+    $("fchStatusN").textContent = "✓ Resumo copiado — cola onde quiser.";
+  });
+  $("fchZapN").addEventListener("click", function () {
+    window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamentoN($("fchMesN").value)), "_blank");
+  });
+  window.__dashN = { render: renderDashN, resumo: resumoFechamentoN }; // testes
+
+  // ---------- rotina diária: lembrete de consulta do dia (push pelo app do paciente) ----------
+  function pushPacienteN(token, titulo, corpo) {
+    try {
+      var nuvem = S.cloud && S.cloud();
+      var cfg = self.MT_CLOUD || {};
+      if (!nuvem || !cfg.url || !token) return;
+      nuvem.client.auth.getSession().then(function (sess) {
+        var tok = (sess && sess.data && sess.data.session && sess.data.session.access_token) || "";
+        return fetch(cfg.url + "/functions/v1/push-envia", {
+          method: "POST",
+          headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+          body: JSON.stringify({ acao: "para", token: token, titulo: titulo, corpo: corpo }),
+        });
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function rotinaDiariaN() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return { enviados: 0 };
+    var st = load();
+    var hoje = S.todayISO();
+    st.pushLogN = st.pushLogN || {};
+    var enviados = 0, mudou = false;
+    (st.consultas || []).forEach(function (c) {
+      if (c.data !== hoje) return;
+      var p = st.pacientes.find(function (x) { return x.id === c.pacienteId && x.ativo !== false; });
+      if (!p || !p.appTokenN) return;
+      var k = "consulta|" + p.id + "|" + hoje;
+      if (st.pushLogN[k]) return;
+      pushPacienteN(p.appTokenN, "Sua consulta é hoje" + (c.hora ? " às " + c.hora : "") + "!",
+        "Te espero no consultório — se não puder vir, me avisa pelo chat do app.");
+      st.pushLogN[k] = hoje;
+      enviados++; mudou = true;
+    });
+    var chaves = Object.keys(st.pushLogN);
+    if (chaves.length > 200) {
+      chaves.sort(function (x, y) { return st.pushLogN[x] < st.pushLogN[y] ? -1 : 1; })
+        .slice(0, chaves.length - 120).forEach(function (k2) { delete st.pushLogN[k2]; });
+      mudou = true;
+    }
+    if (mudou) S.write("ntStudio", st);
+    return { enviados: enviados };
+  }
+  window.__reguaN = rotinaDiariaN; // testes
+  setTimeout(rotinaDiariaN, 5000);
+  setInterval(rotinaDiariaN, 6 * 3600 * 1000);
+
   function render() {
     var st = load();
     renderKpis(st);
     renderPacientes(st);
     renderConta();
+    if (!$("vDashN").hidden) renderDashN();
   }
   S.onChange(function (k) { if (k === "ntStudio") render(); });
   // ---------- login próprio do TORQUE NUTRI ----------
