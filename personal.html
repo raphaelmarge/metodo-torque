@@ -4711,10 +4711,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var treino = (st.treinos || {})[a.id] || "";
     var t2 = (st.treinosV2 || {})[a.id];
     var fichaVenceApp = (t2 && (t2.fichas || []).length && t2.validade && t2.validade < S.todayISO()) ? t2.validade : "";
+    // substitutos do mesmo padrão de movimento (pro aluno trocar quando o aparelho está ocupado)
+    function substApp(nome, grupo) {
+      try {
+        var todos = listaUnificada(st);
+        var eu = todos.find(function (e) { return e.nome.toLowerCase() === String(nome).toLowerCase(); }) || { grupo: grupo };
+        var mov = movimentoDe(nome, eu.grupo);
+        var cands = todos.filter(function (e) {
+          return e.nome.toLowerCase() !== String(nome).toLowerCase() && movimentoDe(e.nome, e.grupo) === mov &&
+            (!eu.grupo || e.grupo === eu.grupo);
+        });
+        var outroEq = cands.filter(function (e) { return eu.eq && e.eq && e.eq !== eu.eq; });
+        return (outroEq.length >= 2 ? outroEq : cands).slice(0, 2).map(function (e) { return e.nome; });
+      } catch (e2) { return []; }
+    }
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
       return { titulo: f.titulo, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
-        return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "" };
+        return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "",
+          alts: substApp(ex.nome || "", ex.grupo) };
       }) };
     }) : null;
     var fexs = [];
@@ -4814,9 +4829,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       (sessApp.length ? "<div class='cardx'><h2>Minhas sessões com " + esc(studio.split(" ")[0]) + "</h2>" +
-        sessApp.map(function (x) {
+        sessApp.map(function (x, si) {
           var pd = x.d.split("-");
-          return "<div class='kv'><span>" + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero!</span></div>";
+          return "<div class='kv'><span>" + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero!</span></div>" +
+            (si === 0 ? "<div id='sconfBox' data-d='" + x.d + "' data-h='" + esc(x.h) + "' style='display:flex;gap:8px;margin:8px 0 4px;'>" +
+              "<button data-pconf='1' style='flex:1;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;border-radius:99px;padding:9px 0;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>Confirmo presença ✓</button>" +
+              "<button data-pconf='0' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;'>Não vou conseguir</button></div>" : "");
         }).join("") + "</div>" : "") +
       "<div class='cardx'><h2>Agenda</h2>" +
       "<div id='agCal'></div><div id='agDia' style='margin-top:10px;'></div>" +
@@ -4843,6 +4861,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
               "<a href='" + esc(it.video || videoBusca(it.nome)) + "' target='_blank' rel='noopener' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;text-decoration:none;font-weight:700;font-size:12px;padding:4px 14px;border-radius:99px;display:inline-block;'>Ver vídeo</a>" +
               ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat!</span>" : "") +
+              (it.alts && it.alts.length ? "<div style='margin-top:8px;'><button class='altbtn' style='background:none;border:none;color:#a9a4b5;font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;'>Sem esse aparelho hoje?</button>" +
+                "<div class='altbox' style='display:none;color:#d6c9f5;font-size:12.5px;margin-top:5px;'>Troca por: <b>" + it.alts.map(function (nA) { return esc(nA); }).join("</b> ou <b>") + "</b> — mesmo padrão de movimento. Na dúvida, chama no chat!</div></div>" : "") +
               "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
               "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:#1d1a24;border:1px solid #7c3aed;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
               "<button class='tmrbtn' data-s='" + rst + "' style='background:#14121a;border:1px solid #7c3aed;color:#d6c9f5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>Descanso " + rst + "s</button>" +
@@ -5119,7 +5139,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(b){var st=L('ptsets_'+isoHj(),{});var max=+b.dataset.n;var n=(st[b.dataset.ex]||0)+1;if(n>max)n=0;st[b.dataset.ex]=n;Sv('ptsets_'+isoHj(),st);pintaSets();" +
       "if(n===max&&navigator.vibrate)navigator.vibrate(90);" +
       "if(FEXS.length&&FEXS.every(function(x){return (st[x.n]||0)>=x.s;})){var f=L('ptfeitos',{});if(!f[isoHj()]){document.getElementById('btnFeito').click();}}return;}" +
+      "var ab=e.target.closest('.altbtn');if(ab){var bx2=ab.nextElementSibling;if(bx2)bx2.style.display=bx2.style.display==='none'?'block':'none';return;}" +
       "var t=e.target.closest('.tmrbtn');if(t){iniciaTmr(+t.dataset.s);return;}});" +
+      // confirmação de presença da próxima sessão (avisa o personal pelo chat do app)
+      "(function(){var bx=document.getElementById('sconfBox');if(!bx)return;var kcf=bx.dataset.d+'|'+bx.dataset.h;" +
+      "function pintaCf(){var v=L('ptconf',{})[kcf];if(!v)return;bx.innerHTML=v===1?\"<span style='color:#4ade80;font-size:13px;font-weight:700;'>✓ Avisei que vou</span>\":\"<span style='color:#fbbf24;font-size:13px;font-weight:700;'>Avisei que não consigo — combina outro horário no chat</span>\";}" +
+      "pintaCf();bx.addEventListener('click',function(e){var c=e.target.getAttribute&&e.target.getAttribute('data-pconf');if(c==null)return;var vou=c==='1';" +
+      "var pd=bx.dataset.d.split('-');var hh=bx.dataset.h;" +
+      "var msg=vou?('Confirmo presença na sessão de '+pd[2]+'/'+pd[1]+(hh?' às '+hh:'')+' ✓'):('Não vou conseguir ir na sessão de '+pd[2]+'/'+pd[1]+(hh?' às '+hh:'')+' — podemos remarcar?');" +
+      "function marcaCf(){var f=L('ptconf',{});f[kcf]=vou?1:-1;Sv('ptconf',f);pintaCf();}" +
+      "if(NUVEM){rpcApp('app_chat_envia',{t:TOKEN,p_texto:msg}).then(function(){marcaCf();}).catch(function(){marcaCf();});}" +
+      "else{marcaCf();alert('Sem internet agora — avisa também pelo WhatsApp, combinado?');}});})();" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
       "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='Bora! Próxima série!';" +
