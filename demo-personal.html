@@ -178,9 +178,9 @@
 
   // planos e contratos fechados (studio rodando há meses)
   var planosPT = [
-    { id: "plA", nome: "Mensal 3x/sem", valor: 400 },
-    { id: "plB", nome: "Mensal 5x/sem", valor: 500 },
-    { id: "plC", nome: "Premium acompanhamento total", valor: 650 },
+    { id: "plA", nome: "Mensal 3x/sem", valor: 400, treinosSem: 3, modalidade: "presencial" },
+    { id: "plB", nome: "Mensal 5x/sem", valor: 500, treinosSem: 5, modalidade: "presencial" },
+    { id: "plC", nome: "Consultoria online", valor: 650, treinosSem: 0, modalidade: "consultoria online" },
   ];
   var contratosPT = alunos.map(function (a, i) {
     return { id: "ct" + (i + 1), alunoId: a.id, planoId: a.valor >= 500 ? "plB" : "plA", status: "ativo", diaVenc: i % 2 ? 5 : 10 };

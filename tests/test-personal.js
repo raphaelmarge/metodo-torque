@@ -97,22 +97,57 @@ async function abaPt(p, a) {
   ok(/wa\.me\/5521994429198/.test(faixa.zap) && /R\$ 49/.test(faixa.txt), "faixa tem o botão de assinar por R$ 49 no WhatsApp");
   ok(!!faixa.desde, "início do teste fica registrado no aparelho");
 
-  // aluno novo: assistente em 2 passos (cadastro → contrato e venda)
+  // aluno novo: assistente em 2 passos (cadastro completo → contrato e venda)
+  await p.route("**/viacep.com.br/ws/30130010/json/", (r) => r.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ logradouro: "Avenida Afonso Pena", bairro: "Centro", localidade: "Belo Horizonte", uf: "MG" }),
+  }));
   await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aZap", "31999990000");
-  await p.fill("#aValor", "400");
+  await p.fill("#aCpf", "111.222.333-44");
+  await p.fill("#aCep", "30130010");
+  await p.waitForTimeout(400);
+  const endAuto = await p.evaluate(() => document.getElementById("aEnd").value);
+  ok(/Avenida Afonso Pena/.test(endAuto) && /Belo Horizonte\/MG/.test(endAuto), "CEP preenche o endereço sozinho no cadastro");
   await p.click("#aAdd");
   const passo2 = await p.evaluate(() => ({
     p1: document.getElementById("naPasso1").hidden,
     p2: !document.getElementById("naPasso2").hidden,
-    planos: document.getElementById("naPlano").options.length,
-    valor: document.getElementById("naValor").value,
   }));
-  ok(passo2.p1 && passo2.p2 && passo2.planos >= 1 && passo2.valor === "400", "passo 2 (contrato e venda) abre na sequência com o valor combinado");
+  ok(passo2.p1 && passo2.p2, "passo 2 (contrato e venda) abre na sequência");
+  // sem plano ainda: cria um plano rápido com treinos/sem e modalidade
+  await p.evaluate(() => { document.getElementById("naNovoPlano").open = true; });
+  await p.fill("#naPlNome", "Mensal 3x/sem");
+  await p.fill("#naPlValor", "400");
+  await p.selectOption("#naPlModal", "presencial");
+  await p.click("#naPlCriar");
+  await p.waitForTimeout(150);
+  const planoCriado = await p.evaluate(() => ({
+    sel: document.getElementById("naPlano").selectedOptions[0].textContent,
+    valor: document.getElementById("naValor").value,
+    plano: JSON.parse(localStorage.getItem("mtapp:ptStudio")).planosPT[0],
+  }));
+  ok(/Mensal 3x\/sem/.test(planoCriado.sel) && /3x\/sem/.test(planoCriado.sel) && /presencial/.test(planoCriado.sel) && planoCriado.valor === "400",
+    "plano criado na hora com treinos/semana e modalidade, já selecionado com o valor");
+  ok(planoCriado.plano.treinosSem === 3 && planoCriado.plano.modalidade === "presencial", "plano guarda quantidade de treinos e modalidade");
   await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
   await p.click("#naConcluir");
   await p.waitForTimeout(150);
+  const posWizard = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    return { valor: a.valor, meta: a.metaSemana, cpf: a.cpf, end: a.endereco, contrato: (st.contratosPT || []).length };
+  });
+  ok(posWizard.valor === 400 && posWizard.meta === 3 && posWizard.contrato === 1, "concluir fecha o contrato e o aluno herda valor e meta do plano");
+  ok(posWizard.cpf === "111.222.333-44" && /Avenida Afonso Pena/.test(posWizard.end), "CPF e endereço salvos no aluno");
+  // limpa plano/contrato do assistente pra não interferir nos testes de contrato adiante
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.contratosPT = [];
+    st.planosPT = [];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
   let lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/João Cliente/.test(lista) && /400/.test(lista), "aluno cadastrado com valor mensal");
   ok(/SEM PAGAMENTO NO MÊS/.test(lista), "etiqueta de pendência antes do pagamento");

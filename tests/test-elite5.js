@@ -170,8 +170,12 @@ function ok(cond, nome) {
   await p.click("#obOk");
   await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
-  await p.fill("#aValor", "400");
   await p.click("#aAdd");
+  await p.evaluate(() => { document.getElementById("naNovoPlano").open = true; });
+  await p.fill("#naPlNome", "Mensal 3x/sem");
+  await p.fill("#naPlValor", "400");
+  await p.click("#naPlCriar");
+  await p.waitForTimeout(150);
   await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
   await p.click("#naConcluir");
   await p.waitForTimeout(150);
