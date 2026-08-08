@@ -97,6 +97,8 @@ async function abaPt(p, a) {
   ok(/wa\.me\/5521994429198/.test(faixa.zap) && /R\$ 49/.test(faixa.txt), "faixa tem o botão de assinar por R$ 49 no WhatsApp");
   ok(!!faixa.desde, "início do teste fica registrado no aparelho");
 
+  // a aba inicial agora é o Dashboard — vai pra lista de alunos primeiro
+  await abaPt(p, "alunos");
   // aluno novo: assistente em 2 passos (cadastro completo → contrato e venda)
   await p.route("**/viacep.com.br/ws/30130010/json/", (r) => r.fulfill({
     contentType: "application/json",
