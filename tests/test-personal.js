@@ -97,11 +97,22 @@ async function abaPt(p, a) {
   ok(/wa\.me\/5521994429198/.test(faixa.zap) && /R\$ 49/.test(faixa.txt), "faixa tem o botão de assinar por R$ 49 no WhatsApp");
   ok(!!faixa.desde, "início do teste fica registrado no aparelho");
 
-  // aluno novo
+  // aluno novo: assistente em 2 passos (cadastro → contrato e venda)
+  await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aZap", "31999990000");
   await p.fill("#aValor", "400");
   await p.click("#aAdd");
+  const passo2 = await p.evaluate(() => ({
+    p1: document.getElementById("naPasso1").hidden,
+    p2: !document.getElementById("naPasso2").hidden,
+    planos: document.getElementById("naPlano").options.length,
+    valor: document.getElementById("naValor").value,
+  }));
+  ok(passo2.p1 && passo2.p2 && passo2.planos >= 1 && passo2.valor === "400", "passo 2 (contrato e venda) abre na sequência com o valor combinado");
+  await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
+  await p.click("#naConcluir");
+  await p.waitForTimeout(150);
   let lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/João Cliente/.test(lista) && /400/.test(lista), "aluno cadastrado com valor mensal");
   ok(/SEM PAGAMENTO NO MÊS/.test(lista), "etiqueta de pendência antes do pagamento");

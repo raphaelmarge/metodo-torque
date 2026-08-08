@@ -168,9 +168,13 @@ function ok(cond, nome) {
   await p.waitForFunction(() => window.__ptStudio);
   await p.fill("#obNome", "Léo Personal");
   await p.click("#obOk");
+  await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
   await p.fill("#aValor", "400");
   await p.click("#aAdd");
+  await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
+  await p.click("#naConcluir");
+  await p.waitForTimeout(150);
   await p.click("#btnMenuPt");
   await p.click('#abas [data-a="treinos"]');
   await p.selectOption("#tAluno", { index: 1 });
