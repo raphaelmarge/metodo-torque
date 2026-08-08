@@ -1974,7 +1974,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.treinosV2 = st.treinosV2 || {};
     st.treinosV2[id] = { fichas: [] };
     save(st);
-    $("tAluno").value = id;
+    $("tAluno").value = id; sincronizaBusca("tAluno");
     mostraTrAba("fichas"); // o montador vive no sub-link Fichas
     renderFichas();
     renderGrupos();
@@ -1984,7 +1984,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ed = e.target.getAttribute && e.target.getAttribute("data-gtedit");
     var rm = e.target.getAttribute && e.target.getAttribute("data-gtrm");
     if (ed) {
-      $("tAluno").value = ed;
+      $("tAluno").value = ed; sincronizaBusca("tAluno");
       renderFichas();
       $("fichasBox").scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -2564,6 +2564,72 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fid = e.target.getAttribute && (e.target.getAttribute("data-exmov") || e.target.getAttribute("data-exzona"));
     if (fid) populaCascata(fid);
   });
+  // ---------- busca com digitação nos seletores de aluno ----------
+  // o <select> continua existindo (valor + change de sempre), mas fica
+  // invisível; quem aparece é um campo de digitar que filtra conforme escreve
+  var buscaSinc = {};
+  function buscaEmSelect(id, placeholder) {
+    var sel = $(id);
+    if (!sel || sel.dataset.busca) return;
+    sel.dataset.busca = "1";
+    var wrap = document.createElement("span");
+    wrap.style.cssText = "position:relative;display:inline-flex;flex:1;min-width:" + (sel.style.minWidth || "180px") + ";";
+    sel.parentNode.insertBefore(wrap, sel);
+    var inp = document.createElement("input");
+    inp.id = id + "Busca";
+    inp.placeholder = placeholder || "Digite o nome do aluno…";
+    inp.autocomplete = "off";
+    inp.style.cssText = "width:100%;";
+    var lista = document.createElement("div");
+    lista.id = id + "BuscaLista";
+    lista.hidden = true;
+    lista.style.cssText = "position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--linha);border-radius:9px;z-index:40;max-height:260px;overflow-y:auto;box-shadow:0 18px 40px -14px rgba(0,0,0,.75);";
+    wrap.appendChild(inp);
+    wrap.appendChild(lista);
+    wrap.appendChild(sel);
+    sel.style.cssText += ";position:absolute;left:0;top:0;width:2px;height:2px;min-width:0;opacity:0;pointer-events:none;";
+    function sinc() {
+      var o = sel.selectedOptions && sel.selectedOptions[0];
+      inp.value = (o && o.value) ? o.textContent : "";
+    }
+    buscaSinc[id] = sinc;
+    function abre() {
+      var q = inp.value.trim().toLowerCase();
+      var ops = Array.from(sel.querySelectorAll("option")).filter(function (o) { return o.value; });
+      var acha = ops.filter(function (o) { return !q || o.textContent.toLowerCase().indexOf(q) >= 0; }).slice(0, 12);
+      lista.innerHTML = acha.map(function (o) {
+        var g = o.closest("optgroup");
+        return '<div data-bval="' + esc(o.value) + '" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;"><b>' + esc(o.textContent) + "</b>" +
+          (g ? '<div class="muted" style="font-size:11px;">' + esc(g.label) + "</div>" : "") + "</div>";
+      }).join("") || '<div class="muted" style="padding:9px 12px;font-size:12.5px;">Ninguém com esse nome.</div>';
+      lista.hidden = false;
+    }
+    function escolhe(v) {
+      sel.value = v;
+      lista.hidden = true;
+      sinc();
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    inp.addEventListener("focus", function () { inp.select(); abre(); });
+    inp.addEventListener("input", abre);
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); var pri = lista.querySelector("[data-bval]"); if (pri) escolhe(pri.getAttribute("data-bval")); }
+      if (e.key === "Escape") { lista.hidden = true; sinc(); }
+    });
+    lista.addEventListener("click", function (e) {
+      var d = e.target.closest && e.target.closest("[data-bval]");
+      if (d) escolhe(d.getAttribute("data-bval"));
+    });
+    document.addEventListener("click", function (e) {
+      if (!wrap.contains(e.target)) { lista.hidden = true; sinc(); }
+    });
+    sel.addEventListener("change", sinc);
+    new MutationObserver(sinc).observe(sel, { childList: true, subtree: true });
+    sinc();
+  }
+  function sincronizaBusca(id) { if (buscaSinc[id]) buscaSinc[id](); }
+  ["sAluno", "pAluno", "avAluno", "taAluno", "qeAluno", "ctAluno"].forEach(function (id) { buscaEmSelect(id); });
+  buscaEmSelect("tAluno", "Digite o aluno (ou treino de disparo)…");
   // quais fichas estão abertas (recolhíveis — o re-render preserva)
   var fichasAbertas = {};
   $("fichasBox").addEventListener("toggle", function (e) {
@@ -2791,7 +2857,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (r.erro) { $("taStatus").textContent = "⚠️ " + r.erro; return; }
     $("taStatus").textContent = "⚡ " + r.fichas + " ficha(s) com " + r.exercicios + " exercícios geradas pra " + r.dias + " dia(s)/semana" +
       (r.avisos.length ? " — " + r.avisos.join(" e ") : "") + ". Revise abaixo, ajuste e envie!";
-    $("tAluno").value = id;
+    $("tAluno").value = id; sincronizaBusca("tAluno");
     renderFichas();
     renderBiblioteca();
   });
@@ -2801,7 +2867,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var r = evoluiTreino(id);
     if (r.erro) { $("taStatus").textContent = "⚠️ " + r.erro; return; }
     $("taStatus").textContent = "📈 Ficha evoluída pra SEMANA " + r.semana + " (progressão dupla: reps sobem até o teto, aí voltam e ganha 1 série). Republique o app do aluno!";
-    $("tAluno").value = id;
+    $("tAluno").value = id; sincronizaBusca("tAluno");
     renderFichas();
   });
   window.__treinoAuto = { gera: geraTreinoAuto, evolui: evoluiTreino }; // testes
@@ -2932,7 +2998,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (r.erro) { $("taStatus").textContent = "⚠️ " + r.erro; return; }
       $("taStatus").textContent = "✨ " + r.fichas + " ficha(s) com " + r.exercicios + " exercícios prescritas pela IA." +
         (r.resumo ? " 🧠 " + r.resumo : "") + " Revise abaixo, ajuste e envie!";
-      $("tAluno").value = id;
+      $("tAluno").value = id; sincronizaBusca("tAluno");
       renderFichas();
       renderBiblioteca();
     });
