@@ -4536,7 +4536,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       kv("Novos alunos no mês", d.novos, d.novos ? "#4ade80" : null) +
       kv("Contratos encerrados no mês", d.encerrados, d.encerrados ? "#f87171" : null) +
       kv("Saldo da carteira", (saldo > 0 ? "+" : "") + saldo, saldo > 0 ? "#4ade80" : saldo < 0 ? "#f87171" : null) +
-      kv("Churn do mês", fmt1(churn) + "%", churn > 5 ? "#f87171" : null);
+      kv("Churn do mês (% da carteira que saiu)", fmt1(churn) + "%", churn > 5 ? "#f87171" : null);
     // indicadores
     var somaVida = 0, nVida = 0;
     (st.contratosPT || []).forEach(function (c) {
