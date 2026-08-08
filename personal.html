@@ -49,6 +49,11 @@
   .kpi-pt .n { font-size: 28px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
   .aluno-pt { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
   /* 📱 perfil do aluno no celular: campos em grade organizada (nada de largura fixa solta) */
+  /* fichas recolhíveis: toca pra abrir/fechar (pode abrir várias) */
+  #fichasBox details > summary { list-style: none; }
+  #fichasBox details > summary::-webkit-details-marker { display: none; }
+  #fichasBox .fseta { display: inline-block; transition: transform .15s; color: var(--cinza); }
+  #fichasBox details[open] .fseta { transform: rotate(180deg); }
   @media (max-width: 640px) {
     #vPerfil .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
     #vPerfil .linha-flex label { width: 100% !important; min-width: 0 !important; }
@@ -2488,9 +2493,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return;
     }
     el.innerHTML = t.fichas.map(function (f) {
-      return '<div style="border:1px solid var(--linha);border-radius:12px;padding:14px;margin-bottom:10px;">' +
-        '<div class="linha-flex" style="justify-content:space-between;margin-bottom:8px;">' +
+      return '<details data-fdet="' + f.id + '"' + (fichasAbertas[f.id] ? " open" : "") + ' style="border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;">' +
+        '<summary style="padding:14px;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
         '<b style="font-size:14.5px;">' + esc(f.titulo) + "</b>" +
+        '<span class="muted" style="font-size:12px;">' + f.itens.length + " exercício(s)</span>" +
+        '<span class="fseta" style="margin-left:auto;">▾</span></summary>' +
+        '<div style="padding:0 14px 14px;">' +
+        '<div class="linha-flex" style="justify-content:flex-end;margin-bottom:4px;">' +
         '<button class="btn sec mini" data-rmficha="' + f.id + '">✕ ficha</button></div>' +
         (f.itens.length ? f.itens.map(function (it, i) {
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
@@ -2517,7 +2526,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<input data-exdes="' + f.id + '" type="number" min="0" step="5" value="60" style="width:70px;" title="descanso entre séries (segundos)">' +
         '<span class="muted">s</span>' +
         '<input data-exobs="' + f.id + '" placeholder="obs (opcional)" style="flex:1;min-width:110px;">' +
-        '<button class="btn mini" data-additem="' + f.id + '">+ Adicionar</button></div></div>';
+        '<button class="btn mini" data-additem="' + f.id + '">+ Adicionar</button></div></div></details>';
     }).join("");
     t.fichas.forEach(function (f) { populaCascata(f.id); });
   }
@@ -2550,6 +2559,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fid = e.target.getAttribute && (e.target.getAttribute("data-exmov") || e.target.getAttribute("data-exzona"));
     if (fid) populaCascata(fid);
   });
+  // quais fichas estão abertas (recolhíveis — o re-render preserva)
+  var fichasAbertas = {};
+  $("fichasBox").addEventListener("toggle", function (e) {
+    var d = e.target;
+    if (d && d.hasAttribute && d.hasAttribute("data-fdet")) fichasAbertas[d.getAttribute("data-fdet")] = d.open;
+  }, true);
   // sub-links da parte de treino: cada bloco vive na sua própria tela
   var trAbaAtual = "fichas";
   function mostraTrAba(aba) {
@@ -2581,7 +2596,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var sug = ["A — ", "B — ", "C — ", "D — "][t.fichas.length] || "";
     var titulo = prompt("Nome da ficha (ex.: A — Peito/Tríceps):", sug);
     if (!titulo || !titulo.trim()) return;
-    t.fichas.push({ id: S.uid(), titulo: titulo.trim(), itens: [] });
+    var idNova = S.uid();
+    t.fichas.push({ id: idNova, titulo: titulo.trim(), itens: [] });
+    fichasAbertas[idNova] = true;
     marcaAppPendente(st, alunoId);
     S.write("ptStudio", st);
     renderFichas();

@@ -542,6 +542,21 @@ async function abaPt(p, a) {
     return st.treinosV2[st.treinosGrupo[0].id].fichas.length;
   });
   ok(gtFichas === 3, "template ABC montou as 3 fichas no treino de disparo (sem aluno)");
+  // fichas recolhíveis: nascem fechadas, toque abre/fecha, várias abertas juntas
+  const fechadas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  ok(fechadas.length === 3 && fechadas.every((o) => !o), "fichas nascem recolhidas (sem abrir tudo de uma vez)");
+  await p.click("#fichasBox details:nth-of-type(1) summary");
+  await p.click("#fichasBox details:nth-of-type(2) summary");
+  await p.click("#fichasBox details:nth-of-type(3) summary");
+  const abertas = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  ok(abertas.length === 3 && abertas.every((o) => o), "toque abre — dá pra deixar as três abertas juntas");
+  await p.click("#fichasBox details:nth-of-type(2) summary");
+  const mista = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  ok(mista[0] && !mista[1] && mista[2], "toque de novo fecha só aquela ficha");
+  await p.evaluate(() => document.getElementById("tAluno").dispatchEvent(new Event("change", { bubbles: true })));
+  await p.waitForTimeout(150);
+  const preservado = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
+  ok(preservado[0] && !preservado[1] && preservado[2], "re-render preserva quais fichas estavam abertas");
   await p.evaluate(() => {
     window.__gruposPT.render();
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
