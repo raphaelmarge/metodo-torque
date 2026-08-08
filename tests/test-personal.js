@@ -1005,6 +1005,8 @@ async function abaPt(p, a) {
   });
   ok(/A — Peito\/Tríceps/.test(appHtml) && /Supino reto/.test(appHtml) && /4×10/.test(appHtml), "app leva a ficha estruturada (Supino 4×10)");
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
+  ok(/Sem esse aparelho hoje\?/.test(appHtml) && /Troca por: /.test(appHtml), "exercícios trazem substitutos do mesmo padrão de movimento");
+  ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
   ok(/>Ver vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão Ver vídeo");
   ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
@@ -1544,6 +1546,27 @@ async function abaPt(p, a) {
     return { acesa, apagada: dot && dot.style.display === "none" };
   });
   ok(dotChat.acesa && dotChat.apagada, "recado novo acende a bolinha no Chat e abrir o chat apaga");
+  // substituto de exercício: o toque abre a dica com as trocas
+  const altEx = await pApp.evaluate(() => {
+    window.__trocaSec("treino");
+    const b = document.querySelector(".altbtn");
+    if (!b) return null;
+    b.click();
+    const bx = b.nextElementSibling;
+    return { visivel: bx && bx.style.display === "block", txt: (bx && bx.textContent) || "" };
+  });
+  ok(!!altEx && altEx.visivel && /Troca por: /.test(altEx.txt), "'Sem esse aparelho hoje?' abre os substitutos do mesmo movimento");
+  // confirmação de presença: Confirmo manda pelo chat (mock) e marca como avisado
+  const confPres = await pApp.evaluate(async () => {
+    window.__trocaSec("inicio");
+    const bx = document.getElementById("sconfBox");
+    if (!bx) return null;
+    bx.querySelector("[data-pconf='1']").click();
+    await new Promise((r) => setTimeout(r, 300));
+    return bx.textContent;
+  });
+  ok(!!confPres && /Avisei que vou/.test(confPres), "Confirmo presença marca como avisado no app");
+  ok(await pApp.evaluate(() => true) && chatDB.some((m) => /Confirmo presença na sessão/.test(m.texto)), "o recado de confirmação chega no chat do personal");
   // home estilo app nativo: hero "treino de hoje", tiles de progresso e XP
   const home = await pApp.evaluate(() => {
     window.__trocaSec("inicio");
