@@ -152,18 +152,48 @@
   <!-- ALUNOS -->
   <section id="vAlunos">
     <div class="card" style="margin-bottom: 14px;">
-      <h2>Novo aluno</h2>
-      <div class="linha-flex" style="margin-top: 8px;">
-        <input id="aNome" placeholder="Nome *" style="flex: 2; min-width: 180px;">
-        <input id="aZap" placeholder="WhatsApp (DDD + número)" inputmode="numeric" style="flex: 1; min-width: 150px;">
-        <input id="aEmail" type="email" placeholder="E-mail (cria o acesso do app)" style="flex: 1; min-width: 180px;">
-        <input id="aValor" type="number" min="0" step="0.01" placeholder="Valor combinado R$" title="Por mês ou por sessão — como você combinar" style="width: 150px;">
-        <select id="aModo" style="width: auto;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select>
-        <select id="aMeta" style="width: auto;" title="Meta de treinos por semana (motivação no app)"><option value="3">meta 3×/sem</option><option value="2">meta 2×/sem</option><option value="4">meta 4×/sem</option><option value="5">meta 5×/sem</option><option value="6">meta 6×/sem</option></select>
-        <button class="btn" id="aAdd">+ Adicionar</button>
+      <div class="linha-flex" style="align-items: center; gap: 12px;">
+        <button class="btn" id="btnNovoAluno">➕ Novo aluno</button>
+        <span class="muted" style="font-size: 12.5px;">Cadastro completo com contrato e primeira venda na sequência.</span>
       </div>
-      <p id="aAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Com o e-mail preenchido, o aluno recebe o acesso do app na hora: o login é o e-mail dele e a senha (temporária) vai junto — ele troca dentro do app.</p>
+      <p id="aAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
+
+    <dialog id="dlgNovoAluno">
+      <div class="card" style="display: flex; flex-direction: column; gap: 12px; width: 560px; max-width: 100%;">
+        <div id="naPasso1">
+          <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Novo aluno — passo 1 de 2 · Cadastro</h2>
+          <div class="grid-2" style="margin-top: 10px;">
+            <div class="campo"><label>Nome *</label><input id="aNome" placeholder="Nome completo"></div>
+            <div class="campo"><label>WhatsApp</label><input id="aZap" placeholder="DDD + número" inputmode="numeric"></div>
+            <div class="campo"><label>E-mail (cria o acesso do app)</label><input id="aEmail" type="email" placeholder="aluno@email.com"></div>
+            <div class="campo"><label>Objetivo</label><input id="aObjetivo" placeholder="Ex.: hipertrofia, emagrecimento"></div>
+            <div class="campo"><label>Valor combinado (R$)</label><input id="aValor" type="number" min="0" step="0.01" placeholder="Ex.: 400"></div>
+            <div class="campo"><label>Cobrança</label><select id="aModo" style="width: 100%;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></div>
+            <div class="campo"><label>Meta de treinos</label><select id="aMeta" style="width: 100%;"><option value="3">3×/semana</option><option value="2">2×/semana</option><option value="4">4×/semana</option><option value="5">5×/semana</option><option value="6">6×/semana</option></select></div>
+          </div>
+          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Com o e-mail preenchido, o aluno recebe o acesso do app na hora (login = e-mail, senha temporária junto). Anamnese e PAR-Q ficam no perfil.</p>
+          <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px;">
+            <button class="btn sec" id="naCancela">Cancelar</button>
+            <button class="btn" id="aAdd">Continuar → contrato e venda</button>
+          </div>
+        </div>
+        <div id="naPasso2" hidden>
+          <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Passo 2 de 2 · Contrato e venda</h2>
+          <div class="grid-2" style="margin-top: 10px;">
+            <div class="campo"><label>Plano do studio</label><select id="naPlano" style="width: 100%;"></select></div>
+            <div class="campo"><label>Vence todo dia</label><input id="naVence" type="number" min="1" max="28" value="5"></div>
+            <div class="campo"><label><input type="checkbox" id="naPagar" checked style="width: auto; margin-right: 6px;">Registrar a primeira venda agora</label><input id="naValor" type="number" min="0" step="0.01" placeholder="Valor R$"></div>
+            <div class="campo"><label>Forma de pagamento</label><select id="naForma" style="width: 100%;"><option>pix</option><option>dinheiro</option><option>cartão</option><option>transferência</option></select></div>
+          </div>
+          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Sem plano criado ainda? Escolha "valor combinado" — dá pra fechar contrato depois no Financeiro.</p>
+          <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px; flex-wrap: wrap;">
+            <button class="btn sec" id="naPerfil">Abrir perfil completo</button>
+            <button class="btn" id="naConcluir">Concluir</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
     <div id="listaAlunos"></div>
   </section>
 
@@ -931,20 +961,67 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></span></div>';
     }).join("") : '<div class="vazio">Cadastre seu primeiro aluno acima. 💪</div>';
   }
+  // assistente de novo aluno: cadastro completo → contrato e venda na sequência
+  var naAlunoId = null;
+  $("btnNovoAluno").addEventListener("click", function () {
+    ["aNome", "aZap", "aEmail", "aObjetivo", "aValor"].forEach(function (id) { $(id).value = ""; });
+    $("naPasso1").hidden = false;
+    $("naPasso2").hidden = true;
+    naAlunoId = null;
+    $("dlgNovoAluno").showModal();
+  });
+  $("naCancela").addEventListener("click", function () { $("dlgNovoAluno").close(); });
   $("aAdd").addEventListener("click", function () {
     var nome = $("aNome").value.trim();
     if (!nome) { alert("Escreva o nome do aluno."); return; }
     var email = $("aEmail").value.trim().toLowerCase();
     var st = load();
-    var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: +$("aValor").value || 0, modo: $("aModo").value, metaSemana: +$("aMeta").value || 3, ativo: true, desde: S.todayISO() };
+    var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: +$("aValor").value || 0, modo: $("aModo").value, metaSemana: +$("aMeta").value || 3, objetivo: $("aObjetivo").value.trim(), ativo: true, desde: S.todayISO() };
     st.alunos.push(novo);
-    $("aNome").value = ""; $("aZap").value = ""; $("aValor").value = ""; $("aEmail").value = "";
     save(st);
+    naAlunoId = novo.id;
     if (email) {
       $("aAcessoStatus").textContent = "⏳ Publicando o app de " + nome.split(" ")[0] + " e enviando o acesso por e-mail…";
       criaAcessoAluno(novo.id, function (r) { $("aAcessoStatus").innerHTML = msgAcesso(r, novo); });
     }
+    // passo 2: contrato e venda
+    var planos = st.planosPT || [];
+    $("naPlano").innerHTML = '<option value="">— valor combinado (sem plano) —</option>' +
+      planos.map(function (pl) { return '<option value="' + pl.id + '">' + esc(pl.nome) + " · R$ " + (+pl.valor).toLocaleString("pt-BR") + "/mês</option>"; }).join("");
+    $("naValor").value = novo.valor || "";
+    $("naPasso1").hidden = true;
+    $("naPasso2").hidden = false;
   });
+  $("naPlano").addEventListener("change", function () {
+    var st = load();
+    var pl = (st.planosPT || []).find(function (x) { return x.id === $("naPlano").value; });
+    if (pl) $("naValor").value = pl.valor;
+  });
+  function naConclui(abrirPerfil) {
+    if (!naAlunoId) { $("dlgNovoAluno").close(); return; }
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === naAlunoId; });
+    if (!a) { $("dlgNovoAluno").close(); return; }
+    var planoId = $("naPlano").value;
+    if (planoId) {
+      st.contratosPT = st.contratosPT || [];
+      st.contratosPT.push({ id: S.uid(), alunoId: a.id, planoId: planoId, status: "ativo", diaVenc: Math.min(28, Math.max(1, +$("naVence").value || 5)) });
+      var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
+      if (plC) a.valor = +plC.valor || a.valor;
+    }
+    if ($("naPagar").checked && +$("naValor").value > 0) {
+      st.pagamentos = st.pagamentos || [];
+      st.pagamentos.push({ id: S.uid(), alunoId: a.id, valor: +$("naValor").value, forma: $("naForma").value, data: S.todayISO() });
+    }
+    save(st);
+    $("dlgNovoAluno").close();
+    var resumo = "✅ " + esc(a.nome.split(" ")[0]) + " cadastrado(a)" + (planoId ? " com contrato" : "") +
+      ($("naPagar").checked && +$("naValor").value > 0 ? " e primeira venda registrada" : "") + ".";
+    $("aAcessoStatus").innerHTML = ($("aAcessoStatus").innerHTML ? $("aAcessoStatus").innerHTML + "<br>" : "") + resumo;
+    if (abrirPerfil) abrePerfil(a.id);
+  }
+  $("naConcluir").addEventListener("click", function () { naConclui(false); });
+  $("naPerfil").addEventListener("click", function () { naConclui(true); });
   $("listaAlunos").addEventListener("click", function (e) {
     var ac = e.target.getAttribute && e.target.getAttribute("data-acesso");
     if (ac) {
