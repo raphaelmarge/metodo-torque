@@ -85,6 +85,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   #calAgenda .cal-dia.pend .cal-n { background: #f59e0b; }
   .menu-fundo { position: fixed; inset: 0; background: rgba(18,16,22,.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .22s; }
   body.menu-aberto .menu-fundo { opacity: 1; pointer-events: auto; }
+  .colunas-dash { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 800px) { .colunas-dash { grid-template-columns: 1fr; } }
+  .kv-pt { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--linha); font-size: 13.5px; }
+  .kv-pt:last-child { border-bottom: none; }
+  .kv-pt strong { font-variant-numeric: tabular-nums; text-align: right; }
   .kpi-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
   .kpi-pt .card { text-align: center; padding: 16px; }
   .kpi-pt .n { font-size: 28px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
@@ -202,9 +207,37 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
   </div>
 
-  <!-- DASHBOARD -->
+  <!-- DASHBOARD (estilo Resumo Gerencial da academia) -->
   <section id="vDash">
     <div class="kpi-pt" id="kpis"></div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Metas do mês e projeção</h2>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin: 8px 0 10px;">
+        <label style="margin:0;font-size:12.5px;">Meta de faturamento (R$) <input id="mtFatP" type="number" min="0" style="width:130px;"></label>
+        <label style="margin:0;font-size:12.5px;">Meta de novos alunos <input id="mtNovosP" type="number" min="0" style="width:90px;"></label>
+        <label style="margin:0;font-size:12.5px;">Meta de sessões dadas <input id="mtSesP" type="number" min="0" style="width:100px;"></label>
+        <button class="btn sec mini" id="mtSalvarP">Salvar metas</button>
+      </div>
+      <div id="mtPainelP" class="muted" style="font-size:13.5px;">Defina as metas acima — a projeção usa o ritmo do mês até agora.</div>
+    </div>
+    <div class="colunas-dash">
+      <div class="card"><h2>Recebimentos</h2><div id="bRecebP" class="muted"></div></div>
+      <div class="card"><h2>Status da base</h2><div id="bBaseP" class="muted"></div></div>
+      <div class="card"><h2>Movimentação do mês</h2><div id="bMovP" class="muted"></div></div>
+      <div class="card"><h2>Indicadores do negócio</h2><div id="bIndP" class="muted"></div></div>
+      <div class="card"><h2>Agenda e presença</h2><div id="bAgP" class="muted"></div></div>
+      <div class="card"><h2>App e treinos dos alunos</h2><div id="bAppP" class="muted"></div></div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Fechamento do mês</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Resumo prontinho do mês — receita, novos e encerrados, sessões e quem falta pagar — pra mandar pro seu WhatsApp, sócio ou contador.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+        <select id="fchMesP" style="width: auto;"></select>
+        <button class="btn" id="fchZapP">Mandar no WhatsApp</button>
+        <button class="btn sec" id="fchCopiaP">Copiar resumo</button>
+      </div>
+      <p id="fchStatusP" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+    </div>
     <div class="card"><h2>Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
   </section>
 
@@ -1028,7 +1061,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vChat").hidden = b.dataset.a !== "chat";
     // o card da conta (ilha) só aparece na aba Alunos — não precisa repetir em todas
     $("cardConta").hidden = b.dataset.a !== "alunos";
-    $("kpis").hidden = b.dataset.a !== "alunos";
+    $("kpis").hidden = false; // os kpis vivem dentro do Dashboard
     $("vPerfil").hidden = true;
     if (b.dataset.a === "relatorios") renderRelatorios();
     if (b.dataset.a === "assessoria") renderAssessoria();
@@ -1157,7 +1190,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var planoId = $("naPlano").value;
     if (!planoId) { alert("Escolha o plano do aluno (ou crie um novo ali embaixo)."); return; }
     st.contratosPT = st.contratosPT || [];
-    st.contratosPT.push({ id: S.uid(), alunoId: a.id, planoId: planoId, status: "ativo", diaVenc: Math.min(28, Math.max(1, +$("naVence").value || 5)) });
+    st.contratosPT.push({ id: S.uid(), alunoId: a.id, planoId: planoId, status: "ativo", inicio: S.todayISO(), diaVenc: Math.min(28, Math.max(1, +$("naVence").value || 5)) });
     var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
     if (plC) {
       a.valor = +plC.valor || a.valor;
@@ -1367,7 +1400,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (a.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(a.zap).replace(/\D/g, ""); }
     else wa.style.display = "none";
     // vira PÁGINA: esconde as outras seções e mostra o perfil
-    ["vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vDesafio", "vRelatorios", "vAssessoria", "vChat", "cardConta", "kpis"].forEach(function (v) { $(v).hidden = true; });
+    ["vDash", "vAlunos", "vAgenda", "vPagamentos", "vTreinos", "vAvaliacoes", "vQuest", "vDesafio", "vRelatorios", "vAssessoria", "vChat", "cardConta"].forEach(function (v) { $(v).hidden = true; });
     $("vPerfil").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     pintaAppDados(a);
@@ -1765,7 +1798,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var a = st.alunos.find(function (x) { return x.id === perfilId; });
       if (!a) return;
       var jaTem = contratoDe(st, perfilId);
-      if (jaTem) jaTem.status = "encerrado";
+      if (jaTem) { jaTem.status = "encerrado"; jaTem.encerradoEm = S.todayISO(); }
       st.contratosPT = st.contratosPT || [];
       st.contratosPT.push({ id: S.uid(), alunoId: perfilId, planoId: planoId,
         diaVenc: Math.min(28, Math.max(1, +$("pfCtDia").value || 5)), inicio: S.todayISO(), status: "ativo" });
@@ -1785,7 +1818,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rm) {
       if (!confirm("Encerrar este contrato?")) return;
       var st2 = load();
-      (st2.contratosPT.find(function (c) { return c.id === rm; }) || {}).status = "encerrado";
+      var ctRm = st2.contratosPT.find(function (c) { return c.id === rm; }) || {};
+      ctRm.status = "encerrado"; ctRm.encerradoEm = S.todayISO();
       save(st2);
       renderPlanosPT();
       abrePerfil(perfilId);
@@ -3757,7 +3791,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var rm = e.target.getAttribute && e.target.getAttribute("data-ctrm");
     if (!rm || !confirm("Encerrar este contrato?")) return;
     var st = load();
-    (st.contratosPT.find(function (c) { return c.id === rm; }) || {}).status = "encerrado";
+    var ctRm2 = st.contratosPT.find(function (c) { return c.id === rm; }) || {};
+    ctRm2.status = "encerrado"; ctRm2.encerradoEm = S.todayISO();
     S.write("ptStudio", st);
     renderPlanosPT(); render();
   });
@@ -4163,7 +4198,198 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var borda = al.tipo === "erro" ? "#dc2626" : al.tipo === "aviso" ? "#d97706" : "var(--roxo)";
       return '<div style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0;font-size:13.5px;">' + al.txt + "</div>";
     }).join("") : "Tudo em ordem — nenhum alerta hoje.";
+    renderDashPT(st);
   }
+
+  // ---------- Dashboard gerencial (estilo Resumo Gerencial da academia) ----------
+  function dadosDoMes(st, mes) {
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    var pgs = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mes; });
+    var fat = pgs.reduce(function (t, p) { return t + +p.valor; }, 0);
+    var novos = st.alunos.filter(function (a) { return (a.desde || "").slice(0, 7) === mes; }).length;
+    var encerrados = (st.contratosPT || []).filter(function (c) { return c.status === "encerrado" && (c.encerradoEm || "").slice(0, 7) === mes; }).length;
+    var sesMes = st.sessoes.filter(function (x) { return (x.data || "").slice(0, 7) === mes; });
+    var feitas = sesMes.filter(function (x) { return x.feita; }).length;
+    var faltas = sesMes.filter(function (x) { return x.faltou; }).length;
+    var semPagar = 0;
+    if (mes === S.todayISO().slice(0, 7)) {
+      ativos.forEach(function (a) {
+        var ct = contratoDe(st, a.id);
+        var cobra = ct || (+a.valor && a.modo !== "sessao");
+        if (cobra && !pgs.some(function (p) { return p.alunoId === a.id; })) semPagar++;
+      });
+    }
+    return { fat: fat, pgs: pgs, novos: novos, encerrados: encerrados, feitas: feitas, faltas: faltas, semPagar: semPagar, ativos: ativos };
+  }
+  function renderDashPT(st) {
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var diaAtual = +hoje.slice(8, 10) || 1;
+    var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
+    var fmtR = function (v) { return "R$ " + Math.round(v).toLocaleString("pt-BR"); };
+    var fmt1 = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
+    function kv(rot, val, cor) {
+      return '<div class="kv-pt"><span>' + rot + "</span><strong" + (cor ? ' style="color:' + cor + ';"' : "") + ">" + val + "</strong></div>";
+    }
+    var d = dadosDoMes(st, mes);
+    var ativos = d.ativos;
+    // carteira: MRR, ticket, contratos
+    var ctAtivos = (st.contratosPT || []).filter(function (c) { return c.status === "ativo"; });
+    var mrr = 0, comContrato = 0, pagantes = 0;
+    ativos.forEach(function (a) {
+      var ct = ctAtivos.find(function (c) { return c.alunoId === a.id; });
+      if (ct) {
+        var pl = planoDe(st, ct.planoId);
+        mrr += pl ? +pl.valor || 0 : 0;
+        comContrato++; pagantes++;
+      } else if (+a.valor && a.modo !== "sessao") { mrr += +a.valor; pagantes++; }
+    });
+    var ticket = pagantes ? mrr / pagantes : 0;
+    var projFat = d.fat / diaAtual * diasNoMes;
+    // recebimentos
+    var formas = {};
+    d.pgs.forEach(function (p) { var f = (p.forma || "outros").toLowerCase(); formas[f] = (formas[f] || 0) + +p.valor; });
+    var atrasados = 0;
+    ativos.forEach(function (a) {
+      var ct = ctAtivos.find(function (c) { return c.alunoId === a.id; });
+      if (ct && diaAtual > +ct.diaVenc && !d.pgs.some(function (p) { return p.alunoId === a.id; })) atrasados++;
+    });
+    $("bRecebP").innerHTML =
+      kv("Recebido no mês", fmtR(d.fat)) +
+      kv("Projeção no ritmo atual", fmtR(projFat)) +
+      kv("Previsto da carteira (mês cheio)", fmtR(mrr)) +
+      kv("Ainda sem pagar", d.semPagar + " aluno(s)", d.semPagar ? "#fbbf24" : "#4ade80") +
+      kv("Atrasados (venceu e não pagou)", atrasados + " aluno(s)", atrasados ? "#f87171" : "#4ade80") +
+      (Object.keys(formas).length ? kv("Por forma", Object.keys(formas).map(function (f) { return f + " " + fmtR(formas[f]); }).join(" · ")) : "");
+    // status da base
+    var comApp = ativos.filter(function (a) { return a.acessoEm; }).length;
+    var comRec = ativos.filter(function (a) { return a.assinaturaRec; }).length;
+    $("bBaseP").innerHTML =
+      kv("Alunos ativos", ativos.length) +
+      kv("Com contrato de plano", comContrato) +
+      kv("Com valor avulso (sem plano)", pagantes - comContrato) +
+      kv("Sem cobrança definida", ativos.length - pagantes, ativos.length - pagantes ? "#fbbf24" : null) +
+      kv("Com acesso do app", comApp + " de " + ativos.length) +
+      kv("Mensalidade no cartão", comRec + " aluno(s)");
+    // movimentação
+    var iniBase = ativos.length - d.novos + d.encerrados;
+    var churn = iniBase > 0 ? 100 * d.encerrados / iniBase : 0;
+    var saldo = d.novos - d.encerrados;
+    $("bMovP").innerHTML =
+      kv("Novos alunos no mês", d.novos, d.novos ? "#4ade80" : null) +
+      kv("Contratos encerrados no mês", d.encerrados, d.encerrados ? "#f87171" : null) +
+      kv("Saldo da carteira", (saldo > 0 ? "+" : "") + saldo, saldo > 0 ? "#4ade80" : saldo < 0 ? "#f87171" : null) +
+      kv("Churn do mês", fmt1(churn) + "%", churn > 5 ? "#f87171" : null);
+    // indicadores
+    var somaVida = 0, nVida = 0;
+    (st.contratosPT || []).forEach(function (c) {
+      if (c.status === "encerrado" && c.inicio && c.encerradoEm) {
+        var mv = (new Date(c.encerradoEm) - new Date(c.inicio)) / (30.4 * 864e5);
+        if (mv > 0 && mv < 120) { somaVida += mv; nVida++; }
+      }
+    });
+    var vidaMedia = nVida >= 3 ? somaVida / nVida : 12;
+    $("bIndP").innerHTML =
+      kv("Receita recorrente (MRR)", fmtR(mrr)) +
+      kv("Ticket médio", fmtR(ticket)) +
+      kv("Vida média de contrato", fmt1(vidaMedia) + " meses" + (nVida < 3 ? " (estimada)" : "")) +
+      kv("Valor do aluno no ciclo (LTV)", fmtR(ticket * vidaMedia)) +
+      kv("Receita por sessão dada", d.feitas ? fmtR(d.fat / d.feitas) : "—");
+    // agenda e presença
+    var fim7 = new Date(hoje + "T12:00"); fim7.setDate(fim7.getDate() + 7);
+    var futuras7 = st.sessoes.filter(function (x) { return !x.feita && !x.faltou && x.data >= hoje && x.data <= S.todayISO(fim7); }).length;
+    var presenca = d.feitas + d.faltas ? Math.round(100 * d.feitas / (d.feitas + d.faltas)) : 100;
+    var corte30 = new Date(hoje + "T12:00"); corte30.setDate(corte30.getDate() - 30);
+    var horas = {};
+    st.sessoes.forEach(function (x) { if (x.feita && x.data >= S.todayISO(corte30) && x.hora) horas[x.hora] = (horas[x.hora] || 0) + 1; });
+    var horaTop = Object.keys(horas).sort(function (a, b) { return horas[b] - horas[a]; })[0];
+    $("bAgP").innerHTML =
+      kv("Sessões dadas no mês", d.feitas) +
+      kv("Projeção no ritmo atual", Math.round(d.feitas / diaAtual * diasNoMes)) +
+      kv("Faltas no mês", d.faltas, d.faltas ? "#fbbf24" : null) +
+      kv("Taxa de presença", presenca + "%", presenca < 80 ? "#fbbf24" : "#4ade80") +
+      kv("Sessões nos próximos 7 dias", futuras7) +
+      kv("Horário mais cheio (30 dias)", horaTop ? horaTop + " (" + horas[horaTop] + "x)" : "—");
+    // app e treinos
+    var comFicha = 0, fichasVencidas = 0;
+    ativos.forEach(function (a) {
+      var tA = (st.treinosV2 || {})[a.id];
+      if (tA && (tA.fichas || []).length) {
+        comFicha++;
+        if (tA.validade && tA.validade < hoje) fichasVencidas++;
+      }
+    });
+    var corte60 = new Date(hoje + "T12:00"); corte60.setDate(corte60.getDate() - 60);
+    var semAvaliacao = ativos.filter(function (a) {
+      var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; });
+      var ult = avs.length ? avs.map(function (v) { return v.data; }).sort().pop() : "";
+      return !ult || ult < S.todayISO(corte60);
+    }).length;
+    $("bAppP").innerHTML =
+      kv("Com acesso do app", comApp + " de " + ativos.length, comApp < ativos.length ? "#fbbf24" : "#4ade80") +
+      kv("Com ficha de treino montada", comFicha + " de " + ativos.length) +
+      kv("Fichas com validade vencida", fichasVencidas, fichasVencidas ? "#fbbf24" : null) +
+      kv("Sem avaliação há 60+ dias", semAvaliacao, semAvaliacao ? "#fbbf24" : "#4ade80");
+    // metas e projeção
+    var metas = (st.config || {}).metasPT || {};
+    if (!$("mtFatP").value && metas.fat) $("mtFatP").value = metas.fat;
+    if (!$("mtNovosP").value && metas.novos) $("mtNovosP").value = metas.novos;
+    if (!$("mtSesP").value && metas.ses) $("mtSesP").value = metas.ses;
+    function linhaMeta(rot, atual, proj, meta, fmt) {
+      var ok = meta > 0 ? proj >= meta : null;
+      var cor = ok == null ? null : ok ? "#4ade80" : "#f87171";
+      return kv(rot + (meta > 0 ? ' <small style="color:var(--cinza);">(meta ' + fmt(meta) + ")</small>" : ""),
+        fmt(atual) + ' <small style="font-weight:600;">→ projeção ' + fmt(proj) + (ok == null ? "" : ok ? " ✓" : " abaixo") + "</small>", cor);
+    }
+    $("mtPainelP").innerHTML =
+      linhaMeta("Faturamento", d.fat, projFat, +metas.fat || 0, fmtR) +
+      linhaMeta("Novos alunos", d.novos, Math.round(d.novos / diaAtual * diasNoMes), +metas.novos || 0, String) +
+      linhaMeta("Sessões dadas", d.feitas, Math.round(d.feitas / diaAtual * diasNoMes), +metas.ses || 0, String) +
+      (metas.fat || metas.novos || metas.ses ? "" : '<p class="muted" style="margin:6px 0 0;font-size:12.5px;">Salve suas metas ali em cima pra acompanhar se o mês vai bater.</p>');
+    // fechamento: popula o seletor de meses (últimos 12) uma vez por render
+    var sel = $("fchMesP");
+    var atual = sel.value;
+    var ops = [];
+    for (var i = 0; i < 12; i++) {
+      var dRef = new Date(); dRef.setDate(1); dRef.setMonth(dRef.getMonth() - i);
+      var k = dRef.getFullYear() + "-" + ("0" + (dRef.getMonth() + 1)).slice(-2);
+      ops.push('<option value="' + k + '">' + k.slice(5, 7) + "/" + k.slice(0, 4) + "</option>");
+    }
+    sel.innerHTML = ops.join("");
+    if (atual) sel.value = atual;
+  }
+  function resumoFechamentoPT(mes) {
+    var st = load();
+    var d = dadosDoMes(st, mes);
+    var nomeStudio = ((st.config || {}).nome) || "meu studio";
+    var presenca = d.feitas + d.faltas ? Math.round(100 * d.feitas / (d.feitas + d.faltas)) : 100;
+    return "Fechamento " + mes.slice(5, 7) + "/" + mes.slice(0, 4) + " — Studio " + nomeStudio.split(" ")[0] + "\n" +
+      "Receita: " + "R$ " + Math.round(d.fat).toLocaleString("pt-BR") + "\n" +
+      "Novos alunos: " + d.novos + " · Contratos encerrados: " + d.encerrados + "\n" +
+      "Sessões dadas: " + d.feitas + " · Faltas: " + d.faltas + " (presença " + presenca + "%)" +
+      (d.semPagar ? "\nAinda sem pagar no mês: " + d.semPagar + " aluno(s)" : "") +
+      "\n— TORQUE PERSONAL";
+  }
+  $("mtSalvarP").addEventListener("click", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.metasPT = { fat: +$("mtFatP").value || 0, novos: +$("mtNovosP").value || 0, ses: +$("mtSesP").value || 0 };
+    S.write("ptStudio", st);
+    renderDashPT(st);
+  });
+  $("fchCopiaP").addEventListener("click", function () {
+    var ta = document.createElement("textarea");
+    ta.value = resumoFechamentoPT($("fchMesP").value);
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    ta.remove();
+    $("fchStatusP").textContent = "✓ Resumo copiado — cola onde quiser.";
+  });
+  $("fchZapP").addEventListener("click", function () {
+    window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamentoPT($("fchMesP").value)), "_blank");
+  });
+  window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT }; // testes
+
   $("relCSV").addEventListener("click", function () {
     var st = load();
     var hoje = S.todayISO();

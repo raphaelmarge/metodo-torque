@@ -847,6 +847,35 @@ async function abaPt(p, a) {
     window.__relPT();
   });
 
+  // ---------- dashboard gerencial (estilo Resumo Gerencial da academia) ----------
+  console.log("Dashboard gerencial:");
+  await abaPt(p, "dash");
+  ok(await p.evaluate(() => !document.getElementById("vDash").hidden && !document.getElementById("kpis").hidden), "voltar pro Dashboard mantém os KPIs visíveis");
+  const dash = await p.evaluate(() => ({
+    receb: document.getElementById("bRecebP").textContent,
+    base: document.getElementById("bBaseP").textContent,
+    mov: document.getElementById("bMovP").textContent,
+    ind: document.getElementById("bIndP").textContent,
+    ag: document.getElementById("bAgP").textContent,
+    app: document.getElementById("bAppP").textContent,
+  }));
+  ok(/Recebido no mês/.test(dash.receb) && /R\$\s?400/.test(dash.receb), "bloco Recebimentos com a receita do mês (R$ 400)");
+  ok(/Com contrato de plano/.test(dash.base) && /Alunos ativos/.test(dash.base), "bloco Status da base renderiza");
+  ok(/Novos alunos no mês/.test(dash.mov) && /Churn do mês/.test(dash.mov), "bloco Movimentação com churn");
+  ok(/MRR/.test(dash.ind) && /Ticket médio/.test(dash.ind) && /LTV/.test(dash.ind) && /R\$/.test(dash.ind), "bloco Indicadores com MRR, ticket médio e LTV");
+  ok(/Taxa de presença/.test(dash.ag) && /Horário mais cheio/.test(dash.ag), "bloco Agenda e presença renderiza");
+  ok(/Com ficha de treino montada/.test(dash.app), "bloco App e treinos renderiza");
+  // metas com projeção run-rate
+  await p.fill("#mtFatP", "1000");
+  await p.click("#mtSalvarP");
+  ok(await p.evaluate(() => /meta R\$\s?1\.000/.test(document.getElementById("mtPainelP").textContent) && /projeção/.test(document.getElementById("mtPainelP").textContent)),
+    "meta salva aparece no painel com projeção run-rate");
+  // fechamento do mês pronto pra mandar
+  const fch = await p.evaluate(() => window.__dashPT.resumo(new Date().toISOString().slice(0, 7)));
+  ok(/Receita: R\$/.test(fch) && /Novos alunos:/.test(fch) && /Sessões dadas:/.test(fch), "resumo de fechamento com receita, novos e sessões");
+  await p.click("#fchCopiaP");
+  ok(await p.evaluate(() => /copiado/.test(document.getElementById("fchStatusP").textContent)), "copiar resumo confirma");
+
   // app do aluno gerado
   const appHtml = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
