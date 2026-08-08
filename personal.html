@@ -44,7 +44,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .abas-pt button .mi { margin-right: 9px; vertical-align: -3px; }
   /* menu inferior fixo (estilo app do aluno) */
   #navPt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(18,16,22,.96); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid #2a2536; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
-  #navPt button { background: none; border: 0; color: #8a8695; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
+  #navPt button { position: relative; background: none; border: 0; color: #8a8695; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
+  .nav-bad { position: absolute; top: 1px; right: calc(50% - 19px); min-width: 15px; height: 15px; border-radius: 8px; background: #dc2626; color: #fff; font-size: 9.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
   #navPt button.ativa { color: #a78bfa; }
   #navPt button:active { background: rgba(255,255,255,.06); }
   .corpo { padding-bottom: 88px; }
@@ -217,6 +218,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <!-- DASHBOARD (estilo Resumo Gerencial da academia) -->
   <section id="vDash">
     <div class="kpi-pt" id="kpis"></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Seu dia hoje</h2><div id="bHojeP" class="muted">Nenhuma sessão marcada pra hoje.</div></div>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Metas do mês e projeção</h2>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin: 8px 0 10px;">
@@ -246,8 +248,21 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p id="fchStatusP" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
     <div class="card" style="margin-bottom: 14px;"><h2>Aniversários dos próximos 7 dias</h2><div id="bNiverP" class="muted">Ninguém faz aniversário nos próximos 7 dias.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>Radar de retenção</h2><div id="bRadarP" class="muted">Todo mundo em movimento.</div></div>
     <div class="card"><h2>Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
   </section>
+
+  <dialog id="dlgDiaAluno">
+    <div class="card" style="width: 440px; max-width: 100%;">
+      <h2 id="daNome" style="text-transform: none; letter-spacing: 0; font-size: 16px;"></h2>
+      <pre id="daTreino" style="white-space: pre-wrap; font-family: inherit; font-size: 13px; line-height: 1.55; max-height: 45vh; overflow: auto; margin: 10px 0; background: rgba(255,255,255,.04); border-radius: 10px; padding: 10px 12px;"></pre>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+        <button class="btn mini" id="daPerfil">Abrir perfil</button>
+        <a class="btn whats mini" id="daZap" target="_blank" rel="noopener" hidden>Chamar no Zap</a>
+        <button class="btn sec mini" id="daFechar" style="margin-left: auto;">Fechar</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- ALUNOS -->
   <section id="vAlunos" hidden>
@@ -2683,6 +2698,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Hoje tem treino" + (ses.hora ? " às " + ses.hora : "") + "!",
           "Te espero lá — se não puder vir, me avisa pelo chat do app.");
       }
+      // aniversário do aluno (1x por ano)
+      if (a.nasc && String(a.nasc).slice(5) === hoje.slice(5)) {
+        manda("niver|" + a.id + "|" + hoje.slice(0, 4), a.appTokenP,
+          "Parabéns, " + a.nome.split(" ")[0] + "!",
+          "Feliz aniversário! Que tal comemorar com um treino especial? Conta comigo sempre.");
+      }
+      // marcos de consistência: 25, 50 e 100 treinos concluídos
+      var nFeitasM = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; }).length;
+      [25, 50, 100].forEach(function (mc) {
+        if (nFeitasM === mc) {
+          manda("marco" + mc + "|" + a.id, a.appTokenP, mc + " treinos concluídos!",
+            "Que consistência! Você completou " + mc + " sessões comigo — orgulho demais. Bora pro próximo marco?");
+        }
+      });
+      // resgate de quem sumiu: 5+ dias sem treinar e nada marcado (no máx. 1 aviso por semana)
+      var ultFR = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; })
+        .map(function (x) { return x.data; }).sort().pop() || "";
+      var temFuturaR = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data >= hoje && !x.feita && !x.faltou; });
+      if (ultFR && !temFuturaR) {
+        var diasR = Math.floor((new Date(hoje) - new Date(ultFR)) / 864e5);
+        if (diasR >= 5) {
+          var semanaR = Math.floor(Date.parse(hoje + "T12:00:00Z") / 6048e5);
+          manda("sumiu|" + a.id + "|" + semanaR, a.appTokenP, "Sentimos sua falta!",
+            "Já faz " + diasR + " dias desde seu último treino — bora marcar o próximo? Me chama no chat do app.");
+        }
+      }
       // régua de cobrança (desligável; quem paga no cartão automático fica de fora)
       if ((st.config || {}).reguaOff || a.assinaturaRec) return;
       var ct = contratoDe(st, a.id);
@@ -2705,6 +2746,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             : "Sua mensalidade" + vTxt + " venceu dia " + venc) + " — me chama no chat que a gente resolve.");
       }
     });
+    // o desafio terminou: avisa a turma toda que o placar final saiu (1x por aluno)
+    var dsF = st.desafio;
+    if (dsF && dsF.fim && dsF.fim < hoje) {
+      st.alunos.forEach(function (a) {
+        if (a.ativo === false || !a.appTokenP) return;
+        manda("desafiofim|" + dsF.fim + "|" + a.id, a.appTokenP,
+          "O desafio " + dsF.nome + " terminou!",
+          "Acabou! Abre o app pra ver o placar final" + (dsF.premio ? " — prêmio: " + dsF.premio : "") + ". Valeu por participar!");
+      });
+    }
     // apara o log (guarda só ~120 chaves mais novas)
     var chaves = Object.keys(st.pushLog);
     if (chaves.length > 200) {
@@ -2866,7 +2917,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '">' +
         '<button class="btn sec mini" data-shora="' + x.id + '" title="mudar a hora da sessão">' + (x.hora || "+ hora") + "</button>" +
         (comData ? '<span class="muted" style="font-size:12px;">' + S.fmtData(x.data) + "</span>" : "") +
-        "<span>" + esc(nomeDe[x.alunoId] || "?") + "</span>" +
+        '<button data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">' + esc(nomeDe[x.alunoId] || "?") + "</button>" +
         '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
         (x.feita ? '<span class="tag ok">FEITA ✓</span>'
           : x.faltou ? '<span class="tag erro">FALTOU</span>'
@@ -2939,6 +2990,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var a = st.alunos.find(function (x) { return x.appTokenP === e.target.getAttribute("data-tok"); });
       if (a) {
         st.sessoes.push({ id: S.uid(), alunoId: a.id, data: e.target.getAttribute("data-dia"), hora: e.target.getAttribute("data-hora") || "", feita: false });
+        marcaAppPendente(st, a.id); // a sessão confirmada entra na agenda do app
         save(st);
       }
       nuvem.client.from("app_agenda").update({ status: "confirmado" }).eq("id", okId).then(function () {
@@ -3034,10 +3086,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     datas.forEach(function (dt) {
       st.sessoes.push({ id: S.uid(), alunoId: alunoId, data: dt, hora: hora, feita: false });
     });
+    marcaAppPendente(st, alunoId); // a agenda nova entra no app na próxima publicação
     save(st);
     if (datas.length > 1) alert(datas.length + " sessões agendadas até " + S.fmtData(datas[datas.length - 1]) + ".");
   });
-  $("listaSessoes").addEventListener("click", function (e) {
+  // usado no detalhe do dia (Agenda) e no card Seu dia hoje (Início)
+  function trataCliqueSessao(e) {
+    var vn = e.target.getAttribute && e.target.getAttribute("data-vernome");
+    if (vn) { abreDiaAluno(vn); return; }
     var f = e.target.getAttribute && e.target.getAttribute("data-feita");
     var c = e.target.getAttribute && e.target.getAttribute("data-cx");
     var ft = e.target.getAttribute && e.target.getAttribute("data-faltou");
@@ -3073,7 +3129,94 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     if (c) st.sessoes = st.sessoes.filter(function (x) { return x.id !== c; });
     save(st);
+  }
+  $("listaSessoes").addEventListener("click", trataCliqueSessao);
+  $("bHojeP").addEventListener("click", trataCliqueSessao);
+  // toque no nome do aluno: treino do dia + atalhos, sem sair da tela
+  function abreDiaAluno(id) {
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === id; });
+    if (!a) return;
+    $("daNome").textContent = a.nome;
+    var tx = treinoTexto(st, id);
+    $("daTreino").textContent = tx || "Sem ficha de treino montada ainda — monta na aba Treinos.";
+    $("daPerfil").onclick = function () { $("dlgDiaAluno").close(); abrePerfil(id); };
+    if (a.zap) {
+      $("daZap").hidden = false;
+      $("daZap").href = "https://wa.me/55" + String(a.zap).replace(/\D/g, "");
+    } else $("daZap").hidden = true;
+    window.__diaAluno = id; // testes
+    $("dlgDiaAluno").showModal();
+  }
+  $("daFechar").addEventListener("click", function () { $("dlgDiaAluno").close(); });
+  // ações rápidas dos alertas e do radar (Início)
+  function vaiPraAba(aba) {
+    var btn = document.querySelector('#abas button[data-a="' + aba + '"]');
+    if (btn) btn.click();
+  }
+  $("relAlertas").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button");
+    if (!b) return;
+    if (b.hasAttribute("data-vernome")) { abreDiaAluno(b.getAttribute("data-vernome")); return; }
+    if (b.hasAttribute("data-alpix")) {
+      var stX = load();
+      var aX = stX.alunos.find(function (x) { return x.id === b.getAttribute("data-alpix"); });
+      if (aX) abrePix(aX, +b.getAttribute("data-v"));
+      return;
+    }
+    if (b.hasAttribute("data-alperfil")) { abrePerfil(b.getAttribute("data-alperfil")); mostraPfAba("fin"); return; }
+    if (b.hasAttribute("data-alav")) {
+      vaiPraAba("avaliacoes");
+      $("avAluno").value = b.getAttribute("data-alav");
+      return;
+    }
+    if (b.hasAttribute("data-altreino")) {
+      vaiPraAba("treinos");
+      $("tAluno").value = b.getAttribute("data-altreino");
+      renderFichas();
+    }
   });
+  $("bRadarP").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button");
+    if (!b) return;
+    if (b.hasAttribute("data-vernome")) { abreDiaAluno(b.getAttribute("data-vernome")); return; }
+    if (b.hasAttribute("data-radaba")) vaiPraAba(b.getAttribute("data-radaba"));
+  });
+
+  // ---------- badges no menu inferior: chat sem ler e pedidos de horário ----------
+  function poeBadge(el, n) {
+    if (!el) return;
+    var b = el.querySelector(".nav-bad");
+    if (b) b.remove();
+    if (n > 0) {
+      var s = document.createElement("span");
+      s.className = "nav-bad";
+      s.textContent = n > 9 ? "9+" : String(n);
+      el.appendChild(s);
+    }
+  }
+  function pintaBadges() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var st = load();
+    var tokens = {};
+    st.alunos.forEach(function (a) { if (a.ativo !== false && a.appTokenP) tokens[a.appTokenP] = 1; });
+    if (!Object.keys(tokens).length) return;
+    Promise.all([
+      nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid),
+      nuvem.client.from("app_agenda").select("id,token").eq("academia_id", nuvem.aid).eq("status", "pedido").gte("dia", S.todayISO()),
+    ]).then(function (rs) {
+      var chat = 0;
+      (((rs[0] || {}).data) || []).forEach(function (m) { if (m.de === "aluno" && !m.lida && tokens[m.token]) chat++; });
+      var ped = ((((rs[1] || {}).data) || []).filter(function (p) { return tokens[p.token]; })).length;
+      window.__badgesPT = { chat: chat, pedidos: ped };
+      poeBadge($("btnMenuPt"), chat); // o Chat mora dentro do menu de 3 traços
+      poeBadge(document.querySelector('#navPt [data-nav="agenda"]'), ped);
+    }).catch(function () {});
+  }
+  window.__badgesRun = pintaBadges; // testes
+  setTimeout(pintaBadges, 6000);
+  setInterval(pintaBadges, 90000);
 
   // ---------- pagamentos ----------
   // dívida acumulada: meses sem pagamento desde o início do contrato (não some na virada do mês)
@@ -4405,6 +4548,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     circPend = null;
     st.avaliacoes.push(reg);
+    marcaAppPendente(st, reg.alunoId); // a evolução entra no app na próxima publicação
     ["avPeso", "avGord", "avCintura", "avBraco"].forEach(function (id) { $(id).value = ""; });
     save(st);
   });
@@ -4601,40 +4745,57 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }).join("");
     } else $("relLTV").textContent = "Sem pagamentos ainda.";
 
-    // ---- alertas ----
+    // ---- alertas (agora com o botão de resolver do lado) ----
     var diaHoje = +hoje.slice(8, 10);
     var alertas = [];
+    function zapAl(a, msg) {
+      return a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Zap</a>' : "";
+    }
     ativos.forEach(function (a) {
       var ct = contratoDe(st, a.id);
       var pagouMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
-      if (ct && !pagouMes && diaHoje > ct.diaVenc) alertas.push({ tipo: "erro", txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + ct.diaVenc + ")." });
+      if (ct && !pagouMes && diaHoje > ct.diaVenc) {
+        var dvAl = dividaDe(st, a);
+        var cobrarAl = dvAl.total || dvAl.valor;
+        var msgC = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" + (dvAl.meses > 1 ? " — ficaram " + dvAl.meses + " meses em aberto (" + S.fmtBRL(dvAl.total) + ")" : "") + ". Te mando o Pix? 💪";
+        alertas.push({ tipo: "erro", txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + ct.diaVenc + ").",
+          ac: ((st.config || {}).pixChave && cobrarAl ? '<button class="btn mini" data-alpix="' + a.id + '" data-v="' + cobrarAl + '">Pix</button>' : "") + zapAl(a, msgC) });
+      }
       var ultimaFeita = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; })
         .map(function (x) { return x.data; }).sort().pop() || a.desde || "";
       var corte14 = new Date(); corte14.setDate(corte14.getDate() - 14);
-      if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", txt: "<b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate." });
+      if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", txt: "<b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate.",
+        ac: zapAl(a, "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪") + '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button>' });
       var ultimaAv = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; }).map(function (v) { return v.data; }).sort().pop();
       var corte60 = new Date(); corte60.setDate(corte60.getDate() - 60);
-      if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", txt: "<b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução." });
+      if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", txt: "<b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução.",
+        ac: '<button class="btn sec mini" data-alav="' + a.id + '">Registrar avaliação</button>' });
       var temFicha = st.treinosV2 && st.treinosV2[a.id] && (st.treinosV2[a.id].fichas || []).length;
-      if (!temFicha && !(st.treinos || {})[a.id]) alertas.push({ tipo: "info", txt: "<b>" + esc(a.nome) + "</b> ainda não tem ficha de treino montada." });
+      if (!temFicha && !(st.treinos || {})[a.id]) alertas.push({ tipo: "info", txt: "<b>" + esc(a.nome) + "</b> ainda não tem ficha de treino montada.",
+        ac: '<button class="btn sec mini" data-altreino="' + a.id + '">Montar treino</button>' });
       if (a.pacote && +a.pacote.total > 0) {
         var restaPc2 = +a.pacote.total - (+a.pacote.usadas || 0);
-        if (restaPc2 <= 2) alertas.push({ tipo: restaPc2 <= 0 ? "erro" : "aviso", txt: "O pacote de sessões de <b>" + esc(a.nome) + "</b> " + (restaPc2 <= 0 ? "ACABOU" : "está acabando (restam " + restaPc2 + ")") + " — hora de renovar." });
+        if (restaPc2 <= 2) alertas.push({ tipo: restaPc2 <= 0 ? "erro" : "aviso", txt: "O pacote de sessões de <b>" + esc(a.nome) + "</b> " + (restaPc2 <= 0 ? "ACABOU" : "está acabando (restam " + restaPc2 + ")") + " — hora de renovar.",
+          ac: '<button class="btn mini" data-alperfil="' + a.id + '">Renovar pacote</button>' });
       }
       var tv = temFicha && st.treinosV2[a.id].validade;
-      if (tv && tv < hoje) alertas.push({ tipo: "aviso", txt: "O treino de <b>" + esc(a.nome) + "</b> venceu em " + S.fmtData(tv) + " — gere a nova fase (Treino automático ou Evoluir semana)." });
+      if (tv && tv < hoje) alertas.push({ tipo: "aviso", txt: "O treino de <b>" + esc(a.nome) + "</b> venceu em " + S.fmtData(tv) + " — gere a nova fase (Treino automático ou Evoluir semana).",
+        ac: '<button class="btn sec mini" data-altreino="' + a.id + '">Gerar nova fase</button>' });
       if (ct) {
         var pl = planoDe(st, ct.planoId);
         if (pl && +pl.ciclo > 1 && ct.inicio) {
           var fimCiclo = new Date(ct.inicio + "T12:00"); fimCiclo.setMonth(fimCiclo.getMonth() + +pl.ciclo);
           var em30 = new Date(); em30.setDate(em30.getDate() + 30);
-          if (fimCiclo <= em30) alertas.push({ tipo: "aviso", txt: "O contrato de <b>" + esc(a.nome) + "</b> (" + esc(pl.nome) + ") completa o ciclo em " + S.fmtData(S.todayISO(fimCiclo)) + " — hora de renovar." });
+          if (fimCiclo <= em30) alertas.push({ tipo: "aviso", txt: "O contrato de <b>" + esc(a.nome) + "</b> (" + esc(pl.nome) + ") completa o ciclo em " + S.fmtData(S.todayISO(fimCiclo)) + " — hora de renovar.",
+            ac: '<button class="btn mini" data-alperfil="' + a.id + '">Renovar</button>' });
         }
       }
     });
     $("relAlertas").innerHTML = alertas.length ? alertas.map(function (al) {
       var borda = al.tipo === "erro" ? "#dc2626" : al.tipo === "aviso" ? "#d97706" : "var(--roxo)";
-      return '<div style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0;font-size:13.5px;">' + al.txt + "</div>";
+      return '<div style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0;font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+        "<span style='flex:1;min-width:180px;'>" + al.txt + "</span>" +
+        (al.ac ? "<span style='display:inline-flex;gap:6px;flex-wrap:wrap;'>" + al.ac + "</span>" : "") + "</div>";
     }).join("") : "Tudo em ordem — nenhum alerta hoje.";
     renderDashPT(st);
   }
@@ -4671,6 +4832,45 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var d = dadosDoMes(st, mes);
     var ativos = d.ativos;
+    // ---- Seu dia hoje: as sessões de agora, com Feita/Faltou direto no Início ----
+    var nomeHj = {};
+    st.alunos.forEach(function (a) { nomeHj[a.id] = a.nome; });
+    var sesHoje = st.sessoes.filter(function (x) { return x.data === hoje; })
+      .sort(function (a, b) { return (a.hora || "99") < (b.hora || "99") ? -1 : 1; });
+    $("bHojeP").innerHTML = sesHoje.length ? sesHoje.map(function (x) {
+      return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '"><b>' + (x.hora || "sem hora") + "</b>" +
+        '<button data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">' + esc(nomeHj[x.alunoId] || "?") + "</button>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        (x.feita ? '<span class="tag ok">FEITA ✓</span>'
+          : x.faltou ? '<span class="tag erro">FALTOU</span>'
+          : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
+            '<button class="btn sec mini" data-faltou="' + x.id + '">Faltou</button>') + "</span></div>";
+    }).join("") : "Nenhuma sessão marcada pra hoje — dia livre ou hora de puxar agendamentos.";
+    // ---- Radar de retenção: quem precisa de atenção antes de sumir de vez ----
+    var radar = [];
+    ativos.forEach(function (a) {
+      var ultF = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; })
+        .map(function (x) { return x.data; }).sort().pop();
+      if (!ultF) return;
+      var diasP = Math.floor((new Date(hoje) - new Date(ultF)) / 864e5);
+      if (diasP < 5) return;
+      var temFutura = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data >= hoje && !x.feita && !x.faltou; });
+      if (temFutura) return;
+      var msgR = "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪";
+      radar.push('<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
+        '<span class="tag ' + (diasP >= 10 ? "erro" : "alerta") + '">' + diasP + " dias sem treinar</span>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">' +
+        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgR) + '">Resgatar no Zap</a>' : "") +
+        '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button></span></div>');
+    });
+    var nuvemR = S.cloud && S.cloud();
+    var bd = window.__badgesPT || {};
+    if (nuvemR && bd.chat) radar.push('<div class="sessao-pt"><b>' + bd.chat + " mensagem(ns) sem resposta no chat</b>" +
+      '<span style="margin-left:auto;"><button class="btn sec mini" data-radaba="chat">Abrir chat</button></span></div>');
+    if (nuvemR && bd.pedidos) radar.push('<div class="sessao-pt"><b>' + bd.pedidos + " pedido(s) de horário esperando</b>" +
+      '<span style="margin-left:auto;"><button class="btn sec mini" data-radaba="agenda">Abrir agenda</button></span></div>');
+    $("bRadarP").innerHTML = radar.length ? radar.join("")
+      : "Todo mundo em movimento" + (nuvemR ? "" : " — entre na sua conta pra ver também chat e pedidos de horário aqui") + ".";
     // carteira: MRR, ticket, contratos
     var ctAtivos = (st.contratosPT || []).filter(function (c) { return c.status === "ativo"; });
     var mrr = 0, comContrato = 0, pagantes = 0;

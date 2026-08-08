@@ -180,7 +180,7 @@ async function abaPt(p, a) {
       ok(/BEGIN:VCALENDAR/.test(txt) && /Sessão — João Cliente/.test(txt) && /DTSTART/.test(txt), "arquivo .ics tem o evento da sessão (Google/iPhone entendem)");
     }
   }
-  await p.click("[data-feita]");
+  await p.click("#listaSessoes [data-feita]");
   ses = await p.evaluate(() => document.getElementById("listaSessoes").textContent);
   ok(/FEITA/.test(ses), "sessão marcada como feita");
   ok(/Hoje/.test(ses), "lista agrupada por dia (cabeçalho Hoje)");
@@ -1014,6 +1014,126 @@ async function abaPt(p, a) {
   ok(/Receita: R\$/.test(fch) && /Novos alunos:/.test(fch) && /Sessões dadas:/.test(fch), "resumo de fechamento com receita, novos e sessões");
   await p.click("#fchCopiaP");
   ok(await p.evaluate(() => /copiado/.test(document.getElementById("fchStatusP").textContent)), "copiar resumo confirma");
+
+  // ---------- dia a dia e retenção: Seu dia hoje, radar, alertas com ação, badges, pushes ----------
+  console.log("Dia a dia e retenção:");
+  {
+    const stAntesC = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+    const hoje = new Date().toISOString().slice(0, 10);
+    await p.evaluate((hoje) => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const j = st.alunos.find((a) => a.nome === "João Cliente");
+      j.zap = j.zap || "31999990000";
+      st.sessoes.push({ id: "sc1", alunoId: j.id, data: hoje, hora: "07:30", feita: false });
+      const d6 = new Date(); d6.setDate(d6.getDate() - 6);
+      st.alunos.push({ id: "axPar", nome: "Parado Silva", ativo: true, zap: "31988887777" });
+      st.sessoes.push({ id: "sc2", alunoId: "axPar", data: d6.toISOString().slice(0, 10), feita: true });
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    }, hoje);
+    await p.reload();
+    await p.waitForTimeout(700);
+
+    // card Seu dia hoje no Início
+    const hojeCard = await p.evaluate(() => document.getElementById("bHojeP").innerHTML);
+    ok(/07:30/.test(hojeCard) && /João Cliente/.test(hojeCard) && /data-feita="sc1"/.test(hojeCard), "card Seu dia hoje lista a sessão com botão Feita");
+
+    // toque no nome → treino do dia + atalhos
+    await p.evaluate(() => document.querySelector("#bHojeP [data-vernome]").click());
+    await p.waitForFunction(() => document.getElementById("dlgDiaAluno").open);
+    const sheet = await p.evaluate(() => ({
+      nome: document.getElementById("daNome").textContent,
+      treino: document.getElementById("daTreino").textContent,
+      zapEscondido: document.getElementById("daZap").hidden,
+    }));
+    ok(/João/.test(sheet.nome) && /Supino reto/.test(sheet.treino) && !sheet.zapEscondido, "toque no nome abre o treino do dia com atalho de Zap");
+    await p.click("#daFechar");
+
+    // Feita direto do Início
+    await p.evaluate(() => document.querySelector('#bHojeP [data-feita="sc1"]').click());
+    await p.waitForTimeout(250);
+    ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.find((x) => x.id === "sc1").feita === true),
+      "marcar Feita direto do card do Início funciona");
+
+    // radar de retenção
+    const radar = await p.evaluate(() => document.getElementById("bRadarP").innerHTML);
+    ok(/Parado Silva/.test(radar) && /6 dias sem treinar/.test(radar) && /Resgatar no Zap/.test(radar), "radar de retenção lista quem parou, com botão de resgate");
+
+    // alertas com botão de ação: sem ficha → Montar treino leva pra aba certa com o aluno escolhido
+    const alHtml = await p.evaluate(() => document.getElementById("relAlertas").innerHTML);
+    ok(/data-altreino="axPar"/.test(alHtml) && /Montar treino/.test(alHtml), "alerta de aluno sem ficha ganhou o botão Montar treino");
+    await p.evaluate(() => document.querySelector('#relAlertas [data-altreino="axPar"]').click());
+    await p.waitForTimeout(250);
+    ok(await p.evaluate(() => !document.getElementById("vTreinos").hidden && document.getElementById("tAluno").value === "axPar"),
+      "botão do alerta abre Treinos já com o aluno escolhido");
+
+    // badges no menu inferior (chat não lido + pedidos de horário, nuvem mockada)
+    const badges = await p.evaluate(async () => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      st.alunos.find((a) => a.nome === "João Cliente").appTokenP = "tok-b";
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      const consulta = (resp) => { const o = { then: (fn) => Promise.resolve(resp).then(fn) }; ["eq", "gte", "in", "order", "limit"].forEach((k) => { o[k] = () => o; }); return o; };
+      window.__cloudOrigB = window.MTStore.cloud;
+      window.MTStore.cloud = () => ({ aid: "a1", client: { from: (t) => ({ select: () => consulta(t === "app_chat"
+        ? { data: [{ token: "tok-b", de: "aluno", lida: false }, { token: "tok-b", de: "aluno", lida: false }] }
+        : { data: [{ id: "p1", token: "tok-b" }] }) }) } });
+      window.__badgesRun();
+      await new Promise((r) => setTimeout(r, 200));
+      window.MTStore.cloud = window.__cloudOrigB;
+      return {
+        info: window.__badgesPT,
+        menu: (document.querySelector("#btnMenuPt .nav-bad") || {}).textContent || "",
+        ag: (document.querySelector('#navPt [data-nav="agenda"] .nav-bad') || {}).textContent || "",
+      };
+    });
+    ok(badges.info && badges.info.chat === 2 && badges.menu === "2", "badge de mensagens não lidas aparece no botão Menu");
+    ok(badges.info.pedidos === 1 && badges.ag === "1", "badge de pedidos de horário aparece na Agenda");
+
+    // pushes de retenção: aniversário, resgate do sumido e fim do desafio
+    const pushesR = await p.evaluate(async () => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const ontem = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const par = st.alunos.find((a) => a.id === "axPar");
+      par.appTokenP = "tok-par";
+      par.nasc = "1990" + hoje.slice(4);
+      st.desafio = { nome: "Desafio Agosto", ini: "2020-01-01", fim: ontem, premio: "1 mês grátis" };
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      window.__cloudOrigRg2 = window.MTStore.cloud;
+      window.__mtCloudOrig2 = window.MT_CLOUD;
+      window.__fetchOrig2 = window.fetch;
+      window.__pushesC = [];
+      window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
+      window.MTStore.cloud = () => ({ aid: "a1", client: { auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
+      window.fetch = async (u, o) => { window.__pushesC.push(JSON.parse(o.body)); return { ok: true }; };
+      window.__reguaPT();
+      await new Promise((r) => setTimeout(r, 200));
+      window.fetch = window.__fetchOrig2;
+      window.MTStore.cloud = window.__cloudOrigRg2;
+      window.MT_CLOUD = window.__mtCloudOrig2;
+      return window.__pushesC.map((x) => x.titulo);
+    });
+    ok(pushesR.some((t) => /Parabéns/.test(t)), "push de aniversário sai no dia");
+    ok(pushesR.some((t) => /Sentimos sua falta/.test(t)), "push de resgate pro aluno que sumiu 5+ dias");
+    ok(pushesR.some((t) => /Desafio Agosto terminou/.test(t)), "aviso do fim do desafio sai no dia seguinte");
+
+    // agendar sessão marca o app pra republicar (agenda entra no app)
+    await abaPt(p, "agenda");
+    await p.evaluate((hoje) => {
+      const j = JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente");
+      document.getElementById("sAluno").value = j.id;
+      document.getElementById("sData").value = hoje;
+      document.getElementById("sHora").value = "09:15";
+      document.getElementById("sAdd").click();
+    }, hoje);
+    await p.waitForTimeout(250);
+    ok(await p.evaluate(() => !!JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente").appEditEm),
+      "agendar sessão marca o app do aluno pra republicar");
+
+    // devolve o estado como estava
+    await p.evaluate((s) => localStorage.setItem("mtapp:ptStudio", s), stAntesC);
+    await p.reload();
+    await p.waitForTimeout(700);
+  }
 
   // ---------- gestão pro dia a dia: bloqueio, pacote, renovação, recibo, régua, aniversário ----------
   console.log("Gestão pro dia a dia:");
