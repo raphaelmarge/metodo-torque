@@ -3938,7 +3938,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     $("relAlertas").innerHTML = alertas.length ? alertas.map(function (al) {
       var borda = al.tipo === "erro" ? "#dc2626" : al.tipo === "aviso" ? "#d97706" : "var(--roxo)";
-      return '<div style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:#faf9fc;border-radius:0 8px 8px 0;font-size:13.5px;">' + al.txt + "</div>";
+      return '<div style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0;font-size:13.5px;">' + al.txt + "</div>";
     }).join("") : "Tudo em ordem — nenhum alerta hoje. 🎉";
   }
   $("relCSV").addEventListener("click", function () {
