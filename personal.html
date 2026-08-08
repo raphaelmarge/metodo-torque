@@ -168,9 +168,9 @@
             <div class="campo"><label>WhatsApp</label><input id="aZap" placeholder="DDD + número" inputmode="numeric"></div>
             <div class="campo"><label>E-mail (cria o acesso do app)</label><input id="aEmail" type="email" placeholder="aluno@email.com"></div>
             <div class="campo"><label>Objetivo</label><input id="aObjetivo" placeholder="Ex.: hipertrofia, emagrecimento"></div>
-            <div class="campo"><label>Valor combinado (R$)</label><input id="aValor" type="number" min="0" step="0.01" placeholder="Ex.: 400"></div>
-            <div class="campo"><label>Cobrança</label><select id="aModo" style="width: 100%;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></div>
-            <div class="campo"><label>Meta de treinos</label><select id="aMeta" style="width: 100%;"><option value="3">3×/semana</option><option value="2">2×/semana</option><option value="4">4×/semana</option><option value="5">5×/semana</option><option value="6">6×/semana</option></select></div>
+            <div class="campo"><label>CPF</label><input id="aCpf" inputmode="numeric" placeholder="000.000.000-00"></div>
+            <div class="campo"><label>CEP</label><input id="aCep" inputmode="numeric" placeholder="00000-000"></div>
+            <div class="campo" style="grid-column: 1 / -1;"><label>Endereço</label><input id="aEnd" placeholder="Rua, nº, bairro — cidade/UF (o CEP preenche sozinho)"></div>
           </div>
           <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Com o e-mail preenchido, o aluno recebe o acesso do app na hora (login = e-mail, senha temporária junto). Anamnese e PAR-Q ficam no perfil.</p>
           <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px;">
@@ -181,12 +181,22 @@
         <div id="naPasso2" hidden>
           <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Passo 2 de 2 · Contrato e venda</h2>
           <div class="grid-2" style="margin-top: 10px;">
-            <div class="campo"><label>Plano do studio</label><select id="naPlano" style="width: 100%;"></select></div>
+            <div class="campo"><label>Plano do studio *</label><select id="naPlano" style="width: 100%;"></select></div>
             <div class="campo"><label>Vence todo dia</label><input id="naVence" type="number" min="1" max="28" value="5"></div>
+            <details id="naNovoPlano" style="grid-column: 1 / -1;">
+              <summary class="muted" style="cursor: pointer; font-size: 12.5px;">➕ Criar um plano novo agora</summary>
+              <div class="grid-2" style="margin-top: 8px;">
+                <div class="campo"><label>Nome do plano</label><input id="naPlNome" placeholder="Ex.: Mensal 3x/sem"></div>
+                <div class="campo"><label>Valor (R$/mês)</label><input id="naPlValor" type="number" min="0" step="0.01"></div>
+                <div class="campo"><label>Treinos por semana</label><select id="naPlTreinos" style="width: 100%;"><option value="3">3×/semana</option><option value="2">2×/semana</option><option value="4">4×/semana</option><option value="5">5×/semana</option><option value="6">6×/semana</option><option value="0">— (consultoria)</option></select></div>
+                <div class="campo"><label>Modalidade</label><select id="naPlModal" style="width: 100%;"><option>presencial</option><option>consultoria online</option><option>híbrido</option></select></div>
+              </div>
+              <button class="btn sec mini" id="naPlCriar" style="margin-top: 8px;">Criar e usar este plano</button>
+            </details>
             <div class="campo"><label><input type="checkbox" id="naPagar" checked style="width: auto; margin-right: 6px;">Registrar a primeira venda agora</label><input id="naValor" type="number" min="0" step="0.01" placeholder="Valor R$"></div>
             <div class="campo"><label>Forma de pagamento</label><select id="naForma" style="width: 100%;"><option>pix</option><option>dinheiro</option><option>cartão</option><option>transferência</option></select></div>
           </div>
-          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Sem plano criado ainda? Escolha "valor combinado" — dá pra fechar contrato depois no Financeiro.</p>
+          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O plano define o valor, a quantidade de treinos por semana e a modalidade (presencial ou consultoria online).</p>
           <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px; flex-wrap: wrap;">
             <button class="btn sec" id="naPerfil">Abrir perfil completo</button>
             <button class="btn" id="naConcluir">Concluir</button>
@@ -246,6 +256,8 @@
         <input id="plNome" placeholder="Nome (ex.: Mensal 3x/sem)" style="flex: 2; min-width: 170px;">
         <input id="plValor" type="number" min="0" step="0.01" placeholder="Valor R$/mês" style="width: 130px;">
         <select id="plCiclo" style="width: auto;"><option value="1">mensal</option><option value="3">trimestral</option><option value="6">semestral</option><option value="12">anual</option></select>
+        <select id="plTreinos" style="width: auto;" title="Treinos por semana incluídos no plano"><option value="3">3×/semana</option><option value="2">2×/semana</option><option value="4">4×/semana</option><option value="5">5×/semana</option><option value="6">6×/semana</option><option value="0">— (consultoria)</option></select>
+        <select id="plModal" style="width: auto;"><option>presencial</option><option>consultoria online</option><option>híbrido</option></select>
         <input id="plLink" placeholder="Link de assinatura recorrente (opcional)" style="flex: 2; min-width: 180px;">
         <button class="btn" id="plAdd">+ Plano</button>
       </div>
@@ -706,6 +718,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pfAltura" inputmode="numeric" style="display:block; width: 90px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Profissão<input id="pfProfissao" style="display:block; width: 160px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Contato de emergência<input id="pfEmergencia" placeholder="nome e telefone" style="display:block; width: 210px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">CPF<input id="pfCpf" inputmode="numeric" style="display:block; width: 150px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">CEP<input id="pfCep" inputmode="numeric" style="display:block; width: 110px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Endereço<input id="pfEnd" placeholder="rua, nº, bairro — cidade/UF" style="display:block; width: 280px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Valor (R$)<input id="pfValor" inputmode="decimal" style="display:block; width: 90px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Cobrança<select id="pfModo" style="display:block; width: 120px; margin-top: 3px;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></label>
       <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pfPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">💠 Pix</option><option value="dinheiro">💵 Dinheiro</option><option value="cartao">💳 Cartão</option><option value="recorrente">🔁 Link recorrente</option></select></label>
@@ -964,7 +979,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // assistente de novo aluno: cadastro completo → contrato e venda na sequência
   var naAlunoId = null;
   $("btnNovoAluno").addEventListener("click", function () {
-    ["aNome", "aZap", "aEmail", "aObjetivo", "aValor"].forEach(function (id) { $(id).value = ""; });
+    ["aNome", "aZap", "aEmail", "aObjetivo", "aCpf", "aCep", "aEnd"].forEach(function (id) { $(id).value = ""; });
     $("naPasso1").hidden = false;
     $("naPasso2").hidden = true;
     naAlunoId = null;
@@ -976,7 +991,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!nome) { alert("Escreva o nome do aluno."); return; }
     var email = $("aEmail").value.trim().toLowerCase();
     var st = load();
-    var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: +$("aValor").value || 0, modo: $("aModo").value, metaSemana: +$("aMeta").value || 3, objetivo: $("aObjetivo").value.trim(), ativo: true, desde: S.todayISO() };
+    var novo = { id: S.uid(), nome: nome, zap: $("aZap").value.replace(/\D/g, ""), email: email, valor: 0, modo: "mes", metaSemana: 3,
+      objetivo: $("aObjetivo").value.trim(), cpf: $("aCpf").value.trim(), cep: $("aCep").value.trim(), endereco: $("aEnd").value.trim(),
+      ativo: true, desde: S.todayISO() };
     st.alunos.push(novo);
     save(st);
     naAlunoId = novo.id;
@@ -985,29 +1002,73 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       criaAcessoAluno(novo.id, function (r) { $("aAcessoStatus").innerHTML = msgAcesso(r, novo); });
     }
     // passo 2: contrato e venda
-    var planos = st.planosPT || [];
-    $("naPlano").innerHTML = '<option value="">— valor combinado (sem plano) —</option>' +
-      planos.map(function (pl) { return '<option value="' + pl.id + '">' + esc(pl.nome) + " · R$ " + (+pl.valor).toLocaleString("pt-BR") + "/mês</option>"; }).join("");
-    $("naValor").value = novo.valor || "";
+    naPopulaPlanos("");
+    $("naValor").value = "";
     $("naPasso1").hidden = true;
     $("naPasso2").hidden = false;
   });
+  function rotuloPlano(pl) {
+    var qtd = pl.treinosSem == null ? "" : (+pl.treinosSem ? " · " + pl.treinosSem + "x/sem" : " · consultoria");
+    return esc(pl.nome) + qtd + (pl.modalidade ? " · " + esc(pl.modalidade) : "") + " · R$ " + (+pl.valor).toLocaleString("pt-BR") + "/mês";
+  }
+  function naPopulaPlanos(selecionado) {
+    var st = load();
+    $("naPlano").innerHTML = '<option value="">— escolha o plano —</option>' +
+      (st.planosPT || []).map(function (pl) { return '<option value="' + pl.id + '">' + rotuloPlano(pl) + "</option>"; }).join("");
+    if (selecionado) $("naPlano").value = selecionado;
+  }
   $("naPlano").addEventListener("change", function () {
     var st = load();
     var pl = (st.planosPT || []).find(function (x) { return x.id === $("naPlano").value; });
     if (pl) $("naValor").value = pl.valor;
   });
+  $("naPlCriar").addEventListener("click", function () {
+    var nomePl = $("naPlNome").value.trim();
+    if (!nomePl || !+$("naPlValor").value) { alert("Preencha nome e valor do plano."); return; }
+    var st = load();
+    st.planosPT = st.planosPT || [];
+    var pl = { id: S.uid(), nome: nomePl, valor: +$("naPlValor").value, ciclo: 1,
+      treinosSem: +$("naPlTreinos").value || 0, modalidade: $("naPlModal").value, linkRec: "" };
+    st.planosPT.push(pl);
+    S.write("ptStudio", st);
+    renderPlanosPT();
+    naPopulaPlanos(pl.id);
+    $("naValor").value = pl.valor;
+    $("naPlNome").value = ""; $("naPlValor").value = "";
+    $("naNovoPlano").open = false;
+  });
+  // CEP preenche o endereço sozinho (ViaCEP) — cursor cai onde falta o número
+  function ligaCep(cepId, endId) {
+    var buscado = "";
+    $(cepId).addEventListener("input", function () {
+      var cep = $(cepId).value.replace(/\D/g, "");
+      if (cep.length !== 8 || cep === buscado) return;
+      buscado = cep;
+      fetch("https://viacep.com.br/ws/" + cep + "/json/").then(function (r) { return r.json(); }).then(function (d) {
+        if (d.erro) { buscado = ""; return; }
+        var rua = d.logradouro || "";
+        $(endId).value = rua + ", " + (d.bairro ? " — " + d.bairro : "") + (d.localidade ? ", " + d.localidade + "/" + (d.uf || "") : "");
+        $(endId).focus();
+        try { $(endId).setSelectionRange(rua.length + 2, rua.length + 2); } catch (e2) {}
+      }).catch(function () { buscado = ""; });
+    });
+  }
+  ligaCep("aCep", "aEnd");
+  ligaCep("pfCep", "pfEnd");
   function naConclui(abrirPerfil) {
     if (!naAlunoId) { $("dlgNovoAluno").close(); return; }
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === naAlunoId; });
     if (!a) { $("dlgNovoAluno").close(); return; }
     var planoId = $("naPlano").value;
-    if (planoId) {
-      st.contratosPT = st.contratosPT || [];
-      st.contratosPT.push({ id: S.uid(), alunoId: a.id, planoId: planoId, status: "ativo", diaVenc: Math.min(28, Math.max(1, +$("naVence").value || 5)) });
-      var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
-      if (plC) a.valor = +plC.valor || a.valor;
+    if (!planoId) { alert("Escolha o plano do aluno (ou crie um novo ali embaixo)."); return; }
+    st.contratosPT = st.contratosPT || [];
+    st.contratosPT.push({ id: S.uid(), alunoId: a.id, planoId: planoId, status: "ativo", diaVenc: Math.min(28, Math.max(1, +$("naVence").value || 5)) });
+    var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
+    if (plC) {
+      a.valor = +plC.valor || a.valor;
+      if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
+      a.modalidade = plC.modalidade || "";
     }
     if ($("naPagar").checked && +$("naValor").value > 0) {
       st.pagamentos = st.pagamentos || [];
@@ -1093,6 +1154,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfObjetivo").value = a.objetivo || ""; $("pfObs").value = a.obs || "";
     $("pfEmail").value = a.email || ""; $("pfSexo").value = a.sexo || "";
     $("pfAltura").value = a.altura || ""; $("pfProfissao").value = a.profissao || "";
+    $("pfCpf").value = a.cpf || ""; $("pfCep").value = a.cep || ""; $("pfEnd").value = a.endereco || "";
     $("pfEmergencia").value = a.emergencia || "";
     $("pfSalvo").textContent = "";
     // anamnese
@@ -1575,6 +1637,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     a.altura = +$("pfAltura").value || 0;
     a.profissao = $("pfProfissao").value.trim();
     a.emergencia = $("pfEmergencia").value.trim();
+    a.cpf = $("pfCpf").value.trim();
+    a.cep = $("pfCep").value.trim();
+    a.endereco = $("pfEnd").value.trim();
     save(st);
     $("pfTitulo").textContent = "👤 " + a.nome;
     $("pfSalvo").textContent = "✅ salvo!";
@@ -3422,6 +3487,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     el.innerHTML = st.planosPT.length ? st.planosPT.map(function (pl) {
       var n = st.contratosPT.filter(function (c) { return c.planoId === pl.id && c.status === "ativo"; }).length;
       return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) + "/mês</span>" +
+        (pl.treinosSem == null && !pl.modalidade ? "" : '<span class="muted">' + (pl.treinosSem == null ? "" : (+pl.treinosSem ? pl.treinosSem + "x/sem" : "consultoria")) + (pl.modalidade ? (pl.treinosSem == null ? "" : " · ") + esc(pl.modalidade) : "") + "</span>") +
         '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>" +
         (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">recorrente</span>' : "") +
         "<span class='muted'>" + n + " contrato(s)</span>" +
@@ -3449,7 +3515,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nome = $("plNome").value.trim();
     if (!nome || !+$("plValor").value) { alert("Preencha nome e valor do plano."); return; }
     var st = load();
-    st.planosPT.push({ id: S.uid(), nome: nome, valor: +$("plValor").value, ciclo: +$("plCiclo").value || 1, linkRec: $("plLink").value.trim() });
+    st.planosPT.push({ id: S.uid(), nome: nome, valor: +$("plValor").value, ciclo: +$("plCiclo").value || 1,
+      treinosSem: +$("plTreinos").value || 0, modalidade: $("plModal").value, linkRec: $("plLink").value.trim() });
     $("plNome").value = ""; $("plValor").value = ""; $("plLink").value = "";
     S.write("ptStudio", st);
     renderPlanosPT(); render();
