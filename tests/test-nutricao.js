@@ -197,6 +197,8 @@ async function abaNt(p, a) {
   ok(/Marcar como feita/.test(appHtml) && /kcalDia/.test(appHtml), "refeições marcáveis + kcal do dia");
   ok(/2140 kcal/.test(appHtml) && /2800 ml/.test(appHtml), "metas de kcal e água embutidas");
   ok(/Meu peso/.test(appHtml) && /pzAdd/.test(appHtml), "card de peso presente");
+  ok(appHtml.includes("if(!L('ntpeso',[]).length&&!L('ntdi_'+isoHj(),[]).length"),
+    "app num celular novo (sem registro local) NÃO devolve dados vazios pra nuvem");
   ok(/aluno_define_login/.test(appHtml) && /Meu login/.test(appHtml), "app do paciente tem login e senha");
   ok(/Nutri Ana Costa/.test(appHtml), "marca do consultório no app");
   ok(/macroDia/.test(appHtml) && /Alvo de macros/.test(appHtml), "card Meu dia mostra P/C/G do dia contra o alvo");

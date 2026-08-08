@@ -312,6 +312,7 @@
   function agendaEnvio(chaveFull) {
     if (!sync.client || sync.aplicando || !sincronizavel(chaveFull)) return;
     sync.sujas[chaveFull] = true;
+    avisaStatus();
     clearTimeout(sync.timer);
     sync.timer = setTimeout(enviaSujas, 1200);
   }
@@ -366,7 +367,28 @@
           } catch (e) {}
           sync.aplicando = false;
         } else if (row.atualizado < local) {
-          sync.sujas[row.chave] = true; // local mais novo: manda de volta
+          // local mais novo: manda de volta — MAS na 1ª puxada, se o local está
+          // vazio e a nuvem tem registros, é um aparelho recém-instalado (o
+          // onboarding acabou de semear o estado em branco). A nuvem vence:
+          // ninguém perde a base de alunos por logar num celular novo.
+          var locVazio = false;
+          if (primeira) {
+            var locVal = null;
+            try { locVal = JSON.parse(localStorage.getItem(row.chave)); } catch (e) {}
+            var nLoc = contaRegistros(locVal), nNuv = contaRegistros(row.valor);
+            locVazio = (nNuv || 0) >= 2 && !nLoc;
+          }
+          if (locVazio) {
+            sync.aplicando = true;
+            try {
+              localStorage.setItem(row.chave, JSON.stringify(row.valor));
+              marcaTs(row.chave, row.atualizado);
+              mudou.push(row.chave);
+            } catch (e) {}
+            sync.aplicando = false;
+          } else {
+            sync.sujas[row.chave] = true;
+          }
         }
       });
       if (maxTs) sync.marca = maxTs;
@@ -394,7 +416,7 @@
 
   function avisaStatus() {
     if (window.MT_syncInfo) {
-      try { window.MT_syncInfo({ ativa: !!sync.client, ultima: sync.ultima }); } catch (e) {}
+      try { window.MT_syncInfo({ ativa: !!sync.client, ultima: sync.ultima, pendentes: Object.keys(sync.sujas).length }); } catch (e) {}
     }
   }
 

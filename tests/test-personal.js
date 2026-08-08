@@ -1111,6 +1111,46 @@ async function abaPt(p, a) {
     return r.enviados;
   });
   ok(regua2 === 0, "rodar a régua de novo no mesmo dia não repete o aviso");
+
+  // push que FALHA não marca o log — a régua tenta de novo na rodada seguinte
+  const reguaF = await p.evaluate(async () => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    j.appTokenP = "tok-joao";
+    st.sessoes.push({ id: "ses-regua2", alunoId: j.id, data: hoje, hora: "22:00", feita: false });
+    delete (st.pushLog || {})["treino|" + j.id + "|" + hoje];
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    const chave = "treino|" + j.id + "|" + hoje;
+    window.__cloudOrigRg = window.MTStore.cloud;
+    window.__mtCloudOrig = window.MT_CLOUD;
+    window.__fetchOrig = window.fetch;
+    window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
+    window.MTStore.cloud = () => ({ aid: "acad-1", client: { auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
+    window.fetch = async () => ({ ok: false });
+    const r1 = window.__reguaPT();
+    await new Promise((res) => setTimeout(res, 120));
+    const marcouNaFalha = !!(JSON.parse(localStorage.getItem("mtapp:ptStudio")).pushLog || {})[chave];
+    window.fetch = async () => ({ ok: true });
+    const r2 = window.__reguaPT();
+    await new Promise((res) => setTimeout(res, 120));
+    const marcouNoOk = !!(JSON.parse(localStorage.getItem("mtapp:ptStudio")).pushLog || {})[chave];
+    const r3 = window.__reguaPT();
+    window.fetch = window.__fetchOrig;
+    window.MTStore.cloud = window.__cloudOrigRg;
+    window.MT_CLOUD = window.__mtCloudOrig;
+    const st9 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const rodou = (st9.config || {}).reguaRodouEm || "";
+    st9.sessoes = st9.sessoes.filter((x) => x.id !== "ses-regua2");
+    delete st9.alunos.find((a) => a.nome === "João Cliente").appTokenP;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st9));
+    return { r1: r1.enviados, marcouNaFalha, r2: r2.enviados, marcouNoOk, r3: r3.enviados, rodou,
+      status: document.getElementById("reguaStatus") ? document.getElementById("reguaStatus").textContent : "" };
+  });
+  ok(reguaF.r1 >= 1 && !reguaF.marcouNaFalha, "push que falhou NÃO marca o log (vai tentar de novo)");
+  ok(reguaF.r2 >= 1 && reguaF.marcouNoOk && reguaF.r3 === 0, "na rodada seguinte o push sai, marca o log e não repete mais");
+  ok(reguaF.rodou.startsWith(new Date().toISOString().slice(0, 10)) && /Última rodada/.test(reguaF.status),
+    "reguaRodouEm registra a última rodada e o card mostra");
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     st.sessoes = st.sessoes.filter((x) => x.id !== "ses-regua");
@@ -1142,6 +1182,8 @@ async function abaPt(p, a) {
   ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
+  ok(appHtml.includes("if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length"),
+    "app num celular novo (sem registro local) NÃO devolve dados vazios pra nuvem");
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
   ok(/>Descanso 100s</.test(appHtml) && /100s ›/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
   ok(/"d":100/.test(appHtml), "treino guiado usa o descanso programado do exercício");
@@ -2233,6 +2275,29 @@ async function abaPt(p, a) {
     await p.evaluate(() => document.getElementById("pfFechar").click());
   }
 
+  // ---------- confiança: backup no card da ilha + indicador da nuvem ----------
+  console.log("Backup e indicador da nuvem:");
+  await abaPt(p, "alunos");
+  ok(await p.evaluate(() => !!document.getElementById("btnBackup") && !!document.getElementById("btnBackupRestaura") &&
+    /backup/i.test(document.getElementById("bkAviso").textContent)), "card da ilha tem o bloco de backup com aviso");
+  await p.evaluate(() => {
+    const orig = URL.createObjectURL;
+    URL.createObjectURL = () => "blob:mock";
+    try { document.getElementById("btnBackup").click(); } finally { URL.createObjectURL = orig; }
+  });
+  await p.waitForTimeout(250);
+  ok(await p.evaluate(() => (JSON.parse(localStorage.getItem("mtapp:ptStudio")).config || {}).backupEm === new Date().toISOString().slice(0, 10) &&
+    /Último backup/.test(document.getElementById("bkAviso").textContent)), "baixar backup grava a data e o aviso passa a mostrar");
+  ok(await p.evaluate(() => {
+    window.MT_syncInfo({ ativa: true, ultima: new Date(), pendentes: 0 });
+    const emDia = !document.getElementById("syncInfoPt").hidden && /Nuvem em dia/.test(document.getElementById("syncInfoPt").textContent);
+    window.MT_syncInfo({ ativa: true, ultima: new Date(), pendentes: 3 });
+    const pendente = /3 alteração/.test(document.getElementById("syncInfoPt").textContent) && /não fecha a página/.test(document.getElementById("syncInfoPt").textContent);
+    window.MT_syncInfo({ ativa: false });
+    const escondido = document.getElementById("syncInfoPt").hidden;
+    return emDia && pendente && escondido;
+  }), "indicador da nuvem: em dia / alterações pendentes / some sem conta");
+
   // aluno "Encerrar" some da lista
   await abaPt(p, "alunos");
   await p.click("[data-rm]");
@@ -2322,6 +2387,56 @@ async function abaPt(p, a) {
     await pD2.close();
     await pD.close();
     await ctxD.close();
+  }
+
+  // ---------- sync: aparelho novo com estado vazio NÃO sobrescreve a nuvem ----------
+  console.log("Proteção do primeiro sync:");
+  {
+    const ctxS = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxS.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "R" }));
+      localStorage.setItem("mtapp:academia", JSON.stringify({ id: "acad-1", papel: "dono" }));
+      // aparelho recém-instalado: onboarding semeou o estado VAZIO com carimbo de agora
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify({ alunos: [], sessoes: [], pagamentos: [], config: {} }));
+      localStorage.setItem("mtsync:ts", JSON.stringify({ "mtapp:ptStudio": "2099-12-31T00:00:00.000Z" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pS = await ctxS.newPage();
+    pS.on("pageerror", (e) => erros.push("sync: " + e));
+    await pS.goto(BASE + "/personal.html");
+    await pS.waitForTimeout(500);
+    const guarda = await pS.evaluate(async () => {
+      // cliente fake: a nuvem tem 3 alunos com carimbo MAIS VELHO que o local vazio
+      const nuvemVal = { alunos: [{ id: "n1", nome: "Aluno Nuvem 1", ativo: true }, { id: "n2", nome: "Aluno Nuvem 2", ativo: true }, { id: "n3", nome: "Aluno Nuvem 3", ativo: true }], sessoes: [], pagamentos: [], config: {} };
+      const upserts = [];
+      // consulta encadeável (eq/in/gt/order/limit…) que resolve com a resposta dada
+      const consulta = (resp) => {
+        const o = { then: (fn, rej) => Promise.resolve(resp).then(fn, rej) };
+        ["eq", "in", "gt", "gte", "lt", "lte", "order", "limit", "select", "neq", "is"].forEach((k) => { o[k] = () => o; });
+        return o;
+      };
+      window.MT_supabase = {
+        auth: { getSession: async () => ({ data: { session: { user: { email: "r@t.br" } } } }) },
+        rpc: () => Promise.resolve({ data: null }),
+        from: (tabela) => ({
+          select: () => consulta(tabela === "dados"
+            ? { data: [{ chave: "mtapp:ptStudio", valor: nuvemVal, atualizado: "2099-01-01T00:00:00.000Z" }] }
+            : { data: [] }),
+          upsert: (linhas) => { upserts.push(...(Array.isArray(linhas) ? linhas : [linhas])); return Promise.resolve({}); },
+          insert: () => Promise.resolve({}),
+        }),
+      };
+      window.MTStore.iniciaSync();
+      await new Promise((res) => setTimeout(res, 2000));
+      return {
+        alunos: (JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos || []).length,
+        subiuVazio: upserts.some((l) => l.chave === "mtapp:ptStudio" && (!l.valor || !(l.valor.alunos || []).length)),
+      };
+    });
+    ok(guarda.alunos === 3, "1º sync num aparelho vazio: a base da nuvem vence (3 alunos aplicados)");
+    ok(!guarda.subiuVazio, "o estado vazio do aparelho novo NUNCA sobe por cima da nuvem");
+    await pS.close();
+    await ctxS.close();
   }
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));

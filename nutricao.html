@@ -1877,6 +1877,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ntfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
       "var rf=L('ntref_'+isoHj(),{});var nrf=0;for(var kk in rf)nrf++;" +
+      // celular novo/limpo: sem registro local não devolve nada (senão apagaria o histórico da nuvem)
+      "if(!L('ntpeso',[]).length&&!L('ntdi_'+isoHj(),[]).length&&!nrf&&!L('ntag_'+isoHj(),0)&&!fs.length)return;" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:" + JSON.stringify(primeiro) + ",peso:L('ntpeso',[]),diario:L('ntdi_'+isoHj(),[])," +
       "refsFeitas:nrf,refsTotal:REFS.length,agua:L('ntag_'+isoHj(),0),aguaMeta:AGUAML,kcalMeta:KCALMETA,dia:isoHj()," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
@@ -2926,20 +2928,22 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 
   // ---------- rotina diária: lembrete de consulta do dia (push pelo app do paciente) ----------
   function pushPacienteN(token, titulo, corpo) {
+    // resolve true só quando a função push-envia respondeu ok — quem chama pode re-tentar depois
     try {
       var nuvem = S.cloud && S.cloud();
       var cfg = self.MT_CLOUD || {};
-      if (!nuvem || !cfg.url || !token) return;
-      nuvem.client.auth.getSession().then(function (sess) {
+      if (!nuvem || !cfg.url || !token) return Promise.resolve(false);
+      return nuvem.client.auth.getSession().then(function (sess) {
         var tok = (sess && sess.data && sess.data.session && sess.data.session.access_token) || "";
         return fetch(cfg.url + "/functions/v1/push-envia", {
           method: "POST",
           headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
           body: JSON.stringify({ acao: "para", token: token, titulo: titulo, corpo: corpo }),
         });
-      }).catch(function () {});
-    } catch (e) {}
+      }).then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });
+    } catch (e) { return Promise.resolve(false); }
   }
+  var pushEmVooN = {}; // chaves esperando resposta do push-envia (não repete na mesma sessão)
   function rotinaDiariaN() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return { enviados: 0 };
@@ -2952,11 +2956,19 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var p = st.pacientes.find(function (x) { return x.id === c.pacienteId && x.ativo !== false; });
       if (!p || !p.appTokenN) return;
       var k = "consulta|" + p.id + "|" + hoje;
-      if (st.pushLogN[k]) return;
+      // só marca no log quando o push-envia responde ok — se falhou, tenta na próxima rodada
+      if (st.pushLogN[k] || pushEmVooN[k]) return;
+      pushEmVooN[k] = 1;
+      enviados++;
       pushPacienteN(p.appTokenN, "Sua consulta é hoje" + (c.hora ? " às " + c.hora : "") + "!",
-        "Te espero no consultório — se não puder vir, me avisa pelo chat do app.");
-      st.pushLogN[k] = hoje;
-      enviados++; mudou = true;
+        "Te espero no consultório — se não puder vir, me avisa pelo chat do app.").then(function (deuCerto) {
+        delete pushEmVooN[k];
+        if (!deuCerto) return;
+        var st2 = load();
+        st2.pushLogN = st2.pushLogN || {};
+        st2.pushLogN[k] = S.todayISO();
+        S.write("ntStudio", st2);
+      });
     });
     var chaves = Object.keys(st.pushLogN);
     if (chaves.length > 200) {
