@@ -465,6 +465,8 @@ async function abaNt(p, a) {
   await p.fill("#cnHora", "10:30");
   await p.click("#cnAdd");
   await p.waitForTimeout(200);
+  ok(await p.evaluate(() => !!document.querySelector("#calAgendaN .cal-dia")), "agenda do Nutri mostra o calendário do mês");
+  await p.evaluate(() => window.__agDiaN("2099-01-15"));
   const consultasTxt = await p.evaluate(() => document.getElementById("listaConsultas").textContent);
   ok(/Bruno Paciente/.test(consultasTxt) && /10:30/.test(consultasTxt), "consulta marcada aparece na lista do módulo");
 
