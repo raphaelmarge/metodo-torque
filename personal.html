@@ -87,8 +87,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* fichas recolhíveis: toca pra abrir/fechar (pode abrir várias) */
   #fichasBox details > summary { list-style: none; }
   #fichasBox details > summary::-webkit-details-marker { display: none; }
-  #fichasBox .fseta { display: inline-block; transition: transform .15s; color: var(--cinza); }
-  #fichasBox details[open] .fseta { transform: rotate(180deg); }
+  #fichasBox .fseta, #listaAvaliacoes .fseta { display: inline-block; transition: transform .15s; color: var(--cinza); }
+  #fichasBox details[open] .fseta, #listaAvaliacoes details[open] .fseta { transform: rotate(180deg); }
   @media (max-width: 640px) {
     #vPerfil .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
     #vPerfil .linha-flex label { width: 100% !important; min-width: 0 !important; }
@@ -3872,9 +3872,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var bom = invertido ? d > 0 : d < 0;
       return " <b style='color:" + (bom ? "#16a34a" : "#dc2626") + ";font-size:12px;'>" + (d > 0 ? "+" : "") + String(d).replace(".", ",") + "</b>";
     }
+    // preserva o que está aberto no re-render (o toggle é assíncrono — lê o DOM real)
+    document.querySelectorAll("#listaAvaliacoes details[data-avdet]").forEach(function (d) {
+      avAbertos[d.getAttribute("data-avdet")] = d.open;
+    });
     el.innerHTML = Object.keys(porAluno).map(function (id) {
       var lista = porAluno[id].slice().sort(function (a, b) { return a.data < b.data ? -1 : 1; });
-      return "<div style='margin-bottom:14px;'><b style='font-size:14.5px;'>" + esc(nomeDe[id] || "?") + "</b>" +
+      return '<details data-avdet="' + id + '"' + (avAbertos[id] ? " open" : "") + ' style="border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;">' +
+        '<summary style="padding:13px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+        '<b style="font-size:14.5px;">' + esc(nomeDe[id] || "?") + "</b>" +
+        '<span class="muted" style="font-size:12px;">' + lista.length + " avaliação(ões) · última em " + S.fmtData(lista[lista.length - 1].data) + "</span>" +
+        '<span class="fseta" style="margin-left:auto;">▾</span></summary>' +
+        '<div style="padding:0 14px 12px;">' +
         lista.map(function (v, i) {
           var ant = i > 0 ? lista[i - 1] : {};
           return '<div class="sessao-pt"><b>' + S.fmtData(v.data) + "</b>" +
@@ -3884,9 +3893,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
             (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
             '<span style="margin-left:auto;"></span><button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
-        }).join("") + "</div>";
+        }).join("") + "</div></details>";
     }).join("");
   }
+  // grupos recolhíveis por aluno: clicar no nome abre, clicar de novo fecha
+  var avAbertos = {};
+  $("listaAvaliacoes").addEventListener("toggle", function (e) {
+    var d = e.target;
+    if (d && d.hasAttribute && d.hasAttribute("data-avdet")) avAbertos[d.getAttribute("data-avdet")] = d.open;
+  }, true);
   $("avAdd").addEventListener("click", function () {
     if (!$("avAluno").value) { alert("Escolha o aluno."); return; }
     var st = load();
