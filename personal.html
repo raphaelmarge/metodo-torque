@@ -2482,6 +2482,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function renderFichas() {
     var el = $("fichasBox");
+    // o evento toggle do <details> é assíncrono — lê o estado real do DOM
+    // antes de reconstruir, senão um re-render rápido perde o que abriu/fechou
+    document.querySelectorAll("#fichasBox details[data-fdet]").forEach(function (d) {
+      fichasAbertas[d.getAttribute("data-fdet")] = d.open;
+    });
     var alunoId = $("tAluno").value;
     if (!alunoId) { el.innerHTML = '<span class="muted">Escolha o aluno e crie a primeira ficha.</span>'; $("tValidade").value = ""; return; }
     var st = load();
@@ -3992,7 +3997,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='cardx' id='cardNotif' style='display:none;'><h2>" + appIco(APPIC.sino, 14) + "Lembretes</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das sessões e recados por aqui.</div>" +
       "<button class='btnx' id='btnNotif' style='width:100%;'>Ativar notificações</button></div>" +
-      "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + "</div>" +
+      "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
       "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
       ",NUVEM=" + JSON.stringify((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
       ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
@@ -4372,7 +4377,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "if(p.tipo==='emoji'){h+=\"<div style='display:flex;gap:6px;flex-wrap:wrap;'>\"+(p.ops||[]).map(function(o,j){return \"<button data-qa='\"+i+\"' data-j='\"+j+\"' style='flex:1;min-width:56px;background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#d6d2df;font-size:19px;padding:8px 4px;cursor:pointer;font-family:inherit;'>\"+eh(o.e)+\"<div style='font-size:9.5px;margin-top:2px;'>\"+eh(o.r)+\"</div></button>\";}).join('')+'</div>';}" +
         "else if(p.tipo==='linear'){h+=\"<div style='display:flex;gap:4px;flex-wrap:wrap;'>\";for(var n=0;n<=10;n++)h+=\"<button data-qa='\"+i+\"' data-v='\"+n+\"' style='flex:1;min-width:26px;background:#14121a;border:1px solid #322e3d;border-radius:7px;color:#d6d2df;font-size:13px;padding:7px 0;cursor:pointer;font-family:inherit;'>\"+n+\"</button>\";h+='</div>';}" +
         "else{h+=\"<input data-qat='\"+i+\"' placeholder='Escreva aqui…' style='width:100%;'>\";}" +
-        "return h;}).join('')+\"<button class='btnx' id='qaEnvia' style='width:100%;margin-top:12px;'>Enviar respostas ➤</button>\";}" +
+        "return h;}).join('')+\"<button class='btnx' id='qaEnvia' style='width:100%;margin-top:12px;'>Enviar respostas</button>\";}" +
         "el.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('button[data-qa]');if(!b)return;var i=+b.dataset.qa;var p=QUESTAPP.ps[i]||{};" +
         "if(b.dataset.j!=null){var o=(p.ops||[])[+b.dataset.j]||{};R[i]={r:o.r||o.e||'',p:+o.p||0};}else{R[i]={r:b.dataset.v,p:+b.dataset.v};}" +
         "el.querySelectorAll(\"button[data-qa='\"+i+\"']\").forEach(function(x){var on=x===b;x.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.borderColor=on?'" + CORC + "':'#322e3d';x.style.color=on?'#fff':'#d6d2df';});});" +
@@ -4385,7 +4390,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "var btn=ev.target;btn.disabled=true;btn.textContent='Enviando…';" +
         "var fim=function(){var resp=L('ptqa',{});resp[chave]=1;Sv('ptqa',resp);pinta();};" +
         "if(NUVEM){rpcApp('app_quest_responde',{t:TOKEN,p_nome:QUESTAPP.nome,p_dados:{respostas:lista,pontuacao:temP?total:null}}).then(function(r){" +
-        "if(r&&r.ok){fim();}else{btn.disabled=false;btn.textContent='Enviar respostas ➤';alert((r&&r.erro)||'Não deu pra enviar agora — confere a internet e tenta de novo.');}});}" +
+        "if(r&&r.ok){fim();}else{btn.disabled=false;btn.textContent='Enviar respostas';alert((r&&r.erro)||'Não deu pra enviar agora — confere a internet e tenta de novo.');}});}" +
         "else{var msg=QUESTAPP.nome+' — '+PRIMEIRO+'\\n'+lista.map(function(x){return (x.sigla?x.sigla+': ':'')+x.resposta;}).join('\\n');" +
         "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
         "pinta();})();"
