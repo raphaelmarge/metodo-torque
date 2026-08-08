@@ -49,6 +49,7 @@
   .tagn.ambar { background: rgba(245,158,11,.14); color: #fcd34d; border-color: rgba(245,158,11,.4); }
   .btn.verde { background: var(--verde); }
   .btn.verde:hover { background: var(--verde-2); }
+  .abas button.ativa { background: var(--verde); border-color: var(--verde); box-shadow: none; }
   .ref-card { border: 1px solid var(--linha); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: var(--card); }
   .kpis-nt { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
   .kpi-nt { background: var(--card); border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
@@ -56,6 +57,9 @@
   .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: #4ade80; }
   /* 📱 perfil do paciente no celular: campos em grade organizada */
   @media (max-width: 640px) {
+    #qtAbasN { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #alAbas, #agAbasN, #chAbasN { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    #qtAbasN button, #alAbas button, #agAbasN button, #chAbasN button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
     #dlgPerfilN .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
     #dlgPerfilN .linha-flex label { width: 100% !important; min-width: 0 !important; }
     #dlgPerfilN .linha-flex label input, #dlgPerfilN .linha-flex label select { width: 100% !important; }
@@ -183,7 +187,11 @@
   </div>
 
   <div id="vAlimentos" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="alAbas" style="margin: 0 0 14px;">
+      <button data-ala="banco" class="ativa">🥦 Banco de alimentos</button>
+      <button data-ala="add">➕ Adicionar alimento</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-alsec="banco">
       <h2>Banco de alimentos (curadoria)</h2>
       <p class="muted" style="font-size: 13px;">Banco brasileiro com centenas de itens — do arroz ao fast food e industrializados. <b>Desmarque o que você NÃO quer</b> que apareça nas dietas e no app dos pacientes; marque de volta quando quiser.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
@@ -194,7 +202,7 @@
       </div>
       <div id="alResumo" class="muted" style="font-size: 12.5px; margin-top: 8px;"></div>
     </div>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-alsec="add" hidden>
       <h2>Código de barras (Open Food Facts)</h2>
       <p class="muted" style="font-size: 13px;">Digite o código de barras de um produto (ou escaneie, em celulares compatíveis) — buscamos no maior banco aberto do mundo e ele entra nos seus alimentos com as kcal do rótulo. Requer internet.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
@@ -204,7 +212,7 @@
         <span id="cbStatus" class="muted" style="font-size: 13px;"></span>
       </div>
     </div>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-alsec="add" hidden>
       <h2>Alimento próprio</h2>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
         <input id="alNome" placeholder="Alimento" style="flex: 2; min-width: 150px;">
@@ -216,11 +224,15 @@
         <button class="btn verde" id="alAdd">+ Alimento</button>
       </div>
     </div>
-    <div class="card"><div id="alLista" class="muted">Carregando…</div></div>
+    <div class="card" data-alsec="banco"><div id="alLista" class="muted">Carregando…</div></div>
   </div>
 
   <div id="vAgendaN" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="agAbasN" style="margin: 0 0 14px;">
+      <button data-aga="consultas" class="ativa">📌 Consultas</button>
+      <button data-aga="marcar">➕ Marcar</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-agsec="marcar" hidden>
       <h2>Marcar consulta</h2>
       <div class="linha-flex" style="margin-top: 8px;">
         <select id="cnPaciente" style="min-width: 180px;"></select>
@@ -230,12 +242,12 @@
       </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A consulta aparece na Agenda do app do paciente (com conta na nuvem).</p>
     </div>
-    <div class="card" id="cardPedidosN" hidden style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
+    <div class="card" id="cardPedidosN" hidden data-agsec="consultas" style="margin-bottom: 14px; border-left: 4px solid #f59e0b;">
       <h2>Pedidos de horário pelo app</h2>
       <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O paciente pede pela Agenda do app dele — confirme aqui.</p>
       <div id="listaPedidosN"></div>
     </div>
-    <div class="card"><h2>Próximas consultas</h2><div id="listaConsultas" class="muted">Nenhuma consulta marcada.</div>
+    <div class="card" data-agsec="consultas"><h2>Próximas consultas</h2><div id="listaConsultas" class="muted">Nenhuma consulta marcada.</div>
       <div class="linha-flex" style="margin-top: 12px;">
         <button class="btn sec" id="btnIcsN">📅 Enviar pro meu calendário</button>
         <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as consultas entram lá.</span>
@@ -245,7 +257,12 @@
 
   <!-- CHECK-INS (questionários pro paciente, estilo LiveClin) -->
   <div id="vQuestN" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="qtAbasN" style="margin: 0 0 14px;">
+      <button data-qta="enviar" class="ativa">📤 Enviar pro paciente</button>
+      <button data-qta="montar">📝 Perguntas e check-ins</button>
+      <button data-qta="resp">📊 Respostas</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Minhas perguntas</h2>
       <p class="muted" style="margin: 4px 0 10px;">Crie perguntas com escala de emojis (com pontuação), escala de 0 a 10 ou resposta livre — e monte check-ins pra acompanhar a semana do paciente. Já deixamos um Check-in semanal pronto (adesão, fome, sono, intestino e água).</p>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px;">
@@ -272,7 +289,7 @@
       <div id="qpListaN" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhuma pergunta ainda.</div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="montar" hidden>
       <h2>Check-ins montados</h2>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
         <input id="qqNomeN" placeholder="Nome (ex.: Check-in semanal)" style="width: 240px;">
@@ -282,7 +299,7 @@
       <div id="qqListaN" class="muted" style="margin-top: 12px; font-size: 13.5px;">Nenhum check-in ainda.</div>
     </div>
 
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="card" style="margin-bottom: 14px;" data-qtsec="enviar">
       <h2>Enviar pro paciente</h2>
       <div class="linha-flex" style="flex-wrap: wrap; gap: 10px; margin-top: 8px;">
         <select id="qePacienteN" style="min-width: 170px;"></select>
@@ -299,18 +316,22 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" data-qtsec="resp" hidden>
       <h2>Respostas recebidas</h2>
       <div id="qRespostasN" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
     </div>
   </div>
 
   <div id="vChatN" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="chAbasN" style="margin: 0 0 14px;">
+      <button data-cha="conversas" class="ativa">💬 Conversas</button>
+      <button data-cha="robo">🤖 Robô e automações</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-chsec="conversas">
       <h2>Conversas com os pacientes</h2>
       <p class="muted" style="margin: 4px 0 0;">O paciente escreve pelo app dele e a mensagem cai aqui — responda sem misturar com o seu WhatsApp pessoal. Bolinha verde = mensagem nova.</p>
     </div>
-    <div class="linha-flex" style="align-items: flex-start; gap: 14px;">
+    <div class="linha-flex" style="align-items: flex-start; gap: 14px;" data-chsec="conversas">
       <div id="chatPacientes" style="flex: 0 0 240px; min-width: 200px;"></div>
       <div class="card" style="flex: 1; min-width: 280px;">
         <h2 id="chatTituloN">Escolha um paciente</h2>
@@ -321,7 +342,7 @@
         </div>
       </div>
     </div>
-    <div class="card" style="margin-top: 14px; border-left: 4px solid var(--verde);">
+    <div class="card" style="margin-top: 14px; border-left: 4px solid var(--verde);" data-chsec="robo" hidden>
       <h2>Robô de atendimento</h2>
       <p class="muted" style="margin: 4px 0 10px;">Igual ao chatbot do sistema da academia: dentro do app do paciente, o robô responde na hora às dúvidas comuns (menu de atalhos) e encaminha pra você quando precisar de gente. Depois de mudar algo, republique os apps dos pacientes.</p>
       <label style="display: flex; gap: 8px; align-items: center; font-weight: 700; margin-bottom: 10px;"><input type="checkbox" id="botAtivoN" style="width: 17px; height: 17px;"> Ligado nos apps dos pacientes</label>
@@ -601,6 +622,30 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
     if (b.dataset.a === "quest") { renderQuestN(); carregaRespostasQuestN(); }
     if (b.dataset.a === "chat") { renderBotN(); montaBuilderN(); renderChatNT(); }
   });
+
+  // ---------- sub-abas dentro das seções (Alimentos, Agenda, Check-ins, Chat) ----------
+  function fazSubAbas(secId, abasId, dataAba, dataSec, inicial) {
+    function mostra(aba) {
+      mostra.atual = aba;
+      document.querySelectorAll("#" + secId + " [" + dataSec + "]").forEach(function (c) {
+        c.hidden = c.getAttribute(dataSec) !== aba ||
+          (c.id === "cardPedidosN" && !c.hasAttribute("data-tem")); // pedidos só aparecem quando existem
+      });
+      document.querySelectorAll("#" + abasId + " button").forEach(function (b) {
+        b.classList.toggle("ativa", b.getAttribute(dataAba) === aba);
+      });
+    }
+    $(abasId).addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("button[" + dataAba + "]");
+      if (b) mostra(b.getAttribute(dataAba));
+    });
+    mostra(inicial);
+    return mostra;
+  }
+  window.__alAbaN = fazSubAbas("vAlimentos", "alAbas", "data-ala", "data-alsec", "banco");
+  window.__agAbaN = fazSubAbas("vAgendaN", "agAbasN", "data-aga", "data-agsec", "consultas");
+  window.__qtAbaN = fazSubAbas("vQuestN", "qtAbasN", "data-qta", "data-qtsec", "enviar");
+  window.__chAbaN = fazSubAbas("vChatN", "chAbasN", "data-cha", "data-chsec", "conversas");
 
   // ---------- onboarding ----------
   function checaOnboarding() {
@@ -2105,14 +2150,16 @@ Receita nova de overnight oats no blog 🥣" style="width: 100%; margin-top: 4px
   }
   function renderPedidosN(st) {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { $("cardPedidosN").hidden = true; return; }
+    if (!nuvem) { $("cardPedidosN").removeAttribute("data-tem"); $("cardPedidosN").hidden = true; return; }
     nuvem.client.from("app_agenda").select("id,token,dia,hora,obs").eq("academia_id", nuvem.aid).eq("status", "pedido")
       .gte("dia", S.todayISO()).order("dia").limit(30).then(function (r) {
         var pedidos = r.data || [];
         var pacPorToken = {};
         st.pacientes.forEach(function (p) { if (p.appTokenN) pacPorToken[p.appTokenN] = p; });
         pedidos = pedidos.filter(function (p) { return pacPorToken[p.token]; });
-        $("cardPedidosN").hidden = !pedidos.length;
+        $("cardPedidosN").toggleAttribute("data-tem", pedidos.length > 0);
+        if (window.__agAbaN) window.__agAbaN(window.__agAbaN.atual || "consultas");
+        else $("cardPedidosN").hidden = !pedidos.length;
         $("listaPedidosN").innerHTML = pedidos.map(function (p) {
           var pac = pacPorToken[p.token];
           return '<div class="linha-flex" style="align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linha);"><b>' + S.fmtData(p.dia) + " " + (p.hora || "") + "</b>" +
