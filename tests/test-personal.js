@@ -557,6 +557,22 @@ async function abaPt(p, a) {
   await p.waitForTimeout(150);
   const preservado = await p.evaluate(() => Array.from(document.querySelectorAll("#fichasBox details")).map((d) => d.open));
   ok(preservado[0] && !preservado[1] && preservado[2], "re-render preserva quais fichas estavam abertas");
+  // busca de aluno com digitação (combobox por cima do select)
+  await p.evaluate(() => window.__trAba("fichas"));
+  await p.fill("#tAlunoBusca", "joão");
+  await p.waitForTimeout(200);
+  const buscaAl = await p.evaluate(() => ({
+    itens: Array.from(document.querySelectorAll("#tAlunoBuscaLista [data-bval]")).map((d) => d.textContent),
+  }));
+  ok(buscaAl.itens.length >= 1 && /João Cliente/.test(buscaAl.itens.join("|")) && !/Bia Grupo/.test(buscaAl.itens.join("|")), "digitar filtra os alunos conforme escreve");
+  await p.click("#tAlunoBuscaLista [data-bval]");
+  await p.waitForTimeout(200);
+  const escolhido = await p.evaluate(() => ({
+    valor: document.getElementById("tAluno").value,
+    rotulo: document.getElementById("tAlunoBusca").value,
+    fichas: document.getElementById("fichasBox").textContent,
+  }));
+  ok(!!escolhido.valor && /João Cliente/.test(escolhido.rotulo) && /Supino reto/.test(escolhido.fichas), "tocar na sugestão escolhe o aluno e carrega as fichas dele");
   await p.evaluate(() => {
     window.__gruposPT.render();
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
