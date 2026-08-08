@@ -826,6 +826,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <button class="btn sec" id="btnContaEquipe" hidden>+ Login de colaborador</button>
       <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
     </div>
+    <p class="muted" id="syncInfoPt" hidden style="margin: 10px 0 0; font-size: 12px;"></p>
+    <div style="margin-top: 12px; padding: 10px 12px; border: 1px dashed #322e3d; border-radius: 12px;">
+      <b style="font-size: 13px;">Backup dos dados</b>
+      <p class="muted" id="bkAviso" style="margin: 6px 0 8px; font-size: 12px;"></p>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+        <button class="btn sec mini" id="btnBackup">Baixar backup (.json)</button>
+        <button class="btn sec mini" id="btnBackupRestaura">Restaurar backup</button>
+        <input type="file" id="bkArquivo" accept=".json,application/json" hidden>
+      </div>
+    </div>
   </div>
 <section id="vPerfil" hidden>
   <div class="card" style="border-left: 4px solid var(--roxo);">
@@ -2543,19 +2553,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- push pro app + apps pendentes de publicar ----------
   // notificação push pro app hospedado do aluno (se ele ativou os lembretes) — degrada em silêncio
   function pushAluno(token, titulo, corpo) {
+    // resolve true só quando a função push-envia respondeu ok — quem chama pode re-tentar depois
     try {
       var nuvem = S.cloud && S.cloud();
       var cfg = self.MT_CLOUD || {};
-      if (!nuvem || !cfg.url || !token) return;
-      nuvem.client.auth.getSession().then(function (s) {
+      if (!nuvem || !cfg.url || !token) return Promise.resolve(false);
+      return nuvem.client.auth.getSession().then(function (s) {
         var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
         return fetch(cfg.url + "/functions/v1/push-envia", {
           method: "POST",
           headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
           body: JSON.stringify({ acao: "para", token: token, titulo: titulo, corpo: corpo }),
         });
-      }).catch(function () {});
-    } catch (e) {}
+      }).then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });
+    } catch (e) { return Promise.resolve(false); }
   }
   window.__pushAluno = pushAluno; // testes
 
@@ -2623,6 +2634,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   setInterval(puxaPagamentosLink, 120000);
 
   // ---------- rotina diária: lembrete de treino + régua de cobrança (push pelo app) ----------
+  var pushEmVoo = {}; // chaves esperando resposta do push-envia (não repete na mesma sessão)
+  function pintaReguaStatus(st, enviados) {
+    var el = $("reguaStatus");
+    if (!el) return;
+    var rr = (st.config || {}).reguaRodouEm;
+    var txt = enviados ? enviados + " aviso(s) enviados agora há pouco. " : "";
+    if (!rr) {
+      txt += "A régua roda sozinha com o Personal aberto (a cada 6 horas).";
+    } else {
+      txt += "Última rodada: " + S.fmtData(rr.slice(0, 10)) + " às " + rr.slice(11, 16) + ".";
+      if (Date.now() - Date.parse(rr) > 26 * 3600 * 1000) {
+        txt += " Atenção: faz mais de 1 dia — abre o Personal de vez em quando pra régua disparar.";
+      }
+    }
+    el.textContent = txt;
+  }
   function rotinaDiariaPush() {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return { motivo: "sem-nuvem", enviados: 0 };
@@ -2634,10 +2661,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.pushLog = st.pushLog || {};
     var enviados = 0, mudou = false;
     function manda(chave, token, titulo, corpo) {
-      if (st.pushLog[chave]) return;
-      pushAluno(token, titulo, corpo);
-      st.pushLog[chave] = hoje;
-      enviados++; mudou = true;
+      // só marca no log quando o push-envia responde ok — se falhou, tenta de novo na próxima rodada
+      if (st.pushLog[chave] || pushEmVoo[chave]) return;
+      pushEmVoo[chave] = 1;
+      enviados++;
+      pushAluno(token, titulo, corpo).then(function (deuCerto) {
+        delete pushEmVoo[chave];
+        if (!deuCerto) return;
+        var st2 = load();
+        st2.pushLog = st2.pushLog || {};
+        st2.pushLog[chave] = S.todayISO();
+        S.write("ptStudio", st2);
+      });
     }
     st.alunos.forEach(function (a) {
       if (a.ativo === false || !a.appTokenP) return;
@@ -2677,8 +2712,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         .slice(0, chaves.length - 120).forEach(function (k) { delete st.pushLog[k]; });
       mudou = true;
     }
-    if (mudou) S.write("ptStudio", st);
-    if ($("reguaStatus")) $("reguaStatus").textContent = enviados ? enviados + " aviso(s) enviados agora há pouco." : "";
+    // registra a rodada — o card mostra quando a régua rodou pela última vez
+    st.config = st.config || {};
+    st.config.reguaRodouEm = S.todayISO() + "T" + new Date().toTimeString().slice(0, 5);
+    S.write("ptStudio", st);
+    pintaReguaStatus(st, enviados);
     return { enviados: enviados };
   }
   window.__reguaPT = rotinaDiariaPush; // testes
@@ -3083,6 +3121,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-recibo="' + p.id + '" title="recibo pra imprimir ou salvar em PDF">recibo</button></div>';
     }).join("") : "Nenhum pagamento registrado.";
     $("reguaOn").checked = !((st.config || {}).reguaOff);
+    pintaReguaStatus(st, 0);
     var diaHoje = +S.todayISO().slice(8, 10);
     var pend = st.alunos.filter(function (a) {
       if (a.ativo === false) return false;
@@ -5121,6 +5160,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
+      // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
+      "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length)return;" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{})," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
@@ -6003,7 +6044,53 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("contaStatus").innerHTML = "Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> (leva 1 minuto) para ter a sua ilha na nuvem: sincroniza celular ↔ computador e libera o app dos seus alunos com link online.";
     }
     renderFaixaTeste(u.logado);
+    // aviso do backup: lembra a cada 30 dias (quem não tem conta depende só dele)
+    var bkEm = (st.config || {}).backupEm || "";
+    var bkDias = bkEm ? Math.floor((new Date(S.todayISO()) - new Date(bkEm)) / 864e5) : null;
+    $("bkAviso").textContent = !bkEm
+      ? "Você ainda não baixou um backup. Ele é um arquivo com TUDO (alunos, fichas, pagamentos) — guarda um por mês, por segurança."
+      : bkDias > 30
+        ? "Atenção: seu último backup foi há " + bkDias + " dias (" + S.fmtData(bkEm) + "). Baixa um novo agora — leva 2 segundos."
+        : "Último backup: " + S.fmtData(bkEm) + ". Baixe um novo de vez em quando, por segurança.";
   }
+  $("btnBackup").addEventListener("click", function () {
+    S.exportBackup();
+    var st = load();
+    st.config = st.config || {};
+    st.config.backupEm = S.todayISO();
+    S.write("ptStudio", st);
+  });
+  $("btnBackupRestaura").addEventListener("click", function () { $("bkArquivo").click(); });
+  $("bkArquivo").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f) return;
+    if (!confirm("Restaurar o backup SUBSTITUI os dados deste aparelho pelos do arquivo. Continuar?")) return;
+    S.importBackup(f).then(function () {
+      alert("Backup restaurado! A página vai recarregar.");
+      location.reload();
+    }, function (e) {
+      alert("Não deu pra restaurar: " + ((e && e.message) || e));
+    });
+  });
+  // indicador da nuvem: o store.js avisa aqui a cada sincronização
+  window.MT_syncInfo = function (info) {
+    window.__syncInfoPT = info;
+    var el = $("syncInfoPt");
+    if (!el) return;
+    if (!info || !info.ativa) { el.hidden = true; return; }
+    el.hidden = false;
+    el.textContent = info.pendentes
+      ? info.pendentes + " alteração(ões) esperando pra subir pra nuvem — não fecha a página agora."
+      : "Nuvem em dia" + (info.ultima ? " — última sincronização às " + String(info.ultima.getHours()).padStart(2, "0") + ":" + String(info.ultima.getMinutes()).padStart(2, "0") : "") + ".";
+  };
+  window.addEventListener("beforeunload", function (e) {
+    // tem coisa que ainda não subiu pra nuvem? segura a saída pra não perder nada
+    if (window.__syncInfoPT && window.__syncInfoPT.ativa && window.__syncInfoPT.pendentes) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
 
   // faixa do modo teste (14 dias grátis) — some quando o personal entra na conta
   function renderFaixaTeste(logado) {
