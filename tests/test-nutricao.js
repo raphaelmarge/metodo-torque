@@ -456,8 +456,10 @@ async function abaNt(p, a) {
   await p.evaluate(() => document.getElementById("pnFechar").click());
   await p.fill("#buscaPac", "");
 
-  // agenda no módulo: marcar consulta local
+  // agenda no módulo: marcar consulta local (sub-abas Consultas/Marcar)
   await abaNt(p, "agenda");
+  ok(await p.evaluate(() => document.querySelector('#agAbasN button.ativa').textContent.includes("Consultas")), "Agenda do Nutri abre na sub-aba Consultas");
+  await p.evaluate(() => window.__agAbaN("marcar"));
   await p.selectOption("#cnPaciente", { index: 1 });
   await p.fill("#cnData", "2099-01-15");
   await p.fill("#cnHora", "10:30");
@@ -467,6 +469,7 @@ async function abaNt(p, a) {
   ok(/Bruno Paciente/.test(consultasTxt) && /10:30/.test(consultasTxt), "consulta marcada aparece na lista do módulo");
 
   // sincronizar com o calendário: exporta .ics das consultas futuras
+  await p.evaluate(() => window.__agAbaN("consultas"));
   {
     const dl = p.waitForEvent("download", { timeout: 5000 }).catch(() => null);
     await p.click("#btnIcsN");
@@ -489,12 +492,14 @@ async function abaNt(p, a) {
   }));
   ok(/ADES/.test(qSeed.perguntas) && /FOME/.test(qSeed.perguntas) && /AGUA/.test(qSeed.perguntas) && /INTES/.test(qSeed.perguntas), "perguntas padrão de nutrição já vêm prontas (adesão, fome, intestino, água…)");
   ok(/Check-in semanal/.test(qSeed.lista), "check-in semanal montado sozinho na primeira visita");
+  await p.evaluate(() => window.__qtAbaN("montar"));
   await p.fill("#qpSiglaN", "trein");
   await p.fill("#qpTituloN", "Treino");
   await p.selectOption("#qpTipoN", "linear");
   await p.fill("#qpTextoN", "De 0 a 10, quanto você treinou essa semana?");
   await p.click("#qpAddN");
   ok(/TREIN/.test(await p.evaluate(() => document.getElementById("qpListaN").textContent)), "pergunta nova salva com sigla em maiúsculas (TREIN)");
+  await p.evaluate(() => window.__qtAbaN("enviar"));
   await p.selectOption("#qePacienteN", { index: 1 });
   await p.selectOption("#qeQuestN", { index: 1 });
   await p.click("#qeGerarN");
