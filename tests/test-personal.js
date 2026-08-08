@@ -237,7 +237,15 @@ async function abaPt(p, a) {
   let pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
   ok(/João Cliente/.test(pend) && /Cobrar/.test(pend), "pendente com botão de cobrança WhatsApp");
 
-  // ---------- pagamentos: plano, contrato e Pix BR Code ----------
+  // ---------- pagamentos: sub-abas, plano, contrato (no perfil) e Pix BR Code ----------
+  ok(await p.evaluate(() =>
+    document.querySelector('[data-pgsec="planos"]').hidden &&
+    document.querySelector('[data-pgsec="contratos"]').hidden &&
+    !document.querySelector('[data-pgsec="receb"]').hidden), "Pagamentos abre na sub-aba Recebimentos (planos e contratos escondidos)");
+  await p.evaluate(() => window.__pgAba("planos"));
+  ok(await p.evaluate(() =>
+    !document.querySelector('[data-pgsec="planos"]').hidden &&
+    document.querySelector('[data-pgsec="receb"]').hidden), "sub-aba Planos mostra só os planos");
   await p.fill("#plNome", "Mensal 3x");
   await p.fill("#plValor", "450");
   await p.selectOption("#plCiclo", "1");
@@ -247,15 +255,25 @@ async function abaPt(p, a) {
   ok(/Mensal 3x/.test(planos) && /450/.test(planos), "plano do studio criado (R$ 450/mês)");
   ok(/recorrente/.test(planos), "plano com link de gateway ganha a etiqueta 🔁 recorrente");
 
-  // contrato: vencimento escolhido pra testar o atraso de forma determinística
+  // contrato agora é fechado no PERFIL do aluno (aba Financeiro); vencimento determinístico pro teste de atraso
   const diaHoje = new Date().getDate();
   const diaVenc = diaHoje > 1 ? 1 : 28;
-  await p.selectOption("#ctAluno", { index: 1 });
-  await p.selectOption("#ctPlano", { index: 1 });
-  await p.fill("#ctDia", String(diaVenc));
-  await p.click("#ctAdd");
+  const joaoId = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente").id);
+  await p.evaluate((id) => { window.__perfilPT(id); window.__pfAba("fin"); }, joaoId);
+  ok(await p.evaluate(() => !!document.getElementById("pfCtPlano") && !!document.getElementById("pfCtAdd")), "perfil sem contrato mostra o form de fechar contrato");
+  await p.selectOption("#pfCtPlano", { index: 1 });
+  await p.fill("#pfCtDia", String(diaVenc));
+  await p.click("#pfCtAdd");
+  await p.waitForFunction(() => /Contrato:/.test(document.getElementById("pfFin").textContent));
+  const finTxt = await p.evaluate(() => document.getElementById("pfFin").textContent);
+  ok(/Mensal 3x/.test(finTxt) && new RegExp("vence dia " + diaVenc).test(finTxt) && /Encerrar contrato/.test(finTxt),
+    "contrato fechado direto no perfil (plano + vencimento + botão de encerrar)");
+  await p.click("#pfFechar");
+  await abaPt(p, "pagamentos");
+  await p.evaluate(() => window.__pgAba("contratos"));
   const cts = await p.evaluate(() => document.getElementById("ctLista").textContent);
-  ok(/João Cliente/.test(cts) && /Mensal 3x/.test(cts) && new RegExp("vence dia " + diaVenc).test(cts), "contrato fechado (aluno + plano + vencimento)");
+  ok(/João Cliente/.test(cts) && /Mensal 3x/.test(cts) && new RegExp("vence dia " + diaVenc).test(cts), "sub-aba Contratos lista a visão geral (aluno + plano + vencimento)");
+  await p.evaluate(() => window.__pgAba("receb"));
 
   // pendência agora usa o valor do CONTRATO, não o do cadastro
   pend = await p.evaluate(() => document.getElementById("pendentes").textContent);
