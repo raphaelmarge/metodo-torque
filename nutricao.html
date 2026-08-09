@@ -164,6 +164,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="agenda"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg>Agenda</button>
     <button data-a="quest"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg>Check-ins</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
+    <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
       <button id="btnTemaNt" class="sw" role="switch" aria-checked="false" title="Mudar pro modo claro"><span class="sw-bola"></span></button>
@@ -445,7 +446,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
   </div>
 
-  <div class="card" id="cardContaN" style="margin-top: 20px; border-left: 4px solid var(--verde);">
+  <div class="card" id="cardContaN" hidden style="margin-top: 20px; border-left: 4px solid var(--verde);">
     <h2>Sua ilha na nuvem</h2>
     <div id="contaStatus" class="muted" style="margin: 6px 0 10px;"></div>
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
@@ -704,8 +705,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     $("vAgendaN").hidden = b.dataset.a !== "agenda";
     $("vQuestN").hidden = b.dataset.a !== "quest";
     $("vChatN").hidden = b.dataset.a !== "chat";
-    // o card da conta (ilha) só aparece na aba Pacientes — não precisa repetir em todas
-    $("cardContaN").hidden = b.dataset.a !== "pacientes";
+    // o card da conta (ilha) tem a própria aba no menu — longe da lista de pacientes
+    $("cardContaN").hidden = b.dataset.a !== "conta";
     if (b.dataset.a === "dietas") renderDietas();
     if (b.dataset.a === "alimentos") renderAlimentos();
     if (b.dataset.a === "receitas") renderReceitas();
