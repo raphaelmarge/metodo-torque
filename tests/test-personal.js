@@ -2051,6 +2051,20 @@ async function abaPt(p, a) {
   ok(!!vid && /youtube-nocookie\.com\/embed\/abc123/.test(vid.aberto.src) && /Fechar vídeo/.test(vid.aberto.rot),
     "'Ver vídeo' abre o player embutido dentro do app (youtube-nocookie)");
   ok(!!vid && vid.fechou && /Ver vídeo/.test(vid.rotVoltou), "tocar de novo fecha o player e o botão volta ao normal");
+  // botão Iniciar exercício abre o guiado já naquele exercício
+  const iniEx = await pApp.evaluate(() => {
+    const bs = document.querySelectorAll(".inibtn");
+    if (bs.length < 2) return null;
+    bs[1].click(); // 2º exercício da ficha
+    return {
+      aberto: document.getElementById("guiaBox").style.display,
+      prog: document.getElementById("gProg").textContent,
+      ex: document.getElementById("gEx").textContent,
+    };
+  });
+  ok(!!iniEx && iniEx.aberto === "flex" && /exercício 2/.test(iniEx.prog),
+    "'Iniciar exercício' abre o modo guiado direto no exercício escolhido (" + (iniEx ? iniEx.ex : "?") + ")");
+  await pApp.evaluate(() => document.getElementById("gFechar").click());
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
   await pApp.evaluate(() => window.__trocaSec("chat"));

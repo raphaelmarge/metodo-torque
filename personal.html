@@ -5292,7 +5292,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (fichasApp ? fichasApp.map(function (f, gi) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
           (f.itens.length ? "<button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;text-align:center;margin:2px 0 8px;'>Treino guiado</button>" : "") +
-          f.itens.map(function (it) {
+          f.itens.map(function (it, ii) {
             var rst = +it.descanso || 60, rAlt = rst === 90 ? 60 : 90;
             return "<details style='background:#14121a;border:1px solid #322e3d;border-radius:11px;margin:6px 0;overflow:hidden;'>" +
               "<summary style='padding:11px 13px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
@@ -5306,6 +5306,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               (it.alts && it.alts.length ? "<div style='margin-top:8px;'><button class='altbtn' style='background:none;border:none;color:#a9a4b5;font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;'>Sem esse aparelho hoje?</button>" +
                 "<div class='altbox' style='display:none;color:#d6c9f5;font-size:12.5px;margin-top:5px;'>Troca por: <b>" + it.alts.map(function (nA) { return esc(nA); }).join("</b> ou <b>") + "</b> — mesmo padrão de movimento. Na dúvida, chama no chat!</div></div>" : "") +
               "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
+              "<button class='inibtn' data-g='" + gi + "' data-e='" + ii + "' style='background:linear-gradient(135deg," + COR + "," + COR2 + ");border:none;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>Iniciar exercício</button>" +
               "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:#1d1a24;border:1px solid #7c3aed;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
               "<button class='tmrbtn' data-s='" + rst + "' style='background:#14121a;border:1px solid #7c3aed;color:#d6c9f5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>Descanso " + rst + "s</button>" +
               "<button class='tmrbtn' data-s='" + rAlt + "' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>" + rAlt + "s</button>" +
@@ -5661,7 +5662,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var gv={f:0,e:0,s:0,timer:null,pend:false};" +
       "function gEl(i){return document.getElementById(i);}" +
       "function setbtnDe(ex){var r=null;document.querySelectorAll('.setbtn').forEach(function(b){if(b.dataset.ex.replace(/'/g,'')===ex)r=b;});return r;}" +
-      "function abreGuia(fi){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);gv={f:fi,e:0,s:0,timer:null,pend:false};" +
+      "function abreGuia(fi,ei){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false};" +
       "gEl('guiaBox').style.display='flex';document.body.style.overflow='hidden';pintaGuia();}" +
       "function fechaGuia(){clearInterval(gv.timer);gEl('guiaBox').style.display='none';document.body.style.overflow='';}" +
       "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];" +
@@ -5687,7 +5688,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var gvf=gEl('gVideo');if(gvf)gvf.style.display='none';" +
       "if(navigator.vibrate)navigator.vibrate([100,60,100,60,300]);beepG();setTimeout(fechaGuia,3500);}" +
       "document.addEventListener('click',function(e){" +
-      "var gb=e.target.closest('.guiabtn');if(gb){abreGuia(+gb.dataset.g);return;}" +
+      "var gb=e.target.closest('.guiabtn');if(gb){abreGuia(+gb.dataset.g,0);return;}" +
+      "var gi2=e.target.closest('.inibtn');if(gi2){abreGuia(+gi2.dataset.g,+gi2.dataset.e);return;}" +
       "if(e.target.id==='gFechar'){fechaGuia();return;}" +
       "if(e.target.id==='gPular'){gFimDesc();return;}" +
       "if(e.target.id==='gPularEx'){clearInterval(gv.timer);gv.e++;gv.s=0;gv.pend=false;" +
