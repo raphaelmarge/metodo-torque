@@ -2173,14 +2173,27 @@ async function abaPt(p, a) {
     document.getElementById("mpSalva").click();
     await new Promise((r) => setTimeout(r, 200));
     const mapa = document.getElementById("mapaAno");
+    // garante um treino registrado HOJE (chave local) e repinta as conquistas
+    const isoLocal = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const f2 = JSON.parse(localStorage.getItem("ptfeitos") || "{}");
+    f2[isoLocal(new Date())] = 1;
+    localStorage.setItem("ptfeitos", JSON.stringify(f2));
+    document.getElementById("btnFeito").click(); // já registrado: só dispara o repinta (alert auto-aceito)
+    await new Promise((r) => setTimeout(r, 300));
+    const cols = document.querySelectorAll("#cqGraf > div:nth-child(2) > div");
+    const semAtual = cols.length ? cols[cols.length - 1].firstChild.textContent : "";
     return {
       meta: document.getElementById("mpBarra").textContent,
       mapaTxt: mapa ? mapa.textContent : "",
       mapaCells: mapa ? mapa.querySelectorAll("div div div").length : 0,
+      mapaCabe: mapa ? mapa.scrollWidth <= mapa.clientWidth + 1 : false,
+      semAtual,
     };
   });
   ok(/Meta: 80 kg/.test(leva2.meta) && /5 kg pra chegar/.test(leva2.meta), "meta de peso vira barra de progresso (90→85, alvo 80: faltam 5)");
   ok(/Seu ano de treinos/.test(leva2.mapaTxt) && leva2.mapaCells >= 360, "mapa de constância pinta as 52 semanas do ano");
+  ok(leva2.mapaCabe, "mapa do ano cabe na largura da tela (sem estourar o card)");
+  ok(+leva2.semAtual >= 1, "gráfico Treinos por semana conta o treino de hoje na semana atual (sem bug de fuso)");
   const jaPag = await pApp.evaluate(async () => {
     window.__trocaSec("inicio");
     const b = document.getElementById("btnJaPaguei");
