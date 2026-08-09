@@ -5159,7 +5159,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return { titulo: f.titulo, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "",
-          alts: substApp(ex.nome || "", ex.grupo) };
+          grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
       }) };
     }) : null;
     var fexs = [];
@@ -5173,6 +5173,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           v: it.video || videoBusca(it.nome || "") };
       }) };
     });
+    // aquecimento automático: 4-5 movimentos pelos grupos musculares da ficha do dia
+    var AQ_MAPA = {
+      "Peito": [["Rotação de ombros pra frente e pra trás", "30s"], ["Flexão na parede", "40s"]],
+      "Costas": [["Deslizamento de braços na parede", "30s"], ["Gato-camelo", "40s"]],
+      "Ombros": [["Círculos de braço amplos", "30s"], ["Elevação em Y sem peso", "30s"]],
+      "Quadríceps": [["Agachamento livre sem peso", "45s"], ["Mobilidade de tornozelo na parede", "30s por perna"]],
+      "Posterior e glúteo": [["Good morning com as mãos na nuca", "40s"], ["Balanço de perna à frente e atrás", "30s por perna"]],
+      "Bíceps": [["Rotação de punhos e abre-fecha de mãos", "20s"]],
+      "Tríceps": [["Extensão de braços acima da cabeça", "30s"]],
+      "Core": [["Rotação de tronco em pé", "30s"], ["Prancha leve", "20s"]],
+    };
+    var aqPorFicha = (fichasApp || []).map(function (f) {
+      var lista = [["Marcha no lugar ou polichinelo leve", "60s"]];
+      var vistosAq = {};
+      f.itens.forEach(function (it) {
+        (AQ_MAPA[it.grupo] || []).forEach(function (aq) {
+          if (!vistosAq[aq[0]]) { vistosAq[aq[0]] = 1; lista.push(aq); }
+        });
+      });
+      return lista.slice(0, 6);
+    });
+    // raio-X do treino: séries somadas por grupo muscular (todas as fichas)
+    var raioX = (function () {
+      var por = {};
+      (fichasApp || []).forEach(function (f) {
+        f.itens.forEach(function (it) { if (it.grupo) por[it.grupo] = (por[it.grupo] || 0) + (+it.series || 3); });
+      });
+      return Object.keys(por).map(function (g) { return { g: g, s: por[g] }; })
+        .sort(function (x, y) { return y.s - x.s; });
+    })();
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
@@ -5286,11 +5316,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
+      "<div id='mapaAno' style='margin-top:14px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
       "<div class='cardx'><h2>Meu treino</h2>" +
       (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:11px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
       (fichasApp ? fichasApp.map(function (f, gi) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
+          (aqPorFicha[gi] && aqPorFicha[gi].length > 1
+            ? "<details class='aqbox' style='background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.45);border-radius:11px;margin:4px 0 8px;overflow:hidden;'>" +
+              "<summary style='padding:10px 13px;cursor:pointer;list-style:none;font-size:13px;font-weight:800;color:#fdba74;'>Aquecimento do dia (~4 min) ›</summary>" +
+              "<div style='padding:0 13px 10px;font-size:13px;color:#d6d2df;'>" +
+              aqPorFicha[gi].map(function (aq) { return "<div class='kv' style='border-color:rgba(251,146,60,.2);'><span>" + esc(aq[0]) + "</span><b style='color:#fdba74;white-space:nowrap;'>" + esc(aq[1]) + "</b></div>"; }).join("") +
+              "<div class='vz' style='font-size:11px;padding:6px 0 0;'>Aquecer evita lesão e melhora o treino — não pula!</div></div></details>"
+            : "") +
           (f.itens.length ? "<button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;text-align:center;margin:2px 0 8px;'>Treino guiado</button>" : "") +
           f.itens.map(function (it, ii) {
             var rst = +it.descanso || 60, rAlt = rst === 90 ? 60 : 90;
@@ -5323,6 +5361,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
         return ln.trim() ? "<div>" + esc(ln) + "</div>" : "<div style='height:8px;'></div>";
       }).join("") + "</div>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal.</div>") + "</div>" +
+      (raioX.length ? "<div class='cardx'><h2>Raio-X do treino</h2>" +
+        "<div class='vz' style='text-align:left;padding:0 0 8px;'>Séries por grupo muscular somando todas as fichas — treino equilibrado é treino que dura.</div>" +
+        (function () {
+          var maxS = raioX[0].s || 1;
+          return raioX.map(function (r) {
+            return "<div style='margin:7px 0;'><div style='display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;'><span>" + esc(r.g) + "</span><b style='color:" + CORC + ";'>" + r.s + " séries</b></div>" +
+              "<div style='height:8px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:" + Math.round(100 * r.s / maxS) + "%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;'></div></div></div>";
+          }).join("");
+        })() + "</div>" : "") +
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
@@ -5332,7 +5379,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='cardx'><h2>Minha evolução</h2><div id='evoBox'></div></div>" +
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
-      "<div id='pzGraf' class='vz'>Registre o peso de hoje — a curva aparece aqui.</div></div>" +
+      "<div id='pzGraf' class='vz'>Registre o peso de hoje — a curva aparece aqui.</div>" +
+      "<div style='display:flex;gap:8px;margin-top:10px;'><input id='mpAlvo' inputmode='decimal' placeholder='Minha meta (kg)' style='flex:1;min-width:0'><button class='btnx' id='mpSalva' style='padding:11px 16px;'>Definir meta</button></div>" +
+      "<div id='mpBarra' style='margin-top:8px;'></div></div>" +
       "<div class='cardx'><h2>Hábitos de hoje</h2>" +
       "<div id='habBox' style='display:flex;flex-direction:column;gap:8px;'></div>" +
       "<div id='habStreak' class='vz' style='margin-top:8px;'></div></div>" +
@@ -5369,7 +5418,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "<textarea id='pixAluno' rows='3' readonly style='width:100%;margin-top:8px;background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#a9a4b5;font-family:monospace;font-size:10px;padding:8px;'>" + pixApp.code + "</textarea>" +
           "<button class='btnx' id='pixCopiaAluno' style='width:100%;margin-top:8px;'>Copiar Pix copia e cola</button></div>" : "") +
         (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:#14121a;border:1px solid #7c3aed;box-shadow:none;'>Assinar no cartão (débito automático)</a>" : "") +
-        "<div class='vz' style='font-size:11px;'>Pagou? Avisa no chat que " + esc(studio.split(" ")[0]) + " confirma.</div></div>" : "") +
+        "<button class='btnx' id='btnJaPaguei' style='display:block;width:100%;text-align:center;margin-top:8px;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Já paguei — avisar " + esc(studio.split(" ")[0]) + "</button>" +
+        "<div id='jaPagueiOk' class='vz' style='display:none;font-size:11.5px;'>Aviso enviado! " + esc(studio.split(" ")[0]) + " confirma e o pagamento entra no histórico.</div></div>" : "") +
       (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP ? "<div class='cardx'><h2>Meu login</h2>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para abrir seu app de QUALQUER aparelho (página Entrar do aluno).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
@@ -5433,6 +5483,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "bx.style.display='block';" +
       "bx.innerHTML=\"<iframe src='https://www.youtube-nocookie.com/embed/\"+id+\"?rel=0&playsinline=1' title='Vídeo do exercício' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='width:100%;aspect-ratio:16/9;border:0;border-radius:10px;margin-top:8px;display:block;background:#000;'></iframe>\";" +
       "vb.dataset.rot=vb.textContent;vb.textContent='Fechar vídeo';});" +
+      // tela sempre acesa durante o treino (wake lock — solta quando fecha o guiado)
+      "var wlTela=null;" +
+      "function ligaTela(){try{if(navigator.wakeLock&&!wlTela){navigator.wakeLock.request('screen').then(function(l){wlTela=l;l.addEventListener('release',function(){wlTela=null;});}).catch(function(){});}}catch(e){}}" +
+      "function soltaTela(){try{if(wlTela){wlTela.release();wlTela=null;}}catch(e){}}" +
+      "document.addEventListener('visibilitychange',function(){var gx=document.getElementById('guiaBox');if(!document.hidden&&gx&&gx.style.display==='flex')ligaTela();});" +
       // ícones de traço desenhados (sem emoji) usados nos cards dinâmicos
       "function icx(p,s){return \"<svg width='\"+(s||16)+\"' height='\"+(s||16)+\"' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'>\"+p+'</svg>';}" +
       "var ICO={trofeu:\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\"," +
@@ -5606,7 +5661,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "bars=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Treinos por semana (últimas 8)</div><div style='display:flex;gap:6px;align-items:flex-end;height:80px;'>\"+sems.map(function(s5){" +
       "var hh5=Math.round(56*s5.n/max5);var bateu=s5.n>=META;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(bateu?'#a78bfa':'#6e6a78')+\";'>\"+(s5.n||'')+\"</div><div style='height:\"+(56-hh5)+\"px;'></div><div style='height:\"+hh5+\"px;background:\"+(bateu?'linear-gradient(180deg,#a78bfa,#7c3aed)':'#3a3346')+\";border-radius:4px 4px 0 0;min-height:2px;'></div><div style='font-size:8.5px;color:#6e6a78;margin-top:3px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
-      "document.getElementById('cqGraf').innerHTML=bars;}" +
+      "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();}" +
+      // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
+      "function pintaMapaAno(){var el=document.getElementById('mapaAno');if(!el)return;var f=L('ptfeitos',{});" +
+      "var hoje=new Date();var fim=new Date(hoje);fim.setDate(fim.getDate()+(6-((fim.getDay()+6)%7)));" +
+      "var html='';var tot=0;" +
+      "for(var w=51;w>=0;w--){html+=\"<div style='display:flex;flex-direction:column;gap:2px;'>\";" +
+      "for(var d=0;d<7;d++){var dt=new Date(fim);dt.setDate(dt.getDate()-w*7-(6-d));var iso=dt.toISOString().slice(0,10);var fez=!!f[iso];if(fez)tot++;var fut=dt>hoje;" +
+      "html+=\"<div style='width:6px;height:6px;border-radius:1.5px;background:\"+(fut?'transparent':fez?'" + COR + "':'#221f2b')+\";'></div>\";}html+='</div>';}" +
+      "el.innerHTML=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Seu ano de treinos — \"+tot+\" dia(s) pintados (cada quadrado é 1 dia)</div><div style='display:flex;gap:2px;justify-content:space-between;'>\"+html+'</div>';}" +
       "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(pintaConquistas,150);});" +
       // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
       "var STUDIO=" + JSON.stringify(studio) + ";" +
@@ -5647,7 +5710,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function marcaCf(){var f=L('ptconf',{});f[kcf]=vou?1:-1;Sv('ptconf',f);pintaCf();}" +
       "if(NUVEM){rpcApp('app_chat_envia',{t:TOKEN,p_texto:msg}).then(function(){marcaCf();}).catch(function(){marcaCf();});}" +
       "else{marcaCf();alert('Sem internet agora — avisa também pelo WhatsApp, combinado?');}});})();" +
-      "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;" +
+      "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
       "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='Bora! Próxima série!';" +
       "if(navigator.vibrate)navigator.vibrate([200,100,200]);setTimeout(function(){bar.style.display='none';},2200);}" +
@@ -5662,9 +5725,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var gv={f:0,e:0,s:0,timer:null,pend:false};" +
       "function gEl(i){return document.getElementById(i);}" +
       "function setbtnDe(ex){var r=null;document.querySelectorAll('.setbtn').forEach(function(b){if(b.dataset.ex.replace(/'/g,'')===ex)r=b;});return r;}" +
-      "function abreGuia(fi,ei){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false};" +
+      "function abreGuia(fi,ei){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false};ligaTela();" +
       "gEl('guiaBox').style.display='flex';document.body.style.overflow='hidden';pintaGuia();}" +
-      "function fechaGuia(){clearInterval(gv.timer);gEl('guiaBox').style.display='none';document.body.style.overflow='';}" +
+      "function fechaGuia(){clearInterval(gv.timer);gEl('guiaBox').style.display='none';document.body.style.overflow='';soltaTela();}" +
       "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];" +
       "gEl('gProg').textContent=f.n+' · exercício '+(gv.e+1)+' de '+f.it.length;" +
       "gEl('gEx').textContent=it.e;" +
@@ -5725,8 +5788,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "return \"<div style='flex:1;text-align:center;' title='\"+k+': '+v+\" kg'><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:#3a3346;border-radius:4px 4px 0 0;'></div><div style='font-size:8.5px;color:#6e6a78;margin-top:2px;'>\"+k.slice(8,10)+\"</div></div>\";}).join('')+\"</div>\";}" +
       "document.getElementById('pzAdd').addEventListener('click',function(){var v=parseFloat((document.getElementById('pzKg').value||'').replace(',','.'));" +
       "if(!v||v<20||v>400){alert('Confere o peso.');return;}var pz=L('ptpeso',{});pz[isoHj()]=v;Sv('ptpeso',pz);document.getElementById('pzKg').value='';pintaPeso();" +
-      "var ck=document.getElementById('ckPeso');if(ck&&!ck.value)ck.value=String(v).replace('.',',');});" +
+      "var ck=document.getElementById('ckPeso');if(ck&&!ck.value)ck.value=String(v).replace('.',',');pintaMetaPeso();});" +
       "pintaPeso();" +
+      // meta de peso: alvo definido pelo aluno vira barra de progresso
+      "function pintaMetaPeso(){var box=document.getElementById('mpBarra');if(!box)return;var alvo=parseFloat(L('ptmetapeso',''));" +
+      "var pz=L('ptpeso',{});var ks=Object.keys(pz).sort();" +
+      "if(!alvo||!ks.length){box.innerHTML=alvo?\"<div class='vz' style='font-size:12px;'>Meta: \"+String(alvo).replace('.',',')+\" kg — registre o peso pra ver o progresso.</div>\":'';return;}" +
+      "var ini=+pz[ks[0]],atual=+pz[ks[ks.length-1]];" +
+      "var total=ini-alvo;var feito=ini-atual;var falta=Math.round((atual-alvo)*10)/10;" +
+      "var pct=total!==0?Math.max(0,Math.min(100,Math.round(100*feito/total))):100;" +
+      "var bateu=(total>=0&&atual<=alvo)||(total<0&&atual>=alvo);" +
+      "box.innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta: <b>\"+String(alvo).replace('.',',')+\" kg</b></span><b style='color:\"+(bateu?'#4ade80':'" + CORC + "')+\";'>\"+(bateu?'META BATIDA!':Math.abs(falta).toString().replace('.',',')+' kg pra chegar')+\"</b></div>\"+" +
+      "\"<div style='height:10px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+(bateu?100:pct)+\"%;background:linear-gradient(90deg,\"+(bateu?'#16a34a,#4ade80':'" + COR + "," + CORC + "')+\");border-radius:99px;transition:width .5s;'></div></div>\";" +
+      "if(bateu&&!L('ptmetaok','')){Sv('ptmetaok','1');confete();}}" +
+      "document.getElementById('mpSalva').addEventListener('click',function(){var v=parseFloat((document.getElementById('mpAlvo').value||'').replace(',','.'));" +
+      "if(!v||v<20||v>400){alert('Confere a meta.');return;}Sv('ptmetapeso',String(v));Sv('ptmetaok','');document.getElementById('mpAlvo').value='';pintaMetaPeso();});" +
+      "(function(){var alvo=L('ptmetapeso','');if(alvo)document.getElementById('mpAlvo').placeholder='Meta atual: '+String(alvo).replace('.',',')+' kg';})();" +
+      "pintaMetaPeso();" +
       // hábitos diários com streak
       "var HABS=[[ICO.gota,'Água em dia'],[ICO.maca,'Alimentação no plano'],[ICO.lua,'Dormi 7h+'],[ICO.ativ,'Cardio / passos']];" +
       "function pintaHab(){var h=L('pthab',{});var hoje=h[isoHj()]||{};" +
@@ -5742,10 +5820,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // fotos de progresso (só no aparelho)
       "function pintaFotos(){var fs=L('ptfotos',[]);var box=document.getElementById('fotosBox');if(!fs.length)return;" +
       "var pri=fs[0],ult=fs[fs.length-1];box.className='';" +
-      "box.innerHTML=\"<div style='display:flex;gap:10px;'>\"+" +
-      "\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:12px;'></div>\"+" +
-      "(fs.length>1?\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</div><img src='\"+ult.img+\"' style='width:100%;border-radius:12px;'></div>\":'')+\"</div>\"+" +
-      "\"<div class='vz' style='font-size:11.5px;'>\"+fs.length+\" foto(s) guardadas</div>\";" +
+      "if(fs.length>1){" +
+      // comparador com slider: AGORA por baixo, ANTES recortada por cima — arrasta e vê a evolução
+      "box.innerHTML=\"<div id='ftWrap' style='position:relative;border-radius:12px;overflow:hidden;'>\"+" +
+      "\"<img src='\"+ult.img+\"' style='width:100%;display:block;'>\"+" +
+      "\"<div id='ftCorte' style='position:absolute;top:0;left:0;bottom:0;overflow:hidden;width:50%;'><img id='ftImgAntes' src='\"+pri.img+\"' style='display:block;max-width:none;'></div>\"+" +
+      "\"<div id='ftLinha' style='position:absolute;top:0;bottom:0;left:50%;width:2px;background:rgba(255,255,255,.85);box-shadow:0 0 8px rgba(0,0,0,.6);'></div>\"+" +
+      "\"<span style='position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:99px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</span>\"+" +
+      "\"<span style='position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:99px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</span></div>\"+" +
+      "\"<input type='range' id='ftRange' min='0' max='100' value='50' style='width:100%;margin-top:8px;padding:0;border:none;background:transparent;' aria-label='Comparar antes e agora'>\"+" +
+      "\"<div class='vz' style='font-size:11.5px;'>Arrasta pra comparar — \"+fs.length+\" foto(s) guardadas</div>\";" +
+      "var wrap=document.getElementById('ftWrap');" +
+      "var ajusta=function(){var ia=document.getElementById('ftImgAntes');if(ia&&wrap.clientWidth)ia.style.width=wrap.clientWidth+'px';};" +
+      "setTimeout(ajusta,60);window.addEventListener('resize',ajusta);" +
+      "document.getElementById('ftRange').addEventListener('input',function(){document.getElementById('ftCorte').style.width=this.value+'%';document.getElementById('ftLinha').style.left=this.value+'%';});" +
+      "}else{" +
+      "box.innerHTML=\"<div style='text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:12px;'></div>\"+" +
+      "\"<div class='vz' style='font-size:11.5px;'>Tire a próxima foto pra liberar o comparador antes × agora</div>\";}" +
       "var dias=Math.round((new Date()-new Date(ult.d))/864e5);" +
       "if(dias>=30)document.getElementById('fotoBtn').firstChild.textContent='Faz '+dias+' dias — hora da foto do mês! ';}" +
       "document.getElementById('fotoInput').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;" +
@@ -5788,6 +5879,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var pca=document.getElementById('pixCopiaAluno');if(pca)pca.addEventListener('click',function(){" +
       "var ta=document.getElementById('pixAluno');ta.select();try{document.execCommand('copy');pca.textContent='Copiado! Cola no app do banco';}catch(e){}" +
       "setTimeout(function(){pca.textContent='Copiar Pix copia e cola';},2500);});" +
+      // "Já paguei": avisa o personal pelo chat com 1 toque (1x por mês)
+      "var jpB=document.getElementById('btnJaPaguei');if(jpB){" +
+      "var jpMes=new Date().toISOString().slice(0,7);" +
+      "if(L('ptpaguei','')===jpMes){jpB.style.display='none';document.getElementById('jaPagueiOk').style.display='block';}" +
+      "jpB.addEventListener('click',function(){var nomes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
+      "var msg='Acabei de pagar a mensalidade de '+nomes[new Date().getMonth()]+'! Pode confirmar quando der.';" +
+      "var fim2=function(){Sv('ptpaguei',jpMes);jpB.style.display='none';document.getElementById('jaPagueiOk').style.display='block';if(navigator.vibrate)navigator.vibrate(90);};" +
+      "if(NUVEM&&TOKEN){jpB.disabled=true;rpcApp('app_chat_envia',{t:TOKEN,p_texto:msg}).then(function(r){jpB.disabled=false;" +
+      "if(r&&r.ok!==false){fim2();}else{alert('Não deu pra enviar agora — tenta de novo em instantes.');}}).catch(function(){jpB.disabled=false;alert('Sem conexão agora — tenta de novo em instantes.');});}" +
+      "else{window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim2();}});}" +
       "var lgB=document.getElementById('lgSalva');if(lgB)lgB.addEventListener('click',function(){" +
       "var lg=document.getElementById('lgLogin').value.trim(),sn=document.getElementById('lgSenha').value;" +
       "if(lg.length<5||sn.length<6){alert('Preencha o login (e-mail ou celular) e uma senha de 6+ caracteres.');return;}" +
