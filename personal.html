@@ -6592,7 +6592,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(p2){var alvos=[];if(p2.d)alvos.push(p2.d+' km');if(p2.tp)alvos.push(p2.tp+' min');if(p2.p)alvos.push('pace '+p2.p);" +
       "info.textContent='Alvo: '+(alvos.join(' \\u00b7 ')||'livre')+(p2.d&&km>=p2.d?' \\u2014 ALVO BATIDO!':'');" +
       "if(cr.run&&!cr.alvoBipou&&((p2.d&&km>=p2.d)||(p2.tp&&el2>=p2.tp*60))){cr.alvoBipou=true;bip(1300,300);if(navigator.vibrate)navigator.vibrate([150,80,150]);}}" +
-      "else info.textContent=cr.gpsOn?'GPS ligado \\u2014 distância e pace sozinhos':'Digite os km na mão ou ligue o GPS';" +
+      "else info.textContent=cr.gpsOn?'GPS ligado \\u2014 distância e pace sozinhos':'O GPS liga sozinho \\u2014 ou digite os km na mão';" +
       "if(Math.floor(km)>cr.ultKm&&km>0){cr.ultKm=Math.floor(km);if(cr.run){bip(1000,220);if(navigator.vibrate)navigator.vibrate([120,60,120]);}}}" +
       "function pintaCrHist(){var el=crEl('crHist');if(!el)return;var lst=L('ptcardio',[]);" +
       "el.innerHTML=lst.length?'<b>Seus \\u00faltimos treinos:</b><br>'+lst.slice(-5).reverse().map(function(x){" +
@@ -6608,15 +6608,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;crEl('crKm').value='';}" +
       "function crGpsPara(){if(cr.watch!=null&&navigator.geolocation){navigator.geolocation.clearWatch(cr.watch);}cr.watch=null;cr.gpsOn=false;cr.lastPos=null;" +
       "var b=crEl('crGps');b.textContent='Ligar GPS';b.style.borderColor='#322e3d';b.style.color='#a9a4b5';}" +
-      "crEl('crGps').addEventListener('click',function(){if(cr.gpsOn){crGpsPara();pintaCr();return;}" +
-      "if(!navigator.geolocation){crEl('crInfo').textContent='Esse aparelho n\\u00e3o tem GPS dispon\\u00edvel \\u2014 digite os km na m\\u00e3o.';return;}" +
-      "var b=this;cr.watch=navigator.geolocation.watchPosition(function(pos){" +
-      "cr.gpsOn=true;b.textContent='GPS ligado \\ud83d\\udccd';b.style.borderColor='#4ade80';b.style.color='#4ade80';" +
+      // GPS sempre ativo: liga sozinho ao entrar na área de cardio (preferência ptgpsAuto, padrão ligado)
+      "var crGpsNeg=false;" +
+      "function crGpsLiga(auto){if(cr.watch!=null)return;if(auto&&crGpsNeg)return;" +
+      "if(!navigator.geolocation){if(!auto)crEl('crInfo').textContent='Esse aparelho n\\u00e3o tem GPS dispon\\u00edvel \\u2014 digite os km na m\\u00e3o.';return;}" +
+      "var b=crEl('crGps');b.textContent='GPS ligando\\u2026';" +
+      "cr.watch=navigator.geolocation.watchPosition(function(pos){" +
+      "cr.gpsOn=true;crGpsNeg=false;b.textContent='GPS ligado \\ud83d\\udccd';b.style.borderColor='#4ade80';b.style.color='#4ade80';" +
       "if(pos.coords.accuracy>40)return;var pt={lat:pos.coords.latitude,lng:pos.coords.longitude};" +
       "if(cr.lastPos&&cr.run){var dK=havKm(cr.lastPos,pt);if(dK<0.15)cr.km+=dK;}" +
       "cr.lastPos=pt;if(cr.run){cr.jan.push({t:Date.now(),km:cr.km});while(cr.jan.length&&Date.now()-cr.jan[0].t>60000)cr.jan.shift();}pintaCr();" +
-      "},function(){crEl('crInfo').textContent='Sem sinal de GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.';" +
-      "},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});});" +
+      "},function(err){if(err&&err.code===1){crGpsNeg=true;crGpsPara();}else{crEl('crGps').textContent='Ligar GPS';}" +
+      "crEl('crInfo').textContent='Sem GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.';" +
+      "},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});}" +
+      "function crAutoGps(){var v=localStorage.getItem('ptgpsAuto');if(v==null||+v)crGpsLiga(true);}" +
+      "crEl('crGps').addEventListener('click',function(){" +
+      "if(cr.watch!=null){Sv('ptgpsAuto',0);crGpsPara();pintaCr();return;}" +
+      "Sv('ptgpsAuto',1);crGpsNeg=false;crGpsLiga(false);});" +
+      "window.__crGpsLiga=crGpsLiga;" +
       "function crChips(){var box=crEl('crTipos');if(!box)return;box.innerHTML=Object.keys(CRMODS).map(function(m){var on=!cr.plano&&cr.mod===m;" +
       "return \"<button type='button' class='crModBt' data-crmod='\"+m+\"' style='flex:1;padding:8px 2px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;background:\"+(on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a')+\";border:\"+(on?'none':'1px solid #322e3d')+\";color:\"+(on?'#fff':'#a9a4b5')+\";'>\"+CRMODS[m]+\"</button>\";}).join('');}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('.crModBt');if(!b||cr.run)return;" +
@@ -6624,10 +6633,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-cbstart]');if(!b)return;" +
       "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.plano=p3;cr.mod=p3.m;" +
-      "crEl('crGo').textContent='Iniciar';crChips();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
+      "crEl('crGo').textContent='Iniciar';crChips();crAutoGps();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
       "crEl('crGo').addEventListener('click',function(){" +
       "if(cr.run){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=(Date.now()-cr.t0)/1000;this.textContent='Continuar';soltaTela();pintaCr();return;}" +
-      "cr.run=true;cr.t0=Date.now()-cr.acum*1000;this.textContent='Pausar';ligaTela();bip(880,110);crEl('crFase').style.color='#a9a4b5';" +
+      "crAutoGps();cr.run=true;cr.t0=Date.now()-cr.acum*1000;this.textContent='Pausar';ligaTela();bip(880,110);crEl('crFase').style.color='#a9a4b5';" +
       "cr.iv=setInterval(pintaCr,200);pintaCr();});" +
       "crEl('crFim').addEventListener('click',function(){crFinaliza(null);});" +
       "crEl('crZera').addEventListener('click',function(){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;soltaTela();crGpsPara();" +
@@ -7118,6 +7127,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // entrou no chat = recados vistos; some a bolinha
       "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);}" +
+      // GPS sempre ativo: acompanha a navegação (liga na área de cardio, desliga fora se não tem treino rodando)
+      "try{if(s==='treino'&&trSub==='cardio')crAutoGps();else if(s!=='treino'&&!cr.run)crGpsPara();}catch(e){}" +
       "window.scrollTo(0,0);}" +
       "nav.addEventListener('click',function(e){var mi=e.target.closest('.nitem');if(!mi)return;" +
       "if(navigator.vibrate)navigator.vibrate(8);" +
@@ -7131,6 +7142,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.querySelectorAll(\"[data-sec='treino']\").forEach(function(el){if(el.id==='trTabs')return;" +
       "var idAlvo=s==='wod'?'cardWod':s==='cardio'?'cardCardio':null;" +
       "el.style.display=(idAlvo?el.id===idAlvo:(el.id!=='cardWod'&&el.id!=='cardCardio'))?'':'none';});" +
+      // GPS sempre ativo: liga ao abrir a área de cardio, desliga ao sair (se não tem treino rodando)
+      "try{if(s==='cardio')crAutoGps();else if(!cr.run)crGpsPara();}catch(e){}" +
       "document.querySelectorAll('[data-trsub]').forEach(function(b){var on=b.dataset.trsub===s;" +
       "b.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';b.style.border=on?'none':'1px solid #322e3d';b.style.color=on?'#fff':'#a9a4b5';});" +
       "window.scrollTo(0,0);}" +
