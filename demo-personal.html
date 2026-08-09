@@ -142,14 +142,36 @@
         checks: serieChecks(Math.min(Math.floor(cfg.desde / 7), 10), cfg.capricho),
         fotoAntes: svgFoto("ANTES", "#4c4560"), fotoAntesD: iso(Math.min(cfg.desde, 120)),
         fotoDepois: svgFoto("AGORA", "#7c3aed"), fotoDepoisD: iso(2),
+        rpe: (function () { var r = {}; r[iso(1)] = idx % 3 === 0 ? 3 : 2; r[iso(3)] = 2; r[iso(5)] = idx % 2 ? 1 : 2; return r; })(),
+        onb: { obj: cfg.objetivo === "Hipertrofia" ? "musculo" : "saude", dias: String(cfg.meta), dor: idx === 3 ? "joelho esquerdo (condromalácia)" : "", em: iso(cfg.desde) },
       },
     };
+    // circuitos (WOD) prescritos + placares devolvidos (nos dois primeiros alunos)
+    if (idx === 0) {
+      a.demoRetorno.wodres = {};
+      a.demoRetorno.wodres["wod" + id] = [
+        { d: iso(14), n: "WOD do sábado", r: "6 volta(s) em 12:00!", v: 6 },
+        { d: iso(7), n: "WOD do sábado", r: "7 volta(s) em 12:00! — BATEU o resultado anterior!", v: 7 },
+      ];
+    }
     if (cfg.rec) a.assinaturaRec = { id: "sub_demo_" + id, desde: iso(60), valor: cfg.valor };
     if (cfg.falhou) a.cartaoFalhouEm = iso(3);
     alunos.push(a);
     treinosV2[id] = { fichas: (cfg.objetivo === "Hipertrofia" ? FICHAS.Hipertrofia : FICHAS.Outro).map(function (f) {
       return { id: uid(), titulo: f.titulo, itens: f.itens.map(function (it) { return { exId: it.exId, series: it.series, reps: it.reps, descanso: it.descanso, obs: "" }; }) };
     }), objetivo: cfg.objetivo.toLowerCase(), semana: 3, validade: iso(-30) };
+    if (idx === 0) {
+      treinosV2[id].wods = [{ id: "wod" + id, nome: "WOD do sábado", tipo: "amrap", cap: 12, min: 12, rounds: 8, work: 20, rest: 10,
+        movs: [{ q: "10", n: "Agachamento livre" }, { q: "10", n: "Flexão de braço" }, { q: "200m", n: "Corrida" }],
+        mov: ["10 Agachamento livre", "10 Flexão de braço", "200m Corrida"],
+        aq: "2 min de corda + mobilidade de quadril", obs: "Escala: flexão com joelho no chão se precisar" }];
+    }
+    if (idx === 1) {
+      treinosV2[id].wods = [{ id: "wod" + id, nome: "Motorzinho", tipo: "emom", cap: 0, min: 10, rounds: 8, work: 20, rest: 10,
+        movs: [{ q: "min ímpar", n: "10 Kettlebell swing" }, { q: "min par", n: "12 Remada curvada com barra" }],
+        mov: ["min ímpar 10 Kettlebell swing", "min par 12 Remada curvada com barra"],
+        aq: "", obs: "Se sobrar menos de 15s no minuto, tira 2 reps" }];
+    }
     // pagamentos desde a matrícula (até 8 meses; o do mês atual conforme cfg.pago)
     var mesesPag = Math.min(8, Math.max(1, Math.floor(cfg.desde / 30)));
     for (var m = mesesPag - 1; m >= 0; m--) {
