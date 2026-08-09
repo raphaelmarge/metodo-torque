@@ -1945,6 +1945,9 @@ async function abaPt(p, a) {
   ok(crono5.rotRound === "+1 round" && /2/.test(crono5.amrap) && /rounds/.test(crono5.amrap) && /0:5\d/.test(crono5.amrap),
     "AMRAP regressivo conta rounds pelo botão +1 round");
   ok(crono5.cronoZero === "0:00.0", "voltar pro modo cronômetro zera tudo");
+  // avisos sonoros: contagem 3-2-1 nos timers e áudio destravado no primeiro toque (iPhone)
+  ok(/function ucCd\(/.test(appHtml2) && /function wodCd\(/.test(appHtml2) && /ac\.resume\(\)/.test(appHtml2) && /o\.type='square'/.test(appHtml2),
+    "timers com contagem sonora 3-2-1 e áudio alto destravado no toque");
   await pApp.evaluate(() => window.__trocaSec("inicio"));
   // substituto de exercício: o toque abre a dica com as trocas
   const altEx = await pApp.evaluate(() => {
