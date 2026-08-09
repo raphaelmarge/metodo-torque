@@ -3841,16 +3841,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   // cronômetro de circuito em tela cheia (pro personal conduzir a sessão)
   (function () {
-    var wp = { tipo: "fortime", run: false, iv: null, t0: 0, acum: 0, voltas: 0, ultMin: -1, ultFase: "" };
+    var wp = { tipo: "fortime", run: false, iv: null, t0: 0, acum: 0, voltas: 0, ultMin: -1, ultFase: "", ultCd: 0 };
     function fmt(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
     function bipP(fq, dur) {
       try {
         var ac = window.__acP || (window.__acP = new (window.AudioContext || window.webkitAudioContext)());
+        if (ac.state === "suspended") ac.resume();
         var o = ac.createOscillator(), g = ac.createGain();
-        o.connect(g); g.connect(ac.destination);
-        o.frequency.value = fq || 880; g.gain.value = 0.15;
+        o.type = "square"; o.connect(g); g.connect(ac.destination);
+        o.frequency.value = fq || 880; g.gain.value = 0.3;
         o.start(); setTimeout(function () { try { o.stop(); } catch (e2) {} }, dur || 130);
       } catch (e) {}
+    }
+    // contagem 3-2-1 antes de cada virada (um bip por segundo)
+    function cdP(resta) {
+      if (!wp.run) return;
+      var cd = (resta <= 3.05 && resta > 0.05) ? Math.ceil(resta) : 0;
+      if (cd && cd !== wp.ultCd) { bipP(600, 110); if (navigator.vibrate) navigator.vibrate(60); }
+      wp.ultCd = cd;
     }
     function chips() {
       $("wpfTipos").innerHTML = Object.keys(WOD_TIPOS).map(function (t) {
@@ -3881,6 +3889,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var cap = 60 * (+($("wpfCap") || {}).value || 0);
         fase.textContent = "FOR TIME"; tmp.textContent = fmt(el2);
         info.textContent = (wp.voltas ? wp.voltas + " volta(s) · " : "") + (cap ? "limite " + fmt(cap) : "sem limite");
+        if (cap) cdP(cap - el2);
         if (cap && el2 >= cap) fim("TEMPO! " + fmt(cap) + (wp.voltas ? " · " + wp.voltas + " volta(s)" : ""));
         return;
       }
@@ -3889,6 +3898,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var resta = tot - el2;
         fase.textContent = "AMRAP " + Math.round(tot / 60) + " MIN"; tmp.textContent = fmt(resta);
         info.textContent = wp.voltas + " volta(s)";
+        cdP(resta);
         if (resta <= 0) fim(wp.voltas + " volta(s) em " + fmt(tot) + "!");
         return;
       }
@@ -3900,6 +3910,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         fase.textContent = "MINUTO " + (mn + 1) + " DE " + Math.round(totE / 60);
         tmp.textContent = fmt(60 - Math.floor(el2 % 60));
         info.textContent = "novo movimento a cada minuto";
+        cdP(60 - (el2 % 60));
         return;
       }
       var rd = +($("wpfRounds") || {}).value || 8, wk = +($("wpfWork") || {}).value || 20, rs = +($("wpfRest") || {}).value || 10;
@@ -3912,6 +3923,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       fase.style.color = trab ? "#a78bfa" : "#22d3ee";
       tmp.textContent = fmt(trab ? wk - pos : ciclo - pos);
       info.textContent = wk + "s trabalho · " + rs + "s descanso";
+      cdP(trab ? wk - pos : ciclo - pos);
     }
     function zera() {
       clearInterval(wp.iv); wp.iv = null; wp.run = false; wp.acum = 0; wp.voltas = 0; wp.ultMin = -1; wp.ultFase = "";
@@ -6122,10 +6134,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "else{marcaCf();alert('Sem internet agora — avisa também pelo WhatsApp, combinado?');}});})();" +
       // ---- modo circuito (WOD): For Time, AMRAP, EMOM e Tabata ----
       "function bip(fq,dur){try{var ac=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)());" +
-      "var o=ac.createOscillator(),ga=ac.createGain();o.connect(ga);ga.connect(ac.destination);o.frequency.value=fq||880;ga.gain.value=.12;o.start();setTimeout(function(){try{o.stop();}catch(e2){}},dur||130);}catch(e){}}" +
+      "if(ac.state==='suspended')ac.resume();var o=ac.createOscillator(),ga=ac.createGain();o.type='square';o.connect(ga);ga.connect(ac.destination);" +
+      "o.frequency.value=fq||880;ga.gain.value=.3;o.start();setTimeout(function(){try{o.stop();}catch(e2){}},dur||130);}catch(e){}}" +
+      "['click','touchstart'].forEach(function(ev){document.addEventListener(ev,function(){try{if(window.__ac&&window.__ac.state==='suspended')window.__ac.resume();}catch(e){}},{passive:true});});" +
       "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
       "var WODS=" + JSON.stringify(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10 }; })) + ";" +
-      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:'',wodId:null,wodNome:''};" +
+      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
+      "function wodCd(resta){if(!wod.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
+      "if(cd&&cd!==wod.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}wod.ultCd=cd;}" +
       // último resultado de cada circuito prescrito aparece no card
       "function pintaWodRes(){var wr=L('ptwodres',{});document.querySelectorAll('.wodres').forEach(function(el){" +
       "var lst=wr[el.dataset.wid]||[];if(!lst.length){el.textContent='';return;}var u=lst[lst.length-1];" +
@@ -6152,22 +6168,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function wodPinta(el2){var tela=document.getElementById('wodTela'),fase=document.getElementById('wodFase'),tmp=document.getElementById('wodTempo'),info=document.getElementById('wodInfo');" +
       "if(wod.tipo==='fortime'){var cap=60*(parseInt(document.getElementById('wodCap').value,10)||0);" +
       "fase.textContent='FOR TIME';tmp.textContent=wodFmt(el2);info.textContent=(wod.voltas?wod.voltas+' volta(s) · ':'')+(cap?'limite '+wodFmt(cap):'sem limite');" +
-      "if(cap&&el2>=cap)wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+wod.voltas+' volta(s)':''));return;}" +
+      "if(cap)wodCd(cap-el2);if(cap&&el2>=cap)wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+wod.voltas+' volta(s)':''));return;}" +
       "if(wod.tipo==='amrap'){var tot=60*(parseInt(document.getElementById('wodMin').value,10)||10);var resta=tot-el2;" +
       "fase.textContent='AMRAP '+Math.round(tot/60)+' MIN';tmp.textContent=wodFmt(resta);info.textContent=wod.voltas+' volta(s) completadas';" +
-      "if(resta<=0)wodFim(wod.voltas+' volta(s) em '+wodFmt(tot)+'!',wod.voltas);return;}" +
+      "wodCd(resta);if(resta<=0)wodFim(wod.voltas+' volta(s) em '+wodFmt(tot)+'!',wod.voltas);return;}" +
       "if(wod.tipo==='emom'){var totE=60*(parseInt(document.getElementById('wodMin').value,10)||10);" +
       "if(el2>=totE){wodFim('EMOM completo — '+Math.round(totE/60)+' minutos!');return;}" +
       "var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
       "if(mn!==wod.ultMin){wod.ultMin=mn;if(el2>1){if(navigator.vibrate)navigator.vibrate([180,80,180]);bip(980,180);}}" +
-      "fase.textContent='MINUTO '+(mn+1)+' DE '+Math.round(totE/60);tmp.textContent=wodFmt(segRes);info.textContent='novo movimento a cada minuto cheio';return;}" +
+      "wodCd(60-(el2%60));fase.textContent='MINUTO '+(mn+1)+' DE '+Math.round(totE/60);tmp.textContent=wodFmt(segRes);info.textContent='novo movimento a cada minuto cheio';return;}" +
       "var rd=parseInt(document.getElementById('wodRounds').value,10)||8;var wk=parseInt(document.getElementById('wodWork').value,10)||20;var rs=parseInt(document.getElementById('wodRest').value,10)||10;" +
       "var ciclo=wk+rs;var totT=rd*ciclo;" +
       "if(el2>=totT){wodFim('Tabata completo — '+rd+(rd>1?' rounds!':' round!'));return;}" +
       "var pos=el2%ciclo;var trabalhando=pos<wk;var faseAtual=trabalhando?'TRABALHA':'DESCANSA';" +
       "if(faseAtual!==wod.ultFase){wod.ultFase=faseAtual;if(el2>0.5){if(navigator.vibrate)navigator.vibrate(trabalhando?[200,80,200]:120);bip(trabalhando?1100:600,150);}}" +
       "tela.style.borderColor=trabalhando?'" + CORC + "':'#0891b2';fase.textContent=faseAtual+' · ROUND '+(Math.floor(el2/ciclo)+1)+' DE '+rd;fase.style.color=trabalhando?'" + CORC + "':'#22d3ee';" +
-      "tmp.textContent=wodFmt(trabalhando?wk-pos:ciclo-pos);info.textContent=wk+'s trabalho · '+rs+'s descanso';}" +
+      "tmp.textContent=wodFmt(trabalhando?wk-pos:ciclo-pos);info.textContent=wk+'s trabalho · '+rs+'s descanso';wodCd(trabalhando?wk-pos:ciclo-pos);}" +
       "function wodTick(){var el2=(Date.now()-wod.t0)/1000;wodPinta(el2);}" +
       "function wodFim(msg,val){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
       "document.getElementById('wodGo').textContent='Iniciar';" +
@@ -6198,8 +6214,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
       "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='Bora! Próxima série!';" +
-      "if(navigator.vibrate)navigator.vibrate([200,100,200]);setTimeout(function(){bar.style.display='none';},2200);}" +
-      "else{bar.textContent='Descanso: '+resta+'s';}},1000);}" +
+      "if(navigator.vibrate)navigator.vibrate([200,100,200]);bip(1300,300);setTimeout(function(){bar.style.display='none';},2200);}" +
+      "else{bar.textContent='Descanso: '+resta+'s';if(resta<=3)bip(600,100);}},1000);}" +
       "pintaSets();" +
       // modo treino guiado: conduz série a série; a série 'feita' clica no setbtn
       // real do exercício, reaproveitando toda a lógica existente (dia completo etc.)
@@ -6313,7 +6329,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "pintaAgua(false);" +
       // ---- utilidades: cronômetro e timer avulsos ----
       "var UCT=[['crono','Cronômetro'],['timer','Timer'],['tabata','Tabata'],['emom','EMOM'],['amrap','AMRAP']];" +
-      "var uc={tipo:'crono',run:false,iv:null,t0:0,acum:0,voltas:[],ultMin:-1,ultFase:''};" +
+      "var uc={tipo:'crono',run:false,iv:null,t0:0,acum:0,voltas:[],ultMin:-1,ultFase:'',ultCd:0};" +
+      "function ucCd(resta){if(!uc.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
+      "if(cd&&cd!==uc.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}uc.ultCd=cd;}" +
       "function ucEl(id){return document.getElementById(id);}" +
       "function ucFmt(s,dec){s=Math.max(0,s);var m=Math.floor(s/60),ss=Math.floor(s%60);" +
       "return m+':'+('0'+ss).slice(-2)+(dec?'.'+Math.floor((s%1)*10):'');}" +
@@ -6335,20 +6353,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "inf.textContent=uc.voltas.length?uc.voltas.length+' volta(s) marcada(s)':'';return;}" +
       "if(uc.tipo==='timer'){var tot=60*ucV('ucMin',0)+ucV('ucSeg',0);var resta=tot-el2;" +
       "fs.textContent=uc.run?'Contando':'Pronto?';fs.style.color='#a9a4b5';tmp.style.color='';tmp.textContent=ucFmt(resta,false);inf.textContent='';" +
-      "if(uc.run&&resta<=0)ucFim('FIM DO TIMER!',false);return;}" +
+      "ucCd(resta);if(uc.run&&resta<=0)ucFim('FIM DO TIMER!',false);return;}" +
       "if(uc.tipo==='amrap'){var tot2=60*ucV('ucMin',12);var resta2=tot2-el2;" +
       "fs.textContent='AMRAP '+ucV('ucMin',12)+' MIN';fs.style.color='" + CORC + "';tmp.style.color='';tmp.textContent=ucFmt(resta2,false);" +
       "inf.textContent=uc.voltas.length+' round'+(uc.voltas.length===1?'':'s')+' — toque em +1 round a cada volta completa';" +
-      "if(uc.run&&resta2<=0){var rd=uc.voltas.length;ucFim(rd+(rd===1?' ROUND!':' ROUNDS!'),true);}return;}" +
+      "ucCd(resta2);if(uc.run&&resta2<=0){var rd=uc.voltas.length;ucFim(rd+(rd===1?' ROUND!':' ROUNDS!'),true);}return;}" +
       "if(uc.tipo==='emom'){var mtot=Math.max(1,ucV('ucMin',10));if(uc.run&&el2>=mtot*60){ucFim('EMOM COMPLETO — '+mtot+' MIN!',true);return;}" +
       "var mAt=Math.floor(el2/60);fs.textContent='MINUTO '+Math.min(mAt+1,mtot)+' DE '+mtot;fs.style.color='" + CORC + "';tmp.style.color='';" +
       "tmp.textContent=ucFmt(60-(el2%60),false);inf.textContent='Comece o exercício a cada virada de minuto';" +
-      "if(uc.run&&mAt!==uc.ultMin){uc.ultMin=mAt;if(mAt>0){if(navigator.vibrate)navigator.vibrate(180);bip(980,220);}}return;}" +
+      "ucCd(60-(el2%60));if(uc.run&&mAt!==uc.ultMin){uc.ultMin=mAt;if(mAt>0){if(navigator.vibrate)navigator.vibrate(180);bip(980,220);}}return;}" +
       "if(uc.tipo==='tabata'){var rds=Math.max(1,ucV('ucRds',8)),tr=Math.max(1,ucV('ucTrab',20)),de=Math.max(1,ucV('ucDesc',10));var cic=tr+de;" +
       "if(uc.run&&el2>=rds*cic){ucFim('TABATA COMPLETO — '+rds+' ROUNDS!',true);return;}" +
       "var rd2=Math.min(rds,Math.floor(el2/cic)+1);var pos=el2%cic;var trab=pos<tr;" +
       "fs.textContent=(trab?'TRABALHA':'DESCANSA')+' — ROUND '+rd2+' DE '+rds;fs.style.color=trab?'" + CORC + "':'#22d3ee';" +
       "tmp.style.color=trab?'" + CORC + "':'#22d3ee';tmp.textContent=ucFmt(trab?tr-pos:cic-pos,false);inf.textContent=tr+'s forte / '+de+'s de descanso';" +
+      "ucCd(trab?tr-pos:cic-pos);" +
       "var f2=(trab?'T':'D')+rd2;if(uc.run&&f2!==uc.ultFase){uc.ultFase=f2;if(el2>0.3){if(navigator.vibrate)navigator.vibrate(trab?[90,50,90]:200);bip(trab?1100:600,200);}}return;}}" +
       "ucEl('ucTipos').innerHTML=UCT.map(function(u2){return \"<button type='button' class='ucTipo' data-uct='\"+u2[0]+\"' style='flex:1;min-width:58px;padding:8px 2px;border-radius:10px;font-size:11.5px;font-weight:800;cursor:pointer;'>\"+u2[1]+\"</button>\";}).join('');" +
       "function ucSel(t){uc.tipo=t;clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;uc.voltas=[];uc.ultMin=-1;uc.ultFase='';soltaTela();" +
