@@ -1126,5 +1126,72 @@ self.MT_RECEITAS = [
    "Dobre ao meio e sirva."
   ],
   "dica": "Ora-pro-nóbis é uma folha rica em proteína e ferro — dupla mineira perfeita com o canastra, sem pesar nas calorias."
+ },
+ {
+  "id": "rc52",
+  "n": "Kafta de patinho com tabule",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 2,
+  "k": 390,
+  "pt": 34,
+  "ing": [
+   "300 g de patinho moído",
+   "1/2 cebola ralada, hortelã e salsinha picadas",
+   "1 col. chá de cominho e sal",
+   "1/2 xíc. de trigo pra quibe hidratado",
+   "1 tomate, 1/2 pepino e limão pro tabule"
+  ],
+  "modo": [
+   "Misture a carne com a cebola, as ervas, o cominho e o sal; modele em espetos.",
+   "Grelhe na frigideira ou na airfryer (200 °C por 12 min), virando na metade.",
+   "Misture o trigo hidratado com tomate, pepino, hortelã, limão e um fio de azeite.",
+   "Sirva a kafta por cima do tabule."
+  ],
+  "dica": "O trigo do tabule tem fibra de sobra e deixa o prato completo sem precisar de arroz — refeição árabe de churrascaria, versão leve."
+ },
+ {
+  "id": "rc53",
+  "n": "Gyoza de frango na airfryer",
+  "cat": "Lanches",
+  "tempo": 35,
+  "rende": 2,
+  "k": 280,
+  "pt": 21,
+  "ing": [
+   "200 g de peito de frango moído",
+   "1 xíc. de repolho bem picado",
+   "Gengibre ralado, cebolinha e 1 col. sopa de shoyu light",
+   "12 massas prontas de pastel de feira (disco pequeno)"
+  ],
+  "modo": [
+   "Misture o frango com o repolho, o gengibre, a cebolinha e o shoyu.",
+   "Recheie os discos, feche em meia-lua apertando as bordas com um garfo.",
+   "Pincele água, leve à airfryer a 180 °C por 10 a 12 min até dourar.",
+   "Sirva com shoyu light e gotas de limão."
+  ],
+  "dica": "Assado em vez de frito, o gyoza vira lanche proteico de verdade — 6 unidades têm menos gordura que 1 pastel de feira."
+ },
+ {
+  "id": "rc54",
+  "n": "Canjica proteica com whey",
+  "cat": "Doces fit",
+  "tempo": 40,
+  "rende": 4,
+  "k": 230,
+  "pt": 14,
+  "ing": [
+   "1 xíc. de canjica branca (milho pra canjica) cozida",
+   "400 ml de leite desnatado",
+   "2 scoops de whey de baunilha",
+   "Canela em pau, cravo e coco ralado sem açúcar"
+  ],
+  "modo": [
+   "Cozinhe a canjica na pressão com água até ficar macia (25 min).",
+   "Junte o leite, a canela e o cravo e apure por 10 min em fogo baixo.",
+   "Desligue, espere amornar e misture o whey dissolvido num pouco de leite.",
+   "Finalize com coco ralado e canela em pó."
+  ],
+  "dica": "O whey entra só com o fogo desligado pra não talhar — sobremesa de festa junina com 14 g de proteína por tigela."
  }
 ];
