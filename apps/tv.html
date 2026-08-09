@@ -95,12 +95,29 @@
            style="max-height: 8vh; max-width: 18vw; object-fit: contain; background: var(--card); padding: .6vh 1vw;">
       <span class="marca">MÉTODO TORQUE</span>
     </span>
-    <span class="relogio" id="relogio"></span>
+    <span style="display:inline-flex; align-items:center; gap:1vw;">
+      <button id="btnTvTimer" style="background:#14121a; border:1px solid #7c3aed; color:#a78bfa; border-radius:1.2vh; padding:1vh 1.6vw; font-family:inherit; font-weight:800; font-size:2.2vh; cursor:pointer;">⏱ TIMER</button>
+      <span class="relogio" id="relogio"></span>
+    </span>
   </div>
   <h1 id="titulo"></h1>
   <div class="conteudo" id="conteudo"></div>
   <div class="alerta-aula" id="alertaAula"><span class="sino">🔔</span><span class="txt" id="alertaTxt"></span></div>
   <div class="pontos" id="pontos"></div>
+</div>
+
+<!-- timer gigante da sala: Tabata / EMOM / AMRAP / For Time no telão -->
+<div id="tvTimer" hidden style="position:fixed; inset:0; z-index:50; background:#0b0a10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.4vh; text-align:center;">
+  <button id="ttFecha" style="position:absolute; top:2.4vh; right:2vw; background:#14121a; border:1px solid #322e3d; color:#a9a4b5; border-radius:1.2vh; padding:1vh 1.4vw; font-family:inherit; font-weight:800; font-size:2.4vh; cursor:pointer;">✕ fechar</button>
+  <div id="ttTipos" style="display:flex; gap:1vw;"></div>
+  <div id="ttCfg" style="display:flex; gap:1.6vw; align-items:center; justify-content:center;"></div>
+  <div id="ttFase" style="font-size:5vh; font-weight:900; letter-spacing:.12em; color:#a9a4b5;">PRONTO?</div>
+  <div id="ttTempo" style="font-size:30vh; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; color:#fff;">0:00</div>
+  <div id="ttInfo" style="font-size:3vh; color:#a9a4b5;"></div>
+  <div style="display:flex; gap:1.6vw;">
+    <button id="ttGo" style="background:linear-gradient(135deg,#7c3aed,#a78bfa); border:none; color:#fff; border-radius:1.6vh; padding:2vh 5vw; font-family:inherit; font-weight:900; font-size:3.4vh; cursor:pointer;">Iniciar</button>
+    <button id="ttZera" style="background:#14121a; border:1px solid #322e3d; color:#a9a4b5; border-radius:1.6vh; padding:2vh 3vw; font-family:inherit; font-weight:800; font-size:3.4vh; cursor:pointer;">Zerar</button>
+  </div>
 </div>
 
 <script src="../assets/access-config.js"></script>
@@ -473,6 +490,124 @@
     if (document.fullscreenElement) return;
     document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(function () {});
   });
+
+  // ---------- timer gigante da sala (Tabata / EMOM / AMRAP / For Time) ----------
+  (function () {
+    var TT_TIPOS = [["tabata", "TABATA"], ["emom", "EMOM"], ["amrap", "AMRAP"], ["fortime", "FOR TIME"]];
+    var tt = { tipo: "tabata", run: false, iv: null, t0: 0, acum: 0, ultMin: -1, ultFase: "", ultCd: 0 };
+    function bipT(fq, dur) {
+      try {
+        var ac = window.__acT || (window.__acT = new (window.AudioContext || window.webkitAudioContext)());
+        if (ac.state === "suspended") ac.resume();
+        var o = ac.createOscillator(), g = ac.createGain();
+        o.type = "square"; o.connect(g); g.connect(ac.destination);
+        o.frequency.value = fq || 880; g.gain.value = 0.35;
+        o.start(); setTimeout(function () { try { o.stop(); } catch (e2) {} }, dur || 150);
+      } catch (e) {}
+    }
+    function cdT(resta) {
+      if (!tt.run) return;
+      var cd = (resta <= 3.05 && resta > 0.05) ? Math.ceil(resta) : 0;
+      if (cd && cd !== tt.ultCd) bipT(600, 130);
+      tt.ultCd = cd;
+    }
+    function fmtT(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+    function ttV(id, pd) { var el = $(id); var v = el ? parseInt(el.value, 10) : NaN; return isNaN(v) || v <= 0 ? pd : v; }
+    function inpT(id, rot, val) {
+      return '<label style="font-size:2.2vh; color:#a9a4b5; font-weight:700;">' + rot +
+        '<input id="' + id + '" type="number" inputmode="numeric" min="1" value="' + val + '" ' +
+        'style="display:block; width:9vw; margin-top:.6vh; background:#14121a; border:1px solid #322e3d; color:#fff; border-radius:1.2vh; padding:1.2vh; font-size:3vh; font-weight:800; text-align:center; font-family:inherit;"></label>';
+    }
+    function ttCfg() {
+      var h = "";
+      if (tt.tipo === "tabata") h = inpT("ttRds", "Rounds", 8) + inpT("ttWork", "Trabalho (s)", 20) + inpT("ttRest", "Descanso (s)", 10);
+      else if (tt.tipo === "fortime") h = inpT("ttMin", "Limite (min)", 12);
+      else h = inpT("ttMin", "Minutos", tt.tipo === "emom" ? 10 : 12);
+      $("ttCfg").innerHTML = h;
+    }
+    function ttChips() {
+      $("ttTipos").innerHTML = TT_TIPOS.map(function (t) {
+        var on = tt.tipo === t[0];
+        return '<button data-tt="' + t[0] + '" style="background:' + (on ? "linear-gradient(135deg,#7c3aed,#a78bfa)" : "#14121a") +
+          "; border:" + (on ? "none" : "1px solid #322e3d") + "; color:" + (on ? "#fff" : "#a9a4b5") +
+          '; border-radius:1.4vh; padding:1.4vh 2.4vw; font-family:inherit; font-weight:900; font-size:2.6vh; cursor:pointer;">' + t[1] + "</button>";
+      }).join("");
+    }
+    function ttFim(msg) {
+      clearInterval(tt.iv); tt.iv = null; tt.run = false; tt.acum = 0; tt.ultMin = -1; tt.ultFase = ""; tt.ultCd = 0;
+      $("ttGo").textContent = "Iniciar"; $("ttTempo").textContent = "FIM!"; $("ttFase").textContent = msg;
+      bipT(1300, 500); setTimeout(function () { bipT(1300, 500); }, 600);
+    }
+    function ttPinta() {
+      var el2 = tt.run ? (Date.now() - tt.t0) / 1000 : tt.acum;
+      var fase = $("ttFase"), tmp = $("ttTempo"), info = $("ttInfo");
+      if (tt.tipo === "fortime") {
+        var cap = 60 * ttV("ttMin", 12);
+        fase.textContent = "FOR TIME"; fase.style.color = "#a9a4b5"; tmp.style.color = "#fff";
+        tmp.textContent = fmtT(el2); info.textContent = "limite " + fmtT(cap);
+        cdT(cap - el2);
+        if (tt.run && el2 >= cap) ttFim("TEMPO!");
+        return;
+      }
+      if (tt.tipo === "amrap") {
+        var tot = 60 * ttV("ttMin", 12);
+        fase.textContent = "AMRAP " + Math.round(tot / 60) + " MIN"; fase.style.color = "#a78bfa"; tmp.style.color = "#fff";
+        tmp.textContent = fmtT(tot - el2); info.textContent = "quantos rounds a turma consegue?";
+        cdT(tot - el2);
+        if (tt.run && el2 >= tot) ttFim("TEMPO! CONTA OS ROUNDS!");
+        return;
+      }
+      if (tt.tipo === "emom") {
+        var totE = 60 * ttV("ttMin", 10);
+        if (tt.run && el2 >= totE) { ttFim("EMOM COMPLETO!"); return; }
+        var mn = Math.floor(el2 / 60);
+        if (tt.run && mn !== tt.ultMin) { tt.ultMin = mn; if (el2 > 1) bipT(980, 250); }
+        fase.textContent = "MINUTO " + (mn + 1) + " DE " + Math.round(totE / 60); fase.style.color = "#a78bfa";
+        tmp.style.color = "#fff"; tmp.textContent = fmtT(60 - (el2 % 60)); info.textContent = "novo movimento a cada minuto";
+        cdT(60 - (el2 % 60));
+        return;
+      }
+      var rd = ttV("ttRds", 8), wk = ttV("ttWork", 20), rs = ttV("ttRest", 10);
+      var ciclo = wk + rs, totT = rd * ciclo;
+      if (tt.run && el2 >= totT) { ttFim("TABATA COMPLETO — " + rd + " ROUNDS!"); return; }
+      var pos = el2 % ciclo, trab = pos < wk;
+      var faseAtual = trab ? "TRABALHA" : "DESCANSA";
+      if (tt.run && faseAtual !== tt.ultFase) { tt.ultFase = faseAtual; if (el2 > 0.5) bipT(trab ? 1100 : 600, 220); }
+      fase.textContent = faseAtual + " · ROUND " + Math.min(rd, Math.floor(el2 / ciclo) + 1) + " DE " + rd;
+      fase.style.color = trab ? "#a78bfa" : "#22d3ee"; tmp.style.color = trab ? "#a78bfa" : "#22d3ee";
+      tmp.textContent = fmtT(trab ? wk - pos : ciclo - pos); info.textContent = wk + "s trabalho · " + rs + "s descanso";
+      cdT(trab ? wk - pos : ciclo - pos);
+    }
+    function ttZera() {
+      clearInterval(tt.iv); tt.iv = null; tt.run = false; tt.acum = 0; tt.ultMin = -1; tt.ultFase = ""; tt.ultCd = 0;
+      $("ttGo").textContent = "Iniciar"; ttPinta();
+    }
+    $("btnTvTimer").addEventListener("click", function (e) {
+      e.stopPropagation();
+      $("tvTimer").hidden = false;
+      ttChips(); ttCfg(); ttPinta();
+    });
+    $("ttFecha").addEventListener("click", function (e) { e.stopPropagation(); ttZera(); $("tvTimer").hidden = true; });
+    $("tvTimer").addEventListener("click", function (e) {
+      e.stopPropagation();
+      var b = e.target.closest("[data-tt]");
+      if (!b || tt.run) return;
+      tt.tipo = b.getAttribute("data-tt"); ttZera(); ttChips(); ttCfg(); ttPinta();
+    });
+    $("ttGo").addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (tt.run) {
+        clearInterval(tt.iv); tt.iv = null; tt.run = false; tt.acum = (Date.now() - tt.t0) / 1000;
+        this.textContent = "Continuar"; return;
+      }
+      if ($("ttTempo").textContent === "FIM!") { tt.acum = 0; }
+      tt.run = true; tt.t0 = Date.now() - tt.acum * 1000;
+      this.textContent = "Pausar"; bipT(880, 150);
+      tt.iv = setInterval(ttPinta, 100); ttPinta();
+    });
+    $("ttZera").addEventListener("click", function (e) { e.stopPropagation(); ttZera(); });
+    window.__tvTimer = { pinta: ttPinta, st: tt }; // testes
+  })();
 })();
 </script>
 </body>

@@ -372,6 +372,31 @@ function ok(cond, nome) {
   await p.waitForTimeout(600);
   const pontosBox = await p.evaluate(() => document.querySelectorAll("#pontos span").length);
   ok(pontosBox === 3, "rotação da modalidade: treino do dia + quem vem + avisos (" + pontosBox + " painéis)");
+  // timer gigante da sala: abre pelo botão do cabeçalho, roda um tabata curto e termina sozinho
+  const tvTimer1 = await p.evaluate(() => {
+    document.getElementById("btnTvTimer").click();
+    return {
+      aberto: !document.getElementById("tvTimer").hidden,
+      chips: document.querySelectorAll("#ttTipos [data-tt]").length,
+      cfg: !!document.getElementById("ttRds"),
+    };
+  });
+  ok(tvTimer1.aberto && tvTimer1.chips === 4 && tvTimer1.cfg, "telão abre o timer gigante com os 4 modos de treino");
+  await p.evaluate(() => {
+    document.getElementById("ttRds").value = "2";
+    document.getElementById("ttWork").value = "1";
+    document.getElementById("ttRest").value = "1";
+    document.getElementById("ttGo").click();
+  });
+  await p.waitForTimeout(1300);
+  const tvTimerMeio = await p.evaluate(() => document.getElementById("ttFase").textContent);
+  ok(/DESCANSA/.test(tvTimerMeio), "timer do telão alterna TRABALHA/DESCANSA");
+  await p.waitForTimeout(3200);
+  const tvTimerFim = await p.evaluate(() => ({
+    fase: document.getElementById("ttFase").textContent,
+    t: document.getElementById("ttTempo").textContent,
+  }));
+  ok(tvTimerFim.t === "FIM!" && /TABATA COMPLETO/.test(tvTimerFim.fase), "timer do telão completa o tabata e avisa o fim");
   await p.close();
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
