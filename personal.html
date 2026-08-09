@@ -5760,15 +5760,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div style='display:flex;gap:8px;margin-top:6px;'>" +
       "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Copos por dia<select id='agMetaSel' style='width:100%;margin-top:3px;'><option>6</option><option selected>8</option><option>10</option><option>12</option></select></label>" +
       "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Tamanho do copo<select id='agMlSel' style='width:100%;margin-top:3px;'><option value='200'>200 ml</option><option value='250' selected>250 ml</option><option value='300'>300 ml</option><option value='500'>500 ml (garrafa)</option></select></label></div></div>" +
-      "<div class='cardx' id='utilCrono'><h2>Cronômetro e timer</h2>" +
-      "<div style='display:flex;gap:6px;margin-bottom:10px;'>" +
-      "<button data-uct='crono' class='ucTipo' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;'>Cronômetro</button>" +
-      "<button data-uct='timer' class='ucTipo' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Timer</button></div>" +
-      "<div id='ucCfg' style='display:none;gap:8px;margin-bottom:10px;'>" +
-      "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Minutos<input id='ucMin' inputmode='numeric' value='5' style='width:100%;margin-top:3px;'></label>" +
-      "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Segundos<input id='ucSeg' inputmode='numeric' value='0' style='width:100%;margin-top:3px;'></label></div>" +
-      "<div style='text-align:center;padding:14px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
-      "<div id='ucTempo' style='font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;'>0:00.0</div></div>" +
+      "<div class='cardx' id='utilCrono'><h2>Cronômetro e timers de treino</h2>" +
+      "<div id='ucTipos' style='display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
+      "<div id='ucCfg' style='display:none;gap:8px;margin-bottom:10px;'></div>" +
+      "<div id='ucTela' style='text-align:center;padding:14px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
+      "<div id='ucFase' style='font-size:11px;font-weight:800;letter-spacing:.16em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
+      "<div id='ucTempo' style='font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;'>0:00.0</div>" +
+      "<div id='ucInfo' style='font-size:12px;color:#a9a4b5;'></div></div>" +
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='ucGo' style='flex:2;'>Iniciar</button>" +
       "<button class='btnx' id='ucVolta' style='flex:1;background:#14121a;border:1px solid " + COR + ";box-shadow:none;'>Volta</button>" +
@@ -6312,32 +6310,66 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var cfg=agCfg();cfg[par[1]]=+this.value;Sv('ptaguaCfg',cfg);pintaAgua(false);});});" +
       "pintaAgua(false);" +
       // ---- utilidades: cronômetro e timer avulsos ----
-      "var uc={tipo:'crono',run:false,iv:null,t0:0,acum:0,voltas:[]};" +
+      "var UCT=[['crono','Cronômetro'],['timer','Timer'],['tabata','Tabata'],['emom','EMOM'],['amrap','AMRAP']];" +
+      "var uc={tipo:'crono',run:false,iv:null,t0:0,acum:0,voltas:[],ultMin:-1,ultFase:''};" +
+      "function ucEl(id){return document.getElementById(id);}" +
       "function ucFmt(s,dec){s=Math.max(0,s);var m=Math.floor(s/60),ss=Math.floor(s%60);" +
       "return m+':'+('0'+ss).slice(-2)+(dec?'.'+Math.floor((s%1)*10):'');}" +
-      "function ucPinta(){var el2=uc.run?(Date.now()-uc.t0)/1000:uc.acum;var tmp=document.getElementById('ucTempo');" +
-      "if(uc.tipo==='crono'){tmp.textContent=ucFmt(el2,true);return;}" +
-      "var tot=60*(parseInt(document.getElementById('ucMin').value,10)||0)+(parseInt(document.getElementById('ucSeg').value,10)||0);" +
-      "var resta=tot-el2;tmp.textContent=ucFmt(resta,false);" +
-      "if(uc.run&&resta<=0){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;soltaTela();" +
-      "document.getElementById('ucGo').textContent='Iniciar';tmp.textContent='FIM!';" +
-      "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);}}" +
-      "document.querySelectorAll('.ucTipo').forEach(function(b){b.addEventListener('click',function(){if(uc.run)return;" +
-      "uc.tipo=this.dataset.uct;uc.acum=0;uc.voltas=[];document.getElementById('ucVoltas').textContent='';" +
-      "document.querySelectorAll('.ucTipo').forEach(function(x){var on=x.dataset.uct===uc.tipo;" +
+      "function ucV(id,pd){var el=ucEl(id);var v=el?parseInt(el.value,10):NaN;return isNaN(v)||v<0?pd:v;}" +
+      "function ucMontaCfg(){var c=ucEl('ucCfg');" +
+      "function inp(id,rot,val){return \"<label style='flex:1;font-size:11px;color:#a9a4b5;'>\"+rot+\"<input id='\"+id+\"' type='number' inputmode='numeric' value='\"+val+\"' min='0' style='width:100%;margin-top:3px;text-align:center;'></label>\";}" +
+      "var h='';if(uc.tipo==='timer')h=inp('ucMin','Minutos',5)+inp('ucSeg','Segundos',0);" +
+      "else if(uc.tipo==='tabata')h=inp('ucRds','Rounds',8)+inp('ucTrab','Trabalho (s)',20)+inp('ucDesc','Descanso (s)',10);" +
+      "else if(uc.tipo==='emom')h=inp('ucMin','Minutos',10);" +
+      "else if(uc.tipo==='amrap')h=inp('ucMin','Minutos',12);" +
+      "c.innerHTML=h;c.style.display=h?'flex':'none';" +
+      "c.querySelectorAll('input').forEach(function(i2){i2.addEventListener('input',function(){if(!uc.run)ucPinta();});});}" +
+      "function ucFim(msg,festa){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;uc.ultMin=-1;uc.ultFase='';soltaTela();" +
+      "ucEl('ucGo').textContent='Iniciar';ucEl('ucTempo').textContent='FIM!';ucEl('ucFase').textContent=msg;" +
+      "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);if(festa)confete();}" +
+      "function ucPinta(){var el2=uc.run?(Date.now()-uc.t0)/1000:uc.acum;" +
+      "var tmp=ucEl('ucTempo'),fs=ucEl('ucFase'),inf=ucEl('ucInfo');" +
+      "if(uc.tipo==='crono'){fs.textContent=uc.run?'Correndo':'Pronto?';fs.style.color='#a9a4b5';tmp.style.color='';tmp.textContent=ucFmt(el2,true);" +
+      "inf.textContent=uc.voltas.length?uc.voltas.length+' volta(s) marcada(s)':'';return;}" +
+      "if(uc.tipo==='timer'){var tot=60*ucV('ucMin',0)+ucV('ucSeg',0);var resta=tot-el2;" +
+      "fs.textContent=uc.run?'Contando':'Pronto?';fs.style.color='#a9a4b5';tmp.style.color='';tmp.textContent=ucFmt(resta,false);inf.textContent='';" +
+      "if(uc.run&&resta<=0)ucFim('FIM DO TIMER!',false);return;}" +
+      "if(uc.tipo==='amrap'){var tot2=60*ucV('ucMin',12);var resta2=tot2-el2;" +
+      "fs.textContent='AMRAP '+ucV('ucMin',12)+' MIN';fs.style.color='" + CORC + "';tmp.style.color='';tmp.textContent=ucFmt(resta2,false);" +
+      "inf.textContent=uc.voltas.length+' round'+(uc.voltas.length===1?'':'s')+' — toque em +1 round a cada volta completa';" +
+      "if(uc.run&&resta2<=0){var rd=uc.voltas.length;ucFim(rd+(rd===1?' ROUND!':' ROUNDS!'),true);}return;}" +
+      "if(uc.tipo==='emom'){var mtot=Math.max(1,ucV('ucMin',10));if(uc.run&&el2>=mtot*60){ucFim('EMOM COMPLETO — '+mtot+' MIN!',true);return;}" +
+      "var mAt=Math.floor(el2/60);fs.textContent='MINUTO '+Math.min(mAt+1,mtot)+' DE '+mtot;fs.style.color='" + CORC + "';tmp.style.color='';" +
+      "tmp.textContent=ucFmt(60-(el2%60),false);inf.textContent='Comece o exercício a cada virada de minuto';" +
+      "if(uc.run&&mAt!==uc.ultMin){uc.ultMin=mAt;if(mAt>0){if(navigator.vibrate)navigator.vibrate(180);bip(980,220);}}return;}" +
+      "if(uc.tipo==='tabata'){var rds=Math.max(1,ucV('ucRds',8)),tr=Math.max(1,ucV('ucTrab',20)),de=Math.max(1,ucV('ucDesc',10));var cic=tr+de;" +
+      "if(uc.run&&el2>=rds*cic){ucFim('TABATA COMPLETO — '+rds+' ROUNDS!',true);return;}" +
+      "var rd2=Math.min(rds,Math.floor(el2/cic)+1);var pos=el2%cic;var trab=pos<tr;" +
+      "fs.textContent=(trab?'TRABALHA':'DESCANSA')+' — ROUND '+rd2+' DE '+rds;fs.style.color=trab?'" + CORC + "':'#22d3ee';" +
+      "tmp.style.color=trab?'" + CORC + "':'#22d3ee';tmp.textContent=ucFmt(trab?tr-pos:cic-pos,false);inf.textContent=tr+'s forte / '+de+'s de descanso';" +
+      "var f2=(trab?'T':'D')+rd2;if(uc.run&&f2!==uc.ultFase){uc.ultFase=f2;if(el2>0.3){if(navigator.vibrate)navigator.vibrate(trab?[90,50,90]:200);bip(trab?1100:600,200);}}return;}}" +
+      "ucEl('ucTipos').innerHTML=UCT.map(function(u2){return \"<button type='button' class='ucTipo' data-uct='\"+u2[0]+\"' style='flex:1;min-width:58px;padding:8px 2px;border-radius:10px;font-size:11.5px;font-weight:800;cursor:pointer;'>\"+u2[1]+\"</button>\";}).join('');" +
+      "function ucSel(t){uc.tipo=t;clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;uc.voltas=[];uc.ultMin=-1;uc.ultFase='';soltaTela();" +
+      "ucEl('ucGo').textContent='Iniciar';ucEl('ucVoltas').textContent='';" +
+      "document.querySelectorAll('.ucTipo').forEach(function(x){var on=x.dataset.uct===t;" +
       "x.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.border=on?'none':'1px solid #322e3d';x.style.color=on?'#fff':'#a9a4b5';});" +
-      "document.getElementById('ucCfg').style.display=uc.tipo==='timer'?'flex':'none';" +
-      "document.getElementById('ucVolta').style.display=uc.tipo==='timer'?'none':'block';" +
-      "document.getElementById('ucTempo').textContent=uc.tipo==='timer'?'':'0:00.0';ucPinta();});});" +
-      "document.getElementById('ucGo').addEventListener('click',function(){" +
+      "var vb=ucEl('ucVolta');vb.style.display=(t==='crono'||t==='amrap')?'block':'none';vb.textContent=t==='amrap'?'+1 round':'Volta';" +
+      "ucMontaCfg();ucPinta();}" +
+      "document.querySelectorAll('.ucTipo').forEach(function(b2){b2.addEventListener('click',function(){if(uc.run)return;ucSel(this.dataset.uct);});});" +
+      "ucEl('ucGo').addEventListener('click',function(){" +
       "if(uc.run){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=(Date.now()-uc.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
+      "if(ucEl('ucTempo').textContent==='FIM!'){uc.acum=0;uc.voltas=[];uc.ultMin=-1;uc.ultFase='';ucEl('ucVoltas').textContent='';}" +
       "uc.run=true;uc.t0=Date.now()-uc.acum*1000;this.textContent='Pausar';ligaTela();bip(880,110);" +
       "uc.iv=setInterval(ucPinta,100);ucPinta();});" +
-      "document.getElementById('ucZera').addEventListener('click',function(){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;uc.voltas=[];soltaTela();" +
-      "document.getElementById('ucGo').textContent='Iniciar';document.getElementById('ucVoltas').textContent='';ucPinta();});" +
-      "document.getElementById('ucVolta').addEventListener('click',function(){if(!uc.run||uc.tipo!=='crono')return;" +
-      "var el2=(Date.now()-uc.t0)/1000;uc.voltas.push(el2);if(navigator.vibrate)navigator.vibrate(50);" +
-      "document.getElementById('ucVoltas').innerHTML=uc.voltas.slice(-8).map(function(v,i){return 'Volta '+(i+1)+': <b>'+ucFmt(v,true)+'</b>';}).join(' · ');});" +
+      "ucEl('ucZera').addEventListener('click',function(){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;uc.voltas=[];uc.ultMin=-1;uc.ultFase='';soltaTela();" +
+      "ucEl('ucGo').textContent='Iniciar';ucEl('ucVoltas').textContent='';ucPinta();});" +
+      "ucEl('ucVolta').addEventListener('click',function(){if(!uc.run)return;var el2=(Date.now()-uc.t0)/1000;" +
+      "if(uc.tipo==='crono'){uc.voltas.push(el2);if(navigator.vibrate)navigator.vibrate(50);" +
+      "ucEl('ucVoltas').innerHTML=uc.voltas.slice(-8).map(function(v2,i2){return 'Volta '+(i2+1)+': <b>'+ucFmt(v2,true)+'</b>';}).join(' · ');return;}" +
+      "if(uc.tipo==='amrap'){uc.voltas.push(el2);if(navigator.vibrate)navigator.vibrate(80);bip(760,90);" +
+      "var n2=uc.voltas.length;var ant=n2>1?uc.voltas[n2-2]:0;" +
+      "ucEl('ucVoltas').innerHTML='<b>'+n2+'</b> round'+(n2===1?'':'s')+' — último em '+ucFmt(el2-ant,false);ucPinta();}});" +
+      "ucSel('crono');" +
       // ---- utilidades: calculadora de 1RM (fórmula de Epley) ----
       "function pintaRm(){var kg=parseFloat((document.getElementById('rmKg').value||'').replace(',','.'));" +
       "var reps=parseInt(document.getElementById('rmReps').value,10);var out=document.getElementById('rmOut');" +
