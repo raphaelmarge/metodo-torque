@@ -492,9 +492,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Trabalho (s)<input id="wpWork" inputmode="numeric" value="20" style="display:block; width: 90px; margin-top: 3px;"></label>
           <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Descanso (s)<input id="wpRest" inputmode="numeric" value="10" style="display:block; width: 90px; margin-top: 3px;"></label>
         </div>
-        <label style="font-size: 12px; display: block; margin: 10px 0 0;">Movimentos — um por linha (ex.: 10 Agachamento goblet)
-          <textarea id="wpMov" rows="4" placeholder="10 Agachamento goblet&#10;10 Flexão de braço&#10;200m corrida" style="width: 100%; margin-top: 3px;"></textarea></label>
-        <label style="font-size: 12px; display: block; margin: 8px 0 0;">Observação (opcional)<input id="wpObs" placeholder="ex.: escala o peso se precisar" style="width: 100%; margin-top: 3px;"></label>
+        <div style="font-size: 12px; margin: 12px 0 4px;">Movimentos do circuito — igual à ficha: quantidade + exercício (busca no banco)</div>
+        <div id="wpMovLinhas"></div>
+        <button class="btn sec mini" id="wpMovAdd">+ movimento</button>
+        <datalist id="wpExs"></datalist>
+        <label style="font-size: 12px; display: block; margin: 10px 0 0;">Aquecimento (opcional)
+          <textarea id="wpAq" rows="2" placeholder="ex.: 2 min de corda + mobilidade de ombro" style="width: 100%; margin-top: 3px;"></textarea></label>
+        <label style="font-size: 12px; display: block; margin: 8px 0 0;">Escalas / observações (opcional)<input id="wpObs" placeholder="ex.: escala o peso se precisar" style="width: 100%; margin-top: 3px;"></label>
         <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
           <button class="btn" id="wpSalva">Salvar circuito</button>
           <button class="btn sec" id="wpLimpa" hidden>Cancelar edição</button>
@@ -3684,6 +3688,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     trAbaAtual = aba;
     document.querySelectorAll("#vTreinos [data-trsec]").forEach(function (c) { c.hidden = c.getAttribute("data-trsec") !== aba; });
     document.querySelectorAll("#trAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-tra") === aba); });
+    if (aba === "wod") { wpCarregaExs(); if (!document.querySelector("#wpMovLinhas .wp-mov")) wpMontaLinhas(); }
   }
   $("trAbas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("button[data-tra]");
@@ -3701,6 +3706,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return "Tabata " + (+w.rounds || 8) + "×" + (+w.work || 20) + "s/" + (+w.rest || 10) + "s";
   }
   var wpEditando = null;
+  // linhas de movimento estilo ficha (quantidade + exercício com busca no banco)
+  var wpExsCarregado = false;
+  function wpCarregaExs() {
+    if (wpExsCarregado) return;
+    wpExsCarregado = true;
+    var st = load();
+    $("wpExs").innerHTML = listaUnificada(st).slice(0, 1500).map(function (e) {
+      return "<option>" + esc(e.nome || e.n || "") + "</option>";
+    }).join("");
+  }
+  function wpLinha(q, n) {
+    var d = document.createElement("div");
+    d.className = "linha-flex wp-mov";
+    d.style.cssText = "gap:8px;margin-bottom:6px;flex-wrap:nowrap;";
+    d.innerHTML = '<input class="wpq" placeholder="10 · 200m · 30s" value="' + esc(q || "") + '" style="width:110px;flex:none;">' +
+      '<input class="wpe" list="wpExs" placeholder="Exercício (digita que ele busca)" value="' + esc(n || "") + '" style="flex:1;min-width:120px;">' +
+      '<button class="btn sec mini wpx" title="tirar este movimento" style="flex:none;">✕</button>';
+    return d;
+  }
+  function wpMontaLinhas(movs) {
+    var box = $("wpMovLinhas");
+    box.innerHTML = "";
+    (movs && movs.length ? movs : [{}, {}, {}]).forEach(function (m) { box.appendChild(wpLinha(m.q, m.n)); });
+  }
+  $("wpMovAdd").addEventListener("click", function () { $("wpMovLinhas").appendChild(wpLinha("", "")); });
+  $("wpMovLinhas").addEventListener("click", function (e) {
+    if (e.target.classList && e.target.classList.contains("wpx")) {
+      var linhas = document.querySelectorAll("#wpMovLinhas .wp-mov");
+      if (linhas.length > 1) e.target.closest(".wp-mov").remove();
+      else { e.target.closest(".wp-mov").querySelectorAll("input").forEach(function (i) { i.value = ""; }); }
+    }
+  });
   function renderWods() {
     var el = $("wpLista");
     var alunoId = $("wpAluno").value;
@@ -3728,8 +3765,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var alunoId = $("wpAluno").value;
     if (!alunoId) { alert("Escolha o aluno."); return; }
     var nome = $("wpNome").value.trim();
-    var mov = $("wpMov").value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 20);
-    if (!nome || !mov.length) { alert("Dê um nome e escreva pelo menos 1 movimento."); return; }
+    var movs = [];
+    document.querySelectorAll("#wpMovLinhas .wp-mov").forEach(function (l) {
+      var q = l.querySelector(".wpq").value.trim();
+      var n = l.querySelector(".wpe").value.trim();
+      if (n) movs.push({ q: q, n: n });
+    });
+    movs = movs.slice(0, 20);
+    var mov = movs.map(function (m) { return (m.q ? m.q + " " : "") + m.n; });
+    if (!nome || !mov.length) { alert("Dê um nome e preencha pelo menos 1 movimento."); return; }
     var st = load();
     st.treinosV2 = st.treinosV2 || {};
     var t = st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
@@ -3744,13 +3788,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     w.work = +$("wpWork").value || 20;
     w.rest = +$("wpRest").value || 10;
     w.mov = mov;
+    w.movs = movs;
+    w.aq = $("wpAq").value.trim();
     w.obs = $("wpObs").value.trim();
     marcaAppPendente(st, alunoId); // o circuito entra no app na próxima publicação
     save(st);
     wpEditando = null;
     $("wpFormTit").textContent = "Novo circuito";
     $("wpLimpa").hidden = true;
-    $("wpNome").value = ""; $("wpMov").value = ""; $("wpObs").value = "";
+    $("wpNome").value = ""; $("wpAq").value = ""; $("wpObs").value = "";
+    wpMontaLinhas();
     $("wpStatus").textContent = "✓ salvo! Toque em Publicar apps atualizados pro aluno receber.";
     setTimeout(function () { $("wpStatus").textContent = ""; }, 4000);
     renderWods();
@@ -3759,7 +3806,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     wpEditando = null;
     $("wpFormTit").textContent = "Novo circuito";
     this.hidden = true;
-    $("wpNome").value = ""; $("wpMov").value = ""; $("wpObs").value = "";
+    $("wpNome").value = ""; $("wpAq").value = ""; $("wpObs").value = "";
+    wpMontaLinhas();
   });
   $("wpLista").addEventListener("click", function (e) {
     var ed = e.target.getAttribute && e.target.getAttribute("data-wped");
@@ -3784,7 +3832,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("wpNome").value = w.nome; $("wpTipo").value = w.tipo;
     $("wpCap").value = w.cap; $("wpMin").value = w.min;
     $("wpRounds").value = w.rounds; $("wpWork").value = w.work; $("wpRest").value = w.rest;
-    $("wpMov").value = w.mov.join("\n"); $("wpObs").value = w.obs || "";
+    wpCarregaExs();
+    wpMontaLinhas(w.movs && w.movs.length ? w.movs : w.mov.map(function (l) { return { q: "", n: l }; }));
+    $("wpAq").value = w.aq || ""; $("wpObs").value = w.obs || "";
     wpMostraCfg();
   });
   window.__wodsPT = renderWods; // testes
@@ -5654,13 +5704,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // modo circuito (WOD): cronômetros de cross — For Time, AMRAP, EMOM e Tabata
       "<div class='cardx' id='cardWod'><h2>Modo circuito (WOD)</h2>" +
       (wodsApp.length ? wodsApp.map(function (w) {
-        return "<div style='background:#14121a;border:1px solid " + COR + ";border-radius:12px;padding:12px 14px;margin-bottom:10px;'>" +
-          "<div style='display:flex;justify-content:space-between;gap:8px;align-items:baseline;'><b style='font-size:14.5px;'>" + esc(w.nome) + "</b>" +
-          "<span style='color:" + CORC + ";font-weight:800;font-size:12px;white-space:nowrap;'>" + esc(wodResumo(w)) + "</span></div>" +
-          "<div style='margin-top:6px;'>" + w.mov.map(function (m) { return "<div style='font-size:13.5px;padding:3px 0;border-bottom:1px dashed #322e3d;'>• " + esc(m) + "</div>"; }).join("") + "</div>" +
-          (w.obs ? "<div style='font-size:12px;color:#a9a4b5;margin-top:6px;'>" + esc(w.obs) + "</div>" : "") +
-          "<div class='wodres' data-wid='" + w.id + "' style='font-size:12px;color:#4ade80;margin-top:6px;'></div>" +
-          "<button class='btnx' data-wodstart='" + w.id + "' style='display:block;width:100%;text-align:center;margin-top:10px;'>Começar circuito</button></div>";
+        // folha de WOD estilo quadro da academia: tipo em destaque, blocos com rótulos
+        var bloco = function (rot, html) {
+          return "<div style='margin-top:12px;'><div style='color:" + CORC + ";font-size:10.5px;font-weight:800;letter-spacing:.16em;'>" + rot + "</div>" + html + "</div>";
+        };
+        var movsH = (w.movs && w.movs.length ? w.movs : w.mov.map(function (l) { return { q: "", n: l }; })).map(function (m) {
+          return "<div style='display:flex;gap:10px;align-items:baseline;font-size:15px;padding:5px 0;border-bottom:1px dashed #322e3d;'>" +
+            (m.q ? "<b style='color:" + CORC + ";flex:none;min-width:44px;'>" + esc(m.q) + "</b>" : "") +
+            "<span>" + esc(m.n) + "</span></div>";
+        }).join("");
+        return "<div style='background:linear-gradient(165deg,#1b1724,#14121a);border:1px solid " + COR + ";border-radius:14px;padding:15px 16px;margin-bottom:10px;'>" +
+          "<div style='font-size:11px;font-weight:800;letter-spacing:.18em;color:" + CORC + ";text-transform:uppercase;'>" + esc(wodResumo(w)) + "</div>" +
+          "<div style='font-size:22px;font-weight:900;font-style:italic;text-transform:uppercase;margin:2px 0 2px;'>" + esc(w.nome) + "</div>" +
+          (w.aq ? bloco("AQUECIMENTO", "<div style='font-size:13.5px;color:#d6d2df;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.aq) + "</div>") : "") +
+          bloco("WOD", "<div style='margin-top:3px;'>" + movsH + "</div>") +
+          (w.obs ? bloco("ESCALAS / OBS", "<div style='font-size:12.5px;color:#a9a4b5;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.obs) + "</div>") : "") +
+          "<div class='wodres' data-wid='" + w.id + "' style='font-size:12px;color:#4ade80;margin-top:8px;'></div>" +
+          "<button class='btnx' data-wodstart='" + w.id + "' style='display:block;width:100%;text-align:center;margin-top:12px;'>Começar circuito</button></div>";
       }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:2px 0 10px;'>Ou monte o seu na mão aqui embaixo:</div>" : "") +
       "<div id='wodTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<div id='wodCfg' style='display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
