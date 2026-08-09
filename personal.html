@@ -5588,6 +5588,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<span><b id='xpNum'>0</b> XP</span></span></div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(13,12,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #26222e;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'></nav>" +
+      // gaveta do menu ☰ (igual ao módulo do personal): fundo escurecido + painel pela direita
+      "<div id='fundoMenuApp' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;'></div>" +
+      "<div id='menuApp' aria-label='Todas as áreas do app' style='position:fixed;top:0;bottom:0;right:0;width:264px;background:#121016;border-left:1px solid #26222e;z-index:61;transform:translateX(105%);transition:transform .22s ease;padding:20px 12px calc(18px + env(safe-area-inset-bottom,0px));overflow:auto;display:flex;flex-direction:column;gap:2px;'></div>" +
       // onboarding de 30 segundos (só aparece no primeiro uso — some depois de responder)
       "<div class='cardx' id='onbCard' style='display:none;border-color:" + COR + ";'>" +
       "<h2>Bora começar!</h2><div class='vz' style='text-align:left;padding:2px 0 8px;'>3 perguntinhas rápidas pro " + esc(a.nome.split(" ")[0]) + " do futuro agradecer:</div>" +
@@ -6454,7 +6457,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(/Pagamento|Mensalidade/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
       "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Desafio/.test(t))return 'inicio';" +
       "return null;}" +
-      "var IGNORA={navApp:1,tmrBar:1,guiaBox:1};" +
+      "var IGNORA={navApp:1,tmrBar:1,guiaBox:1,fundoMenuApp:1,menuApp:1};" +
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
@@ -6462,26 +6465,47 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
-      "var nav=document.getElementById('navApp');" +
-      "nav.innerHTML=itens.map(function(m){" +
+      // 4 abas fixas embaixo + o menu de três traços no canto direito com TODAS as áreas
+      "var fixos=itens.slice(0,4);" +
+      "function btnNav(m){" +
       "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span>\"+" +
       "\"<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;'>\"+m[2]+\"</span>\"+" +
-      "\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid #0d0c10;'></span></button>\";}).join('');" +
+      "(m[0]==='chat'?\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid #0d0c10;'></span>\":'')+'</button>';}" +
+      "var nav=document.getElementById('navApp');" +
+      "nav.innerHTML=fixos.map(btnNav).join('')+" +
+      "\"<button class='nitem' id='navMenuApp' aria-label='Abrir o menu com todas as áreas' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
+      "\"<span style='line-height:0;'>\"+ic(\"<path d='M4 6.5h16M4 12h16M4 17.5h16'/>\")+\"</span>\"+" +
+      "\"<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;'>Menu</span>\"+" +
+      "\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid #0d0c10;'></span></button>\";" +
+      // gaveta com todas as áreas
+      "var gav=document.getElementById('menuApp');" +
+      "gav.innerHTML=\"<div style='font-size:10px;font-weight:800;letter-spacing:.16em;color:#8a8695;text-transform:uppercase;padding:0 10px 10px;'>\"+STUDIO.toUpperCase().slice(0,26)+\"<span style='display:block;color:#fff;font-size:13px;margin-top:2px;'>Menu</span></div>\"+" +
+      "itens.map(function(m){" +
+      "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;font-family:inherit;color:#d6d2df;font-size:14px;font-weight:700;padding:12px 10px;border-radius:10px;text-align:left;position:relative;'>\"+" +
+      "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span><span>\"+m[2]+\"</span>\"+" +
+      "(m[0]==='chat'?\"<span class='ndot' style='display:none;margin-left:auto;width:9px;height:9px;border-radius:50%;background:#f87171;'></span>\":'')+'</button>';}).join('');" +
+      "function abreMenuApp(ab){document.getElementById('fundoMenuApp').style.display=ab?'block':'none';gav.style.transform=ab?'translateX(0)':'translateX(105%)';}" +
+      "document.getElementById('fundoMenuApp').addEventListener('click',function(){abreMenuApp(false);});" +
+      "gav.addEventListener('click',function(e){var mi=e.target.closest('.nitem');if(!mi)return;if(navigator.vibrate)navigator.vibrate(8);trocaSec(mi.getAttribute('data-msec'));abreMenuApp(false);});" +
       "var stSec=document.createElement('style');stSec.textContent='[data-sec-off]{display:none!important}';document.head.appendChild(stSec);" +
       "var SEC='inicio';" +
-      "function mostraDot(on){var d=document.querySelector(\".nitem[data-msec='chat'] .ndot\");if(d)d.style.display=on?'block':'none';}" +
+      "function mostraDot(on){document.querySelectorAll('.ndot').forEach(function(d){d.style.display=on?'block':'none';});}" +
       "function trocaSec(s){SEC=s;document.querySelectorAll('[data-sec]').forEach(function(el){" +
       "if(el.getAttribute('data-sec')===s)el.removeAttribute('data-sec-off');else el.setAttribute('data-sec-off','1');});" +
       "document.querySelectorAll('.nitem').forEach(function(mi){var on=mi.getAttribute('data-msec')===s;" +
-      "mi.style.background=on?'rgba(124,58,237,.16)':'none';mi.style.color=on?'" + CORC + "':'#8a8695';});" +
+      "mi.style.background=on?'rgba(124,58,237,.16)':'none';mi.style.color=on?'" + CORC + "':(mi.parentElement&&mi.parentElement.id==='menuApp'?'#d6d2df':'#8a8695');});" +
+      "var mb=document.getElementById('navMenuApp');if(mb){var eFixo=fixos.some(function(m){return m[0]===s;});" +
+      "mb.style.background=eFixo?'none':'rgba(124,58,237,.16)';mb.style.color=eFixo?'#8a8695':'" + CORC + "';}" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // entrou no chat = recados vistos; some a bolinha
       "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);}" +
       "window.scrollTo(0,0);}" +
       "nav.addEventListener('click',function(e){var mi=e.target.closest('.nitem');if(!mi)return;" +
-      "if(navigator.vibrate)navigator.vibrate(8);trocaSec(mi.getAttribute('data-msec'));});" +
+      "if(navigator.vibrate)navigator.vibrate(8);" +
+      "if(mi.id==='navMenuApp'){abreMenuApp(true);return;}" +
+      "trocaSec(mi.getAttribute('data-msec'));});" +
       // bolinha no Chat quando chega recado do personal que o aluno ainda não viu
       "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);};" +
       // sub-abas do Treino: "Minha ficha" mostra a ficha; "Circuito (WOD)" mostra só o cronômetro
