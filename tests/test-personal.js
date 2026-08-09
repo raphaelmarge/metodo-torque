@@ -2131,6 +2131,22 @@ async function abaPt(p, a) {
     return out;
   });
   ok(/For Time/.test(wodR.chips) && /AMRAP/.test(wodR.chips) && /EMOM/.test(wodR.chips) && /Tabata/.test(wodR.chips), "os 4 cronômetros de cross estão no card");
+  // o WOD é uma SUB-PÁGINA da área de treino (não polui a página principal nem a ficha)
+  const subWod = await pApp.evaluate(() => {
+    window.__trocaSec("treino");
+    window.__trSub("ficha");
+    const wodCard = document.getElementById("cardWod");
+    const fichaEscondida1 = wodCard.style.display === "none";
+    const secCerta = wodCard.getAttribute("data-sec") === "treino";
+    window.__trSub("wod");
+    const wodVisivel = wodCard.style.display !== "none";
+    const fichaCard = Array.from(document.querySelectorAll("[data-sec='treino']")).find((c) => /Meu treino/.test(c.textContent) && c.id !== "cardWod" && c.id !== "trTabs");
+    const fichaSumiu = fichaCard && fichaCard.style.display === "none";
+    window.__trSub("ficha");
+    return { fichaEscondida1, secCerta, wodVisivel, fichaSumiu };
+  });
+  ok(subWod.secCerta && subWod.fichaEscondida1 && subWod.wodVisivel && subWod.fichaSumiu,
+    "WOD vive numa sub-aba do Treino: 'Minha ficha' esconde o cronômetro e 'Circuito (WOD)' esconde a ficha");
   ok(/FOR TIME\|0:0/.test(wodR.fortime) && /1 volta/.test(wodR.fortime), "For Time conta pra cima e marca voltas");
   ok(/TRABALHA · ROUND 1 DE 1/.test(wodR.tabataFase), "Tabata alterna trabalho/descanso com o round na tela");
   ok(/FIM!/.test(wodR.fim) && /Tabata completo/.test(wodR.fim), "Tabata termina sozinho com a festa de FIM (o botão de registrar só aparece se o dia ainda não foi marcado)");

@@ -5594,6 +5594,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
+      // sub-abas da área de treino: ficha tradicional × circuito (WOD)
+      "<div class='cardx' id='trTabs' style='padding:9px 11px;'><div style='display:flex;gap:6px;'>" +
+      "<button data-trsub='ficha' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;'>Minha ficha</button>" +
+      "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Circuito (WOD)</button>" +
+      "</div></div>" +
       "<div class='cardx'><h2>Meu treino</h2>" +
       (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:11px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
       (fichasApp ? fichasApp.map(function (f, gi) {
@@ -6382,7 +6387,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']," +
       "['pagamento',\"<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>\",'Plano']];" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
-      "if(/Meu treino|Diário de cargas/.test(t))return 'treino';" +
+      "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
@@ -6393,6 +6398,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
+      "if(el.id==='trTabs'||el.id==='cardWod'){el.setAttribute('data-sec','treino');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
@@ -6418,6 +6424,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(navigator.vibrate)navigator.vibrate(8);trocaSec(mi.getAttribute('data-msec'));});" +
       // bolinha no Chat quando chega recado do personal que o aluno ainda não viu
       "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);};" +
+      // sub-abas do Treino: "Minha ficha" mostra a ficha; "Circuito (WOD)" mostra só o cronômetro
+      "var trSub='ficha';" +
+      "function trocaTrSub(s){trSub=s;" +
+      "document.querySelectorAll(\"[data-sec='treino']\").forEach(function(el){if(el.id==='trTabs')return;" +
+      "el.style.display=((s==='wod')===(el.id==='cardWod'))?'':'none';});" +
+      "document.querySelectorAll('[data-trsub]').forEach(function(b){var on=b.dataset.trsub===s;" +
+      "b.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';b.style.border=on?'none':'1px solid #322e3d';b.style.color=on?'#fff':'#a9a4b5';});" +
+      "window.scrollTo(0,0);}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-trsub]');if(b)trocaTrSub(b.dataset.trsub);});" +
+      "window.__trSub=trocaTrSub;trocaTrSub('ficha');" +
       "window.__trocaSec=trocaSec;trocaSec('inicio');" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
