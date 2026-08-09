@@ -2654,7 +2654,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var el = $("reguaStatus");
     if (!el) return;
     var rr = (st.config || {}).reguaRodouEm;
-    var txt = enviados ? enviados + " aviso(s) enviados agora há pouco. " : "";
+    var txt = enviados ? enviados + " aviso(s) enviado(s) agora há pouco. " : "";
     if (!rr) {
       txt += "A régua roda sozinha com o Personal aberto (a cada 6 horas).";
     } else {
@@ -6251,7 +6251,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ? "Você ainda não baixou um backup. Ele é um arquivo com TUDO (alunos, fichas, pagamentos) — guarda um por mês, por segurança."
       : bkDias > 30
         ? "Atenção: seu último backup foi há " + bkDias + " dias (" + S.fmtData(bkEm) + "). Baixa um novo agora — leva 2 segundos."
-        : "Último backup: " + S.fmtData(bkEm) + ". Baixe um novo de vez em quando, por segurança.";
+        : "Último backup: " + S.fmtData(bkEm) + ". Baixa um novo de vez em quando, por segurança.";
   }
   $("btnBackup").addEventListener("click", function () {
     S.exportBackup();
