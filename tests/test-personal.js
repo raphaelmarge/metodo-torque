@@ -2135,6 +2135,56 @@ async function abaPt(p, a) {
   ok(/TRABALHA · ROUND 1 DE 1/.test(wodR.tabataFase), "Tabata alterna trabalho/descanso com o round na tela");
   ok(/FIM!/.test(wodR.fim) && /Tabata completo/.test(wodR.fim), "Tabata termina sozinho com a festa de FIM (o botão de registrar só aparece se o dia ainda não foi marcado)");
   ok(/MINUTO 1 DE 2/.test(wodR.emom), "EMOM mostra o minuto atual com contagem regressiva");
+
+  // --- WOD prescrito: professor monta, app recebe configurado, placar volta ---
+  await abaPt(p, "treinos");
+  const profWod = await p.evaluate(async () => {
+    window.__trAba("wod");
+    const j = JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((a) => a.nome === "João Cliente");
+    document.getElementById("wpAluno").value = j.id;
+    document.getElementById("wpAluno").dispatchEvent(new Event("change"));
+    document.getElementById("wpNome").value = "WOD do sábado";
+    document.getElementById("wpTipo").value = "amrap";
+    document.getElementById("wpTipo").dispatchEvent(new Event("change"));
+    document.getElementById("wpMin").value = "12";
+    document.getElementById("wpMov").value = "10 Agachamento goblet\n10 Flexão\n200m corrida";
+    document.getElementById("wpSalva").click();
+    await new Promise((r) => setTimeout(r, 300));
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return {
+      lista: document.getElementById("wpLista").textContent,
+      wods: (st.treinosV2[j.id].wods || []).length,
+      appHtml: window.__montaAppAluno(st.alunos.find((a) => a.id === j.id), new Date().toISOString()).slice(0, 200000),
+    };
+  });
+  ok(/WOD do sábado/.test(profWod.lista) && /AMRAP 12 min/.test(profWod.lista) && profWod.wods === 1,
+    "professor monta o circuito na aba Circuito (WOD) e ele fica salvo no aluno");
+  ok(/WOD do sábado/.test(profWod.appHtml) && /Começar circuito/.test(profWod.appHtml) && /200m corrida/.test(profWod.appHtml),
+    "o app do aluno recebe o circuito prescrito com o botão Começar");
+  ok(await p.evaluate(() => /Circuitos \(WOD\)/.test(window.__painelApp({ wodres: { w1: [{ d: "2026-08-09", n: "WOD do sábado", r: "8 volta(s) em 12:00!", v: 8 }] } }))),
+    "painel do aluno mostra os placares dos circuitos devolvidos pelo app");
+  // cronômetro tela cheia do professor
+  const telaCheia = await p.evaluate(async () => {
+    document.getElementById("btnWodProf").click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.querySelector("[data-wpft='tabata']").click();
+    document.getElementById("wpfRounds").value = "1";
+    document.getElementById("wpfWork").value = "1";
+    document.getElementById("wpfRest").value = "1";
+    document.getElementById("wpfGo").click();
+    await new Promise((r) => setTimeout(r, 2600));
+    const r2 = document.getElementById("wpfFase").textContent + "|" + document.getElementById("wpfInfo").textContent;
+    document.getElementById("wpfFechar").click();
+    return r2;
+  });
+  ok(/FIM!\|Tabata completo/.test(telaCheia), "cronômetro tela cheia do professor roda e termina sozinho");
+  await p.evaluate(() => { // limpa o WOD de teste (e o carimbo de app pendente que ele criou)
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    if (st.treinosV2[j.id]) delete st.treinosV2[j.id].wods;
+    delete j.appEditEm;
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
   await pApp.evaluate(() => window.__trocaSec("chat"));

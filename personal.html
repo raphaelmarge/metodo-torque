@@ -253,6 +253,25 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card"><h2>Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
   </section>
 
+  <div id="wodProf" hidden style="position: fixed; inset: 0; z-index: 90; background: #0d0c10; display: flex; flex-direction: column; padding: 18px 20px calc(18px + env(safe-area-inset-bottom));">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <b style="font-size: 15px; letter-spacing: .1em;">CRONÔMETRO DE CIRCUITO</b>
+      <button class="btn sec mini" id="wpfFechar" style="margin-left: auto;">✕ Fechar</button>
+    </div>
+    <div id="wpfTipos" style="display: flex; gap: 6px; margin-top: 14px;"></div>
+    <div id="wpfCfg" style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;"></div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+      <div id="wpfFase" style="font-size: clamp(16px, 4vw, 30px); font-weight: 800; letter-spacing: .18em; color: #a9a4b5; text-transform: uppercase;">Pronto?</div>
+      <div id="wpfTempo" style="font-size: clamp(80px, 24vw, 220px); font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1;">0:00</div>
+      <div id="wpfInfo" style="font-size: clamp(13px, 2.5vw, 20px); color: #a9a4b5; margin-top: 6px;"></div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn" id="wpfGo" style="flex: 2; padding: 16px; font-size: 16px;">Iniciar</button>
+      <button class="btn sec" id="wpfVolta" style="flex: 1; padding: 16px; display: none;">+1 volta</button>
+      <button class="btn sec" id="wpfZera" style="flex: 1; padding: 16px;">Zerar</button>
+    </div>
+  </div>
+
   <dialog id="dlgDiaAluno">
     <div class="card" style="width: 440px; max-width: 100%;">
       <h2 id="daNome" style="text-transform: none; letter-spacing: 0; font-size: 16px;"></h2>
@@ -436,6 +455,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-tra="fichas" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4M9 12h6M9 15.5h4'/></svg> Fichas do aluno</button>
       <button data-tra="auto"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Automático e IA</button>
       <button data-tra="grupo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg> Em grupo</button>
+      <button data-tra="wod"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='13.5' r='7.5'/><path d='M12 9.5v4l2.5 2M10 2.5h4M12 2.5V6M18.5 7.5l1.5-1.5'/></svg> Circuito (WOD)</button>
       <button data-tra="ex"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Exercícios</button>
       <button data-tra="videos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5' width='18' height='14' rx='3'/><path d='M10 9.3l4.8 2.7-4.8 2.7z'/></svg> Conteúdos</button>
     </div>
@@ -454,6 +474,34 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
       <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos criam as fichas completas em 1 clique; depois é só ajustar.</p>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;" data-trsec="wod" hidden>
+      <h2>Circuito (WOD)</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Monte o circuito com o cronômetro certo — o aluno recebe no app com tudo configurado, só apertar Começar. O resultado (tempo ou voltas) volta pro painel dele.</p>
+      <div class="linha-flex" style="margin: 0 0 10px;"><select id="wpAluno" style="min-width: 200px;"></select></div>
+      <div id="wpLista" class="muted">Escolha o aluno pra ver os circuitos dele.</div>
+      <div style="margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--linha); border-radius: 12px;">
+        <b style="font-size: 13px;" id="wpFormTit">Novo circuito</b>
+        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+          <label style="font-size: 12px; margin: 0;">Nome<input id="wpNome" placeholder="ex.: WOD do sábado" style="display:block; width: 180px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;">Tipo<select id="wpTipo" style="display:block; width: 130px; margin-top: 3px;"><option value="fortime">For Time</option><option value="amrap">AMRAP</option><option value="emom">EMOM</option><option value="tabata">Tabata</option></select></label>
+          <label style="font-size: 12px; margin: 0;" data-wpcfg="fortime">Limite (min, 0 = livre)<input id="wpCap" inputmode="numeric" value="12" style="display:block; width: 130px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-wpcfg="amrap,emom" hidden>Minutos<input id="wpMin" inputmode="numeric" value="10" style="display:block; width: 90px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Rounds<input id="wpRounds" inputmode="numeric" value="8" style="display:block; width: 80px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Trabalho (s)<input id="wpWork" inputmode="numeric" value="20" style="display:block; width: 90px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-wpcfg="tabata" hidden>Descanso (s)<input id="wpRest" inputmode="numeric" value="10" style="display:block; width: 90px; margin-top: 3px;"></label>
+        </div>
+        <label style="font-size: 12px; display: block; margin: 10px 0 0;">Movimentos — um por linha (ex.: 10 Agachamento goblet)
+          <textarea id="wpMov" rows="4" placeholder="10 Agachamento goblet&#10;10 Flexão de braço&#10;200m corrida" style="width: 100%; margin-top: 3px;"></textarea></label>
+        <label style="font-size: 12px; display: block; margin: 8px 0 0;">Observação (opcional)<input id="wpObs" placeholder="ex.: escala o peso se precisar" style="width: 100%; margin-top: 3px;"></label>
+        <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
+          <button class="btn" id="wpSalva">Salvar circuito</button>
+          <button class="btn sec" id="wpLimpa" hidden>Cancelar edição</button>
+          <span id="wpStatus" class="muted" style="font-size: 12.5px;"></span>
+        </div>
+      </div>
+      <button class="btn sec" id="btnWodProf" style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='13.5' r='7.5'/><path d='M12 9.5v4l2.5 2M10 2.5h4'/></svg> Cronômetro tela cheia (pra conduzir a sessão)</button>
     </div>
 
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-trsec="auto">
@@ -1642,6 +1690,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "últimos " + rks.length + " treino(s)" + (med >= 2.5 ? " — considere aliviar" : "")));
         }
         if (kpis.length) html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 2px;'>" + kpis.join("") + "</div>";
+        // placares dos circuitos (WOD) prescritos
+        var wres = (ret.wodres && typeof ret.wodres === "object" && !Array.isArray(ret.wodres)) ? ret.wodres : {};
+        var todasW = [];
+        Object.keys(wres).forEach(function (k) {
+          (Array.isArray(wres[k]) ? wres[k] : []).forEach(function (x) {
+            if (x && typeof x === "object" && dataRe(String(x.d || ""))) todasW.push(x);
+          });
+        });
+        if (todasW.length) {
+          todasW.sort(function (x, y) { return x.d < y.d ? -1 : 1; });
+          html += titulo("Circuitos (WOD) — placares do app") + todasW.slice(-6).reverse().map(function (x) {
+            return "<div style='font-size:13px;padding:4px 0;border-bottom:1px dashed var(--linha);'><b>" + esc(String(x.n || "Circuito").slice(0, 40)) + "</b> — " +
+              esc(String(x.r || "").slice(0, 90)) + " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
+          }).join("");
+        }
         // onboarding: como o aluno se apresentou no primeiro uso do app
         var onb = (ret.onb && typeof ret.onb === "object" && !Array.isArray(ret.onb)) ? ret.onb : null;
         if (onb && (onb.obj || onb.dias || onb.dor)) {
@@ -2908,7 +2971,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var opsGt = (st.treinosGrupo || []).map(function (g) {
       return '<option value="' + g.id + '">' + esc(g.nome) + "</option>";
     }).join("");
-    ["sAluno", "pAluno", "tAluno", "avAluno", "taAluno"].forEach(function (id) {
+    ["sAluno", "pAluno", "tAluno", "avAluno", "taAluno", "wpAluno"].forEach(function (id) {
       var sel = $(id);
       var atual = sel.value;
       sel.innerHTML = "<option value=''>— aluno —</option>" + opts +
@@ -3628,6 +3691,217 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__trAba = mostraTrAba; // testes
   mostraTrAba("fichas");
+
+  // ---------- circuito (WOD): prescrição pro app do aluno ----------
+  var WOD_TIPOS = { fortime: "For Time", amrap: "AMRAP", emom: "EMOM", tabata: "Tabata" };
+  function wodResumo(w) {
+    if (w.tipo === "fortime") return "For Time" + (+w.cap ? " · limite " + w.cap + " min" : " · sem limite");
+    if (w.tipo === "amrap") return "AMRAP " + (+w.min || 10) + " min";
+    if (w.tipo === "emom") return "EMOM " + (+w.min || 10) + " min";
+    return "Tabata " + (+w.rounds || 8) + "×" + (+w.work || 20) + "s/" + (+w.rest || 10) + "s";
+  }
+  var wpEditando = null;
+  function renderWods() {
+    var el = $("wpLista");
+    var alunoId = $("wpAluno").value;
+    if (!alunoId) { el.innerHTML = "Escolha o aluno pra ver os circuitos dele."; return; }
+    var st = load();
+    var t = (st.treinosV2 || {})[alunoId];
+    var wods = (t && t.wods) || [];
+    el.innerHTML = wods.length ? wods.map(function (w) {
+      return '<div class="sessao-pt"><b>' + esc(w.nome) + "</b><span class='tag roxo'>" + esc(wodResumo(w)) + "</span>" +
+        '<span class="muted" style="font-size:12px;">' + w.mov.length + " movimento(s)</span>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        '<button class="btn sec mini" data-wped="' + w.id + '">Editar</button>' +
+        '<button class="btn sec mini" data-wprm="' + w.id + '">✕</button></span></div>';
+    }).join("") : "Nenhum circuito ainda — monte o primeiro abaixo e salve.";
+  }
+  function wpMostraCfg() {
+    var tipo = $("wpTipo").value;
+    document.querySelectorAll("[data-wpcfg]").forEach(function (l) {
+      l.hidden = l.getAttribute("data-wpcfg").split(",").indexOf(tipo) === -1;
+    });
+  }
+  $("wpTipo").addEventListener("change", wpMostraCfg);
+  $("wpAluno").addEventListener("change", renderWods);
+  $("wpSalva").addEventListener("click", function () {
+    var alunoId = $("wpAluno").value;
+    if (!alunoId) { alert("Escolha o aluno."); return; }
+    var nome = $("wpNome").value.trim();
+    var mov = $("wpMov").value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 20);
+    if (!nome || !mov.length) { alert("Dê um nome e escreva pelo menos 1 movimento."); return; }
+    var st = load();
+    st.treinosV2 = st.treinosV2 || {};
+    var t = st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
+    t.wods = t.wods || [];
+    var w = wpEditando ? t.wods.find(function (x) { return x.id === wpEditando; }) : null;
+    if (!w) { w = { id: S.uid() }; t.wods.push(w); }
+    w.nome = nome;
+    w.tipo = $("wpTipo").value;
+    w.cap = +$("wpCap").value || 0;
+    w.min = +$("wpMin").value || 10;
+    w.rounds = +$("wpRounds").value || 8;
+    w.work = +$("wpWork").value || 20;
+    w.rest = +$("wpRest").value || 10;
+    w.mov = mov;
+    w.obs = $("wpObs").value.trim();
+    marcaAppPendente(st, alunoId); // o circuito entra no app na próxima publicação
+    save(st);
+    wpEditando = null;
+    $("wpFormTit").textContent = "Novo circuito";
+    $("wpLimpa").hidden = true;
+    $("wpNome").value = ""; $("wpMov").value = ""; $("wpObs").value = "";
+    $("wpStatus").textContent = "✓ salvo! Toque em Publicar apps atualizados pro aluno receber.";
+    setTimeout(function () { $("wpStatus").textContent = ""; }, 4000);
+    renderWods();
+  });
+  $("wpLimpa").addEventListener("click", function () {
+    wpEditando = null;
+    $("wpFormTit").textContent = "Novo circuito";
+    this.hidden = true;
+    $("wpNome").value = ""; $("wpMov").value = ""; $("wpObs").value = "";
+  });
+  $("wpLista").addEventListener("click", function (e) {
+    var ed = e.target.getAttribute && e.target.getAttribute("data-wped");
+    var rm = e.target.getAttribute && e.target.getAttribute("data-wprm");
+    if (!ed && !rm) return;
+    var st = load();
+    var t = (st.treinosV2 || {})[$("wpAluno").value];
+    if (!t || !t.wods) return;
+    if (rm) {
+      if (!confirm("Excluir este circuito?")) return;
+      t.wods = t.wods.filter(function (x) { return x.id !== rm; });
+      marcaAppPendente(st, $("wpAluno").value);
+      save(st);
+      renderWods();
+      return;
+    }
+    var w = t.wods.find(function (x) { return x.id === ed; });
+    if (!w) return;
+    wpEditando = w.id;
+    $("wpFormTit").textContent = "Editando: " + w.nome;
+    $("wpLimpa").hidden = false;
+    $("wpNome").value = w.nome; $("wpTipo").value = w.tipo;
+    $("wpCap").value = w.cap; $("wpMin").value = w.min;
+    $("wpRounds").value = w.rounds; $("wpWork").value = w.work; $("wpRest").value = w.rest;
+    $("wpMov").value = w.mov.join("\n"); $("wpObs").value = w.obs || "";
+    wpMostraCfg();
+  });
+  window.__wodsPT = renderWods; // testes
+
+  // cronômetro de circuito em tela cheia (pro personal conduzir a sessão)
+  (function () {
+    var wp = { tipo: "fortime", run: false, iv: null, t0: 0, acum: 0, voltas: 0, ultMin: -1, ultFase: "" };
+    function fmt(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+    function bipP(fq, dur) {
+      try {
+        var ac = window.__acP || (window.__acP = new (window.AudioContext || window.webkitAudioContext)());
+        var o = ac.createOscillator(), g = ac.createGain();
+        o.connect(g); g.connect(ac.destination);
+        o.frequency.value = fq || 880; g.gain.value = 0.15;
+        o.start(); setTimeout(function () { try { o.stop(); } catch (e2) {} }, dur || 130);
+      } catch (e) {}
+    }
+    function chips() {
+      $("wpfTipos").innerHTML = Object.keys(WOD_TIPOS).map(function (t) {
+        var on = wp.tipo === t;
+        return '<button data-wpft="' + t + '" class="btn mini' + (on ? "" : " sec") + '" style="flex:1;">' + WOD_TIPOS[t] + "</button>";
+      }).join("");
+    }
+    function cfg() {
+      var inp = function (id, rot, val) { return '<label style="font-size:12px;color:#a9a4b5;">' + rot + '<input id="' + id + '" inputmode="numeric" value="' + val + '" style="display:block;width:110px;margin-top:3px;"></label>'; };
+      var el = $("wpfCfg");
+      if (wp.tipo === "fortime") el.innerHTML = inp("wpfCap", "Limite (min, 0 = livre)", 12);
+      else if (wp.tipo === "tabata") el.innerHTML = inp("wpfRounds", "Rounds", 8) + inp("wpfWork", "Trabalho (s)", 20) + inp("wpfRest", "Descanso (s)", 10);
+      else el.innerHTML = inp("wpfMin", "Minutos", 10);
+      $("wpfVolta").style.display = wp.tipo === "amrap" || wp.tipo === "fortime" ? "block" : "none";
+    }
+    function fim(msg) {
+      clearInterval(wp.iv); wp.iv = null; wp.run = false;
+      $("wpfGo").textContent = "Iniciar";
+      $("wpfFase").textContent = "FIM!";
+      $("wpfInfo").textContent = msg;
+      if (navigator.vibrate) navigator.vibrate([250, 100, 250, 100, 400]);
+      bipP(1300, 400);
+    }
+    function tick() {
+      var el2 = (Date.now() - wp.t0) / 1000;
+      var fase = $("wpfFase"), tmp = $("wpfTempo"), info = $("wpfInfo");
+      if (wp.tipo === "fortime") {
+        var cap = 60 * (+($("wpfCap") || {}).value || 0);
+        fase.textContent = "FOR TIME"; tmp.textContent = fmt(el2);
+        info.textContent = (wp.voltas ? wp.voltas + " volta(s) · " : "") + (cap ? "limite " + fmt(cap) : "sem limite");
+        if (cap && el2 >= cap) fim("TEMPO! " + fmt(cap) + (wp.voltas ? " · " + wp.voltas + " volta(s)" : ""));
+        return;
+      }
+      if (wp.tipo === "amrap") {
+        var tot = 60 * (+($("wpfMin") || {}).value || 10);
+        var resta = tot - el2;
+        fase.textContent = "AMRAP " + Math.round(tot / 60) + " MIN"; tmp.textContent = fmt(resta);
+        info.textContent = wp.voltas + " volta(s)";
+        if (resta <= 0) fim(wp.voltas + " volta(s) em " + fmt(tot) + "!");
+        return;
+      }
+      if (wp.tipo === "emom") {
+        var totE = 60 * (+($("wpfMin") || {}).value || 10);
+        if (el2 >= totE) { fim("EMOM completo — " + Math.round(totE / 60) + " minutos!"); return; }
+        var mn = Math.floor(el2 / 60);
+        if (mn !== wp.ultMin) { wp.ultMin = mn; if (el2 > 1) { if (navigator.vibrate) navigator.vibrate([180, 80, 180]); bipP(980, 200); } }
+        fase.textContent = "MINUTO " + (mn + 1) + " DE " + Math.round(totE / 60);
+        tmp.textContent = fmt(60 - Math.floor(el2 % 60));
+        info.textContent = "novo movimento a cada minuto";
+        return;
+      }
+      var rd = +($("wpfRounds") || {}).value || 8, wk = +($("wpfWork") || {}).value || 20, rs = +($("wpfRest") || {}).value || 10;
+      var ciclo = wk + rs, totT = rd * ciclo;
+      if (el2 >= totT) { fim("Tabata completo — " + rd + (rd > 1 ? " rounds!" : " round!")); return; }
+      var pos = el2 % ciclo, trab = pos < wk;
+      var faseAtual = trab ? "TRABALHA" : "DESCANSA";
+      if (faseAtual !== wp.ultFase) { wp.ultFase = faseAtual; if (el2 > 0.5) { if (navigator.vibrate) navigator.vibrate(trab ? [200, 80, 200] : 120); bipP(trab ? 1100 : 600, 160); } }
+      fase.textContent = faseAtual + " · ROUND " + (Math.floor(el2 / ciclo) + 1) + " DE " + rd;
+      fase.style.color = trab ? "#a78bfa" : "#22d3ee";
+      tmp.textContent = fmt(trab ? wk - pos : ciclo - pos);
+      info.textContent = wk + "s trabalho · " + rs + "s descanso";
+    }
+    function zera() {
+      clearInterval(wp.iv); wp.iv = null; wp.run = false; wp.acum = 0; wp.voltas = 0; wp.ultMin = -1; wp.ultFase = "";
+      $("wpfGo").textContent = "Iniciar"; $("wpfTempo").textContent = "0:00";
+      $("wpfFase").textContent = "Pronto?"; $("wpfFase").style.color = ""; $("wpfInfo").textContent = "";
+    }
+    $("btnWodProf").addEventListener("click", function () {
+      $("wodProf").hidden = false;
+      document.body.style.overflow = "hidden";
+      chips(); cfg();
+      try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { window.__wlProf = l; }).catch(function () {}); } catch (e) {}
+    });
+    $("wpfFechar").addEventListener("click", function () {
+      zera();
+      $("wodProf").hidden = true;
+      document.body.style.overflow = "";
+      try { if (window.__wlProf) { window.__wlProf.release(); window.__wlProf = null; } } catch (e) {}
+    });
+    $("wpfTipos").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-wpft]");
+      if (!b || wp.run) return;
+      wp.tipo = b.getAttribute("data-wpft");
+      zera(); chips(); cfg();
+    });
+    $("wpfGo").addEventListener("click", function () {
+      if (wp.run) {
+        clearInterval(wp.iv); wp.iv = null; wp.run = false;
+        wp.acum = (Date.now() - wp.t0) / 1000;
+        this.textContent = "Continuar";
+        return;
+      }
+      wp.run = true; wp.t0 = Date.now() - wp.acum * 1000;
+      this.textContent = "Pausar";
+      bipP(880, 120);
+      wp.iv = setInterval(tick, 200); tick();
+    });
+    $("wpfZera").addEventListener("click", zera);
+    $("wpfVolta").addEventListener("click", function () { if (wp.run) { wp.voltas++; if (navigator.vibrate) navigator.vibrate(70); tick(); } });
+    window.__wodProf = wp; // testes
+  })();
   // sub-links de Pagamentos: recebimentos, planos e contratos
   function mostraPgAba(aba) {
     document.querySelectorAll("#vPagamentos [data-pgsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pgsec") !== aba; });
@@ -5203,6 +5477,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return Object.keys(por).map(function (g) { return { g: g, s: por[g] }; })
         .sort(function (x, y) { return y.s - x.s; });
     })();
+    // circuitos (WOD) prescritos pelo personal — entram no app com o cronômetro configurado
+    var wodsApp = ((t2 && t2.wods) || []).slice(0, 10);
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
@@ -5372,6 +5648,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         })() + "</div>" : "") +
       // modo circuito (WOD): cronômetros de cross — For Time, AMRAP, EMOM e Tabata
       "<div class='cardx' id='cardWod'><h2>Modo circuito (WOD)</h2>" +
+      (wodsApp.length ? wodsApp.map(function (w) {
+        return "<div style='background:#14121a;border:1px solid " + COR + ";border-radius:12px;padding:12px 14px;margin-bottom:10px;'>" +
+          "<div style='display:flex;justify-content:space-between;gap:8px;align-items:baseline;'><b style='font-size:14.5px;'>" + esc(w.nome) + "</b>" +
+          "<span style='color:" + CORC + ";font-weight:800;font-size:12px;white-space:nowrap;'>" + esc(wodResumo(w)) + "</span></div>" +
+          "<div style='margin-top:6px;'>" + w.mov.map(function (m) { return "<div style='font-size:13.5px;padding:3px 0;border-bottom:1px dashed #322e3d;'>• " + esc(m) + "</div>"; }).join("") + "</div>" +
+          (w.obs ? "<div style='font-size:12px;color:#a9a4b5;margin-top:6px;'>" + esc(w.obs) + "</div>" : "") +
+          "<div class='wodres' data-wid='" + w.id + "' style='font-size:12px;color:#4ade80;margin-top:6px;'></div>" +
+          "<button class='btnx' data-wodstart='" + w.id + "' style='display:block;width:100%;text-align:center;margin-top:10px;'>Começar circuito</button></div>";
+      }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:2px 0 10px;'>Ou monte o seu na mão aqui embaixo:</div>" : "") +
       "<div id='wodTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<div id='wodCfg' style='display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
       "<div id='wodTela' style='text-align:center;padding:18px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
@@ -5381,6 +5666,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='wodGo' style='flex:2;'>Iniciar</button>" +
       "<button class='btnx' id='wodVolta' style='flex:1;display:none;background:#14121a;border:1px solid " + COR + ";box-shadow:none;'>+1 volta</button>" +
+      "<button class='btnx' id='wodTermina' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
       "<button class='btnx' id='wodZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
       "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>Diário de cargas</h2>" +
@@ -5474,14 +5760,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length)return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null)," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{})," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
@@ -5727,7 +6013,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function bip(fq,dur){try{var ac=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)());" +
       "var o=ac.createOscillator(),ga=ac.createGain();o.connect(ga);ga.connect(ac.destination);o.frequency.value=fq||880;ga.gain.value=.12;o.start();setTimeout(function(){try{o.stop();}catch(e2){}},dur||130);}catch(e){}}" +
       "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
-      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:''};" +
+      "var WODS=" + JSON.stringify(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10 }; })) + ";" +
+      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:'',wodId:null,wodNome:''};" +
+      // último resultado de cada circuito prescrito aparece no card
+      "function pintaWodRes(){var wr=L('ptwodres',{});document.querySelectorAll('.wodres').forEach(function(el){" +
+      "var lst=wr[el.dataset.wid]||[];if(!lst.length){el.textContent='';return;}var u=lst[lst.length-1];" +
+      "el.textContent='Último resultado: '+u.r+' ('+u.d.slice(8,10)+'/'+u.d.slice(5,7)+')';});}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-wodstart]');if(!b)return;" +
+      "var w=WODS.find(function(x){return x.id===b.dataset.wodstart;});if(!w||wod.run)return;" +
+      "wod.tipo=w.t;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
+      "if(w.t==='fortime')document.getElementById('wodCap').value=w.cap;" +
+      "else if(w.t==='tabata'){document.getElementById('wodRounds').value=w.rd;document.getElementById('wodWork').value=w.wk;document.getElementById('wodRest').value=w.rs;}" +
+      "else document.getElementById('wodMin').value=w.min;" +
+      "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent=w.n.toUpperCase().slice(0,24)+' — PRONTO?';document.getElementById('wodFimBox').style.display='none';" +
+      "var tela=document.getElementById('wodTela');tela.style.borderColor='" + CORC + "';setTimeout(function(){tela.style.borderColor='#322e3d';},1500);" +
+      "document.getElementById('wodGo').scrollIntoView({behavior:'smooth',block:'center'});if(navigator.vibrate)navigator.vibrate(60);});" +
       "function wodFmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}" +
       "function wodChips(){document.getElementById('wodTipos').innerHTML=WODT.map(function(t){var on=wod.tipo===t[0];" +
       "return \"<button data-wodt='\"+t[0]+\"' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;\"+(on?'background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#a9a4b5;')+\"'>\"+t[1]+\"</button>\";}).join('');}" +
@@ -5736,14 +6036,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "else if(wod.tipo==='amrap')el.innerHTML=inp('wodMin','Minutos',10);" +
       "else if(wod.tipo==='emom')el.innerHTML=inp('wodMin','Minutos',10);" +
       "else el.innerHTML=inp('wodRounds','Rounds',8)+inp('wodWork','Trabalho (s)',20)+inp('wodRest','Descanso (s)',10);" +
-      "document.getElementById('wodVolta').style.display=wod.tipo==='amrap'||wod.tipo==='fortime'?'block':'none';}" +
+      "document.getElementById('wodVolta').style.display=wod.tipo==='amrap'||wod.tipo==='fortime'?'block':'none';" +
+      "document.getElementById('wodTermina').style.display=wod.tipo==='fortime'?'block':'none';}" +
       "function wodPinta(el2){var tela=document.getElementById('wodTela'),fase=document.getElementById('wodFase'),tmp=document.getElementById('wodTempo'),info=document.getElementById('wodInfo');" +
       "if(wod.tipo==='fortime'){var cap=60*(parseInt(document.getElementById('wodCap').value,10)||0);" +
       "fase.textContent='FOR TIME';tmp.textContent=wodFmt(el2);info.textContent=(wod.voltas?wod.voltas+' volta(s) · ':'')+(cap?'limite '+wodFmt(cap):'sem limite');" +
       "if(cap&&el2>=cap)wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+wod.voltas+' volta(s)':''));return;}" +
       "if(wod.tipo==='amrap'){var tot=60*(parseInt(document.getElementById('wodMin').value,10)||10);var resta=tot-el2;" +
       "fase.textContent='AMRAP '+Math.round(tot/60)+' MIN';tmp.textContent=wodFmt(resta);info.textContent=wod.voltas+' volta(s) completadas';" +
-      "if(resta<=0)wodFim(wod.voltas+' volta(s) em '+wodFmt(tot)+'!');return;}" +
+      "if(resta<=0)wodFim(wod.voltas+' volta(s) em '+wodFmt(tot)+'!',wod.voltas);return;}" +
       "if(wod.tipo==='emom'){var totE=60*(parseInt(document.getElementById('wodMin').value,10)||10);" +
       "if(el2>=totE){wodFim('EMOM completo — '+Math.round(totE/60)+' minutos!');return;}" +
       "var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
@@ -5757,16 +6058,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "tela.style.borderColor=trabalhando?'" + CORC + "':'#0891b2';fase.textContent=faseAtual+' · ROUND '+(Math.floor(el2/ciclo)+1)+' DE '+rd;fase.style.color=trabalhando?'" + CORC + "':'#22d3ee';" +
       "tmp.textContent=wodFmt(trabalhando?wk-pos:ciclo-pos);info.textContent=wk+'s trabalho · '+rs+'s descanso';}" +
       "function wodTick(){var el2=(Date.now()-wod.t0)/1000;wodPinta(el2);}" +
-      "function wodFim(msg){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
+      "function wodFim(msg,val){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
       "document.getElementById('wodGo').textContent='Iniciar';" +
       "document.getElementById('wodFase').textContent='FIM!';" +
+      // circuito prescrito: guarda o placar, compara com o anterior e devolve pro personal
+      "if(wod.wodId){var wr=L('ptwodres',{});var lst=wr[wod.wodId]||[];var ant=lst.length?lst[lst.length-1]:null;" +
+      "if(ant&&val!=null&&ant.v!=null){if(wod.tipo==='fortime'?val<ant.v:val>ant.v)msg+=' — BATEU o resultado anterior!';}" +
+      "lst.push({d:isoHj(),n:wod.wodNome,r:msg,v:val==null?null:Math.round(val)});if(lst.length>20)lst.shift();wr[wod.wodId]=lst;Sv('ptwodres',wr);pintaWodRes();}" +
       "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();" +
       "var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
       "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+msg+\"</div>\"+" +
       "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'');" +
       "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});}" +
+      "document.getElementById('wodTermina').addEventListener('click',function(){if(!wod.run)return;var el2=(Date.now()-wod.t0)/1000;" +
+      "wodFim('Seu tempo: '+wodFmt(el2)+(wod.voltas?' · '+wod.voltas+' volta(s)':''),el2);});" +
       "document.getElementById('wodTipos').addEventListener('click',function(e){var b=e.target.closest('[data-wodt]');if(!b||wod.run)return;" +
-      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wodChips();wodCfg();" +
+      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       "document.getElementById('wodGo').addEventListener('click',function(){" +
       "if(wod.run){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=(Date.now()-wod.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
@@ -5775,7 +6082,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.ultMin=-1;wod.ultFase='';soltaTela();" +
       "document.getElementById('wodGo').textContent='Iniciar';document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
-      "wodChips();wodCfg();" +
+      "wodChips();wodCfg();pintaWodRes();" +
       "window.__wod=wod;" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
