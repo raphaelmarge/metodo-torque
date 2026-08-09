@@ -6421,5 +6421,305 @@ self.MT_EXERCICIOS = [
   "g": "Reabilitação e terceira idade",
   "eq": "Peso do corpo",
   "d": "Caminhe numa linha imaginária encostando o calcanhar na ponta do outro pé a cada passo; olhe pra frente, não pro chão."
+ },
+ {
+  "n": "Flexão nórdica de joelhos",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Ajoelhado com os pés presos, desça o tronco reto à frente o mais devagar que conseguir e use as mãos pra amortecer; suba ajudando com um empurrãozinho."
+ },
+ {
+  "n": "Flexão nórdica com elástico de ajuda",
+  "g": "Posterior e glúteo",
+  "eq": "Elástico",
+  "d": "Prenda um elástico grosso à sua frente e segure-o junto ao peito; ele tira parte do peso na descida da nórdica — desça sempre em 3 a 5 segundos."
+ },
+ {
+  "n": "Terra romeno unilateral com kettlebell",
+  "g": "Posterior e glúteo",
+  "eq": "Kettlebell",
+  "d": "Em um pé só, desça o kettlebell rente à perna de apoio levando o quadril pra trás; costas retas e a perna de trás estendida como contrapeso."
+ },
+ {
+  "n": "Ponte de glúteos unilateral com pé no banco",
+  "g": "Posterior e glúteo",
+  "eq": "Banco",
+  "d": "Deitado com um pé no banco e a outra perna estendida pro alto, suba o quadril apertando o glúteo; desça controlando sem tocar o chão."
+ },
+ {
+  "n": "Adução de quadril deitado de lado",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Deitado de lado com a perna de cima cruzada à frente, eleve a perna de baixo estendida; sobe pouco, mas o adutor trabalha o tempo todo."
+ },
+ {
+  "n": "Adução de quadril em pé na polia baixa",
+  "g": "Posterior e glúteo",
+  "eq": "Polia",
+  "d": "Com a caneleira da polia no tornozelo de dentro, cruze a perna à frente da outra contra a resistência; tronco firme, sem inclinar."
+ },
+ {
+  "n": "Good morning com mochila",
+  "g": "Posterior e glúteo",
+  "eq": "Sem equipamento",
+  "d": "Com a mochila pesada abraçada no peito, leve o quadril pra trás com joelhos semiflexionados até o tronco quase paralelo ao chão; volte apertando o glúteo."
+ },
+ {
+  "n": "Step-down lateral no degrau",
+  "g": "Quadríceps",
+  "eq": "Degrau",
+  "d": "De lado em cima do degrau, desça o pé livre até quase tocar o chão dobrando o joelho de apoio devagar; o joelho aponta pro pé o tempo todo."
+ },
+ {
+  "n": "Agachamento skater (patinador)",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Em um pé só, leve a perna livre cruzada pra trás e desça como uma reverência tocando o chão de leve; joelho da frente estável, sem cair pra dentro."
+ },
+ {
+  "n": "Afundo reverso com déficit no step",
+  "g": "Quadríceps",
+  "eq": "Banco/Caixa",
+  "d": "Em pé sobre um step baixo, dê o passo pra trás descendo o joelho abaixo do nível do pé da frente; a amplitude extra exige mais controle."
+ },
+ {
+  "n": "Agachamento goblet com mochila",
+  "g": "Quadríceps",
+  "eq": "Sem equipamento",
+  "d": "Abrace a mochila carregada junto ao peito e agache até as coxas passarem da paralela; peito aberto e calcanhares colados no chão."
+ },
+ {
+  "n": "Afundo com mochila abraçada",
+  "g": "Quadríceps",
+  "eq": "Sem equipamento",
+  "d": "Com a mochila abraçada no peito, dê a passada à frente e desça o joelho de trás em direção ao chão; empurre o chão com o calcanhar pra voltar."
+ },
+ {
+  "n": "Agachamento búlgaro com pausa embaixo",
+  "g": "Quadríceps",
+  "eq": "Banco",
+  "d": "Com o peito do pé de trás no banco, desça e segure 2 segundos parado no fundo antes de subir; a pausa tira o impulso e aumenta o controle."
+ },
+ {
+  "n": "Panturrilha unilateral no degrau com halter",
+  "g": "Quadríceps",
+  "eq": "Halteres",
+  "d": "Em um pé só na beirada do degrau segurando um halter do mesmo lado, desça o calcanhar bem abaixo e suba na ponta; use a outra mão pra se apoiar."
+ },
+ {
+  "n": "Prancha Copenhagen de joelho",
+  "g": "Core",
+  "eq": "Banco",
+  "d": "De lado, com o joelho de cima apoiado no banco e o antebraço no chão, eleve o quadril alinhando o corpo; os adutores seguram a posição."
+ },
+ {
+  "n": "Prancha Copenhagen completa",
+  "g": "Core",
+  "eq": "Banco",
+  "d": "Igual à versão de joelho, mas com o pé de cima apoiado no banco e a perna estendida; corpo em linha reta — versão avançada, progrida com calma."
+ },
+ {
+  "n": "Pallof press em pé",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "De lado pro ponto de fixação, estenda os braços à frente segurando o elástico e não deixe o tronco girar; segure 2 segundos e volte."
+ },
+ {
+  "n": "Pallof press com elevação acima da cabeça",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "Do Pallof tradicional, suba os braços estendidos acima da cabeça mantendo o tronco travado; o desafio anti-rotação aumenta conforme sobe."
+ },
+ {
+  "n": "Prancha com afastamento de pernas (plank jack lento)",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Em prancha alta, afaste e junte os pés em passos controlados, um de cada vez; o quadril fica parado — quem se mexe são só as pernas."
+ },
+ {
+  "n": "Dead bug com anilha sobre o peito",
+  "g": "Core",
+  "eq": "Anilha",
+  "d": "Deitado segurando a anilha com os braços estendidos sobre o peito, estenda perna e mantenha a lombar colada no chão; troque devagar."
+ },
+ {
+  "n": "Anti-rotação em afundo isométrico",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "Parado na posição de afundo com o elástico preso ao lado, estenda os braços à frente e resista ao giro; troque o lado e a perna da frente."
+ },
+ {
+  "n": "Rolamento com barra ajoelhado",
+  "g": "Core",
+  "eq": "Barra",
+  "d": "Ajoelhado com as mãos na barra com anilhas redondas, role à frente até quase estender o corpo e volte puxando com o abdômen; lombar neutra sempre."
+ },
+ {
+  "n": "Supino unilateral no chão com halter",
+  "g": "Peito",
+  "eq": "Halteres",
+  "d": "Deitado no chão com um halter só, desça até o cotovelo tocar de leve o chão e empurre; o core impede o tronco de girar pro lado do peso."
+ },
+ {
+  "n": "Supino no chão com mochila",
+  "g": "Peito",
+  "eq": "Sem equipamento",
+  "d": "Deitado, segure a mochila pesada pelas alças sobre o peito e empurre pra cima até estender os braços; desça devagar até os cotovelos tocarem o chão."
+ },
+ {
+  "n": "Crucifixo unilateral na polia baixa",
+  "g": "Peito",
+  "eq": "Polia",
+  "d": "De lado pra polia, abra o braço estendido e traga-o à frente do peito num arco; segure 1 segundo na contração sem girar o tronco."
+ },
+ {
+  "n": "Remada curvada com mochila",
+  "g": "Costas",
+  "eq": "Sem equipamento",
+  "d": "Tronco inclinado à frente com a coluna reta, puxe a mochila pelas alças até a barriga apertando as escápulas; desça sem deixar os ombros caírem."
+ },
+ {
+  "n": "Remada unilateral com galão de água",
+  "g": "Costas",
+  "eq": "Sem equipamento",
+  "d": "Apoie mão e joelho num banco ou sofá e puxe o galão até a cintura com o cotovelo rente ao corpo; costas paralelas ao chão o tempo todo."
+ },
+ {
+  "n": "Puxada deslizante com toalha no chão",
+  "g": "Costas",
+  "eq": "Toalha",
+  "d": "Deitado de barriga pra baixo com as mãos numa toalha à frente, puxe o corpo deslizando a toalha até o peito sair do chão; simula a puxada sem barra."
+ },
+ {
+  "n": "Puxada unilateral ajoelhado na polia alta",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Ajoelhado de frente pra polia alta, puxe com um braço só até o cotovelo passar da costela; o tronco quer girar — não deixe."
+ },
+ {
+  "n": "Desenvolvimento com galão de água",
+  "g": "Ombros",
+  "eq": "Sem equipamento",
+  "d": "Em pé, leve o galão da altura do peito até acima da cabeça sem arquear a lombar; desça controlando até o queixo."
+ },
+ {
+  "n": "Desenvolvimento bottom-up com kettlebell",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Segure o kettlebell de cabeça pra baixo (bola pra cima) e desenvolva acima da cabeça; a instabilidade obriga punho e ombro a estabilizarem — use carga leve."
+ },
+ {
+  "n": "Elevação em W com elástico",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Pise no elástico e suba os cotovelos dobrados formando um W, apertando as escápulas pra trás; fortalece a parte de trás do ombro e melhora a postura."
+ },
+ {
+  "n": "Rosca unilateral no cabo cruzado",
+  "g": "Bíceps",
+  "eq": "Polia/Cross",
+  "d": "De costas pra polia baixa com o braço levemente atrás do corpo, suba o punho até o ombro; o bíceps trabalha alongado — suba sem balançar."
+ },
+ {
+  "n": "Rosca com mochila pelas alças",
+  "g": "Bíceps",
+  "eq": "Sem equipamento",
+  "d": "Segure a mochila pelas alças com as palmas pra cima e suba até a contração máxima; cotovelos colados no corpo, desça em 3 segundos."
+ },
+ {
+  "n": "Tríceps francês unilateral na polia baixa",
+  "g": "Tríceps",
+  "eq": "Polia/Cross",
+  "d": "De costas pra polia, leve o punho de trás da cabeça até estender o braço acima; o cotovelo aponta pro teto e não abre pro lado."
+ },
+ {
+  "n": "Tríceps mergulho no sofá",
+  "g": "Tríceps",
+  "eq": "Sem equipamento",
+  "d": "Mãos na beirada do sofá e pés no chão, desça dobrando os cotovelos pra trás até 90° e suba; afaste os pés pra dificultar."
+ },
+ {
+  "n": "Salto lateral sobre cone com aterrissagem firme",
+  "g": "Funcional e Cross",
+  "eq": "Cones",
+  "d": "Salte de lado sobre o cone e trave a aterrissagem por 1 segundo com o joelho alinhado antes do próximo salto; qualidade vale mais que velocidade."
+ },
+ {
+  "n": "Sprint curto com mudança de direção no cone",
+  "g": "Funcional e Cross",
+  "eq": "Cones",
+  "d": "Acelere 5 metros, freie plantando o pé de fora no cone e volte acelerando; desacelere em 2 a 3 passos curtos pra proteger o joelho."
+ },
+ {
+  "n": "Salto horizontal com aterrissagem unipodal",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Salte à frente com as duas pernas e aterrisse em um pé só, segurando o equilíbrio por 2 segundos; comece com saltos curtos."
+ },
+ {
+  "n": "Skipping baixo na escada de agilidade",
+  "g": "Funcional e Cross",
+  "eq": "Escada de agilidade",
+  "d": "Passos rápidos e curtos com os pés mal saindo do chão, um toque por quadrado; braços acompanham o ritmo como numa corrida."
+ },
+ {
+  "n": "Corrida lateral com toque no cone",
+  "g": "Funcional e Cross",
+  "eq": "Cones",
+  "d": "Desloque-se de lado entre dois cones tocando cada um com a mão de fora; quadril baixo e passos curtos, sem cruzar as pernas."
+ },
+ {
+  "n": "Salto com giro de 90 graus",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Salte girando o corpo 90° no ar e aterrisse estável com os joelhos alinhados; alterne o lado do giro a cada salto."
+ },
+ {
+  "n": "Levantar da cadeira com uma perna assistido",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Levante da cadeira usando mais uma perna, com a outra à frente e as mãos ajudando só o necessário; desça devagar de volta."
+ },
+ {
+  "n": "Transferência de peso lateral em pé",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso do corpo",
+  "d": "Pés afastados, transfira o peso devagar de um pé pro outro deixando o pé oposto leve no chão; ganha confiança pro equilíbrio do dia a dia."
+ },
+ {
+  "n": "Flexão de quadril sentado com pausa no topo",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Sentado, eleve um joelho em direção ao peito, segure 2 segundos no alto e desça devagar; fortalece o quadril pra subir escadas com segurança."
+ },
+ {
+  "n": "Agachar e pegar objeto do chão com apoio",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Segurando no encosto com uma mão, agache dobrando os joelhos pra pegar um objeto leve no chão; costas retas, o movimento vem das pernas."
+ },
+ {
+  "n": "Marcha estacionária com elevação de braços",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso do corpo",
+  "d": "Marche no lugar elevando os joelhos enquanto sobe os braços alternados à frente; coordena braço e perna e aquece o corpo todo."
+ },
+ {
+  "n": "Equilíbrio em pé com olhos fechados e apoio",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Segurando no encosto, feche os olhos e fique parado 10 a 20 segundos; o corpo aprende a se equilibrar sem depender da visão — sempre com apoio por perto."
+ },
+ {
+  "n": "Rotação torácica deitado com braço em arco",
+  "g": "Mobilidade e alongamento",
+  "eq": "Colchonete",
+  "d": "Deitado de lado com os joelhos dobrados, abra o braço de cima desenhando um arco até o outro lado; siga a mão com o olhar e respire fundo."
+ },
+ {
+  "n": "Alongamento do flexor de quadril meio-ajoelhado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Colchonete",
+  "d": "Com um joelho no chão, aperte o glúteo da perna de trás e leve o quadril à frente sem arquear a lombar; suba o braço do mesmo lado pra alongar mais."
  }
 ];
