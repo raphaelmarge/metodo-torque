@@ -2065,6 +2065,38 @@ async function abaPt(p, a) {
   ok(!!iniEx && iniEx.aberto === "flex" && /exercício 2/.test(iniEx.prog),
     "'Iniciar exercício' abre o modo guiado direto no exercício escolhido (" + (iniEx ? iniEx.ex : "?") + ")");
   await pApp.evaluate(() => document.getElementById("gFechar").click());
+
+  // --- leva 2: aquecimento, raio-X, mapa do ano, meta de peso, Já paguei, wake lock ---
+  ok(/Aquecimento do dia/.test(appHtml2) && /Raio-X do treino/.test(appHtml2) && /wakeLock/.test(appHtml2) && /mapaAno/.test(appHtml2),
+    "app traz aquecimento automático, raio-X por grupo, wake lock e mapa do ano");
+  const leva2 = await pApp.evaluate(async () => {
+    window.__trocaSec("evolucao");
+    const pz = {};
+    pz[new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)] = 90;
+    pz[new Date().toISOString().slice(0, 10)] = 85;
+    localStorage.setItem("ptpeso", JSON.stringify(pz));
+    document.getElementById("mpAlvo").value = "80";
+    document.getElementById("mpSalva").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const mapa = document.getElementById("mapaAno");
+    return {
+      meta: document.getElementById("mpBarra").textContent,
+      mapaTxt: mapa ? mapa.textContent : "",
+      mapaCells: mapa ? mapa.querySelectorAll("div div div").length : 0,
+    };
+  });
+  ok(/Meta: 80 kg/.test(leva2.meta) && /5 kg pra chegar/.test(leva2.meta), "meta de peso vira barra de progresso (90→85, alvo 80: faltam 5)");
+  ok(/Seu ano de treinos/.test(leva2.mapaTxt) && leva2.mapaCells >= 360, "mapa de constância pinta as 52 semanas do ano");
+  const jaPag = await pApp.evaluate(async () => {
+    window.__trocaSec("inicio");
+    const b = document.getElementById("btnJaPaguei");
+    if (!b) return null;
+    b.click();
+    await new Promise((r) => setTimeout(r, 300));
+    return { sumiu: b.style.display === "none", ok: document.getElementById("jaPagueiOk").style.display };
+  });
+  ok(!!jaPag && jaPag.sumiu && jaPag.ok === "block" && chatDB.some((m) => /Acabei de pagar a mensalidade/.test(m.texto)),
+    "'Já paguei' avisa o personal pelo chat e confirma no app (1x por mês)");
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
   await pApp.evaluate(() => window.__trocaSec("chat"));
