@@ -2130,6 +2130,37 @@ async function abaPt(p, a) {
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();
+  // --- GPS sempre ativo: com permissão, liga sozinho, mede a distância e respeita quem desliga ---
+  const ctxGps = await b.newContext({
+    viewport: { width: 500, height: 900 },
+    geolocation: { latitude: -19.9245, longitude: -43.9352, accuracy: 10 },
+    permissions: ["geolocation"],
+  });
+  const pGps = await ctxGps.newPage();
+  pGps.on("dialog", (d) => d.accept());
+  await pGps.route("**/app-teste-gps.html", (r) => r.fulfill({ contentType: "text/html", body: cardioProf.appHtml }));
+  await pGps.goto(BASE + "/app-teste-gps.html", { waitUntil: "domcontentloaded" });
+  await pGps.waitForTimeout(400);
+  await pGps.evaluate(() => { window.__trocaSec("treino"); window.__trSub("cardio"); });
+  await pGps.waitForTimeout(900);
+  const gpsAuto = await pGps.evaluate(() => ({ on: window.__cr.gpsOn, btn: document.getElementById("crGps").textContent }));
+  ok(gpsAuto.on && /GPS ligado/.test(gpsAuto.btn), "GPS liga sozinho ao abrir a área Corrida e bike");
+  await pGps.evaluate(() => document.getElementById("crGo").click());
+  await pGps.waitForTimeout(300);
+  await ctxGps.setGeolocation({ latitude: -19.9254, longitude: -43.9352, accuracy: 10 });
+  await pGps.waitForTimeout(800);
+  await ctxGps.setGeolocation({ latitude: -19.9263, longitude: -43.9352, accuracy: 10 });
+  await pGps.waitForTimeout(800);
+  const gpsKm = await pGps.evaluate(() => window.__cr.km);
+  ok(gpsKm > 0.15 && gpsKm < 0.26, "GPS mede a distância sozinho com o treino rodando (" + gpsKm.toFixed(2) + " km)");
+  await pGps.evaluate(() => { document.getElementById("crZera").click(); window.__trocaSec("inicio"); });
+  await pGps.waitForTimeout(300);
+  ok(await pGps.evaluate(() => window.__cr.watch === null && !window.__cr.gpsOn), "sair da área desliga o GPS pra poupar bateria");
+  await pGps.evaluate(() => { window.__trocaSec("treino"); document.getElementById("crGps").click(); });
+  await pGps.waitForTimeout(200);
+  ok(await pGps.evaluate(() => JSON.parse(localStorage.getItem("ptgpsAuto")) === 0 && !window.__cr.gpsOn && window.__cr.watch === null),
+    "aluno que desliga o GPS pelo botão tem a escolha respeitada (não religa sozinho)");
+  await ctxGps.close();
   await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCr);
   await pApp.evaluate(() => window.__trocaSec("inicio"));
   // substituto de exercício: o toque abre a dica com as trocas
