@@ -6540,7 +6540,7 @@ self.MT_EXERCICIOS = [
   "n": "Dead bug com anilha sobre o peito",
   "g": "Core",
   "eq": "Anilha",
-  "d": "Deitado segurando a anilha com os braços estendidos sobre o peito, estenda perna e mantenha a lombar colada no chão; troque devagar."
+  "d": "Deitado segurando a anilha com os braços estendidos sobre o peito, estenda uma perna de cada vez e mantenha a lombar colada no chão; troque devagar."
  },
  {
   "n": "Anti-rotação em afundo isométrico",
@@ -6678,7 +6678,7 @@ self.MT_EXERCICIOS = [
   "n": "Levantar da cadeira com uma perna assistido",
   "g": "Reabilitação e terceira idade",
   "eq": "Cadeira",
-  "d": "Levante da cadeira usando mais uma perna, com a outra à frente e as mãos ajudando só o necessário; desça devagar de volta."
+  "d": "Levante da cadeira apoiando o peso quase todo numa perna, com a outra à frente e as mãos ajudando só o necessário; desça devagar de volta."
  },
  {
   "n": "Transferência de peso lateral em pé",
