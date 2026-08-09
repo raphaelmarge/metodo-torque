@@ -5370,6 +5370,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               "<div style='height:8px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:" + Math.round(100 * r.s / maxS) + "%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;'></div></div></div>";
           }).join("");
         })() + "</div>" : "") +
+      // modo circuito (WOD): cronômetros de cross — For Time, AMRAP, EMOM e Tabata
+      "<div class='cardx' id='cardWod'><h2>Modo circuito (WOD)</h2>" +
+      "<div id='wodTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
+      "<div id='wodCfg' style='display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
+      "<div id='wodTela' style='text-align:center;padding:18px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
+      "<div id='wodFase' style='font-size:12px;font-weight:800;letter-spacing:.18em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
+      "<div id='wodTempo' style='font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin:4px 0;'>0:00</div>" +
+      "<div id='wodInfo' style='font-size:12.5px;color:#a9a4b5;'></div></div>" +
+      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
+      "<button class='btnx' id='wodGo' style='flex:2;'>Iniciar</button>" +
+      "<button class='btnx' id='wodVolta' style='flex:1;display:none;background:#14121a;border:1px solid " + COR + ";box-shadow:none;'>+1 volta</button>" +
+      "<button class='btnx' id='wodZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
+      "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
@@ -5710,6 +5723,60 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function marcaCf(){var f=L('ptconf',{});f[kcf]=vou?1:-1;Sv('ptconf',f);pintaCf();}" +
       "if(NUVEM){rpcApp('app_chat_envia',{t:TOKEN,p_texto:msg}).then(function(){marcaCf();}).catch(function(){marcaCf();});}" +
       "else{marcaCf();alert('Sem internet agora — avisa também pelo WhatsApp, combinado?');}});})();" +
+      // ---- modo circuito (WOD): For Time, AMRAP, EMOM e Tabata ----
+      "function bip(fq,dur){try{var ac=window.__ac||(window.__ac=new (window.AudioContext||window.webkitAudioContext)());" +
+      "var o=ac.createOscillator(),ga=ac.createGain();o.connect(ga);ga.connect(ac.destination);o.frequency.value=fq||880;ga.gain.value=.12;o.start();setTimeout(function(){try{o.stop();}catch(e2){}},dur||130);}catch(e){}}" +
+      "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
+      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:''};" +
+      "function wodFmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}" +
+      "function wodChips(){document.getElementById('wodTipos').innerHTML=WODT.map(function(t){var on=wod.tipo===t[0];" +
+      "return \"<button data-wodt='\"+t[0]+\"' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;\"+(on?'background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#a9a4b5;')+\"'>\"+t[1]+\"</button>\";}).join('');}" +
+      "function wodCfg(){var el=document.getElementById('wodCfg');var inp=function(id,rot,val,w){return \"<label style='flex:1;min-width:0;font-size:11px;color:#a9a4b5;'>\"+rot+\"<input id='\"+id+\"' inputmode='numeric' value='\"+val+\"' style='width:100%;margin-top:3px;padding:8px 10px;'></label>\";};" +
+      "if(wod.tipo==='fortime')el.innerHTML=inp('wodCap','Tempo limite (min, 0 = livre)',12);" +
+      "else if(wod.tipo==='amrap')el.innerHTML=inp('wodMin','Minutos',10);" +
+      "else if(wod.tipo==='emom')el.innerHTML=inp('wodMin','Minutos',10);" +
+      "else el.innerHTML=inp('wodRounds','Rounds',8)+inp('wodWork','Trabalho (s)',20)+inp('wodRest','Descanso (s)',10);" +
+      "document.getElementById('wodVolta').style.display=wod.tipo==='amrap'||wod.tipo==='fortime'?'block':'none';}" +
+      "function wodPinta(el2){var tela=document.getElementById('wodTela'),fase=document.getElementById('wodFase'),tmp=document.getElementById('wodTempo'),info=document.getElementById('wodInfo');" +
+      "if(wod.tipo==='fortime'){var cap=60*(parseInt(document.getElementById('wodCap').value,10)||0);" +
+      "fase.textContent='FOR TIME';tmp.textContent=wodFmt(el2);info.textContent=(wod.voltas?wod.voltas+' volta(s) · ':'')+(cap?'limite '+wodFmt(cap):'sem limite');" +
+      "if(cap&&el2>=cap)wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+wod.voltas+' volta(s)':''));return;}" +
+      "if(wod.tipo==='amrap'){var tot=60*(parseInt(document.getElementById('wodMin').value,10)||10);var resta=tot-el2;" +
+      "fase.textContent='AMRAP '+Math.round(tot/60)+' MIN';tmp.textContent=wodFmt(resta);info.textContent=wod.voltas+' volta(s) completadas';" +
+      "if(resta<=0)wodFim(wod.voltas+' volta(s) em '+wodFmt(tot)+'!');return;}" +
+      "if(wod.tipo==='emom'){var totE=60*(parseInt(document.getElementById('wodMin').value,10)||10);" +
+      "if(el2>=totE){wodFim('EMOM completo — '+Math.round(totE/60)+' minutos!');return;}" +
+      "var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
+      "if(mn!==wod.ultMin){wod.ultMin=mn;if(el2>1){if(navigator.vibrate)navigator.vibrate([180,80,180]);bip(980,180);}}" +
+      "fase.textContent='MINUTO '+(mn+1)+' DE '+Math.round(totE/60);tmp.textContent=wodFmt(segRes);info.textContent='novo movimento a cada minuto cheio';return;}" +
+      "var rd=parseInt(document.getElementById('wodRounds').value,10)||8;var wk=parseInt(document.getElementById('wodWork').value,10)||20;var rs=parseInt(document.getElementById('wodRest').value,10)||10;" +
+      "var ciclo=wk+rs;var totT=rd*ciclo;" +
+      "if(el2>=totT){wodFim('Tabata completo — '+rd+(rd>1?' rounds!':' round!'));return;}" +
+      "var pos=el2%ciclo;var trabalhando=pos<wk;var faseAtual=trabalhando?'TRABALHA':'DESCANSA';" +
+      "if(faseAtual!==wod.ultFase){wod.ultFase=faseAtual;if(el2>0.5){if(navigator.vibrate)navigator.vibrate(trabalhando?[200,80,200]:120);bip(trabalhando?1100:600,150);}}" +
+      "tela.style.borderColor=trabalhando?'" + CORC + "':'#0891b2';fase.textContent=faseAtual+' · ROUND '+(Math.floor(el2/ciclo)+1)+' DE '+rd;fase.style.color=trabalhando?'" + CORC + "':'#22d3ee';" +
+      "tmp.textContent=wodFmt(trabalhando?wk-pos:ciclo-pos);info.textContent=wk+'s trabalho · '+rs+'s descanso';}" +
+      "function wodTick(){var el2=(Date.now()-wod.t0)/1000;wodPinta(el2);}" +
+      "function wodFim(msg){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
+      "document.getElementById('wodGo').textContent='Iniciar';" +
+      "document.getElementById('wodFase').textContent='FIM!';" +
+      "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();" +
+      "var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
+      "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+msg+\"</div>\"+" +
+      "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'');" +
+      "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});}" +
+      "document.getElementById('wodTipos').addEventListener('click',function(e){var b=e.target.closest('[data-wodt]');if(!b||wod.run)return;" +
+      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wodChips();wodCfg();" +
+      "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
+      "document.getElementById('wodGo').addEventListener('click',function(){" +
+      "if(wod.run){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=(Date.now()-wod.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
+      "wod.run=true;wod.t0=Date.now()-wod.acum*1000;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
+      "bip(880,120);wod.iv=setInterval(wodTick,200);wodTick();});" +
+      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.ultMin=-1;wod.ultFase='';soltaTela();" +
+      "document.getElementById('wodGo').textContent='Iniciar';document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
+      "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
+      "wodChips();wodCfg();" +
+      "window.__wod=wod;" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
       "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='Bora! Próxima série!';" +
