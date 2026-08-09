@@ -1298,6 +1298,18 @@ async function abaPt(p, a) {
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
   ok(/Sem esse aparelho hoje\?/.test(appHtml) && /Troca por: /.test(appHtml), "exercícios trazem substitutos do mesmo padrão de movimento");
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
+  ok(/onbCard/.test(appHtml) && /rpeBox/.test(appHtml) && /dcReps/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
+    "app traz onboarding, RPE, campo de reps, streak de semanas e confete");
+  // painel do personal entende RPE e onboarding devolvidos pelo app
+  const painelNovo = await p.evaluate(() => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const rpe = {}; rpe[hoje] = 3;
+    return window.__painelApp({ feitos: {}, rpe, onb: { obj: "emagrecer", dias: "4", dor: "joelho estala" } });
+  });
+  ok(/Esforço percebido/.test(painelNovo) && /Pesado/.test(painelNovo) && /considere aliviar/.test(painelNovo),
+    "painel mostra o esforço percebido (RPE) com alerta de treino pesado");
+  ok(/Como o aluno se apresentou/.test(painelNovo) && /emagrecer/.test(painelNovo) && /joelho estala/.test(painelNovo),
+    "painel mostra objetivo, dias e a dor relatada no onboarding");
   ok(/>Ver vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão Ver vídeo");
   ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
@@ -1967,6 +1979,59 @@ async function abaPt(p, a) {
   await pApp.click("#btnFeito");
   const feitos = await pApp.evaluate(() => JSON.parse(localStorage.getItem("ptfeitos")));
   ok(Object.keys(feitos).length === 1, "mesmo dia não duplica o registro");
+
+  // --- nível mundial: onboarding 30s, streak de semanas, RPE, 1RM estimado e confete ---
+  const onbApp = await pApp.evaluate(async () => {
+    const card = document.getElementById("onbCard");
+    if (!card || card.style.display !== "block") return null;
+    document.querySelector("#onbObj [data-v='emagrecer']").click();
+    document.querySelector("#onbDias [data-v='3']").click();
+    document.getElementById("onbDor").value = "ombro esquerdo";
+    document.getElementById("onbOk").click();
+    await new Promise((r) => setTimeout(r, 200));
+    return { salvo: JSON.parse(localStorage.getItem("ptonb")), sumiu: card.style.display === "none" };
+  });
+  ok(!!onbApp && onbApp.salvo && onbApp.salvo.obj === "emagrecer" && onbApp.salvo.dor === "ombro esquerdo" && onbApp.sumiu,
+    "onboarding de 30s salva objetivo/dias/dor e some depois de responder");
+  const stkRpe = await pApp.evaluate(async () => {
+    // duas semanas passadas com a meta batida (3 treinos cada) + re-registra hoje → repinta
+    const f = {};
+    const seg = new Date(); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    for (let w = 1; w <= 2; w++) for (let i = 0; i < 3; i++) {
+      const d = new Date(seg); d.setDate(d.getDate() - 7 * w + i);
+      f[d.toISOString().slice(0, 10)] = 1;
+    }
+    localStorage.setItem("ptfeitos", JSON.stringify(f));
+    document.getElementById("btnFeito").click();
+    await new Promise((r) => setTimeout(r, 250));
+    return {
+      stk: (document.getElementById("stkBox") || {}).textContent || "",
+      rpeVisivel: document.getElementById("rpeBox").style.display === "block",
+    };
+  });
+  ok(/sequência de 2 semanas/.test(stkRpe.stk), "chama do streak acende com 2 semanas seguidas de meta");
+  ok(stkRpe.rpeVisivel, "depois do 'Treinei hoje' o app pergunta como foi o treino");
+  const rpeSalvo = await pApp.evaluate(async () => {
+    document.querySelector("[data-rpe='2']").click();
+    await new Promise((r) => setTimeout(r, 150));
+    return JSON.parse(localStorage.getItem("ptrpe") || "{}");
+  });
+  ok(Object.keys(rpeSalvo).some((k) => rpeSalvo[k] === 2), "resposta 'Na medida' fica guardada pro personal (ptrpe)");
+  await pApp.evaluate(() => window.__trocaSec("treino"));
+  await pApp.fill("#dcEx", "Agachamento");
+  await pApp.fill("#dcKg", "90");
+  await pApp.fill("#dcReps", "6");
+  await pApp.click("#dcAdd");
+  await pApp.waitForTimeout(200);
+  const rm = await pApp.evaluate(() => {
+    document.querySelector('[data-dcx="Agachamento"]').click();
+    return {
+      graf: document.getElementById("dcGraf").textContent,
+      confete: !!document.querySelector("[style*='cfQueda']"),
+    };
+  });
+  ok(/recorde 90 kg/.test(rm.graf) && /1RM est\. 108 kg/.test(rm.graf), "gráfico mostra recorde e 1RM estimado (Epley: 90×(1+6÷30)=108)");
+  ok(rm.confete, "novo recorde solta a chuva de confete");
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
   await pApp.evaluate(() => window.__trocaSec("chat"));

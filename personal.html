@@ -894,6 +894,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <label style="font-size: 12px; margin: 0;">Cobrança<select id="pfModo" style="display:block; width: 120px; margin-top: 3px;"><option value="mes">por mês</option><option value="sessao">por sessão</option></select></label>
       <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pfPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="recorrente">Link recorrente</option></select></label>
       <label style="font-size: 12px; margin: 0;">Objetivo<input id="pfObjetivo" placeholder="ex.: hipertrofia" style="display:block; width: 170px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;" title="a meta e o streak do app do aluno usam esse número">Meta de treinos/semana<input id="pfMetaSem" type="number" min="1" max="7" style="display:block; width: 90px; margin-top: 3px;"></label>
     </div>
     <label style="font-size: 12px; display: block; margin: 8px 0 0;">Observações gerais
       <textarea id="pfObs" rows="2" style="width: 100%; margin-top: 3px;"></textarea></label>
@@ -1328,6 +1329,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfDesde").textContent = a.desde ? "aluno desde " + S.fmtData(a.desde) : "";
     $("pfNome").value = a.nome; $("pfZap").value = a.zap || "";
     $("pfNasc").value = a.nasc || ""; $("pfValor").value = a.valor || "";
+    $("pfMetaSem").value = +a.metaSemana || 3;
     $("pfModo").value = a.modo || "mes"; $("pfPagto").value = a.pagto || "";
     $("pfObjetivo").value = a.objetivo || ""; $("pfObs").value = a.obs || "";
     $("pfEmail").value = a.email || ""; $("pfSexo").value = a.sexo || "";
@@ -1569,6 +1571,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__diarioPT = pintaDiario; // testes
   // dados que o aluno registrou no app dele (sincronizados pela nuvem)
   // monta o HTML do painel de métricas a partir do retorno do app (nuvem ou demo)
+  window.__painelApp = function (ret) { return htmlRetornoApp(ret); }; // testes
   function htmlRetornoApp(ret) {
         var html = "";
         var dataRe = function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); };
@@ -1623,7 +1626,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return c && typeof c === "object" && dataRe(String(c.d || ""));
         }).sort(function (x, y) { return x.d < y.d ? -1 : 1; });
         if (cks.length) kpis.push(kpi("Check-ins", cks.length, "último em " + cks[cks.length - 1].d.slice(8, 10) + "/" + cks[cks.length - 1].d.slice(5, 7)));
+        // percepção de esforço pós-treino (RPE de 1 toque no app)
+        var rpe = (ret.rpe && typeof ret.rpe === "object" && !Array.isArray(ret.rpe)) ? ret.rpe : {};
+        var rks = Object.keys(rpe).filter(function (k) { return dataRe(k) && [1, 2, 3].indexOf(+rpe[k]) !== -1; }).sort().slice(-7);
+        if (rks.length) {
+          var soma = 0;
+          rks.forEach(function (k) { soma += +rpe[k]; });
+          var med = soma / rks.length;
+          kpis.push(kpi("Esforço percebido", med >= 2.5 ? "Pesado" : med >= 1.6 ? "Na medida" : "Leve",
+            "últimos " + rks.length + " treino(s)" + (med >= 2.5 ? " — considere aliviar" : "")));
+        }
         if (kpis.length) html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 2px;'>" + kpis.join("") + "</div>";
+        // onboarding: como o aluno se apresentou no primeiro uso do app
+        var onb = (ret.onb && typeof ret.onb === "object" && !Array.isArray(ret.onb)) ? ret.onb : null;
+        if (onb && (onb.obj || onb.dias || onb.dor)) {
+          html += titulo("Como o aluno se apresentou no app") +
+            "<div style='font-size:13px;'>" +
+            (onb.obj ? "Objetivo: <b>" + esc(String(onb.obj).slice(0, 40)) + "</b>" : "") +
+            (onb.dias ? " · <b>" + esc(String(onb.dias).slice(0, 6)) + " dias/semana</b>" : "") +
+            (onb.dor ? "<div style='color:#fbbf24;margin-top:4px;'>Atenção: relatou “" + esc(String(onb.dor).slice(0, 120)) + "” — adapte o treino.</div>" : "") +
+            "</div>";
+        }
         // ---- peso: gráfico de linha ----
         if (ks.length) {
           var l30 = ks.slice(-30);
@@ -1843,6 +1866,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     a.cpf = $("pfCpf").value.trim();
     a.cep = $("pfCep").value.trim();
     a.endereco = $("pfEnd").value.trim();
+    var metaNova = Math.min(7, Math.max(1, +$("pfMetaSem").value || 3));
+    if (metaNova !== (+a.metaSemana || 3)) marcaAppPendente(st, a.id); // a meta muda o app do aluno
+    a.metaSemana = metaNova;
     save(st);
     $("pfTitulo").textContent = a.nome;
     $("pfSalvo").textContent = "✓ salvo!";
@@ -5183,7 +5209,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ".btnx{background:linear-gradient(135deg," + COR + "," + COR2 + ");color:#fff;border:none;border-radius:5px;padding:11px 20px;font-weight:900;font-style:italic;letter-spacing:.04em;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 12px 32px -12px " + COR + "}" +
       ".kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #322e3d}" +
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
-      ".up{color:#4ade80}.down{color:#f87171}</style></head><body>" +
+      ".up{color:#4ade80}.down{color:#f87171}" +
+      "@keyframes cfQueda{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
       "<span id='xpChip' style='flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>" +
@@ -5191,6 +5218,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<span><b id='xpNum'>0</b> XP</span></span></div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(13,12,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #26222e;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'></nav>" +
+      // onboarding de 30 segundos (só aparece no primeiro uso — some depois de responder)
+      "<div class='cardx' id='onbCard' style='display:none;border-color:" + COR + ";'>" +
+      "<h2>Bora começar!</h2><div class='vz' style='text-align:left;padding:2px 0 8px;'>3 perguntinhas rápidas pro " + esc(a.nome.split(" ")[0]) + " do futuro agradecer:</div>" +
+      "<div style='font-size:12.5px;font-weight:700;margin-bottom:5px;'>Seu objetivo principal</div>" +
+      "<div id='onbObj' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
+      "<div style='font-size:12.5px;font-weight:700;margin-bottom:5px;'>Quantos dias por semana dá pra treinar?</div>" +
+      "<div id='onbDias' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
+      "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
+      "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
       // card herói "treino de hoje" (estilo Prime) — a ficha do dia gira sozinha
       (fichasApp ? "<div class='cardx' id='heroTreino' style='background:linear-gradient(150deg," + COR + "," + COR2 + " 78%);border-color:" + COR + ";box-shadow:0 18px 40px -18px " + COR + ";'>" +
         "<div style='font-size:10.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
@@ -5217,6 +5253,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
+      "<div id='rpeBox' style='display:none;margin-top:10px;'></div>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       (sessApp.length ? "<div class='cardx'><h2>Minhas sessões com " + esc(studio.split(" ")[0]) + "</h2>" +
         sessApp.map(function (x, si) {
@@ -5272,7 +5309,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
-      "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><button class='btnx' id='dcAdd'>+</button></div>" +
+      "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><input id='dcReps' inputmode='numeric' placeholder='reps' style='width:64px'><button class='btnx' id='dcAdd'>+</button></div>" +
       "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui.</div>" +
       "<div id='dcGraf' style='display:none;margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>Minha evolução</h2><div id='evoBox'></div></div>" +
@@ -5355,14 +5392,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
-      "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length)return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{})," +
+      "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length)return;" +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null)," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
@@ -5399,6 +5436,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var card=document.getElementById('cardNotif'),btn=document.getElementById('btnNotif');" +
       "if(card&&btn){card.style.display='block';btn.addEventListener('click',function(){" +
       "Notification.requestPermission().then(function(p2){card.style.display='none';if(p2==='granted')tentaPushP();});});}})();" +
+      // sequência de semanas consecutivas batendo a meta (a atual conta se já bateu, sem quebrar enquanto corre)
+      "function streakSem(f){var porSem={};Object.keys(f).forEach(function(k){var d=new Date(k);d.setDate(d.getDate()-((d.getDay()+6)%7));var w=d.toISOString().slice(0,10);porSem[w]=(porSem[w]||0)+1;});" +
+      "var n=0;var d2=new Date();d2.setDate(d2.getDate()-((d2.getDay()+6)%7));" +
+      "if((porSem[d2.toISOString().slice(0,10)]||0)>=META)n++;" +
+      "for(;;){d2.setDate(d2.getDate()-7);if((porSem[d2.toISOString().slice(0,10)]||0)>=META)n++;else break;}return n;}" +
+      // chuva de confete pras conquistas (meta batida, recorde)
+      "function confete(){var box=document.createElement('div');box.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden;';" +
+      "var cores=['" + COR + "','" + CORC + "','#fb923c','#4ade80','#fbbf24','#fff'];" +
+      "for(var ci=0;ci<26;ci++){var p2=document.createElement('div');var tam=6+Math.random()*7;" +
+      "p2.style.cssText='position:absolute;top:-20px;left:'+Math.random()*100+'%;width:'+tam+'px;height:'+(tam*0.6)+'px;background:'+cores[ci%cores.length]+';border-radius:2px;animation:cfQueda '+(1.6+Math.random()*1.4)+'s ease-in '+(Math.random()*0.5)+'s forwards;transform:rotate('+Math.random()*360+'deg);';" +
+      "box.appendChild(p2);}document.body.appendChild(box);setTimeout(function(){box.remove();},3600);}" +
+      // RPE de 1 toque: como foi o treino de hoje?
+      "function mostraRpe(){var iso=isoHj();var r=L('ptrpe',{});var bx=document.getElementById('rpeBox');if(!bx)return;" +
+      "if(!L('ptfeitos',{})[iso]||r[iso]){bx.style.display='none';return;}" +
+      "bx.style.display='block';" +
+      "bx.innerHTML=\"<div style='font-size:12.5px;font-weight:700;margin-bottom:6px;'>Como foi o treino de hoje?</div><div style='display:flex;gap:6px;'>\"+" +
+      "[['1','Leve'],['2','Na medida'],['3','Pesado']].map(function(o){return \"<button data-rpe='\"+o[0]+\"' style='flex:1;background:#14121a;border:1px solid #322e3d;border-radius:11px;padding:9px 0;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;'>\"+o[1]+\"</button>\";}).join('')+'</div>';}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-rpe]');if(!b)return;" +
+      "var r=L('ptrpe',{});r[isoHj()]=+b.dataset.rpe;var ks=Object.keys(r).sort();if(ks.length>90)delete r[ks[0]];Sv('ptrpe',r);" +
+      "var bx=document.getElementById('rpeBox');bx.innerHTML=\"<div class='vz' style='padding:4px 0;'>Anotado! Seu personal vê isso e ajusta o próximo treino.</div>\";setTimeout(function(){bx.style.display='none';},2600);});" +
       // semana: bolinhas seg-dom + meta + streak + medalhas
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
@@ -5409,7 +5466,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "\"<div style='font-size:9px;line-height:1;margin-top:1px;color:\"+(fez?'#fff':'transparent')+\";'>✓</div></div></div>\";}" +
       "document.getElementById('diasSem').innerHTML=html;" +
       "var pct=Math.min(100,Math.round(100*naSem/META));" +
-      "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+\"</b></div><div style='height:10px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;transition:width .5s;'></div></div>\";" +
+      "var stk=streakSem(f);" +
+      "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+\"</b></div><div style='height:10px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;transition:width .5s;'></div></div>\"+" +
+      "(stk>0?\"<div id='stkBox' style='display:flex;align-items:center;gap:7px;margin-top:9px;font-weight:800;font-size:13.5px;color:#fb923c;'>\"+icx(ICO.chama,18)+\"sequência de \"+stk+\" semana\"+(stk>1?'s':'')+\" batendo a meta — não deixa apagar!</div>\":" +
+      "\"<div id='stkBox' style='margin-top:9px;font-size:12px;color:#a9a4b5;'>Bata a meta desta semana pra acender a sequência \"+icx(ICO.chama,13)+\"</div>\");" +
       "var total=Object.keys(f).length;var marcos=[100,50,25,10,5];" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j]){falta=marcos[j];break;}}" +
       "document.getElementById('medalhas').innerHTML='<b>'+total+' treino(s) registrados</b>'+(falta?\"<br><small>faltam \"+(falta-total)+\" pra marca de \"+falta+\" treinos</small>\":'');}" +
@@ -5422,6 +5482,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
       "t.innerHTML=(naSem>=META?icx(ICO.trofeu,20)+' META DA SEMANA BATIDA!<br><small>'+naSem+' treinos — orgulho define</small>':icx(ICO.raio,20)+' Treino registrado!<br><small>'+naSem+' de '+META+' na semana</small>');" +
       "document.body.appendChild(t);setTimeout(function(){t.remove();},3500);" +
+      "if(naSem>=META)confete();" +
+      "mostraRpe();" +
       "rpcApp('app_aluno_treino_reg',{t:TOKEN,p_dia:iso,p_itens:[{ex:'__feito',f:1,c:''}]});});" +
       // check-in semanal
       "var ckNota=0;var EMO=['Péssima','Ruim','Normal','Boa','Incrível'];" +
@@ -5442,7 +5504,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(r&&r.ok){fim();}else{alert('Não deu pra enviar agora — tenta de novo em instantes.');}});}" +
       "else{var msg='Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[ckNota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
       "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
-      "pintaSemana();" +
+      "pintaSemana();mostraRpe();" +
+      // onboarding de 30 segundos: 3 respostas que personalizam o acompanhamento
+      "(function(){var card=document.getElementById('onbCard');if(!card||L('ptonb',null))return;card.style.display='block';" +
+      "var sel={obj:'',dias:''};" +
+      "function chip(box,val,rot){return \"<button data-onb='\"+box+\"' data-v='\"+val+\"' style='flex:1;min-width:0;background:#14121a;border:1px solid #322e3d;border-radius:11px;padding:9px 6px;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;'>\"+rot+\"</button>\";}" +
+      "document.getElementById('onbObj').innerHTML=[['emagrecer','Emagrecer'],['musculo','Ganhar músculo'],['saude','Saúde e disposição'],['performance','Performance']].map(function(o){return chip('obj',o[0],o[1]);}).join('');" +
+      "document.getElementById('onbDias').innerHTML=[['2','2'],['3','3'],['4','4'],['5','5+']].map(function(o){return chip('dias',o[0],o[1]);}).join('');" +
+      "card.addEventListener('click',function(e){var b=e.target.closest('[data-onb]');if(!b)return;sel[b.dataset.onb]=b.dataset.v;" +
+      "card.querySelectorAll(\"[data-onb='\"+b.dataset.onb+\"']\").forEach(function(x){var on=x===b;x.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.borderColor=on?'" + CORC + "':'#322e3d';});});" +
+      "document.getElementById('onbOk').addEventListener('click',function(){if(!sel.obj||!sel.dias){alert('Escolhe o objetivo e os dias — é rapidinho!');return;}" +
+      "Sv('ptonb',{obj:sel.obj,dias:sel.dias,dor:(document.getElementById('onbDor').value||'').trim().slice(0,120),em:isoHj()});" +
+      "card.style.display='none';if(navigator.vibrate)navigator.vibrate(90);});})();" +
       // agenda estilo calendário (pede horário pela nuvem)
       "var SESS=" + JSON.stringify(sessApp) + ";" +
       "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
@@ -5509,15 +5582,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
       "var STUDIO=" + JSON.stringify(studio) + ";" +
       "document.getElementById('btnCardStories').addEventListener('click',function(){" +
-      "var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);" +
+      "var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);var stk2=streakSem(f);" +
+      "var naSem2=0;var seg2=new Date();seg2.setDate(seg2.getDate()-((seg2.getDay()+6)%7));" +
+      "for(var i2=0;i2<7;i2++){var d9=new Date(seg2);d9.setDate(d9.getDate()+i2);if(f[d9.toISOString().slice(0,10)])naSem2++;}" +
       "var c=document.createElement('canvas');c.width=1080;c.height=1080;var g=c.getContext('2d');" +
       "var gr=g.createLinearGradient(0,0,1080,1080);gr.addColorStop(0,'#1c1826');gr.addColorStop(1,'#4c1d95');g.fillStyle=gr;g.fillRect(0,0,1080,1080);" +
       "g.fillStyle='#a78bfa';g.font='700 42px system-ui,sans-serif';g.textAlign='center';g.fillText(STUDIO.toUpperCase().slice(0,30),540,150);" +
       "g.fillStyle='#fff';g.font='800 84px system-ui,sans-serif';" +
-      "g.fillText(total>0?total+(total===1?' treino!':' treinos!'):'Bora treinar!',540,380);" +
+      "g.fillText(naSem2>0?'Minha semana: '+naSem2+' treino'+(naSem2>1?'s':'')+'!':(total>0?total+(total===1?' treino!':' treinos!'):'Bora treinar!'),540,360);" +
       "g.font='600 52px system-ui,sans-serif';g.fillStyle='#e9d5ff';" +
-      "g.fillText(total+' treinos registrados',540,560);" +
-      "g.fillText('melhor sequência: '+seq+(seq===1?' dia':' dias'),540,655);" +
+      "g.fillText('meta da semana: '+naSem2+' de '+META+(naSem2>=META?' — batida!':''),540,520);" +
+      "if(stk2>0){g.fillStyle='#fdba74';g.fillText(stk2+' semana'+(stk2>1?'s':'')+' seguidas batendo a meta',540,615);g.fillStyle='#e9d5ff';}" +
+      "g.fillText(total+' treinos no total · sequência de '+seq+(seq===1?' dia':' dias'),540,stk2>0?710:615);" +
       "g.fillStyle='#a78bfa';g.font='700 34px system-ui,sans-serif';g.fillText(PRIMEIRO+' · TORQUE PERSONAL',540,990);" +
       "c.toBlob(function(bl){var fl=new File([bl],'conquista.png',{type:'image/png'});" +
       "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
@@ -5601,7 +5677,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // gráfico de carga por exercício (clique na linha do diário)
       "function grafCarga(ex){var h=L('ptdc',{});var l=(h[ex]||[]).slice(-12);var g=document.getElementById('dcGraf');" +
       "if(!l.length){g.style.display='none';return;}var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      "g.style.display='block';g.innerHTML=\"<div style='font-size:12px;color:#a9a4b5;margin-bottom:6px;'>\"+ex+\" — últimas cargas</div>\"+" +
+      // recorde + evolução desde o 1º registro + 1RM estimado (fórmula de Epley, quando anota as reps)
+      "var evo=l.length>1?Math.round(100*((+l[l.length-1].kg)-(+l[0].kg))/(+l[0].kg)):0;" +
+      "var comReps=l.slice().reverse().find(function(x){return +x.r>0;});" +
+      "var rm=comReps?Math.round((+comReps.kg)*(1+(+comReps.r)/30)):0;" +
+      "g.style.display='block';g.innerHTML=\"<div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:12px;margin-bottom:6px;'><span style='color:#a9a4b5;'>\"+ex+\"</span><span><b style='color:#a78bfa;'>recorde \"+String(max).replace('.',',')+\" kg</b>\"+(evo>0?\" · <b class='up'>+\"+evo+\"%</b> desde o 1º\":'')+(rm?\" · 1RM est. <b>\"+rm+\" kg</b>\":'')+\"</span></div>\"+" +
       "\"<div style='display:flex;gap:6px;align-items:flex-end;height:90px;'>\"+l.map(function(x){var hh=Math.round(60*(+x.kg)/max);var pr=+x.kg===max;" +
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(pr?'#a78bfa':'#6e6a78')+\";'>\"+String(x.kg).replace('.',',')+(pr?'★':'')+\"</div><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:\"+(pr?'linear-gradient(180deg,#a78bfa,#7c3aed)':'#3a3346')+\";border-radius:4px 4px 0 0;min-height:3px;'></div><div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+x.d.slice(8,10)+'/'+x.d.slice(5,7)+\"</div></div>\";}).join('')+\"</div>\";}" +
       "document.getElementById('dcLista').addEventListener('click',function(e){var r=e.target.closest('[data-dcx]');if(r)grafCarga(r.dataset.dcx);});" +
@@ -5688,10 +5768,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +
       "document.getElementById('dcAdd').addEventListener('click',function(){" +
       "var ex=document.getElementById('dcEx').value.trim(),kg=parseFloat(document.getElementById('dcKg').value.replace(',','.'));" +
+      "var reps=parseInt(document.getElementById('dcReps').value,10)||0;" +
       "if(!ex||!kg){alert('Preencha exercício e carga.');return;}" +
       "var h=L('ptdc',{});var l=h[ex]||[];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      "l.push({d:new Date().toISOString().slice(0,10),kg:kg});if(l.length>60)l.shift();h[ex]=l;Sv('ptdc',h);" +
-      "if(max>0&&kg>max){if(navigator.vibrate)navigator.vibrate([120,60,220]);" +
+      "l.push({d:new Date().toISOString().slice(0,10),kg:kg,r:reps>0&&reps<100?reps:0});if(l.length>60)l.shift();h[ex]=l;Sv('ptdc',h);" +
+      "document.getElementById('dcReps').value='';" +
+      "if(max>0&&kg>max){if(navigator.vibrate)navigator.vibrate([120,60,220]);confete();" +
       "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
       "t.innerHTML=icx(ICO.estrela,20)+' NOVO RECORDE!<br><small>'+ex+': '+kg+' kg</small>';document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}" +
       // progress\u00e3o sugerida (estilo Hevy): 3 registros seguidos na MESMA carga \u2192 hora de subir
