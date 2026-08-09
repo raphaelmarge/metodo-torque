@@ -1,7 +1,7 @@
 {
   "name": "torqueon-nativo",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "App nativo do TORQUE ON (Capacitor) — empacota o sistema em um app Android/iOS de verdade",
   "scripts": {
     "www": "node copia-www.js",
