@@ -2097,6 +2097,44 @@ async function abaPt(p, a) {
   });
   ok(!!jaPag && jaPag.sumiu && jaPag.ok === "block" && chatDB.some((m) => /Acabei de pagar a mensalidade/.test(m.texto)),
     "'Já paguei' avisa o personal pelo chat e confirma no app (1x por mês)");
+
+  // --- modo circuito (WOD): For Time, AMRAP, EMOM e Tabata ---
+  ok(/Modo circuito \(WOD\)/.test(appHtml2) && /data-wodt='fortime'/.test(appHtml2.replace(/"/g, "'")) || /Modo circuito/.test(appHtml2),
+    "app tem o card Modo circuito (WOD)");
+  const wodR = await pApp.evaluate(async () => {
+    window.__trocaSec("treino");
+    const out = {};
+    out.chips = document.getElementById("wodTipos").textContent;
+    // For Time conta pra cima com voltas
+    document.getElementById("wodGo").click();
+    await new Promise((r) => setTimeout(r, 1200));
+    document.getElementById("wodVolta").click();
+    out.fortime = document.getElementById("wodFase").textContent + "|" + document.getElementById("wodTempo").textContent + "|" + document.getElementById("wodInfo").textContent;
+    document.getElementById("wodZera").click();
+    // Tabata relâmpago (1 round de 1s+1s) termina sozinho com confete e botão de registrar
+    document.querySelector("[data-wodt='tabata']").click();
+    document.getElementById("wodRounds").value = "1";
+    document.getElementById("wodWork").value = "1";
+    document.getElementById("wodRest").value = "1";
+    document.getElementById("wodGo").click();
+    await new Promise((r) => setTimeout(r, 600));
+    out.tabataFase = document.getElementById("wodFase").textContent;
+    await new Promise((r) => setTimeout(r, 2300));
+    out.fim = document.getElementById("wodFase").textContent + "|" + document.getElementById("wodFimBox").textContent;
+    // EMOM mostra o minuto e a contagem regressiva
+    document.querySelector("[data-wodt='emom']").click();
+    document.getElementById("wodMin").value = "2";
+    document.getElementById("wodGo").click();
+    await new Promise((r) => setTimeout(r, 400));
+    out.emom = document.getElementById("wodFase").textContent;
+    document.getElementById("wodZera").click();
+    return out;
+  });
+  ok(/For Time/.test(wodR.chips) && /AMRAP/.test(wodR.chips) && /EMOM/.test(wodR.chips) && /Tabata/.test(wodR.chips), "os 4 cronômetros de cross estão no card");
+  ok(/FOR TIME\|0:0/.test(wodR.fortime) && /1 volta/.test(wodR.fortime), "For Time conta pra cima e marca voltas");
+  ok(/TRABALHA · ROUND 1 DE 1/.test(wodR.tabataFase), "Tabata alterna trabalho/descanso com o round na tela");
+  ok(/FIM!/.test(wodR.fim) && /Tabata completo/.test(wodR.fim), "Tabata termina sozinho com a festa de FIM (o botão de registrar só aparece se o dia ainda não foi marcado)");
+  ok(/MINUTO 1 DE 2/.test(wodR.emom), "EMOM mostra o minuto atual com contagem regressiva");
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
   await pApp.evaluate(() => window.__trocaSec("chat"));
