@@ -2163,19 +2163,29 @@ async function abaPt(p, a) {
     document.getElementById("wpTipo").value = "amrap";
     document.getElementById("wpTipo").dispatchEvent(new Event("change"));
     document.getElementById("wpMin").value = "12";
-    document.getElementById("wpMov").value = "10 Agachamento goblet\n10 Flexão\n200m corrida";
+    // movimentos em linhas estilo ficha: quantidade + exercício (com busca no banco)
+    const qs = document.querySelectorAll("#wpMovLinhas .wpq");
+    const es = document.querySelectorAll("#wpMovLinhas .wpe");
+    qs[0].value = "10"; es[0].value = "Agachamento goblet";
+    qs[1].value = "10"; es[1].value = "Flexão de braço";
+    qs[2].value = "200m"; es[2].value = "Corrida";
+    document.getElementById("wpAq").value = "2 min de corda + mobilidade de ombro";
     document.getElementById("wpSalva").click();
     await new Promise((r) => setTimeout(r, 300));
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return {
       lista: document.getElementById("wpLista").textContent,
       wods: (st.treinosV2[j.id].wods || []).length,
-      appHtml: window.__montaAppAluno(st.alunos.find((a) => a.id === j.id), new Date().toISOString()).slice(0, 200000),
+      temBanco: document.querySelectorAll("#wpExs option").length,
+      appHtml: window.__montaAppAluno(st.alunos.find((a) => a.id === j.id), new Date().toISOString()).slice(0, 250000),
     };
   });
+  ok(profWod.temBanco > 500, "o campo de exercício busca no banco (" + profWod.temBanco + " opções)");
+  ok(/AQUECIMENTO/.test(profWod.appHtml) && /ESCALAS \/ OBS|WOD</.test(profWod.appHtml) && /2 min de corda/.test(profWod.appHtml),
+    "no app o circuito vira folha de WOD com blocos (aquecimento + WOD), igual ao quadro da academia");
   ok(/WOD do sábado/.test(profWod.lista) && /AMRAP 12 min/.test(profWod.lista) && profWod.wods === 1,
     "professor monta o circuito na aba Circuito (WOD) e ele fica salvo no aluno");
-  ok(/WOD do sábado/.test(profWod.appHtml) && /Começar circuito/.test(profWod.appHtml) && /200m corrida/.test(profWod.appHtml),
+  ok(/WOD do sábado/.test(profWod.appHtml) && /Começar circuito/.test(profWod.appHtml) && /200m/.test(profWod.appHtml) && /Corrida/.test(profWod.appHtml),
     "o app do aluno recebe o circuito prescrito com o botão Começar");
   ok(await p.evaluate(() => /Circuitos \(WOD\)/.test(window.__painelApp({ wodres: { w1: [{ d: "2026-08-09", n: "WOD do sábado", r: "8 volta(s) em 12:00!", v: 8 }] } }))),
     "painel do aluno mostra os placares dos circuitos devolvidos pelo app");
