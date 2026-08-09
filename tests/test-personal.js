@@ -2161,6 +2161,66 @@ async function abaPt(p, a) {
   ok(await pGps.evaluate(() => JSON.parse(localStorage.getItem("ptgpsAuto")) === 0 && !window.__cr.gpsOn && window.__cr.watch === null),
     "aluno que desliga o GPS pelo botão tem a escolha respeitada (não religa sozinho)");
   await ctxGps.close();
+  // --- aba Configurações: tolerância de atraso + o que o aluno vê no app ---
+  const stSnapCfg = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  const hojeDia = new Date().getDate();
+  const zedRow = () => p.evaluate(() =>
+    [...document.querySelectorAll("#pendentes .sessao-pt")].map((x) => x.textContent).find((t) => /Zed Config/.test(t)) || "");
+  if (hojeDia >= 5) {
+    // aluno com contrato novo vencido há 3 dias e sem tolerância: ATRASADO
+    await p.evaluate(async () => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const iso3 = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
+      st.alunos.push({ id: "cfg1", nome: "Zed Config", valor: 100, ativo: true });
+      st.planosPT.push({ id: "plcfg", nome: "CfgPlan", valor: 100 });
+      st.contratosPT.push({ id: "ctcfg", alunoId: "cfg1", planoId: "plcfg", status: "ativo", inicio: iso3(-3), diaVenc: new Date().getDate() - 3 });
+      st.config = st.config || {};
+      delete st.config.atrasoDias;
+      window.MTStore.write("ptStudio", st);
+    });
+    await abaPt(p, "pagamentos");
+    await p.waitForTimeout(250);
+    const semTol = await zedRow();
+    ok(/ATRASADO/.test(semTol), "sem tolerância, aluno vencido há 3 dias aparece ATRASADO");
+  }
+  await abaPt(p, "config");
+  const cfgSalvo = await p.evaluate(async () => {
+    const out = { visivel: !document.getElementById("vConfig").hidden };
+    document.getElementById("cfgAtraso").value = "5";
+    ["cfgVeWod", "cfgVeCardio", "cfgVeUtil", "cfgVePag"].forEach((id) => { document.getElementById(id).checked = false; });
+    document.getElementById("cfgSalva").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    out.salvo = st.config.atrasoDias === 5 && st.config.appMostra.wod === false && st.config.appMostra.util === false;
+    out.status = document.getElementById("cfgStatus").textContent;
+    out.appHtml = window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    return out;
+  });
+  ok(cfgSalvo.visivel && cfgSalvo.salvo && /publique os apps/i.test(cfgSalvo.status),
+    "aba Configurações salva a tolerância e as áreas do app (e pede pra republicar)");
+  if (hojeDia >= 5) {
+    await abaPt(p, "pagamentos");
+    await p.waitForTimeout(250);
+    const comTol = await zedRow();
+    ok(comTol !== "" && !/ATRASADO/.test(comTol), "tolerância de 5 dias tira a etiqueta ATRASADO do recém-vencido");
+  } else {
+    ok(true, "tolerância de atraso: teste do ATRASADO pulado no comecinho do mês (não dá pra vencer há 3 dias)");
+  }
+  ok(!/data-trsub='wod'/.test(cfgSalvo.appHtml) && !/id='cardWod'/.test(cfgSalvo.appHtml) && !/id='cardCardio'/.test(cfgSalvo.appHtml) && !/Modo circuito \(WOD\)/.test(cfgSalvo.appHtml),
+    "app do aluno some com o WOD e o cardio quando o professor desliga");
+  const pCfg = await ctx.newPage();
+  pCfg.on("dialog", (d) => d.accept());
+  await pCfg.route("**/app-teste-cfg.html", (r) => r.fulfill({ contentType: "text/html", body: cfgSalvo.appHtml }));
+  await pCfg.goto(BASE + "/app-teste-cfg.html", { waitUntil: "domcontentloaded" });
+  await pCfg.waitForTimeout(500);
+  const cfgApp = await pCfg.evaluate(() => ({
+    itens: [...document.querySelectorAll("#menuApp .nitem")].map((x) => x.textContent.trim()),
+    treinoOk: (() => { window.__trocaSec("treino"); return !!document.querySelector("[data-sec='treino']:not([data-sec-off])"); })(),
+  }));
+  ok(!cfgApp.itens.some((t) => /Utilidades|Plano/.test(t)) && cfgApp.treinoOk,
+    "menu do app respeita as chaves (sem Utilidades/Plano) e o treino segue funcionando sem erros");
+  await pCfg.close();
+  await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCfg);
   await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCr);
   await pApp.evaluate(() => window.__trocaSec("inicio"));
   // substituto de exercício: o toque abre a dica com as trocas
