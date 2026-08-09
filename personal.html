@@ -461,6 +461,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-tra="auto"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4.5' y='8' width='15' height='10.5' rx='2.5'/><path d='M12 8V4.5M9 4.5h6'/><circle cx='9.3' cy='13' r='1'/><circle cx='14.7' cy='13' r='1'/><path d='M9.5 16h5'/></svg> Automático e IA</button>
       <button data-tra="grupo"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg> Em grupo</button>
       <button data-tra="wod"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='13.5' r='7.5'/><path d='M12 9.5v4l2.5 2M10 2.5h4M12 2.5V6M18.5 7.5l1.5-1.5'/></svg> Circuito (WOD)</button>
+      <button data-tra="cardio"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='2.5 13 6.5 13 9.5 5.5 14.5 18.5 17.5 11 21.5 11'/></svg> Corrida e bike</button>
       <button data-tra="ex"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Exercícios</button>
       <button data-tra="videos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5' width='18' height='14' rx='3'/><path d='M10 9.3l4.8 2.7-4.8 2.7z'/></svg> Conteúdos</button>
     </div>
@@ -513,6 +514,35 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </div>
       </div>
       <button class="btn sec" id="btnWodProf" style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='13.5' r='7.5'/><path d='M12 9.5v4l2.5 2M10 2.5h4'/></svg> Cronômetro tela cheia (pra conduzir a sessão)</button>
+    </div>
+
+    <div class="card" style="margin-bottom: 14px;" data-trsec="cardio" hidden>
+      <h2>Corrida e bike</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Prescreva o treino de corrida, caminhada ou bike — o aluno recebe no app com um cronômetro próprio que marca <b>pace (min/km)</b>, distância (GPS ou manual) e tiros com bipe. O resultado volta pro painel dele.</p>
+      <div class="linha-flex" style="margin: 0 0 10px;"><select id="cbAluno" style="min-width: 200px;"></select></div>
+      <div id="cbLista" class="muted">Escolha o aluno pra ver os treinos de corrida e bike dele.</div>
+      <div style="margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--linha); border-radius: 12px;">
+        <b style="font-size: 13px;" id="cbFormTit">Novo treino</b>
+        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+          <label style="font-size: 12px; margin: 0;">Nome<input id="cbNome" placeholder="ex.: Rodagem leve de terça" style="display:block; width: 200px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;">Modalidade<select id="cbMod" style="display:block; width: 130px; margin-top: 3px;"><option value="corrida">Corrida</option><option value="caminhada">Caminhada</option><option value="bike">Bike</option></select></label>
+          <label style="font-size: 12px; margin: 0;">Tipo<select id="cbTipo" style="display:block; width: 150px; margin-top: 3px;"><option value="continuo">Contínuo</option><option value="intervalado">Tiros (intervalado)</option></select></label>
+        </div>
+        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+          <label style="font-size: 12px; margin: 0;" data-cbcfg="continuo">Distância (km, 0 = livre)<input id="cbDist" inputmode="decimal" value="5" style="display:block; width: 150px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-cbcfg="continuo">Tempo alvo (min, 0 = livre)<input id="cbTempo" inputmode="numeric" value="0" style="display:block; width: 160px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-cbcfg="continuo">Pace alvo (min/km, opcional)<input id="cbPace" placeholder="ex.: 6:30" style="display:block; width: 170px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-cbcfg="intervalado" hidden>Tiros<input id="cbReps" inputmode="numeric" value="8" style="display:block; width: 80px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-cbcfg="intervalado" hidden>Forte (s)<input id="cbTiro" inputmode="numeric" value="60" style="display:block; width: 90px; margin-top: 3px;"></label>
+          <label style="font-size: 12px; margin: 0;" data-cbcfg="intervalado" hidden>Leve/descanso (s)<input id="cbDesc" inputmode="numeric" value="90" style="display:block; width: 130px; margin-top: 3px;"></label>
+        </div>
+        <label style="font-size: 12px; display: block; margin: 10px 0 0;">Observações (opcional)<input id="cbObs" placeholder="ex.: ritmo conversável, alongar depois" style="width: 100%; margin-top: 3px;"></label>
+        <div class="linha-flex" style="gap: 10px; margin-top: 10px;">
+          <button class="btn" id="cbSalva">Salvar treino</button>
+          <button class="btn sec" id="cbLimpa" hidden>Cancelar edição</button>
+          <span id="cbStatus" class="muted" style="font-size: 12.5px;"></span>
+        </div>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-trsec="auto">
@@ -1714,6 +1744,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           html += titulo("Circuitos (WOD) — placares do app") + todasW.slice(-6).reverse().map(function (x) {
             return "<div style='font-size:13px;padding:4px 0;border-bottom:1px dashed var(--linha);'><b>" + esc(String(x.n || "Circuito").slice(0, 40)) + "</b> — " +
               esc(String(x.r || "").slice(0, 90)) + " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
+          }).join("");
+        }
+        // corrida e bike: registros do cronômetro de cardio (tempo, distância e pace)
+        var crds = (Array.isArray(ret.cardio) ? ret.cardio : []).filter(function (x) {
+          return x && typeof x === "object" && dataRe(String(x.d || ""));
+        });
+        if (crds.length) {
+          var crModsP = { corrida: "Corrida", caminhada: "Caminhada", bike: "Bike" };
+          var fmtSegP = function (s) { s = Math.max(0, Math.round(+s || 0)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); };
+          html += titulo("Corrida e bike — registros do app") + crds.slice(-6).reverse().map(function (x) {
+            return "<div style='font-size:13px;padding:4px 0;border-bottom:1px dashed var(--linha);'><b>" + esc(String(x.n || "Cardio").slice(0, 40)) + "</b>" +
+              " <span class='muted'>(" + esc(crModsP[x.m] || x.m || "") + ")</span> — " +
+              (+x.k ? String((+x.k).toFixed(2)).replace(".", ",") + " km · " : "") + fmtSegP(x.s) +
+              (x.p ? " · pace " + esc(String(x.p).slice(0, 8)) + " /km" : "") +
+              " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
           }).join("");
         }
         // onboarding: como o aluno se apresentou no primeiro uso do app
@@ -2982,7 +3027,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var opsGt = (st.treinosGrupo || []).map(function (g) {
       return '<option value="' + g.id + '">' + esc(g.nome) + "</option>";
     }).join("");
-    ["sAluno", "pAluno", "tAluno", "avAluno", "taAluno", "wpAluno"].forEach(function (id) {
+    ["sAluno", "pAluno", "tAluno", "avAluno", "taAluno", "wpAluno", "cbAluno"].forEach(function (id) {
       var sel = $(id);
       var atual = sel.value;
       sel.innerHTML = "<option value=''>— aluno —</option>" + opts +
@@ -3959,6 +4004,106 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     wpMostraCfg();
   });
   window.__wodsPT = renderWods; // testes
+
+  // ---------- corrida e bike: prescrição de cardio pro app do aluno ----------
+  var CB_MODS = { corrida: "Corrida", caminhada: "Caminhada", bike: "Bike" };
+  function cbResumo(c) {
+    if (c.tipo === "intervalado") return (c.reps || 8) + "× " + (c.tiro || 60) + "s forte / " + (c.desc || 90) + "s leve";
+    var pedacos = [];
+    if (+c.dist) pedacos.push(String(c.dist).replace(".", ",") + " km");
+    if (+c.tempo) pedacos.push(c.tempo + " min");
+    if (c.pace) pedacos.push("pace " + c.pace);
+    return pedacos.length ? pedacos.join(" · ") : "livre";
+  }
+  var cbEditando = null;
+  function cbMostraCfg() {
+    var tipo = $("cbTipo").value;
+    document.querySelectorAll("[data-cbcfg]").forEach(function (l) {
+      l.hidden = l.getAttribute("data-cbcfg") !== tipo;
+    });
+  }
+  $("cbTipo").addEventListener("change", cbMostraCfg);
+  function renderCardios() {
+    var alunoId = $("cbAluno").value;
+    var st = load();
+    var lista = alunoId ? (((st.treinosV2 || {})[alunoId] || {}).cardio || []) : [];
+    $("cbLista").innerHTML = !alunoId ? "Escolha o aluno pra ver os treinos de corrida e bike dele." :
+      lista.length ? lista.map(function (c) {
+        return '<div class="sessao-pt"><b>' + esc(c.nome) + "</b>" +
+          '<span class="tag ok">' + (CB_MODS[c.mod] || c.mod) + "</span>" +
+          '<span class="muted">' + esc(cbResumo(c)) + "</span>" +
+          '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+          '<button class="btn sec mini" data-cbed="' + c.id + '">editar</button>' +
+          '<button class="btn sec mini" data-cbrm="' + c.id + '">remover</button></span></div>';
+      }).join("") : "Nenhum treino de corrida/bike ainda — monte o primeiro abaixo.";
+  }
+  $("cbAluno").addEventListener("change", renderCardios);
+  $("cbSalva").addEventListener("click", function () {
+    var alunoId = $("cbAluno").value;
+    if (!alunoId) { alert("Escolha o aluno."); return; }
+    var nome = $("cbNome").value.trim();
+    if (!nome) { alert("Dê um nome pro treino (ex.: Rodagem leve)."); return; }
+    var st = load();
+    st.treinosV2 = st.treinosV2 || {};
+    var t = st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
+    t.cardio = t.cardio || [];
+    var c = cbEditando ? t.cardio.find(function (x) { return x.id === cbEditando; }) : null;
+    if (!c) { c = { id: S.uid() }; t.cardio.push(c); }
+    c.nome = nome;
+    c.mod = $("cbMod").value;
+    c.tipo = $("cbTipo").value;
+    c.dist = parseFloat(String($("cbDist").value).replace(",", ".")) || 0;
+    c.tempo = +$("cbTempo").value || 0;
+    c.pace = $("cbPace").value.trim();
+    c.reps = +$("cbReps").value || 8;
+    c.tiro = +$("cbTiro").value || 60;
+    c.desc = +$("cbDesc").value || 90;
+    c.obs = $("cbObs").value.trim();
+    marcaAppPendente(st, alunoId); // o treino entra no app na próxima publicação
+    save(st);
+    cbEditando = null;
+    $("cbFormTit").textContent = "Novo treino";
+    $("cbLimpa").hidden = true;
+    $("cbNome").value = ""; $("cbObs").value = ""; $("cbPace").value = "";
+    $("cbStatus").textContent = "Salvo! Publique o app do aluno pra chegar no celular dele.";
+    renderCardios();
+  });
+  $("cbLimpa").addEventListener("click", function () {
+    cbEditando = null;
+    $("cbFormTit").textContent = "Novo treino";
+    $("cbLimpa").hidden = true;
+    $("cbNome").value = ""; $("cbObs").value = ""; $("cbPace").value = "";
+    $("cbStatus").textContent = "";
+  });
+  $("cbLista").addEventListener("click", function (e) {
+    var ed = e.target.closest("[data-cbed]");
+    var rm = e.target.closest("[data-cbrm]");
+    var alunoId = $("cbAluno").value;
+    if (!alunoId || (!ed && !rm)) return;
+    var st = load();
+    var t = ((st.treinosV2 || {})[alunoId] || {});
+    t.cardio = t.cardio || [];
+    if (rm) {
+      if (!confirm("Remover esse treino de cardio?")) return;
+      t.cardio = t.cardio.filter(function (x) { return x.id !== rm.getAttribute("data-cbrm"); });
+      st.treinosV2[alunoId].cardio = t.cardio;
+      marcaAppPendente(st, alunoId);
+      save(st);
+      renderCardios();
+      return;
+    }
+    var c = t.cardio.find(function (x) { return x.id === ed.getAttribute("data-cbed"); });
+    if (!c) return;
+    cbEditando = c.id;
+    $("cbFormTit").textContent = "Editando: " + c.nome;
+    $("cbLimpa").hidden = false;
+    $("cbNome").value = c.nome; $("cbMod").value = c.mod || "corrida"; $("cbTipo").value = c.tipo || "continuo";
+    $("cbDist").value = c.dist || 0; $("cbTempo").value = c.tempo || 0; $("cbPace").value = c.pace || "";
+    $("cbReps").value = c.reps || 8; $("cbTiro").value = c.tiro || 60; $("cbDesc").value = c.desc || 90;
+    $("cbObs").value = c.obs || "";
+    cbMostraCfg();
+  });
+  window.__cardiosPT = renderCardios; // testes
 
   // cronômetro de circuito em tela cheia (pro personal conduzir a sessão)
   (function () {
@@ -5668,6 +5813,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     })();
     // circuitos (WOD) prescritos pelo personal — entram no app com o cronômetro configurado
     var wodsApp = ((t2 && t2.wods) || []).slice(0, 10);
+    // corrida e bike prescritos — entram na sub-página Cardio com o cronômetro de pace
+    var cardiosApp = ((t2 && t2.cardio) || []).slice(0, 10);
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
@@ -5797,6 +5944,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='cardx' id='trTabs' style='padding:9px 11px;'><div style='display:flex;gap:6px;'>" +
       "<button data-trsub='ficha' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;'>Minha ficha</button>" +
       "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Circuito (WOD)</button>" +
+      "<button data-trsub='cardio' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Corrida e bike</button>" +
       "</div></div>" +
       "<div class='cardx'><h2>Meu treino</h2>" +
       (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:11px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
@@ -5883,6 +6031,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='wodTermina' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
       "<button class='btnx' id='wodZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
       "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" +
+      // corrida e bike: folhas prescritas + cronômetro próprio com pace (min/km), GPS e tiros
+      "<div class='cardx' id='cardCardio'><h2>Corrida e bike</h2>" +
+      (cardiosApp.length ? cardiosApp.map(function (c) {
+        var rotMod = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c.mod] || "CARDIO";
+        var alvo = c.tipo === "intervalado"
+          ? (c.reps || 8) + "× " + (c.tiro || 60) + "s forte / " + (c.desc || 90) + "s leve"
+          : [(+c.dist ? String(c.dist).replace(".", ",") + " km" : ""), (+c.tempo ? c.tempo + " min" : ""), (c.pace ? "pace " + c.pace : "")].filter(Boolean).join(" · ") || "livre";
+        return "<div style='background:linear-gradient(165deg,#1b1724,#14121a);border:1px solid " + COR + ";border-radius:14px;padding:15px 16px;margin-bottom:10px;'>" +
+          "<div style='font-size:11px;font-weight:800;letter-spacing:.18em;color:" + CORC + ";text-transform:uppercase;'>" + rotMod + " · " + esc(alvo) + "</div>" +
+          "<div style='font-size:20px;font-weight:900;font-style:italic;text-transform:uppercase;margin:2px 0;'>" + esc(c.nome) + "</div>" +
+          (c.obs ? "<div style='font-size:12.5px;color:#a9a4b5;margin-top:4px;'>" + esc(c.obs) + "</div>" : "") +
+          "<button class='btnx' data-cbstart='" + c.id + "' style='display:block;width:100%;text-align:center;margin-top:10px;'>Começar</button></div>";
+      }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:2px 0 10px;'>Ou treine livre aqui embaixo:</div>" : "") +
+      "<div id='crTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
+      "<div id='crCfgBox' style='display:none;gap:8px;margin-bottom:10px;'></div>" +
+      "<div id='crTela' style='text-align:center;padding:16px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
+      "<div id='crFase' style='font-size:11px;font-weight:800;letter-spacing:.16em;color:#a9a4b5;text-transform:uppercase;'>Pronto pra correr?</div>" +
+      "<div id='crTempo' style='font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin:2px 0;'>0:00</div>" +
+      "<div style='display:flex;gap:8px;justify-content:center;margin-top:8px;'>" +
+      "<div style='flex:1;background:#1b1724;border-radius:11px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE</div><div id='crPace' style='font-size:19px;font-weight:900;color:" + CORC + ";'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div>" +
+      "<div style='flex:1;background:#1b1724;border-radius:11px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>DISTÂNCIA</div><div id='crDist' style='font-size:19px;font-weight:900;'>0,00</div><div style='font-size:9px;color:#6e6a78;'>km</div></div>" +
+      "<div style='flex:1;background:#1b1724;border-radius:11px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE MÉDIO</div><div id='crPaceMed' style='font-size:19px;font-weight:900;'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div></div>" +
+      "<div id='crInfo' style='font-size:12px;color:#a9a4b5;margin-top:8px;'></div></div>" +
+      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
+      "<button class='btnx' id='crGo' style='flex:2;'>Iniciar</button>" +
+      "<button class='btnx' id='crFim' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
+      "<button class='btnx' id='crZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
+      "<div style='display:flex;gap:8px;margin-top:8px;align-items:center;'>" +
+      "<button id='crGps' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:11px;padding:9px 0;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;'>Ligar GPS</button>" +
+      "<input id='crKm' inputmode='decimal' placeholder='km na mão (ex.: 5,2)' style='flex:1.4;min-width:0;text-align:center;'></div>" +
+      "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div></div>" +
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
@@ -6017,14 +6196,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length)return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{})," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[])," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
@@ -6381,6 +6560,80 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
       "wodChips();wodCfg();pintaWodRes();" +
       "window.__wod=wod;" +
+      // ---- corrida e bike: cronômetro com pace (min/km), distância por GPS ou na mão, e tiros ----
+      "var CARDIOS=" + JSON.stringify(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90 }; })).replace(/</g, "\\u003c") + ";" +
+      "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
+      "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false};" +
+      "function crEl(id){return document.getElementById(id);}" +
+      "function paceFmt(mpk){if(!isFinite(mpk)||mpk<=0||mpk>60)return '--:--';var m=Math.floor(mpk),s=Math.round((mpk-m)*60);if(s===60){m++;s=0;}return m+':'+('0'+s).slice(-2);}" +
+      "function havKm(a,b){var R=6371,rd=Math.PI/180;var x=Math.sin((b.lat-a.lat)*rd/2),y=Math.sin((b.lng-a.lng)*rd/2);" +
+      "var h=x*x+Math.cos(a.lat*rd)*Math.cos(b.lat*rd)*y*y;return 2*R*Math.asin(Math.sqrt(h));}" +
+      "function crCd(resta){if(!cr.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
+      "if(cd&&cd!==cr.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}cr.ultCd=cd;}" +
+      "function crKmAtual(){if(cr.gpsOn)return cr.km;var v=parseFloat(String(crEl('crKm').value||'').replace(',','.'));return isFinite(v)&&v>0?v:cr.km;}" +
+      "function pintaCr(){var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;var km=crKmAtual();" +
+      "crEl('crTempo').textContent=wodFmt(el2);" +
+      "crEl('crDist').textContent=km.toFixed(2).replace('.',',');" +
+      "var med=km>0.015?(el2/60)/km:null;crEl('crPaceMed').textContent=med?paceFmt(med):'--:--';" +
+      "var atual=med;if(cr.gpsOn&&cr.jan.length>1){var a0=cr.jan[0],a1=cr.jan[cr.jan.length-1];" +
+      "if(a1.km-a0.km>0.02)atual=((a1.t-a0.t)/60000)/(a1.km-a0.km);}" +
+      "crEl('crPace').textContent=atual?paceFmt(atual):'--:--';" +
+      "crEl('crFim').style.display=(cr.run||cr.acum>0)?'block':'none';" +
+      "var p2=cr.plano;var fase=crEl('crFase'),info=crEl('crInfo');" +
+      "if(p2&&p2.t==='intervalado'){var ciclo=p2.ti+p2.de;var tot=p2.r*ciclo;" +
+      "if(cr.run&&el2>=tot){crFinaliza('TIROS COMPLETOS \\u2014 '+p2.r+'\\u00d7!');return;}" +
+      "var rdA=Math.min(p2.r,Math.floor(el2/ciclo)+1);var pos=el2%ciclo;var forte=pos<p2.ti;" +
+      "fase.textContent=(forte?'FORTE':'LEVE')+' \\u00b7 TIRO '+rdA+' DE '+p2.r;fase.style.color=forte?'" + CORC + "':'#22d3ee';" +
+      "info.textContent=p2.n+' \\u2014 '+p2.ti+'s forte / '+p2.de+'s leve';" +
+      "var f3=(forte?'F':'L')+rdA;if(cr.run&&f3!==cr.ultFase){cr.ultFase=f3;if(el2>0.3){if(navigator.vibrate)navigator.vibrate(forte?[90,50,90]:200);bip(forte?1100:600,200);}}" +
+      "crCd(forte?p2.ti-pos:ciclo-pos);return;}" +
+      "fase.style.color='#a9a4b5';" +
+      "fase.textContent=cr.run?(CRMODS[cr.mod]||'Cardio').toUpperCase()+(p2?' \\u00b7 '+p2.n.toUpperCase():''):(cr.acum>0?'Pausado':'Pronto pra correr?');" +
+      "if(p2){var alvos=[];if(p2.d)alvos.push(p2.d+' km');if(p2.tp)alvos.push(p2.tp+' min');if(p2.p)alvos.push('pace '+p2.p);" +
+      "info.textContent='Alvo: '+(alvos.join(' \\u00b7 ')||'livre')+(p2.d&&km>=p2.d?' \\u2014 ALVO BATIDO!':'');" +
+      "if(cr.run&&!cr.alvoBipou&&((p2.d&&km>=p2.d)||(p2.tp&&el2>=p2.tp*60))){cr.alvoBipou=true;bip(1300,300);if(navigator.vibrate)navigator.vibrate([150,80,150]);}}" +
+      "else info.textContent=cr.gpsOn?'GPS ligado \\u2014 distância e pace sozinhos':'Digite os km na mão ou ligue o GPS';" +
+      "if(Math.floor(km)>cr.ultKm&&km>0){cr.ultKm=Math.floor(km);if(cr.run){bip(1000,220);if(navigator.vibrate)navigator.vibrate([120,60,120]);}}}" +
+      "function pintaCrHist(){var el=crEl('crHist');if(!el)return;var lst=L('ptcardio',[]);" +
+      "el.innerHTML=lst.length?'<b>Seus \\u00faltimos treinos:</b><br>'+lst.slice(-5).reverse().map(function(x){" +
+      "return String(x.d).slice(8,10)+'/'+String(x.d).slice(5,7)+' \\u2014 '+String(x.n).replace(/[<>&]/g,'')+': '+" +
+      "(x.k?x.k.toFixed(2).replace('.',',')+' km \\u00b7 ':'')+wodFmt(x.s)+(x.p?' \\u00b7 pace '+x.p:'');}).join('<br>'):'';}" +
+      "function crFinaliza(msg){var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;if(el2<5)return;" +
+      "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;soltaTela();crGpsPara();" +
+      "var km=crKmAtual();var med=km>0.015?(el2/60)/km:null;" +
+      "var reg={d:isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null};" +
+      "var lst=L('ptcardio',[]);lst.push(reg);if(lst.length>30)lst.shift();Sv('ptcardio',lst);" +
+      "crEl('crGo').textContent='Iniciar';crEl('crFase').textContent=msg||'BOA! Treino registrado';crEl('crFase').style.color='#4ade80';" +
+      "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();pintaCrHist();" +
+      "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;crEl('crKm').value='';}" +
+      "function crGpsPara(){if(cr.watch!=null&&navigator.geolocation){navigator.geolocation.clearWatch(cr.watch);}cr.watch=null;cr.gpsOn=false;cr.lastPos=null;" +
+      "var b=crEl('crGps');b.textContent='Ligar GPS';b.style.borderColor='#322e3d';b.style.color='#a9a4b5';}" +
+      "crEl('crGps').addEventListener('click',function(){if(cr.gpsOn){crGpsPara();pintaCr();return;}" +
+      "if(!navigator.geolocation){crEl('crInfo').textContent='Esse aparelho n\\u00e3o tem GPS dispon\\u00edvel \\u2014 digite os km na m\\u00e3o.';return;}" +
+      "var b=this;cr.watch=navigator.geolocation.watchPosition(function(pos){" +
+      "cr.gpsOn=true;b.textContent='GPS ligado \\ud83d\\udccd';b.style.borderColor='#4ade80';b.style.color='#4ade80';" +
+      "if(pos.coords.accuracy>40)return;var pt={lat:pos.coords.latitude,lng:pos.coords.longitude};" +
+      "if(cr.lastPos&&cr.run){var dK=havKm(cr.lastPos,pt);if(dK<0.15)cr.km+=dK;}" +
+      "cr.lastPos=pt;if(cr.run){cr.jan.push({t:Date.now(),km:cr.km});while(cr.jan.length&&Date.now()-cr.jan[0].t>60000)cr.jan.shift();}pintaCr();" +
+      "},function(){crEl('crInfo').textContent='Sem sinal de GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.';" +
+      "},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});});" +
+      "function crChips(){var box=crEl('crTipos');if(!box)return;box.innerHTML=Object.keys(CRMODS).map(function(m){var on=!cr.plano&&cr.mod===m;" +
+      "return \"<button type='button' class='crModBt' data-crmod='\"+m+\"' style='flex:1;padding:8px 2px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;background:\"+(on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a')+\";border:\"+(on?'none':'1px solid #322e3d')+\";color:\"+(on?'#fff':'#a9a4b5')+\";'>\"+CRMODS[m]+\"</button>\";}).join('');}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('.crModBt');if(!b||cr.run)return;" +
+      "cr.plano=null;cr.mod=b.dataset.crmod;cr.alvoBipou=false;crChips();pintaCr();});" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-cbstart]');if(!b)return;" +
+      "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;" +
+      "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.plano=p3;cr.mod=p3.m;" +
+      "crEl('crGo').textContent='Iniciar';crChips();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
+      "crEl('crGo').addEventListener('click',function(){" +
+      "if(cr.run){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=(Date.now()-cr.t0)/1000;this.textContent='Continuar';soltaTela();pintaCr();return;}" +
+      "cr.run=true;cr.t0=Date.now()-cr.acum*1000;this.textContent='Pausar';ligaTela();bip(880,110);crEl('crFase').style.color='#a9a4b5';" +
+      "cr.iv=setInterval(pintaCr,200);pintaCr();});" +
+      "crEl('crFim').addEventListener('click',function(){crFinaliza(null);});" +
+      "crEl('crZera').addEventListener('click',function(){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;soltaTela();crGpsPara();" +
+      "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';pintaCr();});" +
+      "crEl('crKm').addEventListener('input',function(){if(!cr.gpsOn)pintaCr();});" +
+      "crChips();pintaCr();pintaCrHist();window.__cr=cr;window.__pintaCr=pintaCr;" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
       "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='Bora! Próxima série!';" +
@@ -6824,7 +7077,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
-      "if(el.id==='trTabs'||el.id==='cardWod'){el.setAttribute('data-sec','treino');return;}" +
+      "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'){el.setAttribute('data-sec','treino');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
@@ -6876,7 +7129,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var trSub='ficha';" +
       "function trocaTrSub(s){trSub=s;" +
       "document.querySelectorAll(\"[data-sec='treino']\").forEach(function(el){if(el.id==='trTabs')return;" +
-      "el.style.display=((s==='wod')===(el.id==='cardWod'))?'':'none';});" +
+      "var idAlvo=s==='wod'?'cardWod':s==='cardio'?'cardCardio':null;" +
+      "el.style.display=(idAlvo?el.id===idAlvo:(el.id!=='cardWod'&&el.id!=='cardCardio'))?'':'none';});" +
       "document.querySelectorAll('[data-trsub]').forEach(function(b){var on=b.dataset.trsub===s;" +
       "b.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';b.style.border=on?'none':'1px solid #322e3d';b.style.color=on?'#fff':'#a9a4b5';});" +
       "window.scrollTo(0,0);}" +

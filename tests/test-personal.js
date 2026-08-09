@@ -2040,6 +2040,97 @@ async function abaPt(p, a) {
     "saúde da cobrança separa quem paga em dia de quem atrasa e soma o que falta cair");
   ok(/pacote de sessões/.test(lote7prof.alertas) && /Avisar no zap/.test(lote7prof.alertas) && /wa\.me\/5521977776666/.test(lote7prof.alertas),
     "alerta de pacote acabando ganha o botão de avisar o aluno no zap");
+  // --- corrida e bike: prescrição no professor + cronômetro de pace no app ---
+  const stSnapCr = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  await abaPt(p, "treinos");
+  const cardioProf = await p.evaluate(async () => {
+    window.__trAba("cardio");
+    const out = {};
+    out.abaVisivel = !document.querySelector("[data-trsec='cardio']").hidden;
+    const sel = document.getElementById("cbAluno");
+    sel.value = sel.options[1].value;
+    sel.dispatchEvent(new Event("change"));
+    document.getElementById("cbNome").value = "Rodagem de terça";
+    document.getElementById("cbTipo").value = "continuo";
+    document.getElementById("cbDist").value = "5";
+    document.getElementById("cbPace").value = "6:30";
+    document.getElementById("cbObs").value = "Ritmo conversável";
+    document.getElementById("cbSalva").click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.getElementById("cbNome").value = "Tiros de quinta";
+    document.getElementById("cbTipo").value = "intervalado";
+    document.getElementById("cbTipo").dispatchEvent(new Event("change"));
+    document.getElementById("cbReps").value = "2";
+    document.getElementById("cbTiro").value = "1";
+    document.getElementById("cbDesc").value = "1";
+    document.getElementById("cbSalva").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const aid = document.getElementById("cbAluno").value;
+    out.salvos = ((st.treinosV2[aid] || {}).cardio || []).length;
+    out.lista = document.getElementById("cbLista").textContent;
+    out.appHtml = window.__montaAppAluno(st.alunos.find((a) => a.id === aid), new Date().toISOString());
+    return out;
+  });
+  ok(cardioProf.abaVisivel && cardioProf.salvos === 2 && /Rodagem de terça/.test(cardioProf.lista) && /2× 1s forte/.test(cardioProf.lista),
+    "aba Corrida e bike do professor prescreve contínuo e tiros (intervalado)");
+  const pCr = await ctx.newPage();
+  pCr.on("dialog", (d) => d.accept());
+  await pCr.route("**/app-teste-cardio.html", (r) => r.fulfill({ contentType: "text/html", body: cardioProf.appHtml }));
+  await pCr.goto(BASE + "/app-teste-cardio.html", { waitUntil: "domcontentloaded" });
+  await pCr.waitForTimeout(400);
+  const cardioSub = await pCr.evaluate(() => {
+    window.__trocaSec("treino");
+    window.__trSub("cardio");
+    return {
+      cardVis: document.getElementById("cardCardio").style.display !== "none",
+      folhas: document.querySelectorAll("[data-cbstart]").length,
+      txt: document.getElementById("cardCardio").textContent,
+    };
+  });
+  ok(cardioSub.cardVis && cardioSub.folhas === 2 && /pace 6:30/.test(cardioSub.txt) && /Ritmo conversável/.test(cardioSub.txt),
+    "app ganha a sub-aba Corrida e bike com as folhas prescritas (alvo com pace)");
+  // cronômetro livre com pace: roda, km na mão, Terminei registra
+  await pCr.evaluate(() => document.getElementById("crGo").click());
+  await pCr.waitForTimeout(5400);
+  await pCr.evaluate(() => {
+    document.getElementById("crKm").value = "0,02";
+    document.getElementById("crKm").dispatchEvent(new Event("input"));
+  });
+  const cardioRun = await pCr.evaluate(() => ({
+    t: document.getElementById("crTempo").textContent,
+    pace: document.getElementById("crPaceMed").textContent,
+    dist: document.getElementById("crDist").textContent,
+  }));
+  ok(/0:0[5-9]/.test(cardioRun.t) && cardioRun.dist === "0,02" && /^\d+:\d\d$/.test(cardioRun.pace),
+    "cronômetro de cardio marca tempo, distância e pace (min/km)");
+  await pCr.evaluate(() => document.getElementById("crFim").click());
+  await pCr.waitForTimeout(300);
+  const cardioReg = await pCr.evaluate(() => ({
+    lst: JSON.parse(localStorage.getItem("ptcardio") || "[]"),
+    hist: document.getElementById("crHist").textContent,
+  }));
+  ok(cardioReg.lst.length === 1 && cardioReg.lst[0].k === 0.02 && !!cardioReg.lst[0].p && /últimos treinos/.test(cardioReg.hist),
+    "Terminei! registra o treino com pace e monta o histórico");
+  // tiros prescritos terminam sozinhos e registram
+  await pCr.evaluate(() => {
+    document.querySelectorAll("[data-cbstart]")[1].click();
+    document.getElementById("crGo").click();
+  });
+  await pCr.waitForTimeout(800);
+  const cardioTiro = await pCr.evaluate(() => document.getElementById("crFase").textContent);
+  ok(/TIRO \d DE 2/.test(cardioTiro), "tiros mostram FORTE/LEVE com o tiro atual na tela");
+  await pCr.waitForTimeout(4200);
+  const cardioFim = await pCr.evaluate(() => ({
+    fase: document.getElementById("crFase").textContent,
+    lst: JSON.parse(localStorage.getItem("ptcardio") || "[]"),
+  }));
+  ok(/TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 && /Tiros de quinta/.test(cardioFim.lst[1].n),
+    "treino de tiros completa sozinho e registra o resultado");
+  ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
+    "painel do professor mostra os registros de corrida e bike com pace");
+  await pCr.close();
+  await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnapCr);
   await pApp.evaluate(() => window.__trocaSec("inicio"));
   // substituto de exercício: o toque abre a dica com as trocas
   const altEx = await pApp.evaluate(() => {
