@@ -209,6 +209,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="relatorios"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg>Relatórios</button>
     <button data-a="assessoria"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/></svg>Assessoria</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
+    <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
       <button id="btnTemaPt" class="sw" role="switch" aria-checked="false" title="Mudar pro modo claro"><span class="sw-bola"></span></button>
@@ -807,7 +808,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
   </section>
 
-  <div class="card" id="cardConta" style="margin-top: 20px;">
+  <div class="card" id="cardConta" hidden style="margin-top: 20px;">
     <h2>Sua ilha no TORQUE ON</h2>
     <p class="muted" id="contaStatus" style="margin: 6px 0 10px;"></p>
     <div class="linha-flex" style="margin-bottom: 10px; gap: 14px;">
@@ -1111,8 +1112,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vRelatorios").hidden = b.dataset.a !== "relatorios";
     $("vAssessoria").hidden = b.dataset.a !== "assessoria";
     $("vChat").hidden = b.dataset.a !== "chat";
-    // o card da conta (ilha) só aparece na aba Alunos — não precisa repetir em todas
-    $("cardConta").hidden = b.dataset.a !== "alunos";
+    // o card da conta (ilha) tem a própria aba no menu — longe da lista de alunos
+    $("cardConta").hidden = b.dataset.a !== "conta";
+    if (b.dataset.a === "conta") renderConta();
     $("kpis").hidden = false; // os kpis vivem dentro do Dashboard
     $("vPerfil").hidden = true;
     if (b.dataset.a === "relatorios") renderRelatorios();

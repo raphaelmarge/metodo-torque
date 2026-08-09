@@ -296,9 +296,10 @@ async function abaPt(p, a) {
   let temPix = await p.evaluate(() => !!document.querySelector("#pendentes [data-pix]"));
   ok(!temPix, "sem chave Pix configurada não há botão 💠");
 
-  // chave Pix no card da ilha (que agora vive só na aba Alunos)
-  await abaPt(p, "alunos");
-  ok(await p.evaluate(() => !document.getElementById("cardConta").hidden), "card da ilha aparece na aba Alunos");
+  // chave Pix no card da ilha (que agora tem aba própria no menu — Sua ilha)
+  await abaPt(p, "conta");
+  ok(await p.evaluate(() => !document.getElementById("cardConta").hidden), "card da ilha aparece na aba Sua ilha");
+  ok(await p.evaluate(() => document.getElementById("vAlunos").hidden), "a aba Sua ilha não mistura com a lista de alunos");
   await p.fill("#cfgPixChave", "raphael@torquefit.com.br");
   await p.fill("#cfgPixNome", "Raphael Margé");
   await p.fill("#cfgPixCidade", "Belo Horizonte");
@@ -2462,7 +2463,7 @@ async function abaPt(p, a) {
 
   // ---------- confiança: backup no card da ilha + indicador da nuvem ----------
   console.log("Backup e indicador da nuvem:");
-  await abaPt(p, "alunos");
+  await abaPt(p, "conta");
   ok(await p.evaluate(() => !!document.getElementById("btnBackup") && !!document.getElementById("btnBackupRestaura") &&
     /backup/i.test(document.getElementById("bkAviso").textContent)), "card da ilha tem o bloco de backup com aviso");
   await p.evaluate(() => {
