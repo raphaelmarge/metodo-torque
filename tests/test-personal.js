@@ -1868,6 +1868,43 @@ async function abaPt(p, a) {
   });
   ok(gavetaApp.aberto && gavetaApp.itens.length >= 5 && gavetaApp.fechou && gavetaApp.chatAbriu,
     "menu ☰ no canto direito abre a gaveta com todas as áreas e navega (" + gavetaApp.itens.join(", ") + ")");
+  // --- utilidades: água com copinhos, cronômetro/timer, 1RM, anilhas e IMC ---
+  const util = await pApp.evaluate(async () => {
+    const out = {};
+    out.naGaveta = Array.from(document.querySelectorAll("#menuApp .nitem")).some((x) => /Utilidades/.test(x.textContent));
+    window.__trocaSec("util");
+    for (let i = 0; i < 8; i++) document.getElementById("agMais").click();
+    await new Promise((r) => setTimeout(r, 250));
+    out.agua = document.getElementById("agInfo").textContent;
+    out.copos = document.querySelectorAll("#agCopos .copo").length;
+    out.habAgua = (JSON.parse(localStorage.getItem("pthab") || "{}")[new Date().toISOString().slice(0, 10)] || {})[0] === true;
+    document.getElementById("rmKg").value = "100";
+    document.getElementById("rmReps").value = "5";
+    document.getElementById("rmKg").dispatchEvent(new Event("input"));
+    out.rm = document.getElementById("rmOut").textContent;
+    document.getElementById("anKg").value = "100";
+    document.getElementById("anKg").dispatchEvent(new Event("input"));
+    out.anilhas = document.getElementById("anOut").textContent;
+    document.getElementById("imcKg").value = "85";
+    document.getElementById("imcCm").value = "178";
+    document.getElementById("imcKg").dispatchEvent(new Event("input"));
+    out.imc = document.getElementById("imcOut").textContent;
+    document.getElementById("ucGo").click();
+    await new Promise((r) => setTimeout(r, 500));
+    out.crono = document.getElementById("ucTempo").textContent;
+    document.getElementById("ucZera").click();
+    // devolve o estado dos hábitos com clique real (repinta o XP; o teste de streak marca do zero)
+    window.__trocaSec("inicio");
+    document.querySelectorAll("[data-hab]")[0].click();
+    await new Promise((r) => setTimeout(r, 150));
+    return out;
+  });
+  ok(util.naGaveta && util.copos === 8 && /Meta do dia batida/.test(util.agua) && util.habAgua,
+    "água com copinhos: bater a meta marca o hábito Água sozinho");
+  ok(/116,5 kg/.test(util.rm), "calculadora de 1RM (Epley: 100×5 = 116,5 kg) com tabela de percentuais");
+  ok(/1× 25 kg/.test(util.anilhas) && /1× 15 kg/.test(util.anilhas), "calculadora de anilhas monta a barra (100 kg = 25+15 por lado)");
+  ok(/26,8/.test(util.imc) && /sobrepeso/.test(util.imc), "IMC calcula e classifica (85 kg / 1,78 m = 26,8)");
+  ok(/0:00\.\d/.test(util.crono), "cronômetro avulso roda com décimos");
   await pApp.evaluate(() => window.__trocaSec("inicio"));
   // substituto de exercício: o toque abre a dica com as trocas
   const altEx = await pApp.evaluate(() => {

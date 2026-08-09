@@ -5580,7 +5580,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ".kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #322e3d}" +
       ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}" +
-      "@keyframes cfQueda{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}</style></head><body>" +
+      "@keyframes cfQueda{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}" +
+      "@keyframes copoPop{0%{transform:scale(.75)}60%{transform:scale(1.14)}100%{transform:scale(1)}}</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
       "<span id='xpChip' style='flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>" +
@@ -5749,6 +5750,48 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='pzGraf' class='vz'>Registre o peso de hoje — a curva aparece aqui.</div>" +
       "<div style='display:flex;gap:8px;margin-top:10px;'><input id='mpAlvo' inputmode='decimal' placeholder='Minha meta (kg)' style='flex:1;min-width:0'><button class='btnx' id='mpSalva' style='padding:11px 16px;'>Definir meta</button></div>" +
       "<div id='mpBarra' style='margin-top:8px;'></div></div>" +
+      // ---- UTILIDADES (gaveta ☰): água, cronômetro, 1RM, anilhas, IMC ----
+      "<div class='cardx' id='utilAgua'><h2>Água de hoje</h2>" +
+      "<div id='agCopos' style='display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 10px;'></div>" +
+      "<div style='display:flex;gap:8px;align-items:center;'>" +
+      "<button class='btnx' id='agMais' style='flex:1;'>Bebi um copo!</button>" +
+      "<button class='btnx' id='agMenos' style='flex:none;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;padding:11px 16px;' title='tirar um copo'>−1</button></div>" +
+      "<div id='agInfo' class='vz' style='font-size:12.5px;'></div>" +
+      "<div style='display:flex;gap:8px;margin-top:6px;'>" +
+      "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Copos por dia<select id='agMetaSel' style='width:100%;margin-top:3px;'><option>6</option><option selected>8</option><option>10</option><option>12</option></select></label>" +
+      "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Tamanho do copo<select id='agMlSel' style='width:100%;margin-top:3px;'><option value='200'>200 ml</option><option value='250' selected>250 ml</option><option value='300'>300 ml</option><option value='500'>500 ml (garrafa)</option></select></label></div></div>" +
+      "<div class='cardx' id='utilCrono'><h2>Cronômetro e timer</h2>" +
+      "<div style='display:flex;gap:6px;margin-bottom:10px;'>" +
+      "<button data-uct='crono' class='ucTipo' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;'>Cronômetro</button>" +
+      "<button data-uct='timer' class='ucTipo' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Timer</button></div>" +
+      "<div id='ucCfg' style='display:none;gap:8px;margin-bottom:10px;'>" +
+      "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Minutos<input id='ucMin' inputmode='numeric' value='5' style='width:100%;margin-top:3px;'></label>" +
+      "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Segundos<input id='ucSeg' inputmode='numeric' value='0' style='width:100%;margin-top:3px;'></label></div>" +
+      "<div style='text-align:center;padding:14px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
+      "<div id='ucTempo' style='font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;'>0:00.0</div></div>" +
+      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
+      "<button class='btnx' id='ucGo' style='flex:2;'>Iniciar</button>" +
+      "<button class='btnx' id='ucVolta' style='flex:1;background:#14121a;border:1px solid " + COR + ";box-shadow:none;'>Volta</button>" +
+      "<button class='btnx' id='ucZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
+      "<div id='ucVoltas' class='vz' style='font-size:12px;'></div></div>" +
+      "<div class='cardx' id='utilRm'><h2>Calculadora de 1RM</h2>" +
+      "<div class='vz' style='text-align:left;padding:0 0 8px;'>Quanto você levanta em 1 repetição? Preenche a carga e as reps que fez.</div>" +
+      "<div style='display:flex;gap:8px;'>" +
+      "<input id='rmKg' inputmode='decimal' placeholder='Carga (kg)' style='flex:1;min-width:0'>" +
+      "<input id='rmReps' inputmode='numeric' placeholder='Reps' style='width:80px'></div>" +
+      "<div id='rmOut' style='margin-top:10px;'></div></div>" +
+      "<div class='cardx' id='utilAnilha'><h2>Calculadora de anilhas</h2>" +
+      "<div class='vz' style='text-align:left;padding:0 0 8px;'>Quer levantar X kg? Ele fala quais anilhas colocar em cada lado da barra.</div>" +
+      "<div style='display:flex;gap:8px;'>" +
+      "<input id='anKg' inputmode='decimal' placeholder='Peso total (kg)' style='flex:1;min-width:0'>" +
+      "<select id='anBarra' style='width:120px;'><option value='20'>Barra 20 kg</option><option value='15'>Barra 15 kg</option><option value='10'>Barra 10 kg</option></select></div>" +
+      "<div id='anOut' style='margin-top:10px;'></div></div>" +
+      "<div class='cardx' id='utilImc'><h2>IMC rápido</h2>" +
+      "<div style='display:flex;gap:8px;'>" +
+      "<input id='imcKg' inputmode='decimal' placeholder='Peso (kg)' style='flex:1;min-width:0'>" +
+      "<input id='imcCm' inputmode='numeric' placeholder='Altura (cm)' style='width:110px'></div>" +
+      "<div id='imcOut' style='margin-top:10px;'></div>" +
+      "<div class='vz' style='font-size:11px;'>O IMC é só uma referência — quem manda na avaliação é " + esc(studio.split(" ")[0]) + ".</div></div>" +
       "<div class='cardx'><h2>Hábitos de hoje</h2>" +
       "<div id='habBox' style='display:flex;flex-direction:column;gap:8px;'></div>" +
       "<div id='habStreak' class='vz' style='margin-top:8px;'></div></div>" +
@@ -5825,7 +5868,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
       "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
       ",NUVEM=" + JSON.stringify((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
-      ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ";" +
+      ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres')devolveApp();" +
@@ -6247,6 +6290,83 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(!v||v<20||v>400){alert('Confere a meta.');return;}Sv('ptmetapeso',String(v));Sv('ptmetaok','');document.getElementById('mpAlvo').value='';pintaMetaPeso();});" +
       "(function(){var alvo=L('ptmetapeso','');if(alvo)document.getElementById('mpAlvo').placeholder='Meta atual: '+String(alvo).replace('.',',')+' kg';})();" +
       "pintaMetaPeso();" +
+      // ---- utilidades: água com copinhos animados ----
+      "function agCfg(){var c=L('ptaguaCfg',null)||{copos:8,ml:250};return c;}" +
+      "function agN(){return +L('ptaguaN_'+isoHj(),0)||0;}" +
+      "function pintaAgua(anima){var cfg=agCfg(),n=agN();var box=document.getElementById('agCopos');if(!box)return;" +
+      "document.getElementById('agMetaSel').value=String(cfg.copos);document.getElementById('agMlSel').value=String(cfg.ml);" +
+      "var html='';for(var i=0;i<cfg.copos;i++){var cheio=i<n;" +
+      "html+=\"<div class='copo' data-ci='\"+i+\"' style='width:33px;height:44px;border:2px solid \"+(cheio?'#38bdf8':'#322e3d')+\";border-radius:5px 5px 11px 11px;position:relative;overflow:hidden;cursor:pointer;background:#14121a;\"+(anima&&i===n-1?'animation:copoPop .4s;':'')+\"'>\"+" +
+      "\"<div style='position:absolute;left:0;right:0;bottom:0;height:\"+(cheio?'82%':'0')+\";background:linear-gradient(180deg,#7dd3fc,#0284c7);transition:height .35s;'></div></div>\";}" +
+      "box.innerHTML=html;" +
+      "var ml=n*cfg.ml;var falta=cfg.copos-n;" +
+      "document.getElementById('agInfo').textContent=n>=cfg.copos?'Meta do dia batida — '+(ml/1000).toFixed(2).replace('.',',')+' L! Hábito Água marcado sozinho.':" +
+      "n+' de '+cfg.copos+' copos ('+(ml>=1000?(ml/1000).toFixed(2).replace('.',',')+' L':ml+' ml')+') — faltam '+falta+'.';}" +
+      "function agSalva(n){var cfg=agCfg();n=Math.max(0,Math.min(cfg.copos,n));Sv('ptaguaN_'+isoHj(),n);" +
+      "if(n>=cfg.copos){var h=L('pthab',{});var dia=h[isoHj()]||{};if(!dia[0]){dia[0]=true;h[isoHj()]=dia;Sv('pthab',h);try{pintaHab();}catch(e){}confete();if(navigator.vibrate)navigator.vibrate([120,60,220]);}}" +
+      "pintaAgua(true);}" +
+      "document.getElementById('agMais').addEventListener('click',function(){agSalva(agN()+1);});" +
+      "document.getElementById('agMenos').addEventListener('click',function(){agSalva(agN()-1);});" +
+      "document.getElementById('agCopos').addEventListener('click',function(e){var c=e.target.closest('.copo');if(!c)return;var i=+c.dataset.ci;agSalva(agN()===i+1?i:i+1);});" +
+      "[['agMetaSel','copos'],['agMlSel','ml']].forEach(function(par){document.getElementById(par[0]).addEventListener('change',function(){" +
+      "var cfg=agCfg();cfg[par[1]]=+this.value;Sv('ptaguaCfg',cfg);pintaAgua(false);});});" +
+      "pintaAgua(false);" +
+      // ---- utilidades: cronômetro e timer avulsos ----
+      "var uc={tipo:'crono',run:false,iv:null,t0:0,acum:0,voltas:[]};" +
+      "function ucFmt(s,dec){s=Math.max(0,s);var m=Math.floor(s/60),ss=Math.floor(s%60);" +
+      "return m+':'+('0'+ss).slice(-2)+(dec?'.'+Math.floor((s%1)*10):'');}" +
+      "function ucPinta(){var el2=uc.run?(Date.now()-uc.t0)/1000:uc.acum;var tmp=document.getElementById('ucTempo');" +
+      "if(uc.tipo==='crono'){tmp.textContent=ucFmt(el2,true);return;}" +
+      "var tot=60*(parseInt(document.getElementById('ucMin').value,10)||0)+(parseInt(document.getElementById('ucSeg').value,10)||0);" +
+      "var resta=tot-el2;tmp.textContent=ucFmt(resta,false);" +
+      "if(uc.run&&resta<=0){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;soltaTela();" +
+      "document.getElementById('ucGo').textContent='Iniciar';tmp.textContent='FIM!';" +
+      "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);}}" +
+      "document.querySelectorAll('.ucTipo').forEach(function(b){b.addEventListener('click',function(){if(uc.run)return;" +
+      "uc.tipo=this.dataset.uct;uc.acum=0;uc.voltas=[];document.getElementById('ucVoltas').textContent='';" +
+      "document.querySelectorAll('.ucTipo').forEach(function(x){var on=x.dataset.uct===uc.tipo;" +
+      "x.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.border=on?'none':'1px solid #322e3d';x.style.color=on?'#fff':'#a9a4b5';});" +
+      "document.getElementById('ucCfg').style.display=uc.tipo==='timer'?'flex':'none';" +
+      "document.getElementById('ucVolta').style.display=uc.tipo==='timer'?'none':'block';" +
+      "document.getElementById('ucTempo').textContent=uc.tipo==='timer'?'':'0:00.0';ucPinta();});});" +
+      "document.getElementById('ucGo').addEventListener('click',function(){" +
+      "if(uc.run){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=(Date.now()-uc.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
+      "uc.run=true;uc.t0=Date.now()-uc.acum*1000;this.textContent='Pausar';ligaTela();bip(880,110);" +
+      "uc.iv=setInterval(ucPinta,100);ucPinta();});" +
+      "document.getElementById('ucZera').addEventListener('click',function(){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;uc.voltas=[];soltaTela();" +
+      "document.getElementById('ucGo').textContent='Iniciar';document.getElementById('ucVoltas').textContent='';ucPinta();});" +
+      "document.getElementById('ucVolta').addEventListener('click',function(){if(!uc.run||uc.tipo!=='crono')return;" +
+      "var el2=(Date.now()-uc.t0)/1000;uc.voltas.push(el2);if(navigator.vibrate)navigator.vibrate(50);" +
+      "document.getElementById('ucVoltas').innerHTML=uc.voltas.slice(-8).map(function(v,i){return 'Volta '+(i+1)+': <b>'+ucFmt(v,true)+'</b>';}).join(' · ');});" +
+      // ---- utilidades: calculadora de 1RM (fórmula de Epley) ----
+      "function pintaRm(){var kg=parseFloat((document.getElementById('rmKg').value||'').replace(',','.'));" +
+      "var reps=parseInt(document.getElementById('rmReps').value,10);var out=document.getElementById('rmOut');" +
+      "if(!kg||!reps||reps<1||reps>20){out.innerHTML='';return;}" +
+      "var rm=reps===1?kg:kg*(1+reps/30);" +
+      "out.innerHTML=\"<div style='text-align:center;font-size:15px;margin-bottom:8px;'>Seu 1RM estimado: <b style='color:" + CORC + ";font-size:22px;'>\"+(Math.round(rm*2)/2).toString().replace('.',',')+\" kg</b></div>\"+" +
+      "[95,90,85,80,75,70,60].map(function(p){return \"<div class='kv'><span>\"+p+\"% (\"+(p>=90?'força':p>=75?'hipertrofia':'resistência')+\")</span><b>\"+(Math.round(rm*p/100*2)/2).toString().replace('.',',')+\" kg</b></div>\";}).join('');}" +
+      "document.getElementById('rmKg').addEventListener('input',pintaRm);document.getElementById('rmReps').addEventListener('input',pintaRm);" +
+      // ---- utilidades: calculadora de anilhas ----
+      "function pintaAnilha(){var alvo=parseFloat((document.getElementById('anKg').value||'').replace(',','.'));" +
+      "var barra=+document.getElementById('anBarra').value;var out=document.getElementById('anOut');" +
+      "if(!alvo||alvo<=barra){out.innerHTML=alvo?\"<div class='vz'>O alvo precisa ser maior que a barra (\"+barra+\" kg).</div>\":'';return;}" +
+      "var lado=(alvo-barra)/2;var resto=lado;var PL=[25,20,15,10,5,2.5,1.25];var usa=[];" +
+      "PL.forEach(function(pl){var q=Math.floor(resto/pl+1e-9);if(q>0){usa.push([pl,q]);resto=Math.round((resto-q*pl)*100)/100;}});" +
+      "var montado=barra+2*(lado-resto);" +
+      "out.innerHTML=\"<div style='font-size:13px;margin-bottom:6px;'>Em CADA lado da barra:</div>\"+" +
+      "\"<div style='display:flex;gap:6px;flex-wrap:wrap;'>\"+(usa.length?usa.map(function(u){return \"<span style='background:rgba(124,58,237,.18);border:1px solid " + COR + ";border-radius:99px;padding:6px 13px;font-weight:800;font-size:13px;'>\"+u[1]+\"× \"+String(u[0]).replace('.',',')+\" kg</span>\";}).join(''):\"<span class='vz'>só a barra</span>\")+'</div>'+" +
+      "(resto>0.01?\"<div class='vz' style='font-size:12px;'>Não fecha exato com anilhas padrão — mais próximo: <b>\"+montado.toString().replace('.',',')+\" kg</b> no total.</div>\":'');}" +
+      "document.getElementById('anKg').addEventListener('input',pintaAnilha);document.getElementById('anBarra').addEventListener('change',pintaAnilha);" +
+      // ---- utilidades: IMC ----
+      "function pintaImc(){var kg=parseFloat((document.getElementById('imcKg').value||'').replace(',','.'));" +
+      "var cm=parseInt(document.getElementById('imcCm').value,10);var out=document.getElementById('imcOut');" +
+      "if(!kg||!cm||cm<100||cm>250){out.innerHTML='';return;}" +
+      "var imc=kg/Math.pow(cm/100,2);var faixa=imc<18.5?['abaixo do peso','#fbbf24']:imc<25?['na faixa saudável','#4ade80']:imc<30?['sobrepeso','#fbbf24']:['acima do recomendado','#f87171'];" +
+      "out.innerHTML=\"<div style='text-align:center;font-size:15px;'>IMC: <b style='font-size:24px;color:\"+faixa[1]+\";'>\"+imc.toFixed(1).replace('.',',')+\"</b><div style='font-size:13px;color:\"+faixa[1]+\";font-weight:700;'>\"+faixa[0]+\"</div></div>\";}" +
+      "(function(){var pz=L('ptpeso',{});var ks=Object.keys(pz).sort();" +
+      "if(ks.length)document.getElementById('imcKg').value=String(pz[ks[ks.length-1]]).replace('.',',');" +
+      "if(ALTURA)document.getElementById('imcCm').value=ALTURA;pintaImc();})();" +
+      "document.getElementById('imcKg').addEventListener('input',pintaImc);document.getElementById('imcCm').addEventListener('input',pintaImc);" +
       // hábitos diários com streak
       "var HABS=[[ICO.gota,'Água em dia'],[ICO.maca,'Alimentação no plano'],[ICO.lua,'Dormi 7h+'],[ICO.ativ,'Cardio / passos']];" +
       "function pintaHab(){var h=L('pthab',{});var hoje=h[isoHj()]||{};" +
@@ -6448,6 +6568,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "['evolucao',\"<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>\",'Evolução']," +
       "['agenda',\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\",'Agenda']," +
       "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']," +
+      "['util',\"<path d='M14.5 6.5a4.2 4.2 0 0 0-5.7 5.4L3 17.7 6.3 21l5.8-5.8a4.2 4.2 0 0 0 5.4-5.7l-2.8 2.8-2.4-.6-.6-2.4z'/>\",'Utilidades']," +
       "['pagamento',\"<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>\",'Plano']];" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
@@ -6462,6 +6583,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
       "if(el.id==='trTabs'||el.id==='cardWod'){el.setAttribute('data-sec','treino');return;}" +
+      "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
