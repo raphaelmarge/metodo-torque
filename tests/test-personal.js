@@ -1905,6 +1905,46 @@ async function abaPt(p, a) {
   ok(/1× 25 kg/.test(util.anilhas) && /1× 15 kg/.test(util.anilhas), "calculadora de anilhas monta a barra (100 kg = 25+15 por lado)");
   ok(/26,8/.test(util.imc) && /sobrepeso/.test(util.imc), "IMC calcula e classifica (85 kg / 1,78 m = 26,8)");
   ok(/0:00\.\d/.test(util.crono), "cronômetro avulso roda com décimos");
+  // cronômetro turbinado: modos Tabata, EMOM e AMRAP com contagem de rounds
+  const crono5 = await pApp.evaluate(async () => {
+    const out = {};
+    window.__trocaSec("util");
+    out.chips = Array.from(document.querySelectorAll(".ucTipo")).map((x) => x.textContent).join(",");
+    document.querySelector("[data-uct='tabata']").click();
+    out.cfgTabata = !!document.getElementById("ucRds") && !!document.getElementById("ucTrab") && !!document.getElementById("ucDesc");
+    document.getElementById("ucRds").value = "2";
+    document.getElementById("ucTrab").value = "1";
+    document.getElementById("ucDesc").value = "1";
+    document.getElementById("ucGo").click();
+    await new Promise((r) => setTimeout(r, 1300));
+    out.tabataMeio = document.getElementById("ucFase").textContent;
+    await new Promise((r) => setTimeout(r, 3200));
+    out.tabataFim = document.getElementById("ucFase").textContent + "|" + document.getElementById("ucTempo").textContent;
+    document.querySelector("[data-uct='emom']").click();
+    document.getElementById("ucGo").click();
+    await new Promise((r) => setTimeout(r, 400));
+    out.emom = document.getElementById("ucFase").textContent + "|" + document.getElementById("ucTempo").textContent;
+    document.getElementById("ucZera").click();
+    document.querySelector("[data-uct='amrap']").click();
+    out.rotRound = document.getElementById("ucVolta").textContent;
+    document.getElementById("ucMin").value = "1";
+    document.getElementById("ucGo").click();
+    await new Promise((r) => setTimeout(r, 300));
+    document.getElementById("ucVolta").click();
+    document.getElementById("ucVolta").click();
+    out.amrap = document.getElementById("ucVoltas").textContent + "|" + document.getElementById("ucTempo").textContent;
+    document.getElementById("ucZera").click();
+    document.querySelector("[data-uct='crono']").click();
+    out.cronoZero = document.getElementById("ucTempo").textContent;
+    return out;
+  });
+  ok(crono5.chips === "Cronômetro,Timer,Tabata,EMOM,AMRAP", "cronômetro do Utilidades oferece os 5 modos");
+  ok(crono5.cfgTabata && /DESCANSA/.test(crono5.tabataMeio) && /TABATA COMPLETO — 2 ROUNDS!\|FIM!/.test(crono5.tabataFim),
+    "Tabata alterna TRABALHA/DESCANSA e completa os rounds configurados");
+  ok(/MINUTO 1 DE 10/.test(crono5.emom) && /\|0:5\d/.test(crono5.emom), "EMOM mostra MINUTO 1 DE 10 e conta o minuto regressivo");
+  ok(crono5.rotRound === "+1 round" && /2/.test(crono5.amrap) && /rounds/.test(crono5.amrap) && /0:5\d/.test(crono5.amrap),
+    "AMRAP regressivo conta rounds pelo botão +1 round");
+  ok(crono5.cronoZero === "0:00.0", "voltar pro modo cronômetro zera tudo");
   await pApp.evaluate(() => window.__trocaSec("inicio"));
   // substituto de exercício: o toque abre a dica com as trocas
   const altEx = await pApp.evaluate(() => {
