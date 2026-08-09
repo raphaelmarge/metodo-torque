@@ -760,17 +760,20 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       var d = st.dietas[p.id];
       var temDieta = d && (d.refeicoes || []).length;
       var alvo = kcalAlvo(p);
-      return '<div class="pac"><b style="font-size:15px;">' + esc(p.nome) + "</b>" +
+      // linha limpa: nome (toque abre o perfil) + situação + menu retrátil com as ações
+      return '<div class="pac" style="flex-wrap:wrap;"><b data-perfil="' + p.id + '" role="button" tabindex="0" style="font-size:15px;cursor:pointer;" title="abrir o perfil">' + esc(p.nome) + "</b>" +
         '<span class="tagn' + (p.objetivo === "ganhar" ? " roxa" : p.objetivo === "emagrecer" ? " ambar" : "") + '">' +
         (p.objetivo === "emagrecer" ? "emagrecer" : p.objetivo === "ganhar" ? "ganhar" : "manter") + "</span>" +
         '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
-        (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">app ✓</span>' : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail"> Enviar acesso</button>') +
-        '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
+        (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">app ✓</span>' : "") +
+        '<button class="btn sec mini" data-mais="' + p.id + '" aria-label="mais ações de ' + esc(p.nome) + '" title="mais ações" style="margin-left:auto;padding:6px 12px;font-size:16px;line-height:1;">⋮</button>' +
+        '<div data-acoes="' + p.id + '" hidden style="width:100%;display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;margin-top:8px;border-top:1px dashed var(--linha,#2a3a2e);">' +
         '<button class="btn verde mini" data-perfil="' + p.id + '">Perfil</button>' +
         '<button class="btn verde mini" data-app="' + p.id + '">App do paciente</button>' +
         (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
-        '<button class="btn sec mini" data-rm="' + p.id + '">Encerrar</button></span></div>';
+        (p.acessoEm ? "" : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
+        '<button class="btn sec mini" data-rm="' + p.id + '" style="margin-left:auto;">Encerrar</button></div></div>';
     }).join("") : "Cadastre o primeiro paciente.";
   }
   $("pAdd").addEventListener("click", function () {
@@ -791,6 +794,15 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     }
   });
   $("listaPacientes").addEventListener("click", function (e) {
+    // menu retrátil ⋮: abre as ações do paciente (e fecha o dos outros)
+    var mais = e.target.closest && e.target.closest("[data-mais]");
+    if (mais) {
+      var alvo = document.querySelector('#listaPacientes [data-acoes="' + mais.getAttribute("data-mais") + '"]');
+      var estava = alvo && !alvo.hidden;
+      document.querySelectorAll("#listaPacientes [data-acoes]").forEach(function (d) { d.hidden = true; });
+      if (alvo && !estava) alvo.hidden = false;
+      return;
+    }
     var rm = e.target.getAttribute && e.target.getAttribute("data-rm");
     var ap = e.target.getAttribute && e.target.getAttribute("data-app");
     var pf = e.target.getAttribute && e.target.getAttribute("data-perfil");

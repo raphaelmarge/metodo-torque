@@ -2485,7 +2485,14 @@ async function abaPt(p, a) {
 
   // aluno "Encerrar" some da lista
   await abaPt(p, "alunos");
-  await p.click("[data-rm]");
+  // as ações agora vivem no menu retrátil ⋮ — lista limpa, sem fileira de botões
+  ok(await p.evaluate(() => {
+    const acoes = document.querySelector("#listaAlunos [data-acoes]");
+    return !!document.querySelector("#listaAlunos [data-mais]") && acoes && acoes.hidden;
+  }), "lista de alunos limpa: ações escondidas atrás do botão ⋮");
+  await p.evaluate(() => document.querySelector("#listaAlunos [data-mais]").click());
+  ok(await p.evaluate(() => !document.querySelector("#listaAlunos [data-acoes]").hidden), "toque no ⋮ abre as ações do aluno");
+  await p.click("#listaAlunos [data-rm]");
   lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/primeiro aluno/.test(lista), "encerrar aluno esvazia a lista (histórico preservado)");
   const guardado = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.length);
