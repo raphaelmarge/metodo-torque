@@ -1948,6 +1948,98 @@ async function abaPt(p, a) {
   // avisos sonoros: contagem 3-2-1 nos timers e áudio destravado no primeiro toque (iPhone)
   ok(/function ucCd\(/.test(appHtml2) && /function wodCd\(/.test(appHtml2) && /ac\.resume\(\)/.test(appHtml2) && /o\.type='square'/.test(appHtml2),
     "timers com contagem sonora 3-2-1 e áudio alto destravado no toque");
+  // --- lote timers+retenção (app): treino livre no placar, lembrete de água, retrospectiva do mês ---
+  const lote7app = await pApp.evaluate(async () => {
+    const out = {};
+    const snap = {};
+    ["ptfeitos", "ptdc", "ptpeso", "ptretroV", "ptwodres", "ptaguaLem"].forEach((k) => { snap[k] = localStorage.getItem(k); });
+    // tabata avulso 2×1s/1s termina e vira "treino livre" no ptwodres
+    window.__trocaSec("util");
+    document.querySelector("[data-uct='tabata']").click();
+    document.getElementById("ucRds").value = "2";
+    document.getElementById("ucTrab").value = "1";
+    document.getElementById("ucDesc").value = "1";
+    document.getElementById("ucGo").click();
+    await new Promise((r) => setTimeout(r, 4800));
+    const wr = JSON.parse(localStorage.getItem("ptwodres") || "{}");
+    out.livre = !!(wr.livre || []).length && /Tabata 2/.test(wr.livre[wr.livre.length - 1].n);
+    out.hist = document.getElementById("ucHist").textContent;
+    // lembrete de água guarda o intervalo
+    const sel = document.getElementById("agLemSel");
+    sel.value = "120";
+    sel.dispatchEvent(new Event("change"));
+    out.lem = JSON.parse(localStorage.getItem("ptaguaLem"));
+    // retrospectiva: semeia o mês passado e repinta
+    const d0 = new Date(); d0.setDate(1); d0.setDate(0);
+    const mp = d0.getFullYear() + "-" + String(d0.getMonth() + 1).padStart(2, "0");
+    const f = {}; f[mp + "-03"] = 1; f[mp + "-05"] = 1; f[mp + "-08"] = 1;
+    localStorage.setItem("ptfeitos", JSON.stringify(f));
+    localStorage.setItem("ptdc", JSON.stringify({ "Supino reto": [{ d: mp + "-05", kg: 80, r: 8 }] }));
+    const pz = {}; pz[mp + "-01"] = 90; pz[mp + "-28"] = 88;
+    localStorage.setItem("ptpeso", JSON.stringify(pz));
+    localStorage.removeItem("ptretroV");
+    window.__retro();
+    const card = document.getElementById("retroCard");
+    out.retroVis = card.style.display;
+    out.retroTxt = card.textContent;
+    document.getElementById("retroFecha").click();
+    out.retroFechada = card.style.display === "none" && JSON.parse(localStorage.getItem("ptretroV")) === mp;
+    // devolve o estado como estava (bloco autocontido)
+    Object.keys(snap).forEach((k) => { if (snap[k] == null) localStorage.removeItem(k); else localStorage.setItem(k, snap[k]); });
+    window.__retro();
+    return out;
+  });
+  ok(lote7app.livre && /últimos treinos livres/.test(lote7app.hist),
+    "Tabata avulso do Utilidades vira treino livre com histórico (e sobe pro placar do professor)");
+  ok(lote7app.lem === 120, "lembrete de água guarda o intervalo escolhido");
+  ok(lote7app.retroVis === "block" && /Seu mês de/.test(lote7app.retroTxt) && /Supino reto/.test(lote7app.retroTxt) && /-2 kg/.test(lote7app.retroTxt),
+    "retrospectiva do mês monta sozinha com treinos, recorde e peso");
+  ok(lote7app.retroFechada, "fechar a retrospectiva guarda o mês visto");
+  // --- lote timers+retenção (professor): modelos de WOD, saúde da cobrança, pacote com zap ---
+  const stSnap7 = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  await abaPt(p, "treinos");
+  const lote7prof = await p.evaluate(async () => {
+    const out = {};
+    window.__trAba("wod");
+    await new Promise((r) => setTimeout(r, 150));
+    const sel = document.getElementById("wpModelo");
+    out.modelos = sel ? sel.options.length - 1 : 0;
+    sel.value = "0";
+    sel.dispatchEvent(new Event("change"));
+    out.nome = document.getElementById("wpNome").value;
+    out.tipo = document.getElementById("wpTipo").value;
+    out.min = document.getElementById("wpMin").value;
+    out.mov1 = (document.querySelector("#wpMovLinhas .wp-mov .wpe") || {}).value || "";
+    // saúde da cobrança: um pontual (paga dia 5) e um atrasador (dia 25 e pulou um mês)
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const mes = (n, dia) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + dia; };
+    st.alunos.push({ id: "sd1", nome: "Zed Pontual", valor: 100, ativo: true },
+      { id: "sd2", nome: "Zed Atrasador", zap: "21977776666", valor: 100, ativo: true });
+    st.planosPT = st.planosPT || [];
+    st.planosPT.push({ id: "plsd", nome: "Saúde", valor: 100 });
+    st.contratosPT = st.contratosPT || [];
+    st.contratosPT.push({ id: "ctsd1", alunoId: "sd1", planoId: "plsd", status: "ativo", inicio: mes(3, "01"), diaVenc: 5 },
+      { id: "ctsd2", alunoId: "sd2", planoId: "plsd", status: "ativo", inicio: mes(3, "01"), diaVenc: 5 });
+    [1, 2, 3].forEach((n) => st.pagamentos.push({ id: "sdp" + n, alunoId: "sd1", valor: 100, forma: "pix", data: mes(n, "05") }));
+    [1, 3].forEach((n) => st.pagamentos.push({ id: "sdq" + n, alunoId: "sd2", valor: 100, forma: "pix", data: mes(n, "25") }));
+    // pacote quase no fim (com zap pra avisar)
+    st.alunos.find((a) => a.id === "sd2").pacote = { total: 5, usadas: 4, vendidoEm: mes(1, "01") };
+    window.MTStore.write("ptStudio", st);
+    return out;
+  });
+  await abaPt(p, "pagamentos");
+  await p.waitForTimeout(250);
+  lote7prof.saude = await p.evaluate(() => document.getElementById("bSaudeP").textContent);
+  await abaPt(p, "dash");
+  await p.waitForTimeout(350);
+  lote7prof.alertas = await p.evaluate(() => document.getElementById("relAlertas").innerHTML);
+  await p.evaluate((s) => { localStorage.setItem("mtapp:ptStudio", s); window.MTStore.write("ptStudio", JSON.parse(s)); }, stSnap7);
+  ok(lote7prof.modelos === 8 && /Cindy/.test(lote7prof.nome) && lote7prof.tipo === "amrap" && lote7prof.min === "20" && /Barra fixa/.test(lote7prof.mov1),
+    "montador de WOD tem 8 modelos prontos e o Cindy preenche o formulário inteiro");
+  ok(/Zed Pontual/.test(lote7prof.saude) && /paga em dia/.test(lote7prof.saude) && /Zed Atrasador/.test(lote7prof.saude) && /atrasa/.test(lote7prof.saude) && /ainda não caiu este mês/.test(lote7prof.saude),
+    "saúde da cobrança separa quem paga em dia de quem atrasa e soma o que falta cair");
+  ok(/pacote de sessões/.test(lote7prof.alertas) && /Avisar no zap/.test(lote7prof.alertas) && /wa\.me\/5521977776666/.test(lote7prof.alertas),
+    "alerta de pacote acabando ganha o botão de avisar o aluno no zap");
   await pApp.evaluate(() => window.__trocaSec("inicio"));
   // substituto de exercício: o toque abre a dica com as trocas
   const altEx = await pApp.evaluate(() => {
