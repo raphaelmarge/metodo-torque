@@ -2033,6 +2033,24 @@ async function abaPt(p, a) {
   });
   ok(/recorde 90 kg/.test(rm.graf) && /1RM est\. 108 kg/.test(rm.graf), "gráfico mostra recorde e 1RM estimado (Epley: 90×(1+6÷30)=108)");
   ok(rm.confete, "novo recorde solta a chuva de confete");
+  // vídeo do exercício toca DENTRO do app (player embutido, sem sair pro YouTube)
+  const vid = await pApp.evaluate(async () => {
+    window.__trocaSec("treino");
+    const b = Array.from(document.querySelectorAll(".vidbtn")).find((x) => /watch\?v=abc123/.test(x.dataset.v || ""));
+    if (!b) return null;
+    b.click();
+    await new Promise((r) => setTimeout(r, 150));
+    let bx = b.nextElementSibling;
+    while (bx && !bx.classList.contains("vidbox")) bx = bx.nextElementSibling;
+    const iframe = bx && bx.querySelector("iframe");
+    const aberto = { src: iframe ? iframe.src : "", rot: b.textContent };
+    b.click();
+    await new Promise((r) => setTimeout(r, 100));
+    return { aberto, fechou: !bx.querySelector("iframe"), rotVoltou: b.textContent };
+  });
+  ok(!!vid && /youtube-nocookie\.com\/embed\/abc123/.test(vid.aberto.src) && /Fechar vídeo/.test(vid.aberto.rot),
+    "'Ver vídeo' abre o player embutido dentro do app (youtube-nocookie)");
+  ok(!!vid && vid.fechou && /Ver vídeo/.test(vid.rotVoltou), "tocar de novo fecha o player e o botão volta ao normal");
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
   await pApp.evaluate(() => window.__trocaSec("chat"));
