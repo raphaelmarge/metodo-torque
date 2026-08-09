@@ -209,6 +209,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="relatorios"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg>Relatórios</button>
     <button data-a="assessoria"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/></svg>Assessoria</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
+    <button data-a="config"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/></svg>Configurações</button>
     <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
@@ -848,6 +849,32 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </section>
 
   <!-- ASSESSORIA -->
+  <!-- CONFIGURAÇÕES -->
+  <section id="vConfig" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Cobrança</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quantos dias de tolerância depois do vencimento antes do aluno aparecer como <b>ATRASADO</b>? Vale pros alertas do Início, pra lista "Quem ainda não pagou", pra saúde da cobrança e pra régua automática. 0 = cobra no dia seguinte ao vencimento.</p>
+      <label style="font-size: 12.5px;">Tolerância de atraso (dias)
+        <input id="cfgAtraso" inputmode="numeric" style="display:block; width: 120px; margin-top: 4px;"></label>
+    </div>
+    <div class="card">
+      <h2>O que o aluno vê no app</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Desmarque o que não faz parte do seu trabalho — some do app de <b>todos</b> os alunos na próxima publicação. Ex.: professor de musculação que não passa WOD nem corrida.</p>
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeWod" style="width: 17px; height: 17px;"> Circuito (WOD) — cronômetros de cross e treinos prescritos</label>
+        <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeCardio" style="width: 17px; height: 17px;"> Corrida e bike — cronômetro de pace, GPS e tiros</label>
+        <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeUtil" style="width: 17px; height: 17px;"> Utilidades — água, cronômetros e calculadoras</label>
+        <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeAgenda" style="width: 17px; height: 17px;"> Agenda — pedir e confirmar horário pelo app</label>
+        <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeChat" style="width: 17px; height: 17px;"> Chat com você</label>
+        <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVePag" style="width: 17px; height: 17px;"> Plano e pagamento — Pix, "Já paguei" e assinatura</label>
+      </div>
+      <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
+        <button class="btn" id="cfgSalva">Salvar configurações</button>
+        <span id="cfgStatus" class="muted" style="font-size: 12.5px;"></span>
+      </div>
+    </div>
+  </section>
+
   <section id="vAssessoria" hidden>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Acompanhamento a distância</h2>
@@ -1201,6 +1228,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vRelatorios").hidden = b.dataset.a !== "relatorios";
     $("vAssessoria").hidden = b.dataset.a !== "assessoria";
     $("vChat").hidden = b.dataset.a !== "chat";
+    $("vConfig").hidden = b.dataset.a !== "config";
+    if (b.dataset.a === "config") renderConfigPT();
     // o card da conta (ilha) tem a própria aba no menu — longe da lista de alunos
     $("cardConta").hidden = b.dataset.a !== "conta";
     if (b.dataset.a === "conta") renderConta();
@@ -2898,7 +2927,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       } else if (diaHoje === venc) {
         manda("cobra0|" + a.id + "|" + mes, a.appTokenP, "Sua mensalidade vence hoje",
           "Passando pra lembrar da mensalidade" + vTxt + ". Se já pagou, ignora esse aviso.");
-      } else if (diaHoje > venc && (diaHoje - venc) % 3 === 0) {
+      } else if (diaHoje > venc + atrasoTol(st) && (diaHoje - venc - atrasoTol(st)) % 3 === 0) {
         var dvR = dividaDe(st, a);
         manda("cobraA|" + a.id + "|" + mes + "|" + diaHoje, a.appTokenP, "Mensalidade em aberto",
           (dvR.meses > 1 ? "Ficaram " + dvR.meses + " meses em aberto (" + S.fmtBRL(dvR.total) + " no total)"
@@ -3361,6 +3390,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var tokens = {};
     st.alunos.forEach(function (a) { if (a.ativo !== false && a.appTokenP) tokens[a.appTokenP] = 1; });
     if (!Object.keys(tokens).length) return;
+    try {
     Promise.all([
       nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid),
       nuvem.client.from("app_agenda").select("id,token").eq("academia_id", nuvem.aid).eq("status", "pedido").gte("dia", S.todayISO()),
@@ -3372,6 +3402,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       poeBadge($("btnMenuPt"), chat); // o Chat mora dentro do menu de 3 traços
       poeBadge(document.querySelector('#navPt [data-nav="agenda"]'), ped);
     }).catch(function () {});
+    } catch (e) {} // nuvem capenga (ou mock parcial nos testes) não pode derrubar a página
   }
   window.__badgesRun = pintaBadges; // testes
   setTimeout(pintaBadges, 6000);
@@ -3413,6 +3444,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return n ? { n: n, total: n * +a.valor, pacote: false } : null;
   }
   window.__financeiroPT = { divida: dividaDe, sessoes: sessoesACobrar }; // testes
+  // tolerância de atraso (Configurações): só vira ATRASADO depois de N dias do vencimento
+  function atrasoTol(st) {
+    var n = +((st.config || {}).atrasoDias);
+    return isFinite(n) && n > 0 ? Math.min(28, Math.floor(n)) : 0;
+  }
   function renderPagamentos(st) {
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
@@ -3433,7 +3469,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var ct = contratoDe(st, a.id);
       var pl = ct ? planoDe(st, ct.planoId) : null;
       var valor = pl ? +pl.valor : +a.valor || 0;
-      var atrasado = ct && diaHoje > ct.diaVenc;
+      var atrasado = ct && diaHoje > ct.diaVenc + atrasoTol(st);
       var dv = dividaDe(st, a);
       var scSes = a.modo === "sessao" ? sessoesACobrar(st, a) : null;
       if (a.modo === "sessao" && !(a.pacote && +a.pacote.total > 0)) {
@@ -3494,7 +3530,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var dias = st.pagamentos.filter(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mes; })
           .map(function (p) { return +String(p.data).slice(8, 10); });
         if (!dias.length) { faltas++; return; }
-        atrasos.push(Math.max(0, Math.min.apply(null, dias) - ct.diaVenc));
+        atrasos.push(Math.max(0, Math.min.apply(null, dias) - ct.diaVenc - atrasoTol(st)));
       });
       if (!avaliados) return;
       var media = atrasos.length ? Math.round(atrasos.reduce(function (s, x) { return s + x; }, 0) / atrasos.length) : 0;
@@ -4104,6 +4140,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     cbMostraCfg();
   });
   window.__cardiosPT = renderCardios; // testes
+
+  // ---------- configurações do studio: tolerância de atraso + o que o aluno vê no app ----------
+  var CFG_VE = [["cfgVeWod", "wod"], ["cfgVeCardio", "cardio"], ["cfgVeUtil", "util"], ["cfgVeAgenda", "agenda"], ["cfgVeChat", "chat"], ["cfgVePag", "pag"]];
+  function renderConfigPT() {
+    var st = load();
+    $("cfgAtraso").value = String(atrasoTol(st));
+    var am = (st.config || {}).appMostra || {};
+    CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
+  }
+  $("cfgSalva").addEventListener("click", function () {
+    var st = load();
+    st.config = st.config || {};
+    st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
+    var am = {};
+    CFG_VE.forEach(function (par) { if (!$(par[0]).checked) am[par[1]] = false; });
+    var mudouApp = JSON.stringify(am) !== JSON.stringify((st.config.appMostra || {}));
+    st.config.appMostra = am;
+    // o app dos alunos muda de cara — todos entram na fila de publicar
+    if (mudouApp) st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
+    save(st);
+    $("cfgStatus").textContent = mudouApp
+      ? "Salvo! Agora publique os apps (Alunos → 📤 Publicar apps atualizados) pra valer no celular de todo mundo."
+      : "Salvo!";
+  });
+  window.__configPT = renderConfigPT; // testes
 
   // cronômetro de circuito em tela cheia (pro personal conduzir a sessão)
   (function () {
@@ -5396,7 +5457,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ativos.forEach(function (a) {
       var ct = contratoDe(st, a.id);
       var pagouMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
-      if (ct && !pagouMes && diaHoje > ct.diaVenc) {
+      if (ct && !pagouMes && diaHoje > ct.diaVenc + atrasoTol(st)) {
         var dvAl = dividaDe(st, a);
         var cobrarAl = dvAl.total || dvAl.valor;
         var msgC = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" + (dvAl.meses > 1 ? " — ficaram " + dvAl.meses + " meses em aberto (" + S.fmtBRL(dvAl.total) + ")" : "") + ". Te mando o Pix? 💪";
@@ -5815,6 +5876,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var wodsApp = ((t2 && t2.wods) || []).slice(0, 10);
     // corrida e bike prescritos — entram na sub-página Cardio com o cronômetro de pace
     var cardiosApp = ((t2 && t2.cardio) || []).slice(0, 10);
+    // o que o aluno vê (Configurações do professor): tudo ligado por padrão; false esconde
+    var cfgVe = (st.config || {}).appMostra || {};
+    var ve = function (k) { return cfgVe[k] !== false; };
+    var menuOculta = [];
+    if (!ve("util")) menuOculta.push("util");
+    if (!ve("pag")) menuOculta.push("pagamento");
+    if (!ve("chat")) menuOculta.push("chat");
+    if (!ve("agenda")) menuOculta.push("agenda");
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
@@ -5940,12 +6009,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
-      // sub-abas da área de treino: ficha tradicional × circuito (WOD)
-      "<div class='cardx' id='trTabs' style='padding:9px 11px;'><div style='display:flex;gap:6px;'>" +
+      // sub-abas da área de treino: ficha tradicional × circuito (WOD) × corrida — conforme o professor liberou
+      ((ve("wod") || ve("cardio")) ? "<div class='cardx' id='trTabs' style='padding:9px 11px;'><div style='display:flex;gap:6px;'>" +
       "<button data-trsub='ficha' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;'>Minha ficha</button>" +
-      "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Circuito (WOD)</button>" +
-      "<button data-trsub='cardio' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Corrida e bike</button>" +
-      "</div></div>" +
+      (ve("wod") ? "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
+      (ve("cardio") ? "<button data-trsub='cardio' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Corrida e bike</button>" : "") +
+      "</div></div>" : "") +
       "<div class='cardx'><h2>Meu treino</h2>" +
       (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:11px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
       (fichasApp ? fichasApp.map(function (f, gi) {
@@ -5998,8 +6067,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               "<div style='height:8px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:" + Math.round(100 * r.s / maxS) + "%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;'></div></div></div>";
           }).join("");
         })() + "</div>" : "") +
-      // modo circuito (WOD): cronômetros de cross — For Time, AMRAP, EMOM e Tabata
-      "<div class='cardx' id='cardWod'><h2>Modo circuito (WOD)</h2>" +
+      // modo circuito (WOD): cronômetros de cross — só se o professor liberou nas Configurações
+      (ve("wod") ? "<div class='cardx' id='cardWod'><h2>Modo circuito (WOD)</h2>" +
       (wodsApp.length ? wodsApp.map(function (w) {
         // folha de WOD estilo quadro da academia: tipo em destaque, blocos com rótulos
         var bloco = function (rot, html) {
@@ -6030,9 +6099,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='wodVolta' style='flex:1;display:none;background:#14121a;border:1px solid " + COR + ";box-shadow:none;'>+1 volta</button>" +
       "<button class='btnx' id='wodTermina' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
       "<button class='btnx' id='wodZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
-      "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" +
+      "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" : "") +
       // corrida e bike: folhas prescritas + cronômetro próprio com pace (min/km), GPS e tiros
-      "<div class='cardx' id='cardCardio'><h2>Corrida e bike</h2>" +
+      (ve("cardio") ? "<div class='cardx' id='cardCardio'><h2>Corrida e bike</h2>" +
       (cardiosApp.length ? cardiosApp.map(function (c) {
         var rotMod = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c.mod] || "CARDIO";
         var alvo = c.tipo === "intervalado"
@@ -6061,7 +6130,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div style='display:flex;gap:8px;margin-top:8px;align-items:center;'>" +
       "<button id='crGps' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:11px;padding:9px 0;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;'>Ligar GPS</button>" +
       "<input id='crKm' inputmode='decimal' placeholder='km na mão (ex.: 5,2)' style='flex:1.4;min-width:0;text-align:center;'></div>" +
-      "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div></div>" +
+      "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div></div>" : "") +
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
@@ -6145,7 +6214,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in</button></div></div>" +
       (qa ? "<div class='cardx' id='qaCard'><h2>" + appIco(APPIC.prancheta, 14) + esc(qa.nome || "Questionário") + "</h2><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
-      (plApp ? "<div class='cardx'><h2>Meu plano</h2>" +
+      (plApp && ve("pag") ? "<div class='cardx'><h2>Meu plano</h2>" +
         "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
         "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
         (pixApp ? "<div style='text-align:center;margin-top:10px;'>" +
@@ -6486,6 +6555,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(ac.state==='suspended')ac.resume();var o=ac.createOscillator(),ga=ac.createGain();o.type='square';o.connect(ga);ga.connect(ac.destination);" +
       "o.frequency.value=fq||880;ga.gain.value=.3;o.start();setTimeout(function(){try{o.stop();}catch(e2){}},dur||130);}catch(e){}}" +
       "['click','touchstart'].forEach(function(ev){document.addEventListener(ev,function(){try{if(window.__ac&&window.__ac.state==='suspended')window.__ac.resume();}catch(e){}},{passive:true});});" +
+      "function wodFmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}" +
+      // o motor do WOD só roda se o card existe (o professor pode desligar nas Configurações)
+      "if(document.getElementById('cardWod')){" +
       "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
       "var WODS=" + JSON.stringify(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10 }; })) + ";" +
       "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
@@ -6504,7 +6576,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent=w.n.toUpperCase().slice(0,24)+' — PRONTO?';document.getElementById('wodFimBox').style.display='none';" +
       "var tela=document.getElementById('wodTela');tela.style.borderColor='" + CORC + "';setTimeout(function(){tela.style.borderColor='#322e3d';},1500);" +
       "document.getElementById('wodGo').scrollIntoView({behavior:'smooth',block:'center'});if(navigator.vibrate)navigator.vibrate(60);});" +
-      "function wodFmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}" +
       "function wodChips(){document.getElementById('wodTipos').innerHTML=WODT.map(function(t){var on=wod.tipo===t[0];" +
       "return \"<button data-wodt='\"+t[0]+\"' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;\"+(on?'background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#a9a4b5;')+\"'>\"+t[1]+\"</button>\";}).join('');}" +
       "function wodCfg(){var el=document.getElementById('wodCfg');var inp=function(id,rot,val,w){return \"<label style='flex:1;min-width:0;font-size:11px;color:#a9a4b5;'>\"+rot+\"<input id='\"+id+\"' inputmode='numeric' value='\"+val+\"' style='width:100%;margin-top:3px;padding:8px 10px;'></label>\";};" +
@@ -6560,7 +6631,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
       "wodChips();wodCfg();pintaWodRes();" +
       "window.__wod=wod;" +
-      // ---- corrida e bike: cronômetro com pace (min/km), distância por GPS ou na mão, e tiros ----
+      "}" +
+      // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
+      "if(document.getElementById('cardCardio')){" +
       "var CARDIOS=" + JSON.stringify(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90 }; })).replace(/</g, "\\u003c") + ";" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
       "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false};" +
@@ -6643,6 +6716,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';pintaCr();});" +
       "crEl('crKm').addEventListener('input',function(){if(!cr.gpsOn)pintaCr();});" +
       "crChips();pintaCr();pintaCrHist();window.__cr=cr;window.__pintaCr=pintaCr;" +
+      "}" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
       "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='Bora! Próxima série!';" +
@@ -7074,6 +7148,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']," +
       "['util',\"<path d='M14.5 6.5a4.2 4.2 0 0 0-5.7 5.4L3 17.7 6.3 21l5.8-5.8a4.2 4.2 0 0 0 5.4-5.7l-2.8 2.8-2.4-.6-.6-2.4z'/>\",'Utilidades']," +
       "['pagamento',\"<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>\",'Plano']];" +
+      // áreas desligadas pelo professor nas Configurações somem do menu
+      "var OCULTA=" + JSON.stringify(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
