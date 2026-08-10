@@ -3484,6 +3484,18 @@ async function abaPt(p, a) {
     await pA.waitForTimeout(1200);
     await pA.evaluate(() => window.__trocaSec && window.__trocaSec("treino"));
     await pA.waitForTimeout(400);
+    // 🗂 fichas A/B/C viraram gavetas: só a do dia nasce aberta
+    {
+      const gav = await pA.evaluate(() => {
+        const g = Array.from(document.querySelectorAll(".fichabox"));
+        return { n: g.length, abertas: g.filter((x) => x.open).length,
+          resumo: g.map((x) => x.querySelector("summary").textContent.replace(/\s+/g, " ").trim()),
+          temGuiado: !!g[0].querySelector(".guiabtn"), temEx: g[0].querySelectorAll("details").length };
+      });
+      ok(gav.n >= 2 && gav.abertas === 1, "🗂 as fichas do treino são gavetas e só a do dia nasce aberta (" + gav.abertas + " de " + gav.n + ")");
+      ok(/exercícios/.test(gav.resumo[0]), "o resumo da ficha fechada já diz quantos exercícios tem — " + gav.resumo[0]);
+      ok(gav.temGuiado && gav.temEx >= 1, "aquecimento, treino guiado e exercícios ficam dentro da gaveta da ficha");
+    }
     await pA.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
     const rA = await pA.evaluate(() => {
       const bt = document.querySelector(".animbtn");
