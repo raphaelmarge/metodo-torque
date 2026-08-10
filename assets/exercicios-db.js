@@ -6846,7 +6846,7 @@ self.MT_EXERCICIOS = [
   "n": "Abdução de quadril em pé com mini band no tornozelo",
   "g": "Posterior e glúteo",
   "eq": "Mini band",
-  "d": "Band nos tornozelos, afaste uma perna pro lado sem inclinar o tronco; volte devagar resistindo à banda."
+  "d": "Mini band nos tornozelos, afaste uma perna pro lado sem inclinar o tronco; volte devagar resistindo à banda."
  },
  {
   "n": "Rosca martelo com elástico",
@@ -6870,7 +6870,7 @@ self.MT_EXERCICIOS = [
   "n": "Agachamento com pausa e mini band",
   "g": "Quadríceps",
   "eq": "Mini band",
-  "d": "Band acima dos joelhos, desça, segure 2 segundos empurrando a banda pra fora e suba forte pelos calcanhares."
+  "d": "Mini band acima dos joelhos, desça, segure 2 segundos empurrando a banda pra fora e suba forte pelos calcanhares."
  },
  {
   "n": "Puxada de face com elástico ajoelhado",
@@ -6894,7 +6894,7 @@ self.MT_EXERCICIOS = [
   "n": "Remada unilateral com joelho no banco e pegada aberta",
   "g": "Costas",
   "eq": "Halteres",
-  "d": "Cotovelo abre a 45° puxando o halter à linha do peito; escápula desce e retrai antes de o braço puxar."
+  "d": "Cotovelo abre a 45° puxando o halter até a linha do peito; escápula desce e retrai antes de o braço puxar."
  },
  {
   "n": "Stiff unilateral com dois halteres",
@@ -6906,7 +6906,7 @@ self.MT_EXERCICIOS = [
   "n": "Rosca alternada sentado com rotação",
   "g": "Bíceps",
   "eq": "Halteres",
-  "d": "Comece com pegada neutra e gire a palma pra cima durante a subida; desça devagar resistindo o peso."
+  "d": "Comece com pegada neutra e gire a palma pra cima durante a subida; desça devagar resistindo ao peso."
  },
  {
   "n": "Elevação lateral deitado de lado com halter",
