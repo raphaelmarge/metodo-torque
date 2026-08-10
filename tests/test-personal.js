@@ -1461,6 +1461,48 @@ async function abaPt(p, a) {
     ok(peso.copias === 1, "a foto geral viaja UMA vez só no app, mesmo com 6 fichas (" + peso.copias + " cópia)");
     ok(peso.kb < peso.fotoKb * 2 + 250, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
   }
+  // ---------- 🚀 escala: o painel tem que aguentar milhares de alunos ----------
+  console.log("Escala (1000 alunos):");
+  {
+    const esc1000 = await p.evaluate(() => {
+      const guarda = localStorage.getItem("mtapp:ptStudio");
+      const st = window.MTStore.read("ptStudio", {});
+      const exId = (st.exercicios && st.exercicios[0] && st.exercicios[0].id) || "e1";
+      st.alunos = []; st.pagamentos = []; st.sessoes = []; st.treinosV2 = {};
+      for (let i = 0; i < 1000; i++) {
+        const id = "esc" + i;
+        st.alunos.push({ id, nome: "Aluno Escala " + i, zap: "31999990000", valor: 300, modo: "mes", venc: 5, ativo: true, metaSemana: 3, desde: "2025-01-10" });
+        for (let m = 0; m < 12; m++) st.pagamentos.push({ id: "pe" + i + "_" + m, alunoId: id, valor: 300, data: "2026-" + String(m + 1).padStart(2, "0") + "-05", forma: "pix" });
+        for (let s = 0; s < 4; s++) st.sessoes.push({ id: "se" + i + "_" + s, alunoId: id, data: "2026-08-0" + (s + 1), hora: "07:00", feita: s < 2 });
+        st.treinosV2[id] = { fichas: [{ id: "fe" + i, titulo: "A", itens: [{ exId, series: 4, reps: "10", descanso: 90, obs: "" }] }] };
+      }
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      const t0 = performance.now();
+      window.__ptStudio.render();
+      const renderMs = performance.now() - t0;
+      const cards = document.querySelectorAll("#listaAlunos .aluno-pt").length;
+      const domKB = Math.round(document.getElementById("listaAlunos").innerHTML.length / 1024);
+      const verMais = document.getElementById("alMais");
+      const rot = verMais ? verMais.textContent : "";
+      if (verMais) verMais.click();
+      const depois = document.querySelectorAll("#listaAlunos .aluno-pt").length;
+      // conferência: o índice tem que dar a MESMA resposta da varredura antiga
+      const idx = window.__idxPT(st);
+      const antigo = st.pagamentos.some((pg) => pg.alunoId === "esc7" && (pg.data || "").slice(0, 7) === "2026-03");
+      const novo = idx.pagouMes("esc7", "2026-03");
+      const semPag = idx.pagouMes("esc7", "2029-01");
+      localStorage.setItem("mtapp:ptStudio", guarda);
+      window.__ptStudio.load(); window.__ptStudio.render();
+      return { renderMs: Math.round(renderMs), cards, domKB, rot, depois, antigo, novo, semPag };
+    });
+    ok(esc1000.renderMs < 900, "🚀 painel com 1000 alunos e 12 mil pagamentos redesenha em " + esc1000.renderMs + " ms (era 2280 ms antes dos índices)");
+    ok(esc1000.cards === 60 && /Ver mais/.test(esc1000.rot), "a lista sai em partes de 60 — 1000 cards de uma vez travavam a tela (" + esc1000.rot.trim() + ")");
+    ok(esc1000.depois === 120, "'Ver mais' traz o próximo lote sem recarregar a página");
+    ok(esc1000.domKB < 150, "a lista ocupa " + esc1000.domKB + " KB de tela (eram 936 KB com todos de uma vez)");
+    ok(esc1000.novo === esc1000.antigo && esc1000.novo === true && esc1000.semPag === false,
+      "o índice responde igualzinho à varredura antiga (mesmo resultado, sem o custo)");
+  }
+
   // ---------- 🖼 banco de imagens do studio ----------
   console.log("Banco de imagens:");
   {
