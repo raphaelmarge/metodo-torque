@@ -210,6 +210,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="assessoria"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/></svg>Assessoria</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
     <button data-a="config"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/></svg>Configurações</button>
+    <button data-a="pers"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg>Personalização</button>
     <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
@@ -849,6 +850,32 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   </section>
 
   <!-- ASSESSORIA -->
+  <!-- PERSONALIZAÇÃO: cores e logo do app -->
+  <section id="vPers" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Cores do app</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha a cor da sua marca — a <b>paleta inteira</b> do app do aluno muda junto: botões, gráficos, gradientes, cronômetros e até o card pro Stories, com os tons claro e escuro calculados sozinhos. O seu painel pinta na hora.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;" id="persPre"></div>
+      <div class="linha-flex" style="gap: 12px; margin-top: 12px; flex-wrap: wrap; align-items: center;">
+        <label style="margin: 0; font-size: 12.5px;">Ou uma cor só sua
+          <input type="color" id="cfgCor" value="#7c3aed" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid #322e3d; border-radius: 8px; background: #14121a; cursor: pointer;"></label>
+        <button class="btn sec mini" id="cfgCorReset">Voltar ao roxo TORQUE</button>
+      </div>
+      <div id="persPrev" style="margin-top: 14px;"></div>
+    </div>
+    <div class="card">
+      <h2>Logo do studio</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Aparece no topo do app de cada aluno e no seu painel. Pode ser PNG com fundo transparente — a gente redimensiona sozinho.</p>
+      <div class="linha-flex" style="gap: 12px; align-items: center; flex-wrap: wrap;">
+        <img id="cfgLogoPrev" hidden alt="Logo do studio" style="height: 40px; border-radius: 8px;">
+        <button class="btn sec mini" id="cfgLogoBtn">Enviar logo</button>
+        <button class="btn sec mini" id="cfgLogoDel" hidden>✕ tirar logo</button>
+        <input type="file" id="cfgLogoFile" accept="image/*" hidden>
+      </div>
+      <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Mudou a cara? Toque em <b>Publicar apps atualizados</b> pros seus alunos verem a novidade no app.</p>
+    </div>
+  </section>
+
   <!-- CONFIGURAÇÕES -->
   <section id="vConfig" hidden>
     <div class="card" style="margin-bottom: 14px;">
@@ -937,19 +964,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <label style="margin: 0; font-size: 12.5px;">Cidade
         <input id="cfgPixCidade" placeholder="ex.: Belo Horizonte" style="width: 150px; display: block; margin-top: 4px;"></label>
     </div>
-    <div style="margin: 12px 0; padding: 10px 12px; border: 1px dashed #322e3d; border-radius: 12px;">
-      <b style="font-size: 13px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg> A cara do seu studio</b>
-      <div class="linha-flex" style="gap: 12px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
-        <label style="margin: 0; font-size: 12.5px;">Cor principal (botões e app do aluno)
-          <input type="color" id="cfgCor" value="#7c3aed" style="display: block; margin-top: 4px; width: 64px; height: 34px; padding: 2px; border: 1px solid #322e3d; border-radius: 8px; background: #14121a; cursor: pointer;"></label>
-        <button class="btn sec mini" id="cfgCorReset">Voltar ao roxo padrão</button>
-        <img id="cfgLogoPrev" hidden alt="Logo do studio" style="height: 34px; border-radius: 8px;">
-        <button class="btn sec mini" id="cfgLogoBtn">Enviar logo</button>
-        <button class="btn sec mini" id="cfgLogoDel" hidden>✕ tirar logo</button>
-        <input type="file" id="cfgLogoFile" accept="image/*" hidden>
-      </div>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Mudou a cara? Toque em <b>Publicar apps atualizados</b> (aba Treinos) pros seus alunos verem a novidade no app.</p>
-    </div>
+    <p class="muted" style="margin: 12px 0; font-size: 12.5px;">🎨 Cores e logo do app agora vivem na aba <b>Personalização</b> (menu de 3 traços).</p>
     <label style="display: block; margin: 10px 0; font-size: 12.5px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 21c-3.6-3.2-6-6.5-6-9.8a6 6 0 0 1 12 0c0 3.3-2.4 6.6-6 9.8z'/><circle cx='12' cy='11' r='2.2'/></svg> Mural dos alunos — um aviso por linha (entra no app de todos quando você gerar/publicar de novo)
       <textarea id="cfgMural" rows="3" placeholder="Semana que vem: treino ao ar livre no sábado!
 Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"></textarea></label>
@@ -1230,6 +1245,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("vChat").hidden = b.dataset.a !== "chat";
     $("vConfig").hidden = b.dataset.a !== "config";
     if (b.dataset.a === "config") renderConfigPT();
+    $("vPers").hidden = b.dataset.a !== "pers";
+    if (b.dataset.a === "pers") renderPers();
     // o card da conta (ilha) tem a própria aba no menu — longe da lista de alunos
     $("cardConta").hidden = b.dataset.a !== "conta";
     if (b.dataset.a === "conta") renderConta();
@@ -4166,6 +4183,44 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__configPT = renderConfigPT; // testes
 
+  // ---------- personalização: paleta de cores + logo do app ----------
+  var PERS_CORES = [["#7c3aed", "Roxo TORQUE"], ["#dc2626", "Vermelho"], ["#ea580c", "Laranja"], ["#d97706", "Dourado"],
+    ["#16a34a", "Verde"], ["#0d9488", "Esmeralda"], ["#2563eb", "Azul"], ["#db2777", "Rosa"]];
+  function pintaPersPrev() {
+    var cor = corOk($("cfgCor").value) || "#7c3aed";
+    var cla = clareia(cor, .5), es2 = escurece(cor, .18);
+    $("persPre").innerHTML = PERS_CORES.map(function (par) {
+      var on = par[0].toLowerCase() === cor.toLowerCase();
+      return '<button class="btn sec mini" data-perscor="' + par[0] + '" style="display:inline-flex;gap:7px;align-items:center;' + (on ? "border-color:" + par[0] + ";" : "") + '">' +
+        '<span style="width:16px;height:16px;border-radius:99px;background:' + par[0] + ';display:inline-block;"></span>' + par[1] + "</button>";
+    }).join("");
+    $("persPrev").innerHTML = '<div style="border:1px solid var(--linha);border-radius:14px;overflow:hidden;max-width:340px;">' +
+      '<div style="padding:14px 16px;background:radial-gradient(140% 200% at 50% -60%,' + cor + '59,transparent 60%),#0d0c10;">' +
+      '<div style="font-size:10px;font-weight:800;letter-spacing:.14em;color:' + cla + ';">SEU STUDIO</div>' +
+      '<div style="font-weight:900;font-size:19px;color:#fff;">Assim fica o app do aluno</div></div>' +
+      '<div style="padding:12px 16px;background:#0d0c10;display:flex;gap:8px;align-items:center;">' +
+      '<span style="flex:1;text-align:center;background:linear-gradient(135deg,' + cor + ',' + es2 + ');color:#fff;border-radius:9px;padding:9px 0;font-weight:800;font-size:12.5px;">Treinei hoje!</span>' +
+      '<span style="flex:1;text-align:center;border:1px solid ' + cor + ';color:' + cla + ';border-radius:9px;padding:9px 0;font-weight:800;font-size:12.5px;">Ver treino</span></div></div>';
+  }
+  function renderPers() {
+    var st = load();
+    if (document.activeElement !== $("cfgCor")) $("cfgCor").value = corOk((st.config || {}).cor) || "#7c3aed";
+    var lgP = logoOk((st.config || {}).logo);
+    if (lgP) { $("cfgLogoPrev").src = lgP; $("cfgLogoPrev").hidden = false; }
+    else { $("cfgLogoPrev").hidden = true; $("cfgLogoPrev").removeAttribute("src"); }
+    $("cfgLogoDel").hidden = !lgP;
+    pintaPersPrev();
+  }
+  $("persPre").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-perscor]");
+    if (!b) return;
+    $("cfgCor").value = b.getAttribute("data-perscor");
+    $("cfgCor").dispatchEvent(new Event("change"));
+    pintaPersPrev();
+  });
+  $("cfgCor").addEventListener("input", pintaPersPrev);
+  window.__persPT = renderPers; // testes
+
   // cronômetro de circuito em tela cheia (pro personal conduzir a sessão)
   (function () {
     var wp = { tipo: "fortime", run: false, iv: null, t0: 0, acum: 0, voltas: 0, ultMin: -1, ultFase: "", ultCd: 0 };
@@ -5915,7 +5970,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ".then(function(r){return r.ok?r.json():null;}).then(function(d){" +
         "if(d&&d.html&&d.stamp&&d.stamp>STAMP){document.open();document.write(d.html);document.close();}}).catch(function(){});}}catch(e){}";
     }
-    return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
+    var htmlApp = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<meta name='theme-color' content='" + COR + "'>" +
       "<link rel='manifest' href='/app/manifest.webmanifest'>" +
@@ -7229,6 +7284,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
       "</" + "script></body></html>";
+    // paleta completa: com cor própria, até os tons de roxo cravados (rgba, canvas do Stories,
+    // lavandas de texto) viram a família da cor do studio
+    if (corOk((st.config || {}).cor)) {
+      var nP = parseInt(COR.slice(1), 16);
+      var nC = parseInt(CORC.slice(1), 16);
+      htmlApp = htmlApp
+        .replace(/#7c3aed/gi, COR)
+        .replace(/#a78bfa/gi, CORC)
+        .replace(/#6d28d9/gi, COR2)
+        .replace(/#4c1d95/gi, escurece(COR, .4))
+        .replace(/#d6c9f5/gi, clareia(COR, .68))
+        .replace(/#e9d5ff/gi, clareia(COR, .8))
+        .replace(/rgba\(124,58,237,/g, "rgba(" + ((nP >> 16) & 255) + "," + ((nP >> 8) & 255) + "," + (nP & 255) + ",")
+        .replace(/rgba\(167,139,250,/g, "rgba(" + ((nC >> 16) & 255) + "," + ((nC >> 8) & 255) + "," + (nC & 255) + ",");
+    }
+    return htmlApp;
   }
   $("listaAlunos").addEventListener("click", function (e) {
     var id = e.target.getAttribute && e.target.getAttribute("data-app");
@@ -7754,6 +7825,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.cor = "";
     st.config.appEditGeralEm = new Date().toISOString();
     S.write("ptStudio", st);
+    try { renderPers(); } catch (e) {}
   });
   $("cfgLogoBtn").addEventListener("click", function () { $("cfgLogoFile").click(); });
   $("cfgLogoFile").addEventListener("change", function () {
