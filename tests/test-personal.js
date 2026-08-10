@@ -2693,6 +2693,29 @@ async function abaPt(p, a) {
     ok(limpo.roxoVar === "" && limpo.topoSumiu && limpo.prevSumiu && limpo.inputCor === "#7c3aed", "voltar ao padrão limpa painel, logo e o campo de cor");
   }
 
+  // ---------- 🎨 aba Personalização: paleta completa com cores prontas ----------
+  await abaPt(p, "pers");
+  const pers = await p.evaluate(async () => {
+    const out = { visivel: !document.getElementById("vPers").hidden, presets: document.querySelectorAll("[data-perscor]").length };
+    document.querySelector("[data-perscor='#dc2626']").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const st = window.MTStore.read("ptStudio", {});
+    out.cor = (st.config || {}).cor;
+    out.prev = document.getElementById("persPrev").innerHTML.indexOf("#dc2626") !== -1;
+    out.appHtml = window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    // restaura o padrão pra não afetar o resto da suíte
+    document.getElementById("cfgCorReset").click();
+    await new Promise((r) => setTimeout(r, 150));
+    const st2 = window.MTStore.read("ptStudio", {});
+    delete (st2.config || {}).appEditGeralEm;
+    window.MTStore.write("ptStudio", st2);
+    return out;
+  });
+  ok(pers.visivel && pers.presets === 8 && pers.cor === "#dc2626" && pers.prev,
+    "aba Personalização: 8 cores prontas, o preset salva e o preview pinta na hora");
+  ok(!/#7c3aed/i.test(pers.appHtml) && !/#a78bfa/i.test(pers.appHtml) && !/rgba\(124,58,237/.test(pers.appHtml) && !/#4c1d95/i.test(pers.appHtml) && /#dc2626/.test(pers.appHtml),
+    "paleta COMPLETA no app: nenhum tom do roxo padrão sobra quando o studio tem cor própria");
+
   // conta / ilha
   const conta = await p.evaluate(() => document.getElementById("contaStatus").textContent);
   ok(/Crie sua conta|Conectado/.test(conta), "card da ilha mostra o status da conta");
