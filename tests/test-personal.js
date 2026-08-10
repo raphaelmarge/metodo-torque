@@ -1402,6 +1402,36 @@ async function abaPt(p, a) {
     ok(!/onload=alert/.test(capa.htmlMau) && /"c":""/.test(capa.htmlMau),
       "capa forjada (svg com script) é descartada — só png/jpg/webp em base64 passa");
     ok(!/capaSuja/.test(capa.html), "só o que o app usa viaja: campos estranhos da ficha não vão junto");
+    // a foto GERAL vive na Personalização e vale pra todos; a da ficha ganha dela
+    const geral = await p.evaluate(() => {
+      const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+      const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos.find((x) => x.ativo !== false);
+      st.config = st.config || {};
+      st.config.capaTreino = JPG; // foto geral da Personalização
+      window.MTStore.write("ptStudio", st);
+      const soGeral = window.__montaAppAluno(al, new Date().toISOString());
+      const t = st.treinosV2[al.id];
+      t.fichas[0].capa = PNG; // ficha com foto própria
+      window.MTStore.write("ptStudio", st);
+      const comFicha = window.__montaAppAluno(al, new Date().toISOString());
+      // e a prévia da Personalização mostra a foto escolhida
+      window.__persPT && window.__persPT();
+      const prev = document.getElementById("cfgCapaPrev");
+      const previa = { visivel: !prev.hidden, temSrc: /^data:image\/jpeg/.test(prev.src || ""),
+        rot: document.getElementById("cfgCapaBtn").textContent };
+      delete st.config.capaTreino;
+      delete t.fichas[0].capa;
+      window.MTStore.write("ptStudio", st);
+      return { soGeral, comFicha, previa };
+    });
+    ok(/"c":"data:image\/jpeg/.test(geral.soGeral),
+      "📷 a foto geral da Personalização vale pra todos os alunos (sem precisar mexer ficha por ficha)");
+    ok(/"c":"data:image\/png/.test(geral.comFicha) && !/"c":"data:image\/jpeg/.test(geral.comFicha),
+      "quando a ficha tem foto própria, ela ganha da geral");
+    ok(geral.previa.visivel && geral.previa.temSrc && /Trocar foto/.test(geral.previa.rot),
+      "a Personalização mostra a prévia da foto e troca o botão pra 'Trocar foto'");
   }
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
