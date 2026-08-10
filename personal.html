@@ -6278,6 +6278,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "button{transition:transform .16s ease}button:active{transform:scale(.96)}" +
       "@keyframes cfQueda{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}" +
       "@keyframes copoPop{0%{transform:scale(.75)}60%{transform:scale(1.14)}100%{transform:scale(1)}}" +
+      // gaveta de cada ficha: a seta gira ao abrir e some a setinha nativa do navegador
+      ".fichabox>summary::-webkit-details-marker{display:none}.fichabox .fseta{transition:transform .15s}.fichabox[open]>summary .fseta{transform:rotate(180deg)}" +
+      ".fichabox+.fichabox{border-top:1px solid rgba(255,255,255,.06)}" +
       "@keyframes secIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}.sec-anim{animation:secIn .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:calc(var(--ci,0)*55ms)}" +
       "@keyframes barIn{from{transform:scaleX(0)}}[style*='height:4px;background:#1b1724']>div{transform-origin:left;animation:barIn .9s cubic-bezier(.22,.61,.36,1) both}" +
       "@media (prefers-reduced-motion:reduce){.sec-anim,[style*='height:4px;background:#1b1724']>div{animation:none!important}button{transition:none}}" +
@@ -6403,8 +6406,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "</div></div>" : "") +
       "<div class='cardx'><h2>Meu treino</h2>" +
       (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:16px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
+      // cada ficha (A, B, C…) é uma gaveta: a do dia abre sozinha, o resto fica recolhido
       (fichasApp ? fichasApp.map(function (f, gi) {
-        return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
+        return "<details class='fichabox' data-fi='" + gi + "'" + (gi === 0 ? " open" : "") + " style='margin:8px 0;'>" +
+          "<summary style='list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 2px;font-weight:800;font-size:13px;letter-spacing:.08em;color:" + CORC + ";text-transform:uppercase;'>" +
+          "<span style='flex:1;min-width:0;'>" + esc(f.titulo) + "</span>" +
+          "<span style='font-size:11px;font-weight:700;letter-spacing:.04em;color:#6e6a78;text-transform:none;white-space:nowrap;'>" + f.itens.length + " exercício" + (f.itens.length === 1 ? "" : "s") + "</span>" +
+          "<span class='fseta' style='color:#6e6a78;font-size:12px;'>▾</span></summary>" +
+          "<div style='padding-bottom:4px;'>" +
           (aqPorFicha[gi] && aqPorFicha[gi].length > 1
             ? "<details class='aqbox' style='background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.45);border-radius:16px;margin:4px 0 8px;overflow:hidden;'>" +
               "<summary style='padding:10px 13px;cursor:pointer;list-style:none;font-size:13px;font-weight:800;color:#fdba74;'>Aquecimento do dia (~4 min) ›</summary>" +
@@ -6434,7 +6443,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               "<button class='tmrbtn' data-s='" + rst + "' style='background:rgba(124,58,237,.18);border:1px solid transparent;color:#d6c9f5;border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>Descanso " + rst + "s</button>" +
               "<button class='tmrbtn' data-s='" + rAlt + "' style='background:#1b1724;border:1px solid transparent;color:#a9a4b5;border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;'>" + rAlt + "s</button>" +
               "</div></div></details>";
-          }).join("");
+          }).join("") + "</div></details>";
       }).join("")
       : treino ? "<div style='font-size:14.5px;line-height:1.7;'>" + treino.split("\n").map(function (ln) {
         var m = ln.match(/(https?:\/\/\S+)/);
@@ -7678,7 +7687,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
       "var par=String(fm.t).split('—');var rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));var tit=par.length>1?par.slice(1).join('—').trim():fm.t;" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
-      "document.getElementById('htSub').textContent=fm.n+' exercício(s) te esperando';}" +
+      "document.getElementById('htSub').textContent=fm.n+' exercício(s) te esperando';" +
+      // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
+      "var gav=document.querySelectorAll('.fichabox');" +
+      "if(gav.length>1)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
       "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');});" +
       "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
       "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
