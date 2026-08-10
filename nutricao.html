@@ -1875,6 +1875,18 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button><div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
       (zapN ? "<a class='btnx' style='display:block;text-align:center;text-decoration:none;background:" + COR2 + ";' href='https://wa.me/55" + String(zapN).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi! Sou " + p.nome + ", sobre minha dieta:") + "' target='_blank' rel='noopener'>Falar com " + esc(studio.split(" ")[0]) + "</a>" : "") +
       "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 🥗</div>" +
+      // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
+      "<nav id='navAppN' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(15,26,18,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #29402f;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
+      [["<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>", "Início"],
+        ["<path d='M12 7c-1-2-3-3-5-2-3 1.2-3 6 0 9.6 1.8 2.2 3.6 3.4 5 3.4s3.2-1.2 5-3.4c3-3.6 3-8.4 0-9.6-2-1-4 0-5 2z'/><path d='M12 7c0-2 1.2-3.4 3-4'/>", "Dieta"],
+        ["<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>", "Evolução"],
+        ["<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>", "Agenda"],
+        ["<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>", "Chat"]].map(function (mN) {
+        return "<button class='nitemn' style='flex:1;background:none;border:none;border-radius:11px;padding:7px 2px 5px;font-family:inherit;color:#8fa896;display:flex;flex-direction:column;align-items:center;gap:3px;'>" +
+          "<svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + mN[0] + "</svg>" +
+          "<span style='font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;'>" + mN[1] + "</span></button>";
+      }).join("") +
+      "</nav>" +
       "<script>var REFS=" + JSON.stringify(refs.map(function (r) { return { id: r.id, h: r.h, t: r.t, k: r.k, pt: r.pt, cb: r.cb, gd: r.gd }; })) +
       ",ALDB=" + JSON.stringify(aldb) +
       ",AGUAML=" + aguaMl + ",KCALMETA=" + alvo.alvo +
@@ -2120,8 +2132,6 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "if(/Agenda|Pagamento/.test(t))return 'agenda';" +
       "if(/Fale com/.test(t))return 'chat';return 'inicio';}" +
       "document.querySelectorAll('body > .cardx').forEach(function(el){el.setAttribute('data-secn',secDeN(el));});" +
-      "document.body.insertAdjacentHTML('beforeend'," +
-      "\"<nav id='navAppN' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(15,26,18,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #29402f;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'></nav>\");" +
       "var navN=document.getElementById('navAppN');" +
       "navN.innerHTML=MENUN.map(function(m){return \"<button class='nitemn' data-msecn='\"+m[0]+\"' style='flex:1;background:none;border:none;border-radius:11px;padding:7px 2px 5px;cursor:pointer;font-family:inherit;color:#8fa896;display:flex;flex-direction:column;align-items:center;gap:3px;'>\"+" +
       "\"<svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+m[1]+\"</svg>\"+" +
