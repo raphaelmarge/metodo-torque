@@ -43,7 +43,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .mi { vertical-align: -2.5px; }
   .abas-pt button .mi { margin-right: 9px; vertical-align: -3px; }
   /* menu inferior fixo (estilo app do aluno) */
-  #navPt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(18,16,22,.96); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid #2a2536; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  #navPt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(13,12,16,.9); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.04); padding: 8px 6px calc(6px + env(safe-area-inset-bottom)); }
   #navPt button { position: relative; background: none; border: 0; color: #8a8695; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
   .nav-bad { position: absolute; top: 1px; right: calc(50% - 19px); min-width: 15px; height: 15px; border-radius: 8px; background: #dc2626; color: #fff; font-size: 9.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
   #navPt button.ativa { color: #a78bfa; }
@@ -53,7 +53,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   html[data-tema="claro"] #navPt button.ativa { color: var(--roxo); }
   .abas-pt {
     position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
-    background: #171321; border-right: 1px solid #2a2536; display: flex; flex-direction: column;
+    background: #14121a; border-right: none; display: flex; flex-direction: column;
     padding: 14px 0 16px; overflow-y: auto; transform: translateX(-105%); transition: transform .22s ease;
   }
   body.menu-aberto .abas-pt { transform: none; box-shadow: 0 0 40px rgba(18,16,22,.45); }
@@ -100,8 +100,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .kv-pt strong { font-variant-numeric: tabular-nums; text-align: right; }
   .kpi-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
   .kpi-pt .card { text-align: center; padding: 16px; }
-  .kpi-pt .n { font-size: 28px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-  .aluno-pt { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  .kpi-pt .n { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .aluno-pt { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: none; flex-wrap: wrap; border-radius: 14px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
   /* perfil do aluno no celular: campos em grade organizada (nada de largura fixa solta) */
   /* fichas recolhíveis: toca pra abrir/fechar (pode abrir várias) */
   #fichasBox details > summary { list-style: none; }
@@ -163,7 +163,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div class="busca-topo">
       <input id="buscaAluno" placeholder="Buscar aluno…" autocomplete="off"
-        style="width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid #322e3d; background: #14121a; color: #fff; font-family: inherit; font-size: 13.5px;">
+        style="width: 100%; padding: 9px 12px; border-radius: 99px; border: 1px solid transparent; background: #14121a; color: #fff; font-family: inherit; font-size: 13.5px;">
       <div id="buscaAlunoLista" hidden
         style="position: absolute; top: 110%; right: 0; width: min(280px, 86vw); background: var(--card); color: var(--texto); border: 1px solid var(--linha); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); z-index: 40; overflow: hidden;"></div>
     </div>
@@ -8162,5 +8162,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__ptStudio = { load: load, render: render }; // testes
 })();
 </script>
+<script>/* TORQUE camada visual (aditiva) */(function(){var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;if(RM)return;function conta(el){var tx=el.textContent.trim();var m=tx.match(/^([0-9]+)/);if(!m)return;var alvo=parseInt(m[1],10);if(!alvo)return;var resto=tx.slice(m[1].length);var t0=performance.now();var up=function(t){var p=Math.min(1,(t-t0)/800);el.textContent=Math.round(alvo*(1-Math.pow(1-p,3)))+resto;if(p<1)requestAnimationFrame(up);};requestAnimationFrame(up);}
+addEventListener('load',function(){document.querySelectorAll('.kpi-pt .n').forEach(conta);});})();</script>
 </body>
 </html>

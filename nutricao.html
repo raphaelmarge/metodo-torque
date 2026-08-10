@@ -38,7 +38,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .hamb-nt:hover { background: rgba(255,255,255,.22); }
   .mi { vertical-align: -2.5px; }
   .abas-nt button .mi { margin-right: 9px; vertical-align: -3px; }
-  #navNt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(16,20,17,.96); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid #23301f; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  #navNt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(16,20,17,.9); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.04); padding: 8px 6px calc(6px + env(safe-area-inset-bottom)); }
   #navNt button { background: none; border: 0; color: #8a9585; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
   #navNt button.ativa { color: #4ade80; }
   #navNt button:active { background: rgba(255,255,255,.06); }
@@ -58,7 +58,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .kv-nt strong { font-variant-numeric: tabular-nums; text-align: right; }
   .abas-nt {
     position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
-    background: #121a14; border-right: 1px solid #24312a; display: flex; flex-direction: column;
+    background: #121a14; border-right: none; display: flex; flex-direction: column;
     padding: 14px 0 16px; overflow-y: auto; transform: translateX(-105%); transition: transform .22s ease;
   }
   body.menu-aberto .abas-nt { transform: none; box-shadow: 0 0 40px rgba(16,22,18,.45); }
@@ -75,11 +75,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .abas-nt button.ativa { color: #fff; border-left-color: var(--verde); background: rgba(22,163,74,.22); }
   .menu-fundo { position: fixed; inset: 0; background: rgba(16,22,18,.5); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .22s; }
   body.menu-aberto .menu-fundo { opacity: 1; pointer-events: auto; }
-  .pac { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: 1px solid var(--linha); flex-wrap: wrap; border-radius: 12px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  .pac { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: none; flex-wrap: wrap; border-radius: 14px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
   .linha-nt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
-  .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 10px; border-radius: var(--raio-pill); text-transform: uppercase; background: rgba(34,197,94,.14); color: #4ade80; border: 1px solid rgba(34,197,94,.4); }
-  .tagn.roxa { background: rgba(124,58,237,.14); color: #a78bfa; border-color: rgba(124,58,237,.4); }
-  .tagn.ambar { background: rgba(245,158,11,.14); color: #fcd34d; border-color: rgba(245,158,11,.4); }
+  .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 11px; border-radius: var(--raio-pill); text-transform: uppercase; background: rgba(34,197,94,.14); color: #4ade80; border: none; }
+  .tagn.roxa { background: rgba(124,58,237,.14); color: #a78bfa; }
+  .tagn.ambar { background: rgba(245,158,11,.14); color: #fcd34d; }
   .btn.verde { background: var(--verde); }
   .btn.verde:hover { background: var(--verde-2); }
   .abas button.ativa { background: var(--verde); border-color: var(--verde); box-shadow: none; }
@@ -92,11 +92,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   #calAgendaN .cal-dia.sel { background: var(--verde); color: #fff; border-color: var(--verde); }
   #calAgendaN .cal-dia .cal-n { position: absolute; right: 3px; top: 3px; background: var(--verde); color: #fff; font-size: 9.5px; font-weight: 800; border-radius: 999px; min-width: 15px; height: 15px; line-height: 15px; padding: 0 3px; }
   #calAgendaN .cal-dia.sel .cal-n { background: rgba(255,255,255,.28); }
-  .ref-card { border: 1px solid var(--linha); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: var(--card); }
+  .ref-card { border: none; border-radius: 14px; padding: 14px; margin-bottom: 10px; background: var(--card); }
   .kpis-nt { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .kpi-nt { background: var(--card); border: 1px solid var(--linha); padding: 13px; border-radius: 12px; }
+  .kpi-nt { background: var(--card); border: none; padding: 14px; border-radius: 14px; }
   .kpi-nt .rot { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--cinza); text-transform: uppercase; }
-  .kpi-nt .val { font-size: 22px; font-weight: 800; margin-top: 2px; color: #4ade80; }
+  .kpi-nt .val { font-size: 28px; font-weight: 800; margin-top: 2px; color: #4ade80; font-variant-numeric: tabular-nums; }
   /* perfil do paciente no celular: campos em grade organizada */
   @media (max-width: 640px) {
     #qtAbasN { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -3066,5 +3066,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   render();
 })();
 </script>
+<script>/* TORQUE camada visual (aditiva) */(function(){var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;if(RM)return;function conta(el){var tx=el.textContent.trim();var m=tx.match(/^([0-9]+)/);if(!m)return;var alvo=parseInt(m[1],10);if(!alvo)return;var resto=tx.slice(m[1].length);var t0=performance.now();var up=function(t){var p=Math.min(1,(t-t0)/800);el.textContent=Math.round(alvo*(1-Math.pow(1-p,3)))+resto;if(p<1)requestAnimationFrame(up);};requestAnimationFrame(up);}
+addEventListener('load',function(){document.querySelectorAll('.kpi-nt .val').forEach(conta);});})();</script>
 </body>
 </html>
