@@ -1313,7 +1313,7 @@ async function abaPt(p, a) {
     "painel mostra objetivo, dias e a dor relatada no onboarding");
   // 📊 cada pergunta do questionário vira uma métrica no perfil do aluno
   {
-    const metricas = await p.evaluate(() => window.__painelApp({
+    const metricas = await p.evaluate(() => window.__checkinsPT({
       checks: [
         { d: "2026-06-10", nome: "Check-in semanal", pts: 1, respostas: [
           { sigla: "MOTEX", pergunta: "Qual foi sua motivação?", resposta: "Médio", pontos: 0 },
@@ -1339,6 +1339,25 @@ async function abaPt(p, a) {
     ok(/Nenhuma/.test(metricas) && /2 resposta\(s\)/.test(metricas),
       "pergunta de resposta livre vira métrica de texto com a contagem de respostas");
     ok(/Últimos check-ins/.test(metricas) && /09\/08/.test(metricas), "o histórico dos check-ins continua listado abaixo das métricas");
+    // a aba própria do perfil: existe, troca e o painel principal não repete o bloco
+    const abaQ = await p.evaluate(() => {
+      const bt = document.querySelector('#pfAbas [data-pfa="quest"]');
+      if (!bt) return null;
+      bt.click();
+      const sec = document.querySelector('[data-pfsec="quest"]');
+      return { rot: bt.textContent.trim(), visivel: sec && !sec.hidden,
+        ativa: bt.classList.contains("ativa"), temBox: !!document.getElementById("pfQuestBox"),
+        appEscondida: document.querySelector('[data-pfsec="app"]').hidden };
+    });
+    ok(abaQ && /Check-ins/.test(abaQ.rot) && abaQ.visivel && abaQ.ativa && abaQ.temBox,
+      "o perfil tem uma aba própria de Check-ins que abre a seção das respostas");
+    ok(abaQ && abaQ.appEscondida, "abrir Check-ins esconde as outras seções do perfil (aba de verdade)");
+    ok(await p.evaluate(() => !/MOTEX/.test(window.__painelApp({ checks: [{ d: "2026-08-09", nome: "C", pts: 1, respostas: [{ sigla: "MOTEX", resposta: "Alto", pontos: 1 }] }] }))),
+      "o painel 'Direto do app' não repete mais as respostas — elas vivem só na aba Check-ins");
+    // sem resposta nenhuma, a aba explica o que fazer em vez de ficar vazia
+    ok(/questionário/i.test(await p.evaluate(() => { window.__checkinsPT({ checks: [] }); const c = document.getElementById("pfQuestBox"); return c ? c.textContent : ""; })) ||
+      /questionário/i.test(await p.evaluate(() => document.getElementById("pfQuestBox").textContent)),
+      "aluno sem resposta vê a explicação de como mandar o questionário");
   }
   ok(/>Ver como faz</.test(appHtml) && />vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml),
     "exercício ganha o botão Ver como faz (animação) e o link do vídeo");
@@ -1565,9 +1584,10 @@ async function abaPt(p, a) {
     ok(/Hábitos diários/.test(appDados) && /Água/.test(appDados) && /100%/.test(appDados), "hábitos do aluno viram barras de % (água 100%)");
     ok(/Hábitos em dia/.test(appDados) && /50%/.test(appDados), "KPI de dias com 3+ hábitos nos últimos 30 dias (50%)");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
-    ok(/Check-ins respondidos no app/.test(appDados) && /3 no total/.test(appDados), "respostas de questionário (app_quest) viram seção de check-ins");
-    ok(/stroke=["']#fbbf24["']/.test(appDados) && /mín 2/.test(appDados) && /máx 9/.test(appDados), "pontuação dos check-ins vira gráfico de linha (mín 2 / máx 9)");
-    ok(/\+9 pts/.test(appDados) && /MOTEX/.test(appDados), "última resposta listada com pontuação e siglas");
+    const questBox = await p.evaluate(() => document.getElementById("pfQuestBox").innerHTML);
+    ok(/Check-ins respondidos no app/.test(questBox) && /3 no total/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
+    ok(/stroke=["']#fbbf24["']/.test(questBox) && /mín 2/.test(questBox) && /máx 9/.test(questBox), "pontuação dos check-ins vira gráfico de linha (mín 2 / máx 9)");
+    ok(/\+9 pts/.test(questBox) && /MOTEX/.test(questBox), "última resposta listada com pontuação e siglas");
     ok(/Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
     // aluno malicioso tentando injetar código pela foto/data do retorno
     const xss = await p.evaluate(async () => {
@@ -1591,7 +1611,7 @@ async function abaPt(p, a) {
       const depois = { app: vis("pfAppDados"), cadastro: vis("pfNome"), ativa: document.querySelector("#pfAbas .ativa").getAttribute("data-pfa") };
       return { antes, depois, nBotoes: document.querySelectorAll("#pfAbas button").length };
     });
-    ok(abas.nBotoes === 6 && abas.antes.app && !abas.antes.cadastro && !abas.antes.fin, "perfil abre na aba 📲 App do aluno com as outras seções escondidas");
+    ok(abas.nBotoes === 7 && abas.antes.app && !abas.antes.cadastro && !abas.antes.fin, "perfil abre na aba 📲 App do aluno com as outras seções escondidas");
     ok(abas.depois.cadastro && !abas.depois.app && abas.depois.ativa === "cadastro", "clicar em 👤 Cadastro troca a seção e marca a aba ativa");
   }
   await p.evaluate(() => document.getElementById("pfFechar").click());
@@ -3287,11 +3307,12 @@ async function abaPt(p, a) {
         avaliacoes: (st.avaliacoes || []).length,
         kpis: document.getElementById("kpisPt") ? document.getElementById("kpisPt").textContent : document.body.textContent.slice(0, 50),
         app: document.getElementById("pfAppDados").innerHTML,
+        quest: document.getElementById("pfQuestBox").innerHTML,
       }), 400));
     });
     ok(demo.alunos === 8 && demo.fichas === 8 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 8 alunos com fichas, pagamentos e avaliações");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
-    ok(/Check-ins respondidos no app/.test(demo.app) && /stroke=["']#fbbf24["']/.test(demo.app), "demo também mostra os check-ins de questionário com gráfico de pontuação");
+    ok(/Check-ins respondidos no app/.test(demo.quest) && /stroke=["']#fbbf24["']/.test(demo.quest), "demo também mostra os check-ins de questionário na aba própria");
     // com dados existentes o demo NÃO sobrescreve
     const pD2 = await ctxD.newPage();
     await pD2.goto(BASE + "/demo-personal.html");
