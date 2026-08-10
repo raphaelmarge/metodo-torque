@@ -2149,6 +2149,8 @@ async function abaPt(p, a) {
     return out;
   });
   ok(nrc.mapa && nrc.redondo, "área de corrida estilo NRC: trajeto no mapa e botão INICIAR redondo gigante");
+  ok(/tile\.openstreetmap\.org/.test(cardioProf.appHtml) && /OpenStreetMap/.test(cardioProf.appHtml) && /navigator\.onLine/.test(cardioProf.appHtml),
+    "on-line o mapa usa ruas de verdade (OpenStreetMap com crédito); sem internet cai no traçado offline");
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),

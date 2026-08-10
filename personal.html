@@ -6775,8 +6775,46 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function crEl(id){return document.getElementById(id);}" +
       "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap};}" +
       "function crFala(txt){try{if(!window.speechSynthesis)return false;var u=new SpeechSynthesisUtterance(txt);u.lang='pt-BR';speechSynthesis.speak(u);return true;}catch(e){return false;}}" +
+      // mapa de ruas (OpenStreetMap) quando on-line; sem internet cai no traçado offline
+      "var crTiles={};" +
+      "function merc(lat,lng,z){var n=Math.pow(2,z);var x=(lng+180)/360*n;var la=lat*Math.PI/180;" +
+      "var y=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n;return {x:x,y:y};}" +
+      "function crTile(z,x,y){var n=Math.pow(2,z);if(y<0||y>=n)return null;x=((x%n)+n)%n;" +
+      "var k=z+'/'+x+'/'+y;var t=crTiles[k];if(t)return t;" +
+      "if(Object.keys(crTiles).length>140)crTiles={};" +
+      "t={img:new Image(),ok:false};crTiles[k]=t;t.img.crossOrigin='anonymous';" +
+      "t.img.onload=function(){t.ok=true;try{desenhaRota();}catch(e){}};" +
+      "t.img.src='https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png';return t;}" +
       "function desenhaRota(){var cv=crEl('crMapa');if(!cv)return;var g=cv.getContext('2d');var W=cv.width,H=cv.height;g.clearRect(0,0,W,H);" +
       "var CLR=document.documentElement.classList.contains('claro');" +
+      "var centro=cr.rota.length?cr.rota[cr.rota.length-1]:cr.lastPos;" +
+      "if(navigator.onLine&&centro){" +
+      // zoom: 16 parado; com rota, afasta até o percurso caber
+      "var z=16;var b=null;" +
+      "if(cr.rota.length>1){b={la1:1/0,la2:-1/0,lo1:1/0,lo2:-1/0};" +
+      "cr.rota.forEach(function(pp){if(pp.lat<b.la1)b.la1=pp.lat;if(pp.lat>b.la2)b.la2=pp.lat;if(pp.lng<b.lo1)b.lo1=pp.lng;if(pp.lng>b.lo2)b.lo2=pp.lng;});" +
+      "centro={lat:(b.la1+b.la2)/2,lng:(b.lo1+b.lo2)/2};" +
+      "for(z=17;z>12;z--){var q1=merc(b.la2,b.lo1,z),q2=merc(b.la1,b.lo2,z);" +
+      "if((q2.x-q1.x)*256<W-60&&(q2.y-q1.y)*256<H-60)break;}}" +
+      "var c0=merc(centro.lat,centro.lng,z);var px0=c0.x*256-W/2,py0=c0.y*256-H/2;" +
+      "g.fillStyle='#e8e6e1';g.fillRect(0,0,W,H);" +
+      "for(var tx=Math.floor(px0/256);tx<=Math.floor((px0+W)/256);tx++){for(var ty=Math.floor(py0/256);ty<=Math.floor((py0+H)/256);ty++){" +
+      "var tl=crTile(z,tx,ty);if(tl&&tl.ok)try{g.drawImage(tl.img,Math.round(tx*256-px0),Math.round(ty*256-py0));}catch(e){}}}" +
+      "var pj=function(pp){var m2=merc(pp.lat,pp.lng,z);return {x:m2.x*256-px0,y:m2.y*256-py0};};" +
+      "if(cr.rota.length>1){g.lineJoin='round';g.lineCap='round';" +
+      "g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=8;g.beginPath();" +
+      "cr.rota.forEach(function(pp,i){var q=pj(pp);if(i)g.lineTo(q.x,q.y);else g.moveTo(q.x,q.y);});g.stroke();" +
+      "g.strokeStyle='" + COR + "';g.lineWidth=5;g.beginPath();" +
+      "cr.rota.forEach(function(pp,i){var q=pj(pp);if(i)g.lineTo(q.x,q.y);else g.moveTo(q.x,q.y);});g.stroke();" +
+      "var i0=pj(cr.rota[0]);g.fillStyle='#4ade80';g.beginPath();g.arc(i0.x,i0.y,7,0,7);g.fill();}" +
+      // bolinha azul da posição atual, estilo mapa de celular
+      "var pAt=pj(centro);g.fillStyle='#fff';g.beginPath();g.arc(pAt.x,pAt.y,10,0,7);g.fill();" +
+      "g.fillStyle='#2563eb';g.beginPath();g.arc(pAt.x,pAt.y,6.5,0,7);g.fill();" +
+      // atribuição obrigatória do OpenStreetMap
+      "g.fillStyle='rgba(255,255,255,.85)';g.fillRect(W-150,H-22,150,22);" +
+      "g.fillStyle='#444';g.font='11px system-ui,sans-serif';g.textAlign='right';g.fillText('\\u00a9 OpenStreetMap',W-8,H-7);" +
+      "return;}" +
+      // offline (ou ainda sem posição): grade + traçado do percurso
       "g.strokeStyle=CLR?'rgba(0,0,0,.07)':'rgba(255,255,255,.05)';g.lineWidth=1;" +
       "for(var gx=40;gx<W;gx+=40){g.beginPath();g.moveTo(gx,0);g.lineTo(gx,H);g.stroke();}" +
       "for(var gy=40;gy<H;gy+=40){g.beginPath();g.moveTo(0,gy);g.lineTo(W,gy);g.stroke();}" +
@@ -6855,7 +6893,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(dK>0.004){cr.lastMove=Date.now();" +
       "if(cr.autoP){cr.autoP=false;cr.run=true;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';bip(880,110);}}" +
       "cr.lastPos=pt;if(cr.run){cr.rota.push({lat:pt.lat,lng:pt.lng});if(cr.rota.length>600)cr.rota.shift();" +
-      "cr.jan.push({t:Date.now(),km:cr.km});while(cr.jan.length&&Date.now()-cr.jan[0].t>60000)cr.jan.shift();desenhaRota();}pintaCr();" +
+      "cr.jan.push({t:Date.now(),km:cr.km});while(cr.jan.length&&Date.now()-cr.jan[0].t>60000)cr.jan.shift();}" +
+      "try{desenhaRota();}catch(e){}pintaCr();" +
       "},function(err){if(err&&err.code===1){crGpsNeg=true;crGpsPara();}else{crEl('crGps').textContent='Ligar GPS';}" +
       "crEl('crInfo').textContent='Sem GPS agora \\u2014 digite os km na m\\u00e3o que o pace sai igual.';" +
       "},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});}" +
