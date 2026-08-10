@@ -2715,6 +2715,34 @@ async function abaPt(p, a) {
     "aba Personalização: 8 cores prontas, o preset salva e o preview pinta na hora");
   ok(!/#7c3aed/i.test(pers.appHtml) && !/#a78bfa/i.test(pers.appHtml) && !/rgba\(124,58,237/.test(pers.appHtml) && !/#4c1d95/i.test(pers.appHtml) && /#dc2626/.test(pers.appHtml),
     "paleta COMPLETA no app: nenhum tom do roxo padrão sobra quando o studio tem cor própria");
+  // fundo do app: preset troca a família inteira de fundos e o tom claro é travado
+  const persFundo = await p.evaluate(async () => {
+    const out = { presets: document.querySelectorAll("[data-persfundo]").length };
+    document.querySelector("[data-persfundo='#0a0f1c']").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const st = window.MTStore.read("ptStudio", {});
+    out.salvo = (st.config || {}).fundo;
+    out.appHtml = window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    st.config.fundo = "#eeeeee"; // claro demais: precisa ser escurecido sozinho
+    window.MTStore.write("ptStudio", st);
+    out.appClaro = window.__montaAppAluno(st.alunos[0], new Date().toISOString());
+    // restaura o padrão
+    document.getElementById("cfgFundoReset").click();
+    await new Promise((r) => setTimeout(r, 150));
+    const st2 = window.MTStore.read("ptStudio", {});
+    delete (st2.config || {}).appEditGeralEm;
+    window.MTStore.write("ptStudio", st2);
+    return out;
+  });
+  ok(persFundo.presets === 6 && persFundo.salvo === "#0a0f1c" &&
+    !/#0d0c10/i.test(persFundo.appHtml) && !/#14121a/i.test(persFundo.appHtml) && !/#322e3d/i.test(persFundo.appHtml) && /#0a0f1c/.test(persFundo.appHtml),
+    "fundo do app: 6 tons prontos e o Azul-noite troca a família inteira (fundos, cartões e bordas)");
+  ok(!/background:#eeeeee/i.test(persFundo.appClaro) && (() => {
+    const m = persFundo.appClaro.match(/body\{[^}]*background:(#[0-9a-f]{6})/i);
+    if (!m) return false;
+    const n = parseInt(m[1].slice(1), 16);
+    return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255 <= 0.25;
+  })(), "fundo claro demais é escurecido sozinho (o texto claro continua legível)");
 
   // conta / ilha
   const conta = await p.evaluate(() => document.getElementById("contaStatus").textContent);
