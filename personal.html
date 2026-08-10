@@ -1146,6 +1146,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="apps/store.js"></script>
 <script src="assets/pagarme-cartao.js"></script>
 <script src="assets/exercicios-db.js"></script>
+<script src="assets/exercicios-anim.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
@@ -4952,6 +4953,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function videoBusca(nome) {
     return "https://www.youtube.com/results?search_query=" + encodeURIComponent("como fazer " + nome + " exercício execução correta");
   }
+  // padrão de movimento do exercício (pra demonstração animada — funciona sem internet)
+  function animDe(nome, grupo) {
+    return (self.MT_ANIM && self.MT_ANIM.padrao(nome, grupo)) || "agacho";
+  }
   // lista única: os seus personalizados vencem o catálogo (mesmo nome)
   function listaUnificada(st) {
     var meus = {};
@@ -4998,6 +5003,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (x.seu ? '<span class="tag ok" style="font-size:10px;">SEU</span>' : "") +
         (x.seu && x.semDesc ? '<span class="tag alerta" style="font-size:10px;">sem descrição</span>' : "") +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;align-items:center;">' +
+        '<button class="btn sec mini" data-exanim="' + esc(animDe(x.nome, x.grupo)) + '" title="ver a demonstração do movimento">Como faz</button>' +
         '<a class="btn mini sec" style="text-decoration:none;" target="_blank" rel="noopener" href="' + esc(x.video || videoBusca(x.nome)) + '">▶ vídeo</a>' +
         (x.seu
           ? '<button class="btn sec mini" data-exedit="' + x.id + '">Abrir</button><button class="btn sec mini" data-exrm="' + x.id + '">✕</button>'
@@ -5035,6 +5041,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("exLista").addEventListener("click", function (e) {
     var ed = e.target.getAttribute && e.target.getAttribute("data-exedit");
     var rm = e.target.getAttribute && e.target.getAttribute("data-exrm");
+    // demonstração do movimento: abre/fecha o boneco animado embaixo do exercício
+    var anim = e.target.getAttribute && e.target.getAttribute("data-exanim");
+    if (anim) {
+      var linha = e.target.closest(".sessao-pt");
+      var jaTem = linha.nextElementSibling && linha.nextElementSibling.classList.contains("anim-pt");
+      var abertos = $("exLista").querySelectorAll(".anim-pt");
+      for (var iA = 0; iA < abertos.length; iA++) abertos[iA].remove();
+      if (jaTem) return;
+      var cx = document.createElement("div");
+      cx.className = "anim-pt";
+      cx.style.cssText = "background:var(--card);border-radius:14px;padding:8px;margin:-4px 0 10px;text-align:center;";
+      cx.innerHTML = (self.MT_ANIM ? self.MT_ANIM.svg(anim, "var(--roxo)", 160) : "") +
+        '<div class="muted" style="font-size:11.5px;">movimento de referência — o app do aluno mostra esta mesma demonstração</div>';
+      linha.parentNode.insertBefore(cx, linha.nextSibling);
+      return;
+    }
     // Abrir num item do catálogo: vira cópia personalizada (SEU) e abre o editor
     var abrir = e.target.getAttribute && e.target.getAttribute("data-exabrir");
     if (abrir) {
@@ -6235,8 +6257,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               "<div style='padding:0 13px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
               (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
-              "<button class='vidbtn' data-v='" + esc(it.video || videoBusca(it.nome)) + "' style='background:rgba(124,58,237,.18);border:1px solid transparent;color:#d6c9f5;font-weight:700;font-size:12px;padding:5px 14px;border-radius:99px;display:inline-block;font-family:inherit;cursor:pointer;'>Ver vídeo</button>" +
+              "<button class='animbtn' data-a='" + esc(animDe(it.nome, it.grupo)) + "' style='background:rgba(124,58,237,.18);border:1px solid transparent;color:#d6c9f5;font-weight:700;font-size:12px;padding:5px 14px;border-radius:99px;display:inline-block;font-family:inherit;cursor:pointer;'>Ver como faz</button> " +
+              "<button class='vidbtn' data-v='" + esc(it.video || videoBusca(it.nome)) + "' style='background:none;border:none;color:#8a8695;font-weight:700;font-size:12px;padding:5px 4px;font-family:inherit;cursor:pointer;text-decoration:underline;'>vídeo</button>" +
               ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat!</span>" : "") +
+              "<div class='animbox' style='display:none;'></div>" +
               "<div class='vidbox' style='display:none;'></div>" +
               (it.alts && it.alts.length ? "<div style='margin-top:8px;'><button class='altbtn' style='background:none;border:none;color:#a9a4b5;font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;'>Sem esse aparelho hoje?</button>" +
                 "<div class='altbox' style='display:none;color:#d6c9f5;font-size:12.5px;margin-top:5px;'>Troca por: <b>" + it.alts.map(function (nA) { return esc(nA); }).join("</b> ou <b>") + "</b> — mesmo padrão de movimento. Na dúvida, chama no chat!</div></div>" : "") +
@@ -6507,6 +6531,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function isoLoc(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
       "function isoHj(){return isoLoc(new Date());}" +
       "function semDe(x){var d=typeof x==='string'?new Date(x+'T12:00:00'):new Date(x.getTime());d.setDate(d.getDate()-((d.getDay()+6)%7));return isoLoc(d);}" +
+      // 🏃 demonstração animada do movimento — desenhada aqui dentro, funciona SEM internet
+      "var ANIMD=" + JSON.stringify((self.MT_ANIM && self.MT_ANIM.compacto()) || {}) + ";" +
+      "function animSvg(pad){var p=ANIMD[pad]||ANIMD.agacho;if(!p)return '';var a=p[0],b=p[1];" +
+      "var an=function(at,v1,v2){return \"<animate attributeName='\"+at+\"' values='\"+v1+';'+v2+';'+v1+\"' dur='2.6s' repeatCount='indefinite' calcMode='spline' keyTimes='0;0.5;1' keySplines='.4 0 .2 1;.4 0 .2 1'/>\";};" +
+      "var ln=function(i,f){return \"<polyline points='\"+a[i]+\"' fill='none' stroke='" + CORC + "' stroke-width='\"+(f?4:5)+\"' stroke-linecap='round' stroke-linejoin='round'\"+(f?\" opacity='.42'\":'')+'>'+an('points',a[i],b[i])+'</polyline>';};" +
+      "var c1=a[5].split(','),c2=b[5].split(',');" +
+      "return \"<svg viewBox='\"+(p[2]||'0 0 120 120')+\"' width='100%' style='display:block;max-width:220px;margin:8px auto 0;'>\"+" +
+      "\"<line x1='8' y1='112' x2='112' y2='112' stroke='" + CORC + "' stroke-width='2' stroke-linecap='round' opacity='.28'/>\"+" +
+      "ln(3,1)+ln(4,1)+ln(0)+ln(1)+ln(2)+" +
+      "\"<circle cx='\"+c1[0]+\"' cy='\"+c1[1]+\"' r='" + (self.MT_ANIM ? self.MT_ANIM.raio : 8) + "' fill='" + CORC + "'>\"+an('cx',c1[0],c2[0])+an('cy',c1[1],c2[1])+'</circle></svg>';}" +
+      "document.addEventListener('click',function(e){var ab=e.target.closest('.animbtn');if(!ab)return;" +
+      "var bx=ab.parentNode.querySelector('.animbox');if(!bx)return;" +
+      "if(bx.firstChild){bx.innerHTML='';bx.style.display='none';ab.textContent='Ver como faz';return;}" +
+      "bx.style.display='block';bx.innerHTML=animSvg(ab.dataset.a)+" +
+      "\"<div style='text-align:center;font-size:11.5px;color:#6e6a78;margin-top:2px;'>movimento de referência — a técnica exata quem ajusta é o seu professor</div>\";" +
+      "ab.textContent='Fechar';});" +
       // vídeo do exercício DENTRO do app: player do YouTube embutido (sem sair pra outra aba)
       "function ytId(u){var m=String(u||'').match(/(?:youtube\\.com\\/(?:watch\\?(?:.*&)?v=|shorts\\/|embed\\/)|youtu\\.be\\/)([\\w-]{6,20})/);return m?m[1]:'';}" +
       "document.addEventListener('click',function(e){var vb=e.target.closest('.vidbtn');if(!vb)return;" +

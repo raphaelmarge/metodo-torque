@@ -233,9 +233,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
         <select id="dAluno" style="min-width: 220px;"></select>
         <button class="btn verde" id="dGerar" title="Mifflin-St Jeor + objetivo + banco de alimentos">Gerar dieta automática</button>
+        <button class="btn sec" id="dIA" title="a IA lê o perfil, o objetivo e as restrições e monta o plano alimentar (precisa da conta na nuvem)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m12 3.5 2.3 5.3 5.7.5-4.3 3.8 1.3 5.6-5-3-5 3 1.3-5.6L4 9.3l5.7-.5z'/></svg> Gerar com IA</button>
         <button class="btn sec" id="dZap">Enviar resumo no WhatsApp</button>
         <button class="btn sec" id="dPdf" title="plano alimentar imprimível — imprima ou salve em PDF pra entregar ao paciente">Plano em PDF</button>
       </div>
+      <div id="dIAStatus" class="muted" style="margin-top: 8px; font-size: 13px;"></div>
       <div id="dResumo" class="muted" style="margin-top: 10px; font-size: 13.5px;"></div>
       <div class="linha-flex" style="gap: 8px; margin-top: 10px; align-items: center;">
         <label style="margin: 0; font-size: 13px; font-weight: 700;">Meta de água (ml/dia)
@@ -1346,6 +1348,103 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     S.write("ntStudio", st);
     renderDietas();
     alert("Dieta gerada com " + st.dietas[p.id].refeicoes.length + " refeições para " + kcalAlvo(p).alvo + " kcal.\n\n⚠️ Revise e ajuste — a decisão final é sempre do profissional.");
+  });
+  // ---------- 🥦 IA de dieta (a IA lê o perfil inteiro e monta o plano; o nutri revisa) ----------
+  function montaDadosDietaIA(st, p) {
+    var alvo = kcalAlvo(p), mA = macrosAlvo(p);
+    // catálogo agrupado por categoria (com porção e kcal) — a IA só pode usar estes nomes
+    var porCat = {};
+    CATALOGO.forEach(function (a) { (porCat[a.c] = porCat[a.c] || []).push(a.n + " (" + a.p + ", " + a.k + " kcal)"); });
+    (st.alimentos || []).forEach(function (a) {
+      (porCat["Meus alimentos"] = porCat["Meus alimentos"] || []).push(a.nome + " (" + a.porcao + ", " + a.kcal + " kcal)");
+    });
+    var catalogo = Object.keys(porCat).map(function (c) { return c + ": " + porCat[c].slice(0, 40).join(" | "); }).join("\n");
+    var OBJ = { emagrecer: "emagrecimento", ganhar: "ganho de massa", manter: "manutenção" };
+    var ATIV = { sed: "sedentário", leve: "leve", mod: "moderado", alto: "alto" };
+    return [
+      "PACIENTE: " + (p.nome || "?") + ", " + (p.idade || "?") + " anos, sexo " + (p.sexo === "F" ? "feminino" : "masculino"),
+      "MEDIDAS: " + (p.peso || "?") + " kg, " + (p.altura || "?") + " cm | ATIVIDADE: " + (ATIV[p.atividade] || "?"),
+      "OBJETIVO: " + (OBJ[p.objetivo] || p.objetivo || "?"),
+      "ALVO DIÁRIO: " + alvo.alvo + " kcal (TMB " + alvo.tmb + ") | PROTEÍNA " + mA.prot + " g | CARBOIDRATO " + mA.carb + " g | GORDURA " + mA.gord + " g",
+      "RESTRIÇÕES E OBSERVAÇÕES: " + (p.restricoes || "nenhuma informada"),
+      "ÁGUA SUGERIDA: " + Math.round((+p.peso || 70) * 35) + " ml/dia",
+      "",
+      "CATÁLOGO DISPONÍVEL (use somente estes nomes, exatamente como escritos; a qtd multiplica a porção entre parênteses):",
+      catalogo,
+    ].join("\n");
+  }
+  function parsePlanoIA(texto) {
+    var s = String(texto || "").replace(/```json|```/g, "").trim();
+    var i = s.indexOf("{"), f = s.lastIndexOf("}");
+    if (i < 0 || f <= i) return null;
+    try { return JSON.parse(s.slice(i, f + 1)); } catch (e) { return null; }
+  }
+  function geraDietaIA(pacId, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var p = (st.pacientes || []).find(function (x) { return x.id === pacId; });
+    if (!p) { cb({ erro: "Escolha o paciente." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    var cfg = self.MT_CLOUD || {};
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua conta) pra usar a IA de dieta — sem nuvem, use o Gerar dieta automática." }); return; }
+    var dados = montaDadosDietaIA(st, p);
+    nuvem.client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      return fetch(cfg.url + "/functions/v1/chat-envia", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "ia_dieta", dados: dados }),
+      }).then(function (r) { return r.json(); });
+    }).then(function (d) {
+      if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "IA indisponível agora — publique a chat-envia (torqueon.com.br/funcoes.html) com a ANTHROPIC_API_KEY." }); return; }
+      var plano = parsePlanoIA(d.texto);
+      if (!plano || !(plano.refeicoes || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
+      var st2 = load();
+      var refeicoes = [], total = 0, ignorados = 0;
+      plano.refeicoes.slice(0, 8).forEach(function (r) {
+        var itens = [];
+        (r.itens || []).slice(0, 12).forEach(function (it) {
+          // a IA só pode usar alimento que existe no banco — nada inventado
+          var al = alimPorNome(st2, String(it.nome || "").trim());
+          if (!al) { ignorados++; return; }
+          itens.push({ alimId: al.id, qtd: Math.min(10, Math.max(0.25, Math.round((+it.qtd || 1) * 4) / 4)) });
+          total++;
+        });
+        if (itens.length) {
+          refeicoes.push({
+            id: S.uid(),
+            hora: /^\d{2}:\d{2}$/.test(String(r.hora || "")) ? r.hora : "12:00",
+            titulo: String(r.titulo || "Refeição").slice(0, 40),
+            itens: itens,
+          });
+        }
+      });
+      if (!total) { cb({ erro: "A IA não devolveu alimentos do banco — tente de novo." }); return; }
+      refeicoes.sort(function (a, b) { return a.hora < b.hora ? -1 : 1; });
+      st2.dietas[pacId] = {
+        aguaMl: Math.round((+p.peso || 70) * 35 / 50) * 50,
+        refeicoes: refeicoes, geradaAuto: true, geradaIA: true, geradaEm: S.todayISO(),
+      };
+      S.write("ntStudio", st2);
+      cb({ ok: true, refeicoes: refeicoes.length, itens: total, ignorados: ignorados,
+        kcal: kcalDaDieta(st2, st2.dietas[pacId]), resumo: String(plano.resumo || "").slice(0, 400) });
+    }, function () { cb({ erro: "Sem conexão com a nuvem agora — tente de novo." }); });
+  }
+  window.__iaDieta = geraDietaIA; // testes
+  $("dIA").addEventListener("click", function () {
+    var p = pacienteSel();
+    if (!p) { alert("Escolha o paciente primeiro."); return; }
+    var st = load();
+    if ((dietaDe(st, p.id).refeicoes || []).length && !confirm("Este paciente já tem dieta. Substituir pelo plano montado pela IA?")) return;
+    $("dIAStatus").textContent = "A IA está lendo o perfil e montando o plano alimentar… (leva uns 30 segundos)";
+    $("dIA").disabled = true;
+    geraDietaIA(p.id, function (r) {
+      $("dIA").disabled = false;
+      if (r.erro) { $("dIAStatus").textContent = r.erro; return; }
+      $("dIAStatus").textContent = r.refeicoes + " refeição(ões) com " + r.itens + " alimentos — " + r.kcal + " kcal no total." +
+        (r.resumo ? " " + r.resumo : "") + " ⚠️ Revise e ajuste: a decisão final é sempre sua.";
+      renderDietas();
+    });
   });
   $("dRefAdd").addEventListener("click", function () {
     var p = pacienteSel();

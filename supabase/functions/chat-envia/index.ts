@@ -16,6 +16,7 @@
 //   { acao: "enviar",  conversa_id: "...", texto }  → envia pelo canal da conversa
 //   { acao: "sugerir", conversa_id: "..." }         → devolve sugestão da IA (não envia)
 //   { acao: "ia_treino", dados: "anamnese+catálogo" } → IA monta as fichas de treino (JSON)
+//   { acao: "ia_dieta",  dados: "paciente+alvos+alimentos" } → IA monta o plano alimentar (JSON)
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -253,6 +254,41 @@ Deno.serve(async (req: Request) => {
           'preferências da anamnese; reps pode ser número ("10") ou tempo ("30s"); descanso em segundos; ' +
           "obs é opcional e curta (técnica ou cuidado com a lesão). Se o PAR-Q tiver resposta SIM, seja conservador " +
           "e avise no resumo que o aluno precisa de liberação médica antes de intensificar.",
+        messages: [{ role: "user", content: dados }],
+      }),
+    });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
+    const d2 = await r2.json();
+    let texto = "";
+    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
+    return json({ ok: true, texto: texto.trim() });
+  }
+
+  // 🥦 IA de dieta: recebe o perfil do paciente + alvos + catálogo de alimentos e devolve o plano em JSON
+  if (corpo.acao === "ia_dieta") {
+    const uid = usuarioDoToken(req);
+    const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
+    if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
+    const chave = env("ANTHROPIC_API_KEY");
+    if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
+    const dados = String(corpo.dados || "").slice(0, 30000);
+    if (!dados) return json({ erro: "dados vazios" }, 400);
+    const r2 = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-opus-4-8",
+        max_tokens: 6000,
+        thinking: { type: "adaptive" },
+        system: "Você é um nutricionista clínico sênior que monta planos alimentares individualizados no padrão brasileiro. " +
+          "Recebe o perfil do paciente (dados, objetivo, alvos calóricos e de macros, restrições) e o catálogo de alimentos " +
+          "disponíveis, e responde APENAS com um JSON válido, sem markdown e sem comentários, neste formato exato: " +
+          '{"refeicoes":[{"hora":"07:00","titulo":"Café da manhã","itens":[{"nome":"Alimento do catálogo","qtd":1.5}]}],"resumo":"2 a 3 frases explicando as escolhas"} ' +
+          "Regras: use SOMENTE alimentos do catálogo recebido, com o nome EXATAMENTE igual; monte de 4 a 6 refeições " +
+          "distribuídas ao longo do dia (hora no formato HH:MM); qtd é o multiplicador da porção usual informada no " +
+          "catálogo (aceita meio, ex.: 1.5); some perto do alvo de kcal e de proteína recebidos; RESPEITE as restrições " +
+          "e alergias do paciente sem exceção; varie fontes de proteína, carboidrato e fibras entre as refeições; " +
+          "o resumo explica a lógica e cita qualquer cuidado clínico relevante.",
         messages: [{ role: "user", content: dados }],
       }),
     });
