@@ -510,6 +510,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn" id="tplAplicar">Aplicar no aluno</button>
       </div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
+      <input type="file" id="fCapaFile" accept="image/*" hidden>
       <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
@@ -3938,7 +3939,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span class="muted" style="font-size:12px;">' + f.itens.length + " exercício(s)</span>" +
         '<span class="fseta" style="margin-left:auto;">▾</span></summary>' +
         '<div style="padding:0 14px 14px;">' +
-        '<div class="linha-flex" style="justify-content:flex-end;margin-bottom:4px;">' +
+        // capa da ficha: aparece no card "treino de hoje" do app do aluno
+        '<div class="linha-flex" style="gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">' +
+        (f.capa ? '<img src="' + f.capa + '" alt="capa da ficha" style="width:96px;height:54px;object-fit:cover;border-radius:10px;flex:none;">' : "") +
+        '<button class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card Treino de hoje do app do aluno">' +
+        (f.capa ? "Trocar foto" : "📷 Foto do treino") + "</button>" +
+        (f.capa ? '<button class="btn sec mini" data-fcapax="' + f.id + '" title="tirar a foto desta ficha">✕ foto</button>' : "") +
+        '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-rmficha="' + f.id + '">✕ ficha</button></div>' +
         (f.itens.length ? f.itens.map(function (it, i) {
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
@@ -5009,6 +5016,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var tsr = e.target.getAttribute && e.target.getAttribute("data-tsr");
     var tob = e.target.getAttribute && e.target.getAttribute("data-tobs");
     var des = e.target.getAttribute && e.target.getAttribute("data-desce");
+    // foto da ficha (vira a capa do card "treino de hoje" no app do aluno)
+    var cap = e.target.getAttribute && e.target.getAttribute("data-fcapa");
+    var capX = e.target.getAttribute && e.target.getAttribute("data-fcapax");
+    if (cap) { fichaCapaId = cap; $("fCapaFile").click(); return; }
+    if (capX) {
+      var stCx = load();
+      var tCx = treinoDe(stCx, $("tAluno").value);
+      var fCx = tCx.fichas.find(function (x) { return x.id === capX; });
+      if (fCx) { delete fCx.capa; marcaAppPendente(stCx, $("tAluno").value); save(stCx); renderFichas(); }
+      return;
+    }
     if (!add && !rmF && !rmI && !sob && !tds && !tsr && !tob && !des) return;
     var alunoId = $("tAluno").value;
     var st = load();
@@ -6165,7 +6183,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       } catch (e2) { return []; }
     }
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
-      return { titulo: f.titulo, itens: f.itens.map(function (it) {
+      return { titulo: f.titulo, capa: f.capa || "", itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "",
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
@@ -6346,11 +6364,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
       // card herói "treino de hoje" (estilo Prime) — a ficha do dia gira sozinha
-      (fichasApp ? "<div class='cardx' id='heroTreino' style='background:#121016;border-radius:20px;padding:24px 22px;'>" +
+      (fichasApp ? "<div class='cardx' id='heroTreino' style='background:#121016;border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;'>" +
+        // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
+        "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
+        "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
+        "<div style='position:relative;'>" +
         "<div style='font-size:10px;font-weight:700;letter-spacing:.26em;color:" + CORC + ";text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
         "<div id='htTitulo' style='font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;'></div>" +
         "<div id='htSub' style='font-size:13px;color:#8a8695;'></div>" +
-        "<button id='htVer' style='margin-top:18px;background:" + COR + ";border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div>" : "") +
+        "<button id='htVer' style='margin-top:18px;background:" + COR + ";border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div></div>" : "") +
       // progresso rápido (peso + treinos do mês)
       "<div class='cardx'><h2>Progresso</h2><div id='pgTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'></div></div>" +
       // retrospectiva do mês fechado (aparece no comecinho do mês seguinte, some ao fechar)
@@ -7682,12 +7704,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "pinta();})();"
         : "") +
       // hero "treino de hoje" + progresso rápido + XP (estilo Prime)
-      "var FICHAS_META=" + JSON.stringify((fichasApp || []).map(function (f) { return { t: f.titulo || "Ficha", n: f.itens.length }; })).replace(/</g, "\\u003c") + ";" +
+      "var FICHAS_META=" + JSON.stringify((fichasApp || []).map(function (f) {
+        return { t: f.titulo || "Ficha", n: f.itens.length, c: /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(f.capa || "")) ? f.capa : "" };
+      })).replace(/</g, "\\u003c") + ";" +
       "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||!FICHAS_META.length)return;" +
       "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
       "var par=String(fm.t).split('—');var rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));var tit=par.length>1?par.slice(1).join('—').trim():fm.t;" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
       "document.getElementById('htSub').textContent=fm.n+' exercício(s) te esperando';" +
+      // foto da ficha do dia no card (com véu por cima pro texto continuar legível)
+      "var hf=document.getElementById('htFoto'),hv2=document.getElementById('htVeu');" +
+      "if(hf){if(fm.c){hf.src=fm.c;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
       "var gav=document.querySelectorAll('.fichabox');" +
       "if(gav.length>1)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
@@ -8378,6 +8405,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.appEditGeralEm = new Date().toISOString();
     S.write("ptStudio", st);
     try { renderPers(); } catch (e) {}
+  });
+  // ---------- foto da ficha: vira a capa do card "treino de hoje" no app ----------
+  var fichaCapaId = null;
+  $("fCapaFile").addEventListener("change", function () {
+    var arq = this.files && this.files[0];
+    this.value = "";
+    if (!arq || !fichaCapaId) return;
+    var url = URL.createObjectURL(arq);
+    var img = new Image();
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      // corta em 16:9 pelo centro e reduz pra 720px — leve pra viajar dentro do app
+      var alvoR = 16 / 9, lw = img.width || 1, lh = img.height || 1;
+      var cw = lw, ch = Math.round(lw / alvoR);
+      if (ch > lh) { ch = lh; cw = Math.round(lh * alvoR); }
+      var c = document.createElement("canvas");
+      c.width = Math.min(720, cw);
+      c.height = Math.round(c.width / alvoR);
+      c.getContext("2d").drawImage(img, Math.round((lw - cw) / 2), Math.round((lh - ch) / 2), cw, ch, 0, 0, c.width, c.height);
+      var d = c.toDataURL("image/jpeg", .78);
+      if (d.length > 320 * 1024) { alert("Foto muito pesada — tente outra imagem."); return; }
+      var st = load();
+      var alunoIdC = $("tAluno").value;
+      var t = treinoDe(st, alunoIdC);
+      var f = t.fichas.find(function (x) { return x.id === fichaCapaId; });
+      if (!f) return;
+      f.capa = d;
+      marcaAppPendente(st, alunoIdC); // o app precisa ser republicado pra foto chegar
+      save(st);
+      renderFichas();
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo?"); };
+    img.src = url;
   });
   $("cfgLogoBtn").addEventListener("click", function () { $("cfgLogoFile").click(); });
   $("cfgLogoFile").addEventListener("change", function () {
