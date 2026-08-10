@@ -1311,6 +1311,35 @@ async function abaPt(p, a) {
     "painel mostra o esforço percebido (RPE) com alerta de treino pesado");
   ok(/Como o aluno se apresentou/.test(painelNovo) && /emagrecer/.test(painelNovo) && /joelho estala/.test(painelNovo),
     "painel mostra objetivo, dias e a dor relatada no onboarding");
+  // 📊 cada pergunta do questionário vira uma métrica no perfil do aluno
+  {
+    const metricas = await p.evaluate(() => window.__painelApp({
+      checks: [
+        { d: "2026-06-10", nome: "Check-in semanal", pts: 1, respostas: [
+          { sigla: "MOTEX", pergunta: "Qual foi sua motivação?", resposta: "Médio", pontos: 0 },
+          { sigla: "SONO", pergunta: "Como está o sono?", resposta: "6", pontos: 6 },
+          { sigla: "DOR", pergunta: "Sentiu alguma dor?", resposta: "Ombro esquerdo", pontos: null },
+        ] },
+        { d: "2026-07-10", nome: "Check-in semanal", pts: 2, respostas: [
+          { sigla: "MOTEX", resposta: "Alto", pontos: 1 },
+          { sigla: "SONO", resposta: "7", pontos: 7 },
+        ] },
+        { d: "2026-08-09", nome: "Check-in semanal", pts: 4, respostas: [
+          { sigla: "MOTEX", resposta: "Altíssimo", pontos: 2 },
+          { sigla: "SONO", resposta: "5", pontos: 5 },
+          { sigla: "DOR", resposta: "Nenhuma", pontos: null },
+        ] },
+      ],
+    }));
+    ok(/MOTEX/.test(metricas) && /SONO/.test(metricas) && /DOR/.test(metricas),
+      "📊 cada pergunta respondida vira uma métrica própria no perfil do aluno");
+    ok(/Altíssimo/.test(metricas) && /subiu/.test(metricas), "métrica que melhorou mostra a última resposta e a tendência de alta");
+    ok(/caiu/.test(metricas), "métrica que piorou (sono 7 → 5) aparece marcada como queda");
+    ok(/Qual foi sua motivação\?/.test(metricas), "a pergunta original fica junto da métrica, pro professor lembrar o contexto");
+    ok(/Nenhuma/.test(metricas) && /2 resposta\(s\)/.test(metricas),
+      "pergunta de resposta livre vira métrica de texto com a contagem de respostas");
+    ok(/Últimos check-ins/.test(metricas) && /09\/08/.test(metricas), "o histórico dos check-ins continua listado abaixo das métricas");
+  }
   ok(/>Ver como faz</.test(appHtml) && />vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml),
     "exercício ganha o botão Ver como faz (animação) e o link do vídeo");
   ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
