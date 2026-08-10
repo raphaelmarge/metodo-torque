@@ -1433,6 +1433,67 @@ async function abaPt(p, a) {
     ok(geral.previa.visivel && geral.previa.temSrc && /Trocar foto/.test(geral.previa.rot),
       "a Personalização mostra a prévia da foto e troca o botão pra 'Trocar foto'");
   }
+  // ---------- 🖼 banco de imagens do studio ----------
+  console.log("Banco de imagens:");
+  {
+    const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
+    const banco = await p.evaluate((JPG) => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      window.MTStore.write("ptImagens", [
+        { id: "i1", n: "Sala de musculação", d: JPG, em: hoje },
+        { id: "i2", n: "Área de perna", d: JPG, em: hoje },
+      ]);
+      document.querySelector('[data-a="imagens"]').click();
+      return { espaco: document.getElementById("imgEspaco").textContent,
+        cards: document.querySelectorAll("#imgGaleria [data-imgcapa]").length,
+        secao: !document.getElementById("vImagens").hidden,
+        nome: document.getElementById("imgGaleria").textContent };
+    }, JPG);
+    ok(banco.secao && banco.cards === 2 && /Sala de musculação/.test(banco.nome),
+      "🖼 a aba Imagens lista o que está guardado no banco");
+    ok(/2 imagem\(ns\)/.test(banco.espaco) && /de 4 MB usados/.test(banco.espaco),
+      "o medidor mostra quantas fotos e quanto espaço já foi usado — " + banco.espaco.trim());
+    // usar uma imagem do banco como foto do card (todos os alunos)
+    const usada = await p.evaluate(() => {
+      window.__alertOrig2 = window.alert; window.alert = () => {};
+      document.querySelector('#imgGaleria [data-imgcapa="i1"]').click();
+      window.alert = window.__alertOrig2;
+      const st = window.MTStore.read("ptStudio", {});
+      return { capa: (st.config || {}).capaTreino || "", pendente: !!(st.config || {}).appEditGeralEm };
+    });
+    ok(/^data:image\/jpeg/.test(usada.capa) && usada.pendente,
+      "'Usar no card' pega a foto do banco e marca os apps pra republicar");
+    // a galeria abre pra escolher (Personalização e ficha usam o mesmo diálogo)
+    const dlg = await p.evaluate(() => {
+      window.__galeriaPT({ tipo: "geral" });
+      const aberto = document.getElementById("dlgGaleria").open;
+      const opcoes = document.querySelectorAll("#galEscolher [data-galsel]").length;
+      document.querySelector('#galEscolher [data-galsel="i2"]').click();
+      const st = window.MTStore.read("ptStudio", {});
+      return { aberto, opcoes, fechou: !document.getElementById("dlgGaleria").open, capa: (st.config || {}).capaTreino || "" };
+    });
+    ok(dlg.aberto && dlg.opcoes === 2, "'Escolher da galeria' abre o banco com as fotos guardadas");
+    ok(dlg.fechou && /^data:image\/jpeg/.test(dlg.capa), "escolher uma foto da galeria aplica e fecha o diálogo");
+    // apagar libera espaço; o teto protege o navegador de encher
+    const apagou = await p.evaluate(() => {
+      window.__confirmOrig2 = window.confirm; window.confirm = () => true;
+      document.querySelector('#imgGaleria [data-imgrm="i1"]').click();
+      window.confirm = window.__confirmOrig2;
+      return { n: window.MTStore.read("ptImagens", []).length, txt: document.getElementById("imgEspaco").textContent };
+    });
+    ok(apagou.n === 1 && /1 imagem\(ns\)/.test(apagou.txt), "apagar tira do banco e o medidor acompanha");
+    ok(await p.evaluate(async () => {
+      const t = await (await fetch("apps/store.js")).text();
+      return /"ptImagens"/.test(t);
+    }), "o banco de imagens entra no backup e na sincronização da nuvem");
+    // devolve tudo como estava pro resto da suíte (sem foto geral sobrando)
+    await p.evaluate(() => {
+      window.MTStore.write("ptImagens", []);
+      const st = window.MTStore.read("ptStudio", {});
+      delete (st.config || {}).capaTreino;
+      window.MTStore.write("ptStudio", st);
+    });
+  }
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");

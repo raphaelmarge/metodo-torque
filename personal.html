@@ -235,6 +235,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
     <button data-a="config"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/></svg>Configurações</button>
     <button data-a="pers"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg>Personalização</button>
+    <button data-a="imagens"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='14' rx='2.5'/><circle cx='8.5' cy='10' r='1.6'/><path d='m4 17 4.5-4.5 3.5 3.5 3-3 5 5'/></svg>Imagens</button>
     <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
@@ -921,12 +922,39 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="gap: 12px; align-items: center; flex-wrap: wrap;">
         <img id="cfgCapaPrev" hidden alt="Prévia da foto do card" style="width: 160px; height: 90px; object-fit: cover; border-radius: 12px;">
         <button class="btn sec mini" id="cfgCapaBtn">Enviar foto</button>
+        <button class="btn sec mini" id="cfgCapaGal" title="usar uma foto que já está no seu banco de imagens">🖼 Escolher da galeria</button>
         <button class="btn sec mini" id="cfgCapaDel" hidden>✕ tirar foto</button>
         <input type="file" id="cfgCapaFile" accept="image/*" hidden>
       </div>
       <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Depois de trocar, toque em <b>Publicar apps atualizados</b> pros alunos verem.</p>
     </div>
   </section>
+
+  <!-- IMAGENS (banco de fotos do studio) -->
+  <section id="vImagens" hidden>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Banco de imagens</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Guarde aqui as fotos que você usa no app — capas de treino, fotos do studio, do equipamento. Depois é só escolher da galeria em <b>Personalização</b> ou em cada ficha, sem reenviar do celular toda vez. Cada foto é cortada em 16:9 e comprimida sozinha.</p>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button class="btn" id="imgAdd"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Enviar imagem</button>
+        <input type="file" id="imgFile" accept="image/*" multiple hidden>
+        <span id="imgEspaco" class="muted" style="font-size: 12.5px;"></span>
+      </div>
+      <div id="imgBarra" class="barra" style="margin-top: 10px;"><div style="width:0%"></div></div>
+    </div>
+    <div id="imgGaleria"></div>
+  </section>
+
+  <!-- escolher uma imagem da galeria (usado na Personalização e nas fichas) -->
+  <dialog id="dlgGaleria">
+    <div class="card" style="width: 620px; max-width: 100%;">
+      <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Escolher do banco de imagens</h2>
+      <div id="galEscolher" style="margin-top: 10px; max-height: 60vh; overflow-y: auto;"></div>
+      <div class="linha-flex" style="justify-content: flex-end; margin-top: 12px;">
+        <button class="btn sec mini" id="galFechar">Fechar</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- CONFIGURAÇÕES -->
   <section id="vConfig" hidden>
@@ -1315,6 +1343,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b.dataset.a === "config") renderConfigPT();
     $("vPers").hidden = b.dataset.a !== "pers";
     if (b.dataset.a === "pers") renderPers();
+    $("vImagens").hidden = b.dataset.a !== "imagens";
+    if (b.dataset.a === "imagens") renderImagens();
     // o card da conta (ilha) tem a própria aba no menu — longe da lista de alunos
     $("cardConta").hidden = b.dataset.a !== "conta";
     if (b.dataset.a === "conta") renderConta();
@@ -3956,6 +3986,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (f.capa ? '<img src="' + f.capa + '" alt="capa da ficha" style="width:96px;height:54px;object-fit:cover;border-radius:10px;flex:none;">' : "") +
         '<button class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card Treino de hoje do app do aluno">' +
         (f.capa ? "Trocar foto" : "📷 Foto do treino") + "</button>" +
+        '<button class="btn sec mini" data-fcapag="' + f.id + '" title="escolher do seu banco de imagens">🖼 Galeria</button>' +
         (f.capa ? '<button class="btn sec mini" data-fcapax="' + f.id + '" title="tirar a foto desta ficha">✕ foto</button>' : "") +
         '<span style="margin-left:auto;"></span>' +
         '<button class="btn sec mini" data-rmficha="' + f.id + '">✕ ficha</button></div>' +
@@ -5032,7 +5063,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // foto da ficha (vira a capa do card "treino de hoje" no app do aluno)
     var cap = e.target.getAttribute && e.target.getAttribute("data-fcapa");
     var capX = e.target.getAttribute && e.target.getAttribute("data-fcapax");
+    var capG = e.target.getAttribute && e.target.getAttribute("data-fcapag");
     if (cap) { fichaCapaId = cap; $("fCapaFile").click(); return; }
+    if (capG) { abreGaleria({ tipo: "ficha", id: capG, aluno: $("tAluno").value }); return; }
     if (capX) {
       var stCx = load();
       var tCx = treinoDe(stCx, $("tAluno").value);
@@ -8462,6 +8495,132 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       renderFichas();
     });
   });
+  // ---------- 🖼 banco de imagens do studio ----------
+  // fica numa chave própria (não incha o ptStudio, que viaja a cada salvamento);
+  // entra no backup/sync junto com o resto porque está em BACKUP_KEYS.
+  var IMG_TETO = 4 * 1024 * 1024; // ~4 MB: o que cabe com folga no navegador
+  function imgsLe() {
+    var l = S.read("ptImagens", []);
+    return Array.isArray(l) ? l : [];
+  }
+  function imgsPeso(lista) {
+    var t = 0;
+    (lista || imgsLe()).forEach(function (i) { t += (i.d || "").length; });
+    return t;
+  }
+  function imgFmt(b) {
+    return b >= 1024 * 1024 ? (Math.round(b / 1024 / 1024 * 10) / 10 + " MB") : (Math.round(b / 1024) + " KB");
+  }
+  function renderImagens() {
+    var lista = imgsLe(), usado = imgsPeso(lista);
+    var pct = Math.min(100, Math.round(100 * usado / IMG_TETO));
+    $("imgEspaco").textContent = lista.length + " imagem(ns) · " + imgFmt(usado) + " de " + imgFmt(IMG_TETO) + " usados";
+    $("imgBarra").firstElementChild.style.width = pct + "%";
+    $("imgBarra").classList.toggle("cheia", pct >= 90);
+    $("imgGaleria").innerHTML = lista.length
+      ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;">' +
+        lista.map(function (im) {
+          return '<div class="card" style="padding:10px;">' +
+            '<img src="' + im.d + '" alt="' + esc(im.n) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;display:block;">' +
+            '<div style="font-weight:700;font-size:13px;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(im.n) + "</div>" +
+            '<div class="muted" style="font-size:11.5px;">' + imgFmt((im.d || "").length) + " · " + S.fmtData(im.em) + "</div>" +
+            '<div class="linha-flex" style="gap:6px;margin-top:8px;">' +
+            '<button class="btn sec mini" data-imgnome="' + im.id + '">Renomear</button>' +
+            '<button class="btn sec mini" data-imgcapa="' + im.id + '" title="usar como foto do card treino de hoje (todos os alunos)">Usar no card</button>' +
+            '<button class="btn sec mini" data-imgrm="' + im.id + '">✕</button></div></div>';
+        }).join("") + "</div>"
+      : '<div class="vazio">Nenhuma imagem ainda — toque em <b>Enviar imagem</b> e monte o seu banco.</div>';
+  }
+  window.__imagensPT = { render: renderImagens, lista: imgsLe, peso: imgsPeso }; // testes
+  $("imgAdd").addEventListener("click", function () { $("imgFile").click(); });
+  $("imgFile").addEventListener("change", function () {
+    var arqs = Array.prototype.slice.call(this.files || []);
+    this.value = "";
+    if (!arqs.length) return;
+    var fila = arqs.slice(0, 10); // um lote por vez, pra não travar o navegador
+    (function proxima() {
+      var arq = fila.shift();
+      if (!arq) { renderImagens(); return; }
+      leCapa(arq, function (d) {
+        var lista = imgsLe();
+        if (imgsPeso(lista) + d.length > IMG_TETO) {
+          alert("O banco de imagens está cheio (" + imgFmt(IMG_TETO) + ").\n\nApague alguma foto antiga antes de enviar esta.");
+          renderImagens();
+          return;
+        }
+        lista.unshift({ id: S.uid(), n: String(arq.name || "foto").replace(/\.[a-z0-9]+$/i, "").slice(0, 40), d: d, em: S.todayISO() });
+        S.write("ptImagens", lista);
+        proxima();
+      });
+    })();
+  });
+  $("imgGaleria").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-imgrm");
+    var nm = e.target.getAttribute && e.target.getAttribute("data-imgnome");
+    var cp = e.target.getAttribute && e.target.getAttribute("data-imgcapa");
+    if (!rm && !nm && !cp) return;
+    var lista = imgsLe();
+    if (rm) {
+      var alvo = lista.find(function (x) { return x.id === rm; });
+      if (!confirm("Apagar a imagem “" + ((alvo && alvo.n) || "") + "”? Onde ela já foi usada (card, ficha) a foto continua.")) return;
+      S.write("ptImagens", lista.filter(function (x) { return x.id !== rm; }));
+    }
+    if (nm) {
+      var im = lista.find(function (x) { return x.id === nm; });
+      if (!im) return;
+      var novo = prompt("Nome da imagem:", im.n);
+      if (novo === null) return;
+      im.n = String(novo).trim().slice(0, 40) || im.n;
+      S.write("ptImagens", lista);
+    }
+    if (cp) {
+      var imc = lista.find(function (x) { return x.id === cp; });
+      if (!imc) return;
+      var st = load();
+      st.config = st.config || {};
+      st.config.capaTreino = imc.d;
+      st.config.appEditGeralEm = new Date().toISOString();
+      S.write("ptStudio", st);
+      alert("Pronto! “" + imc.n + "” virou a foto do card de treino do dia.\n\nToque em Publicar apps atualizados pros alunos verem.");
+    }
+    renderImagens();
+  });
+  // escolher da galeria: usado pela Personalização e pelas fichas
+  var galDestino = null; // {tipo:'geral'} ou {tipo:'ficha', id, aluno}
+  function abreGaleria(destino) {
+    galDestino = destino;
+    var lista = imgsLe();
+    $("galEscolher").innerHTML = lista.length
+      ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">' +
+        lista.map(function (im) {
+          return '<button data-galsel="' + im.id + '" style="background:none;border:none;padding:0;cursor:pointer;font-family:inherit;text-align:left;">' +
+            '<img src="' + im.d + '" alt="' + esc(im.n) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;display:block;pointer-events:none;">' +
+            '<div style="font-size:12px;color:var(--texto);margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">' + esc(im.n) + "</div></button>";
+        }).join("") + "</div>"
+      : '<div class="vazio">Seu banco de imagens está vazio — envie fotos na aba <b>Imagens</b> (menu ☰).</div>';
+    $("dlgGaleria").showModal();
+  }
+  window.__galeriaPT = abreGaleria; // testes
+  $("galFechar").addEventListener("click", function () { $("dlgGaleria").close(); });
+  $("galEscolher").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-galsel]");
+    if (!b || !galDestino) return;
+    var im = imgsLe().find(function (x) { return x.id === b.getAttribute("data-galsel"); });
+    if (!im) return;
+    var st = load();
+    if (galDestino.tipo === "geral") {
+      st.config = st.config || {};
+      st.config.capaTreino = im.d;
+      st.config.appEditGeralEm = new Date().toISOString();
+      S.write("ptStudio", st);
+      pintaCapaPers();
+    } else {
+      var t = treinoDe(st, galDestino.aluno);
+      var f = t.fichas.find(function (x) { return x.id === galDestino.id; });
+      if (f) { f.capa = im.d; marcaAppPendente(st, galDestino.aluno); save(st); renderFichas(); }
+    }
+    $("dlgGaleria").close();
+  });
   // foto geral (Personalização): vale pra todos os alunos que não têm foto na ficha
   function pintaCapaPers() {
     var st = load(), capa = (st.config || {}).capaTreino || "";
@@ -8472,6 +8631,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__capaPers = pintaCapaPers; // testes
   $("cfgCapaBtn").addEventListener("click", function () { $("cfgCapaFile").click(); });
+  $("cfgCapaGal").addEventListener("click", function () { abreGaleria({ tipo: "geral" }); });
   $("cfgCapaFile").addEventListener("change", function () {
     var arq = this.files && this.files[0];
     this.value = "";
