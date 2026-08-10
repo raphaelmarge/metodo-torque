@@ -701,6 +701,49 @@ async function abaNt(p, a) {
   await pG.close();
   await ctxG.close();
 
+  // ---------- 🥦 IA de dieta (função chat-envia mockada) ----------
+  console.log("IA de dieta:");
+  {
+    const ia = await p.evaluate(async () => {
+      const st = window.MTStore.read("ntStudio", {});
+      const pid = st.pacientes[0].id;
+      const semNuvem = await new Promise((res) => window.__iaDieta(pid, res));
+      window.__cloudOrigIA = window.MTStore.cloud;
+      window.__fetchOrigIA = window.fetch;
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      const arroz = self.MT_ALIMENTOS.find((a) => /Arroz branco cozido/i.test(a.n)).n;
+      const frango = self.MT_ALIMENTOS.find((a) => /Peito de frango grelhado/i.test(a.n)).n;
+      let corpo = null;
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/chat-envia")) {
+          corpo = JSON.parse(opts.body);
+          const plano = { refeicoes: [
+            { hora: "12:30", titulo: "Almoço", itens: [{ nome: arroz, qtd: 1.5 }, { nome: frango, qtd: 2 }, { nome: "Comida Inventada Xyz", qtd: 1 }] },
+            { hora: "07:00", titulo: "Café da manhã", itens: [{ nome: arroz, qtd: 1 }] },
+          ], resumo: "Plano com proteína distribuída ao longo do dia." };
+          return Promise.resolve({ json: () => Promise.resolve({ ok: true, texto: "```json\n" + JSON.stringify(plano) + "\n```" }) });
+        }
+        return window.__fetchOrigIA(url, opts);
+      };
+      const comNuvem = await new Promise((res) => window.__iaDieta(pid, res));
+      window.fetch = window.__fetchOrigIA;
+      window.MTStore.cloud = window.__cloudOrigIA;
+      const d = window.MTStore.read("ntStudio", {}).dietas[pid];
+      return { semNuvem, comNuvem, corpo,
+        d: { refs: d.refeicoes.length, primeira: d.refeicoes[0].titulo, itens0: d.refeicoes[0].itens.length,
+          qtd: d.refeicoes[1].itens[0].qtd, geradaIA: d.geradaIA } };
+    });
+    ok(/Entre na sua conta/.test(ia.semNuvem.erro), "🥦 sem nuvem a IA de dieta explica o que falta");
+    ok(ia.corpo.acao === "ia_dieta" && /ALVO DIÁRIO/.test(ia.corpo.dados) && /RESTRIÇÕES/.test(ia.corpo.dados) && /CATÁLOGO DISPONÍVEL/.test(ia.corpo.dados),
+      "perfil, alvos e catálogo viajam pra função chat-envia (ação ia_dieta)");
+    ok(ia.comNuvem.ok && ia.comNuvem.refeicoes === 2 && ia.comNuvem.itens === 3 && ia.comNuvem.ignorados === 1,
+      "🥦 IA monta o plano e o alimento inventado é descartado");
+    ok(ia.d.geradaIA && ia.d.primeira === "Café da manhã" && ia.d.qtd === 1.5,
+      "plano entra na dieta ordenado por horário e com a quantidade da IA");
+    ok(typeof ia.comNuvem.kcal === "number" && ia.comNuvem.kcal > 0 && /proteína distribuída/.test(ia.comNuvem.resumo),
+      "o nutricionista recebe as kcal somadas e o resumo da IA pra revisar");
+  }
+
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();

@@ -1311,7 +1311,8 @@ async function abaPt(p, a) {
     "painel mostra o esforço percebido (RPE) com alerta de treino pesado");
   ok(/Como o aluno se apresentou/.test(painelNovo) && /emagrecer/.test(painelNovo) && /joelho estala/.test(painelNovo),
     "painel mostra objetivo, dias e a dor relatada no onboarding");
-  ok(/>Ver vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml), "exercício com vídeo ganha o botão Ver vídeo");
+  ok(/>Ver como faz</.test(appHtml) && />vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml),
+    "exercício ganha o botão Ver como faz (animação) e o link do vídeo");
   ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
@@ -2473,7 +2474,7 @@ async function abaPt(p, a) {
   });
   ok(!!vid && /youtube-nocookie\.com\/embed\/abc123/.test(vid.aberto.src) && /Fechar vídeo/.test(vid.aberto.rot),
     "'Ver vídeo' abre o player embutido dentro do app (youtube-nocookie)");
-  ok(!!vid && vid.fechou && /Ver vídeo/.test(vid.rotVoltou), "tocar de novo fecha o player e o botão volta ao normal");
+  ok(!!vid && vid.fechou && /vídeo/.test(vid.rotVoltou), "tocar de novo fecha o player e o botão volta ao normal");
   // botão Iniciar exercício abre o guiado já naquele exercício
   const iniEx = await pApp.evaluate(() => {
     const bs = document.querySelectorAll(".inibtn");
@@ -3323,6 +3324,76 @@ async function abaPt(p, a) {
     ok(!guarda.subiuVazio, "o estado vazio do aparelho novo NUNCA sobe por cima da nuvem");
     await pS.close();
     await ctxS.close();
+  }
+
+  // ---------- 🏃 demonstração animada do movimento (offline, sem YouTube) ----------
+  console.log("Demonstração animada dos exercícios:");
+  {
+    const pAn = await ctx.newPage();
+    pAn.on("pageerror", (e) => erros.push(String(e)));
+    await pAn.goto(BASE + "/personal.html");
+    await pAn.waitForTimeout(400);
+    // o mapeamento nome→padrão roda no próprio banco (1170 exercícios)
+    const mapa = await pAn.evaluate(() => {
+      const A = window.MT_ANIM;
+      if (!A) return null;
+      const casos = [["Supino reto com barra", "Peito"], ["Agachamento livre", "Quadríceps"], ["Remada curvada", "Costas"],
+        ["Rosca direta", "Bíceps"], ["Prancha frontal", "Core"], ["Corrida na esteira", "Cardio"],
+        ["Braçada de crawl com prancha entre as pernas", "Natação e aquático"], ["Barra fixa pronada", "Costas"]];
+      const semPadrao = (self.MT_EXERCICIOS || []).filter((e) => !A.padrao(e.n, e.g)).length;
+      return { pads: casos.map((c) => A.padrao(c[0], c[1])), total: (self.MT_EXERCICIOS || []).length, semPadrao: semPadrao,
+        compacto: Object.keys(A.compacto()).length };
+    });
+    ok(mapa && mapa.pads.join(",") === "empurra_h,agacho,puxa_h,rosca,prancha,corrida,aquatico,puxa_v",
+      "cada exercício cai no padrão de movimento certo (inclusive natação × prancha e 'pronada' × 'nada')");
+    ok(mapa && mapa.total > 1000 && mapa.semPadrao === 0, "os " + (mapa ? mapa.total : 0) + " exercícios do banco têm demonstração (nenhum sem padrão)");
+    ok(mapa && mapa.compacto === 17, "o pacote compacto que vai pro app leva os 17 padrões");
+    // biblioteca do professor: botão Como faz abre o boneco animado
+    await pAn.evaluate(() => { window.__trAba("ex"); });
+    await pAn.waitForTimeout(300);
+    const bib = await pAn.evaluate(() => {
+      const b = document.querySelector("[data-exanim]");
+      if (!b) return null;
+      b.click();
+      const cx = document.querySelector(".anim-pt");
+      const svg = cx && cx.querySelector("svg");
+      return { padrao: b.dataset.exanim, linhas: svg ? svg.querySelectorAll("polyline").length : 0,
+        anima: svg ? svg.querySelectorAll("animate").length : 0 };
+    });
+    ok(bib && bib.linhas === 5 && bib.anima > 0, "biblioteca: 'Como faz' desenha o boneco (5 segmentos) com animação");
+    const fecha = await pAn.evaluate(() => { document.querySelector("[data-exanim]").click(); return !document.querySelector(".anim-pt"); });
+    ok(fecha, "tocar de novo fecha a demonstração");
+    await pAn.close();
+  }
+  {
+    // app do aluno: o botão Ver como faz desenha a animação SEM pedir nada pra internet
+    const ctxA = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const pA = await ctxA.newPage();
+    const externas = [];
+    pA.on("request", (r) => { if (!/127\.0\.0\.1|localhost/.test(r.url()) && !/^data:/.test(r.url())) externas.push(r.url()); });
+    await pA.goto(BASE + "/demo-aluno.html");
+    await pA.waitForTimeout(1200);
+    await pA.evaluate(() => window.__trocaSec && window.__trocaSec("treino"));
+    await pA.waitForTimeout(400);
+    await pA.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
+    const rA = await pA.evaluate(() => {
+      const bt = document.querySelector(".animbtn");
+      if (!bt) return null;
+      bt.click();
+      const bx = bt.parentNode.querySelector(".animbox");
+      const svg = bx && bx.querySelector("svg");
+      return { pad: bt.dataset.a, rot: bt.textContent, linhas: svg ? svg.querySelectorAll("polyline").length : 0 };
+    });
+    ok(rA && rA.linhas === 5 && /Fechar/.test(rA.rot), "app do aluno: 'Ver como faz' abre a animação do movimento (" + (rA ? rA.pad : "?") + ")");
+    ok(externas.length === 0, "a demonstração não busca NADA na internet (offline de verdade)" + (externas.length ? " — " + externas[0] : ""));
+    const fechouA = await pA.evaluate(() => {
+      const bt = document.querySelector(".animbtn");
+      bt.click();
+      return !bt.parentNode.querySelector(".animbox").firstChild && /Ver como faz/.test(bt.textContent);
+    });
+    ok(fechouA, "tocar de novo fecha e volta o rótulo 'Ver como faz'");
+    await pA.close();
+    await ctxA.close();
   }
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
