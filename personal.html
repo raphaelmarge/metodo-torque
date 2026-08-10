@@ -914,6 +914,18 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Mudou a cara? Toque em <b>Publicar apps atualizados</b> pros seus alunos verem a novidade no app.</p>
     </div>
+
+    <div class="card" style="margin-top: 14px;">
+      <h2>Foto do card “treino de hoje”</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">É a imagem de fundo do card que o aluno vê ao abrir o app. Vale pra <b>todos os alunos</b> — e a gente corta e deixa leve sozinho. Quer uma foto diferente por treino (A de peito, B de perna)? Dá pra escolher ficha por ficha em <b>Treinos → Fichas do aluno</b>; quando a ficha tem foto própria, ela ganha desta.</p>
+      <div class="linha-flex" style="gap: 12px; align-items: center; flex-wrap: wrap;">
+        <img id="cfgCapaPrev" hidden alt="Prévia da foto do card" style="width: 160px; height: 90px; object-fit: cover; border-radius: 12px;">
+        <button class="btn sec mini" id="cfgCapaBtn">Enviar foto</button>
+        <button class="btn sec mini" id="cfgCapaDel" hidden>✕ tirar foto</button>
+        <input type="file" id="cfgCapaFile" accept="image/*" hidden>
+      </div>
+      <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Depois de trocar, toque em <b>Publicar apps atualizados</b> pros alunos verem.</p>
+    </div>
   </section>
 
   <!-- CONFIGURAÇÕES -->
@@ -4455,6 +4467,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (lgP) { $("cfgLogoPrev").src = lgP; $("cfgLogoPrev").hidden = false; }
     else { $("cfgLogoPrev").hidden = true; $("cfgLogoPrev").removeAttribute("src"); }
     $("cfgLogoDel").hidden = !lgP;
+    if (window.__capaPers) window.__capaPers();
     pintaPersPrev();
   }
   $("persPre").addEventListener("click", function (e) {
@@ -7704,9 +7717,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "pinta();})();"
         : "") +
       // hero "treino de hoje" + progresso rápido + XP (estilo Prime)
-      "var FICHAS_META=" + JSON.stringify((fichasApp || []).map(function (f) {
-        return { t: f.titulo || "Ficha", n: f.itens.length, c: /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(f.capa || "")) ? f.capa : "" };
-      })).replace(/</g, "\\u003c") + ";" +
+      // a foto do card do dia: a da ficha manda; sem ela, entra a geral da Personalização
+      "var FICHAS_META=" + JSON.stringify((function () {
+        var imgOk = function (u) { return /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u || "")) ? u : ""; };
+        var geral = imgOk((st.config || {}).capaTreino);
+        return (fichasApp || []).map(function (f) {
+          return { t: f.titulo || "Ficha", n: f.itens.length, c: imgOk(f.capa) || geral };
+        });
+      })()).replace(/</g, "\\u003c") + ";" +
       "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||!FICHAS_META.length)return;" +
       "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
       "var par=String(fm.t).split('—');var rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));var tit=par.length>1?par.slice(1).join('—').trim():fm.t;" +
@@ -8406,17 +8424,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     S.write("ptStudio", st);
     try { renderPers(); } catch (e) {}
   });
-  // ---------- foto da ficha: vira a capa do card "treino de hoje" no app ----------
-  var fichaCapaId = null;
-  $("fCapaFile").addEventListener("change", function () {
-    var arq = this.files && this.files[0];
-    this.value = "";
-    if (!arq || !fichaCapaId) return;
+  // ---------- foto do card "treino de hoje" (geral na Personalização, ou por ficha) ----------
+  // corta em 16:9 pelo centro e reduz pra 720px — leve pra viajar dentro do app
+  function leCapa(arq, pronto) {
     var url = URL.createObjectURL(arq);
     var img = new Image();
     img.onload = function () {
       URL.revokeObjectURL(url);
-      // corta em 16:9 pelo centro e reduz pra 720px — leve pra viajar dentro do app
       var alvoR = 16 / 9, lw = img.width || 1, lh = img.height || 1;
       var cw = lw, ch = Math.round(lw / alvoR);
       if (ch > lh) { ch = lh; cw = Math.round(lh * alvoR); }
@@ -8426,6 +8440,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       c.getContext("2d").drawImage(img, Math.round((lw - cw) / 2), Math.round((lh - ch) / 2), cw, ch, 0, 0, c.width, c.height);
       var d = c.toDataURL("image/jpeg", .78);
       if (d.length > 320 * 1024) { alert("Foto muito pesada — tente outra imagem."); return; }
+      pronto(d);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo?"); };
+    img.src = url;
+  }
+  var fichaCapaId = null;
+  $("fCapaFile").addEventListener("change", function () {
+    var arq = this.files && this.files[0];
+    this.value = "";
+    if (!arq || !fichaCapaId) return;
+    leCapa(arq, function (d) {
       var st = load();
       var alunoIdC = $("tAluno").value;
       var t = treinoDe(st, alunoIdC);
@@ -8435,9 +8460,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       marcaAppPendente(st, alunoIdC); // o app precisa ser republicado pra foto chegar
       save(st);
       renderFichas();
-    };
-    img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo?"); };
-    img.src = url;
+    });
+  });
+  // foto geral (Personalização): vale pra todos os alunos que não têm foto na ficha
+  function pintaCapaPers() {
+    var st = load(), capa = (st.config || {}).capaTreino || "";
+    var prev = $("cfgCapaPrev"), del = $("cfgCapaDel"), bt = $("cfgCapaBtn");
+    if (!prev) return;
+    if (capa) { prev.src = capa; prev.hidden = false; del.hidden = false; bt.textContent = "Trocar foto"; }
+    else { prev.removeAttribute("src"); prev.hidden = true; del.hidden = true; bt.textContent = "Enviar foto"; }
+  }
+  window.__capaPers = pintaCapaPers; // testes
+  $("cfgCapaBtn").addEventListener("click", function () { $("cfgCapaFile").click(); });
+  $("cfgCapaFile").addEventListener("change", function () {
+    var arq = this.files && this.files[0];
+    this.value = "";
+    if (!arq) return;
+    leCapa(arq, function (d) {
+      var st = load();
+      st.config = st.config || {};
+      st.config.capaTreino = d;
+      st.config.appEditGeralEm = new Date().toISOString(); // entra no app de todo mundo
+      S.write("ptStudio", st);
+      pintaCapaPers();
+    });
+  });
+  $("cfgCapaDel").addEventListener("click", function () {
+    var st = load();
+    st.config = st.config || {};
+    delete st.config.capaTreino;
+    st.config.appEditGeralEm = new Date().toISOString();
+    S.write("ptStudio", st);
+    pintaCapaPers();
   });
   $("cfgLogoBtn").addEventListener("click", function () { $("cfgLogoFile").click(); });
   $("cfgLogoFile").addEventListener("change", function () {
