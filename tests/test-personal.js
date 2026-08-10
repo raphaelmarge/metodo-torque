@@ -180,6 +180,8 @@ async function abaPt(p, a) {
       ok(/BEGIN:VCALENDAR/.test(txt) && /Sessão — João Cliente/.test(txt) && /DTSTART/.test(txt), "arquivo .ics tem o evento da sessão (Google/iPhone entendem)");
     }
   }
+  // as ações da sessão vivem no menu retrátil ⋮ — abre antes de marcar
+  await p.click("#listaSessoes [data-smais]");
   await p.click("#listaSessoes [data-feita]");
   ses = await p.evaluate(() => document.getElementById("listaSessoes").textContent);
   ok(/FEITA/.test(ses), "sessão marcada como feita");
@@ -216,6 +218,7 @@ async function abaPt(p, a) {
   // Faltou: falta explícita com etiqueta (no dia de amanhã do calendário)
   await p.evaluate(() => window.__agAba("sessoes"));
   await p.evaluate(() => window.__agDia(new Date(Date.now() + 864e5).toISOString().slice(0, 10)));
+  await p.evaluate(() => document.querySelector("#listaSessoes [data-smais]").click());
   await p.click("[data-faltou]");
   const faltouSt = await p.evaluate(() => ({
     faltas: JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.filter((x) => x.faltou).length,
@@ -438,6 +441,7 @@ async function abaPt(p, a) {
     await p.evaluate((hoje) => { window.__agAba("sessoes"); window.__agDia(hoje); }, hoje);
     await p.evaluate(() => {
       const r = Array.from(document.querySelectorAll("#listaSessoes .sessao-pt")).find((x) => /Paga Sessao/.test(x.textContent) && x.querySelector("[data-feita]"));
+      r.querySelector("[data-smais]").click();
       r.querySelector("[data-feita]").click();
     });
     await p.waitForTimeout(250);
@@ -1182,8 +1186,10 @@ async function abaPt(p, a) {
   await p.click("#sAdd");
   await p.evaluate(() => { window.__agAba("sessoes"); window.__agDia(new Date().toISOString().slice(0, 10)); });
   await p.evaluate(() => {
-    const btns = Array.from(document.querySelectorAll("#listaSessoes [data-feita]"));
-    btns[btns.length - 1].click();
+    const linhas = Array.from(document.querySelectorAll("#listaSessoes .sessao-pt")).filter((x) => x.querySelector("[data-feita]"));
+    const ultima = linhas[linhas.length - 1];
+    ultima.querySelector("[data-smais]").click();
+    ultima.querySelector("[data-feita]").click();
   });
   ok(await p.evaluate(() => {
     const a = JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((x) => x.nome === "João Cliente");

@@ -101,7 +101,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .kpi-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 16px; }
   .kpi-pt .card { text-align: center; padding: 16px; }
   .kpi-pt .n { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-  .aluno-pt { display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: var(--card); border: none; flex-wrap: wrap; border-radius: 14px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  /* card do aluno: nome + ⋮ sempre na mesma linha; etiquetas e ações em faixas próprias */
+  .aluno-pt { display: grid; grid-template-columns: 1fr auto auto; gap: 8px 12px; align-items: center; padding: 11px 14px; background: var(--card); border: none; border-radius: 14px; margin-bottom: 8px; box-shadow: var(--sombra-1); }
+  .aluno-pt .quem { grid-column: 1; grid-row: 1; }
+  .aluno-pt .al-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; grid-column: 2; grid-row: 1; }
+  .aluno-pt .al-mais { flex: none; grid-column: 3; grid-row: 1; }
+  .aluno-pt .al-acoes { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding-top: 10px; margin-top: 2px; border-top: 1px dashed var(--linha); }
+  .aluno-pt .al-acoes .btn { width: 100%; }
   /* perfil do aluno no celular: campos em grade organizada (nada de largura fixa solta) */
   /* fichas recolhíveis: toca pra abrir/fechar (pode abrir várias) */
   #fichasBox details > summary { list-style: none; }
@@ -135,6 +141,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #agAbas, #avAbas, #dsAbas, #chAbas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
     #pfAbas button, #trAbas button, #pgAbas button, #qtAbas button, #relAbas button,
     #agAbas button, #avAbas button, #dsAbas button, #chAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
+    /* card do aluno no celular: nome e ⋮ na 1ª linha, etiquetas na 2ª (nada empurra o menu) */
+    .aluno-pt { grid-template-columns: 1fr auto; }
+    .aluno-pt .al-mais { grid-column: 2; }
+    .aluno-pt .al-tags { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+    .aluno-pt .al-acoes { grid-template-columns: 1fr 1fr; }
+    /* sessão no celular: hora, nome e ⋮ na MESMA linha (o nome encolhe com reticências) */
+    .sessao-pt [data-vernome] { flex: 1 1 60px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+    .sessao-pt .ses-dir { flex: none; }
+    .sessao-pt .ses-acoes { grid-template-columns: 1fr 1fr; }
     /* listas: as ações descem SEMPRE pra linha de baixo, alinhadas à direita (paralelismo) */
     .sessao-pt > b { flex: 1 0 100%; }
     .sessao-pt > span[style*="margin-left:auto"] { flex: 1 0 100%; justify-content: flex-end; }
@@ -146,8 +161,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #fichasBox .linha-flex[style*="margin-top"] .btn { grid-column: 1 / -1; }
     #fichasBox .linha-flex[style*="margin-top"] span.muted { display: none; }
   }
-  .aluno-pt .quem { flex: 1; min-width: 160px; }
+  /* metas do mês: todos os campos do mesmo tamanho, um embaixo do outro no celular */
+  .metas-pt { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; align-items: end; }
+  .metas-pt label { margin: 0; font-size: 12.5px; display: flex; flex-direction: column; gap: 5px; }
+  .metas-pt input { width: 100%; }
+  .metas-pt .btn { align-self: end; height: 44px; }
+  .aluno-pt .quem { min-width: 0; }
+  .aluno-pt .quem strong { display: block; overflow: hidden; text-overflow: ellipsis; }
   .sessao-pt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  .sessao-pt .ses-dir { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; flex: none; }
+  .sessao-pt .ses-acoes { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding-top: 9px; margin-top: 2px; border-top: 1px dashed var(--linha); }
+  .sessao-pt .ses-acoes .btn { width: 100%; }
   .sessao-pt.feita { opacity: .55; }
   /* nome do aluno no topo do perfil sem o espaçamento largo do h2 padrão */
   #pfTitulo { letter-spacing: .02em; }
@@ -224,10 +248,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-bottom: 14px;"><h2>Seu dia hoje</h2><div id="bHojeP" class="muted">Nenhuma sessão marcada pra hoje.</div></div>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Metas do mês e projeção</h2>
-      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin: 8px 0 10px;">
-        <label style="margin:0;font-size:12.5px;">Meta de faturamento (R$) <input id="mtFatP" type="number" min="0" style="width:130px;"></label>
-        <label style="margin:0;font-size:12.5px;">Meta de novos alunos <input id="mtNovosP" type="number" min="0" style="width:90px;"></label>
-        <label style="margin:0;font-size:12.5px;">Meta de sessões dadas <input id="mtSesP" type="number" min="0" style="width:100px;"></label>
+      <div class="metas-pt" style="margin: 8px 0 10px;">
+        <label>Meta de faturamento (R$) <input id="mtFatP" type="number" min="0"></label>
+        <label>Meta de novos alunos <input id="mtNovosP" type="number" min="0"></label>
+        <label>Meta de sessões dadas <input id="mtSesP" type="number" min="0"></label>
         <button class="btn sec mini" id="mtSalvarP">Salvar metas</button>
       </div>
       <div id="mtPainelP" class="muted" style="font-size:13.5px;">Defina as metas acima — a projeção usa o ritmo do mês até agora.</div>
@@ -1309,16 +1333,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // linha limpa: nome (toque abre o perfil) + situação + menu retrátil com as ações
       return '<div class="aluno-pt" style="flex-wrap:wrap;"><div class="quem"><strong data-perfil="' + a.id + '" role="button" tabindex="0" style="cursor:pointer;" title="abrir o perfil">' + esc(a.nome) + "</strong>" +
         '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
+        // as etiquetas ficam num bloco próprio: no celular caem pra linha de baixo
+        // sem empurrar o ⋮, que fica sempre grudado no nome
+        '<span class="al-tags">' +
         (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
-        (fichaVencida ? ' <span class="tag alerta" title="a validade da ficha passou — gere a nova fase">⏰ TREINO VENCIDO</span>' : "") +
-        (a.acessoEm ? ' <span class="tag ok" title="login e senha enviados por e-mail">APP ✓</span>' : "") +
-        '<button class="btn sec mini" data-mais="' + a.id + '" aria-label="mais ações de ' + esc(a.nome) + '" title="mais ações" style="margin-left:auto;padding:6px 12px;font-size:16px;line-height:1;">⋮</button>' +
-        '<div data-acoes="' + a.id + '" hidden style="width:100%;display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;margin-top:8px;border-top:1px dashed var(--linha);">' +
+        (fichaVencida ? '<span class="tag alerta" title="a validade da ficha passou — gere a nova fase">⏰ TREINO VENCIDO</span>' : "") +
+        (a.acessoEm ? '<span class="tag ok" title="login e senha enviados por e-mail">APP ✓</span>' : "") +
+        "</span>" +
+        '<button class="btn sec mini al-mais" data-mais="' + a.id + '" aria-label="mais ações de ' + esc(a.nome) + '" title="mais ações" style="padding:6px 12px;font-size:16px;line-height:1;">⋮</button>' +
+        '<div class="al-acoes" data-acoes="' + a.id + '" hidden>' +
         '<button class="btn mini" data-perfil="' + a.id + '">Perfil</button>' +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
         '<button class="btn mini" data-app="' + a.id + '">App do aluno</button>' +
         (a.acessoEm ? "" : '<button class="btn mini" data-acesso="' + a.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
-        '<button class="btn sec mini" data-rm="' + a.id + '" style="margin-left:auto;">Encerrar</button></div></div>';
+        '<button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div></div>';
     }).join("") : '<div class="vazio">Cadastre seu primeiro aluno acima.</div>';
   }
   // assistente de novo aluno: cadastro completo → contrato e venda na sequência
@@ -3283,12 +3311,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-shora="' + x.id + '" title="mudar a hora da sessão">' + (x.hora || "+ hora") + "</button>" +
         (comData ? '<span class="muted" style="font-size:12px;">' + S.fmtData(x.data) + "</span>" : "") +
         '<button data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">' + esc(nomeDe[x.alunoId] || "?") + "</button>" +
-        '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
-        (x.feita ? '<span class="tag ok">FEITA ✓</span>'
-          : x.faltou ? '<span class="tag erro">FALTOU</span>'
-          : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
-            '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
-        '<button class="btn sec mini" data-cx="' + x.id + '">✕</button></span></div>';
+        // as ações vivem num menu retrátil ⋮ — a linha da agenda fica limpa
+        '<span class="ses-dir">' +
+        (x.feita ? '<span class="tag ok">FEITA ✓</span>' : x.faltou ? '<span class="tag erro">FALTOU</span>' : "") +
+        '<button class="btn sec mini ses-mais" data-smais="' + x.id + '" aria-label="ações da sessão" title="ações da sessão" style="padding:6px 12px;font-size:16px;line-height:1;">⋮</button></span>' +
+        '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' +
+        (x.feita || x.faltou ? "" :
+          '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
+          '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
+        '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button></div></div>';
     }
     function cabDia(txt) {
       return '<div style="font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;">' + txt + "</div>";
@@ -3459,6 +3490,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function trataCliqueSessao(e) {
     var vn = e.target.getAttribute && e.target.getAttribute("data-vernome");
     if (vn) { abreDiaAluno(vn); return; }
+    // menu retrátil ⋮ da sessão: abre as ações dela e fecha as das outras
+    var sm = e.target.closest && e.target.closest("[data-smais]");
+    if (sm) {
+      var lista = sm.closest("[data-sec], .card, body") || document;
+      var alvoS = lista.querySelector('[data-sacoes="' + sm.getAttribute("data-smais") + '"]');
+      var abertaS = alvoS && !alvoS.hidden;
+      lista.querySelectorAll("[data-sacoes]").forEach(function (d) { d.hidden = true; });
+      if (alvoS && !abertaS) alvoS.hidden = false;
+      return;
+    }
     var f = e.target.getAttribute && e.target.getAttribute("data-feita");
     var c = e.target.getAttribute && e.target.getAttribute("data-cx");
     var ft = e.target.getAttribute && e.target.getAttribute("data-faltou");
