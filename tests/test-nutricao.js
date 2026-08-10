@@ -245,6 +245,9 @@ async function abaNt(p, a) {
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Adesão à dieta/.test(appHtml), "app do paciente tem conquistas com gráfico de adesão");
   ok(/Dia perfeito/.test(appHtml) && /7 dias de água/.test(appHtml) && /10 pesagens/.test(appHtml), "medalhas de adesão, água e pesagens no app");
   ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app do paciente tem o robô de atendimento (chatbot de menu)");
+  // menu fixo embaixo (paridade com o app do aluno do Personal)
+  ok(/navAppN/.test(appHtml) && /trocaSecN/.test(appHtml) && /'dieta'/.test(appHtml) && /'evolucao'/.test(appHtml) && /nitemn/.test(appHtml),
+    "app do paciente tem a barra de navegação fixa embaixo (Início/Dieta/Evolução/Agenda/Chat)");
   ok(/Pode escrever aqui embaixo/.test(appHtml), "opção 'humano' vira encaminhamento pro nutricionista");
   // fotos de progresso, Pix e push (lote de melhorias dos apps)
   ok(/Fotos de progresso/.test(appHtml) && /ntfotos/.test(appHtml) && /ANTES · /.test(appHtml), "app do paciente tem fotos de progresso ANTES × AGORA");
@@ -594,6 +597,8 @@ async function abaNt(p, a) {
   await pApp.route("**/rest/v1/rpc/**", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, login: "bruno@email.com" }) }));
   await pApp.goto(BASE + "/app-teste-nutri.html", { waitUntil: "domcontentloaded" });
   await pApp.waitForFunction(() => window.__appNutri);
+  // barra fixa nova: água/refeições/diário vivem na aba Dieta
+  await pApp.evaluate(() => window.__trocaSecN("dieta"));
   await pApp.click("#agAdd");
   await pApp.click("#agAdd");
   const agua = await pApp.evaluate(() => document.getElementById("agTxt").textContent);
@@ -625,11 +630,13 @@ async function abaNt(p, a) {
   ok(/código de barras/i.test(await pApp.evaluate(() => document.body.textContent)), "app tem o botão de código de barras");
   const prox = await pApp.evaluate(() => document.getElementById("proxRef").textContent);
   ok(prox.length > 3, "próxima refeição calculada (" + prox.slice(0, 40) + ")");
+  await pApp.evaluate(() => window.__trocaSecN("evolucao"));
   await pApp.fill("#pzKg", "79,5");
   await pApp.click("#pzAdd");
   const pz = await pApp.evaluate(() => document.getElementById("pzGraf").textContent);
   ok(/79,5/.test(pz), "peso registrado no app");
-  // login do aluno no app
+  // login do aluno no app (card do Início)
+  await pApp.evaluate(() => window.__trocaSecN("inicio"));
   await pApp.fill("#lgLogin", "bruno@email.com");
   await pApp.fill("#lgSenha", "senha123");
   await pApp.click("#lgSalva");
