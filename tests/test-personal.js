@@ -2616,6 +2616,30 @@ async function abaPt(p, a) {
   ok(/dúvida no supino/.test(thread), "mensagem do aluno aparece no chat do app");
 
   ok(errosApp.length === 0, "app do aluno abre sem erros de JS" + (errosApp.length ? " — " + errosApp[0] : ""));
+  // --- modo claro × noturno no app do aluno (botão na gaveta ☰, escolha salva) ---
+  const temaSnap = await pApp.evaluate(() => {
+    const out = {
+      antesClaro: document.documentElement.classList.contains("claro"),
+      corpoAntes: getComputedStyle(document.body).backgroundColor,
+      btn: (document.getElementById("btnTemaApp") || {}).textContent || "",
+    };
+    document.getElementById("btnTemaApp").click();
+    const card = document.querySelector(".cardx");
+    out.claro = document.documentElement.classList.contains("claro");
+    out.corpo = getComputedStyle(document.body).backgroundColor;
+    out.txt = getComputedStyle(document.body).color;
+    out.card = card ? getComputedStyle(card).backgroundColor : "";
+    out.salvo = JSON.parse(localStorage.getItem("pttema"));
+    // devolve pro noturno (padrão) pra não afetar os testes seguintes
+    document.getElementById("btnTemaApp").click();
+    out.voltou = !document.documentElement.classList.contains("claro");
+    return out;
+  });
+  ok(!temaSnap.antesClaro && temaSnap.corpoAntes === "rgb(13, 12, 16)" && /Modo claro/.test(temaSnap.btn),
+    "app nasce no modo noturno com o botão ☀️ Modo claro na gaveta");
+  ok(temaSnap.claro && temaSnap.corpo === "rgb(242, 241, 246)" && temaSnap.txt === "rgb(25, 22, 34)" && temaSnap.card === "rgb(255, 255, 255)" && temaSnap.salvo === 1,
+    "modo claro pinta página, cards e texto e guarda a escolha do aluno");
+  ok(temaSnap.voltou, "um toque devolve pro modo noturno");
   await pApp.close();
 
   // ---------- 🎨 tema do studio: cor principal + logo ----------
