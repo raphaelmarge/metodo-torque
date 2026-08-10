@@ -5995,7 +5995,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }) };
     }
     // ícones de traço desenhados (estilo clean) pros títulos de card do app
-    var appIco = function (p, s) { return "<svg width='" + s + "' height='" + s + "' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-2px;margin-right:6px;'>" + p + "</svg>"; };
+    var appIco = function (p, s) { return "<svg width='" + s + "' height='" + s + "' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-2px;margin-right:6px;'>" + p + "</svg>"; };
     var APPIC = {
       pin: "<path d='M12 17v5'/><path d='M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z'/>",
       trofeu: "<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>",
@@ -6021,65 +6021,72 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<link rel='icon' href='/assets/icons/icon-personal.svg' type='image/svg+xml'>" +
       "<link rel='apple-touch-icon' href='/assets/icons/icon-personal-192.png'>" +
       "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(studio) + "</title>" +
-      "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0d0c10;color:#fff;max-width:480px;margin:0 auto;padding:0 0 calc(92px + env(safe-area-inset-bottom,0px))}" +
-      ".topo{padding:26px 18px 14px;background:radial-gradient(120% 160% at 50% -40%,rgba(124,58,237,.35),transparent 60%)}" +
-      ".topo .k{font-size:11px;letter-spacing:.2em;color:" + CORC + ";font-weight:700;text-transform:uppercase}" +
-      ".topo h1{font-size:24px;font-weight:800;margin-top:6px}" +
-      ".cardx{background:#141218;border:1px solid #26222e;border-radius:8px;margin:10px 14px;padding:15px 17px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset}" +
-      ".cardx h2{font-size:12px;letter-spacing:.14em;color:#a9a4b5;text-transform:uppercase;margin-bottom:8px}" +
-      "pre{white-space:pre-wrap;font-family:inherit;font-size:14.5px;line-height:1.6}" +
-      "input,select{background:#100e15;border:1.5px solid #26222e;border-radius:4px;color:#fff;padding:10px 12px;font-family:inherit;font-size:15px}" +
-      "input:focus,select:focus{outline:none;border-color:" + COR + "}" +
-      ".btnx{background:linear-gradient(135deg," + COR + "," + COR2 + ");color:#fff;border:none;border-radius:5px;padding:11px 20px;font-weight:900;font-style:italic;letter-spacing:.04em;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 12px 32px -12px " + COR + "}" +
-      ".kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed #322e3d}" +
-      ".vz{color:#a9a4b5;font-size:13px;text-align:center;padding:10px 0}" +
+      "<style>*{box-sizing:border-box;margin:0}body{font-family:'Archivo',system-ui,sans-serif;background:#0d0c10;color:#fff;max-width:480px;margin:0 auto;padding:0 0 calc(104px + env(safe-area-inset-bottom,0px));-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}a{color:#a78bfa}a:hover{color:#d6c9f5}" +
+      ".topo{padding:36px 20px 8px;background:none}" +
+      ".topo .k{font-size:10px;letter-spacing:.3em;color:#6e6a78;font-weight:700;text-transform:uppercase}" +
+      ".topo h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:8px}" +
+      ".cardx{background:none;border:none;border-radius:0;margin:32px 20px 0;padding:0;box-shadow:none}" +
+      ".cardx h2{font-size:10.5px;letter-spacing:.22em;color:#6e6a78;text-transform:uppercase;margin-bottom:14px;font-weight:700}" +
+      "pre{white-space:pre-wrap;font-family:inherit;font-size:14.5px;line-height:1.7;color:#d6d2df}" +
+      "input,select,textarea{background:#121016;border:1.5px solid rgba(255,255,255,.07);border-radius:12px;color:#fff;padding:12px 14px;font-family:inherit;font-size:15px}" +
+      "input:focus,select:focus,textarea:focus{outline:none;border-color:" + COR + "}" +
+      ".btnx{background:" + COR + ";color:#fff;border:none;border-radius:99px;padding:13px 24px;font-weight:800;letter-spacing:.02em;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 10px 30px -14px rgba(124,58,237,.9)}" +
+      ".kv{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-bottom:none}" +
+      ".vz{color:#6e6a78;font-size:13px;text-align:center;padding:14px 0}" +
       ".up{color:#4ade80}.down{color:#f87171}" +
+      "button{transition:transform .16s ease}button:active{transform:scale(.96)}" +
       "@keyframes cfQueda{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}" +
       "@keyframes copoPop{0%{transform:scale(.75)}60%{transform:scale(1.14)}100%{transform:scale(1)}}" +
+      "@keyframes secIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}.sec-anim{animation:secIn .5s cubic-bezier(.22,.61,.36,1) both;animation-delay:calc(var(--ci,0)*55ms)}" +
+      "@keyframes barIn{from{transform:scaleX(0)}}[style*='height:4px;background:#1b1724']>div{transform-origin:left;animation:barIn .9s cubic-bezier(.22,.61,.36,1) both}" +
+      "@media (prefers-reduced-motion:reduce){.sec-anim,[style*='height:4px;background:#1b1724']>div{animation:none!important}button{transition:none}}" +
       // modo claro (o aluno alterna na gaveta ☰; o noturno é o padrão) — camada de overrides
-      "html.claro body{background:#f2f1f6;color:#191622}" +
-      "html.claro .cardx{background:#fff;border-color:#e4e1eb;box-shadow:0 1px 2px rgba(23,21,28,.06)}" +
-      "html.claro .cardx h2{color:#645e73}" +
+      "html.claro body{background:#f4f3f7;color:#191622}" +
+      "html.claro .cardx h2{color:#77718a}" +
       "html.claro input,html.claro select,html.claro textarea{background:#fff;border-color:#d9d5e3;color:#191622}" +
-      "html.claro .kv{border-bottom-color:#e4e1eb}" +
+      "html.claro .kv{border-bottom:none}" +
       "html.claro .vz{color:#645e73}" +
-      "html.claro #navApp{background:rgba(255,255,255,.95)!important;border-top:1px solid #e4e1eb!important}" +
+      "html.claro #navApp{background:rgba(255,255,255,.9)!important;border-top:1px solid rgba(25,22,34,.06)!important}" +
       "html.claro #menuApp{background:#fff!important;border-left:1px solid #e4e1eb!important}" +
       "html.claro #menuApp .nitem{color:#3a3547!important}" +
-      "html.claro #xpChip{background:rgba(25,22,34,.06)!important;border-color:rgba(25,22,34,.16)!important}" +
+      "html.claro #xpChip{background:rgba(25,22,34,.05)!important;border-color:transparent!important}" +
+      "html.claro [style*='background:#121016']{background:#fff!important;box-shadow:0 1px 3px rgba(23,21,28,.07)}" +
+      "html.claro [style*='background:#1b1724']{background:#e9e7ef!important}" +
       "html.claro [style*='background:#14121a']{background:#f3f1f7!important}" +
-      "html.claro [style*='#1b1724']{background:#fff!important}" +
+      "html.claro [style*='#1b1724']{background:#e9e7ef!important}" +
       "html.claro [style*='background:#1d1a24']{background:#efedf4!important}" +
       "html.claro [style*='background:#100e15']{background:#fff!important}" +
       "html.claro [style*='background:#221f2b']{background:#e6e3ed!important}" +
       "html.claro [style*='background:#3a3346']{background:#d9d5e2!important}" +
+      "html.claro [style*='rgba(255,255,255,.05)']{border-color:#e4e1eb!important}html.claro [style*='rgba(255,255,255,.06)']{border-color:#e4e1eb!important}html.claro [style*='rgba(255,255,255,.07)']{border-color:#d9d5e3!important}" +
       "html.claro [style*='#322e3d']{border-color:#d9d5e3!important}" +
       "html.claro [style*='#26222f'],html.claro [style*='#26222e']{border-color:#e4e1eb!important}" +
-      "html.claro [style*='color:#fff'][style*='#14121a'],html.claro [style*='color:#fff'][style*='#1d1a24'],html.claro [style*='color:#fff'][style*='#100e15']{color:#241f31!important}" +
+      "html.claro [style*='color:#fff'][style*='#14121a'],html.claro [style*='color:#fff'][style*='#1d1a24'],html.claro [style*='color:#fff'][style*='#100e15'],html.claro [style*='color:#fff'][style*='#121016']{color:#241f31!important}" +
       "html.claro [style*='color:#a9a4b5']{color:#645e73!important}" +
       "html.claro [style*='color:#d6d2df']{color:#3a3547!important}" +
       "html.claro [style*='color:#cfcbdb']{color:#443f52!important}" +
       "html.claro [style*='color:#8a8695']{color:#6c6678!important}" +
       "html.claro [style*='color:#6e6a78']{color:#77718a!important}" +
+      "html.claro [style*='color:#a78bfa']{color:#6d28d9!important}" +
       "html.claro [style*='color:#d6c9f5']{color:" + COR2 + "!important}" +
       "html.claro .btnx[style*='background:#14121a']{color:#241f31!important}" +
       "</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
-      "<span id='xpChip' style='flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>" +
+      "<span id='xpChip' style='flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);border:1px solid transparent;border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>" +
       "<svg width='13' height='13' viewBox='0 0 24 24' fill='" + CORC + "' aria-hidden='true'><path d='M13 2 3 14h7l-1 8 10-12h-7z'/></svg>" +
       "<span><b id='xpNum'>0</b> XP</span></span></div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
-      "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(13,12,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #26222e;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
+      "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(13,12,16,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04);display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
       [["<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>", "Início"],
         ["<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>", "Treino"],
         ["<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>", "Evolução"],
         ["<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>", "Agenda"],
         ["<path d='M4 6.5h16M4 12h16M4 17.5h16'/>", "Menu"]].map(function (mN) {
         return "<button class='nitem' style='flex:1;min-width:0;background:none;border:none;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;'>" +
-          "<span style='line-height:0;'><svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + mN[0] + "</svg></span>" +
-          "<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;'>" + mN[1] + "</span></button>";
+          "<span style='line-height:0;'><svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + mN[0] + "</svg></span>" +
+          "<span style='font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;'>" + mN[1] + "</span></button>";
       }).join("") +
       "</nav>" +
       // gaveta do menu ☰ (igual ao módulo do personal): fundo escurecido + painel pela direita
@@ -6095,11 +6102,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
       // card herói "treino de hoje" (estilo Prime) — a ficha do dia gira sozinha
-      (fichasApp ? "<div class='cardx' id='heroTreino' style='background:linear-gradient(150deg," + COR + "," + COR2 + " 78%);border-color:" + COR + ";box-shadow:0 18px 40px -18px " + COR + ";'>" +
-        "<div style='font-size:10.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
-        "<div id='htTitulo' style='font-size:23px;font-weight:900;font-style:italic;margin:6px 0 2px;text-transform:uppercase;'></div>" +
-        "<div id='htSub' style='font-size:12.5px;color:rgba(255,255,255,.8);'></div>" +
-        "<button id='htVer' style='margin-top:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:6px;padding:9px 18px;font-weight:900;font-style:italic;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.04em;'>Ver treino ›</button></div>" : "") +
+      (fichasApp ? "<div class='cardx' id='heroTreino' style='background:#121016;border-radius:20px;padding:24px 22px;'>" +
+        "<div style='font-size:10px;font-weight:700;letter-spacing:.26em;color:" + CORC + ";text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
+        "<div id='htTitulo' style='font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;'></div>" +
+        "<div id='htSub' style='font-size:13px;color:#8a8695;'></div>" +
+        "<button id='htVer' style='margin-top:18px;background:" + COR + ";border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div>" : "") +
       // progresso rápido (peso + treinos do mês)
       "<div class='cardx'><h2>Progresso</h2><div id='pgTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'></div></div>" +
       // retrospectiva do mês fechado (aparece no comecinho do mês seguinte, some ao fechar)
@@ -6107,7 +6114,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='retroBox'></div>" +
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
-      "<button class='btnx' id='retroFecha' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
+      "<button class='btnx' id='retroFecha' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
       (((st.config || {}).mural || []).length
         ? "<div class='cardx' style='border-color:#7c3aed;'><h2>" + appIco(APPIC.pin, 14) + "Mural do studio</h2>" +
           ((st.config || {}).mural || []).map(function (av) {
@@ -6134,7 +6141,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return "<div class='kv'><span>" + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero!</span></div>" +
             (si === 0 ? "<div id='sconfBox' data-d='" + x.d + "' data-h='" + esc(x.h) + "' style='display:flex;gap:8px;margin:8px 0 4px;'>" +
               "<button data-pconf='1' style='flex:1;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;border-radius:99px;padding:9px 0;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>Confirmo presença ✓</button>" +
-              "<button data-pconf='0' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;'>Não vou conseguir</button></div>" : "");
+              "<button data-pconf='0' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;border-radius:99px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;'>Não vou conseguir</button></div>" : "");
         }).join("") + "</div>" : "") +
       "<div class='cardx'><h2>Agenda</h2>" +
       "<div id='agCal'></div><div id='agDia' style='margin-top:10px;'></div>" +
@@ -6149,16 +6156,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
       // sub-abas da área de treino: ficha tradicional × circuito (WOD) × corrida — conforme o professor liberou
       ((ve("wod") || ve("cardio")) ? "<div class='cardx' id='trTabs' style='padding:9px 11px;'><div style='display:flex;gap:6px;'>" +
-      "<button data-trsub='ficha' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;'>Minha ficha</button>" +
-      (ve("wod") ? "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
-      (ve("cardio") ? "<button data-trsub='cardio' style='flex:1;padding:9px 0;border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;'>Corrida e bike</button>" : "") +
+      "<button data-trsub='ficha' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;'>Minha ficha</button>" +
+      (ve("wod") ? "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
+      (ve("cardio") ? "<button data-trsub='cardio' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Corrida e bike</button>" : "") +
       "</div></div>" : "") +
       "<div class='cardx'><h2>Meu treino</h2>" +
-      (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:11px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
+      (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:16px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
       (fichasApp ? fichasApp.map(function (f, gi) {
         return "<div style='font-weight:800;font-size:13px;letter-spacing:.08em;color:#a78bfa;margin:10px 0 6px;text-transform:uppercase;'>" + esc(f.titulo) + "</div>" +
           (aqPorFicha[gi] && aqPorFicha[gi].length > 1
-            ? "<details class='aqbox' style='background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.45);border-radius:11px;margin:4px 0 8px;overflow:hidden;'>" +
+            ? "<details class='aqbox' style='background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.45);border-radius:16px;margin:4px 0 8px;overflow:hidden;'>" +
               "<summary style='padding:10px 13px;cursor:pointer;list-style:none;font-size:13px;font-weight:800;color:#fdba74;'>Aquecimento do dia (~4 min) ›</summary>" +
               "<div style='padding:0 13px 10px;font-size:13px;color:#d6d2df;'>" +
               aqPorFicha[gi].map(function (aq) { return "<div class='kv' style='border-color:rgba(251,146,60,.2);'><span>" + esc(aq[0]) + "</span><b style='color:#fdba74;white-space:nowrap;'>" + esc(aq[1]) + "</b></div>"; }).join("") +
@@ -6167,22 +6174,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           (f.itens.length ? "<button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;text-align:center;margin:2px 0 8px;'>Treino guiado</button>" : "") +
           f.itens.map(function (it, ii) {
             var rst = +it.descanso || 60, rAlt = rst === 90 ? 60 : 90;
-            return "<details style='background:#14121a;border:1px solid #322e3d;border-radius:11px;margin:6px 0;overflow:hidden;'>" +
+            return "<details style='background:#121016;border-radius:16px;margin:8px 0;overflow:hidden;'>" +
               "<summary style='padding:11px 13px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
               "<b>" + esc(it.nome) + "</b><span style='color:#a9a4b5;white-space:nowrap;'>" + it.series + "×" + esc(String(it.reps)) + " · " + rst + "s ›</span></summary>" +
               "<div style='padding:0 13px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
               (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
-              "<button class='vidbtn' data-v='" + esc(it.video || videoBusca(it.nome)) + "' style='background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;font-weight:700;font-size:12px;padding:4px 14px;border-radius:99px;display:inline-block;font-family:inherit;cursor:pointer;'>Ver vídeo</button>" +
+              "<button class='vidbtn' data-v='" + esc(it.video || videoBusca(it.nome)) + "' style='background:rgba(124,58,237,.18);border:1px solid transparent;color:#d6c9f5;font-weight:700;font-size:12px;padding:5px 14px;border-radius:99px;display:inline-block;font-family:inherit;cursor:pointer;'>Ver vídeo</button>" +
               ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat!</span>" : "") +
               "<div class='vidbox' style='display:none;'></div>" +
               (it.alts && it.alts.length ? "<div style='margin-top:8px;'><button class='altbtn' style='background:none;border:none;color:#a9a4b5;font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0;'>Sem esse aparelho hoje?</button>" +
                 "<div class='altbox' style='display:none;color:#d6c9f5;font-size:12.5px;margin-top:5px;'>Troca por: <b>" + it.alts.map(function (nA) { return esc(nA); }).join("</b> ou <b>") + "</b> — mesmo padrão de movimento. Na dúvida, chama no chat!</div></div>" : "") +
               "<div style='display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;'>" +
-              "<button class='inibtn' data-g='" + gi + "' data-e='" + ii + "' style='background:linear-gradient(135deg," + COR + "," + COR2 + ");border:none;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>Iniciar exercício</button>" +
-              "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:#1d1a24;border:1px solid #7c3aed;color:#fff;border-radius:99px;padding:7px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
-              "<button class='tmrbtn' data-s='" + rst + "' style='background:#14121a;border:1px solid #7c3aed;color:#d6c9f5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>Descanso " + rst + "s</button>" +
-              "<button class='tmrbtn' data-s='" + rAlt + "' style='background:#14121a;border:1px solid #322e3d;color:#a9a4b5;border-radius:99px;padding:7px 12px;font-size:12px;font-family:inherit;cursor:pointer;'>" + rAlt + "s</button>" +
+              "<button class='inibtn' data-g='" + gi + "' data-e='" + ii + "' style='background:" + COR + ";border:none;color:#fff;border-radius:99px;padding:8px 18px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;'>Iniciar exercício</button>" +
+              "<button class='setbtn' data-ex='" + esc(it.nome) + "' data-n='" + (+it.series || 3) + "' style='background:#1d1a24;border:1px solid transparent;color:#d6c9f5;border-radius:99px;padding:8px 18px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;'>0/" + (+it.series || 3) + " séries ✓</button>" +
+              "<button class='tmrbtn' data-s='" + rst + "' style='background:rgba(124,58,237,.18);border:1px solid transparent;color:#d6c9f5;border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>Descanso " + rst + "s</button>" +
+              "<button class='tmrbtn' data-s='" + rAlt + "' style='background:#1b1724;border:1px solid transparent;color:#a9a4b5;border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;'>" + rAlt + "s</button>" +
               "</div></div></details>";
           }).join("");
       }).join("")
@@ -6202,7 +6209,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var maxS = raioX[0].s || 1;
           return raioX.map(function (r) {
             return "<div style='margin:7px 0;'><div style='display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;'><span>" + esc(r.g) + "</span><b style='color:" + CORC + ";'>" + r.s + " séries</b></div>" +
-              "<div style='height:8px;background:#14121a;border-radius:99px;overflow:hidden;'><div style='height:100%;width:" + Math.round(100 * r.s / maxS) + "%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;'></div></div></div>";
+              "<div style='height:4px;background:#1b1724;border-radius:99px;overflow:hidden;'><div style='height:100%;width:" + Math.round(100 * r.s / maxS) + "%;background:linear-gradient(90deg," + COR + "," + CORC + ");border-radius:99px;'></div></div></div>";
           }).join("");
         })() + "</div>" : "") +
       // modo circuito (WOD): cronômetros de cross — só se o professor liberou nas Configurações
@@ -6219,7 +6226,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).join("");
         return "<div style='background:linear-gradient(165deg,#1b1724,#14121a);border:1px solid " + COR + ";border-radius:14px;padding:15px 16px;margin-bottom:10px;'>" +
           "<div style='font-size:11px;font-weight:800;letter-spacing:.18em;color:" + CORC + ";text-transform:uppercase;'>" + esc(wodResumo(w)) + "</div>" +
-          "<div style='font-size:22px;font-weight:900;font-style:italic;text-transform:uppercase;margin:2px 0 2px;'>" + esc(w.nome) + "</div>" +
+          "<div style='font-size:22px;font-weight:900;text-transform:uppercase;margin:2px 0 2px;'>" + esc(w.nome) + "</div>" +
           (w.aq ? bloco("AQUECIMENTO", "<div style='font-size:13.5px;color:#d6d2df;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.aq) + "</div>") : "") +
           bloco("WOD", "<div style='margin-top:3px;'>" + movsH + "</div>") +
           (w.obs ? bloco("ESCALAS / OBS", "<div style='font-size:12.5px;color:#a9a4b5;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.obs) + "</div>") : "") +
@@ -6228,7 +6235,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:2px 0 10px;'>Ou monte o seu na mão aqui embaixo:</div>" : "") +
       "<div id='wodTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<div id='wodCfg' style='display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
-      "<div id='wodTela' style='text-align:center;padding:18px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
+      "<div id='wodTela' style='text-align:center;padding:18px 10px;border-radius:14px;background:#14121a;border:1px solid rgba(255,255,255,.06);'>" +
       "<div id='wodFase' style='font-size:12px;font-weight:800;letter-spacing:.18em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
       "<div id='wodTempo' style='font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin:4px 0;'>0:00</div>" +
       "<div id='wodInfo' style='font-size:12.5px;color:#a9a4b5;'></div></div>" +
@@ -6236,7 +6243,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='wodGo' style='flex:2;'>Iniciar</button>" +
       "<button class='btnx' id='wodVolta' style='flex:1;display:none;background:#14121a;border:1px solid " + COR + ";box-shadow:none;'>+1 volta</button>" +
       "<button class='btnx' id='wodTermina' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
-      "<button class='btnx' id='wodZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
+      "<button class='btnx' id='wodZera' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
       "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" : "") +
       // corrida e bike: folhas prescritas + cronômetro próprio com pace (min/km), GPS e tiros
       (ve("cardio") ? "<div class='cardx' id='cardCardio'><h2>Corrida e bike</h2>" +
@@ -6247,34 +6254,34 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           : [(+c.dist ? String(c.dist).replace(".", ",") + " km" : ""), (+c.tempo ? c.tempo + " min" : ""), (c.pace ? "pace " + c.pace : "")].filter(Boolean).join(" · ") || "livre";
         return "<div style='background:linear-gradient(165deg,#1b1724,#14121a);border:1px solid " + COR + ";border-radius:14px;padding:15px 16px;margin-bottom:10px;'>" +
           "<div style='font-size:11px;font-weight:800;letter-spacing:.18em;color:" + CORC + ";text-transform:uppercase;'>" + rotMod + " · " + esc(alvo) + "</div>" +
-          "<div style='font-size:20px;font-weight:900;font-style:italic;text-transform:uppercase;margin:2px 0;'>" + esc(c.nome) + "</div>" +
+          "<div style='font-size:20px;font-weight:900;text-transform:uppercase;margin:2px 0;'>" + esc(c.nome) + "</div>" +
           (c.obs ? "<div style='font-size:12.5px;color:#a9a4b5;margin-top:4px;'>" + esc(c.obs) + "</div>" : "") +
           "<button class='btnx' data-cbstart='" + c.id + "' style='display:block;width:100%;text-align:center;margin-top:10px;'>Começar</button></div>";
       }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:2px 0 10px;'>Ou treine livre aqui embaixo:</div>" : "") +
       "<div id='crTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       // trajeto estilo app de corrida: o caminho do GPS vai sendo desenhado aqui
       "<div style='position:relative;margin-bottom:10px;'>" +
-      "<canvas id='crMapa' width='640' height='300' style='width:100%;height:150px;display:block;border-radius:14px;background:#14121a;border:1px solid #322e3d;'></canvas>" +
+      "<canvas id='crMapa' width='640' height='300' style='width:100%;height:150px;display:block;border-radius:14px;background:#14121a;border:1px solid rgba(255,255,255,.06);'></canvas>" +
       "<div id='crContagem' style='display:none;position:absolute;inset:0;border-radius:14px;background:rgba(0,0,0,.72);z-index:2;align-items:center;justify-content:center;font-size:84px;font-weight:900;color:" + CORC + ";'>3</div></div>" +
-      "<div id='crCfgBox' style='display:none;background:#1b1724;border:1px solid #322e3d;border-radius:14px;padding:12px;margin-bottom:10px;'></div>" +
-      "<div id='crMetaBox' style='display:none;background:#1b1724;border:1px solid #322e3d;border-radius:14px;padding:12px;margin-bottom:10px;'></div>" +
-      "<div id='crTela' style='text-align:center;padding:12px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
+      "<div id='crCfgBox' style='display:none;background:#1b1724;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px;margin-bottom:10px;'></div>" +
+      "<div id='crMetaBox' style='display:none;background:#1b1724;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px;margin-bottom:10px;'></div>" +
+      "<div id='crTela' style='text-align:center;padding:12px 10px;border-radius:14px;background:#14121a;border:1px solid rgba(255,255,255,.06);'>" +
       "<div id='crFase' style='font-size:11px;font-weight:800;letter-spacing:.16em;color:#a9a4b5;text-transform:uppercase;'>Pronto pra correr?</div>" +
       "<div id='crTempo' style='font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin:2px 0;'>0:00</div>" +
       "<div style='display:flex;gap:8px;justify-content:center;margin-top:8px;'>" +
-      "<div style='flex:1;background:#1b1724;border-radius:11px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE</div><div id='crPace' style='font-size:19px;font-weight:900;color:" + CORC + ";'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div>" +
-      "<div style='flex:1;background:#1b1724;border-radius:11px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>DISTÂNCIA</div><div id='crDist' style='font-size:19px;font-weight:900;'>0,00</div><div style='font-size:9px;color:#6e6a78;'>km</div></div>" +
-      "<div style='flex:1;background:#1b1724;border-radius:11px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE MÉDIO</div><div id='crPaceMed' style='font-size:19px;font-weight:900;'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div></div>" +
+      "<div style='flex:1;background:#1b1724;border-radius:16px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE</div><div id='crPace' style='font-size:19px;font-weight:900;color:" + CORC + ";'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div>" +
+      "<div style='flex:1;background:#1b1724;border-radius:16px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>DISTÂNCIA</div><div id='crDist' style='font-size:19px;font-weight:900;'>0,00</div><div style='font-size:9px;color:#6e6a78;'>km</div></div>" +
+      "<div style='flex:1;background:#1b1724;border-radius:16px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE MÉDIO</div><div id='crPaceMed' style='font-size:19px;font-weight:900;'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div></div>" +
       "<div id='crInfo' style='font-size:12px;color:#a9a4b5;margin-top:8px;'></div></div>" +
       // botão redondo gigante estilo NRC, com engrenagem e GPS dos lados
       "<div style='display:flex;align-items:center;justify-content:center;gap:22px;margin-top:14px;'>" +
-      "<button id='crCfgBtn' aria-label='Configurações da corrida' style='width:52px;height:52px;border-radius:50%;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;cursor:pointer;font-size:20px;line-height:1;'>⚙️</button>" +
+      "<button id='crCfgBtn' aria-label='Configurações da corrida' style='width:52px;height:52px;border-radius:50%;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;cursor:pointer;font-size:20px;line-height:1;'>⚙️</button>" +
       "<button class='btnx' id='crGo' style='width:118px;height:118px;border-radius:50%;font-size:17px;padding:0;flex:none;'>Iniciar</button>" +
-      "<button id='crGps' aria-label='GPS' style='width:52px;height:52px;border-radius:50%;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;cursor:pointer;font-size:11px;font-weight:800;font-family:inherit;line-height:1.2;'>Ligar<br>GPS</button></div>" +
-      "<button id='crMetaBtn' style='display:block;margin:12px auto 0;background:#1b1724;border:1px solid #322e3d;border-radius:99px;padding:10px 22px;color:#d6d2df;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;'>Defina uma meta</button>" +
+      "<button id='crGps' aria-label='GPS' style='width:52px;height:52px;border-radius:50%;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;cursor:pointer;font-size:11px;font-weight:800;font-family:inherit;line-height:1.2;'>Ligar<br>GPS</button></div>" +
+      "<button id='crMetaBtn' style='display:block;margin:12px auto 0;background:#1b1724;border:1px solid rgba(255,255,255,.06);border-radius:99px;padding:10px 22px;color:#d6d2df;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;'>Defina uma meta</button>" +
       "<div style='display:flex;gap:8px;margin-top:12px;'>" +
       "<button class='btnx' id='crFim' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
-      "<button class='btnx' id='crZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button>" +
+      "<button class='btnx' id='crZera' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button>" +
       "<input id='crKm' inputmode='decimal' placeholder='km na mão' style='flex:1;min-width:0;text-align:center;'></div>" +
       "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div>" +
       // modo tela cheia estilo NRC: o mapa ocupa a tela toda com os controles flutuando
@@ -6314,7 +6321,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='agCopos' style='display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 10px;'></div>" +
       "<div style='display:flex;gap:8px;align-items:center;'>" +
       "<button class='btnx' id='agMais' style='flex:1;'>Bebi um copo!</button>" +
-      "<button class='btnx' id='agMenos' style='flex:none;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;padding:11px 16px;' title='tirar um copo'>−1</button></div>" +
+      "<button class='btnx' id='agMenos' style='flex:none;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;padding:11px 16px;' title='tirar um copo'>−1</button></div>" +
       "<div id='agInfo' class='vz' style='font-size:12.5px;'></div>" +
       "<div style='display:flex;gap:8px;margin-top:6px;'>" +
       "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Copos por dia<select id='agMetaSel' style='width:100%;margin-top:3px;'><option>6</option><option selected>8</option><option>10</option><option>12</option></select></label>" +
@@ -6324,14 +6331,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='cardx' id='utilCrono'><h2>Cronômetro e timers de treino</h2>" +
       "<div id='ucTipos' style='display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
       "<div id='ucCfg' style='display:none;gap:8px;margin-bottom:10px;'></div>" +
-      "<div id='ucTela' style='text-align:center;padding:14px 10px;border-radius:14px;background:#14121a;border:1px solid #322e3d;'>" +
+      "<div id='ucTela' style='text-align:center;padding:14px 10px;border-radius:14px;background:#14121a;border:1px solid rgba(255,255,255,.06);'>" +
       "<div id='ucFase' style='font-size:11px;font-weight:800;letter-spacing:.16em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
       "<div id='ucTempo' style='font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;'>0:00.0</div>" +
       "<div id='ucInfo' style='font-size:12px;color:#a9a4b5;'></div></div>" +
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='ucGo' style='flex:2;'>Iniciar</button>" +
       "<button class='btnx' id='ucVolta' style='flex:1;background:#14121a;border:1px solid " + COR + ";box-shadow:none;'>Volta</button>" +
-      "<button class='btnx' id='ucZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
+      "<button class='btnx' id='ucZera' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
       "<div id='ucVoltas' class='vz' style='font-size:12px;'></div>" +
       "<div id='ucHist' class='vz' style='font-size:12px;text-align:left;'></div></div>" +
       "<div class='cardx' id='utilRm'><h2>Calculadora de 1RM</h2>" +
@@ -6385,7 +6392,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
         (pixApp ? "<div style='text-align:center;margin-top:10px;'>" +
           (pixApp.qr ? "<img src='" + pixApp.qr + "' style='width:170px;height:170px;image-rendering:pixelated;background:#fff;padding:7px;border-radius:12px;'>" : "") +
-          "<textarea id='pixAluno' rows='3' readonly style='width:100%;margin-top:8px;background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#a9a4b5;font-family:monospace;font-size:10px;padding:8px;'>" + pixApp.code + "</textarea>" +
+          "<textarea id='pixAluno' rows='3' readonly style='width:100%;margin-top:8px;background:#14121a;border:1px solid rgba(255,255,255,.06);border-radius:9px;color:#a9a4b5;font-family:monospace;font-size:10px;padding:8px;'>" + pixApp.code + "</textarea>" +
           "<button class='btnx' id='pixCopiaAluno' style='width:100%;margin-top:8px;'>Copiar Pix copia e cola</button></div>" : "") +
         (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:#14121a;border:1px solid #7c3aed;box-shadow:none;'>Assinar no cartão (débito automático)</a>" : "") +
         "<button class='btnx' id='btnJaPaguei' style='display:block;width:100%;text-align:center;margin-top:8px;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Já paguei — avisar " + esc(studio.split(" ")[0]) + "</button>" +
@@ -6414,13 +6421,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='gMeta' style='color:#a9a4b5;font-size:15px;margin-top:6px;'></div>" +
       "<button id='gVideo' class='vidbtn' style='display:none;margin-top:10px;background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;font-weight:700;font-size:13px;padding:6px 16px;border-radius:99px;align-self:flex-start;font-family:inherit;cursor:pointer;'>Como fazer</button>" +
       "<div class='vidbox' style='display:none;'></div>" +
-      "<input id='gCarga' inputmode='decimal' placeholder='carga de hoje (kg)' style='margin-top:14px;background:#1d1a24;border:1px solid #322e3d;border-radius:12px;color:#fff;padding:12px;font-size:15px;font-family:inherit;'>" +
+      "<input id='gCarga' inputmode='decimal' placeholder='carga de hoje (kg)' style='margin-top:14px;background:#1d1a24;border:1px solid rgba(255,255,255,.06);border-radius:12px;color:#fff;padding:12px;font-size:15px;font-family:inherit;'>" +
       "<div id='gDesc' style='display:none;font-size:74px;font-weight:800;text-align:center;margin:auto 0;color:#a78bfa;'></div>" +
       "<div style='margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px;'>" +
       "<button class='btnx' id='gSerie' style='font-size:17px;padding:16px;'>Série feita ✓</button>" +
       "<div style='display:flex;gap:8px;'>" +
-      "<button id='gPular' class='btnx' style='flex:1;background:#1d1a24;color:#a9a4b5;box-shadow:none;border:1px solid #322e3d;'>Pular descanso</button>" +
-      "<button id='gPularEx' class='btnx' style='flex:1;background:#1d1a24;color:#a9a4b5;box-shadow:none;border:1px solid #322e3d;'>Pular exercício</button>" +
+      "<button id='gPular' class='btnx' style='flex:1;background:#1d1a24;color:#a9a4b5;box-shadow:none;border:1px solid rgba(255,255,255,.06);'>Pular descanso</button>" +
+      "<button id='gPularEx' class='btnx' style='flex:1;background:#1d1a24;color:#a9a4b5;box-shadow:none;border:1px solid rgba(255,255,255,.06);'>Pular exercício</button>" +
       "</div></div></div>" +
       "<div class='cardx' id='cardNotif' style='display:none;'><h2>" + appIco(APPIC.sino, 14) + "Lembretes</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das sessões e recados por aqui.</div>" +
@@ -6461,7 +6468,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function soltaTela(){try{if(wlTela){wlTela.release();wlTela=null;}}catch(e){}}" +
       "document.addEventListener('visibilitychange',function(){var gx=document.getElementById('guiaBox');if(!document.hidden&&gx&&gx.style.display==='flex')ligaTela();});" +
       // ícones de traço desenhados (sem emoji) usados nos cards dinâmicos
-      "function icx(p,s){return \"<svg width='\"+(s||16)+\"' height='\"+(s||16)+\"' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'>\"+p+'</svg>';}" +
+      "function icx(p,s){return \"<svg width='\"+(s||16)+\"' height='\"+(s||16)+\"' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'>\"+p+'</svg>';}" +
       "var ICO={trofeu:\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\"," +
       "raio:\"<path d='M13 2 3 14h9l-1 8 10-12h-9z'/>\"," +
       "estrela:\"<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>\"," +
@@ -6508,7 +6515,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(!L('ptfeitos',{})[iso]||r[iso]){bx.style.display='none';return;}" +
       "bx.style.display='block';" +
       "bx.innerHTML=\"<div style='font-size:12.5px;font-weight:700;margin-bottom:6px;'>Como foi o treino de hoje?</div><div style='display:flex;gap:6px;'>\"+" +
-      "[['1','Leve'],['2','Na medida'],['3','Pesado']].map(function(o){return \"<button data-rpe='\"+o[0]+\"' style='flex:1;background:#14121a;border:1px solid #322e3d;border-radius:11px;padding:9px 0;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;'>\"+o[1]+\"</button>\";}).join('')+'</div>';}" +
+      "[['1','Leve'],['2','Na medida'],['3','Pesado']].map(function(o){return \"<button data-rpe='\"+o[0]+\"' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:9px 0;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;'>\"+o[1]+\"</button>\";}).join('')+'</div>';}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-rpe]');if(!b)return;" +
       "var r=L('ptrpe',{});r[isoHj()]=+b.dataset.rpe;var ks=Object.keys(r).sort();if(ks.length>90)delete r[ks[0]];Sv('ptrpe',r);" +
       "var bx=document.getElementById('rpeBox');bx.innerHTML=\"<div class='vz' style='padding:4px 0;'>Anotado! Seu personal vê isso e ajusta o próximo treino.</div>\";setTimeout(function(){bx.style.display='none';},2600);});" +
@@ -6548,7 +6555,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M9 15h6'/>\"," +
       "\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M8.5 14c1 1.5 2.3 2.2 3.5 2.2s2.5-.7 3.5-2.2'/>\"," +
       "\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M8 13.5a4.2 4.2 0 0 0 8 0z'/>\"];" +
-      "document.getElementById('ckNotas').innerHTML=EMO.map(function(e,i){return \"<button data-n='\"+(i+1)+\"' style='flex:1;background:#14121a;border:1px solid #322e3d;border-radius:11px;padding:8px 0 6px;cursor:pointer;color:#fff;font-family:inherit;'><div style='line-height:0;'>\"+icx(FACES[i],22)+\"</div><div style='font-size:8.5px;color:#a9a4b5;margin-top:3px;'>\"+e+\"</div></button>\";}).join('');" +
+      "document.getElementById('ckNotas').innerHTML=EMO.map(function(e,i){return \"<button data-n='\"+(i+1)+\"' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:8px 0 6px;cursor:pointer;color:#fff;font-family:inherit;'><div style='line-height:0;'>\"+icx(FACES[i],22)+\"</div><div style='font-size:8.5px;color:#a9a4b5;margin-top:3px;'>\"+e+\"</div></button>\";}).join('');" +
       "document.getElementById('ckNotas').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;ckNota=+b.dataset.n;" +
       "this.querySelectorAll('button').forEach(function(x){x.style.background=x===b?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.borderColor=x===b?'" + CORC + "':'#322e3d';});});" +
       "function semanaCK(){return semDe(new Date());}" +
@@ -6564,7 +6571,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // onboarding de 30 segundos: 3 respostas que personalizam o acompanhamento
       "(function(){var card=document.getElementById('onbCard');if(!card||L('ptonb',null))return;card.style.display='block';" +
       "var sel={obj:'',dias:''};" +
-      "function chip(box,val,rot){return \"<button data-onb='\"+box+\"' data-v='\"+val+\"' style='flex:1;min-width:0;background:#14121a;border:1px solid #322e3d;border-radius:11px;padding:9px 6px;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;'>\"+rot+\"</button>\";}" +
+      "function chip(box,val,rot){return \"<button data-onb='\"+box+\"' data-v='\"+val+\"' style='flex:1;min-width:0;background:#14121a;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:9px 6px;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;'>\"+rot+\"</button>\";}" +
       "document.getElementById('onbObj').innerHTML=[['emagrecer','Emagrecer'],['musculo','Ganhar músculo'],['saude','Saúde e disposição'],['performance','Performance']].map(function(o){return chip('obj',o[0],o[1]);}).join('');" +
       "document.getElementById('onbDias').innerHTML=[['2','2'],['3','3'],['4','4'],['5','5+']].map(function(o){return chip('dias',o[0],o[1]);}).join('');" +
       "card.addEventListener('click',function(e){var b=e.target.closest('[data-onb]');if(!b)return;sel[b.dataset.onb]=b.dataset.v;" +
@@ -6581,7 +6588,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
       "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
       "var pontos={};l.forEach(function(x){pontos[x.dia]=x.status==='confirmado'?'confirmado':(pontos[x.dia]||x.status);});" +
-      "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' style='background:#14121a;border:1px solid #322e3d;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' style='background:#14121a;border:1px solid #322e3d;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
+      "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' style='background:#14121a;border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' style='background:#14121a;border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:#6e6a78;margin-bottom:4px;'>\"+['S','T','Q','Q','S','S','D'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
       "for(var i=0;i<ini;i++)h+='<div></div>';" +
@@ -6597,7 +6604,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "box.innerHTML=\"<div style='font-size:13px;font-weight:800;margin-bottom:6px;'>\"+pd[2]+'/'+pd[1]+\"</div>\"+(l.length?l.map(function(x){" +
       "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
       "var rot=x.status==='confirmado'?'confirmado':x.status==='pedido'?'aguardando':'não deu';" +
-      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:#241b36;border:1px solid #7c3aed;color:#d6c9f5;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
+      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:#241b36;border:1px solid #7c3aed;color:#d6c9f5;border-radius:14px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
       "form.style.display=AGSEL>=isoHj()?'block':'none';}" +
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
@@ -6622,10 +6629,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var pz=Object.keys(L('ptpeso',{})).length;var dc=L('ptdc',{});var recs=Object.keys(dc).length;" +
       "var semMeta=0;var porSem={};Object.keys(f).forEach(function(k){var w=semDe(k);porSem[w]=(porSem[w]||0)+1;});" +
       "Object.keys(porSem).forEach(function(w){if(porSem[w]>=META)semMeta++;});" +
-      "function icq(p){return \"<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
+      "function icq(p){return \"<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
       "var BADGES=[[\"<path d='M5 21V4M5 4h12l-2.5 4L17 12H5'/>\",'Primeiro treino',total,1],[\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\",'3 dias seguidos',seq,3],[\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/><path d='m9 16 2 2 4-4'/>\",'7 dias seguidos',seq,7],[\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\",'Semana com meta',semMeta,1],[\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'25 treinos',total,25],[\"<path d='M6 4h12l3 5-9 11L3 9zM3 9h18'/>\",'100 treinos',total,100],[\"<polyline points='3 7 9 13 13 9 21 17'/><polyline points='15 17 21 17 21 11'/>\",'10 pesagens',pz,10],[\"<path d='M9 3h6v3H9z'/><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 11h6M9 15h4'/>\",'Carga anotada',recs,1],[\"<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>\",'10 semanas de meta',semMeta,10]];" +
       "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b){var tem=b[2]>=b[3];" +
-      "return \"<div style='text-align:center;padding:10px 4px;border-radius:11px;\"+(tem?'background:rgba(124,58,237,.22);border:1px solid #7c3aed;':'background:#14121a;border:1px solid #26222f;opacity:.55;')+\"'>\"+" +
+      "return \"<div style='text-align:center;padding:10px 4px;border-radius:16px;\"+(tem?'background:rgba(124,58,237,.22);border:1px solid #7c3aed;':'background:#14121a;border:1px solid #26222f;opacity:.55;')+\"'>\"+" +
       "\"<div style='line-height:0;padding:3px 0;color:\"+(tem?'#a78bfa':'#6e6a78')+\";'>\"+icq(b[0])+\"</div><div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
       "(tem?\"<div style='font-size:9.5px;color:#a78bfa;font-weight:800;margin-top:2px;'>CONQUISTADA</div>\":\"<div style='font-size:9.5px;color:#6e6a78;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
       "var bars='';var hj5=new Date();var seg5=new Date(hj5);seg5.setDate(seg5.getDate()-((seg5.getDay()+6)%7));var max5=1;var sems=[];" +
@@ -6743,7 +6750,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var tela=document.getElementById('wodTela');tela.style.borderColor='" + CORC + "';setTimeout(function(){tela.style.borderColor='#322e3d';},1500);" +
       "document.getElementById('wodGo').scrollIntoView({behavior:'smooth',block:'center'});if(navigator.vibrate)navigator.vibrate(60);});" +
       "function wodChips(){document.getElementById('wodTipos').innerHTML=WODT.map(function(t){var on=wod.tipo===t[0];" +
-      "return \"<button data-wodt='\"+t[0]+\"' style='flex:1;padding:8px 0;border-radius:11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;\"+(on?'background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;':'background:#14121a;border:1px solid #322e3d;color:#a9a4b5;')+\"'>\"+t[1]+\"</button>\";}).join('');}" +
+      "return \"<button data-wodt='\"+t[0]+\"' style='flex:1;padding:8px 0;border-radius:16px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;\"+(on?'background:linear-gradient(135deg," + COR + "," + CORC + ");border:none;color:#fff;':'background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;')+\"'>\"+t[1]+\"</button>\";}).join('');}" +
       "function wodCfg(){var el=document.getElementById('wodCfg');var inp=function(id,rot,val,w){return \"<label style='flex:1;min-width:0;font-size:11px;color:#a9a4b5;'>\"+rot+\"<input id='\"+id+\"' inputmode='numeric' value='\"+val+\"' style='width:100%;margin-top:3px;padding:8px 10px;'></label>\";};" +
       "if(wod.tipo==='fortime')el.innerHTML=inp('wodCap','Tempo limite (min, 0 = livre)',12);" +
       "else if(wod.tipo==='amrap')el.innerHTML=inp('wodMin','Minutos',10);" +
@@ -7242,7 +7249,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var HABS=[[ICO.gota,'Água em dia'],[ICO.maca,'Alimentação no plano'],[ICO.lua,'Dormi 7h+'],[ICO.ativ,'Cardio / passos']];" +
       "function pintaHab(){var h=L('pthab',{});var hoje=h[isoHj()]||{};" +
       "document.getElementById('habBox').innerHTML=HABS.map(function(x,i){var on=!!hoje[i];" +
-      "return \"<button data-hab='\"+i+\"' style='display:flex;align-items:center;gap:10px;background:\"+(on?'rgba(124,58,237,.22)':'#14121a')+\";border:1px solid \"+(on?'#7c3aed':'#322e3d')+\";border-radius:11px;padding:11px 14px;color:#fff;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;'><span style='line-height:0;flex:none;color:#a9a4b5;'>\"+icx(x[0],18)+\"</span>\"+x[1]+\"<span style='margin-left:auto;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none;\"+(on?'background:rgba(124,58,237,.9);color:#fff;':'border:1.5px solid #3a3346;color:transparent;')+\"'>✓</span></button>\";}).join('');" +
+      "return \"<button data-hab='\"+i+\"' style='display:flex;align-items:center;gap:10px;background:\"+(on?'rgba(124,58,237,.22)':'#14121a')+\";border:1px solid \"+(on?'#7c3aed':'#322e3d')+\";border-radius:16px;padding:11px 14px;color:#fff;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;'><span style='line-height:0;flex:none;color:#a9a4b5;'>\"+icx(x[0],18)+\"</span>\"+x[1]+\"<span style='margin-left:auto;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none;\"+(on?'background:rgba(124,58,237,.9);color:#fff;':'border:1.5px solid #3a3346;color:transparent;')+\"'>✓</span></button>\";}).join('');" +
       "var streak=0;var d=new Date();" +
       "for(var i=0;i<90;i++){var iso=isoLoc(d);var dia=h[iso]||{};var n=0;HABS.forEach(function(_,j){if(dia[j])n++;});" +
       "if(n>=3)streak++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}" +
@@ -7385,8 +7392,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "if(resp[chave]){el.innerHTML='Respondido — seu personal já recebeu.'+(QUESTAPP.repete?' O próximo libera dia <b>'+diaBr(isoAdd(per,7))+'</b>.':'');return;}" +
         "el.className='';" +
         "el.innerHTML=QUESTAPP.ps.map(function(p,i){var h=\"<div style='margin:10px 0 6px;font-weight:700;font-size:14px;'>\"+eh(p.texto)+\"</div>\";" +
-        "if(p.tipo==='emoji'){h+=\"<div style='display:flex;gap:6px;flex-wrap:wrap;'>\"+(p.ops||[]).map(function(o,j){return \"<button data-qa='\"+i+\"' data-j='\"+j+\"' style='flex:1;min-width:56px;background:#14121a;border:1px solid #322e3d;border-radius:9px;color:#d6d2df;font-size:19px;padding:8px 4px;cursor:pointer;font-family:inherit;'>\"+eh(o.e)+\"<div style='font-size:9.5px;margin-top:2px;'>\"+eh(o.r)+\"</div></button>\";}).join('')+'</div>';}" +
-        "else if(p.tipo==='linear'){h+=\"<div style='display:flex;gap:4px;flex-wrap:wrap;'>\";for(var n=0;n<=10;n++)h+=\"<button data-qa='\"+i+\"' data-v='\"+n+\"' style='flex:1;min-width:26px;background:#14121a;border:1px solid #322e3d;border-radius:7px;color:#d6d2df;font-size:13px;padding:7px 0;cursor:pointer;font-family:inherit;'>\"+n+\"</button>\";h+='</div>';}" +
+        "if(p.tipo==='emoji'){h+=\"<div style='display:flex;gap:6px;flex-wrap:wrap;'>\"+(p.ops||[]).map(function(o,j){return \"<button data-qa='\"+i+\"' data-j='\"+j+\"' style='flex:1;min-width:56px;background:#14121a;border:1px solid rgba(255,255,255,.06);border-radius:9px;color:#d6d2df;font-size:19px;padding:8px 4px;cursor:pointer;font-family:inherit;'>\"+eh(o.e)+\"<div style='font-size:9.5px;margin-top:2px;'>\"+eh(o.r)+\"</div></button>\";}).join('')+'</div>';}" +
+        "else if(p.tipo==='linear'){h+=\"<div style='display:flex;gap:4px;flex-wrap:wrap;'>\";for(var n=0;n<=10;n++)h+=\"<button data-qa='\"+i+\"' data-v='\"+n+\"' style='flex:1;min-width:26px;background:#14121a;border:1px solid rgba(255,255,255,.06);border-radius:7px;color:#d6d2df;font-size:13px;padding:7px 0;cursor:pointer;font-family:inherit;'>\"+n+\"</button>\";h+='</div>';}" +
         "else{h+=\"<input data-qat='\"+i+\"' placeholder='Escreva aqui…' style='width:100%;'>\";}" +
         "return h;}).join('')+\"<button class='btnx' id='qaEnvia' style='width:100%;margin-top:12px;'>Enviar respostas</button>\";}" +
         "el.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('button[data-qa]');if(!b)return;var i=+b.dataset.qa;var p=QUESTAPP.ps[i]||{};" +
@@ -7417,9 +7424,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
       "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
       "var pf=L('ptfeitos',{});var noMes=Object.keys(pf).filter(function(k){return k.slice(0,7)===mesK;}).length;" +
-      "function tile(rt,val,sub,cor){return \"<div style='background:#100e15;border:1px solid #26222e;border-radius:8px;padding:11px 13px;'>\"+" +
+      "function tile(rt,val,sub,cor){return \"<div style='background:none;padding:2px 0;'>\"+" +
       "\"<div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;'>\"+rt+\"</div>\"+" +
-      "\"<div style='font-size:21px;font-weight:900;margin-top:2px;'>\"+val+\"</div>\"+" +
+      "\"<div style='font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:4px;'>\"+val+\"</div>\"+" +
       "\"<div style='font-size:11px;color:\"+(cor||'#a9a4b5')+\";'>\"+sub+\"</div></div>\";}" +
       "var t1;if(pks.length){var pUlt=+pz[pks[pks.length-1]];var pd=Math.round((pUlt-(+pz[pks[0]]))*10)/10;" +
       "t1=tile(icx(ICO.peso,13)+' Peso',String(pUlt).replace('.',',')+' kg',(pd>0?'+':'')+String(pd).replace('.',',')+' kg desde o início',pd<0?'#4ade80':pd>0?'#f87171':'#a9a4b5');}" +
@@ -7432,7 +7439,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "pintaHero();pintaProgresso();pintaXP();" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
-      "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
+      "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
       "var MENU=[" +
       "['inicio',\"<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>\",'Início']," +
       "['treino',\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'Treino']," +
@@ -7465,7 +7472,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function btnNav(m){" +
       "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span>\"+" +
-      "\"<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;'>\"+m[2]+\"</span>\"+" +
+      "\"<span style='font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;'>\"+m[2]+\"</span>\"+" +
       "(m[0]==='chat'?\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid #0d0c10;'></span>\":'')+'</button>';}" +
       "var nav=document.getElementById('navApp');" +
       "nav.innerHTML=fixos.map(btnNav).join('')+" +
@@ -7522,7 +7529,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "window.__trocaSec=trocaSec;trocaSec('inicio');" +
       // modo claro × noturno: botão no rodapé da gaveta ☰ (escolha do aluno, guardada no aparelho)
       "var btTema=document.createElement('button');btTema.id='btnTemaApp';" +
-      "btTema.style.cssText='margin-top:14px;background:none;border:1px solid #322e3d;border-radius:11px;padding:11px;color:#a9a4b5;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;';" +
+      "btTema.style.cssText='margin-top:14px;background:none;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:11px;color:#a9a4b5;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;';" +
       "document.getElementById('menuApp').appendChild(btTema);" +
       "function aplicaTemaApp(){var claro=+L('pttema',0)===1;document.documentElement.classList.toggle('claro',claro);" +
       "btTema.textContent=claro?'\\ud83c\\udf19 Modo noturno':'\\u2600\\ufe0f Modo claro';" +
@@ -7531,7 +7538,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "aplicaTemaApp();window.__temaApp=aplicaTemaApp;" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
-      "</" + "script></body></html>";
+      "</" + "script>" +
+      "<script>/* TORQUE camada visual: animações (aditiva — pode remover sem afetar a lógica) */(function(){var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;function cascata(els){if(RM)return;els.forEach(function(el,i){el.style.setProperty('--ci',Math.min(i,8));el.classList.remove('sec-anim');void el.offsetWidth;el.classList.add('sec-anim');});}var pend=null;var mo=new MutationObserver(function(ms){var vis=[];ms.forEach(function(m){var el=m.target;if(m.attributeName==='data-sec-off'&&!el.hasAttribute('data-sec-off')&&vis.indexOf(el)<0)vis.push(el);});if(vis.length){clearTimeout(pend);pend=setTimeout(function(){cascata(vis);},0);}});document.querySelectorAll('[data-sec]').forEach(function(el){mo.observe(el,{attributes:true,attributeFilter:['data-sec-off']});});cascata([].slice.call(document.querySelectorAll('[data-sec]:not([data-sec-off])')).slice(0,10));var xp=document.getElementById('xpNum');if(xp&&!RM){var alvo=parseInt(xp.textContent,10)||0;if(alvo>0){var t0=performance.now();var up=function(t){var p=Math.min(1,(t-t0)/900);xp.textContent=Math.round(alvo*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(up);};requestAnimationFrame(up);}}})();</" + "script>" +
+      "</body></html>";
     // paleta completa: com cor própria, até os tons de roxo cravados (rgba, canvas do Stories,
     // lavandas de texto) viram a família da cor do studio
     if (corOk((st.config || {}).cor)) {

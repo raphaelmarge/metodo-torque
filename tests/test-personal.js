@@ -2681,6 +2681,9 @@ async function abaPt(p, a) {
     out.corpo = getComputedStyle(document.body).backgroundColor;
     out.txt = getComputedStyle(document.body).color;
     out.card = card ? getComputedStyle(card).backgroundColor : "";
+    // no visual minimalista o .cardx é transparente — quem vira branco são as superfícies internas
+    const sup = document.querySelector("[style*='background:#121016']");
+    out.superficie = sup ? getComputedStyle(sup).backgroundColor : "";
     out.salvo = JSON.parse(localStorage.getItem("pttema"));
     // devolve pro noturno (padrão) pra não afetar os testes seguintes
     document.getElementById("btnTemaApp").click();
@@ -2689,8 +2692,8 @@ async function abaPt(p, a) {
   });
   ok(!temaSnap.antesClaro && temaSnap.corpoAntes === "rgb(13, 12, 16)" && /Modo claro/.test(temaSnap.btn),
     "app nasce no modo noturno com o botão ☀️ Modo claro na gaveta");
-  ok(temaSnap.claro && temaSnap.corpo === "rgb(242, 241, 246)" && temaSnap.txt === "rgb(25, 22, 34)" && temaSnap.card === "rgb(255, 255, 255)" && temaSnap.salvo === 1,
-    "modo claro pinta página, cards e texto e guarda a escolha do aluno");
+  ok(temaSnap.claro && temaSnap.corpo === "rgb(244, 243, 247)" && temaSnap.txt === "rgb(25, 22, 34)" && temaSnap.superficie === "rgb(255, 255, 255)" && temaSnap.salvo === 1,
+    "modo claro pinta página, superfícies e texto e guarda a escolha do aluno");
   ok(temaSnap.voltou, "um toque devolve pro modo noturno");
   await pApp.close();
 
