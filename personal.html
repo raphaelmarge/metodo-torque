@@ -1355,6 +1355,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b.dataset.a === "chat") { renderBotP(); montaBuilderP(); renderChatPT(); }
   });
 
+  // ---------- índices: o painel precisa aguentar milhares de alunos ----------
+  // Sem isto, cada aluno varria a lista inteira de pagamentos e sessões — com 1000
+  // alunos e 12 mil pagamentos viravam milhões de comparações a cada render (2,3 s
+  // de tela travada). Aqui a varredura acontece UMA vez e vira consulta instantânea.
+  var idxCache = { st: null, idx: null };
+  function idxDe(st) {
+    if (idxCache.st === st && idxCache.idx) return idxCache.idx;
+    var pagsPorAluno = {}, pagouMes = {}, sessPorAluno = {}, sessFeitas = {};
+    (st.pagamentos || []).forEach(function (p) {
+      (pagsPorAluno[p.alunoId] = pagsPorAluno[p.alunoId] || []).push(p);
+      pagouMes[p.alunoId + "|" + String(p.data || "").slice(0, 7)] = true;
+    });
+    (st.sessoes || []).forEach(function (x) {
+      (sessPorAluno[x.alunoId] = sessPorAluno[x.alunoId] || []).push(x);
+      if (x.feita) (sessFeitas[x.alunoId] = sessFeitas[x.alunoId] || []).push(x);
+    });
+    var idx = {
+      pagouMes: function (alunoId, mes) { return !!pagouMes[alunoId + "|" + mes]; },
+      pagsDe: function (alunoId) { return pagsPorAluno[alunoId] || []; },
+      sessDe: function (alunoId) { return sessPorAluno[alunoId] || []; },
+      sessFeitasDe: function (alunoId) { return sessFeitas[alunoId] || []; },
+    };
+    idxCache = { st: st, idx: idx };
+    return idx;
+  }
+  window.__idxPT = idxDe; // testes
+
   // ---------- kpis ----------
   function renderKpis(st) {
     var receitaMes = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mesAtual; })
@@ -1373,10 +1400,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   // ---------- alunos ----------
   var alFiltro = "todos"; // topo da lista: todos × pagos no mês × sem pagamento
+  var alMostra = 60;      // quantos cards a lista desenha por vez (o resto entra no "Ver mais")
   function renderAlunos(st) {
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     var pagouNoMes = function (a) {
-      return st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      return idxDe(st).pagouMes(a.id, mesAtual);
     };
     var nPagos = ativos.filter(pagouNoMes).length;
     // os contadores ficam no próprio botão — dá pra ver o tamanho do problema sem filtrar
@@ -1389,6 +1417,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     if (alFiltro === "pagos") ativos = ativos.filter(pagouNoMes);
     else if (alFiltro === "devendo") ativos = ativos.filter(function (a) { return !pagouNoMes(a); });
+    // com muitos alunos, a lista sai em partes: 1000 cards de uma vez travam a tela
+    var totalFiltrado = ativos.length;
+    if (totalFiltrado > alMostra) ativos = ativos.slice(0, alMostra);
     $("listaAlunos").innerHTML = ativos.length ? ativos.map(function (a) {
       var pagoMes = pagouNoMes(a);
       var tA = (st.treinosV2 || {})[a.id];
@@ -1410,7 +1441,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn mini" data-app="' + a.id + '">App do aluno</button>' +
         (a.acessoEm ? "" : '<button class="btn mini" data-acesso="' + a.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
         '<button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div></div>';
-    }).join("") : '<div class="vazio">' + (alFiltro === "pagos" ? "Ninguém pagou este mês ainda — o filtro <b>Sem pagamento</b> mostra quem falta."
+    }).join("") + (totalFiltrado > ativos.length
+      ? '<div class="linha-flex" style="justify-content:center;margin-top:10px;">' +
+        '<button class="btn sec mini" id="alMais">Ver mais ' + Math.min(60, totalFiltrado - ativos.length) +
+        " (mostrando " + ativos.length + " de " + totalFiltrado + ")</button></div>"
+      : "") : '<div class="vazio">' + (alFiltro === "pagos" ? "Ninguém pagou este mês ainda — o filtro <b>Sem pagamento</b> mostra quem falta."
       : alFiltro === "devendo" ? "Todo mundo em dia este mês! 🎉"
       : "Cadastre seu primeiro aluno acima.") + "</div>";
   }
@@ -1418,7 +1453,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var b = e.target.closest("button[data-alf]");
     if (!b) return;
     alFiltro = b.getAttribute("data-alf");
+    alMostra = 60; // filtro novo, lista começa do topo
     renderAlunos(load());
+  });
+  $("listaAlunos").addEventListener("click", function (e) {
+    if (e.target && e.target.id === "alMais") { alMostra += 60; renderAlunos(load()); }
   });
   window.__alFiltro = function (f) { alFiltro = f || "todos"; renderAlunos(load()); }; // testes
   // assistente de novo aluno: cadastro completo → contrato e venda na sequência
@@ -1620,7 +1659,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // financeiro: contrato + pagamentos
     var ct = contratoDe(st, id);
     var pl = ct && planoDe(st, ct.planoId);
-    var pgs = st.pagamentos.filter(function (p) { return p.alunoId === id; })
+    var pgs = idxDe(st).pagsDe(id).slice()
       .sort(function (x, y) { return x.data < y.data ? 1 : -1; });
     var ano = S.todayISO().slice(0, 4);
     var totalAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; })
@@ -1662,7 +1701,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // frequência: sessões feitas por mês
     var porMes = {};
     st.sessoes.forEach(function (s) { if (s.alunoId === id && s.feita) porMes[(s.data || "").slice(0, 7)] = (porMes[(s.data || "").slice(0, 7)] || 0) + 1; });
-    var totalSes = st.sessoes.filter(function (s) { return s.alunoId === id && s.feita; }).length;
+    var totalSes = idxDe(st).sessFeitasDe(id).length;
     $("pfFreq").innerHTML = barrasMes(porMes, "#a78bfa") +
       "<div class='muted' style='font-size:12.5px;margin-top:4px;'>" + totalSes + " sessão(ões) feitas no total</div>";
     // relatório de avaliações físicas: tabela + gráfico de evolução de CADA medida
@@ -2517,7 +2556,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return a.ativo !== false && (a.nome || "").toLowerCase().indexOf(termo) >= 0;
     }).slice(0, 8);
     box.innerHTML = achou.length ? achou.map(function (a) {
-      var pagoMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      var pagoMes = idxDe(st).pagouMes(a.id, mesAtual);
       return "<div data-busca-id='" + a.id + "' style='padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--linha);font-size:13.5px;'>" +
         "<b>" + esc(a.nome) + "</b> <span style='font-size:11px;color:" + (pagoMes ? "#4ade80" : "#fbbf24") + ";'>" +
         (pagoMes ? "· pago" : "· em aberto") + "</span></div>";
@@ -3170,7 +3209,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "Feliz aniversário! Que tal comemorar com um treino especial? Conta comigo sempre.");
       }
       // marcos de consistência: 25, 50 e 100 treinos concluídos
-      var nFeitasM = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; }).length;
+      var nFeitasM = idxDe(st).sessFeitasDe(a.id).length;
       [25, 50, 100].forEach(function (mc) {
         if (nFeitasM === mc) {
           manda("marco" + mc + "|" + a.id, a.appTokenP, mc + " treinos concluídos!",
@@ -3178,9 +3217,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
       });
       // resgate de quem sumiu: 5+ dias sem treinar e nada marcado (no máx. 1 aviso por semana)
-      var ultFR = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; })
+      var ultFR = idxDe(st).sessFeitasDe(a.id)
         .map(function (x) { return x.data; }).sort().pop() || "";
-      var temFuturaR = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data >= hoje && !x.feita && !x.faltou; });
+      var temFuturaR = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
       if (ultFR && !temFuturaR) {
         var diasR = Math.floor((new Date(hoje) - new Date(ultFR)) / 864e5);
         if (diasR >= 5) {
@@ -3193,7 +3232,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if ((st.config || {}).reguaOff || a.assinaturaRec) return;
       var ct = contratoDe(st, a.id);
       if (!ct) return;
-      var pagou = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mes; });
+      var pagou = idxDe(st).pagouMes(a.id, mes);
       if (pagou) return;
       var pl = planoDe(st, ct.planoId);
       var vTxt = pl && +pl.valor ? " de " + S.fmtBRL(+pl.valor) : "";
@@ -3714,7 +3753,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     for (;;) {
       var chave = y + "-" + ("0" + m).slice(-2);
       if (chave > mesHoje || guarda++ > 36) break;
-      var pagou = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === chave; });
+      var pagou = idxDe(st).pagouMes(a.id, chave);
       var vencido = chave < mesHoje || (ct ? +hoje.slice(8, 10) > +ct.diaVenc : false);
       if (!pagou && vencido) meses++;
       m++; if (m > 12) { m = 1; y++; }
@@ -3728,9 +3767,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return exc > 0 ? { n: exc, total: 0, pacote: true } : null;
     }
     if (a.modo !== "sessao" || !+a.valor) return null;
-    var ultPg = st.pagamentos.filter(function (p) { return p.alunoId === a.id; })
+    var ultPg = idxDe(st).pagsDe(a.id)
       .map(function (p) { return p.data || ""; }).sort().pop() || "";
-    var n = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita && (x.data || "") > ultPg; }).length;
+    var n = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "") > ultPg; }).length;
     return n ? { n: n, total: n * +a.valor, pacote: false } : null;
   }
   window.__financeiroPT = { divida: dividaDe, sessoes: sessoesACobrar }; // testes
@@ -3753,7 +3792,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var diaHoje = +S.todayISO().slice(8, 10);
     var pend = st.alunos.filter(function (a) {
       if (a.ativo === false) return false;
-      return !st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      return !idxDe(st).pagouMes(a.id, mesAtual);
     });
     var linhasPend = pend.map(function (a) {
       var ct = contratoDe(st, a.id);
@@ -3817,7 +3856,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       mesesRef.forEach(function (mes) {
         if (iniMes && mes < iniMes) return; // aluno ainda não era cliente
         avaliados++;
-        var dias = st.pagamentos.filter(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mes; })
+        var dias = idxDe(st).pagsDe(a.id).filter(function (p) { return (p.data || "").slice(0, 7) === mes; })
           .map(function (p) { return +String(p.data).slice(8, 10); });
         if (!dias.length) { faltas++; return; }
         atrasos.push(Math.max(0, Math.min.apply(null, dias) - ct.diaVenc - atrasoTol(st)));
@@ -3837,7 +3876,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (a.ativo === false || a.modo === "sessao") return;
       var ct2 = contratoDe(st, a.id);
       if (!ct2) return;
-      if (st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; })) return;
+      if (idxDe(st).pagouMes(a.id, mesAtual)) return;
       var pl2 = planoDe(st, ct2.planoId);
       faltamMes += pl2 ? +pl2.valor : (+a.valor || 0);
     });
@@ -5727,7 +5766,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (ativos.length) {
       var pct = previstoMes ? Math.min(100, Math.round(100 * recebidoMes / previstoMes)) : 0;
       var faltam = ativos.filter(function (a) {
-        return !st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+        return !idxDe(st).pagouMes(a.id, mesAtual);
       });
       $("relPrevisto").innerHTML =
         '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px;">' +
@@ -5838,7 +5877,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
     // ---- LTV: receita por aluno ----
     var ltv = st.alunos.map(function (a) {
-      var pags = st.pagamentos.filter(function (p) { return p.alunoId === a.id; });
+      var pags = idxDe(st).pagsDe(a.id);
       var total = pags.reduce(function (t, p) { return t + +p.valor; }, 0);
       var mesesCasa = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2592000000)) : 1;
       return { nome: a.nome, total: total, n: pags.length, mesesCasa: mesesCasa, ativo: a.ativo !== false };
@@ -5860,7 +5899,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     ativos.forEach(function (a) {
       var ct = contratoDe(st, a.id);
-      var pagouMes = st.pagamentos.some(function (p) { return p.alunoId === a.id && (p.data || "").slice(0, 7) === mesAtual; });
+      var pagouMes = idxDe(st).pagouMes(a.id, mesAtual);
       if (ct && !pagouMes && diaHoje > ct.diaVenc + atrasoTol(st)) {
         var dvAl = dividaDe(st, a);
         var cobrarAl = dvAl.total || dvAl.valor;
@@ -5868,7 +5907,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         alertas.push({ tipo: "erro", txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + ct.diaVenc + ").",
           ac: ((st.config || {}).pixChave && cobrarAl ? '<button class="btn mini" data-alpix="' + a.id + '" data-v="' + cobrarAl + '">Pix</button>' : "") + zapAl(a, msgC) });
       }
-      var ultimaFeita = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; })
+      var ultimaFeita = idxDe(st).sessFeitasDe(a.id)
         .map(function (x) { return x.data; }).sort().pop() || a.desde || "";
       var corte14 = new Date(); corte14.setDate(corte14.getDate() - 14);
       if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", txt: "<b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate.",
@@ -5962,12 +6001,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // ---- Radar de retenção: quem precisa de atenção antes de sumir de vez ----
     var radar = [];
     ativos.forEach(function (a) {
-      var ultF = st.sessoes.filter(function (x) { return x.alunoId === a.id && x.feita; })
+      var ultF = idxDe(st).sessFeitasDe(a.id)
         .map(function (x) { return x.data; }).sort().pop();
       if (!ultF) return;
       var diasP = Math.floor((new Date(hoje) - new Date(ultF)) / 864e5);
       if (diasP < 5) return;
-      var temFutura = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data >= hoje && !x.feita && !x.faltou; });
+      var temFutura = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
       if (temFutura) return;
       var msgR = "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪";
       radar.push('<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
@@ -6175,7 +6214,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var hoje = S.todayISO();
     var linhas = [["Aluno", "Situação", "Total pago (R$)", "Pagamentos", "Meses de casa", "Cliente desde"]];
     st.alunos.forEach(function (a) {
-      var pags = st.pagamentos.filter(function (p) { return p.alunoId === a.id; });
+      var pags = idxDe(st).pagsDe(a.id);
       var total = pags.reduce(function (t, p) { return t + +p.valor; }, 0);
       var mesesCasa = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2592000000)) : 1;
       linhas.push([a.nome, a.ativo !== false ? "ativo" : "encerrado", String(total).replace(".", ","), pags.length, mesesCasa, a.desde || ""]);
