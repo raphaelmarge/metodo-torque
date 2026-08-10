@@ -6721,5 +6721,305 @@ self.MT_EXERCICIOS = [
   "g": "Mobilidade e alongamento",
   "eq": "Colchonete",
   "d": "Com um joelho no chão, aperte o glúteo da perna de trás e leve o quadril à frente sem arquear a lombar; suba o braço do mesmo lado pra alongar mais."
+ },
+ {
+  "n": "Braçada de crawl com prancha entre as pernas",
+  "g": "Natação e aquático",
+  "eq": "Prancha de natação",
+  "d": "Prenda a prancha entre as coxas e nade só com os braços; cotovelo alto na fase aérea e entrada da mão na linha do ombro."
+ },
+ {
+  "n": "Pernada de crawl segurando a borda",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Segure a borda com os braços estendidos e bata as pernas a partir do quadril, joelhos quase esticados e tornozelos soltos."
+ },
+ {
+  "n": "Nado costas com pull buoy",
+  "g": "Natação e aquático",
+  "eq": "Pull buoy",
+  "d": "Pull buoy entre as coxas, quadril alto na superfície; braçadas alternadas com mindinho entrando primeiro na água."
+ },
+ {
+  "n": "Batida de perna lateral na borda",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "De lado segurando a borda, eleve a perna de cima até 45° e desça devagar; a água dá a resistência, controle o retorno."
+ },
+ {
+  "n": "Jumping jack aquático",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Na água pelo peito, abra e feche pernas e braços ao mesmo tempo; empurre a água com força nas duas direções."
+ },
+ {
+  "n": "Deslocamento em zigue-zague na piscina",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Cruze a piscina em diagonais curtas mudando de direção a cada 3 passos; tronco ereto e braços empurrando a água."
+ },
+ {
+  "n": "Elevação de joelho alternada na água",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Com a água pelo peito, suba um joelho de cada vez até o quadril em ritmo forte; o abdômen segura o tronco em pé."
+ },
+ {
+  "n": "Chute traseiro na piscina",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Empurre o calcanhar pra trás contra a água contraindo o glúteo; tronco levemente inclinado sem arquear a lombar."
+ },
+ {
+  "n": "Tesoura de pernas com apoio na borda",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "De costas pra borda com os cotovelos apoiados, abra e cruze as pernas estendidas; movimento contínuo contra a água."
+ },
+ {
+  "n": "Rotação de tronco na água com bastão",
+  "g": "Natação e aquático",
+  "eq": "Bastão",
+  "d": "Com a água pelo peito e o bastão na superfície, gire o tronco de um lado ao outro; quadril acompanha e pés giram juntos."
+ },
+ {
+  "n": "Flexão de braço na borda da piscina",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Mãos na borda, desça o peito e empurre até estender os cotovelos; o empuxo da água alivia parte do peso."
+ },
+ {
+  "n": "Polichinelo cruzado aquático",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Alterne abrir e cruzar pernas e braços contra a água; mantenha o ritmo e o abdômen firme o tempo todo."
+ },
+ {
+  "n": "Afundo estático na piscina com halteres aquáticos",
+  "g": "Natação e aquático",
+  "eq": "Halteres aquáticos",
+  "d": "Em posição de afundo, desça e suba empurrando os halteres pra baixo; a água freia o movimento nos dois sentidos."
+ },
+ {
+  "n": "Abdução de ombro aquática com halteres flutuantes",
+  "g": "Natação e aquático",
+  "eq": "Halteres aquáticos",
+  "d": "Com a água pelo pescoço, abra os braços até a linha dos ombros e force os halteres de volta contra a flutuação."
+ },
+ {
+  "n": "Sprint aquático de 15 segundos",
+  "g": "Natação e aquático",
+  "eq": "Cinto flutuador",
+  "d": "Na parte funda com cinto, corra no lugar o mais rápido possível por 15 segundos; joelhos altos e braçada vigorosa."
+ },
+ {
+  "n": "Prancha frontal com macarrão aquático",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Apoie as mãos no macarrão flutuante e estique o corpo em prancha; abdômen e glúteos travados contra a instabilidade."
+ },
+ {
+  "n": "Salto grupado na água",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Com a água pela cintura, salte puxando os dois joelhos ao peito e caia amortecendo; a água protege as articulações."
+ },
+ {
+  "n": "Braçada de peito só com pernas de pé",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Em pé na parte rasa, treine o movimento circular da pernada de peito uma perna por vez; joelho aponta pra fora."
+ },
+ {
+  "n": "Puxada alta com elástico sentado no chão",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Sentado com pernas estendidas, elástico nos pés; puxe até o abdômen levando os cotovelos pra trás sem curvar a lombar."
+ },
+ {
+  "n": "Crucifixo invertido com mini band",
+  "g": "Ombros",
+  "eq": "Mini band",
+  "d": "Segure a mini band à frente com os braços estendidos e abra afastando as mãos; aperte as escápulas no final."
+ },
+ {
+  "n": "Abdução de quadril em pé com mini band no tornozelo",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Band nos tornozelos, afaste uma perna pro lado sem inclinar o tronco; volte devagar resistindo à banda."
+ },
+ {
+  "n": "Rosca martelo com elástico",
+  "g": "Bíceps",
+  "eq": "Elástico",
+  "d": "Pise no elástico com pegada neutra e suba as mãos até os ombros; cotovelos colados no tronco o tempo todo."
+ },
+ {
+  "n": "Tríceps coice com elástico",
+  "g": "Tríceps",
+  "eq": "Elástico",
+  "d": "Tronco inclinado, cotovelo fixo na linha das costas; estenda o braço pra trás até travar e volte com controle."
+ },
+ {
+  "n": "Ponte de glúteo com mini band e passo lateral",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "No topo da ponte, dê um passinho lateral pra cada lado mantendo o quadril alto; joelhos empurram a banda pra fora."
+ },
+ {
+  "n": "Agachamento com pausa e mini band",
+  "g": "Quadríceps",
+  "eq": "Mini band",
+  "d": "Band acima dos joelhos, desça, segure 2 segundos empurrando a banda pra fora e suba forte pelos calcanhares."
+ },
+ {
+  "n": "Puxada de face com elástico ajoelhado",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Ajoelhado, elástico preso no alto; puxe em direção à testa abrindo os cotovelos e rodando os ombros pra fora."
+ },
+ {
+  "n": "Crucifixo unilateral no banco reto",
+  "g": "Peito",
+  "eq": "Halteres",
+  "d": "Um halter só: abra o braço em arco com o cotovelo semiflexionado enquanto o core impede o tronco de girar; troque o lado."
+ },
+ {
+  "n": "Desenvolvimento unilateral em meia-ajoelhada",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Um joelho no chão, empurre o halter do lado do joelho apoiado acima da cabeça; quadril e abdômen travados, sem inclinar."
+ },
+ {
+  "n": "Remada unilateral com joelho no banco e pegada aberta",
+  "g": "Costas",
+  "eq": "Halteres",
+  "d": "Cotovelo abre a 45° puxando o halter à linha do peito; escápula desce e retrai antes de o braço puxar."
+ },
+ {
+  "n": "Stiff unilateral com dois halteres",
+  "g": "Posterior e glúteo",
+  "eq": "Halteres",
+  "d": "Um halter em cada mão, incline sobre uma perna só com a lombar neutra até alongar o posterior; suba apertando o glúteo."
+ },
+ {
+  "n": "Rosca alternada sentado com rotação",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Comece com pegada neutra e gire a palma pra cima durante a subida; desça devagar resistindo o peso."
+ },
+ {
+  "n": "Elevação lateral deitado de lado com halter",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Deitado de lado num banco inclinado, suba o halter do quadril até a vertical; a tensão pega o deltoide já no início do arco."
+ },
+ {
+  "n": "Tríceps testa unilateral com halter",
+  "g": "Tríceps",
+  "eq": "Halteres",
+  "d": "Deitado, desça um halter em direção à testa dobrando só o cotovelo; o braço fica na vertical e o ombro parado."
+ },
+ {
+  "n": "Panturrilha sentado unilateral com halter no joelho",
+  "g": "Quadríceps",
+  "eq": "Halteres",
+  "d": "Sentado com o halter apoiado sobre um joelho, suba o calcanhar o máximo que der e desça em 3 segundos."
+ },
+ {
+  "n": "Flexão com mãos em suporte de livros",
+  "g": "Peito",
+  "eq": "Sem equipamento",
+  "d": "Duas pilhas firmes de livros como apoio; desça o peito abaixo da linha das mãos pra ganhar amplitude extra."
+ },
+ {
+  "n": "Remada invertida embaixo da mesa",
+  "g": "Costas",
+  "eq": "Sem equipamento",
+  "d": "Deite embaixo de uma mesa firme, segure a borda e puxe o peito até ela; corpo reto do calcanhar à cabeça."
+ },
+ {
+  "n": "Agachamento búlgaro com pé no sofá",
+  "g": "Quadríceps",
+  "eq": "Sem equipamento",
+  "d": "Peito do pé de trás no sofá, desça o joelho de trás em direção ao chão; o joelho da frente segue a linha do pé."
+ },
+ {
+  "n": "Ponte de glúteo unilateral com pé no sofá",
+  "g": "Posterior e glúteo",
+  "eq": "Sem equipamento",
+  "d": "Calcanhar apoiado no sofá, suba o quadril com uma perna só; segure 1 segundo no topo sem abrir o quadril."
+ },
+ {
+  "n": "Pike de ombro com pés na cadeira",
+  "g": "Ombros",
+  "eq": "Cadeira",
+  "d": "Pés na cadeira e quadril bem alto em V invertido; desça o topo da cabeça em direção ao chão e empurre de volta."
+ },
+ {
+  "n": "Abdominal canivete alternado no colchonete",
+  "g": "Core",
+  "eq": "Colchonete",
+  "d": "Deitado, suba o tronco e uma perna estendida ao mesmo tempo tocando o pé oposto; desça sem largar o abdômen."
+ },
+ {
+  "n": "Corrida parada com joelho alto na sala",
+  "g": "Cardio",
+  "eq": "Sem equipamento",
+  "d": "Suba os joelhos à altura do quadril em ritmo forte por 30-60 segundos; caia no meio do pé, não no calcanhar."
+ },
+ {
+  "n": "Cadeirinha na parede com almofada entre os joelhos",
+  "g": "Quadríceps",
+  "eq": "Parede",
+  "d": "Coxas paralelas ao chão apoiado na parede apertando uma almofada entre os joelhos; aperte forte sem prender a respiração."
+ },
+ {
+  "n": "Sentar e levantar com apoio dos braços",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Da cadeira, incline o tronco à frente e levante usando as mãos no apoio só o necessário; desça devagar sem despencar."
+ },
+ {
+  "n": "Marcha estacionária com apoio na cadeira",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Segure o encosto e marche no lugar subindo bem os joelhos; olhe pra frente e mantenha o tronco alto."
+ },
+ {
+  "n": "Elevação de panturrilha com apoio na pia",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Mãos na pia, suba na ponta dos pés e desça em 3 segundos; fortalece a panturrilha e o equilíbrio pro dia a dia."
+ },
+ {
+  "n": "Alcance de braço sentado com rotação suave",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Sentado, alcance a mão o mais longe possível na diagonal oposta girando o tronco devagar; volte e troque o lado."
+ },
+ {
+  "n": "Equilíbrio em tandem com apoio leve",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Um pé exatamente à frente do outro como numa linha; segure 20-30 segundos tocando o apoio só se precisar."
+ },
+ {
+  "n": "Flexão de joelho em pé com apoio",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Segurando um apoio, dobre o joelho levando o calcanhar em direção ao glúteo; desça controlado, sem balançar o tronco."
+ },
+ {
+  "n": "Abertura de braços com garrafinhas de água",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Uma garrafinha em cada mão, abra os braços até a linha dos ombros e desça devagar; respire de forma contínua."
+ },
+ {
+  "n": "Caminhada lateral com passos curtos e apoio",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Ao longo de uma bancada, dê passos laterais curtos pra um lado e volte; joelhos levemente dobrados o tempo todo."
  }
 ];
