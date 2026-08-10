@@ -2153,6 +2153,31 @@ async function abaPt(p, a) {
     "on-line o mapa usa ruas de verdade (OpenStreetMap com crédito); sem internet cai no traçado offline");
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
+  // modo tela cheia estilo NRC: mapa ocupa a tela ao iniciar; ✕ volta sem parar a corrida
+  const full = await pCr.evaluate(async () => {
+    const out = {};
+    localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
+    document.getElementById("crZera").click();
+    document.getElementById("crMapa").click();
+    out.abriuPeloMapa = document.getElementById("crFull").style.display !== "none";
+    out.metaPill = document.getElementById("crMetaBtnF").style.display !== "none";
+    document.getElementById("crFullFecha").click();
+    out.fechou = document.getElementById("crFull").style.display === "none";
+    document.getElementById("crGo").click();
+    await new Promise((r) => setTimeout(r, 500));
+    out.abriuAoIniciar = document.getElementById("crFull").style.display !== "none";
+    out.tempoF = document.getElementById("crTempoF").textContent;
+    out.goF = document.getElementById("crGoF").textContent;
+    out.terminei = document.getElementById("crFimF").style.display !== "none";
+    document.getElementById("crFullFecha").click();
+    out.rodandoAposFechar = window.__cr.run === true;
+    document.getElementById("crZera").click();
+    return out;
+  });
+  ok(full.abriuPeloMapa && full.metaPill && full.fechou, "tocar no mapa abre o modo tela cheia (com a pill de meta) e o ✕ fecha");
+  ok(full.abriuAoIniciar && /0:0/.test(full.tempoF) && full.goF === "Pausar" && full.terminei,
+    "iniciar a corrida ocupa a tela: mapa inteiro, tempo flutuando e botão Pausar gigante");
+  ok(full.rodandoAposFechar, "fechar a tela cheia não para a corrida");
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();

@@ -6265,7 +6265,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='crFim' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
       "<button class='btnx' id='crZera' style='flex:1;background:#14121a;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;'>Zerar</button>" +
       "<input id='crKm' inputmode='decimal' placeholder='km na mão' style='flex:1;min-width:0;text-align:center;'></div>" +
-      "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div></div>" : "") +
+      "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div>" +
+      // modo tela cheia estilo NRC: o mapa ocupa a tela toda com os controles flutuando
+      "<div id='crFull' style='display:none;position:fixed;inset:0;z-index:70;background:#0d0c10;'>" +
+      "<canvas id='crMapaFull' width='480' height='900' style='position:absolute;inset:0;width:100%;height:100%;'></canvas>" +
+      "<div id='crContagemF' style='display:none;position:absolute;inset:0;z-index:3;background:rgba(0,0,0,.62);align-items:center;justify-content:center;font-size:130px;font-weight:900;color:#fff;'>3</div>" +
+      "<button id='crFullFecha' aria-label='Fechar tela cheia' style='position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:4;width:42px;height:42px;border-radius:50%;background:rgba(13,12,16,.74);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:17px;cursor:pointer;'>✕</button>" +
+      "<div style='position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;right:66px;z-index:2;background:rgba(13,12,16,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:16px;padding:10px 14px;'>" +
+      "<div style='display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;'><b id='crTempoF' style='font-size:34px;font-variant-numeric:tabular-nums;color:#fff;'>0:00</b>" +
+      "<span id='crFaseF' style='font-size:11px;font-weight:800;letter-spacing:.1em;color:#d6d2df;text-transform:uppercase;'>Pronto?</span></div>" +
+      "<div id='crInfoF' style='font-size:12px;color:#d6d2df;'></div></div>" +
+      "<div style='position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;'>" +
+      "<div style='display:flex;gap:10px;'>" +
+      "<span style='background:rgba(13,12,16,.78);border-radius:12px;padding:7px 14px;font-size:12px;color:#fff;'>PACE <b id='crPaceF' style='font-variant-numeric:tabular-nums;'>--:--</b></span>" +
+      "<span style='background:rgba(13,12,16,.78);border-radius:12px;padding:7px 14px;font-size:12px;color:#fff;'>KM <b id='crDistF' style='font-variant-numeric:tabular-nums;'>0,00</b></span></div>" +
+      "<div style='display:flex;align-items:center;gap:22px;'>" +
+      "<button id='crCfgBtnF' aria-label='Configurações da corrida' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.78);border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>⚙️</button>" +
+      "<button class='btnx' id='crGoF' style='width:132px;height:132px;border-radius:50%;font-size:20px;padding:0;flex:none;'>Iniciar</button>" +
+      "<button id='crGpsF' aria-label='GPS' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.78);border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:10.5px;font-weight:800;font-family:inherit;line-height:1.2;'>GPS</button></div>" +
+      "<button id='crMetaBtnF' style='background:rgba(13,12,16,.82);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:11px 24px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Defina uma meta</button>" +
+      "<button id='crFimF' style='display:none;background:rgba(13,12,16,.82);border:1px solid #4ade80;border-radius:99px;padding:11px 24px;color:#4ade80;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Terminei!</button>" +
+      "</div></div></div>" : "") +
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
@@ -6785,7 +6805,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "t={img:new Image(),ok:false};crTiles[k]=t;t.img.crossOrigin='anonymous';" +
       "t.img.onload=function(){t.ok=true;try{desenhaRota();}catch(e){}};" +
       "t.img.src='https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png';return t;}" +
-      "function desenhaRota(){var cv=crEl('crMapa');if(!cv)return;var g=cv.getContext('2d');var W=cv.width,H=cv.height;g.clearRect(0,0,W,H);" +
+      "function crFullAberto(){var f=crEl('crFull');return !!f&&f.style.display!=='none';}" +
+      "function crFullDim(){var cv=crEl('crMapaFull');if(!cv)return;var r=cv.getBoundingClientRect();" +
+      "if(r.width>0&&Math.abs(cv.width-r.width)>4){cv.width=Math.round(r.width);cv.height=Math.round(r.height);}}" +
+      "function desenhaRota(){desenhaCv(crEl('crMapa'));if(crFullAberto()){crFullDim();desenhaCv(crEl('crMapaFull'));}}" +
+      "function desenhaCv(cv){if(!cv)return;var g=cv.getContext('2d');var W=cv.width,H=cv.height;g.clearRect(0,0,W,H);" +
       "var CLR=document.documentElement.classList.contains('claro');" +
       "var centro=cr.rota.length?cr.rota[cr.rota.length-1]:cr.lastPos;" +
       "if(navigator.onLine&&centro){" +
@@ -6808,7 +6832,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "cr.rota.forEach(function(pp,i){var q=pj(pp);if(i)g.lineTo(q.x,q.y);else g.moveTo(q.x,q.y);});g.stroke();" +
       "var i0=pj(cr.rota[0]);g.fillStyle='#4ade80';g.beginPath();g.arc(i0.x,i0.y,7,0,7);g.fill();}" +
       // bolinha azul da posição atual, estilo mapa de celular
-      "var pAt=pj(centro);g.fillStyle='#fff';g.beginPath();g.arc(pAt.x,pAt.y,10,0,7);g.fill();" +
+      "var posAt=cr.rota.length?cr.rota[cr.rota.length-1]:centro;" +
+      "var pAt=pj(posAt);g.fillStyle='#fff';g.beginPath();g.arc(pAt.x,pAt.y,10,0,7);g.fill();" +
       "g.fillStyle='#2563eb';g.beginPath();g.arc(pAt.x,pAt.y,6.5,0,7);g.fill();" +
       // atribuição obrigatória do OpenStreetMap
       "g.fillStyle='rgba(255,255,255,.85)';g.fillRect(W-150,H-22,150,22);" +
@@ -6865,7 +6890,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "else info.textContent=cr.gpsOn?'GPS ligado \\u2014 distância e pace sozinhos':'O GPS liga sozinho \\u2014 ou digite os km na mão';" +
       "if(Math.floor(km)>cr.ultKm&&km>0){cr.ultKm=Math.floor(km);if(cr.run){var fb2=crCfg().fb;var med3=km>0.015?(el2/60)/km:null;" +
       "var falou=fb2==='voz'&&crFala(cr.ultKm+(cr.ultKm===1?' quil\\u00f4metro':' quil\\u00f4metros')+(med3?'. Pace m\\u00e9dio '+paceFmt(med3).replace(':',' e ')+'.':'.'));" +
-      "if(!falou&&fb2!=='off')bip(1000,220);if(navigator.vibrate)navigator.vibrate([120,60,120]);}}}" +
+      "if(!falou&&fb2!=='off')bip(1000,220);if(navigator.vibrate)navigator.vibrate([120,60,120]);}}" +
+      "try{espelhaCr();}catch(e){}}" +
       "function pintaCrHist(){var el=crEl('crHist');if(!el)return;var lst=L('ptcardio',[]);" +
       "el.innerHTML=lst.length?'<b>Seus \\u00faltimos treinos:</b><br>'+lst.slice(-5).reverse().map(function(x){" +
       "return String(x.d).slice(8,10)+'/'+String(x.d).slice(5,7)+' \\u2014 '+String(x.n).replace(/[<>&]/g,'')+': '+" +
@@ -6914,14 +6940,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function crLarga(){cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
       "crEl('crFase').style.color='#a9a4b5';cr.iv=setInterval(pintaCr,200);pintaCr();}" +
       "crEl('crGo').addEventListener('click',function(){" +
-      "if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';this.textContent='Iniciar';return;}" +
+      "if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fC=crEl('crContagemF');if(fC)fC.style.display='none';this.textContent='Iniciar';return;}" +
       "if(cr.run){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.autoP=false;cr.acum=(Date.now()-cr.t0)/1000;this.textContent='Continuar';soltaTela();pintaCr();return;}" +
-      "crAutoGps();var cd=cr.acum>0?0:crCfg().cd;" +
+      "crAutoGps();abreCrFull();var cd=cr.acum>0?0:crCfg().cd;" +
       "if(!cd){crLarga();return;}" +
       // contagem regressiva estilo app de corrida (configurável: 3, 5 ou 10 segundos)
-      "var elC=crEl('crContagem');elC.style.display='flex';elC.textContent=cd;bip(600,140);this.textContent='Cancelar';" +
-      "cr.cdIv=setInterval(function(){cd--;if(cd<=0){clearInterval(cr.cdIv);cr.cdIv=null;elC.style.display='none';crLarga();return;}" +
-      "elC.textContent=cd;bip(600,140);if(navigator.vibrate)navigator.vibrate(50);},1000);});" +
+      "var elC=crEl('crContagem'),elF=crEl('crContagemF');elC.style.display='flex';elC.textContent=cd;" +
+      "if(elF){elF.style.display='flex';elF.textContent=cd;}bip(600,140);this.textContent='Cancelar';" +
+      "cr.cdIv=setInterval(function(){cd--;if(cd<=0){clearInterval(cr.cdIv);cr.cdIv=null;elC.style.display='none';if(elF)elF.style.display='none';crLarga();return;}" +
+      "elC.textContent=cd;if(elF)elF.textContent=cd;bip(600,140);if(navigator.vibrate)navigator.vibrate(50);},1000);});" +
       // configurações da corrida (engrenagem): contagem, aviso por km e pausa automática
       "function pintaCrCfg(){var c=crCfg();crEl('crCfgBox').innerHTML=" +
       "\"<div style='font-size:11px;font-weight:800;letter-spacing:.14em;color:#6e6a78;margin-bottom:6px;'>CONFIGURA\\u00c7\\u00d5ES DA CORRIDA</div>\"+" +
@@ -6950,9 +6977,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "crEl('crMetaBox').style.display='none';pintaCr();});" +
       "crEl('crFim').addEventListener('click',function(){crFinaliza(null);});" +
       "crEl('crZera').addEventListener('click',function(){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;" +
-      "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';}soltaTela();crGpsPara();" +
+      "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();" +
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';desenhaRota();pintaCr();});" +
       "crEl('crKm').addEventListener('input',function(){if(!cr.gpsOn)pintaCr();});" +
+      // tela cheia: abre ao iniciar ou ao tocar no mapa; ✕ volta pro card sem parar a corrida
+      "function abreCrFull(){var f=crEl('crFull');if(!f)return;f.style.display='block';crFullDim();espelhaCr();try{desenhaRota();}catch(e){}}" +
+      "function fechaCrFull(){var f=crEl('crFull');if(f)f.style.display='none';}" +
+      "function espelhaCr(){if(!crFullAberto())return;" +
+      "crEl('crTempoF').textContent=crEl('crTempo').textContent;crEl('crFaseF').textContent=crEl('crFase').textContent;" +
+      "crEl('crInfoF').textContent=crEl('crInfo').textContent;crEl('crPaceF').textContent=crEl('crPaceMed').textContent;" +
+      "crEl('crDistF').textContent=crEl('crDist').textContent;crEl('crGoF').textContent=crEl('crGo').textContent;" +
+      "var rodou=cr.run||cr.acum>0;crEl('crFimF').style.display=rodou?'block':'none';" +
+      "crEl('crMetaBtnF').style.display=rodou?'none':'block';crEl('crMetaBtnF').textContent=crEl('crMetaBtn').textContent;" +
+      "crEl('crGpsF').style.borderColor=cr.gpsOn?'#4ade80':'rgba(255,255,255,.25)';crEl('crGpsF').style.color=cr.gpsOn?'#4ade80':'#fff';}" +
+      "crEl('crFullFecha').addEventListener('click',fechaCrFull);" +
+      "crEl('crMapa').addEventListener('click',abreCrFull);" +
+      "crEl('crGoF').addEventListener('click',function(){crEl('crGo').click();espelhaCr();});" +
+      "crEl('crFimF').addEventListener('click',function(){crEl('crFim').click();fechaCrFull();});" +
+      "crEl('crGpsF').addEventListener('click',function(){crEl('crGps').click();espelhaCr();});" +
+      "crEl('crCfgBtnF').addEventListener('click',function(){fechaCrFull();crEl('crCfgBtn').click();crEl('crCfgBox').scrollIntoView({block:'center'});});" +
+      "crEl('crMetaBtnF').addEventListener('click',function(){fechaCrFull();crEl('crMetaBtn').click();crEl('crMetaBox').scrollIntoView({block:'center'});});" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
       "}" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
