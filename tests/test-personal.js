@@ -3242,6 +3242,59 @@ async function abaPt(p, a) {
   }), "lista de alunos limpa: ações escondidas atrás do botão ⋮");
   await p.evaluate(() => document.querySelector("#listaAlunos [data-mais]").click());
   ok(await p.evaluate(() => !document.querySelector("#listaAlunos [data-acoes]").hidden), "toque no ⋮ abre as ações do aluno");
+  // 🔎 filtro do topo: todos × pagos no mês × sem pagamento
+  {
+    const filtro = await p.evaluate(() => {
+      // deixa 2 alunos ativos: um pago no mês, um devendo (guardando os originais)
+      const st = window.MTStore.read("ptStudio", {});
+      window.__alunosOrig = st.alunos;
+      window.__pgtosOrig = st.pagamentos;
+      st.alunos = [
+        { id: "fp1", nome: "Paula Pagou", valor: 300, modo: "mes", ativo: true },
+        { id: "fd1", nome: "Davi Devendo", valor: 300, modo: "mes", ativo: true },
+      ];
+      const mes = new Date().toISOString().slice(0, 7);
+      st.pagamentos = [{ id: "pg1", alunoId: "fp1", valor: 300, data: mes + "-05" }];
+      window.MTStore.write("ptStudio", st);
+      const nomes = () => document.getElementById("listaAlunos").textContent;
+      const rot = () => Array.from(document.querySelectorAll("#alFiltro button")).map((b) => b.textContent.trim());
+      window.__alFiltro("todos");
+      const todos = { txt: nomes(), rot: rot() };
+      window.__alFiltro("pagos");
+      const pagos = nomes();
+      window.__alFiltro("devendo");
+      const devendo = nomes();
+      // pelo clique, como o professor faz
+      document.querySelector('#alFiltro [data-alf="todos"]').click();
+      const voltou = { txt: nomes(), ativa: document.querySelector("#alFiltro .ativa").getAttribute("data-alf") };
+      return { todos, pagos, devendo, voltou };
+    });
+    ok(/Paula Pagou/.test(filtro.todos.txt) && /Davi Devendo/.test(filtro.todos.txt), "🔎 filtro 'Todos' mostra a lista inteira");
+    ok(filtro.todos.rot.join(" ") === "Todos (2) Pagos no mês (1) Sem pagamento (1)", "cada filtro mostra quantos alunos tem, sem precisar clicar");
+    ok(/Paula Pagou/.test(filtro.pagos) && !/Davi Devendo/.test(filtro.pagos), "filtro 'Pagos no mês' esconde quem não pagou");
+    ok(/Davi Devendo/.test(filtro.devendo) && !/Paula Pagou/.test(filtro.devendo), "filtro 'Sem pagamento' deixa só quem falta pagar");
+    ok(/Paula Pagou/.test(filtro.voltou.txt) && filtro.voltou.ativa === "todos", "clicar em Todos volta a lista inteira e marca a aba ativa");
+    // com todo mundo pago, o filtro 'Sem pagamento' comemora em vez de ficar vazio
+    const zerado = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      st.pagamentos.push({ id: "pg2", alunoId: "fd1", valor: 300, data: new Date().toISOString().slice(0, 7) + "-06" });
+      window.MTStore.write("ptStudio", st);
+      window.__alFiltro("devendo");
+      return document.getElementById("listaAlunos").textContent;
+    });
+    ok(/em dia/.test(zerado), "sem ninguém devendo, o filtro comemora em vez de mostrar área vazia");
+    // devolve o estado original pro resto da suíte
+    await p.evaluate(() => { window.__alFiltro("todos"); });
+  }
+  await p.evaluate(() => {
+    // volta o aluno original pra sequência seguinte do teste (encerrar aluno)
+    const st = window.MTStore.read("ptStudio", {});
+    st.alunos = window.__alunosOrig || st.alunos;
+    st.pagamentos = window.__pgtosOrig || [];
+    window.MTStore.write("ptStudio", st);
+    window.__alFiltro("todos");
+  });
+  await p.evaluate(() => document.querySelector("#listaAlunos [data-mais]").click());
   await p.click("#listaAlunos [data-rm]");
   lista = await p.evaluate(() => document.getElementById("listaAlunos").textContent);
   ok(/primeiro aluno/.test(lista), "encerrar aluno esvazia a lista (histórico preservado)");
