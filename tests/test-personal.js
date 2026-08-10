@@ -1426,12 +1426,40 @@ async function abaPt(p, a) {
       window.MTStore.write("ptStudio", st);
       return { soGeral, comFicha, previa };
     });
-    ok(/"c":"data:image\/jpeg/.test(geral.soGeral),
+    ok(/var CAPA_GERAL="data:image\/jpeg/.test(geral.soGeral),
       "📷 a foto geral da Personalização vale pra todos os alunos (sem precisar mexer ficha por ficha)");
-    ok(/"c":"data:image\/png/.test(geral.comFicha) && !/"c":"data:image\/jpeg/.test(geral.comFicha),
-      "quando a ficha tem foto própria, ela ganha da geral");
+    ok(/"c":"data:image\/png/.test(geral.comFicha) && /var CAPA_GERAL="data:image\/jpeg/.test(geral.comFicha),
+      "quando a ficha tem foto própria, ela ganha da geral (que segue disponível pras outras fichas)");
     ok(geral.previa.visivel && geral.previa.temSrc && /Trocar foto/.test(geral.previa.rot),
       "a Personalização mostra a prévia da foto e troca o botão pra 'Trocar foto'");
+    // a foto geral não pode ser copiada ficha por ficha (o app do aluno inchava)
+    const peso = await p.evaluate(() => {
+      const cv = document.createElement("canvas");
+      cv.width = 720; cv.height = 405;
+      const x = cv.getContext("2d");
+      const im = x.createImageData(720, 405);
+      for (let i = 0; i < im.data.length; i += 4) { im.data[i] = (i * 7) % 255; im.data[i + 1] = (i * 13) % 255; im.data[i + 2] = (i * 29) % 255; im.data[i + 3] = 255; }
+      x.putImageData(im, 0, 0);
+      const foto = cv.toDataURL("image/jpeg", .78);
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos.find((a) => a.ativo !== false);
+      const guardaFichas = JSON.stringify(st.treinosV2[al.id].fichas);
+      const fichas = [];
+      for (let i = 0; i < 6; i++) fichas.push({ id: "fx" + i, titulo: "Ficha " + i, itens: [{ exId: st.exercicios[0].id, series: 3, reps: "10", descanso: 60, obs: "" }] });
+      st.treinosV2[al.id].fichas = fichas;
+      st.config = st.config || {};
+      st.config.capaTreino = foto;
+      window.MTStore.write("ptStudio", st);
+      const html = window.__montaAppAluno(al, new Date().toISOString());
+      const copias = (html.match(/data:image\/jpeg;base64/g) || []).length;
+      // devolve tudo como estava
+      st.treinosV2[al.id].fichas = JSON.parse(guardaFichas);
+      delete st.config.capaTreino;
+      window.MTStore.write("ptStudio", st);
+      return { copias, kb: Math.round(html.length / 1024), fotoKb: Math.round(foto.length / 1024) };
+    });
+    ok(peso.copias === 1, "a foto geral viaja UMA vez só no app, mesmo com 6 fichas (" + peso.copias + " cópia)");
+    ok(peso.kb < peso.fotoKb * 2 + 250, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
   }
   // ---------- 🖼 banco de imagens do studio ----------
   console.log("Banco de imagens:");
@@ -1451,7 +1479,7 @@ async function abaPt(p, a) {
     }, JPG);
     ok(banco.secao && banco.cards === 2 && /Sala de musculação/.test(banco.nome),
       "🖼 a aba Imagens lista o que está guardado no banco");
-    ok(/2 imagem\(ns\)/.test(banco.espaco) && /de 4 MB usados/.test(banco.espaco),
+    ok(/2 imagem\(ns\)/.test(banco.espaco) && /de 2 MB usados/.test(banco.espaco),
       "o medidor mostra quantas fotos e quanto espaço já foi usado — " + banco.espaco.trim());
     // usar uma imagem do banco como foto do card (todos os alunos)
     const usada = await p.evaluate(() => {
