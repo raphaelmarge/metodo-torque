@@ -2997,6 +2997,7 @@ async function abaPt(p, a) {
       const b = document.getElementById("pfAssinar");
       return !!b && /Ativar mensalidade no cartão/.test(b.textContent);
     }), "perfil sem assinatura tem o botão 🔁 Ativar mensalidade no cartão");
+    await p.click("#pfAcoesBtn"); // as ações do perfil agora moram no menu retrátil ⚡
     await p.click("#pfAssinar");
     await p.waitForFunction(() => document.getElementById("dlgCartaoRec") && document.getElementById("dlgCartaoRec").open);
     const dlgInfo = await p.evaluate(() => ({

@@ -118,17 +118,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #vPerfil .linha-flex label:has(#anMeds), #vPerfil .linha-flex label:has(#anFamiliar),
     #vPerfil .linha-flex label:has(#anAlimentacao), #vPerfil .linha-flex label:has(#anGosta),
     #vPerfil .linha-flex label:has(#anNaoGosta) { grid-column: 1 / -1; }
-    #pfTopo { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; }
-    #pfTopo .btn { width: 100%; }
-    #pfTopo #pfDesde { grid-column: 1 / -1; }
-    #pfTopo #pfTopoEspaco { display: none; }
+    #pfTopo #pfFotoBtn { width: 46px; height: 46px; font-size: 16px; }
+    #pfTopo { gap: 9px; }
+    #pfTopo .pf-ac-rot { display: none; } /* no celular o botão vira só ⚡ (sobra espaço pro nome) */
     /* avaliação física e questionários: mesma grade organizada */
     #vAval .card .linha-flex, #vQuest .card .linha-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     #vAval .card .linha-flex > *, #vQuest .card .linha-flex > * { width: 100% !important; min-width: 0 !important; }
     #vAval .card .linha-flex select, #vQuest .card .linha-flex select,
     #vAval .card .linha-flex .btn:not(.mini):not(.sec), #vQuest .card .linha-flex .btn:not(.mini):not(.sec) { grid-column: 1 / -1; }
-    /* nome do aluno em linha própria no topo do perfil */
-    #pfTopo #pfTitulo { grid-column: 1 / -1; order: -1; font-size: 18px; }
+    /* nome do aluno menor no celular (uma linha, com reticências) */
+    #pfTopo #pfTitulo { font-size: 16.5px; }
+    #pfTopo #pfAcoesBtn { padding: 8px 11px; }
     /* abas do perfil em grade uniforme 3×2 */
     #calAgenda .cal-dia { min-height: 38px; font-size: 12px; }
     #pfAbas, #trAbas, #pgAbas, #qtAbas, #relAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -996,17 +996,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   </div>
 <section id="vPerfil" hidden>
   <div class="card" style="border-left: 4px solid var(--roxo);">
-    <div id="pfTopo" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-      <button class="btn sec mini" id="pfFechar">← Voltar</button>
-      <h2 id="pfTitulo" style="font-size: 20px; margin: 0;">Perfil</h2>
-      <span id="pfDesde" class="muted" style="font-size: 12px;"></span>
-      <span id="pfTopoEspaco" style="margin-left: auto;"></span>
-      <button class="btn mini" id="pfAcesso"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
-      <button class="btn sec mini" id="pfApp" title="baixa o arquivo do app (uso offline)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Gerar app</button>
-      <button class="btn mini" id="pfPix"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5.6' y='5.6' width='12.8' height='12.8' rx='2.6' transform='rotate(45 12 12)'/></svg> Pix</button>
-      <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none;">WhatsApp</a>
+    <div id="pfTopo" style="display: flex; align-items: center; gap: 12px;">
+      <button class="btn sec mini" id="pfFechar" title="Voltar pra lista" aria-label="Voltar pra lista" style="flex: none; padding: 8px 13px; min-height: 38px;">←</button>
+      <button id="pfFotoBtn" title="Foto do aluno — toque pra colocar ou trocar" style="flex: none; width: 52px; height: 52px; border-radius: 50%; border: none; padding: 0; overflow: hidden; cursor: pointer; background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; font-weight: 800; font-size: 18px; font-family: inherit; display: flex; align-items: center; justify-content: center;">
+        <img id="pfFotoImg" alt="" hidden style="width: 100%; height: 100%; object-fit: cover;"><span id="pfIniciais">?</span>
+      </button>
+      <input type="file" id="pfFotoInput" accept="image/*" hidden>
+      <div style="flex: 1; min-width: 0;">
+        <h2 id="pfTitulo" style="font-size: 20px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.01em; text-transform: none; color: var(--texto); font-weight: 800;">Perfil</h2>
+        <span id="pfDesde" class="muted" style="font-size: 12px; display: block;"></span>
+      </div>
+      <button class="btn mini" id="pfAcoesBtn" aria-expanded="false" title="Ações do aluno" style="flex: none;">⚡<span class="pf-ac-rot"> Ações</span> <span class="fseta" style="display: inline-block; transition: transform .15s;">▾</span></button>
     </div>
-    <div id="pfAssinaturaBox" style="margin-top: 10px; font-size: 13px;"></div>
+    <div id="pfAcoes" hidden style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <button class="btn mini" id="pfAcesso" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
+      <button class="btn sec mini" id="pfApp" title="baixa o arquivo do app (uso offline)" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Gerar app</button>
+      <button class="btn mini" id="pfPix" style="width: 100%;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5.6' y='5.6' width='12.8' height='12.8' rx='2.6' transform='rotate(45 12 12)'/></svg> Pix</button>
+      <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none; width: 100%;">WhatsApp</a>
+      <div id="pfAssinaturaBox" style="grid-column: 1 / -1; font-size: 13px; margin-top: 2px;"></div>
+    </div>
   </div>
 
   <div class="abas" id="pfAbas" style="margin: 12px 0;">
@@ -1477,6 +1485,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     mostraPfAba("app");
     $("pfTitulo").textContent = a.nome;
     $("pfDesde").textContent = a.desde ? "aluno desde " + S.fmtData(a.desde) : "";
+    pintaPfFoto(a);
+    // menu de ações começa fechado a cada perfil aberto
+    $("pfAcoes").hidden = true;
+    $("pfAcoesBtn").setAttribute("aria-expanded", "false");
+    $("pfAcoesBtn").querySelector(".fseta").style.transform = "";
     $("pfNome").value = a.nome; $("pfZap").value = a.zap || "";
     $("pfNasc").value = a.nasc || ""; $("pfValor").value = a.valor || "";
     $("pfMetaSem").value = +a.metaSemana || 3;
@@ -2164,6 +2177,48 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("pfApp").addEventListener("click", function () {
     var b = document.querySelector('[data-app="' + perfilId + '"]');
     if (b) b.click();
+  });
+  // ---------- foto do aluno + menu retrátil de ações ----------
+  function pintaPfFoto(a) {
+    var img = $("pfFotoImg"), ini = $("pfIniciais");
+    if (a.foto) { img.src = a.foto; img.hidden = false; ini.hidden = true; }
+    else {
+      img.hidden = true; ini.hidden = false;
+      ini.textContent = String(a.nome || "?").trim().split(/\s+/).slice(0, 2)
+        .map(function (p) { return (p[0] || "").toUpperCase(); }).join("") || "?";
+    }
+  }
+  window.__pfFoto = pintaPfFoto; // testes
+  $("pfAcoesBtn").addEventListener("click", function () {
+    var box = $("pfAcoes"), aberto = box.hidden;
+    box.hidden = !aberto;
+    this.setAttribute("aria-expanded", aberto ? "true" : "false");
+    this.querySelector(".fseta").style.transform = aberto ? "rotate(180deg)" : "";
+  });
+  $("pfFotoBtn").addEventListener("click", function () { if (perfilId) $("pfFotoInput").click(); });
+  $("pfFotoInput").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f || !perfilId) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        // corta quadrado no centro e reduz pra 320px (fica leve pra sincronizar)
+        var lado = Math.min(im.width, im.height), cv = document.createElement("canvas");
+        cv.width = cv.height = Math.min(320, lado);
+        cv.getContext("2d").drawImage(im, (im.width - lado) / 2, (im.height - lado) / 2, lado, lado, 0, 0, cv.width, cv.height);
+        var dado = cv.toDataURL("image/jpeg", .82);
+        var st = load();
+        var a = st.alunos.find(function (x) { return x.id === perfilId; });
+        if (!a) return;
+        a.foto = dado;
+        save(st);
+        pintaPfFoto(a);
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
   });
   $("pfAcesso").addEventListener("click", function () {
     if (!perfilId) return;
