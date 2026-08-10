@@ -934,7 +934,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vImagens" hidden>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Banco de imagens</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Guarde aqui as fotos que você usa no app — capas de treino, fotos do studio, do equipamento. Depois é só escolher da galeria em <b>Personalização</b> ou em cada ficha, sem reenviar do celular toda vez. Cada foto é cortada em 16:9 e comprimida sozinha.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Guarde aqui as fotos que você usa no app — capas de treino, fotos do studio, do equipamento. Depois é só escolher da galeria em <b>Personalização</b> ou em cada ficha, sem reenviar do celular toda vez. Cada foto é cortada em 16:9 e comprimida sozinha — o banco guarda até 2 MB pra sobrar memória do navegador pro resto do sistema.</p>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
         <button class="btn" id="imgAdd"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Enviar imagem</button>
         <input type="file" id="imgFile" accept="image/*" multiple hidden>
@@ -7751,13 +7751,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : "") +
       // hero "treino de hoje" + progresso rápido + XP (estilo Prime)
       // a foto do card do dia: a da ficha manda; sem ela, entra a geral da Personalização
-      "var FICHAS_META=" + JSON.stringify((function () {
+      // a foto geral vai UMA vez só: repetir a mesma imagem em cada ficha inchava
+      // o app (6 fichas × 235 KB viravam 1,4 MB de dado repetido no download do aluno)
+      (function () {
         var imgOk = function (u) { return /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u || "")) ? u : ""; };
         var geral = imgOk((st.config || {}).capaTreino);
-        return (fichasApp || []).map(function (f) {
-          return { t: f.titulo || "Ficha", n: f.itens.length, c: imgOk(f.capa) || geral };
-        });
-      })()).replace(/</g, "\\u003c") + ";" +
+        return "var CAPA_GERAL=" + JSON.stringify(geral).replace(/</g, "\\u003c") + ";" +
+          "var FICHAS_META=" + JSON.stringify((fichasApp || []).map(function (f) {
+            var propria = imgOk(f.capa);
+            return { t: f.titulo || "Ficha", n: f.itens.length, c: propria === geral ? "" : propria };
+          })).replace(/</g, "\\u003c") + ";";
+      })() +
       "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||!FICHAS_META.length)return;" +
       "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
       "var par=String(fm.t).split('—');var rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));var tit=par.length>1?par.slice(1).join('—').trim():fm.t;" +
@@ -7765,7 +7769,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "document.getElementById('htSub').textContent=fm.n+' exercício(s) te esperando';" +
       // foto da ficha do dia no card (com véu por cima pro texto continuar legível)
       "var hf=document.getElementById('htFoto'),hv2=document.getElementById('htVeu');" +
-      "if(hf){if(fm.c){hf.src=fm.c;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}}" +
+      "var cImg=fm.c||CAPA_GERAL;" +
+      "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
       "var gav=document.querySelectorAll('.fichabox');" +
       "if(gav.length>1)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
@@ -8498,7 +8503,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- 🖼 banco de imagens do studio ----------
   // fica numa chave própria (não incha o ptStudio, que viaja a cada salvamento);
   // entra no backup/sync junto com o resto porque está em BACKUP_KEYS.
-  var IMG_TETO = 4 * 1024 * 1024; // ~4 MB: o que cabe com folga no navegador
+  // teto do banco: o navegador dá ~5 MB pro site INTEIRO (alunos, treinos, pagamentos,
+  // fotos de avaliação…). 2 MB de fotos ainda dão ~10 imagens e deixam o resto respirar.
+  var IMG_TETO = 2 * 1024 * 1024;
   function imgsLe() {
     var l = S.read("ptImagens", []);
     return Array.isArray(l) ? l : [];
@@ -8514,7 +8521,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderImagens() {
     var lista = imgsLe(), usado = imgsPeso(lista);
     var pct = Math.min(100, Math.round(100 * usado / IMG_TETO));
-    $("imgEspaco").textContent = lista.length + " imagem(ns) · " + imgFmt(usado) + " de " + imgFmt(IMG_TETO) + " usados";
+    $("imgEspaco").textContent = lista.length + " imagem(ns) · " + imgFmt(usado) + " de " + imgFmt(IMG_TETO) + " usados" +
+      (pct >= 80 ? " — quase cheio, apague o que não usa mais" : "");
     $("imgBarra").firstElementChild.style.width = pct + "%";
     $("imgBarra").classList.toggle("cheia", pct >= 90);
     $("imgGaleria").innerHTML = lista.length
