@@ -1376,6 +1376,33 @@ async function abaPt(p, a) {
   ok(/>Descanso 100s</.test(appHtml) && /100s ›/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
   ok(/"d":100/.test(appHtml), "treino guiado usa o descanso programado do exercício");
   ok(/Minhas sessões/.test(appHtml) && /07:30/.test(appHtml), "próximas sessões embutidas no app");
+  // 📷 foto da ficha: o professor escolhe uma por ficha e ela vira a capa do card do dia
+  {
+    const capa = await p.evaluate(() => {
+      const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos.find((x) => x.ativo !== false);
+      const t = st.treinosV2[al.id];
+      t.fichas[0].capa = PNG;
+      t.fichas[0].capaSuja = "javascript:alert(1)"; // campo inventado não pode vazar
+      window.MTStore.write("ptStudio", st);
+      const html = window.__montaAppAluno(al, new Date().toISOString());
+      // e uma capa forjada (script) tem que ser barrada na saída
+      t.fichas[0].capa = "data:image/svg+xml,<svg onload=alert(1)>";
+      window.MTStore.write("ptStudio", st);
+      const htmlMau = window.__montaAppAluno(al, new Date().toISOString());
+      // devolve a ficha sem foto pro resto da suíte (o card do dia volta ao normal)
+      delete t.fichas[0].capa;
+      delete t.fichas[0].capaSuja;
+      window.MTStore.write("ptStudio", st);
+      return { html, htmlMau };
+    });
+    ok(/id='htFoto'/.test(capa.html) && /"c":"data:image\/png;base64,/.test(capa.html),
+      "📷 a foto da ficha viaja dentro do app e vira a capa do card 'treino de hoje'");
+    ok(!/onload=alert/.test(capa.htmlMau) && /"c":""/.test(capa.htmlMau),
+      "capa forjada (svg com script) é descartada — só png/jpg/webp em base64 passa");
+    ok(!/capaSuja/.test(capa.html), "só o que o app usa viaja: campos estranhos da ficha não vão junto");
+  }
   ok(/Agenda<\/h2>/.test(appHtml) && /agCal/.test(appHtml) && /app_agenda_pede/.test(appHtml) && /app_agenda_lista/.test(appHtml), "app tem agenda estilo calendário com pedido de horário pela nuvem");
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml) && /VCALENDAR/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/cardNotif/.test(appHtml) && /app_aluno_push/.test(appHtml) && /app-sw\.js/.test(appHtml), "app registra push pelo link hospedado (lembretes)");
@@ -2361,9 +2388,11 @@ async function abaPt(p, a) {
       sub: document.getElementById("htSub").textContent,
       tiles: document.getElementById("pgTiles").textContent,
       xp: document.getElementById("xpChip").textContent,
+      foto: (document.getElementById("htFoto") || {}).style && document.getElementById("htFoto").style.display,
     };
   });
   ok(/TREINO|FICHA/.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card 'HOJE · " + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
+  ok(home.foto === "none", "📷 sem foto na ficha, o card do dia fica limpo (nada de imagem quebrada)");
   ok(/Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
   ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
