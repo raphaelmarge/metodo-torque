@@ -1193,5 +1193,70 @@ self.MT_RECEITAS = [
    "Finalize com coco ralado e canela em pó."
   ],
   "dica": "O whey entra só com o fogo desligado pra não talhar — sobremesa de festa junina com 14 g de proteína por tigela."
+ },
+ {
+  "id": "rc55",
+  "n": "Espaguete de abobrinha com frango desfiado ao sugo",
+  "cat": "Almoço e jantar",
+  "tempo": 25,
+  "rende": 2,
+  "k": 255,
+  "pt": 31,
+  "ing": [
+   "2 abobrinhas médias em tiras (espiralizadas ou no ralador)",
+   "250 g de frango desfiado",
+   "1 xíc. de molho de tomate caseiro",
+   "2 dentes de alho e 1 fio de azeite",
+   "Sal, pimenta e manjericão fresco"
+  ],
+  "modo": [
+   "Refogue o alho no azeite, junte o frango desfiado e o molho de tomate e deixe apurar 5 min.",
+   "Salteie as tiras de abobrinha em fogo alto por 2-3 min — al dente, sem soltar água.",
+   "Misture o molho ao 'espaguete', ajuste o sal e finalize com manjericão."
+  ],
+  "dica": "Não cozinhe a abobrinha demais: 3 minutos no fogo alto mantêm a textura de massa com só 255 kcal no prato."
+ },
+ {
+  "id": "rc56",
+  "n": "Torta de liquidificador de frango com aveia",
+  "cat": "Lanches",
+  "tempo": 45,
+  "rende": 8,
+  "k": 210,
+  "pt": 16,
+  "ing": [
+   "2 ovos + 1 xíc. de leite desnatado",
+   "1 xíc. de aveia em flocos + 1/2 xíc. de farinha de arroz",
+   "300 g de frango desfiado temperado com tomate e cebola",
+   "2 col. sopa de azeite e 1 col. sopa de fermento",
+   "Sal, orégano e 30 g de queijo muçarela ralado"
+  ],
+  "modo": [
+   "Bata no liquidificador os ovos, o leite, o azeite, a aveia, a farinha e o sal; por último o fermento.",
+   "Numa forma untada, alterne metade da massa, todo o recheio de frango e o resto da massa.",
+   "Cubra com o queijo e asse a 180 °C por 35 min até dourar."
+  ],
+  "dica": "A aveia substitui a farinha branca e segura a fome — cada fatia tem 16 g de proteína, ótima pro lanche pós-treino."
+ },
+ {
+  "id": "rc57",
+  "n": "Sorvete fit de banana com cacau (nice cream)",
+  "cat": "Doces fit",
+  "tempo": 10,
+  "rende": 3,
+  "k": 105,
+  "pt": 2.5,
+  "ing": [
+   "3 bananas maduras congeladas em rodelas",
+   "1 col. sopa de cacau em pó 100%",
+   "1 col. sopa de pasta de amendoim",
+   "50 ml de leite desnatado (só se precisar soltar)"
+  ],
+  "modo": [
+   "Bata as bananas congeladas no processador raspando as laterais até virar um creme liso.",
+   "Junte o cacau e a pasta de amendoim e pulse; use o leite só se o creme travar.",
+   "Sirva na hora (textura soft) ou congele 30 min pra bola firme."
+  ],
+  "dica": "A banana congelada faz o papel do creme — sobremesa de 105 kcal sem açúcar e sem lactose se trocar o leite por bebida vegetal."
  }
 ];
