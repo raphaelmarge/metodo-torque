@@ -2091,6 +2091,8 @@ async function abaPt(p, a) {
   ok(cardioSub.cardVis && cardioSub.folhas === 2 && /pace 6:30/.test(cardioSub.txt) && /Ritmo conversável/.test(cardioSub.txt),
     "app ganha a sub-aba Corrida e bike com as folhas prescritas (alvo com pace)");
   // cronômetro livre com pace: roda, km na mão, Terminei registra
+  // (desliga a contagem regressiva e a pausa automática pra não atrasar o relógio do teste)
+  await pCr.evaluate(() => localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 })));
   await pCr.evaluate(() => document.getElementById("crGo").click());
   await pCr.waitForTimeout(5400);
   await pCr.evaluate(() => {
@@ -2127,6 +2129,28 @@ async function abaPt(p, a) {
   }));
   ok(/TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 && /Tiros de quinta/.test(cardioFim.lst[1].n),
     "treino de tiros completa sozinho e registra o resultado");
+  // área estilo app de corrida: trajeto, botão redondo, meta e configurações
+  const nrc = await pCr.evaluate(async () => {
+    const out = {
+      mapa: !!document.getElementById("crMapa"),
+      redondo: document.getElementById("crGo").style.borderRadius === "50%",
+    };
+    document.getElementById("crMetaBtn").click();
+    await new Promise((r) => setTimeout(r, 100));
+    document.querySelector(".crMetaOp[data-meta='5-0']").click();
+    await new Promise((r) => setTimeout(r, 100));
+    out.metaBtn = document.getElementById("crMetaBtn").textContent;
+    out.metaInfo = document.getElementById("crInfo").textContent;
+    document.getElementById("crCfgBtn").click();
+    await new Promise((r) => setTimeout(r, 100));
+    document.getElementById("crCfgCd").value = "5";
+    document.getElementById("crCfgCd").dispatchEvent(new Event("change"));
+    out.cfgSalva = JSON.parse(localStorage.getItem("ptcrCfg"));
+    return out;
+  });
+  ok(nrc.mapa && nrc.redondo, "área de corrida estilo NRC: trajeto no mapa e botão INICIAR redondo gigante");
+  ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
+  ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();
@@ -2145,6 +2169,7 @@ async function abaPt(p, a) {
   await pGps.waitForTimeout(900);
   const gpsAuto = await pGps.evaluate(() => ({ on: window.__cr.gpsOn, btn: document.getElementById("crGps").textContent }));
   ok(gpsAuto.on && /GPS ligado/.test(gpsAuto.btn), "GPS liga sozinho ao abrir a área Corrida e bike");
+  await pGps.evaluate(() => localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 })));
   await pGps.evaluate(() => document.getElementById("crGo").click());
   await pGps.waitForTimeout(300);
   await ctxGps.setGeolocation({ latitude: -19.9254, longitude: -43.9352, accuracy: 10 });
