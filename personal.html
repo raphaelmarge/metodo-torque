@@ -1930,6 +1930,58 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               "<text x='" + CP + "' y='" + (CH + 15) + "' font-size='10' fill='#8a8695'>" + cds[0].d.slice(8, 10) + "/" + cds[0].d.slice(5, 7) + " · mín " + num(cmin) + " · máx " + num(cmax) + " pts</text>" +
               "<text x='" + (CW - CP) + "' y='" + (CH + 15) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + cds[cds.length - 1].d.slice(8, 10) + "/" + cds[cds.length - 1].d.slice(5, 7) + "</text></svg>";
           }
+          // ---- cada PERGUNTA vira uma métrica acompanhável (valor de hoje, tendência e histórico) ----
+          var porPerg = {};
+          cks.forEach(function (c) {
+            (Array.isArray(c.respostas) ? c.respostas : []).forEach(function (r) {
+              if (!r || typeof r !== "object") return;
+              var chave = String(r.sigla || r.pergunta || "").slice(0, 40);
+              if (!chave) return;
+              var m = porPerg[chave] || (porPerg[chave] = { sigla: chave, pergunta: String(r.pergunta || ""), serie: [] });
+              m.serie.push({ d: c.d, txt: String(r.resposta == null ? "" : r.resposta),
+                pts: (r.pontos == null || !isFinite(+r.pontos)) ? null : +r.pontos });
+            });
+          });
+          var metricas = Object.keys(porPerg).map(function (k) { return porPerg[k]; })
+            .filter(function (m) { return m.serie.length; });
+          if (metricas.length) {
+            html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:8px;'>" +
+              metricas.map(function (m) {
+                var ult = m.serie[m.serie.length - 1];
+                var comPts = m.serie.filter(function (s) { return s.pts != null; });
+                var trecho = "", rodape = "", cor = "#a78bfa";
+                if (comPts.length) {
+                  var vals = comPts.map(function (s) { return s.pts; }).slice(-12);
+                  var vUlt = vals[vals.length - 1], vAnt = vals.length > 1 ? vals[vals.length - 2] : null;
+                  var somaM = 0;
+                  vals.forEach(function (v) { somaM += v; });
+                  var dif = vAnt == null ? null : vUlt - vAnt;
+                  cor = dif == null ? "#a78bfa" : dif > 0 ? "#4ade80" : dif < 0 ? "#f87171" : "#fbbf24";
+                  // linha do tempo pequena da própria pergunta
+                  if (vals.length >= 2) {
+                    var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), fx = (mx - mn) || 1;
+                    var W = 150, H = 30;
+                    trecho = "<svg viewBox='0 0 " + W + " " + H + "' style='width:100%;height:30px;display:block;margin:6px 0 2px;' aria-hidden='true'>" +
+                      "<polyline points='" + vals.map(function (v, i) {
+                        return (3 + Math.round((W - 6) * i / (vals.length - 1))) + "," + (3 + Math.round((H - 6) * (1 - (v - mn) / fx)));
+                      }).join(" ") + "' fill='none' stroke='" + cor + "' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg>";
+                  }
+                  rodape = num(somaM / vals.length) + " de média" + (dif == null ? "" :
+                    " · " + (dif > 0 ? "▲ subiu " : dif < 0 ? "▼ caiu " : "→ igual") + (dif ? num(Math.abs(dif)) : ""));
+                } else {
+                  rodape = m.serie.length + " resposta(s)";
+                }
+                return "<div style='background:#100e15;border:1px solid var(--linha);border-radius:14px;padding:12px 14px;'>" +
+                  "<div style='font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--cinza-2);text-transform:uppercase;'>" + esc(m.sigla) + "</div>" +
+                  "<div style='font-size:" + (ult.pts != null ? "24px" : "15px") + ";font-weight:800;color:" + cor + ";margin-top:2px;word-break:break-word;'>" +
+                  esc(ult.txt.slice(0, 60)) + (ult.pts != null ? " <span style='font-size:12px;color:var(--cinza);font-weight:700;'>(" + num(ult.pts) + " pts)</span>" : "") + "</div>" +
+                  trecho +
+                  "<div class='muted' style='font-size:11.5px;'>" + rodape + " · " + ult.d.slice(8, 10) + "/" + ult.d.slice(5, 7) + "</div>" +
+                  (m.pergunta ? "<div class='muted' style='font-size:11px;margin-top:4px;opacity:.75;'>" + esc(m.pergunta.slice(0, 70)) + "</div>" : "") +
+                  "</div>";
+              }).join("") + "</div>";
+          }
+          html += "<div class='muted' style='font-size:12px;margin:10px 0 4px;'>Últimos check-ins</div>";
           html += cks.slice(-5).reverse().map(function (c) {
             var pts = c.pts;
             var corC = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
@@ -2483,7 +2535,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     setTimeout(function () { b.innerHTML = mi("prancheta") + " Copiar link"; }, 1800);
   });
   // manda o questionário DIRETO pro app do aluno: fica trancado até a data de
-  // liberação e as respostas viram métricas no perfil (aba )
+  // liberação e cada pergunta vira uma métrica no perfil (aba App do aluno)
   $("qeApp").addEventListener("click", function () {
     var st = questSt(load());
     var a = st.alunos.find(function (x) { return x.id === $("qeAluno").value; });
@@ -2517,7 +2569,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         aviso.textContent = "✓ Enviado! O questionário " +
           (a.questApp.desde <= S.todayISO() ? "já está liberado" : "libera dia " + S.fmtData(a.questApp.desde)) +
           " no app do aluno" + (a.questApp.repete ? " e repete toda semana" : "") +
-          ". As respostas caem aqui embaixo e viram métricas no perfil (aba App do aluno).";
+          ". As respostas caem aqui embaixo e cada pergunta vira uma métrica no perfil do aluno (aba App do aluno), com o valor de hoje, a tendência e o histórico.";
       }, function () {
         aviso.textContent = "Sem conexão agora — tenta de novo com internet.";
       });
