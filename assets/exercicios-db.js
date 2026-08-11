@@ -210,7 +210,7 @@ self.MT_EXERCICIOS = [
   "n": "Agachamento goblet",
   "g": "Quadríceps",
   "eq": "Halteres",
-  "d": "Haltere junto ao peito; ótimo para aprender o padrão do agachamento."
+  "d": "Haltere junto ao peito; ótimo pra aprender o padrão do agachamento."
  },
  {
   "n": "Hack machine",
@@ -372,7 +372,7 @@ self.MT_EXERCICIOS = [
   "n": "Rosca scott",
   "g": "Bíceps",
   "eq": "Banco scott",
-  "d": "Braços apoiados; não estenda 100% embaixo para proteger o cotovelo."
+  "d": "Braços apoiados; não estenda 100% embaixo pra proteger o cotovelo."
  },
  {
   "n": "Rosca concentrada",
@@ -1032,7 +1032,7 @@ self.MT_EXERCICIOS = [
   "n": "Snatch com kettlebell",
   "g": "Funcional e Cross",
   "eq": "Kettlebell",
-  "d": "Um movimento só do chão até acima da cabeça: quadril explode, braço guia e o punho gira no topo para amortecer."
+  "d": "Um movimento só do chão até acima da cabeça: quadril explode, braço guia e o punho gira no topo pra amortecer."
  },
  {
   "n": "Press militar com kettlebell",
@@ -1050,7 +1050,7 @@ self.MT_EXERCICIOS = [
   "n": "Halo com kettlebell",
   "g": "Ombros",
   "eq": "Kettlebell",
-  "d": "Circule o peso ao redor da cabeça bem devagar, cotovelos apontando para cima e abdômen firme para não mexer o tronco."
+  "d": "Circule o peso ao redor da cabeça bem devagar, cotovelos apontando para cima e abdômen firme pra não mexer o tronco."
  },
  {
   "n": "Swing unilateral com kettlebell",
@@ -1128,7 +1128,7 @@ self.MT_EXERCICIOS = [
   "n": "Barra fixa com pegada mista",
   "g": "Costas",
   "eq": "Barra fixa",
-  "d": "Uma mão pronada e outra supinada: suba controlando e troque a pegada a cada série para equilibrar os lados."
+  "d": "Uma mão pronada e outra supinada: suba controlando e troque a pegada a cada série pra equilibrar os lados."
  },
  {
   "n": "Muscle-up na barra",
@@ -1194,7 +1194,7 @@ self.MT_EXERCICIOS = [
   "n": "Chute frontal (teep)",
   "g": "Boxe e lutas",
   "eq": "Livre",
-  "d": "Joelho alto primeiro, depois empurre com a planta do pé como quem afasta a porta — recolha rápido para não ser agarrado."
+  "d": "Joelho alto primeiro, depois empurre com a planta do pé como quem afasta a porta — recolha rápido pra não ser agarrado."
  },
  {
   "n": "Sprawl (defesa de queda)",
@@ -1272,7 +1272,7 @@ self.MT_EXERCICIOS = [
   "n": "Extensão de joelho sentado",
   "g": "Quadríceps",
   "eq": "Cadeira",
-  "d": "Sentado com a coluna encostada, estique um joelho por vez segurando 2 segundos no topo — use caneleira leve para evoluir."
+  "d": "Sentado com a coluna encostada, estique um joelho por vez segurando 2 segundos no topo — use caneleira leve pra evoluir."
  },
  {
   "n": "Flexão de ombro com bastão",
@@ -1284,7 +1284,7 @@ self.MT_EXERCICIOS = [
   "n": "Rotação de tronco sentado com bastão",
   "g": "Mobilidade e alongamento",
   "eq": "Bastão",
-  "d": "Bastão apoiado nos ombros, gire o tronco para cada lado devagar mantendo o quadril parado no assento."
+  "d": "Bastão apoiado nos ombros, gire o tronco pra cada lado devagar mantendo o quadril parado no assento."
  },
  {
   "n": "Apoio na parede com flexão de braços",
@@ -1302,7 +1302,7 @@ self.MT_EXERCICIOS = [
   "n": "Crucifixo inverso unilateral na máquina",
   "g": "Ombros",
   "eq": "Máquina",
-  "d": "Um braço por vez: abra até a linha do ombro com pausa de 1 segundo — o lado livre segura o apoio para não girar."
+  "d": "Um braço por vez: abra até a linha do ombro com pausa de 1 segundo — o lado livre segura o apoio pra não girar."
  },
  {
   "n": "Hack squat com pés altos",
@@ -1350,7 +1350,7 @@ self.MT_EXERCICIOS = [
   "n": "Teaser (pilates)",
   "g": "Pilates e yoga",
   "eq": "Solo",
-  "d": "Suba tronco e pernas ao mesmo tempo formando um V com o corpo — dobre os joelhos para facilitar no começo."
+  "d": "Suba tronco e pernas ao mesmo tempo formando um V com o corpo — dobre os joelhos pra facilitar no começo."
  },
  {
   "n": "Leg circles (pilates)",
@@ -4944,7 +4944,7 @@ self.MT_EXERCICIOS = [
   "n": "Educativo de respiração lateral com prancha",
   "g": "Cardio",
   "eq": "Piscina",
-  "d": "Batendo perna com a prancha à frente, gire só a cabeça para o lado para inspirar e volte o rosto pra água soltando o ar aos poucos."
+  "d": "Batendo perna com a prancha à frente, gire só a cabeça pro lado pra inspirar e volte o rosto pra água soltando o ar aos poucos."
  },
  {
   "n": "Remada unilateral com elástico ancorado",
@@ -5082,7 +5082,7 @@ self.MT_EXERCICIOS = [
   "n": "Equilíbrio tandem (pé na frente do outro)",
   "g": "Reabilitação e terceira idade",
   "eq": "Solo",
-  "d": "Fique com um pé exatamente à frente do outro como numa linha e segure 20 segundos — perto de um apoio para segurança."
+  "d": "Fique com um pé exatamente à frente do outro como numa linha e segure 20 segundos — perto de um apoio pra segurança."
  },
  {
   "n": "Flexão de punho com halter leve",
@@ -7254,7 +7254,7 @@ self.MT_EXERCICIOS = [
   "n": "Saudação ao sol A (surya namaskar A)",
   "g": "Pilates e yoga",
   "eq": "Colchonete",
-  "d": "Encadeie as posturas no ritmo da respiração — uma inspiração ou expiração para cada movimento."
+  "d": "Encadeie as posturas no ritmo da respiração — uma inspiração ou expiração pra cada movimento."
  },
  {
   "n": "Deslize de tornozelo na faixa (band distraction)",
