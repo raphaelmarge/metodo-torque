@@ -1285,7 +1285,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     return st;
   }
-  function save(st) { S.write("ptStudio", st); render(); }
+  function save(st) { idxInvalida(); S.write("ptStudio", st); render(); }
 
   // onboarding do módulo: pergunta o nome do personal na primeira abertura
   function verificaOnboarding() {
@@ -1359,9 +1359,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // Sem isto, cada aluno varria a lista inteira de pagamentos e sessões — com 1000
   // alunos e 12 mil pagamentos viravam milhões de comparações a cada render (2,3 s
   // de tela travada). Aqui a varredura acontece UMA vez e vira consulta instantânea.
-  var idxCache = { st: null, idx: null };
+  var idxCache = { st: null, idx: null, n: -1 };
+  function idxInvalida() { idxCache = { st: null, idx: null, n: -1 }; }
   function idxDe(st) {
-    if (idxCache.st === st && idxCache.idx) return idxCache.idx;
+    // o cache vale só pro MESMO estado carregado e com a mesma quantidade de itens:
+    // se alguém registrou um pagamento ou marcou uma sessão no meio do caminho,
+    // o índice é remontado (a conta é barata; devolver dado velho não seria)
+    var n = (st.pagamentos || []).length + (st.sessoes || []).length;
+    if (idxCache.st === st && idxCache.idx && idxCache.n === n) return idxCache.idx;
     var pagsPorAluno = {}, pagouMes = {}, sessPorAluno = {}, sessFeitas = {};
     (st.pagamentos || []).forEach(function (p) {
       (pagsPorAluno[p.alunoId] = pagsPorAluno[p.alunoId] || []).push(p);
@@ -1377,7 +1382,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       sessDe: function (alunoId) { return sessPorAluno[alunoId] || []; },
       sessFeitasDe: function (alunoId) { return sessFeitas[alunoId] || []; },
     };
-    idxCache = { st: st, idx: idx };
+    idxCache = { st: st, idx: idx, n: n };
     return idx;
   }
   window.__idxPT = idxDe; // testes
@@ -4023,7 +4028,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // capa da ficha: aparece no card "treino de hoje" do app do aluno
         '<div class="linha-flex" style="gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">' +
         (f.capa ? '<img src="' + f.capa + '" alt="capa da ficha" style="width:96px;height:54px;object-fit:cover;border-radius:10px;flex:none;">' : "") +
-        '<button class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card Treino de hoje do app do aluno">' +
+        '<button class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' +
         (f.capa ? "Trocar foto" : "📷 Foto do treino") + "</button>" +
         '<button class="btn sec mini" data-fcapag="' + f.id + '" title="escolher do seu banco de imagens">🖼 Galeria</button>' +
         (f.capa ? '<button class="btn sec mini" data-fcapax="' + f.id + '" title="tirar a foto desta ficha">✕ foto</button>' : "") +
@@ -8573,7 +8578,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<div class="muted" style="font-size:11.5px;">' + imgFmt((im.d || "").length) + " · " + S.fmtData(im.em) + "</div>" +
             '<div class="linha-flex" style="gap:6px;margin-top:8px;">' +
             '<button class="btn sec mini" data-imgnome="' + im.id + '">Renomear</button>' +
-            '<button class="btn sec mini" data-imgcapa="' + im.id + '" title="usar como foto do card treino de hoje (todos os alunos)">Usar no card</button>' +
+            '<button class="btn sec mini" data-imgcapa="' + im.id + '" title="usar como foto do card “treino de hoje” (vale pra todos os alunos)">Usar no card</button>' +
             '<button class="btn sec mini" data-imgrm="' + im.id + '">✕</button></div></div>';
         }).join("") + "</div>"
       : '<div class="vazio">Nenhuma imagem ainda — toque em <b>Enviar imagem</b> e monte o seu banco.</div>';

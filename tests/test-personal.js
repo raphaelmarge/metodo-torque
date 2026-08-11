@@ -1501,6 +1501,20 @@ async function abaPt(p, a) {
     ok(esc1000.domKB < 150, "a lista ocupa " + esc1000.domKB + " KB de tela (eram 936 KB com todos de uma vez)");
     ok(esc1000.novo === esc1000.antigo && esc1000.novo === true && esc1000.semPag === false,
       "o índice responde igualzinho à varredura antiga (mesmo resultado, sem o custo)");
+    // o índice guarda uma cópia pra ser rápido — não pode devolver dado velho
+    const fresco = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos.find((a) => a.ativo !== false);
+      const mes = "2031-07"; // mês sem histórico nenhum, pra medir só o efeito do índice
+      const antes = window.__idxPT(st).pagouMes(al.id, mes);
+      // registra um pagamento no MESMO objeto já indexado (o caso que enganaria o cache)
+      st.pagamentos.push({ id: "pgfresco", alunoId: al.id, valor: 100, data: mes + "-15", forma: "pix" });
+      const depois = window.__idxPT(st).pagouMes(al.id, mes);
+      st.pagamentos = st.pagamentos.filter((x) => x.id !== "pgfresco");
+      return { antes, depois };
+    });
+    ok(fresco.antes === false && fresco.depois === true,
+      "pagamento novo aparece na hora: o índice se refaz quando a lista muda (nada de cache velho)");
   }
 
   // ---------- 🖼 banco de imagens do studio ----------
