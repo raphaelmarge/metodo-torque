@@ -1764,3 +1764,138 @@ alter table public.pagarme_eventos enable row level security;
 drop policy if exists "pagarme_eventos_membros" on public.pagarme_eventos;
 create policy "pagarme_eventos_membros" on public.pagarme_eventos
   for select using (academia_id in (select public.minhas_academias()));
+
+-- ==================== FEED DA COMUNIDADE (rede social do studio) ====================
+-- Os alunos publicam resultado, foto e recado; a turma curte e comenta.
+-- As curtidas e os comentários reusam a tabela app_reacoes (post_id = 'feed:<id>').
+-- O professor modera pelo módulo (RLS de membro). Bloco idempotente.
+
+create table if not exists public.app_feed (
+  id uuid primary key default gen_random_uuid(),
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  token text not null,                          -- autor (token do app do aluno)
+  nome text not null default '',
+  texto text not null default '',
+  foto text not null default '',                -- data URI JPEG já comprimido pelo app
+  treino text not null default '',              -- "Treino B — Costas/Perna" (opcional)
+  oculto boolean not null default false,        -- moderação do professor
+  criado timestamptz not null default now()
+);
+
+create index if not exists app_feed_recentes on public.app_feed (academia_id, criado desc);
+create index if not exists app_feed_autor on public.app_feed (token, criado desc);
+
+alter table public.app_feed enable row level security;
+
+drop policy if exists "app_feed_membros" on public.app_feed;
+create policy "app_feed_membros" on public.app_feed
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- o aluno publica (texto e/ou foto). Limites: 600 caracteres, foto de até
+-- ~400 KB em base64 e 10 posts por dia — segura spam e o tamanho da tabela.
+create or replace function public.app_aluno_posta(t text, p_nome text, p_texto text, p_foto text, p_treino text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_nome text;
+  v_hoje integer;
+  v_id uuid;
+begin
+  -- o nome vem do que o próprio app já devolveu ao professor; o p_nome só
+  -- entra como reserva pra quem ainda não sincronizou nada
+  select academia_id, coalesce(nullif(retorno->>'nome', ''), nullif(trim(coalesce(p_nome, '')), ''), 'Aluno')
+    into v_acad, v_nome
+    from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  if length(trim(coalesce(p_texto, ''))) = 0 and length(coalesce(p_foto, '')) = 0 then
+    return json_build_object('erro', 'vazio');
+  end if;
+  if length(coalesce(p_foto, '')) > 0 then
+    if p_foto !~ '^data:image/(png|jpe?g|webp);base64,' then
+      return json_build_object('erro', 'foto_invalida');
+    end if;
+    if length(p_foto) > 400000 then
+      return json_build_object('erro', 'foto_grande');
+    end if;
+  end if;
+  select count(*) into v_hoje from app_feed
+    where token = t and criado > now() - interval '24 hours';
+  if v_hoje >= 10 then
+    return json_build_object('erro', 'limite_diario');
+  end if;
+  insert into app_feed (academia_id, token, nome, texto, foto, treino)
+    values (v_acad, t, left(coalesce(v_nome, 'Aluno'), 60),
+            left(trim(coalesce(p_texto, '')), 600), coalesce(p_foto, ''),
+            left(coalesce(p_treino, ''), 80))
+    returning id into v_id;
+  return json_build_object('ok', true, 'id', v_id);
+end;
+$$;
+
+-- o feed da turma, já com curtidas e comentários de cada post
+create or replace function public.app_aluno_feed(t text, p_limite integer default 30)
+returns json
+language plpgsql security definer stable
+set search_path = public
+as $$
+declare
+  v_acad uuid;
+  v_out json;
+begin
+  select academia_id into v_acad from app_aluno where token = t;
+  if v_acad is null then
+    return json_build_object('erro', 'token_invalido');
+  end if;
+  select coalesce(json_agg(linha order by (linha->>'criado') desc), '[]'::json) into v_out
+  from (
+    select json_build_object(
+      'id', f.id,
+      'nome', f.nome,
+      'texto', f.texto,
+      'foto', f.foto,
+      'treino', f.treino,
+      'criado', f.criado,
+      'meu', (f.token = t),
+      'curtidas', (select count(*) from app_reacoes r
+                     where r.post_id = 'feed:' || f.id and r.tipo = 'like'),
+      'curti', exists (select 1 from app_reacoes r
+                         where r.post_id = 'feed:' || f.id and r.tipo = 'like' and r.token = t),
+      'comentarios', (select coalesce(json_agg(json_build_object(
+                          'nome', c.nome, 'texto', c.texto, 'criado', c.criado) order by c.criado), '[]'::json)
+                        from app_reacoes c
+                        where c.post_id = 'feed:' || f.id and c.tipo = 'coment')
+    ) as linha
+    from app_feed f
+    where f.academia_id = v_acad and f.oculto = false
+    order by f.criado desc
+    limit greatest(1, least(60, coalesce(p_limite, 30)))
+  ) sub;
+  return json_build_object('ok', true, 'posts', v_out);
+end;
+$$;
+
+-- o autor apaga o próprio post (leva junto curtidas e comentários dele)
+create or replace function public.app_aluno_feed_apaga(t text, p_id uuid)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  delete from app_feed where id = p_id and token = t;
+  if not found then
+    return json_build_object('erro', 'nao_encontrado');
+  end if;
+  delete from app_reacoes where post_id = 'feed:' || p_id;
+  return json_build_object('ok', true);
+end;
+$$;
+
+grant execute on function public.app_aluno_posta(text, text, text, text, text) to anon, authenticated;
+grant execute on function public.app_aluno_feed(text, integer) to anon, authenticated;
+grant execute on function public.app_aluno_feed_apaga(text, uuid) to anon, authenticated;

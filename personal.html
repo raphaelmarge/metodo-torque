@@ -839,6 +839,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="abas" id="dsAbas" style="margin: 0 0 14px;">
       <button data-dsa="config" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/></svg> Desafio</button>
       <button data-dsa="placar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Placar</button>
+      <button data-dsa="feed"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/></svg> Comunidade</button>
     </div>
     <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--roxo);" data-dssec="config">
       <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/></svg> Desafio do studio (estilo GymRats)</h2>
@@ -859,6 +860,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" data-dssec="placar" hidden>
       <h2>Placar</h2>
       <div id="dsRanking" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
+    </div>
+    <div class="card" data-dssec="feed" hidden>
+      <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/></svg> Comunidade (feed da turma)</h2>
+      <p class="muted" style="margin: 4px 0 10px;">O que os seus alunos publicam entre eles: resultado, foto e recado. Você lê tudo e pode <b>esconder</b> um post que saiu da linha — ele some do app de todo mundo na hora, sem republicar nada.</p>
+      <div id="fdmAviso" class="muted" style="font-size: 12.5px; margin-bottom: 10px;"></div>
+      <div class="linha-flex" style="margin-bottom: 10px;">
+        <button class="btn sec" id="fdmRecarrega">Atualizar</button>
+        <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 0;"><input type="checkbox" id="fdmOcultos" style="width: 16px; height: 16px;"> mostrar os escondidos</label>
+      </div>
+      <div id="fdmLista" class="muted">Carregando…</div>
     </div>
   </section>
 
@@ -975,6 +986,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeAgenda" style="width: 17px; height: 17px;"> Agenda — pedir e confirmar horário pelo app</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeChat" style="width: 17px; height: 17px;"> Chat com você</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVePag" style="width: 17px; height: 17px;"> Plano e pagamento — Pix, "Já paguei" e assinatura</label>
+        <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgFeed" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os alunos postam resultado e foto, curtem e comentam entre si (vem desligado; precisa de conta na nuvem)</span></label>
       </div>
       <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
         <button class="btn" id="cfgSalva">Salvar configurações</button>
@@ -2863,6 +2875,63 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__desafioPT = { render: renderDesafio, ranking: carregaRankingDesafio, pinta: pintaRankingDesafio }; // testes
 
+  // ---------- moderação da Comunidade (o feed que os alunos publicam entre si) ----------
+  // o professor é membro da academia, então lê e edita a tabela app_feed direto pela RLS
+  function pintaFeedMod(box, posts) {
+    box.innerHTML = posts.map(function (p) {
+      var q = new Date(p.criado);
+      return "<div style='padding:12px 0;border-top:1px solid var(--linha);" + (p.oculto ? "opacity:.55;" : "") + "'>" +
+        "<div class='linha-flex' style='gap:8px;align-items:center;'>" +
+        "<b style='font-size:14px;'>" + esc(p.nome || "Aluno") + "</b>" +
+        "<span class='muted' style='font-size:11.5px;'>" + (isFinite(q) ? q.toLocaleString("pt-BR").replace(/:\d\d$/, "") : "") +
+        (p.treino ? " · " + esc(p.treino) : "") + "</span>" +
+        (p.oculto ? "<span class='tag alerta' style='font-size:10px;'>escondido</span>" : "") +
+        "<span style='margin-left:auto;display:inline-flex;gap:8px;flex:none;'>" +
+        "<button class='btn sec mini' data-fdmoc='" + esc(p.id) + "'>" + (p.oculto ? "Mostrar" : "Esconder") + "</button>" +
+        "<button class='btn sec mini' data-fdmrm='" + esc(p.id) + "' title='apagar de vez'>✕</button></span></div>" +
+        (p.texto ? "<div style='font-size:14px;margin-top:6px;white-space:pre-wrap;'>" + esc(p.texto) + "</div>" : "") +
+        (p.foto ? "<img src='" + esc(p.foto) + "' alt='foto do post' loading='lazy' style='max-width:220px;border-radius:10px;margin-top:8px;display:block;'>" : "") +
+        "</div>";
+    }).join("");
+  }
+  function carregaFeedMod() {
+    var box = $("fdmLista");
+    var st = load();
+    $("fdmAviso").textContent = (st.config || {}).feedOn
+      ? ""
+      : "A Comunidade está DESLIGADA — ligue em Configurações e publique os apps pros alunos verem.";
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { box.textContent = "Entre com a conta da nuvem (card Sua ilha) pra ver o que a turma postou."; return; }
+    box.textContent = "Carregando…";
+    var q = nuvem.client.from("app_feed").select("id,nome,texto,foto,treino,oculto,criado")
+      .eq("academia_id", nuvem.aid).order("criado", { ascending: false }).limit(60);
+    if (!$("fdmOcultos").checked) q = q.eq("oculto", false);
+    q.then(function (r) {
+      if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a Comunidade."; return; }
+      var posts = (r && r.data) || [];
+      if (!posts.length) { box.textContent = "Ninguém postou ainda."; return; }
+      pintaFeedMod(box, posts);
+    }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
+  }
+  $("fdmRecarrega").addEventListener("click", carregaFeedMod);
+  $("fdmOcultos").addEventListener("change", carregaFeedMod);
+  $("fdmLista").addEventListener("click", function (e) {
+    var oc = e.target.getAttribute && e.target.getAttribute("data-fdmoc");
+    var rm = e.target.getAttribute && e.target.getAttribute("data-fdmrm");
+    if (!oc && !rm) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    e.target.disabled = true;
+    if (rm) {
+      if (!confirm("Apagar este post de vez? Não dá pra voltar atrás.")) { e.target.disabled = false; return; }
+      nuvem.client.from("app_feed").delete().eq("id", rm).then(carregaFeedMod, carregaFeedMod);
+      return;
+    }
+    var escondendo = /Esconder/.test(e.target.textContent);
+    nuvem.client.from("app_feed").update({ oculto: escondendo }).eq("id", oc).then(carregaFeedMod, carregaFeedMod);
+  });
+  window.__feedMod = { carrega: carregaFeedMod, pinta: pintaFeedMod }; // testes
+
   // ---------- grupos de alunos + envio de treino em grupo ----------
   // seletor de quem entra no grupo: abre num quadrado com busca e vários marcados de uma vez
   function pintaGrQuem(ativos) {
@@ -4519,6 +4588,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgAtraso").value = String(atrasoTol(st));
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
+    $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
   }
   $("cfgSalva").addEventListener("click", function () {
     var st = load();
@@ -4526,8 +4596,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
     var am = {};
     CFG_VE.forEach(function (par) { if (!$(par[0]).checked) am[par[1]] = false; });
-    var mudouApp = JSON.stringify(am) !== JSON.stringify((st.config.appMostra || {}));
+    var feed = $("cfgFeed").checked;
+    var mudouApp = JSON.stringify(am) !== JSON.stringify((st.config.appMostra || {})) || feed !== !!st.config.feedOn;
     st.config.appMostra = am;
+    st.config.feedOn = feed;
     // o app dos alunos muda de cara — todos entram na fila de publicar
     if (mudouApp) st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
     save(st);
@@ -4769,6 +4841,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__avAba = fazSubAbas("vAvaliacoes", "avAbas", "data-ava", "data-avsec", "avaliar");
   window.__qtAba = fazSubAbas("vQuest", "qtAbas", "data-qta", "data-qtsec", "enviar");
   window.__dsAba = fazSubAbas("vDesafio", "dsAbas", "data-dsa", "data-dssec", "config");
+  // abrir a sub-aba Comunidade já busca o feed da turma
+  $("dsAbas").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button[data-dsa]");
+    if (b && b.getAttribute("data-dsa") === "feed") carregaFeedMod();
+  });
   window.__relAba = fazSubAbas("vRelatorios", "relAbas", "data-rela", "data-relsec", "fin");
   window.__chAba = fazSubAbas("vChat", "chAbas", "data-cha", "data-chsec", "conversas");
   $("tAluno").addEventListener("change", renderFichas);
@@ -6417,6 +6494,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!ve("pag")) menuOculta.push("pagamento");
     if (!ve("chat")) menuOculta.push("chat");
     if (!ve("agenda")) menuOculta.push("agenda");
+    // Comunidade (feed da turma): o professor liga nas Configurações e só existe com nuvem
+    var feedLigado = !!(st.config || {}).feedOn && !!(self.MT_CLOUD && self.MT_CLOUD.url) && !!a.appTokenP;
+    if (!feedLigado) menuOculta.push("feed");
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
       .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
@@ -6437,6 +6517,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       sino: "<path d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'/><path d='M10.3 21a1.94 1.94 0 0 0 3.4 0'/>",
       prancheta: "<path d='M9 3h6v3H9z'/><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 11h6M9 15h4'/>",
       relogio: "<circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/>",
+      pessoas: "<circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/>",
     };
     var nuvemCfg = self.MT_CLOUD || {};
     var atualizador = "";
@@ -6561,6 +6642,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           ((st.config || {}).mural || []).map(function (av) {
             return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed #322e3d;'>• " + esc(av) + "</div>";
           }).join("") + "</div>"
+        : "") +
+      // ---------- Comunidade: o feed da turma (o professor liga nas Configurações) ----------
+      (feedLigado
+        ? "<div class='cardx'><h2>" + appIco(APPIC.pessoas, 14) + "Comunidade</h2>" +
+          "<div class='vz' style='text-align:left;padding:0 0 10px;font-size:12.5px;'>O mural da turma: conte como foi o treino, poste a foto e puxe a galera. Só quem treina " +
+          "com você vê — nada disso vai pra fora do studio.</div>" +
+          "<div id='fdRank' style='margin-bottom:12px;'></div>" +
+          "<div style='background:#14121a;border:1px solid #322e3d;border-radius:14px;padding:10px;'>" +
+          "<textarea id='fdTexto' rows='2' maxlength='600' placeholder='Ex.: fechei 100 kg no agacho hoje!' " +
+          "style='width:100%;background:transparent;border:none;outline:none;color:inherit;font-family:inherit;font-size:14px;resize:vertical;'></textarea>" +
+          "<div id='fdPrev' style='display:none;margin:6px 0;position:relative;'>" +
+          "<img id='fdPrevImg' alt='foto que você vai publicar' style='width:100%;border-radius:10px;display:block;'>" +
+          "<button id='fdTira' aria-label='Tirar a foto do post' style='position:absolute;top:6px;right:6px;background:rgba(0,0,0,.65);border:none;color:#fff;border-radius:99px;width:28px;height:28px;font-size:15px;cursor:pointer;font-family:inherit;'>✕</button></div>" +
+          "<div style='display:flex;gap:8px;margin-top:6px;'>" +
+          "<label class='btnx' id='fdFotoBt' style='flex:1;background:#0d0c10;border:1px solid #322e3d;color:#a9a4b5;box-shadow:none;text-align:center;cursor:pointer;'>Foto" +
+          "<input id='fdFoto' type='file' accept='image/*' style='display:none;'></label>" +
+          "<button class='btnx' id='fdEnvia' style='flex:2;'>Publicar</button></div>" +
+          "<div id='fdStatus' class='vz' style='font-size:12px;padding:6px 0 0;'></div></div>" +
+          "<div id='fdLista' style='margin-top:14px;'></div></div>"
         : "") +
       ((st.desafio && st.desafio.nome && st.desafio.fim >= S.todayISO())
         ? "<div class='cardx' style='border-color:#a78bfa;background:linear-gradient(160deg,#241d33,#1d1a24);'><h2>" + appIco(APPIC.trofeu, 14) + "Desafio: " + esc(st.desafio.nome) + "</h2>" +
@@ -7842,6 +7942,98 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "pl.innerHTML=rk.slice(0,5).map(function(r,i){return \"<div style='display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #322e3d;'>\"+" +
           "\"<span>\"+(med[i]||(i+1)+'º')+' '+(r.nome||'Aluno')+\"</span><b>\"+r.dias+\" treino(s)</b></div>\";}).join('');});})();"
         : "") +
+      // ---------- Comunidade: feed da turma (posts, curtidas, comentários e ranking da semana) ----------
+      (feedLigado
+        ? "(function(){var lista=document.getElementById('fdLista');if(!lista)return;" +
+          "var fotoNova='';var carregando=false;" +
+          "function eh(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return '&#'+c.charCodeAt(0)+';';});}" +
+          "function quando(iso){var d=new Date(iso);var m=Math.floor((Date.now()-d.getTime())/60000);" +
+          "if(m<1)return'agora';if(m<60)return m+' min';var h=Math.floor(m/60);if(h<24)return h+' h';" +
+          "var dd=Math.floor(h/24);if(dd<7)return dd+' d';return d.toLocaleDateString('pt-BR').slice(0,5);}" +
+          "function iniciais(n){return String(n||'A').trim().split(/\\s+/).slice(0,2).map(function(p){return p.charAt(0).toUpperCase();}).join('');}" +
+          "function stat(t){document.getElementById('fdStatus').textContent=t||'';}" +
+          // sem nuvem o feed não tem como existir — avisa em vez de fingir que funciona
+          "if(!NUVEM||!TOKEN){lista.innerHTML=\"<div class='vz'>A comunidade precisa de internet e do app publicado pelo seu professor.</div>\";" +
+          "document.getElementById('fdEnvia').disabled=true;return;}" +
+          // ----- foto: comprime até caber no limite do servidor (400 KB de base64) -----
+          "document.getElementById('fdFoto').addEventListener('change',function(){var f=this.files&&this.files[0];this.value='';if(!f)return;" +
+          "stat('Preparando a foto…');var img=new Image();var rd=new FileReader();" +
+          "rd.onload=function(){img.onload=function(){" +
+          "var tentativas=[[900,.72],[720,.66],[560,.6],[440,.5]];var saiu='';" +
+          "for(var i=0;i<tentativas.length;i++){var lado=tentativas[i][0],q=tentativas[i][1];" +
+          "var c=document.createElement('canvas');var k=lado/Math.max(img.width,img.height);if(k>1)k=1;" +
+          "c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);" +
+          "c.getContext('2d').drawImage(img,0,0,c.width,c.height);" +
+          "saiu=c.toDataURL('image/jpeg',q);if(saiu.length<=380000)break;}" +
+          "if(saiu.length>380000){stat('Essa foto é pesada demais — tente outra.');return;}" +
+          "fotoNova=saiu;document.getElementById('fdPrevImg').src=saiu;document.getElementById('fdPrev').style.display='block';stat('');};" +
+          "img.onerror=function(){stat('Não consegui ler essa imagem.');};img.src=rd.result;};" +
+          "rd.onerror=function(){stat('Não consegui ler essa imagem.');};rd.readAsDataURL(f);});" +
+          "document.getElementById('fdTira').addEventListener('click',function(){fotoNova='';document.getElementById('fdPrev').style.display='none';});" +
+          // ----- publicar -----
+          "document.getElementById('fdEnvia').addEventListener('click',function(){" +
+          "var tx=document.getElementById('fdTexto').value.trim();" +
+          "if(!tx&&!fotoNova){stat('Escreva algo ou escolha uma foto.');return;}" +
+          "var bt=this;bt.disabled=true;stat('Publicando…');" +
+          // se treinou hoje, o post já sai marcado com o treino do dia
+          "var trHoje='';try{if(L('ptfeitos',{})[isoHj()])trHoje=(FICHAS_META[0]&&FICHAS_META[0].t)?String(FICHAS_META[0].t).slice(0,80):'Treinou hoje';}catch(e){}" +
+          "rpcApp('app_aluno_posta',{t:TOKEN,p_nome:PRIMEIRO,p_texto:tx,p_foto:fotoNova,p_treino:trHoje}).then(function(r){bt.disabled=false;" +
+          "if(r&&r.ok){document.getElementById('fdTexto').value='';fotoNova='';document.getElementById('fdPrev').style.display='none';" +
+          "stat('');if(navigator.vibrate)navigator.vibrate(60);carrega();return;}" +
+          "var e=(r&&r.erro)||'';" +
+          "stat(e==='limite_diario'?'Você já postou bastante hoje — volta amanhã!':e==='foto_grande'?'A foto ficou grande demais.':'Não deu pra publicar agora — tenta de novo.');});});" +
+          // ----- curtir, comentar e apagar -----
+          "lista.addEventListener('click',function(e){" +
+          "var lk=e.target.closest('[data-fdlike]');" +
+          "if(lk){var id=lk.getAttribute('data-fdlike');lk.disabled=true;" +
+          "rpcApp('app_aluno_reage',{t:TOKEN,p_post:'feed:'+id,p_tipo:'like',p_nome:PRIMEIRO,p_texto:''}).then(function(){carrega();});" +
+          "if(navigator.vibrate)navigator.vibrate(8);return;}" +
+          "var cm=e.target.closest('[data-fdcom]');" +
+          "if(cm){var idc=cm.getAttribute('data-fdcom');var inp=lista.querySelector(\"[data-fdinp='\"+idc+\"']\");" +
+          "var tx2=(inp&&inp.value||'').trim();if(!tx2)return;cm.disabled=true;" +
+          "rpcApp('app_aluno_reage',{t:TOKEN,p_post:'feed:'+idc,p_tipo:'coment',p_nome:PRIMEIRO,p_texto:tx2}).then(function(){carrega();});return;}" +
+          "var ap=e.target.closest('[data-fdrm]');" +
+          "if(ap){if(!confirm('Apagar este post?'))return;ap.disabled=true;" +
+          "rpcApp('app_aluno_feed_apaga',{t:TOKEN,p_id:ap.getAttribute('data-fdrm')}).then(function(){carrega();});return;}});" +
+          // ----- pintar -----
+          "function pinta(posts){" +
+          "if(!posts.length){lista.innerHTML=\"<div class='vz'>Ninguém postou ainda — seja o primeiro a mostrar o treino de hoje!</div>\";return;}" +
+          "lista.innerHTML=posts.map(function(p){" +
+          "return \"<div style='border-top:1px solid #322e3d;padding:14px 0;'>\"+" +
+          "\"<div style='display:flex;align-items:center;gap:10px;'>\"+" +
+          "\"<div style='width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg," + COR + "," + CORC + ");color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none;'>\"+eh(iniciais(p.nome))+\"</div>\"+" +
+          "\"<div style='min-width:0;'><b style='font-size:14px;'>\"+eh(p.nome||'Aluno')+\"</b>\"+" +
+          "\"<div style='font-size:11.5px;color:#8a8695;'>\"+quando(p.criado)+(p.treino?' · '+eh(p.treino):'')+\"</div></div>\"+" +
+          "(p.meu?\"<button data-fdrm='\"+eh(p.id)+\"' aria-label='Apagar meu post' style='margin-left:auto;background:none;border:none;color:#8a8695;font-size:13px;cursor:pointer;font-family:inherit;'>apagar</button>\":'')+\"</div>\"+" +
+          "(p.texto?\"<div style='font-size:14.5px;line-height:1.45;margin-top:9px;white-space:pre-wrap;'>\"+eh(p.texto)+\"</div>\":'')+" +
+          "(p.foto?\"<img src='\"+eh(p.foto)+\"' alt='foto do post' loading='lazy' style='width:100%;border-radius:12px;margin-top:9px;display:block;'>\":'')+" +
+          "\"<div style='display:flex;align-items:center;gap:12px;margin-top:9px;'>\"+" +
+          "\"<button data-fdlike='\"+eh(p.id)+\"' style='background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;padding:0;color:\"+(p.curti?'" + CORC + "':'#8a8695')+\"'>\"+(p.curti?'💪 ':'👏 ')+(p.curtidas||0)+\"</button>\"+" +
+          "\"<span style='font-size:12.5px;color:#8a8695;'>\"+(p.comentarios||[]).length+\" comentário(s)</span></div>\"+" +
+          "((p.comentarios||[]).map(function(c){" +
+          "return \"<div style='font-size:13px;margin-top:7px;padding-left:10px;border-left:2px solid #322e3d;'><b>\"+eh(c.nome||'Aluno')+\"</b> \"+eh(c.texto)+\"</div>\";}).join(''))+" +
+          "\"<div style='display:flex;gap:6px;margin-top:9px;'>\"+" +
+          "\"<input data-fdinp='\"+eh(p.id)+\"' maxlength='400' placeholder='Escrever um comentário…' style='flex:1;min-width:0;background:#14121a;border:1px solid #322e3d;border-radius:99px;padding:8px 12px;color:inherit;font-family:inherit;font-size:13px;'>\"+" +
+          "\"<button data-fdcom='\"+eh(p.id)+\"' style='background:none;border:none;color:" + CORC + ";font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;'>Enviar</button></div></div>\";}).join('');}" +
+          // ----- ranking da semana (reusa o placar por dias treinados) -----
+          "function segunda(){var d=new Date();var w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d.toISOString().slice(0,10);}" +
+          "function rankSemana(){var ini=segunda();var fim=isoHj();" +
+          "rpcApp('app_desafio_ranking',{t:TOKEN,p_ini:ini,p_fim:fim}).then(function(d){" +
+          "var el=document.getElementById('fdRank');if(!el)return;var rk=(d&&d.ranking)||[];" +
+          "if(!rk.length){el.innerHTML='';return;}" +
+          "var med=['🥇','🥈','🥉'];" +
+          "el.innerHTML=\"<div style='background:#14121a;border:1px solid #322e3d;border-radius:14px;padding:11px 13px;'>\"+" +
+          "\"<div style='font-size:10px;font-weight:800;letter-spacing:.14em;color:#8a8695;text-transform:uppercase;margin-bottom:7px;'>Ranking da semana</div>\"+" +
+          "rk.slice(0,5).map(function(r,i){return \"<div style='display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0;'><span>\"+(med[i]||(i+1)+'º')+' '+eh(r.nome||'Aluno')+\"</span><b>\"+r.dias+\"</b></div>\";}).join('')+" +
+          "\"<div style='font-size:11.5px;color:#8a8695;margin-top:6px;'>Conta os dias em que cada um marcou <b>Treinei hoje!</b></div></div>\";});}" +
+          // ----- carrega (cache local primeiro, pra abrir rápido e aguentar offline) -----
+          "function carrega(){if(carregando)return;carregando=true;" +
+          "rpcApp('app_aluno_feed',{t:TOKEN,p_limite:30}).then(function(r){carregando=false;" +
+          "if(r&&r.ok&&Array.isArray(r.posts)){try{Sv('ptfeed',r.posts);}catch(e){}pinta(r.posts);return;}" +
+          "pinta(L('ptfeed',[]));}).catch(function(){carregando=false;pinta(L('ptfeed',[]));});}" +
+          "pinta(L('ptfeed',[]));carrega();rankSemana();" +
+          "setInterval(function(){if(SEC==='feed')carrega();},45000);})();"
+        : "") +
       // questionário do personal: trancado até a data de liberação; respostas
       // vão pela RPC pública app_quest_responde e viram métricas no perfil
       (qa ? "var QUESTAPP=" + JSON.stringify({ nome: qa.nome || "Questionário", ps: qa.ps, desde: qa.desde || "", repete: !!qa.repete, env: qa.enviadoEm || "" }).replace(/</g, "\\u003c") + ";" +
@@ -7927,6 +8119,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "['inicio',\"<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>\",'Início']," +
       "['treino',\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'Treino']," +
       "['evolucao',\"<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>\",'Evolução']," +
+      // com o feed ligado a Comunidade vira a 4ª aba fixa (a Agenda vai pro menu ☰)
+      "['feed',\"<circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/>\",'Turma']," +
       "['agenda',\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\",'Agenda']," +
       "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']," +
       "['util',\"<path d='M14.5 6.5a4.2 4.2 0 0 0-5.7 5.4L3 17.7 6.3 21l5.8-5.8a4.2 4.2 0 0 0 5.4-5.7l-2.8 2.8-2.4-.6-.6-2.4z'/>\",'Utilidades']," +
@@ -7937,6 +8131,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
+      "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
       "if(/Pagamento|Mensalidade/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
       "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Desafio/.test(t))return 'inicio';" +
