@@ -1258,5 +1258,73 @@ self.MT_RECEITAS = [
    "Sirva na hora (textura soft) ou congele 30 min pra bola firme."
   ],
   "dica": "A banana congelada faz o papel do creme — sobremesa de 105 kcal sem açúcar e sem lactose se trocar o leite por bebida vegetal."
+ },
+ {
+  "id": "rc58",
+  "n": "Nuggets caseiros de frango na airfryer",
+  "cat": "Lanches",
+  "tempo": 30,
+  "rende": 3,
+  "k": 310,
+  "pt": 45,
+  "ing": [
+   "400 g de peito de frango moído",
+   "1 ovo",
+   "3 col. sopa de farinha de aveia",
+   "3 col. sopa de flocos de milho sem açúcar triturados (pra empanar)",
+   "Sal, alho em pó e páprica a gosto"
+  ],
+  "modo": [
+   "Misture o frango moído com o ovo, a farinha de aveia e os temperos até dar liga.",
+   "Leve a massa 15 min na geladeira — assim ela para de grudar na mão.",
+   "Modele os nuggets, passe nos flocos de milho triturados e arrume sem empilhar na airfryer.",
+   "Asse a 200 °C por 12 min, virando na metade, até dourar."
+  ],
+  "dica": "Versão caseira do nuggets de pacote: 310 kcal e 45 g de proteína por porção, contra ~250 kcal e só 13 g de proteína nos 6 nuggets congelados. Congele crus por até 2 meses e asse direto."
+ },
+ {
+  "id": "rc59",
+  "n": "Refresco proteico de limão com whey",
+  "cat": "Pré-treino",
+  "tempo": 5,
+  "rende": 1,
+  "k": 125,
+  "pt": 27,
+  "ing": [
+   "1 dose de whey isolado sabor neutro ou limão (30 g)",
+   "Suco de 1 limão",
+   "300 ml de água bem gelada",
+   "Gelo e folhas de hortelã",
+   "Adoçante a gosto"
+  ],
+  "modo": [
+   "Dissolva o whey em 50 ml de água com o batedor de arame — sempre líquido primeiro, pó depois, senão empelota.",
+   "Junte o suco de limão, o restante da água gelada e o adoçante.",
+   "Sirva com gelo e hortelã amassada na hora."
+  ],
+  "dica": "Sem leite e quase sem gordura, cai leve antes do treino: 125 kcal e 27 g de proteína. Whey isolado é o único que fica transparente — o concentrado deixa turvo."
+ },
+ {
+  "id": "rc60",
+  "n": "Bolo de caneca proteico de chocolate",
+  "cat": "Doces fit",
+  "tempo": 5,
+  "rende": 1,
+  "k": 235,
+  "pt": 22,
+  "ing": [
+   "1 ovo",
+   "2 col. sopa de farinha de aveia",
+   "1 col. sopa de cacau em pó 100%",
+   "1/2 dose de whey de chocolate (15 g)",
+   "2 col. sopa de leite desnatado",
+   "1 col. chá de fermento em pó e adoçante a gosto"
+  ],
+  "modo": [
+   "Bata o ovo na caneca com o garfo, junte o leite e o adoçante.",
+   "Acrescente a aveia, o cacau e o whey e misture até ficar liso; o fermento entra por último.",
+   "Micro-ondas por 1 min e 30 s na potência alta — se passar disso resseca."
+  ],
+  "dica": "Doce de 5 minutos com 22 g de proteína. Deixe a caneca só até 2/3 cheia, porque a massa dobra de tamanho no micro-ondas."
  }
 ];
