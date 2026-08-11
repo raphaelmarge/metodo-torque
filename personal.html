@@ -628,11 +628,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
     <div class="card" data-trsec="ex">
       <h2>Exercícios <span id="catN" class="muted" style="font-weight: 400;"></span></h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Catálogo TORQUE e os seus exercícios numa lista só, separada por <b>zona do corpo</b> e <b>tipo de movimento</b>. Toque em <b>Abrir</b> pra personalizar vídeo e dica — o personalizado ganha a etiqueta SEU e vale na frente do catálogo.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Catálogo TORQUE e os seus exercícios numa lista só, separada por <b>zona do corpo</b> e <b>tipo de movimento</b>. Toque em <b>Abrir</b> pra personalizar vídeo e dica — o personalizado ganha a etiqueta SEU e vale na frente do catálogo.<br>Marque a <b>★</b> nos que você mais passa: eles sobem pro topo desta lista, ganham um grupo próprio na hora de montar a ficha e a IA passa a preferi-los.</p>
       <div class="linha-flex" style="margin: 8px 0 10px;">
         <input id="catBusca" placeholder="Buscar (ex.: agachamento, kettlebell…)" style="flex: 2; min-width: 170px;">
         <select id="catGrupo" style="flex: 1; min-width: 140px;"><option value="">Todas as zonas</option></select>
         <select id="catMov" style="flex: 1; min-width: 150px;"><option value="">Todos os movimentos</option></select>
+        <button class="btn sec" id="catFav" aria-pressed="false" title="mostrar só os seus favoritos">★ Favoritos</button>
       </div>
       <div id="exLista"></div>
       <div style="border-top: 1px solid var(--linha); margin-top: 14px; padding-top: 12px;">
@@ -1262,12 +1263,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__tema = { corOk: corOk, escurece: escurece, clareia: clareia }; // testes
 
+  var FAV_FILTRO = "★ Meus favoritos"; // opção do seletor de tipo de treino (cascata da ficha)
   function load() {
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
     st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || [];
     st.exercicios = st.exercicios || []; st.treinosV2 = st.treinosV2 || {}; st.videoteca = st.videoteca || [];
     st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
     st.diarioPT = st.diarioPT || {};
+    st.exFav = st.exFav || []; // exercícios favoritos do professor (nomes)
     if (!st.exercicios.length && !st._exSeed) {
       st._exSeed = 1;
       [["Supino reto", "Peito", "Pegada na largura dos ombros, desça a barra controlando até o peito e suba explosivo. Cotovelos a ~45°."],
@@ -4049,9 +4052,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div class="linha-flex" style="margin-top:10px;">' +
         // cascata: tipo de treino → grupamento → exercício (sem rolar 1000 itens)
         '<select data-exmov="' + f.id + '" style="flex:1;min-width:140px;"><option value="">Tipo de treino…</option>' +
+        '<option value="' + FAV_FILTRO + '">' + FAV_FILTRO + "</option>" +
         ["Empurrar", "Puxar", "Agachar e pernas", "Dobradiça e quadril", "Core e estabilidade", "Cardio e condicionamento", "Mobilidade e alongamento", "Habilidade e outros"].map(function (m) { return "<option>" + m + "</option>"; }).join("") + "</select>" +
         '<select data-exzona="' + f.id + '" style="flex:1;min-width:140px;"><option value="">Grupamento…</option></select>' +
         '<select data-exsel="' + f.id + '" style="flex:2;min-width:170px;"><option value="">Exercício…</option></select>' +
+        '<button class="btn sec mini" data-exfavsel="' + f.id + '" title="marcar/desmarcar o exercício escolhido como favorito">☆</button>' +
         '<input data-exser="' + f.id + '" type="number" min="1" value="3" style="width:64px;" title="séries">' +
         '<span class="muted">×</span>' +
         '<input data-exrep="' + f.id + '" value="12" style="width:74px;" title="repetições (ex.: 12 ou 30s)">' +
@@ -4071,7 +4076,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!movSel || !zonaSel || !exSel) return;
     var st = load();
     var mov = movSel.value;
-    var itens = listaUnificada(st).filter(function (x) { return !mov || x.mov === mov; });
+    var soFav = mov === FAV_FILTRO;
+    var itens = listaUnificada(st).filter(function (x) { return soFav ? x.fav : (!mov || x.mov === mov); });
     var zonas = {};
     itens.forEach(function (x) { zonas[x.grupo] = 1; });
     var zonaAtual = zonas[zonaSel.value] ? zonaSel.value : "";
@@ -4084,13 +4090,34 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return a.nome < b.nome ? -1 : 1;
     });
     var atual = exSel.value;
+    function opcao(x) { return '<option value="' + esc(x.nome) + '">' + esc(x.nome) + (x.seu ? " — SEU" : "") + "</option>"; }
+    // os favoritos ganham um grupo próprio no topo — é neles que ele clica todo dia
+    var favs = soFav ? [] : lista.filter(function (x) { return x.fav; });
     exSel.innerHTML = '<option value="">Exercício… (' + lista.length + ")</option>" +
-      lista.map(function (x) { return '<option value="' + esc(x.nome) + '">' + esc(x.nome) + (x.seu ? " — SEU" : "") + "</option>"; }).join("");
+      (favs.length ? '<optgroup label="★ Meus favoritos">' + favs.map(opcao).join("") + "</optgroup>" +
+        '<optgroup label="Todos os exercícios">' + lista.map(opcao).join("") + "</optgroup>"
+        : lista.map(opcao).join(""));
     if (lista.some(function (x) { return x.nome === atual; })) exSel.value = atual;
+    pintaEstrelaCascata(fid);
+  }
+  // a estrela ao lado do seletor mostra o estado do exercício escolhido
+  function pintaEstrelaCascata(fid) {
+    var exSel = document.querySelector('[data-exsel="' + fid + '"]');
+    var btn = document.querySelector('[data-exfavsel="' + fid + '"]');
+    if (!exSel || !btn) return;
+    var nome = exSel.value;
+    var fav = !!nome && ehFav(load(), nome);
+    btn.textContent = fav ? "★" : "☆";
+    btn.style.color = fav ? "#f5b301" : "";
+    btn.style.borderColor = fav ? "#f5b301" : "";
+    btn.disabled = !nome;
+    btn.title = !nome ? "escolha um exercício pra favoritar" : fav ? "tirar dos favoritos" : "marcar como favorito — aparece primeiro na próxima ficha";
   }
   $("fichasBox").addEventListener("change", function (e) {
     var fid = e.target.getAttribute && (e.target.getAttribute("data-exmov") || e.target.getAttribute("data-exzona"));
-    if (fid) populaCascata(fid);
+    if (fid) { populaCascata(fid); return; }
+    var fsel = e.target.getAttribute && e.target.getAttribute("data-exsel");
+    if (fsel) pintaEstrelaCascata(fsel);
   });
   // ---------- busca com digitação nos seletores de aluno ----------
   // o <select> continua existindo (valor + change de sempre), mas fica
@@ -4194,9 +4221,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (wpExsCarregado) return;
     wpExsCarregado = true;
     var st = load();
-    $("wpExs").innerHTML = listaUnificada(st).slice(0, 1500).map(function (e) {
-      return "<option>" + esc(e.nome || e.n || "") + "</option>";
-    }).join("");
+    // favoritos primeiro — o datalist mostra as primeiras opções antes de digitar
+    var todos = listaUnificada(st);
+    $("wpExs").innerHTML = todos.filter(function (e) { return e.fav; }).concat(todos.filter(function (e) { return !e.fav; }))
+      .slice(0, 1500).map(function (e) {
+        return "<option>" + esc(e.nome || e.n || "") + "</option>";
+      }).join("");
   }
   function wpLinha(q, n) {
     var d = document.createElement("div");
@@ -4872,10 +4902,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     TA_LESOES.forEach(function (par) { if (par[0].test(an.lesoes || "")) vetos.push(par[1]); });
     var naoGosta = String(an.naogosta || "").split(/[,;]/).map(function (s) { return s.trim().toLowerCase(); }).filter(function (s) { return s.length > 2; });
     var usados = {};
+    var favG = favMapa(st);
     function candidatos(grupo) {
       var meus = (st.exercicios || []).map(function (e) { return { n: e.nome, g: e.grupo, eq: e.eq || "" }; });
       var cat = (self.MT_EXERCICIOS || []).map(function (c) { return { n: c.n, g: c.g, eq: c.eq || "" }; });
-      return meus.concat(cat).filter(function (c) {
+      var lista = meus.concat(cat).filter(function (c) {
         if (c.g !== grupo || usados[c.n.toLowerCase()]) return false;
         if (eqOk && eqOk.indexOf(c.eq) < 0) return false;
         if (vetos.some(function (v) { return v.test(c.n); })) return false;
@@ -4885,6 +4916,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (nivel === "iniciante" && /muscle-up|planche|front lever|back lever|human flag|pistol|dragon flag|snatch|arranco|clean|terra\b/i.test(c.n)) return false;
         return true;
       });
+      // favoritos do professor entram na frente (sem favoritos a ordem fica igual à de antes)
+      return lista.filter(function (c) { return favG[c.n.toLowerCase()]; })
+        .concat(lista.filter(function (c) { return !favG[c.n.toLowerCase()]; }));
     }
     var plano = TA_SPLITS[dias];
     var t = treinoDe(st, alunoId);
@@ -5011,6 +5045,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "GOSTA DE: " + (an.gosta || "?") + " | NÃO GOSTA DE: " + (an.naogosta || "nada informado"),
       "OBSERVAÇÕES DO PERSONAL: " + (a.obs || "—"),
       "",
+      // os favoritos do professor entram como preferência — a IA prescreve o que ele gosta de passar
+      ((st.exFav || []).length
+        ? "EXERCÍCIOS FAVORITOS DO PERSONAL (prefira estes quando servirem ao objetivo): " + st.exFav.slice(0, 60).join(" | ") + "\n"
+        : "") +
       "CATÁLOGO DISPONÍVEL (use somente estes nomes, agrupados por grupo muscular):",
       catalogo,
     ].join("\n");
@@ -5096,6 +5134,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
   });
   $("fichasBox").addEventListener("click", function (e) {
+    // estrela ao lado do seletor: favorita o exercício escolhido sem sair da ficha
+    var fvs = e.target.getAttribute && e.target.getAttribute("data-exfavsel");
+    if (fvs) {
+      var selFv = document.querySelector('[data-exsel="' + fvs + '"]');
+      if (selFv && selFv.value) { alternaFav(selFv.value); pintaEstrelaCascata(fvs); populaCascata(fvs); renderBiblioteca(); }
+      return;
+    }
     var add = e.target.getAttribute && e.target.getAttribute("data-additem");
     var rmF = e.target.getAttribute && e.target.getAttribute("data-rmficha");
     var rmI = e.target.getAttribute && e.target.getAttribute("data-rmitem");
@@ -5229,6 +5274,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function animDe(nome, grupo) {
     return (self.MT_ANIM && self.MT_ANIM.padrao(nome, grupo)) || "agacho";
   }
+  // ---------- favoritos do professor (os que ele mais passa) ----------
+  // guardados por NOME em st.exFav — vale pro catálogo TORQUE e pros exercícios dele
+  function favMapa(st) {
+    var m = {};
+    (st.exFav || []).forEach(function (n) { m[String(n).toLowerCase()] = 1; });
+    return m;
+  }
+  function ehFav(st, nome) { return !!favMapa(st)[String(nome || "").toLowerCase()]; }
+  // liga/desliga e devolve o novo estado (true = virou favorito)
+  function alternaFav(nome) {
+    var st = load();
+    var alvo = String(nome || "").trim();
+    if (!alvo) return false;
+    var chave = alvo.toLowerCase();
+    var i = (st.exFav || []).findIndex(function (n) { return String(n).toLowerCase() === chave; });
+    if (i >= 0) st.exFav.splice(i, 1); else st.exFav.push(alvo);
+    S.write("ptStudio", st);
+    wpExsCarregado = false; // o datalist do circuito reordena com os favoritos na frente
+    return i < 0;
+  }
+  window.__favPT = { alterna: alternaFav, eh: function (n) { return ehFav(load(), n); }, lista: function () { return (load().exFav || []).slice(); } }; // testes
+
   // lista única: os seus personalizados vencem o catálogo (mesmo nome)
   function listaUnificada(st) {
     var meus = {};
@@ -5236,12 +5303,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // o personalizado herda o equipamento do catálogo (senão some da busca por "kettlebell" etc.)
     var catPorNome = {};
     (self.MT_EXERCICIOS || []).forEach(function (c) { catPorNome[c.n.toLowerCase()] = c; });
+    var fav = favMapa(st);
     var itens = (st.exercicios || []).map(function (e) {
-      return { nome: e.nome, grupo: e.grupo || "Geral", eq: (catPorNome[e.nome.toLowerCase()] || {}).eq || "", video: e.video || "", id: e.id, seu: true, semDesc: !e.descricao, mov: movimentoDe(e.nome, e.grupo) };
+      return { nome: e.nome, grupo: e.grupo || "Geral", eq: (catPorNome[e.nome.toLowerCase()] || {}).eq || "", video: e.video || "", id: e.id, seu: true, semDesc: !e.descricao, mov: movimentoDe(e.nome, e.grupo), fav: !!fav[e.nome.toLowerCase()] };
     });
     (self.MT_EXERCICIOS || []).forEach(function (c) {
       if (meus[c.n.toLowerCase()]) return;
-      itens.push({ nome: c.n, grupo: c.g, eq: c.eq || "", video: "", id: null, seu: false, semDesc: false, mov: movimentoDe(c.n, c.g) });
+      itens.push({ nome: c.n, grupo: c.g, eq: c.eq || "", video: "", id: null, seu: false, semDesc: false, mov: movimentoDe(c.n, c.g), fav: !!fav[c.n.toLowerCase()] });
     });
     return itens;
   }
@@ -5250,14 +5318,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var busca = ($("catBusca").value || "").trim().toLowerCase();
     var zona = $("catGrupo").value;
     var mov = $("catMov").value;
+    var soFav = $("catFav").getAttribute("aria-pressed") === "true";
     var itens = listaUnificada(st).filter(function (x) {
+      if (soFav && !x.fav) return false;
       if (zona && x.grupo !== zona) return false;
       if (mov && x.mov !== mov) return false;
       if (busca && (x.nome + " " + x.grupo + " " + x.eq + " " + x.mov).toLowerCase().indexOf(busca) === -1) return false;
       return true;
     });
-    // os SEUS primeiro (bloco próprio no topo), depois o catálogo por zona
+    // favoritos no topo, depois os SEUS, depois o catálogo por zona
     itens.sort(function (a, b) {
+      if (!soFav && a.fav !== b.fav) return a.fav ? -1 : 1;
       if (a.seu !== b.seu) return a.seu ? -1 : 1;
       if (a.grupo !== b.grupo) return a.grupo < b.grupo ? -1 : 1;
       return a.nome < b.nome ? -1 : 1;
@@ -5265,7 +5336,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var corte = itens.slice(0, 40);
     var html = "", zonaAtual = null;
     corte.forEach(function (x) {
-      var rotulo = x.seu ? "Seus exercícios" : x.grupo;
+      var rotulo = x.fav && !soFav ? "★ Seus favoritos" : x.seu ? "Seus exercícios" : x.grupo;
       if (rotulo !== zonaAtual) {
         zonaAtual = rotulo;
         html += "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;'>" + esc(zonaAtual) + "</div>";
@@ -5275,6 +5346,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (x.seu ? '<span class="tag ok" style="font-size:10px;">SEU</span>' : "") +
         (x.seu && x.semDesc ? '<span class="tag alerta" style="font-size:10px;">sem descrição</span>' : "") +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;align-items:center;">' +
+        '<button class="btn sec mini" data-exfav="' + esc(x.nome) + '" aria-pressed="' + (x.fav ? "true" : "false") + '"' +
+        ' style="' + (x.fav ? "color:#f5b301;border-color:#f5b301;" : "") + '"' +
+        ' title="' + (x.fav ? "tirar dos favoritos" : "marcar como favorito — aparece primeiro na hora de montar a ficha") + '">' + (x.fav ? "★" : "☆") + "</button>" +
         '<button class="btn sec mini" data-exanim="' + esc(animDe(x.nome, x.grupo)) + '" title="ver a demonstração do movimento">Como faz</button>' +
         '<a class="btn mini sec" style="text-decoration:none;" target="_blank" rel="noopener" href="' + esc(x.video || videoBusca(x.nome)) + '">▶ vídeo</a>' +
         (x.seu
@@ -5299,6 +5373,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("catBusca").addEventListener("input", renderBiblioteca);
   $("catGrupo").addEventListener("change", renderBiblioteca);
   $("catMov").addEventListener("change", renderBiblioteca);
+  $("catFav").addEventListener("click", function () {
+    var lig = this.getAttribute("aria-pressed") !== "true";
+    this.setAttribute("aria-pressed", lig ? "true" : "false");
+    this.style.color = lig ? "#f5b301" : "";
+    this.style.borderColor = lig ? "#f5b301" : "";
+    this.textContent = lig ? "★ Só favoritos" : "★ Favoritos";
+    renderBiblioteca();
+  });
   window.__catalogoPT = renderBiblioteca; // testes
   window.__movimentoDe = movimentoDe; // testes
   $("exAdd").addEventListener("click", function () {
@@ -5313,6 +5395,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("exLista").addEventListener("click", function (e) {
     var ed = e.target.getAttribute && e.target.getAttribute("data-exedit");
     var rm = e.target.getAttribute && e.target.getAttribute("data-exrm");
+    // estrela: entra/sai dos favoritos e some da lista se o filtro "só favoritos" estiver ligado
+    var fv = e.target.getAttribute && e.target.getAttribute("data-exfav");
+    if (fv) { alternaFav(fv); renderBiblioteca(); renderFichas(); return; }
     // demonstração do movimento: abre/fecha o boneco animado embaixo do exercício
     var anim = e.target.getAttribute && e.target.getAttribute("data-exanim");
     if (anim) {

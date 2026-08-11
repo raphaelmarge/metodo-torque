@@ -3679,6 +3679,80 @@ async function abaPt(p, a) {
     await pAn.close();
   }
   {
+    // ⭐ favoritos do professor: marca na biblioteca e eles sobem na hora de montar a ficha
+    console.log("Exercícios favoritos do professor:");
+    const pF = await b.newPage();
+    pF.on("pageerror", (e) => erros.push("favoritos: " + e.message));
+    await pF.goto(BASE + "/personal.html");
+    await pF.evaluate(() => {
+      localStorage.setItem("mtapp:ptSemConta", "1");
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify({
+        config: {}, alunos: [{ id: "af1", nome: "Aluno Fav", ativo: true, valor: 300 }],
+        sessoes: [], pagamentos: [], treinos: {}, avaliacoes: [], exercicios: [], videoteca: [],
+        treinosV2: { af1: { fichas: [{ id: "ff1", titulo: "A — Teste", itens: [] }] } },
+      }));
+    });
+    await pF.reload();
+    await pF.waitForTimeout(600);
+
+    // 1) a estrela da biblioteca liga e desliga o favorito
+    await pF.evaluate(() => {
+      document.querySelectorAll("[data-trsec]").forEach((e) => { e.hidden = e.getAttribute("data-trsec") !== "ex"; });
+      window.__catalogoPT();
+    });
+    const marcou = await pF.evaluate(() => {
+      const bt = Array.from(document.querySelectorAll("#exLista [data-exfav]")).find((x) => x.getAttribute("data-exfav") === "Agachamento livre");
+      if (!bt) return null;
+      bt.click();
+      return { lista: window.__favPT.lista(), topo: document.getElementById("exLista").textContent.slice(0, 40) };
+    });
+    ok(marcou && marcou.lista.length === 1 && marcou.lista[0] === "Agachamento livre", "★ a estrela da biblioteca marca o exercício como favorito");
+    ok(marcou && /Seus favoritos/.test(marcou.topo), "o favorito sobe pro topo, num bloco 'Seus favoritos'");
+
+    // 2) o filtro "só favoritos" esconde o resto
+    const filtro = await pF.evaluate(() => {
+      document.getElementById("catFav").click();
+      return { linhas: document.querySelectorAll("#exLista .sessao-pt").length, rotulo: document.getElementById("catFav").textContent };
+    });
+    ok(filtro.linhas === 1 && /Só favoritos/.test(filtro.rotulo), "o botão ★ Favoritos filtra a lista (" + filtro.linhas + " linha)");
+    await pF.evaluate(() => document.getElementById("catFav").click());
+
+    // 3) na ficha, o favorito ganha grupo próprio no seletor e tem filtro de tipo
+    const naFicha = await pF.evaluate(() => {
+      document.querySelectorAll("[data-trsec]").forEach((e) => { e.hidden = e.getAttribute("data-trsec") !== "fichas"; });
+      const sel = document.getElementById("tAluno");
+      sel.value = "af1"; sel.dispatchEvent(new Event("change", { bubbles: true }));
+      document.querySelectorAll("#fichasBox details").forEach((d) => { d.open = true; });
+      const ex = document.querySelector('[data-exsel="ff1"]');
+      return {
+        grupos: Array.from(ex.querySelectorAll("optgroup")).map((g) => g.label),
+        favs: Array.from(ex.querySelectorAll("optgroup:first-of-type option")).map((o) => o.value),
+        temFiltro: Array.from(document.querySelectorAll('[data-exmov="ff1"] option')).some((o) => /Meus favoritos/.test(o.value)),
+      };
+    });
+    ok(naFicha.grupos[0] === "★ Meus favoritos" && naFicha.favs[0] === "Agachamento livre", "na ficha o favorito vem num grupo próprio, antes do resto");
+    ok(naFicha.temFiltro, "o seletor de tipo de treino ganha a opção '★ Meus favoritos'");
+
+    // 4) a estrela ao lado do seletor favorita sem sair da ficha
+    const pelaFicha = await pF.evaluate(() => {
+      const ex = document.querySelector('[data-exsel="ff1"]');
+      ex.value = "Remada curvada"; ex.dispatchEvent(new Event("change", { bubbles: true }));
+      const antes = document.querySelector('[data-exfavsel="ff1"]').textContent;
+      document.querySelector('[data-exfavsel="ff1"]').click();
+      return { antes: antes, depois: document.querySelector('[data-exfavsel="ff1"]').textContent, lista: window.__favPT.lista() };
+    });
+    ok(pelaFicha.antes === "☆" && pelaFicha.depois === "★" && pelaFicha.lista.length === 2, "a estrela ao lado do seletor favorita sem sair da ficha");
+
+    // 5) o filtro de favoritos no tipo de treino deixa só eles
+    const soFav = await pF.evaluate(() => {
+      const mv = document.querySelector('[data-exmov="ff1"]');
+      mv.value = "★ Meus favoritos"; mv.dispatchEvent(new Event("change", { bubbles: true }));
+      return Array.from(document.querySelectorAll('[data-exsel="ff1"] option')).map((o) => o.value).filter(Boolean);
+    });
+    ok(soFav.length === 2 && soFav.indexOf("Agachamento livre") >= 0, "escolher '★ Meus favoritos' deixa só os favoritos na lista (" + soFav.length + ")");
+    await pF.close();
+  }
+  {
     // app do aluno: o botão Ver como faz desenha a animação SEM pedir nada pra internet
     const ctxA = await b.newContext({ viewport: { width: 390, height: 844 } });
     const pA = await ctxA.newPage();
