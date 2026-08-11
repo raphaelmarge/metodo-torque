@@ -7021,5 +7021,305 @@ self.MT_EXERCICIOS = [
   "g": "Reabilitação e terceira idade",
   "eq": "Sem equipamento",
   "d": "Ao longo de uma bancada, dê passos laterais curtos pra um lado e volte; joelhos levemente dobrados o tempo todo."
+ },
+ {
+  "n": "Jab duplo com deslocamento lateral",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Dois jabs seguidos e um passo pro lado sem cruzar os pés; queixo abaixado e a mão de trás protegendo o rosto."
+ },
+ {
+  "n": "Combinação 1-2-3 no saco",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Jab, direto e gancho em sequência; gire o pé de trás no direto e o da frente no gancho pra somar quadril ao golpe."
+ },
+ {
+  "n": "Esquiva em U (roll under)",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Desça flexionando os joelhos e desenhe um U passando por baixo da linha do golpe; nunca curve a coluna pra baixar."
+ },
+ {
+  "n": "Gancho no corpo (body hook)",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Dobre os joelhos pra chegar na altura das costelas e gire o tronco; o cotovelo acompanha na altura do punho."
+ },
+ {
+  "n": "Chute lateral (side kick) no saco",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Levante o joelho, gire o pé de apoio pra fora e empurre o calcanhar contra o alvo; recolha a perna na mesma linha."
+ },
+ {
+  "n": "Defesa de cotovelo e resposta com direto",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Feche o cotovelo junto às costelas pra bloquear e devolva o direto no mesmo movimento de volta da guarda."
+ },
+ {
+  "n": "Deslocamento em oito com guarda alta",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Caminhe desenhando um oito no chão sem juntar os pés, mantendo a guarda na altura das maçãs do rosto."
+ },
+ {
+  "n": "Golpe reto com elástico preso atrás",
+  "g": "Boxe e lutas",
+  "eq": "Elástico",
+  "d": "Elástico preso na altura do peito atrás de você: soque contra a resistência e volte devagar, sem travar o cotovelo."
+ },
+ {
+  "n": "Joelhada com puxada de nuca (thai clinch)",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Mãos entrelaçadas na nuca do saco, puxe pra baixo enquanto sobe o joelho; quadril à frente no impacto."
+ },
+ {
+  "n": "Rolamento pra frente e levantada de luta",
+  "g": "Boxe e lutas",
+  "eq": "Colchonete",
+  "d": "Role apoiando o ombro (nunca a cabeça) e levante já em base de luta, com as mãos protegendo o rosto."
+ },
+ {
+  "n": "Queda de quadril (level change) alternada",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Abaixe flexionando quadril e joelhos mantendo o peito alto — é a entrada da queda, não um agachamento de costas curvas."
+ },
+ {
+  "n": "Combinação de socos com sprawl a cada 5",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Solte 5 socos e jogue os quadris pro chão em sprawl; volte à guarda antes do próximo combo."
+ },
+ {
+  "n": "Chute frontal com troca de base",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Chute com a perna da frente e caia com a outra perna à frente, trocando a base sem parar a guarda."
+ },
+ {
+  "n": "Boxe de sombra com faixa nas pernas",
+  "g": "Boxe e lutas",
+  "eq": "Mini band",
+  "d": "Mini band acima dos joelhos obriga a manter a base aberta; solte combinações sem deixar os joelhos caírem pra dentro."
+ },
+ {
+  "n": "Flexão diamante com pés elevados",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso do corpo",
+  "d": "Mãos formando losango sob o peito e pés no banco; cotovelos rentes ao tronco pra jogar a carga no tríceps."
+ },
+ {
+  "n": "Australiana com pés elevados",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra",
+  "d": "Corpo reto com os calcanhares numa caixa; puxe o peito até a barra e desça em 3 segundos."
+ },
+ {
+  "n": "Agachamento pistol assistido na argola",
+  "g": "Ginástica e calistenia",
+  "eq": "TRX",
+  "d": "Segure as fitas só pra equilíbrio, não pra puxar; desça devagar mantendo o calcanhar da perna de apoio no chão."
+ },
+ {
+  "n": "Prancha com toque no ombro alternado",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso do corpo",
+  "d": "Afaste os pés na largura do quadril e toque o ombro oposto sem deixar o quadril girar."
+ },
+ {
+  "n": "Escalada horizontal na barra (bar hops)",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Pendurado, ande com as mãos de uma ponta à outra da barra; escápulas ativas, sem balançar o corpo."
+ },
+ {
+  "n": "Elevação de quadril na barra (hip raise)",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Pendurado, leve os quadris à altura das mãos com as pernas juntas; desça controlado, sem soltar o abdômen."
+ },
+ {
+  "n": "Flexão arqueiro no joelho",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso do corpo",
+  "d": "Versão fácil do arqueiro: joelhos no chão, um braço estende pro lado enquanto o outro faz a força."
+ },
+ {
+  "n": "Ponte de ombro invertida (crab bridge)",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso do corpo",
+  "d": "Sentado com mãos atrás, empurre o quadril até o tronco ficar reto; olhe pra cima só se o pescoço permitir."
+ },
+ {
+  "n": "Salto na barra pra apoio (jumping muscle-up)",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Com a barra na altura do peito, salte e termine em apoio de braços estendidos; desça devagar pra treinar a fase negativa."
+ },
+ {
+  "n": "Extensão de costas no solo (superman remada)",
+  "g": "Ginástica e calistenia",
+  "eq": "Solo",
+  "d": "Deitado de bruços, tire o peito do chão e puxe os cotovelos pra trás como numa remada; pescoço na linha da coluna."
+ },
+ {
+  "n": "Apoio invertido contra a parede com passos",
+  "g": "Ginástica e calistenia",
+  "eq": "Parede",
+  "d": "Em pino apoiado, dê passinhos com as mãos aproximando os pés da parede; só avance se conseguir respirar normal."
+ },
+ {
+  "n": "Tuck planche nas paralelas baixas",
+  "g": "Ginástica e calistenia",
+  "eq": "Paralelas",
+  "d": "Joelhos recolhidos no peito e ombros à frente das mãos; protraia as escápulas e segure 5 a 10 segundos."
+ },
+ {
+  "n": "Agachamento com salto e giro de 180°",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso do corpo",
+  "d": "Salte girando meia volta e caia agachando pra amortecer; alterne o lado do giro a cada repetição."
+ },
+ {
+  "n": "Cem (the hundred) no solo",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Pernas em mesa, cabeça e ombros fora do chão, bombeie os braços contando 100 respirações curtas sem tensionar o pescoço."
+ },
+ {
+  "n": "Rolamento como uma bola (rolling like a ball)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Abrace os joelhos e role sobre a coluna até as escápulas; volte sem usar impulso dos pés no chão."
+ },
+ {
+  "n": "Cisne (swan) no colchonete",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Mãos sob os ombros, estenda a coluna alongando pra frente antes de subir; não jogue a cabeça pra trás."
+ },
+ {
+  "n": "Chute duplo de calcanhar (double leg kick)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "De bruços com as mãos nas costas, chute os calcanhares ao glúteo 3 vezes e estenda o tronco alongando o peito."
+ },
+ {
+  "n": "Sereia (mermaid stretch)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Sentado de lado, alongue o braço por cima da cabeça criando um C; respire fundo pra abrir as costelas."
+ },
+ {
+  "n": "Postura do gafanhoto (salabhasana)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "De bruços, levante peito e pernas ao mesmo tempo com os braços ao lado do corpo; alongue antes de subir."
+ },
+ {
+  "n": "Postura do guerreiro II",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Pé da frente apontado à frente e o de trás a 90°; joelho da frente na linha do tornozelo e braços paralelos ao chão."
+ },
+ {
+  "n": "Postura da árvore (vrksasana)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Apoie a sola do pé na coxa ou panturrilha — nunca no joelho — e fixe o olhar num ponto pra equilibrar."
+ },
+ {
+  "n": "Postura do triângulo (trikonasana)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Alongue o tronco pro lado antes de descer a mão; o peito abre pra frente em vez de girar pro chão."
+ },
+ {
+  "n": "Postura da ponte com bloco (setu bandha)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Bloco ou almofada sob o sacro pra sustentar o quadril; relaxe os ombros e respire por 30 a 60 segundos."
+ },
+ {
+  "n": "Torção deitada com joelhos (supta matsyendrasana)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Joelhos caem pra um lado e a cabeça olha pro outro; ombros colados no chão, sem forçar a descida."
+ },
+ {
+  "n": "Saudação ao sol A (surya namaskar A)",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Encadeie as posturas no ritmo da respiração — uma inspiração ou expiração para cada movimento."
+ },
+ {
+  "n": "Deslize de tornozelo na faixa (band distraction)",
+  "g": "Mobilidade e alongamento",
+  "eq": "Elástico",
+  "d": "Elástico puxando o tornozelo pra trás, avance o joelho sobre o pé sem levantar o calcanhar; ganha fundo no agachamento."
+ },
+ {
+  "n": "Abertura torácica deitado de lado (book opening)",
+  "g": "Mobilidade e alongamento",
+  "eq": "Colchonete",
+  "d": "Deitado de lado com joelhos dobrados, abra o braço de cima seguindo a mão com o olhar até o peito girar."
+ },
+ {
+  "n": "Alongamento do peitoral no batente",
+  "g": "Mobilidade e alongamento",
+  "eq": "Parede",
+  "d": "Antebraço apoiado no batente na altura do ombro e gire o tronco pro lado oposto; sem dor, só alongamento."
+ },
+ {
+  "n": "90/90 de quadril sentado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Solo",
+  "d": "Uma perna à frente e outra ao lado em 90°; alterne o lado girando pelo quadril, com o tronco alto."
+ },
+ {
+  "n": "Agachamento profundo com apoio (deep squat hold)",
+  "g": "Mobilidade e alongamento",
+  "eq": "Livre",
+  "d": "Segure num apoio e fique no fundo do agachamento por 30 a 60 segundos, empurrando os joelhos com os cotovelos."
+ },
+ {
+  "n": "Deslize do nervo ciático sentado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Cadeira",
+  "d": "Estenda o joelho e puxe a ponta do pé enquanto olha pra cima; movimento lento e curto, nunca até formigar."
+ },
+ {
+  "n": "Alongamento do flexor de quadril ajoelhado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Colchonete",
+  "d": "Joelho no chão e quadril à frente com o glúteo contraído; o alongamento vem do quadril, não da lombar."
+ },
+ {
+  "n": "Rotação de coluna torácica em quatro apoios",
+  "g": "Mobilidade e alongamento",
+  "eq": "Colchonete",
+  "d": "Mão na nuca, gire o cotovelo pro teto acompanhando com o olhar; o quadril fica parado o tempo todo."
+ },
+ {
+  "n": "Alongamento de panturrilha no degrau",
+  "g": "Mobilidade e alongamento",
+  "eq": "Degrau",
+  "d": "Calcanhar abaixo do degrau, segure 30 segundos com o joelho reto e mais 30 com o joelho dobrado."
+ },
+ {
+  "n": "Liberação de glúteo na bolinha",
+  "g": "Mobilidade e alongamento",
+  "eq": "Bolinha",
+  "d": "Sentado sobre a bolinha, procure o ponto sensível e respire fundo por 30 segundos sem rolar rápido."
+ },
+ {
+  "n": "Alongamento de antebraço na mesa",
+  "g": "Mobilidade e alongamento",
+  "eq": "Livre",
+  "d": "Palmas na mesa com os dedos virados pro corpo, recue o quadril devagar; alivia quem digita e quem pega barra."
  }
 ];
