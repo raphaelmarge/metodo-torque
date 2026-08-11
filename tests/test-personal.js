@@ -3679,6 +3679,101 @@ async function abaPt(p, a) {
     await pAn.close();
   }
   {
+    // 👥 Comunidade: o feed que os alunos publicam entre si
+    console.log("Comunidade (feed da turma):");
+    const pC = await b.newPage();
+    pC.on("pageerror", (e) => erros.push("comunidade: " + e.message));
+    await pC.goto(BASE + "/personal.html");
+    await pC.evaluate(() => {
+      localStorage.setItem("mtapp:ptSemConta", "1");
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify({
+        config: { nome: "Studio Com" },
+        alunos: [{ id: "ac1", nome: "João Silva", ativo: true, valor: 300, appTokenP: "tok-com-123456789" }],
+        sessoes: [], pagamentos: [], treinos: {}, avaliacoes: [], exercicios: [], videoteca: [], treinosV2: {},
+      }));
+    });
+    await pC.reload();
+    await pC.waitForTimeout(700);
+
+    // 1) desligada por padrão: o app nem tem a aba
+    const desligado = await pC.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const h = window.__montaAppAluno(st.alunos[0], "s1");
+      // a barra de abas é montada em runtime: a lista OCULTA é quem tira a Turma
+      const oculta = (h.match(/var OCULTA=(\[[^\]]*\])/) || [])[1] || "[]";
+      return { temFeed: /fdLista/.test(h), oculta: JSON.parse(oculta) };
+    });
+    ok(!desligado.temFeed && desligado.oculta.indexOf("feed") >= 0, "👥 a Comunidade vem DESLIGADA — o app sai sem o feed e sem a aba Turma");
+
+    // 2) o professor liga em Configurações e o app ganha o feed
+    const ligou = await pC.evaluate(() => {
+      document.getElementById("cfgFeed").checked = true;
+      document.getElementById("cfgSalva").click();
+      const st = window.MTStore.read("ptStudio", {});
+      const h = window.__montaAppAluno(st.alunos[0], "s2");
+      return {
+        salvou: !!st.config.feedOn,
+        temFeed: /fdLista/.test(h),
+        temAba: /'Turma'/.test(h),
+        pendente: !!(st.alunos[0].appPendente || st.alunos[0].appEditadoEm),
+        chamaPosta: /app_aluno_posta/.test(h),
+        chamaFeed: /app_aluno_feed/.test(h),
+        reusaReage: /'feed:'\+/.test(h),
+      };
+    });
+    ok(ligou.salvou && ligou.temFeed && ligou.temAba, "ligar a Comunidade põe o feed e a aba Turma no app do aluno");
+    ok(ligou.chamaPosta && ligou.chamaFeed, "o app publica por app_aluno_posta e lê por app_aluno_feed");
+    ok(ligou.reusaReage, "curtida e comentário do feed reusam app_aluno_reage com o post 'feed:<id>'");
+
+    // 3) a foto do post é comprimida no celular antes de subir (limite do servidor)
+    const compressao = await pC.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const h = window.__montaAppAluno(st.alunos[0], "s3");
+      return { temTetos: /380000/.test(h), temTentativas: /\[900,\.72\]/.test(h) };
+    });
+    ok(compressao.temTetos && compressao.temTentativas, "a foto do post é reduzida até caber no limite antes de subir");
+
+    // 4) moderação no painel: esconder e apagar pela tabela app_feed
+    const mod = await pC.evaluate(() => {
+      const chamadas = [];
+      window.__cloudOrigF = window.MTStore.cloud;
+      const tabela = () => ({
+        select: () => ({ eq: () => ({ order: () => ({ limit: () => ({ eq: () => ({
+          then: (cb) => cb({ data: [
+            { id: "f1", nome: "Mariana", texto: "PR de agacho!", foto: "", treino: "Treino B", oculto: false, criado: "2026-08-11T10:00:00Z" },
+          ] }),
+        }), then: (cb) => cb({ data: [] }) }) }) }) }),
+        update: (v) => ({ eq: (c, id) => { chamadas.push(["update", id, v.oculto]); return { then: (cb) => cb({}) }; } }),
+        delete: () => ({ eq: (c, id) => { chamadas.push(["delete", id]); return { then: (cb) => cb({}) }; } }),
+      });
+      window.MTStore.cloud = () => ({ aid: "acad-1", client: { from: () => tabela() } });
+      window.__feedMod.carrega();
+      const html = document.getElementById("fdmLista").innerHTML;
+      // clica em Esconder no post que veio da nuvem
+      const bt = document.querySelector("[data-fdmoc]");
+      if (bt) bt.click();
+      window.MTStore.cloud = window.__cloudOrigF;
+      return { html: html, chamadas: chamadas };
+    });
+    ok(/Mariana/.test(mod.html) && /PR de agacho/.test(mod.html), "o professor vê no painel o que a turma postou");
+    ok(mod.chamadas.some((c) => c[0] === "update" && c[1] === "f1" && c[2] === true), "'Esconder' marca o post como oculto na nuvem (some do app na hora)");
+
+    // 5) sem nuvem, o painel explica em vez de quebrar
+    const semNuvem = await pC.evaluate(() => {
+      window.__cloudOrigF2 = window.MTStore.cloud;
+      window.MTStore.cloud = () => null;
+      window.__feedMod.carrega();
+      const t = document.getElementById("fdmLista").textContent;
+      window.MTStore.cloud = window.__cloudOrigF2;
+      return t;
+    });
+    ok(/Entre com a conta da nuvem/.test(semNuvem), "sem nuvem o painel avisa direito em vez de ficar mudo");
+
+    // devolve o estado como estava (senão vaza pros blocos seguintes)
+    await pC.evaluate(() => localStorage.removeItem("mtapp:ptStudio"));
+    await pC.close();
+  }
+  {
     // ⭐ favoritos do professor: marca na biblioteca e eles sobem na hora de montar a ficha
     console.log("Exercícios favoritos do professor:");
     const pF = await b.newPage();
