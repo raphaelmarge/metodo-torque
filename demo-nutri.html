@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo — TORQUE NUTRI</title>
+<link rel="icon" href="assets/icons/icon-nutri.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(80% 30% at 50% 0%, rgba(34,197,94,.16), transparent 70%), #0e0d12; color: #f2f0f6; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+  .cx { max-width: 480px; background: #141218; border: 1px solid #26222e; border-radius: 10px; padding: 28px 26px; text-align: center; }
+  .k { font-size: 11px; letter-spacing: .24em; color: #4ade80; font-weight: 900; text-transform: uppercase; font-style: italic; }
+  h1 { font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 8px 0 10px; }
+  p { color: #9d98a8; font-size: 14px; line-height: 1.65; }
+  .btnx { display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border: none; border-radius: 5px; padding: 14px 26px; font-family: inherit; font-size: 13.5px; font-weight: 900; font-style: italic; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; margin-top: 18px; box-shadow: 0 12px 32px -12px #22c55e; }
+  .aviso { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.4); border-radius: 6px; padding: 12px 14px; font-size: 13px; color: #fcd34d; margin-top: 16px; line-height: 1.6; text-align: left; }
+</style>
+</head>
+<body>
+<div class="cx">
+  <span class="k">TORQUE NUTRI · Demonstração</span>
+  <h1>Consultório de exemplo</h1>
+  <p>Preenche o TORQUE NUTRI <b>neste navegador</b> com um consultório fictício em pleno uso: 6 pacientes com dieta montada, pesagens, consultas marcadas, pagamentos e os check-ins que eles respondem no app.</p>
+  <div id="alerta" class="aviso" hidden>⚠️ <b>Já existem dados do Nutri neste navegador.</b> O demo NÃO vai mexer neles — abra esta página numa <b>guia anônima</b> (ou outro navegador) pra ver a demonstração sem risco.</div>
+  <button class="btnx" id="btnDemoN">🥦 Abrir o consultório de exemplo</button>
+</div>
+<script src="assets/alimentos-db.js"></script>
+<script>
+(function () {
+  "use strict";
+  function leia(k) { try { return JSON.parse(localStorage.getItem("mtapp:" + k)); } catch (e) { return null; } }
+  var atual = leia("ntStudio");
+  var temDados = !!(atual && (atual.pacientes || []).length);
+  if (temDados) {
+    document.getElementById("alerta").hidden = false;
+    document.getElementById("btnDemoN").textContent = "Entendi — vou abrir numa guia anônima";
+    document.getElementById("btnDemoN").onclick = function () { location.href = "nutricao.html"; };
+    return;
+  }
+
+  function iso(diasAtras) {
+    var d = new Date(Date.now() - diasAtras * 864e5);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  // pesagens caindo (ou subindo) com um ruído determinístico, pra ficar com cara de real
+  function seriePeso(inicio, delta, semanas) {
+    var l = [];
+    for (var s = semanas; s >= 0; s--) {
+      var prog = 1 - s / semanas;
+      l.push({ d: iso(s * 7), kg: Math.round((inicio + delta * prog + Math.sin(s * 1.7) * 0.35) * 10) / 10 });
+    }
+    return l;
+  }
+
+  // ---- pacientes ----
+  var PACS = [
+    { nome: "Fernanda Lima", sexo: "F", idade: 34, altura: 165, p0: 78.4, delta: -6.2, sem: 20, atividade: "mod", objetivo: "emagrecer", restricoes: "intolerante a lactose", valor: 220 },
+    { nome: "Ricardo Nunes", sexo: "M", idade: 41, altura: 178, p0: 92.0, delta: -8.5, sem: 24, atividade: "leve", objetivo: "emagrecer", restricoes: "hipertensão — pouco sal", valor: 220 },
+    { nome: "Camila Rocha", sexo: "F", idade: 27, altura: 170, p0: 58.2, delta: 4.1, sem: 16, atividade: "alto", objetivo: "ganhar", restricoes: "vegetariana", valor: 250 },
+    { nome: "Bruno Tavares", sexo: "M", idade: 23, altura: 182, p0: 71.5, delta: 6.8, sem: 18, atividade: "alto", objetivo: "ganhar", restricoes: "", valor: 250 },
+    { nome: "Patrícia Alves", sexo: "F", idade: 52, altura: 160, p0: 70.3, delta: -3.4, sem: 12, atividade: "leve", objetivo: "manter", restricoes: "diabética tipo 2", valor: 200 },
+    { nome: "Diego Martins", sexo: "M", idade: 36, altura: 175, p0: 84.7, delta: -2.1, sem: 8, atividade: "mod", objetivo: "emagrecer", restricoes: "não come peixe", valor: 220 },
+  ];
+
+  // ---- modelo de dieta por objetivo (usa nomes reais do catálogo TORQUE) ----
+  var MODELOS = {
+    emagrecer: [
+      { hora: "07:00", titulo: "Café da manhã", itens: [["Ovo cozido", 2], ["Pão de forma integral", 2], ["Mamão papaia", 1], ["Café sem açúcar", 1]] },
+      { hora: "10:00", titulo: "Lanche da manhã", itens: [["Maçã", 1], ["Castanha-do-pará", 1]] },
+      { hora: "12:30", titulo: "Almoço", itens: [["Arroz integral cozido", 1], ["Feijão carioca cozido", 1], ["Peito de frango grelhado", 1.5], ["Salada de folhas (alface/rúcula)", 2], ["Azeite de oliva", 1]] },
+      { hora: "16:00", titulo: "Lanche da tarde", itens: [["Iogurte natural desnatado", 1], ["Aveia em flocos", 1]] },
+      { hora: "19:30", titulo: "Jantar", itens: [["Batata-doce cozida", 1], ["Tilápia grelhada", 1.5], ["Brócolis cozido", 2]] },
+    ],
+    ganhar: [
+      { hora: "07:00", titulo: "Café da manhã", itens: [["Aveia em flocos", 2], ["Banana prata", 2], ["Pasta de amendoim", 1], ["Leite integral", 1]] },
+      { hora: "10:00", titulo: "Lanche da manhã", itens: [["Pão de forma tradicional", 2], ["Ovo cozido", 3]] },
+      { hora: "12:30", titulo: "Almoço", itens: [["Arroz branco cozido", 2], ["Feijão preto cozido", 1], ["Bife de alcatra grelhado", 1.5], ["Salada de folhas (alface/rúcula)", 1], ["Azeite de oliva", 1]] },
+      { hora: "16:00", titulo: "Pré-treino", itens: [["Tapioca (goma hidratada)", 1], ["Whey protein", 1]] },
+      { hora: "19:30", titulo: "Jantar", itens: [["Macarrão integral cozido", 2], ["Carne moída (patinho) refogada", 1.5], ["Abobrinha refogada", 1]] },
+      { hora: "22:00", titulo: "Ceia", itens: [["Iogurte grego", 1], ["Granola", 1]] },
+    ],
+    manter: [
+      { hora: "07:00", titulo: "Café da manhã", itens: [["Ovo cozido", 2], ["Pão francês", 1], ["Café com leite", 1]] },
+      { hora: "10:00", titulo: "Lanche da manhã", itens: [["Banana prata", 1]] },
+      { hora: "12:30", titulo: "Almoço", itens: [["Arroz integral cozido", 1], ["Lentilha cozida", 1], ["Peito de frango grelhado", 1], ["Salada de folhas (alface/rúcula)", 2], ["Azeite de oliva", 1]] },
+      { hora: "16:00", titulo: "Lanche da tarde", itens: [["Iogurte natural integral", 1], ["Chia", 1]] },
+      { hora: "19:30", titulo: "Jantar", itens: [["Sopa de legumes com frango desfiado", 1], ["Quinoa cozida", 1]] },
+    ],
+  };
+  function montaDieta(objetivo, pesoKg) {
+    var modelo = MODELOS[objetivo] || MODELOS.manter;
+    return {
+      aguaMl: Math.round(pesoKg * 35 / 50) * 50,
+      geradaAuto: true, geradaEm: iso(7),
+      refeicoes: modelo.map(function (r) {
+        return { id: uid(), hora: r.hora, titulo: r.titulo,
+          itens: r.itens.map(function (it) { return { alimId: "cat:" + it[0], qtd: it[1] }; }) };
+      }),
+    };
+  }
+
+  document.getElementById("btnDemoN").addEventListener("click", function () {
+    var st = { config: {}, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {},
+      pesagens: {}, consultas: [], pagamentosN: [], questionarios: [], questPerguntas: [] };
+
+    st.config.nome = "Consultório TORQUE Demo";
+    st.config.zap = "5531999990000";
+    st.config.metasN = { fat: 1500, novos: 2, cons: 14 };
+
+    // alguns alimentos próprios do consultório (além do catálogo TORQUE)
+    st.alimentos = [
+      { id: uid(), nome: "Pão caseiro da dona Lúcia", porcao: "1 fatia (40 g)", kcal: 105, prot: 3.2, carb: 20, gord: 1.4 },
+      { id: uid(), nome: "Shake da casa (banana e cacau)", porcao: "300 ml", kcal: 240, prot: 22, carb: 28, gord: 4 },
+      { id: uid(), nome: "Bolo de fubá integral do consultório", porcao: "1 fatia (60 g)", kcal: 165, prot: 4, carb: 26, gord: 5 },
+    ];
+
+    PACS.forEach(function (base, i) {
+      var pesagens = seriePeso(base.p0, base.delta, base.sem);
+      var pesoAtual = pesagens[pesagens.length - 1].kg;
+      var p = {
+        id: uid(), nome: base.nome, zap: "3199999" + String(1000 + i),
+        email: base.nome.toLowerCase().split(" ")[0] + "@exemplo.com",
+        sexo: base.sexo, idade: base.idade, peso: pesoAtual, altura: base.altura,
+        atividade: base.atividade, objetivo: base.objetivo, restricoes: base.restricoes,
+        ativo: true, desde: iso(base.sem * 7), valor: base.valor, appTokenN: uid() + uid(),
+        // os 4 primeiros já receberam o acesso do app por e-mail
+        acessoEm: i < 4 ? iso(base.sem * 7 - 1) : "",
+      };
+      // o paciente mais novo entrou este mês (aparece em "pacientes novos no mês")
+      if (i === 5) p.desde = iso(9);
+      st.pacientes.push(p);
+      st.pesagens[p.id] = pesagens;
+      st.dietas[p.id] = montaDieta(base.objetivo, pesoAtual);
+
+      // mensalidades pagas: uma por mês desde que entrou
+      var meses = Math.max(1, Math.round(base.sem / 4));
+      for (var m = meses - 1; m >= 0; m--) {
+        if (m === 0 && i >= 4) continue; // dois pacientes ficam com o mês em aberto
+        st.pagamentosN.push({ id: uid(), pacienteId: p.id, valor: base.valor, data: iso(m * 30 + 2) });
+      }
+
+      // consultas: uma já realizada neste mês e a próxima marcada pros próximos dias
+      var HORAS = ["08:00", "09:00", "10:00", "14:00", "15:00", "16:00"];
+      st.consultas.push({ id: uid(), pacienteId: p.id, data: iso(3 + i), hora: HORAS[i] });
+      st.consultas.push({ id: uid(), pacienteId: p.id, data: iso(-(3 + i * 2)), hora: HORAS[i] });
+    });
+
+    // check-ins que os pacientes respondem no app
+    st.questPerguntas = [
+      { id: "q1", texto: "De 0 a 10, como foi sua adesão à dieta essa semana?", tipo: "linear" },
+      { id: "q2", texto: "De 0 a 10, como está sua disposição?", tipo: "linear" },
+      { id: "q3", texto: "Sentiu fome fora de hora? Conta pra mim.", tipo: "texto" },
+    ];
+    st.questionarios = [{ id: uid(), nome: "Check-in semanal", perguntas: ["q1", "q2", "q3"] }];
+
+    try {
+      localStorage.setItem("mtapp:ntStudio", JSON.stringify(st));
+      localStorage.setItem("mtapp:ntSemConta", "1");
+      if (!localStorage.getItem("mtapp:perfil")) {
+        localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Nutri Demo" }));
+      }
+    } catch (e) {
+      alert("Não deu pra montar o demo neste navegador (memória cheia). Tente numa guia anônima.");
+      return;
+    }
+    location.href = "nutricao.html";
+  });
+})();
+</script>
+</body>
+</html>
