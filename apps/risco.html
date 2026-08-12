@@ -110,7 +110,7 @@
     render();
   });
   $("btnCsv").onclick = function () {
-    var csv = "nome;consultor;ultima presenca;dias ausente;risco\n" + calcula().map(function (x) {
+    var csv = "Nome;Consultor;Última presença;Dias ausente;Risco\n" + calcula().map(function (x) {
       return [x.a.nome, x.a.consultor || "", x.ultimo || "nunca", x.dias, x.nota].join(";");
     }).join("\n");
     var el = document.createElement("a");

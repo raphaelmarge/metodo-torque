@@ -670,7 +670,7 @@
     if (bCsv) bCsv.onclick = function () {
       var recs2 = stA().recebiveis.filter(function (r2) { return r2.alunoId === a.id; })
         .sort(function (x, y) { return x.vencimento < y.vencimento ? -1 : 1; });
-      var csv = "competencia;vencimento;valor;status;pago em\n" + recs2.map(function (r2) {
+      var csv = "Competência;Vencimento;Valor;Situação;Pago em\n" + recs2.map(function (r2) {
         return [r2.competencia || "", r2.vencimento || "", String(+r2.valor || 0).replace(".", ","), r2.status, r2.pagoEm || ""].join(";");
       }).join("\n");
       var el = document.createElement("a");
