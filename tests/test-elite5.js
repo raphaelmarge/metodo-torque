@@ -168,7 +168,7 @@ function ok(cond, nome) {
   await p.waitForFunction(() => window.__ptStudio);
   await p.fill("#obNome", "Léo Personal");
   await p.click("#obOk");
-  await p.click("#btnMenuPt");
+  if (await p.locator("#btnMenuPt").isVisible()) await p.click("#btnMenuPt");
   await p.click('#abas [data-a="alunos"]');
   await p.click("#btnNovoAluno");
   await p.fill("#aNome", "João Cliente");
@@ -181,7 +181,7 @@ function ok(cond, nome) {
   await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
   await p.click("#naConcluir");
   await p.waitForTimeout(150);
-  await p.click("#btnMenuPt");
+  if (await p.locator("#btnMenuPt").isVisible()) await p.click("#btnMenuPt");
   await p.click('#abas [data-a="treinos"]');
   await p.selectOption("#tAluno", { index: 1 });
   await p.selectOption("#tplSel", "abc");

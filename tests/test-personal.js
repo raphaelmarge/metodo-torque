@@ -13,7 +13,9 @@ function ok(cond, nome) {
 
 // abre o menu lateral e clica na aba (menu vira gaveta com hambúrguer)
 async function abaPt(p, a) {
-  await p.click("#btnMenuPt");
+  // no computador o menu já fica à vista; no celular é preciso abrir a gaveta
+  const menu = p.locator("#btnMenuPt");
+  if (await menu.isVisible()) await menu.click();
   await p.click('#abas [data-a="' + a + '"]');
 }
 
@@ -3888,6 +3890,45 @@ async function abaPt(p, a) {
     ok(fechouA, "tocar de novo fecha e volta o rótulo 'Ver como faz'");
     await pA.close();
     await ctxA.close();
+  }
+
+  {
+    // 🖥 menu do computador: fica sempre à vista (1 clique por aba); no celular vira gaveta
+    console.log("Menu fixo no computador:");
+    for (const alvo of [
+      { url: "personal.html", menu: "#abas", barra: "#navPt", hamb: "#btnMenuPt" },
+      { url: "nutricao.html", menu: "#abasNt", barra: "#navNt", hamb: "#btnMenuNt" },
+    ]) {
+      const ctxD = await b.newContext({ viewport: { width: 1360, height: 900 } });
+      await ctxD.addInitScript(() => {
+        localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+        localStorage.setItem("mtapp:ptSemConta", "1");
+        localStorage.setItem("mtapp:ntSemConta", "1");
+      });
+      const pD = await ctxD.newPage();
+      await pD.goto(BASE + "/" + alvo.url);
+      await pD.waitForTimeout(500);
+      const desk = await pD.evaluate((a) => {
+        const m = document.querySelector(a.menu).getBoundingClientRect();
+        const corpo = document.querySelector(".corpo").getBoundingClientRect();
+        return {
+          menuNaTela: m.left >= 0 && m.width > 200,
+          semBarraDeBaixo: getComputedStyle(document.querySelector(a.barra)).display === "none",
+          conteudoAoLado: corpo.left >= m.right - 1,
+        };
+      }, alvo);
+      ok(desk.menuNaTela && desk.semBarraDeBaixo, alvo.url + ": no computador o menu fica aberto e a barra de baixo sai");
+      ok(desk.conteudoAoLado, alvo.url + ": o conteúdo fica ao lado do menu (sem ficar por baixo)");
+
+      await pD.setViewportSize({ width: 390, height: 844 });
+      await pD.waitForTimeout(250);
+      const cel = await pD.evaluate((a) => ({
+        menuEscondido: document.querySelector(a.menu).getBoundingClientRect().left < 0,
+        temHamburguer: !!document.querySelector(a.hamb) && document.querySelector(a.hamb).offsetParent !== null,
+      }), alvo);
+      ok(cel.menuEscondido && cel.temHamburguer, alvo.url + ": no celular o menu volta a ser a gaveta do ☰");
+      await ctxD.close();
+    }
   }
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
