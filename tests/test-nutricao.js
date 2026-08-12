@@ -744,6 +744,56 @@ async function abaNt(p, a) {
       "o nutricionista recebe as kcal somadas e o resumo da IA pra revisar");
   }
 
+  {
+    // 🎮 app do paciente com a cara do app do aluno: XP, semana, meta e Comunidade
+    console.log("App do paciente (paridade com o app do aluno):");
+    const pG = await b.newPage();
+    pG.on("pageerror", (e) => erros.push("app nutri: " + e.message));
+    await pG.goto(BASE + "/nutricao.html");
+    await pG.evaluate(() => {
+      localStorage.setItem("mtapp:ntSemConta", "1");
+      localStorage.setItem("mtapp:ntStudio", JSON.stringify({
+        config: { nome: "Consultório Teste" }, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {},
+      }));
+    });
+    await pG.reload();
+    await pG.waitForTimeout(600);
+
+    const gera = (feedOn) => pG.evaluate((liga) => {
+      const S = window.MTStore;
+      const st = S.read("ntStudio", {});
+      st.config.feedOn = liga;
+      const pac = { id: "pg1", nome: "Fernanda Lima", sexo: "F", idade: 34, peso: 72, altura: 165,
+        atividade: "mod", objetivo: "emagrecer", ativo: true, appTokenN: "tok-teste-nutri-1", metaSemana: 5 };
+      st.pacientes = [pac];
+      S.write("ntStudio", st);
+      return window.__montaAppNutri(pac, "s1");
+    }, feedOn);
+
+    // 1) gamificação entra mesmo com a Comunidade desligada
+    const semFeed = await gera(false);
+    ok(/xpNumN/.test(semFeed) && /diasSemN/.test(semFeed) && /btnPlanoN/.test(semFeed),
+      "🎮 o app do paciente ganha XP, semana e o botão 'Segui o plano hoje!'");
+    ok(/heroN/.test(semFeed) && /Ver minhas refeições/.test(semFeed),
+      "o card da meta do dia abre o app, como o card do treino no app do aluno");
+    ok(!/fdListaN/.test(semFeed), "com a Comunidade desligada o app sai sem o feed");
+
+    // 2) com a Comunidade ligada, entra o feed e a aba Turma
+    const comFeed = await gera(true);
+    ok(/fdListaN/.test(comFeed) && /'Turma'/.test(comFeed), "ligar a Comunidade põe o feed e a aba Turma no app do paciente");
+    ok(/app_aluno_posta/.test(comFeed) && /app_aluno_feed/.test(comFeed) && /'feed:'\+/.test(comFeed),
+      "o paciente usa as mesmas RPCs do aluno (app_aluno_posta/feed + reage com 'feed:<id>')");
+    ok(/app_desafio_ranking/.test(comFeed), "o ranking da semana conta os dias de 'Segui o plano hoje!'");
+
+    // 3) a chave nas Configurações do nutricionista
+    const chave = await pG.evaluate(() => {
+      const el = document.getElementById("cfgFeedN");
+      return { existe: !!el, marcado: el ? el.checked : null };
+    });
+    ok(chave.existe && chave.marcado === true, "a chave Comunidade aparece nas Configurações do nutricionista");
+    await pG.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
+    await pG.close();
+  }
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();
