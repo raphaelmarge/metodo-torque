@@ -764,6 +764,52 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
     </div>
 
+    <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar" id="scanCard" hidden>
+      <h2>Medidas pela câmera <span class="tag" style="font-size: 10px; background: rgba(96,165,250,.18); color: #60a5fa;">beta</span></h2>
+      <p class="muted" style="margin: 4px 0 10px;">Duas fotos (de frente e de lado) viram cintura, quadril, coxa e panturrilha em centímetros. A leitura acontece <b>dentro deste aparelho</b> — a foto não vai pra internet e é descartada na hora.</p>
+
+      <div class="linha-flex" id="scanTopo" style="flex-wrap: wrap;">
+        <select id="scanAluno" style="min-width: 180px;"></select>
+        <input id="scanAltura" type="number" step="0.5" min="80" max="250" placeholder="Altura cm" style="width: 110px;">
+        <select id="scanSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
+        <button class="btn" id="scanIniciar">Começar</button>
+      </div>
+
+      <div id="scanTermo" hidden style="margin-top: 12px; border: 1px solid var(--roxo); border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.65;">
+        <b>Antes de tirar as fotos</b>
+        <p style="margin: 6px 0;">📵 <b>A foto não sai daqui.</b> Ela é lida dentro deste aparelho e descartada no mesmo instante. Quer a prova? Ligue o modo avião e faça a medição — funciona igual.</p>
+        <p style="margin: 6px 0;">📐 <b>O que fica guardado:</b> só os números (cintura, quadril, coxa). Sem foto, sem rosto.</p>
+        <p style="margin: 6px 0;">⚖️ Medida de corpo é dado de saúde, e a LGPD trata como dado sensível — por isso a autorização vem separada.</p>
+        <label style="display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; cursor: pointer;">
+          <input type="checkbox" id="scanAceite" style="margin-top: 3px;">
+          <span>O aluno autorizou usar a câmera pra estimar as medidas dele.</span></label>
+        <div class="linha-flex" style="margin-top: 10px;">
+          <button class="btn" id="scanTermoOk">Bora medir</button>
+          <button class="btn sec" id="scanTermoNao">Agora não</button>
+        </div>
+      </div>
+
+      <div id="scanPreparo" hidden style="margin-top: 12px;">
+        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; font-size: 12.5px;">
+          <span style="flex: 1; min-width: 190px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;">👕 <b>Roupa colada no corpo</b><br><span class="muted">camiseta larga vira gordura no resultado</span></span>
+          <span style="flex: 1; min-width: 190px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;">🧱 <b>De frente pra parede lisa</b><br><span class="muted">porta e cortina confundem o contorno</span></span>
+          <span style="flex: 1; min-width: 190px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;">📱 <b>Celular na altura do umbigo</b><br><span class="muted">aluno a uns 3 passos largos, descalço</span></span>
+        </div>
+        <div class="linha-flex" style="margin-top: 12px; flex-wrap: wrap;">
+          <label class="btn" style="cursor: pointer;">📷 Foto 1 — de frente
+            <input type="file" id="scanFrente" accept="image/*" capture="environment" hidden></label>
+          <label class="btn sec" style="cursor: pointer;">📷 Foto 2 — de lado (opcional)
+            <input type="file" id="scanLado" accept="image/*" capture="environment" hidden></label>
+          <button class="btn" id="scanMedir" disabled>Medir</button>
+        </div>
+        <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Na foto de frente: braços afastados do corpo, formando um V, pés na largura do quadril. Na de lado: braços esticados pra frente, sempre o mesmo lado.</p>
+        <div id="scanEstado" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+      </div>
+
+      <div id="scanResultado" hidden style="margin-top: 12px;"></div>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Não rolou? A fita métrica do card acima resolve em 2 minutos.</p>
+    </div>
+
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Nova avaliação física</h2>
       <div class="linha-flex" style="margin-top: 8px;">
@@ -1028,6 +1074,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeAgenda" style="width: 17px; height: 17px;"> Agenda — pedir e confirmar horário pelo app</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeChat" style="width: 17px; height: 17px;"> Chat com você</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVePag" style="width: 17px; height: 17px;"> Plano e pagamento — Pix, "Já paguei" e assinatura</label>
+        <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgScan" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Medidas pela câmera</b> — estima cintura, quadril e coxa a partir de duas fotos, lidas dentro do próprio aparelho (vem desligado; é estimativa, não substitui fita nem bioimpedância)</span></label>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgFeed" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os alunos postam resultado e foto, curtem e comentam entre si (vem desligado; precisa de conta na nuvem)</span></label>
       </div>
       <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
@@ -1280,6 +1327,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/exercicios-db.js"></script>
 <script src="assets/exercicios-anim.js"></script>
 <script src="assets/composicao-corporal.js"></script>
+<script src="assets/scanner-visao.js"></script>
+<script src="assets/scanner-corporal.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
@@ -4632,6 +4681,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
+    $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
   }
   $("cfgSalva").addEventListener("click", function () {
     var st = load();
@@ -4643,6 +4693,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var mudouApp = JSON.stringify(am) !== JSON.stringify((st.config.appMostra || {})) || feed !== !!st.config.feedOn;
     st.config.appMostra = am;
     st.config.feedOn = feed;
+    st.config.scanOn = $("cfgScan").checked;
     // o app dos alunos muda de cara — todos entram na fila de publicar
     if (mudouApp) st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
     save(st);
@@ -5833,6 +5884,171 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__circ = { calcula: calculaCirc }; // testes
 
+  // ---------- medidas pela câmera ----------
+  // A imagem é lida dentro do aparelho e descartada: nada aqui grava foto no
+  // estado, no localStorage ou na nuvem. Só os números seguem adiante.
+  var scanPend = null, scanFotos = { frente: null, lado: null };
+  var TERMO_SCAN = "2026-08-scan-1";
+
+  function scanLigado(st) {
+    return !!((st || load()).config || {}).scanOn && self.MT_VISAO && self.MT_VISAO.suportado();
+  }
+  function pintaScan(st) {
+    var card = $("scanCard");
+    if (!card) return;
+    card.hidden = !scanLigado(st);
+    if (card.hidden) return;
+    var sel = $("scanAluno"), atual = sel.value;
+    sel.innerHTML = '<option value="">Escolha o aluno…</option>' + (st.alunos || [])
+      .filter(function (a) { return a.ativo !== false; })
+      .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
+    if (atual) sel.value = atual;
+  }
+  function scanAlunoAtual() {
+    var st = load();
+    return (st.alunos || []).find(function (a) { return a.id === $("scanAluno").value; }) || null;
+  }
+  function scanDiz(t) { $("scanEstado").innerHTML = t || ""; }
+
+  // pares fita × foto do próprio aluno viram o ajuste da régua dele
+  function scanCalibracao(st, alunoId) {
+    var pares = (st.avaliacoes || []).filter(function (v) {
+      return v.alunoId === alunoId && v.scan && v.scan.circ && v.scan.circ.cintura && v.cintura;
+    }).slice(-5).map(function (v) { return { fita: v.cintura, foto: v.scan.circ.cintura }; });
+    return self.MT_SCANNER.calibra(pares);
+  }
+
+  function scanCarregaImagem(arquivo) {
+    return new Promise(function (ok, erro) {
+      var url = URL.createObjectURL(arquivo);
+      var img = new Image();
+      img.onload = function () { URL.revokeObjectURL(url); ok(img); };
+      img.onerror = function () { URL.revokeObjectURL(url); erro(new Error("não consegui abrir a foto")); };
+      img.src = url;
+    });
+  }
+
+  function scanAtualizaBotao() {
+    $("scanMedir").disabled = !scanFotos.frente;
+  }
+
+  ["scanFrente", "scanLado"].forEach(function (id) {
+    var el = $(id);
+    if (!el) return;
+    el.addEventListener("change", function () {
+      var arq = this.files && this.files[0];
+      if (!arq) return;
+      scanFotos[id === "scanFrente" ? "frente" : "lado"] = arq;
+      scanDiz("Foto " + (id === "scanFrente" ? "de frente" : "de lado") + " escolhida ✓");
+      scanAtualizaBotao();
+    });
+  });
+
+  if ($("scanIniciar")) $("scanIniciar").addEventListener("click", function () {
+    var a = scanAlunoAtual();
+    if (!a) { alert("Escolha o aluno."); return; }
+    if (!$("scanAltura").value && a.altura) $("scanAltura").value = a.altura;
+    if (a.sexo) $("scanSexo").value = a.sexo;
+    if (!$("scanAltura").value) { alert("Preencha a altura do aluno (em cm) — é ela que serve de régua."); return; }
+    var jaAceitou = (a.consentimentoScan || {}).versao === TERMO_SCAN;
+    $("scanTermo").hidden = jaAceitou;
+    $("scanPreparo").hidden = !jaAceitou;
+    $("scanResultado").hidden = true;
+  });
+  if ($("scanTermoNao")) $("scanTermoNao").addEventListener("click", function () { $("scanTermo").hidden = true; });
+  if ($("scanTermoOk")) $("scanTermoOk").addEventListener("click", function () {
+    if (!$("scanAceite").checked) { alert("Marque a autorização do aluno pra continuar."); return; }
+    var st = load();
+    var a = (st.alunos || []).find(function (x) { return x.id === $("scanAluno").value; });
+    if (a) {
+      a.consentimentoScan = { versao: TERMO_SCAN, quando: S.todayISO() };
+      save(st);
+    }
+    $("scanTermo").hidden = true;
+    $("scanPreparo").hidden = false;
+  });
+
+  if ($("scanMedir")) $("scanMedir").addEventListener("click", function () {
+    var bt = this;
+    var a = scanAlunoAtual();
+    var alturaCm = +$("scanAltura").value;
+    if (!a || !alturaCm) { alert("Escolha o aluno e a altura."); return; }
+    if (!scanFotos.frente) { alert("Tire pelo menos a foto de frente."); return; }
+    bt.disabled = true;
+    scanDiz("Preparando…");
+    self.MT_VISAO.carrega("", scanDiz).then(function () {
+      scanDiz("Lendo a foto de frente…");
+      return scanCarregaImagem(scanFotos.frente).then(function (img) {
+        var f = self.MT_SCANNER.analisaFoto(self.MT_VISAO.le(img), "frente", alturaCm);
+        if (!f.ok) throw new Error(f.fala);
+        if (!scanFotos.lado) return { frente: f, lado: null };
+        scanDiz("Lendo a foto de lado…");
+        return scanCarregaImagem(scanFotos.lado).then(function (img2) {
+          var l = self.MT_SCANNER.analisaFoto(self.MT_VISAO.le(img2), "lado", alturaCm);
+          return { frente: f, lado: l.ok ? l : null, avisoLado: l.ok ? "" : l.fala };
+        });
+      });
+    }).then(function (par) {
+      scanDiz("Medindo…");
+      var st = load();
+      var r = self.MT_SCANNER.medidas(par.frente, par.lado, {
+        alturaCm: alturaCm, sexo: $("scanSexo").value, peso: null,
+        calibracao: scanCalibracao(st, a.id),
+      });
+      if (!r.ok) throw new Error(r.erro || "não consegui medir nesta foto");
+      if (par.avisoLado) r.avisos.push("A foto de lado não deu certo (" + par.avisoLado + ") — medi só com a de frente.");
+      r.quando = S.todayISO();
+      scanFotos = { frente: null, lado: null };   // a imagem sai da memória aqui
+      $("scanFrente").value = ""; $("scanLado").value = "";
+      scanDiz("Pronto. As fotos foram descartadas. ✅");
+      pintaScanResultado(r, a);
+    }).catch(function (e) {
+      scanDiz('<b style="color:#f87171;">' + esc(e.message) + "</b>");
+    }).then(function () {
+      bt.disabled = false;
+      scanAtualizaBotao();
+    });
+  });
+
+  function pintaScanResultado(r, a) {
+    scanPend = r;
+    var box = $("scanResultado");
+    box.hidden = false;
+    var nm = function (v, c) { return v == null ? "—" : Number(v).toFixed(c == null ? 1 : c).replace(".", ","); };
+    var rot = { cintura: "Cintura", quadril: "Quadril", torax: "Tórax", coxa: "Coxa", panturrilha: "Panturrilha", braco: "Braço" };
+    var linhas = Object.keys(rot).filter(function (k) { return r.circ[k]; }).map(function (k) {
+      var c = r.confianca[k] || "média";
+      return "<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--linha);'>" +
+        "<span>" + rot[k] + (c !== "alta" ? " <span class='muted' style='font-size:11px;'>(confiança " + c + ")</span>" : "") + "</span>" +
+        "<b>" + nm(r.circ[k]) + " cm <span class='muted' style='font-weight:600;font-size:11px;'>± " + nm(r.margemCm, 1) + "</span></b></div>";
+    }).join("");
+    box.innerHTML =
+      (r.rcest ? "<div style='background:rgba(124,58,237,.10);border:1px solid var(--linha);border-radius:12px;padding:12px 14px;margin-bottom:10px;'>" +
+        "<div style='font-size:10px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;'>Razão cintura / altura</div>" +
+        "<div style='font-size:30px;font-weight:900;'>" + nm(r.rcest, 2) + "</div>" +
+        "<div class='muted' style='font-size:12px;'>abaixo de 0,50 é a faixa de menor risco — é a medida mais confiável daqui, porque não depende da régua</div></div>" : "") +
+      linhas +
+      (r.gordura ? "<div style='margin-top:8px;font-size:13px;'>Gordura estimada: <b>entre " + nm(r.gordura.faixa[0], 0) + "% e " + nm(r.gordura.faixa[1], 0) + "%</b> " +
+        "<span class='muted' style='font-size:11.5px;'>(" + r.gordura.metodo + ", sempre em faixa)</span></div>" : "") +
+      (r.avisos.length ? "<div class='muted' style='margin-top:8px;font-size:12px;line-height:1.6;'>• " + r.avisos.map(esc).join("<br>• ") + "</div>" : "") +
+      "<div class='muted' style='margin-top:10px;font-size:11.5px;border-left:3px solid var(--roxo);padding-left:9px;line-height:1.6;'>" + esc(self.MT_SCANNER.TEXTO_LIMITE) + "</div>" +
+      "<div class='linha-flex' style='margin-top:10px;'><button class='btn' id='scanUsar'>Usar estes números na avaliação</button>" +
+      "<button class='btn sec' id='scanRefazer'>Refazer</button></div>";
+    $("scanUsar").addEventListener("click", function () {
+      $("avAluno").value = a.id;
+      if (!$("avCintura").value && r.circ.cintura) $("avCintura").value = r.circ.cintura;
+      if (!$("avQuadril").value && r.circ.quadril) $("avQuadril").value = r.circ.quadril;
+      if (!$("avBraco").value && r.circ.braco) $("avBraco").value = r.circ.braco;
+      if (!$("avGord").value && r.gordura) $("avGord").value = r.gordura.valor;
+      box.hidden = true;
+      $("avAluno").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    $("scanRefazer").addEventListener("click", function () {
+      scanPend = null; box.hidden = true; scanDiz("");
+    });
+  }
+  window.__scan = { calibracao: scanCalibracao, pinta: pintaScanResultado, pend: function () { return scanPend; } }; // testes
+
   // ---------- laudo de composição corporal ----------
   // Junta o cadastro do aluno (sexo, altura, idade) com a avaliação e devolve
   // o laudo completo. O motor fica em assets/composicao-corporal.js.
@@ -5846,13 +6062,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function laudoDe(st, av) {
     if (!self.MT_CORPO || !av) return null;
     var a = (st.alunos || []).find(function (x) { return x.id === av.alunoId; }) || {};
-    var circ = Object.assign({}, av.circ || {});
+    var circ = Object.assign({}, (av.scan && av.scan.circ) || {}, av.circ || {});
     if (av.cintura) circ.cintura = av.cintura;
     if (av.quadril) circ.quadril = av.quadril;
     if (av.braco) circ.braco = av.braco;
     var r = self.MT_CORPO.calcula({
       sexo: a.sexo || "M", idade: idadeDe(a.nasc), altura: +a.altura || null,
       peso: av.peso, gordura: av.gordura, circ: circ, dobras: av.dobras, bia: av.bia,
+      scan: av.scan || null,
     });
     return r && r.ok ? r : null;
   }
@@ -5950,6 +6167,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
             (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
             (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:#4ade80;">bioimpedância</span>' : "") +
+            (v.scan ? '<span class="tag" style="font-size:10px;background:rgba(96,165,250,.18);color:#60a5fa;">📷 câmera</span>' : "") +
             '<span style="margin-left:auto;"></span>' +
             '<button class="btn sec mini" data-avlaudo="' + v.id + '" title="Laudo completo">📄</button>' +
             '<button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
@@ -5987,6 +6205,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     circPend = null;
     if (+$("avQuadril").value) reg.quadril = +$("avQuadril").value;
+    // medidas vindas da câmera: guardadas à parte, pra nunca se passarem por fita
+    if (scanPend) {
+      reg.scan = { v: 1, quando: scanPend.quando, circ: scanPend.circ, confianca: scanPend.confianca,
+        rcest: scanPend.rcest, margemCm: scanPend.margemCm, calibrado: !!scanPend.calibrado };
+      reg.circ = Object.assign({}, scanPend.circ, reg.circ || {});   // o que foi medido de fita vence
+      if (!reg.gordura && scanPend.gordura) reg.gordura = scanPend.gordura.valor;
+    }
+    scanPend = null;
     // números da balança de bioimpedância (opcionais) — vencem as estimativas
     var bia = {}, seg = [];
     [["biaAgua", "agua"], ["biaProteina", "proteina"], ["biaMineral", "mineral"],
@@ -8897,6 +9123,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderPagamentos(st);
     renderAvaliacoes(st);
     pintaLaudoPT(st);
+    pintaScan(st);
     renderBiblioteca();
     renderVideotecaPT();
     renderPlanosPT();

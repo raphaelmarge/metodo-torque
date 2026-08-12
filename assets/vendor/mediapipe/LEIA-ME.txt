@@ -1,0 +1,15 @@
+MediaPipe Tasks Vision 1.0.1 — Google LLC — licença Apache 2.0 (LICENSE.txt)
+https://www.npmjs.com/package/@mediapipe/tasks-vision
+
+  vision_bundle.js                      bundle IIFE (expõe o global "Vision").
+                                        O projeto não tem build, então nada de ESM.
+  wasm/vision_wasm_internal.*           motor com SIMD (o que quase todo aparelho usa)
+  wasm/vision_wasm_nosimd_internal.*    motor sem SIMD, pra celular antigo não ficar de fora
+  models/pose_landmarker_lite.task      33 pontos do corpo + a silhueta recortada
+
+Tudo servido do próprio domínio de propósito: o escaneamento roda dentro do
+aparelho, sem CDN, e a imagem não é enviada pra lugar nenhum.
+
+Estes arquivos NÃO entram no precache do sw.js — são baixados só quando alguém
+abre as Medidas pela câmera, e ficam numa cache própria (mt-visao-v1) que
+sobrevive às trocas de versão do site.
