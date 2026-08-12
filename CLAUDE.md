@@ -15,11 +15,18 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 | TORQUE NUTRI | `nutricao.html` | Módulo do nutricionista: pacientes, dietas, app do paciente |
 | App do aluno | gerado por `montaAppAluno` (personal.html) e `montaAppNutri` (nutricao.html) | HTML único publicado na tabela `app_aluno`; aluno entra por `aluno-login.html` (login = e-mail, senha enviada por e-mail no cadastro) |
 | Vendas | `personal-vendas.html`, `torqueon.html` | Landing pages |
-| Demo | `demo-aluno.html` | App de demonstração com dados fake (regenerar quando o builder mudar) |
+| Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html` | Demonstrações com dados fake pra mandar pro cliente. O do aluno é gerado por script (regenerar quando o builder mudar) e simula a nuvem interceptando o `fetch`; os outros dois semeiam o localStorage e abrem o módulo |
 
-Bancos compartilhados em `assets/`: `exercicios-db.js` (870), `alimentos-db.js`
-(589), `receitas-db.js` (39). Rotinas diárias adicionam itens — sempre com
+Bancos compartilhados em `assets/`: `exercicios-db.js` (1220), `alimentos-db.js`
+(939), `receitas-db.js` (60). Rotinas diárias adicionam itens — sempre com
 dedupe por nome (case-insensitive) validado por script node.
+
+**Comunidade** (feed da turma, estilo GymRats): tabela `app_feed` + RPCs
+`app_aluno_posta` / `app_aluno_feed` / `app_aluno_feed_apaga`, com curtidas e
+comentários reusando `app_reacoes` (`post_id = 'feed:<id>'`). Vale pros dois
+apps (aluno e paciente) e vem DESLIGADA — o profissional liga nas Configurações
+(`st.config.feedOn`) e republica os apps. Moderação: Personal em Desafio →
+Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
 ## Supabase
 
@@ -71,8 +78,13 @@ bash tests/run.sh   # 15 suítes Playwright — esperado: "suites com falha: 0"
 
 ## Estado atual e pendências do Raphael
 
-- Pendências dele no Supabase: re-rodar o SQL (sql.html), publicar a função
-  envia-email (+ conta resend.com com domínio verificado, secrets
-  RESEND_API_KEY/EMAIL_DE), e ativação Meta do WhatsApp/Instagram (funcoes.html).
-- Itens de roadmap já conversados: IA prescritiva de treino, cobrança
-  recorrente Pagar.me (função existe), questionários no Nutri.
+- Pendências dele no Supabase: **republicar a chat-envia** (sem ela a IA de
+  treino e a IA de dieta não funcionam), publicar envia-email e push-envia
+  (+ conta resend.com com domínio verificado, secrets RESEND_API_KEY/EMAIL_DE),
+  conta Pagar.me e ativação Meta do WhatsApp/Instagram (funcoes.html).
+  O SQL da Comunidade ele já rodou.
+- Escala: o painel aguenta milhares de alunos (índices + paginação). Os passos
+  seguintes, se a base crescer muito: fotos no Supabase Storage, IndexedDB no
+  lugar do localStorage e sync incremental (salvar só o que mudou).
+- Paridade NUTRI × PERSONAL: o app do paciente já ganhou XP, semana, medalhas
+  e Comunidade. Falta o painel (cadastro com anamnese, sub-abas, perfil).
