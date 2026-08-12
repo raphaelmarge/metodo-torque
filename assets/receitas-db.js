@@ -1326,5 +1326,75 @@ self.MT_RECEITAS = [
    "Micro-ondas por 1 min e 30 s na potência alta — se passar disso resseca."
   ],
   "dica": "Doce de 5 minutos com 22 g de proteína. Deixe a caneca só até 2/3 cheia, porque a massa dobra de tamanho no micro-ondas."
+ },
+ {
+  "id": "rc61",
+  "n": "Escondidinho de frango com purê de abóbora",
+  "cat": "Almoço e jantar",
+  "tempo": 40,
+  "rende": 4,
+  "k": 330,
+  "pt": 34,
+  "ing": [
+   "600 g de peito de frango cozido e desfiado",
+   "800 g de abóbora cabotiá em cubos",
+   "1 cebola pequena e 2 dentes de alho picados",
+   "3 col. sopa de requeijão light",
+   "2 col. sopa de queijo parmesão ralado",
+   "Sal, pimenta-do-reino e cheiro-verde a gosto"
+  ],
+  "modo": [
+   "Cozinhe a abóbora até ficar bem macia, escorra bem e amasse ainda quente com o requeijão, sal e pimenta.",
+   "Refogue a cebola e o alho, junte o frango desfiado e o cheiro-verde; acerte o sal e deixe secar o líquido.",
+   "Num refratário, espalhe o frango, cubra com o purê de abóbora e salpique o parmesão.",
+   "Leve ao forno a 200 °C por 15 minutos, ou na air fryer a 180 °C por 10 minutos, até dourar."
+  ],
+  "dica": "Troca o purê de batata por abóbora e corta quase metade do carboidrato do prato, mantendo 34 g de proteína por porção. Escorra a abóbora com capricho pra o purê não ficar aguado."
+ },
+ {
+  "id": "rc62",
+  "n": "Salada de grão-de-bico com atum e limão",
+  "cat": "Almoço e jantar",
+  "tempo": 10,
+  "rende": 2,
+  "k": 380,
+  "pt": 30,
+  "ing": [
+   "1 xíc de grão-de-bico cozido (240 g)",
+   "1 lata de atum em água escorrido (120 g)",
+   "1 tomate sem sementes e 1/2 cebola roxa picados",
+   "Salsinha e hortelã picadas a gosto",
+   "Suco de 1 limão e 1 col. sopa de azeite",
+   "Sal e pimenta-do-reino a gosto"
+  ],
+  "modo": [
+   "Escorra e lave o grão-de-bico cozido pra tirar o excesso de sódio.",
+   "Misture o atum, o tomate, a cebola e as ervas numa tigela grande.",
+   "Tempere com o limão, o azeite, o sal e a pimenta e mexa devagar pra não desmanchar.",
+   "Deixe 10 minutos na geladeira antes de servir — o tempero pega melhor gelado."
+  ],
+  "dica": "Almoço de marmita pronto em 10 minutos, com 30 g de proteína e fibra que segura a fome à tarde. Dura 3 dias na geladeira em pote fechado."
+ },
+ {
+  "id": "rc63",
+  "n": "Mingau proteico de tapioca com canela",
+  "cat": "Café da manhã",
+  "tempo": 8,
+  "rende": 1,
+  "k": 290,
+  "pt": 24,
+  "ing": [
+   "2 col. sopa de goma de tapioca (30 g)",
+   "200 ml de leite desnatado",
+   "1 dose de whey protein sabor baunilha (30 g)",
+   "Canela em pó e adoçante a gosto"
+  ],
+  "modo": [
+   "Dissolva a goma de tapioca no leite frio, mexendo até não sobrar nenhum grumo.",
+   "Leve ao fogo baixo mexendo sem parar por 3 a 4 minutos, até engrossar e ficar translúcido.",
+   "Tire do fogo, espere amornar e só então misture o whey — no fogo quente a proteína talha.",
+   "Finalize com canela e adoçante a gosto."
+  ],
+  "dica": "Café da manhã quentinho com 24 g de proteína pra quem não gosta de ovo de manhã. O whey entra sempre fora do fogo, senão vira grumo."
  }
 ];
