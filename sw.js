@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v378";
+var VERSION = "mt-v379";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 
@@ -53,6 +53,7 @@ var CORE = [
   "assets/receitas-db.js",
   "assets/exercicios-db.js",
   "assets/exercicios-anim.js",
+  "assets/composicao-corporal.js",
   "assets/modulo-conta.js",
   "assets/bot-builder.js",
   "privacidade.html",

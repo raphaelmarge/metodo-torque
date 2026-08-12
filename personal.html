@@ -769,9 +769,36 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="avGord" type="number" step="0.1" min="0" placeholder="% gordura" style="width: 110px;">
         <input id="avCintura" type="number" step="0.1" min="0" placeholder="Cintura cm" style="width: 110px;">
         <input id="avBraco" type="number" step="0.1" min="0" placeholder="Braço cm" style="width: 100px;">
+        <input id="avQuadril" type="number" step="0.1" min="0" placeholder="Quadril cm" style="width: 110px;">
         <button class="btn" id="avAdd">Registrar</button>
       </div>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A evolução (com setas verde/vermelha) aparece aqui e no app do aluno.</p>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A evolução (com setas verde/vermelha) aparece aqui e no app do aluno. Sexo, altura e idade vêm do cadastro do aluno — preencha lá pro laudo sair completo.</p>
+
+      <details id="avBiaBox" style="margin-top: 12px; border: 1px solid var(--linha); border-radius: 12px; padding: 10px 14px;">
+        <summary style="cursor: pointer; font-weight: 700; font-size: 13.5px;">⚖️ Tem balança de bioimpedância? (InBody, Omron, Tanita…) — opcional</summary>
+        <p class="muted" style="margin: 8px 0 10px; font-size: 12.5px;">Digite o que o aparelho mostrou. Esses números entram no lugar das estimativas e o laudo passa a dizer <b>medido</b>. O que você deixar em branco o sistema calcula.</p>
+        <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+          <input id="biaAgua" type="number" step="0.1" min="0" placeholder="Água L" style="width: 100px;">
+          <input id="biaProteina" type="number" step="0.1" min="0" placeholder="Proteína kg" style="width: 120px;">
+          <input id="biaMineral" type="number" step="0.01" min="0" placeholder="Minerais kg" style="width: 120px;">
+          <input id="biaGordKg" type="number" step="0.1" min="0" placeholder="Gordura kg" style="width: 115px;">
+          <input id="biaMme" type="number" step="0.1" min="0" placeholder="Músculo kg" style="width: 120px;">
+          <input id="biaVisceral" type="number" step="1" min="0" placeholder="Visceral (nível)" style="width: 140px;">
+          <input id="biaAngulo" type="number" step="0.1" min="0" placeholder="Ângulo de fase °" style="width: 150px;">
+        </div>
+        <div class="muted" style="margin: 12px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Massa magra por segmento (kg)</div>
+        <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+          <input id="biaBracoE" type="number" step="0.01" min="0" placeholder="Braço esq." style="width: 120px;">
+          <input id="biaBracoD" type="number" step="0.01" min="0" placeholder="Braço dir." style="width: 120px;">
+          <input id="biaTronco" type="number" step="0.01" min="0" placeholder="Tronco" style="width: 105px;">
+          <input id="biaPernaE" type="number" step="0.01" min="0" placeholder="Perna esq." style="width: 120px;">
+          <input id="biaPernaD" type="number" step="0.01" min="0" placeholder="Perna dir." style="width: 120px;">
+        </div>
+      </details>
+    </div>
+    <div class="card" data-avsec="avaliar" id="avLaudoBox" hidden style="margin-bottom: 14px;">
+      <h2>Laudo da última avaliação</h2>
+      <div id="avLaudo"></div>
     </div>
     <div class="card" data-avsec="historico" hidden><h2>Histórico e evolução</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
   </section>
@@ -1252,6 +1279,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/pagarme-cartao.js"></script>
 <script src="assets/exercicios-db.js"></script>
 <script src="assets/exercicios-anim.js"></script>
+<script src="assets/composicao-corporal.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
@@ -5805,6 +5833,86 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__circ = { calcula: calculaCirc }; // testes
 
+  // ---------- laudo de composição corporal ----------
+  // Junta o cadastro do aluno (sexo, altura, idade) com a avaliação e devolve
+  // o laudo completo. O motor fica em assets/composicao-corporal.js.
+  function idadeDe(nasc) {
+    if (!nasc || !/^\d{4}-\d{2}-\d{2}/.test(nasc)) return null;
+    var h = new Date(), d = new Date(nasc + "T12:00:00");
+    var i = h.getFullYear() - d.getFullYear();
+    if (h.getMonth() < d.getMonth() || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) i--;
+    return i > 0 && i < 120 ? i : null;
+  }
+  function laudoDe(st, av) {
+    if (!self.MT_CORPO || !av) return null;
+    var a = (st.alunos || []).find(function (x) { return x.id === av.alunoId; }) || {};
+    var circ = Object.assign({}, av.circ || {});
+    if (av.cintura) circ.cintura = av.cintura;
+    if (av.quadril) circ.quadril = av.quadril;
+    if (av.braco) circ.braco = av.braco;
+    var r = self.MT_CORPO.calcula({
+      sexo: a.sexo || "M", idade: idadeDe(a.nasc), altura: +a.altura || null,
+      peso: av.peso, gordura: av.gordura, circ: circ, dobras: av.dobras, bia: av.bia,
+    });
+    return r && r.ok ? r : null;
+  }
+  function histDe(st, alunoId) {
+    return (st.avaliacoes || []).filter(function (v) { return v.alunoId === alunoId; })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
+      .map(function (v) {
+        var l = laudoDe(st, v);
+        return { data: v.data, peso: v.peso, gordura: v.gordura, mme: l ? l.mme : null };
+      });
+  }
+  function abreLaudo(st, av) {
+    var l = laudoDe(st, av);
+    if (!l) { alert("Pro laudo completo o aluno precisa de altura no cadastro e peso na avaliação."); return; }
+    var a = (st.alunos || []).find(function (x) { return x.id === av.alunoId; }) || {};
+    var html = self.MT_CORPO.laudoHtml(l, {
+      nome: a.nome || "Aluno", quando: av.data, marca: "TORQUE PERSONAL",
+      profissional: (st.config || {}).nome || "", historico: histDe(st, av.alunoId),
+    });
+    var w = window.open("", "_blank");
+    if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
+    w.document.write(html); w.document.close();
+  }
+  // resumo curto do laudo, direto na tela de avaliar
+  function pintaLaudoPT(st) {
+    var box = $("avLaudoBox"), el = $("avLaudo");
+    if (!box || !el) return;
+    var avs = (st.avaliacoes || []).slice().sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    var ult = avs[avs.length - 1];
+    var l = ult ? laudoDe(st, ult) : null;
+    if (!l) { box.hidden = true; return; }
+    box.hidden = false;
+    var a = (st.alunos || []).find(function (x) { return x.id === ult.alunoId; }) || {};
+    var kpi = function (rot, val, sub, cor) {
+      return "<div style='flex:1;min-width:118px;background:rgba(124,58,237,.08);border:1px solid var(--linha);border-radius:10px;padding:10px 12px;'>" +
+        "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a8695;text-transform:uppercase;'>" + rot + "</div>" +
+        "<div style='font-size:20px;font-weight:900;" + (cor ? "color:" + cor + ";" : "") + "'>" + val + "</div>" +
+        (sub ? "<div style='font-size:10.5px;color:#a9a4b5;'>" + sub + "</div>" : "") + "</div>";
+    };
+    var nm = function (v, c) { return v == null ? "—" : Number(v).toFixed(c == null ? 1 : c).replace(".", ","); };
+    var corDe = function (cl) { return cl === "normal" ? "#4ade80" : cl === "acima" ? "#f87171" : "#60a5fa"; };
+    el.innerHTML =
+      "<div class='muted' style='margin:0 0 10px;font-size:12.5px;'><b>" + esc(a.nome || "") + "</b> · " +
+      S.fmtData(ult.data) + (l.estimado ? " · valores estimados a partir do % de gordura" : " · valores medidos na bioimpedância") + "</div>" +
+      "<div class='linha-flex' style='gap:8px;flex-wrap:wrap;'>" +
+      (l.pontuacao ? kpi("Pontuação", l.pontuacao + "/100") : "") +
+      kpi("Gordura", nm(l.gordura) + "%", "faixa " + l.faixaGordura[0] + "–" + l.faixaGordura[1] + "%", corDe(l.classeGordura)) +
+      kpi("Músculo", nm(l.mme) + " kg", "índice " + nm(l.smi), l.smiBaixo ? "#f87171" : "#4ade80") +
+      kpi("Massa magra", nm(l.massaMagra) + " kg") +
+      kpi("Água", nm(l.agua) + " L") +
+      kpi("IMC", nm(l.imc), l.classeImc, corDe(l.classePeso)) +
+      kpi("Basal", l.tmb + " kcal", "gasto/dia " + l.ingestao) +
+      "</div>" +
+      "<div class='linha-flex' style='margin-top:12px;'>" +
+      "<button class='btn' id='avLaudoAbrir'>📄 Laudo completo</button>" +
+      "<span class='muted' style='font-size:12px;'>abre pronto pra imprimir ou salvar em PDF e mandar pro aluno</span></div>";
+    $("avLaudoAbrir").addEventListener("click", function () { abreLaudo(load(), ult); });
+  }
+  window.__laudoPT = { calcula: laudoDe, pinta: pintaLaudoPT, idade: idadeDe }; // testes
+
   // ---------- avaliações ----------
   function renderAvaliacoes(st) {
     var el = $("listaAvaliacoes");
@@ -5841,7 +5949,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.cintura ? "<span>cintura " + String(v.cintura).replace(".", ",") + delta(v.cintura, ant.cintura) + "</span>" : "") +
             (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
             (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
-            '<span style="margin-left:auto;"></span><button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
+            (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:#4ade80;">bioimpedância</span>' : "") +
+            '<span style="margin-left:auto;"></span>' +
+            '<button class="btn sec mini" data-avlaudo="' + v.id + '" title="Laudo completo">📄</button>' +
+            '<button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
         }).join("") + "</div></details>";
     }).join("");
   }
@@ -5875,13 +5986,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!reg.gordura && circPend.gordura) reg.gordura = circPend.gordura;
     }
     circPend = null;
+    if (+$("avQuadril").value) reg.quadril = +$("avQuadril").value;
+    // números da balança de bioimpedância (opcionais) — vencem as estimativas
+    var bia = {}, seg = [];
+    [["biaAgua", "agua"], ["biaProteina", "proteina"], ["biaMineral", "mineral"],
+     ["biaGordKg", "massaGordura"], ["biaMme", "mme"], ["biaVisceral", "visceral"],
+     ["biaAngulo", "anguloFase"]].forEach(function (par) {
+      var v = +$(par[0]).value;
+      if (v > 0) bia[par[1]] = v;
+    });
+    [["biaBracoE", "Braço esquerdo"], ["biaBracoD", "Braço direito"], ["biaTronco", "Tronco"],
+     ["biaPernaE", "Perna esquerda"], ["biaPernaD", "Perna direita"]].forEach(function (par) {
+      var v = +$(par[0]).value;
+      if (v > 0) seg.push({ nome: par[1], magra: v });
+    });
+    if (seg.length) bia.segmentar = seg;
+    if (Object.keys(bia).length) reg.bia = bia;
     st.avaliacoes.push(reg);
     marcaAppPendente(st, reg.alunoId); // a evolução entra no app na próxima publicação
-    ["avPeso", "avGord", "avCintura", "avBraco"].forEach(function (id) { $(id).value = ""; });
+    ["avPeso", "avGord", "avCintura", "avBraco", "avQuadril", "biaAgua", "biaProteina", "biaMineral",
+     "biaGordKg", "biaMme", "biaVisceral", "biaAngulo", "biaBracoE", "biaBracoD", "biaTronco",
+     "biaPernaE", "biaPernaD"].forEach(function (id) { if ($(id)) $(id).value = ""; });
     save(st);
   });
   $("listaAvaliacoes").addEventListener("click", function (e) {
-    var id = e.target.getAttribute && e.target.getAttribute("data-avrm");
+    if (!e.target.getAttribute) return;
+    var laudo = e.target.getAttribute("data-avlaudo");
+    if (laudo) {
+      var stL = load();
+      var av = (stL.avaliacoes || []).find(function (v) { return v.id === laudo; });
+      if (av) abreLaudo(stL, av);
+      return;
+    }
+    var id = e.target.getAttribute("data-avrm");
     if (!id || !confirm("Remover esta avaliação?")) return;
     var st = load();
     st.avaliacoes = (st.avaliacoes || []).filter(function (v) { return v.id !== id; });
@@ -8759,6 +8896,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderAgenda(st);
     renderPagamentos(st);
     renderAvaliacoes(st);
+    pintaLaudoPT(st);
     renderBiblioteca();
     renderVideotecaPT();
     renderPlanosPT();

@@ -987,6 +987,51 @@ async function abaNt(p, a) {
     });
     ok(vazio, "sem avaliação, o app avisa que as medidas entram na consulta");
 
+    // 🧪 laudo completo de composição corporal
+    const laudo = await pA2.evaluate(() => {
+      const S2 = window.MTStore;
+      const st = S2.read("ntStudio", {});
+      st.avaliacoesN = [{ id: "L1", pacienteId: "av1", data: "2026-08-12", peso: 68.4, gordura: 27, cintura: 79, quadril: 99 }];
+      S2.write("ntStudio", st);
+      const p0 = st.pacientes[0];
+      const l = window.__laudoN.calcula(st, p0, st.avaliacoesN[0]);
+      const html = window.MT_CORPO.laudoHtml(l, { nome: p0.nome, quando: "2026-08-12", marca: "TORQUE NUTRI" });
+      window.__perfilNT("av1");
+      return {
+        massaGordura: l.massaGordura, massaMagra: l.massaMagra, agua: l.agua,
+        proteina: l.proteina, mineral: l.mineral, mme: l.mme, smi: l.smi,
+        tmb: l.tmb, imc: l.imc, pontuacao: l.pontuacao, estimado: l.estimado,
+        htmlTemBlocos: /Composição corporal/.test(html) && /Controle de peso/.test(html) &&
+          /Gasto calórico em 30 minutos/.test(html) && /Metabolismo basal/.test(html),
+        naTela: (document.getElementById("avnLaudo") || {}).textContent.replace(/\s+/g, " "),
+      };
+    });
+    // 68,4 kg com 27% de gordura: 18,5 kg de gordura e 49,9 kg de massa magra
+    ok(laudo.massaGordura === 18.5 && laudo.massaMagra === 49.9 && laudo.agua === 36.5 && laudo.proteina === 10,
+      "🧪 o laudo separa gordura, massa magra, água e proteína a partir do % de gordura");
+    ok(laudo.mme > 20 && laudo.smi > 5 && laudo.tmb > 1000 && laudo.imc === 24.8 && laudo.pontuacao > 0,
+      "músculo, índice muscular, metabolismo basal, IMC e pontuação saem calculados");
+    ok(laudo.htmlTemBlocos, "o laudo imprimível traz composição, controle de peso, gasto calórico e metabolismo");
+    ok(/Laudo completo/.test(laudo.naTela) && /Pontuação/.test(laudo.naTela) && laudo.estimado,
+      "o perfil mostra o resumo do laudo com o botão de imprimir, marcado como estimativa");
+
+    // com a bioimpedância digitada, os valores medidos vencem os estimados
+    const bia = await pA2.evaluate(() => {
+      const S2 = window.MTStore;
+      const st = S2.read("ntStudio", {});
+      st.avaliacoesN = [{ id: "L2", pacienteId: "av1", data: "2026-08-12", peso: 68.4,
+        bia: { agua: 40.2, proteina: 11.1, mineral: 3.6, massaGordura: 13.5, mme: 29.4, visceral: 6, anguloFase: 5.9 } }];
+      S2.write("ntStudio", st);
+      const l = window.__laudoN.calcula(st, st.pacientes[0], st.avaliacoesN[0]);
+      const html = window.MT_CORPO.laudoHtml(l, { nome: "x", marca: "TORQUE NUTRI" });
+      return { agua: l.agua, mme: l.mme, gordura: l.gordura, visceral: l.visceral,
+        estimado: l.estimado, temVisceral: /Gordura visceral/.test(html), temAngulo: /Ângulo de fase/.test(html) };
+    });
+    ok(bia.agua === 40.2 && bia.mme === 29.4 && bia.gordura === 19.7 && !bia.estimado,
+      "⚖️ os números da bioimpedância entram no lugar das estimativas e o laudo deixa de ser estimado");
+    ok(bia.visceral === 6 && bia.temVisceral && bia.temAngulo,
+      "gordura visceral e ângulo de fase entram no laudo quando o aparelho mede");
+
     await pA2.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
     await pA2.close();
   }
