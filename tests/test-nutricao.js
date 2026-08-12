@@ -903,6 +903,71 @@ async function abaNt(p, a) {
     await pN.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
     await pN.close();
   }
+  {
+    // 📏 avaliação física: painel registra, app do paciente mostra a evolução
+    console.log("Avaliação física (paridade com o Personal):");
+    const pA2 = await b.newPage();
+    pA2.on("pageerror", (e) => erros.push("aval nutri: " + e.message));
+    pA2.on("dialog", (d) => d.accept());
+    await pA2.goto(BASE + "/nutricao.html");
+    await pA2.evaluate(() => {
+      localStorage.setItem("mtapp:ntSemConta", "1");
+      localStorage.setItem("mtapp:ntStudio", JSON.stringify({
+        config: { nome: "C aval" },
+        pacientes: [{ id: "av1", nome: "Marina Teste", sexo: "F", idade: 31, peso: 74.6, altura: 166,
+          atividade: "mod", objetivo: "emagrecer", ativo: true, appTokenN: "tok-aval" }],
+        dietas: {}, alimentos: [], catalogoOff: {}, pesagens: {}, consultas: [], pagamentosN: [],
+      }));
+    });
+    await pA2.reload();
+    await pA2.waitForTimeout(700);
+
+    const av = await pA2.evaluate(() => {
+      window.__perfilNT("av1");
+      const set = (id, v) => { document.getElementById(id).value = v; };
+      const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+      set("avnData", iso(90)); set("avnPeso", "74,6"); set("avnGord", "32"); set("avnCintura", "88"); set("avnQuadril", "104"); set("avnBraco", "28");
+      document.getElementById("avnAdd").click();
+      set("avnData", iso(0)); set("avnPeso", "68,4"); set("avnGord", "27"); set("avnCintura", "79"); set("avnQuadril", "99"); set("avnBraco", "29");
+      document.getElementById("avnAdd").click();
+      const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+      return {
+        n: st.avaliacoesN.length,
+        pesoCadastro: st.pacientes[0].peso,
+        pesagens: (st.pesagens.av1 || []).length,
+        calc: document.getElementById("avnCalc").textContent.replace(/\s+/g, " "),
+        resumo: document.getElementById("avnLista").textContent.replace(/\s+/g, " "),
+      };
+    });
+    ok(av.n === 2 && av.pesoCadastro === 68.4 && av.pesagens === 2,
+      "📏 a avaliação guarda as medidas, vira pesagem e atualiza o peso do cadastro");
+    ok(/IMC 24,8/.test(av.calc) && /peso normal/.test(av.calc) && /RCQ 0,8/.test(av.calc) && /risco baixo/.test(av.calc),
+      "IMC e relação cintura-quadril saem calculados, com a classificação");
+    ok(/peso \(kg\) -6,2/.test(av.resumo) && /cintura \(cm\) -9/.test(av.resumo) && /bra\u00e7o \(cm\) \+1/.test(av.resumo),
+      "o resumo mostra o que mudou da primeira à última avaliação");
+
+    // o app do paciente recebe as avaliações
+    const appAv = await pA2.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+      const h = window.__montaAppNutri(st.pacientes[0], "s1");
+      return { card: /avnBoxApp/.test(h), avsn: /var AVSN=/.test(h), temMedidas: /Quadril \(cm\)/.test(h) };
+    });
+    ok(appAv.card && appAv.avsn && appAv.temMedidas, "o app do paciente ganha o card 'Minha avaliação física' com as medidas");
+
+    // sem avaliação nenhuma, o app explica em vez de mostrar tabela vazia
+    const vazio = await pA2.evaluate(() => {
+      const S2 = window.MTStore;
+      const st = S2.read("ntStudio", {});
+      st.avaliacoesN = [];
+      S2.write("ntStudio", st);
+      const h = window.__montaAppNutri(st.pacientes[0], "s2");
+      return /Suas medidas aparecem aqui/.test(h);
+    });
+    ok(vazio, "sem avaliação, o app avisa que as medidas entram na consulta");
+
+    await pA2.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
+    await pA2.close();
+  }
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();
