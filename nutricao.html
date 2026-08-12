@@ -642,7 +642,29 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       <label style="font-size: 12px; margin: 0;">Coxa (cm)<input id="avnCoxa" inputmode="decimal" style="display:block; width: 92px; margin-top: 3px;"></label>
       <button class="btn verde mini" id="avnAdd">+ Registrar avaliação</button>
     </div>
+    <details id="avnBiaBox" style="margin-top: 10px; border: 1px solid var(--linha); border-radius: 12px; padding: 10px 14px;">
+      <summary style="cursor: pointer; font-weight: 700; font-size: 13px;">⚖️ Tem balança de bioimpedância? (InBody, Omron, Tanita…) — opcional</summary>
+      <p class="muted" style="margin: 8px 0 10px; font-size: 12px;">Digite o que o aparelho mostrou. Esses números entram no lugar das estimativas e o laudo passa a dizer <b>medido</b>. O que ficar em branco o sistema calcula.</p>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+        <input id="nbAgua" inputmode="decimal" placeholder="Água L" style="width: 100px;">
+        <input id="nbProteina" inputmode="decimal" placeholder="Proteína kg" style="width: 120px;">
+        <input id="nbMineral" inputmode="decimal" placeholder="Minerais kg" style="width: 120px;">
+        <input id="nbGordKg" inputmode="decimal" placeholder="Gordura kg" style="width: 115px;">
+        <input id="nbMme" inputmode="decimal" placeholder="Músculo kg" style="width: 120px;">
+        <input id="nbVisceral" inputmode="numeric" placeholder="Visceral (nível)" style="width: 140px;">
+        <input id="nbAngulo" inputmode="decimal" placeholder="Ângulo de fase °" style="width: 150px;">
+      </div>
+      <div class="muted" style="margin: 12px 0 6px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Massa magra por segmento (kg)</div>
+      <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+        <input id="nbBracoE" inputmode="decimal" placeholder="Braço esq." style="width: 115px;">
+        <input id="nbBracoD" inputmode="decimal" placeholder="Braço dir." style="width: 115px;">
+        <input id="nbTronco" inputmode="decimal" placeholder="Tronco" style="width: 100px;">
+        <input id="nbPernaE" inputmode="decimal" placeholder="Perna esq." style="width: 115px;">
+        <input id="nbPernaD" inputmode="decimal" placeholder="Perna dir." style="width: 115px;">
+      </div>
+    </details>
     <div id="avnCalc" class="muted" style="font-size: 12.5px; margin-top: 6px;"></div>
+    <div id="avnLaudo" style="margin-top: 8px;"></div>
     <div id="avnLista" class="muted" style="font-size: 13px; margin-top: 8px;"></div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Dieta atual</h3>
@@ -657,6 +679,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 <script src="assets/access-config.js"></script>
 <script src="assets/cloud-config.js"></script>
 <script src="assets/alimentos-db.js"></script>
+<script src="assets/composicao-corporal.js"></script>
 <script src="assets/receitas-db.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/vendor/supabase.js"></script>
@@ -1183,7 +1206,64 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var alto = sexo === "F" ? r >= 0.85 : r >= 0.9;
     return { r: r, risco: alto ? "risco aumentado" : "risco baixo" };
   }
+  // ---------- laudo de composição corporal (motor em assets/composicao-corporal.js) ----------
+  function laudoDeN(st, p, av) {
+    if (!self.MT_CORPO || !av || !p) return null;
+    var circ = {};
+    ["cintura", "quadril", "braco", "coxa"].forEach(function (k) { if (av[k]) circ[k] = av[k]; });
+    var r = self.MT_CORPO.calcula({
+      sexo: p.sexo || "F", idade: +p.idade || null, altura: +p.altura || null,
+      peso: av.peso || p.peso, gordura: av.gordura, circ: circ, bia: av.bia,
+    });
+    return r && r.ok ? r : null;
+  }
+  function abreLaudoN(st, p, av) {
+    var l = laudoDeN(st, p, av);
+    if (!l) { alert("Pro laudo completo o paciente precisa de altura no cadastro e peso na avaliação."); return; }
+    var hist = avalsDe(st, p.id).map(function (v) {
+      var x = laudoDeN(st, p, v);
+      return { data: v.data, peso: v.peso, gordura: v.gordura, mme: x ? x.mme : null };
+    });
+    var html = self.MT_CORPO.laudoHtml(l, {
+      nome: p.nome || "Paciente", quando: av.data, marca: "TORQUE NUTRI", cor: "#16a34a",
+      profissional: (st.config || {}).nome || "", historico: hist,
+    });
+    var w = window.open("", "_blank");
+    if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
+    w.document.write(html); w.document.close();
+  }
+  function pintaLaudoN(st, p) {
+    var el = $("avnLaudo");
+    if (!el) return;
+    var l0 = avalsDe(st, p.id);
+    var ult = l0[l0.length - 1];
+    var l = ult ? laudoDeN(st, p, ult) : null;
+    if (!l) { el.innerHTML = ""; return; }
+    var nm = function (v, c) { return v == null ? "—" : Number(v).toFixed(c == null ? 1 : c).replace(".", ","); };
+    var corDe = function (cl) { return cl === "normal" ? "#4ade80" : cl === "acima" ? "#f87171" : "#60a5fa"; };
+    var kpi = function (rot, val, sub, cor) {
+      return "<div style='flex:1;min-width:112px;background:rgba(22,163,74,.10);border:1px solid var(--linha);border-radius:10px;padding:9px 11px;'>" +
+        "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a9585;text-transform:uppercase;'>" + rot + "</div>" +
+        "<div style='font-size:19px;font-weight:900;" + (cor ? "color:" + cor + ";" : "") + "'>" + val + "</div>" +
+        (sub ? "<div style='font-size:10.5px;color:#9fb8a6;'>" + sub + "</div>" : "") + "</div>";
+    };
+    el.innerHTML = "<div class='linha-flex' style='gap:8px;flex-wrap:wrap;'>" +
+      (l.pontuacao ? kpi("Pontuação", l.pontuacao + "/100") : "") +
+      kpi("Gordura", nm(l.gordura) + "%", "faixa " + l.faixaGordura[0] + "–" + l.faixaGordura[1] + "%", corDe(l.classeGordura)) +
+      kpi("Músculo", nm(l.mme) + " kg", "índice " + nm(l.smi), l.smiBaixo ? "#f87171" : "#4ade80") +
+      kpi("Massa magra", nm(l.massaMagra) + " kg") +
+      kpi("Água", nm(l.agua) + " L") +
+      kpi("Basal", l.tmb + " kcal", "gasto/dia " + l.ingestao) +
+      "</div>" +
+      "<div class='linha-flex' style='margin-top:10px;'><button class='btn verde mini' id='avnLaudoAbrir'>📄 Laudo completo</button>" +
+      "<span class='muted' style='font-size:12px;'>" + (l.estimado ? "valores estimados pelo % de gordura" : "valores medidos na bioimpedância") + " — abre pronto pra imprimir</span></div>";
+    var bt = $("avnLaudoAbrir");
+    if (bt) bt.addEventListener("click", function () { abreLaudoN(load(), p, ult); });
+  }
+  window.__laudoN = { calcula: laudoDeN, pinta: pintaLaudoN }; // testes
+
   function pintaAvalN(st, p) {
+    pintaLaudoN(st, p);
     var l = avalsDe(st, p.id);
     // o cabeçalho mostra o que a última avaliação diz do paciente hoje
     var ult = l[l.length - 1];
@@ -1326,6 +1406,20 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       alert("Preencha pelo menos uma medida.");
       return;
     }
+    // números da balança de bioimpedância (opcionais) — vencem as estimativas
+    var bia = {}, seg = [];
+    [["nbAgua", "agua"], ["nbProteina", "proteina"], ["nbMineral", "mineral"], ["nbGordKg", "massaGordura"],
+     ["nbMme", "mme"], ["nbVisceral", "visceral"], ["nbAngulo", "anguloFase"]].forEach(function (par) {
+      var v = num(par[0]);
+      if (v > 0) bia[par[1]] = v;
+    });
+    [["nbBracoE", "Braço esquerdo"], ["nbBracoD", "Braço direito"], ["nbTronco", "Tronco"],
+     ["nbPernaE", "Perna esquerda"], ["nbPernaD", "Perna direita"]].forEach(function (par) {
+      var v = num(par[0]);
+      if (v > 0) seg.push({ nome: par[1], magra: v });
+    });
+    if (seg.length) bia.segmentar = seg;
+    if (Object.keys(bia).length) reg.bia = bia;
     var st = load();
     var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
     if (!p) return;
@@ -1340,7 +1434,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       p.peso = reg.peso;
     }
     S.write("ntStudio", st);
-    ["avnPeso", "avnGord", "avnCintura", "avnQuadril", "avnBraco", "avnCoxa"].forEach(function (x) { $(x).value = ""; });
+    ["avnPeso", "avnGord", "avnCintura", "avnQuadril", "avnBraco", "avnCoxa",
+     "nbAgua", "nbProteina", "nbMineral", "nbGordKg", "nbMme", "nbVisceral", "nbAngulo",
+     "nbBracoE", "nbBracoD", "nbTronco", "nbPernaE", "nbPernaD"].forEach(function (x) { if ($(x)) $(x).value = ""; });
     pintaAvalN(st, p);
     pintaPesoPerfilN(st, p);
     pintaAlvoN(p);

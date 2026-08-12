@@ -3893,6 +3893,84 @@ async function abaPt(p, a) {
   }
 
   {
+    // 🧪 laudo completo de composição corporal (estilo bioimpedância)
+    console.log("Laudo de composição corporal:");
+    const ctxL = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxL.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pL = await ctxL.newPage();
+    pL.on("pageerror", (e) => erros.push("laudo: " + e.message));
+    pL.on("dialog", (d) => d.accept());
+    await pL.goto(BASE + "/personal.html");
+    await pL.waitForFunction(() => window.__ptStudio);
+    await pL.evaluate(() => {
+      const S2 = window.MTStore;
+      const st = S2.read("ptStudio", {});
+      st.alunos = [{ id: "av1", nome: "Marina Souza", sexo: "F", altura: 165, nasc: "1986-03-10", ativo: true }];
+      st.avaliacoes = [
+        { id: "e0", alunoId: "av1", data: "2026-05-10", peso: 76, gordura: 21, cintura: 84, quadril: 97 },
+        { id: "e1", alunoId: "av1", data: "2026-08-12", peso: 72.9, gordura: 16.2, cintura: 80, quadril: 96 },
+      ];
+      S2.write("ptStudio", st);
+    });
+    await pL.reload();
+    await pL.waitForTimeout(700);
+
+    const L = await pL.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const l = window.__laudoPT.calcula(st, st.avaliacoes[1]);
+      return {
+        idade: window.__laudoPT.idade("1986-03-10"),
+        imc: l.imc, massaGordura: l.massaGordura, massaMagra: l.massaMagra,
+        agua: l.agua, proteina: l.proteina, mineral: l.mineral,
+        tmb: l.tmb, smi: l.smi, grau: l.grauObesidade, rcq: l.rcq,
+        controlePeso: l.controlePeso, pontuacao: l.pontuacao,
+        resumo: (document.getElementById("avLaudo") || {}).textContent.replace(/\s+/g, " "),
+        temBotao: !!document.getElementById("avLaudoAbrir"),
+        temLaudoNoHistorico: /data-avlaudo/.test(document.getElementById("listaAvaliacoes").innerHTML),
+      };
+    });
+    // confere contra um laudo InBody real da mesma pessoa (F, 40a, 165 cm, 72,9 kg, 16,2%)
+    ok(L.idade === 40 && L.imc === 26.8 && L.massaGordura === 11.8 && L.massaMagra === 61.1,
+      "🧪 IMC, massa de gordura e massa magra batem com o laudo de bioimpedância");
+    ok(L.agua === 44.7 && L.proteina === 12.2 && L.mineral === 4.19 && L.tmb === 1690,
+      "água, proteína, minerais e metabolismo basal saem calculados (±0,1 do aparelho)");
+    ok(L.smi === 9 && L.grau === 127 && L.rcq === 0.83 && L.controlePeso === 0,
+      "índice muscular, grau de obesidade, cintura-quadril e ajuste de peso conferem");
+    ok(L.pontuacao > 0 && /Pontuação/.test(L.resumo) && L.temBotao && L.temLaudoNoHistorico,
+      "o resumo aparece na aba Avaliações com o botão do laudo (e um 📄 por avaliação)");
+
+    const htmlL = await pL.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const l = window.__laudoPT.calcula(st, st.avaliacoes[1]);
+      return window.MT_CORPO.laudoHtml(l, { nome: "Marina Souza", quando: "2026-08-12", marca: "TORQUE PERSONAL",
+        historico: [{ data: "2026-05-10", peso: 76 }, { data: "2026-08-12", peso: 72.9 }] });
+    });
+    ok(/Composição corporal/.test(htmlL) && /Controle de peso/.test(htmlL) && /Histórico/.test(htmlL) &&
+      /Gasto calórico em 30 minutos/.test(htmlL) && /estimados/.test(htmlL),
+      "o laudo imprimível traz todos os blocos e avisa que os valores são estimados");
+
+    // bioimpedância digitada vence a estimativa
+    const biaL = await pL.evaluate(() => {
+      const S2 = window.MTStore;
+      const st = S2.read("ptStudio", {});
+      st.avaliacoes[1].bia = { agua: 44.8, proteina: 12.2, mineral: 4.13, massaGordura: 11.8, mme: 34.7,
+        segmentar: [{ nome: "Braço esquerdo", magra: 3.6 }, { nome: "Braço direito", magra: 3.67 },
+          { nome: "Tronco", magra: 27.4 }, { nome: "Perna esquerda", magra: 8.51 }, { nome: "Perna direita", magra: 8.6 }] };
+      S2.write("ptStudio", st);
+      const l = window.__laudoPT.calcula(st, st.avaliacoes[1]);
+      const html = window.MT_CORPO.laudoHtml(l, { nome: "x", marca: "TORQUE PERSONAL" });
+      return { mme: l.mme, agua: l.agua, smi: l.smi, estimado: l.estimado,
+        temSegmentar: /Análise segmentar/.test(html) && /Perna direita/.test(html), medidos: /medidos em bioimpedância/.test(html) };
+    });
+    ok(biaL.mme === 34.7 && biaL.agua === 44.8 && biaL.smi === 9 && !biaL.estimado,
+      "⚖️ com a bioimpedância digitada o laudo usa os valores medidos");
+    ok(biaL.temSegmentar && biaL.medidos, "a análise por segmento (braços, tronco e pernas) entra no laudo");
+    await ctxL.close();
+  }
+  {
     // 🖥 menu do computador: fica sempre à vista (1 clique por aba); no celular vira gaveta
     console.log("Menu fixo no computador:");
     for (const alvo of [
