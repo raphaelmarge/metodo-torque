@@ -141,10 +141,12 @@
         st.pagamentosN.push({ id: uid(), pacienteId: p.id, valor: base.valor, data: iso(m * 30 + 2) });
       }
 
-      // consultas: uma já realizada neste mês e a próxima marcada pros próximos dias
+      // consultas: uma que já passou (marcada como feita), duas do dia de hoje e as próximas
       var HORAS = ["08:00", "09:00", "10:00", "14:00", "15:00", "16:00"];
-      st.consultas.push({ id: uid(), pacienteId: p.id, data: iso(3 + i), hora: HORAS[i] });
-      st.consultas.push({ id: uid(), pacienteId: p.id, data: iso(-(3 + i * 2)), hora: HORAS[i] });
+      st.consultas.push({ id: uid(), pacienteId: p.id, data: iso(3 + i), hora: HORAS[i], feita: true });
+      if (i < 2) st.consultas.push({ id: uid(), pacienteId: p.id, data: iso(0), hora: HORAS[i] });
+      else if (i < 5) st.consultas.push({ id: uid(), pacienteId: p.id, data: iso(-(3 + i * 2)), hora: HORAS[i] });
+      // o último fica sem retorno marcado — é ele que aparece no radar de retenção
     });
 
     // check-ins que os pacientes respondem no app

@@ -39,7 +39,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .mi { vertical-align: -2.5px; }
   .abas-nt button .mi { margin-right: 9px; vertical-align: -3px; }
   #navNt { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(16,20,17,.9); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,.04); padding: 8px 6px calc(6px + env(safe-area-inset-bottom)); }
-  #navNt button { background: none; border: 0; color: #8a9585; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
+  #navNt button { position: relative; background: none; border: 0; color: #8a9585; font-family: inherit; font-size: 10.5px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 3px; cursor: pointer; border-radius: 10px; }
+  .nav-bad { position: absolute; top: 1px; right: calc(50% - 19px); min-width: 15px; height: 15px; border-radius: 8px; background: #dc2626; color: #fff; font-size: 9.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
   #navNt button.ativa { color: #4ade80; }
   #navNt button:active { background: rgba(255,255,255,.06); }
   .corpo { padding-bottom: 88px; }
@@ -80,6 +81,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .tagn { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 11px; border-radius: var(--raio-pill); text-transform: uppercase; background: rgba(34,197,94,.14); color: #4ade80; border: none; }
   .tagn.roxa { background: rgba(124,58,237,.14); color: #a78bfa; }
   .tagn.ambar { background: rgba(245,158,11,.14); color: #fcd34d; }
+  .tagn.alerta { background: rgba(239,68,68,.14); color: #f87171; }
   .btn.verde { background: var(--verde); }
   .btn.verde:hover { background: var(--verde-2); }
   .abas button.ativa { background: var(--verde); border-color: var(--verde); box-shadow: none; }
@@ -115,6 +117,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   html[data-tema="claro"] .tagn { background: #dcfce7; color: #15803d; border-color: rgba(22,163,74,.35); }
   html[data-tema="claro"] .tagn.roxa { background: #ede9fe; color: #6d28d9; border-color: rgba(124,58,237,.35); }
   html[data-tema="claro"] .tagn.ambar { background: #fef3c7; color: #b45309; border-color: rgba(245,158,11,.35); }
+  html[data-tema="claro"] .tagn.alerta { background: #fee2e2; color: #b91c1c; border-color: rgba(239,68,68,.35); }
   html[data-tema="claro"] .kpi-nt .val { color: var(--verde-2); }
 </style>
 </head>
@@ -174,6 +177,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vDashN">
     <div class="kpis-nt" id="kpisN"></div>
     <div class="card" style="margin-bottom: 14px;">
+      <h2>Seu dia hoje</h2>
+      <div id="bHojeN" class="muted" style="font-size: 13.5px;">Carregando…</div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Radar de retenção</h2>
+      <p class="muted" style="margin: 0 0 8px; font-size: 12.5px;">Quem está sumindo, com o zap na mão — puxar de volta é mais barato que achar paciente novo.</p>
+      <div id="bRadarN" class="muted" style="font-size: 13.5px;">Carregando…</div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
       <h2>Metas do mês e projeção</h2>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; margin: 8px 0 10px;">
         <label style="margin:0;font-size:12.5px;">Meta de faturamento (R$) <input id="mtFatN" type="number" min="0" style="width:130px;"></label>
@@ -223,6 +235,11 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn verde" id="pAdd">+ Adicionar</button>
       </div>
       <p id="pAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Com o e-mail preenchido, o paciente recebe o acesso do app na hora: o login é o e-mail dele e a senha (temporária) vai junto — ele troca dentro do app.</p>
+    </div>
+    <div class="abas" id="pacFiltro" style="margin: 0 0 12px;">
+      <button data-pacf="todos" class="ativa">Todos</button>
+      <button data-pacf="semdieta">Sem dieta</button>
+      <button data-pacf="devendo">Sem pagamento</button>
     </div>
     <div id="listaPacientes" class="muted">Cadastre o primeiro paciente.</div>
   </div>
@@ -281,6 +298,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; margin-top: 8px;">
         <input id="alBusca" placeholder="Buscar alimento…" style="flex: 2; min-width: 180px;">
         <select id="alCat" style="min-width: 180px;"><option value="">Todas as categorias</option></select>
+        <button class="btn sec mini" id="alFavBtn" aria-pressed="false" title="mostrar só os alimentos que você mais prescreve">★ Favoritos</button>
         <button class="btn sec mini" id="alCatOn">✓ Ativar categoria</button>
         <button class="btn sec mini" id="alCatOff">✕ Desativar categoria</button>
       </div>
@@ -473,6 +491,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></textarea></label>
     <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; margin-top: 12px;"><input type="checkbox" id="cfgFeedN" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os pacientes postam resultado e foto do prato, curtem e comentam entre si, com ranking de quem mais seguiu o plano na semana (vem desligado; precisa de conta na nuvem)</span></label>
     <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--linha);">
+      <b style="font-size: 13px;">Backup dos dados</b>
+      <p class="muted" id="bkAvisoN" style="margin: 6px 0 8px; font-size: 12px;"></p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+        <button class="btn sec mini" id="btnBackupN">Baixar backup (.json)</button>
+        <button class="btn sec mini" id="btnBackupRestauraN">Restaurar backup</button>
+        <input type="file" id="bkArquivoN" accept=".json,application/json" hidden>
+      </div>
+    </div>
+    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--linha);">
       <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 0 0 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg> A cara do seu consultório</h3>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
         <label style="margin: 0; font-size: 12.5px;">Cor principal (botões e app do paciente)
@@ -492,10 +519,20 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 <!-- perfil completo do paciente (estilo cadastro da academia) -->
 <dialog id="dlgPerfilN" style="max-width: 560px; width: 94vw; border: 1px solid var(--linha); border-radius: 18px; background: var(--card); color: var(--texto); padding: 0;">
   <div style="padding: 18px 20px; max-height: 84vh; overflow-y: auto;">
-    <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <h2 id="pnTitulo" style="font-size: 19px; margin: 0;">Perfil</h2>
       <span id="pnDesde" class="muted" style="font-size: 12px;"></span>
-      <button class="btn sec mini" id="pnFechar" style="margin-left: auto;">✕ Fechar</button>
+      <button class="btn sec mini" id="pnAcoesBtn" aria-expanded="false" style="margin-left: auto;">⚡ Ações <span class="fseta">▾</span></button>
+      <button class="btn sec mini" id="pnFechar">✕ Fechar</button>
+    </div>
+    <!-- as ações mais usadas ficam na mão, sem rolar o perfil inteiro -->
+    <div id="pnAcoes" hidden style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+      <button class="btn verde mini" id="pnAcesso"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
+      <button class="btn sec mini" id="pnApp" title="baixa o arquivo do app (uso offline)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Gerar app</button>
+      <button class="btn sec mini" id="pnPgLink" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto) pra mandar no WhatsApp">Link de pagamento</button>
+      <button class="btn sec mini" id="pnAssinar" title="cobrança automática todo mês no cartão do paciente (Pagar.me)">Assinatura mensal</button>
+      <a class="btn whats mini" id="pnWhats" target="_blank" rel="noopener" style="display:none; grid-column: 1 / -1;">WhatsApp</a>
+      <p id="pnAcessoInfo" class="muted" style="font-size: 12px; margin: 0; grid-column: 1 / -1;"></p>
     </div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 16px 0 8px;">Dados do paciente</h3>
@@ -504,28 +541,71 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       <label style="font-size: 12px; margin: 0;">WhatsApp<input id="pnZap" inputmode="numeric" style="display:block; width: 130px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">E-mail<input id="pnEmail" type="email" style="display:block; width: 190px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Idade<input id="pnIdade" inputmode="numeric" style="display:block; width: 66px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Sexo<select id="pnSexo" style="display:block; width: 110px; margin-top: 3px;"><option value="M">Masculino</option><option value="F">Feminino</option></select></label>
+      <label style="font-size: 12px; margin: 0;">Peso (kg)<input id="pnPeso" inputmode="decimal" style="display:block; width: 84px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pnAltura" inputmode="numeric" style="display:block; width: 84px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Atividade<select id="pnAtiv" style="display:block; width: 160px; margin-top: 3px;"><option value="sed">Sedentário</option><option value="leve">Ativo leve (1-3x/sem)</option><option value="mod">Moderado (3-5x/sem)</option><option value="alto">Intenso (6-7x/sem)</option></select></label>
       <label style="font-size: 12px; margin: 0;">Objetivo<select id="pnObjetivo" style="display:block; width: 130px; margin-top: 3px;"><option value="emagrecer">emagrecer</option><option value="manter">manter</option><option value="ganhar">ganhar</option></select></label>
       <label style="font-size: 12px; margin: 0;">Pagamento preferido<select id="pnPagto" style="display:block; width: 150px; margin-top: 3px;"><option value="">—</option><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="plano">📄 Plano/pacote</option></select></label>
     </div>
-    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Restrições e observações
-      <textarea id="pnObs" rows="2" style="width: 100%; margin-top: 3px;"></textarea></label>
+    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Restrições e alergias <span class="muted">— o gerador de dieta e a IA leem este campo</span>
+      <input id="pnRestr" placeholder="ex.: lactose, amendoim, frutos do mar" style="width: 100%; margin-top: 3px;"></label>
+    <label style="font-size: 12px; display: block; margin: 8px 0 0;">Observações (só suas)
+      <textarea id="pnObs" rows="2" placeholder="ex.: viaja muito a trabalho, prefere marmita" style="width: 100%; margin-top: 3px;"></textarea></label>
     <button class="btn verde mini" id="pnSalvar" style="margin-top: 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 4.5h11l3.5 3.5v11.5H5z'/><path d='M8 4.5V9h7V4.5M8 19.5v-6h8v6'/></svg> Salvar dados</button>
     <span id="pnSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
     <div id="pnAlvo" class="muted" style="font-size: 12.5px; margin-top: 6px;"></div>
+
+    <!-- anamnese nutricional: fica fechada pra não estourar o scroll do perfil -->
+    <details id="pnAnBox" style="margin-top: 14px; border: 1px dashed var(--linha); border-radius: 12px; padding: 10px 12px;">
+      <summary style="cursor: pointer; font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; font-weight: 800;">Anamnese nutricional <span id="pnAnBadge" class="tagn" style="text-transform: none; letter-spacing: 0;"></span></summary>
+      <p class="muted" style="font-size: 12px; margin: 10px 0 4px;"><b>Clínico</b></p>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+        <label style="font-size: 12px; margin: 0;">Alergias e intolerâncias<input id="anAlergias" placeholder="ex.: lactose, glúten" style="display:block; width: 200px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Doenças<input id="anDoencas" placeholder="ex.: diabetes, hipertensão" style="display:block; width: 200px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Medicamentos e suplementos<input id="anMeds" style="display:block; width: 210px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Exames recentes<input id="anExames" placeholder="ex.: colesterol alto" style="display:block; width: 190px; margin-top: 3px;"></label>
+      </div>
+      <p class="muted" style="font-size: 12px; margin: 12px 0 4px;"><b>Hábitos</b></p>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+        <label style="font-size: 12px; margin: 0;">Intestino<select id="anIntestino" style="display:block; width: 120px; margin-top: 3px;"><option value="">—</option><option value="normal">normal</option><option value="preso">preso</option><option value="solto">solto</option></select></label>
+        <label style="font-size: 12px; margin: 0;">Água por dia<input id="anAgua" placeholder="ex.: 1,5 L" style="display:block; width: 110px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Sono<input id="anSono" placeholder="ex.: 6 h, ruim" style="display:block; width: 130px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Álcool<input id="anAlcool" placeholder="ex.: fim de semana" style="display:block; width: 140px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Fuma<select id="anFuma" style="display:block; width: 90px; margin-top: 3px;"><option value="">—</option><option value="não">não</option><option value="sim">sim</option></select></label>
+      </div>
+      <p class="muted" style="font-size: 12px; margin: 12px 0 4px;"><b>Rotina</b></p>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+        <label style="font-size: 12px; margin: 0;">Horários das refeições<input id="anRotina" placeholder="ex.: café 7h, almoço 12h" style="display:block; width: 210px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Quem cozinha<input id="anCozinha" placeholder="ex.: eu mesmo, marmita" style="display:block; width: 180px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Alimentos que não come<input id="anAversoes" placeholder="ex.: fígado, jiló" style="display:block; width: 190px; margin-top: 3px;"></label>
+        <label style="font-size: 12px; margin: 0;">Orçamento<input id="anOrcamento" placeholder="ex.: apertado" style="display:block; width: 140px; margin-top: 3px;"></label>
+      </div>
+      <label style="font-size: 12px; display: block; margin: 10px 0 0;">Recordatório de 24 h (o que comeu ontem)
+        <textarea id="anRec24" rows="3" placeholder="Café: pão com manteiga e café com leite…" style="width: 100%; margin-top: 3px;"></textarea></label>
+      <button class="btn verde mini" id="pnAnSalvar" style="margin-top: 8px;">Salvar anamnese</button>
+      <span id="pnAnSalvo" class="muted" style="font-size: 12px; margin-left: 8px;"></span>
+    </details>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Financeiro (consultas)</h3>
     <div id="pnFin" style="font-size: 13.5px; line-height: 1.7;"></div>
     <div class="linha-flex" style="gap: 8px; margin-top: 6px; align-items: center;">
       <input id="pnPgValor" inputmode="decimal" placeholder="Valor R$" style="width: 100px;">
       <button class="btn verde mini" id="pnPgAdd">+ Registrar pagamento</button>
-      <button class="btn sec mini" id="pnPgLink" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto) pra mandar no WhatsApp">Link de pagamento</button>
-      <button class="btn sec mini" id="pnAssinar" title="cobrança automática todo mês no cartão do paciente (Pagar.me)">Assinatura mensal</button>
+      <span class="muted" style="font-size: 12px;">Link de pagamento e assinatura ficam em ⚡ Ações, ali em cima.</span>
     </div>
     <div id="pnAssinaturaBox" style="font-size: 13px; margin-top: 6px;"></div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Consultas</h3>
     <div id="pnConsultas" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
+
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Evolução e conduta</h3>
+    <p class="muted" style="font-size: 12px; margin: 0 0 6px;">O que foi conversado e combinado na consulta — na próxima você abre aqui e lembra de tudo.</p>
+    <div class="linha-flex" style="gap: 8px; align-items: center;">
+      <input id="pnDiarioTxt" placeholder="ex.: relatou fome à noite; combinamos lanche com proteína" style="flex: 1; min-width: 160px;">
+      <button class="btn verde mini" id="pnDiarioAdd">+ Anotar</button>
+    </div>
+    <div id="pnDiarioLista" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 8px;"></div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Evolução de peso</h3>
     <div id="pnPeso" class="muted" style="font-size: 13px;"></div>
@@ -540,12 +620,6 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> O que o paciente registrou no app</h3>
     <div id="pnAppDados" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
 
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
-      <button class="btn verde mini" id="pnAcesso"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='5.5' width='18' height='13' rx='2'/><path d='m3.8 7.2 8.2 6 8.2-6'/></svg> Enviar acesso do app</button>
-      <button class="btn sec mini" id="pnApp" title="baixa o arquivo do app (uso offline)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Gerar app</button>
-      <a class="btn whats mini" id="pnWhats" target="_blank" rel="noopener" style="display:none;">WhatsApp</a>
-    </div>
-    <p id="pnAcessoInfo" class="muted" style="font-size: 12px; margin: 8px 0 0;"></p>
   </div>
 </dialog>
 
@@ -572,6 +646,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var st = S.read("ntStudio", { config: {}, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {} });
     st.config = st.config || {}; st.pacientes = st.pacientes || []; st.dietas = st.dietas || {};
     st.alimentos = st.alimentos || []; st.catalogoOff = st.catalogoOff || {};
+    st.diarioN = st.diarioN || {};  // prontuário: conduta e evolução por consulta
+    st.alFav = st.alFav || [];      // alimentos favoritos do nutricionista (nomes)
     return st;
   }
   function save(st) { S.write("ntStudio", st); render(); }
@@ -591,10 +667,13 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   }
   function alimPorNome(st, nome) {
     var lower = String(nome).toLowerCase();
+    // o alimento próprio vence o catálogo (mesmo nome), e o que o nutricionista
+    // desativou no banco NÃO volta pela dieta automática, pela IA nem pelas receitas
+    var m = (st.alimentos || []).find(function (a) { return a.nome.toLowerCase() === lower; });
+    if (m) return { id: m.id, nome: m.nome, porcao: m.porcao, kcal: m.kcal, prot: m.prot, carb: m.carb || 0, gord: m.gord || 0 };
     var c = CATALOGO.find(function (a) { return a.n.toLowerCase() === lower; });
-    if (c) return { id: "cat:" + c.n, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt, carb: c.cb || 0, gord: c.g || 0 };
-    var m = st.alimentos.find(function (a) { return a.nome.toLowerCase() === lower; });
-    return m ? { id: m.id, nome: m.nome, porcao: m.porcao, kcal: m.kcal, prot: m.prot, carb: m.carb || 0, gord: m.gord || 0 } : null;
+    if (c && (st.catalogoOff || {})[c.n]) return null;
+    return c ? { id: "cat:" + c.n, nome: c.n, porcao: c.p, kcal: c.k, prot: c.pt, carb: c.cb || 0, gord: c.g || 0 } : null;
   }
   function dietaDe(st, pid) {
     st.dietas[pid] = st.dietas[pid] || { aguaMl: 2000, refeicoes: [] };
@@ -644,7 +723,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   ];
   function gerarDieta(st, p) {
     var alvo = kcalAlvo(p).alvo;
-    var restr = (p.restricoes || "").toLowerCase();
+    // as alergias e as aversões da anamnese contam como restrição na hora de montar
+    var an = p.anamnese || {};
+    var restr = [p.restricoes, an.alergias, an.aversoes].filter(Boolean).join(", ").toLowerCase();
     var refeicoes = REF_MODELOS.map(function (m) {
       var itens = m.itens.slice();
       if (p.objetivo === "ganhar" && m.titulo === "Lanche da manhã") itens.push(["Whey protein", 1]);
@@ -681,6 +762,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     return Math.round(t);
   }
   window.__nutri = { kcalAlvo: kcalAlvo, gerarDieta: gerarDieta, kcalDaDieta: kcalDaDieta, macrosAlvo: macrosAlvo, macrosDaDieta: macrosDaDieta }; // testes
+  window.__alimPorNome = function (n) { return alimPorNome(load(), n); }; // testes
+  window.__iaDietaDados = function (p) { return montaDadosDietaIA(load(), p); }; // testes
 
   // ---------- menu lateral ----------
   document.getElementById("btnMenuNt").onclick = function () { document.body.classList.toggle("menu-aberto"); };
@@ -758,11 +841,37 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   });
 
   // ---------- pacientes ----------
+  // pagou o mês? (varre st.pagamentosN, gravado pelo #pnPgAdd e pelo webhook do Pagar.me)
+  function pagouMesN(st, pid, mes) {
+    return (st.pagamentosN || []).some(function (x) {
+      return x.pacienteId === pid && String(x.data || "").slice(0, 7) === mes;
+    });
+  }
+  var pacFiltro = "todos";
+  var paMostra = 60; // a lista cresce de 60 em 60 (com 200 pacientes o navegador engasga)
   function renderPacientes(st) {
     var ativos = st.pacientes.filter(function (p) { return p.ativo !== false; });
-    $("listaPacientes").innerHTML = ativos.length ? ativos.map(function (p) {
+    var mesAtual = S.todayISO().slice(0, 7);
+    var temDietaDe = function (p) { var d = st.dietas[p.id]; return !!(d && (d.refeicoes || []).length); };
+    var nSemDieta = ativos.filter(function (p) { return !temDietaDe(p); }).length;
+    var nDevendo = ativos.filter(function (p) { return !pagouMesN(st, p.id, mesAtual); }).length;
+    // o contador fica no próprio botão — o nutri vê o tamanho do problema sem clicar
+    var rotulos = { todos: "Todos (" + ativos.length + ")", semdieta: "Sem dieta (" + nSemDieta + ")", devendo: "Sem pagamento (" + nDevendo + ")" };
+    document.querySelectorAll("#pacFiltro button").forEach(function (b) {
+      var f = b.getAttribute("data-pacf");
+      b.textContent = rotulos[f] || b.textContent;
+      b.classList.toggle("ativa", f === pacFiltro);
+    });
+    var lista = ativos.filter(function (p) {
+      if (pacFiltro === "semdieta") return !temDietaDe(p);
+      if (pacFiltro === "devendo") return !pagouMesN(st, p.id, mesAtual);
+      return true;
+    });
+    var corte = lista.slice(0, paMostra);
+    $("listaPacientes").innerHTML = corte.length ? corte.map(function (p) {
       var d = st.dietas[p.id];
       var temDieta = d && (d.refeicoes || []).length;
+      var pagou = pagouMesN(st, p.id, mesAtual);
       var alvo = kcalAlvo(p);
       // linha limpa: nome (toque abre o perfil) + situação + menu retrátil com as ações
       return '<div class="pac" style="flex-wrap:wrap;"><b data-perfil="' + p.id + '" role="button" tabindex="0" style="font-size:15px;cursor:pointer;" title="abrir o perfil">' + esc(p.nome) + "</b>" +
@@ -770,6 +879,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         (p.objetivo === "emagrecer" ? "emagrecer" : p.objetivo === "ganhar" ? "ganhar" : "manter") + "</span>" +
         '<span class="muted" style="font-size:12.5px;">' + p.peso + " kg · " + p.altura + " cm · " + p.idade + " anos · alvo " + alvo.alvo + " kcal</span>" +
         (temDieta ? '<span class="tagn">dieta ok</span>' : '<span class="tagn ambar">sem dieta</span>') +
+        (pagou ? '<span class="tagn" title="mensalidade deste mês recebida">pago no mês</span>'
+          : '<span class="tagn ambar" title="ainda não recebeu deste mês">sem pagamento</span>') +
         (p.acessoEm ? '<span class="tagn" title="login e senha enviados por e-mail">app ✓</span>' : "") +
         '<button class="btn sec mini" data-mais="' + p.id + '" aria-label="mais ações de ' + esc(p.nome) + '" title="mais ações" style="margin-left:auto;padding:6px 12px;font-size:16px;line-height:1;">⋮</button>' +
         '<div data-acoes="' + p.id + '" hidden style="width:100%;display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;margin-top:8px;border-top:1px dashed var(--linha,#2a3a2e);">' +
@@ -778,8 +889,21 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
         (p.acessoEm ? "" : '<button class="btn verde mini" data-acesso="' + p.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
         '<button class="btn sec mini" data-rm="' + p.id + '" style="margin-left:auto;">Encerrar</button></div></div>';
-    }).join("") : "Cadastre o primeiro paciente.";
+    }).join("") + (lista.length > corte.length
+      ? '<button class="btn sec mini" id="pacMais" style="margin-top:10px;">Ver mais 60 (mostrando ' + corte.length + " de " + lista.length + ")</button>"
+      : "")
+      : (pacFiltro === "todos" ? "Cadastre o primeiro paciente."
+        : pacFiltro === "semdieta" ? "Todo mundo já tem dieta montada — bom trabalho!"
+        : "Ninguém devendo este mês. 🎉");
   }
+  $("pacFiltro").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-pacf]");
+    if (!b) return;
+    pacFiltro = b.getAttribute("data-pacf");
+    paMostra = 60; // trocou de filtro, volta pro começo da lista
+    renderPacientes(load());
+  });
+  window.__pacFiltro = function (f) { pacFiltro = f || "todos"; paMostra = 60; renderPacientes(load()); }; // testes
   $("pAdd").addEventListener("click", function () {
     var nome = $("pNome").value.trim();
     if (!nome || !+$("pPeso").value || !+$("pAltura").value || !+$("pIdade").value) { alert("Preencha nome, idade, peso e altura."); return; }
@@ -798,6 +922,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     }
   });
   $("listaPacientes").addEventListener("click", function (e) {
+    if (e.target && e.target.id === "pacMais") { paMostra += 60; renderPacientes(load()); return; }
     // menu retrátil ⋮: abre as ações do paciente (e fecha o dos outros)
     var mais = e.target.closest && e.target.closest("[data-mais]");
     if (mais) {
@@ -840,6 +965,46 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 
   // ---------- perfil completo do paciente ----------
   var perfilNId = null;
+  // alvo do dia com os macros na frente (macrosAlvo já existia e não aparecia no perfil)
+  function pintaAlvoN(p) {
+    var alvo = kcalAlvo(p), m = macrosAlvo(p);
+    $("pnAlvo").textContent = "TMB " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal (" +
+      (p.objetivo === "emagrecer" ? "déficit" : p.objetivo === "ganhar" ? "superávit" : "manutenção") + ")" +
+      " · P " + m.prot + " g · C " + m.carb + " g · G " + m.gord + " g";
+  }
+  // ---------- anamnese nutricional ----------
+  var AN_CAMPOS = ["alergias", "doencas", "meds", "exames", "intestino", "agua", "sono", "alcool", "fuma",
+    "rotina", "cozinha", "aversoes", "orcamento", "rec24"];
+  var AN_ID = { alergias: "anAlergias", doencas: "anDoencas", meds: "anMeds", exames: "anExames",
+    intestino: "anIntestino", agua: "anAgua", sono: "anSono", alcool: "anAlcool", fuma: "anFuma",
+    rotina: "anRotina", cozinha: "anCozinha", aversoes: "anAversoes", orcamento: "anOrcamento", rec24: "anRec24" };
+  function pintaRiscoN(an) {
+    var b = $("pnAnBadge");
+    var preenchida = AN_CAMPOS.some(function (k) { return String((an || {})[k] || "").trim(); });
+    if (!preenchida) { b.textContent = "não preenchida"; b.className = "tagn"; return; }
+    var atencao = String((an || {}).doencas || "").trim() || String((an || {}).meds || "").trim();
+    b.textContent = atencao ? "atenção: doença/medicamento" : "✓ ok";
+    b.className = atencao ? "tagn ambar" : "tagn";
+  }
+  function pintaAnamneseN(p) {
+    var an = p.anamnese || {};
+    AN_CAMPOS.forEach(function (k) { var el = $(AN_ID[k]); if (el) el.value = an[k] || ""; });
+    $("pnAnSalvo").textContent = "";
+    pintaRiscoN(an);
+  }
+  // ---------- prontuário: conduta e evolução por consulta ----------
+  function pintaDiarioN(id) {
+    var st = load();
+    var l = (st.diarioN || {})[id] || [];
+    $("pnDiarioLista").innerHTML = l.length
+      ? l.slice().reverse().map(function (x, i) {
+        return "<div style='display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed var(--linha);'>" +
+          "<b style='flex:none;font-size:12px;color:var(--verde);'>" + S.fmtData(x.d) + "</b>" +
+          "<span style='flex:1;'>" + esc(x.t) + "</span>" +
+          "<button class='btn sec mini' data-ddel='" + (l.length - 1 - i) + "' aria-label='apagar anotação'>✕</button></div>";
+      }).join("")
+      : "Nenhuma anotação ainda — escreva a conduta da consulta de hoje.";
+  }
   function abrePerfilN(id) {
     var st = load();
     var p = st.pacientes.find(function (x) { return x.id === id; });
@@ -847,14 +1012,20 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     perfilNId = id;
     $("pnTitulo").textContent = p.nome;
     $("pnDesde").textContent = p.desde ? "paciente desde " + S.fmtData(p.desde) : "";
+    $("pnAcoes").hidden = true; // a gaveta ⚡ nasce fechada a cada perfil aberto
+    $("pnAcoesBtn").setAttribute("aria-expanded", "false");
     $("pnNome").value = p.nome; $("pnZap").value = p.zap || ""; $("pnEmail").value = p.email || "";
     $("pnIdade").value = p.idade || ""; $("pnAltura").value = p.altura || "";
+    $("pnSexo").value = p.sexo === "F" ? "F" : "M";
+    $("pnPeso").value = p.peso || "";
+    $("pnAtiv").value = p.atividade || "sed";
     $("pnObjetivo").value = p.objetivo || "manter"; $("pnPagto").value = p.pagto || "";
-    $("pnObs").value = p.restricoes || "";
+    $("pnRestr").value = p.restricoes || "";
+    $("pnObs").value = p.obs || "";
     $("pnSalvo").textContent = "";
-    var alvo = kcalAlvo(p);
-    $("pnAlvo").textContent = "TMB " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal (" +
-      (p.objetivo === "emagrecer" ? "déficit" : p.objetivo === "ganhar" ? "superávit" : "manutenção") + ")";
+    pintaAlvoN(p);
+    pintaAnamneseN(p);
+    pintaDiarioN(id);
     // financeiro
     var pgs = (st.pagamentosN || []).filter(function (x) { return x.pacienteId === id; })
       .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
@@ -992,16 +1163,64 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     p.email = $("pnEmail").value.trim().toLowerCase();
     p.idade = +$("pnIdade").value || p.idade;
     p.altura = +$("pnAltura").value || p.altura;
+    // sexo, peso e atividade entram na conta do alvo calórico — sem editar aqui,
+    // um erro de digitação no cadastro ficava errado pra sempre
+    p.sexo = $("pnSexo").value === "F" ? "F" : "M";
+    p.peso = +String($("pnPeso").value).replace(",", ".") || p.peso;
+    p.atividade = $("pnAtiv").value;
     p.objetivo = $("pnObjetivo").value;
     p.pagto = $("pnPagto").value;
-    p.restricoes = $("pnObs").value.trim();
+    p.restricoes = $("pnRestr").value.trim(); // só restrição de verdade — a dieta lê este campo
+    p.obs = $("pnObs").value.trim();          // observação livre, não entra no filtro de alimentos
     save(st);
-    var alvo = kcalAlvo(p);
     $("pnTitulo").textContent = p.nome;
-    $("pnAlvo").textContent = "TMB " + alvo.tmb + " kcal · alvo diário " + alvo.alvo + " kcal";
+    pintaAlvoN(p);
     $("pnSalvo").textContent = "✓ salvo!";
     setTimeout(function () { $("pnSalvo").textContent = ""; }, 2000);
   });
+  // gaveta ⚡ Ações no topo do perfil
+  $("pnAcoesBtn").addEventListener("click", function () {
+    var abre = $("pnAcoes").hidden;
+    $("pnAcoes").hidden = !abre;
+    this.setAttribute("aria-expanded", abre ? "true" : "false");
+    var s = this.querySelector(".fseta");
+    if (s) s.style.transform = abre ? "rotate(180deg)" : "";
+  });
+  $("pnAnSalvar").addEventListener("click", function () {
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (!p) return;
+    p.anamnese = p.anamnese || {};
+    AN_CAMPOS.forEach(function (k) { var el = $(AN_ID[k]); if (el) p.anamnese[k] = el.value.trim(); });
+    save(st);
+    pintaRiscoN(p.anamnese);
+    $("pnAnSalvo").textContent = "✓ salva!";
+    setTimeout(function () { $("pnAnSalvo").textContent = ""; }, 2000);
+  });
+  // prontuário: cada anotação fica amarrada à consulta do dia, quando existir
+  $("pnDiarioAdd").addEventListener("click", function () {
+    var tx = $("pnDiarioTxt").value.trim();
+    if (!tx) return;
+    var st = load();
+    st.diarioN[perfilNId] = st.diarioN[perfilNId] || [];
+    var hoje = S.todayISO();
+    var cons = (st.consultas || []).find(function (c) { return c.pacienteId === perfilNId && c.data === hoje; });
+    st.diarioN[perfilNId].push({ d: hoje, t: tx.slice(0, 500), consultaId: cons ? cons.id : "" });
+    if (st.diarioN[perfilNId].length > 200) st.diarioN[perfilNId].shift();
+    S.write("ntStudio", st);
+    $("pnDiarioTxt").value = "";
+    pintaDiarioN(perfilNId);
+  });
+  $("pnDiarioTxt").addEventListener("keydown", function (e) { if (e.key === "Enter") $("pnDiarioAdd").click(); });
+  $("pnDiarioLista").addEventListener("click", function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute("data-ddel");
+    if (i === null || i === undefined) return;
+    var st = load();
+    (st.diarioN[perfilNId] || []).splice(+i, 1);
+    S.write("ntStudio", st);
+    pintaDiarioN(perfilNId);
+  });
+  window.__prontuarioN = { pinta: pintaDiarioN }; // testes
   // Pagar.me: link de checkout seguro da consulta (mesma função da nuvem dos outros módulos)
   function geraLinkPagamentoN(pacienteId, valor, cb) {
     cb = cb || function () {};
@@ -1241,9 +1460,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       (dieta.geradaAuto ? ' · <span class="tagn">gerada automática em ' + S.fmtData(dieta.geradaEm) + " — revise!</span>" : "");
     if (document.activeElement !== $("dAgua")) $("dAgua").value = dieta.aguaMl || Math.round(p.peso * 35 / 50) * 50;
     // datalist única com o catálogo curado + alimentos próprios (busca digitando)
-    $("dlAlimentos").innerHTML = alimentosAtivos(st).map(function (a) {
-      return '<option value="' + esc(a.nome) + '">' + esc(a.porcao) + " · " + a.kcal + " kcal</option>";
-    }).join("");
+    // favoritos primeiro: o navegador mostra as primeiras opções antes de digitar
+    var favD = favMapaN(st);
+    var todosAl = alimentosAtivos(st);
+    $("dlAlimentos").innerHTML = todosAl.filter(function (a) { return favD[a.nome.toLowerCase()]; })
+      .concat(todosAl.filter(function (a) { return !favD[a.nome.toLowerCase()]; }))
+      .map(function (a) {
+        return '<option value="' + esc(a.nome) + '">' + (favD[a.nome.toLowerCase()] ? "★ " : "") + esc(a.porcao) + " · " + a.kcal + " kcal</option>";
+      }).join("");
     $("refeicoesBox").innerHTML = (dieta.refeicoes || []).length ? dieta.refeicoes.map(function (r) {
       var kcalRef = 0, mRef = { prot: 0, carb: 0, gord: 0 };
       var itensHtml = (r.itens || []).map(function (it, i) {
@@ -1355,7 +1579,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var alvo = kcalAlvo(p), mA = macrosAlvo(p);
     // catálogo agrupado por categoria (com porção e kcal) — a IA só pode usar estes nomes
     var porCat = {};
-    CATALOGO.forEach(function (a) { (porCat[a.c] = porCat[a.c] || []).push(a.n + " (" + a.p + ", " + a.k + " kcal)"); });
+    // só o que está ATIVO na curadoria — o que o nutricionista desmarcou não pode voltar pela IA
+    CATALOGO.filter(function (a) { return !(st.catalogoOff || {})[a.n]; })
+      .forEach(function (a) { (porCat[a.c] = porCat[a.c] || []).push(a.n + " (" + a.p + ", " + a.k + " kcal)"); });
     (st.alimentos || []).forEach(function (a) {
       (porCat["Meus alimentos"] = porCat["Meus alimentos"] || []).push(a.nome + " (" + a.porcao + ", " + a.kcal + " kcal)");
     });
@@ -1367,8 +1593,23 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "MEDIDAS: " + (p.peso || "?") + " kg, " + (p.altura || "?") + " cm | ATIVIDADE: " + (ATIV[p.atividade] || "?"),
       "OBJETIVO: " + (OBJ[p.objetivo] || p.objetivo || "?"),
       "ALVO DIÁRIO: " + alvo.alvo + " kcal (TMB " + alvo.tmb + ") | PROTEÍNA " + mA.prot + " g | CARBOIDRATO " + mA.carb + " g | GORDURA " + mA.gord + " g",
-      "RESTRIÇÕES E OBSERVAÇÕES: " + (p.restricoes || "nenhuma informada"),
+      "RESTRIÇÕES E ALERGIAS: " + (p.restricoes || "nenhuma informada"),
       "ÁGUA SUGERIDA: " + Math.round((+p.peso || 70) * 35) + " ml/dia",
+      // a anamnese entra linha a linha, só o que o nutricionista preencheu
+      (function () {
+        var an = p.anamnese || {};
+        var R = [["alergias", "ALERGIAS/INTOLERÂNCIAS"], ["doencas", "DOENÇAS"], ["meds", "MEDICAMENTOS E SUPLEMENTOS"],
+          ["exames", "EXAMES RECENTES"], ["intestino", "INTESTINO"], ["agua", "ÁGUA QUE BEBE HOJE"], ["sono", "SONO"],
+          ["alcool", "ÁLCOOL"], ["fuma", "FUMA"], ["rotina", "ROTINA DE REFEIÇÕES"], ["cozinha", "QUEM COZINHA"],
+          ["aversoes", "ALIMENTOS QUE NÃO COME"], ["orcamento", "ORÇAMENTO"], ["rec24", "RECORDATÓRIO 24H"]];
+        var l = R.filter(function (r) { return String(an[r[0]] || "").trim(); })
+          .map(function (r) { return r[1] + ": " + String(an[r[0]]).trim(); });
+        if (String(p.obs || "").trim()) l.push("OBSERVAÇÕES DO NUTRICIONISTA: " + p.obs.trim());
+        return l.join("\n");
+      })(),
+      ((st.alFav || []).length
+        ? "ALIMENTOS PREFERIDOS DO NUTRICIONISTA (prefira estes quando servirem ao objetivo): " + st.alFav.slice(0, 60).join(" | ")
+        : ""),
       "",
       "CATÁLOGO DISPONÍVEL (use somente estes nomes, exatamente como escritos; a qtd multiplica a porção entre parênteses):",
       catalogo,
@@ -1510,26 +1751,60 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       cats.map(function (c) { return '<option>' + esc(c) + "</option>"; }).join("") +
       "<option>Meus alimentos</option>";
   })();
+  // ---------- favoritos: os alimentos que o nutricionista mais prescreve ----------
+  function favMapaN(st) {
+    var m = {};
+    (st.alFav || []).forEach(function (n) { m[String(n).toLowerCase()] = 1; });
+    return m;
+  }
+  function ehFavN(st, nome) { return !!favMapaN(st)[String(nome || "").toLowerCase()]; }
+  function alternaFavN(nome) {
+    var st = load();
+    var alvo = String(nome || "").trim();
+    if (!alvo) return false;
+    var chave = alvo.toLowerCase();
+    var i = (st.alFav || []).findIndex(function (n) { return String(n).toLowerCase() === chave; });
+    if (i >= 0) st.alFav.splice(i, 1); else st.alFav.push(alvo);
+    S.write("ntStudio", st);
+    return i < 0;
+  }
+  window.__favN = { alterna: alternaFavN, eh: function (n) { return ehFavN(load(), n); }, lista: function () { return (load().alFav || []).slice(); } }; // testes
+  function btFavN(st, nome) {
+    var f = ehFavN(st, nome);
+    return '<button class="btn sec mini" data-alfav="' + esc(nome) + '" aria-pressed="' + (f ? "true" : "false") + '"' +
+      (f ? ' style="color:#f5b301;border-color:#f5b301;"' : "") +
+      ' title="' + (f ? "tirar dos favoritos" : "marcar como favorito — aparece primeiro na hora de montar a dieta") + '">' + (f ? "★" : "☆") + "</button>";
+  }
   function renderAlimentos() {
     var st = load();
     var busca = ($("alBusca").value || "").toLowerCase();
     var cat = $("alCat").value;
+    var soFav = $("alFavBtn").getAttribute("aria-pressed") === "true";
+    var fav = favMapaN(st);
     var ativosN = CATALOGO.filter(function (a) { return !st.catalogoOff[a.n]; }).length;
-    $("alResumo").textContent = CATALOGO.length + " alimentos no catálogo (" + ativosN + " ativos) + " + st.alimentos.length + " seus.";
+    $("alResumo").textContent = CATALOGO.length + " alimentos no catálogo (" + ativosN + " ativos) + " + st.alimentos.length + " seus." +
+      ((st.alFav || []).length ? " ★ " + st.alFav.length + " favorito(s)." : "");
     var doCatalogo = CATALOGO.filter(function (a) {
+      if (soFav && !fav[a.n.toLowerCase()]) return false;
       if (cat && cat !== "Meus alimentos" && a.c !== cat) return false;
       if (cat === "Meus alimentos") return false;
-      if (busca && a.n.toLowerCase().indexOf(busca) === -1) return false;
+      // a busca varre nome E categoria (procurar "fruta" agora acha as frutas)
+      if (busca && (a.n + " " + a.c).toLowerCase().indexOf(busca) === -1) return false;
       return true;
-    }).slice(0, 80);
+    });
+    // favoritos primeiro (sem favoritos, a ordem fica igual à de antes)
+    doCatalogo = doCatalogo.filter(function (a) { return fav[a.n.toLowerCase()]; })
+      .concat(doCatalogo.filter(function (a) { return !fav[a.n.toLowerCase()]; })).slice(0, 80);
     var proprios = (cat && cat !== "Meus alimentos") ? [] : st.alimentos.filter(function (a) {
+      if (soFav && !fav[a.nome.toLowerCase()]) return false;
       return !busca || a.nome.toLowerCase().indexOf(busca) !== -1;
     });
-    $("alLista").innerHTML =
+    var corpo =
       proprios.map(function (a) {
         return '<div class="linha-nt"><span class="tagn roxa">meu</span><b>' + esc(a.nome) + '</b><span class="muted">' + esc(a.porcao) + "</span>" +
-          '<span style="margin-left:auto;">' + a.kcal + " kcal · " + (a.prot || 0) + " g prot</span>" +
-          '<button class="btn sec mini" data-alrm="' + a.id + '">✕</button></div>';
+          '<span style="margin-left:auto;display:inline-flex;gap:8px;align-items:center;">' + a.kcal + " kcal · " + (a.prot || 0) + " g prot" +
+          btFavN(st, a.nome) +
+          '<button class="btn sec mini" data-alrm="' + a.id + '">✕</button></span></div>';
       }).join("") +
       doCatalogo.map(function (a) {
         var off = !!st.catalogoOff[a.n];
@@ -1537,10 +1812,21 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           '<input type="checkbox" data-altg="' + esc(a.n) + '" ' + (off ? "" : "checked") + ' style="width:17px;height:17px;">' +
           "<b>" + esc(a.n) + "</b></label>" +
           '<span class="muted" style="font-size:12px;">' + esc(a.c) + " · " + esc(a.p) + "</span>" +
-          '<span style="margin-left:auto;">' + a.k + " kcal · " + (a.pt || 0) + " g prot</span></div>";
-      }).join("") +
+          '<span style="margin-left:auto;display:inline-flex;gap:8px;align-items:center;">' + a.k + " kcal · " + (a.pt || 0) + " g prot" +
+          btFavN(st, a.n) + "</span></div>";
+      }).join("");
+    $("alLista").innerHTML = (corpo ||
+      '<div class="muted" style="padding:8px 0;">' + (soFav ? "Você ainda não marcou nenhum favorito — toque na ☆ dos que mais prescreve." : "Nada com essa busca.") + "</div>") +
       (doCatalogo.length === 80 ? '<div class="muted" style="padding:8px 0;">Mostrando 80 — refine a busca pra ver o resto. 🔍</div>' : "");
   }
+  $("alFavBtn").addEventListener("click", function () {
+    var lig = this.getAttribute("aria-pressed") !== "true";
+    this.setAttribute("aria-pressed", lig ? "true" : "false");
+    this.style.color = lig ? "#f5b301" : "";
+    this.style.borderColor = lig ? "#f5b301" : "";
+    this.textContent = lig ? "★ Só favoritos" : "★ Favoritos";
+    renderAlimentos();
+  });
   $("alBusca").addEventListener("input", renderAlimentos);
   $("alCat").addEventListener("change", renderAlimentos);
   $("alCatOn").addEventListener("click", function () { mudaCategoria(false); });
@@ -1632,6 +1918,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     renderAlimentos();
   });
   $("alLista").addEventListener("click", function (e) {
+    var fv = e.target.getAttribute && e.target.getAttribute("data-alfav");
+    if (fv) { alternaFavN(fv); renderAlimentos(); renderDietas(load()); return; }
     var rm = e.target.getAttribute && e.target.getAttribute("data-alrm");
     if (!rm || !confirm("Remover este alimento?")) return;
     var st = load();
@@ -2572,6 +2860,25 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     ].map(function (k) { return '<div class="kpi-nt"><div class="rot">' + k.rot + '</div><div class="val">' + k.val + "</div></div>"; }).join("");
   }
   // ---------- agenda de consultas ----------
+  // quem faltou não pode contar como atendido — a consulta passada pede a marcação
+  function botoesConsultaN(c) {
+    if (c.feita) return '<span class="tagn">feita ✓</span>';
+    if (c.faltou) return '<span class="tagn ambar">faltou</span>';
+    if ((c.data || "") > S.todayISO()) return "";
+    return '<button class="btn verde mini" data-cfeita="' + c.id + '">Feita</button>' +
+      '<button class="btn sec mini" data-cfaltou="' + c.id + '">Faltou</button>';
+  }
+  // grava a marcação e devolve true se achou a consulta (usado pela agenda e pelo card do dia)
+  function marcaConsultaN(id, campo) {
+    var st = load();
+    var c = (st.consultas || []).find(function (x) { return x.id === id; });
+    if (!c) return false;
+    c.feita = campo === "feita";
+    c.faltou = campo === "faltou";
+    S.write("ntStudio", st);
+    return true;
+  }
+  window.__marcaConsultaN = marcaConsultaN; // testes
   function renderAgendaN() {
     var st = load();
     st.consultas = st.consultas || [];
@@ -2618,7 +2925,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       (doSel.length ? doSel.map(function (c) {
         return '<div class="linha-flex" style="align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linha);"><b>' + (c.hora || "sem hora") + "</b>" +
           "<span>" + esc(nomeDe[c.pacienteId] || "?") + "</span>" +
-          '<span style="margin-left:auto;"></span>' +
+          '<span style="margin-left:auto;"></span>' + botoesConsultaN(c) +
           '<button class="btn sec mini" data-cnx="' + c.id + '">✕</button></div>';
       }).join("") : '<p class="muted" style="margin:6px 0 0;">Nenhuma consulta nesse dia — toque em outro dia do calendário ou use a aba Marcar.</p>');
     renderPedidosN(st);
@@ -2705,6 +3012,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     renderAgendaN();
   });
   $("listaConsultas").addEventListener("click", function (e) {
+    var fez = e.target.getAttribute && e.target.getAttribute("data-cfeita");
+    var fal = e.target.getAttribute && e.target.getAttribute("data-cfaltou");
+    if (fez || fal) { marcaConsultaN(fez || fal, fez ? "feita" : "faltou"); renderAgendaN(); render(); return; }
     var cx = e.target.getAttribute && e.target.getAttribute("data-cnx");
     if (!cx) return;
     var st = load();
@@ -3102,6 +3412,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (document.activeElement !== $("cfgPixValor")) $("cfgPixValor").value = cfgN.pixValor || "";
     if (document.activeElement !== $("cfgMural")) $("cfgMural").value = (cfgN.mural || []).join("\n");
     $("cfgFeedN").checked = !!cfgN.feedOn; // Comunidade vem desligada
+    pintaBkAvisoN(cfgN.backupEm);
     if (document.activeElement !== $("cfgCorN")) $("cfgCorN").value = corOk(cfgN.cor) || "#16a34a";
     var lgN = logoOkN(cfgN.logo);
     if (lgN) $("cfgLogoPrevN").src = lgN; else $("cfgLogoPrevN").removeAttribute("src");
@@ -3136,6 +3447,36 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     st.config.mural = this.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 10);
     S.write("ntStudio", st);
   });
+  // ---------- backup: o arquivo com TUDO, pra quem usa sem conta na nuvem ----------
+  function pintaBkAvisoN(bkEm) {
+    var dias = bkEm ? Math.round((new Date(S.todayISO() + "T12:00") - new Date(bkEm + "T12:00")) / 864e5) : 0;
+    $("bkAvisoN").textContent = !bkEm
+      ? "Você ainda não baixou um backup. Ele é um arquivo com TUDO (pacientes, dietas, pesagens, consultas e pagamentos) — guarde um por mês, por segurança."
+      : dias > 30
+        ? "Atenção: seu último backup foi há " + dias + " dias (" + S.fmtData(bkEm) + "). Baixa um novo agora — leva 2 segundos."
+        : "Último backup: " + S.fmtData(bkEm) + ". Baixa um novo de vez em quando, por segurança.";
+  }
+  $("btnBackupN").addEventListener("click", function () {
+    S.exportBackup();
+    var st = load();
+    st.config = st.config || {};
+    st.config.backupEm = S.todayISO();
+    S.write("ntStudio", st);
+    pintaBkAvisoN(st.config.backupEm);
+  });
+  $("btnBackupRestauraN").addEventListener("click", function () { $("bkArquivoN").click(); });
+  $("bkArquivoN").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f) return;
+    if (!confirm("Restaurar o backup SUBSTITUI os dados deste aparelho pelos do arquivo. Continuar?")) return;
+    S.importBackup(f).then(function () {
+      alert("Backup restaurado! A página vai recarregar.");
+      location.reload();
+    }, function (e) {
+      alert("Não deu pra restaurar: " + ((e && e.message) || e));
+    });
+  });
   // Comunidade: muda o app de todo mundo, então avisa pra republicar
   $("cfgFeedN").addEventListener("change", function () {
     var st = load();
@@ -3154,8 +3495,11 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var novos = st.pacientes.filter(function (p) { return (p.desde || "").slice(0, 7) === mes; }).length;
     var consMes = (st.consultas || []).filter(function (c) { return (c.data || "").slice(0, 7) === mes; });
     var hoje = S.todayISO();
-    var realizadas = consMes.filter(function (c) { return c.data <= hoje; }).length;
-    return { fat: fat, novos: novos, consMes: consMes.length, realizadas: realizadas, ativos: ativos };
+    // marcada como feita conta; quem faltou não. Enquanto a agenda antiga não tiver
+    // a marcação, cai no comportamento de antes (passou da data = atendida)
+    var realizadas = consMes.filter(function (c) { return c.feita || (!c.faltou && c.data <= hoje); }).length;
+    var faltas = consMes.filter(function (c) { return c.faltou; }).length;
+    return { fat: fat, novos: novos, consMes: consMes.length, realizadas: realizadas, faltas: faltas, ativos: ativos };
   }
   function renderDashN() {
     var st = load();
@@ -3195,14 +3539,55 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       kv("Já realizadas", d.realizadas) +
       kv("Projeção no ritmo atual", Math.round(d.realizadas / diaAtual * diasNoMes)) +
       kv("Próximos 7 dias", prox7 + " consulta(s)");
+    // ---------- Seu dia hoje: a agenda do dia sem precisar entrar na aba Agenda ----------
+    var nomeDeH = {};
+    st.pacientes.forEach(function (p) { nomeDeH[p.id] = p.nome; });
+    var doDia = (st.consultas || []).filter(function (c) { return c.data === hoje; })
+      .sort(function (a, b) { return String(a.hora || "") < String(b.hora || "") ? -1 : 1; });
+    $("bHojeN").innerHTML = doDia.length
+      ? doDia.map(function (c) {
+        return '<div class="linha-flex" style="align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--linha);">' +
+          "<b>" + (c.hora || "sem hora") + "</b>" +
+          '<button class="btn sec mini" data-pacperfil="' + c.pacienteId + '">' + esc(nomeDeH[c.pacienteId] || "?") + "</button>" +
+          '<span style="margin-left:auto;"></span>' + botoesConsultaN(c) + "</div>";
+      }).join("")
+      : "Nenhuma consulta marcada pra hoje — dia livre ou hora de puxar agendamentos.";
+    // ---------- Radar de retenção ----------
     var semRetorno60 = 0;
     var corte60 = new Date(hoje + "T12:00"); corte60.setDate(corte60.getDate() - 60);
+    var sumidos = [];
     ativos.forEach(function (p) {
       var minhas = (st.consultas || []).filter(function (c) { return c.pacienteId === p.id && c.data <= hoje; })
         .map(function (c) { return c.data; }).sort();
       var ult = minhas[minhas.length - 1] || "";
       if (!ult || ult < S.todayISO(corte60)) semRetorno60++;
+      // quem já tem consulta marcada pra frente não está sumido
+      var temFutura = (st.consultas || []).some(function (c) { return c.pacienteId === p.id && c.data > hoje; });
+      if (temFutura) return;
+      var dias = ult ? Math.round((new Date(hoje + "T12:00") - new Date(ult + "T12:00")) / 864e5)
+        : (p.desde ? Math.round((new Date(hoje + "T12:00") - new Date(p.desde + "T12:00")) / 864e5) : 999);
+      if (dias >= 30) sumidos.push({ id: p.id, nome: p.nome, zap: p.zap, dias: dias, nunca: !ult });
     });
+    sumidos.sort(function (a, b) { return b.dias - a.dias; });
+    var nuv = window.__badgesNT || {};
+    var extras = (nuv.chat ? '<div class="linha-flex" style="align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--linha);">' +
+      "<span>" + nuv.chat + " mensagem(ns) sem resposta</span>" +
+      '<button class="btn sec mini" id="radarChatN" style="margin-left:auto;">Abrir o chat</button></div>' : "") +
+      (nuv.pedidos ? '<div class="linha-flex" style="align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--linha);">' +
+        "<span>" + nuv.pedidos + " pedido(s) de horário esperando</span>" +
+        '<button class="btn sec mini" id="radarAgN" style="margin-left:auto;">Abrir a agenda</button></div>' : "");
+    $("bRadarN").innerHTML = (sumidos.length
+      ? sumidos.slice(0, 8).map(function (x) {
+        var cor = x.dias >= 45 ? "alerta" : "ambar";
+        return '<div class="linha-flex" style="align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--linha);flex-wrap:wrap;">' +
+          "<b>" + esc(x.nome) + "</b>" +
+          '<span class="tagn ' + cor + '">' + (x.nunca ? "nunca veio" : "há " + x.dias + " dias") + "</span>" +
+          '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
+          (x.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(x.zap).replace(/\D/g, "") +
+            "?text=" + encodeURIComponent("Oi " + String(x.nome).split(" ")[0] + "! Bora marcar seu retorno? 🥗") + '">Chamar no zap</a>' : "") +
+          '<button class="btn sec mini" data-pacperfil="' + x.id + '">Ver paciente</button></span></div>';
+      }).join("") + (sumidos.length > 8 ? '<div class="muted" style="padding-top:8px;">e mais ' + (sumidos.length - 8) + " paciente(s) na mesma situação.</div>" : "")
+      : '<div style="color:#4ade80;">Ninguém sumido — todo mundo com consulta em dia ou marcada. 🎉</div>') + extras;
     $("bDietaN").innerHTML =
       kv("Check-ins montados", (st.questionarios || []).length) +
       kv("Sem consulta há 60+ dias", semRetorno60 + " paciente(s)", semRetorno60 ? "#fbbf24" : "#4ade80") +
@@ -3261,6 +3646,55 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   });
   $("fchZapN").addEventListener("click", function () {
     window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamentoN($("fchMesN").value)), "_blank");
+  });
+  // ---------- bolinha vermelha: mensagem sem resposta e pedido de horário ----------
+  function poeBadgeN(el, n) {
+    if (!el) return;
+    var b = el.querySelector(".nav-bad");
+    if (b) b.remove();
+    if (n > 0) {
+      var s = document.createElement("span");
+      s.className = "nav-bad";
+      s.textContent = n > 9 ? "9+" : String(n);
+      el.appendChild(s);
+    }
+  }
+  function pintaBadgesN() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return;
+    var st = load();
+    var tokens = {};
+    st.pacientes.forEach(function (p) { if (p.ativo !== false && p.appTokenN) tokens[p.appTokenN] = 1; });
+    if (!Object.keys(tokens).length) return;
+    try {
+      Promise.all([
+        nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid),
+        nuvem.client.from("app_agenda").select("id,token").eq("academia_id", nuvem.aid).eq("status", "pedido").gte("dia", S.todayISO()),
+      ]).then(function (rs) {
+        var chat = 0;
+        (((rs[0] || {}).data) || []).forEach(function (m) { if (m.de === "aluno" && !m.lida && tokens[m.token]) chat++; });
+        var ped = ((((rs[1] || {}).data) || []).filter(function (x) { return tokens[x.token]; })).length;
+        window.__badgesNT = { chat: chat, pedidos: ped };
+        poeBadgeN($("btnMenuNt"), chat); // o Chat mora dentro do menu de 3 traços
+        poeBadgeN(document.querySelector('#navNt [data-nav="agenda"]'), ped);
+      }).catch(function () {});
+    } catch (e) {} // nuvem capenga (ou mock parcial nos testes) não pode derrubar a página
+  }
+  window.__badgesRunN = pintaBadgesN; // testes
+  setTimeout(pintaBadgesN, 6000);
+  setInterval(pintaBadgesN, 90000);
+
+  // cliques dos cards novos do Início (dia de hoje e radar)
+  ["bHojeN", "bRadarN"].forEach(function (idBox) {
+    $(idBox).addEventListener("click", function (e) {
+      var pf = e.target.getAttribute && e.target.getAttribute("data-pacperfil");
+      if (pf) { abrePerfilN(pf); return; }
+      var fez = e.target.getAttribute && e.target.getAttribute("data-cfeita");
+      var fal = e.target.getAttribute && e.target.getAttribute("data-cfaltou");
+      if (fez || fal) { marcaConsultaN(fez || fal, fez ? "feita" : "faltou"); renderDashN(); return; }
+      if (e.target.id === "radarChatN") { var bc = document.querySelector('#abasNt [data-a="chat"]'); if (bc) bc.click(); return; }
+      if (e.target.id === "radarAgN") { var ba = document.querySelector('#abasNt [data-a="agenda"]'); if (ba) ba.click(); }
+    });
   });
   window.__dashN = { render: renderDashN, resumo: resumoFechamentoN }; // testes
 
