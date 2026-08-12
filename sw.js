@@ -1,9 +1,14 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v380";
+var VERSION = "mt-v381";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
+// O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
+// PRÓPRIA, por dois motivos: o precache usa addAll (se um arquivo falhar, o
+// service worker inteiro não instala e o site perde o offline), e o RUNTIME é
+// apagado a cada versão nova — o professor baixaria os 17 MB de novo toda vez.
+var VISAO = "mt-visao-v1";
 
 var CORE = [
   "./",
@@ -54,6 +59,8 @@ var CORE = [
   "assets/exercicios-db.js",
   "assets/exercicios-anim.js",
   "assets/composicao-corporal.js",
+  "assets/scanner-visao.js",
+  "assets/scanner-corporal.js",
   "assets/modulo-conta.js",
   "assets/bot-builder.js",
   "privacidade.html",
@@ -83,7 +90,7 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.map(function (k) {
-        if (k !== PRECACHE && k !== RUNTIME) return caches.delete(k);
+        if (k !== PRECACHE && k !== RUNTIME && k !== VISAO) return caches.delete(k);
       }));
     }).then(function () { return self.clients.claim(); })
   );
@@ -94,6 +101,20 @@ self.addEventListener("fetch", function (event) {
   if (req.method !== "GET") return;
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
+
+  // leitor de imagem: cache própria, que atravessa as trocas de versão do site
+  if (url.pathname.indexOf("/assets/vendor/mediapipe/") > -1) {
+    event.respondWith(caches.open(VISAO).then(function (cache) {
+      return cache.match(req).then(function (hit) {
+        if (hit) return hit;
+        return fetch(req).then(function (res) {
+          if (res && res.ok) cache.put(req, res.clone());
+          return res;
+        });
+      });
+    }));
+    return;
+  }
 
   // páginas (navegações): rede primeiro — quem está online sempre vê a
   // versão nova sem precisar limpar cache; o cache só entra offline

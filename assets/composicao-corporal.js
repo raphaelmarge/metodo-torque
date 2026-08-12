@@ -129,7 +129,9 @@
     d = d || {};
     var sexo = d.sexo === "F" ? "F" : "M";
     var bia = d.bia || {};
-    var o = { sexo: sexo, idade: n(d.idade) || null, altura: n(d.altura) || null, peso: n(d.peso) || null, medido: {} };
+    var scan = d.scan || {};          // medidas vindas da câmera (estimativa por foto)
+    var o = { sexo: sexo, idade: n(d.idade) || null, altura: n(d.altura) || null, peso: n(d.peso) || null,
+      medido: {}, estimadoPorFoto: false };
     if (!o.peso || !o.altura) { o.ok = false; o.aviso = "Informe pelo menos peso e altura."; return o; }
     o.ok = true;
     var alturaM = o.altura / 100;
@@ -142,6 +144,11 @@
       o.medido.gordura = true;
     } else if (o.gordura) {
       o.massaGordura = r1(o.peso * o.gordura / 100);
+    } else if (n(scan.gordura)) {
+      // a foto é o último recurso: bioimpedância > dobras > fita > câmera
+      o.gordura = r1(scan.gordura);
+      o.massaGordura = r1(o.peso * o.gordura / 100);
+      o.estimadoPorFoto = true;
     }
     o.massaMagra = o.massaGordura ? r1(o.peso - o.massaGordura) : null;
     o.faixaGordura = A.FAIXA_GORDURA[sexo];
@@ -341,7 +348,9 @@
         }).join("") + "</table>";
     }
 
-    var nota = o.estimado
+    var nota = o.estimadoPorFoto
+      ? "Parte das medidas desta página foi <b>estimada por foto</b> (câmera do celular). A margem de erro é maior que a da fita métrica — use pra acompanhar a <b>tendência</b>, não como diagnóstico."
+      : o.estimado
       ? "Os valores de composição corporal desta página foram <b>estimados</b> a partir de peso, altura, idade, sexo e do percentual de gordura medido por dobras ou fita. Não substituem exame de bioimpedância."
       : "Composição corporal com valores <b>medidos em bioimpedância</b>, complementados por cálculos do sistema.";
 

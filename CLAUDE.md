@@ -17,9 +17,25 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 | Vendas | `personal-vendas.html`, `torqueon.html` | Landing pages |
 | Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html` | Demonstrações com dados fake pra mandar pro cliente. O do aluno é gerado por script (regenerar quando o builder mudar) e simula a nuvem interceptando o `fetch`; os outros dois semeiam o localStorage e abrem o módulo |
 
-Bancos compartilhados em `assets/`: `exercicios-db.js` (1220), `alimentos-db.js`
-(939), `receitas-db.js` (60). Rotinas diárias adicionam itens — sempre com
+Bancos compartilhados em `assets/`: `exercicios-db.js` (1270), `alimentos-db.js`
+(989), `receitas-db.js` (63). Rotinas diárias adicionam itens — sempre com
 dedupe por nome (case-insensitive) validado por script node.
+
+**Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
+compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
+completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
+TMB, gasto por atividade, pontuação) + `laudoHtml()` imprimível. Quem tem
+bioimpedância digita os valores medidos e eles VENCEM as estimativas.
+
+**Medidas pela câmera** (beta, só no Personal): `assets/scanner-visao.js`
+(carrega o MediaPipe sob demanda) + `assets/scanner-corporal.js`
+(`window.MT_SCANNER`: régua pela altura, silhueta, elipse de Ramanujan, RFM,
+calibração por fita). Duas fotos viram circunferências; a imagem é lida no
+aparelho e descartada — nunca vai pra rede. Vem DESLIGADO (`st.config.scanOn`).
+Precedência do laudo: bioimpedância > dobras > fita > foto. Os ~17 MB do
+MediaPipe ficam em `assets/vendor/mediapipe/` FORA do precache, numa cache
+própria (`mt-visao-v1`) que sobrevive à troca de versão do sw.js — o precache
+usa `addAll`, que é atômico, e o RUNTIME é apagado a cada versão.
 
 **Comunidade** (feed da turma, estilo GymRats): tabela `app_feed` + RPCs
 `app_aluno_posta` / `app_aluno_feed` / `app_aluno_feed_apaga`, com curtidas e
@@ -44,7 +60,7 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 pkill -f "[h]ttp.server 8765"
 setsid nohup python3 -m http.server 8765 --bind 127.0.0.1 -d <raiz-do-repo> > /dev/null 2>&1 < /dev/null &
 
-bash tests/run.sh   # 15 suítes Playwright — esperado: "suites com falha: 0"
+bash tests/run.sh   # 16 suítes — esperado: "suites com falha: 0"
 ```
 
 - Playwright: `/opt/node22/lib/node_modules/playwright` + chromium
@@ -53,6 +69,8 @@ bash tests/run.sh   # 15 suítes Playwright — esperado: "suites com falha: 0"
   original (`__cloudOrig`) e restaurar, senão vaza pros testes seguintes.
 - test-lojas tem verificador de acessibilidade (botões/links sem texto) que
   varre o CÓDIGO das páginas.
+- test-scanner roda em node puro: valida a matemática das medidas com um boneco
+  sintético de larguras conhecidas. Câmera de verdade não é testada de propósito.
 
 ## Como publicar (fluxo obrigatório)
 

@@ -3893,6 +3893,137 @@ async function abaPt(p, a) {
   }
 
   {
+    // 📷 medidas pela câmera: consentimento, preenchimento e entrada no laudo
+    console.log("Medidas pela câmera:");
+    const ctxS = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxS.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pS = await ctxS.newPage();
+    pS.on("pageerror", (e) => erros.push("scan: " + e.message));
+    pS.on("dialog", (d) => d.accept());
+    await pS.goto(BASE + "/personal.html");
+    await pS.waitForFunction(() => window.__ptStudio);
+    await pS.evaluate(() => {
+      const S2 = window.MTStore, st = S2.read("ptStudio", {});
+      st.config = st.config || {};
+      st.alunos = [{ id: "s1", nome: "Marina Souza", sexo: "F", altura: 165, ativo: true }];
+      st.avaliacoes = [];
+      S2.write("ptStudio", st);
+    });
+    await pS.reload();
+    await pS.waitForTimeout(500);
+    const menuS = pS.locator("#btnMenuPt");
+    if (await menuS.isVisible()) await menuS.click();
+    await pS.click('#abas [data-a="avaliacoes"]');
+    await pS.waitForTimeout(300);
+
+    ok(await pS.evaluate(() => document.getElementById("scanCard").hidden),
+      "o card fica escondido enquanto a chave nas Configurações estiver desligada");
+
+    await pS.evaluate(() => {
+      const S2 = window.MTStore, st = S2.read("ptStudio", {});
+      st.config.scanOn = true;
+      S2.write("ptStudio", st);
+    });
+    await pS.reload();
+    await pS.waitForTimeout(600);
+    const menuS2 = pS.locator("#btnMenuPt");
+    if (await menuS2.isVisible()) await menuS2.click();
+    await pS.click('#abas [data-a="avaliacoes"]');
+    await pS.waitForTimeout(300);
+    ok(!(await pS.evaluate(() => document.getElementById("scanCard").hidden)), "com a chave ligada o card aparece");
+
+    // consentimento é obrigatório e fica registrado com a versão do texto
+    await pS.selectOption("#scanAluno", "s1");
+    await pS.click("#scanIniciar");
+    const termo = await pS.evaluate(() => ({
+      termo: !document.getElementById("scanTermo").hidden,
+      preparo: !document.getElementById("scanPreparo").hidden,
+      altura: document.getElementById("scanAltura").value,
+      sexo: document.getElementById("scanSexo").value,
+    }));
+    ok(termo.termo && !termo.preparo, "antes de qualquer foto, pede a autorização do aluno");
+    ok(termo.altura === "165" && termo.sexo === "F", "altura e sexo vêm do cadastro do aluno (a altura é a régua)");
+    await pS.click("#scanTermoOk");
+    ok(await pS.evaluate(() => document.getElementById("scanPreparo").hidden),
+      "sem marcar a autorização, não libera a captura");
+    await pS.check("#scanAceite");
+    await pS.click("#scanTermoOk");
+    await pS.waitForTimeout(200);
+    const consent = await pS.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      return { versao: (st.alunos[0].consentimentoScan || {}).versao, preparo: !document.getElementById("scanPreparo").hidden };
+    });
+    ok(consent.versao === "2026-08-scan-1" && consent.preparo,
+      "a autorização fica gravada com a versão do texto, e a captura libera");
+
+    // resultado na tela -> campos da avaliação -> registro -> laudo
+    const tela = await pS.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      window.__scan.pinta({
+        ok: true, quando: "2026-08-12",
+        circ: { cintura: 78.4, quadril: 96.2, coxa: 55.1, braco: 28.3 },
+        confianca: { cintura: "alta", quadril: "alta", coxa: "média", braco: "baixa" },
+        rcest: 0.48, margemCm: 3, calibrado: false,
+        gordura: { valor: 25.9, faixa: [20.9, 30.9], metodo: "RFM" }, avisos: [],
+      }, st.alunos[0]);
+      const box = document.getElementById("scanResultado");
+      return { visivel: !box.hidden, texto: box.textContent.replace(/\s+/g, " ") };
+    });
+    ok(tela.visivel && /Razão cintura \/ altura/.test(tela.texto) && /0,48/.test(tela.texto),
+      "a tela destaca a razão cintura/altura, que é a medida que não depende da régua");
+    ok(/entre 21% e 31%/.test(tela.texto), "o percentual de gordura sai em faixa, nunca cravado");
+    ok(/não substitui fita métrica/.test(tela.texto), "o aviso de que é estimativa aparece junto do resultado");
+    ok(/confiança baixa/.test(tela.texto), "cada medida mostra o quanto dá pra confiar nela");
+
+    await pS.click("#scanUsar");
+    await pS.waitForTimeout(200);
+    const campos = await pS.evaluate(() => ({
+      cintura: document.getElementById("avCintura").value,
+      quadril: document.getElementById("avQuadril").value,
+      gordura: document.getElementById("avGord").value,
+    }));
+    ok(campos.cintura === "78.4" && campos.quadril === "96.2" && campos.gordura === "25.9",
+      "'Usar estes números' preenche a avaliação, que o professor ainda confere antes de registrar");
+
+    await pS.evaluate(() => { document.getElementById("avPeso").value = "62"; });
+    await pS.click("#avAdd");
+    await pS.waitForTimeout(400);
+    const salvo = await pS.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const av = st.avaliacoes[0] || {};
+      const l = window.__laudoPT.calcula(st, av);
+      return {
+        temScan: !!av.scan, scanCintura: av.scan && av.scan.circ.cintura,
+        etiqueta: /📷 câmera/.test(document.getElementById("listaAvaliacoes").innerHTML),
+        laudoRcq: l ? l.rcq : null, laudoCintura: l ? l.cintura : null,
+      };
+    });
+    ok(salvo.temScan && salvo.scanCintura === 78.4,
+      "o que veio da câmera fica guardado à parte, pra nunca se passar por medida de fita");
+    ok(salvo.etiqueta, "a avaliação ganha a etiqueta 📷 câmera no histórico");
+    ok(salvo.laudoCintura === 78.4 && salvo.laudoRcq === 0.81,
+      "as circunferências da câmera alimentam o laudo (cintura-quadril calculada)");
+
+    // a fita sempre vence a foto, e a bioimpedância vence as duas
+    const precede = await pS.evaluate(() => {
+      const C = window.MT_CORPO;
+      const soFoto = C.calcula({ sexo: "F", altura: 165, peso: 62, scan: { gordura: 26 } });
+      const fita = C.calcula({ sexo: "F", altura: 165, peso: 62, gordura: 22, scan: { gordura: 26 } });
+      const balanca = C.calcula({ sexo: "F", altura: 165, peso: 62, gordura: 22, scan: { gordura: 26 }, bia: { massaGordura: 12 } });
+      return { foto: soFoto.gordura, fotoMarcada: soFoto.estimadoPorFoto,
+        fita: fita.gordura, fitaMarcada: fita.estimadoPorFoto,
+        balanca: balanca.gordura, nota: /estimada por foto/.test(C.laudoHtml(soFoto, { nome: "x" })) };
+    });
+    ok(precede.foto === 26 && precede.fotoMarcada && precede.nota,
+      "só com a câmera, o laudo usa a foto e avisa que a medida é estimada por foto");
+    ok(precede.fita === 22 && !precede.fitaMarcada, "havendo medida de fita ou dobras, ela vence a da câmera");
+    ok(precede.balanca === 19.4, "e a bioimpedância vence as duas");
+    await ctxS.close();
+  }
+  {
     // 🧪 laudo completo de composição corporal (estilo bioimpedância)
     console.log("Laudo de composição corporal:");
     const ctxL = await b.newContext({ viewport: { width: 1360, height: 900 } });
