@@ -794,6 +794,115 @@ async function abaNt(p, a) {
     await pG.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
     await pG.close();
   }
+  {
+    // 🩺 painel do nutricionista com as ferramentas do Personal
+    console.log("Painel do nutricionista (paridade com o Personal):");
+    const pN = await b.newPage();
+    pN.on("pageerror", (e) => erros.push("painel nutri: " + e.message));
+    pN.on("dialog", (d) => d.accept());
+    await pN.goto(BASE + "/nutricao.html");
+    await pN.evaluate(() => {
+      localStorage.setItem("mtapp:ntSemConta", "1");
+      const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+      const st = { config: { nome: "Consultório Q" }, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {},
+        consultas: [], pagamentosN: [], pesagens: {} };
+      for (let i = 0; i < 5; i++) {
+        const id = "q" + i;
+        st.pacientes.push({ id, nome: "Paciente Q" + i, sexo: "F", idade: 30, peso: 70, altura: 165,
+          atividade: "mod", objetivo: "manter", ativo: true, zap: "31999990000", desde: iso(120) });
+        if (i < 3) st.dietas[id] = { refeicoes: [{ id: "r", hora: "08:00", titulo: "Café", itens: [] }] };
+        if (i < 2) st.pagamentosN.push({ id: "pgq" + i, pacienteId: id, valor: 200, data: iso(1) });
+      }
+      // q0 tem consulta hoje; q4 sumiu há 90 dias
+      st.consultas.push({ id: "cq0", pacienteId: "q0", data: iso(0), hora: "09:00" });
+      st.consultas.push({ id: "cq4", pacienteId: "q4", data: iso(90), hora: "09:00" });
+      localStorage.setItem("mtapp:ntStudio", JSON.stringify(st));
+    });
+    await pN.reload();
+    await pN.waitForTimeout(800);
+
+    // 1) filtro + paginação + etiqueta de pagamento na lista
+    const lista = await pN.evaluate(() => {
+      const rot = [...document.querySelectorAll("#pacFiltro button")].map((b) => b.textContent);
+      window.__pacFiltro("devendo");
+      const devendo = document.querySelectorAll("#listaPacientes .pac").length;
+      window.__pacFiltro("semdieta");
+      const semDieta = document.querySelectorAll("#listaPacientes .pac").length;
+      window.__pacFiltro("todos");
+      return { rot, devendo, semDieta, pago: /pago no mês/.test(document.getElementById("listaPacientes").textContent) };
+    });
+    ok(/Todos \(5\)/.test(lista.rot[0]) && lista.devendo === 3 && lista.semDieta === 2,
+      "🩺 a lista de pacientes filtra por sem dieta e sem pagamento, com o contador no botão");
+    ok(lista.pago, "cada paciente mostra se já pagou o mês");
+
+    // 2) consulta feita × faltou e o card do dia
+    const dia = await pN.evaluate(() => {
+      const antes = document.getElementById("bHojeN").textContent.replace(/\s+/g, " ");
+      const bt = document.querySelector("#bHojeN [data-cfeita]");
+      if (bt) bt.click();
+      const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+      return { antes, feita: (st.consultas.find((c) => c.id === "cq0") || {}).feita,
+        depois: document.getElementById("bHojeN").textContent.replace(/\s+/g, " ") };
+    });
+    ok(/09:00/.test(dia.antes) && dia.feita === true && /feita/.test(dia.depois),
+      "'Seu dia hoje' lista a agenda do dia e marca a consulta como feita");
+
+    // 3) radar de retenção com o zap na mão
+    const radar = await pN.evaluate(() => ({
+      texto: document.getElementById("bRadarN").textContent.replace(/\s+/g, " "),
+      linhas: document.querySelectorAll("#bRadarN [data-pacperfil]").length,
+      zap: !!document.querySelector("#bRadarN a.whats"),
+    }));
+    ok(/Paciente Q4/.test(radar.texto) && /há 90 dias/.test(radar.texto) && radar.zap && radar.linhas >= 1,
+      "o radar mostra quem sumiu (Q4, há 90 dias) com o botão de chamar no zap");
+
+    // 4) alimento desativado não volta pela IA nem pelo gerador
+    const cur = await pN.evaluate(() => {
+      const S2 = window.MTStore;
+      const st = S2.read("ntStudio", {});
+      st.catalogoOff = { "Arroz branco cozido": true };
+      S2.write("ntStudio", st);
+      const dados = window.__iaDietaDados ? window.__iaDietaDados(st.pacientes[0]) : "";
+      return { noPrompt: /Arroz branco cozido/.test(dados), achou: !!window.__alimPorNome("Arroz branco cozido") };
+    });
+    ok(!cur.noPrompt && !cur.achou, "alimento desativado na curadoria não volta pela IA nem pelo gerador");
+
+    // 5) favoritos de alimentos
+    const fav = await pN.evaluate(() => {
+      window.__favN.alterna("Banana prata");
+      return { lista: window.__favN.lista(), eh: window.__favN.eh("banana PRATA") };
+    });
+    ok(fav.lista.length === 1 && fav.eh, "★ favoritos de alimentos ligam e desligam (e não olham maiúscula)");
+
+    // 6) prontuário e anamnese no perfil
+    const perfil = await pN.evaluate(() => {
+      window.__perfilNT("q0");
+      document.getElementById("pnDiarioTxt").value = "Relatou fome à noite";
+      document.getElementById("pnDiarioAdd").click();
+      document.getElementById("anDoencas").value = "hipertensão";
+      document.getElementById("pnAnSalvar").click();
+      const st = JSON.parse(localStorage.getItem("mtapp:ntStudio"));
+      const p0 = st.pacientes.find((x) => x.id === "q0");
+      return {
+        anotacoes: (st.diarioN.q0 || []).length,
+        naTela: /fome à noite/.test(document.getElementById("pnDiarioLista").textContent),
+        anamnese: (p0.anamnese || {}).doencas,
+        badge: document.getElementById("pnAnBadge").textContent,
+        temSexo: !!document.getElementById("pnSexo"),
+        macros: /P \d+ g/.test(document.getElementById("pnAlvo").textContent),
+      };
+    });
+    ok(perfil.anotacoes === 1 && perfil.naTela, "o prontuário guarda a conduta da consulta e mostra na hora");
+    ok(perfil.anamnese === "hipertensão" && /atenção/.test(perfil.badge), "a anamnese salva e acende o alerta de doença/medicamento");
+    ok(perfil.temSexo && perfil.macros, "o perfil deixa corrigir sexo/peso/atividade e mostra os macros do alvo");
+
+    // 7) backup na aba Sua ilha
+    const bk = await pN.evaluate(() => ({ botao: !!document.getElementById("btnBackupN"), aviso: (document.getElementById("bkAvisoN") || {}).textContent || "" }));
+    ok(bk.botao && /backup/i.test(bk.aviso), "a aba Sua ilha ganha o backup .json com aviso de quando foi o último");
+
+    await pN.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
+    await pN.close();
+  }
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();
