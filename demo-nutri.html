@@ -103,7 +103,7 @@
 
   document.getElementById("btnDemoN").addEventListener("click", function () {
     var st = { config: {}, pacientes: [], dietas: {}, alimentos: [], catalogoOff: {},
-      pesagens: {}, consultas: [], pagamentosN: [], questionarios: [], questPerguntas: [] };
+      pesagens: {}, consultas: [], pagamentosN: [], questionarios: [], questPerguntas: [], avaliacoesN: [], diarioN: {}, alFav: [] };
 
     st.config.nome = "Consultório TORQUE Demo";
     st.config.zap = "5531999990000";
@@ -132,6 +132,17 @@
       if (i === 5) p.desde = iso(9);
       st.pacientes.push(p);
       st.pesagens[p.id] = pesagens;
+      // avaliação física: a de entrada e a mais recente, com a fita métrica acompanhando o peso
+      var cint0 = Math.round((base.p0 - base.altura / 2) * 10) / 10;
+      var cintF = Math.round((cint0 + base.delta * 1.4) * 10) / 10;
+      st.avaliacoesN.push({ id: uid(), pacienteId: p.id, data: iso(base.sem * 7),
+        peso: base.p0, gordura: base.sexo === "F" ? 32 : 26, cintura: cint0,
+        quadril: Math.round((cint0 * 1.16) * 10) / 10, braco: base.sexo === "F" ? 28 : 33, coxa: base.sexo === "F" ? 56 : 58 });
+      st.avaliacoesN.push({ id: uid(), pacienteId: p.id, data: iso(3),
+        peso: pesoAtual, gordura: base.sexo === "F" ? 27 : 21, cintura: cintF,
+        quadril: Math.round((cintF * 1.18) * 10) / 10,
+        braco: (base.sexo === "F" ? 28 : 33) + (base.objetivo === "ganhar" ? 2 : 0.5),
+        coxa: (base.sexo === "F" ? 56 : 58) + (base.objetivo === "ganhar" ? 2 : 0.5) });
       st.dietas[p.id] = montaDieta(base.objetivo, pesoAtual);
 
       // mensalidades pagas: uma por mês desde que entrou

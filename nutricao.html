@@ -612,7 +612,23 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     <div class="linha-flex" style="gap: 8px; margin-top: 6px; align-items: center;">
       <input id="pnKg" inputmode="decimal" placeholder="Peso hoje (kg)" style="width: 130px;">
       <button class="btn verde mini" id="pnKgAdd">+ Registrar pesagem</button>
+      <span class="muted" style="font-size: 12px;">Pra fita métrica e gordura, use a avaliação completa abaixo.</span>
     </div>
+
+    <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Avaliação física</h3>
+    <p class="muted" style="font-size: 12px; margin: 0 0 8px;">Peso, gordura e a fita métrica na consulta. O IMC e a relação cintura-quadril saem calculados, e a evolução vai pro app do paciente na próxima publicação.</p>
+    <div class="linha-flex" style="gap: 8px; flex-wrap: wrap; align-items: end;">
+      <label style="font-size: 12px; margin: 0;">Data<input id="avnData" type="date" style="display:block; width: 140px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Peso (kg)<input id="avnPeso" inputmode="decimal" style="display:block; width: 90px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Gordura (%)<input id="avnGord" inputmode="decimal" style="display:block; width: 96px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Cintura (cm)<input id="avnCintura" inputmode="decimal" style="display:block; width: 100px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Quadril (cm)<input id="avnQuadril" inputmode="decimal" style="display:block; width: 100px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Braço (cm)<input id="avnBraco" inputmode="decimal" style="display:block; width: 92px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Coxa (cm)<input id="avnCoxa" inputmode="decimal" style="display:block; width: 92px; margin-top: 3px;"></label>
+      <button class="btn verde mini" id="avnAdd">+ Registrar avaliação</button>
+    </div>
+    <div id="avnCalc" class="muted" style="font-size: 12.5px; margin-top: 6px;"></div>
+    <div id="avnLista" class="muted" style="font-size: 13px; margin-top: 8px;"></div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Dieta atual</h3>
     <div id="pnDieta" class="muted" style="font-size: 13px; line-height: 1.7;"></div>
@@ -648,6 +664,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     st.alimentos = st.alimentos || []; st.catalogoOff = st.catalogoOff || {};
     st.diarioN = st.diarioN || {};  // prontuário: conduta e evolução por consulta
     st.alFav = st.alFav || [];      // alimentos favoritos do nutricionista (nomes)
+    st.avaliacoesN = st.avaliacoesN || []; // avaliação física (peso, gordura e circunferências)
     return st;
   }
   function save(st) { S.write("ntStudio", st); render(); }
@@ -1026,6 +1043,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     pintaAlvoN(p);
     pintaAnamneseN(p);
     pintaDiarioN(id);
+    $("avnData").value = S.todayISO();
+    ["avnPeso", "avnGord", "avnCintura", "avnQuadril", "avnBraco", "avnCoxa"].forEach(function (x) { $(x).value = ""; });
+    pintaAvalN(st, p);
     // financeiro
     var pgs = (st.pagamentosN || []).filter(function (x) { return x.pacienteId === id; })
       .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
@@ -1127,6 +1147,67 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   }
   window.__appDadosN = pintaAppDadosN; // testes
 
+  // ---------- avaliação física (peso, gordura e fita métrica) ----------
+  function avalsDe(st, pid) {
+    return (st.avaliacoesN || []).filter(function (v) { return v.pacienteId === pid; })
+      .sort(function (a, b) { return a.data < b.data ? -1 : 1; });
+  }
+  function imcDe(peso, alturaCm) {
+    var a = (+alturaCm || 0) / 100;
+    if (!peso || !a) return null;
+    return Math.round((peso / (a * a)) * 10) / 10;
+  }
+  function classeImc(v) {
+    if (v == null) return "";
+    return v < 18.5 ? "abaixo do peso" : v < 25 ? "peso normal" : v < 30 ? "sobrepeso" : v < 35 ? "obesidade grau I" : v < 40 ? "obesidade grau II" : "obesidade grau III";
+  }
+  // relação cintura-quadril: risco cardiovascular pelos cortes da OMS
+  function rcqDe(cintura, quadril, sexo) {
+    if (!cintura || !quadril) return null;
+    var r = Math.round((cintura / quadril) * 100) / 100;
+    var alto = sexo === "F" ? r >= 0.85 : r >= 0.9;
+    return { r: r, risco: alto ? "risco aumentado" : "risco baixo" };
+  }
+  function pintaAvalN(st, p) {
+    var l = avalsDe(st, p.id);
+    // o cabeçalho mostra o que a última avaliação diz do paciente hoje
+    var ult = l[l.length - 1];
+    var imc = imcDe(ult ? ult.peso : p.peso, p.altura);
+    var rcq = ult ? rcqDe(ult.cintura, ult.quadril, p.sexo) : null;
+    $("avnCalc").innerHTML = (imc != null ? "IMC <b>" + String(imc).replace(".", ",") + "</b> (" + classeImc(imc) + ")" : "") +
+      (rcq ? " · RCQ <b>" + String(rcq.r).replace(".", ",") + "</b> <span style='color:" + (/aumentado/.test(rcq.risco) ? "#fbbf24" : "#4ade80") + ";'>" + rcq.risco + "</span>" : "") +
+      (imc == null && !rcq ? "Registre a primeira avaliação pra ver IMC e relação cintura-quadril." : "");
+    if (!l.length) { $("avnLista").textContent = "Nenhuma avaliação ainda."; return; }
+    // variação entre a primeira e a última de cada medida
+    function delta(campo, menorEhMelhor) {
+      var com = l.filter(function (v) { return v[campo] != null && v[campo] !== ""; });
+      if (com.length < 2) return "";
+      var d = Math.round((+com[com.length - 1][campo] - +com[0][campo]) * 10) / 10;
+      if (!d) return "";
+      var bom = menorEhMelhor ? d < 0 : d > 0;
+      return " <b style='color:" + (bom ? "#4ade80" : "#fbbf24") + ";'>" + (d > 0 ? "+" : "") + String(d).replace(".", ",") + "</b>";
+    }
+    var resumo = l.length > 1
+      ? "<div style='padding:6px 0;border-bottom:1px dashed var(--linha);'>Da 1ª à última: " +
+        ["peso (kg)|peso|1", "gordura (%)|gordura|1", "cintura (cm)|cintura|1", "braço (cm)|braco|0", "coxa (cm)|coxa|0"]
+          .map(function (s) { var pt = s.split("|"); var d = delta(pt[1], pt[2] === "1"); return d ? pt[0] + d : ""; })
+          .filter(Boolean).join(" · ") + "</div>"
+      : "";
+    $("avnLista").innerHTML = resumo + l.slice().reverse().map(function (v) {
+      var partes = [];
+      if (v.peso) partes.push(String(v.peso).replace(".", ",") + " kg");
+      if (v.gordura) partes.push(String(v.gordura).replace(".", ",") + "% gordura");
+      if (v.cintura) partes.push("cintura " + String(v.cintura).replace(".", ","));
+      if (v.quadril) partes.push("quadril " + String(v.quadril).replace(".", ","));
+      if (v.braco) partes.push("braço " + String(v.braco).replace(".", ","));
+      if (v.coxa) partes.push("coxa " + String(v.coxa).replace(".", ","));
+      return "<div style='display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed var(--linha);'>" +
+        "<b style='flex:none;font-size:12px;color:var(--verde);'>" + S.fmtData(v.data) + "</b>" +
+        "<span style='flex:1;'>" + esc(partes.join(" · ") || "sem medidas") + "</span>" +
+        "<button class='btn sec mini' data-avnrm='" + v.id + "' aria-label='apagar avaliação'>✕</button></div>";
+    }).join("");
+  }
+  window.__avalN = { lista: avalsDe, imc: imcDe, rcq: rcqDe }; // testes
   function pintaPesoPerfilN(st, p) {
     var ps = ((st.pesagens || {})[p.id] || []).slice(-10);
     if (!ps.length && p.peso) ps = [{ d: p.desde || S.todayISO(), kg: p.peso }];
@@ -1221,6 +1302,44 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     pintaDiarioN(perfilNId);
   });
   window.__prontuarioN = { pinta: pintaDiarioN }; // testes
+  $("avnAdd").addEventListener("click", function () {
+    var num = function (id) { var v = String($(id).value).replace(",", ".").trim(); return v ? +v : null; };
+    var reg = { id: S.uid(), pacienteId: perfilNId, data: $("avnData").value || S.todayISO(),
+      peso: num("avnPeso"), gordura: num("avnGord"), cintura: num("avnCintura"),
+      quadril: num("avnQuadril"), braco: num("avnBraco"), coxa: num("avnCoxa") };
+    if (!reg.peso && !reg.gordura && !reg.cintura && !reg.quadril && !reg.braco && !reg.coxa) {
+      alert("Preencha pelo menos uma medida.");
+      return;
+    }
+    var st = load();
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (!p) return;
+    st.avaliacoesN.push(reg);
+    // o peso da avaliação vale como pesagem e atualiza o cadastro (o alvo calórico usa ele)
+    if (reg.peso) {
+      st.pesagens = st.pesagens || {};
+      var l = st.pesagens[perfilNId] || [];
+      l.push({ d: reg.data, kg: reg.peso });
+      if (l.length > 60) l.shift();
+      st.pesagens[perfilNId] = l;
+      p.peso = reg.peso;
+    }
+    S.write("ntStudio", st);
+    ["avnPeso", "avnGord", "avnCintura", "avnQuadril", "avnBraco", "avnCoxa"].forEach(function (x) { $(x).value = ""; });
+    pintaAvalN(st, p);
+    pintaPesoPerfilN(st, p);
+    pintaAlvoN(p);
+    render();
+  });
+  $("avnLista").addEventListener("click", function (e) {
+    var rm = e.target.getAttribute && e.target.getAttribute("data-avnrm");
+    if (!rm || !confirm("Apagar esta avaliação?")) return;
+    var st = load();
+    st.avaliacoesN = (st.avaliacoesN || []).filter(function (v) { return v.id !== rm; });
+    S.write("ntStudio", st);
+    var p = st.pacientes.find(function (x) { return x.id === perfilNId; });
+    if (p) pintaAvalN(st, p);
+  });
   // Pagar.me: link de checkout seguro da consulta (mesma função da nuvem dos outros módulos)
   function geraLinkPagamentoN(pacienteId, valor, cb) {
     cb = cb || function () {};
@@ -2162,6 +2281,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var temNuvem = !!(nuvemCfg.url && nuvemCfg.anonKey && p.appTokenN);
     // Comunidade do consultório: mesma infra do app do aluno, ligada nas Configurações
     var feedLigadoN = !!(st.config || {}).feedOn && temNuvem;
+    // avaliações físicas que o paciente vê no app (mesmo formato do AVS do app do aluno)
+    var avsN = avalsDe(st, p.id).map(function (v) {
+      return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, quadril: v.quadril, braco: v.braco, coxa: v.coxa };
+    });
     // meta de dias no plano por semana (o paciente vê no card "Minha semana")
     var metaSemN = Math.min(7, Math.max(1, parseInt(p.metaSemana, 10) || 5));
     // banco de alimentos curado embutido no app (busca offline no diário)
@@ -2247,6 +2370,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<div class='kv'><span>Meta do dia</span><span>" + alvo.alvo + " kcal</span></div>" +
       "<div class='kv'><span>🥩🍚🥑 Proteína · Carbo · Gordura</span><b id='macroDia'>0 · 0 · 0 g</b></div>" +
       "<div class='kv'><span>Alvo de macros</span><span>" + macrosApp.prot + " · " + macrosApp.carb + " · " + macrosApp.gord + " g</span></div></div>" +
+      // avaliação física registrada na consulta (mesma leitura do app do aluno)
+      "<div class='cardx'><h2>Minha avaliação física</h2><div id='avnBoxApp'></div></div>" +
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
@@ -2559,7 +2684,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']];" +
       "function secDeN(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';" +
       "if(/Minhas refei\\u00e7\\u00f5es|Registrar o que comi|Meu dia|\\u00c1gua de hoje/.test(t))return 'dieta';" +
-      "if(/Meu peso|Fotos de progresso|Conquistas/.test(t))return 'evolucao';" +
+      "if(/Meu peso|Fotos de progresso|Conquistas|Minha avalia\\u00e7\\u00e3o/.test(t))return 'evolucao';" +
       "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Agenda|Pagamento/.test(t))return 'agenda';" +
       "if(/Fale com/.test(t))return 'chat';return 'inicio';}" +
@@ -2581,6 +2706,18 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "navN.addEventListener('click',function(e){var mi=e.target.closest('.nitemn');if(!mi)return;" +
       "if(navigator.vibrate)navigator.vibrate(8);trocaSecN(mi.getAttribute('data-msecn'));});" +
       "window.__trocaSecN=trocaSecN;trocaSecN('inicio');" +
+      // ---------- avaliação física no app: o que mudou da primeira consulta até a última ----------
+      "var AVSN=" + JSON.stringify(avsN).replace(/</g, "\\u003c") + ";" +
+      "(function(){var el=document.getElementById('avnBoxApp');if(!el)return;" +
+      "if(!AVSN.length){el.innerHTML=\"<div class='vz'>Suas medidas aparecem aqui quando " + esc(studio.split(" ")[0]).replace(/'/g, "\\'") + " registrar a avaliação na consulta.</div>\";return;}" +
+      "function linha(rot,campo,menorMelhor){var com=AVSN.filter(function(v){return v[campo]!=null&&v[campo]!=='';});if(!com.length)return '';" +
+      "var pri=+com[0][campo],ult=+com[com.length-1][campo];var d=Math.round((ult-pri)*10)/10;" +
+      "var bom=menorMelhor?d<0:d>0;" +
+      "var seta=d?(\" <b style='color:\"+(bom?'#4ade80':'#fbbf24')+\"'>\"+(d>0?'+':'')+String(d).replace('.',',')+\"</b>\"):'';" +
+      "return \"<div class='kv'><span>\"+rot+\"</span><span><b>\"+String(ult).replace('.',',')+\"</b>\"+seta+\"</span></div>\";}" +
+      "el.innerHTML=linha('Peso (kg)','peso',true)+linha('Gordura (%)','gordura',true)+linha('Cintura (cm)','cintura',true)+" +
+      "linha('Quadril (cm)','quadril',true)+linha('Bra\\u00e7o (cm)','braco',false)+linha('Coxa (cm)','coxa',false)+" +
+      "\"<div class='vz'>\"+AVSN.length+\" avalia\\u00e7\\u00e3o(\\u00f5es) \\u00b7 \\u00faltima em \"+AVSN[AVSN.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
       // ---------- gamificação: XP, semana, meta e medalhas (paridade com o app do aluno) ----------
       "var META_SEM_N=" + metaSemN + ";" +
       "function planoDias(){return L('ntplano',{});}" +
