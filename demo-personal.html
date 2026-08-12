@@ -109,14 +109,14 @@
   }
 
   var ALUNOS = [
-    { nome: "Ana Beatriz Souza", zap: "21988110001", valor: 450, objetivo: "Emagrecimento", meta: 4, desde: 210, peso: [82, -9, 120, 4], freq: 4, capricho: 1.15, cargas: [["Agachamento livre", 30, 55, 10], ["Leg press 45°", 80, 140, 9], ["Supino reto com barra", 20, 32.5, 8]], pago: true, rec: true },
-    { nome: "Bruno Ferraz", zap: "21988110002", valor: 400, objetivo: "Hipertrofia", meta: 5, desde: 320, peso: [71, 6, 150, 5], freq: 5, capricho: 1.0, cargas: [["Supino reto com barra", 50, 82.5, 12], ["Agachamento livre", 60, 105, 12], ["Remada curvada com barra", 40, 70, 10], ["Rosca direta com barra", 20, 35, 8]], pago: true },
-    { nome: "Carla Menezes", zap: "21988110003", valor: 380, objetivo: "Condicionamento", meta: 3, desde: 150, peso: [64, -2.5, 90, 5], freq: 3, capricho: 0.9, cargas: [["Elevação pélvica", 40, 80, 8], ["Levantamento terra romeno", 30, 50, 7]], pago: false },
-    { nome: "Diego Prado", zap: "21988110004", valor: 500, objetivo: "Força", meta: 4, desde: 400, peso: [88, 3, 180, 6], freq: 4, capricho: 0.85, cargas: [["Agachamento livre", 100, 150, 14], ["Levantamento terra romeno", 90, 140, 12], ["Supino reto com barra", 80, 110, 12]], pago: true },
-    { nome: "Elisa Martins", zap: "21988110005", valor: 450, objetivo: "Emagrecimento", meta: 3, desde: 90, peso: [77, -4.5, 80, 4], freq: 3, capricho: 1.1, cargas: [["Leg press 45°", 60, 100, 6], ["Puxada alta na polia", 25, 37.5, 6]], pago: true },
-    { nome: "Felipe Andrade", zap: "21988110006", valor: 400, objetivo: "Hipertrofia", meta: 4, desde: 60, peso: [66, 2, 55, 3], freq: 4, capricho: 0.95, cargas: [["Supino reto com barra", 35, 47.5, 5], ["Desenvolvimento com halteres", 12, 18, 5]], pago: false, falhou: true },
-    { nome: "Gabriela Nunes", zap: "21988110007", valor: 380, objetivo: "Saúde geral", meta: 2, desde: 45, peso: [59, -1, 40, 4], freq: 2, capricho: 0.8, cargas: [["Elevação pélvica", 25, 40, 4]], pago: true },
-    { nome: "Henrique Lopes", zap: "21988110008", valor: 420, objetivo: "Hipertrofia", meta: 5, desde: 240, peso: [79, 4.5, 160, 5], freq: 5, capricho: 1.05, cargas: [["Agachamento livre", 70, 110, 11], ["Remada curvada com barra", 45, 72.5, 10], ["Tríceps na polia", 25, 40, 9]], pago: true, rec: true },
+    { nome: "Ana Beatriz Souza", sexo: "F", altura: 165, nascAnos: 34, zap: "21988110001", valor: 450, objetivo: "Emagrecimento", meta: 4, desde: 210, peso: [82, -9, 120, 4], freq: 4, capricho: 1.15, cargas: [["Agachamento livre", 30, 55, 10], ["Leg press 45°", 80, 140, 9], ["Supino reto com barra", 20, 32.5, 8]], pago: true, rec: true },
+    { nome: "Bruno Ferraz", sexo: "M", altura: 178, nascAnos: 29, zap: "21988110002", valor: 400, objetivo: "Hipertrofia", meta: 5, desde: 320, peso: [71, 6, 150, 5], freq: 5, capricho: 1.0, cargas: [["Supino reto com barra", 50, 82.5, 12], ["Agachamento livre", 60, 105, 12], ["Remada curvada com barra", 40, 70, 10], ["Rosca direta com barra", 20, 35, 8]], pago: true },
+    { nome: "Carla Menezes", sexo: "F", altura: 160, nascAnos: 41, zap: "21988110003", valor: 380, objetivo: "Condicionamento", meta: 3, desde: 150, peso: [64, -2.5, 90, 5], freq: 3, capricho: 0.9, cargas: [["Elevação pélvica", 40, 80, 8], ["Levantamento terra romeno", 30, 50, 7]], pago: false },
+    { nome: "Diego Prado", sexo: "M", altura: 183, nascAnos: 37, zap: "21988110004", valor: 500, objetivo: "Força", meta: 4, desde: 400, peso: [88, 3, 180, 6], freq: 4, capricho: 0.85, cargas: [["Agachamento livre", 100, 150, 14], ["Levantamento terra romeno", 90, 140, 12], ["Supino reto com barra", 80, 110, 12]], pago: true },
+    { nome: "Elisa Martins", sexo: "F", altura: 168, nascAnos: 45, zap: "21988110005", valor: 450, objetivo: "Emagrecimento", meta: 3, desde: 90, peso: [77, -4.5, 80, 4], freq: 3, capricho: 1.1, cargas: [["Leg press 45°", 60, 100, 6], ["Puxada alta na polia", 25, 37.5, 6]], pago: true },
+    { nome: "Felipe Andrade", sexo: "M", altura: 174, nascAnos: 23, zap: "21988110006", valor: 400, objetivo: "Hipertrofia", meta: 4, desde: 60, peso: [66, 2, 55, 3], freq: 4, capricho: 0.95, cargas: [["Supino reto com barra", 35, 47.5, 5], ["Desenvolvimento com halteres", 12, 18, 5]], pago: false, falhou: true },
+    { nome: "Gabriela Nunes", sexo: "F", altura: 158, nascAnos: 52, zap: "21988110007", valor: 380, objetivo: "Saúde geral", meta: 2, desde: 45, peso: [59, -1, 40, 4], freq: 2, capricho: 0.8, cargas: [["Elevação pélvica", 25, 40, 4]], pago: true },
+    { nome: "Henrique Lopes", sexo: "M", altura: 180, nascAnos: 31, zap: "21988110008", valor: 420, objetivo: "Hipertrofia", meta: 5, desde: 240, peso: [79, 4.5, 160, 5], freq: 5, capricho: 1.05, cargas: [["Agachamento livre", 70, 110, 11], ["Remada curvada com barra", 45, 72.5, 10], ["Tríceps na polia", 25, 40, 9]], pago: true, rec: true },
   ];
 
   var alunos = [], pagamentos = [], avaliacoes = [], sessoes = [], treinosV2 = {}, diarioPT = {};
@@ -131,6 +131,8 @@
     var id = "demo" + (idx + 1);
     var a = {
       id: id, nome: cfg.nome, zap: cfg.zap, valor: cfg.valor, modo: "mes", metaSemana: cfg.meta,
+      sexo: cfg.sexo, altura: cfg.altura,
+      nasc: (new Date().getFullYear() - cfg.nascAnos) + "-04-12",
       objetivo: cfg.objetivo, ativo: true, desde: iso(cfg.desde),
       anamnese: { nivel: cfg.desde > 200 ? "intermediário" : "iniciante", dias: String(cfg.meta), sono: "7–8h", estresse: idx % 2 ? "médio" : "baixo",
         lesoes: idx === 3 ? "condromalácia leve no joelho E" : "", naogosta: idx === 0 ? "burpee" : "", gosta: "musculação" },
@@ -184,8 +186,33 @@
     [210, 150, 90, 45, 7].forEach(function (dd, k) {
       if (dd > cfg.desde) return;
       var pesoNoDia = cfg.peso[0] + cfg.peso[1] * (1 - Math.min(dd, cfg.peso[2]) / cfg.peso[2]);
-      avaliacoes.push({ id: uid(), alunoId: id, data: iso(dd), peso: Math.round(pesoNoDia * 10) / 10,
-        gordura: Math.round((28 - k * 1.4 - idx) * 10) / 10, cintura: Math.round(94 - k * 1.5 - idx), braco: Math.round((30 + k * 0.6 + idx * 0.5) * 10) / 10 });
+      var reg = { id: uid(), alunoId: id, data: iso(dd), peso: Math.round(pesoNoDia * 10) / 10,
+        gordura: Math.round((28 - k * 1.4 - idx) * 10) / 10, cintura: Math.round(94 - k * 1.5 - idx),
+        quadril: Math.round(102 - k * 0.8 + (cfg.sexo === "F" ? 3 : -4)), braco: Math.round((30 + k * 0.6 + idx * 0.5) * 10) / 10,
+        coxa: Math.round((54 + k * 0.4 + idx * 0.3) * 10) / 10 };
+      // a última avaliação da Ana e do Bruno vem de balança de bioimpedância —
+      // é o que faz o laudo mostrar a análise segmentar e dizer "medido"
+      if (k === 4 && idx < 2) {
+        var magra = reg.peso * (1 - reg.gordura / 100);
+        var f = cfg.sexo === "F" ? 0.40 : 0.44;
+        reg.bia = {
+          agua: Math.round(magra * 0.732 * 10) / 10,
+          proteina: Math.round(magra * 0.195 * 10) / 10,
+          mineral: Math.round(magra * 0.0685 * 100) / 100,
+          massaGordura: Math.round(reg.peso * reg.gordura) / 100,
+          mme: Math.round(magra * (cfg.sexo === "F" ? 0.52 : 0.55) * 10) / 10,
+          visceral: cfg.sexo === "F" ? 5 : 7,
+          anguloFase: cfg.sexo === "F" ? 6.2 : 6.8,
+          segmentar: [
+            { nome: "Braço esquerdo", magra: Math.round(magra * f * 0.15 * 100) / 100, gordura: Math.round(reg.peso * reg.gordura / 100 * 0.05 * 10) / 10 },
+            { nome: "Braço direito", magra: Math.round(magra * f * 0.155 * 100) / 100, gordura: Math.round(reg.peso * reg.gordura / 100 * 0.05 * 10) / 10 },
+            { nome: "Tronco", magra: Math.round(magra * 0.45 * 100) / 100, gordura: Math.round(reg.peso * reg.gordura / 100 * 0.52 * 10) / 10 },
+            { nome: "Perna esquerda", magra: Math.round(magra * f * 0.345 * 100) / 100, gordura: Math.round(reg.peso * reg.gordura / 100 * 0.14 * 10) / 10 },
+            { nome: "Perna direita", magra: Math.round(magra * f * 0.35 * 100) / 100, gordura: Math.round(reg.peso * reg.gordura / 100 * 0.14 * 10) / 10 },
+          ],
+        };
+      }
+      avaliacoes.push(reg);
     });
     // agenda: semana passada (feitas) + próxima semana
     for (var s2 = 0; s2 < cfg.meta; s2++) {

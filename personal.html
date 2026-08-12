@@ -717,6 +717,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-ava="avaliar" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/></svg> Avaliar</button>
       <button data-ava="historico"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Histórico e evolução</button>
     </div>
+    <div class="card" data-avsec="avaliar" id="avLaudoBox" hidden style="margin-bottom: 14px;">
+      <h2>Laudo da última avaliação</h2>
+      <div id="avLaudo"></div>
+    </div>
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Dobras cutâneas — Pollock 3 · Pollock 7 · Guedes</h2>
       <p class="muted" style="margin: 4px 0 10px;">Meça com o adipômetro (mm), escolha o protocolo e o sistema calcula a densidade corporal e o % de gordura pela equação de Siri. O resultado preenche a avaliação abaixo.</p>
@@ -795,10 +799,6 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <input id="biaPernaD" type="number" step="0.01" min="0" placeholder="Perna dir." style="width: 120px;">
         </div>
       </details>
-    </div>
-    <div class="card" data-avsec="avaliar" id="avLaudoBox" hidden style="margin-bottom: 14px;">
-      <h2>Laudo da última avaliação</h2>
-      <div id="avLaudo"></div>
     </div>
     <div class="card" data-avsec="historico" hidden><h2>Histórico e evolução</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
   </section>
