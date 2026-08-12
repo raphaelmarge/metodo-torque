@@ -13,7 +13,9 @@ function ok(cond, nome) {
 
 // abre o menu lateral e clica na aba (menu vira gaveta com hambúrguer)
 async function abaNt(p, a) {
-  await p.click("#btnMenuNt");
+  // no computador o menu já fica à vista; no celular é preciso abrir a gaveta
+  const menu = p.locator("#btnMenuNt");
+  if (await menu.isVisible()) await menu.click();
   await p.click('#abasNt [data-a="' + a + '"]');
 }
 
