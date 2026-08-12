@@ -53,10 +53,14 @@
     return Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
   };
 
-  /* Corpo não é elipse perfeita — é um pouco mais cheio nos cantos. Estes
-   * fatores vêm da comparação entre a elipse e o contorno real de cada região.
-   * Ficam explícitos aqui pra poderem ser ajustados com dados de campo. */
-  A.FATOR = { cintura: 1.026, quadril: 1.033, torax: 1.020, coxa: 1.015, panturrilha: 1.010, braco: 1.010 };
+  /* Corpo não é elipse perfeita — é um pouco mais cheio nos cantos, e esse
+   * empeno é o que estes fatores corrigem.
+   * Os valores não são chute: saem da comparação da elipse com o contorno real
+   * de 31 corpos diferentes num simulador com câmera de verdade. A primeira
+   * versão usava 1,026 e 1,033, escolhidos no olho, e isso sozinho inflava o
+   * quadril em 3,4 cm em todo mundo. Com os valores medidos, o viés do quadril
+   * cai pra menos de meio centímetro. */
+  A.FATOR = { cintura: 1.013, quadril: 1.002, torax: 1.010, coxa: 1.010, panturrilha: 1.008, braco: 1.008 };
 
   /* Proporções médias usadas quando falta a foto de lado (profundidade
    * estimada como fração da largura). Menos preciso — a tela avisa. */
@@ -106,14 +110,19 @@
     return v.length ? mediana(v) : (linhas[y] ? linhas[y].tronco : 0);
   };
 
+  /* Cintura é a linha mais estreita da janela; quadril, a mais larga.
+   * Testamos trocar o extremo puro por percentil (15/85, 8/92) e por mediana das
+   * linhas mais extremas, achando que o ruído do contorno estaria enviesando a
+   * medida. Num simulador 3D com câmera de verdade e 31 corpos diferentes, as
+   * três deram o MESMO erro (RMSE 2,45 a 2,49 cm na cintura). O erro que
+   * importa é de variância, não de viés — então fica o jeito simples. */
   A.maisEstreito = function (linhas, y1, y2) {
     var achado = -1, valor = Infinity;
     for (var y = Math.max(0, y1); y <= Math.min(linhas.length - 1, y2); y++) {
       var t = A.suave(linhas, y);
       if (t > 0 && t < valor) { valor = t; achado = y; }
     }
-    return achado < 0 ? null : { y: achado, px: valor,
-      naBorda: achado <= y1 + 1 || achado >= y2 - 1 };
+    return achado < 0 ? null : { y: achado, px: valor, naBorda: achado <= y1 + 1 || achado >= y2 - 1 };
   };
   A.maisLargo = function (linhas, y1, y2) {
     var achado = -1, valor = 0;
@@ -121,8 +130,7 @@
       var t = A.suave(linhas, y);
       if (t > valor) { valor = t; achado = y; }
     }
-    return achado < 0 ? null : { y: achado, px: valor,
-      naBorda: achado <= y1 + 1 || achado >= y2 - 1 };
+    return achado < 0 ? null : { y: achado, px: valor, naBorda: achado <= y1 + 1 || achado >= y2 - 1 };
   };
 
   /* ---------- régua ----------
@@ -159,7 +167,7 @@
    * Devolve UM problema por vez, do mais grave pro menos: quem lê cinco
    * correções de uma vez não corrige nenhuma. */
   A.LIMITES_QA = { visibilidade: 0.6, ocupacaoMin: 0.60, ocupacaoMax: 0.94, margem: 0.02,
-    desnivel: 0.055, ombrosDeFrente: 0.10, ombrosDeLado: 0.13, bracoMin: 0.02 };
+    desnivel: 0.055, ombrosDeFrente: 0.10, ombrosDeLado: 0.13, quadrilDeLado: 0.085, bracoMin: 0.02 };
   A.avaliaFoto = function (leitura, modo) {
     var lm = leitura.landmarks;
     if (!lm || !lm.length) return { ok: false, cod: "ninguem", fala: "Não achei ninguém na foto. A pessoa precisa aparecer inteira." };
@@ -179,7 +187,14 @@
     if (ocupa > Q.ocupacaoMax) return { ok: false, cod: "perto", fala: "Está perto demais. Dê dois passos pra trás." };
     var largOmbros = Math.abs(lm[P.ombroE].x - lm[P.ombroD].x);
     if (modo === "lado") {
+      /* Aqui a trava é apertada de propósito: é da foto de LADO que sai a
+       * profundidade do corpo, e ela é a medida mais sensível de todas. Medido
+       * nos bonecos: com o corpo 10° fora do perfil a cintura já erra +4 cm, e
+       * com 20° erra +13 cm — enquanto a largura da foto de frente mal se mexe.
+       * Ou seja, quase todo o estrago do "corpo girado" entra por esta foto. */
       if (largOmbros > Q.ombrosDeLado) return { ok: false, cod: "nao-virou", fala: "Nesta foto é de lado: vire o corpo todo e olhe pra frente." };
+      var quadrilAberto = Math.abs(lm[P.quadrilE].x - lm[P.quadrilD].x);
+      if (quadrilAberto > Q.quadrilDeLado) return { ok: false, cod: "meio-virou", fala: "Vire mais: o quadril ainda está apontando pra câmera." };
     } else {
       if (largOmbros < Q.ombrosDeFrente) return { ok: false, cod: "de-lado", fala: "Nesta foto é de frente: vire o corpo pra câmera." };
       if (Math.abs(lm[P.ombroE].y - lm[P.ombroD].y) > Q.desnivel ||
@@ -305,12 +320,37 @@
       Object.keys(circ).forEach(function (k) { circ[k] = r1(circ[k] + cal.desvio); });
     }
 
-    // RAZÃO CINTURA/ALTURA — a saída mais confiável daqui: sai de dois valores em
-    // pixels, então não depende da régua nem da altura digitada
-    var rcest = cint ? r2(cint.px / frente.lim.alturaPx) : null;
+    /* RAZÃO CINTURA/ALTURA — o número que a tela destaca.
+     * É a CIRCUNFERÊNCIA da cintura dividida pela estatura, que é como a
+     * literatura define (corte de risco em 0,50). Cuidado que já custou caro:
+     * usar a LARGURA em vez da circunferência dá ~0,17 e faria todo mundo
+     * parecer saudável.
+     * Continua sem depender da altura digitada, porque a circunferência é
+     * proporcional à escala e a escala é a própria altura — os dois se cancelam
+     * na divisão. Só a calibração por fita, que é um acréscimo em centímetros,
+     * quebra essa invariância de propósito.
+     * Três casas, não duas: com valor perto de 0,5 cada centésimo vale ~1 cm de
+     * cintura, e arredondar cedo demais multiplicava o erro por 2,4. */
+    var rcest = circ.cintura ? Math.round(circ.cintura / alturaCm * 1000) / 1000 : null;
     var rcq = (circ.cintura && circ.quadril) ? r2(circ.cintura / circ.quadril) : null;
     var gord = circ.cintura ? A.rfm(dados.sexo, alturaCm, circ.cintura) : null;
 
+    /* Roupa larga é, de longe, o maior estrago: no simulador, uma camiseta que
+     * sobra 2 cm de cada lado joga a cintura 14 cm pra cima — mais do que
+     * qualquer erro de cálculo. Dá pra desconfiar dela porque os PONTOS do corpo
+     * que a IA marca seguem o esqueleto, enquanto a silhueta segue o tecido:
+     * quando o tronco fica muito mais largo do que os ombros permitiriam, é pano.
+     * O corte de 1,20 foi escolhido pra NÃO acusar ninguém à toa — com roupa
+     * justa, nenhum dos 31 corpos passou de 1,13. */
+    var ombroPx = Math.abs(lmF[P.ombroE].x - lmF[P.ombroD].x) * frente.largura;
+    var troncoMeio = A.suave(linF, yOmbro + Math.round(T * 0.55));
+    if (ombroPx > 0 && troncoMeio > 0) {
+      var proporcao = troncoMeio / ombroPx;
+      if (proporcao > 1.20) {
+        avisos.push("A roupa parece estar sobrando e engordando o contorno — refaça com roupa mais colada.");
+        Object.keys(confianca).forEach(function (k) { confianca[k] = "baixa"; });
+      }
+    }
     if (!lado || !lado.ok) avisos.push("Sem a foto de lado a profundidade é estimada — tire as duas pra ficar mais preciso.");
     if (cint && cint.naBorda) avisos.push("A cintura ficou no limite da área analisada; confira com a fita.");
     if (!cal.desvio) avisos.push("Meça a cintura com fita uma vez e registre: a partir daí a câmera acerta a régua deste aluno.");

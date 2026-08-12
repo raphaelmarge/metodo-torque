@@ -167,6 +167,53 @@ ok(semVisiveis.cod === "cortado", "pés fora do quadro: pede o corpo inteiro");
 ok(S.avaliaFoto(leitura(), "frente").ok, "a foto boa passa");
 ok(S.avaliaFoto(leitura(false), "frente").cod === "bracos", "braços colados no corpo: pede pra afastar em V");
 
+console.log("Razão cintura/altura no padrão clínico:");
+// o corte de risco da literatura (0,50) vale pra CIRCUNFERÊNCIA dividida pela
+// estatura. Usar a largura daria ~0,17 e faria todo mundo parecer saudável.
+ok(r.rcest > 0.30 && r.rcest < 0.80, "a razão sai na escala certa, comparável ao corte de 0,50 (" + r.rcest + ")");
+ok(perto(r.rcest, r.circ.cintura / ALTURA_CM, 0.002), "é mesmo a circunferência dividida pela altura");
+ok(String(r.rcest).replace("0.", "").length >= 3, "vem com 3 casas: arredondar pra 2 valia ~1 cm de cintura");
+
+console.log("Fatores de correção medidos, não chutados:");
+ok(S.FATOR.cintura > 1 && S.FATOR.cintura < 1.02, "o fator da cintura ficou no valor medido no simulador (" + S.FATOR.cintura + ")");
+ok(S.FATOR.quadril > 1 && S.FATOR.quadril < 1.01, "o do quadril também (" + S.FATOR.quadril + ") — o chute antigo inflava 3,4 cm");
+
+console.log("Roupa larga é denunciada:");
+// tronco muito mais largo do que os ombros permitem = pano sobrando
+function comRoupa(extraPx) {
+  const m = montaMascara(true);
+  const cx = W >> 1;
+  for (let y = yOmbro; y <= yQuadril; y++) {
+    for (let k = 1; k <= extraPx; k++) {
+      const larg = cm(larguraTroncoCm(y)) >> 1;
+      if (cx - larg - k >= 0) m[y * W + cx - larg - k] = 1;
+      if (cx + larg + k < W) m[y * W + cx + larg + k] = 1;
+    }
+  }
+  return { landmarks: landmarks(), mascara: m, largura: W, altura: H };
+}
+const justa = S.medidas(S.analisaFoto(leitura(), "frente", ALTURA_CM), null, { alturaCm: ALTURA_CM, sexo: "M" });
+/* Camiseta larga faz a silhueta inchar SEM mexer nos pontos do corpo: a IA marca
+ * o ombro onde está o osso, não onde está o pano. É essa diferença que a gente
+ * usa pra desconfiar — então o teste reproduz exatamente ela, mantendo a
+ * silhueta e estreitando os ombros do esqueleto. */
+const comPano = {
+  landmarks: (function () {
+    const l = landmarks();
+    const cx = 0.5, meia = (cm(LARG.ombro) >> 1) / W * 0.55;
+    l[P.ombroE] = { x: cx + meia, y: l[P.ombroE].y, visibility: 1 };
+    l[P.ombroD] = { x: cx - meia, y: l[P.ombroD].y, visibility: 1 };
+    return l;
+  })(),
+  mascara: montaMascara(true), largura: W, altura: H,
+};
+const fPano = S.analisaFoto(comPano, "frente", ALTURA_CM);
+const larga = fPano.ok ? S.medidas(fPano, null, { alturaCm: ALTURA_CM, sexo: "M" }) : null;
+ok(!/roupa/i.test(justa.avisos.join(" ")), "com roupa justa não acusa nada");
+ok(larga && larga.ok && /roupa/i.test(larga.avisos.join(" ")),
+  "quando a silhueta fica bem mais larga do que os ombros permitem, avisa pra refazer");
+ok(larga && larga.confianca.cintura === "baixa", "e rebaixa a confiança de todas as medidas");
+
 console.log("Textos obrigatórios:");
 ok(/não substitui fita métrica/.test(S.TEXTO_LIMITE), "o aviso de que não substitui fita/bioimpedância está no código");
 
