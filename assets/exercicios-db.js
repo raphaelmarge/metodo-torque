@@ -7321,5 +7321,305 @@ self.MT_EXERCICIOS = [
   "g": "Mobilidade e alongamento",
   "eq": "Livre",
   "d": "Palmas na mesa com os dedos virados pro corpo, recue o quadril devagar; alivia quem digita e quem pega barra."
+ },
+ {
+  "n": "Agachamento na cadeira com pausa de 3 segundos",
+  "g": "Quadríceps",
+  "eq": "Cadeira",
+  "d": "Sente devagar até tocar o assento, conte três segundos parado e suba empurrando o chão com o meio do pé, sem deixar os joelhos caírem pra dentro."
+ },
+ {
+  "n": "Flexão de braço com as mãos no sofá",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Apoie as mãos na borda do sofá na largura do peito, mantenha o corpo em linha reta do calcanhar à cabeça e desça até o peito quase encostar."
+ },
+ {
+  "n": "Afundo reverso segurando no batente da porta",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Segure leve no batente só pra equilibrar, dê um passo pra trás e desça até o joelho de trás quase tocar o chão, mantendo o tronco ereto."
+ },
+ {
+  "n": "Elevação de quadril com os pés no sofá",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Com os calcanhares no sofá e os ombros no chão, suba o quadril apertando o glúteo no topo e desça sem deixar a lombar arquear."
+ },
+ {
+  "n": "Escalador lento com apoio na mesa",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Em prancha com as mãos na mesa, traga um joelho de cada vez em direção ao peito devagar, sem balançar o quadril pra cima."
+ },
+ {
+  "n": "Agachamento isométrico na parede com braços à frente",
+  "g": "Quadríceps",
+  "eq": "Parede",
+  "d": "Deslize as costas na parede até os joelhos formarem 90 graus, estenda os braços na frente e segure respirando normalmente."
+ },
+ {
+  "n": "Remada invertida com toalha na maçaneta",
+  "g": "Costas",
+  "eq": "Toalha",
+  "d": "Prenda a toalha numa maçaneta firme, incline o tronco pra trás com os pés próximos à porta e puxe o peito em direção às mãos."
+ },
+ {
+  "n": "Panturrilha unilateral no degrau da escada",
+  "g": "Posterior e glúteo",
+  "eq": "Escada",
+  "d": "Com a ponta de um pé no degrau e o calcanhar livre, desça até sentir alongar e suba o mais alto que conseguir, segurando no corrimão."
+ },
+ {
+  "n": "Abdominal canivete no chão da sala",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Deitado, suba tronco e pernas ao mesmo tempo tentando tocar os pés com as mãos e volte controlando, sem jogar a cabeça pra frente."
+ },
+ {
+  "n": "Tríceps no banco do sofá com pés no chão",
+  "g": "Tríceps",
+  "eq": "Sofá",
+  "d": "De costas pro sofá, apoie as mãos na borda e desça o corpo dobrando os cotovelos pra trás até 90 graus, sem afastar o quadril do móvel."
+ },
+ {
+  "n": "Elevação lateral com garrafas de água em casa",
+  "g": "Ombros",
+  "eq": "Garrafa de água",
+  "d": "Suba os braços até a altura dos ombros com o cotovelo levemente dobrado e desça em três segundos, sem usar impulso de tronco."
+ },
+ {
+  "n": "Ponte de glúteo unilateral no tapete",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Com um pé apoiado e a outra perna estendida, suba o quadril usando só o glúteo da perna de apoio e mantenha a bacia nivelada."
+ },
+ {
+  "n": "Remada baixa com elástico preso na porta",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Prenda o elástico na altura do quadril, puxe os cotovelos rente ao corpo até as mãos chegarem no abdômen e aperte as escápulas no final."
+ },
+ {
+  "n": "Abdução de quadril deitado de lado com mini band no joelho",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Deitado de lado com joelhos dobrados, abra o joelho de cima sem rolar o quadril pra trás e segure meio segundo no topo."
+ },
+ {
+  "n": "Rotação externa de ombro com elástico junto ao corpo",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Cotovelo colado na costela dobrado a 90 graus, gire o antebraço pra fora sem deixar o ombro subir e volte devagar."
+ },
+ {
+  "n": "Agachamento sumô com elástico sob os pés",
+  "g": "Quadríceps",
+  "eq": "Elástico",
+  "d": "Pés mais afastados que os ombros e pontas pra fora, desça mantendo os joelhos alinhados com os dedos e suba empurrando o chão pros lados."
+ },
+ {
+  "n": "Extensão de quadril em pé com elástico no tornozelo",
+  "g": "Posterior e glúteo",
+  "eq": "Elástico",
+  "d": "Segure num apoio, leve a perna pra trás só até onde o quadril permitir sem arquear a lombar e volte controlando."
+ },
+ {
+  "n": "Puxada unilateral alta com elástico ajoelhado",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Com o elástico preso acima da cabeça, puxe um braço até a lateral do tronco mantendo o abdômen firme e o ombro longe da orelha."
+ },
+ {
+  "n": "Supino inclinado com elástico em pé",
+  "g": "Peito",
+  "eq": "Elástico",
+  "d": "Com o elástico passando nas costas, empurre as mãos pra frente e pra cima em diagonal e volte sentindo o peito alongar."
+ },
+ {
+  "n": "Rosca concentrada com elástico sentado",
+  "g": "Bíceps",
+  "eq": "Elástico",
+  "d": "Apoie o cotovelo na coxa, suba a mão até o ombro sem mover o braço e desça em três segundos contra a resistência."
+ },
+ {
+  "n": "Tríceps testa com elástico deitado no colchonete",
+  "g": "Tríceps",
+  "eq": "Elástico",
+  "d": "Elástico preso atrás da cabeça, estenda os cotovelos até os braços ficarem retos mantendo os ombros parados."
+ },
+ {
+  "n": "Monster walk pra trás com mini band",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Em semiagachamento, caminhe pra trás em diagonal mantendo tensão na faixa e os joelhos sempre abertos na linha dos pés."
+ },
+ {
+  "n": "Extensão de joelho sentado sem carga com pausa",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Sentado com as costas apoiadas, estenda o joelho até a perna ficar reta, segure dois segundos apertando a coxa e desça devagar."
+ },
+ {
+  "n": "Abdução de ombro até 90 graus com bastão",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Bastão",
+  "d": "Segure o bastão com as duas mãos e use o braço bom pra ajudar o braço dolorido a subir só até a altura do ombro, sem forçar."
+ },
+ {
+  "n": "Rotação de tronco sentado com bola pequena",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Bola",
+  "d": "Sentado com os pés no chão, gire o tronco levando a bola de um lado ao outro na altura do umbigo, mantendo o quadril parado."
+ },
+ {
+  "n": "Ponte de glúteo com apoio dos pés na parede",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Parede",
+  "d": "Deitado com os pés apoiados na parede, suba o quadril poucos centímetros e desça, respeitando o limite sem dor."
+ },
+ {
+  "n": "Deslizamento do calcanhar na cama",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso do corpo",
+  "d": "Deitado, deslize o calcanhar em direção ao glúteo dobrando o joelho até onde não doer e estenda de volta lentamente."
+ },
+ {
+  "n": "Isometria de quadríceps com toalha sob o joelho",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Toalha",
+  "d": "Empurre o joelho contra a toalha enrolada, aperte a coxa por cinco segundos e relaxe, sem prender a respiração."
+ },
+ {
+  "n": "Elevação de braços com bastão sentado",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Bastão",
+  "d": "Segure o bastão na largura dos ombros e suba até onde não sentir dor, mantendo as costas apoiadas no encosto."
+ },
+ {
+  "n": "Passo lateral entre dois cones com apoio",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cone",
+  "d": "Caminhe de lado entre os cones com passos curtos, segurando num apoio, olhando pra frente em vez de olhar pros pés."
+ },
+ {
+  "n": "Sentar e levantar contando o tempo (teste funcional)",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Levante e sente da cadeira sem usar as mãos por trinta segundos, mantendo o movimento controlado e sem se jogar no assento."
+ },
+ {
+  "n": "Pinça de dedos com massinha",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Massinha",
+  "d": "Aperte a massinha entre o polegar e cada dedo, um de cada vez, dez vezes em cada, sem forçar articulação dolorida."
+ },
+ {
+  "n": "Caminhada de costas na piscina rasa",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Ande pra trás com passos largos apoiando primeiro a ponta do pé, mantendo o tronco ereto e o abdômen firme contra a água."
+ },
+ {
+  "n": "Abdução de quadril na água com apoio na borda",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Segure na borda e abra a perna lateralmente até a altura confortável, voltando devagar pra sentir a resistência da água."
+ },
+ {
+  "n": "Remada frontal aquática com macarrão",
+  "g": "Natação e aquático",
+  "eq": "Macarrão aquático",
+  "d": "Empurre o macarrão pra baixo e à frente com os braços estendidos e deixe subir controlando, sem travar os cotovelos."
+ },
+ {
+  "n": "Bicicleta suspensa com macarrão sob os braços",
+  "g": "Natação e aquático",
+  "eq": "Macarrão aquático",
+  "d": "Na parte funda, pedale no ar mantendo o tronco reto e o quadril embaixo do corpo, sem deitar pra trás."
+ },
+ {
+  "n": "Nado peito com nadadeiras curtas",
+  "g": "Natação e aquático",
+  "eq": "Nadadeira",
+  "d": "Mantenha a pernada simétrica e o quadril alto, respirando a cada braçada sem levantar demais a cabeça."
+ },
+ {
+  "n": "Empurrada de prancha submersa à frente",
+  "g": "Natação e aquático",
+  "eq": "Prancha de natação",
+  "d": "Empurre a prancha pra baixo e à frente com os dois braços e traga de volta ao peito, mantendo os pés firmes no fundo."
+ },
+ {
+  "n": "Agachamento com salto e giro na água",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Agache até a água na altura do peito e salte girando um quarto de volta, aterrissando com os joelhos levemente dobrados."
+ },
+ {
+  "n": "Corrida com joelho alto na água até o peito",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Corra no lugar levando o joelho até a linha da água, usando os braços em oposição e mantendo o tronco na vertical."
+ },
+ {
+  "n": "Remada curvada unilateral com pegada supinada e halter",
+  "g": "Costas",
+  "eq": "Halter",
+  "d": "Com o joelho e a mão no banco, puxe o halter com a palma virada pra frente até a cintura, mantendo a coluna neutra."
+ },
+ {
+  "n": "Supino com halteres em pegada neutra no banco inclinado",
+  "g": "Peito",
+  "eq": "Halteres",
+  "d": "Palmas viradas uma pra outra, desça os halteres até a linha do peito alto e empurre juntando sem bater um no outro."
+ },
+ {
+  "n": "Agachamento búlgaro com halter na mão contrária",
+  "g": "Quadríceps",
+  "eq": "Halter",
+  "d": "Com o pé de trás no banco e o peso na mão oposta à perna da frente, desça reto e suba empurrando o calcanhar da frente."
+ },
+ {
+  "n": "Levantamento terra romeno unilateral com kettlebell",
+  "g": "Posterior e glúteo",
+  "eq": "Kettlebell",
+  "d": "Apoie numa perna só, jogue o quadril pra trás descendo o peso pela canela e mantenha o quadril nivelado o tempo todo."
+ },
+ {
+  "n": "Desenvolvimento unilateral em pé com kettlebell no rack",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Com o peso apoiado no ombro, empurre acima da cabeça sem inclinar o tronco pro lado e trave o cotovelo no topo."
+ },
+ {
+  "n": "Rosca inclinada com pegada supinada no banco 60 graus",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Deitado no banco inclinado, deixe os braços cair atrás do tronco e suba sem mover os cotovelos pra frente."
+ },
+ {
+  "n": "Tríceps corda unilateral na polia alta",
+  "g": "Tríceps",
+  "eq": "Polia",
+  "d": "Segure a corda com uma mão, estenda o cotovelo colado ao corpo e gire levemente o punho pra fora no final do movimento."
+ },
+ {
+  "n": "Puxada frontal com pegada aberta e barra reta",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Pegada bem mais aberta que os ombros, puxe a barra até a parte alta do peito inclinando o tronco só uns dez graus."
+ },
+ {
+  "n": "Elevação frontal unilateral com pegada neutra e halter",
+  "g": "Ombros",
+  "eq": "Halter",
+  "d": "Palma virada pra dentro, suba o braço até a altura dos olhos e desça em três segundos sem balançar o tronco."
+ },
+ {
+  "n": "Afundo caminhando com kettlebell na posição goblet",
+  "g": "Quadríceps",
+  "eq": "Kettlebell",
+  "d": "Segure o kettlebell junto ao peito e caminhe dando passos longos, descendo até o joelho de trás quase tocar o chão."
  }
 ];
