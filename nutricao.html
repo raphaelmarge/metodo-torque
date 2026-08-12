@@ -608,7 +608,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     <div id="pnDiarioLista" class="muted" style="font-size: 13px; line-height: 1.7; margin-top: 8px;"></div>
 
     <h3 style="font-size: 12px; letter-spacing: .14em; color: var(--verde); text-transform: uppercase; margin: 18px 0 8px;">Evolução de peso</h3>
-    <div id="pnPeso" class="muted" style="font-size: 13px;"></div>
+    <div id="pnPesoGraf" class="muted" style="font-size: 13px;"></div>
     <div class="linha-flex" style="gap: 8px; margin-top: 6px; align-items: center;">
       <input id="pnKg" inputmode="decimal" placeholder="Peso hoje (kg)" style="width: 130px;">
       <button class="btn verde mini" id="pnKgAdd">+ Registrar pesagem</button>
@@ -1226,12 +1226,12 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
               "<div style='font-size:8.5px;color:#6b7280;margin-top:2px;'>" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + "</div></div>";
           }).join("") + "</div>"
         : "";
-      $("pnPeso").innerHTML = graf +
+      $("pnPesoGraf").innerHTML = graf +
         "<div style='margin-top:6px;'>Atual: <b>" + String(vals[vals.length - 1]).replace(".", ",") + " kg</b>" +
         (ps.length > 1 ? " · Variação: <b style='color:" + (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" +
           (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> no período (" + ps.length + " pesagens)" : " · registre a próxima na consulta") + "</div>";
     } else {
-      $("pnPeso").textContent = "Sem pesagens ainda — registre a primeira abaixo.";
+      $("pnPesoGraf").textContent = "Sem pesagens ainda — registre a primeira abaixo.";
     }
   }
   $("pnFechar").addEventListener("click", function () { $("dlgPerfilN").close(); });
@@ -2393,7 +2393,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<div id='agForm' style='display:none;margin-top:10px;'>" +
       "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1;background:#0f1a12;border:1px solid #29402f;border-radius:10px;color:#fff;padding:11px;font-family:inherit;font-size:14px;'></select><button class='btnx' id='agPede'>Pedir horário</button></div>" +
       "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'></div>" +
-      "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver consultas ou pedir horário.</div></div>" +
+      "<div class='vz' id='agNotaCal' style='font-size:11.5px;'>Toque num dia pra ver consultas ou pedir horário.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +

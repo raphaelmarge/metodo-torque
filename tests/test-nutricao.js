@@ -402,7 +402,7 @@ async function abaNt(p, a) {
   await p.waitForTimeout(200);
   perfilN = await p.evaluate(() => ({
     fin: document.getElementById("pnFin").textContent,
-    peso: document.getElementById("pnPeso").textContent,
+    peso: document.getElementById("pnPesoGraf").textContent,
     st: window.MTStore.read("ntStudio", {}),
   }));
   ok(/R\$ 150,00/.test(perfilN.fin), "pagamento de consulta registrado (R$ 150)");
@@ -899,6 +899,26 @@ async function abaNt(p, a) {
     // 7) backup na aba Sua ilha
     const bk = await pN.evaluate(() => ({ botao: !!document.getElementById("btnBackupN"), aviso: (document.getElementById("bkAvisoN") || {}).textContent || "" }));
     ok(bk.botao && /backup/i.test(bk.aviso), "a aba Sua ilha ganha o backup .json com aviso de quando foi o último");
+
+    // 8) gráfico de evolução de peso (id próprio, sem brigar com o campo Peso do cadastro)
+    const evo = await pN.evaluate(() => {
+      const S2 = window.MTStore;
+      const st = S2.read("ntStudio", {});
+      st.pesagens = st.pesagens || {};
+      st.pesagens.q0 = [{ d: "2026-06-01", kg: 71 }, { d: "2026-07-01", kg: 69.5 }, { d: "2026-08-01", kg: 68 }];
+      S2.write("ntStudio", st);
+      window.__perfilNT("q0");
+      const graf = document.getElementById("pnPesoGraf");
+      const campo = document.getElementById("pnPeso");
+      return {
+        temGrafico: !!graf && graf.innerHTML.length > 100,
+        texto: graf ? graf.textContent : "",
+        campoEhInput: campo ? campo.tagName : "",
+        campoValor: campo ? campo.value : "",
+      };
+    });
+    ok(evo.temGrafico && /Variação/.test(evo.texto), "a evolução de peso do paciente desenha o gráfico das pesagens");
+    ok(evo.campoEhInput === "INPUT" && evo.campoValor !== "", "o campo Peso do cadastro continua sendo o input (sem id repetido)");
 
     await pN.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
     await pN.close();
