@@ -6629,6 +6629,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<div id='htTitulo' style='font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;'></div>" +
         "<div id='htSub' style='font-size:13px;color:#8a8695;'></div>" +
         "<button id='htVer' style='margin-top:18px;background:" + COR + ";border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div></div>" : "") +
+      // minha semana: vem logo depois do treino do dia — é o "Treinei hoje!" que
+      // o aluno vem buscar quando abre o app
+      "<div class='cardx'><h2>Minha semana</h2>" +
+      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
+      "<div id='metaBox' style='margin-bottom:12px;'></div>" +
+      "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
+      "<div id='rpeBox' style='display:none;margin-top:10px;'></div>" +
+      "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       // progresso rápido (peso + treinos do mês)
       "<div class='cardx'><h2>Progresso</h2><div id='pgTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'></div></div>" +
       // retrospectiva do mês fechado (aparece no comecinho do mês seguinte, some ao fechar)
@@ -6670,12 +6678,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "<div class='kv'><span>Seus treinos no desafio</span><b id='dsMeus' style='color:#a78bfa;'>0</b></div>" +
           "<div id='dsPlacar' class='vz' style='font-size:12.5px;'>Carregando placar…</div></div>"
         : "") +
-      "<div class='cardx'><h2>Minha semana</h2>" +
-      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
-      "<div id='metaBox' style='margin-bottom:12px;'></div>" +
-      "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
-      "<div id='rpeBox' style='display:none;margin-top:10px;'></div>" +
-      "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       (sessApp.length ? "<div class='cardx'><h2>Minhas sessões com " + esc(studio.split(" ")[0]) + "</h2>" +
         sessApp.map(function (x, si) {
           var pd = x.d.split("-");
