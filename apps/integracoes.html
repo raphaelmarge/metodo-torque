@@ -176,12 +176,13 @@
     if (!url) { out.innerHTML = '<span class="tag alerta">Cole a URL da função primeiro.</span>'; return; }
     out.innerHTML = '<span class="muted">testando…</span>';
     var headers = { "Content-Type": "application/json" };
-    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
-      headers.apikey = window.MT_CLOUD.anonKey;
-      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
-    }
-    fetch(url, { method: "POST", headers: headers, body: JSON.stringify({ acao: "ping" }) })
-      .then(function (r) { return r.json().then(function (j) { return { st: r.status, j: j }; }); })
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
+    // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
+    (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+      headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
+      return fetch(url, { method: "POST", headers: headers, body: JSON.stringify({ acao: "ping" }) })
+        .then(function (r) { return r.json().then(function (j) { return { st: r.status, j: j }; }); });
+    })
       .then(function (r) {
         if (r.j && r.j.ok && r.j.chaveConfigurada) out.innerHTML = '<span class="tag ok">Conectado — chave do Pagar.me configurada. Cobrança automática LIGADA.</span>';
         else if (r.j && r.j.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas falta o secret PAGARME_SECRET_KEY (passo 5 do guia).</span>';
@@ -215,12 +216,13 @@
 
   function chamaWa(payload) {
     var headers = { "Content-Type": "application/json" };
-    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
-      headers.apikey = window.MT_CLOUD.anonKey;
-      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
-    }
-    return fetch($("waUrl").value.trim().replace(/\/+$/, ""), { method: "POST", headers: headers, body: JSON.stringify(payload) })
-      .then(function (r) { return r.json(); });
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
+    // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
+    return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+      headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
+      return fetch($("waUrl").value.trim().replace(/\/+$/, ""), { method: "POST", headers: headers, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json(); });
+    });
   }
   $("btnTestarWa").onclick = function () {
     var out = $("resultadoWa");
