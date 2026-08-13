@@ -84,6 +84,27 @@ const CENARIOS = [
   }
 
   {
+    /* O teste do banco tem que mandar apikey E Authorization. Sem o segundo, o
+     * Supabase responde 401 com a chave CERTA — foi assim que este diagnóstico
+     * acusou injustamente a chave do projeto e mandou trocar o que funcionava. */
+    const ctx = await b.newContext();
+    let cabecalhos = null;
+    await ctx.route("**/rest/v1/", (r) => {
+      cabecalhos = r.request().headers();
+      r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+    await ctx.route("**/functions/v1/chat-envia", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true,"ia":true}' }));
+    const p = await ctx.newPage();
+    await p.goto(BASE + "/diagnostico.html");
+    await p.click("#btnRodar");
+    await p.waitForFunction(() => window.__diagPronto, null, { timeout: 15000 });
+    ok(!!cabecalhos && !!cabecalhos.apikey && /^Bearer /.test(cabecalhos.authorization || ""),
+      "o teste do banco manda apikey E Authorization (sem os dois, chave boa vira 401)");
+    await ctx.close();
+  }
+
+  {
     // testador de chave: descobrir qual chave o projeto aceita sem publicar o
     // site a cada palpite. E ele NUNCA pode encorajar o uso de chave secreta.
     const ctx = await b.newContext();
