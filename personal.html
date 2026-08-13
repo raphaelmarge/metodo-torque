@@ -51,6 +51,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .corpo { padding-bottom: 88px; }
   html[data-tema="claro"] #navPt { background: rgba(255,255,255,.96); border-top-color: #e3e0ec; }
   html[data-tema="claro"] #navPt button.ativa { color: var(--roxo); }
+  /* input de arquivo com display:none NÃO abre o seletor no Safari do iPhone
+     quando o toque vem pelo <label>; escondido assim ele continua clicável */
+  .arq-oculto { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0; opacity: 0; }
   .abas-pt {
     position: fixed; top: 0; bottom: 0; left: 0; width: 258px; max-width: 84vw; z-index: 60;
     background: #14121a; border-right: none; display: flex; flex-direction: column;
@@ -798,9 +801,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="linha-flex" style="margin-top: 12px; flex-wrap: wrap;">
           <button class="btn" id="scanAoVivo">🎥 Câmera guiada (tira sozinho)</button>
           <label class="btn sec" style="cursor: pointer;">📷 Foto 1 — de frente
-            <input type="file" id="scanFrente" accept="image/*" hidden></label>
+            <input type="file" id="scanFrente" accept="image/*,.heic,.heif" class="arq-oculto"></label>
           <label class="btn sec" style="cursor: pointer;">📷 Foto 2 — de lado (opcional)
-            <input type="file" id="scanLado" accept="image/*" hidden></label>
+            <input type="file" id="scanLado" accept="image/*,.heic,.heif" class="arq-oculto"></label>
           <button class="btn" id="scanMedir" disabled>Medir</button>
         </div>
         <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Na câmera guiada o celular fica apoiado, mostra onde a pessoa tem que ficar e dispara sozinho quando o enquadramento está certo — dá pra medir sem ninguém segurando o aparelho.</p>
@@ -823,8 +826,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div style="background: #14121a; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));">
         <div id="scanCamPasso" style="font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase;"></div>
         <div id="scanCamFala" style="font-size: 17px; font-weight: 700; margin-top: 4px; min-height: 46px; color: #fff;"></div>
-        <div class="linha-flex" style="margin-top: 8px;">
+        <div class="linha-flex" style="margin-top: 8px; flex-wrap: wrap;">
           <button class="btn sec" id="scanCamFechar">Fechar</button>
+          <button class="btn sec" id="scanCamVirar">🔄 Virar câmera</button>
           <button class="btn sec" id="scanCamAgora">Tirar agora</button>
         </div>
       </div>
@@ -5943,8 +5947,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return new Promise(function (ok, erro) {
       var url = URL.createObjectURL(arquivo);
       var img = new Image();
-      img.onload = function () { URL.revokeObjectURL(url); ok(img); };
-      img.onerror = function () { URL.revokeObjectURL(url); erro(new Error("não consegui abrir a foto")); };
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        if (!img.naturalWidth) { erro(new Error("essa foto veio vazia — escolha outra.")); return; }
+        ok(img);
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        // arquivo do iPhone escolhido por "Arquivos" às vezes vem em HEIC, que
+        // nem todo navegador abre — pela Biblioteca de Fotos ele já converte
+        erro(new Error("não consegui abrir essa imagem (" + (arquivo.name || "sem nome") +
+          "). Escolha pela Biblioteca de Fotos, ou use uma foto em JPG/PNG."));
+      };
       img.src = url;
     });
   }
@@ -5960,8 +5974,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var arq = this.files && this.files[0];
       if (!arq) return;
       scanFotos[id === "scanFrente" ? "frente" : "lado"] = arq;
-      scanDiz("Foto " + (id === "scanFrente" ? "de frente" : "de lado") + " escolhida ✓");
       scanAtualizaBotao();
+      // dizer só "escolhida ✓" deixava todo mundo esperando a medição acontecer
+      // sozinha; agora a tela mostra o que já tem e o que falta fazer
+      scanDiz(scanFotos.frente
+        ? (scanFotos.lado ? "Frente ✓ e lado ✓" : "Frente ✓ (sem a de lado)") + " — agora toque em <b>Medir</b>."
+        : "Falta a foto de frente (a de lado sozinha não mede).");
+      if (scanFotos.frente) {
+        try { $("scanMedir").scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+      }
     });
   });
 
@@ -6073,7 +6094,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * disparo é automático. Faz as duas fotos em sequência: primeiro de frente,
    * depois de lado. Se a pessoa fechar no meio, o que já foi tirado vale.
    */
-  var camAtiva = null, camTimer = null, camQuadros = { frente: null, lado: null };
+  var camAtiva = null, camTimer = null, camFrontal = false, camQuadros = { frente: null, lado: null };
+  var CAM_SEG_VIRAR = 8;   // segundos pra pessoa voltar, virar de lado e se ajeitar
   function camFecha() {
     if (camAtiva) { try { camAtiva.para(); } catch (e) {} camAtiva = null; }
     // sem isso, quem fecha durante o "agora vire de lado" vê a câmera reabrir sozinha
@@ -6086,12 +6108,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("scanCamFala").textContent = texto || "";
     $("scanCamFala").style.color = cor || "#fff";
   }
+  /* Espera com número grande na tela: a pessoa está a 3 passos do celular e
+   * precisa enxergar quanto tempo tem pra virar de lado. */
+  function camEspera(segundos, passo, texto, aoFim) {
+    var c = $("scanContagem");
+    camDiz(passo, texto);
+    (function tick() {
+      if (segundos <= 0) { c.style.display = "none"; aoFim(); return; }
+      c.style.display = "flex";
+      c.textContent = segundos;
+      segundos--;
+      camTimer = setTimeout(tick, 1000);
+    })();
+  }
   function camInicia(modo) {
     var alturaCm = +$("scanAltura").value;
     camDiz(modo === "frente" ? "Foto 1 de 2 — de frente" : "Foto 2 de 2 — de lado", "Ligando a câmera…");
     $("scanCam").hidden = false;
+    // câmera da frente mostra a pessoa espelhada, como num espelho de academia;
+    // o quadro capturado NÃO é espelhado, então a medida não muda
+    $("scanVideo").style.transform = camFrontal ? "scaleX(-1)" : "none";
     return self.MT_CAMERA.abre({
       video: $("scanVideo"), canvas: $("scanGuia"), modo: modo, alturaCm: alturaCm, base: "",
+      frontal: camFrontal,
       aoAviso: function (t) { if (t) camDiz($("scanCamPasso").textContent, t); },
       aoEstado: function (e) {
         var c = $("scanContagem");
@@ -6107,17 +6146,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         camAtiva = null;
         camQuadros[modo] = quadro;
         if (modo === "frente") {
-          camDiz("Foto 1 pronta ✓", "Agora vire de lado — braços esticados pra frente.");
-          setTimeout(function () {
+          camEspera(CAM_SEG_VIRAR, "Foto 1 pronta ✓", "Agora vire de lado — braços esticados pra frente.", function () {
             camInicia("lado").then(function (c) { camAtiva = c; }).catch(function (e) {
               camFecha();
-              scanDiz("A foto de lado não deu certo (" + esc(e.message) + ") — vou medir só com a de frente.");
+              scanDiz("A foto de lado não deu certo (" + esc(self.MT_VISAO.erroAmigavel(e)) + ") — vou medir só com a de frente.");
               camMede();
             });
-          }, 2200);
+          });
         } else {
-          camFecha();
-          camMede();
+          camEspera(2, "Fotos prontas ✓", "Pode relaxar — já estou medindo.", function () {
+            camFecha();
+            camMede();
+          });
         }
       },
     }).then(function (c) { camAtiva = c; return c; });
@@ -6185,15 +6225,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (camAtiva) { try { camAtiva.para(); } catch (e) {} camAtiva = null; }
     camQuadros[modo] = q;
     if (modo === "frente") {
-      camDiz("Foto 1 pronta ✓", "Agora vire de lado — braços esticados pra frente.");
-      setTimeout(function () {
+      camEspera(CAM_SEG_VIRAR, "Foto 1 pronta ✓", "Agora vire de lado — braços esticados pra frente.", function () {
         camInicia("lado").then(function (c) { camAtiva = c; }).catch(function () { camFecha(); camMede(); });
-      }, 1800);
+      });
     } else { camFecha(); camMede(); }
+  });
+  if ($("scanCamVirar")) $("scanCamVirar").addEventListener("click", function () {
+    // câmera da frente: a pessoa se vê na tela e se posiciona sozinha; a de trás
+    // costuma ter mais qualidade. Deixa escolher, sem perder a foto já tirada
+    camFrontal = !camFrontal;
+    var modo = camQuadros.frente ? "lado" : "frente";
+    if (camAtiva) { try { camAtiva.para(); } catch (e) {} camAtiva = null; }
+    if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+    $("scanContagem").style.display = "none";
+    camInicia(modo).then(function (c) { camAtiva = c; }).catch(function (e) {
+      camFecha();
+      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
+    });
   });
 
   window.__scan = { calibracao: scanCalibracao, pinta: pintaScanResultado, pend: function () { return scanPend; },
-    camInicia: camInicia, camFecha: camFecha, camQuadros: function () { return camQuadros; } }; // testes
+    camInicia: camInicia, camFecha: camFecha, camQuadros: function () { return camQuadros; },
+    camFrontal: function () { return camFrontal; } }; // testes
 
   // ---------- laudo de composição corporal ----------
   // Junta o cadastro do aluno (sexo, altura, idade) com a avaliação e devolve
