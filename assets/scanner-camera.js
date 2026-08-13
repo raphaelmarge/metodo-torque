@@ -151,9 +151,9 @@
             var incl = C.inclinacao();
             if (!q.ok) { texto = q.fala; cor = q.cod === "ninguem" ? "#f87171" : "#fbbf24"; }
             else if (incl != null && incl > C.CONFIG.pitchMaximo) {
-              texto = "Endireita o celular: ele está inclinado.";
+              texto = "Endireite o celular: ele está inclinado.";
               cor = "#fbbf24";
-            } else { pronto = true; cor = "#4ade80"; texto = "Perfeito, não se mexe!"; }
+            } else { pronto = true; cor = "#4ade80"; texto = "Perfeito, não se mexa!"; }
           } else { texto = "Ligando a câmera…"; }
         } catch (e) {
           texto = "Não consegui ler a imagem agora.";
