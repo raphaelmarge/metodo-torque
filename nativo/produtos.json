@@ -22,5 +22,13 @@
     "icone": "assets/icons/loja/icone-nutri-1024.png",
     "fundo": "#0e1512",
     "artefato": "torqueon-nutri"
+  },
+  "aluno": {
+    "appId": "com.torqueon.aluno",
+    "appName": "TORQUE ON Aluno",
+    "abre": "aluno-login.html",
+    "icone": "assets/icons/loja/icone-aluno-1024.png",
+    "fundo": "#121016",
+    "artefato": "torqueon-aluno"
   }
 }

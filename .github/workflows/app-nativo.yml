@@ -11,7 +11,7 @@ on:
       produto:
         description: "Qual app compilar"
         type: choice
-        options: [academia, personal, nutri]
+        options: [academia, personal, nutri, aluno]
         default: personal
       pacote:
         description: "apk (testar no celular) ou aab (subir na Play)"

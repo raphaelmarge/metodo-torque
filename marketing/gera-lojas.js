@@ -55,6 +55,20 @@ const APPS = [
     ],
   },
   {
+    /* O app do aluno é o único que NÃO é do profissional: quem instala é o
+     * aluno ou o paciente, entra com o e-mail que recebeu e o app dele vem da
+     * nuvem. Depois da primeira entrada funciona offline. */
+    id: "aluno", nome: "TORQUE ON Aluno", cor: "#7c3aed", corClara: "#a78bfa",
+    icone: "assets/icons/icon-personal.svg", frase: "O seu treino, no seu bolso",
+    demo: null, pagina: "demo-aluno.html",
+    semSeed: true,
+    cenas: [
+      { espera: 2200, legenda: "Seu treino do dia" },
+      { js: "window.__trocaSec && window.__trocaSec('treino')", espera: 1200, legenda: "Ficha com vídeo e cronômetro" },
+      { js: "window.__trocaSec && window.__trocaSec('inicio')", espera: 1000, legenda: "Sua evolução, semana a semana" },
+    ],
+  },
+  {
     id: "nutri", nome: "TORQUE NUTRI", cor: "#16a34a", corClara: "#4ade80",
     icone: "assets/icons/icon-nutri.svg", frase: "Seu consultório inteiro no celular",
     demo: "demo-nutri.html", pagina: "nutricao.html",
@@ -119,6 +133,10 @@ async function prints(b, app, tela, saida) {
     // cada demo tem o botão com o id do seu produto
     await p.locator("#btnDemo, #btnDemoN").first().click();
     await p.waitForTimeout(2500);
+  } else if (app.semSeed) {
+    // o demo do aluno já vem com tudo dentro: nada pra semear
+    await p.goto(BASE + "/" + app.pagina, { waitUntil: "load" });
+    await p.waitForTimeout(1500);
   } else {
     /* A academia não tem página de demo como o Personal e o Nutri, e uma
      * captura com tudo zerado não vende nada. Então semeamos aqui mesmo uma
@@ -193,6 +211,9 @@ async function prints(b, app, tela, saida) {
       await p.goto(BASE + "/" + cena.rota, { waitUntil: "load" });
       await p.addStyleTag({ content: "#faixaTeste, #faixaTesteN, #boasVindas { display: none !important; }" });
     }
+    if (cena.js) {
+      await p.evaluate(cena.js).catch(function () {});
+    }
     if (cena.aba) {
       // no celular as abas vivem na gaveta do ☰
       const hamb = p.locator("#btnMenuPt, #btnMenuNt").first();
@@ -217,7 +238,8 @@ async function prints(b, app, tela, saida) {
   const srv = servidor();
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
 
-  for (const app of APPS) {
+  const filtro = process.argv[3];
+  for (const app of APPS.filter((a) => !filtro || a.id === filtro)) {
     for (const lado of [512, 1024]) {
       const p = await b.newPage({ viewport: { width: lado, height: lado }, deviceScaleFactor: 1 });
       await p.setContent(htmlIcone(app, lado), { waitUntil: "networkidle" });
