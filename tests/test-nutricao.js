@@ -744,6 +744,26 @@ async function abaNt(p, a) {
       "plano entra na dieta ordenado por horário e com a quantidade da IA");
     ok(typeof ia.comNuvem.kcal === "number" && ia.comNuvem.kcal > 0 && /proteína distribuída/.test(ia.comNuvem.resumo),
       "o nutricionista recebe as kcal somadas e o resumo da IA pra revisar");
+
+    // parse robusto + a ordem do catálogo protege o que o nutricionista cadastrou
+    const extras = await p.evaluate(() => {
+      const st = window.MTStore.read("ntStudio", {});
+      const alimentosAntes = st.alimentos || [];
+      st.alimentos = [{ id: "meu1", nome: "Bolo fit da casa", porcao: "1 fatia", kcal: 180 }];
+      window.MTStore.write("ntStudio", st);
+      const dados = window.__iaDietaDados(st.pacientes[0]);
+      st.alimentos = alimentosAntes;               // não vaza pros testes seguintes
+      window.MTStore.write("ntStudio", st);
+      return {
+        prosa: window.__iaParse('Plano: {"refeicoes":[{"titulo":"Almoço"}]}\nDica: ajuste a {porção} se precisar.'),
+        posMeus: dados.indexOf("Meus alimentos"),
+        posCatalogo: dados.indexOf("Frutas"),
+      };
+    });
+    ok(extras.prosa && extras.prosa.refeicoes.length === 1,
+      "a resposta da IA com comentário depois do JSON continua sendo lida");
+    ok(extras.posMeus >= 0 && extras.posCatalogo > extras.posMeus,
+      "os 'Meus alimentos' entram ANTES do catálogo gigante — corte por tamanho nunca come o que é do nutricionista");
   }
 
   {

@@ -26,6 +26,7 @@ var CORE = [
   "assets/access.js",
   "assets/cloud-config.js",
   "assets/vendor/supabase.js",
+  "assets/vendor/qrcode.js",
   "docs/gate.js",
   "docs/preenchivel.js",
   "docs/mobile.css",
@@ -64,6 +65,7 @@ var CORE = [
   "assets/exercicios-db.js",
   "assets/exercicios-anim.js",
   "assets/composicao-corporal.js",
+  "assets/avaliacao-ui.js",
   "assets/scanner-visao.js",
   "assets/scanner-corporal.js",
   "assets/scanner-camera.js",
@@ -123,6 +125,27 @@ self.addEventListener("fetch", function (event) {
         });
       });
     }));
+    return;
+  }
+
+  // código das Edge Functions (o funcoes.html copia dali pro Supabase):
+  // SEMPRE rede primeiro. Servir do cache aqui fazia o professor copiar e
+  // publicar uma função VELHA sem perceber — foi assim que a chat-envia
+  // "republicada" continuou sem a IA de treino.
+  if (url.pathname.indexOf("/supabase/functions/") > -1) {
+    event.respondWith(
+      fetch(req, { cache: "no-cache" }).then(function (res) {
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(RUNTIME).then(function (cache) { cache.put(req, copy); });
+        }
+        return res;
+      }).catch(function () {
+        return caches.match(req, { ignoreSearch: true }).then(function (hit) {
+          return hit || Response.error();
+        });
+      })
+    );
     return;
   }
 

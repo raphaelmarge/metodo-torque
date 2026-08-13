@@ -81,6 +81,31 @@ async function enviaMeta(canal: string, contato: string, texto: string): Promise
   return { ok: false, erro: "A Meta recusou o envio (" + r.status + "). Confira o token e a janela de 24h." };
 }
 
+// Erro da API da Anthropic traduzido pro que fazer — "IA indisponível agora."
+// escondia chave revogada, falta de crédito e limite de uso, e o motivo ficava
+// só no log da função, que ninguém abre.
+function erroAnthropic(status: number): string {
+  if (status === 401 || status === 403) {
+    return "A Anthropic recusou a chave (" + status + ") — confira o secret ANTHROPIC_API_KEY no Supabase e gere uma chave nova em console.anthropic.com se precisar.";
+  }
+  if (status === 429) return "A IA está no limite de uso agora (429) — espere 1 minuto e tente de novo. Se seguir assim, confira o crédito em console.anthropic.com.";
+  if (status === 400) return "A Anthropic recusou a chamada (400) — tente de novo; se seguir assim, republique a chat-envia (funcoes.html).";
+  if (status >= 500) return "A IA está fora do ar neste momento (" + status + ") — tente de novo em alguns minutos.";
+  return "IA indisponível agora (" + status + ").";
+}
+
+// junta os blocos de texto e recusa resposta cortada/vazia com recado honesto
+function textoDaResposta(d: any): { ok: boolean; texto?: string; erro?: string } {
+  let texto = "";
+  for (const b of d.content || []) if (b.type === "text") texto += b.text;
+  texto = texto.trim();
+  if (d.stop_reason === "max_tokens") {
+    return { ok: false, erro: "A resposta da IA veio cortada no meio — tente de novo (costuma resolver)." };
+  }
+  if (!texto) return { ok: false, erro: "A IA não devolveu texto — tente de novo." };
+  return { ok: true, texto };
+}
+
 async function respostaIA(historico: { de: string; texto: string }[], promptExtra: string): Promise<string> {
   const chave = env("ANTHROPIC_API_KEY");
   if (!chave) return "";
@@ -141,6 +166,9 @@ Deno.serve(async (req: Request) => {
       instagram: !!env("INSTAGRAM_TOKEN"),
       ia: !!env("ANTHROPIC_API_KEY"),
       verify: !!env("META_VERIFY_TOKEN"),
+      // o diagnóstico usa esta lista pra saber se a função publicada está
+      // atualizada — uma versão velha responde o ping sem ela
+      acoes: ["ping", "testar", "ajuda", "analisar", "ia_treino", "ia_dieta", "sugerir", "enviar"],
     });
   }
 
@@ -191,11 +219,10 @@ Deno.serve(async (req: Request) => {
         messages: msgs,
       }),
     });
-    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
-    const d2 = await r2.json();
-    let texto = "";
-    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
-    return json({ ok: true, texto: texto.trim() });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: erroAnthropic(r2.status) }, 502); }
+    const t = textoDaResposta(await r2.json());
+    if (!t.ok) return json({ erro: t.erro }, 502);
+    return json({ ok: true, texto: t.texto });
   }
 
   // copiloto do dono: análise de gestão com o Claude (não envia nada a ninguém)
@@ -222,11 +249,10 @@ Deno.serve(async (req: Request) => {
         messages: [{ role: "user", content: dados }],
       }),
     });
-    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
-    const d2 = await r2.json();
-    let texto = "";
-    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
-    return json({ ok: true, texto: texto.trim() });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: erroAnthropic(r2.status) }, 502); }
+    const t = textoDaResposta(await r2.json());
+    if (!t.ok) return json({ erro: t.erro }, 502);
+    return json({ ok: true, texto: t.texto });
   }
 
   // ✨ IA prescritiva de treino: recebe a anamnese + catálogo e devolve as fichas em JSON
@@ -236,14 +262,16 @@ Deno.serve(async (req: Request) => {
     if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
-    const dados = String(corpo.dados || "").slice(0, 30000);
+    // 60000: a anamnese + catálogo passam folgado; 30000 cortava o rabo do catálogo
+    const dados = String(corpo.dados || "").slice(0, 60000);
     if (!dados) return json({ erro: "dados vazios" }, 400);
     const r2 = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         model: "claude-opus-4-8",
-        max_tokens: 6000,
+        // max_tokens cobre o raciocínio E o JSON juntos — 6000 truncava ficha longa
+        max_tokens: 12000,
         thinking: { type: "adaptive" },
         system: "Você é um personal trainer sênior que prescreve treinos de musculação individualizados. " +
           "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
@@ -257,11 +285,10 @@ Deno.serve(async (req: Request) => {
         messages: [{ role: "user", content: dados }],
       }),
     });
-    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
-    const d2 = await r2.json();
-    let texto = "";
-    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
-    return json({ ok: true, texto: texto.trim() });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: erroAnthropic(r2.status) }, 502); }
+    const t = textoDaResposta(await r2.json());
+    if (!t.ok) return json({ erro: t.erro }, 502);
+    return json({ ok: true, texto: t.texto });
   }
 
   // 🥦 IA de dieta: recebe o perfil do paciente + alvos + catálogo de alimentos e devolve o plano em JSON
@@ -271,14 +298,17 @@ Deno.serve(async (req: Request) => {
     if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
     if (!chave) return json({ erro: "Secret ANTHROPIC_API_KEY não configurado." }, 502);
-    const dados = String(corpo.dados || "").slice(0, 30000);
+    // 60000: perfil + catálogo de alimentos passam folgado; 30000 cortava os
+    // "Meus alimentos", que vêm no fim
+    const dados = String(corpo.dados || "").slice(0, 60000);
     if (!dados) return json({ erro: "dados vazios" }, 400);
     const r2 = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": chave, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         model: "claude-opus-4-8",
-        max_tokens: 6000,
+        // max_tokens cobre o raciocínio E o JSON juntos — 6000 truncava plano longo
+        max_tokens: 12000,
         thinking: { type: "adaptive" },
         system: "Você é um nutricionista clínico sênior que monta planos alimentares individualizados no padrão brasileiro. " +
           "Recebe o perfil do paciente (dados, objetivo, alvos calóricos e de macros, restrições) e o catálogo de alimentos " +
@@ -292,11 +322,17 @@ Deno.serve(async (req: Request) => {
         messages: [{ role: "user", content: dados }],
       }),
     });
-    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: "IA indisponível agora." }, 502); }
-    const d2 = await r2.json();
-    let texto = "";
-    for (const b of d2.content || []) if (b.type === "text") texto += b.text;
-    return json({ ok: true, texto: texto.trim() });
+    if (!r2.ok) { console.error("anthropic", r2.status, await r2.text()); return json({ erro: erroAnthropic(r2.status) }, 502); }
+    const t = textoDaResposta(await r2.json());
+    if (!t.ok) return json({ erro: t.erro }, 502);
+    return json({ ok: true, texto: t.texto });
+  }
+
+  // ação que este arquivo não conhece = provavelmente o SITE está mais novo
+  // que a função publicada (ou vice-versa) — melhor do que cair no erro
+  // enigmático de "conversa_id obrigatório"
+  if (corpo.acao !== "enviar" && corpo.acao !== "sugerir") {
+    return json({ erro: "Ação desconhecida (" + String(corpo.acao || "?") + ") — a chat-envia publicada está desatualizada. Copie e publique de novo em www.torqueon.com.br/funcoes.html." }, 400);
   }
 
   if (!corpo.conversa_id) return json({ erro: "conversa_id obrigatório" }, 400);

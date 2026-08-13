@@ -30,15 +30,25 @@ const CENARIOS = [
   },
   {
     nome: "tudo certo",
-    resposta: { status: 200, body: { ok: true, ia: true, whatsapp: false, instagram: false } },
+    resposta: { status: 200, body: { ok: true, ia: true, whatsapp: false, instagram: false,
+      acoes: ["ping", "testar", "ajuda", "analisar", "ia_treino", "ia_dieta", "sugerir", "enviar"] } },
     espera: [/Função chat-envia publicada/, /Chave da IA configurada/],
+    naoEspera: [/não existe neste projeto/, /desatualizada/],
+  },
+  {
+    // aconteceu de verdade: o ping respondia ia:true, mas a função publicada
+    // era ANTERIOR às ações ia_treino/ia_dieta — e a IA "não funcionava"
+    nome: "função no ar, mas de versão antiga (ping sem a lista de ações)",
+    resposta: { status: 200, body: { ok: true, ia: true, whatsapp: false, instagram: false } },
+    espera: [/desatualizada/, /copie a chat-envia e publique de novo/i],
     naoEspera: [/não existe neste projeto/],
   },
   {
     nome: "função no ar, sem a chave da IA",
-    resposta: { status: 200, body: { ok: true, ia: false, whatsapp: false, instagram: false } },
+    resposta: { status: 200, body: { ok: true, ia: false, whatsapp: false, instagram: false,
+      acoes: ["ping", "testar", "ajuda", "analisar", "ia_treino", "ia_dieta", "sugerir", "enviar"] } },
     espera: [/Falta a chave da IA/, /ANTHROPIC_API_KEY/, /publique a chat-envia DE NOVO/i],
-    naoEspera: [/Chave da IA configurada/],
+    naoEspera: [/Chave da IA configurada/, /desatualizada/],
   },
   {
     nome: "função não existe (nome errado ou outro projeto)",

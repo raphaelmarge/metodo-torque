@@ -793,10 +793,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
 
       <div id="scanPreparo" hidden style="margin-top: 12px;">
-        <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; font-size: 12.5px;">
-          <span style="flex: 1; min-width: 190px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;">👕 <b>Roupa colada no corpo</b><br><span class="muted">camiseta larga vira gordura no resultado</span></span>
-          <span style="flex: 1; min-width: 190px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;">🧱 <b>De frente pra parede lisa</b><br><span class="muted">porta e cortina confundem o contorno</span></span>
-          <span style="flex: 1; min-width: 190px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;">📱 <b>Celular na altura do umbigo</b><br><span class="muted">aluno a uns 3 passos largos, descalço</span></span>
+        <!-- tutorial guiado: um passo por vez, com o desenho da pose -->
+        <div id="scanTuto" style="border: 1px solid var(--linha); border-radius: 14px; padding: 14px 14px 16px; background: rgba(124,58,237,.05);">
+          <div id="scanTutoPasso"></div>
+          <div class="linha-flex" style="margin-top: 14px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn sec" id="scanTutoVolta" hidden>Voltar</button>
+            <button class="btn" id="scanTutoAvanca">Avançar</button>
+            <button class="btn sec" id="scanTutoPula">Pular tutorial</button>
+          </div>
         </div>
         <div class="linha-flex" style="margin-top: 12px; flex-wrap: wrap;">
           <button class="btn" id="scanAoVivo">🎥 Câmera guiada (tira sozinho)</button>
@@ -1369,6 +1373,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/exercicios-db.js"></script>
 <script src="assets/exercicios-anim.js"></script>
 <script src="assets/composicao-corporal.js"></script>
+<script src="assets/avaliacao-ui.js"></script>
 <script src="assets/scanner-visao.js"></script>
 <script src="assets/scanner-corporal.js"></script>
 <script src="assets/scanner-camera.js"></script>
@@ -5282,8 +5287,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function parseFichasIA(texto) {
     var s = String(texto || "").replace(/```json|```/g, "").trim();
-    var i = s.indexOf("{"), f = s.lastIndexOf("}");
-    if (i < 0 || f <= i) return null;
+    var i = s.indexOf("{");
+    if (i < 0) return null;
+    // varredura balanceada: acha o "}" que FECHA o primeiro "{", ignorando os
+    // que estiverem dentro de strings — lastIndexOf pegava chave de prosa
+    // escrita depois do JSON e o parse falhava com resposta boa
+    var nivel = 0, emStr = false, f = -1;
+    for (var k = i; k < s.length; k++) {
+      var ch = s[k];
+      if (emStr) {
+        if (ch === "\\") k++;
+        else if (ch === '"') emStr = false;
+      } else if (ch === '"') emStr = true;
+      else if (ch === "{") nivel++;
+      else if (ch === "}") { nivel--; if (!nivel) { f = k; break; } }
+    }
+    if (f < 0) return null;
     try { return JSON.parse(s.slice(i, f + 1)); } catch (e) { return null; }
   }
   function geraTreinoIA(alunoId, objetivo, equip, cb) {
@@ -5303,6 +5322,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         body: JSON.stringify({ acao: "ia_treino", dados: dados }),
       }).then(function (r) { return r.json(); });
     }).then(function (d) {
+      // versão antiga da chat-envia não conhece ia_treino e responde isto:
+      if (d && /conversa_id obrigatório/.test(d.erro || "")) {
+        cb({ erro: "Sua chat-envia publicada é de uma versão antiga, sem a IA de treino — abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase." }); return;
+      }
       if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "IA indisponível agora — publique a chat-envia (torqueon.com.br/funcoes.html) com a ANTHROPIC_API_KEY." }); return; }
       var plano = parseFichasIA(d.texto);
       if (!plano || !(plano.fichas || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
@@ -5342,6 +5365,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }, function () { cb({ erro: "Sem conexão com a nuvem agora — tente de novo." }); });
   }
   window.__iaTreino = geraTreinoIA; // testes
+  window.__iaParse = parseFichasIA; // testes
   $("taIA").addEventListener("click", function () {
     var id = $("taAluno").value;
     if (!id) { alert("Escolha o aluno."); return; }
@@ -5998,6 +6022,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("scanMedir").disabled = !scanFotos.frente;
   }
 
+  /* tutorial guiado das poses: um passo por vez, com desenho (MT_AVAL_UI).
+   * Sempre recomeça do primeiro passo quando a captura abre — quem já sabe
+   * toca em "Pular tutorial" e vai direto pros botões. */
+  var tutoI = 0;
+  function pintaTuto(reinicia) {
+    var caixa = $("scanTuto"), el = $("scanTutoPasso");
+    if (!caixa || !el || !self.MT_AVAL_UI) return;
+    if (reinicia) { tutoI = 0; caixa.hidden = false; }
+    el.innerHTML = self.MT_AVAL_UI.tutorialPasso(tutoI);
+    $("scanTutoVolta").hidden = tutoI === 0;
+    $("scanTutoAvanca").textContent = tutoI >= self.MT_AVAL_UI.TUTORIAL.length - 1 ? "Entendi — bora medir" : "Avançar";
+  }
+  if ($("scanTutoAvanca")) $("scanTutoAvanca").addEventListener("click", function () {
+    if (!self.MT_AVAL_UI || tutoI >= self.MT_AVAL_UI.TUTORIAL.length - 1) { $("scanTuto").hidden = true; return; }
+    tutoI++; pintaTuto();
+  });
+  if ($("scanTutoVolta")) $("scanTutoVolta").addEventListener("click", function () {
+    if (tutoI > 0) { tutoI--; pintaTuto(); }
+  });
+  if ($("scanTutoPula")) $("scanTutoPula").addEventListener("click", function () { $("scanTuto").hidden = true; });
+
   /* Botão que abre o seletor por código. O <label> em volta de um input de
    * arquivo escondido é o jeito clássico, mas no Safari do iPhone ele
    * simplesmente não abre a fototeca — o .click() a partir do toque abre. */
@@ -6035,6 +6080,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("scanTermo").hidden = jaAceitou;
     $("scanPreparo").hidden = !jaAceitou;
     $("scanResultado").hidden = true;
+    if (jaAceitou) pintaTuto(true);
   });
   if ($("scanTermoNao")) $("scanTermoNao").addEventListener("click", function () { $("scanTermo").hidden = true; });
   if ($("scanTermoOk")) $("scanTermoOk").addEventListener("click", function () {
@@ -6047,6 +6093,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     $("scanTermo").hidden = true;
     $("scanPreparo").hidden = false;
+    pintaTuto(true);
   });
 
   if ($("scanMedir")) $("scanMedir").addEventListener("click", function () {
@@ -6095,22 +6142,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     scanPend = r;
     var box = $("scanResultado");
     box.hidden = false;
+    var U = self.MT_AVAL_UI;
     var nm = function (v, c) { return v == null ? "—" : Number(v).toFixed(c == null ? 1 : c).replace(".", ","); };
     var rot = { cintura: "Cintura", quadril: "Quadril", torax: "Tórax", coxa: "Coxa", panturrilha: "Panturrilha", braco: "Braço" };
-    var linhas = Object.keys(rot).filter(function (k) { return r.circ[k]; }).map(function (k) {
+    // a palavra "confiança baixa/média" precisa aparecer escrita — é o selo de
+    // honestidade da medição (e o teste cobra)
+    var porNivel = { "média": [], baixa: [] };
+    Object.keys(rot).forEach(function (k) {
+      if (r.circ[k] == null) return;
       var c = r.confianca[k] || "média";
-      return "<div style='display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--linha);'>" +
-        "<span>" + rot[k] + (c !== "alta" ? " <span class='muted' style='font-size:11px;'>(confiança " + c + ")</span>" : "") + "</span>" +
-        "<b>" + nm(r.circ[k]) + " cm <span class='muted' style='font-weight:600;font-size:11px;'>± " + nm(r.margemCm, 1) + "</span></b></div>";
-    }).join("");
+      if (porNivel[c]) porNivel[c].push(rot[k]);
+    });
+    var confPartes = [];
+    if (porNivel["média"].length) confPartes.push("<b>confiança média</b>: " + porNivel["média"].join(", "));
+    if (porNivel.baixa.length) confPartes.push("<b>confiança baixa</b>: " + porNivel.baixa.join(", "));
+    var gordCard = r.gordura
+      ? "<div style='flex:1;min-width:210px;background:rgba(124,58,237,.10);border:1px solid var(--linha);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;'>" +
+        (U ? U.donut(r.gordura.valor, { rotulo: "gordura (RFM)", px: 104 }) : "") +
+        "<div style='font-size:13px;line-height:1.5;'>Gordura estimada: <b>entre " + nm(r.gordura.faixa[0], 0) + "% e " + nm(r.gordura.faixa[1], 0) + "%</b> " +
+        "<span class='muted' style='font-size:11.5px;'>(" + r.gordura.metodo + ", sempre em faixa)</span></div></div>"
+      : "";
     box.innerHTML =
-      (r.rcest ? "<div style='background:rgba(124,58,237,.10);border:1px solid var(--linha);border-radius:12px;padding:12px 14px;margin-bottom:10px;'>" +
+      "<div class='linha-flex' style='gap:10px;flex-wrap:wrap;align-items:stretch;'>" +
+      (r.rcest ? "<div style='flex:1;min-width:210px;background:rgba(124,58,237,.10);border:1px solid var(--linha);border-radius:12px;padding:12px 14px;'>" +
         "<div style='font-size:10px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;'>Razão cintura / altura</div>" +
         "<div style='font-size:30px;font-weight:900;'>" + nm(r.rcest, 2) + "</div>" +
         "<div class='muted' style='font-size:12px;'>abaixo de 0,50 é a faixa de menor risco — é a medida mais confiável daqui, porque não depende da altura estar certinha</div></div>" : "") +
-      linhas +
-      (r.gordura ? "<div style='margin-top:8px;font-size:13px;'>Gordura estimada: <b>entre " + nm(r.gordura.faixa[0], 0) + "% e " + nm(r.gordura.faixa[1], 0) + "%</b> " +
-        "<span class='muted' style='font-size:11.5px;'>(" + r.gordura.metodo + ", sempre em faixa)</span></div>" : "") +
+      gordCard +
+      "</div>" +
+      (U ? "<div style='margin-top:12px;'>" + U.corpo(r.circ, r.confianca) + "</div>" : "") +
+      "<div class='muted' style='margin-top:8px;font-size:12px;line-height:1.6;text-align:center;'>margem de ± " + nm(r.margemCm, 1) + " cm por medida" +
+      (r.calibrado ? " · régua calibrada pela fita ✓" : "") +
+      (confPartes.length ? " · " + confPartes.join(" · ") : "") + "</div>" +
       (r.avisos.length ? "<div class='muted' style='margin-top:8px;font-size:12px;line-height:1.6;'>• " + r.avisos.map(esc).join("<br>• ") + "</div>" : "") +
       "<div class='muted' style='margin-top:10px;font-size:11.5px;border-left:3px solid var(--roxo);padding-left:9px;line-height:1.6;'>" + esc(self.MT_SCANNER.TEXTO_LIMITE) + "</div>" +
       "<div class='linha-flex' style='margin-top:10px;'><button class='btn' id='scanUsar'>Usar estes números na avaliação</button>" +
@@ -6300,7 +6363,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   window.__scan = { calibracao: scanCalibracao, pinta: pintaScanResultado, pend: function () { return scanPend; },
     camInicia: camInicia, camFecha: camFecha, camQuadros: function () { return camQuadros; },
-    camFrontal: function () { return camFrontal; }, camErro: camErro }; // testes
+    camFrontal: function () { return camFrontal; }, camErro: camErro,
+    tuto: function () { return { passo: tutoI, aberto: !($("scanTuto") || {}).hidden }; }, tutoPinta: pintaTuto }; // testes
 
   // ---------- laudo de composição corporal ----------
   // Junta o cadastro do aluno (sexo, altura, idade) com a avaliação e devolve
@@ -6356,26 +6420,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!l) { box.hidden = true; return; }
     box.hidden = false;
     var a = (st.alunos || []).find(function (x) { return x.id === ult.alunoId; }) || {};
-    var kpi = function (rot, val, sub, cor) {
-      return "<div style='flex:1;min-width:118px;background:rgba(124,58,237,.08);border:1px solid var(--linha);border-radius:10px;padding:10px 12px;'>" +
-        "<div style='font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a8695;text-transform:uppercase;'>" + rot + "</div>" +
-        "<div style='font-size:20px;font-weight:900;" + (cor ? "color:" + cor + ";" : "") + "'>" + val + "</div>" +
-        (sub ? "<div style='font-size:10.5px;color:#a9a4b5;'>" + sub + "</div>" : "") + "</div>";
-    };
-    var nm = function (v, c) { return v == null ? "—" : Number(v).toFixed(c == null ? 1 : c).replace(".", ","); };
-    var corDe = function (cl) { return cl === "normal" ? "#4ade80" : cl === "acima" ? "#f87171" : "#60a5fa"; };
+    var U = self.MT_AVAL_UI;
     el.innerHTML =
       "<div class='muted' style='margin:0 0 10px;font-size:12.5px;'><b>" + esc(a.nome || "") + "</b> · " +
       S.fmtData(ult.data) + (l.estimado ? " · valores estimados a partir do % de gordura" : " · valores medidos na bioimpedância") + "</div>" +
-      "<div class='linha-flex' style='gap:8px;flex-wrap:wrap;'>" +
-      (l.pontuacao ? kpi("Pontuação", l.pontuacao + "/100") : "") +
-      kpi("Gordura", nm(l.gordura) + "%", "faixa " + l.faixaGordura[0] + "–" + l.faixaGordura[1] + "%", corDe(l.classeGordura)) +
-      kpi("Músculo", nm(l.mme) + " kg", "índice " + nm(l.smi), l.smiBaixo ? "#f87171" : "#4ade80") +
-      kpi("Massa magra", nm(l.massaMagra) + " kg") +
-      kpi("Água", nm(l.agua) + " L") +
-      kpi("IMC", nm(l.imc), l.classeImc, corDe(l.classePeso)) +
-      kpi("Basal", l.tmb + " kcal", "gasto/dia " + l.ingestao) +
-      "</div>" +
+      (U ? U.cardsLaudo(l) : "") +
+      (U && l.gordura != null && l.massaGordura != null
+        ? "<div style='margin-top:12px;background:rgba(124,58,237,.05);border:1px solid var(--linha);border-radius:14px;padding:12px 14px;'>" + U.blocoGordura(l) + "</div>"
+        : "") +
       "<div class='linha-flex' style='margin-top:12px;'>" +
       "<button class='btn' id='avLaudoAbrir'>📄 Laudo completo</button>" +
       "<span class='muted' style='font-size:12px;'>abre pronto pra imprimir ou salvar em PDF e mandar pro aluno</span></div>";

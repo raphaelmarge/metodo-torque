@@ -3969,6 +3969,24 @@ async function abaPt(p, a) {
     ok(consent.versao === "2026-08-scan-1" && consent.preparo,
       "a autorização fica gravada com a versão do texto, e a captura libera");
 
+    // tutorial guiado: abre no 1º passo, o passo da pose tem desenho, e dá pra pular
+    const tuto0 = await pS.evaluate(() => window.__scan.tuto());
+    ok(tuto0.aberto && tuto0.passo === 0, "junto com a captura abre o tutorial guiado, no primeiro passo");
+    await pS.click("#scanTutoAvanca");
+    await pS.click("#scanTutoAvanca");
+    await pS.click("#scanTutoAvanca");
+    const tutoPose = await pS.evaluate(() => ({
+      t: window.__scan.tuto(),
+      svg: !!document.querySelector("#scanTutoPasso svg"),
+      texto: document.getElementById("scanTutoPasso").textContent,
+      voltar: !document.getElementById("scanTutoVolta").hidden,
+    }));
+    ok(tutoPose.t.passo === 3 && tutoPose.svg && /de frente/.test(tutoPose.texto),
+      "o passo da 1ª foto mostra o DESENHO da pose (braços em V), não só texto");
+    ok(tutoPose.voltar, "dá pra voltar um passo pra rever");
+    await pS.click("#scanTutoPula");
+    ok(await pS.evaluate(() => !window.__scan.tuto().aberto), "quem já sabe pula o tutorial e vai direto pros botões");
+
     // resultado na tela -> campos da avaliação -> registro -> laudo
     const tela = await pS.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
@@ -3987,6 +4005,16 @@ async function abaPt(p, a) {
     ok(/entre 21% e 31%/.test(tela.texto), "o percentual de gordura sai em faixa, nunca cravado");
     ok(/não substitui fita métrica/.test(tela.texto), "o aviso de que é estimativa aparece junto do resultado");
     ok(/confiança baixa/.test(tela.texto), "cada medida mostra o quanto dá pra confiar nela");
+
+    // o resultado agora é visual: boneco com as medidas apontadas no corpo
+    const boneco = await pS.evaluate(() => {
+      const svg = document.querySelector("#scanResultado svg.av-corpo");
+      return { tem: !!svg, texto: svg ? svg.textContent : "" };
+    });
+    ok(boneco.tem && /Cintura/.test(boneco.texto) && /78,4 cm/.test(boneco.texto) && /Quadril/.test(boneco.texto),
+      "o boneco aparece com as medidas apontadas nas regiões do corpo");
+    ok(!/Panturrilha/.test(boneco.texto),
+      "medida que a foto não deu (panturrilha) fica fora do boneco — nada inventado");
 
     await pS.click("#scanUsar");
     await pS.waitForTimeout(200);
@@ -4246,6 +4274,24 @@ async function abaPt(p, a) {
       "índice muscular, grau de obesidade, cintura-quadril e ajuste de peso conferem");
     ok(L.pontuacao > 0 && /Pontuação/.test(L.resumo) && L.temBotao && L.temLaudoNoHistorico,
       "o resumo aparece na aba Avaliações com o botão do laudo (e um 📄 por avaliação)");
+    // o painel novo: cards com selo de classificação + gordura aberta em massas
+    ok(/IMC/.test(L.resumo) && /sobrepeso/.test(L.resumo),
+      "o card do IMC traz o selo com a classificação por extenso");
+    ok(/Hidratação/.test(L.resumo) && /Cintura-quadril/.test(L.resumo),
+      "hidratação e cintura-quadril viram cards com selo, como nos apps de bioimpedância");
+    ok(/Massa gorda/.test(L.resumo) && /Massa magra/.test(L.resumo),
+      "o donut abre o peso em massa gorda × massa magra");
+
+    // parse da resposta da IA: prosa com chaves depois do JSON não pode quebrar
+    const parse = await pL.evaluate(() => ({
+      prosa: window.__iaParse('Segue o plano: {"fichas":[{"titulo":"A"}],"resumo":"ok"}\nObs: ajuste a {carga} na hora.'),
+      cerca: window.__iaParse('```json\n{"fichas":[{"titulo":"B"}]}\n```'),
+      lixo: window.__iaParse("não consegui montar"),
+    }));
+    ok(parse.prosa && parse.prosa.fichas.length === 1 && parse.prosa.resumo === "ok",
+      "a resposta da IA com comentário depois do JSON continua sendo lida (era o bug do 'formato inesperado')");
+    ok(parse.cerca && parse.cerca.fichas[0].titulo === "B" && parse.lixo === null,
+      "cerca de código passa, e texto sem JSON devolve null sem quebrar");
 
     const htmlL = await pL.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
