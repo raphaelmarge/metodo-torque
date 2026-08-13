@@ -1396,5 +1396,79 @@ self.MT_RECEITAS = [
    "Finalize com canela e adoçante a gosto."
   ],
   "dica": "Café da manhã quentinho com 24 g de proteína pra quem não gosta de ovo de manhã. O whey entra sempre fora do fogo, senão vira grumo."
- }
+ },
+{
+ "id": "rc64",
+ "n": "Baião de dois fit com frango e feijão-fradinho",
+ "cat": "Almoço e jantar",
+ "tempo": 35,
+ "rende": 4,
+ "k": 382,
+ "pt": 31,
+ "ing": [
+  "2 xíc. de arroz integral cozido",
+  "1 xíc. de feijão-fradinho cozido e escorrido",
+  "400 g de filé de frango em cubos",
+  "1/2 cebola e 2 dentes de alho picados",
+  "60 g de queijo coalho light em cubos",
+  "1 col. sopa de azeite",
+  "Coentro, cheiro-verde e pimenta-do-reino a gosto"
+ ],
+ "modo": [
+  "Tempere o frango com alho, pimenta e sal e grelhe no azeite até dourar por fora e soltar do fundo da panela.",
+  "Junte a cebola e refogue até ficar transparente, raspando o fundo da panela com um pouco de água.",
+  "Misture o feijão-fradinho e o arroz integral já cozidos e mexa em fogo baixo por 3 minutos, só pra pegar gosto.",
+  "Desligue, acrescente o queijo coalho e o coentro e sirva na hora, enquanto o queijo está macio."
+ ],
+ "dica": "A versão tradicional leva bacon, nata e queijo gordo e passa fácil de 600 kcal por prato. Trocando por frango e queijo coalho light, sobra o mesmo sabor nordestino com 31 g de proteína e menos da metade da gordura."
+},
+{
+ "id": "rc65",
+ "n": "Bowl de tempeh grelhado com purê de abóbora",
+ "cat": "Almoço e jantar",
+ "tempo": 30,
+ "rende": 2,
+ "k": 428,
+ "pt": 26,
+ "ing": [
+  "200 g de tempeh em fatias",
+  "300 g de abóbora cabotiá em cubos",
+  "1 xíc. de quinoa cozida",
+  "1 col. sopa de shoyu com baixo teor de sódio",
+  "1 col. chá de gengibre ralado",
+  "1 col. sopa de azeite",
+  "Folhas verdes e gergelim pra finalizar"
+ ],
+ "modo": [
+  "Marine o tempeh no shoyu com gengibre por 10 minutos, virando as fatias na metade do tempo.",
+  "Cozinhe a abóbora no vapor até ficar bem macia e amasse com um garfo, sem adicionar leite nem manteiga.",
+  "Grelhe o tempeh no azeite em fogo médio, 3 minutos de cada lado, até formar crosta dourada.",
+  "Monte o bowl com a quinoa, o purê, o tempeh e as folhas, e finalize com gergelim."
+ ],
+ "dica": "Prato 100% vegetal com 26 g de proteína por porção. O tempeh é soja fermentada: rende mais proteína que o tofu e cai melhor no estômago de quem sente inchaço com leguminosa."
+},
+{
+ "id": "rc66",
+ "n": "Panqueca proteica de farinha de banana verde",
+ "cat": "Café da manhã",
+ "tempo": 12,
+ "rende": 1,
+ "k": 315,
+ "pt": 27,
+ "ing": [
+  "2 col. sopa de farinha de banana verde (20 g)",
+  "1 ovo inteiro e 2 claras",
+  "1 dose de whey protein sabor baunilha (30 g)",
+  "2 col. sopa de água",
+  "Canela em pó a gosto",
+  "1 col. chá de óleo de coco pra untar"
+ ],
+ "modo": [
+  "Bata todos os ingredientes no liquidificador ou misture bem com um fouet até a massa ficar lisa.",
+  "Aqueça a frigideira antiaderente em fogo BAIXO e unte com o óleo de coco — fogo alto queima o whey e amarga.",
+  "Despeje a massa, tampe e deixe por 3 minutos, até a borda soltar sozinha.",
+  "Vire com cuidado, doure mais 2 minutos e sirva com canela por cima."
+ ],
+ "dica": "A farinha de banana verde é amido resistente: alimenta a bactéria boa do intestino e segura a fome por mais tempo que a aveia. Ótima pra quem reclama de fome 2 horas depois do café."
+}
 ];
