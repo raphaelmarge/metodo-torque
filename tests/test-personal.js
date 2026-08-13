@@ -4106,13 +4106,49 @@ async function abaPt(p, a) {
     ok(amig.nosso === "A cabeça ficou cortada. Afaste mais o celular.",
       "e o recado que já estava em português passa inteiro");
 
-    const galeria = await pS.evaluate(() => ({
-      frente: document.getElementById("scanFrente").hasAttribute("capture"),
-      lado: document.getElementById("scanLado").hasAttribute("capture"),
-      aviso: /foto já salva/.test(document.getElementById("scanPreparo").textContent),
-    }));
+    const galeria = await pS.evaluate(() => {
+      const f = document.getElementById("scanFrente");
+      const e = getComputedStyle(f);
+      return {
+        frente: f.hasAttribute("capture"),
+        lado: document.getElementById("scanLado").hasAttribute("capture"),
+        aviso: /foto já salva/.test(document.getElementById("scanPreparo").textContent),
+        // display:none impede o Safari do iPhone de abrir o seletor pelo <label>
+        visivel: e.display !== "none" && e.visibility !== "hidden" && !f.hidden,
+        heic: /heic/i.test(f.getAttribute("accept") || ""),
+      };
+    });
     ok(!galeria.frente && !galeria.lado && galeria.aviso,
       "os botões de foto deixam usar imagem já salva no aparelho, não só tirar na hora");
+    ok(galeria.visivel && galeria.heic,
+      "o campo de arquivo continua clicável no iPhone (nada de display:none) e aceita HEIC");
+
+    // escolher a foto tem que dizer o que já tem e o que falta fazer
+    const escolha = await pS.evaluate(async () => {
+      const cv = document.createElement("canvas");
+      cv.width = 40; cv.height = 60;
+      const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
+      const dt = new DataTransfer();
+      dt.items.add(new File([blob], "frente.png", { type: "image/png" }));
+      const inp = document.getElementById("scanFrente");
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event("change"));
+      return {
+        recado: document.getElementById("scanEstado").textContent,
+        medir: !document.getElementById("scanMedir").disabled,
+      };
+    });
+    ok(/Frente ✓/.test(escolha.recado) && /Medir/.test(escolha.recado) && escolha.medir,
+      "ao escolher a foto a tela diz o que já tem e manda tocar em Medir: " + JSON.stringify(escolha.recado));
+
+    const tempos = await pS.evaluate(() => ({
+      pausa: window.MT_CAMERA.CONFIG.msDepoisDaFoto,
+      virar: !!document.getElementById("scanCamVirar"),
+      frontal: window.__scan.camFrontal(),
+    }));
+    ok(tempos.pausa >= 1200, "a tela segura o 'Foto tirada ✓' antes de fechar (não some na cara da pessoa)");
+    ok(tempos.virar && tempos.frontal === false,
+      "dá pra virar pra câmera da frente, e a de trás continua sendo a padrão");
     await ctxS.close();
   }
   {

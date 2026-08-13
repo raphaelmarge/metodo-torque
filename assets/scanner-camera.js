@@ -20,6 +20,10 @@
     segundosContagem: 3,
     pitchMaximo: 4,         // graus de inclinação do celular tolerados
     intervaloMinimo: 60,    // ms entre análises (dá respiro pro aparelho)
+    // quem está a 3 passos do celular não enxerga texto pequeno: a tela segura
+    // o "Foto tirada ✓" tempo suficiente pra pessoa saber que deu certo antes
+    // de qualquer coisa mudar
+    msDepoisDaFoto: 1600,
   };
 
   C.suportado = function () {
@@ -199,14 +203,20 @@
           return;
         }
         vibra([80, 60, 120]);
-        estado("#4ade80", "Prontinho!", 0);
         // o quadro que vale é lido na resolução de medir, não na do guia
         var quadro = document.createElement("canvas");
         quadro.width = video.videoWidth;
         quadro.height = video.videoHeight;
         quadro.getContext("2d").drawImage(video, 0, 0);
-        encerra();
-        if (op.aoFoto) op.aoFoto(quadro);
+        estado("#4ade80", "Foto tirada ✓", 0);
+        fala("Foto tirada");
+        C.desenhaGuia(ctx, canvas.width, canvas.height, modo, "#4ade80");
+        // a câmera só desliga depois que a pessoa teve tempo de ver o aviso
+        setTimeout(function () {
+          if (!vivo) return;
+          encerra();
+          if (op.aoFoto) op.aoFoto(quadro);
+        }, C.CONFIG.msDepoisDaFoto);
       }
 
       analisa();
