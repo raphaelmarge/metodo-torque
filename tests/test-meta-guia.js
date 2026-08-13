@@ -58,6 +58,9 @@ function ok(cond, msg) {
     "avisa que o token temporário morre em 24h e ensina o permanente");
   ok(/não esteja em nenhum WhatsApp|não serve/.test(texto),
     "avisa que o número não pode estar em uso no WhatsApp comum");
+  // a tela onde ele travou de verdade: app criado antes do portfólio existir
+  ok(/portfólio empresarial/i.test(texto) && /Nenhuma empresa disponível/.test(texto),
+    "usa o nome atual (portfólio empresarial) e explica a tela de 'Nenhuma empresa disponível'");
 
   // os dois caminhos por onde ele chega aqui
   const fun = fs.readFileSync(path.join(RAIZ, "funcoes.html"), "utf8");
