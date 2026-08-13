@@ -17,7 +17,9 @@
 
   C.CONFIG = {
     verdesPraDisparar: 4,   // quadros bons seguidos antes de começar a contagem
-    segundosContagem: 3,
+    // 3 segundos era pouco: a pessoa entra no quadro, o semáforo abre e ela
+    // ainda está se ajeitando quando dispara
+    segundosContagem: 5,
     pitchMaximo: 4,         // graus de inclinação do celular tolerados
     intervaloMinimo: 60,    // ms entre análises (dá respiro pro aparelho)
     // quem está a 3 passos do celular não enxerga texto pequeno: a tela segura

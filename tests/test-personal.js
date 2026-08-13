@@ -4123,6 +4123,13 @@ async function abaPt(p, a) {
     ok(galeria.visivel && galeria.heic,
       "o campo de arquivo continua clicável no iPhone (nada de display:none) e aceita HEIC");
 
+    // o teste que importa: tocar no botão TEM que abrir o seletor de arquivo
+    const abriu = await Promise.all([
+      pS.waitForEvent("filechooser", { timeout: 5000 }).then((fc) => !!fc).catch(() => false),
+      pS.click("#scanBtFrente"),
+    ]);
+    ok(abriu[0], "tocar em 🖼️ Foto 1 abre o seletor (fototeca/arquivos) de verdade");
+
     // escolher a foto tem que dizer o que já tem e o que falta fazer
     const escolha = await pS.evaluate(async () => {
       const cv = document.createElement("canvas");
@@ -4143,12 +4150,31 @@ async function abaPt(p, a) {
 
     const tempos = await pS.evaluate(() => ({
       pausa: window.MT_CAMERA.CONFIG.msDepoisDaFoto,
+      contagem: window.MT_CAMERA.CONFIG.segundosContagem,
       virar: !!document.getElementById("scanCamVirar"),
       frontal: window.__scan.camFrontal(),
     }));
     ok(tempos.pausa >= 1200, "a tela segura o 'Foto tirada ✓' antes de fechar (não some na cara da pessoa)");
     ok(tempos.virar && tempos.frontal === false,
       "dá pra virar pra câmera da frente, e a de trás continua sendo a padrão");
+    ok(tempos.contagem >= 5, "a contagem antes do disparo dá tempo da pessoa se ajeitar");
+
+    // deu erro: a tela NÃO pode sumir — some era o que deixava o Raphael sem
+    // saber o que tinha acontecido
+    const falhou = await pS.evaluate(() => {
+      window.__scan.camErro(new Error("INVALID_ARGUMENT: CalculatorGraph::Run() failed: teste"));
+      return {
+        aberta: !document.getElementById("scanCam").hidden,
+        fala: document.getElementById("scanCamFala").textContent,
+        tecnico: document.getElementById("scanCamTec").textContent,
+        deNovo: !document.getElementById("scanCamDeNovo").hidden,
+      };
+    });
+    ok(falhou.aberta && falhou.deNovo && /travou/.test(falhou.fala),
+      "quando dá erro a tela da câmera fica aberta explicando, com o botão de tentar de novo");
+    ok(/CalculatorGraph/.test(falhou.tecnico),
+      "e guarda o detalhe técnico em letra pequena, pro print do Raphael valer de diagnóstico");
+    await pS.evaluate(() => window.__scan.camFecha());
     await ctxS.close();
   }
   {
