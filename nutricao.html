@@ -1826,12 +1826,15 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var alvo = kcalAlvo(p), mA = macrosAlvo(p);
     // catálogo agrupado por categoria (com porção e kcal) — a IA só pode usar estes nomes
     var porCat = {};
-    // só o que está ATIVO na curadoria — o que o nutricionista desmarcou não pode voltar pela IA
-    CATALOGO.filter(function (a) { return !(st.catalogoOff || {})[a.n]; })
-      .forEach(function (a) { (porCat[a.c] = porCat[a.c] || []).push(a.n + " (" + a.p + ", " + a.k + " kcal)"); });
+    // os alimentos do PRÓPRIO nutricionista entram primeiro: se o texto for
+    // cortado por tamanho, o corte come o fim do catálogo geral, nunca o que
+    // ele cadastrou à mão
     (st.alimentos || []).forEach(function (a) {
       (porCat["Meus alimentos"] = porCat["Meus alimentos"] || []).push(a.nome + " (" + a.porcao + ", " + a.kcal + " kcal)");
     });
+    // só o que está ATIVO na curadoria — o que o nutricionista desmarcou não pode voltar pela IA
+    CATALOGO.filter(function (a) { return !(st.catalogoOff || {})[a.n]; })
+      .forEach(function (a) { (porCat[a.c] = porCat[a.c] || []).push(a.n + " (" + a.p + ", " + a.k + " kcal)"); });
     var catalogo = Object.keys(porCat).map(function (c) { return c + ": " + porCat[c].slice(0, 40).join(" | "); }).join("\n");
     var OBJ = { emagrecer: "emagrecimento", ganhar: "ganho de massa", manter: "manutenção" };
     var ATIV = { sed: "sedentário", leve: "leve", mod: "moderado", alto: "alto" };
@@ -1864,8 +1867,22 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   }
   function parsePlanoIA(texto) {
     var s = String(texto || "").replace(/```json|```/g, "").trim();
-    var i = s.indexOf("{"), f = s.lastIndexOf("}");
-    if (i < 0 || f <= i) return null;
+    var i = s.indexOf("{");
+    if (i < 0) return null;
+    // varredura balanceada: acha o "}" que FECHA o primeiro "{", ignorando os
+    // que estiverem dentro de strings — lastIndexOf pegava chave de prosa
+    // escrita depois do JSON e o parse falhava com resposta boa
+    var nivel = 0, emStr = false, f = -1;
+    for (var k = i; k < s.length; k++) {
+      var ch = s[k];
+      if (emStr) {
+        if (ch === "\\") k++;
+        else if (ch === '"') emStr = false;
+      } else if (ch === '"') emStr = true;
+      else if (ch === "{") nivel++;
+      else if (ch === "}") { nivel--; if (!nivel) { f = k; break; } }
+    }
+    if (f < 0) return null;
     try { return JSON.parse(s.slice(i, f + 1)); } catch (e) { return null; }
   }
   function geraDietaIA(pacId, cb) {
@@ -1885,6 +1902,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         body: JSON.stringify({ acao: "ia_dieta", dados: dados }),
       }).then(function (r) { return r.json(); });
     }).then(function (d) {
+      // versão antiga da chat-envia não conhece ia_dieta e responde isto:
+      if (d && /conversa_id obrigatório/.test(d.erro || "")) {
+        cb({ erro: "Sua chat-envia publicada é de uma versão antiga, sem a IA de dieta — abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase." }); return;
+      }
       if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "IA indisponível agora — publique a chat-envia (torqueon.com.br/funcoes.html) com a ANTHROPIC_API_KEY." }); return; }
       var plano = parsePlanoIA(d.texto);
       if (!plano || !(plano.refeicoes || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
@@ -1920,6 +1941,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     }, function () { cb({ erro: "Sem conexão com a nuvem agora — tente de novo." }); });
   }
   window.__iaDieta = geraDietaIA; // testes
+  window.__iaParse = parsePlanoIA; // testes
   $("dIA").addEventListener("click", function () {
     var p = pacienteSel();
     if (!p) { alert("Escolha o paciente primeiro."); return; }

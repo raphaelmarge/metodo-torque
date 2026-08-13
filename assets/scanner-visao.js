@@ -160,7 +160,12 @@
    * failed…"), que não ajuda ninguém e ainda assusta. Guarda o detalhe no
    * console e devolve o que o professor pode fazer agora. */
   V.erroAmigavel = function (e) {
-    var m = (e && e.message) || String(e || "");
+    var m = (e && e.message) || (typeof e === "string" ? e : "");
+    // rejeição sem mensagem de verdade (ErrorEvent de script que não baixou)
+    // virava "[object Event]" na tela — meio offline é a causa clássica
+    if (!m || /^\[object /.test(m) || /Failed to fetch|NetworkError|Load failed|importScripts/i.test(m)) {
+      return "Não consegui baixar o leitor de imagem — confira a internet e tente de novo. Depois da primeira vez ele fica guardado no aparelho.";
+    }
     var tecnico = /[A-Z]{4,}_[A-Z]|::|CalculatorGraph|timestamp|Packet|wasm|WebAssembly|RuntimeError|Aborted|undefined is not|null is not/.test(m) || m.length > 160;
     if (!tecnico) return m;
     try { console.error("[medidas pela câmera]", m); } catch (x) {}

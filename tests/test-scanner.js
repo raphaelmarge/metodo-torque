@@ -217,5 +217,56 @@ ok(larga && larga.confianca.cintura === "baixa", "e rebaixa a confiança de toda
 console.log("Textos obrigatórios:");
 ok(/não substitui fita métrica/.test(S.TEXTO_LIMITE), "o aviso de que não substitui fita/bioimpedância está no código");
 
+/* ---------- MT_AVAL_UI: o visual da área de avaliação ----------
+ * São funções puras (dados → HTML), então dá pra validar aqui em node:
+ * o que entra tem que aparecer, o que não entra não pode aparecer. */
+console.log("Visual da avaliação (MT_AVAL_UI):");
+require(path.join(RAIZ, "assets/avaliacao-ui.js"));
+const U = self.MT_AVAL_UI;
+ok(!!U && typeof U.cardsLaudo === "function", "o módulo carrega com as funções de desenho");
+
+const laudoFake = {
+  ok: true, peso: 98, altura: 179, imc: 30.6, classeImc: "obesidade grau 1", classePeso: "acima",
+  faixaPeso: [59.3, 79.8], gordura: 32.2, classeGordura: "acima", faixaGordura: [10, 20],
+  massaGordura: 31.6, massaMagra: 66.4, mme: 36.5, smi: 8.9, smiBaixo: false,
+  tmb: 1804, ingestao: 2797, rcq: 0.97, riscoRcq: "alto", agua: 48.6, faixaAgua: [38.2, 44.1], pontuacao: 61,
+};
+const cards = U.cardsLaudo(laudoFake);
+ok(/Pontuação/.test(cards) && /IMC/.test(cards) && /obesidade grau 1/.test(cards),
+  "os cards trazem IMC com o selo da classificação por extenso");
+ok(/Cintura-quadril/.test(cards) && /Inadequado/.test(cards),
+  "a razão cintura-quadril ganha o selo de risco (Inadequado quando alto)");
+ok(/Hidratação/.test(cards) && /49,6/.test(cards),
+  "a hidratação sai em % do peso (49,6% pra 48,6 L em 98 kg)");
+ok(/Basal \(TMB\)/.test(cards) && /1804/.test(cards) && /2797/.test(cards),
+  "o metabolismo basal mostra também o gasto do dia");
+const semRcq = U.cardsLaudo(Object.assign({}, laudoFake, { rcq: null, cintura: 105.3, riscoCintura: "alto" }));
+ok(/Cintura/.test(semRcq) && !/Cintura-quadril/.test(semRcq),
+  "sem quadril medido, o card vira só Cintura (nada de RCQ inventado)");
+
+ok(/32,2%/.test(U.donut(32.2, {})) && /aria-label/.test(U.donut(32.2, {})),
+  "o donut mostra o percentual e tem rótulo acessível");
+const gordBloco = U.blocoGordura(laudoFake);
+ok(/Massa gorda/.test(gordBloco) && /31,6 kg/.test(gordBloco) && /Massa magra/.test(gordBloco) && /66,4 kg/.test(gordBloco),
+  "o bloco de gordura abre o peso em massa gorda × massa magra");
+
+const corpo = U.corpo({ cintura: 105.3, quadril: 109, coxa: 59.4 }, { coxa: "média" });
+ok(/Cintura/.test(corpo) && /105,3 cm/.test(corpo) && /Quadril/.test(corpo) && /Coxa ~/.test(corpo),
+  "o boneco recebe etiquetas só das medidas que existem, com ~ nas de menor confiança");
+ok(!/Tórax/.test(corpo) && !/Braço/.test(corpo) && !/Panturrilha/.test(corpo),
+  "medida que não veio não aparece no boneco");
+ok(U.corpo({}, {}) === "", "sem nenhuma medida o boneco nem é desenhado");
+
+ok(U.TUTORIAL.length >= 6, "o tutorial tem os passos do preparo e das duas poses");
+const passoFrente = U.TUTORIAL.map((p, i) => (/de frente/.test(p.t) ? i : -1)).filter((i) => i >= 0)[0];
+const passoLado = U.TUTORIAL.map((p, i) => (/de lado/.test(p.t) ? i : -1)).filter((i) => i >= 0)[0];
+ok(passoFrente >= 0 && /svg/.test(U.tutorialPasso(passoFrente)) && /braços afastados formando um V/i.test(U.TUTORIAL[passoFrente].x),
+  "o passo da 1ª foto tem o desenho e a instrução do V de braços");
+ok(passoLado >= 0 && /svg/.test(U.tutorialPasso(passoLado)) && /lado esquerdo/i.test(U.TUTORIAL[passoLado].x),
+  "o passo da 2ª foto tem o desenho e manda virar pro lado esquerdo");
+ok((U.tutorialPasso(0).match(/border-radius:99px/g) || []).length === U.TUTORIAL.length,
+  "as bolinhas de progresso são uma por passo");
+ok(/&lt;script&gt;/.test(U.selo("<script>", "ok")), "texto de selo é escapado (nada de HTML injetado)");
+
 console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);

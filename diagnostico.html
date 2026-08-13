@@ -156,6 +156,14 @@
         }
         if (d && d.ok) {
           linha("✅", "Função chat-envia publicada", "Ela respondeu ao teste.");
+          // versão nova responde a lista de ações; sem ela, é deploy antigo —
+          // o ping passa, mas a IA de treino/dieta falha com erro estranho
+          var temIaTreino = (d.acoes || []).indexOf("ia_treino") >= 0;
+          if (!d.acoes || !temIaTreino) {
+            anota("chat-envia sem lista de acoes (versao antiga publicada)");
+            linha("❌", "A chat-envia publicada está desatualizada", "Ela responde, mas é uma versão antiga — sem as IAs de treino e de dieta.",
+              "Abra www.torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase (Edge Functions → chat-envia → Code → cole → Deploy). É rápido e não mexe nos secrets.");
+          }
           if (d.ia) linha("✅", "Chave da IA configurada", "As IAs de treino e de dieta têm com o que trabalhar.");
           else linha("❌", "Falta a chave da IA", "A função está no ar, mas sem a ANTHROPIC_API_KEY.",
             "Supabase → Edge Functions → Secrets → Add new secret → nome ANTHROPIC_API_KEY (tudo maiúsculo, com underscore) → cole a chave → salve → publique a chat-envia DE NOVO (o secret só entra no próximo deploy).");
