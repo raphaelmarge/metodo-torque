@@ -800,14 +800,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </div>
         <div class="linha-flex" style="margin-top: 12px; flex-wrap: wrap;">
           <button class="btn" id="scanAoVivo">🎥 Câmera guiada (tira sozinho)</button>
-          <label class="btn sec" style="cursor: pointer;">📷 Foto 1 — de frente
-            <input type="file" id="scanFrente" accept="image/*,.heic,.heif" class="arq-oculto"></label>
-          <label class="btn sec" style="cursor: pointer;">📷 Foto 2 — de lado (opcional)
-            <input type="file" id="scanLado" accept="image/*,.heic,.heif" class="arq-oculto"></label>
+          <button class="btn sec" id="scanBtFrente">🖼️ Foto 1 — de frente</button>
+          <button class="btn sec" id="scanBtLado">🖼️ Foto 2 — de lado (opcional)</button>
+          <input type="file" id="scanFrente" accept="image/*,.heic,.heif" class="arq-oculto">
+          <input type="file" id="scanLado" accept="image/*,.heic,.heif" class="arq-oculto">
           <button class="btn" id="scanMedir" disabled>Medir</button>
         </div>
         <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Na câmera guiada o celular fica apoiado, mostra onde a pessoa tem que ficar e dispara sozinho quando o enquadramento está certo — dá pra medir sem ninguém segurando o aparelho.</p>
-        <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Nos botões de foto o aparelho pergunta se você quer <b>tirar na hora</b> ou <b>usar uma foto já salva</b> (galeria ou arquivos) — serve pra medir de uma foto antiga e comparar.</p>
+        <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Nos botões 🖼️ o aparelho abre um menu: <b>Fototeca</b> (foto já salva), <b>Tirar foto</b> ou <b>Escolher arquivo</b> — serve pra medir de uma foto antiga e comparar.</p>
         <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Na foto de frente: braços afastados do corpo, formando um V, pés na largura do quadril. Na de lado: braços esticados pra frente, sempre o mesmo lado.</p>
         <div id="scanEstado" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
       </div>
@@ -826,10 +826,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div style="background: #14121a; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));">
         <div id="scanCamPasso" style="font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase;"></div>
         <div id="scanCamFala" style="font-size: 17px; font-weight: 700; margin-top: 4px; min-height: 46px; color: #fff;"></div>
+        <div id="scanCamTec" hidden style="font-size: 10.5px; color: #6f6a7d; margin-top: 2px; word-break: break-word;"></div>
         <div class="linha-flex" style="margin-top: 8px; flex-wrap: wrap;">
           <button class="btn sec" id="scanCamFechar">Fechar</button>
           <button class="btn sec" id="scanCamVirar">🔄 Virar câmera</button>
           <button class="btn sec" id="scanCamAgora">Tirar agora</button>
+          <button class="btn" id="scanCamDeNovo" hidden>Tentar de novo</button>
         </div>
       </div>
     </div>
@@ -5967,6 +5969,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("scanMedir").disabled = !scanFotos.frente;
   }
 
+  /* Botão que abre o seletor por código. O <label> em volta de um input de
+   * arquivo escondido é o jeito clássico, mas no Safari do iPhone ele
+   * simplesmente não abre a fototeca — o .click() a partir do toque abre. */
+  [["scanBtFrente", "scanFrente"], ["scanBtLado", "scanLado"]].forEach(function (par) {
+    var bt = $(par[0]), inp = $(par[1]);
+    if (bt && inp) bt.addEventListener("click", function () { inp.click(); });
+  });
+
   ["scanFrente", "scanLado"].forEach(function (id) {
     var el = $(id);
     if (!el) return;
@@ -6108,6 +6118,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("scanCamFala").textContent = texto || "";
     $("scanCamFala").style.color = cor || "#fff";
   }
+  /* Quando dá errado, a tela NÃO some. Fechar sozinho é o pior comportamento
+   * possível aqui: a pessoa fica sem saber se foi ela, se foi o aparelho ou se
+   * o sistema é ruim. Fica aberto, dizendo o que houve e oferecendo tentar de
+   * novo — com o detalhe técnico em letra pequena, que é o que a gente precisa
+   * quando o Raphael manda o print. */
+  function camErro(e) {
+    if (camAtiva) { try { camAtiva.para(); } catch (x) {} camAtiva = null; }
+    if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+    $("scanCam").hidden = false;
+    $("scanContagem").style.display = "none";
+    camDiz("Não deu certo", self.MT_VISAO.erroAmigavel(e), "#f87171");
+    var tec = $("scanCamTec");
+    tec.textContent = "Detalhe técnico: " + String((e && e.message) || e).slice(0, 220);
+    tec.hidden = false;
+    $("scanCamDeNovo").hidden = false;
+    $("scanCamAgora").hidden = true;
+    $("scanCamVirar").hidden = true;
+  }
+  function camLimpaErro() {
+    $("scanCamTec").hidden = true;
+    $("scanCamDeNovo").hidden = true;
+    $("scanCamAgora").hidden = false;
+    $("scanCamVirar").hidden = false;
+  }
   /* Espera com número grande na tela: a pessoa está a 3 passos do celular e
    * precisa enxergar quanto tempo tem pra virar de lado. */
   function camEspera(segundos, passo, texto, aoFim) {
@@ -6123,6 +6157,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function camInicia(modo) {
     var alturaCm = +$("scanAltura").value;
+    camLimpaErro();
     camDiz(modo === "frente" ? "Foto 1 de 2 — de frente" : "Foto 2 de 2 — de lado", "Ligando a câmera…");
     $("scanCam").hidden = false;
     // câmera da frente mostra a pessoa espelhada, como num espelho de academia;
@@ -6137,21 +6172,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (e.contando > 0) { c.style.display = "flex"; c.textContent = e.contando; }
         else { c.style.display = "none"; camDiz($("scanCamPasso").textContent, e.fala, e.cor); }
       },
-      aoErro: function (e) {
-        camAtiva = null;
-        camFecha();
-        scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
-      },
+      aoErro: function (e) { camAtiva = null; camErro(e); },
       aoFoto: function (quadro) {
         camAtiva = null;
         camQuadros[modo] = quadro;
         if (modo === "frente") {
           camEspera(CAM_SEG_VIRAR, "Foto 1 pronta ✓", "Agora vire de lado — braços esticados pra frente.", function () {
-            camInicia("lado").then(function (c) { camAtiva = c; }).catch(function (e) {
-              camFecha();
-              scanDiz("A foto de lado não deu certo (" + esc(self.MT_VISAO.erroAmigavel(e)) + ") — vou medir só com a de frente.");
-              camMede();
-            });
+            camInicia("lado").then(function (c) { camAtiva = c; }).catch(camErro);
           });
         } else {
           camEspera(2, "Fotos prontas ✓", "Pode relaxar — já estou medindo.", function () {
@@ -6204,10 +6231,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // o pedido de permissão do sensor de inclinação (iOS) só vale se sair de um toque
     self.MT_CAMERA.pedePermissaoInclinacao().then(function () {
       return camInicia("frente");
-    }).then(function (c) { camAtiva = c; }).catch(function (e) {
-      camFecha();
-      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
-    });
+    }).then(function (c) { camAtiva = c; }).catch(camErro);
+  });
+  if ($("scanCamDeNovo")) $("scanCamDeNovo").addEventListener("click", function () {
+    // repete o passo que falhou, sem perder a foto que já tinha dado certo
+    camInicia(camQuadros.frente ? "lado" : "frente").then(function (c) { camAtiva = c; }).catch(camErro);
   });
   if ($("scanCamFechar")) $("scanCamFechar").addEventListener("click", function () {
     camFecha();
@@ -6238,15 +6266,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (camAtiva) { try { camAtiva.para(); } catch (e) {} camAtiva = null; }
     if (camTimer) { clearTimeout(camTimer); camTimer = null; }
     $("scanContagem").style.display = "none";
-    camInicia(modo).then(function (c) { camAtiva = c; }).catch(function (e) {
-      camFecha();
-      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
-    });
+    camInicia(modo).then(function (c) { camAtiva = c; }).catch(camErro);
   });
 
   window.__scan = { calibracao: scanCalibracao, pinta: pintaScanResultado, pend: function () { return scanPend; },
     camInicia: camInicia, camFecha: camFecha, camQuadros: function () { return camQuadros; },
-    camFrontal: function () { return camFrontal; } }; // testes
+    camFrontal: function () { return camFrontal; }, camErro: camErro }; // testes
 
   // ---------- laudo de composição corporal ----------
   // Junta o cadastro do aluno (sexo, altura, idade) com a avaliação e devolve
