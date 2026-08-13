@@ -37,6 +37,15 @@
 
   <div class="card" id="resultado" hidden></div>
 
+  <div class="card">
+    <b style="font-size: 13.5px;">Testar outra chave</b>
+    <p class="sub" style="font-size: 12.5px;">Se a chave do site foi recusada, cole aqui a outra chave pública do projeto (a <b>Publishable key</b>, que começa com <code>sb_publishable_</code>, ou a <b>anon</b>) e teste ANTES de trocar no site. Nada é salvo: o teste acontece só neste navegador.</p>
+    <input id="chaveTeste" placeholder="sb_publishable_… ou eyJ…" autocomplete="off" spellcheck="false"
+      style="width:100%;padding:12px;border-radius:10px;border:1px solid #322e3d;background:#14121a;color:#fff;font-size:13px;font-family:inherit;">
+    <button class="btnx sec" id="btnChave">Testar esta chave</button>
+    <div id="resChave"></div>
+  </div>
+
   <div class="card" id="cxTecnica" hidden>
     <b style="font-size: 13.5px;">Detalhe técnico</b>
     <p class="sub" style="font-size: 12.5px;">Se algo deu errado, copie isto e mande pro suporte — é o que diz exatamente onde travou.</p>
@@ -173,6 +182,49 @@
       bt.textContent = "Rodar de novo";
       window.__diagPronto = true; // testes
     });
+  });
+
+  /* Testador de chave: descobre QUAL chave o projeto aceita sem precisar
+   * publicar o site a cada tentativa. Foi o que faltou quando a chave legada
+   * parou de valer — cada palpite custava um deploy. */
+  $("btnChave").addEventListener("click", function () {
+    var chave = $("chaveTeste").value.trim();
+    var out = $("resChave");
+    if (!chave) { out.textContent = "Cole uma chave primeiro."; return; }
+    if (/^sb_secret_/i.test(chave) || /service_role/.test(chave)) {
+      out.innerHTML = '<b style="color:#f87171;">Essa é uma chave SECRETA — nunca use no site nem cole em lugar nenhum. Apague daí.</b>';
+      $("chaveTeste").value = "";
+      return;
+    }
+    this.disabled = true;
+    out.textContent = "testando…";
+    var linhas = [];
+    fetch(cfg.url + "/rest/v1/", { headers: { apikey: chave, Authorization: "Bearer " + chave } })
+      .then(function (r) { linhas.push((r.ok ? "✅" : "❌") + " banco: HTTP " + r.status); })
+      .catch(function (e) { linhas.push("❌ banco: " + e.message); })
+      .then(function () {
+        return fetch(cfg.url + "/functions/v1/chat-envia", {
+          method: "POST",
+          headers: { apikey: chave, Authorization: "Bearer " + chave, "Content-Type": "application/json" },
+          body: JSON.stringify({ acao: "ping" }),
+        }).then(function (r) {
+          return r.text().then(function (t) {
+            var d = null; try { d = JSON.parse(t); } catch (e) {}
+            linhas.push((r.ok ? "✅" : "❌") + " chat-envia: HTTP " + r.status + (d && d.ok ? (d.ia ? " (com a chave da IA)" : " (SEM a chave da IA)") : " " + corpoCurto(t)));
+          });
+        });
+      })
+      .catch(function (e) { linhas.push("❌ chat-envia: " + e.message); })
+      .then(function () {
+        var deu = linhas.every(function (l) { return l.indexOf("✅") === 0; });
+        out.innerHTML = "<pre>" + linhas.join("\n").replace(/[&<>]/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+        }) + "</pre>" + (deu
+          ? '<b style="color:#4ade80;">Esta chave funciona. Mande ela pro suporte trocar no site.</b>'
+          : '<b style="color:#fcd34d;">Esta chave também não foi aceita. Tente a outra (publishable ou anon).</b>');
+        anota("teste de chave: " + linhas.join(" | "));
+        $("btnChave").disabled = false;
+      });
   });
 
   $("btnCopiar").addEventListener("click", function () {
