@@ -9,9 +9,9 @@ const DEST = path.join(__dirname, "www");
 
 // o que NÃO entra no app
 const IGNORA = new Set([
-  ".git", ".github", ".well-known", "nativo", "tests", "supabase",
-  "node_modules", "README.md", "PUBLICAR-NAS-LOJAS.md", "APP-NATIVO.md",
-  "gerador-codigo.html", "supabase-setup.sql", "print-canvas-final.png", "design", "marketing",
+  ".git", ".github", ".well-known", ".claude", "nativo", "tests", "supabase",
+  "node_modules", "README.md", "PUBLICAR-NAS-LOJAS.md", "APP-NATIVO.md", "LOJAS-TEXTOS.md",
+  "gerador-codigo.html", "supabase-setup.sql", "conferir.sql", "print-canvas-final.png", "design", "marketing",
 ]);
 
 fs.rmSync(DEST, { recursive: true, force: true });
