@@ -22,6 +22,7 @@
   <span class="k">TORQUE PERSONAL · Demonstração</span>
   <h1>Studio de exemplo</h1>
   <p>Preenche o TORQUE PERSONAL <b>neste navegador</b> com um studio fictício em pleno uso: 8 alunos com treinos, pagamentos, agenda, avaliações e os dados que eles registram no app (peso, cargas, hábitos, treinos feitos e check-ins de questionário) — tudo em gráficos no perfil.</p>
+  <p style="margin-top: 12px;">Novidade: em <b>Avaliações</b> o demo já vem com as <b>Medidas pela câmera</b> ligadas — dá pra abrir a câmera guiada e ver o gabarito, o semáforo e o disparo automático funcionando.</p>
   <div id="alerta" class="aviso" hidden>⚠️ <b>Já existem dados do Personal neste navegador.</b> O demo NÃO vai mexer neles — abra esta página numa <b>guia anônima</b> (ou outro navegador) pra ver a demonstração sem risco.</div>
   <button class="btnx" id="btnDemo">🚀 Abrir o studio de exemplo</button>
 </div>
@@ -237,6 +238,8 @@
   var seed = {
     config: {
       nome: "TORQUE Demo", zap: "21994429198", pixChave: "demo@torqueon.com.br", pixNome: "Studio TORQUE Demo", pixCidade: "Rio de Janeiro",
+      // no produto vem desligada; no demo fica ligada pra quem testa achar o recurso
+      scanOn: true,
       mural: ["Sábado 7h tem treinão ao ar livre no parque — bora?", "Semana que vem começa o desafio de agosto. Prêmio: 1 mês grátis!"],
     },
     alunos: alunos, exercicios: exercicios, treinosV2: treinosV2, pagamentos: pagamentos,

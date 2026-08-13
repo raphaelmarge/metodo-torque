@@ -3578,11 +3578,14 @@ async function abaPt(p, a) {
         kpis: document.getElementById("kpisPt") ? document.getElementById("kpisPt").textContent : document.body.textContent.slice(0, 50),
         app: document.getElementById("pfAppDados").innerHTML,
         quest: document.getElementById("pfQuestBox").innerHTML,
+        scanOn: !!(st.config || {}).scanOn,
+        scanCard: !!document.getElementById("scanCard") && !document.getElementById("scanCard").hidden,
       }), 400));
     });
     ok(demo.alunos === 8 && demo.fichas === 8 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 8 alunos com fichas, pagamentos e avaliações");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
     ok(/Check-ins respondidos no app/.test(demo.quest) && /stroke=["']#fbbf24["']/.test(demo.quest), "demo também mostra os check-ins de questionário na aba própria");
+    ok(demo.scanOn && demo.scanCard, "no demo as Medidas pela câmera já vêm ligadas (quem testa acha o recurso sozinho)");
     // com dados existentes o demo NÃO sobrescreve
     const pD2 = await ctxD.newPage();
     await pD2.goto(BASE + "/demo-personal.html");
