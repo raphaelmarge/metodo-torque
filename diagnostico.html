@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico da nuvem — TORQUE ON</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(90% 50% at 50% -10%, rgba(124,58,237,.22), transparent 60%), #121016; color: #f5f4f7; min-height: 100vh; padding: 26px 16px 60px; line-height: 1.6; }
+  main { max-width: 620px; margin: 0 auto; }
+  .k { font-size: 11px; letter-spacing: .22em; color: #a78bfa; font-weight: 800; text-transform: uppercase; }
+  h1 { font-size: 25px; margin: 6px 0 8px; }
+  p.sub { color: #b9b3c6; font-size: 14px; }
+  .card { background: #1a1720; border: 1px solid #2c2739; border-radius: 16px; padding: 18px 18px; margin-top: 16px; }
+  .btnx { width: 100%; padding: 15px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; font-family: inherit; margin-top: 18px; }
+  .btnx:disabled { opacity: .6; }
+  .btnx.sec { background: none; border: 1px solid #3a3446; }
+  .linha { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #262231; }
+  .linha:last-child { border-bottom: 0; }
+  .ic { flex: none; font-size: 19px; width: 26px; }
+  .linha b { display: block; font-size: 14.5px; }
+  .linha span { color: #b9b3c6; font-size: 13px; }
+  .comofaz { color: #fcd34d; font-size: 13px; display: block; margin-top: 4px; }
+  pre { background: #0f0d13; border: 1px solid #2c2739; border-radius: 10px; padding: 12px; font-size: 11.5px; color: #9d98a8; overflow: auto; margin-top: 12px; white-space: pre-wrap; word-break: break-word; }
+  a { color: #a78bfa; }
+</style>
+</head>
+<body>
+<main>
+  <span class="k">TORQUE ON · manutenção</span>
+  <h1>Diagnóstico da nuvem</h1>
+  <p class="sub">Esta página testa a sua conexão com o Supabase e diz, em português, o que está funcionando e o que falta. Ela não muda nada — só olha.</p>
+
+  <button class="btnx" id="btnRodar">Rodar o diagnóstico</button>
+
+  <div class="card" id="resultado" hidden></div>
+
+  <div class="card" id="cxTecnica" hidden>
+    <b style="font-size: 13.5px;">Detalhe técnico</b>
+    <p class="sub" style="font-size: 12.5px;">Se algo deu errado, copie isto e mande pro suporte — é o que diz exatamente onde travou.</p>
+    <pre id="tecnica"></pre>
+    <button class="btnx sec" id="btnCopiar">Copiar o diagnóstico</button>
+  </div>
+</main>
+
+<script src="assets/cloud-config.js"></script>
+<script src="assets/vendor/supabase.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var cfg = self.MT_CLOUD || {};
+  var log = [];
+  function anota(t) { log.push(t); }
+
+  function linha(ic, titulo, detalhe, comofaz) {
+    var d = document.createElement("div");
+    d.className = "linha";
+    d.innerHTML = '<div class="ic">' + ic + "</div><div><b></b><span></span></div>";
+    d.querySelector("b").textContent = titulo;
+    d.querySelector("span").textContent = detalhe || "";
+    if (comofaz) {
+      var c = document.createElement("span");
+      c.className = "comofaz";
+      c.textContent = "👉 " + comofaz;
+      d.querySelector("div:last-child").appendChild(c);
+    }
+    $("resultado").appendChild(d);
+  }
+
+  function corpoCurto(t) { return String(t || "").replace(/\s+/g, " ").slice(0, 300); }
+
+  $("btnRodar").addEventListener("click", function () {
+    var bt = this;
+    bt.disabled = true;
+    bt.textContent = "Testando…";
+    $("resultado").innerHTML = "";
+    $("resultado").hidden = false;
+    log = [];
+
+    if (!cfg.url || !cfg.anonKey) {
+      linha("❌", "Nuvem não configurada", "O arquivo assets/cloud-config.js está sem endereço ou sem chave.");
+      bt.disabled = false; bt.textContent = "Rodar de novo";
+      return;
+    }
+    var projeto = (cfg.url.match(/https:\/\/([a-z0-9]+)\./) || [])[1] || "?";
+    linha("🔗", "Projeto do Supabase", projeto);
+    anota("projeto: " + projeto);
+
+    // 1) o banco responde?
+    fetch(cfg.url + "/rest/v1/", { headers: { apikey: cfg.anonKey } }).then(function (r) {
+      anota("rest: HTTP " + r.status);
+      if (r.ok) linha("✅", "Banco de dados respondendo", "O Supabase está no ar e a chave do site é válida.");
+      else linha("❌", "Banco não respondeu", "HTTP " + r.status, "Confira se o projeto não está pausado no painel do Supabase.");
+    }).catch(function (e) {
+      anota("rest: erro " + e.message);
+      linha("❌", "Não consegui falar com o Supabase", e.message, "Confira sua internet e se o projeto está ativo.");
+    }).then(function () {
+      // 2) a chat-envia está publicada? o ping responde antes de qualquer login
+      return fetch(cfg.url + "/functions/v1/chat-envia", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "ping" }),
+      }).then(function (r) {
+        return r.text().then(function (t) { return { status: r.status, texto: t }; });
+      }).then(function (res) {
+        anota("chat-envia ping: HTTP " + res.status + " " + corpoCurto(res.texto));
+        var d = null;
+        try { d = JSON.parse(res.texto); } catch (e) {}
+
+        if (res.status === 404 || (d && /not found/i.test(d.message || ""))) {
+          linha("❌", "A função chat-envia não existe neste projeto", "O Supabase respondeu que não achou a função.",
+            "O nome tem que ser exatamente chat-envia (minúsculo, com hífen). Confira em Edge Functions se ela está na lista — e se está no projeto " + projeto + ".");
+          return;
+        }
+        if (res.status === 401 || res.status === 403) {
+          linha("❌", "A função recusou a chamada", "HTTP " + res.status + " — normalmente é o Verify JWT.",
+            "Abra a função no painel → Details → deixe o Verify JWT LIGADO (é o padrão) e faça o deploy de novo.");
+          return;
+        }
+        if (d && d.ok) {
+          linha("✅", "Função chat-envia publicada", "Ela respondeu ao teste.");
+          if (d.ia) linha("✅", "Chave da IA configurada", "As IAs de treino e de dieta têm com o que trabalhar.");
+          else linha("❌", "Falta a chave da IA", "A função está no ar, mas sem a ANTHROPIC_API_KEY.",
+            "Supabase → Edge Functions → Secrets → Add new secret → nome ANTHROPIC_API_KEY (tudo maiúsculo, com underscore) → cole a chave → salve → publique a chat-envia DE NOVO (o secret só entra no próximo deploy).");
+          linha(d.whatsapp ? "✅" : "⚪", "WhatsApp", d.whatsapp ? "Token configurado." : "Sem token — o robô do WhatsApp fica desligado (opcional).");
+          linha(d.instagram ? "✅" : "⚪", "Instagram", d.instagram ? "Token configurado." : "Sem token — o robô do Instagram fica desligado (opcional).");
+          return;
+        }
+        linha("❌", "A função respondeu algo inesperado", "HTTP " + res.status + " — " + corpoCurto(res.texto),
+          "Normalmente é erro no deploy: abra a função no painel, veja os Logs e publique de novo.");
+      }).catch(function (e) {
+        anota("chat-envia: erro " + e.message);
+        linha("❌", "Não consegui chamar a chat-envia", e.message,
+          "Se a mensagem fala em CORS ou Failed to fetch, a função não subiu direito — publique de novo.");
+      });
+    }).then(function () {
+      // 3) você está logado? a IA só funciona logado
+      try {
+        var sb = window.supabase.createClient(cfg.url, cfg.anonKey);
+        return sb.auth.getSession().then(function (s) {
+          var sess = s && s.data && s.data.session;
+          anota("sessao: " + (sess ? "logado" : "sem login"));
+          if (sess) linha("✅", "Você está logado", sess.user.email || "");
+          else linha("⚠️", "Você não está logado neste navegador", "As IAs e a sincronização só funcionam logado.",
+            "Abra o TORQUE PERSONAL → Configurações → Entrar na minha conta. Depois rode este diagnóstico de novo.");
+        });
+      } catch (e) { anota("sessao: erro " + e.message); }
+    }).then(function () {
+      $("tecnica").textContent = log.join("\n");
+      $("cxTecnica").hidden = false;
+      bt.disabled = false;
+      bt.textContent = "Rodar de novo";
+      window.__diagPronto = true; // testes
+    });
+  });
+
+  $("btnCopiar").addEventListener("click", function () {
+    var t = $("tecnica").textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () {
+      $("btnCopiar").textContent = "✅ Copiado!";
+    }, function () {});
+  });
+
+  window.__diagPagina = true; // testes
+})();
+</script>
+</body>
+</html>
