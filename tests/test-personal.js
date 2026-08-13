@@ -2169,7 +2169,9 @@ async function abaPt(p, a) {
   ok(/116,5 kg/.test(util.rm), "calculadora de 1RM (Epley: 100×5 = 116,5 kg) com tabela de percentuais");
   ok(/1× 25 kg/.test(util.anilhas) && /1× 15 kg/.test(util.anilhas), "calculadora de anilhas monta a barra (100 kg = 25+15 por lado)");
   ok(/26,8/.test(util.imc) && /sobrepeso/.test(util.imc), "IMC calcula e classifica (85 kg / 1,78 m = 26,8)");
-  ok(/0:00\.\d/.test(util.crono), "cronômetro avulso roda com décimos");
+  // aceita qualquer segundo: com a máquina carregada o cronômetro já passou de
+  // 0:00 quando a leitura acontece, e travar em 0:00 deixava o teste instável
+  ok(/^\d+:\d\d\.\d/.test(util.crono), "cronômetro avulso roda com décimos (" + util.crono + ")");
   // cronômetro turbinado: modos Tabata, EMOM e AMRAP com contagem de rounds
   const crono5 = await pApp.evaluate(async () => {
     const out = {};
@@ -4272,6 +4274,68 @@ async function abaPt(p, a) {
       "⚖️ com a bioimpedância digitada o laudo usa os valores medidos");
     ok(biaL.temSegmentar && biaL.medidos, "a análise por segmento (braços, tronco e pernas) entra no laudo");
     await ctxL.close();
+  }
+  {
+    // 🗑 exclusão de conta: a Play e a Apple exigem em todo app com login.
+    // Sem conta na nuvem, apagar é apagar o aparelho — que é onde os dados estão.
+    console.log("Excluir minha conta:");
+    const ctxX = await b.newContext({ viewport: { width: 1360, height: 900 } });
+    await ctxX.addInitScript(() => {
+      localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+      localStorage.setItem("mtapp:ptSemConta", "1");
+    });
+    const pX = await ctxX.newPage();
+    pX.on("pageerror", (e) => erros.push("excluir: " + e.message));
+    await pX.goto(BASE + "/personal.html");
+    await pX.waitForFunction(() => window.__ptStudio);
+    await pX.evaluate(() => {
+      const S2 = window.MTStore, st = S2.read("ptStudio", {});
+      st.alunos = [{ id: "x1", nome: "Marina", ativo: true }];
+      S2.write("ptStudio", st);
+      localStorage.setItem("outrosite:nao-mexer", "1");
+    });
+    await abaPt(pX, "config");
+    await pX.waitForTimeout(300);
+
+    let confirmar = false, digitado = "";
+    pX.on("dialog", (d) => (d.type() === "prompt" ? d.accept(digitado) : confirmar ? d.accept() : d.dismiss()));
+
+    // cancelar no meio não pode apagar nada
+    await pX.click("#cfgExcluir");
+    await pX.waitForTimeout(200);
+    ok(await pX.evaluate(() => !!localStorage.getItem("mtapp:ptStudio")),
+      "cancelar a confirmação não apaga nada");
+
+    // digitar errado também não
+    confirmar = true; digitado = "excluir tudo";
+    await pX.click("#cfgExcluir");
+    await pX.waitForTimeout(300);
+    ok(await pX.evaluate(() => !!localStorage.getItem("mtapp:ptStudio")),
+      "sem digitar EXCLUIR certinho, os dados continuam lá");
+
+    // confirmando as duas etapas, apaga
+    digitado = "EXCLUIR";
+    await pX.click("#cfgExcluir");
+    await pX.waitForTimeout(600);
+    const depois = await pX.evaluate(() => ({
+      studio: localStorage.getItem("mtapp:ptStudio"),
+      perfil: localStorage.getItem("mtapp:perfil"),
+      alheio: localStorage.getItem("outrosite:nao-mexer"),
+    }));
+    ok(!depois.studio && !depois.perfil, "confirmando as duas etapas, os dados do aparelho vão embora");
+    ok(depois.alheio === "1", "e nada que não seja do TORQUE ON é tocado no aparelho");
+    await ctxX.close();
+
+    // a página pública que a Play exige (dá pra pedir exclusão sem instalar o app)
+    const ctxP = await b.newContext();
+    const pP = await ctxP.newPage();
+    pP.on("pageerror", (e) => erros.push("excluir-conta.html: " + e.message));
+    const resp = await pP.goto(BASE + "/excluir-conta.html");
+    const pag = await pP.evaluate(() => document.body.textContent);
+    ok(resp.status() === 200 && /Excluir minha conta/.test(pag) && /raphael_marge@icloud\.com/.test(pag),
+      "a página pública de exclusão está no ar, com o caminho pelo app e o e-mail de contato");
+    ok(/30 dias|7 dias/.test(pag), "e diz os prazos, que é o que a loja cobra na revisão");
+    await ctxP.close();
   }
   {
     // 🖥 menu do computador: fica sempre à vista (1 clique por aba); no celular vira gaveta

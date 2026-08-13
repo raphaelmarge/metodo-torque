@@ -1117,6 +1117,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="cfgAtualiza">🔄 Baixar a versão nova</button>
       </div>
     </div>
+
+    <div class="card" style="margin-top: 14px; border-left: 4px solid #f87171;">
+      <h2>Excluir minha conta</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Apaga a conta e <b>todos os dados</b> dela: alunos, treinos, avaliações, pagamentos e conversas. Se você for o único dono, a ilha inteira vai junto — inclusive pra sua equipe. <b>Não dá pra desfazer.</b> Antes de excluir, baixe o backup no card acima.</p>
+      <button class="btn sec" id="cfgExcluir" style="border-color: #7f2b2b; color: #fca5a5;">Excluir minha conta e todos os dados</button>
+      <div id="cfgExcluirStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+    </div>
   </section>
 
   <section id="vAssessoria" hidden>
@@ -1367,6 +1374,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/scanner-camera.js"></script>
 <script src="assets/versao.js"></script>
 <script src="assets/pwa-update.js"></script>
+<script src="assets/excluir-conta.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
@@ -9671,6 +9679,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("btnContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
   $("btnContaEquipe").addEventListener("click", contaP.criaColaborador);
   $("btnContaSair").addEventListener("click", contaP.sair);
+
+  // exclusão de conta: exigida pela Play e pela Apple em todo app com login.
+  // Com conta na nuvem apaga de lá também; sem conta, apaga o aparelho — que
+  // é onde os dados estão.
+  if (self.MT_EXCLUIR) {
+    self.MT_EXCLUIR.liga("cfgExcluir", {
+      sb: function () { return (S.usuario && S.usuario().logado) ? window.MT_supabase : null; },
+      aoAviso: function (t) { $("cfgExcluirStatus").textContent = t; },
+      destino: "personal.html",
+    });
+  }
 
   window.__ptStudio = { load: load, render: render }; // testes
 })();
