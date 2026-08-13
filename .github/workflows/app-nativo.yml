@@ -23,7 +23,7 @@ on:
     paths: ["nativo/**", ".github/workflows/app-nativo.yml"]
 
 permissions:
-  contents: read
+  contents: write   # publica o APK de teste numa Release (link que abre no celular)
 
 jobs:
   build:
@@ -100,6 +100,22 @@ jobs:
       - name: Apagar a chave da máquina
         if: ${{ always() && inputs.pacote == 'aab' }}
         run: rm -f nativo/android/torque.keystore
+
+      # O artefato do Actions só baixa quem está logado no GitHub — no celular
+      # isso não acontece. A Release é pública: o link abre direto no navegador
+      # do telefone e instala.
+      - name: Publicar o APK de teste numa Release
+        if: ${{ (inputs.pacote || 'apk') == 'apk' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROD: ${{ inputs.produto || 'academia' }}
+        run: |
+          cp nativo/android/app/build/outputs/apk/debug/app-debug.apk "torqueon-$PROD.apk"
+          gh release create "teste-$PROD" --title "Teste — TORQUE ON ($PROD)" \
+            --notes "APK de teste do app nativo. Baixe no Android, toque no arquivo e permita a instalação desta fonte. Não serve para a Play Store (lá vai o .aab assinado)." \
+            --latest=false 2>/dev/null || true
+          gh release upload "teste-$PROD" "torqueon-$PROD.apk" --clobber
+          echo "APK em https://github.com/${{ github.repository }}/releases/download/teste-$PROD/torqueon-$PROD.apk"
 
       - name: Publicar o pacote como artefato
         uses: actions/upload-artifact@v4
