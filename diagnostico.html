@@ -100,7 +100,13 @@
 
     // 1) o banco responde?
     var chaveMorta = false;
-    fetch(cfg.url + "/rest/v1/", { headers: { apikey: cfg.anonKey } }).then(function (r) {
+    /* Os DOIS cabeçalhos, sempre. O Supabase exige apikey E Authorization; com
+     * só um deles o banco responde 401 mesmo com a chave certa — e foi
+     * exatamente assim que este diagnóstico acusou injustamente a chave do
+     * projeto, mandando trocar o que estava correto. */
+    fetch(cfg.url + "/rest/v1/", {
+      headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey },
+    }).then(function (r) {
       anota("rest: HTTP " + r.status);
       if (r.ok) { linha("✅", "Banco de dados respondendo", "O Supabase está no ar e a chave do site é válida."); return; }
       if (r.status === 401 || r.status === 403) {
@@ -137,8 +143,9 @@
           return;
         }
         if (res.status === 401 || res.status === 403) {
-          // se o banco também recusou, o problema é a chave — não a função
-          if (chaveMorta || /INVALID_CREDENTIALS/i.test(res.texto)) {
+          // só acusa a chave quando o banco TAMBÉM a recusou: um 401 isolado
+          // na função é problema da função, não da chave
+          if (chaveMorta) {
             linha("⚠️", "A função também recusou, pelo mesmo motivo", "É a chave pública, não a chat-envia.",
               "Resolva a chave acima primeiro; depois rode este diagnóstico de novo.");
             return;
