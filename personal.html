@@ -798,12 +798,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="linha-flex" style="margin-top: 12px; flex-wrap: wrap;">
           <button class="btn" id="scanAoVivo">🎥 Câmera guiada (tira sozinho)</button>
           <label class="btn sec" style="cursor: pointer;">📷 Foto 1 — de frente
-            <input type="file" id="scanFrente" accept="image/*" capture="environment" hidden></label>
+            <input type="file" id="scanFrente" accept="image/*" hidden></label>
           <label class="btn sec" style="cursor: pointer;">📷 Foto 2 — de lado (opcional)
-            <input type="file" id="scanLado" accept="image/*" capture="environment" hidden></label>
+            <input type="file" id="scanLado" accept="image/*" hidden></label>
           <button class="btn" id="scanMedir" disabled>Medir</button>
         </div>
         <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Na câmera guiada o celular fica apoiado, mostra onde a pessoa tem que ficar e dispara sozinho quando o enquadramento está certo — dá pra medir sem ninguém segurando o aparelho.</p>
+        <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Nos botões de foto o aparelho pergunta se você quer <b>tirar na hora</b> ou <b>usar uma foto já salva</b> (galeria ou arquivos) — serve pra medir de uma foto antiga e comparar.</p>
         <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Na foto de frente: braços afastados do corpo, formando um V, pés na largura do quadril. Na de lado: braços esticados pra frente, sempre o mesmo lado.</p>
         <div id="scanEstado" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
       </div>
@@ -6023,7 +6024,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       scanDiz("Pronto. As fotos foram descartadas. ✅");
       pintaScanResultado(r, a);
     }).catch(function (e) {
-      scanDiz('<b style="color:#f87171;">' + esc(e.message) + "</b>");
+      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
     }).then(function () {
       bt.disabled = false;
       scanAtualizaBotao();
@@ -6097,6 +6098,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (e.contando > 0) { c.style.display = "flex"; c.textContent = e.contando; }
         else { c.style.display = "none"; camDiz($("scanCamPasso").textContent, e.fala, e.cor); }
       },
+      aoErro: function (e) {
+        camAtiva = null;
+        camFecha();
+        scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
+      },
       aoFoto: function (quadro) {
         camAtiva = null;
         camQuadros[modo] = quadro;
@@ -6122,7 +6128,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var alturaCm = +$("scanAltura").value;
     if (!a || !camQuadros.frente) { scanDiz("Não consegui capturar a foto de frente."); return; }
     scanDiz("Medindo…");
-    try {
+    // carrega() de novo é de graça quando já está pronto — e é o que remonta o
+    // motor caso alguma leitura tenha derrubado o leitor durante a captura
+    self.MT_VISAO.carrega("", scanDiz).then(function () {
       var f = self.MT_SCANNER.analisaFoto(self.MT_VISAO.le(camQuadros.frente), "frente", alturaCm);
       if (!f.ok) throw new Error(f.fala);
       var l = null;
@@ -6140,10 +6148,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       camQuadros = { frente: null, lado: null };   // as imagens saem da memória aqui
       scanDiz("Pronto. As fotos foram descartadas. ✅");
       pintaScanResultado(r, a);
-    } catch (e) {
+    }).catch(function (e) {
       camQuadros = { frente: null, lado: null };
-      scanDiz('<b style="color:#f87171;">' + esc(e.message) + "</b>");
-    }
+      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
+    });
   }
   if ($("scanAoVivo")) $("scanAoVivo").addEventListener("click", function () {
     var a = scanAlunoAtual();
@@ -6158,7 +6166,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return camInicia("frente");
     }).then(function (c) { camAtiva = c; }).catch(function (e) {
       camFecha();
-      scanDiz('<b style="color:#f87171;">' + esc(e.message) + "</b>");
+      scanDiz('<b style="color:#f87171;">' + esc(self.MT_VISAO.erroAmigavel(e)) + "</b>");
     });
   });
   if ($("scanCamFechar")) $("scanCamFechar").addEventListener("click", function () {

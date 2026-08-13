@@ -137,6 +137,7 @@
       return raiz.MT_VISAO.carrega(op.base || "", op.aoAviso);
     }).then(function () {
       var ctx = canvas.getContext("2d");
+      var falhas = 0;
 
       function analisa() {
         if (!vivo) return;
@@ -154,8 +155,16 @@
               texto = "Endireite o celular: ele está inclinado.";
               cor = "#fbbf24";
             } else { pronto = true; cor = "#4ade80"; texto = "Perfeito, não se mexa!"; }
+            falhas = 0;
           } else { texto = "Ligando a câmera…"; }
         } catch (e) {
+          // uma falha solta acontece (quadro chegou torto); várias seguidas
+          // significam motor caído — aí é melhor sair do que fingir que mede
+          if (++falhas >= 4) {
+            encerra();
+            if (op.aoErro) op.aoErro(e);
+            return;
+          }
           texto = "Não consegui ler a imagem agora.";
         }
 

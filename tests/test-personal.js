@@ -4075,6 +4075,44 @@ async function abaPt(p, a) {
     ok(desligou.fechou && desligou.vivas === 0,
       "ao fechar, a câmera é desligada de verdade (nenhuma trilha continua ligada)");
     ok(desligou.semQuadro, "saindo no meio, nada de imagem fica guardado");
+
+    // regressão do celular do Raphael: dois quadros no MESMO milissegundo
+    // derrubavam o motor de vez ("Packet timestamp mismatch"), e daí em diante
+    // até a medição por foto solta falhava
+    const ts = await pS.evaluate(async () => {
+      const cv = document.createElement("canvas");
+      cv.width = 480; cv.height = 640;
+      const g = cv.getContext("2d");
+      g.fillStyle = "#1b1b1b"; g.fillRect(0, 0, 480, 640);
+      await window.MT_VISAO.carrega("");
+      try {
+        window.MT_VISAO.le(cv, { video: true, instante: 1000 });
+        window.MT_VISAO.le(cv, { video: true, instante: 1000 });
+        window.MT_VISAO.le(cv, { video: true, instante: 1000 });
+        const foto = window.MT_VISAO.le(cv);   // e volta pro modo foto inteiro
+        return { ok: true, largura: foto.largura };
+      } catch (e) { return { ok: false, erro: e.message }; }
+    });
+    ok(ts.ok && ts.largura === 480,
+      "quadros no mesmo milissegundo não derrubam o leitor, e a foto solta continua funcionando depois" +
+      (ts.ok ? "" : " — " + ts.erro));
+
+    const amig = await pS.evaluate(() => ({
+      tecnico: window.MT_VISAO.erroAmigavel(new Error("INVALID_ARGUMENT: CalculatorGraph::Run() failed: Packet timestamp mismatch on a calculator receiving from stream \"free_memory\".")),
+      nosso: window.MT_VISAO.erroAmigavel(new Error("A cabeça ficou cortada. Afaste mais o celular.")),
+    }));
+    ok(!/CalculatorGraph/.test(amig.tecnico) && /fita métrica/.test(amig.tecnico),
+      "erro técnico do motor vira recado em português com o que fazer agora");
+    ok(amig.nosso === "A cabeça ficou cortada. Afaste mais o celular.",
+      "e o recado que já estava em português passa inteiro");
+
+    const galeria = await pS.evaluate(() => ({
+      frente: document.getElementById("scanFrente").hasAttribute("capture"),
+      lado: document.getElementById("scanLado").hasAttribute("capture"),
+      aviso: /foto já salva/.test(document.getElementById("scanPreparo").textContent),
+    }));
+    ok(!galeria.frente && !galeria.lado && galeria.aviso,
+      "os botões de foto deixam usar imagem já salva no aparelho, não só tirar na hora");
     await ctxS.close();
   }
   {
