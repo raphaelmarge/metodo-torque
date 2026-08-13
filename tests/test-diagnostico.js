@@ -84,6 +84,38 @@ const CENARIOS = [
   }
 
   {
+    // testador de chave: descobrir qual chave o projeto aceita sem publicar o
+    // site a cada palpite. E ele NUNCA pode encorajar o uso de chave secreta.
+    const ctx = await b.newContext();
+    await ctx.route("**/rest/v1/", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+    await ctx.route("**/functions/v1/chat-envia", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true,"ia":true}' }));
+    const p = await ctx.newPage();
+    const errs = [];
+    p.on("pageerror", (e) => errs.push(e.message));
+    await p.goto(BASE + "/diagnostico.html");
+
+    await p.fill("#chaveTeste", "sb_secret_XVT5Dabcdefg");
+    await p.click("#btnChave");
+    await p.waitForTimeout(300);
+    const secreta = await p.evaluate(() => ({
+      recado: document.getElementById("resChave").innerText,
+      campo: document.getElementById("chaveTeste").value,
+    }));
+    ok(/SECRETA/.test(secreta.recado) && secreta.campo === "",
+      "chave secreta é recusada na hora e apagada do campo, sem sair do navegador");
+
+    await p.fill("#chaveTeste", "sb_publishable_teste123");
+    await p.click("#btnChave");
+    await p.waitForFunction(() => /funciona|não foi aceita/.test(document.getElementById("resChave").innerText), null, { timeout: 10000 });
+    const boa = await p.evaluate(() => document.getElementById("resChave").innerText);
+    ok(/Esta chave funciona/.test(boa) && /banco: HTTP 200/.test(boa) && /com a chave da IA/.test(boa),
+      "chave aceita: diz que funciona e mostra o resultado dos dois testes");
+    ok(errs.length === 0, "sem erro de JS no testador de chave" + (errs.length ? " — " + errs[0] : ""));
+    await ctx.close();
+  }
+
+  {
     // o detalhe técnico é o que o Raphael copia e manda; tem que ter o status
     const ctx = await b.newContext();
     await ctx.route("**/functions/v1/chat-envia", (r) =>
