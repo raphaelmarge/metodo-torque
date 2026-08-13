@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ligar o WhatsApp na Meta — TORQUE ON</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: #121016; color: #fff; min-height: 100vh; padding: 30px 16px 70px; }
+  .caixa { max-width: 660px; margin: 0 auto; }
+  .k { font-size: 12px; letter-spacing: .22em; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+  h1 { font-size: 26px; font-weight: 800; margin: 10px 0 6px; letter-spacing: -.02em; }
+  h2 { font-size: 17.5px; font-weight: 800; letter-spacing: -.01em; }
+  p, li { color: #a9a4b5; font-size: 14.5px; line-height: 1.62; }
+  li { margin-top: 6px; }
+  code { background: #14121a; border: 1px solid #322e3d; border-radius: 6px; padding: 1px 6px; font-size: 13px; color: #e9d5ff; word-break: break-all; }
+  .card { background: #1d1a24; border: 1px solid #322e3d; border-radius: 16px; padding: 20px; margin-top: 16px; }
+  .card.alerta { border-left: 4px solid #f59e0b; }
+  .card.perigo { border-left: 4px solid #f87171; }
+  .n { display: inline-flex; width: 30px; height: 30px; border-radius: 50%; background: #7c3aed; color: #fff; font-weight: 800; align-items: center; justify-content: center; font-size: 15px; margin-right: 10px; flex: none; }
+  .topo { display: flex; align-items: center; margin-bottom: 8px; }
+  .btnx { display: block; width: 100%; background: #14121a; border: 1px solid #322e3d; color: #fff; border-radius: 12px; padding: 12px; font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+  .btnx.roxo { background: linear-gradient(135deg, #7c3aed, #6d28d9); border: 0; font-size: 15px; padding: 15px; box-shadow: 0 10px 30px -12px #7c3aed; }
+  .ok { color: #4ade80; font-weight: 700; font-size: 13px; min-height: 18px; margin-top: 6px; }
+  a { color: #a78bfa; }
+  b { color: #fff; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13.5px; }
+  th, td { border: 1px solid #322e3d; padding: 8px 10px; text-align: left; color: #a9a4b5; vertical-align: top; }
+  th { color: #fff; background: #14121a; }
+  .mini { font-size: 12.5px; color: #8a8695; }
+</style>
+</head>
+<body>
+<div class="caixa">
+  <span class="k">TORQUE ON · manutenção</span>
+  <h1>Ligar o robô do WhatsApp</h1>
+  <p>Do zero: criar a conta na Meta, pegar as chaves e apontar pro TORQUE ON. Faz uma vez só. Reserve <b>40 minutos</b> num computador — pelo celular é sofrimento.</p>
+
+  <div class="card alerta">
+    <p><b>Antes de começar, três coisas que ninguém avisa:</b></p>
+    <ul>
+      <li><b>O número tem que ser exclusivo.</b> Um número que já está no WhatsApp comum ou no WhatsApp Business (o app verde) <b>não serve</b> — a Meta recusa. Use um chip novo ou um número fixo da academia.</li>
+      <li><b>Se você usar o número da academia aqui, ele sai do app verde.</b> A conversa passa a acontecer só dentro do TORQUE ON. Pense nisso antes.</li>
+      <li><b>Dá pra testar sem número nenhum.</b> A Meta empresta um número de teste que fala com até 5 telefones que você cadastrar. Comece por ele.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">1</span><h2>Conta pessoal no Facebook</h2></div>
+    <p>A Meta exige um perfil pessoal como dono de tudo. Se você já tem Facebook, use o seu. Se não tem, crie em <a href="https://facebook.com" target="_blank" rel="noopener">facebook.com</a> — pode ficar sem nenhum amigo e sem nenhuma foto, serve só de chave.</p>
+    <p class="mini">Esse perfil vira o administrador. Não use o perfil de um funcionário que pode sair da academia.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">2</span><h2>Conta comercial (Meta Business)</h2></div>
+    <p>Abra <a href="https://business.facebook.com" target="_blank" rel="noopener">business.facebook.com</a> → <b>Criar conta</b>. Preencha:</p>
+    <ul>
+      <li><b>Nome da empresa</b>: o nome da academia (vai aparecer pros clientes)</li>
+      <li><b>Seu nome</b> e <b>e-mail comercial</b></li>
+    </ul>
+    <p>Depois, em <b>Configurações do negócio → Informações da empresa</b>, preencha CNPJ, endereço e telefone. Isso adianta a <b>verificação do negócio</b>, que a Meta vai exigir mais pra frente pra você sair do modo de teste.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">3</span><h2>Criar o app de desenvolvedor</h2></div>
+    <p>Abra <a href="https://developers.facebook.com" target="_blank" rel="noopener">developers.facebook.com</a> → <b>Meus apps</b> → <b>Criar app</b>.</p>
+    <ul>
+      <li>Se perguntar o que você quer fazer, escolha a opção ligada a <b>empresas / negócios</b> (o nome muda de tempos em tempos: já foi "Empresa", "Negócios", "Outro").</li>
+      <li><b>Nome do app</b>: algo seu, ex.: <code>TORQUE ON</code>. O cliente não vê esse nome.</li>
+      <li><b>Conta comercial</b>: escolha a que você criou no passo 2. <b>Não pule</b> — sem vincular, o WhatsApp não aparece depois.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">4</span><h2>Adicionar o produto WhatsApp</h2></div>
+    <p>Dentro do app → <b>Adicionar produto</b> → procure <b>WhatsApp</b> → <b>Configurar</b>.</p>
+    <p>Você cai numa tela chamada <b>Configuração da API</b> (ou "API Setup"). Ali estão as três coisas que a gente precisa:</p>
+    <table>
+      <tr><th>O que aparece</th><th>Pra que serve</th></tr>
+      <tr><td><b>Token de acesso temporário</b></td><td>a senha que o sistema usa pra enviar mensagem — <b>vence em 24 horas</b> (o passo 7 resolve)</td></tr>
+      <tr><td><b>Identificação do número de telefone</b><br><span class="mini">Phone number ID — é um número comprido, NÃO é o telefone</span></td><td>diz de qual número as mensagens saem</td></tr>
+      <tr><td><b>Número de teste</b></td><td>número emprestado pela Meta pra você testar de graça</td></tr>
+    </table>
+    <p style="margin-top:10px;">Ainda nessa tela, em <b>Para</b>, cadastre o seu celular pessoal como destinatário de teste e mande a mensagem de exemplo. <b>Se ela chegar no seu WhatsApp, a parte da Meta está funcionando.</b></p>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">5</span><h2>Guardar as chaves no Supabase</h2></div>
+    <p>No Supabase → <b>Edge Functions → Secrets</b>, crie estes três:</p>
+    <table>
+      <tr><th>Nome (copie exato)</th><th>Valor</th></tr>
+      <tr><td><code>WHATSAPP_TOKEN</code></td><td>o token de acesso do passo 4</td></tr>
+      <tr><td><code>WHATSAPP_PHONE_ID</code></td><td>a identificação do número (aquele número comprido)</td></tr>
+      <tr><td><code>META_VERIFY_TOKEN</code></td><td>uma senha que <b>você inventa</b> agora, só pra Meta e o Supabase se reconhecerem</td></tr>
+    </table>
+    <p style="margin-top:12px;">Use esta senha, se quiser — gerada agora no seu navegador:</p>
+    <div style="background:#14121a;border:1px solid #322e3d;border-radius:10px;padding:12px;text-align:center;font-size:18px;font-weight:800;letter-spacing:.06em;" id="verify">—</div>
+    <button class="btnx" id="btnVerify">Copiar essa senha</button>
+    <div class="ok" id="okVerify"></div>
+    <p class="mini" style="margin-top:10px;">Anote onde você guarda senhas: ela vai ser pedida de novo no passo 6, e tem que ser <b>idêntica</b> nos dois lugares.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">6</span><h2>Apontar a Meta para o TORQUE ON</h2></div>
+    <p>Ainda no app da Meta → menu <b>WhatsApp → Configuração</b> → seção <b>Webhook</b> → <b>Editar</b>.</p>
+    <p><b>URL de retorno de chamada</b> (callback URL):</p>
+    <div style="background:#14121a;border:1px solid #322e3d;border-radius:10px;padding:12px;font-size:12.5px;word-break:break-all;" id="url">—</div>
+    <button class="btnx" id="btnUrl">Copiar a URL</button>
+    <div class="ok" id="okUrl"></div>
+    <p style="margin-top:12px;"><b>Token de verificação</b>: a mesma senha do passo 5.</p>
+    <p>Clique em <b>Verificar e salvar</b>. Se der erro aqui, é quase sempre uma destas duas coisas:</p>
+    <ul>
+      <li>A função <code>meta-webhook</code> não foi publicada ainda, ou foi publicada com o <b>Verify JWT ligado</b> — nessa função ele tem que ficar <b>DESLIGADO</b>. A Meta chama sem login.</li>
+      <li>A senha do passo 5 está diferente da que você digitou aqui (espaço sobrando no fim conta como diferente).</li>
+    </ul>
+    <p style="margin-top:12px;">Deu certo? Agora clique em <b>Gerenciar</b> e marque o campo <b>messages</b>. <b>Sem isso a Meta não manda nada</b> — ela só avisa que está tudo configurado e fica calada.</p>
+  </div>
+
+  <div class="card perigo">
+    <div class="topo"><span class="n">7</span><h2>Token permanente (não pule)</h2></div>
+    <p>O token do passo 4 <b>morre em 24 horas</b>. Quando morrer, o robô para de responder sem avisar ninguém. Pra resolver de vez:</p>
+    <ul>
+      <li>Abra <b>business.facebook.com</b> → <b>Configurações do negócio</b></li>
+      <li>Menu <b>Usuários → Usuários do sistema</b> → <b>Adicionar</b></li>
+      <li>Nome: <code>robo-torque</code> · Função: <b>Administrador</b></li>
+      <li>Clique no usuário criado → <b>Adicionar ativos</b> → escolha <b>Apps</b> → seu app → marque <b>Controle total</b></li>
+      <li>Adicione também o ativo <b>Contas do WhatsApp</b> → a sua conta → controle total</li>
+      <li>Agora <b>Gerar novo token</b> → escolha o seu app → marque as permissões <code>whatsapp_business_messaging</code> e <code>whatsapp_business_management</code> → em validade, escolha <b>Nunca expira</b></li>
+      <li>Copie o token que aparecer (<b>ele só aparece uma vez</b>) e troque o valor de <code>WHATSAPP_TOKEN</code> no Supabase</li>
+    </ul>
+    <p class="mini">Depois de trocar o secret, publique a <code>meta-webhook</code> e a <code>whatsapp</code> de novo — secret só entra no ar no deploy seguinte.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">8</span><h2>Testar de verdade</h2></div>
+    <ul>
+      <li>Mande <b>“oi”</b> do seu celular para o número de teste da Meta</li>
+      <li>Abra o TORQUE ON → <b>Chat e IA → Conversas</b>: a mensagem tem que aparecer ali em segundos</li>
+      <li>Se você ligou a IA automática, a resposta volta sozinha no seu WhatsApp</li>
+    </ul>
+    <p><b>Chegou na tela mas o robô não respondeu?</b> Vá em <b>Chat e IA → IA e automação</b> e confira se <b>“Ligar a IA automática para toda conversa nova”</b> está marcado, e se o prompt do robô está escrito.</p>
+    <p><b>Não chegou nada?</b> A Meta guarda o histórico: no app → WhatsApp → Configuração → Webhook, veja se aparece erro de entrega. E confira se o campo <b>messages</b> ficou marcado.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo"><span class="n">9</span><h2>Colocar o número da academia (quando estiver pronto)</h2></div>
+    <p>No app → <b>WhatsApp → Configuração da API</b> → <b>Adicionar número de telefone</b>. Você vai precisar de:</p>
+    <ul>
+      <li>Um número que <b>não esteja em nenhum WhatsApp</b> (se estiver, apague a conta dele no app antes e espere alguns minutos)</li>
+      <li>Receber o código por <b>SMS ou ligação</b></li>
+      <li>Escolher o <b>nome de exibição</b> — a Meta analisa e recusa nome que promete resultado ou que não tem a ver com a empresa. Use o nome da academia, simples</li>
+      <li>Fazer a <b>verificação do negócio</b> (CNPJ, comprovante de endereço). Costuma levar de 1 a 3 dias</li>
+    </ul>
+    <p>Trocou o número? Atualize o <code>WHATSAPP_PHONE_ID</code> no Supabase e publique as funções de novo.</p>
+  </div>
+
+  <div class="card alerta">
+    <h2>A regra das 24 horas</h2>
+    <p>O WhatsApp <b>só deixa responder em texto livre nas 24 horas seguintes à última mensagem do cliente</b>. Passou disso, só dá pra mandar <b>template aprovado</b> pela Meta.</p>
+    <p>Na prática: o robô atende quem chamou você — perfeito pra dúvida, matrícula e cobrança respondida. Pra começar conversa do nada (ex.: lembrete de vencimento), é template, aprovado antes na Meta. Não é limitação do TORQUE ON, é regra da plataforma, igual pra todo mundo.</p>
+  </div>
+
+  <div class="card">
+    <h2>Se a tela da Meta não bater com o que está escrito aqui</h2>
+    <p>A Meta renomeia esses menus com frequência. Se você travar numa tela diferente, <b>tire um print e me mande</b> — eu te digo onde clicar. Não fique tentando adivinhar: nessas telas, clicar errado às vezes cria um app novo e você perde o que já fez.</p>
+    <p style="margin-top:10px;"><a href="funcoes.html">← Publicar as funções</a> · <a href="index.html">Voltar ao TORQUE ON</a></p>
+  </div>
+</div>
+
+<script src="assets/cloud-config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var cfg = self.MT_CLOUD || {};
+
+  // a URL sai da configuração real do site: assim ninguém cola o projeto errado
+  var url = (cfg.url || "https://SEU-PROJETO.supabase.co") + "/functions/v1/meta-webhook";
+  $("url").textContent = url;
+
+  /* Senha do verify token gerada no navegador. Sem caractere que confunda na
+   * hora de digitar (0/O, 1/l) — ela vai ser conferida letra por letra entre
+   * dois painéis diferentes. */
+  function senha() {
+    var abc = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    var s = "torque-";
+    var n = new Uint8Array(10);
+    (self.crypto || {}).getRandomValues ? crypto.getRandomValues(n) : n.forEach(function (_, i) { n[i] = i * 7; });
+    for (var i = 0; i < 10; i++) s += abc[n[i] % abc.length];
+    return s;
+  }
+  var vt = senha();
+  $("verify").textContent = vt;
+
+  function copia(texto, ondeOk) {
+    if (!navigator.clipboard) { $(ondeOk).textContent = "Selecione o texto acima e copie na mão."; return; }
+    navigator.clipboard.writeText(texto).then(function () {
+      $(ondeOk).textContent = "✅ Copiado!";
+    }, function () { $(ondeOk).textContent = "Selecione o texto acima e copie na mão."; });
+  }
+  $("btnVerify").addEventListener("click", function () { copia(vt, "okVerify"); });
+  $("btnUrl").addEventListener("click", function () { copia(url, "okUrl"); });
+
+  window.__metaGuia = { url: url, verify: vt }; // testes
+})();
+</script>
+</body>
+</html>

@@ -73,6 +73,7 @@ var CORE = [
   "privacidade.html",
   "excluir-conta.html",
   "diagnostico.html",
+  "meta.html",
   "quest.html",
   "assets/icons/icon-personal.svg",
   "assets/icons/icon-personal-192.png",
