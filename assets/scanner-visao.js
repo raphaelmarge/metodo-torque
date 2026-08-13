@@ -93,18 +93,35 @@
    * mascara é Uint8Array de 0/1 no tamanho analisado.
    * opcoes.video = true usa o modo de vídeo (loop ao vivo), que também devolve
    * a silhueta; opcoes.instante é o timestamp em ms exigido nesse modo. */
+  /* O modo de vídeo exige carimbo de tempo ESTRITAMENTE crescente. Num celular
+   * rápido dois quadros caem no mesmo milissegundo, e aí o motor não só recusa
+   * o quadro: ele derruba o grafo de vez ("Packet timestamp mismatch"), e todo
+   * o resto da sessão passa a falhar — inclusive as fotos soltas. Por isso o
+   * carimbo é forçado a andar pelo menos 1 ms a cada leitura. */
+  var ultimoInstante = 0;
+
   V.le = function (fonte, opcoes) {
-    if (!pose) throw new Error("chame carrega() antes");
+    if (!pose) throw new Error("o leitor de imagem não está carregado; abra o recurso de novo");
     opcoes = opcoes || {};
     var red = paraAnalise(fonte, opcoes.largura || (opcoes.video ? V.LARGURA_GUIA : V.LARGURA_ANALISE));
     var largura = red.largura, altura = red.altura;
     var res;
-    if (opcoes.video) {
-      V.modo("VIDEO");
-      res = pose.detectForVideo(red.fonte, opcoes.instante == null ? performance.now() : opcoes.instante);
-    } else {
-      V.modo("IMAGE");
-      res = pose.detect(red.fonte);
+    try {
+      if (opcoes.video) {
+        V.modo("VIDEO");
+        var t = opcoes.instante == null ? performance.now() : opcoes.instante;
+        if (t <= ultimoInstante) t = ultimoInstante + 1;
+        ultimoInstante = t;
+        res = pose.detectForVideo(red.fonte, t);
+      } else {
+        V.modo("IMAGE");
+        res = pose.detect(red.fonte);
+      }
+    } catch (e) {
+      // grafo quebrado não se conserta sozinho: joga fora pra próxima tentativa
+      // nascer limpa, senão o erro contamina todas as leituras seguintes
+      V.descarrega();
+      throw e;
     }
     var lm = (res.landmarks || [])[0] || null;
     var mk = (res.segmentationMasks || [])[0] || null;
@@ -136,7 +153,18 @@
 
   V.descarrega = function () {
     if (pose) { try { pose.close(); } catch (e) {} }
-    pose = null; carregando = null; modoAtual = "IMAGE";
+    pose = null; carregando = null; modoAtual = "IMAGE"; ultimoInstante = 0;
+  };
+
+  /* Mensagem de erro do motor vem em inglês técnico ("CalculatorGraph::Run()
+   * failed…"), que não ajuda ninguém e ainda assusta. Guarda o detalhe no
+   * console e devolve o que o professor pode fazer agora. */
+  V.erroAmigavel = function (e) {
+    var m = (e && e.message) || String(e || "");
+    var tecnico = /[A-Z]{4,}_[A-Z]|::|CalculatorGraph|timestamp|Packet|wasm|WebAssembly|RuntimeError|Aborted|undefined is not|null is not/.test(m) || m.length > 160;
+    if (!tecnico) return m;
+    try { console.error("[medidas pela câmera]", m); } catch (x) {}
+    return "O leitor de imagem travou. Feche e comece de novo — se insistir, use a fita métrica do card acima.";
   };
 
   raiz.MT_VISAO = V;
