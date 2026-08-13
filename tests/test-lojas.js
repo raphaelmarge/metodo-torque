@@ -60,7 +60,28 @@ ok(nut.includes("icon-nutri.svg") && nut.includes('apple-touch-icon" href="asset
 
 console.log("Guia de publicação:");
 const guia = fs.readFileSync(path.join(RAIZ, "PUBLICAR-NAS-LOJAS.md"), "utf8");
-ok(/pwabuilder/i.test(guia) && /play\.google\.com\/console/.test(guia) && /assetlinks/.test(guia) && /App Store/.test(guia), "PUBLICAR-NAS-LOJAS.md cobre Play, Apple e assetlinks");
+ok(/play\.google\.com\/console/.test(guia) && /App Store/.test(guia) && /developer\.apple|Xcode/.test(guia),
+  "PUBLICAR-NAS-LOJAS.md cobre a Play e a Apple");
+// as duas lojas recusam app com login sem exclusão de conta; o guia tem que
+// mandar o Raphael preencher esse campo, senão a recusa vem só na revisão
+ok(/excluir-conta\.html/.test(guia) && /ANDROID_KEYSTORE_BASE64/.test(guia),
+  "e explica a exclusão de conta e a chave de assinatura, que são o que trava a aprovação");
+ok(/3\.1\.1|3\.1\.3/.test(guia), "e avisa da regra de compra dentro do app da Apple, que é o risco real de recusa");
+
+console.log("Textos e artes das lojas:");
+const textos = fs.readFileSync(path.join(RAIZ, "LOJAS-TEXTOS.md"), "utf8");
+ok(/TORQUE ON/.test(textos) && /TORQUE PERSONAL/.test(textos) && /TORQUE NUTRI/.test(textos),
+  "LOJAS-TEXTOS.md traz a ficha dos três apps");
+ok(/Segurança dos dados/.test(textos) && /App Privacy/.test(textos) && /excluir-conta\.html/.test(textos),
+  "com as respostas dos questionários de privacidade das duas lojas");
+for (const arte of ["assets/icons/loja/icone-academia-1024.png", "assets/icons/loja/icone-personal-1024.png",
+  "assets/icons/loja/icone-nutri-1024.png", "assets/icons/loja/destaque-personal.png"]) {
+  ok(fs.existsSync(path.join(RAIZ, arte)), "arte da loja existe: " + arte);
+}
+const prods = lerJson("nativo/produtos.json");
+ok(!!prods && Object.keys(prods).length === 3 &&
+  prods.personal.appId === "com.torqueon.personal" && prods.nutri.abre === "nutricao.html",
+  "nativo/produtos.json define os três apps com o pacote e a página de cada um");
 
 console.log("App nativo (Capacitor):");
 const pkgNativo = lerJson("nativo/package.json");

@@ -6,6 +6,9 @@
   "android": {
     "allowMixedContent": false
   },
+  "ios": {
+    "contentInset": "always"
+  },
   "server": {
     "androidScheme": "https"
   }

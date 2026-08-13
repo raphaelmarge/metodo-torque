@@ -1,10 +1,23 @@
 name: App nativo Android
 
-# Compila o APK nativo (Capacitor) na nuvem do GitHub — sem precisar de
+# Compila o app nativo (Capacitor) na nuvem do GitHub — sem precisar de
 # Android Studio no seu computador. Rode manualmente na aba Actions
-# ("Run workflow") ou automaticamente quando a pasta nativo/ mudar.
+# ("Run workflow"), escolhendo o produto e o tipo de pacote:
+#   apk = instala direto no celular pra testar
+#   aab = arquivo assinado que sobe na Google Play (precisa dos Secrets)
 on:
   workflow_dispatch:
+    inputs:
+      produto:
+        description: "Qual app compilar"
+        type: choice
+        options: [academia, personal, nutri]
+        default: personal
+      pacote:
+        description: "apk (testar no celular) ou aab (subir na Play)"
+        type: choice
+        options: [apk, aab]
+        default: apk
   push:
     branches: [main]
     paths: ["nativo/**", ".github/workflows/app-nativo.yml"]
@@ -13,7 +26,7 @@ permissions:
   contents: read
 
 jobs:
-  apk:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,15 +42,17 @@ jobs:
         working-directory: nativo
         run: npm install --no-audit --no-fund
 
-      - name: Montar o miolo do app (www)
-        working-directory: nativo
-        run: node copia-www.js
+      - name: Montar o app do produto escolhido
+        run: node nativo/prepara.js "${{ inputs.produto || 'academia' }}"
 
       - name: Criar o projeto Android
         working-directory: nativo
         run: |
           npx cap add android
           npx cap sync android
+
+      - name: Permissões que as lojas exigem (câmera, notificações)
+        run: node nativo/ajusta-nativo.js android
 
       - name: Ícone e splash nativos
         working-directory: nativo
@@ -48,14 +63,50 @@ jobs:
           || echo "seguindo com os ícones padrão"
 
       - name: Compilar o APK (debug — instala direto no celular)
+        if: ${{ (inputs.pacote || 'apk') == 'apk' }}
         working-directory: nativo/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Publicar o APK como artefato
+      # ----- pacote assinado pra Google Play -----
+      # Precisa de 4 Secrets no repositório (Settings → Secrets and variables →
+      # Actions): ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_SENHA,
+      # ANDROID_KEY_ALIAS e ANDROID_KEY_SENHA. Sem eles, use o pacote "apk".
+      - name: Recriar a chave de assinatura
+        if: ${{ inputs.pacote == 'aab' }}
+        run: |
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "::error::Faltam os Secrets da assinatura — veja PUBLICAR-NAS-LOJAS.md"
+            exit 1
+          fi
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > nativo/android/torque.keystore
+
+      - name: Compilar o AAB assinado (sobe na Play)
+        if: ${{ inputs.pacote == 'aab' }}
+        working-directory: nativo/android
+        env:
+          MT_KS_SENHA: ${{ secrets.ANDROID_KEYSTORE_SENHA }}
+          MT_KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MT_KEY_SENHA: ${{ secrets.ANDROID_KEY_SENHA }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$PWD/torque.keystore \
+            -Pandroid.injected.signing.store.password="$MT_KS_SENHA" \
+            -Pandroid.injected.signing.key.alias="$MT_KS_ALIAS" \
+            -Pandroid.injected.signing.key.password="$MT_KEY_SENHA"
+
+      - name: Apagar a chave da máquina
+        if: ${{ always() && inputs.pacote == 'aab' }}
+        run: rm -f nativo/android/torque.keystore
+
+      - name: Publicar o pacote como artefato
         uses: actions/upload-artifact@v4
         with:
-          name: torqueon-academia-apk
-          path: nativo/android/app/build/outputs/apk/debug/app-debug.apk
+          name: torqueon-${{ inputs.produto || 'academia' }}-${{ inputs.pacote || 'apk' }}
+          path: |
+            nativo/android/app/build/outputs/apk/debug/app-debug.apk
+            nativo/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
           retention-days: 30

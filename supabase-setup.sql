@@ -1899,3 +1899,44 @@ $$;
 grant execute on function public.app_aluno_posta(text, text, text, text, text) to anon, authenticated;
 grant execute on function public.app_aluno_feed(text, integer) to anon, authenticated;
 grant execute on function public.app_aluno_feed_apaga(text, uuid) to anon, authenticated;
+
+-- =====================================================================
+-- EXCLUSÃO DE CONTA (exigência da Google Play e da App Store)
+-- Desde 2023 a Play exige que todo app com login ofereça exclusão da
+-- conta DENTRO do app e por um endereço na web. Aqui a exclusão é de
+-- verdade: apaga o usuário no auth e, se ele for o único dono da ilha,
+-- apaga a academia inteira — as chaves estrangeiras são "on delete
+-- cascade", então alunos, pagamentos, treinos, dietas e chat vão junto.
+-- =====================================================================
+create or replace function public.excluir_minha_conta()
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_acad uuid;
+  v_donos int;
+  v_ilhas int := 0;
+begin
+  if v_user is null then
+    raise exception 'faça login antes';
+  end if;
+
+  -- ilha em que ele é o ÚNICO dono morre junto; onde há outro dono, só ele sai
+  for v_acad in select academia_id from membros where user_id = v_user and papel = 'dono' loop
+    select count(*) into v_donos from membros where academia_id = v_acad and papel = 'dono';
+    if v_donos <= 1 then
+      delete from academias where id = v_acad;
+      v_ilhas := v_ilhas + 1;
+    end if;
+  end loop;
+
+  delete from membros where user_id = v_user;
+  delete from auth.users where id = v_user;
+
+  return json_build_object('ok', true, 'ilhas_apagadas', v_ilhas);
+end;
+$$;
+
+grant execute on function public.excluir_minha_conta() to authenticated;
