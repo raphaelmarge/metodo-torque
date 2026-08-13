@@ -7621,5 +7621,305 @@ self.MT_EXERCICIOS = [
   "g": "Quadríceps",
   "eq": "Kettlebell",
   "d": "Segure o kettlebell junto ao peito e caminhe dando passos longos, descendo até o joelho de trás quase tocar o chão."
+ },
+ {
+  "n": "Supino inclinado com halteres e pegada neutra",
+  "g": "Peito",
+  "eq": "Halteres",
+  "d": "Banco a 30 graus, palmas voltadas uma para a outra o tempo todo, cotovelos a 45 graus do tronco para poupar o ombro."
+ },
+ {
+  "n": "Flexão de braço com pegada fechada no banco",
+  "g": "Tríceps",
+  "eq": "Peso do corpo",
+  "d": "Mãos afastadas na largura dos ombros sobre o banco, cotovelos rentes ao tronco e corpo em prancha da cabeça aos calcanhares."
+ },
+ {
+  "n": "Remada curvada com pegada supinada e barra W",
+  "g": "Costas",
+  "eq": "Halteres",
+  "d": "Tronco a 45 graus, palmas voltadas para cima e barra puxada até o umbigo, sem balançar o quadril para ajudar."
+ },
+ {
+  "n": "Desenvolvimento Arnold sentado com halteres",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Comece com as palmas voltadas para você e gire os punhos durante a subida, terminando com as palmas para frente."
+ },
+ {
+  "n": "Rosca direta na polia baixa com corda",
+  "g": "Bíceps",
+  "eq": "Polia",
+  "d": "Gire os punhos para fora no topo do movimento e mantenha os cotovelos parados junto ao tronco durante toda a série."
+ },
+ {
+  "n": "Agachamento búlgaro com halteres e pé elevado",
+  "g": "Quadríceps",
+  "eq": "Halteres",
+  "d": "Peito do pé de trás apoiado no banco, desça na vertical até o joelho de trás quase tocar o chão, com o tronco ereto."
+ },
+ {
+  "n": "Passada lateral com mini band no tornozelo",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Meio agachamento mantido do início ao fim, dê passos laterais sem deixar os joelhos caírem para dentro."
+ },
+ {
+  "n": "Swing russo com kettlebell a uma mão",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "O movimento vem do quadril, não do braço: empurre a bacia para trás e projete para frente, parando o peso na altura do peito."
+ },
+ {
+  "n": "Levantada do chão com halter (dead bug carregado)",
+  "g": "Core",
+  "eq": "Halteres",
+  "d": "Deitado, segure o haltere com os braços estendidos e estenda a perna oposta mantendo a lombar colada no chão."
+ },
+ {
+  "n": "Muscle-up assistido com elástico na barra",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Puxe explosivo até o peito passar da barra e gire os punhos por cima, usando o elástico como ajuda até dominar o movimento."
+ },
+ {
+  "n": "Jab cruzado em deslocamento lateral",
+  "g": "Boxe e lutas",
+  "eq": "Peso do corpo",
+  "d": "Mantenha a guarda alta e o queixo baixo, gire o pé de trás no cruzado e volte a mão ao rosto antes de deslocar."
+ },
+ {
+  "n": "Nado crawl com pull buoy entre as pernas",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Com as pernas paradas no flutuador, foque na entrada da mão à frente do ombro e no giro do tronco a cada braçada."
+ },
+ {
+  "n": "Levantar e sentar da cadeira sem apoio das mãos",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Pés na largura do quadril e um pouco recuados, incline o tronco à frente e levante empurrando o chão, sentando devagar."
+ },
+ {
+  "n": "Ponte de glúteo com bola entre os joelhos",
+  "g": "Pilates e yoga",
+  "eq": "Bola suíça",
+  "d": "Aperte a bola de leve e suba a bacia vértebra por vértebra, descendo na mesma ordem sem soltar a pressão dos joelhos."
+ },
+ {
+  "n": "Gato-camelo com respiração guiada",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Em quatro apoios, inspire arqueando e expire arredondando a coluna, movendo uma vértebra de cada vez sem pressa."
+ },
+ {
+  "n": "Subida na escada de casa com pausa em cima",
+  "g": "Cardio",
+  "eq": "Sem equipamento",
+  "d": "Suba um degrau de cada vez apoiando o pé inteiro, segure um segundo em cima e desça devagar, usando o corrimão se precisar."
+ },
+ {
+  "n": "Crucifixo no cross-over de baixo para cima",
+  "g": "Peito",
+  "eq": "Polia",
+  "d": "Polias na posição mais baixa, suba as mãos em arco até a altura dos olhos e segure um segundo no encontro, sem estufar as costelas."
+ },
+ {
+  "n": "Tríceps testa com halteres e pegada neutra",
+  "g": "Tríceps",
+  "eq": "Halteres",
+  "d": "Deitado, desça os halteres até a altura das orelhas com as palmas frente a frente, movendo só do cotovelo para baixo."
+ },
+ {
+  "n": "Puxada na barra fixa com pegada mista",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Uma palma para frente e outra para trás, alternando o lado a cada série para não criar diferença entre os lados."
+ },
+ {
+  "n": "Elevação lateral deitado de lado no banco",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Deitado de lado no banco inclinado, suba o haltere até a linha do ombro com o cotovelo levemente flexionado, sem impulso."
+ },
+ {
+  "n": "Rosca concentrada unilateral sentado no banco",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Apoie o cotovelo na face interna da coxa e suba o haltere sem tirar o braço do apoio, descendo bem devagar."
+ },
+ {
+  "n": "Agachamento sissy apoiado no rack",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Segure o rack, suba nas pontas dos pés e incline o corpo para trás dobrando os joelhos, sem forçar se sentir dor patelar."
+ },
+ {
+  "n": "Elevação pélvica unilateral no solo",
+  "g": "Posterior e glúteo",
+  "eq": "Peso do corpo",
+  "d": "Uma perna estendida no ar, suba o quadril com a força do glúteo da perna apoiada e não deixe a bacia tombar para o lado."
+ },
+ {
+  "n": "Arranco com kettlebell (snatch)",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Puxe o peso junto ao corpo e gire a mão embaixo do kettlebell no fim, recebendo com o braço estendido sem bater no antebraço."
+ },
+ {
+  "n": "Rolo abdominal com barra (ab wheel na barra)",
+  "g": "Core",
+  "eq": "Halteres",
+  "d": "Ajoelhado, role a barra para frente até onde conseguir manter a lombar neutra e volte puxando com o abdome."
+ },
+ {
+  "n": "Prancha de frente (front lever) com joelhos dobrados",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Pendurado, leve os joelhos ao peito e incline o corpo até deixar o tronco na horizontal, com braços estendidos e escápulas ativas."
+ },
+ {
+  "n": "Esquiva de tronco (slip) com elástico na cintura",
+  "g": "Boxe e lutas",
+  "eq": "Mini band",
+  "d": "Desloque a cabeça para fora da linha do ombro dobrando os joelhos, sem baixar a guarda e sem inclinar demais a coluna."
+ },
+ {
+  "n": "Batida de pernas de costas com prancha no peito",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Quadril alto e pernas soltas partindo do quadril, com a batida saindo dentro d'água sem dobrar demais o joelho."
+ },
+ {
+  "n": "Marcha estacionária com apoio no encosto",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Segure o encosto da cadeira e suba um joelho de cada vez até a altura do quadril, mantendo o tronco ereto e a respiração solta."
+ },
+ {
+  "n": "Mobilidade de tornozelo contra a parede",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Joelho à frente encostando na parede com o calcanhar no chão, afastando o pé aos poucos até achar seu limite."
+ },
+ {
+  "n": "Polichinelo de baixo impacto com passo lateral",
+  "g": "Cardio",
+  "eq": "Sem equipamento",
+  "d": "Um pé de cada vez para o lado, sem saltar, subindo os braços no mesmo ritmo — versão para joelho sensível ou iniciante."
+ },
+ {
+  "n": "Flexão pliométrica com batida de mãos",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Empurre o chão com força para tirar as mãos, bata as palmas e volte com os cotovelos macios — só para quem já faz flexão comum com folga."
+ },
+ {
+  "n": "Remada unilateral na polia baixa sentado",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Puxe um braço de cada vez até a lateral do abdome, deixando o tronco girar só o necessário e voltando com controle."
+ },
+ {
+  "n": "Rotação externa de ombro com mini band em pé",
+  "g": "Ombros",
+  "eq": "Mini band",
+  "d": "Cotovelos colados nas costelas e mini band nos punhos, abra os antebraços para fora sem afastar os cotovelos do corpo."
+ },
+ {
+  "n": "Panturrilha unilateral no degrau com apoio",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Só a ponta do pé no degrau, desça o calcanhar até sentir o alongamento e suba até o topo, segurando um segundo em cima."
+ },
+ {
+  "n": "Stiff unilateral com haltere e apoio na parede",
+  "g": "Posterior e glúteo",
+  "eq": "Halteres",
+  "d": "Encoste a ponta do pé de trás na parede, empurre o quadril para trás e desça o haltere rente à perna de apoio."
+ },
+ {
+  "n": "Caminhada do fazendeiro unilateral com kettlebell",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Peso em uma mão só, ombros nivelados e tronco reto — a força do core é justamente para não tombar para o lado."
+ },
+ {
+  "n": "Pallof press ajoelhado com elástico",
+  "g": "Core",
+  "eq": "Mini band",
+  "d": "Elástico preso na lateral, empurre as mãos à frente do peito resistindo à rotação, sem girar o tronco nem o quadril."
+ },
+ {
+  "n": "Flexão hindu (dand)",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso do corpo",
+  "d": "Saia do cachorro olhando para baixo, mergulhe o peito rente ao chão e termine com o tronco erguido, num movimento contínuo."
+ },
+ {
+  "n": "Joelhada no clinch com saco pesado",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Puxe o saco pela nuca imaginária, suba o joelho projetando o quadril à frente e apoie firme o pé de base."
+ },
+ {
+  "n": "Corrida estacionária na parte funda com colete",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Colete flutuador na cintura, corra sem tocar o fundo mantendo o tronco reto — ótimo para quem não pode impactar o joelho."
+ },
+ {
+  "n": "Apoio unipodal com olhos abertos na cadeira",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Fique num pé só com a mão perto da cadeira para segurança, olhando para um ponto fixo à frente por até trinta segundos."
+ },
+ {
+  "n": "Alongamento de peitoral no batente da porta",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Antebraço apoiado no batente com o cotovelo na altura do ombro, gire o tronco para o lado oposto sem forçar a articulação."
+ },
+ {
+  "n": "Escalador lento com foco no abdome",
+  "g": "Cardio",
+  "eq": "Sem equipamento",
+  "d": "Em posição de prancha alta, traga um joelho ao peito de cada vez devagar, sem deixar o quadril subir nem a lombar cair."
+ },
+ {
+  "n": "Flexão de braço na quina da bancada da cozinha",
+  "g": "Peito",
+  "eq": "Sem equipamento",
+  "d": "Mãos na bancada e corpo inclinado, quanto mais alto o apoio, mais fácil — desça o peito até quase encostar."
+ },
+ {
+  "n": "Remada cavalinho na máquina com peito apoiado",
+  "g": "Costas",
+  "eq": "Máquina",
+  "d": "Peito firme no apoio, puxe com os cotovelos rentes ao corpo e junte as escápulas no fim sem jogar a cabeça para trás."
+ },
+ {
+  "n": "Voador invertido na máquina com pegada neutra",
+  "g": "Ombros",
+  "eq": "Máquina",
+  "d": "Braços na altura dos ombros e cotovelos levemente dobrados, abra até a linha do corpo focando no deltoide posterior."
+ },
+ {
+  "n": "Afundo com salto e troca de perna no ar",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Desça no afundo, salte trocando as pernas no ar e amorteça a queda dobrando os joelhos — evite se tiver dor no joelho."
+ },
+ {
+  "n": "Flexão nórdica assistida com elástico",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Joelhos apoiados e tornozelos presos, desça o corpo devagar segurando com o posterior e use o elástico para ajudar a voltar."
+ },
+ {
+  "n": "Turkish get-up parcial até o cotovelo",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Deitado, com o braço estendido para cima, apoie no cotovelo e depois na mão sem tirar os olhos do kettlebell."
  }
 ];
