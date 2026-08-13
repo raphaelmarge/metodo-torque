@@ -508,12 +508,13 @@
     function chamaFn(payload) {
       if (demoAsn()) return Promise.resolve(simulaAsn(payload));
       var headers = { "Content-Type": "application/json" };
-      if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
-        headers.apikey = window.MT_CLOUD.anonKey;
-        headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
-      }
-      return fetch(integ2().pagarmeUrl, { method: "POST", headers: headers, body: JSON.stringify(payload) })
-        .then(function (r) { return r.json(); });
+      if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
+      // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
+      return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+        headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
+        return fetch(integ2().pagarmeUrl, { method: "POST", headers: headers, body: JSON.stringify(payload) })
+          .then(function (r) { return r.json(); });
+      });
     }
     function contratoAtivo(st2, a2) { return (a2.contratos || []).find(function (x) { return x.status === "ativo"; }); }
     var bAss = $("btnAssinar");

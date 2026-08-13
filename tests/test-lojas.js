@@ -146,5 +146,29 @@ for (const pg of paginas) {
 }
 ok(vazios.length === 0, "nenhum botão/link vazio nas " + paginas.length + " páginas" + (vazios.length ? " — " + vazios.join(", ") : ""));
 
+/* As Edge Functions que agem em nome do usuário (whatsapp, pagarme) exigem
+ * role "authenticated". A anonKey tem role "anon": mandada como Authorization,
+ * leva 401 SEMPRE — a função nem chega a rodar. Já aconteceu em 5 lugares. */
+console.log("Chamada de Edge Function com o login certo:");
+{
+  const culpados = [];
+  const varre = (dir) => {
+    for (const f of fs.readdirSync(dir)) {
+      const p = path.join(dir, f);
+      if (fs.statSync(p).isDirectory()) { if (!/node_modules|nativo|\.git/.test(f)) varre(p); continue; }
+      if (!/\.(html|js)$/.test(f)) continue;
+      const s = fs.readFileSync(p, "utf8");
+      if (/Authorization["'\s]*[:=]\s*["']Bearer\s*["']\s*\+\s*(window\.)?MT_CLOUD\.anonKey/.test(s)) {
+        culpados.push(path.relative(RAIZ, p));
+      }
+    }
+  };
+  varre(RAIZ);
+  ok(culpados.length === 0,
+    "nenhuma tela manda a chave pública no lugar do token de login" + (culpados.length ? " — " + culpados.join(", ") : ""));
+  const st = fs.readFileSync(path.join(RAIZ, "apps/store.js"), "utf8");
+  ok(/tokenNuvem:\s*function/.test(st), "e o store expõe o tokenNuvem() que essas telas usam");
+}
+
 console.log(falhas ? "\n💥 " + falhas + " FALHA(S)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);

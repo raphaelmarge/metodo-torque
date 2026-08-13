@@ -353,10 +353,7 @@
     // modo demonstração: registra o envio sem chamar a API oficial
     if (!whatsappUrl() && demoOn()) return Promise.resolve({ ok: true, demo: true });
     var headers = { "Content-Type": "application/json" };
-    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
-      headers.apikey = window.MT_CLOUD.anonKey;
-      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
-    }
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
     var payload = { acao: "enviar", para: "55" + String(dev.zap).replace(/\D/g, "") };
     if (c.whatsappTemplate) {
       payload.template = c.whatsappTemplate;
@@ -364,8 +361,12 @@
     } else {
       payload.texto = passo ? passo.msg(dev.nome.split(" ")[0], ctxMsg(load(), dev)) : "Oi " + dev.nome.split(" ")[0] + "!";
     }
-    return fetch(whatsappUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
-      .then(function (r) { return r.json(); });
+    // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
+    return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+      headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
+      return fetch(whatsappUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json(); });
+    });
   }
 
   // ---------- Fase 2: cobrança automática (Pagar.me via Edge Function) ----------

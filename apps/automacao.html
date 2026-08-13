@@ -429,13 +429,14 @@
     // modo demonstração: registra o disparo sem chamar a API oficial
     if (!integ().whatsappUrl && demoOn()) return Promise.resolve({ ok: true, demo: true });
     var headers = { "Content-Type": "application/json" };
-    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
-      headers.apikey = window.MT_CLOUD.anonKey;
-      headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
-    }
-    return fetch(integ().whatsappUrl, { method: "POST", headers: headers,
-      body: JSON.stringify({ acao: "enviar", para: "55" + String(para).replace(/\D/g, ""), texto: texto }) })
-      .then(function (r) { return r.json(); });
+    if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
+    // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
+    return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+      headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
+      return fetch(integ().whatsappUrl, { method: "POST", headers: headers,
+        body: JSON.stringify({ acao: "enviar", para: "55" + String(para).replace(/\D/g, ""), texto: texto }) })
+        .then(function (r) { return r.json(); });
+    });
   }
 
   // ---------- resumo diário do dono ----------
@@ -640,16 +641,17 @@
           return null;
         }
         var headers = { "Content-Type": "application/json" };
-        if (window.MT_CLOUD && window.MT_CLOUD.anonKey) {
-          headers.apikey = window.MT_CLOUD.anonKey;
-          headers.Authorization = "Bearer " + window.MT_CLOUD.anonKey;
-        }
-        return fetch(urlPg, { method: "POST", headers: headers, body: JSON.stringify({
-          acao: "criar", metodo: "pix",
-          valorCentavos: Math.round((+alvo.valor || 0) * 100),
-          descricao: "Mensalidade — venc. em " + alvo.dias + " dia(s)",
-          nome: alvo.a.nome, vencimento: S.todayISO(), parcelas: 1,
-        }) }).then(function (r) { return r.json(); }).then(function (r) {
+        if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
+        // o pagarme também exige usuário logado — anonKey crua leva 401
+        return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+          headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
+          return fetch(urlPg, { method: "POST", headers: headers, body: JSON.stringify({
+            acao: "criar", metodo: "pix",
+            valorCentavos: Math.round((+alvo.valor || 0) * 100),
+            descricao: "Mensalidade — venc. em " + alvo.dias + " dia(s)",
+            nome: alvo.a.nome, vencimento: S.todayISO(), parcelas: 1,
+          }) }).then(function (r) { return r.json(); });
+        }).then(function (r) {
           if (r && r.ok && (r.linkPagamento || r.pixCopiaECola)) {
             st.linksPix[alvo.a.id] = { link: r.linkPagamento || r.pixCopiaECola, criadoEm: S.todayISO() };
           }

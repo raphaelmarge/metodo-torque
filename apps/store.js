@@ -608,6 +608,16 @@
     iniciaSync: iniciaSync,
     // acesso à conexão da nuvem (para publicações como o App do Aluno)
     cloud: function () { return sync.client ? { client: sync.client, aid: sync.aid } : null; },
+    /* Token de login pra chamar Edge Function.
+     * As funções que agem em nome do usuário (whatsapp, pagarme) exigem role
+     * "authenticated"; a anonKey tem role "anon" e leva 401 SEMPRE. Quem chama
+     * essas funções tem que usar este token — a anonKey só serve de apikey. */
+    tokenNuvem: function () {
+      if (!sync.client) return Promise.resolve("");
+      return sync.client.auth.getSession()
+        .then(function (s) { return (s && s.data && s.data.session && s.data.session.access_token) || ""; })
+        .catch(function () { return ""; });
+    },
     backupKeys: function () { return BACKUP_KEYS.slice(); },
     usuario: function () {
       var acad = null, perfil = null;
