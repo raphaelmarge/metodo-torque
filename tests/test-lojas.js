@@ -79,9 +79,17 @@ for (const arte of ["assets/icons/loja/icone-academia-1024.png", "assets/icons/l
   ok(fs.existsSync(path.join(RAIZ, arte)), "arte da loja existe: " + arte);
 }
 const prods = lerJson("nativo/produtos.json");
-ok(!!prods && Object.keys(prods).length === 3 &&
-  prods.personal.appId === "com.torqueon.personal" && prods.nutri.abre === "nutricao.html",
-  "nativo/produtos.json define os três apps com o pacote e a página de cada um");
+ok(!!prods && Object.keys(prods).length === 4 &&
+  prods.personal.appId === "com.torqueon.personal" && prods.nutri.abre === "nutricao.html" &&
+  prods.aluno.abre === "aluno-login.html",
+  "nativo/produtos.json define os quatro apps com o pacote e a página de cada um");
+// cada produto precisa do ícone que o gerador de assets nativos consome
+for (const id of Object.keys(prods || {})) {
+  ok(fs.existsSync(path.join(RAIZ, prods[id].icone)), "ícone do app existe: " + id);
+}
+const fluxo = fs.readFileSync(path.join(RAIZ, ".github/workflows/app-nativo.yml"), "utf8");
+ok(Object.keys(prods || {}).every((id) => fluxo.includes(id)),
+  "e o robô do GitHub oferece todos eles na hora de compilar");
 
 console.log("App nativo (Capacitor):");
 const pkgNativo = lerJson("nativo/package.json");
