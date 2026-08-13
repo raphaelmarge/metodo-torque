@@ -72,6 +72,7 @@ var CORE = [
   "assets/bot-builder.js",
   "privacidade.html",
   "excluir-conta.html",
+  "diagnostico.html",
   "quest.html",
   "assets/icons/icon-personal.svg",
   "assets/icons/icon-personal-192.png",
