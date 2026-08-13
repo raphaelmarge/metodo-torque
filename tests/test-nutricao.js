@@ -1035,6 +1035,25 @@ async function abaNt(p, a) {
     await pA2.evaluate(() => localStorage.removeItem("mtapp:ntStudio"));
     await pA2.close();
   }
+
+  {
+    // versão à vista + saída de emergência: quem instala o Nutri na tela
+    // inicial abre esta página direto, e sem isso fica preso na versão velha
+    const pV = await b.newPage();
+    pV.on("pageerror", (e) => erros.push("versao: " + e.message));
+    await pV.goto(BASE + "/nutricao.html");
+    await pV.waitForTimeout(900);
+    const v = await pV.evaluate(() => ({
+      mostrada: (document.getElementById("cfgVersaoN") || {}).textContent,
+      global: window.MT_VERSAO,
+      botao: !!document.getElementById("cfgAtualizaN"),
+      atualiza: typeof window.MT_ATUALIZA === "function",
+    }));
+    ok(/^mt-v\d+$/.test(v.mostrada) && v.mostrada === v.global,
+      "as Configurações do Nutri mostram a versão que está rodando (" + v.mostrada + ")");
+    ok(v.botao && v.atualiza, "e o botão de baixar a versão nova está ligado");
+    await pV.close();
+  }
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
 
   await b.close();

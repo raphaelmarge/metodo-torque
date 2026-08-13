@@ -7854,13 +7854,13 @@ self.MT_EXERCICIOS = [
   "n": "Flexão hindu (dand)",
   "g": "Ginástica e calistenia",
   "eq": "Peso do corpo",
-  "d": "Saia do cachorro olhando para baixo, mergulhe o peito rente ao chão e termine com o tronco erguido, num movimento contínuo."
+  "d": "Comece na posição do cachorro olhando para baixo, mergulhe o peito rente ao chão e termine com o tronco erguido, tudo num movimento só."
  },
  {
   "n": "Joelhada no clinch com saco pesado",
   "g": "Boxe e lutas",
   "eq": "Saco de boxe",
-  "d": "Puxe o saco pela nuca imaginária, suba o joelho projetando o quadril à frente e apoie firme o pé de base."
+  "d": "Segure o alto do saco com as duas mãos, como se fosse a nuca do adversário, e suba o joelho projetando o quadril à frente."
  },
  {
   "n": "Corrida estacionária na parte funda com colete",
