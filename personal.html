@@ -796,18 +796,37 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <span style="flex: 1; min-width: 190px; border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;">📱 <b>Celular na altura do umbigo</b><br><span class="muted">aluno a uns 3 passos largos, descalço</span></span>
         </div>
         <div class="linha-flex" style="margin-top: 12px; flex-wrap: wrap;">
-          <label class="btn" style="cursor: pointer;">📷 Foto 1 — de frente
+          <button class="btn" id="scanAoVivo">🎥 Câmera guiada (tira sozinho)</button>
+          <label class="btn sec" style="cursor: pointer;">📷 Foto 1 — de frente
             <input type="file" id="scanFrente" accept="image/*" capture="environment" hidden></label>
           <label class="btn sec" style="cursor: pointer;">📷 Foto 2 — de lado (opcional)
             <input type="file" id="scanLado" accept="image/*" capture="environment" hidden></label>
           <button class="btn" id="scanMedir" disabled>Medir</button>
         </div>
+        <p class="muted" style="margin: 6px 0 0; font-size: 12px;">Na câmera guiada o celular fica apoiado, mostra onde a pessoa tem que ficar e dispara sozinho quando o enquadramento está certo — dá pra medir sem ninguém segurando o aparelho.</p>
         <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">Na foto de frente: braços afastados do corpo, formando um V, pés na largura do quadril. Na de lado: braços esticados pra frente, sempre o mesmo lado.</p>
         <div id="scanEstado" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
       </div>
 
       <div id="scanResultado" hidden style="margin-top: 12px;"></div>
       <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Não rolou? A fita métrica do card acima resolve em 2 minutos.</p>
+    </div>
+
+    <!-- câmera guiada: tela cheia, gabarito por cima e disparo automático -->
+    <div id="scanCam" hidden style="position: fixed; inset: 0; z-index: 99; background: #000; display: flex; flex-direction: column;">
+      <div style="position: relative; flex: 1; overflow: hidden;">
+        <video id="scanVideo" playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <canvas id="scanGuia" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+        <div id="scanContagem" style="position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-size: 120px; font-weight: 900; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.6); pointer-events: none;"></div>
+      </div>
+      <div style="background: #14121a; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));">
+        <div id="scanCamPasso" style="font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #a78bfa; text-transform: uppercase;"></div>
+        <div id="scanCamFala" style="font-size: 17px; font-weight: 700; margin-top: 4px; min-height: 46px; color: #fff;"></div>
+        <div class="linha-flex" style="margin-top: 8px;">
+          <button class="btn sec" id="scanCamFechar">Fechar</button>
+          <button class="btn sec" id="scanCamAgora">Tirar agora</button>
+        </div>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
@@ -1329,6 +1348,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/composicao-corporal.js"></script>
 <script src="assets/scanner-visao.js"></script>
 <script src="assets/scanner-corporal.js"></script>
+<script src="assets/scanner-camera.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
@@ -6047,7 +6067,125 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       scanPend = null; box.hidden = true; scanDiz("");
     });
   }
-  window.__scan = { calibracao: scanCalibracao, pinta: pintaScanResultado, pend: function () { return scanPend; } }; // testes
+  /* ---------- câmera guiada ----------
+   * O celular fica apoiado, o gabarito mostra onde a pessoa tem que ficar e o
+   * disparo é automático. Faz as duas fotos em sequência: primeiro de frente,
+   * depois de lado. Se a pessoa fechar no meio, o que já foi tirado vale.
+   */
+  var camAtiva = null, camTimer = null, camQuadros = { frente: null, lado: null };
+  function camFecha() {
+    if (camAtiva) { try { camAtiva.para(); } catch (e) {} camAtiva = null; }
+    // sem isso, quem fecha durante o "agora vire de lado" vê a câmera reabrir sozinha
+    if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+    $("scanCam").hidden = true;
+    $("scanContagem").style.display = "none";
+  }
+  function camDiz(passo, texto, cor) {
+    $("scanCamPasso").textContent = passo;
+    $("scanCamFala").textContent = texto || "";
+    $("scanCamFala").style.color = cor || "#fff";
+  }
+  function camInicia(modo) {
+    var alturaCm = +$("scanAltura").value;
+    camDiz(modo === "frente" ? "Foto 1 de 2 — de frente" : "Foto 2 de 2 — de lado", "Ligando a câmera…");
+    $("scanCam").hidden = false;
+    return self.MT_CAMERA.abre({
+      video: $("scanVideo"), canvas: $("scanGuia"), modo: modo, alturaCm: alturaCm, base: "",
+      aoAviso: function (t) { if (t) camDiz($("scanCamPasso").textContent, t); },
+      aoEstado: function (e) {
+        var c = $("scanContagem");
+        if (e.contando > 0) { c.style.display = "flex"; c.textContent = e.contando; }
+        else { c.style.display = "none"; camDiz($("scanCamPasso").textContent, e.fala, e.cor); }
+      },
+      aoFoto: function (quadro) {
+        camAtiva = null;
+        camQuadros[modo] = quadro;
+        if (modo === "frente") {
+          camDiz("Foto 1 pronta ✓", "Agora vire de lado — braços esticados pra frente.");
+          setTimeout(function () {
+            camInicia("lado").then(function (c) { camAtiva = c; }).catch(function (e) {
+              camFecha();
+              scanDiz("A foto de lado não deu certo (" + esc(e.message) + ") — vou medir só com a de frente.");
+              camMede();
+            });
+          }, 2200);
+        } else {
+          camFecha();
+          camMede();
+        }
+      },
+    }).then(function (c) { camAtiva = c; return c; });
+  }
+  // mede a partir do que a câmera guiada capturou (mesmo caminho das fotos soltas)
+  function camMede() {
+    var a = scanAlunoAtual();
+    var alturaCm = +$("scanAltura").value;
+    if (!a || !camQuadros.frente) { scanDiz("Não consegui capturar a foto de frente."); return; }
+    scanDiz("Medindo…");
+    try {
+      var f = self.MT_SCANNER.analisaFoto(self.MT_VISAO.le(camQuadros.frente), "frente", alturaCm);
+      if (!f.ok) throw new Error(f.fala);
+      var l = null;
+      if (camQuadros.lado) {
+        var l0 = self.MT_SCANNER.analisaFoto(self.MT_VISAO.le(camQuadros.lado), "lado", alturaCm);
+        if (l0.ok) l = l0;
+      }
+      var st = load();
+      var r = self.MT_SCANNER.medidas(f, l, {
+        alturaCm: alturaCm, sexo: $("scanSexo").value,
+        calibracao: scanCalibracao(st, a.id),
+      });
+      if (!r.ok) throw new Error(r.erro || "não consegui medir");
+      r.quando = S.todayISO();
+      camQuadros = { frente: null, lado: null };   // as imagens saem da memória aqui
+      scanDiz("Pronto. As fotos foram descartadas. ✅");
+      pintaScanResultado(r, a);
+    } catch (e) {
+      camQuadros = { frente: null, lado: null };
+      scanDiz('<b style="color:#f87171;">' + esc(e.message) + "</b>");
+    }
+  }
+  if ($("scanAoVivo")) $("scanAoVivo").addEventListener("click", function () {
+    var a = scanAlunoAtual();
+    if (!a || !+$("scanAltura").value) { alert("Escolha o aluno e confira a altura."); return; }
+    if (!self.MT_CAMERA || !self.MT_CAMERA.suportado()) {
+      alert("Este aparelho não libera a câmera pro navegador. Use os botões de foto.");
+      return;
+    }
+    camQuadros = { frente: null, lado: null };
+    // o pedido de permissão do sensor de inclinação (iOS) só vale se sair de um toque
+    self.MT_CAMERA.pedePermissaoInclinacao().then(function () {
+      return camInicia("frente");
+    }).then(function (c) { camAtiva = c; }).catch(function (e) {
+      camFecha();
+      scanDiz('<b style="color:#f87171;">' + esc(e.message) + "</b>");
+    });
+  });
+  if ($("scanCamFechar")) $("scanCamFechar").addEventListener("click", function () {
+    camFecha();
+    if (camQuadros.frente) camMede();
+    else { camQuadros = { frente: null, lado: null }; scanDiz(""); }
+  });
+  if ($("scanCamAgora")) $("scanCamAgora").addEventListener("click", function () {
+    // saída manual pra quem não conseguir ficar verde (roupa, luz, cadeirante)
+    var v = $("scanVideo");
+    if (!v.videoWidth) return;
+    var q = document.createElement("canvas");
+    q.width = v.videoWidth; q.height = v.videoHeight;
+    q.getContext("2d").drawImage(v, 0, 0);
+    var modo = /lado/.test($("scanCamPasso").textContent) ? "lado" : "frente";
+    if (camAtiva) { try { camAtiva.para(); } catch (e) {} camAtiva = null; }
+    camQuadros[modo] = q;
+    if (modo === "frente") {
+      camDiz("Foto 1 pronta ✓", "Agora vire de lado — braços esticados pra frente.");
+      setTimeout(function () {
+        camInicia("lado").then(function (c) { camAtiva = c; }).catch(function () { camFecha(); camMede(); });
+      }, 1800);
+    } else { camFecha(); camMede(); }
+  });
+
+  window.__scan = { calibracao: scanCalibracao, pinta: pintaScanResultado, pend: function () { return scanPend; },
+    camInicia: camInicia, camFecha: camFecha, camQuadros: function () { return camQuadros; } }; // testes
 
   // ---------- laudo de composição corporal ----------
   // Junta o cadastro do aluno (sexo, altura, idade) com a avaliação e devolve

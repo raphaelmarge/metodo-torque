@@ -20,7 +20,12 @@ async function abaPt(p, a) {
 }
 
 (async () => {
-  const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
+  // câmera falsa: deixa a captura guiada abrir de verdade no teste (imagem sem
+  // ninguém, então o semáforo fica vermelho — é isso que a gente quer conferir)
+  const b = await chromium.launch({
+    executablePath: EXEC,
+    args: ["--no-sandbox", "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+  });
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 } });
 
   await ctx.addInitScript(() => {
@@ -4021,6 +4026,52 @@ async function abaPt(p, a) {
       "só com a câmera, o laudo usa a foto e avisa que a medida é estimada por foto");
     ok(precede.fita === 22 && !precede.fitaMarcada, "havendo medida de fita ou dobras, ela vence a da câmera");
     ok(precede.balanca === 19.4, "e a bioimpedância vence as duas");
+
+    // 🎥 captura guiada: gabarito na tela, semáforo e desligar a câmera ao sair
+    const guia = await pS.evaluate(() => {
+      const cv = document.createElement("canvas");
+      cv.width = 300; cv.height = 500;
+      const g = cv.getContext("2d");
+      window.MT_CAMERA.desenhaGuia(g, 300, 500, "frente", "#4ade80");
+      const px = g.getImageData(0, 0, 300, 500).data;
+      let pintados = 0;
+      for (let i = 3; i < px.length; i += 4) if (px[i] > 0) pintados++;
+      return { suportado: window.MT_CAMERA.suportado(), pintados };
+    });
+    ok(guia.suportado, "o navegador do celular tem tudo que a captura guiada precisa");
+    ok(guia.pintados > 500, "o gabarito é desenhado por cima da câmera (silhueta de onde ficar)");
+
+    await pS.click("#scanAoVivo");
+    await pS.waitForFunction(() => {
+      const v = document.getElementById("scanVideo");
+      return !document.getElementById("scanCam").hidden && v.srcObject && v.videoWidth > 0;
+    }, null, { timeout: 20000 });
+    ok(true, "o botão da câmera guiada abre a tela cheia e liga o vídeo");
+
+    // sem ninguém na imagem o semáforo tem que reclamar, nunca disparar sozinho
+    const semaforo = await pS.waitForFunction(() => {
+      const t = document.getElementById("scanCamFala").textContent;
+      return t && !/Ligando|Baixando|Preparando|Carregando/.test(t) ? t : null;
+    }, null, { timeout: 90000 }).then((h) => h.jsonValue());
+    ok(/ninguém|corpo|enquadr|inteiro|afaste|aproxime|celular/i.test(semaforo),
+      "com a imagem vazia ele avisa o que corrigir em vez de tirar a foto: " + JSON.stringify(semaforo));
+    ok(await pS.evaluate(() => document.getElementById("scanContagem").style.display === "none"),
+      "a contagem 3-2-1 só aparece quando o enquadramento está certo");
+
+    await pS.click("#scanCamFechar");
+    await pS.waitForTimeout(300);
+    const desligou = await pS.evaluate(() => {
+      const v = document.getElementById("scanVideo");
+      const t = v.srcObject ? v.srcObject.getTracks() : [];
+      return {
+        fechou: document.getElementById("scanCam").hidden,
+        vivas: t.filter((x) => x.readyState === "live").length,
+        semQuadro: !window.__scan.camQuadros().frente,
+      };
+    });
+    ok(desligou.fechou && desligou.vivas === 0,
+      "ao fechar, a câmera é desligada de verdade (nenhuma trilha continua ligada)");
+    ok(desligou.semQuadro, "saindo no meio, nada de imagem fica guardado");
     await ctxS.close();
   }
   {

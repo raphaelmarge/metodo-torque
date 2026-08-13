@@ -1,7 +1,7 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
 
-var VERSION = "mt-v382";
+var VERSION = "mt-v383";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -61,6 +61,7 @@ var CORE = [
   "assets/composicao-corporal.js",
   "assets/scanner-visao.js",
   "assets/scanner-corporal.js",
+  "assets/scanner-camera.js",
   "assets/modulo-conta.js",
   "assets/bot-builder.js",
   "privacidade.html",

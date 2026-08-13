@@ -69,11 +69,17 @@
    * não cai mais (o gargalo passa a ser a inferência) e o erro cresce: em 540 px
    * já dá 3,3%. Então 1080 é o ponto certo. */
   V.LARGURA_ANALISE = 1080;
-  function paraAnalise(fonte) {
+  /* No loop ao vivo a conta é outra: ali não precisa de medida, só de saber se a
+   * pessoa está bem enquadrada. Num celular popular a análise na resolução de
+   * medir roda a 2 quadros por segundo, o que deixa o semáforo lerdo demais pra
+   * guiar alguém — então o loop usa uma resolução menor e ganha fluidez. */
+  V.LARGURA_GUIA = 480;
+  function paraAnalise(fonte, larguraAlvo) {
+    var limite = larguraAlvo || V.LARGURA_ANALISE;
     var w = fonte.naturalWidth || fonte.videoWidth || fonte.width;
     var h = fonte.naturalHeight || fonte.videoHeight || fonte.height;
-    if (!w || !h || w <= V.LARGURA_ANALISE) return { fonte: fonte, largura: w, altura: h };
-    var e = V.LARGURA_ANALISE / w;
+    if (!w || !h || w <= limite) return { fonte: fonte, largura: w, altura: h };
+    var e = limite / w;
     var cv = document.createElement("canvas");
     cv.width = Math.round(w * e);
     cv.height = Math.round(h * e);
@@ -90,7 +96,7 @@
   V.le = function (fonte, opcoes) {
     if (!pose) throw new Error("chame carrega() antes");
     opcoes = opcoes || {};
-    var red = paraAnalise(fonte);
+    var red = paraAnalise(fonte, opcoes.largura || (opcoes.video ? V.LARGURA_GUIA : V.LARGURA_ANALISE));
     var largura = red.largura, altura = red.altura;
     var res;
     if (opcoes.video) {
