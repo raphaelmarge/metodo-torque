@@ -41,6 +41,13 @@
   </div>
 
   <div class="card">
+    <div class="passo"><span class="n">4</span><div><b>Confira se pegou</b><p>Copie o conferidor abaixo, cole numa <b style="color:#fff">nova query</b> e rode. Ele não muda nada — só responde item por item, com ✅ ou ❌, o que está instalado e pra que serve. Item com ❌: rode o SQL do passo 1 de novo.</p></div></div>
+    <button class="btnx sec" id="btnConferir" disabled>Copiar o conferidor</button>
+    <div id="statusConf"></div>
+    <textarea id="caixaConf" hidden readonly></textarea>
+  </div>
+
+  <div class="card">
     <p><b style="color:#fff">Depois de rodar, teste assim:</b> abra a Central de Comando → card <b style="color:#fff">Novo cliente (provisionar acesso)</b> → cadastre um cliente fictício com um e-mail seu. Se aparecer a senha gerada, tá tudo funcionando. 🎉</p>
   </div>
 
@@ -80,6 +87,31 @@
     cx.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   document.getElementById("btnMostrar").addEventListener("click", mostra);
+
+  // conferidor: mesmo caminho do SQL principal, em botão separado
+  var CONF = "";
+  var btnC = document.getElementById("btnConferir");
+  fetch("conferir.sql", { cache: "no-cache" }).then(function (r) {
+    if (!r.ok) throw new Error(r.status);
+    return r.text();
+  }).then(function (t) { CONF = t; btnC.disabled = false; }).catch(function () {
+    document.getElementById("statusConf").textContent = "não consegui carregar o conferidor — recarregue a página";
+  });
+  function mostraConf() {
+    var cx = document.getElementById("caixaConf");
+    cx.hidden = false; cx.value = CONF;
+    cx.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  btnC.addEventListener("click", function () {
+    var fim = function (deu) {
+      document.getElementById("statusConf").textContent = deu ? "✅ Copiado! Cole numa nova query e aperte Run." : "";
+      if (!deu) mostraConf();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(CONF).then(function () { fim(true); }, function () { fim(false); });
+    } else { fim(false); }
+  });
+
   window.__sqlPage = true; // testes
 </script>
 </body>
