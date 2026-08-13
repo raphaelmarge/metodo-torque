@@ -437,8 +437,9 @@
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("sw.js").then(function (reg) {
-        // procura versão nova sempre que o portal abre
-        if (reg.update) reg.update();
+        // procura versão nova sempre que o portal abre (o catch importa: aba
+        // fechando ou rede caída rejeitam essa promessa)
+        if (reg.update) { try { var p = reg.update(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
       }).catch(function () {});
     });
     // versão nova assumiu? recarrega uma vez sozinho

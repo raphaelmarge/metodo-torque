@@ -1,7 +1,10 @@
 /* Service worker do portal Método Torque — precache completo para uso offline. */
 importScripts("assets/content.js");
+importScripts("assets/versao.js");
 
-var VERSION = "mt-v388";
+// a versão mora em assets/versao.js pra que as telas mostrem exatamente a
+// mesma coisa que o service worker está servindo
+var VERSION = self.MT_VERSAO;
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -17,6 +20,8 @@ var CORE = [
   "assets/app.css",
   "assets/app.js",
   "assets/content.js",
+  "assets/versao.js",
+  "assets/pwa-update.js",
   "assets/access-config.js",
   "assets/access.js",
   "assets/cloud-config.js",

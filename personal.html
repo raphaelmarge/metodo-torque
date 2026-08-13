@@ -1108,6 +1108,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <span id="cfgStatus" class="muted" style="font-size: 12.5px;"></span>
       </div>
     </div>
+
+    <div class="card" style="margin-top: 14px;">
+      <h2>Versão do sistema</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quando eu publico uma correção, o celular pode continuar rodando a versão antiga por um tempo. Confira o número aqui: se não bater com o que eu falei, toque em atualizar. <b>Nenhum dado seu é apagado</b> — só o que estava guardado pra funcionar offline.</p>
+      <div class="linha-flex" style="gap: 10px;">
+        <span id="cfgVersao" style="font-weight: 800; font-size: 15px;">—</span>
+        <button class="btn sec" id="cfgAtualiza">🔄 Baixar a versão nova</button>
+      </div>
+    </div>
   </section>
 
   <section id="vAssessoria" hidden>
@@ -1356,6 +1365,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/scanner-visao.js"></script>
 <script src="assets/scanner-corporal.js"></script>
 <script src="assets/scanner-camera.js"></script>
+<script src="assets/versao.js"></script>
+<script src="assets/pwa-update.js"></script>
 <script src="assets/bot-builder.js"></script>
 <script src="assets/modulo-conta.js"></script>
 <script>
@@ -4727,6 +4738,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgStatus").textContent = mudouApp
       ? "Salvo! Agora publique os apps (Alunos → 📤 Publicar apps atualizados) pra valer no celular de todo mundo."
       : "Salvo!";
+  });
+  // versão à vista: sem isso não dá pra saber se o celular está rodando o que
+  // foi publicado ou uma cópia velha guardada pelo navegador
+  if ($("cfgVersao")) $("cfgVersao").textContent = self.MT_VERSAO || "desconhecida";
+  if ($("cfgAtualiza")) $("cfgAtualiza").addEventListener("click", function () {
+    var bt = this;
+    if (!self.MT_ATUALIZA) { alert("Este navegador não guarda versão offline — é só recarregar a página."); return; }
+    bt.disabled = true;
+    bt.textContent = "Baixando…";
+    self.MT_ATUALIZA();
   });
   window.__configPT = renderConfigPT; // testes
 

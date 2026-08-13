@@ -4175,6 +4175,24 @@ async function abaPt(p, a) {
     ok(/CalculatorGraph/.test(falhou.tecnico),
       "e guarda o detalhe técnico em letra pequena, pro print do Raphael valer de diagnóstico");
     await pS.evaluate(() => window.__scan.camFecha());
+
+    // versão à vista: é o que separa "já corrigi" de "aqui continua igual"
+    const versao = await pS.evaluate(async () => {
+      const menu = document.getElementById("btnMenuPt");
+      if (menu && menu.offsetParent !== null) menu.click();
+      document.querySelector('#abas [data-a="config"]').click();
+      await new Promise((r) => setTimeout(r, 300));
+      return {
+        mostrada: document.getElementById("cfgVersao").textContent,
+        global: window.MT_VERSAO,
+        botao: !!document.getElementById("cfgAtualiza"),
+        atualiza: typeof window.MT_ATUALIZA === "function",
+      };
+    });
+    ok(/^mt-v\d+$/.test(versao.mostrada) && versao.mostrada === versao.global,
+      "as Configurações mostram a versão que está rodando (" + versao.mostrada + ")");
+    ok(versao.botao && versao.atualiza,
+      "e tem o botão que baixa a versão nova quando o navegador segura a antiga");
     await ctxS.close();
   }
   {
