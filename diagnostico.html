@@ -90,10 +90,22 @@
     anota("projeto: " + projeto);
 
     // 1) o banco responde?
+    var chaveMorta = false;
     fetch(cfg.url + "/rest/v1/", { headers: { apikey: cfg.anonKey } }).then(function (r) {
       anota("rest: HTTP " + r.status);
-      if (r.ok) linha("✅", "Banco de dados respondendo", "O Supabase está no ar e a chave do site é válida.");
-      else linha("❌", "Banco não respondeu", "HTTP " + r.status, "Confira se o projeto não está pausado no painel do Supabase.");
+      if (r.ok) { linha("✅", "Banco de dados respondendo", "O Supabase está no ar e a chave do site é válida."); return; }
+      if (r.status === 401 || r.status === 403) {
+        /* 401 no banco com a chave pública quer dizer uma coisa só: a chave
+         * não vale mais. Acontece quando o Supabase troca o projeto para as
+         * chaves novas (publishable) e desativa a legada. Quando isto aparece,
+         * NADA de nuvem funciona — nem login, nem sincronização, nem as IAs —
+         * então não adianta procurar defeito nas Edge Functions. */
+        chaveMorta = true;
+        linha("❌", "A chave pública do site não vale mais", "O banco recusou a chave com HTTP " + r.status + ". Sem ela, nada de nuvem funciona: login, sincronização, app do aluno e as IAs.",
+          "No Supabase: Project Settings → API Keys. Reative a aba 'Legacy API keys', OU copie a 'Publishable key' (sb_publishable_…) e me mande pra eu trocar no site.");
+        return;
+      }
+      linha("❌", "Banco não respondeu", "HTTP " + r.status, "Confira se o projeto não está pausado no painel do Supabase.");
     }).catch(function (e) {
       anota("rest: erro " + e.message);
       linha("❌", "Não consegui falar com o Supabase", e.message, "Confira sua internet e se o projeto está ativo.");
@@ -116,6 +128,12 @@
           return;
         }
         if (res.status === 401 || res.status === 403) {
+          // se o banco também recusou, o problema é a chave — não a função
+          if (chaveMorta || /INVALID_CREDENTIALS/i.test(res.texto)) {
+            linha("⚠️", "A função também recusou, pelo mesmo motivo", "É a chave pública, não a chat-envia.",
+              "Resolva a chave acima primeiro; depois rode este diagnóstico de novo.");
+            return;
+          }
           linha("❌", "A função recusou a chamada", "HTTP " + res.status + " — normalmente é o Verify JWT.",
             "Abra a função no painel → Details → deixe o Verify JWT LIGADO (é o padrão) e faça o deploy de novo.");
           return;

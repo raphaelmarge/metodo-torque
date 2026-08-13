@@ -19,6 +19,16 @@ function ok(cond, msg) {
 /* cada cenário: o que a chat-envia responde ao ping, e o que a tela TEM que dizer */
 const CENARIOS = [
   {
+    // aconteceu de verdade: o Supabase trocou o projeto para as chaves novas e
+    // desativou a legada. TUDO de nuvem parou, e a tela mandava procurar
+    // defeito na função — que estava publicada e correta.
+    nome: "chave pública do site revogada (401 no próprio banco)",
+    rest: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
+    resposta: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
+    espera: [/chave pública do site não vale mais/, /Legacy API keys|Publishable/, /pelo mesmo motivo/],
+    naoEspera: [/Verify JWT/, /projeto não está pausado/],
+  },
+  {
     nome: "tudo certo",
     resposta: { status: 200, body: { ok: true, ia: true, whatsapp: false, instagram: false } },
     espera: [/Função chat-envia publicada/, /Chave da IA configurada/],
@@ -54,8 +64,11 @@ const CENARIOS = [
     // nuvem simulada: nada sai para a internet de verdade
     await ctx.route("**/functions/v1/chat-envia", (r) =>
       r.fulfill({ status: c.resposta.status, contentType: "application/json", body: JSON.stringify(c.resposta.body) }));
-    await ctx.route("**/rest/v1/", (r) =>
-      r.fulfill({ status: 200, contentType: "application/json", body: '{"paths":{}}' }));
+    await ctx.route("**/rest/v1/", (r) => r.fulfill({
+      status: (c.rest && c.rest.status) || 200,
+      contentType: "application/json",
+      body: JSON.stringify((c.rest && c.rest.body) || { paths: {} }),
+    }));
     const p = await ctx.newPage();
     p.on("pageerror", (e) => erros.push(e.message));
     await p.goto(BASE + "/diagnostico.html");
