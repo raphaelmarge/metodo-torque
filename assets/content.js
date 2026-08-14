@@ -1,4 +1,4 @@
-// Catálogo de conteúdo do portal Método Torque.
+// Catálogo de conteúdo do portal TORQUE ON.
 // Fonte única de verdade para navegação, home e service worker (lista de docs).
 self.MT_MODULES = [
   { n: 1, title: "O Negócio Academia: Diagnóstico e Fundamentos", short: "Diagnóstico e Fundamentos" },
@@ -116,7 +116,7 @@ self.MT_APPS = [
 
 // type: apostila | ferramenta (interativa) | modelo (documento de apoio) | deck | indice
 self.MT_DOCS = [
-  { slug: "deck", type: "deck", module: null, title: "Apresentação do Método", desc: "O deck completo do Método Torque: promessa, percurso dos módulos e o que muda na sua academia." },
+  { slug: "deck", type: "deck", module: null, title: "Apresentação do Método", desc: "O deck completo do TORQUE ON: promessa, percurso dos módulos e o que muda na sua academia." },
   { slug: "indice", type: "indice", module: null, title: "Índice das Apostilas", desc: "Visão geral das apostilas com o que você implanta em cada módulo." },
   { slug: "trilha-guiada", type: "inicio", module: null, title: "Trilha Guiada — Comece por Aqui", desc: "Responda o diagnóstico rápido e receba a ordem certa de módulos para o seu momento." },
 

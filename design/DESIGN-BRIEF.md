@@ -87,7 +87,7 @@ Textos em pt-BR, informais na medida ("Bora?", emojis pontuais 💜💪).
 ## 4. Inventário de telas
 
 ### 4.1 Portal do método (index + portal.html)
-SPA com os 10 módulos do curso "Método Torque" + modelos preenchíveis +
+SPA com os 10 módulos do curso "TORQUE ON" + modelos preenchíveis +
 acesso aos programas. Visual escuro com roxo.
 
 ### 4.2 Sistema da Academia (apps/sistema.html) — o "EVO killer"

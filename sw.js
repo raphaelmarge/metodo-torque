@@ -1,4 +1,4 @@
-/* Service worker do portal Método Torque — precache completo para uso offline. */
+/* Service worker do portal TORQUE ON — precache completo para uso offline. */
 importScripts("assets/content.js");
 importScripts("assets/versao.js");
 

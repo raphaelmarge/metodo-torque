@@ -1,4 +1,4 @@
-/* Portal Método Torque — navegação, progresso e PWA */
+/* Portal TORQUE ON — navegação, progresso e PWA */
 (function () {
   "use strict";
 
@@ -226,7 +226,7 @@
     el("viewerBadge").textContent = moduleLabel(doc);
     el("viewerTitle").textContent = doc.title;
     el("topbarDoc").textContent = doc.title;
-    document.title = doc.title + " — Método Torque";
+    document.title = doc.title + " — TORQUE ON";
 
     var url = urlFor(doc);
     el("openBtn").href = url;
@@ -252,7 +252,7 @@
     homeView.hidden = false;
     viewerView.hidden = true;
     el("topbarDoc").textContent = "";
-    document.title = "Método Torque — Gestão de Academias de Alta Performance";
+    document.title = "TORQUE ON — Gestão de Academias de Alta Performance";
     buildHome();
     refreshSidebarState();
     closeNav();
