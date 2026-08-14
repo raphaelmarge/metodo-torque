@@ -2473,6 +2473,31 @@ async function abaPt(p, a) {
   ok(full.goPausado === "Continuar" && full.pausaGrade && full.pausaMapa,
     "pausar mostra o mapa com a grade de métricas e o botão Continuar");
   ok(full.rodandoAposFechar, "fechar a tela cheia não para a corrida");
+  // conquistas de corrida: só com a área ligada, medidas pelo histórico real
+  ok(/Primeira corrida/.test(cardioProf.appHtml) && /100 km somados/.test(cardioProf.appHtml) && /Pace abaixo de 6:00/.test(cardioProf.appHtml),
+    "app com a área de corrida ganha medalhas de corrida (desenhos de traço)");
+  await pCr.evaluate(() => {
+    localStorage.setItem("ptcardio", JSON.stringify([
+      { d: "2026-08-01", n: "Rodagem", m: "corrida", s: 1800, k: 5.2, p: "5:46" },
+      { d: "2026-08-03", n: "Giro", m: "bike", s: 3600, k: 20, p: null },
+    ]));
+  });
+  await pCr.reload({ waitUntil: "domcontentloaded" });
+  await pCr.waitForTimeout(700);
+  const cqCorrida = await pCr.evaluate(() => {
+    window.__trocaSec("evolucao");
+    const cards = [...document.querySelectorAll("#cqGrid > div")].map((x) => x.textContent);
+    const acha = (n) => cards.find((t) => t.indexOf(n) > -1) || "";
+    return {
+      primeira: /CONQUISTADA/.test(acha("Primeira corrida")),
+      cinco: /CONQUISTADA/.test(acha("5 km numa corrida")),
+      pace: /CONQUISTADA/.test(acha("Pace abaixo de 6:00")),
+      soma: acha("100 km somados"),
+      bikeNaoConta: /1\/10/.test(acha("10 corridas")),
+    };
+  });
+  ok(cqCorrida.primeira && cqCorrida.cinco && cqCorrida.pace, "correr 5,2 km com pace 5:46 conquista as medalhas de corrida");
+  ok(/5\/100/.test(cqCorrida.soma) && cqCorrida.bikeNaoConta, "os km somados contam só corrida (bike e caminhada ficam de fora)");
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();
