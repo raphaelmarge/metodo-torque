@@ -246,7 +246,7 @@ async function abaNt(p, a) {
   ok(/data-agics/.test(appHtml) && /AGTIT/.test(appHtml), "horário confirmado no app tem o botão 📅 salvar no calendário");
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Adesão à dieta/.test(appHtml), "app do paciente tem conquistas com gráfico de adesão");
   ok(/Dia perfeito/.test(appHtml) && /7 dias de água/.test(appHtml) && /10 pesagens/.test(appHtml), "medalhas de adesão, água e pesagens no app");
-  ok(/botChips/.test(appHtml) && /🤖 assistente/.test(appHtml) && /botEscolhe/.test(appHtml), "app do paciente tem o robô de atendimento (chatbot de menu)");
+  ok(/botChips/.test(appHtml) && />assistente</.test(appHtml) && /botEscolhe/.test(appHtml), "app do paciente tem o robô de atendimento (chatbot de menu)");
   // menu fixo embaixo (paridade com o app do aluno do Personal)
   ok(/navAppN/.test(appHtml) && /trocaSecN/.test(appHtml) && /'dieta'/.test(appHtml) && /'evolucao'/.test(appHtml) && /nitemn/.test(appHtml),
     "app do paciente tem a barra de navegação fixa embaixo (Início/Dieta/Evolução/Agenda/Chat)");
