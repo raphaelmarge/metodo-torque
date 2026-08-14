@@ -7537,26 +7537,44 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='crZera' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button>" +
       "<input id='crKm' inputmode='decimal' placeholder='km na mão' style='flex:1;min-width:0;text-align:center;'></div>" +
       "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div>" +
-      // modo tela cheia estilo NRC: o mapa ocupa a tela toda com os controles flutuando
+      // modo tela cheia estilo NRC: painel de cor chapada com UMA métrica gigante (toque ou
+      // deslize troca; bolinhas mostram a página), mapa como segunda página, pausa com o mapa
+      // + grade de métricas, e cadeado que bloqueia a tela na corrida (segura 1s pra destravar)
       "<div id='crFull' style='display:none;position:fixed;inset:0;z-index:70;background:#0d0c10;'>" +
       "<canvas id='crMapaFull' width='480' height='900' style='position:absolute;inset:0;width:100%;height:100%;'></canvas>" +
-      "<div id='crContagemF' style='display:none;position:absolute;inset:0;z-index:3;background:rgba(0,0,0,.62);align-items:center;justify-content:center;font-size:130px;font-weight:900;color:#fff;'>3</div>" +
-      "<button id='crFullFecha' aria-label='Fechar tela cheia' style='position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:4;width:42px;height:42px;border-radius:50%;background:rgba(13,12,16,.74);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:17px;cursor:pointer;'>✕</button>" +
-      "<div style='position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:14px;right:66px;z-index:2;background:rgba(13,12,16,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:16px;padding:10px 14px;'>" +
-      "<div style='display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;'><b id='crTempoF' style='font-size:34px;font-variant-numeric:tabular-nums;color:#fff;'>0:00</b>" +
-      "<span id='crFaseF' style='font-size:11px;font-weight:800;letter-spacing:.1em;color:#d6d2df;text-transform:uppercase;'>Pronto?</span></div>" +
-      "<div id='crInfoF' style='font-size:12px;color:#d6d2df;'></div></div>" +
-      "<div style='position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;'>" +
-      "<div style='display:flex;gap:10px;'>" +
-      "<span style='background:rgba(13,12,16,.78);border-radius:12px;padding:7px 14px;font-size:12px;color:#fff;'>PACE <b id='crPaceF' style='font-variant-numeric:tabular-nums;'>--:--</b></span>" +
-      "<span style='background:rgba(13,12,16,.78);border-radius:12px;padding:7px 14px;font-size:12px;color:#fff;'>KM <b id='crDistF' style='font-variant-numeric:tabular-nums;'>0,00</b></span></div>" +
-      "<div style='display:flex;align-items:center;gap:22px;'>" +
-      "<button id='crCfgBtnF' aria-label='Configurações da corrida' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.78);border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>⚙️</button>" +
-      "<button class='btnx' id='crGoF' style='width:132px;height:132px;border-radius:50%;font-size:20px;padding:0;flex:none;'>Iniciar</button>" +
-      "<button id='crGpsF' aria-label='GPS' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.78);border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:10.5px;font-weight:800;font-family:inherit;line-height:1.2;'>GPS</button></div>" +
+      "<div id='crPainelF' style='position:absolute;inset:0;z-index:1;background:linear-gradient(165deg," + COR + " 0%," + COR + " 58%," + CORC + " 175%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:130px 20px 240px;cursor:pointer;'>" +
+      "<div id='crGigaV' style='font-size:96px;font-size:min(30vw,118px);font-weight:900;color:#fff;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;text-align:center;'>0,00</div>" +
+      "<div id='crGigaL' style='font-size:13px;font-weight:800;letter-spacing:.2em;color:rgba(255,255,255,.85);margin-top:8px;'>QUILÔMETROS</div>" +
+      "<div id='crDotsF' style='display:flex;gap:8px;margin-top:18px;'></div></div>" +
+      "<div id='crTopoF' style='position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:62px;z-index:2;border-radius:16px;padding:10px 12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);'>" +
+      "<div style='display:flex;text-align:center;'>" +
+      "<div style='flex:1;'><b id='crTempoF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0:00</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>TEMPO</div></div>" +
+      "<div style='flex:1;'><b id='crPaceF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>--:--</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>RITMO</div></div>" +
+      "<div style='flex:1;'><b id='crKcalF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>CALORIAS</div></div></div>" +
+      "<div id='crFaseF' style='text-align:center;font-size:11px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.85);text-transform:uppercase;margin-top:4px;'>Pronto?</div>" +
+      "<div id='crInfoF' style='text-align:center;font-size:11.5px;color:rgba(255,255,255,.8);'></div></div>" +
+      "<div style='position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 14px;'>" +
+      "<div id='crPausaF' style='display:none;width:100%;max-width:440px;background:rgba(13,12,16,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:18px;padding:14px;'>" +
+      "<div style='display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;'>" +
+      "<div><b id='crPzKm' style='font-size:26px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0,00</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#a9a4b5;'>QUILÔMETROS</div></div>" +
+      "<div><b id='crPzT' style='font-size:26px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0:00</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#a9a4b5;'>TEMPO</div></div>" +
+      "<div><b id='crPzPc' style='font-size:26px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>--:--</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#a9a4b5;'>PACE MÉDIO</div></div>" +
+      "<div><b id='crPzKc' style='font-size:26px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#a9a4b5;'>CALORIAS</div></div></div></div>" +
+      "<div style='display:flex;align-items:center;gap:20px;'>" +
+      "<button id='crCfgBtnF' aria-label='Configurações da corrida' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>⚙️</button>" +
+      "<button id='crLockBtnF' aria-label='Bloquear a tela' style='display:none;width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>🔒</button>" +
+      "<button id='crGoF' style='width:126px;height:126px;border-radius:50%;background:#0d0c10;border:none;color:#fff;font-family:inherit;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.4);flex:none;'>Iniciar</button>" +
+      "<button id='crGpsF' aria-label='GPS' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:10.5px;font-weight:800;font-family:inherit;line-height:1.2;'>GPS</button>" +
+      "<button id='crMapBtnF' aria-label='Ver o mapa' style='display:none;width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>🗺️</button></div>" +
       "<button id='crMetaBtnF' style='background:rgba(13,12,16,.82);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:11px 24px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Defina uma meta</button>" +
       "<button id='crFimF' style='display:none;background:rgba(13,12,16,.82);border:1px solid #4ade80;border-radius:99px;padding:11px 24px;color:#4ade80;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Terminei!</button>" +
-      "</div></div></div>" : "") +
+      "</div>" +
+      "<div id='crContagemF' style='display:none;position:absolute;inset:0;z-index:6;background:rgba(0,0,0,.62);align-items:center;justify-content:center;font-size:130px;font-weight:900;color:#fff;'>3</div>" +
+      "<div id='crLockOverF' style='display:none;position:absolute;inset:0;z-index:5;background:rgba(13,12,16,.55);flex-direction:column;align-items:center;justify-content:center;gap:10px;'>" +
+      "<div style='font-size:54px;'>🔒</div><div style='color:#fff;font-weight:800;font-size:14px;'>Tela bloqueada</div>" +
+      "<button id='crUnlockF' style='background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:12px 26px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Segure pra destravar</button></div>" +
+      "<button id='crFullFecha' aria-label='Fechar tela cheia' style='position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:12px;z-index:4;width:42px;height:42px;border-radius:50%;background:rgba(13,12,16,.74);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:17px;cursor:pointer;'>✕</button>" +
+      "</div></div>" : "") +
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
@@ -8085,7 +8103,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(document.getElementById('cardCardio')){" +
       "var CARDIOS=" + JSON.stringify(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90 }; })).replace(/</g, "\\u003c") + ";" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
-      "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null};" +
+      "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
       "function crEl(id){return document.getElementById(id);}" +
       "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap};}" +
       "function crFala(txt){try{if(!window.speechSynthesis)return false;var u=new SpeechSynthesisUtterance(txt);u.lang='pt-BR';speechSynthesis.speak(u);return true;}catch(e){return false;}}" +
@@ -8115,9 +8133,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "for(z=17;z>12;z--){var q1=merc(b.la2,b.lo1,z),q2=merc(b.la1,b.lo2,z);" +
       "if((q2.x-q1.x)*256<W-60&&(q2.y-q1.y)*256<H-60)break;}}" +
       "var c0=merc(centro.lat,centro.lng,z);var px0=c0.x*256-W/2,py0=c0.y*256-H/2;" +
-      "g.fillStyle='#e8e6e1';g.fillRect(0,0,W,H);" +
+      "g.fillStyle='#eceae5';g.fillRect(0,0,W,H);" +
       "for(var tx=Math.floor(px0/256);tx<=Math.floor((px0+W)/256);tx++){for(var ty=Math.floor(py0/256);ty<=Math.floor((py0+H)/256);ty++){" +
       "var tl=crTile(z,tx,ty);if(tl&&tl.ok)try{g.drawImage(tl.img,Math.round(tx*256-px0),Math.round(ty*256-py0));}catch(e){}}}" +
+      /* visual clean, estilo app de corrida: tira a cor berrante dos tiles
+       * (composição 'saturation' — o filtro de canvas não roda em iPhone
+       * antigo, composição roda em tudo) e passa um véu claro por cima.
+       * A rota e a posição são pintadas DEPOIS, então continuam vivas. */
+      "g.globalCompositeOperation='saturation';g.fillStyle='hsl(0, 14%, 50%)';g.fillRect(0,0,W,H);" +
+      "g.globalCompositeOperation='source-over';g.fillStyle='rgba(244,242,237,.42)';g.fillRect(0,0,W,H);" +
       "var pj=function(pp){var m2=merc(pp.lat,pp.lng,z);return {x:m2.x*256-px0,y:m2.y*256-py0};};" +
       "if(cr.rota.length>1){g.lineJoin='round';g.lineCap='round';" +
       "g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=8;g.beginPath();" +
@@ -8149,6 +8173,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "g.fillStyle='#fff';g.beginPath();g.arc(aN.x,aN.y,8,0,7);g.fill();" +
       "g.fillStyle='" + COR + "';g.beginPath();g.arc(aN.x,aN.y,5,0,7);g.fill();}" +
       "function paceFmt(mpk){if(!isFinite(mpk)||mpk<=0||mpk>60)return '--:--';var m=Math.floor(mpk),s=Math.round((mpk-m)*60);if(s===60){m++;s=0;}return m+':'+('0'+s).slice(-2);}" +
+      // calorias estimadas: último peso registrado (ou 70 kg) × km × fator da modalidade
+      "function crKcal(km){var pz=L('ptpeso',{});var ks=Object.keys(pz).sort();var kg=(ks.length?+pz[ks[ks.length-1]]:0)||70;" +
+      "var f=cr.mod==='bike'?0.42:(cr.mod==='caminhada'?0.55:1.03);return Math.round(kg*km*f);}" +
       "function havKm(a,b){var R=6371,rd=Math.PI/180;var x=Math.sin((b.lat-a.lat)*rd/2),y=Math.sin((b.lng-a.lng)*rd/2);" +
       "var h=x*x+Math.cos(a.lat*rd)*Math.cos(b.lat*rd)*y*y;return 2*R*Math.asin(Math.sqrt(h));}" +
       "function crCd(resta){if(!cr.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
@@ -8236,7 +8263,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "crEl('crGo').addEventListener('click',function(){" +
       "if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fC=crEl('crContagemF');if(fC)fC.style.display='none';this.textContent='Iniciar';return;}" +
       "if(cr.run){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.autoP=false;cr.acum=(Date.now()-cr.t0)/1000;this.textContent='Continuar';soltaTela();pintaCr();return;}" +
-      "crAutoGps();abreCrFull();var cd=cr.acum>0?0:crCfg().cd;" +
+      "crAutoGps();abreCrFull(0);var cd=cr.acum>0?0:crCfg().cd;" +
       "if(!cd){crLarga();return;}" +
       // contagem regressiva estilo app de corrida (configurável: 3, 5 ou 10 segundos)
       "var elC=crEl('crContagem'),elF=crEl('crContagemF');elC.style.display='flex';elC.textContent=cd;" +
@@ -8274,23 +8301,56 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();" +
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';desenhaRota();pintaCr();});" +
       "crEl('crKm').addEventListener('input',function(){if(!cr.gpsOn)pintaCr();});" +
-      // tela cheia: abre ao iniciar ou ao tocar no mapa; ✕ volta pro card sem parar a corrida
-      "function abreCrFull(){var f=crEl('crFull');if(!f)return;f.style.display='block';crFullDim();espelhaCr();try{desenhaRota();}catch(e){}}" +
-      "function fechaCrFull(){var f=crEl('crFull');if(f)f.style.display='none';}" +
+      // tela cheia estilo NRC: página 0 = painel de cor chapada com a métrica gigante,
+      // página 1 = mapa; pausado força o mapa + grade de métricas; ✕ volta sem parar
+      // o crFull vai pro <body> na primeira abertura: dentro do card, a animação de entrada
+      // da seção (transform) prende o position:fixed e a tela cheia sai clipada
+      "function abreCrFull(pg){var f=crEl('crFull');if(!f)return;if(f.parentElement!==document.body)document.body.appendChild(f);" +
+      "if(pg===0||pg===1)cr.pagF=pg;f.style.display='block';crFullDim();espelhaCr();try{desenhaRota();}catch(e){}}" +
+      "function fechaCrFull(){var f=crEl('crFull');if(!f)return;f.style.display='none';cr.lockF=false;crEl('crLockOverF').style.display='none';}" +
+      "var GIGAS=[['km','QUIL\\u00d4METROS'],['tempo','TEMPO'],['pace','PACE M\\u00c9DIO'],['kcal','CALORIAS']];" +
       "function espelhaCr(){if(!crFullAberto())return;" +
-      "crEl('crTempoF').textContent=crEl('crTempo').textContent;crEl('crFaseF').textContent=crEl('crFase').textContent;" +
-      "crEl('crInfoF').textContent=crEl('crInfo').textContent;crEl('crPaceF').textContent=crEl('crPaceMed').textContent;" +
-      "crEl('crDistF').textContent=crEl('crDist').textContent;crEl('crGoF').textContent=crEl('crGo').textContent;" +
-      "var rodou=cr.run||cr.acum>0;crEl('crFimF').style.display=rodou?'block':'none';" +
+      "var rodou=cr.run||cr.acum>0;var pausado=!cr.run&&cr.acum>0;var km=crKmAtual();" +
+      "var tTxt=crEl('crTempo').textContent,medTxt=crEl('crPaceMed').textContent,kmTxt=km.toFixed(2).replace('.',','),kcTxt=String(crKcal(km));" +
+      "crEl('crTempoF').textContent=tTxt;crEl('crPaceF').textContent=crEl('crPace').textContent;crEl('crKcalF').textContent=kcTxt;" +
+      "crEl('crFaseF').textContent=crEl('crFase').textContent;" +
+      "var fc=crEl('crFase').style.color;crEl('crFaseF').style.color=(fc==='#a9a4b5'||fc==='rgb(169, 164, 181)')?'rgba(255,255,255,.85)':fc;" +
+      "crEl('crInfoF').textContent=crEl('crInfo').textContent;crEl('crGoF').textContent=crEl('crGo').textContent;" +
+      "var vals={km:kmTxt,tempo:tTxt,pace:medTxt,kcal:kcTxt};var gi=cr.gigaF||0;" +
+      "crEl('crGigaV').textContent=vals[GIGAS[gi][0]];crEl('crGigaL').textContent=GIGAS[gi][1];" +
+      "crEl('crDotsF').innerHTML=GIGAS.map(function(_,i){return \"<span style='width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,\"+(i===gi?'1':'.35')+\");'></span>\";}).join('');" +
+      "var mapa=pausado||cr.pagF===1;crEl('crPainelF').style.display=mapa?'none':'flex';" +
+      "crEl('crTopoF').style.background=mapa?'rgba(13,12,16,.78)':'none';" +
+      "crEl('crPausaF').style.display=pausado?'block':'none';" +
+      "if(pausado){crEl('crPzKm').textContent=kmTxt;crEl('crPzT').textContent=tTxt;crEl('crPzPc').textContent=medTxt;crEl('crPzKc').textContent=kcTxt;}" +
+      "crEl('crCfgBtnF').style.display=rodou?'none':'block';crEl('crGpsF').style.display=rodou?'none':'block';" +
+      "crEl('crLockBtnF').style.display=cr.run?'block':'none';crEl('crMapBtnF').style.display=cr.run?'block':'none';" +
+      "crEl('crMapBtnF').textContent=cr.pagF===1?'📊':'🗺️';crEl('crMapBtnF').setAttribute('aria-label',cr.pagF===1?'Ver o painel':'Ver o mapa');" +
+      "crEl('crFimF').style.display=rodou?'block':'none';" +
+      "crEl('crGoF').style.background=pausado?'linear-gradient(135deg," + COR + "," + CORC + ")':'#0d0c10';" +
       "crEl('crMetaBtnF').style.display=rodou?'none':'block';crEl('crMetaBtnF').textContent=crEl('crMetaBtn').textContent;" +
-      "crEl('crGpsF').style.borderColor=cr.gpsOn?'#4ade80':'rgba(255,255,255,.25)';crEl('crGpsF').style.color=cr.gpsOn?'#4ade80':'#fff';}" +
+      "crEl('crGpsF').style.borderColor=cr.gpsOn?'#4ade80':'rgba(255,255,255,.3)';crEl('crGpsF').style.color=cr.gpsOn?'#4ade80':'#fff';}" +
       "crEl('crFullFecha').addEventListener('click',fechaCrFull);" +
-      "crEl('crMapa').addEventListener('click',abreCrFull);" +
+      "crEl('crMapa').addEventListener('click',function(){abreCrFull(1);});" +
       "crEl('crGoF').addEventListener('click',function(){crEl('crGo').click();espelhaCr();});" +
       "crEl('crFimF').addEventListener('click',function(){crEl('crFim').click();fechaCrFull();});" +
       "crEl('crGpsF').addEventListener('click',function(){crEl('crGps').click();espelhaCr();});" +
       "crEl('crCfgBtnF').addEventListener('click',function(){fechaCrFull();crEl('crCfgBtn').click();crEl('crCfgBox').scrollIntoView({block:'center'});});" +
       "crEl('crMetaBtnF').addEventListener('click',function(){fechaCrFull();crEl('crMetaBtn').click();crEl('crMetaBox').scrollIntoView({block:'center'});});" +
+      "crEl('crMapBtnF').addEventListener('click',function(){cr.pagF=cr.pagF===1?0:1;espelhaCr();try{desenhaRota();}catch(e){}});" +
+      // toque troca a métrica gigante; deslizar pro lado também (bolinhas mostram onde está)
+      "crEl('crPainelF').addEventListener('click',function(){if(Date.now()-(cr.swF||0)<600)return;cr.gigaF=((cr.gigaF||0)+1)%GIGAS.length;espelhaCr();});" +
+      "var crSwX=null;crEl('crPainelF').addEventListener('touchstart',function(e){crSwX=e.touches[0].clientX;},{passive:true});" +
+      "crEl('crPainelF').addEventListener('touchend',function(e){if(crSwX==null)return;var dx=e.changedTouches[0].clientX-crSwX;crSwX=null;" +
+      "if(dx<-40)cr.gigaF=((cr.gigaF||0)+1)%GIGAS.length;else if(dx>40)cr.gigaF=((cr.gigaF||0)+GIGAS.length-1)%GIGAS.length;else return;cr.swF=Date.now();espelhaCr();},{passive:true});" +
+      // cadeado: bloqueia a tela durante a corrida (suor e bolso não pausam nada);
+      // destrava segurando o botão por 1 segundo
+      "crEl('crLockBtnF').addEventListener('click',function(){cr.lockF=true;crEl('crLockOverF').style.display='flex';if(navigator.vibrate)navigator.vibrate(60);});" +
+      "var crUnT=null,crUnB=crEl('crUnlockF');" +
+      "function crSeg(){crUnB.textContent='Segurando\\u2026';crUnT=setTimeout(function(){cr.lockF=false;cr.swF=Date.now();crEl('crLockOverF').style.display='none';crUnB.textContent='Segure pra destravar';if(navigator.vibrate)navigator.vibrate(80);},1000);}" +
+      "function crSolta(){if(crUnT){clearTimeout(crUnT);crUnT=null;}if(cr.lockF)crUnB.textContent='Segure pra destravar';}" +
+      "crUnB.addEventListener('touchstart',function(e){e.preventDefault();crSeg();});crUnB.addEventListener('touchend',crSolta);crUnB.addEventListener('touchcancel',crSolta);" +
+      "crUnB.addEventListener('mousedown',crSeg);crUnB.addEventListener('mouseup',crSolta);crUnB.addEventListener('mouseleave',crSolta);" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
       "}" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +

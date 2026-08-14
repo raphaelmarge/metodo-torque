@@ -2418,32 +2418,60 @@ async function abaPt(p, a) {
   ok(nrc.mapa && nrc.redondo, "área de corrida estilo NRC: trajeto no mapa e botão INICIAR redondo gigante");
   ok(/tile\.openstreetmap\.org/.test(cardioProf.appHtml) && /OpenStreetMap/.test(cardioProf.appHtml) && /navigator\.onLine/.test(cardioProf.appHtml),
     "on-line o mapa usa ruas de verdade (OpenStreetMap com crédito); sem internet cai no traçado offline");
+  ok(/globalCompositeOperation='saturation'/.test(cardioProf.appHtml),
+    "o mapa sai limpo (tiles dessaturados com véu claro) — a rota é quem brilha, não as ruas");
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
-  // modo tela cheia estilo NRC: mapa ocupa a tela ao iniciar; ✕ volta sem parar a corrida
+  // modo tela cheia estilo NRC: painel de cor chapada ao iniciar; mapa é a 2ª página;
+  // métrica gigante troca com toque; cadeado bloqueia; pausar mostra mapa + grade
   const full = await pCr.evaluate(async () => {
     const out = {};
     localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
     document.getElementById("crZera").click();
     document.getElementById("crMapa").click();
     out.abriuPeloMapa = document.getElementById("crFull").style.display !== "none";
+    out.abriuNoMapa = document.getElementById("crPainelF").style.display === "none";
     out.metaPill = document.getElementById("crMetaBtnF").style.display !== "none";
     document.getElementById("crFullFecha").click();
     out.fechou = document.getElementById("crFull").style.display === "none";
     document.getElementById("crGo").click();
     await new Promise((r) => setTimeout(r, 500));
     out.abriuAoIniciar = document.getElementById("crFull").style.display !== "none";
+    out.painel = document.getElementById("crPainelF").style.display !== "none";
     out.tempoF = document.getElementById("crTempoF").textContent;
     out.goF = document.getElementById("crGoF").textContent;
     out.terminei = document.getElementById("crFimF").style.display !== "none";
+    // métrica gigante paginada: um toque troca, as bolinhas mostram a página
+    out.gigaL = document.getElementById("crGigaL").textContent;
+    document.getElementById("crPainelF").click();
+    out.gigaL2 = document.getElementById("crGigaL").textContent;
+    out.dots = document.getElementById("crDotsF").children.length;
+    // cadeado: bloqueia a tela e só destrava segurando 1 segundo
+    document.getElementById("crLockBtnF").click();
+    out.lock = document.getElementById("crLockOverF").style.display !== "none";
+    document.getElementById("crUnlockF").dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 1150));
+    out.destravou = document.getElementById("crLockOverF").style.display === "none";
+    // pausar: mapa + grade de métricas + botão Continuar (estilo NRC)
+    document.getElementById("crGoF").click();
+    out.goPausado = document.getElementById("crGoF").textContent;
+    out.pausaGrade = document.getElementById("crPausaF").style.display !== "none";
+    out.pausaMapa = document.getElementById("crPainelF").style.display === "none";
+    document.getElementById("crGoF").click(); // continua a corrida
+    await new Promise((r) => setTimeout(r, 300));
     document.getElementById("crFullFecha").click();
     out.rodandoAposFechar = window.__cr.run === true;
     document.getElementById("crZera").click();
     return out;
   });
-  ok(full.abriuPeloMapa && full.metaPill && full.fechou, "tocar no mapa abre o modo tela cheia (com a pill de meta) e o ✕ fecha");
-  ok(full.abriuAoIniciar && /0:0/.test(full.tempoF) && full.goF === "Pausar" && full.terminei,
-    "iniciar a corrida ocupa a tela: mapa inteiro, tempo flutuando e botão Pausar gigante");
+  ok(full.abriuPeloMapa && full.abriuNoMapa && full.metaPill && full.fechou,
+    "tocar no mapa abre a tela cheia já na página do mapa (com a pill de meta) e o ✕ fecha");
+  ok(full.abriuAoIniciar && full.painel && /0:0/.test(full.tempoF) && full.goF === "Pausar" && full.terminei,
+    "iniciar a corrida abre o painel de cor chapada com botão Pausar gigante (estilo NRC)");
+  ok(full.gigaL !== full.gigaL2 && full.dots === 4, "a métrica gigante troca com um toque e as 4 bolinhas mostram a página");
+  ok(full.lock && full.destravou, "o cadeado bloqueia a tela na corrida e destrava segurando 1 segundo");
+  ok(full.goPausado === "Continuar" && full.pausaGrade && full.pausaMapa,
+    "pausar mostra o mapa com a grade de métricas e o botão Continuar");
   ok(full.rodandoAposFechar, "fechar a tela cheia não para a corrida");
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
