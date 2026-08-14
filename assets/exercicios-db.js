@@ -7950,7 +7950,7 @@ self.MT_EXERCICIOS = [
   "n": "Clean e press com kettlebell",
   "g": "Funcional e Cross",
   "eq": "Kettlebell",
-  "d": "Puxe o kettlebell até a pegada no peito com o punho neutro e empurre acima da cabeça travando o cotovelo — o quadril dá o impulso, não o braço."
+  "d": "Puxe o kettlebell até a posição de rack no peito com o punho neutro e empurre acima da cabeça travando o cotovelo — o quadril dá o impulso, não o braço."
  },
  {
   "n": "Agachamento goblet com pausa de 3 segundos",
@@ -7971,12 +7971,6 @@ self.MT_EXERCICIOS = [
   "d": "Sentado de frente para a polia baixa, puxe com um braço levando o cotovelo para trás sem girar o tronco."
  },
  {
-  "n": "Elevação de panturrilha unilateral no degrau",
-  "g": "Quadríceps",
-  "eq": "Degrau",
-  "d": "Em um pé só no degrau, desça o calcanhar abaixo da linha do apoio e suba na ponta com pausa em cima."
- },
- {
   "n": "Tríceps testa com barra W no banco declinado",
   "g": "Tríceps",
   "eq": "Barra W",
@@ -7992,7 +7986,7 @@ self.MT_EXERCICIOS = [
   "n": "Puxada alta com pegada neutra fechada",
   "g": "Costas",
   "eq": "Polia",
-  "d": "Com o triângulo, puxe até a parte alta do peito levando os cotovelos para baixo e o peito para a barra."
+  "d": "Com o triângulo, puxe até a parte alta do peito levando os cotovelos para baixo e o peito para o triângulo."
  },
  {
   "n": "Caminhada lateral com mini band em meio agachamento",
@@ -8076,7 +8070,7 @@ self.MT_EXERCICIOS = [
   "n": "Cadeira abdutora com tronco inclinado à frente",
   "g": "Posterior e glúteo",
   "eq": "Máquina",
-  "d": "Incline o tronco à frente segurando no apoio: a mudança de ângulo enfatiza o glúteo médio; abra contra a carga sem pressa."
+  "d": "Incline o tronco à frente segurando no apoio: a mudança de ângulo enfatiza o glúteo máximo; abra contra a carga sem pressa."
  },
  {
   "n": "Remada baixa na máquina com pegada aberta",
