@@ -3777,6 +3777,40 @@ async function abaPt(p, a) {
     ok(ligou.chamaPosta && ligou.chamaFeed, "o app publica por app_aluno_posta e lê por app_aluno_feed");
     ok(ligou.reusaReage, "curtida e comentário do feed reusam app_aluno_reage com o post 'feed:<id>'");
 
+    // 🆙 nível na Turma + conquistas do professor no app
+    const nivelSocial = await pC.evaluate(() => {
+      const S2 = window.MTStore, st = S2.read("ptStudio", {});
+      st.config.conquistas = [{ e: "🦍", n: "Rato de academia", meta: 200 }];
+      S2.write("ptStudio", st);
+      const h = window.__montaAppAluno(st.alunos[0], "s3");
+      return {
+        devolveNivel: /nivel:nivelDe\(xpDados\(\)\)/.test(h),           // o app sincroniza o próprio nível
+        seloNoPost: h.indexOf("+(+p.nivel)") > -1,                      // e pinta o Nv do autor no post
+        conquistaVai: /Rato de academia/.test(h) && /CQX/.test(h),      // conquista do professor embarca
+      };
+    });
+    ok(nivelSocial.devolveNivel && nivelSocial.seloNoPost,
+      "o app devolve o nível pra nuvem e mostra o selo Nv do autor em cada post da Turma");
+    ok(nivelSocial.conquistaVai, "conquista criada pelo professor embarca no app do aluno");
+    const editorCq = await pC.evaluate(() => {
+      document.getElementById("cqPersEmoji").value = "🌅";
+      document.getElementById("cqPersNome").value = "Clube das 6 da manhã";
+      document.getElementById("cqPersMeta").value = "30";
+      document.getElementById("cqPersAdd").click();
+      const st = window.MTStore.read("ptStudio", {});
+      const criou = (st.config.conquistas || []).length;
+      const bt = document.querySelector("[data-cqrm]");
+      if (bt) bt.click();
+      return { criou, sobrou: (window.MTStore.read("ptStudio", {}).config.conquistas || []).length,
+        pendente: !!st.config.appEditGeralEm };
+    });
+    ok(editorCq.criou === 2 && editorCq.sobrou === 1 && editorCq.pendente,
+      "o editor da Personalização cria e tira conquistas, marcando os apps pra republicar");
+    // e o SQL do feed devolve o nível do autor (join com app_aluno.retorno)
+    const sqlFeed = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase-setup.sql"), "utf8");
+    ok(/left join app_aluno a on a\.token = f\.token/.test(sqlFeed) && /'nivel', coalesce\(nullif\(a\.retorno->>'nivel'/.test(sqlFeed),
+      "o app_aluno_feed do SQL entrega o nível atual de quem postou");
+
     // 3) a foto do post é comprimida no celular antes de subir (limite do servidor)
     const compressao = await pC.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
@@ -3938,6 +3972,19 @@ async function abaPt(p, a) {
       return !bt.parentNode.querySelector(".animbox").firstChild && /Ver como faz/.test(bt.textContent);
     });
     ok(fechouA, "tocar de novo fecha e volta o rótulo 'Ver como faz'");
+
+    // 🆙 no demo, o feed mostra o nível de cada autor e as conquistas do
+    // professor aparecem junto das padrão
+    const demoNv = await pA.evaluate(async () => {
+      window.__trocaSec("feed");
+      await new Promise((r) => setTimeout(r, 700));
+      const feed = document.getElementById("fdLista").textContent;
+      window.__trocaSec("evolucao");
+      const cq = document.getElementById("cqGrid").textContent;
+      return { selo: /Nv \d/.test(feed), custom: /Rato de academia/.test(cq) && /Lenda do Studio/.test(cq) };
+    });
+    ok(demoNv.selo, "no feed da Turma cada autor aparece com o selo Nv dele");
+    ok(demoNv.custom, "as conquistas criadas pelo professor aparecem no card Conquistas do demo");
     await pA.close();
     await ctxA.close();
   }

@@ -823,6 +823,8 @@ async function abaNt(p, a) {
     ok(/fdListaN/.test(comFeed) && /'Turma'/.test(comFeed), "ligar a Comunidade põe o feed e a aba Turma no app do paciente");
     ok(/app_aluno_posta/.test(comFeed) && /app_aluno_feed/.test(comFeed) && /'feed:'\+/.test(comFeed),
       "o paciente usa as mesmas RPCs do aluno (app_aluno_posta/feed + reage com 'feed:<id>')");
+    ok(/nivel:nivelDeN\(xpDadosN\(\)\)/.test(comFeed) && comFeed.indexOf("+(+p2.nivel)") > -1,
+      "🆙 o app devolve o nível pra nuvem e mostra o selo Nv do autor nos posts da Turma");
     ok(/app_desafio_ranking/.test(comFeed), "o ranking da semana conta os dias de 'Segui o plano hoje!'");
 
     // 3) a chave nas Configurações do nutricionista

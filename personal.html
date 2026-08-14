@@ -1058,6 +1058,19 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Depois de trocar, toque em <b>Publicar apps atualizados</b> pros alunos verem.</p>
     </div>
+
+    <div class="card" style="margin-top: 14px;">
+      <h2>Conquistas do app</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Crie as <b>suas</b> medalhas — elas aparecem no card Conquistas do app de todos os alunos, junto das padrão. A meta é em <b>treinos registrados</b> (ex.: 🦍 Rato de academia — 200 treinos).</p>
+      <div id="cqPersLista" style="margin-bottom: 10px;"></div>
+      <div class="linha-flex" style="flex-wrap: wrap;">
+        <input id="cqPersEmoji" placeholder="🏅" maxlength="4" style="width: 64px; text-align: center;" aria-label="Emoji da conquista">
+        <input id="cqPersNome" placeholder="Nome (ex.: Rato de academia)" maxlength="28" style="flex: 1; min-width: 180px;">
+        <input id="cqPersMeta" type="number" min="1" max="5000" placeholder="Meta (treinos)" style="width: 130px;">
+        <button class="btn" id="cqPersAdd">Adicionar</button>
+      </div>
+      <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Criou ou tirou alguma? Toque em <b>Publicar apps atualizados</b> (Treinos → Em grupo) pros alunos verem.</p>
+    </div>
   </section>
 
   <!-- IMAGENS (banco de fotos do studio) -->
@@ -7685,7 +7698,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length)return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[])," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[])," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
@@ -7887,9 +7900,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "Object.keys(porSem).forEach(function(w){if(porSem[w]>=META)semMeta++;});" +
       "function icq(p){return \"<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
       "var BADGES=[[\"<path d='M5 21V4M5 4h12l-2.5 4L17 12H5'/>\",'Primeiro treino',total,1],[\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\",'3 dias seguidos',seq,3],[\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/><path d='m9 16 2 2 4-4'/>\",'7 dias seguidos',seq,7],[\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\",'Semana com meta',semMeta,1],[\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'25 treinos',total,25],[\"<path d='M6 4h12l3 5-9 11L3 9zM3 9h18'/>\",'100 treinos',total,100],[\"<polyline points='3 7 9 13 13 9 21 17'/><polyline points='15 17 21 17 21 11'/>\",'10 pesagens',pz,10],[\"<path d='M9 3h6v3H9z'/><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 11h6M9 15h4'/>\",'Carga anotada',recs,1],[\"<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>\",'10 semanas de meta',semMeta,10]];" +
+      // conquistas criadas pelo PRÓPRIO professor (Personalização): emoji + nome
+      // + meta em treinos registrados. Entram depois das padrão.
+      "var CQX=" + JSON.stringify(((st.config || {}).conquistas || []).slice(0, 12).map(function (c) {
+        return { e: String(c.e || "🏅").replace(/[<>&"']/g, "").slice(0, 4) || "🏅",
+          n: String(c.n || "").replace(/[<>&"']/g, "").slice(0, 28), m: Math.max(1, Math.min(5000, +c.meta || 1)) };
+      }).filter(function (c) { return c.n; })).replace(/</g, "\\u003c") + ";" +
+      "CQX.forEach(function(c){BADGES.push([c.e,c.n,total,c.m,1]);});" +
       "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b){var tem=b[2]>=b[3];" +
       "return \"<div style='text-align:center;padding:10px 4px;border-radius:16px;\"+(tem?'background:rgba(124,58,237,.22);border:1px solid #7c3aed;':'background:#14121a;border:1px solid #26222f;opacity:.55;')+\"'>\"+" +
-      "\"<div style='line-height:0;padding:3px 0;color:\"+(tem?'#a78bfa':'#6e6a78')+\";'>\"+icq(b[0])+\"</div><div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
+      "(b[4]?\"<div style='font-size:23px;line-height:1.3;\"+(tem?'':'filter:grayscale(1);')+\"'>\"+b[0]+\"</div>\":\"<div style='line-height:0;padding:3px 0;color:\"+(tem?'#a78bfa':'#6e6a78')+\";'>\"+icq(b[0])+'</div>')+\"<div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
       "(tem?\"<div style='font-size:9.5px;color:#a78bfa;font-weight:800;margin-top:2px;'>CONQUISTADA</div>\":\"<div style='font-size:9.5px;color:#6e6a78;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
       "var bars='';var hj5=new Date();var seg5=new Date(hj5);seg5.setDate(seg5.getDate()-((seg5.getDay()+6)%7));var max5=1;var sems=[];" +
       "for(var w2=7;w2>=0;w2--){var d5=new Date(seg5);d5.setDate(d5.getDate()-7*w2);var n5=porSem[isoLoc(d5)]||0;if(n5>max5)max5=n5;sems.push({d:d5,n:n5});}" +
@@ -8693,7 +8713,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           "return \"<div style='border-top:1px solid #322e3d;padding:14px 0;'>\"+" +
           "\"<div style='display:flex;align-items:center;gap:10px;'>\"+" +
           "\"<div style='width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg," + COR + "," + CORC + ");color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none;'>\"+eh(iniciais(p.nome))+\"</div>\"+" +
+          // o selo Nv vem do retorno do próprio autor (app_aluno.retorno.nivel,
+          // via SQL novo do app_aluno_feed) — sem o SQL atualizado, só não aparece
           "\"<div style='min-width:0;'><b style='font-size:14px;'>\"+eh(p.nome||'Aluno')+\"</b>\"+" +
+          "(+p.nivel>0?\"<span style='margin-left:7px;font-size:10px;font-weight:800;padding:1.5px 8px;border-radius:99px;background:rgba(255,255,255,.08);color:" + CORC + ";vertical-align:2px;'>Nv \"+(+p.nivel)+\"</span>\":'')+" +
           "\"<div style='font-size:11.5px;color:#8a8695;'>\"+quando(p.criado)+(p.treino?' · '+eh(p.treino):'')+\"</div></div>\"+" +
           "(p.meu?\"<button data-fdrm='\"+eh(p.id)+\"' aria-label='Apagar meu post' style='margin-left:auto;background:none;border:none;color:#8a8695;font-size:13px;cursor:pointer;font-family:inherit;'>apagar</button>\":'')+\"</div>\"+" +
           "(p.texto?\"<div style='font-size:14.5px;line-height:1.45;margin-top:9px;white-space:pre-wrap;'>\"+eh(p.texto)+\"</div>\":'')+" +
@@ -9705,6 +9728,48 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     S.write("ptStudio", st);
     pintaCapaPers();
   });
+  // conquistas personalizadas: viram medalhas no card Conquistas do app de
+  // TODOS os alunos (meta em treinos registrados)
+  function pintaCqPers() {
+    var el = $("cqPersLista");
+    if (!el) return;
+    var l = ((load().config || {}).conquistas || []);
+    el.innerHTML = l.length
+      ? l.map(function (c, i) {
+        return "<div class='sessao-pt'><span style='font-size:19px;'>" + esc(c.e) + "</span><b>" + esc(c.n) + "</b>" +
+          "<span class='muted' style='font-size:12px;'>" + (+c.meta) + " treinos</span><span style='margin-left:auto;'></span>" +
+          "<button class='btn sec mini' data-cqrm='" + i + "' aria-label='Tirar esta conquista'>✕</button></div>";
+      }).join("")
+      : "<p class='muted' style='font-size:12.5px;'>Nenhuma conquista sua ainda — as padrão do app continuam valendo.</p>";
+  }
+  $("cqPersAdd").addEventListener("click", function () {
+    var e = $("cqPersEmoji").value.trim() || "🏅";
+    var n = $("cqPersNome").value.trim();
+    var meta = Math.round(+$("cqPersMeta").value);
+    if (!n) { alert("Dê um nome pra conquista (ex.: Rato de academia)."); return; }
+    if (!(meta >= 1 && meta <= 5000)) { alert("Defina a meta em treinos (de 1 a 5000)."); return; }
+    var st = load();
+    st.config = st.config || {};
+    st.config.conquistas = st.config.conquistas || [];
+    if (st.config.conquistas.length >= 12) { alert("Máximo de 12 conquistas suas — tire alguma antes de criar outra."); return; }
+    if (st.config.conquistas.some(function (c) { return c.n.toLowerCase() === n.toLowerCase(); })) { alert("Já existe uma conquista com esse nome."); return; }
+    st.config.conquistas.push({ e: e.slice(0, 4), n: n.slice(0, 28), meta: meta });
+    st.config.appEditGeralEm = new Date().toISOString();   // entra no app de todo mundo na próxima publicação
+    S.write("ptStudio", st);
+    $("cqPersEmoji").value = ""; $("cqPersNome").value = ""; $("cqPersMeta").value = "";
+    pintaCqPers();
+  });
+  $("cqPersLista").addEventListener("click", function (ev) {
+    var bt = ev.target.closest("[data-cqrm]");
+    if (!bt) return;
+    var st = load();
+    (st.config.conquistas || []).splice(+bt.getAttribute("data-cqrm"), 1);
+    st.config.appEditGeralEm = new Date().toISOString();
+    S.write("ptStudio", st);
+    pintaCqPers();
+  });
+  pintaCqPers();
+  window.__cqPers = pintaCqPers; // testes
   $("cfgLogoBtn").addEventListener("click", function () { $("cfgLogoFile").click(); });
   $("cfgLogoFile").addEventListener("change", function () {
     var f = this.files && this.files[0];
