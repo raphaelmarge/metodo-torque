@@ -1861,6 +1861,9 @@ begin
       'foto', f.foto,
       'treino', f.treino,
       'criado', f.criado,
+      -- nível ATUAL do autor, do que o app dele sincronizou por último
+      -- (retorno.nivel entra pelo app_aluno_devolve; app antigo = sem selo)
+      'nivel', coalesce(nullif(a.retorno->>'nivel', '')::int, 0),
       'meu', (f.token = t),
       'curtidas', (select count(*) from app_reacoes r
                      where r.post_id = 'feed:' || f.id and r.tipo = 'like'),
@@ -1872,6 +1875,7 @@ begin
                         where c.post_id = 'feed:' || f.id and c.tipo = 'coment')
     ) as linha
     from app_feed f
+    left join app_aluno a on a.token = f.token
     where f.academia_id = v_acad and f.oculto = false
     order by f.criado desc
     limit greatest(1, least(60, coalesce(p_limite, 30)))

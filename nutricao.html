@@ -2616,7 +2616,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "var rf=L('ntref_'+isoHj(),{});var nrf=0;for(var kk in rf)nrf++;" +
       // celular novo/limpo: sem registro local não devolve nada (senão apagaria o histórico da nuvem)
       "if(!L('ntpeso',[]).length&&!L('ntdi_'+isoHj(),[]).length&&!nrf&&!L('ntag_'+isoHj(),0)&&!fs.length)return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:" + JSON.stringify(primeiro) + ",peso:L('ntpeso',[]),diario:L('ntdi_'+isoHj(),[])," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:" + JSON.stringify(primeiro) + ",nivel:nivelDeN(xpDadosN()),peso:L('ntpeso',[]),diario:L('ntdi_'+isoHj(),[])," +
       "refsFeitas:nrf,refsTotal:REFS.length,agua:L('ntag_'+isoHj(),0),aguaMeta:AGUAML,kcalMeta:KCALMETA,dia:isoHj()," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
@@ -3010,7 +3010,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           "return \"<div style='border-top:1px solid #29402f;padding:14px 0;'>\"+" +
           "\"<div style='display:flex;align-items:center;gap:10px;'>\"+" +
           "\"<div style='width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg," + COR + "," + CORL + ");color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:none;'>\"+eh(iniciais(p2.nome))+\"</div>\"+" +
+          // selo Nv do autor (retorno.nivel via SQL do feed; sem o SQL novo, só não aparece)
           "\"<div style='min-width:0;'><b style='font-size:14px;'>\"+eh(p2.nome||'Paciente')+\"</b>\"+" +
+          "(+p2.nivel>0?\"<span style='margin-left:7px;font-size:10px;font-weight:800;padding:1.5px 8px;border-radius:99px;background:rgba(255,255,255,.08);color:" + CORL + ";vertical-align:2px;'>Nv \"+(+p2.nivel)+\"</span>\":'')+" +
           "\"<div style='font-size:11.5px;color:#8fa896;'>\"+quando(p2.criado)+(p2.treino?' \\u00b7 '+eh(p2.treino):'')+\"</div></div>\"+" +
           "(p2.meu?\"<button data-fdrm='\"+eh(p2.id)+\"' aria-label='Apagar meu post' style='margin-left:auto;background:none;border:none;color:#8fa896;font-size:13px;cursor:pointer;font-family:inherit;'>apagar</button>\":'')+\"</div>\"+" +
           "(p2.texto?\"<div style='font-size:14.5px;line-height:1.45;margin-top:9px;white-space:pre-wrap;'>\"+eh(p2.texto)+\"</div>\":'')+" +
