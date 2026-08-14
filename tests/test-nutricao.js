@@ -601,7 +601,13 @@ async function abaNt(p, a) {
   await pApp.waitForFunction(() => window.__appNutri);
   // barra fixa nova: água/refeições/diário vivem na aba Dieta
   await pApp.evaluate(() => window.__trocaSecN("dieta"));
+  // 🆙 água agora pontua no XP: o 1º copo do dia cria o dia de água (+2 XP) —
+  // antes lia a chave morta 'ntagua' e água nunca contava
+  const xpAntesAgua = await pApp.evaluate(() => +document.getElementById("xpNumN").textContent);
   await pApp.click("#agAdd");
+  await pApp.waitForTimeout(150);
+  const xpDepoisAgua = await pApp.evaluate(() => +document.getElementById("xpNumN").textContent);
+  ok(xpDepoisAgua === xpAntesAgua + 2, "o primeiro copo do dia rende +2 XP (" + xpAntesAgua + " → " + xpDepoisAgua + ")");
   await pApp.click("#agAdd");
   const agua = await pApp.evaluate(() => document.getElementById("agTxt").textContent);
   ok(/500 ml/.test(agua), "2 copos = 500 ml na barra de água");
@@ -637,6 +643,16 @@ async function abaNt(p, a) {
   await pApp.click("#pzAdd");
   const pz = await pApp.evaluate(() => document.getElementById("pzGraf").textContent);
   ok(/79,5/.test(pz), "peso registrado no app");
+  // 🆙 nível: selo no topo bate com a curva 50·(n−1)·n e o card das Conquistas explica
+  const nvN = await pApp.evaluate(() => ({
+    xp: +document.getElementById("xpNumN").textContent,
+    nv: +document.getElementById("nvNumN").textContent,
+    card: (document.getElementById("nvCardN") || {}).textContent.replace(/\s+/g, " "),
+  }));
+  const nvEsperado = (function (xp) { let n = 1; while (50 * n * (n + 1) <= xp) n++; return n; })(nvN.xp);
+  ok(nvN.nv === nvEsperado, "o selo Nv bate com o XP pela curva (" + nvN.xp + " XP → Nv " + nvEsperado + ")");
+  ok(/Nível \d+ — /.test(nvN.card) && /faltam \d+ pro nível/.test(nvN.card) && /dia no plano \+10 XP/.test(nvN.card),
+    "o card Seu nível mostra título, progresso e como se ganha XP");
   // login do aluno no app (card do Início)
   await pApp.evaluate(() => window.__trocaSecN("inicio"));
   await pApp.fill("#lgLogin", "bruno@email.com");
@@ -796,6 +812,8 @@ async function abaNt(p, a) {
     const semFeed = await gera(false);
     ok(/xpNumN/.test(semFeed) && /diasSemN/.test(semFeed) && /btnPlanoN/.test(semFeed),
       "🎮 o app do paciente ganha XP, semana e o botão 'Segui o plano hoje!'");
+    ok(/nvChipN/.test(semFeed) && /nvCardN/.test(semFeed) && /nivelDeN/.test(semFeed),
+      "🆙 e o sistema de níveis vai junto (selo, card e curva)");
     ok(/heroN/.test(semFeed) && /Ver minhas refeições/.test(semFeed),
       "o card da meta do dia abre o app, como o card do treino no app do aluno");
     ok(!/fdListaN/.test(semFeed), "com a Comunidade desligada o app sai sem o feed");

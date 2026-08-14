@@ -7274,6 +7274,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:" + CORC + ";font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
+      // selo de nível SEPARADO do chip de XP: o teste lê o primeiro número do
+      // #xpChip como XP — um "Nv 3" lá dentro quebraria a conta
+      "<span id='nvChip' style='flex:none;display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg," + COR + "," + COR2 + ");border-radius:99px;padding:7px 11px;font-weight:800;font-size:12.5px;color:#fff;box-shadow:0 6px 18px -8px " + COR + ";'>" +
+      "<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='#fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.4 6.7 19.1l1-5.8-4.2-4.1 5.9-.9z'/></svg>" +
+      "Nv <b id='nvNum'>1</b></span>" +
       "<span id='xpChip' style='flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);border:1px solid transparent;border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>" +
       "<svg width='13' height='13' viewBox='0 0 24 24' fill='" + CORC + "' aria-hidden='true'><path d='M13 2 3 14h7l-1 8 10-12h-7z'/></svg>" +
       "<span><b id='xpNum'>0</b> XP</span></span></div>" +
@@ -7376,6 +7381,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'></div>" +
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
+      "<div id='nvCard' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
@@ -8792,10 +8798,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "t1=tile(icx(ICO.peso,13)+' Peso',String(pUlt).replace('.',',')+' kg',(pd>0?'+':'')+String(pd).replace('.',',')+' kg desde o início',pd<0?'#4ade80':pd>0?'#f87171':'#a9a4b5');}" +
       "else{t1=tile(icx(ICO.peso,13)+' Peso','—','registre na aba Evolução');}" +
       "el.innerHTML=t1+tile(icx(ICO.cal,13)+' Treinos no mês',noMes,Object.keys(pf).length+' no total');}" +
-      "function pintaXP(){var el=document.getElementById('xpNum');if(!el)return;" +
-      "var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
-      "var nq=Object.keys(L('ptqa',{})).length;" +
-      "el.textContent=Object.keys(pf).length*10+nh*2+nq*20;}" +
+      // XP calculado dos DADOS (nunca do #xpNum — o count-up anima o texto)
+      "function xpDados(){var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
+      "var nq=Object.keys(L('ptqa',{})).length;return Object.keys(pf).length*10+nh*2+nq*20;}" +
+      /* nível: o XP acumulado vira nível numa curva quadrática — chegar ao
+       * nível n custa 50·(n−1)·n XP. Os primeiros vêm rápido (nível 2 com uma
+       * semana de treino) e cada um seguinte custa mais, que é o padrão dos
+       * apps de hábito que seguram o usuário no longo prazo. */
+      "function nvXpAte(n){return 50*(n-1)*n;}" +
+      "function nivelDe(xp){var n=1;while(50*n*(n+1)<=xp)n++;return n;}" +
+      "var NV_TIT=[[25,'Hall da Fama'],[20,'Mito'],[15,'Lenda'],[12,'Imparável'],[10,'Elite'],[9,'Fera'],[8,'Máquina'],[7,'Casca-grossa'],[6,'Raiz'],[5,'Firme'],[4,'Constante'],[3,'No ritmo'],[2,'Aquecendo']];" +
+      "function nvTitulo(n){for(var i=0;i<NV_TIT.length;i++)if(n>=NV_TIT[i][0])return NV_TIT[i][1];return 'Iniciante';}" +
+      "function pintaNivel(){var xp=xpDados();var n=nivelDe(xp);var el=document.getElementById('nvNum');if(el)el.textContent=n;" +
+      "var base=nvXpAte(n),alvo=nvXpAte(n+1);var pct=Math.max(0,Math.min(100,Math.round(100*(xp-base)/(alvo-base))));" +
+      "var card=document.getElementById('nvCard');if(card){var C2=2*Math.PI*26;" +
+      "card.innerHTML=\"<div style='display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px 14px;'>\"+" +
+      "\"<svg width='64' height='64' viewBox='0 0 64 64' style='flex:none;'><circle cx='32' cy='32' r='26' fill='none' stroke='rgba(255,255,255,.09)' stroke-width='6'/>\"+" +
+      "\"<circle cx='32' cy='32' r='26' fill='none' stroke='" + COR + "' stroke-width='6' stroke-linecap='round' stroke-dasharray='\"+(C2*pct/100).toFixed(1)+' '+C2.toFixed(1)+\"' transform='rotate(-90 32 32)'/>\"+" +
+      "\"<text x='32' y='39' text-anchor='middle' font-size='20' font-weight='800' fill='currentColor'>\"+n+'</text></svg>'+" +
+      "\"<div style='flex:1;min-width:0;'><div style='font-weight:800;font-size:15px;'>Nível \"+n+' — '+nvTitulo(n)+\"</div>\"+" +
+      "\"<div style='height:7px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:7px;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg," + COR + "," + CORC + ");'></div></div>\"+" +
+      "\"<div style='font-size:11.5px;color:#8a8695;margin-top:6px;'>\"+xp+' XP — faltam '+(alvo-xp)+' pro nível '+(n+1)+(nvTitulo(n+1)!==nvTitulo(n)?' ('+nvTitulo(n+1)+')':'')+'</div></div></div>'+" +
+      "\"<div style='font-size:11px;color:#8a8695;margin-top:7px;text-align:center;'>treino +10 XP · hábito do dia +2 · check-in respondido +20</div>\";}" +
+      // celebra só quando SOBE: a 1ª abertura apenas anota o nível atual,
+      // senão todo mundo ganhava festa do nada na atualização
+      "var visto=+L('ptnivelok',0)||0;" +
+      "if(!visto){Sv('ptnivelok',n);}else if(n>visto){Sv('ptnivelok',n);" +
+      "try{confete();if(navigator.vibrate)navigator.vibrate([120,60,120,60,260]);" +
+      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
+      "t.innerHTML='SUBIU DE NÍVEL!<br><small>Nível '+n+' — '+nvTitulo(n)+'</small>';" +
+      "document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}catch(e){}}}" +
+      "function pintaXP(){var el=document.getElementById('xpNum');if(!el)return;el.textContent=xpDados();pintaNivel();}" +
       "pintaHero();pintaProgresso();pintaXP();" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
