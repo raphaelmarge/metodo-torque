@@ -7182,6 +7182,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var wodsApp = ((t2 && t2.wods) || []).slice(0, 10);
     // corrida e bike prescritos — entram na sub-página Cardio com o cronômetro de pace
     var cardiosApp = ((t2 && t2.cardio) || []).slice(0, 10);
+    // ícones de traço da corrida (sem emoji, mesmo estilo da barra de navegação)
+    var crIco = function (p, t) { return "<svg width='" + (t || 22) + "' height='" + (t || 22) + "' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + p + "</svg>"; };
+    var CRICO_LOCK_P = "<rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/>";
+    var CRICO_CFG = crIco("<line x1='4' y1='21' x2='4' y2='14'/><line x1='4' y1='10' x2='4' y2='3'/><line x1='12' y1='21' x2='12' y2='12'/><line x1='12' y1='8' x2='12' y2='3'/><line x1='20' y1='21' x2='20' y2='16'/><line x1='20' y1='12' x2='20' y2='3'/><line x1='1' y1='14' x2='7' y2='14'/><line x1='9' y1='8' x2='15' y2='8'/><line x1='17' y1='16' x2='23' y2='16'/>");
+    var CRICO_LOCK = crIco(CRICO_LOCK_P);
+    var CRICO_MAPA = crIco("<path d='M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z'/><line x1='8' y1='2' x2='8' y2='18'/><line x1='16' y1='6' x2='16' y2='22'/>");
+    var CRICO_PAINEL = crIco("<line x1='18' y1='20' x2='18' y2='10'/><line x1='12' y1='20' x2='12' y2='4'/><line x1='6' y1='20' x2='6' y2='14'/>");
     // o que o aluno vê (Configurações do professor): tudo ligado por padrão; false esconde
     var cfgVe = (st.config || {}).appMostra || {};
     var ve = function (k) { return cfgVe[k] !== false; };
@@ -7528,7 +7535,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='crInfo' style='font-size:12px;color:#a9a4b5;margin-top:8px;'></div></div>" +
       // botão redondo gigante estilo NRC, com engrenagem e GPS dos lados
       "<div style='display:flex;align-items:center;justify-content:center;gap:22px;margin-top:14px;'>" +
-      "<button id='crCfgBtn' aria-label='Configurações da corrida' style='width:52px;height:52px;border-radius:50%;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;cursor:pointer;font-size:20px;line-height:1;'>⚙️</button>" +
+      "<button id='crCfgBtn' aria-label='Configurações da corrida' style='width:52px;height:52px;border-radius:50%;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;cursor:pointer;display:flex;align-items:center;justify-content:center;'>" + CRICO_CFG + "</button>" +
       "<button class='btnx' id='crGo' style='width:118px;height:118px;border-radius:50%;font-size:17px;padding:0;flex:none;'>Iniciar</button>" +
       "<button id='crGps' aria-label='GPS' style='width:52px;height:52px;border-radius:50%;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;cursor:pointer;font-size:11px;font-weight:800;font-family:inherit;line-height:1.2;'>Ligar<br>GPS</button></div>" +
       "<button id='crMetaBtn' style='display:block;margin:12px auto 0;background:#1b1724;border:1px solid rgba(255,255,255,.06);border-radius:99px;padding:10px 22px;color:#d6d2df;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;'>Defina uma meta</button>" +
@@ -7561,17 +7568,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div><b id='crPzPc' style='font-size:26px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>--:--</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#a9a4b5;'>PACE MÉDIO</div></div>" +
       "<div><b id='crPzKc' style='font-size:26px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#a9a4b5;'>CALORIAS</div></div></div></div>" +
       "<div style='display:flex;align-items:center;gap:20px;'>" +
-      "<button id='crCfgBtnF' aria-label='Configurações da corrida' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>⚙️</button>" +
-      "<button id='crLockBtnF' aria-label='Bloquear a tela' style='display:none;width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>🔒</button>" +
+      "<button id='crCfgBtnF' aria-label='Configurações da corrida' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;'>" + CRICO_CFG + "</button>" +
+      "<button id='crLockBtnF' aria-label='Bloquear a tela' style='display:none;width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;align-items:center;justify-content:center;'>" + CRICO_LOCK + "</button>" +
       "<button id='crGoF' style='width:126px;height:126px;border-radius:50%;background:#0d0c10;border:none;color:#fff;font-family:inherit;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.4);flex:none;'>Iniciar</button>" +
       "<button id='crGpsF' aria-label='GPS' style='width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:10.5px;font-weight:800;font-family:inherit;line-height:1.2;'>GPS</button>" +
-      "<button id='crMapBtnF' aria-label='Ver o mapa' style='display:none;width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;font-size:20px;line-height:1;'>🗺️</button></div>" +
+      "<button id='crMapBtnF' aria-label='Ver o mapa' style='display:none;width:54px;height:54px;border-radius:50%;background:rgba(13,12,16,.55);border:1px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;align-items:center;justify-content:center;'>" + CRICO_MAPA + "</button></div>" +
       "<button id='crMetaBtnF' style='background:rgba(13,12,16,.82);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:11px 24px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Defina uma meta</button>" +
       "<button id='crFimF' style='display:none;background:rgba(13,12,16,.82);border:1px solid #4ade80;border-radius:99px;padding:11px 24px;color:#4ade80;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Terminei!</button>" +
       "</div>" +
       "<div id='crContagemF' style='display:none;position:absolute;inset:0;z-index:6;background:rgba(0,0,0,.62);align-items:center;justify-content:center;font-size:130px;font-weight:900;color:#fff;'>3</div>" +
       "<div id='crLockOverF' style='display:none;position:absolute;inset:0;z-index:5;background:rgba(13,12,16,.55);flex-direction:column;align-items:center;justify-content:center;gap:10px;'>" +
-      "<div style='font-size:54px;'>🔒</div><div style='color:#fff;font-weight:800;font-size:14px;'>Tela bloqueada</div>" +
+      "<div style='color:#fff;line-height:0;'>" + crIco(CRICO_LOCK_P, 46) + "</div><div style='color:#fff;font-weight:800;font-size:14px;'>Tela bloqueada</div>" +
       "<button id='crUnlockF' style='background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:12px 26px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Segure pra destravar</button></div>" +
       "<button id='crFullFecha' aria-label='Fechar tela cheia' style='position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:12px;z-index:4;width:42px;height:42px;border-radius:50%;background:rgba(13,12,16,.74);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:17px;cursor:pointer;'>✕</button>" +
       "</div></div>" : "") +
@@ -8103,6 +8110,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(document.getElementById('cardCardio')){" +
       "var CARDIOS=" + JSON.stringify(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90 }; })).replace(/</g, "\\u003c") + ";" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
+      "var CRICOS={mapa:\"" + CRICO_MAPA + "\",painel:\"" + CRICO_PAINEL + "\"};" +
       "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
       "function crEl(id){return document.getElementById(id);}" +
       "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap};}" +
@@ -8323,9 +8331,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "crEl('crTopoF').style.background=mapa?'rgba(13,12,16,.78)':'none';" +
       "crEl('crPausaF').style.display=pausado?'block':'none';" +
       "if(pausado){crEl('crPzKm').textContent=kmTxt;crEl('crPzT').textContent=tTxt;crEl('crPzPc').textContent=medTxt;crEl('crPzKc').textContent=kcTxt;}" +
-      "crEl('crCfgBtnF').style.display=rodou?'none':'block';crEl('crGpsF').style.display=rodou?'none':'block';" +
-      "crEl('crLockBtnF').style.display=cr.run?'block':'none';crEl('crMapBtnF').style.display=cr.run?'block':'none';" +
-      "crEl('crMapBtnF').textContent=cr.pagF===1?'📊':'🗺️';crEl('crMapBtnF').setAttribute('aria-label',cr.pagF===1?'Ver o painel':'Ver o mapa');" +
+      "crEl('crCfgBtnF').style.display=rodou?'none':'flex';crEl('crGpsF').style.display=rodou?'none':'block';" +
+      "crEl('crLockBtnF').style.display=cr.run?'flex':'none';crEl('crMapBtnF').style.display=cr.run?'flex':'none';" +
+      "crEl('crMapBtnF').innerHTML=cr.pagF===1?CRICOS.painel:CRICOS.mapa;crEl('crMapBtnF').setAttribute('aria-label',cr.pagF===1?'Ver o painel':'Ver o mapa');" +
       "crEl('crFimF').style.display=rodou?'block':'none';" +
       "crEl('crGoF').style.background=pausado?'linear-gradient(135deg," + COR + "," + CORC + ")':'#0d0c10';" +
       "crEl('crMetaBtnF').style.display=rodou?'none':'block';crEl('crMetaBtnF').textContent=crEl('crMetaBtn').textContent;" +
