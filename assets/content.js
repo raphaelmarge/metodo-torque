@@ -116,7 +116,7 @@ self.MT_APPS = [
 
 // type: apostila | ferramenta (interativa) | modelo (documento de apoio) | deck | indice
 self.MT_DOCS = [
-  { slug: "deck", type: "deck", module: null, title: "Apresentação do Método", desc: "O deck completo do TORQUE ON: promessa, percurso dos módulos e o que muda na sua academia." },
+  { slug: "deck", type: "deck", module: null, title: "Apresentação do TORQUE ON", desc: "O deck completo do TORQUE ON: promessa, percurso dos módulos e o que muda na sua academia." },
   { slug: "indice", type: "indice", module: null, title: "Índice das Apostilas", desc: "Visão geral das apostilas com o que você implanta em cada módulo." },
   { slug: "trilha-guiada", type: "inicio", module: null, title: "Trilha Guiada — Comece por Aqui", desc: "Responda o diagnóstico rápido e receba a ordem certa de módulos para o seu momento." },
 
