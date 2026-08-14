@@ -1,4 +1,4 @@
-// Controle de acesso do portal Método Torque.
+// Controle de acesso do portal TORQUE ON.
 //
 // Os códigos de acesso são guardados como hash SHA-256 (o código em si não
 // aparece aqui). Para criar um código novo, abra gerador-codigo.html no

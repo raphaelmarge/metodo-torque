@@ -1,4 +1,4 @@
-/* Portal Método Torque — controle de acesso.
+/* Portal TORQUE ON — controle de acesso.
  *
  * Modo NUVEM (MT_CLOUD preenchido): login com e-mail e senha via Supabase,
  * organizado por ACADEMIA — o dono cria a academia (com o código de acesso
@@ -80,7 +80,7 @@
         : "Entre com seu e-mail e senha. Os dados da sua academia sincronizam em todos os aparelhos.";
       $("gateSair").hidden = !vinculando;
       $("gateBtn").textContent = vinculando ? "Vincular →" : criar ? "Criar academia →" : equipe ? "Entrar na equipe →" : teste ? "Começar meu teste grátis →" : "Entrar →";
-      $("gateRodape").textContent = criar ? "Não tem o código do curso? Fale com o suporte do Método Torque."
+      $("gateRodape").textContent = criar ? "Não tem o código do curso? Fale com o suporte do TORQUE ON."
         : equipe ? "Sem o código da equipe? Peça ao dono ou gerente da academia."
         : teste ? "Sem pegadinha: o que você cadastrar no teste fica salvo e vira a sua conta definitiva se você assinar."
         : "Primeira vez? Use Criar academia (dono) ou Sou da equipe (funcionário).";
@@ -320,7 +320,7 @@
         fetch("https://formsubmit.co/ajax/" + encodeURIComponent(ACESSO.notificarEmail), {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ _subject: "Novo cadastro no portal Método Torque", nome: perfil.nome, email: perfil.email, whatsapp: perfil.zap, data: perfil.desde }),
+          body: JSON.stringify({ _subject: "Novo cadastro no portal TORQUE ON", nome: perfil.nome, email: perfil.email, whatsapp: perfil.zap, data: perfil.desde }),
         }).catch(function () {});
       }
       fechaGate();

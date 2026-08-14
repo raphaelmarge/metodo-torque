@@ -1,6 +1,6 @@
-# Método Torque — Portal do Aluno (site + app)
+# TORQUE ON — Portal do Aluno (site + app)
 
-Portal web do curso **Método Torque · Gestão de Academias de Alta Performance**, gerado a partir do material original do curso. É ao mesmo tempo:
+Portal web do curso **TORQUE ON · Gestão de Academias de Alta Performance**, gerado a partir do material original do curso. É ao mesmo tempo:
 
 - **Site** — landing page + área do aluno com todo o material navegável;
 - **App** — PWA instalável no celular e no computador, que funciona **offline** depois da primeira visita.

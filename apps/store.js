@@ -1,4 +1,4 @@
-/* Método Torque — armazenamento compartilhado dos programas.
+/* TORQUE ON — armazenamento compartilhado dos programas.
  * Dados em localStorage (JSON, prefixo mtapp:) e fotos em IndexedDB.
  * Mesma origem = os mesmos dados aparecem no shell, nos programas e no modo TV. */
 (function () {
@@ -247,7 +247,7 @@
   function importBackup(file) {
     return file.text().then(function (txt) {
       var data = JSON.parse(txt);
-      if (data.formato !== "metodo-torque-backup") throw new Error("arquivo não é um backup do Método Torque");
+      if (data.formato !== "metodo-torque-backup") throw new Error("arquivo não é um backup do TORQUE ON");
       window.__MT_IMPORTANDO = true;
       try { BACKUP_KEYS.forEach(function (k) { if (data[k] != null) write(k, data[k]); }); }
       finally { window.__MT_IMPORTANDO = false; }

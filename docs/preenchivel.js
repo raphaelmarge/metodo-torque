@@ -1,4 +1,4 @@
-/* Método Torque — camada preenchível.
+/* TORQUE ON — camada preenchível.
  * Transforma fichas e modelos estáticos em documentos que se preenchem na
  * tela, como um programa: linhas de preenchimento (____) viram campos,
  * células vazias de tabela viram editáveis e quadradinhos de checklist viram
