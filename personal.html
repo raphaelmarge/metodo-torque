@@ -4749,7 +4749,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (mudouApp) st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
     save(st);
     $("cfgStatus").textContent = mudouApp
-      ? "Salvo! Agora publique os apps (Alunos → 📤 Publicar apps atualizados) pra valer no celular de todo mundo."
+      ? "Salvo! Agora publique os apps (Treinos → Em grupo → 📤 Publicar apps atualizados) pra valer no celular de todo mundo."
       : "Salvo!";
   });
   // versão à vista: sem isso não dá pra saber se o celular está rodando o que
@@ -5213,7 +5213,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (t && (t.fichas || []).length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Substituir pelas fichas geradas automaticamente?")) return;
     var r = geraTreinoAuto(id, $("taObjetivo").value, $("taEquip").value);
     if (r.erro) { $("taStatus").textContent = r.erro; return; }
-    $("taStatus").textContent = r.fichas + " ficha(s) com " + r.exercicios + " exercícios geradas pra " + r.dias + " dia(s)/semana" +
+    $("taStatus").textContent = r.fichas + " ficha(s) geradas com " + r.exercicios + " exercícios pra " + r.dias + " dia(s)/semana" +
       (r.avisos.length ? " — " + r.avisos.join(" e ") : "") + ". Revise abaixo, ajuste e envie!";
     $("tAluno").value = id; sincronizaBusca("tAluno");
     renderFichas();
@@ -5377,7 +5377,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     geraTreinoIA(id, $("taObjetivo").value, $("taEquip").value, function (r) {
       $("taIA").disabled = false;
       if (r.erro) { $("taStatus").textContent = r.erro; return; }
-      $("taStatus").textContent = r.fichas + " ficha(s) com " + r.exercicios + " exercícios prescritas pela IA." +
+      $("taStatus").textContent = r.fichas + " ficha(s) prescritas pela IA, com " + r.exercicios + " exercícios." +
         (r.resumo ? " " + r.resumo : "") + " Revise abaixo, ajuste e envie!";
       $("tAluno").value = id; sincronizaBusca("tAluno");
       renderFichas();

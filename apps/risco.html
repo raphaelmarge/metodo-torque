@@ -92,7 +92,7 @@
         var tag = x.faixa === "alto" ? '<span class="tag erro">ALTO</span>' :
           x.faixa === "medio" ? '<span class="tag alerta">MÉDIO</span>' : '<span class="tag ok">BAIXO</span>';
         var msg = "Oi " + x.a.nome.split(" ")[0] + "! Sentimos sua falta" +
-          (x.dias ? " — já faz " + x.dias + " dias" : "") + ". Bora voltar pro treino essa semana? 💪";
+          (x.dias ? " — já faz " + x.dias + (x.dias === 1 ? " dia" : " dias") : "") + ". Bora voltar pro treino essa semana? 💪";
         return "<tr><td><a href='perfil-aluno.html?id=" + x.a.id + "'><strong>" + esc(x.a.nome) + "</strong></a></td>" +
           "<td>" + esc(x.a.consultor || "—") + "</td>" +
           "<td>" + (x.ultimo ? S.fmtData(x.ultimo) : "<span class='muted'>nunca veio</span>") + "</td>" +

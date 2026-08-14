@@ -74,7 +74,7 @@
   .tipo-chip { font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
   .tipo-mensagem { background: #e0edff; color: #1d4ed8; }
   .tipo-menu { background: #e8e0ff; color: #5b21b6; }
-  .tipo-pergunta { background: var(--card)1cc; color: #92600a; }
+  .tipo-pergunta { background: #fef3c7; color: #92600a; }
   .tipo-nota { background: #fef9c3; color: #854d0e; }
   .tipo-ia { background: #dcfce7; color: #15803d; }
   .tipo-equipe { background: #ffe2ef; color: #b0257a; }
@@ -991,7 +991,7 @@
     };
     grava(true).then(function (r) {
       if (r.ok) {
-        $("#botStatus").textContent = "✅ " + botsReg.lista.length + " automação(ões) salvas. " +
+        $("#botStatus").textContent = "✅ " + botsReg.lista.length + " automação(ões) salva(s). " +
           (bot.ativo ? "A 📶 está LIGADA no WhatsApp — toda conversa nova entra pelo balão ▶." : "A 📶 está desligada — ligue a chavinha quando quiser.");
         return null;
       }

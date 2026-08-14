@@ -117,7 +117,7 @@
          * então não adianta procurar defeito nas Edge Functions. */
         chaveMorta = true;
         linha("❌", "A chave pública do site não vale mais", "O banco recusou a chave com HTTP " + r.status + ". Sem ela, nada de nuvem funciona: login, sincronização, app do aluno e as IAs.",
-          "No Supabase: Project Settings → API Keys. Reative a aba 'Legacy API keys', OU copie a 'Publishable key' (sb_publishable_…) e me mande pra eu trocar no site.");
+          "No Supabase: Project Settings → API Keys. Reative as chaves na aba 'Legacy API keys', OU copie a 'Publishable key' (sb_publishable_…) e me mande pra eu trocar no site.");
         return;
       }
       linha("❌", "Banco não respondeu", "HTTP " + r.status, "Confira se o projeto não está pausado no painel do Supabase.");

@@ -356,7 +356,7 @@
           return '<div class="kv"><span>' + ex[1] + "</span><span>" + tag +
             ' <input type="date" data-exame="' + ex[0] + '" value="' + esc(d) + '" style="width: 140px; padding: 2px 6px; font-size: 12px;"></span></div>';
         }).join("") +
-        '<p class="muted" style="margin-top:8px;">Avaliação física a cada " + ((+(S.read("config", { dados: {} }).avaliacaoDias) || 90)) + " dias (agende pela <a href="saude.html">Avaliação Física</a>); exames valem por 1 ano — a data salva sozinha.</p></div>' +
+        '<p class="muted" style="margin-top:8px;">Avaliação física a cada ' + ((+(S.read("config", { dados: {} }).avaliacaoDias) || 90)) + ' dias (agende pela <a href="saude.html">Avaliação Física</a>); exames valem por 1 ano — a data salva sozinha.</p></div>' +
         '<div class="card"><h2>Origem e observações</h2>' +
         [["Como conheceu", a.comoConheceu || a.origem], ["Indicado por", a.indicacao], ["Consultor(a)", a.consultor],
          ["Tipo de visita", a.tipoVisita], ["Cliente desde", a.criado ? S.fmtData(a.criado) : ""], ["Observações", a.obs]].map(function (kv) {
