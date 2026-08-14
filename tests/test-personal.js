@@ -2498,6 +2498,33 @@ async function abaPt(p, a) {
   });
   ok(cqCorrida.primeira && cqCorrida.cinco && cqCorrida.pace, "correr 5,2 km com pace 5:46 conquista as medalhas de corrida");
   ok(/5\/100/.test(cqCorrida.soma) && cqCorrida.bikeNaoConta, "os km somados contam só corrida (bike e caminhada ficam de fora)");
+  // recorde pessoal + arte compartilhável: corrida mais longa celebra na hora
+  const share = await pCr.evaluate(async () => {
+    window.__trocaSec("treino");
+    window.__trSub("cardio");
+    await new Promise((r) => setTimeout(r, 200));
+    localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "off", ap: 0 }));
+    document.getElementById("crZera").click();
+    document.getElementById("crKm").value = "6,1";
+    document.getElementById("crGo").click();
+    await new Promise((r) => setTimeout(r, 300));
+    window.__cr.t0 = Date.now() - 2300000; // 38 minutos rodando
+    document.getElementById("crFim").click();
+    await new Promise((r) => setTimeout(r, 200));
+    return {
+      fase: document.getElementById("crFase").textContent,
+      info: document.getElementById("crInfo").textContent,
+      btn: document.getElementById("crShare").style.display !== "none",
+      regK: window.__cr.fimReg && window.__cr.fimReg.k,
+      zera: (document.getElementById("crZera").click(), document.getElementById("crShare").style.display === "none"),
+    };
+  });
+  ok(/RECORDE: sua corrida mais longa/.test(share.fase + " " + share.info),
+    "corrida mais longa que as anteriores celebra RECORDE na hora");
+  ok(share.btn && share.regK === 6.1 && share.zera,
+    "botão Compartilhar essa corrida aparece com o registro pronto (e some no Zerar)");
+  ok(/crShare/.test(cardioProf.appHtml) && /Compartilhar essa corrida/.test(cardioProf.appHtml) && /corrida\.png/.test(cardioProf.appHtml),
+    "app gera a arte da corrida (trajeto + números + marca do studio) pra postar");
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();
