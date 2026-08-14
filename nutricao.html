@@ -2406,7 +2406,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (botCfg.ativo !== false) {
       botApp = { oi: botCfg.oi, ops: botCfg.ops.map(function (o) {
         return { r: o.r, t: String(o.t).trim().toLowerCase() === "humano"
-          ? "Pode escrever aqui embaixo que " + studio.split(" ")[0] + " te responde assim que puder! 💬" : o.t };
+          ? "Pode escrever aqui embaixo que " + studio.split(" ")[0] + " te responde assim que puder!" : o.t };
       }) };
     }
     var primeiro = (p.nome || "").split(" ")[0];
@@ -2479,13 +2479,13 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='#fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.4 6.7 19.1l1-5.8-4.2-4.1 5.9-.9z'/></svg>" +
       "Nv <b id='nvNumN'>1</b></span>" +
       "<div style='display:flex;align-items:center;gap:6px;background:#16241b;border:1px solid #29402f;border-radius:99px;padding:7px 13px;'>" +
-      "<span style='color:" + CORL + ";font-size:13px;'>⚡</span><b id='xpNumN' style='font-size:14px;'>0</b>" +
+      "<span style='color:" + CORL + ";display:flex;'><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M13 3 5 13h6l-1 8 8-10h-6z'/></svg></span><b id='xpNumN' style='font-size:14px;'>0</b>" +
       "<span style='font-size:11px;color:#9fb8a6;'>XP</span></div></div></div>" +
       // hero: a dieta de hoje em destaque, como o card do treino no app do aluno
       "<div class='cardx' id='heroN' style='padding:22px 20px;border-color:" + COR + ";'>" +
       "<div style='font-size:10.5px;letter-spacing:.18em;color:" + CORL + ";font-weight:800;text-transform:uppercase;'>Hoje · sua meta</div>" +
       "<div style='font-size:34px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;'>" + alvo.alvo + " <span style='font-size:18px;color:#9fb8a6;font-weight:700;'>kcal</span></div>" +
-      "<div class='vz' style='text-align:left;padding:0 0 4px;' id='heroSubN'>" + refs.length + " refeição(ões) no plano · 💧 " + aguaMl + " ml</div>" +
+      "<div class='vz' style='text-align:left;padding:0 0 4px;' id='heroSubN'>" + refs.length + " refeição(ões) no plano · " + aguaMl + " ml</div>" +
       "<button class='btnx' id='heroVerN' style='margin-top:12px;border-radius:99px;padding:11px 22px;'>Ver minhas refeições ›</button></div>" +
       // minha semana: logo abaixo do hero, com a meta e o botão do dia (igual ao app do aluno)
       "<div class='cardx'><h2>Minha semana</h2>" +
@@ -2494,28 +2494,28 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<button class='btnx' id='btnPlanoN' style='width:100%;padding:14px;font-size:15px;'>Segui o plano hoje!</button>" +
       "<div id='medalhasN' class='vz' style='margin-top:10px;'></div></div>" +
       (((st.config || {}).mural || []).length
-        ? "<div class='cardx' style='border-color:" + COR + ";'><h2>📌 Mural do consultório</h2>" +
+        ? "<div class='cardx' style='border-color:" + COR + ";'><h2>Mural do consultório</h2>" +
           ((st.config || {}).mural || []).map(function (av) {
-            return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed #29402f;'>📌 " + esc(av) + "</div>";
+            return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed #29402f;'>" + esc(av) + "</div>";
           }).join("") + "</div>"
         : "") +
-      "<div class='cardx'><h2>⏰ Próxima refeição</h2><div id='proxRef' class='vz' style='font-size:15px;color:#fff;font-weight:700;'></div></div>" +
+      "<div class='cardx'><h2>Próxima refeição</h2><div id='proxRef' class='vz' style='font-size:15px;color:#fff;font-weight:700;'></div></div>" +
       "<div class='cardx'><h2>Água de hoje</h2>" +
       "<div class='agua-bar'><div class='agua-fill' id='agFill' style='width:0%'></div></div>" +
       "<div style='display:flex;justify-content:space-between;align-items:center;'><span id='agTxt' class='vz' style='padding:0;'></span>" +
       "<button class='btnx' id='agAdd'>+ 1 copo (250 ml)</button></div>" +
       "<button class='btnx' id='agLembrete' style='width:100%;margin-top:10px;background:#0e7490;'>Me lembrar de beber água</button>" +
-      "<div class='vz' id='agNota' style='font-size:11px;'>Com o app aberto, avisamos a cada hora. 💧</div></div>" +
+      "<div class='vz' id='agNota' style='font-size:11px;'>Com o app aberto, avisamos a cada hora.</div></div>" +
       "<div class='cardx'><h2>Minhas refeições</h2><div id='refProg' class='vz' style='padding:0 0 8px;'></div>" +
       (refs.length ? refs.map(function (r) {
-        return "<details><summary><span>⏰ " + esc(r.h) + " · " + esc(r.t) + "</span><span style='color:" + CORC + "'>" + r.k + " kcal</span></summary>" +
+        return "<details><summary><span>" + esc(r.h) + " · " + esc(r.t) + "</span><span style='color:" + CORC + "'>" + r.k + " kcal</span></summary>" +
           "<div style='padding:0 14px 12px;'>" +
           r.itens.map(function (it) { return "<div class='kv'><span>" + esc(it.n) + "</span><span style='color:#9fb8a6'>" + esc(it.q) + " · " + it.k + " kcal</span></div>"; }).join("") +
           "<button class='refok off' data-refok='" + r.id + "' data-k='" + r.k + "' style='width:100%;margin-top:10px;'>Marcar como feita ✓</button></div></details>";
-      }).join("") : "<div class='vz'>Sua dieta aparece aqui quando " + esc(primeiro === p.nome ? "o nutricionista" : studio.split(" ")[0]) + " montar. 🥦</div>") + "</div>" +
+      }).join("") : "<div class='vz'>Sua dieta aparece aqui quando " + esc(primeiro === p.nome ? "o nutricionista" : studio.split(" ")[0]) + " montar.</div>") + "</div>" +
       "<div class='cardx'><h2>Registrar o que comi</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Comeu algo fora da dieta? Busque no banco (" + aldb.length + " alimentos) e registre — entra na contagem do dia.</div>" +
-      "<input id='diBusca' list='dlApp' placeholder='🔍 O que você comeu?' style='width:100%;margin-bottom:8px;'>" +
+      "<input id='diBusca' list='dlApp' placeholder='O que você comeu?' style='width:100%;margin-bottom:8px;'>" +
       "<datalist id='dlApp'></datalist>" +
       "<div style='display:flex;gap:8px;'><input id='diQtd' type='number' min='0.5' step='0.5' value='1' style='width:90px;' title='porções'><button class='btnx' id='diAdd' style='flex:1;'>+ Registrar</button></div>" +
       "<button class='btnx' id='diCodigo' style='width:100%;margin-top:8px;background:#0e7490;'>Registrar por código de barras</button>" +
@@ -2524,15 +2524,15 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<div class='kv'><span>Diário (o que registrei)</span><b id='kcalDiario'>0 kcal</b></div>" +
       "<div class='kv'><span><b>Total consumido</b></span><b id='kcalDia' style='color:" + CORC + "'>0 kcal</b></div>" +
       "<div class='kv'><span>Meta do dia</span><span>" + alvo.alvo + " kcal</span></div>" +
-      "<div class='kv'><span>🥩🍚🥑 Proteína · Carbo · Gordura</span><b id='macroDia'>0 · 0 · 0 g</b></div>" +
+      "<div class='kv'><span>Proteína · Carbo · Gordura</span><b id='macroDia'>0 · 0 · 0 g</b></div>" +
       "<div class='kv'><span>Alvo de macros</span><span>" + macrosApp.prot + " · " + macrosApp.carb + " · " + macrosApp.gord + " g</span></div></div>" +
       // avaliação física registrada na consulta (mesma leitura do app do aluno)
       "<div class='cardx'><h2>Minha avaliação física</h2><div id='avnBoxApp'></div></div>" +
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
-      "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui. 📉</div></div>" +
+      "<div id='pzGraf' class='vz'>Registre o peso — a curva aparece aqui.</div></div>" +
       "<div class='cardx'><h2>Fotos de progresso</h2>" +
-      "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer. 😉</div>" +
+      "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer.</div>" +
       "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>Adicionar foto de hoje" +
       "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
       "<div class='vz' style='font-size:11px;'>As fotos ficam SÓ neste aparelho — ninguém mais vê.</div></div>" +
@@ -2541,7 +2541,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         (pixAppN.qr ? "<div style='text-align:center;'><img src='" + pixAppN.qr + "' style='width:170px;height:170px;image-rendering:pixelated;background:#fff;padding:7px;border-radius:12px;'></div>" : "") +
         "<textarea id='pixPac' rows='3' readonly style='width:100%;margin-top:8px;background:#0f1a12;border:1px solid #29402f;border-radius:9px;color:#9fb8a6;font-family:monospace;font-size:10px;padding:8px;'>" + pixAppN.code + "</textarea>" +
         "<button class='btnx' id='pixCopiaPac' style='width:100%;margin-top:8px;'>Copiar Pix copia e cola</button></div>" : "") +
-      "<div class='cardx' id='cardNotif' style='display:none;'><h2>🔔 Lembretes</h2>" +
+      "<div class='cardx' id='cardNotif' style='display:none;'><h2>Lembretes</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das consultas e recados por aqui.</div>" +
       "<button class='btnx' id='btnNotif' style='width:100%;'>Ativar notificações</button></div>" +
       "<div class='cardx'><h2>Agenda</h2>" +
@@ -2554,7 +2554,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<div id='nvCardN' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
-      "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories 📸</button></div>" +
+      "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
       // Comunidade: o mesmo feed do app do aluno (o nutricionista liga nas Configurações)
       (feedLigadoN
         ? "<div class='cardx'><h2>Comunidade</h2>" +
@@ -2585,7 +2585,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;'>" +
         "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button><div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
       (zapN ? "<a class='btnx' style='display:block;text-align:center;text-decoration:none;background:" + COR2 + ";' href='https://wa.me/55" + String(zapN).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi! Sou " + p.nome + ", sobre minha dieta:") + "' target='_blank' rel='noopener'>Falar com " + esc(studio.split(" ")[0]) + "</a>" : "") +
-      "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + " 🥗</div>" +
+      "<div class='vz'>Gerado em " + esc((stamp || "").slice(0, 10)) + " · " + esc(studio) + "</div>" +
       // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
       "<nav id='navAppN' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(15,26,18,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #29402f;display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
       [["<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>", "Início"],
@@ -2629,7 +2629,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "(fs.length>1?\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#9fb8a6;letter-spacing:.1em;margin-bottom:4px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</div><img src='\"+ult.img+\"' style='width:100%;border-radius:12px;'></div>\":'')+\"</div>\"+" +
       "\"<div class='vz' style='font-size:11.5px;'>\"+fs.length+\" foto(s) guardadas</div>\";" +
       "var dias=Math.round((new Date()-new Date(ult.d))/864e5);" +
-      "if(dias>=30)document.getElementById('fotoBtn').firstChild.textContent='📸 Faz '+dias+' dias — hora da foto do mês! ';}" +
+      "if(dias>=30)document.getElementById('fotoBtn').firstChild.textContent='Faz '+dias+' dias — hora da foto do mês! ';}" +
       "document.getElementById('fotoInput').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;" +
       "var img=new Image();var rd=new FileReader();rd.onload=function(){img.onload=function(){" +
       "var c=document.createElement('canvas');var esc2=480/Math.max(img.width,img.height);if(esc2>1)esc2=1;" +
@@ -2642,7 +2642,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       // pix copia e cola
       "var pcp=document.getElementById('pixCopiaPac');" +
       "if(pcp)pcp.addEventListener('click',function(){var t=document.getElementById('pixPac');t.select();" +
-      "try{document.execCommand('copy');pcp.textContent='✅ Copiado! Cola no app do banco.';}catch(e){}" +
+      "try{document.execCommand('copy');pcp.textContent='Copiado! Cola no app do banco.';}catch(e){}" +
       "setTimeout(function(){pcp.textContent='Copiar Pix copia e cola';},2200);});" +
       // notificações push (quando o app abre pelo link hospedado)
       "(function(){if(!NUVEM||!('Notification'in window))return;" +
@@ -2661,17 +2661,17 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       // água
       "function pintaAgua(){var ml=L('ntag_'+isoHj(),0);var pct=Math.min(100,Math.round(ml*100/AGUAML));" +
       "document.getElementById('agFill').style.width=pct+'%';" +
-      "document.getElementById('agTxt').innerHTML='<b style=\"color:#22d3ee\">'+ml+' ml</b> de '+AGUAML+' ml ('+pct+'%)'+(pct>=100?' 🎉':'');}" +
+      "document.getElementById('agTxt').innerHTML='<b style=\"color:#22d3ee\">'+ml+' ml</b> de '+AGUAML+' ml ('+pct+'%)';}" +
       "document.getElementById('agAdd').addEventListener('click',function(){Sv('ntag_'+isoHj(),L('ntag_'+isoHj(),0)+250);pintaAgua();pintaXPN();" +
       "if(navigator.vibrate)navigator.vibrate(60);});pintaAgua();" +
       // lembretes de água (notificação local com o app aberto)
       "var agTimer=null;document.getElementById('agLembrete').addEventListener('click',function(){var b=this;" +
-      "if(!('Notification' in window)){alert('Este navegador não permite notificações — deixa o app aberto que a barra de água te lembra. 💧');return;}" +
+      "if(!('Notification' in window)){alert('Este navegador não permite notificações — deixa o app aberto que a barra de água te lembra.');return;}" +
       "Notification.requestPermission().then(function(perm){if(perm!=='granted'){alert('Permissão negada — ative nas configurações do navegador.');return;}" +
-      "b.textContent='🔔 Lembretes ligados (a cada hora)';b.disabled=true;Sv('ntlembra',1);" +
-      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('💧 Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);});});" +
-      "if(L('ntlembra',0)&&('Notification' in window)&&Notification.permission==='granted'){document.getElementById('agLembrete').textContent='🔔 Lembretes ligados (a cada hora)';document.getElementById('agLembrete').disabled=true;" +
-      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('💧 Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);}" +
+      "b.textContent='Lembretes ligados (a cada hora)';b.disabled=true;Sv('ntlembra',1);" +
+      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);});});" +
+      "if(L('ntlembra',0)&&('Notification' in window)&&Notification.permission==='granted'){document.getElementById('agLembrete').textContent='Lembretes ligados (a cada hora)';document.getElementById('agLembrete').disabled=true;" +
+      "agTimer=setInterval(function(){var ml=L('ntag_'+isoHj(),0);if(ml<AGUAML)new Notification('Hora da água!',{body:'Já foram '+ml+' ml de '+AGUAML+' ml hoje. Bora um copo?'});},3600000);}" +
       // diário alimentar (registrar o que comeu — MyFitnessPal style)
       "document.getElementById('dlApp').innerHTML=ALDB.map(function(a){return \"<option value='\"+a.n.replace(/'/g,'&#39;')+\"'>\"+a.p+' · '+a.k+' kcal</option>';}).join('');" +
       "function kcalDiario(){return L('ntdi_'+isoHj(),[]).reduce(function(t,x){return t+x.k;},0);}" +
@@ -2689,12 +2689,12 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "document.getElementById('diCodigo').addEventListener('click',function(){var cod=prompt('Digite o código de barras do produto (os números embaixo das barrinhas):');" +
       "if(!cod)return;cod=cod.replace(/\\D/g,'');if(cod.length<8){alert('Código inválido.');return;}" +
       "fetch('https://world.openfoodfacts.org/api/v2/product/'+cod+'.json').then(function(r){return r.json();}).then(function(d){" +
-      "if(!d||d.status!==1||!d.product){alert('Produto não encontrado — registra pela busca mesmo. 😉');return;}" +
+      "if(!d||d.status!==1||!d.product){alert('Produto não encontrado — registra pela busca mesmo.');return;}" +
       "var nut=d.product.nutriments||{};var k=Math.round(+nut['energy-kcal_100g']||(+nut.energy_100g||0)/4.184);" +
       "var nome=d.product.product_name_pt||d.product.product_name||('Produto '+cod);" +
       "if(!k){alert('Achei \\''+nome+'\\' mas sem kcal no rótulo.');return;}" +
       "var l=L('ntdi_'+isoHj(),[]);l.push({n:nome+' (100 g)',q:1,k:k});Sv('ntdi_'+isoHj(),l);pintaDiario();" +
-      "}).catch(function(){alert('Precisa de internet pra buscar o código — registra pela busca. 😉');});});" +
+      "}).catch(function(){alert('Precisa de internet pra buscar o código — registra pela busca.');});});" +
       // refeições feitas + kcal do dia + próxima
       "function pintaRefs(){var f=L('ntref_'+isoHj(),{});var kc=0,n=0;" +
       "document.querySelectorAll('[data-refok]').forEach(function(b){var ok=!!f[b.dataset.refok];b.classList.toggle('off',!ok);b.textContent=ok?'✓ Feita!':'Marcar como feita ✓';if(ok){kc+=+b.dataset.k;n++;}});" +
@@ -2703,10 +2703,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "var mp=0,mc=0,mg=0;REFS.forEach(function(r){if(f[r.id]){mp+=r.pt||0;mc+=r.cb||0;mg+=r.gd||0;}});" +
       "L('ntdi_'+isoHj(),[]).forEach(function(x){mp+=x.pt||0;mc+=x.cb||0;mg+=x.gd||0;});" +
       "var mdEl=document.getElementById('macroDia');if(mdEl)mdEl.textContent=Math.round(mp)+' · '+Math.round(mc)+' · '+Math.round(mg)+' g';" +
-      "document.getElementById('refProg').innerHTML=REFS.length?('<b style=\"color:" + CORC + "\">'+n+' de '+REFS.length+'</b> refeições feitas hoje'+(n===REFS.length&&REFS.length?' — dia perfeito! 🎉':'')):'';" +
+      "document.getElementById('refProg').innerHTML=REFS.length?('<b style=\"color:" + CORC + "\">'+n+' de '+REFS.length+'</b> refeições feitas hoje'+(n===REFS.length&&REFS.length?' — dia perfeito!':'')):'';" +
       "var ag=new Date();var hm=('0'+ag.getHours()).slice(-2)+':'+('0'+ag.getMinutes()).slice(-2);" +
       "var prox=REFS.filter(function(r){return r.h>=hm&&!f[r.id];})[0]||REFS.filter(function(r){return !f[r.id];})[0];" +
-      "document.getElementById('proxRef').textContent=prox?('⏰ '+prox.h+' — '+prox.t+' ('+prox.k+' kcal)'):(REFS.length?'Todas as refeições de hoje feitas! 🎉':'Sem dieta ainda.');}" +
+      "document.getElementById('proxRef').textContent=prox?(prox.h+' — '+prox.t+' ('+prox.k+' kcal)'):(REFS.length?'Todas as refeições de hoje feitas!':'Sem dieta ainda.');}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-refok]');if(!b)return;" +
       "var f=L('ntref_'+isoHj(),{});if(f[b.dataset.refok])delete f[b.dataset.refok];else f[b.dataset.refok]=1;Sv('ntref_'+isoHj(),f);pintaRefs();});pintaRefs();pintaDiario();" +
       // peso
@@ -2719,7 +2719,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "var lg=document.getElementById('lgLogin').value.trim(),sn=document.getElementById('lgSenha').value;" +
       "if(lg.length<5||sn.length<6){alert('Preencha o login (e-mail ou celular) e uma senha de 6+ caracteres.');return;}" +
       "var b=this;b.disabled=true;rpcApp('aluno_define_login',{t:TOKEN,p_login:lg,p_senha:sn}).then(function(r){b.disabled=false;" +
-      "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='✅ Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha.';document.getElementById('lgSenha').value='';}" +
+      "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha.';document.getElementById('lgSenha').value='';}" +
       "else{alert((r&&r.erro)||'Não deu agora — tenta de novo.');}});});" +
       // agenda estilo calendário (pede consulta pela nuvem)
       "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
@@ -2745,7 +2745,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "box.innerHTML=\"<div style='font-size:13px;font-weight:800;margin-bottom:6px;'>\"+pd[2]+'/'+pd[1]+\"</div>\"+(l.length?l.map(function(x){" +
       "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
       "var rot=x.status==='confirmado'?'confirmada':x.status==='pedido'?'aguardando':'não deu';" +
-      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#9fb8a6'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:" + CORD + ";border:1px solid " + COR + ";color:" + CORB + ";border-radius:8px;padding:3px 8px;cursor:pointer;font-size:12px;'>📅</button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
+      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#9fb8a6'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:" + CORD + ";border:1px solid " + COR + ";color:" + CORB + ";border-radius:8px;padding:3px 8px;cursor:pointer;font-size:12px;'><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='display:block;'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
       "form.style.display=AGSEL>=isoHj()?'block':'none';}" +
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
@@ -2760,7 +2760,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "document.getElementById('agPede').addEventListener('click',function(){if(!AGSEL)return;var hr=document.getElementById('agHora').value;var ob=document.getElementById('agObs').value.trim();" +
       "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_agenda_pede',{t:TOKEN,p_dia:AGSEL,p_hora:hr,p_obs:ob}).then(function(r){btn.disabled=false;" +
       "if(r&&r.ok){var l=L('ntagenda',[]);l.push({dia:AGSEL,hora:hr,status:'pedido',obs:ob});Sv('ntagenda',l);document.getElementById('agObs').value='';pintaCal();" +
-      "alert('Pedido enviado! Aguarde a confirmação da consulta. 😉');}else{alert((r&&r.erro==='muitos_pedidos')?'Você já tem muitos pedidos aguardando — espere a confirmação.':'Não deu pra enviar agora — tenta de novo.');}});}" +
+      "alert('Pedido enviado! Aguarde a confirmação da consulta.');}else{alert((r&&r.erro==='muitos_pedidos')?'Você já tem muitos pedidos aguardando — espere a confirmação.':'Não deu pra enviar agora — tenta de novo.');}});}" +
       "else{var pd=AGSEL.split('-');window.open('https://wa.me/'+(ZAPN?'55'+ZAPN:'')+'?text='+encodeURIComponent('Oi! Queria marcar consulta dia '+pd[2]+'/'+pd[1]+' às '+hr+(ob?' — '+ob:'')),'_blank');}});" +
       "carregaAgenda();" +
       // conquistas: medalhas + gráfico de adesão
@@ -2772,10 +2772,11 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "var perf=0;Object.keys(diasCom('ntref_')).forEach(function(d6){var f=L('ntref_'+d6,{});if(REFS.length&&Object.keys(f).length>=REFS.length)perf++;});" +
       "var aguaOk=0;Object.keys(diasCom('ntag_')).forEach(function(d7){if(L('ntag_'+d7,0)>=AGUAML)aguaOk++;});" +
       "var pesagens=L('ntpeso',[]).length;" +
-      "var BADGES=[['🏁','Primeiro dia',nAtivos,1],['✅','Dia perfeito',perf,1],['🔥','3 dias seguidos',seq,3],['⚡','7 dias seguidos',seq,7],['💧','7 dias de água',aguaOk,7],['🥗','30 dias ativos',nAtivos,30],['📉','10 pesagens',pesagens,10],['🏆','7 dias perfeitos',perf,7],['💎','30 dias perfeitos',perf,30]];" +
+      "function icq(p){return \"<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
+      "var BADGES=[[\"<path d='M5 21V4M5 4h12l-2.5 4L17 12H5'/>\",'Primeiro dia',nAtivos,1],[\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/><path d='m9 16 2 2 4-4'/>\",'Dia perfeito',perf,1],[\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\",'3 dias seguidos',seq,3],[\"<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>\",'7 dias seguidos',seq,7],[\"<path d='M12 3s6 6.3 6 10.5a6 6 0 0 1-12 0C6 9.3 12 3 12 3z'/>\",'7 dias de água',aguaOk,7],[\"<path d='M4 20c0-8 4-14 16-16-1 12-7 16-13 16'/><path d='M4 20c2-5 6-9 12-12'/>\",'30 dias ativos',nAtivos,30],[\"<polyline points='3 7 9 13 13 9 21 17'/><polyline points='15 17 21 17 21 11'/>\",'10 pesagens',pesagens,10],[\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\",'7 dias perfeitos',perf,7],[\"<path d='M6 4h12l3 5-9 11L3 9zM3 9h18'/>\",'30 dias perfeitos',perf,30]];" +
       "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b){var tem=b[2]>=b[3];" +
       "return \"<div style='text-align:center;padding:10px 4px;border-radius:11px;\"+(tem?'background:" + CORA + ";border:1px solid " + COR + ";':'background:#0f1a12;border:1px solid #1f3126;opacity:.55;')+\"'>\"+" +
-      "\"<div style='font-size:22px;'>\"+b[0]+\"</div><div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
+      "\"<div style='line-height:0;padding:3px 0;color:\"+(tem?'" + CORL + "':'#5d7a66')+\";'>\"+icq(b[0])+\"</div><div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
       "(tem?\"<div style='font-size:9.5px;color:#4ade80;font-weight:800;margin-top:2px;'>CONQUISTADA</div>\":\"<div style='font-size:9.5px;color:#5d7a66;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
       "var bars='';var ds=[];for(var v2=13;v2>=0;v2--){var d8=new Date();d8.setDate(d8.getDate()-v2);var iso8=d8.toISOString().slice(0,10);" +
       "var f8=L('ntref_'+iso8,{});var pct8=REFS.length?Math.min(100,Math.round(100*Object.keys(f8).length/REFS.length)):0;ds.push({d:d8,p:pct8,agua:L('ntag_'+iso8,0)>=AGUAML});}" +
@@ -2783,7 +2784,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "var hh8=Math.round(52*s8.p/100);" +
       "return \"<div style='flex:1;text-align:center;'><div style='height:\"+(52-hh8)+\"px;'></div><div style='height:\"+hh8+\"px;background:\"+(s8.p>=100?'linear-gradient(180deg," + CORL + "," + COR + ")':'#2b4433')+\";border-radius:3px 3px 0 0;min-height:2px;'></div>\"+" +
       "\"<div style='font-size:8px;margin-top:3px;color:\"+(s8.agua?'#22d3ee':'#3d5a47')+\";'>\"+('0'+s8.d.getDate()).slice(-2)+'</div></div>';}).join('')+'</div>'+" +
-      "\"<div class='vz' style='font-size:10px;'>barra cheia = todas as refeições · número azul = água na meta 💧</div>\";" +
+      "\"<div class='vz' style='font-size:10px;'>barra cheia = todas as refeições · número azul = água na meta</div>\";" +
       "document.getElementById('cqGraf').innerHTML=bars;}" +
       "pintaConquistas();document.addEventListener('click',function(e){if(e.target.closest('[data-refok]')||e.target.id==='agAdd'||e.target.id==='pzAdd')setTimeout(pintaConquistas,150);});" +
       // card de conquista pro Stories (canvas 1080×1080 verde com a marca do consultório)
@@ -2797,10 +2798,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "g.fillStyle='#fff';g.font='800 84px system-ui,sans-serif';" +
       "g.fillText(nAtivos>0?nAtivos+(nAtivos===1?' dia firme!':' dias firmes!'):'Começando hoje!',540,380);" +
       "g.font='600 52px system-ui,sans-serif';g.fillStyle='#dcfce7';" +
-      "g.fillText('🥗 '+nAtivos+' dias cuidando da dieta',540,560);" +
-      "g.fillText('🔥 melhor sequência: '+seq+(seq===1?' dia':' dias'),540,655);" +
-      "if(pesagens)g.fillText('⚖️ '+pesagens+(pesagens===1?' pesagem':' pesagens'),540,750);" +
-      "g.fillStyle='" + CORC + "';g.font='700 34px system-ui,sans-serif';g.fillText('🥦 '+PRIMEIRON+' · TORQUE NUTRI',540,990);" +
+      "g.fillText(nAtivos+' dias cuidando da dieta',540,560);" +
+      "g.fillText('melhor sequência: '+seq+(seq===1?' dia':' dias'),540,655);" +
+      "if(pesagens)g.fillText(pesagens+(pesagens===1?' pesagem':' pesagens'),540,750);" +
+      "g.fillStyle='" + CORC + "';g.font='700 34px system-ui,sans-serif';g.fillText(PRIMEIRON+' · TORQUE NUTRI',540,990);" +
       "c.toBlob(function(bl){var fl=new File([bl],'conquista.png',{type:'image/png'});" +
       "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
       "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='conquista.png';a2.click();}});});" +
@@ -2810,9 +2811,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "function botFala(tx){var h=botHist();h.push({de:'bot',texto:tx,criado:new Date().toISOString()});if(h.length>60)h.shift();Sv('ntbotmsgs',h);}" +
       "function pintaChat(msgs){var el=document.getElementById('chMsgs');var all=(msgs||[]).concat(botHist());" +
       "all.sort(function(a,b){return String(a.criado)<String(b.criado)?-1:1;});" +
-      "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem! 😉</div>\";return;}" +
+      "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem!</div>\";return;}" +
       "el.innerHTML=all.map(function(m){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
-      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg," + COR + "," + COR2 + ")':(bot?'" + CORD + "':'#101c14'))+\";border:1px solid \"+(bot?'" + COR + "':'#29402f')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:" + CORL + ";font-weight:800;margin-bottom:2px;'>🤖 assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg," + COR + "," + COR2 + ")':(bot?'" + CORD + "':'#101c14'))+\";border:1px solid \"+(bot?'" + COR + "':'#29402f')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:" + CORL + ";font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
       "el.scrollTop=el.scrollHeight;}" +
       "function carregaChat(){if(!NUVEM){pintaChat(L('ntchat',[]));return;}" +
       "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ntchat',l);pintaChat(l);}else{pintaChat(L('ntchat',[]));}});}" +
@@ -2902,14 +2903,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "\"<div style='display:flex;justify-content:space-between;font-size:14px;'><span>Meta da semana</span><b>\"+n+' de '+META_SEM_N+\"</b></div>\"+" +
       "\"<div style='height:8px;background:#0f1a12;border-radius:99px;overflow:hidden;margin-top:6px;border:1px solid #29402f;'>\"+" +
       "\"<div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg," + COR + "," + CORL + ");'></div></div>\"+" +
-      "(seq>0?\"<div style='margin-top:8px;font-size:13px;color:#fbbf24;font-weight:700;'>\\ud83d\\udd25 sequ\\u00eancia de \"+seq+\" semana\"+(seq>1?'s':'')+\" batendo a meta \\u2014 n\\u00e3o deixa apagar!</div>\":'');" +
+      "(seq>0?\"<div style='margin-top:8px;font-size:13px;color:#fbbf24;font-weight:700;'>Sequ\\u00eancia de \"+seq+\" semana\"+(seq>1?'s':'')+\" batendo a meta \\u2014 n\\u00e3o deixa apagar!</div>\":'');" +
       "var bt=document.getElementById('btnPlanoN');if(bt){var jaHoje=!!f[hoje];" +
       "bt.textContent=jaHoje?'\\u2713 Plano seguido hoje':'Segui o plano hoje!';" +
       "bt.style.opacity=jaHoje?'.65':'1';}" +
       "var med=document.getElementById('medalhasN');if(med){var total=Object.keys(f).length;" +
-      "var MED=[[7,'\\ud83e\\udd49','7 dias'],[30,'\\ud83e\\udd48','30 dias'],[90,'\\ud83e\\udd47','90 dias'],[180,'\\ud83c\\udfc6','180 dias']];" +
+      "var MED=[[7,'7 dias'],[30,'30 dias'],[90,'90 dias'],[180,'180 dias']];" +
       "med.innerHTML=MED.map(function(m){var ok=total>=m[0];" +
-      "return \"<span style='display:inline-block;margin:0 4px;font-size:12px;opacity:\"+(ok?1:.3)+\"'>\"+m[1]+' '+m[2]+'</span>';}).join('')+" +
+      "return \"<span style='display:inline-block;margin:0 4px;font-size:12px;font-weight:700;color:\"+(ok?'" + CORL + "':'inherit')+\";opacity:\"+(ok?1:.3)+\"'>\"+m[1]+'</span>';}).join('')+" +
       "\"<div style='margin-top:4px;'>\"+total+' dia(s) no plano no total</div>';}}" +
       "var btPl=document.getElementById('btnPlanoN');" +
       "if(btPl)btPl.addEventListener('click',function(){var f=planoDias();var hoje=isoHj();" +
@@ -3018,7 +3019,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           "(p2.texto?\"<div style='font-size:14.5px;line-height:1.45;margin-top:9px;white-space:pre-wrap;'>\"+eh(p2.texto)+\"</div>\":'')+" +
           "(p2.foto?\"<img src='\"+eh(p2.foto)+\"' alt='foto do post' loading='lazy' style='width:100%;border-radius:12px;margin-top:9px;display:block;'>\":'')+" +
           "\"<div style='display:flex;align-items:center;gap:12px;margin-top:9px;'>\"+" +
-          "\"<button data-fdlike='\"+eh(p2.id)+\"' style='background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;padding:0;color:\"+(p2.curti?'" + CORL + "':'#8fa896')+\"'>\"+(p2.curti?'\\ud83d\\udcaa ':'\\ud83d\\udc4f ')+(p2.curtidas||0)+\"</button>\"+" +
+          "\"<button data-fdlike='\"+eh(p2.id)+\"' aria-label='Curtir' style='background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;padding:0;color:\"+(p2.curti?'" + CORL + "':'#8fa896')+\"'>\"+" +
+          "\"<svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px;margin-right:4px;'><path d='M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3'/></svg>\"+(p2.curtidas||0)+\"</button>\"+" +
           "\"<span style='font-size:12.5px;color:#8fa896;'>\"+(p2.comentarios||[]).length+\" coment\\u00e1rio(s)</span></div>\"+" +
           "((p2.comentarios||[]).map(function(c){" +
           "return \"<div style='font-size:13px;margin-top:7px;padding-left:10px;border-left:2px solid #29402f;'><b>\"+eh(c.nome||'Paciente')+\"</b> \"+eh(c.texto)+'</div>';}).join(''))+" +
@@ -3027,7 +3029,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           "\"<button data-fdcom='\"+eh(p2.id)+\"' style='background:none;border:none;color:" + CORL + ";font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;'>Enviar</button></div></div>\";}).join('');}" +
           "function rankSemana(){rpcApp('app_desafio_ranking',{t:TOKEN,p_ini:segundaISO(),p_fim:isoHj()}).then(function(d){" +
           "var el=document.getElementById('fdRankN');if(!el)return;var rk=(d&&d.ranking)||[];" +
-          "if(!rk.length){el.innerHTML='';return;}var med=['\\ud83e\\udd47','\\ud83e\\udd48','\\ud83e\\udd49'];" +
+          "if(!rk.length){el.innerHTML='';return;}var med=['1\\u00ba','2\\u00ba','3\\u00ba'];" +
           "el.innerHTML=\"<div style='background:#0f1a12;border:1px solid #29402f;border-radius:14px;padding:11px 13px;'>\"+" +
           "\"<div style='font-size:10px;font-weight:800;letter-spacing:.14em;color:#8fa896;text-transform:uppercase;margin-bottom:7px;'>Ranking da semana</div>\"+" +
           "rk.slice(0,5).map(function(r,i){return \"<div style='display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0;'><span>\"+(med[i]||(i+1)+'\\u00ba')+' '+eh(r.nome||'Paciente')+\"</span><b>\"+r.dias+'</b></div>';}).join('')+" +
@@ -3566,10 +3568,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   function botPadraoN(st) {
     var studio = (st.config || {}).nome || st.nome || "Meu Nutricionista";
     return { ativo: true,
-      oi: "Oi! Sou o assistente do " + studio + ". Escolhe uma opção que eu te ajudo 👇",
+      oi: "Oi! Sou o assistente do " + studio + ". Escolhe uma opção que eu te ajudo:",
       ops: [
-        { r: "Minha dieta", t: "Sua dieta completa tá no card Minhas refeições — marca cada uma como feita que a adesão conta nas Conquistas. 🥗" },
-        { r: "Consultas", t: "Suas consultas ficam no card Agenda — e dá pra pedir horário novo por lá. 📅" },
+        { r: "Minha dieta", t: "Sua dieta completa tá no card Minhas refeições — marca cada uma como feita que a adesão conta nas Conquistas." },
+        { r: "Consultas", t: "Suas consultas ficam no card Agenda — e dá pra pedir horário novo por lá." },
         { r: "Registrar o que comi", t: "Usa o card Registrar o que comi: busca o alimento (ou código de barras) e ele entra na contagem do dia." },
         { r: "Falar com " + studio.split(" ")[0], t: "humano" },
       ] };

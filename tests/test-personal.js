@@ -3808,7 +3808,7 @@ async function abaPt(p, a) {
     // 🆙 nível na Turma + conquistas do professor no app
     const nivelSocial = await pC.evaluate(() => {
       const S2 = window.MTStore, st = S2.read("ptStudio", {});
-      st.config.conquistas = [{ e: "🦍", n: "Rato de academia", meta: 200 }];
+      st.config.conquistas = [{ e: "fogo", n: "Rato de academia", meta: 200 }];
       S2.write("ptStudio", st);
       const h = window.__montaAppAluno(st.alunos[0], "s3");
       return {
@@ -3821,19 +3821,22 @@ async function abaPt(p, a) {
       "o app devolve o nível pra nuvem e mostra o selo Nv do autor em cada post da Turma");
     ok(nivelSocial.conquistaVai, "conquista criada pelo professor embarca no app do aluno");
     const editorCq = await pC.evaluate(() => {
-      document.getElementById("cqPersEmoji").value = "🌅";
+      // paleta de ícones de traço (sem emoji): escolhe o foguete e cria
+      const paleta = document.querySelectorAll("#cqPersIcones [data-cqico]").length;
+      document.querySelector("#cqPersIcones [data-cqico='foguete']").click();
       document.getElementById("cqPersNome").value = "Clube das 6 da manhã";
       document.getElementById("cqPersMeta").value = "30";
       document.getElementById("cqPersAdd").click();
       const st = window.MTStore.read("ptStudio", {});
       const criou = (st.config.conquistas || []).length;
+      const salvouId = (st.config.conquistas || []).some((c) => c.e === "foguete");
       const bt = document.querySelector("[data-cqrm]");
       if (bt) bt.click();
-      return { criou, sobrou: (window.MTStore.read("ptStudio", {}).config.conquistas || []).length,
+      return { paleta, criou, salvouId, sobrou: (window.MTStore.read("ptStudio", {}).config.conquistas || []).length,
         pendente: !!st.config.appEditGeralEm };
     });
-    ok(editorCq.criou === 2 && editorCq.sobrou === 1 && editorCq.pendente,
-      "o editor da Personalização cria e tira conquistas, marcando os apps pra republicar");
+    ok(editorCq.paleta >= 10 && editorCq.criou === 2 && editorCq.salvouId && editorCq.sobrou === 1 && editorCq.pendente,
+      "o editor da Personalização cria conquista com ícone da paleta (sem emoji) e tira, marcando os apps pra republicar");
     // e o SQL do feed devolve o nível do autor (join com app_aluno.retorno)
     const sqlFeed = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase-setup.sql"), "utf8");
     ok(/left join app_aluno a on a\.token = f\.token/.test(sqlFeed) && /'nivel', coalesce\(nullif\(a\.retorno->>'nivel'/.test(sqlFeed),
