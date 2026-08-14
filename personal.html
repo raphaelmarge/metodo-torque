@@ -7566,6 +7566,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btnx' id='crFim' style='flex:1;display:none;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
       "<button class='btnx' id='crZera' style='flex:1;background:#14121a;border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button>" +
       "<input id='crKm' inputmode='decimal' placeholder='km na mão' style='flex:1;min-width:0;text-align:center;'></div>" +
+      // arte da corrida pro aluno postar (aparece depois de finalizar): trajeto +
+      // números + marca do studio — cada corrida compartilhada é propaganda
+      "<button class='btnx' id='crShare' style='display:none;width:100%;margin-top:10px;'>Compartilhar essa corrida</button>" +
       "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div>" +
       // modo tela cheia estilo NRC: painel de cor chapada com UMA métrica gigante (toque ou
       // deslize troca; bolinhas mostram a página), mapa como segunda página, pausa com o mapa
@@ -8262,12 +8265,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "el.innerHTML=lst.length?'<b>Seus \\u00faltimos treinos:</b><br>'+lst.slice(-5).reverse().map(function(x){" +
       "return String(x.d).slice(8,10)+'/'+String(x.d).slice(5,7)+' \\u2014 '+String(x.n).replace(/[<>&]/g,'')+': '+" +
       "(x.k?x.k.toFixed(2).replace('.',',')+' km \\u00b7 ':'')+wodFmt(x.s)+(x.p?' \\u00b7 pace '+x.p:'');}).join('<br>'):'';}" +
+      // medalhas de corrida (mesmos critérios do card Conquistas): usado pra
+      // avisar NA HORA quando a corrida recém-terminada conquista uma
+      "var CRMEDN=['Primeira corrida','10 corridas','5 km numa corrida','10 km numa corrida','100 km somados','Pace abaixo de 6:00'];" +
+      "function crMedQ(lst2){var q=lst2.filter(function(x){return x.m==='corrida';});" +
+      "var n=q.length,mx=0,so=0,rp=0;q.forEach(function(x){var k9=+x.k||0;if(k9>mx)mx=k9;so+=k9;" +
+      "if(k9>=3&&+x.s>0&&((+x.s/60)/k9)<=6.05)rp=1;});" +
+      "return [n>=1,n>=10,mx>=5,mx>=10,so>=100,rp>=1];}" +
       "function crFinaliza(msg){var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;if(el2<5)return;" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;soltaTela();crGpsPara();" +
       "var km=crKmAtual();var med=km>0.015?(el2/60)/km:null;" +
       "var reg={d:isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null};" +
-      "var lst=L('ptcardio',[]);lst.push(reg);if(lst.length>30)lst.shift();Sv('ptcardio',lst);" +
-      "crEl('crGo').textContent='Iniciar';crEl('crFase').textContent=msg||'BOA! Treino registrado';crEl('crFase').style.color='#4ade80';" +
+      "var lst=L('ptcardio',[]);" +
+      // recordes pessoais e medalhas: compara o histórico antes e depois do registro
+      "var antes=crMedQ(lst);var corr=lst.filter(function(x){return x.m==='corrida';});" +
+      "var mxAnt=0,pcAnt=1/0;corr.forEach(function(x){var k9=+x.k||0;if(k9>mxAnt)mxAnt=k9;" +
+      "if(k9>=3&&+x.s>0){var p9=(+x.s/60)/k9;if(p9<pcAnt)pcAnt=p9;}});" +
+      "lst.push(reg);if(lst.length>30)lst.shift();Sv('ptcardio',lst);" +
+      "var extras=[];" +
+      "if(reg.m==='corrida'){var depois=crMedQ(lst);" +
+      "depois.forEach(function(t9,i9){if(t9&&!antes[i9])extras.push('Medalha nova: '+CRMEDN[i9]);});" +
+      "if(corr.length&&reg.k>mxAnt)extras.push('RECORDE: sua corrida mais longa ('+String(reg.k).replace('.',',')+' km)');" +
+      "if(reg.k>=3&&med&&isFinite(pcAnt)&&med<pcAnt)extras.push('RECORDE: seu melhor pace ('+paceFmt(med)+')');}" +
+      "cr.fimReg=reg;cr.fimRota=cr.rota.slice();" +
+      "crEl('crGo').textContent='Iniciar';crEl('crFase').textContent=msg||(extras.length?extras[0]:'BOA! Treino registrado');crEl('crFase').style.color='#4ade80';" +
+      "crEl('crInfo').textContent=extras.slice(msg?0:1).join(' \\u00b7 ');" +
+      "var bSh=crEl('crShare');if(bSh)bSh.style.display=reg.k>0?'block':'none';" +
       "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();pintaCrHist();" +
       "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.rota=[];cr.autoP=false;cr.lastMove=0;crEl('crKm').value='';try{desenhaRota();}catch(e){}}" +
       "function crGpsPara(){if(cr.watch!=null&&navigator.geolocation){navigator.geolocation.clearWatch(cr.watch);}cr.watch=null;cr.gpsOn=false;cr.lastPos=null;" +
@@ -8304,6 +8327,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.plano=p3;cr.mod=p3.m;" +
       "crEl('crGo').textContent='Iniciar';crChips();crAutoGps();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
       "function crLarga(){cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
+      "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
       "crEl('crFase').style.color='#a9a4b5';cr.iv=setInterval(pintaCr,200);pintaCr();}" +
       "crEl('crGo').addEventListener('click',function(){" +
       "if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fC=crEl('crContagemF');if(fC)fC.style.display='none';this.textContent='Iniciar';return;}" +
@@ -8344,8 +8368,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "crEl('crFim').addEventListener('click',function(){crFinaliza(null);});" +
       "crEl('crZera').addEventListener('click',function(){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;" +
       "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();" +
-      "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';desenhaRota();pintaCr();});" +
+      "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';" +
+      "var bS7=crEl('crShare');if(bS7)bS7.style.display='none';desenhaRota();pintaCr();});" +
       "crEl('crKm').addEventListener('input',function(){if(!cr.gpsOn)pintaCr();});" +
+      // arte da corrida (1080x1350): trajeto em branco sobre a cor da marca,
+      // km gigante, tempo/pace e o nome do studio — share nativo ou download
+      "crEl('crShare').addEventListener('click',function(){var rg=cr.fimReg;if(!rg)return;" +
+      "var c=document.createElement('canvas');c.width=1080;c.height=1350;var g=c.getContext('2d');" +
+      "var gr=g.createLinearGradient(0,0,1080,1350);gr.addColorStop(0,'#14121a');gr.addColorStop(1,'" + COR + "');g.fillStyle=gr;g.fillRect(0,0,1080,1350);" +
+      "var rt=cr.fimRota||[];var temRota=rt.length>1;" +
+      "if(temRota){var la1=1/0,la2=-1/0,lo1=1/0,lo2=-1/0;rt.forEach(function(pp){if(pp.lat<la1)la1=pp.lat;if(pp.lat>la2)la2=pp.lat;if(pp.lng<lo1)lo1=pp.lng;if(pp.lng>lo2)lo2=pp.lng;});" +
+      "var dLa=Math.max(la2-la1,1e-5),dLo=Math.max(lo2-lo1,1e-5);var zz=Math.min(700/dLo,520/dLa);" +
+      "g.strokeStyle='rgba(255,255,255,.96)';g.lineWidth=16;g.lineJoin='round';g.lineCap='round';g.beginPath();" +
+      "rt.forEach(function(pp,i9){var x9=190+(pp.lng-lo1)*zz+(700-dLo*zz)/2;var y9=830-(pp.lat-la1)*zz-(520-dLa*zz)/2;if(i9)g.lineTo(x9,y9);else g.moveTo(x9,y9);});g.stroke();}" +
+      "g.textAlign='center';g.fillStyle='rgba(255,255,255,.85)';g.font='700 40px system-ui,sans-serif';g.fillText(STUDIO.toUpperCase().slice(0,30),540,120);" +
+      "var yK=temRota?1010:660;" +
+      "g.fillStyle='#fff';g.font='900 170px system-ui,sans-serif';g.fillText(String(rg.k).replace('.',',')+' km',540,yK);" +
+      "g.font='600 52px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.9)';" +
+      "g.fillText(wodFmt(rg.s)+(rg.p?' \\u00b7 pace '+rg.p:'')+' \\u00b7 '+(CRMODS[rg.m]||'Cardio'),540,yK+95);" +
+      "g.font='700 36px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.75)';" +
+      "g.fillText(PRIMEIRO+' \\u00b7 '+String(rg.d).slice(8,10)+'/'+String(rg.d).slice(5,7),540,1250);" +
+      "c.toBlob(function(bl){var fl=new File([bl],'corrida.png',{type:'image/png'});" +
+      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
+      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='corrida.png';a2.click();}});});" +
       // tela cheia estilo NRC: página 0 = painel de cor chapada com a métrica gigante,
       // página 1 = mapa; pausado força o mapa + grade de métricas; ✕ volta sem parar
       // o crFull vai pro <body> na primeira abertura: dentro do card, a animação de entrada
