@@ -1906,6 +1906,11 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       if (d && /conversa_id obrigatório/.test(d.erro || "")) {
         cb({ erro: "Sua chat-envia publicada é de uma versão antiga, sem a IA de dieta — abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase." }); return;
       }
+      // "IA indisponível agora." seco (sem o motivo entre parênteses) também é
+      // assinatura de versão antiga: ela esconde o erro real da Anthropic
+      if (d && /^IA indisponível agora\.?$/.test(String(d.erro || "").trim())) {
+        cb({ erro: "A IA falhou e sua chat-envia publicada é de uma versão antiga que esconde o motivo. Abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase — na próxima tentativa o erro real aparece (ex.: chave recusada). Aproveite e confira o secret ANTHROPIC_API_KEY." }); return;
+      }
       if (!d || !d.ok || !d.texto) { cb({ erro: (d && d.erro) || "IA indisponível agora — publique a chat-envia (torqueon.com.br/funcoes.html) com a ANTHROPIC_API_KEY." }); return; }
       var plano = parsePlanoIA(d.texto);
       if (!plano || !(plano.refeicoes || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
