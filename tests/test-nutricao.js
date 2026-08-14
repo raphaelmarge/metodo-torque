@@ -114,7 +114,7 @@ async function abaNt(p, a) {
   ok(dieta.aguaMl === 2800, "meta de água = peso × 35 ml (2800)");
   const resumo = await p.evaluate(() => document.getElementById("dResumo").textContent);
   ok(/TMB.*1780/.test(resumo) && /2140 kcal/.test(resumo), "resumo mostra TMB e alvo");
-  ok(/gerada automática/.test(resumo) && /revise/.test(resumo), "etiqueta honesta: gerada automática — revise");
+  ok(/gerada automaticamente/.test(resumo) && /revise/.test(resumo), "etiqueta honesta: gerada automaticamente — revise");
   const totais = await p.evaluate(() => document.getElementById("dTotais").textContent);
   ok(/Total da dieta/.test(totais) && /kcal alvo/.test(totais), "total da dieta × alvo com %");
   const pctM = totais.match(/\((\d+)%\)/);

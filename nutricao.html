@@ -1145,7 +1145,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var d = st.dietas[id];
     $("pnDieta").innerHTML = (d && (d.refeicoes || []).length)
       ? d.refeicoes.length + " refeição(ões) · água " + (d.aguaMl || 2000) + " ml/dia" +
-        (d.geradaAuto ? " · gerada automática em " + S.fmtData(d.geradaEm) : "")
+        (d.geradaAuto ? " · gerada automaticamente em " + S.fmtData(d.geradaEm) : "")
       : "Sem dieta montada — monte na aba Dietas.";
     var wa = $("pnWhats");
     if (p.zap) { wa.style.display = ""; wa.href = "https://wa.me/55" + String(p.zap).replace(/\D/g, ""); }
@@ -1178,7 +1178,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
           var hojeReg = ret.dia === S.todayISO();
           html += "<div><b>Adesão" + (hojeReg ? " de hoje" : " em " + S.fmtData(ret.dia)) + ":</b> " +
             (ret.refsTotal ? (ret.refsFeitas || 0) + " de " + ret.refsTotal + " refeições da dieta" : "sem dieta no app") +
-            " · água " + (ret.agua || 0) + " de " + (ret.aguaMeta || 0) + " ml de água</div>";
+            " · água " + (ret.agua || 0) + " de " + (ret.aguaMeta || 0) + " ml</div>";
         }
         // recordatório: o que ele registrou fora da dieta
         var di = ret.diario || [];
@@ -1704,7 +1704,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var dieta = dietaDe(st, p.id);
     $("dResumo").innerHTML = "TMB (Mifflin-St Jeor): <b>" + alvo.tmb + " kcal</b> · Gasto com atividade e objetivo (" + esc(p.objetivo) + "): <b style='color:var(--verde-2);'>" + alvo.alvo + " kcal/dia</b>" +
       (p.restricoes ? ' · <span class="tagn ambar">' + esc(p.restricoes) + "</span>" : "") +
-      (dieta.geradaAuto ? ' · <span class="tagn">gerada automática em ' + S.fmtData(dieta.geradaEm) + " — revise!</span>" : "");
+      (dieta.geradaAuto ? ' · <span class="tagn">gerada automaticamente em ' + S.fmtData(dieta.geradaEm) + " — revise!</span>" : "");
     if (document.activeElement !== $("dAgua")) $("dAgua").value = dieta.aguaMl || Math.round(p.peso * 35 / 50) * 50;
     // datalist única com o catálogo curado + alimentos próprios (busca digitando)
     // favoritos primeiro: o navegador mostra as primeiras opções antes de digitar
@@ -1892,7 +1892,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!p) { cb({ erro: "Escolha o paciente." }); return; }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
-    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua conta) pra usar a IA de dieta — sem nuvem, use o Gerar dieta automática." }); return; }
+    if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra usar a IA de dieta — sem nuvem, use o Gerar dieta automática." }); return; }
     var dados = montaDadosDietaIA(st, p);
     nuvem.client.auth.getSession().then(function (s) {
       var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
@@ -3118,7 +3118,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     };
     espera(6).then(function (nuvem) {
       if (!nuvem) {
-        alert("Arquivo do app baixado! Envie pelo WhatsApp do paciente.\n\nDica: criando sua conta (card lá embaixo), o app ganha link online que se atualiza sozinho quando você mudar a dieta.");
+        alert("Arquivo do app baixado! Envie pelo WhatsApp do paciente.\n\nDica: criando sua conta (card Sua ilha, no menu), o app ganha link online que se atualiza sozinho quando você mudar a dieta.");
         return;
       }
       nuvem.client.from("app_aluno").upsert([{ token: p.appTokenN, academia_id: nuvem.aid, dados: { html: html, stamp: stamp }, atualizado: stamp }])
@@ -3143,7 +3143,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       { rot: "Pacientes ativos", val: ativos.length },
       { rot: "Com dieta entregue", val: comDieta.length },
       { rot: "Sem dieta ainda", val: ativos.length - comDieta.length },
-      { rot: "Alimentos no banco", val: st.alimentos.length },
+      { rot: "Meus alimentos", val: st.alimentos.length },
     ].map(function (k) { return '<div class="kpi-nt"><div class="rot">' + k.rot + '</div><div class="val">' + k.val + "</div></div>"; }).join("");
   }
   // ---------- agenda de consultas ----------
@@ -3584,14 +3584,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var st = load();
     var reg = (st.config || {}).automacoes;
     if (!reg) reg = { principal: "a1", lista: [{ id: "a1", nome: "Automação principal",
-      dados: fluxoDeN(botDeN(st), (((st.config || {}).nome) || "a nutricionista").split(" ")[0]) }] };
+      dados: fluxoDeN(botDeN(st), (((st.config || {}).nome) || "nutricionista").split(" ")[0]) }] };
     builderN = MT_BotBuilder({ raiz: $("botFluxoN"), cor: "#16a34a", reg: reg,
       salva: function (r) { var st2 = load(); st2.config = st2.config || {}; st2.config.automacoes = r; S.write("ntStudio", st2); } });
     window.__builderN = builderN; // testes
   }
   $("botZapN").addEventListener("click", function () {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { $("botZapOkN").textContent = "Entre na sua conta (card lá embaixo) primeiro."; return; }
+    if (!nuvem) { $("botZapOkN").textContent = "Entre na sua conta (card Sua ilha, no menu) primeiro."; return; }
     montaBuilderN();
     var reg = builderN.reg();
     var fluxo = builderN.principal();
@@ -3627,7 +3627,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!nuvem) {
       el.innerHTML = "";
       $("chatTituloN").textContent = "Chat interno";
-      $("chatMsgsN").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card lá embaixo) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os pacientes pelo WhatsApp da aba Pacientes.</div>';
+      $("chatMsgsN").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card Sua ilha, no menu) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os pacientes pelo WhatsApp da aba Pacientes.</div>';
       $("chatEnvioN").hidden = true;
       return;
     }
@@ -3888,7 +3888,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       kv("Check-ins montados", (st.questionarios || []).length) +
       kv("Sem consulta há 60+ dias", semRetorno60 + " paciente(s)", semRetorno60 ? "#fbbf24" : "#4ade80") +
       kv("Receitas no blog", (self.MT_RECEITAS || []).length) +
-      kv("Alimentos ativos no banco", st.alimentos.length);
+      kv("Meus alimentos cadastrados", st.alimentos.length);
     // metas com projeção run-rate
     var metas = (st.config || {}).metasN || {};
     if (!$("mtFatN").value && metas.fat) $("mtFatN").value = metas.fat;

@@ -213,7 +213,7 @@
       svg: slideSvg(U.silhueta(221, 4, 0.62)) },
     { t: "2ª foto — de lado", x: "Vire o corpo todo pro seu lado esquerdo e estique os dois braços pra frente, na altura do ombro. O quadril não pode apontar pra câmera.",
       svg: slideSvg(U.silhuetaLado(239, 4, 0.62)) },
-    { t: "O disparo é sozinho", x: "Quando o enquadramento estiver certo, aparece a contagem de 5 segundos — é só ficar parado. Se precisar, o botão “Tirar agora” dispara na hora.", e: "⏱️" },
+    { t: "O disparo é automático", x: "Quando o enquadramento estiver certo, aparece a contagem de 5 segundos — é só ficar parado. Se precisar, o botão “Tirar agora” dispara na hora.", e: "⏱️" },
   ];
   U.tutorialPasso = function (i) {
     var n = U.TUTORIAL.length;
