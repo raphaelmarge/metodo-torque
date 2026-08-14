@@ -7921,5 +7921,305 @@ self.MT_EXERCICIOS = [
   "g": "Funcional e Cross",
   "eq": "Kettlebell",
   "d": "Deitado, com o braço estendido para cima, apoie no cotovelo e depois na mão sem tirar os olhos do kettlebell."
+ },
+ {
+  "n": "Remada landmine com uma mão",
+  "g": "Costas",
+  "eq": "Landmine",
+  "d": "Em afastamento de pernas, puxe a ponta da barra até a cintura mantendo o tronco firme e o cotovelo rente ao corpo."
+ },
+ {
+  "n": "Rotação landmine em pé",
+  "g": "Core",
+  "eq": "Landmine",
+  "d": "Braços semiestendidos, gire a barra de um lado ao outro movendo o tronco em bloco — o quadril acompanha, a lombar não torce."
+ },
+ {
+  "n": "Levantamento terra landmine",
+  "g": "Posterior e glúteo",
+  "eq": "Landmine",
+  "d": "Segure a ponta da barra entre as pernas, quadril para trás e coluna neutra; suba estendendo o quadril com força."
+ },
+ {
+  "n": "Agachamento landmine em taça",
+  "g": "Quadríceps",
+  "eq": "Landmine",
+  "d": "Segure a ponta da barra junto ao peito e agache entre as pernas, cotovelos por dentro dos joelhos e calcanhares no chão."
+ },
+ {
+  "n": "Clean e press com kettlebell",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Puxe o kettlebell até a pegada no peito com o punho neutro e empurre acima da cabeça travando o cotovelo — o quadril dá o impulso, não o braço."
+ },
+ {
+  "n": "Agachamento goblet com pausa de 3 segundos",
+  "g": "Quadríceps",
+  "eq": "Kettlebell",
+  "d": "Desça controlando, segure 3 segundos no fundo com o peito aberto e suba forte sem quicar."
+ },
+ {
+  "n": "Swing americano com kettlebell",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Igual ao swing russo, mas o kettlebell sobe até acima da cabeça — só avance para ele depois de dominar o padrão de quadril."
+ },
+ {
+  "n": "Remada unilateral sentado na polia",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Sentado de frente para a polia baixa, puxe com um braço levando o cotovelo para trás sem girar o tronco."
+ },
+ {
+  "n": "Elevação de panturrilha unilateral no degrau",
+  "g": "Quadríceps",
+  "eq": "Degrau",
+  "d": "Em um pé só no degrau, desça o calcanhar abaixo da linha do apoio e suba na ponta com pausa em cima."
+ },
+ {
+  "n": "Tríceps testa com barra W no banco declinado",
+  "g": "Tríceps",
+  "eq": "Barra W",
+  "d": "No banco declinado, desça a barra até a testa com os cotovelos apontando para o teto e estenda sem abrir."
+ },
+ {
+  "n": "Elevação lateral na polia baixa por trás do corpo",
+  "g": "Ombros",
+  "eq": "Polia",
+  "d": "Com o cabo passando por trás das pernas, eleve o braço até a linha do ombro — a tensão contínua da polia pega o deltoide o tempo todo."
+ },
+ {
+  "n": "Puxada alta com pegada neutra fechada",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Com o triângulo, puxe até a parte alta do peito levando os cotovelos para baixo e o peito para a barra."
+ },
+ {
+  "n": "Caminhada lateral com mini band em meio agachamento",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Mini band acima dos joelhos, dê passos laterais curtos mantendo o meio agachamento — os joelhos empurram a banda para fora o tempo todo."
+ },
+ {
+  "n": "Ponte de glúteo com mini band",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Banda acima dos joelhos, suba o quadril apertando o glúteo e empurrando os joelhos para fora contra a banda."
+ },
+ {
+  "n": "Remada alta com elástico",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Pise no elástico e puxe as manoplas até a linha do peito, cotovelos sempre acima das mãos — pare aí para poupar o ombro."
+ },
+ {
+  "n": "Pallof press com passada lateral",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "Segure o elástico ao centro do peito, estenda os braços e dê passos laterais mantendo o tronco travado contra a rotação."
+ },
+ {
+  "n": "Abdução de ombro com mini band nas mãos",
+  "g": "Ombros",
+  "eq": "Mini band",
+  "d": "Banda entre as mãos na frente do corpo, abra os braços esticando a banda até a linha dos ombros e volte devagar."
+ },
+ {
+  "n": "Dips entre dois bancos",
+  "g": "Tríceps",
+  "eq": "Banco",
+  "d": "Mãos num banco e calcanhares no outro, desça até o cotovelo fechar 90° com os ombros longe das orelhas."
+ },
+ {
+  "n": "Prancha com elevação alternada de perna",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Na prancha baixa, eleve uma perna de cada vez sem deixar o quadril subir ou girar — 2 segundos em cima."
+ },
+ {
+  "n": "Flexão com pés elevados no banco",
+  "g": "Peito",
+  "eq": "Banco",
+  "d": "Pés no banco e mãos no chão: o ângulo joga o esforço para a porção superior do peitoral; corpo alinhado do calcanhar à cabeça."
+ },
+ {
+  "n": "Agachamento na parede com elevação de calcanhares",
+  "g": "Quadríceps",
+  "eq": "Parede",
+  "d": "Na posição isométrica de 90° contra a parede, suba e desça os calcanhares alternando — coxa e panturrilha juntas."
+ },
+ {
+  "n": "Flexão inclinada no sofá",
+  "g": "Peito",
+  "eq": "Sofá",
+  "d": "Mãos no braço do sofá e corpo em prancha: versão mais leve da flexão, ótima para iniciantes progredirem em casa."
+ },
+ {
+  "n": "Afundo reverso com apoio na cadeira",
+  "g": "Quadríceps",
+  "eq": "Cadeira",
+  "d": "Segure no encosto para equilibrar e dê o passo para trás, descendo o joelho de trás em direção ao chão sem bater."
+ },
+ {
+  "n": "Remada isométrica com toalha na coxa",
+  "g": "Costas",
+  "eq": "Toalha",
+  "d": "Sentado, passe a toalha sob a coxa e puxe as pontas para cima com força por 10 segundos, peito aberto e escápulas juntas."
+ },
+ {
+  "n": "Escalador lento com apoio no sofá",
+  "g": "Core",
+  "eq": "Sofá",
+  "d": "Mãos no assento do sofá, traga um joelho de cada vez ao peito em 2 segundos — versão de baixo impacto do mountain climber."
+ },
+ {
+  "n": "Cadeira abdutora com tronco inclinado à frente",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Incline o tronco à frente segurando no apoio: a mudança de ângulo enfatiza o glúteo médio; abra contra a carga sem pressa."
+ },
+ {
+  "n": "Remada baixa na máquina com pegada aberta",
+  "g": "Costas",
+  "eq": "Máquina",
+  "d": "Cotovelos abertos na linha dos ombros puxando para o meio das costas — pega mais a porção superior e o trapézio médio."
+ },
+ {
+  "n": "Tríceps na polia com corda ajoelhado",
+  "g": "Tríceps",
+  "eq": "Polia",
+  "d": "Ajoelhado de costas para a polia alta, estenda a corda à frente da cabeça — o ângulo alonga a cabeça longa do tríceps."
+ },
+ {
+  "n": "Drop jump da caixa",
+  "g": "Funcional e Cross",
+  "eq": "Caixa",
+  "d": "Desça da caixa e, ao tocar o chão, salte imediatamente o mais alto possível — contato mínimo com o solo."
+ },
+ {
+  "n": "Salto lateral sobre cone com aterrissagem unilateral",
+  "g": "Funcional e Cross",
+  "eq": "Cone",
+  "d": "Salte por cima do cone e aterrisse numa perna só, segurando 2 segundos — joelho alinhado com a ponta do pé."
+ },
+ {
+  "n": "Avanço com troca em salto",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Do afundo, salte trocando as pernas no ar e aterrisse já na posição do próximo afundo — tronco ereto o tempo todo."
+ },
+ {
+  "n": "Arremesso de medicine ball contra o chão",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "Levante a bola acima da cabeça e arremesse contra o chão com força total usando o core — pegue e repita sem pausa."
+ },
+ {
+  "n": "Equilíbrio unipodal com apoio leve na parede",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Parede",
+  "d": "Fique num pé só com um dedo na parede; conforme melhorar, tire o dedo e depois experimente fechar os olhos."
+ },
+ {
+  "n": "Flexão plantar sentado com garrafa na coxa",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Garrafa de água",
+  "d": "Sentado, com a garrafa apoiada na coxa como carga leve, suba os calcanhares e desça devagar — panturrilha forte previne queda."
+ },
+ {
+  "n": "Corrida na água com joelhos altos",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Na água pelo peito, corra no lugar elevando bem os joelhos — a resistência da água protege as articulações e acelera o coração."
+ },
+ {
+  "n": "Jab e direto com deslocamento lateral",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Após o jab-direto, dê dois passos laterais mantendo a guarda alta — bater e sair do lugar é a base do boxe."
+ },
+ {
+  "n": "Crucifixo com halteres na bola suíça",
+  "g": "Peito",
+  "eq": "Bola suíça",
+  "d": "Deitado com as costas na bola e quadril elevado, abra os halteres com os cotovelos semiflexionados — a instabilidade recruta o core junto."
+ },
+ {
+  "n": "Elevação em Y no TRX",
+  "g": "Ombros",
+  "eq": "TRX",
+  "d": "Inclinado segurando as fitas, suba os braços em Y acima da cabeça com os polegares para cima — fortalece o trapézio inferior."
+ },
+ {
+  "n": "Carregada de sandbag ao ombro alternando lados",
+  "g": "Funcional e Cross",
+  "eq": "Sandbag",
+  "d": "Agache com a coluna neutra, abrace o saco e jogue-o sobre um ombro; desça controlando e alterne o lado a cada repetição."
+ },
+ {
+  "n": "Arrasto de trenó de costas",
+  "g": "Quadríceps",
+  "eq": "Trenó",
+  "d": "De frente para o trenó, ande de costas puxando com os joelhos flexionados — queima o quadríceps sem sobrecarregar a lombar."
+ },
+ {
+  "n": "Escada de agilidade com dois apoios por quadrado",
+  "g": "Cardio",
+  "eq": "Escada de agilidade",
+  "d": "Pise com os dois pés dentro de cada quadrado o mais rápido que conseguir, braços acompanhando a corrida."
+ },
+ {
+  "n": "Ponte com uma perna na bola suíça",
+  "g": "Posterior e glúteo",
+  "eq": "Bola suíça",
+  "d": "Calcanhar de uma perna na bola e a outra estendida para cima: suba o quadril apertando o glúteo sem girar a pelve."
+ },
+ {
+  "n": "Postura da cadeira com elevação de braços",
+  "g": "Pilates e yoga",
+  "eq": "Peso do corpo",
+  "d": "Agache como se fosse sentar numa cadeira invisível e estenda os braços junto às orelhas — segure respirando fundo."
+ },
+ {
+  "n": "Batida de pernas com prancha e rosto na água",
+  "g": "Natação e aquático",
+  "eq": "Prancha de natação",
+  "d": "Segure a prancha à frente, rosto na água soltando o ar, e bata as pernas a partir do quadril com os joelhos quase esticados."
+ },
+ {
+  "n": "Nado costas somente pernas",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "De barriga para cima com os braços ao longo do corpo, bata as pernas mantendo o quadril alto e a barriga na superfície."
+ },
+ {
+  "n": "Caminhada da mala com halter",
+  "g": "Core",
+  "eq": "Halteres",
+  "d": "Carregue um halter pesado de um lado só e ande em linha reta sem inclinar o tronco — o oblíquo do outro lado trava a postura."
+ },
+ {
+  "n": "Volante com anilha",
+  "g": "Ombros",
+  "eq": "Anilha",
+  "d": "Segure a anilha à frente como um volante e gire de um lado ao outro com os braços estendidos na altura dos ombros."
+ },
+ {
+  "n": "Extensão lombar no banco romano com pausa",
+  "g": "Costas",
+  "eq": "Banco romano",
+  "d": "Suba até o tronco alinhar com as pernas, segure 2 segundos e desça devagar — sem hiperestender no topo."
+ },
+ {
+  "n": "Soco alternado com halteres leves",
+  "g": "Boxe e lutas",
+  "eq": "Halteres",
+  "d": "Com halteres de 1 a 2 kg e guarda alta, alterne socos retos girando o quadril — leve de propósito, pra não estragar a técnica."
+ },
+ {
+  "n": "Corda naval em círculos alternados",
+  "g": "Funcional e Cross",
+  "eq": "Corda naval",
+  "d": "Desenhe círculos para fora com cada braço alternando o sentido, base estável em meio agachamento."
  }
 ];
