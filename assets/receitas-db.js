@@ -1470,5 +1470,76 @@ self.MT_RECEITAS = [
   "Vire com cuidado, doure mais 2 minutos e sirva com canela por cima."
  ],
  "dica": "A farinha de banana verde é amido resistente: alimenta a bactéria boa do intestino e segura a fome por mais tempo que a aveia. Ótima pra quem reclama de fome 2 horas depois do café."
-}
+},
+ {
+  "id": "rc67",
+  "n": "Bowl japonês de atum com arroz temperado",
+  "cat": "Almoço e jantar",
+  "tempo": 20,
+  "rende": 2,
+  "k": 420,
+  "pt": 30,
+  "ing": [
+   "1 lata de atum ao natural escorrido (ou 150 g de atum fresco em cubos)",
+   "1 xíc. de arroz japonês cozido (ou arroz branco com 1 col. sopa de vinagre de arroz)",
+   "1/2 pepino em meia-lua",
+   "1/2 cenoura ralada",
+   "1/2 abacate pequeno em fatias",
+   "1 col. sopa de shoyu com baixo teor de sódio",
+   "1 col. chá de gergelim torrado"
+  ],
+  "modo": [
+   "Tempere o arroz ainda morno com o vinagre e espalhe no fundo da tigela.",
+   "Arrume o atum, o pepino, a cenoura e o abacate por cima, cada um no seu canto.",
+   "Regue com o shoyu, salpique o gergelim e sirva na hora."
+  ],
+  "dica": "Versão caseira e barata do temaki: mesma proteína do salmão por um terço do preço, e o abacate entrega a gordura boa que segura a fome à tarde."
+ },
+ {
+  "id": "rc68",
+  "n": "Frango cremoso com queijo feta e tomate no forno",
+  "cat": "Almoço e jantar",
+  "tempo": 35,
+  "rende": 4,
+  "k": 310,
+  "pt": 34,
+  "ing": [
+   "500 g de filé de frango em cubos grandes",
+   "100 g de queijo feta",
+   "2 xíc. de tomate-cereja",
+   "1 col. sopa de azeite de oliva",
+   "2 dentes de alho amassados",
+   "Orégano, sal e pimenta-do-reino"
+  ],
+  "modo": [
+   "Num refratário, misture o frango com o azeite, o alho e os temperos.",
+   "Coloque o bloco de feta no centro e os tomatinhos ao redor.",
+   "Asse a 200 °C por 25 minutos, até o tomate murchar.",
+   "Amasse o feta com o garfo, misture tudo e sirva com arroz ou salada."
+  ],
+  "dica": "O feta tem menos lactose que os queijos frescos e salga o prato sozinho — prove antes de adicionar sal. Rende 4 marmitas com 34 g de proteína cada."
+ },
+ {
+  "id": "rc69",
+  "n": "Mousse de golden milk com iogurte grego",
+  "cat": "Doces fit",
+  "tempo": 10,
+  "rende": 3,
+  "k": 140,
+  "pt": 9,
+  "ing": [
+   "2 potes de iogurte grego natural (260 g)",
+   "1 banana congelada",
+   "1 col. chá de cúrcuma em pó",
+   "1 pitada de canela e outra de pimenta-do-reino",
+   "1 col. sopa de mel",
+   "1 col. sopa de pasta de amendoim"
+  ],
+  "modo": [
+   "Bata tudo no liquidificador até virar um creme espesso.",
+   "Divida em 3 potinhos e leve à geladeira por 2 horas.",
+   "Finalize com canela por cima na hora de servir."
+  ],
+  "dica": "A pimenta-do-reino não é frescura: a piperina multiplica a absorção da curcumina. Sobremesa anti-inflamatória com gosto de doce de padaria."
+ }
 ];
