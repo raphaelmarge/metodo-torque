@@ -2450,6 +2450,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 
     return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='theme-color' content='" + CORTHEME + "'>" +
+      "<link rel='icon' href='/assets/icons/icon-nutri.svg' type='image/svg+xml'>" +
       "<title>" + esc(primeiro) + " · " + esc(studio) + "</title><style>" +
       "*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0f1a12;color:#eef7f0;max-width:480px;margin:0 auto;padding:16px 14px calc(92px + env(safe-area-inset-bottom,0px))}" +
       "[data-secn-off]{display:none!important}" +
@@ -2472,9 +2473,14 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<div style='font-size:10px;letter-spacing:.2em;color:#7f9c88;font-weight:800;text-transform:uppercase;'>" + esc(studio).slice(0, 26) + "</div>" +
       "<h1 style='font-size:30px;font-weight:800;letter-spacing:-.02em;margin:2px 0 0;'>" + esc(primeiro) + "</h1>" +
       "<div id='secTitN' style='font-size:13px;font-weight:700;color:" + CORL + ";'></div></div>" +
-      "<div style='flex:none;display:flex;align-items:center;gap:6px;background:#16241b;border:1px solid #29402f;border-radius:99px;padding:7px 13px;'>" +
+      "<div style='flex:none;display:flex;align-items:center;gap:8px;'>" +
+      // selo de nível separado do chip de XP (paridade com o app do aluno)
+      "<span id='nvChipN' style='display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg," + COR + "," + COR2 + ");border-radius:99px;padding:7px 11px;font-weight:800;font-size:12.5px;color:#fff;'>" +
+      "<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='#fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.4 6.7 19.1l1-5.8-4.2-4.1 5.9-.9z'/></svg>" +
+      "Nv <b id='nvNumN'>1</b></span>" +
+      "<div style='display:flex;align-items:center;gap:6px;background:#16241b;border:1px solid #29402f;border-radius:99px;padding:7px 13px;'>" +
       "<span style='color:" + CORL + ";font-size:13px;'>⚡</span><b id='xpNumN' style='font-size:14px;'>0</b>" +
-      "<span style='font-size:11px;color:#9fb8a6;'>XP</span></div></div>" +
+      "<span style='font-size:11px;color:#9fb8a6;'>XP</span></div></div></div>" +
       // hero: a dieta de hoje em destaque, como o card do treino no app do aluno
       "<div class='cardx' id='heroN' style='padding:22px 20px;border-color:" + COR + ";'>" +
       "<div style='font-size:10.5px;letter-spacing:.18em;color:" + CORL + ";font-weight:800;text-transform:uppercase;'>Hoje · sua meta</div>" +
@@ -2545,6 +2551,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'></div>" +
       "<div class='vz' id='agNotaCal' style='font-size:11.5px;'>Toque num dia pra ver consultas ou pedir horário.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
+      "<div id='nvCardN' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories 📸</button></div>" +
@@ -2655,7 +2662,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "function pintaAgua(){var ml=L('ntag_'+isoHj(),0);var pct=Math.min(100,Math.round(ml*100/AGUAML));" +
       "document.getElementById('agFill').style.width=pct+'%';" +
       "document.getElementById('agTxt').innerHTML='<b style=\"color:#22d3ee\">'+ml+' ml</b> de '+AGUAML+' ml ('+pct+'%)'+(pct>=100?' 🎉':'');}" +
-      "document.getElementById('agAdd').addEventListener('click',function(){Sv('ntag_'+isoHj(),L('ntag_'+isoHj(),0)+250);pintaAgua();" +
+      "document.getElementById('agAdd').addEventListener('click',function(){Sv('ntag_'+isoHj(),L('ntag_'+isoHj(),0)+250);pintaAgua();pintaXPN();" +
       "if(navigator.vibrate)navigator.vibrate(60);});pintaAgua();" +
       // lembretes de água (notificação local com o app aberto)
       "var agTimer=null;document.getElementById('agLembrete').addEventListener('click',function(){var b=this;" +
@@ -2676,9 +2683,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "if(!al){alert('Digite e escolha um alimento da lista de sugestões.');return;}" +
       "var q=+document.getElementById('diQtd').value||1;var l=L('ntdi_'+isoHj(),[]);" +
       "l.push({n:al.n,q:q,k:Math.round(al.k*q),pt:Math.round((al.pt||0)*q),cb:Math.round((al.cb||0)*q),gd:Math.round((al.gd||0)*q)});Sv('ntdi_'+isoHj(),l);" +
-      "document.getElementById('diBusca').value='';document.getElementById('diQtd').value='1';pintaDiario();});" +
+      "document.getElementById('diBusca').value='';document.getElementById('diQtd').value='1';pintaDiario();pintaXPN();});" +
       "document.getElementById('diLista').addEventListener('click',function(e){var i=e.target.getAttribute&&e.target.getAttribute('data-dirm');if(i==null)return;" +
-      "var l=L('ntdi_'+isoHj(),[]);l.splice(+i,1);Sv('ntdi_'+isoHj(),l);pintaDiario();});" +
+      "var l=L('ntdi_'+isoHj(),[]);l.splice(+i,1);Sv('ntdi_'+isoHj(),l);pintaDiario();pintaXPN();});" +
       "document.getElementById('diCodigo').addEventListener('click',function(){var cod=prompt('Digite o código de barras do produto (os números embaixo das barrinhas):');" +
       "if(!cod)return;cod=cod.replace(/\\D/g,'');if(cod.length<8){alert('Código inválido.');return;}" +
       "fetch('https://world.openfoodfacts.org/api/v2/product/'+cod+'.json').then(function(r){return r.json();}).then(function(d){" +
@@ -2706,7 +2713,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "function pintaPz(){var l=L('ntpeso',[]);if(!l.length)return;var el=document.getElementById('pzGraf');" +
       "el.innerHTML=l.slice(-10).map(function(x){return \"<div class='kv'><span>\"+x.d.split('-').reverse().slice(0,2).join('/')+\"</span><b>\"+String(x.kg).replace('.',',')+\" kg</b></div>\";}).join('');}" +
       "document.getElementById('pzAdd').addEventListener('click',function(){var kg=parseFloat(document.getElementById('pzKg').value.replace(',','.'));if(!kg)return;" +
-      "var l=L('ntpeso',[]);l.push({d:isoHj(),kg:kg});if(l.length>90)l.shift();Sv('ntpeso',l);document.getElementById('pzKg').value='';pintaPz();});pintaPz();" +
+      "var l=L('ntpeso',[]);l.push({d:isoHj(),kg:kg});if(l.length>90)l.shift();Sv('ntpeso',l);document.getElementById('pzKg').value='';pintaPz();pintaXPN();});pintaPz();" +
       // login e senha do aluno
       "var lgB=document.getElementById('lgSalva');if(lgB)lgB.addEventListener('click',function(){" +
       "var lg=document.getElementById('lgLogin').value.trim(),sn=document.getElementById('lgSenha').value;" +
@@ -2908,11 +2915,45 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "if(btPl)btPl.addEventListener('click',function(){var f=planoDias();var hoje=isoHj();" +
       "if(f[hoje]){delete f[hoje];}else{f[hoje]=1;if(navigator.vibrate)navigator.vibrate(90);}" +
       "Sv('ntplano',f);pintaSemanaN();pintaXPN();});" +
-      "function pintaXPN(){var el=document.getElementById('xpNumN');if(!el)return;" +
-      "var dias=Object.keys(planoDias()).length;var pes=(L('ntpeso',[])||[]).length;" +
-      "var ag=Object.keys(L('ntagua',{})||{}).length;var di=0;" +
-      "try{di=(L('ntdi_'+isoHj(),[])||[]).length;}catch(e){}" +
-      "el.textContent=dias*10+pes*5+ag*2+di*2;}" +
+      // XP calculado dos dados. Água: os dias de verdade ficam em ntag_<dia>
+      // (a chave antiga ntagua era lida mas nunca escrita — água não pontuava);
+      // as duas fontes somam, então dado antigo continua valendo.
+      "function xpDadosN(){var dias=Object.keys(planoDias()).length;var pes=(L('ntpeso',[])||[]).length;" +
+      "var agD=diasCom('ntag_');var agL=L('ntagua',{})||{};Object.keys(agL).forEach(function(k){agD[k]=1;});var ag=Object.keys(agD).length;" +
+      "var di=0;try{di=(L('ntdi_'+isoHj(),[])||[]).length;}catch(e){}" +
+      "return dias*10+pes*5+ag*2+di*2;}" +
+      /* nível: mesma curva do app do aluno — chegar ao nível n custa
+       * 50·(n−1)·n XP; começa rápido e vai custando mais. */
+      "function nvXpAteN(n){return 50*(n-1)*n;}" +
+      "function nivelDeN(xp){var n=1;while(50*n*(n+1)<=xp)n++;return n;}" +
+      "var NV_TITN=[[25,'Hall da Fama'],[20,'Mito'],[15,'Lenda'],[12,'Imparável'],[10,'Elite'],[9,'Fera'],[8,'Máquina'],[7,'Casca-grossa'],[6,'Raiz'],[5,'Firme'],[4,'Constante'],[3,'No ritmo'],[2,'Aquecendo']];" +
+      "function nvTituloN(n){for(var i=0;i<NV_TITN.length;i++)if(n>=NV_TITN[i][0])return NV_TITN[i][1];return 'Iniciante';}" +
+      "function confeteN(){if(!document.getElementById('cfCssN')){var st=document.createElement('style');st.id='cfCssN';" +
+      "st.textContent='@keyframes cfQN{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}';document.head.appendChild(st);}" +
+      "var v=document.createElement('div');v.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99;';" +
+      "var cores=['" + COR + "','" + CORL + "','" + CORG2 + "','#fbbf24','#fff'];" +
+      "for(var i=0;i<24;i++){var p=document.createElement('div');" +
+      "p.style.cssText='position:absolute;width:9px;height:14px;top:-20px;left:'+Math.random()*100+'%;background:'+cores[i%cores.length]+';border-radius:2px;opacity:.95;animation:cfQN '+(1.6+Math.random()*1.4)+'s linear '+(Math.random()*.7)+'s forwards;transform:rotate('+Math.random()*360+'deg);';" +
+      "v.appendChild(p);}document.body.appendChild(v);setTimeout(function(){v.remove();},3600);}" +
+      "function pintaNivelN(){var xp=xpDadosN();var n=nivelDeN(xp);var el=document.getElementById('nvNumN');if(el)el.textContent=n;" +
+      "var base=nvXpAteN(n),alvo=nvXpAteN(n+1);var pct=Math.max(0,Math.min(100,Math.round(100*(xp-base)/(alvo-base))));" +
+      "var card=document.getElementById('nvCardN');if(card){var C2=2*Math.PI*26;" +
+      "card.innerHTML=\"<div style='display:flex;gap:14px;align-items:center;background:#16241b;border:1px solid #29402f;border-radius:14px;padding:13px 14px;'>\"+" +
+      "\"<svg width='64' height='64' viewBox='0 0 64 64' style='flex:none;'><circle cx='32' cy='32' r='26' fill='none' stroke='rgba(255,255,255,.09)' stroke-width='6'/>\"+" +
+      "\"<circle cx='32' cy='32' r='26' fill='none' stroke='" + COR + "' stroke-width='6' stroke-linecap='round' stroke-dasharray='\"+(C2*pct/100).toFixed(1)+' '+C2.toFixed(1)+\"' transform='rotate(-90 32 32)'/>\"+" +
+      "\"<text x='32' y='39' text-anchor='middle' font-size='20' font-weight='800' fill='#eef7f0'>\"+n+'</text></svg>'+" +
+      "\"<div style='flex:1;min-width:0;'><div style='font-weight:800;font-size:15px;'>Nível \"+n+' — '+nvTituloN(n)+\"</div>\"+" +
+      "\"<div style='height:7px;background:#0f1a12;border-radius:99px;overflow:hidden;margin-top:7px;border:1px solid #29402f;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg," + COR + "," + CORL + ");'></div></div>\"+" +
+      "\"<div style='font-size:11.5px;color:#9fb8a6;margin-top:6px;'>\"+xp+' XP — faltam '+(alvo-xp)+' pro nível '+(n+1)+(nvTituloN(n+1)!==nvTituloN(n)?' ('+nvTituloN(n+1)+')':'')+'</div></div></div>'+" +
+      "\"<div style='font-size:11px;color:#9fb8a6;margin-top:7px;text-align:center;'>dia no plano +10 XP · pesagem +5 · dia com água +2 · item no diário +2</div>\";}" +
+      // celebra só quando SOBE (a 1ª abertura apenas anota o nível atual)
+      "var visto=+L('ntnivel',0)||0;" +
+      "if(!visto){Sv('ntnivel',n);}else if(n>visto){Sv('ntnivel',n);" +
+      "try{confeteN();if(navigator.vibrate)navigator.vibrate([120,60,120,60,260]);" +
+      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg," + COR + "," + CORL + ");color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:99;text-align:center;';" +
+      "t.innerHTML='SUBIU DE NÍVEL!<br><small>Nível '+n+' — '+nvTituloN(n)+'</small>';" +
+      "document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}catch(e){}}}" +
+      "function pintaXPN(){var el=document.getElementById('xpNumN');if(!el)return;el.textContent=xpDadosN();pintaNivelN();}" +
       "pintaSemanaN();pintaXPN();" +
       "var hvN=document.getElementById('heroVerN');" +
       "if(hvN)hvN.addEventListener('click',function(){trocaSecN('dieta');});" +

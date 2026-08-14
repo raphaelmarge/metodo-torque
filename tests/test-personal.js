@@ -2606,6 +2606,46 @@ async function abaPt(p, a) {
   {
     const xp1 = parseInt(((await pApp.evaluate(() => document.getElementById("xpChip").textContent)).match(/\d+/) || ["0"])[0], 10);
     ok(xp1 === xp0 + 10, "treino registrado rende +10 XP (" + xp0 + " → " + xp1 + ")");
+
+    // 🆙 nível: XP acumulado vira nível (curva 50·(n−1)·n), com selo no topo,
+    // card nas Conquistas e festa só quando SOBE
+    const nv = await pApp.evaluate(() => ({
+      chip: document.getElementById("nvChip").textContent.replace(/\s+/g, " ").trim(),
+      num: +document.getElementById("nvNum").textContent,
+      visto: +JSON.parse(localStorage.getItem("ptnivelok") || "0"),
+    }));
+    const esperado = (function (xp) { let n = 1; while (50 * n * (n + 1) <= xp) n++; return n; })(xp1);
+    ok(/^Nv \d+$/.test(nv.chip) && nv.num === esperado,
+      "o selo de nível no topo mostra o nível certo pro XP (" + xp1 + " XP → Nv " + esperado + ")");
+    ok(nv.visto === esperado, "o último nível visto fica anotado (ptnivelok) pra festa não repetir");
+    const nvCard = await pApp.evaluate(() => {
+      window.__trocaSec("evolucao");
+      const c = document.getElementById("nvCard");
+      return c ? c.textContent.replace(/\s+/g, " ") : "";
+    });
+    ok(/Nível \d+ — /.test(nvCard) && /faltam \d+ pro nível/.test(nvCard) && /treino \+10 XP/.test(nvCard),
+      "o card Seu nível mostra título, quanto falta pro próximo e como se ganha XP");
+    // subir de nível de verdade: injeta 30 treinos antigos (+300 XP, cruza o
+    // limiar com folga) gravando pelo Sv() do próprio app — é ele que dispara
+    // a repintura oficial (o btnFeito recusa quando o dia já está marcado)
+    const festa = await pApp.evaluate(() => {
+      const antes = JSON.stringify(window.L("ptfeitos", {}));
+      const f = JSON.parse(antes);
+      const d = new Date("2025-01-01T12:00:00");
+      for (let i = 0; i < 30; i++) { f[d.toISOString().slice(0, 10)] = 1; d.setDate(d.getDate() + 1); }
+      window.Sv("ptfeitos", f);
+      return new Promise((res) => setTimeout(() => {
+        const r = {
+          nv: +document.getElementById("nvNum").textContent,
+          toast: /SUBIU DE NÍVEL/.test(document.body.textContent),
+        };
+        window.Sv("ptfeitos", JSON.parse(antes));   // devolve o estado pros testes seguintes
+        res(r);
+      }, 500));
+    });
+    ok(festa.nv > esperado && festa.toast,
+      "cruzar o limiar sobe o nível na hora e mostra a celebração (Nv " + esperado + " → Nv " + festa.nv + ")");
+    await pApp.evaluate(() => window.__trocaSec("treino"));   // devolve a seção pro resto do fluxo (Diário de cargas mora aqui)
   }
   // cronômetro (o botão vive dentro do <details> fechado — clica via JS)
   await pApp.evaluate(() => document.querySelector(".tmrbtn").click());
