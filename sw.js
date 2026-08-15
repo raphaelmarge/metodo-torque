@@ -58,6 +58,7 @@ var CORE = [
   "torquesys.html",
   "apps/hq.html",
   "aluno-login.html",
+  "pagina.html",
   "nutricao.html",
   "manifest-nutricao.webmanifest",
   "assets/alimentos-db.js",
