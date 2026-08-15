@@ -265,6 +265,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vDash">
     <div class="kpi-pt" id="kpis"></div>
     <div class="card" style="margin-bottom: 14px;"><h2>Seu dia hoje</h2><div id="bHojeP" class="muted">Nenhuma sessão marcada pra hoje.</div></div>
+    <div class="card" style="margin-bottom: 14px;"><h2>WhatsApp de hoje</h2><div id="bZapP" class="muted">Nenhuma mensagem pendente.</div></div>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Metas do mês e projeção</h2>
       <div class="metas-pt" style="margin: 8px 0 10px;">
@@ -1107,6 +1108,22 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quantos dias de tolerância depois do vencimento antes do aluno aparecer como <b>ATRASADO</b>? Vale pros alertas do Início, pra lista "Quem ainda não pagou", pra saúde da cobrança e pra régua automática. 0 = cobra no dia seguinte ao vencimento.</p>
       <label style="font-size: 12.5px;">Tolerância de atraso (dias)
         <input id="cfgAtraso" inputmode="numeric" style="display:block; width: 120px; margin-top: 4px;"></label>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Mensagens de WhatsApp</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Início monta todo dia a fila <b>WhatsApp de hoje</b>: aniversário, lembrete de treino, pagamento atrasado e renovação de plano — cada mensagem já pronta pra sair do seu WhatsApp com um toque. Edite os modelos abaixo; as palavras entre chaves são trocadas sozinhas pelo sistema: <b>{nome}</b> (primeiro nome), <b>{hora}</b> (horário da sessão, ex.: 07:30 — sem horário marcado, o sistema tira o "às" sozinho), <b>{dias}</b> (já vem com a palavra, ex.: "3 dias") e <b>{valor}</b> (valor do plano).</p>
+      <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px; margin-bottom: 10px;"><input type="checkbox" id="cfgZapFila" checked style="width: 17px; height: 17px;"> Montar a fila WhatsApp de hoje no Início</label>
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <label style="font-size: 12.5px;">Lembrete de treino (usa {nome} e {hora})
+          <textarea id="cfgZapTreino" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
+        <label style="font-size: 12.5px;">Aniversário (usa {nome})
+          <textarea id="cfgZapNiver" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
+        <label style="font-size: 12.5px;">Pagamento atrasado (usa {nome}, {dias} e {valor})
+          <textarea id="cfgZapAtraso" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
+        <label style="font-size: 12.5px;">Renovação de plano (usa {nome}, {dias} e {valor})
+          <textarea id="cfgZapRenova" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
+      </div>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Por enquanto, cada mensagem sai do seu número com um toque. Quando o WhatsApp oficial da Meta estiver ativado, essa mesma fila poderá sair sozinha, sem toque nenhum.</p>
     </div>
     <div class="card">
       <h2>O que o aluno vê no app</h2>
@@ -3883,6 +3900,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("listaSessoes").addEventListener("click", trataCliqueSessao);
   $("bHojeP").addEventListener("click", trataCliqueSessao);
+  // fila WhatsApp de hoje: Enviar (abre o zap e marca) ou Pular (só marca)
+  $("bZapP").addEventListener("click", function (e) {
+    var ok = e.target.closest("[data-zapok]");
+    if (ok) { zapMarca(ok.getAttribute("data-zapok")); return; } // o link segue abrindo o WhatsApp
+    var pu = e.target.closest("[data-zappula]");
+    if (pu) zapMarca(pu.getAttribute("data-zappula"));
+  });
   // toque no nome do aluno: treino do dia + atalhos, sem sair da tela
   function abreDiaAluno(id) {
     var st = load();
@@ -4012,6 +4036,119 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var n = +((st.config || {}).atrasoDias);
     return isFinite(n) && n > 0 ? Math.min(28, Math.floor(n)) : 0;
   }
+  // ---- WhatsApp do dia: fila de mensagens prontas (aniversário, treino de hoje,
+  // pagamento atrasado e renovação de ciclo). O professor dispara cada uma com um
+  // toque; st.zapLog guarda o que já foi enviado/pulado pra não repetir. Quando o
+  // WhatsApp oficial da Meta estiver ativo, esta mesma fila vira envio automático.
+  var ZAP_MODELOS_PADRAO = {
+    treino: "Oi {nome}! Lembrete do seu treino de hoje às {hora}. Te espero — se não puder vir, me avisa por aqui.",
+    niver: "{nome}, feliz aniversário! Muita saúde e muito treino no seu novo ano. Grande abraço!",
+    atraso: "Oi {nome}, tudo bem? Sua mensalidade venceu há {dias}. Quer que eu te mande o Pix? Qualquer coisa me chama.",
+    renova: "Oi {nome}! Seu plano completa o ciclo em {dias}. Bora renovar pra não perder o ritmo? Me chama que a gente resolve.",
+  };
+  function zapModelos(st) {
+    var m = (st.config || {}).zapModelos || {};
+    return {
+      treino: m.treino || ZAP_MODELOS_PADRAO.treino,
+      niver: m.niver || ZAP_MODELOS_PADRAO.niver,
+      atraso: m.atraso || ZAP_MODELOS_PADRAO.atraso,
+      renova: m.renova || ZAP_MODELOS_PADRAO.renova,
+    };
+  }
+  function zapTexto(modelo, vars) {
+    return String(modelo).replace(/\{(nome|hora|dias|valor)\}/g, function (_, k) { return vars[k] != null ? String(vars[k]) : ""; });
+  }
+  function filaZapDe(st) {
+    if ((st.config || {}).zapFilaOff) return [];
+    var hoje = S.todayISO();
+    var diaHoje = +hoje.slice(8, 10);
+    var mes = hoje.slice(0, 7);
+    var log = st.zapLog || {};
+    var mods = zapModelos(st);
+    var fila = [];
+    // diasRepete: depois de marcada, a mensagem volta só depois de N dias (0 = nunca volta)
+    function poe(chave, a, tipo, rotulo, texto, diasRepete) {
+      var marcado = log[chave];
+      if (marcado) {
+        if (!diasRepete) return;
+        var idade9 = Math.floor((new Date(hoje + "T12:00") - new Date(String(marcado).slice(0, 10) + "T12:00")) / 864e5);
+        if (idade9 < diasRepete) return;
+      }
+      fila.push({ chave: chave, alunoId: a.id, nome: a.nome, zap: a.zap, tipo: tipo, rotulo: rotulo, texto: texto });
+    }
+    st.alunos.forEach(function (a) {
+      if (a.ativo === false || !a.zap) return;
+      var nome = a.nome.split(" ")[0];
+      // aniversário (1x por ano; nascido em 29/02 é lembrado dia 28 em ano comum)
+      if (a.nasc && String(a.nasc).length >= 10) {
+        var nvMD = String(a.nasc).slice(5, 10);
+        var anoH = +hoje.slice(0, 4);
+        var bis = (anoH % 4 === 0 && anoH % 100 !== 0) || anoH % 400 === 0;
+        if (nvMD === "02-29" && !bis) nvMD = "02-28";
+        if (nvMD === hoje.slice(5)) {
+          poe("zniver|" + a.id + "|" + hoje.slice(0, 4), a, "niver", "aniversário",
+            zapTexto(mods.niver, { nome: nome }));
+        }
+      }
+      // treino de hoje (sessão marcada, ainda não feita nem faltou)
+      var ses = idxDe(st).sessDe(a.id).find(function (x) { return x.data === hoje && !x.feita && !x.faltou; });
+      if (ses) {
+        var txT = zapTexto(mods.treino, { nome: nome, hora: ses.hora || "" });
+        // sessão sem horário: tira o "às" que sobrou e conserta a pontuação
+        if (!ses.hora) txT = txT.replace(/\s+às\s+([.!,?])/g, "$1").replace(/\s+às\s*$/, "").replace(/\s+([.!,?])/g, "$1");
+        poe("ztreino|" + a.id + "|" + hoje, a, "treino", ses.hora ? "treino às " + ses.hora : "treino hoje", txT);
+      }
+      // pagamento atrasado (mesma regra do ATRASADO; volta 3 dias depois de marcada)
+      var ct = contratoDe(st, a.id);
+      if (ct && !a.assinaturaRec && !idxDe(st).pagouMes(a.id, mes)) {
+        var venc = +ct.diaVenc || 5;
+        if (diaHoje > venc + atrasoTol(st)) {
+          var diasAt = diaHoje - venc;
+          var dv9 = dividaDe(st, a);
+          var pl9 = planoDe(st, ct.planoId);
+          var val9 = S.fmtBRL(dv9.meses > 1 ? dv9.total : (pl9 ? +pl9.valor : +a.valor || 0));
+          var txA = zapTexto(mods.atraso, { nome: nome, dias: diasAt + (diasAt > 1 ? " dias" : " dia"), valor: val9 });
+          if (dv9.meses > 1) txA += " No total, ficaram " + dv9.meses + " meses em aberto (" + S.fmtBRL(dv9.total) + ").";
+          poe("zatraso|" + a.id + "|" + mes, a, "atraso",
+            dv9.meses > 1 ? "deve " + dv9.meses + " meses" : "venceu há " + diasAt + (diasAt > 1 ? " dias" : " dia"),
+            txA, 3);
+        }
+      }
+      // ciclo do plano terminando em até 30 dias (volta 7 dias depois de marcada)
+      if (ct && ct.inicio) {
+        var pl = planoDe(st, ct.planoId);
+        if (pl && +pl.ciclo > 1) {
+          var fimC = new Date(ct.inicio + "T12:00");
+          var diaIni9 = fimC.getDate();
+          fimC.setMonth(fimC.getMonth() + +pl.ciclo);
+          if (fimC.getDate() !== diaIni9) fimC.setDate(0); // mês curto: cai no último dia
+          var diasFim = Math.ceil((fimC - new Date(hoje + "T12:00")) / 864e5);
+          if (diasFim > 0 && diasFim <= 30) {
+            poe("zrenova|" + a.id + "|" + S.todayISO(fimC), a, "renova",
+              "renovação em " + diasFim + (diasFim > 1 ? " dias" : " dia"),
+              zapTexto(mods.renova, { nome: nome, dias: diasFim + (diasFim > 1 ? " dias" : " dia"), valor: S.fmtBRL(+pl.valor) }), 7);
+          }
+        }
+      }
+    });
+    return fila;
+  }
+  function zapMarca(chave) {
+    var st = load();
+    st.zapLog = st.zapLog || {};
+    st.zapLog[chave] = S.todayISO() + "T" + new Date().toTimeString().slice(0, 8);
+    var todas = Object.keys(st.zapLog);
+    if (todas.length > 200) {
+      var hj9 = S.todayISO();
+      // poda só o que NÃO é de hoje — marcação do dia nunca volta pra fila
+      todas.filter(function (k) { return String(st.zapLog[k]).slice(0, 10) !== hj9; })
+        .sort(function (x, y) { return st.zapLog[x] < st.zapLog[y] ? -1 : 1; })
+        .slice(0, Math.max(0, todas.length - 120)).forEach(function (k) { delete st.zapLog[k]; });
+    }
+    S.write("ptStudio", st);
+    renderRelatorios();
+  }
+  window.__zapFila = filaZapDe; // testes
   function renderPagamentos(st) {
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
@@ -4743,6 +4880,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderConfigPT() {
     var st = load();
     $("cfgAtraso").value = String(atrasoTol(st));
+    var zm = zapModelos(st);
+    $("cfgZapFila").checked = !(st.config || {}).zapFilaOff;
+    $("cfgZapTreino").value = zm.treino;
+    $("cfgZapNiver").value = zm.niver;
+    $("cfgZapAtraso").value = zm.atraso;
+    $("cfgZapRenova").value = zm.renova;
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
@@ -4752,6 +4895,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     st.config = st.config || {};
     st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
+    st.config.zapFilaOff = $("cfgZapFila").checked ? 0 : 1;
+    // só regrava os modelos se os campos foram preenchidos (a aba pode nunca ter sido aberta)
+    if ($("cfgZapTreino").value || $("cfgZapNiver").value || $("cfgZapAtraso").value || $("cfgZapRenova").value) {
+      st.config.zapModelos = {
+        treino: $("cfgZapTreino").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.treino,
+        niver: $("cfgZapNiver").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.niver,
+        atraso: $("cfgZapAtraso").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.atraso,
+        renova: $("cfgZapRenova").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.renova,
+      };
+    }
     var am = {};
     CFG_VE.forEach(function (par) { if (!$(par[0]).checked) am[par[1]] = false; });
     var feed = $("cfgFeed").checked;
@@ -6805,7 +6958,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (ct) {
         var pl = planoDe(st, ct.planoId);
         if (pl && +pl.ciclo > 1 && ct.inicio) {
-          var fimCiclo = new Date(ct.inicio + "T12:00"); fimCiclo.setMonth(fimCiclo.getMonth() + +pl.ciclo);
+          var fimCiclo = new Date(ct.inicio + "T12:00");
+          var diaIniA = fimCiclo.getDate();
+          fimCiclo.setMonth(fimCiclo.getMonth() + +pl.ciclo);
+          if (fimCiclo.getDate() !== diaIniA) fimCiclo.setDate(0); // mês curto: cai no último dia
           var em30 = new Date(); em30.setDate(em30.getDate() + 30);
           if (fimCiclo <= em30) alertas.push({ tipo: "aviso", txt: "O contrato de <b>" + esc(a.nome) + "</b> (" + esc(pl.nome) + ") completa o ciclo em " + S.fmtData(S.todayISO(fimCiclo)) + " — hora de renovar.",
             ac: '<button class="btn mini" data-alperfil="' + a.id + '">Renovar</button>' });
@@ -6867,6 +7023,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
             '<button class="btn sec mini" data-faltou="' + x.id + '">Faltou</button>') + "</span></div>";
     }).join("") : "Nenhuma sessão marcada pra hoje — dia livre ou hora de puxar agendamentos.";
+    // ---- WhatsApp de hoje: mensagens prontas, cada uma sai com um toque ----
+    var filaZ = filaZapDe(st);
+    $("bZapP").innerHTML = (st.config || {}).zapFilaOff
+      ? "Fila desligada — dá pra ligar de volta nas Configurações."
+      : filaZ.length ? filaZ.map(function (z) {
+      return '<div class="sessao-pt"><b>' + esc(z.nome.split(" ")[0]) + "</b>" +
+        '<span class="muted" style="font-size:12px;">' + esc(z.rotulo) + "</span>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        '<a class="btn whats mini" target="_blank" rel="noopener" data-zapok="' + z.chave + '" href="https://wa.me/55' + String(z.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(z.texto) + '">Enviar</a>' +
+        '<button class="btn sec mini" data-zappula="' + z.chave + '" title="marcar como resolvida sem enviar">Pular</button></span></div>';
+    }).join("") + '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">Toque em Enviar: abre o seu WhatsApp com a mensagem pronta. Os modelos são editáveis nas Configurações.</p>'
+      : "Nenhuma mensagem pendente — todo mundo avisado.";
     // ---- Radar de retenção: quem precisa de atenção antes de sumir de vez ----
     var radar = [];
     ativos.forEach(function (a) {

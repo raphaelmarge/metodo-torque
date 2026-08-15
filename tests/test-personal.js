@@ -2528,6 +2528,53 @@ async function abaPt(p, a) {
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();
+  // --- WhatsApp de hoje: fila de mensagens prontas + modelos editáveis ---
+  const stSnapZap = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    const hoje = S.todayISO();
+    st.alunos.push(
+      { id: "zq1", nome: "Nivea Zap", ativo: true, zap: "31988880001", nasc: "1990" + hoje.slice(4) },
+      { id: "zq2", nome: "Tulio Zap", ativo: true, zap: "31988880002" });
+    st.sessoes.push({ id: "zqs1", alunoId: "zq2", data: hoje, hora: "07:30", feita: false });
+    st.zapLog = {};
+    S.write("ptStudio", st);
+  });
+  const zap1 = await p.evaluate(() => {
+    const fila = window.__zapFila(window.MTStore.read("ptStudio", {}));
+    const niver = fila.find((z) => z.alunoId === "zq1");
+    const treino = fila.find((z) => z.alunoId === "zq2");
+    return { niver: niver && niver.texto, treino: treino && treino.texto };
+  });
+  ok(/Nivea, feliz aniversário/.test(zap1.niver || ""), "fila do WhatsApp pega o aniversariante do dia com a mensagem pronta");
+  ok(/Oi Tulio!.*às 07:30/.test(zap1.treino || ""), "fila pega o treino de hoje com a hora dentro do texto");
+  await abaPt(p, "dash");
+  await p.waitForTimeout(350);
+  const zapCard = await p.evaluate(async () => {
+    const antes = document.querySelectorAll("#bZapP [data-zapok]").length;
+    const href = (document.querySelector("#bZapP [data-zapok]") || {}).href || "";
+    // pula a linha do Tulio (treino) — a da Nivea segue na fila pro teste do modelo
+    const linhaTulio = [...document.querySelectorAll("#bZapP .sessao-pt")].find((l) => /Tulio/.test(l.textContent));
+    if (linhaTulio) linhaTulio.querySelector("[data-zappula]").click();
+    await new Promise((r) => setTimeout(r, 300));
+    return { antes, href, depois: document.querySelectorAll("#bZapP [data-zapok]").length,
+      log: Object.keys(window.MTStore.read("ptStudio", {}).zapLog || {}).length };
+  });
+  ok(zapCard.antes >= 2 && /wa\.me\/55\d+\?text=/.test(zapCard.href),
+    "card WhatsApp de hoje lista as mensagens com o link do zap já montado");
+  ok(zapCard.depois === zapCard.antes - 1 && zapCard.log === 1,
+    "Pular marca no zapLog e tira a mensagem da fila na hora");
+  await abaPt(p, "config");
+  const zapModelo = await p.evaluate(async () => {
+    document.getElementById("cfgZapNiver").value = "Parabéns {nome}, sucesso!";
+    document.getElementById("cfgSalva").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const fila = window.__zapFila(window.MTStore.read("ptStudio", {}));
+    const niver = fila.find((z) => z.alunoId === "zq1");
+    return niver && niver.texto;
+  });
+  ok(zapModelo === "Parabéns Nivea, sucesso!", "modelo editado nas Configurações muda o texto da fila na hora");
+  await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapZap);
   // --- GPS sempre ativo: com permissão, liga sozinho, mede a distância e respeita quem desliga ---
   const ctxGps = await b.newContext({
     viewport: { width: 500, height: 900 },
