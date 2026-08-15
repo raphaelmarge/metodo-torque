@@ -2878,6 +2878,50 @@ async function abaPt(p, a) {
   ok(compra.fechou && compra.cache && compra.cache.status === "ativa" && compra.cache.via === "play_store",
     "depois da compra a tela fecha e o status já aparece como ativa");
   await ctxGate.close();
+  // --- Despesas: o personal descobre onde o dinheiro está indo ---
+  const stSnapDesp = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  const desp = await p.evaluate(async () => {
+    const S = window.MTStore, st = S.read("ptStudio", {}), hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    const dAnt = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 2, 1);
+    const mAnt = dAnt.getFullYear() + "-" + ("0" + (dAnt.getMonth() + 1)).slice(-2);
+    st.pagamentos = [{ id: "pgD1", valor: 1000, data: hoje, forma: "Pix" }];
+    st.despesas = [
+      { id: "dfix", desc: "Repasse academia", cat: "Repasse/aluguel", valor: 400, data: mAnt + "-05", fixa: true },
+      { id: "dcomb", desc: "Gasolina", cat: "Combustível", valor: 100, data: hoje },
+    ];
+    S.write("ptStudio", st);
+    window.__pgAba("desp");
+    const txt = (id) => document.getElementById(id).textContent.replace(/ /g, " ");
+    const out = { resumo: txt("dpResumo"), cats: txt("dpCats"), lista: txt("dpLista") };
+    // lançar pela interface
+    document.getElementById("dpDesc").value = "Curso de biomecânica";
+    document.getElementById("dpCat").value = "Cursos e formação";
+    document.getElementById("dpValor").value = "250";
+    document.getElementById("dpData").value = hoje;
+    document.getElementById("dpAdd").click();
+    out.aposLancar = txt("dpResumo");
+    // mês anterior: a fixa conta, a avulsa de hoje não
+    window.__despesas.vaiPara(mAnt);
+    out.mesAnt = txt("dpLista");
+    out.mesAntResumo = txt("dpResumo");
+    // encerrar a fixa lá atrás: some dos meses seguintes
+    document.querySelector("[data-dpfim='dfix']").click();
+    window.__despesas.vaiPara(mes);
+    out.aposEncerrar = txt("dpResumo");
+    out.fech = window.__dashPT.resumo(mes);
+    return out;
+  });
+  ok(/1\.000/.test(desp.resumo) && /500/.test(desp.resumo) && /sobrou/.test(desp.resumo),
+    "resumo do mês: recebido R$ 1.000, gasto R$ 500 (fixa + gasolina) e quanto sobrou");
+  ok(/Repasse\/aluguel/.test(desp.cats) && /80%/.test(desp.cats) && /20%/.test(desp.cats),
+    "barras por categoria mostram pra onde o dinheiro vai (80% repasse, 20% combustível)");
+  ok(/fixa/.test(desp.lista) && /Gasolina/.test(desp.lista), "a lista mostra a fixa marcada e a despesa avulsa");
+  ok(/750/.test(desp.aposLancar), "lançar pela interface soma na hora (gasto vira R$ 750)");
+  ok(/Repasse/.test(desp.mesAnt) && !/Gasolina/.test(desp.mesAnt) && /R\$ 0/.test(desp.mesAntResumo),
+    "no mês anterior a fixa aparece, a avulsa de hoje não, e o recebido é zero");
+  ok(/350/.test(desp.aposEncerrar), "fixa encerrada some dos meses seguintes (gasto cai pra R$ 350)");
+  ok(/Despesas: R\$ 350 · Sobrou: R\$ 650/.test(desp.fech), "o fechamento do mês ganha despesas e sobra");
+  await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapDesp);
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapSite);
   // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
   const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
