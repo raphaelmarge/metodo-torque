@@ -2735,6 +2735,69 @@ async function abaPt(p, a) {
   const swSrc = await p.evaluate(async () => (await fetch("/sw.js")).text());
   ok(/indexOf\("supabase-setup\.sql"\)/.test(swSrc),
     "o sw serve o supabase-setup.sql sempre da rede (nunca uma cópia velha do cache)");
+  // --- Assinatura pelas lojas (App Store/Play via RevenueCat) ---
+  ok(/assinatura_status/.test(sqlSetup) && /minha_assinatura/.test(sqlSetup) &&
+    /grant execute on function public\.minha_assinatura\(\) to authenticated/.test(sqlSetup),
+    "o SQL tem as colunas de assinatura e o RPC minha_assinatura (só pra quem está logado)");
+  const fnLoja = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase", "functions", "assinatura-loja", "index.ts"), "utf8");
+  ok(/RC_WEBHOOK_TOKEN/.test(fnLoja) && /INITIAL_PURCHASE:\s*"ativa"/.test(fnLoja) &&
+    /BILLING_ISSUE:\s*"atrasada"/.test(fnLoja) && /EXPIRATION:\s*"bloqueada"/.test(fnLoja),
+    "a função assinatura-loja mapeia os eventos do RevenueCat (compra ativa, atraso, vencida)");
+  ok(!/\bCANCELLATION:/.test(fnLoja.replace(/UNCANCELLATION:/g, "")),
+    "cancelar a renovação não derruba na hora — o acesso pago vale até vencer");
+  const funcoesSrc = require("fs").readFileSync(require("path").join(__dirname, "..", "funcoes.html"), "utf8");
+  ok(/"assinatura-loja"/.test(funcoesSrc) && /data-copia="assinatura-loja"/.test(funcoesSrc),
+    "funcoes.html tem o card da assinatura-loja pro Raphael publicar");
+  const assin = await p.evaluate(async () => {
+    const S = window.MTStore;
+    const usuarioOrig = S.usuario, cloudOrig = S.cloud;
+    const out = {};
+    try {
+      S.usuario = () => ({ logado: true, email: "pt@teste.com" });
+      let pediu = "";
+      S.cloud = () => ({ aid: "acad-1", client: { rpc: (nome) => { pediu = nome; return Promise.resolve({ data: { status: "atrasada", via: "play_store", vence: "2026-09-01T00:00:00Z" } }); } } });
+      window.__assinatura.consulta();
+      await new Promise((r) => setTimeout(r, 50));
+      out.pediu = pediu;
+      out.tarjaAtras = !document.getElementById("faixaAssinatura").hidden;
+      out.txtAtras = document.getElementById("faixaAssinaturaTxt").textContent;
+      // o webhook marcou bloqueada (assinatura venceu de vez)
+      S.cloud = () => ({ aid: "acad-1", client: { rpc: () => Promise.resolve({ data: { status: "bloqueada", via: "play_store" } }) } });
+      window.__assinatura.consulta();
+      await new Promise((r) => setTimeout(r, 50));
+      out.txtBloq = document.getElementById("faixaAssinaturaTxt").textContent;
+      out.btnBloq = document.getElementById("faixaAssinaturaBtn").textContent;
+      // pagou de novo: ativa — tarja some e o card Sua ilha mostra a loja
+      S.cloud = () => ({ aid: "acad-1", client: { rpc: () => Promise.resolve({ data: { status: "ativa", via: "play_store", vence: "2026-09-15T00:00:00Z" } }) } });
+      window.__assinatura.consulta();
+      await new Promise((r) => setTimeout(r, 50));
+      out.tarjaAtiva = !document.getElementById("faixaAssinatura").hidden;
+      out.infoAtiva = document.getElementById("assinaturaInfo").textContent;
+      out.cache = JSON.parse(localStorage.getItem("mtapp:ptAssinatura") || "null");
+      // regra das lojas: no app nativo a oferta com preço da web não aparece
+      window.Capacitor = { isNativePlatform: () => true };
+      window.__faixaTeste(false);
+      out.zapNativo = document.getElementById("faixaTesteZap").hidden;
+      delete window.Capacitor;
+      window.__faixaTeste(false);
+      out.zapWeb = document.getElementById("faixaTesteZap").hidden;
+    } finally {
+      S.usuario = usuarioOrig; S.cloud = cloudOrig;
+      localStorage.removeItem("mtapp:ptAssinatura");
+      window.__assinatura.render();
+      window.__faixaTeste((usuarioOrig ? usuarioOrig() : {}).logado);
+    }
+    return out;
+  });
+  ok(assin.pediu === "minha_assinatura", "o painel consulta a situação da assinatura pelo RPC");
+  ok(assin.tarjaAtras && /não caiu/.test(assin.txtAtras) && /carência/.test(assin.txtAtras),
+    "assinatura atrasada: tarja amarela com aviso de carência");
+  ok(/venceu/.test(assin.txtBloq) && /nada é apagado/.test(assin.txtBloq) && /Assinar de novo/.test(assin.btnBloq),
+    "assinatura vencida: tarja explica que nada é apagado e leva pra loja");
+  ok(!assin.tarjaAtiva && /Assinatura ativa/.test(assin.infoAtiva) && /Play Store/.test(assin.infoAtiva) && assin.cache && assin.cache.status === "ativa",
+    "assinatura ativa: tarja some, Sua ilha mostra a loja e o status fica guardado pra abrir offline");
+  ok(assin.zapNativo === true && assin.zapWeb === false,
+    "no app nativo a oferta com preço da web some (regra da Apple/Google); na web continua");
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapSite);
   // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
   const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
