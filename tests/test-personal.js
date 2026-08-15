@@ -3643,7 +3643,7 @@ async function abaPt(p, a) {
   const cta = await p.evaluate(() => document.getElementById("ctaZap").href);
   ok(/wa\.me\/5531999990000/.test(cta), "CTA aponta pro WhatsApp do vendedor (?zap=)");
   const corpo = await p.evaluate(() => document.body.textContent);
-  ok(/personal trainer/.test(corpo) && /Treino guiado/.test(corpo) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
+  ok(/personal trainer/.test(corpo) && /treino guiado/i.test(corpo) && /R\$ 49/.test(corpo), "landing com pitch, features atuais e preço");
   ok(/14 dias grátis/.test(corpo) && /sem cartão/.test(corpo), "trial de 14 dias visível na landing (selo + preço)");
   ok(await p.evaluate(() => [...document.querySelectorAll("a.cta")].some((a) => /Testar grátis/.test(a.textContent) && /personal\.html/.test(a.href))), "CTA 'Testar grátis' leva direto pro módulo");
   {
