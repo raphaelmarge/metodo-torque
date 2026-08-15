@@ -1944,3 +1944,34 @@ end;
 $$;
 
 grant execute on function public.excluir_minha_conta() to authenticated;
+
+-- ==================== PÁGINA DE VENDAS DO PERSONAL ====================
+-- O personal monta a página em "Minha página" e publica aqui; o visitante
+-- abre por www.torqueon.com.br/pagina.html?s=<endereco>. Mesmo padrão do
+-- app_aluno: membros escrevem pela API normal, visitante lê pela RPC.
+-- Este bloco pode rodar mais de uma vez sem problema.
+
+create table if not exists public.site_pro (
+  slug text primary key,
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  dados jsonb,
+  atualizado timestamptz not null default now()
+);
+
+alter table public.site_pro enable row level security;
+
+drop policy if exists "site_pro_membros" on public.site_pro;
+create policy "site_pro_membros" on public.site_pro
+  for all using (academia_id in (select public.minhas_academias()))
+  with check (academia_id in (select public.minhas_academias()));
+
+-- o visitante busca só a página daquele endereço — nunca a tabela
+create or replace function public.site_pro_busca(s text)
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select dados from public.site_pro where slug = s
+$$;
+
+grant execute on function public.site_pro_busca(text) to anon, authenticated;

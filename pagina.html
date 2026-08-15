@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Página do personal — TORQUE ON</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #0d0c10; color: #f2f0f6; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .cx { max-width: 420px; text-align: center; }
+  a { color: #a78bfa; }
+</style>
+</head>
+<body>
+<div class="cx" id="msg"><p>Abrindo a página…</p></div>
+<script src="assets/cloud-config.js"></script>
+<script>
+(function () {
+  "use strict";
+  // A página de vendas do personal mora na nuvem (tabela site_pro). Esta
+  // portinha busca o HTML pelo endereço (?s=) e desenha — nada além da
+  // página daquele endereço sai da função (security definer).
+  var msg = document.getElementById("msg");
+  function erro(t) { msg.innerHTML = "<p>" + t + "</p><p style='margin-top:12px;font-size:13px;color:#8b8698;'>Se você chegou aqui por um link de um personal trainer, avise ele que a página não abriu.</p>"; }
+  var slug = new URLSearchParams(location.search).get("s") || "";
+  if (!/^[a-z0-9-]{3,30}$/.test(slug)) { erro("Endereço da página não encontrado no link."); return; }
+  var nuvem = self.MT_CLOUD || {};
+  if (!nuvem.url || !nuvem.anonKey) { erro("A nuvem não está configurada neste site."); return; }
+  fetch(nuvem.url + "/rest/v1/rpc/site_pro_busca", {
+    method: "POST",
+    headers: { apikey: nuvem.anonKey, Authorization: "Bearer " + nuvem.anonKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ s: slug }),
+  }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (!d || !d.html) { erro("Essa página não existe (ou ainda não foi publicada)."); return; }
+    document.open();
+    document.write(d.html);
+    document.close();
+  }).catch(function () { erro("Sem conexão agora — tenta abrir de novo com internet."); });
+})();
+</script>
+</body>
+</html>

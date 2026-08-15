@@ -2625,6 +2625,73 @@ async function abaPt(p, a) {
   ok(fixasUi.temFixas && fixasUi.desligou && fixasUi.foraDaFila && fixasUi.religou,
     "as 4 mensagens fixas moram na mesma lista das automações, com Ligar/Desligar valendo na fila");
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapZap);
+  // --- Minha página: builder do site de vendas com dados automáticos ---
+  const stSnapSite = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  await p.evaluate(() => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    st.config = st.config || {};
+    st.config.nome = "Studio Teste";
+    st.config.zap = "31 99999-0000";
+    st.config.cor = "#2563eb";
+    st.planosPT = [{ id: "spl1", nome: "Mensal 3x", valor: 400, treinosSem: 3 }];
+    st.servicosPT = [{ id: "ssv1", nome: "Massagem", valor: 120 }];
+    S.write("ptStudio", st);
+  });
+  await abaPt(p, "sitepro");
+  await p.fill("#spSlug", "Studio Teste!");
+  await p.fill("#spHeadline", "Treine de verdade");
+  await p.fill("#spBio", "Sou o professor <b>Teste</b> & cia");
+  await p.fill("#spInsta", "@studioteste");
+  await p.click("#spSalvar");
+  await p.waitForTimeout(250);
+  const site = await p.evaluate(() => {
+    const st = window.MTStore.read("ptStudio", {});
+    return {
+      sp: (st.config || {}).sitePro,
+      html: window.__sitePro.monta(st),
+      preview: (document.getElementById("spPreview").srcdoc || "").length > 1000,
+    };
+  });
+  ok(site.sp.slug === "studioteste" && site.sp.insta === "studioteste", "builder salva os campos (endereço limpo e Instagram sem @)");
+  ok(/Treine de verdade/.test(site.html) && /wa\.me\/5531999990000/.test(site.html) && /position:fixed/.test(site.html),
+    "a página sai com a frase, o WhatsApp automático e o botão flutuante");
+  ok(/Mensal 3x/.test(site.html) && /Massagem/.test(site.html) && /instagram\.com\/studioteste/.test(site.html) && /#2563eb/.test(site.html),
+    "planos, serviços, Instagram e a cor da Personalização entram sozinhos");
+  ok(/&lt;b&gt;Teste&lt;\/b&gt; &amp; cia/.test(site.html), "texto do professor vai escapado (sem HTML solto na página)");
+  ok(site.preview, "a prévia é desenhada no iframe");
+  await p.click("#spPublicar");
+  await p.waitForTimeout(200);
+  ok(await p.evaluate(() => /Entre na sua conta/.test(document.getElementById("spStatus").textContent)),
+    "sem nuvem, o Publicar avisa e aponta o caminho");
+  const pubSite = await p.evaluate(async () => {
+    window.__cloudOrigSP = window.MTStore.cloud;
+    let upsertRow = null;
+    window.MTStore.cloud = () => ({
+      aid: "acad-1",
+      client: { from: (tb) => ({
+        upsert: (rows) => { upsertRow = { tb, row: rows[0] }; return Promise.resolve({ error: null }); },
+        delete: () => ({ eq: () => Promise.resolve({}) }),
+      }) },
+    });
+    document.getElementById("spPublicar").click();
+    await new Promise((r) => setTimeout(r, 300));
+    window.MTStore.cloud = window.__cloudOrigSP;
+    return {
+      tb: upsertRow && upsertRow.tb,
+      slug: upsertRow && upsertRow.row.slug,
+      temHtml: !!(upsertRow && upsertRow.row.dados && /Treine de verdade/.test(upsertRow.row.dados.html)),
+      status: document.getElementById("spStatus").textContent,
+      slugPub: ((window.MTStore.read("ptStudio", {}).config || {}).sitePro || {}).slugPub,
+    };
+  });
+  ok(pubSite.tb === "site_pro" && pubSite.slug === "studioteste" && pubSite.temHtml, "publicar grava a página na nuvem (tabela site_pro)");
+  ok(/No ar/.test(pubSite.status) && /pagina\.html\?s=studioteste/.test(pubSite.status) && pubSite.slugPub === "studioteste",
+    "depois de publicar, o link público aparece e fica guardado");
+  const pagSrc = await p.evaluate(async () => (await fetch("/pagina.html")).text());
+  ok(/site_pro_busca/.test(pagSrc) && /URLSearchParams/.test(pagSrc), "pagina.html busca a página publicada pelo endereço");
+  ok(/site_pro/.test(await p.evaluate(async () => (await fetch("/supabase-setup.sql")).text())),
+    "o SQL da tabela site_pro está no setup (o Raphael roda de novo e pronto)");
+  await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapSite);
   // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
   const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
   const serv = await p.evaluate(async () => {
