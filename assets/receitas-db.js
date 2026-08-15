@@ -1397,80 +1397,80 @@ self.MT_RECEITAS = [
   ],
   "dica": "Café da manhã quentinho com 24 g de proteína pra quem não gosta de ovo de manhã. O whey entra sempre fora do fogo, senão vira grumo."
  },
-{
- "id": "rc64",
- "n": "Baião de dois fit com frango e feijão-fradinho",
- "cat": "Almoço e jantar",
- "tempo": 35,
- "rende": 4,
- "k": 382,
- "pt": 31,
- "ing": [
-  "2 xíc. de arroz integral cozido",
-  "1 xíc. de feijão-fradinho cozido e escorrido",
-  "400 g de filé de frango em cubos",
-  "1/2 cebola e 2 dentes de alho picados",
-  "60 g de queijo coalho light em cubos",
-  "1 col. sopa de azeite",
-  "Coentro, cheiro-verde e pimenta-do-reino a gosto"
- ],
- "modo": [
-  "Tempere o frango com alho, pimenta e sal e grelhe no azeite até dourar por fora e soltar do fundo da panela.",
-  "Junte a cebola e refogue até ficar transparente, raspando o fundo da panela com um pouco de água.",
-  "Misture o feijão-fradinho e o arroz integral já cozidos e mexa em fogo baixo por 3 minutos, só pra pegar gosto.",
-  "Desligue, acrescente o queijo coalho e o coentro e sirva na hora, enquanto o queijo está macio."
- ],
- "dica": "A versão tradicional leva bacon, nata e queijo gordo e passa fácil de 600 kcal por prato. Trocando por frango e queijo coalho light, sobra o mesmo sabor nordestino com 31 g de proteína e menos da metade da gordura."
-},
-{
- "id": "rc65",
- "n": "Bowl de tempeh grelhado com purê de abóbora",
- "cat": "Almoço e jantar",
- "tempo": 30,
- "rende": 2,
- "k": 428,
- "pt": 26,
- "ing": [
-  "200 g de tempeh em fatias",
-  "300 g de abóbora cabotiá em cubos",
-  "1 xíc. de quinoa cozida",
-  "1 col. sopa de shoyu com baixo teor de sódio",
-  "1 col. chá de gengibre ralado",
-  "1 col. sopa de azeite",
-  "Folhas verdes e gergelim pra finalizar"
- ],
- "modo": [
-  "Marine o tempeh no shoyu com gengibre por 10 minutos, virando as fatias na metade do tempo.",
-  "Cozinhe a abóbora no vapor até ficar bem macia e amasse com um garfo, sem adicionar leite nem manteiga.",
-  "Grelhe o tempeh no azeite em fogo médio, 3 minutos de cada lado, até formar crosta dourada.",
-  "Monte o bowl com a quinoa, o purê, o tempeh e as folhas, e finalize com gergelim."
- ],
- "dica": "Prato 100% vegetal com 26 g de proteína por porção. O tempeh é soja fermentada: rende mais proteína que o tofu e cai melhor no estômago de quem sente inchaço com leguminosa."
-},
-{
- "id": "rc66",
- "n": "Panqueca proteica de farinha de banana verde",
- "cat": "Café da manhã",
- "tempo": 12,
- "rende": 1,
- "k": 315,
- "pt": 27,
- "ing": [
-  "2 col. sopa de farinha de banana verde (20 g)",
-  "1 ovo inteiro e 2 claras",
-  "1 dose de whey protein sabor baunilha (30 g)",
-  "2 col. sopa de água",
-  "Canela em pó a gosto",
-  "1 col. chá de óleo de coco pra untar"
- ],
- "modo": [
-  "Bata todos os ingredientes no liquidificador ou misture bem com um fouet até a massa ficar lisa.",
-  "Aqueça a frigideira antiaderente em fogo BAIXO e unte com o óleo de coco — fogo alto queima o whey e amarga.",
-  "Despeje a massa, tampe e deixe por 3 minutos, até a borda soltar sozinha.",
-  "Vire com cuidado, doure mais 2 minutos e sirva com canela por cima."
- ],
- "dica": "A farinha de banana verde é amido resistente: alimenta a bactéria boa do intestino e segura a fome por mais tempo que a aveia. Ótima pra quem reclama de fome 2 horas depois do café."
-},
+ {
+  "id": "rc64",
+  "n": "Baião de dois fit com frango e feijão-fradinho",
+  "cat": "Almoço e jantar",
+  "tempo": 35,
+  "rende": 4,
+  "k": 382,
+  "pt": 31,
+  "ing": [
+   "2 xíc. de arroz integral cozido",
+   "1 xíc. de feijão-fradinho cozido e escorrido",
+   "400 g de filé de frango em cubos",
+   "1/2 cebola e 2 dentes de alho picados",
+   "60 g de queijo coalho light em cubos",
+   "1 col. sopa de azeite",
+   "Coentro, cheiro-verde e pimenta-do-reino a gosto"
+  ],
+  "modo": [
+   "Tempere o frango com alho, pimenta e sal e grelhe no azeite até dourar por fora e soltar do fundo da panela.",
+   "Junte a cebola e refogue até ficar transparente, raspando o fundo da panela com um pouco de água.",
+   "Misture o feijão-fradinho e o arroz integral já cozidos e mexa em fogo baixo por 3 minutos, só pra pegar gosto.",
+   "Desligue, acrescente o queijo coalho e o coentro e sirva na hora, enquanto o queijo está macio."
+  ],
+  "dica": "A versão tradicional leva bacon, nata e queijo gordo e passa fácil de 600 kcal por prato. Trocando por frango e queijo coalho light, sobra o mesmo sabor nordestino com 31 g de proteína e menos da metade da gordura."
+ },
+ {
+  "id": "rc65",
+  "n": "Bowl de tempeh grelhado com purê de abóbora",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 2,
+  "k": 428,
+  "pt": 26,
+  "ing": [
+   "200 g de tempeh em fatias",
+   "300 g de abóbora cabotiá em cubos",
+   "1 xíc. de quinoa cozida",
+   "1 col. sopa de shoyu com baixo teor de sódio",
+   "1 col. chá de gengibre ralado",
+   "1 col. sopa de azeite",
+   "Folhas verdes e gergelim pra finalizar"
+  ],
+  "modo": [
+   "Marine o tempeh no shoyu com gengibre por 10 minutos, virando as fatias na metade do tempo.",
+   "Cozinhe a abóbora no vapor até ficar bem macia e amasse com um garfo, sem adicionar leite nem manteiga.",
+   "Grelhe o tempeh no azeite em fogo médio, 3 minutos de cada lado, até formar crosta dourada.",
+   "Monte o bowl com a quinoa, o purê, o tempeh e as folhas, e finalize com gergelim."
+  ],
+  "dica": "Prato 100% vegetal com 26 g de proteína por porção. O tempeh é soja fermentada: rende mais proteína que o tofu e cai melhor no estômago de quem sente inchaço com leguminosa."
+ },
+ {
+  "id": "rc66",
+  "n": "Panqueca proteica de farinha de banana verde",
+  "cat": "Café da manhã",
+  "tempo": 12,
+  "rende": 1,
+  "k": 315,
+  "pt": 27,
+  "ing": [
+   "2 col. sopa de farinha de banana verde (20 g)",
+   "1 ovo inteiro e 2 claras",
+   "1 dose de whey protein sabor baunilha (30 g)",
+   "2 col. sopa de água",
+   "Canela em pó a gosto",
+   "1 col. chá de óleo de coco pra untar"
+  ],
+  "modo": [
+   "Bata todos os ingredientes no liquidificador ou misture bem com um fouet até a massa ficar lisa.",
+   "Aqueça a frigideira antiaderente em fogo BAIXO e unte com o óleo de coco — fogo alto queima o whey e amarga.",
+   "Despeje a massa, tampe e deixe por 3 minutos, até a borda soltar sozinha.",
+   "Vire com cuidado, doure mais 2 minutos e sirva com canela por cima."
+  ],
+  "dica": "A farinha de banana verde é amido resistente: alimenta a bactéria boa do intestino e segura a fome por mais tempo que a aveia. Ótima pra quem reclama de fome 2 horas depois do café."
+ },
  {
   "id": "rc67",
   "n": "Bowl japonês de atum com arroz temperado",
@@ -1541,5 +1541,77 @@ self.MT_RECEITAS = [
    "Finalize com canela por cima na hora de servir."
   ],
   "dica": "A pimenta-do-reino não é frescura: a piperina multiplica a absorção da curcumina. Sobremesa anti-inflamatória com gosto de doce de padaria."
+ },
+ {
+  "id": "rc70",
+  "n": "Yakisoba fit de frango",
+  "cat": "Almoço e jantar",
+  "tempo": 25,
+  "rende": 3,
+  "k": 440,
+  "pt": 39,
+  "ing": [
+   "200 g de macarrão para yakisoba (seco)",
+   "300 g de peito de frango em tiras",
+   "2 xícaras de brócolis e couve-flor",
+   "1 cenoura em tiras",
+   "meio pimentão em tiras",
+   "3 col. sopa de shoyu light",
+   "1 col. chá de gengibre ralado",
+   "1 fio de óleo de gergelim"
+  ],
+  "modo": [
+   "Cozinhe o macarrão conforme a embalagem e reserve.",
+   "Salteie o frango numa frigideira quente até dourar.",
+   "Junte os legumes e o gengibre e refogue por 4 minutos — eles devem ficar crocantes.",
+   "Volte o macarrão, adicione o shoyu e o óleo de gergelim e misture por 1 minuto."
+  ],
+  "dica": "Legume crocante e molho no final: o segredo do yakisoba de restaurante sem fritura."
+ },
+ {
+  "id": "rc71",
+  "n": "Creme de abóbora com frango desfiado",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 4,
+  "k": 200,
+  "pt": 25,
+  "ing": [
+   "800 g de abóbora cabotiá em cubos",
+   "300 g de peito de frango cozido e desfiado",
+   "1 cebola picada",
+   "2 dentes de alho",
+   "2 col. sopa de requeijão light",
+   "salsinha e pimenta-do-reino a gosto"
+  ],
+  "modo": [
+   "Cozinhe a abóbora com a cebola e o alho em água até amolecer.",
+   "Bata no liquidificador com um pouco da água do cozimento até virar creme.",
+   "Volte à panela, acerte o sal e misture o requeijão.",
+   "Sirva com o frango desfiado por cima e salsinha."
+  ],
+  "dica": "O frango por cima (e não batido junto) mantém a textura e deixa o prato mais bonito no app."
+ },
+ {
+  "id": "rc72",
+  "n": "Panqueca de banana com farelo de aveia",
+  "cat": "Café da manhã",
+  "tempo": 10,
+  "rende": 2,
+  "k": 220,
+  "pt": 9,
+  "ing": [
+   "2 bananas maduras",
+   "2 ovos",
+   "4 col. sopa de farelo de aveia",
+   "1 col. chá de canela",
+   "1 fio de óleo de coco pra untar"
+  ],
+  "modo": [
+   "Amasse as bananas e misture com os ovos, o farelo e a canela.",
+   "Despeje conchas pequenas na frigideira untada, em fogo baixo.",
+   "Vire quando as bordas firmarem e doure o outro lado."
+  ],
+  "dica": "Fogo baixo e paciência: panqueca de banana queima rápido se a frigideira estiver quente demais."
  }
 ];
