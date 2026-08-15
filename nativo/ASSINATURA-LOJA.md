@@ -10,9 +10,17 @@ O que já está pronto no repositório:
   `minha_assinatura()`); rodar o arquivo no SQL Editor.
 - `supabase/functions/assinatura-loja/index.ts` → webhook do RevenueCat
   (publicar pelo funcoes.html, Verify JWT DESLIGADO, secret `RC_WEBHOOK_TOKEN`).
-- `personal.html` → consulta o status ao conectar na nuvem, mostra a situação
-  no card Sua ilha e as faixas de atraso/vencimento; no app nativo esconde a
-  oferta com preço da web (regra das lojas).
+- `assets/modulo-conta.js` → a tela de entrada agora tem CRIAR CONTA
+  self-service (nome + e-mail + senha): quem baixa o app da loja se cadastra
+  sozinho na primeira abertura.
+- `personal.html` → tela de assinatura (R$ 59,90/mês) que aparece logo depois
+  do login/cadastro no app da loja, com o botão Assinar já ligado no plugin do
+  RevenueCat; consulta o status ao conectar na nuvem, mostra a situação no
+  card Sua ilha e as faixas de atraso/vencimento; esconde a oferta com preço
+  da web (regra das lojas).
+- `assets/cloud-config.js` → `MT_RC` é onde entram as chaves PÚBLICAS do SDK
+  do RevenueCat (uma Android, uma iOS). Enquanto vazias, o botão Assinar avisa
+  que a compra chega na próxima atualização.
 
 O que falta e entra no PRÓXIMO build nativo (não dá pra fazer sem as contas):
 
@@ -33,21 +41,13 @@ O que falta e entra no PRÓXIMO build nativo (não dá pra fazer sem as contas):
    npx cap sync
    ```
 
-4. **Ligar no app** — na inicialização do produto personal, depois do login:
-
-   ```js
-   import { Purchases } from "@revenuecat/purchases-capacitor";
-
-   // appUserID = ID DA ACADEMIA (nuvem.aid) — é assim que o webhook acha a conta
-   await Purchases.configure({ apiKey: CHAVE_DA_PLATAFORMA, appUserID: academiaId });
-
-   // comprar: pega a oferta atual e compra o pacote mensal
-   const ofertas = await Purchases.getOfferings();
-   await Purchases.purchasePackage({ aPackage: ofertas.current.availablePackages[0] });
-   ```
-
-   Depois da compra o RevenueCat chama o webhook sozinho — o painel passa a
-   mostrar "Assinatura ativa" na próxima consulta.
+4. **Colar as chaves e buildar** — o código do app já chama o plugin sozinho
+   (tela de assinatura do personal.html): basta preencher `MT_RC.android` e
+   `MT_RC.ios` no `assets/cloud-config.js` com as chaves públicas do
+   RevenueCat e gerar o build com o plugin instalado. O app usa o ID DA
+   ACADEMIA como `appUserID` — é assim que o webhook acha a conta certa.
+   Depois da compra o RevenueCat chama o webhook sozinho e o painel passa a
+   mostrar "Assinatura ativa".
 
 Regras das lojas pra não ser rejeitado:
 
