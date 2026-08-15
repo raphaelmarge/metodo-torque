@@ -3964,9 +3964,22 @@ async function abaPt(p, a) {
         quest: document.getElementById("pfQuestBox").innerHTML,
         scanOn: !!(st.config || {}).scanOn,
         scanCard: !!document.getElementById("scanCard") && !document.getElementById("scanCard").hidden,
+        autos: (st.zapAutos || []).length,
+        servicos: (st.servicosPT || []).length,
+        fila: (() => {
+          const f = window.__zapFila(st);
+          return {
+            sumido: f.some((z) => z.chave.indexOf("zauto|au1") === 0),
+            boasVindas: f.some((z) => z.chave.indexOf("zautoC|au2") === 0),
+            pacoteFoto: f.some((z) => z.chave.indexOf("zautoP|au3") === 0 && z.img === "dimg1"),
+          };
+        })(),
+        temImg: !!localStorage.getItem("mtapp:ptImagens"),
       }), 400));
     });
-    ok(demo.alunos === 8 && demo.fichas === 8 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 8 alunos com fichas, pagamentos e avaliações");
+    ok(demo.alunos === 9 && demo.fichas === 9 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 9 alunos com fichas, pagamentos e avaliações");
+    ok(demo.autos === 3 && demo.servicos === 3 && demo.temImg, "demo traz as automações de WhatsApp, o catálogo de serviços e a foto da promo");
+    ok(demo.fila.sumido && demo.fila.boasVindas && demo.fila.pacoteFoto, "fila do demo mostra aluno sumido, boas-vindas e pacote acabando com a foto");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
     ok(/Check-ins respondidos no app/.test(demo.quest) && /stroke=["']#fbbf24["']/.test(demo.quest), "demo também mostra os check-ins de questionário na aba própria");
     ok(demo.scanOn && demo.scanCard, "no demo as Medidas pela câmera já vêm ligadas (quem testa acha o recurso sozinho)");
@@ -3976,7 +3989,7 @@ async function abaPt(p, a) {
     const aviso = await pD2.evaluate(() => !document.getElementById("alerta").hidden);
     await pD2.click("#btnDemo");
     await pD2.waitForTimeout(300);
-    const preservado = await pD2.evaluate(() => /personal\.html/.test(location.pathname) && JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.length === 8);
+    const preservado = await pD2.evaluate(() => /personal\.html/.test(location.pathname) && JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.length === 9);
     ok(aviso && preservado, "com dados já existentes o demo avisa e não sobrescreve nada");
     await pD2.close();
     await pD.close();
