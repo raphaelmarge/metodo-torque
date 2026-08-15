@@ -21,10 +21,10 @@
 <div class="cx">
   <span class="k">TORQUE PERSONAL · Demonstração</span>
   <h1>Studio de exemplo</h1>
-  <p>Preenche o TORQUE PERSONAL <b>neste navegador</b> com um studio fictício em pleno uso: 8 alunos com treinos, pagamentos, agenda, avaliações e os dados que eles registram no app (peso, cargas, hábitos, treinos feitos e check-ins de questionário) — tudo em gráficos no perfil.</p>
+  <p>Preenche o TORQUE PERSONAL <b>neste navegador</b> com um studio fictício em pleno uso: 9 alunos com treinos, pagamentos, agenda, avaliações e os dados que eles registram no app (peso, cargas, hábitos, treinos feitos e check-ins de questionário) — tudo em gráficos no perfil. Também vem com serviços vendidos (massagem em pacote) e a <b>fila de WhatsApp com automações</b>: aluno sumido, boas-vindas e pacote acabando com foto.</p>
   <p style="margin-top: 12px;">Novidade: em <b>Avaliações</b> o demo já vem com as <b>Medidas pela câmera</b> ligadas — dá pra abrir a câmera guiada e ver o gabarito, o semáforo e o disparo automático funcionando.</p>
-  <div id="alerta" class="aviso" hidden>⚠️ <b>Já existem dados do Personal neste navegador.</b> O demo NÃO vai mexer neles — abra esta página numa <b>guia anônima</b> (ou outro navegador) pra ver a demonstração sem risco.</div>
-  <button class="btnx" id="btnDemo">🚀 Abrir o studio de exemplo</button>
+  <div id="alerta" class="aviso" hidden><b>Já existem dados do Personal neste navegador.</b> O demo NÃO vai mexer neles — abra esta página numa <b>guia anônima</b> (ou outro navegador) pra ver a demonstração sem risco.</div>
+  <button class="btnx" id="btnDemo">Abrir o studio de exemplo</button>
 </div>
 <script>
 (function () {
@@ -112,12 +112,14 @@
   var ALUNOS = [
     { nome: "Ana Beatriz Souza", sexo: "F", altura: 165, nascAnos: 34, zap: "21988110001", valor: 450, objetivo: "Emagrecimento", meta: 4, desde: 210, peso: [82, -9, 120, 4], freq: 4, capricho: 1.15, cargas: [["Agachamento livre", 30, 55, 10], ["Leg press 45°", 80, 140, 9], ["Supino reto com barra", 20, 32.5, 8]], pago: true, rec: true },
     { nome: "Bruno Ferraz", sexo: "M", altura: 178, nascAnos: 29, zap: "21988110002", valor: 400, objetivo: "Hipertrofia", meta: 5, desde: 320, peso: [71, 6, 150, 5], freq: 5, capricho: 1.0, cargas: [["Supino reto com barra", 50, 82.5, 12], ["Agachamento livre", 60, 105, 12], ["Remada curvada com barra", 40, 70, 10], ["Rosca direta com barra", 20, 35, 8]], pago: true },
-    { nome: "Carla Menezes", sexo: "F", altura: 160, nascAnos: 41, zap: "21988110003", valor: 380, objetivo: "Condicionamento", meta: 3, desde: 150, peso: [64, -2.5, 90, 5], freq: 3, capricho: 0.9, cargas: [["Elevação pélvica", 40, 80, 8], ["Levantamento terra romeno", 30, 50, 7]], pago: false },
+    { nome: "Carla Menezes", sexo: "F", altura: 160, nascAnos: 41, zap: "21988110003", valor: 380, objetivo: "Condicionamento", meta: 3, desde: 150, peso: [64, -2.5, 90, 5], freq: 3, capricho: 0.9, cargas: [["Elevação pélvica", 40, 80, 8], ["Levantamento terra romeno", 30, 50, 7]], pago: false, pacoteServ: { nome: "Massagem", total: 5, usadas: 4 } },
     { nome: "Diego Prado", sexo: "M", altura: 183, nascAnos: 37, zap: "21988110004", valor: 500, objetivo: "Força", meta: 4, desde: 400, peso: [88, 3, 180, 6], freq: 4, capricho: 0.85, cargas: [["Agachamento livre", 100, 150, 14], ["Levantamento terra romeno", 90, 140, 12], ["Supino reto com barra", 80, 110, 12]], pago: true },
     { nome: "Elisa Martins", sexo: "F", altura: 168, nascAnos: 45, zap: "21988110005", valor: 450, objetivo: "Emagrecimento", meta: 3, desde: 90, peso: [77, -4.5, 80, 4], freq: 3, capricho: 1.1, cargas: [["Leg press 45°", 60, 100, 6], ["Puxada alta na polia", 25, 37.5, 6]], pago: true },
-    { nome: "Felipe Andrade", sexo: "M", altura: 174, nascAnos: 23, zap: "21988110006", valor: 400, objetivo: "Hipertrofia", meta: 4, desde: 60, peso: [66, 2, 55, 3], freq: 4, capricho: 0.95, cargas: [["Supino reto com barra", 35, 47.5, 5], ["Desenvolvimento com halteres", 12, 18, 5]], pago: false, falhou: true },
+    { nome: "Felipe Andrade", sexo: "M", altura: 174, nascAnos: 23, zap: "21988110006", valor: 400, objetivo: "Hipertrofia", meta: 4, desde: 60, peso: [66, 2, 55, 3], freq: 4, capricho: 0.95, cargas: [["Supino reto com barra", 35, 47.5, 5], ["Desenvolvimento com halteres", 12, 18, 5]], pago: false, falhou: true, sumido: true },
     { nome: "Gabriela Nunes", sexo: "F", altura: 158, nascAnos: 52, zap: "21988110007", valor: 380, objetivo: "Saúde geral", meta: 2, desde: 45, peso: [59, -1, 40, 4], freq: 2, capricho: 0.8, cargas: [["Elevação pélvica", 25, 40, 4]], pago: true },
     { nome: "Henrique Lopes", sexo: "M", altura: 180, nascAnos: 31, zap: "21988110008", valor: 420, objetivo: "Hipertrofia", meta: 5, desde: 240, peso: [79, 4.5, 160, 5], freq: 5, capricho: 1.05, cargas: [["Agachamento livre", 70, 110, 11], ["Remada curvada com barra", 45, 72.5, 10], ["Tríceps na polia", 25, 40, 9]], pago: true, rec: true },
+    // recém-matriculada: dispara a automação de boas-vindas na fila de WhatsApp
+    { nome: "Isabela Duarte", sexo: "F", altura: 163, nascAnos: 27, zap: "21988110009", valor: 400, objetivo: "Condicionamento", meta: 3, desde: 2, peso: [70, 0, 2, 1], freq: 3, capricho: 1.0, cargas: [["Agachamento livre", 20, 20, 1]], pago: true },
   ];
 
   var alunos = [], pagamentos = [], avaliacoes = [], sessoes = [], treinosV2 = {}, diarioPT = {};
@@ -159,6 +161,12 @@
     }
     if (cfg.rec) a.assinaturaRec = { id: "sub_demo_" + id, desde: iso(60), valor: cfg.valor };
     if (cfg.falhou) a.cartaoFalhouEm = iso(3);
+    // pacote de serviço em aberto (ex.: massagem) — aparece em Pagamentos → Serviços
+    // e dispara a automação "Pacote acabando" quando o saldo fica baixo
+    if (cfg.pacoteServ) {
+      a.servPacotes = [{ id: "sp" + id, nome: cfg.pacoteServ.nome, total: cfg.pacoteServ.total, usadas: cfg.pacoteServ.usadas, vendidoEm: iso(30) }];
+      pagamentos.push({ id: uid(), alunoId: id, valor: 450, forma: "pix", data: iso(30), desc: "Pacote " + cfg.pacoteServ.total + "x " + cfg.pacoteServ.nome });
+    }
     alunos.push(a);
     treinosV2[id] = { fichas: (cfg.objetivo === "Hipertrofia" ? FICHAS.Hipertrofia : FICHAS.Outro).map(function (f) {
       return { id: uid(), titulo: f.titulo, itens: f.itens.map(function (it) { return { exId: it.exId, series: it.series, reps: it.reps, descanso: it.descanso, obs: "" }; }) };
@@ -215,11 +223,15 @@
       }
       avaliacoes.push(reg);
     });
-    // agenda: semana passada (feitas) + próxima semana
+    // agenda: semana passada (feitas) + próxima semana. Aluno "sumido" faltou a
+    // semana inteira e a última sessão feita foi há 15 dias — a automação
+    // "Sentimos sua falta" pega ele na fila de WhatsApp
     for (var s2 = 0; s2 < cfg.meta; s2++) {
-      sessoes.push({ id: uid(), alunoId: id, data: iso(2 + s2), hora: String(6 + idx) + ":00", feita: s2 !== 1, faltou: s2 === 1 && idx === 2 });
+      sessoes.push({ id: uid(), alunoId: id, data: iso(2 + s2), hora: String(6 + idx) + ":00",
+        feita: cfg.sumido ? false : s2 !== 1, faltou: !!cfg.sumido || (s2 === 1 && idx === 2) });
       sessoes.push({ id: uid(), alunoId: id, data: iso(-(1 + s2)), hora: String(6 + idx) + ":00", feita: false });
     }
+    if (cfg.sumido) sessoes.push({ id: uid(), alunoId: id, data: iso(15), hora: String(6 + idx) + ":00", feita: true });
     diarioPT[id] = [
       { d: iso(9), t: "Evoluiu bem no " + (cfg.cargas[0] ? cfg.cargas[0][0].toLowerCase() : "treino") + " — subir carga na próxima." },
       { d: iso(2), t: idx === 3 ? "Reclamou do joelho no agachamento — reduzi amplitude e encaixei mobilidade." : "Sessão forte, aluno motivado. Manter o ritmo." },
@@ -245,6 +257,18 @@
     alunos: alunos, exercicios: exercicios, treinosV2: treinosV2, pagamentos: pagamentos,
     avaliacoes: avaliacoes, sessoes: sessoes, diarioPT: diarioPT,
     planosPT: planosPT, contratosPT: contratosPT,
+    // serviços do studio (Pagamentos → Serviços) e automações de WhatsApp
+    // (Configurações → Suas automações; as mensagens caem na fila do Início)
+    servicosPT: [
+      { id: "sv1", nome: "Massagem", valor: 120 },
+      { id: "sv2", nome: "Avaliação física", valor: 90 },
+      { id: "sv3", nome: "Liberação miofascial", valor: 100 },
+    ],
+    zapAutos: [
+      { id: "au1", nome: "Sentimos sua falta", gat: "sumido", dias: 7, texto: "Oi {nome}, senti sua falta nos treinos! Bora voltar? Me fala o melhor dia pra você." },
+      { id: "au2", nome: "Boas-vindas", gat: "cadastro", dias: 1, texto: "Oi {nome}! Que bom ter você no time. Qualquer dúvida com o app ou com os treinos, me chama por aqui!" },
+      { id: "au3", nome: "Pacote acabando", gat: "pacote", dias: 2, imgId: "dimg1", texto: "Oi {nome}! Seu pacote de {servico} está no fim — {resta}. Quer já garantir o próximo?" },
+    ],
     videoteca: [
       { titulo: "Mobilidade de quadril em 8 minutos", categoria: "Mobilidade", url: "https://www.youtube.com/results?search_query=mobilidade+de+quadril" },
       { titulo: "Como progredir no supino com segurança", categoria: "Técnica", url: "https://www.youtube.com/results?search_query=progredir+supino" },
@@ -262,6 +286,20 @@
 
   document.getElementById("btnDemo").onclick = function () {
     try {
+      // banco de imagens com a arte da promo — a automação "Pacote acabando"
+      // manda essa foto junto (botão Foto na fila do Início)
+      var cImg = document.createElement("canvas");
+      cImg.width = 720; cImg.height = 405;
+      var gImg = cImg.getContext("2d");
+      var grad = gImg.createLinearGradient(0, 0, 720, 405);
+      grad.addColorStop(0, "#7c3aed"); grad.addColorStop(1, "#33176b");
+      gImg.fillStyle = grad; gImg.fillRect(0, 0, 720, 405);
+      gImg.fillStyle = "#fff";
+      gImg.font = "italic 900 46px Archivo, Arial, sans-serif";
+      gImg.fillText("PROMO DE MASSAGEM", 52, 190);
+      gImg.font = "600 26px Archivo, Arial, sans-serif";
+      gImg.fillText("Pacote de 5 sessões com desconto", 52, 240);
+      localStorage.setItem("mtapp:ptImagens", JSON.stringify([{ id: "dimg1", n: "Promo massagem", d: cImg.toDataURL("image/jpeg", .8), em: iso(10) }]));
       localStorage.setItem("mtapp:ptStudio", JSON.stringify(seed));
       localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
       localStorage.setItem("mtapp:ptSemConta", "1");
