@@ -1180,7 +1180,7 @@ async function abaPt(p, a) {
   await p.click("[data-pfpacote]");
   await p.waitForTimeout(250);
   await p.evaluate(() => { window.prompt = window.__promptOrig; });
-  ok(await p.evaluate(() => /0 de 10 usadas/.test(document.getElementById("pfFin").textContent)), "pacote de 10 sessões vendido aparece no perfil");
+  ok(await p.evaluate(() => /usou 0 de 10/.test(document.getElementById("pfFin").textContent)), "pacote de 10 sessões vendido aparece no perfil");
   ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).pagamentos.some((x) => /pacote/.test(x.forma || "") && +x.valor === 1200)), "venda do pacote registra o pagamento de R$ 1.200");
   ok(await p.evaluate(() => /data-recibo/.test(document.getElementById("pfFin").innerHTML)), "pagamentos do perfil ganham o link de recibo");
   // sessão feita desconta do pacote
@@ -2575,6 +2575,75 @@ async function abaPt(p, a) {
   });
   ok(zapModelo === "Parabéns Nivea, sucesso!", "modelo editado nas Configurações muda o texto da fila na hora");
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapZap);
+  // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
+  const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  const serv = await p.evaluate(async () => {
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    st.alunos.push({ id: "sv1", nome: "Bia Servico", ativo: true });
+    st.pagamentos = st.pagamentos || [];
+    S.write("ptStudio", st);
+    window.__pgAba("serv");
+    document.getElementById("svNome").value = "Massagem";
+    document.getElementById("svValor").value = "120";
+    document.getElementById("svAdd").click();
+    await new Promise((r) => setTimeout(r, 150));
+    document.getElementById("svVAluno").value = "sv1";
+    // venda avulsa (qtd 1, total sugerido 120)
+    document.getElementById("svVender").click();
+    await new Promise((r) => setTimeout(r, 150));
+    // pacote de 3 com desconto (360 -> 300)
+    document.getElementById("svVAluno").value = "sv1";
+    document.getElementById("svVQtd").value = "3";
+    document.getElementById("svVQtd").dispatchEvent(new Event("input"));
+    const sugerido = document.getElementById("svVTotal").value;
+    document.getElementById("svVTotal").value = "300";
+    document.getElementById("svVender").click();
+    await new Promise((r) => setTimeout(r, 150));
+    const st2 = window.MTStore.read("ptStudio", {});
+    const bia = st2.alunos.find((a) => a.id === "sv1");
+    const pgs = st2.pagamentos.filter((x) => x.alunoId === "sv1");
+    return { sugerido, pgs: pgs.map((x) => ({ v: x.valor, d: x.desc })), pacote: bia.servPacotes };
+  });
+  ok(serv.sugerido === "360" && serv.pgs.some((x) => x.v === 120 && x.d === "Massagem"),
+    "venda avulsa de serviço registra o pagamento com a descrição (e o total vem sugerido)");
+  ok(serv.pgs.some((x) => x.v === 300 && x.d === "Pacote 3x Massagem") && serv.pacote && serv.pacote[0].total === 3,
+    "venda com quantidade 3 vira pacote com saldo no aluno e pagamento com desconto aceito");
+  const servUsa = await p.evaluate(async () => {
+    const bt = [...document.querySelectorAll("#svPacotes [data-svusa]")].find((b) => b.getAttribute("data-svusa").indexOf("sv1|") === 0);
+    if (bt) bt.click();
+    await new Promise((r) => setTimeout(r, 150));
+    const st = window.MTStore.read("ptStudio", {});
+    const bia = st.alunos.find((a) => a.id === "sv1");
+    const app = window.__montaAppAluno(bia, "s1");
+    return { usadas: bia.servPacotes[0].usadas, hist: document.getElementById("svPacotes").textContent,
+      appPacote: /Meus pacotes/.test(app) && /restam 2 de 3/.test(app) };
+  });
+  ok(servUsa.usadas === 1 && /usou 1 de 3/.test(servUsa.hist), "Usar 1 desconta do saldo do pacote na hora");
+  ok(servUsa.appPacote, "o app do aluno ganha o card Meus pacotes com o saldo (restam 2 de 3)");
+  ok(await p.evaluate(() => {
+    const st = window.MTStore.read("ptStudio", {});
+    const pg = st.pagamentos.find((x) => x.alunoId === "sv1" && x.desc === "Massagem");
+    if (!pg) return false;
+    // abre o recibo de verdade (window.open capturado) e confere o texto com a descrição
+    let html = "";
+    const openOrig = window.open;
+    window.open = () => ({ document: { write: (h) => { html += h; }, close: () => {} } });
+    const link = document.createElement("a");
+    link.setAttribute("data-recibo", pg.id);
+    document.getElementById("listaPagamentos").appendChild(link);
+    link.click();
+    link.remove();
+    window.open = openOrig;
+    return /referente a Massagem/.test(html);
+  }), "pagamento de serviço guarda a descrição e o recibo usa ela no texto");
+  ok(await p.evaluate(() => {
+    const st = window.MTStore.read("ptStudio", {});
+    const mes = new Date().toISOString().slice(0, 7);
+    // a Bia só tem pagamentos de serviço (com desc) neste mês: o índice de
+    // mensalidade NÃO pode considerar o mês quitado por causa deles
+    return window.__idxPT(st).pagouMes("sv1", mes) === false;
+  }), "venda de serviço não faz a mensalidade do mês constar como paga (cobrança do plano continua)");
+  await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapServ);
   // --- GPS sempre ativo: com permissão, liga sozinho, mede a distância e respeita quem desliga ---
   const ctxGps = await b.newContext({
     viewport: { width: 500, height: 900 },
