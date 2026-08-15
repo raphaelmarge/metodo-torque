@@ -155,9 +155,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #pfTopo #pfAcoesBtn { padding: 8px 11px; }
     /* abas do perfil em grade uniforme 3×2 */
     #calAgenda .cal-dia { min-height: 38px; font-size: 12px; }
-    #pfAbas, #trAbas, #pgAbas, #qtAbas, #relAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #pfAbas, #trAbas, #pgAbas, #qtAbas, #relAbas, #cfgAbas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     #agAbas, #avAbas, #dsAbas, #chAbas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-    #pfAbas button, #trAbas button, #pgAbas button, #qtAbas button, #relAbas button,
+    #pfAbas button, #trAbas button, #pgAbas button, #qtAbas button, #relAbas button, #cfgAbas button,
     #agAbas button, #avAbas button, #dsAbas button, #chAbas button { width: 100%; padding: 9px 4px; font-size: 12px; text-align: center; }
     /* card do aluno no celular: nome e ⋮ na 1ª linha, etiquetas na 2ª (nada empurra o menu) */
     .aluno-pt { grid-template-columns: 1fr auto; }
@@ -747,11 +747,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
       <h2>Nova avaliação física</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha o aluno, preencha o que você mediu e toque em <b>Salvar avaliação</b>. O % de gordura sai como <b>resultado</b>, calculado na hora: o valor medido na balança vence as dobras (densidade + equação de Siri), que vencem a fita (Marinha americana). Sexo, idade e altura vêm do cadastro do aluno.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha o aluno, preencha o que você mediu e toque em <b>Salvar avaliação</b>. O % de gordura sai como <b>resultado</b>, calculado na hora: o valor medido na balança vence as dobras (densidade + equação de Siri), que vencem a fita (Marinha americana). Sexo e idade vêm do cadastro do aluno; a altura preenche sozinha com a do cadastro — medir de novo aqui atualiza lá.</p>
       <div class="linha-flex" style="flex-wrap: wrap;">
         <select id="avAluno" style="min-width: 180px;"></select>
         <input id="avData" type="date" style="width: auto;">
         <input id="avPeso" type="number" step="0.1" min="0" placeholder="Peso kg" style="width: 100px;">
+        <input id="avAltura" type="number" step="0.5" min="0" placeholder="Altura cm" style="width: 110px;">
       </div>
       <div id="avAlunoAviso" class="muted" style="margin-top: 6px; font-size: 12.5px;"></div>
 
@@ -1110,7 +1111,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
         <label style="font-size: 12.5px;">Nome (aparece na fila)
           <input id="autoNome" maxlength="40" placeholder="ex.: Boas-vindas" style="display: block; width: 100%; margin-top: 4px;"></label>
-        <label style="font-size: 12.5px;">Quando enviar
+        <label id="autoGatL" style="font-size: 12.5px;">Quando enviar
           <select id="autoGat" style="display: block; width: 100%; margin-top: 4px;">
             <option value="sumido">Aluno sumido — sem treinar há X dias</option>
             <option value="antesVenc">Antes do vencimento — X dias antes da mensalidade vencer</option>
@@ -1129,12 +1130,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="font-size: 12.5px;">Mensagem
           <textarea id="autoTexto" rows="3" style="display: block; width: 100%; margin-top: 4px;"></textarea></label>
         <p id="autoDica" class="muted" style="margin: 0; font-size: 12px;"></p>
-        <div class="linha-flex" style="gap: 10px; align-items: center;">
+        <div class="linha-flex" id="autoFotoL" style="gap: 10px; align-items: center;">
           <img id="autoImgPrev" alt="foto da automação" hidden style="width: 74px; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px;">
           <button class="btn sec mini" id="autoImgEsc">Escolher foto do banco de imagens</button>
           <button class="btn sec mini" id="autoImgTira" hidden>✕ Remover a foto</button>
         </div>
-        <p class="muted" style="margin: 0; font-size: 12px;">A foto sai pelo <b>compartilhar</b> do celular (botão Foto na fila) — o link do WhatsApp sozinho não anexa imagem.</p>
+        <p class="muted" id="autoFotoDica" style="margin: 0; font-size: 12px;">A foto sai pelo <b>compartilhar</b> do celular (botão Foto na fila) — o link do WhatsApp sozinho não anexa imagem.</p>
       </div>
       <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
         <button class="btn" id="autoSalva">Salvar automação</button>
@@ -1146,36 +1147,28 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- CONFIGURAÇÕES -->
   <section id="vConfig" hidden>
-    <div class="card" style="margin-bottom: 14px;">
+    <div class="abas" id="cfgAbas" style="margin: 0 0 14px;">
+      <button data-cfga="zap" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.5-1a8.5 8.5 0 1 0 4-16z'/></svg> WhatsApp</button>
+      <button data-cfga="app"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='2.5' width='10' height='19' rx='2.5'/><path d='M11 18.5h2'/></svg> App do aluno</button>
+      <button data-cfga="conta"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='3.2'/><path d='M19.5 12a7.5 7.5 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-2-1.2L14.6 3h-5.2l-.4 2.6a7.6 7.6 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.7 7.7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 2 1.2l.4 2.6h5.2l.4-2.6a7.6 7.6 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z'/></svg> Cobrança e conta</button>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-cfgsec="conta">
       <h2>Cobrança</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quantos dias de tolerância depois do vencimento antes do aluno aparecer como <b>ATRASADO</b>? Vale pros alertas do Início, pra lista "Quem ainda não pagou", pra saúde da cobrança e pra régua automática. 0 = cobra no dia seguinte ao vencimento.</p>
       <label style="font-size: 12.5px;">Tolerância de atraso (dias)
         <input id="cfgAtraso" inputmode="numeric" style="display:block; width: 120px; margin-top: 4px;"></label>
     </div>
-    <div class="card" style="margin-bottom: 14px;">
-      <h2>Mensagens de WhatsApp</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Início monta todo dia a fila <b>WhatsApp de hoje</b>: aniversário, lembrete de treino, pagamento atrasado e renovação de plano — cada mensagem já pronta pra sair do seu WhatsApp com um toque. Edite os modelos abaixo; as palavras entre chaves são trocadas sozinhas pelo sistema: <b>{nome}</b> (primeiro nome), <b>{hora}</b> (horário da sessão, ex.: 07:30 — sem horário marcado, o sistema tira o "às" sozinho), <b>{dias}</b> (já vem com a palavra, ex.: "3 dias") e <b>{valor}</b> (valor do plano).</p>
+    <div class="card" style="margin-bottom: 14px;" data-cfgsec="zap">
+      <h2>Mensagens automáticas de WhatsApp</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Início monta todo dia a fila <b>WhatsApp de hoje</b> com as mensagens da lista abaixo, cada uma pronta pra sair do seu WhatsApp com um toque. As quatro primeiras são do sistema (dá pra editar o texto e desligar cada uma); as outras você cria — toque numa <b>pronta</b> pra ajustar e ligar, ou monte do zero, até com foto do seu banco de imagens. As palavras entre chaves são trocadas sozinhas: <b>{nome}</b>, <b>{hora}</b>, <b>{dias}</b> e <b>{valor}</b>.</p>
       <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px; margin-bottom: 10px;"><input type="checkbox" id="cfgZapFila" checked style="width: 17px; height: 17px;"> Montar a fila WhatsApp de hoje no Início</label>
-      <div style="display: flex; flex-direction: column; gap: 9px;">
-        <label style="font-size: 12.5px;">Lembrete de treino (usa {nome} e {hora})
-          <textarea id="cfgZapTreino" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
-        <label style="font-size: 12.5px;">Aniversário (usa {nome})
-          <textarea id="cfgZapNiver" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
-        <label style="font-size: 12.5px;">Pagamento atrasado (usa {nome}, {dias} e {valor})
-          <textarea id="cfgZapAtraso" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
-        <label style="font-size: 12.5px;">Renovação de plano (usa {nome}, {dias} e {valor})
-          <textarea id="cfgZapRenova" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
-      </div>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Por enquanto, cada mensagem sai do seu número com um toque. Quando o WhatsApp oficial da Meta estiver ativado, essa mesma fila poderá sair sozinha, sem toque nenhum.</p>
-    </div>
-    <div class="card" style="margin-bottom: 14px;">
-      <h2>Suas automações de WhatsApp</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">As quatro mensagens acima são fixas. Aqui você cria as suas: toque numa <b>pronta</b> pra ajustar o texto e ligar, ou monte uma do zero. Dá pra escolher uma foto do seu banco de imagens pra mandar junto com a mensagem. Tudo entra na mesma fila <b>WhatsApp de hoje</b> do Início.</p>
+      <div id="autoLista" class="muted" style="margin-top: 4px; font-size: 13px;"></div>
+      <div class="muted" style="margin: 14px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Criar mais</div>
       <div id="autoProntas" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;"></div>
       <button class="btn" id="autoNova">+ Criar automação do zero</button>
-      <div id="autoLista" class="muted" style="margin-top: 10px; font-size: 13px;"></div>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Por enquanto, cada mensagem sai do seu número com um toque. Quando o WhatsApp oficial da Meta estiver ativado, essa mesma fila poderá sair sozinha, sem toque nenhum.</p>
     </div>
-    <div class="card">
+    <div class="card" data-cfgsec="app">
       <h2>O que o aluno vê no app</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Desmarque o que não faz parte do seu trabalho — some do app de <b>todos</b> os alunos na próxima publicação. Ex.: professor de musculação que não passa WOD nem corrida.</p>
       <div style="display: flex; flex-direction: column; gap: 9px;">
@@ -1188,26 +1181,31 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgScan" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Medidas pela câmera</b> — estima cintura, quadril e coxa a partir de duas fotos, lidas dentro do próprio aparelho (vem desligado; é estimativa, não substitui fita nem bioimpedância)</span></label>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgFeed" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os alunos postam resultado e foto, curtem e comentam entre si (vem desligado; precisa de conta na nuvem)</span></label>
       </div>
-      <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
-        <button class="btn" id="cfgSalva">Salvar configurações</button>
-        <span id="cfgStatus" class="muted" style="font-size: 12.5px;"></span>
-      </div>
     </div>
 
-    <div class="card" style="margin-top: 14px;">
+    <div class="card" style="margin-top: 14px;" data-cfgsec="conta">
       <h2>Versão do sistema</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quando sai uma correção, o celular pode continuar rodando a versão antiga por um tempo. Confira o número aqui: se estiver atrasado, toque em atualizar. <b>Nenhum dado seu é apagado</b> — só o que estava guardado pra funcionar offline.</p>
       <div class="linha-flex" style="gap: 10px;">
         <span id="cfgVersao" style="font-weight: 800; font-size: 15px;">—</span>
-        <button class="btn sec" id="cfgAtualiza">🔄 Baixar a versão nova</button>
+        <button class="btn sec" id="cfgAtualiza">Baixar a versão nova</button>
       </div>
     </div>
 
-    <div class="card" style="margin-top: 14px; border-left: 4px solid #f87171;">
+    <div class="card" style="margin-top: 14px; border-left: 4px solid #f87171;" data-cfgsec="conta">
       <h2>Excluir minha conta</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Apaga a conta e <b>todos os dados</b> dela: alunos, treinos, avaliações, pagamentos e conversas. Se você for o único dono, a ilha inteira vai junto — inclusive pra sua equipe. <b>Não dá pra desfazer.</b> Antes de excluir, baixe o backup no card acima.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Apaga a conta e <b>todos os dados</b> dela: alunos, treinos, avaliações, pagamentos e conversas. Se você for o único dono, a ilha inteira vai junto — inclusive pra sua equipe. <b>Não dá pra desfazer.</b> Antes de excluir, baixe o backup em Conta → Backup dos dados.</p>
       <button class="btn sec" id="cfgExcluir" style="border-color: #7f2b2b; color: #fca5a5;">Excluir minha conta e todos os dados</button>
       <div id="cfgExcluirStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+    </div>
+
+    <!-- o Salvar vale pra todas as sub-abas, por isso fica sempre à vista -->
+    <div class="card" style="margin-top: 14px;">
+      <div class="linha-flex" style="gap: 10px;">
+        <button class="btn" id="cfgSalva">Salvar configurações</button>
+        <span class="muted" style="font-size: 12.5px;">vale pro que você mudou nas três abas</span>
+        <span id="cfgStatus" class="muted" style="font-size: 12.5px;"></span>
+      </div>
     </div>
   </section>
 
@@ -4290,11 +4288,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       fila.push({ chave: chave, alunoId: a.id, nome: a.nome, zap: a.zap, tipo: tipo, rotulo: rotulo, texto: texto, img: imgId || "" });
     }
     var autos = (st.zapAutos || []).filter(function (x) { return !x.off && x.texto; });
+    var fixOff = (st.config || {}).zapFixasOff || {}; // cada mensagem fixa tem o próprio liga/desliga
     st.alunos.forEach(function (a) {
       if (a.ativo === false || !a.zap) return;
       var nome = a.nome.split(" ")[0];
       // aniversário (1x por ano; nascido em 29/02 é lembrado dia 28 em ano comum)
-      if (a.nasc && String(a.nasc).length >= 10) {
+      if (!fixOff.niver && a.nasc && String(a.nasc).length >= 10) {
         var nvMD = String(a.nasc).slice(5, 10);
         var anoH = +hoje.slice(0, 4);
         var bis = (anoH % 4 === 0 && anoH % 100 !== 0) || anoH % 400 === 0;
@@ -4306,7 +4305,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
       // treino de hoje (sessão marcada, ainda não feita nem faltou)
       var ses = idxDe(st).sessDe(a.id).find(function (x) { return x.data === hoje && !x.feita && !x.faltou; });
-      if (ses) {
+      if (ses && !fixOff.treino) {
         var txT = zapTexto(mods.treino, { nome: nome, hora: ses.hora || "" });
         // sessão sem horário: tira o "às" que sobrou e conserta a pontuação
         if (!ses.hora) txT = txT.replace(/\s+às\s+([.!,?])/g, "$1").replace(/\s+às\s*$/, "").replace(/\s+([.!,?])/g, "$1");
@@ -4314,7 +4313,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
       // pagamento atrasado (mesma regra do ATRASADO; volta 3 dias depois de marcada)
       var ct = contratoDe(st, a.id);
-      if (ct && !a.assinaturaRec && !idxDe(st).pagouMes(a.id, mes)) {
+      if (!fixOff.atraso && ct && !a.assinaturaRec && !idxDe(st).pagouMes(a.id, mes)) {
         var venc = +ct.diaVenc || 5;
         if (diaHoje > venc + atrasoTol(st)) {
           var diasAt = diaHoje - venc;
@@ -4329,7 +4328,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
       }
       // ciclo do plano terminando em até 30 dias (volta 7 dias depois de marcada)
-      if (ct && ct.inicio) {
+      if (!fixOff.renova && ct && ct.inicio) {
         var pl = planoDe(st, ct.planoId);
         if (pl && +pl.ciclo > 1) {
           var fimC = new Date(ct.inicio + "T12:00");
@@ -4344,7 +4343,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           }
         }
       }
-      // automações criadas pelo professor (Configurações → Suas automações)
+      // automações criadas pelo professor (Configurações → WhatsApp, lista unificada)
       autos.forEach(function (au) {
         var nAu = Math.max(0, Math.min(90, +au.dias || 0));
         if (au.gat === "sumido") {
@@ -5159,12 +5158,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderConfigPT() {
     var st = load();
     $("cfgAtraso").value = String(atrasoTol(st));
-    var zm = zapModelos(st);
     $("cfgZapFila").checked = !(st.config || {}).zapFilaOff;
-    $("cfgZapTreino").value = zm.treino;
-    $("cfgZapNiver").value = zm.niver;
-    $("cfgZapAtraso").value = zm.atraso;
-    $("cfgZapRenova").value = zm.renova;
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
@@ -5176,15 +5170,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config = st.config || {};
     st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
     st.config.zapFilaOff = $("cfgZapFila").checked ? 0 : 1;
-    // só regrava os modelos se os campos foram preenchidos (a aba pode nunca ter sido aberta)
-    if ($("cfgZapTreino").value || $("cfgZapNiver").value || $("cfgZapAtraso").value || $("cfgZapRenova").value) {
-      st.config.zapModelos = {
-        treino: $("cfgZapTreino").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.treino,
-        niver: $("cfgZapNiver").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.niver,
-        atraso: $("cfgZapAtraso").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.atraso,
-        renova: $("cfgZapRenova").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO.renova,
-      };
-    }
+    // os textos das mensagens fixas são salvos pelo editor da lista (não têm mais campo aqui)
     var am = {};
     CFG_VE.forEach(function (par) { if (!$(par[0]).checked) am[par[1]] = false; });
     var feed = $("cfgFeed").checked;
@@ -5211,7 +5197,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__configPT = renderConfigPT; // testes
 
-  // ---------- automações extras de WhatsApp (Configurações → Suas automações) ----------
+  // ---------- mensagens de WhatsApp (Configurações → WhatsApp: fixas + automações numa lista) ----------
   // st.zapAutos = [{id, nome, gat, dias, diaSem, texto, imgId, off}]; o motor que
   // transforma isso em mensagem mora no filaZapDe, junto dos 4 gatilhos fixos.
   var AUTO_PRONTAS = [
@@ -5229,6 +5215,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     semanal: "Manda toda semana no dia escolhido, pra todo aluno ativo com WhatsApp. Dá pra usar {nome}.",
     pacote: "O X = usos restantes que disparam o aviso. Dá pra usar {nome}, {servico} (nome do serviço) e {resta} — o {resta} já vem com o verbo (ex.: 'restam 3').",
   };
+  // as 4 mensagens fixas do sistema, exibidas na MESMA lista das automações
+  var FIXAS_ROT = {
+    treino: { nome: "Lembrete de treino", desc: "no dia da sessão marcada", dica: "Dá pra usar {nome} e {hora} — sem horário marcado, o sistema tira o \"às\" sozinho." },
+    niver: { nome: "Aniversário", desc: "no dia do aniversário", dica: "Dá pra usar {nome}." },
+    atraso: { nome: "Pagamento atrasado", desc: "depois do vencimento — repete a cada 3 dias", dica: "Dá pra usar {nome}, {dias} (já vem com a palavra, ex.: '3 dias') e {valor}." },
+    renova: { nome: "Renovação de plano", desc: "nos 30 dias antes do fim do ciclo — repete a cada 7 dias", dica: "Dá pra usar {nome}, {dias} e {valor}." },
+  };
   function autoDescGat(au) {
     var n = Math.max(0, +au.dias || 0);
     if (au.gat === "sumido") return "sem treinar há " + Math.max(1, n) + "+ dias"; // o motor também força mínimo 1
@@ -5244,17 +5237,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("autoProntas").innerHTML = AUTO_PRONTAS.map(function (pr, i) {
       return '<button class="btn sec mini" data-autopronta="' + i + '">' + esc(pr.nome) + "</button>";
     }).join("");
+    var fixOff = (st.config || {}).zapFixasOff || {};
+    var fixasHtml = ["treino", "niver", "atraso", "renova"].map(function (k) {
+      return '<div class="sessao-pt"><b>' + FIXAS_ROT[k].nome + "</b>" +
+        '<span class="muted" style="font-size:12px;">' + FIXAS_ROT[k].desc + "</span>" +
+        (fixOff[k] ? ' <span class="tag">desligada</span>' : "") +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        '<button class="btn sec mini" data-fixatg="' + k + '">' + (fixOff[k] ? "Ligar" : "Desligar") + "</button>" +
+        '<button class="btn mini" data-fixaed="' + k + '">Editar</button></span></div>';
+    }).join("");
     var lista = st.zapAutos || [];
-    $("autoLista").innerHTML = lista.length ? lista.map(function (au) {
+    $("autoLista").innerHTML = fixasHtml + (lista.length ? lista.map(function (au) {
       return '<div class="sessao-pt"><b>' + esc(au.nome) + "</b>" +
         '<span class="muted" style="font-size:12px;">' + esc(autoDescGat(au)) + (au.imgId ? " · com foto" : "") + "</span>" +
         (au.off ? ' <span class="tag">desligada</span>' : "") +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
         '<button class="btn sec mini" data-autotg="' + esc(au.id) + '">' + (au.off ? "Ligar" : "Desligar") + "</button>" +
         '<button class="btn mini" data-autoed="' + esc(au.id) + '">Editar</button></span></div>';
-    }).join("") : "Nenhuma automação sua ainda — toque numa pronta ali em cima pra começar.";
+    }).join("") : '<div class="muted" style="margin-top:8px;font-size:12.5px;">Essas quatro são do sistema. As suas você cria logo abaixo — numa pronta ou do zero.</div>');
   }
   var autoEditId = null; // id da automação aberta no editor (null = criando)
+  var autoFixa = null;   // chave da mensagem fixa em edição (treino|niver|atraso|renova)
   var autoImgSel = "";   // imgId escolhido no editor (a galeria grava aqui)
   function autoPintaImg() {
     var im = autoImgSel ? imgsLe().find(function (x) { return x.id === autoImgSel; }) : null;
@@ -5274,6 +5277,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("autoGat").addEventListener("change", autoMudaGat);
   function abreAutoEditor(base, idExistente) {
     autoEditId = idExistente || null;
+    autoFixa = null;
+    $("autoNome").disabled = false;
+    $("autoGatL").hidden = false;
+    $("autoFotoL").hidden = false;
+    $("autoFotoDica").hidden = false;
+    $("autoSalva").textContent = "Salvar automação";
+    $("autoApaga").textContent = "Apagar";
+    $("autoApaga").style.borderColor = "#7f2b2b";
+    $("autoApaga").style.color = "#fca5a5";
     $("autoTitulo").textContent = idExistente ? "Editar automação" : "Nova automação";
     $("autoNome").value = base.nome || "";
     $("autoGat").value = base.gat || "sumido";
@@ -5286,7 +5298,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     autoPintaImg();
     $("dlgAuto").showModal();
   }
+  // editar uma mensagem fixa reusa o mesmo dialog, só que sem gatilho e sem foto
+  function abreFixaEditor(chave) {
+    if (!FIXAS_ROT[chave]) return;
+    autoFixa = chave;
+    autoEditId = null;
+    autoImgSel = "";
+    $("autoTitulo").textContent = "Editar mensagem fixa";
+    $("autoNome").value = FIXAS_ROT[chave].nome;
+    $("autoNome").disabled = true;
+    $("autoGatL").hidden = true;
+    $("autoDiasL").hidden = true;
+    $("autoSemL").hidden = true;
+    $("autoFotoL").hidden = true;
+    $("autoFotoDica").hidden = true;
+    $("autoTexto").value = zapModelos(load())[chave];
+    $("autoDica").textContent = FIXAS_ROT[chave].dica +
+      " Deixar o texto vazio volta pro padrão do sistema; pra essa mensagem parar de sair, use o Desligar na lista.";
+    $("autoSalva").textContent = "Salvar mensagem";
+    $("autoApaga").hidden = false;
+    $("autoApaga").textContent = "Voltar pro texto padrão";
+    $("autoApaga").style.borderColor = ""; // aqui ele não é perigoso — sem o vermelho do Apagar
+    $("autoApaga").style.color = "";
+    autoPintaImg();
+    $("dlgAuto").showModal();
+  }
   window.__autoEdita = abreAutoEditor; // testes
+  window.__autoFixaEdita = abreFixaEditor; // testes
   window.__autosPT = renderAutos; // testes
   $("autoNova").addEventListener("click", function () { abreAutoEditor({}); });
   $("autoProntas").addEventListener("click", function (e) {
@@ -5298,6 +5336,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (jaTem) abreAutoEditor(jaTem, jaTem.id); else abreAutoEditor(pr);
   });
   $("autoLista").addEventListener("click", function (e) {
+    var fed = e.target.closest("[data-fixaed]");
+    if (fed) { abreFixaEditor(fed.getAttribute("data-fixaed")); return; }
+    var ftg = e.target.closest("[data-fixatg]");
+    if (ftg) {
+      var stF = load();
+      stF.config = stF.config || {};
+      stF.config.zapFixasOff = stF.config.zapFixasOff || {};
+      var kF = ftg.getAttribute("data-fixatg");
+      if (stF.config.zapFixasOff[kF]) delete stF.config.zapFixasOff[kF]; else stF.config.zapFixasOff[kF] = 1;
+      save(stF);
+      renderAutos();
+      return;
+    }
     var ed = e.target.closest("[data-autoed]");
     var tg = e.target.closest("[data-autotg]");
     if (!ed && !tg) return;
@@ -5311,6 +5362,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("autoImgTira").addEventListener("click", function () { autoImgSel = ""; autoPintaImg(); });
   $("autoCancela").addEventListener("click", function () { $("dlgAuto").close(); });
   $("autoSalva").addEventListener("click", function () {
+    if (autoFixa) {
+      // mensagem fixa: só o texto muda; vazio volta pro padrão do sistema
+      var stFx = load();
+      stFx.config = stFx.config || {};
+      var zmFx = zapModelos(stFx);
+      zmFx[autoFixa] = $("autoTexto").value.trim().slice(0, 400) || ZAP_MODELOS_PADRAO[autoFixa];
+      stFx.config.zapModelos = zmFx;
+      save(stFx);
+      $("dlgAuto").close();
+      renderAutos();
+      $("cfgStatus").textContent = "Mensagem fixa salva! Já vale na fila WhatsApp de hoje, no Início.";
+      return;
+    }
     var nome = $("autoNome").value.trim().slice(0, 40);
     var texto = $("autoTexto").value.trim().slice(0, 400);
     if (!nome || !texto) { alert("Preencha o nome e a mensagem."); return; }
@@ -5331,6 +5395,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgStatus").textContent = "Automação salva! Quando a condição bater, a mensagem entra na fila WhatsApp de hoje, no Início.";
   });
   $("autoApaga").addEventListener("click", function () {
+    if (autoFixa) {
+      // só preenche o campo — quem grava é o Salvar (Cancelar desfaz de verdade)
+      $("autoTexto").value = ZAP_MODELOS_PADRAO[autoFixa];
+      return;
+    }
     if (!autoEditId) return;
     if (!confirm("Apagar esta automação? As mensagens já enviadas não são afetadas.")) return;
     var st = load();
@@ -5571,6 +5640,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__agAba = fazSubAbas("vAgenda", "agAbas", "data-aga", "data-agsec", "sessoes");
   window.__avAba = fazSubAbas("vAvaliacoes", "avAbas", "data-ava", "data-avsec", "avaliar");
+  window.__cfgAba = fazSubAbas("vConfig", "cfgAbas", "data-cfga", "data-cfgsec", "zap");
   window.__qtAba = fazSubAbas("vQuest", "qtAbas", "data-qta", "data-qtsec", "enviar");
   window.__dsAba = fazSubAbas("vDesafio", "dsAbas", "data-dsa", "data-dssec", "config");
   // abrir a sub-aba Comunidade já busca o feed da turma
@@ -6474,9 +6544,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pintaAvisoAv() {
     var a = alunoAv();
     if (!a) { $("avAlunoAviso").textContent = ""; return; }
+    // altura tem campo aqui no formulário — o aviso cobra só o que não tem
     var falta = [];
     if (!a.sexo) falta.push("sexo");
-    if (!(+a.altura)) falta.push("altura");
     if (!a.nasc) falta.push("nascimento");
     $("avAlunoAviso").innerHTML = falta.length
       ? (falta.length > 1 ? "Faltam" : "Falta") + " no cadastro de " + esc(a.nome.split(" ")[0]) + ": <b>" + falta.join(", ") + "</b> — preencha lá pro % de gordura e o laudo saírem completos."
@@ -6514,7 +6584,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return { metodo: metodo, dobras: nomes, soma: Math.round(S3 * 10) / 10, densidade: Math.round(D * 10000) / 10000, gordura: pct };
   }
   $("dbMetodo").addEventListener("change", renderDobrasCampos);
-  $("avAluno").addEventListener("change", function () { renderDobrasCampos(); pintaAvisoAv(); $("avResultado").textContent = ""; });
+  $("avAluno").addEventListener("change", function () {
+    renderDobrasCampos();
+    pintaAvisoAv();
+    $("avResultado").textContent = "";
+    var aAlt = alunoAv();
+    $("avAltura").value = aAlt && +aAlt.altura ? aAlt.altura : "";
+  });
   // editar na mão um campo que veio da câmera transforma a estimativa em medida do professor
   ["avCintura", "avQuadril", "avBraco"].forEach(function (id) {
     $(id).addEventListener("input", function () { delete this.dataset.origem; });
@@ -7095,6 +7171,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === $("avAluno").value; });
     if (!a) { alert("Escolha o aluno."); return; }
     var sexoAv = a.sexo === "F" ? "F" : "M";
+    // altura medida na hora atualiza o cadastro (o laudo e o IMC usam de lá)
+    var altAv = +$("avAltura").value || 0;
+    if (altAv > 0 && altAv !== +a.altura) a.altura = altAv;
     var db = dobrasDe(sexoAv, idadeDe(a.nasc));
     if (db && db.erro) { alert(db.erro); return; }
     var ft = fitaDe(sexoAv, +a.altura || 0);
@@ -7147,7 +7226,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (Object.keys(bia).length) reg.bia = bia;
     st.avaliacoes.push(reg);
     marcaAppPendente(st, reg.alunoId); // a evolução entra no app na próxima publicação
-    ["avPeso", "avGord", "avCintura", "avBraco", "avQuadril", "ccPescoco", "ccTorax", "ccAbdomen",
+    ["avPeso", "avAltura", "avGord", "avCintura", "avBraco", "avQuadril", "ccPescoco", "ccTorax", "ccAbdomen",
      "ccAntebraco", "ccCoxa", "ccPanturrilha", "biaAgua", "biaProteina", "biaMineral",
      "biaGordKg", "biaMme", "biaVisceral", "biaAngulo", "biaBracoE", "biaBracoD", "biaTronco",
      "biaPernaE", "biaPernaD"].forEach(function (id) { if ($(id)) $(id).value = ""; });
@@ -7157,7 +7236,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // Sem % com fita preenchida, diz o MOTIVO (quadril de mulher, altura, pescoço)
     var semPq = "";
     if (reg.gordura == null && ft) {
-      if (!(+a.altura)) semPq = " A fita não gerou o % porque falta a <b>altura</b> no cadastro.";
+      if (!(+a.altura)) semPq = " A fita não gerou o % porque faltou a <b>altura</b> — preencha o campo Altura na próxima.";
       else if (sexoAv === "F" && !ft.circ.quadril) semPq = " A fita não gerou o % porque pra mulher o <b>quadril</b> é obrigatório.";
       else if (!ft.circ.pescoco) semPq = " A fita não gerou o % porque faltou o <b>pescoço</b>.";
       else if (!ft.circ.cintura) semPq = " A fita não gerou o % porque faltou a <b>cintura</b>.";
@@ -7504,7 +7583,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (imZ ? '<button class="btn sec mini" data-zapfoto="' + z.chave + '" title="compartilha a foto com a mensagem de legenda">Foto</button>' : "") +
         '<a class="btn whats mini" target="_blank" rel="noopener" data-zapok="' + z.chave + '" href="https://wa.me/55' + String(z.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(z.texto) + '">Enviar</a>' +
         '<button class="btn sec mini" data-zappula="' + z.chave + '" title="marcar como resolvida sem enviar">Pular</button></span></div>';
-    }).join("") + '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">Toque em Enviar: abre o seu WhatsApp com a mensagem pronta. Os modelos são editáveis nas Configurações.' +
+    }).join("") + '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">Toque em Enviar: abre o seu WhatsApp com a mensagem pronta. Dá pra editar o texto de cada mensagem em Configurações → WhatsApp.' +
       (zapTemFoto ? " Mensagem com foto: toque em <b>Foto</b> e escolha o aluno certo na lista do celular — a mensagem vai junto, de legenda. Se a legenda não for, mande o texto pelo Enviar; se foi, é só tocar em Pular pra tirar da fila." : "") + "</p>"
       : "Nenhuma mensagem pendente — todo mundo avisado.";
     // as miniaturas recebem o src DEPOIS, uma imagem por id — embutir o base64 no
