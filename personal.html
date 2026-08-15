@@ -1183,6 +1183,23 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <button class="btn sec mini" id="spCapaBtn">Escolher foto de capa do banco de imagens</button>
           <button class="btn sec mini" id="spCapaTira" hidden>✕ Remover a foto</button>
         </div>
+        <div class="muted" style="font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px;">Aparência da página</div>
+        <div class="linha-flex" style="flex-wrap: wrap; align-items: flex-end;">
+          <label style="font-size: 12.5px;">Cor principal
+            <input type="color" id="spCor" value="#7c3aed" style="display: block; margin-top: 4px; width: 58px; height: 32px; padding: 2px; border: 1px solid var(--linha); border-radius: 8px; background: #14121a; cursor: pointer;"></label>
+          <label style="font-size: 12.5px;">Cor do fundo
+            <input type="color" id="spFundo" value="#0d0c10" style="display: block; margin-top: 4px; width: 58px; height: 32px; padding: 2px; border: 1px solid var(--linha); border-radius: 8px; background: #14121a; cursor: pointer;"></label>
+          <button class="btn sec mini" id="spCorPadrao" title="volta a acompanhar as cores da Personalização">Usar as cores da Personalização</button>
+        </div>
+        <div class="linha-flex" style="gap: 10px; align-items: center;">
+          <img id="spLogoPrev" alt="logo da página" hidden style="height: 40px;">
+          <button class="btn sec mini" id="spLogoBtn">Logo própria da página</button>
+          <button class="btn sec mini" id="spLogoTira" hidden>✕ Tirar a logo própria</button>
+          <span class="muted" style="font-size: 12px;">sem logo própria, vale a da Personalização</span>
+          <input type="file" id="spLogoFile" accept="image/*" hidden>
+        </div>
+        <div class="muted" style="font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px;">Ordem das seções (use as setas)</div>
+        <div id="spOrdem" style="display: flex; flex-direction: column; gap: 6px;"></div>
         <div class="linha-flex" style="flex-wrap: wrap; gap: 14px;">
           <label style="display: flex; gap: 8px; align-items: center; font-size: 13px;"><input type="checkbox" id="spMostraPlanos" checked style="width: 16px; height: 16px;"> Mostrar meus planos com preço</label>
           <label style="display: flex; gap: 8px; align-items: center; font-size: 13px;"><input type="checkbox" id="spMostraServ" checked style="width: 16px; height: 16px;"> Mostrar meus serviços com preço</label>
@@ -5473,11 +5490,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // O professor escreve os textos; WhatsApp, Instagram, logo, cores, planos e
   // serviços entram sozinhos. Publica na tabela site_pro (padrão do app_aluno)
   // e o visitante abre por pagina.html?s=<endereco>.
+  var SP_ORDEM_DEF = [["sobre", "Sobre mim"], ["servicos", "Serviços"], ["planos", "Planos"], ["contato", "Fale comigo"]];
+  function spOrdemDe(sp) {
+    var validas = SP_ORDEM_DEF.map(function (par) { return par[0]; });
+    var ordem = (sp.ordem || []).filter(function (k) { return validas.indexOf(k) >= 0; });
+    validas.forEach(function (k) { if (ordem.indexOf(k) < 0) ordem.push(k); });
+    return ordem;
+  }
   function montaSitePro(st) {
     var cfg = st.config || {};
     var sp = cfg.sitePro || {};
-    var cor = corOk(cfg.cor) || "#7c3aed";
-    var fundo = corOk(cfg.fundo) || "#0d0c10";
+    // cores e logo próprias da página vencem as da Personalização
+    var cor = corOk(sp.cor) || corOk(cfg.cor) || "#7c3aed";
+    var fundo = corOk(sp.fundo) || corOk(cfg.fundo) || "#0d0c10";
+    var logo = sp.logo || cfg.logo || "";
+    // fundo claro pede texto escuro (senão a página fica ilegível)
+    var lum = (function (hex) {
+      var m = /^#(..)(..)(..)$/.exec(hex || "");
+      if (!m) return 0;
+      return (parseInt(m[1], 16) * 0.299 + parseInt(m[2], 16) * 0.587 + parseInt(m[3], 16) * 0.114) / 255;
+    })(fundo);
+    var claro = lum > 0.55;
+    var txt = claro ? "#17141f" : "#f2f0f6";
+    var txt2 = claro ? "#4a4657" : "#cfcbdb";
+    var txt3 = claro ? "#6b6678" : "#a9a4b5";
+    var caixa = claro ? "rgba(0,0,0,.05)" : "rgba(255,255,255,.05)";
+    var borda = claro ? "rgba(0,0,0,.12)" : "rgba(255,255,255,.1)";
     var nome = cfg.nome || "Personal trainer";
     var zapDig = String(cfg.zap || "").replace(/\D/g, "");
     var zapUrl = zapDig ? "https://wa.me/55" + zapDig + "?text=" + encodeURIComponent("Oi! Vi sua página e quero saber mais sobre os treinos.") : "";
@@ -5509,41 +5547,45 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var u = urlRede(sp[par[0]], par[2]);
       return u ? redeIco(par[1], u, par[3]) : "";
     }).join("");
+    // cada seção nasce separada e entra na página na ordem escolhida pelo professor
+    var secoes = {
+      sobre: sp.bio ? "<section class='sec'>" + secTit("Sobre mim") + "<p style='color:" + txt2 + ";white-space:pre-line;'>" + esc(sp.bio) + "</p></section>" : "",
+      servicos: servicos.length ? "<section class='sec'>" + secTit("Serviços") + "<div class='gr'>" + servicos.map(function (s) {
+        return "<div class='it'><b>" + esc(s.nome) + "</b><div class='preco'>" + S.fmtBRL(+s.valor) + "</div></div>";
+      }).join("") + "</div></section>" : "",
+      planos: planos.length ? "<section class='sec'>" + secTit("Planos") + "<div class='gr'>" + planos.map(function (pl) {
+        return "<div class='it'><b>" + esc(pl.nome) + "</b>" +
+          (pl.treinosSem ? "<div style='color:" + txt3 + ";font-size:13px;'>" + (+pl.treinosSem) + "x por semana</div>" : "") +
+          "<div class='preco'>" + S.fmtBRL(+pl.valor) + "/mês</div></div>";
+      }).join("") + "</div></section>" : "",
+      contato: "<section class='sec' style='text-align:center;'>" + secTit("Fale comigo") +
+        (zapUrl ? "<p style='margin-bottom:14px;'><a class='cta' href='" + zapUrl + "' target='_blank' rel='noopener'>Chamar no WhatsApp</a></p>" : "") +
+        (redesHtml ? "<div style='margin:16px 0 8px;'>" + redesHtml + "</div>" : "") +
+        (sp.email ? "<p><a href='mailto:" + esc(sp.email) + "'>" + esc(sp.email) + "</a></p>" : "") +
+        "</section>",
+    };
     return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
       "<title>" + esc(nome) + "</title>" +
       "<meta name='description' content='" + esc(sp.sub || ("Treinos com " + nome)) + "'>" +
-      "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:" + fundo + ";color:#f2f0f6;line-height:1.6}" +
+      "<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:" + fundo + ";color:" + txt + ";line-height:1.6}" +
       ".sec{max-width:760px;margin:0 auto;padding:44px 22px}" +
       ".cta{display:inline-block;background:" + cor + ";color:#fff;text-decoration:none;font-weight:800;padding:15px 28px;border-radius:999px;font-size:16px}" +
       ".gr{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}" +
-      ".it{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:18px}" +
+      ".it{background:" + caixa + ";border:1px solid " + borda + ";border-radius:14px;padding:18px}" +
       ".it b{font-size:16px}.preco{color:" + cor + ";font-weight:800;font-size:18px;margin-top:6px}" +
       "a{color:" + cor + "}img{max-width:100%;height:auto}</style></head><body>" +
       // hero: capa (ou gradiente da marca), logo, headline e o chamado pro WhatsApp
-      "<header style='position:relative;text-align:center;padding:64px 22px 56px;background:" +
-      (capaIm ? "linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.75)),url(" + capaIm.d + ") center/cover" : "linear-gradient(150deg," + cor + "33," + fundo + " 60%)") + ";'>" +
-      (cfg.logo ? "<img src='" + cfg.logo + "' alt='" + esc(nome) + "' style='height:64px;margin-bottom:18px;'>" : "") +
+      "<header style='position:relative;text-align:center;padding:64px 22px 56px;color:#f2f0f6;background:" +
+      (capaIm ? "linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.75)),url(" + capaIm.d + ") center/cover" : "linear-gradient(150deg," + cor + "44," + (claro ? "#17141f" : fundo) + " 60%)") + ";'>" +
+      (logo ? "<img src='" + logo + "' alt='" + esc(nome) + "' style='height:64px;margin-bottom:18px;'>" : "") +
       "<div style='font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:" + cor + ";font-weight:800;'>" + esc(nome) + "</div>" +
       "<h1 style='font-size:clamp(28px,6vw,44px);margin:10px auto 12px;max-width:640px;line-height:1.15;'>" + esc(headline) + "</h1>" +
       (sp.sub ? "<p style='color:#cfcbdb;max-width:520px;margin:0 auto 24px;font-size:17px;'>" + esc(sp.sub) + "</p>" : "<div style='height:16px;'></div>") +
       (zapUrl ? "<a class='cta' href='" + zapUrl + "' target='_blank' rel='noopener'>Chamar no WhatsApp</a>" : "") +
       "</header>" +
-      (sp.bio ? "<section class='sec'>" + secTit("Sobre mim") + "<p style='color:#dcd8e6;white-space:pre-line;'>" + esc(sp.bio) + "</p></section>" : "") +
-      (servicos.length ? "<section class='sec'>" + secTit("Serviços") + "<div class='gr'>" + servicos.map(function (s) {
-        return "<div class='it'><b>" + esc(s.nome) + "</b><div class='preco'>" + S.fmtBRL(+s.valor) + "</div></div>";
-      }).join("") + "</div></section>" : "") +
-      (planos.length ? "<section class='sec'>" + secTit("Planos") + "<div class='gr'>" + planos.map(function (pl) {
-        return "<div class='it'><b>" + esc(pl.nome) + "</b>" +
-          (pl.treinosSem ? "<div style='color:#a9a4b5;font-size:13px;'>" + (+pl.treinosSem) + "x por semana</div>" : "") +
-          "<div class='preco'>" + S.fmtBRL(+pl.valor) + "/mês</div></div>";
-      }).join("") + "</div></section>" : "") +
-      "<section class='sec' style='text-align:center;'>" + secTit("Fale comigo") +
-      (zapUrl ? "<p style='margin-bottom:14px;'><a class='cta' href='" + zapUrl + "' target='_blank' rel='noopener'>Chamar no WhatsApp</a></p>" : "") +
-      (redesHtml ? "<div style='margin:16px 0 8px;'>" + redesHtml + "</div>" : "") +
-      (sp.email ? "<p><a href='mailto:" + esc(sp.email) + "'>" + esc(sp.email) + "</a></p>" : "") +
-      "</section>" +
-      "<footer style='text-align:center;padding:26px 22px;color:#8b8698;font-size:12.5px;border-top:1px solid rgba(255,255,255,.08);'>" +
+      spOrdemDe(sp).map(function (k) { return secoes[k] || ""; }).join("") +
+      "<footer style='text-align:center;padding:26px 22px;color:" + txt3 + ";font-size:12.5px;border-top:1px solid " + borda + ";'>" +
       esc(nome) + " · página feita no <a href='https://www.torqueon.com.br' target='_blank' rel='noopener'>TORQUE ON</a></footer>" +
       // botão flutuante de WhatsApp: acompanha a página inteira
       (zapUrl ? "<a href='" + zapUrl + "' target='_blank' rel='noopener' aria-label='Chamar no WhatsApp' " +
@@ -5569,6 +5611,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spCapaPrev").hidden = !capaIm;
     if (capaIm) $("spCapaPrev").src = capaIm.d;
     $("spCapaTira").hidden = !sp.capaId;
+    // aparência: cores (as próprias da página, ou as da Personalização) e logo própria
+    $("spCor").value = corOk(sp.cor) || corOk((st.config || {}).cor) || "#7c3aed";
+    $("spFundo").value = corOk(sp.fundo) || corOk((st.config || {}).fundo) || "#0d0c10";
+    $("spLogoPrev").hidden = !sp.logo;
+    if (sp.logo) $("spLogoPrev").src = sp.logo;
+    $("spLogoTira").hidden = !sp.logo;
+    // ordem das seções com setas de subir/descer
+    var ordem = spOrdemDe(sp);
+    var ROT_SEC = {};
+    SP_ORDEM_DEF.forEach(function (par) { ROT_SEC[par[0]] = par[1]; });
+    $("spOrdem").innerHTML = ordem.map(function (k, i) {
+      return '<div class="sessao-pt" style="padding:8px 12px;"><b style="font-size:13px;">' + (i + 1) + ". " + ROT_SEC[k] + "</b>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:6px;">' +
+        '<button class="btn sec mini" data-spsobe="' + k + '"' + (i === 0 ? " disabled" : "") + ' aria-label="subir ' + ROT_SEC[k] + '">Subir</button>' +
+        '<button class="btn sec mini" data-spdesce="' + k + '"' + (i === ordem.length - 1 ? " disabled" : "") + ' aria-label="descer ' + ROT_SEC[k] + '">Descer</button></span></div>';
+    }).join("");
     var cfg = st.config || {};
     $("spAuto").innerHTML = "Entram sozinhos: WhatsApp " + (cfg.zap ? "<b>" + esc(cfg.zap) + "</b>" : "<b>nenhum — preencha no card Sua ilha</b>") +
       " · " + (st.planosPT || []).length + " plano(s) · " + (st.servicosPT || []).length + " serviço(s) · logo e cores da Personalização.";
@@ -5590,6 +5648,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sp.email = $("spEmail").value.trim().slice(0, 80);
     sp.mostraPlanos = $("spMostraPlanos").checked;
     sp.mostraServ = $("spMostraServ").checked;
+    sp.cor = corOk($("spCor").value) || "";
+    sp.fundo = corOk($("spFundo").value) || "";
     st.config.sitePro = sp;
     S.write("ptStudio", st);
     return st;
@@ -5601,6 +5661,64 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return st;
   });
   $("spCapaBtn").addEventListener("click", function () { spSalva(); abreGaleria({ tipo: "sitepro" }); });
+  $("spCorPadrao").addEventListener("click", function () {
+    spSalva();
+    var st = load();
+    delete st.config.sitePro.cor;
+    delete st.config.sitePro.fundo;
+    S.write("ptStudio", st);
+    renderSitePro();
+    $("spStatus").textContent = "Pronto — a página volta a acompanhar as cores da Personalização.";
+  });
+  $("spOrdem").addEventListener("click", function (e) {
+    var sobe = e.target.getAttribute && e.target.getAttribute("data-spsobe");
+    var desce = e.target.getAttribute && e.target.getAttribute("data-spdesce");
+    if (!sobe && !desce) return;
+    var st = spSalva(); // preserva o que estiver digitado antes de repintar
+    var ordem = spOrdemDe(st.config.sitePro);
+    var k = sobe || desce;
+    var i = ordem.indexOf(k);
+    var j = sobe ? i - 1 : i + 1;
+    if (j < 0 || j >= ordem.length) return;
+    ordem[i] = ordem[j];
+    ordem[j] = k;
+    st.config.sitePro.ordem = ordem;
+    S.write("ptStudio", st);
+    renderSitePro();
+  });
+  $("spLogoBtn").addEventListener("click", function () { $("spLogoFile").click(); });
+  $("spLogoFile").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f) return;
+    spSalva();
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var fator = Math.min(1, 240 / Math.max(img.width || 1, img.height || 1));
+      var c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round((img.width || 1) * fator));
+      c.height = Math.max(1, Math.round((img.height || 1) * fator));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      var d = c.toDataURL("image/png");
+      if (d.length > 150 * 1024) { alert("Logo muito pesada — use uma imagem mais simples."); return; }
+      var st = load();
+      st.config.sitePro = st.config.sitePro || {};
+      st.config.sitePro.logo = d;
+      S.write("ptStudio", st);
+      renderSitePro();
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo?"); };
+    img.src = url;
+  });
+  $("spLogoTira").addEventListener("click", function () {
+    spSalva();
+    var st = load();
+    if (st.config.sitePro) delete st.config.sitePro.logo;
+    S.write("ptStudio", st);
+    renderSitePro();
+  });
   $("spCapaTira").addEventListener("click", function () {
     var st = load();
     if ((st.config || {}).sitePro) { delete st.config.sitePro.capaId; S.write("ptStudio", st); }

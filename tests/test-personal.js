@@ -2665,6 +2665,33 @@ async function abaPt(p, a) {
     /facebook\.com\/studioteste/.test(site.html) && /x\.com\/studioteste/.test(site.html) &&
     (site.html.match(/aria-label='(Instagram|Threads|YouTube|Facebook|X)'/g) || []).length === 5,
     "as 5 redes sociais viram ícones com link (Instagram, Threads, YouTube, Facebook e X)");
+  // personalização da página: cores próprias (com contraste), logo própria e ordem das seções
+  const sitePers = await p.evaluate(async () => {
+    document.getElementById("spCor").value = "#ff5500";
+    document.getElementById("spFundo").value = "#ffffff";
+    document.getElementById("spSalvar").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const pngMini = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    st.config.sitePro.logo = pngMini;
+    S.write("ptStudio", st);
+    const claro = window.__sitePro.monta(S.read("ptStudio", {}));
+    // descer a seção Sobre: Serviços passa na frente
+    document.querySelector('#spOrdem [data-spdesce="sobre"]').click();
+    await new Promise((r) => setTimeout(r, 200));
+    const st2 = S.read("ptStudio", {});
+    const html2 = window.__sitePro.monta(st2);
+    return {
+      corPropria: /#ff5500/.test(claro),
+      contraste: /color:#17141f/.test(claro),
+      logoPropria: claro.indexOf(pngMini) >= 0,
+      ordem: st2.config.sitePro.ordem.join(","),
+      servAntes: html2.indexOf("Serviços") >= 0 && html2.indexOf("Serviços") < html2.indexOf("Sobre mim"),
+    };
+  });
+  ok(sitePers.corPropria && sitePers.contraste, "cor e fundo próprios da página valem (e fundo claro troca pro texto escuro)");
+  ok(sitePers.logoPropria, "logo própria da página vence a da Personalização");
+  ok(sitePers.ordem.indexOf("servicos,sobre") === 0 && sitePers.servAntes, "as setas mudam a ordem das seções na página");
   ok(/&lt;b&gt;Teste&lt;\/b&gt; &amp; cia/.test(site.html), "texto do professor vai escapado (sem HTML solto na página)");
   ok(site.preview, "a prévia é desenhada no iframe");
   await p.click("#spPublicar");
