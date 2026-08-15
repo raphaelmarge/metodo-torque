@@ -1972,3 +1972,35 @@ as $$
 $$;
 
 grant execute on function public.site_pro_busca(text) to anon, authenticated;
+
+-- ==================== ASSINATURA DO PROFISSIONAL (lojas) ====================
+-- O personal pode assinar o TORQUE PERSONAL de dentro do app, pela App Store
+-- ou pela Play Store. O RevenueCat confere o recibo com a Apple/Google e
+-- chama a Edge Function assinatura-loja, que grava o status aqui. O painel
+-- consulta pelo RPC minha_assinatura().
+-- Este bloco pode rodar mais de uma vez sem problema.
+
+alter table public.academias add column if not exists assinatura_status text not null default 'trial';
+alter table public.academias add column if not exists assinatura_via text not null default '';
+alter table public.academias add column if not exists assinatura_vence timestamptz;
+alter table public.academias add column if not exists assinatura_ref text not null default '';
+
+-- o profissional logado vê a situação da própria assinatura (nunca a dos outros)
+create or replace function public.minha_assinatura()
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'status', a.assinatura_status,
+    'via', a.assinatura_via,
+    'vence', a.assinatura_vence,
+    'academia_id', a.id
+  )
+  from public.academias a
+  where a.id in (select public.minhas_academias())
+  order by a.criada
+  limit 1
+$$;
+
+grant execute on function public.minha_assinatura() to authenticated;

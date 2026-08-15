@@ -236,6 +236,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <a id="faixaTesteZap" class="btn mini" target="_blank" rel="noopener" href="#">Assinar — R$ 49/mês</a>
     <button class="btn sec mini" id="faixaTesteEntrar" type="button">Já tenho conta</button>
   </div>
+  <div id="faixaAssinatura" hidden style="border-radius: 12px; padding: 10px 14px; margin: 0 0 14px; font-size: 13px; line-height: 1.6; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <span id="faixaAssinaturaTxt" style="flex: 1; min-width: 200px;"></span>
+    <a id="faixaAssinaturaBtn" class="btn mini" target="_blank" rel="noopener" href="#" hidden>Regularizar</a>
+  </div>
 
   <div class="menu-fundo" id="fundoMenuPt"></div>
   <div class="abas-pt" id="abas">
@@ -1336,6 +1340,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <div class="card" id="cardConta" hidden style="margin-top: 20px;">
     <h2>Sua ilha no TORQUE ON</h2>
     <p class="muted" id="contaStatus" style="margin: 6px 0 10px;"></p>
+    <div id="assinaturaInfo" hidden style="margin: 0 0 12px; padding: 9px 12px; border: 1px solid #322e3d; border-radius: 11px; font-size: 12.5px; line-height: 1.6;"></div>
     <div class="linha-flex" style="margin-bottom: 10px; gap: 14px;">
       <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (os alunos falam com você por ele)
         <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 170px; display: block; margin-top: 4px;"></label>
@@ -10660,6 +10665,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("contaStatus").innerHTML = "Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> (leva 1 minuto) para ter a sua ilha na nuvem: sincroniza celular ↔ computador e libera o app dos seus alunos com link online.";
     }
     renderFaixaTeste(u.logado);
+    renderAssinatura();
     // aviso do backup: lembra a cada 30 dias (quem não tem conta depende só dele)
     var bkEm = (st.config || {}).backupEm || "";
     var bkDias = bkEm ? Math.floor((new Date(S.todayISO()) - new Date(bkEm)) / 864e5) : null;
@@ -10722,9 +10728,77 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       ? "<b>Seu teste grátis de 14 dias terminou.</b> Gostou? Assine e ganhe a sua ilha na nuvem: sincroniza entre aparelhos e libera o app online dos alunos."
       : "<b>Modo teste — dia " + dia + " de 14.</b> Use tudo à vontade; seus dados ficam neste aparelho e viram a sua conta quando você assinar.";
     $("faixaTesteZap").href = "https://wa.me/5521994429198?text=" + encodeURIComponent("Oi! Testei o TORQUE PERSONAL e quero assinar 💪");
+    // regra das lojas (Apple/Google): dentro do app nativo não pode oferta com
+    // preço/pagamento por fora — lá a assinatura é feita pela própria loja
+    $("faixaTesteZap").hidden = ehAppNativo();
     faixa.hidden = false;
   }
+  window.__faixaTeste = renderFaixaTeste; // testes
   $("faixaTesteEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
+
+  // ---------- assinatura do profissional (App Store / Play Store) ----------
+  // Quem assina de dentro do app paga pela loja; o RevenueCat confirma com a
+  // Apple/Google e a nuvem guarda o status. Aqui só CONSULTA e mostra.
+  function ehAppNativo() {
+    try { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }
+    catch (e) { return false; }
+  }
+  function lojaAssinaturasUrl() {
+    // a tela de assinaturas do próprio celular — é lá que se paga, cancela e troca cartão
+    var ios = /iPhone|iPad|Macintosh/i.test(navigator.userAgent);
+    return ios ? "https://apps.apple.com/account/subscriptions" : "https://play.google.com/store/account/subscriptions";
+  }
+  function leAssinatura() {
+    try { return JSON.parse(localStorage.getItem("mtapp:ptAssinatura") || "null"); } catch (e) { return null; }
+  }
+  function renderAssinatura() {
+    var ass = leAssinatura();
+    var faixa = $("faixaAssinatura"), info = $("assinaturaInfo");
+    var u = S.usuario ? S.usuario() : {};
+    faixa.hidden = true;
+    $("faixaAssinaturaBtn").hidden = true;
+    if (!u.logado || !ass || !ass.status || ass.status === "trial") { info.hidden = true; return; }
+    var vence = ass.vence ? S.fmtData(String(ass.vence).slice(0, 10)) : "";
+    var viaTxt = ass.via === "app_store" ? "App Store" : ass.via === "play_store" ? "Play Store" : "";
+    info.hidden = false;
+    if (ass.status === "ativa") {
+      info.innerHTML = "✓ <b>Assinatura ativa</b>" + (viaTxt ? " pela " + viaTxt : "") + (vence ? " — vale até " + vence + " (renova sozinha)" : "") + ".";
+      return;
+    }
+    var atras = ass.status === "atrasada";
+    info.innerHTML = atras
+      ? "<b style=\"color:#fbbf24\">O pagamento da assinatura não caiu.</b> Confere a forma de pagamento na loja pra não perder o acesso."
+      : "<b style=\"color:#f87171\">Assinatura vencida.</b> Assine de novo pra manter a nuvem, o app dos alunos e a IA. Seus dados continuam guardados — nada é apagado.";
+    faixa.hidden = false;
+    faixa.style.background = atras ? "rgba(251,191,36,.1)" : "rgba(248,113,113,.1)";
+    faixa.style.border = "1px solid " + (atras ? "#fbbf24" : "#f87171");
+    $("faixaAssinaturaTxt").innerHTML = atras
+      ? "<b>O pagamento da sua assinatura não caiu.</b> Sem pânico: você tem uns dias de carência — confere a forma de pagamento na loja que tudo volta ao normal."
+      : "<b>Sua assinatura venceu.</b> O painel continua funcionando neste aparelho e nada é apagado, mas assine de novo pra manter a nuvem e o app dos alunos em dia.";
+    var b = $("faixaAssinaturaBtn");
+    b.hidden = false;
+    b.textContent = atras ? "Ver forma de pagamento" : "Assinar de novo";
+    b.href = lojaAssinaturasUrl();
+  }
+  function consultaAssinatura() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.client || typeof nuvem.client.rpc !== "function") return;
+    nuvem.client.rpc("minha_assinatura").then(function (r) {
+      if (r && !r.error && r.data && r.data.status) {
+        try { localStorage.setItem("mtapp:ptAssinatura", JSON.stringify(r.data)); } catch (e) {}
+        renderAssinatura();
+      }
+    }, function () { /* sem internet ou SQL antigo: fica o último status guardado */ });
+  }
+  // a conexão com a nuvem é assíncrona — tenta por ~1 minuto depois de abrir
+  var assTenta = 0;
+  var assTimer = setInterval(function () {
+    assTenta++;
+    if (S.cloud && S.cloud()) { clearInterval(assTimer); consultaAssinatura(); }
+    else if (assTenta > 20) clearInterval(assTimer);
+  }, 3000);
+  renderAssinatura();
+  window.__assinatura = { consulta: consultaAssinatura, render: renderAssinatura, nativo: ehAppNativo }; // testes
 
   function render() {
     var st = load();
