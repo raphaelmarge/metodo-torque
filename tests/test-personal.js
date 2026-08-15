@@ -164,7 +164,7 @@ async function abaPt(p, a) {
 
   // agenda: sessão hoje + marcar feita (agora com sub-abas Sessões/Agendar)
   await abaPt(p, "agenda");
-  ok(await p.evaluate(() => ["agAbas", "avAbas", "qtAbas", "dsAbas", "relAbas", "chAbas"].every((id) => !!document.getElementById(id))),
+  ok(await p.evaluate(() => ["agAbas", "avAbas", "qtAbas", "dsAbas", "relAbas", "chAbas", "cfgAbas"].every((id) => !!document.getElementById(id))),
     "todas as seções grandes têm barra de sub-abas");
   ok(await p.evaluate(() => document.querySelector('#agAbas button.ativa').textContent.includes("Sessões")), "Agenda abre na sub-aba Sessões");
   await p.evaluate(() => window.__agAba("agendar"));
@@ -858,6 +858,8 @@ async function abaPt(p, a) {
   });
   // dobras Pollock 3 (M, 30 anos, 10+20+15 mm → 13,6% conferido à mão)
   await p.selectOption("#avAluno", { index: 1 });
+  ok(await p.evaluate(() => document.getElementById("avAltura").value === "175"),
+    "escolher o aluno preenche a altura com a do cadastro");
   await p.selectOption("#dbMetodo", "p3");
   const campos = await p.evaluate(() => Array.from(document.querySelectorAll("#dbCampos label")).map((l) => l.textContent));
   ok(/Peitoral/.test(campos[0]) && /Abdominal/.test(campos[1]) && /Coxa/.test(campos[2]), "Pollock 3 do aluno homem pede peitoral/abdominal/coxa (sexo vem do cadastro)");
@@ -917,6 +919,19 @@ async function abaPt(p, a) {
   ok(comCirc.reg.gordura === 16.9 && /Marinha/.test(comCirc.resultado), "sem dobras, o % sai pela fita (Marinha americana = 16,9%)");
   ok(comCirc.reg.rcq === 0.89 && comCirc.reg.riscoRcq === "baixo" && comCirc.reg.quadril === 95 && comCirc.reg.circ && comCirc.reg.circ.coxa === 58,
     "avaliação salva com circunferências, quadril e RCQ com risco");
+  // medir a altura de novo no formulário atualiza o cadastro
+  await p.selectOption("#avAluno", { index: 1 });
+  await p.fill("#avAltura", "176");
+  await p.fill("#avPeso", "80");
+  await p.click("#avAdd");
+  await p.waitForTimeout(250);
+  ok(await p.evaluate(() => +JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.find((x) => /João Cliente/.test(x.nome)).altura === 176),
+    "altura medida no formulário atualiza o cadastro do aluno");
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    st.alunos.find((x) => /João Cliente/.test(x.nome)).altura = 175; // devolve pro resto da suíte
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
   // limpa pra não interferir nos testes de evolução seguintes
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
@@ -2579,14 +2594,36 @@ async function abaPt(p, a) {
     "Pular marca no zapLog e tira a mensagem da fila na hora");
   await abaPt(p, "config");
   const zapModelo = await p.evaluate(async () => {
-    document.getElementById("cfgZapNiver").value = "Parabéns {nome}, sucesso!";
-    document.getElementById("cfgSalva").click();
+    // a mensagem fixa agora é editada pela lista unificada (Editar abre o dialog)
+    document.querySelector('#autoLista [data-fixaed="niver"]').click();
+    await new Promise((r) => setTimeout(r, 150));
+    document.getElementById("autoTexto").value = "Parabéns {nome}, sucesso!";
+    document.getElementById("autoSalva").click();
     await new Promise((r) => setTimeout(r, 200));
     const fila = window.__zapFila(window.MTStore.read("ptStudio", {}));
     const niver = fila.find((z) => z.alunoId === "zq1");
     return niver && niver.texto;
   });
-  ok(zapModelo === "Parabéns Nivea, sucesso!", "modelo editado nas Configurações muda o texto da fila na hora");
+  ok(zapModelo === "Parabéns Nivea, sucesso!", "mensagem fixa editada pela lista unificada muda o texto da fila na hora");
+  const fixasUi = await p.evaluate(async () => {
+    const t = document.getElementById("autoLista").textContent;
+    const temFixas = /Lembrete de treino/.test(t) && /Aniversário/.test(t) && /Pagamento atrasado/.test(t) && /Renovação de plano/.test(t);
+    const btNiver = document.querySelector('#autoLista [data-fixatg="niver"]');
+    if (btNiver) btNiver.click();
+    await new Promise((r) => setTimeout(r, 200));
+    const st = window.MTStore.read("ptStudio", {});
+    const desligou = !!((st.config || {}).zapFixasOff || {}).niver;
+    const foraDaFila = !window.__zapFila(st).some((z) => z.alunoId === "zq1" && z.chave.indexOf("zniver|") === 0);
+    const btNiver2 = document.querySelector('#autoLista [data-fixatg="niver"]');
+    if (btNiver2) btNiver2.click(); // religa
+    await new Promise((r) => setTimeout(r, 200));
+    const stR = window.MTStore.read("ptStudio", {});
+    const religou = !((stR.config || {}).zapFixasOff || {}).niver &&
+      window.__zapFila(stR).some((z) => z.alunoId === "zq1" && z.chave.indexOf("zniver|") === 0);
+    return { temFixas, desligou, foraDaFila, religou };
+  });
+  ok(fixasUi.temFixas && fixasUi.desligou && fixasUi.foraDaFila && fixasUi.religou,
+    "as 4 mensagens fixas moram na mesma lista das automações, com Ligar/Desligar valendo na fila");
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapZap);
   // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
   const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
@@ -4806,6 +4843,7 @@ async function abaPt(p, a) {
       localStorage.setItem("outrosite:nao-mexer", "1");
     });
     await abaPt(pX, "config");
+    await pX.evaluate(() => window.__cfgAba("conta")); // o card de excluir mora na sub-aba conta
     await pX.waitForTimeout(300);
 
     let confirmar = false, digitado = "";
