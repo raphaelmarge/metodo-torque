@@ -847,64 +847,76 @@ async function abaPt(p, a) {
   await p.click("#sAdd");
   await abaPt(p, "treinos");
 
-  // dobras cutâneas: Pollock 3 (M, 30 anos, 10+20+15mm → ~13,6%) e Guedes (→ ~16,8%)
+  // formulário único: aluno primeiro, métricas no meio, % de gordura como RESULTADO no salvar
   await abaPt(p, "avaliacoes");
+  // sexo, idade (30) e altura vêm do CADASTRO do aluno — o formulário não pergunta de novo
+  await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos.find((x) => /João Cliente/.test(x.nome));
+    a.sexo = "M"; a.altura = 175; a.nasc = (new Date().getFullYear() - 30) + "-01-01";
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+  });
+  // dobras Pollock 3 (M, 30 anos, 10+20+15 mm → 13,6% conferido à mão)
+  await p.selectOption("#avAluno", { index: 1 });
   await p.selectOption("#dbMetodo", "p3");
-  await p.selectOption("#dbSexo", "M");
-  await p.fill("#dbIdade", "30");
   const campos = await p.evaluate(() => Array.from(document.querySelectorAll("#dbCampos label")).map((l) => l.textContent));
-  ok(/Peitoral/.test(campos[0]) && /Abdominal/.test(campos[1]) && /Coxa/.test(campos[2]), "Pollock 3 masculino pede peitoral/abdominal/coxa");
+  ok(/Peitoral/.test(campos[0]) && /Abdominal/.test(campos[1]) && /Coxa/.test(campos[2]), "Pollock 3 do aluno homem pede peitoral/abdominal/coxa (sexo vem do cadastro)");
   await p.evaluate(() => {
     const ins = document.querySelectorAll(".dbIn");
     ins[0].value = "10"; ins[1].value = "20"; ins[2].value = "15";
+    document.getElementById("avPeso").value = "80";
   });
-  await p.click("#dbCalc");
-  let resDb = await p.evaluate(() => document.getElementById("dbResultado").textContent);
-  ok(/13,6%/.test(resDb), "Pollock 3 + Siri = 13,6% (conferido à mão)");
-  const gordPreenchida = await p.evaluate(() => document.getElementById("avGord").value);
-  ok(gordPreenchida === "13.6", "resultado preenche o campo % gordura da avaliação");
-  // Guedes com as mesmas somas
+  await p.click("#avAdd");
+  await p.waitForTimeout(300);
+  const comDobras = await p.evaluate(() => ({
+    reg: JSON.parse(localStorage.getItem("mtapp:ptStudio")).avaliacoes.slice(-1)[0],
+    resultado: document.getElementById("avResultado").textContent,
+  }));
+  ok(comDobras.reg.gordura === 13.6 && comDobras.reg.metodoDobras === "p3" && comDobras.reg.dobras,
+    "salvar calcula o % pelas dobras (Pollock 3 + Siri = 13,6%) e guarda o protocolo");
+  ok(/13,6%/.test(comDobras.resultado) && /Pollock 3/.test(comDobras.resultado) && /laudo no perfil/.test(comDobras.resultado),
+    "o resultado aparece na hora, com a fonte do cálculo e o atalho pro laudo");
+  // Guedes com as mesmas medidas → 16,8%
+  await p.selectOption("#avAluno", { index: 1 });
   await p.selectOption("#dbMetodo", "guedes");
   await p.evaluate(() => {
     const ins = document.querySelectorAll(".dbIn");
     ins[0].value = "10"; ins[1].value = "20"; ins[2].value = "15";
+    document.getElementById("avPeso").value = "80";
   });
-  await p.click("#dbCalc");
-  resDb = await p.evaluate(() => document.getElementById("dbResultado").textContent);
-  ok(/16,8%/.test(resDb), "Guedes + Siri = 16,8% (conferido à mão)");
-  // registra a avaliação com as dobras anexadas
-  await p.selectOption("#avAluno", { index: 1 });
   await p.click("#avAdd");
-  const comDobras = await p.evaluate(() => {
-    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    return st.avaliacoes[st.avaliacoes.length - 1];
-  });
-  ok(comDobras.metodoDobras === "guedes" && comDobras.dobras && comDobras.gordura === 16.8, "avaliação salva com as dobras e o método");
+  await p.waitForTimeout(300);
+  const comGuedes = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).avaliacoes.slice(-1)[0]);
+  ok(comGuedes.metodoDobras === "guedes" && comGuedes.gordura === 16.8, "Guedes + Siri = 16,8% (conferido à mão)");
   const histDb = await p.evaluate(() => document.getElementById("listaAvaliacoes").textContent);
-  ok(/Guedes/.test(histDb), "histórico mostra a etiqueta 📐 do protocolo");
-
-  // circunferências: % gordura Marinha + RCQ (homem 175cm, pescoço 38, cintura 85, quadril 95)
-  await p.selectOption("#ccSexo", "M");
-  await p.fill("#ccAltura", "175");
-  await p.fill("#ccPescoco", "38");
-  await p.fill("#ccCintura", "85");
-  await p.fill("#ccQuadril", "95");
-  await p.fill("#ccCoxa", "58");
-  await p.click("#ccCalc");
-  const resCc = await p.evaluate(() => document.getElementById("ccResultado").textContent);
-  ok(/16,9% de gordura/.test(resCc), "Marinha (US Navy) = 16,9% (conferido à mão)");
-  ok(/RCQ 0,89/.test(resCc) && /risco baixo/.test(resCc), "RCQ 0,89 com classificação de risco baixo");
-  await p.evaluate(() => { document.getElementById("avGord").value = ""; document.getElementById("avCintura").value = ""; });
-  await p.click("#ccCalc");
-  const preencheu = await p.evaluate(() => ({ g: document.getElementById("avGord").value, c: document.getElementById("avCintura").value }));
-  ok(preencheu.g === "16.9" && preencheu.c === "85", "resultado das circunferências preenche a avaliação");
+  ok(/Guedes/.test(histDb), "histórico mostra a etiqueta do protocolo");
+  // dobras pela metade não deixam salvar torto
   await p.selectOption("#avAluno", { index: 1 });
+  await p.evaluate(() => { document.querySelectorAll(".dbIn")[0].value = "12"; });
+  const nAntes = await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).avaliacoes.length);
   await p.click("#avAdd");
-  const comCirc = await p.evaluate(() => {
-    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    return st.avaliacoes[st.avaliacoes.length - 1];
-  });
-  ok(comCirc.rcq === 0.89 && comCirc.quadril === 95 && comCirc.circ && comCirc.circ.coxa === 58, "avaliação salva com circunferências, quadril e RCQ");
+  await p.waitForTimeout(200);
+  ok(await p.evaluate((n) => JSON.parse(localStorage.getItem("mtapp:ptStudio")).avaliacoes.length === n, nAntes),
+    "dobra preenchida pela metade avisa e não salva nada");
+  // limpa a dobra pela metade (ela sobrevive de propósito à troca de aluno)
+  await p.evaluate(() => { document.querySelectorAll(".dbIn").forEach((i) => { i.value = ""; }); });
+
+  // fita métrica no MESMO formulário (175 cm do cadastro; pescoço 38, cintura 85, quadril 95 → 16,9% e RCQ 0,89)
+  await p.selectOption("#avAluno", { index: 1 });
+  await p.fill("#ccPescoco", "38");
+  await p.fill("#avCintura", "85");
+  await p.fill("#avQuadril", "95");
+  await p.fill("#ccCoxa", "58");
+  await p.fill("#avPeso", "80");
+  await p.click("#avAdd");
+  await p.waitForTimeout(300);
+  const comCirc = await p.evaluate(() => ({
+    reg: JSON.parse(localStorage.getItem("mtapp:ptStudio")).avaliacoes.slice(-1)[0],
+    resultado: document.getElementById("avResultado").textContent,
+  }));
+  ok(comCirc.reg.gordura === 16.9 && /Marinha/.test(comCirc.resultado), "sem dobras, o % sai pela fita (Marinha americana = 16,9%)");
+  ok(comCirc.reg.rcq === 0.89 && comCirc.reg.riscoRcq === "baixo" && comCirc.reg.quadril === 95 && comCirc.reg.circ && comCirc.reg.circ.coxa === 58,
+    "avaliação salva com circunferências, quadril e RCQ com risco");
   // limpa pra não interferir nos testes de evolução seguintes
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
@@ -912,8 +924,9 @@ async function abaPt(p, a) {
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
   });
 
-  // avaliações: registra 2 e vê evolução
+  // avaliações: registra 2 e vê evolução (o % já medido mora na seção da balança)
   await abaPt(p, "avaliacoes");
+  await p.evaluate(() => { document.getElementById("avBiaBox").open = true; });
   await p.selectOption("#avAluno", { index: 1 });
   await p.fill("#avPeso", "90");
   await p.fill("#avGord", "25");
@@ -4468,8 +4481,10 @@ async function abaPt(p, a) {
       quadril: document.getElementById("avQuadril").value,
       gordura: document.getElementById("avGord").value,
     }));
-    ok(campos.cintura === "78.4" && campos.quadril === "96.2" && campos.gordura === "25.9",
-      "'Usar estes números' preenche a avaliação, que o professor ainda confere antes de registrar");
+    ok(campos.cintura === "78.4" && campos.quadril === "96.2" && campos.gordura === "",
+      "'Usar estes números' preenche as medidas — mas o % da foto NÃO vira % medido (entra só como último recurso no salvar)");
+    ok(await pS.evaluate(() => /Tríceps/.test((document.querySelector("#dbCampos label") || {}).textContent || "")),
+      "selecionar a aluna pelo scanner troca as dobras pro protocolo feminino (o atalho dispara o change)");
 
     await pS.evaluate(() => { document.getElementById("avPeso").value = "62"; });
     await pS.click("#avAdd");
@@ -4480,13 +4495,13 @@ async function abaPt(p, a) {
       const l = window.__laudoPT.calcula(st, av);
       return {
         temScan: !!av.scan, scanCintura: av.scan && av.scan.circ.cintura,
-        etiqueta: /📷 câmera/.test(document.getElementById("listaAvaliacoes").innerHTML),
+        etiqueta: />câmera</.test(document.getElementById("listaAvaliacoes").innerHTML),
         laudoRcq: l ? l.rcq : null, laudoCintura: l ? l.cintura : null,
       };
     });
     ok(salvo.temScan && salvo.scanCintura === 78.4,
       "o que veio da câmera fica guardado à parte, pra nunca se passar por medida de fita");
-    ok(salvo.etiqueta, "a avaliação ganha a etiqueta 📷 câmera no histórico");
+    ok(salvo.etiqueta, "a avaliação ganha a etiqueta 'câmera' no histórico");
     ok(salvo.laudoCintura === 78.4 && salvo.laudoRcq === 0.81,
       "as circunferências da câmera alimentam o laudo (cintura-quadril calculada)");
 
@@ -4699,15 +4714,19 @@ async function abaPt(p, a) {
     const L = await pL.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
       const l = window.__laudoPT.calcula(st, st.avaliacoes[1]);
+      // o laudo em cards mora no PERFIL do aluno (aba Avaliações do perfil)
+      window.__perfilPT("av1");
+      window.__pfAba("aval");
       return {
         idade: window.__laudoPT.idade("1986-03-10"),
         imc: l.imc, massaGordura: l.massaGordura, massaMagra: l.massaMagra,
         agua: l.agua, proteina: l.proteina, mineral: l.mineral,
         tmb: l.tmb, smi: l.smi, grau: l.grauObesidade, rcq: l.rcq,
         controlePeso: l.controlePeso, pontuacao: l.pontuacao,
-        resumo: (document.getElementById("avLaudo") || {}).textContent.replace(/\s+/g, " "),
-        temBotao: !!document.getElementById("avLaudoAbrir"),
+        resumo: (document.getElementById("pfLaudo") || {}).textContent.replace(/\s+/g, " "),
+        temBotao: !!document.getElementById("pfLaudoAbrir"),
         temLaudoNoHistorico: /data-avlaudo/.test(document.getElementById("listaAvaliacoes").innerHTML),
+        semLaudoNaAba: !document.getElementById("avLaudoBox"),
       };
     });
     // confere contra um laudo InBody real da mesma pessoa (F, 40a, 165 cm, 72,9 kg, 16,2%)
@@ -4718,7 +4737,8 @@ async function abaPt(p, a) {
     ok(L.smi === 9 && L.grau === 127 && L.rcq === 0.83 && L.controlePeso === 0,
       "índice muscular, grau de obesidade, cintura-quadril e ajuste de peso conferem");
     ok(L.pontuacao > 0 && /Pontuação/.test(L.resumo) && L.temBotao && L.temLaudoNoHistorico,
-      "o resumo aparece na aba Avaliações com o botão do laudo (e um 📄 por avaliação)");
+      "o laudo em cards aparece no perfil do aluno com o botão do laudo completo (e o atalho por avaliação no histórico)");
+    ok(L.semLaudoNaAba, "a aba Avaliações não mostra mais o laudo da última avaliação global");
     // o painel novo: cards com selo de classificação + gordura aberta em massas
     ok(/IMC/.test(L.resumo) && /sobrepeso/.test(L.resumo),
       "o card do IMC traz o selo com a classificação por extenso");

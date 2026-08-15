@@ -745,50 +745,65 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-ava="avaliar" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/></svg> Avaliar</button>
       <button data-ava="historico"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Histórico e evolução</button>
     </div>
-    <div class="card" data-avsec="avaliar" id="avLaudoBox" hidden style="margin-bottom: 14px;">
-      <h2>Laudo da última avaliação</h2>
-      <div id="avLaudo"></div>
-    </div>
     <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
-      <h2>Dobras cutâneas — Pollock 3 · Pollock 7 · Guedes</h2>
-      <p class="muted" style="margin: 4px 0 10px;">Meça com o adipômetro (mm), escolha o protocolo e o sistema calcula a densidade corporal e o % de gordura pela equação de Siri. O resultado preenche a avaliação abaixo.</p>
-      <div class="linha-flex" style="margin-bottom: 10px;">
+      <h2>Nova avaliação física</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha o aluno, preencha o que você mediu e toque em <b>Salvar avaliação</b>. O % de gordura sai como <b>resultado</b>, calculado na hora: o valor medido na balança vence as dobras (densidade + equação de Siri), que vencem a fita (Marinha americana). Sexo, idade e altura vêm do cadastro do aluno.</p>
+      <div class="linha-flex" style="flex-wrap: wrap;">
+        <select id="avAluno" style="min-width: 180px;"></select>
+        <input id="avData" type="date" style="width: auto;">
+        <input id="avPeso" type="number" step="0.1" min="0" placeholder="Peso kg" style="width: 100px;">
+      </div>
+      <div id="avAlunoAviso" class="muted" style="margin-top: 6px; font-size: 12.5px;"></div>
+
+      <div class="muted" style="margin: 16px 0 4px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Dobras cutâneas (adipômetro, mm) — opcional</div>
+      <p class="muted" style="margin: 0 0 8px; font-size: 12px;">Escolha o protocolo e meça. Preencheu as dobras (e não digitou um % já medido)? O % de gordura sai por elas.</p>
+      <div class="linha-flex">
         <select id="dbMetodo" style="width: auto;">
           <option value="p3">Pollock 3 dobras</option>
           <option value="p7">Pollock 7 dobras</option>
           <option value="guedes">Guedes 3 dobras</option>
         </select>
-        <select id="dbSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
-        <input id="dbIdade" type="number" min="10" max="99" placeholder="Idade" style="width: 90px;">
       </div>
-      <div id="dbCampos" class="linha-flex" style="margin-bottom: 10px;"></div>
-      <div class="linha-flex">
-        <button class="btn" id="dbCalc">Calcular</button>
-        <span id="dbResultado" style="font-weight: 700;"></span>
-      </div>
-    </div>
+      <div id="dbCampos" class="linha-flex" style="margin-top: 8px; flex-wrap: wrap;"></div>
 
-    <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
-      <h2>Circunferências (fita métrica) — % gordura Marinha + RCQ</h2>
-      <p class="muted" style="margin: 4px 0 10px;">Meça em cm e o sistema calcula o % de gordura pelo método da Marinha americana (US Navy) e a relação cintura-quadril com a classificação de risco. O resultado também preenche a avaliação abaixo.</p>
-      <div class="linha-flex" style="margin-bottom: 10px; flex-wrap: wrap;">
-        <select id="ccSexo" style="width: auto;"><option value="M">Masculino</option><option value="F">Feminino</option></select>
-        <input id="ccAltura" type="number" step="0.5" min="0" placeholder="Altura cm" style="width: 100px;">
+      <div class="muted" style="margin: 16px 0 4px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Fita métrica (cm) — opcional</div>
+      <p class="muted" style="margin: 0 0 8px; font-size: 12px;">Pescoço + cintura (e, pra mulher, também o quadril) destravam o % de gordura pela Marinha americana — precisa da altura no cadastro. Cintura + quadril dão a relação cintura-quadril com o risco.</p>
+      <div class="linha-flex" style="flex-wrap: wrap;">
         <input id="ccPescoco" type="number" step="0.1" min="0" placeholder="Pescoço cm" style="width: 110px;">
-        <input id="ccCintura" type="number" step="0.1" min="0" placeholder="Cintura cm" style="width: 105px;">
-        <input id="ccQuadril" type="number" step="0.1" min="0" placeholder="Quadril cm" style="width: 105px;">
-      </div>
-      <div class="linha-flex" style="margin-bottom: 10px; flex-wrap: wrap;">
+        <input id="avCintura" type="number" step="0.1" min="0" placeholder="Cintura cm" style="width: 105px;">
+        <input id="avQuadril" type="number" step="0.1" min="0" placeholder="Quadril cm" style="width: 105px;">
+        <input id="avBraco" type="number" step="0.1" min="0" placeholder="Braço cm" style="width: 100px;">
         <input id="ccTorax" type="number" step="0.1" min="0" placeholder="Tórax cm" style="width: 100px;">
         <input id="ccAbdomen" type="number" step="0.1" min="0" placeholder="Abdômen cm" style="width: 110px;">
-        <input id="ccBraco" type="number" step="0.1" min="0" placeholder="Braço cm" style="width: 100px;">
         <input id="ccAntebraco" type="number" step="0.1" min="0" placeholder="Antebraço cm" style="width: 115px;">
         <input id="ccCoxa" type="number" step="0.1" min="0" placeholder="Coxa cm" style="width: 95px;">
         <input id="ccPanturrilha" type="number" step="0.1" min="0" placeholder="Panturrilha cm" style="width: 125px;">
       </div>
-      <div class="linha-flex">
-        <button class="btn" id="ccCalc">Calcular</button>
-        <span id="ccResultado" style="font-weight: 700;"></span>
+      <details id="avBiaBox" style="margin-top: 16px; border: 1px solid var(--linha); border-radius: 12px; padding: 10px 14px;">
+        <summary style="cursor: pointer; font-weight: 700; font-size: 13.5px;">Já tem o % medido? Balança de bioimpedância (InBody, Omron, Tanita…) — opcional</summary>
+        <p class="muted" style="margin: 8px 0 10px; font-size: 12.5px;">Digite o que o aparelho mostrou. Números medidos entram no lugar dos calculados e o laudo passa a dizer <b>medido</b>. O que você deixar em branco o sistema calcula.</p>
+        <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+          <input id="avGord" type="number" step="0.1" min="0" placeholder="% gordura medido" style="width: 145px;">
+          <input id="biaAgua" type="number" step="0.1" min="0" placeholder="Água L" style="width: 100px;">
+          <input id="biaProteina" type="number" step="0.1" min="0" placeholder="Proteína kg" style="width: 120px;">
+          <input id="biaMineral" type="number" step="0.01" min="0" placeholder="Minerais kg" style="width: 120px;">
+          <input id="biaGordKg" type="number" step="0.1" min="0" placeholder="Gordura kg" style="width: 115px;">
+          <input id="biaMme" type="number" step="0.1" min="0" placeholder="Músculo kg" style="width: 120px;">
+          <input id="biaVisceral" type="number" step="1" min="0" placeholder="Visceral (nível)" style="width: 140px;">
+          <input id="biaAngulo" type="number" step="0.1" min="0" placeholder="Ângulo de fase °" style="width: 150px;">
+        </div>
+        <div class="muted" style="margin: 12px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Massa magra por segmento (kg)</div>
+        <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
+          <input id="biaBracoE" type="number" step="0.01" min="0" placeholder="Braço esq." style="width: 120px;">
+          <input id="biaBracoD" type="number" step="0.01" min="0" placeholder="Braço dir." style="width: 120px;">
+          <input id="biaTronco" type="number" step="0.01" min="0" placeholder="Tronco" style="width: 105px;">
+          <input id="biaPernaE" type="number" step="0.01" min="0" placeholder="Perna esq." style="width: 120px;">
+          <input id="biaPernaD" type="number" step="0.01" min="0" placeholder="Perna dir." style="width: 120px;">
+        </div>
+      </details>
+      <div class="linha-flex" style="margin-top: 14px; gap: 10px;">
+        <button class="btn" id="avAdd">Salvar avaliação</button>
+        <span id="avResultado" class="muted" style="font-size: 12.5px;"></span>
       </div>
     </div>
 
@@ -863,43 +878,6 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <button class="btn" id="scanCamDeNovo" hidden>Tentar de novo</button>
         </div>
       </div>
-    </div>
-
-    <div class="card" style="margin-bottom: 14px;" data-avsec="avaliar">
-      <h2>Nova avaliação física</h2>
-      <div class="linha-flex" style="margin-top: 8px;">
-        <select id="avAluno" style="min-width: 180px;"></select>
-        <input id="avData" type="date" style="width: auto;">
-        <input id="avPeso" type="number" step="0.1" min="0" placeholder="Peso kg" style="width: 100px;">
-        <input id="avGord" type="number" step="0.1" min="0" placeholder="% gordura" style="width: 110px;">
-        <input id="avCintura" type="number" step="0.1" min="0" placeholder="Cintura cm" style="width: 110px;">
-        <input id="avBraco" type="number" step="0.1" min="0" placeholder="Braço cm" style="width: 100px;">
-        <input id="avQuadril" type="number" step="0.1" min="0" placeholder="Quadril cm" style="width: 110px;">
-        <button class="btn" id="avAdd">Registrar</button>
-      </div>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">A evolução (com setas verde/vermelha) aparece aqui e no app do aluno. Sexo, altura e idade vêm do cadastro do aluno — preencha lá pro laudo sair completo.</p>
-
-      <details id="avBiaBox" style="margin-top: 12px; border: 1px solid var(--linha); border-radius: 12px; padding: 10px 14px;">
-        <summary style="cursor: pointer; font-weight: 700; font-size: 13.5px;">⚖️ Tem balança de bioimpedância? (InBody, Omron, Tanita…) — opcional</summary>
-        <p class="muted" style="margin: 8px 0 10px; font-size: 12.5px;">Digite o que o aparelho mostrou. Esses números entram no lugar das estimativas e o laudo passa a dizer <b>medido</b>. O que você deixar em branco o sistema calcula.</p>
-        <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
-          <input id="biaAgua" type="number" step="0.1" min="0" placeholder="Água L" style="width: 100px;">
-          <input id="biaProteina" type="number" step="0.1" min="0" placeholder="Proteína kg" style="width: 120px;">
-          <input id="biaMineral" type="number" step="0.01" min="0" placeholder="Minerais kg" style="width: 120px;">
-          <input id="biaGordKg" type="number" step="0.1" min="0" placeholder="Gordura kg" style="width: 115px;">
-          <input id="biaMme" type="number" step="0.1" min="0" placeholder="Músculo kg" style="width: 120px;">
-          <input id="biaVisceral" type="number" step="1" min="0" placeholder="Visceral (nível)" style="width: 140px;">
-          <input id="biaAngulo" type="number" step="0.1" min="0" placeholder="Ângulo de fase °" style="width: 150px;">
-        </div>
-        <div class="muted" style="margin: 12px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Massa magra por segmento (kg)</div>
-        <div class="linha-flex" style="flex-wrap: wrap; gap: 8px;">
-          <input id="biaBracoE" type="number" step="0.01" min="0" placeholder="Braço esq." style="width: 120px;">
-          <input id="biaBracoD" type="number" step="0.01" min="0" placeholder="Braço dir." style="width: 120px;">
-          <input id="biaTronco" type="number" step="0.01" min="0" placeholder="Tronco" style="width: 105px;">
-          <input id="biaPernaE" type="number" step="0.01" min="0" placeholder="Perna esq." style="width: 120px;">
-          <input id="biaPernaD" type="number" step="0.01" min="0" placeholder="Perna dir." style="width: 120px;">
-        </div>
-      </details>
     </div>
     <div class="card" data-avsec="historico" hidden><h2>Histórico e evolução</h2><div id="listaAvaliacoes" class="muted">Nenhuma avaliação registrada.</div></div>
   </section>
@@ -1441,6 +1419,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <div id="pfFreq" style="margin-top: 6px;"></div>
   </div>
 
+  <div class="card" data-pfsec="aval" style="margin-bottom: 14px;">
+    <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase;">Laudo da última avaliação</h2>
+    <div id="pfLaudo" class="muted" style="font-size: 13px; margin-top: 6px;"></div>
+  </div>
   <div class="card" data-pfsec="aval">
     <div style="display: flex; align-items: center; gap: 10px;">
       <h2 style="font-size: 13px; letter-spacing: .14em; color: var(--roxo); text-transform: uppercase; margin: 0;">Avaliações físicas — relatório e evolução</h2>
@@ -1979,7 +1961,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var totalSes = idxDe(st).sessFeitasDe(id).length;
     $("pfFreq").innerHTML = barrasMes(porMes, "#a78bfa") +
       "<div class='muted' style='font-size:12.5px;margin-top:4px;'>" + totalSes + " sessão(ões) feitas no total</div>";
-    // relatório de avaliações físicas: tabela + gráfico de evolução de CADA medida
+    // relatório de avaliações físicas: laudo em cards + tabela + gráficos por medida
+    pintaLaudoPerfil(st, id);
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
     function fmtN(v) { return String(Math.round(v * 10) / 10).replace(".", ","); }
@@ -4065,6 +4048,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (b.hasAttribute("data-alav")) {
       vaiPraAba("avaliacoes");
       $("avAluno").value = b.getAttribute("data-alav");
+      // setar por código não dispara change — sem isso as dobras ficam com o
+      // protocolo do sexo errado e o aviso de cadastro não aparece
+      $("avAluno").dispatchEvent(new Event("change", { bubbles: true }));
       return;
     }
     if (b.hasAttribute("data-altreino")) {
@@ -6465,100 +6451,108 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           F: ["Peitoral", "Axilar média", "Tríceps", "Subescapular", "Abdominal", "Suprailíaca", "Coxa"] },
     guedes: { M: ["Tríceps", "Suprailíaca", "Abdominal"], F: ["Subescapular", "Suprailíaca", "Coxa"] },
   };
-  var dobrasPend = null;
+  function alunoAv() {
+    var st = load();
+    return st.alunos.find(function (x) { return x.id === $("avAluno").value; }) || null;
+  }
   function renderDobrasCampos() {
-    var lista = DOBRAS[$("dbMetodo").value][$("dbSexo").value];
+    var a = alunoAv();
+    var lista = DOBRAS[$("dbMetodo").value][a && a.sexo === "F" ? "F" : "M"];
+    // pontos iguais aos de antes? preserva o que já foi digitado (trocar o aluno
+    // pelo mesmo sexo não pode apagar as dobras medidas)
+    var rotAntes = Array.prototype.map.call(document.querySelectorAll("#dbCampos label"), function (l) { return l.textContent.split(" (")[0]; });
+    var valAntes = Array.prototype.map.call(document.querySelectorAll(".dbIn"), function (i) { return i.value; });
     $("dbCampos").innerHTML = lista.map(function (n, i) {
       return '<label style="margin:0;font-size:12px;color:var(--cinza);">' + n +
         ' (mm)<input class="dbIn" data-i="' + i + '" type="number" step="0.5" min="1" max="80" style="width:110px;display:block;margin-top:3px;"></label>';
     }).join("");
-    $("dbResultado").textContent = "";
-    dobrasPend = null;
+    if (rotAntes.length === lista.length && lista.every(function (n, i) { return rotAntes[i] === n; })) {
+      Array.prototype.forEach.call(document.querySelectorAll(".dbIn"), function (i, ix) { i.value = valAntes[ix] || ""; });
+    }
   }
-  function calculaDobras() {
-    var metodo = $("dbMetodo").value, sexo = $("dbSexo").value, idade = +$("dbIdade").value;
-    var lista = DOBRAS[metodo][sexo];
+  // aviso do cadastro: sem sexo, altura e nascimento o cálculo e o laudo saem capados
+  function pintaAvisoAv() {
+    var a = alunoAv();
+    if (!a) { $("avAlunoAviso").textContent = ""; return; }
+    var falta = [];
+    if (!a.sexo) falta.push("sexo");
+    if (!(+a.altura)) falta.push("altura");
+    if (!a.nasc) falta.push("nascimento");
+    $("avAlunoAviso").innerHTML = falta.length
+      ? (falta.length > 1 ? "Faltam" : "Falta") + " no cadastro de " + esc(a.nome.split(" ")[0]) + ": <b>" + falta.join(", ") + "</b> — preencha lá pro % de gordura e o laudo saírem completos."
+      : "";
+  }
+  // dobras preenchidas viram % de gordura NO SALVAR (densidade + equação de Siri).
+  // null = nenhuma dobra digitada; {erro} = veio pela metade ou fora da faixa.
+  function dobrasDe(sexo, idade) {
+    var metodo = $("dbMetodo").value;
     var vals = Array.prototype.map.call(document.querySelectorAll(".dbIn"), function (i) { return parseFloat(String(i.value).replace(",", ".")); });
-    if (vals.some(function (v) { return !v || v <= 0; })) { alert("Preencha todas as dobras (em mm)."); return null; }
-    if ((metodo === "p3" || metodo === "p7") && (!idade || idade < 10)) { alert("Pollock precisa da idade."); return null; }
+    if (!vals.length || vals.every(function (v) { return !v; })) return null;
+    if (vals.some(function (v) { return !v || v <= 0; })) return { erro: "Preencha todas as dobras do protocolo (em mm) — ou deixe todas em branco." };
+    if ((metodo === "p3" || metodo === "p7") && (!idade || idade < 10)) return { erro: "O protocolo Pollock precisa da idade — preencha o nascimento no cadastro do aluno." };
+    var lista = DOBRAS[metodo][sexo === "F" ? "F" : "M"];
     var S3 = vals.reduce(function (t, v) { return t + v; }, 0);
     var D;
     if (metodo === "p3") {
-      D = sexo === "M"
-        ? 1.10938 - 0.0008267 * S3 + 0.0000016 * S3 * S3 - 0.0002574 * idade
-        : 1.0994921 - 0.0009929 * S3 + 0.0000023 * S3 * S3 - 0.0001392 * idade;
+      D = sexo === "F"
+        ? 1.0994921 - 0.0009929 * S3 + 0.0000023 * S3 * S3 - 0.0001392 * idade
+        : 1.10938 - 0.0008267 * S3 + 0.0000016 * S3 * S3 - 0.0002574 * idade;
     } else if (metodo === "p7") {
-      D = sexo === "M"
-        ? 1.112 - 0.00043499 * S3 + 0.00000055 * S3 * S3 - 0.00028826 * idade
-        : 1.097 - 0.00046971 * S3 + 0.00000056 * S3 * S3 - 0.00012828 * idade;
+      D = sexo === "F"
+        ? 1.097 - 0.00046971 * S3 + 0.00000056 * S3 * S3 - 0.00012828 * idade
+        : 1.112 - 0.00043499 * S3 + 0.00000055 * S3 * S3 - 0.00028826 * idade;
     } else {
-      D = sexo === "M"
-        ? 1.17136 - 0.06706 * Math.log10(S3)
-        : 1.1665 - 0.07063 * Math.log10(S3);
+      D = sexo === "F"
+        ? 1.1665 - 0.07063 * Math.log10(S3)
+        : 1.17136 - 0.06706 * Math.log10(S3);
     }
     var pct = (4.95 / D - 4.5) * 100;
     pct = Math.round(pct * 10) / 10;
-    if (!isFinite(pct) || pct <= 0 || pct >= 60) { alert("Resultado fora da faixa esperada — confira as medidas."); return null; }
+    if (!isFinite(pct) || pct <= 0 || pct >= 60) return { erro: "O % pelas dobras saiu fora da faixa esperada — confira as medidas." };
     var nomes = {};
     lista.forEach(function (n, i) { nomes[n] = vals[i]; });
-    return { metodo: metodo, sexo: sexo, idade: idade || null, dobras: nomes, soma: Math.round(S3 * 10) / 10, densidade: Math.round(D * 10000) / 10000, gordura: pct };
+    return { metodo: metodo, dobras: nomes, soma: Math.round(S3 * 10) / 10, densidade: Math.round(D * 10000) / 10000, gordura: pct };
   }
   $("dbMetodo").addEventListener("change", renderDobrasCampos);
-  $("dbSexo").addEventListener("change", renderDobrasCampos);
-  $("dbCalc").addEventListener("click", function () {
-    var r = calculaDobras();
-    if (!r) return;
-    dobrasPend = r;
-    var ROT = { p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" };
-    $("dbResultado").innerHTML = "<b>" + String(r.gordura).replace(".", ",") + "% de gordura</b> " +
-      '<span class="muted">(densidade ' + String(r.densidade).replace(".", ",") + " · Σ dobras " + String(r.soma).replace(".", ",") + " mm · " + ROT[r.metodo] + " + Siri)</span>";
-    $("avGord").value = r.gordura;
+  $("avAluno").addEventListener("change", function () { renderDobrasCampos(); pintaAvisoAv(); $("avResultado").textContent = ""; });
+  // editar na mão um campo que veio da câmera transforma a estimativa em medida do professor
+  ["avCintura", "avQuadril", "avBraco"].forEach(function (id) {
+    $(id).addEventListener("input", function () { delete this.dataset.origem; });
   });
-  window.__dobras = { calcula: calculaDobras, render: renderDobrasCampos }; // testes
+  window.__dobras = { calcula: dobrasDe, render: renderDobrasCampos }; // testes
 
-  // ---------- circunferências: % gordura Marinha (US Navy) + RCQ ----------
-  var circPend = null;
-  function calculaCirc() {
-    var sexo = $("ccSexo").value;
-    var alt = +$("ccAltura").value, pes = +$("ccPescoco").value;
-    var cin = +$("ccCintura").value, qua = +$("ccQuadril").value;
-    if (!alt || !pes || !cin || (sexo === "F" && !qua)) {
-      alert(sexo === "F" ? "Preencha altura, pescoço, cintura e quadril (cm)." : "Preencha altura, pescoço e cintura (cm)."); return null;
-    }
-    var log10 = function (x) { return Math.log(x) / Math.LN10; };
-    var pct = sexo === "M"
-      ? 495 / (1.0324 - 0.19077 * log10(cin - pes) + 0.15456 * log10(alt)) - 450
-      : 495 / (1.29579 - 0.35004 * log10(cin + qua - pes) + 0.22100 * log10(alt)) - 450;
-    pct = Math.round(pct * 10) / 10;
-    if (!isFinite(pct) || pct <= 0 || pct >= 70) { alert("Confere as medidas — o resultado saiu fora da realidade."); return null; }
-    var rcq = qua ? Math.round((cin / qua) * 100) / 100 : null;
-    var risco = "";
-    if (rcq) {
-      risco = sexo === "M"
-        ? (rcq < 0.90 ? "baixo" : rcq < 1.0 ? "moderado" : "alto")
-        : (rcq < 0.80 ? "baixo" : rcq < 0.85 ? "moderado" : "alto");
-    }
-    var circ = { pescoco: pes, cintura: cin };
-    [["ccQuadril", "quadril"], ["ccTorax", "torax"], ["ccAbdomen", "abdomen"], ["ccBraco", "braco"],
-     ["ccAntebraco", "antebraco"], ["ccCoxa", "coxa"], ["ccPanturrilha", "panturrilha"]].forEach(function (par) {
-      var v = +$(par[0]).value;
-      if (v) circ[par[1]] = v;
+  // ---------- fita métrica: % gordura Marinha (US Navy) + RCQ, também no salvar ----------
+  function fitaDe(sexo, altura) {
+    var circ = {};
+    [["ccPescoco", "pescoco"], ["avCintura", "cintura"], ["avQuadril", "quadril"], ["ccTorax", "torax"],
+     ["ccAbdomen", "abdomen"], ["avBraco", "braco"], ["ccAntebraco", "antebraco"], ["ccCoxa", "coxa"],
+     ["ccPanturrilha", "panturrilha"]].forEach(function (par) {
+      var el = $(par[0]);
+      var v = +el.value;
+      // valor pré-preenchido pela câmera (estimativa) não conta como fita de verdade:
+      // ele já viaja no reg.scan e não pode virar RCQ nem % da Marinha
+      if (v && el.dataset.origem !== "scan") circ[par[1]] = v;
     });
-    return { sexo: sexo, altura: alt, gordura: pct, rcq: rcq, risco: risco, circ: circ };
+    if (!Object.keys(circ).length) return null;
+    var r = { circ: circ };
+    var pes = circ.pescoco, cin = circ.cintura, qua = circ.quadril;
+    if (cin && qua) {
+      r.rcq = Math.round((cin / qua) * 100) / 100;
+      r.risco = sexo === "F"
+        ? (r.rcq < 0.80 ? "baixo" : r.rcq < 0.85 ? "moderado" : "alto")
+        : (r.rcq < 0.90 ? "baixo" : r.rcq < 1.0 ? "moderado" : "alto");
+    }
+    if (altura && pes && cin && (sexo !== "F" || qua)) {
+      var log10 = function (x) { return Math.log(x) / Math.LN10; };
+      var pct = sexo === "F"
+        ? 495 / (1.29579 - 0.35004 * log10(cin + qua - pes) + 0.22100 * log10(altura)) - 450
+        : 495 / (1.0324 - 0.19077 * log10(cin - pes) + 0.15456 * log10(altura)) - 450;
+      pct = Math.round(pct * 10) / 10;
+      if (isFinite(pct) && pct > 0 && pct < 70) r.gordura = pct;
+    }
+    return r;
   }
-  $("ccCalc").addEventListener("click", function () {
-    var r = calculaCirc();
-    if (!r) return;
-    circPend = r;
-    var corR = r.risco === "alto" ? "#f87171" : r.risco === "moderado" ? "#fbbf24" : "#4ade80";
-    $("ccResultado").innerHTML = "<b>" + String(r.gordura).replace(".", ",") + "% de gordura</b> (Marinha)" +
-      (r.rcq ? ' · RCQ <b>' + String(r.rcq).replace(".", ",") + '</b> <span style="color:' + corR + ';font-weight:800;">risco ' + r.risco + "</span>" : "") +
-      ' <span class="muted">— preenche a avaliação abaixo</span>';
-    if (!$("avGord").value) $("avGord").value = r.gordura;
-    if (!$("avCintura").value) $("avCintura").value = r.circ.cintura;
-    if (r.circ.braco && !$("avBraco").value) $("avBraco").value = r.circ.braco;
-  });
-  window.__circ = { calcula: calculaCirc }; // testes
+  window.__circ = { calcula: fitaDe }; // testes
 
   // ---------- medidas pela câmera ----------
   // A imagem é lida dentro do aparelho e descartada: nada aqui grava foto no
@@ -6776,10 +6770,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<button class='btn sec' id='scanRefazer'>Refazer</button></div>";
     $("scanUsar").addEventListener("click", function () {
       $("avAluno").value = a.id;
-      if (!$("avCintura").value && r.circ.cintura) $("avCintura").value = r.circ.cintura;
-      if (!$("avQuadril").value && r.circ.quadril) $("avQuadril").value = r.circ.quadril;
-      if (!$("avBraco").value && r.circ.braco) $("avBraco").value = r.circ.braco;
-      if (!$("avGord").value && r.gordura) $("avGord").value = r.gordura.valor;
+      $("avAluno").dispatchEvent(new Event("change", { bubbles: true })); // atualiza dobras e aviso
+      // os números da foto entram nos campos pro professor CONFERIR, mas marcados
+      // de origem: estimativa não vira medida de fita (rcq/Marinha só com fita real)
+      [["avCintura", "cintura"], ["avQuadril", "quadril"], ["avBraco", "braco"]].forEach(function (par) {
+        var el = $(par[0]);
+        if (!el.value && r.circ[par[1]]) { el.value = r.circ[par[1]]; el.dataset.origem = "scan"; }
+      });
+      // o % estimado pela foto NÃO entra no campo de % medido — ele viaja no
+      // scanPend e só vale como último recurso na hora de salvar
       box.hidden = true;
       $("avAluno").scrollIntoView({ behavior: "smooth", block: "center" });
     });
@@ -7006,30 +7005,39 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!w) { alert("O navegador bloqueou a janela — libere pop-ups pra este site."); return; }
     w.document.write(html); w.document.close();
   }
-  // resumo curto do laudo, direto na tela de avaliar
-  function pintaLaudoPT(st) {
-    var box = $("avLaudoBox"), el = $("avLaudo");
-    if (!box || !el) return;
-    var avs = (st.avaliacoes || []).slice().sort(function (x, y) { return x.data < y.data ? -1 : 1; });
-    var ult = avs[avs.length - 1];
-    var l = ult ? laudoDe(st, ult) : null;
-    if (!l) { box.hidden = true; return; }
-    box.hidden = false;
-    var a = (st.alunos || []).find(function (x) { return x.id === ult.alunoId; }) || {};
+  // laudo em cards da última avaliação DO ALUNO — mora no perfil, aba Avaliações
+  function pintaLaudoPerfil(st, alunoId) {
+    var el = $("pfLaudo");
+    if (!el) return;
+    var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === alunoId; })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    // a última avaliação pode ser parcial (só fita, sem peso) — varre de trás pra
+    // frente e pinta o laudo mais recente que dá conta
+    var ult = null, l = null;
+    for (var i9 = avs.length - 1; i9 >= 0 && !l; i9--) {
+      var cand = laudoDe(st, avs[i9]);
+      if (cand) { l = cand; ult = avs[i9]; }
+    }
+    if (!l) {
+      el.innerHTML = avs.length
+        ? "As avaliações registradas não têm o que o laudo precisa — inclua o <b>peso</b> (e a altura no cadastro do aluno) que os cards aparecem aqui."
+        : "Sem laudo ainda — registre uma avaliação com <b>peso</b> (e altura no cadastro do aluno) que os cards aparecem aqui.";
+      return;
+    }
     var U = self.MT_AVAL_UI;
     el.innerHTML =
-      "<div class='muted' style='margin:0 0 10px;font-size:12.5px;'><b>" + esc(a.nome || "") + "</b> · " +
+      "<div class='muted' style='margin:0 0 10px;font-size:12.5px;'>" +
       S.fmtData(ult.data) + (l.estimado ? " · valores estimados a partir do % de gordura" : " · valores medidos na bioimpedância") + "</div>" +
       (U ? U.cardsLaudo(l) : "") +
       (U && l.gordura != null && l.massaGordura != null
         ? "<div style='margin-top:12px;background:rgba(124,58,237,.05);border:1px solid var(--linha);border-radius:14px;padding:12px 14px;'>" + U.blocoGordura(l) + "</div>"
         : "") +
       "<div class='linha-flex' style='margin-top:12px;'>" +
-      "<button class='btn' id='avLaudoAbrir'>📄 Laudo completo</button>" +
+      "<button class='btn' id='pfLaudoAbrir'>Laudo completo</button>" +
       "<span class='muted' style='font-size:12px;'>abre pronto pra imprimir ou salvar em PDF e mandar pro aluno</span></div>";
-    $("avLaudoAbrir").addEventListener("click", function () { abreLaudo(load(), ult); });
+    $("pfLaudoAbrir").addEventListener("click", function () { abreLaudo(load(), ult); });
   }
-  window.__laudoPT = { calcula: laudoDe, pinta: pintaLaudoPT, idade: idadeDe }; // testes
+  window.__laudoPT = { calcula: laudoDe, pinta: pintaLaudoPerfil, idade: idadeDe }; // testes
 
   // ---------- avaliações ----------
   function renderAvaliacoes(st) {
@@ -7068,9 +7076,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.braco ? "<span>braço " + String(v.braco).replace(".", ",") + delta(v.braco, ant.braco, true) + "</span>" : "") +
             (v.metodoDobras ? '<span class="tag roxo" style="font-size:10px;" title="' + esc(Object.keys(v.dobras || {}).map(function (k) { return k + " " + v.dobras[k] + "mm"; }).join(" · ")) + '">' + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" }[v.metodoDobras] || "dobras") + "</span>" : "") +
             (v.bia ? '<span class="tag" style="font-size:10px;background:rgba(34,197,94,.18);color:#4ade80;">bioimpedância</span>' : "") +
-            (v.scan ? '<span class="tag" style="font-size:10px;background:rgba(96,165,250,.18);color:#60a5fa;">📷 câmera</span>' : "") +
+            (v.scan ? '<span class="tag" style="font-size:10px;background:rgba(96,165,250,.18);color:#60a5fa;">câmera</span>' : "") +
             '<span style="margin-left:auto;"></span>' +
-            '<button class="btn sec mini" data-avlaudo="' + v.id + '" title="Laudo completo">📄</button>' +
+            '<button class="btn sec mini" data-avlaudo="' + v.id + '">Laudo</button>' +
             '<button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
         }).join("") + "</div></details>";
     }).join("");
@@ -7084,34 +7092,42 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("avAdd").addEventListener("click", function () {
     if (!$("avAluno").value) { alert("Escolha o aluno."); return; }
     var st = load();
+    var a = st.alunos.find(function (x) { return x.id === $("avAluno").value; });
+    if (!a) { alert("Escolha o aluno."); return; }
+    var sexoAv = a.sexo === "F" ? "F" : "M";
+    var db = dobrasDe(sexoAv, idadeDe(a.nasc));
+    if (db && db.erro) { alert(db.erro); return; }
+    var ft = fitaDe(sexoAv, +a.altura || 0);
     st.avaliacoes = st.avaliacoes || [];
     var reg = {
-      id: S.uid(), alunoId: $("avAluno").value, data: $("avData").value || S.todayISO(),
-      peso: +$("avPeso").value || null, gordura: +$("avGord").value || null,
+      id: S.uid(), alunoId: a.id, data: $("avData").value || S.todayISO(),
+      peso: +$("avPeso").value || null,
       cintura: +$("avCintura").value || null, braco: +$("avBraco").value || null,
     };
-    if (dobrasPend && reg.gordura === dobrasPend.gordura) {
-      reg.dobras = dobrasPend.dobras;
-      reg.metodoDobras = dobrasPend.metodo;
-      reg.densidade = dobrasPend.densidade;
-    }
-    dobrasPend = null;
-    // circunferências calculadas entram na avaliação (quadril vira medida acompanhada)
-    if (circPend) {
-      reg.circ = circPend.circ;
-      reg.rcq = circPend.rcq;
-      reg.riscoRcq = circPend.risco;
-      if (circPend.circ.quadril) reg.quadril = circPend.circ.quadril;
-      if (!reg.gordura && circPend.gordura) reg.gordura = circPend.gordura;
-    }
-    circPend = null;
     if (+$("avQuadril").value) reg.quadril = +$("avQuadril").value;
+    // o % de gordura é RESULTADO: medido na balança > dobras > fita > foto
+    var medido = +$("avGord").value || null;
+    var fonteG = "";
+    if (medido) { reg.gordura = medido; fonteG = "medido na balança"; }
+    else if (db) {
+      reg.gordura = db.gordura;
+      fonteG = "dobras " + ({ p3: "Pollock 3", p7: "Pollock 7", guedes: "Guedes" })[db.metodo] + " + Siri";
+    } else if (ft && ft.gordura) { reg.gordura = ft.gordura; fonteG = "fita (Marinha americana)"; }
+    if (db) {
+      reg.dobras = db.dobras;
+      reg.metodoDobras = db.metodo;
+      reg.densidade = db.densidade;
+    }
+    if (ft) {
+      reg.circ = ft.circ;
+      if (ft.rcq) { reg.rcq = ft.rcq; reg.riscoRcq = ft.risco; }
+    }
     // medidas vindas da câmera: guardadas à parte, pra nunca se passarem por fita
     if (scanPend) {
       reg.scan = { v: 1, quando: scanPend.quando, circ: scanPend.circ, confianca: scanPend.confianca,
         rcest: scanPend.rcest, margemCm: scanPend.margemCm, calibrado: !!scanPend.calibrado };
       reg.circ = Object.assign({}, scanPend.circ, reg.circ || {});   // o que foi medido de fita vence
-      if (!reg.gordura && scanPend.gordura) reg.gordura = scanPend.gordura.valor;
+      if (!reg.gordura && scanPend.gordura) { reg.gordura = scanPend.gordura.valor; fonteG = "estimativa pela foto"; }
     }
     scanPend = null;
     // números da balança de bioimpedância (opcionais) — vencem as estimativas
@@ -7131,10 +7147,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (Object.keys(bia).length) reg.bia = bia;
     st.avaliacoes.push(reg);
     marcaAppPendente(st, reg.alunoId); // a evolução entra no app na próxima publicação
-    ["avPeso", "avGord", "avCintura", "avBraco", "avQuadril", "biaAgua", "biaProteina", "biaMineral",
+    ["avPeso", "avGord", "avCintura", "avBraco", "avQuadril", "ccPescoco", "ccTorax", "ccAbdomen",
+     "ccAntebraco", "ccCoxa", "ccPanturrilha", "biaAgua", "biaProteina", "biaMineral",
      "biaGordKg", "biaMme", "biaVisceral", "biaAngulo", "biaBracoE", "biaBracoD", "biaTronco",
      "biaPernaE", "biaPernaD"].forEach(function (id) { if ($(id)) $(id).value = ""; });
+    Array.prototype.forEach.call(document.querySelectorAll(".dbIn"), function (i) { i.value = ""; });
     save(st);
+    // o resultado científico na cara: % calculado + atalho pro laudo no perfil.
+    // Sem % com fita preenchida, diz o MOTIVO (quadril de mulher, altura, pescoço)
+    var semPq = "";
+    if (reg.gordura == null && ft) {
+      if (!(+a.altura)) semPq = " A fita não gerou o % porque falta a <b>altura</b> no cadastro.";
+      else if (sexoAv === "F" && !ft.circ.quadril) semPq = " A fita não gerou o % porque pra mulher o <b>quadril</b> é obrigatório.";
+      else if (!ft.circ.pescoco) semPq = " A fita não gerou o % porque faltou o <b>pescoço</b>.";
+      else if (!ft.circ.cintura) semPq = " A fita não gerou o % porque faltou a <b>cintura</b>.";
+    }
+    $("avResultado").innerHTML = (reg.gordura != null
+      ? "Salvo! % de gordura: <b>" + String(reg.gordura).replace(".", ",") + "%</b> (" + fonteG + ")."
+      : "Salvo! Sem % de gordura desta vez." + (semPq || " Registre dobras, fita completa ou o valor da balança na próxima.")) +
+      ' <a href="#" data-avperfil="' + esc(reg.alunoId) + '" style="color:var(--roxo);">Ver o laudo no perfil</a>';
+  });
+  $("avResultado").addEventListener("click", function (e) {
+    var alvo = e.target.getAttribute && e.target.getAttribute("data-avperfil");
+    if (!alvo) return;
+    e.preventDefault();
+    if (!load().alunos.some(function (x) { return x.id === alvo; })) { alert("Esse aluno não está mais cadastrado."); return; }
+    abrePerfil(alvo);
+    mostraPfAba("aval");
   });
   $("listaAvaliacoes").addEventListener("click", function (e) {
     if (!e.target.getAttribute) return;
@@ -10251,7 +10290,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderAgenda(st);
     renderPagamentos(st);
     renderAvaliacoes(st);
-    pintaLaudoPT(st);
     pintaScan(st);
     renderBiblioteca();
     renderVideotecaPT();
