@@ -2644,6 +2644,152 @@ async function abaPt(p, a) {
     return window.__idxPT(st).pagouMes("sv1", mes) === false;
   }), "venda de serviço não faz a mensalidade do mês constar como paga (cobrança do plano continua)");
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapServ);
+  // --- Central de automações de WhatsApp: gatilhos próprios, prontas, editor e foto ---
+  const stSnapAuto = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+  const imgsSnapAuto = await p.evaluate(() => localStorage.getItem("mtapp:ptImagens"));
+  const autoEng = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const dISO = (menos) => { const d = new Date(hoje + "T12:00"); d.setDate(d.getDate() - menos); return S.todayISO(d); };
+    const jpeg1 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
+    S.write("ptImagens", [{ id: "zim1", n: "Promo", d: jpeg1, em: hoje }]);
+    const st = S.read("ptStudio", {});
+    st.alunos.push(
+      { id: "za1", nome: "Tulio Sumido", ativo: true, zap: "31999990001" },
+      { id: "za2", nome: "Vera Nova", ativo: true, zap: "31999990002", desde: dISO(1) },
+      { id: "za3", nome: "Caio Pacote", ativo: true, zap: "31999990003",
+        servPacotes: [{ id: "zsp1", nome: "Massagem", total: 5, usadas: 4, vendidoEm: dISO(20) }] },
+      { id: "za4", nome: "Nilo Antigo", ativo: true, zap: "31999990004", desde: dISO(300) });
+    st.sessoes = st.sessoes || [];
+    st.sessoes.push({ id: "zs1", alunoId: "za1", data: dISO(10), feita: true });
+    st.zapLog = {};
+    st.zapAutos = [
+      { id: "zau1", nome: "Sentimos sua falta", gat: "sumido", dias: 7, texto: "Oi {nome}, sumiu ha {dias}! Bora voltar?" },
+      { id: "zau2", nome: "Boas-vindas", gat: "cadastro", dias: 1, texto: "Oi {nome}! Bem-vinda ao time." },
+      { id: "zau3", nome: "Pacote acabando", gat: "pacote", dias: 2, texto: "Pacote de {servico}: {resta}.", imgId: "zim1" },
+      { id: "zau4", nome: "Desligada", gat: "sumido", dias: 1, texto: "Nunca aparece", off: true },
+    ];
+    S.write("ptStudio", st);
+    const fila = window.__zapFila(S.read("ptStudio", {}));
+    const meus = fila.filter((z) => z.chave.indexOf("zauto") === 0);
+    return {
+      sumido: (meus.find((z) => z.alunoId === "za1" && z.chave.indexOf("zauto|zau1") === 0) || {}).texto,
+      bemVinda: (meus.find((z) => z.alunoId === "za2" && z.chave.indexOf("zautoC|zau2") === 0) || {}).texto,
+      pacote: meus.find((z) => z.alunoId === "za3" && z.chave.indexOf("zautoP|zau3") === 0),
+      antigoSemBoasVindas: !meus.some((z) => z.alunoId === "za4"),
+      desligadaFora: !meus.some((z) => z.chave.indexOf("zau4") >= 0),
+    };
+  });
+  ok(autoEng.sumido === "Oi Tulio, sumiu ha 10 dias! Bora voltar?", "automação 'aluno sumido' entra na fila com {nome} e {dias} trocados");
+  ok(autoEng.bemVinda === "Oi Vera! Bem-vinda ao time.", "automação de boas-vindas pega o aluno cadastrado ontem");
+  ok(autoEng.pacote && autoEng.pacote.texto === "Pacote de Massagem: resta 1." && autoEng.pacote.img === "zim1",
+    "automação de pacote acabando troca {servico} e {resta} e carrega a foto");
+  ok(autoEng.antigoSemBoasVindas, "aluno antigo não recebe boas-vindas atrasadas (janela de 7 dias)");
+  ok(autoEng.desligadaFora, "automação desligada fica fora da fila");
+  const autoVenc = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const amanha = new Date(hoje + "T12:00");
+    amanha.setDate(amanha.getDate() + 1);
+    const st = S.read("ptStudio", {});
+    st.planosPT = st.planosPT || [];
+    st.planosPT.push({ id: "zpl1", nome: "Mensal", valor: 250, ciclo: 1 });
+    st.contratosPT = st.contratosPT || [];
+    // vencimento cai AMANHÃ — se amanhã for dia 1, o aviso precisa cruzar a virada do mês
+    st.contratosPT.push({ id: "zct1", alunoId: "za1", planoId: "zpl1", status: "ativo", inicio: hoje, diaVenc: amanha.getDate() });
+    st.zapAutos.push({ id: "zau6", nome: "Vence logo", gat: "antesVenc", dias: 3, texto: "Oi {nome}, vence {dias} ({valor})." });
+    S.write("ptStudio", st);
+    const fila = window.__zapFila(S.read("ptStudio", {}));
+    const z = fila.find((x) => x.alunoId === "za1" && x.chave.indexOf("zautoV|zau6") === 0);
+    return z && z.texto;
+  });
+  // o fmtBRL usa espaço não separável depois do R$ — por isso o \s no lugar do espaço comum
+  ok(/^Oi Tulio, vence amanhã \(R\$\s250\)\.$/.test(autoVenc || ""), "aviso de vencimento acha o próximo vencimento de verdade (inclusive cruzando a virada do mês)");
+  const autoPoda = await p.evaluate(() => {
+    const S = window.MTStore, hoje = S.todayISO();
+    const dISO = (menos) => { const d = new Date(hoje + "T12:00"); d.setDate(d.getDate() - menos); return S.todayISO(d); };
+    const st = S.read("ptStudio", {});
+    st.zapLog = {};
+    // 200 chaves datadas de dias passados (lixo certo) + 1 marca durável de pacote antiga
+    for (let i = 1; i <= 200; i++) st.zapLog["zautoS|zx|a" + i + "|" + dISO(8)] = dISO(8) + "T08:00:00";
+    st.zapLog["zautoP|zauX|zaX|spX"] = dISO(30) + "T08:00:00"; // marca durável de um pacote já avisado
+    S.write("ptStudio", st);
+    window.__zapMarca("ztreino|zz|" + hoje);
+    const log = S.read("ptStudio", {}).zapLog;
+    return {
+      duravelFicou: !!log["zautoP|zauX|zaX|spX"],
+      lixoFoi: !Object.keys(log).some((k) => k.indexOf("zautoS|zx|") === 0),
+      novaFicou: !!log["ztreino|zz|" + hoje],
+    };
+  });
+  ok(autoPoda.duravelFicou && autoPoda.lixoFoi && autoPoda.novaFicou,
+    "poda do log joga fora só chave datada vencida — a marca de pacote já avisado sobrevive");
+  const autoDup = await p.evaluate(async () => {
+    document.querySelector('#abas [data-a="config"]').click();
+    await new Promise((r) => setTimeout(r, 250));
+    document.querySelector('#autoProntas [data-autopronta="3"]').click(); // Motivação de segunda: 1ª vez cria
+    await new Promise((r) => setTimeout(r, 150));
+    document.getElementById("autoSalva").click();
+    await new Promise((r) => setTimeout(r, 150));
+    document.querySelector('#autoProntas [data-autopronta="3"]').click(); // 2ª vez: abre a existente
+    await new Promise((r) => setTimeout(r, 150));
+    document.getElementById("autoSalva").click();
+    await new Promise((r) => setTimeout(r, 150));
+    return window.MTStore.read("ptStudio", {}).zapAutos.filter((x) => x.nome === "Motivação de segunda").length;
+  });
+  ok(autoDup === 1, "tocar de novo numa pronta já criada abre a existente pra ajustar — não duplica");
+  const autoUi = await p.evaluate(async () => {
+    document.querySelector('#abas [data-a="config"]').click();
+    await new Promise((r) => setTimeout(r, 250));
+    const prontasN = document.querySelectorAll("#autoProntas [data-autopronta]").length;
+    document.querySelector('#autoProntas [data-autopronta="2"]').click(); // Vencimento chegando
+    await new Promise((r) => setTimeout(r, 150));
+    const dlgAberto = document.getElementById("dlgAuto").open;
+    const nomePronto = document.getElementById("autoNome").value;
+    document.getElementById("autoSalva").click();
+    await new Promise((r) => setTimeout(r, 150));
+    const criada = window.MTStore.read("ptStudio", {}).zapAutos.find((x) => x.nome === "Vencimento chegando");
+    // editor do zero com foto da galeria
+    document.getElementById("autoNova").click();
+    await new Promise((r) => setTimeout(r, 100));
+    document.getElementById("autoNome").value = "Foto teste";
+    document.getElementById("autoGat").value = "semanal";
+    document.getElementById("autoGat").dispatchEvent(new Event("change"));
+    document.getElementById("autoDiaSem").value = String(new Date().getDay());
+    document.getElementById("autoTexto").value = "Foto da promo, {nome}!";
+    document.getElementById("autoImgEsc").click();
+    await new Promise((r) => setTimeout(r, 150));
+    document.querySelector('#galEscolher [data-galsel="zim1"]').click();
+    await new Promise((r) => setTimeout(r, 150));
+    const prevVisivel = !document.getElementById("autoImgPrev").hidden;
+    document.getElementById("autoSalva").click();
+    await new Promise((r) => setTimeout(r, 150));
+    const comFoto = window.MTStore.read("ptStudio", {}).zapAutos.find((x) => x.nome === "Foto teste");
+    return { prontasN, dlgAberto, nomePronto, criadaGat: criada && criada.gat, prevVisivel, comFotoImg: comFoto && comFoto.imgId };
+  });
+  ok(autoUi.prontasN >= 6 && autoUi.dlgAberto && autoUi.nomePronto === "Vencimento chegando" && autoUi.criadaGat === "antesVenc",
+    "prontas abrem o editor preenchido e salvar cria a automação");
+  ok(autoUi.prevVisivel && autoUi.comFotoImg === "zim1", "criar do zero escolhe foto do banco de imagens e ela fica guardada por id");
+  const autoFoto = await p.evaluate(async () => {
+    const canOrig = navigator.canShare, shareOrig = navigator.share;
+    let shareArgs = null;
+    navigator.canShare = () => true;
+    navigator.share = (args) => { shareArgs = args; return Promise.resolve(); };
+    document.querySelector('#abas [data-a="dash"]').click();
+    await new Promise((r) => setTimeout(r, 400));
+    // o item do pacote (zau3) é o que tem foto E texto conhecido — clica exatamente nele
+    const btFoto = [...document.querySelectorAll("#bZapP [data-zapfoto]")]
+      .find((b) => b.getAttribute("data-zapfoto").indexOf("zautoP|zau3") === 0);
+    if (btFoto) btFoto.click();
+    await new Promise((r) => setTimeout(r, 200));
+    if (canOrig) navigator.canShare = canOrig; else delete navigator.canShare;
+    if (shareOrig) navigator.share = shareOrig; else delete navigator.share;
+    return { temBtn: !!btFoto, args: shareArgs && { n: shareArgs.files.length, texto: shareArgs.text } };
+  });
+  ok(autoFoto.temBtn && autoFoto.args && autoFoto.args.n === 1 && /Pacote de Massagem/.test(autoFoto.args.texto),
+    "fila do Início ganha o botão Foto e o compartilhar recebe a imagem com o texto da mensagem");
+  await p.evaluate((par) => {
+    localStorage.setItem("mtapp:ptStudio", par.st);
+    if (par.imgs == null) localStorage.removeItem("mtapp:ptImagens"); else localStorage.setItem("mtapp:ptImagens", par.imgs);
+  }, { st: stSnapAuto, imgs: imgsSnapAuto });
   // --- GPS sempre ativo: com permissão, liga sozinho, mede a distância e respeita quem desliga ---
   const ctxGps = await b.newContext({
     viewport: { width: 500, height: 900 },
