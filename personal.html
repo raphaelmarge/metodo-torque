@@ -8286,7 +8286,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var guiaFichasP = (fichasApp || []).map(function (f) {
       return { n: f.titulo || "Ficha", it: f.itens.map(function (it) {
         return { e: (it.nome || "?").replace(/'/g, ""), s: +it.series || 3, r: String(it.reps || ""), d: +it.descanso || 60,
-          v: it.video || videoBusca(it.nome || "") };
+          // sem vídeo próprio o botão some (fica a animação) — nada de mandar pro YouTube
+          v: it.video || "" };
       }) };
     });
     // aquecimento automático: 4-5 movimentos pelos grupos musculares da ficha do dia
@@ -8580,7 +8581,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
               (it.obs ? "<div style='color:#a78bfa;margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
               "<button class='animbtn' data-a='" + esc(animDe(it.nome, it.grupo)) + "' style='background:rgba(124,58,237,.18);border:1px solid transparent;color:#d6c9f5;font-weight:700;font-size:12px;padding:5px 14px;border-radius:99px;display:inline-block;font-family:inherit;cursor:pointer;'>Ver como faz</button> " +
-              "<button class='vidbtn' data-v='" + esc(it.video || videoBusca(it.nome)) + "' style='background:none;border:none;color:#8a8695;font-weight:700;font-size:12px;padding:5px 4px;font-family:inherit;cursor:pointer;text-decoration:underline;'>vídeo</button>" +
+              (it.video ? "<button class='vidbtn' data-v='" + esc(it.video) + "' style='background:none;border:none;color:#8a8695;font-weight:700;font-size:12px;padding:5px 4px;font-family:inherit;cursor:pointer;text-decoration:underline;'>vídeo</button>" : "") +
               ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat!</span>" : "") +
               "<div class='animbox' style='display:none;'></div>" +
               "<div class='vidbox' style='display:none;'></div>" +
@@ -8896,15 +8897,25 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "bx.style.display='block';bx.innerHTML=animSvg(ab.dataset.a)+" +
       "\"<div style='text-align:center;font-size:11.5px;color:#6e6a78;margin-top:2px;'>movimento de referência — a técnica exata quem ajusta é o seu professor</div>\";" +
       "ab.textContent='Fechar';});" +
-      // vídeo do exercício DENTRO do app: player do YouTube embutido (sem sair pra outra aba)
+      // vídeo do exercício SEMPRE dentro do app — nunca abre o YouTube por fora.
+      // Reconhece: vídeo do YouTube (watch/shorts/youtu.be), playlist, Vimeo e
+      // arquivo de vídeo direto (mp4/webm...). Link estranho ganha aviso honesto.
       "function ytId(u){var m=String(u||'').match(/(?:youtube\\.com\\/(?:watch\\?(?:.*&)?v=|shorts\\/|embed\\/)|youtu\\.be\\/)([\\w-]{6,20})/);return m?m[1]:'';}" +
+      "function vidMolde(src){return \"<iframe src='\"+src+\"' title='Vídeo do exercício' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='width:100%;aspect-ratio:16/9;border:0;border-radius:10px;margin-top:8px;display:block;background:#000;'></iframe>\";}" +
+      "function vidHtml(u){u=String(u||'');var id=ytId(u);" +
+      "if(id)return vidMolde('https://www.youtube-nocookie.com/embed/'+id+'?rel=0&playsinline=1');" +
+      "var pl=u.match(/[?&]list=([\\w-]{10,60})/);" +
+      "if(pl)return vidMolde('https://www.youtube-nocookie.com/embed/videoseries?list='+pl[1]);" +
+      "var vm=u.match(/vimeo\\.com\\/(\\d{6,12})/);" +
+      "if(vm)return vidMolde('https://player.vimeo.com/video/'+vm[1]+'?playsinline=1');" +
+      "if(/^https?:\\/\\/[^'\\\"<>]+\\.(mp4|webm|ogg|m4v|mov)([?#][^'\\\"<>]*)?$/i.test(u))" +
+      "return \"<video src='\"+u+\"' controls playsinline style='width:100%;aspect-ratio:16/9;border-radius:10px;margin-top:8px;display:block;background:#000;'></video>\";" +
+      "return '';}" +
       "document.addEventListener('click',function(e){var vb=e.target.closest('.vidbtn');if(!vb)return;" +
       "var bx=vb.nextElementSibling;while(bx&&!bx.classList.contains('vidbox'))bx=bx.nextElementSibling;if(!bx)return;" +
       "if(bx.firstChild){bx.innerHTML='';bx.style.display='none';vb.textContent=vb.dataset.rot||'Ver vídeo';return;}" +
-      "var id=ytId(vb.dataset.v);" +
-      "if(!id){window.open(vb.dataset.v,'_blank');return;}" +
       "bx.style.display='block';" +
-      "bx.innerHTML=\"<iframe src='https://www.youtube-nocookie.com/embed/\"+id+\"?rel=0&playsinline=1' title='Vídeo do exercício' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='width:100%;aspect-ratio:16/9;border:0;border-radius:10px;margin-top:8px;display:block;background:#000;'></iframe>\";" +
+      "bx.innerHTML=vidHtml(vb.dataset.v)||\"<div style='background:#1d1a24;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;color:#a9a4b5;line-height:1.5;'>Esse link não toca aqui dentro. Pede pro seu professor colar o link do vídeo mesmo (no YouTube: Compartilhar → Copiar link).</div>\";" +
       "vb.dataset.rot=vb.textContent;vb.textContent='Fechar vídeo';});" +
       // tela sempre acesa durante o treino (wake lock — solta quando fecha o guiado)
       "var wlTela=null;" +
