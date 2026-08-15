@@ -2,24 +2,21 @@
 -- Cole este arquivo inteiro no SQL Editor do Supabase e clique em Run.
 -- Pode rodar mais de uma vez sem problema.
 
--- limpa a versão antiga (dados por usuário), se existir
-drop table if exists public.dados cascade;
-drop table if exists public.membros cascade;
-drop table if exists public.academias cascade;
-drop function if exists public.minhas_academias() cascade;
-drop function if exists public.criar_academia(text, text) cascade;
-drop function if exists public.entrar_na_equipe(text, text) cascade;
+-- IMPORTANTE: este arquivo NUNCA apaga tabela nem dado. Tudo aqui é
+-- "if not exists" / "or replace" — rodar de novo só cria o que falta.
+-- (Antes havia um bloco de "drop table ... cascade" no topo, que destruía
+-- as contas e os dados sincronizados a cada execução. Foi removido.)
 
 -- ==================== TABELAS ====================
 
-create table public.academias (
+create table if not exists public.academias (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
   codigo_equipe text not null unique,
   criada timestamptz not null default now()
 );
 
-create table public.membros (
+create table if not exists public.membros (
   academia_id uuid not null references public.academias (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
   papel text not null check (papel in ('dono', 'funcionario')),
@@ -31,7 +28,7 @@ create table public.membros (
 
 -- os dados dos programas: uma linha por (academia, chave). Toda a equipe
 -- da academia compartilha as mesmas linhas — academias nunca se misturam.
-create table public.dados (
+create table if not exists public.dados (
   academia_id uuid not null references public.academias (id) on delete cascade,
   chave text not null,
   valor jsonb,
@@ -43,7 +40,7 @@ create table public.dados (
 
 -- academias das quais o usuário logado faz parte (security definer para
 -- não recursionar nas políticas)
-create function public.minhas_academias()
+create or replace function public.minhas_academias()
 returns setof uuid
 language sql security definer stable
 set search_path = public
@@ -86,7 +83,7 @@ create policy "dados_delete" on public.dados
 -- ==================== FUNÇÕES DE CADASTRO ====================
 
 -- Dono cria a academia e vira o primeiro membro. Retorna o código da equipe.
-create function public.criar_academia(p_nome_academia text, p_nome_membro text)
+create or replace function public.criar_academia(p_nome_academia text, p_nome_membro text)
 returns json
 language plpgsql security definer
 set search_path = public
@@ -113,7 +110,7 @@ end;
 $$;
 
 -- Funcionário entra na equipe usando o código da academia.
-create function public.entrar_na_equipe(p_codigo text, p_nome text)
+create or replace function public.entrar_na_equipe(p_codigo text, p_nome text)
 returns json
 language plpgsql security definer
 set search_path = public

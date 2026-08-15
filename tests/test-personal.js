@@ -2724,8 +2724,17 @@ async function abaPt(p, a) {
     "depois de publicar, o link público aparece e fica guardado");
   const pagSrc = await p.evaluate(async () => (await fetch("/pagina.html")).text());
   ok(/site_pro_busca/.test(pagSrc) && /URLSearchParams/.test(pagSrc), "pagina.html busca a página publicada pelo endereço");
-  ok(/site_pro/.test(await p.evaluate(async () => (await fetch("/supabase-setup.sql")).text())),
-    "o SQL da tabela site_pro está no setup (o Raphael roda de novo e pronto)");
+  const sqlSetup = await p.evaluate(async () => (await fetch("/supabase-setup.sql")).text());
+  ok(/site_pro/.test(sqlSetup), "o SQL da tabela site_pro está no setup (o Raphael roda de novo e pronto)");
+  // guarda de segurança: o setup NUNCA pode apagar tabela — rodar de novo com
+  // dados na nuvem destruiria as contas de todo mundo. "drop function if
+  // exists" antes de recriar é ok; "drop table" não tem desculpa.
+  ok(!/(^|\n)\s*drop\s+table/i.test(sqlSetup), "o setup não tem nenhum drop table (rodar de novo nunca apaga dados)");
+  ok(!/(^|\n)create table (?!if not exists)/i.test(sqlSetup) && !/(^|\n)create function /i.test(sqlSetup),
+    "todo create do setup é idempotente (if not exists / or replace)");
+  const swSrc = await p.evaluate(async () => (await fetch("/sw.js")).text());
+  ok(/indexOf\("supabase-setup\.sql"\)/.test(swSrc),
+    "o sw serve o supabase-setup.sql sempre da rede (nunca uma cópia velha do cache)");
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapSite);
   // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
   const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
