@@ -482,6 +482,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-pga="planos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 8 12 4l8.5 4v8L12 20l-8.5-4z'/><path d='M3.5 8 12 12l8.5-4M12 12v8'/></svg> Planos</button>
       <button data-pga="contratos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Contratos</button>
       <button data-pga="serv"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.6 13.4 12 22l-8.6-8.6L4 5l8.4.6z'/><circle cx='9' cy='9' r='1.4'/></svg> Serviços</button>
+      <button data-pga="desp"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m3 7 6 6 4-4 8 8'/><path d='M21 11v6h-6'/></svg> Despesas</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="planos" hidden>
       <h2>Planos do studio</h2>
@@ -526,6 +527,35 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Quantidade 1 = venda avulsa. De 2 pra cima vira <b>pacote com saldo</b>: o total já vem calculado (dá pra dar desconto no campo) e a cada atendimento você desconta no <b>Usar 1</b>.</p>
       <div id="svPacotes" style="margin-top: 12px;"></div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="desp" hidden>
+      <h2>Lançar despesa</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Anote o que sai do caixa — repasse do espaço, combustível, equipamentos, cursos — e descubra quanto <b>sobra de verdade</b> no fim do mês. Despesa fixa entra sozinha todo mês até você encerrar.</p>
+      <div class="linha-flex" style="flex-wrap: wrap;">
+        <input id="dpDesc" placeholder="Descrição (ex.: Repasse academia)" style="flex: 1; min-width: 170px;">
+        <select id="dpCat" style="width: auto;" aria-label="Categoria">
+          <option>Repasse/aluguel</option><option>Combustível</option><option>Equipamentos</option>
+          <option>Cursos e formação</option><option>Marketing</option><option>Impostos/MEI</option>
+          <option>Alimentação</option><option>Outros</option>
+        </select>
+        <input id="dpValor" type="number" min="0" step="0.01" placeholder="Valor R$" style="width: 120px;">
+        <input id="dpData" type="date" style="width: auto;" aria-label="Data da despesa">
+        <label style="display: flex; gap: 6px; align-items: center; font-size: 12.5px; margin: 0; white-space: nowrap;"><input type="checkbox" id="dpFixa" style="width: 16px; height: 16px;"> repete todo mês</label>
+        <button class="btn" id="dpAdd">Lançar</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="desp" hidden>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+        <h2 style="margin: 0;">Despesas do mês</h2>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button class="btn sec mini" id="dpAntes" aria-label="Mês anterior">‹</button>
+          <b id="dpMesRot" style="font-size: 13.5px;"></b>
+          <button class="btn sec mini" id="dpDepois" aria-label="Mês seguinte">›</button>
+        </div>
+      </div>
+      <div id="dpResumo" style="margin-top: 10px;"></div>
+      <div id="dpCats" style="margin-top: 10px;"></div>
+      <div id="dpLista" class="muted" style="margin-top: 10px; font-size: 13px;">Nenhuma despesa lançada.</div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
       <h2>Registrar pagamento</h2>
@@ -1604,7 +1634,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   var FAV_FILTRO = "★ Meus favoritos"; // opção do seletor de tipo de treino (cascata da ficha)
   function load() {
     var st = S.read("ptStudio", { alunos: [], sessoes: [], pagamentos: [], treinos: {} });
-    st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || [];
+    st.alunos = st.alunos || []; st.sessoes = st.sessoes || []; st.pagamentos = st.pagamentos || []; st.treinos = st.treinos || {}; st.avaliacoes = st.avaliacoes || []; st.despesas = st.despesas || [];
     st.exercicios = st.exercicios || []; st.treinosV2 = st.treinosV2 || {}; st.videoteca = st.videoteca || [];
     st.planosPT = st.planosPT || []; st.contratosPT = st.contratosPT || [];
     st.diarioPT = st.diarioPT || {};
@@ -6001,6 +6031,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     document.querySelectorAll("#vPagamentos [data-pgsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pgsec") !== aba; });
     document.querySelectorAll("#pgAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-pga") === aba); });
     if (aba === "serv") renderServicos();
+    if (aba === "desp") renderDespesas();
   }
   $("pgAbas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("button[data-pga]");
@@ -6008,6 +6039,85 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__pgAba = mostraPgAba; // testes
   mostraPgAba("receb");
+
+  // ---------- despesas do studio (pra saber onde o dinheiro está indo) ----------
+  var dpMes = S.todayISO().slice(0, 7);
+  function despesasDoMes(st, mes) {
+    return (st.despesas || []).filter(function (d) {
+      var ini = (d.data || "").slice(0, 7);
+      if (!ini || !(+d.valor > 0)) return false;
+      // fixa: conta todo mês desde que começou até o mês em que foi encerrada
+      if (d.fixa) return ini <= mes && (!d.fim || d.fim.slice(0, 7) >= mes);
+      return ini === mes;
+    });
+  }
+  function dpMesRot(m) { return m.slice(5, 7) + "/" + m.slice(0, 4); }
+  function dpMesVizinho(m, delta) {
+    var d = new Date(+m.slice(0, 4), +m.slice(5, 7) - 1 + delta, 1);
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+  }
+  function renderDespesas() {
+    var st = load();
+    $("dpMesRot").textContent = dpMesRot(dpMes);
+    if (!$("dpData").value) $("dpData").value = S.todayISO();
+    var doMes = despesasDoMes(st, dpMes);
+    var gasto = doMes.reduce(function (s, d) { return s + (+d.valor || 0); }, 0);
+    var recebido = (st.pagamentos || []).filter(function (p) { return (p.data || "").slice(0, 7) === dpMes; })
+      .reduce(function (s, p) { return s + (+p.valor || 0); }, 0);
+    var sobra = recebido - gasto;
+    function cx(rot, val, cor) {
+      return "<div style='background:#121016;border-radius:12px;padding:10px;'><div style='font-weight:800;font-size:16px;color:" + cor + ";'>" + S.fmtBRL(val) + "</div><div class='muted' style='font-size:12px;'>" + rot + "</div></div>";
+    }
+    $("dpResumo").innerHTML = "<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;'>" +
+      cx("recebido", recebido, "#86efac") + cx("gasto", gasto, "#fca5a5") +
+      cx(sobra >= 0 ? "sobrou" : "no vermelho", Math.abs(sobra), sobra >= 0 ? "#a78bfa" : "#fca5a5") + "</div>";
+    var porCat = {};
+    doMes.forEach(function (d) { var c = d.cat || "Outros"; porCat[c] = (porCat[c] || 0) + (+d.valor || 0); });
+    var cats = Object.keys(porCat).sort(function (a, b) { return porCat[b] - porCat[a]; });
+    $("dpCats").innerHTML = cats.map(function (c) {
+      var pc = gasto ? Math.round(100 * porCat[c] / gasto) : 0;
+      return "<div style='margin:5px 0;'><div style='display:flex;justify-content:space-between;font-size:12.5px;gap:8px;'><span>" + esc(c) + "</span><b style='white-space:nowrap;'>" + S.fmtBRL(porCat[c]) + " · " + pc + "%</b></div>" +
+        "<div style='background:#121016;border-radius:99px;height:7px;overflow:hidden;'><div style='width:" + pc + "%;height:100%;background:#7c3aed;'></div></div></div>";
+    }).join("");
+    $("dpLista").innerHTML = doMes.length ? doMes.slice().sort(function (a, b) { return (b.data || "").localeCompare(a.data || ""); }).map(function (d) {
+      return "<div style='display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #211d2b;'>" +
+        "<span>" + (d.fixa ? "<b style='color:#a78bfa;'>fixa</b> · " : "") + esc(d.desc || d.cat || "Despesa") +
+        " <span class='muted' style='font-size:12px;'>" + esc(d.cat || "") + " · desde " + S.fmtData(d.data) + "</span></span>" +
+        "<span style='white-space:nowrap;'><b>" + S.fmtBRL(+d.valor || 0) + "</b> " +
+        (d.fixa && !d.fim ? "<button class='btn sec mini' data-dpfim='" + d.id + "' title='Para de contar a partir do mês seguinte'>encerrar</button> " : "") +
+        "<button class='btn sec mini' data-dpdel='" + d.id + "' aria-label='Excluir despesa' title='Excluir'>✕</button></span></div>";
+    }).join("") : "Nenhuma despesa em " + dpMesRot(dpMes) + ".";
+  }
+  $("dpAdd").addEventListener("click", function () {
+    var valor = +$("dpValor").value;
+    if (!valor || valor <= 0) { alert("Coloque o valor da despesa."); return; }
+    var st = load();
+    st.despesas.push({
+      id: S.uid(), desc: $("dpDesc").value.trim(), cat: $("dpCat").value,
+      valor: valor, data: $("dpData").value || S.todayISO(), fixa: $("dpFixa").checked,
+    });
+    S.write("ptStudio", st);
+    dpMes = ($("dpData").value || S.todayISO()).slice(0, 7);
+    $("dpDesc").value = ""; $("dpValor").value = ""; $("dpFixa").checked = false;
+    renderDespesas();
+  });
+  $("dpAntes").addEventListener("click", function () { dpMes = dpMesVizinho(dpMes, -1); renderDespesas(); });
+  $("dpDepois").addEventListener("click", function () { dpMes = dpMesVizinho(dpMes, 1); renderDespesas(); });
+  $("dpLista").addEventListener("click", function (e) {
+    var del = e.target.closest("[data-dpdel]"), fim = e.target.closest("[data-dpfim]");
+    if (!del && !fim) return;
+    var st = load();
+    if (del) {
+      if (!confirm("Excluir essa despesa?")) return;
+      st.despesas = st.despesas.filter(function (d) { return d.id !== del.getAttribute("data-dpdel"); });
+    } else {
+      var dx = st.despesas.find(function (d) { return d.id === fim.getAttribute("data-dpfim"); });
+      if (dx) dx.fim = dpMes + "-28"; // ainda conta neste mês; some dos seguintes
+    }
+    S.write("ptStudio", st);
+    renderDespesas();
+  });
+  window.__despesas = { render: renderDespesas, doMes: despesasDoMes, vaiPara: function (m) { dpMes = m; renderDespesas(); } }; // testes
   // sub-links genéricos das outras seções (Agenda, Avaliações, Questionários, Desafio, Relatórios, Chat)
   function fazSubAbas(secId, abasId, dataAba, dataSec, inicial) {
     function mostra(aba) {
@@ -8165,8 +8275,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var d = dadosDoMes(st, mes);
     var nomeStudio = ((st.config || {}).nome) || "meu studio";
     var presenca = d.feitas + d.faltas ? Math.round(100 * d.feitas / (d.feitas + d.faltas)) : 100;
+    var gastoMes = despesasDoMes(st, mes).reduce(function (s, dp) { return s + (+dp.valor || 0); }, 0);
     return "Fechamento " + mes.slice(5, 7) + "/" + mes.slice(0, 4) + " — Studio " + nomeStudio.split(" ")[0] + "\n" +
-      "Receita: " + "R$ " + Math.round(d.fat).toLocaleString("pt-BR") + "\n" +
+      "Receita: " + "R$ " + Math.round(d.fat).toLocaleString("pt-BR") +
+      (gastoMes ? " · Despesas: R$ " + Math.round(gastoMes).toLocaleString("pt-BR") +
+        " · Sobrou: R$ " + Math.round(d.fat - gastoMes).toLocaleString("pt-BR") : "") + "\n" +
       "Novos alunos: " + d.novos + " · Contratos encerrados: " + d.encerrados + "\n" +
       "Sessões dadas: " + d.feitas + " · Faltas: " + d.faltas + " (presença " + presenca + "%)" +
       (d.semPagar ? "\nAinda sem pagar no mês: " + d.semPagar + " aluno(s)" : "") +
