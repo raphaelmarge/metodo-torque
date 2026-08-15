@@ -8326,7 +8326,7 @@ self.MT_EXERCICIOS = [
  },
  {
   "n": "Panturrilha excêntrica unilateral no degrau",
-  "g": "Quadríceps",
+  "g": "Posterior e glúteo",
   "eq": "Degrau",
   "d": "Suba com as duas pernas e desça com uma só, deixando o calcanhar passar da linha do degrau em quatro segundos."
  },
@@ -8484,7 +8484,7 @@ self.MT_EXERCICIOS = [
   "n": "Crucifixo invertido unilateral na polia",
   "g": "Ombros",
   "eq": "Polia",
-  "d": "De lado pro aparelho, puxe o cabo cruzando o corpo até o braço apontar pra fora, cotovelo quase estendido; controla a volta."
+  "d": "De lado pro aparelho, puxe o cabo cruzando o corpo até o braço apontar pra fora, cotovelo quase estendido; controle a volta."
  },
  {
   "n": "Escalador cruzado lento",
