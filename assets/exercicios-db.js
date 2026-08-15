@@ -8215,5 +8215,305 @@ self.MT_EXERCICIOS = [
   "g": "Funcional e Cross",
   "eq": "Corda naval",
   "d": "Desenhe círculos para fora com cada braço alternando o sentido, base estável em meio agachamento."
+ },
+ {
+  "n": "Crucifixo na bola suíça",
+  "g": "Peito",
+  "eq": "Halteres",
+  "d": "Apoie cabeça e ombros na bola com o quadril elevado; abra os halteres com cotovelos semiflexionados e feche pela linha do peito, sem deixar o quadril cair."
+ },
+ {
+  "n": "Passe de bola mãos e pés",
+  "g": "Core",
+  "eq": "Bola suíça",
+  "d": "Deitado, passe a bola das mãos para os pés estendendo o corpo; a lombar fica colada no chão o tempo todo."
+ },
+ {
+  "n": "Elevação pélvica com pés na bola suíça",
+  "g": "Posterior e glúteo",
+  "eq": "Bola suíça",
+  "d": "Deitado com calcanhares na bola, suba o quadril apertando o glúteo e desça devagar sem deixar a bola fugir."
+ },
+ {
+  "n": "Flexora deitado na bola suíça",
+  "g": "Posterior e glúteo",
+  "eq": "Bola suíça",
+  "d": "Do topo da ponte, puxe a bola com os calcanhares em direção ao glúteo e volte esticando as pernas sem derrubar o quadril."
+ },
+ {
+  "n": "W invertido na bola suíça",
+  "g": "Ombros",
+  "eq": "Bola suíça",
+  "d": "Deitado de bruços na bola, forme um W puxando os cotovelos para trás e juntando as escápulas; polegares apontam pro teto."
+ },
+ {
+  "n": "Rosca direta sentado na bola suíça",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Sentado na bola com o tronco ereto e abdômen ativo, suba os halteres sem balançar o corpo — a bola denuncia qualquer embalo."
+ },
+ {
+  "n": "Afundo deslizante com toalha",
+  "g": "Quadríceps",
+  "eq": "Toalha",
+  "d": "Um pé sobre a toalha desliza para trás enquanto o joelho da frente flexiona; empurre o chão pra voltar, tronco levemente inclinado à frente."
+ },
+ {
+  "n": "Mountain climber deslizante",
+  "g": "Core",
+  "eq": "Toalha",
+  "d": "Em prancha com os pés sobre toalhas, alterne puxando os joelhos ao peito deslizando, sem levantar o quadril."
+ },
+ {
+  "n": "Prancha com alcance deslizante",
+  "g": "Core",
+  "eq": "Toalha",
+  "d": "Em prancha, deslize uma mão à frente sobre a toalha o máximo que conseguir sem girar o quadril e volte devagar."
+ },
+ {
+  "n": "Adução deslizante em pé",
+  "g": "Posterior e glúteo",
+  "eq": "Toalha",
+  "d": "Um pé na toalha desliza para o lado enquanto o outro joelho flexiona; puxe o chão com o pé de apoio pra voltar, sem curvar a lombar."
+ },
+ {
+  "n": "Pike deslizante com toalha",
+  "g": "Core",
+  "eq": "Toalha",
+  "d": "Da prancha, puxe os pés deslizando até formar um pique com o quadril alto e pernas estendidas; volte controlando a descida."
+ },
+ {
+  "n": "Agachamento um e meio",
+  "g": "Quadríceps",
+  "eq": "Barra/Halteres",
+  "d": "Desça completo, suba só até a metade, desça de novo e aí suba tudo — isso conta uma repetição. Use menos carga que no agachamento normal."
+ },
+ {
+  "n": "Supino com pausa no peito",
+  "g": "Peito",
+  "eq": "Barra",
+  "d": "Pause a barra por dois segundos tocando o peito, sem relaxar os ombros, e empurre explosivo; tira o embalo e ensina a sair do ponto morto."
+ },
+ {
+  "n": "Agachamento com pausa de três segundos",
+  "g": "Quadríceps",
+  "eq": "Barra/Halteres",
+  "d": "Segure três segundos no fundo do agachamento mantendo o tronco firme e os calcanhares no chão antes de subir."
+ },
+ {
+  "n": "Barra fixa negativa lenta",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Suba com um salto ou apoio e desça o mais devagar que conseguir, de cinco a oito segundos; ideal pra quem ainda não faz a barra completa."
+ },
+ {
+  "n": "Flexão com descida em cinco segundos",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Desça contando cinco segundos com o corpo em linha e suba no tempo normal; se ficar difícil, apoie os joelhos e mantenha a lentidão."
+ },
+ {
+  "n": "Remada curvada com pausa no topo",
+  "g": "Costas",
+  "eq": "Barra",
+  "d": "Segure a barra dois segundos colada no abdômen apertando as escápulas antes de descer; menos carga, mais controle."
+ },
+ {
+  "n": "Elevação lateral com subida rápida e descida lenta",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Suba em um segundo e desça em quatro, resistindo à gravidade; pare na linha dos ombros, sem encolher o pescoço."
+ },
+ {
+  "n": "Panturrilha excêntrica unilateral no degrau",
+  "g": "Quadríceps",
+  "eq": "Degrau",
+  "d": "Suba com as duas pernas e desça com uma só, deixando o calcanhar passar da linha do degrau em quatro segundos."
+ },
+ {
+  "n": "Passe de peito com medicine ball em dupla",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "De frente um pro outro, empurre a bola do peito com força e receba amortecendo com os cotovelos; distância que desafie sem errar o alvo."
+ },
+ {
+  "n": "Arremesso rotacional em dupla",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "De lado pro parceiro, gire o tronco e arremesse a bola pela lateral usando o quadril; receba girando junto pra amortecer."
+ },
+ {
+  "n": "Prancha com toque de mão em dupla",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Em prancha de frente um pro outro, toquem as mãos direitas, depois as esquerdas, sem deixar o quadril balançar."
+ },
+ {
+  "n": "Abdominal com passe de bola em dupla",
+  "g": "Core",
+  "eq": "Medicine ball",
+  "d": "Sentados de frente com joelhos flexionados, um sobe e passa a bola, o outro recebe e desce devagar com ela no peito."
+ },
+ {
+  "n": "Espelho de deslocamento em dupla",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Um lidera se deslocando pros lados e o outro copia como um espelho por vinte a trinta segundos; troquem os papéis."
+ },
+ {
+  "n": "Corrida de reação ao comando do parceiro",
+  "g": "Cardio",
+  "eq": "Cones",
+  "d": "O parceiro aponta o cone e você acelera até ele e volta ao centro em posição atlética, pronto pro próximo comando."
+ },
+ {
+  "n": "Tesoura de pernas com prancha",
+  "g": "Natação e aquático",
+  "eq": "Prancha de natação",
+  "d": "Segure a prancha à frente com os braços estendidos e alterne as pernas em tesoura curta e rápida, quadril perto da superfície."
+ },
+ {
+  "n": "Chute frontal na água",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Com a água pela cintura e apoio na borda se precisar, chute à frente contra a resistência da água mantendo o tronco firme."
+ },
+ {
+  "n": "Remada invertida com macarrão aquático",
+  "g": "Natação e aquático",
+  "eq": "Macarrão aquático",
+  "d": "Segure o macarrão submerso à frente e puxe-o em direção ao abdômen contra a resistência da água, cotovelos junto ao corpo."
+ },
+ {
+  "n": "Transferência de peso lateral com apoio",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Segurando o encosto, leve o peso do corpo de uma perna pra outra devagar, sem tirar os pés do chão; treina o equilíbrio do dia a dia."
+ },
+ {
+  "n": "Extensão terminal de joelho com elástico",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Elástico",
+  "d": "Elástico atrás do joelho levemente flexionado; estenda a perna apertando a coxa e volte devagar, sem hiperestender."
+ },
+ {
+  "n": "Ponte com marcha alternada",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Colchonete",
+  "d": "No topo da ponte, tire um pé do chão por dois segundos sem deixar o quadril cair de lado; alterne com calma."
+ },
+ {
+  "n": "Clean e press unilateral com kettlebell",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Puxe o kettlebell do chão até o rack junto ao ombro com o punho neutro e empurre acima da cabeça travando o cotovelo; troque o lado."
+ },
+ {
+  "n": "Carregada de mala com kettlebell",
+  "g": "Core",
+  "eq": "Kettlebell",
+  "d": "Caminhe segurando o kettlebell de um lado só, como uma mala pesada, sem inclinar o tronco; o oblíquo do outro lado trabalha o tempo todo."
+ },
+ {
+  "n": "Halo ajoelhado com kettlebell",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Ajoelhado com o corpo em linha, circule o kettlebell ao redor da cabeça bem perto, sem mexer o tronco; alterne o sentido."
+ },
+ {
+  "n": "Puxada vertical com elástico ancorado alto",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Com o elástico preso acima da cabeça, puxe os cotovelos em direção às costelas juntando as escápulas; tronco firme, sem embalo."
+ },
+ {
+  "n": "Face pull ajoelhado com elástico",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Ajoelhado, puxe o elástico em direção ao rosto abrindo os cotovelos e girando os polegares pra trás; pausa curta com as escápulas juntas."
+ },
+ {
+  "n": "Abdução de quadril em pé com mini band",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Mini band nos tornozelos e mão na parede; afaste a perna de lado sem inclinar o tronco e volte segurando a faixa, sem deixar bater."
+ },
+ {
+  "n": "Remada unilateral com elástico e rotação de tronco",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Puxe o elástico com um braço girando levemente o tronco junto; o quadril fica de frente e o giro vem da parte alta das costas."
+ },
+ {
+  "n": "Tríceps francês unilateral com elástico",
+  "g": "Tríceps",
+  "eq": "Elástico",
+  "d": "Elástico preso embaixo, cotovelo apontando pro teto ao lado da cabeça; estenda o braço sem abrir o cotovelo e desça devagar."
+ },
+ {
+  "n": "Passada lateral com mini band nos joelhos",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Semiagachado com a faixa acima dos joelhos, dê passos laterais mantendo a tensão constante; joelhos sempre empurrando a faixa pra fora."
+ },
+ {
+  "n": "Barquinho invertido",
+  "g": "Core",
+  "eq": "Colchonete",
+  "d": "De bruços, eleve braços e pernas estendidos contraindo as costas e o glúteo; segure sem prender a respiração."
+ },
+ {
+  "n": "Esquiva lateral com passada",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Da base de luta, flexione os joelhos levando o tronco pra fora da linha do soco imaginário e volte com um passo curto; olhos à frente."
+ },
+ {
+  "n": "Soco cruzado com passo à frente",
+  "g": "Boxe e lutas",
+  "eq": "Livre",
+  "d": "Avance o pé da frente junto com o cruzado do braço de trás, girando quadril e calcanhar; volte à base com a guarda fechada."
+ },
+ {
+  "n": "Remada serrote com pausa no topo",
+  "g": "Costas",
+  "eq": "Halteres",
+  "d": "Joelho e mão no banco, puxe o halter até a costela e segure dois segundos com a escápula recolhida antes de descer."
+ },
+ {
+  "n": "Crucifixo invertido unilateral na polia",
+  "g": "Ombros",
+  "eq": "Polia",
+  "d": "De lado pro aparelho, puxe o cabo cruzando o corpo até o braço apontar pra fora, cotovelo quase estendido; controla a volta."
+ },
+ {
+  "n": "Escalador cruzado lento",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Em prancha, leve o joelho em direção ao cotovelo oposto contando dois segundos, sem levantar o quadril; o giro ativa o oblíquo."
+ },
+ {
+  "n": "Equilíbrio unipodal com giro de cabeça",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Em pé numa perna perto de um apoio, gire a cabeça devagar pros lados sem perder o equilíbrio; desafia a estabilidade de forma segura."
+ },
+ {
+  "n": "Cadeirinha na parede com bola entre os joelhos",
+  "g": "Quadríceps",
+  "eq": "Parede",
+  "d": "Escorregue na parede até noventa graus segurando uma bola apertada entre os joelhos; some tempo aos poucos, sem prender a respiração."
+ },
+ {
+  "n": "Ponte de glúteo com isometria de trinta segundos",
+  "g": "Posterior e glúteo",
+  "eq": "Colchonete",
+  "d": "Suba o quadril e segure trinta segundos apertando o glúteo, costelas fechadas; se tremer um pouco, é sinal de trabalho, não de erro."
+ },
+ {
+  "n": "Tríceps coice unilateral com elástico",
+  "g": "Tríceps",
+  "eq": "Elástico",
+  "d": "Tronco inclinado e cotovelo colado ao corpo; estenda o braço pra trás contra o elástico e volte devagar sem derrubar o cotovelo."
  }
 ];
