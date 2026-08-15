@@ -241,6 +241,26 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <a id="faixaAssinaturaBtn" class="btn mini" target="_blank" rel="noopener" href="#" hidden>Regularizar</a>
   </div>
 
+  <!-- oferta de assinatura no app da loja: aparece logo depois do login/cadastro -->
+  <div id="telaAssinatura" hidden style="position: fixed; inset: 0; z-index: 59; background: #121016; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto;">
+    <div style="width: 100%; max-width: 420px; background: #1c1826; border: 1px solid #2c2739; border-radius: 18px; padding: 28px 24px; box-shadow: 0 24px 70px -24px rgba(0,0,0,.7);">
+      <span style="font-size: 11px; letter-spacing: .22em; color: #a78bfa; font-weight: 700;">TORQUE ON</span>
+      <h2 style="font-size: 24px; margin: 4px 0 10px; font-weight: 800; letter-spacing: -.01em; text-transform: none; color: var(--texto);">Assine o TORQUE PERSONAL</h2>
+      <ul style="list-style: none; padding: 0; margin: 0 0 14px; font-size: 13.5px; line-height: 2;">
+        <li>✓ Alunos, agenda, treinos e pagamentos num lugar só</li>
+        <li>✓ App exclusivo pros seus alunos, com a sua marca</li>
+        <li>✓ Sincroniza celular ↔ computador (sua ilha na nuvem)</li>
+        <li>✓ IA de treino, avaliação física e automações de WhatsApp</li>
+        <li>✓ Sua página na internet pra atrair alunos novos</li>
+      </ul>
+      <p style="font-size: 28px; font-weight: 800; margin: 0;">R$ 59,90<span style="font-size: 14px; font-weight: 600; color: #9b96a8;">/mês</span></p>
+      <p class="muted" style="margin: 4px 0 16px; font-size: 12.5px;">Cobrado pela loja do seu celular, renova sozinho. Cancela quando quiser, direto na loja — sem multa.</p>
+      <button class="btn" id="taAssinar" style="width: 100%;">Assinar agora</button>
+      <button class="btn sec" id="taDepois" style="width: 100%; margin-top: 8px;">Continuar no teste grátis</button>
+      <p id="taErro" hidden style="font-size: 12.5px; margin: 10px 0 0; line-height: 1.5; color: #fca5a5;"></p>
+    </div>
+  </div>
+
   <div class="menu-fundo" id="fundoMenuPt"></div>
   <div class="abas-pt" id="abas">
     <div class="menu-cab">TORQUE ON<b>Módulo Personal</b></div>
@@ -10800,6 +10820,71 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   renderAssinatura();
   window.__assinatura = { consulta: consultaAssinatura, render: renderAssinatura, nativo: ehAppNativo }; // testes
 
+  // ---------- tela de assinatura (aparece logo depois do login no app da loja) ----------
+  function mostraTelaAssinatura(forca) {
+    if (!forca && !ehAppNativo()) return; // na web a assinatura é vendida fora do app
+    var ass = leAssinatura();
+    if (ass && ass.status === "ativa") return;
+    // sem encher o saco: no máximo uma vez por dia (a não ser que peçam)
+    var hoje = S.todayISO();
+    if (!forca) {
+      var vista = "";
+      try { vista = localStorage.getItem("mtapp:ptAssinaturaVista") || ""; } catch (e) {}
+      if (vista === hoje) return;
+    }
+    try { localStorage.setItem("mtapp:ptAssinaturaVista", hoje); } catch (e) {}
+    $("taErro").hidden = true;
+    $("telaAssinatura").hidden = false;
+  }
+  function compraAssinatura() {
+    var mostraErro = function (m) { var el = $("taErro"); el.textContent = m; el.hidden = false; };
+    $("taErro").hidden = true;
+    var acad = null;
+    try { acad = JSON.parse(localStorage.getItem("mtapp:academia") || "null"); } catch (e) {}
+    if (!acad || !acad.id) {
+      $("telaAssinatura").hidden = true;
+      contaP.abre("criar");
+      return;
+    }
+    var plataforma = "";
+    try { plataforma = window.Capacitor && window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : ""; } catch (e) {}
+    var P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+    var chave = (self.MT_RC || {})[plataforma] || "";
+    if (!P || !chave) {
+      mostraErro("A compra dentro do app chega na próxima atualização da loja — atualize o app e tente de novo.");
+      return;
+    }
+    $("taAssinar").disabled = true;
+    Promise.resolve(P.configure({ apiKey: chave, appUserID: acad.id }))
+      .then(function () { return P.getOfferings(); })
+      .then(function (of) {
+        var pk = of && of.current && of.current.availablePackages && of.current.availablePackages[0];
+        if (!pk) throw new Error("o plano ainda não está publicado na loja");
+        return P.purchasePackage({ aPackage: pk });
+      })
+      .then(function () {
+        $("taAssinar").disabled = false;
+        $("telaAssinatura").hidden = true;
+        // marca ativa já (o webhook confirma por trás em seguida)
+        try {
+          localStorage.setItem("mtapp:ptAssinatura", JSON.stringify({
+            status: "ativa", via: plataforma === "ios" ? "app_store" : "play_store",
+          }));
+        } catch (e) {}
+        renderAssinatura();
+        setTimeout(consultaAssinatura, 5000);
+        alert("Assinatura ativa! Bom trabalho — a sua ilha na nuvem está liberada.");
+      })
+      .catch(function (e) {
+        $("taAssinar").disabled = false;
+        if (e && (e.userCancelled || /cancel/i.test((e && e.message) || ""))) return; // desistiu, sem drama
+        mostraErro("Não deu pra concluir a compra: " + ((e && e.message) || e));
+      });
+  }
+  $("taAssinar").addEventListener("click", compraAssinatura);
+  $("taDepois").addEventListener("click", function () { $("telaAssinatura").hidden = true; });
+  window.__telaAssinatura = { mostra: mostraTelaAssinatura, compra: compraAssinatura }; // testes
+
   function render() {
     var st = load();
     renderKpis(st);
@@ -11176,7 +11261,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     nomeCampo: "Nome do seu studio (ex.: Studio Léo)",
     nomeIlha: function () { return (load().config || {}).nome || ""; },
     salvaNome: function (nome) { var st = load(); if (!st.config.nome) { st.config.nome = nome; S.write("ptStudio", st); } },
-    depois: function () { verificaOnboarding(); render(); },
+    depois: function () { verificaOnboarding(); render(); mostraTelaAssinatura(); },
   });
   $("btnContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
   $("btnContaEquipe").addEventListener("click", contaP.criaColaborador);

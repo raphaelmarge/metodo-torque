@@ -2798,6 +2798,86 @@ async function abaPt(p, a) {
     "assinatura ativa: tarja some, Sua ilha mostra a loja e o status fica guardado pra abrir offline");
   ok(assin.zapNativo === true && assin.zapWeb === false,
     "no app nativo a oferta com preço da web some (regra da Apple/Google); na web continua");
+  // --- Primeiro acesso estilo loja: baixou o app, criou a conta, viu a oferta ---
+  const ctxGate = await b.newContext({ viewport: { width: 480, height: 900 } });
+  await ctxGate.addInitScript(() => {
+    localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify({ config: { nome: "Studio Gate" }, alunos: [] }));
+    // app da loja de mentira (Capacitor + plugin do RevenueCat)
+    window.__pCalls = [];
+    window.Capacitor = {
+      isNativePlatform: () => true,
+      getPlatform: () => "android",
+      Plugins: {
+        Purchases: {
+          configure: (o) => { window.__pCalls.push(["configure", o]); return Promise.resolve(); },
+          getOfferings: () => { window.__pCalls.push(["getOfferings"]); return Promise.resolve({ current: { availablePackages: [{ identifier: "mensal" }] } }); },
+          purchasePackage: (o) => { window.__pCalls.push(["purchase", o && o.aPackage && o.aPackage.identifier]); return Promise.resolve({}); },
+        },
+      },
+    };
+    // nuvem de mentira: cadastro/login sem internet
+    let temIlha = false;
+    window.MT_supabase = {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null } }),
+        signUp: (args) => {
+          window.__signUp = args;
+          return Promise.resolve({ data: { user: { id: "u1", email: args.email, user_metadata: (args.options && args.options.data) || {} }, session: { ok: true } }, error: null });
+        },
+        signInWithPassword: () => Promise.resolve({ data: {}, error: { message: "nope" } }),
+      },
+      from: () => ({ select: () => Promise.resolve({ data: temIlha ? [{ academia_id: "acad-gate", papel: "dono", nome: "Raphael", academias: { nome: "Studio Gate" } }] : [] }) }),
+      rpc: (nome, args) => {
+        (window.__rpcs = window.__rpcs || []).push([nome, args]);
+        if (nome === "criar_academia") { temIlha = true; return Promise.resolve({ data: { academia_id: "acad-gate" }, error: null }); }
+        return Promise.resolve({ data: null, error: null });
+      },
+    };
+  });
+  const g = await ctxGate.newPage();
+  g.on("dialog", (d) => d.accept());
+  await g.goto(BASE + "/personal.html", { waitUntil: "domcontentloaded" });
+  await g.waitForSelector("#gateModulo", { state: "visible", timeout: 15000 });
+  ok(await g.isVisible("#mgAbaCriar"), "primeira abertura mostra login com a aba Criar conta (cadastro self-service)");
+  await g.click("#mgAbaCriar");
+  ok(await g.isVisible("#mgNome") && /Criar minha conta/.test(await g.textContent("#mgBtn")),
+    "na aba Criar conta aparecem o nome do studio e o botão de criar");
+  ok(await g.isHidden("#mgRodape"), "no app da loja o link pra página de venda da web fica escondido");
+  await g.fill("#mgNome", "Studio Gate");
+  await g.fill("#mgEmail", "novo@personal.com");
+  await g.fill("#mgSenha", "supersegura");
+  await g.click("#mgBtn");
+  await g.waitForSelector("#gateModulo", { state: "hidden", timeout: 8000 });
+  const gateInfo = await g.evaluate(() => ({
+    signUp: window.__signUp && window.__signUp.email,
+    criou: (window.__rpcs || []).some((r) => r[0] === "criar_academia" && r[1] && r[1].p_nome_academia === "Studio Gate"),
+    acad: JSON.parse(localStorage.getItem("mtapp:academia") || "null"),
+  }));
+  ok(gateInfo.signUp === "novo@personal.com" && gateInfo.criou && gateInfo.acad && gateInfo.acad.id === "acad-gate",
+    "criar conta cadastra na nuvem e já cria a ilha com o nome do studio");
+  await g.waitForSelector("#telaAssinatura", { state: "visible", timeout: 5000 });
+  ok(/59,90/.test(await g.textContent("#telaAssinatura")),
+    "a oferta de assinatura aparece sozinha depois do cadastro, com o preço da loja (R$ 59,90/mês)");
+  await g.click("#taDepois");
+  ok(await g.isHidden("#telaAssinatura"), "dá pra continuar no teste grátis sem assinar");
+  const compra = await g.evaluate(async () => {
+    self.MT_RC.android = "chave-teste";
+    window.__telaAssinatura.mostra(true);
+    document.getElementById("taAssinar").click();
+    await new Promise((r) => setTimeout(r, 150));
+    return {
+      calls: window.__pCalls.map((c) => c[0]),
+      user: (window.__pCalls.find((c) => c[0] === "configure") || [])[1],
+      fechou: document.getElementById("telaAssinatura").hidden,
+      cache: JSON.parse(localStorage.getItem("mtapp:ptAssinatura") || "null"),
+    };
+  });
+  ok(compra.calls.includes("configure") && compra.calls.includes("purchase") && compra.user && compra.user.appUserID === "acad-gate",
+    "Assinar agora compra pela loja usando o id da academia (o webhook acha a conta certa)");
+  ok(compra.fechou && compra.cache && compra.cache.status === "ativa" && compra.cache.via === "play_store",
+    "depois da compra a tela fecha e o status já aparece como ativa");
+  await ctxGate.close();
   await p.evaluate((snap) => { localStorage.setItem("mtapp:ptStudio", snap); }, stSnapSite);
   // --- Serviços e pacotes: venda avulsa, pacote com saldo, Usar 1 e app ---
   const stSnapServ = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
@@ -4154,7 +4234,7 @@ async function abaPt(p, a) {
   const gateTxt = await pG.evaluate(() => document.getElementById("gateModulo").textContent);
   ok(/TORQUE/.test(gateTxt) && /PERSONAL/.test(gateTxt), "tela de entrada com a marca TORQUE PERSONAL (não manda pro portal)");
   ok(/Entrar/.test(gateTxt) && /Experimentar sem conta/.test(gateTxt), "gate com Entrar + modo local");
-  ok(!/Criar conta/.test(gateTxt) && /equipe TORQUE ON/.test(gateTxt), "sem autoatendimento: conta é criada pela equipe TORQUE ON (fim do código)");
+  ok(/Criar conta/.test(gateTxt) && !/equipe TORQUE ON/.test(gateTxt), "autoatendimento: dá pra criar a conta sozinho na primeira abertura (fluxo das lojas)");
   await pG.click("#mgLocal");
   const fechou = await pG.evaluate(() => document.getElementById("gateModulo").hidden && !document.getElementById("boasVindas").hidden);
   ok(fechou, "'experimentar sem conta' fecha o gate e abre o onboarding");
