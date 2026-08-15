@@ -129,11 +129,14 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
-  // código das Edge Functions (o funcoes.html copia dali pro Supabase):
-  // SEMPRE rede primeiro. Servir do cache aqui fazia o professor copiar e
-  // publicar uma função VELHA sem perceber — foi assim que a chat-envia
-  // "republicada" continuou sem a IA de treino.
-  if (url.pathname.indexOf("/supabase/functions/") > -1) {
+  // código das Edge Functions (o funcoes.html copia dali pro Supabase) e o
+  // supabase-setup.sql (o sql.html copia dali pro SQL Editor): SEMPRE rede
+  // primeiro. Servir do cache aqui fazia o professor copiar e publicar uma
+  // função VELHA sem perceber — foi assim que a chat-envia "republicada"
+  // continuou sem a IA de treino. Pro SQL é ainda mais sério: rodar uma
+  // versão velha do setup pode recriar estruturas erradas no banco.
+  if (url.pathname.indexOf("/supabase/functions/") > -1 ||
+      url.pathname.indexOf("supabase-setup.sql") > -1) {
     event.respondWith(
       fetch(req, { cache: "no-cache" }).then(function (res) {
         if (res && res.ok) {
