@@ -1125,6 +1125,47 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
   </dialog>
 
+  <!-- criar/editar uma automação de WhatsApp (Configurações) -->
+  <dialog id="dlgAuto">
+    <div class="card" style="width: 540px; max-width: 100%;">
+      <h2 id="autoTitulo" style="text-transform: none; letter-spacing: 0; font-size: 16px;">Nova automação</h2>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+        <label style="font-size: 12.5px;">Nome (aparece na fila)
+          <input id="autoNome" maxlength="40" placeholder="ex.: Boas-vindas" style="display: block; width: 100%; margin-top: 4px;"></label>
+        <label style="font-size: 12.5px;">Quando enviar
+          <select id="autoGat" style="display: block; width: 100%; margin-top: 4px;">
+            <option value="sumido">Aluno sumido — sem treinar há X dias</option>
+            <option value="antesVenc">Antes do vencimento — X dias antes da mensalidade vencer</option>
+            <option value="cadastro">Aluno novo — X dias depois do cadastro</option>
+            <option value="semanal">Toda semana — num dia fixo</option>
+            <option value="pacote">Pacote de serviço acabando — restam X usos ou menos</option>
+          </select></label>
+        <label id="autoDiasL" style="font-size: 12.5px;"><span id="autoDiasRot">Quantos dias (o X acima)</span>
+          <input id="autoDias" type="number" min="0" max="90" value="7" style="display: block; width: 110px; margin-top: 4px;"></label>
+        <label id="autoSemL" hidden style="font-size: 12.5px;">Dia da semana
+          <select id="autoDiaSem" style="display: block; width: 100%; margin-top: 4px;">
+            <option value="1">segunda</option><option value="2">terça</option><option value="3">quarta</option>
+            <option value="4">quinta</option><option value="5">sexta</option><option value="6">sábado</option>
+            <option value="0">domingo</option>
+          </select></label>
+        <label style="font-size: 12.5px;">Mensagem
+          <textarea id="autoTexto" rows="3" style="display: block; width: 100%; margin-top: 4px;"></textarea></label>
+        <p id="autoDica" class="muted" style="margin: 0; font-size: 12px;"></p>
+        <div class="linha-flex" style="gap: 10px; align-items: center;">
+          <img id="autoImgPrev" alt="foto da automação" hidden style="width: 74px; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px;">
+          <button class="btn sec mini" id="autoImgEsc">Escolher foto do banco de imagens</button>
+          <button class="btn sec mini" id="autoImgTira" hidden>✕ Remover a foto</button>
+        </div>
+        <p class="muted" style="margin: 0; font-size: 12px;">A foto sai pelo <b>compartilhar</b> do celular (botão Foto na fila) — o link do WhatsApp sozinho não anexa imagem.</p>
+      </div>
+      <div class="linha-flex" style="gap: 10px; margin-top: 14px;">
+        <button class="btn" id="autoSalva">Salvar automação</button>
+        <button class="btn sec mini" id="autoCancela">Cancelar</button>
+        <button class="btn sec mini" id="autoApaga" hidden style="margin-left: auto; border-color: #7f2b2b; color: #fca5a5;">Apagar</button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- CONFIGURAÇÕES -->
   <section id="vConfig" hidden>
     <div class="card" style="margin-bottom: 14px;">
@@ -1148,6 +1189,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <textarea id="cfgZapRenova" rows="2" style="display:block; width:100%; margin-top:4px;"></textarea></label>
       </div>
       <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Por enquanto, cada mensagem sai do seu número com um toque. Quando o WhatsApp oficial da Meta estiver ativado, essa mesma fila poderá sair sozinha, sem toque nenhum.</p>
+    </div>
+    <div class="card" style="margin-bottom: 14px;">
+      <h2>Suas automações de WhatsApp</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">As quatro mensagens acima são fixas. Aqui você cria as suas: toque numa <b>pronta</b> pra ajustar o texto e ligar, ou monte uma do zero. Dá pra escolher uma foto do seu banco de imagens pra mandar junto com a mensagem. Tudo entra na mesma fila <b>WhatsApp de hoje</b> do Início.</p>
+      <div id="autoProntas" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;"></div>
+      <button class="btn" id="autoNova">+ Criar automação do zero</button>
+      <div id="autoLista" class="muted" style="margin-top: 10px; font-size: 13px;"></div>
     </div>
     <div class="card">
       <h2>O que o aluno vê no app</h2>
@@ -3948,8 +3996,34 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("listaSessoes").addEventListener("click", trataCliqueSessao);
   $("bHojeP").addEventListener("click", trataCliqueSessao);
-  // fila WhatsApp de hoje: Enviar (abre o zap e marca) ou Pular (só marca)
+  // fila WhatsApp de hoje: Enviar (abre o zap e marca), Pular (só marca) ou
+  // Foto (compartilha a imagem da automação; a mensagem só sai da fila no Enviar)
+  var zapFilaCache = [];
+  function dataUrlPraArquivo(d, nomeArq) {
+    var par = String(d).split(",");
+    var mime = (par[0].match(/data:(.*?)[;,]/) || [])[1] || "image/jpeg";
+    var bin = atob(par[1] || "");
+    var u8 = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return new File([u8], nomeArq, { type: mime });
+  }
   $("bZapP").addEventListener("click", function (e) {
+    var ft = e.target.closest("[data-zapfoto]");
+    if (ft) {
+      var zi = zapFilaCache.find(function (x) { return x.chave === ft.getAttribute("data-zapfoto"); });
+      var imF = zi && imgsLe().find(function (x) { return x.id === zi.img; });
+      if (!imF) { alert("A foto dessa automação não está mais no banco de imagens."); return; }
+      var flF = dataUrlPraArquivo(imF.d, "foto.jpg");
+      if (navigator.canShare && navigator.canShare({ files: [flF] })) {
+        navigator.share({ files: [flF], text: zi.texto }).catch(function () {});
+      } else {
+        // computador sem compartilhar nativo: baixa a foto pra anexar no WhatsApp Web
+        var aF = document.createElement("a");
+        aF.href = imF.d; aF.download = "foto.jpg"; aF.click();
+        alert("Este navegador não compartilha foto direto — baixei a imagem pra você anexar na conversa.");
+      }
+      return;
+    }
     var ok = e.target.closest("[data-zapok]");
     if (ok) { zapMarca(ok.getAttribute("data-zapok")); return; } // o link segue abrindo o WhatsApp
     var pu = e.target.closest("[data-zappula]");
@@ -4209,7 +4283,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     };
   }
   function zapTexto(modelo, vars) {
-    return String(modelo).replace(/\{(nome|hora|dias|valor)\}/g, function (_, k) { return vars[k] != null ? String(vars[k]) : ""; });
+    return String(modelo).replace(/\{(nome|hora|dias|valor|servico|resta)\}/g, function (_, k) { return vars[k] != null ? String(vars[k]) : ""; });
   }
   function filaZapDe(st) {
     if ((st.config || {}).zapFilaOff) return [];
@@ -4220,15 +4294,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var mods = zapModelos(st);
     var fila = [];
     // diasRepete: depois de marcada, a mensagem volta só depois de N dias (0 = nunca volta)
-    function poe(chave, a, tipo, rotulo, texto, diasRepete) {
+    function poe(chave, a, tipo, rotulo, texto, diasRepete, imgId) {
       var marcado = log[chave];
       if (marcado) {
         if (!diasRepete) return;
         var idade9 = Math.floor((new Date(hoje + "T12:00") - new Date(String(marcado).slice(0, 10) + "T12:00")) / 864e5);
         if (idade9 < diasRepete) return;
       }
-      fila.push({ chave: chave, alunoId: a.id, nome: a.nome, zap: a.zap, tipo: tipo, rotulo: rotulo, texto: texto });
+      fila.push({ chave: chave, alunoId: a.id, nome: a.nome, zap: a.zap, tipo: tipo, rotulo: rotulo, texto: texto, img: imgId || "" });
     }
+    var autos = (st.zapAutos || []).filter(function (x) { return !x.off && x.texto; });
     st.alunos.forEach(function (a) {
       if (a.ativo === false || !a.zap) return;
       var nome = a.nome.split(" ")[0];
@@ -4283,6 +4358,55 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           }
         }
       }
+      // automações criadas pelo professor (Configurações → Suas automações)
+      autos.forEach(function (au) {
+        var nAu = Math.max(0, Math.min(90, +au.dias || 0));
+        if (au.gat === "sumido") {
+          // sem treinar há N+ dias; repete a cada N enquanto o aluno não voltar
+          var ultAu = idxDe(st).sessFeitasDe(a.id).map(function (x) { return x.data; }).sort().pop();
+          if (!ultAu) return;
+          var diasSem = Math.floor((new Date(hoje + "T12:00") - new Date(ultAu + "T12:00")) / 864e5);
+          if (diasSem >= Math.max(1, nAu)) {
+            poe("zauto|" + au.id + "|" + a.id, a, "auto", au.nome,
+              zapTexto(au.texto, { nome: nome, dias: diasSem + (diasSem > 1 ? " dias" : " dia") }), Math.max(1, nAu), au.imgId);
+          }
+        } else if (au.gat === "antesVenc") {
+          // mensalidade vence em até N dias (1x por mês de vencimento). O próximo
+          // vencimento pode cair no mês que vem — "3 dias antes do dia 2" cruza a virada.
+          if (!ct || a.assinaturaRec) return;
+          var vencAu = +ct.diaVenc || 5;
+          var hojeAu = new Date(hoje + "T12:00");
+          var alvoAu = new Date(hojeAu.getFullYear(), hojeAu.getMonth() + (vencAu < diaHoje ? 1 : 0), vencAu, 12);
+          var mesVencAu = S.todayISO(alvoAu).slice(0, 7);
+          if (idxDe(st).pagouMes(a.id, mesVencAu)) return;
+          var faltaAu = Math.round((alvoAu - hojeAu) / 864e5);
+          if (faltaAu <= nAu) {
+            var plAu = planoDe(st, ct.planoId);
+            poe("zautoV|" + au.id + "|" + a.id + "|" + mesVencAu, a, "auto", au.nome,
+              zapTexto(au.texto, { nome: nome, dias: faltaAu === 0 ? "hoje" : faltaAu === 1 ? "amanhã" : "em " + faltaAu + " dias",
+                valor: S.fmtBRL(plAu ? +plAu.valor : +a.valor || 0) }), 0, au.imgId);
+          }
+        } else if (au.gat === "cadastro") {
+          // N dias depois do cadastro, com janela de 7 dias: aluno antigo não recebe
+          // boas-vindas atrasadas quando a automação é criada depois dele
+          if (!a.desde) return;
+          var idadeAu = Math.floor((new Date(hoje + "T12:00") - new Date(String(a.desde).slice(0, 10) + "T12:00")) / 864e5);
+          if (idadeAu >= nAu && idadeAu <= nAu + 6) {
+            poe("zautoC|" + au.id + "|" + a.id, a, "auto", au.nome, zapTexto(au.texto, { nome: nome }), 0, au.imgId);
+          }
+        } else if (au.gat === "semanal") {
+          if (new Date(hoje + "T12:00").getDay() !== (+au.diaSem || 0)) return;
+          poe("zautoS|" + au.id + "|" + a.id + "|" + hoje, a, "auto", au.nome, zapTexto(au.texto, { nome: nome }), 0, au.imgId);
+        } else if (au.gat === "pacote") {
+          // pacote de serviço com N usos ou menos (1x por pacote)
+          (a.servPacotes || []).forEach(function (pAu) {
+            var restaAu = (+pAu.total || 0) - (+pAu.usadas || 0);
+            if (restaAu <= 0 || restaAu > Math.max(1, nAu)) return;
+            poe("zautoP|" + au.id + "|" + a.id + "|" + pAu.id, a, "auto", au.nome,
+              zapTexto(au.texto, { nome: nome, servico: pAu.nome, resta: restaAu === 1 ? "resta 1" : "restam " + restaAu }), 0, au.imgId);
+          });
+        }
+      });
     });
     return fila;
   }
@@ -4292,16 +4416,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.zapLog[chave] = S.todayISO() + "T" + new Date().toTimeString().slice(0, 8);
     var todas = Object.keys(st.zapLog);
     if (todas.length > 200) {
-      var hj9 = S.todayISO();
-      // poda só o que NÃO é de hoje — marcação do dia nunca volta pra fila
-      todas.filter(function (k) { return String(st.zapLog[k]).slice(0, 10) !== hj9; })
-        .sort(function (x, y) { return st.zapLog[x] < st.zapLog[y] ? -1 : 1; })
-        .slice(0, Math.max(0, todas.length - 120)).forEach(function (k) { delete st.zapLog[k]; });
+      var hj9 = S.todayISO(), mes9 = hj9.slice(0, 7), ano9 = hj9.slice(0, 4);
+      // 1º: lixo certo — chave que termina em data/mês/ano PASSADO nunca mais casa
+      // com a fila (ztreino, zautoS, zrenova vencida, zatraso, zautoV, zniver)
+      todas.forEach(function (k) {
+        var fim9 = k.slice(k.lastIndexOf("|") + 1);
+        if ((/^\d{4}-\d{2}-\d{2}$/.test(fim9) && fim9 < hj9) ||
+            (/^\d{4}-\d{2}$/.test(fim9) && fim9 < mes9) ||
+            (/^\d{4}$/.test(fim9) && fim9 < ano9)) delete st.zapLog[k];
+      });
+      // 2º: se ainda passar do teto, poda as mais antigas que NÃO são de hoje —
+      // mas nunca as marcas "1x enquanto durar" (sumido/cadastro/pacote), senão
+      // a mesma mensagem volta pra fila com a condição ainda de pé
+      todas = Object.keys(st.zapLog);
+      if (todas.length > 200) {
+        todas.filter(function (k) {
+          return String(st.zapLog[k]).slice(0, 10) !== hj9 && !/^(zauto|zautoC|zautoP|zautoV)\|/.test(k);
+        })
+          .sort(function (x, y) { return st.zapLog[x] < st.zapLog[y] ? -1 : 1; })
+          .slice(0, Math.max(0, todas.length - 120)).forEach(function (k) { delete st.zapLog[k]; });
+      }
     }
     S.write("ptStudio", st);
     renderRelatorios();
   }
   window.__zapFila = filaZapDe; // testes
+  window.__zapMarca = zapMarca; // testes
   function renderPagamentos(st) {
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
@@ -5043,6 +5183,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
     $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
+    renderAutos();
   }
   $("cfgSalva").addEventListener("click", function () {
     var st = load();
@@ -5083,6 +5224,135 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     self.MT_ATUALIZA();
   });
   window.__configPT = renderConfigPT; // testes
+
+  // ---------- automações extras de WhatsApp (Configurações → Suas automações) ----------
+  // st.zapAutos = [{id, nome, gat, dias, diaSem, texto, imgId, off}]; o motor que
+  // transforma isso em mensagem mora no filaZapDe, junto dos 4 gatilhos fixos.
+  var AUTO_PRONTAS = [
+    { nome: "Boas-vindas", gat: "cadastro", dias: 1, texto: "Oi {nome}! Que bom ter você no time. Qualquer dúvida com o app ou com os treinos, me chama por aqui!" },
+    { nome: "Sentimos sua falta", gat: "sumido", dias: 7, texto: "Oi {nome}, senti sua falta nos treinos! Bora voltar? Me fala o melhor dia pra você." },
+    { nome: "Vencimento chegando", gat: "antesVenc", dias: 3, texto: "Oi {nome}! Sua mensalidade vence {dias} ({valor}). Quer que eu já te mande o Pix?" },
+    { nome: "Motivação de segunda", gat: "semanal", diaSem: 1, texto: "Bora começar a semana com tudo, {nome}? Te espero no treino!" },
+    { nome: "Pacote acabando", gat: "pacote", dias: 2, texto: "Oi {nome}! Seu pacote de {servico} está no fim — {resta}. Quer já garantir o próximo?" },
+    { nome: "Como foi a semana?", gat: "semanal", diaSem: 6, texto: "E aí {nome}, como foi a semana de treinos? Me conta como você está se sentindo." },
+  ];
+  var AUTO_GAT_DICA = {
+    sumido: "O X = dias sem treinar. Dá pra usar {nome} e {dias} — o {dias} já vem com a palavra (ex.: '10 dias').",
+    antesVenc: "O X = dias antes do vencimento. Dá pra usar {nome}, {dias} (vira 'hoje', 'amanhã' ou 'em 3 dias') e {valor} (valor do plano).",
+    cadastro: "O X = dias depois do cadastro. Só pega aluno recém-chegado: quem já entrou há mais de uma semana não recebe boas-vindas atrasadas. Dá pra usar {nome}.",
+    semanal: "Manda toda semana no dia escolhido, pra todo aluno ativo com WhatsApp. Dá pra usar {nome}.",
+    pacote: "O X = usos restantes que disparam o aviso. Dá pra usar {nome}, {servico} (nome do serviço) e {resta} — o {resta} já vem com o verbo (ex.: 'restam 3').",
+  };
+  function autoDescGat(au) {
+    var n = Math.max(0, +au.dias || 0);
+    if (au.gat === "sumido") return "sem treinar há " + Math.max(1, n) + "+ dias"; // o motor também força mínimo 1
+    if (au.gat === "antesVenc") return n === 0 ? "no dia do vencimento" : n + (n > 1 ? " dias" : " dia") + " antes do vencimento";
+    if (au.gat === "cadastro") return n === 0 ? "no dia do cadastro" : n + (n > 1 ? " dias" : " dia") + " depois do cadastro";
+    if (au.gat === "semanal") return "toda " + (["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][+au.diaSem || 0] || "segunda");
+    if (au.gat === "pacote") { var nP = Math.max(1, n); return "pacote com " + (nP === 1 ? "1 uso" : nP + " usos") + " ou menos"; }
+    return "";
+  }
+  function renderAutos() {
+    if (!$("autoLista")) return;
+    var st = load();
+    $("autoProntas").innerHTML = AUTO_PRONTAS.map(function (pr, i) {
+      return '<button class="btn sec mini" data-autopronta="' + i + '">' + esc(pr.nome) + "</button>";
+    }).join("");
+    var lista = st.zapAutos || [];
+    $("autoLista").innerHTML = lista.length ? lista.map(function (au) {
+      return '<div class="sessao-pt"><b>' + esc(au.nome) + "</b>" +
+        '<span class="muted" style="font-size:12px;">' + esc(autoDescGat(au)) + (au.imgId ? " · com foto" : "") + "</span>" +
+        (au.off ? ' <span class="tag">desligada</span>' : "") +
+        '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        '<button class="btn sec mini" data-autotg="' + esc(au.id) + '">' + (au.off ? "Ligar" : "Desligar") + "</button>" +
+        '<button class="btn mini" data-autoed="' + esc(au.id) + '">Editar</button></span></div>';
+    }).join("") : "Nenhuma automação sua ainda — toque numa pronta ali em cima pra começar.";
+  }
+  var autoEditId = null; // id da automação aberta no editor (null = criando)
+  var autoImgSel = "";   // imgId escolhido no editor (a galeria grava aqui)
+  function autoPintaImg() {
+    var im = autoImgSel ? imgsLe().find(function (x) { return x.id === autoImgSel; }) : null;
+    $("autoImgPrev").hidden = !im;
+    if (im) $("autoImgPrev").src = im.d;
+    // foto apagada da galeria: some o preview, mas o Remover continua pra limpar a referência
+    $("autoImgTira").hidden = !autoImgSel;
+    $("autoImgEsc").textContent = autoImgSel ? "Trocar a foto" : "Escolher foto do banco de imagens";
+  }
+  function autoMudaGat() {
+    var g = $("autoGat").value;
+    $("autoDiasL").hidden = g === "semanal";
+    $("autoSemL").hidden = g !== "semanal";
+    $("autoDiasRot").textContent = g === "pacote" ? "Quantos usos (o X acima)" : "Quantos dias (o X acima)";
+    $("autoDica").textContent = AUTO_GAT_DICA[g] || "";
+  }
+  $("autoGat").addEventListener("change", autoMudaGat);
+  function abreAutoEditor(base, idExistente) {
+    autoEditId = idExistente || null;
+    $("autoTitulo").textContent = idExistente ? "Editar automação" : "Nova automação";
+    $("autoNome").value = base.nome || "";
+    $("autoGat").value = base.gat || "sumido";
+    $("autoDias").value = base.dias != null ? base.dias : 7;
+    $("autoDiaSem").value = String(base.diaSem != null ? base.diaSem : 1);
+    $("autoTexto").value = base.texto || "";
+    autoImgSel = base.imgId || "";
+    $("autoApaga").hidden = !idExistente;
+    autoMudaGat();
+    autoPintaImg();
+    $("dlgAuto").showModal();
+  }
+  window.__autoEdita = abreAutoEditor; // testes
+  window.__autosPT = renderAutos; // testes
+  $("autoNova").addEventListener("click", function () { abreAutoEditor({}); });
+  $("autoProntas").addEventListener("click", function (e) {
+    var bt = e.target.closest("[data-autopronta]");
+    if (!bt) return;
+    var pr = AUTO_PRONTAS[+bt.getAttribute("data-autopronta")] || {};
+    // pronta já criada antes: abre a existente pra ajustar, em vez de duplicar
+    var jaTem = (load().zapAutos || []).find(function (x) { return x.nome === pr.nome; });
+    if (jaTem) abreAutoEditor(jaTem, jaTem.id); else abreAutoEditor(pr);
+  });
+  $("autoLista").addEventListener("click", function (e) {
+    var ed = e.target.closest("[data-autoed]");
+    var tg = e.target.closest("[data-autotg]");
+    if (!ed && !tg) return;
+    var st = load();
+    var au = (st.zapAutos || []).find(function (x) { return x.id === (ed || tg).getAttribute(ed ? "data-autoed" : "data-autotg"); });
+    if (!au) return;
+    if (tg) { au.off = !au.off; save(st); renderAutos(); return; }
+    abreAutoEditor(au, au.id);
+  });
+  $("autoImgEsc").addEventListener("click", function () { abreGaleria({ tipo: "automacao" }); });
+  $("autoImgTira").addEventListener("click", function () { autoImgSel = ""; autoPintaImg(); });
+  $("autoCancela").addEventListener("click", function () { $("dlgAuto").close(); });
+  $("autoSalva").addEventListener("click", function () {
+    var nome = $("autoNome").value.trim().slice(0, 40);
+    var texto = $("autoTexto").value.trim().slice(0, 400);
+    if (!nome || !texto) { alert("Preencha o nome e a mensagem."); return; }
+    var st = load();
+    st.zapAutos = st.zapAutos || [];
+    if (!autoEditId && st.zapAutos.length >= 20) { alert("Você chegou a 20 automações — apague alguma antes de criar outra."); return; }
+    var au = autoEditId ? st.zapAutos.find(function (x) { return x.id === autoEditId; }) : null;
+    if (!au) { au = { id: S.uid() }; st.zapAutos.push(au); }
+    au.nome = nome;
+    au.gat = $("autoGat").value;
+    au.dias = Math.max(0, Math.min(90, parseInt($("autoDias").value, 10) || 0));
+    au.diaSem = +$("autoDiaSem").value || 0;
+    au.texto = texto;
+    au.imgId = autoImgSel || "";
+    save(st);
+    $("dlgAuto").close();
+    renderAutos();
+    $("cfgStatus").textContent = "Automação salva! Quando a condição bater, a mensagem entra na fila WhatsApp de hoje, no Início.";
+  });
+  $("autoApaga").addEventListener("click", function () {
+    if (!autoEditId) return;
+    if (!confirm("Apagar esta automação? As mensagens já enviadas não são afetadas.")) return;
+    var st = load();
+    st.zapAutos = (st.zapAutos || []).filter(function (x) { return x.id !== autoEditId; });
+    save(st);
+    $("dlgAuto").close();
+    renderAutos();
+  });
 
   // ---------- personalização: paleta de cores + logo do app ----------
   var PERS_CORES = [["#7c3aed", "Roxo TORQUE"], ["#dc2626", "Vermelho"], ["#ea580c", "Laranja"], ["#d97706", "Dourado"],
@@ -7179,16 +7449,31 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }).join("") : "Nenhuma sessão marcada pra hoje — dia livre ou hora de puxar agendamentos.";
     // ---- WhatsApp de hoje: mensagens prontas, cada uma sai com um toque ----
     var filaZ = filaZapDe(st);
+    zapFilaCache = filaZ; // o botão Foto precisa achar o texto e a imagem do item
+    var zapImgs = filaZ.some(function (z) { return z.img; }) ? imgsLe() : [];
+    var zapTemFoto = false; // só imagem que ainda existe na galeria conta
     $("bZapP").innerHTML = (st.config || {}).zapFilaOff
       ? "Fila desligada — dá pra ligar de volta nas Configurações."
       : filaZ.length ? filaZ.map(function (z) {
-      return '<div class="sessao-pt"><b>' + esc(z.nome.split(" ")[0]) + "</b>" +
+      var imZ = z.img ? zapImgs.find(function (x) { return x.id === z.img; }) : null;
+      if (imZ) zapTemFoto = true;
+      return '<div class="sessao-pt">' +
+        (imZ ? '<img data-zimg="' + esc(z.img) + '" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:8px;">' : "") +
+        "<b>" + esc(z.nome.split(" ")[0]) + "</b>" +
         '<span class="muted" style="font-size:12px;">' + esc(z.rotulo) + "</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        (imZ ? '<button class="btn sec mini" data-zapfoto="' + z.chave + '" title="compartilha a foto com a mensagem de legenda">Foto</button>' : "") +
         '<a class="btn whats mini" target="_blank" rel="noopener" data-zapok="' + z.chave + '" href="https://wa.me/55' + String(z.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(z.texto) + '">Enviar</a>' +
         '<button class="btn sec mini" data-zappula="' + z.chave + '" title="marcar como resolvida sem enviar">Pular</button></span></div>';
-    }).join("") + '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">Toque em Enviar: abre o seu WhatsApp com a mensagem pronta. Os modelos são editáveis nas Configurações.</p>'
+    }).join("") + '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">Toque em Enviar: abre o seu WhatsApp com a mensagem pronta. Os modelos são editáveis nas Configurações.' +
+      (zapTemFoto ? " Mensagem com foto: toque em <b>Foto</b> e escolha o aluno certo na lista do celular — a mensagem vai junto, de legenda. Se a legenda não for, mande o texto pelo Enviar; se foi, é só tocar em Pular pra tirar da fila." : "") + "</p>"
       : "Nenhuma mensagem pendente — todo mundo avisado.";
+    // as miniaturas recebem o src DEPOIS, uma imagem por id — embutir o base64 no
+    // innerHTML repetiria a foto inteira uma vez por aluno (fila semanal = travada)
+    Array.prototype.forEach.call($("bZapP").querySelectorAll("img[data-zimg]"), function (elZ) {
+      var imZ2 = zapImgs.find(function (x) { return x.id === elZ.getAttribute("data-zimg"); });
+      if (imZ2) elZ.src = imZ2.d; else elZ.remove();
+    });
     // ---- Radar de retenção: quem precisa de atenção antes de sumir de vez ----
     var radar = [];
     ativos.forEach(function (a) {
@@ -10166,7 +10451,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var im = imgsLe().find(function (x) { return x.id === b.getAttribute("data-galsel"); });
     if (!im) return;
     var st = load();
-    if (galDestino.tipo === "geral") {
+    if (galDestino.tipo === "automacao") {
+      // a automação guarda só o id — a foto continua morando no banco de imagens
+      autoImgSel = im.id;
+      autoPintaImg();
+    } else if (galDestino.tipo === "geral") {
       st.config = st.config || {};
       st.config.capaTreino = im.d;
       st.config.appEditGeralEm = new Date().toISOString();
