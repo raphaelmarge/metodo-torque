@@ -1402,7 +1402,7 @@ async function abaPt(p, a) {
   }
   ok(/>Ver como faz</.test(appHtml) && />vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml),
     "exercício ganha o botão Ver como faz (animação) e o link do vídeo");
-  ok(/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio ganha demonstração automática do YouTube");
+  ok(!/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio NÃO manda mais pra busca do YouTube (fica a animação do app)");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
   ok(appHtml.includes("if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length"),
@@ -3429,6 +3429,38 @@ async function abaPt(p, a) {
   ok(!!vid && /youtube-nocookie\.com\/embed\/abc123/.test(vid.aberto.src) && /Fechar vídeo/.test(vid.aberto.rot),
     "'Ver vídeo' abre o player embutido dentro do app (youtube-nocookie)");
   ok(!!vid && vid.fechou && /vídeo/.test(vid.rotVoltou), "tocar de novo fecha o player e o botão volta ao normal");
+  // TODO tipo de link toca dentro do app — nada abre o YouTube por fora
+  const vidTipos = await pApp.evaluate(async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const casos = {
+      playlist: "https://www.youtube.com/playlist?list=PLabcdef12345",
+      vimeo: "https://vimeo.com/123456789",
+      arquivo: "https://meusite.com/treino.mp4",
+      estranho: "https://www.youtube.com/results?search_query=como+fazer+supino",
+    };
+    const out = {};
+    let abriuAba = false;
+    const openOrig = window.open;
+    window.open = () => { abriuAba = true; return null; };
+    for (const k of Object.keys(casos)) {
+      host.innerHTML = "<button class='vidbtn' data-v='" + casos[k] + "'>v</button><div class='vidbox' style='display:none;'></div>";
+      host.querySelector(".vidbtn").click();
+      await new Promise((r) => setTimeout(r, 30));
+      out[k] = host.querySelector(".vidbox").innerHTML;
+    }
+    window.open = openOrig;
+    host.remove();
+    // exercício sem vídeo próprio não ganha botão (fica a animação offline)
+    const semVid = Array.from(document.querySelectorAll(".vidbtn")).filter((x) => x.id !== "gVideo" && !x.dataset.v).length;
+    return { out, abriuAba, semVid };
+  });
+  ok(/videoseries\?list=PLabcdef12345/.test(vidTipos.out.playlist), "playlist do YouTube toca embutida no app (videoseries)");
+  ok(/player\.vimeo\.com\/video\/123456789/.test(vidTipos.out.vimeo), "vídeo do Vimeo toca embutido no app");
+  ok(/<video[^>]+treino\.mp4/.test(vidTipos.out.arquivo), "arquivo de vídeo direto (mp4) toca no player nativo do app");
+  ok(/não toca aqui dentro/.test(vidTipos.out.estranho) && !vidTipos.abriuAba,
+    "link irreconhecível ganha aviso dentro do app — NUNCA abre o YouTube por fora");
+  ok(vidTipos.semVid === 0, "exercício sem vídeo não mostra botão de vídeo (a busca no YouTube acabou)");
   // botão Iniciar exercício abre o guiado já naquele exercício
   const iniEx = await pApp.evaluate(() => {
     const bs = document.querySelectorAll(".inibtn");
