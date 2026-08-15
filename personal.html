@@ -456,6 +456,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button data-pga="receb" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg> Recebimentos</button>
       <button data-pga="planos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 8 12 4l8.5 4v8L12 20l-8.5-4z'/><path d='M3.5 8 12 12l8.5-4M12 12v8'/></svg> Planos</button>
       <button data-pga="contratos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 3.5h8l4 4v13H6z'/><path d='M14 3.5v4h4'/></svg> Contratos</button>
+      <button data-pga="serv"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.6 13.4 12 22l-8.6-8.6L4 5l8.4.6z'/><circle cx='9' cy='9' r='1.4'/></svg> Serviços</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="planos" hidden>
       <h2>Planos do studio</h2>
@@ -478,6 +479,29 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div id="ctLista" class="muted">Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.</div>
     </div>
 
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="serv" hidden>
+      <h2>Serviços do studio</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Cadastre o que você vende além dos planos — massagem, avaliação física, liberação miofascial, consultoria. Venda uma vez só ou em pacote (ex.: 10 massagens com desconto); tudo entra no Recebido do mês, no Histórico e no recibo.</p>
+      <div class="linha-flex" style="flex-wrap: wrap;">
+        <input id="svNome" placeholder="Serviço (ex.: Massagem)" style="flex: 1; min-width: 170px;">
+        <input id="svValor" type="number" min="0" step="0.01" placeholder="Valor R$" style="width: 120px;">
+        <button class="btn" id="svAdd">Adicionar</button>
+      </div>
+      <div id="svLista" class="muted" style="margin-top: 10px; font-size: 13px;"></div>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-pgsec="serv" hidden>
+      <h2>Vender serviço</h2>
+      <div class="linha-flex" style="flex-wrap: wrap; margin-top: 8px;">
+        <select id="svVAluno" style="min-width: 170px;" aria-label="Aluno"></select>
+        <select id="svVServ" style="min-width: 150px;" aria-label="Serviço"></select>
+        <input id="svVQtd" type="number" min="1" step="1" value="1" title="quantidade — 2 ou mais vira pacote com saldo" aria-label="Quantidade" style="width: 76px;">
+        <input id="svVTotal" type="number" min="0" step="0.01" placeholder="Total R$" style="width: 120px;">
+        <select id="svVForma" style="width: auto;" aria-label="Forma de pagamento"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option></select>
+        <button class="btn" id="svVender">Vender</button>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Quantidade 1 = venda avulsa. De 2 pra cima vira <b>pacote com saldo</b>: o total já vem calculado (dá pra dar desconto no campo) e a cada atendimento você desconta no <b>Usar 1</b>.</p>
+      <div id="svPacotes" style="margin-top: 12px;"></div>
+    </div>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
       <h2>Registrar pagamento</h2>
       <div class="linha-flex" style="margin-top: 8px;">
@@ -1559,7 +1583,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var pagsPorAluno = {}, pagouMes = {}, sessPorAluno = {}, sessFeitas = {};
     (st.pagamentos || []).forEach(function (p) {
       (pagsPorAluno[p.alunoId] = pagsPorAluno[p.alunoId] || []).push(p);
-      pagouMes[p.alunoId + "|" + String(p.data || "").slice(0, 7)] = true;
+      // venda de serviço (tem desc) não quita a mensalidade: uma massagem paga não
+      // pode sumir com a cobrança do plano do mês (pendências, régua e dívida)
+      if (!p.desc) pagouMes[p.alunoId + "|" + String(p.data || "").slice(0, 7)] = true;
     });
     (st.sessoes || []).forEach(function (x) {
       (sessPorAluno[x.alunoId] = sessPorAluno[x.alunoId] || []).push(x);
@@ -1880,16 +1906,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var pc = a.pacote;
     var restaPc = pc ? Math.max(0, (+pc.total || 0) - (+pc.usadas || 0)) : 0;
     var pcBloco = pc && +pc.total > 0
-      ? "<br>Pacote de sessões: <b>" + (+pc.usadas || 0) + " de " + pc.total + " usadas</b> · restam " + restaPc +
+      ? "<br>Pacote de sessões: <b>usou " + (+pc.usadas || 0) + " de " + pc.total + "</b> · " + (restaPc === 1 ? "resta 1" : "restam " + restaPc) +
         (restaPc <= 2 ? ' <span class="tag alerta">renovar</span>' : "") +
         ' <button class="btn sec mini" data-pfpacote="1" style="margin-left:6px;">+ Vender mais</button>'
       : '<br><button class="btn sec mini" data-pfpacote="1" style="margin-top:6px;">+ Vender pacote de sessões</button> <span class="muted" style="font-size:12px;">pra quem paga por sessão (ex.: pacote de 10)</span>';
+    var svBloco = (a.servPacotes || []).filter(function (p) { return (+p.total || 0) - (+p.usadas || 0) > 0; })
+      .map(function (p) {
+        var restaSv = (+p.total || 0) - (+p.usadas || 0);
+        return "<br>Pacote de " + esc(p.nome) + ": <b>usou " + (+p.usadas || 0) + " de " + p.total + "</b> · " + (restaSv === 1 ? "resta 1" : "restam " + restaSv) +
+          (restaSv <= 2 ? ' <span class="tag alerta">acabando</span>' : "") +
+          ' <button class="btn mini" data-svusaperfil="' + esc(p.id) + '" style="margin-left:6px;">Usar 1</button>';
+      }).join("");
     $("pfFin").innerHTML =
-      ctBloco + pcBloco +
+      ctBloco + pcBloco + svBloco +
       "<br>Este mês: " + (pagoMes ? "<b style='color:#4ade80;'>✓ pago</b>" : "<b style='color:#fbbf24;'>em aberto</b>") +
       " · Recebido em " + ano + ": <b>" + S.fmtBRL(totalAno) + "</b>" +
       (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:6px;'>Últimos: " + pgs.slice(0, 5).map(function (p) {
-        return S.fmtData(p.data) + " (" + S.fmtBRL(+p.valor) + (p.forma ? " · " + p.forma : "") +
+        return S.fmtData(p.data) + " (" + S.fmtBRL(+p.valor) + (p.desc ? " · " + esc(p.desc) : "") + (p.forma ? " · " + p.forma : "") +
           ') <a href="#" data-recibo="' + p.id + '" style="color:var(--roxo);">recibo</a>';
       }).join(" · ") + "</div>" : "<div class='muted' style='font-size:12.5px;margin-top:6px;'>Nenhum pagamento registrado ainda.</div>");
     // frequência: sessões feitas por mês
@@ -2517,7 +2550,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "h2{border-bottom:2px solid #111;padding-bottom:8px;}button{padding:10px 16px;margin-top:24px;cursor:pointer;}" +
       "@media print{.no-print{display:none;}}</style></head><body>" +
       "<h2>RECIBO — " + S.fmtBRL(+p.valor) + "</h2>" +
-      "<p>Recebi de <b>" + esc(a.nome) + "</b> a quantia de <b>" + S.fmtBRL(+p.valor) + "</b>, referente a serviços de personal trainer" +
+      "<p>Recebi de <b>" + esc(a.nome) + "</b> a quantia de <b>" + S.fmtBRL(+p.valor) + "</b>, referente a " + (p.desc ? esc(p.desc) : "serviços de personal trainer") +
       (p.forma ? " (pagamento em " + esc(p.forma) + ")" : "") + ", no dia " + S.fmtData(p.data) + ".</p>" +
       "<p>" + (cfg.pixCidade ? esc(cfg.pixCidade) + ", " : "") + S.fmtData(S.todayISO()) + ".</p>" +
       "<br><br><p>_______________________________<br>" + esc(quem) + "</p>" +
@@ -2533,6 +2566,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (rc0) { e.preventDefault(); abreRecibo(rc0); return; }
     var alvo = e.target.closest ? e.target.closest("button") : e.target;
     if (!alvo || !perfilId) return;
+    if (alvo.hasAttribute("data-svusaperfil")) {
+      // desconta 1 uso do pacote de serviço direto do perfil
+      var stSv = load();
+      var aSv = stSv.alunos.find(function (x) { return x.id === perfilId; });
+      var pSv = aSv && (aSv.servPacotes || []).find(function (x) { return x.id === alvo.getAttribute("data-svusaperfil"); });
+      if (pSv) {
+        if ((+pSv.total || 0) - (+pSv.usadas || 0) <= 0) { abrePerfil(perfilId); mostraPfAba("fin"); return; } // tela defasada: sem saldo
+        pSv.usadas = (+pSv.usadas || 0) + 1;
+        marcaAppPendente(stSv, perfilId); // o saldo muda no app do aluno
+        save(stSv);
+        if ((+pSv.total || 0) - pSv.usadas <= 0) alert("O pacote de " + pSv.nome + " acabou de zerar — hora de vender outro (Pagamentos → Serviços).");
+        abrePerfil(perfilId); mostraPfAba("fin");
+      }
+      return;
+    }
     if (alvo.hasAttribute("data-pfpacote")) {
       var qtd = +prompt("Quantas sessões tem o pacote? (ex.: 10)", "10");
       if (!qtd || qtd < 1) return;
@@ -4031,6 +4079,111 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return n ? { n: n, total: n * +a.valor, pacote: false } : null;
   }
   window.__financeiroPT = { divida: dividaDe, sessoes: sessoesACobrar }; // testes
+  // ---- Serviços e pacotes: o que o profissional vende além dos planos ----
+  // Catálogo em st.servicosPT; venda avulsa vira pagamento com desc; qtd >= 2
+  // vira pacote com saldo no aluno (a.servPacotes, mesmo espírito do a.pacote).
+  function renderServicos() {
+    var st = load();
+    var svs = st.servicosPT || [];
+    $("svLista").innerHTML = svs.length ? svs.map(function (s) {
+      return '<div class="sessao-pt"><b>' + esc(s.nome) + '</b><span style="margin-left:auto;">' + S.fmtBRL(+s.valor) + "</span>" +
+        '<button class="btn sec mini" data-svrm="' + esc(s.id) + '" aria-label="Tirar este serviço">✕</button></div>';
+    }).join("") : "Nenhum serviço cadastrado ainda — comece pelo formulário acima.";
+    // preserva o que o professor já escolheu/digitou (o re-render roda a cada Usar 1)
+    var vServAntes = $("svVServ").value, vAlunoAntes = $("svVAluno").value, vTotalAntes = $("svVTotal").value;
+    $("svVServ").innerHTML = svs.map(function (s) {
+      return '<option value="' + esc(s.id) + '">' + esc(s.nome) + " — " + S.fmtBRL(+s.valor) + "</option>";
+    }).join("");
+    $("svVAluno").innerHTML = st.alunos.filter(function (a) { return a.ativo !== false; })
+      .map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.nome) + "</option>"; }).join("");
+    if (vServAntes) $("svVServ").value = vServAntes;
+    if ($("svVServ").selectedIndex < 0) $("svVServ").selectedIndex = 0;
+    if (vAlunoAntes) $("svVAluno").value = vAlunoAntes;
+    if ($("svVAluno").selectedIndex < 0) $("svVAluno").selectedIndex = 0;
+    if (vTotalAntes !== "") $("svVTotal").value = vTotalAntes; else svSugereTotal();
+    var linhas = [];
+    st.alunos.forEach(function (a) {
+      (a.servPacotes || []).forEach(function (p) {
+        var resta = Math.max(0, (+p.total || 0) - (+p.usadas || 0));
+        if (resta <= 0) return;
+        linhas.push('<div class="sessao-pt"><b>' + esc(a.nome) + "</b><span>" + esc(p.nome) + " — usou " + (+p.usadas || 0) + " de " + p.total + "</span>" +
+          (resta <= 2 ? ' <span class="tag alerta">acabando</span>' : "") +
+          '<button class="btn mini" style="margin-left:auto;" data-svusa="' + esc(a.id) + "|" + esc(p.id) + '">Usar 1</button></div>');
+      });
+    });
+    $("svPacotes").innerHTML = linhas.length
+      ? "<div class='muted' style='font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;'>Pacotes em aberto</div>" + linhas.join("")
+      : "";
+  }
+  function svSugereTotal() {
+    var st = load();
+    var s = (st.servicosPT || []).find(function (x) { return x.id === $("svVServ").value; });
+    var q = Math.max(1, parseInt($("svVQtd").value, 10) || 1);
+    if (s) $("svVTotal").value = String(Math.round(+s.valor * q * 100) / 100);
+  }
+  $("svVServ").addEventListener("change", svSugereTotal);
+  $("svVQtd").addEventListener("input", svSugereTotal);
+  $("svAdd").addEventListener("click", function () {
+    var nome = $("svNome").value.trim().slice(0, 40);
+    var valor = +$("svValor").value;
+    if (!nome || !(valor > 0)) { alert("Preencha o nome e o valor do serviço."); return; }
+    var st = load();
+    st.servicosPT = st.servicosPT || [];
+    if (st.servicosPT.some(function (s) { return s.nome.toLowerCase() === nome.toLowerCase(); })) { alert("Já existe um serviço com esse nome."); return; }
+    st.servicosPT.push({ id: S.uid(), nome: nome, valor: valor });
+    save(st);
+    $("svNome").value = ""; $("svValor").value = "";
+    renderServicos();
+  });
+  $("svLista").addEventListener("click", function (e) {
+    var bt = e.target.closest("[data-svrm]");
+    if (!bt) return;
+    var st = load();
+    st.servicosPT = (st.servicosPT || []).filter(function (x) { return x.id !== bt.getAttribute("data-svrm"); });
+    save(st);
+    renderServicos();
+  });
+  $("svVender").addEventListener("click", function () {
+    var st = load();
+    var s = (st.servicosPT || []).find(function (x) { return x.id === $("svVServ").value; });
+    var a = st.alunos.find(function (x) { return x.id === $("svVAluno").value; });
+    if (!s || !a) { alert("Cadastre um serviço e escolha o aluno."); return; }
+    var qtd = Math.max(1, parseInt($("svVQtd").value, 10) || 1);
+    var total = +$("svVTotal").value;
+    if (!(total >= 0)) { alert("Confira o valor total."); return; }
+    if (qtd === 1 && !(total > 0)) { alert("Preencha o valor da venda."); return; }
+    var descr = qtd > 1 ? "Pacote " + qtd + "x " + s.nome : s.nome;
+    if (!confirm("Registrar: " + descr + " pra " + a.nome.split(" ")[0] + " — " + S.fmtBRL(total) + "?")) return;
+    if (qtd > 1) {
+      a.servPacotes = a.servPacotes || [];
+      a.servPacotes.push({ id: S.uid(), nome: s.nome, total: qtd, usadas: 0, vendidoEm: S.todayISO() });
+      marcaAppPendente(st, a.id); // o saldo entra no card Meus pacotes do app na próxima publicação
+    }
+    if (total > 0) st.pagamentos.push({ id: S.uid(), alunoId: a.id, valor: total, forma: $("svVForma").value, data: S.todayISO(), desc: descr });
+    save(st);
+    $("svVQtd").value = "1";
+    $("svVTotal").value = ""; // venda fechada: o próximo total volta a ser sugerido
+    renderServicos();
+    try { renderPagamentos(load()); } catch (e2) {}
+    alert(qtd > 1 ? "Pacote vendido! O saldo fica em Pacotes em aberto — desconte com o Usar 1 a cada atendimento."
+      : "Venda registrada! Já entrou no Recebido do mês e no Histórico.");
+  });
+  $("svPacotes").addEventListener("click", function (e) {
+    var bt = e.target.closest("[data-svusa]");
+    if (!bt) return;
+    var par = bt.getAttribute("data-svusa").split("|");
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === par[0]; });
+    var p = a && (a.servPacotes || []).find(function (x) { return x.id === par[1]; });
+    if (!p) return;
+    if ((+p.total || 0) - (+p.usadas || 0) <= 0) { renderServicos(); return; } // tela defasada: sem saldo, só re-pinta
+    p.usadas = (+p.usadas || 0) + 1;
+    marcaAppPendente(st, a.id); // o saldo muda no app do aluno
+    save(st);
+    if ((+p.total || 0) - p.usadas <= 0) alert("O pacote de " + p.nome + " de " + a.nome.split(" ")[0] + " acabou de zerar — hora de vender outro (card Vender serviço, logo acima).");
+    renderServicos();
+  });
+  window.__servicosPT = renderServicos; // testes
   // tolerância de atraso (Configurações): só vira ATRASADO depois de N dias do vencimento
   function atrasoTol(st) {
     var n = +((st.config || {}).atrasoDias);
@@ -4155,7 +4308,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var lista = st.pagamentos.slice().reverse().slice(0, 30);
     $("listaPagamentos").innerHTML = lista.length ? lista.map(function (p) {
       return '<div class="sessao-pt"><b>' + S.fmtData(p.data) + "</b><span>" + esc(nomeDe[p.alunoId] || "?") + "</span>" +
-        '<span class="muted">' + esc(p.forma || "") + '</span><b style="margin-left:auto;">' + S.fmtBRL(+p.valor) + "</b>" +
+        '<span class="muted">' + esc((p.desc ? p.desc + " · " : "") + (p.forma || "")) + '</span><b style="margin-left:auto;">' + S.fmtBRL(+p.valor) + "</b>" +
         '<button class="btn sec mini" data-recibo="' + p.id + '" title="recibo pra imprimir ou salvar em PDF">recibo</button></div>';
     }).join("") : "Nenhum pagamento registrado.";
     $("reguaOn").checked = !((st.config || {}).reguaOff);
@@ -5133,6 +5286,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function mostraPgAba(aba) {
     document.querySelectorAll("#vPagamentos [data-pgsec]").forEach(function (c) { c.hidden = c.getAttribute("data-pgsec") !== aba; });
     document.querySelectorAll("#pgAbas button").forEach(function (b) { b.classList.toggle("ativa", b.getAttribute("data-pga") === aba); });
+    if (aba === "serv") renderServicos();
   }
   $("pgAbas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("button[data-pga]");
@@ -6947,7 +7101,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var msgPc = restaPc2 <= 0
             ? "Oi " + a.nome.split(" ")[0] + "! Seu pacote de sessões acabou — bora renovar pra não perder o ritmo? 💪"
             : "Oi " + a.nome.split(" ")[0] + "! Só avisando: " + (restaPc2 === 1 ? "falta 1 sessão" : "faltam " + restaPc2 + " sessões") + " do seu pacote. Já quer deixar a renovação engatilhada? 💪";
-          alertas.push({ tipo: restaPc2 <= 0 ? "erro" : "aviso", txt: "O pacote de sessões de <b>" + esc(a.nome) + "</b> " + (restaPc2 <= 0 ? "ACABOU" : "está acabando (restam " + restaPc2 + ")") + " — hora de renovar.",
+          alertas.push({ tipo: restaPc2 <= 0 ? "erro" : "aviso", txt: "O pacote de sessões de <b>" + esc(a.nome) + "</b> " + (restaPc2 <= 0 ? "ACABOU" : "está acabando (" + (restaPc2 === 1 ? "resta 1" : "restam " + restaPc2) + ")") + " — hora de renovar.",
             ac: '<button class="btn mini" data-alperfil="' + a.id + '">Renovar pacote</button>' +
               (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgPc) + '">Avisar no zap</a>' : "") });
         }
@@ -7303,6 +7457,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "TQP" + semAcento(a.nome.split(" ")[0]).slice(0, 10));
       pixApp = { code: payloadApp, qr: pixQRDataURL(payloadApp) };
     }
+    // pacotes de serviços com saldo (massagem, avaliação...) — viram card no app
+    var svApp = (a.servPacotes || []).map(function (p) {
+      return { n: String(p.nome || "").slice(0, 30), t: +p.total || 0, u: +p.usadas || 0 };
+    }).filter(function (p) { return p.t - p.u > 0; });
 
     var treino = (st.treinos || {})[a.id] || "";
     var t2 = (st.treinosV2 || {})[a.id];
@@ -7869,6 +8027,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (plApp.linkRec ? "<a href='" + esc(plApp.linkRec) + "' target='_blank' rel='noopener' class='btnx' style='display:block;text-align:center;margin-top:8px;background:#14121a;border:1px solid #7c3aed;box-shadow:none;'>Assinar no cartão (débito automático)</a>" : "") +
         "<button class='btnx' id='btnJaPaguei' style='display:block;width:100%;text-align:center;margin-top:8px;background:#14121a;border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Já paguei — avisar " + esc(studio.split(" ")[0]) + "</button>" +
         "<div id='jaPagueiOk' class='vz' style='display:none;font-size:11.5px;'>Aviso enviado! " + esc(studio.split(" ")[0]) + " confirma e o pagamento entra no histórico.</div></div>" : "") +
+      // pacotes de serviços comprados (massagem etc.): saldo da última publicação do app
+      (svApp.length && ve("pag") ? "<div class='cardx'><h2>Meus pacotes</h2>" +
+        svApp.map(function (p) {
+          return "<div class='kv'><span>" + esc(p.n) + "</span><b>" + (p.t - p.u === 1 ? "resta 1" : "restam " + (p.t - p.u)) + " de " + p.t + "</b></div>";
+        }).join("") +
+        "<div class='vz' style='font-size:12px;'>Esse saldo é de quando o seu app foi atualizado pela última vez — pode estar um pouco atrasado. O número certinho tá com " + esc(studio.split(" ")[0]) + ".</div></div>" : "") +
       (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP ? "<div class='cardx'><h2>Meu login</h2>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para abrir seu app de QUALQUER aparelho (página Entrar do aluno).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
@@ -9192,7 +9356,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
-      "if(/Pagamento|Mensalidade/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
+      "if(/Pagamento|Mensalidade|Meus pacotes/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
       "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Desafio/.test(t))return 'inicio';" +
       "return null;}" +
       "var IGNORA={navApp:1,tmrBar:1,guiaBox:1,fundoMenuApp:1,menuApp:1};" +
