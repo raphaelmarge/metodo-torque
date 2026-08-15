@@ -1163,11 +1163,20 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
           <input id="spSub" maxlength="140" placeholder="ex.: Treinos sob medida, avaliação física e acompanhamento pelo app" style="display: block; width: 100%; margin-top: 4px;"></label>
         <label style="font-size: 12.5px;">Sobre você
           <textarea id="spBio" rows="4" maxlength="800" placeholder="Conte sua história: formação, experiência, seu jeito de trabalhar…" style="display: block; width: 100%; margin-top: 4px;"></textarea></label>
+        <div class="muted" style="font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px;">Redes sociais (preencha as que você usa — viram ícones na página)</div>
         <div class="linha-flex" style="flex-wrap: wrap;">
           <label style="font-size: 12.5px;">Instagram (sem @)
-            <input id="spInsta" maxlength="40" placeholder="seuperfil" style="display: block; width: 160px; margin-top: 4px;"></label>
+            <input id="spInsta" maxlength="60" placeholder="seuperfil" style="display: block; width: 150px; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px;">Threads (sem @)
+            <input id="spThreads" maxlength="60" placeholder="seuperfil" style="display: block; width: 150px; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px;">YouTube (canal, sem @)
+            <input id="spYoutube" maxlength="80" placeholder="seucanal" style="display: block; width: 150px; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px;">Facebook (usuário ou página)
+            <input id="spFacebook" maxlength="80" placeholder="suapagina" style="display: block; width: 160px; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px;">X (sem @)
+            <input id="spX" maxlength="60" placeholder="seuperfil" style="display: block; width: 130px; margin-top: 4px;"></label>
           <label style="font-size: 12.5px;">E-mail (opcional)
-            <input id="spEmail" maxlength="80" placeholder="voce@email.com" style="display: block; width: 220px; margin-top: 4px;"></label>
+            <input id="spEmail" maxlength="80" placeholder="voce@email.com" style="display: block; width: 210px; margin-top: 4px;"></label>
         </div>
         <div class="linha-flex" style="gap: 10px; align-items: center;">
           <img id="spCapaPrev" alt="foto de capa da página" hidden style="width: 96px; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px;">
@@ -5478,6 +5487,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var servicos = sp.mostraServ === false ? [] : (st.servicosPT || []);
     var zapSvg = "<svg viewBox='0 0 24 24' width='26' height='26' fill='none' stroke='#fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.5-1a8.5 8.5 0 1 0 4-16z'/></svg>";
     function secTit(t) { return "<h2 style='font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:" + cor + ";margin:0 0 14px;'>" + t + "</h2>"; }
+    // redes sociais viram uma fileira de ícones redondos na seção Fale comigo
+    function urlRede(v, prefixo) {
+      v = String(v || "").trim().replace(/^@/, "");
+      if (!v) return "";
+      return /^https?:/i.test(v) ? v : prefixo + v;
+    }
+    function redeIco(nomeRede, url, desenho) {
+      return "<a href='" + esc(url) + "' target='_blank' rel='noopener' aria-label='" + nomeRede + "' title='" + nomeRede + "' " +
+        "style='display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);margin:0 5px 8px;'>" +
+        "<svg viewBox='0 0 24 24' width='22' height='22' fill='none' stroke='#fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + desenho + "</svg></a>";
+    }
+    var REDES_DEF = [
+      ["insta", "Instagram", "https://instagram.com/", "<rect x='3' y='3' width='18' height='18' rx='5'/><circle cx='12' cy='12' r='4'/><circle cx='17' cy='7' r='1' fill='#fff' stroke='none'/>"],
+      ["threads", "Threads", "https://www.threads.net/@", "<circle cx='12' cy='12' r='4.3'/><path d='M16.5 12v1.2a2.1 2.1 0 0 0 4.2 0V12a8.7 8.7 0 1 0-3.4 6.9'/>"],
+      ["youtube", "YouTube", "https://www.youtube.com/@", "<rect x='2.5' y='5.5' width='19' height='13' rx='3.5'/><path d='M10.2 9.3l4.8 2.7-4.8 2.7z' fill='#fff' stroke='none'/>"],
+      ["facebook", "Facebook", "https://facebook.com/", "<path d='M17.5 2.5h-3a4.5 4.5 0 0 0-4.5 4.5v3h-3v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z'/>"],
+      ["x", "X", "https://x.com/", "<path d='M4 3.5 19.2 20.5M20 3.5 4.8 20.5'/>"],
+    ];
+    var redesHtml = REDES_DEF.map(function (par) {
+      var u = urlRede(sp[par[0]], par[2]);
+      return u ? redeIco(par[1], u, par[3]) : "";
+    }).join("");
     return "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width, initial-scale=1'>" +
       "<title>" + esc(nome) + "</title>" +
@@ -5509,7 +5540,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }).join("") + "</div></section>" : "") +
       "<section class='sec' style='text-align:center;'>" + secTit("Fale comigo") +
       (zapUrl ? "<p style='margin-bottom:14px;'><a class='cta' href='" + zapUrl + "' target='_blank' rel='noopener'>Chamar no WhatsApp</a></p>" : "") +
-      (sp.insta ? "<p><a href='https://instagram.com/" + esc(String(sp.insta).replace(/^@/, "")) + "' target='_blank' rel='noopener'>Instagram: @" + esc(String(sp.insta).replace(/^@/, "")) + "</a></p>" : "") +
+      (redesHtml ? "<div style='margin:16px 0 8px;'>" + redesHtml + "</div>" : "") +
       (sp.email ? "<p><a href='mailto:" + esc(sp.email) + "'>" + esc(sp.email) + "</a></p>" : "") +
       "</section>" +
       "<footer style='text-align:center;padding:26px 22px;color:#8b8698;font-size:12.5px;border-top:1px solid rgba(255,255,255,.08);'>" +
@@ -5527,6 +5558,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spSub").value = sp.sub || "";
     $("spBio").value = sp.bio || "";
     $("spInsta").value = sp.insta || "";
+    $("spThreads").value = sp.threads || "";
+    $("spYoutube").value = sp.youtube || "";
+    $("spFacebook").value = sp.facebook || "";
+    $("spX").value = sp.x || "";
     $("spEmail").value = sp.email || "";
     $("spMostraPlanos").checked = sp.mostraPlanos !== false;
     $("spMostraServ").checked = sp.mostraServ !== false;
@@ -5547,7 +5582,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     sp.headline = $("spHeadline").value.trim().slice(0, 80);
     sp.sub = $("spSub").value.trim().slice(0, 140);
     sp.bio = $("spBio").value.trim().slice(0, 800);
-    sp.insta = $("spInsta").value.trim().replace(/^@/, "").slice(0, 40);
+    sp.insta = $("spInsta").value.trim().replace(/^@/, "").slice(0, 60);
+    sp.threads = $("spThreads").value.trim().replace(/^@/, "").slice(0, 60);
+    sp.youtube = $("spYoutube").value.trim().replace(/^@/, "").slice(0, 80);
+    sp.facebook = $("spFacebook").value.trim().replace(/^@/, "").slice(0, 80);
+    sp.x = $("spX").value.trim().replace(/^@/, "").slice(0, 60);
     sp.email = $("spEmail").value.trim().slice(0, 80);
     sp.mostraPlanos = $("spMostraPlanos").checked;
     sp.mostraServ = $("spMostraServ").checked;

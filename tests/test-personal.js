@@ -2642,6 +2642,10 @@ async function abaPt(p, a) {
   await p.fill("#spHeadline", "Treine de verdade");
   await p.fill("#spBio", "Sou o professor <b>Teste</b> & cia");
   await p.fill("#spInsta", "@studioteste");
+  await p.fill("#spThreads", "@studioteste");
+  await p.fill("#spYoutube", "studioteste");
+  await p.fill("#spFacebook", "studioteste");
+  await p.fill("#spX", "studioteste");
   await p.click("#spSalvar");
   await p.waitForTimeout(250);
   const site = await p.evaluate(() => {
@@ -2657,6 +2661,10 @@ async function abaPt(p, a) {
     "a página sai com a frase, o WhatsApp automático e o botão flutuante");
   ok(/Mensal 3x/.test(site.html) && /Massagem/.test(site.html) && /instagram\.com\/studioteste/.test(site.html) && /#2563eb/.test(site.html),
     "planos, serviços, Instagram e a cor da Personalização entram sozinhos");
+  ok(/threads\.net\/@studioteste/.test(site.html) && /youtube\.com\/@studioteste/.test(site.html) &&
+    /facebook\.com\/studioteste/.test(site.html) && /x\.com\/studioteste/.test(site.html) &&
+    (site.html.match(/aria-label='(Instagram|Threads|YouTube|Facebook|X)'/g) || []).length === 5,
+    "as 5 redes sociais viram ícones com link (Instagram, Threads, YouTube, Facebook e X)");
   ok(/&lt;b&gt;Teste&lt;\/b&gt; &amp; cia/.test(site.html), "texto do professor vai escapado (sem HTML solto na página)");
   ok(site.preview, "a prévia é desenhada no iframe");
   await p.click("#spPublicar");
