@@ -274,19 +274,19 @@ self.MT_EXERCICIOS = [
  },
  {
   "n": "Panturrilha em pé",
-  "g": "Posterior e glúteo",
+  "g": "Quadríceps",
   "eq": "Máquina",
   "d": "Amplitude total: alongue embaixo e suba na ponta máxima."
  },
  {
   "n": "Panturrilha sentado",
-  "g": "Posterior e glúteo",
+  "g": "Quadríceps",
   "eq": "Máquina",
   "d": "Foco no sóleo; pausa de 1 s no topo."
  },
  {
   "n": "Panturrilha no leg press",
-  "g": "Posterior e glúteo",
+  "g": "Quadríceps",
   "eq": "Máquina",
   "d": "Joelhos estendidos; só o tornozelo trabalha."
  },
@@ -772,7 +772,7 @@ self.MT_EXERCICIOS = [
  },
  {
   "n": "Panturrilha unilateral no degrau",
-  "g": "Posterior e glúteo",
+  "g": "Quadríceps",
   "eq": "Peso do corpo",
   "d": "Uma perna no degrau, calcanhar desce abaixo da borda; suba na ponta máxima."
  },
@@ -1000,7 +1000,7 @@ self.MT_EXERCICIOS = [
  },
  {
   "n": "Panturrilha em pé no chão (duas pernas)",
-  "g": "Posterior e glúteo",
+  "g": "Quadríceps",
   "eq": "Peso do corpo",
   "d": "Suba na ponta dos pés com pausa de 2 s no topo; segure num apoio pra equilíbrio."
  },
@@ -7366,7 +7366,7 @@ self.MT_EXERCICIOS = [
  },
  {
   "n": "Panturrilha unilateral no degrau da escada",
-  "g": "Posterior e glúteo",
+  "g": "Quadríceps",
   "eq": "Escada",
   "d": "Com a ponta de um pé no degrau e o calcanhar livre, desça até sentir alongar e suba o mais alto que conseguir, segurando no corrimão."
  },
@@ -8326,7 +8326,7 @@ self.MT_EXERCICIOS = [
  },
  {
   "n": "Panturrilha excêntrica unilateral no degrau",
-  "g": "Posterior e glúteo",
+  "g": "Quadríceps",
   "eq": "Degrau",
   "d": "Suba com as duas pernas e desça com uma só, deixando o calcanhar passar da linha do degrau em quatro segundos."
  },
