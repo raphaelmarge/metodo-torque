@@ -4355,9 +4355,17 @@ async function abaPt(p, a) {
           };
         })(),
         temImg: !!localStorage.getItem("mtapp:ptImagens"),
+        despesas: (st.despesas || []).length,
+        despFixas: (st.despesas || []).filter((d) => d.fixa).length,
+        sitePro: !!((st.config || {}).sitePro || {}).slug,
+        vidDentro: (st.exercicios || []).some((e) => /demo-video\.webm$/.test(e.video || "")) &&
+          (st.videoteca || []).every((v) => !/results\?search_query/.test(v.url || "")),
       }), 400));
     });
     ok(demo.alunos === 9 && demo.fichas === 9 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 9 alunos com fichas, pagamentos e avaliações");
+    ok(demo.despesas >= 5 && demo.despFixas >= 2, "demo traz despesas do mês (com fixas) pra aba Despesas nascer cheia");
+    ok(demo.sitePro, "demo vem com a Minha página já montada (slug e textos)");
+    ok(demo.vidDentro, "demo usa vídeos que tocam dentro do app (nada de link de busca do YouTube)");
     ok(demo.autos === 3 && demo.servicos === 3 && demo.temImg, "demo traz as automações de WhatsApp, o catálogo de serviços e a foto da promo");
     ok(demo.fila.sumido && demo.fila.boasVindas && demo.fila.pacoteFoto, "fila do demo mostra aluno sumido, boas-vindas e pacote acabando com a foto");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
