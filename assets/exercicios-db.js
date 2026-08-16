@@ -8515,5 +8515,305 @@ self.MT_EXERCICIOS = [
   "g": "Tríceps",
   "eq": "Elástico",
   "d": "Tronco inclinado e cotovelo colado ao corpo; estenda o braço pra trás contra o elástico e volte devagar sem derrubar o cotovelo."
+ },
+ {
+  "n": "Supino em pé no landmine",
+  "g": "Peito",
+  "eq": "Landmine",
+  "d": "Barra ancorada no chão; empurre em diagonal pra cima com o tronco firme e o quadril travado."
+ },
+ {
+  "n": "Supino no landmine ajoelhado",
+  "g": "Peito",
+  "eq": "Landmine",
+  "d": "Ajoelhado, glúteo contraído; empurre a barra em diagonal sem deixar a lombar arquear."
+ },
+ {
+  "n": "Remada curvada no landmine com duas mãos",
+  "g": "Costas",
+  "eq": "Landmine",
+  "d": "Segure a ponta da barra com as duas mãos, tronco a 45 graus, puxe até o cotovelo passar da costela."
+ },
+ {
+  "n": "Desenvolvimento unilateral no landmine",
+  "g": "Ombros",
+  "eq": "Landmine",
+  "d": "Um braço de cada vez, punho neutro; suba em diagonal e desça controlando até a altura do ombro."
+ },
+ {
+  "n": "Agachamento goblet no landmine",
+  "g": "Quadríceps",
+  "eq": "Landmine",
+  "d": "Segure a ponta da barra junto ao peito, agache entre os joelhos mantendo o calcanhar no chão."
+ },
+ {
+  "n": "Rotação de tronco no landmine",
+  "g": "Core",
+  "eq": "Landmine",
+  "d": "Braços quase estendidos, gire a barra de um lado ao outro em arco; o quadril acompanha e a lombar não torce."
+ },
+ {
+  "n": "Levantamento terra unilateral no landmine",
+  "g": "Posterior e glúteo",
+  "eq": "Landmine",
+  "d": "Segure a barra ao lado do corpo com uma mão, quadril pra trás e coluna neutra; suba apertando o glúteo."
+ },
+ {
+  "n": "Avanço com barra no landmine",
+  "g": "Quadríceps",
+  "eq": "Landmine",
+  "d": "Barra apoiada no ombro do lado da perna de trás; desça o joelho ao chão sem inclinar o tronco."
+ },
+ {
+  "n": "Empurrada de trenó alta",
+  "g": "Funcional e Cross",
+  "eq": "Trenó",
+  "d": "Mãos nas alças altas, braços estendidos; passos curtos e rápidos empurrando com o corpo inteiro."
+ },
+ {
+  "n": "Empurrada de trenó baixa",
+  "g": "Funcional e Cross",
+  "eq": "Trenó",
+  "d": "Tronco quase paralelo ao chão, mãos nas alças baixas; dirija a força pra frente sem perder a coluna neutra."
+ },
+ {
+  "n": "Arrasto de trenó lateral",
+  "g": "Posterior e glúteo",
+  "eq": "Trenó",
+  "d": "Cinto na cintura, ande de lado em passos firmes; quem trabalha é o quadril, não o braço."
+ },
+ {
+  "n": "Remada de trenó com corda",
+  "g": "Costas",
+  "eq": "Trenó",
+  "d": "Sentado ou em pé, puxe o trenó mão sobre mão pela corda; o tronco fica firme o tempo todo."
+ },
+ {
+  "n": "Ponte de glúteo com abdução de mini band",
+  "g": "Posterior e glúteo",
+  "eq": "Mini band",
+  "d": "Elástico acima dos joelhos; suba o quadril e abra os joelhos no topo antes de descer."
+ },
+ {
+  "n": "Remada alta com mini band",
+  "g": "Ombros",
+  "eq": "Mini band",
+  "d": "Pise no elástico e puxe até a linha do peito com os cotovelos apontando pra fora, sem encolher o pescoço."
+ },
+ {
+  "n": "Pallof press com mini band",
+  "g": "Core",
+  "eq": "Mini band",
+  "d": "Elástico preso ao lado; estenda os braços à frente e resista à rotação com o abdômen firme."
+ },
+ {
+  "n": "Dorsiflexão com mini band",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Mini band",
+  "d": "Sentado, elástico no peito do pé preso à frente; puxe a ponta do pé pra cima devagar e volte controlando."
+ },
+ {
+  "n": "Push press unilateral com kettlebell",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Pequena flexão de joelhos e empurre o sino pra cima usando o embalo das pernas; desça controlando."
+ },
+ {
+  "n": "Marcha com kettlebell na posição rack",
+  "g": "Core",
+  "eq": "Kettlebell",
+  "d": "Sino apoiado no rack de um lado só; marche no lugar sem deixar o tronco pender pro lado."
+ },
+ {
+  "n": "Salto em profundidade do step",
+  "g": "Funcional e Cross",
+  "eq": "Step/Caixa",
+  "d": "Desça do step, amorteça e salte imediatamente o mais alto que puder; pouse macio."
+ },
+ {
+  "n": "Arremesso de medicine ball no chão com rotação",
+  "g": "Core",
+  "eq": "Medicine ball",
+  "d": "Gire o tronco e arremesse a bola no chão ao lado do pé com força total; pegue e repita do outro lado."
+ },
+ {
+  "n": "Skipping alto com apoio na parede",
+  "g": "Cardio",
+  "eq": "Peso corporal",
+  "d": "Mãos na parede, tronco inclinado; suba os joelhos alternados o mais rápido possível sem perder a postura."
+ },
+ {
+  "n": "Salto unilateral no lugar",
+  "g": "Funcional e Cross",
+  "eq": "Peso corporal",
+  "d": "Saltite numa perna só com aterrissagem silenciosa; joelho alinhado com o pé em cada pouso."
+ },
+ {
+  "n": "Flexão com toque no ombro",
+  "g": "Peito",
+  "eq": "Peso corporal",
+  "d": "Após cada flexão, toque o ombro oposto sem deixar o quadril balançar."
+ },
+ {
+  "n": "Agachamento com pausa de 3 segundos",
+  "g": "Quadríceps",
+  "eq": "Peso corporal",
+  "d": "Desça, segure 3 segundos embaixo mantendo o tronco firme e suba sem embalo."
+ },
+ {
+  "n": "Ponte de glúteo com marcha",
+  "g": "Posterior e glúteo",
+  "eq": "Peso corporal",
+  "d": "No topo da ponte, levante um pé de cada vez sem deixar o quadril cair de lado."
+ },
+ {
+  "n": "Prancha com deslizamento de toalha",
+  "g": "Core",
+  "eq": "Peso corporal",
+  "d": "Em prancha com os pés numa toalha em piso liso, puxe os joelhos ao peito deslizando e volte devagar."
+ },
+ {
+  "n": "Remada isométrica na porta com toalha",
+  "g": "Costas",
+  "eq": "Peso corporal",
+  "d": "Toalha presa na maçaneta, incline o corpo pra trás e segure a puxada com as escápulas apertadas."
+ },
+ {
+  "n": "Cadeirinha na parede com elevação de calcanhar",
+  "g": "Quadríceps",
+  "eq": "Peso corporal",
+  "d": "Na posição da cadeirinha, suba e desça os calcanhares alternados mantendo o encosto na parede."
+ },
+ {
+  "n": "Elevação pélvica na máquina",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Apoio nas costas e almofada no quadril; suba até estender o quadril e segure 1 segundo no topo."
+ },
+ {
+  "n": "Crucifixo invertido na polia alta",
+  "g": "Ombros",
+  "eq": "Polia",
+  "d": "Cabos cruzados na altura do rosto; abra os braços pra trás pensando em juntar as escápulas."
+ },
+ {
+  "n": "Sentar e levantar com apoio de corrimão",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso corporal",
+  "d": "Da cadeira, levante usando o corrimão só pra equilíbrio; o esforço vem das pernas."
+ },
+ {
+  "n": "Marcha lateral com apoio no balcão",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso corporal",
+  "d": "Mãos apoiadas, dê passos laterais lentos pros dois lados mantendo o tronco ereto."
+ },
+ {
+  "n": "Alcance de braço sentado com rotação",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso corporal",
+  "d": "Sentado, gire o tronco levando a mão em direção à parede de trás, devagar e sem dor."
+ },
+ {
+  "n": "Corrida estacionária na água rasa",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Água na altura do peito, corra no lugar elevando os joelhos; a água amortece e resiste ao mesmo tempo."
+ },
+ {
+  "n": "Empurrada de água com as palmas",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Em pé, braços à frente; empurre a água pros lados e volte, como se abrisse cortinas pesadas."
+ },
+ {
+  "n": "Esquiva pendular com passada",
+  "g": "Boxe e lutas",
+  "eq": "Peso corporal",
+  "d": "Pêndulo de um lado ao outro flexionando os joelhos; a cabeça desenha um U e a guarda não cai."
+ },
+ {
+  "n": "Combinação jab direto com esquiva",
+  "g": "Boxe e lutas",
+  "eq": "Peso corporal",
+  "d": "Jab, direto e esquiva por baixo na sequência; termine sempre com as mãos protegendo o queixo."
+ },
+ {
+  "n": "Remada unilateral no landmine em afastado",
+  "g": "Costas",
+  "eq": "Landmine",
+  "d": "Base afastada, mão apoiada na coxa; reme a ponta da barra com o cotovelo rente ao corpo."
+ },
+ {
+  "n": "Agachamento búlgaro com kettlebell no rack",
+  "g": "Quadríceps",
+  "eq": "Kettlebell",
+  "d": "Pé de trás no banco, sino no rack do lado da perna da frente; desça reto e suba sem impulso do pé de trás."
+ },
+ {
+  "n": "Levantamento turco até a mão",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Só a primeira fase do turco: deite, suba até o cotovelo e a mão mantendo o sino pra cima; volte devagar."
+ },
+ {
+  "n": "Flexão com pés no step",
+  "g": "Peito",
+  "eq": "Step/Caixa",
+  "d": "Pés elevados no step; corpo em linha e desça até o peito quase tocar o chão."
+ },
+ {
+  "n": "Rosca concentrada em pé com cabo",
+  "g": "Bíceps",
+  "eq": "Polia",
+  "d": "Cotovelo apoiado na coxa levemente inclinado; suba o punho controlando a volta em 3 segundos."
+ },
+ {
+  "n": "Tríceps francês unilateral com halter",
+  "g": "Tríceps",
+  "eq": "Halteres",
+  "d": "Braço estendido acima da cabeça, desça o halter atrás da nuca dobrando só o cotovelo."
+ },
+ {
+  "n": "Mergulho entre bancos com joelhos dobrados",
+  "g": "Tríceps",
+  "eq": "Peso corporal",
+  "d": "Mãos num banco, pés no chão com joelhos dobrados; desça até o cotovelo a 90 graus, sem afundar o ombro."
+ },
+ {
+  "n": "Elevação frontal alternada sentado",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Sentado pra tirar o embalo do tronco; suba um halter de cada vez até a altura do olho."
+ },
+ {
+  "n": "Encolhimento de ombros na barra fixa pendurado",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Pendurado com braços estendidos, encolha e solte as escápulas sem dobrar os cotovelos."
+ },
+ {
+  "n": "Prancha lateral com rotação de braço",
+  "g": "Core",
+  "eq": "Peso corporal",
+  "d": "Da prancha lateral, passe o braço de cima por baixo do tronco e volte abrindo o peito."
+ },
+ {
+  "n": "Polichinelo com agachamento",
+  "g": "Cardio",
+  "eq": "Peso corporal",
+  "d": "Um polichinelo e um agachamento na sequência, sem pausa; pouse macio nos dois."
+ },
+ {
+  "n": "Corrida com mudança de direção em V",
+  "g": "Cardio",
+  "eq": "Peso corporal",
+  "d": "Corra até um ponto, freie em dois tempos e mude de direção em V; joelho sempre alinhado ao pé."
+ },
+ {
+  "n": "Equilíbrio unipodal com olhos fechados",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso corporal",
+  "d": "Perto de um apoio, fique numa perna só e feche os olhos por alguns segundos; troque a perna."
  }
 ];
