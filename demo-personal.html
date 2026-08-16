@@ -102,7 +102,12 @@
     ["Remada curvada com barra", "Costas"], ["Puxada alta na polia", "Costas"], ["Desenvolvimento com halteres", "Ombros"],
     ["Rosca direta com barra", "Bíceps"], ["Tríceps na polia", "Tríceps"], ["Prancha", "Core"],
   ];
-  var exercicios = EX.map(function (par) { return { id: uid(), nome: par[0], grupo: par[1], eq: "", descricao: "Execução controlada, técnica antes de carga.", video: "" }; });
+  var VIDEO_DEMO = "https://www.torqueon.com.br/assets/demo-video.webm";
+  var exercicios = EX.map(function (par) {
+    return { id: uid(), nome: par[0], grupo: par[1], eq: "", descricao: "Execução controlada, técnica antes de carga.",
+      // dois exercícios com vídeo próprio: mostra o player tocando DENTRO do app
+      video: par[0] === "Supino reto com barra" || par[0] === "Agachamento livre" ? VIDEO_DEMO : "" };
+  });
   var exId = {};
   exercicios.forEach(function (e) { exId[e.nome] = e.id; });
   function ficha(titulo, nomes, series, reps, desc) {
@@ -253,6 +258,14 @@
       // no produto vem desligada; no demo fica ligada pra quem testa achar o recurso
       scanOn: true,
       mural: ["Sábado 7h tem treinão ao ar livre no parque — bora?", "Semana que vem começa o desafio de agosto. Prêmio: 1 mês grátis!"],
+      // Minha página (site de vendas) já montada — abre em Minha página com prévia
+      sitePro: {
+        slug: "torque-demo", headline: "Treine com quem acompanha de verdade",
+        sub: "Treinos sob medida, avaliação física completa e acompanhamento diário pelo app",
+        bio: "Sou personal trainer há 10 anos. Treino gente de todo nível — do primeiro treino à primeira maratona — com ficha própria, avaliação física e acompanhamento pelo app.",
+        insta: "torquefit", youtube: "torquefit", email: "demo@torqueon.com.br",
+        mostraPlanos: true, mostraServ: true,
+      },
     },
     alunos: alunos, exercicios: exercicios, treinosV2: treinosV2, pagamentos: pagamentos,
     avaliacoes: avaliacoes, sessoes: sessoes, diarioPT: diarioPT,
@@ -269,10 +282,19 @@
       { id: "au2", nome: "Boas-vindas", gat: "cadastro", dias: 1, texto: "Oi {nome}! Que bom ter você no time. Qualquer dúvida com o app ou com os treinos, me chama por aqui!" },
       { id: "au3", nome: "Pacote acabando", gat: "pacote", dias: 2, imgId: "dimg1", texto: "Oi {nome}! Seu pacote de {servico} está no fim — {resta}. Quer já garantir o próximo?" },
     ],
+    // despesas do studio (Pagamentos → Despesas): fixas + avulsas do mês
+    despesas: [
+      { id: "dp1", desc: "Repasse do espaço", cat: "Repasse/aluguel", valor: 900, data: iso(70), fixa: true },
+      { id: "dp2", desc: "MEI do mês", cat: "Impostos/MEI", valor: 76, data: iso(40), fixa: true },
+      { id: "dp3", desc: "Gasolina da semana", cat: "Combustível", valor: 180, data: iso(6) },
+      { id: "dp4", desc: "Caneleiras novas", cat: "Equipamentos", valor: 260, data: iso(4) },
+      { id: "dp5", desc: "Impulsionamento no Instagram", cat: "Marketing", valor: 120, data: iso(2) },
+    ],
+    // vídeos que tocam DENTRO do app (arquivo demonstrativo hospedado no site)
     videoteca: [
-      { titulo: "Mobilidade de quadril em 8 minutos", categoria: "Mobilidade", url: "https://www.youtube.com/results?search_query=mobilidade+de+quadril" },
-      { titulo: "Como progredir no supino com segurança", categoria: "Técnica", url: "https://www.youtube.com/results?search_query=progredir+supino" },
-      { titulo: "Alongamento pós-treino completo", categoria: "Mobilidade", url: "https://www.youtube.com/results?search_query=alongamento+pos+treino" },
+      { titulo: "Mobilidade de quadril em 8 minutos", categoria: "Mobilidade", url: VIDEO_DEMO },
+      { titulo: "Como progredir no supino com segurança", categoria: "Técnica", url: VIDEO_DEMO },
+      { titulo: "Alongamento pós-treino completo", categoria: "Mobilidade", url: VIDEO_DEMO },
     ],
     questPerguntas: [
       { id: "qp1", sigla: "MOTEX", titulo: "Motivação", texto: "Qual foi sua motivação pra treinar nos últimos 7 dias?", tipo: "emoji",
