@@ -1613,5 +1613,72 @@ self.MT_RECEITAS = [
    "Vire quando as bordas firmarem e doure o outro lado."
   ],
   "dica": "Fogo baixo e paciência: panqueca de banana queima rápido se a frigideira estiver quente demais."
+ },
+ {
+  "id": "rc73",
+  "n": "Bowl de frango com grão-de-bico crocante",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 2,
+  "k": 410,
+  "pt": 32,
+  "ing": [
+   "250 g de filé de frango em cubos",
+   "150 g de grão-de-bico cozido",
+   "1 abobrinha em meia-lua",
+   "1 col. sopa de azeite",
+   "Páprica defumada, alho e sal a gosto",
+   "Folhas verdes pra montar"
+  ],
+  "modo": [
+   "Tempere o grão-de-bico com metade do azeite e a páprica; asse ou toste na airfryer até ficar crocante.",
+   "Grelhe o frango com alho e sal no azeite restante; salteie a abobrinha na mesma frigideira.",
+   "Monte o bowl: folhas embaixo, frango e abobrinha por cima e o grão-de-bico crocante por último."
+  ],
+  "dica": "O grão-de-bico crocante substitui o croutons — mesma função, muito mais proteína e fibra."
+ },
+ {
+  "id": "rc74",
+  "n": "Mousse proteica de maracujá",
+  "cat": "Doces fit",
+  "tempo": 15,
+  "rende": 4,
+  "k": 80,
+  "pt": 9,
+  "ing": [
+   "300 g de iogurte natural desnatado",
+   "1 dose (30 g) de whey de baunilha",
+   "Polpa de 2 maracujás",
+   "1 envelope de gelatina incolor hidratada",
+   "Adoçante a gosto"
+  ],
+  "modo": [
+   "Bata o iogurte com o whey e metade da polpa até ficar liso.",
+   "Misture a gelatina hidratada e dissolvida, prove e ajuste o doce.",
+   "Divida em potinhos, cubra com o restante da polpa e leve à geladeira por 2 horas."
+  ],
+  "dica": "Sirva bem gelada: o azedinho do maracujá com o doce da baunilha engana qualquer vontade de sobremesa."
+ },
+ {
+  "id": "rc75",
+  "n": "Pão de queijo de frigideira",
+  "cat": "Café da manhã",
+  "tempo": 10,
+  "rende": 1,
+  "k": 290,
+  "pt": 15,
+  "ing": [
+   "1 ovo",
+   "2 col. sopa de polvilho doce (30 g)",
+   "30 g de muçarela ralada",
+   "1 col. sopa de requeijão light",
+   "1 pitada de sal"
+  ],
+  "modo": [
+   "Misture tudo numa tigela até virar uma massa cremosa.",
+   "Despeje na frigideira antiaderente fria e leve ao fogo baixo com tampa.",
+   "Quando firmar e soltar, vire e doure o outro lado por 2 minutos."
+  ],
+  "dica": "Gosto de pão de queijo sem forno e em 10 minutos — dobre a receita nos dias de treino pesado."
  }
 ];
