@@ -286,9 +286,9 @@ async function abaPt(p, a) {
   await p.selectOption("#pfCtPlano", { index: 1 });
   await p.fill("#pfCtDia", String(diaVenc));
   await p.click("#pfCtAdd");
-  await p.waitForFunction(() => /Contrato:/.test(document.getElementById("pfFin").textContent));
+  await p.waitForFunction(() => /Mensal 3x/.test(document.getElementById("pfFin").textContent));
   const finTxt = await p.evaluate(() => document.getElementById("pfFin").textContent);
-  ok(/Mensal 3x/.test(finTxt) && new RegExp("vence dia " + diaVenc).test(finTxt) && /Encerrar contrato/.test(finTxt),
+  ok(/Mensal 3x/.test(finTxt) && new RegExp("vence todo dia " + diaVenc).test(finTxt) && /Encerrar contrato/.test(finTxt),
     "contrato fechado direto no perfil (plano + vencimento + botão de encerrar)");
   await p.click("#pfFechar");
   await abaPt(p, "pagamentos");
