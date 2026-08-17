@@ -1354,32 +1354,29 @@ async function abaPt(p, a) {
     "painel mostra objetivo, dias e a dor relatada no onboarding");
   // 📊 cada pergunta do questionário vira uma métrica no perfil do aluno
   {
-    const metricas = await p.evaluate(() => window.__checkinsPT({
-      checks: [
-        { d: "2026-06-10", nome: "Check-in semanal", pts: 1, respostas: [
-          { sigla: "MOTEX", pergunta: "Qual foi sua motivação?", resposta: "Médio", pontos: 0 },
-          { sigla: "SONO", pergunta: "Como está o sono?", resposta: "6", pontos: 6 },
-          { sigla: "DOR", pergunta: "Sentiu alguma dor?", resposta: "Ombro esquerdo", pontos: null },
-        ] },
-        { d: "2026-07-10", nome: "Check-in semanal", pts: 2, respostas: [
-          { sigla: "MOTEX", resposta: "Alto", pontos: 1 },
-          { sigla: "SONO", resposta: "7", pontos: 7 },
-        ] },
-        { d: "2026-08-09", nome: "Check-in semanal", pts: 4, respostas: [
-          { sigla: "MOTEX", resposta: "Altíssimo", pontos: 2 },
-          { sigla: "SONO", resposta: "5", pontos: 5 },
-          { sigla: "DOR", resposta: "Nenhuma", pontos: null },
-        ] },
-      ],
-    }));
+    const metricas = await p.evaluate(() => {
+      // 8 semanas: motivação subindo mês a mês, sono caindo, dor de resposta livre
+      const checks = [];
+      for (let i = 7; i >= 0; i--) {
+        const d = new Date(Date.UTC(2026, 5, 1 + (7 - i) * 7)).toISOString().slice(0, 10);
+        const resp = [
+          { sigla: "MOTEX", pergunta: "Qual foi sua motivação?", resposta: i === 0 ? "Altíssimo" : "Médio", pontos: 8 - i },
+          { sigla: "SONO", pergunta: "Como está o sono?", resposta: String(1 + i), pontos: 1 + i },
+        ];
+        if (i % 3 === 0) resp.push({ sigla: "DOR", pergunta: "Sentiu alguma dor?", resposta: i === 0 ? "Nenhuma" : "Ombro esquerdo", pontos: null });
+        checks.push({ d, nome: "Check-in semanal", pts: 8 - i, respostas: resp });
+      }
+      return window.__checkinsPT({ checks });
+    });
     ok(/MOTEX/.test(metricas) && /SONO/.test(metricas) && /DOR/.test(metricas),
       "📊 cada pergunta respondida vira uma métrica própria no perfil do aluno");
-    ok(/Altíssimo/.test(metricas) && /subiu/.test(metricas), "métrica que melhorou mostra a última resposta e a tendência de alta");
-    ok(/caiu/.test(metricas), "métrica que piorou (sono 7 → 5) aparece marcada como queda");
-    ok(/Qual foi sua motivação\?/.test(metricas), "a pergunta original fica junto da métrica, pro professor lembrar o contexto");
-    ok(/Nenhuma/.test(metricas) && /2 resposta\(s\)/.test(metricas),
-      "pergunta de resposta livre vira métrica de texto com a contagem de respostas");
-    ok(/Últimos check-ins/.test(metricas) && /09\/08/.test(metricas), "o histórico dos check-ins continua listado abaixo das métricas");
+    ok(/Altíssimo/.test(metricas) && /melhorando/.test(metricas) && /média do último mês/.test(metricas),
+      "motivação subindo aparece como 'melhorando', com a média do mês contra o mês anterior");
+    ok(/piorando/.test(metricas), "sono caindo mês a mês aparece marcado como 'piorando'");
+    ok(/Qual foi sua motivação\?/.test(metricas), "o card usa a pergunta por extenso no lugar da sigla");
+    ok(/Nenhuma/.test(metricas) && /resposta mais comum/.test(metricas) && /Ombro esquerdo/.test(metricas) && /2 de 3/.test(metricas),
+      "pergunta de resposta livre mostra a última resposta e a mais comum das semanas");
+    ok(/Últimos check-ins/.test(metricas), "o histórico dos check-ins continua listado abaixo das métricas");
     // a aba própria do perfil: existe, troca e o painel principal não repete o bloco
     const abaQ = await p.evaluate(() => {
       const bt = document.querySelector('#pfAbas [data-pfa="quest"]');
@@ -1828,8 +1825,9 @@ async function abaPt(p, a) {
     ok(/Hábitos em dia/.test(appDados) && /50%/.test(appDados), "KPI de dias com 3+ hábitos nos últimos 30 dias (50%)");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
     const questBox = await p.evaluate(() => document.getElementById("pfQuestBox").innerHTML);
-    ok(/Check-ins respondidos no app/.test(questBox) && /3 no total/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
-    ok(/stroke=["']#fbbf24["']/.test(questBox) && /mín 2/.test(questBox) && /máx 9/.test(questBox), "pontuação dos check-ins vira gráfico de linha (mín 2 / máx 9)");
+    ok(/3 check-in\(s\) respondidos/.test(questBox) && /o aluno responde desde/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
+    ok(/Como foram as semanas/.test(questBox) && /fill=['"]#4ade80['"]/.test(questBox) && /fill=['"]#f87171['"]/.test(questBox) && /9 ponto/.test(questBox),
+      "pontuação vira barras coloridas por semana (verde = boa, vermelha = fraca), com o valor no toque");
     ok(/\+9 pts/.test(questBox) && /MOTEX/.test(questBox), "última resposta listada com pontuação e siglas");
     ok(/Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
     // aluno malicioso tentando injetar código pela foto/data do retorno
@@ -4369,7 +4367,9 @@ async function abaPt(p, a) {
     ok(demo.autos === 3 && demo.servicos === 3 && demo.temImg, "demo traz as automações de WhatsApp, o catálogo de serviços e a foto da promo");
     ok(demo.fila.sumido && demo.fila.boasVindas && demo.fila.pacoteFoto, "fila do demo mostra aluno sumido, boas-vindas e pacote acabando com a foto");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
-    ok(/Check-ins respondidos no app/.test(demo.quest) && /stroke=["']#fbbf24["']/.test(demo.quest), "demo também mostra os check-ins de questionário na aba própria");
+    ok(/check-in\(s\) respondidos/.test(demo.quest) && /(melhorando|estável|piorando)/.test(demo.quest) &&
+      /resposta mais comum/.test(demo.quest) && /Como foram os treinos da semana\?/.test(demo.quest),
+      "demo mostra os check-ins em linguagem clara: pergunta por extenso, tendência e resposta mais comum");
     ok(demo.scanOn && demo.scanCard, "no demo as Medidas pela câmera já vêm ligadas (quem testa acha o recurso sozinho)");
     // com dados existentes o demo NÃO sobrescreve
     const pD2 = await ctxD.newPage();

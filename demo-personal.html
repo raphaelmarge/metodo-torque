@@ -80,8 +80,8 @@
     for (var i = semanas - 1; i >= 0; i--) {
       var pts = Math.round(Math.sin(i * 2.3) * 2 + capricho * 3);
       out.push({ d: iso(i * 7 + 1), nome: "Check-in semanal", pts: pts, respostas: [
-        { sigla: "TRE", resposta: pts >= 3 ? "Treinei tudo 🤩" : pts >= 1 ? "Quase tudo 🙂" : "Semana corrida 😕", pontos: pts },
-        { sigla: "SONO", resposta: i % 2 ? "Dormi 7h+" : "Menos de 7h", pontos: null },
+        { sigla: "TRE", pergunta: "Como foram os treinos da semana?", resposta: pts >= 3 ? "Treinei tudo 🤩" : pts >= 1 ? "Quase tudo 🙂" : "Semana corrida 😕", pontos: pts },
+        { sigla: "SONO", pergunta: "Dormiu bem essa semana?", resposta: i % 2 ? "Dormi 7h+" : "Menos de 7h", pontos: null },
       ] });
     }
     return out;
