@@ -3503,6 +3503,25 @@ async function abaPt(p, a) {
   ok(/não toca aqui dentro/.test(vidTipos.out.estranho) && !vidTipos.abriuAba,
     "link irreconhecível ganha aviso dentro do app — NUNCA abre o YouTube por fora");
   ok(vidTipos.semVid === 0, "exercício sem vídeo não mostra botão de vídeo (a busca no YouTube acabou)");
+  // --- vídeos padrão do catálogo (curadoria YouTube pt-BR) ---
+  const vidCat = await p.evaluate(() => {
+    const cat = (self.MT_EXERCICIOS || []).filter((c) => c.v);
+    const supino = cat.find((c) => c.n === "Supino reto com barra");
+    const okUrls = cat.every((c) => /^https:\/\/www\.youtube\.com\/watch\?v=[\w-]{6,20}$/.test(c.v));
+    // cópia antiga sem vídeo herda o padrão do catálogo ao passar por exercicioPorNome
+    const S = window.MTStore, st = S.read("ptStudio", {});
+    st.exercicios = st.exercicios || [];
+    st.exercicios.push({ id: "exvT", nome: "Supino reto com barra", grupo: "Peito", video: "", descricao: "x" });
+    const ex = window.__exPorNome(st, "Supino reto com barra");
+    const herdou = ex.video;
+    st.exercicios = st.exercicios.filter((e) => e.id !== "exvT");
+    S.write("ptStudio", st);
+    return { total: cat.length, temSupino: !!supino, okUrls, herdou, esperado: supino && supino.v };
+  });
+  ok(vidCat.total >= 13 && vidCat.temSupino && vidCat.okUrls,
+    "catálogo tem vídeos padrão (13+) em formato watch do YouTube — tocam embutidos no app");
+  ok(vidCat.herdou === vidCat.esperado,
+    "cópia antiga do exercício sem vídeo herda o vídeo padrão do catálogo");
   // botão Iniciar exercício abre o guiado já naquele exercício
   const iniEx = await pApp.evaluate(() => {
     const bs = document.querySelectorAll(".inibtn");

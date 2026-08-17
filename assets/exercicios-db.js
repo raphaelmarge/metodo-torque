@@ -1,12 +1,14 @@
 /* TORQUE ON — banco de exercícios compartilhado (TORQUE ON academia + TORQUE PERSONAL).
- * n=nome, g=grupo, eq=equipamento, d=dica de execução.
+ * n=nome, g=grupo, eq=equipamento, d=dica de execução, v=vídeo padrão (YouTube,
+ * opcional — toca embutido no app; o professor pode trocar pelo dele).
  * Cresce todo dia com a rotina do educador físico. */
 self.MT_EXERCICIOS = [
  {
   "n": "Supino reto com barra",
   "g": "Peito",
   "eq": "Barra/Halteres",
-  "d": "Escápulas retraídas, barra desce ao peitoral médio, pés firmes no chão."
+  "d": "Escápulas retraídas, barra desce ao peitoral médio, pés firmes no chão.",
+  "v": "https://www.youtube.com/watch?v=pCPyqW60Wuk"
  },
  {
   "n": "Supino reto com halteres",
@@ -60,7 +62,8 @@ self.MT_EXERCICIOS = [
   "n": "Flexão de braço",
   "g": "Peito",
   "eq": "Peso do corpo",
-  "d": "Corpo em prancha, cotovelos a ~45° do tronco, peito quase no chão."
+  "d": "Corpo em prancha, cotovelos a ~45° do tronco, peito quase no chão.",
+  "v": "https://www.youtube.com/watch?v=TbVWMhyax2U"
  },
  {
   "n": "Flexão com pegada fechada",
@@ -90,7 +93,8 @@ self.MT_EXERCICIOS = [
   "n": "Puxada alta na polia",
   "g": "Costas",
   "eq": "Polia",
-  "d": "Puxe a barra ao alto do peito; desça as escápulas antes de puxar."
+  "d": "Puxe a barra ao alto do peito; desça as escápulas antes de puxar.",
+  "v": "https://www.youtube.com/watch?v=25XTUWnt_R4"
  },
  {
   "n": "Puxada triângulo",
@@ -102,7 +106,8 @@ self.MT_EXERCICIOS = [
   "n": "Remada curvada com barra",
   "g": "Costas",
   "eq": "Barra",
-  "d": "Tronco a ~45°, coluna neutra; puxe a barra ao abdômen."
+  "d": "Tronco a ~45°, coluna neutra; puxe a barra ao abdômen.",
+  "v": "https://www.youtube.com/watch?v=g_lmBmIWUs4"
  },
  {
   "n": "Remada unilateral (serrote)",
@@ -144,7 +149,8 @@ self.MT_EXERCICIOS = [
   "n": "Levantamento terra romeno",
   "g": "Costas",
   "eq": "Barra",
-  "d": "Joelhos semiflexionados; quadril para trás até alongar o posterior."
+  "d": "Joelhos semiflexionados; quadril para trás até alongar o posterior.",
+  "v": "https://www.youtube.com/watch?v=jSomWOwLiGE"
  },
  {
   "n": "Encolhimento de ombros",
@@ -162,7 +168,8 @@ self.MT_EXERCICIOS = [
   "n": "Agachamento livre",
   "g": "Quadríceps",
   "eq": "Barra",
-  "d": "Pés na largura dos ombros; desça quadril abaixo do joelho com coluna neutra."
+  "d": "Pés na largura dos ombros; desça quadril abaixo do joelho com coluna neutra.",
+  "v": "https://www.youtube.com/watch?v=rM6SDUdl9fs"
  },
  {
   "n": "Agachamento frontal",
@@ -180,7 +187,8 @@ self.MT_EXERCICIOS = [
   "n": "Leg press 45°",
   "g": "Quadríceps",
   "eq": "Máquina",
-  "d": "Desça até 90° sem tirar a lombar do encosto."
+  "d": "Desça até 90° sem tirar a lombar do encosto.",
+  "v": "https://www.youtube.com/watch?v=waAxlYvtCcI"
  },
  {
   "n": "Cadeira extensora",
@@ -240,7 +248,8 @@ self.MT_EXERCICIOS = [
   "n": "Elevação pélvica (hip thrust)",
   "g": "Posterior e glúteo",
   "eq": "Barra",
-  "d": "Costas no banco; suba o quadril até alinhar e aperte o glúteo 1 s."
+  "d": "Costas no banco; suba o quadril até alinhar e aperte o glúteo 1 s.",
+  "v": "https://www.youtube.com/watch?v=kvmT_ZlgVI0"
  },
  {
   "n": "Glúteo na polia (coice)",
@@ -294,7 +303,8 @@ self.MT_EXERCICIOS = [
   "n": "Desenvolvimento com halteres",
   "g": "Ombros",
   "eq": "Halteres",
-  "d": "Suba os halteres sem bater no topo; abdômen firme."
+  "d": "Suba os halteres sem bater no topo; abdômen firme.",
+  "v": "https://www.youtube.com/watch?v=eufDL9MmF8A"
  },
  {
   "n": "Desenvolvimento militar com barra",
@@ -312,7 +322,8 @@ self.MT_EXERCICIOS = [
   "n": "Elevação lateral",
   "g": "Ombros",
   "eq": "Halteres",
-  "d": "Cotovelos levemente flexionados; suba até a linha dos ombros."
+  "d": "Cotovelos levemente flexionados; suba até a linha dos ombros.",
+  "v": "https://www.youtube.com/watch?v=jannLx4RxKo"
  },
  {
   "n": "Elevação lateral na polia",
@@ -354,7 +365,8 @@ self.MT_EXERCICIOS = [
   "n": "Rosca direta com barra",
   "g": "Bíceps",
   "eq": "Barra",
-  "d": "Cotovelos fixos ao lado do corpo; sem balançar o tronco."
+  "d": "Cotovelos fixos ao lado do corpo; sem balançar o tronco.",
+  "v": "https://www.youtube.com/watch?v=Et1wgGMGW8w"
  },
  {
   "n": "Rosca alternada",
@@ -408,7 +420,8 @@ self.MT_EXERCICIOS = [
   "n": "Tríceps corda",
   "g": "Tríceps",
   "eq": "Polia",
-  "d": "Abra a corda no final do movimento; cotovelos fixos."
+  "d": "Abra a corda no final do movimento; cotovelos fixos.",
+  "v": "https://www.youtube.com/watch?v=M-DTY40JG9M"
  },
  {
   "n": "Tríceps francês",
@@ -450,7 +463,8 @@ self.MT_EXERCICIOS = [
   "n": "Prancha",
   "g": "Core",
   "eq": "Peso do corpo",
-  "d": "Corpo reto da cabeça ao calcanhar; abdômen e glúteo contraídos."
+  "d": "Corpo reto da cabeça ao calcanhar; abdômen e glúteo contraídos.",
+  "v": "https://www.youtube.com/watch?v=u2XrXohWtVo"
  },
  {
   "n": "Prancha lateral",
