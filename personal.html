@@ -2045,17 +2045,34 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var totalAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; })
       .reduce(function (s, p) { return s + (+p.valor || 0); }, 0);
     var pagoMes = pgs.some(function (p) { return (p.data || "").slice(0, 7) === mesAtual; });
+    // ---- financeiro do aluno em 4 blocos: situação, contrato, pacotes, histórico ----
+    var rotSec = function (t) { return "<div style='font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--cinza-2);text-transform:uppercase;margin:14px 0 6px;'>" + t + "</div>"; };
+    var MESES_ROT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var mesNome = MESES_ROT[+mesAtual.slice(5, 7) - 1];
+    var nPagsAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; }).length;
+    var situacao = "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;'>" +
+      "<div style='background:" + (pagoMes ? "rgba(74,222,128,.08)" : "rgba(251,191,36,.08)") + ";border:1px solid " + (pagoMes ? "rgba(74,222,128,.4)" : "rgba(251,191,36,.4)") + ";border-radius:12px;padding:10px 13px;'>" +
+      "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>" + mesNome + "</div>" +
+      "<div style='font-size:17px;font-weight:800;color:" + (pagoMes ? "#4ade80" : "#fbbf24") + ";'>" + (pagoMes ? "✓ pago" : "em aberto") + "</div>" +
+      (!pagoMes && ct ? "<div class='muted' style='font-size:11.5px;'>vence dia " + ct.diaVenc + "</div>" : "") + "</div>" +
+      "<div style='background:#121016;border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
+      "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>recebido em " + ano + "</div>" +
+      "<div style='font-size:17px;font-weight:800;'>" + S.fmtBRL(totalAno) + "</div>" +
+      "<div class='muted' style='font-size:11.5px;'>" + (nPagsAno === 1 ? "1 pagamento" : nPagsAno + " pagamentos") + "</div></div></div>";
     var ctBloco;
     if (pl) {
-      ctBloco = "Contrato: <b>" + esc(pl.nome) + "</b> · " + S.fmtBRL(+pl.valor) + "/mês · vence dia " + ct.diaVenc +
-        (ct.inicio ? " · desde " + S.fmtData(ct.inicio) : "") +
-        ' <button class="btn sec mini" data-pfctrenova="' + ct.id + '" style="margin-left:8px;" title="começa um ciclo novo hoje (ex.: renovou o trimestral)">Renovar ciclo</button>' +
-        ' <button class="btn sec mini" data-pfctrm="' + ct.id + '">Encerrar contrato</button>';
+      ctBloco = rotSec("Contrato") +
+        "<div><b>" + esc(pl.nome) + "</b> — " + S.fmtBRL(+pl.valor) + "/mês</div>" +
+        "<div class='muted' style='font-size:12.5px;margin-top:2px;'>vence todo dia " + ct.diaVenc + (ct.inicio ? " · desde " + S.fmtData(ct.inicio) : "") + "</div>" +
+        "<div style='display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;'>" +
+        '<button class="btn sec mini" data-pfctrenova="' + ct.id + '" title="começa um ciclo novo hoje (ex.: renovou o trimestral)">Renovar ciclo</button>' +
+        '<button class="btn sec mini" data-pfctrm="' + ct.id + '">Encerrar contrato</button></div>';
     } else {
       var plOpts = (st.planosPT || []).map(function (p) {
         return '<option value="' + p.id + '">' + esc(rotuloPlano(p)) + "</option>";
       }).join("");
-      ctBloco = "Sem contrato ativo — valor atual: <b>" + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "a combinar") + "</b>" +
+      ctBloco = rotSec("Contrato") +
+        "Sem contrato ativo — valor atual: <b>" + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "a combinar") + "</b>" +
         (plOpts
           ? '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 2px;">' +
             '<select id="pfCtPlano" style="flex:2;min-width:170px;"><option value="">Escolha o plano…</option>' + plOpts + "</select>" +
@@ -2065,26 +2082,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var pc = a.pacote;
     var restaPc = pc ? Math.max(0, (+pc.total || 0) - (+pc.usadas || 0)) : 0;
-    var pcBloco = pc && +pc.total > 0
-      ? "<br>Pacote de sessões: <b>usou " + (+pc.usadas || 0) + " de " + pc.total + "</b> · " + (restaPc === 1 ? "resta 1" : "restam " + restaPc) +
-        (restaPc <= 2 ? ' <span class="tag alerta">renovar</span>' : "") +
-        ' <button class="btn sec mini" data-pfpacote="1" style="margin-left:6px;">+ Vender mais</button>'
-      : '<br><button class="btn sec mini" data-pfpacote="1" style="margin-top:6px;">+ Vender pacote de sessões</button> <span class="muted" style="font-size:12px;">pra quem paga por sessão (ex.: pacote de 10)</span>';
-    var svBloco = (a.servPacotes || []).filter(function (p) { return (+p.total || 0) - (+p.usadas || 0) > 0; })
-      .map(function (p) {
+    var linhaPacote = function (nome, usadas, total, resta, botao, tagTxt) {
+      return "<div style='display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--linha);font-size:13px;'>" +
+        "<span>" + nome + " <span class='muted'>· usou " + usadas + " de " + total + " · " + (resta === 1 ? "resta 1" : "restam " + resta) + "</span>" +
+        (resta <= 2 ? ' <span class="tag alerta">' + tagTxt + "</span>" : "") + "</span>" +
+        "<span style='flex:none;'>" + botao + "</span></div>";
+    };
+    var pcLinhas = "";
+    if (pc && +pc.total > 0) {
+      pcLinhas += linhaPacote("<b>Sessões</b>", +pc.usadas || 0, pc.total, restaPc,
+        '<button class="btn sec mini" data-pfpacote="1">+ Vender mais</button>', "renovar");
+    }
+    (a.servPacotes || []).filter(function (p) { return (+p.total || 0) - (+p.usadas || 0) > 0; })
+      .forEach(function (p) {
         var restaSv = (+p.total || 0) - (+p.usadas || 0);
-        return "<br>Pacote de " + esc(p.nome) + ": <b>usou " + (+p.usadas || 0) + " de " + p.total + "</b> · " + (restaSv === 1 ? "resta 1" : "restam " + restaSv) +
-          (restaSv <= 2 ? ' <span class="tag alerta">acabando</span>' : "") +
-          ' <button class="btn mini" data-svusaperfil="' + esc(p.id) + '" style="margin-left:6px;">Usar 1</button>';
-      }).join("");
-    $("pfFin").innerHTML =
-      ctBloco + pcBloco + svBloco +
-      "<br>Este mês: " + (pagoMes ? "<b style='color:#4ade80;'>✓ pago</b>" : "<b style='color:#fbbf24;'>em aberto</b>") +
-      " · Recebido em " + ano + ": <b>" + S.fmtBRL(totalAno) + "</b>" +
-      (pgs.length ? "<div class='muted' style='font-size:12.5px;margin-top:6px;'>Últimos: " + pgs.slice(0, 5).map(function (p) {
-        return S.fmtData(p.data) + " (" + S.fmtBRL(+p.valor) + (p.desc ? " · " + esc(p.desc) : "") + (p.forma ? " · " + p.forma : "") +
-          ') <a href="#" data-recibo="' + p.id + '" style="color:var(--roxo);">recibo</a>';
-      }).join(" · ") + "</div>" : "<div class='muted' style='font-size:12.5px;margin-top:6px;'>Nenhum pagamento registrado ainda.</div>");
+        pcLinhas += linhaPacote("<b>" + esc(p.nome) + "</b>", +p.usadas || 0, p.total, restaSv,
+          '<button class="btn mini" data-svusaperfil="' + esc(p.id) + '">Usar 1</button>', "acabando");
+      });
+    var pcBloco = pcLinhas
+      ? rotSec("Pacotes") + pcLinhas
+      : (pc && +pc.total > 0 ? "" : rotSec("Pacotes") +
+        '<button class="btn sec mini" data-pfpacote="1">+ Vender pacote de sessões</button>' +
+        " <span class='muted' style='font-size:12px;'>pra quem paga por sessão (ex.: pacote de 10)</span>");
+    var histBloco = rotSec("Últimos pagamentos") + (pgs.length
+      ? pgs.slice(0, 6).map(function (p) {
+          return "<div style='display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--linha);font-size:13px;'>" +
+            "<span><b>" + S.fmtData(p.data) + "</b> <span class='muted'>· " + S.fmtBRL(+p.valor) +
+            (p.forma ? " · " + esc(p.forma) : "") + (p.desc ? " · " + esc(p.desc) : "") + "</span></span>" +
+            '<a href="#" data-recibo="' + p.id + '" style="color:var(--roxo);flex:none;">recibo</a></div>';
+        }).join("") +
+        (pgs.length > 6 ? "<div class='muted' style='font-size:12px;margin-top:6px;'>Mais antigos ficam em Pagamentos → Histórico.</div>" : "")
+      : "<div class='muted' style='font-size:12.5px;'>Nenhum pagamento registrado ainda.</div>");
+    $("pfFin").innerHTML = situacao + ctBloco + pcBloco + histBloco;
     // frequência: sessões feitas por mês
     var porMes = {};
     st.sessoes.forEach(function (s) { if (s.alunoId === id && s.feita) porMes[(s.data || "").slice(0, 7)] = (porMes[(s.data || "").slice(0, 7)] || 0) + 1; });
