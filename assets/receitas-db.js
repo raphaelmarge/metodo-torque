@@ -1680,5 +1680,72 @@ self.MT_RECEITAS = [
    "Quando firmar e soltar, vire e doure o outro lado por 2 minutos."
   ],
   "dica": "Gosto de pão de queijo sem forno e em 10 minutos — dobre a receita nos dias de treino pesado."
+ },
+ {
+  "id": "rc76",
+  "n": "Strogonoff fit de frango com iogurte",
+  "cat": "Almoço e jantar",
+  "tempo": 25,
+  "rende": 3,
+  "k": 320,
+  "pt": 34,
+  "ing": [
+   "500 g de filé de frango em tiras",
+   "200 g de iogurte natural desnatado",
+   "150 g de champignon fresco fatiado",
+   "2 col. sopa de extrato de tomate",
+   "1 cebola picada e alho a gosto",
+   "1 col. chá de mostarda e páprica"
+  ],
+  "modo": [
+   "Doure o frango com a cebola e o alho; junte o champignon e refogue até murchar.",
+   "Acrescente o extrato de tomate, a mostarda e a páprica; cozinhe 2 minutos.",
+   "Desligue o fogo, espere baixar a fervura e misture o iogurte sem deixar ferver (senão talha)."
+  ],
+  "dica": "O iogurte entra no lugar do creme de leite: mesma cremosidade, metade da gordura e muito mais proteína."
+ },
+ {
+  "id": "rc77",
+  "n": "Salada morna de shimeji com edamame",
+  "cat": "Almoço e jantar",
+  "tempo": 15,
+  "rende": 2,
+  "k": 210,
+  "pt": 15,
+  "ing": [
+   "200 g de shimeji desfiado",
+   "150 g de edamame cozido",
+   "1 col. sopa de shoyu (ou aminos de coco)",
+   "1 col. chá de óleo de gergelim",
+   "Gergelim torrado e cebolinha pra finalizar"
+  ],
+  "modo": [
+   "Salteie o shimeji em frigideira bem quente até dourar as pontas.",
+   "Junte o edamame, o shoyu e o óleo de gergelim; misture por 1 minuto.",
+   "Finalize com gergelim torrado e cebolinha por cima."
+  ],
+  "dica": "Prato vegano com 15 g de proteína por porção — serve de acompanhamento ou de jantar leve completo."
+ },
+ {
+  "id": "rc78",
+  "n": "Overnight oats de banana com chia",
+  "cat": "Café da manhã",
+  "tempo": 5,
+  "rende": 1,
+  "k": 330,
+  "pt": 14,
+  "ing": [
+   "40 g de aveia em flocos",
+   "1 col. sopa de chia",
+   "150 ml de leite desnatado (ou bebida vegetal)",
+   "1 banana em rodelas",
+   "1 col. chá de canela e 1 col. chá de mel"
+  ],
+  "modo": [
+   "Misture a aveia, a chia, o leite e a canela num pote com tampa.",
+   "Cubra com as rodelas de banana e o fio de mel.",
+   "Feche e deixe na geladeira de um dia pro outro; de manhã é só comer gelado."
+  ],
+  "dica": "Feito na noite anterior em 5 minutos — o café da manhã de quem sai cedo e vive pulando a primeira refeição."
  }
 ];
