@@ -8815,5 +8815,305 @@ self.MT_EXERCICIOS = [
   "g": "Reabilitação e terceira idade",
   "eq": "Peso corporal",
   "d": "Perto de um apoio, fique numa perna só e feche os olhos por alguns segundos; troque a perna."
+ },
+ {
+  "n": "Remada invertida no TRX",
+  "g": "Costas",
+  "eq": "TRX",
+  "d": "Corpo em prancha inclinada, puxe o peito até as alças mantendo o quadril alinhado do início ao fim."
+ },
+ {
+  "n": "Crucifixo invertido no TRX",
+  "g": "Ombros",
+  "eq": "TRX",
+  "d": "Inclinado pra trás segurando as alças, abra os braços em Y ou T apertando as escápulas."
+ },
+ {
+  "n": "Pistol assistido no TRX",
+  "g": "Quadríceps",
+  "eq": "TRX",
+  "d": "Segurando as alças, desça no agachamento numa perna até embaixo; use os braços só o mínimo pra subir."
+ },
+ {
+  "n": "Levantamento de anilha até o peito",
+  "g": "Funcional e Cross",
+  "eq": "Anilha",
+  "d": "Anilha no chão entre os pés; suba com as pernas e puxe até o peito colando os cotovelos no corpo."
+ },
+ {
+  "n": "Rotação de tronco com anilha sentado",
+  "g": "Core",
+  "eq": "Anilha",
+  "d": "Sentado com o tronco levemente inclinado, gire a anilha de um lado ao outro sem curvar a lombar."
+ },
+ {
+  "n": "Ponte de glúteo com anilha no quadril",
+  "g": "Posterior e glúteo",
+  "eq": "Anilha",
+  "d": "Anilha apoiada no quadril; suba apertando o glúteo e segure um segundo no topo."
+ },
+ {
+  "n": "Caminhada do fazendeiro com anilhas",
+  "g": "Funcional e Cross",
+  "eq": "Anilha",
+  "d": "Uma anilha pesada em cada mão, ande em linha reta com o tronco ereto e os ombros pra trás."
+ },
+ {
+  "n": "Flexão de pernas na bola suíça",
+  "g": "Posterior e glúteo",
+  "eq": "Bola suíça",
+  "d": "Deitado com os calcanhares na bola, suba o quadril e puxe a bola com os pés dobrando os joelhos."
+ },
+ {
+  "n": "Passe de bola suíça mão-pé",
+  "g": "Core",
+  "eq": "Bola suíça",
+  "d": "Deitado, passe a bola das mãos pros pés no meio do movimento de canivete, sem encostar no chão."
+ },
+ {
+  "n": "Ondas alternadas na corda naval",
+  "g": "Cardio",
+  "eq": "Corda naval",
+  "d": "Joelhos semiflexionados, faça ondas rápidas alternando os braços sem travar a respiração."
+ },
+ {
+  "n": "Batida dupla na corda naval",
+  "g": "Funcional e Cross",
+  "eq": "Corda naval",
+  "d": "Levante as duas pontas juntas e bata no chão com força usando o corpo inteiro."
+ },
+ {
+  "n": "Ondas com deslocamento lateral na corda naval",
+  "g": "Cardio",
+  "eq": "Corda naval",
+  "d": "Mantenha as ondas enquanto dá passos laterais pra um lado e pro outro."
+ },
+ {
+  "n": "Círculos externos na corda naval",
+  "g": "Ombros",
+  "eq": "Corda naval",
+  "d": "Desenhe círculos pra fora com cada mão ao mesmo tempo; ombros longe da orelha."
+ },
+ {
+  "n": "Dois apoios por quadrado na escada de agilidade",
+  "g": "Cardio",
+  "eq": "Escada de agilidade",
+  "d": "Pise com os dois pés em cada quadrado, o mais rápido que conseguir, braços acompanhando."
+ },
+ {
+  "n": "Entra e sai lateral na escada de agilidade",
+  "g": "Cardio",
+  "eq": "Escada de agilidade",
+  "d": "De lado pra escada, entre e saia de cada quadrado tocando leve com a ponta do pé."
+ },
+ {
+  "n": "Ida e volta com toque no cone",
+  "g": "Cardio",
+  "eq": "Cones",
+  "d": "Sprint até o cone, toque com a mão flexionando as pernas (não a lombar) e volte de costas."
+ },
+ {
+  "n": "Isometria de agachamento na parede com anilha no colo",
+  "g": "Quadríceps",
+  "eq": "Anilha",
+  "d": "Na cadeirinha da parede, segure a anilha no colo e mantenha a coxa paralela ao chão."
+ },
+ {
+  "n": "Prancha com toque alternado no cone à frente",
+  "g": "Core",
+  "eq": "Cones",
+  "d": "Em prancha alta, toque o cone à frente alternando as mãos sem girar o quadril."
+ },
+ {
+  "n": "Isometria de ponte unilateral",
+  "g": "Posterior e glúteo",
+  "eq": "Peso corporal",
+  "d": "Na ponte de glúteo, estenda uma perna e segure o quadril nivelado por 10 a 20 segundos."
+ },
+ {
+  "n": "Segurada de halter na posição 90 graus",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Pare a rosca no meio do caminho, cotovelo a 90 graus, e segure o tempo combinado sem balançar."
+ },
+ {
+  "n": "Isometria de panturrilha na ponta dos pés",
+  "g": "Quadríceps",
+  "eq": "Peso corporal",
+  "d": "Suba na ponta dos pés e fique lá; para aumentar, faça numa perna só segurando num apoio."
+ },
+ {
+  "n": "Chute frontal alternado (teep)",
+  "g": "Boxe e lutas",
+  "eq": "Peso corporal",
+  "d": "Empurre com a sola do pé na altura do abdômen, joelho alto antes de estender; volte à base."
+ },
+ {
+  "n": "Chute circular no ar (roundhouse)",
+  "g": "Boxe e lutas",
+  "eq": "Peso corporal",
+  "d": "Gire o pé de apoio e o quadril juntos; a canela cruza na diagonal e a guarda continua fechada."
+ },
+ {
+  "n": "Joelhada alternada com puxada de braços",
+  "g": "Boxe e lutas",
+  "eq": "Peso corporal",
+  "d": "Puxe as mãos de cima pra baixo enquanto sobe o joelho oposto com força; troque em ritmo."
+ },
+ {
+  "n": "Cotovelada horizontal alternada",
+  "g": "Boxe e lutas",
+  "eq": "Peso corporal",
+  "d": "Gire o tronco e cruze o cotovelo na altura do queixo imaginário; a outra mão protege o rosto."
+ },
+ {
+  "n": "Sprawl com soco duplo",
+  "g": "Boxe e lutas",
+  "eq": "Peso corporal",
+  "d": "Jogue o quadril pro chão como quem defende queda, suba e dispare dois socos diretos."
+ },
+ {
+  "n": "Prancha lateral com elevação de perna",
+  "g": "Core",
+  "eq": "Peso corporal",
+  "d": "Na prancha lateral, suba e desça a perna de cima estendida sem deixar o quadril cair."
+ },
+ {
+  "n": "Apoio de corvo (crow pose)",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso corporal",
+  "d": "Joelhos apoiados na parte de trás dos braços, incline o peso à frente até os pés saírem do chão."
+ },
+ {
+  "n": "Caminhada de urso",
+  "g": "Ginástica e calistenia",
+  "eq": "Peso corporal",
+  "d": "Quatro apoios com joelhos a um palmo do chão; ande à frente e atrás com passos curtos."
+ },
+ {
+  "n": "Subida de degrau explosiva alternada",
+  "g": "Quadríceps",
+  "eq": "Step/Caixa",
+  "d": "Suba no step com impulso e troque as pernas no ar; aterrisse macio com o pé inteiro."
+ },
+ {
+  "n": "Levantar da cadeira com abraço no peito",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso corporal",
+  "d": "Braços cruzados no peito, levante e sente devagar; o desafio é não usar as mãos."
+ },
+ {
+  "n": "Caminhada com calcanhar e ponta alternados",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso corporal",
+  "d": "Alguns passos no calcanhar, alguns na ponta; perto de um apoio pra segurança."
+ },
+ {
+  "n": "Aperto de bolinha com as mãos",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Bolinha",
+  "d": "Aperte a bolinha por 3 segundos e solte; fortalece a pegada pra abrir potes e segurar corrimão."
+ },
+ {
+  "n": "Polichinelo na água",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Água no peito, abra e feche braços e pernas; a resistência da água protege os joelhos."
+ },
+ {
+  "n": "Corrida na água funda com flutuador",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Com o cinto flutuador, pedale como se corresse sem tocar o fundo; tronco levemente à frente."
+ },
+ {
+  "n": "Chute de costas segurando a borda",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "De barriga pra cima segurando a borda, bata as pernas estendidas com o quadril perto da superfície."
+ },
+ {
+  "n": "Adução de quadril na máquina",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Feche as pernas contra a resistência devagar e volte mais devagar ainda; sem bater os pesos."
+ },
+ {
+  "n": "Encolhimento de ombro na máquina",
+  "g": "Costas",
+  "eq": "Máquina",
+  "d": "Suba os ombros em direção às orelhas e desça devagar; sem girar os ombros nem dobrar os braços."
+ },
+ {
+  "n": "Remada unilateral no TRX com rotação",
+  "g": "Costas",
+  "eq": "TRX",
+  "d": "Segure uma alça só; ao remar, gire o tronco abrindo o braço livre pra trás."
+ },
+ {
+  "n": "Fallout no TRX",
+  "g": "Core",
+  "eq": "TRX",
+  "d": "De joelhos com as alças à frente, deixe o corpo cair inclinando os braços acima da cabeça e volte com o abdômen."
+ },
+ {
+  "n": "Press de peito no TRX (alças curtas)",
+  "g": "Peito",
+  "eq": "TRX",
+  "d": "Alças curtas, corpo bem inclinado; empurre até estender os cotovelos mantendo o quadril firme."
+ },
+ {
+  "n": "Oito com anilha ao redor do corpo",
+  "g": "Core",
+  "eq": "Anilha",
+  "d": "Passe a anilha ao redor da cintura desenhando um oito, alternando o sentido; abdômen sempre firme."
+ },
+ {
+  "n": "Press Pallof com anilha na polia baixa",
+  "g": "Core",
+  "eq": "Polia",
+  "d": "De lado pra polia, estenda os braços à frente e resista à rotação por 5 segundos antes de voltar."
+ },
+ {
+  "n": "Puxada de corda sentado no chão",
+  "g": "Costas",
+  "eq": "Corda naval",
+  "d": "Sentado com pernas estendidas, puxe a corda mão sobre mão como se içasse um peso."
+ },
+ {
+  "n": "Abdominal com passe de bola no V",
+  "g": "Core",
+  "eq": "Bola suíça",
+  "d": "No canivete, troque a bola entre mãos e pés a cada subida sem deixar a lombar arquear demais."
+ },
+ {
+  "n": "Ondas ajoelhado na corda naval",
+  "g": "Core",
+  "eq": "Corda naval",
+  "d": "De joelhos, faça as ondas com o tronco firme; sem o apoio das pernas o abdômen trabalha dobrado."
+ },
+ {
+  "n": "Corrida lateral na escada de agilidade",
+  "g": "Cardio",
+  "eq": "Escada de agilidade",
+  "d": "Atravesse a escada de lado com um pé em cada quadrado, olhando pra frente e não pros pés."
+ },
+ {
+  "n": "Salto com giro de 180 graus",
+  "g": "Funcional e Cross",
+  "eq": "Peso corporal",
+  "d": "Salte girando meia-volta e aterrisse macio de frente pro outro lado; alterne o sentido do giro."
+ },
+ {
+  "n": "Descida lenta na barra fixa (negativa)",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Suba com apoio ou salto e desça em 5 segundos controlando; ótima ponte pra primeira barra completa."
+ },
+ {
+  "n": "Flexão com mãos em diamante no joelho",
+  "g": "Tríceps",
+  "eq": "Peso corporal",
+  "d": "Apoiado nos joelhos, mãos formando um diamante; desça com os cotovelos rente ao corpo."
  }
 ];
