@@ -6217,13 +6217,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   })();
   function exercicioPorNome(st, nome) {
     var ex = (st.exercicios || []).find(function (e) { return e.nome.toLowerCase() === nome.toLowerCase(); });
+    var cat = (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nome.toLowerCase(); });
     if (!ex) {
-      var cat = (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === nome.toLowerCase(); });
-      ex = { id: S.uid(), nome: cat ? cat.n : nome, grupo: (cat && cat.g) || "", video: "", descricao: (cat && cat.d) || "" };
+      ex = { id: S.uid(), nome: cat ? cat.n : nome, grupo: (cat && cat.g) || "", video: (cat && cat.v) || "", descricao: (cat && cat.d) || "" };
       st.exercicios.push(ex);
+    } else if (!ex.video && cat && cat.v) {
+      // cópia antiga sem vídeo herda o vídeo padrão do catálogo (o professor pode trocar)
+      ex.video = cat.v;
     }
     return ex;
   }
+  window.__exPorNome = exercicioPorNome; // testes
   $("tplAplicar").addEventListener("click", function () {
     var alunoId = $("tAluno").value, tpl = TEMPLATES_FICHA[$("tplSel").value];
     if (!alunoId) { alert("Escolha o aluno primeiro."); return; }
@@ -6724,7 +6728,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     (self.MT_EXERCICIOS || []).forEach(function (c) {
       if (meus[c.n.toLowerCase()]) return;
-      itens.push({ nome: c.n, grupo: c.g, eq: c.eq || "", video: "", id: null, seu: false, semDesc: false, mov: movimentoDe(c.n, c.g), fav: !!fav[c.n.toLowerCase()] });
+      itens.push({ nome: c.n, grupo: c.g, eq: c.eq || "", video: c.v || "", id: null, seu: false, semDesc: false, mov: movimentoDe(c.n, c.g), fav: !!fav[c.n.toLowerCase()] });
     });
     return itens;
   }
