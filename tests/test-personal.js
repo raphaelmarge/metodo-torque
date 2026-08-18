@@ -2056,6 +2056,23 @@ async function abaPt(p, a) {
     ok(auto.subiram === "t-auto1,t-auto2" && auto.pendentes === 0,
       "abrir o painel republica sozinho os apps atrasados — sem clique nenhum");
     ok(!auto.tocouPush, "a republicação automática não dispara notificação pro aluno (ele não pediu nada)");
+    /* Conta e lembretes saíram do Início e viraram a área "Ajustes", na gaveta
+     * do menu ☰ — como em qualquer app. Fica por último no MENU de propósito:
+     * as 4 primeiras áreas viram aba fixa embaixo, e Ajustes não é uma delas. */
+    const ajustes = await p.evaluate(() => {
+      const S = window.MTStore;
+      const h = window.__montaAppAluno({ id: "aj1", nome: "Aluno Teste", email: "a@b.com", ativo: true,
+        desde: S.todayISO(), appTokenP: "t-aj", acessoEm: "2026-08-18T00:00:00Z", metaSemana: 3 }, "s1");
+      const menu = (h.match(/\['ajustes',[\s\S]{0,40}/) || [""])[0];
+      const pos = h.indexOf("'ajustes'"), posPag = h.indexOf("'pagamento'");
+      return { noMenu: /'Ajustes'/.test(h), depoisDoPlano: pos > posPag,
+        rota: /Minha conta\|Meu login\|Lembretes\/\.test\(t\)\)return 'ajustes'/.test(h),
+        semNoInicio: !/Meu login\|Minha conta\|Desafio\/\.test\(t\)\)return 'inicio'/.test(h) };
+    });
+    ok(ajustes.noMenu && ajustes.depoisDoPlano,
+      "o app do aluno ganha a área Ajustes, no fim do menu (fica na gaveta ☰, não nas abas de baixo)");
+    ok(ajustes.rota && ajustes.semNoInicio,
+      "Minha conta, Meu login e Lembretes saem do Início e vão pra Ajustes");
     /* Resposta que não é JSON (função antiga, erro do gateway) estourava no
      * r.json() e virava "Sem conexão com a nuvem" — mandando o professor
      * procurar defeito na internet em vez de republicar a função. */
