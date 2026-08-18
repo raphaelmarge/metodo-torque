@@ -612,6 +612,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn" id="tplAplicar">Aplicar no aluno</button>
       </div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
+      <!-- a ficha só chega no celular do aluno depois de publicar; até agora a
+           única porta era o botão de lote lá na aba "Em grupo" -->
+      <button class="btn" id="tEnviaApp" style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
+      <p id="tEnvioStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
       <input type="file" id="fCapaFile" accept="image/*" hidden>
       <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
@@ -699,6 +703,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="taIA" title="a IA lê a anamnese completa e prescreve o treino (precisa da conta na nuvem)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m12 3.5 2.3 5.3 5.7.5-4.3 3.8 1.3 5.6-5-3-5 3 1.3-5.6L4 9.3l5.7-.5z'/></svg> Gerar com IA</button>
         <button class="btn sec" id="taEvoluir" title="evolui séries/reps da ficha atual (progressão dupla)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Evoluir semana</button>
       </div>
+      <button class="btn" id="taEnviaApp" style="margin-top: 10px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
       <p id="taStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
 
@@ -3930,8 +3935,53 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }, function () { falhas += grupo.length; lote(); });
     })();
   }
-  window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes }; // testes
+  /* Publica o app de UM aluno. A ficha nova só chega no celular dele depois
+   * disto — e até agora a única porta era o botão de lote, que fica em
+   * Treinos → Em grupo, longe de onde a ficha é montada. */
+  function publicaAppDe(alunoId, cb) {
+    cb = cb || function () {};
+    var st = load();
+    var a = st.alunos.find(function (x) { return x.id === alunoId; });
+    if (!a) { cb({ erro: "Aluno não encontrado." }); return; }
+    if (!a.appTokenP) { cb({ erro: "Este aluno ainda não tem o app criado. Abra o perfil dele e toque em Enviar acesso do app." }); return; }
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { cb({ erro: "Entre na sua conta (card Sua ilha) pra publicar o app." }); return; }
+    var stampP = new Date().toISOString();
+    nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid,
+      dados: { html: montaAppAluno(a, stampP), stamp: stampP }, atualizado: stampP }])
+      .then(function (r) {
+        if (r && r.error) { cb({ erro: "Não deu pra publicar agora: " + r.error.message }); return; }
+        var st2 = load();
+        var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
+        if (a2) a2.appPubEm = stampP;
+        S.write("ptStudio", st2);
+        pushAluno(a.appTokenP, "Treino novo no seu app!", "Seu personal atualizou o treino — bora conferir.");
+        render();
+        cb({ ok: true, nome: a.nome });
+      }, function () { cb({ erro: "Sem conexão com a nuvem agora — tenta de novo." }); });
+  }
+  // liga qualquer botão "enviar pro app" a um seletor de aluno + caixa de recado
+  function ligaEnvioApp(idBotao, idSeletor, idStatus) {
+    var b = $(idBotao);
+    if (!b) return;
+    b.addEventListener("click", function () {
+      var id = $(idSeletor).value;
+      if (!id) { alert("Escolha o aluno primeiro."); return; }
+      b.disabled = true;
+      var rot = b.innerHTML;
+      b.textContent = "Enviando…";
+      publicaAppDe(id, function (r) {
+        b.disabled = false; b.innerHTML = rot;
+        if (r.erro) { $(idStatus).textContent = r.erro; alert(r.erro); return; }
+        $(idStatus).innerHTML = "<b style='color:#4ade80;'>Enviado!</b> O treino de " + esc(r.nome.split(" ")[0]) +
+          " já está no app dele — na próxima vez que abrir, aparece atualizado.";
+      });
+    });
+  }
+  window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes, publicaUm: publicaAppDe }; // testes
   $("btnPubPendentes").addEventListener("click", publicaAppsPendentes);
+  ligaEnvioApp("taEnviaApp", "taAluno", "taStatus");
+  ligaEnvioApp("tEnviaApp", "tAluno", "tEnvioStatus");
 
   // ---------- agenda ----------
   function bloqueioDe(st, iso) {

@@ -1925,6 +1925,33 @@ async function abaPt(p, a) {
     ok(visivel.caixaVisivel && visivel.temRecado,
       "clicando de outra aba, o painel abre a aba certa e o recado do acesso fica VISÍVEL (antes sumia e parecia que nada acontecia)");
     ok(visivel.naStatus, "o cadastro novo tem caixa de recado DENTRO do dialog (o aviso de trás fica escondido por ele)");
+    /* A ficha só chega no celular do aluno depois de publicar o app. A única
+     * porta era o botão de lote, escondido na aba "Em grupo" — quem montava a
+     * ficha não tinha como mandar. Agora existe o envio de UM aluno, e o botão
+     * está nas duas abas onde a ficha é feita. */
+    const envio = await p.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const a = st.alunos[0];
+      a.appTokenP = a.appTokenP || "tok-envio";
+      S.write("ptStudio", st);
+      let publicado = null;
+      const q = () => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "insert", "update", "delete", "neq", "is"].forEach((m) => { o[m] = () => o; });
+        o.then = (f) => Promise.resolve({ data: [], error: null }).then(f);
+        o.upsert = (linhas) => { publicado = linhas; return Promise.resolve({ error: null }); }; return o; };
+      window.__cloudOrig = window.__cloudOrig || S.cloud;
+      S.cloud = () => ({ aid: "a1", client: {
+        auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
+        from: () => q(), rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
+      } });
+      const r = await new Promise((res) => window.__appsPendentes.publicaUm(a.id, res));
+      S.cloud = window.__cloudOrig;
+      return { r: r, token: publicado && publicado[0].token, temHtml: !!(publicado && String(publicado[0].dados.html).length > 5000),
+        pubEm: !!(S.read("ptStudio", {}).alunos.find((x) => x.id === a.id) || {}).appPubEm,
+        botaoFichas: !!document.getElementById("tEnviaApp"), botaoAuto: !!document.getElementById("taEnviaApp") };
+    });
+    ok(envio.r.ok && envio.token && envio.temHtml, "dá pra publicar o app de UM aluno (o app inteiro vai pra nuvem)");
+    ok(envio.pubEm, "publicar marca a data no aluno (ele sai da fila de 'apps atualizados')");
+    ok(envio.botaoFichas && envio.botaoAuto, "o botão 'Enviar pro app do aluno' está nas duas abas onde a ficha é montada");
   }
   {
     const comMural = await p.evaluate(() => {
