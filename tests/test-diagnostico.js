@@ -23,7 +23,7 @@ const CENARIOS = [
     // desativou a legada. TUDO de nuvem parou, e a tela mandava procurar
     // defeito na função — que estava publicada e correta.
     nome: "chave pública do site revogada (401 no próprio banco)",
-    rest: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
+    rest: { status: 401, body: { message: "Invalid API key", code: "INVALID_CREDENTIALS" } },
     resposta: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
     espera: [/chave pública do site não vale mais/, /Legacy API keys|Publishable/, /pelo mesmo motivo/],
     naoEspera: [/Verify JWT/, /projeto não está pausado/],
@@ -60,7 +60,7 @@ const CENARIOS = [
     nome: "função recusa a chamada (Verify JWT)",
     resposta: { status: 401, body: { message: "Invalid JWT" } },
     espera: [/recusou a chamada/, /Verify JWT/],
-    naoEspera: [/publicada/],
+    naoEspera: [/chat-envia publicada/],
   },
 ];
 
@@ -74,11 +74,14 @@ const CENARIOS = [
     // nuvem simulada: nada sai para a internet de verdade
     await ctx.route("**/functions/v1/chat-envia", (r) =>
       r.fulfill({ status: c.resposta.status, contentType: "application/json", body: JSON.stringify(c.resposta.body) }));
-    await ctx.route("**/rest/v1/", (r) => r.fulfill({
+    await ctx.route("**/rest/v1/rpc/app_aluno_busca", (r) => r.fulfill({
       status: (c.rest && c.rest.status) || 200,
       contentType: "application/json",
-      body: JSON.stringify((c.rest && c.rest.body) || { paths: {} }),
+      body: JSON.stringify((c.rest && c.rest.body) === undefined ? null : (c.rest && c.rest.body) || null),
     }));
+    // funções que o diagnóstico também pinga: fora do foco de cada cenário
+    await ctx.route("**/functions/v1/envia-email", (r) => r.fulfill({ status: 404, body: "nao publicada" }));
+    await ctx.route("**/functions/v1/push-envia", (r) => r.fulfill({ status: 404, body: "nao publicada" }));
     const p = await ctx.newPage();
     p.on("pageerror", (e) => erros.push(e.message));
     await p.goto(BASE + "/diagnostico.html");
@@ -99,10 +102,12 @@ const CENARIOS = [
      * acusou injustamente a chave do projeto e mandou trocar o que funcionava. */
     const ctx = await b.newContext();
     let cabecalhos = null;
-    await ctx.route("**/rest/v1/", (r) => {
+    await ctx.route("**/rest/v1/rpc/app_aluno_busca", (r) => {
       cabecalhos = r.request().headers();
-      r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+      r.fulfill({ status: 200, contentType: "application/json", body: "null" });
     });
+    await ctx.route("**/functions/v1/envia-email", (r) => r.fulfill({ status: 404, body: "x" }));
+    await ctx.route("**/functions/v1/push-envia", (r) => r.fulfill({ status: 404, body: "x" }));
     await ctx.route("**/functions/v1/chat-envia", (r) =>
       r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true,"ia":true}' }));
     const p = await ctx.newPage();
@@ -118,9 +123,11 @@ const CENARIOS = [
     // testador de chave: descobrir qual chave o projeto aceita sem publicar o
     // site a cada palpite. E ele NUNCA pode encorajar o uso de chave secreta.
     const ctx = await b.newContext();
-    await ctx.route("**/rest/v1/", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+    await ctx.route("**/rest/v1/rpc/app_aluno_busca", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "null" }));
     await ctx.route("**/functions/v1/chat-envia", (r) =>
       r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true,"ia":true}' }));
+    await ctx.route("**/functions/v1/envia-email", (r) => r.fulfill({ status: 404, body: "x" }));
+    await ctx.route("**/functions/v1/push-envia", (r) => r.fulfill({ status: 404, body: "x" }));
     const p = await ctx.newPage();
     const errs = [];
     p.on("pageerror", (e) => errs.push(e.message));

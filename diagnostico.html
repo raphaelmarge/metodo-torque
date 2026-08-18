@@ -38,6 +38,15 @@
   <div class="card" id="resultado" hidden></div>
 
   <div class="card">
+    <b style="font-size: 13.5px;">Mandar um e-mail de teste</b>
+    <p class="sub" style="font-size: 12.5px;">Quando o aluno não recebe o acesso, o problema quase sempre é o Resend recusando — e o painel não mostra o motivo dele. Aqui o recado vem inteiro. Manda primeiro pro <b>seu próprio e-mail</b>, depois pro de um aluno: se o seu chega e o do aluno não, é domínio não verificado.</p>
+    <input id="emailTeste" type="email" placeholder="para quem mandar o teste" autocomplete="off" spellcheck="false"
+      style="width:100%;padding:12px;border-radius:10px;border:1px solid #322e3d;background:#14121a;color:#fff;font-size:13px;font-family:inherit;">
+    <button class="btnx sec" id="btnEmail">Mandar o teste</button>
+    <div id="resEmail"></div>
+  </div>
+
+  <div class="card">
     <b style="font-size: 13.5px;">Testar outra chave</b>
     <p class="sub" style="font-size: 12.5px;">Se a chave do site foi recusada, cole aqui a outra chave pública do projeto (a <b>Publishable key</b>, que começa com <code>sb_publishable_</code>, ou a <b>anon</b>) e teste ANTES de trocar no site. Nada é salvo: o teste acontece só neste navegador.</p>
     <input id="chaveTeste" placeholder="sb_publishable_… ou eyJ…" autocomplete="off" spellcheck="false"
@@ -80,6 +89,8 @@
   }
 
   function corpoCurto(t) { return String(t || "").replace(/\s+/g, " ").slice(0, 300); }
+  // o recado do Resend e o e-mail digitado vão pra innerHTML — escapa sempre
+  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
 
   $("btnRodar").addEventListener("click", function () {
     var bt = this;
@@ -98,17 +109,42 @@
     linha("🔗", "Projeto do Supabase", projeto);
     anota("projeto: " + projeto);
 
-    // 1) o banco responde?
+    // 0) a sessão vem ANTES de tudo: a envia-email exige usuário logado (a chave
+    //    pública não basta), então sem o token dela o teste dava falso negativo
+    var sb = null, sess = null, jwt = cfg.anonKey;
+    try { sb = window.supabase.createClient(cfg.url, cfg.anonKey); } catch (e) { anota("supabase-js: " + e.message); }
+    var passo0 = sb ? sb.auth.getSession().then(function (s) {
+      sess = s && s.data && s.data.session;
+      if (sess && sess.access_token) jwt = sess.access_token;
+      anota("sessao: " + (sess ? "logado" : "sem login"));
+      if (sess) linha("✅", "Você está logado", sess.user.email || "");
+      else linha("⚠️", "Você não está logado neste navegador", "As IAs, a sincronização e parte destes testes só funcionam logado.",
+        "Abra o TORQUE PERSONAL → Configurações → Entrar na minha conta. Depois rode este diagnóstico de novo.");
+    }).catch(function (e) { anota("sessao: erro " + e.message); }) : Promise.resolve();
+
     var chaveMorta = false;
+    return passo0.then(function () {
+    // 1) o banco responde?
     /* Os DOIS cabeçalhos, sempre. O Supabase exige apikey E Authorization; com
      * só um deles o banco responde 401 mesmo com a chave certa — e foi
      * exatamente assim que este diagnóstico acusou injustamente a chave do
      * projeto, mandando trocar o que estava correto. */
-    fetch(cfg.url + "/rest/v1/", {
-      headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey },
+    /* Testa a chave pública chamando o MESMO caminho que o app do aluno usa
+     * (app_aluno_busca, liberada pra anon) com um token que não existe. Se
+     * responder, a chave vale. A raiz /rest/v1/ devolve 401 em projeto novo
+     * mesmo com a chave boa — e isso fazia o diagnóstico acusar chave morta. */
+    return fetch(cfg.url + "/rest/v1/rpc/app_aluno_busca", {
+      method: "POST",
+      headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ t: "diagnostico-token-que-nao-existe" }),
     }).then(function (r) {
-      anota("rest: HTTP " + r.status);
-      if (r.ok) { linha("✅", "Banco de dados respondendo", "O Supabase está no ar e a chave do site é válida."); return; }
+      anota("rest (app_aluno_busca com anon): HTTP " + r.status);
+      if (r.ok) { linha("✅", "Banco de dados respondendo", "A chave pública do site vale — é ela que abre o app do aluno."); return; }
+      if (r.status === 404) {
+        linha("❌", "O SQL não rodou neste projeto", "A função app_aluno_busca não existe — sem ela o app do aluno não abre.",
+          "Abra www.torqueon.com.br/sql.html, copie tudo e rode no Supabase → SQL Editor.");
+        return;
+      }
       if (r.status === 401 || r.status === 403) {
         /* 401 no banco com a chave pública quer dizer uma coisa só: a chave
          * não vale mais. Acontece quando o Supabase troca o projeto para as
@@ -181,14 +217,23 @@
     }).then(function () {
       // 3) a envia-email está publicada e com a conta do Resend ligada?
       //    o ping responde antes de qualquer login e diz se o secret existe
+      if (!sess) {
+        linha("⚪", "Não deu pra testar o e-mail", "Essa função exige usuário logado — entre na sua conta e rode de novo.");
+        return;
+      }
       return fetch(cfg.url + "/functions/v1/envia-email", {
         method: "POST",
-        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + jwt, "Content-Type": "application/json" },
         body: JSON.stringify({ acao: "ping" }),
       }).then(function (r) {
         return r.text().then(function (t) { return { status: r.status, texto: t }; });
       }).then(function (res) {
         anota("envia-email ping: HTTP " + res.status + " " + corpoCurto(res.texto));
+        if (res.status === 401) {
+          linha("⚠️", "A envia-email recusou o seu login", "Ela está publicada (a mensagem é dela), mas não aceitou a sua sessão.",
+            "Saia e entre de novo no TORQUE PERSONAL, e rode este diagnóstico outra vez.");
+          return;
+        }
         if (res.status === 404) {
           linha("❌", "A função envia-email não existe neste projeto", "Sem ela o aluno cadastrado nunca recebe login e senha do app.",
             "Abra www.torqueon.com.br/funcoes.html, copie a envia-email e publique no Supabase (Edge Functions → Deploy a new function → Via Editor). O nome tem que ser exatamente envia-email.");
@@ -241,20 +286,16 @@
           return;
         }
         linha("❌", "A push-envia respondeu algo inesperado", "HTTP " + res.status + " — " + corpoCurto(res.texto), "Veja os Logs da função no painel.");
-      }).catch(function (e) { anota("push-envia: erro " + e.message); });
+      }).catch(function (e) {
+        anota("push-envia: erro " + e.message);
+        linha("⚪", "A push-envia ainda não foi publicada", "O navegador nem conseguiu falar com ela (" + e.message + ") — é o que acontece quando a função não existe. O app funciona, só não avisa o aluno no celular.",
+          "Quando quiser ligar: funcoes.html → copie a push-envia → publique com o nome push-envia e crie os secrets VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY.");
+      });
     }).then(function () {
-      // 5) você está logado? a IA só funciona logado — e o teste do SQL precisa de sessão
+      // 5) o SQL rodou inteiro? (precisa da sessão, que já foi buscada no passo 0)
       try {
-        var sb = window.supabase.createClient(cfg.url, cfg.anonKey);
-        return sb.auth.getSession().then(function (s) {
-          var sess = s && s.data && s.data.session;
-          anota("sessao: " + (sess ? "logado" : "sem login"));
-          if (!sess) {
-            linha("⚠️", "Você não está logado neste navegador", "As IAs, a sincronização e o teste do banco só funcionam logado.",
-              "Abra o TORQUE PERSONAL → Configurações → Entrar na minha conta. Depois rode este diagnóstico de novo.");
-            return;
-          }
-          linha("✅", "Você está logado", sess.user.email || "");
+        if (!sb || !sess) return;
+        return Promise.resolve().then(function () {
           /* O SQL é um arquivo só, rodado de cima pra baixo, e o SQL Editor
            * PARA no primeiro erro. Então basta perguntar por uma função do
            * FIM do arquivo: se ela existe, o arquivo inteiro rodou. */
@@ -287,6 +328,57 @@
       bt.textContent = "Rodar de novo";
       window.__diagPronto = true; // testes
     });
+    }); // fecha o passo0
+  });
+
+  /* Teste de e-mail de ponta a ponta: chama a envia-email de verdade e mostra
+   * a resposta CRUA do Resend. Sem isto, "o aluno não recebeu" fica sem causa:
+   * o painel do professor só diz "o e-mail não saiu". */
+  $("btnEmail").addEventListener("click", function () {
+    var out = $("resEmail"), bt = this;
+    var para = $("emailTeste").value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para)) { out.textContent = "Escreve um e-mail válido primeiro."; return; }
+    bt.disabled = true; out.textContent = "enviando…";
+    var sb2 = null;
+    try { sb2 = window.supabase.createClient(cfg.url, cfg.anonKey); } catch (e) {}
+    if (!sb2) { out.textContent = "A nuvem não carregou nesta página."; bt.disabled = false; return; }
+    sb2.auth.getSession().then(function (s) {
+      var sess2 = s && s.data && s.data.session;
+      if (!sess2) {
+        out.innerHTML = '<b style="color:#fbbf24;">Você não está logado.</b> Entre na sua conta pelo TORQUE PERSONAL e volte aqui — a função de e-mail só atende usuário logado.';
+        bt.disabled = false; return;
+      }
+      return fetch(cfg.url + "/functions/v1/envia-email", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + sess2.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "enviar", para: para, assunto: "Teste do TORQUE ON",
+          html: "<p>É só um teste. Se este e-mail chegou, o envio do acesso do aluno está funcionando.</p>" }),
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var d = null; try { d = JSON.parse(t); } catch (e) {}
+          anota("email teste (" + para + "): HTTP " + r.status + " " + corpoCurto(t));
+          $("tecnica").textContent = log.join("\n"); $("cxTecnica").hidden = false;
+          if (d && d.ok) {
+            out.innerHTML = '<b style="color:#4ade80;">Saiu do sistema.</b> Agora confere a caixa de entrada (e o spam) de <b>' + esc(para) + "</b>. Se não chegar em 2 minutos, o Resend aceitou mas não entregou — veja em resend.com → Emails o status desta mensagem.";
+            return;
+          }
+          var erro = (d && d.erro) || t;
+          var extra = "";
+          if (/domain is not verified|not verified|verify a domain/i.test(erro)) {
+            extra = "<br><b>É o domínio.</b> Em resend.com → Domains, o torqueon.com.br precisa estar <b>Verified</b> (verde). Enquanto não estiver, o Resend só entrega no e-mail do dono da conta.";
+          } else if (/testing emails|own email address|only send testing/i.test(erro)) {
+            extra = "<br><b>Está no modo de teste do Resend.</b> Sem domínio verificado ele só entrega pro e-mail dono da conta — por isso o seu chega e o do aluno não. Verifique o domínio e crie o secret EMAIL_DE com um endereço @torqueon.com.br.";
+          } else if (/RESEND_API_KEY/i.test(erro)) {
+            extra = "<br>Falta o secret <b>RESEND_API_KEY</b> — crie e publique a envia-email de novo (o secret só entra no próximo deploy).";
+          } else if (r.status === 401) {
+            extra = "<br>A função recusou o seu login. Saia e entre de novo no TORQUE PERSONAL.";
+          }
+          out.innerHTML = '<b style="color:#f87171;">Não saiu.</b> ' + esc(erro) + extra;
+        });
+      });
+    }).catch(function (e) {
+      out.innerHTML = '<b style="color:#f87171;">Não consegui chamar a função.</b> ' + esc(e.message) + " — se fala em Failed to fetch, a envia-email não está publicada.";
+    }).then(function () { bt.disabled = false; });
   });
 
   /* Testador de chave: descobre QUAL chave o projeto aceita sem precisar
@@ -304,7 +396,12 @@
     this.disabled = true;
     out.textContent = "testando…";
     var linhas = [];
-    fetch(cfg.url + "/rest/v1/", { headers: { apikey: chave, Authorization: "Bearer " + chave } })
+    // mesmo caminho do teste de cima: a raiz /rest/v1/ devolve 401 com chave boa
+    fetch(cfg.url + "/rest/v1/rpc/app_aluno_busca", {
+      method: "POST",
+      headers: { apikey: chave, Authorization: "Bearer " + chave, "Content-Type": "application/json" },
+      body: JSON.stringify({ t: "diagnostico-token-que-nao-existe" }),
+    })
       .then(function (r) { linhas.push((r.ok ? "✅" : "❌") + " banco: HTTP " + r.status); })
       .catch(function (e) { linhas.push("❌ banco: " + e.message); })
       .then(function () {
