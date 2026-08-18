@@ -64,7 +64,6 @@ var CORE = [
   "assets/alimentos-db.js",
   "assets/receitas-db.js",
   "assets/exercicios-db.js",
-  "assets/exercicios-anim.js",
   "assets/composicao-corporal.js",
   "assets/avaliacao-ui.js",
   "assets/scanner-visao.js",
