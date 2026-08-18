@@ -135,6 +135,25 @@ self.MT_moduloConta = function (cfg) {
         alert("Login criado e copiado! Cole no WhatsApp do colaborador:\n\n" + msg);
       }, function () { alert("Sem conexão com a nuvem agora."); });
     },
+    // segurança da conta: trocar a senha sem sair do painel
+    trocaSenha: function () {
+      if (!sb) { alert("A nuvem não está configurada neste site."); return; }
+      sb.auth.getSession().then(function (r) {
+        var sess = r && r.data && r.data.session;
+        if (!sess) { alert("Entre na sua conta primeiro."); return; }
+        var s1 = prompt("Senha nova (mínimo 6 caracteres):");
+        if (s1 === null) return;
+        s1 = String(s1);
+        if (s1.length < 6) { alert("A senha precisa de pelo menos 6 caracteres."); return; }
+        var s2 = prompt("Repita a senha nova:");
+        if (s2 === null) return;
+        if (s1 !== String(s2)) { alert("As duas senhas estão diferentes — tente de novo."); return; }
+        sb.auth.updateUser({ password: s1 }).then(function (r2) {
+          if (r2 && r2.error) { alert("Não deu pra trocar: " + r2.error.message); return; }
+          alert("Senha trocada! Da próxima vez que entrar, use a senha nova.");
+        }, function () { alert("Sem conexão com a nuvem agora — tente de novo."); });
+      });
+    },
     sair: function () {
       if (!confirm("Sair da sua conta neste aparelho? (os dados locais continuam aqui)")) return;
       sb.auth.signOut().finally(function () {

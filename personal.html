@@ -1417,7 +1417,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <button class="btn" id="btnContaEntrar">Entrar na minha conta</button>
       <button class="btn sec" id="btnContaEquipe" hidden>+ Login de colaborador</button>
-      <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
+      <button class="btn sec" id="btnContaSenha" hidden>Trocar minha senha</button>
+      <button class="btn sec" id="btnContaSair" hidden>Sair da conta</button>
     </div>
     <p class="muted" id="syncInfoPt" hidden style="margin: 10px 0 0; font-size: 12px;"></p>
     <div style="margin-top: 12px; padding: 10px 12px; border: 1px dashed #322e3d; border-radius: 12px;">
@@ -9215,6 +9216,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<input id='lgSenha' type='password' placeholder='Senha (mínimo 6 caracteres)' style='width:100%;margin-bottom:8px;'>" +
         "<button class='btnx' id='lgSalva' style='width:100%;'>Salvar meu login</button>" +
         "<div id='lgOk' class='vz' style='display:none;'></div></div>" : "") +
+      /* Quem já entra com login precisa poder trocar a senha e sair do app —
+       * principalmente em celular emprestado ou compartilhado. */
+      (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP && a.acessoEm ? "<div class='cardx'><h2>Minha conta</h2>" +
+        "<div class='kv'><span>Login</span><b>" + esc(String(a.email || "").trim().toLowerCase()) + "</b></div>" +
+        "<div class='vz' style='text-align:left;padding:8px 0;'>Trocar a senha (mínimo 6 caracteres):</div>" +
+        "<input id='cnSenha' type='password' placeholder='Senha nova' style='width:100%;margin-bottom:8px;'>" +
+        "<input id='cnSenha2' type='password' placeholder='Repita a senha nova' style='width:100%;margin-bottom:8px;'>" +
+        "<button class='btnx' id='cnSalva' style='width:100%;'>Salvar senha nova</button>" +
+        "<div id='cnOk' class='vz' style='display:none;'></div>" +
+        "<button class='btnx' id='cnSair' style='width:100%;margin-top:10px;background:none;border:1px solid #f87171;color:#f87171;'>Sair do app neste aparelho</button>" +
+        "<div class='vz' style='font-size:11.5px;padding-top:6px;'>Saindo, este aparelho esquece o seu app. Pra voltar, entre com o seu login e senha.</div></div>" : "") +
       "<div class='cardx'><h2>" + appIco(APPIC.presente, 14) + "Indique um amigo</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 10px;'>Treinar em dupla rende muito mais. Chama um amigo pro " + esc(studio.split(" ")[0]) + " — é só encaminhar o convite.</div>" +
       "<a class='btnx' style='display:block;text-align:center;text-decoration:none;' target='_blank' rel='noopener' href='https://wa.me/?text=" +
@@ -9247,7 +9259,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
       "<script>var AVS=" + jsonApp(avs) + ",META=" + metaSemana +
       ",NUVEM=" + jsonApp((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
-      ",TOKEN=" + jsonApp(a.appTokenP || "") + ",ZAPP=" + jsonApp(zapPersonal) + ",PRIMEIRO=" + jsonApp(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) + ";" +
+      ",TOKEN=" + jsonApp(a.appTokenP || "") + ",ZAPP=" + jsonApp(zapPersonal) + ",PRIMEIRO=" + jsonApp(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) +
+      ",MEULOGIN=" + jsonApp(a.acessoEm ? String(a.email || "").trim().toLowerCase() : "") + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio')devolveApp();" +
@@ -10279,6 +10292,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "var b=this;b.disabled=true;rpcApp('aluno_define_login',{t:TOKEN,p_login:lg,p_senha:sn}).then(function(r){b.disabled=false;" +
       "if(r&&r.ok){var ok2=document.getElementById('lgOk');ok2.style.display='block';ok2.textContent='Pronto! Agora você entra de qualquer aparelho com '+r.login+' + sua senha, na página Entrar do aluno.';document.getElementById('lgSenha').value='';}" +
       "else{alert((r&&r.erro)||'Não deu agora — confere a internet e tenta de novo.');}});});" +
+      "var cnB=document.getElementById('cnSalva');if(cnB)cnB.addEventListener('click',function(){" +
+      "var s1=document.getElementById('cnSenha').value,s2=document.getElementById('cnSenha2').value;" +
+      "if(s1.length<6){alert('A senha precisa de pelo menos 6 caracteres.');return;}" +
+      "if(s1!==s2){alert('As duas senhas estão diferentes — digite de novo.');return;}" +
+      "var b=this;b.disabled=true;rpcApp('aluno_define_login',{t:TOKEN,p_login:MEULOGIN,p_senha:s1}).then(function(r){b.disabled=false;" +
+      "if(r&&r.ok){var k=document.getElementById('cnOk');k.style.display='block';k.textContent='Senha trocada! Da próxima vez, entre com a senha nova.';" +
+      "document.getElementById('cnSenha').value='';document.getElementById('cnSenha2').value='';}" +
+      "else{alert((r&&r.erro)||'Não deu agora — confere a internet e tenta de novo.');}});});" +
+      "var cnS=document.getElementById('cnSair');if(cnS)cnS.addEventListener('click',function(){" +
+      "if(!confirm('Sair do app neste aparelho? Seus treinos e registros continuam guardados — é só entrar de novo.'))return;" +
+      "try{['tq_app_token','tq_app_html','tq_app_stamp','mt_aluno_token'].forEach(function(k){localStorage.removeItem(k);});}catch(e){}" +
+      "location.href='/aluno-login.html?sair=1';});" +
       "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
       "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
       "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +
@@ -10543,7 +10568,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
       "if(/Pagamento|Mensalidade|Meus pacotes/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
-      "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Desafio/.test(t))return 'inicio';" +
+      "if(/Mural|Minha semana|Hábitos|Lembretes|Meu login|Minha conta|Desafio/.test(t))return 'inicio';" +
       "return null;}" +
       "var IGNORA={navApp:1,tmrBar:1,guiaBox:1,fundoMenuApp:1,menuApp:1};" +
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
@@ -11080,6 +11105,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("btnContaEntrar").hidden = u.logado;
     $("btnContaEquipe").hidden = !u.logado;
     $("btnContaSair").hidden = !u.logado;
+    $("btnContaSenha").hidden = !u.logado;
     if (u.logado) {
       $("contaStatus").innerHTML = "✓ <b>Conectado como " + esc(u.email) + "</b> — seus dados sincronizam entre os seus aparelhos e ficam na SUA ilha, separados de qualquer outro personal ou academia.";
     } else {
@@ -11667,6 +11693,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("btnContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
   $("btnContaEquipe").addEventListener("click", contaP.criaColaborador);
   $("btnContaSair").addEventListener("click", contaP.sair);
+  $("btnContaSenha").addEventListener("click", contaP.trocaSenha);
 
   // exclusão de conta: exigida pela Play e pela Apple em todo app com login.
   // Com conta na nuvem apaga de lá também; sem conta, apaga o aparelho — que

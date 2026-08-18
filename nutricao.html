@@ -487,7 +487,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
       <button class="btn verde" id="btnContaEntrar">Entrar na minha conta</button>
       <button class="btn sec" id="btnContaEquipe" hidden>+ Login de colaborador</button>
-      <button class="btn sec" id="btnContaSair" hidden>↩ Sair da conta</button>
+      <button class="btn sec" id="btnContaSenha" hidden>Trocar minha senha</button>
+      <button class="btn sec" id="btnContaSair" hidden>Sair da conta</button>
       <label style="margin: 0; font-size: 12.5px;">Seu WhatsApp (para o app dos pacientes)
         <input id="cfgZap" inputmode="numeric" placeholder="31999990000" style="width: 160px; display: block; margin-top: 4px;"></label>
     </div>
@@ -3774,6 +3775,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     $("btnContaEntrar").hidden = u.logado;
     $("btnContaEquipe").hidden = !u.logado;
     $("btnContaSair").hidden = !u.logado;
+    $("btnContaSenha").hidden = !u.logado;
     $("contaStatus").innerHTML = u.logado
       ? "✓ <b>Conectado como " + esc(u.email) + "</b> — seus pacientes e dietas sincronizam entre os seus aparelhos, na SUA ilha, separados de qualquer outro profissional."
       : "Seus dados estão só neste aparelho por enquanto. <b>Crie sua conta</b> para ter a sua ilha na nuvem e publicar o app dos pacientes com link online.";
@@ -4141,6 +4143,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
   $("btnContaEntrar").addEventListener("click", function () { contaN.abre("entrar"); });
   $("btnContaEquipe").addEventListener("click", contaN.criaColaborador);
   $("btnContaSair").addEventListener("click", contaN.sair);
+  $("btnContaSenha").addEventListener("click", contaN.trocaSenha);
 
   // exclusão de conta: exigida pela Play e pela Apple em todo app com login
   if (self.MT_EXCLUIR) {
