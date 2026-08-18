@@ -10731,7 +10731,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var studio = (load().config || {}).nome || "Seu personal";
           enviaEmailFn(nuvem, email, "Seu acesso ao app de treino — " + studio, emailAcessoHtml(studio, a.nome.split(" ")[0], email, senha))
             .then(function (r3) {
-              if (r3 && r3.ok) cb({ ok: true, email: email });
+              if (r3 && r3.ok) cb({ ok: true, email: email, senha: senha });
               else cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: (r3 && r3.erro) || "publique a função envia-email (torqueon.com.br/funcoes.html)" });
             }, function () {
               cb({ ok: true, semEmail: true, email: email, senha: senha, motivo: "sem conexão com a função envia-email" });
@@ -10746,7 +10746,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return "✓ Acesso criado — mas o e-mail não saiu (" + esc(r.motivo) + ").<br>Login: <b>" + esc(r.email) + "</b> · senha temporária: <b style='font-family:monospace;'>" + esc(r.senha) + "</b> " +
         '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/' + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto) + '">Mandar no WhatsApp</a>';
     }
-    return "Acesso enviado pro e-mail <b>" + esc(r.email) + "</b>! O aluno entra em torqueon.com.br/aluno-login.html com o e-mail e a senha que chegou (e troca a senha no app).";
+    /* Mesmo com o envio aceito, o e-mail pode não chegar (provedor do aluno
+     * barrando remetente novo é o caso mais comum). Sem a senha aqui, o
+     * professor ficava sem saída: reenviar só gera outra senha que também não
+     * chega. Por isso o WhatsApp continua à mão. */
+    var texto2 = "Oi " + a.nome.split(" ")[0] + "! Seu app de treino tá pronto.\nEntra em https://www.torqueon.com.br/aluno-login.html\nLogin: " + r.email + (r.senha ? "\nSenha temporária: " + r.senha : "") + "\n(troca a senha dentro do app, no card Meu login)";
+    return "Acesso enviado pro e-mail <b>" + esc(r.email) + "</b>! O aluno entra em torqueon.com.br/aluno-login.html com o e-mail e a senha que chegou (e troca a senha no app)." +
+      (r.senha ? "<br><span class='muted'>Não chegou em alguns minutos? Olhe o spam — ou mande por aqui:</span> senha temporária <b style='font-family:monospace;'>" + esc(r.senha) + "</b> " +
+        '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/' + (a.zap ? "55" + String(a.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(texto2) + '">Mandar no WhatsApp</a>' : "");
   }
   window.__acessoAluno = { cria: criaAcessoAluno, senha: senhaAleatoria, msg: msgAcesso }; // testes
 
