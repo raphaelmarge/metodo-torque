@@ -3562,7 +3562,10 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
             ' <span class="muted" style="font-size:12px;">' + S.fmtData((row.criado || "").slice(0, 10)) + "</span>" +
             (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
             '<div class="muted" style="font-size:12.5px;margin-top:4px;">' + (d.respostas || []).map(function (x) {
-              return esc(x.sigla || "") + ": <b>" + esc(String(x.resposta)) + "</b>";
+              // mostra a PERGUNTA por extenso quando o app mandou (sigla é atalho de código,
+              // não serve pro nutricionista bater o olho e entender)
+              var rot = String(x.pergunta || x.sigla || "").slice(0, 60);
+              return esc(rot) + ": <b>" + esc(String(x.resposta)) + "</b>";
             }).join(" · ") + "</div></div>";
         }).join("");
       }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
