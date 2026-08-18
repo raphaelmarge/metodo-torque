@@ -1612,9 +1612,11 @@ async function abaPt(p, a) {
       /questionário/i.test(await p.evaluate(() => document.getElementById("pfQuestBox").textContent)),
       "aluno sem resposta vê a explicação de como mandar o questionário");
   }
-  ok(/>Ver como faz</.test(appHtml) && />vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml),
-    "exercício ganha o botão Ver como faz (animação) e o link do vídeo");
-  ok(!/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio NÃO manda mais pra busca do YouTube (fica a animação do app)");
+  ok(/>vídeo</.test(appHtml) && /youtube\.com\/watch\?v=abc123/.test(appHtml),
+    "exercício com vídeo ganha o botão de vídeo no app");
+  ok(!/youtube\.com\/results\?search_query=/.test(appHtml), "exercício sem vídeo próprio NÃO manda pra busca do YouTube");
+  // o boneco animado foi retirado: sem sobra de código nem de botão no app
+  ok(!/animbtn|animbox|ANIMD|Ver como faz/.test(appHtml), "o app sai sem nenhum resto da demonstração de bonequinho");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
   ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
   ok(appHtml.includes("if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length"),
@@ -3847,7 +3849,7 @@ async function abaPt(p, a) {
     }
     window.open = openOrig;
     host.remove();
-    // exercício sem vídeo próprio não ganha botão (fica a animação offline)
+    // exercício sem vídeo próprio simplesmente não ganha botão de vídeo
     const semVid = Array.from(document.querySelectorAll(".vidbtn")).filter((x) => x.id !== "gVideo" && !x.dataset.v).length;
     return { out, abriuAba, semVid };
   });
@@ -4856,45 +4858,6 @@ async function abaPt(p, a) {
     await ctxS.close();
   }
 
-  // ---------- 🏃 demonstração animada do movimento (offline, sem YouTube) ----------
-  console.log("Demonstração animada dos exercícios:");
-  {
-    const pAn = await ctx.newPage();
-    pAn.on("pageerror", (e) => erros.push(String(e)));
-    await pAn.goto(BASE + "/personal.html");
-    await pAn.waitForTimeout(400);
-    // o mapeamento nome→padrão roda no próprio banco (1170 exercícios)
-    const mapa = await pAn.evaluate(() => {
-      const A = window.MT_ANIM;
-      if (!A) return null;
-      const casos = [["Supino reto com barra", "Peito"], ["Agachamento livre", "Quadríceps"], ["Remada curvada", "Costas"],
-        ["Rosca direta", "Bíceps"], ["Prancha frontal", "Core"], ["Corrida na esteira", "Cardio"],
-        ["Braçada de crawl com prancha entre as pernas", "Natação e aquático"], ["Barra fixa pronada", "Costas"]];
-      const semPadrao = (self.MT_EXERCICIOS || []).filter((e) => !A.padrao(e.n, e.g)).length;
-      return { pads: casos.map((c) => A.padrao(c[0], c[1])), total: (self.MT_EXERCICIOS || []).length, semPadrao: semPadrao,
-        compacto: Object.keys(A.compacto()).length };
-    });
-    ok(mapa && mapa.pads.join(",") === "empurra_h,agacho,puxa_h,rosca,prancha,corrida,aquatico,puxa_v",
-      "cada exercício cai no padrão de movimento certo (inclusive natação × prancha e 'pronada' × 'nada')");
-    ok(mapa && mapa.total > 1000 && mapa.semPadrao === 0, "os " + (mapa ? mapa.total : 0) + " exercícios do banco têm demonstração (nenhum sem padrão)");
-    ok(mapa && mapa.compacto === 17, "o pacote compacto que vai pro app leva os 17 padrões");
-    // biblioteca do professor: botão Como faz abre o boneco animado
-    await pAn.evaluate(() => { window.__trAba("ex"); });
-    await pAn.waitForTimeout(300);
-    const bib = await pAn.evaluate(() => {
-      const b = document.querySelector("[data-exanim]");
-      if (!b) return null;
-      b.click();
-      const cx = document.querySelector(".anim-pt");
-      const svg = cx && cx.querySelector("svg");
-      return { padrao: b.dataset.exanim, linhas: svg ? svg.querySelectorAll("polyline").length : 0,
-        anima: svg ? svg.querySelectorAll("animate").length : 0 };
-    });
-    ok(bib && bib.linhas === 5 && bib.anima > 0, "biblioteca: 'Como faz' desenha o boneco (5 segmentos) com animação");
-    const fecha = await pAn.evaluate(() => { document.querySelector("[data-exanim]").click(); return !document.querySelector(".anim-pt"); });
-    ok(fecha, "tocar de novo fecha a demonstração");
-    await pAn.close();
-  }
   {
     // 👥 Comunidade: o feed que os alunos publicam entre si
     console.log("Comunidade (feed da turma):");
