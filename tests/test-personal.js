@@ -1968,6 +1968,28 @@ async function abaPt(p, a) {
     ok(!cardLogin.com, "aluno que já recebeu o acesso não vê o card 'Meu login' (ele já entra com o login que chegou)");
     ok(cardLogin.sem, "quem nunca recebeu acesso continua podendo criar o próprio login (não fica sem caminho)");
     ok(cardLogin.guarda, "o código do app não quebra quando o card não existe");
+    /* Sair e trocar a senha: o aluno pode estar num celular emprestado, e o
+     * professor precisa poder girar a senha sem falar com ninguém. */
+    const conta = await p.evaluate(() => {
+      const S = window.MTStore;
+      const base = { id: "cn1", nome: "Aluno Teste", email: "A@B.com", ativo: true, desde: S.todayISO(), appTokenP: "tok-cn", metaSemana: 3 };
+      const com = window.__montaAppAluno(Object.assign({}, base, { acessoEm: "2026-08-18T00:00:00Z" }), "s1");
+      const sem = window.__montaAppAluno(base, "s2");
+      return {
+        cardCom: /<h2>Minha conta<\/h2>/.test(com), cardSem: /<h2>Minha conta<\/h2>/.test(sem),
+        login: (com.match(/MEULOGIN=("[^"]*")/) || [])[1],
+        troca: /aluno_define_login',\{t:TOKEN,p_login:MEULOGIN/.test(com),
+        limpa: /tq_app_token','tq_app_html','tq_app_stamp','mt_aluno_token/.test(com),
+        volta: /aluno-login\.html\?sair=1/.test(com),
+        botaoPainel: !!document.getElementById("btnContaSenha"),
+        temTrocaSenha: !!(window.MT_conta && window.MT_conta.trocaSenha) || /trocaSenha/.test(String(window.__contaP || "")),
+      };
+    });
+    ok(conta.cardCom && !conta.cardSem, "o card 'Minha conta' aparece só pra quem tem login (quem não tem vê o de criar login)");
+    ok(conta.login === '"a@b.com"', "o app leva o login do aluno em minúsculas, pra trocar a senha sem trocar o login");
+    ok(conta.troca, "trocar a senha reusa o login atual (não deixa o aluno mudar o login sem querer)");
+    ok(conta.limpa && conta.volta, "sair limpa o token e a cópia offline do aparelho e volta pra tela de entrar");
+    ok(conta.botaoPainel, "o painel do personal tem o botão de trocar a própria senha");
   }
   {
     const comMural = await p.evaluate(() => {
