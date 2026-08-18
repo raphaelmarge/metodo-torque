@@ -1884,6 +1884,40 @@ async function abaPt(p, a) {
     ok(await p.evaluate(() => !!window.MTStore.read("ptStudio", {}).alunos[0].acessoEm), "acesso criado fica marcado no aluno (vira o selo 📱 APP ✓ na lista)");
     const msgFb = await p.evaluate(() => window.__acessoAluno.msg({ ok: true, semEmail: true, email: "a@b.com", senha: "Xy2Xy2Xy2X", motivo: "teste" }, { nome: "João Cliente", zap: "31988887777" }));
     ok(/Xy2Xy2Xy2X/.test(msgFb) && /wa\.me\/5531988887777/.test(msgFb), "mensagem de fallback traz a senha e o botão de WhatsApp");
+    /* O recado do acesso só existia em lugares que podiam estar ESCONDIDOS: na
+     * aba "App do aluno" (e o professor clica de outra aba) e atrás do dialog de
+     * cadastro. Dava a impressão de que o botão não fazia nada — inclusive
+     * quando o e-mail falhava e a senha de reserva estava ali, invisível. */
+    const visivel = await p.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      window.__cloudOrig = window.__cloudOrig || S.cloud;
+      // consulta encadeada que termina em promise vazia (o perfil faz vários selects)
+      const q = () => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "upsert", "insert", "update", "delete", "neq", "is"].forEach((m) => { o[m] = () => o; });
+        o.then = (f) => Promise.resolve({ data: [], error: null }).then(f); return o; };
+      S.cloud = () => ({ aid: "a1", client: {
+        auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
+        from: () => q(),
+        rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
+      } });
+      window.__fetchOrig = window.__fetchOrig || window.fetch;
+      window.fetch = (u, o) => String(u).includes("functions/v1/envia-email")
+        ? Promise.resolve({ status: 200, json: () => Promise.resolve({ ok: true }) })
+        : window.__fetchOrig(u, o);
+      window.__perfilPT(st.alunos[0].id);
+      await new Promise((r) => setTimeout(r, 250));
+      window.__pfAba("cadastro");                    // o professor está em OUTRA aba
+      document.getElementById("pfAcesso").click();
+      await new Promise((r) => setTimeout(r, 900));
+      const box = document.getElementById("pfAppDados");
+      const out = { caixaVisivel: box.offsetParent !== null, temRecado: /Acesso enviado|Acesso criado/.test(box.innerText),
+        naStatus: !!document.getElementById("naAcessoStatus") };
+      window.fetch = window.__fetchOrig;
+      S.cloud = window.__cloudOrig;
+      return out;
+    });
+    ok(visivel.caixaVisivel && visivel.temRecado,
+      "clicando de outra aba, o painel abre a aba certa e o recado do acesso fica VISÍVEL (antes sumia e parecia que nada acontecia)");
+    ok(visivel.naStatus, "o cadastro novo tem caixa de recado DENTRO do dialog (o aviso de trás fica escondido por ele)");
   }
   {
     const comMural = await p.evaluate(() => {
