@@ -54,13 +54,18 @@ alter table public.academias enable row level security;
 alter table public.membros enable row level security;
 alter table public.dados enable row level security;
 
+-- toda política leva um "drop if exists" na frente: sem isso, rodar o arquivo
+-- de novo morria em "policy already exists" e TUDO daqui pra baixo não rodava
+drop policy if exists "academia_ver_minha" on public.academias;
 create policy "academia_ver_minha" on public.academias
   for select using (id in (select public.minhas_academias()));
 
+drop policy if exists "membros_ver_equipe" on public.membros;
 create policy "membros_ver_equipe" on public.membros
   for select using (academia_id in (select public.minhas_academias()));
 
 -- só o dono remove funcionários (e ninguém remove o dono)
+drop policy if exists "membros_dono_remove" on public.membros;
 create policy "membros_dono_remove" on public.membros
   for delete using (
     papel <> 'dono'
@@ -71,12 +76,16 @@ create policy "membros_dono_remove" on public.membros
     )
   );
 
+drop policy if exists "dados_select" on public.dados;
 create policy "dados_select" on public.dados
   for select using (academia_id in (select public.minhas_academias()));
+drop policy if exists "dados_insert" on public.dados;
 create policy "dados_insert" on public.dados
   for insert with check (academia_id in (select public.minhas_academias()));
+drop policy if exists "dados_update" on public.dados;
 create policy "dados_update" on public.dados
   for update using (academia_id in (select public.minhas_academias()));
+drop policy if exists "dados_delete" on public.dados;
 create policy "dados_delete" on public.dados
   for delete using (academia_id in (select public.minhas_academias()));
 

@@ -37,6 +37,21 @@ function crcNode(s) {
   ok(/hq_sou_admin/.test(sql) && /hq_clientes/.test(sql) && /hq_cliente_set/.test(sql) && /hq_pagamento_reg/.test(sql) && /hq_kpis/.test(sql), "as 5 funções hq_* existem");
   ok((sql.match(/acesso restrito ao administrador/g) || []).length >= 4, "toda função hq_* de dados exige admin");
   ok(!/create policy[^;]*saas_/.test(sql), "tabelas saas_* sem policy (bloqueadas pra API — só as funções acessam)");
+  /* O arquivo é rodado de novo a cada mudança. Uma única "create policy" sem o
+   * "drop policy if exists" antes derruba o script inteiro em 42710 (already
+   * exists) — e TUDO daquele ponto pra baixo (inclusive o bloco do HQ) não roda. */
+  {
+    const linhas = sql.split("\n");
+    const semDrop = [];
+    linhas.forEach((l, i) => {
+      const m = /^\s*create policy "([^"]+)"/.exec(l);
+      if (!m) return;
+      const antes = linhas.slice(Math.max(0, i - 3), i).join("\n");
+      if (antes.indexOf('drop policy if exists "' + m[1] + '"') < 0) semDrop.push(m[1] + " (linha " + (i + 1) + ")");
+    });
+    ok(semDrop.length === 0, "toda policy tem 'drop policy if exists' antes (rodar o SQL de novo não pode quebrar)" +
+      (semDrop.length ? " — falta em: " + semDrop.join(", ") : ""));
+  }
   ok(/hq_receita_mensal/.test(sql) && /add column if not exists zap/.test(sql) && /ultima_atividade/.test(sql), "v2: receita mensal, WhatsApp e última atividade no SQL");
   ok(/saas_tickets/.test(sql) && /suporte_envia/.test(sql) && /suporte_lista/.test(sql), "assistência: tabela e RPCs do cliente");
   ok(/aluno_define_login/.test(sql) && /aluno_login/.test(sql) && /gen_salt\('bf'\)/.test(sql) && /pgcrypto/.test(sql), "login do aluno: RPCs com bcrypt no SQL");
