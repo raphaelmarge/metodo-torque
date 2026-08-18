@@ -55,6 +55,29 @@ function crcNode(s) {
   ok(/hq_receita_mensal/.test(sql) && /add column if not exists zap/.test(sql) && /ultima_atividade/.test(sql), "v2: receita mensal, WhatsApp e última atividade no SQL");
   ok(/saas_tickets/.test(sql) && /suporte_envia/.test(sql) && /suporte_lista/.test(sql), "assistência: tabela e RPCs do cliente");
   ok(/aluno_define_login/.test(sql) && /aluno_login/.test(sql) && /gen_salt\('bf'\)/.test(sql) && /pgcrypto/.test(sql), "login do aluno: RPCs com bcrypt no SQL");
+  /* No Supabase o pgcrypto mora no schema "extensions". Uma função com
+   * "set search_path = public" e um crypt/gen_salt SEM prefixo morre em
+   * "function gen_salt(unknown) does not exist" — foi o que travou a criação
+   * do login de todo aluno. Ou o search_path enxerga extensions, ou a chamada
+   * vem qualificada como extensions.crypt(...). */
+  {
+    const semPg = [];
+    // cada bloco "create ... function ... as $$ ... $$;"
+    const re = /create or replace function ([\s\S]*?)\n\$\$;/g;
+    let m;
+    while ((m = re.exec(sql))) {
+      const bloco = m[1];
+      const nome = (bloco.match(/^\s*public\.(\w+)/) || [])[1] || "?";
+      const usaCru = /(?<!extensions\.)\b(crypt|gen_salt)\s*\(/.test(bloco);
+      if (!usaCru) continue;
+      const cab = bloco.split("as $$")[0] || "";
+      if (!/search_path\s*=[^\n]*\bextensions\b/.test(cab)) semPg.push(nome);
+    }
+    ok(semPg.length === 0, "toda função que usa crypt/gen_salt enxerga o pgcrypto (extensions no search_path)" +
+      (semPg.length ? " — falta em: " + semPg.join(", ") : ""));
+  }
+  ok(/create extension if not exists pgcrypto with schema extensions/.test(sql),
+    "o pgcrypto é criado no schema extensions (é onde o Supabase o mantém)");
   ok(/hq_cliente_provisiona/.test(sql) && /equipe_cria_login/.test(sql) && /hq_cliente_reseta_senha/.test(sql), "provisionamento: RPCs do HQ e do dono no SQL");
   ok(/_torque_cria_usuario/.test(sql) && /revoke all on function public\._torque_cria_usuario/.test(sql), "criação de usuário é interna (revogada pra anon/authenticated)");
   ok(/'nutri'/.test(sql.split("saas_clientes_tipo_check")[2] || ""), "tipo de cliente aceita nutri");
