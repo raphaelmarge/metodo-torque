@@ -386,6 +386,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </div>
         <div id="naPasso2" hidden>
           <h2 style="text-transform: none; letter-spacing: 0; font-size: 16px;">Passo 2 de 2 · Contrato e venda</h2>
+          <!-- o recado do acesso PRECISA aparecer aqui dentro: o #aAcessoStatus
+               fica na tela de trás, escondido pelo próprio dialog -->
+          <p id="naAcessoStatus" style="margin: 8px 0 0; font-size: 12.5px; line-height: 1.55;"></p>
           <div class="grid-2" style="margin-top: 10px;">
             <div class="campo"><label>Plano do studio *</label><select id="naPlano" style="width: 100%;"></select></div>
             <div class="campo"><label>Vence todo dia</label><input id="naVence" type="number" min="1" max="28" value="5"></div>
@@ -1863,8 +1866,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     save(st);
     naAlunoId = novo.id;
     if (email) {
-      $("aAcessoStatus").textContent = "⏳ Publicando o app de " + nome.split(" ")[0] + " e enviando o acesso por e-mail…";
-      criaAcessoAluno(novo.id, function (r) { $("aAcessoStatus").innerHTML = msgAcesso(r, novo); });
+      // o dialog cobre a tela de trás: o recado vai nos dois lugares, senão o
+      // professor clica, o acesso é criado (ou falha) e ele não vê nada
+      var recado = function (html) { $("aAcessoStatus").innerHTML = html; $("naAcessoStatus").innerHTML = html; };
+      recado("Publicando o app de " + esc(nome.split(" ")[0]) + " e enviando o acesso por e-mail…");
+      criaAcessoAluno(novo.id, function (r) { recado(msgAcesso(r, novo)); });
+    } else {
+      $("naAcessoStatus").innerHTML = "<span class='muted'>Sem e-mail no cadastro — o acesso do app você manda depois, pelo perfil do aluno.</span>";
     }
     // passo 2: contrato e venda
     naPopulaPlanos("");
@@ -1960,7 +1968,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return;
       }
       e.target.disabled = true;
-      e.target.textContent = "⏳ Enviando…";
+      e.target.textContent = "Enviando…";
       criaAcessoAluno(ac, function (r) {
         $("aAcessoStatus").innerHTML = msgAcesso(r, al);
         render();
@@ -2966,11 +2974,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var digitado = $("pfEmail").value.trim().toLowerCase();
     if (digitado && digitado !== (a.email || "")) { a.email = digitado; S.write("ptStudio", st); }
     var b = this;
-    b.disabled = true; b.textContent = "⏳ Enviando…";
+    b.disabled = true; b.textContent = "Enviando…";
     criaAcessoAluno(perfilId, function (r) {
       b.disabled = false; b.innerHTML = mi("envelope") + " Enviar acesso do app";
       var box = $("pfAppDados");
       if (box) box.innerHTML = msgAcesso(r, a) + "<hr style='border:none;border-top:1px solid var(--linha);margin:10px 0;'>" + box.innerHTML;
+      // o recado mora na aba "App do aluno": clicando de outra aba, ele caía num
+      // lugar escondido e parecia que o botão não tinha feito nada
+      mostraPfAba("app");
+      if (box && box.scrollIntoView) box.scrollIntoView({ block: "nearest" });
       if (r.erro) alert(r.erro);
     });
   });
@@ -3214,7 +3226,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!nuvemQ) {
       avisoQ.textContent = "Entre na sua conta (card Sua ilha) antes de mandar esse link — sem a nuvem, as respostas do aluno não chegam.";
     } else {
-      avisoQ.textContent = "⏳ Preparando o app do aluno na nuvem…";
+      avisoQ.textContent = "Preparando o app do aluno na nuvem…";
       var stampQ = new Date().toISOString();
       nuvemQ.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvemQ.aid, dados: { html: montaAppAluno(a, stampQ), stamp: stampQ }, atualizado: stampQ }])
         .then(function (r) {
@@ -3258,7 +3270,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       aviso.textContent = "Entre na sua conta (card Sua ilha) e clique de novo — sem a nuvem o app do aluno não atualiza.";
       return;
     }
-    aviso.textContent = "⏳ Publicando o app do aluno com o questionário…";
+    aviso.textContent = "Publicando o app do aluno com o questionário…";
     var stamp = new Date().toISOString();
     nuvem.client.from("app_aluno").upsert([{ token: a.appTokenP, academia_id: nuvem.aid, dados: { html: montaAppAluno(a, stamp), stamp: stamp }, atualizado: stamp }])
       .then(function (r) {
@@ -4812,7 +4824,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var pg = e.target.closest("[data-pgm]");
     if (pg) {
       pg.disabled = true;
-      pg.textContent = "⏳ Gerando…";
+      pg.textContent = "Gerando…";
       geraLinkPagamento(pg.getAttribute("data-pgm"), +pg.getAttribute("data-v"), function (r) {
         pg.disabled = false;
         pg.textContent = "Link de pagamento";
