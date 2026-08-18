@@ -1747,5 +1747,76 @@ self.MT_RECEITAS = [
    "Feche e deixe na geladeira de um dia pro outro; de manhã é só comer gelado."
   ],
   "dica": "Feito na noite anterior em 5 minutos — o café da manhã de quem sai cedo e vive pulando a primeira refeição."
+ },
+ {
+  "id": "rc79",
+  "n": "Bife de fraldinha com chimichurri e batata rústica",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 2,
+  "k": 480,
+  "pt": 38,
+  "ing": [
+   "300 g de fraldinha em bifes",
+   "300 g de batata com casca em gomos",
+   "1 col. sopa de azeite",
+   "Chimichurri: 1 punhado de salsa, 1 dente de alho, 1 col. chá de orégano, 1 col. sopa de azeite, 1 col. sopa de vinagre e pimenta calabresa",
+   "Sal grosso a gosto"
+  ],
+  "modo": [
+   "Cozinhe as batatas por 8 minutos, escorra e leve ao forno a 220 °C com o azeite por 20 minutos até dourar.",
+   "Pique bem a salsa e o alho e misture com orégano, azeite, vinagre e pimenta — esse é o chimichurri.",
+   "Tempere a carne só com sal grosso e grelhe 3 minutos de cada lado na frigideira bem quente.",
+   "Deixe descansar 3 minutos, fatie contra a fibra e sirva com o chimichurri por cima e a batata do lado."
+  ],
+  "dica": "Churrasco de dia de semana: a fraldinha é magra pro corte que é, e o chimichurri dá sabor sem somar creme nenhum."
+ },
+ {
+  "id": "rc80",
+  "n": "Polenta cremosa proteica com ragu de frango",
+  "cat": "Almoço e jantar",
+  "tempo": 35,
+  "rende": 3,
+  "k": 420,
+  "pt": 34,
+  "ing": [
+   "150 g de fubá",
+   "600 ml de água e 1 caldo de legumes",
+   "40 g de queijo colonial ralado (ou parmesão)",
+   "400 g de peito de frango em cubos",
+   "1 lata de tomate pelado",
+   "1 cebola e 2 dentes de alho picados",
+   "1 col. sopa de azeite, orégano, sal e pimenta"
+  ],
+  "modo": [
+   "Refogue a cebola e o alho no azeite, junte o frango e sele até dourar.",
+   "Acrescente o tomate pelado amassado, tempere e cozinhe em fogo baixo por 15 minutos até engrossar.",
+   "Numa outra panela, dissolva o fubá na água fria com o caldo, leve ao fogo mexendo sempre por 20 minutos.",
+   "Fora do fogo misture o queijo ralado na polenta e sirva com o ragu por cima."
+  ],
+  "dica": "Comida de vó com macro de atleta: 34 g de proteína por porção e carboidrato de digestão lenta, ideal pro jantar de quem treina de manhã."
+ },
+ {
+  "id": "rc81",
+  "n": "Mousse de cupuaçu com iogurte grego",
+  "cat": "Doces fit",
+  "tempo": 10,
+  "rende": 4,
+  "k": 150,
+  "pt": 9,
+  "ing": [
+   "300 g de polpa de cupuaçu (ou maracujá)",
+   "400 g de iogurte grego natural sem açúcar",
+   "1 sachê de gelatina incolor sem sabor (12 g) hidratada",
+   "2 col. sopa de adoçante culinário",
+   "Raspas de limão pra finalizar"
+  ],
+  "modo": [
+   "Bata a polpa de cupuaçu com o iogurte e o adoçante até virar um creme liso.",
+   "Hidrate a gelatina em 5 col. sopa de água, dissolva no micro-ondas por 15 segundos e junte batendo.",
+   "Divida em 4 potinhos, finalize com raspas de limão e leve à geladeira por 3 horas.",
+   "Sirva gelado."
+  ],
+  "dica": "Sobremesa amazônica com 9 g de proteína por porção — mata a vontade de doce à noite sem estourar a dieta."
  }
 ];
