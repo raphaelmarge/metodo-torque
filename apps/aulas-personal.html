@@ -108,8 +108,8 @@
         (a.meia ? '<span class="tag roxo">meia aula</span>' : "") +
         (a.teste ? '<span class="tag ok">aula teste</span>' : "") +
         '<span class="muted">máx. ' + (a.max || 1) + "</span>" +
-        '<button class="btn sec mini" data-ed="' + a.id + '">✎</button>' +
-        '<button class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
+        '<button aria-label="Editar" class="btn sec mini" data-ed="' + a.id + '">✎</button>' +
+        '<button aria-label="Excluir" class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhuma aula de personal cadastrada — clique em "+ Nova aula".</div>';
   }
 
@@ -208,8 +208,8 @@
         "</span></div>" +
         '<div class="linha-flex" style="gap:6px;">' +
         (saldo > 0 && !vencido ? '<button class="btn mini" data-usa="' + p.id + '">− Usar 1 sessão</button>' : "") +
-        '<button class="btn sec mini" data-hist="' + p.id + '">📋</button>' +
-        '<button class="btn perigo mini" data-del="' + p.id + '">✕</button></div></div>';
+        '<button aria-label="Copiar" class="btn sec mini" data-hist="' + p.id + '">📋</button>' +
+        '<button aria-label="Excluir" class="btn perigo mini" data-del="' + p.id + '">✕</button></div></div>';
     }).join("") : '<p class="mut">Nenhum pacote vendido ainda.</p>';
   }
 

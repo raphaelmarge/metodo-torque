@@ -183,8 +183,8 @@
           atras ? '<span class="tag erro">VENCIDA</span>' : '<span class="tag alerta">EM ABERTO</span>') + "</td>" +
         "<td style='text-align:right; white-space:nowrap'>" +
         (c.status === "aberto" ? '<button class="btn ok mini" data-pagar="' + c.id + '">✓ Pagar</button> ' +
-          '<button class="btn sec mini" data-cancelar="' + c.id + '">✕</button>' :
-          '<button class="btn sec mini" data-reabrir="' + c.id + '">↩</button>') +
+          '<button aria-label="Excluir" class="btn sec mini" data-cancelar="' + c.id + '">✕</button>' :
+          '<button aria-label="Desfazer" class="btn sec mini" data-reabrir="' + c.id + '">↩</button>') +
         ' <button class="btn sec mini" data-ver="' + c.id + '" title="Detalhes da conta">👁</button>' +
         "</td></tr>";
     }).join("");
@@ -270,7 +270,7 @@
     var st = load();
     $("listaCentros").innerHTML = st.centros.map(function (c, i) {
       return '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 7px 10px;"><span style="font-size:14px">' + esc(c) +
-        '</span><button class="btn perigo mini" data-rc="' + i + '" style="padding:2px 8px">✕</button></div>';
+        '</span><button aria-label="Excluir" class="btn perigo mini" data-rc="' + i + '" style="padding:2px 8px">✕</button></div>';
     }).join("");
   }
   $("btnCentros").onclick = function () { renderCentros(); $("dlgCentros").showModal(); };

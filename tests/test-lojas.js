@@ -146,6 +146,23 @@ for (const pg of paginas) {
 }
 ok(vazios.length === 0, "nenhum botão/link vazio nas " + paginas.length + " páginas" + (vazios.length ? " — " + vazios.join(", ") : ""));
 
+/* Botão só com símbolo (✕ ‹ › + ➤) também é botão sem nome: o leitor de tela
+ * anuncia o caractere cru. O teste antigo só pegava os COMPLETAMENTE vazios. */
+const semNome = [];
+for (const pg of paginas) {
+  const t = fs.readFileSync(path.join(RAIZ, pg), "utf8");
+  const re = /<button\b([^>]*)>([\s\S]{0,400}?)<\/button>/g;
+  let m2, n = 0;
+  while ((m2 = re.exec(t))) {
+    if (/aria-label|title=/.test(m2[1])) continue;
+    const visivel = m2[2].replace(/<svg[\s\S]*?<\/svg>/g, "").replace(/<[^>]*>/g, "");
+    if (/[a-zA-Zà-úÀ-Ú0-9]/.test(visivel)) continue;
+    n++;
+  }
+  if (n) semNome.push(pg + " (" + n + ")");
+}
+ok(semNome.length === 0, "nenhum botão só de símbolo sem aria-label" + (semNome.length ? " — " + semNome.join(", ") : ""));
+
 /* As Edge Functions que agem em nome do usuário (whatsapp, pagarme) exigem
  * role "authenticated". A anonKey tem role "anon": mandada como Authorization,
  * leva 401 SEMPRE — a função nem chega a rodar. Já aconteceu em 5 lugares. */

@@ -228,7 +228,7 @@
             '<input type="checkbox" data-metaok="' + m.id + '"' + (m.feito ? " checked" : "") + ">" +
             '<span style="flex:1;' + (m.feito ? "text-decoration:line-through; color:var(--cinza);" : "") + '">' + esc(m.titulo) +
             (m.prazo ? ' <span class="muted">(até ' + S.fmtData(m.prazo) + ")</span>" : "") + "</span>" +
-            '<button class="btn sec mini" data-metarm="' + m.id + '">🗑</button></div>';
+            '<button aria-label="Excluir" class="btn sec mini" data-metarm="' + m.id + '">🗑</button></div>';
         }).join("") : '<div class="vazio">Nenhuma meta ainda — combine as metas do mês com o colaborador.</div>') +
         "</div>";
     }

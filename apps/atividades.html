@@ -86,7 +86,7 @@
         '<span class="tag ' + (a.ativa === false ? "neutro" : "ok") + '">' + (a.ativa === false ? "Inativa" : "Ativa") + "</span>" +
         '<button class="btn sec mini" data-tgl="' + a.id + '">' + (a.ativa === false ? "reativar" : "inativar") + "</button>" +
         '<button class="btn sec mini" data-dup="' + a.id + '" title="duplicar">⧉</button>' +
-        '<button class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
+        '<button aria-label="Excluir" class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhuma atividade — cadastre as modalidades (ex.: BOXE, CROSSFIT, DANÇA, GAP, HIIT, HYROX, JUMP, Muay Thai).</div>';
   }
 

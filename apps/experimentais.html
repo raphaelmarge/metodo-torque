@@ -182,7 +182,7 @@
         (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgPosAula(a)) + '">Pós-aula</a>' : "") : "") +
       (a.status === "faltou" ? '<button class="btn sec" data-acao="remarcar">Remarcar</button>' +
         (a.zap ? '<a class="btn whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgFalta(a)) + '">Reconquistar</a>' : "") : "") +
-      '<button class="btn perigo" data-acao="excluir">✕</button>' +
+      '<button aria-label="Excluir" class="btn perigo" data-acao="excluir">✕</button>' +
       "</div></div>";
   }
 

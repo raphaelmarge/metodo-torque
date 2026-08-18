@@ -125,7 +125,7 @@
         return "<tr><td>" + S.fmtData(c.data) + "</td><td>" + diaSemana(c.data) + "</td><td>" + esc(c.hora) +
           '</td><td class="num">' + (+c.musc || 0) + '</td><td class="num">' + (+c.cardio || 0) + '</td><td class="num">' + (+c.outras || 0) +
           '</td><td class="num"><strong>' + t + '</strong></td><td class="num">' + pct(t, capTotal) + "</td><td>" + esc(c.quem || "—") +
-          '</td><td><button class="btn perigo mini" data-excluir="' + c.id + '">✕</button></td></tr>';
+          '</td><td><button aria-label="Excluir" class="btn perigo mini" data-excluir="' + c.id + '">✕</button></td></tr>';
       }).join("") : '<tr><td colspan="10" class="muted" style="padding: 20px;">Nenhuma contagem no período — registre com ➕ Nova contagem (ex.: toda hora cheia).</td></tr>');
 
     // média por horário (hora cheia)

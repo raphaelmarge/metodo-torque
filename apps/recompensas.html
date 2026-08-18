@@ -161,7 +161,7 @@
     $("listaPremios").innerHTML = st.premios.length ? st.premios.map(function (p, i) {
       return '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 7px 10px; margin-bottom: 4px;">' +
         "<span>" + esc(p.nome) + " — <strong>" + p.custo + " pts</strong></span>" +
-        '<button class="btn perigo mini" data-rp="' + i + '" type="button" style="padding: 1px 8px;">✕</button></div>';
+        '<button aria-label="Excluir" class="btn perigo mini" data-rp="' + i + '" type="button" style="padding: 1px 8px;">✕</button></div>';
     }).join("") : '<p class="muted">Nenhum prêmio ainda. Ex.: garrafa (50 pts), camiseta (150 pts), 1 mês grátis (600 pts).</p>';
   }
   $("btnPremios").onclick = function () { renderPremios(); $("dlgPremios").showModal(); };

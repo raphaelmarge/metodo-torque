@@ -125,7 +125,7 @@
       var hor = f.de ? f.de + "–" + (f.ate || "?") : "fechado";
       return '<div class="linha-fer"><strong>' + S.fmtData(f.data) + "</strong><span style='flex:1;'>" + esc(f.nome) +
         "</span><span class='tag " + (f.de ? "roxo" : "neutro") + "'>" + hor + "</span>" +
-        '<button class="btn sec mini" data-rm="' + f.id + '">🗑</button></div>';
+        '<button aria-label="Excluir" class="btn sec mini" data-rm="' + f.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhum feriado cadastrado ainda.</div>';
   }
 

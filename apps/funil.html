@@ -208,7 +208,7 @@
       (l.status === "contato" ? '<button class="btn sec" data-acao="agendar">Agendar aula</button>' : "") +
       (l.status === "agendado" ? '<button class="btn sec" data-acao="visitou">✓ Visitou</button>' : "") +
       (l.status === "visitou" ? '<button class="btn ok" data-acao="matricular">Matriculou</button>' : "") +
-      '<button class="btn perigo" data-acao="perdido">✕</button>' +
+      '<button aria-label="Excluir" class="btn perigo" data-acao="perdido">✕</button>' +
       "</div></div>";
   }
 

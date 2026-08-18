@@ -2216,7 +2216,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfDiarioLista").innerHTML = lista.length ? lista.slice().reverse().map(function (x, i) {
       return '<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--linha);">' +
         '<b style="white-space:nowrap;">' + S.fmtData(x.d) + "</b><span style='flex:1;'>" + esc(x.t) + "</span>" +
-        '<button class="btn sec mini" data-ddel="' + (lista.length - 1 - i) + '">✕</button></div>';
+        '<button class="btn sec mini" data-ddel="' + (lista.length - 1 - i) + '" aria-label="apagar este registro">✕</button></div>';
     }).join("") : "Nenhuma anotação ainda — anote em 10 segundos como foi a sessão de hoje.";
   }
   $("pfDiarioAdd").addEventListener("click", function () {
@@ -2534,10 +2534,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var cds = serieForm.slice(-20);
           var cv = cds.map(function (c) { return +c.pts; });
           var cmin = Math.min.apply(null, cv), cmax = Math.max.apply(null, cv);
-          // escala ancorada no ZERO (não no mínimo do aluno): se todas as semanas
-          // empatam em 5 pontos, todas ficam altas e verdes — e não rasteiras e vermelhas
-          var cbase = Math.min(0, cmin);
-          var cfx = (cmax - cbase) || 1;
+          // ALTURA: escala ancorada no zero pelos dois lados (não no mínimo nem no
+          // máximo do aluno), pra semana ruim ficar rasteira e empate ficar alto.
+          // COR: compara com a MELHOR semana, e pontuação negativa é sempre vermelha —
+          // senão a melhor semana de quem só respondeu que está mal virava verde.
+          var cbase = Math.min(0, cmin), ctopo = Math.max(0, cmax);
+          var cfx = (ctopo - cbase) || 1;
           var CW = 340, CH = 66, CP = 4, BW = Math.max(6, Math.floor((CW - 2 * CP) / cds.length) - 3);
           html += "<div class='muted' style='font-size:12px;margin:2px 0 4px;'>Como foram as semanas de <b>" + esc(formAlvo) + "</b> — barra alta e verde = semana boa; baixa e vermelha = semana fraca." +
             (varios ? " (os outros formulários ficam na lista aqui embaixo)" : "") + "</div>" +
@@ -2546,7 +2548,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               var frac = (v - cbase) / cfx;
               var h = Math.max(4, Math.round((CH - 8) * frac) + 4);
               var x = CP + Math.round((CW - 2 * CP - BW) * (cds.length === 1 ? 0 : i / (cds.length - 1)));
-              var cor = frac >= 0.66 ? "#4ade80" : frac >= 0.33 ? "#fbbf24" : "#f87171";
+              var fcor = v < 0 ? -1 : (ctopo > 0 ? v / ctopo : 0.5);
+              var cor = fcor >= 0.66 ? "#4ade80" : fcor >= 0.33 ? "#fbbf24" : "#f87171";
               return "<rect x='" + x + "' y='" + (CH - h) + "' width='" + BW + "' height='" + h + "' rx='2.5' fill='" + cor + "'><title>" + fmtD(cds[i].d) + ": " + num(v) + " ponto(s)</title></rect>";
             }).join("") +
             "<text x='" + CP + "' y='" + (CH + 14) + "' font-size='10' fill='#8a8695'>" + fmtD(cds[0].d) + "</text>" +
@@ -2565,8 +2568,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             if (!r || typeof r !== "object") return;
             var chave = String(r.sigla || r.pergunta || "").slice(0, 40);
             if (!chave) return;
+            // a marcação vem gravada na própria resposta; o cadastro é só o plano B
+            // (assim apagar a pergunta não vira o sentido de todo o histórico)
             var m = porPerg[chave] || (porPerg[chave] = { sigla: chave, pergunta: String(r.pergunta || ""),
-              menosMelhor: !!(cfgPerg[chave.toLowerCase()] || {}).menosMelhor, serie: [] });
+              menosMelhor: r.menos != null ? !!r.menos : !!(cfgPerg[chave.toLowerCase()] || {}).menosMelhor, serie: [] });
+            if (r.menos != null) m.menosMelhor = !!r.menos;
             m.serie.push({ d: c.d, txt: String(r.resposta == null ? "" : r.resposta),
               pts: (r.pontos == null || !isFinite(+r.pontos)) ? null : +r.pontos });
           });
@@ -2628,7 +2634,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "<b>" + c.d.slice(8, 10) + "/" + c.d.slice(5, 7) + "</b> · " + esc(String(c.nome || "Check-in")) +
             (pts != null ? " <b style='color:" + corC + ";'>" + (pts > 0 ? "+" : "") + num(pts) + " pts</b>" : "") +
             "<div class='muted' style='font-size:12px;margin-top:2px;'>" + (Array.isArray(c.respostas) ? c.respostas : []).map(function (x2) {
-              return x2 && typeof x2 === "object" ? esc(String(x2.sigla || "")) + ": <b>" + esc(String(x2.resposta == null ? "" : x2.resposta)) + "</b>" : "";
+              return x2 && typeof x2 === "object" ? esc(String(x2.pergunta || x2.sigla || "")) + ": <b>" + esc(String(x2.resposta == null ? "" : x2.resposta)) + "</b>" : "";
             }).filter(Boolean).join(" · ") + "</div></div>";
         }).join("");
       }
@@ -2867,7 +2873,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var a = st.alunos.find(function (x) { return x.id === perfilId; });
       if (!a) return;
       var jaTem = contratoDe(st, perfilId);
-      if (jaTem) { jaTem.status = "encerrado"; jaTem.encerradoEm = S.todayISO(); }
+      // troca de plano NÃO é aluno que saiu: sem a marca "troca" o churn e o
+      // saldo da carteira contavam cada mudança de plano como uma perda
+      if (jaTem) { jaTem.status = "encerrado"; jaTem.encerradoEm = S.todayISO(); jaTem.motivo = "troca"; }
       st.contratosPT = st.contratosPT || [];
       st.contratosPT.push({ id: S.uid(), alunoId: perfilId, planoId: planoId,
         diaVenc: Math.min(28, Math.max(1, +$("pfCtDia").value || 5)), inicio: S.todayISO(), status: "ativo" });
@@ -3090,8 +3098,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var tipoRot = p.tipo === "emoji" ? "carinhas" : p.tipo === "linear" ? "0–10" : "livre";
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
         "<b>" + esc(p.sigla) + "</b> · " + esc(p.titulo) + ' <span class="muted" style="font-size:12px;">(' + tipoRot + ")</span>" +
+        (p.menosMelhor ? ' <span style="background:#f8717122;color:#f87171;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:800;">nota menor é melhor</span>' : "") +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-qprm="' + p.id + '">✕</button></div>';
+        '<button class="btn sec mini" data-qpinv="' + p.id + '" title="trocar o sentido da nota">' + (p.menosMelhor ? "maior é melhor" : "menor é melhor") + "</button>" +
+        '<button class="btn sec mini" data-qprm="' + p.id + '" aria-label="excluir a pergunta ' + esc(p.sigla) + '">✕</button></div>';
     }).join("") : "Nenhuma pergunta ainda — crie a primeira acima.";
     $("qqPerguntas").innerHTML = st.questPerguntas.length
       ? "Marque as perguntas do questionário novo:<br>" + st.questPerguntas.map(function (p) {
@@ -3102,7 +3112,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
         "<b>" + esc(q.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + q.perguntas.length + " pergunta(s))</span>" +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-qqrm="' + q.id + '">✕</button></div>';
+        '<button class="btn sec mini" data-qqrm="' + q.id + '" aria-label="excluir o questionário">✕</button></div>';
     }).join("") : "Nenhum questionário ainda.";
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
     $("qeAluno").innerHTML = '<option value="">Aluno…</option>' + ativos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
@@ -3135,6 +3145,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderQuest();
   });
   $("qpLista").addEventListener("click", function (e) {
+    // trocar o sentido da nota SEM apagar a pergunta: apagar tirava ela de todos os
+    // questionários já enviados e virava a leitura de todo o histórico respondido
+    var inv = e.target.getAttribute && e.target.getAttribute("data-qpinv");
+    if (inv) {
+      var sti = questSt(load());
+      var pi = sti.questPerguntas.find(function (p) { return p.id === inv; });
+      if (pi) { pi.menosMelhor = !pi.menosMelhor; save(sti); renderQuest(); }
+      alert(pi && pi.menosMelhor
+        ? "Agora esta pergunta conta como NOTA MENOR É MELHOR (dor, cansaço, fome).\nReenvie o questionário pros alunos pra valer nos próximos check-ins."
+        : "Agora esta pergunta conta como nota maior é melhor.\nReenvie o questionário pros alunos pra valer nos próximos check-ins.");
+      return;
+    }
     var id = e.target.getAttribute && e.target.getAttribute("data-qprm");
     if (!id || !confirm("Excluir esta pergunta?")) return;
     var st = questSt(load());
@@ -3166,7 +3188,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       nome: q.nome,
       ps: q.perguntas.map(function (pid) {
         var p = st.questPerguntas.find(function (x) { return x.id === pid; });
-        return p ? { s: p.sigla, texto: p.texto, tipo: p.tipo, ops: p.ops || [] } : null;
+        // mm = "nota menor é melhor": sem isso o app somava dor como ponto bom
+        return p ? { s: p.sigla, texto: p.texto, tipo: p.tipo, ops: p.ops || [], mm: !!p.menosMelhor } : null;
       }).filter(Boolean),
     };
   }
@@ -3273,7 +3296,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             ' <span class="muted" style="font-size:12px;">' + S.fmtData((row.criado || "").slice(0, 10)) + "</span>" +
             (pts != null ? ' <span style="font-weight:800;color:' + corP + ';margin-left:6px;">' + (pts > 0 ? "+" : "") + pts + " pts</span>" : "") +
             '<div class="muted" style="font-size:12.5px;margin-top:4px;">' + (d.respostas || []).map(function (x) {
-              return esc(x.sigla || "") + ": <b>" + esc(String(x.resposta)) + "</b>";
+              return esc(x.pergunta || x.sigla || "") + ": <b>" + esc(String(x.resposta)) + "</b>";
             }).join(" · ") + "</div></div>";
         }).join("");
       }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
@@ -3482,7 +3505,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="linha-flex" style="align-items:center;gap:8px;padding:8px 0;border-top:1px solid #322e3d;">' +
         "<b>" + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nomes.join(", ") + ")</span>" +
         '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-grrm="' + g.id + '">✕</button></div>';
+        '<button class="btn sec mini" data-grrm="' + g.id + '" aria-label="excluir a turma">✕</button></div>';
     }).join("") : "Nenhum grupo ainda.";
     st.treinosGrupo = st.treinosGrupo || [];
     $("gtLista").innerHTML = st.treinosGrupo.length ? st.treinosGrupo.map(function (g) {
@@ -3493,7 +3516,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<b>" + esc(g.nome) + "</b> <span class='muted' style='font-size:12px;'>(" + nf + " ficha(s), " + nex + " exercício(s))</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
         '<button class="btn sec mini" data-gtedit="' + g.id + '">✎ montar</button>' +
-        '<button class="btn sec mini" data-gtrm="' + g.id + '">✕</button></span></div>';
+        '<button class="btn sec mini" data-gtrm="' + g.id + '" aria-label="excluir este item">✕</button></span></div>';
     }).join("") : "Nenhum treino de disparo ainda — clique em <b>Montar treino de disparo</b>.";
     var opsGt = st.treinosGrupo.map(function (g) {
       var t2 = (st.treinosV2 || {})[g.id];
@@ -3967,7 +3990,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("calAgenda").innerHTML = cal;
     $("blLista").innerHTML = (st.bloqueios || []).length ? st.bloqueios.map(function (b) {
       return '<div class="sessao-pt"><b>' + S.fmtData(b.de) + (b.ate !== b.de ? " a " + S.fmtData(b.ate) : "") + "</b><span>" + esc(b.motivo) + "</span>" +
-        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-blrm="' + b.id + '">✕</button></div>';
+        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-blrm="' + b.id + '" aria-label="excluir o bloqueio">✕</button></div>';
     }).join("") : "Nenhum bloqueio.";
     // detalhe do dia escolhido + sessões antigas sem marcação
     function linhaSes(x, comData) {
@@ -4913,7 +4936,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '" title="subir na ficha">↑</button>' : "") +
             (i < f.itens.length - 1 ? '<button class="btn sec mini" data-desce="' + f.id + ":" + i + '" title="descer na ficha">↓</button>' : "") +
-            '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '">✕</button></span></div>';
+            '<button class="btn sec mini" data-rmitem="' + f.id + ":" + i + '" aria-label="tirar o exercício da ficha">✕</button></span></div>';
         }).join("") : '<div class="muted" style="padding:4px 0;">Ficha vazia — adicione o primeiro exercício.</div>') +
         '<div class="linha-flex" style="margin-top:10px;">' +
         // cascata: tipo de treino → grupamento → exercício (sem rolar 1000 itens)
@@ -5128,7 +5151,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span class="muted" style="font-size:12px;">' + w.mov.length + " movimento(s)</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
         '<button class="btn sec mini" data-wped="' + w.id + '">Editar</button>' +
-        '<button class="btn sec mini" data-wprm="' + w.id + '">✕</button></span></div>';
+        '<button class="btn sec mini" data-wprm="' + w.id + '" aria-label="excluir o circuito">✕</button></span></div>';
     }).join("") : "Nenhum circuito ainda — monte o primeiro abaixo e salve.";
   }
   function wpMostraCfg() {
@@ -6301,8 +6324,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!ex) {
       ex = { id: S.uid(), nome: cat ? cat.n : nome, grupo: (cat && cat.g) || "", video: (cat && cat.v) || "", descricao: (cat && cat.d) || "" };
       st.exercicios.push(ex);
-    } else if (!ex.video && cat && cat.v) {
-      // cópia antiga sem vídeo herda o vídeo padrão do catálogo (o professor pode trocar)
+    } else if (!ex.video && !ex.semVideo && cat && cat.v) {
+      // cópia antiga sem vídeo herda o vídeo padrão do catálogo (o professor pode trocar);
+      // quem apagou o vídeo de propósito (semVideo) não recebe de volta
       ex.video = cat.v;
     }
     return ex;
@@ -6313,6 +6337,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // demonstração no app do aluno, sem o professor precisar refazer nada.
   function videoDoEx(ex) {
     if (!ex) return "";
+    if (ex.semVideo) return "";
     if (ex.video) return ex.video;
     var cat = (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === String(ex.nome || "").toLowerCase(); });
     return (cat && cat.v) || "";
@@ -6763,21 +6788,64 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function movimentoDe(nome, grupo) {
     var n = " " + String(nome).toLowerCase() + " ";
     var tem = function (ks) { return ks.some(function (k) { return n.indexOf(k) >= 0; }); };
-    if (tem(["alongamento", "mobilidade", "liberação", "rotação torácica", "cat-cow", "gato e camelo", "escorpião"])) return "Mobilidade e alongamento";
-    if (tem(["prancha", "abdominal", "hollow", "dead bug", "bird dog", "pallof", "rollout", "russian", "twist", "elevação de pernas", "canivete", "superman", "anti-rota", "ponte lateral"])) return "Core e estabilidade";
-    // "corda" sozinha jogava pro cardio TODO exercício de polia com corda
-    // (tríceps corda, remada baixa com corda, rosca com corda...) — por isso os
-    // termos aqui são específicos de pular/escalar/corda naval
+    // natação vem primeiro: na piscina "prancha" é o flutuador da mão e
+    // "braçada/pernada" não são puxar/agachar — o grupo inteiro é condicionamento
+    if (grupo === "Natação e aquático") return "Cardio e condicionamento";
+    if (tem(["alongamento", "mobilidade", "liberação", "rotação torácica", "cat-cow", "gato e camelo", "escorpião",
+      "yoga", "postura d", "saudação ao sol", "guerreiro", "asana", "meia lua", "torção deitada", "cachorro olhando",
+      "sereia", "mermaid", "respiração diafragmática", "respiração de fogo", "pêndulo de codman", "círculo de tornozelo",
+      "círculos de tornozelo", "dorsiflexão", "alcance funcional", "alcance lateral", "alcance de braço",
+      "inclinação de tronco", "levantar os braços"])) return "Mobilidade e alongamento";
+    // exercício de tríceps é sempre empurrar — sem isso "Tríceps coice" caía no
+    // padrão de quadril (por causa do "coice") e sumia do filtro de empurrar
+    if (tem(["tríceps"])) return "Empurrar";
+    // "elevação lateral/frontal DE PERNA" é quadril, não ombro
+    if (tem(["elevação lateral de perna", "elevação frontal de perna"])) return "Dobradiça e quadril";
+    if ((tem(["prancha", "abdominal", "hollow", "dead bug", "bird dog", "pallof", "rollout", "russian", "twist",
+      "elevação de pernas", "canivete", "superman", "anti-rota", "ponte lateral",
+      "hundred", "roll-up", "roll up", "teaser", "leg circle", "single leg stretch", "double leg stretch",
+      "criss-cross", "dragon flag", "toes to bar", "esquadro na barra", "knees to elbows",
+      "rolling like a ball", "rolamento como uma bola", "side kick", "swan", "cisne", "swimming",
+      "carry", "farmer", "fazendeiro", "yoke", "suitcase", "garçom", "waiter", "pinch",
+      "basculação pélvica", "equilíbrio", "apoio unipodal", "transferência de peso",
+      "caminhada de urso", "caminhada do urso", "bear crawl"]) ||
+        (tem(["l-sit", "v-sit"]) && !tem(["barra fixa", "pull-up"]))) &&
+        !tem(["pernada", "braçada", "educativo"])) return "Core e estabilidade";
+    // termos específicos: "caminhada"/"escada"/"corda" sozinhas jogavam pro cardio
+    // exercícios que são de força (mini band, panturrilha no degrau, tríceps corda)
     if (tem(["corrida", "esteira", "bike", "bicicleta", "elíptico", "transport", "ergômetro", "burpee", "polichinelo",
       "pular corda", "pulo de corda", "salto de corda", "corda naval", "corda de boxe", "subida na corda", "escalada de corda",
-      "sprint", "tiro de", "escada", "mountain climber", "caminhada", "hiit", "circuito", "skipping", "jump"])) return "Cardio e condicionamento";
-    if (tem(["agachamento", "leg press", "afundo", "avanço", "passada", "búlgaro", "extensora", "hack", "pistol", "subida no banco", "step up", "sissy", "wall sit", "panturrilha"])) return "Agachar e pernas";
-    if (tem(["terra", "stiff", "romeno", "elevação pélvica", "hip thrust", "bom dia", "swing", "flexora", "glúteo", "coice", "abdução", "adução", "pull through", "hiperextensão", "ponte de"])) return "Dobradiça e quadril";
-    if (tem(["remada", "puxada", "barra fixa", "pull", "rosca", "encolhimento", "invertido", "serrote", "pulôver", "pullover"])) return "Puxar";
-    if (tem(["supino", "flexão de braço", "desenvolvimento", "press", "paralela", "mergulho", "crucifixo", "crossover", "cross over", "voador", "tríceps", "testa", "francês", "elevação lateral", "elevação frontal", "arnold", "push"])) return "Empurrar";
+      "sprint", "tiro de", "escada de agilidade", "stair", "mountain climber", "caminhada rápida", "caminhada inclinada",
+      "hiit", "circuito", "skipping", "jump",
+      "marcha estacionária", "marcha lateral", "marcha sentada", "passo lateral entre", "passo à frente",
+      "calcanhar-ponta", "calcanhar e ponta", "deslocamento", "sprawl", "zigue-zague", "carioca", "lateral hop"]) ||
+        (tem(["salto"]) && !tem(["agachamento", "afundo", "avanço", "búlgaro", "passada"])))
+      return "Cardio e condicionamento";
+    if (tem(["agachamento", "leg press", "afundo", "avanço", "passada", "búlgaro", "extensora", "hack", "pistol",
+      "subida no banco", "step up", "sissy", "wall sit", "panturrilha",
+      "squat", "flexão plantar", "sentar e levantar", "levantar e sentar", "levantar da cadeira", "levantar do solo",
+      "subida de degrau", "elevação de calcanhares", "elevação de calcanhar", "extensão de joelho",
+      "agachar", "sentadilla", "deslizamento do calcanhar", "isometria de quadríceps", "tibial anterior"])) return "Agachar e pernas";
+    if (tem(["terra", "stiff", "romeno", "elevação pélvica", "hip thrust", "bom dia", "swing", "flexora", "glúteo",
+      "coice", "abdução de quadril", "pull through", "hiperextensão", "ponte de",
+      "flexão de joelho", "flexão nórdica", "flexão de pernas", "flexão de quadril"])) return "Dobradiça e quadril";
+    if (tem(["remada", "puxada", "barra fixa", "pull", "rosca", "encolhimento", "remada invertida", "crucifixo invertido", "voador invertido", "w invertido", "serrote", "pulôver", "pullover"])) return "Puxar";
+    // "flexão" solta é a flexão de solo (push-up) — só o punho foge da regra
+    if (tem(["supino", "flexão", "desenvolvimento", "press", "paralela", "mergulho", "crucifixo", "crossover", "cross over", "voador", "testa", "francês", "elevação lateral", "elevação frontal", "arnold", "push"]) &&
+        !tem(["flexão de punho"])) return "Empurrar";
+    // levantamento olímpico, ginástica e força atlética: habilidade mesmo
+    if (tem(["clean", "cargada", "snatch", "arranco", "jerk", "muscle-up", "muscle up", "turkish get-up", "levantamento turco",
+      "get-up", "get up", "parada de mão", "pino na parede", "apoio invertido", "wall walk", "human flag",
+      "front lever", "back lever", "planche", "skin the cat", "atlas stone",
+      "man maker", "cluster", "tire flip", "virada de pneu"])) return "Habilidade e outros";
+    // TODO grupo do banco tem que estar aqui — sem isso o exercício some do filtro
     var G = { "Peito": "Empurrar", "Ombros": "Empurrar", "Tríceps": "Empurrar", "Costas": "Puxar", "Bíceps": "Puxar",
       "Quadríceps": "Agachar e pernas", "Pernas": "Agachar e pernas", "Posterior e glúteo": "Dobradiça e quadril",
-      "Core": "Core e estabilidade", "Cardio": "Cardio e condicionamento", "Mobilidade e alongamento": "Mobilidade e alongamento" };
+      "Core": "Core e estabilidade", "Cardio": "Cardio e condicionamento",
+      "Mobilidade e alongamento": "Mobilidade e alongamento", "Pilates e yoga": "Mobilidade e alongamento",
+      "Boxe e lutas": "Cardio e condicionamento", "Natação e aquático": "Cardio e condicionamento",
+      "Funcional e Cross": "Cardio e condicionamento", "Reabilitação e terceira idade": "Mobilidade e alongamento",
+      "Ginástica e calistenia": "Habilidade e outros" };
     return G[grupo] || "Habilidade e outros";
   }
   // vídeo demonstrativo: busca pronta no YouTube quando não há vídeo próprio
@@ -6867,7 +6935,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-exanim="' + esc(animDe(x.nome, x.grupo)) + '" title="ver a demonstração do movimento">Como faz</button>' +
         '<a class="btn mini sec" style="text-decoration:none;" target="_blank" rel="noopener" href="' + esc(x.video || videoBusca(x.nome)) + '">▶ vídeo</a>' +
         (x.seu
-          ? '<button class="btn sec mini" data-exedit="' + x.id + '">Abrir</button><button class="btn sec mini" data-exrm="' + x.id + '">✕</button>'
+          ? '<button class="btn sec mini" data-exedit="' + x.id + '">Abrir</button><button class="btn sec mini" data-exrm="' + x.id + '" aria-label="excluir o exercício">✕</button>'
           : '<button class="btn sec mini" data-exabrir="' + esc(x.nome) + '">Abrir</button>') +
         "</span></div>";
     });
@@ -6945,7 +7013,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       exEditando = ed;
       $("dlgExTitulo").textContent = ex.nome;
       $("dxNome").value = ex.nome; $("dxGrupo").value = ex.grupo || "";
-      $("dxVideo").value = ex.video || ""; $("dxDesc").value = ex.descricao || "";
+      // mostra o vídeo que o aluno está vendo (inclusive o padrão do catálogo),
+      // senão apagar o campo não tem como significar "não quero vídeo aqui"
+      $("dxVideo").value = ex.semVideo ? "" : videoDoEx(ex); $("dxDesc").value = ex.descricao || "";
       $("dlgEx").showModal();
     }
     if (rm) {
@@ -6974,7 +7044,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("dxVideo").focus();
       return;
     }
+    // apagar o campo com um vídeo aparecendo = "não quero vídeo neste exercício";
+    // sem essa marca o vídeo padrão do catálogo ressuscitava sozinho
+    var tinhaVideo = !!videoDoEx(ex);
     ex.video = vidNovo;
+    ex.semVideo = !vidNovo && tinhaVideo;
     ex.descricao = $("dxDesc").value.trim();
     S.write("ptStudio", st);
     renderBiblioteca(); renderFichas();
@@ -6989,7 +7063,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return "<div style='font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:10px 0 4px;text-transform:uppercase;'>" + esc(c) + "</div>" +
         porCat[c].map(function (v) {
           return '<div class="sessao-pt"><a href="' + esc(v.url) + '" target="_blank" rel="noopener" style="font-weight:700;">▶ ' + esc(v.titulo) + "</a>" +
-            '<span style="margin-left:auto;"></span><button class="btn sec mini" data-vtprm="' + v.id + '">✕</button></div>';
+            '<span style="margin-left:auto;"></span><button class="btn sec mini" data-vtprm="' + v.id + '" aria-label="excluir o conteúdo">✕</button></div>';
         }).join("");
     }).join("");
   }
@@ -7090,7 +7164,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>" +
         (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">recorrente</span>' : "") +
         "<span class='muted'>" + n + " contrato(s)</span>" +
-        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-plrm="' + pl.id + '">✕</button></div>';
+        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-plrm="' + pl.id + '" aria-label="excluir o plano">✕</button></div>';
     }).join("") : "Nenhum plano ainda.";
     var nomeDe = {};
     st.alunos.forEach(function (a) { nomeDe[a.id] = a.nome; });
@@ -7773,7 +7847,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             (v.scan ? '<span class="tag" style="font-size:10px;background:rgba(96,165,250,.18);color:#60a5fa;">câmera</span>' : "") +
             '<span style="margin-left:auto;"></span>' +
             '<button class="btn sec mini" data-avlaudo="' + v.id + '">Laudo</button>' +
-            '<button class="btn sec mini" data-avrm="' + v.id + '">✕</button></div>';
+            '<button class="btn sec mini" data-avrm="' + v.id + '" aria-label="excluir a avaliação">✕</button></div>';
         }).join("") + "</div></details>";
     }).join("");
   }
@@ -7941,7 +8015,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       { t: "Recebido no mês", v: fmtR(recebidoMes), cor: "#16a34a" },
       { t: "Falta receber", v: fmtR(Math.max(0, previstoMes - recebidoMes)), cor: previstoMes > recebidoMes ? "#d97706" : "#16a34a" },
       { t: "Sessões no mês", v: sessMes },
-      { t: "Ticket médio", v: nPagantes ? fmtR(recebidoMes / nPagantes) : "—", sub: nPagantes ? nPagantes + " pagante(s)" : "" },
+      // "recebido" e "previsto" são contas diferentes — o rótulo tem que dizer qual é
+      { t: "Ticket médio recebido", v: nPagantes ? fmtR(recebidoMes / nPagantes) : "—", sub: nPagantes ? nPagantes + " pagante(s) — média de quem pagou" : "" },
     ]);
 
     // ---- previsto × recebido ----
@@ -8143,7 +8218,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var pgs = st.pagamentos.filter(function (p) { return (p.data || "").slice(0, 7) === mes; });
     var fat = pgs.reduce(function (t, p) { return t + +p.valor; }, 0);
     var novos = st.alunos.filter(function (a) { return (a.desde || "").slice(0, 7) === mes; }).length;
-    var encerrados = (st.contratosPT || []).filter(function (c) { return c.status === "encerrado" && (c.encerradoEm || "").slice(0, 7) === mes; }).length;
+    // quem SAIU é o aluno desativado no mês — a mesma conta da aba Relatórios.
+    // Contar contrato encerrado dava dois números diferentes pro mesmo mês e
+    // transformava troca de plano (contrato antigo encerrado) em churn.
+    var encerrados = st.alunos.filter(function (a) { return a.ativo === false && (a.fim || "").slice(0, 7) === mes; }).length;
     var sesMes = st.sessoes.filter(function (x) { return (x.data || "").slice(0, 7) === mes; });
     var feitas = sesMes.filter(function (x) { return x.feita; }).length;
     var faltas = sesMes.filter(function (x) { return x.faltou; }).length;
@@ -8157,6 +8235,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     return { fat: fat, pgs: pgs, novos: novos, encerrados: encerrados, feitas: feitas, faltas: faltas, semPagar: semPagar, ativos: ativos };
   }
+  window.__dashDados = function (mes) { return dadosDoMes(load(), mes); }; // testes
   function renderDashPT(st) {
     var hoje = S.todayISO();
     var mes = hoje.slice(0, 7);
@@ -8288,13 +8367,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var saldo = d.novos - d.encerrados;
     $("bMovP").innerHTML =
       kv("Novos alunos no mês", d.novos, d.novos ? "#4ade80" : null) +
-      kv("Contratos encerrados no mês", d.encerrados, d.encerrados ? "#f87171" : null) +
+      kv("Alunos que saíram no mês", d.encerrados, d.encerrados ? "#f87171" : null) +
       kv("Saldo da carteira", (saldo > 0 ? "+" : "") + saldo, saldo > 0 ? "#4ade80" : saldo < 0 ? "#f87171" : null) +
       kv("Churn do mês (% da carteira que saiu)", fmt1(churn) + "%", churn > 5 ? "#f87171" : null);
     // indicadores
     var somaVida = 0, nVida = 0;
     (st.contratosPT || []).forEach(function (c) {
-      if (c.status === "encerrado" && c.inicio && c.encerradoEm) {
+      if (c.status === "encerrado" && c.motivo !== "troca" && c.inicio && c.encerradoEm) {
         var mv = (new Date(c.encerradoEm) - new Date(c.inicio)) / (30.4 * 864e5);
         if (mv > 0 && mv < 120) { somaVida += mv; nVida++; }
       }
@@ -8302,7 +8381,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var vidaMedia = nVida >= 3 ? somaVida / nVida : 12;
     $("bIndP").innerHTML =
       kv("Receita recorrente (MRR)", fmtR(mrr)) +
-      kv("Ticket médio", fmtR(ticket)) +
+      kv("Ticket médio previsto (mensalidade média)", fmtR(ticket)) +
       kv("Vida média de contrato", fmt1(vidaMedia) + " meses" + (nVida < 3 ? " (estimada)" : "")) +
       kv("Valor do aluno no ciclo (LTV)", fmtR(ticket * vidaMedia)) +
       kv("Receita por sessão dada", d.feitas ? fmtR(d.fat / d.feitas) : "—");
@@ -8399,7 +8478,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "Receita: " + "R$ " + Math.round(d.fat).toLocaleString("pt-BR") +
       (gastoMes ? " · Despesas: R$ " + Math.round(gastoMes).toLocaleString("pt-BR") +
         " · Sobrou: R$ " + Math.round(d.fat - gastoMes).toLocaleString("pt-BR") : "") + "\n" +
-      "Novos alunos: " + d.novos + " · Contratos encerrados: " + d.encerrados + "\n" +
+      "Novos alunos: " + d.novos + " · Alunos que saíram: " + d.encerrados + "\n" +
       "Sessões dadas: " + d.feitas + " · Faltas: " + d.faltas + " (presença " + presenca + "%)" +
       (d.semPagar ? "\nAinda sem pagar no mês: " + d.semPagar + " aluno(s)" : "") +
       "\n— TORQUE PERSONAL";
@@ -8456,6 +8535,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     coracao: "<path d='M12 21C7 16.5 3 13.3 3 9.2 3 6.4 5.2 4 8 4c1.6 0 3.1.8 4 2 .9-1.2 2.4-2 4-2 2.8 0 5 2.4 5 5.2 0 4.1-4 7.3-9 11.8z'/>"
   };
   var MT_CQNOMES = { medalha: "Medalha", trofeu: "Troféu", estrela: "Estrela", coroa: "Coroa", diamante: "Diamante", fogo: "Fogo", raio: "Raio", alvo: "Alvo", foguete: "Foguete", montanha: "Montanha", halter: "Halter", coracao: "Coração" };
+  // JSON que vai DENTRO de um <script> do HTML gerado: JSON.stringify não escapa
+  // "<", então um nome de studio/exercício com um fecha-script literal encerrava
+  // o bloco no meio da declaração e
+  // derrubava o app inteiro do aluno. Todo bloco do app publicado passa por aqui.
+  function jsonApp(v) { return JSON.stringify(v).replace(/</g, "\\u003c"); }
+  window.__jsonApp = jsonApp; // testes
+
   function montaAppAluno(a, stamp) {
     var st = load();
     var studio = (st.config || {}).nome || "Meu Personal";
@@ -8599,10 +8685,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nuvemCfg = self.MT_CLOUD || {};
     var atualizador = "";
     if (nuvemCfg.url && nuvemCfg.anonKey && a.appTokenP) {
-      atualizador = "var STAMP=" + JSON.stringify(stamp) + ";" +
-        "try{if(navigator.onLine){fetch(" + JSON.stringify(nuvemCfg.url + "/rest/v1/rpc/app_aluno_busca") + ",{method:'POST'," +
-        "headers:{apikey:" + JSON.stringify(nuvemCfg.anonKey) + ",Authorization:'Bearer '+" + JSON.stringify(nuvemCfg.anonKey) + ",'Content-Type':'application/json'}," +
-        "body:JSON.stringify({t:" + JSON.stringify(a.appTokenP) + "})})" +
+      atualizador = "var STAMP=" + jsonApp(stamp) + ";" +
+        "try{if(navigator.onLine){fetch(" + jsonApp(nuvemCfg.url + "/rest/v1/rpc/app_aluno_busca") + ",{method:'POST'," +
+        "headers:{apikey:" + jsonApp(nuvemCfg.anonKey) + ",Authorization:'Bearer '+" + jsonApp(nuvemCfg.anonKey) + ",'Content-Type':'application/json'}," +
+        "body:JSON.stringify({t:" + jsonApp(a.appTokenP) + "})})" +
         ".then(function(r){return r.ok?r.json():null;}).then(function(d){" +
         "if(d&&d.html&&d.stamp&&d.stamp>STAMP){document.open();document.write(d.html);document.close();}}).catch(function(){});}}catch(e){}";
     }
@@ -8962,7 +9048,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='cardx'><h2>Diário de cargas</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
       "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
-      "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><input id='dcReps' inputmode='numeric' placeholder='reps' style='width:64px'><button class='btnx' id='dcAdd'>+</button></div>" +
+      "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><input id='dcReps' inputmode='numeric' placeholder='reps' style='width:64px'><button class='btnx' id='dcAdd' aria-label='Adicionar'>+</button></div>" +
       "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui.</div>" +
       "<div id='dcGraf' style='display:none;margin-top:10px;'></div></div>" +
       "<div class='cardx'><h2>Minha evolução</h2><div id='evoBox'></div></div>" +
@@ -9077,7 +9163,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div id='tmrBar' style='display:none;position:fixed;bottom:calc(62px + env(safe-area-inset-bottom,0px));left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg," + COR + "," + CORC + ");color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       "<div id='guiaBox' style='display:none;position:fixed;inset:0;background:#121016;z-index:60;flex-direction:column;padding:22px 18px;max-width:480px;margin:0 auto;'>" +
       "<div style='display:flex;justify-content:space-between;align-items:center;color:#a9a4b5;font-size:13px;font-weight:700;gap:8px;'>" +
-      "<span id='gProg'></span><button id='gFechar' style='background:none;border:none;color:#a9a4b5;font-size:22px;cursor:pointer;font-family:inherit;'>✕</button></div>" +
+      "<span id='gProg'></span><button id='gFechar' aria-label='Fechar o guia' style='background:none;border:none;color:#a9a4b5;font-size:22px;cursor:pointer;font-family:inherit;'>✕</button></div>" +
       "<div id='gEx' style='font-size:25px;font-weight:800;margin-top:16px;'></div>" +
       "<div id='gMeta' style='color:#a9a4b5;font-size:15px;margin-top:6px;'></div>" +
       "<button id='gVideo' class='vidbtn' style='display:none;margin-top:10px;background:rgba(124,58,237,.2);border:1px solid #7c3aed;color:#d6c9f5;font-weight:700;font-size:13px;padding:6px 16px;border-radius:99px;align-self:flex-start;font-family:inherit;cursor:pointer;'>Como fazer</button>" +
@@ -9094,9 +9180,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das sessões e recados por aqui.</div>" +
       "<button class='btnx' id='btnNotif' style='width:100%;'>Ativar notificações</button></div>" +
       "<div class='vz'>Gerado em " + esc(S.fmtData((stamp || "").slice(0, 10))) + " · " + esc(studio) + "</div>" +
-      "<script>var AVS=" + JSON.stringify(avs) + ",META=" + metaSemana +
-      ",NUVEM=" + JSON.stringify((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
-      ",TOKEN=" + JSON.stringify(a.appTokenP || "") + ",ZAPP=" + JSON.stringify(zapPersonal) + ",PRIMEIRO=" + JSON.stringify(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) + ";" +
+      "<script>var AVS=" + jsonApp(avs) + ",META=" + metaSemana +
+      ",NUVEM=" + jsonApp((self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP) ? { u: self.MT_CLOUD.url, k: self.MT_CLOUD.anonKey } : null) +
+      ",TOKEN=" + jsonApp(a.appTokenP || "") + ",ZAPP=" + jsonApp(zapPersonal) + ",PRIMEIRO=" + jsonApp(a.nome.split(" ")[0]) + ",ALTURA=" + (+a.altura || 0) + ";" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio')devolveApp();" +
@@ -9114,7 +9200,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function isoHj(){return isoLoc(new Date());}" +
       "function semDe(x){var d=typeof x==='string'?new Date(x+'T12:00:00'):new Date(x.getTime());d.setDate(d.getDate()-((d.getDay()+6)%7));return isoLoc(d);}" +
       // demonstração animada do movimento — desenhada aqui dentro, funciona SEM internet
-      "var ANIMD=" + JSON.stringify((self.MT_ANIM && self.MT_ANIM.compacto()) || {}) + ";" +
+      "var ANIMD=" + jsonApp((self.MT_ANIM && self.MT_ANIM.compacto()) || {}) + ";" +
       "function animSvg(pad){var p=ANIMD[pad]||ANIMD.agacho;if(!p)return '';var a=p[0],b=p[1];" +
       "var an=function(at,v1,v2){return \"<animate attributeName='\"+at+\"' values='\"+v1+';'+v2+';'+v1+\"' dur='2.6s' repeatCount='indefinite' calcMode='spline' keyTimes='0;0.5;1' keySplines='.4 0 .2 1;.4 0 .2 1'/>\";};" +
       "var ln=function(i,f){return \"<polyline points='\"+a[i]+\"' fill='none' stroke='" + CORC + "' stroke-width='\"+(f?4:5)+\"' stroke-linecap='round' stroke-linejoin='round'\"+(f?\" opacity='.42'\":'')+'>'+an('points',a[i],b[i])+'</polyline>';};" +
@@ -9267,7 +9353,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "Sv('ptonb',{obj:sel.obj,dias:sel.dias,dor:(document.getElementById('onbDor').value||'').trim().slice(0,120),em:isoHj()});" +
       "card.style.display='none';if(navigator.vibrate)navigator.vibrate(90);});})();" +
       // agenda estilo calendário (pede horário pela nuvem)
-      "var SESS=" + JSON.stringify(sessApp) + ";" +
+      "var SESS=" + jsonApp(sessApp) + ";" +
       "var AGSEL=null,AGMES=new Date();AGMES.setDate(1);" +
       "var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];" +
       "function agDados(){var l=L('ptagenda',[]);SESS.forEach(function(s){if(!l.some(function(x){return x.dia===s.d&&x.hora===(s.h||'')&&x.status==='confirmado';}))l.push({dia:s.d,hora:s.h||'',status:'confirmado',obs:'Sessão marcada'});});return l;}" +
@@ -9275,7 +9361,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "function pintaCal(){var el=document.getElementById('agCal');var l=agDados();var y=AGMES.getFullYear(),m=AGMES.getMonth();" +
       "var ini=(new Date(y,m,1).getDay()+6)%7;var nd=new Date(y,m+1,0).getDate();" +
       "var pontos={};l.forEach(function(x){pontos[x.dia]=x.status==='confirmado'?'confirmado':(pontos[x.dia]||x.status);});" +
-      "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' style='background:#14121a;border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' style='background:#14121a;border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
+      "var h=\"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'><button id='agAnt' aria-label='Mês anterior' style='background:#14121a;border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>‹</button><b style='font-size:14px;'>\"+MESES[m]+' '+y+\"</b><button id='agProx' aria-label='Próximo mês' style='background:#14121a;border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:14px;padding:4px 12px;cursor:pointer;font-size:15px;'>›</button></div>\";" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:#6e6a78;margin-bottom:4px;'>\"+['S','T','Q','Q','S','S','D'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
       "for(var i=0;i<ini;i++)h+='<div></div>';" +
@@ -9296,7 +9382,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
       // salvar horário confirmado no calendário do celular (.ics)
-      "var AGTIT=" + JSON.stringify("Sessão com " + studio.split(" ")[0] + " (TORQUE ON)") + ";" +
+      "var AGTIT=" + jsonApp("Sessão com " + studio.split(" ")[0] + " (TORQUE ON)") + ";" +
       "document.getElementById('agDia').addEventListener('click',function(e){var d9=e.target.getAttribute&&e.target.getAttribute('data-agics');if(!d9)return;" +
       "var p9=d9.split('|');var h9=p9[1]||'08:00';var i9=p9[0].replace(/-/g,'')+'T'+h9.replace(':','')+'00';" +
       "var f9=new Date(p9[0]+'T'+h9+':00');f9.setMinutes(f9.getMinutes()+60);var p2=function(n){return('0'+n).slice(-2);};" +
@@ -9334,10 +9420,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // conquistas criadas pelo PRÓPRIO professor (Personalização): ícone de
       // traço (id da paleta; dado legado com emoji vira medalha) + nome + meta
       // em treinos registrados. Entram depois das padrão.
-      "var CQX=" + JSON.stringify(((st.config || {}).conquistas || []).slice(0, 12).map(function (c) {
+      "var CQX=" + jsonApp(((st.config || {}).conquistas || []).slice(0, 12).map(function (c) {
         return { p: MT_CQICONS[c.e] || MT_CQICONS.medalha,
           n: String(c.n || "").replace(/[<>&"']/g, "").slice(0, 28), m: Math.max(1, Math.min(5000, +c.meta || 1)) };
-      }).filter(function (c) { return c.n; })).replace(/</g, "\\u003c") + ";" +
+      }).filter(function (c) { return c.n; })) + ";" +
       "CQX.forEach(function(c){BADGES.push([c.p,c.n,total,c.m]);});" +
       "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b){var tem=b[2]>=b[3];" +
       "return \"<div style='text-align:center;padding:10px 4px;border-radius:16px;\"+(tem?'background:rgba(124,58,237,.22);border:1px solid #7c3aed;':'background:#14121a;border:1px solid #26222f;opacity:.55;')+\"'>\"+" +
@@ -9359,7 +9445,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "el.innerHTML=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Seu ano de treinos — \"+tot+\" dia(s) pintados (cada quadrado é 1 dia)</div><div style='display:flex;gap:1.5px;max-width:100%;overflow:hidden;'>\"+html+'</div>';}" +
       "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(pintaConquistas,150);});" +
       // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
-      "var STUDIO=" + JSON.stringify(studio) + ";" +
+      "var STUDIO=" + jsonApp(studio) + ";" +
       "document.getElementById('btnCardStories').addEventListener('click',function(){" +
       "var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);var stk2=streakSem(f);" +
       "var naSem2=0;var seg2=new Date();seg2.setDate(seg2.getDate()-((seg2.getDay()+6)%7));" +
@@ -9411,7 +9497,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
       "else{var a3=document.createElement('a');a3.href=c.toDataURL('image/png');a3.download='retro.png';a3.click();}});});" +
       "pintaRetro();window.__retro=pintaRetro;" +
-      "var FEXS=" + JSON.stringify(fexs) + ";" +
+      "var FEXS=" + jsonApp(fexs) + ";" +
       // séries por exercício + cronômetro + auto-completar o dia
       "function pintaSets(){var st=L('ptsets_'+isoHj(),{});document.querySelectorAll('.setbtn').forEach(function(b){" +
       "var n=st[b.dataset.ex]||0,max=+b.dataset.n;b.textContent=n+'/'+max+' séries ✓';" +
@@ -9440,7 +9526,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // o motor do WOD só roda se o card existe (o professor pode desligar nas Configurações)
       "if(document.getElementById('cardWod')){" +
       "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
-      "var WODS=" + JSON.stringify(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10 }; })) + ";" +
+      "var WODS=" + jsonApp(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10 }; })) + ";" +
       "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
       "function wodCd(resta){if(!wod.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
       "if(cd&&cd!==wod.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}wod.ultCd=cd;}" +
@@ -9515,7 +9601,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "}" +
       // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
       "if(document.getElementById('cardCardio')){" +
-      "var CARDIOS=" + JSON.stringify(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90 }; })).replace(/</g, "\\u003c") + ";" +
+      "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90 }; })) + ";" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
       "var CRICOS={mapa:\"" + CRICO_MAPA + "\",painel:\"" + CRICO_PAINEL + "\"};" +
       "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
@@ -9818,7 +9904,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "pintaSets();" +
       // modo treino guiado: conduz série a série; a série 'feita' clica no setbtn
       // real do exercício, reaproveitando toda a lógica existente (dia completo etc.)
-      "var GUIA=" + JSON.stringify(guiaFichasP).replace(/</g, "\\u003c") + ";" +
+      "var GUIA=" + jsonApp(guiaFichasP) + ";" +
       "function beepG(){try{var ac=new (window.AudioContext||window.webkitAudioContext)();var o=ac.createOscillator(),ga=ac.createGain();" +
       "o.connect(ga);ga.connect(ac.destination);o.frequency.value=880;ga.gain.value=.25;o.start();" +
       "setTimeout(function(){o.frequency.value=1320;},180);setTimeout(function(){o.stop();ac.close();},380);}catch(e){}}" +
@@ -10082,7 +10168,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "img.src=rd.result;};rd.readAsDataURL(f);this.value='';});" +
       "pintaFotos();" +
       // chat aluno ↔ personal (+ robô de atendimento)
-      "var BOT=" + JSON.stringify(botApp) + ";" +
+      "var BOT=" + jsonApp(botApp) + ";" +
       "function botHist(){return L('ptbotmsgs',[]);}" +
       "function botFala(tx){var h=botHist();h.push({de:'bot',texto:tx,criado:new Date().toISOString()});if(h.length>60)h.shift();Sv('ptbotmsgs',h);}" +
       "function pintaChat(msgs){var el=document.getElementById('chMsgs');var all=(msgs||[]).concat(botHist());" +
@@ -10157,7 +10243,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "\"<div class='vz'>\"+AVS.length+\" avaliação(ões) · última em \"+AVS[AVS.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
       // desafio em grupo: meus pontos + placar da turma
       ((st.desafio && st.desafio.nome && st.desafio.fim >= S.todayISO())
-        ? "var DESAFIO=" + JSON.stringify({ ini: st.desafio.ini, fim: st.desafio.fim }) + ";" +
+        ? "var DESAFIO=" + jsonApp({ ini: st.desafio.ini, fim: st.desafio.fim }) + ";" +
           "(function(){var f=L('ptfeitos',{});var meus=Object.keys(f).filter(function(k){return k>=DESAFIO.ini&&k<=DESAFIO.fim;}).length;" +
           "var el=document.getElementById('dsMeus');if(el)el.textContent=meus;" +
           "document.addEventListener('click',function(e){if(e.target&&e.target.id==='btnFeito')setTimeout(function(){" +
@@ -10267,7 +10353,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         : "") +
       // questionário do personal: trancado até a data de liberação; respostas
       // vão pela RPC pública app_quest_responde e viram métricas no perfil
-      (qa ? "var QUESTAPP=" + JSON.stringify({ nome: qa.nome || "Questionário", ps: qa.ps, desde: qa.desde || "", repete: !!qa.repete, env: qa.enviadoEm || "" }).replace(/</g, "\\u003c") + ";" +
+      (qa ? "var QUESTAPP=" + jsonApp({ nome: qa.nome || "Questionário", ps: qa.ps, desde: qa.desde || "", repete: !!qa.repete, env: qa.enviadoEm || "" }) + ";" +
         "(function(){var el=document.getElementById('qaBox');if(!el)return;" +
         "function eh(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return '&#'+c.charCodeAt(0)+';';});}" +
         "function isoAdd(iso,n){var p=iso.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
@@ -10289,10 +10375,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "el.querySelectorAll(\"button[data-qa='\"+i+\"']\").forEach(function(x){var on=x===b;x.style.background=on?'linear-gradient(135deg," + COR + "," + CORC + ")':'#14121a';x.style.borderColor=on?'" + CORC + "':'#322e3d';x.style.color=on?'#fff':'#d6d2df';});});" +
         "el.addEventListener('click',function(ev){if(ev.target.id!=='qaEnvia')return;" +
         "var faltam=false;var lista=QUESTAPP.ps.map(function(p,i){" +
-        "if(p.tipo!=='emoji'&&p.tipo!=='linear'){var inp=el.querySelector(\"input[data-qat='\"+i+\"']\");var v=inp?inp.value.trim():'';if(!v)faltam=true;return {sigla:p.s||'',pergunta:p.texto,resposta:v,pontos:null};}" +
-        "if(!R[i]){faltam=true;return null;}return {sigla:p.s||'',pergunta:p.texto,resposta:R[i].r,pontos:R[i].p};});" +
+        "if(p.tipo!=='emoji'&&p.tipo!=='linear'){var inp=el.querySelector(\"input[data-qat='\"+i+\"']\");var v=inp?inp.value.trim():'';if(!v)faltam=true;return {sigla:p.s||'',pergunta:p.texto,resposta:v,pontos:null,menos:!!p.mm};}" +
+        "if(!R[i]){faltam=true;return null;}return {sigla:p.s||'',pergunta:p.texto,resposta:R[i].r,pontos:R[i].p,menos:!!p.mm};});" +
         "if(faltam){alert('Responde todas as perguntas antes de enviar.');return;}" +
-        "var total=0,temP=false;lista.forEach(function(x){if(x&&x.pontos!=null){total+=x.pontos;temP=true;}});" +
+        "var total=0,temP=false;lista.forEach(function(x){if(x&&x.pontos!=null){total+=(x.menos?-x.pontos:x.pontos);temP=true;}});" +
         "var btn=ev.target;btn.disabled=true;btn.textContent='Enviando…';" +
         "var fim=function(){var resp=L('ptqa',{});resp[chave]=1;Sv('ptqa',resp);pinta();};" +
         "if(NUVEM){rpcApp('app_quest_responde',{t:TOKEN,p_nome:QUESTAPP.nome,p_dados:{respostas:lista,pontuacao:temP?total:null}}).then(function(r){" +
@@ -10308,11 +10394,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (function () {
         var imgOk = function (u) { return /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u || "")) ? u : ""; };
         var geral = imgOk((st.config || {}).capaTreino);
-        return "var CAPA_GERAL=" + JSON.stringify(geral).replace(/</g, "\\u003c") + ";" +
-          "var FICHAS_META=" + JSON.stringify((fichasApp || []).map(function (f) {
+        return "var CAPA_GERAL=" + jsonApp(geral) + ";" +
+          "var FICHAS_META=" + jsonApp((fichasApp || []).map(function (f) {
             var propria = imgOk(f.capa);
             return { t: f.titulo || "Ficha", n: f.itens.length, c: propria === geral ? "" : propria };
-          })).replace(/</g, "\\u003c") + ";";
+          })) + ";";
       })() +
       "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||!FICHAS_META.length)return;" +
       "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
@@ -10384,7 +10470,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "['util',\"<path d='M14.5 6.5a4.2 4.2 0 0 0-5.7 5.4L3 17.7 6.3 21l5.8-5.8a4.2 4.2 0 0 0 5.4-5.7l-2.8 2.8-2.4-.6-.6-2.4z'/>\",'Utilidades']," +
       "['pagamento',\"<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>\",'Plano']];" +
       // áreas desligadas pelo professor nas Configurações somem do menu
-      "var OCULTA=" + JSON.stringify(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
+      "var OCULTA=" + jsonApp(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
@@ -11253,7 +11339,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<div class="linha-flex" style="gap:6px;margin-top:8px;">' +
             '<button class="btn sec mini" data-imgnome="' + im.id + '">Renomear</button>' +
             '<button class="btn sec mini" data-imgcapa="' + im.id + '" title="usar como foto do card “treino de hoje” (vale pra todos os alunos)">Usar no card</button>' +
-            '<button class="btn sec mini" data-imgrm="' + im.id + '">✕</button></div></div>';
+            '<button class="btn sec mini" data-imgrm="' + im.id + '" aria-label="excluir a imagem">✕</button></div></div>';
         }).join("") + "</div>"
       : '<div class="vazio">Nenhuma imagem ainda — toque em <b>Enviar imagem</b> e monte o seu banco.</div>';
   }

@@ -195,7 +195,7 @@
     </select>
     <div style="display: flex; gap: 8px;">
       <input id="tkTxt" placeholder="Responder ao cliente…" style="flex: 1;">
-      <button class="btn" id="tkEnviar" style="width: auto;">➤</button>
+      <button aria-label="Enviar" class="btn" id="tkEnviar" style="width: auto;">➤</button>
     </div>
     <form method="dialog" style="margin-top: 10px;"><button class="btn sec" style="width: 100%;">Fechar</button></form>
   </dialog>
@@ -617,7 +617,7 @@
         (l.contato ? '<span class="mut">' + esc(l.contato) + "</span>" : "") +
         '<span style="margin-left:auto;"></span>' +
         (idx >= 0 && idx < 4 ? '<button class="btn sec mini" data-avanca="' + l.id + '">→ ' + ETAPAS[idx + 1] + "</button>" : "") +
-        (l.etapa !== "perdido" && l.etapa !== "fechado" ? '<button class="btn sec mini" data-perde="' + l.id + '">✕</button>' : "") +
+        (l.etapa !== "perdido" && l.etapa !== "fechado" ? '<button aria-label="Excluir" class="btn sec mini" data-perde="' + l.id + '">✕</button>' : "") +
         "</div>";
     }).join("") : "Nenhum lead ainda — anote aqui todo interessado.";
   }

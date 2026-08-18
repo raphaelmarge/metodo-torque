@@ -130,7 +130,7 @@
           '</td><td class="num">' + pct(+a.cred2 || 0) + '</td><td class="num">' + pct(+a.cred7 || 0) + "</td><td>" +
           (a.prazo ? "D+" + a.prazo : "—") + "</td><td>" +
           (a.status === "inativo" ? '<span class="tag neutro">INATIVA</span>' : '<span class="tag ok">ATIVA</span>') +
-          '</td><td><button class="btn sec mini" data-edit="' + a.id + '">✏</button></td></tr>';
+          '</td><td><button aria-label="Editar" class="btn sec mini" data-edit="' + a.id + '">✏</button></td></tr>';
       }).join("") : '<tr><td colspan="8" class="muted" style="padding: 20px;">Nenhuma adquirente cadastrada — clique em ➕ Nova adquirente e copie as taxas do seu contrato com a maquininha.</td></tr>');
     simula();
   }

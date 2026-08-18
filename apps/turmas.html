@@ -135,7 +135,7 @@
         (st.chamadas[chaveHoje] ? " · chamada de hoje: " + presentes.length + "/" + alunos.length : "") + "</div></div>" +
         (lotada ? '<span class="tag erro">LOTADA</span>' : cap ? '<span class="tag ok">' + (cap - alunos.length) + " VAGA(S)</span>" : "") +
         (st.chamadas[chaveHoje] ? ' <span class="tag ok">CHAMADA FEITA</span>' : ' <span class="tag neutro">SEM CHAMADA HOJE</span>') +
-        ' <button class="btn sec mini" data-edit="' + t.id + '">✎</button></summary>' +
+        ' <button aria-label="Editar" class="btn sec mini" data-edit="' + t.id + '">✎</button></summary>' +
         '<div class="chamada-cab"><span>CHAMADA DE HOJE (' + S.fmtData(hoje) + ')</span>' +
         '<button class="btn mini" data-salvar="' + t.id + '">Salvar chamada</button></div>' +
         alunos.map(function (a) {
@@ -144,14 +144,14 @@
             (presentes.indexOf(a) !== -1 ? " checked" : "") + ">" + esc(a) + "</label>" +
             "<span>" + (f != null ? '<span class="freq">' + f + "% presença</span> " : "") +
             '<button class="btn sec mini" data-just="' + t.id + "|" + esc(a) + '" title="Falta justificada — gera reposição (30 dias)" style="padding: 2px 8px;">Justificar</button> ' +
-            '<button class="btn perigo mini" data-rma="' + t.id + "|" + esc(a) + '" style="padding: 2px 8px;">✕</button></span></div>';
+            '<button aria-label="Excluir" class="btn perigo mini" data-rma="' + t.id + "|" + esc(a) + '" style="padding: 2px 8px;">✕</button></span></div>';
         }).join("") +
         (alunos.length ? "" : '<div class="muted" style="padding: 10px 16px;">Turma vazia — adicione os alunos.</div>') +
         (espera.length ? '<div class="chamada-cab" style="background:#f4f0ff;"><span>FILA DE ESPERA (' + espera.length + ")</span></div>" +
           espera.map(function (nm) {
             return '<div class="aluno-linha"><span>' + esc(nm) + (lotada ? "" : ' <span class="tag ok" style="font-size:10px;">vaga disponível!</span>') + "</span>" +
               "<span>" + (lotada ? "" : '<button class="btn ok mini" data-promove="' + t.id + "|" + esc(nm) + '">↑ Chamar</button> ') +
-              '<button class="btn perigo mini" data-saifila="' + t.id + "|" + esc(nm) + '" style="padding:2px 8px;">✕</button></span></div>';
+              '<button aria-label="Excluir" class="btn perigo mini" data-saifila="' + t.id + "|" + esc(nm) + '" style="padding:2px 8px;">✕</button></span></div>';
           }).join("") : "") +
         '<div class="add-aluno"><input list="alunosLista" placeholder="' + (lotada ? "Turma lotada — entra na fila de espera…" : "Adicionar aluno…") + '" data-addinput="' + t.id + '" style="flex: 1;">' +
         '<button class="btn mini" data-addbtn="' + t.id + '">' + (lotada ? "→ Fila de espera" : "Adicionar") + "</button></div>" +
@@ -289,7 +289,7 @@
       var vencida = r.validade < hoje;
       return '<div class="aluno-linha"><span><strong>' + esc(r.aluno) + "</strong> · " + esc(r.turmaNome) + " · falta de " + S.fmtData(r.data) +
         " · vale até " + S.fmtData(r.validade) + (vencida ? ' <span class="tag erro">VENCIDA</span>' : ' <span class="tag ok">VÁLIDA</span>') + "</span>" +
-        '<span><button class="btn ok mini" data-usarepo="' + r.id + '">✓ Usada</button> <button class="btn perigo mini" data-delrepo="' + r.id + '" style="padding: 2px 8px;">✕</button></span></div>';
+        '<span><button class="btn ok mini" data-usarepo="' + r.id + '">✓ Usada</button> <button aria-label="Excluir" class="btn perigo mini" data-delrepo="' + r.id + '" style="padding: 2px 8px;">✕</button></span></div>';
     }).join("");
   }
   $("lista").addEventListener("click", function (e) {

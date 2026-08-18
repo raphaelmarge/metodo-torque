@@ -168,7 +168,7 @@
     $("listaPosts").innerHTML = posts.length ? posts.slice().reverse().map(function (p) {
       return '<div class="post"><div style="flex:1;"><strong>' + esc(p.titulo) + "</strong>" +
         '<div class="muted" style="font-size:12.5px;">' + esc(p.texto || "") + " · " + S.fmtData(p.data) + "</div></div>" +
-        '<button class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
+        '<button aria-label="Excluir" class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhum aviso — crie o primeiro (ex.: horário especial de feriado, aula nova).</div>';
   }
   $("btnPost").addEventListener("click", function () {
@@ -460,7 +460,7 @@
                 "<button class='sfeita' data-ex='" + chaveEx + "' data-max='" + nSeries + "'>0/" + nSeries + " ✓</button>" +
                 "<input class='cargain' data-ex='" + chaveEx + "' inputmode='decimal' placeholder='" + esc(it.carga || "kg") + "'>" +
                 "<button class='timerbtn' data-s='" + descSeg + "'>⏱ " + descSeg + "s</button>" +
-                "<button class='histbtn' data-ex='" + chaveEx + "'>📈</button>" +
+                "<button aria-label='Ver evolução' class='histbtn' data-ex='" + chaveEx + "'>📈</button>" +
                 "</div></div>";
             }).join("") + "</div>";
         }).join("") +
@@ -621,9 +621,9 @@
           return "<div class='lj' data-i='" + i + "' style='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--linha);'>" +
             "<span style='flex:1;font-weight:600;font-size:13.5px;'>" + esc(p.n) + "</span>" +
             "<b style='color:var(--cor);font-size:13px;'>R$ " + p.v.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) + "</b>" +
-            "<button class='lj-m' style='width:30px;height:30px;border-radius:8px;border:1px solid var(--linha);background:var(--card);color:var(--txt);font-weight:800;cursor:pointer;'>−</button>" +
+            "<button aria-label='Diminuir' class='lj-m' style='width:30px;height:30px;border-radius:8px;border:1px solid var(--linha);background:var(--card);color:var(--txt);font-weight:800;cursor:pointer;'>−</button>" +
             "<span class='lj-q' style='width:20px;text-align:center;font-weight:800;'>0</span>" +
-            "<button class='lj-p' style='width:30px;height:30px;border-radius:8px;border:1px solid var(--linha);background:var(--cor);color:#fff;font-weight:800;cursor:pointer;'>+</button></div>";
+            "<button aria-label='Adicionar' class='lj-p' style='width:30px;height:30px;border-radius:8px;border:1px solid var(--linha);background:var(--cor);color:#fff;font-weight:800;cursor:pointer;'>+</button></div>";
         }).join("") +
         "<div style='display:flex;justify-content:space-between;align-items:center;margin-top:10px;'>" +
         "<b id='ljTotal'>Total: R$ 0,00</b>" +
@@ -654,7 +654,7 @@
             "<button class='plike'><span>0</span></button>" +
             "<button class='pcbtn'><span>0</span></button></div>" +
             "<div class='pcoms' hidden></div>" +
-            "<div class='pinput' hidden><input maxlength='400' placeholder='Escreva um comentário…'><button>➤</button></div>" : "") +
+            "<div class='pinput' hidden><input maxlength='400' placeholder='Escreva um comentário…'><button aria-label='Enviar'>➤</button></div>" : "") +
           "</div>";
       }).join("") : "<div class='vz'>Sem publicações no momento. 😉</div>") +
       "</div></div>" +
@@ -769,7 +769,7 @@
       // ===== NAV =====
       "<div id='timerBar'></div>" +
       "<div class='guia' id='guiaBox'><div class='top'><span id='gProg'></span>" +
-      "<button id='gFechar' style='background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer;font-family:inherit'>✕</button></div>" +
+      "<button aria-label='Excluir' id='gFechar' style='background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer;font-family:inherit'>✕</button></div>" +
       "<div class='exn' id='gEx'></div><div class='meta' id='gMeta'></div>" +
       "<a id='gVideo' target='_blank' rel='noopener' style='display:none;margin-top:10px;background:var(--card);border:1px solid var(--cor);color:var(--cor);text-decoration:none;font-weight:700;font-size:13px;padding:6px 16px;border-radius:99px;align-self:flex-start'>▶ como fazer</a>" +
       "<input id='gCarga' inputmode='decimal' placeholder='carga de hoje (kg)' style='margin-top:14px;background:var(--card);border:1px solid var(--linha);border-radius:12px;color:var(--txt);padding:12px;font-size:15px;font-family:inherit'>" +
@@ -961,7 +961,7 @@
         "return \"<div class='aula'><div class='l1'><span>\"+g.aula+\"</span><span class='vg'>\"+dd+\"</span></div><div class='sub'>\"+st2+\"</div>\"+" +
         "(g.status!=='cancelado'&&!passou?\"<div style='margin-top:8px;text-align:right;'><button class='btnx' style='background:#0369a1;padding:7px 12px;font-size:12.5px;margin-right:6px' data-ics='\"+g.aula+'|'+g.data+\"' title='Adicionar ao calendário'>📆</button>\"+" +
         "(pode?\"<button class='btnx' style='background:#57534e;padding:7px 16px;font-size:12.5px' data-cx='\"+g.id+\"'>Cancelar</button>\":\"<span style='font-size:11.5px;color:var(--txt2)'>cancele com a recepção (até \"+REGRAS.ch+\"h antes)</span>\")+\"</div>\":'')+" +
-        "(passou&&g.status!=='cancelado'&&g.status!=='espera'?\"<div data-ava='\"+g.aula+'|'+g.data+\"' style='margin-top:6px;font-size:13px;color:var(--txt2);'>Como foi? \"+[1,2,3,4,5].map(function(n){return \"<button class='star' data-n='\"+n+\"' style='background:none;border:none;font-size:20px;cursor:pointer;padding:2px;'>☆</button>\";}).join('')+\"</div>\":'')+\"</div>\";}).join('');});};" +
+        "(passou&&g.status!=='cancelado'&&g.status!=='espera'?\"<div data-ava='\"+g.aula+'|'+g.data+\"' style='margin-top:6px;font-size:13px;color:var(--txt2);'>Como foi? \"+[1,2,3,4,5].map(function(n){return \"<button aria-label='Favoritar' class='star' data-n='\"+n+\"' style='background:none;border:none;font-size:20px;cursor:pointer;padding:2px;'>☆</button>\";}).join('')+\"</div>\":'')+\"</div>\";}).join('');});};" +
         // ⭐ avaliação da aula (vai pro relatório de satisfação da academia)
         "document.getElementById('minhaLista').addEventListener('click',function(e){var s=e.target.closest('.star');if(!s)return;" +
         "var w=s.closest('[data-ava]');var pa=w.getAttribute('data-ava').split('|');var n=+s.dataset.n;w.textContent='Enviando…';" +

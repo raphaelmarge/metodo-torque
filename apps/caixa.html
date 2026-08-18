@@ -44,9 +44,9 @@
 
   <div class="card linha-flex" style="justify-content: space-between;">
     <div class="linha-flex">
-      <button class="btn sec mini" id="dAnt">‹</button>
+      <button aria-label="Anterior" class="btn sec mini" id="dAnt">‹</button>
       <strong id="dLabel" style="text-transform: capitalize;"></strong>
-      <button class="btn sec mini" id="dProx">›</button>
+      <button aria-label="Próximo" class="btn sec mini" id="dProx">›</button>
       <button class="btn sec mini" id="dHoje">Hoje</button>
       <span class="status-caixa" id="statusCaixa"></span>
     </div>
@@ -175,7 +175,7 @@
         '<div class="desc">' + esc(m.desc) + (m.tipo === "sangria" ? '<div class="sub">sangria (retirada da gaveta)</div>' : "") + "</div>" +
         '<span class="tag neutro">' + esc(m.forma) + "</span>" +
         '<span class="valor">' + vv((m.tipo === "entrada" ? "+ " : "− ") + S.fmtBRL(m.valor)) + "</span>" +
-        (!d.fechado ? '<button class="btn perigo mini" data-rm="' + i + '" style="padding:3px 8px;">✕</button>' : "") + "</div>";
+        (!d.fechado ? '<button aria-label="Excluir" class="btn perigo mini" data-rm="' + i + '" style="padding:3px 8px;">✕</button>' : "") + "</div>";
     }).join("");
     $("listaMovs").innerHTML = linhas || '<div class="vazio">Nenhuma movimentação neste dia ainda.</div>';
 

@@ -124,11 +124,11 @@
         (p.status === "inativo" ? ' <span class="tag neutro">INATIVO</span>' : "") +
         '<div class="sub">' + (p.cref ? "CREF " + esc(p.cref) + " · " : "") + S.fmtBRL(+p.taxa || 0) + "/mês</div></div>" +
         (p.status !== "inativo" && +p.taxa > 0 ? (pago
-          ? '<span class="tag ok">PAGO ' + S.fmtData(pago) + '</span><button class="btn sec mini" data-desfaz="' + p.id + '">↩</button>'
+          ? '<span class="tag ok">PAGO ' + S.fmtData(pago) + '</span><button aria-label="Desfazer" class="btn sec mini" data-desfaz="' + p.id + '">↩</button>'
           : '<span class="tag erro">PENDENTE</span><button class="btn mini" data-paga="' + p.id + '">✓ Receber</button>' +
             (p.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(p.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">💬</a>' : "")) : "") +
         '<button class="btn sec mini" data-ver="' + p.id + '" title="Detalhes do personal">👁</button>' +
-        '<button class="btn sec mini" data-edita="' + p.id + '">✏</button></div>';
+        '<button aria-label="Editar" class="btn sec mini" data-edita="' + p.id + '">✏</button></div>';
     }).join("") : '<div class="vazio">Nenhum personal cadastrado. Clique em ➕ Novo personal.</div>';
   }
 

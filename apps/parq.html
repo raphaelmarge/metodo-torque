@@ -130,7 +130,7 @@
     $("painel").innerHTML =
       '<div class="linha-flex no-print" style="justify-content: space-between;">' +
       "<h2 style='font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--texto); margin: 0;'>PAR-Q — " + esc(aluno.nome) + "</h2>" +
-      (f ? '<div class="linha-flex"><button class="btn sec mini" onclick="window.print()">🖨</button><button class="btn perigo mini" id="btnRefazer">Refazer</button></div>' : "") +
+      (f ? '<div class="linha-flex"><button aria-label="Imprimir" class="btn sec mini" onclick="window.print()">🖨</button><button class="btn perigo mini" id="btnRefazer">Refazer</button></div>' : "") +
       "</div>" +
       PERGUNTAS.map(function (p, i) {
         var resp = f ? f.respostas[i] : null;

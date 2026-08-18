@@ -675,6 +675,76 @@ async function abaPt(p, a) {
     "exercício de polia com corda entra no padrão certo (empurrar/puxar), não no cardio");
   ok(cordas.pular === "Cardio e condicionamento" && cordas.naval === "Cardio e condicionamento",
     "pular corda e corda naval continuam no cardio");
+  // outras palavras que jogavam o exercício pro padrão errado no montador de fichas
+  const padroes = await p.evaluate(() => ({
+    tricepsCoice: window.__movimentoDe("Tríceps coice na polia", "Tríceps"),
+    gluteoCoice: window.__movimentoDe("Coice na polia baixa", "Posterior e glúteo"),
+    minibandWalk: window.__movimentoDe("Caminhada lateral com mini band", "Posterior e glúteo"),
+    caminhadaRapida: window.__movimentoDe("Caminhada rápida", "Cardio"),
+    esteira: window.__movimentoDe("Esteira — caminhada inclinada", "Cardio"),
+    degrau: window.__movimentoDe("Panturrilha unilateral no degrau da escada", "Quadríceps"),
+    agilidade: window.__movimentoDe("Escada de agilidade lateral", "Cardio"),
+    pernada: window.__movimentoDe("Pernada de crawl com prancha", "Cardio"),
+    pranchaCore: window.__movimentoDe("Prancha lateral", "Core"),
+    pernaLateral: window.__movimentoDe("Elevação lateral de perna deitado com caneleira", "Posterior e glúteo"),
+    ombroLateral: window.__movimentoDe("Elevação lateral", "Ombros"),
+    abducaoOmbro: window.__movimentoDe("Abdução de ombro com mini band nas mãos", "Ombros"),
+    abducaoQuadril: window.__movimentoDe("Abdução de quadril na máquina", "Posterior e glúteo"),
+    barquinho: window.__movimentoDe("Barquinho invertido", "Core"),
+    remadaInv: window.__movimentoDe("Remada invertida no TRX", "Costas"),
+  }));
+  ok(padroes.tricepsCoice === "Empurrar" && padroes.gluteoCoice === "Dobradiça e quadril",
+    "'coice' de tríceps vai pra empurrar e o de glúteo continua no quadril");
+  ok(padroes.minibandWalk === "Dobradiça e quadril" && padroes.caminhadaRapida === "Cardio e condicionamento" && padroes.esteira === "Cardio e condicionamento",
+    "caminhada com mini band é glúteo; caminhada rápida e esteira continuam cardio");
+  ok(padroes.degrau === "Agachar e pernas" && padroes.agilidade === "Cardio e condicionamento",
+    "'escada' no nome não joga panturrilha pro cardio, e escada de agilidade continua cardio");
+  ok(padroes.pernada === "Cardio e condicionamento" && padroes.pranchaCore === "Core e estabilidade",
+    "prancha de natação (pernada) não vira exercício de core, e a prancha de verdade continua no core");
+  ok(padroes.pernaLateral === "Dobradiça e quadril" && padroes.ombroLateral === "Empurrar",
+    "elevação lateral DE PERNA é quadril; a de ombro continua empurrar");
+  // achado do diagnóstico: o mapa de grupos só conhecia 10 dos 16 grupos do banco,
+  // então 337 exercícios (calistenia, funcional, boxe, natação, pilates, reabilitação)
+  // sumiam em "Habilidade e outros" e não apareciam em nenhum filtro da cascata
+  const grupos = await p.evaluate(() => ({
+    flexaoEspartana: window.__movimentoDe("Flexão espartana", "Ginástica e calistenia"),
+    flexaoDiamante: window.__movimentoDe("Flexão diamante com pés elevados", "Ginástica e calistenia"),
+    flexaoPlantar: window.__movimentoDe("Flexão plantar sentado", "Reabilitação e terceira idade"),
+    flexaoPunho: window.__movimentoDe("Flexão de punho com halter leve", "Reabilitação e terceira idade"),
+    flexaoNordica: window.__movimentoDe("Flexão nórdica de joelhos", "Posterior e glúteo"),
+    yoga: window.__movimentoDe("Guerreiro II (yoga)", "Pilates e yoga"),
+    pilates: window.__movimentoDe("The hundred", "Pilates e yoga"),
+    boxe: window.__movimentoDe("Uppercut no saco", "Boxe e lutas"),
+    reab: window.__movimentoDe("Sentar e levantar com apoio de cadeira", "Reabilitação e terceira idade"),
+    funcional: window.__movimentoDe("Farmer walk", "Funcional e Cross"),
+    olimpico: window.__movimentoDe("Clean and jerk", "Funcional e Cross"),
+    toesToBar: window.__movimentoDe("Toes to bar", "Funcional e Cross"),
+    saltoAgacha: window.__movimentoDe("Agachamento com salto e caixa", "Quadríceps"),
+    barraL: window.__movimentoDe("Barra fixa em L (L-sit pull-up)", "Ginástica e calistenia"),
+  }));
+  ok(grupos.flexaoEspartana === "Empurrar" && grupos.flexaoDiamante === "Empurrar",
+    "flexão de solo da calistenia entra em Empurrar (a palavra-chave era 'flexão de braço', específica demais)");
+  ok(grupos.flexaoPlantar === "Agachar e pernas" && grupos.flexaoNordica === "Dobradiça e quadril" && grupos.flexaoPunho !== "Empurrar",
+    "'flexão' de plantar/nórdica/punho não vira flexão de braço");
+  ok(grupos.yoga === "Mobilidade e alongamento" && grupos.pilates === "Core e estabilidade",
+    "postura de yoga é mobilidade e exercício de pilates é core");
+  ok(grupos.boxe === "Cardio e condicionamento" && grupos.reab === "Agachar e pernas" && grupos.funcional === "Core e estabilidade",
+    "boxe é condicionamento, sentar e levantar é perna e caminhada com carga é core");
+  ok(grupos.olimpico === "Habilidade e outros" && grupos.toesToBar === "Core e estabilidade",
+    "levantamento olímpico fica em habilidade e toes to bar vai pro core");
+  ok(grupos.saltoAgacha === "Agachar e pernas" && grupos.barraL === "Puxar",
+    "agachamento com salto continua perna e barra fixa em L continua puxar");
+  // natação inteira num padrão só: "prancha" na piscina é o flutuador, não o exercício de core
+  const nado = await p.evaluate(() => ["Empurrada de prancha submersa à frente", "Tesoura de pernas com prancha",
+    "Batida de pernas com prancha e rosto na água", "Batida de perna com giro de corpo e prancha",
+    "Nado crawl com pull buoy entre as pernas", "Remada na água com halteres flutuantes"]
+    .map((n) => window.__movimentoDe(n, "Natação e aquático")));
+  ok(nado.every((x) => x === "Cardio e condicionamento"),
+    "exercício de natação não cai no core por causa da prancha-flutuador — o grupo inteiro fica em condicionamento");
+  ok(padroes.abducaoOmbro === "Empurrar" && padroes.abducaoQuadril === "Dobradiça e quadril",
+    "abdução de ombro vai pro ombro e a de quadril continua no quadril");
+  ok(padroes.barquinho === "Core e estabilidade" && padroes.remadaInv === "Puxar",
+    "'invertido' sozinho não vira puxada (barquinho fica no core) e a remada invertida continua puxar");
   ok(/Posterior e glúteo/.test(casc.zonas) && !/^Peito$/m.test(casc.zonas.split("|").join("\n")), "grupamentos oferecidos seguem o tipo de treino escolhido");
   ok(!!casc.valor, "lista filtrada traz os levantamentos terra");
   await p.selectOption('[data-exsel="' + fichaId + '"]', casc.valor);
@@ -1054,6 +1124,22 @@ async function abaPt(p, a) {
   ok(/Com contrato de plano/.test(dash.base) && /Alunos ativos/.test(dash.base), "bloco Status da base renderiza");
   ok(/Novos alunos no mês/.test(dash.mov) && /Churn do mês/.test(dash.mov), "bloco Movimentação com churn");
   ok(/MRR/.test(dash.ind) && /Ticket médio/.test(dash.ind) && /LTV/.test(dash.ind) && /R\$/.test(dash.ind), "bloco Indicadores com MRR, ticket médio e LTV");
+  ok(/Ticket médio previsto/.test(dash.ind), "os dois 'Ticket médio' do produto agora dizem qual é qual (previsto × recebido)");
+  ok(/Alunos que saíram no mês/.test(dash.mov) && !/Contratos encerrados no mês/.test(dash.mov),
+    "o painel conta ALUNO que saiu (mesma conta dos Relatórios) — troca de plano não vira churn");
+  // troca de plano encerra o contrato antigo mas não pode contar como saída
+  const troca = await p.evaluate(() => {
+    const S = window.MTStore, snap = localStorage.getItem("mtapp:ptStudio");
+    const st = S.read("ptStudio", {});
+    const hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    st.contratosPT = [{ id: "c1", alunoId: st.alunos[0].id, planoId: "p1", diaVenc: 5,
+      inicio: hoje, status: "encerrado", encerradoEm: hoje, motivo: "troca" }];
+    S.write("ptStudio", st);
+    const d = window.__dashDados ? window.__dashDados(mes) : null;
+    S.write("ptStudio", JSON.parse(snap));
+    return d ? d.encerrados : -1;
+  });
+  ok(troca === 0, "contrato encerrado por troca de plano não entra no churn do mês");
   ok(/Taxa de presença/.test(dash.ag) && /Horário mais cheio/.test(dash.ag), "bloco Agenda e presença renderiza");
   ok(/Com ficha de treino montada/.test(dash.app), "bloco App e treinos renderiza");
   // metas com projeção run-rate
@@ -1418,8 +1504,8 @@ async function abaPt(p, a) {
       }
       return window.__checkinsPT({ checks });
     });
-    ok(/MOTEX/.test(metricas) && /SONO/.test(metricas) && /DOR/.test(metricas),
-      "📊 cada pergunta respondida vira uma métrica própria no perfil do aluno");
+    ok(/Qual foi sua motivação/.test(metricas) && /Como está o sono/.test(metricas) && /Sentiu alguma dor/.test(metricas),
+      "📊 cada pergunta respondida vira uma métrica própria no perfil do aluno (pela pergunta, não pela sigla)");
     ok(/Altíssimo/.test(metricas) && /melhorando/.test(metricas) && /média do último mês/.test(metricas),
       "motivação subindo aparece como 'melhorando', com a média do mês contra o mês anterior");
     ok(/piorando/.test(metricas), "sono caindo mês a mês aparece marcado como 'piorando'");
@@ -1454,13 +1540,58 @@ async function abaPt(p, a) {
         respostas: [{ sigla: "DOR", pergunta: "Quanta dor?", resposta: String(i), pontos: i }] }));
       const hd = window.__checkinsPT({ checks: dor });
       out.dorPiorando = /piorando/.test(hd) && !/melhorando/.test(hd);
+      // pontuação toda NEGATIVA (a escala de carinhas que vem pronta tem -1 e -2):
+      // a melhor semana de quem só vai mal não pode aparecer alta e verde
+      const negs = window.__checkinsPT({ checks: [[1,-2],[2,-4],[3,-6],[4,-3]].map((par) => semana(par[0], par[1])) });
+      out.negativoSemVerde = !/fill='#4ade80'/.test(negs) && /fill='#f87171'/.test(negs);
       S.write("ptStudio", JSON.parse(snap));
       return out;
     });
+    ok(diag.negativoSemVerde, "semana de pontuação negativa nunca pinta de verde (escala simétrica em volta do zero)");
     ok(diag.empateVerde, "semanas todas com nota máxima aparecem altas e verdes (escala ancorada no zero, não no mínimo do aluno)");
     ok(diag.umFormulario, "o gráfico usa só o formulário mais respondido e avisa que há outros (pontuações não são comparáveis entre formulários)");
     ok(diag.singular && diag.semDesdeMentiroso, "cabeçalho no singular certo e sem prometer 'desde sempre' quando a lista vem cortada");
     ok(diag.dorPiorando, "pergunta marcada como 'nota menor é melhor' (dor) mostra piorando quando a nota sobe");
+    // --- achados novos: a marcação "menor é melhor" tem que chegar no app do aluno,
+    // entrar na pontuação da semana, aparecer na lista de perguntas e dar pra editar
+    const menos = await p.evaluate(() => {
+      const S = window.MTStore, snap = localStorage.getItem("mtapp:ptStudio");
+      const st = S.read("ptStudio", {});
+      st.questPerguntas = [{ id: "qm", sigla: "DOR", titulo: "Dor", texto: "Quanta dor?", tipo: "linear", ops: [], menosMelhor: true }];
+      st.questionarios = [{ id: "qq", nome: "Semanal", perguntas: ["qm"] }];
+      S.write("ptStudio", st);
+      const pay = window.__questPT.payload(S.read("ptStudio", {}), st.questionarios[0]);
+      window.__questPT.render();
+      const lista = document.getElementById("qpLista").innerHTML;
+      // o painel lê a marcação da própria resposta (sobrevive a apagar a pergunta)
+      const semCadastro = S.read("ptStudio", {});
+      semCadastro.questPerguntas = [];
+      S.write("ptStudio", semCadastro);
+      const hd = window.__checkinsPT({ checks: [1,2,3,4,5,6,7,8].map((i) => ({ d: "2026-0" + i + "-05", nome: "Semanal", pts: i,
+        respostas: [{ sigla: "DOR", pergunta: "Quanta dor?", resposta: String(i), pontos: i, menos: true }] })) });
+      S.write("ptStudio", JSON.parse(snap));
+      return { mm: !!(pay.ps[0] || {}).mm, chip: /nota menor é melhor/.test(lista),
+        botao: /data-qpinv/.test(lista), historico: /piorando/.test(hd) && !/melhorando/.test(hd) };
+    });
+    ok(menos.mm, "a marcação 'nota menor é melhor' vai no questionário mandado pro aluno (antes o app somava dor como ponto bom)");
+    ok(menos.chip && menos.botao, "a lista de perguntas mostra a marcação e tem botão pra trocar o sentido sem apagar a pergunta");
+    ok(menos.historico, "o histórico continua lido como 'piorando' mesmo depois de apagar a pergunta do cadastro");
+    // app do aluno: soma da semana inverte a pergunta marcada, e o JSON dos blocos é escapado
+    const appQ = await p.evaluate(() => ({ escapa: window.__jsonApp({ n: "a <" + "/script> b" }) }));
+    const fonteApp = fs.readFileSync(require("path").join(__dirname, "..", "personal.html"), "utf8");
+    ok(/total\+=\(x\.menos\?-x\.pontos:x\.pontos\)/.test(fonteApp),
+      "o app do aluno desconta os pontos da pergunta marcada como 'menor é melhor' na soma da semana");
+    ok(!/\+ JSON\.stringify\(/.test(fonteApp), "todos os blocos JSON do app publicado passam pelo jsonApp (nenhum JSON.stringify solto)");
+    ok(appQ.escapa.indexOf("<" + "/script>") < 0 && appQ.escapa.indexOf("\\u003c/script>") >= 0,
+      "todo bloco JSON do app publicado escapa '<' (um nome com </script> derrubava o app inteiro)");
+    // vídeo: apagar o campo tem que TIRAR o vídeo (antes o do catálogo ressuscitava)
+    const vid = await p.evaluate(() => ({
+      comCatalogo: window.__videoDoEx({ nome: "Supino reto com barra" }),
+      apagado: window.__videoDoEx({ nome: "Supino reto com barra", video: "", semVideo: true }),
+      proprio: window.__videoDoEx({ nome: "Supino reto com barra", video: "https://x.y/z" }),
+    }));
+    ok(vid.comCatalogo && !vid.apagado && vid.proprio === "https://x.y/z",
+      "vídeo: o do catálogo entra sozinho, o do professor manda, e apagar de propósito tira mesmo");
     // a aba própria do perfil: existe, troca e o painel principal não repete o bloco
     const abaQ = await p.evaluate(() => {
       const bt = document.querySelector('#pfAbas [data-pfa="quest"]');
@@ -1912,7 +2043,7 @@ async function abaPt(p, a) {
     ok(/3 check-ins respondidos/.test(questBox) && /— de \d\d\/\d\d até \d\d\/\d\d/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
     ok(/Como foram as semanas/.test(questBox) && /fill=['"]#4ade80['"]/.test(questBox) && /fill=['"]#f87171['"]/.test(questBox) && /9 ponto/.test(questBox),
       "pontuação vira barras coloridas por semana (verde = boa, vermelha = fraca), com o valor no toque");
-    ok(/\+9 pts/.test(questBox) && /MOTEX/.test(questBox), "última resposta listada com pontuação e siglas");
+    ok(/\+9 pts/.test(questBox) && /MOTEX/.test(questBox), "última resposta listada com pontuação (sigla vale de reserva quando não veio a pergunta)");
     ok(/Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
     // aluno malicioso tentando injetar código pela foto/data do retorno
     const xss = await p.evaluate(async () => {

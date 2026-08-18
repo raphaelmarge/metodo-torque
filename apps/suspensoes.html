@@ -134,7 +134,7 @@
           "</td><td style='white-space: normal; max-width: 220px;'>" + esc(s.motivo || "") + "</td><td>" + tag + "</td><td>" +
           (stt !== "finalizada" ? '<button class="btn ok mini" data-reativa="' + s.id + '">▶ Reativar</button> ' : "") +
           '<button class="btn sec mini" data-ver="' + s.id + '" title="Detalhes / histórico">👁</button> ' +
-          '<button class="btn perigo mini" data-excluir="' + s.id + '">✕</button></td></tr>';
+          '<button aria-label="Excluir" class="btn perigo mini" data-excluir="' + s.id + '">✕</button></td></tr>';
       }).join("") : '<tr><td colspan="11" class="muted" style="padding: 20px;">Nenhuma suspensão — use ⏸ Nova suspensão quando um aluno precisar congelar o plano.</td></tr>');
   }
   ["fBusca", "fStatus"].forEach(function (id) { $(id).addEventListener("input", render); });

@@ -9173,10 +9173,10 @@ self.MT_EXERCICIOS = [
   "d": "Ancore a superband na altura da barriga e puxe com as palmas pra cima, cotovelo rente ao corpo e tronco firme, sem balançar."
  },
  {
-  "n": "Rotação externa de ombro a 90 graus com superband",
+  "n": "Rotação externa de ombro a 90 graus com elástico",
   "g": "Ombros",
-  "eq": "Superband",
-  "d": "Cotovelo na altura do ombro e dobrado a 90 graus, gire o antebraço pra cima devagar e volte segurando; use a banda leve e pare se doer."
+  "eq": "Elástico",
+  "d": "Cotovelo na altura do ombro e dobrado a 90 graus, gire o antebraço pra cima devagar e volte segurando; manguito rotador é músculo pequeno, use elástico leve e pare se doer."
  },
  {
   "n": "Puxada na polia alta com corda",
