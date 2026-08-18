@@ -38,6 +38,15 @@
   <div class="card" id="resultado" hidden></div>
 
   <div class="card">
+    <b style="font-size: 13.5px;">Mandar um e-mail de teste</b>
+    <p class="sub" style="font-size: 12.5px;">Quando o aluno não recebe o acesso, o problema quase sempre é o Resend recusando — e o painel não mostra o motivo dele. Aqui o recado vem inteiro. Manda primeiro pro <b>seu próprio e-mail</b>, depois pro de um aluno: se o seu chega e o do aluno não, é domínio não verificado.</p>
+    <input id="emailTeste" type="email" placeholder="para quem mandar o teste" autocomplete="off" spellcheck="false"
+      style="width:100%;padding:12px;border-radius:10px;border:1px solid #322e3d;background:#14121a;color:#fff;font-size:13px;font-family:inherit;">
+    <button class="btnx sec" id="btnEmail">Mandar o teste</button>
+    <div id="resEmail"></div>
+  </div>
+
+  <div class="card">
     <b style="font-size: 13.5px;">Testar outra chave</b>
     <p class="sub" style="font-size: 12.5px;">Se a chave do site foi recusada, cole aqui a outra chave pública do projeto (a <b>Publishable key</b>, que começa com <code>sb_publishable_</code>, ou a <b>anon</b>) e teste ANTES de trocar no site. Nada é salvo: o teste acontece só neste navegador.</p>
     <input id="chaveTeste" placeholder="sb_publishable_… ou eyJ…" autocomplete="off" spellcheck="false"
@@ -80,6 +89,8 @@
   }
 
   function corpoCurto(t) { return String(t || "").replace(/\s+/g, " ").slice(0, 300); }
+  // o recado do Resend e o e-mail digitado vão pra innerHTML — escapa sempre
+  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
 
   $("btnRodar").addEventListener("click", function () {
     var bt = this;
@@ -318,6 +329,56 @@
       window.__diagPronto = true; // testes
     });
     }); // fecha o passo0
+  });
+
+  /* Teste de e-mail de ponta a ponta: chama a envia-email de verdade e mostra
+   * a resposta CRUA do Resend. Sem isto, "o aluno não recebeu" fica sem causa:
+   * o painel do professor só diz "o e-mail não saiu". */
+  $("btnEmail").addEventListener("click", function () {
+    var out = $("resEmail"), bt = this;
+    var para = $("emailTeste").value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para)) { out.textContent = "Escreve um e-mail válido primeiro."; return; }
+    bt.disabled = true; out.textContent = "enviando…";
+    var sb2 = null;
+    try { sb2 = window.supabase.createClient(cfg.url, cfg.anonKey); } catch (e) {}
+    if (!sb2) { out.textContent = "A nuvem não carregou nesta página."; bt.disabled = false; return; }
+    sb2.auth.getSession().then(function (s) {
+      var sess2 = s && s.data && s.data.session;
+      if (!sess2) {
+        out.innerHTML = '<b style="color:#fbbf24;">Você não está logado.</b> Entre na sua conta pelo TORQUE PERSONAL e volte aqui — a função de e-mail só atende usuário logado.';
+        bt.disabled = false; return;
+      }
+      return fetch(cfg.url + "/functions/v1/envia-email", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + sess2.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "enviar", para: para, assunto: "Teste do TORQUE ON",
+          html: "<p>É só um teste. Se este e-mail chegou, o envio do acesso do aluno está funcionando.</p>" }),
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var d = null; try { d = JSON.parse(t); } catch (e) {}
+          anota("email teste (" + para + "): HTTP " + r.status + " " + corpoCurto(t));
+          $("tecnica").textContent = log.join("\n"); $("cxTecnica").hidden = false;
+          if (d && d.ok) {
+            out.innerHTML = '<b style="color:#4ade80;">Saiu do sistema.</b> Agora confere a caixa de entrada (e o spam) de <b>' + esc(para) + "</b>. Se não chegar em 2 minutos, o Resend aceitou mas não entregou — veja em resend.com → Emails o status desta mensagem.";
+            return;
+          }
+          var erro = (d && d.erro) || t;
+          var extra = "";
+          if (/domain is not verified|not verified|verify a domain/i.test(erro)) {
+            extra = "<br><b>É o domínio.</b> Em resend.com → Domains, o torqueon.com.br precisa estar <b>Verified</b> (verde). Enquanto não estiver, o Resend só entrega no e-mail do dono da conta.";
+          } else if (/testing emails|own email address|only send testing/i.test(erro)) {
+            extra = "<br><b>Está no modo de teste do Resend.</b> Sem domínio verificado ele só entrega pro e-mail dono da conta — por isso o seu chega e o do aluno não. Verifique o domínio e crie o secret EMAIL_DE com um endereço @torqueon.com.br.";
+          } else if (/RESEND_API_KEY/i.test(erro)) {
+            extra = "<br>Falta o secret <b>RESEND_API_KEY</b> — crie e publique a envia-email de novo (o secret só entra no próximo deploy).";
+          } else if (r.status === 401) {
+            extra = "<br>A função recusou o seu login. Saia e entre de novo no TORQUE PERSONAL.";
+          }
+          out.innerHTML = '<b style="color:#f87171;">Não saiu.</b> ' + esc(erro) + extra;
+        });
+      });
+    }).catch(function (e) {
+      out.innerHTML = '<b style="color:#f87171;">Não consegui chamar a função.</b> ' + esc(e.message) + " — se fala em Failed to fetch, a envia-email não está publicada.";
+    }).then(function () { bt.disabled = false; });
   });
 
   /* Testador de chave: descobre QUAL chave o projeto aceita sem precisar
