@@ -958,6 +958,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </select>
       </div>
       <input id="qpTexto" placeholder="A pergunta em si (ex.: Qual foi sua motivação pra treinar nos últimos 7 dias?)" style="width: 100%; margin-top: 8px;">
+      <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 8px 0 0;"><input type="checkbox" id="qpMenos" style="width: 16px; height: 16px;"> Nesta pergunta, <b>nota menor é melhor</b> (ex.: dor, cansaço, fome) — o painel inverte a leitura da tendência</label>
       <div id="qpOpsBox" style="margin-top: 8px;">
         <p class="muted" style="font-size: 12px; margin-bottom: 4px;">Alternativas da escala (rótulo | pontos):</p>
         <div class="linha-flex" style="flex-wrap: wrap; gap: 6px;">
@@ -2044,7 +2045,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ano = S.todayISO().slice(0, 4);
     var totalAno = pgs.filter(function (p) { return (p.data || "").slice(0, 4) === ano; })
       .reduce(function (s, p) { return s + (+p.valor || 0); }, 0);
-    var pagoMes = pgs.some(function (p) { return (p.data || "").slice(0, 7) === mesAtual; });
+    // mesma regra do resto do painel (lista, pendências, régua): venda de serviço
+    // ou de pacote NÃO quita a mensalidade — senão o perfil diz "pago" e a cobrança
+    // continua aberta em todas as outras telas
+    var pagoMes = idxDe(st).pagouMes(id, mesAtual);
+    var extrasMes = pgs.filter(function (p) { return p.desc && (p.data || "").slice(0, 7) === mesAtual; })
+      .reduce(function (t, p) { return t + (+p.valor || 0); }, 0);
     // ---- financeiro do aluno em 4 blocos: situação, contrato, pacotes, histórico ----
     var rotSec = function (t) { return "<div style='font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--cinza-2);text-transform:uppercase;margin:14px 0 6px;'>" + t + "</div>"; };
     var MESES_ROT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -2054,7 +2060,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "<div style='background:" + (pagoMes ? "rgba(74,222,128,.08)" : "rgba(251,191,36,.08)") + ";border:1px solid " + (pagoMes ? "rgba(74,222,128,.4)" : "rgba(251,191,36,.4)") + ";border-radius:12px;padding:10px 13px;'>" +
       "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>" + mesNome + "</div>" +
       "<div style='font-size:17px;font-weight:800;color:" + (pagoMes ? "#4ade80" : "#fbbf24") + ";'>" + (pagoMes ? "✓ pago" : "em aberto") + "</div>" +
-      (!pagoMes && ct ? "<div class='muted' style='font-size:11.5px;'>vence dia " + ct.diaVenc + "</div>" : "") + "</div>" +
+      (!pagoMes && ct ? "<div class='muted' style='font-size:11.5px;'>vence dia " + ct.diaVenc + "</div>" : "") +
+      (extrasMes ? "<div class='muted' style='font-size:11.5px;'>+ " + S.fmtBRL(extrasMes) + " em serviços/pacotes</div>" : "") + "</div>" +
       "<div style='background:#121016;border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
       "<div class='muted' style='font-size:11px;text-transform:uppercase;letter-spacing:.1em;'>recebido em " + ano + "</div>" +
       "<div style='font-size:17px;font-weight:800;'>" + S.fmtBRL(totalAno) + "</div>" +
@@ -2069,7 +2076,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<button class="btn sec mini" data-pfctrm="' + ct.id + '">Encerrar contrato</button></div>';
     } else {
       var plOpts = (st.planosPT || []).map(function (p) {
-        return '<option value="' + p.id + '">' + esc(rotuloPlano(p)) + "</option>";
+        // rotuloPlano JÁ devolve escapado — esc() de novo transformaria & em &amp;amp;
+        return '<option value="' + esc(p.id) + '">' + rotuloPlano(p) + "</option>";
       }).join("");
       ctBloco = rotSec("Contrato") +
         "Sem contrato ativo — valor atual: <b>" + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "a combinar") + "</b>" +
@@ -2084,7 +2092,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var restaPc = pc ? Math.max(0, (+pc.total || 0) - (+pc.usadas || 0)) : 0;
     var linhaPacote = function (nome, usadas, total, resta, botao, tagTxt) {
       return "<div style='display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--linha);font-size:13px;'>" +
-        "<span>" + nome + " <span class='muted'>· usou " + usadas + " de " + total + " · " + (resta === 1 ? "resta 1" : "restam " + resta) + "</span>" +
+        "<span>" + nome + " <span class='muted'>· usou " + usadas + " de " + total + " · " +
+        (resta === 0 ? "acabou" : resta === 1 ? "resta 1" : "restam " + resta) + "</span>" +
         (resta <= 2 ? ' <span class="tag alerta">' + tagTxt + "</span>" : "") + "</span>" +
         "<span style='flex:none;'>" + botao + "</span></div>";
     };
@@ -2099,11 +2108,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         pcLinhas += linhaPacote("<b>" + esc(p.nome) + "</b>", +p.usadas || 0, p.total, restaSv,
           '<button class="btn mini" data-svusaperfil="' + esc(p.id) + '">Usar 1</button>', "acabando");
       });
-    var pcBloco = pcLinhas
-      ? rotSec("Pacotes") + pcLinhas
-      : (pc && +pc.total > 0 ? "" : rotSec("Pacotes") +
+    // o botão de vender sessões só some quando JÁ existe pacote de sessões (aí vira
+    // "+ Vender mais" na própria linha) — pacote de serviço não pode escondê-lo
+    var temSessoes = !!(pc && +pc.total > 0);
+    var pcBloco = rotSec("Pacotes") + pcLinhas +
+      (temSessoes ? "" :
+        "<div style='margin-top:8px;'>" +
         '<button class="btn sec mini" data-pfpacote="1">+ Vender pacote de sessões</button>' +
-        " <span class='muted' style='font-size:12px;'>pra quem paga por sessão (ex.: pacote de 10)</span>");
+        " <span class='muted' style='font-size:12px;'>pra quem paga por sessão (ex.: pacote de 10)</span></div>");
     var histBloco = rotSec("Últimos pagamentos") + (pgs.length
       ? pgs.slice(0, 6).map(function (p) {
           return "<div style='display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--linha);font-size:13px;'>" +
@@ -2501,18 +2513,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (cks.length) {
         var comPts = cks.filter(function (c) { return c.pts != null && isFinite(+c.pts); });
         var fmtD = function (d) { return d.slice(8, 10) + "/" + d.slice(5, 7); };
-        html += titulo(cks.length + " check-in(s) respondidos — o aluno responde desde " + fmtD(cks[0].d) + " · último em " + fmtD(cks[cks.length - 1].d));
+        // LIM_CHECKS: a consulta traz no máximo 40 respostas (as mais novas). Com a
+        // lista cheia não dá pra dizer "desde sempre" — o aluno pode responder há anos.
+        var LIM_CHECKS = 40;
+        var cortou = cks.length >= LIM_CHECKS;
+        html += titulo(cks.length === 1
+          ? "1 check-in respondido — em " + fmtD(cks[0].d)
+          : (cortou ? "Últimos " + cks.length + " check-ins" : cks.length + " check-ins respondidos") +
+            " — de " + fmtD(cks[0].d) + " até " + fmtD(cks[cks.length - 1].d));
         if (comPts.length >= 2) {
-          // cada barra é uma semana: alta e verde = semana boa; baixa e vermelha = semana ruim
-          var cds = comPts.slice(-20);
+          // cada barra é uma semana: alta e verde = semana boa; baixa e vermelha = semana ruim.
+          // Questionários diferentes somam faixas de pontos diferentes (um de 5 perguntas
+          // chega a 10, um de 1 pergunta chega a 2) — misturar na mesma escala engana.
+          // Por isso o gráfico mostra só o formulário mais respondido.
+          var porForm = {};
+          comPts.forEach(function (c) { var k = String(c.nome || "Check-in"); (porForm[k] = porForm[k] || []).push(c); });
+          var formAlvo = Object.keys(porForm).sort(function (x, y) { return porForm[y].length - porForm[x].length; })[0];
+          var serieForm = porForm[formAlvo];
+          var varios = Object.keys(porForm).length > 1;
+          var cds = serieForm.slice(-20);
           var cv = cds.map(function (c) { return +c.pts; });
           var cmin = Math.min.apply(null, cv), cmax = Math.max.apply(null, cv);
-          var cfx = (cmax - cmin) || 1;
+          // escala ancorada no ZERO (não no mínimo do aluno): se todas as semanas
+          // empatam em 5 pontos, todas ficam altas e verdes — e não rasteiras e vermelhas
+          var cbase = Math.min(0, cmin);
+          var cfx = (cmax - cbase) || 1;
           var CW = 340, CH = 66, CP = 4, BW = Math.max(6, Math.floor((CW - 2 * CP) / cds.length) - 3);
-          html += "<div class='muted' style='font-size:12px;margin:2px 0 4px;'>Como foram as semanas — barra alta e verde = semana boa; baixa e vermelha = semana fraca.</div>" +
+          html += "<div class='muted' style='font-size:12px;margin:2px 0 4px;'>Como foram as semanas de <b>" + esc(formAlvo) + "</b> — barra alta e verde = semana boa; baixa e vermelha = semana fraca." +
+            (varios ? " (os outros formulários ficam na lista aqui embaixo)" : "") + "</div>" +
             "<svg viewBox='0 0 " + CW + " " + (CH + 18) + "' style='width:100%;max-width:440px;display:block;' role='img' aria-label='Pontuação semana a semana dos check-ins'>" +
             cv.map(function (v, i) {
-              var frac = (v - cmin) / cfx;
+              var frac = (v - cbase) / cfx;
               var h = Math.max(4, Math.round((CH - 8) * frac) + 4);
               var x = CP + Math.round((CW - 2 * CP - BW) * (cds.length === 1 ? 0 : i / (cds.length - 1)));
               var cor = frac >= 0.66 ? "#4ade80" : frac >= 0.33 ? "#fbbf24" : "#f87171";
@@ -2522,13 +2553,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "<text x='" + (CW - CP) + "' y='" + (CH + 14) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + fmtD(cds[cds.length - 1].d) + "</text></svg>";
         }
         // ---- cada PERGUNTA vira uma métrica acompanhável (valor de hoje, tendência e histórico) ----
+        // configuração das perguntas do professor (pra saber onde nota menor é melhor)
+        var cfgPerg = {};
+        ((load().questPerguntas) || []).forEach(function (q) {
+          if (q && q.sigla) cfgPerg[String(q.sigla).toLowerCase()] = q;
+          if (q && q.texto) cfgPerg[String(q.texto).toLowerCase()] = q;
+        });
         var porPerg = {};
         cks.forEach(function (c) {
           (Array.isArray(c.respostas) ? c.respostas : []).forEach(function (r) {
             if (!r || typeof r !== "object") return;
             var chave = String(r.sigla || r.pergunta || "").slice(0, 40);
             if (!chave) return;
-            var m = porPerg[chave] || (porPerg[chave] = { sigla: chave, pergunta: String(r.pergunta || ""), serie: [] });
+            var m = porPerg[chave] || (porPerg[chave] = { sigla: chave, pergunta: String(r.pergunta || ""),
+              menosMelhor: !!(cfgPerg[chave.toLowerCase()] || {}).menosMelhor, serie: [] });
             m.serie.push({ d: c.d, txt: String(r.resposta == null ? "" : r.resposta),
               pts: (r.pontos == null || !isFinite(+r.pontos)) ? null : +r.pontos });
           });
@@ -2549,7 +2587,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
                 var mRec = med(vals.slice(-4));
                 var vAntes = vals.slice(-8, -4);
                 var mAnt = vAntes.length ? med(vAntes) : null;
-                var dif = mAnt == null ? null : mRec - mAnt;
+                // pergunta marcada como "nota menor é melhor" (dor, cansaço, fome):
+                // subir a nota é PIORAR — sem isso o painel elogiava aluno com mais dor
+                var dif = mAnt == null ? null : (mRec - mAnt) * (m.menosMelhor ? -1 : 1);
                 var cor = dif == null ? "#a78bfa" : dif > 0.3 ? "#4ade80" : dif < -0.3 ? "#f87171" : "#fbbf24";
                 var rot = dif == null ? "acompanhando" : dif > 0.3 ? "melhorando" : dif < -0.3 ? "piorando" : "estável";
                 chip = "<span style='background:" + cor + "22;color:" + cor + ";border-radius:99px;padding:2px 10px;font-size:11px;font-weight:800;'>" + rot + "</span>";
@@ -2639,15 +2679,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var r = rs[0];
         var ret = r && r.data && r.data[0] && r.data[0].retorno;
         var rowsQ = (rs[1] && !rs[1].error && rs[1].data) || [];
-        if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app."; return; }
-        if (rowsQ.length) {
+        // os check-ins vêm de OUTRA tabela (app_quest) e não dependem do app_aluno —
+        // monta primeiro, senão um erro no app_aluno deixava a aba travada em "Carregando…"
+        var checksQ = rowsQ.map(function (row) {
+          var dd = (row && row.dados && typeof row.dados === "object") ? row.dados : {};
+          return { d: String(row.criado || "").slice(0, 10), nome: row.questionario || "Check-in",
+            pts: (dd.pontuacao == null || !isFinite(+dd.pontuacao)) ? null : +dd.pontuacao,
+            respostas: Array.isArray(dd.respostas) ? dd.respostas : [] };
+        });
+        if (r && r.error) {
+          box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a sincronização do app.";
+          pintaCheckins(checksQ.length ? { checks: checksQ } : null,
+            "Não deu pra carregar agora — confira a internet e abra o perfil de novo.");
+          return;
+        }
+        if (checksQ.length) {
           ret = (ret && typeof ret === "object") ? ret : {};
-          ret.checks = rowsQ.map(function (row) {
-            var dd = (row && row.dados && typeof row.dados === "object") ? row.dados : {};
-            return { d: String(row.criado || "").slice(0, 10), nome: row.questionario || "Check-in",
-              pts: (dd.pontuacao == null || !isFinite(+dd.pontuacao)) ? null : +dd.pontuacao,
-              respostas: Array.isArray(dd.respostas) ? dd.respostas : [] };
-          });
+          ret.checks = checksQ;
         }
         if (!ret) {
           box.textContent = "O aluno ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui.";
@@ -2793,7 +2841,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!aP) return;
       if (aP.pacote && +aP.pacote.total > 0) aP.pacote.total = +aP.pacote.total + qtd;
       else aP.pacote = { total: qtd, usadas: 0, vendidoEm: S.todayISO() };
-      if (vlr > 0) stP.pagamentos.push({ id: S.uid(), alunoId: perfilId, valor: vlr, forma: "pacote " + qtd + " sessões", data: S.todayISO() });
+      // desc preenchido: entra no recebido e no histórico, mas NÃO apaga a
+      // cobrança da mensalidade (mesma regra da venda de serviço)
+      if (vlr > 0) stP.pagamentos.push({ id: S.uid(), alunoId: perfilId, valor: vlr, forma: "pacote " + qtd + " sessões", desc: "Pacote de " + qtd + " sessões", data: S.todayISO() });
       save(stP);
       abrePerfil(perfilId);
       mostraPfAba("fin");
@@ -3078,9 +3128,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (ops.length < 2) { alert("A escala precisa de pelo menos 2 alternativas."); return; }
     }
     var st = questSt(load());
-    st.questPerguntas.push({ id: S.uid(), sigla: sigla, titulo: titulo, texto: texto, tipo: tipo, ops: ops });
+    st.questPerguntas.push({ id: S.uid(), sigla: sigla, titulo: titulo, texto: texto, tipo: tipo, ops: ops,
+      menosMelhor: !!$("qpMenos").checked });
     save(st);
-    $("qpSigla").value = ""; $("qpTitulo").value = ""; $("qpTexto").value = "";
+    $("qpSigla").value = ""; $("qpTitulo").value = ""; $("qpTexto").value = ""; $("qpMenos").checked = false;
     renderQuest();
   });
   $("qpLista").addEventListener("click", function (e) {
@@ -4858,7 +4909,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<button class="btn sec mini" data-tsr="' + f.id + ":" + i + '" title="mudar séries e repetições">' + it.series + "×" + it.reps + "</button>" +
             '<button class="btn sec mini" data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">⏱ ' + (+it.descanso || 60) + "s</button>" +
             '<button class="btn sec mini" data-tobs="' + f.id + ":" + i + '" title="editar a observação do exercício">' + (it.obs ? "✎ " + esc(it.obs) : "✎") + "</button>" +
-            (ex.video ? "<span title='tem vídeo'>▸</span>" : "") +
+            (videoDoEx(ex) ? "<span title='tem vídeo'>▸</span>" : "") +
             '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '" title="subir na ficha">↑</button>' : "") +
             (i < f.itens.length - 1 ? '<button class="btn sec mini" data-desce="' + f.id + ":" + i + '" title="descer na ficha">↓</button>' : "") +
@@ -6256,6 +6307,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     return ex;
   }
+  // vídeo do exercício: o do professor manda; sem ele, entra o vídeo padrão do
+  // catálogo. Assim ficha montada ANTES da curadoria de vídeos também mostra
+  // demonstração no app do aluno, sem o professor precisar refazer nada.
+  function videoDoEx(ex) {
+    if (!ex) return "";
+    if (ex.video) return ex.video;
+    var cat = (self.MT_EXERCICIOS || []).find(function (c) { return c.n.toLowerCase() === String(ex.nome || "").toLowerCase(); });
+    return (cat && cat.v) || "";
+  }
+  window.__videoDoEx = videoDoEx; // testes
   window.__exPorNome = exercicioPorNome; // testes
   $("tplAplicar").addEventListener("click", function () {
     var alunoId = $("tAluno").value, tpl = TEMPLATES_FICHA[$("tplSel").value];
@@ -6753,7 +6814,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     (self.MT_EXERCICIOS || []).forEach(function (c) { catPorNome[c.n.toLowerCase()] = c; });
     var fav = favMapa(st);
     var itens = (st.exercicios || []).map(function (e) {
-      return { nome: e.nome, grupo: e.grupo || "Geral", eq: (catPorNome[e.nome.toLowerCase()] || {}).eq || "", video: e.video || "", id: e.id, seu: true, semDesc: !e.descricao, mov: movimentoDe(e.nome, e.grupo), fav: !!fav[e.nome.toLowerCase()] };
+      return { nome: e.nome, grupo: e.grupo || "Geral", eq: (catPorNome[e.nome.toLowerCase()] || {}).eq || "", video: e.video || (catPorNome[e.nome.toLowerCase()] || {}).v || "", id: e.id, seu: true, semDesc: !e.descricao, mov: movimentoDe(e.nome, e.grupo), fav: !!fav[e.nome.toLowerCase()] };
     });
     (self.MT_EXERCICIOS || []).forEach(function (c) {
       if (meus[c.n.toLowerCase()]) return;
@@ -6901,7 +6962,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!ex) return;
     ex.nome = $("dxNome").value.trim() || ex.nome;
     ex.grupo = $("dxGrupo").value.trim();
-    ex.video = $("dxVideo").value.trim();
+    var vidNovo = $("dxVideo").value.trim();
+    if (vidNovo && !/^https?:\/\//i.test(vidNovo)) {
+      alert("Cola o link inteiro do vídeo, começando com https:// — no YouTube: Compartilhar → Copiar link.");
+      $("dxVideo").focus();
+      return;
+    }
+    ex.video = vidNovo;
     ex.descricao = $("dxDesc").value.trim();
     S.write("ptStudio", st);
     renderBiblioteca(); renderFichas();
@@ -8433,7 +8500,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
       return { titulo: f.titulo, capa: f.capa || "", itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
-        return { nome: ex.nome || "?", video: ex.video || "", desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "",
+        return { nome: ex.nome || "?", video: videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "",
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
       }) };
     }) : null;
@@ -9745,7 +9812,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "pintaSets();" +
       // modo treino guiado: conduz série a série; a série 'feita' clica no setbtn
       // real do exercício, reaproveitando toda a lógica existente (dia completo etc.)
-      "var GUIA=" + JSON.stringify(guiaFichasP) + ";" +
+      "var GUIA=" + JSON.stringify(guiaFichasP).replace(/</g, "\\u003c") + ";" +
       "function beepG(){try{var ac=new (window.AudioContext||window.webkitAudioContext)();var o=ac.createOscillator(),ga=ac.createGain();" +
       "o.connect(ga);ga.connect(ac.destination);o.frequency.value=880;ga.gain.value=.25;o.start();" +
       "setTimeout(function(){o.frequency.value=1320;},180);setTimeout(function(){o.stop();ac.close();},380);}catch(e){}}" +

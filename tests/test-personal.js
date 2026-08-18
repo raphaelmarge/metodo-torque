@@ -1211,6 +1211,44 @@ async function abaPt(p, a) {
   ok(await p.evaluate(() => /usou 0 de 10/.test(document.getElementById("pfFin").textContent)), "pacote de 10 sessões vendido aparece no perfil");
   ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).pagamentos.some((x) => /pacote/.test(x.forma || "") && +x.valor === 1200)), "venda do pacote registra o pagamento de R$ 1.200");
   ok(await p.evaluate(() => /data-recibo/.test(document.getElementById("pfFin").innerHTML)), "pagamentos do perfil ganham o link de recibo");
+  // --- achados do diagnóstico no Financeiro do aluno ---
+  const finDiag = await p.evaluate(async () => {
+    const S = window.MTStore, snap = localStorage.getItem("mtapp:ptStudio"), hoje = S.todayISO(), mes = hoje.slice(0, 7);
+    const esperar = () => new Promise((r) => setTimeout(r, 130));
+    const out = {};
+    const base = () => ({ config: { nome: "T" }, alunos: [], planosPT: [], contratosPT: [], pagamentos: [],
+      sessoes: [], avaliacoes: [], exercicios: [], treinosV2: {}, despesas: [] });
+    // venda de serviço não pode dar quitação da mensalidade (regra do resto do painel)
+    let st = base();
+    st.alunos.push({ id: "fd1", nome: "Serv", ativo: true });
+    st.planosPT.push({ id: "pl", nome: "Mensal", valor: 400, treinosSem: 3 });
+    st.contratosPT.push({ id: "ct", alunoId: "fd1", planoId: "pl", diaVenc: 10, status: "ativo", inicio: hoje });
+    st.pagamentos.push({ id: "p1", alunoId: "fd1", valor: 120, data: hoje, forma: "Pix", desc: "Massagem" });
+    S.write("ptStudio", st);
+    window.__perfilPT("fd1"); await esperar();
+    const t1 = document.getElementById("pfFin").textContent.replace(/\s+/g, " ");
+    out.servicoNaoQuita = /em aberto/.test(t1) && !/✓ pago/.test(t1) && /em serviços\/pacotes/.test(t1);
+    // pacote de serviço não pode esconder o botão de vender pacote de sessões
+    st = base();
+    st.alunos.push({ id: "fd2", nome: "Pac", ativo: true, servPacotes: [{ id: "sv", nome: "Massagem", total: 3, usadas: 1 }] });
+    S.write("ptStudio", st);
+    window.__perfilPT("fd2"); await esperar();
+    out.botaoSobrevive = !!document.querySelector("#pfFin [data-pfpacote]") &&
+      /Massagem/.test(document.getElementById("pfFin").textContent);
+    // nome de plano com & não pode escapar duas vezes no select
+    st = base();
+    st.alunos.push({ id: "fd3", nome: "Amp", ativo: true });
+    st.planosPT.push({ id: "plA", nome: "Studio & Box", valor: 147, treinosSem: 3 });
+    S.write("ptStudio", st);
+    window.__perfilPT("fd3"); await esperar();
+    const opt = document.querySelector("#pfCtPlano option[value='plA']");
+    out.semEscapeDuplo = !!opt && /Studio & Box/.test(opt.textContent) && !/&amp;/.test(opt.textContent);
+    S.write("ptStudio", JSON.parse(snap));
+    return out;
+  });
+  ok(finDiag.servicoNaoQuita, "venda de serviço não pinta a mensalidade de paga — e o valor aparece como extra do mês");
+  ok(finDiag.botaoSobrevive, "pacote de serviço ativo não esconde o botão de vender pacote de sessões");
+  ok(finDiag.semEscapeDuplo, "nome de plano com & aparece certo no select (sem escape duplo)");
   // sessão feita desconta do pacote
   await p.evaluate(() => document.getElementById("pfFechar").click());
   await abaPt(p, "agenda");
@@ -1377,6 +1415,40 @@ async function abaPt(p, a) {
     ok(/Nenhuma/.test(metricas) && /resposta mais comum/.test(metricas) && /Ombro esquerdo/.test(metricas) && /2 de 3/.test(metricas),
       "pergunta de resposta livre mostra a última resposta e a mais comum das semanas");
     ok(/Últimos check-ins/.test(metricas), "o histórico dos check-ins continua listado abaixo das métricas");
+    // --- achados do diagnóstico: escala, formulários misturados, plural e "menos é melhor" ---
+    const diag = await p.evaluate(() => {
+      const S = window.MTStore, snap = localStorage.getItem("mtapp:ptStudio");
+      const semana = (i, pts, extra) => Object.assign({ d: "2026-0" + i + "-05", nome: "Check-in semanal", pts: pts,
+        respostas: [{ sigla: "A", pergunta: "Como foi a semana?", resposta: "r" + pts, pontos: pts }] }, extra || {});
+      const out = {};
+      // todas as semanas com a nota máxima: barras altas e verdes (escala ancorada no zero)
+      const iguais = window.__checkinsPT({ checks: [1,2,3,4,5,6].map((i) => semana(i, 5)) });
+      out.empateVerde = (iguais.match(/fill='#4ade80'/g) || []).length === 6 && !/fill='#f87171'/.test(iguais);
+      // dois formulários: o gráfico é de um só e avisa
+      const mistos = [1,2,3,4].map((i) => semana(i, 8)).concat([{ d: "2026-05-06", nome: "Como foi o treino?", pts: 2,
+        respostas: [{ sigla: "B", pergunta: "E aí?", resposta: "r", pontos: 2 }] }]);
+      const hm = window.__checkinsPT({ checks: mistos });
+      out.umFormulario = /Como foram as semanas de <b>Check-in semanal<\/b>/.test(hm) && /outros formulários/.test(hm);
+      // cabeçalho: singular certo; lista cheia não promete "desde sempre"
+      out.singular = /1 check-in respondido/.test(window.__checkinsPT({ checks: [semana(1, 3)] }));
+      const cheio = Array.from({ length: 40 }, (_, i) => semana((i % 8) + 1, 3));
+      const hc = window.__checkinsPT({ checks: cheio });
+      out.semDesdeMentiroso = /Últimos 40 check-ins/.test(hc) && !/responde desde/.test(hc);
+      // pergunta onde nota MENOR é melhor (dor): subir a nota é piorar
+      const st = S.read("ptStudio", {});
+      st.questPerguntas = [{ id: "qd", sigla: "DOR", titulo: "Dor", texto: "Quanta dor?", tipo: "linear", ops: [], menosMelhor: true }];
+      S.write("ptStudio", st);
+      const dor = [1,2,3,4,5,6,7,8].map((i) => ({ d: "2026-0" + (i > 8 ? 8 : i) + "-05", nome: "Check-in semanal", pts: i,
+        respostas: [{ sigla: "DOR", pergunta: "Quanta dor?", resposta: String(i), pontos: i }] }));
+      const hd = window.__checkinsPT({ checks: dor });
+      out.dorPiorando = /piorando/.test(hd) && !/melhorando/.test(hd);
+      S.write("ptStudio", JSON.parse(snap));
+      return out;
+    });
+    ok(diag.empateVerde, "semanas todas com nota máxima aparecem altas e verdes (escala ancorada no zero, não no mínimo do aluno)");
+    ok(diag.umFormulario, "o gráfico usa só o formulário mais respondido e avisa que há outros (pontuações não são comparáveis entre formulários)");
+    ok(diag.singular && diag.semDesdeMentiroso, "cabeçalho no singular certo e sem prometer 'desde sempre' quando a lista vem cortada");
+    ok(diag.dorPiorando, "pergunta marcada como 'nota menor é melhor' (dor) mostra piorando quando a nota sobe");
     // a aba própria do perfil: existe, troca e o painel principal não repete o bloco
     const abaQ = await p.evaluate(() => {
       const bt = document.querySelector('#pfAbas [data-pfa="quest"]');
@@ -1825,7 +1897,7 @@ async function abaPt(p, a) {
     ok(/Hábitos em dia/.test(appDados) && /50%/.test(appDados), "KPI de dias com 3+ hábitos nos últimos 30 dias (50%)");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
     const questBox = await p.evaluate(() => document.getElementById("pfQuestBox").innerHTML);
-    ok(/3 check-in\(s\) respondidos/.test(questBox) && /o aluno responde desde/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
+    ok(/3 check-ins respondidos/.test(questBox) && /— de \d\d\/\d\d até \d\d\/\d\d/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
     ok(/Como foram as semanas/.test(questBox) && /fill=['"]#4ade80['"]/.test(questBox) && /fill=['"]#f87171['"]/.test(questBox) && /9 ponto/.test(questBox),
       "pontuação vira barras coloridas por semana (verde = boa, vermelha = fraca), com o valor no toque");
     ok(/\+9 pts/.test(questBox) && /MOTEX/.test(questBox), "última resposta listada com pontuação e siglas");
@@ -3522,6 +3594,53 @@ async function abaPt(p, a) {
     "catálogo tem vídeos padrão (13+) em formato watch do YouTube — tocam embutidos no app");
   ok(vidCat.herdou === vidCat.esperado,
     "cópia antiga do exercício sem vídeo herda o vídeo padrão do catálogo");
+  // ficha montada ANTES da curadoria também leva o vídeo pro app do aluno
+  const vidFicha = await p.evaluate(() => {
+    const S = window.MTStore, snap = localStorage.getItem("mtapp:ptStudio");
+    const st = { config: { nome: "T" },
+      alunos: [{ id: "vfA", nome: "Ficha Antiga", ativo: true, appTokenP: "tkv" }],
+      exercicios: [
+        { id: "vf1", nome: "Agachamento livre", grupo: "Quadríceps", video: "", descricao: "d" },
+        { id: "vf2", nome: "Supino reto com barra", grupo: "Peito", video: "https://www.youtube.com/watch?v=MEUVIDEO123", descricao: "d" },
+        { id: "vf3", nome: "Exercício só do professor", grupo: "Core", video: "", descricao: "d" },
+      ],
+      treinosV2: { vfA: { semana: 1, fichas: [{ id: "vff", titulo: "A", itens: [
+        { exId: "vf1", series: 3, reps: "10", descanso: 60, obs: "" },
+        { exId: "vf2", series: 4, reps: "8", descanso: 90, obs: "" },
+        { exId: "vf3", series: 3, reps: "12", descanso: 60, obs: "" },
+      ] }] } },
+      pagamentos: [], sessoes: [], avaliacoes: [], planosPT: [], contratosPT: [] };
+    S.write("ptStudio", st);
+    const html = window.__montaAppAluno(st.alunos[0], "demo");
+    const out = {
+      herdou: /youtube\.com\/watch\?v=rM6SDUdl9fs/.test(html),
+      doProfessorVence: /watch\?v=MEUVIDEO123/.test(html),
+      semInvencao: window.__videoDoEx({ nome: "Exercício só do professor", video: "" }) === "",
+      nulo: window.__videoDoEx(null) === "",
+    };
+    // devolve o estado pelo store (dispara o re-render — setItem cru deixaria a tela velha)
+    S.write("ptStudio", JSON.parse(snap));
+    return out;
+  });
+  ok(vidFicha.herdou && vidFicha.doProfessorVence,
+    "ficha montada antes da curadoria leva o vídeo do catálogo pro app — e o vídeo do professor continua vencendo");
+  ok(vidFicha.semInvencao && vidFicha.nulo,
+    "exercício fora do catálogo (ou vazio) não ganha vídeo inventado");
+  // bloco GUIA do app precisa do mesmo escape de "<" dos outros JSON (nome de exercício é do professor)
+  const guiaEsc = await p.evaluate(() => {
+    const S = window.MTStore, snap = localStorage.getItem("mtapp:ptStudio");
+    const st = { config: { nome: "T" }, alunos: [{ id: "gE", nome: "G", ativo: true, appTokenP: "tg" }],
+      exercicios: [{ id: "ge1", nome: "<" + "/script><b>x</b>", grupo: "Peito", video: "", descricao: "d" }],
+      treinosV2: { gE: { semana: 1, fichas: [{ id: "gf", titulo: "A", itens: [{ exId: "ge1", series: 3, reps: "10", descanso: 60, obs: "" }] }] } },
+      pagamentos: [], sessoes: [], avaliacoes: [], planosPT: [], contratosPT: [] };
+    S.write("ptStudio", st);
+    const html = window.__montaAppAluno(st.alunos[0], "demo");
+    const i = html.indexOf("var GUIA=");
+    const trecho = html.slice(i, i + 500);
+    S.write("ptStudio", JSON.parse(snap));
+    return { escapado: /\\u003c/.test(trecho), cru: /<\/script>/.test(trecho) };
+  });
+  ok(guiaEsc.escapado && !guiaEsc.cru, "o bloco GUIA do app escapa < (nome de exercício não quebra o script do aluno)");
   // botão Iniciar exercício abre o guiado já naquele exercício
   const iniEx = await pApp.evaluate(() => {
     const bs = document.querySelectorAll(".inibtn");
@@ -4386,7 +4505,7 @@ async function abaPt(p, a) {
     ok(demo.autos === 3 && demo.servicos === 3 && demo.temImg, "demo traz as automações de WhatsApp, o catálogo de serviços e a foto da promo");
     ok(demo.fila.sumido && demo.fila.boasVindas && demo.fila.pacoteFoto, "fila do demo mostra aluno sumido, boas-vindas e pacote acabando com a foto");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
-    ok(/check-in\(s\) respondidos/.test(demo.quest) && /(melhorando|estável|piorando)/.test(demo.quest) &&
+    ok(/check-ins? respondidos?/.test(demo.quest) && /(melhorando|estável|piorando)/.test(demo.quest) &&
       /resposta mais comum/.test(demo.quest) && /Como foram os treinos da semana\?/.test(demo.quest),
       "demo mostra os check-ins em linguagem clara: pergunta por extenso, tendência e resposta mais comum");
     ok(demo.scanOn && demo.scanCard, "no demo as Medidas pela câmera já vêm ligadas (quem testa acha o recurso sozinho)");
