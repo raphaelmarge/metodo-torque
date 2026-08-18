@@ -1884,6 +1884,13 @@ async function abaPt(p, a) {
     ok(await p.evaluate(() => !!window.MTStore.read("ptStudio", {}).alunos[0].acessoEm), "acesso criado fica marcado no aluno (vira o selo 📱 APP ✓ na lista)");
     const msgFb = await p.evaluate(() => window.__acessoAluno.msg({ ok: true, semEmail: true, email: "a@b.com", senha: "Xy2Xy2Xy2X", motivo: "teste" }, { nome: "João Cliente", zap: "31988887777" }));
     ok(/Xy2Xy2Xy2X/.test(msgFb) && /wa\.me\/5531988887777/.test(msgFb), "mensagem de fallback traz a senha e o botão de WhatsApp");
+    /* O provedor do aluno pode engolir o e-mail mesmo com o envio ACEITO. Sem a
+     * senha na mensagem de sucesso, o professor ficava sem saída: reenviar só
+     * gera outra senha que também não chega. */
+    ok(acesso.r.senha, "quando o e-mail sai, a senha temporária volta junto (pro caso de não chegar)");
+    const msgOk = await p.evaluate(() => window.__acessoAluno.msg({ ok: true, email: "a@b.com", senha: "Zz9Zz9Zz9Z" }, { nome: "João Cliente", zap: "31988887777" }));
+    ok(/Acesso enviado/.test(msgOk) && /Zz9Zz9Zz9Z/.test(msgOk) && /wa\.me\/5531988887777/.test(msgOk),
+      "mesmo com o e-mail aceito, a tela mantém a senha e o botão de WhatsApp à mão");
     /* O recado do acesso só existia em lugares que podiam estar ESCONDIDOS: na
      * aba "App do aluno" (e o professor clica de outra aba) e atrás do dialog de
      * cadastro. Dava a impressão de que o botão não fazia nada — inclusive
