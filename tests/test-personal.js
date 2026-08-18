@@ -663,6 +663,18 @@ async function abaPt(p, a) {
     return { total, depois: ex.options.length, zonas: zonas.join("|"), valor: alvo && alvo.value };
   }, fichaId);
   ok(casc.total > 500 && casc.depois > 1 && casc.depois < 200, "cascata filtra: de " + (casc.total - 1) + " exercícios pra " + (casc.depois - 1) + " (tipo + grupamento)");
+  // acessório "corda" da polia não pode jogar o exercício pro cardio (tríceps corda, remada com corda…)
+  const cordas = await p.evaluate(() => ({
+    triceps: window.__movimentoDe("Tríceps corda", "Tríceps"),
+    remada: window.__movimentoDe("Remada baixa com corda", "Costas"),
+    rosca: window.__movimentoDe("Rosca martelo na polia com corda", "Bíceps"),
+    pular: window.__movimentoDe("Pular corda", "Cardio"),
+    naval: window.__movimentoDe("Ondas alternadas na corda naval", "Cardio"),
+  }));
+  ok(cordas.triceps === "Empurrar" && cordas.remada === "Puxar" && cordas.rosca === "Puxar",
+    "exercício de polia com corda entra no padrão certo (empurrar/puxar), não no cardio");
+  ok(cordas.pular === "Cardio e condicionamento" && cordas.naval === "Cardio e condicionamento",
+    "pular corda e corda naval continuam no cardio");
   ok(/Posterior e glúteo/.test(casc.zonas) && !/^Peito$/m.test(casc.zonas.split("|").join("\n")), "grupamentos oferecidos seguem o tipo de treino escolhido");
   ok(!!casc.valor, "lista filtrada traz os levantamentos terra");
   await p.selectOption('[data-exsel="' + fichaId + '"]', casc.valor);

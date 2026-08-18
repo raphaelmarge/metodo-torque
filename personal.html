@@ -6307,6 +6307,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     return ex;
   }
+  window.__movimentoDe = movimentoDe; // testes
   // vídeo do exercício: o do professor manda; sem ele, entra o vídeo padrão do
   // catálogo. Assim ficha montada ANTES da curadoria de vídeos também mostra
   // demonstração no app do aluno, sem o professor precisar refazer nada.
@@ -6764,7 +6765,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var tem = function (ks) { return ks.some(function (k) { return n.indexOf(k) >= 0; }); };
     if (tem(["alongamento", "mobilidade", "liberação", "rotação torácica", "cat-cow", "gato e camelo", "escorpião"])) return "Mobilidade e alongamento";
     if (tem(["prancha", "abdominal", "hollow", "dead bug", "bird dog", "pallof", "rollout", "russian", "twist", "elevação de pernas", "canivete", "superman", "anti-rota", "ponte lateral"])) return "Core e estabilidade";
-    if (tem(["corrida", "esteira", "bike", "bicicleta", "elíptico", "transport", "ergômetro", "burpee", "polichinelo", "corda", "sprint", "tiro de", "escada", "mountain climber", "caminhada", "hiit", "circuito", "skipping", "jump"])) return "Cardio e condicionamento";
+    // "corda" sozinha jogava pro cardio TODO exercício de polia com corda
+    // (tríceps corda, remada baixa com corda, rosca com corda...) — por isso os
+    // termos aqui são específicos de pular/escalar/corda naval
+    if (tem(["corrida", "esteira", "bike", "bicicleta", "elíptico", "transport", "ergômetro", "burpee", "polichinelo",
+      "pular corda", "pulo de corda", "salto de corda", "corda naval", "corda de boxe", "subida na corda", "escalada de corda",
+      "sprint", "tiro de", "escada", "mountain climber", "caminhada", "hiit", "circuito", "skipping", "jump"])) return "Cardio e condicionamento";
     if (tem(["agachamento", "leg press", "afundo", "avanço", "passada", "búlgaro", "extensora", "hack", "pistol", "subida no banco", "step up", "sissy", "wall sit", "panturrilha"])) return "Agachar e pernas";
     if (tem(["terra", "stiff", "romeno", "elevação pélvica", "hip thrust", "bom dia", "swing", "flexora", "glúteo", "coice", "abdução", "adução", "pull through", "hiperextensão", "ponte de"])) return "Dobradiça e quadril";
     if (tem(["remada", "puxada", "barra fixa", "pull", "rosca", "encolhimento", "invertido", "serrote", "pulôver", "pullover"])) return "Puxar";
