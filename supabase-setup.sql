@@ -1291,7 +1291,11 @@ grant execute on function public.hq_erros() to authenticated;
 -- Bloco idempotente.
 -- ============================================================
 
-create extension if not exists pgcrypto;
+-- No Supabase o pgcrypto vive no schema "extensions", não no public. Sem
+-- "extensions" no search_path das funções abaixo, crypt/gen_salt somem e o
+-- login do aluno morre com "function gen_salt(unknown) does not exist".
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
 
 alter table public.app_aluno add column if not exists login text not null default '';
 alter table public.app_aluno add column if not exists senha text not null default '';
@@ -1302,7 +1306,7 @@ create unique index if not exists app_aluno_login_unico
 create or replace function public.aluno_define_login(t text, p_login text, p_senha text)
 returns json
 language plpgsql security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_tem uuid;
@@ -1331,7 +1335,7 @@ $$;
 create or replace function public.aluno_login(p_login text, p_senha text)
 returns json
 language plpgsql security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v record;
