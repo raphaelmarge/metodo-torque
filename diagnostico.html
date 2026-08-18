@@ -179,15 +179,105 @@
           "Se a mensagem fala em CORS ou Failed to fetch, a função não subiu direito — publique de novo.");
       });
     }).then(function () {
-      // 3) você está logado? a IA só funciona logado
+      // 3) a envia-email está publicada e com a conta do Resend ligada?
+      //    o ping responde antes de qualquer login e diz se o secret existe
+      return fetch(cfg.url + "/functions/v1/envia-email", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "ping" }),
+      }).then(function (r) {
+        return r.text().then(function (t) { return { status: r.status, texto: t }; });
+      }).then(function (res) {
+        anota("envia-email ping: HTTP " + res.status + " " + corpoCurto(res.texto));
+        if (res.status === 404) {
+          linha("❌", "A função envia-email não existe neste projeto", "Sem ela o aluno cadastrado nunca recebe login e senha do app.",
+            "Abra www.torqueon.com.br/funcoes.html, copie a envia-email e publique no Supabase (Edge Functions → Deploy a new function → Via Editor). O nome tem que ser exatamente envia-email.");
+          return;
+        }
+        var d = null;
+        try { d = JSON.parse(res.texto); } catch (e) {}
+        if (!d || !d.ok) {
+          linha("❌", "A envia-email respondeu algo inesperado", "HTTP " + res.status + " — " + corpoCurto(res.texto),
+            "Abra a função no painel, veja os Logs e publique de novo.");
+          return;
+        }
+        linha("✅", "Função envia-email publicada", "Ela respondeu ao teste.");
+        if (d.chaveConfigurada) linha("✅", "Conta de e-mail (Resend) ligada", "A RESEND_API_KEY está no lugar.");
+        else linha("❌", "Falta a chave do Resend", "A função está no ar, mas sem a RESEND_API_KEY — nenhum e-mail sai.",
+          "Supabase → Edge Functions → Secrets → Add new secret → nome RESEND_API_KEY → cole a chave (começa com re_) → salve → publique a envia-email DE NOVO (o secret só entra no próximo deploy).");
+        var rem = String(d.remetente || "");
+        if (/resend\.dev/.test(rem)) {
+          linha("⚠️", "O remetente ainda é o de teste do Resend", "Hoje sai como " + rem + " — só entrega no e-mail do dono da conta, não nos alunos.",
+            "Crie o secret EMAIL_DE com: TORQUE ON <nao-responda@torqueon.com.br> (o domínio precisa estar Verified no Resend). Depois publique a envia-email de novo.");
+        } else if (rem) {
+          linha("✅", "Remetente do e-mail", rem);
+        }
+      }).catch(function (e) {
+        anota("envia-email: erro " + e.message);
+        linha("❌", "Não consegui chamar a envia-email", e.message, "Se fala em CORS ou Failed to fetch, a função não subiu direito — publique de novo.");
+      });
+    }).then(function () {
+      // 4) a push-envia (notificações no celular do aluno) — opcional, mas o
+      //    diagnóstico avisa se está no ar e se as chaves VAPID estão lá
+      return fetch(cfg.url + "/functions/v1/push-envia", {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ acao: "ping" }),
+      }).then(function (r) {
+        return r.text().then(function (t) { return { status: r.status, texto: t }; });
+      }).then(function (res) {
+        anota("push-envia ping: HTTP " + res.status + " " + corpoCurto(res.texto));
+        if (res.status === 404) {
+          linha("⚪", "A push-envia ainda não foi publicada", "O app funciona, só não avisa o aluno no celular (treino novo, recado, lembrete).",
+            "Quando quiser ligar: funcoes.html → copie a push-envia → publique com o nome push-envia e crie os secrets VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY.");
+          return;
+        }
+        var d = null;
+        try { d = JSON.parse(res.texto); } catch (e) {}
+        if (d && d.ok && d.vapid) { linha("✅", "Notificações no celular ligadas", "Função publicada e chaves VAPID no lugar."); return; }
+        if (d && d.ok) {
+          linha("❌", "Falta a chave das notificações", "A push-envia está no ar, mas sem VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY.",
+            "Crie os dois secrets e publique a push-envia de novo (o secret só entra no próximo deploy).");
+          return;
+        }
+        linha("❌", "A push-envia respondeu algo inesperado", "HTTP " + res.status + " — " + corpoCurto(res.texto), "Veja os Logs da função no painel.");
+      }).catch(function (e) { anota("push-envia: erro " + e.message); });
+    }).then(function () {
+      // 5) você está logado? a IA só funciona logado — e o teste do SQL precisa de sessão
       try {
         var sb = window.supabase.createClient(cfg.url, cfg.anonKey);
         return sb.auth.getSession().then(function (s) {
           var sess = s && s.data && s.data.session;
           anota("sessao: " + (sess ? "logado" : "sem login"));
-          if (sess) linha("✅", "Você está logado", sess.user.email || "");
-          else linha("⚠️", "Você não está logado neste navegador", "As IAs e a sincronização só funcionam logado.",
-            "Abra o TORQUE PERSONAL → Configurações → Entrar na minha conta. Depois rode este diagnóstico de novo.");
+          if (!sess) {
+            linha("⚠️", "Você não está logado neste navegador", "As IAs, a sincronização e o teste do banco só funcionam logado.",
+              "Abra o TORQUE PERSONAL → Configurações → Entrar na minha conta. Depois rode este diagnóstico de novo.");
+            return;
+          }
+          linha("✅", "Você está logado", sess.user.email || "");
+          /* O SQL é um arquivo só, rodado de cima pra baixo, e o SQL Editor
+           * PARA no primeiro erro. Então basta perguntar por uma função do
+           * FIM do arquivo: se ela existe, o arquivo inteiro rodou. */
+          return sb.rpc("minha_assinatura").then(function (r1) {
+            anota("rpc minha_assinatura: " + (r1.error ? r1.error.message : "ok"));
+            if (r1.error) {
+              linha("❌", "O SQL não rodou até o fim", "A função minha_assinatura (última do arquivo) não existe no banco: " + r1.error.message,
+                "Abra www.torqueon.com.br/sql.html, dê Ctrl+Shift+R, copie tudo e rode no Supabase → SQL Editor. Se aparecer erro vermelho, me manda o print.");
+              return;
+            }
+            linha("✅", "SQL rodou até o fim", "A última função do arquivo respondeu — o banco está completo.");
+            return sb.rpc("hq_sou_admin").then(function (r2) {
+              anota("rpc hq_sou_admin: " + (r2.error ? r2.error.message : String(r2.data)));
+              if (r2.error) {
+                linha("❌", "O bloco do HQ não está no banco", r2.error.message,
+                  "Rode o supabase-setup.sql de novo (ele cria as tabelas saas_* e as funções hq_*).");
+                return;
+              }
+              if (r2.data === true) linha("✅", "Você é administrador do TORQUE ON", "A tela apps/hq.html abre com a sua conta.");
+              else linha("⚠️", "Sua conta ainda não é administradora", "O banco está certo, só falta te cadastrar como admin.",
+                "Supabase → SQL Editor → rode: insert into public.saas_admins (user_id) select id from auth.users where email = '" + (sess.user.email || "SEU@EMAIL") + "' on conflict do nothing;");
+            });
+          });
         });
       } catch (e) { anota("sessao: erro " + e.message); }
     }).then(function () {
