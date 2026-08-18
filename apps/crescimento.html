@@ -431,7 +431,7 @@
         "<b>" + (d.medalha || "🏆") + " " + escD(d.titulo) + "</b>" +
         "<span>" + d.meta + " treinos em " + d.mes.slice(5) + "/" + d.mes.slice(2, 4) + "</span>" +
         (ativo ? '<span class="tag" style="background:#dcfce7;color:#15803d;font-weight:800;">NO AR</span>' : '<span class="muted">encerrado</span>') +
-        '<span style="margin-left:auto;"></span><button class="btn sec mini" data-dsfrm="' + d.id + '">✕</button></div>';
+        '<span style="margin-left:auto;"></span><button aria-label="Excluir" class="btn sec mini" data-dsfrm="' + d.id + '">✕</button></div>';
     }).join("") : "Nenhum desafio ainda.";
   }
   document.getElementById("dsfAdd").addEventListener("click", function () {

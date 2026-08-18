@@ -679,7 +679,7 @@
         '<span style="font-weight:800;padding-top:8px;">Dia</span>' +
         '<input type="number" min="0" value="' + (+et.dia || 0) + '" data-jdia="' + i + '" style="width:64px;">' +
         '<textarea data-jtexto="' + i + '" rows="2" style="flex:1;min-width:260px;border:1px solid var(--linha);padding:8px;font-family:inherit;font-size:13px;">' + et.texto.replace(/</g, "&lt;") + "</textarea>" +
-        '<button class="btn perigo mini" data-jdel="' + i + '">✕</button></div>';
+        '<button aria-label="Excluir" class="btn perigo mini" data-jdel="' + i + '">✕</button></div>';
     }).join("");
   }
   function salvaJornada() {
@@ -750,7 +750,7 @@
             esc(GATILHOS[r.gatilho] || r.gatilho) + " → template “" + esc(tpl ? tpl.nome : "?") + "”</div></div>" +
             '<span class="tag ' + (r.ativo !== false ? "ok" : "neutro") + '">' + (r.ativo !== false ? "ATIVA" : "INATIVA") + "</span>" +
             '<button class="btn sec mini" data-liga="' + r.id + '">' + (r.ativo !== false ? "pausar" : "ativar") + "</button>" +
-            '<button class="btn perigo mini" data-delr="' + r.id + '">✕</button></div>';
+            '<button aria-label="Excluir" class="btn perigo mini" data-delr="' + r.id + '">✕</button></div>';
         }).join("") : '<div class="vazio">Nenhuma automação.</div>');
     }
     if (aba === "templates") {
@@ -758,8 +758,8 @@
         '<button class="btn" id="btnNovoTpl">Novo template</button></div>' +
         st.templates.map(function (t) {
           return '<div class="lin"><div class="quem"><strong>' + esc(t.nome) + '</strong><div class="msg">' + esc(t.texto) + "</div></div>" +
-            '<button class="btn sec mini" data-edt="' + t.id + '">✏</button>' +
-            '<button class="btn perigo mini" data-delt="' + t.id + '">✕</button></div>';
+            '<button aria-label="Editar" class="btn sec mini" data-edt="' + t.id + '">✏</button>' +
+            '<button aria-label="Excluir" class="btn perigo mini" data-delt="' + t.id + '">✕</button></div>';
         }).join("");
     }
     $("painel").innerHTML = h;

@@ -127,8 +127,8 @@
         '<span class="muted">' + (usaPerfil[p.id] || 0) + " colab.</span>" +
         '<span class="tag ' + (p.ativa === false ? "neutro" : "ok") + '">' + (p.ativa === false ? "Inativa" : "Ativa") + "</span>" +
         '<button class="btn sec mini" data-dup="' + p.id + '" title="duplicar">⧉</button>' +
-        '<button class="btn sec mini" data-ed="' + p.id + '">✎</button>' +
-        '<button class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
+        '<button aria-label="Editar" class="btn sec mini" data-ed="' + p.id + '">✎</button>' +
+        '<button aria-label="Excluir" class="btn sec mini" data-rm="' + p.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhuma permissão encontrada.</div>';
   }
 
@@ -237,7 +237,7 @@
       var p = st.perfis.find(function (x) { return x.id === st.vinculos[em]; });
       return "<div class='linha-flex' style='justify-content:space-between;border:1px solid var(--linha);background:var(--card);padding:8px 12px;margin-top:-1px;'>" +
         "<span><b>" + esc(em) + "</b> → " + esc(p ? p.nome : "(perfil removido)") + "</span>" +
-        "<button class='btn perigo mini' data-desvincula='" + esc(em) + "'>✕</button></div>";
+        "<button aria-label='Excluir' class='btn perigo mini' data-desvincula='" + esc(em) + "'>✕</button></div>";
     }).join("") : "<p class='muted'>Ninguém vinculado ainda — todos veem tudo.</p>";
     // sugere os e-mails da equipe (nuvem)
     var nuvem = S.cloud && S.cloud();

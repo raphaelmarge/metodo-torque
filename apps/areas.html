@@ -65,8 +65,8 @@
       return '<div class="linha-area"><strong style="flex:1; min-width: 160px;">' + esc(a.nome) + "</strong>" +
         '<span class="muted">Capacidade: ' + (a.capacidade || "—") + "</span>" +
         '<span class="muted" style="flex:1;">' + esc(a.equipamentos || "—") + "</span>" +
-        '<button class="btn sec mini" data-ed="' + a.id + '">✎</button>' +
-        '<button class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
+        '<button aria-label="Editar" class="btn sec mini" data-ed="' + a.id + '">✎</button>' +
+        '<button aria-label="Excluir" class="btn sec mini" data-rm="' + a.id + '">🗑</button></div>';
     }).join("") : '<div class="vazio">Nenhuma área ainda — cadastre as suas (ex.: SALA DE MUSCULAÇÃO, CROSSFIT BOX, SALA DE BIKE, SALA DE GINÁSTICA, Sala de avaliação, area kids).</div>';
   }
 

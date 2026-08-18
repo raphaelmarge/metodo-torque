@@ -307,7 +307,7 @@
         return '<div class="ficha" style="border: 1px solid var(--linha); margin-bottom: 12px;">' +
           '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 10px 14px;">' +
           "<strong>" + S.fmtData(v.data) + "</strong><span class='muted'>avaliador(a): " + esc(v.avaliador) + "</span>" +
-          '<button class="btn perigo mini" data-del="' + v.id + '" style="padding: 3px 9px;">✕</button></div>' +
+          '<button aria-label="Excluir" class="btn perigo mini" data-del="' + v.id + '" style="padding: 3px 9px;">✕</button></div>' +
           '<div style="padding: 12px 14px;">' +
           '<div class="linha-flex" style="gap: 22px;">' +
           "<span><strong style='font-size: 20px;'>" + v.peso + "</strong> kg " + delta(v.peso, anterior && anterior.peso) + "</span>" +
@@ -334,7 +334,7 @@
         return '<div class="ficha" style="border: 1px solid var(--linha); margin-bottom: 10px;">' +
           '<div class="linha-flex" style="justify-content: space-between; background: var(--fundo); padding: 9px 14px;">' +
           "<strong>" + S.fmtData(e.data) + "</strong>" + (e.atividade ? "<span class='muted'>" + esc(e.atividade) + "</span>" : "<span></span>") +
-          '<button class="btn perigo mini" data-deld="' + e.id + '" style="padding: 3px 9px;">✕</button></div>' +
+          '<button aria-label="Excluir" class="btn perigo mini" data-deld="' + e.id + '" style="padding: 3px 9px;">✕</button></div>' +
           '<div style="padding: 10px 14px;">' +
           (e.sentiu ? '<div style="font-size: 14px; margin-bottom: 4px;">' + esc(e.sentiu) + "</div>" : "") +
           (e.detalhe ? '<div class="muted">' + esc(e.detalhe) + "</div>" : "") +

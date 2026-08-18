@@ -108,7 +108,7 @@
       return '<div class="grupo"><div class="cab"><strong>' + esc(g.nome) + "</strong>" +
         '<span class="muted" style="font-size:12px;">progresso por ' + (g.modo === "dias" ? "dias" : "sessões") + " · " + membros.length + " aluno(s)</span>" +
         '<span style="margin-left:auto;"><button class="btn sec mini" data-add="' + g.id + '">+ Incluir aluno</button> ' +
-        '<button class="btn sec mini" data-del="' + g.id + '">✕</button></span></div>' +
+        '<button aria-label="Excluir" class="btn sec mini" data-del="' + g.id + '">✕</button></span></div>' +
         '<div class="escada">' + niveisOrd.map(function (n) {
           return '<span class="faixa" style="background:' + n.cor + '">' + esc(n.nome) + " · " + n.limiar + (g.modo === "dias" ? "d" : "s") + "</span>";
         }).join("→ ") + "</div>" +
@@ -121,7 +121,7 @@
             (na.prox ? " · faltam " + Math.max(0, na.prox.limiar - na.p) + " p/ " + esc(na.prox.nome) : " · nível máximo") + "</span>" +
             '<span class="prog"><i style="width:' + pct + '%"></i></span>' +
             (g.modo === "sessoes" ? '<button class="btn sec mini" data-bonus="' + g.id + "|" + a.id + '" title="Creditar 1 sessão de graduação">+1</button>' : "") +
-            '<button class="btn perigo mini" data-rem="' + g.id + "|" + a.id + '">−</button></div>';
+            '<button aria-label="Diminuir" class="btn perigo mini" data-rem="' + g.id + "|" + a.id + '">−</button></div>';
         }).join("") : '<div class="aluno-linha muted">Ninguém incluído nesta trilha ainda.</div>');
     }).join("") : '<div class="vazio">Nenhuma trilha ainda — crie a primeira (ex.: Faixas Jiu-Jitsu, Níveis Funcional).</div>';
   }
@@ -135,7 +135,7 @@
     div.innerHTML = '<input class="nvNome" placeholder="Nome do nível" value="' + esc(n.nome) + '" style="flex:2;">' +
       '<input class="nvCor" type="color" value="' + n.cor + '" style="width:44px;padding:2px;">' +
       '<input class="nvLim" type="number" min="0" placeholder="limiar" value="' + (n.limiar === "" ? "" : n.limiar) + '" style="width:90px;">' +
-      '<button type="button" class="btn perigo mini nvDel">✕</button>';
+      '<button aria-label="Excluir" type="button" class="btn perigo mini nvDel">✕</button>';
     div.querySelector(".nvDel").onclick = function () { div.remove(); };
     return div;
   }

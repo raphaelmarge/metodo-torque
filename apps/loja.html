@@ -163,7 +163,7 @@
       "function render(){var m=document.getElementById('m');m.innerHTML=DADOS.map(function(g){" +
       "return '<h2>'+g.cat+'</h2><div class=grid>'+g.itens.map(function(p){var q=car[p.id]||0;var sem=p.estoque<=0;" +
       "return '<div class=prod><div class=n>'+p.nome+'</div><div class=p>'+brl(p.preco)+'</div>'+(sem?'<span class=sem>SEM ESTOQUE</span>':'')+" +
-      "(q?'<div class=qtd><button onclick=\"add(\\''+p.id+'\\',-1)\">−</button><strong>'+q+'</strong><button onclick=\"add(\\''+p.id+'\\',1)\">+</button></div>':" +
+      "(q?'<div class=qtd><button aria-label='Diminuir' onclick=\"add(\\''+p.id+'\\',-1)\">−</button><strong>'+q+'</strong><button aria-label='Adicionar' onclick=\"add(\\''+p.id+'\\',1)\">+</button></div>':" +
       "'<button '+(sem?'disabled':'')+' onclick=\"add(\\''+p.id+'\\',1)\">Adicionar</button>')+'</div>'}).join('')+'</div>'}).join('');barra()}" +
       "function add(id,d){car[id]=(car[id]||0)+d;if(car[id]<=0)delete car[id];render()}" +
       "function limpa(){car={};render()}" +

@@ -40,9 +40,9 @@
 
   <div class="card linha-flex no-print" style="justify-content: space-between;">
     <div class="nav-data">
-      <button class="btn sec mini" id="dAnt">‹</button>
+      <button aria-label="Anterior" class="btn sec mini" id="dAnt">‹</button>
       <strong id="dLabel"></strong>
-      <button class="btn sec mini" id="dProx">›</button>
+      <button aria-label="Próximo" class="btn sec mini" id="dProx">›</button>
       <button class="btn sec mini" id="dHoje">Hoje</button>
     </div>
     <div class="linha-flex">
@@ -125,7 +125,7 @@
     var resultados = (w && w.resultados) || [];
     $("placar").innerHTML = resultados.length ? resultados.map(function (r, i) {
       return '<div class="placar-linha"><span><span class="pos">' + (i + 1) + "º</span> " + esc(r.aluno) + "</span>" +
-        "<span><strong>" + esc(r.resultado) + '</strong> <button class="btn perigo mini no-print" data-rm="' + i + '" style="padding: 2px 8px;">✕</button></span></div>';
+        "<span><strong>" + esc(r.resultado) + '</strong> <button aria-label="Excluir" class="btn perigo mini no-print" data-rm="' + i + '" style="padding: 2px 8px;">✕</button></span></div>';
     }).join("") : '<div class="muted">Ninguém registrou ainda — quem vai abrir o placar?</div>';
     $("alunosLista").innerHTML = S.read("alunos", { alunos: [] }).alunos
       .filter(function (a) { return a.status !== "inativo"; })

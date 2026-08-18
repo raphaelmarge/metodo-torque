@@ -817,6 +817,10 @@ async function abaNt(p, a) {
     ok(/heroN/.test(semFeed) && /Ver minhas refeições/.test(semFeed),
       "o card da meta do dia abre o app, como o card do treino no app do aluno");
     ok(!/fdListaN/.test(semFeed), "com a Comunidade desligada o app sai sem o feed");
+    // XP do diário tem que ser CUMULATIVO como as outras parcelas: contando só o dia
+    // de hoje, o paciente perdia XP e o nível VOLTAVA à meia-noite
+    ok(/diasCom\('ntdi_'\)/.test(semFeed) && !/di=\(L\('ntdi_'\+isoHj\(\),\[\]\)\|\|\[\]\)\.length/.test(semFeed),
+      "🆙 o XP do diário soma todos os dias (não zera na virada da meia-noite)");
 
     // 2) com a Comunidade ligada, entra o feed e a aba Turma
     const comFeed = await gera(true);
@@ -1003,8 +1007,20 @@ async function abaNt(p, a) {
     });
     ok(av.n === 2 && av.pesoCadastro === 68.4 && av.pesagens === 2,
       "📏 a avaliação guarda as medidas, vira pesagem e atualiza o peso do cadastro");
-    ok(/IMC 24,8/.test(av.calc) && /peso normal/.test(av.calc) && /RCQ 0,8/.test(av.calc) && /risco baixo/.test(av.calc),
+    ok(/IMC 24,8/.test(av.calc) && /peso normal/.test(av.calc) && /RCQ 0,8/.test(av.calc),
       "IMC e relação cintura-quadril saem calculados, com a classificação");
+    // a aba tem que usar a MESMA escala do laudo impresso pelo botão ao lado
+    const rcqIgual = await pA2.evaluate(() => {
+      const casos = [["F", 70, 85], ["F", 76, 85], ["F", 74, 85], ["M", 88, 100], ["M", 95, 100], ["M", 105, 100]];
+      return casos.map((c) => {
+        const meu = window.__avalN.rcq(c[1], c[2], c[0]);
+        const motor = window.MT_CORPO.calcula({ sexo: c[0], peso: 70, altura: 170, idade: 30,
+          circ: { cintura: c[1], quadril: c[2] } });
+        return meu.risco === "risco " + motor.riscoRcq;
+      });
+    });
+    ok(rcqIgual.every(Boolean),
+      "o risco cintura-quadril da aba bate com o do laudo impresso (escala única de 3 níveis)");
     ok(/peso \(kg\) -6,2/.test(av.resumo) && /cintura \(cm\) -9/.test(av.resumo) && /bra\u00e7o \(cm\) \+1/.test(av.resumo),
       "o resumo mostra o que mudou da primeira à última avaliação");
 

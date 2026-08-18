@@ -381,7 +381,7 @@
             (ct.tipo === "ligacao" ? "uma ligação" : ct.tipo === "whatsapp" ? "uma mensagem de WhatsApp" : ct.tipo === "email" ? "um e-mail" : "uma anotação") +
             ': “' + esc(ct.texto || "") + '”</span><span class="muted" style="white-space:nowrap;">' +
             S.fmtData(ct.em.slice(0, 10)) + " às " + d.toTimeString().slice(0, 5) +
-            ' <button class="btn perigo mini" data-delct="' + ct.id + '" style="padding:1px 7px;">✕</button></span></div>';
+            ' <button aria-label="Excluir" class="btn perigo mini" data-delct="' + ct.id + '" style="padding:1px 7px;">✕</button></span></div>';
         }).join("") : '<p class="muted">Nenhum contato registrado ainda — registre a primeira ligação ou mensagem acima.</p>') + "</div>";
     }
     if (secao === "financeiro") {

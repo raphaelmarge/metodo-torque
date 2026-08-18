@@ -125,7 +125,7 @@
         '<div class="gasto"><div class="v">' + S.fmtBRL(x.ano) + '</div><div class="l">12 MESES (' + x.qtd + ' conta(s))</div></div>' +
         '<div class="gasto"><div class="v">' + S.fmtBRL(x.mes) + '</div><div class="l">ESTE MÊS</div></div>' +
         (f.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(f.zap).replace(/\D/g, "") + '">💬</a>' : "") +
-        '<button class="btn sec mini" data-edita="' + f.id + '">✏</button></div>';
+        '<button aria-label="Editar" class="btn sec mini" data-edita="' + f.id + '">✏</button></div>';
     }).join("") : '<div class="vazio">Nenhum fornecedor cadastrado. Clique em ➕ Novo fornecedor.</div>';
   }
 
