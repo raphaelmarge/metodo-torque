@@ -1990,6 +1990,39 @@ async function abaPt(p, a) {
     ok(conta.troca, "trocar a senha reusa o login atual (não deixa o aluno mudar o login sem querer)");
     ok(conta.limpa && conta.volta, "sair limpa o token e a cópia offline do aparelho e volta pra tela de entrar");
     ok(conta.botaoPainel, "o painel do personal tem o botão de trocar a própria senha");
+    // "Indique um amigo" agora é opcional, como os outros cards do app
+    const indica = await p.evaluate(() => {
+      const S = window.MTStore, base = { id: "in1", nome: "A T", email: "a@b.com", ativo: true, desde: S.todayISO(), appTokenP: "t-in", metaSemana: 3 };
+      const st = S.read("ptStudio", {}); const antes = st.config.appMostra;
+      st.config.appMostra = {}; S.write("ptStudio", st);
+      const ligado = /Indique um amigo/.test(window.__montaAppAluno(base, "s1"));
+      const st2 = S.read("ptStudio", {}); st2.config.appMostra = { indica: false }; S.write("ptStudio", st2);
+      const desligado = /Indique um amigo/.test(window.__montaAppAluno(base, "s2"));
+      const st3 = S.read("ptStudio", {}); st3.config.appMostra = antes || {}; S.write("ptStudio", st3);
+      return { ligado: ligado, desligado: desligado, check: !!document.getElementById("cfgVeIndica"), caixa: !!document.getElementById("taEnvioStatus") };
+    });
+    ok(indica.ligado && !indica.desligado && indica.check,
+      "'Indique um amigo' tem interruptor nas Configurações (ligado por padrão, some quando desliga)");
+    ok(indica.caixa, "o envio pro app tem caixa de recado própria (não se mistura com a da IA)");
+    /* Resposta que não é JSON (função antiga, erro do gateway) estourava no
+     * r.json() e virava "Sem conexão com a nuvem" — mandando o professor
+     * procurar defeito na internet em vez de republicar a função. */
+    const iaNaoJson = await p.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      window.__cloudOrig2 = S.cloud;
+      S.cloud = () => ({ aid: "a1", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) } } });
+      window.__fetchOrig = window.__fetchOrig || window.fetch;
+      window.fetch = (u, o) => String(u).includes("functions/v1/chat-envia")
+        ? Promise.resolve({ status: 546, text: () => Promise.resolve("<html>Function failed</html>") })
+        : window.__fetchOrig(u, o);
+      const r = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
+      window.fetch = window.__fetchOrig;
+      S.cloud = window.__cloudOrig2;
+      return r.erro || "";
+    });
+    ok(/546/.test(iaNaoJson) && /publique de novo/.test(iaNaoJson) && !/Sem conexão/.test(iaNaoJson),
+      "resposta que não é JSON mostra o status real e manda republicar a função (não mente 'sem conexão')");
   }
   {
     const comMural = await p.evaluate(() => {
@@ -4348,7 +4381,9 @@ async function abaPt(p, a) {
             { nome: costas, series: 3, reps: "12", descanso: 60 },
             { nome: "Exercício Inventado Xyz", series: 3, reps: "10", descanso: 60 },
           ] }], resumo: "Foco em hipertrofia com volume moderado." };
-          return Promise.resolve({ json: () => Promise.resolve({ ok: true, texto: "```json\n" + JSON.stringify(plano) + "\n```" }) });
+          // a função lê como TEXTO primeiro (resposta não-JSON não pode virar "sem conexão")
+          const corpoResp = JSON.stringify({ ok: true, texto: "```json\n" + JSON.stringify(plano) + "\n```" });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(corpoResp), json: () => Promise.resolve(JSON.parse(corpoResp)) });
         }
         return window.__fetchOrig(url, opts);
       };

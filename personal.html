@@ -704,6 +704,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="taEvoluir" title="evolui séries/reps da ficha atual (progressão dupla)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Evoluir semana</button>
       </div>
       <button class="btn" id="taEnviaApp" style="margin-top: 10px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
+      <!-- caixa PRÓPRIA: dividindo a de cima, o recado da IA e o do envio se
+           confundiam e um erro antigo parecia ser do botão recém-clicado -->
+      <p id="taEnvioStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
       <p id="taStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
 
@@ -1316,6 +1319,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeAgenda" style="width: 17px; height: 17px;"> Agenda — pedir e confirmar horário pelo app</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeChat" style="width: 17px; height: 17px;"> Chat com você</label>
         <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVePag" style="width: 17px; height: 17px;"> Plano e pagamento — Pix, "Já paguei" e assinatura</label>
+        <label style="display: flex; gap: 9px; align-items: center; font-size: 13.5px;"><input type="checkbox" id="cfgVeIndica" style="width: 17px; height: 17px;"> Indique um amigo — convite pronto pro aluno chamar alguém pra treinar</label>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgScan" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Medidas pela câmera</b> — estima cintura, quadril e coxa a partir de duas fotos, lidas dentro do próprio aparelho (vem desligado; é estimativa, não substitui fita nem bioimpedância)</span></label>
         <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="checkbox" id="cfgFeed" style="width: 17px; height: 17px; margin-top: 2px;"> <span><b>Comunidade</b> — os alunos postam resultado e foto, curtem e comentam entre si (vem desligado; precisa de conta na nuvem)</span></label>
       </div>
@@ -3981,7 +3985,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes, publicaUm: publicaAppDe }; // testes
   $("btnPubPendentes").addEventListener("click", publicaAppsPendentes);
-  ligaEnvioApp("taEnviaApp", "taAluno", "taStatus");
+  ligaEnvioApp("taEnviaApp", "taAluno", "taEnvioStatus");
   ligaEnvioApp("tEnviaApp", "tAluno", "tEnvioStatus");
 
   // ---------- agenda ----------
@@ -5465,7 +5469,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__cardiosPT = renderCardios; // testes
 
   // ---------- configurações do studio: tolerância de atraso + o que o aluno vê no app ----------
-  var CFG_VE = [["cfgVeWod", "wod"], ["cfgVeCardio", "cardio"], ["cfgVeUtil", "util"], ["cfgVeAgenda", "agenda"], ["cfgVeChat", "chat"], ["cfgVePag", "pag"]];
+  var CFG_VE = [["cfgVeWod", "wod"], ["cfgVeCardio", "cardio"], ["cfgVeUtil", "util"], ["cfgVeAgenda", "agenda"], ["cfgVeChat", "chat"], ["cfgVePag", "pag"], ["cfgVeIndica", "indica"]];
   function renderConfigPT() {
     var st = load();
     $("cfgAtraso").value = String(atrasoTol(st));
@@ -6662,7 +6666,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         method: "POST",
         headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
         body: JSON.stringify({ acao: "ia_treino", dados: dados }),
-      }).then(function (r) { return r.json(); });
+      /* Ler como TEXTO primeiro: resposta que não é JSON (função antiga, erro
+       * do gateway, HTML de erro) fazia o r.json() estourar e cair no "sem
+       * conexão" — mentira que mandava o professor procurar defeito na
+       * internet em vez de republicar a função. */
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) {}
+          if (j) return j;
+          return { erro: "A função chat-envia respondeu algo que não é JSON (HTTP " + r.status + "): " +
+            String(t).replace(/\s+/g, " ").slice(0, 160) +
+            " — abra torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase." };
+        });
+      });
     }).then(function (d) {
       // versão antiga da chat-envia não conhece ia_treino e responde isto:
       if (d && /conversa_id obrigatório/.test(d.erro || "")) {
@@ -6709,7 +6726,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       marcaAppPendente(st2, alunoId);
       S.write("ptStudio", st2);
       cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, resumo: String(plano.resumo || "").slice(0, 400) });
-    }, function () { cb({ erro: "Sem conexão com a nuvem agora — tente de novo." }); });
+    }, function (e) { cb({ erro: "Não consegui falar com a IA: " + ((e && e.message) || "sem conexão") +
+      " — se falar em Failed to fetch, a chat-envia não está publicada neste projeto." }); });
   }
   window.__iaTreino = geraTreinoIA; // testes
   window.__iaParse = parseFichasIA; // testes
@@ -9227,11 +9245,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<div id='cnOk' class='vz' style='display:none;'></div>" +
         "<button class='btnx' id='cnSair' style='width:100%;margin-top:10px;background:none;border:1px solid #f87171;color:#f87171;'>Sair do app neste aparelho</button>" +
         "<div class='vz' style='font-size:11.5px;padding-top:6px;'>Saindo, este aparelho esquece o seu app. Pra voltar, entre com o seu login e senha.</div></div>" : "") +
-      "<div class='cardx'><h2>" + appIco(APPIC.presente, 14) + "Indique um amigo</h2>" +
+      (ve("indica") ? "<div class='cardx'><h2>" + appIco(APPIC.presente, 14) + "Indique um amigo</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 10px;'>Treinar em dupla rende muito mais. Chama um amigo pro " + esc(studio.split(" ")[0]) + " — é só encaminhar o convite.</div>" +
       "<a class='btnx' style='display:block;text-align:center;text-decoration:none;' target='_blank' rel='noopener' href='https://wa.me/?text=" +
       encodeURIComponent("Treino com " + studio + " e tô curtindo demais! Chama no WhatsApp pra fechar um horário: https://wa.me/" + (zapPersonal ? "55" + zapPersonal : "") + " — fala que quem indicou foi " + a.nome.split(" ")[0]) +
-      "'>Convidar no WhatsApp</a></div>" +
+      "'>Convidar no WhatsApp</a></div>" : "") +
       "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
       "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
       "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
