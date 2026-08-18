@@ -630,7 +630,8 @@ async function abaPt(p, a) {
       editEm: a.appEditEm,
       semToken: window.__appsPendentes.pendente(st, a),
       comToken: window.__appsPendentes.pendente(st, Object.assign({}, a, { appTokenP: "tok123" })),
-      publicado: window.__appsPendentes.pendente(st, Object.assign({}, a, { appTokenP: "tok123", appPubEm: new Date(Date.now() + 60000).toISOString() })),
+      // publicado = depois da edição E com a versão atual do sistema
+      publicado: window.__appsPendentes.pendente(st, Object.assign({}, a, { appTokenP: "tok123", appPubEm: new Date(Date.now() + 60000).toISOString(), appVer: self.MT_VERSAO })),
       temBotao: !!document.getElementById("btnPubPendentes"),
     };
   });
@@ -2006,6 +2007,25 @@ async function abaPt(p, a) {
     ok(indica.ligado && !indica.desligado && indica.check,
       "'Indique um amigo' tem interruptor nas Configurações (ligado por padrão, some quando desliga)");
     ok(indica.caixa, "o envio pro app tem caixa de recado própria (não se mistura com a da IA)");
+    /* Melhoria minha no app (card novo, conserto) não marcava ninguém como
+     * pendente — o botão de publicar em lote nem aparecia, e a novidade só
+     * chegava no aluno se o professor por acaso editasse a ficha dele. */
+    const versao = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const a = st.alunos[0];
+      a.appTokenP = a.appTokenP || "tok-ver";
+      a.appEditEm = "2020-01-01T00:00:00Z";
+      a.appPubEm = "2030-01-01T00:00:00Z";   // publicado DEPOIS da última edição
+      a.appVer = "mt-v001";                   // ...mas com versão velha do sistema
+      S.write("ptStudio", st);
+      const velha = window.__appsPendentes.pendente(S.read("ptStudio", {}), a);
+      a.appVer = self.MT_VERSAO;
+      S.write("ptStudio", st);
+      const atual = window.__appsPendentes.pendente(S.read("ptStudio", {}), a);
+      return { velha: velha, atual: atual, temVersao: !!self.MT_VERSAO };
+    });
+    ok(versao.temVersao && versao.velha && !versao.atual,
+      "app publicado numa versão antiga do sistema entra na fila de republicar (e sai quando republica)");
     /* Resposta que não é JSON (função antiga, erro do gateway) estourava no
      * r.json() e virava "Sem conexão com a nuvem" — mandando o professor
      * procurar defeito na internet em vez de republicar a função. */

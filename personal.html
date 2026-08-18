@@ -730,7 +730,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <span class="muted" style="align-self: center;">→</span>
         <select id="geGrupo" style="min-width: 170px;"></select>
         <button class="btn" id="geEnviar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar treino pro grupo</button>
-        <button class="btn sec" id="btnPubPendentes" hidden title="Republica de uma vez o app de todo aluno com ficha, mural ou desafio editado desde a última publicação"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Publicar apps atualizados</button>
+        <button class="btn sec" id="btnPubPendentes" hidden title="Republica de uma vez o app de todo aluno com algo editado desde a última publicação — ou com o app numa versão antiga do sistema"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Publicar apps atualizados</button>
       </div>
       <p id="geStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
@@ -3242,7 +3242,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           if (r && r.error) { avisoQ.textContent = "Não deu pra publicar o app do aluno (" + r.error.message + ") — gere o link de novo antes de mandar."; return; }
           var stQ = load();
           var aQ = stQ.alunos.find(function (x) { return x.id === a.id; });
-          if (aQ) { aQ.appPubEm = stampQ; S.write("ptStudio", stQ); }
+          if (aQ) { aQ.appPubEm = stampQ; aQ.appVer = self.MT_VERSAO || ""; S.write("ptStudio", stQ); }
           avisoQ.textContent = "✓ Tudo pronto — pode mandar: as respostas vão cair aqui embaixo.";
         }, function () {
           avisoQ.textContent = "Sem conexão agora — o aluno pode ver erro ao enviar. Gere o link de novo com internet.";
@@ -3286,7 +3286,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (r && r.error) { aviso.textContent = "Não deu pra publicar o app (" + r.error.message + ") — tenta de novo."; return; }
         var st2 = load();
         var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
-        if (a2) { a2.appPubEm = stamp; S.write("ptStudio", st2); }
+        if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; S.write("ptStudio", st2); }
         aviso.textContent = "✓ Enviado! O questionário " +
           (a.questApp.desde <= S.todayISO() ? "já está liberado" : "libera dia " + S.fmtData(a.questApp.desde)) +
           " no app do aluno" + (a.questApp.repete ? " e repete toda semana" : "") +
@@ -3650,7 +3650,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var stOk = load();
         comToken.forEach(function (a) {
           var a2 = stOk.alunos.find(function (x) { return x.id === a.id; });
-          if (a2) a2.appPubEm = stamp;
+          if (a2) { a2.appPubEm = stamp; a2.appVer = self.MT_VERSAO || ""; }
           pushAluno(a.appTokenP, "Treino novo no app!", "Seu personal mandou treino novo — abre o app pra conferir.");
         });
         S.write("ptStudio", stOk);
@@ -3888,6 +3888,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function appPendente(st, a) {
     if (!a.appTokenP || a.ativo === false) return false;
+    /* App publicado com uma versão ANTIGA do sistema também está pendente. Sem
+     * isto, melhoria minha (card novo, conserto no app) só chegava no aluno se
+     * o professor por acaso editasse a ficha dele — e o botão de publicar em
+     * lote nem aparecia, porque ninguém contava como pendente. */
+    if ((a.appVer || "") !== (self.MT_VERSAO || "")) return true;
     var edit = Math.max(Date.parse(a.appEditEm || "") || 0, Date.parse((st.config || {}).appEditGeralEm || "") || 0);
     return edit > (Date.parse(a.appPubEm || "") || 0);
   }
@@ -3930,7 +3935,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var st2 = load();
           grupo.forEach(function (a) {
             var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
-            if (a2) a2.appPubEm = stampP;
+            if (a2) { a2.appPubEm = stampP; a2.appVer = self.MT_VERSAO || ""; }
             pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
           });
           S.write("ptStudio", st2);
@@ -3957,7 +3962,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (r && r.error) { cb({ erro: "Não deu pra publicar agora: " + r.error.message }); return; }
         var st2 = load();
         var a2 = st2.alunos.find(function (x) { return x.id === alunoId; });
-        if (a2) a2.appPubEm = stampP;
+        if (a2) { a2.appPubEm = stampP; a2.appVer = self.MT_VERSAO || ""; }
         S.write("ptStudio", st2);
         pushAluno(a.appTokenP, "Treino novo no seu app!", "Seu personal atualizou o treino — bora conferir.");
         render();
@@ -10709,7 +10714,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           if (r.error) { alert("Baixei o arquivo, mas o app NÃO foi salvo na nuvem: " + r.error.message + "\n\nO link online não vai funcionar até publicar de novo com internet."); return; }
           var stPub = load();
           var aPub = stPub.alunos.find(function (x) { return x.id === a.id; });
-          if (aPub) { aPub.appPubEm = stamp; S.write("ptStudio", stPub); }
+          if (aPub) { aPub.appPubEm = stamp; aPub.appVer = self.MT_VERSAO || ""; S.write("ptStudio", stPub); }
           pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
           var url = location.origin + location.pathname.replace(/personal\.html$/, "") + "app/?t=" + a.appTokenP;
           var msg = "Oi " + a.nome.split(" ")[0] + "! Seu app de treino tá pronto: " + url + " — abre no navegador e usa 'Adicionar à tela inicial'.";
@@ -10783,7 +10788,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           // marca na lista que este aluno já tem o acesso do app (chip APP )
           var st3 = load();
           var a3 = st3.alunos.find(function (x) { return x.id === alunoId; });
-          if (a3) { a3.acessoEm = stamp; a3.appPubEm = stamp; S.write("ptStudio", st3); }
+          if (a3) { a3.acessoEm = stamp; a3.appPubEm = stamp; a3.appVer = self.MT_VERSAO || ""; S.write("ptStudio", st3); }
           var studio = (load().config || {}).nome || "Seu personal";
           enviaEmailFn(nuvem, email, "Seu acesso ao app de treino — " + studio, emailAcessoHtml(studio, a.nome.split(" ")[0], email, senha))
             .then(function (r3) {
