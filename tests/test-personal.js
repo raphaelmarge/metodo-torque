@@ -2026,6 +2026,36 @@ async function abaPt(p, a) {
     });
     ok(versao.temVersao && versao.velha && !versao.atual,
       "app publicado numa versão antiga do sistema entra na fila de republicar (e sai quando republica)");
+    /* E a fila se resolve SOZINHA: abrir o painel já republica o que ficou
+     * pra trás, em segundo plano, sem clique e sem notificar o aluno. */
+    const auto = await p.evaluate(async () => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      st.alunos.push({ id: "auto1", nome: "Auto Um", ativo: true, desde: S.todayISO(), appTokenP: "t-auto1", appVer: "mt-v001", appPubEm: "2030-01-01T00:00:00Z", metaSemana: 3 });
+      st.alunos.push({ id: "auto2", nome: "Auto Dois", ativo: true, desde: S.todayISO(), appTokenP: "t-auto2", appVer: "mt-v001", appPubEm: "2030-01-01T00:00:00Z", metaSemana: 3 });
+      S.write("ptStudio", st);
+      let subiu = [], tocouPush = false;
+      const q = (t) => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "insert", "update", "delete", "neq", "is"].forEach((m) => { o[m] = () => o; });
+        o.then = (f) => Promise.resolve({ data: [], error: null }).then(f);
+        o.upsert = (l) => { if (t === "app_aluno") subiu = subiu.concat(l); return Promise.resolve({ error: null }); }; return o; };
+      window.__cloudOrig3 = S.cloud;
+      S.cloud = () => ({ aid: "a", client: {
+        auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "J" } } }) },
+        from: (t) => { if (t === "push_subs") tocouPush = true; return q(t); },
+        rpc: () => Promise.resolve({ data: { ok: true }, error: null }),
+      } });
+      window.__appsPendentes.auto(true);   // força: o painel já pode ter rodado a automática antes
+      await new Promise((r) => setTimeout(r, 1200));
+      const st2 = S.read("ptStudio", {});
+      const fim = { subiram: subiu.map((x) => x.token).sort().join(","), tocouPush: tocouPush,
+        pendentes: st2.alunos.filter((a) => window.__appsPendentes.pendente(st2, a)).length };
+      st2.alunos = st2.alunos.filter((a) => a.id !== "auto1" && a.id !== "auto2");
+      S.write("ptStudio", st2);
+      S.cloud = window.__cloudOrig3;
+      return fim;
+    });
+    ok(auto.subiram === "t-auto1,t-auto2" && auto.pendentes === 0,
+      "abrir o painel republica sozinho os apps atrasados — sem clique nenhum");
+    ok(!auto.tocouPush, "a republicação automática não dispara notificação pro aluno (ele não pediu nada)");
     /* Resposta que não é JSON (função antiga, erro do gateway) estourava no
      * r.json() e virava "Sem conexão com a nuvem" — mandando o professor
      * procurar defeito na internet em vez de republicar a função. */

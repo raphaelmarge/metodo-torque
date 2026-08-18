@@ -3903,20 +3903,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     btn.innerHTML = mi("enviar") + " Publicar apps atualizados (" + pend.length + ")";
   }
   // publica em lotes de 5 com progresso — falhou um lote, ele continua pendente pro retry
-  function publicaAppsPendentes() {
+  function publicaAppsPendentes(silencioso) {
     var st = load();
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { alert("Entre na sua conta (card Sua ilha) pra publicar os apps."); return; }
+    if (!nuvem) { if (!silencioso) alert("Entre na sua conta (card Sua ilha) pra publicar os apps."); return; }
     var pend = st.alunos.filter(function (a) { return appPendente(st, a); });
     if (!pend.length) return;
     var btn = $("btnPubPendentes");
-    btn.disabled = true;
+    if (!silencioso) btn.disabled = true;
     var total = pend.length, feitos = 0, falhas = 0;
     var stampP = new Date().toISOString();
     var fila = pend.slice();
     (function lote() {
       if (!fila.length) {
-        btn.disabled = false;
+        if (!silencioso) btn.disabled = false;
+        if (silencioso) { render(); return; }
         $("geStatus").textContent = falhas
           ? feitos + " app(s) atualizados, " + falhas + " falharam — clique de novo pra tentar os que faltaram."
           : feitos + " app(s) atualizados na nuvem — os alunos já veem a novidade!";
@@ -3924,7 +3925,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return;
       }
       var grupo = fila.splice(0, 5);
-      $("geStatus").textContent = "Publicando apps… " + (feitos + falhas + grupo.length) + " de " + total;
+      if (!silencioso) $("geStatus").textContent = "Publicando apps… " + (feitos + falhas + grupo.length) + " de " + total;
       var linhas = grupo.map(function (a) {
         return { token: a.appTokenP, academia_id: nuvem.aid, dados: { html: montaAppAluno(a, stampP), stamp: stampP }, atualizado: stampP };
       });
@@ -3936,7 +3937,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           grupo.forEach(function (a) {
             var a2 = st2.alunos.find(function (x) { return x.id === a.id; });
             if (a2) { a2.appPubEm = stampP; a2.appVer = self.MT_VERSAO || ""; }
-            pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
+            // atualização automática não incomoda o aluno com notificação:
+            // ele não fez nada, e o app se atualiza sozinho na próxima abertura
+            if (!silencioso) pushAluno(a.appTokenP, "Novidade no seu app!", "Seu personal atualizou o app — dá uma olhada.");
           });
           S.write("ptStudio", st2);
         }
@@ -3987,7 +3990,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
     });
   }
-  window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes, publicaUm: publicaAppDe }; // testes
+  /* Atualização AUTOMÁTICA: ao abrir o painel, todo app que ficou numa versão
+   * antiga do sistema é republicado sozinho, em segundo plano e sem avisar o
+   * aluno. O professor não clica em nada — o botão de publicar continua ali
+   * só pra quem quiser forçar na hora. */
+  var autoJaRodou = false;
+  function autoPublicaApps(forcar) {
+    if (autoJaRodou && !forcar) return;
+    var nuvem = S.cloud && S.cloud();
+    // sem conta na nuvem (ou com o cliente ainda montando) não há o que publicar
+    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return;
+    var st = load();
+    if (!st.alunos.some(function (a) { return appPendente(st, a); })) return;
+    autoJaRodou = true;
+    publicaAppsPendentes(true);
+  }
+  window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes, publicaUm: publicaAppDe, auto: autoPublicaApps }; // testes
   $("btnPubPendentes").addEventListener("click", publicaAppsPendentes);
   ligaEnvioApp("taEnviaApp", "taAluno", "taEnvioStatus");
   ligaEnvioApp("tEnviaApp", "tAluno", "tEnvioStatus");
@@ -11309,6 +11327,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     renderConta();
     renderPubPendentes(st);
     renderRelatorios(); // o Dashboard (aba inicial) mostra os alertas
+    setTimeout(autoPublicaApps, 1500); // deixa a tela pintar antes de subir os apps
   }
   $("cfgZap").addEventListener("change", function () {
     var st = load();
