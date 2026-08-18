@@ -1952,6 +1952,22 @@ async function abaPt(p, a) {
     ok(envio.r.ok && envio.token && envio.temHtml, "dá pra publicar o app de UM aluno (o app inteiro vai pra nuvem)");
     ok(envio.pubEm, "publicar marca a data no aluno (ele sai da fila de 'apps atualizados')");
     ok(envio.botaoFichas && envio.botaoAuto, "o botão 'Enviar pro app do aluno' está nas duas abas onde a ficha é montada");
+    /* Quem recebeu o acesso do professor já entra com e-mail e senha — o card
+     * "Meu login" (que serve pra CRIAR um login) só confunde, e ainda deixava
+     * o aluno cadastrar um login diferente do que chegou pra ele. */
+    const cardLogin = await p.evaluate(() => {
+      const S = window.MTStore;
+      const base = { id: "cl1", nome: "Aluno Teste", email: "a@b.com", ativo: true, desde: S.todayISO(), appTokenP: "tok-cl", metaSemana: 3 };
+      const re = /<h2>Meu login<\/h2>/;
+      return {
+        sem: re.test(window.__montaAppAluno(base, "s1")),
+        com: re.test(window.__montaAppAluno(Object.assign({}, base, { acessoEm: "2026-08-18T00:00:00Z" }), "s2")),
+        guarda: /var lgB=document\.getElementById\('lgSalva'\);if\(lgB\)/.test(window.__montaAppAluno(base, "s3")),
+      };
+    });
+    ok(!cardLogin.com, "aluno que já recebeu o acesso não vê o card 'Meu login' (ele já entra com o login que chegou)");
+    ok(cardLogin.sem, "quem nunca recebeu acesso continua podendo criar o próprio login (não fica sem caminho)");
+    ok(cardLogin.guarda, "o código do app não quebra quando o card não existe");
   }
   {
     const comMural = await p.evaluate(() => {
