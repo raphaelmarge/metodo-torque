@@ -9129,5 +9129,305 @@ self.MT_EXERCICIOS = [
   "g": "Tríceps",
   "eq": "Peso corporal",
   "d": "Apoiado nos joelhos, mãos formando um diamante; desça com os cotovelos rente ao corpo."
+ },
+ {
+  "n": "Barra fixa assistida com superband",
+  "g": "Costas",
+  "eq": "Superband",
+  "d": "Prenda a superband na barra e apoie o joelho ou o pé nela; suba até o queixo passar e desça devagar, sem balançar pra pegar impulso."
+ },
+ {
+  "n": "Paralelas assistidas com superband",
+  "g": "Tríceps",
+  "eq": "Superband",
+  "d": "Passe a superband entre as barras e apoie os joelhos nela; desça só até o cotovelo a 90 graus, sem afundar o ombro, e suba controlado."
+ },
+ {
+  "n": "Agachamento com superband nos ombros",
+  "g": "Quadríceps",
+  "eq": "Superband",
+  "d": "Pise nas duas pontas e apoie a superband sobre os ombros, nunca no pescoço; desça com o peito aberto e o joelho na linha do pé."
+ },
+ {
+  "n": "Levantamento terra com superband",
+  "g": "Posterior e glúteo",
+  "eq": "Superband",
+  "d": "Pise no meio da superband e segure as pontas; empurre o chão e estenda o quadril com a coluna neutra, sem arredondar a lombar."
+ },
+ {
+  "n": "Caminhada frontal resistida com superband na cintura",
+  "g": "Funcional e Cross",
+  "eq": "Superband",
+  "d": "Ancore a superband atrás na cintura; avance em passos curtos e fortes e volte andando controlado, sem arquear a lombar."
+ },
+ {
+  "n": "Rotação de tronco em pé com superband ancorada",
+  "g": "Core",
+  "eq": "Superband",
+  "d": "Superband na altura do peito: gire o tronco com os braços firmes e deixe o pé de trás pivotar um pouco, sem forçar a lombar."
+ },
+ {
+  "n": "Remada em pé com superband e pegada supinada",
+  "g": "Costas",
+  "eq": "Superband",
+  "d": "Ancore a superband na altura da barriga e puxe com as palmas pra cima, cotovelo rente ao corpo e tronco firme, sem balançar."
+ },
+ {
+  "n": "Rotação externa de ombro a 90 graus com superband",
+  "g": "Ombros",
+  "eq": "Superband",
+  "d": "Cotovelo na altura do ombro e dobrado a 90 graus, gire o antebraço pra cima devagar e volte segurando; use a banda leve e pare se doer."
+ },
+ {
+  "n": "Puxada na polia alta com corda",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Puxe a corda até o peito abrindo as pontas pros lados no fim, cotovelo rente ao corpo e sem jogar o tronco pra trás; controle a volta."
+ },
+ {
+  "n": "Puxada na polia alta com pegada de toalha",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Passe uma toalha na barra da polia e puxe segurando as pontas; ótimo pra pegada, mas comece leve porque a mão escorrega e solta."
+ },
+ {
+  "n": "Rosca inversa na polia baixa",
+  "g": "Bíceps",
+  "eq": "Polia",
+  "d": "Pegada pronada na barra da polia baixa: suba só dobrando o cotovelo, punho firme e sem balançar o tronco; use carga leve."
+ },
+ {
+  "n": "Sandbag do chão ao alto (ground to overhead)",
+  "g": "Funcional e Cross",
+  "eq": "Sandbag",
+  "d": "Levante o saco do chão com força de quadril e leve acima da cabeça num movimento só; coluna neutra e desça abraçando o saco."
+ },
+ {
+  "n": "Afundo com sandbag no ombro",
+  "g": "Quadríceps",
+  "eq": "Sandbag",
+  "d": "Com o saco num ombro só, dê o passo à frente e desça o joelho de trás com o tronco ereto; troque o lado a cada série."
+ },
+ {
+  "n": "Corrida curta carregando sandbag",
+  "g": "Cardio",
+  "eq": "Sandbag",
+  "d": "Abrace o saco no peito e corra 20 a 30 metros em ritmo forte, tronco firme e passos curtos; olhe à frente pra não tropeçar."
+ },
+ {
+  "n": "Desenvolvimento com sandbag no peito",
+  "g": "Ombros",
+  "eq": "Sandbag",
+  "d": "Segure o saco junto ao peito e empurre acima da cabeça sem arquear a lombar; desça devagar até o peito, costelas encaixadas."
+ },
+ {
+  "n": "Get-up com sandbag no peito",
+  "g": "Funcional e Cross",
+  "eq": "Sandbag",
+  "d": "Deitado de costas abraçando o saco, levante até ficar de pé apoiando mão e joelho, coluna neutra; comece com carga bem leve."
+ },
+ {
+  "n": "Halo com bulgarian bag",
+  "g": "Ombros",
+  "eq": "Bulgarian bag",
+  "d": "Gire o saco búlgaro rente à cabeça alternando o sentido, costelas encaixadas pra lombar não arquear; comece devagar e leve."
+ },
+ {
+  "n": "Clean e press com bulgarian bag",
+  "g": "Ombros",
+  "eq": "Bulgarian bag",
+  "d": "Puxe o saco búlgaro do chão até o peito com o quadril e empurre acima da cabeça; trave o abdômen e firme a pegada nas alças."
+ },
+ {
+  "n": "Giro lateral com bulgarian bag",
+  "g": "Core",
+  "eq": "Bulgarian bag",
+  "d": "Segure o saco búlgaro pelas alças e gire o tronco de um lado ao outro com controle; freie com a barriga, não com os braços."
+ },
+ {
+  "n": "Slam ball com salto",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "Estenda o corpo com a bola acima da cabeça e arremesse forte no chão; aterrisse com joelhos macios e não pegue no repique."
+ },
+ {
+  "n": "Slam ball unilateral",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "Com bola leve numa mão só, leve acima da cabeça e arremesse no chão à frente; troque o braço a cada série, sem torcer a lombar."
+ },
+ {
+  "n": "Slam ball ajoelhado",
+  "g": "Core",
+  "eq": "Medicine ball",
+  "d": "De joelhos, leve a bola acima da cabeça sem jogar a lombar pra trás e arremesse no chão usando o abdômen; quadril estendido."
+ },
+ {
+  "n": "Wall ball unilateral",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "Agache com a bola num ombro e, ao subir, arremesse na parede com esse braço; use bola leve e receba com as duas mãos."
+ },
+ {
+  "n": "Arremesso de medicine ball pra trás por cima da cabeça",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "Agache com a bola entre os pés e lance pra trás por cima da cabeça estendendo o quadril; confira antes se a área está livre."
+ },
+ {
+  "n": "Arremesso de medicine ball de baixo pra cima (scoop)",
+  "g": "Funcional e Cross",
+  "eq": "Medicine ball",
+  "d": "Agache com a bola baixa e lance pra cima e à frente com força de quadril; os braços só acompanham, sem puxar da lombar."
+ },
+ {
+  "n": "Abdominal curl up de McGill",
+  "g": "Core",
+  "eq": "Colchonete",
+  "d": "Mãos sob a lombar e uma perna dobrada, descole só a cabeça e os ombros dois dedos do chão, pescoço firme, e segure 8 segundos sem dor."
+ },
+ {
+  "n": "Prancha lateral de joelhos com antebraço apoiado",
+  "g": "Core",
+  "eq": "Colchonete",
+  "d": "De lado com o cotovelo embaixo do ombro e os joelhos dobrados, suba o quadril até o corpo ficar em linha e segure 10 segundos sem dor."
+ },
+ {
+  "n": "Bird dog com bastão apoiado nas costas",
+  "g": "Core",
+  "eq": "Bastão",
+  "d": "Em quatro apoios com o bastão deitado na coluna, estenda braço e perna opostos sem deixar o bastão cair nem girar o quadril."
+ },
+ {
+  "n": "Basculação pélvica deitado",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Colchonete",
+  "d": "Deitado com os joelhos dobrados, cole e descole a lombar do chão girando só a bacia, bem devagar, sem prender a respiração e sem dor."
+ },
+ {
+  "n": "Rotação interna de ombro com elástico junto ao corpo",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Cotovelo colado na costela e dobrado a 90 graus, puxe o antebraço até a barriga e volte devagar, com carga leve e sem forçar o ombro."
+ },
+ {
+  "n": "Isometria de rotação externa do ombro na parede",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Parede",
+  "d": "Cotovelo colado ao corpo, empurre as costas da mão contra a parede com metade da força por 10 segundos, sem subir o ombro e sem dor."
+ },
+ {
+  "n": "Pêndulo de Codman (balanço solto do braço)",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Peso do corpo",
+  "d": "Apoie a mão boa numa mesa, incline o tronco e deixe o outro braço pendurado balançando em círculos pequenos, relaxado e sem forçar."
+ },
+ {
+  "n": "Elevação em Y deitado de bruços no chão",
+  "g": "Ombros",
+  "eq": "Colchonete",
+  "d": "De bruços com a testa no chão, suba os braços abertos em Y com os polegares pro teto só até onde não dói e desça devagar."
+ },
+ {
+  "n": "Elevação de perna reta deitado com joelho travado",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Colchonete",
+  "d": "Com a outra perna dobrada, trave o joelho, suba a perna reta um palmo e desça em 3 segundos sem descolar a lombar do chão."
+ },
+ {
+  "n": "Mini agachamento com apoio na cadeira",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Segurando o encosto, dobre os joelhos só um palmo e volte, com o joelho apontando pra ponta do pé e descendo só até onde não dói."
+ },
+ {
+  "n": "Marcha sentada na cadeira",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Sentado na ponta da cadeira com a coluna ereta, eleve um joelho de cada vez em ritmo calmo por 1 minuto, respirando solto."
+ },
+ {
+  "n": "Nado crawl com palmar",
+  "g": "Natação e aquático",
+  "eq": "Palmar",
+  "d": "A palmar aumenta a pegada: entre com a mão na linha do ombro e cotovelo alto; comece com poucas voltas pra não sobrecarregar o ombro."
+ },
+ {
+  "n": "Nado borboleta com nadadeira",
+  "g": "Natação e aquático",
+  "eq": "Nadadeira",
+  "d": "Duas pernadas por braçada, recuperando os braços esticados rente à água; só pra quem já ondula bem e sem forçar a lombar."
+ },
+ {
+  "n": "Ondulação de golfinho com nadadeira",
+  "g": "Natação e aquático",
+  "eq": "Nadadeira",
+  "d": "Braços esticados à frente, ondule a partir do peito e do quadril com joelhos quase retos; ondulação curta, sem forçar a lombar."
+ },
+ {
+  "n": "Crawl de um braço só com pull buoy",
+  "g": "Natação e aquático",
+  "eq": "Pull buoy",
+  "d": "Pull buoy entre as coxas, nade com um braço e deixe o outro esticado à frente; troque de lado a cada 25 m pra não desequilibrar o ombro."
+ },
+ {
+  "n": "Nado costas de um braço só com palmar",
+  "g": "Natação e aquático",
+  "eq": "Palmar",
+  "d": "Um braço puxa enquanto o outro descansa na coxa; entre com o dedinho primeiro, sem jogar a cabeça, e faça poucas voltas com a palmar."
+ },
+ {
+  "n": "Nado peito com duas pernadas por braçada",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Uma braçada pra cada duas pernadas, deslizando entre elas; joelhos na largura do quadril na pernada pra não forçar o menisco."
+ },
+ {
+  "n": "Virada olímpica no crawl",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Perto da parede, dê a cambalhota soltando ar pelo nariz e empurre de barriga pra cima; treine devagar e com o professor por perto."
+ },
+ {
+  "n": "Deslize ventral após impulso na parede",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Empurre a parede com os pés, mãos sobrepostas e cabeça entre os braços, e deslize até parar; corpo alinhado e sem levantar o rosto."
+ },
+ {
+  "n": "Batida de perna com giro de corpo e prancha",
+  "g": "Natação e aquático",
+  "eq": "Prancha de natação",
+  "d": "Segurando a prancha e batendo perna, gire o corpo todo a cada seis batidas; o giro sai do quadril, e a cabeça só acompanha pra respirar."
+ },
+ {
+  "n": "Pernada de crawl de lado com nadadeira",
+  "g": "Natação e aquático",
+  "eq": "Nadadeira",
+  "d": "De lado, braço de baixo esticado e o de cima na coxa, bata curtinho a partir do quadril; gire só o rosto pra respirar, sem torcer a lombar."
+ },
+ {
+  "n": "Pedalada sentado no macarrão aquático",
+  "g": "Natação e aquático",
+  "eq": "Macarrão aquático",
+  "d": "Sente no macarrão como num selim, tronco ereto e abdômen firme, e pedale no ritmo; só pra quem flutua bem e com o professor por perto."
+ },
+ {
+  "n": "Tesoura de braços com halteres aquáticos",
+  "g": "Natação e aquático",
+  "eq": "Halteres aquáticos",
+  "d": "Com a água na altura do ombro, abra e cruze os braços à frente do peito num vaivém contínuo, sem travar os cotovelos nem a respiração."
+ },
+ {
+  "n": "Extensão de tríceps aquática com halteres flutuantes",
+  "g": "Natação e aquático",
+  "eq": "Halteres aquáticos",
+  "d": "Cotovelos colados ao tronco, empurre os halteres pra trás até quase esticar e volte devagar vencendo a flutuação, sem balançar o tronco."
+ },
+ {
+  "n": "Manopla com gancho e uppercut alternados",
+  "g": "Boxe e lutas",
+  "eq": "Manoplas",
+  "d": "Gire o quadril nos ganchos e uppercuts voltando a guarda ao rosto; punho firme no impacto e o parceiro segura a manopla travada."
  }
 ];
