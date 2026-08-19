@@ -2036,6 +2036,14 @@ create table if not exists public.zap_config (
   atualizado timestamptz not null default now()
 );
 
+-- colunas do RECEBER (2026-08). Ficam aqui, junto do create table, porque o
+-- zap_config_ve logo abaixo lê elas: na PRIMEIRA rodada do arquivo a função
+-- seria criada antes das colunas existirem e o script inteiro morria.
+alter table public.zap_config add column if not exists app_secret   text not null default '';
+alter table public.zap_config add column if not exists verify_token text not null default '';
+alter table public.zap_config add column if not exists ig_id        text not null default '';
+alter table public.zap_config add column if not exists ig_token     text not null default '';
+
 alter table public.zap_config enable row level security;
 -- de propósito SEM políticas: ninguém lê nem escreve direto pela API.
 -- Todo acesso passa pelas funções abaixo (ou pela service key, no servidor).
@@ -2075,11 +2083,17 @@ as $$
               'phone_id', z.phone_id,
               'template', z.template,
               'tem_token', length(coalesce(z.token, '')) > 0,
+              -- pro RECEBER: o que a tela precisa mostrar sem nunca ver segredo
+              'verify_token', coalesce(z.verify_token, ''),
+              'ig_id', coalesce(z.ig_id, ''),
+              'tem_app_secret', length(coalesce(z.app_secret, '')) > 0,
+              'tem_ig_token', length(coalesce(z.ig_token, '')) > 0,
               'atualizado', z.atualizado)
        from public.zap_config z
       where z.academia_id in (select public.minhas_academias())
       limit 1),
-    jsonb_build_object('phone_id', '', 'template', '', 'tem_token', false));
+    jsonb_build_object('phone_id', '', 'template', '', 'tem_token', false,
+                       'verify_token', '', 'ig_id', '', 'tem_app_secret', false, 'tem_ig_token', false));
 $$;
 
 -- desligar: apaga a credencial desta academia (o número volta a ser manual)
@@ -2097,3 +2111,67 @@ $$;
 grant execute on function public.zap_config_salva(text, text, text) to authenticated;
 grant execute on function public.zap_config_ve() to authenticated;
 grant execute on function public.zap_config_apaga() to authenticated;
+
+-- ==================== RECEBER POR PROFISSIONAL (webhook da Meta) ====================
+-- O caminho de ENVIAR já é por academia (bloco zap_config acima). Este bloco faz o
+-- mesmo com o caminho de RECEBER: a mensagem que chega traz o ID do número que a
+-- recebeu, e é por ele que a função meta-webhook descobre a academia dona.
+--
+-- Antes disso, o webhook escolhia a academia com um "limit 1" — ou seja, SORTEAVA.
+-- Com dois profissionais no mesmo banco, a conversa de um caía dentro da academia
+-- do outro. Os índices únicos abaixo garantem que um número pertence a um dono só.
+-- Bloco idempotente — pode rodar de novo.
+
+-- parciais (where <> ''): sem isso o default vazio faria todo mundo colidir
+create unique index if not exists zap_config_phone  on public.zap_config (phone_id)     where phone_id     <> '';
+create unique index if not exists zap_config_ig     on public.zap_config (ig_id)        where ig_id        <> '';
+create unique index if not exists zap_config_verify on public.zap_config (verify_token) where verify_token <> '';
+
+-- senha do aperto de mão com a Meta, gerada pelo servidor (o profissional não
+-- escolhe: dois escolhendo "torque123" quebrariam a busca por valor).
+-- Alfabeto sem 0/O/1/I/L, que ninguém confunde ao digitar.
+create or replace function public.zap_verify_novo()
+returns text
+language sql volatile
+as $$
+  select 'torque-' || string_agg(substr('ABCDEFGHJKMNPQRSTUVWXYZ23456789', (floor(random() * 31)::int) + 1, 1), '')
+    from generate_series(1, 10)
+$$;
+
+-- salva a credencial completa (enviar + receber) da academia de quem está logado.
+-- Campo secreto vazio = "não mexi nesse": mantém o que já estava guardado.
+create or replace function public.zap_config_salva2(
+  p_phone_id text, p_token text, p_template text,
+  p_app_secret text, p_ig_id text, p_ig_token text)
+returns jsonb
+language plpgsql security definer
+set search_path = public
+as $$
+declare aid uuid; vt text;
+begin
+  select academia_id into aid from public.membros where user_id = auth.uid() limit 1;
+  if aid is null then
+    return jsonb_build_object('erro', 'Entre na sua conta primeiro.');
+  end if;
+  insert into public.zap_config (academia_id, phone_id, token, template, app_secret, ig_id, ig_token, verify_token, atualizado)
+  values (aid, coalesce(p_phone_id, ''), coalesce(p_token, ''), coalesce(p_template, ''),
+          coalesce(p_app_secret, ''), coalesce(p_ig_id, ''), coalesce(p_ig_token, ''),
+          public.zap_verify_novo(), now())
+  on conflict (academia_id) do update
+    set phone_id   = excluded.phone_id,
+        token      = case when coalesce(excluded.token, '')      = '' then zap_config.token      else excluded.token      end,
+        app_secret = case when coalesce(excluded.app_secret, '') = '' then zap_config.app_secret else excluded.app_secret end,
+        ig_token   = case when coalesce(excluded.ig_token, '')   = '' then zap_config.ig_token   else excluded.ig_token   end,
+        ig_id      = case when coalesce(excluded.ig_id, '')     = '' then zap_config.ig_id     else excluded.ig_id     end,
+        template   = excluded.template,
+        -- a senha do aperto de mão nasce uma vez e não muda mais (ela já está
+        -- colada no painel da Meta do profissional)
+        verify_token = case when coalesce(zap_config.verify_token, '') = ''
+                            then public.zap_verify_novo() else zap_config.verify_token end,
+        atualizado = now();
+  select z.verify_token into vt from public.zap_config z where z.academia_id = aid;
+  return jsonb_build_object('ok', true, 'verify_token', vt);
+end
+$$;
+
+grant execute on function public.zap_config_salva2(text, text, text, text, text, text) to authenticated;

@@ -70,6 +70,28 @@ function crcNode(s) {
   const guiaFn = fs.readFileSync(__dirname + "/../funcoes.html", "utf8");
   ok(/Não precisa criar Secret nenhum/.test(guiaFn) && /WHATSAPP_COMPARTILHADO/.test(guiaFn),
     "a página das funções explica que a whatsapp não precisa de Secret (e onde fica o interruptor do número emprestado)");
+
+  // RECEBER por profissional: colunas, índices únicos e a RPC nova
+  ok(/add column if not exists app_secret/.test(sql) && /add column if not exists verify_token/.test(sql) &&
+     /add column if not exists ig_id/.test(sql) && /add column if not exists ig_token/.test(sql),
+    "zap_config ganhou as colunas do receber (app_secret, verify_token, ig_id, ig_token)");
+  ok(/create unique index if not exists zap_config_phone[\s\S]*?where phone_id\s*<> ''/.test(sql) &&
+     /create unique index if not exists zap_config_ig[\s\S]*?where ig_id\s*<> ''/.test(sql) &&
+     /create unique index if not exists zap_config_verify[\s\S]*?where verify_token\s*<> ''/.test(sql),
+    "um número (e uma senha de aperto de mão) pertence a UMA academia só — índice único parcial");
+  ok(/zap_config_salva2/.test(sql) && /grant execute on function public\.zap_config_salva2/.test(sql),
+    "a RPC zap_config_salva2 existe e tem grant (grant é por assinatura)");
+  ok(/zap_verify_novo/.test(sql) && /ABCDEFGHJKMNPQRSTUVWXYZ23456789/.test(sql),
+    "a senha do aperto de mão é gerada pelo servidor, num alfabeto sem 0/O/1/I/L");
+  ok(!/zap_config_salva2[\s\S]*?returns jsonb[\s\S]{0,900}?jsonb_build_object\([^)]*'token'/.test(sql),
+    "nem a RPC nova devolve o token cru");
+
+  // as telas do receber
+  const painelPT = fs.readFileSync(__dirname + "/../personal.html", "utf8");
+  ok(/id="cfgZapSeg"/.test(painelPT) && /zap_config_salva2/.test(painelPT) && /cfgZapVerify/.test(painelPT),
+    "o painel do personal tem os campos do receber e mostra a senha do aperto de mão pra colar na Meta");
+  ok(/id="waSeg"/.test(integ) && /zap_config_salva2/.test(integ) && /waWhVerify/.test(integ),
+    "a tela da academia idem");
   /* O arquivo é rodado de novo a cada mudança. Uma única "create policy" sem o
    * "drop policy if exists" antes derruba o script inteiro em 42710 (already
    * exists) — e TUDO daquele ponto pra baixo (inclusive o bloco do HQ) não roda. */

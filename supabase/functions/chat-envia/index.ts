@@ -56,19 +56,51 @@ function usuarioDoToken(req: Request): string {
   } catch { return ""; }
 }
 
-async function enviaMeta(canal: string, contato: string, texto: string): Promise<{ ok: boolean; erro?: string }> {
+/* Credencial da academia DONA da conversa. Sem isso, o robô responderia pelo
+ * número do profissional e o botão Enviar da equipe pelo número do dono do
+ * sistema — a mesma conversa saindo por dois números diferentes. */
+async function credencialDa(aid: string): Promise<any> {
+  try {
+    const r = await sb(`zap_config?select=phone_id,token,ig_id,ig_token&academia_id=eq.${aid}`);
+    const linhas = r.ok ? await r.json() : [];
+    const c = linhas[0];
+    if (c && (c.token || c.ig_token)) return c;
+    // ninguém no sistema inteiro cadastrou número? então é instalação de dono
+    // único: os Secrets globais continuam valendo, como sempre valeram
+    const r2 = await sb("zap_config?select=academia_id&token=neq.&limit=1");
+    const outros = r2.ok ? await r2.json() : [];
+    if (!outros.length) return { donoUnico: true };
+  } catch { /* sem banco: cai no modo dono único abaixo */ }
+  return { donoUnico: true };
+}
+
+/* Quando a academia da conversa pode usar o número global:
+ *  - é a academia do próprio dono do sistema (ACADEMIA_DONO_ID), ou
+ *  - o dono liberou o número de propósito (WHATSAPP_COMPARTILHADO=sim), ou
+ *  - a instalação é de dono único e ninguém cadastrou número nenhum ainda.
+ * Sem isso, cada um responde pelo número dele — que é o modelo de cobrança. */
+function podeUsarGlobal(aid: string): boolean {
+  const dono = (env("ACADEMIA_DONO_ID") || "").trim();
+  if (dono && aid && dono === aid) return true;
+  return (env("WHATSAPP_COMPARTILHADO") || "").trim().toLowerCase() === "sim";
+}
+
+async function enviaMeta(cred: any, canal: string, contato: string, texto: string, aid?: string): Promise<{ ok: boolean; erro?: string }> {
   let r: Response;
+  const emprestado = podeUsarGlobal(aid || "") || !!(cred && cred.donoUnico);
   if (canal === "instagram") {
-    const token = env("INSTAGRAM_TOKEN");
-    if (!token) return { ok: false, erro: "Secret INSTAGRAM_TOKEN não configurado no Supabase." };
-    r = await fetch(GRAPH + "/me/messages?access_token=" + encodeURIComponent(token), {
+    const token = (cred && cred.ig_token) || (emprestado ? env("INSTAGRAM_TOKEN") : "");
+    const igId = (cred && cred.ig_id) || env("INSTAGRAM_IG_ID");
+    if (!token) return { ok: false, erro: "Nenhuma conta do Instagram ligada nesta academia — cole o ID e o token em Configurações → WhatsApp." };
+    r = await fetch(GRAPH + (igId ? "/" + igId : "/me") + "/messages?access_token=" + encodeURIComponent(token), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ recipient: { id: contato }, message: { text: texto } }),
     });
   } else {
-    const token = env("WHATSAPP_TOKEN"), fone = env("WHATSAPP_PHONE_ID");
-    if (!token || !fone) return { ok: false, erro: "Secrets WHATSAPP_TOKEN / WHATSAPP_PHONE_ID não configurados." };
+    const token = (cred && cred.token) || (emprestado ? env("WHATSAPP_TOKEN") : "");
+    const fone = (cred && cred.phone_id) || (emprestado ? env("WHATSAPP_PHONE_ID") : "");
+    if (!token || !fone) return { ok: false, erro: "Nenhum número do WhatsApp ligado nesta academia — cole o ID do número e o token em Configurações → WhatsApp." };
     r = await fetch(GRAPH + "/" + fone + "/messages", {
       method: "POST",
       headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
@@ -160,10 +192,21 @@ Deno.serve(async (req: Request) => {
   try { corpo = await req.json(); } catch { return json({ erro: "JSON inválido" }, 400); }
 
   if (corpo.acao === "ping") {
+    // o número ligado nesta academia manda na resposta: antes o ping pintava
+    // tudo verde com o número do dono, mentindo justo no diagnóstico
+    const uidP = usuarioDoToken(req);
+    let credP: any = null;
+    if (uidP) {
+      const rm = await sb(`membros?select=academia_id&user_id=eq.${uidP}&limit=1`);
+      const ms = rm.ok ? await rm.json() : [];
+      if (ms[0]) credP = await credencialDa(ms[0].academia_id);
+    }
     return json({
       ok: true,
-      whatsapp: !!(env("WHATSAPP_TOKEN") && env("WHATSAPP_PHONE_ID")),
-      instagram: !!env("INSTAGRAM_TOKEN"),
+      numeroProprio: !!(credP && credP.token && credP.phone_id),
+      whatsapp: !!((credP && credP.token && credP.phone_id) ||
+        ((credP && credP.donoUnico) && env("WHATSAPP_TOKEN") && env("WHATSAPP_PHONE_ID"))),
+      instagram: !!((credP && credP.ig_token) || ((credP && credP.donoUnico) && env("INSTAGRAM_TOKEN"))),
       ia: !!env("ANTHROPIC_API_KEY"),
       verify: !!env("META_VERIFY_TOKEN"),
       // o diagnóstico usa esta lista pra saber se a função publicada está
@@ -360,7 +403,7 @@ Deno.serve(async (req: Request) => {
   if (corpo.acao === "enviar") {
     const texto = String(corpo.texto || "").trim();
     if (!texto) return json({ erro: "texto vazio" }, 400);
-    const envio = await enviaMeta(conversa.canal, conversa.contato_id, texto);
+    const envio = await enviaMeta(await credencialDa(conversa.academia_id), conversa.canal, conversa.contato_id, texto, conversa.academia_id);
     if (!envio.ok) return json({ erro: envio.erro }, 502);
     // nome de quem respondeu (aparece no balão pra equipe toda saber quem falou)
     const autor = String(membro.nome || membro.email || "").split("@")[0].slice(0, 60);

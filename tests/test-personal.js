@@ -3186,7 +3186,7 @@ async function abaPt(p, a) {
       const snap = JSON.stringify(S.read("ptStudio", {}));
       const chamadas = [];
       const cloudOrig = S.cloud;
-      let guardado = { phone_id: "", template: "", tem_token: false };
+      let guardado = { phone_id: "", template: "", tem_token: false, verify_token: "", ig_id: "", tem_app_secret: false };
       // o painel redesenha depois de salvar e toca em várias tabelas: o mock da
       // nuvem precisa ser encadeável, senão o render estoura no meio do teste
       const enc = () => { const o = {}; ["select", "eq", "in", "gte", "lte", "order", "limit", "upsert", "insert", "update", "delete", "single", "maybeSingle"].forEach((k) => { o[k] = () => o; }); o.then = (f) => Promise.resolve({ data: [], error: null }).then(f); return o; };
@@ -3196,9 +3196,12 @@ async function abaPt(p, a) {
           from: () => enc(),
           rpc: (fn, args) => {
             chamadas.push({ fn, args: args || {} });
-            if (fn === "zap_config_salva") {
-              guardado = { phone_id: args.p_phone_id, template: args.p_template, tem_token: !!args.p_token || guardado.tem_token };
-              return Promise.resolve({ data: { ok: true } });
+            if (fn === "zap_config_salva2") {
+              guardado = { phone_id: args.p_phone_id, template: args.p_template,
+                tem_token: !!args.p_token || guardado.tem_token,
+                tem_app_secret: !!args.p_app_secret, ig_id: args.p_ig_id || "",
+                verify_token: "torque-ABCDEFGHJK" };
+              return Promise.resolve({ data: { ok: true, verify_token: "torque-ABCDEFGHJK" } });
             }
             if (fn === "zap_config_apaga") { guardado = { phone_id: "", template: "", tem_token: false }; return Promise.resolve({ data: { ok: true } }); }
             if (fn === "zap_config_ve") return Promise.resolve({ data: guardado });
@@ -3221,10 +3224,12 @@ async function abaPt(p, a) {
       document.getElementById("cfgZapTpl").value = "cobranca_mensalidade";
       document.getElementById("cfgZapSalva").click();
       await new Promise((r) => setTimeout(r, 500));
-      const salvo = chamadas.find((c) => c.fn === "zap_config_salva") || { args: {} };
+      const salvo = chamadas.find((c) => c.fn === "zap_config_salva2") || { args: {} };
       const espelho = (S.read("ptStudio", {}).config || {}).zapApi || {};
       const depois = {
         campoToken: document.getElementById("cfgZapToken").value,
+        webhook: !document.getElementById("cfgZapWebhook").hidden,
+        verify: (document.getElementById("cfgZapVerify") || {}).textContent || "",
         ligado: window.__zapApiOn(),
         temDesligar: !document.getElementById("cfgZapDesliga").hidden,
         estudioCru: JSON.stringify(S.read("ptStudio", {})),
@@ -3236,7 +3241,9 @@ async function abaPt(p, a) {
     ok(!liga.campos.temUrl && liga.campos.temFone && liga.campos.tokenEhSenha === "password",
       "o personal liga o número dele com ID + token — nenhuma URL de servidor pra colar");
     ok(liga.salvo.p_phone_id === "1112223334445" && liga.salvo.p_token === "TOKEN-SECRETO-DA-META" && liga.salvo.p_template === "cobranca_mensalidade",
-      "as credenciais vão pra nuvem pela RPC zap_config_salva (uma por academia)");
+      "as credenciais vão pra nuvem pela RPC zap_config_salva2 (uma por academia)");
+    ok(liga.depois.webhook && /torque-/.test(liga.depois.verify),
+      "depois de ligar, a tela mostra a URL e a senha do aperto de mão pra colar na Meta");
     ok(liga.depois.campoToken === "" && liga.depois.estudioCru.indexOf("TOKEN-SECRETO-DA-META") < 0,
       "o token some da tela e NÃO fica guardado no aparelho");
     ok(liga.espelho.ligado === true && liga.espelho.phoneId === "1112223334445" && !liga.espelho.token,

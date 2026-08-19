@@ -1320,6 +1320,24 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="font-size: 12.5px; min-width: 200px;">Template aprovado (opcional)
           <input id="cfgZapTpl" placeholder="cobranca_mensalidade" style="display:block; width: 100%; margin-top: 4px;"></label>
       </div>
+      <details style="margin-top: 12px;">
+        <summary style="cursor: pointer; font-size: 13px; font-weight: 700;">Receber as respostas aqui dentro (opcional)</summary>
+        <p class="muted" style="margin: 8px 0 10px; font-size: 12.5px;">Preenchendo isto, o que o aluno responder no WhatsApp cai no seu Chat — e o robô responde <b>pelo seu número</b>. Sem isto, o envio funciona igual; só as respostas continuam chegando no aplicativo do celular.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+          <label style="font-size: 12.5px; flex: 1; min-width: 240px;">Chave secreta do app (App Secret)
+            <input id="cfgZapSeg" type="password" autocomplete="off" placeholder="cole aqui a chave secreta do app" style="display:block; width: 100%; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px; min-width: 200px;">ID da conta do Instagram (opcional)
+            <input id="cfgZapIg" placeholder="17841400000000000" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
+          <label style="font-size: 12.5px; flex: 1; min-width: 240px;">Token da Página do Instagram (opcional)
+            <input id="cfgZapIgTok" type="password" autocomplete="off" placeholder="cole aqui o token da Página" style="display:block; width: 100%; margin-top: 4px;"></label>
+        </div>
+        <div id="cfgZapWebhook" hidden style="margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--roxo); border-radius: 12px; font-size: 12.5px;">
+          <b>Cole estes dois no painel da Meta</b> (WhatsApp → Configuração → Webhook → Editar):
+          <div style="margin-top: 8px;">URL de retorno<br><code id="cfgZapUrlWh" style="word-break: break-all;">—</code></div>
+          <div style="margin-top: 6px;">Token de verificação<br><code id="cfgZapVerify">—</code></div>
+          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Depois clique em <b>Verificar e salvar</b> e marque o campo <b>messages</b> — sem isso a Meta não manda nada.</p>
+        </div>
+      </details>
       <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O token fica guardado na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b> — por isso o campo aparece vazio depois de salvo. Deixe vazio pra manter o que já está lá.</p>
       <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 10px;">
         <label style="font-size: 12.5px; min-width: 200px;">Mandar um teste pra (DDI+DDD+número)
@@ -5680,6 +5698,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if ($("cfgZapFone") && document.activeElement !== $("cfgZapFone")) $("cfgZapFone").value = d.phone_id || "";
       if ($("cfgZapTpl") && document.activeElement !== $("cfgZapTpl")) $("cfgZapTpl").value = d.template || "";
       if ($("cfgZapDesliga")) $("cfgZapDesliga").hidden = !d.tem_token;
+      if ($("cfgZapIg") && document.activeElement !== $("cfgZapIg")) $("cfgZapIg").value = d.ig_id || "";
+      if ($("cfgZapSeg")) $("cfgZapSeg").value = "";
+      if ($("cfgZapIgTok")) $("cfgZapIgTok").value = "";
+      // a URL e a senha do aperto de mão são o que ele cola no painel da Meta
+      var cx = $("cfgZapWebhook");
+      if (cx) {
+        cx.hidden = !d.verify_token;
+        if (d.verify_token) {
+          $("cfgZapUrlWh").textContent = String((self.MT_CLOUD || {}).url || "").replace(/\/+$/, "") + "/functions/v1/meta-webhook";
+          $("cfgZapVerify").textContent = d.verify_token;
+        }
+      }
       pintaZapApiStatus();
     });
   }
@@ -5722,7 +5752,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!fone) { pintaZapApiStatus("Cole o ID do número (Phone number ID) que a Meta te deu."); return; }
     if (!tok && !zapApiOn()) { pintaZapApiStatus("Cole o token permanente da Meta na primeira vez."); return; }
     pintaZapApiStatus("Guardando…");
-    rpcZap("zap_config_salva", { p_phone_id: fone, p_token: tok, p_template: tpl }).then(function (d) {
+    rpcZap("zap_config_salva2", {
+      p_phone_id: fone, p_token: tok, p_template: tpl,
+      p_app_secret: String(($("cfgZapSeg") || {}).value || "").trim(),
+      p_ig_id: String(($("cfgZapIg") || {}).value || "").replace(/\D/g, ""),
+      p_ig_token: String(($("cfgZapIgTok") || {}).value || "").trim(),
+    }).then(function (d) {
       if (d && d.erro) { pintaZapApiStatus("Não deu: " + esc(d.erro)); return; }
       $("cfgZapToken").value = "";
       return leZapConfigNuvem().then(function () {

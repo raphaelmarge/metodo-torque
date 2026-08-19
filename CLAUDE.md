@@ -47,6 +47,19 @@ entrada ou demonstração). O painel guarda só um espelho local
 (`config.zapApi = {ligado, phoneId, template}`) porque o desenho da fila é
 síncrono — token nunca toca o localStorage.
 
+**Receber por profissional** (a partir da v474): o `meta-webhook` descobre de quem
+é a mensagem pelo ID do número que a recebeu (`metadata.phone_number_id` no
+WhatsApp; `recipient.id`/`entry.id` no Instagram) e casa com `zap_config.phone_id`
+/ `ig_id` — índices únicos parciais garantem um dono por número. **Sem dono, não
+processa nada**: antes ele escolhia a academia com `limit 1`, ou seja, sorteava, e
+a conversa de um caía dentro da academia do outro. A resposta sai pelo MESMO
+número que recebeu. Um POST só pode falar de UM dono (donos misturados = 400),
+porque a assinatura da Meta cobre o corpo inteiro; o `app_secret` é o do dono
+resolvido, nunca o global. `zap_config_salva2` guarda também app_secret,
+verify_token (gerado pelo servidor), ig_id e ig_token. A região marcada
+`==== ROTEAMENTO ====` no index.ts é **JS puro de propósito** — `tests/test-meta-webhook.js`
+recorta e avalia ela em node, sem chamar a Meta; não coloque tipo do TypeScript lá.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
@@ -122,8 +135,8 @@ bash tests/run.sh   # 16 suítes — esperado: "suites com falha: 0"
 
 ## Estado atual e pendências do Raphael
 
-- Pendências dele no Supabase: **rodar o SQL de novo** (bloco zap_config) e
-  **republicar a whatsapp**; **republicar a chat-envia** (sem ela a IA de
+- Pendências dele no Supabase: **rodar o SQL de novo** (blocos zap_config e
+  RECEBER POR PROFISSIONAL) e **republicar whatsapp, meta-webhook e chat-envia**; **republicar a chat-envia** (sem ela a IA de
   treino e a IA de dieta não funcionam), publicar envia-email e push-envia
   (+ conta resend.com com domínio verificado, secrets RESEND_API_KEY/EMAIL_DE),
   conta Pagar.me e ativação Meta do WhatsApp/Instagram (funcoes.html).
