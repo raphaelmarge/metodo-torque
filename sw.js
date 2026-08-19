@@ -77,6 +77,7 @@ var CORE = [
   "privacidade.html",
   "excluir-conta.html",
   "diagnostico.html",
+  "gifs.html",
   "meta.html",
   "quest.html",
   "assets/icons/icon-personal.svg",

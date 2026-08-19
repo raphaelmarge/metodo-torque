@@ -9183,6 +9183,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         capaTreino: (st.config || {}).capaTreino || "",
       },
       desafio: st.desafio || null,
+      // banco de GIFs do dono: vai UMA regra (endereço base + padrão do nome), e o
+      // app monta o link de cada exercício na hora. Zero peso no pacote do aluno.
+      gif: gifRegra(),
       studio: studio, COR: COR, COR2: COR2, CORC: CORC, CORE: CORE, CORCL1: CORCL1, CORCL2: CORCL2,
       PAL: PAL, LOGOAPP: LOGOAPP, zapPersonal: zapPersonal, metaSemana: metaSemana,
       sessApp: sessApp, vidsApp: vidsApp, qa: qa, ctApp: ctApp, plApp: plApp, pixApp: pixApp, svApp: svApp,
@@ -9198,6 +9201,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * o /app/ monta o app com o código do site, sempre o mais novo. O `html`
    * ainda vai junto só pra não quebrar quem estiver com a página /app/ velha
    * guardada no aparelho — sai numa próxima versão. */
+  /* Regra do banco de GIFs (assets/cloud-config.js). Sai daqui pro pacote do
+   * aluno como UM objeto pequeno; o app usa isso pra montar o endereço do GIF
+   * de qualquer um dos 1619 exercícios sem carregar lista nenhuma. */
+  function gifRegra() {
+    var g = self.MT_GIFS || {}, c = self.MT_CLOUD || {};
+    if (!g.bucket || !c.url) return null;
+    return { b: c.url.replace(/\/+$/, "") + "/storage/v1/object/public/" + g.bucket + "/",
+      p: g.padrao || "traco", a: !!g.acento, e: g.ext || "gif" };
+  }
+  window.__gifRegra = gifRegra; // testes
+
   function pacoteApp(a, stamp) {
     var D = dadosAppAluno(a, stamp);
     return { html: self.MT_APP_ALUNO.monta(D), dados: D, ver: self.MT_VERSAO || "", stamp: stamp };

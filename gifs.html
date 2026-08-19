@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banco de GIFs dos exercícios — TORQUE ON</title>
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link href="assets/fonts/archivo.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(90% 50% at 50% -10%, rgba(124,58,237,.22), transparent 60%), #121016; color: #f5f4f7; min-height: 100vh; padding: 26px 16px 60px; line-height: 1.6; }
+  main { max-width: 680px; margin: 0 auto; }
+  .k { font-size: 11px; letter-spacing: .22em; color: #a78bfa; font-weight: 800; text-transform: uppercase; }
+  h1 { font-size: 25px; margin: 6px 0 8px; letter-spacing: -.01em; }
+  p.sub { color: #b9b3c6; font-size: 14px; }
+  .card { background: #1a1720; border: 1px solid #2c2739; border-radius: 16px; padding: 18px; margin-top: 16px; }
+  .card h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #a9a4b5; margin-bottom: 10px; }
+  label { display: block; font-size: 12.5px; color: #b9b3c6; margin-top: 12px; }
+  input { width: 100%; margin-top: 5px; background: #0f0d13; border: 1px solid #2c2739; border-radius: 11px; color: #f5f4f7; padding: 13px; font-size: 15px; font-family: inherit; }
+  .btnx { width: 100%; padding: 15px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; font-family: inherit; margin-top: 16px; }
+  .btnx:disabled { opacity: .55; }
+  .btnx.sec { background: none; border: 1px solid #3a3446; font-size: 14px; padding: 12px; }
+  .passo { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid #262231; }
+  .passo:last-child { border-bottom: 0; }
+  .passo .n { flex: none; width: 24px; height: 24px; border-radius: 50%; background: #7c3aed; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .passo p { font-size: 13.5px; color: #b9b3c6; }
+  .placar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .placar div { flex: 1; min-width: 120px; background: #0f0d13; border: 1px solid #2c2739; border-radius: 12px; padding: 12px; }
+  .placar b { display: block; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .placar span { font-size: 11.5px; color: #8a8695; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 12px; }
+  .grade figure { background: #fff; border-radius: 10px; overflow: hidden; }
+  .grade img { display: block; width: 100%; height: 84px; object-fit: contain; background: #fff; }
+  .grade figcaption { font-size: 9.5px; color: #4a4458; padding: 4px 5px; background: #ece9f3; line-height: 1.25; }
+  pre { background: #0f0d13; border: 1px solid #2c2739; border-radius: 10px; padding: 12px; font-size: 12px; color: #cfcbdb; overflow: auto; margin-top: 12px; white-space: pre-wrap; word-break: break-word; }
+  .ok { color: #4ade80; } .ruim { color: #f87171; } .aviso { color: #fcd34d; }
+  a { color: #a78bfa; }
+  #saida { font-size: 13.5px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="k">TORQUE ON</div>
+  <h1>Banco de GIFs dos exercícios</h1>
+  <p class="sub">Esta página descobre sozinha como os seus GIFs estão guardados no Supabase e diz o que preencher pra eles aparecerem no app do aluno. Ela só LÊ — não apaga nem move nada.</p>
+
+  <div class="card">
+    <h2>Antes de começar</h2>
+    <div class="passo"><span class="n">1</span><div><b>O bucket precisa ser público</b><p>No Supabase: <b>Storage</b> → clique no seu bucket → <b>⋯</b> → <b>Make public</b>. Sem isso o celular do aluno não consegue baixar o GIF.</p></div></div>
+    <div class="passo"><span class="n">2</span><div><b>Pegue o nome do bucket</b><p>É o nome que aparece na lista do <b>Storage</b>, do lado esquerdo. Ex.: <code>gifs</code>, <code>exercicios</code>, <code>gifs-exercicios</code>.</p></div></div>
+    <div class="passo"><span class="n">3</span><div><b>Abra um GIF qualquer e copie o nome do arquivo</b><p>Clique num arquivo dentro do bucket. O nome dele (ex.: <code>supino-reto-com-barra.gif</code>) é o que eu preciso ver.</p></div></div>
+  </div>
+
+  <div class="card">
+    <h2>Testar</h2>
+    <label>Nome do bucket
+      <input id="bucket" placeholder="ex.: gifs" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+    <label>Nome de UM arquivo que existe lá (com a extensão)
+      <input id="amostra" placeholder="ex.: supino-reto-com-barra.gif" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+    <button class="btnx" id="btnTestar">Descobrir o padrão</button>
+    <button class="btnx sec" id="btnListar">Tentar listar o bucket (se der permissão)</button>
+    <div id="saida"></div>
+  </div>
+
+  <div class="card" id="cxResultado" hidden>
+    <h2>Resultado</h2>
+    <div class="placar" id="placar"></div>
+    <div class="grade" id="grade"></div>
+    <div id="conclusao"></div>
+    <pre id="receita"></pre>
+    <button class="btnx sec" id="btnCopiar">Copiar pra mandar pro Claude</button>
+  </div>
+
+  <p class="sub" style="margin-top:18px;">Se o teste não achar nada, mande pro Claude o nome do bucket e o nome de 3 arquivos — com isso ele monta a regra na mão.</p>
+</main>
+
+<script src="assets/cloud-config.js"></script>
+<script src="assets/exercicios-db.js"></script>
+<script src="assets/vendor/supabase.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var cfg = self.MT_CLOUD || {};
+  var EX = (self.MT_EXERCICIOS || []).map(function (x) { return x.n; });
+
+  function baseDe(bucket) {
+    return String(cfg.url || "").replace(/\/+$/, "") + "/storage/v1/object/public/" + bucket + "/";
+  }
+  // as quatro maneiras de virar nome de arquivo, com e sem acento
+  var PADROES = [
+    { id: "traco", rot: "supino-reto-com-barra", sep: "-" },
+    { id: "sublinha", rot: "supino_reto_com_barra", sep: "_" },
+    { id: "espaco", rot: "Supino reto com barra", sep: " " },
+    { id: "junto", rot: "supinoretocombarra", sep: "" },
+  ];
+  function slug(nome, padrao, acento) {
+    var t = String(nome).trim().toLowerCase();
+    if (!acento) t = t.normalize("NFD").replace(/[̀-ͯ]/g, "");
+    t = t.replace(/[^a-z0-9À-ɏ ]+/g, " ").replace(/\s+/g, " ").trim();
+    var p = PADROES.filter(function (x) { return x.id === padrao; })[0];
+    return t.replace(/ /g, p ? p.sep : "-");
+  }
+  function existe(url) {
+    return new Promise(function (res) {
+      var im = new Image();
+      var pronto = false;
+      var fim = function (v) { if (!pronto) { pronto = true; res(v); } };
+      im.onload = function () { fim(true); };
+      im.onerror = function () { fim(false); };
+      setTimeout(function () { fim(false); }, 8000);
+      im.src = url;
+    });
+  }
+
+  function recado(html) { $("saida").innerHTML = html; }
+
+  // 1) descobre o padrão comparando o arquivo de amostra com os nomes do catálogo
+  function padraoDaAmostra(arq) {
+    var m = String(arq).trim().replace(/^.*\//, "");
+    var pt = m.lastIndexOf(".");
+    var ext = pt > 0 ? m.slice(pt + 1).toLowerCase() : "gif";
+    var base = pt > 0 ? m.slice(0, pt) : m;
+    var achados = [];
+    [true, false].forEach(function (ac) {
+      PADROES.forEach(function (p) {
+        for (var i = 0; i < EX.length; i++) {
+          if (slug(EX[i], p.id, ac) === base.toLowerCase() || slug(EX[i], p.id, ac) === base) {
+            achados.push({ padrao: p.id, acento: ac, ext: ext, exemplo: EX[i] });
+            return;
+          }
+        }
+      });
+    });
+    return { ext: ext, base: base, achados: achados };
+  }
+
+  $("btnTestar").addEventListener("click", function () {
+    var bucket = $("bucket").value.trim().replace(/^\/+|\/+$/g, "");
+    var amostra = $("amostra").value.trim();
+    if (!cfg.url) { recado("<span class='ruim'>A conexão com a nuvem não está configurada neste site.</span>"); return; }
+    if (!bucket) { recado("<span class='aviso'>Escreva o nome do bucket.</span>"); return; }
+    var bt = this; bt.disabled = true;
+    recado("Testando…");
+
+    var achou = amostra ? padraoDaAmostra(amostra) : { ext: "gif", base: "", achados: [] };
+    var candidatos = achou.achados.length ? achou.achados
+      : [];
+    if (!candidatos.length) {
+      // sem amostra que case: testa as 8 combinações contra 12 exercícios do catálogo
+      [true, false].forEach(function (ac) {
+        PADROES.forEach(function (p) { candidatos.push({ padrao: p.id, acento: ac, ext: achou.ext || "gif" }); });
+      });
+    }
+
+    var amostraEx = EX.slice(0, 400).filter(function (_, i) { return i % 20 === 0; }).slice(0, 20);
+    var base = baseDe(bucket);
+    var testes = candidatos.map(function (c) {
+      return Promise.all(amostraEx.map(function (n) {
+        return existe(base + encodeURIComponent(slug(n, c.padrao, c.acento)) + "." + c.ext);
+      })).then(function (r) {
+        return { c: c, acertos: r.filter(Boolean).length, de: r.length };
+      });
+    });
+
+    Promise.all(testes).then(function (res) {
+      bt.disabled = false;
+      res.sort(function (a, b) { return b.acertos - a.acertos; });
+      var melhor = res[0];
+      if (!melhor || !melhor.acertos) {
+        recado("<span class='ruim'>Nenhum GIF respondeu.</span><br>" +
+          "Motivos possíveis: o bucket não está <b>público</b>, o nome do bucket está diferente, ou os arquivos têm nome de código (ex.: <code>0025.gif</code>) em vez do nome do exercício." +
+          (achou.base ? "<br><br>O arquivo que você digitou (<code>" + achou.base + "</code>) não bate com nenhum dos 1619 exercícios do catálogo — isso é sinal de que os nomes são códigos ou estão em inglês. Mande o nome do bucket e 3 nomes de arquivo pro Claude." : ""));
+        return;
+      }
+      recado("<span class='ok'>Achei!</span> Conferindo a base inteira…");
+      mostra(bucket, melhor.c, melhor);
+    });
+  });
+
+  // 2) mede quantos exercícios do catálogo têm GIF (por amostragem, pra não puxar 1619)
+  function mostra(bucket, regra, primeiro) {
+    var base = baseDe(bucket);
+    var amostra = [];
+    for (var i = 0; i < EX.length; i += Math.max(1, Math.floor(EX.length / 120))) amostra.push(EX[i]);
+    Promise.all(amostra.map(function (n) {
+      return existe(base + encodeURIComponent(slug(n, regra.padrao, regra.acento)) + "." + regra.ext)
+        .then(function (v) { return { n: n, ok: v }; });
+    })).then(function (r) {
+      var ok = r.filter(function (x) { return x.ok; });
+      var pc = Math.round(100 * ok.length / r.length);
+      var estimado = Math.round(EX.length * ok.length / r.length);
+      $("cxResultado").hidden = false;
+      $("placar").innerHTML =
+        "<div><b>" + pc + "%</b><span>dos exercícios têm GIF (amostra de " + r.length + ")</span></div>" +
+        "<div><b>~" + estimado.toLocaleString("pt-BR") + "</b><span>de " + EX.length.toLocaleString("pt-BR") + " no catálogo</span></div>";
+      $("grade").innerHTML = ok.slice(0, 12).map(function (x) {
+        return "<figure><img src='" + base + encodeURIComponent(slug(x.n, regra.padrao, regra.acento)) + "." + regra.ext +
+          "' alt=''><figcaption>" + x.n.replace(/</g, "&lt;") + "</figcaption></figure>";
+      }).join("");
+      $("conclusao").innerHTML = pc >= 50
+        ? "<p class='sub' style='margin-top:12px;'>Casou bem. Mande as três linhas abaixo pro Claude e ele liga isso no app.</p>"
+        : "<p class='sub' style='margin-top:12px;'><span class='aviso'>Casou só em parte.</span> Provavelmente os arquivos usam outro jeito de escrever o nome. Mande as linhas abaixo <b>e</b> 3 nomes de arquivo do bucket pro Claude.</p>";
+      var receita = 'bucket: "' + bucket + '"\npadrao: "' + regra.padrao + '"\nacento: ' + (regra.acento ? "true" : "false") + '\next: "' + regra.ext + '"\n\nacerto: ' + pc + "% (" + ok.length + " de " + r.length + ")";
+      $("receita").textContent = receita;
+      $("btnCopiar").onclick = function () {
+        navigator.clipboard.writeText(receita).then(function () { $("btnCopiar").textContent = "Copiado ✓"; },
+          function () { $("btnCopiar").textContent = "Selecione o texto acima e copie"; });
+      };
+      recado("");
+    });
+  }
+
+  // 3) tentativa de listar o bucket (só funciona se houver política de leitura)
+  $("btnListar").addEventListener("click", function () {
+    var bucket = $("bucket").value.trim();
+    if (!bucket) { recado("<span class='aviso'>Escreva o nome do bucket primeiro.</span>"); return; }
+    if (!window.supabase || !cfg.url) { recado("<span class='ruim'>Sem conexão com a nuvem.</span>"); return; }
+    var bt = this; bt.disabled = true;
+    recado("Listando…");
+    var sb = window.supabase.createClient(cfg.url, cfg.anonKey);
+    sb.storage.from(bucket).list("", { limit: 20 }).then(function (r) {
+      bt.disabled = false;
+      if (r.error) { recado("<span class='aviso'>Não deu pra listar:</span> " + r.error.message + "<br>Sem problema — use o botão de cima com o nome de um arquivo."); return; }
+      var nomes = (r.data || []).map(function (x) { return x.name; }).filter(function (n) { return n && n !== ".emptyFolderPlaceholder"; });
+      if (!nomes.length) { recado("<span class='aviso'>O bucket respondeu, mas veio vazio.</span> Os arquivos podem estar dentro de uma pasta."); return; }
+      recado("<b>Primeiros arquivos do bucket:</b><pre>" + nomes.join("\n").replace(/</g, "&lt;") + "</pre>" +
+        "Copie um desses nomes pro campo de cima e toque em <b>Descobrir o padrão</b>.");
+      if (!$("amostra").value) $("amostra").value = nomes[0];
+    }, function (e) { bt.disabled = false; recado("<span class='ruim'>Falhou: " + (e && e.message) + "</span>"); });
+  });
+
+  window.__gifsTool = { slug: slug, padraoDaAmostra: padraoDaAmostra, baseDe: baseDe }; // testes
+})();
+</script>
+</body>
+</html>
