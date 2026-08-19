@@ -1092,7 +1092,7 @@ async function abaPt(p, a) {
     window.__relPT();
   });
   const relAl = await p.evaluate(() => document.getElementById("relAlertas").textContent);
-  ok(/Maria Sumida/.test(relAl) && /14 dias/.test(relAl), "alerta 👻 de aluna sumida (14+ dias)");
+  ok(/Maria Sumida/.test(relAl) && /Sumido há 14\+ dias/.test(relAl), "alerta 👻 de aluna sumida (14+ dias), no grupo certo");
   ok(/ficha de treino/.test(relAl), "alerta 📋 de aluna sem ficha montada");
   const resumo2 = await p.evaluate(() => document.getElementById("relResumo").textContent);
   ok(/350/.test(resumo2), "falta receber recalcula com a aluna nova (R$ 350)");
@@ -1204,6 +1204,53 @@ async function abaPt(p, a) {
     await p.waitForTimeout(250);
     ok(await p.evaluate(() => !document.getElementById("vTreinos").hidden && document.getElementById("tAluno").value === "axPar"),
       "botão do alerta abre Treinos já com o aluno escolhido");
+
+    // ---- alertas agrupados: um paredão de linhas iguais vira bloco por assunto ----
+    await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      // 12 alunos sem ficha nenhuma: antes virava 12 linhas soltas, uma embaixo da outra
+      for (let i = 0; i < 12; i++) st.alunos.push({ id: "agru" + i, nome: "Agrupado " + (i + 1), ativo: true, desde: "2026-01-05", valor: 100, modo: "mes" });
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    });
+    await p.reload();
+    await p.waitForTimeout(700);
+    const gr = await p.evaluate(() => {
+      const el = document.getElementById("relAlertas");
+      const linhas = (bl) => [...bl.children].filter((c) => c.tagName === "DIV" && /border-left/.test(c.getAttribute("style") || ""));
+      const grupos = [...el.querySelectorAll("[data-algrupo]")];
+      const bloco = grupos.find((g) => /SEM FICHA DE TREINO/i.test(g.textContent));
+      return {
+        grupos: grupos.length,
+        cabecalho: el.firstElementChild.textContent,
+        contagem: bloco ? /(\d+) alunos/.exec(bloco.textContent)[1] : "",
+        visiveis: bloco ? linhas(bloco).filter((c) => !c.hidden).length : -1,
+        escondidos: bloco ? bloco.querySelectorAll("[data-alresto][hidden]").length : -1,
+        botao: bloco ? (bloco.querySelector("[data-alabre]") || {}).textContent : "",
+      };
+    });
+    ok(gr.grupos > 1 && /alertas em \d+ assuntos/.test(gr.cabecalho), "os alertas do Início vêm agrupados por assunto, com o total no topo");
+    ok(+gr.contagem >= 12 && gr.visiveis === 3 && gr.escondidos >= 9,
+      "cada assunto mostra 3 alunos e guarda o resto (" + gr.contagem + " no grupo, " + gr.visiveis + " à mostra, " + gr.escondidos + " guardados)");
+    ok(/ver os outros \d+/.test(gr.botao || ""), "o botão diz quantos alunos ainda faltam ver");
+    await p.evaluate(() => {
+      const bl = [...document.querySelectorAll("#relAlertas [data-algrupo]")].find((g) => /SEM FICHA DE TREINO/i.test(g.textContent));
+      bl.querySelector("[data-alabre]").click();
+    });
+    await p.waitForTimeout(200);
+    const gr2 = await p.evaluate(() => {
+      const bl = [...document.querySelectorAll("#relAlertas [data-algrupo]")].find((g) => /SEM FICHA DE TREINO/i.test(g.textContent));
+      return { escondidos: bl.querySelectorAll("[data-alresto][hidden]").length, botao: bl.querySelectorAll("[data-alabre]").length,
+        aindaTemAcao: !!bl.querySelector("[data-altreino]") };
+    });
+    ok(gr2.escondidos === 0 && gr2.botao === 0 && gr2.aindaTemAcao,
+      "clicar em 'ver os outros' abre o resto do grupo sem redesenhar a tela (os botões de ação continuam)");
+    await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      st.alunos = st.alunos.filter((a) => String(a.id).indexOf("agru") !== 0);
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    });
+    await p.reload();
+    await p.waitForTimeout(600);
 
     // badges no menu inferior (chat não lido + pedidos de horário, nuvem mockada)
     const badges = await p.evaluate(async () => {
@@ -2840,7 +2887,7 @@ async function abaPt(p, a) {
     "montador de WOD tem 8 modelos prontos e o Cindy preenche o formulário inteiro");
   ok(/Zed Pontual/.test(lote7prof.saude) && /paga em dia/.test(lote7prof.saude) && /Zed Atrasador/.test(lote7prof.saude) && /atrasa/.test(lote7prof.saude) && /ainda não caiu este mês/.test(lote7prof.saude),
     "saúde da cobrança separa quem paga em dia de quem atrasa e soma o que falta cair");
-  ok(/pacote de sessões/.test(lote7prof.alertas) && /Avisar no zap/.test(lote7prof.alertas) && /wa\.me\/5521977776666/.test(lote7prof.alertas),
+  ok(/Pacote de sessões no fim/.test(lote7prof.alertas) && /Avisar no zap/.test(lote7prof.alertas) && /wa\.me\/5521977776666/.test(lote7prof.alertas),
     "alerta de pacote acabando ganha o botão de avisar o aluno no zap");
   // --- corrida e bike: prescrição no professor + cronômetro de pace no app ---
   const stSnapCr = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
