@@ -2196,6 +2196,49 @@ async function abaPt(p, a) {
         return { recado: recado, baixou: baixou };
       });
       ok(!semConta.baixou, "sem conta na nuvem, clicar em Publicar app NÃO baixa arquivo nenhum");
+      // e o painel sabe DIZER quem ainda pode estar com o arquivo velho no celular
+      const quem = await p.evaluate(async () => {
+        const S = window.MTStore, st = S.read("ptStudio", {});
+        st.alunos.push({ id: "qn1", nome: "Abriu Silva", ativo: true, desde: S.todayISO(), appTokenP: "t-abriu", metaSemana: 3 });
+        st.alunos.push({ id: "qn2", nome: "Sumiu Souza", ativo: true, desde: S.todayISO(), appTokenP: "t-sumiu", zap: "31977776666", metaSemana: 3 });
+        st.alunos.push({ id: "qn3", nome: "Cortado Costa", ativo: true, desde: S.todayISO(), appTokenP: "t-cort", appRevogadoEm: S.todayISO(), metaSemana: 3 });
+        S.write("ptStudio", st);
+        window.__cloudOrigQ = window.__cloudOrigQ || S.cloud;
+        let pedido = null;
+        S.cloud = () => ({ aid: "a1", client: { rpc: (nome, args) => {
+          pedido = { nome: nome, tokens: (args || {}).p_tokens || [] };
+          return Promise.resolve({ data: [
+            { token: "t-abriu", visto_em: "2026-08-18T10:00:00Z", publicado_em: "2026-08-10T10:00:00Z" },
+            { token: "t-sumiu", visto_em: null, publicado_em: "2026-08-10T10:00:00Z" },
+          ], error: null });
+        } } });
+        const r = await new Promise((res) => window.__quemNaoAbriu(res));
+        S.cloud = window.__cloudOrigQ;
+        return { r: r, pedido: pedido };
+      });
+      ok(quem.pedido && quem.pedido.nome === "app_alunos_vistos", "a lista pergunta pra nuvem quem abriu (app_alunos_vistos)");
+      ok(quem.pedido.tokens.indexOf("t-cort") < 0, "aluno com acesso já cortado fica fora da conferência");
+      const nomesQuem = quem.r.faltam.map((x) => x.nome);
+      ok(nomesQuem.indexOf("Sumiu Souza") >= 0 && nomesQuem.indexOf("Abriu Silva") < 0,
+        "só entra na lista quem NUNCA abriu pelo link (" + nomesQuem.join(", ") + ")");
+      ok((quem.r.faltam.find((x) => x.nome === "Sumiu Souza") || {}).zap === "31977776666",
+        "a lista traz o zap de quem falta, pra mandar o link na hora");
+      // sem o SQL novo publicado, o painel fala a verdade em vez de acusar todo mundo
+      const semSql = await p.evaluate(async () => {
+        const S = window.MTStore;
+        window.__cloudOrigQ2 = window.__cloudOrigQ2 || S.cloud;
+        S.cloud = () => ({ aid: "a1", client: { rpc: () => Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.app_alunos_vistos" } }) } });
+        const r = await new Promise((res) => window.__quemNaoAbriu(res));
+        S.cloud = window.__cloudOrigQ2;
+        return r;
+      });
+      ok(/Rode o SQL novo/.test(semSql.erro || ""),
+        "sem o SQL novo, o painel pede pra rodar o SQL em vez de listar todo mundo como pendente");
+      await p.evaluate(() => {
+        const S = window.MTStore, st = S.read("ptStudio", {});
+        st.alunos = st.alunos.filter((a) => String(a.id).indexOf("qn") !== 0);
+        S.write("ptStudio", st);
+      });
       ok(/conta na nuvem/.test(semConta.recado) && /grátis/.test(semConta.recado),
         "e o recado explica que a conta (grátis) é o que entrega o app — " + semConta.recado.slice(0, 60));
     }
