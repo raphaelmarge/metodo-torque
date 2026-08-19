@@ -1344,6 +1344,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
 
     <div class="card" style="margin-top: 14px;" data-cfgsec="conta">
+      <h2>Minha conta</h2>
+      <p class="muted" id="cfgContaQuem" style="margin: 4px 0 10px; font-size: 12.5px;"></p>
+      <div class="linha-flex" style="gap: 10px; flex-wrap: wrap;">
+        <button class="btn" id="cfgContaEntrar" hidden>Entrar na minha conta</button>
+        <button class="btn sec" id="cfgContaSenha" hidden>Trocar minha senha</button>
+        <button class="btn sec" id="cfgContaSair" hidden>Sair da conta neste aparelho</button>
+      </div>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Sair não apaga nada: os dados deste aparelho continuam aqui e os da nuvem também. Pra voltar, é só entrar de novo com o seu e-mail e senha.</p>
+    </div>
+
+    <div class="card" style="margin-top: 14px;" data-cfgsec="conta">
       <h2>Versão do sistema</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quando sai uma correção, o celular pode continuar rodando a versão antiga por um tempo. Confira o número aqui: se estiver atrasado, toque em atualizar. <b>Nenhum dado seu é apagado</b> — só o que estava guardado pra funcionar offline.</p>
       <div class="linha-flex" style="gap: 10px;">
@@ -5585,6 +5596,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
     $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
+    renderConta(); // o cartão Minha conta vive aqui também (entrar/senha/sair)
     renderAutos();
   }
   $("cfgSalva").addEventListener("click", function () {
@@ -9393,6 +9405,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("btnContaEquipe").hidden = !u.logado;
     $("btnContaSair").hidden = !u.logado;
     $("btnContaSenha").hidden = !u.logado;
+    // os mesmos botões dentro de Configurações → Cobrança e conta: é onde a
+    // maioria procura "sair" (do lado de "Excluir minha conta")
+    $("cfgContaEntrar").hidden = u.logado;
+    $("cfgContaSair").hidden = !u.logado;
+    $("cfgContaSenha").hidden = !u.logado;
+    $("cfgContaQuem").innerHTML = u.logado
+      ? "Conectado como <b>" + esc(u.email) + "</b>."
+      : "Você ainda não entrou numa conta — os dados estão só neste aparelho.";
     if (u.logado) {
       $("contaStatus").innerHTML = "✓ <b>Conectado como " + esc(u.email) + "</b> — seus dados sincronizam entre os seus aparelhos e ficam na SUA ilha, separados de qualquer outro personal ou academia.";
     } else {
@@ -9982,6 +10002,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("btnContaEquipe").addEventListener("click", contaP.criaColaborador);
   $("btnContaSair").addEventListener("click", contaP.sair);
   $("btnContaSenha").addEventListener("click", contaP.trocaSenha);
+  $("cfgContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
+  $("cfgContaSair").addEventListener("click", contaP.sair);
+  $("cfgContaSenha").addEventListener("click", contaP.trocaSenha);
 
   // exclusão de conta: exigida pela Play e pela Apple em todo app com login.
   // Com conta na nuvem apaga de lá também; sem conta, apaga o aparelho — que
