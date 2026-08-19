@@ -2159,6 +2159,46 @@ async function abaPt(p, a) {
     });
     ok(versao.temVersao && versao.velha && !versao.atual,
       "app publicado numa versão antiga do sistema entra na fila de republicar (e sai quando republica)");
+
+    /* O app é SÓ pelo link: o arquivo .html baixado virava foto congelada no
+     * celular do aluno — não recebia conserto, não recebia treino novo, não
+     * tocava notificação e não dava pra cortar o acesso. */
+    {
+      const semArquivo = await p.evaluate(() => {
+        const fonte = document.documentElement.innerHTML;
+        return {
+          semDownloadHtml: !/download = "app-|\.download\s*=\s*"app-/.test(fonte),
+          botaoPerfil: (document.getElementById("pfApp") || {}).textContent.trim(),
+          tituloPerfil: (document.getElementById("pfApp") || {}).title || "",
+        };
+      });
+      ok(semArquivo.semDownloadHtml, "o painel não baixa mais o arquivo .html do app em lugar nenhum");
+      ok(/Publicar app/.test(semArquivo.botaoPerfil) && !/Gerar/.test(semArquivo.botaoPerfil),
+        "o botão do perfil diz o que faz de verdade: Publicar app (" + semArquivo.botaoPerfil + ")");
+      ok(!/baixa o arquivo/.test(semArquivo.tituloPerfil), "e a dica do botão não promete arquivo nenhum");
+      // sem conta na nuvem o professor recebe um recado que ensina, não um arquivo
+      const semConta = await p.evaluate(async () => {
+        const S = window.MTStore, st = S.read("ptStudio", {});
+        window.__cloudOrigL = window.__cloudOrigL || S.cloud;
+        S.cloud = () => null;
+        window.__nuvemTickMs = 1;
+        let recado = "", baixou = false;
+        const alertOrig = window.alert;
+        window.alert = (m) => { recado = String(m); };
+        const criaOrig = document.createElement.bind(document);
+        document.createElement = (t) => { const el = criaOrig(t); if (t === "a") { const c = el.click.bind(el); el.click = () => { if (el.download) baixou = true; return c(); }; } return el; };
+        const b = document.querySelector('[data-app="' + st.alunos[0].id + '"]');
+        if (b) b.click();
+        await new Promise((r) => setTimeout(r, 400));
+        window.alert = alertOrig;
+        document.createElement = criaOrig;
+        S.cloud = window.__cloudOrigL;
+        return { recado: recado, baixou: baixou };
+      });
+      ok(!semConta.baixou, "sem conta na nuvem, clicar em Publicar app NÃO baixa arquivo nenhum");
+      ok(/conta na nuvem/.test(semConta.recado) && /grátis/.test(semConta.recado),
+        "e o recado explica que a conta (grátis) é o que entrega o app — " + semConta.recado.slice(0, 60));
+    }
     /* E a fila se resolve SOZINHA: abrir o painel já republica o que ficou
      * pra trás, em segundo plano, sem clique e sem notificar o aluno. */
     const auto = await p.evaluate(async () => {

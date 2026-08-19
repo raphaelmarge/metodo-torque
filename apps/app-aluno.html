@@ -56,13 +56,12 @@
           <p class="muted" style="font-size: 13px; margin-top: 10px;">O app junta tudo que o sistema sabe: plano, treino, avaliação, WOD do dia + histórico, grade da semana e o mural — na estrutura do app.</p>
         </div>
         <div class="card" id="cardEnvio" hidden>
-          <h2>2 · Envie pro aluno (uma vez só)</h2>
+          <h2>2 · Mande o link pro aluno (uma vez só)</h2>
+          <p style="margin-top: 10px; font-size: 13px;">O link do aluno: <b id="linkHospedado" style="word-break:break-all;color:var(--roxo);"></b> <button class="btn mini sec" id="btnCopiaLink" hidden>copiar</button></p>
           <div class="linha-flex" style="margin-top: 10px;">
-            <button class="btn" id="btnBaixar">Baixar app (HTML)</button>
             <a class="btn whats" id="btnZap" target="_blank" rel="noopener" hidden>Abrir WhatsApp do aluno</a>
           </div>
-          <p class="muted" style="margin-top: 8px; font-size: 13px;">Baixe e anexe na conversa do WhatsApp. No celular, o aluno abre e usa "Adicionar à tela inicial" — vira um app. <strong>Com a nuvem ligada, esse envio é único:</strong> depois o app se atualiza sozinho.</p>
-          <p style="margin-top: 8px; font-size: 13px;"><b>Melhor ainda (recomendado):</b> mande só o LINK instalável — <b id="linkHospedado" style="word-break:break-all;color:var(--roxo);"></b> <button class="btn mini sec" id="btnCopiaLink" hidden>copiar</button><br><span class="muted" style="font-size:12px;">Pelo link, o app abre no navegador, instala na tela inicial e recebe <b>notificações push</b> (Android/desktop; iPhone só instalado, iOS 16.4+).</span></p>
+          <p class="muted" style="margin-top: 8px; font-size: 13px;">O aluno abre o link no celular e usa <b>Adicionar à tela inicial</b> — vira um app de verdade, com ícone. <strong>É uma vez só:</strong> daí em diante o app se atualiza sozinho e recebe <b>notificações push</b> (Android e computador; no iPhone, depois de instalado, iOS 16.4+).</p>
         </div>
         <div class="card">
           <h2>App conectado (atualiza sozinho)</h2>
@@ -1181,14 +1180,9 @@
   }
 
   $("btnGerar").onclick = gera;
-  $("btnBaixar").onclick = function () {
-    if (!htmlGerado) return;
-    var blob = new Blob([htmlGerado], { type: "text/html;charset=utf-8" });
-    var el = document.createElement("a");
-    el.href = URL.createObjectURL(blob);
-    el.download = "app-" + (alunoAtual ? alunoAtual.nome : "aluno").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
-    el.click();
-  };
+  /* Não existe mais "baixar o app": o arquivo .html virava uma foto congelada
+   * no celular do aluno — nunca recebia conserto nem treino novo, não tocava
+   * notificação e não dava pra cortar o acesso. A entrega é o link. */
   $("btnPublicar").onclick = function () { publicaTodos(false); };
   // publicação automática ao abrir a tela (a conexão da nuvem sobe assíncrona)
   setTimeout(function () { publicaTodos(true); }, 2500);
