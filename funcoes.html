@@ -51,6 +51,8 @@
   <div class="card">
     <h2>3 · whatsapp <span class="tag on">Verify JWT: deixar ligado</span></h2>
     <p>Envia as mensagens automáticas do sistema (cobrança, lembretes) pelo WhatsApp oficial.</p>
+    <p><b style="color:#fff">Não precisa criar Secret nenhum.</b> Esta função é uma só e serve todos os profissionais: cada um liga o <b style="color:#fff">próprio</b> número em Configurações → WhatsApp (ID do número + token), e a Meta cobra as mensagens na conta de cada um. Antes de publicar, rode o <a href="sql.html">SQL</a> de novo — ela precisa da tabela <code>zap_config</code>.</p>
+    <p class="mini" style="color:#6e6a78;font-size:12.5px;">Só se você quiser emprestar o SEU número pra quem ainda não ligou o dele (plano de entrada ou demonstração): crie os Secrets <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code> e <code>WHATSAPP_COMPARTILHADO</code> com o valor <code>sim</code>. Sem isso, quem não configurou simplesmente não envia — e a conta não cai no seu bolso.</p>
     <button class="btnx" data-copia="whatsapp">Copiar o código (whatsapp)</button>
     <div class="status" data-st="whatsapp"></div>
   </div>

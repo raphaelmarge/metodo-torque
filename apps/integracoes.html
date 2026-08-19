@@ -99,9 +99,10 @@
       <ol>
         <li>Entre em <strong>developers.facebook.com</strong> → Meus apps → <strong>Criar app</strong> (tipo Business) e adicione o produto <strong>WhatsApp</strong>.</li>
         <li>Na tela <strong>API Setup</strong> a Meta te dá um número de teste na hora (dá pra cadastrar até 5 números receptores pra testar hoje mesmo). Para usar o número da academia em produção, é preciso <strong>verificar a empresa</strong> no Business Manager e migrar/registrar o número (ele não pode estar ativo no app comum do WhatsApp).</li>
-        <li>Copie o <strong>Phone number ID</strong> e o <strong>token</strong> (para produção, gere um token permanente em Business Settings → System Users). <em>Não me mande o token — ele vai só no Supabase.</em></li>
-        <li>No <strong>Supabase</strong>: Edge Functions → nova função <code>whatsapp</code> → clique em <strong>Copiar código da função</strong> acima, cole e Deploy. Em <strong>Secrets</strong>: <code>WHATSAPP_TOKEN</code> e <code>WHATSAPP_PHONE_ID</code>.</li>
-        <li>Cole a URL da função acima, <strong>Testar conexão</strong> e mande um <strong>teste</strong> pro seu celular. ✅</li>
+        <li>Copie o <strong>Phone number ID</strong> e o <strong>token</strong> (para produção, gere um token permanente em Business Settings → System Users).</li>
+        <li>Cole os dois nos campos aqui em cima e clique em <strong>Ligar meu número</strong>. <em>Não precisa criar nada no Supabase — o servidor já é do sistema. O token fica guardado do lado de lá e não volta pra esta tela.</em></li>
+        <li><strong>Testar conexão</strong> e mandar um <strong>teste</strong> pro seu celular. ✅</li>
+        <li>As mensagens são cobradas pela Meta <strong>na conta desta academia</strong> — responder o aluno dentro de 24h é grátis; template fora da janela custa centavos por mensagem.</li>
         <li>No <strong>WhatsApp Manager → Message templates</strong>, crie o template <code>cobranca_mensalidade</code> (pt_BR) com o corpo: <em>"Oi {{1}}! Sua mensalidade de {{2}} está em aberto. Qualquer dúvida é só responder por aqui. 💜"</em> — quando aprovar, informe o nome no campo acima. Com ele, a cobrança chega mesmo fora da janela de 24h.</li>
       </ol>
     </details>
