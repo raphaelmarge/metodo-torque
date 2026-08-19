@@ -1818,5 +1818,77 @@ self.MT_RECEITAS = [
    "Sirva gelado."
   ],
   "dica": "Sobremesa amazônica com 9 g de proteína por porção — mata a vontade de doce à noite sem estourar a dieta."
+ },
+ {
+  "id": "rc82",
+  "n": "Moqueca de peixe branco light",
+  "cat": "Almoço e jantar",
+  "tempo": 35,
+  "rende": 4,
+  "k": 310,
+  "pt": 34,
+  "ing": [
+   "600 g de filé de peixe branco (robalo, pescada ou tilápia) em postas",
+   "200 ml de leite de coco light",
+   "2 tomates em rodelas",
+   "1 cebola em rodelas",
+   "1 pimentão amarelo em tiras",
+   "1 col. sopa de azeite de dendê",
+   "Suco de 1 limão, coentro, sal e pimenta-do-reino"
+  ],
+  "modo": [
+   "Tempere o peixe com o limão, sal e pimenta e deixe descansar 15 minutos na geladeira.",
+   "Numa panela larga, faça camadas: cebola, tomate, pimentão e as postas de peixe por cima.",
+   "Regue com o leite de coco e o dendê, tampe e cozinhe em fogo baixo por 20 minutos sem mexer.",
+   "Finalize com coentro picado e sirva com arroz e uma colher do caldo."
+  ],
+  "dica": "A moqueca tradicional leva 400 ml de leite de coco integral; com o light e uma colher só de dendê ela cai pra 310 kcal e mantém 34 g de proteína por porção."
+ },
+ {
+  "id": "rc83",
+  "n": "Escondidinho de jaca verde com purê de macaxeira",
+  "cat": "Almoço e jantar",
+  "tempo": 45,
+  "rende": 4,
+  "k": 380,
+  "pt": 16,
+  "ing": [
+   "500 g de jaca verde cozida e desfiada",
+   "600 g de macaxeira cozida",
+   "200 ml de leite vegetal sem açúcar",
+   "100 g de proteína texturizada de soja hidratada",
+   "1 cebola e 3 dentes de alho picados",
+   "1 col. sopa de azeite, colorau, cominho, sal e cheiro-verde"
+  ],
+  "modo": [
+   "Refogue a cebola e o alho no azeite, junte a jaca desfiada e a soja hidratada e tempere com colorau e cominho.",
+   "Cozinhe por 10 minutos mexendo, acertando o sal, até ficar bem sequinho como carne de panela.",
+   "Amasse a macaxeira ainda quente com o leite vegetal até virar um purê liso.",
+   "Monte num refratário: recheio embaixo, purê por cima, e leve ao forno a 200 graus por 15 minutos pra dourar."
+  ],
+  "dica": "Versão 100% vegetal do escondidinho nordestino: a jaca dá a textura da carne desfiada e a soja entra pra fechar 16 g de proteína por porção."
+ },
+ {
+  "id": "rc84",
+  "n": "Creme gelado de açaí com whey e castanha",
+  "cat": "Pré-treino",
+  "tempo": 5,
+  "rende": 2,
+  "k": 290,
+  "pt": 24,
+  "ing": [
+   "200 g de polpa de açaí congelada sem açúcar",
+   "1 banana congelada em rodelas",
+   "30 g de whey protein sabor baunilha",
+   "100 ml de leite desnatado ou bebida vegetal",
+   "15 g de castanha-do-pará picada"
+  ],
+  "modo": [
+   "Bata no liquidificador ou processador a polpa de açaí, a banana congelada, o whey e o leite.",
+   "Use o mínimo de líquido possível e vá empurrando com uma espátula até virar um creme grosso de sorvete.",
+   "Sirva na hora em duas taças e finalize com a castanha-do-pará picada.",
+   "Se quiser mais firme, leve ao congelador por 20 minutos antes de servir."
+  ],
+  "dica": "Açaí de verdade é fruta, não sobremesa: sem xarope de guaraná ele fecha 290 kcal com 24 g de proteína — pré-treino de fim de tarde que ainda refresca."
  }
 ];
