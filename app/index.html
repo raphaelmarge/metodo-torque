@@ -101,40 +101,83 @@
   function cabecalhos() {
     return { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" };
   }
-  function semResposta() {
+  /* Dizer a VERDADE quando não abre.
+   *
+   * Antes qualquer tropeço virava "Sem internet agora" — inclusive com o celular
+   * no 5G. Aí o aluno reclamava do celular, o professor reclamava do aluno, e
+   * ninguém olhava pro lugar certo. Agora cada motivo tem o seu recado, e os
+   * detalhes técnicos ficam a um toque de distância. */
+  var pista = "";
+  function anota(txt) { pista = String(txt || "").slice(0, 300); }
+  function semResposta(motivo) {
     var cop = copiaLocal();
-    if (cop) { abre(cop); return; }
-    recado("Sem internet agora — tenta de novo em instantes.");
+    if (cop) { abre(cop); return; }   // tem cópia no aparelho: abre e pronto
+    var offline = !navigator.onLine;
+    var msg, dica;
+    if (motivo === "rede" || offline) {
+      msg = "Sem internet agora — tenta de novo em instantes.";
+      dica = "O app funciona sem internet depois que você abrir ele uma vez.";
+    } else if (motivo === "vazio") {
+      msg = "Este link ainda não tem app publicado.";
+      dica = "Peça pro seu personal abrir o sistema e tocar em <b>Publicar app</b> no seu perfil.";
+    } else {
+      msg = "O sistema da sua academia não respondeu.";
+      dica = "Não é o seu celular. Mostra esta tela pro seu personal — ele resolve pelo painel.";
+    }
+    document.querySelector(".box").innerHTML =
+      '<div class="marca">TORQUE</div><p>' + msg + "</p>" +
+      '<p style="font-size:13px;">' + dica + "</p>" +
+      '<p><button id="tentar" style="background:#7c3aed;color:#fff;border:0;border-radius:99px;padding:13px 26px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;">Tentar de novo</button></p>' +
+      '<p><button id="verdet" style="background:none;border:0;color:#8a8695;font-family:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer;">Ver detalhes</button></p>' +
+      '<pre id="det" hidden style="text-align:left;font-size:11px;color:#8a8695;background:rgba(255,255,255,.04);padding:10px;border-radius:10px;white-space:pre-wrap;word-break:break-word;"></pre>';
+    document.getElementById("tentar").onclick = function () { location.reload(); };
+    document.getElementById("verdet").onclick = function () {
+      var d = document.getElementById("det");
+      d.hidden = !d.hidden;
+      d.textContent = "motivo: " + (motivo || "?") + "\nonline: " + navigator.onLine +
+        "\nnuvem: " + (cfg.url || "(não configurada)") + "\ntoken: " + (t ? t.slice(0, 6) + "…" : "(vazio)") +
+        "\nversao: " + (self.MT_VERSAO || "?") + "\n" + pista;
+    };
   }
   // caminho antigo: vale pra quem ainda não rodou o SQL novo
   function buscaAntiga() {
     return fetch(cfg.url + "/rest/v1/rpc/app_aluno_busca", {
       method: "POST", headers: cabecalhos(), body: JSON.stringify({ t: t }),
-    }).then(function (r) { return r.json(); }).then(function (d) {
+    }).then(function (r) {
+      // o PGRST202 do app_aluno_estado é ESPERADO em quem ainda não rodou o SQL
+      // novo — quem decide o recado é o que ESTA busca viu, não aquela
+      if (!r.ok) { anota("app_aluno_busca HTTP " + r.status); return { erro: 1 }; }
+      return r.json().catch(function () { anota("app_aluno_busca devolveu algo que não é JSON"); return { erro: 1 }; });
+    }).then(function (d) {
+      if (d && d.erro) { semResposta("servidor"); return; }
       var html = montaDoPacote(d);
       if (html) { guarda(d); abre(html); return; }
-      // aqui NÃO dá pra saber se foi apagado ou se é a versão velha da função:
-      // na dúvida, mantém o que o aluno já tem
-      semResposta();
-    }).catch(semResposta);
+      if (d && d.code) { anota("app_aluno_busca: " + d.code + " " + (d.message || "")); semResposta("servidor"); return; }
+      // JSON válido e vazio: o servidor está de pé, este token é que não tem app
+      semResposta(d === null || d === undefined ? "vazio" : "servidor");
+    }).catch(function (e) { anota("app_aluno_busca falhou: " + (e && e.message)); semResposta("rede"); });
   }
 
   fetch(cfg.url + "/rest/v1/rpc/app_aluno_estado", {
     method: "POST", headers: cabecalhos(), body: JSON.stringify({ t: t }),
-  }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (d) {
+  }).then(function (r) {
+    if (!r.ok) anota("app_aluno_estado HTTP " + r.status);
+    return r.json().catch(function () { return null; });
+  }).then(function (d) {
     // envelope de verdade? então o servidor falou, e a palavra dele vale
     if (d && typeof d === "object" && typeof d.ok === "boolean") {
       if (!d.ok) { acessoAcabou(d.motivo); return; }
       var html = montaDoPacote({ dados: d.dados });
-      if (!html) { semResposta(); return; }
+      if (!html) { anota("o pacote veio sem dados que montem o app"); semResposta("servidor"); return; }
       guarda({ dados: d.dados, stamp: (d.dados && d.dados.stamp) || "" });
       try { localStorage.setItem("tq_app_visto", new Date().toISOString()); } catch (e) {}
       abre(html);
       return;
     }
+    if (d && d.code) anota("app_aluno_estado: " + d.code + " " + (d.message || ""));
     // função ainda não publicada (ou resposta estranha): cai no caminho antigo
     return buscaAntiga();
-  }).catch(function () { return buscaAntiga(); });
+  }).catch(function (e) { anota("app_aluno_estado falhou: " + (e && e.message)); return buscaAntiga(); });
   // guarda o esqueleto (esta página + o construtor) pro app abrir sem internet
   try {
     if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("app-sw.js");

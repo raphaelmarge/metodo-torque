@@ -163,6 +163,42 @@ const PACOTE = JSON.parse(fs.readFileSync(path.join(__dirname, "pacote-exemplo.j
       "a faxina devolve contagem, nunca token");
   }
 
+  /* O carregador tem que dizer a VERDADE quando não abre. Antes qualquer
+   * tropeço virava "Sem internet agora" — inclusive com o celular no 5G, e aí
+   * o professor procurava o problema no lugar errado. */
+  console.log("O recado de erro fala a verdade:");
+  {
+    async function semCopia(resposta) {
+      const ctx = await b.newContext({ viewport: { width: 430, height: 900 } });
+      const p = await ctx.newPage();
+      await p.route("**/rest/v1/rpc/app_aluno_estado", resposta.estado);
+      await p.route("**/rest/v1/rpc/app_aluno_busca", resposta.busca);
+      await p.goto(BASE + "/app/?t=tok-sem-copia");
+      await p.waitForTimeout(900);
+      const fim = await p.evaluate(() => {
+        const d = document.getElementById("verdet");
+        if (d) d.click();
+        // só o recado visível: body.textContent traria o código do <script> junto
+        return { texto: (document.querySelector(".box").innerText || "").replace(/\s+/g, " ").trim(),
+          temTentar: !!document.getElementById("tentar"),
+          detalhe: (document.getElementById("det") || {}).textContent || "" };
+      });
+      await ctx.close();
+      return fim;
+    }
+    const vazio = await semCopia({ estado: json({ code: "PGRST202" }), busca: json(null) });
+    t(/ainda não tem app publicado/i.test(vazio.texto) && !/sem internet/i.test(vazio.texto),
+      "token sem app publicado: diz que falta PUBLICAR, não que falta internet");
+    t(/Publicar app/.test(vazio.texto), "e ensina o caminho: pedir pro personal publicar");
+    const fora = await semCopia({ estado: (r) => r.abort(), busca: (r) => r.abort() });
+    t(/sem internet/i.test(fora.texto), "rede caída de verdade continua dizendo que é a internet");
+    const quebrado = await semCopia({ estado: json({ code: "PGRST202" }), busca: (r) => r.fulfill({ status: 500, contentType: "application/json", body: "{}" }) });
+    t(/não respondeu/i.test(quebrado.texto) && /Não é o seu celular/i.test(quebrado.texto),
+      "servidor fora do ar: avisa que o problema NÃO é o celular do aluno");
+    t(quebrado.temTentar && /HTTP 500/.test(quebrado.detalhe),
+      "tem botão de tentar de novo e os detalhes técnicos pro professor (" + quebrado.detalhe.replace(/\n/g, " ").slice(0, 60) + ")");
+  }
+
   console.log("");
   console.log(falhas ? "💥 " + falhas + " FALHA(S)" : "🏁 TUDO PASSOU");
   console.log("Resultado: " + ok + " ok, " + falhas + " falhas");
