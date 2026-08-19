@@ -5462,22 +5462,11 @@ async function abaPt(p, a) {
       ok(gav.temGuiado && gav.temEx >= 1, "aquecimento, treino guiado e exercícios ficam dentro da gaveta da ficha");
     }
     await pA.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
-    const rA = await pA.evaluate(() => {
-      const bt = document.querySelector(".animbtn");
-      if (!bt) return null;
-      bt.click();
-      const bx = bt.parentNode.querySelector(".animbox");
-      const svg = bx && bx.querySelector("svg");
-      return { pad: bt.dataset.a, rot: bt.textContent, linhas: svg ? svg.querySelectorAll("polyline").length : 0 };
-    });
-    ok(rA && rA.linhas === 5 && /Fechar/.test(rA.rot), "app do aluno: 'Ver como faz' abre a animação do movimento (" + (rA ? rA.pad : "?") + ")");
-    ok(externas.length === 0, "a demonstração não busca NADA na internet (offline de verdade)" + (externas.length ? " — " + externas[0] : ""));
-    const fechouA = await pA.evaluate(() => {
-      const bt = document.querySelector(".animbtn");
-      bt.click();
-      return !bt.parentNode.querySelector(".animbox").firstChild && /Ver como faz/.test(bt.textContent);
-    });
-    ok(fechouA, "tocar de novo fecha e volta o rótulo 'Ver como faz'");
+    // a demonstração de bonequinho saiu do app na v465 — aqui fica a trava de que
+    // o demo regenerado também não traz nenhum resto dela
+    ok(await pA.evaluate(() => !document.querySelector(".animbtn, .animbox")),
+      "o demo do aluno não tem resto da demonstração de bonequinho");
+    ok(externas.length === 0, "o demo não busca NADA na internet (offline de verdade)" + (externas.length ? " — " + externas[0] : ""));
 
     // 🆙 no demo, o feed mostra o nível de cada autor e as conquistas do
     // professor aparecem junto das padrão
