@@ -1311,18 +1311,23 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="zap">
       <h2>WhatsApp oficial (API da Meta)</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Com ele o sistema <b>manda as mensagens sozinho</b>, sem abrir o WhatsApp no celular. É opcional: sem configurar, tudo continua como está hoje. O passo a passo pra ativar na Meta está em <a href="meta.html" target="_blank" rel="noopener">torqueon.com.br/meta.html</a>.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Com ele o sistema <b>manda as mensagens sozinho</b>, sem abrir o WhatsApp no celular. É opcional: sem configurar, tudo continua como está hoje. Você liga o <b>seu</b> número aqui — nada de mexer em servidor. O passo a passo pra pegar esses dois dados na Meta está em <a href="meta.html" target="_blank" rel="noopener">torqueon.com.br/meta.html</a>.</p>
       <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
-        <label style="font-size: 12.5px; flex: 1; min-width: 260px;">URL da função (Supabase → Edge Functions → whatsapp)
-          <input id="cfgZapUrl" placeholder="https://seu-projeto.supabase.co/functions/v1/whatsapp" style="display:block; width: 100%; margin-top: 4px;"></label>
+        <label style="font-size: 12.5px; min-width: 200px;">ID do número (Phone number ID)
+          <input id="cfgZapFone" placeholder="123456789012345" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
+        <label style="font-size: 12.5px; flex: 1; min-width: 240px;">Token permanente
+          <input id="cfgZapToken" type="password" autocomplete="off" placeholder="cole aqui o token da Meta" style="display:block; width: 100%; margin-top: 4px;"></label>
         <label style="font-size: 12.5px; min-width: 200px;">Template aprovado (opcional)
           <input id="cfgZapTpl" placeholder="cobranca_mensalidade" style="display:block; width: 100%; margin-top: 4px;"></label>
       </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O token fica guardado na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b> — por isso o campo aparece vazio depois de salvo. Deixe vazio pra manter o que já está lá.</p>
       <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 10px;">
         <label style="font-size: 12.5px; min-width: 200px;">Mandar um teste pra (DDI+DDD+número)
           <input id="cfgZapNum" placeholder="5531999990000" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
+        <button class="btn" id="cfgZapSalva">Ligar meu número</button>
         <button class="btn sec" id="cfgZapTesta">Testar conexão</button>
         <button class="btn sec" id="cfgZapEnvia">Enviar teste</button>
+        <button class="btn sec" id="cfgZapDesliga" hidden>Desligar</button>
       </div>
       <div id="cfgZapStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
       <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Regra da Meta: texto livre só chega até <b>24h</b> depois da última mensagem do aluno. Fora dessa janela é preciso um <b>template aprovado</b> — quando o envio automático esbarrar nisso, a fila avisa e devolve o botão manual.</p>
@@ -5589,9 +5594,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgAtraso").value = String(atrasoTol(st));
     $("cfgZapFila").checked = !(st.config || {}).zapFilaOff;
     var zapi = (st.config || {}).zapApi || {};
-    $("cfgZapUrl").value = zapi.url || "";
+    $("cfgZapFone").value = zapi.phoneId || "";
     $("cfgZapTpl").value = zapi.template || "";
+    $("cfgZapToken").value = "";
+    $("cfgZapDesliga").hidden = !zapi.ligado;
     pintaZapApiStatus();
+    leZapConfigNuvem(); // confere com a nuvem (o token nunca vem junto)
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
@@ -5604,10 +5612,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config = st.config || {};
     st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
     st.config.zapFilaOff = $("cfgZapFila").checked ? 0 : 1;
-    st.config.zapApi = {
-      url: String($("cfgZapUrl").value || "").trim().replace(/\/+$/, ""),
-      template: String($("cfgZapTpl").value || "").trim(),
-    };
+    // a integração do WhatsApp tem botão próprio (Ligar meu número): ela vai pra
+    // nuvem, não pro estudio local
     // os textos das mensagens fixas são salvos pelo editor da lista (não têm mais campo aqui)
     var am = {};
     CFG_VE.forEach(function (par) { if (!$(par[0]).checked) am[par[1]] = false; });
@@ -5639,11 +5645,48 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * painel manda sozinho — a chave do WhatsApp fica só no Supabase, nunca aqui.
    */
   function zapApiCfg(st) { return ((st || load()).config || {}).zapApi || {}; }
-  function zapApiOn(st) { return !!String(zapApiCfg(st).url || "").trim(); }
+  // espelho local só pra saber SE está ligado (o desenho da fila é síncrono);
+  // a credencial de verdade mora na nuvem, em zap_config, separada por academia
+  function zapApiOn(st) { return !!zapApiCfg(st).ligado; }
+  function zapApiUrl() {
+    var c = self.MT_CLOUD || {};
+    return c.url ? String(c.url).replace(/\/+$/, "") + "/functions/v1/whatsapp" : "";
+  }
+  // guarda no estudio o retrato do que a nuvem respondeu (nunca o token)
+  function guardaZapEspelho(d) {
+    var st = load();
+    st.config = st.config || {};
+    st.config.zapApi = d && d.tem_token
+      ? { ligado: true, phoneId: String(d.phone_id || ""), template: String(d.template || "") }
+      : { ligado: false, phoneId: String((d && d.phone_id) || ""), template: String((d && d.template) || "") };
+    save(st);
+  }
+  function rpcZap(nome, args) {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta (card Sua ilha) pra ligar o WhatsApp oficial." });
+    return nuvem.client.rpc(nome, args || {}).then(function (r) {
+      if (r && r.error) return { erro: r.error.message };
+      return (r && r.data) || {};
+    }).catch(function () { return { erro: "Não consegui falar com a nuvem agora." }; });
+  }
+  var zapLendo = false;
+  function leZapConfigNuvem() {
+    if (zapLendo || !(S.cloud && S.cloud())) return Promise.resolve();
+    zapLendo = true;
+    return rpcZap("zap_config_ve").then(function (d) {
+      zapLendo = false;
+      if (d && d.erro) return;
+      guardaZapEspelho(d);
+      if ($("cfgZapFone") && document.activeElement !== $("cfgZapFone")) $("cfgZapFone").value = d.phone_id || "";
+      if ($("cfgZapTpl") && document.activeElement !== $("cfgZapTpl")) $("cfgZapTpl").value = d.template || "";
+      if ($("cfgZapDesliga")) $("cfgZapDesliga").hidden = !d.tem_token;
+      pintaZapApiStatus();
+    });
+  }
   // a função exige usuário LOGADO: a anonKey tem papel "anon" e leva 401 sempre
   function chamaZapApi(payload) {
-    var url = String(zapApiCfg().url || "").trim();
-    if (!url) return Promise.resolve({ erro: "Configure a URL da função em Configurações → WhatsApp." });
+    var url = zapApiUrl();
+    if (!url) return Promise.resolve({ erro: "Este aparelho está sem a configuração da nuvem — recarregue a página." });
     var heads = { "Content-Type": "application/json" };
     if (self.MT_CLOUD && self.MT_CLOUD.anonKey) heads.apikey = self.MT_CLOUD.anonKey;
     return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
@@ -5665,26 +5708,49 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var el = $("cfgZapStatus");
     if (!el) return;
     if (msg) { el.innerHTML = msg; return; }
+    var c = zapApiCfg();
     el.innerHTML = zapApiOn()
-      ? '<span class="tag ok">LIGADO</span> a fila do Início manda sozinha.'
+      ? '<span class="tag ok">LIGADO</span> número ' + esc(c.phoneId || "") + " — a fila do Início manda sozinha."
       : '<span class="tag neutro">DESLIGADO</span> as mensagens saem do seu WhatsApp, com um toque.';
   }
+  // Ligar meu número: as credenciais vão pra nuvem (separadas por academia).
+  // O token some da tela na hora — daqui pra frente ele só existe do lado do servidor.
+  if ($("cfgZapSalva")) $("cfgZapSalva").addEventListener("click", function () {
+    var fone = String($("cfgZapFone").value || "").replace(/\D/g, "");
+    var tok = String($("cfgZapToken").value || "").trim();
+    var tpl = String($("cfgZapTpl").value || "").trim();
+    if (!fone) { pintaZapApiStatus("Cole o ID do número (Phone number ID) que a Meta te deu."); return; }
+    if (!tok && !zapApiOn()) { pintaZapApiStatus("Cole o token permanente da Meta na primeira vez."); return; }
+    pintaZapApiStatus("Guardando…");
+    rpcZap("zap_config_salva", { p_phone_id: fone, p_token: tok, p_template: tpl }).then(function (d) {
+      if (d && d.erro) { pintaZapApiStatus("Não deu: " + esc(d.erro)); return; }
+      $("cfgZapToken").value = "";
+      return leZapConfigNuvem().then(function () {
+        pintaZapApiStatus('<span class="tag ok">GUARDADO</span> agora toque em Testar conexão.');
+        render();
+      });
+    });
+  });
+  if ($("cfgZapDesliga")) $("cfgZapDesliga").addEventListener("click", function () {
+    if (!confirm("Desligar o WhatsApp oficial? As mensagens voltam a sair do seu aplicativo, com um toque.")) return;
+    rpcZap("zap_config_apaga").then(function (d) {
+      if (d && d.erro) { pintaZapApiStatus("Não deu: " + esc(d.erro)); return; }
+      return leZapConfigNuvem().then(function () {
+        pintaZapApiStatus("Desligado. A fila voltou pro modo manual.");
+        render();
+      });
+    });
+  });
   if ($("cfgZapTesta")) $("cfgZapTesta").addEventListener("click", function () {
-    var url = String($("cfgZapUrl").value || "").trim().replace(/\/+$/, "");
-    if (!url) { pintaZapApiStatus("Cole a URL da função primeiro."); return; }
-    // testa o que está NA TELA, mesmo antes de salvar
-    var st = load(); st.config = st.config || {};
-    st.config.zapApi = { url: url, template: String($("cfgZapTpl").value || "").trim() };
-    save(st);
     pintaZapApiStatus("Testando…");
     chamaZapApi({ acao: "ping" }).then(function (d) {
       if (d && d.erro) { pintaZapApiStatus("Não deu: " + esc(d.erro)); return; }
       if (d && d.ok && d.tokenConfigurado && d.foneConfigurado) {
-        pintaZapApiStatus('<span class="tag ok">CONEXÃO OK</span> token e número configurados no Supabase.');
+        pintaZapApiStatus('<span class="tag ok">CONEXÃO OK</span> ' +
+          (d.numeroProprio ? "usando o número que você ligou aqui." : "usando o número padrão do sistema."));
         return;
       }
-      pintaZapApiStatus("A função respondeu, mas faltam os segredos no Supabase: " +
-        ((d && d.tokenConfigurado) ? "" : "WHATSAPP_TOKEN ") + ((d && d.foneConfigurado) ? "" : "WHATSAPP_PHONE_ID"));
+      pintaZapApiStatus("A função respondeu, mas não achou o número: toque em Ligar meu número e confira o ID e o token.");
     });
   });
   if ($("cfgZapEnvia")) $("cfgZapEnvia").addEventListener("click", function () {

@@ -2017,3 +2017,83 @@ as $$
 $$;
 
 grant execute on function public.minha_assinatura() to authenticated;
+
+-- ==================== WHATSAPP OFICIAL POR PROFISSIONAL (2026-08) ====================
+-- Cada personal/academia liga o PRÓPRIO número do WhatsApp sem tocar em GitHub
+-- nem em Supabase: ele cola o ID do número e o token na tela de Configurações e
+-- o sistema guarda AQUI, separado por academia. A função "whatsapp" (uma só,
+-- compartilhada por todo mundo) lê a credencial de quem está chamando.
+--
+-- O token nunca volta pro navegador: a tabela fica sem política de leitura e o
+-- painel só enxerga o que a RPC zap_config_ve devolve (se tem token, sim ou não).
+-- Bloco idempotente — pode rodar de novo.
+
+create table if not exists public.zap_config (
+  academia_id uuid primary key references public.academias (id) on delete cascade,
+  phone_id text not null default '',
+  token text not null default '',
+  template text not null default '',
+  atualizado timestamptz not null default now()
+);
+
+alter table public.zap_config enable row level security;
+-- de propósito SEM políticas: ninguém lê nem escreve direto pela API.
+-- Todo acesso passa pelas funções abaixo (ou pela service key, no servidor).
+
+-- salva a credencial da academia de quem está logado.
+-- token vazio = "não mexi nesse campo": mantém o que já estava guardado.
+create or replace function public.zap_config_salva(p_phone_id text, p_token text, p_template text)
+returns jsonb
+language plpgsql security definer
+set search_path = public
+as $$
+declare aid uuid;
+begin
+  select academia_id into aid from public.membros where user_id = auth.uid() limit 1;
+  if aid is null then
+    return jsonb_build_object('erro', 'Entre na sua conta primeiro.');
+  end if;
+  insert into public.zap_config (academia_id, phone_id, token, template, atualizado)
+  values (aid, coalesce(p_phone_id, ''), coalesce(p_token, ''), coalesce(p_template, ''), now())
+  on conflict (academia_id) do update
+    set phone_id = excluded.phone_id,
+        token = case when coalesce(excluded.token, '') = '' then zap_config.token else excluded.token end,
+        template = excluded.template,
+        atualizado = now();
+  return jsonb_build_object('ok', true);
+end
+$$;
+
+-- o painel só precisa saber se está configurado — o token NÃO volta nunca
+create or replace function public.zap_config_ve()
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select coalesce(
+    (select jsonb_build_object(
+              'phone_id', z.phone_id,
+              'template', z.template,
+              'tem_token', length(coalesce(z.token, '')) > 0,
+              'atualizado', z.atualizado)
+       from public.zap_config z
+      where z.academia_id in (select public.minhas_academias())
+      limit 1),
+    jsonb_build_object('phone_id', '', 'template', '', 'tem_token', false));
+$$;
+
+-- desligar: apaga a credencial desta academia (o número volta a ser manual)
+create or replace function public.zap_config_apaga()
+returns jsonb
+language plpgsql security definer
+set search_path = public
+as $$
+begin
+  delete from public.zap_config where academia_id in (select public.minhas_academias());
+  return jsonb_build_object('ok', true);
+end
+$$;
+
+grant execute on function public.zap_config_salva(text, text, text) to authenticated;
+grant execute on function public.zap_config_ve() to authenticated;
+grant execute on function public.zap_config_apaga() to authenticated;

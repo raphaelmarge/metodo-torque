@@ -33,6 +33,17 @@ entende `var()`. O `html` do pacote é só rede de segurança pra quem estiver c
 página `/app/` velha guardada — sai numa versão futura. `app/app-sw.js` guarda o
 esqueleto (rede primeiro, cache de reserva) pro app abrir sem internet.
 
+**WhatsApp oficial por profissional** (a partir da v471): a função `whatsapp` é
+UMA só, publicada pelo Raphael, e serve todo mundo. Cada personal/academia cola
+o próprio *Phone number ID* + token em Configurações → WhatsApp; isso vai pra
+`zap_config` (uma linha por academia) pelas RPCs `zap_config_salva` /
+`zap_config_ve` / `zap_config_apaga`. A tabela tem RLS **sem política nenhuma**:
+o token só é lido pela função, com a service key, e `zap_config_ve` devolve
+`tem_token` (booleano), nunca o token. Sem credencial própria, a função cai nos
+Secrets globais (instalação única). O painel guarda só um espelho local
+(`config.zapApi = {ligado, phoneId, template}`) porque o desenho da fila é
+síncrono — token nunca toca o localStorage.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
@@ -108,7 +119,8 @@ bash tests/run.sh   # 16 suítes — esperado: "suites com falha: 0"
 
 ## Estado atual e pendências do Raphael
 
-- Pendências dele no Supabase: **republicar a chat-envia** (sem ela a IA de
+- Pendências dele no Supabase: **rodar o SQL de novo** (bloco zap_config) e
+  **republicar a whatsapp**; **republicar a chat-envia** (sem ela a IA de
   treino e a IA de dieta não funcionam), publicar envia-email e push-envia
   (+ conta resend.com com domínio verificado, secrets RESEND_API_KEY/EMAIL_DE),
   conta Pagar.me e ativação Meta do WhatsApp/Instagram (funcoes.html).

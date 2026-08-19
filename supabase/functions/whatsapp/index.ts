@@ -4,6 +4,14 @@
 // vai para o site. Com ela o sistema ENVIA as mensagens sozinho (cobrança,
 // lembretes), sem precisar abrir o WhatsApp no celular.
 //
+// Cada profissional liga o PRÓPRIO número: ele cola o ID do número e o token
+// na tela de Configurações do TORQUE PERSONAL, o painel guarda na tabela
+// zap_config (separada por academia) e esta função lê a credencial de QUEM está
+// chamando. Ninguém precisa criar projeto no Supabase nem mexer no GitHub —
+// esta função é uma só, publicada por você, e serve todo mundo.
+// Se a academia não tiver credencial própria, cai nos Secrets globais
+// (WHATSAPP_TOKEN / WHATSAPP_PHONE_ID), que é o modo de instalação única.
+//
 // Como instalar (uma vez):
 //   1. developers.facebook.com → Criar app (tipo Business) → adicionar o
 //      produto WhatsApp. Na tela "API Setup" você já ganha um número de teste
@@ -45,14 +53,36 @@ function json(body: unknown, status = 200): Response {
 }
 
 
-// só usuário LOGADO (personal/academia) pode usar — a anon key pública não passa
-function usuarioLogado(req: Request): boolean {
+// só usuário LOGADO (personal/academia) pode usar — a anon key pública não passa.
+// devolve o id dele, que é por onde achamos a credencial da academia.
+function usuarioDo(req: Request): string {
   try {
     const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     const corpo = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return corpo.role === "authenticated" && !!corpo.sub;
+    return corpo.role === "authenticated" && corpo.sub ? String(corpo.sub) : "";
   } catch {
-    return false;
+    return "";
+  }
+}
+
+// credencial da academia de quem chamou (lida com a service key, no servidor)
+async function credencialDe(userId: string): Promise<{ token: string; phoneId: string; template: string } | null> {
+  const url = Deno.env.get("SUPABASE_URL") || "";
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!url || !key || !userId) return null;
+  const heads = { apikey: key, Authorization: "Bearer " + key };
+  try {
+    const rm = await fetch(url + "/rest/v1/membros?select=academia_id&limit=1&user_id=eq." + userId, { headers: heads });
+    const membros = rm.ok ? await rm.json() : [];
+    const aid = membros?.[0]?.academia_id;
+    if (!aid) return null;
+    const rc = await fetch(url + "/rest/v1/zap_config?select=phone_id,token,template&academia_id=eq." + aid, { headers: heads });
+    const linhas = rc.ok ? await rc.json() : [];
+    const c = linhas?.[0];
+    if (!c || !c.token || !c.phone_id) return null;
+    return { token: String(c.token), phoneId: String(c.phone_id), template: String(c.template || "") };
+  } catch {
+    return null;
   }
 }
 
@@ -60,7 +90,8 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ erro: "use POST" }, 405);
 
-  if (!usuarioLogado(req)) {
+  const userId = usuarioDo(req);
+  if (!userId) {
     return json({ erro: "Entre na sua conta do TORQUE ON para usar esta função (a chave pública não basta)." }, 401);
   }
 
@@ -71,14 +102,16 @@ Deno.serve(async (req: Request) => {
     return json({ erro: "JSON inválido" }, 400);
   }
 
-  const token = Deno.env.get("WHATSAPP_TOKEN") || "";
-  const phoneId = Deno.env.get("WHATSAPP_PHONE_ID") || "";
+  // a credencial do próprio profissional manda; sem ela, cai na instalação única
+  const propria = await credencialDe(userId);
+  const token = propria ? propria.token : (Deno.env.get("WHATSAPP_TOKEN") || "");
+  const phoneId = propria ? propria.phoneId : (Deno.env.get("WHATSAPP_PHONE_ID") || "");
 
   if (body.acao === "ping") {
-    return json({ ok: true, tokenConfigurado: !!token, foneConfigurado: !!phoneId });
+    return json({ ok: true, tokenConfigurado: !!token, foneConfigurado: !!phoneId, numeroProprio: !!propria });
   }
   if (!token || !phoneId) {
-    return json({ erro: "Configure WHATSAPP_TOKEN e WHATSAPP_PHONE_ID nos Secrets da função." }, 500);
+    return json({ erro: "Nenhum número do WhatsApp ligado nesta conta — cole o ID do número e o token em Configurações → WhatsApp." }, 400);
   }
 
   if (body.acao === "enviar") {
