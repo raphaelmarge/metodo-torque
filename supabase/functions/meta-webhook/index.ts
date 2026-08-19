@@ -12,12 +12,21 @@
 //      → cole este arquivo → Deploy. IMPORTANTE: desligue "Verify JWT"
 //      (a Meta chama esta URL sem login). Pela CLI:
 //        supabase functions deploy meta-webhook --no-verify-jwt
-//   3. Em Edge Functions → Secrets, adicione:
-//        META_VERIFY_TOKEN  = uma senha qualquer que você inventa (ex.: torque123)
-//        WHATSAPP_TOKEN     = token do WhatsApp Cloud API (mesmo da função "whatsapp")
-//        WHATSAPP_PHONE_ID  = Phone number ID do WhatsApp
-//        INSTAGRAM_TOKEN    = token de acesso da Página (com instagram_manage_messages)
+//   3. Em Edge Functions → Secrets, o único OBRIGATÓRIO é:
 //        ANTHROPIC_API_KEY  = chave da API da Anthropic (console.anthropic.com)
+//
+//      Cada profissional liga o número DELE no painel (Configurações → WhatsApp):
+//      ID do número, token, chave secreta do app e a senha do aperto de mão saem
+//      de lá e ficam em zap_config, uma linha por academia. A mensagem que chega
+//      traz o ID do número que a recebeu (metadata.phone_number_id), e é assim que
+//      esta função sabe de quem ela é — e responde PELO MESMO número.
+//
+//      Opcionais, só pra instalação de dono único (um número só, o seu):
+//        META_VERIFY_TOKEN  = senha do aperto de mão do SEU app
+//        META_APP_SECRET    = chave secreta do SEU app (confere a assinatura)
+//        WHATSAPP_TOKEN / WHATSAPP_PHONE_ID  = o seu número
+//        INSTAGRAM_TOKEN / INSTAGRAM_IG_ID   = a sua conta do Instagram
+//        ACADEMIA_DONO_ID   = id da SUA academia (sem ele, a função descobre sozinha)
 //   4. No painel da Meta (developers.facebook.com → seu app → Webhooks):
 //      - URL do callback:  https://SEU-PROJETO.supabase.co/functions/v1/meta-webhook
 //      - Verify token:     o mesmo META_VERIFY_TOKEN
@@ -50,19 +59,72 @@ function sb(path: string, init: RequestInit = {}): Promise<Response> {
 }
 
 // ---------- academia + configuração ----------
-async function pegaConfig(): Promise<{ aid: string; auto_global: boolean; prompt: string; bot: any } | null> {
-  let r = await sb("chat_config?select=academia_id,auto_global,prompt,bot&limit=1");
-  let rows = r.ok ? await r.json() : [];
-  if (rows.length) {
-    return {
-      aid: rows[0].academia_id, auto_global: !!rows[0].auto_global,
-      prompt: rows[0].prompt || "", bot: rows[0].bot || null,
-    };
+// SEMPRE filtrada pela academia dona da mensagem. Sem linha, o robô fica quieto
+// (auto_global false) em vez de herdar a configuração de outra pessoa.
+async function pegaConfig(aid: string): Promise<{ aid: string; auto_global: boolean; prompt: string; bot: any }> {
+  const r = await sb(`chat_config?select=auto_global,prompt,bot&academia_id=eq.${aid}`);
+  const rows = r.ok ? await r.json() : [];
+  const c = rows[0] || {};
+  return { aid, auto_global: !!c.auto_global, prompt: c.prompt || "", bot: c.bot || null };
+}
+
+// credenciais globais (modo dono único): só valem quando o número que recebeu a
+// mensagem é justamente o do dono do sistema
+function globaisDo(): any {
+  return {
+    aid: env("ACADEMIA_DONO_ID"),
+    phoneId: env("WHATSAPP_PHONE_ID"), token: env("WHATSAPP_TOKEN"),
+    igId: env("INSTAGRAM_IG_ID"), igToken: env("INSTAGRAM_TOKEN"),
+    appSecret: env("META_APP_SECRET"),
+  };
+}
+
+// descobre de quem é a mensagem: busca a linha do zap_config pelo id que veio no
+// payload e aplica escolheCredencial. Se a consulta falhar (SQL ainda não rodado,
+// por exemplo), cai no modo dono único em vez de derrubar quem já usava.
+async function resolveDono(canal: string, donoId: string): Promise<any> {
+  const campo = canal === "instagram" ? "ig_id" : "phone_id";
+  let linhas: any[] = [];
+  try {
+    const r = await sb(`zap_config?select=academia_id,phone_id,token,ig_id,ig_token,app_secret&${campo}=eq.${encodeURIComponent(donoId)}`);
+    if (r.ok) linhas = await r.json();
+    else console.warn("zap_config indisponível — modo dono único", r.status);
+  } catch (e) {
+    console.warn("zap_config falhou — modo dono único", String(e));
   }
-  r = await sb("academias?select=id&limit=1");
-  rows = r.ok ? await r.json() : [];
-  if (rows.length) return { aid: rows[0].id, auto_global: false, prompt: "", bot: null };
-  return null;
+  const globais = globaisDo();
+  if (canal === "instagram" && !globais.igId) {
+    // ninguém cadastrou Instagram ainda? então o token global ainda manda
+    try {
+      const rIg = await sb("zap_config?select=academia_id&ig_id=neq.&limit=1");
+      globais.igSozinho = rIg.ok ? (await rIg.json()).length === 0 : false;
+    } catch { globais.igSozinho = false; }
+  }
+  const cred = escolheCredencial(linhas, canal, donoId, globais);
+  if (cred && cred.origem === "dono" && !cred.aid) {
+    // instalação antiga sem ACADEMIA_DONO_ID: usa a única academia que existe
+    // só serve quando existe UMA academia no banco. Com mais de uma, escolher
+    // seria sortear — que é justamente o defeito que este lote conserta.
+    const r2 = await sb("academias?select=id&limit=2");
+    const rows2 = r2.ok ? await r2.json() : [];
+    if (rows2.length !== 1) {
+      console.error("modo dono único com " + rows2.length + " academias — crie o Secret ACADEMIA_DONO_ID");
+      return null;
+    }
+    cred.aid = rows2[0].id;
+    console.warn("modo dono único — defina o Secret ACADEMIA_DONO_ID");
+  }
+  return cred;
+}
+
+// todas as credenciais cadastradas (só o que o aperto de mão precisa ver)
+async function verifyTokensCadastrados(): Promise<any[]> {
+  try {
+    const r = await sb("zap_config?select=verify_token&verify_token=neq.");
+    return r.ok ? await r.json() : [];
+  } catch {
+    return [];
+  }
 }
 
 // ---------- dados da academia (para as ferramentas da IA) ----------
@@ -280,18 +342,21 @@ async function respostaIA(
 }
 
 // ---------- envio pela Meta ----------
-async function enviaMeta(canal: string, contato: string, texto: string): Promise<boolean> {
+async function enviaMeta(cred: any, canal: string, contato: string, texto: string): Promise<boolean> {
   let r: Response;
   if (canal === "instagram") {
-    const token = env("INSTAGRAM_TOKEN");
-    if (!token) return false;
-    r = await fetch(GRAPH + "/me/messages?access_token=" + encodeURIComponent(token), {
+    const token = cred?.token || "";
+    const igId = cred?.igId || "";
+    if (!token || !igId) return false;
+    // pela conta do próprio profissional (/me resolveria pro dono do token global)
+    r = await fetch(GRAPH + "/" + igId + "/messages?access_token=" + encodeURIComponent(token), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ recipient: { id: contato }, message: { text: texto } }),
     });
   } else {
-    const token = env("WHATSAPP_TOKEN"), fone = env("WHATSAPP_PHONE_ID");
+    // responde pelo MESMO número que recebeu — é o que mantém a janela de 24h
+    const token = cred?.token || "", fone = cred?.phoneId || "";
     if (!token || !fone) return false;
     r = await fetch(GRAPH + "/" + fone + "/messages", {
       method: "POST",
@@ -338,32 +403,32 @@ function botCompat(bot: any): any {
 // anda pelos blocos a partir de um id; devolve "ia" quando o Claude deve
 // responder a mensagem atual (bloco IA sem texto fixo)
 async function executaFluxo(
-  bot: any, id: string, conversa: any, aid: string, canal: string, contato: string,
+  bot: any, id: string, conversa: any, cred: any, canal: string, contato: string,
 ): Promise<string | void> {
   let hops = 0;
   while (id && hops++ < 12) {
     const b = achaBloco(bot, id);
     if (!b) break;
     if (b.tipo === "mensagem") {
-      if (b.texto) await respondeAuto(conversa, aid, canal, contato, b.texto);
+      if (b.texto) await respondeAuto(conversa, cred, canal, contato, b.texto);
       id = b.destino; continue;
     }
     if (b.tipo === "nota") {
       await sb("chat_mensagens", {
         method: "POST",
-        body: JSON.stringify({ conversa_id: conversa.id, academia_id: aid, de: "nota", texto: b.texto || "" }),
+        body: JSON.stringify({ conversa_id: conversa.id, academia_id: cred.aid, de: "nota", texto: b.texto || "" }),
       });
       id = b.destino; continue;
     }
     if (b.tipo === "menu") {
-      await respondeAuto(conversa, aid, canal, contato, textoMenuBloco(b));
+      await respondeAuto(conversa, cred, canal, contato, textoMenuBloco(b));
       await sb(`chat_conversas?id=eq.${conversa.id}`, {
         method: "PATCH", body: JSON.stringify({ bot_estado: "menu:" + b.id }),
       });
       return;
     }
     if (b.tipo === "pergunta") {
-      await respondeAuto(conversa, aid, canal, contato, b.texto || "?");
+      await respondeAuto(conversa, cred, canal, contato, b.texto || "?");
       await sb(`chat_conversas?id=eq.${conversa.id}`, {
         method: "PATCH", body: JSON.stringify({ bot_estado: "perg:" + b.id }),
       });
@@ -373,7 +438,7 @@ async function executaFluxo(
       await sb(`chat_conversas?id=eq.${conversa.id}`, {
         method: "PATCH", body: JSON.stringify({ modo_auto: true, bot_estado: "ia" }),
       });
-      if (b.texto) { await respondeAuto(conversa, aid, canal, contato, b.texto); return; }
+      if (b.texto) { await respondeAuto(conversa, cred, canal, contato, b.texto); return; }
       conversa.modo_auto = true;
       return "ia";
     }
@@ -381,7 +446,7 @@ async function executaFluxo(
       await sb(`chat_conversas?id=eq.${conversa.id}`, {
         method: "PATCH", body: JSON.stringify({ modo_auto: false, bot_estado: "humano" }),
       });
-      await respondeAuto(conversa, aid, canal, contato,
+      await respondeAuto(conversa, cred, canal, contato,
         b.texto || "Perfeito! Já chamei alguém da equipe — te respondemos em instantes. 🙌");
       return;
     }
@@ -394,12 +459,12 @@ async function executaFluxo(
 }
 
 // responde pelo canal e registra como mensagem do robô/IA
-async function respondeAuto(conversa: any, aid: string, canal: string, contato: string, texto: string) {
-  const enviou = await enviaMeta(canal, contato, texto);
+async function respondeAuto(conversa: any, cred: any, canal: string, contato: string, texto: string) {
+  const enviou = await enviaMeta(cred, canal, contato, texto);
   if (!enviou) return false;
   await sb("chat_mensagens", {
     method: "POST",
-    body: JSON.stringify({ conversa_id: conversa.id, academia_id: aid, de: "ia", texto }),
+    body: JSON.stringify({ conversa_id: conversa.id, academia_id: cred.aid, de: "ia", texto }),
   });
   await sb(`chat_conversas?id=eq.${conversa.id}`, {
     method: "PATCH",
@@ -409,9 +474,13 @@ async function respondeAuto(conversa: any, aid: string, canal: string, contato: 
 }
 
 // ---------- processa uma mensagem recebida ----------
-async function processa(canal: string, contato: string, nome: string, texto: string, mid: string) {
-  const cfg = await pegaConfig();
-  if (!cfg) { console.error("sem academia cadastrada"); return; }
+// cred vem pronta de quem conferiu a assinatura — a mensagem só é processada
+// depois de ter dono. Antes, mensagem sem dono caía na academia sorteada pelo
+// "limit 1", misturando conversa de gente diferente.
+async function processa(msg: any, cred: any) {
+  const canal = msg.canal, contato = msg.contato, nome = msg.nome, texto = msg.texto, mid = msg.mid;
+  if (!cred) { console.error("mensagem sem dono — ignorada", canal, msg.donoId); return; }
+  const cfg = await pegaConfig(cred.aid);
 
   // conversa: cria (herdando o modo automático global) ou atualiza
   let r = await sb(
@@ -465,20 +534,20 @@ async function processa(canal: string, contato: string, nome: string, texto: str
             return o.rotulo && texto.trim().toLowerCase() === String(o.rotulo).toLowerCase();
           });
         if (op) {
-          const r2 = await executaFluxo(bot, op.destino, conversa, cfg.aid, canal, contato);
+          const r2 = await executaFluxo(bot, op.destino, conversa, cred, canal, contato);
           if (r2 !== "ia") return;
         } else {
-          await respondeAuto(conversa, cfg.aid, canal, contato, "Não entendi 🤔\n\n" + textoMenuBloco(b));
+          await respondeAuto(conversa, cred, canal, contato, "Não entendi 🤔\n\n" + textoMenuBloco(b));
           return;
         }
       } else {
-        const r2 = await executaFluxo(bot, bot.inicio, conversa, cfg.aid, canal, contato);
+        const r2 = await executaFluxo(bot, bot.inicio, conversa, cred, canal, contato);
         if (r2 !== "ia") return;
       }
     } else if (estado.startsWith("perg:")) {
       // a resposta do cliente já foi guardada acima; segue o fluxo
       const b = achaBloco(bot, estado.slice(5));
-      const r2 = await executaFluxo(bot, b ? b.destino : "", conversa, cfg.aid, canal, contato);
+      const r2 = await executaFluxo(bot, b ? b.destino : "", conversa, cred, canal, contato);
       if (r2 !== "ia") return;
     } else if (estado === "humano" || estado === "fim") {
       return; // a equipe assume — o robô fica em silêncio
@@ -487,7 +556,7 @@ async function processa(canal: string, contato: string, nome: string, texto: str
     } else if (nova) {
       // primeira mensagem: entra pelo bloco marcado com ▶
       const r2 = await executaFluxo(
-        bot, bot.inicio || (bot.blocos[0] && bot.blocos[0].id), conversa, cfg.aid, canal, contato,
+        bot, bot.inicio || (bot.blocos[0] && bot.blocos[0].id), conversa, cred, canal, contato,
       );
       if (r2 !== "ia") return;
     }
@@ -500,37 +569,98 @@ async function processa(canal: string, contato: string, nome: string, texto: str
   const hist = (r.ok ? await r.json() : []).reverse();
   const resposta = await respostaIA(hist, cfg.prompt, { aid: cfg.aid, contato: contato });
   if (!resposta) return;
-  await respondeAuto(conversa, cfg.aid, canal, contato, resposta);
+  await respondeAuto(conversa, cred, canal, contato, resposta);
 }
 
-// ---------- extrai as mensagens do payload da Meta ----------
-function extrai(payload: any): { canal: string; contato: string; nome: string; texto: string; mid: string }[] {
-  const saida: { canal: string; contato: string; nome: string; texto: string; mid: string }[] = [];
+// ==== ROTEAMENTO (JS puro de propósito: os testes avaliam este trecho em node) ====
+// Três funções sem rede e sem Deno, pra dar pra provar o roteamento multi-inquilino
+// sem chamar a Meta de verdade. NÃO coloque tipo do TypeScript aqui dentro.
+
+// extrai as mensagens do payload da Meta — e, principalmente, QUEM recebeu cada uma
+// @ts-ignore — região escrita em JS puro de propósito (os testes avaliam ela em node)
+function extrai(payload) {
+  const saida = [];
   for (const entry of payload.entry || []) {
-    // WhatsApp Cloud API
+    // WhatsApp Cloud API: o dono é o ID do número que recebeu
     for (const ch of entry.changes || []) {
       const v = ch.value || {};
       const nome = v.contacts?.[0]?.profile?.name || "";
+      const donoId = String(v.metadata?.phone_number_id || "");
       for (const m of v.messages || []) {
         const texto = m.text?.body ||
           m.button?.text || m.interactive?.button_reply?.title || m.interactive?.list_reply?.title || "";
-        if (texto && m.from) saida.push({ canal: "whatsapp", contato: m.from, nome, texto, mid: m.id || "" });
+        if (texto && m.from) saida.push({ canal: "whatsapp", contato: m.from, nome, texto, mid: m.id || "", donoId: donoId });
       }
     }
-    // Instagram (e Messenger) — formato messaging
+    // Instagram: o dono é a conta que recebeu (entry.id, ou o recipient da mensagem)
+    if (payload.object !== "instagram") continue; // Messenger (object "page") não é produto nosso
     for (const m of entry.messaging || []) {
       const texto = m.message?.text || "";
       const eco = m.message?.is_echo; // mensagens que a própria página enviou
       if (texto && !eco && m.sender?.id) {
         saida.push({
-          canal: payload.object === "instagram" ? "instagram" : "whatsapp",
-          contato: m.sender.id, nome: "", texto, mid: m.message?.mid || "",
+          canal: "instagram", contato: m.sender.id, nome: "", texto, mid: m.message?.mid || "",
+          donoId: String(m.recipient?.id || entry.id || ""),
         });
       }
     }
   }
   return saida;
 }
+
+/* Escolhe a credencial dona da mensagem a partir das linhas já buscadas.
+ * Pura de propósito: quem faz o fetch é resolveDono().
+ * Regras, nesta ordem:
+ *   1. casou exatamente UMA linha do zap_config → é dela;
+ *   2. casou mais de uma → recusa (não sorteia; o índice único evita, mas não confiamos);
+ *   3. não casou nenhuma, mas o dono é o número global do sistema → modo dono único;
+ *   4. nada disso → null, e a mensagem não é processada.
+ * O passo 4 é o conserto do vazamento antigo: antes, mensagem sem dono caía dentro
+ * da academia de outra pessoa. */
+// @ts-ignore — região JS puro
+function escolheCredencial(linhas, canal, donoId, globais) {
+  const g = globais || {};
+  const id = String(donoId || "");
+  // @ts-ignore — região JS puro
+  const casadas = (linhas || []).filter(function (l) {
+    return canal === "instagram" ? String(l.ig_id || "") === id && id : String(l.phone_id || "") === id && id;
+  });
+  if (casadas.length > 1) return null;
+  if (casadas.length === 1) {
+    const l = casadas[0];
+    const tok = canal === "instagram" ? l.ig_token : l.token;
+    if (!tok) return null;
+    return {
+      aid: l.academia_id, token: tok, phoneId: l.phone_id || "", igId: l.ig_id || "",
+      appSecret: l.app_secret || "", origem: "propria",
+    };
+  }
+  const globalId = canal === "instagram" ? g.igId : g.phoneId;
+  const globalTok = canal === "instagram" ? g.igToken : g.token;
+  const dono = { aid: g.aid || "", token: globalTok, phoneId: g.phoneId || "", igId: g.igId || "", appSecret: g.appSecret || "", origem: "dono" };
+  if (id && globalId && id === globalId && globalTok) return dono;
+  /* Instagram da instalação antiga: ela nunca teve um Secret com o ID da conta,
+   * só o token. Enquanto NINGUÉM tiver cadastrado um ig_id, o token global segue
+   * valendo — e esse atalho se desliga sozinho no dia em que o primeiro
+   * profissional ligar o Instagram dele. */
+  if (canal === "instagram" && id && !globalId && globalTok && g.igSozinho) {
+    dono.igId = id;
+    return dono;
+  }
+  return null;
+}
+
+// aperto de mão do webhook: vale o segredo global do dono OU o de qualquer
+// profissional cadastrado (cada um tem o app dele na Meta)
+// @ts-ignore — região JS puro
+function verificaHandshake(tokenRecebido, globalVerify, linhas) {
+  const t = String(tokenRecebido || "");
+  if (!t) return false;
+  if (globalVerify && t === globalVerify) return true;
+  // @ts-ignore — região JS puro
+  return (linhas || []).some(function (l) { return String(l.verify_token || "") === t; });
+}
+// ==== FIM ROTEAMENTO ====
 
 Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
@@ -540,7 +670,9 @@ Deno.serve(async (req: Request) => {
     const modo = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const desafio = url.searchParams.get("hub.challenge") || "";
-    if (modo === "subscribe" && token && token === env("META_VERIFY_TOKEN")) {
+    // vale a senha global do dono OU a de qualquer profissional cadastrado —
+    // cada um aponta o app DELE pra esta mesma URL
+    if (modo === "subscribe" && verificaHandshake(token, env("META_VERIFY_TOKEN"), await verifyTokensCadastrados())) {
       return new Response(desafio, { status: 200 });
     }
     return new Response("token de verificação inválido", { status: 403 });
@@ -548,31 +680,50 @@ Deno.serve(async (req: Request) => {
 
   if (req.method !== "POST") return new Response("ok", { status: 200 });
 
-  // assinatura da Meta (X-Hub-Signature-256): com META_APP_SECRET configurado,
-  // só POSTs realmente vindos da Meta passam — bloqueia payload forjado.
   const bruto = await req.text();
-  const segredo = env("META_APP_SECRET");
-  if (segredo) {
-    const assinatura = req.headers.get("X-Hub-Signature-256") || "";
-    const chave = await crypto.subtle.importKey(
-      "raw", new TextEncoder().encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
-    );
-    const mac = await crypto.subtle.sign("HMAC", chave, new TextEncoder().encode(bruto));
-    const esperado = "sha256=" + Array.from(new Uint8Array(mac)).map((b) => b.toString(16).padStart(2, "0")).join("");
-    if (assinatura !== esperado) {
-      console.error("assinatura da Meta não confere — payload descartado");
-      return new Response("assinatura inválida", { status: 401 });
-    }
-  }
-
   let payload: any = {};
   try { payload = JSON.parse(bruto); } catch { /* corpo vazio */ }
 
   const msgs = extrai(payload);
+
+  /* Assinatura da Meta (X-Hub-Signature-256). Cada app da Meta assina com o
+   * segredo DELE, então precisamos saber de quem é a mensagem ANTES de conferir
+   * — por isso o corpo é lido e interpretado primeiro (ler JSON não muda nada).
+   * Sem segredo nenhum guardado, segue como sempre foi: passa com aviso. */
+  let cred: any = null;
   if (msgs.length) {
+    /* O POST inteiro é assinado UMA vez, com o segredo de UM app da Meta. Então
+     * ele só pode falar de um dono: se vierem donos diferentes no mesmo corpo,
+     * é gente tentando pendurar a mensagem de um na assinatura do outro. */
+    const donos = Array.from(new Set(msgs.map((m: any) => m.canal + "|" + (m.donoId || ""))));
+    if (donos.length > 1) {
+      console.error("POST com donos diferentes no mesmo corpo — descartado", donos.join(", "));
+      return new Response("donos misturados", { status: 400 });
+    }
+    cred = await resolveDono(msgs[0].canal, msgs[0].donoId || "");
+    // dono conhecido manda: o segredo global é do app do dono do sistema e nunca
+    // vai bater com a assinatura do app de outro profissional
+    const segredo = cred ? cred.appSecret : env("META_APP_SECRET");
+    if (segredo) {
+      const assinatura = req.headers.get("X-Hub-Signature-256") || "";
+      const chave = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+      );
+      const mac = await crypto.subtle.sign("HMAC", chave, new TextEncoder().encode(bruto));
+      const esperado = "sha256=" + Array.from(new Uint8Array(mac)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      if (assinatura !== esperado) {
+        console.error("assinatura da Meta não confere — payload descartado");
+        return new Response("assinatura inválida", { status: 401 });
+      }
+    } else {
+      console.warn("sem conferência de assinatura — cole a Chave Secreta do App no painel");
+    }
+  }
+
+  if (msgs.length && cred) {
     const trabalho = (async () => {
       for (const m of msgs) {
-        try { await processa(m.canal, m.contato, m.nome, m.texto, m.mid); }
+        try { await processa(m, cred); }
         catch (e) { console.error("processa", e); }
       }
     })();

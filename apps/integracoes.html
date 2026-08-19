@@ -82,9 +82,18 @@
       <div class="campo" style="min-width: 200px;"><label>Template de cobrança aprovado (opcional)</label>
         <input id="waTemplate" placeholder="cobranca_mensalidade">
       </div>
+      <div class="campo" style="flex: 1; min-width: 240px;"><label>Chave secreta do app (pra receber as respostas aqui)</label>
+        <input id="waSeg" type="password" autocomplete="off" placeholder="cole aqui a chave secreta do app">
+      </div>
       <button class="btn" id="btnLigarWa">Ligar meu número</button>
       <button class="btn sec" id="btnTestarWa">Testar conexão</button>
       <button class="btn sec" id="btnDesligarWa" hidden>Desligar</button>
+    </div>
+    <div id="waWebhook" hidden style="margin-top: 10px; padding: 10px 12px; border: 1px dashed #7c3aed; border-radius: 12px; font-size: 12.5px;">
+      <strong>Cole estes dois no painel da Meta</strong> (WhatsApp → Configuração → Webhook → Editar):
+      <div style="margin-top: 8px;">URL de retorno<br><code id="waWhUrl" style="word-break: break-all;">—</code></div>
+      <div style="margin-top: 6px;">Token de verificação<br><code id="waWhVerify">—</code></div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">Depois clique em <strong>Verificar e salvar</strong> e marque o campo <strong>messages</strong> — sem isso a Meta não manda nada.</p>
     </div>
     <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O token fica guardado na nuvem, do lado do servidor, e <strong>nunca volta pra esta tela</strong> — por isso o campo aparece vazio depois de salvo. Deixe vazio pra manter o que já está lá.</p>
     <div class="linha-flex" style="align-items: flex-end; margin-top: 8px;">
@@ -235,6 +244,16 @@
       stW.integracoes.whatsappTemplate = d.template || "";
       delete stW.integracoes.whatsappUrl; // formato antigo: a URL agora é fixa
       S.write("config", stW);
+      $("waSeg").value = "";
+      // URL e senha do aperto de mão pra colar no painel da Meta
+      var wh = $("waWebhook");
+      if (wh) {
+        wh.hidden = !d.verify_token;
+        if (d.verify_token) {
+          $("waWhUrl").textContent = String((window.MT_CLOUD || {}).url || "").replace(/\/+$/, "") + "/functions/v1/meta-webhook";
+          $("waWhVerify").textContent = d.verify_token;
+        }
+      }
       if (document.activeElement !== $("waFone")) $("waFone").value = d.phone_id || "";
       if (document.activeElement !== $("waTemplate")) $("waTemplate").value = d.template || "";
       atualizaWa();
@@ -254,7 +273,10 @@
     if (!fone) { out.innerHTML = '<span class="tag alerta">Cole o ID do número (Phone number ID) da Meta.</span>'; return; }
     if (!tok && !waLigado) { out.innerHTML = '<span class="tag alerta">Cole o token permanente da Meta na primeira vez.</span>'; return; }
     out.textContent = "guardando…";
-    rpcWa("zap_config_salva", { p_phone_id: fone, p_token: tok, p_template: $("waTemplate").value.trim() }).then(function (d) {
+    rpcWa("zap_config_salva2", {
+      p_phone_id: fone, p_token: tok, p_template: $("waTemplate").value.trim(),
+      p_app_secret: $("waSeg").value.trim(), p_ig_id: "", p_ig_token: "",
+    }).then(function (d) {
       if (d && d.erro) { out.innerHTML = '<span class="tag erro">' + d.erro + "</span>"; return; }
       $("waToken").value = "";
       return leWa().then(function () { out.innerHTML = '<span class="tag ok">Guardado — agora toque em Testar conexão.</span>'; });
