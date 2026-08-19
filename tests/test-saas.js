@@ -37,6 +37,15 @@ function crcNode(s) {
   ok(/hq_sou_admin/.test(sql) && /hq_clientes/.test(sql) && /hq_cliente_set/.test(sql) && /hq_pagamento_reg/.test(sql) && /hq_kpis/.test(sql), "as 5 funções hq_* existem");
   ok((sql.match(/acesso restrito ao administrador/g) || []).length >= 4, "toda função hq_* de dados exige admin");
   ok(!/create policy[^;]*saas_/.test(sql), "tabelas saas_* sem policy (bloqueadas pra API — só as funções acessam)");
+  // WhatsApp por profissional: o token do número de cada academia não pode ter
+  // caminho de leitura pela API — só as funções (e a service key) enxergam
+  ok(/create table if not exists public\.zap_config/.test(sql) && /alter table public\.zap_config enable row level security/.test(sql),
+    "zap_config existe e nasce com RLS ligada");
+  ok(!/create policy[^;]*zap_config/.test(sql), "zap_config sem policy: o token do WhatsApp não volta pra ninguém pela API");
+  ok(/zap_config_salva/.test(sql) && /zap_config_ve/.test(sql) && /zap_config_apaga/.test(sql),
+    "as 3 funções zap_config_* existem (salvar, ver o estado e desligar)");
+  ok(!/jsonb_build_object\([^)]*'token'/.test(sql.slice(sql.indexOf("zap_config_ve"))),
+    "zap_config_ve devolve se TEM token, nunca o token");
   /* O arquivo é rodado de novo a cada mudança. Uma única "create policy" sem o
    * "drop policy if exists" antes derruba o script inteiro em 42710 (already
    * exists) — e TUDO daquele ponto pra baixo (inclusive o bloco do HQ) não roda. */
