@@ -60,6 +60,18 @@ verify_token (gerado pelo servidor), ig_id e ig_token. A região marcada
 `==== ROTEAMENTO ====` no index.ts é **JS puro de propósito** — `tests/test-meta-webhook.js`
 recorta e avalia ela em node, sem chamar a Meta; não coloque tipo do TypeScript lá.
 
+**Cortar o acesso do aluno** (a partir da v475): `app_aluno.revogado_em` +
+`app_aluno_ativo(t)`, por onde passam TODAS as RPCs do aluno (antes cada uma lia
+o token cru e aluno cortado seguia postando). `aluno_revoga_acesso` (revoga ou
+apaga de vez), `aluno_religa_acesso` e `app_aluno_faxina(tokens[])` — o painel
+manda os tokens que conhece e recebe só a CONTAGEM do que foi cortado (token
+nunca volta pro navegador). No app, `app_aluno_estado(t)` devolve um envelope
+`{ok, motivo|dados}`: **só apaga o aparelho quando o servidor DIZ que acabou** —
+falha de rede, HTTP 5xx, resposta que não é o envelope e função ainda não
+publicada (PGRST202) caem no caminho antigo e não tocam em nada, porque a cópia
+local existe pro aluno que treina sem sinal. "Encerrar aluno" e "Excluir minha
+conta" passam a oferecer/fazer a revogação.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

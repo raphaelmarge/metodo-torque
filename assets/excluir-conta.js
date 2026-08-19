@@ -54,13 +54,24 @@
     }
 
     if (!naNuvem) {
+      /* Sem sessão, isto apaga SÓ este aparelho. Era aqui que o sistema mentia:
+       * o profissional "formatava o perfil", via tudo zerado e achava que tinha
+       * acabado — mas os alunos continuavam com o app funcionando, alimentado
+       * pela nuvem, porque a nuvem nem foi tocada. */
+      raiz.alert("Atenção: você não está conectado à sua conta.\n\nIsto apaga só os dados DESTE aparelho. Seus alunos continuam com o app funcionando normalmente.\n\nPra apagar de verdade, entre na sua conta e repita.");
       diz("Apagando os dados deste aparelho…");
       E.limpaAparelho();
-      return Promise.resolve({ ok: true, local: true });
+      return Promise.resolve({ ok: true, local: true, avisou: true });
     }
 
     diz("Apagando a sua conta…");
-    return op.sb.rpc("excluir_minha_conta").then(function (r) {
+    /* Primeiro corta o acesso de TODOS os alunos: a academia só é apagada quando
+     * você é o único dono, então sem esta faxina os apps continuariam abrindo
+     * numa ilha que tem outro dono. Se a RPC ainda não existe no banco, segue
+     * em frente — o cascade da academia resolve o caso simples. */
+    return op.sb.rpc("app_aluno_faxina", { p_tokens: [] }).catch(function () { return null; }).then(function () {
+      return op.sb.rpc("excluir_minha_conta");
+    }).then(function (r) {
       if (r.error) throw new Error(r.error.message || "não consegui apagar a conta agora");
       // o usuário já não existe: a sessão morre junto, então nem adianta signOut
       E.limpaAparelho();

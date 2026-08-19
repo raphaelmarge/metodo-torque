@@ -53,6 +53,43 @@
     } catch (e) {}
   }
 
+  /* A regra que faltava: SÓ apaga quando o servidor DISSE que acabou.
+   * Falha de rede nunca apaga nada — a cópia local existe justamente pro aluno
+   * que treina no subsolo, sem sinal. */
+  function apagaTudoDoAparelho() {
+    try {
+      ["tq_app_pacote", "tq_app_html", "tq_app_stamp", "tq_app_visto", "tq_app_token", "mt_aluno_token"]
+        .forEach(function (k) { localStorage.removeItem(k); });
+      // e os registros do treino que ficaram guardados aqui
+      var fora = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && /^(pt|nt)[a-z]/.test(k)) fora.push(k);
+      }
+      fora.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) {}
+    try {
+      if (self.caches && caches.keys) {
+        caches.keys().then(function (ks) {
+          ks.forEach(function (k) { if (k.indexOf("mt-app-") === 0) caches.delete(k); });
+        });
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+      }
+    } catch (e) {}
+  }
+  function acessoAcabou(motivo) {
+    apagaTudoDoAparelho();
+    document.querySelector(".box").innerHTML =
+      '<div class="marca">TORQUE</div><p>' +
+      (motivo === "revogado"
+        ? "Seu acesso foi encerrado por quem cuida do seu treino."
+        : "Este app não existe mais.") +
+      '</p><p style="font-size:13px;">Se achar que foi engano, fale com a sua academia ou com o seu personal.</p>' +
+      '<p style="font-size:13px;"><a href="../aluno-login.html">Entrar com outro login</a></p>';
+  }
+
   if (!t || !cfg.url) {
     var cop0 = copiaLocal();
     if (cop0) { abre(cop0); return; }
@@ -60,21 +97,44 @@
     return;
   }
   try { localStorage.setItem("tq_app_token", t); } catch (e) {}
-  fetch(cfg.url + "/rest/v1/rpc/app_aluno_busca", {
-    method: "POST",
-    headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ t: t }),
-  }).then(function (r) { return r.json(); }).then(function (d) {
-    var html = montaDoPacote(d);
-    if (html) { guarda(d); abre(html); return; }
-    var cop1 = copiaLocal();
-    if (cop1) { abre(cop1); return; }
-    recado("App não encontrado — peça para a academia publicar de novo.");
-  }).catch(function () {
+
+  function cabecalhos() {
+    return { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" };
+  }
+  function semResposta() {
     var cop = copiaLocal();
     if (cop) { abre(cop); return; }
     recado("Sem internet agora — tenta de novo em instantes.");
-  });
+  }
+  // caminho antigo: vale pra quem ainda não rodou o SQL novo
+  function buscaAntiga() {
+    return fetch(cfg.url + "/rest/v1/rpc/app_aluno_busca", {
+      method: "POST", headers: cabecalhos(), body: JSON.stringify({ t: t }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      var html = montaDoPacote(d);
+      if (html) { guarda(d); abre(html); return; }
+      // aqui NÃO dá pra saber se foi apagado ou se é a versão velha da função:
+      // na dúvida, mantém o que o aluno já tem
+      semResposta();
+    }).catch(semResposta);
+  }
+
+  fetch(cfg.url + "/rest/v1/rpc/app_aluno_estado", {
+    method: "POST", headers: cabecalhos(), body: JSON.stringify({ t: t }),
+  }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (d) {
+    // envelope de verdade? então o servidor falou, e a palavra dele vale
+    if (d && typeof d === "object" && typeof d.ok === "boolean") {
+      if (!d.ok) { acessoAcabou(d.motivo); return; }
+      var html = montaDoPacote({ dados: d.dados });
+      if (!html) { semResposta(); return; }
+      guarda({ dados: d.dados, stamp: (d.dados && d.dados.stamp) || "" });
+      try { localStorage.setItem("tq_app_visto", new Date().toISOString()); } catch (e) {}
+      abre(html);
+      return;
+    }
+    // função ainda não publicada (ou resposta estranha): cai no caminho antigo
+    return buscaAntiga();
+  }).catch(function () { return buscaAntiga(); });
   // guarda o esqueleto (esta página + o construtor) pro app abrir sem internet
   try {
     if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("app-sw.js");
