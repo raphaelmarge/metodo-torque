@@ -2234,6 +2234,54 @@ async function abaPt(p, a) {
       });
       ok(/Rode o SQL novo/.test(semSql.erro || ""),
         "sem o SQL novo, o painel pede pra rodar o SQL em vez de listar todo mundo como pendente");
+
+      /* Sub-abas no celular: com grade de colunas fixas, uma barra de 7 abas
+       * virava 3+3+1 com a última boiando no canto, e a do Desafio (3 abas
+       * numa grade de 2) caía como 2+1. No flex cada linha se completa. */
+      const antesTam = p.viewportSize();
+      await p.setViewportSize({ width: 430, height: 900 });
+      await p.waitForTimeout(300);
+      const barras = await p.evaluate(() => {
+        const out = [];
+        ["trAbas", "pgAbas", "dsAbas", "pfAbas", "relAbas", "cfgAbas"].forEach((id) => {
+          const bar = document.getElementById(id);
+          if (!bar) return;
+          const bts = [...bar.children].filter((x) => x.tagName === "BUTTON");
+          if (!bts.length) return;
+          const larg = bar.getBoundingClientRect().width;
+          const linhas = {};
+          bts.forEach((b) => { const r = b.getBoundingClientRect(); (linhas[Math.round(r.top)] = linhas[Math.round(r.top)] || []).push(r); });
+          // cada linha tem que ir de ponta a ponta da barra (nada de sobra solta)
+          const sobra = Object.keys(linhas).map((k) => {
+            const rs = linhas[k];
+            return Math.round(bar.getBoundingClientRect().right - Math.max(...rs.map((r) => r.right)));
+          });
+          out.push({ id: id, n: bts.length, linhas: Object.keys(linhas).length, sobraMax: Math.max.apply(null, sobra), larg: Math.round(larg) });
+        });
+        return out;
+      });
+      const frouxas = barras.filter((b) => b.sobraMax > 2);
+      ok(barras.length >= 4 && frouxas.length === 0,
+        "no celular toda barra de sub-abas preenche a linha inteira" +
+        (frouxas.length ? " — sobra em " + frouxas.map((f) => f.id + " (" + f.sobraMax + "px)").join(", ") : ""));
+      const ds = barras.find((b) => b.id === "dsAbas");
+      ok(ds && ds.n === 3 && ds.linhas === 1, "as 3 abas do Desafio cabem numa linha só (era 2+1)");
+      // e o formulário do desafio para de cortar o prêmio no meio da palavra
+      const form = await p.evaluate(() => {
+        // a seção precisa estar à mostra, senão as medidas voltam zeradas
+        const abre = document.querySelector('.abas-pt button[data-a="desafio"]') || document.querySelector('#abas button[data-a="desafio"]');
+        if (abre) abre.click();
+        const el = document.getElementById("dsPremio"), nome = document.getElementById("dsNome");
+        if (!el || !el.offsetParent) return null;
+        el.value = "1 mês de assessoria grátis";
+        const card = el.closest(".card").getBoundingClientRect();
+        const r = el.getBoundingClientRect(), rn = nome.getBoundingClientRect();
+        return { cabe: el.scrollWidth <= el.clientWidth + 1, larguraCheia: r.width > card.width * 0.8, nomeCheio: rn.width > card.width * 0.8 };
+      });
+      ok(form && form.cabe && form.larguraCheia && form.nomeCheio,
+        "no celular o nome e o prêmio do desafio ocupam a linha inteira (o prêmio não fica cortado)");
+      await p.setViewportSize(antesTam);
+      await p.waitForTimeout(300);
       await p.evaluate(() => {
         const S = window.MTStore, st = S.read("ptStudio", {});
         st.alunos = st.alunos.filter((a) => String(a.id).indexOf("qn") !== 0);
