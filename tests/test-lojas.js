@@ -163,6 +163,15 @@ for (const pg of paginas) {
 }
 ok(semNome.length === 0, "nenhum botão só de símbolo sem aria-label" + (semNome.length ? " — " + semNome.join(", ") : ""));
 
+/* Página sem <link rel="icon"> faz o navegador pedir /favicon.ico e tomar 404
+ * — some da aba e polui o console de quem abre. */
+const semIcone = [];
+for (const pg of fs.readdirSync(RAIZ).filter((f) => f.endsWith(".html")).concat(glob2)) {
+  const t = fs.readFileSync(path.join(RAIZ, pg), "utf8");
+  if (!/rel=["']icon["']/i.test(t)) semIcone.push(pg);
+}
+ok(semIcone.length === 0, "toda página tem ícone de aba (sem 404 de favicon)" + (semIcone.length ? " — " + semIcone.join(", ") : ""));
+
 /* As Edge Functions que agem em nome do usuário (whatsapp, pagarme) exigem
  * role "authenticated". A anonKey tem role "anon": mandada como Authorization,
  * leva 401 SEMPRE — a função nem chega a rodar. Já aconteceu em 5 lugares. */

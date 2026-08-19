@@ -26,7 +26,13 @@
       var p = function (n) { return String(n).padStart(2, "0"); };
       return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
     },
-    fmtData: function (iso) { if (!iso) return "—"; var p = String(iso).split("-"); return p[2] + "/" + p[1] + "/" + p[0]; },
+    // só formata data de verdade: um carimbo estranho virava "undefined/undefined/..."
+    // na linha "Gerado em" do rodapé do app
+    fmtData: function (iso) {
+      var t = String(iso || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return t || "—";
+      var p = t.split("-"); return p[2] + "/" + p[1] + "/" + p[0];
+    },
   };
   // "#7c3aed" -> "124,58,237" — deixa rgba(var(--x),.18) funcionar
   function rgbDe(hex) { var n = parseInt(String(hex).slice(1), 16); return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255); }

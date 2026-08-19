@@ -1841,6 +1841,17 @@ async function abaPt(p, a) {
     return /tq_app_html/.test(t) && /localStorage\.getItem\("tq_app_token"\)/.test(t) && /copiaLocal/.test(t);
   }), "abridor do app guarda cópia offline e reusa o token do aparelho");
 
+  // carimbo estranho não pode virar "undefined/undefined" no rodapé do app
+  {
+    const rodape = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const h = window.__montaAppAluno(st.alunos[0], "demo");
+      const m = h.match(/Gerado em [^<]*/);
+      return m ? m[0] : "";
+    });
+    ok(rodape && !/undefined/.test(rodape), "rodapé do app não mostra 'undefined' quando o carimbo não é data — " + rodape);
+  }
+
   // ---------- fonte única: o /app/ monta o app com o código do SITE ----------
   {
     // pacote como ele vai pra nuvem, mas SEM o html pronto: se o app abrir,
