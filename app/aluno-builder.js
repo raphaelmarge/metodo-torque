@@ -152,6 +152,98 @@
       "html.claro [style*='color:var(--corc)']{color:var(--cor2)!important}" +
       "html.claro [style*='color:var(--cor-cl1)']{color:var(--cor2)!important}" +
       "html.claro .btnx[style*='background:var(--bg4)']{color:#241f31!important}" +
+      /* ---------- treino guiado em tela cheia (estilo story) ----------
+       * Tudo por CLASSE, nunca por style inline: os seletores do modo claro
+       * acima reescrevem cor lendo a string do atributo style, e o player é
+       * escuro nos DOIS temas de propósito (o card claro é a única superfície
+       * clara). Inline aqui voltaria a cair naqueles seletores. */
+      ".gwrap{display:none;position:fixed;inset:0;z-index:72;flex-direction:column;max-width:480px;margin:0 auto;" +
+      "padding:calc(10px + env(safe-area-inset-top,0px)) 18px calc(8px + env(safe-area-inset-bottom,0px));" +
+      "background:radial-gradient(120% 62% at 50% 42%,rgba(var(--cor-rgb),.20),transparent 68%),var(--bg2);color:#fff}" +
+      ".gtopo{display:flex;align-items:center;gap:6px;min-height:44px}" +
+      ".gmarca{flex:1;min-width:0;font-size:10px;letter-spacing:.3em;font-weight:800;color:#6e6a78;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+      ".gtopo button{background:none;border:none;color:#6e6a78;font-family:inherit;cursor:pointer;min-height:44px;padding:0 9px;font-weight:700;font-size:11px;border-radius:99px}" +
+      ".gtopo button:active{background:rgba(255,255,255,.07)}" +
+      ".gtopo .gx{font-size:21px;min-width:44px;padding:0;color:#a9a4b5}"+
+      ".gtopo .gvolta{min-width:44px;font-size:20px;padding:0}" +
+      ".gbarra{display:flex;gap:4px;margin-top:12px}" +
+      ".gbarra i{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.13);overflow:hidden}" +
+      ".gbarra i.past{background:rgba(255,255,255,.28)}" +
+      ".gbarra i b{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--cor),var(--corc));transition:width .3s ease}" +
+      ".gcont{margin-top:9px;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;color:#6e6a78}" +
+      ".gcont b{color:#fff}" +
+      ".gcont span{display:block;font-size:11.5px;font-weight:600;margin-top:2px}" +
+      ".gcard{position:relative;flex:0 1 auto;max-height:56vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:16px;border-radius:26px;padding:18px;"+
+      "display:flex;flex-direction:column;" +
+      "background:linear-gradient(160deg,#f6f3fd,#e9ddfb);color:#1d1729;" +
+      "box-shadow:0 26px 66px -30px rgba(var(--cor-rgb),1),inset 0 0 0 1px rgba(var(--cor-rgb),.14)}" +
+      ".gcard.recibo{max-height:62vh}"+
+      ".gnum{position:absolute;top:2px;right:14px;font-size:104px;line-height:.9;font-weight:800;color:rgba(var(--cor-rgb),.10);font-variant-numeric:tabular-nums;pointer-events:none}" +
+      ".gchip{display:inline-block;align-self:flex-start;font-size:9.5px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:var(--cor2);background:rgba(var(--cor-rgb),.12);border-radius:99px;padding:5px 11px}" +
+      ".gsets{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}" +
+      ".gsets i{flex:1;min-width:38px;max-width:72px;height:52px;border-radius:13px;background:#e6e2ef;color:#8b83a2;display:flex;align-items:center;justify-content:center;" +
+      "font-size:22px;font-weight:800;font-style:normal;font-variant-numeric:tabular-nums;transition:height .2s ease}" +
+      ".gsets i.ok{background:linear-gradient(160deg,var(--cor),var(--cor2));color:#fff}" +
+      ".gsets i.now{background:#fff;color:var(--cor2);box-shadow:inset 0 0 0 2px var(--cor)}" +
+      ".gsets.mini i{height:28px;font-size:14px}" +
+      ".gobs{margin-top:14px;border-left:3px solid var(--cor);padding-left:11px}" +
+      ".gobs em{display:block;font-style:normal;font-size:9px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:#6f6688}" +
+      ".gobs p{font-size:13.5px;font-weight:700;color:var(--cor2);margin-top:3px;line-height:1.4}" +
+      ".gdica{margin-top:12px;font-size:13.5px;line-height:1.5;color:#544c68}" +
+      ".ghist{margin-top:14px;font-size:12px;color:#6f6688;font-variant-numeric:tabular-nums}" +
+      ".gcard .vidbtn{margin-top:14px;align-self:flex-start;background:rgba(var(--cor-rgb),.14);border:1px solid rgba(var(--cor-rgb),.5);color:var(--cor2);" +
+      "font-weight:800;font-size:13px;padding:11px 18px;border-radius:99px;font-family:inherit;cursor:pointer;min-height:44px}" +
+      ".gbig{text-align:center;font-size:clamp(64px,26vw,116px);line-height:1;font-weight:800;color:var(--cor2);font-variant-numeric:tabular-nums;margin:10px 0 2px}"+
+      /* fim do exercício: o número vira placar pequeno pra o registro da carga
+         caber na MESMA tela — no celular pequeno ele empurrava o stepper pra fora */
+      ".gcard.compacto .gbig{font-size:34px;margin:8px 0 0;text-align:left}"+
+      ".gcard.compacto .gbiglab{text-align:left;margin-top:2px}"+
+      ".gcard.compacto .gtrilho{margin:8px 0 0;max-width:none}"+
+      /* enquanto ele anota a carga, o nome do exercício embaixo é redundante:
+         sai da frente pra o botão Salvar caber na tela sem rolar (iPhone SE) */
+      ".gwrap.reg .ggrupo,.gwrap.reg .gtit,.gwrap.reg .gmeta{display:none!important}"+
+      ".gwrap.reg .gcard{max-height:80vh}"+
+      ".gwrap.reg .gsets,.gwrap.reg .ghist{display:none}"+
+      ".gcard.compacto .gstep input{font-size:34px}"+
+      ".gcard.compacto .gstep.rep input{font-size:22px}" +
+      ".gbiglab{text-align:center;font-size:10px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:#6f6688}" +
+      ".gprev{text-align:center;font-size:13px;font-weight:700;color:#544c68;margin-top:10px}" +
+      ".gtrilho{height:5px;border-radius:3px;background:#ded7ee;width:100%;margin:12px auto 0;max-width:220px;overflow:hidden}" +
+      ".gtrilho b{display:block;height:100%;background:var(--cor);border-radius:3px}" +
+      ".gcg{margin-top:16px}" +
+      ".gcglab{font-size:9.5px;letter-spacing:.2em;font-weight:800;text-transform:uppercase;color:#6f6688}" +
+      ".gstep{display:flex;align-items:center;gap:10px;margin-top:8px}" +
+      ".gstep button{width:52px;height:52px;flex:none;border-radius:16px;border:1px solid rgba(var(--cor-rgb),.35);background:#fff;color:var(--cor2);" +
+      "font-size:26px;font-weight:800;font-family:inherit;cursor:pointer;line-height:1}" +
+      ".gstep button:active{background:rgba(var(--cor-rgb),.12)}" +
+      ".gstep input{flex:1;min-width:0;background:none;border:none;text-align:center;color:#1d1729;font-family:inherit;"+
+      "}.gstep input::placeholder{color:#b3aac6;font-size:17px;font-weight:700}.gstep input{" +
+      "font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;padding:0;min-height:52px}" +
+      ".gstep input:focus{outline:2px solid var(--cor);outline-offset:4px;border-radius:10px}" +
+      ".gstep u{font-style:normal;text-decoration:none;font-size:15px;font-weight:800;color:#6f6688;flex:none}" +
+      ".gstep.rep input{font-size:26px}" +
+      ".gstep.rep button{width:44px;height:44px;font-size:21px}" +
+      ".gsalvar{width:100%;min-height:52px;margin-top:14px;border-radius:16px;border:none;background:linear-gradient(135deg,var(--cor),var(--cor2));" +
+      "color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}" +
+      ".gsemcarga{width:100%;min-height:44px;margin-top:8px;border-radius:99px;border:1px solid #d6cfe6;background:none;color:#6f6688;" +
+      "font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}" +
+      ".ggrupo{margin-top:15px;font-size:10px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:var(--corc)}" +
+      ".gtit{font-size:clamp(22px,7vw,28px);line-height:1.1;font-weight:800;letter-spacing:-.02em;margin-top:5px}" +
+      ".gmeta{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}" +
+      ".gmeta i{font-style:normal;font-size:12.5px;font-weight:800;border-radius:99px;padding:7px 14px;background:rgba(255,255,255,.07);color:#cfcbdb}" +
+      ".gmeta i.forte{background:linear-gradient(135deg,var(--cor),var(--cor2));color:#fff}" +
+      ".grelo{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px}" +
+      ".grelo em{font-style:normal;display:block;font-size:9.5px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:#6e6a78}" +
+      ".grelo b{display:block;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}" +
+      ".grelo span{font-size:12px;color:#6e6a78;font-variant-numeric:tabular-nums;padding-bottom:4px}" +
+      ".gpe{margin-top:12px;display:flex;gap:8px}" +
+      ".gpe button{min-height:64px;border-radius:20px;border:none;font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;flex:1}" +
+      ".gpe .prin{background:linear-gradient(135deg,var(--cor),var(--cor2));color:#fff;box-shadow:0 14px 34px -16px rgba(var(--cor-rgb),1)}" +
+      ".gpe .sec{background:rgba(255,255,255,.07);color:#cfcbdb}" +
+      ".gpe .mais{flex:none;width:74px;font-size:15px}" +
+      ".gfalta{width:100%;min-height:44px;margin-top:8px;border-radius:14px;border:1px solid rgba(var(--cor-rgb),.4);background:rgba(var(--cor-rgb),.08);" +
+      "color:var(--cor2);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;text-align:left;padding:0 14px}" +
+      "@media (max-height:620px){.gnum{font-size:74px}.gsets i{height:44px;font-size:19px}.grelo b{font-size:24px}.gpe button{min-height:56px}}" +
       "</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:var(--corc);font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
@@ -574,21 +666,40 @@
       "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
       "<button class='btnx' id='chEnvia' aria-label='Enviar'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 12h14M12 6l6 6-6 6'/></svg></button></div></div>" +
       "<div id='tmrBar' style='display:none;position:fixed;bottom:calc(62px + env(safe-area-inset-bottom,0px));left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
-      "<div id='guiaBox' style='display:none;position:fixed;inset:0;background:var(--bg2);z-index:60;flex-direction:column;padding:22px 18px;max-width:480px;margin:0 auto;'>" +
-      "<div style='display:flex;justify-content:space-between;align-items:center;color:#a9a4b5;font-size:13px;font-weight:700;gap:8px;'>" +
-      "<span id='gProg'></span><button id='gFechar' aria-label='Fechar o guia' style='background:none;border:none;color:#a9a4b5;font-size:22px;cursor:pointer;font-family:inherit;'>✕</button></div>" +
-      "<div id='gEx' style='font-size:25px;font-weight:800;margin-top:16px;'></div>" +
-      "<div id='gMeta' style='color:#a9a4b5;font-size:15px;margin-top:6px;'></div>" +
-      "<button id='gVideo' class='vidbtn' style='display:none;margin-top:10px;background:rgba(var(--cor-rgb),.2);border:1px solid var(--cor);color:var(--cor-cl1);font-weight:700;font-size:13px;padding:6px 16px;border-radius:99px;align-self:flex-start;font-family:inherit;cursor:pointer;'>Como fazer</button>" +
+      /* Treino guiado: uma tela por exercício, estilo story. O aluno olha de
+       * longe (barra, número, cronômetro), toca em coisa grande, e no fim de
+       * cada exercício anota a carga sem teclado. */
+      "<div id='guiaBox' class='gwrap'>" +
+      "<div class='gtopo'>" +
+      "<span class='gmarca'>" + esc(studio) + "</span>" +
+      "<button id='gVoltaEx' class='gvolta' aria-label='Exercício anterior'>‹</button>" +
+      "<button id='gPularEx'>Pular exercício</button>" +
+      "<button id='gFechar' class='gx' aria-label='Fechar o treino guiado'>✕</button></div>" +
+      "<div class='gbarra' id='gBarra' aria-hidden='true'></div>" +
+      "<div class='gcont' id='gProg'></div>" +
+      "<div class='gcard' id='gCard'>" +
+      "<div class='gnum' id='gNum' aria-hidden='true'></div>" +
+      "<span class='gchip' id='gEstado'></span>" +
+      "<div id='gMiolo'></div>" +
+      // o número do descanso mora AQUI, fixo: se ele fosse redesenhado junto com
+      // o miolo, o próximo pintaGuia o apagava e o player travava no meio
+      "<div class='gbig' id='gDesc' style='display:none;'></div>" +
+      "<div class='gbiglab' id='gDescLab' style='display:none;'>segundos</div>" +
+      "<div class='gtrilho' id='gTrilhoCx' style='display:none;'><b id='gTrilho'></b></div>" +
+      "<div id='gMiolo2'></div>" +
+      "<button id='gVideo' class='vidbtn' style='display:none;'>Como fazer</button>" +
       "<div class='vidbox' style='display:none;'></div>" +
-      "<input id='gCarga' inputmode='decimal' placeholder='carga de hoje (kg)' style='margin-top:14px;background:var(--bg7);border:1px solid rgba(255,255,255,.06);border-radius:12px;color:#fff;padding:12px;font-size:15px;font-family:inherit;'>" +
-      "<div id='gDesc' style='display:none;font-size:74px;font-weight:800;text-align:center;margin:auto 0;color:var(--corc);'></div>" +
-      "<div style='margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px;'>" +
-      "<button class='btnx' id='gSerie' style='font-size:17px;padding:16px;'>Série feita ✓</button>" +
-      "<div style='display:flex;gap:8px;'>" +
-      "<button id='gPular' class='btnx' style='flex:1;background:var(--bg7);color:#a9a4b5;box-shadow:none;border:1px solid rgba(255,255,255,.06);'>Pular descanso</button>" +
-      "<button id='gPularEx' class='btnx' style='flex:1;background:var(--bg7);color:#a9a4b5;box-shadow:none;border:1px solid rgba(255,255,255,.06);'>Pular exercício</button>" +
-      "</div></div></div>" +
+      "<div class='ghist' id='gHist'></div></div>" +
+      "<div class='ggrupo' id='gGrupo'></div>" +
+      "<div class='gtit' id='gEx'></div>" +
+      "<div class='gmeta' id='gMeta'></div>" +
+      "<div class='grelo'><div><em id='gReloLab'>Tempo neste exercício</em><b id='gRelo'>0:00</b></div>" +
+      "<span id='gReloTot'></span></div>" +
+      "<div class='gpe' id='gPe'>" +
+      "<button class='prin' id='gSerie'>Série feita ✓</button>" +
+      "<button class='sec' id='gPular' style='display:none;'>Pular descanso</button>" +
+      "<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button></div>" +
+      "</div>" +
       "<div class='cardx' id='cardNotif' style='display:none;'><h2>" + appIco(APPIC.sino, 14) + "Lembretes</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das sessões e recados por aqui.</div>" +
       "<button class='btnx' id='btnNotif' style='width:100%;'>Ativar notificações</button></div>" +
@@ -1306,56 +1417,263 @@
       "pintaSets();" +
       // modo treino guiado: conduz série a série; a série 'feita' clica no setbtn
       // real do exercício, reaproveitando toda a lógica existente (dia completo etc.)
-      "var GUIA=" + jsonApp(guiaFichasP) + ";" +
+      // GUIA enriquecido DENTRO do builder: grupo, dica e recado do professor já
+      // vêm em fichasApp, então o pacote do aluno não engorda nem um byte e
+      // ninguém precisa republicar pra ganhar o player novo.
+      "var GUIA=" + jsonApp((function () {
+        var extra = (fichasApp || []).map(function (f) {
+          return (f.itens || []).map(function (it) {
+            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "" };
+          });
+        });
+        return (guiaFichasP || []).map(function (f, fi) {
+          return { n: f.n, it: (f.it || []).map(function (it, ii) {
+            var x = (extra[fi] || [])[ii] || {};
+            return { e: it.e, s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "" };
+          }) };
+        });
+      })()) + ";" +
       "function beepG(){try{var ac=new (window.AudioContext||window.webkitAudioContext)();var o=ac.createOscillator(),ga=ac.createGain();" +
       "o.connect(ga);ga.connect(ac.destination);o.frequency.value=880;ga.gain.value=.25;o.start();" +
       "setTimeout(function(){o.frequency.value=1320;},180);setTimeout(function(){o.stop();ac.close();},380);}catch(e){}}" +
-      "var gv={f:0,e:0,s:0,timer:null,pend:false};" +
+      // gv.feitas guarda quantas séries de cada exercício já foram marcadas nesta
+      // sessão do player (pra barra e pros blocos sobreviverem ao voltar exercício)
+      "var gv={f:0,e:0,s:0,timer:null,pend:false,feitas:{},cargas:{},t0:0,tex:0,relo:null,sujo:false,fim:false};" +
       "function gEl(i){return document.getElementById(i);}" +
-      "function setbtnDe(ex){var r=null;document.querySelectorAll('.setbtn').forEach(function(b){if(b.dataset.ex.replace(/'/g,'')===ex)r=b;});return r;}" +
-      "function abreGuia(fi,ei){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false};ligaTela();" +
-      "gEl('guiaBox').style.display='flex';document.body.style.overflow='hidden';pintaGuia();}" +
-      "function fechaGuia(){clearInterval(gv.timer);gEl('guiaBox').style.display='none';document.body.style.overflow='';soltaTela();}" +
-      "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];" +
-      "gEl('gProg').textContent=f.n+' · exercício '+(gv.e+1)+' de '+f.it.length;" +
-      "gEl('gEx').textContent=it.e;" +
-      "gEl('gMeta').textContent=it.s+' séries × '+(it.r||'?')+' · descanso '+(it.d||60)+'s';" +
+      "function g2(n){return (n<10?'0':'')+n;}" +
+      "function gmmss(sg){sg=Math.max(0,Math.round(sg));return Math.floor(sg/60)+':'+g2(sg%60);}" +
+      // o MESMO exercício pode estar em duas fichas com número de séries diferente
+      // (abdômen na A e na B). Como ptsets_<hoje> é por NOME, pegar o botão errado
+      // fazia o handler zerar o dia no "if(n>max)n=0" — casa o data-n com as séries
+      // deste exercício e, no empate, fica com o primeiro.
+      "function setbtnDe(ex,ns){var r=null;document.querySelectorAll('.setbtn').forEach(function(b){"+
+      "if(b.dataset.ex.replace(/'/g,'')!==ex)return;"+
+      "if(!r||(ns&&+b.dataset.n===+ns&&+r.dataset.n!==+ns))r=b;});return r;}" +
+      // passo do stepper: quem levanta 5 kg não sobe de 5 em 5, quem levanta 80 não sobe de 1 em 1
+      "function gpasso(v){return v<10?1:(v<40?2.5:5);}" +
+      "function gnum(v){return String(Math.round(v*100)/100).replace('.',',');}" +
+      "function gultimo(ex){var l=(L('ptdc',{})[ex]||[]);return l.length?l[l.length-1]:null;}" +
+      "function grecorde(ex){var l=(L('ptdc',{})[ex]||[]);var m=0;l.forEach(function(x){if(+x.kg>m)m=+x.kg;});return m;}" +
+      // ---------- gravação da carga: só grava o que o aluno CONFIRMOU ----------
+      // O 'change' antigo perdia o registro quando o aluno saía sem tirar o foco,
+      // e a guarda de valor igual fazia o aluno achar que salvou sem salvar.
+      "function gGrava(ex,kg,reps,slot){if(!ex)return false;kg=+kg;if(!isFinite(kg)||kg<=0)return false;" +
+      "var h=L('ptdc',{}),l=h[ex]||[],hj=isoHj();slot=slot||'';" +
+      "var reg={d:hj,kg:kg,g:1};if(slot)reg.i=slot;if(+reps>0)reg.r=+reps;" +
+      // um registro por dia por exercício NO CAMINHO DO PLAYER (g:1). O Diário
+      // continua sendo append puro — lá o aluno anota quantas linhas quiser.
+      "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===1&&(l[k].i||'')===slot){i=k;break;}}" +
+      "if(i>=0)l[i]=reg;else l.push(reg);" +
+      "if(l.length>60)l.shift();h[ex]=l;Sv('ptdc',h);" +
+      "if(typeof pintaDC==='function')try{pintaDC();}catch(e2){}" +
+      "gv.cargas[ex]=kg;return true;}" +
+      // gv.reg diz de QUEM é o formulário aberto: na repescagem o exercício não é
+      // o gv.e, e sem isso a carga ia parar no exercício errado
+      "function gSalvaSeSujo(){if(!gv.sujo)return;gv.sujo=false;" +
+      "var c=gEl('gKg'),r=gEl('gReps');if(!c||!gv.reg)return;" +
+      "gGrava(gv.reg,parseFloat(String(c.value).replace(',','.')),r?parseFloat(r.value):0,gv.regi);}" +
+      // ---------- abrir / fechar ----------
+      "function abreGuia(fi,ei){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false,feitas:{},cargas:{},t0:Date.now(),tex:Date.now(),relo:null,sujo:false,fim:false};" +
+      "ligaTela();gEl('guiaBox').style.display='flex';document.body.style.overflow='hidden';" +
+      "gEl('gCard').classList.remove('recibo');" +
+      "gEl('gVoltaEx').style.display='';gEl('gPularEx').style.display='';" +
+      "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\"+" +
+      "\"<button class='sec' id='gPular' style='display:none;'>Pular descanso</button>\"+" +
+      "\"<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button>\";" +
+      "gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();}" +
+      "function fechaGuia(){gSalvaSeSujo();clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
+      "gEl('guiaBox').style.display='none';document.body.style.overflow='';soltaTela();}" +
+      "function gTicRelo(){var r=gEl('gRelo'),t=gEl('gReloTot');if(!r)return;" +
+      "r.textContent=gmmss((Date.now()-gv.tex)/1000);" +
+      "if(t)t.textContent='treino '+gmmss((Date.now()-gv.t0)/1000);}" +
+      // ---------- barra segmentada (indicador de POSIÇÃO, não de 'feito') ----------
+      "function pintaBarra(){var f=GUIA[gv.f],bx=gEl('gBarra');if(!bx)return;var n=f.it.length;" +
+      "if(n>12){bx.innerHTML=\"<i class='past'><b style='width:\"+Math.round(100*(gv.e+1)/n)+\"%'></b></i>\";return;}" +
+      "var h='';for(var i=0;i<n;i++){var cls=i<gv.e?' class=\"past\"':'';" +
+      "var pc=i===gv.e?Math.round(100*Math.min(gv.s,f.it[i].s)/(f.it[i].s||1)):0;" +
+      "h+='<i'+cls+'><b style=\"width:'+pc+'%\"></b></i>;'.replace(';','');}bx.innerHTML=h;}" +
+      // ---------- pintura ----------
+      "function gCabeca(){var f=GUIA[gv.f],n=f.it.length;" +
+      "gEl('gProg').innerHTML='<b>'+g2(gv.e+1)+'</b> / '+g2(n)+\"<span>\"+esc2(f.n)+' · exercício '+(gv.e+1)+' de '+n+'</span>';" +
+      "gEl('gNum').textContent=g2(gv.e+1);pintaBarra();}" +
+      "function esc2(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}" +
+      "function gBlocos(mini){var f=GUIA[gv.f],it=f.it[gv.e],h='';" +
+      "for(var i=1;i<=it.s;i++){var c=i<=gv.s?'ok':(i===gv.s+1?'now':'');" +
+      "h+=\"<i class='\"+c+\"'>\"+(i<=gv.s?'✓':i)+'</i>';}" +
+      "return \"<div class='gsets\"+(mini?' mini':'')+\"'>\"+h+'</div>';}" +
+      "function gHistTxt(ex){var u=gultimo(ex),rc=grecorde(ex);" +
+      "if(!u)return 'Primeira vez nesse exercício.';" +
+      "return 'última vez '+gnum(u.kg)+' kg'+(+u.r>0?' × '+u.r:'')+(rc?' · recorde '+gnum(rc)+' kg':'');}" +
+      "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];if(!it)return;" +
+      "gv.tex=gv.tex||Date.now();gCabeca();" +
+      "gEl('gEstado').textContent='Série '+Math.min(gv.s+1,it.s)+' de '+it.s;" +
+      "var m='';" +
+      "m+=gBlocos(false);" +
+      "if(it.ob)m+=\"<div class='gobs'><em>Recado do professor</em><p>\"+esc2(it.ob)+'</p></div>';" +
+      "if(it.dc)m+=\"<div class='gdica'>\"+esc2(it.dc)+'</div>';" +
+      "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
+      "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
+      "gEl('gHist').textContent=gHistTxt(it.e);" +
       "var gvd=gEl('gVideo');if(gvd){gvd.dataset.v=it.v||'';gvd.style.display=it.v?'inline-block':'none';gvd.textContent='Como fazer';" +
       "var gbx=gvd.nextElementSibling;if(gbx&&gbx.classList.contains('vidbox')){gbx.innerHTML='';gbx.style.display='none';}}" +
-      "var h=L('ptdc',{});var l=h[it.e]||[];gEl('gCarga').value=l.length?l[l.length-1].kg:'';" +
-      "gEl('gDesc').style.display='none';gEl('gSerie').style.display='block';gEl('gPular').style.display='none';" +
-      "gEl('gSerie').textContent='Série feita ✓ ('+gv.s+'/'+it.s+')';}" +
-      "function gFimDesc(){clearInterval(gv.timer);if(gv.pend){gv.e++;gv.s=0;gv.pend=false;}pintaGuia();}" +
-      "function gDescanso(sg,trocaEx){gv.pend=trocaEx;var resta=sg;" +
-      "gEl('gSerie').style.display='none';gEl('gPular').style.display='block';" +
-      "var d=gEl('gDesc');d.style.display='block';d.textContent=resta;clearInterval(gv.timer);" +
+      "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
+      "gEl('gEx').textContent=it.e;" +
+      "gEl('gMeta').innerHTML=\"<i class='forte'>\"+it.s+' × '+esc2(it.r||'?')+\"</i><i>\"+(it.d||60)+' s de descanso</i>';" +
+      "gEl('gReloLab').textContent='Tempo neste exercício';" +
+      "gEl('gDesc').style.display='none';" +
+      "gEl('gSerie').style.display='block';gEl('gSerie').textContent='Série feita ✓ ('+gv.s+'/'+it.s+')';" +
+      "gEl('gPular').style.display='none';gEl('gMais15').style.display='none';" +
+      "gEl('gCard').scrollTop=0;}" +
+      // ---------- descanso ----------
+      "function gFimDesc(){clearInterval(gv.timer);gSalvaSeSujo();" +
+      "if(gv.pend){gv.feitas[gv.e]=gv.s;gv.e++;gv.s=0;gv.pend=false;gv.tex=Date.now();" +
+      "if(gv.e>=GUIA[gv.f].it.length){gConclui();return;}}" +
+      "pintaGuia();}" +
+      "function gDescanso(sg,trocaEx){gv.pend=trocaEx;var resta=sg,tot=sg||1;" +
+      "var f=GUIA[gv.f],it=f.it[gv.e];" +
+      "gEl('gEstado').textContent=trocaEx?'Exercício feito':'Descanso';pintaBarra();" +
+      "gEl('gSerie').style.display='none';" +
+      "var pu=gEl('gPular');pu.style.display='block';pu.style.pointerEvents='none';pu.style.opacity='.55';" +
+      "setTimeout(function(){pu.style.pointerEvents='';pu.style.opacity='';},700);" +
+      "gEl('gMais15').style.display='block';" +
+      // o #gDesc continua sendo SÓ o número (é o que o teste lê); rótulo, trilho
+      // e prévia são irmãos dele dentro do card
+      "gEl('gMiolo').innerHTML=gBlocos(true);" +
+      "var d=gEl('gDesc');d.style.display='block';d.textContent=resta;" +
+      "gEl('gDescLab').style.display='block';gEl('gTrilhoCx').style.display='block';gEl('gTrilho').style.width='100%';" +
+      "gEl('gCard').classList.toggle('compacto',!!trocaEx);" +
+      "gEl('guiaBox').classList.toggle('reg',!!trocaEx);" +
+      "gEl('gMiolo2').innerHTML=trocaEx?gCargaHtml(it):(\"<div class='gprev'>Vem a série \"+Math.min(gv.s+1,it.s)+' de '+it.s+'</div>');" +
+      "if(trocaEx)ligaStepper(it,gv.f+':'+gv.e);" +
+      "clearInterval(gv.timer);" +
+      "gv.mais=0;" +
       "gv.timer=setInterval(function(){resta--;" +
+      "if(gv.mais){resta+=gv.mais;tot+=gv.mais;gv.mais=0;}" +
+      "var tr=gEl('gTrilho');if(tr)tr.style.width=Math.max(0,Math.round(100*resta/tot))+'%';" +
       "if(resta<=0){beepG();if(navigator.vibrate)navigator.vibrate([200,100,200]);gFimDesc();return;}" +
-      "d.textContent=resta;},1000);}" +
-      "function gConclui(){clearInterval(gv.timer);" +
-      "gEl('gProg').textContent='';gEl('gEx').textContent='Treino concluído!';" +
-      "gEl('gMeta').textContent='Mandou bem demais. Alonga, hidrata e até a próxima!';" +
-      "gEl('gSerie').style.display='none';gEl('gDesc').style.display='none';gEl('gPular').style.display='none';" +
-      "var gvf=gEl('gVideo');if(gvf)gvf.style.display='none';" +
-      "if(navigator.vibrate)navigator.vibrate([100,60,100,60,300]);beepG();setTimeout(fechaGuia,3500);}" +
+      "d.textContent=resta;if(resta<=3)bip(600,100);},1000);}" +
+      // ---------- registro da carga (steppers, sem teclado obrigatório) ----------
+      "function gCargaHtml(it){var u=gultimo(it.e);var v=u?+u.kg:0;var r=u&&+u.r>0?+u.r:'';" +
+      "return \"<div class='gcg'><div class='gcglab' id='gCgLab'>Carga de hoje</div>\"+" +
+      "\"<div class='gstep'><button type='button' id='gMenos' aria-label='Diminuir a carga'>−</button>\"+" +
+      "\"<input id='gKg' inputmode='decimal' value='\"+(v?gnum(v):'')+\"' placeholder='0' aria-label='Carga em quilos'><u>kg</u>\"+" +
+      "\"<button type='button' id='gMaisKg' aria-label='Aumentar a carga'>+</button></div>\"+" +
+      "\"<div class='gstep rep'><button type='button' id='gRepMenos' aria-label='Diminuir as repetições'>−</button>\"+" +
+      "\"<input id='gReps' inputmode='numeric' value='\"+r+\"' placeholder='—' aria-label='Repetições'><u>reps</u>\"+" +
+      "\"<button type='button' id='gRepMais' aria-label='Aumentar as repetições'>+</button></div>\"+" +
+      "\"<button type='button' class='gsalvar' id='gSalvar'>Salvar carga</button>\"+" +
+      "\"<button type='button' class='gsemcarga' id='gSemCarga'>Foi sem carga (peso do corpo)</button></div>\";}" +
+      "function ligaStepper(it,slot){var kg=gEl('gKg'),rp=gEl('gReps');if(!kg)return;gv.reg=it.e;gv.regi=slot||'';" +
+      "function passo(dir){var v=parseFloat(String(kg.value).replace(',','.'))||0;var p=gpasso(v||10);" +
+      "v=Math.max(0,Math.round((v+dir*p)*100)/100);kg.value=v?gnum(v):'';gv.sujo=true;}" +
+      "gEl('gMenos').onclick=function(){passo(-1);};gEl('gMaisKg').onclick=function(){passo(1);};" +
+      "gEl('gRepMenos').onclick=function(){rp.value=Math.max(0,(parseInt(rp.value,10)||0)-1)||'';gv.sujo=true;};" +
+      "gEl('gRepMais').onclick=function(){rp.value=(parseInt(rp.value,10)||0)+1;gv.sujo=true;};" +
+      "kg.oninput=function(){gv.sujo=true;};rp.oninput=function(){gv.sujo=true;};" +
+      "gEl('gSalvar').onclick=function(){gv.sujo=false;" +
+      "var ok=gGrava(it.e,parseFloat(String(kg.value).replace(',','.')),parseInt(rp.value,10)||0,gv.regi);" +
+      "var lab=gEl('gCgLab');if(!lab)return;" +
+      "if(!ok){lab.textContent='Digite a carga primeiro';return;}" +
+      "lab.textContent='Anotado ✓';lab.style.color='#16a34a';" +
+      "var h2=gEl('gHist');if(h2)h2.textContent=gHistTxt(it.e);" +
+      "if(navigator.vibrate)navigator.vibrate(60);" +
+      "setTimeout(function(){if(gEl('gCgLab')===lab){lab.textContent='Carga de hoje';lab.style.color='';}},1600);};" +
+      "gEl('gSemCarga').onclick=function(){gv.sujo=false;gv.cargas[it.e]='corpo';" +
+      "var lab=gEl('gCgLab');if(lab){lab.textContent='Sem carga ✓';lab.style.color='#16a34a';}};}" +
+      // ---------- fim do treino: recibo, repescagem e RPE ----------
+      "function gConclui(){clearInterval(gv.timer);clearInterval(gv.relo);gSalvaSeSujo();gv.fim=true;gv.reg='';gv.regi='';soltaTela();" +
+      "var f=GUIA[gv.f];gv.feitas[gv.e]=Math.max(gv.feitas[gv.e]||0,gv.s);" +
+      // o recibo conta o DIA, nao so o que passou pelo player: quem marcou series
+      // pela ficha (ptsets_<hoje>, a fonte de verdade do dia) ou entrou pelo
+      // Iniciar exercicio no meio via 3 de 10 num treino que o app ja deu por feito
+      "var hjR=isoHj(),stR=L('ptsets_'+hjR,{}),dcR=L('ptdc',{});" +
+      "var marc=0,pres=0,anot=0,faltam=[];" +
+      "f.it.forEach(function(it,i){pres+=it.s;" +
+      "marc+=Math.min(Math.max(gv.feitas[i]||0,stR[it.e]||0),it.s);" +
+      "var temC=gv.cargas[it.e]||(dcR[it.e]||[]).some(function(x){return x.d===hjR;});" +
+      "if(temC)anot++;else faltam.push({i:i,e:it.e});});" +
+      "gEl('gEstado').textContent='Treino de hoje';gEl('gNum').textContent='';" +
+      "gEl('gBarra').innerHTML=f.it.map(function(){return \"<i class='past'></i>\";}).join('');" +
+      "gEl('gProg').innerHTML='<b>'+g2(f.it.length)+'</b> / '+g2(f.it.length)+\"<span>\"+esc2(f.n)+' · terminou</span>';" +
+      "gEl('gCard').classList.add('recibo');" +
+      "gEl('gVoltaEx').style.display='none';gEl('gPularEx').style.display='none';" +
+      "var vb=gEl('gVideo');if(vb){vb.style.display='none';var bx=vb.nextElementSibling;" +
+      "if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
+      "var m=\"<div class='gdica' style='margin-top:14px;font-size:15px;color:#1d1729;font-weight:700;'>\"+" +
+      "'Séries feitas aqui · '+marc+' de '+pres+\"<br>Cargas anotadas · \"+anot+' de '+f.it.length+" +
+      "'<br>Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+'</div>';" +
+      "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +
+      "faltam.map(function(x){return \"<button type='button' class='gfalta' data-gfalta='\"+x.i+\"'>\"+esc2(x.e)+' ›</button>';}).join('');" +
+      "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gHist').textContent='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
+      "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
+      "gEl('gGrupo').style.display='none';" +
+      "gEl('gEx').textContent='Treino concluído!';" +
+      "gEl('gMeta').innerHTML=\"<i>Mandou bem demais. Alonga, hidrata e até a próxima.</i>\";" +
+      "gEl('gReloLab').textContent='Tempo de treino';gEl('gRelo').textContent=gmmss((Date.now()-gv.t0)/1000);" +
+      "gEl('gReloTot').textContent='';" +
+      "gEl('gDesc').style.display='none';" +
+      // os botões do rodapé podem já ter sido trocados (caminho 'Terminar treino'):
+      // ler .style de um id que não existe mais derrubava o fim do treino
+      "gEl('gPe').innerHTML=\"<button class='prin' id='gFim'>Fechar</button>\";" +
+      "gEl('gCard').scrollTop=0;" +
+      "if(navigator.vibrate)navigator.vibrate([100,60,100,60,300]);beepG();" +
+      "if(typeof confete==='function')try{confete();}catch(e3){}}" +
+      // repescagem: abre o registro daquele exercício sem sair da tela final
+      "function gRepesca(i){var it=GUIA[gv.f].it[i];if(!it)return;" +
+      "gEl('gEstado').textContent='Anotar carga';gEl('gEx').textContent=it.e;" +
+      "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
+      "gEl('gMiolo').innerHTML='';gEl('gMiolo2').innerHTML=gCargaHtml(it);gEl('gHist').textContent=gHistTxt(it.e);" +
+      "ligaStepper(it,gv.f+':'+i);" +
+      "gEl('gPe').innerHTML=\"<button class='sec' id='gVoltaFim'>Voltar pro resumo</button>\";" +
+      "gEl('gCard').scrollTop=0;}" +
+      // ---------- cliques ----------
       "document.addEventListener('click',function(e){" +
       "var gb=e.target.closest('.guiabtn');if(gb){abreGuia(+gb.dataset.g,0);return;}" +
       "var gi2=e.target.closest('.inibtn');if(gi2){abreGuia(+gi2.dataset.g,+gi2.dataset.e);return;}" +
-      "if(e.target.id==='gFechar'){fechaGuia();return;}" +
+      "var gf=e.target.closest('[data-gfalta]');if(gf){gRepesca(+gf.dataset.gfalta);return;}" +
+      "if(e.target.id==='gVoltaFim'){gConclui();return;}" +
+      "if(e.target.id==='gFim'||e.target.id==='gFechar'){fechaGuia();return;}" +
       "if(e.target.id==='gPular'){gFimDesc();return;}" +
-      "if(e.target.id==='gPularEx'){clearInterval(gv.timer);gv.e++;gv.s=0;gv.pend=false;" +
+      "if(e.target.id==='gMais15'){gv.mais=(gv.mais||0)+15;return;}" +
+      "if(e.target.id==='gVoltaEx'){if(gv.fim||gv.e<=0)return;" +
+      "gSalvaSeSujo();clearInterval(gv.timer);" +
+      // no 'Terminar treino' o rodapé virou um botão só e o gSerie sumiu: sem
+      // remontar, o pintaGuia estoura no gSerie e o ‹ fica morto na tela
+      "if(!gEl('gSerie'))gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\"+" +
+      "\"<button class='sec' id='gPular' style='display:none;'>Pular descanso</button>\"+" +
+      "\"<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button>\";" +
+      "gv.feitas[gv.e]=gv.s;gv.e--;gv.s=gv.feitas[gv.e]||0;gv.pend=false;gv.tex=Date.now();pintaGuia();return;}" +
+      "if(e.target.id==='gPularEx'){if(gv.fim)return;gSalvaSeSujo();clearInterval(gv.timer);gv.mais=0;" +
+      "gv.feitas[gv.e]=gv.s;gv.e++;gv.s=0;gv.pend=false;gv.tex=Date.now();" +
       "if(gv.e>=GUIA[gv.f].it.length){gConclui();}else{pintaGuia();}return;}" +
-      "if(e.target.id==='gSerie'){var it=GUIA[gv.f].it[gv.e];gv.s++;" +
-      "var sb=setbtnDe(it.e);var st2=L('ptsets_'+isoHj(),{});" +
+      "if(e.target.id==='gSerie'){var it=GUIA[gv.f].it[gv.e];gv.s++;gv.feitas[gv.e]=gv.s;" +
+      "var sb=setbtnDe(it.e,it.s);var st2=L('ptsets_'+isoHj(),{});" +
       "if(sb&&(st2[sb.dataset.ex]||0)<it.s)sb.click();" +
       "var fimEx=gv.s>=it.s;" +
-      "if(fimEx&&gv.e>=GUIA[gv.f].it.length-1){gConclui();return;}" +
-      "gDescanso(it.d,fimEx);return;}});" +
-      "gEl('gCarga').addEventListener('change',function(){var f2=GUIA[gv.f];var it=f2&&f2.it[gv.e];if(!it)return;" +
-      "var v=parseFloat(this.value.replace(',','.'));if(!isFinite(v)||v<=0)return;" +
-      "var h=L('ptdc',{});var l=h[it.e]||[];" +
-      "if(!l.length||+l[l.length-1].kg!==v){l.push({d:isoHj(),kg:v});if(l.length>60)l.shift();h[it.e]=l;Sv('ptdc',h);" +
-      "if(typeof pintaDC==='function')try{pintaDC();}catch(e2){}}});" +
+      // último exercício da ficha: não faz sentido descansar pro nada, mas a carga
+      // não pode escapar — mostra o registro SEM contagem e com o botão de encerrar
+      "if(fimEx&&gv.e>=GUIA[gv.f].it.length-1){clearInterval(gv.timer);gv.pend=false;" +
+      "pintaBarra();gEl('gEstado').textContent='Exercício feito';" +
+      "gEl('gCard').classList.add('compacto');gEl('guiaBox').classList.add('reg');" +
+      "gEl('gMiolo').innerHTML='';gEl('gDesc').style.display='none';" +
+      "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
+      "gEl('gMiolo2').innerHTML=gCargaHtml(it);ligaStepper(it,gv.f+':'+gv.e);gEl('gCard').scrollTop=0;" +
+      "gEl('gVoltaEx').style.display='none';gEl('gPularEx').style.display='none';" +
+      "gEl('gPe').innerHTML=\"<button class='prin' id='gFecharTreino'>Terminar treino</button>\";return;}" +
+      "gDescanso(it.d,fimEx);return;}" +
+      "if(e.target.id==='gFecharTreino'){clearInterval(gv.timer);gSalvaSeSujo();gConclui();return;}});" +
+      // deslizar pro lado troca de exercício (o card rolando não conta)
+      "(function(){var x0=0,y0=0,rol=false;var w=gEl('guiaBox');if(!w)return;" +
+      "w.addEventListener('touchstart',function(ev){var t=ev.touches[0];x0=t.clientX;y0=t.clientY;" +
+      "rol=!!(e2Alvo(ev.target));},{passive:true});" +
+      "function e2Alvo(el){while(el&&el!==w){" +
+      "if(el.id==='gKg'||el.id==='gReps'||el.className==='gstep'||el.className==='gstep rep')return true;" +
+      "if(el.id==='gCard'&&el.scrollHeight>el.clientHeight+2)return true;el=el.parentElement;}return false;}" +
+      "w.addEventListener('touchend',function(ev){if(gv.fim||rol)return;var t=ev.changedTouches[0];" +
+      "var dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<50||Math.abs(dx)<Math.abs(dy)*1.5)return;" +
+      "var b=document.getElementById(dx<0?'gPularEx':'gVoltaEx');if(b)b.click();},{passive:true});})();" +
       // gráfico de carga por exercício (clique na linha do diário)
       "function grafCarga(ex){var h=L('ptdc',{});var l=(h[ex]||[]).slice(-12);var g=document.getElementById('dcGraf');" +
       "if(!l.length){g.style.display='none';return;}var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
