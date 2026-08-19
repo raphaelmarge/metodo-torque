@@ -2045,6 +2045,40 @@ async function abaPt(p, a) {
     ok(conta.troca, "trocar a senha reusa o login atual (não deixa o aluno mudar o login sem querer)");
     ok(conta.limpa && conta.volta, "sair limpa o token e a cópia offline do aparelho e volta pra tela de entrar");
     ok(conta.botaoPainel, "o painel do personal tem o botão de trocar a própria senha");
+  }
+  {
+    // sair da conta tem que estar em Configurações, do lado de "Excluir minha
+    // conta" — é onde todo mundo procura, não numa aba escondida
+    const sairCfg = await p.evaluate(async () => {
+      const usuOrig = window.MTStore.usuario;
+      document.querySelector('#abas button[data-a="config"]').click();
+      const sub = document.querySelector('#cfgAbas button[data-cfga="conta"]');
+      if (sub) sub.click();
+      await new Promise((r) => setTimeout(r, 200));
+      const fora = {
+        entrar: !document.getElementById("cfgContaEntrar").hidden,
+        sair: !document.getElementById("cfgContaSair").hidden,
+      };
+      window.MTStore.usuario = () => ({ logado: true, email: "leo@studio.com", papel: "dono" });
+      window.__configPT();
+      await new Promise((r) => setTimeout(r, 150));
+      const dentro = {
+        quem: (document.getElementById("cfgContaQuem") || {}).textContent || "",
+        entrar: !document.getElementById("cfgContaEntrar").hidden,
+        senha: !document.getElementById("cfgContaSenha").hidden,
+        sair: !document.getElementById("cfgContaSair").hidden,
+        naMesmaAba: document.getElementById("cfgContaSair").closest("[data-cfgsec]").getAttribute("data-cfgsec"),
+      };
+      window.MTStore.usuario = usuOrig;
+      window.__configPT();
+      return { fora, dentro };
+    });
+    ok(sairCfg.fora.entrar && !sairCfg.fora.sair,
+      "sem conta, Configurações mostra Entrar e esconde o Sair");
+    ok(sairCfg.dentro.sair && sairCfg.dentro.senha && !sairCfg.dentro.entrar && /leo@studio\.com/.test(sairCfg.dentro.quem),
+      "logado, Configurações mostra quem está conectado, trocar senha e sair");
+    ok(sairCfg.dentro.naMesmaAba === "conta",
+      "o Sair fica na sub-aba Cobrança e conta, junto de Excluir minha conta");
     // "Indique um amigo" agora é opcional, como os outros cards do app
     const indica = await p.evaluate(() => {
       const S = window.MTStore, base = { id: "in1", nome: "A T", email: "a@b.com", ativo: true, desde: S.todayISO(), appTokenP: "t-in", metaSemana: 3 };
