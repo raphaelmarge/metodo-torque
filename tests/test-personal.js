@@ -4197,6 +4197,165 @@ async function abaPt(p, a) {
   guiP = await pApp.evaluate(() => document.getElementById("gEx").textContent);
   ok(/concluído/.test(guiP), "pular os exercícios chega no 🎉 treino concluído");
   await pApp.evaluate(() => document.getElementById("gFechar").click());
+
+  /* ---------- treino guiado em tela cheia (estilo story) ----------
+   * O guiado deixou de ser uma lista de texto e virou uma tela por exercício:
+   * barra segmentada em cima, card claro no meio, cronômetro embaixo, e no fim
+   * de cada exercício o registro da carga por stepper (sem teclado obrigatório). */
+  {
+    console.log("Treino guiado estilo story:");
+    await pApp.evaluate(() => document.querySelector(".guiabtn").click());
+    await pApp.waitForTimeout(300);
+    const st1 = await pApp.evaluate(() => {
+      const ex = document.getElementById("gEx").textContent;
+      return {
+        display: document.getElementById("guiaBox").style.display,
+        prog: document.getElementById("gProg").textContent,
+        segmentos: document.querySelectorAll("#gBarra i").length,
+        blocos: document.querySelectorAll("#gMiolo .gsets i").length,
+        temCard: !!document.getElementById("gCard"),
+        relo: document.getElementById("gRelo").textContent,
+        reloLab: document.getElementById("gReloLab").textContent,
+        chips: document.getElementById("gMeta").textContent,
+        ex: ex,
+        zi: getComputedStyle(document.getElementById("guiaBox")).zIndex,
+      };
+    });
+    ok(st1.display === "flex" && /01 \//.test(st1.prog) && /exercício 1/.test(st1.prog),
+      "abre em tela cheia com o contador de story (" + st1.prog.replace(/\s+/g, " ").slice(0, 40) + ")");
+    ok(st1.segmentos > 1 && st1.blocos > 0 && st1.temCard,
+      "tem a barra segmentada (" + st1.segmentos + " exercícios) e os blocos de série (" + st1.blocos + ") dentro do card");
+    ok(/^\d+:\d\d$/.test(st1.relo) && /Tempo neste exercício/i.test(st1.reloLab),
+      "o cronômetro fica embaixo e diz o que está contando (" + st1.reloLab + " " + st1.relo + ")");
+    ok(/×/.test(st1.chips) && /descanso/.test(st1.chips), "os chips mostram séries × reps e o descanso");
+    ok(+st1.zi >= 62, "o player fica ACIMA da gaveta do menu (z-index " + st1.zi + ")");
+
+    // uma série -> descanso com número grande; a última -> registro da carga
+    const serie1 = await pApp.evaluate(async () => {
+      document.getElementById("gSerie").click();
+      await new Promise((r) => setTimeout(r, 200));
+      return { estado: document.getElementById("gEstado").textContent,
+        desc: document.getElementById("gDesc").textContent,
+        vis: document.getElementById("gDesc").style.display,
+        pularVis: document.getElementById("gPular").style.display,
+        travado: getComputedStyle(document.getElementById("gPular")).pointerEvents };
+    });
+    ok(/Descanso/i.test(serie1.estado) && serie1.vis === "block" && /^\d+$/.test(serie1.desc),
+      "marcar a série cai no descanso com o número gigante (" + serie1.desc + ")");
+    ok(serie1.travado === "none", "o 'Pular descanso' nasce travado, pra dedo escorregando não pular o descanso");
+    // '+15 s' SOMA no relógio que está correndo (antes reiniciava em 15)
+    const mais15 = await pApp.evaluate(async () => {
+      const n = () => +document.getElementById("gDesc").textContent;
+      const antes = n();
+      document.getElementById("gMais15").click();
+      await new Promise((r) => setTimeout(r, 1100));
+      return { antes: antes, depois: n() };
+    });
+    ok(mais15.depois > mais15.antes && mais15.depois >= mais15.antes + 13,
+      "'+15 s' soma no descanso que está correndo em vez de reiniciar (" + mais15.antes + " → " + mais15.depois + ")");
+    // o ‹ no primeiro exercício não pode matar o descanso que está rodando
+    const voltaNada = await pApp.evaluate(async () => {
+      const n = () => +document.getElementById("gDesc").textContent;
+      const a = n();
+      document.getElementById("gVoltaEx").click();
+      await new Promise((r) => setTimeout(r, 1100));
+      return { antes: a, depois: n(), prog: document.getElementById("gProg").textContent };
+    });
+    ok(voltaNada.depois < voltaNada.antes && /exercício 1/.test(voltaNada.prog),
+      "tocar em ‹ no primeiro exercício não trava o descanso nem sai do lugar");
+
+    // pula até o fim do exercício pra chegar no registro da carga
+    const carga = await pApp.evaluate(async () => {
+      const bt = () => document.getElementById("gPular");
+      for (let i = 0; i < 12; i++) {
+        if (document.getElementById("gKg")) break;
+        if (bt() && bt().style.display === "block") { await new Promise((r) => setTimeout(r, 760)); bt().click(); }
+        else if (document.getElementById("gSerie")) document.getElementById("gSerie").click();
+        await new Promise((r) => setTimeout(r, 220));
+      }
+      if (!document.getElementById("gKg")) return null;
+      const antes = JSON.parse(localStorage.getItem("ptdc") || "{}");
+      const nome = document.getElementById("gEx").textContent;
+      document.getElementById("gMaisKg").click();
+      document.getElementById("gMaisKg").click();
+      document.getElementById("gRepMais").click();
+      const semSalvar = JSON.parse(localStorage.getItem("ptdc") || "{}");
+      document.getElementById("gSalvar").click();
+      await new Promise((r) => setTimeout(r, 150));
+      const depois = JSON.parse(localStorage.getItem("ptdc") || "{}");
+      return { nome: nome, antes: (antes[nome] || []).length, semSalvar: (semSalvar[nome] || []).length,
+        depois: (depois[nome] || []), lab: document.getElementById("gCgLab").textContent,
+        hist: document.getElementById("gHist").textContent };
+    });
+    ok(carga && carga.depois.length > carga.antes,
+      "no fim do exercício dá pra anotar a carga por stepper, sem teclado");
+    ok(carga && carga.semSalvar === carga.antes,
+      "mexer no stepper e NÃO salvar não grava nada (o registro é do que o aluno confirmou)");
+    const reg = carga && carga.depois[carga.depois.length - 1];
+    ok(reg && reg.kg > 0 && reg.r > 0 && reg.g === 1,
+      "o registro guarda carga, repetições e a marca de que veio do treino guiado");
+    ok(carga && /Anotado/.test(carga.lab) && /recorde/.test(carga.hist),
+      "o app confirma 'Anotado' dentro do card e a linha de histórico atualiza na hora");
+    // salvar de novo o mesmo exercício no mesmo dia ATUALIZA, não duplica
+    const denovo = await pApp.evaluate(async () => {
+      const nome = document.getElementById("gEx").textContent;
+      document.getElementById("gMaisKg").click();
+      document.getElementById("gSalvar").click();
+      await new Promise((r) => setTimeout(r, 120));
+      return (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.g === 1).length;
+    });
+    ok(denovo === 1, "salvar de novo no mesmo dia corrige o registro em vez de criar outro (" + denovo + ")");
+
+    // fim: recibo com o que foi feito e repescagem de quem ficou sem carga
+    const fim = await pApp.evaluate(async () => {
+      for (let i = 0; i < 24; i++) {
+        if (document.getElementById("gFim")) break;
+        const t = document.getElementById("gFecharTreino") || document.getElementById("gPularEx");
+        if (t) t.click();
+        await new Promise((r) => setTimeout(r, 160));
+      }
+      return { ex: document.getElementById("gEx").textContent,
+        recibo: document.getElementById("gMiolo").textContent,
+        faltam: document.querySelectorAll("[data-gfalta]").length,
+        temFechar: !!document.getElementById("gFim") };
+    });
+    ok(/concluído/.test(fim.ex) && /Séries feitas aqui/.test(fim.recibo) && /Cargas anotadas/.test(fim.recibo) && /Tempo de treino/.test(fim.recibo),
+      "a tela final vira um recibo do treino (séries, cargas e tempo)");
+    ok(fim.temFechar, "a tela final NÃO fecha sozinha — o aluno sai quando quiser");
+    ok(fim.faltam >= 1, "quem ficou sem carga vira um atalho de repescagem no recibo (" + fim.faltam + ")");
+    const repesca = await pApp.evaluate(async () => {
+      document.querySelector("[data-gfalta]").click();
+      await new Promise((r) => setTimeout(r, 150));
+      return { temStepper: !!document.getElementById("gKg"), volta: !!document.getElementById("gVoltaFim") };
+    });
+    ok(repesca.temStepper && repesca.volta, "tocar no atalho abre o registro ali mesmo, sem sair da tela final");
+    /* a repescagem abre o formulário de OUTRO exercício: sem saber de quem é o
+     * formulário, sair sem salvar gravava a carga no exercício errado */
+    const alvoCerto = await pApp.evaluate(async () => {
+      document.getElementById("gVoltaFim").click();   // volta pro resumo pra ter os chips de novo
+      await new Promise((r) => setTimeout(r, 150));
+      const chip = document.querySelector("[data-gfalta]");
+      if (!chip) return { nome: "", mexeu: [] };
+      const nome = chip.textContent.replace(/\s*›\s*$/, "").trim();
+      const antes = JSON.parse(localStorage.getItem("ptdc") || "{}");
+      chip.click();
+      await new Promise((r) => setTimeout(r, 120));
+      document.getElementById("gMaisKg").click();      // mexe e NÃO salva
+      document.getElementById("gVoltaFim").click();     // sai pelo caminho que grava o pendente
+      await new Promise((r) => setTimeout(r, 150));
+      const dep = JSON.parse(localStorage.getItem("ptdc") || "{}");
+      const outros = Object.keys(dep).filter((k) => (dep[k] || []).length !== ((antes[k] || []).length));
+      return { nome: nome, mexeu: outros };
+    });
+    ok(alvoCerto.mexeu.length === 0 || (alvoCerto.mexeu.length === 1 && alvoCerto.mexeu[0] === alvoCerto.nome),
+      "o que a repescagem grava vai pro exercício DELA, nunca pro último aberto (" + alvoCerto.mexeu.join(", ") + ")");
+    await pApp.evaluate(() => { const v = document.getElementById("gVoltaFim"); if (v) v.click(); });
+    await pApp.waitForTimeout(150);
+    await pApp.evaluate(() => document.getElementById("gFim").click());
+    await pApp.waitForTimeout(150);
+    ok(await pApp.evaluate(() => document.getElementById("guiaBox").style.display === "none" && document.body.style.overflow === ""),
+      "fechar devolve a rolagem da página (nada de app travado depois do treino)");
+  }
   // card de conquista pro Stories baixa a imagem
   {
     const dlCard = pApp.waitForEvent("download", { timeout: 5000 }).catch(() => null);
