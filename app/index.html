@@ -8,12 +8,17 @@
 <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
 <style>
   body { font-family: system-ui, sans-serif; background: #121016; color: #f5f4f7; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; text-align: center; }
-  .box { padding: 30px; } .box .e { font-size: 46px; }
+  .box { padding: 30px; }
+  .marca { font-size: 11px; letter-spacing: .3em; font-weight: 800; color: #a78bfa; text-transform: uppercase; }
+  .box p { margin-top: 14px; color: #cfcbdb; }
 </style>
 </head>
 <body>
-<div class="box"><div class="e">💜</div><p id="msg">Abrindo seu app…</p></div>
+<div class="box"><div class="marca">TORQUE</div><p id="msg">Abrindo seu app…</p></div>
 <script src="../assets/cloud-config.js"></script>
+<script src="../assets/versao.js"></script>
+<!-- o código do app vem daqui, do site: uma fonte só pra todos os alunos -->
+<script src="aluno-builder.js"></script>
 <script>
 (function () {
   // token: da URL ou, se instalado/aberto sem ?t=, o último usado neste aparelho
@@ -21,13 +26,37 @@
   try { t = t || localStorage.getItem("tq_app_token") || ""; } catch (e) {}
   var cfg = self.MT_CLOUD || {};
   function abre(html) { document.open(); document.write(html); document.close(); }
-  function copiaLocal() {
-    try { return localStorage.getItem("tq_app_html") || ""; } catch (e) { return ""; }
+  function recado(txt) { document.getElementById("msg").textContent = txt; }
+  function guardado(chave) { try { return localStorage.getItem(chave) || ""; } catch (e) { return ""; } }
+
+  /* Junta os dados do aluno com o código do site. Se o construtor não carregou
+   * (site fora do ar, cache velho), cai no HTML pronto que veio junto — é por
+   * isso que o pacote ainda traz os dois. */
+  function montaDoPacote(pac) {
+    if (pac && pac.dados && self.MT_APP_ALUNO) {
+      try { return self.MT_APP_ALUNO.monta(pac.dados); } catch (e) {}
+    }
+    return (pac && pac.html) || "";
   }
+  // cópia local: abre offline e volta a funcionar sem internet
+  function copiaLocal() {
+    var crus = guardado("tq_app_pacote");
+    if (crus) { try { return montaDoPacote(JSON.parse(crus)); } catch (e) {} }
+    return guardado("tq_app_html"); // formato antigo (só HTML)
+  }
+  function guarda(pac) {
+    try {
+      // guarda os DADOS, não o HTML: o código sempre vem do site na próxima vez
+      localStorage.setItem("tq_app_pacote", JSON.stringify({ dados: pac.dados || null, html: pac.dados ? "" : (pac.html || "") }));
+      localStorage.setItem("tq_app_stamp", pac.stamp || "");
+      if (pac.dados) localStorage.removeItem("tq_app_html");
+    } catch (e) {}
+  }
+
   if (!t || !cfg.url) {
     var cop0 = copiaLocal();
     if (cop0) { abre(cop0); return; }
-    document.getElementById("msg").textContent = "Link incompleto — peça o seu link do app na recepção. 💜";
+    recado("Link incompleto — peça o seu link do app na recepção.");
     return;
   }
   try { localStorage.setItem("tq_app_token", t); } catch (e) {}
@@ -36,20 +65,20 @@
     headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
     body: JSON.stringify({ t: t }),
   }).then(function (r) { return r.json(); }).then(function (d) {
-    if (d && d.html) {
-      // guarda a cópia pra abrir offline na próxima (o app se atualiza sozinho quando online)
-      try { localStorage.setItem("tq_app_html", d.html); localStorage.setItem("tq_app_stamp", d.stamp || ""); } catch (e) {}
-      abre(d.html);
-    } else {
-      var cop1 = copiaLocal();
-      if (cop1) { abre(cop1); return; }
-      document.getElementById("msg").textContent = "App não encontrado — peça para a academia publicar de novo. 💜";
-    }
+    var html = montaDoPacote(d);
+    if (html) { guarda(d); abre(html); return; }
+    var cop1 = copiaLocal();
+    if (cop1) { abre(cop1); return; }
+    recado("App não encontrado — peça para a academia publicar de novo.");
   }).catch(function () {
     var cop = copiaLocal();
     if (cop) { abre(cop); return; }
-    document.getElementById("msg").textContent = "Sem internet agora — tenta de novo em instantes.";
+    recado("Sem internet agora — tenta de novo em instantes.");
   });
+  // guarda o esqueleto (esta página + o construtor) pro app abrir sem internet
+  try {
+    if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("app-sw.js");
+  } catch (e) {}
   window.__appLoader = true; // testes
 })();
 </script>

@@ -72,6 +72,8 @@ var CORE = [
   "assets/modulo-conta.js",
   "assets/excluir-conta.js",
   "assets/bot-builder.js",
+  // construtor do app do aluno: fonte única do código do app
+  "app/aluno-builder.js",
   "privacidade.html",
   "excluir-conta.html",
   "diagnostico.html",

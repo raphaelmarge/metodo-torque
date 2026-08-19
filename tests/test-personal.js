@@ -1579,10 +1579,13 @@ async function abaPt(p, a) {
     ok(menos.historico, "o histórico continua lido como 'piorando' mesmo depois de apagar a pergunta do cadastro");
     // app do aluno: soma da semana inverte a pergunta marcada, e o JSON dos blocos é escapado
     const appQ = await p.evaluate(() => ({ escapa: window.__jsonApp({ n: "a <" + "/script> b" }) }));
-    const fonteApp = fs.readFileSync(require("path").join(__dirname, "..", "personal.html"), "utf8");
+    // o código do app mora no construtor do site; o painel só monta os dados
+    const fonteApp = fs.readFileSync(require("path").join(__dirname, "..", "app", "aluno-builder.js"), "utf8");
+    const fontePainel = fs.readFileSync(require("path").join(__dirname, "..", "personal.html"), "utf8");
     ok(/total\+=\(x\.menos\?-x\.pontos:x\.pontos\)/.test(fonteApp),
       "o app do aluno desconta os pontos da pergunta marcada como 'menor é melhor' na soma da semana");
-    ok(!/\+ JSON\.stringify\(/.test(fonteApp), "todos os blocos JSON do app publicado passam pelo jsonApp (nenhum JSON.stringify solto)");
+    ok(!/\+ JSON\.stringify\(/.test(fonteApp) && !/\+ JSON\.stringify\(/.test(fontePainel),
+      "todos os blocos JSON do app publicado passam pelo jsonApp (nenhum JSON.stringify solto)");
     ok(appQ.escapa.indexOf("<" + "/script>") < 0 && appQ.escapa.indexOf("\\u003c/script>") >= 0,
       "todo bloco JSON do app publicado escapa '<' (um nome com </script> derrubava o app inteiro)");
     // vídeo: apagar o campo tem que TIRAR o vídeo (antes o do catálogo ressuscitava)
@@ -1837,6 +1840,44 @@ async function abaPt(p, a) {
     const t = await (await fetch("app/index.html")).text();
     return /tq_app_html/.test(t) && /localStorage\.getItem\("tq_app_token"\)/.test(t) && /copiaLocal/.test(t);
   }), "abridor do app guarda cópia offline e reusa o token do aparelho");
+
+  // ---------- fonte única: o /app/ monta o app com o código do SITE ----------
+  {
+    // pacote como ele vai pra nuvem, mas SEM o html pronto: se o app abrir,
+    // é porque o código veio do site (app/aluno-builder.js)
+    const pac = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos[0];
+      al.appTokenP = al.appTokenP || "tok-fonte-unica";
+      window.MTStore.write("ptStudio", st);
+      const pacote = window.__pacoteApp(al, "2026-01-01T00:00:00Z");
+      return { dados: pacote.dados, stamp: pacote.stamp, ver: pacote.ver, temHtml: !!pacote.html, nome: al.nome.split(" ")[0] };
+    });
+    ok(pac.temHtml && pac.ver && pac.dados && !/<!DOCTYPE/i.test(JSON.stringify(pac.dados)),
+      "pacote publicado leva os dados do aluno (e o html só como rede de segurança)");
+
+    const pLoader = await ctx.newPage();
+    const errosL = [];
+    pLoader.on("pageerror", (e) => errosL.push(e.message));
+    await pLoader.route("**/rest/v1/rpc/app_aluno_busca", (r) =>
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ dados: pac.dados, stamp: pac.stamp, ver: pac.ver }) }));
+    await pLoader.goto(BASE + "/app/?t=tok-fonte-unica");
+    await pLoader.waitForTimeout(700);
+    const montou = await pLoader.evaluate(() => ({
+      nav: !!document.getElementById("navApp"),
+      titulo: (document.querySelector(".topo h1") || {}).textContent || "",
+      raiz: (document.querySelector("style") || {}).textContent.indexOf(":root{--cor:") === 0,
+      guardou: !!(localStorage.getItem("tq_app_pacote") || ""),
+      semHtmlGuardado: !localStorage.getItem("tq_app_html"),
+    }));
+    ok(montou.nav && montou.titulo === pac.nome,
+      "sem o html pronto, o /app/ monta o app do aluno com o código do site");
+    ok(montou.raiz, "a cor do studio chega pelo :root do pacote");
+    ok(montou.guardou && montou.semHtmlGuardado,
+      "o aparelho guarda os DADOS (não o html), então na próxima vez o código vem novo do site");
+    ok(errosL.length === 0, "abrir pelo /app/ não gera erro de JS" + (errosL.length ? " — " + errosL[0] : ""));
+    await pLoader.close();
+  }
   ok(/app_aluno_devolve/.test(appHtml) && /devolveApp/.test(appHtml), "app devolve peso/cargas/treinos/fotos pro personal (sincronização)");
   ok(/com o seu personal/.test(appHtml), "texto das fotos avisa que o personal também vê");
   ok(/btnCardStories/.test(appHtml) && /Gerar card pro Stories/.test(appHtml), "conquistas têm o botão de card pro Stories");
@@ -1982,7 +2023,7 @@ async function abaPt(p, a) {
         cardCom: /<h2>Minha conta<\/h2>/.test(com), cardSem: /<h2>Minha conta<\/h2>/.test(sem),
         login: (com.match(/MEULOGIN=("[^"]*")/) || [])[1],
         troca: /aluno_define_login',\{t:TOKEN,p_login:MEULOGIN/.test(com),
-        limpa: /tq_app_token','tq_app_html','tq_app_stamp','mt_aluno_token/.test(com),
+        limpa: /tq_app_token','tq_app_html','tq_app_pacote','tq_app_stamp','mt_aluno_token/.test(com),
         volta: /aluno-login\.html\?sair=1/.test(com),
         botaoPainel: !!document.getElementById("btnContaSenha"),
         temTrocaSenha: !!(window.MT_conta && window.MT_conta.trocaSenha) || /trocaSenha/.test(String(window.__contaP || "")),
