@@ -9429,5 +9429,305 @@ self.MT_EXERCICIOS = [
   "g": "Boxe e lutas",
   "eq": "Manoplas",
   "d": "Gire o quadril nos ganchos e uppercuts voltando a guarda ao rosto; punho firme no impacto e o parceiro segura a manopla travada."
+ },
+ {
+  "n": "Cem (hundred) do Pilates",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Pernas em mesa ou estendidas a 45°, cabeça e escápulas fora do solo; pulse os braços contando cinco inspirações e cinco expirações."
+ },
+ {
+  "n": "Ponte com bola entre os joelhos no Pilates",
+  "g": "Pilates e yoga",
+  "eq": "Bola",
+  "d": "Suba a bacia vértebra por vértebra apertando a bola; desça na mesma lentidão, sem jogar o peso na lombar."
+ },
+ {
+  "n": "Roll up do Pilates",
+  "g": "Pilates e yoga",
+  "eq": "Colchonete",
+  "d": "Deitado com braços acima da cabeça, enrole a coluna vértebra por vértebra até sentar; desça na mesma velocidade."
+ },
+ {
+  "n": "Barra fixa negativa",
+  "g": "Ginástica e calistenia",
+  "eq": "Barra fixa",
+  "d": "Suba com apoio ou pulo e desça em 5 segundos controlando; é o caminho para a primeira barra completa."
+ },
+ {
+  "n": "Flexão pike com pés no banco",
+  "g": "Ginástica e calistenia",
+  "eq": "Banco",
+  "d": "Quadril bem alto formando um V invertido; desça a cabeça à frente das mãos para trabalhar o ombro como no desenvolvimento."
+ },
+ {
+  "n": "Prancha frontal com apoio de mãos e pés (tuck planche)",
+  "g": "Ginástica e calistenia",
+  "eq": "Paralelas",
+  "d": "Joelhos recolhidos ao peito e ombros à frente das mãos; comece com 5 segundos e só avance quando o tremor sumir."
+ },
+ {
+  "n": "Apoio invertido na parede (handstand hold)",
+  "g": "Ginástica e calistenia",
+  "eq": "Sem equipamento",
+  "d": "Suba com a barriga voltada para a parede, ombros encaixados e costelas fechadas; comece com 10 segundos."
+ },
+ {
+  "n": "Dips nas paralelas com joelhos recolhidos",
+  "g": "Ginástica e calistenia",
+  "eq": "Paralelas",
+  "d": "Joelhos recolhidos para controlar o balanço; desça até o cotovelo a 90° e mantenha os ombros abaixados."
+ },
+ {
+  "n": "Agachamento pistol assistido com elástico",
+  "g": "Ginástica e calistenia",
+  "eq": "Elástico",
+  "d": "Elástico preso acima ajuda na subida; desça numa perna só com a outra estendida à frente e o calcanhar firme no chão."
+ },
+ {
+  "n": "Alongamento do peitoral no batente da porta",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Antebraço apoiado no batente com cotovelo na altura do ombro; gire o tronco devagar até sentir o peito abrir, sem dor."
+ },
+ {
+  "n": "Mobilidade de tornozelo com joelho à parede",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Pé a um palmo da parede; leve o joelho à frente sem tirar o calcanhar do chão e repita comparando os dois lados."
+ },
+ {
+  "n": "Gato-camelo com respiração",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Em quatro apoios, inspire arqueando e expire arredondando a coluna; movimento lento, vértebra por vértebra."
+ },
+ {
+  "n": "Nado peito com pull buoy",
+  "g": "Natação e aquático",
+  "eq": "Pull buoy",
+  "d": "Pull buoy entre as coxas para isolar a braçada; puxe em coração e deslize com a cabeça entre os braços."
+ },
+ {
+  "n": "Caminhada na água com resistência de halteres aquáticos",
+  "g": "Natação e aquático",
+  "eq": "Halteres aquáticos",
+  "d": "Água na linha do peito; caminhe empurrando os halteres para trás e para frente, com o tronco ereto."
+ },
+ {
+  "n": "Corrida estacionária na piscina funda com colete",
+  "g": "Natação e aquático",
+  "eq": "Colete flutuador",
+  "d": "Sem tocar o fundo, simule a corrida com joelhos altos e braços alternados; ótimo para quem não pode ter impacto."
+ },
+ {
+  "n": "Batida de pernas na borda da piscina",
+  "g": "Natação e aquático",
+  "eq": "Sem equipamento",
+  "d": "Segure a borda com o corpo estendido; bata as pernas partindo do quadril, joelhos quase estendidos e pés soltos."
+ },
+ {
+  "n": "Nado costas com palmar",
+  "g": "Natação e aquático",
+  "eq": "Palmar",
+  "d": "Palmar aumenta a resistência da braçada; entre com o dedo mínimo primeiro e mantenha o quadril alto para não afundar."
+ },
+ {
+  "n": "Rosca inclinada unilateral no banco 45°",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Braço pendurado atrás da linha do corpo; suba sem mover o ombro para aproveitar o alongamento da cabeça longa."
+ },
+ {
+  "n": "Rosca com elástico pegada supinada em pé",
+  "g": "Bíceps",
+  "eq": "Elástico",
+  "d": "Pise no elástico na largura do quadril; cotovelos colados no tronco e resista na descida, que é onde o elástico mais puxa."
+ },
+ {
+  "n": "Rosca punho invertida com barra",
+  "g": "Bíceps",
+  "eq": "Barra",
+  "d": "Pegada pronada na largura dos ombros; suba devagar para trabalhar braquiorradial e antebraço sem usar impulso."
+ },
+ {
+  "n": "Rosca martelo cruzada sobre o corpo",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Leve o halter em direção ao ombro oposto com a palma virada para dentro; trabalha o braquial e engrossa o braço."
+ },
+ {
+  "n": "Esquiva lateral com deslocamento",
+  "g": "Boxe e lutas",
+  "eq": "Sem equipamento",
+  "d": "Flexione os joelhos e desloque o tronco para o lado mantendo a guarda alta; volte à posição sem cruzar os pés."
+ },
+ {
+  "n": "Jab-direto no saco com passo à frente",
+  "g": "Boxe e lutas",
+  "eq": "Saco de pancada",
+  "d": "Avance com o pé da frente junto ao jab, gire o quadril no direto e recolha as mãos ao rosto imediatamente."
+ },
+ {
+  "n": "Sombra de boxe com deslocamento em oito",
+  "g": "Boxe e lutas",
+  "eq": "Sem equipamento",
+  "d": "Desenhe um oito no chão com os pés soltando combinações leves; foco em não cruzar os pés e manter a guarda."
+ },
+ {
+  "n": "Joelhada no aparador com puxada de nuca",
+  "g": "Boxe e lutas",
+  "eq": "Aparador",
+  "d": "Puxe a nuca do aparador enquanto sobe o joelho, contraindo o abdômen no impacto; alterne as pernas."
+ },
+ {
+  "n": "Extensão de tríceps acima da cabeça no cabo com corda",
+  "g": "Tríceps",
+  "eq": "Cabo/Polia",
+  "d": "De costas para a polia, cotovelos apontando à frente e fixos; abra a corda no final da extensão."
+ },
+ {
+  "n": "Flexão diamante com joelhos apoiados",
+  "g": "Tríceps",
+  "eq": "Peso do corpo",
+  "d": "Mãos formando um triângulo sob o peito e joelhos no chão; cotovelos rentes ao corpo, versão de entrada da flexão diamante."
+ },
+ {
+  "n": "Corrida estacionária com joelhos altos",
+  "g": "Cardio",
+  "eq": "Peso do corpo",
+  "d": "Joelhos acima da linha do quadril, apoio na ponta do pé e tronco ereto; ótimo aquecimento para treino em casa."
+ },
+ {
+  "n": "Escada de agilidade com passo lateral",
+  "g": "Cardio",
+  "eq": "Escada de agilidade",
+  "d": "Dois pés dentro de cada quadrado deslocando de lado, joelhos semiflexionados e olhar à frente, não nos pés."
+ },
+ {
+  "n": "Subida no step com joelho alto",
+  "g": "Cardio",
+  "eq": "Step",
+  "d": "Suba com o pé inteiro no step e finalize levando o joelho oposto à altura do quadril; desça controlado, sem pular."
+ },
+ {
+  "n": "Polichinelo sem impacto",
+  "g": "Cardio",
+  "eq": "Peso do corpo",
+  "d": "Abra um pé de cada vez para o lado enquanto sobe os braços; mesma frequência cardíaca sem carga nas articulações."
+ },
+ {
+  "n": "Remada no ergômetro em ritmo constante",
+  "g": "Cardio",
+  "eq": "Remo ergômetro",
+  "d": "A ordem é pernas, tronco, braços na puxada e o inverso na volta; costas neutras, nunca arredondadas."
+ },
+ {
+  "n": "Flexão com apoio elevado dos pés no banco",
+  "g": "Peito",
+  "eq": "Banco",
+  "d": "Pés no banco e mãos no chão na linha do peito; quanto mais alto o banco, mais carga vai pro peitoral superior e ombro."
+ },
+ {
+  "n": "Crucifixo no cabo unilateral em pé",
+  "g": "Peito",
+  "eq": "Cabo/Polia",
+  "d": "Um passo à frente da polia, cotovelo levemente fletido e fixo; leve a mão até a linha média sem girar o tronco."
+ },
+ {
+  "n": "Supino com elástico deitado no chão",
+  "g": "Peito",
+  "eq": "Elástico",
+  "d": "Elástico passando pelas costas e preso nas mãos; empurre até estender os cotovelos e volte devagar até o antebraço tocar o chão."
+ },
+ {
+  "n": "Sentar e levantar da cadeira com apoio",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Pés afastados na largura do quadril e mãos no braço da cadeira só se precisar; levante empurrando o chão, sem impulso de tronco."
+ },
+ {
+  "n": "Marcha estacionária segurando o encosto",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Segure o encosto e eleve um joelho por vez até a altura confortável; comece com apoio das duas mãos e evolua para uma."
+ },
+ {
+  "n": "Elevação de calcanhares com apoio na bancada",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Suba nas pontas dos pés segurando a bancada e desça em 3 segundos; fortalece a panturrilha e melhora o equilíbrio."
+ },
+ {
+  "n": "Extensão de joelho sentado na cadeira",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Sentado com as costas apoiadas, estenda um joelho por vez e segure 2 segundos; pode somar caneleira leve quando ficar fácil."
+ },
+ {
+  "n": "Desenvolvimento Arnold sentado",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Comece com as palmas voltadas para você e gire os punhos enquanto sobe; termine com as palmas para a frente."
+ },
+ {
+  "n": "Elevação lateral no cabo por trás do corpo",
+  "g": "Ombros",
+  "eq": "Cabo/Polia",
+  "d": "Pegue o cabo por trás das costas e eleve até a linha do ombro; a tensão contínua na base do movimento é a vantagem sobre o halter."
+ },
+ {
+  "n": "Face pull com elástico ajoelhado",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Puxe o elástico até a testa abrindo os cotovelos na altura dos ombros; rode os punhos para fora no final."
+ },
+ {
+  "n": "Crucifixo invertido no banco inclinado com halteres",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Peito apoiado no banco a 30°; abra os braços até a linha dos ombros com os polegares para cima, sem usar impulso."
+ },
+ {
+  "n": "Encolhimento de ombros com kettlebell",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Suba os ombros em direção às orelhas sem girar; segure um segundo no topo e desça alongando o trapézio."
+ },
+ {
+  "n": "Remada alta com elástico pegada larga",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Pise no elástico e puxe até a linha do peito com os cotovelos acima das mãos; se doer o ombro, use pegada mais larga."
+ },
+ {
+  "n": "Kettlebell swing russo com uma mão",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "O impulso vem do quadril, não do braço; troque de mão no topo do movimento e mantenha o ombro encaixado."
+ },
+ {
+  "n": "Carregamento do fazendeiro unilateral",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Peso em uma mão só; caminhe sem inclinar o tronco para o lado — é o core que segura o alinhamento."
+ },
+ {
+  "n": "Salto em profundidade do caixote",
+  "g": "Funcional e Cross",
+  "eq": "Caixote",
+  "d": "Desça do caixote (não pule para cima), aterrisse absorvendo com quadril e joelhos e salte imediatamente; só para quem já domina o agachamento."
+ },
+ {
+  "n": "Bear crawl no lugar",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Joelhos a dois dedos do chão, coluna neutra; tire uma mão e o pé oposto do chão alternando sem balançar o quadril."
+ },
+ {
+  "n": "Burpee sem salto para iniciante",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "Desça as mãos ao chão, ande com os pés para trás e volte se levantando sem pular; poupa joelho e ombro de quem está começando."
  }
 ];
