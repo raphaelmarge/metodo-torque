@@ -1307,7 +1307,25 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="muted" style="margin: 14px 0 6px; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;">Criar mais</div>
       <div id="autoProntas" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;"></div>
       <button class="btn" id="autoNova">+ Criar automação do zero</button>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Por enquanto, cada mensagem sai do seu número com um toque. Quando o WhatsApp oficial da Meta estiver ativado, essa mesma fila poderá sair sozinha, sem toque nenhum.</p>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12px;" id="autoRodape">Cada mensagem sai do seu número com um toque. Ligando o <b>WhatsApp oficial</b> no cartão abaixo, a mesma fila sai sozinha — sem toque nenhum.</p>
+    </div>
+    <div class="card" style="margin-bottom: 14px;" data-cfgsec="zap">
+      <h2>WhatsApp oficial (API da Meta)</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Com ele o sistema <b>manda as mensagens sozinho</b>, sem abrir o WhatsApp no celular. É opcional: sem configurar, tudo continua como está hoje. O passo a passo pra ativar na Meta está em <a href="meta.html" target="_blank" rel="noopener">torqueon.com.br/meta.html</a>.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+        <label style="font-size: 12.5px; flex: 1; min-width: 260px;">URL da função (Supabase → Edge Functions → whatsapp)
+          <input id="cfgZapUrl" placeholder="https://seu-projeto.supabase.co/functions/v1/whatsapp" style="display:block; width: 100%; margin-top: 4px;"></label>
+        <label style="font-size: 12.5px; min-width: 200px;">Template aprovado (opcional)
+          <input id="cfgZapTpl" placeholder="cobranca_mensalidade" style="display:block; width: 100%; margin-top: 4px;"></label>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 10px;">
+        <label style="font-size: 12.5px; min-width: 200px;">Mandar um teste pra (DDI+DDD+número)
+          <input id="cfgZapNum" placeholder="5531999990000" inputmode="numeric" style="display:block; width: 100%; margin-top: 4px;"></label>
+        <button class="btn sec" id="cfgZapTesta">Testar conexão</button>
+        <button class="btn sec" id="cfgZapEnvia">Enviar teste</button>
+      </div>
+      <div id="cfgZapStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12px;">Regra da Meta: texto livre só chega até <b>24h</b> depois da última mensagem do aluno. Fora dessa janela é preciso um <b>template aprovado</b> — quando o envio automático esbarrar nisso, a fila avisa e devolve o botão manual.</p>
     </div>
     <div class="card" data-cfgsec="app">
       <h2>O que o aluno vê no app</h2>
@@ -4321,6 +4339,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // fila WhatsApp de hoje: Enviar (abre o zap e marca), Pular (só marca) ou
   // Foto (compartilha a imagem da automação; a mensagem só sai da fila no Enviar)
   var zapFilaCache = [];
+  /* Por que guardar aqui e não no DOM: gravar no estudio dispara o redesenho do
+   * Início, que refaz a fila inteira. Se o aviso de erro morasse só no DOM, ele
+   * sumiria justamente quando o professor precisa lê-lo. */
+  var zapErros = {}; // chave da fila -> por que não saiu
+  var zapResumo = ""; // resultado do último "Enviar todas agora"
   function dataUrlPraArquivo(d, nomeArq) {
     var par = String(d).split(",");
     var mime = (par[0].match(/data:(.*?)[;,]/) || [])[1] || "image/jpeg";
@@ -4348,9 +4371,62 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var ok = e.target.closest("[data-zapok]");
     if (ok) { zapMarca(ok.getAttribute("data-zapok")); return; } // o link segue abrindo o WhatsApp
+    // WhatsApp oficial ligado: manda de verdade e só tira da fila se a Meta aceitou
+    var of = e.target.closest("[data-zapapi]");
+    if (of) { mandaDaFila(of.getAttribute("data-zapapi"), of); return; }
+    if (e.target.id === "zapTodas") { mandaFilaToda(); return; }
     var pu = e.target.closest("[data-zappula]");
     if (pu) zapMarca(pu.getAttribute("data-zappula"));
   });
+  /* Envio pela API oficial, uma linha da fila. Só marca como resolvida quando a
+   * Meta confirma — erro nenhum some da fila calado. Fora da janela de 24h a
+   * Meta recusa texto livre: aí a linha vira o botão manual de sempre. */
+  function mandaDaFila(chave, botao, emLote) {
+    var z = zapFilaCache.find(function (x) { return x.chave === chave; });
+    if (!z) return Promise.resolve(false);
+    var rot = botao ? botao.textContent : "";
+    if (botao) { botao.disabled = true; botao.textContent = "Enviando…"; }
+    return zapApiEnvia(z.zap, z.texto).then(function (d) {
+      if (d && d.ok) {
+        delete zapErros[chave];
+        zapMarca(chave, emLote);
+        return true;
+      }
+      zapErros[chave] = d && d.precisaTemplate
+        ? "fora da janela de 24h — só chega com template aprovado"
+        : ((d && d.erro) || "não deu pra enviar");
+      if (botao) { botao.disabled = false; botao.textContent = rot || "Enviar"; }
+      renderRelatorios(); // redesenha pra linha mostrar o motivo e o link manual
+      return false;
+    });
+  }
+  // uma de cada vez: a Meta reclama de rajada e assim dá pra ver quem falhou
+  function mandaFilaToda() {
+    var chaves = zapFilaCache.map(function (x) { return x.chave; });
+    if (!chaves.length) return Promise.resolve();
+    var bt = $("zapTodas");
+    if (bt) bt.disabled = true;
+    var enviadas = 0, falhas = 0, i = 0;
+    function passo() {
+      if (i >= chaves.length) {
+        zapResumo = enviadas + " enviada(s)" +
+          (falhas ? " · " + falhas + " não saiu (o motivo está na linha, com o link pra mandar na mão)" : "") + ".";
+        renderRelatorios();
+        return Promise.resolve();
+      }
+      var ch = chaves[i++];
+      zapResumo = "Enviando " + i + " de " + chaves.length + "…";
+      var stEl = $("zapTodasSt");
+      if (stEl) stEl.textContent = zapResumo;
+      var botao = document.querySelector('[data-zapapi="' + ch + '"]');
+      return mandaDaFila(ch, botao, true).then(function (deu) {
+        if (deu) enviadas++; else falhas++;
+        return passo();
+      });
+    }
+    return passo();
+  }
+  window.__zapMandaFila = mandaFilaToda; // testes
   // toque no nome do aluno: treino do dia + atalhos, sem sair da tela
   function abreDiaAluno(id) {
     var st = load();
@@ -4736,7 +4812,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     return fila;
   }
-  function zapMarca(chave) {
+  // semRender: no envio em lote, redesenhar a cada linha apagaria os avisos de erro
+  function zapMarca(chave, semRender) {
     var st = load();
     st.zapLog = st.zapLog || {};
     st.zapLog[chave] = S.todayISO() + "T" + new Date().toTimeString().slice(0, 8);
@@ -4764,7 +4841,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
     }
     S.write("ptStudio", st);
-    renderRelatorios();
+    if (!semRender) renderRelatorios();
   }
   window.__zapFila = filaZapDe; // testes
   window.__zapMarca = zapMarca; // testes
@@ -5500,6 +5577,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     $("cfgAtraso").value = String(atrasoTol(st));
     $("cfgZapFila").checked = !(st.config || {}).zapFilaOff;
+    var zapi = (st.config || {}).zapApi || {};
+    $("cfgZapUrl").value = zapi.url || "";
+    $("cfgZapTpl").value = zapi.template || "";
+    pintaZapApiStatus();
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
@@ -5511,6 +5592,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config = st.config || {};
     st.config.atrasoDias = Math.min(28, Math.max(0, parseInt($("cfgAtraso").value, 10) || 0));
     st.config.zapFilaOff = $("cfgZapFila").checked ? 0 : 1;
+    st.config.zapApi = {
+      url: String($("cfgZapUrl").value || "").trim().replace(/\/+$/, ""),
+      template: String($("cfgZapTpl").value || "").trim(),
+    };
     // os textos das mensagens fixas são salvos pelo editor da lista (não têm mais campo aqui)
     var am = {};
     CFG_VE.forEach(function (par) { if (!$(par[0]).checked) am[par[1]] = false; });
@@ -5536,6 +5621,74 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     bt.textContent = "Baixando…";
     self.MT_ATUALIZA();
   });
+  /* ---------- WhatsApp oficial (API Cloud da Meta) ----------
+   * Sem isto configurado, todo botão de WhatsApp continua abrindo o aplicativo
+   * com a mensagem pronta (como sempre foi). Com a URL da função preenchida, o
+   * painel manda sozinho — a chave do WhatsApp fica só no Supabase, nunca aqui.
+   */
+  function zapApiCfg(st) { return ((st || load()).config || {}).zapApi || {}; }
+  function zapApiOn(st) { return !!String(zapApiCfg(st).url || "").trim(); }
+  // a função exige usuário LOGADO: a anonKey tem papel "anon" e leva 401 sempre
+  function chamaZapApi(payload) {
+    var url = String(zapApiCfg().url || "").trim();
+    if (!url) return Promise.resolve({ erro: "Configure a URL da função em Configurações → WhatsApp." });
+    var heads = { "Content-Type": "application/json" };
+    if (self.MT_CLOUD && self.MT_CLOUD.anonKey) heads.apikey = self.MT_CLOUD.anonKey;
+    return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
+      if (!tok) return { erro: "Entre na sua conta (card Sua ilha) — a função oficial só aceita usuário logado." };
+      heads.Authorization = "Bearer " + tok;
+      return fetch(url, { method: "POST", headers: heads, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json().catch(function () { return { erro: "Resposta estranha da função (HTTP " + r.status + ")." }; }); })
+        .catch(function () { return { erro: "Não consegui falar com a função — confira a URL e a internet." }; });
+    });
+  }
+  // manda uma mensagem da fila; devolve {ok} ou {erro, precisaTemplate}
+  function zapApiEnvia(zapDoAluno, texto) {
+    var num = String(zapDoAluno || "").replace(/\D/g, "");
+    if (!num) return Promise.resolve({ erro: "Esse aluno está sem WhatsApp no cadastro." });
+    if (num.length <= 11) num = "55" + num; // cadastro guarda DDD+número
+    return chamaZapApi({ acao: "enviar", para: num, texto: texto });
+  }
+  function pintaZapApiStatus(msg) {
+    var el = $("cfgZapStatus");
+    if (!el) return;
+    if (msg) { el.innerHTML = msg; return; }
+    el.innerHTML = zapApiOn()
+      ? '<span class="tag ok">LIGADO</span> a fila do Início manda sozinha.'
+      : '<span class="tag neutro">DESLIGADO</span> as mensagens saem do seu WhatsApp, com um toque.';
+  }
+  if ($("cfgZapTesta")) $("cfgZapTesta").addEventListener("click", function () {
+    var url = String($("cfgZapUrl").value || "").trim().replace(/\/+$/, "");
+    if (!url) { pintaZapApiStatus("Cole a URL da função primeiro."); return; }
+    // testa o que está NA TELA, mesmo antes de salvar
+    var st = load(); st.config = st.config || {};
+    st.config.zapApi = { url: url, template: String($("cfgZapTpl").value || "").trim() };
+    save(st);
+    pintaZapApiStatus("Testando…");
+    chamaZapApi({ acao: "ping" }).then(function (d) {
+      if (d && d.erro) { pintaZapApiStatus("Não deu: " + esc(d.erro)); return; }
+      if (d && d.ok && d.tokenConfigurado && d.foneConfigurado) {
+        pintaZapApiStatus('<span class="tag ok">CONEXÃO OK</span> token e número configurados no Supabase.');
+        return;
+      }
+      pintaZapApiStatus("A função respondeu, mas faltam os segredos no Supabase: " +
+        ((d && d.tokenConfigurado) ? "" : "WHATSAPP_TOKEN ") + ((d && d.foneConfigurado) ? "" : "WHATSAPP_PHONE_ID"));
+    });
+  });
+  if ($("cfgZapEnvia")) $("cfgZapEnvia").addEventListener("click", function () {
+    var num = String($("cfgZapNum").value || "").replace(/\D/g, "");
+    if (num.length < 12) { pintaZapApiStatus("Escreva o número completo com DDI e DDD (ex.: 5531999990000)."); return; }
+    pintaZapApiStatus("Enviando…");
+    chamaZapApi({ acao: "enviar", para: num, texto: "Teste do TORQUE PERSONAL — o WhatsApp oficial está funcionando!" })
+      .then(function (d) {
+        if (d && d.ok) { pintaZapApiStatus('<span class="tag ok">ENVIADO</span> confira o celular.'); return; }
+        pintaZapApiStatus(esc((d && d.erro) || "Não deu pra enviar.") +
+          (d && d.precisaTemplate ? " — esse número está fora da janela de 24h: só chega com template aprovado." : ""));
+      });
+  });
+  window.__zapApiOn = zapApiOn; // testes
+  window.__zapApiEnvia = zapApiEnvia; // testes
+
   window.__configPT = renderConfigPT; // testes
 
   // ---------- mensagens de WhatsApp (Configurações → WhatsApp: fixas + automações numa lista) ----------
@@ -8353,6 +8506,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     zapFilaCache = filaZ; // o botão Foto precisa achar o texto e a imagem do item
     var zapImgs = filaZ.some(function (z) { return z.img; }) ? imgsLe() : [];
     var zapTemFoto = false; // só imagem que ainda existe na galeria conta
+    var zapOfi = zapApiOn(st); // com a API da Meta ligada, a fila sai sozinha
     $("bZapP").innerHTML = (st.config || {}).zapFilaOff
       ? "Fila desligada — dá pra ligar de volta nas Configurações."
       : filaZ.length ? filaZ.map(function (z) {
@@ -8364,9 +8518,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span class="muted" style="font-size:12px;">' + esc(z.rotulo) + "</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
         (imZ ? '<button class="btn sec mini" data-zapfoto="' + z.chave + '" title="compartilha a foto com a mensagem de legenda">Foto</button>' : "") +
-        '<a class="btn whats mini" target="_blank" rel="noopener" data-zapok="' + z.chave + '" href="https://wa.me/55' + String(z.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(z.texto) + '">Enviar</a>' +
-        '<button class="btn sec mini" data-zappula="' + z.chave + '" title="marcar como resolvida sem enviar">Pular</button></span></div>';
-    }).join("") + '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">Toque em Enviar: abre o seu WhatsApp com a mensagem pronta. Dá pra editar o texto de cada mensagem em Configurações → WhatsApp.' +
+        (zapOfi
+          ? '<button class="btn whats mini" data-zapapi="' + z.chave + '" title="manda pela API oficial, sem abrir o WhatsApp">Enviar</button>'
+          : '<a class="btn whats mini" target="_blank" rel="noopener" data-zapok="' + z.chave + '" href="https://wa.me/55' + String(z.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(z.texto) + '">Enviar</a>') +
+        '<button class="btn sec mini" data-zappula="' + z.chave + '" title="marcar como resolvida sem enviar">Pular</button></span>' +
+        // por que a última tentativa não saiu — com o caminho manual do lado
+        (zapErros[z.chave]
+          ? '<span data-zaperro="1" class="muted" style="flex-basis:100%;font-size:11.5px;color:#f87171;">' + esc(zapErros[z.chave]) +
+            ' — <a class="whats" target="_blank" rel="noopener" href="https://wa.me/55' + String(z.zap).replace(/\D/g, "") +
+            "?text=" + encodeURIComponent(z.texto) + '">mandar pelo seu WhatsApp</a></span>'
+          : "") + "</div>";
+    }).join("") +
+      (zapOfi ? '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+        '<button class="btn" id="zapTodas">Enviar todas agora</button>' +
+        '<span class="muted" id="zapTodasSt" style="font-size:12px;">' + esc(zapResumo) + "</span></div>" : "") +
+      '<p class="muted" style="font-size:11.5px;margin:10px 0 0;">' +
+      (zapOfi ? "WhatsApp oficial ligado: o Enviar manda direto, sem abrir o aplicativo. Se o aluno não falou com você nas últimas 24h, a Meta exige template aprovado — nesse caso a linha avisa e volta o envio manual."
+              : "Toque em Enviar: abre o seu WhatsApp com a mensagem pronta.") + " Dá pra editar o texto de cada mensagem em Configurações → WhatsApp." +
       (zapTemFoto ? " Mensagem com foto: toque em <b>Foto</b> e escolha o aluno certo na lista do celular — a mensagem vai junto, de legenda. Se a legenda não for, mande o texto pelo Enviar; se foi, é só tocar em Pular pra tirar da fila." : "") + "</p>"
       : "Nenhuma mensagem pendente — todo mundo avisado.";
     // as miniaturas recebem o src DEPOIS, uma imagem por id — embutir o base64 no
