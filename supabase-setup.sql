@@ -2301,3 +2301,83 @@ $$;
 grant execute on function public.aluno_revoga_acesso(text, boolean) to authenticated;
 grant execute on function public.aluno_religa_acesso(text) to authenticated;
 grant execute on function public.app_aluno_faxina(text[]) to authenticated;
+
+-- ==================== QUEM AINDA NÃO ABRIU PELO LINK ====================
+-- (2026-08) O app deixou de existir como arquivo .html baixado. Quem ficou com
+-- um desses no celular tem uma FOTO CONGELADA: não recebe conserto, não recebe
+-- treino novo, não toca notificação e não obedece à revogação de acesso. Só que
+-- não dá pra apagar de longe — o arquivo não fala com a nuvem.
+--
+-- O que dá pra fazer é DESCOBRIR quem é: quem nunca abriu o app pelo link
+-- hospedado é exatamente quem ainda pode estar no formato velho. O carimbo
+-- abaixo marca cada abertura; o painel monta a lista com o que faltou.
+-- Bloco idempotente.
+
+alter table public.app_aluno add column if not exists visto_em timestamptz;
+
+-- o carimbo entra na MESMA chamada que o app já fazia pra abrir (nada de ida
+-- extra na rede). Por isso a função deixou de ser 'stable' e virou plpgsql.
+create or replace function public.app_aluno_estado(t text)
+returns jsonb
+language plpgsql security definer
+set search_path = public
+as $$
+declare v_reg public.app_aluno%rowtype;
+begin
+  select * into v_reg from public.app_aluno a where a.token = t;
+  if not found then
+    return jsonb_build_object('ok', false, 'motivo', 'sem_registro');
+  end if;
+  if v_reg.revogado_em is not null then
+    return jsonb_build_object('ok', false, 'motivo', 'revogado');
+  end if;
+  -- uma escrita por aluno por dia: abrir o app 20 vezes não vira 20 updates
+  if v_reg.visto_em is null or v_reg.visto_em < now() - interval '20 hours' then
+    update public.app_aluno set visto_em = now() where token = t;
+  end if;
+  return jsonb_build_object('ok', true, 'dados', v_reg.dados);
+end;
+$$;
+
+grant execute on function public.app_aluno_estado(text) to anon, authenticated;
+
+-- o caminho antigo (app_aluno_busca) também carimba, senão quem está com a
+-- página /app/ velha guardada aparecia pro professor como "nunca abriu"
+create or replace function public.app_aluno_busca(t text)
+returns jsonb
+language plpgsql security definer
+set search_path = public
+as $$
+declare v_dados jsonb; v_visto timestamptz;
+begin
+  select dados, visto_em into v_dados, v_visto
+    from public.app_aluno where token = t and revogado_em is null;
+  if not found then return null; end if;
+  if v_visto is null or v_visto < now() - interval '20 hours' then
+    update public.app_aluno set visto_em = now() where token = t;
+  end if;
+  return v_dados;
+end;
+$$;
+
+grant execute on function public.app_aluno_busca(text) to anon, authenticated;
+
+-- O painel manda os tokens que ele já conhece e recebe de volta SÓ a data da
+-- última abertura de cada um. Nenhum token novo volta pro navegador: a resposta
+-- é limitada ao que foi perguntado e ao que é desta conta.
+create or replace function public.app_alunos_vistos(p_tokens text[])
+returns json
+language sql security definer stable
+set search_path = public
+as $$
+  select coalesce(json_agg(json_build_object(
+           'token', a.token,
+           'visto_em', a.visto_em,
+           'publicado_em', a.atualizado)), '[]'::json)
+    from public.app_aluno a
+   where a.academia_id in (select public.minhas_academias())
+     and a.revogado_em is null
+     and a.token = any (coalesce(p_tokens, array[]::text[]))
+$$;
+
+grant execute on function public.app_alunos_vistos(text[]) to authenticated;

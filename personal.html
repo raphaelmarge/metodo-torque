@@ -1366,6 +1366,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
     </div>
 
+    <div class="card" style="margin-top: 14px;" data-cfgsec="app">
+      <h2>Quem ainda não abriu o app pelo link</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O app deixou de ser um arquivo baixado — agora é só o link. Quem ficou com o arquivo velho no celular <b>não recebe treino novo, não recebe notificação e continua entrando mesmo depois de encerrado</b>, e não dá pra apagar de longe. Esta lista mostra quem nunca abriu pelo link: é exatamente quem pode estar no formato antigo. Mande o link de novo e peça pra apagar o arquivo.</p>
+      <button class="btn sec" id="cfgQuemNaoAbriu">Conferir quem falta</button>
+      <div id="cfgQuemStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+      <div id="cfgQuemLista" style="margin-top: 10px;"></div>
+    </div>
+
     <div class="card" style="margin-top: 14px;" data-cfgsec="conta">
       <h2>Conferir os acessos publicados</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Se você trocou de computador, formatou o aparelho ou restaurou um backup antigo, pode ter ficado aluno com o app ainda aberto na nuvem sem aparecer aqui na sua lista. Este botão compara os dois lados e <b>corta o que não existe mais aqui</b>.</p>
@@ -9286,9 +9294,47 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       cb({ ok: true, revogados: +d.revogados || 0 });
     }).catch(function () { cb({ erro: "Não consegui falar com a nuvem agora." }); });
   }
+  /* ---------- quem ainda não abriu o app pelo link ----------
+   * O arquivo .html baixado saiu do produto, mas quem já tem um no celular
+   * continua com ele: não fala com a nuvem, então não dá pra apagar de longe.
+   * O que dá é DESCOBRIR quem é — quem nunca abriu pelo link hospedado é
+   * exatamente quem ainda pode estar no formato velho. */
+  function quemNaoAbriu(cb) {
+    cb = cb || function () {};
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { cb({ erro: "Entre na sua conta pra conferir — é a nuvem que sabe quem abriu." }); return; }
+    var st = load();
+    var comApp = st.alunos.filter(function (a) { return a.appTokenP && !a.appRevogadoEm && a.ativo !== false; });
+    if (!comApp.length) { cb({ ok: true, faltam: [], total: 0 }); return; }
+    var tokens = comApp.map(function (a) { return a.appTokenP; });
+    nuvem.client.rpc("app_alunos_vistos", { p_tokens: tokens }).then(function (r) {
+      if (r && r.error) {
+        // função ainda não publicada: fala a verdade em vez de mostrar todo mundo como pendente
+        var m = (r.error.code === "PGRST202" || /app_alunos_vistos/.test(r.error.message || ""))
+          ? "Rode o SQL novo no Supabase (bloco QUEM AINDA NÃO ABRIU PELO LINK) — sem ele eu não tenho como saber quem abriu."
+          : r.error.message;
+        cb({ erro: m });
+        return;
+      }
+      var porToken = {};
+      ((r && r.data) || []).forEach(function (x) { porToken[x.token] = x; });
+      var faltam = comApp.filter(function (a) {
+        var reg = porToken[a.appTokenP];
+        return !reg || !reg.visto_em;
+      }).map(function (a) {
+        var reg = porToken[a.appTokenP] || {};
+        return { id: a.id, nome: a.nome, zap: a.zap || "", token: a.appTokenP, publicadoEm: reg.publicado_em || a.appPubEm || "" };
+      });
+      cb({ ok: true, faltam: faltam, total: comApp.length });
+    }).catch(function () { cb({ erro: "Não consegui falar com a nuvem agora." }); });
+  }
+  function linkDoApp(token) {
+    return location.origin + location.pathname.replace(/personal\.html$/, "") + "app/?t=" + token;
+  }
   window.__revogaAluno = revogaAcessoAluno; // testes
   window.__religaAluno = religaAcessoAluno; // testes
   window.__faxinaAcessos = faxinaAcessos; // testes
+  window.__quemNaoAbriu = quemNaoAbriu; // testes
 
   window.__pacoteApp = pacoteApp; // testes
 
@@ -10262,6 +10308,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ? "Achei " + r.revogados + " acesso(s) antigo(s) que não existiam mais aqui e cortei."
         : "Tudo certo: nenhum acesso sobrando na nuvem.";
     });
+  });
+
+  $("cfgQuemNaoAbriu").addEventListener("click", function () {
+    var bt = this, el = $("cfgQuemStatus"), cx = $("cfgQuemLista");
+    bt.disabled = true;
+    el.textContent = "Conferindo…";
+    cx.innerHTML = "";
+    quemNaoAbriu(function (r) {
+      bt.disabled = false;
+      if (r.erro) { el.textContent = r.erro; return; }
+      if (!r.total) { el.textContent = "Nenhum aluno com app publicado ainda."; return; }
+      if (!r.faltam.length) {
+        el.textContent = "Todos os " + r.total + " aluno(s) com app já abriram pelo link. Nada a fazer.";
+        return;
+      }
+      el.innerHTML = "<b>" + r.faltam.length + " de " + r.total + "</b> ainda não abriram pelo link.";
+      cx.innerHTML = r.faltam.map(function (a) {
+        var msg = "Oi " + a.nome.split(" ")[0] + "! Troquei o seu app de lugar: agora é por este link — " + linkDoApp(a.token) +
+          " . Abre no celular e usa 'Adicionar à tela inicial'. Se você tiver um arquivo antigo do app salvo aí, pode apagar: ele não recebe mais treino novo.";
+        return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
+          '<span class="muted">' + (a.publicadoEm ? "app publicado em " + S.fmtData(String(a.publicadoEm).slice(0, 10)) : "sem data de publicação") + "</span>" +
+          '<span style="margin-left:auto;display:inline-flex;gap:6px;flex-wrap:wrap;">' +
+          (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Mandar o link</a>' : "") +
+          '<button class="btn sec mini" data-quemver="' + a.id + '">Ver aluno</button></span></div>';
+      }).join("");
+    });
+  });
+  $("cfgQuemLista").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-quemver]");
+    if (b) abrePerfil(b.getAttribute("data-quemver"));
   });
 
   // exclusão de conta: exigida pela Play e pela Apple em todo app com login.
