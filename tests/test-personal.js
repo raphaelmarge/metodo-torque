@@ -3065,6 +3065,85 @@ async function abaPt(p, a) {
     "card WhatsApp de hoje lista as mensagens com o link do zap já montado");
   ok(zapCard.depois === zapCard.antes - 1 && zapCard.log === 1,
     "Pular marca no zapLog e tira a mensagem da fila na hora");
+
+  // --- WhatsApp oficial (API da Meta): a mesma fila sai sozinha ---
+  console.log("WhatsApp oficial (API da Meta):");
+  {
+    const zapi = await p.evaluate(async () => {
+      const S = window.MTStore;
+      const snap = JSON.stringify(S.read("ptStudio", {}));
+      const st = S.read("ptStudio", {});
+      st.config = st.config || {};
+      const hj = S.todayISO(), nasc = "1990-" + hj.slice(5);
+      st.alunos = [
+        { id: "zo1", nome: "Ana Oficial", zap: "31999990001", nasc: nasc, ativo: true, desde: hj, valor: 100, modo: "mes" },
+        { id: "zo2", nome: "Bia Oficial", zap: "31999990002", nasc: nasc, ativo: true, desde: hj, valor: 100, modo: "mes" },
+      ];
+      st.zapLog = {};
+      delete st.config.zapApi;
+      S.write("ptStudio", st);
+      await new Promise((r) => setTimeout(r, 250));
+      const semApi = {
+        ligado: window.__zapApiOn(),
+        manual: document.querySelectorAll("#bZapP [data-zapok]").length,
+        oficial: document.querySelectorAll("#bZapP [data-zapapi]").length,
+        botaoTodas: !!document.getElementById("zapTodas"),
+      };
+      // agora liga a API oficial
+      const st2 = S.read("ptStudio", {});
+      st2.config.zapApi = { url: "https://x.supabase.co/functions/v1/whatsapp", template: "" };
+      S.write("ptStudio", st2);
+      await new Promise((r) => setTimeout(r, 250));
+      const comApi = {
+        ligado: window.__zapApiOn(),
+        manual: document.querySelectorAll("#bZapP [data-zapok]").length,
+        oficial: document.querySelectorAll("#bZapP [data-zapapi]").length,
+        botaoTodas: !!document.getElementById("zapTodas"),
+      };
+      // mock da função: a segunda cai fora da janela de 24h
+      const chamadas = [];
+      window.__tokenOrig = S.tokenNuvem;
+      window.__fetchOrig = window.fetch;
+      S.tokenNuvem = () => Promise.resolve("tok-do-usuario");
+      window.fetch = (url, opts) => {
+        if (String(url).includes("/functions/v1/whatsapp")) {
+          const corpo = JSON.parse(opts.body);
+          chamadas.push({ para: corpo.para, auth: (opts.headers || {}).Authorization || "" });
+          const ruim = String(corpo.para).endsWith("0002");
+          return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(
+            ruim ? { erro: "Meta recusou", codigo: 131047, precisaTemplate: true } : { ok: true, messageId: "m1" }) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      await window.__zapMandaFila();
+      await new Promise((r) => setTimeout(r, 300));
+      const fim = {
+        chamadas: chamadas,
+        naFila: window.__zapFila(S.read("ptStudio", {})).length,
+        aviso: (document.querySelector("#bZapP [data-zaperro]") || {}).textContent || "",
+        temLinkManual: !!document.querySelector("#bZapP [data-zaperro] a[href*='wa.me']"),
+        resumo: (document.getElementById("zapTodasSt") || {}).textContent || "",
+      };
+      S.tokenNuvem = window.__tokenOrig;
+      window.fetch = window.__fetchOrig;
+      S.write("ptStudio", JSON.parse(snap));
+      await new Promise((r) => setTimeout(r, 200));
+      return { semApi, comApi, fim };
+    });
+    ok(!zapi.semApi.ligado && zapi.semApi.manual >= 2 && zapi.semApi.oficial === 0 && !zapi.semApi.botaoTodas,
+      "sem configurar, a fila continua saindo do WhatsApp do professor (nada muda)");
+    ok(zapi.comApi.ligado && zapi.comApi.oficial >= 2 && zapi.comApi.manual === 0 && zapi.comApi.botaoTodas,
+      "com a API oficial ligada, a fila ganha envio direto e o botão Enviar todas agora");
+    ok(zapi.fim.chamadas.length === 2 && zapi.fim.chamadas.every((c) => /^55\d{10,11}$/.test(c.para)),
+      "cada mensagem vai pra API com DDI+DDD+número (" + zapi.fim.chamadas.map((c) => c.para).join(", ") + ")");
+    ok(zapi.fim.chamadas.every((c) => c.auth === "Bearer tok-do-usuario"),
+      "a função é chamada com o login do professor (a chave pública levaria 401)");
+    ok(zapi.fim.naFila === 1, "só o que a Meta aceitou sai da fila (sobrou " + zapi.fim.naFila + ")");
+    ok(/24h/.test(zapi.fim.aviso) && zapi.fim.temLinkManual,
+      "o que não saiu explica o motivo e devolve o link pra mandar na mão — " + zapi.fim.aviso.slice(0, 60));
+    ok(/1 enviada/.test(zapi.fim.resumo) && /1 não saiu/.test(zapi.fim.resumo),
+      "o resumo do lote conta certo o que foi e o que não foi — " + zapi.fim.resumo);
+  }
   await abaPt(p, "config");
   const zapModelo = await p.evaluate(async () => {
     // a mensagem fixa agora é editada pela lista unificada (Editar abre o dialog)
