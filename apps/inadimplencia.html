@@ -344,9 +344,12 @@
     var c = S.read("config", { dados: {} });
     return !!(c.integracoes && c.integracoes.demo);
   }
+  // a função é uma só, do site; o que muda por academia é o número ligado nela
   function whatsappUrl() {
     var c = S.read("config", { dados: {} });
-    return (c.integracoes && c.integracoes.whatsappUrl) || "";
+    var ligado = !!(c.integracoes && c.integracoes.whatsappLigado);
+    var nu = window.MT_CLOUD || {};
+    return ligado && nu.url ? String(nu.url).replace(/\/+$/, "") + "/functions/v1/whatsapp" : "";
   }
   function enviaWaAuto(dev, passo) {
     var c = S.read("config", { dados: {} }).integracoes || {};

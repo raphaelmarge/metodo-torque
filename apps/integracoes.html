@@ -71,17 +71,22 @@
 
   <div class="integ">
     <header><span class="ico">💬</span><h2>WhatsApp oficial (API da Meta)</h2><span id="stWa" class="tag neutro">NÃO CONFIGURADA</span></header>
-    <p class="muted" style="margin: 8px 0 10px;">O sistema <strong>envia as mensagens sozinho</strong> (cobrança, lembretes) sem abrir o WhatsApp. Texto livre vale na janela de 24h após o aluno falar com o número; fora dela a Meta exige um <strong>template aprovado</strong>.</p>
+    <p class="muted" style="margin: 8px 0 10px;">O sistema <strong>envia as mensagens sozinho</strong> (cobrança, lembretes) sem abrir o WhatsApp. Você liga o <strong>número da sua academia</strong> aqui — a Meta cobra as mensagens na conta dela, não na de mais ninguém. Texto livre vale na janela de 24h após o aluno falar com o número; fora dela a Meta exige um <strong>template aprovado</strong>.</p>
     <div class="linha-flex" style="align-items: flex-end;">
-      <div class="campo" style="flex: 1; min-width: 280px;"><label>URL da função (Supabase → Edge Functions → whatsapp)</label>
-        <input id="waUrl" placeholder="https://seu-projeto.supabase.co/functions/v1/whatsapp">
+      <div class="campo" style="min-width: 220px;"><label>ID do número (Phone number ID)</label>
+        <input id="waFone" placeholder="123456789012345" inputmode="numeric">
       </div>
-      <div class="campo" style="min-width: 220px;"><label>Template de cobrança aprovado (opcional)</label>
+      <div class="campo" style="flex: 1; min-width: 240px;"><label>Token permanente</label>
+        <input id="waToken" type="password" autocomplete="off" placeholder="cole aqui o token da Meta">
+      </div>
+      <div class="campo" style="min-width: 200px;"><label>Template de cobrança aprovado (opcional)</label>
         <input id="waTemplate" placeholder="cobranca_mensalidade">
       </div>
-      <button class="btn" id="btnTestarWa">Testar conexão</button>
-      <button class="btn sec" id="btnCodigoWa">Copiar código da função</button>
+      <button class="btn" id="btnLigarWa">Ligar meu número</button>
+      <button class="btn sec" id="btnTestarWa">Testar conexão</button>
+      <button class="btn sec" id="btnDesligarWa" hidden>Desligar</button>
     </div>
+    <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O token fica guardado na nuvem, do lado do servidor, e <strong>nunca volta pra esta tela</strong> — por isso o campo aparece vazio depois de salvo. Deixe vazio pra manter o que já está lá.</p>
     <div class="linha-flex" style="align-items: flex-end; margin-top: 8px;">
       <div class="campo" style="min-width: 220px;"><label>Enviar mensagem de teste para (DDI+DDD+número)</label>
         <input id="waTeste" placeholder="5531999990000">
@@ -191,28 +196,77 @@
       .catch(function (e) { out.innerHTML = '<span class="tag erro">Não alcancei a função: ' + e.message + " — confira a URL e o deploy.</span>"; });
   };
 
-  // ---------- WhatsApp oficial ----------
-  $("waUrl").value = (c0.integracoes && c0.integracoes.whatsappUrl) || "";
+  /* ---------- WhatsApp oficial ----------
+   * A função é UMA só, publicada pelo dono do TORQUE ON, e serve todas as
+   * academias: aqui a academia liga o NÚMERO DELA (id + token), que vai pra
+   * zap_config na nuvem. Ninguém precisa criar função nem projeto — e a conta
+   * das mensagens cai na Meta de quem mandou. */
   $("waTemplate").value = (c0.integracoes && c0.integracoes.whatsappTemplate) || "";
+  var waLigado = false;
   atualizaWa();
   function atualizaWa() {
-    var ok = !!$("waUrl").value.trim();
-    $("stWa").textContent = ok ? "CONFIGURADA" : "NÃO CONFIGURADA";
-    $("stWa").className = "tag " + (ok ? "ok" : "neutro");
+    $("stWa").textContent = waLigado ? "CONFIGURADA" : "NÃO CONFIGURADA";
+    $("stWa").className = "tag " + (waLigado ? "ok" : "neutro");
+    $("btnDesligarWa").hidden = !waLigado;
   }
-  function salvaWa(id, campo) {
-    $(id).addEventListener("change", function () {
-      var st = cfg();
-      st.integracoes = st.integracoes || {};
-      var v = this.value.trim().replace(id === "waUrl" ? /\/+$/ : /^$/, "");
-      if (st.integracoes[campo] === v) return;
-      st.integracoes[campo] = v;
-      S.write("config", st);
+  function waUrl() {
+    var c = window.MT_CLOUD || {};
+    return c.url ? String(c.url).replace(/\/+$/, "") + "/functions/v1/whatsapp" : "";
+  }
+  function rpcWa(nome, args) {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta pra ligar o WhatsApp oficial." });
+    return nuvem.client.rpc(nome, args || {}).then(function (r) {
+      if (r && r.error) return { erro: r.error.message };
+      return (r && r.data) || {};
+    }).catch(function () { return { erro: "Não consegui falar com a nuvem agora." }; });
+  }
+  function leWa() {
+    if (!(S.cloud && S.cloud())) return Promise.resolve();
+    return rpcWa("zap_config_ve").then(function (d) {
+      if (d && d.erro) return;
+      waLigado = !!d.tem_token;
+      // espelho local: as outras telas (Automação, Inadimplência) precisam saber
+      // se dá pra mandar sozinho, e elas não podem ver a credencial
+      var stW = cfg();
+      stW.integracoes = stW.integracoes || {};
+      stW.integracoes.whatsappLigado = waLigado;
+      stW.integracoes.whatsappTemplate = d.template || "";
+      delete stW.integracoes.whatsappUrl; // formato antigo: a URL agora é fixa
+      S.write("config", stW);
+      if (document.activeElement !== $("waFone")) $("waFone").value = d.phone_id || "";
+      if (document.activeElement !== $("waTemplate")) $("waTemplate").value = d.template || "";
       atualizaWa();
     });
   }
-  salvaWa("waUrl", "whatsappUrl");
-  salvaWa("waTemplate", "whatsappTemplate");
+  leWa();
+  $("waTemplate").addEventListener("change", function () {
+    var st = cfg();
+    st.integracoes = st.integracoes || {};
+    st.integracoes.whatsappTemplate = this.value.trim();
+    S.write("config", st);
+  });
+  $("btnLigarWa").onclick = function () {
+    var out = $("resultadoWa");
+    var fone = $("waFone").value.replace(/\D/g, "");
+    var tok = $("waToken").value.trim();
+    if (!fone) { out.innerHTML = '<span class="tag alerta">Cole o ID do número (Phone number ID) da Meta.</span>'; return; }
+    if (!tok && !waLigado) { out.innerHTML = '<span class="tag alerta">Cole o token permanente da Meta na primeira vez.</span>'; return; }
+    out.textContent = "guardando…";
+    rpcWa("zap_config_salva", { p_phone_id: fone, p_token: tok, p_template: $("waTemplate").value.trim() }).then(function (d) {
+      if (d && d.erro) { out.innerHTML = '<span class="tag erro">' + d.erro + "</span>"; return; }
+      $("waToken").value = "";
+      return leWa().then(function () { out.innerHTML = '<span class="tag ok">Guardado — agora toque em Testar conexão.</span>'; });
+    });
+  };
+  $("btnDesligarWa").onclick = function () {
+    if (!confirm("Desligar o WhatsApp oficial desta academia?")) return;
+    rpcWa("zap_config_apaga").then(function (d) {
+      var out = $("resultadoWa");
+      if (d && d.erro) { out.innerHTML = '<span class="tag erro">' + d.erro + "</span>"; return; }
+      return leWa().then(function () { out.innerHTML = '<span class="tag neutro">Desligado.</span>'; });
+    });
+  };
 
   function chamaWa(payload) {
     var headers = { "Content-Type": "application/json" };
@@ -220,17 +274,17 @@
     // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
     return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
       headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
-      return fetch($("waUrl").value.trim().replace(/\/+$/, ""), { method: "POST", headers: headers, body: JSON.stringify(payload) })
+      return fetch(waUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
         .then(function (r) { return r.json(); });
     });
   }
   $("btnTestarWa").onclick = function () {
     var out = $("resultadoWa");
-    if (!$("waUrl").value.trim()) { out.innerHTML = '<span class="tag alerta">Cole a URL da função primeiro.</span>'; return; }
+    if (!waUrl()) { out.innerHTML = '<span class="tag alerta">Este aparelho está sem a configuração da nuvem — recarregue a página.</span>'; return; }
     out.textContent = "testando…";
     chamaWa({ acao: "ping" }).then(function (r) {
-      if (r && r.ok && r.tokenConfigurado && r.foneConfigurado) out.innerHTML = '<span class="tag ok">Conectado — token e número configurados.</span>';
-      else if (r && r.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas faltam os Secrets (passo 4).</span>';
+      if (r && r.ok && r.tokenConfigurado && r.foneConfigurado) out.innerHTML = '<span class="tag ok">Conectado — ' + (r.numeroProprio ? "usando o número desta academia." : "usando o número padrão do sistema.") + "</span>";
+      else if (r && r.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas nenhum número ligado — toque em Ligar meu número.</span>';
       else out.innerHTML = '<span class="tag erro">' + ((r && r.erro) || "resposta inesperada") + "</span>";
     }).catch(function (e) { out.innerHTML = '<span class="tag erro">Não alcancei a função: ' + e.message + "</span>"; });
   };
