@@ -9,8 +9,12 @@
 // zap_config (separada por academia) e esta função lê a credencial de QUEM está
 // chamando. Ninguém precisa criar projeto no Supabase nem mexer no GitHub —
 // esta função é uma só, publicada por você, e serve todo mundo.
-// Se a academia não tiver credencial própria, cai nos Secrets globais
-// (WHATSAPP_TOKEN / WHATSAPP_PHONE_ID), que é o modo de instalação única.
+// Quem não ligar número nenhum simplesmente não envia — e é assim de propósito:
+// cada um paga a própria conta na Meta, e emprestar o número do dono faria as
+// mensagens saírem com o número errado e a conta cair no bolso errado.
+// Pra instalação de dono único (ou plano de entrada), ligue o Secret
+// WHATSAPP_COMPARTILHADO=sim: aí quem não tem credencial usa
+// WHATSAPP_TOKEN / WHATSAPP_PHONE_ID.
 //
 // Como instalar (uma vez):
 //   1. developers.facebook.com → Criar app (tipo Business) → adicionar o
@@ -102,16 +106,22 @@ Deno.serve(async (req: Request) => {
     return json({ erro: "JSON inválido" }, 400);
   }
 
-  // a credencial do próprio profissional manda; sem ela, cai na instalação única
+  /* Cada profissional paga o PRÓPRIO WhatsApp: a Meta cobra a conta dele, não a
+   * do dono do sistema. Por isso, sem credencial própria a função NÃO empresta o
+   * número global — se emprestasse, o dono pagaria a conta de todo mundo e as
+   * mensagens sairiam com o número dele (o aluno responderia pra pessoa errada).
+   * WHATSAPP_COMPARTILHADO=sim libera o número global de propósito, pra quem
+   * quiser oferecer um plano de entrada ou uma demonstração. */
+  const compartilhado = (Deno.env.get("WHATSAPP_COMPARTILHADO") || "").trim().toLowerCase() === "sim";
   const propria = await credencialDe(userId);
-  const token = propria ? propria.token : (Deno.env.get("WHATSAPP_TOKEN") || "");
-  const phoneId = propria ? propria.phoneId : (Deno.env.get("WHATSAPP_PHONE_ID") || "");
+  const token = propria ? propria.token : (compartilhado ? Deno.env.get("WHATSAPP_TOKEN") || "" : "");
+  const phoneId = propria ? propria.phoneId : (compartilhado ? Deno.env.get("WHATSAPP_PHONE_ID") || "" : "");
 
   if (body.acao === "ping") {
-    return json({ ok: true, tokenConfigurado: !!token, foneConfigurado: !!phoneId, numeroProprio: !!propria });
+    return json({ ok: true, tokenConfigurado: !!token, foneConfigurado: !!phoneId, numeroProprio: !!propria, compartilhado: compartilhado });
   }
   if (!token || !phoneId) {
-    return json({ erro: "Nenhum número do WhatsApp ligado nesta conta — cole o ID do número e o token em Configurações → WhatsApp." }, 400);
+    return json({ erro: "Nenhum número do WhatsApp ligado nesta conta — cole o ID do número e o token da Meta em Configurações → WhatsApp." }, 400);
   }
 
   if (body.acao === "enviar") {

@@ -46,6 +46,24 @@ function crcNode(s) {
     "as 3 funções zap_config_* existem (salvar, ver o estado e desligar)");
   ok(!/jsonb_build_object\([^)]*'token'/.test(sql.slice(sql.indexOf("zap_config_ve"))),
     "zap_config_ve devolve se TEM token, nunca o token");
+
+  // modelo de cobrança: cada profissional paga o próprio WhatsApp. A função não
+  // pode emprestar o número do dono do sistema por descuido — só de propósito
+  const fnWa = fs.readFileSync(__dirname + "/../supabase/functions/whatsapp/index.ts", "utf8");
+  ok(/WHATSAPP_COMPARTILHADO/.test(fnWa),
+    "a função tem o interruptor WHATSAPP_COMPARTILHADO pro número emprestado");
+  ok(/compartilhado \? Deno\.env\.get\("WHATSAPP_TOKEN"\)/.test(fnWa) &&
+     /compartilhado \? Deno\.env\.get\("WHATSAPP_PHONE_ID"\)/.test(fnWa),
+    "sem credencial própria e sem o interruptor, ninguém manda pelo número do dono (ele não paga a conta de todo mundo)");
+  ok(/credencialDe/.test(fnWa) && /zap_config\?select=phone_id,token,template/.test(fnWa),
+    "a função busca a credencial da academia de quem chamou");
+
+  // a tela da academia liga o número dela, sem pedir URL de servidor
+  const integ = fs.readFileSync(__dirname + "/../apps/integracoes.html", "utf8");
+  ok(/id="waFone"/.test(integ) && /id="waToken"/.test(integ) && !/id="waUrl"/.test(integ),
+    "Integrações pede ID do número e token — nenhuma URL de função pra colar");
+  ok(/zap_config_salva/.test(integ) && /zap_config_ve/.test(integ) && /zap_config_apaga/.test(integ),
+    "Integrações usa as RPCs (a credencial vai pra nuvem, não pro aparelho)");
   /* O arquivo é rodado de novo a cada mudança. Uma única "create policy" sem o
    * "drop policy if exists" antes derruba o script inteiro em 42710 (already
    * exists) — e TUDO daquele ponto pra baixo (inclusive o bloco do HQ) não roda. */

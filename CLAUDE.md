@@ -39,8 +39,11 @@ o próprio *Phone number ID* + token em Configurações → WhatsApp; isso vai p
 `zap_config` (uma linha por academia) pelas RPCs `zap_config_salva` /
 `zap_config_ve` / `zap_config_apaga`. A tabela tem RLS **sem política nenhuma**:
 o token só é lido pela função, com a service key, e `zap_config_ve` devolve
-`tem_token` (booleano), nunca o token. Sem credencial própria, a função cai nos
-Secrets globais (instalação única). O painel guarda só um espelho local
+`tem_token` (booleano), nunca o token. Sem credencial própria, ninguém envia: o
+modelo é **cada um paga o seu** na Meta, e emprestar o número do dono faria a
+conta cair no bolso errado e o aluno responder pra pessoa errada. O Secret
+`WHATSAPP_COMPARTILHADO=sim` libera o número global de propósito (plano de
+entrada ou demonstração). O painel guarda só um espelho local
 (`config.zapApi = {ligado, phoneId, template}`) porque o desenho da fila é
 síncrono — token nunca toca o localStorage.
 

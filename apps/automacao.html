@@ -409,11 +409,11 @@
     $("resumoSemAtivo").addEventListener("change", salvaR);
     $("btnResumoAgora").addEventListener("click", function () { enviaResumoDono(true); });
     $("btnSemanalAgora").addEventListener("click", function () { enviaResumoSemanal(true); });
-    if (cfgR.ativo && cfgR.zap && cfgR.ultimo !== S.todayISO() && (integ().whatsappUrl || demoOn())) {
+    if (cfgR.ativo && cfgR.zap && cfgR.ultimo !== S.todayISO() && (waOn() || demoOn())) {
       setTimeout(function () { enviaResumoDono(false); }, 1500);
     }
     // fechamento semanal: dispara no domingo (ou na 1ª abertura depois dele), no máx. 1x por semana
-    if (cfgR.semanal && cfgR.zap && (integ().whatsappUrl || demoOn())) {
+    if (cfgR.semanal && cfgR.zap && (waOn() || demoOn())) {
       var hj = new Date(S.todayISO() + "T12:00");
       var ultimo = cfgR.ultimoSemanal || "";
       var diasDesde = ultimo ? Math.floor((hj - new Date(ultimo + "T12:00")) / 864e5) : 99;
@@ -425,15 +425,22 @@
     var c = S.read("config", { dados: {} });
     return !!(c.integracoes && c.integracoes.demo);
   }
+  // a função do WhatsApp é uma só, do site; a academia liga o número dela em
+  // Integrações e o espelho local (whatsappLigado) diz se dá pra mandar sozinho
+  function waUrl() {
+    var c = window.MT_CLOUD || {};
+    return c.url ? String(c.url).replace(/\/+$/, "") + "/functions/v1/whatsapp" : "";
+  }
+  function waOn() { return !!integ().whatsappLigado && !!waUrl(); }
   function enviaWa(para, texto) {
     // modo demonstração: registra o disparo sem chamar a API oficial
-    if (!integ().whatsappUrl && demoOn()) return Promise.resolve({ ok: true, demo: true });
+    if (!waOn() && demoOn()) return Promise.resolve({ ok: true, demo: true });
     var headers = { "Content-Type": "application/json" };
     if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
     // a função exige usuário logado — a anonKey crua leva 401 (role "anon")
     return (S.tokenNuvem ? S.tokenNuvem() : Promise.resolve("")).then(function (tok) {
       headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
-      return fetch(integ().whatsappUrl, { method: "POST", headers: headers,
+      return fetch(waUrl(), { method: "POST", headers: headers,
         body: JSON.stringify({ acao: "enviar", para: "55" + String(para).replace(/\D/g, ""), texto: texto }) })
         .then(function (r) { return r.json(); });
     });
@@ -728,8 +735,8 @@
       h = '<div class="card linha-flex" style="justify-content: space-between;">' +
         "<span><strong>" + pend.length + "</strong> disparo(s) para hoje · <span class='muted'>" +
         (lista.length - pend.length) + " já enviados</span></span>" +
-        ((integ().whatsappUrl || demoOn())
-          ? '<button class="btn" id="btnTodos"' + (pend.length ? "" : " disabled") + ">Enviar todos" + (!integ().whatsappUrl && demoOn() ? " (simulação)" : " pela API") + "</button>"
+        ((waOn() || demoOn())
+          ? '<button class="btn" id="btnTodos"' + (pend.length ? "" : " disabled") + ">Enviar todos" + (!waOn() && demoOn() ? " (simulação)" : " pela API") + "</button>"
           : '<span class="muted">Configure o WhatsApp oficial em <a href="integracoes.html">Integrações</a> (ou ative o modo demonstração) para enviar em lote — os links manuais funcionam sempre.</span>') +
         "</div><div id='listaDisp'>" +
         (lista.length ? lista.map(function (d) {
