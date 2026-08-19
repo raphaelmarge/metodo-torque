@@ -13,13 +13,25 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 | Portal TORQUE ON | `index.html` + `apps/*.html` | Sistema da academia (estilo EVO): alunos, financeiro, check-in, grade, modo TV, chat com IA |
 | TORQUE PERSONAL | `personal.html` (R$ 49/mês) | Módulo do personal: alunos, fichas, avaliações, app do aluno |
 | TORQUE NUTRI | `nutricao.html` | Módulo do nutricionista: pacientes, dietas, app do paciente |
-| App do aluno | gerado por `montaAppAluno` (personal.html) e `montaAppNutri` (nutricao.html) | HTML único publicado na tabela `app_aluno`; aluno entra por `aluno-login.html` (login = e-mail, senha enviada por e-mail no cadastro) |
+| App do aluno | **código** em `app/aluno-builder.js` + **dados** de `dadosAppAluno` (personal.html); Nutri ainda usa `montaAppNutri` (nutricao.html) | `app/index.html` junta os dois na hora; aluno entra por `aluno-login.html` (login = e-mail, senha enviada por e-mail no cadastro) |
 | Vendas | `personal-vendas.html`, `torqueon.html` | Landing pages |
 | Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html` | Demonstrações com dados fake pra mandar pro cliente. O do aluno é gerado por script (regenerar quando o builder mudar) e simula a nuvem interceptando o `fetch`; os outros dois semeiam o localStorage e abrem o módulo |
 
 Bancos compartilhados em `assets/`: `exercicios-db.js` (1270), `alimentos-db.js`
 (989), `receitas-db.js` (63). Rotinas diárias adicionam itens — sempre com
 dedupe por nome (case-insensitive) validado por script node.
+
+**Fonte única do app do aluno** (a partir da v467): o código do app mora em
+`app/aluno-builder.js` (`MT_APP_ALUNO.monta(D)`) e é servido pelo site, igual pra
+todos os alunos. O painel só monta o pacote de DADOS daquele aluno
+(`dadosAppAluno` → ~4 KB, contra 180 KB de HTML) e grava em `app_aluno.dados` no
+formato `{html, dados, ver, stamp}`. Quem abre `/app/?t=…` junta os dois — então
+uma correção de código chega em TODOS os alunos sozinha, sem ninguém republicar.
+Regras: nada de dado de aluno dentro do aluno-builder.js (tudo entra pelo objeto
+`D`); a cor chega por variáveis CSS no `:root`; canvas usa `CV('cor')` porque não
+entende `var()`. O `html` do pacote é só rede de segurança pra quem estiver com a
+página `/app/` velha guardada — sai numa versão futura. `app/app-sw.js` guarda o
+esqueleto (rede primeiro, cache de reserva) pro app abrir sem internet.
 
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
