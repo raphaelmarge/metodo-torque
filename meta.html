@@ -90,8 +90,9 @@
   </div>
 
   <div class="card">
-    <div class="topo"><span class="n">5</span><h2>Guardar as chaves no Supabase</h2></div>
-    <p>No Supabase → <b>Edge Functions → Secrets</b>, crie estes três:</p>
+    <div class="topo"><span class="n">5</span><h2>Guardar as chaves</h2></div>
+    <p><b>Pra ENVIAR</b> (cobrança, lembretes, a fila do Início): você não guarda nada no Supabase. Abra o <b>painel do TORQUE PERSONAL → Configurações → WhatsApp</b> (ou, na academia, <b>Integrações</b>), cole o <b>ID do número</b> e o <b>token</b> e toque em <b>Ligar meu número</b>. É assim que cada profissional liga o número dele e paga a própria conta na Meta.</p>
+    <p style="margin-top:12px;"><b>Pra RECEBER e o robô responder</b> (a função <code>meta-webhook</code>), aí sim: no Supabase → <b>Edge Functions → Secrets</b>, crie estes três:</p>
     <table>
       <tr><th>Nome (copie exato)</th><th>Valor</th></tr>
       <tr><td><code>WHATSAPP_TOKEN</code></td><td>o token de acesso do passo 4</td></tr>

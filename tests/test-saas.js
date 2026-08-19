@@ -64,6 +64,12 @@ function crcNode(s) {
     "Integrações pede ID do número e token — nenhuma URL de função pra colar");
   ok(/zap_config_salva/.test(integ) && /zap_config_ve/.test(integ) && /zap_config_apaga/.test(integ),
     "Integrações usa as RPCs (a credencial vai pra nuvem, não pro aparelho)");
+  // os guias não podem mandar o cliente criar Secret pra ENVIAR: isso é do dono
+  ok(!/Secrets<\/strong>: <code>WHATSAPP_TOKEN/.test(integ) && /Ligar meu número/.test(integ),
+    "o passo a passo da academia manda ligar o número no painel, não criar Secret no Supabase");
+  const guiaFn = fs.readFileSync(__dirname + "/../funcoes.html", "utf8");
+  ok(/Não precisa criar Secret nenhum/.test(guiaFn) && /WHATSAPP_COMPARTILHADO/.test(guiaFn),
+    "a página das funções explica que a whatsapp não precisa de Secret (e onde fica o interruptor do número emprestado)");
   /* O arquivo é rodado de novo a cada mudança. Uma única "create policy" sem o
    * "drop policy if exists" antes derruba o script inteiro em 42710 (already
    * exists) — e TUDO daquele ponto pra baixo (inclusive o bloco do HQ) não roda. */
