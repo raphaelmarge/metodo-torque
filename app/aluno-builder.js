@@ -82,6 +82,7 @@
     var ctApp = D.ctApp || null, plApp = D.plApp || null, pixApp = D.pixApp || null, svApp = D.svApp || [];
     var treino = D.treino || "", t2 = D.t2 || null, fichaVenceApp = D.fichaVenceApp || "";
     var fichasApp = D.fichasApp || null, fexs = D.fexs || [], guiaFichasP = D.guiaFichasP || [];
+    var GIF = D.gif || null;
     var aqPorFicha = D.aqPorFicha || {}, raioX = D.raioX || null;
     var wodsApp = D.wodsApp || [], cardiosApp = D.cardiosApp || [];
     var menuOculta = D.menuOculta || [], feedLigado = !!D.feedLigado;
@@ -179,6 +180,9 @@
       "box-shadow:0 26px 66px -30px rgba(var(--cor-rgb),1),inset 0 0 0 1px rgba(var(--cor-rgb),.14)}" +
       ".gcard.recibo{max-height:62vh}"+
       ".gnum{position:absolute;top:2px;right:14px;font-size:104px;line-height:.9;font-weight:800;color:rgba(var(--cor-rgb),.10);font-variant-numeric:tabular-nums;pointer-events:none}" +
+      ".ggif{margin-top:14px;border-radius:16px;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 1px rgba(var(--cor-rgb),.12)}"+
+      ".ggif img{display:block;width:100%;max-height:34vh;object-fit:contain;background:#fff}"+
+      ".gwrap.reg .ggif{display:none!important}"+
       ".gchip{display:inline-block;align-self:flex-start;font-size:9.5px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:var(--cor2);background:rgba(var(--cor-rgb),.12);border-radius:99px;padding:5px 11px}" +
       ".gsets{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}" +
       ".gsets i{flex:1;min-width:38px;max-width:72px;height:52px;border-radius:13px;background:#e6e2ef;color:#8b83a2;display:flex;align-items:center;justify-content:center;" +
@@ -680,6 +684,7 @@
       "<div class='gcard' id='gCard'>" +
       "<div class='gnum' id='gNum' aria-hidden='true'></div>" +
       "<span class='gchip' id='gEstado'></span>" +
+      "<div class='ggif' id='gGif' style='display:none;'></div>" +
       "<div id='gMiolo'></div>" +
       // o número do descanso mora AQUI, fixo: se ele fosse redesenhado junto com
       // o miolo, o próximo pintaGuia o apagava e o player travava no meio
@@ -733,7 +738,22 @@
       // arquivo de vídeo direto (mp4/webm...). Link estranho ganha aviso honesto.
       "function ytId(u){var m=String(u||'').match(/(?:youtube\\.com\\/(?:watch\\?(?:.*&)?v=|shorts\\/|embed\\/)|youtu\\.be\\/)([\\w-]{6,20})/);return m?m[1]:'';}" +
       "function vidMolde(src){return \"<iframe src='\"+src+\"' title='Vídeo do exercício' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen style='width:100%;aspect-ratio:16/9;border:0;border-radius:10px;margin-top:8px;display:block;background:#000;'></iframe>\";}" +
+      // Banco de GIFs do dono: em vez de guardar 1619 links, o app monta o
+      // endereço na hora a partir do nome do exercício. Se o arquivo não
+      // existir, o <img> falha e a demonstração some sem barulho nenhum.
+      "var GIF=" + jsonApp(GIF) + ";" +
+      "function gifUrl(nome){if(!GIF||!GIF.b||!nome)return '';" +
+      "var t=String(nome).trim().toLowerCase();" +
+      "if(!GIF.a)t=t.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');" +
+      "t=t.replace(/[^a-z0-9\\u00c0-\\u024f ]+/g,' ').replace(/\\s+/g,' ').trim();" +
+      "if(GIF.p==='sublinha')t=t.replace(/ /g,'_');" +
+      "else if(GIF.p==='junto')t=t.replace(/ /g,'');" +
+      "else if(GIF.p!=='espaco')t=t.replace(/ /g,'-');" +
+      "return GIF.b+encodeURIComponent(t)+'.'+(GIF.e||'gif');}" +
       "function vidHtml(u){u=String(u||'');var id=ytId(u);" +
+      // GIF/imagem animada não é <video>: é <img>, sem controles e em loop
+      "if(/\\.(gif|webp|png|jpe?g)([?#][^'\"<>]*)?$/i.test(u))" +
+      "return \"<img src='\"+u+\"' alt='' loading='lazy' style='width:100%;border-radius:10px;margin-top:8px;display:block;background:#fff;'>\";" +
       "if(id)return vidMolde('https://www.youtube-nocookie.com/embed/'+id+'?rel=0&playsinline=1');" +
       "var pl=u.match(/[?&]list=([\\w-]{10,60})/);" +
       "if(pl)return vidMolde('https://www.youtube-nocookie.com/embed/videoseries?list='+pl[1]);" +
@@ -1516,6 +1536,11 @@
       "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
       "gEl('gHist').textContent=gHistTxt(it.e);" +
+      // demonstração: o GIF do banco aparece sozinho (é leve e mudo); o vídeo do
+      // professor continua atrás do botão, porque tem som e pesa
+      "var gg=gEl('gGif');if(gg){var gu=gifUrl(it.e);" +
+      "gg.innerHTML=gu?\"<img src='\"+gu+\"' alt='' loading='lazy' onerror='this.parentNode.style.display=\\\"none\\\"'>\":'';" +
+      "gg.style.display=gu?'block':'none';}" +
       "var gvd=gEl('gVideo');if(gvd){gvd.dataset.v=it.v||'';gvd.style.display=it.v?'inline-block':'none';gvd.textContent='Como fazer';" +
       "var gbx=gvd.nextElementSibling;if(gbx&&gbx.classList.contains('vidbox')){gbx.innerHTML='';gbx.style.display='none';}}" +
       "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
@@ -1534,6 +1559,7 @@
       "function gDescanso(sg,trocaEx){gv.pend=trocaEx;var resta=sg,tot=sg||1;" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
       "gEl('gEstado').textContent=trocaEx?'Exercício feito':'Descanso';pintaBarra();" +
+      "var gg2=gEl('gGif');if(gg2&&trocaEx)gg2.style.display='none';" +
       "gEl('gSerie').style.display='none';" +
       "var pu=gEl('gPular');pu.style.display='block';pu.style.pointerEvents='none';pu.style.opacity='.55';" +
       "setTimeout(function(){pu.style.pointerEvents='';pu.style.opacity='';},700);" +
@@ -1595,6 +1621,7 @@
       "var temC=gv.cargas[it.e]||(dcR[it.e]||[]).some(function(x){return x.d===hjR;});" +
       "if(temC)anot++;else faltam.push({i:i,e:it.e});});" +
       "gEl('gEstado').textContent='Treino de hoje';gEl('gNum').textContent='';" +
+      "var gg3=gEl('gGif');if(gg3)gg3.style.display='none';" +
       "gEl('gBarra').innerHTML=f.it.map(function(){return \"<i class='past'></i>\";}).join('');" +
       "gEl('gProg').innerHTML='<b>'+g2(f.it.length)+'</b> / '+g2(f.it.length)+\"<span>\"+esc2(f.n)+' · terminou</span>';" +
       "gEl('gCard').classList.add('recibo');" +

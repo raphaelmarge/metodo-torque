@@ -4230,6 +4230,40 @@ async function abaPt(p, a) {
     ok(/×/.test(st1.chips) && /descanso/.test(st1.chips), "os chips mostram séries × reps e o descanso");
     ok(+st1.zi >= 62, "o player fica ACIMA da gaveta do menu (z-index " + st1.zi + ")");
 
+    /* Banco de GIFs do dono: o app monta o endereço na hora, a partir do nome do
+     * exercício — nada de 1619 links dentro do registro de cada aluno. */
+    {
+      const semGif = await pApp.evaluate(() => {
+        const g = document.getElementById("gGif");
+        return { existe: !!g, escondido: !g || g.style.display === "none" };
+      });
+      ok(semGif.existe && semGif.escondido,
+        "sem banco de GIF configurado, a moldura da demonstração fica escondida (nada de buraco na tela)");
+      const regra = await p.evaluate(() => {
+        const antes = self.MT_GIFS;
+        self.MT_GIFS = { bucket: "gifs", padrao: "traco", acento: false, ext: "gif" };
+        const r = window.__gifRegra();
+        self.MT_GIFS = antes;
+        return r;
+      });
+      ok(regra && /\/storage\/v1\/object\/public\/gifs\/$/.test(regra.b) && regra.p === "traco",
+        "a regra do banco de GIFs vira UM endereço base no pacote (" + (regra || {}).b + ")");
+      const semBucket = await p.evaluate(() => {
+        const antes = self.MT_GIFS;
+        self.MT_GIFS = { bucket: "", padrao: "traco" };
+        const r = window.__gifRegra();
+        self.MT_GIFS = antes;
+        return r;
+      });
+      ok(semBucket === null, "sem bucket preenchido, o pacote do aluno não carrega regra nenhuma");
+      // e o app sabe transformar nome de exercício em endereço de arquivo
+      const url = await pApp.evaluate(() => {
+        const f = new Function("return typeof gifUrl === 'function'");
+        return { temFuncao: /function gifUrl/.test(document.documentElement.innerHTML) };
+      });
+      ok(url.temFuncao, "o app carrega o montador de endereço do GIF");
+    }
+
     // uma série -> descanso com número grande; a última -> registro da carga
     const serie1 = await pApp.evaluate(async () => {
       document.getElementById("gSerie").click();
