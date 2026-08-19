@@ -4185,6 +4185,11 @@ async function abaPt(p, a) {
   const thread = await pApp.evaluate(() => document.getElementById("chMsgs").textContent);
   ok(/dúvida no supino/.test(thread), "mensagem do aluno aparece no chat do app");
 
+  const barraApp = await pApp.evaluate(() => {
+    const m = document.querySelector("meta[name=theme-color]");
+    return m ? m.getAttribute("content") : "";
+  });
+  ok(barraApp === "#7c3aed", "app pinta a barra do navegador com a cor da paleta (" + barraApp + ")");
   ok(errosApp.length === 0, "app do aluno abre sem erros de JS" + (errosApp.length ? " — " + errosApp[0] : ""));
   // --- modo claro × noturno no app do aluno (botão na gaveta ☰, escolha salva) ---
   const temaSnap = await pApp.evaluate(() => {
@@ -4200,7 +4205,7 @@ async function abaPt(p, a) {
     out.txt = getComputedStyle(document.body).color;
     out.card = card ? getComputedStyle(card).backgroundColor : "";
     // no visual minimalista o .cardx é transparente — quem vira branco são as superfícies internas
-    const sup = document.querySelector("[style*='background:#121016']");
+    const sup = document.querySelector("[style*='background:var(--bg2)']");
     out.superficie = sup ? getComputedStyle(sup).backgroundColor : "";
     out.salvo = JSON.parse(localStorage.getItem("pttema"));
     // devolve pro noturno (padrão) pra não afetar os testes seguintes
@@ -4253,8 +4258,11 @@ async function abaPt(p, a) {
         topoVisivel: !document.getElementById("logoStudio").hidden && (document.getElementById("logoStudio").src || "").indexOf("data:image/png") === 0,
       };
     }, PNG_MIN);
-    ok(/<meta name='theme-color' content='#0ea5e9'>/.test(tema.html), "app gerado leva a cor nova no theme-color");
-    ok(/linear-gradient\(135deg,#0ea5e9,/.test(tema.html) && !/linear-gradient\(135deg,#7c3aed,/.test(tema.html), "botões do app usam o gradiente da cor nova (sem sobra do roxo)");
+    ok(/:root\{[^}]*--cor:#0ea5e9;/.test(tema.html) && !/<meta name='theme-color'/.test(tema.html),
+      "app gerado leva a cor nova na paleta (a barra do navegador vem dela, no aparelho)");
+    // a paleta mora num :root só (fonte única): o código do app não repete cor nenhuma
+    ok(/:root\{[^}]*--cor:#0ea5e9;/.test(tema.html) && /linear-gradient\(135deg,var\(--cor\),var\(--cor2\)\)/.test(tema.html) && !/#7c3aed/i.test(tema.html),
+      "botões do app usam o gradiente da cor nova (sem sobra do roxo)");
     ok(tema.html.indexOf(PNG_MIN) !== -1, "logo (dataURL) entra no cabeçalho do app do aluno");
     ok(tema.prevVisivel && tema.delVisivel && tema.topoVisivel, "painel mostra a logo no topo + preview com ✕ tirar logo");
     // cor inválida e logo maliciosa não entram
@@ -4269,7 +4277,7 @@ async function abaPt(p, a) {
         roxoVar: document.documentElement.style.getPropertyValue("--roxo"),
       };
     });
-    ok(/<meta name='theme-color' content='#7c3aed'>/.test(invalido.html), "cor inválida (red;x) cai no roxo padrão no app");
+    ok(/:root\{[^}]*--cor:#7c3aed;/.test(invalido.html), "cor inválida (red;x) cai no roxo padrão no app");
     ok(invalido.roxoVar === "", "cor inválida não pinta o painel (volta pro padrão)");
     ok(invalido.html.indexOf("onerror='hack") === -1 && invalido.html.indexOf("hack") === -1, "logo maliciosa (com aspas) fica de fora do app (anti-XSS)");
     // restaura o padrão pra não afetar o resto da suíte
@@ -4312,6 +4320,21 @@ async function abaPt(p, a) {
     "aba Personalização: 8 cores prontas, o preset salva e o preview pinta na hora");
   ok(!/#7c3aed/i.test(pers.appHtml) && !/#a78bfa/i.test(pers.appHtml) && !/rgba\(124,58,237/.test(pers.appHtml) && !/#4c1d95/i.test(pers.appHtml) && /#dc2626/.test(pers.appHtml),
     "paleta COMPLETA no app: nenhum tom do roxo padrão sobra quando o studio tem cor própria");
+  // fonte única: fora do bloco :root o código do app é o MESMO pra qualquer cor —
+  // é isso que permite atualizar o app sem regerar o HTML de cada aluno
+  const mesmoCodigo = await p.evaluate(async () => {
+    const semRaiz = (h) => h.replace(/:root\{[^}]*\}/, "");
+    const st = window.MTStore.read("ptStudio", {});
+    st.config = st.config || {};
+    const gera = (cor) => { st.config.cor = cor; window.MTStore.write("ptStudio", st);
+      return window.__montaAppAluno(window.MTStore.read("ptStudio", {}).alunos[0], "2026-01-01T00:00:00Z"); };
+    const a1 = gera("#dc2626"), a2 = gera("#0ea5e9");
+    delete st.config.cor; delete st.config.appEditGeralEm;
+    window.MTStore.write("ptStudio", st);
+    return { igual: semRaiz(a1) === semRaiz(a2), raizDiferente: a1 !== a2 };
+  });
+  ok(mesmoCodigo.igual && mesmoCodigo.raizDiferente,
+    "fonte única: só o bloco :root muda de studio pra studio — o código do app é idêntico");
   // fundo do app: preset troca a família inteira de fundos e o tom claro é travado
   const persFundo = await p.evaluate(async () => {
     const out = { presets: document.querySelectorAll("[data-persfundo]").length };
@@ -4334,8 +4357,8 @@ async function abaPt(p, a) {
   ok(persFundo.presets === 6 && persFundo.salvo === "#0a0f1c" &&
     !/#0d0c10/i.test(persFundo.appHtml) && !/#14121a/i.test(persFundo.appHtml) && !/#322e3d/i.test(persFundo.appHtml) && /#0a0f1c/.test(persFundo.appHtml),
     "fundo do app: 6 tons prontos e o Azul-noite troca a família inteira (fundos, cartões e bordas)");
-  ok(!/background:#eeeeee/i.test(persFundo.appClaro) && (() => {
-    const m = persFundo.appClaro.match(/body\{[^}]*background:(#[0-9a-f]{6})/i);
+  ok(!/--bg0:#eeeeee/i.test(persFundo.appClaro) && (() => {
+    const m = persFundo.appClaro.match(/:root\{[^}]*--bg0:(#[0-9a-f]{6})/i);
     if (!m) return false;
     const n = parseInt(m[1].slice(1), 16);
     return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255 <= 0.25;
