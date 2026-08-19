@@ -1033,7 +1033,7 @@
         "l.forEach(function(g){if(g.data===hj&&(g.status==='confirmado'||g.status==='pendente')){" +
         "var auN=AULAS.filter(function(x){return x.n===g.aula;})[0];" +
         "try{new Notification('\ud83d\udcaa '+g.aula+' hoje'+((auN&&auN.i)?' \u00e0s '+auN.i:'')+' \u2014 te esperamos!');}catch(en){}}});});}" +
-        "var VAPID_PUB='BHUSgtixkEk1ueTwUhCKqhp5vdjH0zSUvm52ZAiMlxscfCfiCJrya2XQZcIOZa6cyKaPYi8pU4kVfM5ve9gzkoY';" +
+        "var VAPID_PUB='BLesSk80OGEOnbJj9iqH2_KHPIhdN0GsGhVpuVWx4O7YqvtV_P961-hqBtqOHw3SWp3GnwDbpauRyEcRVFmdb-I';" +
         "function vapidArr(str){var pad=new Array((4-str.length%4)%4+1).join('=');var b=(str+pad).replace(/-/g,'+').replace(/_/g,'/');" +
         "var raw=atob(b);var arr=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);return arr;}" +
         "function tentaPush(){if(!('serviceWorker'in navigator)||!('PushManager'in window)||location.protocol!=='https:')return;" +

@@ -7,11 +7,13 @@
 // Como instalar (uma vez):
 //   1. Rode o bloco PUSH DE VERDADE do supabase-setup.sql.
 //   2. Deploy desta função com o nome: push-envia (Verify JWT LIGADO).
-//   3. Secrets:
-//        VAPID_PUBLIC_KEY  = BHUSgtixkEk1ueTwUhCKqhp5vdjH0zSUvm52ZAiMlxscfCfiCJrya2XQZcIOZa6cyKaPYi8pU4kVfM5ve9gzkoY
-//        VAPID_PRIVATE_KEY = (o par da pública — está no PR/na conversa; ou gere o seu:
-//                             npx web-push generate-vapid-keys — aí troque a pública
-//                             também no app-aluno.html e republique os apps)
+//   3. Secrets (as duas chaves são um PAR — trocar uma sem a outra quebra o push):
+//        VAPID_PUBLIC_KEY  = BLesSk80OGEOnbJj9iqH2_KHPIhdN0GsGhVpuVWx4O7YqvtV_P961-hqBtqOHw3SWp3GnwDbpauRyEcRVFmdb-I
+//        VAPID_PRIVATE_KEY = (a metade secreta desta pública — o Raphael recebeu na conversa;
+//                             ela NUNCA entra no repositório, só nos Secrets do Supabase)
+//      Perdeu a privada? Gere um par novo (npx web-push generate-vapid-keys) e troque a
+//      pública nos TRÊS lugares que o app usa — app/aluno-builder.js, apps/app-aluno.html
+//      e nutricao.html — senão o navegador recusa a inscrição.
 //   4. Agendar o lembrete diário: Supabase → Integrations → Cron (pg_cron):
 //        select cron.schedule('lembrete-aulas', '0 9 * * *', $$
 //          select net.http_post(
