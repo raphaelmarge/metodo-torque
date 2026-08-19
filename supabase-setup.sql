@@ -161,6 +161,12 @@ create table if not exists public.app_aluno (
   atualizado timestamptz not null default now()
 );
 
+-- Acesso revogado (2026-08): o profissional corta o acesso de UM aluno sem
+-- apagar o histórico. Antes disso não existia revogação nenhuma — "encerrar o
+-- aluno" só marcava no painel e o app dele continuava sendo alimentado.
+alter table public.app_aluno add column if not exists revogado_em timestamptz;
+create index if not exists app_aluno_vivos on public.app_aluno (academia_id) where revogado_em is null;
+
 alter table public.app_aluno enable row level security;
 
 -- só membros da academia escrevem/leem pela API normal (o aluno usa a RPC)
@@ -169,6 +175,19 @@ create policy "app_aluno_membros" on public.app_aluno
   for all using (academia_id in (select public.minhas_academias()))
   with check (academia_id in (select public.minhas_academias()));
 
+-- porta única do aluno: devolve a academia do token só enquanto o acesso vale.
+-- Todas as RPCs do aluno passam por aqui — foi assim que aluno cortado parou de
+-- postar no feed, agendar aula e devolver dados.
+create or replace function public.app_aluno_ativo(t text)
+returns uuid
+language sql security definer stable
+set search_path = public
+as $$
+  select academia_id from public.app_aluno where token = t and revogado_em is null
+$$;
+
+grant execute on function public.app_aluno_ativo(text) to anon, authenticated;
+
 -- o app do aluno chama esta função com o token (chave secreta e única);
 -- security definer: devolve só a linha daquele token, nunca a tabela
 create or replace function public.app_aluno_busca(t text)
@@ -176,7 +195,7 @@ returns jsonb
 language sql security definer stable
 set search_path = public
 as $$
-  select dados from public.app_aluno where token = t
+  select dados from public.app_aluno where token = t and revogado_em is null
 $$;
 
 grant execute on function public.app_aluno_busca(text) to anon, authenticated;
@@ -215,7 +234,7 @@ declare
   v_acad uuid;
   v_id uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -343,7 +362,7 @@ declare
   v_acad uuid;
   v_id uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -369,7 +388,7 @@ declare
   v_acad uuid;
   v_id uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -435,7 +454,7 @@ as $$
 declare
   v_acad uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -467,7 +486,7 @@ as $$
       'post', post_id, 'tipo', tipo, 'nome', nome, 'texto', texto,
       'meu', (token = t), 'criado', criado) order by criado), '[]'::json)
   from app_reacoes
-  where academia_id = (select academia_id from app_aluno where token = t)
+  where academia_id = public.app_aluno_ativo(t)
 $$;
 
 grant execute on function public.app_aluno_reage(text, text, text, text, text) to anon, authenticated;
@@ -487,7 +506,7 @@ declare
   v_id uuid;
   v_max int;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -615,7 +634,7 @@ declare
   v_acad uuid;
   it jsonb;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -658,7 +677,7 @@ as $$
 declare
   v_acad uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -701,7 +720,7 @@ declare
   v_acad uuid;
   v_id uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -816,7 +835,7 @@ as $$
 declare
   v_acad uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -862,7 +881,7 @@ as $$
 declare
   v_acad uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -1311,7 +1330,7 @@ as $$
 declare
   v_tem uuid;
 begin
-  select academia_id into v_tem from app_aluno where token = t;
+  v_tem := public.app_aluno_ativo(t);
   if v_tem is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -1341,7 +1360,7 @@ declare
   v record;
 begin
   select token, senha into v from app_aluno
-    where lower(login) = lower(trim(coalesce(p_login, ''))) and login <> '';
+    where lower(login) = lower(trim(coalesce(p_login, ''))) and login <> '' and revogado_em is null;
   if v.token is null or v.senha = '' or v.senha <> crypt(coalesce(p_senha, ''), v.senha) then
     -- mesma resposta para login inexistente e senha errada (não vaza quem existe)
     return json_build_object('erro', 'Login ou senha incorretos. Esqueceu? Peça um link novo à sua academia ou personal.');
@@ -1387,7 +1406,7 @@ as $$
 declare
   v_acad uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -1560,7 +1579,7 @@ as $$
 declare
   v_acad uuid;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -1819,7 +1838,7 @@ begin
   -- entra como reserva pra quem ainda não sincronizou nada
   select academia_id, coalesce(nullif(retorno->>'nome', ''), nullif(trim(coalesce(p_nome, '')), ''), 'Aluno')
     into v_acad, v_nome
-    from app_aluno where token = t;
+    from app_aluno where token = t and revogado_em is null;
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -1858,7 +1877,7 @@ declare
   v_acad uuid;
   v_out json;
 begin
-  select academia_id into v_acad from app_aluno where token = t;
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'token_invalido');
   end if;
@@ -2175,3 +2194,110 @@ end
 $$;
 
 grant execute on function public.zap_config_salva2(text, text, text, text, text, text) to authenticated;
+
+-- ==================== CORTAR O ACESSO DO ALUNO (2026-08) ====================
+-- Faltava a coisa mais básica: um jeito de tirar o acesso de UM aluno. "Encerrar
+-- este aluno" só marcava no painel; o app dele continuava sendo alimentado pela
+-- nuvem, o login por e-mail continuava valendo e ele seguia postando no feed.
+-- E, do outro lado, o app do aluno não sabia diferenciar "fui apagado" de "estou
+-- sem internet", então abria a cópia guardada pra sempre.
+-- Bloco idempotente.
+
+-- Estado do acesso, pro app saber o que houve. Três respostas possíveis, todas
+-- com HTTP 200 — é isso que deixa o app distinguir "acabou" de "sem sinal":
+--   {ok:true, dados:{...}} · {ok:false, motivo:'revogado'} · {ok:false, motivo:'sem_registro'}
+create or replace function public.app_aluno_estado(t text)
+returns jsonb
+language sql security definer stable
+set search_path = public
+as $$
+  select case
+    when not exists (select 1 from public.app_aluno a where a.token = t)
+      then jsonb_build_object('ok', false, 'motivo', 'sem_registro')
+    when exists (select 1 from public.app_aluno a where a.token = t and a.revogado_em is not null)
+      then jsonb_build_object('ok', false, 'motivo', 'revogado')
+    else jsonb_build_object('ok', true, 'dados',
+           (select a.dados from public.app_aluno a where a.token = t))
+  end
+$$;
+
+grant execute on function public.app_aluno_estado(text) to anon, authenticated;
+
+-- corta (ou apaga de vez) o acesso de um aluno da MINHA academia
+create or replace function public.aluno_revoga_acesso(p_token text, p_apagar boolean default false)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare v_acad uuid;
+begin
+  select academia_id into v_acad from public.app_aluno where token = p_token;
+  -- mesma resposta pra "não existe" e "não é seu": não revela nada de ninguém
+  if v_acad is null or v_acad not in (select public.minhas_academias()) then
+    return json_build_object('erro', 'Esse acesso não é desta conta.');
+  end if;
+  if p_apagar then
+    delete from public.app_agendamentos where token = p_token;
+    delete from public.app_reacoes      where token = p_token;
+    delete from public.app_treino_log   where token = p_token;
+    delete from public.push_subs        where token = p_token;
+    delete from public.app_pedidos      where token = p_token;
+    delete from public.app_checkin      where token = p_token;
+    delete from public.app_chat         where token = p_token;
+    delete from public.app_aval_aula    where token = p_token;
+    delete from public.app_agenda       where token = p_token;
+    delete from public.app_quest        where token = p_token;
+    delete from public.app_feed         where token = p_token;
+    delete from public.app_aluno        where token = p_token;
+    return json_build_object('ok', true, 'apagado', true);
+  end if;
+  -- revogar: some o pacote e o login, mas o retorno (histórico que o painel lê)
+  -- fica guardado — o professor não perde o que o aluno já registrou
+  update public.app_aluno
+     set revogado_em = now(), dados = null, login = '', senha = ''
+   where token = p_token;
+  return json_build_object('ok', true, 'revogado', true);
+end;
+$$;
+
+create or replace function public.aluno_religa_acesso(p_token text)
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare v_acad uuid;
+begin
+  select academia_id into v_acad from public.app_aluno where token = p_token;
+  if v_acad is null or v_acad not in (select public.minhas_academias()) then
+    return json_build_object('erro', 'Esse acesso não é desta conta.');
+  end if;
+  update public.app_aluno set revogado_em = null where token = p_token;
+  -- o pacote foi zerado na revogação: o painel precisa publicar o app de novo
+  return json_build_object('ok', true, 'religado', true, 'republicar', true);
+end;
+$$;
+
+-- Faxina: o painel manda os tokens que ele AINDA conhece e o banco corta o resto
+-- da academia. É o conserto de quem formatou o computador ou restaurou um backup
+-- antigo e ficou com acessos fantasmas na nuvem, sem saber.
+-- Devolve só a contagem — token nunca volta pro navegador.
+create or replace function public.app_aluno_faxina(p_tokens text[])
+returns json
+language plpgsql security definer
+set search_path = public
+as $$
+declare v_n int;
+begin
+  update public.app_aluno
+     set revogado_em = now(), dados = null, login = '', senha = ''
+   where academia_id in (select public.minhas_academias())
+     and revogado_em is null
+     and not (token = any (coalesce(p_tokens, array[]::text[])));
+  get diagnostics v_n = row_count;
+  return json_build_object('ok', true, 'revogados', v_n);
+end;
+$$;
+
+grant execute on function public.aluno_revoga_acesso(text, boolean) to authenticated;
+grant execute on function public.aluno_religa_acesso(text) to authenticated;
+grant execute on function public.app_aluno_faxina(text[]) to authenticated;
