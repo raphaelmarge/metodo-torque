@@ -4530,6 +4530,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("relAlertas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("button");
     if (!b) return;
+    if (b.hasAttribute("data-alabre")) { // abre o resto do grupo, sem redesenhar a tela
+      var cxG = b.closest("[data-algrupo]");
+      if (cxG) cxG.querySelectorAll("[data-alresto]").forEach(function (l) { l.hidden = false; });
+      b.remove();
+      return;
+    }
     if (b.hasAttribute("data-vernome")) { abreDiaAluno(b.getAttribute("data-vernome")); return; }
     if (b.hasAttribute("data-alpix")) {
       var stX = load();
@@ -8557,20 +8563,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var dvAl = dividaDe(st, a);
         var cobrarAl = dvAl.total || dvAl.valor;
         var msgC = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" + (dvAl.meses > 1 ? " — ficaram " + dvAl.meses + " meses em aberto (" + S.fmtBRL(dvAl.total) + ")" : "") + ". Te mando o Pix? 💪";
-        alertas.push({ tipo: "erro", txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + ct.diaVenc + ").",
+        alertas.push({ tipo: "erro", g: "Pagamento atrasado", curto: "<b>" + esc(a.nome) + "</b> — venceu dia " + ct.diaVenc + (dvAl.meses > 1 ? " · " + dvAl.meses + " meses (" + S.fmtBRL(dvAl.total) + ")" : ""), txt: "<b>" + esc(a.nome) + "</b> está com o pagamento ATRASADO (venceu dia " + ct.diaVenc + ").",
           ac: ((st.config || {}).pixChave && cobrarAl ? '<button class="btn mini" data-alpix="' + a.id + '" data-v="' + cobrarAl + '">Pix</button>' : "") + zapAl(a, msgC) });
       }
       var ultimaFeita = idxDe(st).sessFeitasDe(a.id)
         .map(function (x) { return x.data; }).sort().pop() || a.desde || "";
       var corte14 = new Date(); corte14.setDate(corte14.getDate() - 14);
-      if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", txt: "<b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate.",
+      if (ultimaFeita && ultimaFeita < S.todayISO(corte14)) alertas.push({ tipo: "aviso", g: "Sumido há 14+ dias", curto: "<b>" + esc(a.nome) + "</b> — último treino em " + S.fmtData(ultimaFeita), txt: "<b>" + esc(a.nome) + "</b> não treina há mais de 14 dias — manda um resgate.",
         ac: zapAl(a, "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪") + '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button>' });
       var ultimaAv = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; }).map(function (v) { return v.data; }).sort().pop();
       var corte60 = new Date(); corte60.setDate(corte60.getDate() - 60);
-      if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", txt: "<b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução.",
+      if (ultimaAv && ultimaAv < S.todayISO(corte60)) alertas.push({ tipo: "aviso", g: "Sem avaliação há 60+ dias", curto: "<b>" + esc(a.nome) + "</b> — última em " + S.fmtData(ultimaAv), txt: "<b>" + esc(a.nome) + "</b> está sem avaliação nova há 60+ dias — hora de medir a evolução.",
         ac: '<button class="btn sec mini" data-alav="' + a.id + '">Registrar avaliação</button>' });
       var temFicha = st.treinosV2 && st.treinosV2[a.id] && (st.treinosV2[a.id].fichas || []).length;
-      if (!temFicha && !(st.treinos || {})[a.id]) alertas.push({ tipo: "info", txt: "<b>" + esc(a.nome) + "</b> ainda não tem ficha de treino montada.",
+      if (!temFicha && !(st.treinos || {})[a.id]) alertas.push({ tipo: "info", g: "Sem ficha de treino", curto: "<b>" + esc(a.nome) + "</b>", txt: "<b>" + esc(a.nome) + "</b> ainda não tem ficha de treino montada.",
         ac: '<button class="btn sec mini" data-altreino="' + a.id + '">Montar treino</button>' });
       if (a.pacote && +a.pacote.total > 0) {
         var restaPc2 = +a.pacote.total - (+a.pacote.usadas || 0);
@@ -8578,13 +8584,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var msgPc = restaPc2 <= 0
             ? "Oi " + a.nome.split(" ")[0] + "! Seu pacote de sessões acabou — bora renovar pra não perder o ritmo? 💪"
             : "Oi " + a.nome.split(" ")[0] + "! Só avisando: " + (restaPc2 === 1 ? "falta 1 sessão" : "faltam " + restaPc2 + " sessões") + " do seu pacote. Já quer deixar a renovação engatilhada? 💪";
-          alertas.push({ tipo: restaPc2 <= 0 ? "erro" : "aviso", txt: "O pacote de sessões de <b>" + esc(a.nome) + "</b> " + (restaPc2 <= 0 ? "ACABOU" : "está acabando (" + (restaPc2 === 1 ? "resta 1" : "restam " + restaPc2) + ")") + " — hora de renovar.",
+          alertas.push({ tipo: restaPc2 <= 0 ? "erro" : "aviso", g: "Pacote de sessões no fim", curto: "<b>" + esc(a.nome) + "</b> — " + (restaPc2 <= 0 ? "acabou" : restaPc2 === 1 ? "resta 1 sessão" : "restam " + restaPc2 + " sessões"), txt: "O pacote de sessões de <b>" + esc(a.nome) + "</b> " + (restaPc2 <= 0 ? "ACABOU" : "está acabando (" + (restaPc2 === 1 ? "resta 1" : "restam " + restaPc2) + ")") + " — hora de renovar.",
             ac: '<button class="btn mini" data-alperfil="' + a.id + '">Renovar pacote</button>' +
               (a.zap ? ' <a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgPc) + '">Avisar no zap</a>' : "") });
         }
       }
       var tv = temFicha && st.treinosV2[a.id].validade;
-      if (tv && tv < hoje) alertas.push({ tipo: "aviso", txt: "O treino de <b>" + esc(a.nome) + "</b> venceu em " + S.fmtData(tv) + " — gere a nova fase (Treino automático ou Evoluir semana).",
+      if (tv && tv < hoje) alertas.push({ tipo: "aviso", g: "Treino vencido", curto: "<b>" + esc(a.nome) + "</b> — venceu em " + S.fmtData(tv), txt: "O treino de <b>" + esc(a.nome) + "</b> venceu em " + S.fmtData(tv) + " — gere a nova fase (Treino automático ou Evoluir semana).",
         ac: '<button class="btn sec mini" data-altreino="' + a.id + '">Gerar nova fase</button>' });
       if (ct) {
         var pl = planoDe(st, ct.planoId);
@@ -8594,17 +8600,51 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           fimCiclo.setMonth(fimCiclo.getMonth() + +pl.ciclo);
           if (fimCiclo.getDate() !== diaIniA) fimCiclo.setDate(0); // mês curto: cai no último dia
           var em30 = new Date(); em30.setDate(em30.getDate() + 30);
-          if (fimCiclo <= em30) alertas.push({ tipo: "aviso", txt: "O contrato de <b>" + esc(a.nome) + "</b> (" + esc(pl.nome) + ") completa o ciclo em " + S.fmtData(S.todayISO(fimCiclo)) + " — hora de renovar.",
+          if (fimCiclo <= em30) alertas.push({ tipo: "aviso", g: "Contrato pra renovar", curto: "<b>" + esc(a.nome) + "</b> — " + esc(pl.nome) + " fecha em " + S.fmtData(S.todayISO(fimCiclo)), txt: "O contrato de <b>" + esc(a.nome) + "</b> (" + esc(pl.nome) + ") completa o ciclo em " + S.fmtData(S.todayISO(fimCiclo)) + " — hora de renovar.",
             ac: '<button class="btn mini" data-alperfil="' + a.id + '">Renovar</button>' });
         }
       }
     });
-    $("relAlertas").innerHTML = alertas.length ? alertas.map(function (al) {
-      var borda = al.tipo === "erro" ? "#dc2626" : al.tipo === "aviso" ? "#d97706" : "var(--roxo)";
-      return '<div style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0;font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
-        "<span style='flex:1;min-width:180px;'>" + al.txt + "</span>" +
-        (al.ac ? "<span style='display:inline-flex;gap:6px;flex-wrap:wrap;'>" + al.ac + "</span>" : "") + "</div>";
-    }).join("") : "Tudo em ordem — nenhum alerta hoje.";
+    /* Alertas AGRUPADOS por assunto.
+     *
+     * Antes era uma lista corrida: cada aluno gerava uma linha por problema, e
+     * com 40 alunos a tela do Início virava um paredão de 100 linhas repetindo
+     * as mesmas duas frases — ninguém lê, e o alerta que importa (pagamento
+     * atrasado) some no meio. Agora cada assunto vira um bloco com a contagem,
+     * os 3 primeiros aparecem e o resto abre no "ver os outros N". */
+    $("relAlertas").innerHTML = alertas.length ? (function () {
+      var peso = { erro: 0, aviso: 1, info: 2 };
+      var ordem = [], porG = {};
+      alertas.forEach(function (al) {
+        var g = al.g || "Outros avisos";
+        if (!porG[g]) { porG[g] = { nome: g, tipo: al.tipo, itens: [] }; ordem.push(g); }
+        if (peso[al.tipo] < peso[porG[g].tipo]) porG[g].tipo = al.tipo; // o pior manda na cor
+        porG[g].itens.push(al);
+      });
+      var grupos = ordem.map(function (g) { return porG[g]; })
+        .sort(function (x, y) { return peso[x.tipo] - peso[y.tipo] || y.itens.length - x.itens.length; });
+      function linha(al, escondida) {
+        var borda = al.tipo === "erro" ? "#dc2626" : al.tipo === "aviso" ? "#d97706" : "var(--roxo)";
+        return '<div' + (escondida ? ' data-alresto="1" hidden' : "") + ' style="border-left:3px solid ' + borda + ';padding:8px 12px;margin-bottom:6px;background:rgba(255,255,255,.05);border-radius:0 8px 8px 0;font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+          // dentro do grupo o assunto já está no título — a linha fica só com
+          // o nome e o dado que muda de aluno pra aluno
+          "<span style='flex:1;min-width:150px;'>" + (al.curto || al.txt) + "</span>" +
+          (al.ac ? "<span style='display:inline-flex;gap:6px;flex-wrap:wrap;'>" + al.ac + "</span>" : "") + "</div>";
+      }
+      var total = alertas.length;
+      return '<div class="muted" style="font-size:12.5px;margin-bottom:10px;">' + total + (total === 1 ? " alerta" : " alertas") + " em " + grupos.length + (grupos.length === 1 ? " assunto" : " assuntos") + " — comece de cima.</div>" +
+        grupos.map(function (gr, gi) {
+          var cor = gr.tipo === "erro" ? "#dc2626" : gr.tipo === "aviso" ? "#d97706" : "var(--roxo)";
+          var resto = gr.itens.length - 3;
+          return '<div data-algrupo="' + gi + '" style="margin-bottom:14px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + cor + ';margin-bottom:6px;">' +
+              '<span style="width:8px;height:8px;border-radius:50%;background:' + cor + ';flex:none;"></span>' +
+              esc(gr.nome) + '<span class="muted" style="letter-spacing:0;text-transform:none;font-weight:600;">' + gr.itens.length + (gr.itens.length === 1 ? " aluno" : " alunos") + "</span></div>" +
+            gr.itens.map(function (al, i) { return linha(al, i >= 3); }).join("") +
+            (resto > 0 ? '<button class="btn sec mini" data-alabre="' + gi + '">ver os outros ' + resto + "</button>" : "") +
+            "</div>";
+        }).join("");
+    })() : "Tudo em ordem — nenhum alerta hoje.";
     renderDashPT(st);
   }
 
