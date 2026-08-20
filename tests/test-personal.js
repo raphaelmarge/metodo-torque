@@ -1793,6 +1793,47 @@ async function abaPt(p, a) {
     ok(peso.copias === 1, "a foto geral viaja UMA vez só no app, mesmo com 6 fichas (" + peso.copias + " cópia)");
     ok(peso.kb < peso.fotoKb * 2 + 250, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
   }
+  /* Com foto, o card do treino de hoje ganha um véu escuro por cima da imagem
+   * — nos DOIS temas. Antes o texto seguia o tema, então no modo claro o nome
+   * do treino saía escuro em cima do véu escuro e não dava pra ler. */
+  {
+    const appCapa = await p.evaluate(() => {
+      const cv = document.createElement("canvas");
+      cv.width = 720; cv.height = 405;
+      const x = cv.getContext("2d");
+      x.fillStyle = "#101014"; x.fillRect(0, 0, 720, 405);
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos.find((z) => z.ativo !== false);
+      st.config = st.config || {};
+      st.config.capaTreino = cv.toDataURL("image/jpeg", .78);
+      window.MTStore.write("ptStudio", st);
+      const html = window.__montaAppAluno(al, new Date().toISOString());
+      delete st.config.capaTreino;
+      window.MTStore.write("ptStudio", st);
+      return html;
+    });
+    const pCapa = await p.context().newPage();
+    await pCapa.addInitScript(() => localStorage.setItem("pttema", JSON.stringify(1)));
+    await pCapa.route("**/app-teste-capa.html", (r) => r.fulfill({ contentType: "text/html", body: appCapa }));
+    await pCapa.goto(BASE + "/app-teste-capa.html", { waitUntil: "domcontentloaded" });
+    await pCapa.waitForTimeout(900);
+    const hero = await pCapa.evaluate(() => {
+      const el = document.getElementById("heroTreino");
+      return { claro: document.documentElement.classList.contains("claro"),
+        comfoto: el.classList.contains("comfoto"),
+        foto: document.getElementById("htFoto").style.display,
+        tit: getComputedStyle(document.getElementById("htTitulo")).color,
+        sub: getComputedStyle(document.getElementById("htSub")).color };
+    });
+    // as páginas do app dividem o mesmo armazenamento: sem apagar a escolha de
+    // tema aqui, os testes seguintes nasceriam no modo claro
+    await pCapa.evaluate(() => localStorage.removeItem("pttema"));
+    await pCapa.close();
+    ok(hero.claro && hero.foto === "block" && hero.comfoto,
+      "o card do dia com foto se marca como 'comfoto' pro tema não mandar no texto");
+    ok(hero.tit === "rgb(255, 255, 255)" && hero.sub === "rgb(214, 210, 223)",
+      "com foto, o nome do treino fica branco também no modo claro (era escuro sobre o véu escuro)");
+  }
   // ---------- 🚀 escala: o painel tem que aguentar milhares de alunos ----------
   console.log("Escala (1000 alunos):");
   {
