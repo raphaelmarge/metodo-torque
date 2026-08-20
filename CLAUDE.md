@@ -119,6 +119,9 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   chat-envia, whatsapp, envia-email (Resend), pagarme, push-envia.
   Ele publica copiando de www.torqueon.com.br/funcoes.html.
 - Nunca coloque service key no site — só anonKey (`assets/cloud-config.js`).
+- **Redundância** (v513): todo update/delete no `dados` guarda o valor ANTERIOR
+  em `dados_hist` (gatilho, 10 versões por chave). Restaurar = update trazendo
+  `dados_hist.valor` mais recente (exemplo comentado no bloco do SQL).
 
 ## Como testar (obrigatório antes de publicar)
 

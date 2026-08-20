@@ -750,6 +750,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn" id="geEnviar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar treino pro grupo</button>
         <button class="btn sec" id="btnPubPendentes" hidden title="Republica de uma vez o app de todo aluno com algo editado desde a última publicação — ou com o app numa versão antiga do sistema"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Publicar apps atualizados</button>
       </div>
+      <div id="avisoCongelados" hidden style="margin: 10px 0 0; padding: 10px 13px; border: 1px solid rgba(245, 158, 11, .45); border-radius: 12px; background: rgba(245, 158, 11, .10); font-size: 13px;"></div>
       <p id="geStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
     </div>
 
@@ -4153,6 +4154,55 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes, publicaUm: publicaAppDe, auto: autoPublicaApps }; // testes
   $("btnPubPendentes").addEventListener("click", publicaAppsPendentes);
+  /* ---------- apps congelados no formato antigo ----------
+   * Antes da v467 o app do aluno era um HTML pronto guardado na nuvem, sem o
+   * campo `dados`. Um pacote desses não se reconstrói pelo código do site — é
+   * uma foto congelada: não recebe conserto, não recebe tela nova, nada. E o
+   * painel não tinha como saber: o professor descobria pelo aluno reclamando.
+   * Esta conferência pergunta à nuvem a versão de cada pacote publicado (só
+   * token + ver, nunca o HTML de 200 KB) e avisa na cara quando algum aluno
+   * está congelado, com o botão que republica todos de uma vez. */
+  var congeladosTokens = null; // null = ainda não conferiu nesta sessão
+  function alunosCongelados(st) {
+    if (!congeladosTokens) return [];
+    return st.alunos.filter(function (a) {
+      return a.ativo !== false && a.appTokenP && congeladosTokens[a.appTokenP];
+    });
+  }
+  function renderCongelados() {
+    var box = $("avisoCongelados");
+    if (!box) return;
+    var cong = alunosCongelados(load());
+    box.hidden = !cong.length;
+    if (!cong.length) return;
+    box.innerHTML = "<b>" + cong.length + " app(s) de aluno no formato antigo</b> — congelados: não recebem " +
+      "treino novo nem consertos até serem republicados. " +
+      '<button class="btn mini" id="btnDescongela" style="margin-left:6px;">Republicar agora</button>';
+    $("btnDescongela").addEventListener("click", function () {
+      var st = load();
+      var cong = alunosCongelados(st);
+      window.__congelados.ultimoClique = cong.length; // gancho de teste
+      cong.forEach(function (a) { marcaAppPendente(st, a.id); });
+      S.write("ptStudio", st);
+      publicaAppsPendentes();
+      congeladosTokens = {}; // some na hora; a próxima conferência confirma
+      renderCongelados();
+    });
+  }
+  function checaAppsCongelados() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return;
+    nuvem.client.from("app_aluno").select("token,ver:dados->>ver").eq("academia_id", nuvem.aid)
+      .then(function (r) {
+        if (!r || r.error || !Array.isArray(r.data)) return;
+        var sem = {};
+        r.data.forEach(function (row) { if (!row.ver) sem[row.token] = true; });
+        congeladosTokens = sem;
+        renderCongelados();
+      }, function () { /* sem rede agora — tenta na próxima sessão */ });
+  }
+  window.__congelados = { checa: checaAppsCongelados, render: renderCongelados, lista: alunosCongelados }; // testes
+  setTimeout(checaAppsCongelados, 3500);
   ligaEnvioApp("taEnviaApp", "taAluno", "taEnvioStatus");
   ligaEnvioApp("tEnviaApp", "tAluno", "tEnvioStatus");
 
