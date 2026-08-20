@@ -66,14 +66,25 @@ const CENARIOS = [
     naoEspera: [/chat-envia publicada/, /Verify JWT/, /publique de novo/],
   },
   {
-    /* Aconteceu de verdade: a MESMA credencial passou na envia-email (200) e
-     * foi barrada na chat-envia (401). Isso prova que a conta e a chave estão
-     * boas e que o problema é o Verify JWT daquela função. */
-    nome: "só a chat-envia recusa; outra função aceita a mesma credencial",
+    /* Aconteceu de verdade: a MESMA credencial passou na envia-email (200) e foi
+     * barrada na chat-envia (401). O GET sem credencial fecha o diagnóstico: se
+     * nem assim a função roda, quem barra é o porteiro (Verify JWT). */
+    nome: "só a chat-envia recusa e nem sem credencial ela roda (porteiro ligado)",
     resposta: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
     email: { status: 200, body: { ok: true, chaveConfigurada: true } },
-    espera: [/recusando no portão, com a credencial CERTA/, /Verify JWT.{0,4} DESLIGADO/, /envia-email/],
+    espera: [/Verify JWT da chat-envia ainda está LIGADO/, /Edge Functions.{0,4}→.{0,4}chat-envia/, /desmarcando/i],
     naoEspera: [/Não deu pra testar a chat-envia sem login/, /Legacy API keys/],
+  },
+  {
+    /* Porteiro desligado (o GET chega na função e ela responde "use POST"), mas
+     * a chamada COM credencial ainda leva 401: aí o culpado é outro, e a tela
+     * tem que dizer isso em vez de mandar mexer no Verify JWT de novo. */
+    nome: "porteiro desligado, função no ar, mas a chamada com credencial ainda leva 401",
+    resposta: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
+    get: { status: 405, body: { erro: "use POST" } },
+    email: { status: 200, body: { ok: true, chaveConfigurada: true } },
+    espera: [/está no ar, mas recusa a chamada com credencial/, /Verify JWT já está desligado/, /me mande este print/i],
+    naoEspera: [/ainda está LIGADO/, /Não deu pra testar a chat-envia sem login/],
   },
 ];
 
@@ -153,13 +164,45 @@ async function testaAjudantes() {
     "401 no meio do caminho: renova o crachá e refaz a chamada sozinho (o humano não vê erro)");
   ok(pedidos[1].auth === "Bearer cracha-renovado", "a segunda tentativa vai com o crachá novo");
 
+  /* 401 mesmo com crachá NOVO em folha: o portão está barrando aquela função.
+   * Dizer "sua sessão caiu" aqui manda o professor fazer um login que não
+   * resolve nada — foi o que o Raphael viu na tela com a sessão perfeita. */
   respostas.length = 0;
   respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' });
   respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' });
-  const cMorto = clienteFake(jwt(3600), "outro");
+  const cPortao = clienteFake(jwt(3600), "cracha-novinho");
+  const barrado = await F.chama(cPortao, "chat-envia", { acao: "ping" }, "A IA de treino");
+  ok(/portão|portao/i.test(barrado.erro) && /não é a sua sessão/i.test(barrado.erro),
+    "401 com crachá renovado é acusado como portão do Supabase, não como sessão caída");
+  ok(/diagnostico\.html/.test(barrado.erro) && !/ANTHROPIC_API_KEY/.test(barrado.erro),
+    "e manda pro diagnóstico em vez de mandar republicar ou entrar de novo");
+
+  // sem conseguir renovar, aí sim é sessão caída
+  respostas.length = 0;
+  respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' });
+  const cMorto = clienteFake(jwt(3600), "");
   const desistiu = await F.chama(cMorto, "chat-envia", { acao: "ping" }, "A IA de treino");
   ok(/sess/i.test(desistiu.erro) && !/ANTHROPIC_API_KEY/.test(desistiu.erro),
     "quando nem renovando resolve, o recado é sessão caída — não 'publique a função'");
+
+  /* Plano B: função de reserva. Se o portão barra a de sempre e o dono
+   * configurou um apelido, o site usa a reserva sozinho — e continua usando. */
+  raiz.MT_FN_APELIDO = { "chat-envia": "chat-envia2" };
+  respostas.length = 0;
+  pedidos.length = 0;
+  respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' }); // nome de sempre
+  respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' }); // de novo, com crachá novo
+  respostas.push({ status: 200, body: '{"ok":true,"texto":"pela reserva"}' }); // apelido
+  const viaApelido = await F.chama(clienteFake(jwt(3600), "cracha-novinho"), "chat-envia", { acao: "ping" }, "A IA de treino");
+  ok(viaApelido.ok && viaApelido.texto === "pela reserva", "função de reserva salva a chamada quando o portão barra a principal");
+  ok(/chat-envia2/.test(pedidos[pedidos.length - 1].url), "a última tentativa foi mesmo no nome de reserva");
+  respostas.length = 0;
+  pedidos.length = 0;
+  respostas.push({ status: 200, body: '{"ok":true,"texto":"direto"}' });
+  const jaSabe = await F.chama(clienteFake(jwt(3600), "x"), "chat-envia", { acao: "ping" }, "A IA de treino");
+  ok(jaSabe.ok && pedidos.length === 1 && /chat-envia2/.test(pedidos[0].url),
+    "depois que a reserva funciona, as próximas chamadas já vão direto nela");
+  raiz.MT_FN_APELIDO = {};
 
   respostas.length = 0;
   respostas.push({ status: 404, body: '{"code":404,"message":"Requested function was not found"}' });
@@ -178,8 +221,11 @@ async function testaAjudantes() {
     const ctx = await b.newContext();
     const erros = [];
     // nuvem simulada: nada sai para a internet de verdade
-    await ctx.route("**/functions/v1/chat-envia", (r) =>
-      r.fulfill({ status: c.resposta.status, contentType: "application/json", body: JSON.stringify(c.resposta.body) }));
+    await ctx.route("**/functions/v1/chat-envia", (r) => {
+      // o GET (teste do porteiro) pode responder diferente do POST
+      const q = c.get && r.request().method() === "GET" ? c.get : c.resposta;
+      r.fulfill({ status: q.status, contentType: "application/json", body: JSON.stringify(q.body) });
+    });
     await ctx.route("**/rest/v1/rpc/app_aluno_busca", (r) => r.fulfill({
       status: (c.rest && c.rest.status) || 200,
       contentType: "application/json",
