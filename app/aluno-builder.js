@@ -209,24 +209,35 @@
       ".gwrap.reg .ggrupo,.gwrap.reg .gtit,.gwrap.reg .gmeta{display:none!important}"+
       ".gwrap.reg .gcard{max-height:80vh}"+
       ".gwrap.reg .gsets,.gwrap.reg .ghist{display:none}"+
-      ".gcard.compacto .gstep input{font-size:34px}"+
-      ".gcard.compacto .gstep.rep input{font-size:22px}" +
+      ".gcard.compacto .gcg .gwval input{font-size:34px}"+
+      ".gcard.compacto .gcg .gwval.sm input{font-size:22px}" +
       ".gbiglab{text-align:center;font-size:10px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:#6f6688}" +
       ".gtrilho{height:5px;border-radius:3px;background:#ded7ee;width:100%;margin:12px auto 0;max-width:220px;overflow:hidden}" +
       ".gtrilho b{display:block;height:100%;background:var(--cor);border-radius:3px}" +
       ".gcg{margin-top:16px}" +
       ".gcglab{font-size:9.5px;letter-spacing:.2em;font-weight:800;text-transform:uppercase;color:#6f6688}" +
-      ".gstep{display:flex;align-items:center;gap:10px;margin-top:8px}" +
-      ".gstep button{width:52px;height:52px;flex:none;border-radius:16px;border:1px solid rgba(var(--cor-rgb),.35);background:#fff;color:var(--cor2);" +
-      "font-size:26px;font-weight:800;font-family:inherit;cursor:pointer;line-height:1}" +
-      ".gstep button:active{background:rgba(var(--cor-rgb),.12)}" +
-      ".gstep input{flex:1;min-width:0;background:none;border:none;text-align:center;color:#1d1729;font-family:inherit;"+
-      "}.gstep input::placeholder{color:#b3aac6;font-size:17px;font-weight:700}.gstep input{" +
-      "font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;padding:0;min-height:52px}" +
-      ".gstep input:focus{outline:2px solid var(--cor);outline-offset:4px;border-radius:10px}" +
-      ".gstep u{font-style:normal;text-decoration:none;font-size:15px;font-weight:800;color:#6f6688;flex:none}" +
-      ".gstep.rep input{font-size:26px}" +
-      ".gstep.rep button{width:44px;height:44px;font-size:21px}" +
+      /* Régua deslizante no lugar dos botões + e −. Botão de passo era lento:
+         pra sair de 20 kg e chegar em 95 eram 30 toques. Aqui um arrasto passa
+         dezenas de quilos, o valor gruda no traço (scroll-snap) e quem quiser
+         um número exato ainda pode tocar no número e digitar. */
+      ".gcg .gwbox{margin-top:10px}" +
+      ".gcg .gwval{display:flex;align-items:baseline;justify-content:center;gap:7px}" +
+      ".gcg .gwval input{width:3.3em;background:none;border:none;text-align:right;color:#1d1729;font-family:inherit;" +
+      "font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;padding:0;min-height:50px}" +
+      ".gcg .gwval input::placeholder{color:#b3aac6;font-size:19px;font-weight:700}" +
+      ".gcg .gwval input:focus{outline:2px solid var(--cor);outline-offset:4px;border-radius:10px}" +
+      ".gcg .gwval u{font-style:normal;text-decoration:none;font-size:15px;font-weight:800;color:#6f6688}" +
+      ".gcg .gwval.sm input{font-size:27px;min-height:36px;width:2.6em}" +
+      ".gwrail{position:relative;margin-top:2px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);" +
+      "mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}" +
+      ".gwheel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px calc(50% - 9px) 0;touch-action:pan-x;" +
+      "-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}" +
+      ".gwheel::-webkit-scrollbar{display:none}" +
+      ".gwheel i{flex:none;height:40px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;font-style:normal}" +
+      ".gwheel i:before{content:\'\';width:2px;height:12px;border-radius:2px;background:#cfc6e4}" +
+      ".gwheel i.f:before{height:20px;background:rgba(var(--cor-rgb),.55)}" +
+      ".gwheel i b{font-size:10.5px;font-weight:800;color:#6f6688;margin-top:3px;font-variant-numeric:tabular-nums}" +
+      ".gwmk{position:absolute;left:50%;top:2px;width:3px;height:30px;border-radius:3px;background:var(--cor);transform:translateX(-1.5px);pointer-events:none;z-index:2;box-shadow:0 0 0 4px rgba(var(--cor-rgb),.14)}" +
       ".gsalvar{width:100%;min-height:52px;margin-top:14px;border-radius:16px;border:none;background:linear-gradient(135deg,var(--cor),var(--cor2));" +
       "color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}" +
       ".gsemcarga{width:100%;min-height:44px;margin-top:8px;border-radius:99px;border:1px solid #d6cfe6;background:none;color:#6f6688;" +
@@ -1472,7 +1483,6 @@
       "if(b.dataset.ex.replace(/'/g,'')!==ex)return;"+
       "if(!r||(ns&&+b.dataset.n===+ns&&+r.dataset.n!==+ns))r=b;});return r;}" +
       // passo do stepper: quem levanta 5 kg não sobe de 5 em 5, quem levanta 80 não sobe de 1 em 1
-      "function gpasso(v){return v<10?1:(v<40?2.5:5);}" +
       "function gnum(v){return String(Math.round(v*100)/100).replace('.',',');}" +
       "function gultimo(ex){var l=(L('ptdc',{})[ex]||[]);return l.length?l[l.length-1]:null;}" +
       "function grecorde(ex){var l=(L('ptdc',{})[ex]||[]);var m=0;l.forEach(function(x){if(+x.kg>m)m=+x.kg;});return m;}" +
@@ -1586,22 +1596,44 @@
       "if(resta<=0){beepG();if(navigator.vibrate)navigator.vibrate([200,100,200]);gFimDesc();return;}" +
       "d.textContent=resta;if(resta<=3)bip(600,100);},1000);}" +
       // ---------- registro da carga (steppers, sem teclado obrigatório) ----------
-      "function gCargaHtml(it){var u=gultimo(it.e);var v=u?+u.kg:0;var r=u&&+u.r>0?+u.r:'';" +
+      // ---------- régua deslizante (carga e repetições) ----------
+      // Um traço por passo; o do meio é o valor escolhido. Arrastar percorre
+      // dezenas de quilos de uma vez, que é o que os botões + e − não davam.
+      "var GW={kg:{min:0,max:300,p:1,px:18},rep:{min:0,max:60,p:1,px:18}};" +
+      "function gRegua(id,cfg,val){var h='',n=Math.round((cfg.max-cfg.min)/cfg.p);" +
+      "for(var i=0;i<=n;i++){var v=Math.round((cfg.min+i*cfg.p)*100)/100;var f=(i%5===0);" +
+      "h+=\"<i style='width:\"+cfg.px+\"px' data-v='\"+v+\"'\"+(f?\" class='f'\":'')+'>'+(f?'<b>'+gnum(v)+'</b>':'')+'</i>';}" +
+      "return \"<div class='gwrail'><div class='gwheel' id='\"+id+\"' aria-hidden='true'>\"+h+\"</div><span class='gwmk'></span></div>\";}" +
+      "function gIdx(cfg,v){return Math.max(0,Math.min(Math.round((cfg.max-cfg.min)/cfg.p),Math.round(((+v||0)-cfg.min)/cfg.p)));}" +
+      // liga a régua ao campo: rolou -> escreve o número; digitou -> anda a régua
+      "function ligaRegua(id,cfg,campo,formata){var rd=gEl(id);if(!rd)return;var t=null,ultimo=null;" +
+      "function poe(v,semRolar){var s=formata(v);if(campo.value!==s){campo.value=s;gv.sujo=true;}" +
+      "if(!semRolar)rd.scrollLeft=gIdx(cfg,v)*cfg.px;}" +
+      "rd.addEventListener('scroll',function(){if(t)clearTimeout(t);" +
+      "t=setTimeout(function(){var i=Math.round(rd.scrollLeft/cfg.px);" +
+      "var v=Math.round((cfg.min+i*cfg.p)*100)/100;if(v===ultimo)return;ultimo=v;" +
+      "poe(v,true);if(navigator.vibrate)navigator.vibrate(6);},60);});" +
+      "campo.addEventListener('change',function(){var v=parseFloat(String(campo.value).replace(',','.'))||0;" +
+      "ultimo=v;poe(v);});" +
+      "return poe;}" +
+      "function gCargaHtml(it){var u=gultimo(it.e);var v=u?+u.kg:0;var r=u&&+u.r>0?+u.r:(parseInt(it.r,10)||0);" +
       "return \"<div class='gcg'><div class='gcglab' id='gCgLab'>Carga de hoje</div>\"+" +
-      "\"<div class='gstep'><button type='button' id='gMenos' aria-label='Diminuir a carga'>−</button>\"+" +
-      "\"<input id='gKg' inputmode='decimal' value='\"+(v?gnum(v):'')+\"' placeholder='0' aria-label='Carga em quilos'><u>kg</u>\"+" +
-      "\"<button type='button' id='gMaisKg' aria-label='Aumentar a carga'>+</button></div>\"+" +
-      "\"<div class='gstep rep'><button type='button' id='gRepMenos' aria-label='Diminuir as repetições'>−</button>\"+" +
-      "\"<input id='gReps' inputmode='numeric' value='\"+r+\"' placeholder='—' aria-label='Repetições'><u>reps</u>\"+" +
-      "\"<button type='button' id='gRepMais' aria-label='Aumentar as repetições'>+</button></div>\"+" +
+      "\"<div class='gwbox'><div class='gwval'>\"+" +
+      "\"<input id='gKg' inputmode='decimal' value='\"+(v?gnum(v):'')+\"' placeholder='0' aria-label='Carga em quilos'><u>kg</u></div>\"+" +
+      "gRegua('gWKg',GW.kg,v)+\"</div>\"+" +
+      "\"<div class='gwbox'><div class='gwval sm'>\"+" +
+      "\"<input id='gReps' inputmode='numeric' value='\"+(r||'')+\"' placeholder='—' aria-label='Repetições'><u>reps</u></div>\"+" +
+      "gRegua('gWRep',GW.rep,r)+\"</div>\"+" +
       "\"<button type='button' class='gsalvar' id='gSalvar'>Salvar carga</button>\"+" +
       "\"<button type='button' class='gsemcarga' id='gSemCarga'>Foi sem carga (peso do corpo)</button></div>\";}" +
       "function ligaStepper(it,slot){var kg=gEl('gKg'),rp=gEl('gReps');if(!kg)return;gv.reg=it.e;gv.regi=slot||'';" +
-      "function passo(dir){var v=parseFloat(String(kg.value).replace(',','.'))||0;var p=gpasso(v||10);" +
-      "v=Math.max(0,Math.round((v+dir*p)*100)/100);kg.value=v?gnum(v):'';gv.sujo=true;}" +
-      "gEl('gMenos').onclick=function(){passo(-1);};gEl('gMaisKg').onclick=function(){passo(1);};" +
-      "gEl('gRepMenos').onclick=function(){rp.value=Math.max(0,(parseInt(rp.value,10)||0)-1)||'';gv.sujo=true;};" +
-      "gEl('gRepMais').onclick=function(){rp.value=(parseInt(rp.value,10)||0)+1;gv.sujo=true;};" +
+      "ligaRegua('gWKg',GW.kg,kg,function(v){return v?gnum(v):'';});" +
+      "ligaRegua('gWRep',GW.rep,rp,function(v){return v?String(Math.round(v)):'';});" +
+      // a régua nasce no valor de hoje (última carga daquele exercício): no caso
+      // comum o aluno repete a carga e não precisa arrastar nada
+      "requestAnimationFrame(function(){var a=gEl('gWKg'),b=gEl('gWRep');" +
+      "if(a)a.scrollLeft=gIdx(GW.kg,parseFloat(String(kg.value).replace(',','.'))||0)*GW.kg.px;" +
+      "if(b)b.scrollLeft=gIdx(GW.rep,parseInt(rp.value,10)||0)*GW.rep.px;});" +
       "kg.oninput=function(){gv.sujo=true;};rp.oninput=function(){gv.sujo=true;};" +
       "gEl('gSalvar').onclick=function(){gv.sujo=false;" +
       "var ok=gGrava(it.e,parseFloat(String(kg.value).replace(',','.')),parseInt(rp.value,10)||0,gv.regi);" +
