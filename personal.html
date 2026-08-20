@@ -10294,6 +10294,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     salvaNome: function (nome) { var st = load(); if (!st.config.nome) { st.config.nome = nome; S.write("ptStudio", st); } },
     depois: function () { verificaOnboarding(); render(); mostraTelaAssinatura(); },
   });
+  /* A faixa de sessão caída precisa abrir o login DIRETO: o painel ainda acha
+   * que você está logado (o e-mail ficou da carga da página), então mandar
+   * pro card só mostraria "Conectado como…" — e você teria que sair antes. */
+  self.MT_CONTA_ATUAL = contaP;
   $("btnContaEntrar").addEventListener("click", function () { contaP.abre("entrar"); });
   $("btnContaEquipe").addEventListener("click", contaP.criaColaborador);
   $("btnContaSair").addEventListener("click", contaP.sair);
@@ -10384,9 +10388,11 @@ addEventListener('load',function(){document.querySelectorAll('.kpi-pt .n').forEa
     btn.className = "btn";
     btn.textContent = "Entrar de novo";
     btn.addEventListener("click", function () {
+      faixa.remove();
+      // abre a janela de login na hora; o card da conta é só o plano B
+      if (self.MT_CONTA_ATUAL && self.MT_CONTA_ATUAL.abre) { self.MT_CONTA_ATUAL.abre("entrar"); return; }
       var aba = document.querySelector('[data-a="conta"]');
       if (aba) aba.click();
-      faixa.remove();
     });
     var fechar = document.createElement("button");
     fechar.className = "btn sec";
