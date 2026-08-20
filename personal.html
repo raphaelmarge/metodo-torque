@@ -2830,6 +2830,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return;
         }
         pintaCheckins(ret);
+        /* foto que o ALUNO colocou no app dele. O retorno vem de RPC pública,
+         * então vale a mesma desconfiança das fotos de progresso: só data: de
+         * imagem, sem aspas, e com tamanho de gente (uma foto de 320 px dá uns
+         * 25 KB; o app corta em 380 KB antes de mandar). Fica num campo só
+         * dela, sem encostar na foto que VOCÊ pôs pela ficha. */
+        var fp = String((ret && ret.fotoPerfil) || "");
+        if (/^data:image\//.test(fp) && !/['"<>\\]/.test(fp) && fp.length <= 400000 && fp !== a.fotoAluno) {
+          a.fotoAluno = fp;
+          // grava direto: o save() redesenharia a lista inteira embaixo de quem
+          // está lendo o perfil, e a foto só muda o cartão que eu repinto aqui
+          var stF = load(); var aF = (stF.alunos || []).find(function (x) { return x.id === a.id; });
+          if (aF) { aF.fotoAluno = fp; S.write("ptStudio", stF); }
+          if (perfilId === a.id) pintaPfFoto(a);
+        }
         var html = "";
         try {
         html = htmlRetornoApp(ret);
@@ -3063,7 +3077,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- foto do aluno + menu retrátil de ações ----------
   function pintaPfFoto(a) {
     var img = $("pfFotoImg"), ini = $("pfIniciais");
-    if (a.foto) { img.src = a.foto; img.hidden = false; ini.hidden = true; }
+    // fotoAluno é a que o próprio aluno colocou no app dele; foto é a que você
+    // pôs por aqui. A dele vem na frente — é a cara que ele escolheu mostrar.
+    var qual = a.fotoAluno || a.foto;
+    if (qual) { img.src = qual; img.hidden = false; ini.hidden = true; }
     else {
       img.hidden = true; ini.hidden = false;
       ini.textContent = String(a.nome || "?").trim().split(/\s+/).slice(0, 2)
@@ -9158,8 +9175,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         lat: a.lat || null, lng: a.lng || null,
         // a foto da ficha vira o avatar do topo do app. É a mesma que o painel
         // já guarda: quadrada, 320 px, JPEG — uns 20 KB, o único item pesado
-        // do pacote (o resto junto não passa de 4 KB).
-        foto: a.foto || "",
+        // do pacote (o resto junto não passa de 4 KB). Se o aluno já colocou a
+        // dele pelo app, é ela que volta — senão o pacote desfaria a escolha
+        // dele no primeiro celular novo.
+        foto: a.fotoAluno || a.foto || "",
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       cfg: {

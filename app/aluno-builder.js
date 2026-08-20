@@ -120,8 +120,10 @@
       // chip da própria cor sumiria dentro do fundo
       ".tpchip{flex:none;display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:99px;padding:6px 10px;font-weight:800;font-size:11.5px;color:#fff}" +
       // foto do aluno; sem foto, as iniciais dele no mesmo círculo
-      ".tpav{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:.02em;color:#fff}" +
-      ".tpav img{width:100%;height:100%;object-fit:cover;display:block}" +
+      ".tpav{position:relative;flex:none;width:46px;height:46px;padding:0;border-radius:50%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-family:inherit;font-weight:800;font-size:15px;letter-spacing:.02em;color:#fff;cursor:pointer}" +
+      ".tpav img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}" +
+      // selinho de câmera: sem ele ninguém descobre que dá pra tocar na foto
+      ".tpavc{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;background:var(--cor2);border:1.5px solid rgba(255,255,255,.85);color:#fff;display:flex;align-items:center;justify-content:center;line-height:0}" +
       // um cartão só dentro da faixa: sequência grande à esquerda, os quatro
       // hábitos do dia em linhas finas à direita
       "#topoExtra{display:flex;gap:12px;margin-top:14px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:10px 12px}" +
@@ -315,7 +317,13 @@
       // e os chips, um nome comprido virava três linhas ou saía cortado
       "<div class='tpmarca'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt=''>" : "") + "<span class='k'>" + esc(studio).toUpperCase() + "</span></div>" +
       "<div style='display:flex;align-items:center;gap:11px;'>" +
-      "<div class='tpav'>" + (FOTOAL ? "<img src='" + FOTOAL + "' alt='Sua foto'>" : esc(INICIAIS)) + "</div>" +
+      // tocar no avatar troca a foto (a do painel vem no pacote; a que o aluno
+      // escolher aqui vale mais, porque é ele mesmo se vendo)
+      "<button type='button' class='tpav' id='avBtn' aria-label='Trocar a sua foto'>" +
+      "<img id='avImg' alt=''" + (FOTOAL ? " src='" + FOTOAL + "'" : " style='display:none;'") + ">" +
+      "<span id='avIni'" + (FOTOAL ? " style='display:none;'" : "") + ">" + esc(INICIAIS) + "</span>" +
+      "<span class='tpavc' aria-hidden='true'><svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5h3.5L8 6h8l1.5 2.5H21V19H3z'/><circle cx='12' cy='13' r='3.2'/></svg></span></button>" +
+      "<input id='avFile' type='file' accept='image/*' style='display:none;'>" +
       "<div style='flex:1;min-width:0;'><h1 style='padding:0;margin:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:rgba(255,255,255,.82);font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
       // selo de nível SEPARADO do chip de XP: o teste lê o primeiro número do
       // #xpChip como XP — um "Nv 3" lá dentro quebraria a conta
@@ -793,17 +801,39 @@
       "(function(){var tc=document.createElement('meta');tc.setAttribute('name','theme-color');tc.setAttribute('content',CV('cor'));document.head.appendChild(tc);})();" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfotoperfil')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
-      "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length)return;" +
+      "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[])," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
+      "fotoPerfil:L('ptfotoperfil','')||null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +
+      /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
+       * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
+       * painel usa — antes de ser guardada e de viajar pro personal. A foto
+       * original nunca sai do celular: o que vai é a versão pequena. */
+      "function avPinta(src){var im=document.getElementById('avImg'),ini=document.getElementById('avIni');if(!im||!ini)return;" +
+      "if(src){im.src=src;im.style.display='';ini.style.display='none';}else{im.removeAttribute('src');im.style.display='none';ini.style.display='';}}" +
+      "(function(){var fl=document.getElementById('avFile'),bt=document.getElementById('avBtn');if(!fl||!bt)return;" +
+      // a foto escolhida pelo aluno vence a que veio do painel
+      "var minha=L('ptfotoperfil','');if(minha)avPinta(minha);" +
+      "bt.addEventListener('click',function(){fl.click();});" +
+      "fl.addEventListener('change',function(){var f=fl.files&&fl.files[0];fl.value='';if(!f)return;" +
+      "var rd=new FileReader();rd.onload=function(){var im=new Image();" +
+      "im.onerror=function(){alert('Não consegui abrir essa imagem. Tenta outra foto.');};" +
+      "im.onload=function(){var lado=Math.min(im.width,im.height);" +
+      "var cv=document.createElement('canvas');cv.width=cv.height=Math.min(320,lado);" +
+      "cv.getContext('2d').drawImage(im,(im.width-lado)/2,(im.height-lado)/2,lado,lado,0,0,cv.width,cv.height);" +
+      "var dado=cv.toDataURL('image/jpeg',.82);" +
+      "if(dado.length>380000){alert('Essa foto ficou pesada demais. Tenta outra.');return;}" +
+      // Sv já avisa o personal (a chave está na lista que chama o devolveApp)
+      "Sv('ptfotoperfil',dado);avPinta(dado);};im.src=rd.result;};" +
+      "rd.onerror=function(){alert('Não consegui ler essa imagem. Tenta outra foto.');};rd.readAsDataURL(f);});})();" +
       "function isoLoc(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}" +
       "function isoHj(){return isoLoc(new Date());}" +
       "function semDe(x){var d=typeof x==='string'?new Date(x+'T12:00:00'):new Date(x.getTime());d.setDate(d.getDate()-((d.getDay()+6)%7));return isoLoc(d);}" +
