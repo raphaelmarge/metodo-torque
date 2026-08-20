@@ -1524,7 +1524,7 @@ async function abaPt(p, a) {
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
   ok(/Sem esse aparelho hoje\?/.test(appHtml) && /Troca por: /.test(appHtml), "exercícios trazem substitutos do mesmo padrão de movimento");
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
-  ok(/onbCard/.test(appHtml) && /rpeBox/.test(appHtml) && /dcReps/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
+  ok(/onbCard/.test(appHtml) && /cardRpe/.test(appHtml) && /dcReps/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
     "app traz onboarding, RPE, campo de reps, streak de semanas e confete");
   // painel do personal entende RPE e onboarding devolvidos pelo app
   const painelNovo = await p.evaluate(() => {
@@ -4385,12 +4385,15 @@ async function abaPt(p, a) {
       return { ex: document.getElementById("gEx").textContent,
         recibo: document.getElementById("gMiolo").textContent,
         faltam: document.querySelectorAll("[data-gfalta]").length,
+        rpe: document.querySelectorAll("#gMiolo [data-rpe]").length,
         temFechar: !!document.getElementById("gFim") };
     });
     ok(/concluído/.test(fim.ex) && /Séries feitas aqui/.test(fim.recibo) && /Cargas anotadas/.test(fim.recibo) && /Tempo de treino/.test(fim.recibo),
       "a tela final vira um recibo do treino (séries, cargas e tempo)");
     ok(fim.temFechar, "a tela final NÃO fecha sozinha — o aluno sai quando quiser");
     ok(fim.faltam >= 1, "quem ficou sem carga vira um atalho de repescagem no recibo (" + fim.faltam + ")");
+    ok(fim.rpe === 3 && /Como foi o treino de hoje\?/.test(fim.recibo),
+      "o recibo pergunta como foi o treino ali mesmo (leve/na medida/pesado), sem voltar pra primeira tela");
     const repesca = await pApp.evaluate(async () => {
       document.querySelector("[data-gfalta]").click();
       await new Promise((r) => setTimeout(r, 150));
@@ -4493,11 +4496,14 @@ async function abaPt(p, a) {
     await new Promise((r) => setTimeout(r, 250));
     return {
       stk: (document.getElementById("stkBox") || {}).textContent || "",
-      rpeVisivel: document.getElementById("rpeBox").style.display === "block",
+      rpeNaHome: /Como foi o treino/.test(document.body.innerText),
+      rpeVisivel: document.getElementById("cardRpe").style.display === "block",
+      rpeNoTreino: document.getElementById("cardRpe").getAttribute("data-sec") === "treino",
     };
   });
   ok(/sequência de 2 semanas/.test(stkRpe.stk), "chama do streak acende com 2 semanas seguidas de meta");
-  ok(stkRpe.rpeVisivel, "depois do 'Treinei hoje' o app pergunta como foi o treino");
+  ok(stkRpe.rpeVisivel && stkRpe.rpeNoTreino, "depois do 'Treinei hoje' a pergunta fica esperando na área de Treino");
+  ok(!stkRpe.rpeNaHome, "e a primeira tela não pergunta mais nada — ela só mostra o dia e o treino");
   const rpeSalvo = await pApp.evaluate(async () => {
     document.querySelector("[data-rpe='2']").click();
     await new Promise((r) => setTimeout(r, 150));
