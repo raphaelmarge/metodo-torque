@@ -9729,5 +9729,305 @@ self.MT_EXERCICIOS = [
   "g": "Funcional e Cross",
   "eq": "Peso do corpo",
   "d": "Desça as mãos ao chão, ande com os pés para trás e volte se levantando sem pular; poupa joelho e ombro de quem está começando."
+ },
+ {
+  "n": "Crucifixo declinado com halteres",
+  "g": "Peito",
+  "eq": "Halteres",
+  "d": "Desça só até os braços chegarem na linha do peito, com o cotovelo travado num ângulo levemente dobrado o tempo todo; passar dessa linha empurra a cabeça do ombro pra frente e não recruta nem um pouco a mais de peitoral."
+ },
+ {
+  "n": "Crossover com elástico ancorado alto",
+  "g": "Peito",
+  "eq": "Elástico",
+  "d": "Cotovelos levemente dobrados e travados nesse ângulo o tempo todo: junte as mãos na altura do umbigo cruzando um pouco à frente do corpo — se o cotovelo dobra e estica, você fez tríceps e não peito."
+ },
+ {
+  "n": "Flexão de braço com mochila nas costas",
+  "g": "Peito",
+  "eq": "Peso do corpo",
+  "d": "Encurte as alças pra mochila ficar apoiada em cima das escápulas e não escorregar pra nuca na descida, e mantenha o corpo em linha de prancha: quadril caído com peso nas costas é o que castiga a lombar."
+ },
+ {
+  "n": "Puxada na frente com meia amplitude alongada",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Trabalhe só a metade de cima do movimento, da barra esticada até a altura da testa, mas segure a volta: se você soltar o peso lá em cima o ombro sobe junto e vira balanço em vez de trabalho no ponto alongado do dorsal."
+ },
+ {
+  "n": "Barra fixa com apoio dos pés na caixa",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Deixe só a ponta dos pés na caixa e ajude com a perna o mínimo possível — quem puxa é a costa: se você empurrar forte com as pernas vira um agachamento pendurado e o dorsal não trabalha."
+ },
+ {
+  "n": "Remada curvada com elástico sob os pés",
+  "g": "Costas",
+  "eq": "Elástico",
+  "d": "Pise no meio do elástico, jogue o quadril pra trás até o tronco chegar em uns 45 graus e puxe as mãos em direção ao umbigo levando o cotovelo pra trás — não levante o tronco a cada repetição pra vencer a resistência, o tronco fica parado."
+ },
+ {
+  "n": "Remada com kettlebell apoiado no banco",
+  "g": "Costas",
+  "eq": "Kettlebell",
+  "d": "Uma mão no banco, o kettlebell puxando em direção ao quadril e não ao peito; a alça mais baixa permite descer mais e alongar melhor a dorsal."
+ },
+ {
+  "n": "Rotação cubana com elástico",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Puxe o elástico numa remada alta até o cotovelo ficar na altura do ombro, gire o antebraço pra cima devagar e só então empurre pro alto — se a rotação sair rápida ou o cotovelo cair abaixo da linha do ombro, o manguito é que paga a conta."
+ },
+ {
+  "n": "Protração de escápula com elástico deitado (serrátil)",
+  "g": "Ombros",
+  "eq": "Elástico",
+  "d": "Deitado com o elástico passando por trás das costas e os braços apontados pro teto, empurre as mãos uns três dedos a mais soltando só a escápula do chão, com o cotovelo esticado — se o cotovelo dobra vira tríceps, e se o tronco inteiro sobe a escápula nem saiu do lugar."
+ },
+ {
+  "n": "Caminhada com kettlebell bottom-up",
+  "g": "Ombros",
+  "eq": "Kettlebell",
+  "d": "Segure a alça bem no meio, com o punho reto e o fundo do kettlebell virado pro teto na altura do ombro, e esprema a alça a cada passo; se o peso tombar, abra a mão e deixe cair longe do pé em vez de correr atrás dele."
+ },
+ {
+  "n": "Rosca scott com pegada fechada na barra W",
+  "g": "Bíceps",
+  "eq": "Barra",
+  "d": "Encaixe a axila em cima do apoio e desça devagar até quase esticar o cotovelo — soltar o peso e estender o braço de uma vez no banco scott é o jeito mais fácil de estirar o tendão do bíceps."
+ },
+ {
+  "n": "Flexão de punho sentado com barra apoiada nas coxas",
+  "g": "Bíceps",
+  "eq": "Barra",
+  "d": "Antebraços apoiados nas coxas e punhos para fora do joelho: deixe a barra rolar até a ponta dos dedos e enrole de volta — cuida da pegada de quem faz terra e barra."
+ },
+ {
+  "n": "Tríceps na polia com meia amplitude no final",
+  "g": "Tríceps",
+  "eq": "Polia",
+  "d": "Faça só a metade de baixo, do meio do movimento até o braço esticar, e pare exatamente quando ele ficar reto — empurrar além disso joga o cotovelo pra trás e castiga a articulação sem dar estímulo nenhum a mais."
+ },
+ {
+  "n": "Tríceps pushdown com elástico ancorado alto",
+  "g": "Tríceps",
+  "eq": "Elástico",
+  "d": "Cotovelo colado no tronco e imóvel do começo ao fim: só o antebraço desce. Se o cotovelo abrir pros lados ou subir junto, o movimento vira empurrão de peito e o tríceps escapa."
+ },
+ {
+  "n": "Tríceps francês em pé com mochila pelas alças",
+  "g": "Tríceps",
+  "eq": "Peso do corpo",
+  "d": "Segure a mochila pelas alças atrás da cabeça com os cotovelos apontando pro teto e parados no lugar durante todo o movimento — abriu os cotovelos pros lados, o esforço saiu do tríceps e virou empurrão de ombro."
+ },
+ {
+  "n": "Agachamento b-stance com halteres (apoio escalonado)",
+  "g": "Quadríceps",
+  "eq": "Halteres",
+  "d": "O pé de trás fica meio pé atrás, só com a ponta encostada no chão pra equilibrar — quem faz força é a perna da frente, então se você sentir a coxa de trás trabalhando é porque está empurrando com ela e precisa aliviar o apoio."
+ },
+ {
+  "n": "Agachamento pendular na máquina",
+  "g": "Quadríceps",
+  "eq": "Máquina",
+  "d": "Encaixe o ombro no apoio e mantenha o pé inteiro colado na plataforma: como o aparelho joga o peso pra trás, o erro clássico é despencar e deixar o joelho ir sozinho à frente — segure a descida em 2 a 3 segundos e pare quando a coxa chegar na linha do apoio, sem descolar o quadril do encosto."
+ },
+ {
+  "n": "Agachamento com calcanhares apoiados em livros",
+  "g": "Quadríceps",
+  "eq": "Peso do corpo",
+  "d": "Dois livros firmes (ou uma toalha dobrada) de uns 3 cm sob os calcanhares deixam você descer mais fundo sem tirar o pé do apoio; mantenha o joelho apontando na mesma linha do pé e desça só até onde a lombar não arredondar."
+ },
+ {
+  "n": "Agachamento unilateral no banco com toque de calcanhar",
+  "g": "Quadríceps",
+  "eq": "Banco",
+  "d": "Sente e levante de um pé só, tocando o calcanhar da perna de fora no chão sem colocar peso nele — é a progressão honesta para o agachamento em uma perna."
+ },
+ {
+  "n": "Terra romeno b-stance com halteres",
+  "g": "Posterior e glúteo",
+  "eq": "Halteres",
+  "d": "Quase todo o peso na perna da frente e a de trás só apoiando a ponta do pé; empurre o quadril pra trás até sentir o posterior da perna da frente esticar e pare no instante em que a lombar começar a arredondar."
+ },
+ {
+  "n": "Bom dia unilateral com barra",
+  "g": "Posterior e glúteo",
+  "eq": "Barra",
+  "d": "Use barra leve ou só o bastão: com a barra apoiada no trapézio e apoiado em uma perna só, incline o tronco à frente girando pelo quadril e deixe a perna livre esticar pra trás como contrapeso, mantendo o quadril nivelado — se ele abrir pro lado, você foi fundo demais."
+ },
+ {
+  "n": "Swing com dois kettlebells",
+  "g": "Posterior e glúteo",
+  "eq": "Kettlebell",
+  "d": "Deixe as duas alças passarem entre as coxas com os cotovelos raspando as costelas na descida e jogue o peso pra frente com o estalo do quadril — quem tenta levantar os kettlebells com o braço puxa a lombar junto, ainda mais com carga dobrada."
+ },
+ {
+  "n": "Isometria de adutor com toalha entre os joelhos",
+  "g": "Posterior e glúteo",
+  "eq": "Toalha",
+  "d": "Barriga pra cima, joelhos dobrados e pés no chão, aperte a toalha enrolada entre os joelhos com uns 70% da força e segure respirando normalmente — prender o ar é o erro clássico aqui e faz a pressão subir à toa."
+ },
+ {
+  "n": "Mesa flexora com pés em dorsiflexão",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Puxe a ponta dos pés em direção à canela durante toda a série: com o tornozelo assim a panturrilha ajuda menos e o posterior trabalha mais."
+ },
+ {
+  "n": "Prancha alta com apoio de uma mão só",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Afaste os pés bem mais que a largura do quadril antes de tirar a mão do chão e segure o umbigo apontado pro chão; no instante em que um lado do quadril abrir pra cima, volte a apoiar as duas mãos."
+ },
+ {
+  "n": "Lift diagonal com elástico ancorado baixo",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "Com o elástico preso lá embaixo, leve as mãos do quadril até acima do ombro oposto girando pelo pé de trás e pelo quadril, braços quase esticados — girar só a coluna com o quadril travado é o caminho curto pra dor lombar."
+ },
+ {
+  "n": "Prancha de urso isométrica",
+  "g": "Core",
+  "eq": "Peso do corpo",
+  "d": "Mãos embaixo dos ombros e joelhos embaixo do quadril, tire os joelhos só uns dois dedos do chão e segure com o bumbum na altura das costas — se ele subir feito tenda ou a lombar afundar, encoste os joelhos, descanse e recomece em vez de segurar torto."
+ },
+ {
+  "n": "Levantamento terra da mala com kettlebell ao lado do corpo",
+  "g": "Core",
+  "eq": "Kettlebell",
+  "d": "Com o kettlebell ao lado do pé, empurre o quadril pra trás sem deixar o tronco tombar pro lado do peso — os ombros ficam nivelados o tempo todo, é o abdômen do lado livre que segura; faça o mesmo número de repetições dos dois lados."
+ },
+ {
+  "n": "Isometria de apoio nas paralelas (support hold)",
+  "g": "Ginástica e calistenia",
+  "eq": "Paralelas",
+  "d": "Cotovelos travados, ombros empurrados pra baixo longe da orelha e costelas fechadas; no momento em que os ombros começarem a subir em direção às orelhas, desça e descanse, porque é aí que a articulação fica pendurada no ligamento."
+ },
+ {
+  "n": "Depressão escapular nas paralelas (scap dips)",
+  "g": "Ginástica e calistenia",
+  "eq": "Paralelas",
+  "d": "O braço fica reto o tempo todo: você afunda e sobe o corpo só com a escápula, uns cinco dedos de amplitude — se o cotovelo dobrar já virou mergulho e o exercício perdeu a função de preparar o ombro."
+ },
+ {
+  "n": "Progressão de front lever com elástico",
+  "g": "Ginástica e calistenia",
+  "eq": "Superband",
+  "d": "Com o superband preso na barra passando por baixo do quadril, mantenha os cotovelos completamente esticados e o quadril na mesma altura dos ombros — se a lombar começar a arquear, dobre mais os joelhos ou troque por um elástico mais grosso antes de insistir."
+ },
+ {
+  "n": "Apoio de mão na parede de barriga para dentro",
+  "g": "Ginástica e calistenia",
+  "eq": "Parede",
+  "d": "Suba de costas para a parede, caminhando com os pés, até ficar quase vertical com a barriga contraída — o corpo aprende a posição sem risco de cair de costas."
+ },
+ {
+  "n": "Remada gorila com dois kettlebells",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Com os dois kettlebells no chão entre os pés e o quadril alto igual num terra romeno, puxe um de cada vez colando o cotovelo no corpo e empurre o kettlebell parado contra o chão pra travar o tronco — se o ombro rodar pro alto, o peso está pesado demais."
+ },
+ {
+  "n": "Thruster com dois kettlebells",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Agachamento e desenvolvimento são um movimento só: aproveite o impulso das pernas pra lançar os kettlebells e só termine o caminho com os braços, porque parar embaixo e empurrar no braço joga toda a carga em cima do ombro."
+ },
+ {
+  "n": "Saltinho de tornozelo (pogo jump)",
+  "g": "Funcional e Cross",
+  "eq": "Peso do corpo",
+  "d": "São saltinhos baixos e rápidos feitos só pelo tornozelo, com o joelho quase reto e o corpo duro como uma mola: toque a ponta do pé e saia do chão na mesma hora, sem deixar o calcanhar afundar — se o calcanhar bater no chão a cada salto, salte mais baixo e acelere o ritmo."
+ },
+ {
+  "n": "Arranque com kettlebell em uma mão",
+  "g": "Funcional e Cross",
+  "eq": "Kettlebell",
+  "d": "Do chão até acima da cabeça em um movimento só; gire a mão por dentro do peso no final para o kettlebell pousar no antebraço, não bater nele."
+ },
+ {
+  "n": "Salto no caixote com aterrissagem em uma perna",
+  "g": "Funcional e Cross",
+  "eq": "Caixa",
+  "d": "Suba com os dois pés e pouse com um só, absorvendo com o joelho alinhado ao segundo dedo do pé; só faça se a aterrissagem sair silenciosa."
+ },
+ {
+  "n": "Ski ergômetro (SkiErg)",
+  "g": "Cardio",
+  "eq": "Máquina",
+  "d": "A força vem do quadril e do abdômen, não do braço: puxe as alças de cima jogando o bumbum pra trás com o joelho meio dobrado e feche o tronco até as mãos passarem do joelho, mantendo a coluna reta — arredondar as costas pra puxar mais forte é o que castiga a lombar aqui."
+ },
+ {
+  "n": "Esteira curvada sem motor",
+  "g": "Cardio",
+  "eq": "Máquina",
+  "d": "Ela só anda porque você empurra: fique na parte da frente do tambor e incline o corpo todo a partir do tornozelo, sem quebrar na cintura, e pra parar caminhe devagar pro fundo da esteira segurando no corrimão — soltar as mãos e sair de repente com o tambor girando derruba do mesmo jeito que pular de escada rolante."
+ },
+ {
+  "n": "Marcha estacionária contando de trás para frente",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Marche no lugar segurando o encosto e conte de trinta para zero em voz alta; dividir a atenção é o que mais treina o cérebro a não deixar o idoso cair na vida real."
+ },
+ {
+  "n": "Sentar e levantar do sofá baixo",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sofá",
+  "d": "O sofá é mais baixo que a cadeira e por isso mais difícil: apoie as mãos nos braços do sofá só o quanto precisar e vá tirando a ajuda com o tempo."
+ },
+ {
+  "n": "Caminhada com mudança de direção a cada quatro passos",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cones",
+  "d": "Ande quatro passos e vire para outro lado, sempre com espaço livre em volta; girar é o momento em que mais se cai, então o giro é o exercício."
+ },
+ {
+  "n": "Desenhar o alfabeto com o pé sentado",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Cadeira",
+  "d": "Sentado com a perna estendida, escreva as letras no ar movendo só o tornozelo — solta a articulação de quem passa o dia parado e ajuda no inchaço."
+ },
+ {
+  "n": "Bobbing: afundar e subir controlando a respiração",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Afunde dobrando os joelhos soltando o ar pelo nariz e suba puxando o ar pela boca, num ritmo constante; é o primeiro passo de quem tem medo de água."
+ },
+ {
+  "n": "Flutuação ventral em estrela",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "De barriga para baixo com braços e pernas abertos, encha o peito de ar e relaxe o pescoço deixando o rosto na água — quem se enrijece afunda."
+ },
+ {
+  "n": "Nado cachorrinho para adaptação",
+  "g": "Natação e aquático",
+  "eq": "Piscina",
+  "d": "Braçadas curtas embaixo d'água com a cabeça fora, pernada leve e contínua; serve para o aluno perder o medo antes de aprender o crawl."
+ },
+ {
+  "n": "Braçada de crawl com elástico ancorado",
+  "g": "Natação e aquático",
+  "eq": "Elástico",
+  "d": "Inclinado à frente, comece a puxada com o cotovelo alto e o antebraço apontando pro chão; deixar o cotovelo cair antes da mão (drop elbow) tira a pegada na água e é justamente o vício que esse exercício em terra serve pra corrigir."
+ },
+ {
+  "n": "Rajada de socos no saco por trinta segundos",
+  "g": "Boxe e lutas",
+  "eq": "Saco de boxe",
+  "d": "Trinta segundos de socos alternados no ritmo mais alto que der, sem perder a guarda entre as trocas; é condicionamento, então a técnica vale mais que a força."
+ },
+ {
+  "n": "Esquiva por baixo da corda estendida",
+  "g": "Boxe e lutas",
+  "eq": "Corda",
+  "d": "Passe por baixo de uma corda esticada na altura do peito dobrando os joelhos, nunca curvando a coluna, e saia já com a guarda no rosto."
+ },
+ {
+  "n": "Parry com a mão da frente e resposta de direto",
+  "g": "Boxe e lutas",
+  "eq": "Manoplas",
+  "d": "Desvie o golpe com um toque curto da mão da frente, sem esticar o braço, e responda com o direto no mesmo movimento de volta."
  }
 ];
