@@ -127,7 +127,7 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 pkill -f "[h]ttp.server 8765"
 setsid nohup python3 -m http.server 8765 --bind 127.0.0.1 -d <raiz-do-repo> > /dev/null 2>&1 < /dev/null &
 
-bash tests/run.sh   # 16 suítes — esperado: "suites com falha: 0"
+bash tests/run.sh   # 20 suítes — esperado: "suites com falha: 0"
 ```
 
 - Playwright: `/opt/node22/lib/node_modules/playwright` + chromium
@@ -143,8 +143,12 @@ bash tests/run.sh   # 16 suítes — esperado: "suites com falha: 0"
 
 1. Trabalhe no branch `claude/material-app-site-conversion-4uy622` (ou outro `claude/...`).
 2. Rode TODAS as suítes (acima).
-3. **Suba a versão do `sw.js` em +1** (`mt-vNNN`) a cada mudança de produto — sem
-   isso os navegadores seguram a versão velha.
+3. **Suba a versão em +1** (`mt-vNNN`) a cada mudança de produto, nos **DOIS**
+   lugares: `assets/versao.js` e o `var VERSION` cravado no `sw.js`. O navegador
+   só troca o service worker quando os BYTES do `sw.js` mudam — com a versão só
+   no arquivo importado, o `sw.js` ficou idêntico do v491 ao v509 e o iPhone
+   congelou no código guardado (o Safari não confere arquivo importado).
+   `tests/test-versao.js` falha se os dois números não baterem.
 4. Commit → push → **PR pra main → merge imediato** (o Raphael quer cada lote no
    ar na hora, sem esperar aprovação) → recomeça o branch a partir de origin/main.
 5. Avise o Raphael em pt-BR simples, com prints quando fizer sentido.
