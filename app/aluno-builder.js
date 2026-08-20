@@ -171,17 +171,18 @@
       ".gbarra i{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.13);overflow:hidden}" +
       ".gbarra i.past{background:rgba(255,255,255,.28)}" +
       ".gbarra i b{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--cor),var(--corc));transition:width .3s ease}" +
-      ".gcont{margin-top:9px;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;color:#6e6a78}" +
+      ".gcont{margin-top:9px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;" +
+      "font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;color:#6e6a78}" +
       ".gcont b{color:#fff}" +
-      ".gcont span{display:block;font-size:11.5px;font-weight:600;margin-top:2px}" +
-      ".gcard{position:relative;flex:0 1 auto;max-height:56vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:16px;border-radius:26px;padding:18px;"+
+      ".gcont #gProg span{display:block;font-size:11.5px;font-weight:600;margin-top:2px}" +
+      ".gcont > span{flex:none;font-size:11.5px;font-weight:700;padding-top:2px}" +
+      ".gcard{position:relative;flex:0 1 auto;max-height:64vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:16px;border-radius:26px;padding:18px;"+
       "display:flex;flex-direction:column;" +
       "background:linear-gradient(160deg,#f6f3fd,#e9ddfb);color:#1d1729;" +
       "box-shadow:0 26px 66px -30px rgba(var(--cor-rgb),1),inset 0 0 0 1px rgba(var(--cor-rgb),.14)}" +
-      ".gcard.recibo{max-height:62vh}"+
-      ".gnum{position:absolute;top:2px;right:14px;font-size:104px;line-height:.9;font-weight:800;color:rgba(var(--cor-rgb),.10);font-variant-numeric:tabular-nums;pointer-events:none}" +
+      ".gcard.recibo{max-height:68vh}"+
       ".ggif{margin-top:14px;border-radius:16px;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 1px rgba(var(--cor-rgb),.12)}"+
-      ".ggif img{display:block;width:100%;max-height:34vh;object-fit:contain;background:#fff}"+
+      ".ggif img{display:block;width:100%;max-height:40vh;object-fit:contain;background:#fff}"+
       ".gwrap.reg .ggif{display:none!important}"+
       ".gchip{display:inline-block;align-self:flex-start;font-size:9.5px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:var(--cor2);background:rgba(var(--cor-rgb),.12);border-radius:99px;padding:5px 11px}" +
       ".gsets{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}" +
@@ -211,7 +212,6 @@
       ".gcard.compacto .gstep input{font-size:34px}"+
       ".gcard.compacto .gstep.rep input{font-size:22px}" +
       ".gbiglab{text-align:center;font-size:10px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:#6f6688}" +
-      ".gprev{text-align:center;font-size:13px;font-weight:700;color:#544c68;margin-top:10px}" +
       ".gtrilho{height:5px;border-radius:3px;background:#ded7ee;width:100%;margin:12px auto 0;max-width:220px;overflow:hidden}" +
       ".gtrilho b{display:block;height:100%;background:var(--cor);border-radius:3px}" +
       ".gcg{margin-top:16px}" +
@@ -231,23 +231,27 @@
       "color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}" +
       ".gsemcarga{width:100%;min-height:44px;margin-top:8px;border-radius:99px;border:1px solid #d6cfe6;background:none;color:#6f6688;" +
       "font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}" +
-      ".ggrupo{margin-top:15px;font-size:10px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:var(--corc)}" +
-      ".gtit{font-size:clamp(22px,7vw,28px);line-height:1.1;font-weight:800;letter-spacing:-.02em;margin-top:5px}" +
-      ".gmeta{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}" +
-      ".gmeta i{font-style:normal;font-size:12.5px;font-weight:800;border-radius:99px;padding:7px 14px;background:rgba(255,255,255,.07);color:#cfcbdb}" +
+      ".ggrupo{margin-top:11px;font-size:9px;letter-spacing:.2em;font-weight:800;text-transform:uppercase;color:var(--corc)}" +
+      ".gtit{font-size:clamp(17px,4.8vw,21px);line-height:1.15;font-weight:800;letter-spacing:-.01em;margin-top:3px}" +
+      ".gmeta{display:flex;gap:6px;flex-wrap:wrap;min-width:0}" +
+      ".gmeta i{font-style:normal;font-size:11px;font-weight:800;border-radius:99px;padding:5px 11px;background:rgba(255,255,255,.07);color:#cfcbdb}" +
       ".gmeta i.forte{background:linear-gradient(135deg,var(--cor),var(--cor2));color:#fff}" +
-      ".grelo{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px}" +
-      ".grelo em{font-style:normal;display:block;font-size:9.5px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:#6e6a78}" +
-      ".grelo b{display:block;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}" +
-      ".grelo span{font-size:12px;color:#6e6a78;font-variant-numeric:tabular-nums;padding-bottom:4px}" +
-      ".gpe{margin-top:12px;display:flex;gap:8px}" +
-      ".gpe button{min-height:64px;border-radius:20px;border:none;font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;flex:1}" +
+      /* rodapé em UMA faixa: chips do treino à esquerda, relógio à direita.
+         Antes o nome do exercício vinha em 28px e o cronômetro em 30px com
+         rótulo em caixa alta — três blocos altos que empurravam o vídeo pra
+         fora da tela e obrigavam a rolar o card pra ver o movimento. */
+      ".gbase{margin-top:13px;display:flex;align-items:center;justify-content:space-between;gap:10px}" +
+      ".grelo{flex:none;display:flex;align-items:baseline;gap:5px;font-variant-numeric:tabular-nums;color:#6e6a78}" +
+      ".grelo b{font-size:19px;font-weight:800;color:#fff;line-height:1}" +
+      ".grelo em{font-style:normal;font-size:10.5px;font-weight:700}" +
+      ".gpe{margin-top:auto;padding-top:14px;display:flex;gap:8px}" +
+      ".gpe button{min-height:58px;border-radius:20px;border:none;font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;flex:1}" +
       ".gpe .prin{background:linear-gradient(135deg,var(--cor),var(--cor2));color:#fff;box-shadow:0 14px 34px -16px rgba(var(--cor-rgb),1)}" +
       ".gpe .sec{background:rgba(255,255,255,.07);color:#cfcbdb}" +
       ".gpe .mais{flex:none;width:74px;font-size:15px}" +
       ".gfalta{width:100%;min-height:44px;margin-top:8px;border-radius:14px;border:1px solid rgba(var(--cor-rgb),.4);background:rgba(var(--cor-rgb),.08);" +
       "color:var(--cor2);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;text-align:left;padding:0 14px}" +
-      "@media (max-height:620px){.gnum{font-size:74px}.gsets i{height:44px;font-size:19px}.grelo b{font-size:24px}.gpe button{min-height:56px}}" +
+      "@media (max-height:620px){.gsets i{height:44px;font-size:19px}.grelo b{font-size:17px}.gpe button{min-height:52px}.gtit{font-size:16px}}" +
       "</style></head><body>" +
       "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
       "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:var(--corc);font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
@@ -680,9 +684,8 @@
       "<button id='gPularEx'>Pular exercício</button>" +
       "<button id='gFechar' class='gx' aria-label='Fechar o treino guiado'>✕</button></div>" +
       "<div class='gbarra' id='gBarra' aria-hidden='true'></div>" +
-      "<div class='gcont' id='gProg'></div>" +
+      "<div class='gcont'><div id='gProg'></div><span id='gReloTot'></span></div>" +
       "<div class='gcard' id='gCard'>" +
-      "<div class='gnum' id='gNum' aria-hidden='true'></div>" +
       "<span class='gchip' id='gEstado'></span>" +
       "<div class='ggif' id='gGif' style='display:none;'></div>" +
       "<div id='gMiolo'></div>" +
@@ -697,9 +700,8 @@
       "<div class='ghist' id='gHist'></div></div>" +
       "<div class='ggrupo' id='gGrupo'></div>" +
       "<div class='gtit' id='gEx'></div>" +
-      "<div class='gmeta' id='gMeta'></div>" +
-      "<div class='grelo'><div><em id='gReloLab'>Tempo neste exercício</em><b id='gRelo'>0:00</b></div>" +
-      "<span id='gReloTot'></span></div>" +
+      "<div class='gbase'><div class='gmeta' id='gMeta'></div>" +
+      "<div class='grelo'><b id='gRelo'>0:00</b><em id='gReloLab'>neste exercício</em></div></div>" +
       "<div class='gpe' id='gPe'>" +
       "<button class='prin' id='gSerie'>Série feita ✓</button>" +
       "<button class='sec' id='gPular' style='display:none;'>Pular descanso</button>" +
@@ -1516,8 +1518,11 @@
       "h+='<i'+cls+'><b style=\"width:'+pc+'%\"></b></i>;'.replace(';','');}bx.innerHTML=h;}" +
       // ---------- pintura ----------
       "function gCabeca(){var f=GUIA[gv.f],n=f.it.length;" +
-      "gEl('gProg').innerHTML='<b>'+g2(gv.e+1)+'</b> / '+g2(n)+\"<span>\"+esc2(f.n)+' · exercício '+(gv.e+1)+' de '+n+'</span>';" +
-      "gEl('gNum').textContent=g2(gv.e+1);pintaBarra();}" +
+      /* Só a posição em números e o nome da ficha. O "exercício 3 de 7" dizia a
+         MESMA coisa que o 03/07 logo acima e que a barra segmentada, e a marca
+         d'água gigante dizia pela terceira vez. */
+      "gEl('gProg').innerHTML='<b>'+g2(gv.e+1)+'</b> / '+g2(n)+\"<span>\"+esc2(f.n)+'</span>';" +
+      "pintaBarra();}" +
       "function esc2(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}" +
       "function gBlocos(mini){var f=GUIA[gv.f],it=f.it[gv.e],h='';" +
       "for(var i=1;i<=it.s;i++){var c=i<=gv.s?'ok':(i===gv.s+1?'now':'');" +
@@ -1528,7 +1533,7 @@
       "return 'última vez '+gnum(u.kg)+' kg'+(+u.r>0?' × '+u.r:'')+(rc?' · recorde '+gnum(rc)+' kg':'');}" +
       "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];if(!it)return;" +
       "gv.tex=gv.tex||Date.now();gCabeca();" +
-      "gEl('gEstado').textContent='Série '+Math.min(gv.s+1,it.s)+' de '+it.s;" +
+      "gEl('gEstado').style.display='none';" +
       "var m='';" +
       "m+=gBlocos(false);" +
       "if(it.ob)m+=\"<div class='gobs'><em>Recado do professor</em><p>\"+esc2(it.ob)+'</p></div>';" +
@@ -1545,10 +1550,10 @@
       "var gbx=gvd.nextElementSibling;if(gbx&&gbx.classList.contains('vidbox')){gbx.innerHTML='';gbx.style.display='none';}}" +
       "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
       "gEl('gEx').textContent=it.e;" +
-      "gEl('gMeta').innerHTML=\"<i class='forte'>\"+it.s+' × '+esc2(it.r||'?')+\"</i><i>\"+(it.d||60)+' s de descanso</i>';" +
-      "gEl('gReloLab').textContent='Tempo neste exercício';" +
+      "gEl('gMeta').innerHTML=\"<i class='forte'>\"+it.s+' × '+esc2(it.r||'?')+\"</i><i>\"+(it.d||60)+' s descanso</i>';" +
+      "gEl('gReloLab').textContent='neste exercício';" +
       "gEl('gDesc').style.display='none';" +
-      "gEl('gSerie').style.display='block';gEl('gSerie').textContent='Série feita ✓ ('+gv.s+'/'+it.s+')';" +
+      "gEl('gSerie').style.display='block';gEl('gSerie').textContent='Série feita ✓';" +
       "gEl('gPular').style.display='none';gEl('gMais15').style.display='none';" +
       "gEl('gCard').scrollTop=0;}" +
       // ---------- descanso ----------
@@ -1558,7 +1563,7 @@
       "pintaGuia();}" +
       "function gDescanso(sg,trocaEx){gv.pend=trocaEx;var resta=sg,tot=sg||1;" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
-      "gEl('gEstado').textContent=trocaEx?'Exercício feito':'Descanso';pintaBarra();" +
+      "var ge=gEl('gEstado');ge.style.display='inline-block';ge.textContent=trocaEx?'Exercício feito':'Descanso';pintaBarra();" +
       "var gg2=gEl('gGif');if(gg2&&trocaEx)gg2.style.display='none';" +
       "gEl('gSerie').style.display='none';" +
       "var pu=gEl('gPular');pu.style.display='block';pu.style.pointerEvents='none';pu.style.opacity='.55';" +
@@ -1571,7 +1576,7 @@
       "gEl('gDescLab').style.display='block';gEl('gTrilhoCx').style.display='block';gEl('gTrilho').style.width='100%';" +
       "gEl('gCard').classList.toggle('compacto',!!trocaEx);" +
       "gEl('guiaBox').classList.toggle('reg',!!trocaEx);" +
-      "gEl('gMiolo2').innerHTML=trocaEx?gCargaHtml(it):(\"<div class='gprev'>Vem a série \"+Math.min(gv.s+1,it.s)+' de '+it.s+'</div>');" +
+      "gEl('gMiolo2').innerHTML=trocaEx?gCargaHtml(it):'';" +
       "if(trocaEx)ligaStepper(it,gv.f+':'+gv.e);" +
       "clearInterval(gv.timer);" +
       "gv.mais=0;" +
@@ -1620,10 +1625,10 @@
       "marc+=Math.min(Math.max(gv.feitas[i]||0,stR[it.e]||0),it.s);" +
       "var temC=gv.cargas[it.e]||(dcR[it.e]||[]).some(function(x){return x.d===hjR;});" +
       "if(temC)anot++;else faltam.push({i:i,e:it.e});});" +
-      "gEl('gEstado').textContent='Treino de hoje';gEl('gNum').textContent='';" +
+      "var gec=gEl('gEstado');gec.style.display='inline-block';gec.textContent='Treino de hoje';" +
       "var gg3=gEl('gGif');if(gg3)gg3.style.display='none';" +
       "gEl('gBarra').innerHTML=f.it.map(function(){return \"<i class='past'></i>\";}).join('');" +
-      "gEl('gProg').innerHTML='<b>'+g2(f.it.length)+'</b> / '+g2(f.it.length)+\"<span>\"+esc2(f.n)+' · terminou</span>';" +
+      "gEl('gProg').innerHTML='<b>'+g2(f.it.length)+'</b> / '+g2(f.it.length)+\"<span>\"+esc2(f.n)+'</span>';" +
       "gEl('gCard').classList.add('recibo');" +
       "gEl('gVoltaEx').style.display='none';gEl('gPularEx').style.display='none';" +
       "var vb=gEl('gVideo');if(vb){vb.style.display='none';var bx=vb.nextElementSibling;" +
@@ -1638,7 +1643,7 @@
       "gEl('gGrupo').style.display='none';" +
       "gEl('gEx').textContent='Treino concluído!';" +
       "gEl('gMeta').innerHTML=\"<i>Mandou bem demais. Alonga, hidrata e até a próxima.</i>\";" +
-      "gEl('gReloLab').textContent='Tempo de treino';gEl('gRelo').textContent=gmmss((Date.now()-gv.t0)/1000);" +
+      "gEl('gReloLab').textContent='de treino';gEl('gRelo').textContent=gmmss((Date.now()-gv.t0)/1000);" +
       "gEl('gReloTot').textContent='';" +
       "gEl('gDesc').style.display='none';" +
       // os botões do rodapé podem já ter sido trocados (caminho 'Terminar treino'):
@@ -1649,7 +1654,7 @@
       "if(typeof confete==='function')try{confete();}catch(e3){}}" +
       // repescagem: abre o registro daquele exercício sem sair da tela final
       "function gRepesca(i){var it=GUIA[gv.f].it[i];if(!it)return;" +
-      "gEl('gEstado').textContent='Anotar carga';gEl('gEx').textContent=it.e;" +
+      "var gea=gEl('gEstado');gea.style.display='inline-block';gea.textContent='Anotar carga';gEl('gEx').textContent=it.e;" +
       "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
       "gEl('gMiolo').innerHTML='';gEl('gMiolo2').innerHTML=gCargaHtml(it);gEl('gHist').textContent=gHistTxt(it.e);" +
       "ligaStepper(it,gv.f+':'+i);" +
@@ -1682,7 +1687,7 @@
       // último exercício da ficha: não faz sentido descansar pro nada, mas a carga
       // não pode escapar — mostra o registro SEM contagem e com o botão de encerrar
       "if(fimEx&&gv.e>=GUIA[gv.f].it.length-1){clearInterval(gv.timer);gv.pend=false;" +
-      "pintaBarra();gEl('gEstado').textContent='Exercício feito';" +
+      "pintaBarra();var gef=gEl('gEstado');gef.style.display='inline-block';gef.textContent='Exercício feito';" +
       "gEl('gCard').classList.add('compacto');gEl('guiaBox').classList.add('reg');" +
       "gEl('gMiolo').innerHTML='';gEl('gDesc').style.display='none';" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +

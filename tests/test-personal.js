@@ -4186,13 +4186,16 @@ async function abaPt(p, a) {
     ex: document.getElementById("gEx").textContent,
     prog: document.getElementById("gProg").textContent,
   }));
-  ok(guiP.aberto === "flex" && guiP.ex.length > 1 && /exercício 1/.test(guiP.prog), "▶ Treino guiado abre no 1º exercício (" + guiP.ex + ")");
+  ok(guiP.aberto === "flex" && guiP.ex.length > 1 && /^01\s*\/\s*\d/.test(guiP.prog.trim()), "▶ Treino guiado abre no 1º exercício (" + guiP.ex + ")");
   await pApp.click("#gSerie");
   guiP = await pApp.evaluate(() => ({ desc: document.getElementById("gDesc").style.display, num: +document.getElementById("gDesc").textContent }));
   ok(guiP.desc === "block" && guiP.num > 0, "série feita liga o descanso automático (" + guiP.num + "s)");
   await pApp.click("#gPular");
-  guiP = await pApp.evaluate(() => document.getElementById("gSerie").textContent);
-  ok(/1\//.test(guiP), "pular descanso volta pro botão de série (1/N)");
+  guiP = await pApp.evaluate(() => ({
+    botao: document.getElementById("gSerie").style.display,
+    feitas: document.querySelectorAll("#gMiolo .gsets i.ok").length,
+  }));
+  ok(guiP.botao === "block" && guiP.feitas === 1, "pular descanso volta pro botão de série, com 1 série marcada nos blocos");
   await pApp.evaluate(() => { for (let i = 0; i < 12; i++) document.getElementById("gPularEx").click(); });
   guiP = await pApp.evaluate(() => document.getElementById("gEx").textContent);
   ok(/concluído/.test(guiP), "pular os exercícios chega no 🎉 treino concluído");
@@ -4221,11 +4224,11 @@ async function abaPt(p, a) {
         zi: getComputedStyle(document.getElementById("guiaBox")).zIndex,
       };
     });
-    ok(st1.display === "flex" && /01 \//.test(st1.prog) && /exercício 1/.test(st1.prog),
-      "abre em tela cheia com o contador de story (" + st1.prog.replace(/\s+/g, " ").slice(0, 40) + ")");
+    ok(st1.display === "flex" && /01 \//.test(st1.prog) && !/exercício 1 de/.test(st1.prog),
+      "abre em tela cheia com o contador de story, sem repetir a posição por extenso (" + st1.prog.replace(/\s+/g, " ").slice(0, 40) + ")");
     ok(st1.segmentos > 1 && st1.blocos > 0 && st1.temCard,
       "tem a barra segmentada (" + st1.segmentos + " exercícios) e os blocos de série (" + st1.blocos + ") dentro do card");
-    ok(/^\d+:\d\d$/.test(st1.relo) && /Tempo neste exercício/i.test(st1.reloLab),
+    ok(/^\d+:\d\d$/.test(st1.relo) && /neste exercício/i.test(st1.reloLab),
       "o cronômetro fica embaixo e diz o que está contando (" + st1.reloLab + " " + st1.relo + ")");
     ok(/×/.test(st1.chips) && /descanso/.test(st1.chips), "os chips mostram séries × reps e o descanso");
     ok(+st1.zi >= 62, "o player fica ACIMA da gaveta do menu (z-index " + st1.zi + ")");
@@ -4295,7 +4298,7 @@ async function abaPt(p, a) {
       await new Promise((r) => setTimeout(r, 1100));
       return { antes: a, depois: n(), prog: document.getElementById("gProg").textContent };
     });
-    ok(voltaNada.depois < voltaNada.antes && /exercício 1/.test(voltaNada.prog),
+    ok(voltaNada.depois < voltaNada.antes && /^01\s*\/\s*\d/.test(voltaNada.prog.trim()),
       "tocar em ‹ no primeiro exercício não trava o descanso nem sai do lugar");
 
     // pula até o fim do exercício pra chegar no registro da carga
@@ -4612,7 +4615,7 @@ async function abaPt(p, a) {
       ex: document.getElementById("gEx").textContent,
     };
   });
-  ok(!!iniEx && iniEx.aberto === "flex" && /exercício 2/.test(iniEx.prog),
+  ok(!!iniEx && iniEx.aberto === "flex" && /^02\s*\/\s*\d/.test(iniEx.prog.trim()),
     "'Iniciar exercício' abre o modo guiado direto no exercício escolhido (" + (iniEx ? iniEx.ex : "?") + ")");
   await pApp.evaluate(() => document.getElementById("gFechar").click());
 
