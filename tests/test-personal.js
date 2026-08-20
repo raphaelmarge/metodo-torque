@@ -5184,6 +5184,24 @@ async function abaPt(p, a) {
       "e o 401 não manda mais republicar a chat-envia (foi o que fez o Raphael republicar 3 vezes à toa)");
     ok(/não está publicada/.test(honesto.ausente) && /funcoes\.html/.test(honesto.ausente),
       "✨ 404 continua mandando publicar a função — esse caso é real");
+
+    // sessão caída aparece na frente do professor, com botão de resolver
+    const faixa = await p.evaluate(() => {
+      /* os testes de cima já derrubaram a sessão de mentira, então a faixa pode
+       * estar na tela: limpa antes pra medir o aparecimento de verdade */
+      const jaEstava = window.__faixaSessao();
+      const velha = document.getElementById("faixaSessao");
+      if (velha) velha.remove();
+      window.dispatchEvent(new CustomEvent("mt:sessao-caiu", { detail: { oQue: "A IA de treino" } }));
+      const el = document.getElementById("faixaSessao");
+      const botoes = el ? [...el.querySelectorAll("button")].map((b) => b.textContent) : [];
+      const texto = el ? el.textContent : "";
+      if (el) el.remove();
+      return { jaEstava, apareceu: !!el, botoes, texto };
+    });
+    ok(faixa.jaEstava, "a IA que caiu por sessão já tinha levantado a faixa sozinha");
+    ok(faixa.apareceu && /sess/i.test(faixa.texto), "faixa de sessão caída aparece quando a nuvem derruba o login");
+    ok(faixa.botoes.indexOf("Entrar de novo") >= 0, "e ela traz o botão Entrar de novo (um toque, sem procurar o card)");
   }
 
   // 🔁 mensalidade no cartão (assinatura Pagar.me com tokenização no navegador)

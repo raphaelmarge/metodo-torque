@@ -218,7 +218,9 @@
     if (!window.supabase || !cfg.url) { recado("<span class='ruim'>Sem conexão com a nuvem.</span>"); return; }
     var bt = this; bt.disabled = true;
     recado("Listando…");
-    var sb = window.supabase.createClient(cfg.url, cfg.anonKey);
+    /* Cliente descartável (só lista arquivos): sem guardar sessão e sem
+     * relógio de renovação, pra não disputar o crachá com o painel. */
+    var sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
     sb.storage.from(bucket).list("", { limit: 20 }).then(function (r) {
       bt.disabled = false;
       if (r.error) { recado("<span class='aviso'>Não deu pra listar:</span> " + r.error.message + "<br>Sem problema — use o botão de cima com o nome de um arquivo."); return; }

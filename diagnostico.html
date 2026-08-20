@@ -123,14 +123,46 @@
     // 0) a sessão vem ANTES de tudo: a envia-email exige usuário logado (a chave
     //    pública não basta), então sem o token dela o teste dava falso negativo
     var sb = null, sess = null, jwt = cfg.anonKey;
-    try { sb = window.supabase.createClient(cfg.url, cfg.anonKey); } catch (e) { anota("supabase-js: " + e.message); }
+    // reusa o cliente da página: criar outro faz dois relógios disputarem o
+    // mesmo crachá de login, e quem perde a disputa derruba a sessão
+    try { sb = window.MT_supabase || window.supabase.createClient(cfg.url, cfg.anonKey); window.MT_supabase = sb; } catch (e) { anota("supabase-js: " + e.message); }
     var passo0 = sb ? sb.auth.getSession().then(function (s) {
       sess = s && s.data && s.data.session;
       if (sess && sess.access_token) jwt = sess.access_token;
       anota("sessao: " + (sess ? "logado" : "sem login"));
-      if (sess) linha("✅", "Você está logado", sess.user.email || "");
-      else linha("⚠️", "Você não está logado neste navegador", "As IAs, a sincronização e parte destes testes só funcionam logado.",
-        "Abra o TORQUE PERSONAL → Configurações → Entrar na minha conta. Depois rode este diagnóstico de novo.");
+      if (!sess) {
+        linha("⚠️", "Você não está logado neste navegador", "As IAs, a sincronização e parte destes testes só funcionam logado.",
+          "Abra o TORQUE PERSONAL → Configurações → Entrar na minha conta. Depois rode este diagnóstico de novo.");
+        return;
+      }
+      linha("✅", "Você está logado", sess.user.email || "");
+      /* Quanto tempo o crachá ainda vale e se ele RENOVA. É a diferença entre
+       * "você foi deslogado agora" e "a renovação está quebrada e você vai cair
+       * de novo daqui a pouco" — sem isso, o professor só vê a IA parar. */
+      var falta = (self.MT_FUNCAO && self.MT_FUNCAO.faltaPra(sess.access_token));
+      if (falta != null) {
+        var min = Math.round(falta / 60);
+        anota("cracha vence em " + falta + "s");
+        linha(falta > 0 ? "🔗" : "⚠️", "Crachá do login",
+          falta > 0 ? "Vale por mais " + (min > 0 ? min + " min" : "menos de 1 min") + "." : "Já venceu — tem que renovar agora.");
+      }
+      return sb.auth.refreshSession().then(function (r) {
+        var novo = r && r.data && r.data.session;
+        var err = (r && r.error && (r.error.message || String(r.error))) || "";
+        anota("renovacao: " + (novo ? "ok" : "falhou " + err));
+        if (novo) {
+          if (novo.access_token) { jwt = novo.access_token; sess = novo; }
+          linha("✅", "A renovação do crachá funciona", "O sistema consegue se manter logado sozinho.");
+          return;
+        }
+        linha("❌", "A renovação do crachá falhou", err || "O Supabase não devolveu crachá novo.",
+          /already used|invalid refresh/i.test(err)
+            ? "Isso é sessão derrubada por dois lugares logados ao mesmo tempo. Saia da conta e entre de novo — e evite deixar o sistema aberto em dois aparelhos com a mesma conta ao mesmo tempo."
+            : "Saia da conta no TORQUE PERSONAL (card Sua ilha) e entre de novo. Se voltar a falhar, me mande este print.");
+      }, function (e) {
+        anota("renovacao: erro " + e.message);
+        linha("⚠️", "Não deu pra testar a renovação do crachá", e.message, "Confira a internet e rode de novo.");
+      });
     }).catch(function (e) { anota("sessao: erro " + e.message); }) : Promise.resolve();
 
     var chaveMorta = false;
@@ -386,7 +418,7 @@
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para)) { out.textContent = "Escreve um e-mail válido primeiro."; return; }
     bt.disabled = true; out.textContent = "enviando…";
     var sb2 = null;
-    try { sb2 = window.supabase.createClient(cfg.url, cfg.anonKey); } catch (e) {}
+    try { sb2 = window.MT_supabase || window.supabase.createClient(cfg.url, cfg.anonKey); } catch (e) {}
     if (!sb2) { out.textContent = "A nuvem não carregou nesta página."; bt.disabled = false; return; }
     sb2.auth.getSession().then(function (s) {
       var sess2 = s && s.data && s.data.session;

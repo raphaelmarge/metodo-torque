@@ -4147,5 +4147,42 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 </script>
 <script>/* TORQUE camada visual (aditiva) */(function(){var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;if(RM)return;function conta(el){var tx=el.textContent.trim();var m=tx.match(/^([0-9]+)/);if(!m)return;var alvo=parseInt(m[1],10);if(!alvo)return;var resto=tx.slice(m[1].length);var t0=performance.now();var up=function(t){var p=Math.min(1,(t-t0)/800);el.textContent=Math.round(alvo*(1-Math.pow(1-p,3)))+resto;if(p<1)requestAnimationFrame(up);};requestAnimationFrame(up);}
 addEventListener('load',function(){document.querySelectorAll('.kpi-nt .val').forEach(conta);});})();</script>
+<script>
+/* Faixa de sessão caída: quando o crachá do login morre e nem renovando volta,
+ * o professor precisa VER isso e resolver em um toque — antes o recado ficava
+ * escondido no rodapé do card que ele tentou usar. */
+(function () {
+  window.addEventListener("mt:sessao-caiu", function () {
+    if (document.getElementById("faixaSessao")) return; // já está na tela
+    var faixa = document.createElement("div");
+    faixa.id = "faixaSessao";
+    faixa.setAttribute("role", "status");
+    faixa.style.cssText = "position:fixed;left:12px;right:12px;bottom:78px;z-index:9999;background:#2a1f10;" +
+      "border:1px solid #7c5a1a;border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center;" +
+      "justify-content:space-between;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.45);";
+    var txt = document.createElement("div");
+    txt.style.cssText = "font-size:14px;line-height:1.5;flex:1 1 220px;color:#fbbf24;font-weight:700;";
+    txt.textContent = "Sua sessão da nuvem caiu. Entre de novo pra voltar a usar a IA, os pagamentos e a publicação dos apps.";
+    var acoes = document.createElement("div");
+    acoes.style.cssText = "display:flex;gap:8px;";
+    var btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = "Entrar de novo";
+    btn.addEventListener("click", function () {
+      var aba = document.querySelector('[data-a="conta"]');
+      if (aba) aba.click();
+      faixa.remove();
+    });
+    var fechar = document.createElement("button");
+    fechar.className = "btn sec";
+    fechar.textContent = "Agora não";
+    fechar.addEventListener("click", function () { faixa.remove(); });
+    acoes.appendChild(btn); acoes.appendChild(fechar);
+    faixa.appendChild(txt); faixa.appendChild(acoes);
+    document.body.appendChild(faixa);
+  });
+  window.__faixaSessao = function () { return !!document.getElementById("faixaSessao"); }; // testes
+})();
+</script>
 </body>
 </html>
