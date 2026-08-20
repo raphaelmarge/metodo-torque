@@ -6,8 +6,12 @@
 //
 // Como instalar (uma vez):
 //   1. Supabase → Edge Functions → Deploy new function → nome: chat-envia
-//      → cole este arquivo → Deploy (deixe "Verify JWT" LIGADO: só a equipe
-//      logada consegue chamar). Pela CLI: supabase functions deploy chat-envia
+//      → cole este arquivo → Deploy. Pode DESLIGAR o "Verify JWT" (Details da
+//      função): esta função confere sozinha quem está chamando, perguntando ao
+//      Supabase de quem é o token, e recusa quem não for da equipe. Em projeto
+//      que trocou as chaves de assinatura, o portão recusa até token bom — com
+//      o Verify JWT desligado a função volta a funcionar sem perder segurança.
+//      Pela CLI: supabase functions deploy chat-envia --no-verify-jwt
 //   2. Usa os mesmos secrets da função meta-webhook:
 //        WHATSAPP_TOKEN / WHATSAPP_PHONE_ID / INSTAGRAM_TOKEN / ANTHROPIC_API_KEY
 //
@@ -47,12 +51,25 @@ function sb(path: string, init: RequestInit = {}): Promise<Response> {
   });
 }
 
-// usuário do token JWT (a plataforma já validou a assinatura)
-function usuarioDoToken(req: Request): string {
+/* Quem é o usuário da chamada — perguntando pro PRÓPRIO Supabase.
+ *
+ * Antes esta função só lia o miolo do JWT e confiava que o portão do Supabase
+ * ("Verify JWT") tinha conferido a assinatura. Dois problemas apareceram:
+ *   1. com o Verify JWT DESLIGADO, qualquer um podia forjar um token e passar;
+ *   2. em projeto que trocou as chaves de assinatura, o portão passou a
+ *      recusar até token BOM — e a função nem rodava (401 no diagnóstico).
+ * Perguntando pro /auth/v1/user, o token é validado de verdade e a função
+ * funciona com o Verify JWT ligado OU desligado. */
+async function usuarioDoToken(req: Request): Promise<string> {
+  const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  if (!jwt || jwt === env("SUPABASE_ANON_KEY")) return ""; // chave pública não é usuário
   try {
-    const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
-    const corpo = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return corpo.sub || "";
+    const r = await fetch(env("SUPABASE_URL") + "/auth/v1/user", {
+      headers: { Authorization: "Bearer " + jwt, apikey: env("SUPABASE_SERVICE_ROLE_KEY") },
+    });
+    if (!r.ok) return "";
+    const u = await r.json();
+    return (u && u.id) || "";
   } catch { return ""; }
 }
 
@@ -194,7 +211,7 @@ Deno.serve(async (req: Request) => {
   if (corpo.acao === "ping") {
     // o número ligado nesta academia manda na resposta: antes o ping pintava
     // tudo verde com o número do dono, mentindo justo no diagnóstico
-    const uidP = usuarioDoToken(req);
+    const uidP = await usuarioDoToken(req);
     let credP: any = null;
     if (uidP) {
       const rm = await sb(`membros?select=academia_id&user_id=eq.${uidP}&limit=1`);
@@ -218,7 +235,7 @@ Deno.serve(async (req: Request) => {
   // simulador do chatbot: responde com a IA usando um histórico de teste
   // (não envia nada para a Meta, não grava nada)
   if (corpo.acao === "testar") {
-    const uid = usuarioDoToken(req);
+    const uid = await usuarioDoToken(req);
     let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
     const m = (r.ok ? await r.json() : [])[0];
     if (!m) return json({ erro: "sem permissão" }, 403);
@@ -232,7 +249,7 @@ Deno.serve(async (req: Request) => {
 
   // central de ajuda: o Claude responde dúvidas de uso com base no manual
   if (corpo.acao === "ajuda") {
-    const uid = usuarioDoToken(req);
+    const uid = await usuarioDoToken(req);
     let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
     if (!(r.ok ? await r.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
@@ -270,7 +287,7 @@ Deno.serve(async (req: Request) => {
 
   // copiloto do dono: análise de gestão com o Claude (não envia nada a ninguém)
   if (corpo.acao === "analisar") {
-    const uid = usuarioDoToken(req);
+    const uid = await usuarioDoToken(req);
     let r = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
     const m = (r.ok ? await r.json() : [])[0];
     if (!m) return json({ erro: "sem permissão" }, 403);
@@ -300,7 +317,7 @@ Deno.serve(async (req: Request) => {
 
   // ✨ IA prescritiva de treino: recebe a anamnese + catálogo e devolve as fichas em JSON
   if (corpo.acao === "ia_treino") {
-    const uid = usuarioDoToken(req);
+    const uid = await usuarioDoToken(req);
     const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
     if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
@@ -336,7 +353,7 @@ Deno.serve(async (req: Request) => {
 
   // 🥦 IA de dieta: recebe o perfil do paciente + alvos + catálogo de alimentos e devolve o plano em JSON
   if (corpo.acao === "ia_dieta") {
-    const uid = usuarioDoToken(req);
+    const uid = await usuarioDoToken(req);
     const r1 = await sb(`membros?select=academia_id&user_id=eq.${uid}&limit=1`);
     if (!(r1.ok ? await r1.json() : []).length) return json({ erro: "sem permissão" }, 403);
     const chave = env("ANTHROPIC_API_KEY");
@@ -385,7 +402,7 @@ Deno.serve(async (req: Request) => {
   const conversa = (r.ok ? await r.json() : [])[0];
   if (!conversa) return json({ erro: "conversa não encontrada" }, 404);
 
-  const uid = usuarioDoToken(req);
+  const uid = await usuarioDoToken(req);
   r = await sb(`membros?select=user_id,nome,email&academia_id=eq.${conversa.academia_id}&user_id=eq.${uid}`);
   const membro = (r.ok ? await r.json() : [])[0];
   if (!membro) return json({ erro: "sem permissão nesta academia" }, 403);

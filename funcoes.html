@@ -36,6 +36,12 @@
   <p>Cada botão roxo copia o código de uma função. No painel do Supabase, vá em <b style="color:#fff">Edge Functions → Deploy new function → Via Editor</b>, dê o nome <b style="color:#fff">exatamente igual</b> ao mostrado aqui, apague o código de exemplo, cole o copiado e toque em <b style="color:#fff">Deploy function</b>.</p>
 
   <div class="aviso">
+    <p style="margin:0 0 10px;"><b>Mudou: agora TODAS as funções vão com o “Verify JWT” DESLIGADO.</b>
+    Cada função confere sozinha quem está chamando — ela pergunta ao Supabase de quem é o token e recusa
+    quem não estiver logado na equipe. Isso é mais seguro do que era antes (com o Verify JWT ligado, a
+    função confiava no portão e nem olhava o token) e resolve um problema real: em projeto que trocou as
+    chaves de assinatura, o portão passou a recusar até token bom, e a função nem chegava a rodar.
+    Depois do deploy, abra a função → <b>Details</b> e deixe a chavinha <b>Verify JWT</b> desligada.</p>
     <p style="margin:0;"><b>Antes de republicar: republicar resolve pouca coisa.</b> Se a tela disse
     que o <b>Supabase recusou a credencial</b> (HTTP 401), a função nem chegou a rodar — o problema é
     login/chave, e publicar de novo não muda nada. Rode primeiro o
@@ -53,14 +59,14 @@
   </div>
 
   <div class="card">
-    <h2>2 · chat-envia <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <h2>2 · chat-envia <span class="tag off">Verify JWT: DESLIGAR</span></h2>
     <p>Usada quando você responde pela tela Chat e IA, pede sugestão da IA ou testa as conexões.</p>
     <button class="btnx" data-copia="chat-envia">Copiar o código (chat-envia)</button>
     <div class="status" data-st="chat-envia"></div>
   </div>
 
   <div class="card">
-    <h2>3 · whatsapp <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <h2>3 · whatsapp <span class="tag off">Verify JWT: DESLIGAR</span></h2>
     <p>Envia as mensagens automáticas do sistema (cobrança, lembretes) pelo WhatsApp oficial.</p>
     <p><b style="color:#fff">Não precisa criar Secret nenhum.</b> Esta função é uma só e serve todos os profissionais: cada um liga o <b style="color:#fff">próprio</b> número em Configurações → WhatsApp (ID do número + token), e a Meta cobra as mensagens na conta de cada um. Antes de publicar, rode o <a href="sql.html">SQL</a> de novo — ela precisa da tabela <code>zap_config</code>.</p>
     <p class="mini" style="color:#6e6a78;font-size:12.5px;">Só se você quiser emprestar o SEU número pra quem ainda não ligou o dele (plano de entrada ou demonstração): crie os Secrets <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code> e <code>WHATSAPP_COMPARTILHADO</code> com o valor <code>sim</code>. Sem isso, quem não configurou simplesmente não envia — e a conta não cai no seu bolso.</p>
@@ -69,21 +75,21 @@
   </div>
 
   <div class="card">
-    <h2>4 · envia-email <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <h2>4 · envia-email <span class="tag off">Verify JWT: DESLIGAR</span></h2>
     <p>Envia o <b style="color:#fff">acesso do app</b> pro aluno/paciente por e-mail na hora do cadastro (login + senha temporária). Usa o Resend (resend.com, grátis até 3.000 e-mails/mês) — o passo a passo está no comentário do próprio código.</p>
     <button class="btnx" data-copia="envia-email">Copiar o código (envia-email)</button>
     <div class="status" data-st="envia-email"></div>
   </div>
 
   <div class="card">
-    <h2>5 · push-envia <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <h2>5 · push-envia <span class="tag off">Verify JWT: DESLIGAR</span></h2>
     <p>Manda as <b style="color:#fff">notificações push</b> pro celular do aluno: treino novo, mensagem do personal, horário confirmado e o lembrete diário das aulas. Precisa dos secrets <code>VAPID_PUBLIC_KEY</code> e <code>VAPID_PRIVATE_KEY</code> (o passo a passo está no comentário do próprio código).</p>
     <button class="btnx" data-copia="push-envia">Copiar o código (push-envia)</button>
     <div class="status" data-st="push-envia"></div>
   </div>
 
   <div class="card">
-    <h2>6 · pagarme <span class="tag on">Verify JWT: deixar ligado</span></h2>
+    <h2>6 · pagarme <span class="tag off">Verify JWT: DESLIGAR</span></h2>
     <p>Cuida das <b style="color:#fff">cobranças pelo Pagar.me</b>: gera o link de pagamento (PIX, boleto ou cartão) e agora também ativa a <b style="color:#fff">mensalidade automática no cartão</b> — o aluno cadastra o cartão uma vez e o Pagar.me cobra sozinho todo mês. Precisa dos secrets <code>PAGARME_SECRET_KEY</code> (chave secreta, sk_...) e <code>PAGARME_PUBLIC_KEY</code> (chave pública, pk_...) — as duas ficam no painel do pagar.me, em Configurações → Chaves. O número do cartão vai direto pro Pagar.me, nunca passa pelo TORQUE ON.</p>
     <button class="btnx" data-copia="pagarme">Copiar o código (pagarme)</button>
     <div class="status" data-st="pagarme"></div>
