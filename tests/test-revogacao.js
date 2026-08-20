@@ -20,6 +20,10 @@ function t(cond, nome) {
  * guardado aqui: um objeto inventado à mão não monta o app e o teste mediria a
  * coisa errada. Regenere com o painel se o formato do pacote mudar. */
 const PACOTE = JSON.parse(fs.readFileSync(path.join(__dirname, "pacote-exemplo.json"), "utf8"));
+/* O que o painel realmente GRAVA na nuvem é o embrulho — não o D solto. Testar
+ * com o D solto escondeu por semanas o defeito que derrubava o app de quem
+ * rodou o SQL novo: o carregador embrulhava o embrulho. */
+const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: PACOTE.stamp || "" };
 
 (async () => {
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });
@@ -95,8 +99,15 @@ const PACOTE = JSON.parse(fs.readFileSync(path.join(__dirname, "pacote-exemplo.j
     t(r.montou && !!r.pacote, "função nova ainda não publicada: cai no caminho antigo e o app abre igual");
   }
   {
-    const r = await abreApp({ estado: json({ ok: true, dados: PACOTE }) });
+    const r = await abreApp({ estado: json({ ok: true, dados: REGISTRO }) });
     t(r.montou && !!r.visto, "acesso valendo: monta o app e carimba o último contato com a nuvem");
+    /* Regressão da v475: o envelope já entrega o pacote pronto e o carregador
+     * embrulhava outra vez, montando o app com o embrulho no lugar dos dados
+     * do aluno. Quem rodou o SQL novo ficou com o app morto. */
+    t(/Alex|Teste|[A-Za-zÀ-ú]/.test(r.texto) && !/não respondeu/i.test(r.texto),
+      "o pacote que a nuvem entrega monta o app de verdade (nada de embrulhar duas vezes)");
+    const semEmbrulho = await abreApp({ estado: json({ ok: true, dados: PACOTE }) });
+    t(semEmbrulho.montou, "registro antigo, gravado sem embrulho, também continua montando");
   }
 
   console.log("Painel: cortar e faxina:");

@@ -33,10 +33,15 @@
    * (site fora do ar, cache velho), cai no HTML pronto que veio junto — é por
    * isso que o pacote ainda traz os dois. */
   function montaDoPacote(pac) {
-    if (pac && pac.dados && self.MT_APP_ALUNO) {
-      try { return self.MT_APP_ALUNO.monta(pac.dados); } catch (e) {}
+    if (!pac || typeof pac !== "object") return "";
+    if (self.MT_APP_ALUNO) {
+      // formato normal: o registro é {html, dados, ver, stamp}
+      if (pac.dados) { try { return self.MT_APP_ALUNO.monta(pac.dados); } catch (e) {} }
+      // e o registro que já veio SEM embrulho (pacote antigo, ou envelope que
+      // entrega o D direto) também tem que montar
+      if (pac.a) { try { return self.MT_APP_ALUNO.monta(pac); } catch (e) {} }
     }
-    return (pac && pac.html) || "";
+    return pac.html || "";
   }
   // cópia local: abre offline e volta a funcionar sem internet
   function copiaLocal() {
@@ -167,9 +172,14 @@
     // envelope de verdade? então o servidor falou, e a palavra dele vale
     if (d && typeof d === "object" && typeof d.ok === "boolean") {
       if (!d.ok) { acessoAcabou(d.motivo); return; }
-      var html = montaDoPacote({ dados: d.dados });
+      /* d.dados JÁ É o pacote gravado pelo painel ({html, dados, ver, stamp}).
+       * Embrulhar de novo fazia o app ser montado com o embrulho no lugar dos
+       * dados do aluno — e como o embrulho novo não levava o html de reserva,
+       * a tela morria em "não respondeu". Era o defeito que o Raphael viu. */
+      var pac = d.dados;
+      var html = montaDoPacote(pac);
       if (!html) { anota("o pacote veio sem dados que montem o app"); semResposta("servidor"); return; }
-      guarda({ dados: d.dados, stamp: (d.dados && d.dados.stamp) || "" });
+      guarda(pac && pac.dados ? pac : { dados: pac, stamp: (pac && pac.stamp) || "" });
       try { localStorage.setItem("tq_app_visto", new Date().toISOString()); } catch (e) {}
       abre(html);
       return;
