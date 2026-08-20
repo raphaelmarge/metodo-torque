@@ -342,8 +342,17 @@ function ok(cond, nome) {
     alertaTxt: document.getElementById("alertaTxt").textContent,
   }));
   ok(/Horários de hoje/.test(tvAulas.corpo) && /CROSSFIT/.test(tvAulas.corpo) && /Pedro Coach/.test(tvAulas.corpo) && /Sala 2/.test(tvAulas.corpo), "quadro de horários lista a aula de hoje com professor e sala");
-  ok(/EM \d+ MIN/.test(tvAulas.corpo), "aula chegando ganha a etiqueta EM X MIN no quadro");
-  ok(/urgente/.test(tvAulas.alerta) && /COMEÇA/.test(tvAulas.alertaTxt) && /CROSSFIT/.test(tvAulas.alertaTxt), "alerta 🔔 pulsante avisa a aula que está pra começar");
+  /* Perto da meia-noite não existe "próxima aula de hoje" — o painel está CERTO
+   * em não avisar nada, e a aula semeada pra daqui a 10 min cairia no dia
+   * seguinte. Em vez de fingir que passou, o teste diz que não deu pra medir. */
+  var quaseMeiaNoite = (function () { var d = new Date(); return d.getHours() === 23 && d.getMinutes() >= 40; })();
+  if (quaseMeiaNoite) {
+    console.log("  ⏭  alerta da próxima aula: não dá pra medir a " + new Date().toTimeString().slice(0, 5) +
+      " (não existe aula de hoje depois da meia-noite) — rode de dia");
+  } else {
+    ok(/EM \d+ MIN/.test(tvAulas.corpo), "aula chegando ganha a etiqueta EM X MIN no quadro");
+    ok(/urgente/.test(tvAulas.alerta) && /COMEÇA/.test(tvAulas.alertaTxt) && /CROSSFIT/.test(tvAulas.alertaTxt), "alerta 🔔 pulsante avisa a aula que está pra começar");
+  }
   await p.goto(BASE + "/apps/tv.html?painel=avisos");
   await p.waitForTimeout(600);
   const tvAvisos = await p.evaluate(() => document.body.textContent);
