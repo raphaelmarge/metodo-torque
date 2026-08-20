@@ -283,7 +283,7 @@
                   }
                   linha("❌", "O Verify JWT da chat-envia ainda está LIGADO",
                     "Nem sem credencial ela roda (HTTP " + g.st + ") — o porteiro barra antes, e por isso a mesma credencial passa na envia-email e não passa aqui.",
-                    "No Supabase: Edge Functions → chat-envia → Details (ou os três pontinhos → Function configuration) → DESLIGUE a chavinha \u201cVerify JWT\u201d e salve — e NÃO publique a função de novo depois disso, porque publicar pelo editor costuma religar a chavinha sozinho. Se ela não ficar desligada, crie uma função NOVA (ex.: chat-envia2) com o mesmo código, já desmarcando o Verify JWT na criação, e me avise o nome: eu aponto o site pra ela.");
+                    "No Supabase: Edge Functions → chat-envia → Details (ou os três pontinhos → Function configuration) → DESLIGUE a chavinha \u201cVerify JWT with legacy secret\u201d e salve. Ela confere o crachá com o segredo ANTIGO do projeto; se o projeto trocou as chaves de assinatura, ela recusa TUDO — inclusive crachá bom, que é o seu caso. Por garantia, desligue DEPOIS de publicar e não publique de novo em seguida. Se a chavinha não ficar desligada, crie uma função NOVA (ex.: chat-envia2) com o mesmo código, já desmarcando isso na criação, e me avise o nome: eu aponto o site pra ela. Pra ver com os próprios olhos que a função nem rodou: Edge Functions → chat-envia → Logs (Invocations) — não vai ter NENHUMA chamada no horário deste teste.");
                 });
             }
             vereditoCredencial();

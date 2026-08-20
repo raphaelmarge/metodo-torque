@@ -41,10 +41,12 @@
     quem não estiver logado na equipe. Isso é mais seguro do que era antes (com o Verify JWT ligado, a
     função confiava no portão e nem olhava o token) e resolve um problema real: em projeto que trocou as
     chaves de assinatura, o portão passou a recusar até token bom, e a função nem chegava a rodar.
-    <b>A ordem importa:</b> publique primeiro e só DEPOIS desligue a chavinha — publicar pelo editor do
-    painel costuma devolver o <b>Verify JWT</b> pro padrão (ligado). Abra a função → <b>Details</b>
-    (ou os três pontinhos → <b>Function configuration</b>), desligue, salve, e <u>não publique de novo
-    em seguida</u>. Pra conferir sem depender do que a tela mostra, use o
+    A chavinha no painel se chama <b>“Verify JWT with legacy secret”</b>: ela confere o crachá com o
+    segredo <u>antigo</u> do projeto, então num projeto que trocou as chaves de assinatura ela recusa
+    <b>tudo</b> — inclusive crachá bom. Abra a função → <b>Details</b> (ou os três pontinhos →
+    <b>Function configuration</b>), desligue e salve. Por garantia, faça isso <b>depois</b> de
+    publicar e não publique de novo em seguida (publicar pelo editor pode devolver a chavinha ao
+    padrão). Pra conferir sem depender do que a tela mostra, use o
     <a href="diagnostico.html">diagnóstico</a>: ele bate na função sem credencial nenhuma e diz se o
     porteiro ainda está lá.</p>
     <p style="margin:0;"><b>Antes de republicar: republicar resolve pouca coisa.</b> Se a tela disse
