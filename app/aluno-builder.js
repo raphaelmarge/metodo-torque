@@ -113,6 +113,17 @@
       ".btnx{background:var(--cor);color:#fff;border:none;border-radius:99px;padding:13px 24px;font-weight:800;letter-spacing:.02em;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 10px 30px -14px rgba(var(--cor-rgb),.9)}" +
       ".kv{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-bottom:none}" +
       ".vz{color:#6e6a78;font-size:13px;text-align:center;padding:14px 0}" +
+      // "Como foi o treino?" aparece em dois fundos: o card escuro da área de
+      // Treino e o recibo (lavanda claro) do fim da sessão. Uma classe só, com
+      // a variação do recibo escrita como filha de .gcard.
+      ".rpelab{font-size:13px;font-weight:800;margin-bottom:8px}" +
+      ".rperow{display:flex;gap:6px}" +
+      ".rpebtn{flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:11px 0;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;min-height:44px}" +
+      ".rpeok{color:#6e6a78;font-size:13px;text-align:center;padding:6px 0}" +
+      "html.claro .rpebtn{background:#fff;border-color:#d9d5e3;color:#191622}" +
+      ".gcard .rpelab{color:#1d1729}" +
+      ".gcard .rpebtn{background:rgba(var(--cor-rgb),.12);border:1px solid rgba(var(--cor-rgb),.4);color:var(--cor2)}" +
+      ".gcard .rpeok{color:#544c68}" +
       ".up{color:#4ade80}.down{color:#f87171}" +
       "button{transition:transform .16s ease}button:active{transform:scale(.96)}" +
       "@keyframes cfQueda{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}" +
@@ -299,8 +310,12 @@
       "<div id='onbDias' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
-      // card herói "treino de hoje" (estilo Prime) — a ficha do dia gira sozinha
-      (fichasApp ? "<div class='cardx' id='heroTreino' style='background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;'>" +
+      // bloco de hoje: a faixa dos dias em cima e o treino do dia colado nela.
+      // A data manda no que aparece embaixo, então os dois lidos juntos contam
+      // a mesma frase ("hoje, quarta, é o treino C") em vez de dois cartões soltos.
+      "<div class='cardx' id='blocoHoje'>" +
+      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
+      (fichasApp ? "<div id='heroTreino' style='margin-top:10px;background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;'>" +
         // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
         "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
         "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
@@ -309,13 +324,11 @@
         "<div id='htTitulo' style='font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;'></div>" +
         "<div id='htSub' style='font-size:13px;color:#8a8695;'></div>" +
         "<button id='htVer' style='margin-top:18px;background:var(--cor);border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div></div>" : "") +
-      // minha semana: vem logo depois do treino do dia — é o "Treinei hoje!" que
-      // o aluno vem buscar quando abre o app
+      "</div>" +
+      // o resto da semana (meta, sequência e o Treinei hoje!) fica logo abaixo
       "<div class='cardx'><h2>Minha semana</h2>" +
-      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-bottom:12px;'></div>" +
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
-      "<div id='rpeBox' style='display:none;margin-top:10px;'></div>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       // progresso rápido (peso + treinos do mês)
       "<div class='cardx'><h2>Progresso</h2><div id='pgTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'></div></div>" +
@@ -378,6 +391,10 @@
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
+      // "Como foi o treino?" mora aqui, na área de Treino, e não na primeira
+      // tela: a pergunta só faz sentido depois de treinar. Quem termina pelo
+      // player responde no recibo; este card pega quem só marcou "Treinei hoje!".
+      "<div class='cardx' id='cardRpe' data-rpebox style='display:none;'></div>" +
       // sub-abas da área de treino: ficha tradicional × circuito (WOD) × corrida — conforme o professor liberou
       ((ve("wod") || ve("cardio")) ? "<div class='cardx' id='trTabs' style='padding:9px 11px;'><div style='display:flex;gap:6px;'>" +
       "<button data-trsub='ficha' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;'>Minha ficha</button>" +
@@ -829,15 +846,21 @@
       "for(var ci=0;ci<26;ci++){var p2=document.createElement('div');var tam=6+Math.random()*7;" +
       "p2.style.cssText='position:absolute;top:-20px;left:'+Math.random()*100+'%;width:'+tam+'px;height:'+(tam*0.6)+'px;background:'+cores[ci%cores.length]+';border-radius:2px;animation:cfQueda '+(1.6+Math.random()*1.4)+'s ease-in '+(Math.random()*0.5)+'s forwards;transform:rotate('+Math.random()*360+'deg);';" +
       "box.appendChild(p2);}document.body.appendChild(box);setTimeout(function(){box.remove();},3600);}" +
-      // RPE de 1 toque: como foi o treino de hoje?
-      "function mostraRpe(){var iso=isoHj();var r=L('ptrpe',{});var bx=document.getElementById('rpeBox');if(!bx)return;" +
-      "if(!L('ptfeitos',{})[iso]||r[iso]){bx.style.display='none';return;}" +
-      "bx.style.display='block';" +
-      "bx.innerHTML=\"<div style='font-size:12.5px;font-weight:700;margin-bottom:6px;'>Como foi o treino de hoje?</div><div style='display:flex;gap:6px;'>\"+" +
-      "[['1','Leve'],['2','Na medida'],['3','Pesado']].map(function(o){return \"<button data-rpe='\"+o[0]+\"' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:9px 0;color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;'>\"+o[1]+\"</button>\";}).join('')+'</div>';}" +
+      // RPE de 1 toque: como foi o treino de hoje? Os botões saem daqui pros
+      // dois lugares que perguntam — o recibo do fim da sessão e o card da
+      // área de Treino — pra pergunta e resposta serem sempre as mesmas.
+      "function rpeHtml(){return \"<div class='rpelab'>Como foi o treino de hoje?</div><div class='rperow'>\"+" +
+      "[['1','Leve'],['2','Na medida'],['3','Pesado']].map(function(o){return \"<button type='button' class='rpebtn' data-rpe='\"+o[0]+\"'>\"+o[1]+\"</button>\";}).join('')+'</div>';}" +
+      "function mostraRpe(){var iso=isoHj();var r=L('ptrpe',{});var bx=document.getElementById('cardRpe');if(!bx)return;" +
+      "if(!L('ptfeitos',{})[iso]||r[iso]){bx.style.display='none';bx.innerHTML='';return;}" +
+      "bx.style.display='block';bx.innerHTML=rpeHtml();}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-rpe]');if(!b)return;" +
       "var r=L('ptrpe',{});r[isoHj()]=+b.dataset.rpe;var ks=Object.keys(r).sort();if(ks.length>90)delete r[ks[0]];Sv('ptrpe',r);" +
-      "var bx=document.getElementById('rpeBox');bx.innerHTML=\"<div class='vz' style='padding:4px 0;'>Anotado! Seu personal vê isso e ajusta o próximo treino.</div>\";setTimeout(function(){bx.style.display='none';},2600);});" +
+      "var cx=b.closest('[data-rpebox]');if(!cx)return;" +
+      "cx.innerHTML=\"<div class='rpeok'>Anotado! Seu personal vê isso e ajusta o próximo treino.</div>\";" +
+      // respondeu no recibo → o card da área de Treino não pode perguntar de novo
+      "if(cx.id==='cardRpe'){setTimeout(function(){cx.style.display='none';},2600);return;}" +
+      "var cr=document.getElementById('cardRpe');if(cr){cr.style.display='none';cr.innerHTML='';}});" +
       // semana: bolinhas seg-dom + meta + streak + medalhas
       "function pintaSemana(){var f=L('ptfeitos',{});var hj=new Date();var seg=new Date(hj);seg.setDate(seg.getDate()-((seg.getDay()+6)%7));" +
       "var rot=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];var html='';var naSem=0;" +
@@ -1688,6 +1711,8 @@
       "var m=\"<div class='gdica' style='margin-top:14px;font-size:15px;color:#1d1729;font-weight:700;'>\"+" +
       "'Séries feitas aqui · '+marc+' de '+pres+\"<br>Cargas anotadas · \"+anot+' de '+f.it.length+" +
       "'<br>Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+'</div>';" +
+      // a pergunta chega no momento certo: acabou de treinar, ainda ofegante
+      "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:18px;'>\"+rpeHtml()+'</div>';" +
       "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +
       "faltam.map(function(x){return \"<button type='button' class='gfalta' data-gfalta='\"+x.i+\"'>\"+esc2(x.e)+' ›</button>';}).join('');" +
       "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gHist').textContent='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
@@ -2303,7 +2328,7 @@
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
-      "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'){el.setAttribute('data-sec','treino');return;}" +
+      "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'){el.setAttribute('data-sec','treino');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
