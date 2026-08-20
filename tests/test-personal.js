@@ -1526,6 +1526,12 @@ async function abaPt(p, a) {
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
   ok(/id='avBtn'/.test(appHtml) && /ptfotoperfil/.test(appHtml) && /fotoPerfil:/.test(appHtml),
     "o aluno troca a própria foto pelo topo do app, e ela volta pro personal");
+  // no modo claro o fundo escuro fixo do assistente deixava texto escuro sobre
+  // fundo escuro; agora as três peças usam um véu da própria cor do studio
+  ok(!/#241b36/.test(appHtml) && (appHtml.match(/rgba\(var\(--cor-rgb\),\.14\)/g) || []).length >= 3,
+    "o assistente não tem mais fundo escuro fixo — ele clareia junto com o tema");
+  ok(/minha\?'color:#fff;':''/.test(appHtml),
+    "a bolha do aluno fixa o texto branco (no claro ela herdava o texto escuro do corpo)");
   ok(/onbCard/.test(appHtml) && /cardRpe/.test(appHtml) && /dcReps/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
     "app traz onboarding, RPE, campo de reps, streak de semanas e confete");
   // faixa colorida do topo: foto do aluno, iniciais quando não tem, e o
@@ -4949,6 +4955,12 @@ async function abaPt(p, a) {
     const sup = document.querySelector("[style*='background:var(--bg2)']");
     out.superficie = sup ? getComputedStyle(sup).backgroundColor : "";
     out.salvo = JSON.parse(localStorage.getItem("pttema"));
+    // o dia de hoje no calendário: tinha texto branco sem fundo e sumia no claro
+    const hj = new Date();
+    const isoHj = hj.getFullYear() + "-" + String(hj.getMonth() + 1).padStart(2, "0") + "-" + String(hj.getDate()).padStart(2, "0");
+    const cel = document.querySelector("[data-agdia='" + isoHj + "']");
+    out.hojeTxt = cel ? getComputedStyle(cel).color : "";
+    out.hojeBg = cel ? getComputedStyle(cel).backgroundColor : "";
     // devolve pro noturno (padrão) pra não afetar os testes seguintes
     document.getElementById("btnTemaApp").click();
     out.voltou = !document.documentElement.classList.contains("claro");
@@ -4959,6 +4971,8 @@ async function abaPt(p, a) {
   ok(temaSnap.claro && temaSnap.corpo === "rgb(244, 243, 247)" && temaSnap.txt === "rgb(25, 22, 34)" && temaSnap.superficie === "rgb(255, 255, 255)" && temaSnap.salvo === 1,
     "modo claro pinta página, superfícies e texto e guarda a escolha do aluno");
   ok(temaSnap.voltou, "um toque devolve pro modo noturno");
+  ok(temaSnap.hojeTxt === "rgb(25, 22, 34)" && /^rgba?\(/.test(temaSnap.hojeBg) && !/, 0\)$/.test(temaSnap.hojeBg),
+    "no modo claro o dia de hoje aparece no calendário (texto escuro sobre um véu da cor, não branco no vazio)");
   await pApp.close();
 
   // ---------- 🎨 tema do studio: cor principal + logo ----------
