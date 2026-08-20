@@ -2000,7 +2000,7 @@
       // hábitos diários com streak
       // na faixa do topo o espaço é curto: cada hábito é uma linha fina com
       // ícone, apelido e a sequência dele; o nome inteiro fica no aria-label
-      "var HABS=[[ICO.gota,'Água em dia','Água'],[ICO.maca,'Alimentação no plano','Dieta'],[ICO.lua,'Dormi 7h+','Sono'],[ICO.ativ,'Cardio / passos','Cardio']];" +
+      "var HABS=[[ICO.gota,'Água em dia','Água'],[ICO.maca,'Alimentação no plano','Alimentação'],[ICO.lua,'Dormi 7h+','Sono'],[ICO.ativ,'Cardio / passos','Cardio']];" +
       // sequência de UM hábito: dias seguidos até hoje (o dia de hoje ainda não
       // marcado não quebra a conta — ele só não soma)
       "function stkHab(h,i){var n=0;var d=new Date();" +
