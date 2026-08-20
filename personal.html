@@ -9156,6 +9156,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         id: a.id, nome: a.nome, email: a.email || "", appTokenP: a.appTokenP || "",
         acessoEm: a.acessoEm || "", criado: a.criado || "", altura: +a.altura || 0,
         lat: a.lat || null, lng: a.lng || null,
+        // a foto da ficha vira o avatar do topo do app. É a mesma que o painel
+        // já guarda: quadrada, 320 px, JPEG — uns 20 KB, o único item pesado
+        // do pacote (o resto junto não passa de 4 KB).
+        foto: a.foto || "",
       },
       stamp: stamp, ver: self.MT_VERSAO || "",
       cfg: {

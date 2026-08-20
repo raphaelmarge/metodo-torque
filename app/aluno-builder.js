@@ -73,6 +73,12 @@
      * de antes, quando este trecho morava dentro do montaAppAluno — assim o
      * corpo do construtor ficou igualzinho e dá pra conferir linha a linha. */
     var a = D.a || {}, stamp = D.stamp || "";
+    /* foto do aluno no topo. O pacote vem da nuvem, então o endereço da imagem
+     * é conferido aqui antes de virar src: só data: de imagem em base64 passa.
+     * Sem foto (ou com foto estranha), o círculo mostra as iniciais dele. */
+    var FOTOAL = /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(String(a.foto || "")) ? a.foto : "";
+    var INICIAIS = String(a.nome || "?").trim().split(/\s+/).slice(0, 2)
+      .map(function (p) { return (p[0] || "").toUpperCase(); }).join("") || "?";
     var st = { config: D.cfg || {}, desafio: D.desafio || null };
     var studio = D.studio || "Meu Personal";
     var COR = D.COR, COR2 = D.COR2, CORC = D.CORC, CORE = D.CORE, CORCL1 = D.CORCL1, CORCL2 = D.CORCL2;
@@ -106,11 +112,16 @@
       // sequência e os hábitos do dia moram DENTRO dela (só no Início — nas
       // outras áreas a faixa fica curta, só com nome, nível e XP).
       ".topo{padding:calc(30px + env(safe-area-inset-top,0px)) 20px 18px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;color:#fff}" +
-      ".topo .k{font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase}" +
-      ".topo h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:8px}" +
+      ".tpmarca{display:flex;align-items:center;gap:9px;margin-bottom:13px}" +
+      ".tpmarca img{flex:none;height:26px;border-radius:7px;display:block}" +
+      ".topo .k{min-width:0;font-size:9.5px;letter-spacing:.2em;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".topo h1{font-size:27px;font-weight:800;letter-spacing:-.02em}" +
       // os dois chips do topo ficam translúcidos: sobre a faixa colorida, um
       // chip da própria cor sumiria dentro do fundo
-      ".tpchip{flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:99px;padding:7px 12px;font-weight:800;font-size:12.5px;color:#fff}" +
+      ".tpchip{flex:none;display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:99px;padding:6px 10px;font-weight:800;font-size:11.5px;color:#fff}" +
+      // foto do aluno; sem foto, as iniciais dele no mesmo círculo
+      ".tpav{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:.02em;color:#fff}" +
+      ".tpav img{width:100%;height:100%;object-fit:cover;display:block}" +
       // um cartão só dentro da faixa: sequência grande à esquerda, os quatro
       // hábitos do dia em linhas finas à direita
       "#topoExtra{display:flex;gap:12px;margin-top:14px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:10px 12px}" +
@@ -300,8 +311,12 @@
       "@media (max-height:620px){.gsets i{height:44px;font-size:19px}.grelo b{font-size:17px}.gpe button{min-height:52px}.gtit{font-size:16px}}" +
       "</style></head><body>" +
       "<div class='topo'>" +
-      "<div style='display:flex;align-items:center;gap:14px;'>" +
-      "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:rgba(255,255,255,.82);font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
+      // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
+      // e os chips, um nome comprido virava três linhas ou saía cortado
+      "<div class='tpmarca'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt=''>" : "") + "<span class='k'>" + esc(studio).toUpperCase() + "</span></div>" +
+      "<div style='display:flex;align-items:center;gap:11px;'>" +
+      "<div class='tpav'>" + (FOTOAL ? "<img src='" + FOTOAL + "' alt='Sua foto'>" : esc(INICIAIS)) + "</div>" +
+      "<div style='flex:1;min-width:0;'><h1 style='padding:0;margin:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:rgba(255,255,255,.82);font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
       // selo de nível SEPARADO do chip de XP: o teste lê o primeiro número do
       // #xpChip como XP — um "Nv 3" lá dentro quebraria a conta
       "<span id='nvChip' class='tpchip'>" +
