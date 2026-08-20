@@ -68,10 +68,10 @@
     <div class="grade" id="grade"></div>
     <div id="conclusao"></div>
     <pre id="receita"></pre>
-    <button class="btnx sec" id="btnCopiar">Copiar pra mandar pro Claude</button>
+    <button class="btnx sec" id="btnCopiar">Copiar a configuração</button>
   </div>
 
-  <p class="sub" style="margin-top:18px;">Se o teste não achar nada, mande pro Claude o nome do bucket e o nome de 3 arquivos — com isso ele monta a regra na mão.</p>
+  <p class="sub" style="margin-top:18px;">Se o teste não achar nada, mande pro suporte o nome do bucket e o nome de 3 arquivos — com isso dá pra montar a regra na mão.</p>
 </main>
 
 <script src="assets/cloud-config.js"></script>
@@ -170,7 +170,7 @@
       if (!melhor || !melhor.acertos) {
         recado("<span class='ruim'>Nenhum GIF respondeu.</span><br>" +
           "Motivos possíveis: o bucket não está <b>público</b>, o nome do bucket está diferente, ou os arquivos têm nome de código (ex.: <code>0025.gif</code>) em vez do nome do exercício." +
-          (achou.base ? "<br><br>O arquivo que você digitou (<code>" + achou.base + "</code>) não bate com nenhum dos 1619 exercícios do catálogo — isso é sinal de que os nomes são códigos ou estão em inglês. Mande o nome do bucket e 3 nomes de arquivo pro Claude." : ""));
+          (achou.base ? "<br><br>O arquivo que você digitou (<code>" + achou.base + "</code>) não bate com nenhum dos 1619 exercícios do catálogo — isso é sinal de que os nomes são códigos ou estão em inglês. Mande o nome do bucket e 3 nomes de arquivo pro suporte." : ""));
         return;
       }
       recado("<span class='ok'>Achei!</span> Conferindo a base inteira…");
@@ -199,8 +199,8 @@
           "' alt=''><figcaption>" + x.n.replace(/</g, "&lt;") + "</figcaption></figure>";
       }).join("");
       $("conclusao").innerHTML = pc >= 50
-        ? "<p class='sub' style='margin-top:12px;'>Casou bem. Mande as três linhas abaixo pro Claude e ele liga isso no app.</p>"
-        : "<p class='sub' style='margin-top:12px;'><span class='aviso'>Casou só em parte.</span> Provavelmente os arquivos usam outro jeito de escrever o nome. Mande as linhas abaixo <b>e</b> 3 nomes de arquivo do bucket pro Claude.</p>";
+        ? "<p class='sub' style='margin-top:12px;'>Casou bem. Mande as três linhas abaixo pro suporte pra ligar isso no app.</p>"
+        : "<p class='sub' style='margin-top:12px;'><span class='aviso'>Casou só em parte.</span> Provavelmente os arquivos usam outro jeito de escrever o nome. Mande as linhas abaixo <b>e</b> 3 nomes de arquivo do bucket pro suporte.</p>";
       var receita = 'bucket: "' + bucket + '"\npadrao: "' + regra.padrao + '"\nacento: ' + (regra.acento ? "true" : "false") + '\next: "' + regra.ext + '"\n\nacerto: ' + pc + "% (" + ok.length + " de " + r.length + ")";
       $("receita").textContent = receita;
       $("btnCopiar").onclick = function () {
