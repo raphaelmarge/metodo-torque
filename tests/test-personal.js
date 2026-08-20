@@ -3425,6 +3425,37 @@ async function abaPt(p, a) {
     "botão Compartilhar essa corrida aparece com o registro pronto (e some no Zerar)");
   ok(/crShare/.test(cardioProf.appHtml) && /Compartilhar essa corrida/.test(cardioProf.appHtml) && /corrida\.png/.test(cardioProf.appHtml),
     "app gera a arte da corrida (trajeto + números + marca do studio) pra postar");
+  /* 📸 card estilo Strava: a FOTO do aluno vira o fundo, com o traçado do GPS e
+   * os números por cima (véus escuros garantem a leitura). A foto é lida no
+   * aparelho e nunca sai dele; o compartilhar usa a folha do sistema, que é por
+   * onde entra no Instagram. */
+  const cardFoto = await pCr.evaluate(async () => {
+    // refaz um registro rapidinho (o Zerar do teste anterior limpou o de antes)
+    document.getElementById("crKm").value = "5,0";
+    document.getElementById("crGo").click();
+    await new Promise((r) => setTimeout(r, 250));
+    window.__cr.t0 = Date.now() - 1800000;
+    document.getElementById("crFim").click();
+    await new Promise((r) => setTimeout(r, 200));
+    window.__cr.fimRota = [
+      { lat: -19.92, lng: -43.94 }, { lat: -19.921, lng: -43.938 }, { lat: -19.9195, lng: -43.937 }];
+    const foto = document.createElement("canvas");
+    foto.width = 800; foto.height = 600;
+    const fg = foto.getContext("2d");
+    fg.fillStyle = "#2e7d32"; fg.fillRect(0, 0, 800, 600); // "foto" verde
+    const com = window.__crCard(foto);
+    const sem = window.__crCard(null);
+    const px = (cv, x, y) => Array.from(cv.getContext("2d").getImageData(x, y, 1, 1).data).slice(0, 3);
+    const meio = px(com, 540, 500);
+    return { temInput: !!document.getElementById("crShareArq"),
+      w: com.width, h: com.height, semW: sem.width,
+      fotoAtras: meio[1] > meio[0] && meio[1] > meio[2],
+      diferentes: px(com, 20, 20).join() !== px(sem, 20, 20).join() };
+  });
+  ok(cardFoto.temInput && cardFoto.w === 1080 && cardFoto.h === 1350 && cardFoto.semW === 1080,
+    "o card da corrida sai em 1080×1350 nos dois sabores — com a foto do aluno e sem");
+  ok(cardFoto.fotoAtras && cardFoto.diferentes,
+    "com foto, ela fica atrás do traçado (véu escuro por cima, cor da foto preservada)");
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();
