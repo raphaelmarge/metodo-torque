@@ -700,6 +700,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
 <script src="assets/pwa-update.js"></script>
 <script src="assets/excluir-conta.js"></script>
 <script src="assets/cloud-config.js"></script>
+<script src="assets/erro-funcao.js"></script>
 <script src="assets/alimentos-db.js"></script>
 <script src="assets/composicao-corporal.js"></script>
 <script src="assets/receitas-db.js"></script>
@@ -1488,11 +1489,19 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra gerar o link de pagamento." }); return; }
     nuvem.client.auth.getSession().then(function (s) {
       var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      if (!tok) return { erro: self.MT_ERRO_FUNCAO.semSessao("O link de pagamento") };
       return fetch(cfg.url + "/functions/v1/pagarme", {
         method: "POST",
         headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
         body: JSON.stringify({ acao: "criar", metodo: "cartao", valorCentavos: Math.round(valor * 100), descricao: "Consulta — " + ((st.config || {}).nome || "Nutricionista"), nome: p.nome, email: p.email || undefined }),
-      }).then(function (r) { return r.json(); });
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) {}
+          if (r.status >= 200 && r.status < 300 && j) return j;
+          return { erro: self.MT_ERRO_FUNCAO("pagarme", r.status, t, j) };
+        });
+      });
     }).then(function (d) {
       if (d && d.ok && d.linkPagamento) cb({ ok: true, link: d.linkPagamento });
       else cb({ erro: (d && d.erro) || "Publique a função pagarme (torqueon.com.br/funcoes.html) e configure a PAGARME_SECRET_KEY." });
@@ -1904,11 +1913,21 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var dados = montaDadosDietaIA(st, p);
     nuvem.client.auth.getSession().then(function (s) {
       var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      /* Token vazio virava "Bearer " e o Supabase respondia 401 sem o campo
+       * erro — a tela então mandava republicar a função à toa. */
+      if (!tok) { return { erro: self.MT_ERRO_FUNCAO.semSessao("A IA de dieta") }; }
       return fetch(cfg.url + "/functions/v1/chat-envia", {
         method: "POST",
         headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
         body: JSON.stringify({ acao: "ia_dieta", dados: dados }),
-      }).then(function (r) { return r.json(); });
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) {}
+          if (r.status >= 200 && r.status < 300 && j) return j;
+          return { erro: self.MT_ERRO_FUNCAO("chat-envia", r.status, t, j) };
+        });
+      });
     }).then(function (d) {
       // versão antiga da chat-envia não conhece ia_dieta e responde isto:
       if (d && /conversa_id obrigatório/.test(d.erro || "")) {
@@ -3092,11 +3111,20 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     var cfg = self.MT_CLOUD || {};
     return nuvem.client.auth.getSession().then(function (s) {
       var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      if (!tok) return { __status: 401, erro: self.MT_ERRO_FUNCAO.semSessao("O envio de e-mail") };
       return fetch(cfg.url + "/functions/v1/envia-email", {
         method: "POST",
         headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
         body: JSON.stringify({ acao: "enviar", para: para, assunto: assunto, html: html }),
-      }).then(function (r) { return r.json().then(function (d) { d.__status = r.status; return d; }); });
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) {}
+          var d = (r.status >= 200 && r.status < 300 && j) ? j : { erro: self.MT_ERRO_FUNCAO("envia-email", r.status, t, j) };
+          d.__status = r.status;
+          return d;
+        });
+      });
     });
   }
   function criaAcessoPaciente(pid, cb) {
@@ -4069,6 +4097,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       if (!nuvem || !cfg.url || !token) return Promise.resolve(false);
       return nuvem.client.auth.getSession().then(function (sess) {
         var tok = (sess && sess.data && sess.data.session && sess.data.session.access_token) || "";
+        if (!tok) return null; // sessão caída: o lembrete fica pendente e sai depois
         return fetch(cfg.url + "/functions/v1/push-envia", {
           method: "POST",
           headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },

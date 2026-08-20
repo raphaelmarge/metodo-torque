@@ -228,7 +228,7 @@ async function abaNt(p, a) {
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/pagarme")) {
           corpo = JSON.parse(opts.body);
-          return Promise.resolve({ json: () => Promise.resolve({ ok: true, linkPagamento: "https://pagar.me/checkout/n1" }) });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, linkPagamento: "https://pagar.me/checkout/n1" })) });
         }
         return window.__fetchOrigPg(url, opts);
       };
@@ -739,7 +739,7 @@ async function abaNt(p, a) {
             { hora: "12:30", titulo: "Almoço", itens: [{ nome: arroz, qtd: 1.5 }, { nome: frango, qtd: 2 }, { nome: "Comida Inventada Xyz", qtd: 1 }] },
             { hora: "07:00", titulo: "Café da manhã", itens: [{ nome: arroz, qtd: 1 }] },
           ], resumo: "Plano com proteína distribuída ao longo do dia." };
-          return Promise.resolve({ json: () => Promise.resolve({ ok: true, texto: "```json\n" + JSON.stringify(plano) + "\n```" }) });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, texto: "```json\n" + JSON.stringify(plano) + "\n```" })) });
         }
         return window.__fetchOrigIA(url, opts);
       };

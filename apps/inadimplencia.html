@@ -125,6 +125,7 @@
 
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
+<script src="../assets/erro-funcao.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="store.js"></script>
 <script>
@@ -391,9 +392,17 @@
       ? nuvem.client.auth.getSession().then(function (s) { return (s && s.data && s.data.session && s.data.session.access_token) || ""; }).catch(function () { return ""; })
       : Promise.resolve("");
     return pegaTok.then(function (tok) {
-      headers.Authorization = "Bearer " + (tok || (window.MT_CLOUD && window.MT_CLOUD.anonKey) || "");
+      if (!tok) return { erro: self.MT_ERRO_FUNCAO.semSessao("A cobrança pelo Pagar.me") };
+      headers.Authorization = "Bearer " + tok;
       return fetch(pagarmeUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
-        .then(function (r) { return r.json(); });
+        .then(function (r) {
+          return r.text().then(function (t) {
+            var j = null;
+            try { j = JSON.parse(t); } catch (e) {}
+            if (r.status >= 200 && r.status < 300 && j) return j;
+            return { erro: self.MT_ERRO_FUNCAO("pagarme", r.status, t, j) };
+          });
+        });
     });
   }
   // modo demonstração: gera cobranças de mentira (nada é cobrado de verdade)
