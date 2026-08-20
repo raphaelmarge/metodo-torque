@@ -135,6 +135,11 @@
   "use strict";
   var S = window.MTStore;
   var $ = function (id) { return document.getElementById(id); };
+  /* Liga o clique só se o botão existir. Um id que sumiu da tela derrubava o
+   * script inteiro no "Cannot set properties of null" e, junto com ele, TODOS
+   * os botões ligados nas linhas seguintes — foi assim que o "Copiar código da
+   * função" do Pagar.me parou de funcionar sem ninguém perceber. */
+  var liga = function (id, fn) { var el = $(id); if (el) el.onclick = fn; };
 
   function cfg() { return S.read("config", { dados: {}, horarios: {} }); }
   var c0 = cfg();
@@ -185,7 +190,7 @@
     atualizaStatus();
   });
 
-  $("btnTestar").onclick = function () {
+  liga("btnTestar", function () {
     var url = $("pgUrl").value.trim().replace(/\/+$/, "");
     var out = $("resultadoTeste");
     if (!url) { out.innerHTML = '<span class="tag alerta">Cole a URL da função primeiro.</span>'; return; }
@@ -204,7 +209,7 @@
         else out.innerHTML = '<span class="tag erro">Resposta inesperada (' + r.st + "): " + (r.j && r.j.erro ? r.j.erro : "confira a URL") + "</span>";
       })
       .catch(function (e) { out.innerHTML = '<span class="tag erro">Não alcancei a função: ' + e.message + " — confira a URL e o deploy.</span>"; });
-  };
+  });
 
   /* ---------- WhatsApp oficial ----------
    * A função é UMA só, publicada pelo dono do TORQUE ON, e serve todas as
@@ -266,7 +271,7 @@
     st.integracoes.whatsappTemplate = this.value.trim();
     S.write("config", st);
   });
-  $("btnLigarWa").onclick = function () {
+  liga("btnLigarWa", function () {
     var out = $("resultadoWa");
     var fone = $("waFone").value.replace(/\D/g, "");
     var tok = $("waToken").value.trim();
@@ -281,15 +286,15 @@
       $("waToken").value = "";
       return leWa().then(function () { out.innerHTML = '<span class="tag ok">Guardado — agora toque em Testar conexão.</span>'; });
     });
-  };
-  $("btnDesligarWa").onclick = function () {
+  });
+  liga("btnDesligarWa", function () {
     if (!confirm("Desligar o WhatsApp oficial desta academia?")) return;
     rpcWa("zap_config_apaga").then(function (d) {
       var out = $("resultadoWa");
       if (d && d.erro) { out.innerHTML = '<span class="tag erro">' + d.erro + "</span>"; return; }
       return leWa().then(function () { out.innerHTML = '<span class="tag neutro">Desligado.</span>'; });
     });
-  };
+  });
 
   function chamaWa(payload) {
     var headers = { "Content-Type": "application/json" };
@@ -301,7 +306,7 @@
         .then(function (r) { return r.json(); });
     });
   }
-  $("btnTestarWa").onclick = function () {
+  liga("btnTestarWa", function () {
     var out = $("resultadoWa");
     if (!waUrl()) { out.innerHTML = '<span class="tag alerta">Este aparelho está sem a configuração da nuvem — recarregue a página.</span>'; return; }
     out.textContent = "testando…";
@@ -310,8 +315,8 @@
       else if (r && r.ok) out.innerHTML = '<span class="tag alerta">Função no ar, mas nenhum número ligado — toque em Ligar meu número.</span>';
       else out.innerHTML = '<span class="tag erro">' + ((r && r.erro) || "resposta inesperada") + "</span>";
     }).catch(function (e) { out.innerHTML = '<span class="tag erro">Não alcancei a função: ' + e.message + "</span>"; });
-  };
-  $("btnEnviarTeste").onclick = function () {
+  });
+  liga("btnEnviarTeste", function () {
     var num = $("waTeste").value.replace(/\D/g, "");
     var out = $("resultadoWa");
     if (num.length < 12) { out.innerHTML = '<span class="tag alerta">Número com DDI+DDD (ex.: 5531999990000).</span>'; return; }
@@ -321,19 +326,13 @@
         if (r && r.ok) out.innerHTML = '<span class="tag ok">Enviada! Confira o celular.</span>';
         else out.innerHTML = '<span class="tag erro">' + ((r && r.erro) || "falhou") + (r && r.precisaTemplate ? " — fora da janela de 24h: use o template." : "") + "</span>";
       }).catch(function (e) { out.innerHTML = '<span class="tag erro">erro: ' + e.message + "</span>"; });
-  };
-  $("btnCodigoWa").onclick = function () {
-    fetch("../supabase/functions/whatsapp/index.ts")
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-      .then(function (t) {
-        return navigator.clipboard.writeText(t).then(function () {
-          alert("Código copiado! Cole na Edge Function \"whatsapp\" no painel do Supabase e clique em Deploy.");
-        }, function () { prompt("Copie o código:", t); });
-      })
-      .catch(function () { alert("Não consegui carregar o arquivo — ele está em supabase/functions/whatsapp/index.ts"); });
-  };
+  });
+  /* Não existe botão de copiar o código da função whatsapp nesta tela de
+   * propósito: a whatsapp é UMA só, publicada pelo dono do sistema em
+   * torqueon.com.br/funcoes.html, e cada academia só cola aqui o número e o
+   * token dela. O handler tinha ficado pra trás e quebrava a página. */
 
-  $("btnCodigo").onclick = function () {
+  liga("btnCodigo", function () {
     fetch("../supabase/functions/pagarme/index.ts")
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
       .then(function (t) {
@@ -342,7 +341,7 @@
         }, function () { prompt("Copie o código:", t); });
       })
       .catch(function () { alert("Não consegui carregar o arquivo — ele está no repositório em supabase/functions/pagarme/index.ts"); });
-  };
+  });
 })();
 </script>
 </body>

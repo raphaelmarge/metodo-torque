@@ -312,7 +312,7 @@
           // o ping passa, mas a IA de treino/dieta falha com erro estranho
           var temIaTreino = (d.acoes || []).indexOf("ia_treino") >= 0;
           if (!d.acoes || !temIaTreino) {
-            anota("chat-envia sem lista de acoes (versao antiga publicada)");
+            anota("chat-envia sem lista de ações (versão antiga publicada)");
             linha("❌", "A chat-envia publicada está desatualizada", "Ela responde, mas é uma versão antiga — sem as IAs de treino e de dieta.",
               "Abra www.torqueon.com.br/funcoes.html, copie a chat-envia e publique de novo no Supabase (Edge Functions → chat-envia → Code → cole → Deploy). É rápido e não mexe nos secrets.");
           }
