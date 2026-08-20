@@ -162,8 +162,30 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
     const sql = fs.readFileSync(path.join(__dirname, "..", "supabase-setup.sql"), "utf8");
     t(/alter table public\.app_aluno add column if not exists revogado_em/.test(sql),
       "existe a coluna revogado_em");
-    t(!/from app_aluno where token = t;/.test(sql),
-      "nenhuma RPC do aluno lê o token cru: todas passam pelo app_aluno_ativo");
+    /* Antes isto era só a ausência de UMA string, e por isso não pegava nada:
+     * cinco RPCs (agendamentos, cancela, feed_apaga, pedidos e devolve) mexiam
+     * no banco sem nunca perguntar se o acesso ainda valia — aluno cortado
+     * seguia cancelando aula, apagando post e mandando dados. Agora o teste
+     * ENUMERA as funções do aluno e cobra o porteiro em cada uma. */
+    {
+      // as duas que ficam de fora de propósito: o porteiro em pessoa, e a
+      // função que PRECISA responder pra aluno cortado ("seu acesso acabou")
+      const dispensadas = ["app_aluno_ativo", "app_aluno_estado"];
+      const corpos = sql.split(/create or replace function public\./).slice(1);
+      const semGuarda = [];
+      corpos.forEach((bloco) => {
+        const nome = (bloco.match(/^(\w+)\s*\(/) || ["", ""])[1];
+        if (!/^app_aluno_/.test(nome) || dispensadas.indexOf(nome) >= 0) return;
+        if (!/\(t text/.test(bloco.slice(0, 200))) return;
+        const corpo = bloco.split("$$;")[0];
+        if (!/app_aluno_ativo\(t\)/.test(corpo) && !/revogado_em/.test(corpo)) semGuarda.push(nome);
+      });
+      t(semGuarda.length === 0,
+        "toda RPC do aluno confere se o acesso ainda vale" +
+        (semGuarda.length ? " — sem guarda: " + semGuarda.join(", ") : ""));
+    }
+    t(/language sql volatile\nset search_path = public/.test(sql),
+      "a geradora do verify token fixa o search_path, como todas as outras");
     t(/app_aluno_ativo\(t\)/.test(sql) && /revogado_em is null/.test(sql),
       "o app_aluno_ativo só devolve academia enquanto o acesso vale");
     t(/and login <> '' and revogado_em is null/.test(sql),

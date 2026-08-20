@@ -260,7 +260,8 @@ as $$
       'id', id, 'aula', aula_nome, 'data', data, 'status', status)
       order by data desc, criado desc), '[]'::json)
   from (select * from app_agendamentos
-        where token = t and status <> 'cancelado_ok'
+        where token = t and public.app_aluno_ativo(t) is not null
+          and status <> 'cancelado_ok'
         order by data desc, criado desc limit 30) s
 $$;
 
@@ -271,6 +272,9 @@ language plpgsql security definer
 set search_path = public
 as $$
 begin
+  if public.app_aluno_ativo(t) is null then
+    return json_build_object('erro', 'sem_acesso');
+  end if;
   update app_agendamentos set status = 'cancelado'
     where id = p_id and token = t and status in ('pendente', 'confirmado');
   if not found then
@@ -411,6 +415,9 @@ language plpgsql security definer
 set search_path = public
 as $$
 begin
+  if public.app_aluno_ativo(t) is null then
+    return json_build_object('erro', 'sem_acesso');
+  end if;
   update app_agendamentos set status = 'cancelado'
     where id = p_id and token = t and status in ('pendente', 'confirmado', 'espera');
   if not found then
@@ -742,7 +749,9 @@ as $$
   select coalesce(json_agg(json_build_object(
       'id', id, 'itens', itens, 'total', total, 'status', status,
       'criado', to_char(criado, 'DD/MM')) order by criado desc), '[]'::json)
-  from (select * from app_pedidos where token = t order by criado desc limit 20) s
+  from (select * from app_pedidos
+        where token = t and public.app_aluno_ativo(t) is not null
+        order by criado desc limit 20) s
 $$;
 
 grant execute on function public.app_aluno_pedido(text, jsonb, numeric, text) to anon, authenticated;
@@ -1638,6 +1647,9 @@ begin
   if t is null or length(t) < 10 then
     return json_build_object('erro', 'token inválido');
   end if;
+  if public.app_aluno_ativo(t) is null then
+    return json_build_object('erro', 'sem_acesso');
+  end if;
   update public.app_aluno set retorno = p_dados, atualizado = now() where token = t;
   if not found then
     return json_build_object('erro', 'app não encontrado');
@@ -1920,6 +1932,9 @@ language plpgsql security definer
 set search_path = public
 as $$
 begin
+  if public.app_aluno_ativo(t) is null then
+    return json_build_object('erro', 'sem_acesso');
+  end if;
   delete from app_feed where id = p_id and token = t;
   if not found then
     return json_build_object('erro', 'nao_encontrado');
@@ -2152,6 +2167,7 @@ create unique index if not exists zap_config_verify on public.zap_config (verify
 create or replace function public.zap_verify_novo()
 returns text
 language sql volatile
+set search_path = public
 as $$
   select 'torque-' || string_agg(substr('ABCDEFGHJKMNPQRSTUVWXYZ23456789', (floor(random() * 31)::int) + 1, 1), '')
     from generate_series(1, 10)
