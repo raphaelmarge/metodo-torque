@@ -1890,5 +1890,76 @@ self.MT_RECEITAS = [
    "Se quiser mais firme, leve ao congelador por 20 minutos antes de servir."
   ],
   "dica": "Açaí de verdade é fruta, não sobremesa: sem xarope de guaraná ele fecha 290 kcal com 24 g de proteína — pré-treino de fim de tarde que ainda refresca."
+ },
+ {
+  "id": "rc85",
+  "n": "Café gelado proteico com bebida de aveia",
+  "cat": "Pré-treino",
+  "tempo": 5,
+  "rende": 1,
+  "k": 215,
+  "pt": 23,
+  "ing": [
+   "1 dose de café expresso curto (40 ml) já frio",
+   "200 ml de bebida de aveia barista gelada",
+   "25 g de whey protein sabor baunilha",
+   "Gelo a gosto",
+   "Canela em pó pra polvilhar"
+  ],
+  "modo": [
+   "Tire o expresso e deixe esfriar (ou use café coado forte da geladeira) — café quente talha o whey e vira grumo.",
+   "Na coqueteleira, junte a bebida de aveia gelada e o whey e agite bem antes de entrar o café.",
+   "Acrescente o café frio e o gelo, agite mais uma vez e sirva na hora.",
+   "Polvilhe canela por cima."
+  ],
+  "dica": "Cafeína e proteína no mesmo copo, 40 minutos antes de treinar: 23 g de proteína com carboidrato leve da aveia, sem peso no estômago."
+ },
+ {
+  "id": "rc86",
+  "n": "Pote proteico de kefir com frutas e pistache",
+  "cat": "Lanches",
+  "tempo": 10,
+  "rende": 2,
+  "k": 290,
+  "pt": 12,
+  "ing": [
+   "400 ml de kefir de leite integral coado",
+   "200 g de frutas vermelhas (morango, amora, mirtilo)",
+   "30 g de pistache torrado sem sal picado",
+   "20 g de flocos de quinoa",
+   "Adoçante a gosto e raspas de limão"
+  ],
+  "modo": [
+   "Misture o kefir com o adoçante e as raspas de limão.",
+   "Monte em dois potes de vidro alternando camadas de kefir e frutas.",
+   "Finalize com os flocos de quinoa e o pistache picado só na hora de comer, pra não murchar.",
+   "Leve à geladeira por 30 minutos antes de servir."
+  ],
+  "dica": "O kefir tem os probióticos do iogurte com mais variedade de cepas — bom lanche da tarde pra quem reclama de intestino preso e não quer apelar pro doce."
+ },
+ {
+  "id": "rc87",
+  "n": "Filé de frango recheado com mussarela de búfala e tomate seco",
+  "cat": "Almoço e jantar",
+  "tempo": 35,
+  "rende": 2,
+  "k": 340,
+  "pt": 38,
+  "ing": [
+   "300 g de filé de peito de frango (2 filés grossos)",
+   "80 g de mussarela de búfala em fatias",
+   "20 g de tomate seco escorrido e picado",
+   "Folhas de manjericão fresco",
+   "1 col. chá de azeite de oliva",
+   "Sal, pimenta-do-reino e orégano"
+  ],
+  "modo": [
+   "Abra cada filé como um livro (corte pela lateral sem separar) e tempere dos dois lados.",
+   "Recheie com a mussarela de búfala, o tomate seco e o manjericão, e feche com palitos.",
+   "Sele em frigideira antiaderente quente com o azeite, 3 minutos de cada lado.",
+   "Termine no forno a 200 °C por 12 minutos, ou na airfryer a 180 °C por 10, até o centro passar de 74 °C.",
+   "Descanse 5 minutos antes de cortar pra não perder o suco."
+  ],
+  "dica": "A búfala derrete com menos gordura que a mussarela comum e o tomate seco resolve o sal — 38 g de proteína por porção sem o frango seco de sempre."
  }
 ];
