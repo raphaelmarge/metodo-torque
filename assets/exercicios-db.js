@@ -9782,7 +9782,7 @@ self.MT_EXERCICIOS = [
   "n": "Protração de escápula com elástico deitado (serrátil)",
   "g": "Ombros",
   "eq": "Elástico",
-  "d": "Deitado com o elástico passando por trás das costas e os braços apontados pro teto, empurre as mãos uns três dedos a mais mantendo o cotovelo esticado: quem dobra o cotovelo ou tira a lombar do apoio troca o serrátil por tríceps."
+  "d": "Deitado com o elástico passando por trás das costas e os braços apontados pro teto, empurre as mãos uns três dedos a mais soltando só a escápula do chão, com o cotovelo esticado — se o cotovelo dobra vira tríceps, e se o tronco inteiro sobe a escápula nem saiu do lugar."
  },
  {
   "n": "Caminhada com kettlebell bottom-up",
@@ -9863,10 +9863,10 @@ self.MT_EXERCICIOS = [
   "d": "Deixe as duas alças passarem entre as coxas com os cotovelos raspando as costelas na descida e jogue o peso pra frente com o estalo do quadril — quem tenta levantar os kettlebells com o braço puxa a lombar junto, ainda mais com carga dobrada."
  },
  {
-  "n": "Concha deitado de lado (clamshell)",
+  "n": "Isometria de adutor com toalha entre os joelhos",
   "g": "Posterior e glúteo",
-  "eq": "Solo",
-  "d": "Deite de lado com os joelhos dobrados e os calcanhares colados, um quadril empilhado em cima do outro, e abra só o joelho de cima — no instante em que o quadril começar a rolar pra trás pra ganhar mais amplitude, pare ali, porque daí em diante quem trabalha é a lombar e não o glúteo médio."
+  "eq": "Toalha",
+  "d": "Barriga pra cima, joelhos dobrados e pés no chão, aperte a toalha enrolada entre os joelhos com uns 70% da força e segure respirando normalmente — prender o ar é o erro clássico aqui e faz a pressão subir à toa."
  },
  {
   "n": "Mesa flexora com pés em dorsiflexão",
@@ -9878,7 +9878,7 @@ self.MT_EXERCICIOS = [
   "n": "Prancha alta com apoio de uma mão só",
   "g": "Core",
   "eq": "Peso do corpo",
-  "d": "Afaste os pés na largura do colchonete e só tire a mão do chão quando o quadril parar de girar; o umbigo tem que continuar apontado pro chão, e no instante em que um lado do quadril abrir pra cima, volte a apoiar as duas mãos."
+  "d": "Afaste os pés bem mais que a largura do quadril antes de tirar a mão do chão e segure o umbigo apontado pro chão; no instante em que um lado do quadril abrir pra cima, volte a apoiar as duas mãos."
  },
  {
   "n": "Lift diagonal com elástico ancorado baixo",
