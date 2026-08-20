@@ -1834,6 +1834,38 @@ async function abaPt(p, a) {
     ok(hero.tit === "rgb(255, 255, 255)" && hero.sub === "rgb(214, 210, 223)",
       "com foto, o nome do treino fica branco também no modo claro (era escuro sobre o véu escuro)");
   }
+  /* Quem vence quando o aparelho e a nuvem discordam.
+   *
+   * Um professor perdeu a lista de alunos aqui: o aparelho abriu com a lista
+   * curta, era "mais novo", e subiu por cima da nuvem cheia. A trava que existia
+   * pra impedir isso media o aparelho pela MAIOR lista dele — e a maior lista do
+   * painel é o catálogo de exercícios, semeado com uma dezena de itens num
+   * aparelho zerado. Ela nunca disparava. */
+  {
+    const sync = await p.evaluate(() => {
+      const S = window.__MTSync;
+      if (!S) return null;
+      const dez = Array(10).fill(0);
+      return {
+        // o caso real: 1 aluno no aparelho, 5 na nuvem, catálogo igual dos dois lados
+        perigo: S.nuvemTemMais({ alunos: [1], exercicios: dez }, { alunos: [1, 2, 3, 4, 5], exercicios: dez }),
+        // aparelho recém-semeado (zero aluno, catálogo cheio) contra nuvem com base
+        novo: S.nuvemTemMais({ alunos: [], exercicios: dez }, { alunos: [1, 2], exercicios: dez }),
+        // encerrar aluno de verdade já subiu: os dois lados iguais, nada a desfazer
+        exclusao: S.nuvemTemMais({ alunos: [1, 2, 3] }, { alunos: [1, 2, 3] }),
+        // aparelho com mais coisa que a nuvem continua mandando
+        aparelhoRico: S.nuvemTemMais({ alunos: [1, 2, 3, 4] }, { alunos: [1, 2] }),
+        // a conta antiga achava que este aparelho tinha 10 registros
+        contaVelha: S.listasDe({ alunos: [], exercicios: dez }).alunos,
+      };
+    });
+    ok(!!sync, "o store expõe a regra de sincronização pros testes");
+    ok(sync.perigo, "nuvem com mais alunos vence o aparelho com a lista curta (foi assim que sumiram alunos)");
+    ok(sync.novo, "aparelho recém-semeado não apaga a base da nuvem, mesmo com o catálogo cheio");
+    ok(sync.contaVelha === 0, "a contagem agora olha lista por lista — zero aluno conta zero, não dez");
+    ok(!sync.exclusao, "encerrar aluno de verdade não é desfeito na abertura seguinte");
+    ok(!sync.aparelhoRico, "aparelho com mais dados que a nuvem continua mandando");
+  }
   // ---------- 🚀 escala: o painel tem que aguentar milhares de alunos ----------
   console.log("Escala (1000 alunos):");
   {
