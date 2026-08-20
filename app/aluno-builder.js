@@ -600,7 +600,12 @@
       "<input id='crKm' inputmode='decimal' placeholder='km na mão' style='flex:1;min-width:0;text-align:center;'></div>" +
       // arte da corrida pro aluno postar (aparece depois de finalizar): trajeto +
       // números + marca do studio — cada corrida compartilhada é propaganda
-      "<button class='btnx' id='crShare' style='display:none;width:100%;margin-top:10px;'>Compartilhar essa corrida</button>" +
+      "<div id='crShare' style='display:none;margin-top:10px;'>" +
+      "<div style='display:flex;gap:8px;'>" +
+      "<label class='btnx' style='flex:1;text-align:center;'>Compartilhar essa corrida com sua foto" +
+      "<input id='crShareArq' type='file' accept='image/*' style='display:none;'></label>" +
+      "<button type='button' class='btnx' data-crsem style='flex:none;background:var(--bg4);box-shadow:none;color:#d6d2df;'>Sem foto</button></div>" +
+      "<div class='vz' style='font-size:11px;padding:6px 0 0;'>Sua foto com o tra\u00e7ado do GPS por cima \u2014 pronto pro Stories ou feed. A foto n\u00e3o sai do seu celular.</div></div>" +
       "<div id='crHist' class='vz' style='font-size:12px;text-align:left;'></div>" +
       // modo tela cheia estilo NRC: painel de cor chapada com UMA métrica gigante (toque ou
       // deslize troca; bolinhas mostram a página), mapa como segunda página, pausa com o mapa
@@ -1483,14 +1488,25 @@
       "crEl('crKm').addEventListener('input',function(){if(!cr.gpsOn)pintaCr();});" +
       // arte da corrida (1080x1350): trajeto em branco sobre a cor da marca,
       // km gigante, tempo/pace e o nome do studio — share nativo ou download
-      "crEl('crShare').addEventListener('click',function(){var rg=cr.fimReg;if(!rg)return;" +
+      /* A arte da corrida sai em dois sabores: sobre a FOTO que o aluno escolher
+       * (estilo Strava — a foto \u00e9 lida no aparelho e nunca sai dele) ou sobre o
+       * gradiente da cor do studio. Com foto entram os v\u00e9us escuros em cima e
+       * embaixo e a sombra no tra\u00e7ado, sen\u00e3o linha branca some em c\u00e9u claro. */
+      "function cardCorrida(foto,soCanvas){var rg=cr.fimReg;if(!rg)return null;" +
       "var c=document.createElement('canvas');c.width=1080;c.height=1350;var g=c.getContext('2d');" +
-      "var gr=g.createLinearGradient(0,0,1080,1350);gr.addColorStop(0,CV('bg4'));gr.addColorStop(1,CV('cor'));g.fillStyle=gr;g.fillRect(0,0,1080,1350);" +
+      "if(foto){var rz=Math.max(1080/(foto.width||1),1350/(foto.height||1));" +
+      "var w9=(foto.width||1)*rz,h9=(foto.height||1)*rz;" +
+      "g.drawImage(foto,(1080-w9)/2,(1350-h9)/2,w9,h9);" +
+      "g.fillStyle='rgba(10,8,14,.26)';g.fillRect(0,0,1080,1350);" +
+      "var gv=g.createLinearGradient(0,740,0,1350);gv.addColorStop(0,'rgba(10,8,14,0)');gv.addColorStop(1,'rgba(10,8,14,.9)');g.fillStyle=gv;g.fillRect(0,740,1080,610);" +
+      "var gt=g.createLinearGradient(0,0,0,230);gt.addColorStop(0,'rgba(10,8,14,.55)');gt.addColorStop(1,'rgba(10,8,14,0)');g.fillStyle=gt;g.fillRect(0,0,1080,230);}" +
+      "else{var gr=g.createLinearGradient(0,0,1080,1350);gr.addColorStop(0,CV('bg4'));gr.addColorStop(1,CV('cor'));g.fillStyle=gr;g.fillRect(0,0,1080,1350);}" +
       "var rt=cr.fimRota||[];var temRota=rt.length>1;" +
       "if(temRota){var la1=1/0,la2=-1/0,lo1=1/0,lo2=-1/0;rt.forEach(function(pp){if(pp.lat<la1)la1=pp.lat;if(pp.lat>la2)la2=pp.lat;if(pp.lng<lo1)lo1=pp.lng;if(pp.lng>lo2)lo2=pp.lng;});" +
       "var dLa=Math.max(la2-la1,1e-5),dLo=Math.max(lo2-lo1,1e-5);var zz=Math.min(700/dLo,520/dLa);" +
+      "if(foto){g.shadowColor='rgba(0,0,0,.65)';g.shadowBlur=18;}" +
       "g.strokeStyle='rgba(255,255,255,.96)';g.lineWidth=16;g.lineJoin='round';g.lineCap='round';g.beginPath();" +
-      "rt.forEach(function(pp,i9){var x9=190+(pp.lng-lo1)*zz+(700-dLo*zz)/2;var y9=830-(pp.lat-la1)*zz-(520-dLa*zz)/2;if(i9)g.lineTo(x9,y9);else g.moveTo(x9,y9);});g.stroke();}" +
+      "rt.forEach(function(pp,i9){var x9=190+(pp.lng-lo1)*zz+(700-dLo*zz)/2;var y9=830-(pp.lat-la1)*zz-(520-dLa*zz)/2;if(i9)g.lineTo(x9,y9);else g.moveTo(x9,y9);});g.stroke();g.shadowBlur=0;}" +
       "g.textAlign='center';g.fillStyle='rgba(255,255,255,.85)';g.font='700 40px system-ui,sans-serif';g.fillText(STUDIO.toUpperCase().slice(0,30),540,120);" +
       "var yK=temRota?1010:660;" +
       "g.fillStyle='#fff';g.font='900 170px system-ui,sans-serif';g.fillText(String(rg.k).replace('.',',')+' km',540,yK);" +
@@ -1498,9 +1514,19 @@
       "g.fillText(wodFmt(rg.s)+(rg.p?' \\u00b7 pace '+rg.p:'')+' \\u00b7 '+(CRMODS[rg.m]||'Cardio'),540,yK+95);" +
       "g.font='700 36px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.75)';" +
       "g.fillText(PRIMEIRO+' \\u00b7 '+String(rg.d).slice(8,10)+'/'+String(rg.d).slice(5,7),540,1250);" +
+      "if(soCanvas)return c;" +
+      // navigator.share abre a folha do sistema \u2014 \u00e9 por ela que a imagem entra
+      // no Instagram (Stories ou feed); sem suporte, baixa o arquivo
       "c.toBlob(function(bl){var fl=new File([bl],'corrida.png',{type:'image/png'});" +
       "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
-      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='corrida.png';a2.click();}});});" +
+      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='corrida.png';a2.click();}});return null;}" +
+      "window.__crCard=function(im){return cardCorrida(im,true);};" +
+      "crEl('crShare').addEventListener('click',function(e){if(e.target.closest('[data-crsem]'))cardCorrida(null);});" +
+      "crEl('crShareArq').addEventListener('change',function(){var f=this.files&&this.files[0];this.value='';if(!f)return;" +
+      "var u=URL.createObjectURL(f);var im=new Image();" +
+      "im.onload=function(){URL.revokeObjectURL(u);cardCorrida(im);};" +
+      "im.onerror=function(){URL.revokeObjectURL(u);alert('N\u00e3o consegui abrir essa foto \u2014 tenta outra.');};" +
+      "im.src=u;});" +
       // tela cheia estilo NRC: página 0 = painel de cor chapada com a métrica gigante,
       // página 1 = mapa; pausado força o mapa + grade de métricas; ✕ volta sem parar
       // o crFull vai pro <body> na primeira abertura: dentro do card, a animação de entrada
