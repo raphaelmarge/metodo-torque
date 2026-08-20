@@ -5629,7 +5629,7 @@ async function abaPt(p, a) {
           (st.videoteca || []).every((v) => !/results\?search_query/.test(v.url || "")),
       }), 400));
     });
-    ok(demo.alunos === 9 && demo.fichas === 9 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 9 alunos com fichas, pagamentos e avaliações");
+    ok(demo.alunos === 24 && demo.fichas === 24 && demo.pagamentos > 20 && demo.avaliacoes > 15, "demo semeia 24 alunos com fichas, pagamentos e avaliações");
     ok(demo.despesas >= 5 && demo.despFixas >= 2, "demo traz despesas do mês (com fixas) pra aba Despesas nascer cheia");
     ok(demo.sitePro, "demo vem com a Minha página já montada (slug e textos)");
     ok(demo.vidDentro, "demo usa vídeos que tocam dentro do app (nada de link de busca do YouTube)");
@@ -5646,7 +5646,7 @@ async function abaPt(p, a) {
     const aviso = await pD2.evaluate(() => !document.getElementById("alerta").hidden);
     await pD2.click("#btnDemo");
     await pD2.waitForTimeout(300);
-    const preservado = await pD2.evaluate(() => /personal\.html/.test(location.pathname) && JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.length === 9);
+    const preservado = await pD2.evaluate(() => /personal\.html/.test(location.pathname) && JSON.parse(localStorage.getItem("mtapp:ptStudio")).alunos.length === 24);
     ok(aviso && preservado, "com dados já existentes o demo avisa e não sobrescreve nada");
     await pD2.close();
     await pD.close();

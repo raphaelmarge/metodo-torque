@@ -21,7 +21,7 @@
 <div class="cx">
   <span class="k">TORQUE PERSONAL · Demonstração</span>
   <h1>Studio de exemplo</h1>
-  <p>Preenche o TORQUE PERSONAL <b>neste navegador</b> com um studio fictício em pleno uso: 9 alunos com treinos, pagamentos, agenda, avaliações e os dados que eles registram no app (peso, cargas, hábitos, treinos feitos e check-ins de questionário) — tudo em gráficos no perfil. Também vem com serviços vendidos (massagem em pacote) e a <b>fila de WhatsApp com automações</b>: aluno sumido, boas-vindas e pacote acabando com foto.</p>
+  <p>Preenche o TORQUE PERSONAL <b>neste navegador</b> com um studio fictício em pleno uso: 24 alunos com treinos, pagamentos, agenda, avaliações e os dados que eles registram no app (peso, cargas, hábitos, treinos feitos e check-ins de questionário) — tudo em gráficos no perfil. Também vem com serviços vendidos (massagem em pacote) e a <b>fila de WhatsApp com automações</b>: aluno sumido, boas-vindas e pacote acabando com foto.</p>
   <p style="margin-top: 12px;">Novidade: em <b>Avaliações</b> o demo já vem com as <b>Medidas pela câmera</b> ligadas — dá pra abrir a câmera guiada e ver o gabarito, o semáforo e o disparo automático funcionando.</p>
   <div id="alerta" class="aviso" hidden><b>Já existem dados do Personal neste navegador.</b> O demo NÃO vai mexer neles — abra esta página numa <b>guia anônima</b> (ou outro navegador) pra ver a demonstração sem risco.</div>
   <button class="btnx" id="btnDemo">Abrir o studio de exemplo</button>
@@ -125,6 +125,21 @@
     { nome: "Henrique Lopes", sexo: "M", altura: 180, nascAnos: 31, zap: "21988110008", valor: 420, objetivo: "Hipertrofia", meta: 5, desde: 330, peso: [79, 4.5, 160, 5], freq: 5, capricho: 1.05, cargas: [["Agachamento livre", 70, 110, 11], ["Remada curvada com barra", 45, 72.5, 10], ["Tríceps na polia", 25, 40, 9]], pago: true, rec: true },
     // recém-matriculada: dispara a automação de boas-vindas na fila de WhatsApp
     { nome: "Isabela Duarte", sexo: "F", altura: 163, nascAnos: 27, zap: "21988110009", valor: 400, objetivo: "Condicionamento", meta: 3, desde: 2, peso: [70, 0, 2, 1], freq: 3, capricho: 1.0, cargas: [["Agachamento livre", 20, 20, 1]], pago: true },
+    { nome: "João Vitor Camargo", sexo: "M", altura: 176, nascAnos: 33, zap: "21988110010", valor: 420, objetivo: "Hipertrofia", meta: 4, desde: 400, peso: [74, 7, 170, 6], freq: 4, capricho: 1.1, cargas: [["Supino reto com barra", 45, 75, 11], ["Puxada alta na polia", 40, 65, 10], ["Leg press 45°", 100, 170, 10]], pago: true },
+    { nome: "Larissa Peixoto", sexo: "F", altura: 170, nascAnos: 30, zap: "21988110011", valor: 450, objetivo: "Emagrecimento", meta: 4, desde: 300, peso: [84, -11, 140, 6], freq: 4, capricho: 1.2, cargas: [["Agachamento livre", 25, 50, 9], ["Elevação pélvica", 50, 95, 9], ["Remada curvada com barra", 20, 35, 7]], pago: true, rec: true },
+    { nome: "Marcelo Tavares", sexo: "M", altura: 172, nascAnos: 48, zap: "21988110012", valor: 380, objetivo: "Saúde geral", meta: 2, desde: 210, peso: [95, -6, 130, 5], freq: 2, capricho: 0.75, cargas: [["Leg press 45°", 70, 110, 6], ["Puxada alta na polia", 30, 45, 6]], pago: false },
+    { nome: "Natália Ribeiro", sexo: "F", altura: 162, nascAnos: 26, zap: "21988110013", valor: 400, objetivo: "Condicionamento", meta: 3, desde: 120, peso: [61, -1.5, 90, 4], freq: 3, capricho: 1.0, cargas: [["Agachamento livre", 20, 37.5, 7], ["Desenvolvimento com halteres", 8, 14, 6]], pago: true, pacoteServ: { nome: "Avaliação física", total: 4, usadas: 3 } },
+    { nome: "Otávio Bastos", sexo: "M", altura: 186, nascAnos: 35, zap: "21988110014", valor: 500, objetivo: "Força", meta: 4, desde: 500, peso: [92, 4, 200, 6], freq: 4, capricho: 1.05, cargas: [["Agachamento livre", 110, 165, 15], ["Levantamento terra romeno", 100, 155, 13], ["Supino reto com barra", 85, 120, 13]], pago: true, rec: true },
+    { nome: "Priscila Amaral", sexo: "F", altura: 167, nascAnos: 28, zap: "21988110015", valor: 450, objetivo: "Hipertrofia", meta: 5, desde: 260, peso: [58, 5, 150, 6], freq: 5, capricho: 1.15, cargas: [["Elevação pélvica", 60, 110, 11], ["Leg press 45°", 90, 150, 10], ["Puxada alta na polia", 25, 45, 9]], pago: true, rec: true },
+    { nome: "Rafael Queiroz", sexo: "M", altura: 179, nascAnos: 39, zap: "21988110016", valor: 450, objetivo: "Emagrecimento", meta: 3, desde: 190, peso: [104, -13, 150, 6], freq: 3, capricho: 0.95, cargas: [["Leg press 45°", 80, 130, 8], ["Remada curvada com barra", 30, 50, 7]], pago: false, falhou: true },
+    { nome: "Sofia Carvalho", sexo: "F", altura: 156, nascAnos: 61, zap: "21988110017", valor: 380, objetivo: "Saúde geral", meta: 2, desde: 340, peso: [67, -3, 160, 5], freq: 2, capricho: 0.9, cargas: [["Elevação pélvica", 20, 35, 6], ["Prancha", 0, 0, 4]], pago: true },
+    { nome: "Thiago Mendonça", sexo: "M", altura: 181, nascAnos: 25, zap: "21988110018", valor: 400, objetivo: "Condicionamento", meta: 4, desde: 110, peso: [83, -3, 80, 4], freq: 4, capricho: 0.7, cargas: [["Agachamento livre", 40, 60, 5], ["Supino reto com barra", 40, 55, 5]], pago: true, sumido: true },
+    { nome: "Vanessa Lima", sexo: "F", altura: 164, nascAnos: 43, zap: "21988110019", valor: 450, objetivo: "Emagrecimento", meta: 3, desde: 230, peso: [79, -7.5, 150, 6], freq: 3, capricho: 1.05, cargas: [["Agachamento livre", 20, 42.5, 8], ["Leg press 45°", 60, 105, 8], ["Tríceps na polia", 15, 27.5, 7]], pago: true },
+    { nome: "Wagner Portela", sexo: "M", altura: 175, nascAnos: 32, zap: "21988110020", valor: 420, objetivo: "Hipertrofia", meta: 5, desde: 470, peso: [68, 9, 190, 6], freq: 5, capricho: 1.1, cargas: [["Supino reto com barra", 40, 85, 13], ["Rosca direta com barra", 15, 32.5, 11], ["Agachamento livre", 55, 100, 12]], pago: true },
+    { nome: "Yasmin Rocha", sexo: "F", altura: 159, nascAnos: 22, zap: "21988110021", valor: 400, objetivo: "Condicionamento", meta: 3, desde: 12, peso: [63, -0.5, 10, 2], freq: 3, capricho: 1.0, cargas: [["Agachamento livre", 15, 20, 2]], pago: true },
+    { nome: "Caio Estrela", sexo: "M", altura: 184, nascAnos: 27, zap: "21988110022", valor: 650, objetivo: "Força", meta: 4, desde: 150, peso: [86, 2.5, 120, 5], freq: 4, capricho: 1.2, cargas: [["Levantamento terra romeno", 80, 125, 9], ["Agachamento livre", 90, 135, 9], ["Desenvolvimento com halteres", 20, 30, 8]], pago: true, rec: true },
+    { nome: "Renata Villar", sexo: "F", altura: 171, nascAnos: 36, zap: "21988110023", valor: 450, objetivo: "Hipertrofia", meta: 4, desde: 280, peso: [65, 4, 160, 6], freq: 4, capricho: 1.0, cargas: [["Elevação pélvica", 45, 85, 10], ["Remada curvada com barra", 25, 45, 9], ["Crucifixo com halteres", 8, 14, 8]], pago: true },
+    { nome: "Lucas Bittencourt", sexo: "M", altura: 170, nascAnos: 55, zap: "21988110024", valor: 380, objetivo: "Saúde geral", meta: 2, desde: 75, peso: [90, -2.5, 60, 3], freq: 2, capricho: 0.8, cargas: [["Leg press 45°", 60, 85, 4], ["Puxada alta na polia", 25, 35, 4]], pago: false },
   ];
 
   var alunos = [], pagamentos = [], avaliacoes = [], sessoes = [], treinosV2 = {}, diarioPT = {};
@@ -137,6 +152,9 @@
   };
   ALUNOS.forEach(function (cfg, idx) {
     var id = "demo" + (idx + 1);
+    var vr = idx % 6;                                   // variação das medidas
+    var hora = String(6 + Math.floor(idx / 2) % 14).padStart(2, "0") +
+      ":" + (idx % 2 ? "30" : "00");                    // 06:00 … 19:30, sem choque
     var a = {
       id: id, nome: cfg.nome, zap: cfg.zap, valor: cfg.valor, modo: "mes", metaSemana: cfg.meta,
       sexo: cfg.sexo, altura: cfg.altura,
@@ -201,9 +219,9 @@
       if (dd > cfg.desde) return;
       var pesoNoDia = cfg.peso[0] + cfg.peso[1] * (1 - Math.min(dd, cfg.peso[2]) / cfg.peso[2]);
       var reg = { id: uid(), alunoId: id, data: iso(dd), peso: Math.round(pesoNoDia * 10) / 10,
-        gordura: Math.round((28 - k * 1.4 - idx) * 10) / 10, cintura: Math.round(94 - k * 1.5 - idx),
-        quadril: Math.round(102 - k * 0.8 + (cfg.sexo === "F" ? 3 : -4)), braco: Math.round((30 + k * 0.6 + idx * 0.5) * 10) / 10,
-        coxa: Math.round((54 + k * 0.4 + idx * 0.3) * 10) / 10 };
+        gordura: Math.round((28 - k * 1.4 - vr) * 10) / 10, cintura: Math.round(94 - k * 1.5 - vr),
+        quadril: Math.round(102 - k * 0.8 + (cfg.sexo === "F" ? 3 : -4)), braco: Math.round((30 + k * 0.6 + vr * 0.5) * 10) / 10,
+        coxa: Math.round((54 + k * 0.4 + vr * 0.3) * 10) / 10 };
       // avaliação COMPLETA (dobras Pollock 7 + fita inteira) nas duas últimas dos veteranos
       if (k >= 5 && idx < 4) {
         var somaD = reg.gordura * 3.1; // soma de dobras coerente com o % registrado
@@ -214,7 +232,7 @@
         reg.metodoDobras = "p7";
         reg.densidade = Math.round(4.95 / (reg.gordura / 100 + 4.5) * 10000) / 10000;
         reg.circ = {
-          pescoco: Math.round(((cfg.sexo === "F" ? 32 : 38) + idx * 0.5) * 10) / 10,
+          pescoco: Math.round(((cfg.sexo === "F" ? 32 : 38) + vr * 0.5) * 10) / 10,
           cintura: reg.cintura, quadril: reg.quadril,
           torax: Math.round(((cfg.sexo === "F" ? 88 : 100) + k * 0.4) * 10) / 10,
           abdomen: Math.round((reg.cintura + 2) * 10) / 10,
@@ -252,11 +270,16 @@
     // semana inteira e a última sessão feita foi há 15 dias — a automação
     // "Sentimos sua falta" pega ele na fila de WhatsApp
     for (var s2 = 0; s2 < cfg.meta; s2++) {
-      sessoes.push({ id: uid(), alunoId: id, data: iso(2 + s2), hora: String(6 + idx) + ":00",
+      sessoes.push({ id: uid(), alunoId: id, data: iso(2 + s2), hora: hora,
         feita: cfg.sumido ? false : s2 !== 1, faltou: !!cfg.sumido || (s2 === 1 && idx === 2) });
-      sessoes.push({ id: uid(), alunoId: id, data: iso(-(1 + s2)), hora: String(6 + idx) + ":00", feita: false });
+      sessoes.push({ id: uid(), alunoId: id, data: iso(-(1 + s2)), hora: hora, feita: false });
     }
-    if (cfg.sumido) sessoes.push({ id: uid(), alunoId: id, data: iso(15), hora: String(6 + idx) + ":00", feita: true });
+    if (cfg.sumido) sessoes.push({ id: uid(), alunoId: id, data: iso(15), hora: hora, feita: true });
+    // um terço da turma treina HOJE: as da manhã já feitas, as da tarde esperando —
+    // é o que dá conteúdo pro cartão "Seu dia hoje" do Início
+    if (idx % 3 === 0 && !cfg.sumido) {
+      sessoes.push({ id: uid(), alunoId: id, data: iso(0), hora: hora, feita: parseInt(hora, 10) < 13 });
+    }
     diarioPT[id] = [
       { d: iso(9), t: "Evoluiu bem no " + (cfg.cargas[0] ? cfg.cargas[0][0].toLowerCase() : "treino") + " — subir carga na próxima." },
       { d: iso(2), t: idx === 3 ? "Reclamou do joelho no agachamento — reduzi amplitude e encaixei mobilidade." : "Sessão forte, aluno motivado. Manter o ritmo." },
