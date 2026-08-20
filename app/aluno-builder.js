@@ -194,6 +194,14 @@
       "html.claro [style*='var(--bg10)'],html.claro [style*='var(--bg9)']{border-color:#e4e1eb!important}" +
       "html.claro [style*='color:#fff'][style*='var(--bg4)'],html.claro [style*='color:#fff'][style*='var(--bg7)'],html.claro [style*='color:#fff'][style*='var(--bg1)'],html.claro [style*='color:#fff'][style*='var(--bg2)']{color:#241f31!important}" +
       "html.claro [style*='color:#a9a4b5']{color:#645e73!important}" +
+      /* card do treino de hoje COM foto: o véu por cima da imagem é escuro nos
+       * dois temas, então o texto tem que ser claro nos dois. Sem isto, no modo
+       * claro o nome do treino saía escuro em cima do véu escuro. */
+      "#heroTreino.comfoto #htTitulo{color:#fff!important}" +
+      "#heroTreino.comfoto #htSub{color:#d6d2df!important}" +
+      "html.claro #heroTreino.comfoto #htTitulo{color:#fff!important}" +
+      "html.claro #heroTreino.comfoto #htSub{color:#d6d2df!important}" +
+      "html.claro #heroTreino.comfoto .htk{color:var(--cor-cl1)!important}" +
       // no fundo branco o verde e o vermelho claros somem; escurece os dois
       "html.claro [style*='color:#4ade80']{color:#15803d!important}" +
       "html.claro [style*='color:#f87171']{color:#dc2626!important}" +
@@ -380,7 +388,7 @@
         "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
         "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
         "<div style='position:relative;'>" +
-        "<div style='font-size:10px;font-weight:700;letter-spacing:.26em;color:var(--corc);text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
+        "<div class='htk' style='font-size:10px;font-weight:700;letter-spacing:.26em;color:var(--corc);text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
         "<div id='htTitulo' style='font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;'></div>" +
         "<div id='htSub' style='font-size:13px;color:#8a8695;'></div>" +
         "<button id='htVer' style='margin-top:18px;background:var(--cor);border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div></div>" : "") +
@@ -2343,7 +2351,8 @@
       // foto da ficha do dia no card (com véu por cima pro texto continuar legível)
       "var hf=document.getElementById('htFoto'),hv2=document.getElementById('htVeu');" +
       "var cImg=fm.c||CAPA_GERAL;" +
-      "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}}" +
+      "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}" +
+      "el.classList.toggle('comfoto',!!cImg);}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
       "var gav=document.querySelectorAll('.fichabox');" +
       "if(gav.length>1)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
