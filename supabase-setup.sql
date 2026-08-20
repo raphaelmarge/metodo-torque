@@ -802,6 +802,56 @@ create trigger dados_hist_tg
   before update or delete on public.dados
   for each row execute function public.dados_guarda_hist();
 
+-- ==================== REDUNDÂNCIA: HISTÓRICO DO APP DO ALUNO ====================
+-- O `retorno` é o que o aluno registrou no app (peso, cargas, treinos, fotos) —
+-- insubstituível. O pacote (`dados`) fica de fora de propósito: ele se regenera
+-- republicando o app. E o retorno cresce o dia inteiro no uso normal, então a
+-- foto só é tirada quando ele ENCOLHE (algo apagou registro) ou quando a linha
+-- é EXCLUÍDA. 5 versões por token, RLS selada sem política. Restaurar:
+--   update app_aluno a set retorno = (select h.retorno from app_aluno_hist h
+--     where h.token = a.token order by h.id desc limit 1)
+--   where a.token = '...';
+-- Bloco idempotente.
+
+create table if not exists public.app_aluno_hist (
+  id bigint generated always as identity primary key,
+  academia_id uuid,
+  token text not null,
+  retorno jsonb,
+  atualizado timestamptz,
+  guardado_em timestamptz not null default now()
+);
+alter table public.app_aluno_hist enable row level security;
+create index if not exists app_aluno_hist_busca
+  on public.app_aluno_hist (token, id desc);
+
+create or replace function public.app_aluno_guarda_hist()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'DELETE' then
+    if old.retorno is not null then
+      insert into app_aluno_hist (academia_id, token, retorno, atualizado)
+        values (old.academia_id, old.token, old.retorno, old.atualizado);
+    end if;
+    return old;
+  end if;
+  if old.retorno is not null and new.retorno is distinct from old.retorno
+     and coalesce(octet_length(new.retorno::text), 0) < octet_length(old.retorno::text) then
+    insert into app_aluno_hist (academia_id, token, retorno, atualizado)
+      values (old.academia_id, old.token, old.retorno, old.atualizado);
+    delete from app_aluno_hist h
+      where h.token = old.token
+        and h.id not in (select id from app_aluno_hist
+                         where token = old.token order by id desc limit 5);
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists app_aluno_hist_tg on public.app_aluno;
+create trigger app_aluno_hist_tg
+  before update or delete on public.app_aluno
+  for each row execute function public.app_aluno_guarda_hist();
+
 -- ==================== TELEMETRIA DE ERROS ====================
 -- As páginas do sistema reportam erros de JavaScript aqui; a página
 -- Auditoria e Saúde mostra o que quebrou. Bloco idempotente.

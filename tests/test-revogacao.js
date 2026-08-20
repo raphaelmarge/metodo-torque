@@ -193,6 +193,14 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       "todo update/delete no `dados` guarda a versão anterior no dados_hist");
     t(/old\.valor is distinct from new\.valor/.test(sql) && /limit 10/.test(sql),
       "o histórico só grava quando o valor muda de verdade, e guarda as 10 últimas versões");
+    // o retorno do aluno (peso, cargas, fotos) é insubstituível: foto quando
+    // ENCOLHE ou quando a linha morre — crescer é o dia a dia e não fotografa
+    t(/create table if not exists public\.app_aluno_hist/.test(sql) &&
+      /before update or delete on public\.app_aluno/.test(sql),
+      "o retorno do app do aluno também tem histórico (encolheu ou excluiu = fotografa)");
+    t(/octet_length\(new\.retorno::text\), 0\) < octet_length\(old\.retorno::text\)/.test(sql) &&
+      /order by id desc limit 5/.test(sql),
+      "a foto só sai quando o retorno encolhe, e ficam as 5 últimas por token");
     t(/app_aluno_ativo\(t\)/.test(sql) && /revogado_em is null/.test(sql),
       "o app_aluno_ativo só devolve academia enquanto o acesso vale");
     t(/and login <> '' and revogado_em is null/.test(sql),
