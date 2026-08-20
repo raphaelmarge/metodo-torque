@@ -47,6 +47,28 @@
     }
     return null;
   }
+  /* Tamanho de CADA lista de um valor sincronizado, uma por uma.
+   *
+   * A contaRegistros acima devolve só o tamanho da MAIOR lista — e a maior lista
+   * do painel do personal é o catálogo de exercícios, que o onboarding semeia com
+   * uma dezena de itens num aparelho zerado. Por causa disso a trava que existia
+   * pra impedir que um celular recém-instalado apagasse a base da nuvem nunca
+   * disparava: o aparelho "vazio" já contava dez. Um professor perdeu a lista de
+   * alunos assim — o aparelho subiu o estado curto por cima da nuvem cheia. */
+  function listasDe(v) {
+    var out = {};
+    if (Array.isArray(v)) { out["#"] = v.length; return out; }
+    if (v && typeof v === "object") {
+      Object.keys(v).forEach(function (k) { if (Array.isArray(v[k])) out[k] = v[k].length; });
+    }
+    return out;
+  }
+  // a nuvem tem lista MAIOR que a do aparelho? então mandar o aparelho por cima
+  // apagaria registro de gente — e apagar é o único erro que não dá pra desfazer
+  function nuvemTemMais(local, nuvem) {
+    var lNuv = listasDe(nuvem), lLoc = listasDe(local);
+    return Object.keys(lNuv).some(function (k) { return lNuv[k] > (lLoc[k] || 0); });
+  }
   function registraLog(key, antes, depois) {
     if (SEM_LOG[key] || window.__MT_IMPORTANDO) return;
     try {
@@ -367,18 +389,25 @@
           } catch (e) {}
           sync.aplicando = false;
         } else if (row.atualizado < local) {
-          // local mais novo: manda de volta — MAS na 1ª puxada, se o local está
-          // vazio e a nuvem tem registros, é um aparelho recém-instalado (o
-          // onboarding acabou de semear o estado em branco). A nuvem vence:
-          // ninguém perde a base de alunos por logar num celular novo.
-          var locVazio = false;
+          /* local mais novo: manda de volta — MAS na 1ª puxada da sessão, se a
+           * nuvem tem alguma lista MAIOR que a do aparelho, a nuvem vence.
+           *
+           * Antes a nuvem só vencia com o aparelho COMPLETAMENTE vazio, medido
+           * pela maior lista — que num painel recém-semeado já vem com o catálogo
+           * de exercícios dentro. Na prática a trava nunca pegava, e bastava o
+           * aparelho abrir com a lista curta pra apagar a base inteira na nuvem.
+           *
+           * Apagar sem querer é o único erro que não dá pra desfazer, então na
+           * dúvida a nuvem ganha. Exclusão de verdade não é atrapalhada por isto:
+           * quando o professor encerra um aluno, a mudança sobe na hora, e na
+           * abertura seguinte a nuvem já está com a lista curta também. */
+          var nuvemMaior = false;
           if (primeira) {
             var locVal = null;
             try { locVal = JSON.parse(localStorage.getItem(row.chave)); } catch (e) {}
-            var nLoc = contaRegistros(locVal), nNuv = contaRegistros(row.valor);
-            locVazio = (nNuv || 0) >= 2 && !nLoc;
+            nuvemMaior = nuvemTemMais(locVal, row.valor);
           }
-          if (locVazio) {
+          if (nuvemMaior) {
             sync.aplicando = true;
             try {
               localStorage.setItem(row.chave, JSON.stringify(row.valor));
@@ -607,6 +636,9 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
   }
 
+  // gancho de teste: a regra que decide quem vence quando aparelho e nuvem
+  // discordam é a que evita perder a base de alunos — precisa ser testável
+  window.__MTSync = { listasDe: listasDe, nuvemTemMais: nuvemTemMais };
   window.MTStore = {
     baixaCSV: baixaCSV,
     ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,
