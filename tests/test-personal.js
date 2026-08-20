@@ -4139,6 +4139,7 @@ async function abaPt(p, a) {
       tit: document.getElementById("htTitulo").textContent,
       sub: document.getElementById("htSub").textContent,
       tiles: document.getElementById("pgTiles").textContent,
+      tilesHtml: document.getElementById("pgTiles").innerHTML,
       xp: document.getElementById("xpChip").textContent,
       foto: (document.getElementById("htFoto") || {}).style && document.getElementById("htFoto").style.display,
     };
@@ -4146,6 +4147,34 @@ async function abaPt(p, a) {
   ok(/TREINO|FICHA/.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card 'HOJE · " + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
   ok(home.foto === "none", "📷 sem foto na ficha, o card do dia fica limpo (nada de imagem quebrada)");
   ok(/Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
+  ok((home.tilesHtml.match(/background:var\(--bg2\)/g) || []).length === 2,
+    "os dois números do Progresso são cartões de verdade, não texto solto no fundo");
+  // sem mês anterior o rodapé não repete o número de cima ("2" e "2 no total")
+  ok(/seu primeiro mês|que em \w{3} até aqui|igual a \w{3} até aqui/.test(home.tiles),
+    "embaixo dos treinos do mês vem a comparação justa com o mês passado, não o total repetido");
+  // guarda o que o app já tinha: as suítes seguintes contam com esses treinos
+  const feitosAntes = await pApp.evaluate(() => localStorage.getItem("ptfeitos"));
+  await pApp.evaluate(() => {
+    // dois treinos neste mês contra quatro no mesmo pedaço do mês passado
+    const hj = new Date(), dia = Math.min(hj.getDate(), 20);
+    const iso = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const f = {};
+    for (let i = 0; i < 2; i++) f[iso(new Date(hj.getFullYear(), hj.getMonth(), Math.max(1, dia - i)))] = 1;
+    for (let i = 0; i < 4; i++) f[iso(new Date(hj.getFullYear(), hj.getMonth() - 1, Math.max(1, dia - i)))] = 1;
+    // e um treino no mês passado DEPOIS do dia de hoje, que não pode contar
+    f[iso(new Date(hj.getFullYear(), hj.getMonth() - 1, 28))] = 1;
+    localStorage.setItem("ptfeitos", JSON.stringify(f));
+  });
+  await pApp.reload();
+  await pApp.waitForTimeout(900);
+  const pgComp = await pApp.evaluate(() => document.getElementById("pgTiles").textContent);
+  await pApp.evaluate((v) => {
+    if (v === null) localStorage.removeItem("ptfeitos"); else localStorage.setItem("ptfeitos", v);
+  }, feitosAntes);
+  await pApp.reload();
+  await pApp.waitForTimeout(900);
+  ok(/-2 que em \w{3} até aqui/.test(pgComp),
+    "a conta compara o mesmo pedaço do mês (2 contra 4), ignorando os dias que ainda não chegaram — " + pgComp.replace(/\s+/g, " ").trim());
   ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);
   ok(await pApp.evaluate(() => {
