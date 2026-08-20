@@ -194,6 +194,9 @@
       "html.claro [style*='var(--bg10)'],html.claro [style*='var(--bg9)']{border-color:#e4e1eb!important}" +
       "html.claro [style*='color:#fff'][style*='var(--bg4)'],html.claro [style*='color:#fff'][style*='var(--bg7)'],html.claro [style*='color:#fff'][style*='var(--bg1)'],html.claro [style*='color:#fff'][style*='var(--bg2)']{color:#241f31!important}" +
       "html.claro [style*='color:#a9a4b5']{color:#645e73!important}" +
+      // no fundo branco o verde e o vermelho claros somem; escurece os dois
+      "html.claro [style*='color:#4ade80']{color:#15803d!important}" +
+      "html.claro [style*='color:#f87171']{color:#dc2626!important}" +
       "html.claro [style*='color:#d6d2df']{color:#3a3547!important}" +
       "html.claro [style*='color:#cfcbdb']{color:#443f52!important}" +
       "html.claro [style*='color:#8a8695']{color:#6c6678!important}" +
@@ -2345,14 +2348,35 @@
       "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
       "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
       "var pf=L('ptfeitos',{});var noMes=Object.keys(pf).filter(function(k){return k.slice(0,7)===mesK;}).length;" +
-      "function tile(rt,val,sub,cor){return \"<div style='background:none;padding:2px 0;'>\"+" +
-      "\"<div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;'>\"+rt+\"</div>\"+" +
-      "\"<div style='font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:4px;'>\"+val+\"</div>\"+" +
-      "\"<div style='font-size:11px;color:\"+(cor||'#a9a4b5')+\";'>\"+sub+\"</div></div>\";}" +
+      // os dois números do Progresso são cartões de verdade, senão viram texto
+      // solto no meio do fundo (a unidade e a variação entram menores, pro
+      // número grande ser a primeira coisa que o olho pega)
+      "function tile(rt,val,sub,cor){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:13px 14px;'>\"+" +
+      "\"<div style='display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a8695;text-transform:uppercase;'>\"+rt+\"</div>\"+" +
+      "\"<div style='font-size:25px;font-weight:800;letter-spacing:-.02em;margin-top:8px;line-height:1.05;'>\"+val+\"</div>\"+" +
+      "\"<div style='font-size:11px;font-weight:700;margin-top:4px;line-height:1.35;color:\"+(cor||'#a9a4b5')+\";'>\"+sub+\"</div></div>\";}" +
+      "function un(u){return \"<small style='font-size:14px;font-weight:800;margin-left:3px;color:#a9a4b5;'>\"+u+'</small>';}" +
       "var t1;if(pks.length){var pUlt=+pz[pks[pks.length-1]];var pd=Math.round((pUlt-(+pz[pks[0]]))*10)/10;" +
-      "t1=tile(icx(ICO.peso,13)+' Peso',String(pUlt).replace('.',',')+' kg',(pd>0?'+':'')+String(pd).replace('.',',')+' kg desde o início',pd<0?'#4ade80':pd>0?'#f87171':'#a9a4b5');}" +
-      "else{t1=tile(icx(ICO.peso,13)+' Peso','—','registre na aba Evolução');}" +
-      "el.innerHTML=t1+tile(icx(ICO.cal,13)+' Treinos no mês',noMes,Object.keys(pf).length+' no total');}" +
+      "t1=tile(icx(ICO.peso,13)+'Peso',String(pUlt).replace('.',',')+un('kg')," +
+      "pd?(pd>0?'+':'')+String(pd).replace('.',',')+' kg desde o início':'igual ao começo',pd<0?'#4ade80':pd>0?'#f87171':'#a9a4b5');}" +
+      "else{t1=tile(icx(ICO.peso,13)+'Peso','—','registre na aba Evolução');}" +
+      /* embaixo dos treinos do mês vinha "N no total", que no primeiro mês
+       * repetia o número de cima ("2" e "2 no total"). Agora vem a comparação
+       * com o mês passado, que é o que diz se ele está melhorando. */
+      "var MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
+      "var dAnt=new Date(agora.getFullYear(),agora.getMonth()-1,1);" +
+      "var antK=dAnt.getFullYear()+'-'+String(dAnt.getMonth()+1).padStart(2,'0');" +
+      /* o mês corrente quase sempre está pela metade, então comparar com o mês
+       * passado INTEIRO diria "-6 que em julho" no dia 20 de agosto — desanima
+       * quem está indo bem. A conta usa o mesmo pedaço: até o mesmo dia. */
+      "var diaHj=agora.getDate();" +
+      "var noAnt=Object.keys(pf).filter(function(k){return k.slice(0,7)===antK&&+k.slice(8,10)<=diaHj;}).length;" +
+      "var tot=Object.keys(pf).length;var s2,c2;" +
+      "if(noAnt){var dif=noMes-noAnt;var mn=MES3[dAnt.getMonth()];" +
+      "s2=dif?(dif>0?'+':'')+dif+' que em '+mn+' até aqui':'igual a '+mn+' até aqui';" +
+      "c2=dif>0?'#4ade80':dif<0?'#f87171':'#a9a4b5';}" +
+      "else{s2=tot>noMes?tot+' no total':'seu primeiro mês';}" +
+      "el.innerHTML=t1+tile(icx(ICO.cal,13)+'Treinos no mês',noMes,s2,c2);}" +
       // XP calculado dos DADOS (nunca do #xpNum — o count-up anima o texto)
       "function xpDados(){var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
       "var nq=Object.keys(L('ptqa',{})).length;return Object.keys(pf).length*10+nh*2+nq*20;}" +
