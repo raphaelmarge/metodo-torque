@@ -255,6 +255,26 @@
           return;
         }
         if (!bom && todos401) {
+          /* Prova cruzada: manda o MESMO cabeçalho pra outra função. Se ela
+           * responder, a credencial serve — e o 401 é configuração daquela
+           * função (o "Verify JWT" do portão), não da sua conta. Foi assim que
+           * se descobriu que só a chat-envia recusava. */
+          return fetch(cfg.url + "/functions/v1/envia-email", {
+            method: "POST",
+            headers: { apikey: cfg.anonKey, Authorization: "Bearer " + jwt, "Content-Type": "application/json" },
+            body: JSON.stringify({ acao: "ping" }),
+          }).then(function (r) { return r.status; }, function () { return 0; }).then(function (outra) {
+            anota("prova cruzada (envia-email): HTTP " + outra);
+            if (outra >= 200 && outra < 400) {
+              linha("❌", "A chat-envia está recusando no portão, com a credencial CERTA",
+                "A mesma credencial passou na função envia-email (HTTP " + outra + ") e foi barrada na chat-envia (" + comoFoi + ") — então não é a sua conta nem a chave do site.",
+                "Publique a chat-envia de novo com o \u201cVerify JWT\u201d DESLIGADO: abra www.torqueon.com.br/funcoes.html, copie o código atual (ele confere sozinho quem está chamando) e no Supabase deixe a chavinha Verify JWT desligada nos Details da função.");
+              return;
+            }
+            vereditoCredencial();
+          });
+        }
+        function vereditoCredencial() {
           if (chaveMorta) {
             linha("⚠️", "A função também recusou, pelo mesmo motivo", "É a chave pública, não a chat-envia (" + comoFoi + ").",
               "Resolva a chave acima primeiro; depois rode este diagnóstico de novo.");
@@ -269,7 +289,6 @@
           }
           linha("❌", "O Supabase recusou a credencial", "Nem a chave pública nem a sua sessão passaram pelo portão das funções (" + comoFoi + ") — republicar a chat-envia não muda isso.",
             "No Supabase: Project Settings → API Keys. Se as 'Legacy API keys' estiverem desativadas, reative; ou copie a 'Publishable key' (sb_publishable_…) e me mande pra eu trocar no site.");
-          return;
         }
         if (bom) {
           var d = bom.json;

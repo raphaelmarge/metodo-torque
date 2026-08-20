@@ -6,7 +6,8 @@
 //
 // Como instalar (uma vez):
 //   1. Rode o bloco PUSH DE VERDADE do supabase-setup.sql.
-//   2. Deploy desta função com o nome: push-envia (Verify JWT LIGADO).
+//   2. Deploy desta função com o nome: push-envia. Pode DESLIGAR o "Verify
+//      JWT": ela confere sozinha quem está chamando.
 //   3. Secrets (as duas chaves são um PAR — trocar uma sem a outra quebra o push):
 //        VAPID_PUBLIC_KEY  = BLesSk80OGEOnbJj9iqH2_KHPIhdN0GsGhVpuVWx4O7YqvtV_P961-hqBtqOHw3SWp3GnwDbpauRyEcRVFmdb-I
 //        VAPID_PRIVATE_KEY = (a metade secreta desta pública — o Raphael recebeu na conversa;
@@ -59,15 +60,31 @@ function sb(path: string, init: RequestInit = {}): Promise<Response> {
 }
 
 // só usuário logado (equipe/personal) ou o cron com a service key podem disparar push —
-// a anonKey pública sozinha não passa (evita spam nas notificações dos alunos)
-function chamadorConfiavel(req: Request): boolean {
+// a chave pública sozinha não passa (evita spam nas notificações dos alunos)
+/* Valida o token DE VERDADE, perguntando pro próprio Supabase quem é o dono
+ * dele. Antes a função só lia o miolo do JWT: com o "Verify JWT" desligado,
+ * qualquer um forjava um token e passava; e com ele ligado, projeto que trocou
+ * as chaves de assinatura passou a recusar até token BOM, e a função nem
+ * rodava. Assim funciona nos dois casos, sem abrir a porta. */
+async function usuarioValidado(req: Request): Promise<string> {
+  const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  const anon = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  if (!jwt || (anon && jwt === anon)) return ""; // chave pública não é usuário
   try {
-    const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
-    const corpo = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return (corpo.role === "authenticated" && !!corpo.sub) || corpo.role === "service_role";
-  } catch {
-    return false;
-  }
+    const r = await fetch((Deno.env.get("SUPABASE_URL") || "") + "/auth/v1/user", {
+      headers: { Authorization: "Bearer " + jwt, apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "" },
+    });
+    if (!r.ok) return "";
+    const u = await r.json();
+    return (u && u.id) || "";
+  } catch { return ""; }
+}
+
+async function chamadorConfiavel(req: Request): Promise<boolean> {
+  const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  const srv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (srv && jwt === srv) return true;         // o cron chama com a service key
+  return !!(await usuarioValidado(req));
 }
 
 async function envia(subRow: any, titulo: string, corpo: string): Promise<boolean> {
@@ -96,7 +113,7 @@ Deno.serve(async (req: Request) => {
   if (corpo.acao === "ping") {
     return json({ ok: true, vapid: !!(pub && priv) });
   }
-  if (!chamadorConfiavel(req)) return json({ erro: "Entre na sua conta para enviar notificações." }, 401);
+  if (!(await chamadorConfiavel(req))) return json({ erro: "Entre na sua conta para enviar notificações." }, 401);
   if (!pub || !priv) return json({ erro: "Configure VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY nos Secrets." }, 502);
   webpush.setVapidDetails("mailto:contato@torquefit.com.br", pub, priv);
 

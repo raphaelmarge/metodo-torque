@@ -99,7 +99,13 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
 
 - `supabase-setup.sql`: TODO idempotente. Depois de alterar, o Raphael precisa
   rodar de novo (ele copia de www.torqueon.com.br/sql.html).
-- Edge Functions em `supabase/functions/`: meta-webhook (Verify JWT OFF),
+- Edge Functions: **todas com Verify JWT OFF** (a partir da v494). Cada função
+  que exige login valida o token ela mesma (`usuarioValidado`/`usuarioDoToken`
+  → `GET /auth/v1/user` com a service key) em vez de confiar no portão. Motivo:
+  ler só o miolo do JWT deixava passar token forjado quando o Verify JWT estava
+  desligado, e no projeto do Raphael o portão passou a recusar até token BOM
+  (401 INVALID_CREDENTIALS só na chat-envia, enquanto a envia-email respondia
+  200 com a MESMA credencial). Lista em `supabase/functions/`: meta-webhook,
   chat-envia, whatsapp, envia-email (Resend), pagarme, push-envia.
   Ele publica copiando de www.torqueon.com.br/funcoes.html.
 - Nunca coloque service key no site — só anonKey (`assets/cloud-config.js`).

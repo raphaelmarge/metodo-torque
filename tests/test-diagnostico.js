@@ -57,13 +57,23 @@ const CENARIOS = [
     naoEspera: [/Falta a chave da IA/],
   },
   {
-    /* O 401 aqui vem do PORTÃO do Supabase: a função nem roda. Sem login, não
-     * dá pra concluir nada sobre ela — e foi mandando "republique" nesta linha
-     * que o Raphael publicou a chat-envia três vezes à toa. */
+    /* O 401 aqui vem do PORTÃO do Supabase: a função nem roda. Sem login e sem
+     * outra função respondendo, não dá pra concluir nada sobre ela — e foi
+     * mandando "republique" nesta linha que o Raphael publicou 3 vezes à toa. */
     nome: "portão recusa a chamada e não há login (não dá pra culpar a função)",
     resposta: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
     espera: [/Não deu pra testar a chat-envia sem login/, /não republique/i, /Entre na sua conta/],
     naoEspera: [/chat-envia publicada/, /Verify JWT/, /publique de novo/],
+  },
+  {
+    /* Aconteceu de verdade: a MESMA credencial passou na envia-email (200) e
+     * foi barrada na chat-envia (401). Isso prova que a conta e a chave estão
+     * boas e que o problema é o Verify JWT daquela função. */
+    nome: "só a chat-envia recusa; outra função aceita a mesma credencial",
+    resposta: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
+    email: { status: 200, body: { ok: true, chaveConfigurada: true } },
+    espera: [/recusando no portão, com a credencial CERTA/, /Verify JWT.{0,4} DESLIGADO/, /envia-email/],
+    naoEspera: [/Não deu pra testar a chat-envia sem login/, /Legacy API keys/],
   },
 ];
 
@@ -176,7 +186,9 @@ async function testaAjudantes() {
       body: JSON.stringify((c.rest && c.rest.body) === undefined ? null : (c.rest && c.rest.body) || null),
     }));
     // funções que o diagnóstico também pinga: fora do foco de cada cenário
-    await ctx.route("**/functions/v1/envia-email", (r) => r.fulfill({ status: 404, body: "nao publicada" }));
+    await ctx.route("**/functions/v1/envia-email", (r) => r.fulfill(c.email
+      ? { status: c.email.status, contentType: "application/json", body: JSON.stringify(c.email.body) }
+      : { status: 404, body: "nao publicada" }));
     await ctx.route("**/functions/v1/push-envia", (r) => r.fulfill({ status: 404, body: "nao publicada" }));
     const p = await ctx.newPage();
     p.on("pageerror", (e) => erros.push(e.message));
