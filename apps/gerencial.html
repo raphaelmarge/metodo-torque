@@ -98,6 +98,7 @@
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/erro-funcao.js"></script>
+<script src="../assets/funcao-nuvem.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="store.js"></script>
 <script>
@@ -461,23 +462,9 @@
     para = para.trim().toLowerCase();
     var texto = resumoFechamento(mes);
     $("fechStatus").textContent = "⏳ Enviando…";
-    nuvem.client.auth.getSession().then(function (s) {
-      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
-      if (!tok) return { erro: self.MT_ERRO_FUNCAO.semSessao("O envio do fechamento") };
-      return fetch(cfgN.url + "/functions/v1/envia-email", {
-        method: "POST",
-        headers: { apikey: cfgN.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
-        body: JSON.stringify({ acao: "enviar", para: para, assunto: texto.split("\n")[0],
-          html: "<pre style='font-family:system-ui,sans-serif;font-size:14px;line-height:1.7;'>" + texto.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</pre>" }),
-      }).then(function (r) {
-        return r.text().then(function (t) {
-          var j = null;
-          try { j = JSON.parse(t); } catch (e) {}
-          if (r.status >= 200 && r.status < 300 && j) return j;
-          return { erro: self.MT_ERRO_FUNCAO("envia-email", r.status, t, j) };
-        });
-      });
-    }).then(function (d) {
+    self.MT_FUNCAO.chama(nuvem.client, "envia-email", { acao: "enviar", para: para, assunto: texto.split("\n")[0],
+      html: "<pre style='font-family:system-ui,sans-serif;font-size:14px;line-height:1.7;'>" + texto.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</pre>" }, "O envio do fechamento")
+      .then(function (d) {
       $("fechStatus").textContent = d && d.ok ? "✅ Fechamento enviado pra " + para + "!"
         : "⚠️ " + ((d && d.erro) || "Publique a função envia-email (torqueon.com.br/funcoes.html) com a RESEND_API_KEY.");
     }, function () { $("fechStatus").textContent = "⚠️ Sem conexão com a função envia-email agora."; });

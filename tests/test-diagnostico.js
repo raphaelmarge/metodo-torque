@@ -67,8 +67,8 @@ const CENARIOS = [
   },
 ];
 
-/* ---------- tradutor de erro de função (assets/erro-funcao.js) ---------- */
-{
+/* ---------- tradutor de erro + crachá do login (helpers de assets/) ---------- */
+async function testaAjudantes() {
   console.log("Tradutor de erro de Edge Function:");
   const raiz = {};
   const src = fs.readFileSync(path.join(RAIZ, "assets/erro-funcao.js"), "utf8");
@@ -94,9 +94,73 @@ const CENARIOS = [
   const semSessao = T.semSessao("A IA de treino");
   ok(/sess/i.test(semSessao) && /entre de novo/i.test(semSessao) && /IA de treino/.test(semSessao),
     "recado de sessão caída diz o que fazer e o que parou de funcionar");
+
+  /* ---------- crachá que vence (assets/funcao-nuvem.js) ----------
+   * "Funciona por um tempo e depois dá erro" é o token do login vencendo: ele
+   * vale ~1 hora e o painel fica aberto o dia todo. O chamador tem que renovar
+   * antes de chamar e tentar de novo quando o Supabase recusar. */
+  console.log("Crachá do login que vence:");
+  raiz.MT_CLOUD = { url: "https://projeto.supabase.co", anonKey: "anon-key" };
+  new Function("self", fs.readFileSync(path.join(RAIZ, "assets/funcao-nuvem.js"), "utf8"))(raiz);
+  const F = raiz.MT_FUNCAO;
+  const jwt = (segundos) => "a." + Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + segundos })).toString("base64url") + ".b";
+
+  const clienteFake = (tok, novoTok) => {
+    const c = { renovou: 0 };
+    c.auth = {
+      getSession: () => Promise.resolve({ data: { session: tok ? { access_token: tok } : null } }),
+      refreshSession: () => { c.renovou++; return Promise.resolve({ data: { session: novoTok ? { access_token: novoTok } : null } }); },
+    };
+    return c;
+  };
+
+  const fetchOrig = global.fetch;
+  const respostas = [];
+  const pedidos = [];
+  global.fetch = (url, opts) => {
+    pedidos.push({ url: String(url), auth: opts.headers.Authorization });
+    const r = respostas.shift() || { status: 200, body: '{"ok":true}' };
+    return Promise.resolve({ status: r.status, text: () => Promise.resolve(r.body) });
+  };
+
+  const cVale = clienteFake(jwt(3600), "novo");
+  ok((await F.token(cVale)) === (await cVale.auth.getSession()).data.session.access_token && cVale.renovou === 0,
+    "crachá longe de vencer é usado como está, sem renovar à toa");
+
+  const cVence = clienteFake(jwt(30), "cracha-novo");
+  ok((await F.token(cVence)) === "cracha-novo" && cVence.renovou === 1,
+    "crachá perto de vencer (menos de 2 min) é renovado antes de chamar");
+
+  const cSem = clienteFake("", "");
+  ok((await F.token(cSem)) === "", "sem sessão e sem renovação possível, devolve vazio");
+
+  pedidos.length = 0;
+  respostas.push({ status: 401, body: '{"message":"Invalid credentials","code":"INVALID_CREDENTIALS"}' });
+  respostas.push({ status: 200, body: '{"ok":true,"texto":"pronto"}' });
+  const c401 = clienteFake(jwt(3600), "cracha-renovado");
+  const recuperou = await F.chama(c401, "chat-envia", { acao: "ping" }, "A IA de treino");
+  ok(recuperou.ok && recuperou.texto === "pronto" && c401.renovou === 1 && pedidos.length === 2,
+    "401 no meio do caminho: renova o crachá e refaz a chamada sozinho (o humano não vê erro)");
+  ok(pedidos[1].auth === "Bearer cracha-renovado", "a segunda tentativa vai com o crachá novo");
+
+  respostas.length = 0;
+  respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' });
+  respostas.push({ status: 401, body: '{"message":"Invalid credentials"}' });
+  const cMorto = clienteFake(jwt(3600), "outro");
+  const desistiu = await F.chama(cMorto, "chat-envia", { acao: "ping" }, "A IA de treino");
+  ok(/sess/i.test(desistiu.erro) && !/ANTHROPIC_API_KEY/.test(desistiu.erro),
+    "quando nem renovando resolve, o recado é sessão caída — não 'publique a função'");
+
+  respostas.length = 0;
+  respostas.push({ status: 404, body: '{"code":404,"message":"Requested function was not found"}' });
+  const semFn = await F.chama(clienteFake(jwt(3600), "x"), "chat-envia", { acao: "ping" }, "A IA de treino");
+  ok(/não está publicada/.test(semFn.erro), "404 continua sendo função ausente, e não sessão");
+
+  global.fetch = fetchOrig;
 }
 
 (async () => {
+  await testaAjudantes();
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
   console.log("Diagnóstico da nuvem:");
 

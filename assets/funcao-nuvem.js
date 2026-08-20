@@ -1,0 +1,107 @@
+/* TORQUE ON — chamador de Edge Function com token sempre fresco.
+ *
+ * Motivo de existir: "funciona por um tempo e depois dá erro". O crachá de
+ * login (access_token) do Supabase vale cerca de 1 hora. Com o painel aberto o
+ * dia todo, ou com o sistema aberto em dois lugares ao mesmo tempo (o refresh
+ * de um invalida o do outro), a hora passa e a próxima chamada leva 401 — e
+ * antes isso aparecia como "publique a chat-envia", que não tem nada a ver.
+ *
+ * O que este arquivo faz:
+ *   1. renova o crachá ANTES de chamar, quando ele está perto de vencer;
+ *   2. se mesmo assim vier 401/403, renova e tenta MAIS UMA vez;
+ *   3. só então desiste, com o recado honesto de sessão caída.
+ * Assim o professor não vê erro nenhum no caso comum — o sistema se recupera
+ * sozinho —, e quando não dá pra recuperar, ele ouve a verdade.
+ *
+ * Uso: MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "ia_treino" }, "A IA de treino")
+ *      → Promise de { ...resposta } ou { erro: "recado pro humano" }
+ */
+(function (raiz) {
+  var MARGEM = 120; // renova quando falta menos de 2 minutos
+
+  // segundos que faltam pro crachá vencer; null quando não dá pra saber
+  function faltaPra(tok) {
+    try {
+      var p = String(tok).split(".")[1];
+      if (!p) return null;
+      var corpo = JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/")));
+      if (!corpo || !corpo.exp) return null;
+      return corpo.exp - Math.floor(Date.now() / 1000);
+    } catch (e) { return null; }
+  }
+
+  function renova(client) {
+    if (!client || !client.auth || typeof client.auth.refreshSession !== "function") return Promise.resolve("");
+    return client.auth.refreshSession().then(function (r) {
+      return (r && r.data && r.data.session && r.data.session.access_token) || "";
+    }, function () { return ""; });
+  }
+
+  /* Crachá pronto pra usar: renova sozinho quando está pra vencer.
+   * Devolve "" quando não há sessão — quem chama tem que avisar o humano. */
+  function token(client) {
+    if (!client || !client.auth || typeof client.auth.getSession !== "function") return Promise.resolve("");
+    return client.auth.getSession().then(function (s) {
+      var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      if (!tok) return renova(client);
+      var falta = faltaPra(tok);
+      if (falta === null || falta > MARGEM) return tok; // ainda vale (ou não dá pra ler: usa como está)
+      return renova(client).then(function (novo) {
+        // renovação falhou mas o crachá ainda não venceu: tenta com o que tem
+        return novo || (falta > 0 ? tok : "");
+      });
+    }, function () { return ""; });
+  }
+
+  function traduz(nome, status, texto, json) {
+    if (raiz.MT_ERRO_FUNCAO) return raiz.MT_ERRO_FUNCAO(nome, status, texto, json);
+    return "A função " + nome + " não respondeu como esperado (HTTP " + status + ").";
+  }
+  function semSessao(oQue) {
+    if (raiz.MT_ERRO_FUNCAO) return raiz.MT_ERRO_FUNCAO.semSessao(oQue);
+    return "Sua sessão da nuvem caiu — saia da conta e entre de novo.";
+  }
+
+  function chama(client, nome, corpo, oQue) {
+    var cfg = raiz.MT_CLOUD || {};
+    if (!cfg.url) return Promise.resolve({ erro: "Este aparelho está sem a configuração da nuvem — recarregue a página." });
+    var url = cfg.url + "/functions/v1/" + nome;
+
+    function envia(tok) {
+      return fetch(url, {
+        method: "POST",
+        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+        body: JSON.stringify(corpo),
+      }).then(function (r) {
+        /* Ler como TEXTO primeiro: resposta que não é JSON (erro do portão,
+         * HTML de erro, função antiga) fazia o r.json() estourar e virar
+         * "sem conexão" — mentira que mandava procurar defeito na internet. */
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) {}
+          var ok = r.status >= 200 && r.status < 300;
+          var d = (ok && j) ? j : { erro: traduz(nome, r.status, t, j) };
+          d.__status = r.status;
+          return d;
+        });
+      });
+    }
+
+    return token(client).then(function (tok) {
+      if (!tok) return { erro: semSessao(oQue), __status: 401 };
+      return envia(tok).then(function (d) {
+        if (d.__status !== 401 && d.__status !== 403) return d;
+        // crachá recusado no meio do caminho: renova e tenta MAIS UMA vez
+        return renova(client).then(function (novo) {
+          if (!novo) return { erro: semSessao(oQue), __status: d.__status };
+          return envia(novo).then(function (d2) {
+            if (d2.__status === 401 || d2.__status === 403) return { erro: semSessao(oQue), __status: d2.__status };
+            return d2;
+          });
+        });
+      });
+    });
+  }
+
+  raiz.MT_FUNCAO = { chama: chama, token: token, faltaPra: faltaPra };
+})(typeof self !== "undefined" ? self : this);

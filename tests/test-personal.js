@@ -5126,18 +5126,40 @@ async function abaPt(p, a) {
       const semSessao = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
       const chamouSemSessao = chamou;
 
-      // 2) com sessão, mas o portão do Supabase recusa a credencial
-      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      // 2) crachá recusado no meio do caminho, mas a renovação funciona:
+      //    o sistema tem que se recuperar sozinho, sem erro nenhum na tela
+      let tentativas = 0;
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: {
+        getSession: () => Promise.resolve({ data: { session: { access_token: "tok-velho" } } }),
+        refreshSession: () => Promise.resolve({ data: { session: { access_token: "tok-novo" } } }),
+      } } });
+      const peito2 = self.MT_EXERCICIOS.find((c) => c.g === "Peito").n;
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/chat-envia")) {
+          tentativas++;
+          if (tentativas === 1) return Promise.resolve({ status: 401, text: () => Promise.resolve('{"message":"Invalid credentials","code":"INVALID_CREDENTIALS"}') });
+          const plano = { fichas: [{ titulo: "A", itens: [{ nome: peito2, series: 3, reps: "10", descanso: 60 }] }], resumo: "ok" };
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, texto: JSON.stringify(plano) })) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      const recuperou = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
+
+      // 3) crachá recusado E renovação sem sucesso: aí é sessão caída mesmo
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: {
+        getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }),
+        refreshSession: () => Promise.resolve({ data: { session: null } }),
+      } } });
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/chat-envia")) {
           const corpo = '{"message":"Invalid credentials","code":"INVALID_CREDENTIALS"}';
-          return Promise.resolve({ status: 401, ok: false, text: () => Promise.resolve(corpo) });
+          return Promise.resolve({ status: 401, text: () => Promise.resolve(corpo) });
         }
         return window.__fetchOrig(url, opts);
       };
       const portao = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
 
-      // 3) função mesmo ausente: aí sim manda publicar
+      // 4) função mesmo ausente: aí sim manda publicar
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/chat-envia")) {
           return Promise.resolve({ status: 404, ok: false, text: () => Promise.resolve('{"code":404,"message":"Requested function was not found"}') });
@@ -5148,13 +5170,16 @@ async function abaPt(p, a) {
 
       window.fetch = window.__fetchOrig;
       window.MTStore.cloud = window.__cloudOrig;
-      return { semSessao: semSessao.erro || "", chamouSemSessao, portao: portao.erro || "", ausente: ausente.erro || "" };
+      return { semSessao: semSessao.erro || "", chamouSemSessao, portao: portao.erro || "",
+        ausente: ausente.erro || "", recuperou: !!recuperou.ok, tentativas };
     });
     ok(/sess/i.test(honesto.semSessao) && /entre de novo/i.test(honesto.semSessao) && honesto.chamouSemSessao === 0,
       "✨ sessão caída: a IA manda entrar de novo e nem chama a função");
     ok(!/ANTHROPIC_API_KEY/.test(honesto.semSessao), "e não manda procurar a chave da IA quando é a sessão");
-    ok(/credencial/i.test(honesto.portao) && /nem chegou a rodar/.test(honesto.portao),
-      "✨ 401 do portão do Supabase é explicado como credencial, não como função quebrada");
+    ok(honesto.recuperou && honesto.tentativas === 2,
+      "✨ crachá vencido no meio do caminho: renova e refaz a chamada sozinho (era o 'funciona um tempo e depois dá erro')");
+    ok(/sess/i.test(honesto.portao) && /entre de novo/i.test(honesto.portao),
+      "✨ quando nem renovando resolve, o recado é sessão caída");
     ok(!/ANTHROPIC_API_KEY/.test(honesto.portao) && !/publique a chat-envia/i.test(honesto.portao),
       "e o 401 não manda mais republicar a chat-envia (foi o que fez o Raphael republicar 3 vezes à toa)");
     ok(/não está publicada/.test(honesto.ausente) && /funcoes\.html/.test(honesto.ausente),

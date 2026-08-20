@@ -26,6 +26,7 @@ var CORE = [
   "assets/access.js",
   "assets/cloud-config.js",
   "assets/erro-funcao.js",
+  "assets/funcao-nuvem.js",
   "assets/vendor/supabase.js",
   "assets/vendor/qrcode.js",
   "docs/gate.js",
