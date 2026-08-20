@@ -186,6 +186,13 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
     }
     t(/language sql volatile\nset search_path = public/.test(sql),
       "a geradora do verify token fixa o search_path, como todas as outras");
+    // redundância: sobrescrever ou apagar um registro do `dados` guarda o valor
+    // anterior — foi a falta disso que tornou irrecuperável a base de um professor
+    t(/create table if not exists public\.dados_hist/.test(sql) &&
+      /before update or delete on public\.dados/.test(sql),
+      "todo update/delete no `dados` guarda a versão anterior no dados_hist");
+    t(/old\.valor is distinct from new\.valor/.test(sql) && /limit 10/.test(sql),
+      "o histórico só grava quando o valor muda de verdade, e guarda as 10 últimas versões");
     t(/app_aluno_ativo\(t\)/.test(sql) && /revogado_em is null/.test(sql),
       "o app_aluno_ativo só devolve academia enquanto o acesso vale");
     t(/and login <> '' and revogado_em is null/.test(sql),

@@ -2649,6 +2649,55 @@ async function abaPt(p, a) {
     ok(!fotoSuja, "foto de perfil maliciosa não é guardada na ficha do aluno");
     await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig; });
   }
+  /* apps congelados no formato antigo (sem `dados` na nuvem): o painel avisa e
+   * o botão do aviso republica — antes o professor só descobria pelo aluno.
+   * Roda num studio mínimo (e devolve o de antes no fim) pra prova ser exata:
+   * 1 congelado entra, 1 pacote sai. */
+  {
+    const cong = await p.evaluate(async () => {
+      const S = window.MTStore;
+      const guarda = localStorage.getItem("mtapp:ptStudio");
+      const orig = S.cloud;
+      const st = JSON.parse(guarda);
+      S.write("ptStudio", Object.assign({}, st, {
+        alunos: [{ id: "cg1", nome: "Congelado Um", ativo: true, appTokenP: "tok-cong" }],
+      }));
+      let upserts = 0;
+      // consulta encadeável: qualquer .eq/.order/.limit devolve ela mesma, e o
+      // await resolve — assim nenhum outro pedaço da página tropeça no mock
+      const cadeia = (resp) => {
+        const o = { eq: () => o, neq: () => o, gt: () => o, gte: () => o, lt: () => o, lte: () => o,
+          is: () => o, in: () => o, ilike: () => o, not: () => o, order: () => o, limit: () => o,
+          single: () => o, maybeSingle: () => o,
+          then: (ok, erro) => Promise.resolve(resp).then(ok, erro) };
+        return o;
+      };
+      S.cloud = () => ({ aid: "x", client: {
+        auth: { getSession: () => Promise.resolve({ data: {} }) },
+        from: () => ({
+          // a conferência pede só token + ver — nunca o HTML de 200 KB
+          select: (cols) => cadeia(/token/.test(cols) && /ver/.test(cols)
+            ? { data: [{ token: "tok-cong", ver: null }] } : { data: [] }),
+          upsert: (l) => { upserts += (l || []).length; return cadeia({}); },
+          insert: () => cadeia({}), update: () => cadeia({}), delete: () => cadeia({}),
+        }),
+      } });
+      window.__congelados.checa();
+      await new Promise((r) => setTimeout(r, 250));
+      const box = document.getElementById("avisoCongelados");
+      const antes = { visivel: !box.hidden, texto: box.textContent };
+      document.getElementById("btnDescongela").click();
+      await new Promise((r) => setTimeout(r, 500));
+      const sumiu = box.hidden;
+      S.cloud = orig;
+      S.write("ptStudio", JSON.parse(guarda)); // devolve o studio dos outros testes
+      return { visivel: antes.visivel, texto: antes.texto, upserts, sumiu };
+    });
+    ok(cong.visivel && /formato antigo/.test(cong.texto) && /congelado/.test(cong.texto),
+      "painel avisa quando um app publicado está congelado no formato antigo");
+    ok(cong.upserts === 1, "o botão do aviso republica o congelado na hora (" + cong.upserts + " pacote)");
+    ok(cong.sumiu, "depois de republicar o aviso sai da tela");
+  }
   // abas do perfil (pra tela não ficar tumultuada)
   {
     const abas = await p.evaluate(() => {

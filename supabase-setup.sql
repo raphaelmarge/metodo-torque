@@ -757,6 +757,51 @@ $$;
 grant execute on function public.app_aluno_pedido(text, jsonb, numeric, text) to anon, authenticated;
 grant execute on function public.app_aluno_pedidos(text) to anon, authenticated;
 
+-- ==================== REDUNDÂNCIA: HISTÓRICO DO DADOS ====================
+-- Um celular com a lista curta sobrescreveu a base de alunos de um professor na
+-- nuvem, e o valor anterior não existia mais em lugar nenhum. Esta tabela guarda
+-- as últimas 10 versões de cada registro do `dados`: toda sobrescrita e toda
+-- exclusão deixam o valor ANTERIOR aqui antes de acontecer. RLS sem política de
+-- propósito — ninguém lê pelo site; restauração é operação de dono, via SQL:
+--   update dados d set valor = (select h.valor from dados_hist h
+--     where h.academia_id = d.academia_id and h.chave = d.chave
+--     order by h.id desc limit 1)
+--   where d.academia_id = '...' and d.chave = 'mtapp:ptStudio';
+-- Bloco idempotente.
+
+create table if not exists public.dados_hist (
+  id bigint generated always as identity primary key,
+  academia_id uuid not null,
+  chave text not null,
+  valor jsonb,
+  atualizado timestamptz,
+  guardado_em timestamptz not null default now()
+);
+alter table public.dados_hist enable row level security;
+create index if not exists dados_hist_busca
+  on public.dados_hist (academia_id, chave, id desc);
+
+create or replace function public.dados_guarda_hist()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'DELETE' or old.valor is distinct from new.valor then
+    insert into dados_hist (academia_id, chave, valor, atualizado)
+      values (old.academia_id, old.chave, old.valor, old.atualizado);
+    -- faxina: só as 10 versões mais recentes de cada chave ficam
+    delete from dados_hist h
+      where h.academia_id = old.academia_id and h.chave = old.chave
+        and h.id not in (select id from dados_hist
+                         where academia_id = old.academia_id and chave = old.chave
+                         order by id desc limit 10);
+  end if;
+  return coalesce(new, old);
+end $$;
+
+drop trigger if exists dados_hist_tg on public.dados;
+create trigger dados_hist_tg
+  before update or delete on public.dados
+  for each row execute function public.dados_guarda_hist();
+
 -- ==================== TELEMETRIA DE ERROS ====================
 -- As páginas do sistema reportam erros de JavaScript aqui; a página
 -- Auditoria e Saúde mostra o que quebrou. Bloco idempotente.
