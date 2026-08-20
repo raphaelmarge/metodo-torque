@@ -2534,6 +2534,23 @@ async function abaPt(p, a) {
   ok(/Peso.*de 90 pra 84 kg/.test(perfil.peso.replace(/\s+/g, " ")) || (/de 90/.test(perfil.peso) && /84 kg/.test(perfil.peso)), "gráfico de evolução do peso (90 → 84 kg)");
   ok(/% de gordura/.test(perfil.peso) && /-5,5|19,5/.test(perfil.peso), "gráfico de evolução da % de gordura");
   ok(/exercício/.test(perfil.ficha) || /Sem ficha/.test(perfil.ficha), "resumo da ficha atual presente");
+  /* Nascimento agora é DIGITADO (dd/mm/aaaa) com máscara, não mais o seletor de
+   * data — no iPad o seletor virava roda de mês/ano e o professor jurava que o
+   * dia tinha sumido. Por dentro continua AAAA-MM-DD. */
+  const nasc = await p.evaluate(() => {
+    const el = document.getElementById("pfNasc");
+    el.value = "20101980";
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    const mascara = el.value;
+    return { tipo: el.type, teclado: el.getAttribute("inputmode"), mascara,
+      iso: window.__nasc.daTela(mascara), volta: window.__nasc.praTela("1980-10-20"),
+      impossivel: window.__nasc.daTela("31/02/1990"), metade: window.__nasc.daTela("20/10") };
+  });
+  ok(nasc.tipo === "text" && nasc.teclado === "numeric",
+    "nascimento é digitado com teclado numérico (fim do seletor que escondia o dia no iPad)");
+  ok(nasc.mascara === "20/10/1980", "digitar 8 números ganha as barras sozinho (" + nasc.mascara + ")");
+  ok(nasc.iso === "1980-10-20" && nasc.volta === "20/10/1980", "dd/mm/aaaa vira AAAA-MM-DD por dentro, e volta");
+  ok(nasc.impossivel === null && nasc.metade === null, "31/02 e data pela metade não passam");
   // edita dados e salva
   await p.evaluate(() => {
     document.getElementById("pfObjetivo").value = "Hipertrofia";
@@ -2544,9 +2561,10 @@ async function abaPt(p, a) {
   const salvo = await p.evaluate(() => {
     const st = window.MTStore.read("ptStudio", {});
     const a = st.alunos.find((x) => x.ativo !== false);
-    return { obj: a.objetivo, pagto: a.pagto, email: a.email, altura: a.altura, prof: a.profissao, emerg: a.emergencia };
+    return { obj: a.objetivo, pagto: a.pagto, email: a.email, altura: a.altura, prof: a.profissao, emerg: a.emergencia, nasc: a.nasc };
   });
   ok(salvo.obj === "Hipertrofia" && salvo.pagto === "pix", "objetivo e método de pagamento salvos no cadastro");
+  ok(salvo.nasc === "1980-10-20", "o nascimento digitado salvou no formato interno (" + salvo.nasc + ")");
   ok(salvo.email === "joao@email.com" && salvo.altura === 178 && salvo.prof === "Engenheiro" && /Maria/.test(salvo.emerg), "cadastro completo salva e-mail, altura, profissão e emergência");
   // anamnese completa: PAR-Q + histórico + hábitos
   ok(await p.evaluate(() => /não respondido/.test(document.getElementById("pfParqBadge").textContent)), "badge avisa que o PAR-Q não foi respondido");

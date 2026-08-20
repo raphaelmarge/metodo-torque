@@ -1562,7 +1562,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <label style="font-size: 12px; margin: 0;">Nome<input id="pfNome" style="display:block; width: 200px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">WhatsApp<input id="pfZap" inputmode="numeric" style="display:block; width: 140px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">E-mail<input id="pfEmail" type="email" style="display:block; width: 200px; margin-top: 3px;"></label>
-      <label style="font-size: 12px; margin: 0;">Nascimento<input id="pfNasc" type="date" style="display:block; width: 150px; margin-top: 3px;"></label>
+      <label style="font-size: 12px; margin: 0;">Nascimento<input id="pfNasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="bday" style="display:block; width: 150px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Sexo<select id="pfSexo" style="display:block; width: 110px; margin-top: 3px;"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></label>
       <label style="font-size: 12px; margin: 0;">Altura (cm)<input id="pfAltura" inputmode="numeric" style="display:block; width: 90px; margin-top: 3px;"></label>
       <label style="font-size: 12px; margin: 0;">Profissão<input id="pfProfissao" style="display:block; width: 160px; margin-top: 3px;"></label>
@@ -2141,7 +2141,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("pfAcoesBtn").setAttribute("aria-expanded", "false");
     $("pfAcoesBtn").querySelector(".fseta").style.transform = "";
     $("pfNome").value = a.nome; $("pfZap").value = a.zap || "";
-    $("pfNasc").value = a.nasc || ""; $("pfValor").value = a.valor || "";
+    $("pfNasc").value = nascPraTela(a.nasc); $("pfValor").value = a.valor || "";
     $("pfMetaSem").value = +a.metaSemana || 3;
     $("pfModo").value = a.modo || "mes"; $("pfPagto").value = a.pagto || "";
     $("pfObjetivo").value = a.objetivo || ""; $("pfObs").value = a.obs || "";
@@ -2902,13 +2902,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (abaAlunos) abaAlunos.click();
   }
   $("pfFechar").addEventListener("click", fechaPerfil);
+  /* Nascimento DIGITADO (dd/mm/aaaa), não mais pelo seletor de data do sistema.
+   * No iPhone/iPad o seletor abre um calendário que, com um toque no cabeçalho,
+   * vira roda de mês/ano — e o professor jura que o DIA sumiu (aconteceu em
+   * teste real). Pra data de nascimento, rolar décadas também é pior que
+   * digitar 8 números. Por dentro nada muda: a.nasc segue AAAA-MM-DD. */
+  function nascPraTela(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+    return m ? m[3] + "/" + m[2] + "/" + m[1] : "";
+  }
+  function nascDaTela(txt) {
+    var d = String(txt || "").replace(/\D/g, "");
+    if (d.length !== 8) return null;
+    var dia = +d.slice(0, 2), mes = +d.slice(2, 4), ano = +d.slice(4);
+    if (ano < 1900 || ano > new Date().getFullYear()) return null;
+    var teste = new Date(ano, mes - 1, dia);
+    if (teste.getFullYear() !== ano || teste.getMonth() !== mes - 1 || teste.getDate() !== dia) return null;
+    return d.slice(4) + "-" + d.slice(2, 4) + "-" + d.slice(0, 2);
+  }
+  $("pfNasc").addEventListener("input", function () {
+    var d = this.value.replace(/\D/g, "").slice(0, 8);
+    this.value = d.length > 4 ? d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4)
+      : d.length > 2 ? d.slice(0, 2) + "/" + d.slice(2) : d;
+  });
+  window.__nasc = { praTela: nascPraTela, daTela: nascDaTela }; // testes
   $("pfSalvar").addEventListener("click", function () {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === perfilId; });
     if (!a) return;
     a.nome = $("pfNome").value.trim() || a.nome;
     a.zap = $("pfZap").value.replace(/\D/g, "");
-    a.nasc = $("pfNasc").value;
+    // data pela metade ou impossível não entra — e não apaga a que já existia
+    var nascNovo = nascDaTela($("pfNasc").value);
+    if ($("pfNasc").value.trim() === "") a.nasc = "";
+    else if (nascNovo) a.nasc = nascNovo;
+    else alert("Nascimento incompleto — use dia/mês/ano (ex.: 20/10/1980). O campo ficou como estava.");
     a.valor = parseFloat(($("pfValor").value || "").replace(",", ".")) || 0;
     a.modo = $("pfModo").value;
     a.pagto = $("pfPagto").value;
