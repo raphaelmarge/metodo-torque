@@ -203,6 +203,9 @@
       "html.claro [style*='color:#6e6a78']{color:#77718a!important}" +
       "html.claro [style*='color:var(--corc)']{color:var(--cor2)!important}" +
       "html.claro [style*='color:var(--cor-cl1)']{color:var(--cor2)!important}" +
+      // as opções do assistente ficam sobre um véu da cor: no claro o tom médio
+      // não dava contraste suficiente no texto pequeno, então usa o tom escuro
+      "html.claro [data-bop],html.claro [data-agics]{color:var(--cor-esc)!important}" +
       "html.claro .btnx[style*='background:var(--bg4)']{color:#241f31!important}" +
       /* ---------- treino guiado em tela cheia (estilo story) ----------
        * Tudo por CLASSE, nunca por style inline: os seletores do modo claro
@@ -1012,7 +1015,7 @@
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
       "for(var i=0;i<ini;i++)h+='<div></div>';" +
       "for(var d2=1;d2<=nd;d2++){var iso=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d2).slice(-2);var st2=pontos[iso];var hoje2=iso===isoHj();" +
-      "h+=\"<div data-agdia='\"+iso+\"' style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;\"+(AGSEL===iso?'background:linear-gradient(135deg,var(--cor),var(--corc));color:#fff;':(hoje2?'border:1px solid var(--corc);color:#fff;':'background:var(--bg4);border:1px solid var(--bg10);color:#d6d2df;'))+\"'>\"+d2+" +
+      "h+=\"<div data-agdia='\"+iso+\"' style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;\"+(AGSEL===iso?'background:linear-gradient(135deg,var(--cor),var(--corc));color:#fff;':(hoje2?'background:rgba(var(--cor-rgb),.14);border:1px solid var(--corc);font-weight:800;':'background:var(--bg4);border:1px solid var(--bg10);color:#d6d2df;'))+\"'>\"+d2+" +
       "(st2?\"<span style='width:5px;height:5px;border-radius:50%;margin-top:2px;background:\"+(st2==='confirmado'?'#4ade80':st2==='pedido'?'#fbbf24':'#f87171')+\";'></span>\":\"<span style='height:7px;'></span>\")+'</div>';}" +
       "h+='</div>';el.innerHTML=h;" +
       "document.getElementById('agAnt').onclick=function(){AGMES.setMonth(AGMES.getMonth()-1);pintaCal();};" +
@@ -1023,7 +1026,7 @@
       "box.innerHTML=\"<div style='font-size:13px;font-weight:800;margin-bottom:6px;'>\"+pd[2]+'/'+pd[1]+\"</div>\"+(l.length?l.map(function(x){" +
       "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
       "var rot=x.status==='confirmado'?'confirmado':x.status==='pedido'?'aguardando':'não deu';" +
-      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:#241b36;border:1px solid var(--cor);color:var(--cor-cl1);border-radius:14px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
+      "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:rgba(var(--cor-rgb),.14);border:1px solid var(--cor);color:var(--cor-cl1);border-radius:14px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
       "form.style.display=AGSEL>=isoHj()?'block':'none';}" +
       "(function(){var hs='';for(var hh=6;hh<=21;hh++){['00','30'].forEach(function(mm){hs+='<option>'+('0'+hh).slice(-2)+':'+mm+'</option>';});}document.getElementById('agHora').innerHTML=hs;})();" +
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
@@ -2095,14 +2098,14 @@
       "all.sort(function(a,b){return String(a.criado)<String(b.criado)?-1:1;});" +
       "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem!</div>\";return;}" +
       "el.innerHTML=all.map(function(m){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
-      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,var(--cor),var(--cor2))':(bot?'#241b36':'var(--bg4)'))+\";border:1px solid \"+(bot?'var(--cor)':'var(--bg11)')+\";border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:var(--corc);font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,var(--cor),var(--cor2))':(bot?'rgba(var(--cor-rgb),.14)':'var(--bg4)'))+\";border:1px solid \"+(bot?'var(--cor)':'var(--bg11)')+\";\"+(minha?'color:#fff;':'')+\"border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:var(--corc);font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
       "el.scrollTop=el.scrollHeight;" +
       "var ultP=null;all.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')ultP=m.criado;});" +
       "if(window.__chatDot)window.__chatDot(ultP);}" +
       "function carregaChat(){if(!NUVEM){pintaChat(L('ptchat',[]));return;}" +
       "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptchat',l);pintaChat(l);}else{pintaChat(L('ptchat',[]));}});}" +
       "function pintaChips(){var el=document.getElementById('botChips');if(!BOT){el.style.display='none';return;}" +
-      "el.innerHTML=BOT.ops.map(function(o,i){return \"<button data-bop='\"+i+\"' style='background:#241b36;border:1px solid var(--cor);color:var(--cor-cl1);border-radius:99px;padding:6px 13px;font-size:12px;font-family:inherit;cursor:pointer;'>\"+String(o.r).replace(/</g,'&lt;')+\"</button>\";}).join('');}" +
+      "el.innerHTML=BOT.ops.map(function(o,i){return \"<button data-bop='\"+i+\"' style='background:rgba(var(--cor-rgb),.14);border:1px solid var(--cor);color:var(--cor-cl1);border-radius:99px;padding:6px 13px;font-size:12px;font-family:inherit;cursor:pointer;'>\"+String(o.r).replace(/</g,'&lt;')+\"</button>\";}).join('');}" +
       "function botEscolhe(i){var o=BOT&&BOT.ops[i];if(!o)return;var h=botHist();h.push({de:'aluno-local',texto:o.r,criado:new Date().toISOString()});Sv('ptbotmsgs',h);" +
       "pintaChat(L('ptchat',[]));setTimeout(function(){botFala(o.t);pintaChat(L('ptchat',[]));},250);}" +
       "document.getElementById('botChips').addEventListener('click',function(e){var b=e.target.closest('[data-bop]');if(b)botEscolhe(+b.dataset.bop);});" +
