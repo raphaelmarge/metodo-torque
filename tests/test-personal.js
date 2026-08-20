@@ -1961,7 +1961,7 @@ async function abaPt(p, a) {
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/envia-email")) {
           chamadas.email = JSON.parse(opts.body);
-          return Promise.resolve({ status: 200, json: () => Promise.resolve({ ok: true }) });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve('{"ok":true}') });
         }
         return window.__fetchOrig(url, opts);
       };
@@ -5047,7 +5047,7 @@ async function abaPt(p, a) {
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/pagarme")) {
           corpo = JSON.parse(opts.body);
-          return Promise.resolve({ json: () => Promise.resolve({ ok: true, linkPagamento: "https://pagar.me/checkout/abc123" }) });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, linkPagamento: "https://pagar.me/checkout/abc123" })) });
         }
         return window.__fetchOrig(url, opts);
       };
@@ -5105,6 +5105,62 @@ async function abaPt(p, a) {
     ok(ia.pendente, "app do aluno fica pendente de republicação depois do treino da IA");
   }
 
+  /* A IA parou de mandar republicar a função quando o problema é credencial.
+   * Sem sessão, o cabeçalho virava "Bearer " vazio, o Supabase respondia 401
+   * "Invalid credentials" (sem o campo erro) e a tela concluía "publique a
+   * chat-envia com a ANTHROPIC_API_KEY" — o Raphael republicou 3 vezes à toa. */
+  {
+    const honesto = await p.evaluate(async () => {
+      const st = window.MTStore.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      window.__cloudOrig = window.MTStore.cloud;
+      window.__fetchOrig = window.fetch;
+      let chamou = 0;
+
+      // 1) sessão caída: nem chega a chamar a função
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: null } }) } } });
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/chat-envia")) { chamou++; return Promise.resolve({ status: 200, ok: true, text: () => Promise.resolve('{"ok":true,"texto":"x"}') }); }
+        return window.__fetchOrig(url, opts);
+      };
+      const semSessao = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
+      const chamouSemSessao = chamou;
+
+      // 2) com sessão, mas o portão do Supabase recusa a credencial
+      window.MTStore.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/chat-envia")) {
+          const corpo = '{"message":"Invalid credentials","code":"INVALID_CREDENTIALS"}';
+          return Promise.resolve({ status: 401, ok: false, text: () => Promise.resolve(corpo) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      const portao = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
+
+      // 3) função mesmo ausente: aí sim manda publicar
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/chat-envia")) {
+          return Promise.resolve({ status: 404, ok: false, text: () => Promise.resolve('{"code":404,"message":"Requested function was not found"}') });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      const ausente = await new Promise((res) => window.__iaTreino(id, "hipertrofia", "academia", res));
+
+      window.fetch = window.__fetchOrig;
+      window.MTStore.cloud = window.__cloudOrig;
+      return { semSessao: semSessao.erro || "", chamouSemSessao, portao: portao.erro || "", ausente: ausente.erro || "" };
+    });
+    ok(/sess/i.test(honesto.semSessao) && /entre de novo/i.test(honesto.semSessao) && honesto.chamouSemSessao === 0,
+      "✨ sessão caída: a IA manda entrar de novo e nem chama a função");
+    ok(!/ANTHROPIC_API_KEY/.test(honesto.semSessao), "e não manda procurar a chave da IA quando é a sessão");
+    ok(/credencial/i.test(honesto.portao) && /nem chegou a rodar/.test(honesto.portao),
+      "✨ 401 do portão do Supabase é explicado como credencial, não como função quebrada");
+    ok(!/ANTHROPIC_API_KEY/.test(honesto.portao) && !/publique a chat-envia/i.test(honesto.portao),
+      "e o 401 não manda mais republicar a chat-envia (foi o que fez o Raphael republicar 3 vezes à toa)");
+    ok(/não está publicada/.test(honesto.ausente) && /funcoes\.html/.test(honesto.ausente),
+      "✨ 404 continua mandando publicar a função — esse caso é real");
+  }
+
   // 🔁 mensalidade no cartão (assinatura Pagar.me com tokenização no navegador)
   console.log("Mensalidade no cartão:");
   {
@@ -5135,10 +5191,10 @@ async function abaPt(p, a) {
         if (u.includes("functions/v1/pagarme")) {
           const corpo = JSON.parse(opts.body);
           window.__cartaoChamadas.funcao.push(corpo);
-          if (corpo.acao === "chave_publica") return Promise.resolve({ json: () => Promise.resolve({ ok: true, publicKey: "pk_teste" }) });
-          if (corpo.acao === "assinar") return Promise.resolve({ json: () => Promise.resolve({ ok: true, assinaturaId: "sub_teste_1", status: "active" }) });
-          if (corpo.acao === "assinatura_status") return Promise.resolve({ json: () => Promise.resolve({ ok: true, status: "active", proximaCobranca: "2026-09-07T12:00:00Z", valor: 45000 }) });
-          return Promise.resolve({ json: () => Promise.resolve({ ok: true, status: "canceled" }) });
+          if (corpo.acao === "chave_publica") return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, publicKey: "pk_teste" })) });
+          if (corpo.acao === "assinar") return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, assinaturaId: "sub_teste_1", status: "active" })) });
+          if (corpo.acao === "assinatura_status") return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, status: "active", proximaCobranca: "2026-09-07T12:00:00Z", valor: 45000 })) });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, status: "canceled" })) });
         }
         return window.__fetchOrig(url, opts);
       };

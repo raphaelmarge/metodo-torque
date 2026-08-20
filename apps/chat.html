@@ -287,6 +287,7 @@
 
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
+<script src="../assets/erro-funcao.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="store.js"></script>
 <script>
@@ -332,12 +333,22 @@
   function funcao(corpo) {
     return nuvem.client.auth.getSession().then(function (s) {
       var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
+      // "Bearer " vazio leva 401 do portão do Supabase, sem o campo erro dentro
+      if (!tok) return { __status: 401, erro: self.MT_ERRO_FUNCAO.semSessao("O chat com a nuvem") };
       return fetch(MT_CLOUD.url + "/functions/v1/chat-envia", {
         method: "POST",
         headers: { apikey: MT_CLOUD.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
         body: JSON.stringify(corpo),
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) {}
+          var d = (r.status >= 200 && r.status < 300 && j) ? j : { erro: self.MT_ERRO_FUNCAO("chat-envia", r.status, t, j) };
+          d.__status = r.status;
+          return d;
+        });
       });
-    }).then(function (r) { return r.json().then(function (d) { d.__status = r.status; return d; }); });
+    });
   }
 
   // ---------- lista de conversas ----------

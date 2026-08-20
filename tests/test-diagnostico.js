@@ -57,12 +57,44 @@ const CENARIOS = [
     naoEspera: [/Falta a chave da IA/],
   },
   {
-    nome: "função recusa a chamada (Verify JWT)",
-    resposta: { status: 401, body: { message: "Invalid JWT" } },
-    espera: [/recusou a chamada/, /Verify JWT/],
-    naoEspera: [/chat-envia publicada/],
+    /* O 401 aqui vem do PORTÃO do Supabase: a função nem roda. Sem login, não
+     * dá pra concluir nada sobre ela — e foi mandando "republique" nesta linha
+     * que o Raphael publicou a chat-envia três vezes à toa. */
+    nome: "portão recusa a chamada e não há login (não dá pra culpar a função)",
+    resposta: { status: 401, body: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" } },
+    espera: [/Não deu pra testar a chat-envia sem login/, /não republique/i, /Entre na sua conta/],
+    naoEspera: [/chat-envia publicada/, /Verify JWT/, /publique de novo/],
   },
 ];
+
+/* ---------- tradutor de erro de função (assets/erro-funcao.js) ---------- */
+{
+  console.log("Tradutor de erro de Edge Function:");
+  const raiz = {};
+  const src = fs.readFileSync(path.join(RAIZ, "assets/erro-funcao.js"), "utf8");
+  new Function("self", src)(raiz);
+  const T = raiz.MT_ERRO_FUNCAO;
+
+  const gateway = T("chat-envia", 401, '{"message":"Invalid credentials","code":"INVALID_CREDENTIALS"}',
+    { message: "Invalid credentials", code: "INVALID_CREDENTIALS" });
+  ok(/credencial/i.test(gateway) && /sess/i.test(gateway), "401 do portão fala de credencial e sessão");
+  ok(!/ANTHROPIC_API_KEY/.test(gateway) && !/publique|republique/i.test(gateway.replace(/NÃO resolve/, "")),
+    "401 do portão NÃO manda publicar a função nem procurar a chave da IA");
+  ok(/nem chegou a rodar/.test(gateway), "e explica que a função nem chegou a rodar");
+
+  const semFuncao = T("chat-envia", 404, "", { code: 404, message: "Requested function was not found" });
+  ok(/não está publicada/.test(semFuncao) && /funcoes\.html/.test(semFuncao), "404 manda publicar a função");
+
+  const daFuncao = T("chat-envia", 502, "", { erro: "Secret ANTHROPIC_API_KEY não configurado." });
+  ok(daFuncao === "Secret ANTHROPIC_API_KEY não configurado.", "quando a própria função explica, o recado dela é mantido");
+
+  const boot = T("chat-envia", 546, "", { code: "BOOT_ERROR" });
+  ok(/BOOT_ERROR/.test(boot) && /Logs/.test(boot), "erro de boot manda olhar os Logs");
+
+  const semSessao = T.semSessao("A IA de treino");
+  ok(/sess/i.test(semSessao) && /entre de novo/i.test(semSessao) && /IA de treino/.test(semSessao),
+    "recado de sessão caída diz o que fazer e o que parou de funcionar");
+}
 
 (async () => {
   const b = await chromium.launch({ executablePath: EXEC, args: ["--no-sandbox"] });
@@ -165,7 +197,7 @@ const CENARIOS = [
     await p.waitForFunction(() => window.__diagPronto, null, { timeout: 15000 });
     const tec = await p.evaluate(() => document.getElementById("tecnica").textContent);
     const visivel = await p.evaluate(() => !document.getElementById("cxTecnica").hidden);
-    ok(visivel && /chat-envia ping: HTTP 500/.test(tec) && /BOOT_ERROR/.test(tec),
+    ok(visivel && /chat-envia ping \[chave pública\]: HTTP 500/.test(tec) && /BOOT_ERROR/.test(tec),
       "erro de deploy aparece no detalhe técnico, com status e corpo da resposta");
     const tela = await p.evaluate(() => document.getElementById("resultado").innerText);
     ok(/respondeu algo inesperado/.test(tela) && /Logs/.test(tela),

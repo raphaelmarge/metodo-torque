@@ -73,6 +73,7 @@
 </main>
 
 <script src="assets/cloud-config.js"></script>
+<script src="assets/erro-funcao.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script>
 (function () {
@@ -170,37 +171,76 @@
       anota("rest: erro " + e.message);
       linha("❌", "Não consegui falar com o Supabase", e.message, "Confira sua internet e se o projeto está ativo.");
     }).then(function () {
-      // 2) a chat-envia está publicada? o ping responde antes de qualquer login
-      return fetch(cfg.url + "/functions/v1/chat-envia", {
-        method: "POST",
-        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ acao: "ping" }),
-      }).then(function (r) {
-        return r.text().then(function (t) { return { status: r.status, texto: t }; });
-      }).then(function (res) {
-        anota("chat-envia ping: HTTP " + res.status + " " + corpoCurto(res.texto));
-        var d = null;
-        try { d = JSON.parse(res.texto); } catch (e) {}
+      /* 2) a chat-envia está publicada?
+       *
+       * Testa com CADA credencial, porque um 401 aqui não quer dizer que a
+       * função está quebrada: o portão do Supabase recusa antes de a função
+       * rodar. Ver só o 401 da chave pública fez o diagnóstico mandar
+       * "republique a função" três vezes seguidas pra um problema que era
+       * falta de login. */
+      function pingChat(rotulo, autorizacao) {
+        return fetch(cfg.url + "/functions/v1/chat-envia", {
+          method: "POST",
+          headers: { apikey: cfg.anonKey, Authorization: "Bearer " + autorizacao, "Content-Type": "application/json" },
+          body: JSON.stringify({ acao: "ping" }),
+        }).then(function (r) {
+          return r.text().then(function (t) {
+            var j = null;
+            try { j = JSON.parse(t); } catch (e) {}
+            anota("chat-envia ping [" + rotulo + "]: HTTP " + r.status + " " + corpoCurto(t));
+            return { rotulo: rotulo, status: r.status, texto: t, json: j };
+          });
+        }).catch(function (e) {
+          anota("chat-envia ping [" + rotulo + "]: erro " + e.message);
+          return { rotulo: rotulo, status: 0, texto: e.message, json: null };
+        });
+      }
 
-        if (res.status === 404 || (d && /not found/i.test(d.message || ""))) {
-          linha("❌", "A função chat-envia não existe neste projeto", "O Supabase respondeu que não achou a função.",
+      var tentativas = [pingChat("chave pública", cfg.anonKey)];
+      if (sess && sess.access_token) tentativas.push(pingChat("sua sessão", sess.access_token));
+
+      return Promise.all(tentativas).then(function (res) {
+        var bom = null, i;
+        for (i = 0; i < res.length; i++) if (res[i].json && res[i].json.ok) { bom = res[i]; break; }
+        var achou404 = false, todos401 = true, todosSemRede = true;
+        for (i = 0; i < res.length; i++) {
+          var x = res[i], m = (x.json && (x.json.message || "")) || "";
+          if (x.status === 404 || /not found/i.test(m)) achou404 = true;
+          if (x.status !== 401 && x.status !== 403) todos401 = false;
+          if (x.status !== 0) todosSemRede = false;
+        }
+        var comoFoi = res.map(function (x) { return x.rotulo + ": HTTP " + (x.status || "sem resposta"); }).join(" · ");
+
+        if (!bom && todosSemRede) {
+          linha("❌", "Não consegui chamar a chat-envia", res[0].texto,
+            "Se a mensagem fala em CORS ou Failed to fetch, a função não subiu direito — publique de novo em www.torqueon.com.br/funcoes.html.");
+          return;
+        }
+        if (!bom && achou404) {
+          linha("❌", "A função chat-envia não existe neste projeto", "O Supabase respondeu que não achou a função (" + comoFoi + ").",
             "O nome tem que ser exatamente chat-envia (minúsculo, com hífen). Confira em Edge Functions se ela está na lista — e se está no projeto " + projeto + ".");
           return;
         }
-        if (res.status === 401 || res.status === 403) {
-          // só acusa a chave quando o banco TAMBÉM a recusou: um 401 isolado
-          // na função é problema da função, não da chave
+        if (!bom && todos401) {
           if (chaveMorta) {
-            linha("⚠️", "A função também recusou, pelo mesmo motivo", "É a chave pública, não a chat-envia.",
+            linha("⚠️", "A função também recusou, pelo mesmo motivo", "É a chave pública, não a chat-envia (" + comoFoi + ").",
               "Resolva a chave acima primeiro; depois rode este diagnóstico de novo.");
             return;
           }
-          linha("❌", "A função recusou a chamada", "HTTP " + res.status + " — normalmente é o Verify JWT.",
-            "Abra a função no painel → Details → deixe o Verify JWT LIGADO (é o padrão) e faça o deploy de novo.");
+          if (!sess) {
+            /* Este é o caso do dia a dia: sem login, o portão recusa e não dá
+             * pra saber nada sobre a função. Dizer "republique" aqui é chute. */
+            linha("⚠️", "Não deu pra testar a chat-envia sem login", "O Supabase recusou a chave pública no portão das funções (" + comoFoi + ") — a função nem chegou a rodar, então isso NÃO quer dizer que ela está quebrada.",
+              "Entre na sua conta no TORQUE PERSONAL (card Sua ilha) e rode este diagnóstico de novo. Não republique a função por causa desta linha.");
+            return;
+          }
+          linha("❌", "O Supabase recusou a credencial", "Nem a chave pública nem a sua sessão passaram pelo portão das funções (" + comoFoi + ") — republicar a chat-envia não muda isso.",
+            "No Supabase: Project Settings → API Keys. Se as 'Legacy API keys' estiverem desativadas, reative; ou copie a 'Publishable key' (sb_publishable_…) e me mande pra eu trocar no site.");
           return;
         }
-        if (d && d.ok) {
-          linha("✅", "Função chat-envia publicada", "Ela respondeu ao teste.");
+        if (bom) {
+          var d = bom.json;
+          linha("✅", "Função chat-envia publicada", "Ela respondeu ao teste (" + comoFoi + ").");
           // versão nova responde a lista de ações; sem ela, é deploy antigo —
           // o ping passa, mas a IA de treino/dieta falha com erro estranho
           var temIaTreino = (d.acoes || []).indexOf("ia_treino") >= 0;
@@ -216,12 +256,8 @@
           linha(d.instagram ? "✅" : "⚪", "Instagram", d.instagram ? "Token configurado." : "Sem token — o robô do Instagram fica desligado (opcional).");
           return;
         }
-        linha("❌", "A função respondeu algo inesperado", "HTTP " + res.status + " — " + corpoCurto(res.texto),
+        linha("❌", "A função respondeu algo inesperado", comoFoi + " — " + corpoCurto(res[res.length - 1].texto),
           "Normalmente é erro no deploy: abra a função no painel, veja os Logs e publique de novo.");
-      }).catch(function (e) {
-        anota("chat-envia: erro " + e.message);
-        linha("❌", "Não consegui chamar a chat-envia", e.message,
-          "Se a mensagem fala em CORS ou Failed to fetch, a função não subiu direito — publique de novo.");
       });
     }).then(function () {
       // 3) a envia-email está publicada e com a conta do Resend ligada?

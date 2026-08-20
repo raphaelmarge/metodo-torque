@@ -25,6 +25,8 @@
   .tag { display: inline-block; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 3px 10px; margin-left: 8px; vertical-align: 2px; }
   .tag.off { background: #451a1a; color: #fca5a5; border: 1px solid #7f1d1d; }
   .tag.on { background: #14532d; color: #86efac; border: 1px solid #166534; }
+  .aviso { background: #2a1f10; border: 1px solid #7c5a1a; border-radius: 14px; padding: 16px 18px; margin-top: 16px; }
+  .aviso b { color: #fbbf24; }
 </style>
 </head>
 <body>
@@ -32,6 +34,15 @@
   <span class="k">TORQUE ON · manutenção</span>
   <h1>Publicar as funções (Supabase)</h1>
   <p>Cada botão roxo copia o código de uma função. No painel do Supabase, vá em <b style="color:#fff">Edge Functions → Deploy new function → Via Editor</b>, dê o nome <b style="color:#fff">exatamente igual</b> ao mostrado aqui, apague o código de exemplo, cole o copiado e toque em <b style="color:#fff">Deploy function</b>.</p>
+
+  <div class="aviso">
+    <p style="margin:0;"><b>Antes de republicar: republicar resolve pouca coisa.</b> Se a tela disse
+    que o <b>Supabase recusou a credencial</b> (HTTP 401), a função nem chegou a rodar — o problema é
+    login/chave, e publicar de novo não muda nada. Rode primeiro o
+    <a href="diagnostico.html">diagnóstico da nuvem</a>: ele diz se é a função, a sua sessão ou a chave do site.
+    Republicar só vale quando o diagnóstico falar em <b>função ausente</b>, <b>versão antiga</b> ou
+    <b>Secret novo</b> (o Secret só entra no deploy seguinte).</p>
+  </div>
 
   <div class="card">
     <h2>1 · meta-webhook <span class="tag off">Verify JWT: DESLIGAR</span></h2>
