@@ -256,7 +256,8 @@
   function initHQ() {
     var cfg = self.MT_CLOUD || {};
     if (window.MT_supabase) cli = window.MT_supabase;
-    else if (cfg.url && cfg.anonKey && window.supabase) cli = window.supabase.createClient(cfg.url, cfg.anonKey);
+    // um cliente por página: dois com o mesmo login brigam pelo crachá
+    else if (cfg.url && cfg.anonKey && window.supabase) { cli = window.supabase.createClient(cfg.url, cfg.anonKey); window.MT_supabase = cli; }
     if (!cli) { lock("A nuvem não está configurada (assets/cloud-config.js)."); return; }
     cli.auth.getSession().then(function (r) {
       var sess = r.data && r.data.session;

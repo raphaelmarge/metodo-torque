@@ -58,6 +58,10 @@
     return "A função " + nome + " não respondeu como esperado (HTTP " + status + ").";
   }
   function semSessao(oQue) {
+    /* Avisa a página inteira, não só quem chamou: assim o painel pode botar o
+     * botão de entrar de novo na frente do professor, em vez de esconder o
+     * recado no rodapé de um card. */
+    try { raiz.dispatchEvent(new CustomEvent("mt:sessao-caiu", { detail: { oQue: oQue || "" } })); } catch (e) {}
     if (raiz.MT_ERRO_FUNCAO) return raiz.MT_ERRO_FUNCAO.semSessao(oQue);
     return "Sua sessão da nuvem caiu — saia da conta e entre de novo.";
   }

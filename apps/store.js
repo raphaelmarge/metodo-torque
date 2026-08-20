@@ -423,7 +423,14 @@
   function iniciaSync() {
     var cfg = self.MT_CLOUD;
     if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase || sync.client) return;
+    /* UM cliente por página, sempre. Antes o store criava o dele sem publicar
+     * em window.MT_supabase, então o modulo-conta criava um SEGUNDO. Dois
+     * clientes com o mesmo login = dois relógios renovando o mesmo crachá: um
+     * renova, o crachá antigo morre, e o outro tenta com o morto, leva
+     * "refresh token already used" e DERRUBA a sessão. É o "funciona por um
+     * tempo e depois dá erro" na origem. */
     var client = window.MT_supabase || window.supabase.createClient(cfg.url, cfg.anonKey);
+    window.MT_supabase = client;
     client.auth.getSession().then(function (r) {
       var sess = r.data && r.data.session;
       if (!sess) return; // sem login, sem sync
