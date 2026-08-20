@@ -4338,6 +4338,27 @@ async function abaPt(p, a) {
       "arrastar a régua escreve o valor do traço do meio no campo (" + (carga && carga.kgNaTela) + " kg × " + (carga && carga.repsNaTela) + ")");
     ok(carga && carga.semSalvar === carga.antes,
       "mexer na régua e NÃO salvar não grava nada (o registro é do que o aluno confirmou)");
+    /* O descanso continuava correndo por baixo do registro da carga: quando
+     * zerava, o player trocava de exercício e o formulário sumia embaixo do
+     * dedo de quem estava arrastando a régua. Agora ele segura e o botão vira
+     * a saída explícita. */
+    const segura = await pApp.evaluate(async () => {
+      const rd = document.getElementById("gWKg");
+      rd.dispatchEvent(new Event("touchstart"));
+      await new Promise((r) => setTimeout(r, 60));
+      const ex = document.getElementById("gEx").textContent;
+      window.__zeraDescanso();               // simula o cronômetro chegando a zero
+      await new Promise((r) => setTimeout(r, 120));
+      return {
+        aindaTem: !!document.getElementById("gWKg"),
+        mesmoEx: document.getElementById("gEx").textContent === ex,
+        botao: (document.getElementById("gPular") || {}).textContent,
+      };
+    });
+    ok(segura.aindaTem && segura.mesmoEx,
+      "descanso zerando com o aluno na régua NÃO troca de exercício nem some com o formulário");
+    ok(/Próximo exercício/.test(segura.botao || ""),
+      "e o botão vira 'Próximo exercício', que é a saída no tempo dele");
     const reg = carga && carga.depois[carga.depois.length - 1];
     ok(reg && reg.kg > 0 && reg.r > 0 && reg.g === 1,
       "o registro guarda carga, repetições e a marca de que veio do treino guiado");
