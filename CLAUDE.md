@@ -33,6 +33,16 @@ entende `var()`. O `html` do pacote é só rede de segurança pra quem estiver c
 página `/app/` velha guardada — sai numa versão futura. `app/app-sw.js` guarda o
 esqueleto (rede primeiro, cache de reserva) pro app abrir sem internet.
 
+**Foto do aluno** (a partir da v506): dois campos na ficha, sem briga entre
+eles — `a.foto` é a que o PERSONAL põe pelo painel, `a.fotoAluno` é a que o
+ALUNO põe tocando no avatar do topo do app. Onde a foto aparece, vale
+`fotoAluno || foto`. A do aluno é cortada em quadrado e reduzida pra 320 px no
+próprio celular (a original nunca sai de lá), guardada em `ptfotoperfil` e
+devolvida pro painel dentro do `retorno` (`fotoPerfil`), pelo mesmo
+`app_aluno_devolve` das fotos de progresso — **sem SQL novo**. O painel só
+aceita `data:` de imagem, sem aspas e até 400 KB, e grava com `S.write` em vez
+de `save()` pra não redesenhar a lista embaixo de quem está lendo o perfil.
+
 **WhatsApp oficial por profissional** (a partir da v471): a função `whatsapp` é
 UMA só, publicada pelo Raphael, e serve todo mundo. Cada personal/academia cola
 o próprio *Phone number ID* + token em Configurações → WhatsApp; isso vai pra

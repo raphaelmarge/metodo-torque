@@ -1524,6 +1524,8 @@ async function abaPt(p, a) {
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
   ok(/Sem esse aparelho hoje\?/.test(appHtml) && /Troca por: /.test(appHtml), "exercícios trazem substitutos do mesmo padrão de movimento");
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
+  ok(/id='avBtn'/.test(appHtml) && /ptfotoperfil/.test(appHtml) && /fotoPerfil:/.test(appHtml),
+    "o aluno troca a própria foto pelo topo do app, e ela volta pro personal");
   ok(/onbCard/.test(appHtml) && /cardRpe/.test(appHtml) && /dcReps/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
     "app traz onboarding, RPE, campo de reps, streak de semanas e confete");
   // faixa colorida do topo: foto do aluno, iniciais quando não tem, e o
@@ -1538,11 +1540,15 @@ async function abaPt(p, a) {
       a.foto = "javascript:alert(1)"; S2.write("ptStudio", st);
       const torto = window.__montaAppAluno(S2.read("ptStudio", {}).alunos[0], "s-av2");
       a.foto = antes; S2.write("ptStudio", st);
-      const pega = (h) => (h.match(/<div class='tpav'>(.*?)<\/div>/) || ["", ""])[1];
-      return { nada: pega(nada), com: pega(com), torto: pega(torto), faixa: /class='topo'/.test(com) && /id='topoExtra'/.test(com) };
+      const bt = (h) => (h.match(/<button type='button' class='tpav'[\s\S]*?<\/button>/) || [""])[0];
+      const img = (h) => (bt(h).match(/<img id='avImg'[^>]*>/) || [""])[0];
+      const ini = (h) => (bt(h).match(/<span id='avIni'[^>]*>(.*?)<\/span>/) || ["", ""])[1];
+      return { nada: ini(nada), nadaSemImg: !/src=/.test(img(nada)), com: img(com),
+        torto: ini(torto), tortoSemImg: !/src=/.test(img(torto)),
+        faixa: /class='topo'/.test(com) && /id='topoExtra'/.test(com) };
     }, S1);
-    ok(av.com.indexOf(S1) > 0 && /^<img /.test(av.com), "a foto do aluno vai no pacote e vira o avatar do topo");
-    ok(av.nada === "JC" && av.torto === "JC",
+    ok(av.com.indexOf(S1) > 0 && /^<img id='avImg'/.test(av.com), "a foto do aluno vai no pacote e vira o avatar do topo");
+    ok(av.nada === "JC" && av.torto === "JC" && av.nadaSemImg && av.tortoSemImg,
       "sem foto (ou com endereço estranho) o avatar mostra as iniciais — " + av.nada + " / " + av.torto);
     ok(av.faixa, "o topo do app é a faixa colorida com o cartão de sequência e hábitos");
   }
@@ -2515,6 +2521,7 @@ async function abaPt(p, a) {
             return h;
           })(),
           fotoAntes: px, fotoAntesD: "2026-05-01", fotoDepois: px, fotoDepoisD: "2026-08-01",
+          fotoPerfil: px,
         } }] }) }) }) }) },
       });
       window.__perfilPT(a.id);
@@ -2531,6 +2538,16 @@ async function abaPt(p, a) {
     ok(/Hábitos diários/.test(appDados) && /Água/.test(appDados) && /100%/.test(appDados), "hábitos do aluno viram barras de % (água 100%)");
     ok(/Hábitos em dia/.test(appDados) && /50%/.test(appDados), "KPI de dias com 3+ hábitos nos últimos 30 dias (50%)");
     ok(/ANTES/.test(appDados) && /AGORA/.test(appDados) && /<img/.test(appDados), "fotos antes × depois do aluno aparecem pro personal");
+    // a foto que o ALUNO pôs no app dele volta pro painel e assume a ficha
+    const fotoAl = await p.evaluate(() => {
+      const al = window.MTStore.read("ptStudio", {}).alunos.find((x) => x.ativo !== false);
+      const img = document.getElementById("pfFotoImg");
+      return { guardada: (al.fotoAluno || "").slice(0, 21), doPersonal: al.foto || "",
+        naFicha: (img.src || "").slice(0, 21), visivel: !img.hidden };
+    });
+    ok(fotoAl.guardada === "data:image/gif;base64" && fotoAl.naFicha === "data:image/gif;base64" && fotoAl.visivel,
+      "a foto que o aluno põe no app dele volta pro painel e aparece na ficha");
+    ok(!fotoAl.doPersonal, "ela fica num campo só dela — a foto que o personal põe pela ficha não é sobrescrita");
     const questBox = await p.evaluate(() => document.getElementById("pfQuestBox").innerHTML);
     ok(/3 check-ins respondidos/.test(questBox) && /— de \d\d\/\d\d até \d\d\/\d\d/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
     ok(/Como foram as semanas/.test(questBox) && /fill=['"]#4ade80['"]/.test(questBox) && /fill=['"]#f87171['"]/.test(questBox) && /9 ponto/.test(questBox),
@@ -2541,12 +2558,16 @@ async function abaPt(p, a) {
     const xss = await p.evaluate(async () => {
       window.MTStore.cloud = () => ({ aid: "x", client: { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: [{ retorno: {
         fotoAntes: "x' onerror='window.__xssHit=1", fotoAntesD: "1234567'><b>9",
+        fotoPerfil: "x' onerror='window.__xssHit=1",
       } }] }) }) }) }) } });
       window.__perfilPT(window.MTStore.read("ptStudio", {}).alunos[0].id);
       await new Promise((r) => setTimeout(r, 350));
       return { html: document.getElementById("pfAppDados").innerHTML, hit: !!window.__xssHit };
     });
     ok(!xss.hit && !/onerror/.test(xss.html) && !/Fotos de progresso/.test(xss.html), "foto maliciosa vinda do app é descartada (anti-XSS)");
+    const fotoSuja = await p.evaluate(() => (window.MTStore.read("ptStudio", {}).alunos || [])
+      .some((x) => /onerror/.test(String(x.fotoAluno || ""))));
+    ok(!fotoSuja, "foto de perfil maliciosa não é guardada na ficha do aluno");
     await p.evaluate(() => { window.MTStore.cloud = window.__cloudOrig; });
   }
   // abas do perfil (pra tela não ficar tumultuada)
@@ -4467,6 +4488,28 @@ async function abaPt(p, a) {
   await pApp.click("#pzAdd");
   const pz = await pApp.evaluate(() => document.getElementById("pzGraf").textContent);
   ok(/83,4/.test(pz), "peso registrado com curva");
+  // o aluno troca a própria foto tocando no avatar do topo
+  {
+    const antes = await pApp.evaluate(() => ({
+      ini: document.getElementById("avIni").textContent,
+      img: getComputedStyle(document.getElementById("avImg")).display !== "none",
+    }));
+    ok(antes.ini === "JC" && !antes.img, "sem foto, o topo mostra as iniciais do aluno (" + antes.ini + ")");
+    // PNG 8x4 (retangular de propósito: o corte tem que sair quadrado)
+    await pApp.setInputFiles("#avFile", { name: "eu.png", mimeType: "image/png",
+      buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAIAAAA8r+mnAAAAQUlEQVR4nBWLURUAQAiDlsQkS2ISkphkSUx0J5/wkEQJixaIERErJFPGpg1mTMz6B6gzNMdAYP+sUMGhc25CwoYHii4nYbjsDOUAAAAASUVORK5CYII=", "base64") });
+    await new Promise((r) => setTimeout(r, 500));
+    const depois = await pApp.evaluate(() => {
+      const im = document.getElementById("avImg");
+      return { tipo: (im.src || "").slice(0, 15), larg: im.naturalWidth, alt: im.naturalHeight,
+        img: getComputedStyle(im).display !== "none",
+        ini: getComputedStyle(document.getElementById("avIni")).display !== "none",
+        guardada: (JSON.parse(localStorage.getItem("ptfotoperfil") || '""') || "").slice(0, 15) };
+    });
+    ok(depois.img && !depois.ini && depois.tipo === "data:image/jpeg", "escolher uma foto troca as iniciais pela foto");
+    ok(depois.larg === depois.alt && depois.larg === 4, "a foto é cortada em quadrado no aparelho (8x4 vira 4x4)");
+    ok(depois.guardada === "data:image/jpeg", "a foto fica guardada no aparelho pra continuar lá na próxima vez");
+  }
   // hábitos: marca 3 e confere streak
   await pApp.evaluate(() => {
     document.querySelectorAll("[data-hab]")[0].click();
