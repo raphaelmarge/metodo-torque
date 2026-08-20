@@ -1471,7 +1471,7 @@
       "setTimeout(function(){o.frequency.value=1320;},180);setTimeout(function(){o.stop();ac.close();},380);}catch(e){}}" +
       // gv.feitas guarda quantas séries de cada exercício já foram marcadas nesta
       // sessão do player (pra barra e pros blocos sobreviverem ao voltar exercício)
-      "var gv={f:0,e:0,s:0,timer:null,pend:false,feitas:{},cargas:{},t0:0,tex:0,relo:null,sujo:false,fim:false};" +
+      "var gv={mexe:false,f:0,e:0,s:0,timer:null,pend:false,feitas:{},cargas:{},t0:0,tex:0,relo:null,sujo:false,fim:false};" +
       "function gEl(i){return document.getElementById(i);}" +
       "function g2(n){return (n<10?'0':'')+n;}" +
       "function gmmss(sg){sg=Math.max(0,Math.round(sg));return Math.floor(sg/60)+':'+g2(sg%60);}" +
@@ -1567,11 +1567,21 @@
       "gEl('gPular').style.display='none';gEl('gMais15').style.display='none';" +
       "gEl('gCard').scrollTop=0;}" +
       // ---------- descanso ----------
-      "function gFimDesc(){clearInterval(gv.timer);gSalvaSeSujo();" +
+      // gancho de teste: força o fim do descanso sem esperar o relógio de verdade
+      "window.__zeraDescanso=function(){if(gv.pend&&(gv.sujo||gv.mexe)){gSegura();return 'segurou';}gFimDesc();return 'avancou';};" +
+      "function gSegura(){clearInterval(gv.timer);gv.timer=null;" +
+      "var d2=gEl('gDesc');if(d2)d2.textContent='0';" +
+      "var lb=gEl('gDescLab');if(lb)lb.textContent='descanso acabou — sem pressa';" +
+      "var tr2=gEl('gTrilho');if(tr2)tr2.style.width='0%';" +
+      "var pu2=gEl('gPular');if(pu2){pu2.textContent='Próximo exercício';pu2.classList.add('prin');pu2.classList.remove('sec');}" +
+      "var m15=gEl('gMais15');if(m15)m15.style.display='none';}" +
+      "function gFimDesc(){clearInterval(gv.timer);gv.mexe=false;gSalvaSeSujo();" +
       "if(gv.pend){gv.feitas[gv.e]=gv.s;gv.e++;gv.s=0;gv.pend=false;gv.tex=Date.now();" +
       "if(gv.e>=GUIA[gv.f].it.length){gConclui();return;}}" +
       "pintaGuia();}" +
-      "function gDescanso(sg,trocaEx){gv.pend=trocaEx;var resta=sg,tot=sg||1;" +
+      "function gDescanso(sg,trocaEx){gv.pend=trocaEx;gv.mexe=false;var resta=sg,tot=sg||1;" +
+      "var pu0=gEl('gPular');if(pu0){pu0.textContent='Pular descanso';pu0.classList.remove('prin');pu0.classList.add('sec');}" +
+      "var lb0=gEl('gDescLab');if(lb0)lb0.textContent='segundos';" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
       "var ge=gEl('gEstado');ge.style.display='inline-block';ge.textContent=trocaEx?'Exercício feito':'Descanso';pintaBarra();" +
       "var gg2=gEl('gGif');if(gg2&&trocaEx)gg2.style.display='none';" +
@@ -1593,7 +1603,12 @@
       "gv.timer=setInterval(function(){resta--;" +
       "if(gv.mais){resta+=gv.mais;tot+=gv.mais;gv.mais=0;}" +
       "var tr=gEl('gTrilho');if(tr)tr.style.width=Math.max(0,Math.round(100*resta/tot))+'%';" +
-      "if(resta<=0){beepG();if(navigator.vibrate)navigator.vibrate([200,100,200]);gFimDesc();return;}" +
+      "if(resta<=0){beepG();if(navigator.vibrate)navigator.vibrate([200,100,200]);" +
+      /* Zerou enquanto o aluno anota a carga? Segura. Trocar de exercício com o
+         dedo na régua fazia o formulário sumir no meio do arrasto — parecia que
+         a tela fechava sozinha. Quem não encostou em nada segue no automático. */
+      "if(gv.pend&&(gv.sujo||gv.mexe)){gSegura();return;}" +
+      "gFimDesc();return;}" +
       "d.textContent=resta;if(resta<=3)bip(600,100);},1000);}" +
       // ---------- registro da carga (steppers, sem teclado obrigatório) ----------
       // ---------- régua deslizante (carga e repetições) ----------
@@ -1607,10 +1622,15 @@
       "function gIdx(cfg,v){return Math.max(0,Math.min(Math.round((cfg.max-cfg.min)/cfg.p),Math.round(((+v||0)-cfg.min)/cfg.p)));}" +
       // liga a régua ao campo: rolou -> escreve o número; digitou -> anda a régua
       "function ligaRegua(id,cfg,campo,formata){var rd=gEl(id);if(!rd)return;var t=null,ultimo=null;" +
+      // encostar na régua já conta como 'estou anotando': é o que segura o
+      // cronômetro de trocar de exercício embaixo do dedo do aluno
+      "rd.addEventListener('touchstart',function(){gv.mexe=true;},{passive:true});" +
+      "rd.addEventListener('pointerdown',function(){gv.mexe=true;});" +
+      "campo.addEventListener('focus',function(){gv.mexe=true;});" +
       "function poe(v,semRolar){var s=formata(v);if(campo.value!==s){campo.value=s;gv.sujo=true;}" +
       "if(!semRolar)rd.scrollLeft=gIdx(cfg,v)*cfg.px;}" +
       "rd.addEventListener('scroll',function(){if(t)clearTimeout(t);" +
-      "t=setTimeout(function(){var i=Math.round(rd.scrollLeft/cfg.px);" +
+      "gv.mexe=true;t=setTimeout(function(){var i=Math.round(rd.scrollLeft/cfg.px);" +
       "var v=Math.round((cfg.min+i*cfg.p)*100)/100;if(v===ultimo)return;ultimo=v;" +
       "poe(v,true);if(navigator.vibrate)navigator.vibrate(6);},60);});" +
       "campo.addEventListener('change',function(){var v=parseFloat(String(campo.value).replace(',','.'))||0;" +
