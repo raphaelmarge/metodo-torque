@@ -1526,6 +1526,26 @@ async function abaPt(p, a) {
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
   ok(/onbCard/.test(appHtml) && /cardRpe/.test(appHtml) && /dcReps/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
     "app traz onboarding, RPE, campo de reps, streak de semanas e confete");
+  // faixa colorida do topo: foto do aluno, iniciais quando não tem, e o
+  // cartão com a sequência e os hábitos do dia
+  {
+    const S1 = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
+    const av = await p.evaluate((foto) => {
+      const S2 = window.MTStore, st = S2.read("ptStudio", {}), a = st.alunos[0], antes = a.foto;
+      const nada = window.__montaAppAluno(a, "s-av0");
+      a.foto = foto; S2.write("ptStudio", st);
+      const com = window.__montaAppAluno(S2.read("ptStudio", {}).alunos[0], "s-av1");
+      a.foto = "javascript:alert(1)"; S2.write("ptStudio", st);
+      const torto = window.__montaAppAluno(S2.read("ptStudio", {}).alunos[0], "s-av2");
+      a.foto = antes; S2.write("ptStudio", st);
+      const pega = (h) => (h.match(/<div class='tpav'>(.*?)<\/div>/) || ["", ""])[1];
+      return { nada: pega(nada), com: pega(com), torto: pega(torto), faixa: /class='topo'/.test(com) && /id='topoExtra'/.test(com) };
+    }, S1);
+    ok(av.com.indexOf(S1) > 0 && /^<img /.test(av.com), "a foto do aluno vai no pacote e vira o avatar do topo");
+    ok(av.nada === "JC" && av.torto === "JC",
+      "sem foto (ou com endereço estranho) o avatar mostra as iniciais — " + av.nada + " / " + av.torto);
+    ok(av.faixa, "o topo do app é a faixa colorida com o cartão de sequência e hábitos");
+  }
   // painel do personal entende RPE e onboarding devolvidos pelo app
   const painelNovo = await p.evaluate(() => {
     const hoje = new Date().toISOString().slice(0, 10);

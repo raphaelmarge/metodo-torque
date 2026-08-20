@@ -73,6 +73,12 @@
      * de antes, quando este trecho morava dentro do montaAppAluno — assim o
      * corpo do construtor ficou igualzinho e dá pra conferir linha a linha. */
     var a = D.a || {}, stamp = D.stamp || "";
+    /* foto do aluno no topo. O pacote vem da nuvem, então o endereço da imagem
+     * é conferido aqui antes de virar src: só data: de imagem em base64 passa.
+     * Sem foto (ou com foto estranha), o círculo mostra as iniciais dele. */
+    var FOTOAL = /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(String(a.foto || "")) ? a.foto : "";
+    var INICIAIS = String(a.nome || "?").trim().split(/\s+/).slice(0, 2)
+      .map(function (p) { return (p[0] || "").toUpperCase(); }).join("") || "?";
     var st = { config: D.cfg || {}, desafio: D.desafio || null };
     var studio = D.studio || "Meu Personal";
     var COR = D.COR, COR2 = D.COR2, CORC = D.CORC, CORE = D.CORE, CORCL1 = D.CORCL1, CORCL2 = D.CORCL2;
@@ -102,9 +108,38 @@
       PAL.map(function (c, i) { return "--bg" + i + ":" + c + ";"; }).join("") +
       "}" +
       "*{box-sizing:border-box;margin:0}body{font-family:'Archivo',system-ui,sans-serif;background:var(--bg0);color:#fff;max-width:480px;margin:0 auto;padding:0 0 calc(104px + env(safe-area-inset-bottom,0px));-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}a{color:var(--corc)}a:hover{color:var(--cor-cl1)}" +
-      ".topo{padding:36px 20px 8px;background:none}" +
-      ".topo .k{font-size:10px;letter-spacing:.3em;color:#6e6a78;font-weight:700;text-transform:uppercase}" +
-      ".topo h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:8px}" +
+      // faixa colorida no topo: o app do aluno abre com a cor do studio, e a
+      // sequência e os hábitos do dia moram DENTRO dela (só no Início — nas
+      // outras áreas a faixa fica curta, só com nome, nível e XP).
+      ".topo{padding:calc(30px + env(safe-area-inset-top,0px)) 20px 18px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;color:#fff}" +
+      ".tpmarca{display:flex;align-items:center;gap:9px;margin-bottom:13px}" +
+      ".tpmarca img{flex:none;height:26px;border-radius:7px;display:block}" +
+      ".topo .k{min-width:0;font-size:9.5px;letter-spacing:.2em;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".topo h1{font-size:27px;font-weight:800;letter-spacing:-.02em}" +
+      // os dois chips do topo ficam translúcidos: sobre a faixa colorida, um
+      // chip da própria cor sumiria dentro do fundo
+      ".tpchip{flex:none;display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:99px;padding:6px 10px;font-weight:800;font-size:11.5px;color:#fff}" +
+      // foto do aluno; sem foto, as iniciais dele no mesmo círculo
+      ".tpav{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:.02em;color:#fff}" +
+      ".tpav img{width:100%;height:100%;object-fit:cover;display:block}" +
+      // um cartão só dentro da faixa: sequência grande à esquerda, os quatro
+      // hábitos do dia em linhas finas à direita
+      "#topoExtra{display:flex;gap:12px;margin-top:14px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:10px 12px}" +
+      ".tpsk{flex:none;width:42%;display:flex;align-items:center;gap:9px}" +
+      ".tpskico{flex:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;line-height:0}" +
+      ".tpskt{min-width:0}" +
+      // line-height folgado: com a caixa apertada o acento sumia cortado em cima
+      ".tpskn{display:block;font-size:25px;font-weight:800;line-height:1.15;letter-spacing:-.02em}" +
+      ".tpskn small{font-size:12px;font-weight:700;margin-left:3px}" +
+      ".tpsklab{display:block;font-style:normal;font-size:8.5px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.62);margin-top:2px}" +
+      ".tpskrec{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:rgba(255,255,255,.45);margin-top:2px}" +
+      ".tphab{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;border-left:1px solid rgba(255,255,255,.16);padding-left:12px}" +
+      ".tphab button{display:flex;align-items:center;gap:7px;width:100%;min-height:34px;background:none;border:none;padding:0;color:rgba(255,255,255,.66);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;text-align:left}" +
+      ".tphab button.on{color:#fff}" +
+      ".tphab i{flex:none;font-style:normal;line-height:0}" +
+      ".tphab span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+      ".tphab u{flex:none;text-decoration:none;font-size:10.5px;font-weight:800;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.45)}" +
+      ".tphab button.on u{color:rgba(255,255,255,.85)}" +
       ".cardx{background:none;border:none;border-radius:0;margin:32px 20px 0;padding:0;box-shadow:none}" +
       ".cardx h2{font-size:10.5px;letter-spacing:.22em;color:#6e6a78;text-transform:uppercase;margin-bottom:14px;font-weight:700}" +
       "pre{white-space:pre-wrap;font-family:inherit;font-size:14.5px;line-height:1.7;color:#d6d2df}" +
@@ -143,7 +178,7 @@
       "html.claro #navApp{background:rgba(255,255,255,.9)!important;border-top:1px solid rgba(25,22,34,.06)!important}" +
       "html.claro #menuApp{background:#fff!important;border-left:1px solid #e4e1eb!important}" +
       "html.claro #menuApp .nitem{color:#3a3547!important}" +
-      "html.claro #xpChip{background:rgba(25,22,34,.05)!important;border-color:transparent!important}" +
+      // o topo é colorido nos dois temas, então os chips dele não mudam no claro
       "html.claro [style*='background:var(--bg2)']{background:#fff!important;box-shadow:0 1px 3px rgba(23,21,28,.07)}" +
       "html.claro [style*='background:var(--bg5)']{background:#e9e7ef!important}" +
       "html.claro [style*='background:var(--bg4)']{background:#f3f1f7!important}" +
@@ -275,16 +310,27 @@
       "color:var(--cor2);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;text-align:left;padding:0 14px}" +
       "@media (max-height:620px){.gsets i{height:44px;font-size:19px}.grelo b{font-size:17px}.gpe button{min-height:52px}.gtit{font-size:16px}}" +
       "</style></head><body>" +
-      "<div class='topo' style='display:flex;align-items:center;gap:14px;'>" +
-      "<div style='flex:1;min-width:0;'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='height:44px;border-radius:10px;margin-bottom:6px;display:block;'>" : "") + "<div class='k'>" + esc(studio).toUpperCase() + "</div><h1 style='padding:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:var(--corc);font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
+      "<div class='topo'>" +
+      // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
+      // e os chips, um nome comprido virava três linhas ou saía cortado
+      "<div class='tpmarca'>" + (LOGOAPP ? "<img src='" + LOGOAPP + "' alt=''>" : "") + "<span class='k'>" + esc(studio).toUpperCase() + "</span></div>" +
+      "<div style='display:flex;align-items:center;gap:11px;'>" +
+      "<div class='tpav'>" + (FOTOAL ? "<img src='" + FOTOAL + "' alt='Sua foto'>" : esc(INICIAIS)) + "</div>" +
+      "<div style='flex:1;min-width:0;'><h1 style='padding:0;margin:0;'>" + esc(a.nome.split(" ")[0]) + "</h1><div id='secTit' style='color:rgba(255,255,255,.82);font-size:12.5px;font-weight:700;margin-top:2px;'></div></div>" +
       // selo de nível SEPARADO do chip de XP: o teste lê o primeiro número do
       // #xpChip como XP — um "Nv 3" lá dentro quebraria a conta
-      "<span id='nvChip' style='flex:none;display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,var(--cor),var(--cor2));border-radius:99px;padding:7px 11px;font-weight:800;font-size:12.5px;color:#fff;box-shadow:0 6px 18px -8px var(--cor);'>" +
+      "<span id='nvChip' class='tpchip'>" +
       "<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='#fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.4 6.7 19.1l1-5.8-4.2-4.1 5.9-.9z'/></svg>" +
       "Nv <b id='nvNum'>1</b></span>" +
-      "<span id='xpChip' style='flex:none;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);border:1px solid transparent;border-radius:99px;padding:7px 13px;font-weight:800;font-size:12.5px;'>" +
-      "<svg width='13' height='13' viewBox='0 0 24 24' fill='var(--corc)' aria-hidden='true'><path d='M13 2 3 14h7l-1 8 10-12h-7z'/></svg>" +
+      "<span id='xpChip' class='tpchip'>" +
+      "<svg width='13' height='13' viewBox='0 0 24 24' fill='#fff' aria-hidden='true'><path d='M13 2 3 14h7l-1 8 10-12h-7z'/></svg>" +
       "<span><b id='xpNum'>0</b> XP</span></span></div>" +
+      // sequência e hábitos do dia dentro da faixa — trocaSec só mostra no Início
+      "<div id='topoExtra'>" +
+      "<div class='tpsk'><span class='tpskico'>" + crIco(MT_CQICONS.fogo, 17) + "</span>" +
+      "<span class='tpskt'><b id='habStreak' class='tpskn'></b>" +
+      "<i class='tpsklab'>Sequência</i><i id='habRec' class='tpskrec'></i></span></div>" +
+      "<div id='habBox' class='tphab' aria-label='Hábitos de hoje'></div></div></div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
       "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(var(--bg0-rgb),.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04);display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
@@ -627,9 +673,7 @@
       "<input id='imcCm' inputmode='numeric' placeholder='Altura (cm)' style='width:110px'></div>" +
       "<div id='imcOut' style='margin-top:10px;'></div>" +
       "<div class='vz' style='font-size:11px;'>O IMC é só uma referência — quem manda na avaliação é " + esc(studio.split(" ")[0]) + ".</div></div>" +
-      "<div class='cardx'><h2>Hábitos de hoje</h2>" +
-      "<div id='habBox' style='display:flex;flex-direction:column;gap:8px;'></div>" +
-      "<div id='habStreak' class='vz' style='margin-top:8px;'></div></div>" +
+      // (os hábitos de hoje subiram pra faixa colorida do topo)
       "<div class='cardx'><h2>Fotos de progresso</h2>" +
       "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer.</div>" +
       "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>Adicionar foto de hoje" +
@@ -1954,14 +1998,28 @@
       "if(ALTURA)document.getElementById('imcCm').value=ALTURA;pintaImc();})();" +
       "document.getElementById('imcKg').addEventListener('input',pintaImc);document.getElementById('imcCm').addEventListener('input',pintaImc);" +
       // hábitos diários com streak
-      "var HABS=[[ICO.gota,'Água em dia'],[ICO.maca,'Alimentação no plano'],[ICO.lua,'Dormi 7h+'],[ICO.ativ,'Cardio / passos']];" +
+      // na faixa do topo o espaço é curto: cada hábito é uma linha fina com
+      // ícone, apelido e a sequência dele; o nome inteiro fica no aria-label
+      "var HABS=[[ICO.gota,'Água em dia','Água'],[ICO.maca,'Alimentação no plano','Alimentação'],[ICO.lua,'Dormi 7h+','Sono'],[ICO.ativ,'Cardio / passos','Cardio']];" +
+      // sequência de UM hábito: dias seguidos até hoje (o dia de hoje ainda não
+      // marcado não quebra a conta — ele só não soma)
+      "function stkHab(h,i){var n=0;var d=new Date();" +
+      "for(var k=0;k<400;k++){var iso=isoLoc(d);if((h[iso]||{})[i])n++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}return n;}" +
+      // recorde: maior sequência de dias com 3+ hábitos em toda a história
+      "function recHab(h){var rec=0,cur=0,ant=null;" +
+      "Object.keys(h).sort().forEach(function(iso){var dia=h[iso]||{};var n=0;HABS.forEach(function(_,j){if(dia[j])n++;});" +
+      "if(n<3){cur=0;ant=null;return;}var d=new Date(iso+'T12:00:00');" +
+      "cur=(ant&&Math.round((d-ant)/864e5)===1)?cur+1:1;ant=d;if(cur>rec)rec=cur;});return rec;}" +
       "function pintaHab(){var h=L('pthab',{});var hoje=h[isoHj()]||{};" +
-      "document.getElementById('habBox').innerHTML=HABS.map(function(x,i){var on=!!hoje[i];" +
-      "return \"<button data-hab='\"+i+\"' style='display:flex;align-items:center;gap:10px;background:\"+(on?'rgba(var(--cor-rgb),.22)':'var(--bg4)')+\";border:1px solid \"+(on?'var(--cor)':'var(--bg11)')+\";border-radius:16px;padding:11px 14px;color:#fff;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;'><span style='line-height:0;flex:none;color:#a9a4b5;'>\"+icx(x[0],18)+\"</span>\"+x[1]+\"<span style='margin-left:auto;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none;\"+(on?'background:rgba(var(--cor-rgb),.9);color:#fff;':'border:1.5px solid var(--bg12);color:transparent;')+\"'>✓</span></button>\";}).join('');" +
+      "document.getElementById('habBox').innerHTML=HABS.map(function(x,i){var on=!!hoje[i];var dh=stkHab(h,i);" +
+      "return \"<button type='button' data-hab='\"+i+\"' class='\"+(on?'on':'')+\"' aria-pressed='\"+(on?'true':'false')+\"' aria-label='\"+x[1]+\"'>\"+" +
+      "'<i>'+icx(x[0],15)+'</i><span>'+x[2]+'</span><u>'+(dh?dh+' dia'+(dh>1?'s':''):'—')+'</u></button>';}).join('');" +
       "var streak=0;var d=new Date();" +
-      "for(var i=0;i<90;i++){var iso=isoLoc(d);var dia=h[iso]||{};var n=0;HABS.forEach(function(_,j){if(dia[j])n++;});" +
+      "for(var i=0;i<400;i++){var iso=isoLoc(d);var dia=h[iso]||{};var n=0;HABS.forEach(function(_,j){if(dia[j])n++;});" +
       "if(n>=3)streak++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}" +
-      "document.getElementById('habStreak').innerHTML=streak?icx(ICO.chama,15)+' <b>'+streak+' dia(s) seguidos</b> com 3+ hábitos — constância é o segredo!':'Marque pelo menos 3 pra contar o dia.';}" +
+      "document.getElementById('habStreak').innerHTML=streak+\" <small>dia\"+(streak===1?'':'s')+'</small>';" +
+      "var rec=recHab(h);" +
+      "document.getElementById('habRec').textContent=rec>1?'Recorde: '+rec+' dias':'Marque 3 pra contar o dia';}" +
       "document.getElementById('habBox').addEventListener('click',function(e){var b=e.target.closest('[data-hab]');if(!b)return;" +
       "var h=L('pthab',{});var hoje=h[isoHj()]||{};hoje[b.dataset.hab]=!hoje[b.dataset.hab];h[isoHj()]=hoje;Sv('pthab',h);pintaHab();});" +
       "pintaHab();" +
@@ -2368,6 +2426,9 @@
       "mb.style.background=eFixo?'none':'rgba(var(--cor-rgb),.16)';mb.style.color=eFixo?(CLARO?'#6c6678':'#8a8695'):(CLARO?'var(--cor)':'var(--corc)');}" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
+      // a sequência e os hábitos são conteúdo do Início: fora dele a faixa
+      // colorida fica curta, só com o nome, o nível e o XP
+      "var tpx=document.getElementById('topoExtra');if(tpx)tpx.style.display=(s==='inicio'?'':'none');" +
       // entrou no chat = recados vistos; some a bolinha
       "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);}" +
       // GPS sempre ativo: acompanha a navegação (liga na área de cardio, desliga fora se não tem treino rodando)
