@@ -47,6 +47,15 @@
   </div>
 
   <div class="card">
+    <b style="font-size: 13.5px;">Testar o link de um aluno</b>
+    <p class="sub" style="font-size: 12.5px;">Quando o app de um aluno não abre, cole aqui o <b>link dele</b> (ou só o código depois do <code>?t=</code>). O teste diz se o app está publicado na nuvem, se o acesso foi cortado, ou se aquele link não existe. É o mesmo caminho que o celular dele faz.</p>
+    <input id="tokTeste" placeholder="cole o link do aluno aqui" autocomplete="off" spellcheck="false"
+      style="width:100%;padding:12px;border-radius:10px;border:1px solid #322e3d;background:#14121a;color:#fff;font-size:13px;font-family:inherit;">
+    <button class="btnx sec" id="btnTok">Testar este link</button>
+    <div id="resTok"></div>
+  </div>
+
+  <div class="card">
     <b style="font-size: 13.5px;">Testar outra chave</b>
     <p class="sub" style="font-size: 12.5px;">Se a chave do site foi recusada, cole aqui a outra chave pública do projeto (a <b>Publishable key</b>, que começa com <code>sb_publishable_</code>, ou a <b>anon</b>) e teste ANTES de trocar no site. Nada é salvo: o teste acontece só neste navegador.</p>
     <input id="chaveTeste" placeholder="sb_publishable_… ou eyJ…" autocomplete="off" spellcheck="false"
@@ -384,6 +393,57 @@
   /* Testador de chave: descobre QUAL chave o projeto aceita sem precisar
    * publicar o site a cada tentativa. Foi o que faltou quando a chave legada
    * parou de valer — cada palpite custava um deploy. */
+  /* Testar o link de UM aluno.
+   *
+   * Quando o app não abre, a pergunta é sempre a mesma: "é a nuvem, é o link ou
+   * é o celular do aluno?". Este teste faz o mesmo caminho que o celular dele
+   * faz — e responde em uma linha. */
+  $("btnTok").addEventListener("click", function () {
+    var cru = $("tokTeste").value.trim();
+    var out = $("resTok");
+    var m = cru.match(/[?&]t=([^&#\s]+)/);
+    var tok = m ? decodeURIComponent(m[1]) : cru.replace(/^.*\//, "");
+    if (!tok) { out.innerHTML = "<p class='sub'>Cole o link do aluno primeiro.</p>"; return; }
+    if (!cfg.url) { out.innerHTML = "<p class='sub'>A nuvem não está configurada neste site.</p>"; return; }
+    var bt = this; bt.disabled = true;
+    out.innerHTML = "<p class='sub'>Testando…</p>";
+    var cab = { apikey: cfg.anonKey, Authorization: "Bearer " + cfg.anonKey, "Content-Type": "application/json" };
+    function rpc(nome) {
+      return fetch(cfg.url + "/rest/v1/rpc/" + nome, { method: "POST", headers: cab, body: JSON.stringify({ t: tok }) })
+        .then(function (r) { return r.text().then(function (tx) { return { st: r.status, tx: tx }; }); })
+        .catch(function (e) { return { st: 0, tx: String(e && e.message) }; });
+    }
+    Promise.all([rpc("app_aluno_estado"), rpc("app_aluno_busca")]).then(function (rs) {
+      bt.disabled = false;
+      var est = rs[0], bus = rs[1];
+      var dEst = null, dBus = null;
+      try { dEst = JSON.parse(est.tx); } catch (e) {}
+      try { dBus = JSON.parse(bus.tx); } catch (e) {}
+      var linhas = [];
+      if (dEst && typeof dEst.ok === "boolean") {
+        if (dEst.ok) linhas.push(["✅", "O app deste aluno está publicado e liberado", "O celular dele consegue abrir. Se não abre, é o aparelho: peça pra fechar e abrir o link de novo."]);
+        else if (dEst.motivo === "revogado") linhas.push(["❌", "O acesso deste aluno foi CORTADO", "Alguém tocou em 'Tirar o acesso' (ou na faxina). Devolva pelo perfil do aluno: Ações → Devolver o acesso."]);
+        else linhas.push(["❌", "Este link não existe mais na nuvem", "O registro foi apagado. Publique o app de novo no perfil do aluno."]);
+      } else if (dEst && dEst.code === "PGRST202") {
+        linhas.push(["⚪", "O SQL novo ainda não rodou neste projeto", "Não impede o app de abrir (tem o caminho antigo), mas sem ele não dá pra cortar acesso nem ver quem abriu. Rode o SQL em sql.html."]);
+      } else if (est.st !== 200) {
+        linhas.push(["❌", "O banco recusou a consulta (HTTP " + est.st + ")", est.tx.slice(0, 140)]);
+      }
+      if (bus.st !== 200) {
+        linhas.push(["❌", "app_aluno_busca falhou (HTTP " + bus.st + ")", bus.tx.slice(0, 140)]);
+      } else if (dBus === null) {
+        linhas.push(["❌", "Não existe app publicado pra este link", "É o caso mais comum: o app deste aluno nunca subiu pra nuvem, ou o link é de outro sistema. Abra o perfil dele e toque em Publicar app."]);
+      } else if (dBus && (dBus.html || dBus.dados)) {
+        linhas.push(["✅", "O pacote do app está lá e é válido", "Publicado em " + ((dBus.stamp || "").slice(0, 10) || "?") + " · versão " + (dBus.ver || "?")]);
+      } else {
+        linhas.push(["⚠️", "O registro existe mas está vazio", "Publique o app de novo pra regravar o pacote."]);
+      }
+      out.innerHTML = linhas.map(function (l) {
+        return "<div class='linha'><div class='ic'>" + l[0] + "</div><div><b>" + l[1] + "</b><span>" + String(l[2]).replace(/</g, "&lt;") + "</span></div></div>";
+      }).join("");
+    });
+  });
+
   $("btnChave").addEventListener("click", function () {
     var chave = $("chaveTeste").value.trim();
     var out = $("resChave");
