@@ -112,6 +112,7 @@
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/erro-funcao.js"></script>
+<script src="../assets/funcao-nuvem.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="store.js"></script>
 <script>
@@ -337,23 +338,8 @@
       pronto(respostaLocal(q), "🔎 resposta da busca local — entre na nuvem para respostas da IA");
       return;
     }
-    nuvem.client.auth.getSession().then(function (sess) {
-      var tok = (sess && sess.data && sess.data.session && sess.data.session.access_token) || "";
-      // sem token a chamada leva 401 — a busca local responde e explica o motivo certo
-      if (!tok) return { erro: self.MT_ERRO_FUNCAO.semSessao("A resposta da IA") };
-      return fetch(MT_CLOUD.url + "/functions/v1/chat-envia", {
-        method: "POST",
-        headers: { apikey: MT_CLOUD.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
-        body: JSON.stringify({ acao: "ajuda", historico: iaHist.slice(-8), contexto: MANUAL }),
-      }).then(function (r) {
-        return r.text().then(function (t) {
-          var j = null;
-          try { j = JSON.parse(t); } catch (e) {}
-          if (r.status >= 200 && r.status < 300 && j) return j;
-          return { erro: self.MT_ERRO_FUNCAO("chat-envia", r.status, t, j) };
-        });
-      });
-    }).then(function (d) {
+    self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "ajuda", historico: iaHist.slice(-8), contexto: MANUAL }, "A resposta da IA")
+      .then(function (d) {
       if (d && d.ok && d.texto) pronto(d.texto, "🤖 Claude · com base no manual do TORQUE ON");
       else pronto(respostaLocal(q), "🔎 busca local — a IA não respondeu (" + ((d && d.erro) || "confira a função chat-envia") + ")");
     }).catch(function () {

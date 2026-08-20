@@ -161,27 +161,10 @@
       var nuvem = window.MTStore && window.MTStore.cloud && window.MTStore.cloud();
       var cfg = self.MT_CLOUD || {};
       if (!nuvem || !cfg.url) return Promise.resolve({ erro: "Entre na sua conta pra usar a assinatura no cartão." });
-      return nuvem.client.auth.getSession().then(function (s) {
-        var tok = (s && s.data && s.data.session && s.data.session.access_token) || "";
-        // "Bearer " vazio leva 401 do portão do Supabase, e o recado saía errado
-        if (!tok) {
-          return { erro: self.MT_ERRO_FUNCAO ? self.MT_ERRO_FUNCAO.semSessao("A assinatura no cartão")
-            : "Sua sessão da nuvem caiu — saia da conta e entre de novo." };
-        }
-        return fetch(cfg.url + "/functions/v1/pagarme", {
-          method: "POST",
-          headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
-          body: JSON.stringify(corpo),
-        }).then(function (r) {
-          return r.text().then(function (t) {
-            var j = null;
-            try { j = JSON.parse(t); } catch (e) {}
-            if (r.status >= 200 && r.status < 300 && j) return j;
-            return { erro: self.MT_ERRO_FUNCAO ? self.MT_ERRO_FUNCAO("pagarme", r.status, t, j)
-              : "A função pagarme recusou a chamada (HTTP " + r.status + ")." };
-          });
-        });
-      }).catch(function () { return { erro: "Sem conexão com a nuvem agora." }; });
+      // MT_FUNCAO renova o crachá do login antes de chamar e tenta de novo se o
+      // Supabase recusar — sem isso, painel aberto há mais de 1 hora dava 401
+      return self.MT_FUNCAO.chama(nuvem.client, "pagarme", corpo, "A assinatura no cartão")
+        .catch(function () { return { erro: "Sem conexão com a nuvem agora." }; });
     },
     // tokeniza o cartão DIRETO no Pagar.me (o número nunca passa pela nossa nuvem)
     _tokeniza: function (pk, cartao) {

@@ -123,11 +123,12 @@ function ok(cond, nome) {
   const aging = await p.evaluate(() => document.getElementById("aging").textContent);
   ok(/1–29/.test(aging) && /30–59/.test(aging) && /90\+/.test(aging), "faixas 1–29/30–59/90+ presentes");
   ok(/TOTAL EM ABERTO/.test(aging) && /297/.test(aging), "total em aberto soma R$ 297 (99×3)");
-  // cobrança Pagar.me modernizada: função padrão da nuvem + token de sessão (anonKey crua leva 401)
+  /* cobrança Pagar.me modernizada: função padrão da nuvem + crachá de login
+   * renovado pelo MT_FUNCAO (a anonKey crua leva 401, e o crachá vence em 1h) */
   ok(await p.evaluate(async () => {
     const t = await (await fetch("inadimplencia.html")).text();
-    return /functions\/v1\/pagarme/.test(t) && /getSession/.test(t) && /pagarmeManual/.test(t);
-  }), "PIX/boleto da inadimplência usa a função padrão da nuvem com login (sem URL manual)");
+    return /functions\/v1\/pagarme/.test(t) && /MT_FUNCAO/.test(t) && /pagarmeManual/.test(t);
+  }), "PIX/boleto da inadimplência usa a função padrão da nuvem com o crachá renovado (sem URL manual)");
   await p.close();
 
   // ---------- 5) Curva ABC ----------

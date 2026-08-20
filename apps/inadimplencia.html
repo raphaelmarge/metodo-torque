@@ -126,6 +126,7 @@
 <script src="../assets/access-config.js"></script>
 <script src="../assets/cloud-config.js"></script>
 <script src="../assets/erro-funcao.js"></script>
+<script src="../assets/funcao-nuvem.js"></script>
 <script src="../assets/vendor/supabase.js"></script>
 <script src="store.js"></script>
 <script>
@@ -388,13 +389,15 @@
     if (window.MT_CLOUD && window.MT_CLOUD.anonKey) headers.apikey = window.MT_CLOUD.anonKey;
     // a função exige usuário logado — usa o token da sessão (anonKey crua leva 401)
     var nuvem = S.cloud && S.cloud();
-    var pegaTok = nuvem
-      ? nuvem.client.auth.getSession().then(function (s) { return (s && s.data && s.data.session && s.data.session.access_token) || ""; }).catch(function () { return ""; })
-      : Promise.resolve("");
-    return pegaTok.then(function (tok) {
+    if (!nuvem) return Promise.resolve({ erro: self.MT_ERRO_FUNCAO.semSessao("A cobrança pelo Pagar.me") });
+    var manual = pagarmeManual();
+    // MT_FUNCAO renova o crachá do login antes de chamar (ele vence em ~1 hora)
+    if (!manual) return self.MT_FUNCAO.chama(nuvem.client, "pagarme", payload, "A cobrança pelo Pagar.me");
+    // quem configurou uma URL própria continua indo pra ela — só o crachá muda
+    return self.MT_FUNCAO.token(nuvem.client).then(function (tok) {
       if (!tok) return { erro: self.MT_ERRO_FUNCAO.semSessao("A cobrança pelo Pagar.me") };
       headers.Authorization = "Bearer " + tok;
-      return fetch(pagarmeUrl(), { method: "POST", headers: headers, body: JSON.stringify(payload) })
+      return fetch(manual, { method: "POST", headers: headers, body: JSON.stringify(payload) })
         .then(function (r) {
           return r.text().then(function (t) {
             var j = null;

@@ -614,6 +614,10 @@
      * essas funções tem que usar este token — a anonKey só serve de apikey. */
     tokenNuvem: function () {
       if (!sync.client) return Promise.resolve("");
+      /* O crachá vale ~1 hora. Com a tela aberta o dia todo ele vencia e a
+       * chamada levava 401 — o famoso "funciona por um tempo e depois dá
+       * erro". MT_FUNCAO.token renova antes de vencer. */
+      if (self.MT_FUNCAO && self.MT_FUNCAO.token) return self.MT_FUNCAO.token(sync.client);
       return sync.client.auth.getSession()
         .then(function (s) { return (s && s.data && s.data.session && s.data.session.access_token) || ""; })
         .catch(function () { return ""; });
