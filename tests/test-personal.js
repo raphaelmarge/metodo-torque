@@ -4313,21 +4313,31 @@ async function abaPt(p, a) {
       if (!document.getElementById("gKg")) return null;
       const antes = JSON.parse(localStorage.getItem("ptdc") || "{}");
       const nome = document.getElementById("gEx").textContent;
-      document.getElementById("gMaisKg").click();
-      document.getElementById("gMaisKg").click();
-      document.getElementById("gRepMais").click();
+      // a carga entra arrastando a régua (o traço do meio é o valor escolhido)
+      window.__roda = async (id, valor) => {
+        const rd = document.getElementById(id);
+        const px = rd.querySelector("i").offsetWidth;
+        rd.scrollLeft = valor * px;
+        rd.dispatchEvent(new Event("scroll"));
+        await new Promise((r) => setTimeout(r, 150));
+      };
+      await window.__roda("gWKg", 40);
+      await window.__roda("gWRep", 12);
       const semSalvar = JSON.parse(localStorage.getItem("ptdc") || "{}");
       document.getElementById("gSalvar").click();
       await new Promise((r) => setTimeout(r, 150));
       const depois = JSON.parse(localStorage.getItem("ptdc") || "{}");
       return { nome: nome, antes: (antes[nome] || []).length, semSalvar: (semSalvar[nome] || []).length,
         depois: (depois[nome] || []), lab: document.getElementById("gCgLab").textContent,
-        hist: document.getElementById("gHist").textContent };
+        hist: document.getElementById("gHist").textContent,
+        kgNaTela: document.getElementById("gKg").value, repsNaTela: document.getElementById("gReps").value };
     });
     ok(carga && carga.depois.length > carga.antes,
-      "no fim do exercício dá pra anotar a carga por stepper, sem teclado");
+      "no fim do exercício dá pra anotar a carga arrastando a régua, sem teclado");
+    ok(carga && carga.kgNaTela === "40" && carga.repsNaTela === "12",
+      "arrastar a régua escreve o valor do traço do meio no campo (" + (carga && carga.kgNaTela) + " kg × " + (carga && carga.repsNaTela) + ")");
     ok(carga && carga.semSalvar === carga.antes,
-      "mexer no stepper e NÃO salvar não grava nada (o registro é do que o aluno confirmou)");
+      "mexer na régua e NÃO salvar não grava nada (o registro é do que o aluno confirmou)");
     const reg = carga && carga.depois[carga.depois.length - 1];
     ok(reg && reg.kg > 0 && reg.r > 0 && reg.g === 1,
       "o registro guarda carga, repetições e a marca de que veio do treino guiado");
@@ -4336,7 +4346,7 @@ async function abaPt(p, a) {
     // salvar de novo o mesmo exercício no mesmo dia ATUALIZA, não duplica
     const denovo = await pApp.evaluate(async () => {
       const nome = document.getElementById("gEx").textContent;
-      document.getElementById("gMaisKg").click();
+      await window.__roda("gWKg", 45);
       document.getElementById("gSalvar").click();
       await new Promise((r) => setTimeout(r, 120));
       return (JSON.parse(localStorage.getItem("ptdc") || "{}")[nome] || []).filter((x) => x.g === 1).length;
@@ -4363,9 +4373,9 @@ async function abaPt(p, a) {
     const repesca = await pApp.evaluate(async () => {
       document.querySelector("[data-gfalta]").click();
       await new Promise((r) => setTimeout(r, 150));
-      return { temStepper: !!document.getElementById("gKg"), volta: !!document.getElementById("gVoltaFim") };
+      return { temRegua: !!document.getElementById("gWKg"), volta: !!document.getElementById("gVoltaFim") };
     });
-    ok(repesca.temStepper && repesca.volta, "tocar no atalho abre o registro ali mesmo, sem sair da tela final");
+    ok(repesca.temRegua && repesca.volta, "tocar no atalho abre o registro ali mesmo, sem sair da tela final");
     /* a repescagem abre o formulário de OUTRO exercício: sem saber de quem é o
      * formulário, sair sem salvar gravava a carga no exercício errado */
     const alvoCerto = await pApp.evaluate(async () => {
@@ -4377,7 +4387,7 @@ async function abaPt(p, a) {
       const antes = JSON.parse(localStorage.getItem("ptdc") || "{}");
       chip.click();
       await new Promise((r) => setTimeout(r, 120));
-      document.getElementById("gMaisKg").click();      // mexe e NÃO salva
+      await window.__roda("gWKg", 30);                  // mexe e NÃO salva
       document.getElementById("gVoltaFim").click();     // sai pelo caminho que grava o pendente
       await new Promise((r) => setTimeout(r, 150));
       const dep = JSON.parse(localStorage.getItem("ptdc") || "{}");
