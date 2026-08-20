@@ -1,10 +1,20 @@
 /* Service worker do portal TORQUE ON — precache completo para uso offline. */
 importScripts("assets/content.js");
-importScripts("assets/versao.js");
 
-// a versão mora em assets/versao.js pra que as telas mostrem exatamente a
-// mesma coisa que o service worker está servindo
-var VERSION = self.MT_VERSAO;
+/* A versão fica CRAVADA aqui, e não só no assets/versao.js.
+ *
+ * O navegador decide se existe service worker novo comparando os BYTES deste
+ * arquivo. Com a versão só no arquivo importado, o sw.js ficava igualzinho lote
+ * após lote — 18 versões seguidas, do mt-v491 ao mt-v509 — e o iPhone nunca
+ * trocava o service worker, porque o Safari não confere os arquivos importados.
+ * O aparelho seguia servindo do cache TODO js do site, inclusive o
+ * app/aluno-builder.js (o "código único" do app do aluno), e reiniciar o celular
+ * não adiantava: o problema não estava no aparelho, estava no aviso que nunca
+ * chegava. O pwa-update.js já pedia "procura versão nova" a cada abertura; era
+ * a resposta que vinha sempre igual.
+ *
+ * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
+var VERSION = "mt-v510";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -133,14 +143,18 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
-  // código das Edge Functions (o funcoes.html copia dali pro Supabase) e o
-  // supabase-setup.sql (o sql.html copia dali pro SQL Editor): SEMPRE rede
-  // primeiro. Servir do cache aqui fazia o professor copiar e publicar uma
-  // função VELHA sem perceber — foi assim que a chat-envia "republicada"
-  // continuou sem a IA de treino. Pro SQL é ainda mais sério: rodar uma
-  // versão velha do setup pode recriar estruturas erradas no banco.
+  // código das Edge Functions (o funcoes.html copia dali pro Supabase), o
+  // supabase-setup.sql (o sql.html copia dali pro SQL Editor) e o construtor do
+  // app do aluno: SEMPRE rede primeiro. Servir do cache aqui fazia o professor
+  // copiar e publicar uma função VELHA sem perceber — foi assim que a
+  // chat-envia "republicada" continuou sem a IA de treino. Pro SQL é ainda mais
+  // sério: rodar uma versão velha do setup pode recriar estruturas erradas no
+  // banco. E o aluno-builder.js é a FONTE ÚNICA do app do aluno: servir ele do
+  // cache é o mesmo que desligar o conserto automático que ele existe pra dar.
+  // Nos três casos o cache continua valendo como reserva, pro app abrir offline.
   if (url.pathname.indexOf("/supabase/functions/") > -1 ||
-      url.pathname.indexOf("supabase-setup.sql") > -1) {
+      url.pathname.indexOf("supabase-setup.sql") > -1 ||
+      url.pathname.indexOf("/app/aluno-builder.js") > -1) {
     event.respondWith(
       fetch(req, { cache: "no-cache" }).then(function (res) {
         if (res && res.ok) {
