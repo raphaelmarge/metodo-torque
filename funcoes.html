@@ -41,7 +41,12 @@
     quem não estiver logado na equipe. Isso é mais seguro do que era antes (com o Verify JWT ligado, a
     função confiava no portão e nem olhava o token) e resolve um problema real: em projeto que trocou as
     chaves de assinatura, o portão passou a recusar até token bom, e a função nem chegava a rodar.
-    Depois do deploy, abra a função → <b>Details</b> e deixe a chavinha <b>Verify JWT</b> desligada.</p>
+    <b>A ordem importa:</b> publique primeiro e só DEPOIS desligue a chavinha — publicar pelo editor do
+    painel costuma devolver o <b>Verify JWT</b> pro padrão (ligado). Abra a função → <b>Details</b>
+    (ou os três pontinhos → <b>Function configuration</b>), desligue, salve, e <u>não publique de novo
+    em seguida</u>. Pra conferir sem depender do que a tela mostra, use o
+    <a href="diagnostico.html">diagnóstico</a>: ele bate na função sem credencial nenhuma e diz se o
+    porteiro ainda está lá.</p>
     <p style="margin:0;"><b>Antes de republicar: republicar resolve pouca coisa.</b> Se a tela disse
     que o <b>Supabase recusou a credencial</b> (HTTP 401), a função nem chegou a rodar — o problema é
     login/chave, e publicar de novo não muda nada. Rode primeiro o

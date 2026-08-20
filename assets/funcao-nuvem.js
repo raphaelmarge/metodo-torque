@@ -9,7 +9,10 @@
  * O que este arquivo faz:
  *   1. renova o crachá ANTES de chamar, quando ele está perto de vencer;
  *   2. se mesmo assim vier 401/403, renova e tenta MAIS UMA vez;
- *   3. só então desiste, com o recado honesto de sessão caída.
+ *   3. se o crachá NOVO também levar 401, o problema não é a sessão — é o
+ *      portão do Supabase recusando aquela função, e o recado diz isso;
+ *   4. e, havendo apelido configurado (MT_FN_APELIDO), repete a chamada na
+ *      função de reserva antes de desistir.
  * Assim o professor não vê erro nenhum no caso comum — o sistema se recupera
  * sozinho —, e quando não dá pra recuperar, ele ouve a verdade.
  *
@@ -17,7 +20,8 @@
  *      → Promise de { ...resposta } ou { erro: "recado pro humano" }
  */
 (function (raiz) {
-  var MARGEM = 120; // renova quando falta menos de 2 minutos
+  var MARGEM = 120;   // renova quando falta menos de 2 minutos
+  var apelidoOk = {}; // apelido que já deu certo nesta página: usa direto
 
   // segundos que faltam pro crachá vencer; null quando não dá pra saber
   function faltaPra(tok) {
@@ -57,6 +61,7 @@
     if (raiz.MT_ERRO_FUNCAO) return raiz.MT_ERRO_FUNCAO(nome, status, texto, json);
     return "A função " + nome + " não respondeu como esperado (HTTP " + status + ").";
   }
+
   function semSessao(oQue) {
     /* Avisa a página inteira, não só quem chamou: assim o painel pode botar o
      * botão de entrar de novo na frente do professor, em vez de esconder o
@@ -66,13 +71,28 @@
     return "Sua sessão da nuvem caiu — saia da conta e entre de novo.";
   }
 
+  /* 401 com crachá NOVO em folha não é sessão caída: é o portão do Supabase
+   * barrando aquela função. Dizer "entre de novo" aqui manda a pessoa fazer um
+   * login que não resolve nada — e some com o problema de vista. */
+  function portaoRecusou(nome, status) {
+    return "O Supabase barrou a chamada da função " + nome + " no portão (HTTP " + status +
+      "), mesmo com o seu login válido e recém-renovado — não é a sua sessão nem a chave do site. " +
+      "Abra www.torqueon.com.br/diagnostico.html: ele testa a função com e sem credencial e diz o que destrava.";
+  }
+
+  function apelidoDe(nome) {
+    var m = raiz.MT_FN_APELIDO || {};
+    var alt = m[nome] || "";
+    return alt && alt !== nome ? alt : "";
+  }
+
   function chama(client, nome, corpo, oQue) {
     var cfg = raiz.MT_CLOUD || {};
     if (!cfg.url) return Promise.resolve({ erro: "Este aparelho está sem a configuração da nuvem — recarregue a página." });
-    var url = cfg.url + "/functions/v1/" + nome;
+    var alvo = apelidoOk[nome] || nome;
 
-    function envia(tok) {
-      return fetch(url, {
+    function envia(qual, tok) {
+      return fetch(cfg.url + "/functions/v1/" + qual, {
         method: "POST",
         headers: { apikey: cfg.anonKey, Authorization: "Bearer " + tok, "Content-Type": "application/json" },
         body: JSON.stringify(corpo),
@@ -84,23 +104,39 @@
           var j = null;
           try { j = JSON.parse(t); } catch (e) {}
           var ok = r.status >= 200 && r.status < 300;
-          var d = (ok && j) ? j : { erro: traduz(nome, r.status, t, j) };
+          var d = (ok && j) ? j : { erro: traduz(qual, r.status, t, j) };
           d.__status = r.status;
           return d;
         });
       });
     }
+    function barrado(d) { return d && (d.__status === 401 || d.__status === 403); }
+
+    // última cartada: a função de reserva, quando o dono configurou um apelido
+    function tentaApelido(tok, d) {
+      var alt = apelidoDe(alvo);
+      if (!alt || alt === alvo) return d;
+      return envia(alt, tok).then(function (d2) {
+        if (barrado(d2)) return d;
+        apelidoOk[nome] = alt; // deu certo: as próximas já vão direto
+        return d2;
+      }, function () { return d; });
+    }
 
     return token(client).then(function (tok) {
       if (!tok) return { erro: semSessao(oQue), __status: 401 };
-      return envia(tok).then(function (d) {
-        if (d.__status !== 401 && d.__status !== 403) return d;
+      return envia(alvo, tok).then(function (d) {
+        if (!barrado(d)) return d;
         // crachá recusado no meio do caminho: renova e tenta MAIS UMA vez
         return renova(client).then(function (novo) {
-          if (!novo) return { erro: semSessao(oQue), __status: d.__status };
-          return envia(novo).then(function (d2) {
-            if (d2.__status === 401 || d2.__status === 403) return { erro: semSessao(oQue), __status: d2.__status };
-            return d2;
+          if (!novo) {
+            // não deu pra renovar: aí sim a sessão pode ter morrido de verdade
+            return tentaApelido(tok, { erro: semSessao(oQue), __status: d.__status });
+          }
+          return envia(alvo, novo).then(function (d2) {
+            if (!barrado(d2)) return d2;
+            // crachá novo em folha e mesmo assim barrado: é o portão, não você
+            return tentaApelido(novo, { erro: portaoRecusou(alvo, d2.__status), __status: d2.__status });
           });
         });
       });

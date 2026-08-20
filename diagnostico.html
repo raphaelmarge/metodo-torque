@@ -266,10 +266,25 @@
           }).then(function (r) { return r.status; }, function () { return 0; }).then(function (outra) {
             anota("prova cruzada (envia-email): HTTP " + outra);
             if (outra >= 200 && outra < 400) {
-              linha("❌", "A chat-envia está recusando no portão, com a credencial CERTA",
-                "A mesma credencial passou na função envia-email (HTTP " + outra + ") e foi barrada na chat-envia (" + comoFoi + ") — então não é a sua conta nem a chave do site.",
-                "Publique a chat-envia de novo com o \u201cVerify JWT\u201d DESLIGADO: abra www.torqueon.com.br/funcoes.html, copie o código atual (ele confere sozinho quem está chamando) e no Supabase deixe a chavinha Verify JWT desligada nos Details da função.");
-              return;
+              /* Teste do porteiro: um GET simples. Se a função ESTÁ rodando, ela
+               * mesma responde "use POST" (405). Se o porteiro ainda está na
+               * frente, volta o 401 de novo. É o jeito de saber se o Verify JWT
+               * foi mesmo desligado, sem depender do que o painel mostra. */
+              return fetch(cfg.url + "/functions/v1/chat-envia", { method: "GET" })
+                .then(function (r) { return r.text().then(function (t) { return { st: r.status, t: t }; }); },
+                      function (e) { return { st: 0, t: e.message }; })
+                .then(function (g) {
+                  anota("porteiro (GET sem credencial): HTTP " + g.st + " " + corpoCurto(g.t));
+                  if (/use POST/i.test(g.t) || g.st === 405) {
+                    linha("⚠️", "A chat-envia está no ar, mas recusa a chamada com credencial",
+                      "Sem credencial nenhuma ela responde (HTTP " + g.st + "), então o Verify JWT já está desligado e o código novo subiu. O 401 aparece só quando mandamos o cabeçalho de login (" + comoFoi + ").",
+                      "Me mande este print: com o Verify JWT desligado e a função no ar, esse 401 vem de outro lugar e eu preciso ver o detalhe técnico inteiro.");
+                    return;
+                  }
+                  linha("❌", "O Verify JWT da chat-envia ainda está LIGADO",
+                    "Nem sem credencial ela roda (HTTP " + g.st + ") — o porteiro barra antes, e por isso a mesma credencial passa na envia-email e não passa aqui.",
+                    "No Supabase: Edge Functions → chat-envia → Details (ou os três pontinhos → Function configuration) → DESLIGUE a chavinha \u201cVerify JWT\u201d e salve — e NÃO publique a função de novo depois disso, porque publicar pelo editor costuma religar a chavinha sozinho. Se ela não ficar desligada, crie uma função NOVA (ex.: chat-envia2) com o mesmo código, já desmarcando o Verify JWT na criação, e me avise o nome: eu aponto o site pra ela.");
+                });
             }
             vereditoCredencial();
           });
