@@ -5202,6 +5202,19 @@ async function abaPt(p, a) {
     ok(faixa.jaEstava, "a IA que caiu por sessão já tinha levantado a faixa sozinha");
     ok(faixa.apareceu && /sess/i.test(faixa.texto), "faixa de sessão caída aparece quando a nuvem derruba o login");
     ok(faixa.botoes.indexOf("Entrar de novo") >= 0, "e ela traz o botão Entrar de novo (um toque, sem procurar o card)");
+    const abriu = await p.evaluate(() => {
+      window.__contaOrig = self.MT_CONTA_ATUAL;
+      let pedido = "";
+      self.MT_CONTA_ATUAL = { abre: (q) => { pedido = q; } };
+      window.dispatchEvent(new CustomEvent("mt:sessao-caiu"));
+      const el = document.getElementById("faixaSessao");
+      [...el.querySelectorAll("button")].find((b) => b.textContent === "Entrar de novo").click();
+      const sumiu = !document.getElementById("faixaSessao");
+      self.MT_CONTA_ATUAL = window.__contaOrig;
+      return { pedido, sumiu, logado: window.MTStore.usuario().logado };
+    });
+    ok(abriu.pedido === "entrar" && abriu.sumiu, "o botão abre a janela de login direto (não o card que diz 'conectado')");
+    ok(!abriu.logado, "e o painel para de se dizer conectado com o crachá morto");
   }
 
   // 🔁 mensalidade no cartão (assinatura Pagar.me com tokenização no navegador)

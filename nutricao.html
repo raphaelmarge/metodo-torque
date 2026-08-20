@@ -4126,6 +4126,8 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
     salvaNome: function (nome) { var st = load(); if (!st.config.nome) { st.config.nome = nome; S.write("ntStudio", st); } },
     depois: function () { checaOnboarding(); render(); },
   });
+  // a faixa de sessão caída abre o login direto por aqui
+  self.MT_CONTA_ATUAL = contaN;
   $("btnContaEntrar").addEventListener("click", function () { contaN.abre("entrar"); });
   $("btnContaEquipe").addEventListener("click", contaN.criaColaborador);
   $("btnContaSair").addEventListener("click", contaN.sair);
@@ -4169,9 +4171,11 @@ addEventListener('load',function(){document.querySelectorAll('.kpi-nt .val').for
     btn.className = "btn";
     btn.textContent = "Entrar de novo";
     btn.addEventListener("click", function () {
+      faixa.remove();
+      // abre a janela de login na hora; o card da conta é só o plano B
+      if (self.MT_CONTA_ATUAL && self.MT_CONTA_ATUAL.abre) { self.MT_CONTA_ATUAL.abre("entrar"); return; }
       var aba = document.querySelector('[data-a="conta"]');
       if (aba) aba.click();
-      faixa.remove();
     });
     var fechar = document.createElement("button");
     fechar.className = "btn sec";

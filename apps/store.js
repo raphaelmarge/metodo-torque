@@ -420,6 +420,11 @@
     }
   }
 
+  /* Sessão derrubada pela nuvem: o painel não pode seguir dizendo "conectado
+   * como fulano" com o crachá morto — senão o botão que aparece é Sair, e não
+   * Entrar, que é o que a pessoa precisa. */
+  self.addEventListener("mt:sessao-caiu", function () { sync.email = ""; });
+
   function iniciaSync() {
     var cfg = self.MT_CLOUD;
     if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase || sync.client) return;
