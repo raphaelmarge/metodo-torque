@@ -2638,7 +2638,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       "box.innerHTML=\"<div style='display:flex;gap:10px;'>\"+" +
       "\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#9fb8a6;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:12px;'></div>\"+" +
       "(fs.length>1?\"<div style='flex:1;text-align:center;'><div style='font-size:10.5px;color:#9fb8a6;letter-spacing:.1em;margin-bottom:4px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</div><img src='\"+ult.img+\"' style='width:100%;border-radius:12px;'></div>\":'')+\"</div>\"+" +
-      "\"<div class='vz' style='font-size:11.5px;'>\"+fs.length+\" foto(s) guardadas</div>\";" +
+      "\"<div class='vz' style='font-size:11.5px;'>\"+fs.length+(fs.length===1?\" foto guardada\":\" fotos guardadas\")+\"</div>\";" +
       "var dias=Math.round((new Date()-new Date(ult.d))/864e5);" +
       "if(dias>=30)document.getElementById('fotoBtn').firstChild.textContent='Faz '+dias+' dias — hora da foto do mês! ';}" +
       "document.getElementById('fotoInput').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;" +
@@ -3653,7 +3653,7 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
       return nuvem.client.from("chat_config").upsert([corpo], { onConflict: "academia_id" });
     };
     grava(true).then(function (r) {
-      if (!r.error) { btn.disabled = false; $("botZapOkN").textContent = "✓ " + reg.lista.length + " automação(ões) publicadas! Com a integração oficial ligada, seu número responde com a 📶."; return; }
+      if (!r.error) { btn.disabled = false; $("botZapOkN").textContent = "✓ " + S.plural(reg.lista.length, "automação publicada", "automações publicadas") + "! Com a integração oficial ligada, seu número responde com a 📶."; return; }
       grava(false).then(function (r2) {
         btn.disabled = false;
         $("botZapOkN").textContent = r2.error

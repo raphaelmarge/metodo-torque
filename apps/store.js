@@ -144,6 +144,13 @@
     return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
   }
 
+  /* "2 foto(s) guardadas" resolvia o singular do substantivo e esquecia o
+   * resto da frase. plural() recebe o número e as duas versões inteiras, então
+   * "1 ficha prescrita" e "3 fichas prescritas" saem certas as duas. */
+  function plural(n, um, varios) {
+    return n + " " + (Math.abs(n) === 1 ? um : varios);
+  }
+
   function fmtData(iso) {
     if (!iso) return "—";
     var p = iso.split("-");
@@ -645,7 +652,7 @@
     horarioDoDia: horarioDoDia, abertoAgora: abertoAgora,
     read: read, write: write, uid: uid,
     contratoAtivoConta: contratoAtivoConta, ehClienteAtivo: ehClienteAtivo,
-    todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData,
+    todayISO: todayISO, monthKey: monthKey, fmtBRL: fmtBRL, fmtData: fmtData, plural: plural,
     savePhoto: savePhoto, savePhotoData: savePhotoData, getPhoto: getPhoto, deletePhoto: deletePhoto,
     saveLogo: saveLogo, getLogo: getLogo, removeLogo: removeLogo, aplicaLogo: aplicaLogo,
     exportBackup: exportBackup, importBackup: importBackup, onChange: onChange, equipeDatalist: equipeDatalist,

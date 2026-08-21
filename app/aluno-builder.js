@@ -819,6 +819,7 @@
       // barra do navegador na cor do studio — nasce da paleta, não do HTML
       "(function(){var tc=document.createElement('meta');tc.setAttribute('name','theme-color');tc.setAttribute('content',CV('cor'));document.head.appendChild(tc);})();" +
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
+      "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfotoperfil')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
@@ -970,7 +971,7 @@
       "\"<div id='stkBox' style='margin-top:9px;font-size:12px;color:#a9a4b5;'>Bata a meta desta semana pra acender a sequência \"+icx(ICO.chama,13)+\"</div>\");" +
       "var total=Object.keys(f).length;var marcos=[100,50,25,10,5];" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j]){falta=marcos[j];break;}}" +
-      "document.getElementById('medalhas').innerHTML='<b>'+total+' treino(s) registrados</b>'+(falta?\"<br><small>faltam \"+(falta-total)+\" pra marca de \"+falta+\" treinos</small>\":'');}" +
+      "document.getElementById('medalhas').innerHTML='<b>'+pl(total,'treino registrado','treinos registrados')+'</b>'+(falta?\"<br><small>faltam \"+(falta-total)+\" pra marca de \"+falta+\" treinos</small>\":'');}" +
       "document.getElementById('btnFeito').addEventListener('click',function(){var f=L('ptfeitos',{});var iso=isoHj();" +
       "if(f[iso]){alert('Treino de hoje já registrado! Descansa que amanhã tem mais.');return;}" +
       "f[iso]=1;Sv('ptfeitos',f);pintaSemana();" +
@@ -1104,7 +1105,7 @@
       "for(var w=51;w>=0;w--){html+=\"<div style='flex:1;min-width:0;display:flex;flex-direction:column;gap:1.5px;'>\";" +
       "for(var d=0;d<7;d++){var dt=new Date(fim);dt.setDate(dt.getDate()-w*7-(6-d));var iso=isoLoc(dt);var fez=!!f[iso];if(fez)tot++;var fut=dt>hoje;" +
       "html+=\"<div style='width:100%;aspect-ratio:1;border-radius:1.5px;background:\"+(fut?'transparent':fez?'var(--cor)':'var(--bg8)')+\";'></div>\";}html+='</div>';}" +
-      "el.innerHTML=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Seu ano de treinos — \"+tot+\" dia(s) pintados (cada quadrado é 1 dia)</div><div style='display:flex;gap:1.5px;max-width:100%;overflow:hidden;'>\"+html+'</div>';}" +
+      "el.innerHTML=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Seu ano de treinos — \"+pl(tot,'dia pintado','dias pintados')+\" (cada quadrado é 1 dia)</div><div style='display:flex;gap:1.5px;max-width:100%;overflow:hidden;'>\"+html+'</div>';}" +
       "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(pintaConquistas,150);});" +
       // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
       "var STUDIO=" + jsonApp(studio) + ";" +
@@ -1216,11 +1217,11 @@
       "document.getElementById('wodTermina').style.display=wod.tipo==='fortime'?'block':'none';}" +
       "function wodPinta(el2){var tela=document.getElementById('wodTela'),fase=document.getElementById('wodFase'),tmp=document.getElementById('wodTempo'),info=document.getElementById('wodInfo');" +
       "if(wod.tipo==='fortime'){var cap=60*(parseInt(document.getElementById('wodCap').value,10)||0);" +
-      "fase.textContent='FOR TIME';tmp.textContent=wodFmt(el2);info.textContent=(wod.voltas?wod.voltas+' volta(s) · ':'')+(cap?'limite '+wodFmt(cap):'sem limite');" +
-      "if(cap)wodCd(cap-el2);if(cap&&el2>=cap)wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+wod.voltas+' volta(s)':''));return;}" +
+      "fase.textContent='FOR TIME';tmp.textContent=wodFmt(el2);info.textContent=(wod.voltas?pl(wod.voltas,'volta','voltas')+' · ':'')+(cap?'limite '+wodFmt(cap):'sem limite');" +
+      "if(cap)wodCd(cap-el2);if(cap&&el2>=cap)wodFim('TEMPO! '+wodFmt(cap)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''));return;}" +
       "if(wod.tipo==='amrap'){var tot=60*(parseInt(document.getElementById('wodMin').value,10)||10);var resta=tot-el2;" +
-      "fase.textContent='AMRAP '+Math.round(tot/60)+' MIN';tmp.textContent=wodFmt(resta);info.textContent=wod.voltas+' volta(s) completadas';" +
-      "wodCd(resta);if(resta<=0)wodFim(wod.voltas+' volta(s) em '+wodFmt(tot)+'!',wod.voltas);return;}" +
+      "fase.textContent='AMRAP '+Math.round(tot/60)+' MIN';tmp.textContent=wodFmt(resta);info.textContent=pl(wod.voltas,'volta completada','voltas completadas');" +
+      "wodCd(resta);if(resta<=0)wodFim(pl(wod.voltas,'volta','voltas')+' em '+wodFmt(tot)+'!',wod.voltas);return;}" +
       "if(wod.tipo==='emom'){var totE=60*(parseInt(document.getElementById('wodMin').value,10)||10);" +
       "if(el2>=totE){wodFim('EMOM completo — '+Math.round(totE/60)+' minutos!');return;}" +
       "var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
@@ -1247,7 +1248,7 @@
       "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'');" +
       "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});}" +
       "document.getElementById('wodTermina').addEventListener('click',function(){if(!wod.run)return;var el2=(Date.now()-wod.t0)/1000;" +
-      "wodFim('Seu tempo: '+wodFmt(el2)+(wod.voltas?' · '+wod.voltas+' volta(s)':''),el2);});" +
+      "wodFim('Seu tempo: '+wodFmt(el2)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''),el2);});" +
       "document.getElementById('wodTipos').addEventListener('click',function(e){var b=e.target.closest('[data-wodt]');if(!b||wod.run)return;" +
       "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
@@ -1997,7 +1998,7 @@
       "function ucPinta(){var el2=uc.run?(Date.now()-uc.t0)/1000:uc.acum;" +
       "var tmp=ucEl('ucTempo'),fs=ucEl('ucFase'),inf=ucEl('ucInfo');" +
       "if(uc.tipo==='crono'){fs.textContent=uc.run?'Correndo':'Pronto?';fs.style.color='#a9a4b5';tmp.style.color='';tmp.textContent=ucFmt(el2,true);" +
-      "inf.textContent=uc.voltas.length?uc.voltas.length+' volta(s) marcada(s)':'';return;}" +
+      "inf.textContent=uc.voltas.length?pl(uc.voltas.length,'volta marcada','voltas marcadas'):'';return;}" +
       "if(uc.tipo==='timer'){var tot=60*ucV('ucMin',0)+ucV('ucSeg',0);var resta=tot-el2;" +
       "fs.textContent=uc.run?'Contando':'Pronto?';fs.style.color='#a9a4b5';tmp.style.color='';tmp.textContent=ucFmt(resta,false);inf.textContent='';" +
       "ucCd(resta);if(uc.run&&resta<=0)ucFim('FIM DO TIMER!',false);return;}" +
@@ -2105,7 +2106,7 @@
       "\"<span style='position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:99px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</span>\"+" +
       "\"<span style='position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:99px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</span></div>\"+" +
       "\"<input type='range' id='ftRange' min='0' max='100' value='50' style='width:100%;margin-top:8px;padding:0;border:none;background:transparent;' aria-label='Comparar antes e agora'>\"+" +
-      "\"<div class='vz' style='font-size:11.5px;'>Arrasta pra comparar — \"+fs.length+\" foto(s) guardadas</div>\";" +
+      "\"<div class='vz' style='font-size:11.5px;'>Arrasta pra comparar — \"+pl(fs.length,'foto guardada','fotos guardadas')+\"</div>\";" +
       "var wrap=document.getElementById('ftWrap');" +
       "var ajusta=function(){var ia=document.getElementById('ftImgAntes');if(ia&&wrap.clientWidth)ia.style.width=wrap.clientWidth+'px';};" +
       "setTimeout(ajusta,60);window.addEventListener('resize',ajusta);" +
@@ -2209,7 +2210,7 @@
       "var bom=inv?d>0:d<0;var seta=d?(\" <b class='\"+(bom?'up':'down')+\"'>\"+(d>0?'+':'')+String(d).replace('.',',')+\"</b>\"):'';" +
       "return \"<div class='kv'><span>\"+rot+\"</span><span><b>\"+String(ult).replace('.',',')+\"</b>\"+seta+\"</span></div>\";}" +
       "el.innerHTML=linha(icx(ICO.peso,13)+' Peso (kg)','peso')+linha(icx(ICO.pct,13)+' Gordura (%)','gordura')+linha(icx(ICO.regua,13)+' Cintura (cm)','cintura')+linha(icx(ICO.halter,13)+' Braço (cm)','braco',true)+" +
-      "\"<div class='vz'>\"+AVS.length+\" avaliação(ões) · última em \"+AVS[AVS.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
+      "\"<div class='vz'>\"+pl(AVS.length,'avaliação','avaliações')+\" · última em \"+AVS[AVS.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
       // desafio em grupo: meus pontos + placar da turma
       ((st.desafio && st.desafio.nome && st.desafio.fim >= S.todayISO())
         ? "var DESAFIO=" + jsonApp({ ini: st.desafio.ini, fim: st.desafio.fim }) + ";" +
@@ -2223,7 +2224,7 @@
           "var rk=d&&d.ranking;if(!rk||!rk.length){pl.textContent='Placar aparece quando a turma começar a treinar.';return;}" +
           "var med=['1º','2º','3º'];pl.style.textAlign='left';" +
           "pl.innerHTML=rk.slice(0,5).map(function(r,i){return \"<div style='display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed var(--bg11);'>\"+" +
-          "\"<span>\"+(med[i]||(i+1)+'º')+' '+(r.nome||'Aluno')+\"</span><b>\"+r.dias+\" treino(s)</b></div>\";}).join('');});})();"
+          "\"<span>\"+(med[i]||(i+1)+'º')+' '+(r.nome||'Aluno')+\"</span><b>\"+pl(r.dias,'treino','treinos')+\"</b></div>\";}).join('');});})();"
         : "") +
       // ---------- Comunidade: feed da turma (posts, curtidas, comentários e ranking da semana) ----------
       (feedLigado
@@ -2296,7 +2297,7 @@
           "\"<div style='display:flex;align-items:center;gap:12px;margin-top:9px;'>\"+" +
           "\"<button data-fdlike='\"+eh(p.id)+\"' aria-label='Curtir' style='background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;padding:0;color:\"+(p.curti?'var(--corc)':'#8a8695')+\"'>\"+" +
           "\"<svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px;margin-right:4px;'><path d='M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3'/></svg>\"+(p.curtidas||0)+\"</button>\"+" +
-          "\"<span style='font-size:12.5px;color:#8a8695;'>\"+(p.comentarios||[]).length+\" comentário(s)</span></div>\"+" +
+          "\"<span style='font-size:12.5px;color:#8a8695;'>\"+pl((p.comentarios||[]).length,'comentário','comentários')+\"</span></div>\"+" +
           "((p.comentarios||[]).map(function(c){" +
           "return \"<div style='font-size:13px;margin-top:7px;padding-left:10px;border-left:2px solid var(--bg11);'><b>\"+eh(c.nome||'Aluno')+\"</b> \"+eh(c.texto)+\"</div>\";}).join(''))+" +
           "\"<div style='display:flex;gap:6px;margin-top:9px;'>\"+" +
@@ -2373,7 +2374,7 @@
       "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
       "var par=String(fm.t).split('—');var rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));var tit=par.length>1?par.slice(1).join('—').trim():fm.t;" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
-      "document.getElementById('htSub').textContent=fm.n+' exercício(s) te esperando';" +
+      "document.getElementById('htSub').textContent=pl(fm.n,'exercício te esperando','exercícios te esperando');" +
       // foto da ficha do dia no card (com véu por cima pro texto continuar legível)
       "var hf=document.getElementById('htFoto'),hv2=document.getElementById('htVeu');" +
       "var cImg=fm.c||CAPA_GERAL;" +
@@ -2411,7 +2412,7 @@
       "var noAnt=Object.keys(pf).filter(function(k){return k.slice(0,7)===antK&&+k.slice(8,10)<=diaHj;}).length;" +
       "var tot=Object.keys(pf).length;var s2,c2;" +
       "if(noAnt){var dif=noMes-noAnt;var mn=MES3[dAnt.getMonth()];" +
-      "s2=dif?(dif>0?'+':'')+dif+' que em '+mn+' até aqui':'igual a '+mn+' até aqui';" +
+      "s2=dif?Math.abs(dif)+(dif>0?' a mais':' a menos')+' que em '+mn+' até aqui':'igual a '+mn+' até aqui';" +
       "c2=dif>0?'#4ade80':dif<0?'#f87171':'#a9a4b5';}" +
       "else{s2=tot>noMes?tot+' no total':'seu primeiro mês';}" +
       "el.innerHTML=t1+tile(icx(ICO.cal,13)+'Treinos no mês',noMes,s2,c2);}" +

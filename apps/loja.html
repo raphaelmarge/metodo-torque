@@ -90,7 +90,7 @@
     $("tabela").innerHTML = cab + "<tbody>" + corpo + "</tbody>";
 
     var visiveis = itens.filter(function (p) { return c.exibir[p.id] !== false; }).length;
-    $("resumo").textContent = visiveis + " de " + itens.length + " produto(s) exibidos na loja.";
+    $("resumo").textContent = visiveis + " de " + S.plural(itens.length, "produto exibido", "produtos exibidos") + " na loja.";
   }
 
   ["cfgNome", "cfgZap", "cfgAviso"].forEach(function (id) {
