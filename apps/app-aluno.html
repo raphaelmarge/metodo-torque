@@ -592,7 +592,7 @@
       "<div class='cardx'>" +
       "<div class='gamerow'><div class='gnum'>" + sessoesMes + "<span>treinos no mês</span></div>" +
       "<div class='gnum'>" + totalCk + "<span>no total</span></div>" +
-      "<div class='gnum'>" + sequencia + "<span>semana(s) seguidas</span></div></div>" +
+      "<div class='gnum'>" + sequencia + "<span>" + (sequencia === 1 ? "semana seguida" : "semanas seguidas") + "</span></div></div>" +
       (conquistadas.length ? "<div class='medals'>" + conquistadas.map(function (m) {
         return "<span class='medal'>" + m[1] + "<small>" + m[2] + "</small></span>";
       }).join("") + "</div>" : "") +
@@ -714,7 +714,7 @@
       kv("Total registrado", (a.checkins || []).length + " check-in(s)") +
       (meusPacotes.length ? meusPacotes.map(function (pp) {
         return "<div style='border:1px dashed var(--cor);border-radius:10px;padding:10px;margin-top:8px;font-size:13px;'><b>Personal:</b> " +
-          pp.saldo + " de " + pp.qtd + " sessão(ões) restantes" +
+          pp.saldo + " de " + S.plural(pp.qtd, "sessão restante", "sessões restantes") +
           (pp.validade ? " · válido até " + S.fmtData(pp.validade) : "") +
           (pp.saldo <= 2 ? " — <b>renove com a equipe!</b>" : "") + "</div>";
       }).join("") : "") + "</div></details>" +
@@ -1122,7 +1122,7 @@
             "❌ Não consegui publicar (" + feitos + " de " + linhas.length + " foram): " + falha, "var(--erro)");
           return false;
         }
-        statusPub("✅ " + feitos + " app(s) publicados às " + new Date().toTimeString().slice(0, 5) + " — os alunos recebem a versão nova ao abrir o app com internet.", "var(--ok)");
+        statusPub("✅ " + S.plural(feitos, "app publicado", "apps publicados") + " às " + new Date().toTimeString().slice(0, 5) + " — os alunos recebem a versão nova ao abrir o app com internet.", "var(--ok)");
         return true;
       });
     });

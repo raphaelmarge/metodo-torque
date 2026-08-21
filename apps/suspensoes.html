@@ -180,7 +180,7 @@
       if (!confirm("Reativar " + s.nome + "? A suspensão encerra hoje e o aluno volta a entrar normalmente.")) return;
       s.finalizadaEm = S.todayISO();
       var diasSusp = s.inicio <= s.finalizadaEm ? dias(s.inicio, s.finalizadaEm) : 0;
-      if (diasSusp > 0 && s.alunoId && confirm("Creditar os " + diasSusp + " dia(s) suspensos no contrato? (posterga a vigência)")) {
+      if (diasSusp > 0 && s.alunoId && confirm("Creditar os " + S.plural(diasSusp, "dia suspenso", "dias suspensos") + " no contrato? (posterga a vigência)")) {
         var stAl = stA();
         var al = stAl.alunos.find(function (x) { return x.id === s.alunoId; });
         var ct = al && (al.contratos || []).find(function (c) { return c.status === "ativo"; });
@@ -226,7 +226,7 @@
       if (reg.suspCarencia) {
         var libera = new Date(cAtivo.inicio + "T12:00"); libera.setMonth(libera.getMonth() + reg.suspCarencia);
         if ($("sInicio").value < S.todayISO(libera)) {
-          alert("A 1ª suspensão só é liberada " + reg.suspCarencia + " mês(es) após o início do contrato (a partir de " + S.fmtData(S.todayISO(libera)) + ")."); e.preventDefault(); return;
+          alert("A 1ª suspensão só é liberada " + S.plural(reg.suspCarencia, "mês", "meses") + " após o início do contrato (a partir de " + S.fmtData(S.todayISO(libera)) + ")."); e.preventDefault(); return;
         }
       }
       if (reg.suspDias && $("sInicio").value && $("sFim").value && !$("campoFim").hidden) {

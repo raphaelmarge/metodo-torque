@@ -2582,7 +2582,7 @@ async function abaPt(p, a) {
     document.getElementById("pfEmergencia").value = "Maria 31 98888-0000";
   });
   ok(/Contrato/.test(perfil.fin) && /Mensal 3x/.test(perfil.fin) && /pago/.test(perfil.fin), "financeiro mostra contrato e status do mês");
-  ok(/sessão\(ões\) feitas/.test(perfil.freq), "frequência de treino com gráfico de sessões");
+  ok(/sess(ão feita|ões feitas) no total/.test(perfil.freq), "frequência de treino com gráfico de sessões");
   ok(/Data/.test(perfil.peso) && /90 kg|84 kg/.test(perfil.peso), "relatório de avaliações em tabela (peso registrado)");
   ok(/% gordura/.test(perfil.peso) && /25%|19,5%/.test(perfil.peso), "tabela traz % de gordura das avaliações");
   ok(/Peso.*de 90 pra 84 kg/.test(perfil.peso.replace(/\s+/g, " ")) || (/de 90/.test(perfil.peso) && /84 kg/.test(perfil.peso)), "gráfico de evolução do peso (90 → 84 kg)");
@@ -4404,7 +4404,7 @@ async function abaPt(p, a) {
   }, feitosAntes);
   await pApp.reload();
   await pApp.waitForTimeout(900);
-  ok(/-2 que em \w{3} até aqui/.test(pgComp),
+  ok(/2 a menos que em \w{3} até aqui/.test(pgComp),
     "a conta compara o mesmo pedaço do mês (2 contra 4), ignorando os dias que ainda não chegaram — " + pgComp.replace(/\s+/g, " ").trim());
   ok(/\d+ XP/.test(home.xp), "chip de XP no topo da home (" + home.xp.trim() + ")");
   const xp0 = parseInt((home.xp.match(/\d+/) || ["0"])[0], 10);

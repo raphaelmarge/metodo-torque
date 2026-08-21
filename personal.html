@@ -2289,7 +2289,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.sessoes.forEach(function (s) { if (s.alunoId === id && s.feita) porMes[(s.data || "").slice(0, 7)] = (porMes[(s.data || "").slice(0, 7)] || 0) + 1; });
     var totalSes = idxDe(st).sessFeitasDe(id).length;
     $("pfFreq").innerHTML = barrasMes(porMes, "#a78bfa") +
-      "<div class='muted' style='font-size:12.5px;margin-top:4px;'>" + totalSes + " sessão(ões) feitas no total</div>";
+      "<div class='muted' style='font-size:12.5px;margin-top:4px;'>" + S.plural(totalSes, "sessão feita", "sessões feitas") + " no total</div>";
     // relatório de avaliações físicas: laudo em cards + tabela + gráficos por medida
     pintaLaudoPerfil(st, id);
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === id; })
@@ -2345,7 +2345,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         grafMedida("Cintura", "cm", "cintura", "#38bdf8") +
         grafMedida("Quadril", "cm", "quadril", "#f472b6") +
         grafMedida("Braço", "cm", "braco", "#4ade80") +
-        "<div class='muted' style='font-size:11.5px;margin-top:6px;'>" + avs.length + " avaliação(ões) registradas — as novas entram por aqui automaticamente.</div>";
+        "<div class='muted' style='font-size:11.5px;margin-top:6px;'>" + S.plural(avs.length, "avaliação registrada", "avaliações registradas") + " — as novas entram por aqui automaticamente.</div>";
     } else {
       $("pfPeso").textContent = "Sem avaliações ainda — registre a primeira na aba Avaliações e o relatório monta sozinho.";
     }
@@ -3867,7 +3867,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
       $("geStatus").textContent = (res && res.error)
         ? "✓ Treino copiado pra " + r.ids.length + " aluno(s), mas os apps NÃO atualizaram na nuvem (" + res.error.message + ")."
-        : "Treino enviado pra " + r.ids.length + " aluno(s) — " + linhas.length + " app(s) atualizados na nuvem!";
+        : "Treino enviado pra " + S.plural(r.ids.length, "aluno", "alunos") + " — " + S.plural(linhas.length, "app atualizado", "apps atualizados") + " na nuvem!";
       render();
     }, function () {
       $("geStatus").textContent = "✓ Treino copiado, mas sem conexão pra atualizar os apps agora.";
@@ -4130,8 +4130,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (!silencioso) btn.disabled = false;
         if (silencioso) { render(); return; }
         $("geStatus").textContent = falhas
-          ? feitos + " app(s) atualizados, " + falhas + " falharam — clique de novo pra tentar os que faltaram."
-          : feitos + " app(s) atualizados na nuvem — os alunos já veem a novidade!";
+          ? S.plural(feitos, "app atualizado", "apps atualizados") + ", " + falhas + " falharam — clique de novo pra tentar os que faltaram."
+          : S.plural(feitos, "app atualizado", "apps atualizados") + " na nuvem — os alunos já veem a novidade!";
         render();
         return;
       }
@@ -6943,7 +6943,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     S.write("ptStudio", st);
     renderFichas();
     renderBiblioteca();
-    alert(tpl.fichas.length + " ficha(s) criadas! Ajuste séries/cargas e publique o app do aluno.");
+    alert(S.plural(tpl.fichas.length, "ficha criada", "fichas criadas") + "! Ajuste séries/cargas e publique o app do aluno.");
   });
   window.__templates = TEMPLATES_FICHA; // testes
 
@@ -7076,7 +7076,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (t && (t.fichas || []).length && !confirm("Este aluno já tem " + t.fichas.length + " ficha(s). Substituir pelas fichas geradas automaticamente?")) return;
     var r = geraTreinoAuto(id, $("taObjetivo").value, $("taEquip").value);
     if (r.erro) { $("taStatus").textContent = r.erro; return; }
-    $("taStatus").textContent = r.fichas + " ficha(s) geradas com " + r.exercicios + " exercícios pra " + r.dias + " dia(s)/semana" +
+    $("taStatus").textContent = S.plural(r.fichas, "ficha gerada", "fichas geradas") + " com " + r.exercicios + " exercícios pra " + r.dias + " dia(s)/semana" +
       (r.avisos.length ? " — " + r.avisos.join(" e ") : "") + ". Revise abaixo, ajuste e envie!";
     $("tAluno").value = id; sincronizaBusca("tAluno");
     renderFichas();
@@ -7243,7 +7243,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     geraTreinoIA(id, $("taObjetivo").value, $("taEquip").value, function (r) {
       $("taIA").disabled = false;
       if (r.erro) { $("taStatus").textContent = r.erro; return; }
-      $("taStatus").textContent = r.fichas + " ficha(s) prescritas pela IA, com " + r.exercicios + " exercícios." +
+      $("taStatus").textContent = S.plural(r.fichas, "ficha prescrita", "fichas prescritas") + " pela IA, com " + r.exercicios + " exercícios." +
         (r.resumo ? " " + r.resumo : "") + " Revise abaixo, ajuste e envie!";
       $("tAluno").value = id; sincronizaBusca("tAluno");
       renderFichas();
@@ -9750,7 +9750,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return nuvem.client.from("chat_config").upsert([corpo], { onConflict: "academia_id" });
     };
     grava(true).then(function (r) {
-      if (!r.error) { btn.disabled = false; $("botZapOkP").textContent = "✓ " + reg.lista.length + " automação(ões) publicadas! Com a integração oficial ligada, seu número responde com a 📶."; return; }
+      if (!r.error) { btn.disabled = false; $("botZapOkP").textContent = "✓ " + S.plural(reg.lista.length, "automação publicada", "automações publicadas") + "! Com a integração oficial ligada, seu número responde com a 📶."; return; }
       grava(false).then(function (r2) {
         btn.disabled = false;
         $("botZapOkP").textContent = r2.error

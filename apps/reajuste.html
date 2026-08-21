@@ -177,7 +177,7 @@
     S.write("reajustes", h);
     $("cardPrevia").hidden = true;
     render();
-    alert("Reajuste aplicado! " + r.afetados.length + " contrato(s) e " + mudouParcelas + " mensalidade(s) futuras atualizadas.");
+    alert("Reajuste aplicado! " + S.plural(r.afetados.length, "contrato", "contratos") + " e " + S.plural(mudouParcelas, "mensalidade futura atualizada", "mensalidades futuras atualizadas") + ".");
   };
 
   function render() {

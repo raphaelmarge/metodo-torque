@@ -117,7 +117,7 @@
         }
         var erros = r.data || [];
         $("saudeInfo").textContent = erros.length
-          ? erros.length + " erro(s) nos últimos 7 dias — o de cima é o mais recente."
+          ? S.plural(erros.length, "erro", "erros") + " nos últimos 7 dias — o de cima é o mais recente."
           : "🎉 Nenhum erro de JavaScript reportado nos últimos 7 dias — sistema saudável!";
         $("listaErros").innerHTML = erros.map(function (e) {
           return '<div class="erro-item"><b>' + esc(e.pagina) + "</b> · " +

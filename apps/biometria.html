@@ -719,7 +719,7 @@
         object: "users",
         values: novos.map(function (a) { return { name: a.nome, registration: String(a.id) }; }),
       }).then(function () {
-        cidLog("✅ " + novos.length + " aluno(s) enviados. Agora colete a digital/face de cada um no próprio aparelho.");
+        cidLog("✅ " + S.plural(novos.length, "aluno enviado", "alunos enviados") + ". Agora colete a digital/face de cada um no próprio aparelho.");
       });
     }).catch(function (e) { cidLog("❌ Falhou: " + e.message); });
   });
@@ -758,7 +758,7 @@
       b.controlid.ultImport = maxT;
       S.write("biometria", b);
       mostraUltImp();
-      cidLog("✅ " + feitos + " check-in(s) registrados nos alunos.");
+      cidLog("✅ " + S.plural(feitos, "check-in registrado", "check-ins registrados") + " nos alunos.");
     }).catch(function (e) { cidLog("❌ Falhou: " + e.message); });
   });
 

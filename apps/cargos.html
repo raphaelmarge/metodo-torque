@@ -109,7 +109,7 @@
       var nome = rm.getAttribute("data-rm");
       var st2 = load();
       var emUso = st2.colaboradores.filter(function (c) { return c.cargo === nome && c.ativo !== false; }).length;
-      if (emUso) { alert("Tem " + emUso + " colaborador(es) ativos com esse cargo — troque o cargo deles antes de excluir."); return; }
+      if (emUso) { alert("Tem " + S.plural(emUso, "colaborador ativo", "colaboradores ativos") + " com esse cargo — troque o cargo deles antes de excluir."); return; }
       if (!confirm("Excluir o cargo \"" + nome + "\"?")) return;
       st2.cargos = st2.cargos.filter(function (c) { return c !== nome; });
       S.write("equipe", st2);

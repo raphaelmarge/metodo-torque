@@ -258,7 +258,7 @@
     });
     S.write("produtos", st);
     $("cardFeito").hidden = false;
-    $("resultado").innerHTML = "✅ <strong>" + importadas + " venda(s) importadas</strong> (" +
+    $("resultado").innerHTML = "✅ <strong>" + S.plural(importadas, "venda importada", "vendas importadas") + "</strong> (" +
       total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) + ")<br>" +
       '<span class="muted">Elas já contam nos relatórios: Vendas, Caixa, DRE, Movimentação e Recebimentos por Centro de Receita.</span>';
     $("btnImportar").disabled = true;
@@ -289,7 +289,7 @@
     });
     S.write("alunos", st);
     $("cardFeito").hidden = false;
-    $("resultado").innerHTML = "✅ <strong>" + importados + " aluno(s) importados!</strong><br>" +
+    $("resultado").innerHTML = "✅ <strong>" + S.plural(importados, "aluno importado", "alunos importados") + "!</strong><br>" +
       '<span class="muted">Eles entraram sem contrato — venda o plano de cada um na Gestão de Alunos (botão Nova venda), ou já use a Segmentação para dar boas-vindas por WhatsApp.</span>';
     $("btnImportar").disabled = true;
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
