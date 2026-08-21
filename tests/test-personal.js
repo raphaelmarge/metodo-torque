@@ -554,6 +554,19 @@ async function abaPt(p, a) {
         "subir a hora-aula no PLANO muda a carteira de quem assinou (R$ 120 → consumo R$ 480)");
       ok(/Carteira de sessões/.test(ha.fin) && /hora-aula/.test(ha.fin) && /sessão/.test(ha.fin),
         "o contrato no perfil fala em hora-aula e /sessão, com a carteira logo ali");
+      // a LISTA de planos também: era ali que o "/mês" fixo escapou no print
+      ok(await p.evaluate(() => {
+        const st = window.MTStore.read("ptStudio", {});
+        st.planosPT.push({ id: "plHoraL", nome: "Hora-aula lista", valor: 100, cobranca: "sessao", ciclo: 1 });
+        window.MTStore.write("ptStudio", st);
+        window.__pgAba("planos");
+        const html = document.getElementById("plLista").innerHTML;
+        const st2 = window.MTStore.read("ptStudio", {});
+        st2.planosPT = st2.planosPT.filter((x) => x.id !== "plHoraL");
+        window.MTStore.write("ptStudio", st2);
+        return /Hora-aula lista/.test(html) && /\/sessão/.test(html) && /tag roxo[^>]*>hora-aula/.test(html) &&
+          !/Hora-aula lista<\/b><span>R\$\s?100\/mês/.test(html);
+      }), "a lista de planos mostra /sessão e a etiqueta hora-aula (não mais /mês fixo)");
       // limpa: encerra o rastro do teste
       await p.evaluate(() => {
         const st = window.MTStore.read("ptStudio", {});
