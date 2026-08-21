@@ -590,6 +590,31 @@ async function abaPt(p, a) {
       });
       ok(troca && troca.pagos === 100 && troca.consumido === 100 && troca.saldo === 0,
         "trocar de mensalista pra hora-aula NÃO fabrica dívida/crédito: só conta o que veio DEPOIS da virada (R$100 pago, 1 aula, saldo 0)");
+      // REGRESSÃO item 17: vínculo de 3+ anos não esconde a inadimplência recente.
+      // Aluno mensal R$500 desde 44 meses atrás, pagou só o 1º mês → deve os recentes.
+      const divAntiga = await p.evaluate(() => {
+        const st = window.MTStore.read("ptStudio", {});
+        const F = window.__financeiroPT;
+        const d = new Date(); d.setMonth(d.getMonth() - 44);
+        const ini = d.toISOString().slice(0, 10), iniMes = ini.slice(0, 7);
+        st.planosPT.push({ id: "plMenT", nome: "Mensal T", valor: 500, cobranca: "mes", ciclo: 1 });
+        st.alunos.push({ id: "axVelho", nome: "Antigo", ativo: true, modo: "mes", desde: ini });
+        st.contratosPT.push({ id: "ctVelho", alunoId: "axVelho", planoId: "plMenT", diaVenc: 5, status: "ativo", inicio: ini });
+        st.pagamentos.push({ id: "pgV", alunoId: "axVelho", valor: 500, data: iniMes + "-05", forma: "pix" }); // só o 1º mês
+        window.MTStore.write("ptStudio", st);
+        const a = st.alunos.find((x) => x.id === "axVelho");
+        const dv = F.divida(window.MTStore.read("ptStudio", {}), a);
+        const s2 = window.MTStore.read("ptStudio", {});
+        ["axVelho"].forEach(() => {
+          s2.alunos = s2.alunos.filter((x) => x.id !== "axVelho");
+          s2.planosPT = s2.planosPT.filter((x) => x.id !== "plMenT");
+          s2.contratosPT = s2.contratosPT.filter((x) => x.alunoId !== "axVelho");
+          s2.pagamentos = s2.pagamentos.filter((x) => x.alunoId !== "axVelho");
+        });
+        window.MTStore.write("ptStudio", s2);
+        return dv;
+      });
+      ok(divAntiga.meses >= 30, "contrato de 3+ anos não esconde a dívida recente: conta os últimos ~36 meses em aberto (" + divAntiga.meses + " meses)");
       // a LISTA de planos também: era ali que o "/mês" fixo escapou no print
       ok(await p.evaluate(() => {
         const st = window.MTStore.read("ptStudio", {});
@@ -2017,6 +2042,17 @@ async function abaPt(p, a) {
         aparelhoRico: S.nuvemTemMais({ alunos: [1, 2, 3, 4] }, { alunos: [1, 2] }),
         // a conta antiga achava que este aparelho tinha 10 registros
         contaVelha: S.listasDe({ alunos: [], exercicios: dez }).alunos,
+        // MAPA (treinosV2/dietas): nuvem cheia de fichas × aparelho com o mapa vazio.
+        // Antes listasDe só via arrays de 1º nível e a trava não pegava o mapa —
+        // o aparelho apagava todas as fichas da nuvem.
+        mapaPerigo: S.nuvemTemMais(
+          { treinosV2: { a1: { fichas: [] } } },
+          { treinosV2: { a1: { fichas: [1, 2, 3] }, a2: { fichas: [4] } } }),
+        mapaVeMais: S.listasDe({ treinosV2: { a1: { fichas: [1, 2, 3] } } })["treinosV2.a1.fichas"],
+        // dieta do Nutri é o mesmo formato (paciente → { refeicoes: [] })
+        dietaPerigo: S.nuvemTemMais(
+          { dietas: { p1: { refeicoes: [] } } },
+          { dietas: { p1: { refeicoes: [1, 2] } } }),
       };
     });
     ok(!!sync, "o store expõe a regra de sincronização pros testes");
@@ -2025,6 +2061,9 @@ async function abaPt(p, a) {
     ok(sync.contaVelha === 0, "a contagem agora olha lista por lista — zero aluno conta zero, não dez");
     ok(!sync.exclusao, "encerrar aluno de verdade não é desfeito na abertura seguinte");
     ok(!sync.aparelhoRico, "aparelho com mais dados que a nuvem continua mandando");
+    ok(sync.mapaVeMais === 3, "a trava agora enxerga as listas DENTRO dos mapas (treinosV2.a1.fichas = 3)");
+    ok(sync.mapaPerigo, "nuvem com fichas de treino vence aparelho com o mapa vazio (senão apagava todas as fichas)");
+    ok(sync.dietaPerigo, "mesma proteção pras dietas do Nutri (mapa paciente → refeições)");
   }
   // ---------- 🚀 escala: o painel tem que aguentar milhares de alunos ----------
   console.log("Escala (1000 alunos):");

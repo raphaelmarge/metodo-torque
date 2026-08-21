@@ -2097,7 +2097,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!id || !confirm("Encerrar este aluno? O histórico fica guardado.")) return;
     var st = load();
     var enc = st.alunos.find(function (a) { return a.id === id; });
-    if (enc) { enc.ativo = false; enc.fim = S.todayISO(); }
+    if (enc) {
+      enc.ativo = false; enc.fim = S.todayISO();
+      // tira as sessões FUTURAS ainda não realizadas (a recorrência criava até 90):
+      // senão entopem calendário, "seu dia", .ics e "antigas sem marcação"
+      var hojeEnc = S.todayISO();
+      st.sessoes = st.sessoes.filter(function (x) {
+        return x.alunoId !== id || x.feita || x.faltou || x.data < hojeEnc;
+      });
+    }
     save(st);
     /* Encerrar só marcava aqui no painel — o app do aluno continuava sendo
      * alimentado pela nuvem e o login por e-mail continuava valendo. Agora o
@@ -3069,6 +3077,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var stR = load();
       var ctR = stR.contratosPT.find(function (c) { return c.id === alvo.getAttribute("data-pfctrenova"); });
       if (!ctR) return;
+      // renovar joga o início pra hoje, e a dívida é contada a partir do início —
+      // então meses em aberto sumiriam em silêncio. Avisa antes de apagar.
+      var alvoR = stR.alunos.find(function (a) { return a.id === ctR.alunoId; });
+      var dvR = alvoR ? dividaDe(stR, alvoR) : { meses: 0 };
+      if (dvR.meses > 0 && !confirm("Este aluno tem " + dvR.meses + " mês(es) em aberto (" + S.fmtBRL(dvR.total) + ").\n\nRenovar o ciclo começa hoje e tira essa cobrança das pendências. Continuar?")) return;
       ctR.inicio = S.todayISO();
       save(stR);
       alert("Ciclo renovado — novo período começa hoje.");
@@ -4368,10 +4381,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (x.feita ? '<span class="tag ok">FEITA ✓</span>' : x.faltou ? '<span class="tag erro">FALTOU</span>' : "") +
         '<button class="btn sec mini ses-mais" data-smais="' + x.id + '" aria-label="ações da sessão" title="ações da sessão" style="padding:6px 12px;font-size:16px;line-height:1;">⋮</button></span>' +
         '<div class="ses-acoes" data-sacoes="' + x.id + '" hidden>' +
-        (x.feita || x.faltou ? "" :
-          '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
-          '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
-        '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button></div></div>';
+        (x.feita
+          // sessão já feita: em vez de apagar (que deixava o pacote/pagamento sem estorno),
+          // um "Desfazer" que reverte a marcação E devolve a aula/pagamento
+          ? '<button class="btn sec mini" data-desfeita="' + x.id + '" title="desfaz a marcação e estorna o pacote/pagamento desta sessão">Desfazer Feita</button>'
+          : (x.faltou ? "" :
+              '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
+              '<button class="btn sec mini" data-faltou="' + x.id + '" title="o aluno não veio — conta como falta na assiduidade">Faltou</button>') +
+            '<button class="btn sec mini" data-cx="' + x.id + '" title="desmarca a sessão da agenda">Cancelou</button>') +
+        "</div></div>";
     }
     function cabDia(txt) {
       return '<div style="font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--cinza);margin:12px 0 4px;text-transform:uppercase;">' + txt + "</div>";
@@ -4411,7 +4429,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       .gte("dia", S.todayISO()).order("dia").limit(30).then(function (r) {
         var pedidos = r.data || [];
         var alunoPorToken = {};
-        st.alunos.forEach(function (a) { if (a.appTokenP) alunoPorToken[a.appTokenP] = a; });
+        st.alunos.forEach(function (a) { if (a.appTokenP && a.ativo !== false) alunoPorToken[a.appTokenP] = a; }); // encerrado não aparece nos pedidos
         pedidos = pedidos.filter(function (p) { return alunoPorToken[p.token]; });
         $("cardPedidosApp").toggleAttribute("data-tem", pedidos.length > 0);
         if (window.__agAba) window.__agAba(window.__agAba.atual || "sessoes");
@@ -4434,14 +4452,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) return;
     if (okId) {
+      e.target.disabled = true; // trava contra toque duplo / re-render antes do update subir
       var st = load();
       var a = st.alunos.find(function (x) { return x.appTokenP === e.target.getAttribute("data-tok"); });
       if (a) {
-        st.sessoes.push({ id: S.uid(), alunoId: a.id, data: e.target.getAttribute("data-dia"), hora: e.target.getAttribute("data-hora") || "", feita: false });
-        marcaAppPendente(st, a.id); // a sessão confirmada entra na agenda do app
-        save(st);
+        var diaP = e.target.getAttribute("data-dia"), horaP = e.target.getAttribute("data-hora") || "";
+        // não cria a sessão duas vezes (mesmo aluno/dia/hora ainda não realizada)
+        var jaTem = st.sessoes.some(function (x) { return x.alunoId === a.id && x.data === diaP && (x.hora || "") === horaP && !x.feita && !x.faltou; });
+        if (!jaTem) {
+          st.sessoes.push({ id: S.uid(), alunoId: a.id, data: diaP, hora: horaP, feita: false });
+          marcaAppPendente(st, a.id); // a sessão confirmada entra na agenda do app
+          save(st);
+        }
       }
-      nuvem.client.from("app_agenda").update({ status: "confirmado" }).eq("id", okId).then(function () {
+      // .eq("status","pedido"): só confirma o que ainda está pendente (dois cliques não duplicam)
+      nuvem.client.from("app_agenda").update({ status: "confirmado" }).eq("id", okId).eq("status", "pedido").then(function () {
         pushAluno(e.target.getAttribute("data-tok"), "Horário confirmado!", "Sua sessão de " + S.fmtData(e.target.getAttribute("data-dia")) + " às " + (e.target.getAttribute("data-hora") || "combinar") + " tá confirmada. Te espero! 💪");
         renderAgenda(load());
       });
@@ -4556,8 +4581,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var c = e.target.getAttribute && e.target.getAttribute("data-cx");
     var ft = e.target.getAttribute && e.target.getAttribute("data-faltou");
     var sh = e.target.getAttribute && e.target.getAttribute("data-shora");
-    if (!f && !c && !ft && !sh) return;
+    var df = e.target.getAttribute && e.target.getAttribute("data-desfeita");
+    if (!f && !c && !ft && !sh && !df) return;
     var st = load();
+    if (df) {
+      // desfazer uma sessão FEITA: reverte a marcação e ESTORNA o que a Feita
+      // consumiu (a aula do pacote e/ou o pagamento registrado) — antes o único
+      // caminho era Cancelou, que apagava sem devolver nada
+      var xd = st.sessoes.find(function (x) { return x.id === df; });
+      if (xd && xd.feita) {
+        if (!confirm("Desfazer esta sessão? Ela volta pra 'não marcada'.")) return;
+        xd.feita = false;
+        var alD = st.alunos.find(function (x) { return x.id === xd.alunoId; });
+        if (alD) {
+          if (alD.pacote && +alD.pacote.total > 0 && +alD.pacote.usadas > 0) alD.pacote.usadas = +alD.pacote.usadas - 1;
+          var vSesD = valorSessaoDe(st, alD);
+          if (vSesD > 0) {
+            var iPg = -1;
+            for (var q = st.pagamentos.length - 1; q >= 0; q--) {
+              var pg = st.pagamentos[q];
+              if (pg.alunoId === alD.id && pg.forma === "sessão" && +pg.valor === vSesD) { iPg = q; break; }
+            }
+            if (iPg >= 0 && confirm("Remover também o pagamento de " + S.fmtBRL(vSesD) + " que foi registrado nesta sessão?")) {
+              st.pagamentos.splice(iPg, 1);
+            }
+          }
+        }
+        save(st);
+      }
+      return;
+    }
     if (f) {
       var xf0 = st.sessoes.find(function (x) { return x.id === f; });
       if (xf0) {
@@ -4587,7 +4640,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         xs.hora = nh.trim();
       }
     }
-    if (c) st.sessoes = st.sessoes.filter(function (x) { return x.id !== c; });
+    if (c) {
+      if (!confirm("Desmarcar esta sessão da agenda?")) return;
+      st.sessoes = st.sessoes.filter(function (x) { return x.id !== c; });
+    }
     save(st);
   }
   $("listaSessoes").addEventListener("click", trataCliqueSessao);
@@ -4797,10 +4853,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (ini > hoje) ini = hoje;
     var mesHoje = hoje.slice(0, 7);
     var y = +ini.slice(0, 4), m = +ini.slice(5, 7);
+    // teto de ~36 meses de varredura, mas cortando os ANTIGOS, não os recentes:
+    // vínculo de 3+ anos começava a conta no início e parava antes de chegar no
+    // mês atual — a inadimplência recente sumia. Agora, se for muito antigo, a
+    // conta começa em (hoje − 36 meses) e o mês de hoje sempre entra.
+    var hy = +mesHoje.slice(0, 4), hm = +mesHoje.slice(5, 7);
+    var totalMeses = (hy - y) * 12 + (hm - m);
+    if (totalMeses > 36) {
+      var abs = y * 12 + (m - 1) + (totalMeses - 36);
+      y = Math.floor(abs / 12); m = (abs % 12) + 1;
+    }
     var meses = 0, guarda = 0;
     for (;;) {
       var chave = y + "-" + ("0" + m).slice(-2);
-      if (chave > mesHoje || guarda++ > 36) break;
+      if (chave > mesHoje || guarda++ > 45) break;
       var pagou = idxDe(st).pagouMes(a.id, chave);
       var vencido = chave < mesHoje || (ct ? +hoje.slice(8, 10) > +ct.diaVenc : false);
       if (!pagou && vencido) meses++;
@@ -5361,9 +5427,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__pagarmePT = geraLinkPagamento; // testes
   $("pAdd").addEventListener("click", function () {
-    if (!$("pAluno").value || !+$("pValor").value) { alert("Escolha o aluno e o valor."); return; }
+    var vPg = parseFloat(($("pValor").value || "").replace(",", "."));
+    // exige valor POSITIVO: "-500" digitado por engano derrubava o recebido do mês
+    // e ainda marcava o aluno como pago (some da cobrança)
+    if (!$("pAluno").value || !(vPg > 0)) { alert("Escolha o aluno e um valor maior que zero."); return; }
     var st = load();
-    st.pagamentos.push({ id: S.uid(), alunoId: $("pAluno").value, valor: +$("pValor").value, forma: $("pForma").value, data: S.todayISO() });
+    st.pagamentos.push({ id: S.uid(), alunoId: $("pAluno").value, valor: vPg, forma: $("pForma").value, data: S.todayISO() });
     $("pValor").value = "";
     save(st);
   });
@@ -7759,8 +7828,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("pixRecebi").addEventListener("click", function () {
     var ctx = window.__pixCtx;
     if (!ctx) return;
+    var vRec = +ctx.valor;
+    // Pix de valor aberto (aluno sem valor/plano) chegava aqui com 0 e quitava o
+    // mês sem receber nada — pede o valor de verdade antes de gravar
+    if (!(vRec > 0)) {
+      var d = prompt("Quanto o aluno pagou? (R$)", "");
+      if (d === null) return;
+      vRec = parseFloat((d || "").replace(",", "."));
+      if (!(vRec > 0)) { alert("Valor inválido — nada foi registrado."); return; }
+    }
     var stX = load();
-    stX.pagamentos.push({ id: S.uid(), alunoId: ctx.alunoId, valor: +ctx.valor, forma: "pix", data: S.todayISO() });
+    stX.pagamentos.push({ id: S.uid(), alunoId: ctx.alunoId, valor: vRec, forma: "pix", data: S.todayISO() });
     save(stX);
     $("dlgPix").close();
   });

@@ -35,7 +35,18 @@ function crcNode(s) {
   const sql = fs.readFileSync(__dirname + "/../supabase-setup.sql", "utf8");
   ok(/saas_admins/.test(sql) && /saas_clientes/.test(sql) && /saas_pagamentos/.test(sql), "tabelas saas_admins/clientes/pagamentos no setup");
   ok(/hq_sou_admin/.test(sql) && /hq_clientes/.test(sql) && /hq_cliente_set/.test(sql) && /hq_pagamento_reg/.test(sql) && /hq_kpis/.test(sql), "as 5 funções hq_* existem");
-  ok((sql.match(/acesso restrito ao administrador/g) || []).length >= 4, "toda função hq_* de dados exige admin");
+  // guarda por FUNÇÃO, não por contagem: antes bastava a frase aparecer 4x no
+  // arquivo, então dava pra tirar a guarda de uma função (ou de uma das duplicadas)
+  // sem o teste perceber — e função hq_* security definer sem guarda expõe todas
+  // as academias. Agora cada bloco hq_* (menos o próprio sou_admin) tem que ter.
+  const semGuardaHq = sql.split(/create or replace function public\.hq_/).slice(1)
+    .filter(function (bloco) {
+      const nome = (bloco.match(/^\w+/) || [""])[0];
+      if (/^sou_admin/.test(nome)) return false; // é o próprio verificador de admin
+      return !/acesso restrito ao administrador/.test(bloco.slice(0, bloco.indexOf("$$;") + 3));
+    })
+    .map(function (bloco) { return "hq_" + (bloco.match(/^\w+/) || [""])[0]; });
+  ok(semGuardaHq.length === 0, "toda função hq_* de dados exige admin (guarda por função)" + (semGuardaHq.length ? " — falta em: " + semGuardaHq.join(", ") : ""));
   ok(!/create policy[^;]*saas_/.test(sql), "tabelas saas_* sem policy (bloqueadas pra API — só as funções acessam)");
   // WhatsApp por profissional: o token do número de cada academia não pode ter
   // caminho de leitura pela API — só as funções (e a service key) enxergam
