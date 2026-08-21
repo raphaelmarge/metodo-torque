@@ -82,6 +82,30 @@ a conta DELE: o dinheiro do aluno cai direto com o professor, sem repasse (e
 configurado, o caminho antigo (função `pagarme` com a chave global) continua.
 O espelho local é só `config.pagApi = {ligado, provedor}`.
 
+**Baixa automática multi-gateway** (a partir da v532): quando o aluno paga um
+link (ou mensalidade automática) do gateway PRÓPRIO, a baixa entra sozinha.
+Desenho em duas voltas: a URL do webhook (`pagamentos-webhook`) leva
+`?aid=<academia>&k=<webhook_token>` (senha por academia na `pag_config`, gerada
+pelo servidor — índice único parcial, um dono por senha); e a função **nunca
+confia no corpo do aviso** — pega só o id do pagamento e busca os dados DE
+VOLTA no gateway com a chave daquela academia (aviso forjado não vira baixa).
+Grava em `pag_eventos` (RLS: membro só LÊ; escrita só pela service key) com
+id = `provedor:pagamentoId:tipo` (idempotência por pagamento+desfecho: cobrança
+que venceu e foi paga depois ainda ganha a baixa). A função `pagamentos`
+carimba cada link com `external_reference`/`metadata.mt_ref` =
+`mt|<alunoId>|<origem>` e aponta o webhook (MP: `notification_url` por link;
+Asaas: webhook criado UMA vez pela API, id guardado em `asaas_webhook_id`;
+Pagar.me: o professor cola a URL mostrada no card — `pag_config_ve` devolve o
+`webhook_token` de propósito, papel de verify_token, nunca a `chave`). O painel
+(`puxaPagamentosGateway`) casa por ref → `a.pedidosPg` → `a.assinaturaAs`,
+dedupe por `eventoId`, grava com `S.write`; origem `pacote` entra COM desc e
+zera `a.pacote.cobrar`. Assinatura (cobrança automática mensal) v1 é pelo
+Asaas (`acao: assinar` — exige CPF do aluno; `a.assinaturaAs = {id, desde,
+valor}`); quem tem `assinaturaAs` sai da régua de cobrança igual ao
+`assinaturaRec` do caminho antigo. A região `==== NORMALIZA ====` do
+pagamentos-webhook é **JS puro de propósito** — `tests/test-pag-webhook.js`
+recorta e roda em node; não coloque tipo do TypeScript lá.
+
 **Cortar o acesso do aluno** (a partir da v475): `app_aluno.revogado_em` +
 `app_aluno_ativo(t)`, por onde passam TODAS as RPCs do aluno (antes cada uma lia
 o token cru e aluno cortado seguia postando). `aluno_revoga_acesso` (revoga ou
@@ -128,7 +152,8 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   desligado, e no projeto do Raphael o portão passou a recusar até token BOM
   (401 INVALID_CREDENTIALS só na chat-envia, enquanto a envia-email respondia
   200 com a MESMA credencial). Lista em `supabase/functions/`: meta-webhook,
-  chat-envia, whatsapp, envia-email (Resend), pagarme, push-envia, pagamentos.
+  chat-envia, whatsapp, envia-email (Resend), pagarme, push-envia, pagamentos,
+  pagamentos-webhook.
   Ele publica copiando de www.torqueon.com.br/funcoes.html.
 - Nunca coloque service key no site — só anonKey (`assets/cloud-config.js`).
 - **Redundância** (v513/v515): todo update/delete no `dados` guarda o valor
@@ -185,8 +210,10 @@ bash tests/run.sh   # 20 suítes — esperado: "suites com falha: 0"
 
 ## Estado atual e pendências do Raphael
 
-- Pendências dele no Supabase: **rodar o SQL de novo** (blocos zap_config e
-  RECEBER POR PROFISSIONAL) e **republicar whatsapp, meta-webhook e chat-envia**; **republicar a chat-envia** (sem ela a IA de
+- Pendências dele no Supabase: **rodar o SQL de novo** (blocos zap_config,
+  RECEBER POR PROFISSIONAL e BAIXA AUTOMÁTICA MULTI-GATEWAY), **publicar
+  pagamentos e pagamentos-webhook** (baixa automática dos gateways próprios)
+  e **republicar whatsapp, meta-webhook e chat-envia**; **republicar a chat-envia** (sem ela a IA de
   treino e a IA de dieta não funcionam), publicar envia-email e push-envia
   (+ conta resend.com com domínio verificado, secrets RESEND_API_KEY/EMAIL_DE),
   conta Pagar.me e ativação Meta do WhatsApp/Instagram (funcoes.html).

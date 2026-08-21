@@ -64,6 +64,20 @@ function crcNode(s) {
     "as 3 funções pag_config_* existem (salvar, ver o estado e desligar)");
   ok(!/json_build_object\([^)]*'chave'/.test(sql.slice(sql.indexOf("pag_config_ve"))),
     "pag_config_ve devolve provedor + tem_chave, nunca a chave em si");
+
+  // BAIXA AUTOMÁTICA MULTI-GATEWAY: senha por academia + tabela de eventos selada
+  ok(/add column if not exists webhook_token/.test(sql) && /pag_token_novo/.test(sql) &&
+     /create unique index if not exists pag_config_webhook[\s\S]*?where webhook_token\s*<> ''/.test(sql),
+    "pag_config ganhou a senha do webhook (gerada no servidor, índice único = um dono por senha)");
+  ok(/update public\.pag_config set webhook_token = public\.pag_token_novo\(\) where coalesce\(webhook_token, ''\) = ''/.test(sql),
+    "quem já tinha gateway ligado ganha a senha ao rodar o SQL de novo");
+  ok(/create table if not exists public\.pag_eventos[\s\S]*?academia_id uuid not null/.test(sql),
+    "pag_eventos existe e academia_id é NOT NULL — sem dono, não se grava nada");
+  ok(/alter table public\.pag_eventos enable row level security/.test(sql) &&
+     /create policy "pag_eventos_membros" on public\.pag_eventos\s*\n\s*for select using/.test(sql),
+    "pag_eventos: membro só LÊ os eventos da própria academia (escrever é só a função, com a service key)");
+  ok(!/create policy[^;]*pag_eventos[^;]*(insert|update|delete)/i.test(sql),
+    "nenhuma política deixa o navegador escrever em pag_eventos");
   ok(!/jsonb_build_object\([^)]*'token'/.test(sql.slice(sql.indexOf("zap_config_ve"))),
     "zap_config_ve devolve se TEM token, nunca o token");
 

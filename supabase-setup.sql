@@ -2389,6 +2389,26 @@ create table if not exists public.pag_config (
 );
 alter table public.pag_config enable row level security;
 
+-- Baixa automática: cada academia ganha uma senha de webhook própria. É por ela
+-- (na URL ?aid=…&k=…) que a função pagamentos-webhook descobre DE QUEM é o aviso
+-- de pagamento — mesmo desenho do verify_token da Meta: um dono por senha.
+alter table public.pag_config add column if not exists webhook_token text not null default '';
+-- id do webhook criado na conta Asaas do profissional (pra não criar dois)
+alter table public.pag_config add column if not exists asaas_webhook_id text not null default '';
+create unique index if not exists pag_config_webhook on public.pag_config (webhook_token) where webhook_token <> '';
+
+-- senha longa e aleatória (64 caracteres); gerada pelo servidor, nunca escolhida
+create or replace function public.pag_token_novo()
+returns text
+language sql volatile
+set search_path = public
+as $$
+  select 'tq' || replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '')
+$$;
+
+-- quem já tinha gateway ligado antes desta versão ganha a senha agora
+update public.pag_config set webhook_token = public.pag_token_novo() where coalesce(webhook_token, '') = '';
+
 create or replace function public.pag_config_salva(p_provedor text, p_chave text)
 returns json language plpgsql security definer set search_path = public as $$
 declare v_acad uuid;
@@ -2404,19 +2424,28 @@ begin
     if not found then return json_build_object('erro', 'cole a chave do gateway'); end if;
     return json_build_object('ok', true);
   end if;
-  insert into pag_config (academia_id, provedor, chave)
-    values (v_acad, p_provedor, trim(p_chave))
+  insert into pag_config (academia_id, provedor, chave, webhook_token)
+    values (v_acad, p_provedor, trim(p_chave), public.pag_token_novo())
     on conflict (academia_id) do update
-      set provedor = excluded.provedor, chave = excluded.chave, atualizado = now();
+      set provedor = excluded.provedor, chave = excluded.chave, atualizado = now(),
+          -- a senha do webhook nasce uma vez e não muda mais (ela já pode estar
+          -- registrada no gateway do profissional)
+          webhook_token = case when coalesce(pag_config.webhook_token, '') = ''
+                               then public.pag_token_novo() else pag_config.webhook_token end;
   return json_build_object('ok', true);
 end $$;
 grant execute on function public.pag_config_salva(text, text) to authenticated;
 
--- estado pro painel pintar: provedor e SE tem chave — a chave em si nunca sai
+-- estado pro painel pintar: provedor e SE tem chave — a chave em si nunca sai.
+-- O webhook_token pode sair: ele é a senha que o PRÓPRIO profissional cola no
+-- painel do gateway dele (mesmo papel do verify_token da Meta) e não deixa
+-- ninguém cobrar nem ler nada — só avisar "chegou pagamento", e o aviso ainda
+-- é conferido de volta no gateway antes de valer.
 create or replace function public.pag_config_ve()
 returns json language sql security definer stable set search_path = public as $$
   select coalesce(
-    (select json_build_object('ok', true, 'provedor', p.provedor, 'tem_chave', true, 'comissao', p.comissao_pct)
+    (select json_build_object('ok', true, 'provedor', p.provedor, 'tem_chave', true, 'comissao', p.comissao_pct,
+                              'webhook_token', coalesce(p.webhook_token, ''), 'academia_id', p.academia_id)
        from pag_config p
       where p.academia_id in (select academia_id from membros where user_id = auth.uid())
       limit 1),
@@ -2434,6 +2463,42 @@ begin
   return json_build_object('ok', true);
 end $$;
 grant execute on function public.pag_config_apaga() to authenticated;
+
+-- ==================== BAIXA AUTOMÁTICA MULTI-GATEWAY (2026-08) ====================
+-- A função pagamentos-webhook recebe o aviso "pagamento caiu" do gateway do
+-- PRÓPRIO profissional (Mercado Pago, Asaas ou Pagar.me) e grava aqui — o
+-- painel lê e dá baixa sozinho no financeiro. Segurança em duas voltas:
+--   1. a URL do webhook carrega ?aid=<academia>&k=<webhook_token> (a senha da
+--      tabela pag_config acima) — sem a dupla certa, a função nem olha o corpo;
+--   2. a função NUNCA confia no corpo do aviso: ela pega só o id do pagamento e
+--      busca os dados DE VOLTA no gateway, usando a chave guardada daquela
+--      academia. Aviso falso com a senha vazada não vira baixa: o pagamento tem
+--      que existir de verdade na conta do professor.
+-- academia_id é NOT NULL de propósito: sem dono resolvido, não se grava nada
+-- (mesma regra do meta-webhook). Bloco idempotente.
+
+create table if not exists public.pag_eventos (
+  id text primary key,                          -- provedor + ':' + id do pagamento (idempotência)
+  academia_id uuid not null references public.academias (id) on delete cascade,
+  provedor text not null default '',            -- mercadopago / asaas / pagarme
+  tipo text not null default '',                -- pago / falhou
+  valor_centavos integer not null default 0,
+  ref text not null default '',                 -- "mt|<alunoId>|<origem>" carimbado na criação do link
+  link_id text not null default '',             -- id do link/pedido que originou (casa com a.pedidosPg)
+  assinatura_id text not null default '',       -- id da assinatura (cobrança automática)
+  cliente text not null default '',
+  email text not null default '',
+  criado timestamptz not null default now()
+);
+
+create index if not exists pag_eventos_acad on public.pag_eventos (academia_id, criado desc);
+
+alter table public.pag_eventos enable row level security;
+
+-- o professor só LÊ os eventos da academia dele; escrever, só a função (service key)
+drop policy if exists "pag_eventos_membros" on public.pag_eventos;
+create policy "pag_eventos_membros" on public.pag_eventos
+  for select using (academia_id in (select public.minhas_academias()));
 
 -- ==================== CORTAR O ACESSO DO ALUNO (2026-08) ====================
 -- Faltava a coisa mais básica: um jeito de tirar o acesso de UM aluno. "Encerrar

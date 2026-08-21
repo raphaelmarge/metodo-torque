@@ -710,6 +710,82 @@ async function abaPt(p, a) {
     ok(link.pg && link.pg.forma === "link cartão" && +link.pg.valor === 123.45 && link.pg.alunoId === "axDev", "evento order.paid vira pagamento 'link cartão' de R$ 123,45");
     ok(!link.falhou && link.pedidos === 0, "payment_failed é ignorado e o pedido pago sai da fila do aluno");
 
+    // 🏦 baixa automática MULTI-GATEWAY: eventos da pag_eventos viram pagamento
+    // pelos 3 casamentos (referência carimbada, pedido guardado, assinatura)
+    const gwBaixa = await p.evaluate((hoje) => {
+      const S = window.MTStore;
+      const st = S.read("ptStudio", {});
+      st.config.pagApi = { ligado: true, provedor: "asaas" };
+      const ax = st.alunos.find((a) => a.id === "axDev");
+      ax.pedidosPg = [{ id: "pl_asaas_1", v: 200, em: hoje, prov: "asaas" }];
+      ax.assinaturaAs = { id: "sub_9", desde: hoje, valor: 150 };
+      st.alunos.push({ id: "axPacGw", nome: "Pac Teste", pacote: { total: 10, usadas: 10, cobrar: 450, vendidoEm: hoje } });
+      S.write("ptStudio", st);
+      window.__cloudOrig = S.cloud;
+      const eventos = [
+        // do mais novo pro mais velho, como a nuvem devolve (o painel reverte)
+        { id: "asaas:p4:falhou", provedor: "asaas", tipo: "falhou", valor_centavos: 15000, ref: "", link_id: "", assinatura_id: "sub_9", criado: hoje + "T14:00:00" },
+        { id: "asaas:p3:pago", provedor: "asaas", tipo: "pago", valor_centavos: 45000, ref: "mt|axPacGw|pacote", link_id: "", assinatura_id: "", criado: hoje + "T13:00:00" },
+        { id: "asaas:p2:pago", provedor: "asaas", tipo: "pago", valor_centavos: 20000, ref: "", link_id: "pl_asaas_1", assinatura_id: "", criado: hoje + "T12:00:00" },
+        { id: "mercadopago:p1:pago", provedor: "mercadopago", tipo: "pago", valor_centavos: 12000, ref: "mt|axDev|mensal", link_id: "", assinatura_id: "", criado: hoje + "T11:00:00" },
+      ];
+      S.cloud = () => ({ client: { from: (tb) => ({ select: () => ({ order: () => ({ limit: () => ({
+        then: (cb) => cb({ data: tb === "pag_eventos" ? eventos : [] }),
+      }) }) }) }) } });
+      window.__pagGateway();
+      // roda de novo com os MESMOS eventos: nada pode entrar duas vezes
+      window.__pagGateway();
+      const alertaAcendeu = S.read("ptStudio", {}).alunos.find((a) => a.id === "axDev").cartaoFalhouEm;
+      // aluno pagou depois (alerta limpo na mão): o MESMO evento antigo de
+      // falha não pode re-acender o alerta na leitura seguinte
+      const stLimpa = S.read("ptStudio", {});
+      stLimpa.alunos.find((a) => a.id === "axDev").cartaoFalhouEm = "";
+      S.write("ptStudio", stLimpa);
+      window.__pagGateway();
+      const alertaDepoisDePagar = S.read("ptStudio", {}).alunos.find((a) => a.id === "axDev").cartaoFalhouEm;
+      S.cloud = window.__cloudOrig;
+      const st3 = S.read("ptStudio", {});
+      const ax3 = st3.alunos.find((a) => a.id === "axDev");
+      const pac3 = st3.alunos.find((a) => a.id === "axPacGw");
+      return {
+        mensal: st3.pagamentos.find((x) => x.eventoId === "mercadopago:p1:pago"),
+        linkPg: st3.pagamentos.find((x) => x.eventoId === "asaas:p2:pago"),
+        pacotePg: st3.pagamentos.find((x) => x.eventoId === "asaas:p3:pago"),
+        pacCobrar: pac3.pacote.cobrar,
+        falhouNaoEntra: !st3.pagamentos.some((x) => x.eventoId === "asaas:p4:falhou"),
+        alerta: alertaAcendeu,
+        naoReacende: alertaDepoisDePagar === "",
+        pedidos: (ax3.pedidosPg || []).length,
+        total: st3.pagamentos.filter((x) => String(x.eventoId || "").split(":").length === 3).length,
+      };
+    }, hoje);
+    ok(gwBaixa.mensal && gwBaixa.mensal.forma === "auto (mercadopago)" && +gwBaixa.mensal.valor === 120 && !gwBaixa.mensal.desc,
+      "🏦 referência carimbada (mt|aluno|mensal) vira pagamento automático SEM desc — conta como mensalidade");
+    ok(gwBaixa.linkPg && +gwBaixa.linkPg.valor === 200 && gwBaixa.linkPg.alunoId === "axDev" && gwBaixa.pedidos === 0,
+      "pedido guardado (a.pedidosPg) casa o link Asaas e sai da fila depois de pago");
+    ok(gwBaixa.pacotePg && /Pacote de 10 aulas/.test(gwBaixa.pacotePg.desc || "") && gwBaixa.pacCobrar === 0,
+      "origem 'pacote' entra COM desc e zera a pendência da renovação (a.pacote.cobrar)");
+    ok(gwBaixa.falhouNaoEntra && gwBaixa.alerta === hoje,
+      "cobrança automática vencida NÃO vira pagamento — só acende o alerta do aluno");
+    ok(gwBaixa.naoReacende,
+      "depois que o aluno paga, o MESMO evento de falha não re-acende o alerta");
+    ok(gwBaixa.total === 3, "rodar duas vezes com os mesmos eventos não duplica nada (dedupe por eventoId)");
+
+    // perfil do aluno: com o gateway Asaas ligado, a assinatura é a do professor
+    const boxAs = await p.evaluate(() => {
+      window.__perfilPT("axDev");
+      const comAss = document.getElementById("pfAssinaturaBox").innerHTML;
+      const st2 = window.MTStore.read("ptStudio", {});
+      delete st2.alunos.find((a) => a.id === "axDev").assinaturaAs;
+      window.MTStore.write("ptStudio", st2);
+      window.__perfilPT("axDev");
+      const semAss = document.getElementById("pfAssinaturaBox").innerHTML;
+      return { comAss, semAss };
+    });
+    ok(/Cobrança automática \(Asaas\)/.test(boxAs.comAss) && /pfAssAsCancela/.test(boxAs.comAss),
+      "perfil mostra a assinatura Asaas ativa, com status e cancelar");
+    ok(/pfAssinarAs/.test(boxAs.semAss), "sem assinatura + gateway Asaas ligado → botão 'Ativar cobrança automática (Asaas)'");
+
     // devolve o estado como estava
     await p.evaluate((s) => localStorage.setItem("mtapp:ptStudio", s), stAntes);
     await p.reload();
@@ -5697,7 +5773,7 @@ async function abaPt(p, a) {
       window.fetch = (url, opts) => {
         if (String(url).includes("functions/v1/pagamentos")) {
           urlChamada = String(url); corpo = JSON.parse(opts.body);
-          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, link: "https://mpago.la/abc" })) });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, link: "https://mpago.la/abc", linkId: "pref_777", provedor: "mercadopago" })) });
         }
         return window.__fetchOrig(url, opts);
       };
@@ -5705,6 +5781,11 @@ async function abaPt(p, a) {
       window.fetch = window.__fetchOrig;
       S.cloud = window.__cloudOrig;
       out.rot = !!(urlChamada && corpo && corpo.acao === "link" && corpo.valorCentavos === 15000 && rMp.ok && rMp.link === "https://mpago.la/abc");
+      // o link sai CARIMBADO (aluno + origem) e o pedido fica guardado pra baixa automática
+      out.carimbo = !!(corpo && corpo.alunoId === id && corpo.origem === "mensal");
+      const stPd = S.read("ptStudio", {});
+      const pdNovo = ((stPd.alunos.find((a) => a.id === id) || {}).pedidosPg || []).find((x) => x.id === "pref_777");
+      out.pedidoGuardado = !!(pdNovo && pdNovo.prov === "mercadopago" && +pdNovo.v === 150);
       // a chave digitada NUNCA pode parar no localStorage (ela vive só no servidor)
       document.getElementById("cfgPagChave").value = "CHAVE-SECRETA-XYZ-123";
       out.chaveForaDoAparelho = JSON.stringify(localStorage).indexOf("CHAVE-SECRETA-XYZ-123") === -1;
@@ -5712,12 +5793,15 @@ async function abaPt(p, a) {
       // limpa o rastro pros testes seguintes
       const st3 = S.read("ptStudio", {});
       delete st3.config.pagApi; delete st3.config.pagLink;
+      const aPd = st3.alunos.find((a) => a.id === id);
+      if (aPd) aPd.pedidosPg = (aPd.pedidosPg || []).filter((x) => x.id !== "pref_777");
       S.write("ptStudio", st3);
       return out;
     });
     ok(gw.campos, "🏦 Configurações → Receber dos alunos: o card do gateway existe (plataforma, chave, link, ligar/desligar)");
     ok(gw.trocaCampo && gw.espelho && gw.linkOutro, "'Outra plataforma' guarda o link do professor e o botão Link de pagamento passa a usar ELE");
     ok(gw.rot, "com Mercado Pago ligado, a cobrança sai da função 'pagamentos' (a conta do PRÓPRIO professor) com o valor certo");
+    ok(gw.carimbo && gw.pedidoGuardado, "o link sai carimbado (alunoId + origem) e o pedido fica guardado pra baixa automática casar depois");
     ok(gw.chaveForaDoAparelho, "a chave do gateway nunca toca o localStorage — só o espelho {ligado, provedor} fica no aparelho");
   }
 
