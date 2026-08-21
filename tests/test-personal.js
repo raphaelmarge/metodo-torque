@@ -5649,6 +5649,108 @@ async function abaPt(p, a) {
     ok(gw.chaveForaDoAparelho, "a chave do gateway nunca toca o localStorage — só o espelho {ligado, provedor} fica no aparelho");
   }
 
+  // 🧭 onboarding do professor novo (4 passos) + hora-aula UNITÁRIA
+  {
+    const onb = await p.evaluate(() => {
+      const S = window.MTStore, out = {};
+      const snap = localStorage.getItem("mtapp:ptStudio");
+      // professor recém-chegado: tem nome, zero aluno, zero plano
+      const st0 = S.read("ptStudio", {});
+      st0.alunos = []; st0.planosPT = []; st0.sessoes = []; st0.pagamentos = []; st0.contratosPT = [];
+      st0.config = { nome: "Novo Professor" };
+      S.write("ptStudio", st0);
+      window.__obGuia.verifica();
+      out.guiaAparece = !document.getElementById("obGuia").hidden && !document.getElementById("obP2").hidden;
+      // escolhe HORA-AULA → o campo da mensalidade some e o da aula aparece
+      const rSes = document.querySelector('input[name="obCobra"][value="sessao"]');
+      rSes.checked = true; rSes.dispatchEvent(new Event("change"));
+      out.trocaCampos = document.getElementById("obLbMes").hidden && !document.getElementById("obLbAula").hidden;
+      document.getElementById("obValAula").value = "100";
+      document.getElementById("obP2Ok").click();
+      const st1 = S.read("ptStudio", {});
+      const plO = (st1.planosPT || [])[0];
+      // hora-aula nasce UNITÁRIA: sem ciclo mensal e sem link de assinatura
+      out.planoUnitario = !!(plO && plO.cobranca === "sessao" && plO.valor === 100 && plO.ciclo === 1 && !plO.linkRec);
+      out.passo3 = !document.getElementById("obP3").hidden;
+      document.getElementById("obPix").value = "31999990000";
+      document.getElementById("obP3Ok").click();
+      out.pix = S.read("ptStudio", {}).config.pixChave === "31999990000";
+      out.passo4 = !document.getElementById("obP4").hidden;
+      document.getElementById("obP4Depois").click();
+      const st2 = S.read("ptStudio", {});
+      out.fim = st2.config.onboardFim === true && document.getElementById("obGuia").hidden;
+      // e não volta a aparecer pra quem já terminou
+      window.__obGuia.verifica();
+      out.naoVolta = document.getElementById("obGuia").hidden;
+      localStorage.setItem("mtapp:ptStudio", snap);
+      window.__obGuia.verifica();
+      return out;
+    });
+    ok(onb.guiaAparece, "🧭 professor novo (nome + nada cadastrado) cai no guia de 4 passos");
+    ok(onb.trocaCampos && onb.planoUnitario, "escolher hora-aula cria o plano UNITÁRIO: R$ por aula, ciclo 1, sem assinatura recorrente");
+    ok(onb.passo3 && onb.pix && onb.passo4, "os passos seguem: chave Pix guardada e chegada no passo final");
+    ok(onb.fim && onb.naoVolta, "terminar marca onboardFim e o guia não volta a encher o saco");
+  }
+
+  // 🎟️ hora-aula no formulário de planos: modo unitário esconde ciclo/assinatura
+  {
+    const uni = await p.evaluate(() => {
+      const S = window.MTStore, out = {};
+      document.getElementById("plCobranca").value = "sessao";
+      window.__plModoSessao();
+      out.esconde = document.getElementById("plCiclo").hidden && document.getElementById("plLink").hidden &&
+        !document.getElementById("plDicaSessao").hidden && /hora-aula/.test(document.getElementById("plValor").placeholder);
+      // mesmo com ciclo 12 e link preenchidos por baixo, o plano sai unitário
+      document.getElementById("plCiclo").value = "12";
+      document.getElementById("plLink").value = "https://assinatura.exemplo/x";
+      document.getElementById("plNome").value = "Hora-aula teste";
+      document.getElementById("plValor").value = "90";
+      document.getElementById("plAdd").click();
+      const st = S.read("ptStudio", {});
+      const pl = st.planosPT[st.planosPT.length - 1];
+      out.unitario = pl.nome === "Hora-aula teste" && pl.cobranca === "sessao" && pl.ciclo === 1 && pl.linkRec === "";
+      // limpa o rastro e devolve o formulário pro modo mensal
+      st.planosPT = st.planosPT.filter((x) => x.id !== pl.id);
+      S.write("ptStudio", st);
+      document.getElementById("plCobranca").value = "mes";
+      window.__plModoSessao();
+      out.volta = !document.getElementById("plCiclo").hidden && !document.getElementById("plLink").hidden;
+      return out;
+    });
+    ok(uni.esconde, "🎟️ hora-aula no formulário esconde ciclo e assinatura (venda unitária, não mensal)");
+    ok(uni.unitario, "o plano hora-aula grava ciclo 1 e sem link recorrente, mesmo com os campos escondidos preenchidos");
+    ok(uni.volta, "voltar pra 'por mês' devolve ciclo e assinatura");
+  }
+
+  // 💳 venda unitária de créditos no perfil (carteira): +4 aulas = 4 × valor
+  {
+    const cred = await p.evaluate(() => {
+      const S = window.MTStore, out = {};
+      const snap = localStorage.getItem("mtapp:ptStudio");
+      const st = S.read("ptStudio", {});
+      const hj = S.todayISO();
+      st.alunos.push({ id: "axCred", nome: "Aluno Credito", ativo: true, modo: "sessao", valor: 100, modoSessaoDesde: hj });
+      S.write("ptStudio", st);
+      window.__perfilPT("axCred");
+      const fin1 = document.getElementById("pfFin").innerHTML;
+      out.botoes = /data-vendecr="4"/.test(fin1) && /data-vendecr="outro"/.test(fin1);
+      const cOrig = window.confirm;
+      window.confirm = () => true;
+      document.querySelector("[data-vendecr='4']").click();
+      window.confirm = cOrig;
+      const st2 = S.read("ptStudio", {});
+      const pg = st2.pagamentos.filter((x) => x.alunoId === "axCred").pop();
+      out.pagamento = !!(pg && pg.valor === 400 && /crédito 4/.test(pg.forma) && !pg.desc);
+      const cart = window.__financeiroPT.carteira(st2, st2.alunos.find((x) => x.id === "axCred"));
+      out.saldo = cart && cart.saldo === 400 && cart.valorSessao === 100;
+      document.getElementById("pfFechar").click();
+      localStorage.setItem("mtapp:ptStudio", snap);
+      return out;
+    });
+    ok(cred.botoes, "💳 a carteira ganha os botões de venda unitária (+1, +4, +8, +10 aulas e outro…)");
+    ok(cred.pagamento && cred.saldo, "vender +4 aulas registra R$ 400 SEM desc e o saldo da carteira vira R$ 400 (4 créditos)");
+  }
+
   // ✨ IA prescritiva de treino (função chat-envia mockada)
   {
     const ia = await p.evaluate(async () => {
