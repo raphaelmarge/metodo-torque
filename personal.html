@@ -1379,13 +1379,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label id="cfgPagLbLink" hidden style="font-size: 12.5px; flex: 1; min-width: 240px;">Seu link de cobrança
           <input id="cfgPagLink" type="url" autocomplete="off" placeholder="https://… (o link de pagamento da sua plataforma)" style="display:block; width: 100%; margin-top: 4px;"></label>
       </div>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12px;" id="cfgPagDica">Mercado Pago: crie a conta no app, depois em <b>mercadopago.com.br/developers</b> → Suas integrações → Credenciais de produção → copie o <b>Access Token</b>. Asaas: Conta → Integrações → <b>Chave de API</b>. Pagar.me: Configurações → Chaves → <b>Chave secreta</b>. A chave fica guardada na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b>.</p>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;" id="cfgPagDica">Mercado Pago: crie a conta no app, depois em <b>mercadopago.com.br/developers</b> → Suas integrações → Credenciais de produção → copie o <b>Access Token</b>. Asaas: Conta → Integrações → <b>Chave de API</b>. Pagar.me: Configurações → Chaves → <b>Chave secreta</b>. A chave fica guardada na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b>. Com o gateway ligado, a <b>baixa é automática</b>: o aluno paga pelo link e o pagamento entra sozinho no financeiro.</p>
       <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;">
         <button class="btn" id="cfgPagSalva">Ligar</button>
         <button class="btn sec" id="cfgPagTesta">Testar conexão</button>
         <button class="btn sec" id="cfgPagDesliga" hidden>Desligar</button>
       </div>
       <div id="cfgPagStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+      <div id="cfgPagHook" class="muted" style="margin-top: 6px; font-size: 12px;"></div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="zap">
       <h2>Mensagens automáticas de WhatsApp</h2>
@@ -2269,6 +2270,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
      * professor decide na hora, que é quando ele lembra do assunto. */
     if (enc && enc.appTokenP && confirm("Tirar também o acesso ao app dele?\n\nO app para de abrir e o login por e-mail para de funcionar. O histórico continua aqui com você.")) {
       revogaAcessoAluno(enc.id, false);
+    }
+    // encerrar NÃO cancela a cobrança automática (ela mora na conta Asaas do
+    // professor) — sem este aviso o ex-aluno continuaria sendo cobrado todo mês
+    if (enc && enc.assinaturaAs) {
+      alert("Atenção: este aluno tem cobrança automática no Asaas, e encerrar aqui NÃO cancela a assinatura.\n\nAbra o perfil dele → cancelar (ou cancele direto no site asaas.com), senão o Asaas continua cobrando todo mês.");
     }
   });
 
@@ -3420,16 +3426,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (r.erro) alert(r.erro);
     });
   });
-  // ---------- mensalidade no cartão (assinatura Pagar.me) ----------
+  // ---------- cobrança automática (assinatura Pagar.me global ou Asaas próprio) ----------
   function pintaAssinatura(a) {
     var box = $("pfAssinaturaBox");
     if (!box) return;
     var r = a.assinaturaRec;
-    box.innerHTML = r
-      ? "Mensalidade no cartão <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(r.desde) + " (" + S.fmtBRL(+r.valor) + "/mês)" +
+    var ra = a.assinaturaAs;
+    if (r) {
+      box.innerHTML = "Mensalidade no cartão <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(r.desde) + " (" + S.fmtBRL(+r.valor) + "/mês)" +
         '<div style="display:flex;gap:8px;margin-top:8px;">' +
         '<button class="btn sec mini" id="pfAssinaturaStatus">ver status</button>' +
-        '<button class="btn sec mini" id="pfAssinaturaCancela">cancelar</button></div>'
+        '<button class="btn sec mini" id="pfAssinaturaCancela">cancelar</button></div>';
+      return;
+    }
+    if (ra) {
+      box.innerHTML = "Cobrança automática (Asaas) <b style='color:#4ade80;'>ativa</b> desde " + S.fmtData(ra.desde) + " (" + S.fmtBRL(+ra.valor) + "/mês)" +
+        '<div style="display:flex;gap:8px;margin-top:8px;">' +
+        '<button class="btn sec mini" id="pfAssAsStatus">ver status</button>' +
+        '<button class="btn sec mini" id="pfAssAsCancela">cancelar</button></div>';
+      return;
+    }
+    // com o gateway Asaas do PRÓPRIO professor ligado, a assinatura é a dele;
+    // senão fica o caminho antigo (cartão pelo Pagar.me global)
+    var pagApiA = ((load().config) || {}).pagApi || {};
+    box.innerHTML = pagApiA.ligado && pagApiA.provedor === "asaas"
+      ? '<button class="btn mini" id="pfAssinarAs">Ativar cobrança automática (Asaas)</button>' +
+        '<div class="muted" style="font-size:12px;margin-top:6px;">todo mês o Asaas manda a cobrança pro aluno (Pix, cartão ou boleto), direto na SUA conta — e a baixa entra sozinha aqui</div>'
       : '<button class="btn mini" id="pfAssinar">Ativar mensalidade no cartão</button>' +
         '<div class="muted" style="font-size:12px;margin-top:6px;">cobrança automática todo mês no cartão do aluno (Pagar.me)</div>';
   }
@@ -3460,6 +3482,90 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           alert("Prontinho! A mensalidade no cartão do " + a2.nome.split(" ")[0] + " está ativa — a cobrança agora é automática todo mês.");
         },
       });
+      return;
+    }
+    if (e.target.id === "pfAssinarAs") {
+      var ctAs = contratoDe(st, a.id);
+      var plAs = ctAs && planoDe(st, ctAs.planoId);
+      var valorAs = (plAs ? +plAs.valor : 0) || +a.valor || 0;
+      if (!valorAs) { alert("Antes de ativar, defina o valor do aluno (campo Valor R$ do cadastro) ou feche um contrato com plano."); return; }
+      var cpfAs = String(a.cpf || "").replace(/\D/g, "");
+      if (cpfAs.length !== 11) {
+        var digAs = prompt("O Asaas exige o CPF do aluno pra cobrança automática.\nDigite o CPF de " + a.nome.split(" ")[0] + " (só números):", "");
+        if (digAs === null) return;
+        cpfAs = String(digAs).replace(/\D/g, "");
+        if (cpfAs.length !== 11) { alert("CPF inválido — precisa dos 11 números."); return; }
+        a.cpf = cpfAs;
+        S.write("ptStudio", st);
+        // espelha no campo da ficha aberta — senão o próximo Salvar do cadastro
+        // gravaria o campo vazio por cima do CPF recém-guardado
+        if ($("pfCpf")) $("pfCpf").value = cpfAs;
+      }
+      var nuvemAs = S.cloud && S.cloud();
+      if (!nuvemAs) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
+      var btAs = e.target;
+      // o alvo fica preso ao aluno do CLIQUE: se o professor trocar de perfil
+      // enquanto a nuvem responde, a assinatura não pode cair no aluno errado
+      var alvoAs = a.id;
+      btAs.disabled = true;
+      btAs.textContent = "Ativando…";
+      var voltaAs = function () { btAs.disabled = false; btAs.textContent = "Ativar cobrança automática (Asaas)"; };
+      self.MT_FUNCAO.chama(nuvemAs.client, "pagamentos", { acao: "assinar", alunoId: a.id, valorCentavos: Math.round(valorAs * 100), descricao: "Mensalidade — " + ((st.config || {}).nome || "Personal"), nome: a.nome, cpf: cpfAs, email: a.email || undefined, venc: S.todayISO() }, "A cobrança automática")
+        .then(function (d) {
+          voltaAs();
+          if (!d || !d.ok || !d.assinaturaId) { alert((d && d.erro) || "Não deu pra ativar agora — confira a chave em Configurações → Receber dos alunos."); return; }
+          var stAs = load();
+          var aAs = stAs.alunos.find(function (x) { return x.id === alvoAs; });
+          if (!aAs) return;
+          aAs.assinaturaAs = { id: String(d.assinaturaId), desde: S.todayISO(), valor: valorAs };
+          save(stAs);
+          if (perfilId === alvoAs) pintaAssinatura(aAs);
+          if (d.link) {
+            var msgAs = "Oi " + aAs.nome.split(" ")[0] + "! Sua mensalidade agora é automática 🎉 Segue o link da primeira cobrança (Pix, cartão ou boleto): " + d.link;
+            if (confirm("Ativada! Mandar o link da primeira cobrança pro aluno no WhatsApp?")) {
+              window.open("https://wa.me/" + (aAs.zap ? "55" + String(aAs.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msgAs), "_blank");
+            } else {
+              prompt("Copie o link da primeira cobrança:", d.link);
+            }
+          } else {
+            alert("Ativada! O Asaas manda a cobrança pro aluno todo mês — e a baixa entra sozinha aqui.");
+          }
+        }, function () { voltaAs(); alert("Sem conexão com a função pagamentos agora."); });
+      return;
+    }
+    if (e.target.id === "pfAssAsStatus" && a.assinaturaAs) {
+      var btSt = e.target;
+      var nuvemSt = S.cloud && S.cloud();
+      if (!nuvemSt) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
+      btSt.disabled = true;
+      self.MT_FUNCAO.chama(nuvemSt.client, "pagamentos", { acao: "assinatura_status", assinaturaId: a.assinaturaAs.id }, "A cobrança automática").then(function (d) {
+        btSt.disabled = false;
+        if (!d || d.erro) { alert((d && d.erro) || "Não deu pra consultar agora — tenta de novo."); return; }
+        var mapaAs = { ACTIVE: "✓ ativa", INACTIVE: "pausada", EXPIRED: "✕ encerrada" };
+        alert("Assinatura: " + (mapaAs[d.status] || d.status) +
+          (d.proximaCobranca ? "\nPróxima cobrança: " + S.fmtData(String(d.proximaCobranca).slice(0, 10)) : "") +
+          (d.valor ? "\nValor: " + S.fmtBRL(d.valor / 100) + "/mês" : ""));
+      }, function () { btSt.disabled = false; alert("Sem conexão com a função pagamentos agora."); });
+      return;
+    }
+    if (e.target.id === "pfAssAsCancela" && a.assinaturaAs) {
+      if (!confirm("Cancelar a cobrança automática deste aluno? O Asaas para de gerar as mensalidades na hora.")) return;
+      var btCa = e.target;
+      var nuvemCa = S.cloud && S.cloud();
+      if (!nuvemCa) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
+      var alvoCa = a.id; // preso ao aluno do clique — trocar de perfil no meio não pode apagar a assinatura de outro
+      btCa.disabled = true;
+      self.MT_FUNCAO.chama(nuvemCa.client, "pagamentos", { acao: "assinatura_cancela", assinaturaId: a.assinaturaAs.id }, "A cobrança automática").then(function (d) {
+        if (!d || d.erro) { btCa.disabled = false; alert((d && d.erro) || "Não deu pra cancelar agora — tenta de novo."); return; }
+        var stCa = load();
+        var aCa = stCa.alunos.find(function (x) { return x.id === alvoCa; });
+        if (aCa) {
+          delete aCa.assinaturaAs;
+          save(stCa);
+          if (perfilId === alvoCa) pintaAssinatura(aCa);
+        }
+        alert("Cancelada. A partir de agora a cobrança volta a ser manual.");
+      }, function () { btCa.disabled = false; alert("Sem conexão com a função pagamentos agora."); });
       return;
     }
     if (e.target.id === "pfAssinaturaStatus" && a.assinaturaRec) {
@@ -4168,12 +4274,90 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (mudou) S.write("ptStudio", st);
       });
   }
+  // baixa automática do gateway PRÓPRIO (Mercado Pago / Asaas / Pagar.me da
+  // conta do professor): lê os eventos que a pagamentos-webhook conferiu e
+  // gravou em pag_eventos, casa com o aluno e registra o pagamento sozinho.
+  // Casamento, na ordem: 1) referência "mt|alunoId|origem" carimbada no link,
+  // 2) pedido guardado (a.pedidosPg), 3) assinatura Asaas (a.assinaturaAs).
+  function puxaPagamentosGateway() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.aid) return;
+    var st0 = load();
+    if (!(((st0.config || {}).pagApi || {}).ligado)) return; // só com gateway próprio ligado
+    // filtro pela academia DESTE painel: a RLS devolve todas as academias do
+    // usuário, e quem participa de duas não pode ver a janela roubada pela outra
+    // (mesma regra do resto do sync — .eq com o aid preso)
+    // marca d'água com folga de 7 dias: lê do mais velho pro mais novo a partir
+    // de onde parou, então NADA se perde por limite de janela; a folga relê os
+    // últimos dias (o dedupe segura) pra dar tempo de outro aparelho sincronizar
+    // o aluno/pedido que casa o evento
+    var desde = String((st0.config || {}).pagEvDesde || "");
+    var q = nuvem.client.from("pag_eventos").select("id,provedor,tipo,valor_centavos,ref,link_id,assinatura_id,criado")
+      .eq("academia_id", nuvem.aid).order("criado", { ascending: true }).limit(200);
+    if (desde) q = q.gt("criado", desde);
+    q.then(function (r) {
+        if (!r || r.error || !r.data || !r.data.length) return;
+        var st = load();
+        st.config = st.config || {};
+        var vistos = {};
+        (st.pagamentos || []).forEach(function (p) { if (p.eventoId) vistos[p.eventoId] = 1; });
+        var mudou = false;
+        r.data.forEach(function (ev) {
+          if (vistos[ev.id]) return;
+          var ref = String(ev.ref || "").split("|");
+          var alunoId = ref[0] === "mt" ? ref[1] : "";
+          var origem = ref[0] === "mt" ? (ref[2] || "mensal") : "mensal";
+          var a = alunoId ? st.alunos.find(function (x) { return x.id === alunoId; }) : null;
+          if (!a && ev.link_id) a = st.alunos.find(function (x) { return (x.pedidosPg || []).some(function (p) { return p.id === ev.link_id; }); });
+          if (!a && ev.assinatura_id) a = st.alunos.find(function (x) { return x.assinaturaAs && x.assinaturaAs.id === ev.assinatura_id; });
+          if (!a) return;
+          if (ev.tipo === "falhou") {
+            // cobrança automática vencida sem pagar: acende o alerta do aluno.
+            // O marcador guarda data+id do evento MAIS NOVO já aplicado: evento
+            // igual ou mais velho não re-acende nada (nem depois do aluno pagar,
+            // nem oscilando entre dois meses vencidos)
+            var fMarca = String(ev.criado || "") + "|" + ev.id;
+            if (ev.assinatura_id && a.assinaturaAs && a.assinaturaAs.id === ev.assinatura_id && String(a.cartaoFalhouEvt || "") < fMarca) {
+              a.cartaoFalhouEvt = fMarca;
+              a.cartaoFalhouEm = String(ev.criado || "").slice(0, 10) || S.todayISO();
+              mudou = true;
+            }
+            return;
+          }
+          if (ev.tipo !== "pago") return; // "estorno" fica guardado na nuvem, sem mexer no caixa por ora
+          var pgto = { id: S.uid(), alunoId: a.id, valor: (ev.valor_centavos || 0) / 100, forma: "auto (" + (ev.provedor || "gateway") + ")", data: String(ev.criado || "").slice(0, 10) || S.todayISO(), eventoId: ev.id };
+          // pacote renovado pago pelo link: entra COM desc (não é crédito de
+          // carteira nem mensalidade) e apaga a pendência da renovação
+          if (origem === "pacote") {
+            pgto.desc = "Pacote de " + (+((a.pacote || {}).total) || 0) + " aulas (renovação)";
+            if (a.pacote) a.pacote.cobrar = 0;
+          }
+          st.pagamentos.push(pgto);
+          vistos[ev.id] = 1;
+          a.cartaoFalhouEm = ""; // pagou → limpa o alerta
+          if (ev.link_id) a.pedidosPg = (a.pedidosPg || []).filter(function (p) { return p.id !== ev.link_id; });
+          mudou = true;
+        });
+        // avança a marca d'água (recuada 7 dias): a próxima leitura continua
+        // de onde esta parou — mochila de férias de um mês não perde baixa
+        var ult = r.data[r.data.length - 1];
+        var tUlt = ult && ult.criado ? new Date(String(ult.criado)).getTime() : 0;
+        if (tUlt) {
+          var marca = new Date(tUlt - 7 * 86400000).toISOString();
+          if (marca > String(st.config.pagEvDesde || "")) { st.config.pagEvDesde = marca; mudou = true; }
+        }
+        if (mudou) S.write("ptStudio", st);
+      });
+  }
   window.__pagAuto = puxaPagamentosCartao; // testes
   window.__pagLink = puxaPagamentosLink; // testes
+  window.__pagGateway = puxaPagamentosGateway; // testes
   setTimeout(puxaPagamentosCartao, 3000);
   setInterval(puxaPagamentosCartao, 120000);
   setTimeout(puxaPagamentosLink, 4000);
   setInterval(puxaPagamentosLink, 120000);
+  setTimeout(puxaPagamentosGateway, 5000);
+  setInterval(puxaPagamentosGateway, 120000);
 
   // ---------- rotina diária: lembrete de treino + régua de cobrança (push pelo app) ----------
   var pushEmVoo = {}; // chaves esperando resposta do push-envia (não repete na mesma sessão)
@@ -4251,8 +4435,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             "Já faz " + diasR + " dias desde seu último treino — bora marcar o próximo? Me chama no chat do app.");
         }
       }
-      // régua de cobrança (desligável; quem paga no cartão automático fica de fora)
-      if ((st.config || {}).reguaOff || a.assinaturaRec) return;
+      // régua de cobrança (desligável; quem paga no automático fica de fora)
+      if ((st.config || {}).reguaOff || a.assinaturaRec || a.assinaturaAs) return;
       var ct = contratoDe(st, a.id);
       if (!ct) return;
       var pagou = idxDe(st).pagouMes(a.id, mes);
@@ -5316,7 +5500,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var plAt = ct ? planoDe(st, ct.planoId) : null;
       // hora-aula não entra na cobrança de mensalidade: quem cobra é a carteira
       var ehSesAt = (plAt && plAt.cobranca === "sessao") || (!plAt && a.modo === "sessao");
-      if (!fixOff.atraso && ct && !ehSesAt && !a.assinaturaRec && !idxDe(st).pagouMes(a.id, mes)) {
+      if (!fixOff.atraso && ct && !ehSesAt && !a.assinaturaRec && !a.assinaturaAs && !idxDe(st).pagouMes(a.id, mes)) {
         var venc = +ct.diaVenc || 5;
         if (diaHoje > venc + atrasoTol(st)) {
           var diasAt = diaHoje - venc;
@@ -5361,7 +5545,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         } else if (au.gat === "antesVenc") {
           // mensalidade vence em até N dias (1x por mês de vencimento). O próximo
           // vencimento pode cair no mês que vem — "3 dias antes do dia 2" cruza a virada.
-          if (!ct || a.assinaturaRec) return;
+          if (!ct || a.assinaturaRec || a.assinaturaAs) return;
           var vencAu = +ct.diaVenc || 5;
           var hojeAu = new Date(hoje + "T12:00");
           var alvoAu = new Date(hojeAu.getFullYear(), hojeAu.getMonth() + (vencAu < diaHoje ? 1 : 0), vencAu, 12);
@@ -5468,6 +5652,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<span class="muted">' + a.pacote.total + " aulas</span>" +
             '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
             '<button class="btn mini" data-pacrec="' + a.id + '" title="registra o recebimento do pacote renovado">Recebi</button>' +
+            '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + vPac + '" data-origem="pacote" title="gera o link de cobrança no SEU gateway — quando o aluno pagar, a baixa entra sozinha">Link de pagamento</button>' +
             ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + vPac + '">Pix</button>' : "") +
             (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgP) + '">Cobrar</a>' : "") + "</span></div>";
         }
@@ -5492,12 +5677,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (valor ? "<span>" + S.fmtBRL(valor) + "</span>" : "") +
         (ct ? '<span class="muted">vence dia ' + ct.diaVenc + "</span>" : '<span class="muted">sem contrato</span>') +
         (dv.meses > 1 ? '<span class="tag erro">deve ' + dv.meses + " meses — " + S.fmtBRL(dv.total) + "</span>" : atrasado ? '<span class="tag erro">ATRASADO</span>' : "") +
-        (a.assinaturaRec ? '<span class="tag ok">no cartão</span>' : "") +
+        (a.assinaturaRec ? '<span class="tag ok">no cartão</span>' : a.assinaturaAs ? '<span class="tag ok">automática</span>' : "") +
         (a.cartaoFalhouEm ? '<span class="tag erro">cartão recusado</span>' : "") +
         '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
-        (cobrar ? '<button class="btn mini" data-receb="' + a.id + '" data-v="' + cobrar + '" title="registra o recebimento com 1 toque">Recebi</button>' : "") +
-        (cobrar && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + cobrar + '">Pix</button>' : "") +
-        (cobrar ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + cobrar + '" title="gera o link de cobrança no SEU gateway (cartão, Pix ou boleto)">Link de pagamento</button>' : "") +
+        // quem tem cobrança automática (cartão ou Asaas) não ganha os botões de
+        // receber/cobrar por fora: o gateway registra sozinho, e um "Recebi" a
+        // mais viraria pagamento em dobro no caixa
+        (cobrar && !a.assinaturaRec && !a.assinaturaAs ? '<button class="btn mini" data-receb="' + a.id + '" data-v="' + cobrar + '" title="registra o recebimento com 1 toque">Recebi</button>' : "") +
+        (cobrar && !a.assinaturaRec && !a.assinaturaAs && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + cobrar + '">Pix</button>' : "") +
+        (cobrar && !a.assinaturaRec && !a.assinaturaAs ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + cobrar + '" data-origem="mensal" title="gera o link de cobrança no SEU gateway (cartão, Pix ou boleto)">Link de pagamento</button>' : "") +
         (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">Assinatura</a>' : "") +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") + "</span></div>";
     }).filter(Boolean);
@@ -5604,6 +5792,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var pg = e.target.closest("[data-pgm]");
     if (pg) {
+      var origemPg = pg.getAttribute("data-origem") || "mensal";
       pg.disabled = true;
       pg.textContent = "Gerando…";
       geraLinkPagamento(pg.getAttribute("data-pgm"), +pg.getAttribute("data-v"), function (r) {
@@ -5612,13 +5801,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (r.erro) { alert(r.erro); return; }
         var st2 = load();
         var al2 = st2.alunos.find(function (x) { return x.id === pg.getAttribute("data-pgm"); });
-        var msg2 = "Oi " + (al2 ? al2.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar a mensalidade (cartão, Pix ou boleto): " + r.link;
+        var oQue2 = origemPg === "pacote" ? "a renovação do pacote" : "a mensalidade";
+        var msg2 = "Oi " + (al2 ? al2.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar " + oQue2 + " (cartão, Pix ou boleto): " + r.link;
         if (confirm("Link gerado! Mandar pro aluno no WhatsApp agora?")) {
           window.open("https://wa.me/" + (al2 && al2.zap ? "55" + String(al2.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg2), "_blank");
         } else {
           prompt("Copie o link de pagamento:", r.link);
         }
-      });
+      }, origemPg);
       return;
     }
     var b = e.target.closest("[data-pix]");
@@ -5628,7 +5818,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (a) abrePix(a, +b.getAttribute("data-v"));
   });
   // Pagar.me: gera o link de checkout seguro (cartão/Pix/boleto) pela função da nuvem
-  function geraLinkPagamento(alunoId, valor, cb) {
+  function geraLinkPagamento(alunoId, valor, cb, origem) {
     cb = cb || function () {};
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
@@ -5646,9 +5836,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // gateway do PRÓPRIO professor (Mercado Pago / Asaas / Pagar.me da conta dele):
     // o dinheiro cai direto na conta dele, sem repasse
     if (pagApi.ligado && pagApi.provedor) {
-      self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "link", valorCentavos: Math.round(valor * 100), descricao: "Mensalidade — " + ((st.config || {}).nome || "Personal"), nome: a.nome, email: a.email || undefined }, "O link de pagamento")
+      var descLk = (origem === "pacote" ? "Renovação do pacote" : "Mensalidade") + " — " + ((st.config || {}).nome || "Personal");
+      self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "link", alunoId: a.id, origem: origem || "mensal", valorCentavos: Math.round(valor * 100), descricao: descLk, nome: a.nome, email: a.email || undefined }, "O link de pagamento")
         .then(function (d) {
-          if (d && d.ok && d.link) cb({ ok: true, link: d.link });
+          if (d && d.ok && d.link) {
+            // guarda o pedido: é por ele (ou pela referência carimbada no link)
+            // que a baixa automática casa o pagamento com o aluno
+            if (d.linkId) {
+              var stO2 = load();
+              var aO2 = stO2.alunos.find(function (x) { return x.id === alunoId; });
+              if (aO2) {
+                aO2.pedidosPg = (aO2.pedidosPg || []).slice(-11);
+                aO2.pedidosPg.push({ id: String(d.linkId), v: valor, em: S.todayISO(), prov: d.provedor || pagApi.provedor });
+                S.write("ptStudio", stO2);
+              }
+            }
+            cb({ ok: true, link: d.link });
+          }
           else cb({ erro: (d && d.erro) || "Publique a função pagamentos (torqueon.com.br/funcoes.html) e confira a chave em Configurações → Receber dos alunos." });
         }, function () { cb({ erro: "Sem conexão com a função pagamentos agora." }); });
       return;
@@ -6424,17 +6628,48 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if ($("cfgPagLink") && document.activeElement !== $("cfgPagLink")) $("cfgPagLink").value = (st.config || {}).pagLink || "";
     if ($("cfgPagDesliga")) $("cfgPagDesliga").hidden = !esp.ligado;
     if (esp.ligado) pintaPagStatus("Ligado: " + (esp.provedor === "outro" ? "o seu link de cobrança" : esp.provedor) + ". O botão Link de pagamento já usa a SUA conta.");
+    pintaPagHook(esp);
+  }
+  // baixa automática: MP e Asaas se ajeitam sozinhos; o Pagar.me (chave própria)
+  // precisa que o professor cole a URL do webhook no painel dele — a URL leva a
+  // senha gerada pelo servidor (pag_config_ve), mesmo papel do verify_token da Meta
+  function pintaPagHook(esp) {
+    var el = $("cfgPagHook");
+    if (!el) return;
+    el.textContent = "";
+    if (!esp.ligado || !esp.provedor || esp.provedor === "outro") return;
+    if (esp.provedor !== "pagarme") {
+      el.textContent = "Baixa automática: quando o aluno pagar pelo link, o pagamento entra sozinho no financeiro (publique a função pagamentos-webhook — torqueon.com.br/funcoes.html).";
+      return;
+    }
+    el.textContent = "Carregando a URL da baixa automática…";
+    rpcZap("pag_config_ve").then(function (d) {
+      var cfg = self.MT_CLOUD || {};
+      if (d && d.ok && d.webhook_token && d.academia_id && cfg.url) {
+        var urlHook = cfg.url + "/functions/v1/pagamentos-webhook?aid=" + encodeURIComponent(d.academia_id) + "&k=" + encodeURIComponent(d.webhook_token);
+        el.innerHTML = "Baixa automática: no painel do Pagar.me → Configurações → Webhooks, cadastre esta URL (eventos <b>order.paid</b> e <b>charge.payment_failed</b>): <code style=\"word-break:break-all; user-select:all;\">" + urlHook + "</code>";
+      } else {
+        el.textContent = "Baixa automática: rode o SQL novo (torqueon.com.br/sql.html) e toque em Ligar de novo pra ganhar a URL do webhook.";
+      }
+    }, function () { el.textContent = ""; });
   }
   if ($("cfgPagProv")) $("cfgPagProv").addEventListener("change", function () {
     var ehOutro = this.value === "outro";
     $("cfgPagLbChave").hidden = ehOutro;
     $("cfgPagLbLink").hidden = !ehOutro;
   });
+  // alunos ativos com cobrança automática do Asaas — trocar/desligar o gateway
+  // NÃO cancela essas assinaturas (elas moram na conta Asaas do professor)
+  function alunosComAssinaturaAs(st) {
+    return (st.alunos || []).filter(function (a) { return a.ativo !== false && a.assinaturaAs; }).length;
+  }
   if ($("cfgPagSalva")) $("cfgPagSalva").addEventListener("click", function () {
     var prov = $("cfgPagProv").value;
     if (!prov) { pintaPagStatus("Escolha a plataforma primeiro."); return; }
     var st = load();
     st.config = st.config || {};
+    var saindoAs = pagEspelho(st).provedor === "asaas" && prov !== "asaas" ? alunosComAssinaturaAs(st) : 0;
+    if (saindoAs && !confirm("Atenção: " + saindoAs + " aluno(s) têm cobrança automática no Asaas. Trocar de plataforma NÃO cancela essas assinaturas — o Asaas continua cobrando e a baixa PARA de entrar aqui.\n\nO certo é cancelar antes (perfil do aluno → cancelar). Trocar mesmo assim?")) return;
     if (prov === "outro") {
       var lk = ($("cfgPagLink").value || "").trim();
       if (!/^https:\/\//.test(lk)) { pintaPagStatus("Cole um link completo, começando com https://"); return; }
@@ -6470,7 +6705,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }, function () { pintaPagStatus("Sem conexão com a função pagamentos agora."); });
   });
   if ($("cfgPagDesliga")) $("cfgPagDesliga").addEventListener("click", function () {
-    if (!confirm("Desligar o link de cobrança? O Pix com a sua chave continua funcionando normal.")) return;
+    var stAvisa = load();
+    var desligaAs = pagEspelho(stAvisa).provedor === "asaas" ? alunosComAssinaturaAs(stAvisa) : 0;
+    var msgDeslg = "Desligar o link de cobrança? O Pix com a sua chave continua funcionando normal." +
+      (desligaAs ? "\n\nATENÇÃO: " + desligaAs + " aluno(s) têm cobrança automática no Asaas — desligar aqui NÃO cancela essas assinaturas (cancele antes no perfil de cada aluno, ou depois direto no site asaas.com)." : "");
+    if (!confirm(msgDeslg)) return;
     var st = load();
     var eraOutro = pagEspelho(st).provedor === "outro";
     var fim = function () {
@@ -9475,7 +9714,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (Object.keys(formas).length ? kv("Por forma", Object.keys(formas).map(function (f) { return f + " " + fmtR(formas[f]); }).join(" · ")) : "");
     // status da base
     var comApp = ativos.filter(function (a) { return a.acessoEm; }).length;
-    var comRec = ativos.filter(function (a) { return a.assinaturaRec; }).length;
+    var comRec = ativos.filter(function (a) { return a.assinaturaRec || a.assinaturaAs; }).length;
     $("bBaseP").innerHTML =
       kv("Alunos ativos", ativos.length) +
       kv("Com contrato de plano", comContrato) +
