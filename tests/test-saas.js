@@ -78,6 +78,8 @@ function crcNode(s) {
     "pag_eventos: membro só LÊ os eventos da própria academia (escrever é só a função, com a service key)");
   ok(!/create policy[^;]*pag_eventos[^;]*(insert|update|delete)/i.test(sql),
     "nenhuma política deixa o navegador escrever em pag_eventos");
+  ok(/asaas_webhook_id = case when pag_config\.chave is distinct from excluded\.chave/.test(sql),
+    "trocar a chave zera o webhook Asaas guardado — a função recria na conta nova (baixa não morre em silêncio)");
   ok(!/jsonb_build_object\([^)]*'token'/.test(sql.slice(sql.indexOf("zap_config_ve"))),
     "zap_config_ve devolve se TEM token, nunca o token");
 

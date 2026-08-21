@@ -2431,7 +2431,12 @@ begin
           -- a senha do webhook nasce uma vez e não muda mais (ela já pode estar
           -- registrada no gateway do profissional)
           webhook_token = case when coalesce(pag_config.webhook_token, '') = ''
-                               then public.pag_token_novo() else pag_config.webhook_token end;
+                               then public.pag_token_novo() else pag_config.webhook_token end,
+          -- chave nova = pode ser OUTRA conta Asaas: zera o id do webhook pra
+          -- função pagamentos criar de novo na conta certa (senão a baixa
+          -- automática morre em silêncio apontando pra conta velha)
+          asaas_webhook_id = case when pag_config.chave is distinct from excluded.chave
+                                  then '' else pag_config.asaas_webhook_id end;
   return json_build_object('ok', true);
 end $$;
 grant execute on function public.pag_config_salva(text, text) to authenticated;
@@ -2481,7 +2486,7 @@ create table if not exists public.pag_eventos (
   id text primary key,                          -- provedor + ':' + id do pagamento (idempotência)
   academia_id uuid not null references public.academias (id) on delete cascade,
   provedor text not null default '',            -- mercadopago / asaas / pagarme
-  tipo text not null default '',                -- pago / falhou
+  tipo text not null default '',                -- pago / falhou / estorno
   valor_centavos integer not null default 0,
   ref text not null default '',                 -- "mt|<alunoId>|<origem>" carimbado na criação do link
   link_id text not null default '',             -- id do link/pedido que originou (casa com a.pedidosPg)

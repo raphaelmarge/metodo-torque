@@ -91,18 +91,29 @@ confia no corpo do aviso** — pega só o id do pagamento e busca os dados DE
 VOLTA no gateway com a chave daquela academia (aviso forjado não vira baixa).
 Grava em `pag_eventos` (RLS: membro só LÊ; escrita só pela service key) com
 id = `provedor:pagamentoId:tipo` (idempotência por pagamento+desfecho: cobrança
-que venceu e foi paga depois ainda ganha a baixa). A função `pagamentos`
+que venceu e foi paga depois ainda ganha a baixa; `estorno` fica registrado mas
+o painel não mexe no caixa por ora). A função `pagamentos`
 carimba cada link com `external_reference`/`metadata.mt_ref` =
 `mt|<alunoId>|<origem>` e aponta o webhook (MP: `notification_url` por link;
 Asaas: webhook criado UMA vez pela API, id guardado em `asaas_webhook_id`;
 Pagar.me: o professor cola a URL mostrada no card — `pag_config_ve` devolve o
-`webhook_token` de propósito, papel de verify_token, nunca a `chave`). O painel
-(`puxaPagamentosGateway`) casa por ref → `a.pedidosPg` → `a.assinaturaAs`,
-dedupe por `eventoId`, grava com `S.write`; origem `pacote` entra COM desc e
-zera `a.pacote.cobrar`. Assinatura (cobrança automática mensal) v1 é pelo
-Asaas (`acao: assinar` — exige CPF do aluno; `a.assinaturaAs = {id, desde,
-valor}`); quem tem `assinaturaAs` sai da régua de cobrança igual ao
-`assinaturaRec` do caminho antigo. A região `==== NORMALIZA ====` do
+`webhook_token` de propósito, papel de verify_token, nunca a `chave`; trocar a
+chave zera `asaas_webhook_id` pra recriar na conta nova). O painel
+(`puxaPagamentosGateway`) lê ASCENDENTE com `.eq(academia_id, aid)` (a RLS
+devolve todas as academias do usuário — sem o filtro, quem participa de duas
+teria a janela roubada) e marca d'água `config.pagEvDesde` = evento mais novo
+menos 7 dias (nada se perde por janela; a folga cobre outro aparelho; dedupe
+por `eventoId` segura as re-leituras); casa por ref → `a.pedidosPg` →
+`a.assinaturaAs`, grava com `S.write`; origem `pacote` entra COM desc e zera
+`a.pacote.cobrar`; o card "pacote renovou" tem Link com `data-origem="pacote"`.
+Alerta de cobrança vencida usa marcador monotônico `a.cartaoFalhouEvt`
+(`criado|id`) — não re-acende depois de paga nem oscila entre dois meses.
+Assinatura (cobrança automática mensal) v1 é pelo Asaas (`acao: assinar` —
+exige CPF do aluno; `a.assinaturaAs = {id, desde, valor}`); quem tem
+`assinaturaAs` sai da régua de cobrança igual ao `assinaturaRec` do caminho
+antigo, e os dois perdem os botões Recebi/Pix/Link da lista de cobrança (baixa
+em dobro). Trocar/desligar gateway ou encerrar aluno com `assinaturaAs` avisa
+que a assinatura continua viva no Asaas. A região `==== NORMALIZA ====` do
 pagamentos-webhook é **JS puro de propósito** — `tests/test-pag-webhook.js`
 recorta e roda em node; não coloque tipo do TypeScript lá.
 

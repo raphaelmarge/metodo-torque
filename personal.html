@@ -2271,6 +2271,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (enc && enc.appTokenP && confirm("Tirar também o acesso ao app dele?\n\nO app para de abrir e o login por e-mail para de funcionar. O histórico continua aqui com você.")) {
       revogaAcessoAluno(enc.id, false);
     }
+    // encerrar NÃO cancela a cobrança automática (ela mora na conta Asaas do
+    // professor) — sem este aviso o ex-aluno continuaria sendo cobrado todo mês
+    if (enc && enc.assinaturaAs) {
+      alert("Atenção: este aluno tem cobrança automática no Asaas, e encerrar aqui NÃO cancela a assinatura.\n\nAbra o perfil dele → cancelar (ou cancele direto no site asaas.com), senão o Asaas continua cobrando todo mês.");
+    }
   });
 
   // ---------- perfil completo do aluno ----------
@@ -3492,10 +3497,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (cpfAs.length !== 11) { alert("CPF inválido — precisa dos 11 números."); return; }
         a.cpf = cpfAs;
         S.write("ptStudio", st);
+        // espelha no campo da ficha aberta — senão o próximo Salvar do cadastro
+        // gravaria o campo vazio por cima do CPF recém-guardado
+        if ($("pfCpf")) $("pfCpf").value = cpfAs;
       }
       var nuvemAs = S.cloud && S.cloud();
       if (!nuvemAs) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
       var btAs = e.target;
+      // o alvo fica preso ao aluno do CLIQUE: se o professor trocar de perfil
+      // enquanto a nuvem responde, a assinatura não pode cair no aluno errado
+      var alvoAs = a.id;
       btAs.disabled = true;
       btAs.textContent = "Ativando…";
       var voltaAs = function () { btAs.disabled = false; btAs.textContent = "Ativar cobrança automática (Asaas)"; };
@@ -3504,11 +3515,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           voltaAs();
           if (!d || !d.ok || !d.assinaturaId) { alert((d && d.erro) || "Não deu pra ativar agora — confira a chave em Configurações → Receber dos alunos."); return; }
           var stAs = load();
-          var aAs = stAs.alunos.find(function (x) { return x.id === perfilId; });
+          var aAs = stAs.alunos.find(function (x) { return x.id === alvoAs; });
           if (!aAs) return;
           aAs.assinaturaAs = { id: String(d.assinaturaId), desde: S.todayISO(), valor: valorAs };
           save(stAs);
-          pintaAssinatura(aAs);
+          if (perfilId === alvoAs) pintaAssinatura(aAs);
           if (d.link) {
             var msgAs = "Oi " + aAs.nome.split(" ")[0] + "! Sua mensalidade agora é automática 🎉 Segue o link da primeira cobrança (Pix, cartão ou boleto): " + d.link;
             if (confirm("Ativada! Mandar o link da primeira cobrança pro aluno no WhatsApp?")) {
@@ -3542,15 +3553,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var btCa = e.target;
       var nuvemCa = S.cloud && S.cloud();
       if (!nuvemCa) { alert("Entre na sua conta (card Sua ilha) primeiro."); return; }
+      var alvoCa = a.id; // preso ao aluno do clique — trocar de perfil no meio não pode apagar a assinatura de outro
       btCa.disabled = true;
       self.MT_FUNCAO.chama(nuvemCa.client, "pagamentos", { acao: "assinatura_cancela", assinaturaId: a.assinaturaAs.id }, "A cobrança automática").then(function (d) {
         if (!d || d.erro) { btCa.disabled = false; alert((d && d.erro) || "Não deu pra cancelar agora — tenta de novo."); return; }
         var stCa = load();
-        var aCa = stCa.alunos.find(function (x) { return x.id === perfilId; });
+        var aCa = stCa.alunos.find(function (x) { return x.id === alvoCa; });
         if (aCa) {
           delete aCa.assinaturaAs;
           save(stCa);
-          pintaAssinatura(aCa);
+          if (perfilId === alvoCa) pintaAssinatura(aCa);
         }
         alert("Cancelada. A partir de agora a cobrança volta a ser manual.");
       }, function () { btCa.disabled = false; alert("Sem conexão com a função pagamentos agora."); });
@@ -4269,18 +4281,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // 2) pedido guardado (a.pedidosPg), 3) assinatura Asaas (a.assinaturaAs).
   function puxaPagamentosGateway() {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) return;
+    if (!nuvem || !nuvem.aid) return;
     var st0 = load();
     if (!(((st0.config || {}).pagApi || {}).ligado)) return; // só com gateway próprio ligado
-    nuvem.client.from("pag_eventos").select("id,provedor,tipo,valor_centavos,ref,link_id,assinatura_id,criado")
-      .order("criado", { ascending: false }).limit(200).then(function (r) {
+    // filtro pela academia DESTE painel: a RLS devolve todas as academias do
+    // usuário, e quem participa de duas não pode ver a janela roubada pela outra
+    // (mesma regra do resto do sync — .eq com o aid preso)
+    // marca d'água com folga de 7 dias: lê do mais velho pro mais novo a partir
+    // de onde parou, então NADA se perde por limite de janela; a folga relê os
+    // últimos dias (o dedupe segura) pra dar tempo de outro aparelho sincronizar
+    // o aluno/pedido que casa o evento
+    var desde = String((st0.config || {}).pagEvDesde || "");
+    var q = nuvem.client.from("pag_eventos").select("id,provedor,tipo,valor_centavos,ref,link_id,assinatura_id,criado")
+      .eq("academia_id", nuvem.aid).order("criado", { ascending: true }).limit(200);
+    if (desde) q = q.gt("criado", desde);
+    q.then(function (r) {
         if (!r || r.error || !r.data || !r.data.length) return;
         var st = load();
+        st.config = st.config || {};
         var vistos = {};
         (st.pagamentos || []).forEach(function (p) { if (p.eventoId) vistos[p.eventoId] = 1; });
         var mudou = false;
-        // veio do mais novo pro mais velho — processa em ordem cronológica
-        r.data.slice().reverse().forEach(function (ev) {
+        r.data.forEach(function (ev) {
           if (vistos[ev.id]) return;
           var ref = String(ev.ref || "").split("|");
           var alunoId = ref[0] === "mt" ? ref[1] : "";
@@ -4291,16 +4313,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           if (!a) return;
           if (ev.tipo === "falhou") {
             // cobrança automática vencida sem pagar: acende o alerta do aluno.
-            // O marcador (cartaoFalhouEvt) impede o MESMO evento de re-acender
-            // o alerta a cada leitura — inclusive depois do aluno pagar
-            if (ev.assinatura_id && a.assinaturaAs && a.assinaturaAs.id === ev.assinatura_id && a.cartaoFalhouEvt !== ev.id) {
-              a.cartaoFalhouEvt = ev.id;
+            // O marcador guarda data+id do evento MAIS NOVO já aplicado: evento
+            // igual ou mais velho não re-acende nada (nem depois do aluno pagar,
+            // nem oscilando entre dois meses vencidos)
+            var fMarca = String(ev.criado || "") + "|" + ev.id;
+            if (ev.assinatura_id && a.assinaturaAs && a.assinaturaAs.id === ev.assinatura_id && String(a.cartaoFalhouEvt || "") < fMarca) {
+              a.cartaoFalhouEvt = fMarca;
               a.cartaoFalhouEm = String(ev.criado || "").slice(0, 10) || S.todayISO();
               mudou = true;
             }
             return;
           }
-          if (ev.tipo !== "pago") return;
+          if (ev.tipo !== "pago") return; // "estorno" fica guardado na nuvem, sem mexer no caixa por ora
           var pgto = { id: S.uid(), alunoId: a.id, valor: (ev.valor_centavos || 0) / 100, forma: "auto (" + (ev.provedor || "gateway") + ")", data: String(ev.criado || "").slice(0, 10) || S.todayISO(), eventoId: ev.id };
           // pacote renovado pago pelo link: entra COM desc (não é crédito de
           // carteira nem mensalidade) e apaga a pendência da renovação
@@ -4314,6 +4338,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           if (ev.link_id) a.pedidosPg = (a.pedidosPg || []).filter(function (p) { return p.id !== ev.link_id; });
           mudou = true;
         });
+        // avança a marca d'água (recuada 7 dias): a próxima leitura continua
+        // de onde esta parou — mochila de férias de um mês não perde baixa
+        var ult = r.data[r.data.length - 1];
+        var tUlt = ult && ult.criado ? new Date(String(ult.criado)).getTime() : 0;
+        if (tUlt) {
+          var marca = new Date(tUlt - 7 * 86400000).toISOString();
+          if (marca > String(st.config.pagEvDesde || "")) { st.config.pagEvDesde = marca; mudou = true; }
+        }
         if (mudou) S.write("ptStudio", st);
       });
   }
@@ -5620,6 +5652,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<span class="muted">' + a.pacote.total + " aulas</span>" +
             '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
             '<button class="btn mini" data-pacrec="' + a.id + '" title="registra o recebimento do pacote renovado">Recebi</button>' +
+            '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + vPac + '" data-origem="pacote" title="gera o link de cobrança no SEU gateway — quando o aluno pagar, a baixa entra sozinha">Link de pagamento</button>' +
             ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + vPac + '">Pix</button>' : "") +
             (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgP) + '">Cobrar</a>' : "") + "</span></div>";
         }
@@ -5647,9 +5680,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (a.assinaturaRec ? '<span class="tag ok">no cartão</span>' : a.assinaturaAs ? '<span class="tag ok">automática</span>' : "") +
         (a.cartaoFalhouEm ? '<span class="tag erro">cartão recusado</span>' : "") +
         '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
-        (cobrar ? '<button class="btn mini" data-receb="' + a.id + '" data-v="' + cobrar + '" title="registra o recebimento com 1 toque">Recebi</button>' : "") +
-        (cobrar && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + cobrar + '">Pix</button>' : "") +
-        (cobrar ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + cobrar + '" title="gera o link de cobrança no SEU gateway (cartão, Pix ou boleto)">Link de pagamento</button>' : "") +
+        // quem tem cobrança automática (cartão ou Asaas) não ganha os botões de
+        // receber/cobrar por fora: o gateway registra sozinho, e um "Recebi" a
+        // mais viraria pagamento em dobro no caixa
+        (cobrar && !a.assinaturaRec && !a.assinaturaAs ? '<button class="btn mini" data-receb="' + a.id + '" data-v="' + cobrar + '" title="registra o recebimento com 1 toque">Recebi</button>' : "") +
+        (cobrar && !a.assinaturaRec && !a.assinaturaAs && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + cobrar + '">Pix</button>' : "") +
+        (cobrar && !a.assinaturaRec && !a.assinaturaAs ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + cobrar + '" data-origem="mensal" title="gera o link de cobrança no SEU gateway (cartão, Pix ou boleto)">Link de pagamento</button>' : "") +
         (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">Assinatura</a>' : "") +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") + "</span></div>";
     }).filter(Boolean);
@@ -5756,6 +5792,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var pg = e.target.closest("[data-pgm]");
     if (pg) {
+      var origemPg = pg.getAttribute("data-origem") || "mensal";
       pg.disabled = true;
       pg.textContent = "Gerando…";
       geraLinkPagamento(pg.getAttribute("data-pgm"), +pg.getAttribute("data-v"), function (r) {
@@ -5764,13 +5801,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (r.erro) { alert(r.erro); return; }
         var st2 = load();
         var al2 = st2.alunos.find(function (x) { return x.id === pg.getAttribute("data-pgm"); });
-        var msg2 = "Oi " + (al2 ? al2.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar a mensalidade (cartão, Pix ou boleto): " + r.link;
+        var oQue2 = origemPg === "pacote" ? "a renovação do pacote" : "a mensalidade";
+        var msg2 = "Oi " + (al2 ? al2.nome.split(" ")[0] : "") + "! Segue o link seguro pra pagar " + oQue2 + " (cartão, Pix ou boleto): " + r.link;
         if (confirm("Link gerado! Mandar pro aluno no WhatsApp agora?")) {
           window.open("https://wa.me/" + (al2 && al2.zap ? "55" + String(al2.zap).replace(/\D/g, "") : "") + "?text=" + encodeURIComponent(msg2), "_blank");
         } else {
           prompt("Copie o link de pagamento:", r.link);
         }
-      });
+      }, origemPg);
       return;
     }
     var b = e.target.closest("[data-pix]");
@@ -5798,7 +5836,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // gateway do PRÓPRIO professor (Mercado Pago / Asaas / Pagar.me da conta dele):
     // o dinheiro cai direto na conta dele, sem repasse
     if (pagApi.ligado && pagApi.provedor) {
-      self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "link", alunoId: a.id, origem: origem || "mensal", valorCentavos: Math.round(valor * 100), descricao: "Mensalidade — " + ((st.config || {}).nome || "Personal"), nome: a.nome, email: a.email || undefined }, "O link de pagamento")
+      var descLk = (origem === "pacote" ? "Renovação do pacote" : "Mensalidade") + " — " + ((st.config || {}).nome || "Personal");
+      self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "link", alunoId: a.id, origem: origem || "mensal", valorCentavos: Math.round(valor * 100), descricao: descLk, nome: a.nome, email: a.email || undefined }, "O link de pagamento")
         .then(function (d) {
           if (d && d.ok && d.link) {
             // guarda o pedido: é por ele (ou pela referência carimbada no link)
@@ -6619,11 +6658,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgPagLbChave").hidden = ehOutro;
     $("cfgPagLbLink").hidden = !ehOutro;
   });
+  // alunos ativos com cobrança automática do Asaas — trocar/desligar o gateway
+  // NÃO cancela essas assinaturas (elas moram na conta Asaas do professor)
+  function alunosComAssinaturaAs(st) {
+    return (st.alunos || []).filter(function (a) { return a.ativo !== false && a.assinaturaAs; }).length;
+  }
   if ($("cfgPagSalva")) $("cfgPagSalva").addEventListener("click", function () {
     var prov = $("cfgPagProv").value;
     if (!prov) { pintaPagStatus("Escolha a plataforma primeiro."); return; }
     var st = load();
     st.config = st.config || {};
+    var saindoAs = pagEspelho(st).provedor === "asaas" && prov !== "asaas" ? alunosComAssinaturaAs(st) : 0;
+    if (saindoAs && !confirm("Atenção: " + saindoAs + " aluno(s) têm cobrança automática no Asaas. Trocar de plataforma NÃO cancela essas assinaturas — o Asaas continua cobrando e a baixa PARA de entrar aqui.\n\nO certo é cancelar antes (perfil do aluno → cancelar). Trocar mesmo assim?")) return;
     if (prov === "outro") {
       var lk = ($("cfgPagLink").value || "").trim();
       if (!/^https:\/\//.test(lk)) { pintaPagStatus("Cole um link completo, começando com https://"); return; }
@@ -6659,7 +6705,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }, function () { pintaPagStatus("Sem conexão com a função pagamentos agora."); });
   });
   if ($("cfgPagDesliga")) $("cfgPagDesliga").addEventListener("click", function () {
-    if (!confirm("Desligar o link de cobrança? O Pix com a sua chave continua funcionando normal.")) return;
+    var stAvisa = load();
+    var desligaAs = pagEspelho(stAvisa).provedor === "asaas" ? alunosComAssinaturaAs(stAvisa) : 0;
+    var msgDeslg = "Desligar o link de cobrança? O Pix com a sua chave continua funcionando normal." +
+      (desligaAs ? "\n\nATENÇÃO: " + desligaAs + " aluno(s) têm cobrança automática no Asaas — desligar aqui NÃO cancela essas assinaturas (cancele antes no perfil de cada aluno, ou depois direto no site asaas.com)." : "");
+    if (!confirm(msgDeslg)) return;
     var st = load();
     var eraOutro = pagEspelho(st).provedor === "outro";
     var fim = function () {

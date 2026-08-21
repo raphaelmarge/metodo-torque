@@ -52,6 +52,8 @@ t(qualPagamento("asaas", { event: "PAYMENT_RECEIVED", payment: { id: "pay_1" } }
   "Asaas: RECEIVED, CONFIRMED e OVERDUE passam");
 t(qualPagamento("asaas", { event: "PAYMENT_CREATED", payment: { id: "pay_4" } }) === null,
   "Asaas: cobrança só CRIADA (ninguém pagou) é ignorada");
+t(qualPagamento("asaas", { event: "PAYMENT_REFUNDED", payment: { id: "pay_5" } }).id === "pay_5",
+  "Asaas: estorno (REFUNDED) também é conferido");
 
 // Pagar.me: tudo se resolve pelo pedido
 t(qualPagamento("pagarme", { type: "order.paid", data: { id: "or_1" } }).id === "or_1",
@@ -74,6 +76,9 @@ t(mpPago && mpPago.tipo === "pago" && mpPago.valor_centavos === 14990 && mpPago.
 t(avalia("mercadopago", { status: "pending", transaction_amount: 100 }) === null &&
   avalia("mercadopago", { status: "rejected", transaction_amount: 100 }) === null,
   "MP pending/rejected não vira nada (o MP re-avisa se mudar)");
+t((avalia("mercadopago", { status: "refunded", transaction_amount: 100 }) || {}).tipo === "estorno" &&
+  (avalia("mercadopago", { status: "charged_back", transaction_amount: 100 }) || {}).tipo === "estorno",
+  "MP estornado/chargeback vira registro 'estorno' (fica guardado; não mexe no caixa por ora)");
 
 // Asaas: RECEIVED/CONFIRMED = pago; OVERDUE = falhou (alerta); com link e assinatura
 const asPago = avalia("asaas", { status: "RECEIVED", value: 200, externalReference: "mt|a2|pacote", paymentLink: "pl_9", subscription: "" });
@@ -86,6 +91,8 @@ t(asVenceu && asVenceu.tipo === "falhou" && asVenceu.assinatura_id === "sub_7",
   "Asaas OVERDUE → falhou com o id da assinatura (acende o alerta do aluno certo)");
 t(avalia("asaas", { status: "PENDING", value: 80 }) === null,
   "Asaas PENDING (gerou mas ninguém pagou) não vira nada");
+t((avalia("asaas", { status: "REFUNDED", value: 80 }) || {}).tipo === "estorno",
+  "Asaas REFUNDED vira registro 'estorno'");
 
 // o caso da re-busca: o aviso dizia OVERDUE, mas o pagamento JÁ está pago no
 // gateway — vale o que o gateway diz AGORA, não o aviso atrasado
@@ -100,6 +107,8 @@ t((avalia("pagarme", { id: "or_2", status: "failed", charges: [{ amount: 100, st
   "Pagar.me failed → falhou");
 t(avalia("pagarme", { id: "or_3", status: "pending", charges: [] }) === null,
   "Pagar.me pending não vira nada");
+t((avalia("pagarme", { id: "or_4", status: "canceled", charges: [{ status: "refunded" }] }) || {}).tipo === "estorno",
+  "Pagar.me cancelado/estornado vira registro 'estorno'");
 
 console.log("Segurança do desenho (na fonte da função):");
 

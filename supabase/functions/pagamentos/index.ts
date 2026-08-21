@@ -121,7 +121,7 @@ async function garanteWebhookAsaas(cfg: Cfg, emailDono: string): Promise<void> {
         apiVersion: 3,
         authToken: cfg.webhookToken,
         sendType: "SEQUENTIALLY",
-        events: ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_OVERDUE"],
+        events: ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_OVERDUE", "PAYMENT_REFUNDED"],
       }),
     });
     const d: any = await resp.json().catch(() => ({}));
@@ -352,7 +352,9 @@ Deno.serve(async (req: Request) => {
   }
 
   if (body.acao === "assinatura_status" || body.acao === "assinatura_cancela") {
-    if (cfg.provedor !== "asaas") return json({ erro: "Assinatura por gateway próprio: só Asaas por enquanto." }, 400);
+    if (cfg.provedor !== "asaas") {
+      return json({ erro: "Esta assinatura foi criada no Asaas, mas o gateway ligado agora é " + cfg.provedor + " — a chave Asaas não está mais guardada. Religue o Asaas em Configurações → Receber dos alunos, ou cancele a assinatura direto no site asaas.com." }, 400);
+    }
     const id = String(body.assinaturaId || "").trim();
     if (!id) return json({ erro: "assinaturaId vazio." }, 400);
     try {

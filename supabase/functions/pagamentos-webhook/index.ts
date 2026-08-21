@@ -59,8 +59,9 @@ function qualPagamento(provedor, corpo) {
     var evAs = String(corpo.event || "");
     var idAs = corpo.payment && corpo.payment.id ? String(corpo.payment.id) : "";
     // RECEIVED = dinheiro na conta; CONFIRMED = cartão aprovado (liquida depois);
-    // OVERDUE = venceu sem pagar (alerta de assinatura). O resto não interessa.
-    if (!idAs || ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_OVERDUE"].indexOf(evAs) < 0) return null;
+    // OVERDUE = venceu sem pagar (alerta de assinatura); REFUNDED = estorno
+    // (fica registrado — o painel decide o que fazer). O resto não interessa.
+    if (!idAs || ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_OVERDUE", "PAYMENT_REFUNDED"].indexOf(evAs) < 0) return null;
     return { id: idAs };
   }
   if (provedor === "pagarme") {
@@ -68,7 +69,7 @@ function qualPagamento(provedor, corpo) {
     var d = corpo.data || {};
     // tudo se resolve pelo PEDIDO: charge.* aponta o pedido dela
     var idPg = String((d.order && d.order.id) || (tipoPg.indexOf("order.") === 0 ? d.id : "") || "");
-    if (!idPg || !/\.(paid|payment_failed)$/.test(tipoPg)) return null;
+    if (!idPg || !/\.(paid|payment_failed|refunded|canceled)$/.test(tipoPg)) return null;
     return { id: idPg };
   }
   return null;
@@ -78,9 +79,8 @@ function avalia(provedor, pg) {
   pg = pg || {};
   if (provedor === "mercadopago") {
     var stMp = String(pg.status || "");
-    if (stMp !== "approved") return null; // pendente/recusado: o MP re-avisa se mudar
-    return {
-      tipo: "pago",
+    var linhaMp = {
+      tipo: "",
       valor_centavos: Math.round(Number(pg.transaction_amount || 0) * 100) || 0,
       ref: String(pg.external_reference || ""),
       link_id: "",
@@ -88,6 +88,10 @@ function avalia(provedor, pg) {
       cliente: String((pg.payer && (pg.payer.first_name || "")) || "").slice(0, 120),
       email: String((pg.payer && pg.payer.email) || "").slice(0, 120),
     };
+    if (stMp === "approved") linhaMp.tipo = "pago";
+    else if (stMp === "refunded" || stMp === "charged_back") linhaMp.tipo = "estorno";
+    else return null; // pendente/recusado: o MP re-avisa se mudar
+    return linhaMp;
   }
   if (provedor === "asaas") {
     var stAs = String(pg.status || "");
@@ -102,6 +106,7 @@ function avalia(provedor, pg) {
     };
     if (stAs === "RECEIVED" || stAs === "CONFIRMED" || stAs === "RECEIVED_IN_CASH") linha.tipo = "pago";
     else if (stAs === "OVERDUE") linha.tipo = "falhou";
+    else if (stAs === "REFUNDED") linha.tipo = "estorno";
     else return null;
     return linha;
   }
@@ -120,6 +125,7 @@ function avalia(provedor, pg) {
     };
     if (stPg === "paid") linha2.tipo = "pago";
     else if (stPg === "failed" || String(ch.status || "") === "failed") linha2.tipo = "falhou";
+    else if (stPg === "canceled" || String(ch.status || "") === "refunded") linha2.tipo = "estorno";
     else return null;
     return linha2;
   }

@@ -118,7 +118,7 @@
 
   <div class="card">
     <h2>9 · pagamentos-webhook <span class="tag off">Verify JWT: DESLIGAR</span></h2>
-    <p>A <b style="color:#fff">baixa automática do gateway próprio</b>: quando o aluno paga um link (ou uma mensalidade automática) do Mercado Pago, Asaas ou Pagar.me do professor, o gateway avisa esta função — ela <b style="color:#fff">confere o pagamento de volta no gateway</b> (aviso falso não vira baixa) e grava na tabela <code>pag_eventos</code>; o painel registra o pagamento sozinho. Antes, rode o <a href="sql.html">SQL</a> de novo (bloco BAIXA AUTOMÁTICA MULTI-GATEWAY). Nenhum Secret novo: no Mercado Pago e no Asaas a ligação se faz sozinha; no Pagar.me o professor cola a URL mostrada em Configurações → Receber dos alunos.</p>
+    <p>A <b style="color:#fff">baixa automática do gateway próprio</b>: quando o aluno paga um link (ou uma mensalidade automática) do Mercado Pago, Asaas ou Pagar.me do professor, o gateway avisa esta função — ela <b style="color:#fff">confere o pagamento de volta no gateway</b> (aviso falso não vira baixa) e grava na tabela <code>pag_eventos</code>; o painel registra o pagamento sozinho. Antes, rode o <a href="sql.html">SQL</a> de novo (bloco BAIXA AUTOMÁTICA MULTI-GATEWAY). Nenhum Secret novo: no Mercado Pago e no Asaas a ligação se faz sozinha; no Pagar.me o professor cola a URL mostrada em Configurações → Receber dos alunos (eventos <code>order.paid</code>, <code>charge.payment_failed</code> e <code>order.canceled</code>).</p>
     <button class="btnx" data-copia="pagamentos-webhook">Copiar o código (pagamentos-webhook)</button>
     <div class="status" data-st="pagamentos-webhook"></div>
   </div>

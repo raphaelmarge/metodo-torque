@@ -723,15 +723,27 @@ async function abaPt(p, a) {
       S.write("ptStudio", st);
       window.__cloudOrig = S.cloud;
       const eventos = [
-        // do mais novo pro mais velho, como a nuvem devolve (o painel reverte)
-        { id: "asaas:p4:falhou", provedor: "asaas", tipo: "falhou", valor_centavos: 15000, ref: "", link_id: "", assinatura_id: "sub_9", criado: hoje + "T14:00:00" },
-        { id: "asaas:p3:pago", provedor: "asaas", tipo: "pago", valor_centavos: 45000, ref: "mt|axPacGw|pacote", link_id: "", assinatura_id: "", criado: hoje + "T13:00:00" },
-        { id: "asaas:p2:pago", provedor: "asaas", tipo: "pago", valor_centavos: 20000, ref: "", link_id: "pl_asaas_1", assinatura_id: "", criado: hoje + "T12:00:00" },
+        // ascendente (do mais velho pro mais novo), como a query nova pede
         { id: "mercadopago:p1:pago", provedor: "mercadopago", tipo: "pago", valor_centavos: 12000, ref: "mt|axDev|mensal", link_id: "", assinatura_id: "", criado: hoje + "T11:00:00" },
+        { id: "asaas:p2:pago", provedor: "asaas", tipo: "pago", valor_centavos: 20000, ref: "", link_id: "pl_asaas_1", assinatura_id: "", criado: hoje + "T12:00:00" },
+        { id: "asaas:p3:pago", provedor: "asaas", tipo: "pago", valor_centavos: 45000, ref: "mt|axPacGw|pacote", link_id: "", assinatura_id: "", criado: hoje + "T13:00:00" },
+        { id: "asaas:p4:falhou", provedor: "asaas", tipo: "falhou", valor_centavos: 15000, ref: "", link_id: "", assinatura_id: "sub_9", criado: hoje + "T14:00:00" },
+        // evento de OUTRA academia não pode nem chegar: a query filtra por aid
+        { id: "asaas:p9:pago", provedor: "asaas", tipo: "pago", valor_centavos: 99900, ref: "mt|axDev|mensal", link_id: "", assinatura_id: "", criado: hoje + "T15:00:00", academia_id: "OUTRA" },
       ];
-      S.cloud = () => ({ client: { from: (tb) => ({ select: () => ({ order: () => ({ limit: () => ({
-        then: (cb) => cb({ data: tb === "pag_eventos" ? eventos : [] }),
-      }) }) }) }) } });
+      window.__gwFiltros = {};
+      S.cloud = () => ({ aid: "acadT", client: { from: (tb) => {
+        const q = {
+          eq: (col, v) => { window.__gwFiltros[col] = v; return q; },
+          gt: (col, v) => { window.__gwFiltros["gt_" + col] = v; return q; },
+          order: () => q,
+          limit: () => q,
+          then: (cb) => cb({ data: tb === "pag_eventos"
+            ? eventos.filter((e) => (e.academia_id || "acadT") === window.__gwFiltros.academia_id)
+            : [] }),
+        };
+        return { select: () => q };
+      } } });
       window.__pagGateway();
       // roda de novo com os MESMOS eventos: nada pode entrar duas vezes
       window.__pagGateway();
@@ -757,6 +769,11 @@ async function abaPt(p, a) {
         naoReacende: alertaDepoisDePagar === "",
         pedidos: (ax3.pedidosPg || []).length,
         total: st3.pagamentos.filter((x) => String(x.eventoId || "").split(":").length === 3).length,
+        outraAcademia: !st3.pagamentos.some((x) => x.eventoId === "asaas:p9:pago"),
+        filtrouAid: window.__gwFiltros.academia_id === "acadT",
+        // marca d'água = evento mais novo LIDO (14h; o 15h é de outra academia) menos 7 dias
+        marca: st3.config.pagEvDesde,
+        marcaOk: new Date(st3.config.pagEvDesde || 0).getTime() === new Date(hoje + "T14:00:00").getTime() - 7 * 86400000,
       };
     }, hoje);
     ok(gwBaixa.mensal && gwBaixa.mensal.forma === "auto (mercadopago)" && +gwBaixa.mensal.valor === 120 && !gwBaixa.mensal.desc,
@@ -769,6 +786,16 @@ async function abaPt(p, a) {
       "cobrança automática vencida NÃO vira pagamento — só acende o alerta do aluno");
     ok(gwBaixa.naoReacende,
       "depois que o aluno paga, o MESMO evento de falha não re-acende o alerta");
+    ok(gwBaixa.filtrouAid && gwBaixa.outraAcademia,
+      "a leitura filtra pela academia DESTE painel — evento de outra academia não entra no caixa");
+    ok(gwBaixa.marcaOk,
+      "marca d'água avança (evento mais novo − 7 dias): nada se perde por janela e a folga cobre outro aparelho (" + gwBaixa.marca + ")");
+    // botões que dariam pagamento em dobro somem de quem tem cobrança automática
+    const fonte = await p.evaluate(async () => await (await fetch("personal.html")).text());
+    ok(/!a\.assinaturaRec && !a\.assinaturaAs \? '<button class="btn mini" data-receb/.test(fonte),
+      "aluno com cobrança automática não ganha o botão Recebi (evita baixa em dobro)");
+    ok(/data-origem="pacote"/.test(fonte) && /data-origem="mensal"/.test(fonte),
+      "o card 'pacote renovou' ganha Link de pagamento com origem pacote (a baixa zera a pendência sozinha)");
     ok(gwBaixa.total === 3, "rodar duas vezes com os mesmos eventos não duplica nada (dedupe por eventoId)");
 
     // perfil do aluno: com o gateway Asaas ligado, a assinatura é a do professor
