@@ -4730,6 +4730,25 @@ async function abaPt(p, a) {
       "descanso zerando com o aluno na régua NÃO troca de exercício nem some com o formulário");
     ok(/Próximo exercício/.test(segura.botao || ""),
       "e o botão vira 'Próximo exercício', que é a saída no tempo dele");
+    /* O swipe de trocar de exercício só conhecia os botões +/- antigos: quando
+     * a régua os substituiu, arrastar a régua 50px virava "próximo exercício"
+     * e o formulário sumia com a carga não salva. A régua é área sem swipe. */
+    const arrasto = await pApp.evaluate(async () => {
+      const rd = document.getElementById("gWKg");
+      const ex = document.getElementById("gEx").textContent;
+      const vai = (tipo, x) => {
+        const ev = new Event(tipo, { bubbles: true });
+        ev.touches = tipo === "touchend" ? [] : [{ clientX: x, clientY: 300 }];
+        ev.changedTouches = [{ clientX: x, clientY: 300 }];
+        rd.dispatchEvent(ev);
+      };
+      vai("touchstart", 220); vai("touchend", 60);   // arrasto de 160px pra esquerda
+      await new Promise((r) => setTimeout(r, 150));
+      return { aindaTem: !!document.getElementById("gWKg"),
+        mesmoEx: document.getElementById("gEx").textContent === ex };
+    });
+    ok(arrasto.aindaTem && arrasto.mesmoEx,
+      "arrastar a RÉGUA pro lado não conta como swipe: o formulário fica e o exercício não muda");
     const reg = carga && carga.depois[carga.depois.length - 1];
     ok(reg && reg.kg > 0 && reg.r > 0 && reg.g === 1,
       "o registro guarda carga, repetições e a marca de que veio do treino guiado");
