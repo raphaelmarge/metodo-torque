@@ -1917,7 +1917,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // as etiquetas ficam num bloco próprio: no celular caem pra linha de baixo
         // sem empurrar o ⋮, que fica sempre grudado no nome
         '<span class="al-tags">' +
-        (pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>') +
+        (function () {
+          // quem paga por sessão vive de saldo, não de mês: a etiqueta mostra a
+          // carteira (e "sem pagamento no mês" deixaria de ser verdade útil)
+          var cartL = carteiraPT(st, a);
+          if (cartL) {
+            return cartL.saldo < 0 ? '<span class="tag alerta">SALDO ' + S.fmtBRL(cartL.saldo) + "</span>"
+              : cartL.saldo === 0 ? '<span class="tag alerta">CRÉDITOS NO FIM</span>'
+              : '<span class="tag ok">SALDO ' + S.fmtBRL(cartL.saldo) + "</span>";
+          }
+          return pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>';
+        })() +
         (fichaVencida ? '<span class="tag alerta" title="a validade da ficha passou — gere a nova fase">⏰ TREINO VENCIDO</span>' : "") +
         (a.acessoEm ? '<span class="tag ok" title="login e senha enviados por e-mail">APP ✓</span>' : "") +
         "</span>" +
@@ -2247,7 +2257,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }).join("") +
         (pgs.length > 6 ? "<div class='muted' style='font-size:12px;margin-top:6px;'>Mais antigos ficam em Financeiro → Histórico.</div>" : "")
       : "<div class='muted' style='font-size:12.5px;'>Nenhum pagamento registrado ainda.</div>");
-    $("pfFin").innerHTML = situacao + ctBloco + pcBloco + histBloco;
+    // carteira de créditos: o retrato que o professor pediu — quanto entrou,
+    // quanto virou aula e quanto sobra (ou falta), sempre em tempo real
+    var cart = carteiraPT(st, a);
+    var cartBloco = "";
+    if (cart) {
+      var corSaldo = cart.saldo > 0 ? "#4ade80" : cart.saldo < 0 ? "#f87171" : "var(--cinza-2)";
+      var rotSaldo = cart.saldo > 0
+        ? "sobram créditos — dá pra mais " + Math.floor(cart.saldo / cart.valorSessao) + " sessão(ões)"
+        : cart.saldo < 0
+        ? "DEVENDO " + S.fmtBRL(-cart.saldo) + " (" + Math.ceil(-cart.saldo / cart.valorSessao) + " sessão(ões) além do pago)"
+        : "consumiu exatamente o que pagou";
+      var linhaCart = function (rot, val) {
+        return "<div style='display:flex;justify-content:space-between;font-size:13px;padding:4px 0;'><span class='muted'>" + rot + "</span><b>" + val + "</b></div>";
+      };
+      cartBloco = rotSec("Carteira de sessões") +
+        "<div style='background:#121016;border:1px solid var(--linha);border-radius:12px;padding:10px 13px;'>" +
+        linhaCart("Valor da sessão", S.fmtBRL(cart.valorSessao)) +
+        linhaCart("Total pago", S.fmtBRL(cart.pagos)) +
+        linhaCart("Aulas realizadas", cart.feitas) +
+        linhaCart("Valor consumido", S.fmtBRL(cart.consumido)) +
+        "<div style='display:flex;justify-content:space-between;font-size:14px;padding:7px 0 2px;border-top:1px dashed var(--linha);margin-top:4px;'>" +
+        "<span><b>Saldo disponível</b></span><b style='color:" + corSaldo + ";'>" + S.fmtBRL(cart.saldo) + "</b></div>" +
+        "<div class='muted' style='font-size:11.5px;color:" + corSaldo + ";'>" + rotSaldo + "</div></div>" +
+        "<div class='muted' style='font-size:11.5px;margin-top:5px;'>Cada aula marcada como Feita na agenda desconta " +
+        S.fmtBRL(cart.valorSessao) + " daqui. Crédito que sobrar continua valendo no mês seguinte.</div>";
+    }
+    $("pfFin").innerHTML = situacao + cartBloco + ctBloco + pcBloco + histBloco;
     // frequência: sessões feitas por mês
     var porMes = {};
     st.sessoes.forEach(function (s) { if (s.alunoId === id && s.feita) porMes[(s.data || "").slice(0, 7)] = (porMes[(s.data || "").slice(0, 7)] || 0) + 1; });
@@ -4761,7 +4797,28 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var n = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "") > ultPg; }).length;
     return n ? { n: n, total: n * +a.valor, pacote: false } : null;
   }
-  window.__financeiroPT = { divida: dividaDe, sessoes: sessoesACobrar }; // testes
+  /* Carteira de créditos (quem paga POR SESSÃO): pagamento adiciona crédito,
+   * aula FEITA consome o valor de uma sessão, e o saldo é a diferença — pode
+   * ficar positivo (sobra pro período seguinte), zerar ou ficar negativo
+   * (fez mais aulas do que pagou). Tudo DERIVADO do que o painel já guarda:
+   * a.valor (valor da sessão), st.pagamentos e as sessões feitas da agenda —
+   * nenhum dado novo é gravado, então não há o que dessincronizar.
+   * Venda de serviço/pacote (pagamento com desc) fica de fora, pela mesma
+   * regra do resto do painel: massagem paga não vira crédito de aula.
+   * Aluno com PACOTE de sessões ativo fica de fora também: o pacote controla
+   * por QUANTIDADE (10 sessões), e o preço fechado do pacote quase nunca é
+   * n × valor da sessão — as duas contas juntas dariam duas verdades. */
+  function carteiraPT(st, a) {
+    if (a.modo !== "sessao" || !(+a.valor > 0)) return null;
+    if (a.pacote && (+a.pacote.total || 0) - (+a.pacote.usadas || 0) > 0) return null;
+    var pagos = idxDe(st).pagsDe(a.id).filter(function (p) { return !p.desc; })
+      .reduce(function (t, p) { return t + (+p.valor || 0); }, 0);
+    var feitas = idxDe(st).sessFeitasDe(a.id).length;
+    var consumido = feitas * +a.valor;
+    return { valorSessao: +a.valor, pagos: pagos, feitas: feitas,
+      consumido: consumido, saldo: pagos - consumido };
+  }
+  window.__financeiroPT = { divida: dividaDe, sessoes: sessoesACobrar, carteira: carteiraPT }; // testes
   // ---- Serviços e pacotes: o que o profissional vende além dos planos ----
   // Catálogo em st.servicosPT; venda avulsa vira pagamento com desc; qtd >= 2
   // vira pacote com saldo no aluno (a.servPacotes, mesmo espírito do a.pacote).
