@@ -5597,6 +5597,58 @@ async function abaPt(p, a) {
     ok(await p.evaluate(async () => /data-pgm=/.test(await (await fetch("personal.html")).text())), "pendências ganham o botão 💳 Link de pagamento");
   }
 
+  // 🏦 gateway por profissional: o dinheiro cai DIRETO na conta do professor
+  {
+    const gw = await p.evaluate(async () => {
+      const S = window.MTStore, out = {};
+      out.campos = !!(document.getElementById("cfgPagProv") && document.getElementById("cfgPagChave") &&
+        document.getElementById("cfgPagLink") && document.getElementById("cfgPagSalva") && document.getElementById("cfgPagDesliga"));
+      // "Outra plataforma": o professor cola o PRÓPRIO link — qualquer gateway serve
+      document.getElementById("cfgPagProv").value = "outro";
+      document.getElementById("cfgPagProv").dispatchEvent(new Event("change"));
+      out.trocaCampo = !document.getElementById("cfgPagLbLink").hidden && document.getElementById("cfgPagLbChave").hidden;
+      document.getElementById("cfgPagLink").value = "https://cobra.exemplo/meu-link";
+      document.getElementById("cfgPagSalva").click();
+      const st1 = S.read("ptStudio", {});
+      out.espelho = !!(st1.config.pagApi && st1.config.pagApi.ligado && st1.config.pagApi.provedor === "outro" && st1.config.pagLink === "https://cobra.exemplo/meu-link");
+      const id = st1.alunos[0].id;
+      const rOutro = await new Promise((res) => window.__pagarmePT(id, 300, res));
+      out.linkOutro = !!(rOutro && rOutro.ok && rOutro.link === "https://cobra.exemplo/meu-link");
+      // gateway de verdade (Mercado Pago): o link sai da função "pagamentos", com a conta DELE
+      const st2 = S.read("ptStudio", {});
+      st2.config.pagApi = { ligado: true, provedor: "mercadopago" };
+      S.write("ptStudio", st2);
+      window.__cloudOrig = S.cloud;
+      window.__fetchOrig = window.fetch;
+      S.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      let corpo = null, urlChamada = "";
+      window.fetch = (url, opts) => {
+        if (String(url).includes("functions/v1/pagamentos")) {
+          urlChamada = String(url); corpo = JSON.parse(opts.body);
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify({ ok: true, link: "https://mpago.la/abc" })) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      const rMp = await new Promise((res) => window.__pagarmePT(id, 150, res));
+      window.fetch = window.__fetchOrig;
+      S.cloud = window.__cloudOrig;
+      out.rot = !!(urlChamada && corpo && corpo.acao === "link" && corpo.valorCentavos === 15000 && rMp.ok && rMp.link === "https://mpago.la/abc");
+      // a chave digitada NUNCA pode parar no localStorage (ela vive só no servidor)
+      document.getElementById("cfgPagChave").value = "CHAVE-SECRETA-XYZ-123";
+      out.chaveForaDoAparelho = JSON.stringify(localStorage).indexOf("CHAVE-SECRETA-XYZ-123") === -1;
+      document.getElementById("cfgPagChave").value = "";
+      // limpa o rastro pros testes seguintes
+      const st3 = S.read("ptStudio", {});
+      delete st3.config.pagApi; delete st3.config.pagLink;
+      S.write("ptStudio", st3);
+      return out;
+    });
+    ok(gw.campos, "🏦 Configurações → Receber dos alunos: o card do gateway existe (plataforma, chave, link, ligar/desligar)");
+    ok(gw.trocaCampo && gw.espelho && gw.linkOutro, "'Outra plataforma' guarda o link do professor e o botão Link de pagamento passa a usar ELE");
+    ok(gw.rot, "com Mercado Pago ligado, a cobrança sai da função 'pagamentos' (a conta do PRÓPRIO professor) com o valor certo");
+    ok(gw.chaveForaDoAparelho, "a chave do gateway nunca toca o localStorage — só o espelho {ligado, provedor} fica no aparelho");
+  }
+
   // ✨ IA prescritiva de treino (função chat-envia mockada)
   {
     const ia = await p.evaluate(async () => {

@@ -1319,6 +1319,31 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <label style="font-size: 12.5px;">Tolerância de atraso (dias)
         <input id="cfgAtraso" inputmode="numeric" style="display:block; width: 120px; margin-top: 4px;"></label>
     </div>
+    <div class="card" style="margin-bottom: 14px;" data-cfgsec="conta">
+      <h2>Receber dos alunos (cartão e boleto)</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Pix com a sua chave já cai direto na sua conta. Aqui você liga também o <b>link de cobrança</b> (cartão parcelado, Pix e boleto) usando o gateway que VOCÊ escolher — o dinheiro do aluno cai <b>direto na sua conta</b> do gateway, sem intermediário. Escolha a plataforma, cole a chave dela e pronto.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+        <label style="font-size: 12.5px; min-width: 200px;">Plataforma
+          <select id="cfgPagProv" style="display:block; width: 100%; margin-top: 4px;">
+            <option value="">— escolher —</option>
+            <option value="mercadopago">Mercado Pago (conta grátis, só CPF)</option>
+            <option value="asaas">Asaas (feito pra mensalidades)</option>
+            <option value="pagarme">Pagar.me (precisa de CNPJ/MEI)</option>
+            <option value="outro">Outra plataforma (colar meu link)</option>
+          </select></label>
+        <label id="cfgPagLbChave" style="font-size: 12.5px; flex: 1; min-width: 240px;">Chave da plataforma
+          <input id="cfgPagChave" type="password" autocomplete="off" placeholder="cole aqui a chave (access token / API key)" style="display:block; width: 100%; margin-top: 4px;"></label>
+        <label id="cfgPagLbLink" hidden style="font-size: 12.5px; flex: 1; min-width: 240px;">Seu link de cobrança
+          <input id="cfgPagLink" type="url" autocomplete="off" placeholder="https://… (o link de pagamento da sua plataforma)" style="display:block; width: 100%; margin-top: 4px;"></label>
+      </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12px;" id="cfgPagDica">Mercado Pago: crie a conta no app, depois em <b>mercadopago.com.br/developers</b> → Suas integrações → Credenciais de produção → copie o <b>Access Token</b>. Asaas: Conta → Integrações → <b>Chave de API</b>. Pagar.me: Configurações → Chaves → <b>Chave secreta</b>. A chave fica guardada na nuvem, do lado do servidor, e <b>nunca volta pra esta tela</b>.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;">
+        <button class="btn" id="cfgPagSalva">Ligar</button>
+        <button class="btn sec" id="cfgPagTesta">Testar conexão</button>
+        <button class="btn sec" id="cfgPagDesliga" hidden>Desligar</button>
+      </div>
+      <div id="cfgPagStatus" class="muted" style="margin-top: 8px; font-size: 12.5px;"></div>
+    </div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="zap">
       <h2>Mensagens automáticas de WhatsApp</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">O Início monta todo dia a fila <b>WhatsApp de hoje</b> com as mensagens da lista abaixo, cada uma pronta pra sair do seu WhatsApp com um toque. As quatro primeiras são do sistema (dá pra editar o texto e desligar cada uma); as outras você cria — toque numa <b>pronta</b> pra ajustar e ligar, ou monte do zero, até com foto do seu banco de imagens. As palavras entre chaves são trocadas sozinhas: <b>{nome}</b>, <b>{hora}</b>, <b>{dias}</b> e <b>{valor}</b>.</p>
@@ -5282,7 +5307,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
         (cobrar ? '<button class="btn mini" data-receb="' + a.id + '" data-v="' + cobrar + '" title="registra o recebimento com 1 toque">Recebi</button>' : "") +
         (cobrar && (st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + cobrar + '">Pix</button>' : "") +
-        (cobrar ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + cobrar + '" title="gera o link seguro do Pagar.me (cartão, Pix ou boleto)">Link de pagamento</button>' : "") +
+        (cobrar ? '<button class="btn mini" data-pgm="' + a.id + '" data-v="' + cobrar + '" title="gera o link de cobrança no SEU gateway (cartão, Pix ou boleto)">Link de pagamento</button>' : "") +
         (pl && pl.linkRec ? '<a class="btn sec mini" href="' + esc(pl.linkRec) + '" target="_blank" rel="noopener">Assinatura</a>' : "") +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msg) + '">Cobrar</a>' : "") + "</span></div>";
     }).filter(Boolean);
@@ -5404,9 +5429,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === alunoId; });
     if (!a) { cb({ erro: "Aluno não encontrado." }); return; }
     if (!valor || valor < 1) { cb({ erro: "Valor inválido." }); return; }
+    var pagApi = (st.config || {}).pagApi || {};
+    // "Outra plataforma": o link do professor, direto — funciona até offline
+    if (pagApi.ligado && pagApi.provedor === "outro") {
+      if ((st.config || {}).pagLink) { cb({ ok: true, link: st.config.pagLink }); return; }
+      cb({ erro: "Cole o seu link de cobrança em Configurações → Receber dos alunos." }); return;
+    }
     var nuvem = S.cloud && S.cloud();
     var cfg = self.MT_CLOUD || {};
     if (!nuvem || !cfg.url) { cb({ erro: "Entre na sua conta (card Sua ilha) pra gerar o link de pagamento." }); return; }
+    // gateway do PRÓPRIO professor (Mercado Pago / Asaas / Pagar.me da conta dele):
+    // o dinheiro cai direto na conta dele, sem repasse
+    if (pagApi.ligado && pagApi.provedor) {
+      self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "link", valorCentavos: Math.round(valor * 100), descricao: "Mensalidade — " + ((st.config || {}).nome || "Personal"), nome: a.nome, email: a.email || undefined }, "O link de pagamento")
+        .then(function (d) {
+          if (d && d.ok && d.link) cb({ ok: true, link: d.link });
+          else cb({ erro: (d && d.erro) || "Publique a função pagamentos (torqueon.com.br/funcoes.html) e confira a chave em Configurações → Receber dos alunos." });
+        }, function () { cb({ erro: "Sem conexão com a função pagamentos agora." }); });
+      return;
+    }
+    // sem gateway próprio configurado: cai no caminho antigo (função pagarme com a chave global)
     self.MT_FUNCAO.chama(nuvem.client, "pagarme", { acao: "criar", metodo: "cartao", valorCentavos: Math.round(valor * 100), descricao: "Mensalidade — " + ((st.config || {}).nome || "Personal"), nome: a.nome, email: a.email || undefined }, "O link de pagamento")
       .then(function (d) {
       if (d && d.ok && d.linkPagamento) {
@@ -5974,6 +6016,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgZapDesliga").hidden = !zapi.ligado;
     pintaZapApiStatus();
     leZapConfigNuvem(); // confere com a nuvem (o token nunca vem junto)
+    if (window.__pagCfg) window.__pagCfg.pinta(); // gateway de pagamento (a chave nunca vem junto)
     var am = (st.config || {}).appMostra || {};
     CFG_VE.forEach(function (par) { $(par[0]).checked = am[par[1]] !== false; });
     $("cfgFeed").checked = !!(st.config || {}).feedOn; // Comunidade vem desligada
@@ -6037,7 +6080,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function rpcZap(nome, args) {
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta (card Sua ilha) pra ligar o WhatsApp oficial." });
+    if (!nuvem) return Promise.resolve({ erro: "Entre na sua conta (card Sua ilha) primeiro." });
     return nuvem.client.rpc(nome, args || {}).then(function (r) {
       if (r && r.error) return { erro: r.error.message };
       return (r && r.data) || {};
@@ -6157,6 +6200,89 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__zapApiOn = zapApiOn; // testes
   window.__zapApiEnvia = zapApiEnvia; // testes
+
+  /* ---------- Receber dos alunos (gateway por profissional) ----------
+   * Mesmo desenho do WhatsApp oficial: a chave do gateway vai pra nuvem
+   * (pag_config, tabela selada) e NUNCA volta pro navegador. Aqui só fica o
+   * espelho local {ligado, provedor} (config.pagApi), porque a lista de
+   * cobrança desenha síncrona. "Outra plataforma" é 100% local: o professor
+   * cola o próprio link de cobrança (config.pagLink) e o botão usa ele. */
+  function pagEspelho(st) { return (st.config || {}).pagApi || {}; }
+  function pintaPagStatus(msg) { if ($("cfgPagStatus")) $("cfgPagStatus").textContent = msg || ""; }
+  function pintaPagCampos() {
+    var st = load();
+    var esp = pagEspelho(st);
+    if ($("cfgPagProv") && document.activeElement !== $("cfgPagProv")) $("cfgPagProv").value = esp.provedor || "";
+    var ehOutro = ($("cfgPagProv") ? $("cfgPagProv").value : "") === "outro";
+    if ($("cfgPagLbChave")) $("cfgPagLbChave").hidden = ehOutro;
+    if ($("cfgPagLbLink")) $("cfgPagLbLink").hidden = !ehOutro;
+    if ($("cfgPagLink") && document.activeElement !== $("cfgPagLink")) $("cfgPagLink").value = (st.config || {}).pagLink || "";
+    if ($("cfgPagDesliga")) $("cfgPagDesliga").hidden = !esp.ligado;
+    if (esp.ligado) pintaPagStatus("Ligado: " + (esp.provedor === "outro" ? "o seu link de cobrança" : esp.provedor) + ". O botão Link de pagamento já usa a SUA conta.");
+  }
+  if ($("cfgPagProv")) $("cfgPagProv").addEventListener("change", function () {
+    var ehOutro = this.value === "outro";
+    $("cfgPagLbChave").hidden = ehOutro;
+    $("cfgPagLbLink").hidden = !ehOutro;
+  });
+  if ($("cfgPagSalva")) $("cfgPagSalva").addEventListener("click", function () {
+    var prov = $("cfgPagProv").value;
+    if (!prov) { pintaPagStatus("Escolha a plataforma primeiro."); return; }
+    var st = load();
+    st.config = st.config || {};
+    if (prov === "outro") {
+      var lk = ($("cfgPagLink").value || "").trim();
+      if (!/^https:\/\//.test(lk)) { pintaPagStatus("Cole um link completo, começando com https://"); return; }
+      st.config.pagLink = lk;
+      st.config.pagApi = { ligado: true, provedor: "outro" };
+      save(st);
+      pintaPagCampos();
+      pintaPagStatus("Ligado: o botão Link de pagamento passa a abrir o SEU link.");
+      return;
+    }
+    var chave = ($("cfgPagChave").value || "").trim();
+    pintaPagStatus("Guardando na nuvem…");
+    rpcZap("pag_config_salva", { p_provedor: prov, p_chave: chave }).then(function (d) {
+      if (d && d.erro) { pintaPagStatus("Não deu: " + d.erro); return; }
+      var st2 = load();
+      st2.config = st2.config || {};
+      st2.config.pagApi = { ligado: true, provedor: prov };
+      save(st2);
+      $("cfgPagChave").value = ""; // a chave nunca fica nesta tela
+      pintaPagCampos();
+      pintaPagStatus("Pronto! A chave ficou guardada no servidor — os links de cobrança saem da SUA conta " + prov + ".");
+    });
+  });
+  if ($("cfgPagTesta")) $("cfgPagTesta").addEventListener("click", function () {
+    var st = load();
+    if (pagEspelho(st).provedor === "outro") { pintaPagStatus("Outra plataforma é só o link — não tem conexão pra testar."); return; }
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) { pintaPagStatus("Entre na sua conta (card Sua ilha) primeiro."); return; }
+    pintaPagStatus("Testando…");
+    self.MT_FUNCAO.chama(nuvem.client, "pagamentos", { acao: "ping" }, "O gateway de pagamento").then(function (d) {
+      if (d && d.ok) pintaPagStatus(d.temChave ? "Conectado: " + d.provedor + " com a chave guardada ✓" : "A função respondeu, mas ainda não tem chave guardada — cole a chave e toque em Ligar.");
+      else pintaPagStatus("Não deu: " + ((d && d.erro) || "publique a função pagamentos (torqueon.com.br/funcoes.html)."));
+    }, function () { pintaPagStatus("Sem conexão com a função pagamentos agora."); });
+  });
+  if ($("cfgPagDesliga")) $("cfgPagDesliga").addEventListener("click", function () {
+    if (!confirm("Desligar o link de cobrança? O Pix com a sua chave continua funcionando normal.")) return;
+    var st = load();
+    var eraOutro = pagEspelho(st).provedor === "outro";
+    var fim = function () {
+      var st2 = load();
+      st2.config = st2.config || {};
+      delete st2.config.pagApi;
+      save(st2);
+      pintaPagCampos();
+      pintaPagStatus("Desligado. A chave foi apagada do servidor.");
+    };
+    if (eraOutro) { fim(); return; }
+    rpcZap("pag_config_apaga").then(function (d) {
+      if (d && d.erro) { pintaPagStatus("Não deu: " + d.erro); return; }
+      fim();
+    });
+  });
+  window.__pagCfg = { pinta: pintaPagCampos, espelho: pagEspelho }; // testes
 
   window.__configPT = renderConfigPT; // testes
 

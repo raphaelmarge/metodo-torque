@@ -55,6 +55,15 @@ function crcNode(s) {
   ok(!/create policy[^;]*zap_config/.test(sql), "zap_config sem policy: o token do WhatsApp não volta pra ninguém pela API");
   ok(/zap_config_salva/.test(sql) && /zap_config_ve/.test(sql) && /zap_config_apaga/.test(sql),
     "as 3 funções zap_config_* existem (salvar, ver o estado e desligar)");
+  // gateway por profissional: mesma regra do zap_config — a chave do Mercado
+  // Pago/Asaas/Pagar.me de cada professor fica selada, sem caminho de leitura
+  ok(/create table if not exists public\.pag_config/.test(sql) && /alter table public\.pag_config enable row level security/.test(sql),
+    "pag_config existe e nasce com RLS ligada");
+  ok(!/create policy[^;]*pag_config/.test(sql), "pag_config sem policy: a chave do gateway não volta pra ninguém pela API");
+  ok(/pag_config_salva/.test(sql) && /pag_config_ve/.test(sql) && /pag_config_apaga/.test(sql),
+    "as 3 funções pag_config_* existem (salvar, ver o estado e desligar)");
+  ok(!/json_build_object\([^)]*'chave'/.test(sql.slice(sql.indexOf("pag_config_ve"))),
+    "pag_config_ve devolve provedor + tem_chave, nunca a chave em si");
   ok(!/jsonb_build_object\([^)]*'token'/.test(sql.slice(sql.indexOf("zap_config_ve"))),
     "zap_config_ve devolve se TEM token, nunca o token");
 
