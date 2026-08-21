@@ -1893,7 +1893,8 @@
       "w.addEventListener('touchstart',function(ev){var t=ev.touches[0];x0=t.clientX;y0=t.clientY;" +
       "rol=!!(e2Alvo(ev.target));},{passive:true});" +
       "function e2Alvo(el){while(el&&el!==w){" +
-      "if(el.id==='gKg'||el.id==='gReps'||el.className==='gstep'||el.className==='gstep rep')return true;" +
+      "if(el.id==='gKg'||el.id==='gReps'||el.id==='gWKg'||el.id==='gWRep')return true;" +
+      "if(/\\b(gcg|gwbox|gwrail|gwheel)\\b/.test(String(el.className||'')))return true;" +
       "if(el.id==='gCard'&&el.scrollHeight>el.clientHeight+2)return true;el=el.parentElement;}return false;}" +
       "w.addEventListener('touchend',function(ev){if(gv.fim||rol)return;var t=ev.changedTouches[0];" +
       "var dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<50||Math.abs(dx)<Math.abs(dy)*1.5)return;" +
