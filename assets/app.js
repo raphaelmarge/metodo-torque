@@ -355,7 +355,7 @@
     (window.crypto && crypto.getRandomValues) ? crypto.getRandomValues(rnd) : null;
     for (var i = 0; i < 10; i++) senha += chars[(rnd[i] || Math.floor(Math.random() * 1e9)) % chars.length];
     el("eqaCriarLogin").disabled = true;
-    window.MT_supabase.rpc("equipe_cria_login", { p_email: email, p_senha: senha, p_nome: nome, p_papel: "equipe" }).then(function (r) {
+    window.MT_supabase.rpc("equipe_cria_login", { p_email: email, p_senha: senha, p_nome: nome, p_papel: "funcionario" }).then(function (r) {
       el("eqaCriarLogin").disabled = false;
       if (r.error) { el("eqaErro").textContent = "Não deu: " + r.error.message; el("eqaErro").hidden = false; return; }
       var msg = "Seu acesso ao TORQUE ON:\nSite: https://www.torqueon.com.br/?portal=1\nLogin: " + email.toLowerCase() + "\nSenha: " + senha + "\n\nDica: troque a senha depois de entrar.";

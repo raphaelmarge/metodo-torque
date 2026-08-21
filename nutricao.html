@@ -1172,27 +1172,32 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         var ret = r && r.data && r.data[0] && r.data[0].retorno;
         if (!ret) { box.textContent = "O paciente ainda não registrou nada no app (ou está sem internet lá). Assim que registrar, aparece aqui."; return; }
         var html = "";
+        // o retorno vem de RPC pública (o paciente controla o token): número que
+        // não é número vira 0 e data só aceita dígitos/traço — senão texto forjado
+        // rodaria como HTML na sessão do nutricionista (XSS armazenado)
+        var n2 = function (v) { return isFinite(+v) ? +v : 0; };
+        var dOk = function (d) { return String(d || "").replace(/[^0-9-]/g, ""); };
         // peso registrado pelo próprio paciente
         var pz = ret.peso || [];
         if (pz.length) {
           var ult = pz[pz.length - 1], pri = pz[0];
           var dif = Math.round((+ult.kg - +pri.kg) * 10) / 10;
-          html += "<div><b>Peso na balança (registrado por ele):</b> " + String(ult.kg).replace(".", ",") + " kg em " + S.fmtData(ult.d) +
+          html += "<div><b>Peso na balança (registrado por ele):</b> " + String(n2(ult.kg)).replace(".", ",") + " kg em " + S.fmtData(dOk(ult.d)) +
             (pz.length > 1 ? " (<b style='color:" + (dif < 0 ? "#16a34a" : dif > 0 ? "#dc2626" : "#6b7280") + ";'>" + (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg</b> desde o início · " + pz.length + " registros)" : "") + "</div>";
         }
         // adesão do dia: refeições + água
         if (ret.dia) {
           var hojeReg = ret.dia === S.todayISO();
-          html += "<div><b>Adesão" + (hojeReg ? " de hoje" : " em " + S.fmtData(ret.dia)) + ":</b> " +
-            (ret.refsTotal ? (ret.refsFeitas || 0) + " de " + ret.refsTotal + " refeições da dieta" : "sem dieta no app") +
-            " · água " + (ret.agua || 0) + " de " + (ret.aguaMeta || 0) + " ml</div>";
+          html += "<div><b>Adesão" + (hojeReg ? " de hoje" : " em " + S.fmtData(dOk(ret.dia))) + ":</b> " +
+            (ret.refsTotal ? n2(ret.refsFeitas) + " de " + n2(ret.refsTotal) + " refeições da dieta" : "sem dieta no app") +
+            " · água " + n2(ret.agua) + " de " + n2(ret.aguaMeta) + " ml</div>";
         }
         // recordatório: o que ele registrou fora da dieta
         var di = ret.diario || [];
         if (di.length) {
           var kcalDi = di.reduce(function (t, x) { return t + (+x.k || 0); }, 0);
           html += "<div style='margin-top:4px;'><b>Fora da dieta (diário):</b> " + di.map(function (x) {
-            return esc(x.n) + " (" + String(x.q).replace(".", ",") + "x · " + x.k + " kcal)";
+            return esc(x.n) + " (" + String(n2(x.q)).replace(".", ",") + "x · " + n2(x.k) + " kcal)";
           }).join(" · ") + " — total " + kcalDi + " kcal</div>";
         }
         // fotos de progresso (sanitizadas — vêm de RPC pública)
@@ -3552,7 +3557,9 @@ Receita nova de overnight oats no blog" style="width: 100%; margin-top: 4px;"></
         st.pacientes.forEach(function (p) { if (p.appTokenN) nomePorToken[p.appTokenN] = p.nome; });
         box.innerHTML = rows.map(function (row) {
           var d = row.dados || {};
-          var pts = d.pontuacao;
+          // pontuação vem do app (token do paciente): só número entra na tela,
+          // senão texto forjado rodaria como HTML na sessão do nutricionista (XSS)
+          var pts = (d.pontuacao == null || !isFinite(+d.pontuacao)) ? null : +d.pontuacao;
           var corP = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
           return '<div style="padding:10px 0;border-top:1px solid #e5e7eb22;">' +
             "<b>" + esc(nomePorToken[row.token] || "Paciente") + "</b> · " + esc(row.questionario || "Check-in") +

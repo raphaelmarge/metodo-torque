@@ -128,7 +128,7 @@ self.MT_moduloConta = function (cfg) {
       var rnd = new Uint32Array(10);
       if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(rnd);
       for (var i = 0; i < 10; i++) senha += chars[(rnd[i] || Math.floor(Math.random() * 1e9)) % chars.length];
-      sb.rpc("equipe_cria_login", { p_email: email.trim(), p_senha: senha, p_nome: nome.trim(), p_papel: "equipe" }).then(function (r) {
+      sb.rpc("equipe_cria_login", { p_email: email.trim(), p_senha: senha, p_nome: nome.trim(), p_papel: "funcionario" }).then(function (r) {
         if (r.error) { alert("Não deu: " + r.error.message); return; }
         var msg = "Seu acesso ao TORQUE ON:\nSite: " + location.origin + location.pathname + "\nLogin: " + email.trim().toLowerCase() + "\nSenha: " + senha + "\n\nDica: troque a senha depois de entrar.";
         if (navigator.clipboard) navigator.clipboard.writeText(msg);

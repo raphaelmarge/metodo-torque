@@ -526,9 +526,11 @@ async function abaPt(p, a) {
         const st2 = window.MTStore.read("ptStudio", {});
         const a2 = st2.alunos.find((x) => x.id === "axHora");
         const F = window.__financeiroPT;
-        // paga 900 e faz 4 aulas — o exemplo da especificação
-        st2.pagamentos.push({ id: "pgh1", alunoId: "axHora", valor: 900, data: "2026-08-05", forma: "pix" });
-        for (let i = 1; i <= 4; i++) st2.sessoes.push({ id: "sxh" + i, alunoId: "axHora", data: "2026-08-0" + i, hora: "06:00", feita: true });
+        // paga 900 e faz 4 aulas — o exemplo da especificação (tudo DENTRO do
+        // período hora-aula: fecha o contrato e registra no mesmo dia)
+        const hj = window.MTStore.todayISO();
+        st2.pagamentos.push({ id: "pgh1", alunoId: "axHora", valor: 900, data: hj, forma: "pix" });
+        for (let i = 1; i <= 4; i++) st2.sessoes.push({ id: "sxh" + i, alunoId: "axHora", data: hj, hora: "0" + i + ":00", feita: true });
         window.MTStore.write("ptStudio", st2);
         const st3 = window.MTStore.read("ptStudio", {});
         const a3 = st3.alunos.find((x) => x.id === "axHora");
@@ -554,6 +556,40 @@ async function abaPt(p, a) {
         "subir a hora-aula no PLANO muda a carteira de quem assinou (R$ 120 → consumo R$ 480)");
       ok(/Carteira de sessões/.test(ha.fin) && /hora-aula/.test(ha.fin) && /sessão/.test(ha.fin),
         "o contrato no perfil fala em hora-aula e /sessão, com a carteira logo ali");
+      // REGRESSÃO item 1: mensalista que VIRA hora-aula não pode ter as mensalidades
+      // antigas viradas em "crédito" nem as aulas de mensalista viradas em "consumo"
+      const troca = await p.evaluate(() => {
+        const st = window.MTStore.read("ptStudio", {});
+        const F = window.__financeiroPT, hj = window.MTStore.todayISO();
+        const antes = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10); // 60 dias atrás
+        st.planosPT = st.planosPT || [];
+        if (!st.planosPT.find((x) => x.id === "plHoraT")) st.planosPT.push({ id: "plHoraT", nome: "Hora T", valor: 100, ciclo: 1, cobranca: "sessao" });
+        st.alunos.push({ id: "axTroca", nome: "Ex Mensalista", ativo: true, modo: "mes", valor: 500 });
+        // vida de mensalista: 6 pagamentos e 20 aulas ANTES da virada
+        for (let i = 0; i < 6; i++) st.pagamentos.push({ id: "pgt" + i, alunoId: "axTroca", valor: 500, data: antes, forma: "pix" });
+        for (let i = 0; i < 20; i++) st.sessoes.push({ id: "sst" + i, alunoId: "axTroca", data: antes, hora: "07:00", feita: true });
+        // vira hora-aula HOJE (contrato com início hoje = marco da carteira)
+        st.contratosPT = st.contratosPT || [];
+        st.contratosPT.push({ id: "ctTroca", alunoId: "axTroca", planoId: "plHoraT", diaVenc: 5, status: "ativo", inicio: hj });
+        const a = st.alunos.find((x) => x.id === "axTroca");
+        a.modo = "sessao";
+        // paga 1 aula e faz 1 aula, HOJE (já como hora-aula)
+        st.pagamentos.push({ id: "pgtH", alunoId: "axTroca", valor: 100, data: hj, forma: "pix" });
+        st.sessoes.push({ id: "sstH", alunoId: "axTroca", data: hj, hora: "08:00", feita: true });
+        window.MTStore.write("ptStudio", st);
+        const c = F.carteira(window.MTStore.read("ptStudio", {}), a);
+        // limpa o rastro
+        const s2 = window.MTStore.read("ptStudio", {});
+        s2.alunos = s2.alunos.filter((x) => x.id !== "axTroca");
+        s2.planosPT = s2.planosPT.filter((x) => x.id !== "plHoraT");
+        s2.contratosPT = s2.contratosPT.filter((x) => x.alunoId !== "axTroca");
+        s2.pagamentos = s2.pagamentos.filter((x) => x.alunoId !== "axTroca");
+        s2.sessoes = s2.sessoes.filter((x) => x.alunoId !== "axTroca");
+        window.MTStore.write("ptStudio", s2);
+        return c;
+      });
+      ok(troca && troca.pagos === 100 && troca.consumido === 100 && troca.saldo === 0,
+        "trocar de mensalista pra hora-aula NÃO fabrica dívida/crédito: só conta o que veio DEPOIS da virada (R$100 pago, 1 aula, saldo 0)");
       // a LISTA de planos também: era ali que o "/mês" fixo escapou no print
       ok(await p.evaluate(() => {
         const st = window.MTStore.read("ptStudio", {});
