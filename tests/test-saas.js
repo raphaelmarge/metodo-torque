@@ -80,6 +80,16 @@ function crcNode(s) {
     "nenhuma política deixa o navegador escrever em pag_eventos");
   ok(/asaas_webhook_id = case when pag_config\.chave is distinct from excluded\.chave/.test(sql),
     "trocar a chave zera o webhook Asaas guardado — a função recria na conta nova (baixa não morre em silêncio)");
+
+  // modelo marketplace: split do dono pronto, com a comissão NASCENDO em zero
+  const fnPag = fs.readFileSync(__dirname + "/../supabase/functions/pagamentos/index.ts", "utf8");
+  ok(/ASAAS_WALLET_DONO/.test(fnPag) && /percentualValue/.test(fnPag) &&
+     /corpo\.split = sp/.test(fnPag) && /corpoAs\.split = spAs/.test(fnPag),
+    "split do dono entra no LINK e na ASSINATURA Asaas (subir a comissão no futuro é só trocar o número)");
+  ok(/if \(!wallet \|\| !\(pct > 0\) \|\| pct >= 100\) return null/.test(fnPag),
+    "comissão 0 (ou carteira não configurada) = NENHUM split enviado — o professor recebe 100%");
+  ok(/comissao_pct numeric not null default 0/.test(sql),
+    "comissao_pct nasce em 0 no banco — o modelo existe desligado, sem mudar nada pra ninguém");
   ok(!/jsonb_build_object\([^)]*'token'/.test(sql.slice(sql.indexOf("zap_config_ve"))),
     "zap_config_ve devolve se TEM token, nunca o token");
 

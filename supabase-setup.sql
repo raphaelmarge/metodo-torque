@@ -2409,6 +2409,13 @@ $$;
 -- quem já tinha gateway ligado antes desta versão ganha a senha agora
 update public.pag_config set webhook_token = public.pag_token_novo() where coalesce(webhook_token, '') = '';
 
+-- Modelo marketplace (split do dono, Asaas): comissao_pct nasce em 0 — todo
+-- professor recebe 100%. Pra passar a ganhar uma fatia de UMA academia:
+--   1. crie o Secret ASAAS_WALLET_DONO nas Edge Functions (sua carteira Asaas);
+--   2. suba a comissão dela, ex.:
+--        update public.pag_config set comissao_pct = 5 where academia_id = '<id da academia>';
+-- A cobrança seguinte já sai dividida sozinha; voltar a 0 desliga o split.
+
 create or replace function public.pag_config_salva(p_provedor text, p_chave text)
 returns json language plpgsql security definer set search_path = public as $$
 declare v_acad uuid;
