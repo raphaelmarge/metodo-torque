@@ -70,6 +70,18 @@ verify_token (gerado pelo servidor), ig_id e ig_token. A região marcada
 `==== ROTEAMENTO ====` no index.ts é **JS puro de propósito** — `tests/test-meta-webhook.js`
 recorta e avalia ela em node, sem chamar a Meta; não coloque tipo do TypeScript lá.
 
+**Pagamentos por profissional** (a partir da v528): o link de cobrança
+(cartão/Pix/boleto) sai da conta do PRÓPRIO personal/academia — ele escolhe o
+gateway em Configurações → Receber dos alunos (Mercado Pago, Asaas ou Pagar.me)
+e cola a própria chave, que vai pra `pag_config` (selada, RLS sem política,
+mesmo desenho do zap_config) pelas RPCs `pag_config_salva`/`_ve`/`_apaga` —
+`_ve` devolve `tem_chave`, nunca a chave. A função `pagamentos` gera o link com
+a conta DELE: o dinheiro do aluno cai direto com o professor, sem repasse (e
+`comissao_pct` nasce em 0, pronta pro split no futuro). "Outra plataforma" é
+100% local: o professor cola o próprio link (`config.pagLink`). Sem nada
+configurado, o caminho antigo (função `pagarme` com a chave global) continua.
+O espelho local é só `config.pagApi = {ligado, provedor}`.
+
 **Cortar o acesso do aluno** (a partir da v475): `app_aluno.revogado_em` +
 `app_aluno_ativo(t)`, por onde passam TODAS as RPCs do aluno (antes cada uma lia
 o token cru e aluno cortado seguia postando). `aluno_revoga_acesso` (revoga ou
@@ -116,7 +128,7 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   desligado, e no projeto do Raphael o portão passou a recusar até token BOM
   (401 INVALID_CREDENTIALS só na chat-envia, enquanto a envia-email respondia
   200 com a MESMA credencial). Lista em `supabase/functions/`: meta-webhook,
-  chat-envia, whatsapp, envia-email (Resend), pagarme, push-envia.
+  chat-envia, whatsapp, envia-email (Resend), pagarme, push-envia, pagamentos.
   Ele publica copiando de www.torqueon.com.br/funcoes.html.
 - Nunca coloque service key no site — só anonKey (`assets/cloud-config.js`).
 - **Redundância** (v513/v515): todo update/delete no `dados` guarda o valor

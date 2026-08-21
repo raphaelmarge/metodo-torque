@@ -110,14 +110,21 @@
   </div>
 
   <div class="card">
-    <h2>8 · assinatura-loja <span class="tag off">Verify JWT: DESLIGAR</span></h2>
+    <h2>8 · pagamentos <span class="tag off">Verify JWT: DESLIGAR</span></h2>
+    <p>O link de cobrança <b style="color:#fff">na conta de CADA profissional</b>: o personal/academia escolhe o gateway dele (Mercado Pago, Asaas ou Pagar.me) em Configurações → Receber dos alunos, cola a própria chave, e esta função gera o link usando <b style="color:#fff">a conta dele</b> — o dinheiro do aluno cai direto com o professor, sem repasse. A chave fica na tabela <code>pag_config</code> (selada, criada pelo SQL) e nunca volta pro navegador. Não precisa de secret nenhum.</p>
+    <button class="btnx" data-copia="pagamentos">Copiar o código (pagamentos)</button>
+    <div class="status" data-st="pagamentos"></div>
+  </div>
+
+  <div class="card">
+    <h2>9 · assinatura-loja <span class="tag off">Verify JWT: DESLIGAR</span></h2>
     <p>Recebe do <b style="color:#fff">RevenueCat</b> os avisos das assinaturas feitas <b style="color:#fff">pela App Store e pela Play Store</b> (comprou, renovou, cartão falhou, acesso acabou) e grava a situação na conta do personal. Depois do deploy: (1) desligue "Verify JWT" (Details); (2) crie o secret <code>RC_WEBHOOK_TOKEN</code> com uma senha longa que você inventa; (3) no painel do RevenueCat → Integrations → Webhooks, cadastre a URL <code>https://SEU-PROJETO.supabase.co/functions/v1/assinatura-loja?t=SUA-SENHA</code>.</p>
     <button class="btnx" data-copia="assinatura-loja">Copiar o código (assinatura-loja)</button>
     <div class="status" data-st="assinatura-loja"></div>
   </div>
 
   <div class="card">
-    <p><b style="color:#fff">Depois das oito publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>, <code>PAGARME_SECRET_KEY</code>, <code>PAGARME_PUBLIC_KEY</code>, <code>PAGARME_WEBHOOK_TOKEN</code>, <code>RC_WEBHOOK_TOKEN</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
+    <p><b style="color:#fff">Depois das nove publicadas</b>, ainda em Edge Functions, abra <b style="color:#fff">Secrets</b> e adicione as chaves (<code>ANTHROPIC_API_KEY</code>, <code>RESEND_API_KEY</code>, <code>EMAIL_DE</code>, <code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code>, <code>PAGARME_SECRET_KEY</code>, <code>PAGARME_PUBLIC_KEY</code>, <code>PAGARME_WEBHOOK_TOKEN</code>, <code>RC_WEBHOOK_TOKEN</code>) — o passo a passo completo está na aba <b style="color:#fff">Instalação</b> da tela Chat e IA do sistema.</p>
     <p class="mini" style="color:#6e6a78;font-size:12.5px;">Do WhatsApp e do Instagram não entra Secret nenhum: cada profissional cola o número, o token e a chave secreta do app dele no painel (Configurações → WhatsApp), e a tela mostra a URL e a senha do aperto de mão pra ele colar na Meta. Os antigos <code>META_VERIFY_TOKEN</code>, <code>META_APP_SECRET</code>, <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_ID</code>, <code>INSTAGRAM_TOKEN</code> e <code>INSTAGRAM_IG_ID</code> continuam valendo <b style="color:#fff">só</b> pra instalação de dono único — a sua.</p>
   </div>
 

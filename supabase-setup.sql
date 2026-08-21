@@ -2364,6 +2364,70 @@ $$;
 
 grant execute on function public.zap_config_salva2(text, text, text, text, text, text) to authenticated;
 
+-- ==================== PAGAMENTOS POR PROFISSIONAL ====================
+-- Cada personal/academia recebe os pagamentos dos alunos DIRETO na própria
+-- conta do gateway que escolher (Mercado Pago, Asaas ou Pagar.me) — o dinheiro
+-- nunca passa pelo dono do sistema, então não existe repasse nem intermediação.
+-- Mesmo desenho do zap_config ("cada um paga o seu"): a chave fica AQUI,
+-- selada — RLS ligada SEM política nenhuma, só a função pagamentos lê, com a
+-- service key. pag_config_ve devolve provedor + tem_chave (booleano), NUNCA a
+-- chave. comissao_pct nasce em 0 e fica pronta pro modelo marketplace/split.
+-- Bloco idempotente.
+create table if not exists public.pag_config (
+  academia_id uuid primary key references public.academias (id) on delete cascade,
+  provedor text not null check (provedor in ('mercadopago', 'asaas', 'pagarme')),
+  chave text not null,
+  comissao_pct numeric not null default 0,
+  atualizado timestamptz not null default now()
+);
+alter table public.pag_config enable row level security;
+
+create or replace function public.pag_config_salva(p_provedor text, p_chave text)
+returns json language plpgsql security definer set search_path = public as $$
+declare v_acad uuid;
+begin
+  select academia_id into v_acad from membros where user_id = auth.uid() limit 1;
+  if v_acad is null then return json_build_object('erro', 'entre na sua conta'); end if;
+  if p_provedor not in ('mercadopago', 'asaas', 'pagarme') then
+    return json_build_object('erro', 'provedor desconhecido');
+  end if;
+  if coalesce(trim(p_chave), '') = '' then
+    -- chave vazia = só troca o provedor, mantendo a chave que já está guardada
+    update pag_config set provedor = p_provedor, atualizado = now() where academia_id = v_acad;
+    if not found then return json_build_object('erro', 'cole a chave do gateway'); end if;
+    return json_build_object('ok', true);
+  end if;
+  insert into pag_config (academia_id, provedor, chave)
+    values (v_acad, p_provedor, trim(p_chave))
+    on conflict (academia_id) do update
+      set provedor = excluded.provedor, chave = excluded.chave, atualizado = now();
+  return json_build_object('ok', true);
+end $$;
+grant execute on function public.pag_config_salva(text, text) to authenticated;
+
+-- estado pro painel pintar: provedor e SE tem chave — a chave em si nunca sai
+create or replace function public.pag_config_ve()
+returns json language sql security definer stable set search_path = public as $$
+  select coalesce(
+    (select json_build_object('ok', true, 'provedor', p.provedor, 'tem_chave', true, 'comissao', p.comissao_pct)
+       from pag_config p
+      where p.academia_id in (select academia_id from membros where user_id = auth.uid())
+      limit 1),
+    json_build_object('ok', true, 'tem_chave', false))
+$$;
+grant execute on function public.pag_config_ve() to authenticated;
+
+create or replace function public.pag_config_apaga()
+returns json language plpgsql security definer set search_path = public as $$
+declare v_acad uuid;
+begin
+  select academia_id into v_acad from membros where user_id = auth.uid() limit 1;
+  if v_acad is null then return json_build_object('erro', 'entre na sua conta'); end if;
+  delete from pag_config where academia_id = v_acad;
+  return json_build_object('ok', true);
+end $$;
+grant execute on function public.pag_config_apaga() to authenticated;
+
 -- ==================== CORTAR O ACESSO DO ALUNO (2026-08) ====================
 -- Faltava a coisa mais básica: um jeito de tirar o acesso de UM aluno. "Encerrar
 -- este aluno" só marcava no painel; o app dele continuava sendo alimentado pela
