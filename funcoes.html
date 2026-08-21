@@ -112,6 +112,7 @@
   <div class="card">
     <h2>8 · pagamentos <span class="tag off">Verify JWT: DESLIGAR</span></h2>
     <p>O link de cobrança <b style="color:#fff">na conta de CADA profissional</b>: o personal/academia escolhe o gateway dele (Mercado Pago, Asaas ou Pagar.me) em Configurações → Receber dos alunos, cola a própria chave, e esta função gera o link usando <b style="color:#fff">a conta dele</b> — o dinheiro do aluno cai direto com o professor, sem repasse. Também ativa a <b style="color:#fff">cobrança automática mensal</b> (assinatura pelo Asaas) e já deixa cada link preparado pra <b style="color:#fff">baixa automática</b> (função 9). A chave fica na tabela <code>pag_config</code> (selada, criada pelo SQL) e nunca volta pro navegador. Não precisa de secret nenhum.</p>
+    <p class="mini" style="color:#6e6a78;font-size:12.5px;">Modelo marketplace (opcional, pro futuro): a comissão de cada academia mora em <code>pag_config.comissao_pct</code> e nasce em <b>0%</b> — todo mundo recebe 100%. Quando você decidir cobrar uma fatia: crie o Secret <code>ASAAS_WALLET_DONO</code> com o ID da SUA carteira Asaas e suba a <code>comissao_pct</code> da academia no SQL Editor — a próxima cobrança já sai dividida sozinha (split do Asaas), sem republicar nada.</p>
     <button class="btnx" data-copia="pagamentos">Copiar o código (pagamentos)</button>
     <div class="status" data-st="pagamentos"></div>
   </div>

@@ -113,7 +113,13 @@ exige CPF do aluno; `a.assinaturaAs = {id, desde, valor}`); quem tem
 `assinaturaAs` sai da régua de cobrança igual ao `assinaturaRec` do caminho
 antigo, e os dois perdem os botões Recebi/Pix/Link da lista de cobrança (baixa
 em dobro). Trocar/desligar gateway ou encerrar aluno com `assinaturaAs` avisa
-que a assinatura continua viva no Asaas. A região `==== NORMALIZA ====` do
+que a assinatura continua viva no Asaas. **Split do dono** (marketplace, a
+partir da v533): `splitDono()` na função pagamentos — com Secret
+`ASAAS_WALLET_DONO` + `pag_config.comissao_pct > 0`, o link e a assinatura
+Asaas saem com `split: [{walletId, percentualValue}]`; comissão 0 (o padrão de
+todo mundo) = nenhum split enviado, professor recebe 100%. Subir a comissão =
+`update pag_config set comissao_pct = N where academia_id = …` (exemplo
+comentado no SQL) — sem republicar nada. A região `==== NORMALIZA ====` do
 pagamentos-webhook é **JS puro de propósito** — `tests/test-pag-webhook.js`
 recorta e roda em node; não coloque tipo do TypeScript lá.
 

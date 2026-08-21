@@ -15,6 +15,12 @@
 // A chave do gateway mora na tabela pag_config (selada, RLS sem política) e só
 // é lida aqui, com a service key — ela NUNCA volta pro navegador.
 //
+// Split do dono (modelo marketplace, Asaas): a comissão de cada academia mora
+// em pag_config.comissao_pct e NASCE EM 0 — sem split, o professor recebe
+// 100%. Pra ligar: crie o Secret ASAAS_WALLET_DONO (a carteira Asaas do dono
+// do sistema) e suba a comissao_pct da academia; a cobrança seguinte já sai
+// dividida sozinha, sem republicar nada.
+//
 // Como instalar (uma vez):
 //   1. Rode o bloco PAGAMENTOS POR PROFISSIONAL do supabase-setup.sql
 //      (e o BAIXA AUTOMÁTICA MULTI-GATEWAY, da mesma família).
@@ -61,7 +67,7 @@ async function usuarioValidado(req: Request): Promise<{ id: string; email: strin
   } catch { return null; }
 }
 
-type Cfg = { aid: string; provedor: string; chave: string; webhookToken: string; asaasWebhookId: string };
+type Cfg = { aid: string; provedor: string; chave: string; webhookToken: string; asaasWebhookId: string; comissaoPct: number };
 
 // a configuração de pagamento da academia de quem chamou (lida com a service key)
 async function configDe(userId: string): Promise<Cfg | null> {
@@ -78,10 +84,10 @@ async function configDe(userId: string): Promise<Cfg | null> {
     // existir — tenta com elas e, se der erro, busca só o básico (o link sai
     // igual, a baixa automática é que fica esperando o SQL)
     let c: any = null;
-    let rc = await fetch(url + "/rest/v1/pag_config?select=provedor,chave,webhook_token,asaas_webhook_id&academia_id=eq." + aid, { headers: heads });
+    let rc = await fetch(url + "/rest/v1/pag_config?select=provedor,chave,comissao_pct,webhook_token,asaas_webhook_id&academia_id=eq." + aid, { headers: heads });
     if (rc.ok) c = (await rc.json())?.[0];
     else {
-      rc = await fetch(url + "/rest/v1/pag_config?select=provedor,chave&academia_id=eq." + aid, { headers: heads });
+      rc = await fetch(url + "/rest/v1/pag_config?select=provedor,chave,comissao_pct&academia_id=eq." + aid, { headers: heads });
       c = rc.ok ? (await rc.json())?.[0] : null;
     }
     if (!c || !c.provedor || !c.chave) return null;
@@ -91,6 +97,7 @@ async function configDe(userId: string): Promise<Cfg | null> {
       chave: String(c.chave),
       webhookToken: String(c.webhook_token || ""),
       asaasWebhookId: String(c.asaas_webhook_id || ""),
+      comissaoPct: Number(c.comissao_pct || 0) || 0,
     };
   } catch { return null; }
 }
@@ -138,6 +145,19 @@ async function garanteWebhookAsaas(cfg: Cfg, emailDono: string): Promise<void> {
   } catch { /* sem drama: tenta de novo no próximo link */ }
 }
 
+// Split do dono do sistema (modelo marketplace, Asaas): a comissão da academia
+// (pag_config.comissao_pct) nasce em 0 e o Secret ASAAS_WALLET_DONO guarda a
+// carteira do dono. Com comissão 0 OU sem carteira configurada, NENHUM split é
+// enviado — o professor recebe 100%, como sempre. Subir a comissão no futuro é
+// só trocar o número na pag_config: o split entra na cobrança seguinte sozinho.
+function splitDono(cfg: Cfg): any[] | null {
+  const wallet = (Deno.env.get("ASAAS_WALLET_DONO") || "").trim();
+  const pct = Number(cfg.comissaoPct || 0);
+  if (!wallet || !(pct > 0) || pct >= 100) return null;
+  // o Asaas aceita até 4 casas decimais no percentual
+  return [{ walletId: wallet, percentualValue: Math.round(pct * 10000) / 10000 }];
+}
+
 // ---------- um adaptador por gateway: entra {valor, descricao, nome, email, ref}, sai {link, linkId} ----------
 
 async function linkMercadoPago(cfg: Cfg, valorReais: number, descricao: string, nome: string, email: string, ref: string) {
@@ -168,6 +188,8 @@ async function linkAsaas(cfg: Cfg, valorReais: number, descricao: string, nome: 
     chargeType: "DETACHED",
   };
   if (ref) corpo.externalReference = ref;
+  const sp = splitDono(cfg);
+  if (sp) corpo.split = sp;
   const resp = await fetch("https://api.asaas.com/v3/paymentLinks", {
     method: "POST",
     headers: { access_token: cfg.chave, "Content-Type": "application/json" },
@@ -240,19 +262,24 @@ async function assinaAsaas(cfg: Cfg, corpo: any, ref: string) {
   if (!rc.ok || !dc.id) throw new Error("Asaas recusou o cadastro do aluno: " + erroAsaas(dc, rc));
 
   // 2. a assinatura mensal — billingType UNDEFINED: a cada mês o Asaas gera a
-  // cobrança e o aluno escolhe Pix, cartão ou boleto; o webhook dá a baixa
+  // cobrança e o aluno escolhe Pix, cartão ou boleto; o webhook dá a baixa.
+  // O split configurado aqui vira MODELO: toda mensalidade gerada já nasce
+  // dividida (comissão 0 = sem split, professor recebe 100%)
+  const corpoAs: any = {
+    customer: dc.id,
+    billingType: "UNDEFINED",
+    value: valorReais,
+    nextDueDate: venc,
+    cycle: "MONTHLY",
+    description: descricao,
+    externalReference: ref || undefined,
+  };
+  const spAs = splitDono(cfg);
+  if (spAs) corpoAs.split = spAs;
   const ra = await fetch("https://api.asaas.com/v3/subscriptions", {
     method: "POST",
     headers: { access_token: cfg.chave, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      customer: dc.id,
-      billingType: "UNDEFINED",
-      value: valorReais,
-      nextDueDate: venc,
-      cycle: "MONTHLY",
-      description: descricao,
-      externalReference: ref || undefined,
-    }),
+    body: JSON.stringify(corpoAs),
   });
   const da: any = await ra.json().catch(() => ({}));
   if (!ra.ok || !da.id) throw new Error("Asaas recusou a assinatura: " + erroAsaas(da, ra));
