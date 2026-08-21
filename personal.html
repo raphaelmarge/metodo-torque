@@ -249,6 +249,45 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Dica: no celular, use <b>Adicionar à tela inicial</b> — vira um app de verdade, com ícone e tudo.</p>
   </div>
 
+  <div class="card" id="obGuia" hidden style="margin-bottom: 16px; border-left: 4px solid var(--roxo);">
+    <div id="obP2">
+      <h2>Passo 2 de 4 · Como você cobra?</h2>
+      <p class="muted" style="margin: 6px 0 10px;">Dá pra mudar tudo depois em Financeiro → Planos. Escolha o que combina com o seu trabalho:</p>
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="radio" name="obCobra" value="mes" checked style="width: 17px; height: 17px; margin-top: 2px;"><span><b>Mensalidade</b> — valor fixo por mês, com dia de vencimento.</span></label>
+        <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="radio" name="obCobra" value="sessao" style="width: 17px; height: 17px; margin-top: 2px;"><span><b>Hora-aula</b> — você vende <b>por aula</b> (1, 4, 10…), e cada aula Feita desconta da carteira do aluno. É venda unitária de propósito: mês tem 4 semanas num mês e 5 no outro — quem vende a hora trabalhada não dá aula de graça na semana extra.</span></label>
+        <label style="display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px;"><input type="radio" name="obCobra" value="ambos" style="width: 17px; height: 17px; margin-top: 2px;"><span><b>Os dois</b> — uns alunos na mensalidade, outros na hora-aula.</span></label>
+      </div>
+      <div class="linha-flex" style="margin-top: 12px;">
+        <label id="obLbMes" style="font-size: 12.5px;">Valor da mensalidade (R$)
+          <input id="obValMes" type="number" min="0" step="0.01" placeholder="ex.: 400" style="display:block; width: 140px; margin-top: 4px;"></label>
+        <label id="obLbAula" hidden style="font-size: 12.5px;">Valor da hora-aula (R$)
+          <input id="obValAula" type="number" min="0" step="0.01" placeholder="ex.: 100" style="display:block; width: 140px; margin-top: 4px;"></label>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="btn" id="obP2Ok">Criar meu plano →</button>
+        <button class="btn sec" id="obP2Pula" type="button">Pular</button>
+      </div>
+    </div>
+    <div id="obP3" hidden>
+      <h2>Passo 3 de 4 · Como você recebe?</h2>
+      <p class="muted" style="margin: 6px 0 10px;">Com a sua chave Pix, o sistema gera o QR de cobrança sozinho e o dinheiro cai <b>direto na sua conta</b>. Cartão e boleto você liga depois em Configurações → Receber dos alunos (Mercado Pago, Asaas, Pagar.me ou o link da sua plataforma).</p>
+      <div class="linha-flex">
+        <input id="obPix" placeholder="Sua chave Pix (celular, e-mail, CPF ou aleatória)" style="max-width: 320px;">
+        <button class="btn" id="obP3Ok">Salvar →</button>
+        <button class="btn sec" id="obP3Pula" type="button">Agora não</button>
+      </div>
+    </div>
+    <div id="obP4" hidden>
+      <h2>Passo 4 de 4 · Bora treinar alguém 💪</h2>
+      <p class="muted" style="margin: 6px 0 10px;">Cadastre seu primeiro aluno: com 2 toques ele já ganha ficha de treino e o <b>app com o seu nome</b> pra acompanhar tudo pelo celular dele.</p>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn" id="obP4Aluno">Cadastrar meu primeiro aluno</button>
+        <button class="btn sec" id="obP4Depois" type="button">Explorar antes</button>
+      </div>
+    </div>
+  </div>
+
   <div id="faixaTeste" hidden style="background: rgba(124,58,237,.14); border: 1px solid #7c3aed; border-radius: 12px; padding: 10px 14px; margin: 0 0 14px; font-size: 13px; line-height: 1.6; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
     <span id="faixaTesteTxt" style="flex: 1; min-width: 200px;"></span>
     <a id="faixaTesteZap" class="btn mini" target="_blank" rel="noopener" href="#">Assinar — R$ 49/mês</a>
@@ -518,6 +557,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="plLink" placeholder="Link de assinatura recorrente (opcional)" style="flex: 2; min-width: 180px;">
         <button class="btn" id="plAdd">+ Plano</button>
       </div>
+      <p class="muted" id="plDicaSessao" hidden style="margin: 0 0 8px; font-size: 12.5px;">Hora-aula é venda <b>unitária</b>: você define o preço de UMA aula e vende créditos (1, 4, 10…) — cada "Feita" desconta da carteira do aluno. Sem ciclo mensal de propósito: mês tem 4 semanas num mês e 5 no outro, e quem vende a hora trabalhada não pode dar aula de graça na semana extra.</p>
       <div id="plLista" class="muted">Nenhum plano ainda.</div>
     </div>
 
@@ -1794,9 +1834,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // onboarding do módulo: pergunta o nome do personal na primeira abertura
   function verificaOnboarding() {
     var st = load();
-    var nome = (st.config || {}).nome;
+    var cfg = st.config || {};
+    var nome = cfg.nome;
     $("boasVindas").hidden = !!nome;
     if (nome) $("tituloStudio").textContent = "Studio " + nome.split(" ")[0];
+    // guia do professor novo: só aparece pra quem acabou de chegar (tem nome,
+    // mas nenhum aluno nem plano) e some pra sempre quando ele termina ou pula
+    var precisaGuia = !!nome && !cfg.onboardFim && !(st.alunos || []).length && !(st.planosPT || []).length;
+    $("obGuia").hidden = !precisaGuia;
+  }
+  function obFecha() {
+    var st = load();
+    st.config = st.config || {};
+    st.config.onboardFim = true;
+    S.write("ptStudio", st);
+    $("obGuia").hidden = true;
+  }
+  function obPasso(n) {
+    $("obP2").hidden = n !== 2;
+    $("obP3").hidden = n !== 3;
+    $("obP4").hidden = n !== 4;
   }
   $("obOk").addEventListener("click", function () {
     var nome = $("obNome").value.trim();
@@ -1806,8 +1863,56 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.config.nome = nome;
     S.write("ptStudio", st);
     verificaOnboarding();
+    obPasso(2);
     render();
   });
+  // passo 2: modelo de cobrança → cria o(s) primeiro(s) plano(s)
+  document.querySelectorAll('input[name="obCobra"]').forEach(function (r) {
+    r.addEventListener("change", function () {
+      $("obLbMes").hidden = this.value === "sessao";
+      $("obLbAula").hidden = this.value === "mes";
+    });
+  });
+  $("obP2Ok").addEventListener("click", function () {
+    var modo = (document.querySelector('input[name="obCobra"]:checked') || {}).value || "mes";
+    var vMes = parseFloat(($("obValMes").value || "").replace(",", "."));
+    var vAula = parseFloat(($("obValAula").value || "").replace(",", "."));
+    if ((modo === "mes" || modo === "ambos") && !(vMes > 0)) { alert("Diz o valor da mensalidade (dá pra mudar depois)."); return; }
+    if ((modo === "sessao" || modo === "ambos") && !(vAula > 0)) { alert("Diz o valor da sua hora-aula (dá pra mudar depois)."); return; }
+    var st = load();
+    st.planosPT = st.planosPT || [];
+    if (modo === "mes" || modo === "ambos") {
+      st.planosPT.push({ id: S.uid(), nome: "Mensal 3x/sem", valor: vMes, ciclo: 1, cobranca: "mes", treinosSem: 3, modalidade: "presencial", linkRec: "" });
+    }
+    if (modo === "sessao" || modo === "ambos") {
+      // hora-aula nasce UNITÁRIA: preço de UMA aula, sem ciclo — a venda é por
+      // créditos (1, 4, 10…) e cada Feita desconta da carteira
+      st.planosPT.push({ id: S.uid(), nome: "Hora-aula", valor: vAula, ciclo: 1, cobranca: "sessao", treinosSem: 0, modalidade: "presencial", linkRec: "" });
+    }
+    save(st);
+    obPasso(3);
+  });
+  $("obP2Pula").addEventListener("click", function () { obPasso(3); });
+  // passo 3: chave Pix (o QR de cobrança nasce dela)
+  $("obP3Ok").addEventListener("click", function () {
+    var px = $("obPix").value.trim();
+    if (px) {
+      var st = load();
+      st.config = st.config || {};
+      st.config.pixChave = px;
+      S.write("ptStudio", st);
+    }
+    obPasso(4);
+  });
+  $("obP3Pula").addEventListener("click", function () { obPasso(4); });
+  // passo 4: primeiro aluno (fecha o guia e abre o cadastro)
+  $("obP4Aluno").addEventListener("click", function () {
+    obFecha();
+    render();
+    $("btnNovoAluno").click();
+  });
+  $("obP4Depois").addEventListener("click", function () { obFecha(); render(); });
+  window.__obGuia = { passo: obPasso, fecha: obFecha, verifica: verificaOnboarding }; // testes
   var mesAtual = S.todayISO().slice(0, 7);
 
   // ---------- menu lateral ----------
@@ -2320,8 +2425,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "<div style='display:flex;justify-content:space-between;font-size:14px;padding:7px 0 2px;border-top:1px dashed var(--linha);margin-top:4px;'>" +
         "<span><b>Saldo disponível</b></span><b style='color:" + corSaldo + ";'>" + S.fmtBRL(cart.saldo) + "</b></div>" +
         "<div class='muted' style='font-size:11.5px;color:" + corSaldo + ";'>" + rotSaldo + "</div></div>" +
+        // venda UNITÁRIA de créditos: hora-aula se vende por aula (1, 4, 10…),
+        // nunca por mês — mês tem 4 semanas num mês e 5 no outro
+        "<div style='display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;'>" +
+        [1, 4, 8, 10].map(function (nCr) {
+          return "<button class='btn sec mini' data-vendecr='" + nCr + "' title='registra o pagamento de " + nCr + " aula(s) — " + S.fmtBRL(nCr * cart.valorSessao) + "'>+" + nCr + " " + (nCr === 1 ? "aula" : "aulas") + "</button>";
+        }).join("") +
+        "<button class='btn sec mini' data-vendecr='outro' title='você escolhe quantas aulas'>outro…</button></div>" +
         "<div class='muted' style='font-size:11.5px;margin-top:5px;'>Cada aula marcada como Feita na agenda desconta " +
-        S.fmtBRL(cart.valorSessao) + " daqui. Crédito que sobrar continua valendo no mês seguinte.</div>";
+        S.fmtBRL(cart.valorSessao) + " daqui. Crédito que sobrar continua valendo no mês seguinte — e crédito não expira.</div>";
     }
     $("pfFin").innerHTML = situacao + cartBloco + ctBloco + pcBloco + histBloco;
     // frequência: sessões feitas por mês
@@ -3079,6 +3191,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if ((+pSv.total || 0) - pSv.usadas <= 0) alert("O pacote de " + pSv.nome + " acabou de zerar — hora de vender outro (Financeiro → Serviços).");
         abrePerfil(perfilId); mostraPfAba("fin");
       }
+      return;
+    }
+    if (alvo.hasAttribute("data-vendecr")) {
+      // venda unitária de créditos de hora-aula: N aulas × valor da sessão vira
+      // pagamento SEM desc (é ele que abastece a carteira) — nada de plano mensal
+      var stVc = load();
+      var aVc = stVc.alunos.find(function (x) { return x.id === perfilId; });
+      var cVc = aVc ? carteiraPT(stVc, aVc) : null;
+      if (!cVc) return;
+      var nVc = alvo.getAttribute("data-vendecr");
+      if (nVc === "outro") {
+        nVc = +prompt("Quantas aulas o aluno está comprando?", "12");
+        if (!nVc || nVc < 1) return;
+      } else nVc = +nVc;
+      var totVc = Math.round(nVc * cVc.valorSessao * 100) / 100;
+      if (!confirm("Registrar a compra de " + nVc + " aula(s) — " + S.fmtBRL(totVc) + "?\n\nEntra como crédito na carteira: cada Feita desconta " + S.fmtBRL(cVc.valorSessao) + ".")) return;
+      stVc.pagamentos.push({ id: S.uid(), alunoId: perfilId, valor: totVc, forma: "crédito " + nVc + " aula(s)", data: S.todayISO() });
+      save(stVc);
+      abrePerfil(perfilId);
+      mostraPfAba("fin");
       return;
     }
     if (alvo.hasAttribute("data-pfpacote")) {
@@ -8005,13 +8137,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span style="margin-left:auto;"></span><button class="btn sec mini" data-ctrm="' + c.id + '">Encerrar</button></div>';
     }).join("") : "Nenhum contrato ainda — o aluno sem contrato usa o valor combinado do cadastro.";
   }
+  // hora-aula é venda UNITÁRIA: preço de UMA aula, sem ciclo mensal/anual e sem
+  // assinatura recorrente (mês tem 4 semanas num mês e 5 no outro — plano mensal
+  // de hora trabalhada daria aula de graça na semana extra)
+  function plModoSessao() {
+    var ehSes = $("plCobranca").value === "sessao";
+    $("plCiclo").hidden = ehSes;
+    $("plLink").hidden = ehSes;
+    $("plDicaSessao").hidden = !ehSes;
+    $("plValor").placeholder = ehSes ? "R$ da hora-aula" : "Valor R$";
+    $("plNome").placeholder = ehSes ? "Nome (ex.: Hora-aula avulsa)" : "Nome (ex.: Mensal 3x/sem)";
+  }
+  $("plCobranca").addEventListener("change", plModoSessao);
+  window.__plModoSessao = plModoSessao; // testes
   $("plAdd").addEventListener("click", function () {
     var nome = $("plNome").value.trim();
     if (!nome || !+$("plValor").value) { alert("Preencha nome e valor do plano."); return; }
     var st = load();
-    st.planosPT.push({ id: S.uid(), nome: nome, valor: +$("plValor").value, ciclo: +$("plCiclo").value || 1,
+    var ehSesPl = $("plCobranca").value === "sessao";
+    st.planosPT.push({ id: S.uid(), nome: nome, valor: +$("plValor").value,
+      // hora-aula: sem ciclo e sem link de assinatura — é venda unitária de créditos
+      ciclo: ehSesPl ? 1 : (+$("plCiclo").value || 1),
       cobranca: $("plCobranca") ? $("plCobranca").value : "mes",
-      treinosSem: +$("plTreinos").value || 0, modalidade: $("plModal").value, linkRec: $("plLink").value.trim() });
+      treinosSem: +$("plTreinos").value || 0, modalidade: $("plModal").value,
+      linkRec: ehSesPl ? "" : $("plLink").value.trim() });
     $("plNome").value = ""; $("plValor").value = ""; $("plLink").value = "";
     S.write("ptStudio", st);
     renderPlanosPT(); render();
