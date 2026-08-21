@@ -787,12 +787,19 @@ begin
   if tg_op = 'DELETE' or old.valor is distinct from new.valor then
     insert into dados_hist (academia_id, chave, valor, atualizado)
       values (old.academia_id, old.chave, old.valor, old.atualizado);
-    -- faxina: só as 10 versões mais recentes de cada chave ficam
+    -- faxina: ficam as 10 versões mais recentes E as 2 MAIORES dos últimos 90
+    -- dias. O "e as maiores" existe por cicatriz: num apagão, o painel salva o
+    -- vazio por cima várias vezes seguidas, e as versões pequenas iam empurrando
+    -- a cópia boa (grande) pra fora das 10 vagas — quase perdemos o resgate.
     delete from dados_hist h
       where h.academia_id = old.academia_id and h.chave = old.chave
         and h.id not in (select id from dados_hist
                          where academia_id = old.academia_id and chave = old.chave
-                         order by id desc limit 10);
+                         order by id desc limit 10)
+        and h.id not in (select id from dados_hist
+                         where academia_id = old.academia_id and chave = old.chave
+                           and guardado_em > now() - interval '90 days'
+                         order by octet_length(valor::text) desc, id desc limit 2);
   end if;
   return coalesce(new, old);
 end $$;

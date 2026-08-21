@@ -349,7 +349,14 @@
     try { localStorage.setItem(TSKEY, JSON.stringify(m)); } catch (e) {}
   }
 
-  var sync = { client: null, aid: null, sujas: {}, timer: null, aplicando: false, ultima: null };
+  /* reconciliou: a REGRA DE FERRO da sessão. Nenhum envio sobe antes de a
+   * primeira puxada da nuvem ter chegado e sido aplicada. Foi por aqui que uma
+   * base inteira sumiu DUAS vezes: um aparelho recém-zerado (navegador limpo,
+   * aba anônima, app recém-instalado) escrevia o estúdio vazio no boot, o
+   * timer de 1,2 s empurrava esse vazio pra nuvem ANTES de a primeira puxada
+   * voltar, e a nuvem cheia era substituída pelo nada. A trava nuvemTemMais
+   * protege o caminho de BAIXAR; esta protege o de ENVIAR. */
+  var sync = { client: null, aid: null, sujas: {}, timer: null, aplicando: false, ultima: null, reconciliou: false };
 
   function sincronizavel(chaveFull) {
     if (SYNC_IGNORA[chaveFull]) return false;
@@ -366,6 +373,10 @@
 
   function enviaSujas() {
     if (!sync.client) return;
+    // regra de ferro: só envia depois da primeira puxada da sessão. A fila
+    // fica guardada e sobe assim que a puxada reconciliar (o puxa chama
+    // enviaSujas no fim) — aparelho zerado nunca mais apaga a nuvem no boot.
+    if (!sync.reconciliou) { avisaStatus(); return; }
     var chaves = Object.keys(sync.sujas);
     if (!chaves.length) return;
     sync.sujas = {};
@@ -392,7 +403,7 @@
     if (!sync.client) return Promise.resolve();
     // 1ª puxada da sessão: completa (semeia o aparelho e acha chaves só-locais).
     // Depois: só o que mudou desde a marca d'água — corta o tráfego dos ciclos de 30 s.
-    if (sync.marcaAid !== sync.aid) { sync.marca = ""; sync.marcaAid = sync.aid; }
+    if (sync.marcaAid !== sync.aid) { sync.marca = ""; sync.marcaAid = sync.aid; sync.reconciliou = false; }
     var primeira = !sync.marca;
     var consulta = sync.client.from("dados").select("chave,valor,atualizado").eq("academia_id", sync.aid);
     if (!primeira) consulta = consulta.gt("atualizado", sync.marca);
@@ -455,6 +466,9 @@
           if (sincronizavel(k) && !remotas[k]) { marcaTs(k, tsMap()[k]); sync.sujas[k] = true; }
         }
       }
+      // a partir daqui a sessão está reconciliada com a nuvem: os envios que
+      // ficaram segurados (regra de ferro) podem subir
+      sync.reconciliou = true;
       if (Object.keys(sync.sujas).length) enviaSujas();
       sync.ultima = new Date();
       avisaStatus();
@@ -663,7 +677,8 @@
 
   // gancho de teste: a regra que decide quem vence quando aparelho e nuvem
   // discordam é a que evita perder a base de alunos — precisa ser testável
-  window.__MTSync = { listasDe: listasDe, nuvemTemMais: nuvemTemMais };
+  window.__MTSync = { listasDe: listasDe, nuvemTemMais: nuvemTemMais,
+    enviaSujas: enviaSujas, _estado: sync }; // _estado/enviaSujas: só pros testes
   window.MTStore = {
     baixaCSV: baixaCSV,
     ehDomingoOuFeriado: ehDomingoOuFeriado, horasPonto: horasPonto, feriadosDoAno: feriadosDoAno,

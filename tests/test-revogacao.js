@@ -204,6 +204,11 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
       "todo update/delete no `dados` guarda a versão anterior no dados_hist");
     t(/old\.valor is distinct from new\.valor/.test(sql) && /limit 10/.test(sql),
       "o histórico só grava quando o valor muda de verdade, e guarda as 10 últimas versões");
+    // cicatriz do 2º apagão: versões vazias em série quase empurraram a cópia
+    // boa pra fora das 10 vagas — a faxina agora poupa também as 2 MAIORES
+    t(/octet_length\(valor::text\) desc/.test(sql.slice(sql.indexOf("dados_guarda_hist"))) &&
+      /interval '90 days'/.test(sql.slice(sql.indexOf("dados_guarda_hist"))),
+      "a faxina do cofre nunca solta as 2 maiores versões dos últimos 90 dias (a cópia boa sobrevive a spam de vazio)");
     // o retorno do aluno (peso, cargas, fotos) é insubstituível: foto quando
     // ENCOLHE ou quando a linha morre — crescer é o dia a dia e não fotografa
     t(/create table if not exists public\.app_aluno_hist/.test(sql) &&

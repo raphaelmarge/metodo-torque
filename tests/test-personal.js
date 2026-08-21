@@ -2065,6 +2065,40 @@ async function abaPt(p, a) {
     ok(sync.mapaPerigo, "nuvem com fichas de treino vence aparelho com o mapa vazio (senão apagava todas as fichas)");
     ok(sync.dietaPerigo, "mesma proteção pras dietas do Nutri (mapa paciente → refeições)");
   }
+
+  /* 🔒 REGRA DE FERRO do envio: aparelho recém-zerado NUNCA empurra nada pra
+   * nuvem antes da primeira puxada da sessão. Foi ESTE o buraco dos dois
+   * apagões do Diogo: o boot escrevia o estúdio vazio, o timer de 1,2 s
+   * enviava, e a nuvem cheia virava nada antes de a puxada voltar. */
+  {
+    const ferro = await p.evaluate(async () => {
+      const Sy = window.__MTSync, st = Sy._estado, out = {};
+      const cliOrig = st.client, sujOrig = st.sujas, recOrig = st.reconciliou;
+      let upserts = 0;
+      st.client = { from: () => ({ upsert: () => { upserts++; return Promise.resolve({ error: null }); } }) };
+      st.sujas = { "mtapp:ptStudio": true };
+      // ANTES da primeira puxada: o envio tem que segurar a fila, sem upsert
+      st.reconciliou = false;
+      Sy.enviaSujas();
+      await new Promise((r) => setTimeout(r, 50));
+      out.segurou = upserts === 0 && st.sujas["mtapp:ptStudio"] === true;
+      // DEPOIS da puxada reconciliar: a mesma fila sobe
+      st.reconciliou = true;
+      Sy.enviaSujas();
+      await new Promise((r) => setTimeout(r, 50));
+      out.subiu = upserts === 1;
+      st.client = cliOrig; st.sujas = sujOrig; st.reconciliou = recOrig;
+      return out;
+    });
+    ok(ferro.segurou, "🔒 antes da 1ª puxada da sessão, NADA sobe pra nuvem — a fila fica guardada (mata o apagão do aparelho zerado)");
+    ok(ferro.subiu, "depois que a puxada reconcilia, a mesma fila sobe normalmente");
+    // e o motor de verdade liga a regra nos dois pontos certos (fonte do store.js)
+    const storeSrc = await p.evaluate(async () => await (await fetch("apps/store.js")).text());
+    ok(/if \(!sync\.reconciliou\) \{ avisaStatus\(\); return; \}/.test(storeSrc),
+      "o enviaSujas de verdade tem a regra de ferro logo na entrada");
+    ok(/sync\.reconciliou = true;/.test(storeSrc) && /sync\.marcaAid = sync\.aid; sync\.reconciliou = false;/.test(storeSrc),
+      "a puxada liga a regra ao reconciliar e trocar de conta desliga de novo");
+  }
   // ---------- 🚀 escala: o painel tem que aguentar milhares de alunos ----------
   console.log("Escala (1000 alunos):");
   {
