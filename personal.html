@@ -2057,6 +2057,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       a.valor = +plC.valor || a.valor;
       // o plano manda no modelo de cobrança: hora-aula liga a carteira de créditos
       a.modo = plC.cobranca === "sessao" ? "sessao" : "mes";
+      if (a.modo === "sessao" && !a.modoSessaoDesde) a.modoSessaoDesde = S.todayISO();
       if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
       a.modalidade = plC.modalidade || "";
     }
@@ -2981,6 +2982,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     else alert("Nascimento incompleto — use dia/mês/ano (ex.: 20/10/1980). O campo ficou como estava.");
     a.valor = parseFloat(($("pfValor").value || "").replace(",", ".")) || 0;
     a.modo = $("pfModo").value;
+    // marco da carteira: a partir de hoje as aulas passam a descontar por sessão
+    if (a.modo === "sessao") { if (!a.modoSessaoDesde) a.modoSessaoDesde = S.todayISO(); }
+    else a.modoSessaoDesde = "";
     a.pagto = $("pfPagto").value;
     a.objetivo = $("pfObjetivo").value.trim();
     a.obs = $("pfObs").value.trim();
@@ -3090,6 +3094,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         a.valor = +plC.valor || a.valor;
         // o plano manda no modelo de cobrança: hora-aula liga a carteira de créditos
         a.modo = plC.cobranca === "sessao" ? "sessao" : "mes";
+        if (a.modo === "sessao" && !a.modoSessaoDesde) a.modoSessaoDesde = S.todayISO();
         if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
         a.modalidade = plC.modalidade || "";
       }
@@ -4051,6 +4056,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var pagou = idxDe(st).pagouMes(a.id, mes);
       if (pagou) return;
       var pl = planoDe(st, ct.planoId);
+      // hora-aula não tem "mensalidade": quem cobra é a carteira (saldo negativo),
+      // senão o aluno com crédito adiantado recebe cobrança de um valor que não deve
+      if ((pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao")) return;
       var vTxt = pl && +pl.valor ? " de " + S.fmtBRL(+pl.valor) : "";
       var venc = +ct.diaVenc || 5;
       if (venc - diaHoje === 2) {
@@ -4560,10 +4568,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           alPc.pacote.usadas = (+alPc.pacote.usadas || 0) + 1;
           var restaAgora = +alPc.pacote.total - alPc.pacote.usadas;
           if (restaAgora === 0) alert("O pacote de " + alPc.nome.split(" ")[0] + " acabou de zerar — hora de renovar (perfil, aba Financeiro).");
-        } else if (alPc && alPc.modo === "sessao" && +alPc.valor) {
-          // quem paga por sessão: oferece fechar o financeiro na hora
-          if (confirm("Sessão feita! Registrar " + S.fmtBRL(+alPc.valor) + " desta sessão agora? (Cancelar deixa acumulado na lista de cobrança)")) {
-            st.pagamentos.push({ id: S.uid(), alunoId: alPc.id, valor: +alPc.valor, forma: "sessão", data: S.todayISO() });
+        } else if (alPc && alPc.modo === "sessao") {
+          // quem paga por sessão: oferece fechar o financeiro na hora, pelo MESMO
+          // preço que a carteira desconta (o plano manda; sem plano, o cadastro)
+          var vSes = valorSessaoDe(st, alPc);
+          if (vSes > 0 && confirm("Sessão feita! Registrar " + S.fmtBRL(vSes) + " desta sessão agora? (Cancelar deixa acumulado na lista de cobrança)")) {
+            st.pagamentos.push({ id: S.uid(), alunoId: alPc.id, valor: vSes, forma: "sessão", data: S.todayISO() });
           }
         }
       }
@@ -4824,16 +4834,35 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * Aluno com PACOTE de sessões ativo fica de fora também: o pacote controla
    * por QUANTIDADE (10 sessões), e o preço fechado do pacote quase nunca é
    * n × valor da sessão — as duas contas juntas dariam duas verdades. */
+  /* Preço de UMA sessão (hora-aula), fonte ÚNICA: o plano manda; sem plano, o
+   * valor do cadastro. A "Feita" registra e a carteira desconta pelo MESMO
+   * número — antes a Feita usava a.valor e a carteira o valor do plano, e a
+   * diferença virava dívida fantasma a cada aula. */
+  function valorSessaoDe(st, a) {
+    var ct = contratoDe(st, a.id), pl = ct ? planoDe(st, ct.planoId) : null;
+    return pl && pl.cobranca === "sessao" ? +pl.valor
+      : (!pl && a.modo === "sessao" ? +a.valor : 0);
+  }
   function carteiraPT(st, a) {
     var ctW = contratoDe(st, a.id);
     var plW = ctW ? planoDe(st, ctW.planoId) : null;
-    var vs = plW && plW.cobranca === "sessao" ? +plW.valor
-      : (!plW && a.modo === "sessao" ? +a.valor : 0);
+    var vs = valorSessaoDe(st, a);
     if (!(vs > 0)) return null;
     if (a.pacote && (+a.pacote.total || 0) - (+a.pacote.usadas || 0) > 0) return null;
-    var pagos = idxDe(st).pagsDe(a.id).filter(function (p) { return !p.desc; })
+    /* O modelo "por sessão" tem um MARCO: a carteira só conta pagamento e aula A
+     * PARTIR do dia em que o aluno virou hora-aula (início do contrato hora-aula,
+     * ou o dia em que a Cobrança do perfil virou "por sessão"). Sem esse corte,
+     * uma mensalidade antiga virava "crédito" e uma aula de quando ele era
+     * mensalista virava "consumo" — dívida (ou crédito) fantasma na troca de plano. */
+    var desde = plW && plW.cobranca === "sessao" ? (ctW.inicio || "")
+      : (a.modoSessaoDesde || "");
+    function noPeriodo(x) { return !desde || String(x.data || "") >= desde; }
+    var pagos = idxDe(st).pagsDe(a.id)
+      .filter(function (p) { return !p.desc && noPeriodo(p); })
       .reduce(function (t, p) { return t + (+p.valor || 0); }, 0);
-    var feitas = idxDe(st).sessFeitasDe(a.id).length;
+    var feitas = idxDe(st).sessFeitasDe(a.id).filter(noPeriodo).length;
+    // aula coberta por um pacote (já pago à parte) não sai da carteira de sessões
+    if (a.pacote && +a.pacote.total > 0) feitas = Math.max(0, feitas - (+a.pacote.total || 0));
     var consumido = feitas * vs;
     return { valorSessao: vs, pagos: pagos, feitas: feitas,
       consumido: consumido, saldo: pagos - consumido };
@@ -5015,7 +5044,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       }
       // pagamento atrasado (mesma regra do ATRASADO; volta 3 dias depois de marcada)
       var ct = contratoDe(st, a.id);
-      if (!fixOff.atraso && ct && !a.assinaturaRec && !idxDe(st).pagouMes(a.id, mes)) {
+      var plAt = ct ? planoDe(st, ct.planoId) : null;
+      // hora-aula não entra na cobrança de mensalidade: quem cobra é a carteira
+      var ehSesAt = (plAt && plAt.cobranca === "sessao") || (!plAt && a.modo === "sessao");
+      if (!fixOff.atraso && ct && !ehSesAt && !a.assinaturaRec && !idxDe(st).pagouMes(a.id, mes)) {
         var venc = +ct.diaVenc || 5;
         if (diaHoje > venc + atrasoTol(st)) {
           var diasAt = diaHoje - venc;
@@ -5152,13 +5184,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var valor = pl ? +pl.valor : +a.valor || 0;
       var atrasado = ct && diaHoje > ct.diaVenc + atrasoTol(st);
       var dv = dividaDe(st, a);
-      var scSes = a.modo === "sessao" ? sessoesACobrar(st, a) : null;
-      if (a.modo === "sessao" && !(a.pacote && +a.pacote.total > 0)) {
-        // quem paga por sessão: só aparece com sessões feitas sem acerto
+      // "por sessão" = o plano manda; sem plano, o modo do cadastro (mesma regra
+      // de dividaDe). Assim aluno com pacote pago não cai no ramo mensalista e
+      // mensalista com o modo trocado à mão não some da lista.
+      var ehSessao = (pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao");
+      var scSes = ehSessao ? sessoesACobrar(st, a) : null;
+      if (ehSessao) {
+        // quem paga por sessão: só aparece com carteira negativa ou pacote estourado
         if (!scSes) return "";
-        var msgS = "Oi " + a.nome.split(" ")[0] + "! Fechando as sessões: " + scSes.n + " feita(s) desde o último acerto (" + S.fmtBRL(scSes.total) + "). Te mando o Pix? 💪";
+        var msgS = scSes.pacote
+          ? "Oi " + a.nome.split(" ")[0] + "! O pacote zerou e ficaram " + scSes.n + " sessão(ões) além dele. Vamos renovar? 💪"
+          : "Oi " + a.nome.split(" ")[0] + "! Fechando as sessões: " + scSes.n + " feita(s) desde o último acerto (" + S.fmtBRL(scSes.total) + "). Te mando o Pix? 💪";
+        var tagSes = scSes.pacote ? S.plural(scSes.n, "sessão além do pacote", "sessões além do pacote") : S.plural(scSes.n, "sessão a cobrar", "sessões a cobrar");
         return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
-          '<span class="tag alerta">' + S.plural(scSes.n, "sessão a cobrar", "sessões a cobrar") + "</span><span>" + S.fmtBRL(scSes.total) + "</span>" +
+          '<span class="tag alerta">' + tagSes + "</span><span>" + S.fmtBRL(scSes.total) + "</span>" +
           '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
           '<button class="btn mini" data-receb="' + a.id + '" data-v="' + scSes.total + '" title="registra o recebimento com 1 toque">Recebi</button>' +
           ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + scSes.total + '">Pix</button>' : "") +
@@ -5200,9 +5239,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var verdes = 0, amarelos = 0, vermelhos = 0, linhasSaude = [];
     st.alunos.forEach(function (a) {
-      if (a.ativo === false || a.modo === "sessao") return;
+      if (a.ativo === false) return;
       var ct = contratoDe(st, a.id);
       if (!ct) return;
+      var plS = planoDe(st, ct.planoId);
+      if ((plS && plS.cobranca === "sessao") || (!plS && a.modo === "sessao")) return; // hora-aula não é mensalidade
       var iniMes = (ct.inicio || "").slice(0, 7);
       var atrasos = [], faltas = 0, avaliados = 0;
       mesesRef.forEach(function (mes) {
@@ -5225,11 +5266,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     var faltamMes = 0;
     st.alunos.forEach(function (a) {
-      if (a.ativo === false || a.modo === "sessao") return;
+      if (a.ativo === false) return;
       var ct2 = contratoDe(st, a.id);
       if (!ct2) return;
       if (idxDe(st).pagouMes(a.id, mesAtual)) return;
       var pl2 = planoDe(st, ct2.planoId);
+      if ((pl2 && pl2.cobranca === "sessao") || (!pl2 && a.modo === "sessao")) return; // hora-aula: quem cobra é a carteira
       faltamMes += pl2 ? +pl2.valor : (+a.valor || 0);
     });
     var elSaude = $("bSaudeP");
@@ -8570,6 +8612,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function valorMensalDe(st, a) {
     var ct = contratoDe(st, a.id);
     var pl = ct ? planoDe(st, ct.planoId) : null;
+    // hora-aula não é mensalidade: quem cobra é a carteira, então não entra no
+    // "Previsto"/"Falta receber" nem aparece como devedor de mensalidade
+    if ((pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao")) return 0;
     return pl ? +pl.valor : +a.valor || 0;
   }
   function renderRelatorios() {
@@ -8607,7 +8652,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (ativos.length) {
       var pct = previstoMes ? Math.min(100, Math.round(100 * recebidoMes / previstoMes)) : 0;
       var faltam = ativos.filter(function (a) {
-        return !idxDe(st).pagouMes(a.id, mesAtual);
+        // hora-aula (valorMensalDe = 0) não é devedor de mensalidade: fica de fora
+        return !idxDe(st).pagouMes(a.id, mesAtual) && valorMensalDe(st, a) > 0;
       });
       $("relPrevisto").innerHTML =
         '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px;">' +
@@ -8740,8 +8786,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     ativos.forEach(function (a) {
       var ct = contratoDe(st, a.id);
+      var plAl = ct ? planoDe(st, ct.planoId) : null;
+      var ehSesAl = (plAl && plAl.cobranca === "sessao") || (!plAl && a.modo === "sessao");
       var pagouMes = idxDe(st).pagouMes(a.id, mesAtual);
-      if (ct && !pagouMes && diaHoje > ct.diaVenc + atrasoTol(st)) {
+      // hora-aula não gera alerta de "pagamento atrasado": quem cobra é a carteira
+      if (ct && !ehSesAl && !pagouMes && diaHoje > ct.diaVenc + atrasoTol(st)) {
         var dvAl = dividaDe(st, a);
         var cobrarAl = dvAl.total || dvAl.valor;
         var msgC = "Oi " + a.nome.split(" ")[0] + "! Passando pra lembrar do plano" + (dvAl.meses > 1 ? " — ficaram " + dvAl.meses + " meses em aberto (" + S.fmtBRL(dvAl.total) + ")" : "") + ". Te mando o Pix? 💪";
@@ -8954,8 +9003,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var ct = ctAtivos.find(function (c) { return c.alunoId === a.id; });
       if (ct) {
         var pl = planoDe(st, ct.planoId);
-        mrr += pl ? +pl.valor || 0 : 0;
-        comContrato++; pagantes++;
+        comContrato++;
+        // hora-aula não é receita mensal fixa: conta como contrato, mas fica fora
+        // do MRR/ticket/LTV (senão o preço de UMA sessão vira "mensalidade")
+        if (pl && pl.cobranca !== "sessao") { mrr += +pl.valor || 0; pagantes++; }
       } else if (+a.valor && a.modo !== "sessao") { mrr += +a.valor; pagantes++; }
     });
     var ticket = pagantes ? mrr / pagantes : 0;

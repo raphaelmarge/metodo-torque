@@ -1006,7 +1006,7 @@ set search_path = public
 as $$
   select coalesce(json_agg(x order by x.criado), '[]'::json) from (
     select de, texto, criado from app_chat
-    where token = t
+    where token = t and public.app_aluno_ativo(t) is not null
     order by criado desc limit 60
   ) x
 $$;
@@ -1643,7 +1643,7 @@ begin
   end if;
   v_uid := public._torque_cria_usuario(p_email, p_senha, p_nome);
   insert into membros (academia_id, user_id, papel, nome, email)
-    values (v_acad, v_uid, coalesce(nullif(p_papel, ''), 'equipe'), coalesce(p_nome, ''), lower(trim(p_email)));
+    values (v_acad, v_uid, coalesce(nullif(p_papel, ''), 'funcionario'), coalesce(p_nome, ''), lower(trim(p_email)));
   return json_build_object('ok', true, 'email', lower(trim(p_email)));
 end;
 $$;
@@ -1707,7 +1707,7 @@ set search_path = public
 as $$
   select coalesce(json_agg(x order by x.dia, x.hora), '[]'::json) from (
     select id, dia, hora, status, obs from app_agenda
-    where token = t and dia >= current_date - 30
+    where token = t and public.app_aluno_ativo(t) is not null and dia >= current_date - 30
     order by dia, hora limit 120
   ) x
 $$;
@@ -1736,6 +1736,38 @@ alter table public.chat_mensagens add column if not exists autor text not null d
 
 alter table public.app_aluno add column if not exists retorno jsonb;
 
+-- Mescla o retorno do app pra NUNCA apagar histórico. O app manda o estado LOCAL
+-- inteiro; num celular recém-instalado esse estado vem quase vazio, e o antigo
+-- "retorno = p_dados" (substituição) zerava meses de treinos, pesos e fotos na
+-- nuvem com um único toque. Regra por chave: objeto vira UNIÃO (o histórico por
+-- data só cresce, nunca some), e valor vazio (null/{}/[]/"") não sobrescreve o
+-- que já existe. Chave nova ou com valor de verdade entra normalmente.
+create or replace function public.app_retorno_mescla(velho jsonb, novo jsonb)
+returns jsonb language plpgsql immutable set search_path = public as $$
+declare k text; vv jsonb; nv jsonb; saida jsonb;
+begin
+  if velho is null or jsonb_typeof(velho) <> 'object' then return novo; end if;
+  if novo  is null or jsonb_typeof(novo)  <> 'object' then return velho; end if;
+  saida := velho;
+  for k in select jsonb_object_keys(novo) loop
+    nv := novo->k; vv := velho->k;
+    -- valor novo "vazio" não apaga o que já existe na nuvem
+    if nv is null or nv = 'null'::jsonb
+       or (jsonb_typeof(nv) = 'object' and nv = '{}'::jsonb)
+       or (jsonb_typeof(nv) = 'array'  and jsonb_array_length(nv) = 0)
+       or (jsonb_typeof(nv) = 'string' and nv = '""'::jsonb) then
+      continue; -- mantém saida->k (= velho->k)
+    end if;
+    -- dois objetos: união (as datas de treino/peso só entram, nunca saem)
+    if jsonb_typeof(nv) = 'object' and vv is not null and jsonb_typeof(vv) = 'object' then
+      saida := jsonb_set(saida, array[k], vv || nv);
+    else
+      saida := jsonb_set(saida, array[k], nv);
+    end if;
+  end loop;
+  return saida;
+end $$;
+
 create or replace function public.app_aluno_devolve(t text, p_dados jsonb)
 returns json language plpgsql security definer set search_path = public as $$
 begin
@@ -1745,7 +1777,10 @@ begin
   if public.app_aluno_ativo(t) is null then
     return json_build_object('erro', 'sem_acesso');
   end if;
-  update public.app_aluno set retorno = p_dados, atualizado = now() where token = t;
+  -- mescla (não substitui): celular novo com 1 registro não apaga o histórico
+  update public.app_aluno
+    set retorno = public.app_retorno_mescla(retorno, p_dados), atualizado = now()
+    where token = t;
   if not found then
     return json_build_object('erro', 'app não encontrado');
   end if;
@@ -1807,7 +1842,9 @@ begin
   if t is null or length(t) < 10 then
     return json_build_object('erro', 'token inválido');
   end if;
-  select academia_id into v_acad from public.app_aluno where token = t limit 1;
+  -- porteiro: token revogado não lê o ranking dos colegas (era where token=t limit 1,
+  -- sem checar revogado_em — ex-aluno seguia vendo os dados de todos)
+  v_acad := public.app_aluno_ativo(t);
   if v_acad is null then
     return json_build_object('erro', 'app não encontrado');
   end if;
