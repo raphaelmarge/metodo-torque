@@ -7740,9 +7740,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var el = $("plLista");
     el.innerHTML = st.planosPT.length ? st.planosPT.map(function (pl) {
       var n = st.contratosPT.filter(function (c) { return c.planoId === pl.id && c.status === "ativo"; }).length;
-      return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) + "/mês</span>" +
+      return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) +
+        (pl.cobranca === "sessao" ? "/sessão" : "/mês") + "</span>" +
+        (pl.cobranca === "sessao" ? '<span class="tag roxo" title="hora-aula: cada Feita desconta da carteira de créditos">hora-aula</span>' : "") +
         (pl.treinosSem == null && !pl.modalidade ? "" : '<span class="muted">' + (pl.treinosSem == null ? "" : (+pl.treinosSem ? pl.treinosSem + "x/sem" : "consultoria")) + (pl.modalidade ? (pl.treinosSem == null ? "" : " · ") + esc(pl.modalidade) : "") + "</span>") +
-        '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>" +
+        (pl.cobranca === "sessao" ? "" : '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>") +
         (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">recorrente</span>' : "") +
         "<span class='muted'>" + n + " contrato(s)</span>" +
         '<span style="margin-left:auto;"></span><button class="btn sec mini" data-plrm="' + pl.id + '" aria-label="excluir o plano">✕</button></div>';
