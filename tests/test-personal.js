@@ -455,6 +455,60 @@ async function abaPt(p, a) {
     ok(await p.evaluate(() => window.MTStore.read("ptStudio", {}).pagamentos.some((x) => x.alunoId === "axSes" && x.forma === "sessão" && +x.valor === 80)),
       "Feita + confirmar registra a sessão de R$ 80 direto no financeiro");
 
+    /* 💳 Carteira de créditos (paga por sessão): pagamento adiciona crédito,
+     * aula FEITA consome o valor da sessão, saldo = pago − consumido. Neste
+     * ponto o Paga Sessao tem R$ 240 pagos (Recebi 160 + sessão 80) e 3 aulas
+     * feitas de R$ 80 — os fluxos que já existiam levam a carteira a ZERO. */
+    {
+      const cart = await p.evaluate(() => {
+        const F = window.__financeiroPT;
+        const st0 = window.MTStore.read("ptStudio", {});
+        const alSes = () => window.MTStore.read("ptStudio", {}).alunos.find((x) => x.id === "axSes");
+        const c0 = F.carteira(st0, alSes());
+        // crédito novo + venda de serviço (desc — NÃO pode virar crédito de aula)
+        st0.pagamentos.push(
+          { id: "pgw1", alunoId: "axSes", valor: 800, data: "2026-08-02", forma: "pix" },
+          { id: "pgw2", alunoId: "axSes", valor: 150, data: "2026-08-02", desc: "Massagem" });
+        window.MTStore.write("ptStudio", st0);
+        const c1 = F.carteira(window.MTStore.read("ptStudio", {}), alSes());
+        // 11 aulas a mais (14 no total) → consumiu R$ 1.120 > R$ 1.040 pagos
+        const st1 = window.MTStore.read("ptStudio", {});
+        for (let i = 0; i < 11; i++) st1.sessoes.push({ id: "sxw" + i, alunoId: "axSes", data: "2026-08-0" + ((i % 9) + 1), hora: "0" + (i % 9) + ":00", feita: true });
+        window.MTStore.write("ptStudio", st1);
+        const stN = window.MTStore.read("ptStudio", {});
+        const c2 = F.carteira(stN, alSes());
+        const fora = {
+          mensal: F.carteira(stN, stN.alunos.find((x) => x.id === "axDev")),
+          pacoteAtivo: F.carteira(stN, Object.assign({}, alSes(), { pacote: { total: 10, usadas: 3 } })),
+        };
+        window.__perfilPT("axSes");
+        const fin = document.getElementById("pfFin").innerHTML;
+        document.getElementById("pfFechar").click();
+        return { c0, c1, c2, fora, fin };
+      });
+      ok(cart.c0 && cart.c0.pagos === 240 && cart.c0.feitas === 3 && cart.c0.consumido === 240 && cart.c0.saldo === 0,
+        "a carteira fecha em ZERO com os fluxos Recebi e Feita que já existiam (R$ 240 pagos, 3 aulas de R$ 80)");
+      ok(cart.c1.pagos === 1040 && cart.c1.saldo === 800,
+        "pagamento vira crédito na hora — e venda de serviço (massagem) fica de fora da carteira");
+      ok(cart.c2.saldo === -80 && cart.c2.consumido === 1120,
+        "mais aulas que crédito → saldo NEGATIVO (fez 14 aulas, consumiu R$ 1.120 de R$ 1.040 pagos)");
+      ok(cart.fora.mensal === null && cart.fora.pacoteAtivo === null,
+        "mensalista e aluno com pacote ativo ficam fora — pacote controla por quantidade");
+      ok(/Carteira de sessões/.test(cart.fin) && /Saldo disponível/.test(cart.fin) && /DEVENDO/.test(cart.fin),
+        "a aba Financeiro do perfil mostra a carteira com o saldo e o aviso de devendo");
+      // a etiqueta da lista troca "sem pagamento no mês" pelo SALDO de quem paga por sessão
+      await abaPt(p, "alunos");
+      ok(await p.evaluate(() => /class="tag alerta">SALDO/.test(document.getElementById("listaAlunos").innerHTML)),
+        "na lista, quem paga por sessão mostra o SALDO em vez de 'sem pagamento no mês'");
+      // devolve o estado pros testes seguintes (a carteira volta pro zero)
+      await p.evaluate(() => {
+        const st = window.MTStore.read("ptStudio", {});
+        st.pagamentos = st.pagamentos.filter((x) => String(x.id).indexOf("pgw") !== 0);
+        st.sessoes = st.sessoes.filter((x) => String(x.id).indexOf("sxw") !== 0);
+        window.MTStore.write("ptStudio", st);
+      });
+    }
+
     // dashboard soma o que há pra receber (meses passados continuam devidos mesmo com o mês atual pago)
     await abaPt(p, "dash");
     ok(await p.evaluate(() => /A receber acumulado/.test(document.getElementById("bRecebP").textContent) && /R\$\s?300/.test(document.getElementById("bRecebP").textContent)),
