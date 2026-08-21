@@ -509,6 +509,63 @@ async function abaPt(p, a) {
       });
     }
 
+    /* 🕐 PLANO de hora-aula: o professor determina o valor da sessão no plano
+     * (Financeiro → Planos, cobrança "por sessão"), fecha contrato, e o aluno
+     * vira "por sessão" sozinho — carteira ligada, sem dívida mensal, e o
+     * valor da hora-aula vem SEMPRE do plano (mudou o plano, mudou pra todos). */
+    {
+      const ha = await p.evaluate(() => {
+        const st = window.MTStore.read("ptStudio", {});
+        st.planosPT = st.planosPT || [];
+        st.planosPT.push({ id: "plHora", nome: "Hora-aula", valor: 100, ciclo: 1, cobranca: "sessao", treinosSem: 2, modalidade: "presencial" });
+        st.alunos.push({ id: "axHora", nome: "Aluna Hora Aula", ativo: true });
+        window.MTStore.write("ptStudio", st);
+        window.__perfilPT("axHora");
+        document.getElementById("pfCtPlano").value = "plHora";
+        document.getElementById("pfCtAdd").click();
+        const st2 = window.MTStore.read("ptStudio", {});
+        const a2 = st2.alunos.find((x) => x.id === "axHora");
+        const F = window.__financeiroPT;
+        // paga 900 e faz 4 aulas — o exemplo da especificação
+        st2.pagamentos.push({ id: "pgh1", alunoId: "axHora", valor: 900, data: "2026-08-05", forma: "pix" });
+        for (let i = 1; i <= 4; i++) st2.sessoes.push({ id: "sxh" + i, alunoId: "axHora", data: "2026-08-0" + i, hora: "06:00", feita: true });
+        window.MTStore.write("ptStudio", st2);
+        const st3 = window.MTStore.read("ptStudio", {});
+        const a3 = st3.alunos.find((x) => x.id === "axHora");
+        const cart = F.carteira(st3, a3);
+        // o professor sobe a hora-aula pra R$ 120 NO PLANO — a carteira acompanha
+        st3.planosPT.find((x) => x.id === "plHora").valor = 120;
+        window.MTStore.write("ptStudio", st3);
+        const cart120 = F.carteira(window.MTStore.read("ptStudio", {}), a3);
+        window.__perfilPT("axHora");
+        const fin = document.getElementById("pfFin").innerHTML;
+        document.getElementById("pfFechar").click();
+        return { modo: a2.modo, valor: a2.valor,
+          div: F.divida(st3, a3), cart, cart120, fin,
+          rotulo: document.getElementById("pfCtPlano") ? "" : "", };
+      });
+      ok(ha.modo === "sessao" && ha.valor === 100,
+        "fechar contrato com plano hora-aula liga o modo por sessão com o valor do plano");
+      ok(ha.div.meses === 0 && ha.div.total === 0,
+        "contrato de hora-aula NÃO gera dívida mensal — quem cobra é a carteira");
+      ok(ha.cart && ha.cart.valorSessao === 100 && ha.cart.pagos === 900 && ha.cart.consumido === 400 && ha.cart.saldo === 500,
+        "o exemplo da especificação fecha: R$ 900 pagos, 4 aulas de R$ 100 → saldo R$ 500");
+      ok(ha.cart120.valorSessao === 120 && ha.cart120.consumido === 480,
+        "subir a hora-aula no PLANO muda a carteira de quem assinou (R$ 120 → consumo R$ 480)");
+      ok(/Carteira de sessões/.test(ha.fin) && /hora-aula/.test(ha.fin) && /sessão/.test(ha.fin),
+        "o contrato no perfil fala em hora-aula e /sessão, com a carteira logo ali");
+      // limpa: encerra o rastro do teste
+      await p.evaluate(() => {
+        const st = window.MTStore.read("ptStudio", {});
+        st.alunos = st.alunos.filter((x) => x.id !== "axHora");
+        st.planosPT = st.planosPT.filter((x) => x.id !== "plHora");
+        st.contratosPT = (st.contratosPT || []).filter((x) => x.alunoId !== "axHora");
+        st.pagamentos = st.pagamentos.filter((x) => x.alunoId !== "axHora");
+        st.sessoes = st.sessoes.filter((x) => x.alunoId !== "axHora");
+        window.MTStore.write("ptStudio", st);
+      });
+    }
+
     // dashboard soma o que há pra receber (meses passados continuam devidos mesmo com o mês atual pago)
     await abaPt(p, "dash");
     ok(await p.evaluate(() => /A receber acumulado/.test(document.getElementById("bRecebP").textContent) && /R\$\s?300/.test(document.getElementById("bRecebP").textContent)),
