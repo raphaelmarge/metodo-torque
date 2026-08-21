@@ -117,6 +117,64 @@ Você exporta um backup quando quiser e apaga a conta e todos os dados direto pe
 
 ---
 
+## 🏋️ TORQUE ON Aluno
+
+| Campo | Texto |
+|---|---|
+| **Nome (Play, 30)** | TORQUE ON Aluno — Meu treino |
+| **Nome (App Store, 30)** | TORQUE ON Aluno |
+| **Subtítulo (Apple, 30)** | Seu treino no bolso |
+| **Descrição curta (Play, 80)** | O app do aluno: treino do dia, evolução, fotos de progresso e sua turma. |
+
+**Descrição longa:**
+
+```
+O TORQUE ON Aluno é o app de quem treina com uma academia, studio, personal trainer ou nutricionista que usa o TORQUE ON. Seu professor monta tudo — você só abre e treina.
+
+SEU TREINO DO DIA
+• A ficha do dia pronta, com séries, repetições, cargas e vídeos de como fazer.
+• Treino guiado passo a passo, com descanso cronometrado.
+• "Treinei hoje!" de um toque — sua sequência de dias vira um foguinho que ninguém quer apagar.
+
+SUA EVOLUÇÃO
+• Curva de peso, cargas e medidas — veja o quanto você mudou.
+• Fotos de antes e depois, guardadas só entre você e seu professor.
+• Nível, XP e medalhas por constância — treinar vira jogo.
+
+SUA TURMA
+• Comunidade da sua academia: poste o treino, curta e comente (quando o professor ligar).
+• Ranking do desafio do mês.
+• Agenda: peça e confirme horário direto pelo app.
+• Chat direto com seu professor.
+
+FUNCIONA SEM INTERNET
+Seu treino fica guardado no aparelho — dá pra treinar no porão da academia sem sinal. Quando a internet volta, tudo sincroniza sozinho.
+
+O acesso é criado pela sua academia ou pelo seu personal — você recebe o login por e-mail. Dúvidas: www.torqueon.com.br
+```
+
+- **Categoria:** Play → *Saúde e fitness* · Apple → *Saúde e fitness*
+- **Palavras-chave (Apple, 100):** `treino,academia,ficha,musculação,personal,aluno,evolução,carga,série,fitness`
+- **Tags (Play):** treino, ficha de treino, academia, musculação
+
+**⚠️ Conta do revisor — o app do ALUNO é diferente:** ele **não tem** "Experimentar
+sem conta" (a conta é criada pelo professor). Antes de enviar pra revisão:
+
+1. No TORQUE PERSONAL, cadastre um aluno de demonstração com um e-mail seu
+   (ex.: `revisor@torqueon.com.br`), gere o app dele e defina uma senha.
+2. Entre você mesmo uma vez com esse login pra conferir que funciona.
+3. No App Review Information (Apple) / credenciais de teste (Play), preencha
+   esse e-mail + senha e o texto:
+
+```
+Este app é para alunos de academias e personal trainers que usam o TORQUE ON.
+A conta do aluno é criada pelo professor dele (não há cadastro dentro do app).
+Use a conta de demonstração acima para entrar: a ficha de treino, a evolução e
+a comunidade já estão preenchidas. O app funciona offline após o primeiro acesso.
+```
+
+---
+
 # 🔒 Questionários das lojas (as respostas certas)
 
 ## Google Play — “Segurança dos dados”
@@ -153,7 +211,10 @@ Você exporta um backup quando quiser e apaga a conta e todos os dados direto pe
 
 ## Conta de teste pro revisor (os dois lados pedem)
 
-Os revisores precisam entrar no app. Use o modo sem conta, que é o mesmo caminho de um cliente novo:
+Os revisores precisam entrar no app. Pros apps do PROFISSIONAL (academia,
+Personal, Nutri), use o modo sem conta, que é o mesmo caminho de um cliente novo.
+**⚠️ Este texto NÃO vale pro TORQUE ON Aluno** — lá não existe "Experimentar sem
+conta"; use a conta de demonstração da seção do Aluno, acima.
 
 ```
 Não é necessário login para avaliar o app.

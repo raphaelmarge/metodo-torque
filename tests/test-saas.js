@@ -226,7 +226,9 @@ function crcNode(s) {
     const ok2 = corpo.p_login === "rafa@email.com" && corpo.p_senha === "senha123";
     r.fulfill({ contentType: "application/json", body: JSON.stringify(ok2 ? { ok: true, token: "tok-aluno-teste" } : { erro: "Login ou senha incorretos. Esqueceu? Peça um link novo à sua academia ou personal." }) });
   });
-  await p.route("**/app/?t=tok-aluno-teste*", (r) => r.fulfill({ contentType: "text/html", body: "<title>app</title>APP DO ALUNO OK" }));
+  // app/index.html explícito: dentro do app da loja (Capacitor), "app/?t=" sem
+  // extensão caía no index.html da raiz e o login morria — o site usa o mesmo caminho
+  await p.route("**/app/index.html?t=tok-aluno-teste*", (r) => r.fulfill({ contentType: "text/html", body: "<title>app</title>APP DO ALUNO OK" }));
   await p.goto(BASE + "/aluno-login.html");
   await p.waitForFunction(() => window.__alunoLogin);
   // senha errada → mensagem
@@ -240,7 +242,7 @@ function crcNode(s) {
   await p.fill("#sn", "senha123");
   await p.click("#btn");
   await p.waitForFunction(() => document.body.textContent.indexOf("APP DO ALUNO OK") !== -1, null, { timeout: 8000 });
-  ok(true, "login certo redireciona para app/?t=TOKEN");
+  ok(true, "login certo redireciona para app/index.html?t=TOKEN (caminho que funciona também no app da loja)");
   const tokenGuardado = await p.evaluate(() => localStorage.getItem("mt_aluno_token"));
   ok(tokenGuardado === "tok-aluno-teste", "token fica lembrado no aparelho");
   await p.close();
