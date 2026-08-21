@@ -168,21 +168,32 @@ const REGISTRO = { html: "", dados: PACOTE, ver: PACOTE.ver || "mt-v0", stamp: P
      * seguia cancelando aula, apagando post e mandando dados. Agora o teste
      * ENUMERA as funções do aluno e cobra o porteiro em cada uma. */
     {
-      // as duas que ficam de fora de propósito: o porteiro em pessoa, e a
-      // função que PRECISA responder pra aluno cortado ("seu acesso acabou")
-      const dispensadas = ["app_aluno_ativo", "app_aluno_estado"];
+      // lista FECHADA de dispensas: o porteiro em pessoa, a função que PRECISA
+      // responder pra aluno cortado ("seu acesso acabou"), o gatilho de histórico
+      // (não tem token) e a faxina de revogação (recebe token[]). Qualquer outra
+      // RPC do aluno tem que ter o porteiro — e escape silencioso não vale.
+      const dispensadas = ["app_aluno_ativo", "app_aluno_estado", "app_aluno_guarda_hist", "app_aluno_faxina"];
       const corpos = sql.split(/create or replace function public\./).slice(1);
       const semGuarda = [];
+      let varridas = 0;
+      const puladas = [];
       corpos.forEach((bloco) => {
         const nome = (bloco.match(/^(\w+)\s*\(/) || ["", ""])[1];
-        if (!/^app_aluno_/.test(nome) || dispensadas.indexOf(nome) >= 0) return;
-        if (!/\(t text/.test(bloco.slice(0, 200))) return;
+        if (!/^app_aluno_/.test(nome)) return;
+        if (dispensadas.indexOf(nome) >= 0) { puladas.push(nome); return; }
+        varridas++;
         const corpo = bloco.split("$$;")[0];
         if (!/app_aluno_ativo\(t\)/.test(corpo) && !/revogado_em/.test(corpo)) semGuarda.push(nome);
       });
       t(semGuarda.length === 0,
         "toda RPC do aluno confere se o acesso ainda vale" +
         (semGuarda.length ? " — sem guarda: " + semGuarda.join(", ") : ""));
+      // piso: se o formato do SQL mudar e o split não achar nada, o teste FALHA
+      // em vez de passar no vácuo (antes não havia contagem mínima)
+      t(varridas >= 18, "o teste realmente varreu as RPCs do aluno (" + varridas + " encontradas)");
+      // só as exceções conhecidas podem ficar de fora — nada de escape silencioso
+      t(puladas.every((n) => dispensadas.indexOf(n) >= 0),
+        "só as RPCs dispensadas conhecidas ficam de fora do porteiro");
     }
     t(/language sql volatile\nset search_path = public/.test(sql),
       "a geradora do verify token fixa o search_path, como todas as outras");

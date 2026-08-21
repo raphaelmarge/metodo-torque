@@ -2317,7 +2317,7 @@
           // ----- carrega (cache local primeiro, pra abrir rápido e aguentar offline) -----
           "function carrega(){if(carregando)return;carregando=true;" +
           "rpcApp('app_aluno_feed',{t:TOKEN,p_limite:30}).then(function(r){carregando=false;" +
-          "if(r&&r.ok&&Array.isArray(r.posts)){try{Sv('ptfeed',r.posts);}catch(e){}pinta(r.posts);return;}" +
+          "if(r&&r.ok&&Array.isArray(r.posts)){try{Sv('ptfeed',r.posts.map(function(p){var q=Object.assign({},p);delete q.foto;return q;}));}catch(e){}pinta(r.posts);return;}" +
           "pinta(L('ptfeed',[]));}).catch(function(){carregando=false;pinta(L('ptfeed',[]));});}" +
           "pinta(L('ptfeed',[]));carrega();rankSemana();" +
           "setInterval(function(){if(SEC==='feed')carrega();},45000);})();"

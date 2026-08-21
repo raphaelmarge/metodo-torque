@@ -117,7 +117,24 @@ Deno.serve(async (req: Request) => {
   if (!pub || !priv) return json({ erro: "Configure VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY nos Secrets." }, 502);
   webpush.setVapidDetails("mailto:contato@torquefit.com.br", pub, priv);
 
-  let r = await sb("push_subs?select=token,sub");
+  /* Isolamento por academia: o cron (service key) alcança todos os inscritos; um
+   * usuário logado só alcança os alunos da PRÓPRIA academia. Antes a função lia
+   * push_subs de todo mundo, então um funcionário da Academia A disparava push
+   * (com texto livre) pros alunos das Academias B, C, D — spam/phishing na tela
+   * de bloqueio do aluno. push_subs tem academia_id justamente pra isolar. */
+  const jwtCh = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  const ehCron = !!env("SUPABASE_SERVICE_ROLE_KEY") && jwtCh === env("SUPABASE_SERVICE_ROLE_KEY");
+  let filtroAcad = "";
+  if (!ehCron) {
+    const uid = await usuarioValidado(req);
+    const rm = await sb(`membros?select=academia_id&user_id=eq.${uid}`);
+    const membros = rm.ok ? await rm.json() : [];
+    const aids = membros.map((m: any) => m.academia_id).filter(Boolean);
+    if (!aids.length) return json({ ok: true, enviados: 0, motivo: "conta sem academia" });
+    filtroAcad = `&academia_id=in.(${aids.join(",")})`;
+  }
+
+  let r = await sb(`push_subs?select=token,sub${filtroAcad}`);
   const subs = r.ok ? await r.json() : [];
   if (!subs.length) return json({ ok: true, enviados: 0, motivo: "nenhum aluno com push ativado ainda" });
 

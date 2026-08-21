@@ -802,6 +802,27 @@ create trigger dados_hist_tg
   before update or delete on public.dados
   for each row execute function public.dados_guarda_hist();
 
+-- ==================== CARIMBO DO SERVIDOR NO `dados` ====================
+-- A marca d'água do puxa incremental compara `atualizado`. Se cada aparelho
+-- carimbasse com o PRÓPRIO relógio, um upsert que sai atrasado (o Wi-Fi caiu e
+-- ele reenviou minutos depois) chegaria com a hora ANTIGA da escrita, abaixo da
+-- marca d'água dos outros aparelhos, e nunca seria puxado — o lançamento (ex.:
+-- um pagamento) sumiria. Aqui o servidor carimba a hora de CHEGADA, então
+-- nenhuma linha entra "atrás" da marca de ninguém, e relógio desregulado no
+-- celular deixa de abrir janela de perda. (Roda antes do dados_hist_tg — 'c'
+-- vem antes de 'h' na ordem alfabética dos gatilhos BEFORE.)
+create or replace function public.dados_carimba()
+returns trigger language plpgsql set search_path = public as $$
+begin
+  new.atualizado := now();
+  return new;
+end $$;
+
+drop trigger if exists dados_carimba_tg on public.dados;
+create trigger dados_carimba_tg
+  before insert or update on public.dados
+  for each row execute function public.dados_carimba();
+
 -- ==================== REDUNDÂNCIA: HISTÓRICO DO APP DO ALUNO ====================
 -- O `retorno` é o que o aluno registrou no app (peso, cargas, treinos, fotos) —
 -- insubstituível. O pacote (`dados`) fica de fora de propósito: ele se regenera

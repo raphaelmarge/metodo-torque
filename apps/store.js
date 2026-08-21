@@ -59,7 +59,25 @@
     var out = {};
     if (Array.isArray(v)) { out["#"] = v.length; return out; }
     if (v && typeof v === "object") {
-      Object.keys(v).forEach(function (k) { if (Array.isArray(v[k])) out[k] = v[k].length; });
+      Object.keys(v).forEach(function (k) {
+        var val = v[k];
+        if (Array.isArray(val)) { out[k] = val.length; return; }
+        // mapas (treinosV2, dietas, treinos): conta o tamanho do mapa E as listas
+        // de dentro — antes só arrays de 1º nível entravam, então apagar todas as
+        // fichas/dietas da nuvem não disparava a trava
+        if (val && typeof val === "object") {
+          out[k + "#"] = Object.keys(val).length;
+          Object.keys(val).forEach(function (id) {
+            var sub = val[id];
+            if (Array.isArray(sub)) { out[k + "." + id] = sub.length; return; }
+            if (sub && typeof sub === "object") {
+              Object.keys(sub).forEach(function (kk) {
+                if (Array.isArray(sub[kk])) out[k + "." + id + "." + kk] = sub[kk].length;
+              });
+            }
+          });
+        }
+      });
     }
     return out;
   }
