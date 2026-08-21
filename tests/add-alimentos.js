@@ -59,7 +59,7 @@ for (const c of entrada) {
    * Bebida alcoólica é a exceção honesta: o álcool tem 7 kcal por grama e não
    * aparece em proteína, carboidrato nem gordura, então a conta fecha mais
    * alta de propósito — é assim que a cerveja e a caipirinha já estão no banco. */
-  const alcool = /cerveja|chopp?e?|vinho|espumante|cacha[çc]a|whisky|vodka|gin|licor|caipir|drink|destilado|sidra|saqu[êe]|rum|aperol|negroni/i.test(n);
+  const alcool = /cerveja|chopp?e?|vinho|espumante|cacha[çc]a|whisky|vodka|gin|licor|caipir|drink|destilado|sidra|saqu[êe]|rum|aperol|negroni|quent[ãa]o|ponche|batida|mojito|caipiroska/i.test(n);
   const calc = pt * 4 + cb * 4 + g * 9;
   if (!alcool && k > 0 && Math.abs(calc - k) > Math.max(30, k * 0.25)) {
     recusados.push([n, "kcal não bate com os macros (" + k + " informado x " + Math.round(calc) + " calculado)"]);

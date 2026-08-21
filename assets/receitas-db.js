@@ -1961,5 +1961,87 @@ self.MT_RECEITAS = [
    "Descanse 5 minutos antes de cortar pra não perder o suco."
   ],
   "dica": "A búfala derrete com menos gordura que a mussarela comum e o tomate seco resolve o sal — 38 g de proteína por porção sem o frango seco de sempre."
+ },
+ {
+  "id": "rc88",
+  "n": "Frango tikka de airfryer com iogurte",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 2,
+  "k": 295,
+  "pt": 40,
+  "ing": [
+   "400 g de peito de frango em cubos grandes",
+   "150 g de iogurte natural desnatado",
+   "1 col. sopa de suco de limão",
+   "1 col. chá de páprica defumada",
+   "1 col. chá de cúrcuma",
+   "1/2 col. chá de cominho em pó",
+   "1 dente de alho amassado e 1 col. chá de gengibre ralado",
+   "Sal e pimenta a gosto"
+  ],
+  "modo": [
+   "Misture o iogurte, o limão, os temperos, o alho e o gengibre numa tigela até virar uma pasta laranja.",
+   "Junte os cubos de frango, cubra e deixe na geladeira por 20 minutos (ou até 12 horas, se puder).",
+   "Espete em palitos de churrasco ou espalhe no cesto da airfryer sem empilhar.",
+   "Asse a 200 °C por 12 a 15 minutos, virando na metade, até dourar nas pontas.",
+   "Sirva com limão e coentro; o molho que sobrar na tigela vai fora, porque encostou no frango cru."
+  ],
+  "dica": "O iogurte amacia a carne pelo ácido e não pela gordura: dá 40 g de proteína por porção com menos de 300 kcal."
+ },
+ {
+  "id": "rc89",
+  "n": "Tigela coreana de atum com legumes e ovo",
+  "cat": "Almoço e jantar",
+  "tempo": 20,
+  "rende": 2,
+  "k": 430,
+  "pt": 32,
+  "ing": [
+   "200 g de atum em conserva de água, escorrido",
+   "200 g de arroz integral cozido",
+   "1 cenoura média em tiras finas",
+   "1 abobrinha pequena em tiras",
+   "100 g de espinafre refogado",
+   "2 ovos",
+   "1 col. sopa de gochujang",
+   "1 col. chá de óleo de gergelim",
+   "Gergelim torrado para finalizar"
+  ],
+  "modo": [
+   "Refogue a cenoura e a abobrinha separadamente, cada uma por 2 minutos, só até perderem a rigidez.",
+   "Tempere o espinafre já refogado com metade do óleo de gergelim e um pouco de sal.",
+   "Frite os ovos com a gema mole numa frigideira antiaderente.",
+   "Monte a tigela: arroz no fundo, os legumes em gomos separados por cima e o atum no meio.",
+   "Coroe com o ovo, o gochujang e o gergelim, e misture tudo na hora de comer."
+  ],
+  "dica": "É o bibimbap sem a carne: o atum em água entrega a proteína e o gochujang resolve o sabor com 15 kcal por colher."
+ },
+ {
+  "id": "rc90",
+  "n": "Shakshuka de forno com grão-de-bico",
+  "cat": "Café da manhã",
+  "tempo": 25,
+  "rende": 2,
+  "k": 330,
+  "pt": 19,
+  "ing": [
+   "4 ovos",
+   "400 g de tomate pelado em cubos",
+   "150 g de grão-de-bico cozido e escorrido",
+   "1/2 cebola picada e 1 dente de alho",
+   "1 col. chá de páprica defumada",
+   "1/2 col. chá de cominho",
+   "1 col. chá de azeite de oliva",
+   "Coentro ou salsinha e pimenta a gosto"
+  ],
+  "modo": [
+   "Refogue a cebola e o alho no azeite numa frigideira que possa ir ao forno.",
+   "Junte a páprica e o cominho, mexa por 30 segundos e acrescente o tomate e o grão-de-bico.",
+   "Deixe apurar em fogo médio por 10 minutos, até o molho engrossar e parar de soltar água.",
+   "Abra quatro buracos no molho com as costas da colher e quebre um ovo em cada um.",
+   "Leve ao forno a 190 °C por 8 a 10 minutos, até a clara firmar com a gema ainda mole."
+  ],
+  "dica": "O grão-de-bico transforma um prato de ovos em refeição completa: 19 g de proteína e fibra que segura a fome até o almoço."
  }
 ];
