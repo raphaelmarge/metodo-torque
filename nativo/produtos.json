@@ -13,7 +13,8 @@
     "abre": "personal.html",
     "icone": "assets/icons/loja/icone-personal-1024.png",
     "fundo": "#121016",
-    "artefato": "torqueon-personal"
+    "artefato": "torqueon-personal",
+    "ignora": ["assets/vendor/faceapi"]
   },
   "nutri": {
     "appId": "com.torqueon.nutri",
@@ -21,7 +22,8 @@
     "abre": "nutricao.html",
     "icone": "assets/icons/loja/icone-nutri-1024.png",
     "fundo": "#0e1512",
-    "artefato": "torqueon-nutri"
+    "artefato": "torqueon-nutri",
+    "ignora": ["assets/vendor/faceapi", "assets/vendor/mediapipe"]
   },
   "aluno": {
     "appId": "com.torqueon.aluno",
@@ -29,6 +31,7 @@
     "abre": "aluno-login.html",
     "icone": "assets/icons/loja/icone-aluno-1024.png",
     "fundo": "#121016",
-    "artefato": "torqueon-aluno"
+    "artefato": "torqueon-aluno",
+    "ignora": ["assets/vendor/faceapi", "assets/vendor/mediapipe", "assets/vendor/babel.min.js"]
   }
 }

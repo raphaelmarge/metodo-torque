@@ -59,7 +59,9 @@
       $("btn").disabled = false;
       if (d && d.ok && d.token) {
         try { localStorage.setItem("mt_aluno_token", d.token); } catch (err) {}
-        location.href = "app/?t=" + encodeURIComponent(d.token);
+        // app/index.html explícito (não app/): dentro do app da loja (Capacitor),
+        // caminho sem extensão cai no index.html da RAIZ e o login morria em tela preta
+        location.href = "app/index.html?t=" + encodeURIComponent(d.token);
         return;
       }
       erro((d && d.erro) || "Não deu para entrar agora — tenta de novo em instantes.");
@@ -68,13 +70,19 @@
       erro("Sem conexão. Confira a internet e tente de novo.");
     });
   });
-  // já entrou antes neste aparelho? vai direto
+  // já entrou antes neste aparelho? vai DIRETO pro treino, sem parar no formulário
+  // (o app da loja abre sempre nesta página — cair no login toda vez, com uma senha
+  // que chegou por e-mail, era pedir pro aluno desistir). Com ?sair=1 o redirect é
+  // suspenso e fica só o linkzinho, pra quem quer entrar com outro login.
   try {
     var t = localStorage.getItem("mt_aluno_token");
-    if (t && new URLSearchParams(location.search).get("sair") === null) {
+    var quisSair = new URLSearchParams(location.search).get("sair") !== null;
+    if (t && !quisSair) {
+      location.replace("app/index.html?t=" + encodeURIComponent(t));
+    } else if (t) {
       var aviso = document.createElement("p");
       aviso.className = "nota";
-      aviso.innerHTML = "Você já entrou neste aparelho — <a href='app/?t=" + encodeURIComponent(t) + "' style='color:#a78bfa;font-weight:700;'>abrir meu app →</a>";
+      aviso.innerHTML = "Você já entrou neste aparelho — <a href='app/index.html?t=" + encodeURIComponent(t) + "' style='color:#a78bfa;font-weight:700;'>abrir meu app →</a>";
       document.querySelector(".cartao").appendChild(aviso);
     }
   } catch (err) {}

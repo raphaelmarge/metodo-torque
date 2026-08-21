@@ -1,16 +1,19 @@
 {
   "name": "torqueon-nativo",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "App nativo do TORQUE ON (Capacitor) — empacota o sistema em um app Android/iOS de verdade",
   "scripts": {
     "www": "node copia-www.js",
     "android": "npm run www && npx cap add android && npx cap sync android",
-    "ios": "npm run www && npx cap add ios && npx cap sync ios"
+    "ios": "npm run www && npx cap add ios && npx cap sync ios",
+    "aluno-ios": "node prepara.js aluno && (npx cap add ios || true) && npx cap sync ios && node ajusta-nativo.js ios && npx --yes @capacitor/assets generate --ios --assetPath assets --iconBackgroundColor '#121016' --iconBackgroundColorDark '#121016' --splashBackgroundColor '#121016' --splashBackgroundColorDark '#121016'",
+    "aluno-android": "node prepara.js aluno && (npx cap add android || true) && npx cap sync android && node ajusta-nativo.js android && npx --yes @capacitor/assets generate --android --assetPath assets --iconBackgroundColor '#121016' --iconBackgroundColorDark '#121016' --splashBackgroundColor '#121016' --splashBackgroundColorDark '#121016'"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0"
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0"

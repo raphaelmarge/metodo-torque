@@ -93,7 +93,22 @@ ok(Object.keys(prods || {}).every((id) => fluxo.includes(id)),
 
 console.log("App nativo (Capacitor):");
 const pkgNativo = lerJson("nativo/package.json");
-ok(!!pkgNativo && !!(pkgNativo.dependencies || {})["@capacitor/core"] && !!(pkgNativo.dependencies || {})["@capacitor/android"], "nativo/package.json com Capacitor core + android");
+ok(!!pkgNativo && !!(pkgNativo.dependencies || {})["@capacitor/core"] && !!(pkgNativo.dependencies || {})["@capacitor/android"] && !!(pkgNativo.dependencies || {})["@capacitor/ios"], "nativo/package.json com Capacitor core + android + ios (sem o ios, 'cap add ios' falha no Mac)");
+// o app do ALUNO: login precisa apontar pro arquivo com extensão (no Capacitor,
+// caminho sem extensão cai no index da raiz e o aluno nunca chegava no treino)
+{
+  const loginHtml = fs.readFileSync(path.join(RAIZ, "aluno-login.html"), "utf8");
+  ok(/app\/index\.html\?t=/.test(loginHtml) && !/["']app\/\?t=/.test(loginHtml),
+    "aluno-login.html manda pro app/index.html?t= (funciona no site E dentro do app da loja)");
+  ok(/location\.replace\("app\/index\.html\?t="/.test(loginHtml),
+    "quem já entrou uma vez cai DIRETO no treino ao reabrir o app (auto-redirect com escape ?sair=1)");
+  const prodsNativo = lerJson("nativo/produtos.json");
+  ok(!!prodsNativo && !!prodsNativo.aluno && Array.isArray(prodsNativo.aluno.ignora) && prodsNativo.aluno.ignora.indexOf("assets/vendor/mediapipe") >= 0,
+    "produto aluno existe no nativo e deixa os 28 MB do mediapipe fora do pacote");
+  const preparaJs = fs.readFileSync(path.join(RAIZ, "nativo/prepara.js"), "utf8");
+  ok(/p\.ignora/.test(preparaJs) && /rmSync/.test(preparaJs),
+    "prepara.js aplica a lista ignora do produto (tira do www o que ele não usa)");
+}
 const capCfg = lerJson("nativo/capacitor.config.json");
 ok(!!capCfg && capCfg.appId === "com.torqueon.academia" && capCfg.webDir === "www", "capacitor.config.json com appId com.torqueon.academia e webDir www");
 for (const a of ["nativo/assets/icon.png", "nativo/assets/splash.png", "nativo/assets/splash-dark.png"]) {

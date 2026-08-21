@@ -16,18 +16,41 @@ Esse APK "debug" serve pra você testar e mostrar. **Pra Play Store** é preciso
 
 ## iPhone (iOS)
 
-Precisa de um Mac com Xcode (regra da Apple, sem contorno):
+Precisa de um Mac com Xcode (regra da Apple, sem contorno). O comando pronto
+monta o produto certo, cria o projeto do iPhone, grava os textos de permissão +
+PrivacyInfo (obrigatórios pra Apple) e gera ícone e splash nativos — tudo de uma vez:
 
 ```
 cd nativo
 npm install
-npm run ios          # monta o www e cria o projeto ios/
+npm run aluno-ios    # app do ALUNO completo (www + ios/ + permissões + ícones)
 npx cap open ios     # abre no Xcode → assinar com sua conta Developer → arquivar → App Store
 ```
 
-## Os 3 produtos
+Pra outro produto, o caminho por extenso é o mesmo trocando o nome:
 
-O primeiro app nativo é o **TORQUE ON academia** (`com.torqueon.academia`), que abre no portal. TORQUE PERSONAL e TORQUE NUTRI seguem o mesmo molde — é trocar o `appId`, o nome e a página inicial no `capacitor.config.json`. Me pede quando quiser que eu monto os outros dois.
+```
+node prepara.js personal        # ou academia | nutri | aluno
+npx cap add ios                 # só na primeira vez
+npx cap sync ios
+node ajusta-nativo.js ios       # permissões de câmera/fotos + PrivacyInfo.xcprivacy (obrigatório)
+npx --yes @capacitor/assets generate --ios --assetPath assets --iconBackgroundColor '#121016' --iconBackgroundColorDark '#121016' --splashBackgroundColor '#121016' --splashBackgroundColorDark '#121016'
+npx cap open ios
+```
+
+⚠️ **Não use `npm run ios`/`npm run android` puros pra um produto específico**: eles
+não rodam o `prepara.js`, então empacotam com a identidade que estiver no
+`capacitor.config.json` (por padrão, a academia).
+
+## Os 4 produtos
+
+Cada produto vira um app com identidade própria (veja `nativo/produtos.json`):
+**TORQUE ON academia** (`com.torqueon.academia`, abre no portal), **TORQUE
+PERSONAL**, **TORQUE NUTRI** e **TORQUE ON Aluno** (`com.torqueon.aluno`, abre
+direto na entrada do aluno — quem já entrou uma vez cai direto no treino). O
+`prepara.js <produto>` troca appId, nome, página inicial e ícone, e ainda tira
+do pacote o que aquele produto não usa (o app do aluno dispensa os 28 MB do
+leitor de câmera do Personal).
 
 ## Próximos superpoderes nativos (quando você quiser)
 

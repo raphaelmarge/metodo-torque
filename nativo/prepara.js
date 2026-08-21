@@ -1,12 +1,14 @@
-// Prepara o app nativo de UM dos três produtos.
-// Uso: node nativo/prepara.js <academia|personal|nutri>
+// Prepara o app nativo de UM dos produtos.
+// Uso: node nativo/prepara.js <academia|personal|nutri|aluno>
 //
-// Faz três coisas antes do Capacitor entrar em cena:
+// Faz quatro coisas antes do Capacitor entrar em cena:
 //   1. copia o site inteiro para nativo/www (copia-www.js);
 //   2. se o produto não é a academia, troca o www/index.html por um redirecionamento
 //      pra página do produto — o app do personal tem que abrir no Personal, não
 //      no portal da academia;
-//   3. escreve o capacitor.config.json e o ícone daquele produto.
+//   3. tira do www o que o produto NÃO usa (lista "ignora" do produtos.json) —
+//      o app do aluno não precisa dos 28 MB do leitor de câmera do Personal;
+//   4. escreve o capacitor.config.json e o ícone daquele produto.
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
@@ -37,6 +39,13 @@ if (p.abre !== "index.html") {
     'display:flex;align-items:center;justify-content:center;height:100vh;margin:0}</style></head>' +
     '<body><p>Abrindo o ' + p.appName + '…</p>' +
     '<script>location.replace("' + p.abre + '");</script></body></html>');
+}
+
+// o que o produto não usa sai do pacote (peso de loja: cada MB é re-baixado a
+// cada atualização). A lista é por produto porque o Personal PRECISA do
+// mediapipe (Medidas pela câmera) e a academia usa o faceapi (biometria).
+for (const rel of p.ignora || []) {
+  fs.rmSync(path.join(www, rel), { recursive: true, force: true });
 }
 
 fs.writeFileSync(path.join(AQUI, "capacitor.config.json"), JSON.stringify({

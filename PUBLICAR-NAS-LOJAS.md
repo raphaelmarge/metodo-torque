@@ -95,12 +95,16 @@ O app gerado aqui é **nativo (Capacitor)** e já abre em tela cheia — este pa
 ```
 cd nativo
 npm install
-node prepara.js personal      # ou academia / nutri
+node prepara.js personal      # ou academia / nutri / aluno
 npx cap add ios
 npx cap sync ios
 node ajusta-nativo.js ios     # textos de permissão + PrivacyInfo (obrigatório)
+npx --yes @capacitor/assets generate --ios --assetPath assets --iconBackgroundColor '#121016' --iconBackgroundColorDark '#121016' --splashBackgroundColor '#121016' --splashBackgroundColorDark '#121016'
+                              # ícone + splash nativos (sem isso o app sobe com o ícone padrão do Capacitor)
 npx cap open ios              # abre no Xcode
 ```
+
+💡 Pro app do ALUNO existe o atalho que faz tudo isso de uma vez: `npm run aluno-ios`.
 
 No Xcode: **Signing & Capabilities** → escolha o seu time → **Product → Archive** → **Distribute App** → App Store Connect.
 
