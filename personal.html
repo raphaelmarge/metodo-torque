@@ -510,7 +510,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <p class="muted" style="margin: 4px 0 10px;">Monte seus planos (mensal, trimestral…) e feche contrato com o aluno logo abaixo. Cartão recorrente/boleto: cole o link de assinatura do SEU gateway (Mercado Pago, InfinitePay, PagSeguro…) — o Pix o sistema gera sozinho.</p>
       <div class="linha-flex" style="margin-bottom: 8px;">
         <input id="plNome" placeholder="Nome (ex.: Mensal 3x/sem)" style="flex: 2; min-width: 170px;">
-        <input id="plValor" type="number" min="0" step="0.01" placeholder="Valor R$/mês" style="width: 130px;">
+        <input id="plValor" type="number" min="0" step="0.01" placeholder="Valor R$" style="width: 110px;">
+        <select id="plCobranca" style="width: auto;" title="por mês = mensalidade · por sessão = hora-aula que alimenta a carteira de créditos"><option value="mes">por mês</option><option value="sessao">por sessão (hora-aula)</option></select>
         <select id="plCiclo" style="width: auto;"><option value="1">mensal</option><option value="3">trimestral</option><option value="6">semestral</option><option value="12">anual</option></select>
         <select id="plTreinos" style="width: auto;" title="Treinos por semana incluídos no plano"><option value="3">3×/semana</option><option value="2">2×/semana</option><option value="4">4×/semana</option><option value="5">5×/semana</option><option value="6">6×/semana</option><option value="0">— (consultoria)</option></select>
         <select id="plModal" style="width: auto;"><option>presencial</option><option>consultoria online</option><option>híbrido</option></select>
@@ -1995,7 +1996,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   function rotuloPlano(pl) {
     var qtd = pl.treinosSem == null ? "" : (+pl.treinosSem ? " · " + pl.treinosSem + "x/sem" : " · consultoria");
-    return esc(pl.nome) + qtd + (pl.modalidade ? " · " + esc(pl.modalidade) : "") + " · R$ " + (+pl.valor).toLocaleString("pt-BR") + "/mês";
+    return esc(pl.nome) + qtd + (pl.modalidade ? " · " + esc(pl.modalidade) : "") + " · R$ " + (+pl.valor).toLocaleString("pt-BR") +
+      (pl.cobranca === "sessao" ? "/sessão" : "/mês");
   }
   function naPopulaPlanos(selecionado) {
     var st = load();
@@ -2053,6 +2055,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
     if (plC) {
       a.valor = +plC.valor || a.valor;
+      // o plano manda no modelo de cobrança: hora-aula liga a carteira de créditos
+      a.modo = plC.cobranca === "sessao" ? "sessao" : "mes";
       if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
       a.modalidade = plC.modalidade || "";
     }
@@ -2201,8 +2205,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ctBloco;
     if (pl) {
       ctBloco = rotSec("Contrato") +
-        "<div><b>" + esc(pl.nome) + "</b> — " + S.fmtBRL(+pl.valor) + "/mês</div>" +
-        "<div class='muted' style='font-size:12.5px;margin-top:2px;'>vence todo dia " + ct.diaVenc + (ct.inicio ? " · desde " + S.fmtData(ct.inicio) : "") + "</div>" +
+        "<div><b>" + esc(pl.nome) + "</b> — " + S.fmtBRL(+pl.valor) + (pl.cobranca === "sessao" ? "/sessão" : "/mês") + "</div>" +
+        "<div class='muted' style='font-size:12.5px;margin-top:2px;'>" +
+        (pl.cobranca === "sessao" ? "hora-aula — cada Feita desconta da carteira" : "vence todo dia " + ct.diaVenc) +
+        (ct.inicio ? " · desde " + S.fmtData(ct.inicio) : "") + "</div>" +
         "<div style='display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;'>" +
         '<button class="btn sec mini" data-pfctrenova="' + ct.id + '" title="começa um ciclo novo hoje (ex.: renovou o trimestral)">Renovar ciclo</button>' +
         '<button class="btn sec mini" data-pfctrm="' + ct.id + '">Encerrar contrato</button></div>';
@@ -3082,6 +3088,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
       if (plC) {
         a.valor = +plC.valor || a.valor;
+        // o plano manda no modelo de cobrança: hora-aula liga a carteira de créditos
+        a.modo = plC.cobranca === "sessao" ? "sessao" : "mes";
         if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
         a.modalidade = plC.modalidade || "";
       }
@@ -4767,7 +4775,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function dividaDe(st, a) {
     var ct = contratoDe(st, a.id);
     var pl = ct ? planoDe(st, ct.planoId) : null;
-    var valor = pl ? +pl.valor : (a.modo !== "sessao" ? +a.valor || 0 : 0);
+    // hora-aula não tem "mês devido": quem cobra é a carteira de créditos
+    // (saldo negativo), senão o mesmo aluno seria cobrado duas vezes
+    if ((pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao")) {
+      return { meses: 0, total: 0, valor: 0 };
+    }
+    var valor = pl ? +pl.valor : +a.valor || 0;
     if (!valor) return { meses: 0, total: 0, valor: 0 };
     var hoje = S.todayISO();
     var ini = (ct && ct.inicio) || a.desde || hoje;
@@ -4791,11 +4804,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var exc = (+a.pacote.usadas || 0) - +a.pacote.total;
       return exc > 0 ? { n: exc, total: 0, pacote: true } : null;
     }
-    if (a.modo !== "sessao" || !+a.valor) return null;
-    var ultPg = idxDe(st).pagsDe(a.id)
-      .map(function (p) { return p.data || ""; }).sort().pop() || "";
-    var n = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "") > ultPg; }).length;
-    return n ? { n: n, total: n * +a.valor, pacote: false } : null;
+    /* Antes: feitas desde o ÚLTIMO pagamento — que cobrava aluno com crédito
+     * em caixa (pagou 9 sessões adiantado, fez 3, e a pendência pedia mais).
+     * Agora quem manda é a carteira: só existe cobrança com SALDO NEGATIVO,
+     * e ela pede exatamente o que falta. */
+    var c = carteiraPT(st, a);
+    if (!c || c.saldo >= 0) return null;
+    var n = Math.ceil(-c.saldo / c.valorSessao);
+    return { n: n, total: -c.saldo, pacote: false };
   }
   /* Carteira de créditos (quem paga POR SESSÃO): pagamento adiciona crédito,
    * aula FEITA consome o valor de uma sessão, e o saldo é a diferença — pode
@@ -4809,13 +4825,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * por QUANTIDADE (10 sessões), e o preço fechado do pacote quase nunca é
    * n × valor da sessão — as duas contas juntas dariam duas verdades. */
   function carteiraPT(st, a) {
-    if (a.modo !== "sessao" || !(+a.valor > 0)) return null;
+    var ctW = contratoDe(st, a.id);
+    var plW = ctW ? planoDe(st, ctW.planoId) : null;
+    var vs = plW && plW.cobranca === "sessao" ? +plW.valor
+      : (!plW && a.modo === "sessao" ? +a.valor : 0);
+    if (!(vs > 0)) return null;
     if (a.pacote && (+a.pacote.total || 0) - (+a.pacote.usadas || 0) > 0) return null;
     var pagos = idxDe(st).pagsDe(a.id).filter(function (p) { return !p.desc; })
       .reduce(function (t, p) { return t + (+p.valor || 0); }, 0);
     var feitas = idxDe(st).sessFeitasDe(a.id).length;
-    var consumido = feitas * +a.valor;
-    return { valorSessao: +a.valor, pagos: pagos, feitas: feitas,
+    var consumido = feitas * vs;
+    return { valorSessao: vs, pagos: pagos, feitas: feitas,
       consumido: consumido, saldo: pagos - consumido };
   }
   window.__financeiroPT = { divida: dividaDe, sessoes: sessoesACobrar, carteira: carteiraPT }; // testes
@@ -7742,6 +7762,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!nome || !+$("plValor").value) { alert("Preencha nome e valor do plano."); return; }
     var st = load();
     st.planosPT.push({ id: S.uid(), nome: nome, valor: +$("plValor").value, ciclo: +$("plCiclo").value || 1,
+      cobranca: $("plCobranca") ? $("plCobranca").value : "mes",
       treinosSem: +$("plTreinos").value || 0, modalidade: $("plModal").value, linkRec: $("plLink").value.trim() });
     $("plNome").value = ""; $("plValor").value = ""; $("plLink").value = "";
     S.write("ptStudio", st);
