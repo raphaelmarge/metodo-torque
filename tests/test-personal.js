@@ -150,6 +150,44 @@ async function abaPt(p, a) {
   });
   ok(posWizard.valor === 400 && posWizard.meta === 3 && posWizard.contrato === 1, "concluir fecha o contrato e o aluno herda valor e meta do plano");
   ok(posWizard.cpf === "111.222.333-44" && /Avenida Afonso Pena/.test(posWizard.end), "CPF e endereço salvos no aluno");
+  // 🚪 plano é OPCIONAL e dá pra SAIR no meio do passo 2 (o aluno já está salvo)
+  {
+    // concluir SEM escolher plano: sem alert, sem contrato, dialog fecha
+    await p.click("#btnNovoAluno");
+    await p.fill("#aNome", "Cliente Sem Plano");
+    await p.click("#aAdd");
+    await p.evaluate(() => { document.getElementById("naPagar").checked = false; });
+    await p.click("#naConcluir");
+    await p.waitForTimeout(150);
+    const semPlano = await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const a = st.alunos.find((x) => x.nome === "Cliente Sem Plano");
+      return { fechou: !document.getElementById("dlgNovoAluno").open, existe: !!a,
+        contratos: (st.contratosPT || []).filter((c) => a && c.alunoId === a.id).length };
+    });
+    ok(semPlano.fechou && semPlano.existe && semPlano.contratos === 0,
+      "🚪 concluir SEM plano funciona: aluno salvo, sem contrato, sem alert travando");
+    // botão "Sair — contrato depois" existe e fecha no meio do passo 2
+    await p.click("#btnNovoAluno");
+    await p.fill("#aNome", "Cliente Saida");
+    await p.click("#aAdd");
+    await p.click("#naSair");
+    await p.waitForTimeout(100);
+    const saida = await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      return { fechou: !document.getElementById("dlgNovoAluno").open,
+        existe: !!st.alunos.find((x) => x.nome === "Cliente Saida"),
+        aviso: document.getElementById("aAcessoStatus").textContent };
+    });
+    ok(saida.fechou && saida.existe && /contrato e venda ficam pra depois/.test(saida.aviso),
+      "o passo 2 tem saída no meio: fecha na hora e avisa que o aluno já ficou salvo");
+    // tira os dois alunos de teste pra não interferir no resto da suíte
+    await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      st.alunos = st.alunos.filter((x) => x.nome !== "Cliente Sem Plano" && x.nome !== "Cliente Saida");
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    });
+  }
   // limpa plano/contrato do assistente pra não interferir nos testes de contrato adiante
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
@@ -5783,6 +5821,76 @@ async function abaPt(p, a) {
     });
     ok(cred.botoes, "💳 a carteira ganha os botões de venda unitária (+1, +4, +8, +10 aulas e outro…)");
     ok(cred.pagamento && cred.saldo, "vender +4 aulas registra R$ 400 SEM desc e o saldo da carteira vira R$ 400 (4 créditos)");
+  }
+
+  // 📦 PACOTE de hora-aula como produto + renovação automática ao zerar
+  {
+    const pac = await p.evaluate(async () => {
+      const S = window.MTStore, out = {};
+      const snap = localStorage.getItem("mtapp:ptStudio");
+      // 1) o professor cria o produto: pacote de 2 aulas por R$ 900, renova sozinho
+      document.getElementById("plCobranca").value = "sessao";
+      window.__plModoSessao();
+      document.getElementById("plPacQtd").value = "2";
+      window.__plModoSessao();
+      out.campoAparece = !document.getElementById("plPacQtd").hidden && !document.getElementById("plPacRenovaLb").hidden &&
+        /PACOTE/.test(document.getElementById("plValor").placeholder);
+      document.getElementById("plPacRenova").checked = true;
+      document.getElementById("plNome").value = "Pacote 2 aulas";
+      document.getElementById("plValor").value = "900";
+      document.getElementById("plAdd").click();
+      const st1 = S.read("ptStudio", {});
+      const pl = st1.planosPT[st1.planosPT.length - 1];
+      out.produto = pl.pacoteQtd === 2 && pl.pacoteRenova === true && pl.cobranca === "sessao" && pl.valor === 900;
+      out.lista = /pacote ↻/.test(document.getElementById("plLista").innerHTML);
+      // 2) contrato com o plano-pacote semeia o ciclo no aluno
+      st1.alunos.push({ id: "axPac", nome: "Aluno Pacote", ativo: true });
+      S.write("ptStudio", st1);
+      window.__perfilPT("axPac");
+      document.getElementById("pfCtPlano").value = pl.id;
+      document.getElementById("pfCtAdd").click();
+      const st2 = S.read("ptStudio", {});
+      const a2 = st2.alunos.find((x) => x.id === "axPac");
+      out.ciclo1 = !!(a2.pacote && a2.pacote.total === 2 && a2.pacote.usadas === 0 && a2.pacote.renova === true && a2.pacote.valor === 900);
+      document.getElementById("pfFechar").click();
+      // 3) duas Feitas zeram o pacote → ele RENOVA sozinho e a cobrança fica pendente
+      const st3 = S.read("ptStudio", {});
+      st3.sessoes.push({ id: "sxp1", alunoId: "axPac", data: S.todayISO(), hora: "06:00" },
+        { id: "sxp2", alunoId: "axPac", data: S.todayISO(), hora: "07:00" });
+      S.write("ptStudio", st3);
+      const aOrig = window.alert; window.alert = () => {};
+      const feita = (id) => {
+        const b = document.createElement("button");
+        b.setAttribute("data-feita", id);
+        document.getElementById("listaSessoes").appendChild(b);
+        b.click();
+      };
+      feita("sxp1");
+      feita("sxp2");
+      window.alert = aOrig;
+      const st4 = S.read("ptStudio", {});
+      const a4 = st4.alunos.find((x) => x.id === "axPac");
+      out.renovou = !!(a4.pacote && a4.pacote.usadas === 0 && a4.pacote.total === 2 && +a4.pacote.cobrar === 900 && a4.pacote.renova === true);
+      // 4) a cobrança da renovação aparece nas pendências, e o Recebi dedicado dá baixa COM desc
+      // (o save do Feita já redesenhou; espera o render assentar)
+      await new Promise((r) => setTimeout(r, 250));
+      const pendHtml = document.getElementById("pendentes").innerHTML;
+      out.pendencia = /pacote renovou/.test(pendHtml) && /data-pacrec="axPac"/.test(pendHtml);
+      const cOrig = window.confirm; window.confirm = () => true;
+      const btnRec = document.querySelector('[data-pacrec="axPac"]');
+      if (btnRec) btnRec.click();
+      window.confirm = cOrig;
+      const st5 = S.read("ptStudio", {});
+      const a5 = st5.alunos.find((x) => x.id === "axPac");
+      const pg5 = st5.pagamentos.filter((x) => x.alunoId === "axPac").pop();
+      out.baixa = !!(a5.pacote && +a5.pacote.cobrar === 0 && pg5 && pg5.valor === 900 && /renovação/.test(pg5.desc || ""));
+      localStorage.setItem("mtapp:ptStudio", snap);
+      return out;
+    });
+    ok(pac.campoAparece && pac.produto && pac.lista, "📦 plano hora-aula vira PACOTE (2 aulas por R$ 900) com etiqueta 'pacote ↻' quando renova sozinho");
+    ok(pac.ciclo1, "fechar contrato com plano-pacote abre o 1º ciclo no aluno (2 aulas, renova ligado)");
+    ok(pac.renovou, "zerar o pacote RENOVA sozinho: novo ciclo de 2 aulas e cobrança de R$ 900 pendente");
+    ok(pac.pendencia && pac.baixa, "a renovação aparece nas pendências e o Recebi dá baixa COM desc (não vira crédito de carteira)");
   }
 
   // ✨ IA prescritiva de treino (função chat-envia mockada)

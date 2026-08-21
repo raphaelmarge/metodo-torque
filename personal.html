@@ -447,7 +447,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
                fica na tela de trás, escondido pelo próprio dialog -->
           <p id="naAcessoStatus" style="margin: 8px 0 0; font-size: 12.5px; line-height: 1.55;"></p>
           <div class="grid-2" style="margin-top: 10px;">
-            <div class="campo"><label>Plano do studio *</label><select id="naPlano" style="width: 100%;"></select></div>
+            <div class="campo"><label>Plano do studio (opcional)</label><select id="naPlano" style="width: 100%;"></select></div>
             <div class="campo"><label>Vence todo dia</label><input id="naVence" type="number" min="1" max="28" value="5"></div>
             <details id="naNovoPlano" style="grid-column: 1 / -1;">
               <summary class="muted" style="cursor: pointer; font-size: 12.5px;">Criar um plano novo agora</summary>
@@ -462,8 +462,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
             <div class="campo"><label><input type="checkbox" id="naPagar" checked style="width: auto; margin-right: 6px;">Registrar a primeira venda agora</label><input id="naValor" type="number" min="0" step="0.01" placeholder="Valor R$"></div>
             <div class="campo"><label>Forma de pagamento</label><select id="naForma" style="width: 100%;"><option>pix</option><option>dinheiro</option><option>cartão</option><option>transferência</option></select></div>
           </div>
-          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O plano define o valor, a quantidade de treinos por semana e a modalidade (presencial ou consultoria online).</p>
+          <p class="muted" style="margin: 8px 0 0; font-size: 12px;">O plano define o valor, os treinos por semana e a modalidade — mas é <b>opcional</b>: o aluno já está salvo, e dá pra fechar contrato depois pelo perfil (aba Financeiro).</p>
           <div class="linha-flex" style="justify-content: flex-end; margin-top: 10px; flex-wrap: wrap;">
+            <button class="btn sec" id="naSair">Sair — contrato depois</button>
             <button class="btn sec" id="naPerfil">Abrir perfil completo</button>
             <button class="btn" id="naConcluir">Concluir</button>
           </div>
@@ -551,6 +552,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <input id="plNome" placeholder="Nome (ex.: Mensal 3x/sem)" style="flex: 2; min-width: 170px;">
         <input id="plValor" type="number" min="0" step="0.01" placeholder="Valor R$" style="width: 110px;">
         <select id="plCobranca" style="width: auto;" title="por mês = mensalidade · por sessão = hora-aula que alimenta a carteira de créditos"><option value="mes">por mês</option><option value="sessao">por sessão (hora-aula)</option></select>
+        <input id="plPacQtd" type="number" min="0" step="1" placeholder="aulas no pacote (opcional)" hidden style="width: 190px;" title="preencha pra vender como PACOTE fechado (ex.: 10 aulas pelo valor cheio); vazio = hora-aula avulsa">
+        <label id="plPacRenovaLb" hidden style="display: flex; gap: 7px; align-items: center; font-size: 12.5px; white-space: nowrap;"><input type="checkbox" id="plPacRenova" style="width: 16px; height: 16px;"> renova sozinho ao acabar</label>
         <select id="plCiclo" style="width: auto;"><option value="1">mensal</option><option value="3">trimestral</option><option value="6">semestral</option><option value="12">anual</option></select>
         <select id="plTreinos" style="width: auto;" title="Treinos por semana incluídos no plano"><option value="3">3×/semana</option><option value="2">2×/semana</option><option value="4">4×/semana</option><option value="5">5×/semana</option><option value="6">6×/semana</option><option value="0">— (consultoria)</option></select>
         <select id="plModal" style="width: auto;"><option>presencial</option><option>consultoria online</option><option>híbrido</option></select>
@@ -2127,7 +2130,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function rotuloPlano(pl) {
     var qtd = pl.treinosSem == null ? "" : (+pl.treinosSem ? " · " + pl.treinosSem + "x/sem" : " · consultoria");
     return esc(pl.nome) + qtd + (pl.modalidade ? " · " + esc(pl.modalidade) : "") + " · R$ " + (+pl.valor).toLocaleString("pt-BR") +
-      (pl.cobranca === "sessao" ? "/sessão" : "/mês");
+      (+pl.pacoteQtd > 0 ? " / " + pl.pacoteQtd + " aulas" + (pl.pacoteRenova ? " ↻" : "") : pl.cobranca === "sessao" ? "/sessão" : "/mês");
   }
   function naPopulaPlanos(selecionado) {
     var st = load();
@@ -2179,21 +2182,35 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = st.alunos.find(function (x) { return x.id === naAlunoId; });
     if (!a) { $("dlgNovoAluno").close(); return; }
     var planoId = $("naPlano").value;
-    if (!planoId) { alert("Escolha o plano do aluno (ou crie um novo ali embaixo)."); return; }
-    st.contratosPT = st.contratosPT || [];
-    st.contratosPT.push({ id: S.uid(), alunoId: a.id, planoId: planoId, status: "ativo", inicio: S.todayISO(), diaVenc: Math.min(28, Math.max(1, +$("naVence").value || 5)) });
-    var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
-    if (plC) {
-      a.valor = +plC.valor || a.valor;
-      // o plano manda no modelo de cobrança: hora-aula liga a carteira de créditos
-      a.modo = plC.cobranca === "sessao" ? "sessao" : "mes";
-      if (a.modo === "sessao" && !a.modoSessaoDesde) a.modoSessaoDesde = S.todayISO();
-      if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
-      a.modalidade = plC.modalidade || "";
+    // plano é OPCIONAL: tem professor que não trabalha com plano fechado (ou
+    // decide depois) — o aluno já está salvo desde o passo 1, e o contrato
+    // pode ser feito a qualquer hora no perfil (aba Financeiro)
+    if (planoId) {
+      st.contratosPT = st.contratosPT || [];
+      st.contratosPT.push({ id: S.uid(), alunoId: a.id, planoId: planoId, status: "ativo", inicio: S.todayISO(), diaVenc: Math.min(28, Math.max(1, +$("naVence").value || 5)) });
+      var plC = (st.planosPT || []).find(function (x) { return x.id === planoId; });
+      if (plC) {
+        a.valor = +plC.valor || a.valor;
+        // o plano manda no modelo de cobrança: hora-aula liga a carteira de créditos
+        a.modo = plC.cobranca === "sessao" ? "sessao" : "mes";
+        if (a.modo === "sessao" && !a.modoSessaoDesde) a.modoSessaoDesde = S.todayISO();
+        if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
+        a.modalidade = plC.modalidade || "";
+        // plano-PACOTE: abre o primeiro ciclo de aulas do aluno
+        if (+plC.pacoteQtd > 0) {
+          a.pacote = { total: +plC.pacoteQtd, usadas: 0, vendidoEm: S.todayISO(),
+            planoId: plC.id, valor: +plC.valor, renova: !!plC.pacoteRenova };
+        }
+      }
     }
     if ($("naPagar").checked && +$("naValor").value > 0) {
       st.pagamentos = st.pagamentos || [];
-      st.pagamentos.push({ id: S.uid(), alunoId: a.id, valor: +$("naValor").value, forma: $("naForma").value, data: S.todayISO() });
+      // venda de PACOTE entra com desc (regra da casa: pacote não quita mensalidade
+      // nem vira crédito de carteira — o controle dele é por QUANTIDADE)
+      var pgNa = { id: S.uid(), alunoId: a.id, valor: +$("naValor").value, forma: $("naForma").value, data: S.todayISO() };
+      var plPagNa = planoId ? (st.planosPT || []).find(function (x) { return x.id === planoId; }) : null;
+      if (plPagNa && +plPagNa.pacoteQtd > 0) pgNa.desc = "Pacote de " + plPagNa.pacoteQtd + " aulas";
+      st.pagamentos.push(pgNa);
     }
     save(st);
     $("dlgNovoAluno").close();
@@ -2204,6 +2221,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   $("naConcluir").addEventListener("click", function () { naConclui(false); });
   $("naPerfil").addEventListener("click", function () { naConclui(true); });
+  // sair no meio do passo 2: o aluno já está salvo — só fecha, sem contrato nem venda
+  $("naSair").addEventListener("click", function () {
+    $("dlgNovoAluno").close();
+    if (naAlunoId) {
+      var stS = load();
+      var aS = stS.alunos.find(function (x) { return x.id === naAlunoId; });
+      if (aS) $("aAcessoStatus").innerHTML = ($("aAcessoStatus").innerHTML ? $("aAcessoStatus").innerHTML + "<br>" : "") +
+        "✓ " + esc(aS.nome.split(" ")[0]) + " cadastrado(a) — contrato e venda ficam pra depois (perfil → Financeiro).";
+    }
+  });
   $("listaAlunos").addEventListener("click", function (e) {
     var ac = e.target.getAttribute && e.target.getAttribute("data-acesso");
     if (ac) {
@@ -3267,6 +3294,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (a.modo === "sessao" && !a.modoSessaoDesde) a.modoSessaoDesde = S.todayISO();
         if (+plC.treinosSem) a.metaSemana = +plC.treinosSem;
         a.modalidade = plC.modalidade || "";
+        // plano-PACOTE: abre o primeiro ciclo de aulas (a venda registra no card de pagamentos)
+        if (+plC.pacoteQtd > 0) {
+          a.pacote = { total: +plC.pacoteQtd, usadas: 0, vendidoEm: S.todayISO(),
+            planoId: plC.id, valor: +plC.valor, renova: !!plC.pacoteRenova };
+        }
       }
       save(st);
       renderPlanosPT();
@@ -4777,7 +4809,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           // desconta do pacote — e continua contando além do total (sessão excedente aparece na cobrança)
           alPc.pacote.usadas = (+alPc.pacote.usadas || 0) + 1;
           var restaAgora = +alPc.pacote.total - alPc.pacote.usadas;
-          if (restaAgora === 0) alert("O pacote de " + alPc.nome.split(" ")[0] + " acabou de zerar — hora de renovar (perfil, aba Financeiro).");
+          if (restaAgora === 0) {
+            if (alPc.pacote.renova && +alPc.pacote.valor > 0) {
+              // RENOVAÇÃO AUTOMÁTICA (combinado professor × aluno no plano-pacote):
+              // abre outro ciclo igual na hora e a COBRANÇA entra nas pendências —
+              // o dinheiro não entra sozinho, quem confirma é o Recebi
+              alPc.pacote = { total: +alPc.pacote.total, usadas: 0, vendidoEm: S.todayISO(),
+                planoId: alPc.pacote.planoId, valor: +alPc.pacote.valor, renova: true,
+                cobrar: +alPc.pacote.valor };
+              alert("O pacote de " + alPc.nome.split(" ")[0] + " zerou e RENOVOU sozinho — a cobrança de " + S.fmtBRL(+alPc.pacote.valor) + " já está nas pendências de pagamento.");
+            } else {
+              alert("O pacote de " + alPc.nome.split(" ")[0] + " acabou de zerar — hora de renovar (perfil, aba Financeiro).");
+            }
+          }
         } else if (alPc && alPc.modo === "sessao") {
           // quem paga por sessão: oferece fechar o financeiro na hora, pelo MESMO
           // preço que a carteira desconta (o plano manda; sem plano, o cadastro)
@@ -5063,7 +5107,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * diferença virava dívida fantasma a cada aula. */
   function valorSessaoDe(st, a) {
     var ct = contratoDe(st, a.id), pl = ct ? planoDe(st, ct.planoId) : null;
-    return pl && pl.cobranca === "sessao" ? +pl.valor
+    // plano-PACOTE fica de fora: pl.valor ali é o preço do PACOTE inteiro, não
+    // de uma aula — quem controla o consumo é a quantidade (a.pacote)
+    return pl && pl.cobranca === "sessao" && !(+pl.pacoteQtd > 0) ? +pl.valor
       : (!pl && a.modo === "sessao" ? +a.valor : 0);
   }
   function carteiraPT(st, a) {
@@ -5413,6 +5459,18 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var ehSessao = (pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao");
       var scSes = ehSessao ? sessoesACobrar(st, a) : null;
       if (ehSessao) {
+        // renovação automática do PACOTE esperando o dinheiro: aparece primeiro
+        if (a.pacote && +a.pacote.cobrar > 0) {
+          var vPac = +a.pacote.cobrar;
+          var msgP = "Oi " + a.nome.split(" ")[0] + "! Seu pacote de " + a.pacote.total + " aulas renovou — " + S.fmtBRL(vPac) + " pra gente seguir firme. Te mando o Pix? 💪";
+          return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
+            '<span class="tag alerta">pacote renovou ↻</span><span>' + S.fmtBRL(vPac) + "</span>" +
+            '<span class="muted">' + a.pacote.total + " aulas</span>" +
+            '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
+            '<button class="btn mini" data-pacrec="' + a.id + '" title="registra o recebimento do pacote renovado">Recebi</button>' +
+            ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + vPac + '">Pix</button>' : "") +
+            (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgP) + '">Cobrar</a>' : "") + "</span></div>";
+        }
         // quem paga por sessão: só aparece com carteira negativa ou pacote estourado
         if (!scSes) return "";
         var msgS = scSes.pacote
@@ -5521,6 +5579,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!confirm("Registrar " + S.fmtBRL(vR) + " recebido de " + alR.nome.split(" ")[0] + " agora?")) return;
       stR.pagamentos.push({ id: S.uid(), alunoId: alR.id, valor: vR, forma: "recebido", data: S.todayISO() });
       save(stR);
+      return;
+    }
+    // Recebi da RENOVAÇÃO do pacote: entra COM desc (pacote não quita mensalidade
+    // nem vira crédito de carteira) e apaga a pendência do ciclo novo
+    var pr = e.target.closest("[data-pacrec]");
+    if (pr) {
+      var stPr = load();
+      var alPr = stPr.alunos.find(function (x) { return x.id === pr.getAttribute("data-pacrec"); });
+      if (!alPr || !alPr.pacote || !(+alPr.pacote.cobrar > 0)) return;
+      var vPr = +alPr.pacote.cobrar;
+      if (!confirm("Registrar " + S.fmtBRL(vPr) + " do pacote renovado de " + alPr.nome.split(" ")[0] + "?")) return;
+      stPr.pagamentos.push({ id: S.uid(), alunoId: alPr.id, valor: vPr, forma: "pacote renovado",
+        desc: "Pacote de " + (+alPr.pacote.total || 0) + " aulas (renovação)", data: S.todayISO() });
+      alPr.pacote.cobrar = 0;
+      save(stPr);
       return;
     }
     var ap = e.target.closest("[data-abreperfil]");
@@ -8119,8 +8192,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     el.innerHTML = st.planosPT.length ? st.planosPT.map(function (pl) {
       var n = st.contratosPT.filter(function (c) { return c.planoId === pl.id && c.status === "ativo"; }).length;
       return '<div class="sessao-pt"><b>' + esc(pl.nome) + "</b><span>" + S.fmtBRL(+pl.valor) +
-        (pl.cobranca === "sessao" ? "/sessão" : "/mês") + "</span>" +
-        (pl.cobranca === "sessao" ? '<span class="tag roxo" title="hora-aula: cada Feita desconta da carteira de créditos">hora-aula</span>' : "") +
+        (+pl.pacoteQtd > 0 ? " / " + pl.pacoteQtd + " aulas" : pl.cobranca === "sessao" ? "/sessão" : "/mês") + "</span>" +
+        (+pl.pacoteQtd > 0 ? '<span class="tag roxo" title="pacote fechado de aulas' + (pl.pacoteRenova ? " — renova sozinho ao acabar" : "") + '">pacote' + (pl.pacoteRenova ? " ↻" : "") + "</span>"
+          : pl.cobranca === "sessao" ? '<span class="tag roxo" title="hora-aula: cada Feita desconta da carteira de créditos">hora-aula</span>' : "") +
         (pl.treinosSem == null && !pl.modalidade ? "" : '<span class="muted">' + (pl.treinosSem == null ? "" : (+pl.treinosSem ? pl.treinosSem + "x/sem" : "consultoria")) + (pl.modalidade ? (pl.treinosSem == null ? "" : " · ") + esc(pl.modalidade) : "") + "</span>") +
         (pl.cobranca === "sessao" ? "" : '<span class="muted">' + (pl.ciclo > 1 ? "ciclo de " + pl.ciclo + " meses" : "mensal") + "</span>") +
         (pl.linkRec ? '<span class="tag roxo" title="tem link de assinatura recorrente">recorrente</span>' : "") +
@@ -8145,9 +8219,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("plCiclo").hidden = ehSes;
     $("plLink").hidden = ehSes;
     $("plDicaSessao").hidden = !ehSes;
-    $("plValor").placeholder = ehSes ? "R$ da hora-aula" : "Valor R$";
-    $("plNome").placeholder = ehSes ? "Nome (ex.: Hora-aula avulsa)" : "Nome (ex.: Mensal 3x/sem)";
+    // pacote: só existe no mundo hora-aula (X aulas por um valor fechado)
+    $("plPacQtd").hidden = !ehSes;
+    $("plPacRenovaLb").hidden = !ehSes;
+    if (!ehSes) { $("plPacQtd").value = ""; $("plPacRenova").checked = false; }
+    var temPac = ehSes && +$("plPacQtd").value > 0;
+    $("plValor").placeholder = temPac ? "R$ do PACOTE" : ehSes ? "R$ da hora-aula" : "Valor R$";
+    $("plNome").placeholder = temPac ? "Nome (ex.: Pacote 10 aulas)" : ehSes ? "Nome (ex.: Hora-aula avulsa)" : "Nome (ex.: Mensal 3x/sem)";
   }
+  $("plPacQtd").addEventListener("input", plModoSessao);
   $("plCobranca").addEventListener("change", plModoSessao);
   window.__plModoSessao = plModoSessao; // testes
   $("plAdd").addEventListener("click", function () {
@@ -8159,9 +8239,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       // hora-aula: sem ciclo e sem link de assinatura — é venda unitária de créditos
       ciclo: ehSesPl ? 1 : (+$("plCiclo").value || 1),
       cobranca: $("plCobranca") ? $("plCobranca").value : "mes",
+      // pacote: X aulas por um valor fechado; renova = ao zerar, abre outro ciclo
+      // sozinho e a cobrança entra nas pendências (combinado professor × aluno)
+      pacoteQtd: ehSesPl ? (Math.floor(+$("plPacQtd").value) || 0) : 0,
+      pacoteRenova: ehSesPl && +$("plPacQtd").value > 0 && $("plPacRenova").checked,
       treinosSem: +$("plTreinos").value || 0, modalidade: $("plModal").value,
       linkRec: ehSesPl ? "" : $("plLink").value.trim() });
     $("plNome").value = ""; $("plValor").value = ""; $("plLink").value = "";
+    $("plPacQtd").value = ""; $("plPacRenova").checked = false;
     S.write("ptStudio", st);
     renderPlanosPT(); render();
   });
