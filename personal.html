@@ -2270,9 +2270,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (cart) {
       var corSaldo = cart.saldo > 0 ? "#4ade80" : cart.saldo < 0 ? "#f87171" : "var(--cinza-2)";
       var rotSaldo = cart.saldo > 0
-        ? "sobram créditos — dá pra mais " + Math.floor(cart.saldo / cart.valorSessao) + " sessão(ões)"
+        ? "sobram créditos — dá pra mais " + S.plural(Math.floor(cart.saldo / cart.valorSessao), "sessão", "sessões")
         : cart.saldo < 0
-        ? "DEVENDO " + S.fmtBRL(-cart.saldo) + " (" + Math.ceil(-cart.saldo / cart.valorSessao) + " sessão(ões) além do pago)"
+        ? "DEVENDO " + S.fmtBRL(-cart.saldo) + " (" + S.plural(Math.ceil(-cart.saldo / cart.valorSessao), "sessão", "sessões") + " além do pago)"
         : "consumiu exatamente o que pagou";
       var linhaCart = function (rot, val) {
         return "<div style='display:flex;justify-content:space-between;font-size:13px;padding:4px 0;'><span class='muted'>" + rot + "</span><b>" + val + "</b></div>";
@@ -4340,7 +4340,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var temPend = iso < hoje && doDia.some(function (x) { return !x.feita && !x.faltou; });
       var bq = bloqueioDe(st, iso);
       cal += '<button class="cal-dia' + (iso === hoje ? " hoje" : "") + (iso === diaSel ? " sel" : "") + (temPend ? " pend" : "") + (bq ? " bloq" : "") +
-        '" data-caldia="' + iso + '" title="' + (bq ? esc(bq.motivo) + " · " : "") + doDia.length + ' sessão(ões)">' + dd +
+        '" data-caldia="' + iso + '" title="' + (bq ? esc(bq.motivo) + " · " : "") + S.plural(doDia.length, 'sessão', 'sessões') + '">' + dd +
         (doDia.length ? '<span class="cal-n">' + doDia.length + "</span>" : "") + "</button>";
     }
     cal += "</div>";
@@ -4370,7 +4370,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     var rotSel = diaSel === hoje ? "Hoje" : diaSel === amanhaISO ? "Amanhã" : S.fmtData(diaSel);
     var doSel = (porDia[diaSel] || []).slice().sort(function (a, b) { return (a.hora || "") < (b.hora || "") ? -1 : 1; });
-    var htmlSes = cabDia(rotSel + (doSel.length ? " — " + doSel.length + " sessão(ões)" : "")) +
+    var htmlSes = cabDia(rotSel + (doSel.length ? " — " + S.plural(doSel.length, "sessão", "sessões") : "")) +
       (doSel.length ? doSel.map(function (x) { return linhaSes(x, false); }).join("")
         : '<p class="muted" style="margin:6px 0 0;">Nenhuma sessão nesse dia — toque em outro dia do calendário ou use a aba Agendar.</p>');
     var antigas = st.sessoes.filter(function (x) { return x.data < hoje && !x.feita && !x.faltou && x.data !== diaSel; })
@@ -4520,7 +4520,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var choques = st.sessoes.filter(function (x) { return x.hora === hora && datas.indexOf(x.data) >= 0; });
       if (choques.length) {
         var c0 = choques[0];
-        if (!confirm("Você já tem " + choques.length + " sessão(ões) nesse mesmo horário — ex.: " + S.fmtData(c0.data) + " às " + c0.hora + " com " + (nomeDe0[c0.alunoId] || "?") + ". Agendar mesmo assim?")) return;
+        if (!confirm("Você já tem " + S.plural(choques.length, "sessão", "sessões") + " nesse mesmo horário — ex.: " + S.fmtData(c0.data) + " às " + c0.hora + " com " + (nomeDe0[c0.alunoId] || "?") + ". Agendar mesmo assim?")) return;
       }
     }
     datas.forEach(function (dt) {
@@ -5158,7 +5158,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if (!scSes) return "";
         var msgS = "Oi " + a.nome.split(" ")[0] + "! Fechando as sessões: " + scSes.n + " feita(s) desde o último acerto (" + S.fmtBRL(scSes.total) + "). Te mando o Pix? 💪";
         return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
-          '<span class="tag alerta">' + scSes.n + " sessão(ões) a cobrar</span><span>" + S.fmtBRL(scSes.total) + "</span>" +
+          '<span class="tag alerta">' + S.plural(scSes.n, "sessão a cobrar", "sessões a cobrar") + "</span><span>" + S.fmtBRL(scSes.total) + "</span>" +
           '<span style="margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;">' +
           '<button class="btn mini" data-receb="' + a.id + '" data-v="' + scSes.total + '" title="registra o recebimento com 1 toque">Recebi</button>' +
           ((st.config || {}).pixChave ? '<button class="btn mini" data-pix="' + a.id + '" data-v="' + scSes.total + '">Pix</button>' : "") +
@@ -5187,7 +5187,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var scP = sessoesACobrar(st, a);
       if (!scP) return;
       linhasPend.push('<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
-        '<span class="tag alerta">' + scP.n + " sessão(ões) além do pacote</span>" +
+        '<span class="tag alerta">' + S.plural(scP.n, "sessão", "sessões") + " além do pacote</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
         '<button class="btn mini" data-abreperfil="' + a.id + '">Renovar pacote</button></span></div>');
     });
@@ -8688,8 +8688,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var taxa = n + f ? Math.round(100 * n / (n + f)) : null;
       return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
         (taxa !== null ? '<span class="muted">presença ' + taxa + "%</span>" : "") +
-        (f ? '<span style="color:#d97706;font-weight:700;">' + f + " falta(s)</span>" : "") +
-        '<span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + n + " sessão(ões)</span>" +
+        (f ? '<span style="color:#d97706;font-weight:700;">' + S.plural(f, "falta", "faltas") + "</span>" : "") +
+        '<span style="margin-left:auto;font-weight:800;color:' + cor + ';">' + S.plural(n, "sessão", "sessões") + "</span>" +
         (n === 0 ? ' <span class="tag erro">sumido — chame!</span>' : "") + "</div>";
     }).join("") : "Cadastre alunos primeiro.";
 

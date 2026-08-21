@@ -401,7 +401,7 @@ async function abaPt(p, a) {
     await abaPt(p, "pagamentos");
     const pendHtml = await p.evaluate(() => document.getElementById("pendentes").innerHTML);
     ok(new RegExp("deve " + expMeses + " meses").test(pendHtml) && /Devedor Antigo/.test(pendHtml), "pendência mostra a etiqueta 'deve N meses' no lugar do ATRASADO simples");
-    ok(/sessão\(ões\) a cobrar/.test(pendHtml) && /Paga Sessao/.test(pendHtml) && /data-receb="axSes"/.test(pendHtml), "linha própria de quem paga por sessão, com botão Recebi");
+    ok(/sess(ão|ões) a cobrar/.test(pendHtml) && /Paga Sessao/.test(pendHtml) && /data-receb="axSes"/.test(pendHtml), "linha própria de quem paga por sessão, com botão Recebi");
     ok(/além do pacote/.test(pendHtml) && /data-abreperfil="axPac"/.test(pendHtml) && /Renovar pacote/.test(pendHtml), "pacote estourado aparece com botão Renovar pacote");
     ok(new RegExp('data-receb="axDev" data-v="' + expMeses * 100 + '"').test(pendHtml), "botões de cobrança do devedor usam o TOTAL acumulado, não só o mês");
 
