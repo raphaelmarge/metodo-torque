@@ -112,7 +112,7 @@
         '<span class="avatar">' + esc(ini(x.nome)) + '</span>' +
         '<div class="quem"><strong>' + esc(x.nome) + '</strong> ' +
         (x.p.vagas ? '<span class="tag ' + (x.p.faixa === "alta" ? "ok" : x.p.faixa === "media" ? "alerta" : "erro") + '" style="font-size:10px;">' + x.p.ocup + '% ' + x.p.faixa.toUpperCase() + "</span>" : "") +
-        '<div class="muted" style="font-size:12px;">' + x.p.total + " presença(s) recebidas no mês</div></div>" +
+        '<div class="muted" style="font-size:12px;">' + S.plural(x.p.total, "presença recebida", "presenças recebidas") + " no mês</div></div>" +
         '<div class="kpi"><div class="n">' + x.p.aulas + '</div><div class="l">AULAS (GRADE)</div></div>' +
         '<div class="kpi"><div class="n">' + x.p.media + '</div><div class="l">MÉDIA/AULA</div></div>' +
         '<div class="kpi"><div class="n">' + x.p.chamadas + '</div><div class="l">CHAMADAS TURMA</div></div>' +

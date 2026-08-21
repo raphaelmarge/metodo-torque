@@ -636,7 +636,7 @@ Semana que vem: manutenção na área de peso livre"></textarea>
       return fila.then(function () {
         if (aplicados.length || cancelados.length || promovidos.length) {
           avisoApp((aplicados.length ? "📲 " + aplicados.length + " agendamento(s) do app entraram na grade. " : "") +
-                   (cancelados.length ? "🚫 " + cancelados.length + " cancelamento(s) aplicados. " : "") +
+                   (cancelados.length ? "🚫 " + S.plural(cancelados.length, "cancelamento aplicado", "cancelamentos aplicados") + ". " : "") +
                    (promovidos.length ? "🕗 Da lista de espera: " + promovidos.map(function (g) { return (g.aluno || "aluno").split(" ")[0]; }).join(", ") + " entrou na aula — avise no WhatsApp!" : ""));
           render();
         }

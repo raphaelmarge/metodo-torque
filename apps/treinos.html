@@ -551,7 +551,7 @@
         "<td style='text-align:right'><button class='btn sec mini' data-videx='" + x.id + "' title='Definir o link do vídeo de execução'>🎬</button> " +
         "<button aria-label='Excluir' class='btn perigo mini' data-delex='" + x.id + "'>✕</button></td></tr>";
     }).join("");
-    if (aba === "exercicios") $("resumoAba").textContent = st.exercicios.length + " exercício(s) seus + " + (self.MT_EXERCICIOS || []).length + " no catálogo TORQUE (aparecem na busca das fichas)";
+    if (aba === "exercicios") $("resumoAba").textContent = S.plural(st.exercicios.length, "exercício seu", "exercícios seus") + " + " + (self.MT_EXERCICIOS || []).length + " no catálogo TORQUE (aparecem na busca das fichas)";
   }
   $("buscaEx").addEventListener("input", function () { buscaEx = this.value; renderEx(); });
   $("addEx").onclick = function () {
