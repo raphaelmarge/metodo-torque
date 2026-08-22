@@ -15,7 +15,7 @@ Supabase (nuvem, multi-tenant por academia). Responda ao Raphael sempre em
 | TORQUE NUTRI | `nutricao.html` | Módulo do nutricionista: pacientes, dietas, app do paciente |
 | App do aluno | **código** em `app/aluno-builder.js` + **dados** de `dadosAppAluno` (personal.html); Nutri ainda usa `montaAppNutri` (nutricao.html) | `app/index.html` junta os dois na hora; aluno entra por `aluno-login.html` (login = e-mail, senha enviada por e-mail no cadastro) |
 | Vendas | `personal-vendas.html`, `torqueon.html` | Landing pages |
-| Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html` | Demonstrações com dados fake pra mandar pro cliente. O do aluno é gerado por script (regenerar quando o builder mudar) e simula a nuvem interceptando o `fetch`; os outros dois semeiam o localStorage e abrem o módulo |
+| Demos | `demo-aluno.html`, `demo-personal.html`, `demo-nutri.html` | Demonstrações com dados fake pra mandar pro cliente. O do aluno é gerado por `node tools/demo-aluno/regen-demo.js` (com o servidor 8765 no ar — regenerar quando o builder mudar) e simula a nuvem interceptando o `fetch`; os outros dois semeiam o localStorage e abrem o módulo |
 
 Bancos compartilhados em `assets/`: `exercicios-db.js` (1270), `alimentos-db.js`
 (989), `receitas-db.js` (63). Rotinas diárias adicionam itens — sempre com

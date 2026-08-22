@@ -1,0 +1,146 @@
+<script>/* demonstração: dados fake de 14 meses, só em memória (não gravam no aparelho) */
+var __demoDados={};
+(function(){
+  function iso(n){var d=new Date(Date.now()-n*864e5);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+  function dt(n,h){var d=new Date(Date.now()-n*864e5);d.setHours(h,12,0,0);return d.toISOString();}
+  function mmss(s){return Math.floor(s/60)+":"+("0"+Math.round(s%60)).slice(-2);}
+  function svgf(rot,cor){return "data:image/svg+xml;base64,"+btoa("<svg xmlns='http://www.w3.org/2000/svg' width='300' height='400'><rect width='300' height='400' fill='"+cor+"'/><circle cx='150' cy='140' r='55' fill='rgba(255,255,255,.25)'/><rect x='95' y='210' width='110' height='150' rx='40' fill='rgba(255,255,255,.25)'/><text x='150' y='385' font-family='sans-serif' font-size='22' font-weight='bold' fill='rgba(255,255,255,.85)' text-anchor='middle'>"+rot+"</text></svg>");}
+  var peso={};for(var i=420;i>=0;i-=3){peso[iso(i)]=Math.round((86-7.8*(420-i)/420+Math.sin(i*0.7)*0.35)*10)/10;}
+  var feitos={};for(var i=420;i>=1;i--){var dw=new Date(Date.now()-i*864e5).getDay();if(dw===1||dw===3||dw===5||dw===6)feitos[iso(i)]=1;}
+  /* cargas anotadas em TODOS os exercícios das fichas A–E: [nome, kg inicial,
+     kg atual, reps]; ~28 anotações quinzenais por exercício, subindo devagar */
+  var dc={};
+  [["Supino reto",42.5,70,12],["Supino inclinado com halteres",16,30,12],["Crucifixo na máquina",35,55,15],["Tríceps na corda",20,35,12],["Francês com halter",10,18,12],
+   ["Remada curvada",40,72.5,12],["Puxada aberta",45,75,12],["Remada baixa",40,70,12],["Rosca direta",20,34,12],["Rosca martelo",12,22,12],
+   ["Agachamento livre",50,100,10],["Leg press 45",120,220,12],["Stiff com halteres",30,60,12],["Panturrilha em pé",40,80,15],
+   ["Desenvolvimento com halteres",14,26,10],["Elevação lateral",6,12,15],["Face pull",15,27.5,15],["Elevação frontal",8,14,12],
+   ["Abdominal na polia (crunch)",25,45,15],["Elevação de pernas na barra",0,0,12],
+   ["Levantamento terra",60,120,8],["Hip thrust",60,140,12],["Mesa flexora",30,55,12],["Cadeira abdutora",40,70,15],["Panturrilha sentado",30,60,15]]
+  .forEach(function(ex){
+    if(!ex[2])return; // exercício de peso do corpo fica sem anotação
+    var l=[];for(var w=56;w>=0;w-=2){var t=(56-w)/56;
+      l.push({d:iso(w*7+2),kg:Math.round((ex[1]+(ex[2]-ex[1])*t)*2)/2,r:ex[3]-(w%6===0?2:0),g:1});}
+    dc[ex[0]]=l;});
+  var hab={};for(var i=60;i>=0;i--){hab[iso(i)]={0:true,1:i%3!==0,2:true,3:i%2===0};}
+  var fotos=[{d:iso(420),img:svgf("ANTES","#4c4560")},{d:iso(3),img:svgf("AGORA","#7c3aed")}];
+  var chat=[
+    {de:"aluno",texto:"Bom demais o treino de hoje! Senti forte o agachamento.",criado:dt(1,18)},
+    {de:"personal",texto:"É assim que fala! Semana que vem a gente tenta os 100 kg.",criado:dt(1,19)},
+    {de:"aluno",texto:"Fechado. Sábado 7h confirmado?",criado:dt(1,20)},
+    {de:"personal",texto:"Confirmado! Leva a garrafa e o cinto.",criado:dt(0,9)}
+  ];
+  __demoDados.ptpeso=JSON.stringify(peso);
+  __demoDados.ptfeitos=JSON.stringify(feitos);
+  __demoDados.ptdc=JSON.stringify(dc);
+  __demoDados.pthab=JSON.stringify(hab);
+  __demoDados.ptfotos=JSON.stringify(fotos);
+  __demoDados.ptchat=JSON.stringify(chat);
+  __demoDados.ptvisto=JSON.stringify(dt(1,21));
+  var rpe={};rpe[iso(1)]=2;rpe[iso(3)]=3;rpe[iso(5)]=2;rpe[iso(8)]=1;
+  __demoDados.ptrpe=JSON.stringify(rpe);
+  __demoDados.ptonb=JSON.stringify({obj:"musculo",dias:"4",dor:"",em:iso(420)});
+  __demoDados.ptmetapeso=JSON.stringify("77");
+  __demoDados["ptaguaN_"+iso(0)]=JSON.stringify(5);
+  /* placares dos circuitos PRESCRITOS (chave = id do wod na ficha: dmw1/dmw2/
+     dmw3) + os avulsos do montador livre — meses de história, melhorando */
+  __demoDados.ptwodres=JSON.stringify({
+    dmw1:[
+      {d:iso(63),n:"Chipper do sábado",tp:"amrap",v:3,ex:22,r:"3 voltas + 22"},
+      {d:iso(42),n:"Chipper do sábado",tp:"amrap",v:4,ex:0,r:"4 voltas"},
+      {d:iso(28),n:"Chipper do sábado",tp:"amrap",v:4,ex:9,r:"4 voltas + 9"},
+      {d:iso(14),n:"Chipper do sábado",tp:"amrap",v:4,ex:12,r:"4 voltas + 12"},
+      {d:iso(7),n:"Chipper do sábado",tp:"amrap",v:5,ex:2,r:"5 voltas + 2 — BATEU o resultado anterior!",}
+    ],
+    dmw2:[
+      {d:iso(35),n:"Fran",tp:"fortime",v:571,r:"9:31"},
+      {d:iso(9),n:"Fran",tp:"fortime",v:521,r:"8:41 — BATEU o resultado anterior!"}
+    ],
+    dmw3:[
+      {d:iso(21),n:"Motor de segunda",tp:"emom",v:9,r:"9 na pior série"},
+      {d:iso(6),n:"Motor de segunda",tp:"emom",v:10,r:"10 na pior série"}
+    ],
+    livre:[
+      {d:iso(4),n:"Tabata 8×20/10s",r:"TABATA COMPLETO — 8 ROUNDS!",v:null},
+      {d:iso(2),n:"AMRAP 12 min",tp:"amrap",r:"9 ROUNDS!",v:9}
+    ]
+  });
+  __demoDados.ptaguaLem=JSON.stringify(120);
+  /* corridas e pedais de ~6 meses: rodagem semanal com o pace caindo, tiros,
+     um longão de 10 km (acende a medalha) e bike de vez em quando */
+  var cardio=[];
+  for(var w=24;w>=1;w--){var t9=(24-w)/24;
+    if(w%2===0){var pc=400-Math.round(46*t9);var km=5+((w%4===0)?0.08:0);
+      cardio.push({d:iso(w*7+1),n:"Rodagem leve",m:"corrida",s:Math.round(pc*km),k:Math.round(km*100)/100,p:mmss(pc)});}
+    else if(w%3===0){var pt9=352-Math.round(28*t9);
+      cardio.push({d:iso(w*7),n:"Tiros na praça",m:"corrida",s:Math.round(pt9*3.4),k:3.4,p:mmss(pt9)});}
+    if(w%5===0)cardio.push({d:iso(w*7+3),n:"Pedal regenerativo",m:"bike",s:2400,k:15.3,p:mmss(2400/15.3)});
+  }
+  cardio.push({d:iso(10),n:"Longão de domingo",m:"corrida",s:3721,k:10.2,p:mmss(3721/10.2)});
+  cardio.push({d:iso(2),n:"Rodagem leve",m:"corrida",s:Math.round(354*5.05),k:5.05,p:mmss(354)});
+  cardio.sort(function(a,b){return a.d<b.d?-1:1;});
+  __demoDados.ptcardio=JSON.stringify(cardio);
+})();
+/* Comunidade de mentirinha: o feed responde localmente, então dá pra postar,
+   curtir e comentar dentro do demo sem tocar em nuvem nenhuma. */
+var __demoFeed=(function(){
+  function h(n){var d=new Date(Date.now()-n*36e5);return d.toISOString();}
+  var proximo=100;
+  var posts=[
+    {id:"p1",nome:"Mariana",nivel:4,texto:"Fechei 100 kg no agacho hoje! Seis meses atrás eu não subia 60.",foto:"",treino:"Treino B — Perna",criado:h(2),meu:false,curtidas:7,curti:true,
+     comentarios:[{nome:"Carlos",texto:"Monstra! Bora pros 110",criado:h(1)},{nome:"Alex",texto:"Que evolução, parabéns!",criado:h(1)}]},
+    {id:"p2",nome:"Carlos",nivel:7,texto:"Semana fechada: 5 treinos, nenhum furo. Quem vem junto semana que vem?",foto:"",treino:"",criado:h(9),meu:false,curtidas:4,curti:false,
+     comentarios:[{nome:"Juliana",texto:"Tô dentro!",criado:h(8)}]},
+    {id:"p3",nome:"Alex",nivel:6,texto:"Primeiro treino depois de 3 semanas parado. Voltei!",foto:"",treino:"Treino A — Peito/Ombro/Tríceps",criado:h(27),meu:true,curtidas:9,curti:false,
+     comentarios:[{nome:"Mariana",texto:"Boaaa, faltou você aqui",criado:h(26)}]},
+    {id:"p4",nome:"Juliana",nivel:3,texto:"Meta da semana batida antes de sexta pela primeira vez!",foto:"",treino:"Treino C — Costas",criado:h(52),meu:false,curtidas:6,curti:true,comentarios:[]},
+    {id:"p5",nome:"Rodrigo",nivel:2,texto:"Comecei essa semana. Tô morto, mas voltei hoje de novo.",foto:"",treino:"Treino A — Peito/Ombro/Tríceps",criado:h(58),meu:false,curtidas:11,curti:false,
+     comentarios:[{nome:"Carlos",texto:"Bem-vindo! A primeira semana é a pior",criado:h(57)},{nome:"Mariana",texto:"Aguenta que compensa",criado:h(56)}]},
+    {id:"p6",nome:"Patrícia",nivel:5,texto:"3 kg a menos no mês e a roupa do casamento serviu. Chorei.",foto:"",treino:"",criado:h(74),meu:false,curtidas:18,curti:true,
+     comentarios:[{nome:"Juliana",texto:"Que máximo!!",criado:h(73)},{nome:"Alex",texto:"Merecido demais",criado:h(72)},{nome:"Rodrigo",texto:"Inspiração",criado:h(70)}]},
+    {id:"p7",nome:"Thiago",nivel:6,texto:"Treinão de sábado no parque com a galera. Bora que semana que vem tem de novo.",foto:"",treino:"",criado:h(96),meu:false,curtidas:13,curti:false,
+     comentarios:[{nome:"Carlos",texto:"O melhor treino da semana",criado:h(95)}]},
+    {id:"p8",nome:"Alex",nivel:6,texto:"Bati 5 séries no supino com 60 kg. Mês passado eram 3.",foto:"",treino:"Treino A — Peito/Ombro/Tríceps",criado:h(120),meu:true,curtidas:8,curti:false,
+     comentarios:[{nome:"Patrícia",texto:"Voando!",criado:h(119)}]},
+    {id:"p9",nome:"Bianca",nivel:3,texto:"Primeira vez que consegui a prancha inteira sem parar. Pequenas vitórias.",foto:"",treino:"Treino B — Costas/Perna/Bíceps",criado:h(140),meu:false,curtidas:9,curti:true,
+     comentarios:[{nome:"Mariana",texto:"Isso aí é vitória grande",criado:h(139)}]}
+  ];
+  var ranking=[{nome:"Mariana",dias:5},{nome:"Patrícia",dias:5},{nome:"Alex",dias:4},{nome:"Carlos",dias:4},
+    {nome:"Thiago",dias:4},{nome:"Juliana",dias:3},{nome:"Bianca",dias:3},{nome:"Rodrigo",dias:2},
+    {nome:"Fernanda",dias:2},{nome:"Léo",dias:2},{nome:"Camila",dias:1},{nome:"Vitor",dias:1}];
+  return {
+    feed:function(){return {ok:true,posts:posts.slice()};},
+    ranking:function(){return {ok:true,ranking:ranking};},
+    posta:function(c){
+      posts.unshift({id:"n"+(proximo++),nome:"Alex",nivel:6,texto:c.p_texto||"",foto:c.p_foto||"",treino:c.p_treino||"",
+        criado:new Date().toISOString(),meu:true,curtidas:0,curti:false,comentarios:[]});
+      return {ok:true};
+    },
+    reage:function(c){
+      var id=String(c.p_post||"").replace("feed:","");
+      for(var i=0;i<posts.length;i++){ if(posts[i].id!==id) continue;
+        if(c.p_tipo==="like"){ posts[i].curti=!posts[i].curti; posts[i].curtidas+=posts[i].curti?1:-1; }
+        else { posts[i].comentarios.push({nome:"Alex",texto:c.p_texto,criado:new Date().toISOString()}); }
+        break; }
+      return {ok:true};
+    },
+    apaga:function(c){ posts=posts.filter(function(x){return x.id!==String(c.p_id);}); return {ok:true}; }
+  };
+})();
+(function(){
+  var fetchReal=window.fetch;
+  window.fetch=function(url,op){
+    var u=String(url||"");
+    if(u.indexOf("/rest/v1/rpc/")<0) return fetchReal.apply(this,arguments);
+    var fn=u.split("/rest/v1/rpc/")[1];
+    var corpo={};try{corpo=JSON.parse((op&&op.body)||"{}");}catch(e){}
+    var r={ok:true};
+    if(fn==="app_aluno_feed")r=__demoFeed.feed();
+    else if(fn==="app_desafio_ranking")r=__demoFeed.ranking();
+    else if(fn==="app_aluno_posta")r=__demoFeed.posta(corpo);
+    else if(fn==="app_aluno_reage")r=__demoFeed.reage(corpo);
+    else if(fn==="app_aluno_feed_apaga")r=__demoFeed.apaga(corpo);
+    else if(fn==="app_aluno_busca")r=null; /* nada de auto-atualizar o demo */
+    return Promise.resolve({ok:true,status:200,json:function(){return Promise.resolve(r);}});
+  };
+})();
+var __demoLS={getItem:function(k){return Object.prototype.hasOwnProperty.call(__demoDados,k)?__demoDados[k]:null;},setItem:function(k,v){__demoDados[k]=String(v);},removeItem:function(k){delete __demoDados[k];},key:function(i){return Object.keys(__demoDados)[i]||null;}};Object.defineProperty(__demoLS,'length',{get:function(){return Object.keys(__demoDados).length;}});</script>

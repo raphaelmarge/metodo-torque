@@ -3361,11 +3361,13 @@
         });
         return m;
       })()) + ";" +
+      // ATENÇÃO: pernas vem ANTES de braço — 'Quadríceps' também termina em
+      // 'íceps' e caía no grupo errado (o Leg press aparecia em Braço)
       "function gcanon(g){g=String(g||'').toLowerCase();" +
       "if(/peito|peitoral/.test(g))return 'Peito';if(/costas|dorsal|trap/.test(g))return 'Costas';" +
+      "if(/perna|quadr|posterior|gl\\u00fateo|gluteo|panturr|adutor|abdutor/.test(g))return 'Pernas';" +
       "if(/\\u00edceps|iceps|antebra|bra\\u00e7o|braco/.test(g))return 'Braço';" +
       "if(/ombro|deltoide/.test(g))return 'Ombro';" +
-      "if(/perna|quadr|posterior|gl\\u00fateo|gluteo|panturr|adutor|abdutor/.test(g))return 'Pernas';" +
       "if(/abd|core|lombar/.test(g))return 'Abdômen';return 'Outros';}" +
       "function cgDados(){var dc=L('ptdc',{});var gs={};var mesK=isoHj().slice(0,7);" +
       "Object.keys(dc).forEach(function(n){var lst=dc[n]||[];if(!lst.length)return;" +
