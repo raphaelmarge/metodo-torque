@@ -2043,5 +2043,74 @@ self.MT_RECEITAS = [
    "Leve ao forno a 190 °C por 8 a 10 minutos, até a clara firmar com a gema ainda mole."
   ],
   "dica": "O grão-de-bico transforma um prato de ovos em refeição completa: 19 g de proteína e fibra que segura a fome até o almoço."
+ },
+ {
+  "id": "rc91",
+  "n": "Suco verde que não vira salada amarga",
+  "cat": "Café da manhã",
+  "tempo": 10,
+  "rende": 2,
+  "k": 95,
+  "pt": 2,
+  "ing": [
+   "2 fatias grossas de abacaxi (200 g)",
+   "1 folha grande de couve sem o talo",
+   "1/2 limão espremido",
+   "1 pedaço de gengibre (1 cm)",
+   "400 ml de água gelada",
+   "Folhas de hortelã"
+  ],
+  "modo": [
+   "Bata o abacaxi com a água primeiro, até virar um suco liso.",
+   "Junte a couve rasgada, o limão, o gengibre e a hortelã e bata só por 20 segundos — bater demais amarga.",
+   "Prove antes de coar: se precisar, mais abacaxi, nunca açúcar.",
+   "Sirva com gelo na hora; guardado, o verde oxida e perde o frescor."
+  ],
+  "dica": "A ordem de bater é o segredo: fruta primeiro, folha por último e pouco tempo — doce na frente, sem amargor."
+ },
+ {
+  "id": "rc92",
+  "n": "Espaguete de abobrinha ao alho e óleo com frango",
+  "cat": "Almoço e jantar",
+  "tempo": 20,
+  "rende": 2,
+  "k": 290,
+  "pt": 34,
+  "ing": [
+   "2 abobrinhas médias em tiras finas (espiralizadas ou de descascador)",
+   "300 g de tiras de peito de frango",
+   "2 dentes de alho fatiados",
+   "1 col. sopa de azeite de oliva",
+   "Pimenta calabresa, sal e salsinha"
+  ],
+  "modo": [
+   "Tempere e grelhe as tiras de frango numa frigideira quente até dourar; reserve.",
+   "Na mesma frigideira, doure o alho no azeite com a pimenta.",
+   "Entre com o espaguete de abobrinha e salteie por só 2 minutos — passou disso, solta água e amolece.",
+   "Volte o frango, misture, acerte o sal e finalize com a salsinha."
+  ],
+  "dica": "A abobrinha entra por 300 kcal a menos que o macarrão e o prato ainda entrega 34 g de proteína por porção."
+ },
+ {
+  "id": "rc93",
+  "n": "Picolé de vitamina de morango com iogurte",
+  "cat": "Doces fit",
+  "tempo": 15,
+  "rende": 6,
+  "k": 60,
+  "pt": 3,
+  "ing": [
+   "300 g de morangos maduros",
+   "300 g de iogurte natural integral",
+   "1 col. sopa de mel",
+   "1 col. chá de essência de baunilha (opcional)"
+  ],
+  "modo": [
+   "Bata metade dos morangos com o iogurte, o mel e a baunilha até ficar cremoso.",
+   "Pique a outra metade dos morangos em pedacinhos e misture SEM bater, pra dar textura.",
+   "Distribua nas forminhas de picolé e leve ao congelador por pelo menos 4 horas.",
+   "Pra desenformar, passe a forminha rapidamente em água da torneira."
+  ],
+  "dica": "Sobremesa de 60 kcal com fruta de verdade: o pedaço de morango inteiro engana a vontade de sorvete de massa."
  }
 ];
