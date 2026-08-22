@@ -6047,6 +6047,119 @@ async function abaPt(p, a) {
     ok(ia.pendente, "app do aluno fica pendente de republicação depois do treino da IA");
   }
 
+  // 🎯 IA com seletor de TIPO: circuito e corrida caem na aba certa, nunca na errada
+  {
+    const iaTipo = await p.evaluate(async () => {
+      const S = window.MTStore, out = {};
+      const st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      window.__cloudOrig = S.cloud;
+      window.__fetchOrig = window.fetch;
+      S.cloud = () => ({ aid: "x", client: { auth: { getSession: () => Promise.resolve({ data: { session: { access_token: "tok" } } }) } } });
+      let corpo = null;
+      const responde = (plano) => (url, opts) => {
+        if (String(url).includes("functions/v1/chat-envia")) {
+          corpo = JSON.parse(opts.body);
+          const corpoResp = JSON.stringify({ ok: true, texto: JSON.stringify(plano) });
+          return Promise.resolve({ status: 200, text: () => Promise.resolve(corpoResp), json: () => Promise.resolve(JSON.parse(corpoResp)) });
+        }
+        return window.__fetchOrig(url, opts);
+      };
+      // Circuito: a IA devolve wods e eles caem em t.wods, pela peneira do formulário
+      window.fetch = responde({ wods: [
+        { nome: "Circuito da IA", tipo: "amrap", min: 12, movs: [{ q: "10", n: "Agachamento goblet" }, { q: "200m", n: "Corrida" }], aq: "2 min de corda", obs: "escale se precisar" },
+        { nome: "Tipo inválido vira For Time", tipo: "zzz", movs: [{ q: "5", n: "Burpee" }] },
+      ], resumo: "Dois circuitos." });
+      const rWod = await new Promise((res) => window.__iaTreino(id, "condicionamento", "academia", res, "wod"));
+      out.tipoWodViajou = !!(corpo && corpo.tipo === "wod");
+      out.rWod = rWod;
+      out.wods = (S.read("ptStudio", {}).treinosV2[id].wods || []).map((w) => ({ nome: w.nome, tipo: w.tipo, movs: (w.movs || []).length, mov0: (w.mov || [])[0] }));
+      // Corrida: a IA devolve cardio e ele cai em t.cardio, com o objetivo da prova nos dados
+      window.fetch = responde({ cardio: [
+        { nome: "Rodagem leve", mod: "corrida", tipo: "continuo", dist: 5, pace: "6:30", obs: "ritmo conversável" },
+        { nome: "Tiros", mod: "corrida", tipo: "intervalado", reps: 6, tiro: 60, desc: 90 },
+      ], resumo: "Semana básica." });
+      const rCr = await new Promise((res) => window.__iaTreino(id, "5 km", "academia", res, "corrida"));
+      out.tipoCorridaViajou = !!(corpo && corpo.tipo === "corrida" && /OBJETIVO DA CORRIDA: 5 km/.test(corpo.dados));
+      out.rCr = rCr;
+      out.cardios = (S.read("ptStudio", {}).treinosV2[id].cardio || []).map((c) => ({ nome: c.nome, tipo: c.tipo, pace: c.pace }));
+      // chat-envia ANTIGA ignora o tipo e devolve fichas: erro honesto, nada cai na aba errada
+      window.fetch = responde({ fichas: [{ titulo: "A", itens: [{ nome: "X" }] }] });
+      const rVelha = await new Promise((res) => window.__iaTreino(id, "condicionamento", "academia", res, "wod"));
+      out.rVelha = rVelha;
+      out.wodsDepoisVelha = (S.read("ptStudio", {}).treinosV2[id].wods || []).length;
+      window.fetch = window.__fetchOrig;
+      S.cloud = window.__cloudOrig;
+      // o seletor de tipo existe e troca os campos (corrida esconde equipamento e mostra a prova)
+      document.getElementById("taTipo").value = "corrida";
+      document.getElementById("taTipo").dispatchEvent(new Event("change"));
+      out.campos = document.getElementById("taProva").hidden === false && document.getElementById("taEquip").hidden === true &&
+        document.getElementById("taGerar").hidden === true;
+      document.getElementById("taTipo").value = "musculacao";
+      document.getElementById("taTipo").dispatchEvent(new Event("change"));
+      out.camposVolta = document.getElementById("taProva").hidden === true && document.getElementById("taGerar").hidden === false;
+      return out;
+    });
+    ok(iaTipo.tipoWodViajou && iaTipo.rWod.ok && iaTipo.rWod.tipo === "wod" && iaTipo.rWod.wods === 2,
+      "🎯 tipo Circuito viaja pra chat-envia e a IA prescreve os WODs");
+    ok(iaTipo.wods.length === 2 && iaTipo.wods[0].tipo === "amrap" && iaTipo.wods[0].movs === 2 && iaTipo.wods[0].mov0 === "10 Agachamento goblet" && iaTipo.wods[1].tipo === "fortime",
+      "os circuitos caem em t.wods com a MESMA peneira do formulário (tipo inválido vira For Time)");
+    ok(iaTipo.tipoCorridaViajou && iaTipo.rCr.ok && iaTipo.cardios.length === 2 && iaTipo.cardios[0].pace === "6:30" && iaTipo.cardios[1].tipo === "intervalado",
+      "tipo Corrida viaja com o objetivo da prova e os treinos caem em t.cardio");
+    ok(/versão antiga/.test(iaTipo.rVelha.erro || "") && iaTipo.wodsDepoisVelha === 2,
+      "chat-envia antiga (só musculação) não deixa treino cair na aba errada — erro honesto e nada muda");
+    ok(iaTipo.campos && iaTipo.camposVolta, "escolher Corrida troca os campos (prova no lugar de equipamento) e volta certinho");
+  }
+
+  // 📅 Semana do aluno: amarra treino ↔ dia e o pacote do app leva o plano resolvido
+  {
+    const pln = await p.evaluate(() => {
+      const S = window.MTStore, out = {};
+      const st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      const t = st.treinosV2[id];
+      out.temTudo = !!((t.fichas || []).length && (t.wods || []).length && (t.cardio || []).length);
+      window.__trAba("plano");
+      out.abaExiste = !document.querySelector('[data-trsec="plano"]').hidden;
+      document.getElementById("plnAluno").value = id;
+      window.__planoPT.render();
+      out.seteDias = document.querySelectorAll("#plnDias [data-plndia]").length === 7;
+      // segunda = ficha A, quarta = circuito, sábado = corrida — o resto descansa
+      document.querySelector('#plnDias [data-plndia="1"]').value = "ficha:" + t.fichas[0].id;
+      document.querySelector('#plnDias [data-plndia="3"]').value = "wod:" + t.wods[0].id;
+      document.querySelector('#plnDias [data-plndia="6"]').value = "cardio:" + t.cardio[0].id;
+      document.getElementById("plnSalva").click();
+      const st2 = S.read("ptStudio", {});
+      const plano = st2.treinosV2[id].plano;
+      out.salvo = !!(plano && plano.dias && plano.dias["1"] && plano.dias["1"].tp === "ficha" &&
+        plano.dias["3"] && plano.dias["3"].tp === "wod" && plano.dias["6"] && plano.dias["6"].tp === "cardio");
+      out.pendente = !!st2.alunos.find((a) => a.id === id).appEditEm;
+      window.__planoPT.render();
+      out.pintou = document.querySelector('#plnDias [data-plndia="3"]').value === "wod:" + t.wods[0].id;
+      // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
+      // card HOJE do app passa a ler o dia da semana
+      const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
+      const m = html.match(/var PLANO=(.+?);function pintaHero/);
+      out.planoApp = m ? JSON.parse(m[1]) : null;
+      out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
+      // limpa o rastro (plano + wods/cardio que a IA de teste criou) pros próximos blocos
+      const st3 = S.read("ptStudio", {});
+      delete st3.treinosV2[id].plano;
+      st3.treinosV2[id].wods = [];
+      st3.treinosV2[id].cardio = [];
+      S.write("ptStudio", st3);
+      window.__trAba("fichas");
+      return out;
+    });
+    ok(pln.temTudo && pln.abaExiste && pln.seteDias, "📅 aba Semana do aluno existe, com os 7 dias e os treinos do aluno pra escolher");
+    ok(pln.salvo && pln.pendente && pln.pintou, "salvar amarra treino ↔ dia (ficha/circuito/corrida), marca republicação e re-render preserva as escolhas");
+    ok(pln.planoApp && pln.planoApp["1"] && pln.planoApp["1"].tp === "ficha" &&
+      pln.planoApp["3"] && pln.planoApp["3"].tp === "wod" && typeof pln.planoApp["3"].i === "number" && !!pln.planoApp["3"].n &&
+      pln.planoApp["6"] && pln.planoApp["6"].tp === "cardio",
+      "o pacote leva o plano resolvido: dia → tipo + índice + nome do treino");
+    ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
+  }
+
   /* A IA parou de mandar republicar a função quando o problema é credencial.
    * Sem sessão, o cabeçalho virava "Bearer " vazio, o Supabase respondia 401
    * "Invalid credentials" (sem o campo erro) e a tela concluía "publique a
