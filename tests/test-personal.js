@@ -3496,6 +3496,35 @@ async function abaPt(p, a) {
   // avisos sonoros: contagem 3-2-1 nos timers e áudio destravado no primeiro toque (iPhone)
   ok(/function ucCd\(/.test(appHtml2) && /function wodCd\(/.test(appHtml2) && /ac\.resume\(\)/.test(appHtml2) && /o\.type='square'/.test(appHtml2),
     "timers com contagem sonora 3-2-1 e áudio alto destravado no toque");
+  // --- R2: placar de circuito por tipo (telas 07/08/09) ---
+  {
+    const r2 = await pApp.evaluate(() => {
+      const out = {};
+      const w = window.__wod;
+      w.wodId = "wtest"; w.wodNome = "Chipper"; w.tipo = "amrap"; w.voltas = 5; w.laps = [218, 450, 691];
+      window.__wodPlacar("fim de teste", 5);
+      const ov = document.getElementById("wodPlacar");
+      out.abriu = !!ov;
+      const tx = ov ? ov.textContent : "";
+      out.pecas = /Quantas voltas você fechou/i.test(tx) && /Como você fez/i.test(tx) &&
+        /Tempo de cada volta/i.test(tx) && /Salvar resultado/.test(tx) && /AMRAP/.test(tx);
+      document.getElementById("wpMais").click();
+      document.querySelector("[data-wpcf='esc']").click();
+      document.getElementById("wpSalvar").click();
+      const wr = JSON.parse(localStorage.getItem("ptwodres") || "{}");
+      const e = (wr.wtest || []).slice(-1)[0] || {};
+      out.salvo = e.v === 6 && e.tp === "amrap" && e.cf === "esc" && Array.isArray(e.sp) && e.sp.length === 3 &&
+        /6 voltas/.test(e.r) && /escalado/.test(e.r);
+      out.fechou = !document.getElementById("wodPlacar");
+      // limpa o rastro pros próximos blocos
+      delete wr.wtest; localStorage.setItem("ptwodres", JSON.stringify(wr));
+      w.wodId = null; w.voltas = 0; w.laps = [];
+      const fb = document.getElementById("wodFimBox"); if (fb) { fb.style.display = "none"; fb.innerHTML = ""; }
+      return out;
+    });
+    ok(r2.abriu && r2.pecas, "🏁 R2: encerrar circuito prescrito abre o placar do tipo (voltas + como fez + tempo de cada volta)");
+    ok(r2.salvo && r2.fechou, "Salvar resultado grava voltas/como fez/splits no ptwodres (que o personal recebe) e fecha o placar");
+  }
   // --- lote timers+retenção (app): treino livre no placar, lembrete de água, retrospectiva do mês ---
   const lote7app = await pApp.evaluate(async () => {
     const out = {};
