@@ -439,6 +439,9 @@
       ".mgsw{margin-left:auto;flex:none;width:46px;height:28px;border-radius:99px;background:var(--bg4);position:relative;transition:background .18s}" +
       ".mgsw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .18s;box-shadow:0 1px 4px rgba(0,0,0,.35)}" +
       ".mgsw.on{background:var(--cor)}.mgsw.on i{left:21px}" +
+      // conquistas encolhidas: só as 6 primeiras aparecem até o Ver todas
+      "#cqGrid.enc>div:nth-child(n+7){display:none}" +
+      "html.claro #cqVerMais{color:#544d63}" +
       ".mgq{display:flex;align-items:center;gap:13px;width:calc(100% - 32px);min-height:64px;background:rgba(var(--cor-rgb),.10);border:1px solid rgba(var(--cor-rgb),.5);border-radius:22px;margin:18px 16px 0;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;color:var(--corc)}" +
       ".mgq .mgsub{color:var(--corc)}" +
       /* agenda (tela 14): o dia de hoje é o quadradinho branco; no claro vira
@@ -754,6 +757,9 @@
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
+      // a grade é retrátil: nascem 6 medalhas e o resto abre por aqui (pedido
+      // do Raphael — a lista só cresce com o tempo)
+      "<button type='button' id='cqVerMais' style='display:none;width:100%;min-height:48px;margin-top:10px;border-radius:99px;border:1px solid var(--bg11);background:var(--bg2);color:#b9b4c6;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;'></button>" +
       // tela 49: ranking da turma no mês + os dois cartões (peso e sequência)
       "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
       "<div id='cqTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;'></div>" +
@@ -1574,6 +1580,12 @@
       // conquistas: medalhas + gráfico de treinos por semana
       "function seqMax(f){var ks=Object.keys(f).sort();var max2=0,seq=0,ant=null;ks.forEach(function(k){" +
       "if(ant){var dif=(new Date(k)-new Date(ant))/864e5;seq=dif===1?seq+1:1;}else seq=1;if(seq>max2)max2=seq;ant=k;});return max2;}" +
+      // Ver todas × Mostrar menos: o estado mora FORA do pintaConquistas pra
+      // sobreviver às repinturas; o clique repinta a grade
+      "var cqAberto=false;" +
+      "document.addEventListener('click',function(e5){if(!e5.target||e5.target.id!=='cqVerMais')return;" +
+      "cqAberto=!cqAberto;try{pintaConquistas();}catch(e6){}" +
+      "if(!cqAberto){var g6=document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
       "function pintaConquistas(){var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);" +
       "var pz=Object.keys(L('ptpeso',{})).length;var dc=L('ptdc',{});var recs=Object.keys(dc).length;" +
       "var semMeta=0;var porSem={};Object.keys(f).forEach(function(k){var w=semDe(k);porSem[w]=(porSem[w]||0)+1;});" +
@@ -1611,6 +1623,11 @@
       ":\"<div style='line-height:0;padding:4px 0;color:#57525f;'>\"+icq(\"<rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 0 1 8 0v3'/>\")+'</div>')+" +
       "\"<div style='font-size:12px;font-weight:800;margin-top:8px;line-height:1.25;\"+(tem?'':'color:#6e6a78;')+\"'>\"+b[1]+'</div>'+" +
       "(tem?'':\"<div style='font-size:9.5px;color:#57525f;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
+      // retrátil: com mais de 6 medalhas, encolhe e o botão diz quantas tem
+      "var g5=document.getElementById('cqGrid'),vm5=document.getElementById('cqVerMais');" +
+      "if(g5&&vm5){var enc5=!cqAberto&&BADGES.length>6;g5.classList.toggle('enc',enc5);" +
+      "vm5.style.display=BADGES.length>6?'':'none';" +
+      "vm5.textContent=cqAberto?'Mostrar menos':'Ver todas as '+BADGES.length+' conquistas';}" +
       // tela 31: MINHAS SEMANAS — número verde quando bateu a meta da semana
       // (o aria-label mantém o nome antigo 'Treinos por semana' pros leitores)
       "var bars='';var hj5=new Date();var seg5=new Date(hj5);seg5.setDate(seg5.getDate()-((seg5.getDay()+6)%7));var max5=1;var sems=[];" +
