@@ -760,11 +760,12 @@
       // a grade é retrátil: nascem 6 medalhas e o resto abre por aqui (pedido
       // do Raphael — a lista só cresce com o tempo)
       "<button type='button' id='cqVerMais' style='display:none;width:100%;min-height:48px;margin-top:10px;border-radius:99px;border:1px solid var(--bg11);background:var(--bg2);color:#b9b4c6;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;'></button>" +
-      // tela 49: ranking da turma no mês + os dois cartões (peso e sequência)
-      "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
+      // ordem do Raphael: medalhas → peso/sequência → semanas → mapa do ano →
+      // ranking da turma POR ÚLTIMO; o botão do Stories fecha a página
       "<div id='cqTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
+      "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
       // "Como foi o treino?" mora aqui, na área de Treino, e não na primeira
       // tela: a pergunta só faz sentido depois de treinar. Quem termina pelo
