@@ -10365,5 +10365,317 @@ self.MT_EXERCICIOS = [
   "g": "Ombros",
   "eq": "Halteres",
   "d": "Suba os ombros em direção às orelhas sem girar, segure dois segundos e desça controlado."
+ },
+ {
+  "n": "Agachamento na cadeira para gestante",
+  "g": "Gestante e pós-parto",
+  "eq": "Cadeira",
+  "d": "Pés um pouco mais afastados que o quadril, desça até tocar de leve o assento e suba sem prender a respiração."
+ },
+ {
+  "n": "Agachamento sumô apoiado na parede para gestante",
+  "g": "Gestante e pós-parto",
+  "eq": "Parede",
+  "d": "Costas deslizando na parede e pés afastados com pontas para fora, desça só até onde o equilíbrio ficar confortável."
+ },
+ {
+  "n": "Elevação lateral sentada com halteres leves para gestante",
+  "g": "Gestante e pós-parto",
+  "eq": "Halteres",
+  "d": "Sentada com apoio de costas, suba os braços até a linha dos ombros em ritmo lento e desça em dois tempos."
+ },
+ {
+  "n": "Gato-camelo para alívio da lombar na gestação",
+  "g": "Gestante e pós-parto",
+  "eq": "Colchonete",
+  "d": "Em quatro apoios, alterne arredondar e alongar a coluna no ritmo da respiração, sem forçar o fim do movimento."
+ },
+ {
+  "n": "Basculação pélvica em pé na gestação",
+  "g": "Gestante e pós-parto",
+  "eq": "Parede",
+  "d": "Encostada na parede, bascule o quadril tentando aproximar a lombar da parede e solte devagar — alivia o peso da barriga na lombar."
+ },
+ {
+  "n": "Ponte de glúteo com apoio para gestante",
+  "g": "Gestante e pós-parto",
+  "eq": "Colchonete",
+  "d": "Suba o quadril só até a linha do tronco, com os pés firmes e afastados; a partir do 2º trimestre prefira pouca amplitude e pausas curtas."
+ },
+ {
+  "n": "Exercício de Kegel sentada",
+  "g": "Gestante e pós-parto",
+  "eq": "Sem equipamento",
+  "d": "Contraia o assoalho pélvico como quem segura o xixi por 5 segundos e solte por 10, respirando normalmente."
+ },
+ {
+  "n": "Respiração 360 com mãos nas costelas",
+  "g": "Gestante e pós-parto",
+  "eq": "Sem equipamento",
+  "d": "Inspire expandindo as costelas para os lados e para trás contra as mãos, e solte o ar deixando as costelas fecharem."
+ },
+ {
+  "n": "Abdução de quadril deitada de lado na gestação",
+  "g": "Gestante e pós-parto",
+  "eq": "Colchonete",
+  "d": "Deitada de lado com a cabeça apoiada, suba a perna de cima até a linha do quadril e desça devagar, sem rodar o tronco."
+ },
+ {
+  "n": "Alongamento de piriforme sentada na cadeira",
+  "g": "Gestante e pós-parto",
+  "eq": "Cadeira",
+  "d": "Cruze o tornozelo sobre o joelho oposto e incline o tronco à frente com a coluna reta até sentir alongar o glúteo."
+ },
+ {
+  "n": "Reconstrução do core no pós-parto (ativação do transverso)",
+  "g": "Gestante e pós-parto",
+  "eq": "Colchonete",
+  "d": "Deitada com joelhos dobrados, expire aproximando o umbigo da coluna sem mexer o quadril e segure 5 segundos."
+ },
+ {
+  "n": "Ponte de glúteo com expiração no pós-parto",
+  "g": "Gestante e pós-parto",
+  "eq": "Colchonete",
+  "d": "Suba o quadril soltando o ar e contraindo o assoalho pélvico, e desça inspirando — o abdome trabalha junto com a respiração."
+ },
+ {
+  "n": "Deslizamento de calcanhar no pós-parto",
+  "g": "Gestante e pós-parto",
+  "eq": "Colchonete",
+  "d": "Deitada, deslize um calcanhar de cada vez esticando a perna sem deixar a lombar descolar do chão."
+ },
+ {
+  "n": "Marcha deitada no pós-parto (dead bug adaptado)",
+  "g": "Gestante e pós-parto",
+  "eq": "Colchonete",
+  "d": "Deitada com pernas em 90 graus, desça um pé de cada vez até tocar o chão mantendo a lombar estável."
+ },
+ {
+  "n": "Prancha inclinada na bancada no pós-parto",
+  "g": "Gestante e pós-parto",
+  "eq": "Sem equipamento",
+  "d": "Mãos na bancada e corpo em linha reta, segure 20 segundos observando se a barriga não forma uma quilha no meio."
+ },
+ {
+  "n": "Agachamento com bebê no carregador",
+  "g": "Gestante e pós-parto",
+  "eq": "Peso do corpo",
+  "d": "Com o bebê firme no carregador junto ao tronco, desça devagar com os pés afastados e suba sem inclinar para a frente."
+ },
+ {
+  "n": "Footwork no reformer (pés paralelos)",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Deitada com os pés na barra, estenda e dobre as pernas contra as molas mantendo o quadril parado no carrinho."
+ },
+ {
+  "n": "Footwork no reformer em V",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Calcanhares unidos e pontas abertas na barra, estenda as pernas apertando a parte interna das coxas no caminho."
+ },
+ {
+  "n": "Leg circles com alças no reformer",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Pés nas alças, desenhe círculos com as duas pernas ao mesmo tempo, do tamanho que o quadril aguentar sem balançar."
+ },
+ {
+  "n": "Frog no reformer",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Pés nas alças com calcanhares unidos, dobre os joelhos para fora e estenda as pernas em diagonal sem arquear a lombar."
+ },
+ {
+  "n": "Elephant no reformer",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Mãos na barra e pés no carrinho com o quadril alto, empurre e puxe o carrinho com pernas estendidas usando o abdome."
+ },
+ {
+  "n": "Long stretch no reformer",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Em prancha com as mãos na barra e pés no encosto, mova o carrinho para trás e para a frente sem deixar o quadril cair."
+ },
+ {
+  "n": "Remada sentada com alças no reformer",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Sentada de frente para as molas, puxe as alças até as costelas juntando as escápulas e volte controlando o carrinho."
+ },
+ {
+  "n": "Mermaid no reformer",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Sentada de lado com a mão na barra, empurre o carrinho inclinando o tronco para o lado e alongando a lateral do corpo."
+ },
+ {
+  "n": "Ponte com pés na barra do reformer",
+  "g": "Pilates e yoga",
+  "eq": "Reformer",
+  "d": "Pés na barra e braços ao lado do corpo, suba o quadril vértebra por vértebra e desça na mesma calma."
+ },
+ {
+  "n": "A-skip com deslocamento",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Avance saltitando com um joelho alto de cada vez, braços coordenados e contato rápido do pé no chão."
+ },
+ {
+  "n": "B-skip com extensão de perna",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Do joelho alto, estenda a perna à frente e puxe o pé para baixo raspando o chão, como se pedalasse no ar."
+ },
+ {
+  "n": "C-skip com abertura de quadril",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Saltite abrindo o joelho para fora a cada passada, alternando os lados — solta o quadril antes do treino de corrida."
+ },
+ {
+  "n": "Corrida com joelho alto e calcanhar no glúteo alternados",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Alterne quatro passadas de joelho alto com quatro de calcanhar no glúteo mantendo o tronco ereto."
+ },
+ {
+  "n": "Perna rígida (straight leg run)",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Corra com as pernas estendidas tocando o chão com o meio do pé à frente do corpo, tronco levemente inclinado."
+ },
+ {
+  "n": "Passada exagerada (educativo de amplitude)",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Passadas longas e saltadas empurrando o chão para trás com força, com braços amplos ajudando o impulso."
+ },
+ {
+  "n": "Tapping rápido de pés no lugar",
+  "g": "Cardio",
+  "eq": "Sem equipamento",
+  "d": "Pés batendo no chão o mais rápido possível com joelhos quase esticados, tronco firme e braços correndo junto."
+ },
+ {
+  "n": "Flexão isométrica de pescoço contra a mão (frente)",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Empurre a testa contra a palma da mão sem deixar a cabeça se mover, segure 10 segundos e solte devagar."
+ },
+ {
+  "n": "Extensão isométrica de pescoço contra a mão (trás)",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Empurre a nuca contra as mãos entrelaçadas sem mover a cabeça, mantendo o queixo neutro."
+ },
+ {
+  "n": "Inclinação isométrica de pescoço contra a mão (lado)",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Sem equipamento",
+  "d": "Empurre a lateral da cabeça contra a palma sem deixar a orelha se aproximar do ombro, e troque de lado."
+ },
+ {
+  "n": "Retração de queixo deitado",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Colchonete",
+  "d": "Deitado de costas, faça um queixo duplo suave empurrando a nuca contra o chão por 5 segundos."
+ },
+ {
+  "n": "Retração de queixo em pé na parede",
+  "g": "Mobilidade e alongamento",
+  "eq": "Parede",
+  "d": "Costas e nuca na parede, deslize a cabeça para trás fazendo queixo duplo sem inclinar o olhar."
+ },
+ {
+  "n": "Rolo de pescoço lento em meia-lua",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Desenhe uma meia-lua com o queixo do ombro direito ao esquerdo, passando pelo peito — nunca gire por trás."
+ },
+ {
+  "n": "Caminhada do fazendeiro com pegada de toalha",
+  "g": "Costas",
+  "eq": "Toalha",
+  "d": "Enrole toalhas nas alças dos pesos e caminhe: a pegada grossa multiplica o trabalho de antebraço."
+ },
+ {
+  "n": "Pendurar na barra com pegada de toalha",
+  "g": "Costas",
+  "eq": "Toalha",
+  "d": "Passe duas toalhas pela barra e segure uma em cada mão, pendurado com os ombros ativos."
+ },
+ {
+  "n": "Rotação de punho com bastão pesado",
+  "g": "Bíceps",
+  "eq": "Bastão",
+  "d": "Segure o bastão pela ponta com o braço apoiado e gire o punho para os dois lados em movimento curto e controlado."
+ },
+ {
+  "n": "Enrolar corda com anilha (wrist roller)",
+  "g": "Bíceps",
+  "eq": "Anilha",
+  "d": "Com os braços à frente, enrole a corda girando os punhos até a anilha subir, e desenrole com o mesmo controle."
+ },
+ {
+  "n": "Aberturas de dedos com elástico de mão",
+  "g": "Reabilitação e terceira idade",
+  "eq": "Elástico",
+  "d": "Com o elástico em volta dos dedos, abra a mão contra a resistência e feche devagar — equilibra o excesso de aperto do dia a dia."
+ },
+ {
+  "n": "Pinça de dedos com anilha pequena",
+  "g": "Bíceps",
+  "eq": "Anilha",
+  "d": "Segure a anilha só com a ponta dos dedos e o polegar por 20 segundos, mantendo o punho neutro."
+ },
+ {
+  "n": "Suspensão unilateral na barra com apoio dos pés",
+  "g": "Costas",
+  "eq": "Barra fixa",
+  "d": "Pendure-se com uma mão e deixe os pés apoiados dividindo o peso, trocando de lado a cada tentativa."
+ },
+ {
+  "n": "Elevação frontal com bastão e pegada larga",
+  "g": "Ombros",
+  "eq": "Bastão",
+  "d": "Suba o bastão com os braços estendidos até a linha dos olhos, segurando nas pontas, e desça em dois tempos."
+ },
+ {
+  "n": "Corrida lateral cruzando por trás (karaoke lento)",
+  "g": "Cardio",
+  "eq": "Livre",
+  "d": "Desloque-se de lado cruzando um pé por trás do outro em ritmo lento, girando o quadril e mantendo o tronco à frente."
+ },
+ {
+  "n": "Salto à corda com deslocamento frontal",
+  "g": "Cardio",
+  "eq": "Corda",
+  "d": "Pule a corda avançando poucos centímetros a cada salto, mantendo o giro no punho e a aterrissagem leve."
+ },
+ {
+  "n": "Polichinelo com elástico nos tornozelos",
+  "g": "Cardio",
+  "eq": "Mini band",
+  "d": "Com a mini band nos tornozelos, abra e feche as pernas em saltos curtos sem deixar os joelhos caírem para dentro."
+ },
+ {
+  "n": "Escalador com mãos na bancada",
+  "g": "Core",
+  "eq": "Sem equipamento",
+  "d": "Mãos na bancada e corpo inclinado, alterne os joelhos ao peito em ritmo confortável — versão de casa do escalador."
+ },
+ {
+  "n": "Abdominal com pernas na cadeira",
+  "g": "Core",
+  "eq": "Cadeira",
+  "d": "Deitado com as panturrilhas apoiadas no assento, suba as escápulas do chão olhando para o teto e desça devagar."
+ },
+ {
+  "n": "Extensão de tríceps no banco com uma perna elevada",
+  "g": "Tríceps",
+  "eq": "Banco",
+  "d": "No mergulho de banco, mantenha uma perna estendida no ar: o core trabalha junto e a carga sobe sem peso extra."
  }
 ];
