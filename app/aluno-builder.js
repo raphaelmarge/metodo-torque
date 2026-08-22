@@ -191,6 +191,7 @@
       "html.claro .mgtit{color:#191622}" +
       "html.claro .mgsub{color:#6c6678}" +
       "html.claro .mgchev{color:#a9a4b5}" +
+      "html.claro .mgsw{background:#d8d3e4}html.claro .mgsw.on{background:var(--cor)}" +
       "html.claro .mgq{background:rgba(var(--cor-rgb),.08);color:var(--cor)}" +
       "html.claro .mgq .mgsub{color:var(--cor)}" +
       "html.claro .aghoje{background:rgba(var(--cor-rgb),.16);border:1px solid var(--corc)}" +
@@ -434,6 +435,10 @@
       ".mgsub{display:block;font-size:12.5px;color:#8a8695;margin-top:2px}" +
       ".mgbadge{margin-left:auto;min-width:27px;height:27px;border-radius:99px;background:var(--cor);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 8px;flex:none}" +
       ".mgchev{margin-left:auto;flex:none;color:#57525f;line-height:0}" +
+      // interruptor das preferências (tela 11): bolinha desliza e o fundo acende
+      ".mgsw{margin-left:auto;flex:none;width:46px;height:28px;border-radius:99px;background:var(--bg4);position:relative;transition:background .18s}" +
+      ".mgsw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .18s;box-shadow:0 1px 4px rgba(0,0,0,.35)}" +
+      ".mgsw.on{background:var(--cor)}.mgsw.on i{left:21px}" +
       ".mgq{display:flex;align-items:center;gap:13px;width:calc(100% - 32px);min-height:64px;background:rgba(var(--cor-rgb),.10);border:1px solid rgba(var(--cor-rgb),.5);border-radius:22px;margin:18px 16px 0;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;color:var(--corc)}" +
       ".mgq .mgsub{color:var(--corc)}" +
       /* agenda (tela 14): o dia de hoje é o quadradinho branco; no claro vira
@@ -713,6 +718,9 @@
       "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1'></select></div>" +
       "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'>" +
       "<button class='btnx' id='agPede' style='width:100%;min-height:58px;font-size:16px;margin-top:10px;'>+ Pedir um horário</button></div>" +
+      // atalho da tela 14: o botão fica visível SEMPRE — tocar seleciona o dia
+      // de hoje e abre o formulário de pedido logo acima
+      "<button class='btnx' id='agPedeJa' style='width:100%;min-height:58px;font-size:16px;margin-top:12px;'>+ Pedir um horário</button>" +
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div>" +
       "<div id='agPend' style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:8px;'></div></div>" +
       // ---------- Evolução (telas 49/41/42/32): cabeçalho por aba + 4 pílulas ----------
@@ -1146,10 +1154,20 @@
       "<span id='ajIni'" + (FOTOAL ? " style='display:none;'" : "") + ">" + esc(INICIAIS) + "</span></span>" +
       "<span style='flex:1;min-width:0;'><span style='display:block;font-size:23px;font-weight:900;letter-spacing:-.02em;'>" + esc(a.nome) + "</span>" +
       "<span style='display:block;font-size:12.5px;color:rgba(255,255,255,.85);margin-top:2px;'>" + esc(studio) + (plApp ? " · plano " + esc(plApp.nome) : "") + "</span></span></div></div>" +
-      // preferências: a linha do tema mora AQUI (o menu só aponta pra cá)
+      // preferências (tela 11): tema e notificações com interruptor, lembrete
+      // de água apontando pras utilidades e a linha honesta do idioma
       "<div class='mgcard' id='ajPrefs' style='margin-top:16px;'>" +
       "<button class='mgrow' id='btnTemaApp'><span style='line-height:0;' id='mgTemaIco'></span>" +
-      "<span style='flex:1;min-width:0;'><span class='mgtit' id='mgTemaTit'></span><span class='mgsub'>o escuro é o padrão</span></span></button></div>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit' id='mgTemaTit'></span><span class='mgsub'>o escuro é o padrão</span></span>" +
+      "<span class='mgsw' id='swTema' aria-hidden='true'><i></i></span></button>" +
+      "<button class='mgrow' id='ajNotif' style='display:none;'><span style='line-height:0;'>" + appIco(APPIC.sino, 22) + "</span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Notificações</span><span class='mgsub'>lembrete das sessões e recados por aqui</span></span>" +
+      "<span class='mgsw' id='swNotif' aria-hidden='true'><i></i></span></button>" +
+      "<button class='mgrow' data-ajgo='util'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z'/></svg></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Lembrete de água</span><span class='mgsub' id='ajAguaSub'>desligado</span></span>" +
+      "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
+      "<div class='mgrow' style='cursor:default;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z'/></svg></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Idioma</span><span class='mgsub'>Português (Brasil)</span></span></div></div>" +
       "<div class='mgcard' id='ajDados'>" +
       "<div class='wpk' style='margin:14px 0 2px;'>Meus dados</div>" +
       (function () {
@@ -1162,8 +1180,20 @@
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Altura</span><span class='mgsub'>" + String((+a.altura / 100).toFixed(2)).replace(".", ",") + " m · quem mede é seu personal</span></span></div>";
         if (qa) rows += "<button class='mgrow' data-ajgo='chat' data-ajgoto='qaCard'><span style='line-height:0;'>" + sv("<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>") + "</span>" +
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Meus questionários</span><span class='mgsub'>responder leva 1 minuto</span></span>" + chev + "</button>";
+        // baixar meus dados (LGPD na prática): um arquivo com tudo do aparelho
+        rows += "<button class='mgrow' id='ajBaixa'><span style='line-height:0;'>" + sv("<path d='M12 3v12M7.5 10.5 12 15l4.5-4.5'/><path d='M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2'/>") + "</span>" +
+          "<span style='flex:1;min-width:0;'><span class='mgtit'>Baixar meus dados</span><span class='mgsub'>treinos, cargas e avaliações num arquivo</span></span>" + chev + "</button>";
         return rows;
       })() + "</div>" +
+      // seção APP (tela 11): instalar como aplicativo e a página de privacidade
+      "<div class='mgcard' id='ajApp'>" +
+      "<div class='wpk' style='margin:14px 0 2px;'>App</div>" +
+      "<button class='mgrow' id='ajInstala' style='display:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='2.5' width='14' height='19' rx='2.5'/><path d='M12 8v6M9 11.5 12 14.5l3-3'/></svg></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Instalar na tela de início</span><span class='mgsub'>abre sem navegador, direto do ícone</span></span>" +
+      "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
+      "<a class='mgrow' href='/privacidade.html' target='_blank' rel='noopener' style='text-decoration:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 2.5 4.5 5.5v6c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5v-6z'/><path d='M9 12l2 2 4-4'/></svg></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Sobre e privacidade</span><span class='mgsub'>seus dados e como cuidamos deles</span></span>" +
+      "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></a></div>" +
       (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP && !a.acessoEm ? "<div class='cardx'><h2>Meu login</h2>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para abrir seu app de QUALQUER aparelho (página Entrar do aluno).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
@@ -1352,7 +1382,9 @@
       "if(Notification.permission==='granted'){tentaPushP();return;}" +
       "if(Notification.permission!=='default')return;" +
       "var card=document.getElementById('cardNotif'),btn=document.getElementById('btnNotif');" +
-      "if(card&&btn){card.style.display='block';btn.addEventListener('click',function(){" +
+      // a linha Notificações dos Ajustes (tela 11) assumiu o papel deste card —
+      // ele só volta a aparecer se a linha não existir
+      "if(card&&btn&&!document.getElementById('ajNotif')){card.style.display='block';btn.addEventListener('click',function(){" +
       "Notification.requestPermission().then(function(p2){card.style.display='none';if(p2==='granted')tentaPushP();});});}})();" +
       // sequência de semanas consecutivas batendo a meta (a atual conta se já bateu, sem quebrar enquanto corre)
       "function streakSem(f){var porSem={};Object.keys(f).forEach(function(k){var w=semDe(k);porSem[w]=(porSem[w]||0)+1;});" +
@@ -1527,6 +1559,10 @@
       "if(r&&r.ok){var l=L('ptagenda',[]);l.push({dia:AGSEL,hora:hr,status:'pedido',obs:ob});Sv('ptagenda',l);document.getElementById('agObs').value='';pintaCal();" +
       "alert('Pedido enviado! '+PRIMEIRO+', seu personal confirma em breve.');}else{alert((r&&r.erro==='muitos_pedidos')?'Você já tem muitos pedidos aguardando — espere a confirmação.':'Não deu pra enviar agora — tenta de novo.');}});}" +
       "else{var pd=AGSEL.split('-');window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent('Oi! Queria marcar horário dia '+pd[2]+'/'+pd[1]+' às '+hr+(ob?' — '+ob:'')),'_blank');}});" +
+      // o atalho de baixo: seleciona HOJE no calendário e abre o formulário
+      "var apj=document.getElementById('agPedeJa');if(apj)apj.addEventListener('click',function(){" +
+      "if(!AGSEL){var c9=document.querySelector(\"[data-agdia='\"+isoHj()+\"']\");if(c9)c9.click();}" +
+      "var f9=document.getElementById('agForm');if(f9&&f9.style.display!=='none')f9.scrollIntoView({behavior:'smooth',block:'center'});});" +
       "carregaAgenda();" +
       // conquistas: medalhas + gráfico de treinos por semana
       "function seqMax(f){var ks=Object.keys(f).sort();var max2=0,seq=0,ant=null;ks.forEach(function(k){" +
@@ -2888,6 +2924,7 @@
       // lembrete de água: checa a cada minuto enquanto o app está aberto (8h-22h, para ao bater a meta)
       "document.getElementById('agLemSel').value=String(+L('ptaguaLem',0)||0);" +
       "document.getElementById('agLemSel').addEventListener('change',function(){Sv('ptaguaLem',+this.value);" +
+      "if(window.__aguaSub)window.__aguaSub();" + // a linha dos Ajustes espelha a escolha
       "if(+this.value&&'Notification'in window&&Notification.permission==='default')Notification.requestPermission();});" +
       "setInterval(function(){var iv=+L('ptaguaLem',0);if(!iv)return;var h=new Date().getHours();if(h<8||h>=22)return;" +
       "var cfg=agCfg();if(agN()>=cfg.copos)return;var ult=+L('ptaguaLemTs',0);if(Date.now()-ult<iv*60000)return;Sv('ptaguaLemTs',Date.now());" +
@@ -3119,6 +3156,9 @@
       // chat aluno ↔ personal (+ robô de atendimento)
       "var BOT=" + jsonApp(botApp) + ";" +
       "function botHist(){return L('ptbotmsgs',[]);}" +
+      // avatarzinho do personal ao lado das bolhas dele (tela 10)
+      "var CHAV=" + jsonApp("<span style='flex:none;width:30px;height:30px;border-radius:50%;background:rgba(var(--cor-rgb),.28);border:1px solid rgba(var(--cor-rgb),.5);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--corc);overflow:hidden;'>" +
+        (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>" : esc(String(studio || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""))) + "</span>") + ";" +
       "function botFala(tx){var h=botHist();h.push({de:'bot',texto:tx,criado:new Date().toISOString()});if(h.length>60)h.shift();Sv('ptbotmsgs',h);}" +
       // tela 10: balões arredondados (o meu na cor, o do personal escuro),
       // com divisor de data HOJE / ONTEM / DD/MM entre os dias
@@ -3130,7 +3170,10 @@
       "var d0=String(m.criado).slice(0,10);var ant=ix>0?String(all[ix-1].criado).slice(0,10):null;var div='';" +
       "if(d0!==ant){var lab=d0===isoHj()?'HOJE':d0===ontem9?'ONTEM':d0.slice(8,10)+'/'+d0.slice(5,7);" +
       "div=\"<div style='align-self:center;font-size:10px;font-weight:800;letter-spacing:.2em;color:#6e6a78;margin:10px 0 4px;'>\"+lab+\"</div>\";}" +
-      "return div+\"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,var(--cor),var(--cor2))':(bot?'rgba(var(--cor-rgb),.14)':'var(--bg4)'))+\";border:1px solid \"+(bot?'var(--cor)':'rgba(255,255,255,.05)')+\";\"+(minha?'color:#fff;':'')+\"border-radius:\"+(minha?'18px 18px 6px 18px':'18px 18px 18px 6px')+\";padding:11px 14px;max-width:84%;font-size:14px;line-height:1.45;'>\"+(bot?\"<div style='font-size:10px;color:var(--corc);font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:3px;\"+(minha?'text-align:right;':'')+\"'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      // mensagem do personal ganha o avatarzinho encostado na bolha (tela 10)
+      "var pess=!minha&&!bot;" +
+      "var bolha=\"<div style='\"+(pess?'':('align-self:'+(minha?'flex-end':'flex-start')+';'))+\"background:\"+(minha?'linear-gradient(135deg,var(--cor),var(--cor2))':(bot?'rgba(var(--cor-rgb),.14)':'var(--bg4)'))+\";border:1px solid \"+(bot?'var(--cor)':'rgba(255,255,255,.05)')+\";\"+(minha?'color:#fff;':'')+\"border-radius:\"+(minha?'18px 18px 6px 18px':'18px 18px 18px 6px')+\";padding:11px 14px;max-width:\"+(pess?'100%':'84%')+\";font-size:14px;line-height:1.45;'>\"+(bot?\"<div style='font-size:10px;color:var(--corc);font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:3px;\"+(minha?'text-align:right;':'')+\"'>\"+String(m.criado).slice(11,16)+\"</div></div>\";" +
+      "return div+(pess?\"<div style='align-self:flex-start;display:flex;align-items:flex-end;gap:7px;max-width:86%;'>\"+CHAV+bolha+'</div>':bolha);}).join('');" +
       "el.scrollTop=el.scrollHeight;" +
       "var ultP=null;all.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')ultP=m.criado;});" +
       "if(window.__chatDot)window.__chatDot(ultP);}" +
@@ -3981,11 +4024,40 @@
       "var btTema=document.getElementById('btnTemaApp');" +
       "var icoTema=function(p){return \"<svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';};" +
       "function aplicaTemaApp(){var claro=+L('pttema',0)===1;document.documentElement.classList.toggle('claro',claro);" +
+      "var sw9=document.getElementById('swTema');if(sw9)sw9.classList.toggle('on',claro);" +
       "if(btTema){document.getElementById('mgTemaTit').textContent=claro?'Modo noturno':'Modo claro';" +
       "document.getElementById('mgTemaIco').innerHTML=icoTema(claro?\"<path d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/>\":\"<circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/>\");}" +
       "try{trocaSec(SEC);}catch(e){}}" +
       "if(btTema)btTema.addEventListener('click',function(){Sv('pttema',+L('pttema',0)===1?0:1);aplicaTemaApp();if(navigator.vibrate)navigator.vibrate(10);});" +
       "aplicaTemaApp();window.__temaApp=aplicaTemaApp;" +
+      // ---- Ajustes (tela 11): notificações com interruptor ----
+      "(function(){var row=document.getElementById('ajNotif'),sw=document.getElementById('swNotif');" +
+      "if(!row||!sw||!('Notification' in window))return;row.style.display='';" +
+      "var p=function(){sw.classList.toggle('on',Notification.permission==='granted');};p();" +
+      "row.addEventListener('click',function(){" +
+      "if(Notification.permission==='granted'){alert('Notificações já estão ligadas — lembretes e recados chegam por aqui. Pra desligar, use os ajustes do celular.');return;}" +
+      "if(Notification.permission==='denied'){alert('O celular está bloqueando as notificações deste app. Libere nos ajustes do navegador.');return;}" +
+      "Notification.requestPermission().then(function(r){p();if(r==='granted'&&typeof tentaPushP==='function')try{tentaPushP();}catch(e9){}});});})();" +
+      // ---- Ajustes: sub do lembrete de água (o valor mora nas Utilidades) ----
+      "function pintaAguaSub(){var el=document.getElementById('ajAguaSub');if(!el)return;var v=+L('ptaguaLem',0)||0;" +
+      "el.textContent=v===60?'a cada 1 hora':v===90?'a cada 1h30':v===120?'a cada 2 horas':'desligado — liga aqui';}" +
+      "pintaAguaSub();window.__aguaSub=pintaAguaSub;" +
+      // ---- Ajustes: baixar meus dados (LGPD na prática — arquivo local) ----
+      "(function(){var b=document.getElementById('ajBaixa');if(!b)return;b.addEventListener('click',function(){" +
+      "var dados={gerado:new Date().toISOString(),aluno:PRIMEIRO," +
+      "peso:L('ptpeso',{}),cargas:L('ptdc',{}),treinos_feitos:L('ptfeitos',{}),habitos:L('pthab',{})," +
+      "como_foi_o_treino:L('ptrpe',{}),circuitos:L('ptwodres',{}),corridas:L('ptcardio',[]),marcas:L('ptmarcas',[])," +
+      "agua:L('ptaguaCfg',null),avaliacoes:AVS};" +
+      "var bl=new Blob([JSON.stringify(dados,null,1)],{type:'application/json'});" +
+      "var a9=document.createElement('a');a9.href=URL.createObjectURL(bl);a9.download='meus-dados-torque.json';" +
+      "document.body.appendChild(a9);a9.click();setTimeout(function(){URL.revokeObjectURL(a9.href);a9.remove();},400);});})();" +
+      // ---- Ajustes: instalar na tela de início (PWA) ----
+      "(function(){var row=document.getElementById('ajInstala');if(!row)return;var evt=null;" +
+      "if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)return;" + // já instalado
+      "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();evt=e;row.style.display='';});" +
+      "if(/iphone|ipad|ipod/i.test(navigator.userAgent))row.style.display='';" +
+      "row.addEventListener('click',function(){if(evt){evt.prompt();return;}" +
+      "alert('No Safari: toca no botão Compartilhar (o quadradinho com a seta) e escolhe Adicionar à Tela de Início. O app ganha ícone próprio.');});})();" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
       "</" + "script>" +
