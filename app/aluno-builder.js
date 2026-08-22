@@ -91,6 +91,7 @@
     var GIF = D.gif || null;
     var aqPorFicha = D.aqPorFicha || {}, raioX = D.raioX || null;
     var wodsApp = D.wodsApp || [], cardiosApp = D.cardiosApp || [];
+    var planoApp = D.planoApp || null; // semana do aluno: dia → {tp, i, n}, já resolvido no painel
     var menuOculta = D.menuOculta || [], feedLigado = !!D.feedLigado;
     var avs = D.avs || [], botApp = D.botApp || null, atualizador = D.atualizador || "";
     var vem = D.ve || {};
@@ -383,7 +384,7 @@
       // a mesma frase ("hoje, quarta, é o treino C") em vez de dois cartões soltos.
       "<div class='cardx' id='blocoHoje'>" +
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
-      (fichasApp ? "<div id='heroTreino' style='margin-top:10px;background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;'>" +
+      ((fichasApp || planoApp) ? "<div id='heroTreino' style='margin-top:10px;background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;'>" +
         // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
         "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
         "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
@@ -2369,22 +2370,35 @@
           "var FICHAS_META=" + jsonApp((fichasApp || []).map(function (f) {
             var propria = imgOk(f.capa);
             return { t: f.titulo || "Ficha", n: f.itens.length, c: propria === geral ? "" : propria };
-          })) + ";";
+          })) + ";" +
+          // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
+          "var PLANO=" + jsonApp(planoApp) + ";";
       })() +
-      "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||!FICHAS_META.length)return;" +
-      "var tot=Object.keys(L('ptfeitos',{})).length;var i=tot%FICHAS_META.length;var fm=FICHAS_META[i];" +
-      "var par=String(fm.t).split('—');var rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));var tit=par.length>1?par.slice(1).join('—').trim():fm.t;" +
+      // com a Semana do aluno (PLANO), o card HOJE segue o plano do professor:
+      // ficha abre a gaveta certa, circuito/corrida apontam a sub-aba, dia sem
+      // treino vira descanso; sem plano, vale o rodízio de sempre
+      "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||(!FICHAS_META.length&&!PLANO))return;" +
+      "var i=-1,fm=null,rt='',tit='',sub='',cImg='';" +
+      "var pj=PLANO&&PLANO[String(new Date().getDay())];" +
+      "if(PLANO){" +
+      "if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i]){i=pj.i;fm=FICHAS_META[i];}" +
+      "else if(pj&&pj.tp==='wod'){rt='CIRCUITO (WOD)';tit=pj.n;sub='circuito completo te esperando';cImg=CAPA_GERAL;}" +
+      "else if(pj&&pj.tp==='cardio'){rt='CORRIDA E BIKE';tit=pj.n;sub='treino prescrito te esperando';cImg=CAPA_GERAL;}" +
+      "else{rt='DESCANSO';tit='Dia de recuperar';sub='alongue, caminhe leve e durma bem — amanhã tem mais';cImg=CAPA_GERAL;}" +
+      "}else{var tot=Object.keys(L('ptfeitos',{})).length;i=tot%FICHAS_META.length;fm=FICHAS_META[i];}" +
+      "if(fm){var par=String(fm.t).split('—');rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));tit=par.length>1?par.slice(1).join('—').trim():fm.t;sub=pl(fm.n,'exercício te esperando','exercícios te esperando');cImg=fm.c||CAPA_GERAL;}" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
-      "document.getElementById('htSub').textContent=pl(fm.n,'exercício te esperando','exercícios te esperando');" +
+      "document.getElementById('htSub').textContent=sub;" +
       // foto da ficha do dia no card (com véu por cima pro texto continuar legível)
       "var hf=document.getElementById('htFoto'),hv2=document.getElementById('htVeu');" +
-      "var cImg=fm.c||CAPA_GERAL;" +
       "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}" +
       "el.classList.toggle('comfoto',!!cImg);}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
       "var gav=document.querySelectorAll('.fichabox');" +
-      "if(gav.length>1)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
-      "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');});" +
+      "if(gav.length>1&&i>=0)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
+      // Ver treino: além de ir pra área de Treino, cai na SUB-ABA do dia (plano)
+      "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');" +
+      "var pj2=PLANO&&PLANO[String(new Date().getDay())];if(pj2&&window.__trSub)window.__trSub(pj2.tp==='wod'?'wod':pj2.tp==='cardio'?'cardio':'ficha');});" +
       "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
       "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
       "var pf=L('ptfeitos',{});var noMes=Object.keys(pf).filter(function(k){return k.slice(0,7)===mesK;}).length;" +

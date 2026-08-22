@@ -135,6 +135,22 @@ publicada (PGRST202) caem no caminho antigo e não tocam em nada, porque a cópi
 local existe pro aluno que treina sem sinal. "Encerrar aluno" e "Excluir minha
 conta" passam a oferecer/fazer a revogação.
 
+**Semana do aluno + IA por tipo** (a partir da v534): aba "Semana do aluno"
+(`data-tra="plano"`) amarra cada dia da semana a UM treino do aluno —
+`t.plano = {dias: {"0".."6": {tp: "ficha"|"wod"|"cardio", id}}}` em
+`st.treinosV2[alunoId]`. O pacote (`dadosAppAluno`) leva o plano RESOLVIDO
+(`planoApp = {dia: {tp, i, n}}` — índice dentro de fichasApp/wodsApp/cardiosApp)
+e o card HOJE do app segue o plano: ficha abre a gaveta certa, circuito/corrida
+apontam a sub-aba (`__trSub`), dia sem treino vira DESCANSO; sem plano, vale o
+rodízio antigo (`tot % FICHAS_META.length`). O padrão semanal vale pro mês
+inteiro até mudar. A IA de treino ganhou seletor de TIPO (`#taTipo`:
+musculação/wod/corrida): `geraTreinoIA(id, objetivo, equip, cb, tipo)` manda
+`tipo` pra chat-envia (3 system prompts; formato `{wods:[…]}` / `{cardio:[…]}`),
+peneira com as MESMAS regras dos formulários (`peneiraWodsIA`/`peneiraCardiosIA`)
+e salva na coleção certa, pulando pra aba certa. chat-envia antiga (ignora tipo,
+devolve fichas) → erro honesto mandando republicar, nada cai na aba errada.
+Hooks: `window.__planoPT`. A demo do aluno não tem plano — segue no rodízio.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,
