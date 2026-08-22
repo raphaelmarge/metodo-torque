@@ -17,6 +17,14 @@ var ESQUELETO = [
   "manifest.webmanifest",
   "../assets/cloud-config.js",
   "../assets/versao.js",
+  // a cara do redesenho é a Archivo — sem ela no esqueleto, o app offline
+  // abria na fonte do sistema e ficava diferente do desenho
+  "../assets/fonts/archivo.css",
+  "../assets/fonts/files/archivo-latin-400-normal.woff2",
+  "../assets/fonts/files/archivo-latin-500-normal.woff2",
+  "../assets/fonts/files/archivo-latin-600-normal.woff2",
+  "../assets/fonts/files/archivo-latin-700-normal.woff2",
+  "../assets/fonts/files/archivo-latin-800-normal.woff2",
 ];
 
 self.addEventListener("install", function (e) {

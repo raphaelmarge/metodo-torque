@@ -101,6 +101,12 @@
       "<link rel='manifest' href='/app/manifest.webmanifest'>" +
       "<link rel='icon' href='/assets/icons/icon-personal.svg' type='image/svg+xml'>" +
       "<link rel='apple-touch-icon' href='/assets/icons/icon-personal-192.png'>" +
+      // a Archivo é a cara do redesenho: o CSS pedia a fonte mas ninguém a
+      // carregava — o app inteiro caía na fonte do sistema e ficava "diferente
+      // do Claude Design". font-display:swap: sem internet o texto não some.
+      "<link rel='preload' href='/assets/fonts/files/archivo-latin-700-normal.woff2' as='font' type='font/woff2' crossorigin>" +
+      "<link rel='preload' href='/assets/fonts/files/archivo-latin-800-normal.woff2' as='font' type='font/woff2' crossorigin>" +
+      "<link rel='stylesheet' href='/assets/fonts/archivo.css'>" +
       "<title>" + esc(a.nome.split(" ")[0]) + " · " + esc(studio) + "</title>" +
       "<style>:root{" +
       "--cor:" + COR + ";--cor2:" + COR2 + ";--corc:" + CORC + ";" +
