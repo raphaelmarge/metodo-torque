@@ -762,7 +762,7 @@
       "<button type='button' id='cqVerMais' style='display:none;width:100%;min-height:48px;margin-top:10px;border-radius:99px;border:1px solid var(--bg11);background:var(--bg2);color:#b9b4c6;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;'></button>" +
       // ordem do Raphael: medalhas → peso/sequência → semanas → mapa do ano →
       // ranking da turma POR ÚLTIMO; o botão do Stories fecha a página
-      "<div id='cqTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;'></div>" +
+      "<div id='cqTiles' style='display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
       "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
@@ -1656,20 +1656,13 @@
       // tela 49: cartões PESO e SEQUÊNCIA embaixo da grade de conquistas
       "function seqAtual(f){var n=0;var d=new Date();for(var k=0;k<400;k++){var iso=isoLoc(d);" +
       "if(f[iso])n++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}return n;}" +
+      // o cartão de PESO saiu daqui (pedido do Raphael) — o peso mora na aba
+      // Corpo; fica só a SEQUÊNCIA, na largura toda
       "function pintaCqTiles(){var el=document.getElementById('cqTiles');if(!el)return;" +
       "var f=L('ptfeitos',{});var sq=seqAtual(f);var rec=seqMax(f);" +
-      "var pz=L('ptpeso',{});var pts={};Object.keys(pz).forEach(function(k){pts[k]=+pz[k];});" +
-      "(typeof AVS!=='undefined'?AVS:[]).forEach(function(v){if(v.peso!=null&&pts[v.data]==null)pts[v.data]=+v.peso;});" +
-      "var ks=Object.keys(pts).sort();var MESL7=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
-      "var h='';" +
-      "if(ks.length){var at=pts[ks[ks.length-1]];var d9=Math.round((at-pts[ks[0]])*10)/10;" +
-      "h+=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>Peso</div>\"+" +
-      "\"<b style='font-size:24px;font-weight:900;'>\"+String(at).replace('.',',')+\"<small style='font-size:12px;font-weight:800;'> kg</small></b>\"+" +
-      "(d9?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:\"+(d9<0?'#4ade80':'#f87171')+\";'>\"+(d9>0?'+':'')+String(d9).replace('.',',')+' kg desde '+MESL7[+ks[0].slice(5,7)-1]+\"</div>\":'');" +
-      "h+='</div>';}" +
-      "h+=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>Sequência</div>\"+" +
+      "var h=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>Sequência</div>\"+" +
       "\"<b style='font-size:24px;font-weight:900;'>\"+sq+\"<small style='font-size:12px;font-weight:800;'> \"+(sq===1?'dia':'dias')+'</small></b>'+" +
-      "(rec?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:#fbbf24;'>recorde \"+rec+' dias</div>':'')+'</div>';" +
+      "(rec?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:#fbbf24;'>recorde de \"+rec+(rec===1?' dia':' dias')+'</div>':'')+'</div>';" +
       "el.innerHTML=h;}" +
       "pintaCqTiles();" +
       // tela 49: ranking da turma no mês (só com a nuvem ligada — a RPC conta
