@@ -390,6 +390,17 @@
       ".guvrow b{color:#fff;font-weight:700}" +
       ".gprox{margin-top:13px;font-size:13px;color:#8a8695}" +
       ".gprox b{color:#fff;font-weight:700}" +
+      /* barra de descanso no rodapé (tela 47) — só aparece com .resta no wrap */
+      "#gResta{display:none;position:absolute;left:0;right:0;bottom:0;z-index:3;background:var(--bg1);border-top:1px solid var(--bg11);padding:12px 20px calc(14px + env(safe-area-inset-bottom,0px))}" +
+      ".gwrap.resta #gResta{display:block}" +
+      ".gwrap.resta .gpe,.gwrap.resta .gbase{display:none}" + // o rodapé de botões dá lugar à barra
+      ".gwrap.resta .gcard{margin-bottom:8px}" +
+      "#gResta .grk{font-size:10px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:#8a8695}" +
+      "#gResta .gbig{font-size:32px;margin:0;text-align:left;color:#fff}" +
+      "#gResta .gbiglab{font-size:10px;margin:0;color:#8a8695}" +
+      "#gResta button{min-height:44px;border:none;border-radius:99px;background:none;font-family:inherit;font-size:14px;font-weight:800;color:var(--corc);cursor:pointer;padding:0 12px;flex:none}" +
+      "#gResta button.prin{background:linear-gradient(135deg,var(--cor),var(--cor2));color:#fff;padding:0 20px}" +
+      "#gResta .gtrilho{margin:10px 0 0;max-width:none;background:var(--bg5)}" +
       /* ---------- fim do treino em festa (tela 48): fundo na cor do studio ---------- */
       ".gwrap.festa{background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%)}" +
       ".gwrap.festa .gcard{background:none;border:none;box-shadow:none;max-height:none}" +
@@ -1247,11 +1258,6 @@
       "<span class='gchip' id='gEstado'></span>" +
       "<div class='ggif' id='gGif' style='display:none;'></div>" +
       "<div id='gMiolo'></div>" +
-      // o número do descanso mora AQUI, fixo: se ele fosse redesenhado junto com
-      // o miolo, o próximo pintaGuia o apagava e o player travava no meio
-      "<div class='gbig' id='gDesc' style='display:none;'></div>" +
-      "<div class='gbiglab' id='gDescLab' style='display:none;'>segundos</div>" +
-      "<div class='gtrilho' id='gTrilhoCx' style='display:none;'><b id='gTrilho'></b></div>" +
       "<div id='gMiolo2'></div>" +
       "<button id='gVideo' class='vidbtn' style='display:none;'>Como fazer</button>" +
       "<div class='vidbox' style='display:none;'></div>" +
@@ -1261,9 +1267,20 @@
       "<div class='gbase'><div class='gmeta' id='gMeta'></div>" +
       "<div class='grelo'><b id='gRelo'>0:00</b><em id='gReloLab'>neste exercício</em></div></div>" +
       "<div class='gpe' id='gPe'>" +
-      "<button class='prin' id='gSerie'>Série feita ✓</button>" +
-      "<button class='sec' id='gPular' style='display:none;'>Pular descanso</button>" +
-      "<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button></div>" +
+      "<button class='prin' id='gSerie'>Série feita ✓</button></div>" +
+      /* Descanso no rodapé (tela 47): o exercício continua na tela e a contagem
+       * mora numa barra fixa embaixo — número, rótulo, +15 s, Pular e o trilho.
+       * Os ids são os MESMOS de sempre (o número segue sendo só o #gDesc). */
+      "<div id='gResta'>" +
+      "<div style='display:flex;align-items:center;gap:9px;'>" +
+      "<span class='grk'>Descanso</span>" +
+      "<div class='gbig' id='gDesc' style='display:none;'></div>" +
+      "<div class='gbiglab' id='gDescLab' style='display:none;'>segundos</div>" +
+      "<span style='flex:1;'></span>" +
+      "<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button>" +
+      "<button class='sec' id='gPular' style='display:none;'>Pular descanso</button></div>" +
+      "<div class='gtrilho' id='gTrilhoCx' style='display:none;'><b id='gTrilho'></b></div>" +
+      "</div>" +
       "</div>" +
       "<div class='cardx' id='cardNotif' style='display:none;'><h2>" + appIco(APPIC.sino, 14) + "Lembretes</h2>" +
       "<div class='vz' style='text-align:left;padding:0 0 8px;'>Ative as notificações pra receber lembrete das sessões e recados por aqui.</div>" +
@@ -2513,11 +2530,11 @@
       "ligaTela();gEl('guiaBox').style.display='flex';gEl('guiaBox').classList.remove('festa');document.body.style.overflow='hidden';" +
       "gEl('gCard').classList.remove('recibo');" +
       "gEl('gVoltaEx').style.display='';gEl('gPularEx').style.display='';" +
-      "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\"+" +
-      "\"<button class='sec' id='gPular' style='display:none;'>Pular descanso</button>\"+" +
-      "\"<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button>\";" +
+      // gPular e gMais15 agora são fixos na barra do rodapé — só o gSerie volta
+      "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\";" +
       "gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();}" +
       "function fechaGuia(){gSalvaSeSujo();clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "gEl('guiaBox').classList.remove('resta');" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
       "gEl('guiaBox').style.display='none';gEl('guiaBox').classList.remove('festa');document.body.style.overflow='';soltaTela();}" +
       "function gTicRelo(){var r=gEl('gRelo'),t=gEl('gReloTot');if(!r)return;" +
@@ -2583,7 +2600,8 @@
       "var nx=f.it[gv.e+1];" +
       "m+=nx?\"<div class='gprox'>Depois vem <b>\"+esc2(nx.e)+'</b> · '+nx.s+' × '+esc2(nx.r||'?')+'</div>':" +
       "\"<div class='gprox'>Último exercício do treino 💪</div>\";" +
-      "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
+      "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gCard').classList.remove('compacto');" +
+      "gEl('guiaBox').classList.remove('reg');gEl('guiaBox').classList.remove('resta');" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
       // o resumo antigo em texto segue preenchido (os testes leem), mas a régua
       // visual agora é o card de cima — só aparece quando NÃO tem card
@@ -2634,9 +2652,11 @@
       "var pu=gEl('gPular');pu.style.display='block';pu.style.pointerEvents='none';pu.style.opacity='.55';" +
       "setTimeout(function(){pu.style.pointerEvents='';pu.style.opacity='';},700);" +
       "gEl('gMais15').style.display='block';" +
-      // o #gDesc continua sendo SÓ o número (é o que o teste lê); rótulo, trilho
-      // e prévia são irmãos dele dentro do card
-      "gEl('gMiolo').innerHTML=gBlocos(true);" +
+      // o #gDesc continua sendo SÓ o número (é o que o teste lê); agora ele e o
+      // trilho moram na barra fixa do rodapé (.resta) — entre séries o miolo
+      // fica como está (a tela inteira do exercício continua visível)
+      "gEl('guiaBox').classList.add('resta');" +
+      "if(trocaEx)gEl('gMiolo').innerHTML=gBlocos(true);" +
       "var d=gEl('gDesc');d.style.display='block';d.textContent=resta;" +
       "gEl('gDescLab').style.display='block';gEl('gTrilhoCx').style.display='block';gEl('gTrilho').style.width='100%';" +
       "gEl('gCard').classList.toggle('compacto',!!trocaEx);" +
@@ -2728,7 +2748,7 @@
       "var gg3=gEl('gGif');if(gg3)gg3.style.display='none';" +
       "gEl('gBarra').innerHTML=f.it.map(function(){return \"<i class='past'></i>\";}).join('');" +
       "gEl('gProg').innerHTML='<b>'+g2(f.it.length)+'</b> / '+g2(f.it.length)+\"<span>\"+esc2(f.n)+'</span>';" +
-      "gEl('gCard').classList.add('recibo');gEl('guiaBox').classList.add('festa');" +
+      "gEl('gCard').classList.add('recibo');gEl('guiaBox').classList.add('festa');gEl('guiaBox').classList.remove('resta');" +
       "gEl('gVoltaEx').style.display='none';gEl('gPularEx').style.display='none';" +
       "var vb=gEl('gVideo');if(vb){vb.style.display='none';var bx=vb.nextElementSibling;" +
       "if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
@@ -2823,9 +2843,7 @@
       "gSalvaSeSujo();clearInterval(gv.timer);" +
       // no 'Terminar treino' o rodapé virou um botão só e o gSerie sumiu: sem
       // remontar, o pintaGuia estoura no gSerie e o ‹ fica morto na tela
-      "if(!gEl('gSerie'))gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\"+" +
-      "\"<button class='sec' id='gPular' style='display:none;'>Pular descanso</button>\"+" +
-      "\"<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button>\";" +
+      "if(!gEl('gSerie'))gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\";" +
       "gv.feitas[gv.e]=gv.s;gv.e--;gv.s=gv.feitas[gv.e]||0;gv.pend=false;gv.tex=Date.now();pintaGuia();return;}" +
       "if(e.target.id==='gPularEx'){if(gv.fim)return;gSalvaSeSujo();clearInterval(gv.timer);gv.mais=0;" +
       "gv.feitas[gv.e]=gv.s;gv.e++;gv.s=0;gv.pend=false;gv.tex=Date.now();" +
@@ -2846,6 +2864,9 @@
       "gEl('gMiolo2').innerHTML=gCargaHtml(it);ligaStepper(it,gv.f+':'+gv.e);gEl('gCard').scrollTop=0;" +
       "gEl('gVoltaEx').style.display='none';gEl('gPularEx').style.display='none';" +
       "gEl('gPe').innerHTML=\"<button class='prin' id='gFecharTreino'>Terminar treino</button>\";return;}" +
+      // entre séries a tela do exercício fica INTEIRA (tela 47): repinta com a
+      // série nova marcada e só então liga a barra de descanso no rodapé
+      "if(!fimEx)pintaGuia();" +
       "gDescanso(it.d,fimEx);return;}" +
       "if(e.target.id==='gFecharTreino'){clearInterval(gv.timer);gSalvaSeSujo();gConclui();return;}});" +
       // deslizar pro lado troca de exercício (o card rolando não conta)
