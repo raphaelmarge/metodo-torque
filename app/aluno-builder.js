@@ -379,20 +379,58 @@
       "<div id='onbDias' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
-      // bloco de hoje: a faixa dos dias em cima e o treino do dia colado nela.
-      // A data manda no que aparece embaixo, então os dois lidos juntos contam
-      // a mesma frase ("hoje, quarta, é o treino C") em vez de dois cartões soltos.
+      // bloco de hoje (receita R1): os treinos prescritos do dia viram um
+      // CARROSSEL — um card por tipo (ficha, circuito, corrida), pontinhos
+      // embaixo, e o botão de cada card abre o fluxo daquele tipo. A faixa dos
+      // dias vem colada embaixo. Sem o skin carregado, os cards empilham.
       "<div class='cardx' id='blocoHoje'>" +
-      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
-      ((fichasApp || planoApp) ? "<div id='heroTreino' style='margin-top:10px;background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;'>" +
-        // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
-        "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
-        "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
-        "<div style='position:relative;'>" +
-        "<div class='htk' style='font-size:10px;font-weight:700;letter-spacing:.26em;color:var(--corc);text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
-        "<div id='htTitulo' style='font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;'></div>" +
-        "<div id='htSub' style='font-size:13px;color:#8a8695;'></div>" +
-        "<button id='htVer' style='margin-top:18px;background:var(--cor);border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div></div>" : "") +
+      (function () {
+        var cardCss = "flex:none;width:100%;scroll-snap-align:center;margin-top:10px;background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;";
+        var rotCss = "font-size:10px;font-weight:700;letter-spacing:.26em;color:var(--corc);text-transform:uppercase;";
+        var titCss = "font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;";
+        var subCss = "font-size:13px;color:#8a8695;";
+        var btnCss = "margin-top:18px;background:var(--cor);border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;";
+        var hero = (fichasApp || planoApp)
+          ? "<div id='heroTreino' style='" + cardCss + "'>" +
+            // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
+            "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
+            "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
+            "<div style='position:relative;'>" +
+            "<div class='htk' style='" + rotCss + "'>HOJE · <span id='htRot'></span></div>" +
+            "<div id='htTitulo' style='" + titCss + "'></div>" +
+            "<div id='htSub' style='" + subCss + "'></div>" +
+            "<button id='htVer' class='btnx' style='" + btnCss + "'>Ver treino ›</button></div></div>"
+          : "";
+        // cards extras nascem escondidos: o script mostra os que não repetem o
+        // treino que o card principal já está mostrando (plano do dia)
+        var wodCard = "";
+        if (ve("wod") && wodsApp.length) {
+          var w0 = wodsApp[0];
+          wodCard = "<div id='heroWod' style='display:none;" + cardCss + "'>" +
+            "<div class='htk' style='" + rotCss + "'>HOJE · CIRCUITO</div>" +
+            "<div style='" + titCss + "'>" + esc(w0.nome || "Circuito") + "</div>" +
+            "<div style='" + subCss + "'>" + esc((w0.resumo || "circuito completo") + " · " + (((w0.movs && w0.movs.length) || (w0.mov && w0.mov.length)) || 0) + " movimentos") + "</div>" +
+            "<button data-carrver='wod' class='btnx' style='" + btnCss + "'>Começar circuito ›</button></div>";
+        }
+        var crCard = "";
+        if (ve("cardio") && cardiosApp.length) {
+          var c0 = cardiosApp[0];
+          var alvoCr = c0.tipo === "intervalado"
+            ? (c0.reps || 8) + "× " + (c0.tiro || 60) + "s forte / " + (c0.desc || 90) + "s leve"
+            : [(+c0.dist ? String(c0.dist).replace(".", ",") + " km" : ""), (+c0.tempo ? c0.tempo + " min" : ""), (c0.pace ? "pace " + c0.pace : "")].filter(Boolean).join(" · ") || "treino livre";
+          var rotCr = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c0.mod] || "CARDIO";
+          var btnCr = { corrida: "Começar corrida ›", caminhada: "Começar caminhada ›", bike: "Começar pedal ›" }[c0.mod] || "Começar ›";
+          crCard = "<div id='heroCr' style='display:none;" + cardCss + "'>" +
+            "<div class='htk' style='" + rotCss + "'>HOJE · " + rotCr + "</div>" +
+            "<div style='" + titCss + "'>" + esc(c0.nome || "Cardio") + "</div>" +
+            "<div style='" + subCss + "'>" + esc(alvoCr) + "</div>" +
+            "<button data-carrver='cardio' class='btnx' style='" + btnCss + "'>" + btnCr + "</button></div>";
+        }
+        var dias = "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-top:14px;'></div>";
+        if (!hero && !wodCard && !crCard) return dias;
+        return "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + wodCard + crCard + "</div>" +
+          "<div class='carrdots' id='heroDots' style='display:none;'></div>" + dias;
+      })() +
       "</div>" +
       // o resto da semana (meta, sequência e o Treinei hoje!) fica logo abaixo
       "<div class='cardx'><h2>Minha semana</h2>" +
@@ -2399,6 +2437,22 @@
       // Ver treino: além de ir pra área de Treino, cai na SUB-ABA do dia (plano)
       "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');" +
       "var pj2=PLANO&&PLANO[String(new Date().getDay())];if(pj2&&window.__trSub)window.__trSub(pj2.tp==='wod'?'wod':pj2.tp==='cardio'?'cardio':'ficha');});" +
+      // carrossel de treinos do dia (receita R1): mostra os cards que não
+      // repetem o que o principal já exibe, pinta os pontinhos conforme o
+      // arrasto e leva cada botão pro fluxo do tipo certo
+      "(function(){var cr=document.getElementById('heroCarr');if(!cr)return;" +
+      "var pj3=PLANO&&PLANO[String(new Date().getDay())];var tpHoje=pj3?pj3.tp:'ficha';" +
+      "var cw=document.getElementById('heroWod');if(cw&&tpHoje!=='wod')cw.style.display='';" +
+      "var cc=document.getElementById('heroCr');if(cc&&tpHoje!=='cardio')cc.style.display='';" +
+      "var cards=Array.prototype.filter.call(cr.children,function(x){return x.style.display!=='none';});" +
+      "var dts=document.getElementById('heroDots');" +
+      "if(cards.length<2){if(dts)dts.style.display='none';return;}" +
+      "if(dts){dts.style.display='flex';" +
+      "var pinta=function(i){dts.innerHTML=cards.map(function(x,xi){return \"<i class='\"+(xi===i?'on':'')+\"'></i>\";}).join('');};" +
+      "pinta(0);var t3;cr.addEventListener('scroll',function(){clearTimeout(t3);t3=setTimeout(function(){" +
+      "var i=Math.round(cr.scrollLeft/Math.max(1,cr.clientWidth));pinta(Math.max(0,Math.min(cards.length-1,i)));},80);},{passive:true});}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-carrver]');if(!b)return;" +
+      "if(window.__trocaSec)window.__trocaSec('treino');if(window.__trSub)window.__trSub(b.getAttribute('data-carrver'));});})();" +
       "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
       "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
       "var pf=L('ptfeitos',{});var noMes=Object.keys(pf).filter(function(k){return k.slice(0,7)===mesK;}).length;" +

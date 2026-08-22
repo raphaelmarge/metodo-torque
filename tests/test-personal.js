@@ -2396,6 +2396,12 @@ async function abaPt(p, a) {
     const pLoader = await ctx.newPage();
     const errosL = [];
     pLoader.on("pageerror", (e) => errosL.push(e.message));
+    // a app_aluno_estado é derrubada de propósito: no GitHub a internet é
+    // aberta e, sem isso, o teste batia no Supabase DE VERDADE — que respondia
+    // "sem_registro" pro token de mentira e a página apagava tudo em vez de
+    // montar. Derrubada, ela cai no caminho antigo (app_aluno_busca), que é o
+    // que este bloco quer testar.
+    await pLoader.route("**/rest/v1/rpc/app_aluno_estado", (r) => r.abort());
     await pLoader.route("**/rest/v1/rpc/app_aluno_busca", (r) =>
       r.fulfill({ contentType: "application/json", body: JSON.stringify({ dados: pac.dados, stamp: pac.stamp, ver: pac.ver }) }));
     await pLoader.goto(BASE + "/app/?t=tok-fonte-unica");
@@ -6142,6 +6148,11 @@ async function abaPt(p, a) {
       const m = html.match(/var PLANO=(.+?);function pintaHero/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
+      // receita R1: os treinos do dia viram carrossel (.carr) com pontinhos e
+      // um botão por tipo — circuito e corrida entram como cards irmãos
+      out.carrossel = /id='heroCarr'/.test(html) && /class='carrdots' id='heroDots'/.test(html) &&
+        /data-carrver='wod'/.test(html) && /data-carrver='cardio'/.test(html) &&
+        /Começar circuito ›/.test(html) && /Começar corrida ›/.test(html);
       // limpa o rastro (plano + wods/cardio que a IA de teste criou) pros próximos blocos
       const st3 = S.read("ptStudio", {});
       delete st3.treinosV2[id].plano;
@@ -6158,6 +6169,7 @@ async function abaPt(p, a) {
       pln.planoApp["6"] && pln.planoApp["6"].tp === "cardio",
       "o pacote leva o plano resolvido: dia → tipo + índice + nome do treino");
     ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
+    ok(pln.carrossel, "🎠 R1: os treinos do dia viram carrossel — cards de circuito e corrida com botão pro fluxo certo");
   }
 
   // 🎭 skin do redesenho (Claude Design): camada visual embutida no app publicado
