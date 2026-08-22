@@ -347,6 +347,30 @@
       ".habgrid u{display:none}" +
       "html.claro .habgrid button{background:#fff;border-color:#d9d5e3;color:#6c6678}" +
       "html.claro .habgrid button.on{background:rgba(var(--cor-rgb),.12);border-color:var(--cor);color:#241f31}" +
+      /* ---------- placar do circuito (telas 07/08/09) ----------
+       * Tela de resultado por tipo (AMRAP / For Time / EMOM-Tabata). Tudo por
+       * CLASSE e escuro nos DOIS temas de propósito, igual ao player do treino
+       * guiado — o modo claro reescreve cores lendo style inline, e aqui não. */
+      /* cores por VARIÁVEL de propósito: o "fundo do app" das Configurações
+       * troca a família --bg inteira, e o placar acompanha */
+      "#wodPlacar{position:fixed;inset:0;z-index:71;overflow:auto;background:var(--bg0);color:#fff}" +
+      ".wpcard{background:var(--bg1);border-radius:22px;padding:16px 18px;margin-top:14px}" +
+      ".wpk{font-size:10.5px;font-weight:800;letter-spacing:.2em;color:#8a8695;text-transform:uppercase;margin-bottom:10px}" +
+      ".wptile{background:var(--bg4);border:1px solid var(--bg11);border-radius:16px;padding:12px 8px;text-align:center;color:#fff}" +
+      ".wptile i{display:block;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#8a8695;text-transform:uppercase;margin-bottom:6px}" +
+      ".wptile b{font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}" +
+      ".wptile b small{font-size:13px;font-weight:800;color:#8a8695;margin-left:2px}" +
+      ".wpr{cursor:pointer;font-family:inherit}" +
+      ".wpr.pior{border-color:var(--cor);background:rgba(var(--cor-rgb),.12)}" +
+      ".wpchip{flex:1;min-height:52px;border-radius:16px;background:var(--bg2);border:1px solid var(--bg11);color:#8a8695;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer}" +
+      ".wpchip.on{background:rgba(var(--cor-rgb),.16);border-color:var(--cor);color:#fff}" +
+      ".wpctipo{display:inline-flex;align-items:center;border-radius:99px;padding:7px 14px;font-size:11.5px;font-weight:800;letter-spacing:.06em;background:rgba(var(--cor-rgb),.18);border:1px solid rgba(var(--cor-rgb),.45);color:var(--corc);text-transform:uppercase}" +
+      ".wplin{display:flex;align-items:center;gap:12px;min-height:48px;font-size:14.5px;border-top:1px solid var(--bg11)}" +
+      ".wplin:first-of-type{border-top:none}" +
+      ".wptg{flex:none;width:52px;height:30px;border-radius:99px;background:var(--bg8);border:none;position:relative;cursor:pointer}" +
+      ".wptg::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}" +
+      ".wptg.on{background:var(--cor)}.wptg.on::after{left:25px}" +
+      ".wpobs{width:100%;background:var(--bg4);border:1px solid var(--bg11);border-radius:14px;color:#fff;font-family:inherit;font-size:14px;padding:12px;min-height:84px}" +
       "</style>" + (raiz.MT_APP_SKIN ? "<style>" + raiz.MT_APP_SKIN.css + "</style>" : "") + "</head><body class='semtopo'>" + (raiz.MT_APP_SKIN ? "<script>" + raiz.MT_APP_SKIN.js + "<\/script>" : "") +
       "<div class='topo'>" +
       // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
@@ -1310,8 +1334,8 @@
       // o motor do WOD só roda se o card existe (o professor pode desligar nas Configurações)
       "if(document.getElementById('cardWod')){" +
       "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
-      "var WODS=" + jsonApp(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10 }; })) + ";" +
-      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
+      "var WODS=" + jsonApp(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10, mv: ((w.movs && w.movs.length) || (w.mov && w.mov.length) || 0) }; })) + ";" +
+      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
       "function wodCd(resta){if(!wod.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
       "if(cd&&cd!==wod.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}wod.ultCd=cd;}" +
       // último resultado de cada circuito prescrito aparece no card
@@ -1320,7 +1344,7 @@
       "el.textContent='Último resultado: '+u.r+' ('+u.d.slice(8,10)+'/'+u.d.slice(5,7)+')';});}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-wodstart]');if(!b)return;" +
       "var w=WODS.find(function(x){return x.id===b.dataset.wodstart;});if(!w||wod.run)return;" +
-      "wod.tipo=w.t;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
+      "wod.tipo=w.t;wod.voltas=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
       "if(w.t==='fortime')document.getElementById('wodCap').value=w.cap;" +
       "else if(w.t==='tabata'){document.getElementById('wodRounds').value=w.rd;document.getElementById('wodWork').value=w.wk;document.getElementById('wodRest').value=w.rs;}" +
       "else document.getElementById('wodMin').value=w.min;" +
@@ -1356,18 +1380,110 @@
       "tela.style.borderColor=trabalhando?'var(--corc)':'#0891b2';fase.textContent=faseAtual+' · ROUND '+(Math.floor(el2/ciclo)+1)+' DE '+rd;fase.style.color=trabalhando?'var(--corc)':'#22d3ee';" +
       "tmp.textContent=wodFmt(trabalhando?wk-pos:ciclo-pos);info.textContent=wk+'s trabalho · '+rs+'s descanso';wodCd(trabalhando?wk-pos:ciclo-pos);}" +
       "function wodTick(){var el2=(Date.now()-wod.t0)/1000;wodPinta(el2);}" +
-      "function wodFim(msg,val){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
-      "document.getElementById('wodGo').textContent='Iniciar';" +
-      "document.getElementById('wodFase').textContent='FIM!';" +
-      // circuito prescrito: guarda o placar, compara com o anterior e devolve pro personal
-      "if(wod.wodId){var wr=L('ptwodres',{});var lst=wr[wod.wodId]||[];var ant=lst.length?lst[lst.length-1]:null;" +
-      "if(ant&&val!=null&&ant.v!=null){if(wod.tipo==='fortime'?val<ant.v:val>ant.v)msg+=' — BATEU o resultado anterior!';}" +
-      "lst.push({d:isoHj(),n:wod.wodNome,r:msg,v:val==null?null:Math.round(val)});if(lst.length>20)lst.shift();wr[wod.wodId]=lst;Sv('ptwodres',wr);pintaWodRes();}" +
-      "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();" +
-      "var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
+      // caixinha verde + "Registrar treino" (o fim de sempre, reaproveitada)
+      "function wodMsgFim(msg){var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
       "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+msg+\"</div>\"+" +
       "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'');" +
       "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});}" +
+      "function wodFim(msg,val){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
+      "document.getElementById('wodGo').textContent='Iniciar';" +
+      "document.getElementById('wodFase').textContent='FIM!';" +
+      "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();" +
+      // circuito PRESCRITO ganha a tela de resultado (receita R2, telas 07/08/09);
+      // o timer livre continua com a caixinha de sempre
+      "if(wod.wodId){wodPlacar(msg,val);return;}" +
+      "wodMsgFim(msg);}" +
+      /* ---------- R2: placar de circuito por tipo ----------
+       * AMRAP: voltas confirmadas + reps da última volta + tempo de cada volta
+       * (dos toques no cronômetro) + comparação com a vez anterior.
+       * For Time: tempo (toque pra corrigir) + "não terminei" + suas vezes.
+       * EMOM/Tabata: reps de cada round + total/pior/média + observação.
+       * Salvar grava em ptwodres — o mesmo lugar de antes, com campos a mais
+       * (tp/cf/ex/nf/sp/rp/ob) — e o Sv devolve pro painel do personal. */
+      "function wodPlacar(msg,val){var wm=WODS.find(function(x){return x.id===wod.wodId;})||{};" +
+      "var eh=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');};" +
+      "var dd=function(d){return String(d||'').slice(8,10)+'/'+String(d||'').slice(5,7);};" +
+      "var tipo=wod.tipo;var pvi=function(id,d){return parseInt((document.getElementById(id)||{}).value,10)||d;};" +
+      "var minA=pvi('wodMin',wm.min||10);var wk2=pvi('wodWork',wm.wk||20);var rs2=pvi('wodRest',wm.rs||10);" +
+      "var rd=tipo==='tabata'?pvi('wodRounds',wm.rd||8):minA;" +
+      "var lst0=(L('ptwodres',{}))[wod.wodId]||[];var ant=lst0.length?lst0[lst0.length-1]:null;" +
+      "var st={v:wod.voltas,ex:0,cf:'',reps:[],ob:'',nf:0,t:val==null?null:Math.round(val)};" +
+      "if(tipo==='emom'||tipo==='tabata')for(var q=0;q<Math.min(rd,24);q++)st.reps.push(null);" +
+      "var laps=wod.laps.slice();var ov=document.createElement('div');ov.id='wodPlacar';document.body.appendChild(ov);" +
+      "var cardW=function(rot,html){return \"<div class='wpcard'>\"+(rot?\"<div class='wpk'>\"+rot+'</div>':'')+html+'</div>';};" +
+      "var comoFez=function(){return cardW('Como você fez',\"<div style='display:flex;gap:8px;'>\"+[['rx','RX'],['esc','Escalado'],['adp','Adaptado']].map(function(o){" +
+      "return \"<button class='wpchip\"+(st.cf===o[0]?' on':'')+\"' data-wpcf='\"+o[0]+\"'>\"+o[1]+'</button>';}).join('')+'</div>');};" +
+      "function pr(){var chip='',sub='',corpo='',nota='o seu personal vê o placar no painel';" +
+      "var reps=st.reps.filter(function(x){return x!=null;});var tot=reps.reduce(function(a,b){return a+b;},0);" +
+      "var pior=reps.length?Math.min.apply(null,reps):null;" +
+      "if(tipo==='amrap'){chip='AMRAP '+minA+' MIN';sub=(wm.mv?wm.mv+' movimentos · ':'')+'terminou em '+wodFmt(minA*60);nota='vira uma marca em Evolução · Marcas';" +
+      "corpo=cardW('Quantas voltas você fechou?',\"<div style='display:flex;gap:10px;'>\"+" +
+      "\"<div class='wptile' style='flex:1;'><i>Voltas</i><b>\"+st.v+'</b></div>'+" +
+      "\"<button class='wptile wpr' id='wpExB' style='flex:1;'><i>+ reps</i><b>\"+st.ex+'</b></button></div>'+" +
+      "\"<div style='display:flex;gap:10px;margin-top:10px;'><button class='wpchip' id='wpMenos'>− 1 volta</button><button class='wpchip' id='wpMais'>+ 1 volta</button></div>\"+" +
+      "\"<div style='font-size:12.5px;color:#6e6a78;margin-top:10px;'>o app conta as voltas que você tocou no cronômetro — só confirma · toque em + reps pra anotar a volta que ficou pela metade</div>\")+comoFez();" +
+      "if(laps.length){corpo+=cardW('Tempo de cada volta',laps.map(function(lp,i){var dur=lp-(i?laps[i-1]:0);var antD=i?laps[i-1]-(i>1?laps[i-2]:0):null;" +
+      "var df=antD==null?null:dur-antD;" +
+      "return \"<div class='wplin'><span style='flex:1;font-weight:800;'>Volta \"+(i+1)+\"</span><b style='font-variant-numeric:tabular-nums;'>\"+wodFmt(dur)+'</b>'+" +
+      "\"<span style='width:52px;text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;color:\"+(df==null?'#6e6a78':df<0?'#4ade80':'#8a8695')+\";'>\"+(df==null?'—':(df<0?'-':'+')+wodFmt(Math.abs(df)))+'</span></div>';}).join(''));}" +
+      "if(ant&&ant.v!=null){var mel=st.v>ant.v||(st.v===ant.v&&st.ex>(ant.ex||0));" +
+      "corpo+=cardW('',\"<div style='display:flex;gap:12px;align-items:center;'><span style='font-size:22px;'>\"+(mel?'⭐':'📌')+'</span><div>'+" +
+      "\"<b style='font-size:14.5px;'>\"+(mel?'Melhor que em '+dd(ant.d):'Sua marca de '+dd(ant.d)+' segue na frente')+'</b>'+" +
+      "\"<div style='font-size:13px;color:#8a8695;'>você fez \"+ant.v+(ant.ex?' voltas + '+ant.ex:' voltas')+' · agora '+st.v+(st.ex?' + '+st.ex:'')+'</div></div></div>');}}" +
+      "else if(tipo==='fortime'){chip='FOR TIME';sub=(wm.mv?wm.mv+' movimentos':'circuito completo');" +
+      "corpo=cardW('',\"<div style='text-align:center;'><div class='wpk'>Seu tempo</div>\"+" +
+      "\"<b id='wpT' style='font-size:56px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1;cursor:pointer;'>\"+wodFmt(st.t||0)+'</b>'+" +
+      "\"<div style='font-size:12.5px;color:#6e6a78;margin-top:8px;'>medido pelo cronômetro · toque pra corrigir</div></div>\"+" +
+      "\"<div class='wplin' style='margin-top:12px;'><span style='flex:1;'>Não terminei o WOD</span><button id='wpNf' aria-pressed='\"+(st.nf?'true':'false')+\"' class='wptg\"+(st.nf?' on':'')+\"'></button></div>\")+comoFez();" +
+      "if(lst0.length){var cfN={rx:'RX',esc:'escalado',adp:'adaptado'};" +
+      "corpo+=cardW('Suas vezes no '+eh(wod.wodNome),\"<div class='wplin'><span style='width:56px;font-weight:800;'>hoje</span><span style='flex:1;color:#8a8695;'>\"+(cfN[st.cf]||'—')+\"</span><b style='color:#4ade80;font-variant-numeric:tabular-nums;'>\"+wodFmt(st.t||0)+'</b></div>'+" +
+      "lst0.slice(-3).reverse().map(function(x){return \"<div class='wplin'><span style='width:56px;font-weight:800;'>\"+dd(x.d)+\"</span><span style='flex:1;color:#8a8695;'>\"+(cfN[x.cf]||'')+'</span><b style=\\\"font-variant-numeric:tabular-nums;\\\">'+(x.v!=null?wodFmt(x.v):eh(String(x.r||'').slice(0,12)))+'</b></div>';}).join(''));" +
+      "var mel2=lst0.filter(function(x){return x.v!=null&&!x.nf;}).map(function(x){return x.v;});" +
+      "if(mel2.length&&st.t!=null&&!st.nf&&st.t<Math.min.apply(null,mel2))nota=wodFmt(Math.min.apply(null,mel2)-st.t)+' mais rápido que a sua melhor marca';}}" +
+      "else{chip=tipo==='tabata'?'TABATA · '+rd+' ROUNDS':'EMOM '+minA+' MIN';" +
+      "sub=tipo==='tabata'?wk2+'s trabalho / '+rs2+'s descanso':'um movimento a cada minuto cheio';nota='o seu personal vê o placar e a observação no painel';" +
+      "corpo=cardW('Reps de cada round',\"<div style='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;'>\"+st.reps.map(function(v,i){" +
+      "return \"<button class='wptile wpr\"+(v!=null&&v===pior?' pior':'')+\"' data-wpr='\"+i+\"'><i>R\"+(i+1)+'</i><b>'+(v==null?'—':v)+'</b></button>';}).join('')+'</div>'+" +
+      "\"<div style='font-size:12.5px;color:#6e6a78;margin-top:10px;'>toque num round pra anotar as reps\"+(tipo==='tabata'&&pior!=null?\" · em Tabata o placar é a <b style='color:#fff;'>pior série: \"+pior+'</b>':'')+'</div>');" +
+      "if(reps.length)corpo+=cardW('',\"<div style='display:flex;gap:10px;'>\"+" +
+      "\"<div class='wptile' style='flex:1;'><i>Total</i><b>\"+tot+'<small>reps</small></b></div>'+" +
+      "\"<div class='wptile' style='flex:1;'><i>Pior série</i><b>\"+pior+'</b></div>'+" +
+      "\"<div class='wptile' style='flex:1;'><i>Média</i><b>\"+String(Math.round(10*tot/reps.length)/10).replace('.',',')+'</b></div></div>');" +
+      "corpo+=cardW('Uma observação pro seu personal',\"<textarea id='wpObs' rows='3' maxlength='300' class='wpobs' placeholder='Ex.: caiu no R6, ombro cansado…'></textarea>\");}" +
+      "ov.innerHTML=\"<div style='max-width:480px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 18px calc(28px + env(safe-area-inset-bottom,0px));'>\"+" +
+      "\"<div style='display:flex;align-items:center;margin-bottom:16px;'><button id='wpVoltar' class='wpchip' style='flex:none;padding:0 20px;'>Voltar</button><span style='margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.22em;color:#8a8695;'>MEU RESULTADO</span></div>\"+" +
+      "\"<span class='wpctipo'>\"+chip+'</span>'+" +
+      "\"<div style='font-size:clamp(26px,8vw,38px);font-weight:900;letter-spacing:-.03em;text-transform:uppercase;line-height:1;margin:10px 0 6px;'>\"+eh(wod.wodNome)+'</div>'+" +
+      "\"<div style='font-size:13.5px;color:#8a8695;'>\"+sub+'</div>'+corpo+" +
+      "\"<button id='wpSalvar' class='btnx' style='width:100%;min-height:58px;font-size:17px;margin-top:18px;'>Salvar resultado</button>\"+" +
+      "\"<div style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:10px;'>\"+nota+'</div></div>';" +
+      "var obn=document.getElementById('wpObs');if(obn)obn.value=st.ob;}" +
+      "ov.addEventListener('input',function(e){if(e.target.id==='wpObs')st.ob=e.target.value;});" +
+      "ov.addEventListener('click',function(e){var t=e.target.closest('button,#wpT');if(!t)return;" +
+      "if(t.id==='wpVoltar'){ov.remove();wodMsgFim(msg);return;}" +
+      "if(t.id==='wpMenos'){st.v=Math.max(0,st.v-1);pr();return;}" +
+      "if(t.id==='wpMais'){st.v++;pr();return;}" +
+      "if(t.id==='wpExB'){var ex=prompt('Reps da volta que ficou pela metade:',st.ex||'');if(ex!=null&&ex!=='')st.ex=Math.max(0,parseInt(ex,10)||0);pr();return;}" +
+      "if(t.id==='wpNf'){st.nf=st.nf?0:1;pr();return;}" +
+      "if(t.id==='wpT'){var tv=prompt('Corrige o tempo (mm:ss):',wodFmt(st.t||0));if(tv){var pt=String(tv).split(':');var sg=60*(parseInt(pt[0],10)||0)+(parseInt(pt[1],10)||0);if(sg>0)st.t=sg;}pr();return;}" +
+      "if(t.dataset&&t.dataset.wpcf){st.cf=st.cf===t.dataset.wpcf?'':t.dataset.wpcf;pr();return;}" +
+      "if(t.dataset&&t.dataset.wpr!=null){var rp=prompt('Reps do round '+(1+ +t.dataset.wpr)+':',st.reps[+t.dataset.wpr]==null?'':st.reps[+t.dataset.wpr]);" +
+      "if(rp!=null&&rp!=='')st.reps[+t.dataset.wpr]=Math.max(0,parseInt(rp,10)||0);pr();return;}" +
+      "if(t.id==='wpSalvar'){var reps2=st.reps.filter(function(x){return x!=null;});var tot2=reps2.reduce(function(a,b){return a+b;},0);" +
+      "var pior2=reps2.length?Math.min.apply(null,reps2):null;" +
+      "var cfT={rx:' · RX',esc:' · escalado',adp:' · adaptado'}[st.cf]||'';var r,v;" +
+      "if(tipo==='amrap'){v=st.v;r=pl(st.v,'volta','voltas')+(st.ex?' + '+st.ex+' reps':'')+' em '+wodFmt(minA*60)+cfT;}" +
+      "else if(tipo==='fortime'){v=st.t;r=(st.nf?'não terminou · ':'')+'tempo '+wodFmt(st.t||0)+cfT;}" +
+      "else{v=pior2;r=(reps2.length?tot2+' reps · pior série '+pior2:'circuito completo')+cfT;}" +
+      "if(st.ob)r+=' — obs: '+st.ob.slice(0,120);" +
+      "var wr2=L('ptwodres',{});var lst2=wr2[wod.wodId]||[];var ant2=lst2.length?lst2[lst2.length-1]:null;" +
+      "if(ant2&&v!=null&&ant2.v!=null&&!st.nf){if(tipo==='fortime'?v<ant2.v:v>ant2.v)r+=' — BATEU o resultado anterior!';}" +
+      "lst2.push({d:isoHj(),n:wod.wodNome,r:r,v:v==null?null:Math.round(v),tp:tipo,cf:st.cf||'',ex:st.ex||0,nf:st.nf?1:0," +
+      "sp:laps.map(function(x){return Math.round(x);}),rp:st.reps,ob:st.ob.slice(0,300)});" +
+      "if(lst2.length>20)lst2.shift();wr2[wod.wodId]=lst2;Sv('ptwodres',wr2);pintaWodRes();" +
+      "ov.remove();wodMsgFim('Placar salvo! '+r);return;}});" +
+      "pr();window.__wodPlacarEl=ov;}" +
+      "window.__wodPlacar=wodPlacar;" +
       "document.getElementById('wodTermina').addEventListener('click',function(){if(!wod.run)return;var el2=(Date.now()-wod.t0)/1000;" +
       "wodFim('Seu tempo: '+wodFmt(el2)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''),el2);});" +
       "document.getElementById('wodTipos').addEventListener('click',function(e){var b=e.target.closest('[data-wodt]');if(!b||wod.run)return;" +
@@ -1377,9 +1493,10 @@
       "if(wod.run){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=(Date.now()-wod.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
       "wod.run=true;wod.t0=Date.now()-wod.acum*1000;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
       "bip(880,120);wod.iv=setInterval(wodTick,200);wodTick();});" +
-      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.ultMin=-1;wod.ultFase='';soltaTela();" +
+      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();" +
       "document.getElementById('wodGo').textContent='Iniciar';document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
-      "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
+      // cada volta guarda o instante: vira a lista "tempo de cada volta" do placar
+      "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;wod.laps.push((Date.now()-wod.t0)/1000);if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
       "wodChips();wodCfg();pintaWodRes();" +
       "window.__wod=wod;" +
       "}" +
