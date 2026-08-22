@@ -27,6 +27,9 @@ todos os alunos. O painel só monta o pacote de DADOS daquele aluno
 (`dadosAppAluno` → ~4 KB, contra 180 KB de HTML) e grava em `app_aluno.dados` no
 formato `{html, dados, ver, stamp}`. Quem abre `/app/?t=…` junta os dois — então
 uma correção de código chega em TODOS os alunos sozinha, sem ninguém republicar.
+O VISUAL do redesenho mora em `app/aluno-skin.js` (`MT_APP_SKIN`, embutido pelo
+builder no HTML publicado, com guarda — sem skin, nada muda); aparência se mexe
+lá, nunca reescrevendo o builder.
 Regras: nada de dado de aluno dentro do aluno-builder.js (tudo entra pelo objeto
 `D`); a cor chega por variáveis CSS no `:root`; canvas usa `CV('cor')` porque não
 entende `var()`. O `html` do pacote é só rede de segurança pra quem estiver com a
@@ -214,6 +217,29 @@ bash tests/run.sh   # 20 suítes — esperado: "suites com falha: 0"
   varre o CÓDIGO das páginas.
 - test-scanner roda em node puro: valida a matemática das medidas com um boneco
   sintético de larguras conhecidas. Câmera de verdade não é testada de propósito.
+
+## Trabalhando junto com o Claude Design (leia se você É o Claude Design)
+
+O Raphael usa o Claude Code E o Claude Design no MESMO repositório. Regras pra
+ninguém atropelar ninguém — valem pros dois:
+
+- **Merge na main = site no ar na hora** (GitHub Pages). Toda mudança passa
+  pelas suítes de `tests/` — o workflow `.github/workflows/testes.yml` roda
+  sozinho em cada push na main e em cada PR. Vermelho = quebrou; conserte ou
+  reverta antes de seguir.
+- **Claude Design: prefira PR em vez de push direto na main** (branch
+  `design/...`). Assim o teste roda ANTES de publicar.
+- **Visual do app do aluno mora em `app/aluno-skin.js`** — é a camada certa
+  pra mexer em aparência (CSS + ajuste mínimo de DOM, embutida no app
+  publicado pelo builder). NÃO reescrever `app/aluno-builder.js` (lógica:
+  sync, push, PIX, GPS, chat) nem `apps/store.js` (motor de sync) — mudanças
+  aí são do Claude Code, com as suítes rodando localmente.
+- Zonas tranquilas pra design: `personal-vendas.html`, `torqueon.html`,
+  textos, imagens, `DESIGN.md`. Zonas de cuidado: `personal.html`,
+  `nutricao.html`, `index.html` (páginas gigantes com JS embutido — combine
+  antes ou vá de PR).
+- O Claude Code puxa `origin/main` antes de cada lote — o que entrar por PR
+  mergeado é incorporado automaticamente ao trabalho dele.
 
 ## Como publicar (fluxo obrigatório)
 

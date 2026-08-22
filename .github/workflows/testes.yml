@@ -1,0 +1,40 @@
+# TORQUE ON — as 21 suítes rodam sozinhas no GitHub a cada mudança.
+#
+# Por que existe: com o Claude Code E o Claude Design mexendo no mesmo
+# repositório, tudo que chega na main (ou abre PR) passa pelos mesmos testes
+# que rodam localmente — se algo quebrar, fica vermelho aqui antes de alguém
+# perceber no site. Merge na main publica o site na hora (GitHub Pages), então
+# este é o único alarme automático.
+#
+# Os testes esperam o Playwright e o Chromium em caminhos fixos
+# (/opt/node22/... e /opt/pw-browsers/chromium — ver CLAUDE.md); em vez de
+# mexer nas 21 suítes, o robô recria esses caminhos com links simbólicos.
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  suites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Playwright + Chromium nos caminhos que as suítes esperam
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          sudo mkdir -p /opt/node22/lib/node_modules /opt/pw-browsers
+          sudo ln -s "$PWD/node_modules/playwright" /opt/node22/lib/node_modules/playwright
+          CHROME=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          sudo ln -s "$CHROME" /opt/pw-browsers/chromium
+
+      - name: Roda as suítes
+        run: bash tests/run.sh
