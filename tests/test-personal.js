@@ -3385,8 +3385,9 @@ async function abaPt(p, a) {
     document.querySelector("#navApp .nitem[data-msec='treino']").click();
     return { itens, antes, depois: { inicio: secVisivel("inicio"), treino: secVisivel("treino") }, tit: document.getElementById("secTit").textContent };
   });
-  ok(navAbas.itens.length >= 5 && navAbas.itens[0] === "inicio", "barra de abas montada com as seções do app (" + navAbas.itens.length + " abas)");
-  ok(await pApp.evaluate(() => document.querySelectorAll("#navApp .nitem svg").length >= 5 && !/[🏠🏋📈📅💬💳]/.test(document.getElementById("navApp").textContent)), "abas com ícones de traço (SVG), sem emoji");
+  // telas finais: 4 botões embaixo (Hoje, Treinos, Evolução, Menu) — o resto vive na gaveta
+  ok(navAbas.itens.length >= 4 && navAbas.itens[0] === "inicio", "barra de abas montada com as seções do app (" + navAbas.itens.length + " abas)");
+  ok(await pApp.evaluate(() => document.querySelectorAll("#navApp .nitem svg").length >= 4 && !/[🏠🏋📈📅💬💳]/.test(document.getElementById("navApp").textContent)), "abas com ícones de traço (SVG), sem emoji");
   ok(navAbas.antes.inicio && !navAbas.antes.treino && !navAbas.depois.inicio && navAbas.depois.treino && /Treino/.test(navAbas.tit), "tocar na aba troca a seção e o título do topo");
   // recado do personal ainda não visto acende a bolinha 🔴 no Chat
   const dotChat = await pApp.evaluate(() => {
@@ -4701,7 +4702,8 @@ async function abaPt(p, a) {
       foto: (document.getElementById("htFoto") || {}).style && document.getElementById("htFoto").style.display,
     };
   });
-  ok(/TREINO|FICHA/.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card 'HOJE · " + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
+  // telas finais: o rótulo do herói da ficha é a DATA ("SÁBADO, 22 DE AGOSTO")
+  ok(/ DE /.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card '" + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
   ok(home.foto === "none", "📷 sem foto na ficha, o card do dia fica limpo (nada de imagem quebrada)");
   ok(/Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
   ok((home.tilesHtml.match(/background:var\(--bg2\)/g) || []).length === 2,
@@ -5126,8 +5128,9 @@ async function abaPt(p, a) {
 
   // motivação: treinei hoje → bolinha, meta e toast
   pApp.on("dialog", (d) => d.accept());
-  const semana = await pApp.evaluate(() => document.getElementById("diasSem").textContent);
-  ok(/✓/.test(semana), "bolinha do dia marcada (auto pelo treino completo)");
+  // dia treinado ganha o chip pintado (gradiente da cor) — o ✓ saiu no redesenho
+  const semana = await pApp.evaluate(() => document.getElementById("diasSem").innerHTML);
+  ok(/linear-gradient/.test(semana), "chip do dia pintado (auto pelo treino completo)");
   const metaTxt = await pApp.evaluate(() => document.getElementById("metaBox").textContent);
   ok(/1 de 3/.test(metaTxt), "meta da semana mostra 1 de 3");
   const medal = await pApp.evaluate(() => document.getElementById("medalhas").textContent);
@@ -6145,14 +6148,14 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);function pintaHero/);
+      const m = html.match(/var PLANO=(.+?);var DSEM_/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
-      // receita R1: os treinos do dia viram carrossel (.carr) com pontinhos e
-      // um botão por tipo — circuito e corrida entram como cards irmãos
-      out.carrossel = /id='heroCarr'/.test(html) && /class='carrdots' id='heroDots'/.test(html) &&
+      // receita R1 + telas finais: os treinos do dia viram carrossel de tela
+      // cheia, com risquinhos por card ("1 de 3 · arraste") e um botão por tipo
+      out.carrossel = /id='heroCarr'/.test(html) && /class='htdash'/.test(html) &&
         /data-carrver='wod'/.test(html) && /data-carrver='cardio'/.test(html) &&
-        /Começar circuito ›/.test(html) && /Começar corrida ›/.test(html);
+        /Começar circuito/.test(html) && /Começar corrida/.test(html) && /arraste/.test(html);
       // limpa o rastro (plano + wods/cardio que a IA de teste criou) pros próximos blocos
       const st3 = S.read("ptStudio", {});
       delete st3.treinosV2[id].plano;
