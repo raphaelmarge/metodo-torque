@@ -6139,15 +6139,9 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);var HERO_EXTRA/);
+      const m = html.match(/var PLANO=(.+?);function pintaHero/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
-      // redesenho 13a: herói de 550px com data, véu fixo, UM botão de 58px e carrossel
-      out.hero13a = /height:550px/.test(html) && /id='htData'/.test(html) && /id='htDots'/.test(html) &&
-        /min-height:58px/.test(html) && />Começar treino</.test(html) && /id='htGhost'/.test(html);
-      // com circuito e corrida prescritos, o carrossel ganha os cards extras
-      const mEx = html.match(/var HERO_EXTRA=(.+?);/);
-      out.heroExtra = mEx ? JSON.parse(mEx[1]) : [];
       // limpa o rastro (plano + wods/cardio que a IA de teste criou) pros próximos blocos
       const st3 = S.read("ptStudio", {});
       delete st3.treinosV2[id].plano;
@@ -6164,9 +6158,30 @@ async function abaPt(p, a) {
       pln.planoApp["6"] && pln.planoApp["6"].tp === "cardio",
       "o pacote leva o plano resolvido: dia → tipo + índice + nome do treino");
     ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
-    ok(pln.hero13a, "🎨 redesenho 13a: herói de 550px com data, marca-d'água, carrossel e UM botão 'Começar treino' de 58px");
-    ok(pln.heroExtra.length === 2 && pln.heroExtra[0].k === "wod" && pln.heroExtra[1].k === "cardio" && !!pln.heroExtra[1].s,
-      "o carrossel do herói ganha os cards de circuito e corrida prescritos (com o alvo resumido)");
+  }
+
+  // 🎭 skin do redesenho (Claude Design): camada visual embutida no app publicado
+  {
+    const skin = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const html = window.__montaAppAluno(st.alunos[0], "teste-skin");
+      return {
+        temSkin: !!self.MT_APP_SKIN && typeof self.MT_APP_SKIN.css === "string" && typeof self.MT_APP_SKIN.js === "string",
+        embute: html.indexOf(self.MT_APP_SKIN.css) > -1 && html.indexOf(self.MT_APP_SKIN.js) > -1,
+        toque: /min-height:58px!important/.test(self.MT_APP_SKIN.css) && /\.tphab button\{min-height:44px!important\}/.test(self.MT_APP_SKIN.css),
+        utilitarios: /\.carr\{/.test(self.MT_APP_SKIN.css) && /\.notabtn\{/.test(self.MT_APP_SKIN.css) && /\.listrow\{/.test(self.MT_APP_SKIN.css),
+      };
+    });
+    ok(skin.temSkin, "🎭 o skin do redesenho carrega junto do builder no painel");
+    ok(skin.embute, "o app publicado EMBUTE o skin (o aluno leva o visual junto, sem referência externa)");
+    ok(skin.toque, "os alvos de toque do handoff (botão principal 58px, hábitos 44px) estão no skin");
+    ok(skin.utilitarios, "as classes das receitas (carrossel, notas 58px, listrow) já viajam no skin");
+    const fontes = await p.evaluate(async () => ({
+      painel: /app\/aluno-skin\.js/.test(await (await fetch("personal.html")).text()),
+      appPg: /aluno-skin\.js/.test(await (await fetch("app/index.html")).text()),
+      sw: (await (await fetch("sw.js")).text()).split("app/aluno-skin.js").length === 3,
+    }));
+    ok(fontes.painel && fontes.appPg && fontes.sw, "o skin entra pelo painel, pela página /app/ e no sw (precache + rede primeiro)");
   }
 
   /* A IA parou de mandar republicar a função quando o problema é credencial.

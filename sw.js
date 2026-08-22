@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v535";
+var VERSION = "mt-v536";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -86,6 +86,8 @@ var CORE = [
   "assets/bot-builder.js",
   // construtor do app do aluno: fonte única do código do app
   "app/aluno-builder.js",
+  // skin do redesenho: a camada visual que o builder embute no app publicado
+  "app/aluno-skin.js",
   "privacidade.html",
   "excluir-conta.html",
   "diagnostico.html",
@@ -154,7 +156,8 @@ self.addEventListener("fetch", function (event) {
   // Nos três casos o cache continua valendo como reserva, pro app abrir offline.
   if (url.pathname.indexOf("/supabase/functions/") > -1 ||
       url.pathname.indexOf("supabase-setup.sql") > -1 ||
-      url.pathname.indexOf("/app/aluno-builder.js") > -1) {
+      url.pathname.indexOf("/app/aluno-builder.js") > -1 ||
+      url.pathname.indexOf("/app/aluno-skin.js") > -1) {
     event.respondWith(
       fetch(req, { cache: "no-cache" }).then(function (res) {
         if (res && res.ok) {
