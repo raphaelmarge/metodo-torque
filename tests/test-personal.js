@@ -2855,7 +2855,7 @@ async function abaPt(p, a) {
     ok(await p.evaluate(() => !!document.getElementById("cfgMural")), "módulo tem o campo 📌 Mural na ilha");
   }
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Treinos por semana/.test(appHtml), "app tem painel de conquistas com gráfico de semanas");
-  ok(/7 dias seguidos/.test(appHtml) && /100 treinos/.test(appHtml) && /CONQUISTADA/.test(appHtml), "medalhas de sequência e volume no app");
+  ok(/7 dias seguidos/.test(appHtml) && /100 treinos/.test(appHtml) && /data-cqok/.test(appHtml), "medalhas de sequência e volume no app");
   ok(/botChips/.test(appHtml) && />assistente</.test(appHtml) && /botEscolhe/.test(appHtml), "app tem o robô de atendimento (chatbot de menu) no chat");
   ok(/Pode escrever aqui embaixo/.test(appHtml), "opção 'humano' vira encaminhamento pro personal");
   {
@@ -3917,14 +3917,15 @@ async function abaPt(p, a) {
   await pCr.waitForTimeout(700);
   const cqCorrida = await pCr.evaluate(() => {
     window.__trocaSec("evolucao");
-    const cards = [...document.querySelectorAll("#cqGrid > div")].map((x) => x.textContent);
-    const acha = (n) => cards.find((t) => t.indexOf(n) > -1) || "";
+    // tela 31: o estado da medalha vive no data-cqok (o selo textual saiu do desenho)
+    const cards = [...document.querySelectorAll("#cqGrid > div")].map((x) => ({ t: x.textContent, ok: x.getAttribute("data-cqok") === "1" }));
+    const acha = (n) => cards.find((c) => c.t.indexOf(n) > -1) || { t: "", ok: false };
     return {
-      primeira: /CONQUISTADA/.test(acha("Primeira corrida")),
-      cinco: /CONQUISTADA/.test(acha("5 km numa corrida")),
-      pace: /CONQUISTADA/.test(acha("Pace abaixo de 6:00")),
-      soma: acha("100 km somados"),
-      bikeNaoConta: /1\/10/.test(acha("10 corridas")),
+      primeira: acha("Primeira corrida").ok,
+      cinco: acha("5 km numa corrida").ok,
+      pace: acha("Pace abaixo de 6:00").ok,
+      soma: acha("100 km somados").t,
+      bikeNaoConta: /1\/10/.test(acha("10 corridas").t),
     };
   });
   ok(cqCorrida.primeira && cqCorrida.cinco && cqCorrida.pace, "correr 5,2 km com pace 5:46 conquista as medalhas de corrida");

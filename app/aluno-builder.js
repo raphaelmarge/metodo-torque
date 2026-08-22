@@ -1527,24 +1527,40 @@
           n: String(c.n || "").replace(/[<>&"']/g, "").slice(0, 28), m: Math.max(1, Math.min(5000, +c.meta || 1)) };
       }).filter(function (c) { return c.n; })) + ";" +
       "CQX.forEach(function(c){BADGES.push([c.p,c.n,total,c.m]);});" +
-      "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b){var tem=b[2]>=b[3];" +
-      "return \"<div style='text-align:center;padding:10px 4px;border-radius:16px;\"+(tem?'background:rgba(var(--cor-rgb),.22);border:1px solid var(--cor);':'background:var(--bg4);border:1px solid var(--bg10);opacity:.55;')+\"'>\"+" +
-      "(b[4]?\"<div style='font-size:23px;line-height:1.3;\"+(tem?'':'filter:grayscale(1);')+\"'>\"+b[0]+\"</div>\":\"<div style='line-height:0;padding:3px 0;color:\"+(tem?'var(--corc)':'#6e6a78')+\";'>\"+icq(b[0])+'</div>')+\"<div style='font-size:10.5px;font-weight:700;margin-top:3px;line-height:1.25;'>\"+b[1]+'</div>'+" +
-      "(tem?\"<div style='font-size:9.5px;color:var(--corc);font-weight:800;margin-top:2px;'>CONQUISTADA</div>\":\"<div style='font-size:9.5px;color:#6e6a78;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
+      // tela 31: cards lisos sem contorno — conquistada tem o ícone COLORIDO
+      // (a cor varia por medalha), bloqueada vira cadeado cinza com o progresso
+      // pequenininho; o estado vai no data-cqok (é o que os testes leem)
+      "var CQCOR=['var(--corc)','#fb923c','#4ade80','#fbbf24'];" +
+      "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b,i5){var tem=b[2]>=b[3];var cor5=CQCOR[i5%CQCOR.length];" +
+      "return \"<div data-cqok='\"+(tem?1:0)+\"' style='text-align:center;padding:16px 6px 14px;border-radius:20px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);\"+(tem?'':'opacity:.6;')+\"'>\"+" +
+      "(tem?(b[4]?\"<div style='font-size:24px;line-height:1.3;'>\"+b[0]+\"</div>\":\"<div style='line-height:0;padding:4px 0;color:\"+cor5+\";'>\"+icq(b[0])+'</div>')" +
+      ":\"<div style='line-height:0;padding:4px 0;color:#57525f;'>\"+icq(\"<rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 0 1 8 0v3'/>\")+'</div>')+" +
+      "\"<div style='font-size:12px;font-weight:800;margin-top:8px;line-height:1.25;\"+(tem?'':'color:#6e6a78;')+\"'>\"+b[1]+'</div>'+" +
+      "(tem?'':\"<div style='font-size:9.5px;color:#57525f;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
+      // tela 31: MINHAS SEMANAS — número verde quando bateu a meta da semana
+      // (o aria-label mantém o nome antigo 'Treinos por semana' pros leitores)
       "var bars='';var hj5=new Date();var seg5=new Date(hj5);seg5.setDate(seg5.getDate()-((seg5.getDay()+6)%7));var max5=1;var sems=[];" +
-      "for(var w2=7;w2>=0;w2--){var d5=new Date(seg5);d5.setDate(d5.getDate()-7*w2);var n5=porSem[isoLoc(d5)]||0;if(n5>max5)max5=n5;sems.push({d:d5,n:n5});}" +
-      "bars=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Treinos por semana (últimas 8)</div><div style='display:flex;gap:6px;align-items:flex-end;height:80px;'>\"+sems.map(function(s5){" +
-      "var hh5=Math.round(56*s5.n/max5);var bateu=s5.n>=META;" +
-      "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(bateu?'var(--corc)':'#6e6a78')+\";'>\"+(s5.n||'')+\"</div><div style='height:\"+(56-hh5)+\"px;'></div><div style='height:\"+hh5+\"px;background:\"+(bateu?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg12)')+\";border-radius:4px 4px 0 0;min-height:2px;'></div><div style='font-size:8.5px;color:#6e6a78;margin-top:3px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
+      "for(var w2=5;w2>=0;w2--){var d5=new Date(seg5);d5.setDate(d5.getDate()-7*w2);var n5=porSem[isoLoc(d5)]||0;if(n5>max5)max5=n5;sems.push({d:d5,n:n5});}" +
+      "var cq9=document.getElementById('cqGraf');if(cq9)cq9.style.cssText='margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;';" +
+      "bars=\"<div style='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;'><span class='wpk' style='margin:0;'>Minhas semanas</span><span style='font-size:12px;color:#8a8695;'>meta de \"+META+\" por semana</span></div>\"+" +
+      "\"<div style='display:flex;gap:8px;align-items:flex-end;height:100px;' aria-label='Treinos por semana'>\"+sems.map(function(s5){" +
+      "var hh5=Math.round(66*s5.n/max5);var bateu=s5.n>=META;" +
+      "return \"<div style='flex:1;text-align:center;'><div style='font-size:12px;font-weight:800;color:\"+(bateu?'#4ade80':'#8a8695')+\";'>\"+s5.n+\"</div><div style='height:\"+(66-hh5)+\"px;'></div><div style='height:\"+Math.max(hh5,4)+\"px;background:\"+(bateu?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:8px 8px 2px 2px;'></div><div style='font-size:9.5px;color:#6e6a78;margin-top:4px;'>\"+('0'+s5.d.getDate()).slice(-2)+'/'+('0'+(s5.d.getMonth()+1)).slice(-2)+'</div></div>';}).join('')+'</div>';" +
       "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();}" +
       // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
+      // tela 31: o mapa do ano virou um card com os meses embaixo
       "function pintaMapaAno(){var el=document.getElementById('mapaAno');if(!el)return;var f=L('ptfeitos',{});" +
+      "el.style.cssText='margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;';" +
       "var hoje=new Date();var fim=new Date(hoje);fim.setDate(fim.getDate()+(6-((fim.getDay()+6)%7)));" +
       "var html='';var tot=0;" +
       "for(var w=51;w>=0;w--){html+=\"<div style='flex:1;min-width:0;display:flex;flex-direction:column;gap:1.5px;'>\";" +
       "for(var d=0;d<7;d++){var dt=new Date(fim);dt.setDate(dt.getDate()-w*7-(6-d));var iso=isoLoc(dt);var fez=!!f[iso];if(fez)tot++;var fut=dt>hoje;" +
       "html+=\"<div style='width:100%;aspect-ratio:1;border-radius:1.5px;background:\"+(fut?'transparent':fez?'var(--cor)':'var(--bg8)')+\";'></div>\";}html+='</div>';}" +
-      "el.innerHTML=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Seu ano de treinos — \"+pl(tot,'dia pintado','dias pintados')+\" (cada quadrado é 1 dia)</div><div style='display:flex;gap:1.5px;max-width:100%;overflow:hidden;'>\"+html+'</div>';}" +
+      "var MES3B=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
+      "var labs=[51,38,25,12].map(function(w9){var d9=new Date(fim);d9.setDate(d9.getDate()-w9*7);return \"<span>\"+MES3B[d9.getMonth()]+'</span>';}).join('')+'<span>hoje</span>';" +
+      "el.innerHTML=\"<div style='font-size:12px;color:#a9a4b5;margin-bottom:8px;'>Seu ano de treinos — <b>\"+pl(tot,'dia pintado','dias pintados')+\"</b> (cada quadrado é 1 dia)</div>\"+" +
+      "\"<div style='display:flex;gap:1.5px;max-width:100%;overflow:hidden;'>\"+html+'</div>'+" +
+      "\"<div style='display:flex;justify-content:space-between;font-size:10px;color:#6e6a78;margin-top:6px;'>\"+labs+'</div>';}" +
       // tela 49: cartões PESO e SEQUÊNCIA embaixo da grade de conquistas
       "function seqAtual(f){var n=0;var d=new Date();for(var k=0;k<400;k++){var iso=isoLoc(d);" +
       "if(f[iso])n++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}return n;}" +
