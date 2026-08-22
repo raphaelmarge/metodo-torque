@@ -187,6 +187,7 @@
       "html.claro .mgchev{color:#a9a4b5}" +
       "html.claro .mgq{background:rgba(var(--cor-rgb),.08);color:var(--cor)}" +
       "html.claro .mgq .mgsub{color:var(--cor)}" +
+      "html.claro .aghoje{background:rgba(var(--cor-rgb),.16);border:1px solid var(--corc)}" +
       // o topo é colorido nos dois temas, então os chips dele não mudam no claro
       "html.claro [style*='background:var(--bg2)']{background:#fff!important;box-shadow:0 1px 3px rgba(23,21,28,.07)}" +
       "html.claro [style*='background:var(--bg5)']{background:#e9e7ef!important}" +
@@ -403,6 +404,9 @@
       ".mgchev{margin-left:auto;flex:none;color:#57525f;line-height:0}" +
       ".mgq{display:flex;align-items:center;gap:13px;width:calc(100% - 32px);min-height:64px;background:rgba(var(--cor-rgb),.10);border:1px solid rgba(var(--cor-rgb),.5);border-radius:22px;margin:18px 16px 0;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;color:var(--corc)}" +
       ".mgq .mgsub{color:var(--corc)}" +
+      /* agenda (tela 14): o dia de hoje é o quadradinho branco; no claro vira
+       * véu da cor (o teste do tema lê texto escuro + fundo não transparente) */
+      ".aghoje{background:#fff;color:#191622;font-weight:800}" +
       // hábitos do dia em grade (HOJE EU JÁ) — feito = contorno da cor do studio
       ".habgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}" +
       ".habgrid button{min-height:62px;background:var(--bg2);border:1px solid var(--bg11);border-radius:16px;color:#8a8695;font-family:inherit;font-size:10.5px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:6px 2px}" +
@@ -646,7 +650,16 @@
           "<div class='kv'><span>Seus treinos no desafio</span><b id='dsMeus' style='color:var(--corc);'>0</b></div>" +
           "<div id='dsPlacar' class='vz' style='font-size:12.5px;'>Carregando placar…</div></div>"
         : "") +
-      (sessApp.length ? "<div class='cardx'><h2>Minhas sessões com " + esc(studio.split(" ")[0]) + "</h2>" +
+      // ---------- Agenda (tela 14): cabeçalho com a próxima sessão ----------
+      // Preenchido em runtime (pintaAgTopo) porque a próxima sessão pode vir
+      // da nuvem (ptagenda) e muda quando o aluno pede horário.
+      "<div class='cardx' id='agTopo' style='margin:0;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:26px 20px 22px;color:#fff;'>" +
+      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Minha agenda</div>" +
+      "<div id='agProxTit' style='font-size:30px;font-weight:900;letter-spacing:-.03em;margin-top:2px;'>Nada marcado</div>" +
+      "<div id='agProxSub' style='font-size:13px;color:rgba(255,255,255,.85);margin-top:2px;'></div>" +
+      "<div id='agTopoBts' style='display:flex;gap:10px;margin-top:14px;'></div></div></div>" +
+      (sessApp.length ? "<div class='cardx'><h2>Minhas sessões com " + esc(studio) + "</h2>" +
         sessApp.map(function (x, si) {
           var pd = x.d.split("-");
           return "<div class='kv'><span>" + pd[2] + "/" + pd[1] + (x.h ? " às " + x.h : "") + "</span><span>te espero!</span></div>" +
@@ -655,11 +668,18 @@
               "<button data-pconf='0' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;border-radius:99px;padding:9px 0;font-size:13px;font-family:inherit;cursor:pointer;'>Não vou conseguir</button></div>" : "");
         }).join("") + "</div>" : "") +
       "<div class='cardx'><h2>Agenda</h2>" +
-      "<div id='agCal'></div><div id='agDia' style='margin-top:10px;'></div>" +
+      "<div id='agCal'></div>" +
+      // legenda da tela 14: quadradinho cheio = confirmado; tracejado = pedido
+      "<div style='display:flex;gap:16px;align-items:center;margin-top:10px;font-size:12px;color:#8a8695;'>" +
+      "<span style='display:inline-flex;align-items:center;gap:6px;'><i style='width:12px;height:12px;border-radius:4px;background:linear-gradient(135deg,var(--cor),var(--corc));'></i>confirmado</span>" +
+      "<span style='display:inline-flex;align-items:center;gap:6px;'><i style='width:12px;height:12px;border-radius:4px;border:1.5px dashed var(--corc);'></i>esperando resposta</span></div>" +
+      "<div id='agDia' style='margin-top:12px;'></div>" +
       "<div id='agForm' style='display:none;margin-top:10px;'>" +
-      "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1'></select><button class='btnx' id='agPede'>Pedir horário</button></div>" +
-      "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'></div>" +
-      "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div></div>" +
+      "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1'></select></div>" +
+      "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'>" +
+      "<button class='btnx' id='agPede' style='width:100%;min-height:58px;font-size:16px;margin-top:10px;'>+ Pedir um horário</button></div>" +
+      "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div>" +
+      "<div id='agPend' style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:8px;'></div></div>" +
       // ---------- Evolução (tela 49): cabeçalho com nível/XP + pílulas ----------
       "<div class='cardx' id='evTopo' style='margin:0;'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 20px;color:#fff;display:flex;align-items:center;gap:16px;'>" +
@@ -1346,16 +1366,44 @@
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:#6e6a78;margin-bottom:4px;'>\"+['S','T','Q','Q','S','S','D'].map(function(x){return '<div>'+x+'</div>';}).join('')+'</div>';" +
       "h+=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:3px;'>\";" +
       "for(var i=0;i<ini;i++)h+='<div></div>';" +
+      // tela 14: confirmado = quadradinho na cor do studio; pedido = tracejado;
+      // hoje = quadradinho branco (classe, pro modo claro ter regra própria)
       "for(var d2=1;d2<=nd;d2++){var iso=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+d2).slice(-2);var st2=pontos[iso];var hoje2=iso===isoHj();" +
-      "h+=\"<div data-agdia='\"+iso+\"' style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;\"+(AGSEL===iso?'background:linear-gradient(135deg,var(--cor),var(--corc));color:#fff;':(hoje2?'background:rgba(var(--cor-rgb),.14);border:1px solid var(--corc);font-weight:800;':'background:var(--bg4);border:1px solid var(--bg10);color:#d6d2df;'))+\"'>\"+d2+" +
-      "(st2?\"<span style='width:5px;height:5px;border-radius:50%;margin-top:2px;background:\"+(st2==='confirmado'?'#4ade80':st2==='pedido'?'#fbbf24':'#f87171')+\";'></span>\":\"<span style='height:7px;'></span>\")+'</div>';}" +
+      "var sty='',cls='';" +
+      "if(AGSEL===iso)sty='background:linear-gradient(135deg,var(--cor),var(--corc));color:#fff;';" +
+      "else if(hoje2)cls='aghoje';" +
+      "else if(st2==='confirmado')sty='background:linear-gradient(160deg,var(--corc),var(--cor));color:#fff;';" +
+      "else if(st2==='pedido')sty='border:1.5px dashed var(--corc);color:#d6d2df;';" +
+      "else if(st2)sty='border:1.5px dashed #f87171;color:#d6d2df;';" +
+      "else sty='color:#a9a4b5;';" +
+      "var pon=(AGSEL===iso||st2==='confirmado')&&!cls?'rgba(255,255,255,.9)':cls?'var(--cor)':st2==='pedido'?'var(--corc)':'#f87171';" +
+      "h+=\"<div data-agdia='\"+iso+\"'\"+(cls?\" class='\"+cls+\"'\":'')+\" style='aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:13px;cursor:pointer;font-size:13.5px;font-weight:700;\"+sty+\"'>\"+d2+" +
+      "(st2||((AGSEL===iso||hoje2)&&pontos[iso])?\"<span style='width:5px;height:5px;border-radius:50%;margin-top:2px;background:\"+pon+\";'></span>\":\"<span style='height:7px;'></span>\")+'</div>';}" +
       "h+='</div>';el.innerHTML=h;" +
       "document.getElementById('agAnt').onclick=function(){AGMES.setMonth(AGMES.getMonth()-1);pintaCal();};" +
-      "document.getElementById('agProx').onclick=function(){AGMES.setMonth(AGMES.getMonth()+1);pintaCal();};pintaDia();}" +
+      "document.getElementById('agProx').onclick=function(){AGMES.setMonth(AGMES.getMonth()+1);pintaCal();};pintaDia();pintaAgTopo();}" +
+      // cabeçalho da agenda (tela 14): a próxima sessão confirmada + os dois botões
+      "function pintaAgTopo(){var el=document.getElementById('agProxTit');if(!el)return;var hj9=isoHj();" +
+      "var fut=agDados().filter(function(x){return x.status==='confirmado'&&x.dia>=hj9;}).sort(function(a9,b9){return (a9.dia+(a9.hora||'')).localeCompare(b9.dia+(b9.hora||''));})[0];" +
+      "var bts=document.getElementById('agTopoBts');var sub=document.getElementById('agProxSub');" +
+      "if(!fut){el.textContent='Nada marcado';sub.textContent='pede um horário aqui embaixo';bts.innerHTML='';return;}" +
+      "var dt8=new Date(fut.dia+'T12:00:00');var nm8=DSEMA[dt8.getDay()];nm8=nm8.charAt(0)+nm8.slice(1).toLowerCase();" +
+      "el.textContent=nm8+', '+(fut.hora||'a combinar');" +
+      "sub.textContent='é o próximo — dia '+String(fut.dia).slice(8,10)+'/'+String(fut.dia).slice(5,7);" +
+      "var pill='flex:1;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:99px;min-height:48px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;';" +
+      "bts.innerHTML=\"<button type='button' data-agics='\"+fut.dia+'|'+(fut.hora||'')+\"' style='\"+pill+\"'>Salvar no meu celular</button>\"+" +
+      "\"<button type='button' data-agrem='\"+fut.dia+'|'+(fut.hora||'')+\"' style='\"+pill+\"'>Preciso remarcar</button>\";}" +
+      // nomes locais porque o DSEM_ global só nasce mais pra baixo no script
+      "var DSEMA=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];" +
       "function pintaDia(){var box=document.getElementById('agDia');var form=document.getElementById('agForm');" +
+      "var pend9=document.getElementById('agPend');if(pend9){var np9=agDados().filter(function(x){return x.status==='pedido'&&x.dia>=isoHj();}).length;" +
+      "pend9.textContent=np9?'você tem '+pl(np9,'pedido esperando','pedidos esperando')+' resposta':'';}" +
       "if(!AGSEL){box.innerHTML='';form.style.display='none';return;}" +
       "var l=agDados().filter(function(x){return x.dia===AGSEL;});var pd=AGSEL.split('-');" +
-      "box.innerHTML=\"<div style='font-size:13px;font-weight:800;margin-bottom:6px;'>\"+pd[2]+'/'+pd[1]+\"</div>\"+(l.length?l.map(function(x){" +
+      "var dt9=new Date(AGSEL+'T12:00:00');" +
+      "box.innerHTML=\"<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;'>\"+" +
+      "\"<span class='wpk' style='margin:0;'>\"+DSEMA[dt9.getDay()]+', '+(+pd[2])+' DE '+MESES[+pd[1]-1].toUpperCase()+\"</span>\"+" +
+      "(AGSEL===isoHj()?\"<span style='background:rgba(74,222,128,.14);color:#4ade80;border-radius:99px;padding:4px 12px;font-size:10.5px;font-weight:800;letter-spacing:.08em;'>HOJE</span>\":'')+'</div>'+(l.length?l.map(function(x){" +
       "var cor=x.status==='confirmado'?'#4ade80':x.status==='pedido'?'#fbbf24':'#f87171';" +
       "var rot=x.status==='confirmado'?'confirmado':x.status==='pedido'?'aguardando':'não deu';" +
       "return \"<div class='kv'><span>\"+(x.hora||'horário a combinar')+(x.obs?\" · <small style='color:#a9a4b5'>\"+String(x.obs).replace(/</g,'&lt;')+'</small>':'')+\"</span><span><b style='color:\"+cor+\"'>\"+rot+'</b>'+(x.status==='confirmado'?\" <button data-agics='\"+x.dia+'|'+(x.hora||'')+\"' title='Salvar no calendário' style='background:rgba(var(--cor-rgb),.14);border:1px solid var(--cor);color:var(--cor-cl1);border-radius:14px;padding:3px 8px;cursor:pointer;font-size:0;line-height:0;' aria-label='Salvar no calendário'><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' aria-hidden='true'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/></svg></button>\":'')+'</span></div>';}).join(''):\"<div class='vz'>Nada marcado nesse dia.</div>\");" +
@@ -1364,12 +1412,19 @@
       "document.getElementById('agCal').addEventListener('click',function(e){var d3=e.target.closest('[data-agdia]');if(d3){AGSEL=d3.getAttribute('data-agdia');pintaCal();}});" +
       // salvar horário confirmado no calendário do celular (.ics)
       "var AGTIT=" + jsonApp("Sessão com " + studio.split(" ")[0] + " (TORQUE ON)") + ";" +
-      "document.getElementById('agDia').addEventListener('click',function(e){var d9=e.target.getAttribute&&e.target.getAttribute('data-agics');if(!d9)return;" +
+      "function agIcsBaixa(d9){" +
       "var p9=d9.split('|');var h9=p9[1]||'08:00';var i9=p9[0].replace(/-/g,'')+'T'+h9.replace(':','')+'00';" +
       "var f9=new Date(p9[0]+'T'+h9+':00');f9.setMinutes(f9.getMinutes()+60);var p2=function(n){return('0'+n).slice(-2);};" +
       "var s9=f9.getFullYear()+p2(f9.getMonth()+1)+p2(f9.getDate())+'T'+p2(f9.getHours())+p2(f9.getMinutes())+'00';" +
       "var ics='BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//TORQUE ON//App//PT-BR\\r\\nBEGIN:VEVENT\\r\\nUID:'+Date.now()+'@torqueon.com.br\\r\\nDTSTART:'+i9+'\\r\\nDTEND:'+s9+'\\r\\nSUMMARY:'+AGTIT+'\\r\\nEND:VEVENT\\r\\nEND:VCALENDAR';" +
-      "var b9=new Blob([ics],{type:'text/calendar'});var a9=document.createElement('a');a9.href=URL.createObjectURL(b9);a9.download='treino.ics';document.body.appendChild(a9);a9.click();setTimeout(function(){URL.revokeObjectURL(a9.href);a9.remove();},800);});" +
+      "var b9=new Blob([ics],{type:'text/calendar'});var a9=document.createElement('a');a9.href=URL.createObjectURL(b9);a9.download='treino.ics';document.body.appendChild(a9);a9.click();setTimeout(function(){URL.revokeObjectURL(a9.href);a9.remove();},800);}" +
+      "document.getElementById('agDia').addEventListener('click',function(e){var t9=e.target.closest&&e.target.closest('[data-agics]');if(t9)agIcsBaixa(t9.getAttribute('data-agics'));});" +
+      // os botões do cabeçalho: salvar .ics e "preciso remarcar" (abre o chat já escrito)
+      "document.getElementById('agTopo').addEventListener('click',function(e){" +
+      "var t9=e.target.closest&&e.target.closest('[data-agics]');if(t9){agIcsBaixa(t9.getAttribute('data-agics'));return;}" +
+      "var r9=e.target.closest&&e.target.closest('[data-agrem]');if(!r9)return;var p9=r9.getAttribute('data-agrem').split('|');" +
+      "if(window.__trocaSec)window.__trocaSec('chat');var ct9=document.getElementById('chTexto');" +
+      "if(ct9){ct9.value='Preciso remarcar a sessão de '+p9[0].slice(8,10)+'/'+p9[0].slice(5,7)+(p9[1]?' às '+p9[1]:'')+' — pode ser?';ct9.focus();}});" +
       "document.getElementById('agPede').addEventListener('click',function(){if(!AGSEL)return;var hr=document.getElementById('agHora').value;var ob=document.getElementById('agObs').value.trim();" +
       "if(NUVEM){var btn=this;btn.disabled=true;rpcApp('app_agenda_pede',{t:TOKEN,p_dia:AGSEL,p_hora:hr,p_obs:ob}).then(function(r){btn.disabled=false;" +
       "if(r&&r.ok){var l=L('ptagenda',[]);l.push({dia:AGSEL,hora:hr,status:'pedido',obs:ob});Sv('ptagenda',l);document.getElementById('agObs').value='';pintaCal();" +
@@ -3253,6 +3308,7 @@
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
       "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
       "if(el.id==='evTopo'){el.setAttribute('data-sec','evolucao');return;}" +
+      "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       // pílulas da Evolução (tela 49): Conquistas × Corpo
@@ -3353,7 +3409,7 @@
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
       // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util');" +
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)
