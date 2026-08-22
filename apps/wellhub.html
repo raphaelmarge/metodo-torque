@@ -645,7 +645,7 @@
     var max = Math.max.apply(null, meses.map(function (m) { return m.n; })) || 1;
     var ult = meses[meses.length - 1].n, ant = meses[meses.length - 2].n;
     el.innerHTML =
-      '<p style="margin:0 0 10px;font-size:14px;"><b>' + linhas.length + ' ex-aluno(s) viraram agregador nos últimos 12 meses</b>' +
+      '<p style="margin:0 0 10px;font-size:14px;"><b>' + S.plural(linhas.length, 'ex-aluno virou', 'ex-alunos viraram') + ' agregador nos últimos 12 meses</b>' +
       (ult > ant ? ' · <span style="color:#dc2626;font-weight:700;">tendência subindo</span>' : ult < ant ? ' · <span style="color:#16a34a;font-weight:700;">caindo</span>' : "") + "</p>" +
       '<div style="display:flex;gap:10px;align-items:flex-end;height:70px;max-width:420px;margin-bottom:12px;">' +
       meses.map(function (m) {
