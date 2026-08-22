@@ -3404,28 +3404,36 @@ async function abaPt(p, a) {
   // recado do personal ainda não visto acende a bolinha 🔴 no Chat
   const dotChat = await pApp.evaluate(() => {
     window.__chatDot(new Date().toISOString());
-    const dot = document.querySelector(".nitem[data-msec='chat'] .ndot");
+    // no desenho novo a bolinha fica no botão MENU (o chat mora dentro dele)
+    const dot = document.querySelector("#navMenuApp .ndot");
     const acesa = dot && dot.style.display === "block";
     window.__trocaSec("chat");
     return { acesa, apagada: dot && dot.style.display === "none" };
   });
-  ok(dotChat.acesa && dotChat.apagada, "recado novo acende a bolinha no Chat e abrir o chat apaga");
-  // menu de três traços no canto direito (igual ao módulo do personal)
+  ok(dotChat.acesa && dotChat.apagada, "recado novo acende a bolinha no MENU e abrir o chat apaga");
+  // menu (tela 01): página inteira com cabeçalho, atalhos e badges
   const gavetaApp = await pApp.evaluate(async () => {
     document.getElementById("navMenuApp").click();
-    await new Promise((r) => setTimeout(r, 250));
-    const aberto = /translateX\(0/.test(document.getElementById("menuApp").style.transform);
+    await new Promise((r) => setTimeout(r, 350));
+    // aberto = saiu do translateX(105%) (depois da animação o transform vira
+    // none de propósito — Chrome espelhava o raio do cabeçalho no scroller)
+    const aberto = !/105/.test(document.getElementById("menuApp").style.transform);
     const itens = Array.from(document.querySelectorAll("#menuApp .nitem")).map((x) => x.textContent.trim());
+    const cab = document.querySelector("#menuApp .mghd");
+    const nome = cab ? cab.textContent : "";
+    const esperado = ((JSON.parse(localStorage.getItem("mtapp:ptStudio") || "{}").alunos || [])[0] || {}).nome || "";
     document.querySelector("#menuApp .nitem[data-msec='chat']").click();
     await new Promise((r) => setTimeout(r, 250));
     return {
-      aberto, itens,
+      aberto, itens, nome, esperado,
       fechou: document.getElementById("fundoMenuApp").style.display === "none",
       chatAbriu: !!document.querySelector("[data-sec='chat']:not([data-sec-off])"),
     };
   });
   ok(gavetaApp.aberto && gavetaApp.itens.length >= 5 && gavetaApp.fechou && gavetaApp.chatAbriu,
-    "menu ☰ no canto direito abre a gaveta com todas as áreas e navega (" + gavetaApp.itens.join(", ") + ")");
+    "menu vira página inteira, com as áreas, e navega (" + gavetaApp.itens.length + " itens)");
+  ok(gavetaApp.esperado && gavetaApp.nome.indexOf(gavetaApp.esperado) >= 0,
+    "cabeçalho do menu mostra o nome do aluno (" + gavetaApp.esperado + ")");
   // --- utilidades: água com copinhos, cronômetro/timer, 1RM, anilhas e IMC ---
   const util = await pApp.evaluate(async () => {
     const out = {};
