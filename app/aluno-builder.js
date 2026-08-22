@@ -1040,6 +1040,18 @@
               }).join("");
           }).join("");
         })() + "</div>" : "") +
+      // ---------- Chat (tela 10): cabeçalho do personal no alto da área ----------
+      "<div class='cardx' id='chTopo' style='margin:0;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:22px 20px;color:#fff;display:flex;align-items:center;gap:13px;'>" +
+      "<span style='width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;overflow:hidden;flex:none;'>" +
+      (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>" : esc(String(studio || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""))) + "</span>" +
+      "<span style='flex:1;min-width:0;'><span style='display:block;font-size:22px;font-weight:900;letter-spacing:-.02em;'>" + esc(studio) + "</span>" +
+      "<span style='display:block;font-size:12.5px;color:rgba(255,255,255,.85);margin-top:2px;'>seu personal · responde quando puder</span></span></div></div>" +
+      "<div class='cardx'><h2>Fale com " + esc(studio) + "</h2>" +
+      "<div id='chMsgs' style='max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
+      "<div id='botChips' style='display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
+      "<div style='display:flex;gap:8px;align-items:center;'><input id='chTexto' placeholder='Escreve pro seu personal…' style='flex:1;min-width:0;border-radius:99px;padding-left:18px;'>" +
+      "<button class='btnx' id='chEnvia' aria-label='Enviar' style='flex:none;width:52px;height:52px;border-radius:50%;padding:0;'><svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 12h14M12 6l6 6-6 6'/></svg></button></div></div>" +
       "<div class='cardx'><h2>Check-in da semana</h2>" +
       "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem!</div>" +
       "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
@@ -1048,7 +1060,6 @@
       "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in</button></div></div>" +
       // R3: o card virou o CONVITE do questionário (tela 03) — o fluxo abre por cima
-      (qa ? "<div class='cardx' id='qaCard'><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
       (plApp && ve("pag") ? "<div class='cardx'><h2>Meu plano</h2>" +
         "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
         "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
@@ -1090,11 +1101,8 @@
       "<a class='btnx' style='display:block;text-align:center;text-decoration:none;' target='_blank' rel='noopener' href='https://wa.me/?text=" +
       encodeURIComponent("Treino com " + studio + " e tô curtindo demais! Chama no WhatsApp pra fechar um horário: https://wa.me/" + (zapPersonal ? "55" + zapPersonal : "") + " — fala que quem indicou foi " + a.nome.split(" ")[0]) +
       "'>Convidar no WhatsApp</a></div>" : "") +
-      "<div class='cardx'><h2>Fale com " + esc(studio.split(" ")[0]) + "</h2>" +
-      "<div id='chMsgs' style='max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:10px;'><div class='vz'>Carregando…</div></div>" +
-      "<div id='botChips' style='display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
-      "<div style='display:flex;gap:8px;'><input id='chTexto' placeholder='Escreva aqui…' style='flex:1;min-width:0'>" +
-      "<button class='btnx' id='chEnvia' aria-label='Enviar'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 12h14M12 6l6 6-6 6'/></svg></button></div></div>" +
+      // o convite do questionário mora na área do chat, abaixo da conversa
+      (qa ? "<div class='cardx' id='qaCard'><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
       "<div id='tmrBar' style='display:none;position:fixed;bottom:calc(62px + env(safe-area-inset-bottom,0px));left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       /* Treino guiado: uma tela por exercício, estilo story. O aluno olha de
        * longe (barra, número, cronômetro), toca em coisa grande, e no fim de
@@ -2843,21 +2851,31 @@
       "var BOT=" + jsonApp(botApp) + ";" +
       "function botHist(){return L('ptbotmsgs',[]);}" +
       "function botFala(tx){var h=botHist();h.push({de:'bot',texto:tx,criado:new Date().toISOString()});if(h.length>60)h.shift();Sv('ptbotmsgs',h);}" +
+      // tela 10: balões arredondados (o meu na cor, o do personal escuro),
+      // com divisor de data HOJE / ONTEM / DD/MM entre os dias
       "function pintaChat(msgs){var el=document.getElementById('chMsgs');var all=(msgs||[]).concat(botHist());" +
       "all.sort(function(a,b){return String(a.criado)<String(b.criado)?-1:1;});" +
       "if(!all.length){el.innerHTML=\"<div class='vz'>Manda a primeira mensagem!</div>\";return;}" +
-      "el.innerHTML=all.map(function(m){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
-      "return \"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,var(--cor),var(--cor2))':(bot?'rgba(var(--cor-rgb),.14)':'var(--bg4)'))+\";border:1px solid \"+(bot?'var(--cor)':'var(--bg11)')+\";\"+(minha?'color:#fff;':'')+\"border-radius:12px;padding:8px 12px;max-width:82%;font-size:13.5px;'>\"+(bot?\"<div style='font-size:10px;color:var(--corc);font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:2px;'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
+      "var ontem9=isoLoc(new Date(Date.now()-864e5));" +
+      "el.innerHTML=all.map(function(m,ix){var minha=m.de==='aluno'||m.de==='aluno-local';var bot=m.de==='bot';" +
+      "var d0=String(m.criado).slice(0,10);var ant=ix>0?String(all[ix-1].criado).slice(0,10):null;var div='';" +
+      "if(d0!==ant){var lab=d0===isoHj()?'HOJE':d0===ontem9?'ONTEM':d0.slice(8,10)+'/'+d0.slice(5,7);" +
+      "div=\"<div style='align-self:center;font-size:10px;font-weight:800;letter-spacing:.2em;color:#6e6a78;margin:10px 0 4px;'>\"+lab+\"</div>\";}" +
+      "return div+\"<div style='align-self:\"+(minha?'flex-end':'flex-start')+\";background:\"+(minha?'linear-gradient(135deg,var(--cor),var(--cor2))':(bot?'rgba(var(--cor-rgb),.14)':'var(--bg4)'))+\";border:1px solid \"+(bot?'var(--cor)':'rgba(255,255,255,.05)')+\";\"+(minha?'color:#fff;':'')+\"border-radius:\"+(minha?'18px 18px 6px 18px':'18px 18px 18px 6px')+\";padding:11px 14px;max-width:84%;font-size:14px;line-height:1.45;'>\"+(bot?\"<div style='font-size:10px;color:var(--corc);font-weight:800;margin-bottom:2px;'>assistente</div>\":'')+String(m.texto).replace(/</g,'&lt;')+\"<div style='font-size:10px;opacity:.6;margin-top:3px;\"+(minha?'text-align:right;':'')+\"'>\"+String(m.criado).slice(11,16)+\"</div></div>\";}).join('');" +
       "el.scrollTop=el.scrollHeight;" +
       "var ultP=null;all.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')ultP=m.criado;});" +
       "if(window.__chatDot)window.__chatDot(ultP);}" +
       "function carregaChat(){if(!NUVEM){pintaChat(L('ptchat',[]));return;}" +
       "rpcApp('app_chat_lista',{t:TOKEN}).then(function(l){if(Array.isArray(l)){Sv('ptchat',l);pintaChat(l);}else{pintaChat(L('ptchat',[]));}});}" +
-      "function pintaChips(){var el=document.getElementById('botChips');if(!BOT){el.style.display='none';return;}" +
+      // sem robô configurado, as pílulas viram respostas rápidas (tela 10):
+      // tocar só PREENCHE a mensagem — quem envia é o aluno
+      "function pintaChips(){var el=document.getElementById('botChips');" +
+      "if(!BOT){el.innerHTML=['Vou faltar hoje','Posso remarcar?','Tô com dor'].map(function(t9){return \"<button data-bpre='\"+t9+\"' class='chipx' style='cursor:pointer;'>\"+t9+\"</button>\";}).join('');return;}" +
       "el.innerHTML=BOT.ops.map(function(o,i){return \"<button data-bop='\"+i+\"' style='background:rgba(var(--cor-rgb),.14);border:1px solid var(--cor);color:var(--cor-cl1);border-radius:99px;padding:6px 13px;font-size:12px;font-family:inherit;cursor:pointer;'>\"+String(o.r).replace(/</g,'&lt;')+\"</button>\";}).join('');}" +
       "function botEscolhe(i){var o=BOT&&BOT.ops[i];if(!o)return;var h=botHist();h.push({de:'aluno-local',texto:o.r,criado:new Date().toISOString()});Sv('ptbotmsgs',h);" +
       "pintaChat(L('ptchat',[]));setTimeout(function(){botFala(o.t);pintaChat(L('ptchat',[]));},250);}" +
-      "document.getElementById('botChips').addEventListener('click',function(e){var b=e.target.closest('[data-bop]');if(b)botEscolhe(+b.dataset.bop);});" +
+      "document.getElementById('botChips').addEventListener('click',function(e){var b=e.target.closest('[data-bop]');if(b){botEscolhe(+b.dataset.bop);return;}" +
+      "var pr=e.target.closest('[data-bpre]');if(pr){var ct8=document.getElementById('chTexto');ct8.value=pr.getAttribute('data-bpre');ct8.focus();}});" +
       "if(BOT&&!botHist().length)botFala(BOT.oi);pintaChips();pintaChat(L('ptchat',[]));" +
       "document.getElementById('chEnvia').addEventListener('click',function(){" +
       "var inp=document.getElementById('chTexto');var tx=inp.value.trim();if(!tx)return;" +
@@ -3309,6 +3327,7 @@
       "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
       "if(el.id==='evTopo'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
+      "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       // pílulas da Evolução (tela 49): Conquistas × Corpo
@@ -3409,7 +3428,7 @@
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
       // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda');" +
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)
