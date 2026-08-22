@@ -1,0 +1,81 @@
+# Relógio, bands e saúde — o caminho do app de verdade (iOS + Android)
+
+Este documento é o mapa pra ligar smartwatch/band no TORQUE ON. A parte que
+NÃO depende de loja já está no ar; a parte nativa tem o contrato pronto — é
+plugar o shell da loja (esta pasta `nativo/`, Capacitor) e implementar a ponte.
+
+## O que JÁ funciona hoje (sem loja, qualquer celular)
+
+- **Importar do relógio (GPX/TCX)** — botão na área *Corrida e bike* do app do
+  aluno. Todo smartwatch exporta o treino nesses formatos (Apple Watch via
+  apps como HealthFit/RunGap ou Strava; Garmin/Polar/Coros/Xiaomi direto no
+  app deles). O arquivo é lido NO aparelho (nada sobe pra rede), a corrida
+  entra no `ptcardio` com km/tempo/pace/data reais e conta pra medalhas,
+  marcas e recordes. Motor: `crImporta(texto, rotulo)` no
+  `app/aluno-builder.js`, exposto como `window.__crImporta` (é o mesmo que a
+  ponte nativa usa).
+
+## O contrato da ponte (o que o shell nativo injeta)
+
+O shell da loja injeta, ANTES do app web carregar, um objeto global:
+
+```js
+window.MTNativo = {
+  saude: {
+    // abre a tela nativa de conexão (pedir permissão HealthKit/Health Connect)
+    abrir: function () {},
+    // opcionais — quando existirem, o app web passa a usá-los:
+    // devolve treinos novos desde `desdeISO` como lista de GPX/TCX (texto)
+    treinos: function (desdeISO, callback) {},
+    // peso mais recente { kg: 82.4, data: '2026-08-20' }
+    peso: function (callback) {},
+  },
+};
+```
+
+Com `window.MTNativo.saude` presente, o app do aluno acende sozinho a linha
+**Ajustes → APP → "Conectar relógio e saúde"** (id `ajSaude`) e o toque chama
+`saude.abrir()`. Cada treino que a ponte entregar é só passar em
+`window.__crImporta(textoGpx)` — dedupe, medalhas e histórico já são tratados
+lá. A web NUNCA mostra essa linha sem a ponte: nada de botão que finge.
+
+## Passo a passo — Android (Health Connect)
+
+1. `cd nativo && node copia-www.js && npx cap sync android`
+2. Plugin: `npm i capacitor-health-connect` (ou o oficial que estiver mantido
+   na época — conferir em capacitorjs.com/docs/plugins).
+3. `AndroidManifest.xml`: permissões `android.permission.health.READ_EXERCISE`,
+   `READ_HEART_RATE`, `READ_WEIGHT` + a activity de rationale que o Health
+   Connect exige.
+4. No shell (arquivo JS do wrapper), implementar `MTNativo.saude` chamando o
+   plugin e convertendo cada sessão de exercício em GPX simples (lat/lon/time
+   dos pontos, ou só tempo+distância quando não houver rota).
+5. Publicar como atualização do app da Play Store (ver `ASSINATURA-LOJA.md`).
+
+## Passo a passo — iPhone (HealthKit / Apple Watch)
+
+1. `cd nativo && node copia-www.js && npx cap sync ios`
+2. Plugin: `@perfood/capacitor-healthkit` (ou equivalente mantido).
+3. No Xcode: capability **HealthKit** + textos de uso no `Info.plist`
+   (`NSHealthShareUsageDescription` — em pt-BR, explicando que é pra trazer
+   treinos e peso do aluno pro acompanhamento).
+4. Implementar `MTNativo.saude` lendo `HKWorkout` (corrida/caminhada/bike) e
+   `HKQuantityTypeIdentifierBodyMass`; treinos com rota (`HKWorkoutRoute`)
+   viram GPX, sem rota viram TCX mínimo (tempo + distância).
+5. Revisão da App Store: HealthKit exige que o app SÓ leia o que usa e mostre
+   política de privacidade (usar `/privacidade.html` do site).
+
+## Frequência cardíaca ao vivo (bônus, sem loja no Android)
+
+Chrome no Android tem Web Bluetooth: cintas/bands com o serviço padrão de
+batimento (0x180D) conectam direto na página. Se formos fazer, é um botão na
+corrida/treino guiado que mostra FC ao vivo + zonas — no iPhone só via app
+nativo (o plugin de Bluetooth do Capacitor cobre os dois).
+
+## Strava (alternativa que cobre qualquer relógio, sem loja)
+
+Quase todo relógio despeja os treinos no Strava. Uma Edge Function
+`strava-sync` (OAuth do Strava + token por aluno em tabela selada, mesmo
+desenho do `zap_config`) puxaria as corridas novas de tempos em tempos.
+Precisa: criar o app gratuito em strava.com/settings/api e publicar a função.
+É o próximo passo natural depois deste.
