@@ -179,8 +179,14 @@
       "html.claro .kv{border-bottom:none}" +
       "html.claro .vz{color:#645e73}" +
       "html.claro #navApp{background:rgba(255,255,255,.9)!important;border-top:1px solid rgba(25,22,34,.06)!important}" +
-      "html.claro #menuApp{background:#fff!important;border-left:1px solid #e4e1eb!important}" +
-      "html.claro #menuApp .nitem{color:#3a3547!important}" +
+      "html.claro #menuApp{background:#f4f3f7!important}" +
+      "html.claro .mgcard{background:#fff;border-color:#e7e4ee}" +
+      "html.claro .mgrow{border-color:#eceaf1;color:#6c6678}" +
+      "html.claro .mgtit{color:#191622}" +
+      "html.claro .mgsub{color:#6c6678}" +
+      "html.claro .mgchev{color:#a9a4b5}" +
+      "html.claro .mgq{background:rgba(var(--cor-rgb),.08);color:var(--cor)}" +
+      "html.claro .mgq .mgsub{color:var(--cor)}" +
       // o topo é colorido nos dois temas, então os chips dele não mudam no claro
       "html.claro [style*='background:var(--bg2)']{background:#fff!important;box-shadow:0 1px 3px rgba(23,21,28,.07)}" +
       "html.claro [style*='background:var(--bg5)']{background:#e9e7ef!important}" +
@@ -380,6 +386,23 @@
       ".htdash{display:flex;align-items:center;gap:8px;margin:14px 0}" +
       ".htdash span{flex:none;height:6px;border-radius:99px}" +
       ".htdash .htn{flex:none;margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.62);text-transform:uppercase}" +
+      /* ---------- menu (tela 01): a gaveta vira página inteira ----------
+       * Classes de propósito (não inline): o menu é montado em runtime e o
+       * modo claro precisa de regra própria pra cada superfície dele. */
+      ".mghd{background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 28px 28px;color:#fff;padding:calc(30px + env(safe-area-inset-top,0px)) 20px 28px;display:flex;align-items:center;gap:14px}" +
+      ".mgav{width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:21px;overflow:hidden;flex:none}" +
+      ".mgav img{width:100%;height:100%;object-fit:cover;border-radius:50%}" +
+      ".mgnome{display:block;font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1.05}" +
+      ".mgstudio{display:block;font-size:13.5px;color:rgba(255,255,255,.82);font-weight:700;margin-top:3px}" +
+      ".mgcard{background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:24px;margin:14px 16px 0;padding:2px 16px}" +
+      ".mgrow{display:flex;align-items:center;gap:13px;width:100%;min-height:64px;padding:12px 0;background:none;border:none;border-top:1px solid var(--bg5);cursor:pointer;font-family:inherit;text-align:left;color:#b9b4c6}" +
+      ".mgrow:first-child{border-top:none}" +
+      ".mgtit{display:block;font-size:16.5px;font-weight:800;color:#fff;letter-spacing:-.01em}" +
+      ".mgsub{display:block;font-size:12.5px;color:#8a8695;margin-top:2px}" +
+      ".mgbadge{margin-left:auto;min-width:27px;height:27px;border-radius:99px;background:var(--cor);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 8px;flex:none}" +
+      ".mgchev{margin-left:auto;flex:none;color:#57525f;line-height:0}" +
+      ".mgq{display:flex;align-items:center;gap:13px;width:calc(100% - 32px);min-height:64px;background:rgba(var(--cor-rgb),.10);border:1px solid rgba(var(--cor-rgb),.5);border-radius:22px;margin:18px 16px 0;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;color:var(--corc)}" +
+      ".mgq .mgsub{color:var(--corc)}" +
       // hábitos do dia em grade (HOJE EU JÁ) — feito = contorno da cor do studio
       ".habgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}" +
       ".habgrid button{min-height:62px;background:var(--bg2);border:1px solid var(--bg11);border-radius:16px;color:#8a8695;font-family:inherit;font-size:10.5px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:6px 2px}" +
@@ -459,9 +482,11 @@
           "<span style='font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;'>" + mN[1] + "</span></button>";
       }).join("") +
       "</nav>" +
-      // gaveta do menu ☰ (igual ao módulo do personal): fundo escurecido + painel pela direita
-      "<div id='fundoMenuApp' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;'></div>" +
-      "<div id='menuApp' aria-label='Todas as áreas do app' style='position:fixed;top:0;bottom:0;right:0;width:264px;background:var(--bg2);border-left:1px solid var(--bg9);z-index:61;transform:translateX(105%);transition:transform .22s ease;padding:20px 12px calc(18px + env(safe-area-inset-bottom,0px));overflow:auto;display:flex;flex-direction:column;gap:2px;'></div>" +
+      // menu (tela 01): a gaveta é uma PÁGINA inteira que desliza da direita,
+      // por baixo da barra de abas (z 49 < 50) — o aluno continua vendo HOJE/
+      // TREINOS/EVOLUÇÃO/MENU embaixo, igual ao desenho final
+      "<div id='fundoMenuApp' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:48;'></div>" +
+      "<div id='menuApp' aria-label='Todas as áreas do app' style='position:fixed;top:0;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--bg0);z-index:49;transform:translateX(105%);transition:transform .24s ease;padding:0 0 calc(110px + env(safe-area-inset-bottom,0px));overflow:auto;'></div>" +
       // ---------- Início do redesenho (telas final-44/45/46 do Claude Design) ----------
       // O carrossel É a tela: cada treino prescrito vira um herói de tela cheia
       // (foto/gradiente, lista fantasma de exercícios, data, título gigante,
@@ -1089,7 +1114,10 @@
       "if(src){im.src=src;im.style.display='';ini.style.display='none';}else{im.removeAttribute('src');im.style.display='none';ini.style.display='';}" +
       // o avatar do herói (Início) mostra a mesma foto
       "var im2=document.getElementById('avImg2'),ini2=document.getElementById('avIni2');if(im2&&ini2){" +
-      "if(src){im2.src=src;im2.style.display='';ini2.style.display='none';}else{im2.removeAttribute('src');im2.style.display='none';ini2.style.display='';}}}" +
+      "if(src){im2.src=src;im2.style.display='';ini2.style.display='none';}else{im2.removeAttribute('src');im2.style.display='none';ini2.style.display='';}}" +
+      // e o cabeçalho do menu (tela 01) também
+      "var im3=document.getElementById('mgImg'),ini3=document.getElementById('mgIni');if(im3&&ini3){" +
+      "if(src){im3.src=src;im3.style.display='';ini3.style.display='none';}else{im3.removeAttribute('src');im3.style.display='none';ini3.style.display='';}}}" +
       "(function(){var fl=document.getElementById('avFile'),bt=document.getElementById('avBtn');if(!fl||!bt)return;" +
       // a foto escolhida pelo aluno vence a que veio do painel
       "var minha=L('ptfotoperfil','');if(minha)avPinta(minha);" +
@@ -2892,13 +2920,17 @@
         "var hj=isoHj();var desde=/^\\d{4}-\\d{2}-\\d{2}$/.test(QUESTAPP.desde)?QUESTAPP.desde:hj;" +
         "var per=desde;if(QUESTAPP.repete&&hj>=desde){per=isoAdd(desde,Math.floor((new Date(hj)-new Date(desde))/6048e5)*7);}" +
         "var chave=(QUESTAPP.env||'')+'|'+per;var T=QUESTAPP.ps.length;" +
+        // o menu (tela 01) pergunta se tem questionário esperando — 1 ou 0
+        "window.__qaPend=function(){if(hj<desde)return 0;return L('ptqa',{})[chave]?0:1;};" +
         /* R3: fluxo paginado (telas 02-06) — uma pergunta por tela, resposta
          * parcial guardada no aparelho (dá pra parar no meio e voltar), e o
          * envio final é o MESMO de antes: app_quest_responde com a mesma lista */
         "function draftLe(){var d=L('ptqadraft',{});return d[chave]||{i:0,R:{},T:{}};}" +
         "function draftSalva(d){var all=L('ptqadraft',{});all[chave]=d;Sv('ptqadraft',all);}" +
         "function draftLimpa(){var all=L('ptqadraft',{});delete all[chave];Sv('ptqadraft',all);}" +
-        "function pinta(){var resp=L('ptqa',{});el.className='';el.style.textAlign='left';" +
+        // responder/destrancar também atualiza o badge do menu (tela 01)
+        "function pinta(){pinta0();if(window.__menuBadges)window.__menuBadges();}" +
+        "function pinta0(){var resp=L('ptqa',{});el.className='';el.style.textAlign='left';" +
         "var cab=\"<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px;color:#fff;'>\"+" +
         "\"<div style='font-size:9.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);'>Do seu personal pra você</div>\"+" +
         "\"<div style='font-size:24px;font-weight:900;letter-spacing:-.02em;margin-top:4px;'>\"+eh(QUESTAPP.nome)+'</div>'+" +
@@ -3181,26 +3213,72 @@
       "\"<span style='line-height:0;'>\"+ic(\"<path d='M4 6.5h16M4 12h16M4 17.5h16'/>\")+\"</span>\"+" +
       "\"<span style='font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;'>Menu</span>\"+" +
       "\"<span class='ndot' style='display:none;position:absolute;top:3px;right:50%;margin-right:-17px;width:9px;height:9px;border-radius:50%;background:#f87171;border:2px solid var(--bg0);'></span></button>\";" +
-      // gaveta com todas as áreas
+      // menu (tela 01): página com cabeçalho roxo (foto + nome + studio),
+      // atalho do questionário com badge, um grupo com as áreas e o card de
+      // Ajustes com o modo claro. Nome de gente e de plano entram por
+      // textContent, nunca por innerHTML.
       "var gav=document.getElementById('menuApp');" +
-      "gav.innerHTML=\"<div style='font-size:10px;font-weight:800;letter-spacing:.16em;color:#8a8695;text-transform:uppercase;padding:0 10px 10px;'>\"+STUDIO.toUpperCase().slice(0,26)+\"<span style='display:block;color:#fff;font-size:13px;margin-top:2px;'>Menu</span></div>\"+" +
-      "itens.map(function(m){" +
-      "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='display:flex;align-items:center;gap:11px;background:none;border:none;cursor:pointer;font-family:inherit;color:#d6d2df;font-size:14px;font-weight:700;padding:12px 10px;border-radius:10px;text-align:left;position:relative;'>\"+" +
-      "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span><span>\"+m[2]+\"</span>\"+" +
-      "(m[0]==='chat'?\"<span class='ndot' style='display:none;margin-left:auto;width:9px;height:9px;border-radius:50%;background:#f87171;'></span>\":'')+'</button>';}).join('');" +
-      "function abreMenuApp(ab){document.getElementById('fundoMenuApp').style.display=ab?'block':'none';gav.style.transform=ab?'translateX(0)':'translateX(105%)';}" +
+      "var MGNOME=" + jsonApp(a.nome || "") + ",PLSUB=" + jsonApp(plApp ? (plApp.nome + " · R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês" + (plApp.diaVenc ? " · vence dia " + plApp.diaVenc : "")) : "mensalidade e comprovantes") + ";" +
+      "var CHEV=\"<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg>\";" +
+      "var MICO={};itens.forEach(function(m){MICO[m[0]]=m[1];});" +
+      "var MTIT={chat:'Chat',agenda:'Calendário',treino:'Minhas fichas',util:'Utilidades',feed:'Minha turma',pagamento:'Meu plano',ajustes:'Ajustes'};" +
+      "function mgRow(sec,extra){return \"<button class='nitem mgrow' data-msec='\"+sec+\"'>\"+" +
+      "\"<span style='line-height:0;'>\"+ic(MICO[sec])+\"</span>\"+" +
+      "\"<span style='flex:1;min-width:0;'><span class='mgtit'>\"+(MTIT[sec]||sec)+\"</span><span class='mgsub'></span></span>\"+" +
+      "(extra||\"<span class='mgchev'>\"+CHEV+'</span>')+'</button>';}" +
+      "var mgg=['chat','agenda','treino','util','feed','pagamento'].filter(function(s){return MICO[s];});" +
+      "gav.innerHTML=" +
+      "\"<div class='mghd'><span class='mgav'><img id='mgImg' alt='' style='display:none;'><span id='mgIni'></span></span>\"+" +
+      "\"<span style='flex:1;min-width:0;'><span class='mgnome'></span><span class='mgstudio'></span></span></div>\"+" +
+      "(document.getElementById('qaCard')&&MICO.chat?\"<button class='nitem mgq' data-msec='chat' data-mgoto='qaCard'>\"+" +
+      "\"<span style='line-height:0;'>\"+ic(\"<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>\")+\"</span>\"+" +
+      "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Questionários</span><span class='mgsub' id='mgQaSub'></span></span>\"+" +
+      "\"<span class='mgbadge' id='mgQaB' style='display:none;'></span></button>\":'')+" +
+      "(mgg.length?\"<div class='mgcard'>\"+mgg.map(function(s){return mgRow(s,s==='chat'?\"<span class='mgbadge' id='mgChatB' style='display:none;'></span><span class='mgchev'>\"+CHEV+'</span>':null);}).join('')+'</div>':'')+" +
+      "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+" +
+      "\"<button class='mgrow' id='btnTemaApp'><span style='line-height:0;' id='mgTemaIco'></span><span style='flex:1;min-width:0;'><span class='mgtit' id='mgTemaTit'></span><span class='mgsub'>o escuro é o padrão</span></span></button></div>\":'');" +
+      "gav.querySelector('.mgnome').textContent=MGNOME;gav.querySelector('.mgstudio').textContent=STUDIO;" +
+      // iniciais e foto copiadas do avatar do topo, que já resolveu painel × aluno
+      "(function(){var ai=document.getElementById('avIni'),ii=document.getElementById('mgIni');if(ai&&ii)ii.textContent=ai.textContent;" +
+      "var av=document.getElementById('avImg');if(av&&ii&&av.getAttribute('src')&&av.style.display!=='none'){var mi9=document.getElementById('mgImg');mi9.src=av.src;mi9.style.display='';ii.style.display='none';}})();" +
+      // subtítulos calculados: agenda = próxima sessão; fichas = treinos ativos
+      "var MSUB={chat:'fale com seu personal',util:'cronômetro, 1RM, anilhas, água',feed:'o feed da sua turma',pagamento:PLSUB,ajustes:'tema, lembretes, minha conta'," +
+      "agenda:(function(){var hj9=isoHj();var pr=(SESS||[]).filter(function(s9){return s9.d>=hj9;})[0];if(!pr)return 'sem sessão marcada';var dw=new Date(pr.d+'T12:00:00').getDay();return (dw===0||dw===6?'próximo ':'próxima ')+DSEM_[dw].toLowerCase()+(pr.h?', '+pr.h:'');})()," +
+      "treino:(function(){var n9=(FICHAS_META||[]).length+(WODS||[]).length+(CARDIOS||[]).length;return n9?pl(n9,'treino ativo','treinos ativos'):'seus treinos';})()};" +
+      "gav.querySelectorAll('.mgrow[data-msec]').forEach(function(b){var s9=MSUB[b.getAttribute('data-msec')];var el9=b.querySelector('.mgsub');if(el9&&s9!=null)el9.textContent=s9;});" +
+      // badges vivos: questionário esperando + recados não lidos no chat
+      "function pintaMB(){var qb=document.getElementById('mgQaB'),qs=document.getElementById('mgQaSub');" +
+      "if(qb){var p9=window.__qaPend?window.__qaPend():0;qb.style.display=p9?'flex':'none';qb.textContent=p9||'';if(qs)qs.textContent=p9?'1 esperando você':'em dia — nada esperando';}" +
+      "var cb=document.getElementById('mgChatB');if(cb){var pc9=L('ptchat',[]);var vi9=String(L('ptvisto',''));var n9=0;" +
+      "pc9.forEach(function(m9){if(m9&&m9.de&&m9.de!=='aluno'&&m9.de!=='aluno-local'&&m9.de!=='bot'&&String(m9.criado||'')>vi9)n9++;});" +
+      "cb.style.display=n9?'flex':'none';cb.textContent=n9>9?'9+':n9;var cv9=cb.parentElement.querySelector('.mgchev');if(cv9)cv9.style.display=n9?'none':'';}}" +
+      "window.__menuBadges=pintaMB;pintaMB();" +
+      "var gavAberta=false;" +
+      // pinta as 4 abas de baixo num lugar só: com o menu aberto, só o MENU acende
+      "function pintaAbas(s){var CLARO=document.documentElement.classList.contains('claro');" +
+      "document.querySelectorAll('#navApp .nitem').forEach(function(mi){var on=!gavAberta&&mi.getAttribute('data-msec')===s;" +
+      "mi.style.background=on?'rgba(var(--cor-rgb),.16)':'none';mi.style.color=on?(CLARO?'var(--cor)':'var(--corc)'):(CLARO?'#6c6678':'#8a8695');});" +
+      "var mb=document.getElementById('navMenuApp');if(mb){var eFixo=fixos.some(function(m){return m[0]===s;});var liga=gavAberta||!eFixo;" +
+      "mb.style.background=liga?'rgba(var(--cor-rgb),.16)':'none';mb.style.color=liga?(CLARO?'var(--cor)':'var(--corc)'):(CLARO?'#6c6678':'#8a8695');}}" +
+      "function abreMenuApp(ab){gavAberta=ab;document.getElementById('fundoMenuApp').style.display=ab?'block':'none';" +
+      // Chrome espelha o raio de baixo do cabeçalho nos cantos de cima quando o
+      // painel rola (overflow) DENTRO de um transform — então o transform só
+      // existe durante o deslize e vira none assim que a animação termina
+      "if(ab){gav.style.transform='translateX(0)';setTimeout(function(){if(gavAberta)gav.style.transform='none';},280);pintaMB();gav.scrollTop=0;}" +
+      "else gav.style.transform='translateX(105%)';" +
+      "pintaAbas(SEC);}" +
+      "gav.addEventListener('transitionend',function(){if(gavAberta)gav.style.transform='none';});" +
       "document.getElementById('fundoMenuApp').addEventListener('click',function(){abreMenuApp(false);});" +
-      "gav.addEventListener('click',function(e){var mi=e.target.closest('.nitem');if(!mi)return;if(navigator.vibrate)navigator.vibrate(8);trocaSec(mi.getAttribute('data-msec'));abreMenuApp(false);});" +
+      "gav.addEventListener('click',function(e){var mi=e.target.closest('.nitem');if(!mi)return;if(navigator.vibrate)navigator.vibrate(8);trocaSec(mi.getAttribute('data-msec'));abreMenuApp(false);" +
+      "var go=mi.getAttribute('data-mgoto');if(go){var ge=document.getElementById(go);if(ge)setTimeout(function(){ge.scrollIntoView({behavior:'smooth',block:'start'});},80);}});" +
       "var stSec=document.createElement('style');stSec.textContent='[data-sec-off]{display:none!important}';document.head.appendChild(stSec);" +
       "var SEC='inicio';" +
       "function mostraDot(on){document.querySelectorAll('.ndot').forEach(function(d){d.style.display=on?'block':'none';});}" +
       "function trocaSec(s){SEC=s;document.querySelectorAll('[data-sec]').forEach(function(el){" +
       "if(el.getAttribute('data-sec')===s)el.removeAttribute('data-sec-off');else el.setAttribute('data-sec-off','1');});" +
       "var CLARO=document.documentElement.classList.contains('claro');" +
-      "document.querySelectorAll('.nitem').forEach(function(mi){var on=mi.getAttribute('data-msec')===s;" +
-      "mi.style.background=on?'rgba(var(--cor-rgb),.16)':'none';mi.style.color=on?(CLARO?'var(--cor)':'var(--corc)'):(mi.parentElement&&mi.parentElement.id==='menuApp'?'#d6d2df':(CLARO?'#6c6678':'#8a8695'));});" +
-      "var mb=document.getElementById('navMenuApp');if(mb){var eFixo=fixos.some(function(m){return m[0]===s;});" +
-      "mb.style.background=eFixo?'none':'rgba(var(--cor-rgb),.16)';mb.style.color=eFixo?(CLARO?'#6c6678':'#8a8695'):(CLARO?'var(--cor)':'var(--corc)');}" +
+      // só a barra de baixo recolore: as linhas do menu-página têm cor própria
+      "pintaAbas(s);" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos e Evolução a faixa colorida some: cada área tem o
@@ -3211,17 +3289,18 @@
       // a sequência e os hábitos são conteúdo do Início: fora dele a faixa
       // colorida fica curta, só com o nome, o nível e o XP
       "var tpx=document.getElementById('topoExtra');if(tpx)tpx.style.display=(s==='inicio'?'':'none');" +
-      // entrou no chat = recados vistos; some a bolinha
-      "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);}" +
+      // entrou no chat = recados vistos; some a bolinha e o badge do menu
+      "if(s==='chat'){Sv('ptvisto',new Date().toISOString());mostraDot(false);if(window.__menuBadges)window.__menuBadges();}" +
       // GPS sempre ativo: acompanha a navegação (liga na área de cardio, desliga fora se não tem treino rodando)
       "try{if(s==='treino'&&trSub==='cardio')crAutoGps();else if(s!=='treino'&&!cr.run)crGpsPara();}catch(e){}" +
       "window.scrollTo(0,0);}" +
       "nav.addEventListener('click',function(e){var mi=e.target.closest('.nitem');if(!mi)return;" +
       "if(navigator.vibrate)navigator.vibrate(8);" +
-      "if(mi.id==='navMenuApp'){abreMenuApp(true);return;}" +
-      "trocaSec(mi.getAttribute('data-msec'));});" +
+      // tocar em MENU de novo fecha; tocar numa aba fixa fecha e navega
+      "if(mi.id==='navMenuApp'){abreMenuApp(!gavAberta);return;}" +
+      "trocaSec(mi.getAttribute('data-msec'));abreMenuApp(false);});" +
       // bolinha no Chat quando chega recado do personal que o aluno ainda não viu
-      "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);};" +
+      "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);if(window.__menuBadges)window.__menuBadges();};" +
       // sub-abas do Treino: "Minha ficha" mostra a ficha; "Circuito (WOD)" mostra só o cronômetro
       "var trSub='ficha';" +
       "function trocaTrSub(s){trSub=s;" +
@@ -3236,15 +3315,15 @@
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-trsub]');if(b)trocaTrSub(b.dataset.trsub);});" +
       "window.__trSub=trocaTrSub;trocaTrSub('ficha');" +
       "window.__trocaSec=trocaSec;trocaSec('inicio');" +
-      // modo claro × noturno: botão no rodapé da gaveta ☰ (escolha do aluno, guardada no aparelho)
-      "var btTema=document.createElement('button');btTema.id='btnTemaApp';" +
-      "btTema.style.cssText='margin-top:14px;background:none;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:11px;color:#a9a4b5;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;';" +
-      "document.getElementById('menuApp').appendChild(btTema);" +
-      "var icoTema=function(p){return \"<svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-2px;margin-right:6px;'>\"+p+'</svg>';};" +
+      // modo claro × noturno: linha no card de Ajustes do menu (tela 01) —
+      // a escolha do aluno continua guardada no aparelho (pttema)
+      "var btTema=document.getElementById('btnTemaApp');" +
+      "var icoTema=function(p){return \"<svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';};" +
       "function aplicaTemaApp(){var claro=+L('pttema',0)===1;document.documentElement.classList.toggle('claro',claro);" +
-      "btTema.innerHTML=claro?icoTema(\"<path d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/>\")+'Modo noturno':icoTema(\"<circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/>\")+'Modo claro';" +
+      "if(btTema){document.getElementById('mgTemaTit').textContent=claro?'Modo noturno':'Modo claro';" +
+      "document.getElementById('mgTemaIco').innerHTML=icoTema(claro?\"<path d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/>\":\"<circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/>\");}" +
       "try{trocaSec(SEC);}catch(e){}}" +
-      "btTema.addEventListener('click',function(){Sv('pttema',+L('pttema',0)===1?0:1);aplicaTemaApp();if(navigator.vibrate)navigator.vibrate(10);});" +
+      "if(btTema)btTema.addEventListener('click',function(){Sv('pttema',+L('pttema',0)===1?0:1);aplicaTemaApp();if(navigator.vibrate)navigator.vibrate(10);});" +
       "aplicaTemaApp();window.__temaApp=aplicaTemaApp;" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
