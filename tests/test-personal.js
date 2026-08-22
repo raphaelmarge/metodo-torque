@@ -4739,7 +4739,8 @@ async function abaPt(p, a) {
   await pGps.evaluate(() => { window.__trocaSec("treino"); window.__trSub("cardio"); });
   await pGps.waitForTimeout(900);
   const gpsAuto = await pGps.evaluate(() => ({ on: window.__cr.gpsOn, btn: document.getElementById("crGps").textContent }));
-  ok(gpsAuto.on && /GPS ligado/.test(gpsAuto.btn), "GPS liga sozinho ao abrir a área Corrida e bike");
+  // tela 51: o botão vira termômetro do sinal (bom/ok/fraco pela precisão)
+  ok(gpsAuto.on && /GPS(ligado|bom|ok|fraco)/.test(gpsAuto.btn.replace(/\s/g, "")), "GPS liga sozinho ao abrir a área Corrida e bike (" + gpsAuto.btn + ")");
   await pGps.evaluate(() => localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 })));
   await pGps.evaluate(() => document.getElementById("crGo").click());
   await pGps.waitForTimeout(300);

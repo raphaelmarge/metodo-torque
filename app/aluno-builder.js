@@ -952,11 +952,19 @@
       "<div id='crTela' style='text-align:center;padding:12px 10px;border-radius:14px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);'>" +
       "<div id='crFase' style='font-size:11px;font-weight:800;letter-spacing:.16em;color:#a9a4b5;text-transform:uppercase;'>Pronto pra correr?</div>" +
       "<div id='crTempo' style='font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;margin:2px 0;'>0:00</div>" +
-      "<div style='display:flex;gap:8px;justify-content:center;margin-top:8px;'>" +
-      "<div style='flex:1;background:var(--bg5);border-radius:16px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE</div><div id='crPace' style='font-size:19px;font-weight:900;color:var(--corc);'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div>" +
-      "<div style='flex:1;background:var(--bg5);border-radius:16px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>DISTÂNCIA</div><div id='crDist' style='font-size:19px;font-weight:900;'>0,00</div><div style='font-size:9px;color:#6e6a78;'>km</div></div>" +
-      "<div style='flex:1;background:var(--bg5);border-radius:16px;padding:8px 4px;'><div style='font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#6e6a78;'>PACE MÉDIO</div><div id='crPaceMed' style='font-size:19px;font-weight:900;'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div></div>" +
-      "<div id='crInfo' style='font-size:12px;color:#a9a4b5;margin-top:8px;'></div></div>" +
+      // tela 51: quatro cartões — PACE, MÉDIO, KM e KCAL (as calorias já eram
+      // calculadas pro modo tela cheia; agora aparecem aqui também)
+      "<div style='display:flex;gap:7px;justify-content:center;margin-top:8px;'>" +
+      "<div style='flex:1;min-width:0;background:var(--bg5);border-radius:16px;padding:8px 2px;'><div style='font-size:9px;font-weight:800;letter-spacing:.1em;color:#6e6a78;'>PACE</div><div id='crPace' style='font-size:17px;font-weight:900;color:var(--corc);'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div>" +
+      "<div style='flex:1;min-width:0;background:var(--bg5);border-radius:16px;padding:8px 2px;'><div style='font-size:9px;font-weight:800;letter-spacing:.1em;color:#6e6a78;'>MÉDIO</div><div id='crPaceMed' style='font-size:17px;font-weight:900;'>--:--</div><div style='font-size:9px;color:#6e6a78;'>min/km</div></div>" +
+      "<div style='flex:1;min-width:0;background:var(--bg5);border-radius:16px;padding:8px 2px;'><div style='font-size:9px;font-weight:800;letter-spacing:.1em;color:#6e6a78;'>KM</div><div id='crDist' style='font-size:17px;font-weight:900;'>0,00</div><div style='font-size:9px;color:#6e6a78;'>km</div></div>" +
+      "<div style='flex:1;min-width:0;background:var(--bg5);border-radius:16px;padding:8px 2px;'><div style='font-size:9px;font-weight:800;letter-spacing:.1em;color:#6e6a78;'>KCAL</div><div id='crKcalV' style='font-size:17px;font-weight:900;'>0</div><div style='font-size:9px;color:#6e6a78;'>kcal</div></div></div>" +
+      "<div id='crInfo' style='font-size:12px;color:#a9a4b5;margin-top:8px;'></div>" +
+      // tela 51: confronto com o alvo de pace + barra da meta da corrida
+      "<div id='crAlvo' style='display:none;font-size:12.5px;font-weight:800;margin-top:8px;'></div>" +
+      "<div id='crMetaBar' style='display:none;margin-top:10px;text-align:left;'>" +
+      "<div style='display:flex;justify-content:space-between;font-size:12px;font-weight:800;'><span>Meta da corrida</span><b id='crMetaTxt'></b></div>" +
+      "<div style='height:6px;border-radius:4px;background:var(--bg5);margin-top:6px;overflow:hidden;'><b id='crMetaFill' style='display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cor),var(--corc));transition:width .3s;'></b></div></div></div>" +
       // botão redondo gigante estilo NRC, com engrenagem e GPS dos lados
       "<div style='display:flex;align-items:center;justify-content:center;gap:22px;margin-top:14px;'>" +
       "<button id='crCfgBtn' aria-label='Configurações da corrida' style='width:52px;height:52px;border-radius:50%;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;cursor:pointer;display:flex;align-items:center;justify-content:center;'>" + CRICO_CFG + "</button>" +
@@ -967,6 +975,8 @@
       "<button class='btnx' id='crFim' style='flex:1;display:none;background:var(--bg4);border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
       "<button class='btnx' id='crZera' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button>" +
       "<input id='crKm' inputmode='decimal' placeholder='km na mão' style='flex:1;min-width:0;text-align:center;'></div>" +
+      // tela 40: com a corrida pausada dá pra jogar fora sem salvar nada
+      "<button id='crDescarta' style='display:none;width:100%;margin-top:8px;min-height:44px;background:none;border:none;color:#f87171;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Descartar esta corrida</button>" +
       // arte da corrida pro aluno postar (aparece depois de finalizar): trajeto +
       // números + marca do studio — cada corrida compartilhada é propaganda
       "<div id='crShare' style='display:none;margin-top:10px;'>" +
@@ -2223,7 +2233,24 @@
       "var atual=med;if(cr.gpsOn&&cr.jan.length>1){var a0=cr.jan[0],a1=cr.jan[cr.jan.length-1];" +
       "if(a1.km-a0.km>0.02)atual=((a1.t-a0.t)/60000)/(a1.km-a0.km);}" +
       "crEl('crPace').textContent=atual?paceFmt(atual):'--:--';" +
+      "var kcV=crEl('crKcalV');if(kcV)kcV.textContent=String(crKcal(km));" +
       "crEl('crFim').style.display=(cr.run||cr.acum>0)?'block':'none';" +
+      "var dsc=crEl('crDescarta');if(dsc)dsc.style.display=(!cr.run&&cr.acum>5)?'block':'none';" +
+      // tela 51: confronto com o alvo de pace e a barra da meta (fora dos tiros)
+      "(function(){var alv=crEl('crAlvo'),mb=crEl('crMetaBar');if(!alv||!mb)return;" +
+      "var p3=cr.plano;var ehInt=p3&&p3.t==='intervalado';var vivo=cr.run||cr.acum>0;" +
+      "var alvoP=!ehInt&&p3&&p3.p?(function(s){var pr=String(s).split(':');return (+pr[0]||0)+((+pr[1]||0)/60);})(p3.p):0;" +
+      "if(vivo&&alvoP&&med){var dif=Math.round((alvoP-med)*60);alv.style.display='block';" +
+      "if(dif>=0){alv.style.color='#4ade80';alv.textContent='\\u2713 '+(dif<1?'cravado no alvo de '+p3.p:dif+' segundo'+(dif>1?'s':'')+' por km mais r\\u00e1pido que o alvo de '+p3.p);}" +
+      "else{alv.style.color='#fbbf24';alv.textContent=(-dif)+' s por km acima do alvo de '+p3.p+' \\u2014 segura o ritmo';}}" +
+      "else alv.style.display='none';" +
+      "var mD=!ehInt&&p3&&p3.d?+p3.d:(!ehInt&&cr.metaD?+cr.metaD:0);" +
+      "var mT=!ehInt&&!mD&&p3&&p3.tp?+p3.tp:(!ehInt&&!mD&&cr.metaT?+cr.metaT:0);" +
+      "if(vivo&&(mD||mT)){mb.style.display='block';" +
+      "var frac=mD?Math.min(1,km/mD):Math.min(1,el2/(mT*60));" +
+      "crEl('crMetaFill').style.width=Math.round(frac*100)+'%';" +
+      "crEl('crMetaTxt').textContent=mD?(km.toFixed(2).replace('.',',')+' de '+String(mD).replace('.',',')+' km'):(Math.floor(el2/60)+' de '+mT+' min');}" +
+      "else mb.style.display='none';})();" +
       "var p2=cr.plano;var fase=crEl('crFase'),info=crEl('crInfo');" +
       "if(p2&&p2.t==='intervalado'){var ciclo=p2.ti+p2.de;var tot=p2.r*ciclo;" +
       "if(cr.run&&el2>=tot){crFinaliza('TIROS COMPLETOS \\u2014 '+p2.r+'\\u00d7!');return;}" +
@@ -2284,7 +2311,10 @@
       "if(!navigator.geolocation){if(!auto)crEl('crInfo').textContent='Esse aparelho n\\u00e3o tem GPS dispon\\u00edvel \\u2014 digite os km na m\\u00e3o.';return;}" +
       "var b=crEl('crGps');b.innerHTML='GPS\\u2026';" +
       "cr.watch=navigator.geolocation.watchPosition(function(pos){" +
-      "cr.gpsOn=true;crGpsNeg=false;b.innerHTML='GPS ligado';b.style.borderColor='#4ade80';b.style.color='#4ade80';" +
+      // tela 51: o botão vira o TERMÔMETRO do sinal (bom/ok/fraco pela precisão)
+      "cr.gpsOn=true;crGpsNeg=false;var ac9=pos.coords?pos.coords.accuracy:null;" +
+      "b.innerHTML=ac9==null?'GPS ligado':ac9<=30?'GPS<br>bom':ac9<=70?'GPS<br>ok':'GPS<br>fraco';" +
+      "var cq9=ac9!=null&&ac9>70?'#fbbf24':'#4ade80';b.style.borderColor=cq9;b.style.color=cq9;" +
       "if(pos.coords.accuracy>40)return;var pt={lat:pos.coords.latitude,lng:pos.coords.longitude};" +
       "var dK=cr.lastPos?havKm(cr.lastPos,pt):0;" +
       "if(cr.lastPos&&cr.run&&dK<0.15)cr.km+=dK;" +
@@ -2349,6 +2379,9 @@
       "crEl('crMetaBtn').textContent=cr.metaD?('Meta: '+cr.metaD+' km'):(cr.metaT?('Meta: '+cr.metaT+' min'):'Defina uma meta');" +
       "crEl('crMetaBox').style.display='none';pintaCr();});" +
       "crEl('crFim').addEventListener('click',function(){crFinaliza(null);});" +
+      // Descartar (tela 40): confirma e joga fora — é o Zerar com aviso
+      "var crDs=crEl('crDescarta');if(crDs)crDs.addEventListener('click',function(){" +
+      "if(!confirm('Descartar esta corrida? Nada será salvo.'))return;crEl('crZera').click();});" +
       "crEl('crZera').addEventListener('click',function(){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;" +
       "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();" +
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';" +
