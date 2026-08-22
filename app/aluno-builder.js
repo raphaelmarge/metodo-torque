@@ -2928,10 +2928,11 @@
       "function agN(){return +L('ptaguaN_'+isoHj(),0)||0;}" +
       "function pintaAgua(anima){var cfg=agCfg(),n=agN();var box=document.getElementById('agCopos');if(!box)return;" +
       "document.getElementById('agMetaSel').value=String(cfg.copos);document.getElementById('agMlSel').value=String(cfg.ml);" +
-      // tela 15: os copos são quadradinhos arredondados na cor do studio
+      // copo com CARA de copo (afunila embaixo) e água AZUL — água não é da
+      // cor do studio (pedido do Raphael: laranja não parecia água)
       "var html='';for(var i=0;i<cfg.copos;i++){var cheio=i<n;" +
-      "html+=\"<div class='copo' data-ci='\"+i+\"' style='width:44px;height:52px;border:2px solid \"+(cheio?'transparent':'var(--bg11)')+\";border-radius:13px;position:relative;overflow:hidden;cursor:pointer;background:var(--bg4);\"+(anima&&i===n-1?'animation:copoPop .4s;':'')+\"'>\"+" +
-      "\"<div style='position:absolute;left:0;right:0;bottom:0;height:\"+(cheio?'100%':'0')+\";background:linear-gradient(180deg,var(--corc),var(--cor));transition:height .35s;'></div></div>\";}" +
+      "html+=\"<div class='copo' data-ci='\"+i+\"' style='width:44px;height:54px;position:relative;cursor:pointer;clip-path:polygon(6% 0,94% 0,81% 100%,19% 100%);background:var(--bg4);\"+(anima&&i===n-1?'animation:copoPop .4s;':'')+\"'>\"+" +
+      "\"<div style='position:absolute;left:0;right:0;bottom:0;height:\"+(cheio?'92%':'0')+\";background:linear-gradient(180deg,#7dd3fc,#0284c7);transition:height .35s;'></div></div>\";}" +
       "box.innerHTML=html;" +
       "var ml=n*cfg.ml;var falta=cfg.copos-n;" +
       "document.getElementById('agInfo').textContent=n>=cfg.copos?'Meta do dia batida — '+(ml/1000).toFixed(2).replace('.',',')+' L! Hábito Água marcado sozinho.':" +
