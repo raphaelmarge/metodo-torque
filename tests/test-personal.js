@@ -5028,8 +5028,8 @@ async function abaPt(p, a) {
         rpe: document.querySelectorAll("#gMiolo [data-rpe]").length,
         temFechar: !!document.getElementById("gFim") };
     });
-    ok(/concluído/.test(fim.ex) && /no treino/.test(fim.recibo) && /séries/.test(fim.recibo) && /Cargas anotadas/.test(fim.recibo),
-      "a tela final vira a celebração do treino (tempo, séries e cargas anotadas)");
+    ok(/concluído/.test(fim.ex) && /Séries feitas aqui/.test(fim.recibo) && /Cargas anotadas/.test(fim.recibo) && /Tempo de treino/.test(fim.recibo),
+      "a tela final vira um recibo do treino (séries, cargas e tempo)");
     ok(fim.temFechar, "a tela final NÃO fecha sozinha — o aluno sai quando quiser");
     ok(fim.faltam >= 1, "quem ficou sem carga vira um atalho de repescagem no recibo (" + fim.faltam + ")");
     ok(fim.rpe === 3 && /Como foi o treino de hoje\?/.test(fim.recibo),
@@ -6139,15 +6139,9 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);var HERO_EXTRA/);
+      const m = html.match(/var PLANO=(.+?);function pintaHero/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
-      // redesenho 13a: herói de 550px com data, véu fixo, UM botão de 58px e carrossel
-      out.hero13a = /height:550px/.test(html) && /id='htData'/.test(html) && /id='htDots'/.test(html) &&
-        /min-height:58px/.test(html) && />Começar treino</.test(html) && /id='htGhost'/.test(html);
-      // com circuito e corrida prescritos, o carrossel ganha os cards extras
-      const mEx = html.match(/var HERO_EXTRA=(.+?);/);
-      out.heroExtra = mEx ? JSON.parse(mEx[1]) : [];
       // limpa o rastro (plano + wods/cardio que a IA de teste criou) pros próximos blocos
       const st3 = S.read("ptStudio", {});
       delete st3.treinosV2[id].plano;
@@ -6164,29 +6158,30 @@ async function abaPt(p, a) {
       pln.planoApp["6"] && pln.planoApp["6"].tp === "cardio",
       "o pacote leva o plano resolvido: dia → tipo + índice + nome do treino");
     ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
-    ok(pln.hero13a, "🎨 redesenho 13a: herói de 550px com data, marca-d'água, carrossel e UM botão 'Começar treino' de 58px");
-    ok(pln.heroExtra.length === 2 && pln.heroExtra[0].k === "wod" && pln.heroExtra[1].k === "cardio" && !!pln.heroExtra[1].s,
-      "o carrossel do herói ganha os cards de circuito e corrida prescritos (com o alvo resumido)");
   }
 
-  // 🏋️ lote 2 do redesenho: player com carga sem teclado + celebração de fim
+  // 🎭 skin do redesenho (Claude Design): camada visual embutida no app publicado
   {
-    const pl2 = await p.evaluate(() => {
+    const skin = await p.evaluate(() => {
       const st = window.MTStore.read("ptStudio", {});
-      const html = window.__montaAppAluno(st.alunos[0], "teste-fluxo");
+      const html = window.__montaAppAluno(st.alunos[0], "teste-skin");
       return {
-        passos: /data-gstep='kg:-2\.5'/.test(html) && /data-gstep='kg:2\.5'/.test(html) &&
-          /data-gstep='rep:-1'/.test(html) && /data-gstep='rep:1'/.test(html) &&
-          /\.gsteps button\{[^}]*min-height:54px/.test(html),
-        celebra: /\.gwrap\.fim\{background:linear-gradient\(170deg/.test(html) && /gtiles/.test(html) && /kg no total/.test(html),
-        postar: /id==='gPostar'/.test(html) && /Postar na turma/.test(html),
-        proximo: /Depois vem <b/.test(html),
+        temSkin: !!self.MT_APP_SKIN && typeof self.MT_APP_SKIN.css === "string" && typeof self.MT_APP_SKIN.js === "string",
+        embute: html.indexOf(self.MT_APP_SKIN.css) > -1 && html.indexOf(self.MT_APP_SKIN.js) > -1,
+        toque: /min-height:58px!important/.test(self.MT_APP_SKIN.css) && /\.tphab button\{min-height:44px!important\}/.test(self.MT_APP_SKIN.css),
+        utilitarios: /\.carr\{/.test(self.MT_APP_SKIN.css) && /\.notabtn\{/.test(self.MT_APP_SKIN.css) && /\.listrow\{/.test(self.MT_APP_SKIN.css),
       };
     });
-    ok(pl2.passos, "🏋️ anotar carga SEM teclado: passos de ±2,5 kg e ±1 rep (alvos de 54px)");
-    ok(pl2.celebra, "o fim do treino vira a celebração roxa, com tempo, séries e kg levantados");
-    ok(pl2.postar, "com a Comunidade ligada, a celebração convida a Postar na turma (texto já rascunhado)");
-    ok(pl2.proximo, "a tela da série avisa qual exercício vem depois (monta a próxima estação)");
+    ok(skin.temSkin, "🎭 o skin do redesenho carrega junto do builder no painel");
+    ok(skin.embute, "o app publicado EMBUTE o skin (o aluno leva o visual junto, sem referência externa)");
+    ok(skin.toque, "os alvos de toque do handoff (botão principal 58px, hábitos 44px) estão no skin");
+    ok(skin.utilitarios, "as classes das receitas (carrossel, notas 58px, listrow) já viajam no skin");
+    const fontes = await p.evaluate(async () => ({
+      painel: /app\/aluno-skin\.js/.test(await (await fetch("personal.html")).text()),
+      appPg: /aluno-skin\.js/.test(await (await fetch("app/index.html")).text()),
+      sw: (await (await fetch("sw.js")).text()).split("app/aluno-skin.js").length === 3,
+    }));
+    ok(fontes.painel && fontes.appPg && fontes.sw, "o skin entra pelo painel, pela página /app/ e no sw (precache + rede primeiro)");
   }
 
   /* A IA parou de mandar republicar a função quando o problema é credencial.
