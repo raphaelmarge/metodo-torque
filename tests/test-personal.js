@@ -1859,8 +1859,8 @@ async function abaPt(p, a) {
     "o assistente não tem mais fundo escuro fixo — ele clareia junto com o tema");
   ok(/minha\?'color:#fff;':''/.test(appHtml),
     "a bolha do aluno fixa o texto branco (no claro ela herdava o texto escuro do corpo)");
-  ok(/onbCard/.test(appHtml) && /cardRpe/.test(appHtml) && /dcReps/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
-    "app traz onboarding, RPE, campo de reps, streak de semanas e confete");
+  ok(/onbCard/.test(appHtml) && /cardRpe/.test(appHtml) && /gMudaCarga/.test(appHtml) && /streakSem/.test(appHtml) && /cfQueda/.test(appHtml),
+    "app traz onboarding, RPE, mudar a carga no player, streak de semanas e confete");
   // faixa colorida do topo: foto do aluno, iniciais quando não tem, e o
   // cartão com a sequência e os hábitos do dia
   {
@@ -2028,7 +2028,7 @@ async function abaPt(p, a) {
   // o boneco animado foi retirado: sem sobra de código nem de botão no app
   ok(!/animbtn|animbox|ANIMD|Ver como faz/.test(appHtml), "o app sai sem nenhum resto da demonstração de bonequinho");
   ok(/gVideo/.test(appHtml) && />Como fazer</.test(appHtml), "modo guiado tem o link Como fazer");
-  ok(/dcExs/.test(appHtml), "diário de cargas sugere os exercícios da ficha");
+  ok(!/dcExs/.test(appHtml), "o diário manual de cargas saiu da aba Treino (a leitura mora na Evolução)");
   ok(appHtml.includes("if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length"),
     "app num celular novo (sem registro local) NÃO devolve dados vazios pra nuvem");
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
@@ -3354,7 +3354,7 @@ async function abaPt(p, a) {
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
-  ok(/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "app tem diário de cargas com recorde");
+  ok(!/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "sem diário manual, mas o recorde segue celebrado pelo player");
   ok(/Minha evolução/.test(appHtml) && /84/.test(appHtml), "app leva as avaliações (peso 84)");
   ok(/Meu plano/.test(appHtml) && /Mensal 3x/.test(appHtml) && new RegExp("todo dia " + diaVenc).test(appHtml), "app tem o card Meu plano (plano + vencimento)");
   ok(/pixAluno/.test(appHtml) && /pixCopiaAluno/.test(appHtml), "app com Pix copia-e-cola e botão de copiar");
@@ -4893,11 +4893,30 @@ async function abaPt(p, a) {
   }), "botão 'Ver treino ➜' do hero pula pra aba Treino");
   // com o menu de abas, cada grupo de cards vive numa seção — troca antes de interagir
   await pApp.evaluate(() => window.__trocaSec("treino"));
-  await pApp.fill("#dcEx", "Agachamento");
-  await pApp.fill("#dcKg", "80");
-  await pApp.click("#dcAdd");
-  const dc = await pApp.evaluate(() => document.getElementById("dcLista").textContent);
-  ok(/Agachamento/.test(dc) && /80/.test(dc), "aluno registra carga no diário");
+  // sem o diário manual, a carga entra pelo caminho do player (gGrava) e a
+  // linha da ficha pinta a última anotação
+  const dc = await pApp.evaluate(() => {
+    const el = document.querySelector(".exult");
+    if (!el) return null;
+    const nome = el.dataset.exn;
+    // zera o histórico desse exercício pro teste ser determinístico
+    const h = JSON.parse(localStorage.getItem("ptdc") || "{}");
+    delete h[nome];
+    localStorage.setItem("ptdc", JSON.stringify(h));
+    window.__gGrava(nome, 80, 10, "");
+    window.__pintaUlt();
+    const kgEl = Array.from(document.querySelectorAll(".exkg")).find((x) => x.dataset.exn === nome);
+    const res = { linha: el.textContent, kg: kgEl ? kgEl.textContent : "" };
+    // limpa de novo: o fluxo do player mais pra frente salva ESSE exercício e
+    // conta os registros g:1 do dia — o daqui não pode sobrar
+    const h2 = JSON.parse(localStorage.getItem("ptdc") || "{}");
+    delete h2[nome];
+    localStorage.setItem("ptdc", JSON.stringify(h2));
+    window.__pintaUlt();
+    return res;
+  });
+  ok(dc && /última: 10 reps · 80 kg/.test(dc.linha) && /80 kg/.test(dc.kg),
+    "carga salva pelo player pinta na linha da ficha (" + (dc ? dc.linha : "sem linha") + ")");
   // séries: 4 cliques no Supino (4 séries) e completa os demais → dia marca sozinho
   const nBtns = await pApp.evaluate(() => document.querySelectorAll(".setbtn").length);
   ok(nBtns >= 1, "botões de séries renderizados (" + nBtns + ")");
@@ -5240,13 +5259,19 @@ async function abaPt(p, a) {
     ok(!!cardArq && /conquista\.png/.test(cardArq.suggestedFilename()), "Gerar card pro Stories baixa a imagem da conquista");
     await pApp.evaluate(() => document.getElementById("arteFecha").click());
   }
-  // gráfico de carga: clica na linha do diário
-  await pApp.fill("#dcEx", "Supino reto");
-  await pApp.fill("#dcKg", "72");
-  await pApp.click("#dcAdd");
-  await pApp.evaluate(() => document.querySelector('[data-dcx="Supino reto"]').click());
-  const graf = await pApp.evaluate(() => document.getElementById("dcGraf").textContent);
-  ok(/Supino reto/.test(graf) && /★/.test(graf), "gráfico de carga abre com PR ★");
+  // recorde: carga maior salva pelo player solta o toast NOVO RECORDE + confete
+  const rec9 = await pApp.evaluate(async () => {
+    const h = JSON.parse(localStorage.getItem("ptdc") || "{}");
+    h["Supino reto"] = [{ d: "2020-01-06", kg: 60, r: 10 }];
+    localStorage.setItem("ptdc", JSON.stringify(h));
+    window.__gGrava("Supino reto", 72, 10, "");
+    await new Promise((r) => setTimeout(r, 120));
+    // só DIV: o <script> do app também contém o texto 'NOVO RECORDE'
+    const t = Array.from(document.body.children).find((x) => x.tagName === "DIV" && /NOVO RECORDE/.test(x.textContent || ""));
+    return { toast: t ? t.textContent : "", confete: !!document.querySelector("[style*='cfQueda']") };
+  });
+  ok(/NOVO RECORDE/.test(rec9.toast) && /72/.test(rec9.toast), "carga maior salva pelo player celebra NOVO RECORDE (" + rec9.toast.replace(/\s+/g, " ").slice(0, 50) + ")");
+  ok(rec9.confete, "e solta a chuva de confete");
   // peso diário (tela 49: o peso vive na pílula Corpo da Evolução)
   await pApp.evaluate(() => { window.__trocaSec("evolucao"); window.__evSub("corpo"); });
   await pApp.fill("#pzKg", "83,4");
@@ -5340,20 +5365,21 @@ async function abaPt(p, a) {
   });
   ok(Object.keys(rpeSalvo).some((k) => rpeSalvo[k] === 2), "resposta 'Na medida' fica guardada pro personal (ptrpe)");
   await pApp.evaluate(() => window.__trocaSec("treino"));
-  await pApp.fill("#dcEx", "Agachamento");
-  await pApp.fill("#dcKg", "90");
-  await pApp.fill("#dcReps", "6");
-  await pApp.click("#dcAdd");
-  await pApp.waitForTimeout(200);
-  const rm = await pApp.evaluate(() => {
-    document.querySelector('[data-dcx="Agachamento"]').click();
-    return {
-      graf: document.getElementById("dcGraf").textContent,
-      confete: !!document.querySelector("[style*='cfQueda']"),
-    };
+  // o card do diário manual foi removido de vez da aba Treino
+  ok(await pApp.evaluate(() => !document.getElementById("dcLista") && !document.getElementById("dcGraf") && !document.getElementById("dcEx")),
+    "aba Treino sem o diário manual de cargas (a leitura mora em Evolução → Cargas)");
+  // progressão sugerida continua viva no caminho do player: 3ª carga igual → sugere subir
+  const prog = await pApp.evaluate(async () => {
+    const d = (off) => { const x = new Date(); x.setDate(x.getDate() + off); return x.toISOString().slice(0, 10); };
+    const h = JSON.parse(localStorage.getItem("ptdc") || "{}");
+    h["Agachamento"] = [{ d: d(-7), kg: 90, r: 6 }, { d: d(-4), kg: 90, r: 6 }];
+    localStorage.setItem("ptdc", JSON.stringify(h));
+    delete window.__sugestaoProg;
+    window.__gGrava("Agachamento", 90, 6, "");
+    await new Promise((r) => setTimeout(r, 120));
+    return window.__sugestaoProg;
   });
-  ok(/recorde 90 kg/.test(rm.graf) && /1RM est\. 108 kg/.test(rm.graf), "gráfico mostra recorde e 1RM estimado (Epley: 90×(1+6÷30)=108)");
-  ok(rm.confete, "novo recorde solta a chuva de confete");
+  ok(prog === 92.5, "3ª carga igual pelo player sugere subir pra 92,5 kg (90 + 2,5)");
   // vídeo do exercício toca DENTRO do app (player embutido, sem sair pro YouTube)
   const vid = await pApp.evaluate(async () => {
     window.__trocaSec("treino");

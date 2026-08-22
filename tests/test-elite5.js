@@ -214,9 +214,8 @@ function ok(cond, nome) {
   });
   await pApp2.reload({ waitUntil: "domcontentloaded" });
   await pApp2.evaluate(() => window.__trocaSec("treino"));
-  await pApp2.fill("#dcEx", "Supino reto");
-  await pApp2.fill("#dcKg", "60");
-  await pApp2.click("#dcAdd");
+  // sem o diário manual, a 3ª carga igual entra pelo caminho do player (gGrava)
+  await pApp2.evaluate(() => window.__gGrava("Supino reto", 60, 0, ""));
   await pApp2.waitForTimeout(400);
   const sugestao = await pApp2.evaluate(() => window.__sugestaoProg);
   ok(sugestao === 62.5, "3ª carga igual sugere subir pra 62,5 kg (60 + 2,5)");

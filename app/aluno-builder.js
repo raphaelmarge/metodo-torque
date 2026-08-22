@@ -988,12 +988,9 @@
       "<button id='crUnlockF' style='background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:12px 26px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Segure pra destravar</button></div>" +
       "<button id='crFullFecha' aria-label='Fechar tela cheia' style='position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:12px;z-index:4;width:42px;height:42px;border-radius:50%;background:rgba(var(--bg0-rgb),.74);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:17px;cursor:pointer;'>✕</button>" +
       "</div></div>" : "") +
-      "<div class='cardx'><h2>Diário de cargas</h2>" +
-      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='dcEx' list='dcExs' placeholder='Exercício' style='flex:2;min-width:0'>" +
-      "<datalist id='dcExs'>" + (fichasApp ? fichasApp.map(function (f) { return f.itens.map(function (it) { return "<option>" + esc(it.nome) + "</option>"; }).join(""); }).join("") : "") + "</datalist>" +
-      "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><input id='dcReps' inputmode='numeric' placeholder='reps' style='width:64px'><button class='btnx' id='dcAdd' aria-label='Adicionar'>+</button></div>" +
-      "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui.</div>" +
-      "<div id='dcGraf' style='display:none;margin-top:10px;'></div></div>" +
+      // o diário manual de cargas saiu daqui (pedido do Raphael): a carga entra
+      // pelo player e a leitura mora em Evolução → Cargas; o recorde e a
+      // sugestão de progressão agora festejam direto no gGrava
       // tela 41: curva do peso (registros + avaliações na MESMA curva), meta
       // com barra e a última avaliação com deltas — tudo dos dados que já existem
       "<div class='cardx'><h2>Meu peso</h2>" +
@@ -2430,10 +2427,25 @@
       // um registro por dia por exercício NO CAMINHO DO PLAYER (g:1). O Diário
       // continua sendo append puro — lá o aluno anota quantas linhas quiser.
       "var i=-1;for(var k=l.length-1;k>=0;k--){if(l[k].d===hj&&l[k].g===1&&(l[k].i||'')===slot){i=k;break;}}" +
+      // recorde compara com TUDO que veio antes, menos a anotação de hoje que
+      // está sendo corrigida (senão editar a carga de hoje nunca vira recorde)
+      "var maxA=0;for(var k9=0;k9<l.length;k9++){if(k9!==i&&+l[k9].kg>maxA)maxA=+l[k9].kg;}" +
       "if(i>=0)l[i]=reg;else l.push(reg);" +
       "if(l.length>60)l.shift();h[ex]=l;Sv('ptdc',h);" +
-      "if(typeof pintaDC==='function')try{pintaDC();}catch(e2){}" +
-      "gv.cargas[ex]=kg;return true;}" +
+      "gv.cargas[ex]=kg;try{gFesteja(ex,kg,maxA,l);}catch(e2){}return true;}" +
+      "window.__gGrava=gGrava;" +
+      // festinha do recorde e sugestão de progressão — vinham do diário manual
+      // (removido a pedido do Raphael); agora acompanham quem salva pelo player
+      "function gFesteja(ex,kg,maxA,l){" +
+      "if(maxA>0&&kg>maxA){if(navigator.vibrate)navigator.vibrate([120,60,220]);try{confete();}catch(e9){}" +
+      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:80;text-align:center;';" +
+      "t.innerHTML=icx(ICO.estrela,20)+' NOVO RECORDE!<br><small>'+esc2(ex)+': '+gnum(kg)+' kg</small>';document.body.appendChild(t);setTimeout(function(){t.remove();},3500);return;}" +
+      // progressão sugerida (estilo Hevy): 3 registros seguidos na MESMA carga → hora de subir
+      "var ult3=l.slice(-3);if(ult3.length===3&&ult3.every(function(x){return +x.kg===kg;})){" +
+      "var sug=kg<20?1:2.5;var t2=document.createElement('div');" +
+      "t2.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#0891b2,#22d3ee);color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:80;text-align:center;';" +
+      "t2.innerHTML=icx(ICO.alta,20)+' 3 treinos em '+gnum(kg)+' kg!<br><small>Bora tentar '+gnum(kg+sug)+' kg no próximo?</small>';" +
+      "document.body.appendChild(t2);setTimeout(function(){t2.remove();},4500);window.__sugestaoProg=kg+sug;}}" +
       // gv.reg diz de QUEM é o formulário aberto: na repescagem o exercício não é
       // o gv.e, e sem isso a carga ia parar no exercício errado
       "function gSalvaSeSujo(){if(!gv.sujo)return;gv.sujo=false;" +
@@ -2791,17 +2803,8 @@
       "w.addEventListener('touchend',function(ev){if(gv.fim||rol)return;var t=ev.changedTouches[0];" +
       "var dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)<50||Math.abs(dx)<Math.abs(dy)*1.5)return;" +
       "var b=document.getElementById(dx<0?'gPularEx':'gVoltaEx');if(b)b.click();},{passive:true});})();" +
-      // gráfico de carga por exercício (clique na linha do diário)
-      "function grafCarga(ex){var h=L('ptdc',{});var l=(h[ex]||[]).slice(-12);var g=document.getElementById('dcGraf');" +
-      "if(!l.length){g.style.display='none';return;}var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      // recorde + evolução desde o 1º registro + 1RM estimado (fórmula de Epley, quando anota as reps)
-      "var evo=l.length>1?Math.round(100*((+l[l.length-1].kg)-(+l[0].kg))/(+l[0].kg)):0;" +
-      "var comReps=l.slice().reverse().find(function(x){return +x.r>0;});" +
-      "var rm=comReps?Math.round((+comReps.kg)*(1+(+comReps.r)/30)):0;" +
-      "g.style.display='block';g.innerHTML=\"<div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:12px;margin-bottom:6px;'><span style='color:#a9a4b5;'>\"+ex+\"</span><span><b style='color:var(--corc);'>recorde \"+String(max).replace('.',',')+\" kg</b>\"+(evo>0?\" · <b class='up'>+\"+evo+\"%</b> desde o 1º\":'')+(rm?\" · 1RM est. <b>\"+rm+\" kg</b>\":'')+\"</span></div>\"+" +
-      "\"<div style='display:flex;gap:6px;align-items:flex-end;height:90px;'>\"+l.map(function(x){var hh=Math.round(60*(+x.kg)/max);var pr=+x.kg===max;" +
-      "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(pr?'var(--corc)':'#6e6a78')+\";'>\"+String(x.kg).replace('.',',')+(pr?'★':'')+\"</div><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:\"+(pr?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg12)')+\";border-radius:4px 4px 0 0;min-height:3px;'></div><div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+x.d.slice(8,10)+'/'+x.d.slice(5,7)+\"</div></div>\";}).join('')+\"</div>\";}" +
-      "document.getElementById('dcLista').addEventListener('click',function(e){var r=e.target.closest('[data-dcx]');if(r)grafCarga(r.dataset.dcx);});" +
+      // o gráfico por exercício do diário manual foi embora junto com o card —
+      // a leitura de cargas (barras, recorde, 1RM Epley) mora em Evolução → Cargas
       // peso diário
       // tela 41: curva de LINHA com pontos — registros do aluno + peso das
       // avaliações do personal na MESMA curva; tocar num ponto mostra o dia
@@ -3180,26 +3183,9 @@
       "if(!confirm('Sair do app neste aparelho? Seus treinos e registros continuam guardados — é só entrar de novo.'))return;" +
       "try{['tq_app_token','tq_app_html','tq_app_pacote','tq_app_stamp','mt_aluno_token'].forEach(function(k){localStorage.removeItem(k);});}catch(e){}" +
       "location.href='/aluno-login.html?sair=1';});" +
-      "function pintaDC(){var h=L('ptdc',{});var ks=Object.keys(h);var el=document.getElementById('dcLista');if(!ks.length)return;" +
-      "el.className='';el.innerHTML=ks.map(function(k){var l=h[k];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      "return \"<div class='kv' data-dcx='\"+k+\"' style='cursor:pointer;'><span>\"+k+\"</span><span><b>\"+String(max).replace('.',',')+\" kg</b> <small style='color:#a9a4b5'>(\"+l.length+\")</small></span></div>\";}).join('');}" +
-      "document.getElementById('dcAdd').addEventListener('click',function(){" +
-      "var ex=document.getElementById('dcEx').value.trim(),kg=parseFloat(document.getElementById('dcKg').value.replace(',','.'));" +
-      "var reps=parseInt(document.getElementById('dcReps').value,10)||0;" +
-      "if(!ex||!kg){alert('Preencha exercício e carga.');return;}" +
-      "var h=L('ptdc',{});var l=h[ex]||[];var max=0;l.forEach(function(x){if(+x.kg>max)max=+x.kg;});" +
-      "l.push({d:isoHj(),kg:kg,r:reps>0&&reps<100?reps:0});if(l.length>60)l.shift();h[ex]=l;Sv('ptdc',h);" +
-      "document.getElementById('dcReps').value='';" +
-      "if(max>0&&kg>max){if(navigator.vibrate)navigator.vibrate([120,60,220]);confete();" +
-      "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
-      "t.innerHTML=icx(ICO.estrela,20)+' NOVO RECORDE!<br><small>'+ex+': '+kg+' kg</small>';document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}" +
-      // progress\u00e3o sugerida (estilo Hevy): 3 registros seguidos na MESMA carga \u2192 hora de subir
-      "else{var ult3=l.slice(-3);if(ult3.length===3&&ult3.every(function(x){return +x.kg===kg;})){" +
-      "var sug=kg<20?1:2.5;var t2=document.createElement('div');" +
-      "t2.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#0891b2,#22d3ee);color:#fff;padding:13px 20px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
-      "t2.innerHTML=icx(ICO.alta,20)+' 3 treinos em '+kg+' kg!<br><small>Bora tentar '+String(kg+sug).replace('.',',')+' kg no pr\u00f3ximo?</small>';" +
-      "document.body.appendChild(t2);setTimeout(function(){t2.remove();},4500);window.__sugestaoProg=kg+sug;}}" +
-      "document.getElementById('dcKg').value='';pintaDC();});pintaDC();" +
+      // o formulário manual do diário de cargas morava aqui — saiu a pedido
+      // do Raphael; a festa do recorde e a progressão moram no gFesteja
+      // (chamado pelo gGrava, o caminho do player)
       // tela 41: última avaliação com deltas coloridos + histórico dobrável
       "(function(){var el=document.getElementById('evoBox');if(!AVS.length){el.innerHTML=\"<div class='vz'>Suas avaliações físicas aparecem aqui quando o personal registrar.</div>\";return;}" +
       "var ult=AVS[AVS.length-1];" +
@@ -3762,7 +3748,7 @@
       // áreas desligadas pelo professor nas Configurações somem do menu
       "var OCULTA=" + jsonApp(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
-      "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
+      "if(/Meu treino|Raio-X|Modo circuito/.test(t))return 'treino';" +
       "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
