@@ -5229,8 +5229,8 @@ async function abaPt(p, a) {
   await pApp.evaluate(() => document.querySelector('[data-dcx="Supino reto"]').click());
   const graf = await pApp.evaluate(() => document.getElementById("dcGraf").textContent);
   ok(/Supino reto/.test(graf) && /★/.test(graf), "gráfico de carga abre com PR ★");
-  // peso diário
-  await pApp.evaluate(() => window.__trocaSec("evolucao"));
+  // peso diário (tela 49: o peso vive na pílula Corpo da Evolução)
+  await pApp.evaluate(() => { window.__trocaSec("evolucao"); window.__evSub("corpo"); });
   await pApp.fill("#pzKg", "83,4");
   await pApp.click("#pzAdd");
   const pz = await pApp.evaluate(() => document.getElementById("pzGraf").textContent);
