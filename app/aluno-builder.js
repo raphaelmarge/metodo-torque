@@ -371,6 +371,14 @@
       ".wptg::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}" +
       ".wptg.on{background:var(--cor)}.wptg.on::after{left:25px}" +
       ".wpobs{width:100%;background:var(--bg4);border:1px solid var(--bg11);border-radius:14px;color:#fff;font-family:inherit;font-size:14px;padding:12px;min-height:84px}" +
+      /* ---------- questionário paginado (telas 02-06) ---------- */
+      "#qaFluxo{position:fixed;inset:0;z-index:71;overflow:auto;background:var(--bg0);color:#fff}" +
+      ".qaop{display:flex;align-items:center;gap:14px;width:100%;min-height:72px;background:var(--bg2);border:1px solid var(--bg11);border-radius:20px;padding:0 18px;font-family:inherit;color:#fff;cursor:pointer;margin-top:10px}" +
+      ".qaop.on{border-color:var(--cor);background:rgba(var(--cor-rgb),.12)}" +
+      ".qaop .qe{font-size:32px;line-height:1}" +
+      ".qabar{display:flex;gap:6px;margin-top:12px}" +
+      ".qabar i{flex:1;height:6px;border-radius:99px;background:var(--bg8)}" +
+      ".qabar i.on{background:var(--cor)}" +
       "</style>" + (raiz.MT_APP_SKIN ? "<style>" + raiz.MT_APP_SKIN.css + "</style>" : "") + "</head><body class='semtopo'>" + (raiz.MT_APP_SKIN ? "<script>" + raiz.MT_APP_SKIN.js + "<\/script>" : "") +
       "<div class='topo'>" +
       // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
@@ -858,7 +866,8 @@
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
       "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in</button></div></div>" +
-      (qa ? "<div class='cardx' id='qaCard'><h2>" + appIco(APPIC.prancheta, 14) + esc(qa.nome || "Questionário") + "</h2><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
+      // R3: o card virou o CONVITE do questionário (tela 03) — o fluxo abre por cima
+      (qa ? "<div class='cardx' id='qaCard'><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
       (plApp && ve("pag") ? "<div class='cardx'><h2>Meu plano</h2>" +
         "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
         "<div class='kv'><span>Vencimento</span><span>todo dia " + ctApp.diaVenc + "</span></div>" +
@@ -2574,31 +2583,87 @@
         "function diaBr(iso){return iso.slice(8,10)+'/'+iso.slice(5,7);}" +
         "var hj=isoHj();var desde=/^\\d{4}-\\d{2}-\\d{2}$/.test(QUESTAPP.desde)?QUESTAPP.desde:hj;" +
         "var per=desde;if(QUESTAPP.repete&&hj>=desde){per=isoAdd(desde,Math.floor((new Date(hj)-new Date(desde))/6048e5)*7);}" +
-        "var chave=(QUESTAPP.env||'')+'|'+per;var R={};" +
-        "function pinta(){var resp=L('ptqa',{});el.style.textAlign='left';" +
-        "if(hj<desde){el.innerHTML='Seu personal mandou esse questionário — ele libera dia <b>'+diaBr(desde)+'</b>. Volta aqui nesse dia!';return;}" +
-        "if(resp[chave]){el.innerHTML='Respondido — seu personal já recebeu.'+(QUESTAPP.repete?' O próximo libera dia <b>'+diaBr(isoAdd(per,7))+'</b>.':'');return;}" +
-        "el.className='';" +
-        "el.innerHTML=QUESTAPP.ps.map(function(p,i){var h=\"<div style='margin:10px 0 6px;font-weight:700;font-size:14px;'>\"+eh(p.texto)+\"</div>\";" +
-        "if(p.tipo==='emoji'){h+=\"<div style='display:flex;gap:6px;flex-wrap:wrap;'>\"+(p.ops||[]).map(function(o,j){return \"<button data-qa='\"+i+\"' data-j='\"+j+\"' style='flex:1;min-width:56px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:9px;color:#d6d2df;font-size:19px;padding:8px 4px;cursor:pointer;font-family:inherit;'>\"+eh(o.e)+\"<div style='font-size:9.5px;margin-top:2px;'>\"+eh(o.r)+\"</div></button>\";}).join('')+'</div>';}" +
-        "else if(p.tipo==='linear'){h+=\"<div style='display:flex;gap:4px;flex-wrap:wrap;'>\";for(var n=0;n<=10;n++)h+=\"<button data-qa='\"+i+\"' data-v='\"+n+\"' style='flex:1;min-width:26px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:7px;color:#d6d2df;font-size:13px;padding:7px 0;cursor:pointer;font-family:inherit;'>\"+n+\"</button>\";h+='</div>';}" +
-        "else{h+=\"<input data-qat='\"+i+\"' placeholder='Escreva aqui…' style='width:100%;'>\";}" +
-        "return h;}).join('')+\"<button class='btnx' id='qaEnvia' style='width:100%;margin-top:12px;'>Enviar respostas</button>\";}" +
-        "el.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('button[data-qa]');if(!b)return;var i=+b.dataset.qa;var p=QUESTAPP.ps[i]||{};" +
-        "if(b.dataset.j!=null){var o=(p.ops||[])[+b.dataset.j]||{};R[i]={r:o.r||o.e||'',p:+o.p||0};}else{R[i]={r:b.dataset.v,p:+b.dataset.v};}" +
-        "el.querySelectorAll(\"button[data-qa='\"+i+\"']\").forEach(function(x){var on=x===b;x.style.background=on?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)';x.style.borderColor=on?'var(--corc)':'var(--bg11)';x.style.color=on?'#fff':'#d6d2df';});});" +
-        "el.addEventListener('click',function(ev){if(ev.target.id!=='qaEnvia')return;" +
-        "var faltam=false;var lista=QUESTAPP.ps.map(function(p,i){" +
-        "if(p.tipo!=='emoji'&&p.tipo!=='linear'){var inp=el.querySelector(\"input[data-qat='\"+i+\"']\");var v=inp?inp.value.trim():'';if(!v)faltam=true;return {sigla:p.s||'',pergunta:p.texto,resposta:v,pontos:null,menos:!!p.mm};}" +
-        "if(!R[i]){faltam=true;return null;}return {sigla:p.s||'',pergunta:p.texto,resposta:R[i].r,pontos:R[i].p,menos:!!p.mm};});" +
-        "if(faltam){alert('Responde todas as perguntas antes de enviar.');return;}" +
+        "var chave=(QUESTAPP.env||'')+'|'+per;var T=QUESTAPP.ps.length;" +
+        /* R3: fluxo paginado (telas 02-06) — uma pergunta por tela, resposta
+         * parcial guardada no aparelho (dá pra parar no meio e voltar), e o
+         * envio final é o MESMO de antes: app_quest_responde com a mesma lista */
+        "function draftLe(){var d=L('ptqadraft',{});return d[chave]||{i:0,R:{},T:{}};}" +
+        "function draftSalva(d){var all=L('ptqadraft',{});all[chave]=d;Sv('ptqadraft',all);}" +
+        "function draftLimpa(){var all=L('ptqadraft',{});delete all[chave];Sv('ptqadraft',all);}" +
+        "function pinta(){var resp=L('ptqa',{});el.className='';el.style.textAlign='left';" +
+        "var cab=\"<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px;color:#fff;'>\"+" +
+        "\"<div style='font-size:9.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);'>Do seu personal pra você</div>\"+" +
+        "\"<div style='font-size:24px;font-weight:900;letter-spacing:-.02em;margin-top:4px;'>\"+eh(QUESTAPP.nome)+'</div>'+" +
+        "\"<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:4px;'>\"+pl(T,'pergunta','perguntas')+' · leva 1 minuto</div></div>';" +
+        "if(hj<desde){el.innerHTML=cab+\"<div style='border:1.5px dashed var(--bg11);border-radius:18px;padding:14px 16px;margin-top:12px;'><b style='font-size:14.5px;'>Trancado até \"+diaBr(desde)+\"</b><div style='font-size:12.5px;color:#8a8695;margin-top:2px;'>seu personal libera nesse dia — volta aqui</div></div>\";return;}" +
+        "if(resp[chave]){el.innerHTML=cab+\"<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;font-size:14px;color:#d6d2df;'>Respondido — seu personal já recebeu.\"+(QUESTAPP.repete?' O próximo libera dia <b>'+diaBr(isoAdd(per,7))+'</b>.':'')+'</div>';return;}" +
+        "var d0=L('ptqadraft',{})[chave];var temD=!!(d0&&(Object.keys(d0.R||{}).length||Object.keys(d0.T||{}).length));" +
+        "el.innerHTML=cab+" +
+        "\"<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;font-size:14px;line-height:1.5;color:#d6d2df;'>Seu personal usa as respostas pra ajustar o treino da próxima semana.\"+" +
+        "\"<div style='border-top:1px solid var(--bg11);margin-top:10px;padding-top:10px;font-size:13px;color:#8a8695;'>🔒 só o seu personal vê as suas respostas</div></div>\"+" +
+        "\"<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;'><div class='wpk'>O que ele vai perguntar</div>\"+" +
+        "QUESTAPP.ps.map(function(p){return \"<div style='font-size:14px;color:#d6d2df;padding:3px 0;'>\"+eh(p.texto)+'</div>';}).join('')+'</div>'+" +
+        "\"<button class='btnx' id='qaAbrir' style='width:100%;min-height:58px;font-size:16px;margin-top:14px;'>\"+(temD?'Continuar de onde parou':'Responder agora')+'</button>'+" +
+        "\"<div style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:8px;'>você pode parar no meio e voltar depois</div>\";}" +
+        "var fx=null,stq=null;" +
+        "function fechaFluxo(){if(fx){fx.remove();fx=null;}pinta();}" +
+        "function respondida(i){var p=QUESTAPP.ps[i]||{};if(p.tipo==='emoji'||p.tipo==='linear')return stq.R[i]!=null;return true;}" +
+        "function prF(){var p=QUESTAPP.ps[stq.i]||{};var done=respondida(stq.i);var ultima=stq.i===T-1;" +
+        "var barra=QUESTAPP.ps.map(function(x,xi){return \"<i class='\"+(xi===stq.i?'on':'')+\"'></i>\";}).join('');" +
+        "var corpo='';" +
+        "if(p.tipo==='emoji'){corpo=(p.ops||[]).map(function(o,j){var on=stq.R[stq.i]&&stq.R[stq.i].j===j;" +
+        "return \"<button class='qaop\"+(on?' on':'')+\"' data-qj='\"+j+\"'><span class='qe'>\"+eh(o.e)+\"</span><span style='flex:1;text-align:left;font-size:17px;font-weight:800;'>\"+eh(o.r)+'</span>'+(on?\"<span style='font-size:20px;'>✓</span>\":'')+'</button>';}).join('')+" +
+        "\"<div style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:12px;'>toque numa opção pra avançar automático</div>\";}" +
+        "else if(p.tipo==='linear'){var sel=stq.R[stq.i]?String(stq.R[stq.i].r):null;var ns='';" +
+        "for(var n=0;n<=10;n++)ns+=\"<button class='notabtn\"+(sel===String(n)?' on':'')+\"' data-qv='\"+n+\"'>\"+n+'</button>';" +
+        "corpo=\"<div style='display:grid;grid-template-columns:repeat(6,1fr);gap:8px;'>\"+ns+'</div>'+" +
+        "\"<div style='display:flex;justify-content:space-between;font-size:12.5px;color:#6e6a78;margin-top:10px;'><span>0 · mínimo</span><span>10 · máximo</span></div>\";}" +
+        "else{corpo=\"<textarea id='qaTxt' rows='4' class='wpobs' placeholder='Escreva aqui… (opcional)'></textarea>\";}" +
+        "fx.innerHTML=\"<div style='max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px));'>\"+" +
+        "\"<div style='display:flex;align-items:center;gap:10px;'><button id='qaX' aria-label='Fechar o questionário' style='flex:none;width:44px;height:44px;border-radius:50%;background:var(--bg2);border:1px solid var(--bg11);color:#fff;font-size:16px;font-family:inherit;cursor:pointer;'>✕</button>\"+" +
+        "\"<span style='flex:1;text-align:center;font-size:10.5px;font-weight:800;letter-spacing:.22em;color:#8a8695;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>\"+eh(QUESTAPP.nome)+'</span>'+" +
+        "\"<span style='flex:none;font-size:15px;font-weight:900;'>\"+(stq.i+1)+\"<span style='color:#6e6a78;'>/\"+T+'</span></span></div>'+" +
+        "\"<div class='qabar'>\"+barra+'</div>'+" +
+        "\"<div style='font-size:clamp(24px,7vw,30px);font-weight:900;letter-spacing:-.02em;line-height:1.15;margin:22px 0 14px;'>\"+eh(p.texto)+'</div>'+" +
+        "\"<div style='flex:1;'>\"+corpo+'</div>'+" +
+        "\"<button id='qaProx' class='btnx' style='width:100%;min-height:58px;font-size:17px;margin-top:16px;\"+(done?'':'opacity:.45;')+\"'>\"+(ultima?'Enviar':'Próxima')+'</button>'+" +
+        "(stq.i>0?\"<button id='qaAnt' style='background:none;border:none;color:#8a8695;font-family:inherit;font-size:13.5px;font-weight:700;padding:12px;cursor:pointer;'>‹ pergunta anterior</button>\":'')+'</div>';" +
+        "var tx=document.getElementById('qaTxt');if(tx)tx.value=stq.T[stq.i]||'';}" +
+        "function avanca(){if(!respondida(stq.i)||!fx)return;if(stq.i<T-1){stq.i++;draftSalva({i:stq.i,R:stq.R,T:stq.T});prF();}else{envia();}}" +
+        "function abreFluxo(){var d=draftLe();stq={i:Math.min(+d.i||0,T-1),R:d.R||{},T:d.T||{}};" +
+        "fx=document.createElement('div');fx.id='qaFluxo';document.body.appendChild(fx);" +
+        "fx.addEventListener('input',function(e){if(e.target.id==='qaTxt'){stq.T[stq.i]=e.target.value;draftSalva({i:stq.i,R:stq.R,T:stq.T});}});" +
+        "fx.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;" +
+        "if(b.id==='qaX'){draftSalva({i:stq.i,R:stq.R,T:stq.T});fechaFluxo();return;}" +
+        "if(b.id==='qaAnt'){stq.i=Math.max(0,stq.i-1);prF();return;}" +
+        "if(b.id==='qaProx'){avanca();return;}" +
+        "if(b.dataset.qj!=null){var p2=QUESTAPP.ps[stq.i]||{};var o=(p2.ops||[])[+b.dataset.qj]||{};" +
+        "stq.R[stq.i]={r:o.r||o.e||'',p:+o.p||0,j:+b.dataset.qj};draftSalva({i:stq.i,R:stq.R,T:stq.T});prF();setTimeout(avanca,350);return;}" +
+        "if(b.dataset.qv!=null){stq.R[stq.i]={r:b.dataset.qv,p:+b.dataset.qv};draftSalva({i:stq.i,R:stq.R,T:stq.T});prF();return;}});" +
+        "prF();}" +
+        "function enviadoTela(){fx.innerHTML=\"<div style='min-height:100%;background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px calc(24px + env(safe-area-inset-bottom,0px));'>\"+" +
+        "\"<div style='width:82px;height:82px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:38px;color:#fff;'>✓</div>\"+" +
+        "\"<div style='font-size:11px;font-weight:800;letter-spacing:.26em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-top:22px;'>Respondido</div>\"+" +
+        "\"<div style='font-size:30px;font-weight:900;color:#fff;letter-spacing:-.02em;margin-top:8px;'>Seu personal já recebeu</div>\"+" +
+        "\"<div style='font-size:15px;color:rgba(255,255,255,.85);margin-top:10px;max-width:320px;line-height:1.5;'>Ele vai olhar isso antes de montar a sua semana. Se algo mudar, manda no chat.</div>\"+" +
+        "(QUESTAPP.repete?\"<div style='margin-top:18px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:12px 18px;color:#fff;font-size:14px;'>O próximo libera dia <b>\"+diaBr(isoAdd(per,7))+'</b> — o app avisa.</div>':'')+" +
+        "\"<div style='flex:1;min-height:24px;'></div>\"+" +
+        "\"<button id='qaVoltaIni' style='width:100%;min-height:58px;border-radius:99px;background:#fff;border:none;color:var(--cor-esc,#3b2b63);font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;'>Voltar pro início</button>\"+" +
+        "\"<button id='qaChat' style='width:100%;min-height:52px;border-radius:99px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px;'>Falar com o seu personal</button></div>\";" +
+        "var vi=document.getElementById('qaVoltaIni');if(vi)vi.onclick=function(){fechaFluxo();if(window.__trocaSec)window.__trocaSec('inicio');};" +
+        "var fc=document.getElementById('qaChat');if(fc)fc.onclick=function(){fechaFluxo();if(window.__trocaSec)window.__trocaSec('chat');};}" +
+        "function envia(){var lista=QUESTAPP.ps.map(function(p,i){" +
+        "if(p.tipo!=='emoji'&&p.tipo!=='linear')return {sigla:p.s||'',pergunta:p.texto,resposta:String(stq.T[i]||'').trim(),pontos:null,menos:!!p.mm};" +
+        "var r=stq.R[i]||{};return {sigla:p.s||'',pergunta:p.texto,resposta:r.r,pontos:r.p,menos:!!p.mm};});" +
         "var total=0,temP=false;lista.forEach(function(x){if(x&&x.pontos!=null){total+=(x.menos?-x.pontos:x.pontos);temP=true;}});" +
-        "var btn=ev.target;btn.disabled=true;btn.textContent='Enviando…';" +
-        "var fim=function(){var resp=L('ptqa',{});resp[chave]=1;Sv('ptqa',resp);pinta();};" +
+        "var bt=document.getElementById('qaProx');if(bt){bt.disabled=true;bt.textContent='Enviando…';}" +
+        "var fim=function(){var resp=L('ptqa',{});resp[chave]=1;Sv('ptqa',resp);draftLimpa();enviadoTela();};" +
         "if(NUVEM){rpcApp('app_quest_responde',{t:TOKEN,p_nome:QUESTAPP.nome,p_dados:{respostas:lista,pontuacao:temP?total:null}}).then(function(r){" +
-        "if(r&&r.ok){fim();}else{btn.disabled=false;btn.textContent='Enviar respostas';alert((r&&r.erro)||'Não deu pra enviar agora — confere a internet e tenta de novo.');}});}" +
+        "if(r&&r.ok){fim();}else{if(bt){bt.disabled=false;bt.textContent='Enviar';}alert((r&&r.erro)||'Não deu pra enviar agora — confere a internet e tenta de novo.');}});}" +
         "else{var msg=QUESTAPP.nome+' — '+PRIMEIRO+'\\n'+lista.map(function(x){return (x.sigla?x.sigla+': ':'')+x.resposta;}).join('\\n');" +
-        "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
+        "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}}" +
+        "el.addEventListener('click',function(ev){if(ev.target.closest&&ev.target.closest('#qaAbrir'))abreFluxo();});" +
+        "window.__qaFluxo=abreFluxo;" +
         "pinta();})();"
         : "") +
       // hero "treino de hoje" + progresso rápido + XP (estilo Prime)
