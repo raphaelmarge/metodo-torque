@@ -3827,6 +3827,23 @@ async function abaPt(p, a) {
   }));
   ok(/TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 && /Tiros de quinta/.test(cardioFim.lst[1].n),
     "treino de tiros completa sozinho e registra o resultado");
+  // importar do relógio: GPX sintético de ~2 km em 12 min entra no ptcardio
+  const imp = await pCr.evaluate(() => {
+    // ponto a cada 30 s andando ~83 m (0,00075° de latitude): 24 passos ≈ 2 km em 12 min
+    let seg9 = "";
+    for (let i = 0; i <= 24; i++) {
+      const t9 = new Date(Date.UTC(2026, 7, 15, 7, 0, 0) + i * 30000).toISOString();
+      seg9 += "<trkpt lat='" + (-19.92 - i * 0.00075).toFixed(5) + "' lon='-43.94'><time>" + t9 + "</time></trkpt>";
+    }
+    const gpx = "<gpx><trk><name>Corrida do relógio</name><trkseg>" + seg9 + "</trkseg></trk></gpx>";
+    window.confirm = () => true;
+    const reg = window.__crImporta(gpx);
+    return { reg, lst: JSON.parse(localStorage.getItem("ptcardio") || "[]"), fase: document.getElementById("crFase").textContent };
+  });
+  ok(imp.reg && imp.reg.k > 1.9 && imp.reg.k < 2.1 && imp.reg.d === "2026-08-15" && /^6:0\d$/.test(imp.reg.p),
+    "GPX do relógio vira registro com km, pace e a DATA do treino (" + (imp.reg && imp.reg.k + " km · " + imp.reg.p) + ")");
+  ok(imp.lst.some((x) => x.n === "Corrida do relógio") && /RELÓGIO IMPORTADO/.test(imp.fase),
+    "a corrida importada entra no histórico e a tela confirma");
   // área estilo app de corrida: trajeto, botão redondo, meta e configurações
   const nrc = await pCr.evaluate(async () => {
     const out = {

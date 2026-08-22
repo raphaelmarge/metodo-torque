@@ -977,6 +977,11 @@
       "<input id='crKm' inputmode='decimal' placeholder='km na mão' style='flex:1;min-width:0;text-align:center;'></div>" +
       // tela 40: com a corrida pausada dá pra jogar fora sem salvar nada
       "<button id='crDescarta' style='display:none;width:100%;margin-top:8px;min-height:44px;background:none;border:none;color:#f87171;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Descartar esta corrida</button>" +
+      // sincronia com relógio/band: todo smartwatch exporta GPX ou TCX — o
+      // aluno importa e a corrida entra com km, tempo, pace e data de verdade
+      "<label class='btnx' style='display:block;text-align:center;margin-top:10px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);color:#d6d2df;box-shadow:none;cursor:pointer;'>Importar do relógio (GPX/TCX)" +
+      "<input id='crImp' type='file' accept='.gpx,.tcx,.xml' style='display:none;'></label>" +
+      "<div class='vz' style='font-size:11px;padding:4px 0 0;'>Apple Watch, Garmin, Xiaomi, Polar… — exporta o treino no app do relógio e traz o arquivo pra cá.</div>" +
       // arte da corrida pro aluno postar (aparece depois de finalizar): trajeto +
       // números + marca do studio — cada corrida compartilhada é propaganda
       "<div id='crShare' style='display:none;margin-top:10px;'>" +
@@ -1220,6 +1225,11 @@
       "<div class='wpk' style='margin:14px 0 2px;'>App</div>" +
       "<button class='mgrow' id='ajInstala' style='display:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='2.5' width='14' height='19' rx='2.5'/><path d='M12 8v6M9 11.5 12 14.5l3-3'/></svg></span>" +
       "<span style='flex:1;min-width:0;'><span class='mgtit'>Instalar na tela de início</span><span class='mgsub'>abre sem navegador, direto do ícone</span></span>" +
+      "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
+      // ponte do app de verdade (nativo/SAUDE.md): quando o shell da loja
+      // injetar window.MTNativo.saude, esta linha acende sozinha
+      "<button class='mgrow' id='ajSaude' style='display:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='6.5'/><path d='M12 9v3l2 1.5M9 3.5h6M9 20.5h6'/></svg></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Conectar relógio e saúde</span><span class='mgsub'>Apple Saúde / Health Connect</span></span>" +
       "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
       "<a class='mgrow' href='/privacidade.html' target='_blank' rel='noopener' style='text-decoration:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 2.5 4.5 5.5v6c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5v-6z'/><path d='M9 12l2 2 4-4'/></svg></span>" +
       "<span style='flex:1;min-width:0;'><span class='mgtit'>Sobre e privacidade</span><span class='mgsub'>seus dados e como cuidamos deles</span></span>" +
@@ -2303,6 +2313,52 @@
       "var bSh=crEl('crShare');if(bSh)bSh.style.display=reg.k>0?'block':'none';" +
       "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();pintaCrHist();" +
       "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.rota=[];cr.autoP=false;cr.lastMove=0;crEl('crKm').value='';try{desenhaRota();}catch(e){}}" +
+      /* ---------- importar do relógio (GPX/TCX) ----------
+       * Todo smartwatch/band exporta o treino nesses formatos. Lê o arquivo NO
+       * aparelho (nada sobe pra rede), tira km/tempo/pace/data reais e grava
+       * no mesmo ptcardio das corridas do GPS — medalhas e recordes contam.
+       * A ponte do app nativo (nativo/SAUDE.md) usa esta MESMA função. */
+      "function crImporta(txt,rotulo){var doc=null;" +
+      "try{doc=new DOMParser().parseFromString(String(txt||''),'text/xml');}catch(e){}" +
+      "if(!doc||doc.getElementsByTagName('parsererror').length){alert('Não consegui ler esse arquivo — exporta do app do relógio como GPX ou TCX.');return null;}" +
+      "var pts=[];var tk=doc.getElementsByTagName('trkpt');" +
+      "if(tk.length){for(var i=0;i<tk.length;i++){var p9=tk[i];var t9=p9.getElementsByTagName('time')[0];" +
+      "pts.push({lat:+p9.getAttribute('lat'),lng:+p9.getAttribute('lon'),t:t9?Date.parse(t9.textContent):null,dm:null});}}" +
+      "else{var tc=doc.getElementsByTagName('Trackpoint');for(var i2=0;i2<tc.length;i2++){var q9=tc[i2];" +
+      "var tt=q9.getElementsByTagName('Time')[0];var la=q9.getElementsByTagName('LatitudeDegrees')[0];" +
+      "var lo=q9.getElementsByTagName('LongitudeDegrees')[0];var dm=q9.getElementsByTagName('DistanceMeters')[0];" +
+      "pts.push({lat:la?+la.textContent:null,lng:lo?+lo.textContent:null,t:tt?Date.parse(tt.textContent):null,dm:dm?+dm.textContent:null});}}" +
+      "pts=pts.filter(function(x){return x.t;});" +
+      "if(pts.length<2){alert('Esse arquivo veio sem os pontos do treino — tenta exportar de novo como GPX.');return null;}" +
+      // distância: o TCX costuma trazer o total pronto; senão soma pelo GPS
+      "var km=0;var comDm=pts.filter(function(x){return x.dm!=null;});" +
+      "if(comDm.length>1){km=(comDm[comDm.length-1].dm-comDm[0].dm)/1000;}" +
+      "else{for(var j=1;j<pts.length;j++){var a9=pts[j-1],b9=pts[j];" +
+      "if(a9.lat!=null&&b9.lat!=null){var d9=havKm(a9,b9);if(d9<0.5)km+=d9;}}}" +
+      "km=Math.round(km*100)/100;" +
+      "var seg=Math.round((pts[pts.length-1].t-pts[0].t)/1000);" +
+      "if(!(seg>=60)||!(km>0.1)){alert('Treino muito curto ou sem distância — confere se exportou o arquivo certo.');return null;}" +
+      "var med=(seg/60)/km;var quando=new Date(pts[0].t);" +
+      "var nomeTrk='';var nEl=doc.getElementsByTagName('name')[0];if(nEl)nomeTrk=String(nEl.textContent||'').trim().slice(0,32);" +
+      "var reg={d:isoLoc(quando),n:(nomeTrk||rotulo||'Importada do relógio'),m:cr.mod||'corrida',s:seg,k:km,p:paceFmt(med)};" +
+      "if(!confirm('Importar: '+String(km).replace('.',',')+' km em '+wodFmt(seg)+' (pace '+reg.p+') de '+reg.d.slice(8,10)+'/'+reg.d.slice(5,7)+' como '+(CRMODS[reg.m]||'Corrida')+'?'))return null;" +
+      "var lst=L('ptcardio',[]);var antes=crMedQ(lst);" +
+      "var mxAnt=0,pcAnt=1/0;lst.forEach(function(x){if(x.m!=='corrida')return;var k9=+x.k||0;if(k9>mxAnt)mxAnt=k9;" +
+      "if(k9>=3&&+x.s>0){var pq=(+x.s/60)/k9;if(pq<pcAnt)pcAnt=pq;}});" +
+      "lst.push(reg);lst.sort(function(a,b){return String(a.d)<String(b.d)?-1:1;});if(lst.length>30)lst.shift();Sv('ptcardio',lst);" +
+      "var extras=[];if(reg.m==='corrida'){var depois=crMedQ(lst);" +
+      "depois.forEach(function(t8,i8){if(t8&&!antes[i8])extras.push('Medalha nova: '+CRMEDN[i8]);});" +
+      "if(mxAnt&&reg.k>mxAnt)extras.push('RECORDE: sua corrida mais longa');" +
+      "if(reg.k>=3&&isFinite(pcAnt)&&med<pcAnt)extras.push('RECORDE: seu melhor pace');}" +
+      "crEl('crFase').textContent='RELÓGIO IMPORTADO — '+String(km).replace('.',',')+' km registrados';crEl('crFase').style.color='#4ade80';" +
+      "crEl('crInfo').textContent=extras.join(' · ');" +
+      "if(extras.length)confete();if(navigator.vibrate)navigator.vibrate([150,80,150]);" +
+      "pintaCrHist();return reg;}" +
+      "window.__crImporta=crImporta;" +
+      "(function(){var inp=crEl('crImp');if(!inp)return;inp.addEventListener('change',function(){" +
+      "var f=this.files&&this.files[0];this.value='';if(!f)return;" +
+      "var rd=new FileReader();rd.onload=function(){crImporta(String(rd.result||''),f.name.replace(/\\.(gpx|tcx|xml)$/i,''));};" +
+      "rd.readAsText(f);});})();" +
       "function crGpsPara(){if(cr.watch!=null&&navigator.geolocation){navigator.geolocation.clearWatch(cr.watch);}cr.watch=null;cr.gpsOn=false;cr.lastPos=null;" +
       "var b=crEl('crGps');b.innerHTML='Ligar<br>GPS';b.style.borderColor='var(--bg11)';b.style.color='#a9a4b5';try{desenhaRota();}catch(e){}}" +
       // GPS sempre ativo: liga sozinho ao entrar na área de cardio (preferência ptgpsAuto, padrão ligado)
@@ -4151,6 +4207,12 @@
       "if(/iphone|ipad|ipod/i.test(navigator.userAgent))row.style.display='';" +
       "row.addEventListener('click',function(){if(evt){evt.prompt();return;}" +
       "alert('No Safari: toca no botão Compartilhar (o quadradinho com a seta) e escolhe Adicionar à Tela de Início. O app ganha ícone próprio.');});})();" +
+      // ---- ponte do app nativo (contrato em nativo/SAUDE.md) ----
+      // o shell da loja injeta window.MTNativo.saude ANTES do app carregar;
+      // aqui só acendemos a linha e delegamos — a web nunca finge que conecta
+      "(function(){var nv=window.MTNativo&&window.MTNativo.saude;var row=document.getElementById('ajSaude');" +
+      "if(!nv||!row)return;row.style.display='';" +
+      "row.addEventListener('click',function(){try{nv.abrir();}catch(e9){alert('Não deu pra abrir a conexão de saúde agora.');}});})();" +
       "var pc0=L('ptchat',[]);var uP0=null;pc0.forEach(function(m){if(m&&m.de&&m.de!=='aluno'&&m.de!=='aluno-local'&&m.de!=='bot')uP0=m.criado;});window.__chatDot(uP0);})();" +
       atualizador +
       "</" + "script>" +
