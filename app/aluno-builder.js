@@ -635,6 +635,21 @@
       "<div style='display:flex;gap:8px;'><select id='agHora' style='flex:1'></select><button class='btnx' id='agPede'>Pedir horário</button></div>" +
       "<input id='agObs' placeholder='Observação (opcional)' style='width:100%;margin-top:8px;'></div>" +
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div></div>" +
+      // ---------- Evolução (tela 49): cabeçalho com nível/XP + pílulas ----------
+      "<div class='cardx' id='evTopo' style='margin:0;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 20px;color:#fff;display:flex;align-items:center;gap:16px;'>" +
+      "<div id='evRing' style='flex:none;width:86px;height:86px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(#fff 0 0%,rgba(255,255,255,.25) 0% 100%);'>" +
+      "<div style='width:70px;height:70px;border-radius:50%;background:rgba(0,0,0,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;'>" +
+      "<b id='evNvNum' style='font-size:26px;font-weight:900;line-height:1;'>1</b>" +
+      "<span style='font-size:8px;font-weight:800;letter-spacing:.18em;margin-top:2px;'>NÍVEL</span></div></div>" +
+      "<div style='min-width:0;flex:1;'>" +
+      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Minha evolução</div>" +
+      "<div id='evXp' style='font-size:26px;font-weight:900;letter-spacing:-.02em;margin-top:2px;'>0 XP</div>" +
+      "<div style='font-size:11.5px;color:rgba(255,255,255,.85);margin-top:3px;'>treino = 10 XP · hábito = 2 XP · check-in = 20 XP</div>" +
+      "<div id='evFalta' style='font-size:11.5px;font-weight:700;color:rgba(255,255,255,.9);'></div></div></div>" +
+      "<div id='evAbas' style='display:flex;gap:8px;padding:14px 20px 0;'>" +
+      "<button type='button' data-evsub-bt='conq' style='flex:none;min-height:44px;padding:0 20px;border-radius:99px;background:var(--cor);border:1px solid var(--cor);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Conquistas</button>" +
+      "<button type='button' data-evsub-bt='corpo' style='flex:none;min-height:44px;padding:0 20px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Corpo</button></div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
@@ -883,7 +898,7 @@
       "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><input id='dcReps' inputmode='numeric' placeholder='reps' style='width:64px'><button class='btnx' id='dcAdd' aria-label='Adicionar'>+</button></div>" +
       "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui.</div>" +
       "<div id='dcGraf' style='display:none;margin-top:10px;'></div></div>" +
-      "<div class='cardx'><h2>Minha evolução</h2><div id='evoBox'></div></div>" +
+      "<div class='cardx'><h2>Avaliações físicas</h2><div id='evoBox'></div></div>" +
       "<div class='cardx'><h2>Meu peso</h2>" +
       "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
       "<div id='pzGraf' class='vz'>Registre o peso de hoje — a curva aparece aqui.</div>" +
@@ -2996,7 +3011,14 @@
       "var t=document.createElement('div');t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;padding:13px 22px;border-radius:13px;font-weight:800;z-index:9;text-align:center;';" +
       "t.innerHTML='SUBIU DE NÍVEL!<br><small>Nível '+n+' — '+nvTitulo(n)+'</small>';" +
       "document.body.appendChild(t);setTimeout(function(){t.remove();},3500);}catch(e){}}}" +
-      "function pintaXP(){var el=document.getElementById('xpNum');if(!el)return;el.textContent=xpDados();pintaNivel();}" +
+      "function pintaXP(){var el=document.getElementById('xpNum');if(!el)return;el.textContent=xpDados();pintaNivel();" +
+      // cabeçalho da Evolução (tela 49): anel do nível + XP + quanto falta
+      "var ev=document.getElementById('evTopo');if(ev){var xp=xpDados();var nv=nivelDe(xp);" +
+      "var base=nvXpAte(nv),alvo=nvXpAte(nv+1);var pct=Math.min(100,Math.round(100*(xp-base)/Math.max(1,alvo-base)));" +
+      "document.getElementById('evNvNum').textContent=nv;" +
+      "document.getElementById('evXp').textContent=xp+' XP';" +
+      "document.getElementById('evFalta').textContent='faltam '+Math.max(0,alvo-xp)+' pro nível '+(nv+1);" +
+      "document.getElementById('evRing').style.background='conic-gradient(#fff 0 '+pct+'%,rgba(255,255,255,.25) '+pct+'% 100%)';}}" +
       "pintaHero();pintaProgresso();pintaXP();" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
@@ -3017,7 +3039,7 @@
       "var OCULTA=" + jsonApp(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
-      "if(/Conquistas|Minha evolução|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
+      "if(/Conquistas|Minha evolução|Avaliações físicas|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
@@ -3038,8 +3060,21 @@
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
       "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
+      "if(el.id==='evTopo'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
+      // pílulas da Evolução (tela 49): Conquistas × Corpo
+      "(function(){document.querySelectorAll(\"[data-sec='evolucao']\").forEach(function(el){if(el.id==='evTopo')return;" +
+      "var h=el.querySelector('h2');el.setAttribute('data-evsub',/Conquistas/.test(h?h.textContent:'')?'conq':'corpo');});" +
+      "var atual='conq';function pintaEv(){document.querySelectorAll(\"[data-sec='evolucao'][data-evsub]\").forEach(function(el){" +
+      "el.style.display=el.getAttribute('data-evsub')===atual?'':'none';});" +
+      "document.querySelectorAll('[data-evsub-bt]').forEach(function(b){var on=b.getAttribute('data-evsub-bt')===atual;" +
+      "b.style.background=on?'var(--cor)':'var(--bg4)';b.style.color=on?'#fff':'#a9a4b5';b.style.borderColor=on?'var(--cor)':'var(--bg11)';});}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-evsub-bt]');if(!b)return;" +
+      "atual=b.getAttribute('data-evsub-bt');pintaEv();if(navigator.vibrate)navigator.vibrate(8);});" +
+      "pintaEv();window.__evSub=function(s2){atual=s2;pintaEv();};" +
+      // o selo de nível antigo dentro de Conquistas repetia o cabeçalho novo
+      "var nc9=document.getElementById('nvCard');if(nc9&&document.getElementById('evTopo'))nc9.style.display='none';})();" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
       // 3 abas fixas embaixo + o Menu no canto direito com TODAS as áreas
@@ -3078,9 +3113,9 @@
       "mb.style.background=eFixo?'none':'rgba(var(--cor-rgb),.16)';mb.style.color=eFixo?(CLARO?'#6c6678':'#8a8695'):(CLARO?'var(--cor)':'var(--corc)');}" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
-      // no Início e nos Treinos a faixa colorida some: cada um tem o próprio
-      // cabeçalho (herói / MEU TREINO) — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino');" +
+      // no Início, Treinos e Evolução a faixa colorida some: cada área tem o
+      // próprio cabeçalho — roxo em cima de roxo, nunca mais
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // a sequência e os hábitos são conteúdo do Início: fora dele a faixa
