@@ -1497,7 +1497,13 @@
       // o motor do WOD só roda se o card existe (o professor pode desligar nas Configurações)
       "if(document.getElementById('cardWod')){" +
       "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
-      "var WODS=" + jsonApp(wodsApp.map(function (w) { return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10, mv: ((w.movs && w.movs.length) || (w.mov && w.mov.length) || 0) }; })) + ";" +
+      "var WODS=" + jsonApp(wodsApp.map(function (w) {
+        return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10,
+          mv: ((w.movs && w.movs.length) || (w.mov && w.mov.length) || 0),
+          // a lista de movimentos vai junto: a tela cheia mostra a volta atual
+          ms: (w.movs && w.movs.length ? w.movs.map(function (m) { return { q: String(m.q || ""), n: String(m.n || "") }; })
+            : (w.mov || []).map(function (n) { return { q: "", n: String(n) }; })).slice(0, 12) };
+      })) + ";" +
       "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
       "function wodCd(resta){if(!wod.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
       "if(cd&&cd!==wod.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}wod.ultCd=cd;}" +
@@ -1556,7 +1562,91 @@
       "if(faseAtual!==wod.ultFase){wod.ultFase=faseAtual;if(el2>0.5){if(navigator.vibrate)navigator.vibrate(trabalhando?[200,80,200]:120);bip(trabalhando?1100:600,150);}}" +
       "tela.style.borderColor=trabalhando?'var(--corc)':'#0891b2';fase.textContent=faseAtual+' · ROUND '+(Math.floor(el2/ciclo)+1)+' DE '+rd;fase.style.color=trabalhando?'var(--corc)':'#22d3ee';" +
       "tmp.textContent=wodFmt(trabalhando?wk-pos:ciclo-pos);info.textContent=wk+'s trabalho · '+rs+'s descanso';wodCd(trabalhando?wk-pos:ciclo-pos);}" +
-      "function wodTick(){var el2=(Date.now()-wod.t0)/1000;wodPinta(el2);}" +
+      "function wodTick(){var el2=(Date.now()-wod.t0)/1000;wodPinta(el2);espelhaW();}" +
+      /* ---------- tela cheia do circuito (telas 35/36) ----------
+       * ESPELHO do cronômetro do card: só lê o estado e aperta os botões de
+       * verdade (wodGo/wodVolta/wodTermina) — a lógica do timer não muda. */
+      "var wodF=null,wfRisc={},wfUltVoltas=-1;" +
+      "function criaWodFull(){if(wodF)return;wodF=document.createElement('div');wodF.id='wodFull';" +
+      "wodF.style.cssText='display:none;position:fixed;inset:0;z-index:71;overflow:auto;background:var(--bg0);color:#fff;';" +
+      "wodF.innerHTML=\"<div style='max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:0 0 calc(20px + env(safe-area-inset-bottom,0px));'>\"+" +
+      "\"<div id='wfTopo' style='padding:calc(16px + env(safe-area-inset-top,0px)) 18px 20px;'>\"+" +
+      "\"<div style='display:flex;align-items:flex-start;gap:8px;'>\"+" +
+      "\"<div style='flex:1;min-width:0;'><div id='wfKick' style='font-size:10.5px;font-weight:800;letter-spacing:.2em;color:var(--corc);text-transform:uppercase;'></div>\"+" +
+      "\"<div id='wfNome' style='font-size:17px;font-weight:800;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'></div></div>\"+" +
+      "\"<button id='wfPausa' style='flex:none;background:rgba(255,255,255,.12);border:none;border-radius:99px;padding:0 20px;min-height:44px;color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Pausar</button>\"+" +
+      "\"<button id='wfMin' aria-label='Voltar pro card do circuito' style='flex:none;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:16px;font-family:inherit;cursor:pointer;'>✕</button></div>\"+" +
+      "\"<div id='wfFase' style='text-align:center;font-size:12px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:#8a8695;margin-top:16px;'></div>\"+" +
+      "\"<div id='wfTempo' style='text-align:center;font-size:clamp(78px,28vw,124px);font-weight:900;font-variant-numeric:tabular-nums;line-height:.95;letter-spacing:-.04em;'></div>\"+" +
+      "\"<div id='wfSub' style='text-align:center;font-size:13.5px;font-weight:700;color:#cfcbdb;margin-top:8px;min-height:18px;'></div>\"+" +
+      "\"<div style='height:6px;background:var(--bg5);border-radius:99px;overflow:hidden;margin-top:16px;'><div id='wfBar' style='height:100%;width:0;background:linear-gradient(90deg,var(--cor),var(--corc));border-radius:99px;'></div></div></div>\"+" +
+      "\"<div style='padding:0 18px;flex:1;'>\"+" +
+      "\"<div id='wfPlacar' style='display:none;background:var(--bg1);border-radius:20px;padding:14px 16px;'></div>\"+" +
+      "\"<div id='wfAgora' style='display:none;background:var(--bg1);border-radius:20px;padding:14px 16px;'></div>\"+" +
+      "\"<div id='wfMovs' style='margin-top:14px;'></div></div>\"+" +
+      "\"<div style='padding:10px 18px 0;'>\"+" +
+      "\"<button id='wfVolta' class='btnx' style='display:none;width:100%;min-height:62px;font-size:19px;'>Fechei a volta</button>\"+" +
+      "\"<button id='wfFim' style='display:block;width:100%;min-height:48px;margin-top:8px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>Terminar agora</button></div></div>\";" +
+      "document.body.appendChild(wodF);" +
+      "wodF.addEventListener('click',function(e){var b=e.target.closest('button,[data-wfmov]');if(!b)return;" +
+      "if(b.id==='wfMin'){wodF.style.display='none';return;}" +
+      "if(b.id==='wfPausa'){document.getElementById('wodGo').click();espelhaW();return;}" +
+      "if(b.id==='wfVolta'){var bv=document.getElementById('wodVolta');if(bv)bv.click();return;}" +
+      "if(b.id==='wfFim'){var el9=wod.run?(Date.now()-wod.t0)/1000:wod.acum;if(el9<1)return;" +
+      "if(wod.tipo==='fortime'){document.getElementById('wodTermina').click();return;}" +
+      "if(wod.tipo==='amrap'){wodFim(pl(wod.voltas,'volta','voltas')+' — terminou antes do tempo',wod.voltas);return;}" +
+      "wodFim('Circuito encerrado');return;}" +
+      "var mv=b.getAttribute&&b.getAttribute('data-wfmov');if(mv!=null){wfRisc[mv]=!wfRisc[mv];espelhaW();}});}" +
+      "function abreWodFull(){criaWodFull();wfRisc={};wfUltVoltas=wod.voltas;wodF.style.display='block';espelhaW();}" +
+      "function fechaWodFull(){if(wodF)wodF.style.display='none';}" +
+      "function espelhaW(){if(!wodF||wodF.style.display==='none')return;" +
+      "var el2=wod.run?(Date.now()-wod.t0)/1000:wod.acum;" +
+      "var wm=WODS.find(function(x){return x.id===wod.wodId;})||{};var ms=wm.ms||[];" +
+      "var eh7=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');};" +
+      "var pvi7=function(id,d){return parseInt((document.getElementById(id)||{}).value,10)||d;};" +
+      "var TIP={fortime:'For Time',amrap:'AMRAP',emom:'EMOM',tabata:'Tabata'};" +
+      "document.getElementById('wfNome').textContent=wod.wodNome||('Circuito '+(TIP[wod.tipo]||''));" +
+      "var go=document.getElementById('wodGo');document.getElementById('wfPausa').textContent=go.textContent==='Pausar'?'Pausar':'Continuar';" +
+      "var topo=document.getElementById('wfTopo'),kick=document.getElementById('wfKick'),fase=document.getElementById('wfFase'),sub=document.getElementById('wfSub');" +
+      "var tempo=document.getElementById('wfTempo'),bar=document.getElementById('wfBar'),plc=document.getElementById('wfPlacar'),ago=document.getElementById('wfAgora'),mv9=document.getElementById('wfMovs');" +
+      "topo.style.background='none';kick.style.color='var(--corc)';fase.style.color='#8a8695';sub.style.color='#cfcbdb';" +
+      "document.getElementById('wfVolta').style.display='none';plc.style.display='none';ago.style.display='none';mv9.innerHTML='';" +
+      "if(wod.voltas!==wfUltVoltas){wfRisc={};wfUltVoltas=wod.voltas;}" +
+      "function listaMovs(titulo){if(!ms.length)return;" +
+      "mv9.innerHTML=\"<div class='wpk'>\"+titulo+'</div>'+ms.map(function(m,i){var r=wfRisc[String(i)];" +
+      "return \"<div data-wfmov='\"+i+\"' style='display:flex;gap:14px;align-items:baseline;font-size:17px;padding:9px 0;border-bottom:1px dashed var(--bg11);cursor:pointer;\"+(r?'opacity:.4;text-decoration:line-through;':'')+\"'>\"+" +
+      "(m.q?\"<b style='color:var(--corc);flex:none;min-width:60px;'>\"+eh7(m.q)+'</b>':'')+'<span>'+eh7(m.n)+'</span></div>';}).join('');}" +
+      "if(wod.tipo==='amrap'){var tot=60*pvi7('wodMin',wm.min||10);var resta=Math.max(0,tot-el2);" +
+      "kick.textContent='AMRAP '+Math.round(tot/60)+' MIN';fase.textContent='Falta';tempo.textContent=wodFmt(resta);sub.textContent='';" +
+      "bar.style.width=Math.min(100,Math.round(100*el2/tot))+'%';" +
+      "var ant=(L('ptwodres',{})[wod.wodId]||[]).slice(-1)[0];var ritmo='';" +
+      "if(ant&&ant.v!=null){var alvo9=ant.v*el2/tot;" +
+      "ritmo=\"<div style='text-align:right;min-width:0;'>\"+(wod.voltas>=alvo9?\"<div style='color:#4ade80;font-weight:800;font-size:13.5px;'>no ritmo do recorde</div>\":'')+" +
+      "\"<div style='color:#8a8695;font-size:12px;'>em \"+String(ant.d||'').slice(8,10)+'/'+String(ant.d||'').slice(5,7)+' fechou '+ant.v+(ant.ex?' + '+ant.ex:'')+'</div></div>';}" +
+      "plc.style.display='block';plc.innerHTML=\"<div style='display:flex;align-items:center;gap:12px;justify-content:space-between;'>\"+" +
+      "\"<div><b style='font-size:34px;font-weight:900;'>\"+wod.voltas+\"</b><div style='font-size:9.5px;letter-spacing:.18em;font-weight:800;color:#8a8695;text-transform:uppercase;'>Voltas completas</div></div>\"+ritmo+'</div>';" +
+      "document.getElementById('wfVolta').style.display='block';listaMovs('Volta '+(wod.voltas+1));}" +
+      "else if(wod.tipo==='fortime'){var cap=60*pvi7('wodCap',0);" +
+      "kick.textContent='FOR TIME'+(cap?' · LIMITE '+Math.round(cap/60)+' MIN':'');fase.textContent='Tempo';tempo.textContent=wodFmt(el2);" +
+      "sub.textContent=wod.voltas?pl(wod.voltas,'volta','voltas'):'';bar.style.width=cap?Math.min(100,Math.round(100*el2/cap))+'%':'0';" +
+      "document.getElementById('wfVolta').style.display='block';listaMovs('O circuito');}" +
+      "else if(wod.tipo==='emom'){var totE=60*pvi7('wodMin',wm.min||10);var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
+      "kick.textContent='EMOM '+Math.round(totE/60)+' MIN';fase.textContent='Minuto '+(mn+1)+' de '+Math.round(totE/60);tempo.textContent=wodFmt(segRes);" +
+      "sub.textContent='novo movimento a cada minuto cheio';bar.style.width=Math.min(100,Math.round(100*el2/totE))+'%';" +
+      "if(ms.length){ago.style.display='block';var mE=ms[mn%ms.length];" +
+      "ago.innerHTML=\"<div class='wpk'>Agora</div><div style='font-size:22px;font-weight:900;'>\"+(mE.q?eh7(mE.q)+' ':'')+eh7(mE.n)+'</div>';}}" +
+      "else{var rd=pvi7('wodRounds',wm.rd||8),wk=pvi7('wodWork',wm.wk||20),rs=pvi7('wodRest',wm.rs||10);" +
+      "var ciclo=wk+rs;var totT=rd*ciclo;var pos=el2%ciclo;var trab=pos<wk;var rAt=Math.min(rd,Math.floor(el2/ciclo)+1);" +
+      "kick.textContent='TABATA · '+rd+' ROUNDS';fase.textContent=trab?'Trabalha':'Descansa';tempo.textContent=wodFmt(trab?wk-pos:ciclo-pos);" +
+      "sub.textContent='Round '+rAt+' de '+rd+' · '+wk+'s trabalho / '+rs+'s descanso';" +
+      "bar.style.width=Math.min(100,Math.round(100*el2/totT))+'%';" +
+      // o fundo muda com a fase (tela 36): trabalho na cor do studio, descanso em azul
+      "topo.style.background=trab?'linear-gradient(160deg,var(--cor),var(--cor2))':'linear-gradient(160deg,#0e7490,#155e75)';" +
+      "kick.style.color='rgba(255,255,255,.85)';fase.style.color='rgba(255,255,255,.9)';sub.style.color='rgba(255,255,255,.9)';" +
+      "if(ms.length){ago.style.display='block';var mT=ms[(rAt-1)%ms.length];" +
+      "ago.innerHTML=\"<div class='wpk'>Agora</div><div style='font-size:22px;font-weight:900;'>\"+(mT.q?eh7(mT.q)+' ':'')+eh7(mT.n)+'</div>'+" +
+      "\"<div style='font-size:13px;color:#8a8695;margin-top:4px;'>bip e vibração na troca de fase e nos últimos 3 segundos</div>\";}}}" +
+      "window.__wodFull=function(){abreWodFull();};" +
       // caixinha verde + "Registrar treino" (o fim de sempre); com op, entra o
       // "Compartilhar com foto" da R4 (tela 28 — post do circuito)
       "function wodMsgFim(msg,op){var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
@@ -1565,7 +1655,7 @@
       "(op?arteBtns('wodShareArq','wodShareSem'):'');" +
       "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});" +
       "if(op)ligaArte('wodShareArq','wodShareSem',op);}" +
-      "function wodFim(msg,val){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
+      "function wodFim(msg,val){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();fechaWodFull();" +
       "document.getElementById('wodGo').textContent='Iniciar';" +
       "document.getElementById('wodFase').textContent='FIM!';" +
       "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();" +
@@ -1677,8 +1767,8 @@
       "document.getElementById('wodGo').addEventListener('click',function(){" +
       "if(wod.run){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=(Date.now()-wod.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
       "wod.run=true;wod.t0=Date.now()-wod.acum*1000;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
-      "bip(880,120);wod.iv=setInterval(wodTick,200);wodTick();});" +
-      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();" +
+      "bip(880,120);wod.iv=setInterval(wodTick,200);wodTick();abreWodFull();});" +
+      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();fechaWodFull();" +
       "document.getElementById('wodGo').textContent='Iniciar';document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       // cada volta guarda o instante: vira a lista "tempo de cada volta" do placar
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;wod.laps.push((Date.now()-wod.t0)/1000);if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
