@@ -1079,6 +1079,32 @@
       /* O card só existe pra quem AINDA não tem login: quem recebeu o acesso do
        * professor já entra com e-mail e senha, e pedir pra "criar um login"
        * ali só confunde (dava pra cadastrar um login diferente do que chegou). */
+      // ---------- Ajustes (tela 11): cabeçalho + preferências + meus dados ----------
+      "<div class='cardx' id='ajTopo' style='margin:0;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:26px 20px 24px;color:#fff;display:flex;align-items:center;gap:14px;'>" +
+      "<span class='mgav' style='width:56px;height:56px;font-size:19px;'>" +
+      "<img id='ajImg' alt=''" + (FOTOAL ? " src='" + FOTOAL + "'" : " style='display:none;'") + ">" +
+      "<span id='ajIni'" + (FOTOAL ? " style='display:none;'" : "") + ">" + esc(INICIAIS) + "</span></span>" +
+      "<span style='flex:1;min-width:0;'><span style='display:block;font-size:23px;font-weight:900;letter-spacing:-.02em;'>" + esc(a.nome) + "</span>" +
+      "<span style='display:block;font-size:12.5px;color:rgba(255,255,255,.85);margin-top:2px;'>" + esc(studio) + (plApp ? " · plano " + esc(plApp.nome) : "") + "</span></span></div></div>" +
+      // preferências: a linha do tema mora AQUI (o menu só aponta pra cá)
+      "<div class='mgcard' id='ajPrefs' style='margin-top:16px;'>" +
+      "<button class='mgrow' id='btnTemaApp'><span style='line-height:0;' id='mgTemaIco'></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit' id='mgTemaTit'></span><span class='mgsub'>o escuro é o padrão</span></span></button></div>" +
+      "<div class='mgcard' id='ajDados'>" +
+      "<div class='wpk' style='margin:14px 0 2px;'>Meus dados</div>" +
+      (function () {
+        var sv = function (p) { return "<svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + p + "</svg>"; };
+        var chev = "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span>";
+        var rows = "";
+        if (plApp && ve("pag")) rows += "<button class='mgrow' data-ajgo='pagamento'><span style='line-height:0;'>" + sv("<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>") + "</span>" +
+          "<span style='flex:1;min-width:0;'><span class='mgtit'>Meu plano</span><span class='mgsub'>" + esc(plApp.nome) + " · R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês" + (ctApp && ctApp.diaVenc ? " · vence dia " + ctApp.diaVenc : "") + "</span></span>" + chev + "</button>";
+        if (+a.altura) rows += "<div class='mgrow' style='cursor:default;'><span style='line-height:0;'>" + sv("<path d='M12 3v18M8.5 6.5 12 3l3.5 3.5M8.5 17.5 12 21l3.5-3.5'/>") + "</span>" +
+          "<span style='flex:1;min-width:0;'><span class='mgtit'>Altura</span><span class='mgsub'>" + String((+a.altura / 100).toFixed(2)).replace(".", ",") + " m · quem mede é seu personal</span></span></div>";
+        if (qa) rows += "<button class='mgrow' data-ajgo='chat' data-ajgoto='qaCard'><span style='line-height:0;'>" + sv("<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>") + "</span>" +
+          "<span style='flex:1;min-width:0;'><span class='mgtit'>Meus questionários</span><span class='mgsub'>responder leva 1 minuto</span></span>" + chev + "</button>";
+        return rows;
+      })() + "</div>" +
       (self.MT_CLOUD && self.MT_CLOUD.url && a.appTokenP && !a.acessoEm ? "<div class='cardx'><h2>Meu login</h2>" +
         "<div class='vz' style='text-align:left;padding:0 0 8px;'>Crie um login e senha para abrir seu app de QUALQUER aparelho (página Entrar do aluno).</div>" +
         "<input id='lgLogin' placeholder='Seu e-mail ou celular com DDD' style='width:100%;margin-bottom:8px;'>" +
@@ -1168,14 +1194,10 @@
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o
        * painel usa — antes de ser guardada e de viajar pro personal. A foto
        * original nunca sai do celular: o que vai é a versão pequena. */
-      "function avPinta(src){var im=document.getElementById('avImg'),ini=document.getElementById('avIni');if(!im||!ini)return;" +
-      "if(src){im.src=src;im.style.display='';ini.style.display='none';}else{im.removeAttribute('src');im.style.display='none';ini.style.display='';}" +
-      // o avatar do herói (Início) mostra a mesma foto
-      "var im2=document.getElementById('avImg2'),ini2=document.getElementById('avIni2');if(im2&&ini2){" +
-      "if(src){im2.src=src;im2.style.display='';ini2.style.display='none';}else{im2.removeAttribute('src');im2.style.display='none';ini2.style.display='';}}" +
-      // e o cabeçalho do menu (tela 01) também
-      "var im3=document.getElementById('mgImg'),ini3=document.getElementById('mgIni');if(im3&&ini3){" +
-      "if(src){im3.src=src;im3.style.display='';ini3.style.display='none';}else{im3.removeAttribute('src');im3.style.display='none';ini3.style.display='';}}}" +
+      // a mesma foto aparece no topo, no herói do Início, no menu e nos Ajustes
+      "function avPinta(src){[['avImg','avIni'],['avImg2','avIni2'],['mgImg','mgIni'],['ajImg','ajIni']].forEach(function(par){" +
+      "var im=document.getElementById(par[0]),ini=document.getElementById(par[1]);if(!im||!ini)return;" +
+      "if(src){im.src=src;im.style.display='';ini.style.display='none';}else{im.removeAttribute('src');im.style.display='none';ini.style.display='';}});}" +
       "(function(){var fl=document.getElementById('avFile'),bt=document.getElementById('avBtn');if(!fl||!bt)return;" +
       // a foto escolhida pelo aluno vence a que veio do painel
       "var minha=L('ptfotoperfil','');if(minha)avPinta(minha);" +
@@ -2735,6 +2757,10 @@
       "if(b){if(navigator.vibrate)navigator.vibrate(8);utilVai(b.getAttribute('data-utgo'));return;}" +
       "if(e.target.closest('#utVoltBt'))utilVai(null);});" +
       "utilVai(null);window.__utilVai=utilVai;" +
+      // linhas de Ajustes que levam pra outra área (Meu plano, Meus questionários)
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-ajgo]');if(!b)return;" +
+      "if(navigator.vibrate)navigator.vibrate(8);if(window.__trocaSec)window.__trocaSec(b.getAttribute('data-ajgo'));" +
+      "var go=b.getAttribute('data-ajgoto');if(go){var ge=document.getElementById(go);if(ge)setTimeout(function(){ge.scrollIntoView({behavior:'smooth',block:'start'});},80);}});" +
       // ---- utilidades: calculadora de 1RM (fórmula de Epley) ----
       "function pintaRm(){var kg=parseFloat((document.getElementById('rmKg').value||'').replace(',','.'));" +
       "var reps=parseInt(document.getElementById('rmReps').value,10);var out=document.getElementById('rmOut');" +
@@ -3328,6 +3354,7 @@
       "if(el.id==='evTopo'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
       "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
+      "if(/^aj/.test(String(el.id||''))){el.setAttribute('data-sec','ajustes');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       // pílulas da Evolução (tela 49): Conquistas × Corpo
@@ -3380,8 +3407,7 @@
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Questionários</span><span class='mgsub' id='mgQaSub'></span></span>\"+" +
       "\"<span class='mgbadge' id='mgQaB' style='display:none;'></span></button>\":'')+" +
       "(mgg.length?\"<div class='mgcard'>\"+mgg.map(function(s){return mgRow(s,s==='chat'?\"<span class='mgbadge' id='mgChatB' style='display:none;'></span><span class='mgchev'>\"+CHEV+'</span>':null);}).join('')+'</div>':'')+" +
-      "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+" +
-      "\"<button class='mgrow' id='btnTemaApp'><span style='line-height:0;' id='mgTemaIco'></span><span style='flex:1;min-width:0;'><span class='mgtit' id='mgTemaTit'></span><span class='mgsub'>o escuro é o padrão</span></span></button></div>\":'');" +
+      "(MICO.ajustes?\"<div class='mgcard'>\"+mgRow('ajustes')+'</div>':'');" +
       "gav.querySelector('.mgnome').textContent=MGNOME;gav.querySelector('.mgstudio').textContent=STUDIO;" +
       // iniciais e foto copiadas do avatar do topo, que já resolveu painel × aluno
       "(function(){var ai=document.getElementById('avIni'),ii=document.getElementById('mgIni');if(ai&&ii)ii.textContent=ai.textContent;" +
@@ -3428,7 +3454,7 @@
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
       // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat');" +
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='ajustes');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)
