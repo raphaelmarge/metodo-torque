@@ -3289,7 +3289,7 @@ async function abaPt(p, a) {
     await pTrava.goto(BASE + "/app-quest-travado.html", { waitUntil: "domcontentloaded" });
     await pTrava.waitForTimeout(200);
     const travado = await pTrava.evaluate(() => document.getElementById("qaBox").textContent);
-    ok(/Seu personal mandou/.test(travado) && /libera dia/.test(travado), "antes da data, o card no app aparece trancado com a data de liberação");
+    ok(/Trancado até/.test(travado) && /\d\d\/\d\d/.test(travado), "antes da data, o card no app aparece trancado com a data de liberação");
     await pTrava.close();
     // na data certa: perguntas liberam, aluno responde e a resposta vai pra nuvem
     const htmlLivre = await p.evaluate(() => {
@@ -3310,17 +3310,28 @@ async function abaPt(p, a) {
     await pLivre.route("**/app-quest-livre.html", (r) => r.fulfill({ contentType: "text/html", body: htmlLivre }));
     await pLivre.goto(BASE + "/app-quest-livre.html", { waitUntil: "domcontentloaded" });
     await pLivre.waitForTimeout(200);
-    ok(await pLivre.evaluate(() => document.querySelectorAll("#qaBox button[data-qa]").length >= 12), "na data certa as perguntas aparecem (emoji + escala 0-10)");
-    await pLivre.evaluate(() => document.querySelector("#qaBox button[data-qa='0']").click());
-    await pLivre.evaluate(() => document.querySelector("#qaBox button[data-qa='1'][data-v='8']").click());
-    await pLivre.evaluate(() => document.getElementById("qaEnvia").click());
+    // na data certa o convite libera; o fluxo paginado responde e envia
+    ok(await pLivre.evaluate(() => /Responder agora/.test(document.getElementById("qaBox").textContent)),
+      "na data certa o convite libera (Responder agora)");
+    await pLivre.evaluate(() => document.getElementById("qaAbrir").click());
+    await pLivre.evaluate(() => document.getElementById("qaFluxo").querySelector("[data-qj='0']").click());
+    await pLivre.waitForTimeout(550); // emoji avança sozinho pra 2/2
+    await pLivre.evaluate(() => {
+      document.getElementById("qaFluxo").querySelector("[data-qv='8']").click();
+      document.getElementById("qaProx").click(); // última pergunta → Enviar
+    });
     await pLivre.waitForTimeout(400);
     ok(postadoApp && postadoApp.p_dados && postadoApp.p_dados.pontuacao === 10 && postadoApp.p_dados.respostas.length === 2, "resposta do app vai pra RPC app_quest_responde com pontuação somada (2 + 8 = 10)");
-    const depois = await pLivre.evaluate(() => ({
-      box: document.getElementById("qaBox").textContent,
-      ptqa: JSON.parse(localStorage.getItem("ptqa") || "{}"),
-    }));
-    ok(/Respondido/.test(depois.box) && /próximo libera dia/.test(depois.box), "depois de responder o card confirma e mostra quando libera o próximo");
+    const depois = await pLivre.evaluate(() => {
+      const telaOk = /Respondido/i.test(document.getElementById("qaFluxo").textContent);
+      document.getElementById("qaVoltaIni").click(); // fecha a tela Respondido
+      return {
+        telaOk,
+        box: document.getElementById("qaBox").textContent,
+        ptqa: JSON.parse(localStorage.getItem("ptqa") || "{}"),
+      };
+    });
+    ok(depois.telaOk && /Respondido/.test(depois.box) && /próximo libera dia/.test(depois.box), "depois de responder o card confirma e mostra quando libera o próximo");
     ok(Object.keys(depois.ptqa).length === 1, "período respondido fica marcado no aparelho (não responde duas vezes)");
     await pLivre.close();
   }
@@ -3524,6 +3535,78 @@ async function abaPt(p, a) {
     });
     ok(r2.abriu && r2.pecas, "🏁 R2: encerrar circuito prescrito abre o placar do tipo (voltas + como fez + tempo de cada volta)");
     ok(r2.salvo && r2.fechou, "Salvar resultado grava voltas/como fez/splits no ptwodres (que o personal recebe) e fecha o placar");
+  }
+  // --- R3: questionário uma-pergunta-por-tela (telas 02-06) ---
+  {
+    const qaHtml = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos[0];
+      const antes = al.questApp;
+      al.questApp = { nome: "Como foi sua semana", desde: "2020-01-01", repete: false, enviadoEm: "eT", ps: [
+        { s: "SONO", texto: "Como dormiu?", tipo: "emoji", ops: [{ e: "🙁", r: "Mal", p: 0 }, { e: "🙂", r: "Bem", p: 2 }], mm: false },
+        { s: "DOR", texto: "Dor de 0 a 10?", tipo: "linear", ops: [], mm: true },
+        { s: "", texto: "Quer ajustar algo?", tipo: "texto", ops: [], mm: false },
+      ] };
+      const h = window.__montaAppAluno(al, "teste-quest");
+      if (antes === undefined) delete al.questApp; else al.questApp = antes;
+      return h;
+    });
+    const pQ = await ctx.newPage();
+    const errosQ = [];
+    pQ.on("pageerror", (e) => errosQ.push(String(e)));
+    let envio = null;
+    await pQ.route("**/rest/v1/rpc/**", (r) => r.abort());
+    await pQ.route("**/rest/v1/rpc/app_quest_responde", (r) => {
+      envio = JSON.parse(r.request().postData() || "{}");
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+    });
+    await pQ.route("**/app-teste-quest.html", (r) => r.fulfill({ contentType: "text/html", body: qaHtml }));
+    await pQ.goto(BASE + "/app-teste-quest.html", { waitUntil: "domcontentloaded" });
+    const conv = await pQ.evaluate(() => {
+      window.__trocaSec("chat");
+      const el = document.getElementById("qaBox");
+      return /Responder agora/.test(el.textContent) && /O que ele vai perguntar/i.test(el.textContent) && /só o seu personal vê/.test(el.textContent);
+    });
+    ok(conv, "📝 R3: o card do questionário virou o convite (o que ele vai perguntar + Responder agora)");
+    const fluxo = await pQ.evaluate(async () => {
+      const out = {};
+      // as páginas da suíte dividem o MESMO localStorage — guarda pra devolver
+      // no fim (uma chave a mais em ptqa mudaria o XP dos testes seguintes)
+      const qa0 = localStorage.getItem("ptqa");
+      const dr0 = localStorage.getItem("ptqadraft");
+      window.__qaFluxo();
+      const fx = document.getElementById("qaFluxo");
+      out.p1 = /1\/3/.test(fx.textContent) && /Como dormiu\?/.test(fx.textContent) && fx.querySelectorAll(".qaop").length === 2;
+      fx.querySelector("[data-qj='1']").click(); // "Bem" — avança sozinho
+      await new Promise((r) => setTimeout(r, 550));
+      out.p2 = /2\/3/.test(fx.textContent) && !!fx.querySelector("[data-qv='7']");
+      fx.querySelector("[data-qv='7']").click();
+      document.getElementById("qaProx").click();
+      out.p3 = /3\/3/.test(fx.textContent) && !!document.getElementById("qaTxt");
+      const d = JSON.parse(localStorage.getItem("ptqadraft") || "{}");
+      const ch = Object.keys(d)[0];
+      out.parcial = !!(ch && d[ch] && d[ch].R && d[ch].R["0"] && d[ch].R["1"] && d[ch].R["1"].p === 7);
+      document.getElementById("qaTxt").value = "menos agacho";
+      document.getElementById("qaTxt").dispatchEvent(new Event("input", { bubbles: true }));
+      document.getElementById("qaProx").click(); // Enviar
+      await new Promise((r) => setTimeout(r, 350));
+      out.enviadoTela = /Respondido/i.test(fx.textContent) && /já recebeu/.test(fx.textContent);
+      out.marcado = Object.keys(JSON.parse(localStorage.getItem("ptqa") || "{}")).length >
+        Object.keys(JSON.parse(qa0 || "{}")).length;
+      out.draftLimpo = !Object.keys(JSON.parse(localStorage.getItem("ptqadraft") || "{}")).length;
+      // devolve como estava
+      if (qa0 == null) localStorage.removeItem("ptqa"); else localStorage.setItem("ptqa", qa0);
+      if (dr0 == null) localStorage.removeItem("ptqadraft"); else localStorage.setItem("ptqadraft", dr0);
+      return out;
+    });
+    ok(fluxo.p1 && fluxo.p2 && fluxo.p3, "uma pergunta por tela: emoji avança sozinho, escala 0-10 em botões, texto por último (n/total no topo)");
+    ok(fluxo.parcial, "resposta parcial fica guardada no aparelho (dá pra parar no meio e voltar depois)");
+    ok(fluxo.enviadoTela && fluxo.marcado && fluxo.draftLimpo && !!envio && envio.p_dados && envio.p_dados.respostas.length === 3 &&
+      envio.p_dados.respostas[1].pontos === 7 && envio.p_dados.respostas[1].menos === true &&
+      envio.p_dados.respostas[2].resposta === "menos agacho" && envio.p_dados.pontuacao === -5,
+      "Enviar manda a MESMA lista de sempre (sigla/pontos/menos + pontuação) e a tela Respondido aparece");
+    ok(errosQ.length === 0, "fluxo do questionário sem erro de JS" + (errosQ.length ? " — " + errosQ[0] : ""));
+    await pQ.close();
   }
   // --- lote timers+retenção (app): treino livre no placar, lembrete de água, retrospectiva do mês ---
   const lote7app = await pApp.evaluate(async () => {
