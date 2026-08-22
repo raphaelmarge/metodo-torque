@@ -1119,7 +1119,8 @@
       "<div id='botChips' style='display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;align-items:center;'><input id='chTexto' placeholder='Escreve pro seu personal…' style='flex:1;min-width:0;border-radius:99px;padding-left:18px;'>" +
       "<button class='btnx' id='chEnvia' aria-label='Enviar' style='flex:none;width:52px;height:52px;border-radius:50%;padding:0;'><svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 12h14M12 6l6 6-6 6'/></svg></button></div></div>" +
-      "<div class='cardx'><h2>Check-in da semana</h2>" +
+      // o check-in é um questionário: o atalho Questionários do menu aponta pra cá
+      "<div class='cardx' id='ckCard'><h2>Check-in da semana</h2>" +
       "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem!</div>" +
       "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
       "<div id='ckNotas' style='display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;'></div>" +
@@ -1178,8 +1179,9 @@
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Meu plano</span><span class='mgsub'>" + esc(plApp.nome) + " · R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês" + (ctApp && ctApp.diaVenc ? " · vence dia " + ctApp.diaVenc : "") + "</span></span>" + chev + "</button>";
         if (+a.altura) rows += "<div class='mgrow' style='cursor:default;'><span style='line-height:0;'>" + sv("<path d='M12 3v18M8.5 6.5 12 3l3.5 3.5M8.5 17.5 12 21l3.5-3.5'/>") + "</span>" +
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Altura</span><span class='mgsub'>" + String((+a.altura / 100).toFixed(2)).replace(".", ",") + " m · quem mede é seu personal</span></span></div>";
-        if (qa) rows += "<button class='mgrow' data-ajgo='chat' data-ajgoto='qaCard'><span style='line-height:0;'>" + sv("<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>") + "</span>" +
-          "<span style='flex:1;min-width:0;'><span class='mgtit'>Meus questionários</span><span class='mgsub'>responder leva 1 minuto</span></span>" + chev + "</button>";
+        // o check-in da semana também é questionário — sem qa a linha leva nele
+        rows += "<button class='mgrow' data-ajgo='chat' data-ajgoto='" + (qa ? "qaCard" : "ckCard") + "'><span style='line-height:0;'>" + sv("<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>") + "</span>" +
+          "<span style='flex:1;min-width:0;'><span class='mgtit'>Meus questionários</span><span class='mgsub'>" + (qa ? "responder leva 1 minuto" : "o check-in da semana mora aqui") + "</span></span>" + chev + "</button>";
         // baixar meus dados (LGPD na prática): um arquivo com tudo do aparelho
         rows += "<button class='mgrow' id='ajBaixa'><span style='line-height:0;'>" + sv("<path d='M12 3v12M7.5 10.5 12 15l4.5-4.5'/><path d='M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2'/>") + "</span>" +
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Baixar meus dados</span><span class='mgsub'>treinos, cargas e avaliações num arquivo</span></span>" + chev + "</button>";
@@ -1462,10 +1464,13 @@
       "document.getElementById('ckNotas').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;ckNota=+b.dataset.n;" +
       "this.querySelectorAll('button').forEach(function(x){x.style.background=x===b?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)';x.style.borderColor=x===b?'var(--corc)':'var(--bg11)';});});" +
       "function semanaCK(){return semDe(new Date());}" +
+      // o menu Questionários conta o check-in pendente da semana junto
+      "window.__ckPend=function(){return L('ptck','')===semanaCK()?0:1;};" +
       "if(L('ptck','')===semanaCK()){document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';}" +
       "document.getElementById('ckEnvia').addEventListener('click',function(){if(!ckNota){alert('Escolha uma nota pra semana.');return;}" +
       "var peso=parseFloat((document.getElementById('ckPeso').value||'').replace(',','.'))||null;var texto=document.getElementById('ckTexto').value.trim();" +
-      "var fim=function(){Sv('ptck',semanaCK());document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';};" +
+      "var fim=function(){Sv('ptck',semanaCK());document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';" +
+      "if(window.__menuBadges)window.__menuBadges();};" + // o badge do menu apaga na hora
       "if(NUVEM){rpcApp('app_aluno_checkin',{t:TOKEN,p_nota:ckNota,p_texto:texto,p_peso:peso}).then(function(r){" +
       "if(r&&r.ok){fim();}else{alert('Não deu pra enviar agora — tenta de novo em instantes.');}});}" +
       "else{var msg='Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[ckNota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
@@ -3933,7 +3938,8 @@
       "gav.innerHTML=" +
       "\"<div class='mghd'><span class='mgav'><img id='mgImg' alt='' style='display:none;'><span id='mgIni'></span></span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgnome'></span><span class='mgstudio'></span></span></div>\"+" +
-      "(document.getElementById('qaCard')&&MICO.chat?\"<button class='nitem mgq' data-msec='chat' data-mgoto='qaCard'>\"+" +
+      // o atalho existe com questionário do personal OU com o check-in da semana
+      "((document.getElementById('qaCard')||document.getElementById('ckCard'))&&MICO.chat?\"<button class='nitem mgq' id='mgQaBt' data-msec='chat' data-mgoto='\"+(document.getElementById('qaCard')?'qaCard':'ckCard')+\"'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(\"<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>\")+\"</span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Questionários</span><span class='mgsub' id='mgQaSub'></span></span>\"+" +
       "\"<span class='mgbadge' id='mgQaB' style='display:none;'></span></button>\":'')+" +
@@ -3950,7 +3956,13 @@
       "gav.querySelectorAll('.mgrow[data-msec]').forEach(function(b){var s9=MSUB[b.getAttribute('data-msec')];var el9=b.querySelector('.mgsub');if(el9&&s9!=null)el9.textContent=s9;});" +
       // badges vivos: questionário esperando + recados não lidos no chat
       "function pintaMB(){var qb=document.getElementById('mgQaB'),qs=document.getElementById('mgQaSub');" +
-      "if(qb){var p9=window.__qaPend?window.__qaPend():0;qb.style.display=p9?'flex':'none';qb.textContent=p9||'';if(qs)qs.textContent=p9?'1 esperando você':'em dia — nada esperando';}" +
+      // o badge soma o questionário do personal e o check-in da semana; o toque
+      // leva pro primeiro que estiver esperando
+      "if(qb){var pq=window.__qaPend?window.__qaPend():0;var pk=window.__ckPend?window.__ckPend():0;var p9=pq+pk;" +
+      "qb.style.display=p9?'flex':'none';qb.textContent=p9||'';" +
+      "if(qs)qs.textContent=p9?p9+' esperando você':'em dia — nada esperando';" +
+      "var bt9=document.getElementById('mgQaBt');" +
+      "if(bt9)bt9.setAttribute('data-mgoto',pq&&document.getElementById('qaCard')?'qaCard':pk?'ckCard':(document.getElementById('qaCard')?'qaCard':'ckCard'));}" +
       "var cb=document.getElementById('mgChatB');if(cb){var pc9=L('ptchat',[]);var vi9=String(L('ptvisto',''));var n9=0;" +
       "pc9.forEach(function(m9){if(m9&&m9.de&&m9.de!=='aluno'&&m9.de!=='aluno-local'&&m9.de!=='bot'&&String(m9.criado||'')>vi9)n9++;});" +
       "cb.style.display=n9?'flex':'none';cb.textContent=n9>9?'9+':n9;var cv9=cb.parentElement.querySelector('.mgchev');if(cv9)cv9.style.display=n9?'none':'';}}" +
