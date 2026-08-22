@@ -282,7 +282,10 @@
       ".gcard.compacto .gtrilho{margin:8px 0 0;max-width:none}"+
       /* enquanto ele anota a carga, o nome do exercício embaixo é redundante:
          sai da frente pra o botão Salvar caber na tela sem rolar (iPhone SE) */
-      ".gwrap.reg .ggrupo,.gwrap.reg .gtit,.gwrap.reg .gmeta{display:none!important}"+
+      // na tela de anotar carga o NOME do exercício fica (tela 22) — só os
+      // chips somem; a linha roxa vira a pergunta 'Com quanto você fechou?'
+      ".gwrap.reg .gmeta{display:none!important}"+
+      ".gwrap.reg .ggrupo{color:#8a8695}"+
       ".gwrap.reg .gcard{max-height:80vh}"+
       ".gwrap.reg .gsets,.gwrap.reg .ghist{display:none}"+
       ".gcard.compacto .gcg .gwval input{font-size:34px}"+
@@ -354,6 +357,8 @@
       ".gcard{background:var(--bg1);color:#fff;box-shadow:none;border:1px solid var(--bg11);margin-top:14px}" +
       ".ggif{background:var(--bg4);border:1.5px dashed var(--bg12);box-shadow:none}" +
       ".gchip{color:var(--corc);background:rgba(var(--cor-rgb),.16)}" +
+      ".gchip.verde{color:#4ade80;background:rgba(74,222,128,.15)}" + // selo '✓ 4 séries feitas' (tela 22)
+      ".gcgult{margin:10px 0 2px;font-size:12.5px;color:#8a8695;text-align:center}" +
       ".gsets i{background:var(--bg4);color:#8a8695}" +
       ".gsets i.now{background:var(--bg2);color:var(--corc);box-shadow:inset 0 0 0 2px var(--cor)}" +
       ".gobs em{color:#8a8695}.gobs p{color:var(--corc)}" +
@@ -2549,9 +2554,13 @@
       "var pu0=gEl('gPular');if(pu0){pu0.textContent='Pular descanso';pu0.classList.remove('prin');pu0.classList.add('sec');}" +
       "var lb0=gEl('gDescLab');if(lb0)lb0.textContent='segundos';" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
-      "var ge=gEl('gEstado');ge.style.display='inline-block';ge.textContent=trocaEx?'Exercício feito':'Descanso';pintaBarra();" +
-      // no descanso entre séries a linha roxa já anuncia a PRÓXIMA série
-      "if(!trocaEx)gEl('gGrupo').textContent='Série '+Math.min(gv.s+1,it.s)+' de '+it.s;" +
+      // selo verde no fim do exercício (tela 22); entre séries segue 'Descanso'
+      "var ge=gEl('gEstado');ge.style.display='inline-block';" +
+      "ge.textContent=trocaEx?('✓ '+it.s+(it.s>1?' séries feitas':' série feita')):'Descanso';" +
+      "ge.classList.toggle('verde',!!trocaEx);pintaBarra();" +
+      // no descanso entre séries a linha roxa já anuncia a PRÓXIMA série; na
+      // anotação de carga ela vira a pergunta
+      "gEl('gGrupo').textContent=trocaEx?'Com quanto você fechou?':'Série '+Math.min(gv.s+1,it.s)+' de '+it.s;" +
       "var gg2=gEl('gGif');if(gg2&&trocaEx)gg2.style.display='none';" +
       "gEl('gSerie').style.display='none';" +
       "var pu=gEl('gPular');pu.style.display='block';pu.style.pointerEvents='none';pu.style.opacity='.55';" +
@@ -2612,6 +2621,8 @@
       "\"<div class='gwbox'><div class='gwval sm'>\"+" +
       "\"<input id='gReps' inputmode='numeric' value='\"+(r||'')+\"' placeholder='—' aria-label='Repetições'><u>reps</u></div>\"+" +
       "gRegua('gWRep',GW.rep,r)+\"</div>\"+" +
+      // lembrete da sessão anterior, igual à tela 22 ('na última vez você fez 30')
+      "(u?\"<div class='gcgult'>na última vez você fez \"+gnum(+u.kg)+' kg'+(+u.r>0?' × '+u.r:'')+'</div>':'')+" +
       "\"<button type='button' class='gsalvar' id='gSalvar'>Salvar carga</button>\"+" +
       "\"<button type='button' class='gsemcarga' id='gSemCarga'>Foi sem carga (peso do corpo)</button></div>\";}" +
       "function ligaStepper(it,slot){var kg=gEl('gKg'),rp=gEl('gReps');if(!kg)return;gv.reg=it.e;gv.regi=slot||'';" +
@@ -2710,7 +2721,7 @@
       "if(typeof confete==='function')try{confete();}catch(e3){}}" +
       // repescagem: abre o registro daquele exercício sem sair da tela final
       "function gRepesca(i){var it=GUIA[gv.f].it[i];if(!it)return;" +
-      "var gea=gEl('gEstado');gea.style.display='inline-block';gea.textContent='Anotar carga';gEl('gEx').textContent=it.e;" +
+      "var gea=gEl('gEstado');gea.style.display='inline-block';gea.textContent='Anotar carga';gea.classList.remove('verde');gEl('gEx').textContent=it.e;" +
       "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
       "gEl('gMiolo').innerHTML='';gEl('gMiolo2').innerHTML=gCargaHtml(it);" +
       "gEl('gHist').textContent=gHistTxt(it.e);gEl('gHist').style.display='';" +
@@ -2758,7 +2769,9 @@
       // último exercício da ficha: não faz sentido descansar pro nada, mas a carga
       // não pode escapar — mostra o registro SEM contagem e com o botão de encerrar
       "if(fimEx&&gv.e>=GUIA[gv.f].it.length-1){clearInterval(gv.timer);gv.pend=false;" +
-      "pintaBarra();var gef=gEl('gEstado');gef.style.display='inline-block';gef.textContent='Exercício feito';" +
+      "pintaBarra();var gef=gEl('gEstado');gef.style.display='inline-block';" +
+      "gef.textContent='✓ '+it.s+(it.s>1?' séries feitas':' série feita');gef.classList.add('verde');" +
+      "gEl('gGrupo').textContent='Com quanto você fechou?';" +
       "gEl('gCard').classList.add('compacto');gEl('guiaBox').classList.add('reg');" +
       "gEl('gMiolo').innerHTML='';gEl('gDesc').style.display='none';" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
