@@ -326,6 +326,47 @@
       ".gfalta{width:100%;min-height:44px;margin-top:8px;border-radius:14px;border:1px solid rgba(var(--cor-rgb),.4);background:rgba(var(--cor-rgb),.08);" +
       "color:var(--cor2);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;text-align:left;padding:0 14px}" +
       "@media (max-height:620px){.gsets i{height:44px;font-size:19px}.grelo b{font-size:17px}.gpe button{min-height:52px}.gtit{font-size:16px}}" +
+      /* ---------- player escuro no desenho da tela 47 ----------
+       * O título sobe pro topo (ordem do flex — a LÓGICA não muda de lugar) e o
+       * card lavanda vira escuro. Tudo por classe, como o resto do player. */
+      ".gwrap{background:var(--bg0)}" +
+      ".gtopo{order:0}.gbarra{order:1}.gcont{order:2}.ggrupo{order:3}.gtit{order:4}.gcard{order:5}.gbase{order:6}.gpe{order:7}" +
+      ".gtopo .gx{order:-1;margin-right:2px}" +
+      ".gmarca{text-align:center;color:#8a8695}" +
+      ".ggrupo{margin-top:14px}" +
+      ".gtit{font-size:clamp(26px,8vw,36px);letter-spacing:-.03em;line-height:1.04;margin-top:4px}" +
+      ".gcard{background:var(--bg1);color:#fff;box-shadow:none;border:1px solid var(--bg11);margin-top:14px}" +
+      ".ggif{background:var(--bg4);border:1.5px dashed var(--bg12);box-shadow:none}" +
+      ".gchip{color:var(--corc);background:rgba(var(--cor-rgb),.16)}" +
+      ".gsets i{background:var(--bg4);color:#8a8695}" +
+      ".gsets i.now{background:var(--bg2);color:var(--corc);box-shadow:inset 0 0 0 2px var(--cor)}" +
+      ".gobs em{color:#8a8695}.gobs p{color:var(--corc)}" +
+      ".gdica{color:#a9a4b5}.ghist{color:#8a8695}" +
+      ".gcard .vidbtn{color:var(--corc)}" +
+      ".gbig{color:#fff}.gbiglab{color:#8a8695}" +
+      ".gtrilho{background:var(--bg5)}" +
+      ".gcglab{color:#8a8695}" +
+      ".gcg .gwval input{color:#fff}.gcg .gwval input::placeholder{color:#55506b}.gcg .gwval u{color:#8a8695}" +
+      ".gwheel i:before{background:var(--bg12)}.gwheel i b{color:#8a8695}" +
+      ".gsemcarga{border-color:var(--bg11);color:#8a8695}" +
+      ".gfalta{color:var(--corc)}" +
+      /* ---------- fim do treino em festa (tela 48): fundo na cor do studio ---------- */
+      ".gwrap.festa{background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%)}" +
+      ".gwrap.festa .gcard{background:none;border:none;box-shadow:none;max-height:none}" +
+      ".gwrap.festa .gbarra,.gwrap.festa .gcont,.gwrap.festa .ggrupo,.gwrap.festa .gbase,.gwrap.festa .gtit,.gwrap.festa .gchip{display:none}" +
+      ".gwrap.festa .gmarca{color:rgba(255,255,255,.8)}" +
+      ".gwrap.festa .gtopo button{color:#fff}" +
+      ".wtile2{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:12px 6px;text-align:center;color:#fff}" +
+      ".wtile2 b{display:block;font-size:23px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}" +
+      ".wtile2 i{display:block;font-style:normal;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-top:5px}" +
+      ".gwrap.festa .rpelab{color:#fff}" +
+      ".gwrap.festa .rpebtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff}" +
+      ".gwrap.festa .rpeok{color:rgba(255,255,255,.85)}" +
+      ".gwrap.festa .gcglab{color:rgba(255,255,255,.8)}" +
+      ".gwrap.festa .gfalta{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);color:#fff}" +
+      ".gwrap.festa .btnx{background:#fff!important;color:var(--cor-esc,#3b2b63)!important;box-shadow:none!important}" +
+      ".gwrap.festa .vz{color:rgba(255,255,255,.7)}" +
+      ".gwrap.festa .gpe .prin{background:rgba(255,255,255,.16);color:#fff;box-shadow:none;border:1px solid rgba(255,255,255,.3)}" +
       /* ---------- Início do redesenho (telas final-44/45/46) ----------
        * No Início a faixa colorida do topo some: o cabeçalho (saudação + avatar)
        * vive DENTRO do herói. As outras áreas continuam com a faixa de sempre.
@@ -610,30 +651,65 @@
       (ve("wod") ? "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
       (ve("cardio") ? "<button data-trsub='cardio' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Corrida e bike</button>" : "") +
       "</div></div>" : "") +
-      "<div class='cardx'><h2>Meu treino</h2>" +
-      (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:16px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-bottom:8px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
-      // cada ficha (A, B, C…) é uma gaveta: a do dia abre sozinha, o resto fica recolhido
+      // ---------- aba Treinos (tela 25): cabeçalho roxo + fichas em cards ----------
+      "<div class='cardx' id='trFichasWrap' style='margin:0;'>" +
+      "<div id='trTopo' style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 18px;color:#fff;'>" +
+      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Meu treino</div>" +
+      (fichasApp
+        ? (function () {
+            var totSer = 0;
+            fichasApp.forEach(function (f) { f.itens.forEach(function (it) { totSer += (+it.series || 3); }); });
+            return "<div style='display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap;'>" +
+              "<span style='font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;'>" + fichasApp.length + (fichasApp.length === 1 ? " ficha" : " fichas") + "</span>" +
+              "<span style='font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);'>" + totSer + " séries na semana</span></div>";
+          })()
+        : "<div style='font-size:24px;font-weight:900;margin-top:4px;'>Seu treino</div>") +
+      "<div style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'>montado por " + esc(studio) +
+      (fichaVenceApp ? " · vale até " + esc(S.fmtData(fichaVenceApp)) : "") + "</div></div>" +
+      "<div style='padding:0 20px;'>" +
+      (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:16px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-top:12px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
+      // cada ficha (A, B, C…) é um card-gaveta: a do dia abre sozinha
       (fichasApp ? fichasApp.map(function (f, gi) {
-        return "<details class='fichabox' data-fi='" + gi + "'" + (gi === 0 ? " open" : "") + " style='margin:8px 0;'>" +
-          "<summary style='list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 2px;font-weight:800;font-size:13px;letter-spacing:.08em;color:var(--corc);text-transform:uppercase;'>" +
-          "<span style='flex:1;min-width:0;'>" + esc(f.titulo) + "</span>" +
-          "<span style='font-size:11px;font-weight:700;letter-spacing:.04em;color:#6e6a78;text-transform:none;white-space:nowrap;'>" + f.itens.length + " exercício" + (f.itens.length === 1 ? "" : "s") + "</span>" +
-          "<span class='fseta' style='color:#6e6a78;font-size:12px;'>▾</span></summary>" +
-          "<div style='padding-bottom:4px;'>" +
+        // "A — Peito e tríceps" → letra no quadradinho + nome limpo
+        var parT = String(f.titulo || "").split("—");
+        var letra = parT.length > 1 ? parT[0].trim().slice(0, 2) : String.fromCharCode(65 + gi);
+        var nomeF = parT.length > 1 ? parT.slice(1).join("—").trim() : (f.titulo || "Ficha");
+        var serF = 0; f.itens.forEach(function (it) { serF += (+it.series || 3); });
+        // dia da semana amarrado na Semana do aluno (se houver)
+        var diaTxt = "";
+        if (planoApp) {
+          var rot7 = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+          var hj7 = String(new Date().getDay());
+          Object.keys(planoApp).some(function (dk) {
+            if (planoApp[dk].tp === "ficha" && planoApp[dk].i === gi) { diaTxt = " · " + (dk === hj7 ? "hoje" : rot7[+dk]); return true; }
+            return false;
+          });
+        }
+        return "<details class='fichabox' data-fi='" + gi + "'" + (gi === 0 ? " open" : "") + " style='margin:12px 0 0;background:var(--bg1);border-radius:22px;overflow:hidden;'>" +
+          "<summary style='list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 16px;'>" +
+          "<span style='flex:none;width:44px;height:44px;border-radius:14px;background:rgba(var(--cor-rgb),.25);color:var(--corc);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;'>" + esc(letra) + "</span>" +
+          "<span style='flex:1;min-width:0;'><b style='display:block;font-size:16px;font-weight:800;'>" + esc(nomeF) + "</b>" +
+          "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>" + f.itens.length + " exercício" + (f.itens.length === 1 ? "" : "s") + " · " + serF + " séries" + esc(diaTxt) + "</span></span>" +
+          "<span class='fseta' style='color:#6e6a78;font-size:13px;'>▾</span></summary>" +
+          "<div style='padding:0 0 14px;'>" +
           (aqPorFicha[gi] && aqPorFicha[gi].length > 1
-            ? "<details class='aqbox' style='background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.45);border-radius:16px;margin:4px 0 8px;overflow:hidden;'>" +
+            ? "<details class='aqbox' style='background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.45);border-radius:16px;margin:2px 16px 8px;overflow:hidden;'>" +
               "<summary style='padding:10px 13px;cursor:pointer;list-style:none;font-size:13px;font-weight:800;color:#fdba74;'>Aquecimento do dia (~4 min) ›</summary>" +
               "<div style='padding:0 13px 10px;font-size:13px;color:#d6d2df;'>" +
               aqPorFicha[gi].map(function (aq) { return "<div class='kv' style='border-color:rgba(251,146,60,.2);'><span>" + esc(aq[0]) + "</span><b style='color:#fdba74;white-space:nowrap;'>" + esc(aq[1]) + "</b></div>"; }).join("") +
               "<div class='vz' style='font-size:11px;padding:6px 0 0;'>Aquecer evita lesão e melhora o treino — não pula!</div></div></details>"
             : "") +
-          (f.itens.length ? "<button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;text-align:center;margin:2px 0 8px;'>Treino guiado</button>" : "") +
           f.itens.map(function (it, ii) {
             var rst = +it.descanso || 60, rAlt = rst === 90 ? 60 : 90;
-            return "<details style='background:var(--bg2);border-radius:16px;margin:8px 0;overflow:hidden;'>" +
-              "<summary style='padding:11px 13px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;font-size:14px;'>" +
-              "<b>" + esc(it.nome) + "</b><span style='color:#a9a4b5;white-space:nowrap;'>" + it.series + "×" + esc(String(it.reps)) + " · " + rst + "s ›</span></summary>" +
-              "<div style='padding:0 13px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
+            // linha no estilo da tela 25: nome + última carga à esquerda,
+            // prescrição e kg (pintados do diário do aparelho) à direita
+            return "<details class='exrow' style='border-top:1px solid var(--bg11);'>" +
+              "<summary style='padding:12px 16px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;font-size:14px;'>" +
+              "<span style='flex:1;min-width:0;'><b style='display:block;font-size:14.5px;'>" + esc(it.nome) + "</b>" +
+              "<span class='exult' data-exn='" + esc(it.nome) + "' style='display:block;font-size:11.5px;color:#6e6a78;margin-top:2px;'>sem carga anotada</span></span>" +
+              "<span style='flex:none;font-size:14.5px;font-weight:800;white-space:nowrap;'>" + it.series + " × " + esc(String(it.reps)) + "</span>" +
+              "<span class='exkg' data-exn='" + esc(it.nome) + "' style='flex:none;min-width:44px;text-align:right;font-size:14px;font-weight:800;color:var(--corc);white-space:nowrap;'></span></summary>" +
+              "<div style='padding:0 16px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
               (it.obs ? "<div style='color:var(--corc);margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
               (it.video ? "<button class='vidbtn' data-v='" + esc(it.video) + "' style='background:none;border:none;color:#8a8695;font-weight:700;font-size:12px;padding:5px 4px;font-family:inherit;cursor:pointer;text-decoration:underline;'>vídeo</button>" : "") +
@@ -647,7 +723,10 @@
               "<button class='tmrbtn' data-s='" + rst + "' style='background:rgba(var(--cor-rgb),.18);border:1px solid transparent;color:var(--cor-cl1);border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>Descanso " + rst + "s</button>" +
               "<button class='tmrbtn' data-s='" + rAlt + "' style='background:var(--bg5);border:1px solid transparent;color:#a9a4b5;border-radius:99px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;'>" + rAlt + "s</button>" +
               "</div></div></details>";
-          }).join("") + "</div></details>";
+          }).join("") +
+          // o botão grandão fecha o card, igual à tela 25
+          (f.itens.length ? "<div style='padding:12px 16px 0;'><button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;'>Começar essa ficha</button></div>" : "") +
+          "</div></details>";
       }).join("")
       : treino ? "<div style='font-size:14.5px;line-height:1.7;'>" + treino.split("\n").map(function (ln) {
         var m = ln.match(/(https?:\/\/\S+)/);
@@ -658,37 +737,48 @@
             "<div class='vidbox' style='display:none;'></div></div>";
         }
         return ln.trim() ? "<div>" + esc(ln) + "</div>" : "<div style='height:8px;'></div>";
-      }).join("") + "</div>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal.</div>") + "</div>" +
-      (raioX.length ? "<div class='cardx'><h2>Raio-X do treino</h2>" +
-        "<div class='vz' style='text-align:left;padding:0 0 8px;'>Séries por grupo muscular somando todas as fichas — treino equilibrado é treino que dura.</div>" +
+      }).join("") + "</div>" : "<div class='vz'>Seu treino aparece aqui — peça ao seu personal.</div>") + "</div></div>" +
+      // Raio-X no desenho da tela 25: grupo à esquerda, barra no meio, número à direita
+      (raioX.length ? "<div class='cardx'><div style='background:var(--bg1);border-radius:22px;padding:16px 18px;'>" +
+        "<h2 style='margin-bottom:2px;letter-spacing:0;font-size:17px;color:#fff;text-transform:none;font-weight:800;'>Raio-X do treino</h2>" +
+        "<div style='font-size:12.5px;color:#8a8695;margin-bottom:12px;'>séries por grupo, somando as " + (fichasApp ? fichasApp.length : 0) + " fichas</div>" +
         (function () {
           var maxS = raioX[0].s || 1;
           return raioX.map(function (r) {
-            return "<div style='margin:7px 0;'><div style='display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;'><span>" + esc(r.g) + "</span><b style='color:var(--corc);'>" + r.s + " séries</b></div>" +
-              "<div style='height:4px;background:var(--bg5);border-radius:99px;overflow:hidden;'><div style='height:100%;width:" + Math.round(100 * r.s / maxS) + "%;background:linear-gradient(90deg,var(--cor),var(--corc));border-radius:99px;'></div></div></div>";
+            return "<div style='display:flex;align-items:center;gap:12px;margin:10px 0;'>" +
+              "<span style='flex:none;width:104px;font-size:13px;color:#d6d2df;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>" + esc(r.g) + "</span>" +
+              "<div style='flex:1;height:6px;background:var(--bg5);border-radius:99px;overflow:hidden;'><div style='height:100%;width:" + Math.round(100 * r.s / maxS) + "%;background:linear-gradient(90deg,var(--cor),var(--corc));border-radius:99px;'></div></div>" +
+              "<b style='flex:none;min-width:20px;text-align:right;font-size:14px;'>" + r.s + "</b></div>";
           }).join("");
-        })() + "</div>" : "") +
-      // modo circuito (WOD): cronômetros de cross — só se o professor liberou nas Configurações
-      (ve("wod") ? "<div class='cardx' id='cardWod'><h2>Modo circuito (WOD)</h2>" +
+        })() + "</div></div>" : "") +
+      // modo circuito (WOD), no desenho da tela 50: cabeçalho com a data, folha
+      // com borda da cor, "Sua última vez" em verde, "Seus circuitos" e o
+      // montador manual escondido atrás do botão
+      (ve("wod") ? "<div class='cardx' id='cardWod'>" +
+      "<div style='display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px;'>" +
+      "<h2 style='margin-bottom:0;'>Modo circuito (WOD)</h2><span id='wodHoje' style='font-size:12px;color:#8a8695;white-space:nowrap;'></span></div>" +
       (wodsApp.length ? wodsApp.map(function (w) {
         // folha de WOD estilo quadro da academia: tipo em destaque, blocos com rótulos
         var bloco = function (rot, html) {
-          return "<div style='margin-top:12px;'><div style='color:var(--corc);font-size:10.5px;font-weight:800;letter-spacing:.16em;'>" + rot + "</div>" + html + "</div>";
+          return "<div style='margin-top:14px;'><div style='color:var(--corc);font-size:10.5px;font-weight:800;letter-spacing:.18em;'>" + rot + "</div>" + html + "</div>";
         };
         var movsH = (w.movs && w.movs.length ? w.movs : w.mov.map(function (l) { return { q: "", n: l }; })).map(function (m) {
-          return "<div style='display:flex;gap:10px;align-items:baseline;font-size:15px;padding:5px 0;border-bottom:1px dashed var(--bg11);'>" +
-            (m.q ? "<b style='color:var(--corc);flex:none;min-width:44px;'>" + esc(m.q) + "</b>" : "") +
+          return "<div style='display:flex;gap:12px;align-items:baseline;font-size:16px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>" +
+            (m.q ? "<b style='color:var(--corc);flex:none;min-width:60px;'>" + esc(m.q) + "</b>" : "") +
             "<span>" + esc(m.n) + "</span></div>";
         }).join("");
-        return "<div style='background:linear-gradient(165deg,var(--bg5),var(--bg4));border:1px solid var(--cor);border-radius:14px;padding:15px 16px;margin-bottom:10px;'>" +
+        return "<div style='background:var(--bg1);border:1.5px solid var(--cor);border-radius:24px;padding:18px;margin-bottom:12px;'>" +
           "<div style='font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--corc);text-transform:uppercase;'>" + esc(w.resumo || "") + "</div>" +
-          "<div style='font-size:22px;font-weight:900;text-transform:uppercase;margin:2px 0 2px;'>" + esc(w.nome) + "</div>" +
-          (w.aq ? bloco("AQUECIMENTO", "<div style='font-size:13.5px;color:#d6d2df;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.aq) + "</div>") : "") +
+          "<div style='font-size:clamp(24px,7vw,30px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;margin:4px 0 2px;'>" + esc(w.nome) + "</div>" +
+          (w.aq ? bloco("AQUECIMENTO", "<div style='font-size:14px;color:#d6d2df;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.aq) + "</div>") : "") +
           bloco("WOD", "<div style='margin-top:3px;'>" + movsH + "</div>") +
-          (w.obs ? bloco("ESCALAS / OBS", "<div style='font-size:12.5px;color:#a9a4b5;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.obs) + "</div>") : "") +
-          "<div class='wodres' data-wid='" + w.id + "' style='font-size:12px;color:#4ade80;margin-top:8px;'></div>" +
-          "<button class='btnx' data-wodstart='" + w.id + "' style='display:block;width:100%;text-align:center;margin-top:12px;'>Começar circuito</button></div>";
-      }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:2px 0 10px;'>Ou monte o seu na mão aqui embaixo:</div>" : "") +
+          (w.obs ? bloco("ESCALAS / OBS", "<div style='font-size:13px;color:#a9a4b5;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.obs) + "</div>") : "") +
+          "<div class='wodres' data-wid='" + w.id + "' style='font-size:13.5px;font-weight:700;color:#4ade80;margin-top:10px;'></div>" +
+          "<button class='btnx' data-wodstart='" + w.id + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;margin-top:12px;'>Começar circuito</button></div>";
+      }).join("") : "") +
+      "<div id='wodHist'></div>" +
+      (wodsApp.length ? "<button type='button' class='btnx' id='wodLivreBt' style='display:block;width:100%;background:var(--bg4);border:1px solid var(--bg11);color:#d6d2df;box-shadow:none;margin-top:10px;'>Montar o meu circuito</button>" : "") +
+      "<div id='wodLivre'" + (wodsApp.length ? " style='display:none;margin-top:10px;'" : "") + ">" +
       "<div id='wodTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<div id='wodCfg' style='display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
       "<div id='wodTela' style='text-align:center;padding:18px 10px;border-radius:14px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);'>" +
@@ -700,6 +790,7 @@
       "<button class='btnx' id='wodVolta' style='flex:1;display:none;background:var(--bg4);border:1px solid var(--cor);box-shadow:none;'>+1 volta</button>" +
       "<button class='btnx' id='wodTermina' style='flex:1;display:none;background:var(--bg4);border:1px solid #4ade80;color:#4ade80;box-shadow:none;'>Terminei!</button>" +
       "<button class='btnx' id='wodZera' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
+      "</div>" + // fecha o #wodLivre — a caixinha de fim fica FORA, sempre visível
       "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" : "") +
       // corrida e bike: folhas prescritas + cronômetro próprio com pace (min/km), GPS e tiros
       (ve("cardio") ? "<div class='cardx' id='cardCardio'><h2>Corrida e bike</h2>" +
@@ -1398,7 +1489,19 @@
       // último resultado de cada circuito prescrito aparece no card
       "function pintaWodRes(){var wr=L('ptwodres',{});document.querySelectorAll('.wodres').forEach(function(el){" +
       "var lst=wr[el.dataset.wid]||[];if(!lst.length){el.textContent='';return;}var u=lst[lst.length-1];" +
-      "el.textContent='Último resultado: '+u.r+' ('+u.d.slice(8,10)+'/'+u.d.slice(5,7)+')';});}" +
+      "el.textContent='Sua última vez: '+u.r;});" +
+      // "Seus circuitos": os últimos placares de todos os circuitos (tela 50)
+      "var eh8=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');};" +
+      "var rowsH=[];Object.keys(wr).forEach(function(k){(Array.isArray(wr[k])?wr[k]:[]).forEach(function(x){if(x&&x.d)rowsH.push(x);});});" +
+      "rowsH.sort(function(a,b){return a.d<b.d?1:-1;});" +
+      "var hh=document.getElementById('wodHist');if(hh){hh.innerHTML=rowsH.length?" +
+      "\"<div class='wpk' style='margin:16px 0 2px;'>Seus circuitos</div>\"+rowsH.slice(0,5).map(function(x,xi){" +
+      "var res=x.tp==='fortime'&&x.v!=null?wodFmt(x.v):x.tp==='amrap'&&x.v!=null?(x.ex?x.v+' + '+x.ex:x.v+' voltas'):" +
+      "(x.tp==='tabata'||x.tp==='emom')&&x.v!=null?x.v+' na pior série':eh8(String(x.r||'').slice(0,16));" +
+      "return \"<div style='display:flex;gap:12px;align-items:center;min-height:46px;font-size:14px;\"+(xi?'border-top:1px solid var(--bg11);':'')+\"'>\"+" +
+      "\"<b style='flex:none;width:48px;'>\"+x.d.slice(8,10)+'/'+x.d.slice(5,7)+'</b>'+" +
+      "\"<span style='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#d6d2df;'>\"+eh8(x.n)+'</span>'+" +
+      "\"<b style='flex:none;color:#4ade80;'>\"+res+'</b></div>';}).join(''):'';}}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-wodstart]');if(!b)return;" +
       "var w=WODS.find(function(x){return x.id===b.dataset.wodstart;});if(!w||wod.run)return;" +
       "wod.tipo=w.t;wod.voltas=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
@@ -1407,6 +1510,8 @@
       "else document.getElementById('wodMin').value=w.min;" +
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent=w.n.toUpperCase().slice(0,24)+' — PRONTO?';document.getElementById('wodFimBox').style.display='none';" +
       "var tela=document.getElementById('wodTela');tela.style.borderColor='var(--corc)';setTimeout(function(){tela.style.borderColor='var(--bg11)';},1500);" +
+      // o cronômetro mora no bloco manual: abre ele antes de rolar até lá
+      "var lv9=document.getElementById('wodLivre');if(lv9)lv9.style.display='block';" +
       "document.getElementById('wodGo').scrollIntoView({behavior:'smooth',block:'center'});if(navigator.vibrate)navigator.vibrate(60);});" +
       "function wodChips(){document.getElementById('wodTipos').innerHTML=WODT.map(function(t){var on=wod.tipo===t[0];" +
       "return \"<button data-wodt='\"+t[0]+\"' style='flex:1;padding:8px 0;border-radius:16px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;\"+(on?'background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;':'background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;')+\"'>\"+t[1]+\"</button>\";}).join('');}" +
@@ -1563,6 +1668,12 @@
       // cada volta guarda o instante: vira a lista "tempo de cada volta" do placar
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;wod.laps.push((Date.now()-wod.t0)/1000);if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
       "wodChips();wodCfg();pintaWodRes();" +
+      // data no cabeçalho e o montador manual atrás do botão (tela 50)
+      "(function(){var wh=document.getElementById('wodHoje');if(wh){var d0=new Date();" +
+      "var ds=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];var ms=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
+      "wh.textContent=ds[d0.getDay()]+', '+d0.getDate()+' de '+ms[d0.getMonth()];}" +
+      "var lb=document.getElementById('wodLivreBt');if(lb)lb.addEventListener('click',function(){" +
+      "var lv=document.getElementById('wodLivre');lv.style.display=lv.style.display==='none'?'block':'none';});})();" +
       "window.__wod=wod;" +
       "}" +
       // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
@@ -1948,7 +2059,7 @@
       // ---------- abrir / fechar ----------
       "function abreGuia(fi,ei){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
       "gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false,feitas:{},cargas:{},t0:Date.now(),tex:Date.now(),relo:null,sujo:false,fim:false};" +
-      "ligaTela();gEl('guiaBox').style.display='flex';document.body.style.overflow='hidden';" +
+      "ligaTela();gEl('guiaBox').style.display='flex';gEl('guiaBox').classList.remove('festa');document.body.style.overflow='hidden';" +
       "gEl('gCard').classList.remove('recibo');" +
       "gEl('gVoltaEx').style.display='';gEl('gPularEx').style.display='';" +
       "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\"+" +
@@ -1957,7 +2068,7 @@
       "gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();}" +
       "function fechaGuia(){gSalvaSeSujo();clearInterval(gv.timer);clearInterval(gv.relo);" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
-      "gEl('guiaBox').style.display='none';document.body.style.overflow='';soltaTela();}" +
+      "gEl('guiaBox').style.display='none';gEl('guiaBox').classList.remove('festa');document.body.style.overflow='';soltaTela();}" +
       "function gTicRelo(){var r=gEl('gRelo'),t=gEl('gReloTot');if(!r)return;" +
       "r.textContent=gmmss((Date.now()-gv.tex)/1000);" +
       "if(t)t.textContent='treino '+gmmss((Date.now()-gv.t0)/1000);}" +
@@ -1973,6 +2084,8 @@
          MESMA coisa que o 03/07 logo acima e que a barra segmentada, e a marca
          d'água gigante dizia pela terceira vez. */
       "gEl('gProg').innerHTML='<b>'+g2(gv.e+1)+'</b> / '+g2(n)+\"<span>\"+esc2(f.n)+'</span>';" +
+      // o centro do topo mostra o TREINO (tela 47), não a marca do studio
+      "var gm9=document.querySelector('#guiaBox .gmarca');if(gm9)gm9.textContent=String(f.n||'').toUpperCase().replace('—','·');" +
       "pintaBarra();}" +
       "function esc2(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}" +
       "function gBlocos(mini){var f=GUIA[gv.f],it=f.it[gv.e],h='';" +
@@ -2118,34 +2231,56 @@
       "marc+=Math.min(Math.max(gv.feitas[i]||0,stR[it.e]||0),it.s);" +
       "var temC=gv.cargas[it.e]||(dcR[it.e]||[]).some(function(x){return x.d===hjR;});" +
       "if(temC)anot++;else faltam.push({i:i,e:it.e});});" +
-      "var gec=gEl('gEstado');gec.style.display='inline-block';gec.textContent='Treino de hoje';" +
+      "var gec=gEl('gEstado');gec.style.display='none';" +
       "var gg3=gEl('gGif');if(gg3)gg3.style.display='none';" +
       "gEl('gBarra').innerHTML=f.it.map(function(){return \"<i class='past'></i>\";}).join('');" +
       "gEl('gProg').innerHTML='<b>'+g2(f.it.length)+'</b> / '+g2(f.it.length)+\"<span>\"+esc2(f.n)+'</span>';" +
-      "gEl('gCard').classList.add('recibo');" +
+      "gEl('gCard').classList.add('recibo');gEl('guiaBox').classList.add('festa');" +
       "gEl('gVoltaEx').style.display='none';gEl('gPularEx').style.display='none';" +
       "var vb=gEl('gVideo');if(vb){vb.style.display='none';var bx=vb.nextElementSibling;" +
       "if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
-      "var m=\"<div class='gdica' style='margin-top:14px;font-size:15px;color:#1d1729;font-weight:700;'>\"+" +
-      "'Séries feitas aqui · '+marc+' de '+pres+\"<br>Cargas anotadas · \"+anot+' de '+f.it.length+" +
-      "'<br>Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+'</div>';" +
+      // volume do dia (kg × reps × séries do que teve carga anotada) — vale pros
+      // tiles E pra arte do post
+      "var vol9=0;f.it.forEach(function(it){var reg9=(dcR[it.e]||[]).filter(function(x){return x.d===hjR;}).pop();" +
+      "var kg9=reg9?+reg9.kg:(gv.cargas[it.e]?+gv.cargas[it.e]:0);var r9=(reg9&&+reg9.r)?+reg9.r:(parseInt(it.r,10)||10);" +
+      "if(kg9>0)vol9+=kg9*r9*(+it.s||3);});" +
+      // a festa (tela 48): troféu, meta da semana, tiles e a régua de XP
+      "var f9=L('ptfeitos',{});var naS=0;var sg9=new Date();sg9.setDate(sg9.getDate()-((sg9.getDay()+6)%7));" +
+      "for(var i9=0;i9<7;i9++){var d9=new Date(sg9);d9.setDate(d9.getDate()+i9);if(f9[isoLoc(d9)])naS++;}" +
+      "if(!f9[hjR])naS++;" + // o dia de hoje conta mesmo se o registro ainda não caiu
+      "var diasC=((new Date().getDay()+6)%7)+1;var bateu=naS>=META;var stk9=streakSem(f9);" +
+      "var xp9=xpDados();var nv9=nivelDe(xp9);var alvoN=nvXpAte(nv9+1);var falta9=Math.max(0,alvoN-xp9);" +
+      "var pctN=Math.min(100,Math.round(100*(xp9-nvXpAte(nv9))/Math.max(1,alvoN-nvXpAte(nv9))));" +
+      "var m=\"<div style='text-align:center;color:#fff;'>\"+" +
+      "\"<div style='width:84px;height:84px;margin:2px auto 0;border-radius:50%;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;color:#fde047;'>\"+icx(ICO.trofeu,40)+'</div>'+" +
+      "\"<div style='font-size:10.5px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-top:12px;'>\"+(bateu?'Meta da semana batida':'Treino concluído')+'</div>'+" +
+      "\"<div style='font-size:clamp(28px,9vw,38px);font-weight:900;line-height:1.05;margin-top:6px;'>\"+naS+(naS===1?' treino':' treinos')+' em '+diasC+(diasC===1?' dia':' dias')+'</div>'+" +
+      "(stk9>0?\"<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:8px;'>\"+(stk9===1?'Primeira semana batendo a meta':stk9+'ª semana seguida batendo a meta')+'. Orgulho define.</div>':'')+'</div>'+" +
+      "\"<div style='display:flex;gap:8px;margin-top:16px;'>\"+" +
+      "\"<div class='wtile2' style='flex:1;'><b>\"+gmmss((Date.now()-gv.t0)/1000)+'</b><i>no treino</i></div>'+" +
+      "(vol9>0?\"<div class='wtile2' style='flex:1;'><b>\"+Math.round(vol9).toLocaleString('pt-BR')+'</b><i>kg no total</i></div>':'')+" +
+      "\"<div class='wtile2' style='flex:1;'><b>\"+marc+'</b><i>séries</i></div></div>'+" +
+      "\"<div style='background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:12px 16px;margin-top:10px;color:#fff;'>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:800;'><span>\"+xp9+' XP</span>'+" +
+      "\"<span style='color:rgba(255,255,255,.8);font-weight:700;'>faltam \"+falta9+' pro Nv '+(nv9+1)+'</span></div>'+" +
+      "\"<div style='height:8px;background:rgba(255,255,255,.22);border-radius:99px;overflow:hidden;margin-top:8px;'><div style='height:100%;width:\"+pctN+\"%;background:#fff;border-radius:99px;'></div></div></div>\";" +
+      // o detalhe do dia (o recibo de sempre, agora discreto)
+      "m+=\"<div class='gdica' style='margin-top:12px;font-size:13.5px;color:rgba(255,255,255,.85);text-align:center;'>\"+" +
+      "'Séries feitas aqui · '+marc+' de '+pres+\" — Cargas anotadas · \"+anot+' de '+f.it.length+" +
+      "' — Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+'</div>';" +
       // a pergunta chega no momento certo: acabou de treinar, ainda ofegante
-      "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:18px;'>\"+rpeHtml()+'</div>';" +
+      "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:16px;'>\"+rpeHtml()+'</div>';" +
       "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +
       "faltam.map(function(x){return \"<button type='button' class='gfalta' data-gfalta='\"+x.i+\"'>\"+esc2(x.e)+' ›</button>';}).join('');" +
-      // R4: compartilhar o treino com a foto — o gatilho mora no recibo (tela 24)
+      // R4: compartilhar o treino com a foto — o gatilho mora no recibo
       "m+=arteBtns('gShareArq','gShareSem');" +
+      "m+=\"<button type='button' id='gVerEvo' style='width:100%;min-height:50px;margin-top:10px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;'>Ver minha evolução</button>\";" +
       "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gHist').textContent='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
-      // números do dia pra arte: tempo, volume (kg × reps × séries do que teve
-      // carga anotada hoje) e séries feitas — só o que o app sabe de verdade
-      "var opG=(function(){var s9=[[gmmss((Date.now()-gv.t0)/1000),'tempo']];var vol=0;" +
-      "f.it.forEach(function(it){var reg9=(dcR[it.e]||[]).filter(function(x){return x.d===hjR;}).pop();" +
-      "var kg9=reg9?+reg9.kg:(gv.cargas[it.e]?+gv.cargas[it.e]:0);var r9=(reg9&&+reg9.r)?+reg9.r:(parseInt(it.r,10)||10);" +
-      "if(kg9>0)vol+=kg9*r9*(+it.s||3);});" +
-      "if(vol>0)s9.push([Math.round(vol).toLocaleString('pt-BR'),'kg no total']);" +
-      "s9.push([marc,pl(marc,'série','séries').replace(/^\\d+ /,'')]);" +
-      "return {badge:'MUSCULAÇÃO',titulo:f.n,stats:s9,rodape:'Musculação'};})();" +
+      "var opG={badge:'MUSCULAÇÃO',titulo:f.n,rodape:'Musculação',stats:(function(){var s9=[[gmmss((Date.now()-gv.t0)/1000),'tempo']];" +
+      "if(vol9>0)s9.push([Math.round(vol9).toLocaleString('pt-BR'),'kg no total']);" +
+      "s9.push([marc,marc===1?'série':'séries']);return s9;})()};" +
       "ligaArte('gShareArq','gShareSem',opG);" +
+      "var gve=document.getElementById('gVerEvo');if(gve)gve.addEventListener('click',function(){fechaGuia();if(window.__trocaSec)window.__trocaSec('evolucao');});" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
       "gEl('gGrupo').style.display='none';" +
       "gEl('gEx').textContent='Treino concluído!';" +
@@ -2890,11 +3025,19 @@
       "if(/Minha conta|Meu login|Lembretes/.test(t))return 'ajustes';" +
       "if(/Mural|Minha semana|Hábitos|Desafio/.test(t))return 'inicio';" +
       "return null;}" +
+      // últimas cargas do diário pintadas na lista da ficha (tela 25) — o kg é
+      // dado do APARELHO (ptdc), então entra por pintura, nunca pelo HTML fixo
+      "function pintaUltimas(){var dc=L('ptdc',{});" +
+      "document.querySelectorAll('.exult').forEach(function(el){var lst=dc[el.dataset.exn]||[];var u=lst[lst.length-1];" +
+      "el.textContent=u?('última: '+(u.r?u.r+' reps · ':'')+String(u.kg).replace('.',',')+' kg'):'sem carga anotada';});" +
+      "document.querySelectorAll('.exkg').forEach(function(el){var lst=dc[el.dataset.exn]||[];var u=lst[lst.length-1];" +
+      "el.textContent=u?String(u.kg).replace('.',',')+' kg':'';});}" +
+      "pintaUltimas();window.__pintaUlt=pintaUltimas;" +
       "var IGNORA={navApp:1,tmrBar:1,guiaBox:1,fundoMenuApp:1,menuApp:1};" +
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
-      "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'){el.setAttribute('data-sec','treino');return;}" +
+      "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
@@ -2935,8 +3078,11 @@
       "mb.style.background=eFixo?'none':'rgba(var(--cor-rgb),.16)';mb.style.color=eFixo?(CLARO?'#6c6678':'#8a8695'):(CLARO?'var(--cor)':'var(--corc)');}" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
-      // no Início a faixa colorida some: o cabeçalho mora dentro do herói
-      "document.body.classList.toggle('semtopo',s==='inicio');" +
+      // no Início e nos Treinos a faixa colorida some: cada um tem o próprio
+      // cabeçalho (herói / MEU TREINO) — roxo em cima de roxo, nunca mais
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino');" +
+      // entrar na área de treino repinta as últimas cargas (tela 25)
+      "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // a sequência e os hábitos são conteúdo do Início: fora dele a faixa
       // colorida fica curta, só com o nome, o nível e o XP
       "var tpx=document.getElementById('topoExtra');if(tpx)tpx.style.display=(s==='inicio'?'':'none');" +

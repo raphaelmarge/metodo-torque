@@ -1846,7 +1846,8 @@ async function abaPt(p, a) {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return window.__montaAppAluno(st.alunos[0], new Date().toISOString());
   });
-  ok(/A — Peito\/Tríceps/.test(appHtml) && /Supino reto/.test(appHtml) && /4×10/.test(appHtml), "app leva a ficha estruturada (Supino 4×10)");
+  // tela 25: a linha do exercício mostra "4 × 10" (com respiro)
+  ok(/A — Peito\/Tríceps|Peito\/Tríceps/.test(appHtml) && /Supino reto/.test(appHtml) && /4 × 10/.test(appHtml), "app leva a ficha estruturada (Supino 4 × 10)");
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
   ok(/Sem esse aparelho hoje\?/.test(appHtml) && /Troca por: /.test(appHtml), "exercícios trazem substitutos do mesmo padrão de movimento");
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
@@ -2031,7 +2032,7 @@ async function abaPt(p, a) {
   ok(appHtml.includes("if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length"),
     "app num celular novo (sem registro local) NÃO devolve dados vazios pra nuvem");
   ok(/setbtn/.test(appHtml) && /tmrbtn/.test(appHtml), "exercícios têm botões de séries e cronômetro");
-  ok(/>Descanso 100s</.test(appHtml) && /100s ›/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
+  ok(/>Descanso 100s</.test(appHtml) && /data-s='100'/.test(appHtml), "descanso programado (100s) vira o cronômetro principal do exercício no app");
   ok(/"d":100/.test(appHtml), "treino guiado usa o descanso programado do exercício");
   ok(/Minhas sessões/.test(appHtml) && /07:30/.test(appHtml), "próximas sessões embutidas no app");
   // 📷 foto da ficha: o professor escolhe uma por ficha e ela vira a capa do card do dia
