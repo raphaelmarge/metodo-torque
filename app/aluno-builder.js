@@ -930,6 +930,17 @@
       "<div style='display:flex;gap:8px;margin-top:10px;'><input id='mpAlvo' inputmode='decimal' placeholder='Minha meta (kg)' style='flex:1;min-width:0'><button class='btnx' id='mpSalva' style='padding:11px 16px;'>Definir meta</button></div>" +
       "<div id='mpBarra' style='margin-top:8px;'></div></div>" +
       // ---- UTILIDADES (gaveta ☰): água, cronômetro, 1RM, anilhas, IMC ----
+      // ---------- Utilidades (tela 15): cabeçalho próprio + água + grade ----------
+      // O hub mostra água e a grade de ferramentas; tocar numa ferramenta esconde
+      // o hub e mostra só ela, com o Voltar em cima (telas 16-18). Nada de lógica
+      // nova: as calculadoras e o cronômetro são os mesmos, só mudam de roupa.
+      "<div class='cardx' id='utilTopo' style='margin:0;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:26px 20px 22px;color:#fff;'>" +
+      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Utilidades</div>" +
+      "<div style='font-size:30px;font-weight:900;letter-spacing:-.03em;margin-top:2px;'>Caixa de ferramentas</div></div></div>" +
+      "<div class='cardx' id='utilVoltar' style='display:none;align-items:center;justify-content:space-between;'>" +
+      "<button type='button' id='utVoltBt' class='btnx' style='background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#d6d2df;box-shadow:none;padding:11px 24px;border-radius:99px;'>Voltar</button>" +
+      "<span id='utVoltNome' style='font-size:11px;font-weight:800;letter-spacing:.18em;color:#8a8695;'></span></div>" +
       "<div class='cardx' id='utilAgua'><h2>Água de hoje</h2>" +
       "<div id='agCopos' style='display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 10px;'></div>" +
       "<div style='display:flex;gap:8px;align-items:center;'>" +
@@ -941,17 +952,36 @@
       "<label style='flex:1;font-size:11px;color:#a9a4b5;'>Tamanho do copo<select id='agMlSel' style='width:100%;margin-top:3px;'><option value='200'>200 ml</option><option value='250' selected>250 ml</option><option value='300'>300 ml</option><option value='500'>500 ml (garrafa)</option></select></label></div>" +
       "<label style='display:block;font-size:11px;color:#a9a4b5;margin-top:8px;'>Lembrete pra beber água (toca com o app aberto)" +
       "<select id='agLemSel' style='width:100%;margin-top:3px;'><option value='0'>Desligado</option><option value='60'>A cada 1 hora</option><option value='90'>A cada 1h30</option><option value='120'>A cada 2 horas</option></select></label></div>" +
+      // grade 2×2 de ferramentas (tela 15) — cada tile abre a própria página
+      "<div class='cardx' id='utilHub'><h2>Ferramentas</h2>" +
+      "<div style='display:grid;grid-template-columns:1fr 1fr;gap:12px;'>" +
+      (function () {
+        var sv = function (p) { return "<svg width='25' height='25' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + p + "</svg>"; };
+        return [
+          ["crono", sv("<circle cx='12' cy='13.5' r='7.5'/><path d='M12 9.8v3.7l2.6 1.6M9.5 2.5h5M12 2.5V6'/>"), "Cronômetro", "crono, timer, tabata, EMOM e AMRAP"],
+          ["anilha", sv("<circle cx='12' cy='12' r='8'/><circle cx='12' cy='12' r='2.6'/><path d='M12 4v3M12 17v3M4 12h3M17 12h3'/>"), "Anilhas", "quais colocar em cada lado da barra"],
+          ["rm", sv("<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>"), "1RM", "seu máximo e as porcentagens"],
+          ["imc", sv("<path d='M4.5 17.5a8 8 0 1 1 15 0'/><path d='M12 13.5 15.5 9'/><circle cx='12' cy='14' r='1.4'/>"), "IMC", "com a sua altura já preenchida"],
+        ].map(function (t) {
+          return "<button type='button' data-utgo='" + t[0] + "' style='background:var(--bg4);border:1px solid rgba(255,255,255,.05);border-radius:20px;padding:16px 14px;text-align:left;cursor:pointer;font-family:inherit;color:#fff;min-height:118px;'>" +
+            "<span style='display:block;line-height:0;color:var(--corc);margin-bottom:12px;'>" + t[1] + "</span>" +
+            "<b style='font-size:16.5px;font-weight:800;letter-spacing:-.01em;'>" + t[2] + "</b>" +
+            "<span style='display:block;font-size:12px;color:#8a8695;margin-top:3px;line-height:1.35;'>" + t[3] + "</span></button>";
+        }).join("");
+      })() +
+      "</div></div>" +
       "<div class='cardx' id='utilCrono'><h2>Cronômetro e timers de treino</h2>" +
       "<div id='ucTipos' style='display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;'></div>" +
       "<div id='ucCfg' style='display:none;gap:8px;margin-bottom:10px;'></div>" +
-      "<div id='ucTela' style='text-align:center;padding:14px 10px;border-radius:14px;background:var(--bg4);border:1px solid rgba(255,255,255,.06);'>" +
-      "<div id='ucFase' style='font-size:11px;font-weight:800;letter-spacing:.16em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
-      "<div id='ucTempo' style='font-size:46px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;'>0:00.0</div>" +
+      // tela 16: tempo gigante sem caixa e botões redondos (Zerar · Iniciar · Volta)
+      "<div id='ucTela' style='text-align:center;padding:20px 10px 6px;'>" +
+      "<div id='ucFase' style='font-size:11px;font-weight:800;letter-spacing:.2em;color:#a9a4b5;text-transform:uppercase;'>Pronto?</div>" +
+      "<div id='ucTempo' style='font-size:clamp(58px,21vw,86px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.05;letter-spacing:-.03em;'>0:00.0</div>" +
       "<div id='ucInfo' style='font-size:12px;color:#a9a4b5;'></div></div>" +
-      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
-      "<button class='btnx' id='ucGo' style='flex:2;'>Iniciar</button>" +
-      "<button class='btnx' id='ucVolta' style='flex:1;background:var(--bg4);border:1px solid var(--cor);box-shadow:none;'>Volta</button>" +
-      "<button class='btnx' id='ucZera' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Zerar</button></div>" +
+      "<div style='display:flex;gap:18px;margin-top:16px;align-items:center;justify-content:center;'>" +
+      "<button class='btnx' id='ucZera' style='flex:none;width:76px;height:76px;border-radius:50%;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;font-size:13px;padding:0;'>Zerar</button>" +
+      "<button class='btnx' id='ucGo' style='flex:none;width:118px;height:118px;border-radius:50%;font-size:17px;padding:0;'>Iniciar</button>" +
+      "<button class='btnx' id='ucVolta' style='flex:none;width:76px;height:76px;border-radius:50%;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;font-size:13px;padding:0;'>Volta</button></div>" +
       "<div id='ucVoltas' class='vz' style='font-size:12px;'></div>" +
       "<div id='ucHist' class='vz' style='font-size:12px;text-align:left;'></div></div>" +
       "<div class='cardx' id='utilRm'><h2>Calculadora de 1RM</h2>" +
@@ -2524,9 +2554,10 @@
       "function agN(){return +L('ptaguaN_'+isoHj(),0)||0;}" +
       "function pintaAgua(anima){var cfg=agCfg(),n=agN();var box=document.getElementById('agCopos');if(!box)return;" +
       "document.getElementById('agMetaSel').value=String(cfg.copos);document.getElementById('agMlSel').value=String(cfg.ml);" +
+      // tela 15: os copos são quadradinhos arredondados na cor do studio
       "var html='';for(var i=0;i<cfg.copos;i++){var cheio=i<n;" +
-      "html+=\"<div class='copo' data-ci='\"+i+\"' style='width:33px;height:44px;border:2px solid \"+(cheio?'#38bdf8':'var(--bg11)')+\";border-radius:5px 5px 11px 11px;position:relative;overflow:hidden;cursor:pointer;background:var(--bg4);\"+(anima&&i===n-1?'animation:copoPop .4s;':'')+\"'>\"+" +
-      "\"<div style='position:absolute;left:0;right:0;bottom:0;height:\"+(cheio?'82%':'0')+\";background:linear-gradient(180deg,#7dd3fc,#0284c7);transition:height .35s;'></div></div>\";}" +
+      "html+=\"<div class='copo' data-ci='\"+i+\"' style='width:44px;height:52px;border:2px solid \"+(cheio?'transparent':'var(--bg11)')+\";border-radius:13px;position:relative;overflow:hidden;cursor:pointer;background:var(--bg4);\"+(anima&&i===n-1?'animation:copoPop .4s;':'')+\"'>\"+" +
+      "\"<div style='position:absolute;left:0;right:0;bottom:0;height:\"+(cheio?'100%':'0')+\";background:linear-gradient(180deg,var(--corc),var(--cor));transition:height .35s;'></div></div>\";}" +
       "box.innerHTML=html;" +
       "var ml=n*cfg.ml;var falta=cfg.copos-n;" +
       "document.getElementById('agInfo').textContent=n>=cfg.copos?'Meta do dia batida — '+(ml/1000).toFixed(2).replace('.',',')+' L! Hábito Água marcado sozinho.':" +
@@ -2617,19 +2648,45 @@
       "ucEl('ucZera').addEventListener('click',function(){clearInterval(uc.iv);uc.iv=null;uc.run=false;uc.acum=0;uc.voltas=[];uc.ultMin=-1;uc.ultFase='';soltaTela();" +
       "ucEl('ucGo').textContent='Iniciar';ucEl('ucVoltas').textContent='';ucPinta();});" +
       "ucEl('ucVolta').addEventListener('click',function(){if(!uc.run)return;var el2=(Date.now()-uc.t0)/1000;" +
+      // tela 16: cada volta vira uma linha com o tempo DELA e a diferença pra
+      // anterior (verde quando foi mais rápida) — a mais nova em cima
       "if(uc.tipo==='crono'){uc.voltas.push(el2);if(navigator.vibrate)navigator.vibrate(50);" +
-      "ucEl('ucVoltas').innerHTML=uc.voltas.slice(-8).map(function(v2,i2){return 'Volta '+(i2+1)+': <b>'+ucFmt(v2,true)+'</b>';}).join(' · ');return;}" +
+      "var vs=uc.voltas;var rows='';for(var i2=vs.length-1;i2>=0;i2--){var lap=vs[i2]-(i2>0?vs[i2-1]:0);" +
+      "var ant2=i2>0?vs[i2-1]-(i2>1?vs[i2-2]:0):null;var df=ant2==null?null:lap-ant2;" +
+      "var dtx=df==null?'—':(df<=-0.05?'-':'+')+ucFmt(Math.abs(df),false);" +
+      "rows+=\"<div style='display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg5);padding:10px 2px;font-size:14.5px;'><span>Volta \"+(i2+1)+\"</span>\"+" +
+      "\"<span style='display:flex;gap:12px;align-items:center;'><b style='font-variant-numeric:tabular-nums;'>\"+ucFmt(lap,false)+\"</b>\"+" +
+      "\"<i style='font-style:normal;font-size:12.5px;font-weight:800;min-width:44px;text-align:right;color:\"+(df!=null&&df<=-0.05?'#4ade80':'#8a8695')+\";'>\"+dtx+\"</i></span></div>\";}" +
+      "ucEl('ucVoltas').innerHTML=\"<div class='wpk' style='margin:16px 0 2px;'>\"+vs.length+(vs.length===1?' volta marcada':' voltas marcadas')+'</div>'+rows;return;}" +
       "if(uc.tipo==='amrap'){uc.voltas.push(el2);if(navigator.vibrate)navigator.vibrate(80);bip(760,90);" +
       "var n2=uc.voltas.length;var ant=n2>1?uc.voltas[n2-2]:0;" +
       "ucEl('ucVoltas').innerHTML='<b>'+n2+'</b> round'+(n2===1?'':'s')+' — último em '+ucFmt(el2-ant,false);ucPinta();}});" +
       "ucSel('crono');pintaUcHist();" +
+      // ---- utilidades: hub (tela 15) — a grade abre cada ferramenta sozinha ----
+      "var UTT={crono:['utilCrono','Cronômetro'],anilha:['utilAnilha','Anilhas'],rm:['utilRm','1RM'],imc:['utilImc','IMC']};" +
+      "function utilVai(t){Object.keys(UTT).forEach(function(k){var el=document.getElementById(UTT[k][0]);if(el)el.style.display=t===k?'':'none';});" +
+      "['utilTopo','utilAgua','utilHub'].forEach(function(id2){var el=document.getElementById(id2);if(el)el.style.display=t?'none':'';});" +
+      "var vb2=document.getElementById('utilVoltar');if(vb2){vb2.style.display=t?'flex':'none';document.getElementById('utVoltNome').textContent=t?UTT[t][1].toUpperCase():'';}" +
+      "window.scrollTo(0,0);}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-utgo]');" +
+      "if(b){if(navigator.vibrate)navigator.vibrate(8);utilVai(b.getAttribute('data-utgo'));return;}" +
+      "if(e.target.closest('#utVoltBt'))utilVai(null);});" +
+      "utilVai(null);window.__utilVai=utilVai;" +
       // ---- utilidades: calculadora de 1RM (fórmula de Epley) ----
       "function pintaRm(){var kg=parseFloat((document.getElementById('rmKg').value||'').replace(',','.'));" +
       "var reps=parseInt(document.getElementById('rmReps').value,10);var out=document.getElementById('rmOut');" +
       "if(!kg||!reps||reps<1||reps>20){out.innerHTML='';return;}" +
-      "var rm=reps===1?kg:kg*(1+reps/30);" +
-      "out.innerHTML=\"<div style='text-align:center;font-size:15px;margin-bottom:8px;'>Seu 1RM estimado: <b style='color:var(--corc);font-size:22px;'>\"+(Math.round(rm*2)/2).toString().replace('.',',')+\" kg</b></div>\"+" +
-      "[95,90,85,80,75,70,60].map(function(p){return \"<div class='kv'><span>\"+p+\"% (\"+(p>=90?'força':p>=75?'hipertrofia':'resistência')+\")</span><b>\"+(Math.round(rm*p/100*2)/2).toString().replace('.',',')+\" kg</b></div>\";}).join('');}" +
+      "var rm=reps===1?kg:kg*(1+reps/30);var rmv=(Math.round(rm*2)/2).toString().replace('.',',');" +
+      // tela 17: card roxo com o número gigante + tabela de objetivos (80% em destaque)
+      "out.innerHTML=\"<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:20px;text-align:center;color:#fff;'>\"+" +
+      "\"<div style='font-size:9.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.8);'>Seu 1RM estimado</div>\"+" +
+      "\"<div style='font-size:52px;font-weight:900;letter-spacing:-.03em;line-height:1.15;'>\"+rmv+\"<small style='font-size:22px;font-weight:800;'> kg</small></div>\"+" +
+      "\"<div style='font-size:12.5px;color:rgba(255,255,255,.85);margin-top:2px;'>pela fórmula de Epley · \"+String(kg).replace('.',',')+\" kg × \"+reps+\" reps</div></div>\"+" +
+      "\"<div class='wpk' style='margin:16px 0 2px;'>Quanto usar em cada objetivo</div>\"+" +
+      "[[95,'força máxima'],[90,'força'],[85,'força / hipertrofia'],[80,'hipertrofia'],[75,'hipertrofia'],[70,'resistência'],[60,'resistência / técnica']].map(function(pr){var p=pr[0];" +
+      "return \"<div style='display:flex;align-items:center;gap:12px;border-top:1px solid var(--bg5);padding:12px 8px;font-size:14px;\"+(p===80?'background:rgba(var(--cor-rgb),.14);border-radius:14px;border-top-color:transparent;':'')+\"'><b style='width:44px;'>\"+p+\"%</b><span style='flex:1;color:#8a8695;'>\"+pr[1]+\"</span><b>\"+(Math.round(rm*p/100*2)/2).toString().replace('.',',')+\" kg</b></div>\";}).join('');" +
+      // guarda o último 1RM no aparelho: a calculadora de anilhas usa (tela 18)
+      "Sv('ptrm1',{kg:kg,reps:reps,rm:Math.round(rm*2)/2});}" +
       "document.getElementById('rmKg').addEventListener('input',pintaRm);document.getElementById('rmReps').addEventListener('input',pintaRm);" +
       // ---- utilidades: calculadora de anilhas ----
       "function pintaAnilha(){var alvo=parseFloat((document.getElementById('anKg').value||'').replace(',','.'));" +
@@ -2638,9 +2695,22 @@
       "var lado=(alvo-barra)/2;var resto=lado;var PL=[25,20,15,10,5,2.5,1.25];var usa=[];" +
       "PL.forEach(function(pl){var q=Math.floor(resto/pl+1e-9);if(q>0){usa.push([pl,q]);resto=Math.round((resto-q*pl)*100)/100;}});" +
       "var montado=barra+2*(lado-resto);" +
-      "out.innerHTML=\"<div style='font-size:13px;margin-bottom:6px;'>Em CADA lado da barra:</div>\"+" +
-      "\"<div style='display:flex;gap:6px;flex-wrap:wrap;'>\"+(usa.length?usa.map(function(u){return \"<span style='background:rgba(var(--cor-rgb),.18);border:1px solid var(--cor);border-radius:99px;padding:6px 13px;font-weight:800;font-size:13px;'>\"+u[1]+\"× \"+String(u[0]).replace('.',',')+\" kg</span>\";}).join(''):\"<span class='vz'>só a barra</span>\")+'</div>'+" +
-      "(resto>0.01?\"<div class='vz' style='font-size:12px;'>Não fecha exato com anilhas padrão — mais próximo: <b>\"+montado.toString().replace('.',',')+\" kg</b> no total.</div>\":'');}" +
+      // tela 18: a barra desenhada — anilha maior é mais alta e mais forte na cor
+      "var AH={25:92,20:86,15:74,10:62,5:48,2.5:38,1.25:30};" +
+      "function anPl(u){var h=AH[u[0]]||34;var cor2=u[0]>=20?'linear-gradient(180deg,var(--corc),var(--cor))':u[0]>=10?'rgba(var(--cor-rgb),.55)':'var(--bg8)';var b='';" +
+      "for(var q=0;q<Math.min(u[1],4);q++)b+=\"<span style='display:inline-block;flex:none;width:\"+(u[0]>=10?15:11)+\"px;height:\"+h+\"px;border-radius:6px;background:\"+cor2+\";'></span>\";return b;}" +
+      "var esq=usa.map(anPl).join(''),dir=usa.slice().reverse().map(anPl).join('');" +
+      "out.innerHTML=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:16px;'>\"+" +
+      "\"<div style='font-size:13.5px;color:#d6d2df;'>Em <b>cada lado</b> da barra:</div>\"+" +
+      "\"<div style='display:flex;align-items:center;justify-content:center;gap:3px;margin:18px 0 14px;min-height:96px;'>\"+esq+\"<span style='flex:none;width:64px;height:9px;border-radius:99px;background:var(--bg8);margin:0 4px;'></span>\"+dir+'</div>'+" +
+      "\"<div style='display:flex;gap:8px;flex-wrap:wrap;justify-content:center;'>\"+(usa.length?usa.map(function(u){return \"<span style='background:rgba(var(--cor-rgb),.14);border:1.5px solid var(--cor);border-radius:99px;padding:9px 16px;font-weight:800;font-size:14px;'>\"+u[1]+\" × \"+String(u[0]).replace('.',',')+\" kg</span>\";}).join(''):\"<span class='vz'>só a barra</span>\")+'</div>'+" +
+      "\"<div style='text-align:center;font-size:13px;color:#8a8695;margin-top:12px;'>barra \"+barra+\" + \"+String(Math.round(2*(lado-resto)*100)/100).toString().replace('.',',')+\" em anilhas = <b>\"+montado.toString().replace('.',',')+\" kg</b></div>\"+" +
+      "(resto>0.01?\"<div class='vz' style='font-size:12px;text-align:center;'>não fecha exato com anilhas padrão — esse é o mais próximo</div>\":'')+'</div>'+" +
+      // se o aluno já calculou o 1RM, mostra as cargas dos objetivos aqui também
+      "(function(){var r1=L('ptrm1',null);if(!r1||!r1.rm)return '';" +
+      "return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-top:12px;'>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;align-items:center;'><span class='wpk'>Do seu 1RM</span><b style='font-size:20px;'>\"+String(r1.rm).replace('.',',')+\" kg</b></div>\"+" +
+      "[[90,'força'],[80,'hipertrofia'],[70,'resistência']].map(function(pr){return \"<div style='display:flex;gap:12px;border-top:1px solid var(--bg5);padding:9px 2px;font-size:13.5px;'><b style='width:40px;'>\"+pr[0]+\"%</b><span style='flex:1;color:#8a8695;'>\"+pr[1]+\"</span><b>\"+(Math.round(r1.rm*pr[0]/100*2)/2).toString().replace('.',',')+\" kg</b></div>\";}).join('')+'</div>';})();}" +
       "document.getElementById('anKg').addEventListener('input',pintaAnilha);document.getElementById('anBarra').addEventListener('change',pintaAnilha);" +
       // ---- utilidades: IMC ----
       "function pintaImc(){var kg=parseFloat((document.getElementById('imcKg').value||'').replace(',','.'));" +
@@ -3281,11 +3351,13 @@
       "pintaAbas(s);" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
-      // no Início, Treinos e Evolução a faixa colorida some: cada área tem o
-      // próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao');" +
+      // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
+      // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
+      // entrar nas Utilidades sempre começa no hub (água + grade)
+      "if(s==='util'&&window.__utilVai)window.__utilVai(null);" +
       // a sequência e os hábitos são conteúdo do Início: fora dele a faixa
       // colorida fica curta, só com o nome, o nível e o XP
       "var tpx=document.getElementById('topoExtra');if(tpx)tpx.style.display=(s==='inicio'?'':'none');" +
