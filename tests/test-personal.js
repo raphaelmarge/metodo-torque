@@ -2851,7 +2851,7 @@ async function abaPt(p, a) {
       window.MTStore.write("ptStudio", st);
       return window.__montaAppAluno(window.MTStore.read("ptStudio", {}).alunos[0], new Date().toISOString());
     });
-    ok(/Mural do studio/.test(comMural) && /Treinão de sábado/.test(comMural), "aviso do mural entra no app do aluno");
+    ok(/Recado do /.test(comMural) && /Treinão de sábado/.test(comMural), "aviso do mural entra no app do aluno");
     ok(await p.evaluate(() => !!document.getElementById("cfgMural")), "módulo tem o campo 📌 Mural na ilha");
   }
   ok(/Conquistas<\/h2>/.test(appHtml) && /cqGrid/.test(appHtml) && /Treinos por semana/.test(appHtml), "app tem painel de conquistas com gráfico de semanas");
@@ -3386,6 +3386,8 @@ async function abaPt(p, a) {
   await pApp.route("**/rest/v1/rpc/app_aluno_treino_reg", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await pApp.route("**/rest/v1/rpc/app_aluno_checkin", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await pApp.route("**/rest/v1/rpc/app_aluno_busca", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(null) }));
+  // o ranking da turma (tela 49) dispara no load — mock determinístico, nunca produção
+  await pApp.route("**/rest/v1/rpc/app_desafio_ranking", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ ranking: [] }) }));
   // serve via http (setContent teria origem opaca, sem localStorage)
   await pApp.route("**/app-teste-personal.html", (r) => r.fulfill({ contentType: "text/html", body: appHtml2 }));
   await pApp.goto(BASE + "/app-teste-personal.html", { waitUntil: "domcontentloaded" });
