@@ -4917,7 +4917,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var bloqueadas = datas.filter(function (dt) { return bloqueioDe(st, dt); });
     if (bloqueadas.length) {
       var b0 = bloqueioDe(st, bloqueadas[0]);
-      if (!confirm(bloqueadas.length + " dia(s) escolhido(s) estão bloqueados na sua agenda (" + (b0.motivo || "bloqueio") + " — ex.: " + S.fmtData(bloqueadas[0]) + "). Agendar mesmo assim?")) return;
+      if (!confirm(S.plural(bloqueadas.length, "dia escolhido está bloqueado", "dias escolhidos estão bloqueados") + " na sua agenda (" + (b0.motivo || "bloqueio") + " — ex.: " + S.fmtData(bloqueadas[0]) + "). Agendar mesmo assim?")) return;
     }
     // choque de horário: já existe sessão no mesmo dia + hora?
     if (hora) {
@@ -6669,7 +6669,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     st.config = st.config || {};
     var saindoAs = pagEspelho(st).provedor === "asaas" && prov !== "asaas" ? alunosComAssinaturaAs(st) : 0;
-    if (saindoAs && !confirm("Atenção: " + saindoAs + " aluno(s) têm cobrança automática no Asaas. Trocar de plataforma NÃO cancela essas assinaturas — o Asaas continua cobrando e a baixa PARA de entrar aqui.\n\nO certo é cancelar antes (perfil do aluno → cancelar). Trocar mesmo assim?")) return;
+    if (saindoAs && !confirm("Atenção: " + S.plural(saindoAs, "aluno tem", "alunos têm") + " cobrança automática no Asaas. Trocar de plataforma NÃO cancela essas assinaturas — o Asaas continua cobrando e a baixa PARA de entrar aqui.\n\nO certo é cancelar antes (perfil do aluno → cancelar). Trocar mesmo assim?")) return;
     if (prov === "outro") {
       var lk = ($("cfgPagLink").value || "").trim();
       if (!/^https:\/\//.test(lk)) { pintaPagStatus("Cole um link completo, começando com https://"); return; }
@@ -6708,7 +6708,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var stAvisa = load();
     var desligaAs = pagEspelho(stAvisa).provedor === "asaas" ? alunosComAssinaturaAs(stAvisa) : 0;
     var msgDeslg = "Desligar o link de cobrança? O Pix com a sua chave continua funcionando normal." +
-      (desligaAs ? "\n\nATENÇÃO: " + desligaAs + " aluno(s) têm cobrança automática no Asaas — desligar aqui NÃO cancela essas assinaturas (cancele antes no perfil de cada aluno, ou depois direto no site asaas.com)." : "");
+      (desligaAs ? "\n\nATENÇÃO: " + S.plural(desligaAs, "aluno tem", "alunos têm") + " cobrança automática no Asaas — desligar aqui NÃO cancela essas assinaturas (cancele antes no perfil de cada aluno, ou depois direto no site asaas.com)." : "");
     if (!confirm(msgDeslg)) return;
     var st = load();
     var eraOutro = pagEspelho(st).provedor === "outro";
