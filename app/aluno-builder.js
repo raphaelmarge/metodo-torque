@@ -680,9 +680,12 @@
       "<button class='btnx' id='agPede' style='width:100%;min-height:58px;font-size:16px;margin-top:10px;'>+ Pedir um horário</button></div>" +
       "<div class='vz' id='agNota' style='font-size:11.5px;'>Toque num dia pra ver os horários ou pedir um novo.</div>" +
       "<div id='agPend' style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:8px;'></div></div>" +
-      // ---------- Evolução (tela 49): cabeçalho com nível/XP + pílulas ----------
+      // ---------- Evolução (telas 49/41/42/32): cabeçalho por aba + 4 pílulas ----------
+      // Conquistas mostra o anel do nível; Corpo/Cargas/Marcas trocam o
+      // cabeçalho pelo número da aba (delta de peso, recordes e marcas do mês)
       "<div class='cardx' id='evTopo' style='margin:0;'>" +
       "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 20px;color:#fff;display:flex;align-items:center;gap:16px;'>" +
+      "<span id='evTopoNv' style='display:flex;align-items:center;gap:16px;flex:1;min-width:0;'>" +
       "<div id='evRing' style='flex:none;width:86px;height:86px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(#fff 0 0%,rgba(255,255,255,.25) 0% 100%);'>" +
       "<div style='width:70px;height:70px;border-radius:50%;background:rgba(0,0,0,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;'>" +
       "<b id='evNvNum' style='font-size:26px;font-weight:900;line-height:1;'>1</b>" +
@@ -691,10 +694,20 @@
       "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Minha evolução</div>" +
       "<div id='evXp' style='font-size:26px;font-weight:900;letter-spacing:-.02em;margin-top:2px;'>0 XP</div>" +
       "<div style='font-size:11.5px;color:rgba(255,255,255,.85);margin-top:3px;'>treino = 10 XP · hábito = 2 XP · check-in = 20 XP</div>" +
-      "<div id='evFalta' style='font-size:11.5px;font-weight:700;color:rgba(255,255,255,.9);'></div></div></div>" +
-      "<div id='evAbas' style='display:flex;gap:8px;padding:14px 20px 0;'>" +
-      "<button type='button' data-evsub-bt='conq' style='flex:none;min-height:44px;padding:0 20px;border-radius:99px;background:var(--cor);border:1px solid var(--cor);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Conquistas</button>" +
-      "<button type='button' data-evsub-bt='corpo' style='flex:none;min-height:44px;padding:0 20px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Corpo</button></div></div>" +
+      "<div id='evFalta' style='font-size:11.5px;font-weight:700;color:rgba(255,255,255,.9);'></div></div></span>" +
+      "<span id='evTopoAlt' style='display:none;flex:1;min-width:0;'>" +
+      "<span id='evAltK' style='display:block;font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'></span>" +
+      "<span style='display:flex;align-items:baseline;gap:10px;margin-top:2px;'>" +
+      "<b id='evAltN' style='font-size:42px;font-weight:900;letter-spacing:-.03em;line-height:1.05;'></b>" +
+      "<span id='evAltS' style='font-size:13.5px;font-weight:700;color:rgba(255,255,255,.9);'></span></span></span></div>" +
+      "<div id='evAbas' style='display:flex;gap:8px;padding:14px 20px 0;overflow-x:auto;scrollbar-width:none;'>" +
+      "<button type='button' data-evsub-bt='conq' style='flex:none;min-height:44px;padding:0 18px;border-radius:99px;background:var(--cor);border:1px solid var(--cor);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Conquistas</button>" +
+      "<button type='button' data-evsub-bt='corpo' style='flex:none;min-height:44px;padding:0 18px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Corpo</button>" +
+      "<button type='button' data-evsub-bt='cargas' style='flex:none;min-height:44px;padding:0 18px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Cargas</button>" +
+      "<button type='button' data-evsub-bt='marcas' style='flex:none;min-height:44px;padding:0 18px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;'>Marcas</button></div></div>" +
+      // páginas novas (telas 42 e 32) — pintadas em runtime dos dados do aparelho
+      "<div class='cardx' id='evCargas'><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div></div>" +
+      "<div class='cardx' id='evMarcas'><div id='mkBox' class='vz'>Suas marcas aparecem aqui.</div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
@@ -943,12 +956,20 @@
       "<input id='dcKg' inputmode='decimal' placeholder='kg' style='width:74px'><input id='dcReps' inputmode='numeric' placeholder='reps' style='width:64px'><button class='btnx' id='dcAdd' aria-label='Adicionar'>+</button></div>" +
       "<div id='dcLista' class='vz'>Anote a carga de cada exercício — seus recordes ficam guardados aqui.</div>" +
       "<div id='dcGraf' style='display:none;margin-top:10px;'></div></div>" +
-      "<div class='cardx'><h2>Avaliações físicas</h2><div id='evoBox'></div></div>" +
+      // tela 41: curva do peso (registros + avaliações na MESMA curva), meta
+      // com barra e a última avaliação com deltas — tudo dos dados que já existem
       "<div class='cardx'><h2>Meu peso</h2>" +
-      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
-      "<div id='pzGraf' class='vz'>Registre o peso de hoje — a curva aparece aqui.</div>" +
-      "<div style='display:flex;gap:8px;margin-top:10px;'><input id='mpAlvo' inputmode='decimal' placeholder='Minha meta (kg)' style='flex:1;min-width:0'><button class='btnx' id='mpSalva' style='padding:11px 16px;'>Definir meta</button></div>" +
-      "<div id='mpBarra' style='margin-top:8px;'></div></div>" +
+      "<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:16px;'>" +
+      "<div style='display:flex;justify-content:space-between;align-items:baseline;'><span class='wpk' style='margin:0;'>Peso</span><span id='pzTopo'></span></div>" +
+      "<div id='pzGraf' class='vz' style='padding:8px 0 0;'>Registre o peso de hoje — a curva aparece aqui.</div>" +
+      "<div id='pzNota' style='font-size:12px;color:#8a8695;margin-top:8px;'></div></div>" +
+      "<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:16px;margin-top:12px;'>" +
+      "<div style='display:flex;justify-content:space-between;align-items:center;'><span class='wpk' style='margin:0;'>Meu peso</span><span id='mpMetaTxt' style='font-size:14px;color:#d6d2df;'></span></div>" +
+      "<div id='mpBarra' style='margin-top:10px;'></div>" +
+      "<div style='display:flex;gap:8px;margin-top:12px;'><input id='pzKg' inputmode='decimal' placeholder='Peso de hoje (kg)' style='flex:1;min-width:0'><button class='btnx' id='pzAdd'>Registrar</button></div>" +
+      "<div id='mpForm' style='display:none;gap:8px;margin-top:8px;'><input id='mpAlvo' inputmode='decimal' placeholder='Minha meta (kg)' style='flex:1;min-width:0'><button class='btnx' id='mpSalva' style='padding:11px 16px;'>Definir meta</button></div>" +
+      "<div id='pzUlt' style='font-size:11.5px;color:#8a8695;margin-top:8px;'></div></div></div>" +
+      "<div class='cardx'><h2>Última avaliação</h2><div id='evoBox'></div></div>" +
       // ---- UTILIDADES (gaveta ☰): água, cronômetro, 1RM, anilhas, IMC ----
       // ---------- Utilidades (tela 15): cabeçalho próprio + água + grade ----------
       // O hub mostra água e a grade de ferramentas; tocar numa ferramenta esconde
@@ -1025,7 +1046,7 @@
       // (os hábitos de hoje subiram pra faixa colorida do topo)
       "<div class='cardx'><h2>Fotos de progresso</h2>" +
       "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer.</div>" +
-      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:10px;'>Adicionar foto de hoje" +
+      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:12px;min-height:54px;line-height:32px;font-size:15.5px;'>+ Adicionar foto de hoje" +
       "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
       "<div class='vz' style='font-size:11px;'>Suas fotos ficam com você e com o seu personal — mais ninguém vê.</div></div>" +
       (vidsApp.length ? "<div class='cardx'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
@@ -2609,29 +2630,59 @@
       "return \"<div style='flex:1;text-align:center;'><div style='font-size:10px;font-weight:800;color:\"+(pr?'var(--corc)':'#6e6a78')+\";'>\"+String(x.kg).replace('.',',')+(pr?'★':'')+\"</div><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:\"+(pr?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg12)')+\";border-radius:4px 4px 0 0;min-height:3px;'></div><div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+x.d.slice(8,10)+'/'+x.d.slice(5,7)+\"</div></div>\";}).join('')+\"</div>\";}" +
       "document.getElementById('dcLista').addEventListener('click',function(e){var r=e.target.closest('[data-dcx]');if(r)grafCarga(r.dataset.dcx);});" +
       // peso diário
-      "function pintaPeso(){var pz=L('ptpeso',{});var ks=Object.keys(pz).sort();var g=document.getElementById('pzGraf');" +
-      "if(!ks.length){return;}var l=ks.slice(-14);var vals=l.map(function(k){return +pz[k];});var max=Math.max.apply(null,vals),min=Math.min.apply(null,vals);var faixa=(max-min)||1;" +
-      "var dif=Math.round((vals[vals.length-1]-(+pz[ks[0]]))*10)/10;" +
-      "g.className='';g.innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;'><span>Hoje: <b>\"+String(vals[vals.length-1]).replace('.',',')+\" kg</b></span><span style='color:\"+(dif<0?'#4ade80':dif>0?'#f87171':'#a9a4b5')+\";font-weight:800;'>\"+(dif>0?'+':'')+String(dif).replace('.',',')+\" kg desde o início</span></div>\"+" +
-      "\"<div style='display:flex;gap:4px;align-items:flex-end;height:70px;'>\"+l.map(function(k){var v=+pz[k];var hh=Math.round(14+46*(v-min)/faixa);" +
-      "return \"<div style='flex:1;text-align:center;' title='\"+k+': '+v+\" kg'><div style='height:\"+(60-hh)+\"px;'></div><div style='height:\"+hh+\"px;background:var(--bg12);border-radius:4px 4px 0 0;'></div><div style='font-size:8.5px;color:#6e6a78;margin-top:2px;'>\"+k.slice(8,10)+\"</div></div>\";}).join('')+\"</div>\";}" +
+      // tela 41: curva de LINHA com pontos — registros do aluno + peso das
+      // avaliações do personal na MESMA curva; tocar num ponto mostra o dia
+      "function pintaPeso(){var pz=L('ptpeso',{});var pts={};Object.keys(pz).forEach(function(k){pts[k]=+pz[k];});" +
+      "(AVS||[]).forEach(function(v){if(v.peso!=null&&v.data&&pts[v.data]==null)pts[v.data]=+v.peso;});" +
+      "var ks=Object.keys(pts).sort();var g=document.getElementById('pzGraf');var topo=document.getElementById('pzTopo');" +
+      "if(!ks.length){if(topo)topo.textContent='';return;}" +
+      "var l=ks.slice(-6);var vals=l.map(function(k){return pts[k];});" +
+      "var atual=vals[vals.length-1];var dif=Math.round((atual-pts[ks[0]])*10)/10;" +
+      "if(topo)topo.innerHTML=\"<b style='font-size:24px;font-weight:900;'>\"+String(atual).replace('.',',')+\"<small style='font-size:13px;font-weight:800;'> kg</small></b>\"+" +
+      "(dif?\"<b style='font-size:13px;font-weight:800;margin-left:7px;color:\"+(dif<0?'#4ade80':'#f87171')+\";'>\"+(dif>0?'+':'')+String(dif).replace('.',',')+\"</b>\":'');" +
+      "var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);var fx=(max-min)||1;" +
+      "var W=320,H=104,PX=22,PT=26,PB=24;" +
+      "var xs=l.map(function(k,i){return PX+(W-2*PX)*(l.length===1?0.5:i/(l.length-1));});" +
+      "var ys=vals.map(function(v){return PT+(H-PT-PB)*(1-(v-min)/fx);});" +
+      "var linha='';xs.forEach(function(x,i){linha+=(i?' L':'M')+x+' '+ys[i];});" +
+      "var sv=\"<svg viewBox='0 0 \"+W+' '+H+\"' style='width:100%;display:block;'>\";" +
+      "sv+=\"<path d='\"+linha+\"' fill='none' stroke='var(--corc)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/>\";" +
+      "xs.forEach(function(x,i){var ult=i===xs.length-1;" +
+      "sv+=\"<circle cx='\"+x+\"' cy='\"+ys[i]+\"' r='\"+(ult?6:5)+\"' fill='\"+(ult?'var(--corc)':'var(--bg2)')+\"' stroke='var(--corc)' stroke-width='2.5' data-pzk='\"+l[i]+\"' data-pzv='\"+String(vals[i]).replace('.',',')+\"' style='cursor:pointer;'/>\";" +
+      "sv+=\"<text x='\"+x+\"' y='\"+(ys[i]-11)+\"' text-anchor='middle' font-size='12' font-weight='\"+(ult?'900':'700')+\"' fill='\"+(ult?'var(--corc)':'#8a8695')+\"'>\"+String(vals[i]).replace('.',',')+\"</text>\";" +
+      "sv+=\"<text x='\"+x+\"' y='\"+(H-4)+\"' text-anchor='middle' font-size='10' fill='#6e6a78'>\"+l[i].slice(8,10)+'/'+l[i].slice(5,7)+\"</text>\";});" +
+      "sv+='</svg>';g.className='';g.innerHTML=sv;" +
+      "var nota=document.getElementById('pzNota');if(nota){var nav9=(AVS||[]).filter(function(v){return v.peso!=null;}).length;" +
+      "nota.textContent=(nav9?pl(nav9,'avaliação do seu personal na curva','avaliações do seu personal na curva')+' · ':'')+'toque num ponto pra ver o dia';}" +
+      "var ult9=null;Object.keys(pz).sort().forEach(function(k){ult9=k;});" +
+      "var pu=document.getElementById('pzUlt');if(pu&&ult9)pu.textContent='Último registro seu: '+String(pz[ult9]).replace('.',',')+' kg em '+ult9.slice(8,10)+'/'+ult9.slice(5,7)+' · avaliações do seu personal entram na mesma curva';}" +
+      "document.getElementById('pzGraf').addEventListener('click',function(e){var c9=e.target.closest&&e.target.closest('[data-pzk]');if(!c9)return;" +
+      "var k9=c9.getAttribute('data-pzk');var nota=document.getElementById('pzNota');" +
+      "if(nota)nota.textContent='Dia '+k9.slice(8,10)+'/'+k9.slice(5,7)+': '+c9.getAttribute('data-pzv')+' kg';});" +
       "document.getElementById('pzAdd').addEventListener('click',function(){var v=parseFloat((document.getElementById('pzKg').value||'').replace(',','.'));" +
       "if(!v||v<20||v>400){alert('Confere o peso.');return;}var pz=L('ptpeso',{});pz[isoHj()]=v;Sv('ptpeso',pz);document.getElementById('pzKg').value='';pintaPeso();" +
       "var ck=document.getElementById('ckPeso');if(ck&&!ck.value)ck.value=String(v).replace('.',',');pintaMetaPeso();});" +
       "pintaPeso();" +
       // meta de peso: alvo definido pelo aluno vira barra de progresso
+      // tela 41: 'meta 62 kg' à direita, barra, 'faltam X kg' + 'Mudar a meta'
       "function pintaMetaPeso(){var box=document.getElementById('mpBarra');if(!box)return;var alvo=parseFloat(L('ptmetapeso',''));" +
+      "var mt=document.getElementById('mpMetaTxt');" +
       "var pz=L('ptpeso',{});var ks=Object.keys(pz).sort();" +
-      "if(!alvo||!ks.length){box.innerHTML=alvo?\"<div class='vz' style='font-size:12px;'>Meta: \"+String(alvo).replace('.',',')+\" kg — registre o peso pra ver o progresso.</div>\":'';return;}" +
+      "if(mt)mt.innerHTML=alvo?\"meta <b>\"+String(alvo).replace('.',',')+\" kg</b>\":'';" +
+      "if(!alvo||!ks.length){box.innerHTML=\"<button type='button' id='mpMuda' style='background:none;border:none;color:var(--corc);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0;'>\"+(alvo?'Mudar a meta':'Definir uma meta')+'</button>'+" +
+      "(alvo?\"<div class='vz' style='font-size:12px;text-align:left;padding:4px 0 0;'>registre o peso pra ver o progresso</div>\":'');return;}" +
       "var ini=+pz[ks[0]],atual=+pz[ks[ks.length-1]];" +
       "var total=ini-alvo;var feito=ini-atual;var falta=Math.round((atual-alvo)*10)/10;" +
       "var pct=total!==0?Math.max(0,Math.min(100,Math.round(100*feito/total))):100;" +
       "var bateu=(total>=0&&atual<=alvo)||(total<0&&atual>=alvo);" +
-      "box.innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta: <b>\"+String(alvo).replace('.',',')+\" kg</b></span><b style='color:\"+(bateu?'#4ade80':'var(--corc)')+\";'>\"+(bateu?'META BATIDA!':Math.abs(falta).toString().replace('.',',')+' kg pra chegar')+\"</b></div>\"+" +
-      "\"<div style='height:10px;background:var(--bg4);border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+(bateu?100:pct)+\"%;background:linear-gradient(90deg,\"+(bateu?'#16a34a,#4ade80':'var(--cor),var(--corc)')+\");border-radius:99px;transition:width .5s;'></div></div>\";" +
+      "box.innerHTML=\"<div style='height:10px;background:var(--bg4);border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+(bateu?100:pct)+\"%;background:linear-gradient(90deg,\"+(bateu?'#16a34a,#4ade80':'var(--cor),var(--corc)')+\");border-radius:99px;transition:width .5s;'></div></div>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-top:8px;'><b style='color:\"+(bateu?'#4ade80':'inherit')+\";'>\"+(bateu?'META BATIDA!':'faltam <b>'+Math.abs(falta).toString().replace('.',',')+' kg</b>')+\"</b>\"+" +
+      "\"<button type='button' id='mpMuda' style='background:none;border:none;color:var(--corc);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:0;'>Mudar a meta</button></div>\";" +
       "if(bateu&&!L('ptmetaok','')){Sv('ptmetaok','1');confete();}}" +
+      "document.getElementById('mpBarra').addEventListener('click',function(e){if(!e.target.closest||!e.target.closest('#mpMuda'))return;" +
+      "var f9=document.getElementById('mpForm');f9.style.display=f9.style.display==='none'?'flex':'none';});" +
       "document.getElementById('mpSalva').addEventListener('click',function(){var v=parseFloat((document.getElementById('mpAlvo').value||'').replace(',','.'));" +
-      "if(!v||v<20||v>400){alert('Confere a meta.');return;}Sv('ptmetapeso',String(v));Sv('ptmetaok','');document.getElementById('mpAlvo').value='';pintaMetaPeso();});" +
+      "if(!v||v<20||v>400){alert('Confere a meta.');return;}Sv('ptmetapeso',String(v));Sv('ptmetaok','');document.getElementById('mpAlvo').value='';document.getElementById('mpForm').style.display='none';pintaMetaPeso();});" +
       "(function(){var alvo=L('ptmetapeso','');if(alvo)document.getElementById('mpAlvo').placeholder='Meta atual: '+String(alvo).replace('.',',')+' kg';})();" +
       "pintaMetaPeso();" +
       // ---- utilidades: água com copinhos animados ----
@@ -2962,13 +3013,145 @@
       "t2.innerHTML=icx(ICO.alta,20)+' 3 treinos em '+kg+' kg!<br><small>Bora tentar '+String(kg+sug).replace('.',',')+' kg no pr\u00f3ximo?</small>';" +
       "document.body.appendChild(t2);setTimeout(function(){t2.remove();},4500);window.__sugestaoProg=kg+sug;}}" +
       "document.getElementById('dcKg').value='';pintaDC();});pintaDC();" +
+      // tela 41: última avaliação com deltas coloridos + histórico dobrável
       "(function(){var el=document.getElementById('evoBox');if(!AVS.length){el.innerHTML=\"<div class='vz'>Suas avaliações físicas aparecem aqui quando o personal registrar.</div>\";return;}" +
-      "function linha(rot,campo,inv){var com=AVS.filter(function(v){return v[campo]!=null;});if(com.length<1)return '';" +
-      "var pri=com[0][campo],ult=com[com.length-1][campo];var d=Math.round((ult-pri)*10)/10;" +
-      "var bom=inv?d>0:d<0;var seta=d?(\" <b class='\"+(bom?'up':'down')+\"'>\"+(d>0?'+':'')+String(d).replace('.',',')+\"</b>\"):'';" +
-      "return \"<div class='kv'><span>\"+rot+\"</span><span><b>\"+String(ult).replace('.',',')+\"</b>\"+seta+\"</span></div>\";}" +
-      "el.innerHTML=linha(icx(ICO.peso,13)+' Peso (kg)','peso')+linha(icx(ICO.pct,13)+' Gordura (%)','gordura')+linha(icx(ICO.regua,13)+' Cintura (cm)','cintura')+linha(icx(ICO.halter,13)+' Braço (cm)','braco',true)+" +
-      "\"<div class='vz'>\"+pl(AVS.length,'avaliação','avaliações')+\" · última em \"+AVS[AVS.length-1].data.split('-').reverse().join('/')+\"</div>\";})();" +
+      "var ult=AVS[AVS.length-1];" +
+      "function linha(rot,campo,unid,inv){var com=AVS.filter(function(v){return v[campo]!=null;});if(com.length<1)return '';" +
+      "var pri=com[0][campo],u=com[com.length-1][campo];var d=Math.round((u-pri)*10)/10;" +
+      "var bom=inv?d>0:d<0;" +
+      "return \"<div style='display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg5);padding:11px 2px;font-size:15px;'><span>\"+rot+\"</span>\"+" +
+      "\"<span style='display:flex;gap:12px;align-items:baseline;'><b style='font-size:16px;'>\"+String(u).replace('.',',')+unid+\"</b>\"+" +
+      "\"<i style='font-style:normal;font-weight:800;font-size:13px;min-width:42px;text-align:right;color:\"+(d?(bom?'#4ade80':'#f87171'):'#8a8695')+\";'>\"+(d?(d>0?'+':'')+String(d).replace('.',','):'—')+\"</i></span></div>\";}" +
+      "el.innerHTML=\"<div class='wpk' style='margin:0 0 4px;'>\"+pl(AVS.length,'avaliação','avaliações')+' · última em '+ult.data.slice(8,10)+'/'+ult.data.slice(5,7)+\"</div>\"+" +
+      "linha('Peso','peso',' kg')+linha('Gordura','gordura','%')+linha('Cintura','cintura',' cm')+linha('Braço','braco',' cm',true)+" +
+      "(AVS.length>1?\"<button type='button' id='evoTudo' class='btnx' style='width:100%;margin-top:12px;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;'>Ver todas as avaliações ›</button><div id='evoHist' style='display:none;margin-top:8px;'></div>\":'');" +
+      "var bt9=document.getElementById('evoTudo');if(bt9)bt9.addEventListener('click',function(){var h9=document.getElementById('evoHist');" +
+      "if(h9.style.display==='none'){h9.style.display='';bt9.textContent='Esconder o histórico';" +
+      "h9.innerHTML=AVS.slice().reverse().map(function(v){return \"<div style='border-top:1px solid var(--bg5);padding:9px 2px;font-size:13px;color:#d6d2df;'><b>\"+v.data.slice(8,10)+'/'+v.data.slice(5,7)+'</b>'+" +
+      "(v.peso!=null?' · '+String(v.peso).replace('.',',')+' kg':'')+(v.gordura!=null?' · '+String(v.gordura).replace('.',',')+'% gordura':'')+(v.cintura!=null?' · cintura '+String(v.cintura).replace('.',',')+' cm':'')+(v.braco!=null?' · braço '+String(v.braco).replace('.',',')+' cm':'')+'</div>';}).join('');}" +
+      "else{h9.style.display='none';bt9.textContent='Ver todas as avaliações ›';}});})();" +
+      // ---------- Cargas (tela 42): grupos musculares com busca ----------
+      // O grupo de cada exercício vem das fichas (objeto D) — carga é dado do
+      // aparelho (ptdc), então tudo aqui é pintura em runtime.
+      "var EXGRP=" + jsonApp((function () {
+        var m = {};
+        (fichasApp || []).forEach(function (f) {
+          (f.itens || []).forEach(function (it) { if (it.nome && it.grupo) m[it.nome] = it.grupo; });
+        });
+        return m;
+      })()) + ";" +
+      "function gcanon(g){g=String(g||'').toLowerCase();" +
+      "if(/peito|peitoral/.test(g))return 'Peito';if(/costas|dorsal|trap/.test(g))return 'Costas';" +
+      "if(/\\u00edceps|iceps|antebra|bra\\u00e7o|braco/.test(g))return 'Braço';" +
+      "if(/ombro|deltoide/.test(g))return 'Ombro';" +
+      "if(/perna|quadr|posterior|gl\\u00fateo|gluteo|panturr|adutor|abdutor/.test(g))return 'Pernas';" +
+      "if(/abd|core|lombar/.test(g))return 'Abdômen';return 'Outros';}" +
+      "function cgDados(){var dc=L('ptdc',{});var gs={};var mesK=isoHj().slice(0,7);" +
+      "Object.keys(dc).forEach(function(n){var lst=dc[n]||[];if(!lst.length)return;" +
+      "var max=null;lst.forEach(function(e){if(e&&e.kg!=null&&(!max||+e.kg>+max.kg))max=e;});" +
+      "var ult=lst[lst.length-1];var noMes=lst.some(function(e){return e&&String(e.d||'').slice(0,7)===mesK;});" +
+      "var g=gcanon(EXGRP[n]);gs[g]=gs[g]||{exs:[]};" +
+      "gs[g].exs.push({n:n,max:max?+max.kg:0,maxD:max?max.d:'',maxR:max?+max.r||0:0,ult:ult,noMes:noMes,lst:lst});});" +
+      "Object.keys(gs).forEach(function(g){gs[g].exs.sort(function(a,b){return b.max-a.max;});gs[g].best=gs[g].exs[0]?gs[g].exs[0].max:0;});return gs;}" +
+      "var cgAberto=null,cgBusca='';" +
+      "function pintaCargas(){var el=document.getElementById('cgBox');if(!el)return;var gs=cgDados();" +
+      "var ordem=[['Superiores',['Peito','Costas','Braço','Ombro']],['Inferiores',['Pernas','Abdômen']],['',['Outros']]];" +
+      "var tem=Object.keys(gs).length;if(!tem){el.className='vz';el.innerHTML='Anote as cargas nos treinos e elas aparecem aqui.';return;}" +
+      "el.className='';var h='';var mesK=isoHj().slice(0,7);" +
+      "if(cgAberto==null){var mx=0;Object.keys(gs).forEach(function(g){if(gs[g].best>mx){mx=gs[g].best;cgAberto=g;}});}" +
+      "ordem.forEach(function(par){var comG=par[1].filter(function(g){return gs[g];});if(!comG.length)return;" +
+      "if(par[0])h+=\"<div class='wpk' style='margin:14px 0 6px;'>\"+par[0]+'</div>';" +
+      "comG.forEach(function(g){var d9=gs[g];var ab=cgAberto===g;var nm=d9.exs.filter(function(x){return x.noMes;}).length;" +
+      "h+=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:4px 16px;margin-bottom:10px;'>\"+" +
+      "\"<button type='button' data-cgab='\"+g+\"' style='display:flex;align-items:center;gap:10px;width:100%;min-height:56px;background:none;border:none;cursor:pointer;font-family:inherit;color:#fff;text-align:left;padding:8px 0;'>\"+" +
+      "\"<b style='font-size:17px;font-weight:800;'>\"+g+\"</b><span style='flex:1;font-size:12px;color:#8a8695;'>\"+pl(d9.exs.length,'exercício','exercícios')+(nm?' · '+nm+' este mês':'')+\"</span>\"+" +
+      "\"<b style='font-size:15px;'>\"+(d9.best?String(d9.best).replace('.',',')+' kg':'sem carga')+\"</b>\"+" +
+      "\"<span class='mgchev' style='margin:0;transform:rotate(\"+(ab?'-90':'90')+\"deg);'><svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M9 6l6 6-6 6'/></svg></span></button>\";" +
+      "if(ab){var top=d9.exs[0];" +
+      "if(top&&top.max){var pri=null;top.lst.forEach(function(e){if(e&&e.kg!=null&&!pri)pri=e;});" +
+      "var pctS=pri&&+pri.kg?Math.round(100*(top.max-pri.kg)/pri.kg):0;" +
+      "var rm9=top.maxR>1?Math.round((top.max*(1+top.maxR/30))*2)/2:top.max;" +
+      "h+=\"<div style='background:var(--bg4);border-radius:16px;padding:14px;margin:4px 0 12px;'>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;font-size:13.5px;'><b>\"+top.n.replace(/</g,'&lt;')+\"</b><span style='color:#8a8695;'>1RM est. <b style='color:#fff;'>\"+String(rm9).replace('.',',')+\" kg</b></span></div>\"+" +
+      "\"<div style='display:flex;align-items:baseline;gap:8px;margin-top:2px;'><b style='font-size:26px;font-weight:900;'>\"+String(top.max).replace('.',',')+\"<small style='font-size:14px;'> kg</small></b>\"+" +
+      "(pctS>0&&pri?\"<b style='font-size:12.5px;color:#4ade80;'>+\"+pctS+\"% desde \"+String(pri.d||'').slice(8,10)+'/'+String(pri.d||'').slice(5,7)+\"</b>\":'')+'</div>'+" +
+      "\"<div style='display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px;'>\"+(function(){var l6=top.lst.filter(function(e){return e&&e.kg!=null;}).slice(-6);" +
+      "var mx6=0;l6.forEach(function(e){if(+e.kg>mx6)mx6=+e.kg;});" +
+      "return l6.map(function(e,i){var hh=Math.round(18+44*(+e.kg)/(mx6||1));var ult9=i===l6.length-1;" +
+      "return \"<div style='flex:1;max-width:72px;text-align:center;'><div style='font-size:10px;color:\"+(ult9?'var(--corc)':'#8a8695')+\";font-weight:800;'>\"+String(e.kg).replace('.',',')+\"</div>\"+" +
+      "\"<div style='height:\"+hh+\"px;background:\"+(ult9?'linear-gradient(180deg,var(--corc),var(--cor))':'var(--bg7)')+\";border-radius:7px;margin-top:2px;'></div>\"+" +
+      "\"<div style='font-size:9px;color:#6e6a78;margin-top:3px;'>\"+String(e.d||'').slice(8,10)+'/'+String(e.d||'').slice(5,7)+\"</div></div>\";}).join('');})()+'</div></div>';}" +
+      "h+=\"<input data-cgbusca='1' placeholder='Buscar em \"+g.toLowerCase()+\"' value='\"+cgBusca.replace(/[<'\"]/g,'')+\"' style='width:100%;margin-bottom:10px;border-radius:99px;padding-left:16px;'>\";" +
+      "var fil=d9.exs.filter(function(x){return !cgBusca||x.n.toLowerCase().indexOf(cgBusca.toLowerCase())>=0;});" +
+      "var doMes=fil.filter(function(x){return x.noMes;});var resto=fil.filter(function(x){return !x.noMes;});" +
+      "function rowEx(x){return \"<div style='display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg5);padding:10px 2px;font-size:14px;'><span style='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>\"+x.n.replace(/</g,'&lt;')+\"</span>\"+" +
+      "\"<b style='margin-left:10px;'>\"+(x.max?String(x.max).replace('.',',')+' kg':'corpo')+\"</b><span style='font-size:11px;color:#6e6a78;margin-left:10px;min-width:38px;text-align:right;'>\"+String(x.maxD||'').slice(8,10)+'/'+String(x.maxD||'').slice(5,7)+\"</span></div>\";}" +
+      "if(doMes.length)h+=\"<div class='wpk' style='margin:4px 0 2px;'>Mexeu este mês</div>\"+doMes.map(rowEx).join('');" +
+      "if(resto.length)h+=(doMes.length?\"<div class='wpk' style='margin:10px 0 2px;'>Os outros</div>\":'')+resto.map(rowEx).join('');" +
+      "h+=\"<div style='height:8px;'></div>\";}" +
+      "h+='</div>';});});el.innerHTML=h;}" +
+      "document.addEventListener('click',function(e){var b=e.target.closest('[data-cgab]');if(!b)return;" +
+      "var g=b.getAttribute('data-cgab');cgAberto=cgAberto===g?'':g;cgBusca='';pintaCargas();if(navigator.vibrate)navigator.vibrate(8);});" +
+      "document.addEventListener('input',function(e){if(!e.target.matches||!e.target.matches('[data-cgbusca]'))return;" +
+      "cgBusca=e.target.value;var v9=e.target.value;var p9=e.target.selectionStart;pintaCargas();" +
+      "var n9=document.querySelector('[data-cgbusca]');if(n9){n9.focus();n9.value=v9;try{n9.setSelectionRange(p9,p9);}catch(e2){}}});" +
+      "pintaCargas();window.__pintaCargas=pintaCargas;" +
+      // ---------- Marcas (tela 32): corrida, força e circuitos ----------
+      "function mkCorrida(){var corr=L('ptcardio',[]).filter(function(x){return x.m==='corrida'&&+x.k>0.05;});var out=[];" +
+      "if(!corr.length)return out;var mesK=isoHj().slice(0,7);" +
+      "function add(rot,val,d){if(val!=null)out.push({rot:rot,val:val,d:d,nova:String(d||'').slice(0,7)===mesK});}" +
+      "var mxK=null;corr.forEach(function(x){if(!mxK||+x.k>+mxK.k)mxK=x;});add('Maior distância',String(mxK.k).replace('.',',')+' km',mxK.d);" +
+      "var mp=null;corr.forEach(function(x){if(+x.k>=3&&x.p){if(!mp||x.p<mp.p)mp=x;}});if(mp)add('Melhor pace médio (3 km+)',mp.p,mp.d);" +
+      "[[5,'5 km'],[10,'10 km']].forEach(function(par){var mel=null;corr.forEach(function(x){if(+x.k>=par[0]*0.95&&+x.k<=par[0]*1.12){if(!mel||+x.s<+mel.s)mel=x;}});" +
+      "if(mel)add(par[1],Math.floor(mel.s/60)+':'+('0'+Math.round(mel.s%60)).slice(-2),mel.d);});" +
+      "return out;}" +
+      "function pintaMarcas(){var el=document.getElementById('mkBox');if(!el)return;el.className='';var mesK=isoHj().slice(0,7);" +
+      "var corr=mkCorrida();" +
+      "function card(tit,sub,dir,corpo){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;margin-bottom:10px;'>\"+" +
+      "\"<div style='display:flex;align-items:center;justify-content:space-between;'><span><b style='font-size:17px;font-weight:800;'>\"+tit+\"</b><span style='display:block;font-size:12px;color:#8a8695;margin-top:1px;'>\"+sub+\"</span></span><b style='font-size:13px;color:#d6d2df;'>\"+dir+\"</b></div>\"+corpo+'</div>';}" +
+      "function rowMk(m){return \"<div style='display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg5);padding:10px 2px;font-size:14px;margin-top:2px;'><span>\"+m.rot+" +
+      "(m.nova?\"<span style='background:rgba(251,191,36,.14);color:#fbbf24;border-radius:99px;padding:2px 9px;font-size:9.5px;font-weight:800;letter-spacing:.08em;margin-left:8px;'>NOVA</span>\":'')+\"</span>\"+" +
+      "\"<span style='display:flex;gap:10px;align-items:baseline;'><b style='font-size:15px;'>\"+m.val+\"</b><span style='font-size:11px;color:#6e6a78;'>\"+String(m.d||'').slice(8,10)+'/'+String(m.d||'').slice(5,7)+\"</span></span></div>\";}" +
+      "var h='';" +
+      "h+=card('Corrida','entram sozinhas quando você corre no app',pl(corr.length,'marca','marcas'),corr.length?corr.map(rowMk).join(''):\"<div class='vz' style='text-align:left;padding:8px 0 0;'>Corre com o app aberto que as marcas entram aqui.</div>\");" +
+      "var dc=L('ptdc',{});var forca=[];Object.keys(dc).forEach(function(n){var mx=null;(dc[n]||[]).forEach(function(e){if(e&&e.kg!=null&&(!mx||+e.kg>+mx.kg))mx=e;});" +
+      "if(mx&&+mx.kg>0)forca.push({rot:n.replace(/</g,'&lt;'),val:String(mx.kg).replace('.',',')+' kg',d:mx.d,nova:String(mx.d||'').slice(0,7)===mesK,kg:+mx.kg});});" +
+      "forca.sort(function(a,b){return b.kg-a.kg;});" +
+      "h+=card('Força','suas maiores cargas anotadas',pl(forca.length,'levantamento','levantamentos'),forca.length?forca.slice(0,6).map(rowMk).join(''):\"<div class='vz' style='text-align:left;padding:8px 0 0;'>Anota as cargas no treino que os recordes aparecem.</div>\");" +
+      "var wr=L('ptwodres',{});var feitos=0;var bhs=[];(typeof WODS!=='undefined'?WODS:[]).forEach(function(w){var lst=wr[w.id]||[];if(!lst.length)return;feitos++;" +
+      "var ult=lst[lst.length-1];bhs.push({rot:String(w.n).replace(/</g,'&lt;'),val:String(ult.r||'').replace(/</g,'&lt;'),d:ult.d,nova:String(ult.d||'').slice(0,7)===mesK});});" +
+      "if(typeof WODS!=='undefined'&&WODS.length)h+=card('Circuitos',bhs.length?'seu último resultado em cada um':'os circuitos que o professor montou',feitos+' de '+WODS.length+' feitos',bhs.map(rowMk).join(''));" +
+      "var mm=L('ptmarcas',[]);if(mm.length)h+=card('Marcadas na mão','anotadas por você',pl(mm.length,'marca','marcas'),mm.slice().reverse().map(function(m){return rowMk({rot:String(m.n).replace(/</g,'&lt;'),val:String(m.v).replace(/</g,'&lt;'),d:m.d,nova:String(m.d||'').slice(0,7)===mesK});}).join(''));" +
+      "h+=\"<button type='button' id='mkAdd' class='btnx' style='width:100%;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;'>+ Marcar na mão</button>\";" +
+      "el.innerHTML=h;}" +
+      "document.addEventListener('click',function(e){if(!e.target.closest||!e.target.closest('#mkAdd'))return;" +
+      "var n9=prompt('Qual marca? (ex.: Prancha, Flexões seguidas)');if(!n9)return;var v9=prompt('Qual foi o resultado? (ex.: 2:30, 25 reps)');if(!v9)return;" +
+      "var mm=L('ptmarcas',[]);mm.push({n:String(n9).slice(0,40),v:String(v9).slice(0,20),d:isoHj()});if(mm.length>30)mm.shift();Sv('ptmarcas',mm);pintaMarcas();});" +
+      "pintaMarcas();window.__pintaMarcas=pintaMarcas;" +
+      // cabeçalho da Evolução por aba (corpo = delta do peso; cargas/marcas = novidades do mês)
+      "window.__evTopoPinta=function(aba){var nv9=document.getElementById('evTopoNv'),alt=document.getElementById('evTopoAlt');if(!nv9||!alt)return;" +
+      "if(aba==='conq'){nv9.style.display='flex';alt.style.display='none';return;}" +
+      "nv9.style.display='none';alt.style.display='block';" +
+      "var K=document.getElementById('evAltK'),N=document.getElementById('evAltN'),S=document.getElementById('evAltS');var mesK=isoHj().slice(0,7);" +
+      "var MESL9=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];var mesNome=MESL9[+mesK.slice(5,7)-1];" +
+      "if(aba==='corpo'){K.textContent='Minha evolução';" +
+      "var pz=L('ptpeso',{});var pts={};Object.keys(pz).forEach(function(k){pts[k]=+pz[k];});(AVS||[]).forEach(function(v){if(v.peso!=null&&pts[v.data]==null)pts[v.data]=+v.peso;});" +
+      "var ks=Object.keys(pts).sort();" +
+      "if(ks.length<2){N.textContent='Corpo';S.textContent='registre seu peso pra acompanhar';return;}" +
+      "var d9=Math.round((pts[ks[ks.length-1]]-pts[ks[0]])*10)/10;" +
+      "N.innerHTML=(d9>0?'+':'')+String(d9).replace('.',',')+\"<small style='font-size:18px;'> kg</small>\";" +
+      "var cin=(AVS||[]).filter(function(v){return v.cintura!=null;});var cinTx='';" +
+      "if(cin.length>1){var dc9=Math.round((cin[cin.length-1].cintura-cin[0].cintura)*10)/10;if(dc9)cinTx='e '+(dc9>0?'+':'')+String(dc9).replace('.',',')+' cm de cintura ';}" +
+      "S.textContent=cinTx+'desde '+MESL9[+ks[0].slice(5,7)-1];return;}" +
+      "if(aba==='cargas'){K.textContent='Minhas cargas';var dc=L('ptdc',{});var rec=0;" +
+      "Object.keys(dc).forEach(function(n){var lst=dc[n]||[];var mx=null;lst.forEach(function(e){if(e&&e.kg!=null&&(!mx||+e.kg>+mx.kg))mx=e;});" +
+      "if(mx&&String(mx.d||'').slice(0,7)===mesK&&lst.filter(function(e){return e&&e.kg!=null;}).length>1)rec++;});" +
+      "N.textContent=rec;S.textContent=(rec===1?'recorde novo':'recordes novos')+' em '+mesNome;return;}" +
+      "K.textContent='Minhas marcas';var nova=mkCorrida().filter(function(m){return m.nova;}).length;" +
+      "var mm=L('ptmarcas',[]).filter(function(m){return String(m.d||'').slice(0,7)===mesK;}).length;" +
+      "var dc9=L('ptdc',{});Object.keys(dc9).forEach(function(n){var mx=null;(dc9[n]||[]).forEach(function(e){if(e&&e.kg!=null&&(!mx||+e.kg>+mx.kg))mx=e;});" +
+      "if(mx&&String(mx.d||'').slice(0,7)===mesK)nova++;});" +
+      "N.textContent=nova+mm;S.textContent=((nova+mm)===1?'marca nova':'marcas novas')+' em '+mesNome;};" +
       // desafio em grupo: meus pontos + placar da turma
       ((st.desafio && st.desafio.nome && st.desafio.fim >= S.todayISO())
         ? "var DESAFIO=" + jsonApp({ ini: st.desafio.ini, fim: st.desafio.fim }) + ";" +
@@ -3330,7 +3513,7 @@
       "var OCULTA=" + jsonApp(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Diário de cargas|Raio-X|Modo circuito/.test(t))return 'treino';" +
-      "if(/Conquistas|Minha evolução|Avaliações físicas|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
+      "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
@@ -3351,19 +3534,25 @@
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
       "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
-      "if(el.id==='evTopo'){el.setAttribute('data-sec','evolucao');return;}" +
+      "if(el.id==='evTopo'||el.id==='evCargas'||el.id==='evMarcas'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
       "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
       "if(/^aj/.test(String(el.id||''))){el.setAttribute('data-sec','ajustes');return;}" +
       "if(/^util/.test(String(el.id||''))){el.setAttribute('data-sec','util');return;}" +
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
-      // pílulas da Evolução (tela 49): Conquistas × Corpo
+      // pílulas da Evolução (telas 49/41/42/32): Conquistas × Corpo × Cargas × Marcas
       "(function(){document.querySelectorAll(\"[data-sec='evolucao']\").forEach(function(el){if(el.id==='evTopo')return;" +
+      "if(el.id==='evCargas'){el.setAttribute('data-evsub','cargas');return;}" +
+      "if(el.id==='evMarcas'){el.setAttribute('data-evsub','marcas');return;}" +
       "var h=el.querySelector('h2');el.setAttribute('data-evsub',/Conquistas/.test(h?h.textContent:'')?'conq':'corpo');});" +
       "var atual='conq';function pintaEv(){document.querySelectorAll(\"[data-sec='evolucao'][data-evsub]\").forEach(function(el){" +
       "el.style.display=el.getAttribute('data-evsub')===atual?'':'none';});" +
       "document.querySelectorAll('[data-evsub-bt]').forEach(function(b){var on=b.getAttribute('data-evsub-bt')===atual;" +
-      "b.style.background=on?'var(--cor)':'var(--bg4)';b.style.color=on?'#fff':'#a9a4b5';b.style.borderColor=on?'var(--cor)':'var(--bg11)';});}" +
+      "b.style.background=on?'var(--cor)':'var(--bg4)';b.style.color=on?'#fff':'#a9a4b5';b.style.borderColor=on?'var(--cor)':'var(--bg11)';});" +
+      // o cabeçalho e as páginas repintam com os dados mais frescos do aparelho
+      "if(window.__evTopoPinta)window.__evTopoPinta(atual);" +
+      "if(atual==='cargas'&&window.__pintaCargas)window.__pintaCargas();" +
+      "if(atual==='marcas'&&window.__pintaMarcas)window.__pintaMarcas();}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-evsub-bt]');if(!b)return;" +
       "atual=b.getAttribute('data-evsub-bt');pintaEv();if(navigator.vibrate)navigator.vibrate(8);});" +
       "pintaEv();window.__evSub=function(s2){atual=s2;pintaEv();};" +
