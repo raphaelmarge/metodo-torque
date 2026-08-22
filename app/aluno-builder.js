@@ -3024,12 +3024,75 @@
       "\"<i style='font-style:normal;font-weight:800;font-size:13px;min-width:42px;text-align:right;color:\"+(d?(bom?'#4ade80':'#f87171'):'#8a8695')+\";'>\"+(d?(d>0?'+':'')+String(d).replace('.',','):'—')+\"</i></span></div>\";}" +
       "el.innerHTML=\"<div class='wpk' style='margin:0 0 4px;'>\"+pl(AVS.length,'avaliação','avaliações')+' · última em '+ult.data.slice(8,10)+'/'+ult.data.slice(5,7)+\"</div>\"+" +
       "linha('Peso','peso',' kg')+linha('Gordura','gordura','%')+linha('Cintura','cintura',' cm')+linha('Braço','braco',' cm',true)+" +
-      "(AVS.length>1?\"<button type='button' id='evoTudo' class='btnx' style='width:100%;margin-top:12px;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;'>Ver todas as avaliações ›</button><div id='evoHist' style='display:none;margin-top:8px;'></div>\":'');" +
-      "var bt9=document.getElementById('evoTudo');if(bt9)bt9.addEventListener('click',function(){var h9=document.getElementById('evoHist');" +
-      "if(h9.style.display==='none'){h9.style.display='';bt9.textContent='Esconder o histórico';" +
-      "h9.innerHTML=AVS.slice().reverse().map(function(v){return \"<div style='border-top:1px solid var(--bg5);padding:9px 2px;font-size:13px;color:#d6d2df;'><b>\"+v.data.slice(8,10)+'/'+v.data.slice(5,7)+'</b>'+" +
-      "(v.peso!=null?' · '+String(v.peso).replace('.',',')+' kg':'')+(v.gordura!=null?' · '+String(v.gordura).replace('.',',')+'% gordura':'')+(v.cintura!=null?' · cintura '+String(v.cintura).replace('.',',')+' cm':'')+(v.braco!=null?' · braço '+String(v.braco).replace('.',',')+' cm':'')+'</div>';}).join('');}" +
-      "else{h9.style.display='none';bt9.textContent='Ver todas as avaliações ›';}});})();" +
+      "\"<button type='button' id='evoLaudo' class='btnx' style='width:100%;margin-top:12px;background:var(--bg4);border:1px solid rgba(255,255,255,.07);color:#d6d2df;box-shadow:none;min-height:52px;'>Ver a avaliação completa ›</button>\";})();" +
+      // ---------- laudo da avaliação (tela 43): tela cheia, criada só quando abre ----------
+      "var avCmpPri=false;" +
+      "function avNum(x){return String(x==null?'':x).replace('.',',');}" +
+      "function avDelta(u,p,inv,suf){if(u==null||p==null)return '';var d=Math.round((u-p)*10)/10;if(!d)return '';var bom=inv?d>0:d<0;" +
+      "return \"<div style='font-size:12.5px;font-weight:800;margin-top:2px;color:\"+(bom?'#4ade80':'#f87171')+\";'>\"+(d>0?'+':'')+avNum(d)+(suf||'')+'</div>';}" +
+      "function pintaLaudo(){var box=document.getElementById('avFull');if(!box||!AVS.length)return;" +
+      "var u=AVS[AVS.length-1];var base=AVS.length>1?(avCmpPri?AVS[0]:AVS[AVS.length-2]):null;var p=base||{};" +
+      "var MESL8=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
+      "var mg=u.bia&&u.bia.massaGordura!=null?+u.bia.massaGordura:(u.peso!=null&&u.gordura!=null?Math.round(u.peso*u.gordura/10)/10:null);" +
+      "var mm9=u.peso!=null&&mg!=null?Math.round((u.peso-mg)*10)/10:null;" +
+      "var mgP=p.bia&&p.bia.massaGordura!=null?+p.bia.massaGordura:(p.peso!=null&&p.gordura!=null?Math.round(p.peso*p.gordura/10)/10:null);" +
+      "var mmP=p.peso!=null&&mgP!=null?Math.round((p.peso-mgP)*10)/10:null;" +
+      "function tile(rot,val,suf,delta){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'>\"+" +
+      "\"<div class='wpk' style='margin:0 0 4px;'>\"+rot+\"</div><b style='font-size:26px;font-weight:900;'>\"+val+\"<small style='font-size:13px;font-weight:800;'> \"+suf+'</small></b>'+delta+'</div>';}" +
+      "var h=\"<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:calc(18px + env(safe-area-inset-top,0px)) 16px 18px;color:#fff;'>\"+" +
+      "\"<div style='display:flex;align-items:center;gap:12px;'>\"+" +
+      "\"<button type='button' id='avFecha' aria-label='Voltar' style='flex:none;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.16);border:none;color:#fff;font-size:19px;cursor:pointer;'>‹</button>\"+" +
+      "\"<span style='flex:1;min-width:0;'><span style='display:block;font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Avaliação física</span>\"+" +
+      "\"<span style='display:block;font-size:24px;font-weight:900;letter-spacing:-.02em;'>\"+(+u.data.slice(8,10))+' de '+MESL8[+u.data.slice(5,7)-1]+\"</span></span>\"+" +
+      "\"<span style='flex:none;background:rgba(255,255,255,.16);border-radius:99px;padding:7px 14px;font-size:12px;font-weight:800;'>com o studio</span></div>\"+" +
+      "(base?\"<div style='display:flex;gap:10px;margin-top:14px;'><button type='button' id='avCmp' style='flex:1;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:99px;min-height:46px;font-weight:800;font-size:13.5px;font-family:inherit;cursor:pointer;'>Comparando com \"+base.data.slice(8,10)+'/'+base.data.slice(5,7)+(avCmpPri?' (a primeira)':' (a anterior)')+\"</button>\"+" +
+      "\"<span style='flex:none;display:flex;align-items:center;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:0 16px;font-size:12.5px;font-weight:800;'>As \"+AVS.length+\"</span></div>\":'')+'</div>';" +
+      "h+=\"<div style='padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;'>\"+" +
+      "(u.peso!=null?tile('Peso',avNum(u.peso),'kg',avDelta(u.peso,p.peso,false,' kg')):'')+" +
+      "(u.gordura!=null?tile('Gordura',avNum(u.gordura),'%',avDelta(u.gordura,p.gordura,false,' pontos')):'')+" +
+      "(mm9!=null?tile('Massa magra',avNum(mm9),'kg',avDelta(mm9,mmP,true,' kg')):'')+" +
+      "(u.cintura!=null?tile('Cintura',avNum(u.cintura),'cm',avDelta(u.cintura,p.cintura,false,' cm')):'')+'</div>';" +
+      "if(mg!=null&&mm9!=null){var pctG=Math.round(100*mg/(mg+mm9));" +
+      "h+=\"<div style='margin:0 16px 12px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;align-items:center;'><span class='wpk' style='margin:0;'>Composição</span>\"+" +
+      "\"<span style='background:rgba(74,222,128,.14);color:#4ade80;border-radius:99px;padding:4px 12px;font-size:10px;font-weight:800;letter-spacing:.08em;'>\"+(u.bia&&u.bia.massaGordura!=null?'MEDIDO NA BALANÇA':'ESTIMADO PELO %')+\"</span></div>\"+" +
+      "\"<div style='display:flex;height:14px;border-radius:99px;overflow:hidden;margin-top:12px;'><div style='width:\"+pctG+\"%;background:#fbbf24;'></div><div style='flex:1;background:linear-gradient(90deg,var(--cor),var(--corc));'></div></div>\"+" +
+      "\"<div style='display:flex;gap:18px;margin-top:10px;font-size:13px;'><span><i style='display:inline-block;width:10px;height:10px;border-radius:3px;background:#fbbf24;margin-right:6px;'></i>Gordura <b>\"+avNum(mg)+\" kg</b></span>\"+" +
+      "\"<span><i style='display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--corc);margin-right:6px;'></i>Magra <b>\"+avNum(mm9)+\" kg</b></span></div></div>\";}" +
+      "var CIRCN={pescoco:'Pescoço',torax:'Tórax',cintura:'Cintura',abdomen:'Abdômen',quadril:'Quadril',braco:'Braço',antebraco:'Antebraço',coxa:'Coxa',panturrilha:'Panturrilha'};" +
+      "var cu={};Object.keys(CIRCN).forEach(function(k){var v9=(u.circ&&u.circ[k]!=null)?u.circ[k]:u[k];if(v9!=null)cu[k]=+v9;});" +
+      "var cp={};Object.keys(CIRCN).forEach(function(k){var v9=(p.circ&&p.circ[k]!=null)?p.circ[k]:p[k];if(v9!=null)cp[k]=+v9;});" +
+      "var cks=Object.keys(cu);" +
+      "if(cks.length){h+=\"<div style='margin:0 16px 12px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'>\"+" +
+      "\"<div style='display:flex;justify-content:space-between;'><b style='font-size:16px;font-weight:800;'>Circunferências</b><span style='font-size:12px;color:#8a8695;'>\"+pl(cks.length,'medida · fita','medidas · fita')+\"</span></div>\"+" +
+      // braço/antebraço/coxa/panturrilha crescendo é BOM (verde); o resto, diminuindo
+      "\"<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 10px;margin-top:14px;'>\"+cks.map(function(k){var d9=cp[k]!=null?Math.round((cu[k]-cp[k])*10)/10:null;" +
+      "var cresceBom={braco:1,antebraco:1,coxa:1,panturrilha:1}[k];var bom9=cresceBom?d9>0:d9<0;" +
+      "return \"<div><div style='font-size:12px;color:#8a8695;'>\"+CIRCN[k]+\"</div><b style='font-size:17px;'>\"+avNum(cu[k])+'</b>'+(d9?\" <i style='font-style:normal;font-size:12px;font-weight:800;color:\"+(bom9?'#4ade80':'#f87171')+\";'>\"+(d9>0?'+':'')+avNum(d9)+'</i>':'')+'</div>';}).join('')+'</div>'+" +
+      "(u.rcq!=null?\"<div style='border-top:1px solid var(--bg5);margin-top:14px;padding-top:10px;font-size:12.5px;color:#8a8695;'>Tudo em cm · cintura ÷ quadril <b style='color:#fff;'>\"+avNum(u.rcq)+'</b>'+(u.riscoRcq?\" · <b style='color:#fbbf24;'>\"+String(u.riscoRcq).replace(/</g,'&lt;')+'</b>':'')+'</div>':'')+'</div>';}" +
+      "if(u.dobras){var soma=0,nd=0;Object.keys(u.dobras).forEach(function(k){if(+u.dobras[k]>0){soma+=+u.dobras[k];nd++;}});" +
+      "if(nd){var MET={p3:'Pollock 3',p7:'Pollock 7',guedes:'Guedes'};" +
+      "h+=\"<div style='margin:0 16px 12px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;'>\"+" +
+      "\"<b style='font-size:16px;font-weight:800;'>Dobras cutâneas</b><span style='font-size:12.5px;color:#8a8695;'>\"+(MET[u.metodoDobras]||pl(nd,'dobra','dobras'))+' · soma '+avNum(Math.round(soma*10)/10)+\" mm</span></div>\";}}" +
+      "if(u.bia){var BIAN=[['agua','Água corporal','L'],['proteina','Proteína','kg'],['mineral','Minerais','kg'],['massaGordura','Massa de gordura','kg'],['mme','Músculo esquelético','kg'],['visceral','Gordura visceral','nível'],['anguloFase','Ângulo de fase','°']];" +
+      "var brs=BIAN.filter(function(par){return u.bia[par[0]]!=null;});" +
+      "if(brs.length){h+=\"<div style='margin:0 16px 12px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:6px 16px 10px;'>\"+" +
+      "\"<b style='display:block;font-size:16px;font-weight:800;padding:8px 0 4px;'>Bioimpedância</b>\"+" +
+      "brs.map(function(par){return \"<div style='display:flex;justify-content:space-between;border-top:1px solid var(--bg5);padding:9px 2px;font-size:14px;'><span style='color:#d6d2df;'>\"+par[1]+\"</span><b>\"+avNum(u.bia[par[0]])+' '+par[2]+'</b></div>';}).join('')+'</div>';}" +
+      "if(u.bia.segmentar&&u.bia.segmentar.length){h+=\"<div style='margin:0 16px 12px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:6px 16px 10px;'>\"+" +
+      "\"<b style='display:block;font-size:16px;font-weight:800;padding:8px 0 4px;'>Massa magra por segmento</b>\"+" +
+      "u.bia.segmentar.map(function(s9){return \"<div style='display:flex;justify-content:space-between;border-top:1px solid var(--bg5);padding:9px 2px;font-size:14px;'><span style='color:#d6d2df;'>\"+String(s9.nome).replace(/</g,'&lt;')+\"</span><b>\"+avNum(s9.magra)+' kg</b></div>';}).join('')+'</div>';}}" +
+      "h+=\"<div style='height:calc(30px + env(safe-area-inset-bottom,0px));'></div>\";" +
+      "box.innerHTML=h;box.querySelector('.wpk');}" +
+      "function abreLaudo(){var box=document.getElementById('avFull');" +
+      "if(!box){box=document.createElement('div');box.id='avFull';" +
+      "box.style.cssText='display:none;position:fixed;inset:0;z-index:72;background:var(--bg0);overflow:auto;max-width:480px;margin:0 auto;';" +
+      "document.body.appendChild(box);" +
+      "box.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('#avFecha')){box.style.display='none';return;}" +
+      "if(e.target.closest&&e.target.closest('#avCmp')){avCmpPri=!avCmpPri;pintaLaudo();}});}" +
+      "pintaLaudo();box.style.display='block';box.scrollTop=0;}" +
+      "document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('#evoLaudo')){abreLaudo();if(navigator.vibrate)navigator.vibrate(8);}});" +
+      "window.__laudoAv=abreLaudo;" +
       // ---------- Cargas (tela 42): grupos musculares com busca ----------
       // O grupo de cada exercício vem das fichas (objeto D) — carga é dado do
       // aparelho (ptdc), então tudo aqui é pintura em runtime.

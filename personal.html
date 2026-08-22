@@ -10268,7 +10268,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!feedLigado) menuOculta.push("feed");
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; })
-      .map(function (v) { return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco }; });
+      // o laudo completo (tela 43) vive no app: circunferências, dobras e
+      // bioimpedância viajam junto — é dado do próprio aluno, no app dele
+      .map(function (v) {
+        return { data: v.data, peso: v.peso, gordura: v.gordura, cintura: v.cintura, braco: v.braco,
+          quadril: v.quadril || null, circ: v.circ || null, rcq: v.rcq || null, riscoRcq: v.riscoRcq || null,
+          bia: v.bia || null, dobras: v.dobras || null, metodoDobras: v.metodoDobras || null };
+      });
     var botCfg = botDe(st);
     var botApp = null;
     if (botCfg.ativo !== false) {
