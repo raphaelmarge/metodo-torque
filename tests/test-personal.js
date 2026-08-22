@@ -6139,9 +6139,15 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);function pintaHero/);
+      const m = html.match(/var PLANO=(.+?);var HERO_EXTRA/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
+      // redesenho 13a: herói de 550px com data, véu fixo, UM botão de 58px e carrossel
+      out.hero13a = /height:550px/.test(html) && /id='htData'/.test(html) && /id='htDots'/.test(html) &&
+        /min-height:58px/.test(html) && />Começar treino</.test(html) && /id='htGhost'/.test(html);
+      // com circuito e corrida prescritos, o carrossel ganha os cards extras
+      const mEx = html.match(/var HERO_EXTRA=(.+?);/);
+      out.heroExtra = mEx ? JSON.parse(mEx[1]) : [];
       // limpa o rastro (plano + wods/cardio que a IA de teste criou) pros próximos blocos
       const st3 = S.read("ptStudio", {});
       delete st3.treinosV2[id].plano;
@@ -6158,6 +6164,9 @@ async function abaPt(p, a) {
       pln.planoApp["6"] && pln.planoApp["6"].tp === "cardio",
       "o pacote leva o plano resolvido: dia → tipo + índice + nome do treino");
     ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
+    ok(pln.hero13a, "🎨 redesenho 13a: herói de 550px com data, marca-d'água, carrossel e UM botão 'Começar treino' de 58px");
+    ok(pln.heroExtra.length === 2 && pln.heroExtra[0].k === "wod" && pln.heroExtra[1].k === "cardio" && !!pln.heroExtra[1].s,
+      "o carrossel do herói ganha os cards de circuito e corrida prescritos (com o alvo resumido)");
   }
 
   /* A IA parou de mandar republicar a função quando o problema é credencial.
