@@ -5686,8 +5686,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // quem paga por sessão: só aparece com carteira negativa ou pacote estourado
         if (!scSes) return "";
         var msgS = scSes.pacote
-          ? "Oi " + a.nome.split(" ")[0] + "! O pacote zerou e ficaram " + scSes.n + " sessão(ões) além dele. Vamos renovar? 💪"
-          : "Oi " + a.nome.split(" ")[0] + "! Fechando as sessões: " + scSes.n + " feita(s) desde o último acerto (" + S.fmtBRL(scSes.total) + "). Te mando o Pix? 💪";
+          ? "Oi " + a.nome.split(" ")[0] + "! O pacote zerou e " + (scSes.n === 1 ? "ficou 1 sessão" : "ficaram " + scSes.n + " sessões") + " além dele. Vamos renovar? 💪"
+          : "Oi " + a.nome.split(" ")[0] + "! Fechando as sessões: " + S.plural(scSes.n, "feita", "feitas") + " desde o último acerto (" + S.fmtBRL(scSes.total) + "). Te mando o Pix? 💪";
         var tagSes = scSes.pacote ? S.plural(scSes.n, "sessão além do pacote", "sessões além do pacote") : S.plural(scSes.n, "sessão a cobrar", "sessões a cobrar");
         return '<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
           '<span class="tag alerta">' + tagSes + "</span><span>" + S.fmtBRL(scSes.total) + "</span>" +
@@ -8136,7 +8136,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var t = (st.treinosV2 || {})[id];
     var jaTem = t ? (tipoIA === "wod" ? (t.wods || []).length : tipoIA === "corrida" ? (t.cardio || []).length : (t.fichas || []).length) : 0;
-    var rotJa = tipoIA === "wod" ? "circuito(s)" : tipoIA === "corrida" ? "treino(s) de corrida" : "ficha(s)";
+    var rotJa = tipoIA === "wod" ? (jaTem === 1 ? "circuito" : "circuitos") : tipoIA === "corrida" ? (jaTem === 1 ? "treino de corrida" : "treinos de corrida") : (jaTem === 1 ? "ficha" : "fichas");
     if (jaTem && !confirm("Este aluno já tem " + jaTem + " " + rotJa + ". Substituir pelo que a IA prescrever?")) return;
     $("taStatus").textContent = "A IA está lendo a anamnese e prescrevendo o treino… (leva uns 30 segundos)";
     $("taIA").disabled = true;
