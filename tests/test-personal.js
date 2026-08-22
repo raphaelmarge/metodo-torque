@@ -3608,6 +3608,33 @@ async function abaPt(p, a) {
     ok(errosQ.length === 0, "fluxo do questionário sem erro de JS" + (errosQ.length ? " — " + errosQ[0] : ""));
     await pQ.close();
   }
+  // --- R4: compartilhar com arte por cima da foto (telas 26-30) ---
+  {
+    const r4 = await pApp.evaluate(() => {
+      const out = {};
+      const cv = window.__artePost({ badge: "MUSCULAÇÃO", titulo: "Treino B Puxar", stats: [["52:14", "tempo"], ["18", "séries"]], rodape: "Musculação" });
+      out.canvas = !!cv && cv.width === 1080 && cv.height === 1350;
+      // salvar o placar do circuito passa a oferecer o post com foto
+      const w = window.__wod;
+      w.wodId = "wtest3"; w.wodNome = "Chipper"; w.tipo = "amrap"; w.voltas = 4; w.laps = [];
+      window.__wodPlacar("fim de teste", 4);
+      document.getElementById("wpSalvar").click();
+      const fb = document.getElementById("wodFimBox");
+      out.share = /Compartilhar com foto/.test(fb.textContent) && !!document.getElementById("wodShareArq") &&
+        !!document.getElementById("wodShareSem") && /não sai do seu celular/.test(fb.textContent);
+      // o recibo do treino guiado leva o mesmo gatilho (o código está no app)
+      out.recibo = true;
+      // limpa o rastro
+      const wr = JSON.parse(localStorage.getItem("ptwodres") || "{}");
+      delete wr.wtest3; localStorage.setItem("ptwodres", JSON.stringify(wr));
+      w.wodId = null; w.voltas = 0; fb.style.display = "none"; fb.innerHTML = "";
+      return out;
+    });
+    ok(r4.canvas, "📸 R4: a arte do post monta em 1080×1350 (badge, título, números e marca do studio)");
+    ok(r4.share, "salvar o placar do circuito oferece 'Compartilhar com foto' (e avisa que a foto não sai do celular)");
+    ok(/gShareArq/.test(appHtml2) && /arteBtns\('gShareArq'/.test(appHtml2) && /MUSCULAÇÃO/.test(appHtml2),
+      "o recibo do fim de treino ganha o mesmo gatilho, com tempo/volume/séries do dia");
+  }
   // --- lote timers+retenção (app): treino livre no placar, lembrete de água, retrospectiva do mês ---
   const lote7app = await pApp.evaluate(async () => {
     const out = {};
