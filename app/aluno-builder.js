@@ -203,6 +203,12 @@
       "html.claro #heroTreino.comfoto #htTitulo{color:#fff!important}" +
       "html.claro #heroTreino.comfoto #htSub{color:#d6d2df!important}" +
       "html.claro #heroTreino.comfoto .htk{color:var(--cor-cl1)!important}" +
+      // o herói é sempre escuro por dentro (foto ou gradiente da marca): o texto
+      // fica branco nos DOIS temas — sem isso, o modo claro reescrevia o cinza
+      "#heroTreino #htTitulo{color:#fff!important}" +
+      "#heroTreino #htSub{color:#cfcbdb!important}" +
+      "html.claro #heroTreino #htSub{color:#cfcbdb!important}" +
+      "html.claro #heroTreino .htk{color:var(--cor-cl1)!important}" +
       // no fundo branco o verde e o vermelho claros somem; escurece os dois
       "html.claro [style*='color:#4ade80']{color:#15803d!important}" +
       "html.claro [style*='color:#f87171']{color:#dc2626!important}" +
@@ -379,20 +385,31 @@
       "<div id='onbDias' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
-      // bloco de hoje: a faixa dos dias em cima e o treino do dia colado nela.
-      // A data manda no que aparece embaixo, então os dois lidos juntos contam
-      // a mesma frase ("hoje, quarta, é o treino C") em vez de dois cartões soltos.
-      "<div class='cardx' id='blocoHoje'>" +
-      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
-      ((fichasApp || planoApp) ? "<div id='heroTreino' style='margin-top:10px;background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;'>" +
+      // bloco de hoje (redesenho 13a): o HERÓI de 550px manda na tela — foto da
+      // ficha (ou o gradiente da marca) com o véu por cima, a data, o título em
+      // 44px e UM botão "Começar treino"; a faixa dos dias vem colada embaixo.
+      // Com mais de um treino prescrito (ficha + circuito + corrida), o herói
+      // vira carrossel: arrasta pro lado e os pontinhos mostram onde está.
+      "<div id='blocoHoje' style='margin:14px 0 0;'>" +
+      ((fichasApp || planoApp || wodsApp.length || cardiosApp.length) ? "<div id='heroTreino' style='position:relative;height:550px;background:var(--bg0);overflow:hidden;touch-action:pan-y;'>" +
+        // fundo decorativo da marca (aparece quando a ficha não tem foto):
+        // gradiente + círculos + os exercícios do dia em marca-d'água
+        "<div id='htFundo' style='position:absolute;inset:0;background:linear-gradient(160deg,var(--cor) 0%,var(--cor-esc) 52%,#241a3d 100%);overflow:hidden;'>" +
+        "<div style='position:absolute;top:-70px;right:-90px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.09);'></div>" +
+        "<div style='position:absolute;top:30px;right:-170px;width:320px;height:320px;border-radius:50%;border:1.5px solid rgba(255,255,255,.14);'></div>" +
+        "<div id='htGhost' style='position:absolute;left:20px;top:120px;right:40px;'></div></div>" +
         // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
-        "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
-        "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
-        "<div style='position:relative;'>" +
-        "<div class='htk' style='font-size:10px;font-weight:700;letter-spacing:.26em;color:var(--corc);text-transform:uppercase;'>HOJE · <span id='htRot'></span></div>" +
-        "<div id='htTitulo' style='font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;'></div>" +
-        "<div id='htSub' style='font-size:13px;color:#8a8695;'></div>" +
-        "<button id='htVer' style='margin-top:18px;background:var(--cor);border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;'>Ver treino ›</button></div></div>" : "") +
+        "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'>" +
+        // o véu fica SEMPRE: é ele que assenta o texto, com foto ou com gradiente
+        "<div id='htVeu' style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.66) 0%,rgba(13,12,16,.1) 34%,rgba(13,12,16,.9) 76%,var(--bg0) 100%);pointer-events:none;'></div>" +
+        "<div style='position:absolute;left:0;right:0;bottom:0;padding:0 20px 22px;'>" +
+        "<div class='htk' style='font-size:10px;font-weight:800;letter-spacing:.26em;color:var(--cor-cl1);text-transform:uppercase;'><span id='htData'></span> · <span id='htRot'></span></div>" +
+        "<div id='htTitulo' style='font-size:44px;font-weight:900;line-height:.94;letter-spacing:-.035em;text-transform:uppercase;margin:10px 0 8px;color:#fff;'></div>" +
+        "<div id='htSub' style='font-size:13.5px;color:#cfcbdb;margin-bottom:12px;'></div>" +
+        "<div id='htDots' style='display:none;align-items:center;gap:8px;margin-bottom:14px;'></div>" +
+        "<button id='htVer' style='width:100%;min-height:58px;background:var(--cor);border:none;color:#fff;border-radius:99px;font-family:inherit;font-size:17px;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 16px 40px -18px rgba(var(--cor-rgb),1);'>Começar treino</button>" +
+        "</div></div>" : "") +
+      "<div style='padding:18px 20px 0;'><div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div></div>" +
       "</div>" +
       // o resto da semana (meta, sequência e o Treinei hoje!) fica logo abaixo
       "<div class='cardx'><h2>Minha semana</h2>" +
@@ -407,10 +424,16 @@
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
       "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
+      // mural do studio no estilo "recado" (redesenho 13a): cartão com a barra
+      // roxa, as iniciais do studio e os avisos em texto de leitura
       (((st.config || {}).mural || []).length
-        ? "<div class='cardx' style='border-color:var(--cor);'><h2>" + appIco(APPIC.pin, 14) + "Mural do studio</h2>" +
+        ? "<div class='cardx' style='background:var(--bg2);border-radius:22px;padding:18px 20px;border-left:3px solid var(--cor);'>" +
+          "<div style='display:flex;align-items:center;gap:10px;margin-bottom:10px;'>" +
+          "<span style='flex:none;width:30px;height:30px;border-radius:50%;background:rgba(var(--cor-rgb),.16);color:var(--corc);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;'>" + esc(studio.replace(/[^A-Za-zÀ-ú ]/g, "").trim().slice(0, 2).toUpperCase() || "T") + "</span>" +
+          "<h2 style='margin:0;'>Mural do studio</h2></div>" +
           ((st.config || {}).mural || []).map(function (av) {
-            return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed var(--bg11);'>• " + esc(av) + "</div>";
+            // sem cor cravada: herda a do tema (branca no escuro, escura no claro)
+            return "<div style='font-size:14.5px;line-height:1.55;padding:5px 0;'>" + esc(av) + "</div>";
           }).join("") + "</div>"
         : "") +
       // ---------- Comunidade: o feed da turma (o professor liga nas Configurações) ----------
@@ -2372,33 +2395,71 @@
             return { t: f.titulo || "Ficha", n: f.itens.length, c: propria === geral ? "" : propria };
           })) + ";" +
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
-          "var PLANO=" + jsonApp(planoApp) + ";";
+          "var PLANO=" + jsonApp(planoApp) + ";" +
+          // cards extras do carrossel do herói: 1º circuito e 1º cardio prescritos
+          "var HERO_EXTRA=" + jsonApp((function () {
+            var ex = [];
+            if (ve("wod") && wodsApp.length) ex.push({ k: "wod", n: wodsApp[0].nome || "Circuito", s: wodsApp[0].resumo || "" });
+            if (ve("cardio") && cardiosApp.length) {
+              var c0 = cardiosApp[0];
+              var alvo = c0.tipo === "intervalado"
+                ? (c0.reps || 8) + "× " + (c0.tiro || 60) + "s forte / " + (c0.desc || 90) + "s leve"
+                : [(+c0.dist ? String(c0.dist).replace(".", ",") + " km" : ""), (+c0.tempo ? c0.tempo + " min" : ""), (c0.pace ? "pace " + c0.pace : "")].filter(Boolean).join(" · ") || "treino livre";
+              ex.push({ k: "cardio", n: c0.nome || "Corrida", s: alvo });
+            }
+            return ex;
+          })()) + ";";
       })() +
-      // com a Semana do aluno (PLANO), o card HOJE segue o plano do professor:
-      // ficha abre a gaveta certa, circuito/corrida apontam a sub-aba, dia sem
-      // treino vira descanso; sem plano, vale o rodízio de sempre
-      "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||(!FICHAS_META.length&&!PLANO))return;" +
-      "var i=-1,fm=null,rt='',tit='',sub='',cImg='';" +
-      "var pj=PLANO&&PLANO[String(new Date().getDay())];" +
-      "if(PLANO){" +
-      "if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i]){i=pj.i;fm=FICHAS_META[i];}" +
-      "else if(pj&&pj.tp==='wod'){rt='CIRCUITO (WOD)';tit=pj.n;sub='circuito completo te esperando';cImg=CAPA_GERAL;}" +
-      "else if(pj&&pj.tp==='cardio'){rt='CORRIDA E BIKE';tit=pj.n;sub='treino prescrito te esperando';cImg=CAPA_GERAL;}" +
-      "else{rt='DESCANSO';tit='Dia de recuperar';sub='alongue, caminhe leve e durma bem — amanhã tem mais';cImg=CAPA_GERAL;}" +
-      "}else{var tot=Object.keys(L('ptfeitos',{})).length;i=tot%FICHAS_META.length;fm=FICHAS_META[i];}" +
+      // o herói de hoje (redesenho 13a): com a Semana do aluno (PLANO), o card
+      // segue o plano do professor — ficha abre a gaveta certa, circuito e
+      // corrida apontam a sub-aba, dia sem treino vira descanso; sem plano,
+      // vale o rodízio de sempre. Com mais de um treino prescrito, vira
+      // carrossel (arrasta pro lado, pontinhos mostram onde está).
+      "var MESES_ROT=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];" +
+      "var DIAS_HERO=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];" +
+      "var HEROIS=[],heroIx=0;" +
+      "function montaHerois(){HEROIS=[];var pj=PLANO&&PLANO[String(new Date().getDay())];" +
+      "function extraDe(k){for(var x=0;x<HERO_EXTRA.length;x++)if(HERO_EXTRA[x].k===k)return HERO_EXTRA[x];return null;}" +
+      "if(PLANO){if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i])HEROIS.push({k:'ficha',i:pj.i});" +
+      "else if(pj&&pj.tp==='wod'){var ew=extraDe('wod');HEROIS.push({k:'wod',n:pj.n,s:ew&&ew.s});}" +
+      "else if(pj&&pj.tp==='cardio'){var ec=extraDe('cardio');HEROIS.push({k:'cardio',n:pj.n,s:ec&&ec.s});}" +
+      "else HEROIS.push({k:'off'});}" +
+      "else if(FICHAS_META.length){var tot=Object.keys(L('ptfeitos',{})).length;HEROIS.push({k:'ficha',i:tot%FICHAS_META.length});}" +
+      "HERO_EXTRA.forEach(function(x){if(!HEROIS.some(function(h){return h.k===x.k;}))HEROIS.push({k:x.k,n:x.n,s:x.s});});}" +
+      "function pintaHeroIx(){var el=document.getElementById('heroTreino');if(!el||!HEROIS.length)return;" +
+      "var h=HEROIS[heroIx];var i=-1,fm=null,rt='',tit='',sub='',cImg='';" +
+      "if(h.k==='ficha'){i=h.i;fm=FICHAS_META[i];}" +
+      "else if(h.k==='wod'){rt='CIRCUITO (WOD)';tit=h.n||'Circuito';sub=h.s||'circuito completo te esperando';}" +
+      "else if(h.k==='cardio'){rt='CORRIDA E BIKE';tit=h.n||'Corrida';sub=h.s||'treino prescrito te esperando';}" +
+      "else{rt='DESCANSO';tit='Dia de recuperar';sub='alongue, caminhe leve e durma bem — amanhã tem mais';}" +
       "if(fm){var par=String(fm.t).split('—');rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));tit=par.length>1?par.slice(1).join('—').trim():fm.t;sub=pl(fm.n,'exercício te esperando','exercícios te esperando');cImg=fm.c||CAPA_GERAL;}" +
+      "var d0=new Date();var hdt=document.getElementById('htData');if(hdt)hdt.textContent=DIAS_HERO[d0.getDay()]+', '+d0.getDate()+' DE '+MESES_ROT[d0.getMonth()];" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
       "document.getElementById('htSub').textContent=sub;" +
-      // foto da ficha do dia no card (com véu por cima pro texto continuar legível)
-      "var hf=document.getElementById('htFoto'),hv2=document.getElementById('htVeu');" +
-      "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}" +
+      // exercícios do dia em marca-d'água no fundo (só sem foto, só na ficha)
+      "var hg=document.getElementById('htGhost');if(hg){var gn=(h.k==='ficha'&&!cImg&&typeof GUIA!=='undefined'&&GUIA[i])?GUIA[i].it.slice(0,6):[];" +
+      "hg.innerHTML=gn.map(function(x){return \"<div style='font-size:17px;font-weight:800;letter-spacing:-.01em;color:rgba(255,255,255,.16);padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'>\"+String(x.e||'').replace(/[<>&]/g,'')+'</div>';}).join('');}" +
+      "var hf=document.getElementById('htFoto');" +
+      "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';}" +
       "el.classList.toggle('comfoto',!!cImg);}" +
+      "var hbt=document.getElementById('htVer');if(hbt)hbt.textContent=h.k==='off'?'Ver meus treinos':'Começar treino';" +
+      // pontinhos do carrossel (só com mais de um treino) + "1 de N · arraste"
+      "var hds=document.getElementById('htDots');if(hds){if(HEROIS.length>1){hds.style.display='flex';" +
+      "hds.innerHTML=HEROIS.map(function(x,xi){return \"<span style='width:\"+(xi===heroIx?26:6)+\"px;height:6px;border-radius:99px;background:\"+(xi===heroIx?'#fff':'rgba(255,255,255,.42)')+\";'></span>\";}).join('')+" +
+      "\"<span style='margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.62);text-transform:uppercase;'>\"+(heroIx+1)+' de '+HEROIS.length+' · arraste →</span>';}else hds.style.display='none';}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
       "var gav=document.querySelectorAll('.fichabox');" +
-      "if(gav.length>1&&i>=0)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
-      // Ver treino: além de ir pra área de Treino, cai na SUB-ABA do dia (plano)
-      "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');" +
-      "var pj2=PLANO&&PLANO[String(new Date().getDay())];if(pj2&&window.__trSub)window.__trSub(pj2.tp==='wod'?'wod':pj2.tp==='cardio'?'cardio':'ficha');});" +
+      "if(gav.length>1&&h.k==='ficha')for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
+      "function pintaHero(){montaHerois();heroIx=0;pintaHeroIx();}" +
+      // arrastar pro lado troca o treino do carrossel
+      "(function(){var el=document.getElementById('heroTreino');if(!el)return;var x0=null;" +
+      "el.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});" +
+      "el.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;" +
+      "if(Math.abs(dx)<48||HEROIS.length<2)return;heroIx=(heroIx+(dx<0?1:HEROIS.length-1))%HEROIS.length;pintaHeroIx();},{passive:true});})();" +
+      // Começar treino: vai pra área de Treino, já na SUB-ABA do card visível
+      "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){var h=HEROIS[heroIx]||{};" +
+      "if(window.__trocaSec)window.__trocaSec('treino');" +
+      "if(window.__trSub)window.__trSub(h.k==='wod'?'wod':h.k==='cardio'?'cardio':'ficha');});" +
       "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
       "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
       "var pf=L('ptfeitos',{});var noMes=Object.keys(pf).filter(function(k){return k.slice(0,7)===mesK;}).length;" +
