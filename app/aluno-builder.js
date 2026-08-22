@@ -1263,6 +1263,54 @@
       "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(pintaConquistas,150);});" +
       // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
       "var STUDIO=" + jsonApp(studio) + ";" +
+      /* R4 (telas 26-30): a arte do post por cima da FOTO que o aluno tira na
+       * hora — badge do tipo, data, título gigante, números do dia e a marca do
+       * studio. Sem foto, entra o gradiente da cor. A foto nunca sai do celular:
+       * tudo é desenhado aqui e vai direto pra folha de compartilhar. */
+      "function artePost(foto,op,soCanvas){op=op||{};var c=document.createElement('canvas');c.width=1080;c.height=1350;var g=c.getContext('2d');" +
+      "if(foto){var rz=Math.max(1080/(foto.width||1),1350/(foto.height||1));var w9=(foto.width||1)*rz,h9=(foto.height||1)*rz;" +
+      "g.drawImage(foto,(1080-w9)/2,(1350-h9)/2,w9,h9);" +
+      "g.fillStyle='rgba(10,8,14,.26)';g.fillRect(0,0,1080,1350);" +
+      "var gv2=g.createLinearGradient(0,700,0,1350);gv2.addColorStop(0,'rgba(10,8,14,0)');gv2.addColorStop(1,'rgba(10,8,14,.92)');g.fillStyle=gv2;g.fillRect(0,700,1080,650);" +
+      "var gt2=g.createLinearGradient(0,0,0,240);gt2.addColorStop(0,'rgba(10,8,14,.6)');gt2.addColorStop(1,'rgba(10,8,14,0)');g.fillStyle=gt2;g.fillRect(0,0,1080,240);}" +
+      "else{var gr2=g.createLinearGradient(0,0,1080,1350);gr2.addColorStop(0,CV('bg4'));gr2.addColorStop(1,CV('cor-esc'));g.fillStyle=gr2;g.fillRect(0,0,1080,1350);}" +
+      "var bg9=String(op.badge||'').toUpperCase();" +
+      "if(bg9){g.font='800 34px system-ui,sans-serif';var bw=g.measureText(bg9).width;" +
+      "g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=3;g.beginPath();" +
+      "if(g.roundRect)g.roundRect(60,58,bw+64,74,37);else g.rect(60,58,bw+64,74);g.stroke();" +
+      "g.fillStyle='#fff';g.textAlign='left';g.fillText(bg9,92,108);}" +
+      "var MES3A=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];var dh9=new Date();" +
+      "g.textAlign='right';g.font='800 34px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.85)';g.fillText(dh9.getDate()+' '+MES3A[dh9.getMonth()],1020,108);" +
+      // título com quebra em até 2 linhas
+      "g.textAlign='left';g.fillStyle='#fff';g.font='900 88px system-ui,sans-serif';" +
+      "var tit9=String(op.titulo||'').toUpperCase();var linhas=[];var atual='';" +
+      "tit9.split(' ').forEach(function(w0){var t9=atual?atual+' '+w0:w0;if(g.measureText(t9).width>940&&atual){linhas.push(atual);atual=w0;}else atual=t9;});" +
+      "if(atual)linhas.push(atual);linhas=linhas.slice(0,2);" +
+      "var yT=1035-(linhas.length-1)*96;linhas.forEach(function(l9,i9){g.fillText(l9,60,yT+i9*96);});" +
+      // números do dia (até 3)
+      "var x9=60;(op.stats||[]).slice(0,3).forEach(function(s9){" +
+      "g.fillStyle='#fff';g.font='800 76px system-ui,sans-serif';var v9=String(s9[0]);var wv=g.measureText(v9).width;g.fillText(v9,x9,1165);" +
+      "g.fillStyle='rgba(255,255,255,.7)';g.font='800 30px system-ui,sans-serif';var lb9=String(s9[1]).toUpperCase();var wl=g.measureText(lb9).width;g.fillText(lb9,x9,1212);" +
+      "x9+=Math.max(wv,wl)+70;});" +
+      // rodapé: marca do studio + o tipo
+      "g.font='800 30px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.75)';g.fillText(STUDIO.toUpperCase().slice(0,32),60,1296);" +
+      "g.textAlign='right';g.fillStyle='rgba(255,255,255,.55)';g.fillText(String(op.rodape||'').toUpperCase(),1020,1296);g.textAlign='left';" +
+      "if(soCanvas)return c;" +
+      "c.toBlob(function(bl){var fl=new File([bl],'treino.png',{type:'image/png'});" +
+      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
+      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='treino.png';a2.click();}});return null;}" +
+      "window.__artePost=function(op){return artePost(null,op,true);};" +
+      // liga um par foto/sem-foto (input de arquivo + botão) na arte do post
+      "function ligaArte(idArq,idSem,op){var aq=document.getElementById(idArq);" +
+      "if(aq)aq.addEventListener('change',function(){var f9=this.files&&this.files[0];this.value='';if(!f9)return;" +
+      "var u9=URL.createObjectURL(f9);var im9=new Image();" +
+      "im9.onload=function(){URL.revokeObjectURL(u9);artePost(im9,op);};" +
+      "im9.onerror=function(){URL.revokeObjectURL(u9);alert('Não consegui abrir essa foto — tenta outra.');};im9.src=u9;});" +
+      "var sm=document.getElementById(idSem);if(sm)sm.addEventListener('click',function(){artePost(null,op);});}" +
+      "function arteBtns(idArq,idSem){return \"<div style='display:flex;gap:8px;margin-top:14px;'>\"+" +
+      "\"<label class='btnx' style='flex:1;text-align:center;cursor:pointer;'>Compartilhar com foto<input id='\"+idArq+\"' type='file' accept='image/*' style='display:none;'></label>\"+" +
+      "\"<button type='button' class='btnx' id='\"+idSem+\"' style='flex:none;background:var(--bg4);box-shadow:none;color:#d6d2df;'>Sem foto</button></div>\"+" +
+      "\"<div class='vz' style='font-size:11px;padding:4px 0 0;'>Sua foto com os números do treino por cima — a foto não sai do seu celular.</div>\";}" +
       "document.getElementById('btnCardStories').addEventListener('click',function(){" +
       "var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);var stk2=streakSem(f);" +
       "var naSem2=0;var seg2=new Date();seg2.setDate(seg2.getDate()-((seg2.getDay()+6)%7));" +
@@ -1389,11 +1437,14 @@
       "tela.style.borderColor=trabalhando?'var(--corc)':'#0891b2';fase.textContent=faseAtual+' · ROUND '+(Math.floor(el2/ciclo)+1)+' DE '+rd;fase.style.color=trabalhando?'var(--corc)':'#22d3ee';" +
       "tmp.textContent=wodFmt(trabalhando?wk-pos:ciclo-pos);info.textContent=wk+'s trabalho · '+rs+'s descanso';wodCd(trabalhando?wk-pos:ciclo-pos);}" +
       "function wodTick(){var el2=(Date.now()-wod.t0)/1000;wodPinta(el2);}" +
-      // caixinha verde + "Registrar treino" (o fim de sempre, reaproveitada)
-      "function wodMsgFim(msg){var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
+      // caixinha verde + "Registrar treino" (o fim de sempre); com op, entra o
+      // "Compartilhar com foto" da R4 (tela 28 — post do circuito)
+      "function wodMsgFim(msg,op){var fb=document.getElementById('wodFimBox');fb.style.display='block';" +
       "fb.innerHTML=\"<div style='text-align:center;font-weight:800;color:#4ade80;font-size:14.5px;margin-bottom:8px;'>\"+msg+\"</div>\"+" +
-      "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'');" +
-      "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});}" +
+      "(!L('ptfeitos',{})[isoHj()]?\"<button class='btnx' id='wodFeito' style='display:block;width:100%;text-align:center;'>Registrar treino de hoje</button>\":'')+" +
+      "(op?arteBtns('wodShareArq','wodShareSem'):'');" +
+      "var wf=document.getElementById('wodFeito');if(wf)wf.addEventListener('click',function(){document.getElementById('btnFeito').click();fb.style.display='none';});" +
+      "if(op)ligaArte('wodShareArq','wodShareSem',op);}" +
       "function wodFim(msg,val){clearInterval(wod.iv);wod.run=false;wod.iv=null;soltaTela();" +
       "document.getElementById('wodGo').textContent='Iniciar';" +
       "document.getElementById('wodFase').textContent='FIM!';" +
@@ -1490,7 +1541,12 @@
       "lst2.push({d:isoHj(),n:wod.wodNome,r:r,v:v==null?null:Math.round(v),tp:tipo,cf:st.cf||'',ex:st.ex||0,nf:st.nf?1:0," +
       "sp:laps.map(function(x){return Math.round(x);}),rp:st.reps,ob:st.ob.slice(0,300)});" +
       "if(lst2.length>20)lst2.shift();wr2[wod.wodId]=lst2;Sv('ptwodres',wr2);pintaWodRes();" +
-      "ov.remove();wodMsgFim('Placar salvo! '+r);return;}});" +
+      // R4: o fim do circuito oferece o post com a foto (números do placar)
+      "var stW=tipo==='amrap'?[[st.v+(st.ex?'+'+st.ex:''),'voltas'],[wodFmt(minA*60),'tempo']]:" +
+      "tipo==='fortime'?[[wodFmt(st.t||0),'tempo']].concat(st.cf?[[{rx:'RX',esc:'ESCALADO',adp:'ADAPTADO'}[st.cf],'como fez']]:[]):" +
+      "[[tot2,'reps'],[pior2!=null?pior2:'—','pior série']];" +
+      "var rotW={amrap:'AMRAP',fortime:'For Time',emom:'EMOM',tabata:'Tabata'}[tipo]||'Circuito';" +
+      "ov.remove();wodMsgFim('Placar salvo! '+r,{badge:'CIRCUITO',titulo:wod.wodNome,stats:stW,rodape:rotW});return;}});" +
       "pr();window.__wodPlacarEl=ov;}" +
       "window.__wodPlacar=wodPlacar;" +
       "document.getElementById('wodTermina').addEventListener('click',function(){if(!wod.run)return;var el2=(Date.now()-wod.t0)/1000;" +
@@ -2077,7 +2133,19 @@
       "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:18px;'>\"+rpeHtml()+'</div>';" +
       "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +
       "faltam.map(function(x){return \"<button type='button' class='gfalta' data-gfalta='\"+x.i+\"'>\"+esc2(x.e)+' ›</button>';}).join('');" +
+      // R4: compartilhar o treino com a foto — o gatilho mora no recibo (tela 24)
+      "m+=arteBtns('gShareArq','gShareSem');" +
       "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gHist').textContent='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
+      // números do dia pra arte: tempo, volume (kg × reps × séries do que teve
+      // carga anotada hoje) e séries feitas — só o que o app sabe de verdade
+      "var opG=(function(){var s9=[[gmmss((Date.now()-gv.t0)/1000),'tempo']];var vol=0;" +
+      "f.it.forEach(function(it){var reg9=(dcR[it.e]||[]).filter(function(x){return x.d===hjR;}).pop();" +
+      "var kg9=reg9?+reg9.kg:(gv.cargas[it.e]?+gv.cargas[it.e]:0);var r9=(reg9&&+reg9.r)?+reg9.r:(parseInt(it.r,10)||10);" +
+      "if(kg9>0)vol+=kg9*r9*(+it.s||3);});" +
+      "if(vol>0)s9.push([Math.round(vol).toLocaleString('pt-BR'),'kg no total']);" +
+      "s9.push([marc,pl(marc,'série','séries').replace(/^\\d+ /,'')]);" +
+      "return {badge:'MUSCULAÇÃO',titulo:f.n,stats:s9,rodape:'Musculação'};})();" +
+      "ligaArte('gShareArq','gShareSem',opG);" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
       "gEl('gGrupo').style.display='none';" +
       "gEl('gEx').textContent='Treino concluído!';" +
