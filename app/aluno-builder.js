@@ -326,7 +326,28 @@
       ".gfalta{width:100%;min-height:44px;margin-top:8px;border-radius:14px;border:1px solid rgba(var(--cor-rgb),.4);background:rgba(var(--cor-rgb),.08);" +
       "color:var(--cor2);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;text-align:left;padding:0 14px}" +
       "@media (max-height:620px){.gsets i{height:44px;font-size:19px}.grelo b{font-size:17px}.gpe button{min-height:52px}.gtit{font-size:16px}}" +
-      "</style>" + (raiz.MT_APP_SKIN ? "<style>" + raiz.MT_APP_SKIN.css + "</style>" : "") + "</head><body>" + (raiz.MT_APP_SKIN ? "<script>" + raiz.MT_APP_SKIN.js + "<\/script>" : "") +
+      /* ---------- Início do redesenho (telas final-44/45/46) ----------
+       * No Início a faixa colorida do topo some: o cabeçalho (saudação + avatar)
+       * vive DENTRO do herói. As outras áreas continuam com a faixa de sempre.
+       * Os textos do herói usam CLASSE de propósito: o modo claro reescreve
+       * cores lendo o style inline, e o herói é escuro nos dois temas. */
+      "body.semtopo .topo{display:none}" +
+      ".htk2{font-size:10px;font-weight:800;letter-spacing:.26em;color:var(--corc);text-transform:uppercase}" +
+      ".htit{font-weight:900;line-height:.94;letter-spacing:-.035em;text-transform:uppercase;margin:10px 0 8px;color:#fff;font-size:clamp(30px,10vw,44px)}" +
+      ".hsub{font-size:13.5px;color:#cfcbdb}" +
+      ".hgline{font-size:17px;font-weight:800;letter-spacing:-.01em;color:rgba(255,255,255,.16);padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".htdash{display:flex;align-items:center;gap:8px;margin:14px 0}" +
+      ".htdash span{flex:none;height:6px;border-radius:99px}" +
+      ".htdash .htn{flex:none;margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.62);text-transform:uppercase}" +
+      // hábitos do dia em grade (HOJE EU JÁ) — feito = contorno da cor do studio
+      ".habgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}" +
+      ".habgrid button{min-height:62px;background:var(--bg2);border:1px solid var(--bg11);border-radius:16px;color:#8a8695;font-family:inherit;font-size:10.5px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:6px 2px}" +
+      ".habgrid button.on{background:rgba(var(--cor-rgb),.16);border-color:var(--cor);color:#fff}" +
+      ".habgrid i{font-style:normal;line-height:0}" +
+      ".habgrid u{display:none}" +
+      "html.claro .habgrid button{background:#fff;border-color:#d9d5e3;color:#6c6678}" +
+      "html.claro .habgrid button.on{background:rgba(var(--cor-rgb),.12);border-color:var(--cor);color:#241f31}" +
+      "</style>" + (raiz.MT_APP_SKIN ? "<style>" + raiz.MT_APP_SKIN.css + "</style>" : "") + "</head><body class='semtopo'>" + (raiz.MT_APP_SKIN ? "<script>" + raiz.MT_APP_SKIN.js + "<\/script>" : "") +
       "<div class='topo'>" +
       // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
       // e os chips, um nome comprido virava três linhas ou saía cortado
@@ -352,15 +373,13 @@
       "<div id='topoExtra'>" +
       "<div class='tpsk'><span class='tpskico'>" + crIco(MT_CQICONS.fogo, 17) + "</span>" +
       "<span class='tpskt'><b id='habStreak' class='tpskn'></b>" +
-      "<i class='tpsklab'>Sequência</i><i id='habRec' class='tpskrec'></i></span></div>" +
-      "<div id='habBox' class='tphab' aria-label='Hábitos de hoje'></div></div></div>" +
+      "<i class='tpsklab'>Sequência</i><i id='habRec' class='tpskrec'></i></span></div></div></div>" +
       // barra de abas fixa embaixo (estilo app nativo — itens preenchidos pelo script)
       // o menu já nasce montado no HTML (aparece até em visualizador sem JS); o script refina depois
       "<nav id='navApp' aria-label='Menu do app' style='position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:rgba(var(--bg0-rgb),.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04);display:flex;z-index:50;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));'>" +
-      [["<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>", "Início"],
-        ["<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>", "Treino"],
+      [["<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>", "Hoje"],
+        ["<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>", "Treinos"],
         ["<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>", "Evolução"],
-        ["<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>", "Agenda"],
         ["<path d='M4 6.5h16M4 12h16M4 17.5h16'/>", "Menu"]].map(function (mN) {
         return "<button class='nitem' style='flex:1;min-width:0;background:none;border:none;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;'>" +
           "<span style='line-height:0;'><svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>" + mN[0] + "</svg></span>" +
@@ -370,6 +389,106 @@
       // gaveta do menu ☰ (igual ao módulo do personal): fundo escurecido + painel pela direita
       "<div id='fundoMenuApp' style='display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;'></div>" +
       "<div id='menuApp' aria-label='Todas as áreas do app' style='position:fixed;top:0;bottom:0;right:0;width:264px;background:var(--bg2);border-left:1px solid var(--bg9);z-index:61;transform:translateX(105%);transition:transform .22s ease;padding:20px 12px calc(18px + env(safe-area-inset-bottom,0px));overflow:auto;display:flex;flex-direction:column;gap:2px;'></div>" +
+      // ---------- Início do redesenho (telas final-44/45/46 do Claude Design) ----------
+      // O carrossel É a tela: cada treino prescrito vira um herói de tela cheia
+      // (foto/gradiente, lista fantasma de exercícios, data, título gigante,
+      // risquinhos "1 de 3 · arraste" e o botão grandão). O cabeçalho com a
+      // saudação e o avatar flutua por cima e não se move com o arrasto.
+      (function () {
+        var cardCss = "flex:none;width:100%;scroll-snap-align:center;position:relative;overflow:hidden;height:clamp(470px,64vh,570px);background:var(--bg0);";
+        var botCss = "position:absolute;left:0;right:0;bottom:0;padding:0 20px 18px;";
+        var btnCss = "width:100%;min-height:56px;font-size:16px;";
+        var ghost = function (linhas) {
+          return "<div style='position:absolute;left:20px;top:112px;right:40px;'>" + linhas.map(function (l) {
+            return "<div class='hgline'>" + esc(l) + "</div>";
+          }).join("") + "</div>";
+        };
+        var hero = (fichasApp || planoApp)
+          ? "<div id='heroTreino' style='" + cardCss + "'>" +
+            // fundo: gradiente da cor do studio + círculos decorativos
+            "<div style='position:absolute;inset:0;background:linear-gradient(160deg,var(--cor),var(--cor2) 52%,var(--bg0) 100%);overflow:hidden;'>" +
+            "<div style='position:absolute;top:-70px;right:-90px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.09);'></div>" +
+            "<div style='position:absolute;top:30px;right:-170px;width:320px;height:320px;border-radius:50%;border:1.5px solid rgba(255,255,255,.14);'></div></div>" +
+            // lista fantasma: os exercícios da ficha do dia, apagadinhos (o script preenche)
+            "<div id='htGhost' style='position:absolute;left:20px;top:112px;right:40px;'></div>" +
+            // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
+            "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'>" +
+            // o véu fica SEMPRE: escurece embaixo pro texto valer nos dois fundos
+            "<div id='htVeu' style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.55) 0%,rgba(13,12,16,.08) 34%,rgba(13,12,16,.88) 74%,var(--bg0) 100%);pointer-events:none;'></div>" +
+            "<div style='" + botCss + "'>" +
+            "<div class='htk htk2'><span id='htRot'></span></div>" +
+            "<div id='htTitulo' class='htit'></div>" +
+            "<div id='htSub' class='hsub'></div>" +
+            "<div class='htdash'></div>" +
+            "<button id='htVer' class='btnx' style='" + btnCss + "'>Começar treino</button></div></div>"
+          : "";
+        // cards extras nascem escondidos: o script mostra os que não repetem o
+        // treino que o card principal já está mostrando (plano do dia)
+        var wodCard = "";
+        if (ve("wod") && wodsApp.length) {
+          var w0 = wodsApp[0];
+          var movsG = (w0.movs && w0.movs.length ? w0.movs.map(function (m) { return ((m.q ? m.q + " " : "") + (m.n || "")).trim(); })
+            : (w0.mov || [])).filter(Boolean).slice(0, 7);
+          wodCard = "<div id='heroWod' style='display:none;" + cardCss + "'>" +
+            ghost(movsG) +
+            "<div style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.45) 0%,rgba(13,12,16,0) 34%,rgba(13,12,16,.86) 74%,var(--bg0) 100%);pointer-events:none;'></div>" +
+            "<div style='" + botCss + "'>" +
+            "<div class='htk htk2'>HOJE · CIRCUITO</div>" +
+            "<div class='htit'>" + esc(w0.nome || "Circuito") + "</div>" +
+            "<div class='hsub'>" + esc((w0.resumo || "circuito completo") + " · " + (((w0.movs && w0.movs.length) || (w0.mov && w0.mov.length)) || 0) + " movimentos") + "</div>" +
+            "<div class='htdash'></div>" +
+            "<button data-carrver='wod' class='btnx' style='" + btnCss + "'>Começar circuito</button></div></div>";
+        }
+        var crCard = "";
+        if (ve("cardio") && cardiosApp.length) {
+          var c0 = cardiosApp[0];
+          var alvoCr = c0.tipo === "intervalado"
+            ? (c0.reps || 8) + "× " + (c0.tiro || 60) + "s forte / " + (c0.desc || 90) + "s leve"
+            : [(+c0.dist ? String(c0.dist).replace(".", ",") + " km" : ""), (+c0.tempo ? c0.tempo + " min" : ""), (c0.pace ? "pace " + c0.pace : "")].filter(Boolean).join(" · ") || "treino livre";
+          var rotCr = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c0.mod] || "CARDIO";
+          var btnCr = { corrida: "Começar corrida", caminhada: "Começar caminhada", bike: "Começar pedal" }[c0.mod] || "Começar";
+          crCard = "<div id='heroCr' style='display:none;" + cardCss + "'>" +
+            // traçado decorativo, tipo o percurso do GPS
+            "<svg viewBox='0 0 200 200' aria-hidden='true' style='position:absolute;top:36px;right:-24px;width:72%;opacity:.5;stroke:var(--cor);' fill='none' stroke-width='10' stroke-linecap='round'><path d='M30 172 C 18 120, 82 132, 92 92 S 152 64, 152 32 S 102 12, 112 48'/></svg>" +
+            "<div style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.45) 0%,rgba(13,12,16,0) 34%,rgba(13,12,16,.86) 74%,var(--bg0) 100%);pointer-events:none;'></div>" +
+            "<div style='" + botCss + "'>" +
+            "<div class='htk htk2'>HOJE · " + rotCr + "</div>" +
+            "<div class='htit'>" + esc(c0.nome || "Cardio") + "</div>" +
+            "<div class='hsub'>" + esc(alvoCr) + "</div>" +
+            "<div class='htdash'></div>" +
+            "<button data-carrver='cardio' class='btnx' style='" + btnCss + "'>" + btnCr + "</button></div></div>";
+        }
+        // cabeçalho flutuante: marca do studio + saudação + avatar (o mesmo
+        // toque de trocar a foto do topo — aqui o topo colorido fica escondido)
+        var heroTopo = "<div id='heroTopo' style='position:absolute;top:0;left:0;right:0;padding:calc(14px + env(safe-area-inset-top,0px)) 20px 0;display:flex;align-items:center;gap:12px;z-index:2;pointer-events:none;'>" +
+          "<div style='min-width:0;flex:1;'>" +
+          "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;color:rgba(255,255,255,.72);text-transform:uppercase;'>" + esc(studio).toUpperCase() + "</div>" +
+          "<div id='heroSauda' style='font-size:19px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-top:3px;'>" + esc(a.nome.split(" ")[0]) + "</div></div>" +
+          "<button type='button' id='avBtn2' aria-label='Trocar a sua foto' style='pointer-events:auto;flex:none;width:42px;height:42px;padding:0;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;color:#fff;font-family:inherit;cursor:pointer;overflow:hidden;'>" +
+          "<img id='avImg2' alt='' style='width:100%;height:100%;object-fit:cover;border-radius:50%;" + (FOTOAL ? "" : "display:none;") + "'" + (FOTOAL ? " src='" + FOTOAL + "'" : "") + ">" +
+          "<span id='avIni2'" + (FOTOAL ? " style='display:none;'" : "") + ">" + esc(INICIAIS) + "</span></button></div>";
+        if (!hero && !wodCard && !crCard) {
+          // aluno ainda sem treino prescrito: só a faixa com a saudação
+          return "<div id='blocoHoje' style='position:relative;'>" +
+            "<div style='height:170px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;'></div>" + heroTopo + "</div>";
+        }
+        return "<div id='blocoHoje' style='position:relative;'>" +
+          "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + wodCard + crCard + "</div>" + heroTopo + "</div>";
+      })() +
+      // card do ritmo da semana: recado curto + anel X/Y (o script preenche)
+      "<div class='cardx' id='coachCard' style='margin-top:18px;display:none;'>" +
+      "<div style='display:flex;gap:14px;align-items:center;background:var(--bg2);border-radius:22px;padding:16px 18px;'>" +
+      "<div id='coachTxt' style='flex:1;min-width:0;font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;'></div>" +
+      "<div id='ringSem' style='flex:none;width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;'>" +
+      "<div style='width:56px;height:56px;border-radius:50%;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;'>" +
+      "<b id='ringNum' style='font-size:16px;font-weight:900;line-height:1;'>–</b>" +
+      "<span style='font-size:7.5px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;margin-top:2px;'>semana</span></div></div></div></div>" +
+      // a semana em chips (seg-dom) + a sequência de dias embaixo
+      "<div class='cardx' id='semBlock' style='margin-top:18px;'>" +
+      "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
+      "<div id='stkLine' style='display:none;align-items:center;gap:7px;margin-top:12px;font-size:13px;font-weight:700;color:#fb923c;'></div></div>" +
+      // hábitos do dia em grade, estilo "HOJE EU JÁ"
+      "<div class='cardx' id='habWrap'><h2>Hoje eu já</h2><div id='habBox' class='habgrid' aria-label='Hábitos de hoje'></div></div>" +
       // onboarding de 30 segundos (só aparece no primeiro uso — some depois de responder)
       "<div class='cardx' id='onbCard' style='display:none;border-color:var(--cor);'>" +
       "<h2>Bora começar!</h2><div class='vz' style='text-align:left;padding:2px 0 8px;'>3 perguntinhas rápidas pro " + esc(a.nome.split(" ")[0]) + " do futuro agradecer:</div>" +
@@ -379,59 +498,6 @@
       "<div id='onbDias' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
-      // bloco de hoje (receita R1): os treinos prescritos do dia viram um
-      // CARROSSEL — um card por tipo (ficha, circuito, corrida), pontinhos
-      // embaixo, e o botão de cada card abre o fluxo daquele tipo. A faixa dos
-      // dias vem colada embaixo. Sem o skin carregado, os cards empilham.
-      "<div class='cardx' id='blocoHoje'>" +
-      (function () {
-        var cardCss = "flex:none;width:100%;scroll-snap-align:center;margin-top:10px;background:var(--bg2);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;";
-        var rotCss = "font-size:10px;font-weight:700;letter-spacing:.26em;color:var(--corc);text-transform:uppercase;";
-        var titCss = "font-size:27px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px;text-transform:uppercase;";
-        var subCss = "font-size:13px;color:#8a8695;";
-        var btnCss = "margin-top:18px;background:var(--cor);border:none;color:#fff;border-radius:99px;padding:11px 22px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.02em;";
-        var hero = (fichasApp || planoApp)
-          ? "<div id='heroTreino' style='" + cardCss + "'>" +
-            // foto da ficha do dia (o professor escolhe uma por ficha) — some quando não tem
-            "<img id='htFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;'>" +
-            "<div id='htVeu' style='display:none;position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,16,22,.2) 0%,rgba(18,16,22,.72) 55%,rgba(18,16,22,.94) 100%);'></div>" +
-            "<div style='position:relative;'>" +
-            "<div class='htk' style='" + rotCss + "'>HOJE · <span id='htRot'></span></div>" +
-            "<div id='htTitulo' style='" + titCss + "'></div>" +
-            "<div id='htSub' style='" + subCss + "'></div>" +
-            "<button id='htVer' class='btnx' style='" + btnCss + "'>Ver treino ›</button></div></div>"
-          : "";
-        // cards extras nascem escondidos: o script mostra os que não repetem o
-        // treino que o card principal já está mostrando (plano do dia)
-        var wodCard = "";
-        if (ve("wod") && wodsApp.length) {
-          var w0 = wodsApp[0];
-          wodCard = "<div id='heroWod' style='display:none;" + cardCss + "'>" +
-            "<div class='htk' style='" + rotCss + "'>HOJE · CIRCUITO</div>" +
-            "<div style='" + titCss + "'>" + esc(w0.nome || "Circuito") + "</div>" +
-            "<div style='" + subCss + "'>" + esc((w0.resumo || "circuito completo") + " · " + (((w0.movs && w0.movs.length) || (w0.mov && w0.mov.length)) || 0) + " movimentos") + "</div>" +
-            "<button data-carrver='wod' class='btnx' style='" + btnCss + "'>Começar circuito ›</button></div>";
-        }
-        var crCard = "";
-        if (ve("cardio") && cardiosApp.length) {
-          var c0 = cardiosApp[0];
-          var alvoCr = c0.tipo === "intervalado"
-            ? (c0.reps || 8) + "× " + (c0.tiro || 60) + "s forte / " + (c0.desc || 90) + "s leve"
-            : [(+c0.dist ? String(c0.dist).replace(".", ",") + " km" : ""), (+c0.tempo ? c0.tempo + " min" : ""), (c0.pace ? "pace " + c0.pace : "")].filter(Boolean).join(" · ") || "treino livre";
-          var rotCr = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c0.mod] || "CARDIO";
-          var btnCr = { corrida: "Começar corrida ›", caminhada: "Começar caminhada ›", bike: "Começar pedal ›" }[c0.mod] || "Começar ›";
-          crCard = "<div id='heroCr' style='display:none;" + cardCss + "'>" +
-            "<div class='htk' style='" + rotCss + "'>HOJE · " + rotCr + "</div>" +
-            "<div style='" + titCss + "'>" + esc(c0.nome || "Cardio") + "</div>" +
-            "<div style='" + subCss + "'>" + esc(alvoCr) + "</div>" +
-            "<button data-carrver='cardio' class='btnx' style='" + btnCss + "'>" + btnCr + "</button></div>";
-        }
-        var dias = "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;margin-top:14px;'></div>";
-        if (!hero && !wodCard && !crCard) return dias;
-        return "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + wodCard + crCard + "</div>" +
-          "<div class='carrdots' id='heroDots' style='display:none;'></div>" + dias;
-      })() +
-      "</div>" +
       // o resto da semana (meta, sequência e o Treinei hoje!) fica logo abaixo
       "<div class='cardx'><h2>Minha semana</h2>" +
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
@@ -445,11 +511,15 @@
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
       "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
+      // recado do professor no estilo das telas finais: card com filete da cor
       (((st.config || {}).mural || []).length
-        ? "<div class='cardx' style='border-color:var(--cor);'><h2>" + appIco(APPIC.pin, 14) + "Mural do studio</h2>" +
+        ? "<div class='cardx'><div style='background:var(--bg2);border-radius:22px;padding:18px 20px;border-left:3px solid var(--cor);'>" +
+          "<div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;'>" +
+          "<span aria-hidden='true' style='flex:none;width:30px;height:30px;border-radius:50%;background:rgba(var(--cor-rgb),.16);color:var(--corc);display:flex;align-items:center;justify-content:center;'>" + appIco(APPIC.pin, 13) + "</span>" +
+          "<div style='font-size:10.5px;font-weight:800;letter-spacing:.2em;color:#8a8695;text-transform:uppercase;'>Mural do studio</div></div>" +
           ((st.config || {}).mural || []).map(function (av) {
-            return "<div style='font-size:14px;padding:6px 0;border-bottom:1px dashed var(--bg11);'>• " + esc(av) + "</div>";
-          }).join("") + "</div>"
+            return "<div style='font-size:14.5px;line-height:1.55;padding:5px 0;'>" + esc(av) + "</div>";
+          }).join("") + "</div></div>"
         : "") +
       // ---------- Comunidade: o feed da turma (o professor liga nas Configurações) ----------
       (feedLigado
@@ -877,11 +947,15 @@
        * painel usa — antes de ser guardada e de viajar pro personal. A foto
        * original nunca sai do celular: o que vai é a versão pequena. */
       "function avPinta(src){var im=document.getElementById('avImg'),ini=document.getElementById('avIni');if(!im||!ini)return;" +
-      "if(src){im.src=src;im.style.display='';ini.style.display='none';}else{im.removeAttribute('src');im.style.display='none';ini.style.display='';}}" +
+      "if(src){im.src=src;im.style.display='';ini.style.display='none';}else{im.removeAttribute('src');im.style.display='none';ini.style.display='';}" +
+      // o avatar do herói (Início) mostra a mesma foto
+      "var im2=document.getElementById('avImg2'),ini2=document.getElementById('avIni2');if(im2&&ini2){" +
+      "if(src){im2.src=src;im2.style.display='';ini2.style.display='none';}else{im2.removeAttribute('src');im2.style.display='none';ini2.style.display='';}}}" +
       "(function(){var fl=document.getElementById('avFile'),bt=document.getElementById('avBtn');if(!fl||!bt)return;" +
       // a foto escolhida pelo aluno vence a que veio do painel
       "var minha=L('ptfotoperfil','');if(minha)avPinta(minha);" +
       "bt.addEventListener('click',function(){fl.click();});" +
+      "var bt2=document.getElementById('avBtn2');if(bt2)bt2.addEventListener('click',function(){fl.click();});" +
       "fl.addEventListener('change',function(){var f=fl.files&&fl.files[0];fl.value='';if(!f)return;" +
       "var rd=new FileReader();rd.onload=function(){var im=new Image();" +
       "im.onerror=function(){alert('Não consegui abrir essa imagem. Tenta outra foto.');};" +
@@ -1000,14 +1074,22 @@
       "for(var i=0;i<7;i++){var d=new Date(seg);d.setDate(d.getDate()+i);var iso=isoLoc(d);var fez=!!f[iso];if(fez)naSem++;" +
       "var hoje=iso===isoHj();html+=\"<div style='flex:1;min-width:0;'><div style='border-radius:9px;padding:7px 0 5px;text-align:center;\"+(fez?'background:linear-gradient(135deg,var(--cor),var(--corc));':'background:var(--bg4);border:1px solid var(--bg10);')+(hoje?'outline:2px solid var(--corc);outline-offset:1px;':'')+\"'>\"+" +
       "\"<div style='font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:\"+(fez?'rgba(255,255,255,.85)':'#6e6a78')+\";'>\"+rot[i]+\"</div>\"+" +
-      "\"<div style='font-size:14px;font-weight:800;margin-top:1px;color:\"+(fez?'#fff':'#d6d2df')+\";'>\"+d.getDate()+\"</div>\"+" +
-      "\"<div style='font-size:9px;line-height:1;margin-top:1px;color:\"+(fez?'#fff':'transparent')+\";'>✓</div></div></div>\";}" +
+      "\"<div style='font-size:14px;font-weight:800;margin-top:1px;color:\"+(fez?'#fff':'#d6d2df')+\";'>\"+d.getDate()+\"</div></div></div>\";}" +
       "document.getElementById('diasSem').innerHTML=html;" +
       "var pct=Math.min(100,Math.round(100*naSem/META));" +
       "var stk=streakSem(f);" +
       "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+\"</b></div><div style='height:10px;background:var(--bg4);border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg,var(--cor),var(--corc));border-radius:99px;transition:width .5s;'></div></div>\"+" +
       "(stk>0?\"<div id='stkBox' style='display:flex;align-items:center;gap:7px;margin-top:9px;font-weight:800;font-size:13.5px;color:#fb923c;'>\"+icx(ICO.chama,18)+\"sequência de \"+stk+\" semana\"+(stk>1?'s':'')+\" batendo a meta — não deixa apagar!</div>\":" +
       "\"<div id='stkBox' style='margin-top:9px;font-size:12px;color:#a9a4b5;'>Bata a meta desta semana pra acender a sequência \"+icx(ICO.chama,13)+\"</div>\");" +
+      // card do coach no Início: anel X/Y da semana + recado honesto pelo estado
+      "var rg=document.getElementById('ringSem');if(rg){var p2=Math.max(0,Math.min(100,pct));" +
+      "rg.style.background='conic-gradient(var(--cor) 0 '+p2+'%,var(--bg4) '+p2+'% 100%)';" +
+      "document.getElementById('ringNum').textContent=naSem+'/'+META;" +
+      "var ct=document.getElementById('coachTxt');if(ct)ct.innerHTML=naSem>=META?" +
+      "'Semana fechada: <b>'+naSem+' de '+META+'</b> treinos. Orgulho define — mantém o ritmo!':" +
+      "naSem>0?'Você já fez <b>'+naSem+' de '+META+'</b> treinos essa semana — hoje dá pra somar mais um.':" +
+      "'Bora abrir a semana: <b>'+META+' treino'+(META>1?'s':'')+'</b> te esperando.';" +
+      "var cc2=document.getElementById('coachCard');if(cc2)cc2.style.display='';}" +
       "var total=Object.keys(f).length;var marcos=[100,50,25,10,5];" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j]){falta=marcos[j];break;}}" +
       "document.getElementById('medalhas').innerHTML='<b>'+pl(total,'treino registrado','treinos registrados')+'</b>'+(falta?\"<br><small>faltam \"+(falta-total)+\" pra marca de \"+falta+\" treinos</small>\":'');}" +
@@ -2111,7 +2193,7 @@
       // hábitos diários com streak
       // na faixa do topo o espaço é curto: cada hábito é uma linha fina com
       // ícone, apelido e a sequência dele; o nome inteiro fica no aria-label
-      "var HABS=[[ICO.gota,'Água em dia','Água'],[ICO.maca,'Alimentação no plano','Alimentação'],[ICO.lua,'Dormi 7h+','Sono'],[ICO.ativ,'Cardio / passos','Cardio']];" +
+      "var HABS=[[ICO.gota,'Água em dia','Água'],[ICO.maca,'Alimentação no plano','Comida'],[ICO.lua,'Dormi 7h+','Sono'],[ICO.ativ,'Cardio / passos','Cardio']];" +
       // sequência de UM hábito: dias seguidos até hoje (o dia de hoje ainda não
       // marcado não quebra a conta — ele só não soma)
       "function stkHab(h,i){var n=0;var d=new Date();" +
@@ -2130,7 +2212,12 @@
       "if(n>=3)streak++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}" +
       "document.getElementById('habStreak').innerHTML=streak+\" <small>dia\"+(streak===1?'':'s')+'</small>';" +
       "var rec=recHab(h);" +
-      "document.getElementById('habRec').textContent=rec>1?'Recorde: '+rec+' dias':'Marque 3 pra contar o dia';}" +
+      "document.getElementById('habRec').textContent=rec>1?'Recorde: '+rec+' dias':'Marque 3 pra contar o dia';" +
+      // a chama embaixo da semana (telas finais): sequência de dias com 3+ hábitos
+      "var sl=document.getElementById('stkLine');if(sl){if(streak>0){sl.style.display='flex';" +
+      "sl.innerHTML=icx(ICO.chama,16)+'<b>'+streak+' dia'+(streak===1?'':'s')+' seguido'+(streak===1?'':'s')+'</b>'+" +
+      "(rec>1?\"<span style='color:#6e6a78;font-weight:600;'>· recorde \"+rec+' dias</span>':'');}" +
+      "else{sl.style.display='none';}}}" +
       "document.getElementById('habBox').addEventListener('click',function(e){var b=e.target.closest('[data-hab]');if(!b)return;" +
       "var h=L('pthab',{});var hoje=h[isoHj()]||{};hoje[b.dataset.hab]=!hoje[b.dataset.hab];h[isoHj()]=hoje;Sv('pthab',h);pintaHab();});" +
       "pintaHab();" +
@@ -2407,7 +2494,9 @@
         return "var CAPA_GERAL=" + jsonApp(geral) + ";" +
           "var FICHAS_META=" + jsonApp((fichasApp || []).map(function (f) {
             var propria = imgOk(f.capa);
-            return { t: f.titulo || "Ficha", n: f.itens.length, c: propria === geral ? "" : propria };
+            // e = nomes dos primeiros exercícios: viram a lista fantasma do herói
+            return { t: f.titulo || "Ficha", n: f.itens.length, c: propria === geral ? "" : propria,
+              e: f.itens.slice(0, 7).map(function (it) { return String(it.nome || "").slice(0, 40); }) };
           })) + ";" +
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
           "var PLANO=" + jsonApp(planoApp) + ";";
@@ -2415,42 +2504,49 @@
       // com a Semana do aluno (PLANO), o card HOJE segue o plano do professor:
       // ficha abre a gaveta certa, circuito/corrida apontam a sub-aba, dia sem
       // treino vira descanso; sem plano, vale o rodízio de sempre
+      "var DSEM_=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];" +
+      "var MESL_=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];" +
       "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||(!FICHAS_META.length&&!PLANO))return;" +
-      "var i=-1,fm=null,rt='',tit='',sub='',cImg='';" +
-      "var pj=PLANO&&PLANO[String(new Date().getDay())];" +
+      "var i=-1,fm=null,rt='',tit='',sub='',cImg='',btn='Começar treino';" +
+      "var hjD=new Date();var dataHj=DSEM_[hjD.getDay()]+', '+hjD.getDate()+' DE '+MESL_[hjD.getMonth()];" +
+      "var pj=PLANO&&PLANO[String(hjD.getDay())];" +
       "if(PLANO){" +
       "if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i]){i=pj.i;fm=FICHAS_META[i];}" +
-      "else if(pj&&pj.tp==='wod'){rt='CIRCUITO (WOD)';tit=pj.n;sub='circuito completo te esperando';cImg=CAPA_GERAL;}" +
-      "else if(pj&&pj.tp==='cardio'){rt='CORRIDA E BIKE';tit=pj.n;sub='treino prescrito te esperando';cImg=CAPA_GERAL;}" +
-      "else{rt='DESCANSO';tit='Dia de recuperar';sub='alongue, caminhe leve e durma bem — amanhã tem mais';cImg=CAPA_GERAL;}" +
+      "else if(pj&&pj.tp==='wod'){rt='HOJE · CIRCUITO (WOD)';tit=pj.n;sub='circuito completo te esperando';cImg=CAPA_GERAL;btn='Começar circuito';}" +
+      "else if(pj&&pj.tp==='cardio'){rt='HOJE · CORRIDA E BIKE';tit=pj.n;sub='treino prescrito te esperando';cImg=CAPA_GERAL;btn='Começar corrida';}" +
+      "else{rt='HOJE · DESCANSO';tit='Dia de recuperar';sub='alongue, caminhe leve e durma bem — amanhã tem mais';cImg=CAPA_GERAL;btn='Ver meus treinos';}" +
       "}else{var tot=Object.keys(L('ptfeitos',{})).length;i=tot%FICHAS_META.length;fm=FICHAS_META[i];}" +
-      "if(fm){var par=String(fm.t).split('—');rt=par.length>1?('TREINO '+par[0].trim()):('FICHA '+(i+1));tit=par.length>1?par.slice(1).join('—').trim():fm.t;sub=pl(fm.n,'exercício te esperando','exercícios te esperando');cImg=fm.c||CAPA_GERAL;}" +
+      // a ficha do dia: a DATA vira o rótulo e a letra do treino entra no título
+      "if(fm){var par=String(fm.t).split('—');rt=dataHj;tit=par.length>1?('Treino '+par[0].trim()+' '+par.slice(1).join('—').trim()):fm.t;sub=pl(fm.n,'exercício te esperando','exercícios te esperando');cImg=fm.c||CAPA_GERAL;}" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
       "document.getElementById('htSub').textContent=sub;" +
-      // foto da ficha do dia no card (com véu por cima pro texto continuar legível)
-      "var hf=document.getElementById('htFoto'),hv2=document.getElementById('htVeu');" +
-      "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';hv2.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';hv2.style.display='none';}" +
+      "var hb0=document.getElementById('htVer');if(hb0)hb0.textContent=btn;" +
+      // lista fantasma: os exercícios da ficha do dia, apagadinhos no fundo
+      "var hg=document.getElementById('htGhost');if(hg){var ge=(fm&&fm.e)||[];hg.innerHTML=ge.map(function(){return \"<div class='hgline'></div>\";}).join('');" +
+      "for(var g2=0;g2<hg.children.length;g2++)hg.children[g2].textContent=ge[g2]||'';}" +
+      // foto da ficha do dia no card (o véu fica sempre, pro texto valer)
+      "var hf=document.getElementById('htFoto');" +
+      "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';}" +
       "el.classList.toggle('comfoto',!!cImg);}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
       "var gav=document.querySelectorAll('.fichabox');" +
       "if(gav.length>1&&i>=0)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
-      // Ver treino: além de ir pra área de Treino, cai na SUB-ABA do dia (plano)
+      // Começar treino: além de ir pra área de Treino, cai na SUB-ABA do dia (plano)
       "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');" +
       "var pj2=PLANO&&PLANO[String(new Date().getDay())];if(pj2&&window.__trSub)window.__trSub(pj2.tp==='wod'?'wod':pj2.tp==='cardio'?'cardio':'ficha');});" +
-      // carrossel de treinos do dia (receita R1): mostra os cards que não
-      // repetem o que o principal já exibe, pinta os pontinhos conforme o
-      // arrasto e leva cada botão pro fluxo do tipo certo
-      "(function(){var cr=document.getElementById('heroCarr');if(!cr)return;" +
+      // carrossel de treinos do dia (telas final-44/45/46): cada card mostra os
+      // próprios risquinhos ("2 de 3 · arraste →") e o botão leva pro fluxo certo
+      "(function(){" +
+      "var sa=document.getElementById('heroSauda');if(sa){var hh=new Date().getHours();sa.textContent=(hh<12?'Bom dia':hh<18?'Boa tarde':'Boa noite')+', '+PRIMEIRO;}" +
+      "var cr=document.getElementById('heroCarr');if(!cr)return;" +
       "var pj3=PLANO&&PLANO[String(new Date().getDay())];var tpHoje=pj3?pj3.tp:'ficha';" +
       "var cw=document.getElementById('heroWod');if(cw&&tpHoje!=='wod')cw.style.display='';" +
       "var cc=document.getElementById('heroCr');if(cc&&tpHoje!=='cardio')cc.style.display='';" +
       "var cards=Array.prototype.filter.call(cr.children,function(x){return x.style.display!=='none';});" +
-      "var dts=document.getElementById('heroDots');" +
-      "if(cards.length<2){if(dts)dts.style.display='none';return;}" +
-      "if(dts){dts.style.display='flex';" +
-      "var pinta=function(i){dts.innerHTML=cards.map(function(x,xi){return \"<i class='\"+(xi===i?'on':'')+\"'></i>\";}).join('');};" +
-      "pinta(0);var t3;cr.addEventListener('scroll',function(){clearTimeout(t3);t3=setTimeout(function(){" +
-      "var i=Math.round(cr.scrollLeft/Math.max(1,cr.clientWidth));pinta(Math.max(0,Math.min(cards.length-1,i)));},80);},{passive:true});}" +
+      "cards.forEach(function(c,ci){var d=c.querySelector('.htdash');if(!d)return;" +
+      "if(cards.length<2){d.style.display='none';return;}" +
+      "d.innerHTML=cards.map(function(x,xi){return \"<span style='\"+(xi===ci?'width:26px;background:#fff;':'width:6px;background:rgba(255,255,255,.42);')+\"'></span>\";}).join('')+" +
+      "\"<span class='htn'>\"+(ci+1)+' de '+cards.length+' · arraste →</span>';});" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-carrver]');if(!b)return;" +
       "if(window.__trocaSec)window.__trocaSec('treino');if(window.__trSub)window.__trSub(b.getAttribute('data-carrver'));});})();" +
       "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
@@ -2521,8 +2617,8 @@
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
       "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
       "var MENU=[" +
-      "['inicio',\"<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>\",'Início']," +
-      "['treino',\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'Treino']," +
+      "['inicio',\"<path d='M3 10 12 3l9 7'/><path d='M5 8.8V21h14V8.8'/><path d='M9.5 21v-6h5v6'/>\",'Hoje']," +
+      "['treino',\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'Treinos']," +
       "['evolucao',\"<polyline points='3 17 9 11 13 15 21 7'/><polyline points='15 7 21 7 21 13'/>\",'Evolução']," +
       // com o feed ligado a Comunidade vira a 4ª aba fixa (a Agenda vai pro menu ☰)
       "['feed',\"<circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/>\",'Turma']," +
@@ -2553,8 +2649,9 @@
       "var s=secDe(el);el.setAttribute('data-sec',s||'inicio');});" +
       "var temSec={};document.querySelectorAll('[data-sec]').forEach(function(el){temSec[el.getAttribute('data-sec')]=1;});" +
       "var itens=MENU.filter(function(m){return temSec[m[0]];});" +
-      // 4 abas fixas embaixo + o menu de três traços no canto direito com TODAS as áreas
-      "var fixos=itens.slice(0,4);" +
+      // 3 abas fixas embaixo + o Menu no canto direito com TODAS as áreas
+      // (as telas finais do redesenho têm 4 botões: Hoje, Treinos, Evolução, Menu)
+      "var fixos=itens.slice(0,3);" +
       "function btnNav(m){" +
       "return \"<button class='nitem' data-msec='\"+m[0]+\"' style='flex:1;min-width:0;background:none;border:none;cursor:pointer;font-family:inherit;color:#8a8695;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 5px;border-radius:9px;position:relative;'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(m[1])+\"</span>\"+" +
@@ -2588,6 +2685,8 @@
       "mb.style.background=eFixo?'none':'rgba(var(--cor-rgb),.16)';mb.style.color=eFixo?(CLARO?'#6c6678':'#8a8695'):(CLARO?'var(--cor)':'var(--corc)');}" +
       "var rot=itens.filter(function(m){return m[0]===s;})[0];" +
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
+      // no Início a faixa colorida some: o cabeçalho mora dentro do herói
+      "document.body.classList.toggle('semtopo',s==='inicio');" +
       // a sequência e os hábitos são conteúdo do Início: fora dele a faixa
       // colorida fica curta, só com o nome, o nível e o XP
       "var tpx=document.getElementById('topoExtra');if(tpx)tpx.style.display=(s==='inicio'?'':'none');" +

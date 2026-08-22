@@ -37,13 +37,15 @@
     + ".topo h1{font-size:26px;letter-spacing:-.02em}"
     + ".tpchip{padding:7px 12px}"
 
-    /* ---------- bloco de hoje: o herói manda na tela ---------- */
-    + "#heroTreino{border-radius:22px!important}"
-    + "#htTitulo{font-size:32px!important;font-weight:900!important;letter-spacing:-.03em!important;line-height:.96!important}"
-    + "#htSub{font-size:13.5px!important}"
-    + "#heroTreino.comfoto{min-height:400px;display:flex;flex-direction:column;justify-content:flex-end}"
-    + "#heroTreino.comfoto #htTitulo{font-size:44px!important}"
-    + "#heroTreino .btnx,#heroTreino button.btnx{min-height:58px;width:100%;font-size:17px;font-weight:800}"
+    /* ---------- bloco de hoje: o herói manda na tela (telas final-44/45/46) ----------
+     * O carrossel do Início é FULL-BLEED: cards de tela cheia, título gigante,
+     * risquinhos por card e o botão grandão. O construtor monta a estrutura;
+     * aqui entra o acabamento. */
+    + "#heroCarr{margin:0!important;padding:0!important;gap:0!important}"
+    + "#heroCarr>div{border-radius:0!important}"
+    + "#htTitulo,#heroCarr .htit{font-size:clamp(30px,10vw,44px)!important;font-weight:900!important;letter-spacing:-.035em!important;line-height:.94!important;text-transform:uppercase}"
+    + "#htSub,#heroCarr .hsub{font-size:13.5px!important}"
+    + "#heroCarr .btnx{min-height:58px;width:100%;font-size:17px;font-weight:800}"
     + "#diasSem>div>div,#diasSem>div{border-radius:12px!important}"
 
     /* ---------- barra de abas ---------- */
