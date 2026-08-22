@@ -297,6 +297,16 @@
       ".gcg .gwval input:focus{outline:2px solid var(--cor);outline-offset:4px;border-radius:10px}" +
       ".gcg .gwval u{font-style:normal;text-decoration:none;font-size:15px;font-weight:800;color:#6f6688}" +
       ".gcg .gwval.sm input{font-size:27px;min-height:36px;width:2.6em}" +
+      // anotar carga SEM teclado (redesenho 11a): passos de ±2,5 kg e ±1 rep
+      ".gsteps{display:flex;gap:10px;margin-top:10px}" +
+      ".gsteps button{flex:1;min-height:54px;border-radius:16px;border:1px solid #d6cfe6;background:#fff;color:var(--cor2);font-family:inherit;font-size:18px;font-weight:800;cursor:pointer;font-variant-numeric:tabular-nums}" +
+      ".gsteps.sm button{min-height:44px;font-size:15px}" +
+      // fim do treino: a tela inteira vira a celebração roxa do redesenho
+      ".gwrap.fim{background:linear-gradient(170deg,var(--cor) 0%,var(--cor2) 46%,#2b1259 100%)}" +
+      ".gtiles{display:flex;gap:8px;margin-top:14px}" +
+      ".gtiles div{flex:1;background:#fff;border:1px solid #e2dbf2;border-radius:16px;padding:12px 6px;text-align:center}" +
+      ".gtiles b{display:block;font-size:20px;font-weight:900;color:#1d1729;font-variant-numeric:tabular-nums}" +
+      ".gtiles span{display:block;font-size:9px;font-weight:800;letter-spacing:.1em;color:#6f6688;text-transform:uppercase;margin-top:3px}" +
       ".gwrail{position:relative;margin-top:2px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);" +
       "mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}" +
       ".gwheel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px calc(50% - 9px) 0;touch-action:pan-x;" +
@@ -1670,6 +1680,7 @@
       "function abreGuia(fi,ei){var f=GUIA[fi];if(!f||!f.it.length)return;clearInterval(gv.timer);clearInterval(gv.relo);" +
       "gv={f:fi,e:Math.min(+ei||0,f.it.length-1),s:0,timer:null,pend:false,feitas:{},cargas:{},t0:Date.now(),tex:Date.now(),relo:null,sujo:false,fim:false};" +
       "ligaTela();gEl('guiaBox').style.display='flex';document.body.style.overflow='hidden';" +
+      "gEl('guiaBox').classList.remove('fim');" +
       "gEl('gCard').classList.remove('recibo');" +
       "gEl('gVoltaEx').style.display='';gEl('gPularEx').style.display='';" +
       "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\"+" +
@@ -1677,6 +1688,7 @@
       "\"<button class='sec mais' id='gMais15' style='display:none;'>+15 s</button>\";" +
       "gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();}" +
       "function fechaGuia(){gSalvaSeSujo();clearInterval(gv.timer);clearInterval(gv.relo);" +
+      "gEl('guiaBox').classList.remove('fim');" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
       "gEl('guiaBox').style.display='none';document.body.style.overflow='';soltaTela();}" +
       "function gTicRelo(){var r=gEl('gRelo'),t=gEl('gReloTot');if(!r)return;" +
@@ -1710,6 +1722,8 @@
       "m+=gBlocos(false);" +
       "if(it.ob)m+=\"<div class='gobs'><em>Recado do professor</em><p>\"+esc2(it.ob)+'</p></div>';" +
       "if(it.dc)m+=\"<div class='gdica'>\"+esc2(it.dc)+'</div>';" +
+      // o que vem depois (redesenho 11a): o aluno já monta a estação seguinte
+      "var prox=f.it[gv.e+1];if(prox)m+=\"<div class='ghist' style='margin-top:12px;'>Depois vem <b style='color:#1d1729;'>\"+esc2(prox.e)+'</b> · '+prox.s+' × '+esc2(String(prox.r||'?'))+'</div>';" +
       "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
       "gEl('gHist').textContent=gHistTxt(it.e);" +
@@ -1802,9 +1816,12 @@
       "return \"<div class='gcg'><div class='gcglab' id='gCgLab'>Carga de hoje</div>\"+" +
       "\"<div class='gwbox'><div class='gwval'>\"+" +
       "\"<input id='gKg' inputmode='decimal' value='\"+(v?gnum(v):'')+\"' placeholder='0' aria-label='Carga em quilos'><u>kg</u></div>\"+" +
+      // sem teclado: os passos de anilha resolvem o caso comum em 1 toque
+      "\"<div class='gsteps'><button type='button' data-gstep='kg:-2.5' aria-label='Menos 2,5 quilos'>− 2,5</button><button type='button' data-gstep='kg:2.5' aria-label='Mais 2,5 quilos'>+ 2,5</button></div>\"+" +
       "gRegua('gWKg',GW.kg,v)+\"</div>\"+" +
       "\"<div class='gwbox'><div class='gwval sm'>\"+" +
       "\"<input id='gReps' inputmode='numeric' value='\"+(r||'')+\"' placeholder='—' aria-label='Repetições'><u>reps</u></div>\"+" +
+      "\"<div class='gsteps sm'><button type='button' data-gstep='rep:-1' aria-label='Menos 1 repetição'>− 1</button><button type='button' data-gstep='rep:1' aria-label='Mais 1 repetição'>+ 1</button></div>\"+" +
       "gRegua('gWRep',GW.rep,r)+\"</div>\"+" +
       "\"<button type='button' class='gsalvar' id='gSalvar'>Salvar carga</button>\"+" +
       "\"<button type='button' class='gsemcarga' id='gSemCarga'>Foi sem carga (peso do corpo)</button></div>\";}" +
@@ -1817,6 +1834,15 @@
       "if(a)a.scrollLeft=gIdx(GW.kg,parseFloat(String(kg.value).replace(',','.'))||0)*GW.kg.px;" +
       "if(b)b.scrollLeft=gIdx(GW.rep,parseInt(rp.value,10)||0)*GW.rep.px;});" +
       "kg.oninput=function(){gv.sujo=true;};rp.oninput=function(){gv.sujo=true;};" +
+      // botões de passo (±2,5 kg / ±1 rep): mexem no valor, acendem o 'sujo' e
+      // re-centram a régua — a mesma trilha de gravação dos outros caminhos
+      "Array.prototype.forEach.call(document.querySelectorAll('[data-gstep]'),function(b){b.onclick=function(){" +
+      "var p=b.getAttribute('data-gstep').split(':');var passo=parseFloat(p[1]);" +
+      "var alvo=p[0]==='kg'?gEl('gKg'):gEl('gReps');if(!alvo)return;" +
+      "var v=parseFloat(String(alvo.value).replace(',','.'))||0;v=Math.max(0,Math.round((v+passo)*100)/100);" +
+      "alvo.value=p[0]==='kg'?(v?gnum(v):''):(v?String(Math.round(v)):'');" +
+      "gv.sujo=true;gv.mexe=true;if(navigator.vibrate)navigator.vibrate(8);" +
+      "var cfg2=p[0]==='kg'?GW.kg:GW.rep;var rl=gEl(p[0]==='kg'?'gWKg':'gWRep');if(rl)rl.scrollLeft=gIdx(cfg2,v)*cfg2.px;};});" +
       "gEl('gSalvar').onclick=function(){gv.sujo=false;" +
       "var ok=gGrava(it.e,parseFloat(String(kg.value).replace(',','.')),parseInt(rp.value,10)||0,gv.regi);" +
       "var lab=gEl('gCgLab');if(!lab)return;" +
@@ -1843,13 +1869,18 @@
       "var gg3=gEl('gGif');if(gg3)gg3.style.display='none';" +
       "gEl('gBarra').innerHTML=f.it.map(function(){return \"<i class='past'></i>\";}).join('');" +
       "gEl('gProg').innerHTML='<b>'+g2(f.it.length)+'</b> / '+g2(f.it.length)+\"<span>\"+esc2(f.n)+'</span>';" +
-      "gEl('gCard').classList.add('recibo');" +
+      "gEl('gCard').classList.add('recibo');gEl('guiaBox').classList.add('fim');" +
       "gEl('gVoltaEx').style.display='none';gEl('gPularEx').style.display='none';" +
       "var vb=gEl('gVideo');if(vb){vb.style.display='none';var bx=vb.nextElementSibling;" +
       "if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
-      "var m=\"<div class='gdica' style='margin-top:14px;font-size:15px;color:#1d1729;font-weight:700;'>\"+" +
-      "'Séries feitas aqui · '+marc+' de '+pres+\"<br>Cargas anotadas · \"+anot+' de '+f.it.length+" +
-      "'<br>Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+'</div>';" +
+      // quilos levantados na sessão: séries feitas × reps × carga anotada de hoje
+      "var kgTot=0;f.it.forEach(function(it,i){var nS=Math.min(Math.max(gv.feitas[i]||0,stR[it.e]||0),it.s);" +
+      "var cg=gv.cargas[it.e];if(cg===undefined){var dl=(dcR[it.e]||[]).filter(function(x){return x.d===hjR;});if(dl.length)cg=+dl[dl.length-1].kg;}" +
+      "var rp2=parseInt(it.r,10)||0;if(typeof cg==='number'&&cg>0&&nS>0&&rp2>0)kgTot+=nS*rp2*cg;});" +
+      "var m=\"<div class='gtiles'><div><b>\"+gmmss((Date.now()-gv.t0)/1000)+'</b><span>no treino</span></div>'+" +
+      "'<div><b>'+marc+' de '+pres+'</b><span>séries</span></div>'+" +
+      "(kgTot>0?'<div><b>'+(kgTot>=10000?(Math.round(kgTot/100)/10).toString().replace('.',',')+' t':Math.round(kgTot))+'</b><span>kg no total</span></div>':'')+'</div>'+" +
+      "\"<div class='gdica' style='margin-top:14px;font-size:15px;color:#1d1729;font-weight:700;'>Cargas anotadas · \"+anot+' de '+f.it.length+'</div>';" +
       // a pergunta chega no momento certo: acabou de treinar, ainda ofegante
       "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:18px;'>\"+rpeHtml()+'</div>';" +
       "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +
@@ -1864,7 +1895,10 @@
       "gEl('gDesc').style.display='none';" +
       // os botões do rodapé podem já ter sido trocados (caminho 'Terminar treino'):
       // ler .style de um id que não existe mais derrubava o fim do treino
-      "gEl('gPe').innerHTML=\"<button class='prin' id='gFim'>Fechar</button>\";" +
+      // com a Comunidade ligada, o fim do treino convida a postar (redesenho 11a)
+      "var fdOk=!!document.getElementById('fdTexto');" +
+      "gEl('gPe').innerHTML=(fdOk?\"<button class='prin' id='gPostar'>Postar na turma</button>\":'')+" +
+      "\"<button class='\"+(fdOk?'sec':'prin')+\"' id='gFim'>Fechar</button>\";" +
       "gEl('gCard').scrollTop=0;" +
       "if(navigator.vibrate)navigator.vibrate([100,60,100,60,300]);beepG();" +
       "if(typeof confete==='function')try{confete();}catch(e3){}}" +
@@ -1882,6 +1916,10 @@
       "var gi2=e.target.closest('.inibtn');if(gi2){abreGuia(+gi2.dataset.g,+gi2.dataset.e);return;}" +
       "var gf=e.target.closest('[data-gfalta]');if(gf){gRepesca(+gf.dataset.gfalta);return;}" +
       "if(e.target.id==='gVoltaFim'){gConclui();return;}" +
+      // Postar na turma: fecha o player e cai no feed com o texto já rascunhado
+      "if(e.target.id==='gPostar'){var fN2=GUIA[gv.f]?GUIA[gv.f].n:'';fechaGuia();" +
+      "if(window.__trocaSec)window.__trocaSec('feed');" +
+      "var ftx=document.getElementById('fdTexto');if(ftx&&!ftx.value)ftx.value='Fechei o treino '+fN2+' de hoje! 💪';return;}" +
       "if(e.target.id==='gFim'||e.target.id==='gFechar'){fechaGuia();return;}" +
       "if(e.target.id==='gPular'){gFimDesc();return;}" +
       "if(e.target.id==='gMais15'){gv.mais=(gv.mais||0)+15;return;}" +

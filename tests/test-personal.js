@@ -5028,8 +5028,8 @@ async function abaPt(p, a) {
         rpe: document.querySelectorAll("#gMiolo [data-rpe]").length,
         temFechar: !!document.getElementById("gFim") };
     });
-    ok(/concluído/.test(fim.ex) && /Séries feitas aqui/.test(fim.recibo) && /Cargas anotadas/.test(fim.recibo) && /Tempo de treino/.test(fim.recibo),
-      "a tela final vira um recibo do treino (séries, cargas e tempo)");
+    ok(/concluído/.test(fim.ex) && /no treino/.test(fim.recibo) && /séries/.test(fim.recibo) && /Cargas anotadas/.test(fim.recibo),
+      "a tela final vira a celebração do treino (tempo, séries e cargas anotadas)");
     ok(fim.temFechar, "a tela final NÃO fecha sozinha — o aluno sai quando quiser");
     ok(fim.faltam >= 1, "quem ficou sem carga vira um atalho de repescagem no recibo (" + fim.faltam + ")");
     ok(fim.rpe === 3 && /Como foi o treino de hoje\?/.test(fim.recibo),
@@ -6167,6 +6167,26 @@ async function abaPt(p, a) {
     ok(pln.hero13a, "🎨 redesenho 13a: herói de 550px com data, marca-d'água, carrossel e UM botão 'Começar treino' de 58px");
     ok(pln.heroExtra.length === 2 && pln.heroExtra[0].k === "wod" && pln.heroExtra[1].k === "cardio" && !!pln.heroExtra[1].s,
       "o carrossel do herói ganha os cards de circuito e corrida prescritos (com o alvo resumido)");
+  }
+
+  // 🏋️ lote 2 do redesenho: player com carga sem teclado + celebração de fim
+  {
+    const pl2 = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      const html = window.__montaAppAluno(st.alunos[0], "teste-fluxo");
+      return {
+        passos: /data-gstep='kg:-2\.5'/.test(html) && /data-gstep='kg:2\.5'/.test(html) &&
+          /data-gstep='rep:-1'/.test(html) && /data-gstep='rep:1'/.test(html) &&
+          /\.gsteps button\{[^}]*min-height:54px/.test(html),
+        celebra: /\.gwrap\.fim\{background:linear-gradient\(170deg/.test(html) && /gtiles/.test(html) && /kg no total/.test(html),
+        postar: /id==='gPostar'/.test(html) && /Postar na turma/.test(html),
+        proximo: /Depois vem <b/.test(html),
+      };
+    });
+    ok(pl2.passos, "🏋️ anotar carga SEM teclado: passos de ±2,5 kg e ±1 rep (alvos de 54px)");
+    ok(pl2.celebra, "o fim do treino vira a celebração roxa, com tempo, séries e kg levantados");
+    ok(pl2.postar, "com a Comunidade ligada, a celebração convida a Postar na turma (texto já rascunhado)");
+    ok(pl2.proximo, "a tela da série avisa qual exercício vem depois (monta a próxima estação)");
   }
 
   /* A IA parou de mandar republicar a função quando o problema é credencial.
