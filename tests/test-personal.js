@@ -5226,12 +5226,19 @@ async function abaPt(p, a) {
     ok(await pApp.evaluate(() => document.getElementById("guiaBox").style.display === "none" && document.body.style.overflow === ""),
       "fechar devolve a rolagem da página (nada de app travado depois do treino)");
   }
-  // card de conquista pro Stories baixa a imagem
+  // card de conquista pro Stories: abre a PRÉVIA (o share precisa sair do
+  // toque no iPhone) e o Salvar baixa a imagem
   {
-    const dlCard = pApp.waitForEvent("download", { timeout: 5000 }).catch(() => null);
     await pApp.evaluate(() => document.getElementById("btnCardStories").click());
+    await pApp.waitForTimeout(400);
+    const prevOk = await pApp.evaluate(() => !!document.getElementById("artePrev") && !!document.querySelector("#artePrev img") &&
+      !!document.getElementById("arteShare") && !!document.getElementById("arteBaixa"));
+    ok(prevOk, "Gerar card pro Stories abre a prévia com Compartilhar e Salvar");
+    const dlCard = pApp.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+    await pApp.evaluate(() => document.getElementById("arteBaixa").click());
     const cardArq = await dlCard;
     ok(!!cardArq && /conquista\.png/.test(cardArq.suggestedFilename()), "Gerar card pro Stories baixa a imagem da conquista");
+    await pApp.evaluate(() => document.getElementById("arteFecha").click());
   }
   // gráfico de carga: clica na linha do diário
   await pApp.fill("#dcEx", "Supino reto");

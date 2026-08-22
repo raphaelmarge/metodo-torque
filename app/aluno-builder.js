@@ -1630,10 +1630,28 @@
       // rodapé: marca do studio + o tipo
       "g.font='800 30px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.75)';g.fillText(STUDIO.toUpperCase().slice(0,32),60,1296);" +
       "g.textAlign='right';g.fillStyle='rgba(255,255,255,.55)';g.fillText(String(op.rodape||'').toUpperCase(),1020,1296);g.textAlign='left';" +
-      "if(soCanvas)return c;" +
-      "c.toBlob(function(bl){var fl=new File([bl],'treino.png',{type:'image/png'});" +
-      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
-      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='treino.png';a2.click();}});return null;}" +
+      "if(soCanvas)return c;arteMostra(c,'treino.png');return null;}" +
+      /* No iPhone o navigator.share só funciona DENTRO do toque do usuário —
+       * chamado depois do carregamento da foto + toBlob, o iOS recusava em
+       * silêncio e "nada acontecia". Agora a arte abre numa PRÉVIA (telas
+       * 27-30) e o Compartilhar sai do próprio toque, que o iOS aceita. */
+      "function arteMostra(c,nome){nome=nome||'treino.png';var old=document.getElementById('artePrev');if(old)old.remove();" +
+      "var bl9=null;try{c.toBlob(function(b){bl9=b;},'image/png');}catch(e){}" +
+      "var ov=document.createElement('div');ov.id='artePrev';" +
+      "ov.style.cssText='position:fixed;inset:0;z-index:80;background:rgba(8,7,12,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';" +
+      "ov.innerHTML=\"<img src='\"+c.toDataURL('image/png')+\"' style='max-width:82%;max-height:60vh;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);' alt='Arte do treino'>\"+" +
+      "\"<div style='display:flex;gap:10px;margin-top:18px;width:100%;max-width:340px;'>\"+" +
+      "\"<button type='button' id='arteShare' class='btnx' style='flex:1;min-height:54px;font-size:15.5px;'>Compartilhar</button>\"+" +
+      "\"<button type='button' id='arteBaixa' class='btnx' style='flex:none;background:var(--bg4);box-shadow:none;color:#d6d2df;min-height:54px;'>Salvar</button></div>\"+" +
+      "\"<button type='button' id='arteFecha' style='margin-top:10px;background:none;border:none;color:#a9a4b5;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:10px 20px;'>Fechar</button>\";" +
+      "document.body.appendChild(ov);" +
+      "document.getElementById('arteFecha').addEventListener('click',function(){ov.remove();});" +
+      "document.getElementById('arteBaixa').addEventListener('click',function(){var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download=nome;document.body.appendChild(a2);a2.click();setTimeout(function(){a2.remove();},400);});" +
+      "document.getElementById('arteShare').addEventListener('click',function(){" +
+      "var fl=bl9?new File([bl9],nome,{type:'image/png'}):null;" +
+      "if(fl&&navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
+      "else document.getElementById('arteBaixa').click();});" +
+      "window.__artePrev=ov;}" +
       "window.__artePost=function(op){return artePost(null,op,true);};" +
       // liga um par foto/sem-foto (input de arquivo + botão) na arte do post
       "function ligaArte(idArq,idSem,op){var aq=document.getElementById(idArq);" +
@@ -1660,9 +1678,8 @@
       "if(stk2>0){g.fillStyle='#fdba74';g.fillText(stk2+' semana'+(stk2>1?'s':'')+' seguidas batendo a meta',540,615);g.fillStyle=CV('cor-cl2');}" +
       "g.fillText(total+' treinos no total · sequência de '+seq+(seq===1?' dia':' dias'),540,stk2>0?710:615);" +
       "g.fillStyle=CV('corc');g.font='700 34px system-ui,sans-serif';g.fillText(PRIMEIRO+' · TORQUE PERSONAL',540,990);" +
-      "c.toBlob(function(bl){var fl=new File([bl],'conquista.png',{type:'image/png'});" +
-      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
-      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='conquista.png';a2.click();}});});" +
+      // mesma prévia do fim de treino: o share sai do toque, que o iPhone aceita
+      "arteMostra(c,'conquista.png');});" +
       // retrospectiva do mês fechado: monta sozinha no comecinho do mês seguinte
       "var MESN=['janeiro','fevereiro','mar\\u00e7o','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
       "function retroMes(){var d=new Date();d.setDate(1);d.setDate(0);return isoLoc(d).slice(0,7);}" +
