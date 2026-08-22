@@ -613,12 +613,15 @@
       "<div style='display:flex;gap:8px;margin-top:10px;'>" +
       "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
       "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
-      // recado do professor no estilo das telas finais: card com filete da cor
+      // recado do professor (tela 13): avatar com as iniciais do studio,
+      // kicker "Recado do <studio>" e o selo "fixado" — filete da cor na esquerda
       (((st.config || {}).mural || []).length
         ? "<div class='cardx'><div style='background:var(--bg2);border-radius:22px;padding:18px 20px;border-left:3px solid var(--cor);'>" +
           "<div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;'>" +
-          "<span aria-hidden='true' style='flex:none;width:30px;height:30px;border-radius:50%;background:rgba(var(--cor-rgb),.16);color:var(--corc);display:flex;align-items:center;justify-content:center;'>" + appIco(APPIC.pin, 13) + "</span>" +
-          "<div style='font-size:10.5px;font-weight:800;letter-spacing:.2em;color:#8a8695;text-transform:uppercase;'>Mural do studio</div></div>" +
+          "<span aria-hidden='true' style='flex:none;width:34px;height:34px;border-radius:50%;background:rgba(var(--cor-rgb),.22);color:var(--corc);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;overflow:hidden;'>" +
+          (LOGOAPP ? "<img src='" + LOGOAPP + "' alt='' style='width:100%;height:100%;object-fit:cover;'>" : esc(String(studio || "?").trim().split(/\s+/).slice(0, 2).map(function (w) { return (w[0] || "").toUpperCase(); }).join(""))) + "</span>" +
+          "<div style='flex:1;font-size:10.5px;font-weight:800;letter-spacing:.18em;color:#8a8695;text-transform:uppercase;'>Recado do " + esc(studio.split(" ")[0]) + "</div>" +
+          "<span style='font-size:11px;color:#6e6a78;'>fixado</span></div>" +
           ((st.config || {}).mural || []).map(function (av) {
             return "<div style='font-size:14.5px;line-height:1.55;padding:5px 0;'>" + esc(av) + "</div>";
           }).join("") + "</div></div>"
@@ -711,6 +714,9 @@
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
+      // tela 49: ranking da turma no mês + os dois cartões (peso e sequência)
+      "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
+      "<div id='cqTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
@@ -1044,9 +1050,12 @@
       "<div id='imcOut' style='margin-top:10px;'></div>" +
       "<div class='vz' style='font-size:11px;'>O IMC é só uma referência — quem manda na avaliação é " + esc(studio.split(" ")[0]) + ".</div></div>" +
       // (os hábitos de hoje subiram pra faixa colorida do topo)
-      "<div class='cardx'><h2>Fotos de progresso</h2>" +
+      // tela 41: fotos por ângulo (Frente/Lado/Costas) + comparador com alça
+      "<div class='cardx'><div style='display:flex;justify-content:space-between;align-items:baseline;'><h2>Fotos de progresso</h2>" +
+      "<span style='font-size:11.5px;color:#8a8695;'>só você e seu personal veem</span></div>" +
+      "<div id='ftAbas' style='display:flex;gap:8px;margin-bottom:12px;'></div>" +
       "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer.</div>" +
-      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:12px;min-height:54px;line-height:32px;font-size:15.5px;'>+ Adicionar foto de hoje" +
+      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:12px;min-height:54px;line-height:32px;font-size:15.5px;'>+ Adicionar foto de frente" +
       "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
       "<div class='vz' style='font-size:11px;'>Suas fotos ficam com você e com o seu personal — mais ninguém vê.</div></div>" +
       (vidsApp.length ? "<div class='cardx'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
@@ -1143,11 +1152,15 @@
         "<div id='cnOk' class='vz' style='display:none;'></div>" +
         "<button class='btnx' id='cnSair' style='width:100%;margin-top:10px;background:none;border:1px solid #f87171;color:#f87171;'>Sair do app neste aparelho</button>" +
         "<div class='vz' style='font-size:11.5px;padding-top:6px;'>Saindo, este aparelho esquece o seu app. Pra voltar, entre com o seu login e senha.</div></div>" : "") +
-      (ve("indica") ? "<div class='cardx'><h2>" + appIco(APPIC.presente, 14) + "Indique um amigo</h2>" +
-      "<div class='vz' style='text-align:left;padding:0 0 10px;'>Treinar em dupla rende muito mais. Chama um amigo pro " + esc(studio.split(" ")[0]) + " — é só encaminhar o convite.</div>" +
-      "<a class='btnx' style='display:block;text-align:center;text-decoration:none;' target='_blank' rel='noopener' href='https://wa.me/?text=" +
-      encodeURIComponent("Treino com " + studio + " e tô curtindo demais! Chama no WhatsApp pra fechar um horário: https://wa.me/" + (zapPersonal ? "55" + zapPersonal : "") + " — fala que quem indicou foi " + a.nome.split(" ")[0]) +
-      "'>Convidar no WhatsApp</a></div>" : "") +
+      // tela 13: o convite virou uma linha compacta com seta — tocar já abre o
+      // WhatsApp com a mensagem pronta (aria mantém o nome antigo pros leitores)
+      (ve("indica") ? "<div class='cardx'>" +
+      "<a aria-label='Indique um amigo — Convidar no WhatsApp' target='_blank' rel='noopener' style='display:flex;align-items:center;gap:13px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:16px;text-decoration:none;color:#fff;min-height:64px;' href='https://wa.me/?text=" +
+      encodeURIComponent("Treino com " + studio + " e tô curtindo demais! Chama no WhatsApp pra fechar um horário: https://wa.me/" + (zapPersonal ? "55" + zapPersonal : "") + " — fala que quem indicou foi " + a.nome.split(" ")[0]) + "'>" +
+      "<span style='flex:none;color:var(--corc);line-height:0;'>" + appIco(APPIC.presente, 22) + "</span>" +
+      "<span style='flex:1;min-width:0;'><b style='display:block;font-size:16px;font-weight:800;'>Chamar um amigo</b>" +
+      "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>treinar em dupla rende mais — manda o convite no WhatsApp</span></span>" +
+      "<span style='flex:none;color:#57525f;line-height:0;'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></a></div>" : "") +
       // o convite do questionário mora na área do chat, abaixo da conversa
       (qa ? "<div class='cardx' id='qaCard'><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
       "<div id='tmrBar' style='display:none;position:fixed;bottom:calc(62px + env(safe-area-inset-bottom,0px));left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
@@ -1203,7 +1216,9 @@
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
-      "var fs=L('ptfotos',[]);var pri=fs[0]||null;var ult=fs.length>1?fs[fs.length-1]:null;" +
+      // o antes/depois que vai pro painel prioriza as fotos de FRENTE (tela 41)
+      "var fs=L('ptfotos',[]);var fr=fs.filter(function(x){return (x.tipo||'frente')==='frente';});if(!fr.length)fr=fs;" +
+      "var pri=fr[0]||null;var ult=fr.length>1?fr[fr.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[])," +
@@ -1530,7 +1545,41 @@
       "for(var d=0;d<7;d++){var dt=new Date(fim);dt.setDate(dt.getDate()-w*7-(6-d));var iso=isoLoc(dt);var fez=!!f[iso];if(fez)tot++;var fut=dt>hoje;" +
       "html+=\"<div style='width:100%;aspect-ratio:1;border-radius:1.5px;background:\"+(fut?'transparent':fez?'var(--cor)':'var(--bg8)')+\";'></div>\";}html+='</div>';}" +
       "el.innerHTML=\"<div style='font-size:11px;color:#a9a4b5;margin-bottom:6px;'>Seu ano de treinos — \"+pl(tot,'dia pintado','dias pintados')+\" (cada quadrado é 1 dia)</div><div style='display:flex;gap:1.5px;max-width:100%;overflow:hidden;'>\"+html+'</div>';}" +
-      "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(pintaConquistas,150);});" +
+      // tela 49: cartões PESO e SEQUÊNCIA embaixo da grade de conquistas
+      "function seqAtual(f){var n=0;var d=new Date();for(var k=0;k<400;k++){var iso=isoLoc(d);" +
+      "if(f[iso])n++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}return n;}" +
+      "function pintaCqTiles(){var el=document.getElementById('cqTiles');if(!el)return;" +
+      "var f=L('ptfeitos',{});var sq=seqAtual(f);var rec=seqMax(f);" +
+      "var pz=L('ptpeso',{});var pts={};Object.keys(pz).forEach(function(k){pts[k]=+pz[k];});" +
+      "(typeof AVS!=='undefined'?AVS:[]).forEach(function(v){if(v.peso!=null&&pts[v.data]==null)pts[v.data]=+v.peso;});" +
+      "var ks=Object.keys(pts).sort();var MESL7=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
+      "var h='';" +
+      "if(ks.length){var at=pts[ks[ks.length-1]];var d9=Math.round((at-pts[ks[0]])*10)/10;" +
+      "h+=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>Peso</div>\"+" +
+      "\"<b style='font-size:24px;font-weight:900;'>\"+String(at).replace('.',',')+\"<small style='font-size:12px;font-weight:800;'> kg</small></b>\"+" +
+      "(d9?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:\"+(d9<0?'#4ade80':'#f87171')+\";'>\"+(d9>0?'+':'')+String(d9).replace('.',',')+' kg desde '+MESL7[+ks[0].slice(5,7)-1]+\"</div>\":'');" +
+      "h+='</div>';}" +
+      "h+=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>Sequência</div>\"+" +
+      "\"<b style='font-size:24px;font-weight:900;'>\"+sq+\"<small style='font-size:12px;font-weight:800;'> \"+(sq===1?'dia':'dias')+'</small></b>'+" +
+      "(rec?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:#fbbf24;'>recorde \"+rec+' dias</div>':'')+'</div>';" +
+      "el.innerHTML=h;}" +
+      "pintaCqTiles();" +
+      // tela 49: ranking da turma no mês (só com a nuvem ligada — a RPC conta
+      // os treinos de cada colega no período; o token revogado não passa)
+      "if(NUVEM){(function(){var hj9=isoHj();var ini9=hj9.slice(0,8)+'01';" +
+      "rpcApp('app_desafio_ranking',{t:TOKEN,p_ini:ini9,p_fim:hj9}).then(function(d){" +
+      "var rk=d&&(d.ranking||d);if(!Array.isArray(rk)||rk.length<2)return;var box=document.getElementById('cqRank');if(!box)return;" +
+      "var MESL7=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
+      "box.style.display='block';" +
+      "box.innerHTML=\"<div class='wpk' style='margin:0 0 6px;'>Ranking da turma · \"+MESL7[+hj9.slice(5,7)-1]+\"</div>\"+" +
+      "rk.slice(0,5).map(function(r,i){var eu=String(r.nome||'')===PRIMEIRO;" +
+      "var ini2=String(r.nome||'A').trim().slice(0,2).toUpperCase();" +
+      "return \"<div style='display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:14px;margin-top:4px;\"+(eu?'background:rgba(var(--cor-rgb),.14);border:1px solid rgba(var(--cor-rgb),.5);':'')+\"'>\"+" +
+      "\"<b style='width:16px;color:\"+(i===0?'#fbbf24':'#8a8695')+\";'>\"+(i+1)+\"</b>\"+" +
+      "\"<span style='flex:none;width:32px;height:32px;border-radius:50%;background:\"+(eu?'var(--cor)':'var(--bg7)')+\";color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;'>\"+ini2+\"</span>\"+" +
+      "\"<span style='flex:1;font-size:14.5px;font-weight:700;'>\"+(eu?'Você':String(r.nome||'Aluno').replace(/</g,'&lt;'))+\"</span>\"+" +
+      "\"<b style='font-size:13.5px;'>\"+pl(+r.dias||0,'treino','treinos')+'</b></div>';}).join('');}).catch(function(){});})();}" +
+      "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(function(){pintaConquistas();pintaCqTiles();},150);});" +
       // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
       "var STUDIO=" + jsonApp(studio) + ";" +
       /* R4 (telas 26-30): a arte do post por cima da FOTO que o aluno tira na
@@ -2894,33 +2943,47 @@
       "var h=L('pthab',{});var hoje=h[isoHj()]||{};hoje[b.dataset.hab]=!hoje[b.dataset.hab];h[isoHj()]=hoje;Sv('pthab',h);pintaHab();});" +
       "pintaHab();" +
       // fotos de progresso (só no aparelho)
-      "function pintaFotos(){var fs=L('ptfotos',[]);var box=document.getElementById('fotosBox');if(!fs.length)return;" +
-      "var pri=fs[0],ult=fs[fs.length-1];box.className='';" +
-      "if(fs.length>1){" +
+      // tela 41: cada foto tem um ângulo (frente/lado/costas — foto antiga sem
+      // ângulo conta como frente) e o comparador ganhou a alça de arrastar
+      "var ftTipo='frente';var FTT=[['frente','Frente'],['lado','Lado'],['costas','Costas']];" +
+      "function ftDe(fs,t){return fs.filter(function(x){return (x.tipo||'frente')===t;});}" +
+      "function pintaFotos(){var fs=L('ptfotos',[]);var box=document.getElementById('fotosBox');if(!box)return;" +
+      "var abas=document.getElementById('ftAbas');" +
+      "if(abas)abas.innerHTML=FTT.map(function(par){var n=ftDe(fs,par[0]).length;var on=ftTipo===par[0];" +
+      "return \"<button type='button' data-fttipo='\"+par[0]+\"' style='flex:1;min-height:52px;border-radius:14px;cursor:pointer;font-family:inherit;text-align:center;padding:6px 2px;\"+(on?'background:rgba(var(--cor-rgb),.14);border:1.5px solid var(--corc);color:#fff;':'background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;')+\"'>\"+" +
+      "\"<b style='display:block;font-size:14px;'>\"+par[1]+\"</b><span style='font-size:10.5px;color:\"+(on?'var(--corc)':'#6e6a78')+\";'>\"+(n?pl(n,'foto','fotos'):'nenhuma')+\"</span></button>\";}).join('');" +
+      "var bt0=document.getElementById('fotoBtn');if(bt0&&bt0.firstChild)bt0.firstChild.textContent='+ Adicionar foto de '+ftTipo+' ';" +
+      "var l=ftDe(fs,ftTipo);var pri=l[0],ult=l[l.length-1];" +
+      "if(!l.length){box.className='vz';box.innerHTML='Tire a primeira foto de '+ftTipo+' — daqui a uns meses você vai agradecer.';return;}" +
+      "box.className='';" +
+      "if(l.length>1){" +
       // comparador com slider: AGORA por baixo, ANTES recortada por cima — arrasta e vê a evolução
-      "box.innerHTML=\"<div id='ftWrap' style='position:relative;border-radius:12px;overflow:hidden;'>\"+" +
+      "box.innerHTML=\"<div id='ftWrap' style='position:relative;border-radius:16px;overflow:hidden;'>\"+" +
       "\"<img src='\"+ult.img+\"' style='width:100%;display:block;'>\"+" +
       "\"<div id='ftCorte' style='position:absolute;top:0;left:0;bottom:0;overflow:hidden;width:50%;'><img id='ftImgAntes' src='\"+pri.img+\"' style='display:block;max-width:none;'></div>\"+" +
-      "\"<div id='ftLinha' style='position:absolute;top:0;bottom:0;left:50%;width:2px;background:rgba(255,255,255,.85);box-shadow:0 0 8px rgba(0,0,0,.6);'></div>\"+" +
-      "\"<span style='position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:99px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</span>\"+" +
-      "\"<span style='position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:99px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</span></div>\"+" +
-      "\"<input type='range' id='ftRange' min='0' max='100' value='50' style='width:100%;margin-top:8px;padding:0;border:none;background:transparent;' aria-label='Comparar antes e agora'>\"+" +
-      "\"<div class='vz' style='font-size:11.5px;'>Arrasta pra comparar — \"+pl(fs.length,'foto guardada','fotos guardadas')+\"</div>\";" +
+      "\"<div id='ftLinha' style='position:absolute;top:0;bottom:0;left:50%;width:2px;background:rgba(255,255,255,.85);box-shadow:0 0 8px rgba(0,0,0,.6);'>\"+" +
+      "\"<span style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:800;letter-spacing:-.05em;'>\\u2039\\u203a</span></div>\"+" +
+      "\"<span style='position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:4px 10px;border-radius:99px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</span>\"+" +
+      "\"<span style='position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:4px 10px;border-radius:99px;'>AGORA · \"+ult.d.slice(8,10)+'/'+ult.d.slice(5,7)+\"</span></div>\"+" +
+      "\"<input type='range' id='ftRange' min='0' max='100' value='50' style='width:100%;margin-top:8px;padding:0;border:none;background:transparent;accent-color:var(--cor);' aria-label='Comparar antes e agora'>\"+" +
+      "\"<div class='vz' style='font-size:11.5px;'>Arrasta pra comparar · \"+ftTipo+', '+pl(l.length,'foto guardada','fotos guardadas')+\"</div>\";" +
       "var wrap=document.getElementById('ftWrap');" +
       "var ajusta=function(){var ia=document.getElementById('ftImgAntes');if(ia&&wrap.clientWidth)ia.style.width=wrap.clientWidth+'px';};" +
       "setTimeout(ajusta,60);window.addEventListener('resize',ajusta);" +
       "document.getElementById('ftRange').addEventListener('input',function(){document.getElementById('ftCorte').style.width=this.value+'%';document.getElementById('ftLinha').style.left=this.value+'%';});" +
       "}else{" +
-      "box.innerHTML=\"<div style='text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:12px;'></div>\"+" +
-      "\"<div class='vz' style='font-size:11.5px;'>Tire a próxima foto pra liberar o comparador antes × agora</div>\";}" +
+      "box.innerHTML=\"<div style='text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:16px;'></div>\"+" +
+      "\"<div class='vz' style='font-size:11.5px;'>Tire a próxima foto de \"+ftTipo+\" pra liberar o comparador antes × agora</div>\";}" +
       "var dias=Math.round((new Date()-new Date(ult.d))/864e5);" +
-      "if(dias>=30)document.getElementById('fotoBtn').firstChild.textContent='Faz '+dias+' dias — hora da foto do mês! ';}" +
+      "if(dias>=30&&bt0&&bt0.firstChild)bt0.firstChild.textContent='Faz '+dias+' dias — hora da foto do mês! ';}" +
+      "var ftA=document.getElementById('ftAbas');if(ftA)ftA.addEventListener('click',function(e){var b=e.target.closest('[data-fttipo]');if(!b)return;" +
+      "ftTipo=b.getAttribute('data-fttipo');pintaFotos();if(navigator.vibrate)navigator.vibrate(8);});" +
       "document.getElementById('fotoInput').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;" +
       "var img=new Image();var rd=new FileReader();rd.onload=function(){img.onload=function(){" +
       "var c=document.createElement('canvas');var esc2=480/Math.max(img.width,img.height);if(esc2>1)esc2=1;" +
       "c.width=Math.round(img.width*esc2);c.height=Math.round(img.height*esc2);" +
       "c.getContext('2d').drawImage(img,0,0,c.width,c.height);" +
-      "var fs=L('ptfotos',[]);fs.push({d:isoHj(),img:c.toDataURL('image/jpeg',.68)});if(fs.length>12)fs.shift();" +
+      "var fs=L('ptfotos',[]);fs.push({d:isoHj(),img:c.toDataURL('image/jpeg',.68),tipo:ftTipo});if(fs.length>12)fs.shift();" +
       "try{Sv('ptfotos',fs);}catch(e){alert('Memória de fotos cheia — apague fotos antigas do app.');return;}pintaFotos();};" +
       "img.src=rd.result;};rd.readAsDataURL(f);this.value='';});" +
       "pintaFotos();" +
