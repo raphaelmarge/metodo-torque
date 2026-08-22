@@ -3468,7 +3468,7 @@ async function abaPt(p, a) {
   ok(util.naGaveta && util.copos === 8 && /Meta do dia batida/.test(util.agua) && util.habAgua,
     "água com copinhos: bater a meta marca o hábito Água sozinho");
   ok(/116,5 kg/.test(util.rm), "calculadora de 1RM (Epley: 100×5 = 116,5 kg) com tabela de percentuais");
-  ok(/1× 25 kg/.test(util.anilhas) && /1× 15 kg/.test(util.anilhas), "calculadora de anilhas monta a barra (100 kg = 25+15 por lado)");
+  ok(/1 × 25 kg/.test(util.anilhas) && /1 × 15 kg/.test(util.anilhas), "calculadora de anilhas monta a barra (100 kg = 25+15 por lado)");
   ok(/26,8/.test(util.imc) && /sobrepeso/.test(util.imc), "IMC calcula e classifica (85 kg / 1,78 m = 26,8)");
   // aceita qualquer segundo: com a máquina carregada o cronômetro já passou de
   // 0:00 quando a leitura acontece, e travar em 0:00 deixava o teste instável
