@@ -343,11 +343,14 @@
        * O título sobe pro topo (ordem do flex — a LÓGICA não muda de lugar) e o
        * card lavanda vira escuro. Tudo por classe, como o resto do player. */
       ".gwrap{background:var(--bg0)}" +
-      ".gtopo{order:0}.gbarra{order:1}.gcont{order:2}.ggrupo{order:3}.gtit{order:4}.gcard{order:5}.gbase{order:6}.gpe{order:7}" +
+      // título primeiro, "Série 3 de 4" logo abaixo (tela 47) — só a ORDEM do
+      // flex muda; o #gGrupo continua o mesmo elemento de sempre
+      ".gtopo{order:0}.gbarra{order:1}.gcont{order:2}.gtit{order:3}.ggrupo{order:4}.gcard{order:5}.gbase{order:6}.gpe{order:7}" +
       ".gtopo .gx{order:-1;margin-right:2px}" +
+      ".gtopo #gPularEx{display:none}" + // pular mora no miolo (#gPulaEx2); o clique de teste segue vivo
       ".gmarca{text-align:center;color:#8a8695}" +
-      ".ggrupo{margin-top:14px}" +
-      ".gtit{font-size:clamp(26px,8vw,36px);letter-spacing:-.03em;line-height:1.04;margin-top:4px}" +
+      ".ggrupo{margin-top:5px;font-size:14px;letter-spacing:0;text-transform:none;font-weight:700}" +
+      ".gtit{font-size:clamp(26px,8vw,36px);letter-spacing:-.03em;line-height:1.04;margin-top:14px}" +
       ".gcard{background:var(--bg1);color:#fff;box-shadow:none;border:1px solid var(--bg11);margin-top:14px}" +
       ".ggif{background:var(--bg4);border:1.5px dashed var(--bg12);box-shadow:none}" +
       ".gchip{color:var(--corc);background:rgba(var(--cor-rgb),.16)}" +
@@ -363,6 +366,24 @@
       ".gwheel i:before{background:var(--bg12)}.gwheel i b{color:#8a8695}" +
       ".gsemcarga{border-color:var(--bg11);color:#8a8695}" +
       ".gfalta{color:var(--corc)}" +
+      /* tiles REPETIÇÕES/CARGA, atalhos e o card "NA ÚLTIMA VEZ" (tela 47).
+       * Cinzas fixos de propósito: o player é escuro nos dois temas. */
+      ".gmeta{display:none}" + // séries × reps agora moram no tile (o texto segue preenchido pros testes)
+      ".gtiles{display:flex;gap:10px;margin-top:14px}" +
+      ".gtile{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--bg11);border-radius:18px;padding:13px 14px;min-height:88px}" +
+      ".gtile span{display:block;font-size:9px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:#8a8695}" +
+      ".gtile b{display:block;font-size:31px;font-weight:800;letter-spacing:-.02em;line-height:1.12;margin-top:5px;color:#fff}" +
+      ".gtile b u{font-size:14px;font-weight:800;color:#8a8695;text-decoration:none;margin-left:2px}" +
+      ".gtile em{display:block;font-style:normal;font-size:11px;font-weight:700;margin-top:3px;color:#4ade80}" +
+      ".gtile em.mn{color:#8a8695}" +
+      ".gsecrow{display:flex;gap:10px;margin-top:12px}" +
+      ".gsecrow button{flex:1;min-height:50px;border-radius:99px;border:none;background:var(--bg4);color:#d6d3de;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}" +
+      ".gultvez{background:var(--bg2);border:1px solid var(--bg11);border-radius:18px;padding:13px 14px 15px;margin-top:14px}" +
+      ".gultvez span{display:block;font-size:9px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;color:#8a8695}" +
+      ".guvrow{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:14px;color:#b9b4c6}" +
+      ".guvrow b{color:#fff;font-weight:700}" +
+      ".gprox{margin-top:13px;font-size:13px;color:#8a8695}" +
+      ".gprox b{color:#fff;font-weight:700}" +
       /* ---------- fim do treino em festa (tela 48): fundo na cor do studio ---------- */
       ".gwrap.festa{background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%)}" +
       ".gwrap.festa .gcard{background:none;border:none;box-shadow:none;max-height:none}" +
@@ -2452,16 +2473,48 @@
       "function gHistTxt(ex){var u=gultimo(ex),rc=grecorde(ex);" +
       "if(!u)return 'Primeira vez nesse exercício.';" +
       "return 'última vez '+gnum(u.kg)+' kg'+(+u.r>0?' × '+u.r:'')+(rc?' · recorde '+gnum(rc)+' kg':'');}" +
+      // ---------- diário agrupado por dia (tiles e card 'NA ÚLTIMA VEZ') ----------
+      "function gDias(ex){var l=(L('ptdc',{})[ex]||[]),m={};l.forEach(function(x){(m[x.d]=m[x.d]||[]).push(x);});" +
+      "return {m:m,ds:Object.keys(m).sort()};}" +
+      // a 'última vez' de verdade é a sessão ANTERIOR a hoje; sem ela, vale a mais recente
+      "function gUltDia(ex){var g=gDias(ex),hj=isoHj();" +
+      "for(var i=g.ds.length-1;i>=0;i--){if(g.ds[i]<hj)return {d:g.ds[i],l:g.m[g.ds[i]]};}" +
+      "return g.ds.length?{d:g.ds[g.ds.length-1],l:g.m[g.ds[g.ds.length-1]]}:null;}" +
+      "function gCargaAtual(ex){if(gv.cargas[ex]!=null)return gv.cargas[ex];var u=gultimo(ex);return u?+u.kg:0;}" +
+      // delta do tile: carga de agora × maior carga do último dia ANTERIOR ao dela
+      "function gDeltaKg(ex,cv){if(!isFinite(+cv)||!(+cv>0))return 0;var g=gDias(ex);" +
+      "var ref=(gv.cargas[ex]!=null)?isoHj():(g.ds.length?g.ds[g.ds.length-1]:null);if(!ref)return 0;" +
+      "for(var i=g.ds.length-1;i>=0;i--){if(g.ds[i]<ref){var m9=0;g.m[g.ds[i]].forEach(function(x){if(+x.kg>m9)m9=+x.kg;});" +
+      "return m9>0?(+cv)-m9:0;}}return 0;}" +
       "function pintaGuia(){var f=GUIA[gv.f],it=f.it[gv.e];if(!it)return;" +
       "gv.tex=gv.tex||Date.now();gCabeca();" +
       "gEl('gEstado').style.display='none';" +
       "var m='';" +
-      "m+=gBlocos(false);" +
+      "m+=gBlocos(true);" +
       "if(it.ob)m+=\"<div class='gobs'><em>Recado do professor</em><p>\"+esc2(it.ob)+'</p></div>';" +
       "if(it.dc)m+=\"<div class='gdica'>\"+esc2(it.dc)+'</div>';" +
+      // tiles da tela 47: repetições da ficha + carga de agora com o delta verde
+      "var cv=gCargaAtual(it.e),dl=gDeltaKg(it.e,cv);" +
+      "var tc=cv==='corpo'?\"<b style='font-size:19px;padding-top:9px;'>sem carga</b>\":" +
+      "(+cv>0?'<b>'+gnum(+cv)+'<u>kg</u></b>':\"<b style='color:#8a8695;'>—</b>\");" +
+      "if(dl)tc+=\"<em\"+(dl>0?'':\" class='mn'\")+'>'+(dl>0?'+':'\\u2212')+gnum(Math.abs(dl))+' kg desde a última</em>';" +
+      "m+=\"<div class='gtiles'><div class='gtile'><span>Repetições</span><b>\"+esc2(it.r||'—')+'</b></div>'+" +
+      "\"<div class='gtile'><span>Carga</span>\"+tc+'</div></div>';" +
+      "m+=\"<div class='gsecrow'><button type='button' id='gMudaCarga'>Mudar a carga</button>\"+" +
+      "\"<button type='button' id='gPulaEx2'>Pular exercício</button></div>\";" +
+      // card 'NA ÚLTIMA VEZ · 17 de agosto' com as anotações daquele dia
+      "var uv=gUltDia(it.e);" +
+      "if(uv){m+=\"<div class='gultvez'><span>Na última vez · \"+(+uv.d.slice(8,10))+' de '+MESES[+uv.d.slice(5,7)-1].toLowerCase()+'</span>';" +
+      "uv.l.slice(0,4).forEach(function(x,i){m+=\"<div class='guvrow'>Série \"+(i+1)+'<b>'+(+x.r>0?x.r+' × ':'')+gnum(+x.kg)+' kg</b></div>';});" +
+      "m+='</div>';}" +
+      "var nx=f.it[gv.e+1];" +
+      "m+=nx?\"<div class='gprox'>Depois vem <b>\"+esc2(nx.e)+'</b> · '+nx.s+' × '+esc2(nx.r||'?')+'</div>':" +
+      "\"<div class='gprox'>Último exercício do treino 💪</div>\";" +
       "gEl('gMiolo').innerHTML=m;gEl('gMiolo2').innerHTML='';gEl('gCard').classList.remove('compacto');gEl('guiaBox').classList.remove('reg');" +
       "gEl('gDescLab').style.display='none';gEl('gTrilhoCx').style.display='none';" +
-      "gEl('gHist').textContent=gHistTxt(it.e);" +
+      // o resumo antigo em texto segue preenchido (os testes leem), mas a régua
+      // visual agora é o card de cima — só aparece quando NÃO tem card
+      "gEl('gHist').textContent=gHistTxt(it.e);gEl('gHist').style.display=uv?'none':'';" +
       // demonstração: o GIF do banco aparece sozinho (é leve e mudo); o vídeo do
       // professor continua atrás do botão, porque tem som e pesa
       "var gg=gEl('gGif');if(gg){var gu=gifUrl(it.e);" +
@@ -2469,7 +2522,9 @@
       "gg.style.display=gu?'block':'none';}" +
       "var gvd=gEl('gVideo');if(gvd){gvd.dataset.v=it.v||'';gvd.style.display=it.v?'inline-block':'none';gvd.textContent='Como fazer';" +
       "var gbx=gvd.nextElementSibling;if(gbx&&gbx.classList.contains('vidbox')){gbx.innerHTML='';gbx.style.display='none';}}" +
-      "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
+      // a linha roxa embaixo do título virou a posição na série (tela 47); o
+      // grupo muscular continua nas listas de treino, onde sempre esteve
+      "gEl('gGrupo').textContent='Série '+Math.min(gv.s+1,it.s)+' de '+it.s;gEl('gGrupo').style.display='block';" +
       "gEl('gEx').textContent=it.e;" +
       "gEl('gMeta').innerHTML=\"<i class='forte'>\"+it.s+' × '+esc2(it.r||'?')+\"</i><i>\"+(it.d||60)+' s descanso</i>';" +
       "gEl('gReloLab').textContent='neste exercício';" +
@@ -2495,6 +2550,8 @@
       "var lb0=gEl('gDescLab');if(lb0)lb0.textContent='segundos';" +
       "var f=GUIA[gv.f],it=f.it[gv.e];" +
       "var ge=gEl('gEstado');ge.style.display='inline-block';ge.textContent=trocaEx?'Exercício feito':'Descanso';pintaBarra();" +
+      // no descanso entre séries a linha roxa já anuncia a PRÓXIMA série
+      "if(!trocaEx)gEl('gGrupo').textContent='Série '+Math.min(gv.s+1,it.s)+' de '+it.s;" +
       "var gg2=gEl('gGif');if(gg2&&trocaEx)gg2.style.display='none';" +
       "gEl('gSerie').style.display='none';" +
       "var pu=gEl('gPular');pu.style.display='block';pu.style.pointerEvents='none';pu.style.opacity='.55';" +
@@ -2655,7 +2712,8 @@
       "function gRepesca(i){var it=GUIA[gv.f].it[i];if(!it)return;" +
       "var gea=gEl('gEstado');gea.style.display='inline-block';gea.textContent='Anotar carga';gEl('gEx').textContent=it.e;" +
       "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
-      "gEl('gMiolo').innerHTML='';gEl('gMiolo2').innerHTML=gCargaHtml(it);gEl('gHist').textContent=gHistTxt(it.e);" +
+      "gEl('gMiolo').innerHTML='';gEl('gMiolo2').innerHTML=gCargaHtml(it);" +
+      "gEl('gHist').textContent=gHistTxt(it.e);gEl('gHist').style.display='';" +
       "ligaStepper(it,gv.f+':'+i);" +
       "gEl('gPe').innerHTML=\"<button class='sec' id='gVoltaFim'>Voltar pro resumo</button>\";" +
       "gEl('gCard').scrollTop=0;}" +
@@ -2668,6 +2726,20 @@
       "if(e.target.id==='gFim'||e.target.id==='gFechar'){fechaGuia();return;}" +
       "if(e.target.id==='gPular'){gFimDesc();return;}" +
       "if(e.target.id==='gMais15'){gv.mais=(gv.mais||0)+15;return;}" +
+      // 'Pular exercício' do miolo é só um apelido do botão de sempre do topo
+      "if(e.target.id==='gPulaEx2'){var bp9=gEl('gPularEx');if(bp9)bp9.click();return;}" +
+      /* 'Mudar a carga': abre o MESMO formulário de régua do fim do exercício,
+         dentro do card. Salvou (ou marcou sem carga) → fecha e o tile CARGA já
+         acorda com o número novo; tocar de novo no botão também fecha. */
+      "if(e.target.id==='gMudaCarga'){if(gv.fim)return;var itM=GUIA[gv.f].it[gv.e],m2=gEl('gMiolo2');" +
+      "if(m2.innerHTML){gSalvaSeSujo();m2.innerHTML='';gv.reg='';gv.regi='';pintaGuia();return;}" +
+      "m2.innerHTML=gCargaHtml(itM);ligaStepper(itM,gv.f+':'+gv.e);" +
+      "var sv9=gEl('gSalvar'),o9=sv9.onclick;sv9.onclick=function(){o9();" +
+      "var l9=gEl('gCgLab');if(l9&&/Anotado/.test(l9.textContent))setTimeout(function(){" +
+      "if(gv.pend||gv.fim)return;gEl('gMiolo2').innerHTML='';gv.reg='';gv.regi='';pintaGuia();},450);};" +
+      "var sc9=gEl('gSemCarga'),o8=sc9.onclick;sc9.onclick=function(){o8();setTimeout(function(){" +
+      "if(gv.pend||gv.fim)return;gEl('gMiolo2').innerHTML='';gv.reg='';gv.regi='';pintaGuia();},450);};" +
+      "m2.scrollIntoView({block:'nearest'});return;}" +
       "if(e.target.id==='gVoltaEx'){if(gv.fim||gv.e<=0)return;" +
       "gSalvaSeSujo();clearInterval(gv.timer);" +
       // no 'Terminar treino' o rodapé virou um botão só e o gSerie sumiu: sem

@@ -57,6 +57,7 @@
     /* ---------- player do treino guiado (classes .g*, sem inline) ---------- */
     + ".gtit{font-size:clamp(26px,8vw,36px);font-weight:900;letter-spacing:-.03em}"
     + ".gsets i{min-height:48px;border-radius:14px}"
+    + ".gsets.mini i{min-height:28px;height:28px;border-radius:10px}" // fileira compacta acima dos tiles (tela 47)
     + ".gpe button{min-height:58px;border-radius:99px;font-weight:800}"
     + ".grelo b{font-variant-numeric:tabular-nums}"
     + ".gcard{border-radius:26px}"
