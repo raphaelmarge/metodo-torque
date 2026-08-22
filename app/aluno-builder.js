@@ -1397,10 +1397,12 @@
       "var rg=document.getElementById('ringSem');if(rg){var p2=Math.max(0,Math.min(100,pct));" +
       "rg.style.background='conic-gradient(var(--cor) 0 '+p2+'%,var(--bg4) '+p2+'% 100%)';" +
       "document.getElementById('ringNum').textContent=naSem+'/'+META;" +
-      "var ct=document.getElementById('coachTxt');if(ct)ct.innerHTML=naSem>=META?" +
+      // a dica do treino de HOJE (carga, circuito ou pace) vence o recado
+      // genérico da semana — é o que o desenho chama de recado do coach
+      "var ct=document.getElementById('coachTxt');if(ct)ct.innerHTML=(typeof coachDica==='function'?coachDica():null)||(naSem>=META?" +
       "'Semana fechada: <b>'+naSem+' de '+META+'</b> treinos. Orgulho define — mantém o ritmo!':" +
       "naSem>0?'Você já fez <b>'+naSem+' de '+META+'</b> treinos essa semana — hoje dá pra somar mais um.':" +
-      "'Bora abrir a semana: <b>'+META+' treino'+(META>1?'s':'')+'</b> te esperando.';" +
+      "'Bora abrir a semana: <b>'+META+' treino'+(META>1?'s':'')+'</b> te esperando.');" +
       "var cc2=document.getElementById('coachCard');if(cc2)cc2.style.display='';}" +
       "var total=Object.keys(f).length;var marcos=[100,50,25,10,5];" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j]){falta=marcos[j];break;}}" +
@@ -3604,8 +3606,11 @@
         return "var CAPA_GERAL=" + jsonApp(geral) + ";" +
           "var FICHAS_META=" + jsonApp((fichasApp || []).map(function (f) {
             var propria = imgOk(f.capa);
+            // duração estimada: séries × (execução ~40s + descanso), em blocos de 5 min
+            var seg = f.itens.reduce(function (t, it) { return t + (parseInt(it.series, 10) || 3) * (40 + (+it.descanso || 60)); }, 0);
             // e = nomes dos primeiros exercícios: viram a lista fantasma do herói
             return { t: f.titulo || "Ficha", n: f.itens.length, c: propria === geral ? "" : propria,
+              m: Math.max(10, Math.round(seg / 60 / 5) * 5),
               e: f.itens.slice(0, 7).map(function (it) { return String(it.nome || "").slice(0, 40); }) };
           })) + ";" +
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
@@ -3616,24 +3621,81 @@
       // treino vira descanso; sem plano, vale o rodízio de sempre
       "var DSEM_=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];" +
       "var MESL_=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];" +
+      /* recado do coach sobre o treino de HOJE (telas 44/45/46): carga da
+       * última vez na ficha, placar a bater no circuito, pace na corrida.
+       * Sem dado nenhum, devolve null e o card segue com o recado da semana. */
+      "function coachDica(){try{" +
+      "function e9(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}" +
+      "var pj=PLANO&&PLANO[String(new Date().getDay())];var fm=null;" +
+      "if(PLANO){if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i])fm=FICHAS_META[pj.i];" +
+      "else if(pj&&pj.tp==='wod'){var w=WODS[pj.i];if(!w)return null;" +
+      "var u=(L('ptwodres',{})[w.id]||[]).slice(-1)[0];" +
+      "return u?'Última vez no <b>'+e9(w.n)+'</b>: <b>'+e9(String(u.r||'').slice(0,20))+'</b>. Bora passar disso hoje?':" +
+      "'Circuito novo na área: <b>'+e9(w.n)+'</b>. Anota o placar no fim!';}" +
+      "else if(pj&&pj.tp==='cardio'){var c=CARDIOS[pj.i];if(!c)return null;" +
+      "return c.t==='intervalado'?('Segura o forte nos '+c.ti+' segundos e recupera DE VERDADE nos '+c.de+'s leves. Sem pressa na largada.'):" +
+      "(c.p?'Segura o pace de <b>'+e9(c.p)+'</b> do começo ao fim — terminar com sobra é o plano.':" +
+      "'Ritmo de conversa do começo ao fim — constância vale mais que velocidade.');}" +
+      "else return null;}" + // dia de descanso no plano → recado da semana
+      "if(!fm&&!PLANO&&FICHAS_META.length)fm=FICHAS_META[Object.keys(L('ptfeitos',{})).length%FICHAS_META.length];" +
+      "if(!fm||!fm.e)return null;" +
+      // o exercício da ficha com anotação mais recente vira sugestão de carga
+      "var h=L('ptdc',{}),ml=null;" +
+      "fm.e.forEach(function(nm){var l=h[nm]||[];var u2=l[l.length-1];" +
+      "if(u2&&+u2.kg>0&&(!ml||String(u2.d)>String(ml.u.d)))ml={n:nm,u:u2};});" +
+      "if(!ml)return null;var kg=+ml.u.kg,sg=kg+(kg<20?1:2.5);" +
+      "return 'Na última <b>'+e9(ml.n)+'</b> você fechou '+(+ml.u.r>0?ml.u.r+'×':'')+gnum(kg)+' kg — hoje vale tentar <b>'+gnum(sg)+' kg</b>.';" +
+      "}catch(e){return null;}}" +
+      // resumo curto de um circuito (mesmo texto do quadro da academia)
+      "function wodResumo(w){if(!w)return '';return w.t==='amrap'?'AMRAP '+w.min+' min':" +
+      "w.t==='fortime'?('For Time'+(w.cap?' · limite '+w.cap+' min':'')):" +
+      "w.t==='emom'?'EMOM '+w.min+' min':w.t==='tabata'?('Tabata '+w.rd+'×'+w.wk+'/'+w.rs+'s'):'Circuito';}" +
+      // há quantos dias esse treino foi feito (pelo diário dos exercícios dele)
+      "function fichaFezHa(fm){if(!fm||!fm.e)return null;var h=L('ptdc',{}),hj=isoHj(),max='';" +
+      "fm.e.forEach(function(nm){(h[nm]||[]).forEach(function(x){if(x.d&&x.d<hj&&x.d>max)max=x.d;});});" +
+      "if(!max)return null;var dd=Math.round((new Date(hj)-new Date(max))/864e5);return dd>0?dd:null;}" +
+      // melhor pace guardado (m:ss por km) da mesma modalidade, pra meta ter régua
+      "function melhorPace(mod){var l=L('ptcardio',[]);if(!Array.isArray(l))return '';var mp=0;" +
+      "l.forEach(function(x){if(x&&x.m===mod&&+x.k>=1&&+x.s>0){var pc=(+x.s)/(+x.k);if(!mp||pc<mp)mp=pc;}});" +
+      "if(!mp)return '';var mn=Math.floor(mp/60),sg=Math.round(mp%60);return mn+':'+String(sg).padStart(2,'0');}" +
       "function pintaHero(){var el=document.getElementById('heroTreino');if(!el||(!FICHAS_META.length&&!PLANO))return;" +
-      "var i=-1,fm=null,rt='',tit='',sub='',cImg='',btn='Começar treino';" +
+      "var i=-1,fm=null,rt='',tit='',sub='',cImg='',btn='Começar treino',gLin=null,gSvg='';" +
       "var hjD=new Date();var dataHj=DSEM_[hjD.getDay()]+', '+hjD.getDate()+' DE '+MESL_[hjD.getMonth()];" +
       "var pj=PLANO&&PLANO[String(hjD.getDay())];" +
       "if(PLANO){" +
       "if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i]){i=pj.i;fm=FICHAS_META[i];}" +
-      "else if(pj&&pj.tp==='wod'){rt='HOJE · CIRCUITO (WOD)';tit=pj.n;sub='circuito completo te esperando';cImg=CAPA_GERAL;btn='Começar circuito';}" +
-      "else if(pj&&pj.tp==='cardio'){rt='HOJE · CORRIDA E BIKE';tit=pj.n;sub='treino prescrito te esperando';cImg=CAPA_GERAL;btn='Começar corrida';}" +
+      // circuito do plano: o card ganha o resumo do quadro, a contagem de
+      // movimentos, o último resultado e a lista fantasma (tela 45)
+      "else if(pj&&pj.tp==='wod'){var w9=WODS[pj.i]||null;rt='HOJE · CIRCUITO';tit=pj.n;cImg=CAPA_GERAL;btn='Começar circuito';" +
+      "sub=w9?wodResumo(w9)+' · '+pl(w9.mv,'movimento','movimentos'):'circuito completo te esperando';" +
+      "if(w9){var uw=(L('ptwodres',{})[w9.id]||[]).slice(-1)[0];" +
+      "if(uw&&uw.d)sub+=' · em '+uw.d.slice(8,10)+'/'+uw.d.slice(5,7)+' você fez '+String(uw.r||'').slice(0,18);" +
+      "gLin=w9.ms.slice(0,7).map(function(m){return ((m.q?m.q+' ':'')+m.n).trim();});}}" +
+      // corrida/bike do plano: alvo do treino + seu melhor pace + o traçado (tela 46)
+      "else if(pj&&pj.tp==='cardio'){var c9=CARDIOS[pj.i]||null;" +
+      "var rotC={corrida:'CORRIDA',caminhada:'CAMINHADA',bike:'BIKE'}[c9&&c9.m]||'CORRIDA E BIKE';" +
+      "rt='HOJE · '+rotC;tit=pj.n;cImg=CAPA_GERAL;" +
+      "btn={corrida:'Começar corrida',caminhada:'Começar caminhada',bike:'Começar pedal'}[c9&&c9.m]||'Começar corrida';" +
+      "if(c9){sub=c9.t==='intervalado'?(c9.r+'× '+c9.ti+'s forte / '+c9.de+'s leve'+(c9.p?' · alvo de pace '+c9.p:'')):" +
+      "[(c9.d?String(c9.d).replace('.',',')+' km':''),(c9.tp?c9.tp+' min':''),(c9.p?'pace '+c9.p:'')].filter(Boolean).join(' · ')||'treino livre';" +
+      "var bp=melhorPace(c9.m);if(bp)sub+=' · seu melhor: '+bp;}else{sub='treino prescrito te esperando';}" +
+      "gSvg=\"<svg viewBox='0 0 200 200' aria-hidden='true' style='position:absolute;top:0;right:0;width:78%;opacity:.5;stroke:rgba(255,255,255,.55);' fill='none' stroke-width='10' stroke-linecap='round'><path d='M30 172 C 18 120, 82 132, 92 92 S 152 64, 152 32 S 102 12, 112 48'/></svg>\";}" +
       "else{rt='HOJE · DESCANSO';tit='Dia de recuperar';sub='alongue, caminhe leve e durma bem — amanhã tem mais';cImg=CAPA_GERAL;btn='Ver meus treinos';}" +
       "}else{var tot=Object.keys(L('ptfeitos',{})).length;i=tot%FICHAS_META.length;fm=FICHAS_META[i];}" +
-      // a ficha do dia: a DATA vira o rótulo e a letra do treino entra no título
-      "if(fm){var par=String(fm.t).split('—');rt=dataHj;tit=par.length>1?('Treino '+par[0].trim()+' '+par.slice(1).join('—').trim()):fm.t;sub=pl(fm.n,'exercício te esperando','exercícios te esperando');cImg=fm.c||CAPA_GERAL;}" +
+      // a ficha do dia: a DATA vira o rótulo, a letra entra no título e o
+      // subtítulo conta o tamanho e quando foi a última vez (tela 44)
+      "if(fm){var par=String(fm.t).split('—');rt=dataHj;tit=par.length>1?('Treino '+par[0].trim()+' '+par.slice(1).join('—').trim()):fm.t;" +
+      "sub=pl(fm.n,'exercício','exercícios')+(fm.m?' · ~'+fm.m+' min':'');" +
+      "var dd9=fichaFezHa(fm);if(dd9===1)sub+=' · você fez esse treino ontem';else if(dd9)sub+=' · você fez esse treino há '+dd9+' dias';" +
+      "cImg=fm.c||CAPA_GERAL;}" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
       "document.getElementById('htSub').textContent=sub;" +
       "var hb0=document.getElementById('htVer');if(hb0)hb0.textContent=btn;" +
-      // lista fantasma: os exercícios da ficha do dia, apagadinhos no fundo
-      "var hg=document.getElementById('htGhost');if(hg){var ge=(fm&&fm.e)||[];hg.innerHTML=ge.map(function(){return \"<div class='hgline'></div>\";}).join('');" +
-      "for(var g2=0;g2<hg.children.length;g2++)hg.children[g2].textContent=ge[g2]||'';}" +
+      // lista fantasma: exercícios da ficha OU movimentos do circuito; na
+      // corrida entra o traçado tipo GPS no lugar das linhas
+      "var hg=document.getElementById('htGhost');if(hg){" +
+      "if(gSvg){hg.innerHTML=gSvg;}else{var ge=gLin||(fm&&fm.e)||[];hg.innerHTML=ge.map(function(){return \"<div class='hgline'></div>\";}).join('');" +
+      "for(var g2=0;g2<hg.children.length;g2++)hg.children[g2].textContent=ge[g2]||'';}}" +
       // foto da ficha do dia no card (o véu fica sempre, pro texto valer)
       "var hf=document.getElementById('htFoto');" +
       "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';}" +
@@ -3729,7 +3791,8 @@
       "document.getElementById('evXp').textContent=xp+' XP';" +
       "document.getElementById('evFalta').textContent='faltam '+Math.max(0,alvo-xp)+' pro nível '+(nv+1);" +
       "document.getElementById('evRing').style.background='conic-gradient(#fff 0 '+pct+'%,rgba(255,255,255,.25) '+pct+'% 100%)';}}" +
-      "pintaHero();pintaProgresso();pintaXP();" +
+      // repinta a semana DEPOIS do herói: agora o coachDica já enxerga o plano
+      "pintaHero();pintaProgresso();pintaXP();try{pintaSemana();}catch(e0){}" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
       "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
