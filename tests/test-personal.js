@@ -5498,14 +5498,14 @@ async function abaPt(p, a) {
     const cols = document.querySelectorAll("#cqGraf > div:nth-child(2) > div");
     const semAtual = cols.length ? cols[cols.length - 1].firstChild.textContent : "";
     return {
-      meta: document.getElementById("mpBarra").textContent,
+      meta: document.getElementById("mpMetaTxt").textContent + "|" + document.getElementById("mpBarra").textContent,
       mapaTxt: mapa ? mapa.textContent : "",
       mapaCells: mapa ? mapa.querySelectorAll("div div div").length : 0,
       mapaCabe: mapa ? mapa.scrollWidth <= mapa.clientWidth + 1 : false,
       semAtual,
     };
   });
-  ok(/Meta: 80 kg/.test(leva2.meta) && /5 kg pra chegar/.test(leva2.meta), "meta de peso vira barra de progresso (90→85, alvo 80: faltam 5)");
+  ok(/meta 80 kg/.test(leva2.meta) && /faltam 5 kg/.test(leva2.meta), "meta de peso vira barra de progresso (90→85, alvo 80: faltam 5)");
   ok(/Seu ano de treinos/.test(leva2.mapaTxt) && leva2.mapaCells >= 360, "mapa de constância pinta as 52 semanas do ano");
   ok(leva2.mapaCabe, "mapa do ano cabe na largura da tela (sem estourar o card)");
   ok(+leva2.semAtual >= 1, "gráfico Treinos por semana conta o treino de hoje na semana atual (sem bug de fuso)");
