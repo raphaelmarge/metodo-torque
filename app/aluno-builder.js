@@ -1466,7 +1466,9 @@
       "function semanaCK(){return semDe(new Date());}" +
       // o menu Questionários conta o check-in pendente da semana junto
       "window.__ckPend=function(){return L('ptck','')===semanaCK()?0:1;};" +
-      "if(L('ptck','')===semanaCK()){document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';}" +
+      // check-in da semana já enviado? O card SOME até a semana virar (pedido
+      // do Raphael) — a confirmação só aparece na hora do envio (fim())
+      "if(L('ptck','')===semanaCK()){var ckc9=document.getElementById('ckCard');if(ckc9)ckc9.style.display='none';}" +
       "document.getElementById('ckEnvia').addEventListener('click',function(){if(!ckNota){alert('Escolha uma nota pra semana.');return;}" +
       "var peso=parseFloat((document.getElementById('ckPeso').value||'').replace(',','.'))||null;var texto=document.getElementById('ckTexto').value.trim();" +
       "var fim=function(){Sv('ptck',semanaCK());document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';" +
