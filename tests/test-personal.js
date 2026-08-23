@@ -5910,7 +5910,17 @@ async function abaPt(p, a) {
   });
   // check-in: escolhe carinha e envia (sem nuvem → wa.me; só valida o estado)
   await pApp.evaluate(() => { window.open = () => null; }); // não abre janela no teste
-  await pApp.evaluate(() => window.__trocaSec("chat"));
+  // o check-in ganhou área própria (v585): não mora mais embaixo da conversa
+  await pApp.evaluate(() => window.__trocaSec("quest"));
+  const ckArea = await pApp.evaluate(() => ({
+    sec: document.getElementById("ckCard").getAttribute("data-sec"),
+    topo: !!document.getElementById("qsTopo"),
+    naGaveta: (document.getElementById("mgQaBt") || {}).getAttribute
+      ? document.getElementById("mgQaBt").getAttribute("data-msec") : null,
+    foraDoChat: document.getElementById("chTopo").getAttribute("data-sec") === "chat",
+  }));
+  ok(ckArea.sec === "quest" && ckArea.topo && ckArea.naGaveta === "quest" && ckArea.foraDoChat,
+    "Questionários viraram área própria com entrada no menu — saíram de baixo da conversa do chat");
   await pApp.click("#ckNotas button:nth-child(4)");
   await pApp.fill("#ckPeso", "84,5");
   await pApp.fill("#ckTexto", "Semana boa!");
@@ -5918,7 +5928,20 @@ async function abaPt(p, a) {
   await pApp.waitForTimeout(200);
   const ckOk = await pApp.evaluate(() => document.getElementById("ckOk").style.display !== "none");
   ok(ckOk, "check-in enviado marca a semana como feita");
+  // o card some na semana seguinte (pedido do Raphael): a área não pode ficar
+  // só com a faixa roxa e mais nada
+  const qsVazio = await pApp.evaluate(() => {
+    document.getElementById("ckCard").style.display = "none";
+    const q = document.getElementById("qaCard"); if (q) q.style.display = "none";
+    window.__menuBadges();
+    const v = document.getElementById("qsVazio");
+    return { visivel: v.style.display !== "none", txt: v.textContent,
+      topo: document.getElementById("qsTopN").textContent };
+  });
+  ok(qsVazio.visivel && /Nada pra responder/.test(qsVazio.txt) && /Tudo em dia/.test(qsVazio.topo),
+    "com tudo respondido a área de Questionários diz que está vazia, em vez de mostrar só a faixa");
 
+  await pApp.evaluate(() => window.__trocaSec("chat"));
   const evo = await pApp.evaluate(() => document.getElementById("evoBox").textContent);
   ok(/84/.test(evo) && /-6/.test(evo.replace("−", "-")), "evolução mostra peso atual e delta");
   // chat: aluno manda mensagem → aparece no thread (RPC mockada)
