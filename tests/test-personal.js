@@ -5063,10 +5063,10 @@ async function abaPt(p, a) {
   ok(home.foto === "none", "📷 sem foto na ficha, o card do dia fica limpo (nada de imagem quebrada)");
   ok(home.semProgresso && !/Peso/.test(home.tiles),
     "o card Progresso saiu do Início e o peso não aparece mais nas Conquistas (ele mora na aba Corpo)");
-  ok(/Sequência/.test(home.tiles) && /Treinos no mês/.test(home.tiles),
-    "Conquistas mostra sequência e treinos do mês");
-  ok((home.tilesHtml.match(/background:var\(--bg2\)/g) || []).length === 2,
-    "os dois números são cartões de verdade, não texto solto no fundo");
+  ok(/Sequência/.test(home.tiles) && /Treinos no mês/.test(home.tiles) && /Semanas batendo a meta/.test(home.tiles),
+    "Conquistas mostra sequência, treinos do mês e as semanas batendo a meta (essa veio do Início)");
+  ok((home.tilesHtml.match(/background:var\(--bg2\)/g) || []).length === 3,
+    "os três números são cartões de verdade, não texto solto no fundo");
   // sem mês anterior o rodapé não repete o número de cima ("2" e "2 no total")
   ok(/seu primeiro mês|que em \w{3} até aqui|igual a \w{3} até aqui/.test(home.tiles),
     "embaixo dos treinos do mês vem a comparação justa com o mês passado, não o total repetido");
@@ -5525,8 +5525,17 @@ async function abaPt(p, a) {
   // dia treinado ganha o chip pintado (gradiente da cor) — o ✓ saiu no redesenho
   const semana = await pApp.evaluate(() => document.getElementById("diasSem").innerHTML);
   ok(/linear-gradient/.test(semana), "chip do dia pintado (auto pelo treino completo)");
-  const metaTxt = await pApp.evaluate(() => document.getElementById("metaBox").textContent);
-  ok(/1 de 3/.test(metaTxt), "meta da semana mostra 1 de 3");
+  // MINHA SEMANA virou um card só: recado + chips + resumo + Treinei hoje!
+  const metaTxt = await pApp.evaluate(() => ({
+    resumo: document.getElementById("semResumo").textContent,
+    // o anel 4/4 e a barra "Meta da semana" saíram: diziam o mesmo que os chips
+    velhos: ["metaBox", "ringSem", "ringNum", "coachCard", "stkBox"].filter((i) => document.getElementById(i)),
+    umCardSo: (() => { const b = document.getElementById("semBlock");
+      return !!(b && b.querySelector("#coachTxt") && b.querySelector("#diasSem") && b.querySelector("#btnFeito")); })(),
+  }));
+  ok(/1 de 3 na semana/.test(metaTxt.resumo) && metaTxt.velhos.length === 0,
+    "resumo da semana num texto só (1 de 3 na semana) — o anel e a barra que repetiam o mesmo número saíram");
+  ok(metaTxt.umCardSo, "recado do coach, os dias da semana e o Treinei hoje! moram no mesmo card");
   const medal = await pApp.evaluate(() => document.getElementById("medalhas").textContent);
   ok(/1 treino/.test(medal) && /faltam 4/.test(medal), "contador de medalhas (faltam 4 pra 🥉)");
   // clicar manualmente no mesmo dia não duplica
@@ -5560,13 +5569,18 @@ async function abaPt(p, a) {
     document.getElementById("btnFeito").click();
     await new Promise((r) => setTimeout(r, 250));
     return {
-      stk: (document.getElementById("stkBox") || {}).textContent || "",
+      // a sequência de SEMANAS na meta mudou de casa: virou tile das Conquistas
+      stk: (document.getElementById("cqTiles") || {}).textContent || "",
+      // e a de dias de hábito agora mora no card dos hábitos, dizendo do que é
+      habStk: (() => { const e = document.getElementById("stkLine");
+        return e && e.parentElement.id === "habWrap" ? e.textContent : ""; })(),
       rpeNaHome: /Como foi o treino/.test(document.body.innerText),
       rpeVisivel: document.getElementById("cardRpe").style.display === "block",
       rpeNoTreino: document.getElementById("cardRpe").getAttribute("data-sec") === "treino",
     };
   });
-  ok(/sequência de 2 semanas/.test(stkRpe.stk), "chama do streak acende com 2 semanas seguidas de meta");
+  ok(/Semanas batendo a meta/.test(stkRpe.stk) && /2\s*semanas/.test(stkRpe.stk),
+    "a sequência de semanas na meta virou tile das Conquistas (é conquista, não status de hoje)");
   ok(stkRpe.rpeVisivel && stkRpe.rpeNoTreino, "depois do 'Treinei hoje' a pergunta fica esperando na área de Treino");
   ok(!stkRpe.rpeNaHome, "e a primeira tela não pergunta mais nada — ela só mostra o dia e o treino");
   const rpeSalvo = await pApp.evaluate(async () => {

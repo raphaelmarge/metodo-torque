@@ -161,6 +161,20 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Tela de Início enxuta** (a partir da v584): o card **Minha semana** (`#semBlock`)
+é um bloco só — recado do coach (`#coachTxt`), os chips seg–dom (`#diasSem`),
+a linha de resumo (`#semResumo` = "4 de 4 na semana · N dias seguidos") e o
+**Treinei hoje!** (`#btnFeito`), com `#medalhas` discreto embaixo. Antes eram
+TRÊS blocos dizendo a mesma coisa: o anel 4/4 do card do coach, os chips e a
+barra "Meta da semana" — os três removidos menos os chips, que são os únicos
+que mostram QUAIS dias. Duas sequências diferentes moravam juntas e se
+confundiam: a de **semanas** batendo a meta virou o terceiro tile das
+Conquistas (`#cqTiles`, largura cheia — é conquista, não status de hoje) e a de
+**dias com 3+ hábitos** (`#stkLine`) foi pro card dos hábitos (`#habWrap`) com
+o texto dizendo do que é. A do card da semana conta dias TREINADOS
+(`seqAtual`). Ids que sumiram: `coachCard`, `ringSem`, `ringNum`, `metaBox`,
+`stkBox`.
+
 **Cabeçalho da área Treinos** (a partir da v583): `#trTopo` é um bloco só —
 faixa roxa em cima (`#trTopN`/`#trTopS`/`#trTopSub`) e as três pílulas
 (`#trTabs`) logo abaixo dela, igual ao desenho da Evolução (`#evTopo` +
