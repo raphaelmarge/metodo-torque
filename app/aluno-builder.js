@@ -453,7 +453,38 @@
       ".mgsw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .18s;box-shadow:0 1px 4px rgba(0,0,0,.35)}" +
       ".mgsw.on{background:var(--cor)}.mgsw.on i{left:21px}" +
       // conquistas encolhidas: só as 6 primeiras aparecem até o Ver todas
-      "#cqGrid.enc>div:nth-child(n+7){display:none}" +
+      "#cqGrid.enc>button:nth-child(n+7){display:none}" +
+      /* ---------- conquista em tela cheia (estilo Nike Run) ----------
+       * A medalha gira em 3D acompanhando o celular (giroscópio) e o brilho
+       * caminha junto. Sem giroscópio, o dedo arrasta — e sozinha ela balança
+       * de leve, pra nunca ficar parada e sem graça. */
+      "#cqFull{display:none;position:fixed;inset:0;z-index:78;background:radial-gradient(120% 80% at 50% 18%,var(--cor-esc,#2a1b52) 0%,var(--bg0) 62%);" +
+      "flex-direction:column;align-items:center;justify-content:center;padding:26px 22px calc(26px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;overflow-y:auto}" +
+      "#cqFull.on{display:flex}" +
+      "#cqPalco{perspective:900px;flex:none;margin-bottom:6px}" +
+      "#cqMed{position:relative;width:min(62vw,230px);aspect-ratio:1;border-radius:50%;transform-style:preserve-3d;" +
+      "transition:transform .12s ease-out;display:flex;align-items:center;justify-content:center;" +
+      "box-shadow:0 30px 70px -20px rgba(0,0,0,.85)}" +
+      "#cqMed .aro{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 210deg,var(--cor),var(--corc),#fff,var(--corc),var(--cor));" +
+      "-webkit-mask:radial-gradient(circle,transparent 0 62%,#000 63%);mask:radial-gradient(circle,transparent 0 62%,#000 63%)}" +
+      "#cqMed .disco{position:absolute;inset:9%;border-radius:50%;background:linear-gradient(150deg,var(--cor2),var(--cor) 55%,var(--cor-esc,#241848));" +
+      "border:1px solid rgba(255,255,255,.16)}" +
+      "#cqMed .brilho{position:absolute;inset:0;border-radius:50%;pointer-events:none;" +
+      "background:radial-gradient(60% 60% at var(--bx,32%) var(--by,26%),rgba(255,255,255,.55),rgba(255,255,255,.10) 45%,transparent 68%)}" +
+      "#cqMed .ico{position:relative;color:#fff;line-height:0;transform:translateZ(26px);filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}" +
+      "#cqMed .ico svg{width:min(26vw,96px);height:min(26vw,96px);stroke-width:1.3}" +
+      "#cqMed.travada .disco{background:linear-gradient(150deg,var(--bg7),var(--bg4))}" +
+      "#cqMed.travada .aro{background:conic-gradient(from 210deg,var(--bg7),var(--bg11),var(--bg7))}" +
+      "#cqFull h3{font-size:clamp(24px,7vw,32px);font-weight:900;letter-spacing:-.02em;text-align:center;margin:18px 0 0}" +
+      "#cqFull .cqsub{font-size:14px;color:#a9a4b5;text-align:center;margin-top:8px;line-height:1.5;max-width:300px}" +
+      "#cqFull .cqsel{margin-top:12px;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--corc)}" +
+      "#cqFull .cqbar{width:min(280px,80%);height:6px;border-radius:4px;background:var(--bg5);margin-top:14px;overflow:hidden}" +
+      "#cqFull .cqbar b{display:block;height:100%;background:linear-gradient(90deg,var(--cor),var(--corc))}" +
+      "#cqFull .cqpe{display:flex;gap:10px;margin-top:26px;width:100%;max-width:330px}" +
+      "#cqFull .cqpe button{flex:1;min-height:54px;border-radius:99px;border:none;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}" +
+      "#cqFull .cqpe .prin{background:#fff;color:var(--cor-esc,#2a1b52)}" +
+      "#cqFull .cqpe .sec{background:rgba(255,255,255,.10);color:#d6d2df}" +
+      "@media (prefers-reduced-motion: reduce){#cqMed{transition:none}}" +
       "html.claro #cqVerMais{color:#544d63}" +
       ".mgq{display:flex;align-items:center;gap:13px;width:calc(100% - 32px);min-height:64px;background:rgba(var(--cor-rgb),.10);border:1px solid rgba(var(--cor-rgb),.5);border-radius:22px;margin:18px 16px 0;padding:14px 16px;cursor:pointer;font-family:inherit;text-align:left;color:var(--corc)}" +
       ".mgq .mgsub{color:var(--corc)}" +
@@ -1627,15 +1658,87 @@
       "if(ant){var dif=(new Date(k)-new Date(ant))/864e5;seq=dif===1?seq+1:1;}else seq=1;if(seq>max2)max2=seq;ant=k;});return max2;}" +
       // Ver todas × Mostrar menos: o estado mora FORA do pintaConquistas pra
       // sobreviver às repinturas; o clique repinta a grade
-      "var cqAberto=false;" +
+      // desenha a medalha (o mesmo traço serve a grade e a tela cheia)
+      "function icq(p){return \"<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
+      "var cqAberto=false;var CQATUAL=[];" +
       "document.addEventListener('click',function(e5){if(!e5.target||e5.target.id!=='cqVerMais')return;" +
       "cqAberto=!cqAberto;try{pintaConquistas();}catch(e6){}" +
       "if(!cqAberto){var g6=document.getElementById('cqGrid');if(g6)g6.scrollIntoView({block:'start'});}});" +
+      /* ---------- conquista em tela cheia (estilo Nike Run) ----------
+       * Tocou numa medalha: abre por cima, a medalha gigante gira com o
+       * movimento do celular e o brilho anda junto. O <div> é criado na hora
+       * (fora do classificador de seções, que já rodou) e vive no <body>. */
+      "var cqGiro=null;" + // {handler} do giroscópio ligado agora
+      "function cqFecha(){var f=document.getElementById('cqFull');if(f)f.classList.remove('on');" +
+      "if(cqGiro){window.removeEventListener('deviceorientation',cqGiro);cqGiro=null;}" +
+      "document.body.style.overflow='';}" +
+      "window.__cqFecha=cqFecha;" +
+      "function cqAbre(i){var b=CQATUAL[i];if(!b)return;var tem=b.v>=b.m;" +
+      "var f=document.getElementById('cqFull');" +
+      "if(!f){f=document.createElement('div');f.id='cqFull';document.body.appendChild(f);}" +
+      "var falta=Math.max(0,b.m-b.v);" +
+      "var comoFaz=tem?'':(falta>0?(falta===1?'Falta <b>1</b> pra destravar':'Faltam <b>'+falta+'</b> pra destravar'):'Ainda não destravou');" +
+      "f.innerHTML=\"<div id='cqPalco'><div id='cqMed'\"+(tem?'':\" class='travada'\")+\">\"+" +
+      "\"<span class='aro'></span><span class='disco'></span>\"+" +
+      "\"<span class='ico'>\"+(tem?(b.emo?\"<span style='font-size:74px;line-height:1;'>\"+b.p+'</span>':icq(b.p))" +
+      ":icq(\"<rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 0 1 8 0v3'/>\"))+'</span>'+" +
+      "\"<span class='brilho'></span></div></div>\"+" +
+      "\"<div class='cqsel'>\"+(tem?'Conquistada':'Bloqueada')+'</div>'+" +
+      "'<h3>'+esc2(b.n)+'</h3>'+" +
+      "(tem?(b.d?\"<div class='cqsub'>Você conquistou em \"+b.d.slice(8,10)+'/'+b.d.slice(5,7)+'/'+b.d.slice(0,4)+'</div>':\"<div class='cqsub'>Está no seu mural — orgulho define.</div>\")" +
+      ":\"<div class='cqsub'>\"+comoFaz+\"</div><div class='cqbar'><b style='width:\"+Math.round(100*Math.min(1,b.v/(b.m||1)))+\"%'></b></div>\"+" +
+      "\"<div class='cqsub' style='margin-top:8px;font-weight:800;color:#8a8695;'>\"+Math.min(b.v,b.m)+' de '+b.m+'</div>')+" +
+      "\"<div class='cqpe'>\"+(tem?\"<button type='button' class='prin' id='cqShare'>Compartilhar</button>\":'')+" +
+      "\"<button type='button' class='sec' id='cqVolta'>Fechar</button></div>\";" +
+      "f.classList.add('on');document.body.style.overflow='hidden';" +
+      "document.getElementById('cqVolta').addEventListener('click',cqFecha);" +
+      "var sh=document.getElementById('cqShare');if(sh)sh.addEventListener('click',function(){cqArte(b);});" +
+      "cqLigaGiro(document.getElementById('cqMed'));" +
+      "if(navigator.vibrate)navigator.vibrate(12);}" +
+      // giroscópio (iOS pede permissão DENTRO do toque) com o dedo de reserva
+      "function cqLigaGiro(med){if(!med)return;var ax=0,ay=0;" +
+      "function poe(rx,ry){med.style.transform='rotateX('+rx.toFixed(1)+'deg) rotateY('+ry.toFixed(1)+'deg)';" +
+      "med.style.setProperty('--bx',(50-ry*1.6).toFixed(0)+'%');med.style.setProperty('--by',(38+rx*1.6).toFixed(0)+'%');}" +
+      "poe(0,0);" +
+      "function liga(){if(cqGiro)return;cqGiro=function(ev){var be=ev.beta,ga=ev.gamma;if(be==null||ga==null)return;" +
+      "ax=Math.max(-22,Math.min(22,(be-42)*0.55));ay=Math.max(-22,Math.min(22,ga*0.55));poe(-ax,ay);};" +
+      "window.addEventListener('deviceorientation',cqGiro);}" +
+      "try{var DOE=window.DeviceOrientationEvent;" +
+      "if(DOE&&typeof DOE.requestPermission==='function')DOE.requestPermission().then(function(r){if(r==='granted')liga();}).catch(function(){});" +
+      "else if(DOE)liga();}catch(e9){}" +
+      // arrastar com o dedo: funciona no computador e quando o giro não vem
+      "var arr=false,x0=0,y0=0,rx0=0,ry0=0;" +
+      "med.addEventListener('pointerdown',function(ev){arr=true;x0=ev.clientX;y0=ev.clientY;rx0=-ax;ry0=ay;med.setPointerCapture&&med.setPointerCapture(ev.pointerId);});" +
+      "med.addEventListener('pointermove',function(ev){if(!arr)return;" +
+      "var rx=Math.max(-26,Math.min(26,rx0-(ev.clientY-y0)*0.28));var ry=Math.max(-26,Math.min(26,ry0+(ev.clientX-x0)*0.28));poe(rx,ry);});" +
+      "['pointerup','pointercancel','pointerleave'].forEach(function(t9){med.addEventListener(t9,function(){arr=false;});});}" +
+      // arte da conquista pro Stories, pela MESMA prévia do resto do app
+      "function cqArte(b){var c=document.createElement('canvas');c.width=1080;c.height=1350;var g=c.getContext('2d');" +
+      "var gr=g.createLinearGradient(0,0,0,1350);gr.addColorStop(0,CV('cor'));gr.addColorStop(1,CV('cor-esc'));g.fillStyle=gr;g.fillRect(0,0,1080,1350);" +
+      "g.textAlign='center';" +
+      "g.fillStyle='rgba(255,255,255,.75)';g.font='800 34px system-ui,sans-serif';g.fillText(STUDIO.toUpperCase().slice(0,28),540,140);" +
+      "g.fillStyle='rgba(255,255,255,.14)';g.beginPath();g.arc(540,600,250,0,7);g.fill();" +
+      "g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=8;g.beginPath();g.arc(540,600,250,0,7);g.stroke();" +
+      "g.fillStyle='rgba(255,255,255,.9)';g.font='800 30px system-ui,sans-serif';g.fillText('CONQUISTA DESBLOQUEADA',540,980);" +
+      "g.fillStyle='#fff';g.font='900 74px system-ui,sans-serif';" +
+      "var nm=String(b.n);if(nm.length>18){var pr=nm.split(' ');var meio=Math.ceil(pr.length/2);" +
+      "g.fillText(pr.slice(0,meio).join(' '),540,1080);g.fillText(pr.slice(meio).join(' '),540,1160);}" +
+      "else g.fillText(nm,540,1110);" +
+      "g.fillStyle='rgba(255,255,255,.8)';g.font='600 36px system-ui,sans-serif';" +
+      "g.fillText(b.d?b.d.slice(8,10)+'/'+b.d.slice(5,7)+'/'+b.d.slice(0,4):PRIMEIRO,540,1250);" +
+      // a medalha (SVG) entra por cima como imagem; sem ela a arte sai igual
+      "var sv=\"<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'>\"+b.p+'</svg>';" +
+      "var im=new Image();im.onload=function(){g.drawImage(im,540-130,600-130,260,260);arteMostra(c,'conquista.png');};" +
+      "im.onerror=function(){arteMostra(c,'conquista.png');};" +
+      "im.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(sv)));}" +
+      // clique num card da grade → abre a tela cheia
+      "document.addEventListener('click',function(e8){var b8=e8.target.closest&&e8.target.closest('[data-cqi]');" +
+      "if(b8)cqAbre(+b8.getAttribute('data-cqi'));});" +
+      "window.__cqAbre=cqAbre;" +
       "function pintaConquistas(){var f=L('ptfeitos',{});var total=Object.keys(f).length;var seq=seqMax(f);" +
       "var pz=Object.keys(L('ptpeso',{})).length;var dc=L('ptdc',{});var recs=Object.keys(dc).length;" +
       "var semMeta=0;var porSem={};Object.keys(f).forEach(function(k){var w=semDe(k);porSem[w]=(porSem[w]||0)+1;});" +
       "Object.keys(porSem).forEach(function(w){if(porSem[w]>=META)semMeta++;});" +
-      "function icq(p){return \"<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
       "var BADGES=[[\"<path d='M5 21V4M5 4h12l-2.5 4L17 12H5'/>\",'Primeiro treino',total,1],[\"<path d='M13 3 5 13h6l-1 8 8-10h-6z'/>\",'3 dias seguidos',seq,3],[\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/><path d='m9 16 2 2 4-4'/>\",'7 dias seguidos',seq,7],[\"<path d='M8 21h8M12 17v4M6 3h12v5a6 6 0 0 1-12 0z'/><path d='M6 5H3c0 3 1.5 4.5 3 4.5M18 5h3c0 3-1.5 4.5-3 4.5'/>\",'Semana com meta',semMeta,1],[\"<path d='M7 7v10M4 9v6M17 7v10M20 9v6M7 12h10'/>\",'25 treinos',total,25],[\"<path d='M6 4h12l3 5-9 11L3 9zM3 9h18'/>\",'100 treinos',total,100],[\"<polyline points='3 7 9 13 13 9 21 17'/><polyline points='15 17 21 17 21 11'/>\",'10 pesagens',pz,10],[\"<path d='M9 3h6v3H9z'/><rect x='5' y='4' width='14' height='17' rx='2'/><path d='M9 11h6M9 15h4'/>\",'Carga anotada',recs,1],[\"<path d='m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2-5.6-3-5.6 3 1.2-6.2L3 9.5l6.3-.8z'/>\",'10 semanas de meta',semMeta,10]];" +
       // conquistas de CORRIDA: medidas pelo histórico real do cronômetro
       // (ptcardio, só modalidade corrida — bike e caminhada não valem aqui).
@@ -1662,12 +1765,20 @@
       // (a cor varia por medalha), bloqueada vira cadeado cinza com o progresso
       // pequenininho; o estado vai no data-cqok (é o que os testes leem)
       "var CQCOR=['var(--corc)','#fb923c','#4ade80','#fbbf24'];" +
+      /* Data da conquista: pro tipo "N treinos" dá pra saber o dia exato — é o
+       * N-ésimo treino registrado. Nas outras (sequência, pace, peso) não há
+       * como cravar sem inventar, então a tela cheia simplesmente não mostra
+       * data — melhor sem do que com data errada. */
+      "function cqData(nome,alvo){if(!/treino/i.test(nome)||/seguidos|meta/i.test(nome))return '';" +
+      "var ks=Object.keys(L('ptfeitos',{})).sort();return ks.length>=alvo?ks[alvo-1]:'';}" +
       "document.getElementById('cqGrid').innerHTML=BADGES.map(function(b,i5){var tem=b[2]>=b[3];var cor5=CQCOR[i5%CQCOR.length];" +
-      "return \"<div data-cqok='\"+(tem?1:0)+\"' style='text-align:center;padding:16px 6px 14px;border-radius:20px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);\"+(tem?'':'opacity:.6;')+\"'>\"+" +
+      "return \"<button type='button' data-cqok='\"+(tem?1:0)+\"' data-cqi='\"+i5+\"' style='display:block;width:100%;font-family:inherit;color:#fff;cursor:pointer;text-align:center;padding:16px 6px 14px;border-radius:20px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);\"+(tem?'':'opacity:.6;')+\"'>\"+" +
       "(tem?(b[4]?\"<div style='font-size:24px;line-height:1.3;'>\"+b[0]+\"</div>\":\"<div style='line-height:0;padding:4px 0;color:\"+cor5+\";'>\"+icq(b[0])+'</div>')" +
       ":\"<div style='line-height:0;padding:4px 0;color:#57525f;'>\"+icq(\"<rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 0 1 8 0v3'/>\")+'</div>')+" +
       "\"<div style='font-size:12px;font-weight:800;margin-top:8px;line-height:1.25;\"+(tem?'':'color:#6e6a78;')+\"'>\"+b[1]+'</div>'+" +
-      "(tem?'':\"<div style='font-size:9.5px;color:#57525f;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</div>';}).join('');" +
+      "(tem?'':\"<div style='font-size:9.5px;color:#57525f;margin-top:2px;'>\"+Math.min(b[2],b[3])+'/'+b[3]+'</div>')+'</button>';}).join('');" +
+      // a tela cheia lê daqui (o clique só manda o índice)
+      "CQATUAL=BADGES.map(function(b,i5){return {p:b[0],n:b[1],v:b[2],m:b[3],emo:b[4]||'',cor:CQCOR[i5%CQCOR.length],d:(b[2]>=b[3]?cqData(b[1],b[3]):'')};});" +
       // retrátil: com mais de 6 medalhas, encolhe e o botão diz quantas tem
       "var g5=document.getElementById('cqGrid'),vm5=document.getElementById('cqVerMais');" +
       "if(g5&&vm5){var enc5=!cqAberto&&BADGES.length>6;g5.classList.toggle('enc',enc5);" +

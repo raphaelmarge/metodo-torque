@@ -3958,7 +3958,8 @@ async function abaPt(p, a) {
   const cqCorrida = await pCr.evaluate(() => {
     window.__trocaSec("evolucao");
     // tela 31: o estado da medalha vive no data-cqok (o selo textual saiu do desenho)
-    const cards = [...document.querySelectorAll("#cqGrid > div")].map((x) => ({ t: x.textContent, ok: x.getAttribute("data-cqok") === "1" }));
+    // os cards viraram <button> (tocar abre a conquista em tela cheia)
+    const cards = [...document.querySelectorAll("#cqGrid [data-cqok]")].map((x) => ({ t: x.textContent, ok: x.getAttribute("data-cqok") === "1" }));
     const acha = (n) => cards.find((c) => c.t.indexOf(n) > -1) || { t: "", ok: false };
     return {
       primeira: acha("Primeira corrida").ok,
@@ -3969,6 +3970,43 @@ async function abaPt(p, a) {
     };
   });
   ok(cqCorrida.primeira && cqCorrida.cinco && cqCorrida.pace, "correr 5,2 km com pace 5:46 conquista as medalhas de corrida");
+  /* Tocar numa conquista abre a tela cheia (estilo Nike Run): medalha grande
+   * que gira com o movimento do celular (ou com o dedo) e o brilho anda junto. */
+  const cqTela = await pCr.evaluate(async () => {
+    window.__evSub("conq");
+    document.querySelector("#cqGrid [data-cqok='1']").click();
+    await new Promise((r) => setTimeout(r, 200));
+    const f = document.getElementById("cqFull"), med = document.getElementById("cqMed");
+    const antes = med.style.transform;
+    const r0 = med.getBoundingClientRect();
+    const ev = (t, x, y) => med.dispatchEvent(new PointerEvent(t, { clientX: x, clientY: y, bubbles: true, pointerId: 1 }));
+    ev("pointerdown", r0.left + r0.width / 2, r0.top + r0.height / 2);
+    ev("pointermove", r0.left + r0.width / 2 + 60, r0.top + r0.height / 2 - 40);
+    await new Promise((r) => setTimeout(r, 120));
+    const depois = med.style.transform, brilho = med.style.getPropertyValue("--bx");
+    ev("pointerup", 0, 0);
+    const out = { aberta: f.classList.contains("on"), titulo: f.querySelector("h3").textContent,
+      selo: f.querySelector(".cqsel").textContent, temShare: !!document.getElementById("cqShare"),
+      antes, depois, brilho, travouFundo: document.body.style.overflow === "hidden" };
+    document.getElementById("cqVolta").click();
+    await new Promise((r) => setTimeout(r, 120));
+    out.fechou = !f.classList.contains("on") && document.body.style.overflow === "";
+    // e uma bloqueada mostra o progresso, sem compartilhar
+    document.querySelector("#cqGrid [data-cqok='0']").click();
+    await new Promise((r) => setTimeout(r, 150));
+    out.bloqSelo = f.querySelector(".cqsel").textContent;
+    out.bloqBarra = !!f.querySelector(".cqbar b");
+    out.bloqSemShare = !document.getElementById("cqShare");
+    document.getElementById("cqVolta").click();
+    return out;
+  });
+  ok(cqTela.aberta && cqTela.titulo.length > 2 && /Conquistada/.test(cqTela.selo) && cqTela.temShare && cqTela.travouFundo,
+    "tocar na conquista abre a tela cheia com a medalha, o selo e o Compartilhar (" + cqTela.titulo + ")");
+  ok(/rotateX\(0deg\) rotateY\(0deg\)/.test(cqTela.antes) && !/rotateX\(0deg\) rotateY\(0deg\)/.test(cqTela.depois) && /%/.test(cqTela.brilho),
+    "arrastar gira a medalha em 3D e move o brilho junto (" + cqTela.depois + ")");
+  ok(cqTela.fechou, "Fechar volta pra grade e destrava a rolagem do fundo");
+  ok(/Bloqueada/.test(cqTela.bloqSelo) && cqTela.bloqBarra && cqTela.bloqSemShare,
+    "conquista ainda bloqueada mostra a barra de progresso e não oferece compartilhar");
   ok(/5\/100/.test(cqCorrida.soma) && cqCorrida.bikeNaoConta, "os km somados contam só corrida (bike e caminhada ficam de fora)");
   // recorde pessoal + arte compartilhável: corrida mais longa celebra na hora
   const share = await pCr.evaluate(async () => {
