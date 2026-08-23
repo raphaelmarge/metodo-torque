@@ -161,6 +161,16 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Cabeçalho da área Treinos** (a partir da v583): `#trTopo` é um bloco só —
+faixa roxa em cima (`#trTopN`/`#trTopS`/`#trTopSub`) e as três pílulas
+(`#trTabs`) logo abaixo dela, igual ao desenho da Evolução (`#evTopo` +
+`#evAbas`). Antes as abas eram um card separado ANTES da faixa, e a faixa
+morava dentro da lista de fichas — na tela as abas apareciam soltas no topo,
+sem título nenhum. `trocaTrSub` pula o `#trTopo` no esconde-esconde (ele é o
+chapéu das três abas) e troca o texto da faixa lendo `TRHEAD`, montado no
+builder com um texto por aba (fichas/circuitos/corridas). O classificador
+`[data-sec]` tem branch de id pro `trTopo`, não mais pro `trTabs`.
+
 **Frequência cardíaca ao vivo** (a partir da v580): o app do aluno lê cinta ou
 pulseira de batimento e mostra FC + zona (Z1–Z5, sobre 220 − idade) durante o
 treino guiado e a corrida. Dois caminhos reais, nesta ordem: `window.MTNativo.fc`
