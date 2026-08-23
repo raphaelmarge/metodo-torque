@@ -4026,6 +4026,21 @@ async function abaPt(p, a) {
     "o card da corrida sai em 1080×1350 nos dois sabores — com a foto do aluno e sem");
   ok(cardFoto.fotoAtras && cardFoto.diferentes,
     "com foto, ela fica atrás do traçado (véu escuro por cima, cor da foto preservada)");
+  /* Compartilhar a corrida abre a PRÉVIA (o mesmo caminho do fim do treino):
+   * o navigator.share tem que sair do toque, senão o iPhone recusa calado. */
+  const prevCr = await pCr.evaluate(async () => {
+    document.querySelector("#crShare [data-crsem]").click();
+    await new Promise((r) => setTimeout(r, 300));
+    const ov = document.getElementById("artePrev");
+    return { abriu: !!ov, temImg: !!(ov && ov.querySelector("img[src^='data:image']")),
+      share: !!(ov && ov.querySelector("#arteShare")), baixa: !!(ov && ov.querySelector("#arteBaixa")),
+      nome: (ov && ov.querySelector("#arteBaixa")) ? (document.getElementById("arteBaixa").click(), true) : false };
+  });
+  ok(prevCr.abriu && prevCr.temImg && prevCr.share && prevCr.baixa,
+    "compartilhar a corrida abre a prévia com Compartilhar e Salvar (share sai do toque, que é o que o iPhone exige)");
+  ok(!/toBlob\(function\(bl\)\{var fl=new File\(\[bl\],'corrida/.test(cardioProf.appHtml),
+    "o share da corrida não é mais chamado de dentro do toBlob (era o que travava no iPhone)");
+  await pCr.evaluate(() => { const f = document.getElementById("arteFecha"); if (f) f.click(); });
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
   await pCr.close();

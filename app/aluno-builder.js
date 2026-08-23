@@ -1837,9 +1837,8 @@
       "if(d.dp!=null){g.fillText('peso: '+(d.dp>0?'+':'')+String(d.dp).replace('.',',')+' kg no m\\u00eas',540,y);y+=80;}" +
       "if(d.nh){g.fillText(d.nh+' h\\u00e1bitos marcados',540,y);}" +
       "g.fillStyle=CV('corc');g.font='700 34px system-ui,sans-serif';g.fillText(PRIMEIRO+' \\u00b7 TORQUE PERSONAL',540,990);" +
-      "c.toBlob(function(bl){var fl=new File([bl],'retro.png',{type:'image/png'});" +
-      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
-      "else{var a3=document.createElement('a');a3.href=c.toDataURL('image/png');a3.download='retro.png';a3.click();}});});" +
+      // mesma prévia do fim do treino: o share sai do TOQUE, senão o iPhone recusa calado
+      "arteMostra(c,'retro.png');});" +
       "pintaRetro();window.__retro=pintaRetro;" +
       "var FEXS=" + jsonApp(fexs) + ";" +
       // séries por exercício + cronômetro + auto-completar o dia
@@ -2478,11 +2477,11 @@
       "g.font='700 36px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.75)';" +
       "g.fillText(PRIMEIRO+' \\u00b7 '+String(rg.d).slice(8,10)+'/'+String(rg.d).slice(5,7),540,1250);" +
       "if(soCanvas)return c;" +
-      // navigator.share abre a folha do sistema \u2014 \u00e9 por ela que a imagem entra
-      // no Instagram (Stories ou feed); sem suporte, baixa o arquivo
-      "c.toBlob(function(bl){var fl=new File([bl],'corrida.png',{type:'image/png'});" +
-      "if(navigator.canShare&&navigator.canShare({files:[fl]})){navigator.share({files:[fl]}).catch(function(){});}" +
-      "else{var a2=document.createElement('a');a2.href=c.toDataURL('image/png');a2.download='corrida.png';a2.click();}});return null;}" +
+      /* A arte passa pela MESMA prévia do fim do treino (arteMostra): o
+       * navigator.share tem que sair do TOQUE do aluno. Antes o share era
+       * chamado dentro do toBlob (assíncrono) e o iPhone recusava calado —
+       * o aluno tocava em compartilhar e não acontecia nada. */
+      "arteMostra(c,'corrida.png');return null;}" +
       "window.__crCard=function(im){return cardCorrida(im,true);};" +
       "crEl('crShare').addEventListener('click',function(e){if(e.target.closest('[data-crsem]'))cardCorrida(null);});" +
       "crEl('crShareArq').addEventListener('change',function(){var f=this.files&&this.files[0];this.value='';if(!f)return;" +
