@@ -3711,8 +3711,10 @@ async function abaPt(p, a) {
   ok(lote7app.livre && /últimos treinos livres/.test(lote7app.hist),
     "Tabata avulso do Utilidades vira treino livre com histórico (e sobe pro placar do professor)");
   ok(lote7app.lem === 120, "lembrete de água guarda o intervalo escolhido");
-  ok(lote7app.retroVis === "block" && /Seu mês de/.test(lote7app.retroTxt) && /Supino reto/.test(lote7app.retroTxt) && /-2 kg/.test(lote7app.retroTxt),
-    "retrospectiva do mês monta sozinha com treinos, recorde e peso");
+  ok(lote7app.retroVis === "block" && /Seu mês de/.test(lote7app.retroTxt) && /Supino reto/.test(lote7app.retroTxt),
+    "retrospectiva do mês monta sozinha com treinos e recorde de carga");
+  ok(!/Peso no mês/.test(lote7app.retroTxt),
+    "a retrospectiva não fala de peso — dado de corpo mora na aba Corpo");
   ok(lote7app.retroFechada, "fechar a retrospectiva guarda o mês visto");
   // --- lote timers+retenção (professor): modelos de WOD, saúde da cobrança, pacote com zap ---
   const stSnap7 = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
@@ -4901,8 +4903,9 @@ async function abaPt(p, a) {
       rot: document.getElementById("htRot").textContent,
       tit: document.getElementById("htTitulo").textContent,
       sub: document.getElementById("htSub").textContent,
-      tiles: document.getElementById("pgTiles").textContent,
-      tilesHtml: document.getElementById("pgTiles").innerHTML,
+      semProgresso: !document.getElementById("pgTiles"),
+      tiles: (window.__evSub("cargas"), window.__evSub("conq"), document.getElementById("cqTiles").textContent),
+      tilesHtml: document.getElementById("cqTiles").innerHTML,
       xp: document.getElementById("xpChip").textContent,
       foto: (document.getElementById("htFoto") || {}).style && document.getElementById("htFoto").style.display,
     };
@@ -4910,9 +4913,12 @@ async function abaPt(p, a) {
   // telas finais: o rótulo do herói da ficha é a DATA ("SÁBADO, 22 DE AGOSTO")
   ok(/ DE /.test(home.rot) && home.tit.length > 2 && /exercício/.test(home.sub), "card '" + home.rot + "' mostra a ficha da vez (" + home.tit + ")");
   ok(home.foto === "none", "📷 sem foto na ficha, o card do dia fica limpo (nada de imagem quebrada)");
-  ok(/Peso/.test(home.tiles) && /Treinos no mês/.test(home.tiles), "tiles de progresso (peso + treinos do mês) na home");
+  ok(home.semProgresso && !/Peso/.test(home.tiles),
+    "o card Progresso saiu do Início e o peso não aparece mais nas Conquistas (ele mora na aba Corpo)");
+  ok(/Sequência/.test(home.tiles) && /Treinos no mês/.test(home.tiles),
+    "Conquistas mostra sequência e treinos do mês");
   ok((home.tilesHtml.match(/background:var\(--bg2\)/g) || []).length === 2,
-    "os dois números do Progresso são cartões de verdade, não texto solto no fundo");
+    "os dois números são cartões de verdade, não texto solto no fundo");
   // sem mês anterior o rodapé não repete o número de cima ("2" e "2 no total")
   ok(/seu primeiro mês|que em \w{3} até aqui|igual a \w{3} até aqui/.test(home.tiles),
     "embaixo dos treinos do mês vem a comparação justa com o mês passado, não o total repetido");
@@ -4931,7 +4937,10 @@ async function abaPt(p, a) {
   });
   await pApp.reload();
   await pApp.waitForTimeout(900);
-  const pgComp = await pApp.evaluate(() => document.getElementById("pgTiles").textContent);
+  const pgComp = await pApp.evaluate(() => {
+    window.__trocaSec("evolucao"); window.__evSub("conq");
+    return document.getElementById("cqTiles").textContent;
+  });
   await pApp.evaluate((v) => {
     if (v === null) localStorage.removeItem("ptfeitos"); else localStorage.setItem("ptfeitos", v);
   }, feitosAntes);

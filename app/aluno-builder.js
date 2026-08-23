@@ -661,14 +661,8 @@
       "<div id='metaBox' style='margin-bottom:12px;'></div>" +
       "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
       "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
-      // progresso rápido (peso + treinos do mês)
-      "<div class='cardx'><h2>Progresso</h2><div id='pgTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'></div></div>" +
-      // retrospectiva do mês fechado (aparece no comecinho do mês seguinte, some ao fechar)
-      "<div class='cardx' id='retroCard' style='display:none;border-color:var(--cor);'><h2>Retrospectiva</h2>" +
-      "<div id='retroBox'></div>" +
-      "<div style='display:flex;gap:8px;margin-top:10px;'>" +
-      "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
-      "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
+      // Progresso e retrospectiva saíram daqui (pedido do Raphael): moram na
+      // aba Conquistas, e sem os dados de CORPO — peso e gordura ficam no Corpo
       // recado do professor (tela 13): avatar com as iniciais do studio,
       // kicker "Recado do <studio>" e o selo "fixado" — filete da cor na esquerda
       (((st.config || {}).mural || []).length
@@ -770,6 +764,14 @@
       // páginas novas (telas 42 e 32) — pintadas em runtime dos dados do aparelho
       "<div class='cardx' id='evCargas'><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div></div>" +
       "<div class='cardx' id='evMarcas'><div id='mkBox' class='vz'>Suas marcas aparecem aqui.</div></div>" +
+      // retrospectiva do mês fechado (aparece no comecinho do mês seguinte, some
+      // ao fechar) — mora na aba Conquistas, sem linha de peso
+      "<div class='cardx' id='retroCard' style='display:none;'><h2>Retrospectiva</h2>" +
+      "<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:6px 16px 14px;'>" +
+      "<div id='retroBox'></div>" +
+      "<div style='display:flex;gap:8px;margin-top:12px;'>" +
+      "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
+      "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
@@ -778,7 +780,7 @@
       "<button type='button' id='cqVerMais' style='display:none;width:100%;min-height:48px;margin-top:10px;border-radius:99px;border:1px solid var(--bg11);background:var(--bg2);color:#b9b4c6;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;'></button>" +
       // ordem do Raphael: medalhas → peso/sequência → semanas → mapa do ano →
       // ranking da turma POR ÚLTIMO; o botão do Stories fecha a página
-      "<div id='cqTiles' style='display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px;'></div>" +
+      "<div id='cqTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
       "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
@@ -1323,7 +1325,7 @@
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
       "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfotoperfil')devolveApp();" +
-      "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaProgresso();pintaXP();}catch(e){}}}" +
+      "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
       // o antes/depois que vai pro painel prioriza as fotos de FRENTE (tela 41)
@@ -1702,10 +1704,24 @@
       // Corpo; fica só a SEQUÊNCIA, na largura toda
       "function pintaCqTiles(){var el=document.getElementById('cqTiles');if(!el)return;" +
       "var f=L('ptfeitos',{});var sq=seqAtual(f);var rec=seqMax(f);" +
-      "var h=\"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>Sequência</div>\"+" +
-      "\"<b style='font-size:24px;font-weight:900;'>\"+sq+\"<small style='font-size:12px;font-weight:800;'> \"+(sq===1?'dia':'dias')+'</small></b>'+" +
-      "(rec?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:#fbbf24;'>recorde de \"+rec+(rec===1?' dia':' dias')+'</div>':'')+'</div>';" +
-      "el.innerHTML=h;}" +
+      "function cqTile(rot,val,un9,sub,cor){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'><div class='wpk' style='margin:0 0 4px;'>\"+rot+'</div>'+" +
+      "\"<b style='font-size:24px;font-weight:900;'>\"+val+(un9?\"<small style='font-size:12px;font-weight:800;'> \"+un9+'</small>':'')+'</b>'+" +
+      "(sub?\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:\"+(cor||'#8a8695')+\";'>\"+sub+'</div>':'')+'</div>';}" +
+      // treinos do mês veio do Início; a comparação é com o MESMO pedaço do mês
+      // passado (até o mesmo dia), senão "-6 que em julho" no dia 20 desanima
+      "var ag9=new Date();var mesK9=ag9.getFullYear()+'-'+String(ag9.getMonth()+1).padStart(2,'0');" +
+      "var noMes9=Object.keys(f).filter(function(k){return k.slice(0,7)===mesK9;}).length;" +
+      "var MES39=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
+      "var dAnt9=new Date(ag9.getFullYear(),ag9.getMonth()-1,1);" +
+      "var antK9=dAnt9.getFullYear()+'-'+String(dAnt9.getMonth()+1).padStart(2,'0');var diaHj9=ag9.getDate();" +
+      "var noAnt9=Object.keys(f).filter(function(k){return k.slice(0,7)===antK9&&+k.slice(8,10)<=diaHj9;}).length;" +
+      "var tot9=Object.keys(f).length;var s29,c29;" +
+      "if(noAnt9){var dif9=noMes9-noAnt9;var mn9=MES39[dAnt9.getMonth()];" +
+      "s29=dif9?Math.abs(dif9)+(dif9>0?' a mais':' a menos')+' que em '+mn9+' até aqui':'igual a '+mn9+' até aqui';" +
+      "c29=dif9>0?'#4ade80':dif9<0?'#f87171':'#8a8695';}" +
+      "else{s29=tot9>noMes9?tot9+' no total':'seu primeiro mês';}" +
+      "el.innerHTML=cqTile('Sequência',sq,sq===1?'dia':'dias',rec?'recorde de '+rec+(rec===1?' dia':' dias'):'','#fbbf24')+" +
+      "cqTile('Treinos no mês',noMes9,'',s29,c29);}" +
       "pintaCqTiles();" +
       // tela 49: ranking da turma no mês (só com a nuvem ligada — a RPC conta
       // os treinos de cada colega no período; o token revogado não passa)
@@ -1822,7 +1838,7 @@
       "card.style.display='block';card.querySelector('h2').textContent='Seu m\\u00eas de '+d.nome;" +
       "var linhas=[['Treinos registrados','<b>'+d.tr+'</b>']];" +
       "if(d.rec)linhas.push(['Maior carga do m\\u00eas','<b>'+String(d.rec.ex).replace(/[<>&]/g,'').slice(0,26)+' \\u2014 '+String(d.rec.kg).replace('.',',')+' kg</b>']);" +
-      "if(d.dp!=null)linhas.push(['Peso no m\\u00eas','<b>'+(d.dp>0?'+':'')+String(d.dp).replace('.',',')+' kg</b>']);" +
+
       "if(d.nh)linhas.push(['H\\u00e1bitos marcados','<b>'+d.nh+'</b>']);" +
       "document.getElementById('retroBox').innerHTML=linhas.map(function(l){return \"<div class='kv'><span>\"+l[0]+'</span>'+l[1]+'</div>';}).join('');}" +
       "document.getElementById('retroFecha').addEventListener('click',function(){Sv('ptretroV',retroDados().m);pintaRetro();});" +
@@ -1834,7 +1850,7 @@
       "g.font='800 88px system-ui,sans-serif';g.fillText(d.tr+(d.tr===1?' TREINO':' TREINOS'),540,470);" +
       "g.font='600 48px system-ui,sans-serif';g.fillStyle=CV('cor-cl2');var y=580;" +
       "if(d.rec){g.fillText('recorde: '+String(d.rec.ex).slice(0,22)+' \\u2014 '+String(d.rec.kg).replace('.',',')+' kg',540,y);y+=80;}" +
-      "if(d.dp!=null){g.fillText('peso: '+(d.dp>0?'+':'')+String(d.dp).replace('.',',')+' kg no m\\u00eas',540,y);y+=80;}" +
+
       "if(d.nh){g.fillText(d.nh+' h\\u00e1bitos marcados',540,y);}" +
       "g.fillStyle=CV('corc');g.font='700 34px system-ui,sans-serif';g.fillText(PRIMEIRO+' \\u00b7 TORQUE PERSONAL',540,990);" +
       // mesma prévia do fim do treino: o share sai do TOQUE, senão o iPhone recusa calado
@@ -3911,38 +3927,8 @@
       "\"<span class='htn'>\"+(ci+1)+' de '+cards.length+' · arraste →</span>';});" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-carrver]');if(!b)return;" +
       "if(window.__trocaSec)window.__trocaSec('treino');if(window.__trSub)window.__trSub(b.getAttribute('data-carrver'));});})();" +
-      "function pintaProgresso(){var el=document.getElementById('pgTiles');if(!el)return;" +
-      "var pz=L('ptpeso',{});var pks=Object.keys(pz).sort();var agora=new Date();var mesK=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');" +
-      "var pf=L('ptfeitos',{});var noMes=Object.keys(pf).filter(function(k){return k.slice(0,7)===mesK;}).length;" +
-      // os dois números do Progresso são cartões de verdade, senão viram texto
-      // solto no meio do fundo (a unidade e a variação entram menores, pro
-      // número grande ser a primeira coisa que o olho pega)
-      "function tile(rt,val,sub,cor){return \"<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:13px 14px;'>\"+" +
-      "\"<div style='display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#8a8695;text-transform:uppercase;'>\"+rt+\"</div>\"+" +
-      "\"<div style='font-size:25px;font-weight:800;letter-spacing:-.02em;margin-top:8px;line-height:1.05;'>\"+val+\"</div>\"+" +
-      "\"<div style='font-size:11px;font-weight:700;margin-top:4px;line-height:1.35;color:\"+(cor||'#a9a4b5')+\";'>\"+sub+\"</div></div>\";}" +
-      "function un(u){return \"<small style='font-size:14px;font-weight:800;margin-left:3px;color:#a9a4b5;'>\"+u+'</small>';}" +
-      "var t1;if(pks.length){var pUlt=+pz[pks[pks.length-1]];var pd=Math.round((pUlt-(+pz[pks[0]]))*10)/10;" +
-      "t1=tile(icx(ICO.peso,13)+'Peso',String(pUlt).replace('.',',')+un('kg')," +
-      "pd?(pd>0?'+':'')+String(pd).replace('.',',')+' kg desde o início':'igual ao começo',pd<0?'#4ade80':pd>0?'#f87171':'#a9a4b5');}" +
-      "else{t1=tile(icx(ICO.peso,13)+'Peso','—','registre na aba Evolução');}" +
-      /* embaixo dos treinos do mês vinha "N no total", que no primeiro mês
-       * repetia o número de cima ("2" e "2 no total"). Agora vem a comparação
-       * com o mês passado, que é o que diz se ele está melhorando. */
-      "var MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
-      "var dAnt=new Date(agora.getFullYear(),agora.getMonth()-1,1);" +
-      "var antK=dAnt.getFullYear()+'-'+String(dAnt.getMonth()+1).padStart(2,'0');" +
-      /* o mês corrente quase sempre está pela metade, então comparar com o mês
-       * passado INTEIRO diria "-6 que em julho" no dia 20 de agosto — desanima
-       * quem está indo bem. A conta usa o mesmo pedaço: até o mesmo dia. */
-      "var diaHj=agora.getDate();" +
-      "var noAnt=Object.keys(pf).filter(function(k){return k.slice(0,7)===antK&&+k.slice(8,10)<=diaHj;}).length;" +
-      "var tot=Object.keys(pf).length;var s2,c2;" +
-      "if(noAnt){var dif=noMes-noAnt;var mn=MES3[dAnt.getMonth()];" +
-      "s2=dif?Math.abs(dif)+(dif>0?' a mais':' a menos')+' que em '+mn+' até aqui':'igual a '+mn+' até aqui';" +
-      "c2=dif>0?'#4ade80':dif<0?'#f87171':'#a9a4b5';}" +
-      "else{s2=tot>noMes?tot+' no total':'seu primeiro mês';}" +
-      "el.innerHTML=t1+tile(icx(ICO.cal,13)+'Treinos no mês',noMes,s2,c2);}" +
+      // pintaProgresso saiu com o card Progresso do Início: agora quem mostra
+      // treinos do mês é o pintaCqTiles, na aba Conquistas
       // XP calculado dos DADOS (nunca do #xpNum — o count-up anima o texto)
       "function xpDados(){var pf=L('ptfeitos',{});var hb=L('pthab',{});var nh=0;Object.keys(hb).forEach(function(k){var dd=hb[k];if(dd&&typeof dd==='object')Object.keys(dd).forEach(function(j){if(dd[j])nh++;});});" +
       "var nq=Object.keys(L('ptqa',{})).length;return Object.keys(pf).length*10+nh*2+nq*20;}" +
@@ -3982,7 +3968,7 @@
       "document.getElementById('evFalta').textContent='faltam '+Math.max(0,alvo-xp)+' pro nível '+(nv+1);" +
       "document.getElementById('evRing').style.background='conic-gradient(#fff 0 '+pct+'%,rgba(255,255,255,.25) '+pct+'% 100%)';}}" +
       // repinta a semana DEPOIS do herói: agora o coachDica já enxerga o plano
-      "pintaHero();pintaProgresso();pintaXP();try{pintaSemana();}catch(e0){}" +
+      "pintaHero();pintaXP();try{pintaSemana();pintaCqTiles();}catch(e0){}" +
       // barra de abas embaixo: agrupa os cards em seções e controla a navegação
       // (ícones de traço em SVG — herdam a cor da aba via currentColor)
       "(function(){function ic(p){return \"<svg width='21' height='21' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>\"+p+'</svg>';}" +
@@ -4002,7 +3988,7 @@
       "var OCULTA=" + jsonApp(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Raio-X|Modo circuito/.test(t))return 'treino';" +
-      "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
+      "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso|Retrospectiva|Seu mês de/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
@@ -4032,6 +4018,7 @@
       // pílulas da Evolução (telas 49/41/42/32): Conquistas × Corpo × Cargas × Marcas
       "(function(){document.querySelectorAll(\"[data-sec='evolucao']\").forEach(function(el){if(el.id==='evTopo')return;" +
       "if(el.id==='evCargas'){el.setAttribute('data-evsub','cargas');return;}" +
+      "if(el.id==='retroCard'){el.setAttribute('data-evsub','conq');return;}" +
       "if(el.id==='evMarcas'){el.setAttribute('data-evsub','marcas');return;}" +
       "var h=el.querySelector('h2');el.setAttribute('data-evsub',/Conquistas/.test(h?h.textContent:'')?'conq':'corpo');});" +
       "var atual='conq';function pintaEv(){document.querySelectorAll(\"[data-sec='evolucao'][data-evsub]\").forEach(function(el){" +
@@ -4041,7 +4028,10 @@
       // o cabeçalho e as páginas repintam com os dados mais frescos do aparelho
       "if(window.__evTopoPinta)window.__evTopoPinta(atual);" +
       "if(atual==='cargas'&&window.__pintaCargas)window.__pintaCargas();" +
-      "if(atual==='marcas'&&window.__pintaMarcas)window.__pintaMarcas();}" +
+      "if(atual==='marcas'&&window.__pintaMarcas)window.__pintaMarcas();" +
+      // a retrospectiva tem regra própria (só no comecinho do mês, some ao
+      // fechar) — a sub-aba mostra, ela decide se fica
+      "if(atual==='conq'&&window.__retro)try{window.__retro();}catch(e9){}}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-evsub-bt]');if(!b)return;" +
       "atual=b.getAttribute('data-evsub-bt');pintaEv();if(navigator.vibrate)navigator.vibrate(8);});" +
       "pintaEv();window.__evSub=function(s2){atual=s2;pintaEv();};" +
