@@ -205,6 +205,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .aluno-pt .quem { min-width: 0; }
   .aluno-pt .quem strong { display: block; overflow: hidden; text-overflow: ellipsis; }
   .sessao-pt { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--linha); font-size: 13.5px; flex-wrap: wrap; }
+  /* tipo de série na linha do exercício: com a mesma cara dos botõezinhos ao lado */
+  .tecsel { flex: none; width: auto; min-width: 0; padding: 5px 8px; font-size: 12px; font-weight: 700; border-radius: 999px; }
   .sessao-pt .ses-dir { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; flex: none; }
   .sessao-pt .ses-acoes { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding-top: 9px; margin-top: 2px; border-top: 1px dashed var(--linha); }
   .sessao-pt .ses-acoes .btn { width: 100%; }
@@ -6013,6 +6015,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     ["iso", "Isometria", "segura parado no ponto mais difícil do movimento"],
   ];
   var tecNome = function (k) { var t = TECS_PT.find(function (x) { return x[0] === k; }); return t ? t[1] : ""; };
+  var opcoesTec = function (sel) {
+    return '<option value=""' + (sel ? "" : " selected") + ">Série normal</option>" +
+      TECS_PT.map(function (x) {
+        return '<option value="' + x[0] + '"' + (sel === x[0] ? " selected" : "") + ">" + esc(x[1]) + "</option>";
+      }).join("");
+  };
   function treinoTexto(st, alunoId) {
     var t = (st.treinosV2 || {})[alunoId];
     if (!t || !t.fichas.length) return (st.treinos || {})[alunoId] || "";
@@ -6063,7 +6071,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return '<div class="sessao-pt"><b>' + esc(ex.nome) + "</b>" +
             '<button class="btn sec mini" data-tsr="' + f.id + ":" + i + '" title="mudar séries e repetições">' + it.series + "×" + it.reps + "</button>" +
             '<button class="btn sec mini" data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">⏱ ' + (+it.descanso || 60) + "s</button>" +
-            '<button class="btn sec mini" data-ttec="' + f.id + ":" + i + '" title="técnica de intensidade neste exercício (drop-set, up set…)">' + (tecNome(it.tec) ? "⚡ " + esc(tecNome(it.tec)) : "⚡") + "</button>" +
+            // tipo de série direto na linha: era um botão com prompt numerado,
+            // que o Raphael achou pouco intuitivo — agora é a mesma lista da cascata
+            '<select class="tecsel" data-ttecsel="' + f.id + ":" + i + '" title="tipo de série neste exercício">' + opcoesTec(it.tec) + "</select>" +
             // a observação inteira fica no title: no botão ela é cortada, senão a
             // linha do exercício quebra e joga o ↑↓✕ pra segunda fileira
             '<button class="btn sec mini" data-tobs="' + f.id + ":" + i + '" title="' + (it.obs ? esc(it.obs) + " — clique para editar" : "editar a observação do exercício") + '">' +
@@ -6079,6 +6089,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<select data-exmov="' + f.id + '" style="flex:1;min-width:140px;"><option value="">Tipo de treino…</option>' +
         '<option value="' + FAV_FILTRO + '">' + FAV_FILTRO + "</option>" +
         ["Empurrar", "Puxar", "Agachar e pernas", "Dobradiça e quadril", "Core e estabilidade", "Cardio e condicionamento", "Mobilidade e alongamento", "Habilidade e outros"].map(function (m) { return "<option>" + m + "</option>"; }).join("") + "</select>" +
+        // ordem pedida pelo Raphael: primeiro COMO vai ser a série, depois onde e qual
+        '<select data-extec="' + f.id + '" style="flex:1;min-width:140px;" title="tipo de série">' + opcoesTec("") + "</select>" +
         '<select data-exzona="' + f.id + '" style="flex:1;min-width:140px;"><option value="">Grupamento…</option></select>' +
         '<select data-exsel="' + f.id + '" style="flex:2;min-width:170px;"><option value="">Exercício…</option></select>' +
         '<button class="btn sec mini" data-exfavsel="' + f.id + '" title="marcar/desmarcar o exercício escolhido como favorito">☆</button>' +
@@ -6139,6 +6151,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     btn.title = !nome ? "escolha um exercício pra favoritar" : fav ? "tirar dos favoritos" : "marcar como favorito — aparece primeiro na próxima ficha";
   }
   $("fichasBox").addEventListener("change", function (e) {
+    // tipo de série de um exercício que já está na ficha
+    var alvoTec = e.target.getAttribute && e.target.getAttribute("data-ttecsel");
+    if (alvoTec) {
+      var pTec = alvoTec.split(":");
+      var stT = load();
+      var tT = treinoDe(stT, $("tAluno").value);
+      var fT = tT.fichas.find(function (x) { return x.id === pTec[0]; });
+      var itT = fT && fT.itens[+pTec[1]];
+      if (!itT) return;
+      var vTec = e.target.value;
+      if (!vTec || !TECS_PT.some(function (x) { return x[0] === vTec; })) delete itT.tec; else itT.tec = vTec;
+      marcaAppPendente(stT, $("tAluno").value);
+      S.write("ptStudio", stT);
+      renderFichas();
+      return;
+    }
     var fid = e.target.getAttribute && (e.target.getAttribute("data-exmov") || e.target.getAttribute("data-exzona"));
     if (fid) { populaCascata(fid); return; }
     var fsel = e.target.getAttribute && e.target.getAttribute("data-exsel");
@@ -8305,7 +8333,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var tds = e.target.getAttribute && e.target.getAttribute("data-tdesc");
     var tsr = e.target.getAttribute && e.target.getAttribute("data-tsr");
     var tob = e.target.getAttribute && e.target.getAttribute("data-tobs");
-    var ttc = e.target.getAttribute && e.target.getAttribute("data-ttec");
     var des = e.target.getAttribute && e.target.getAttribute("data-desce");
     // foto da ficha (vira a capa do card "treino de hoje" no app do aluno)
     var cap = e.target.getAttribute && e.target.getAttribute("data-fcapa");
@@ -8320,7 +8347,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (fCx) { delete fCx.capa; marcaAppPendente(stCx, $("tAluno").value); save(stCx); renderFichas(); }
       return;
     }
-    if (!add && !rmF && !rmI && !sob && !tds && !tsr && !tob && !ttc && !des) return;
+    if (!add && !rmF && !rmI && !sob && !tds && !tsr && !tob && !des) return;
     var alunoId = $("tAluno").value;
     var st = load();
     var t = treinoDe(st, alunoId);
@@ -8340,7 +8367,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         reps: document.querySelector('[data-exrep="' + add + '"]').value.trim() || "12",
         descanso: Math.max(0, +document.querySelector('[data-exdes="' + add + '"]').value || 0) || 60,
         obs: document.querySelector('[data-exobs="' + add + '"]').value.trim(),
+        tec: (document.querySelector('[data-extec="' + add + '"]') || {}).value || "",
       });
+      // o tipo de série volta pro normal depois de adicionar: série especial é
+      // exceção, e deixar engatilhado marcaria os próximos exercícios sem querer
+      var selTec = document.querySelector('[data-extec="' + add + '"]');
+      if (selTec) selTec.value = "";
     }
     if (rmF) {
       if (!confirm("Remover esta ficha inteira?")) return;
@@ -8386,20 +8418,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var nObs = prompt("Observação do exercício (deixe vazio pra remover):", ito.obs || "");
       if (nObs === null) return;
       ito.obs = nObs.trim();
-    }
-    if (ttc) {
-      var pc9 = ttc.split(":");
-      var fc9 = t.fichas.find(function (x) { return x.id === pc9[0]; });
-      var itc = fc9 && fc9.itens[+pc9[1]];
-      if (!itc) return;
-      var atual = TECS_PT.findIndex(function (x) { return x[0] === itc.tec; }) + 1;
-      var nTec = prompt("Técnica neste exercício:\n\n0 = nenhuma (série normal)\n" +
-        TECS_PT.map(function (x, k) { return (k + 1) + " = " + x[1] + " — " + x[2]; }).join("\n") +
-        "\n\nO que muda (peso ou repetição) você escreve na observação ✎.", atual);
-      if (nTec === null) return;
-      var iTec = parseInt(nTec, 10);
-      if (!(iTec >= 0 && iTec <= TECS_PT.length)) { alert("Digite um número de 0 a " + TECS_PT.length + "."); return; }
-      if (iTec === 0) delete itc.tec; else itc.tec = TECS_PT[iTec - 1][0];
     }
     if (des) {
       var pd = des.split(":");
