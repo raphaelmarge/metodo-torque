@@ -1222,6 +1222,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     </div>
 
     <div class="card" style="margin-top: 14px;">
+      <h2>Fotos por tipo de treino</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Suba <b>uma foto por tipo</b> e pronto: o sistema olha os exercícios de cada ficha, vê que é dia de perna (ou de costas, ou circuito, ou corrida) e usa a foto certa — em <b>todos os alunos</b>, inclusive nas fichas que você criar depois. Foto escolhida na ficha continua ganhando desta; tipo sem foto cai na foto geral aí de cima.</p>
+      <div id="cfgCapasTipo" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;"></div>
+      <input type="file" id="cfgTipoFile" accept="image/*" hidden>
+      <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Depois de subir, toque em <b>Publicar apps atualizados</b> pros alunos verem.</p>
+    </div>
+
+    <div class="card" style="margin-top: 14px;">
       <h2>Conquistas do app</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Crie as <b>suas</b> medalhas — elas aparecem no card Conquistas do app de todos os alunos, junto das padrão. A meta é em <b>treinos registrados</b> (ex.: Rato de academia — 200 treinos).</p>
       <div id="cqPersLista" style="margin-bottom: 10px;"></div>
@@ -7502,6 +7510,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     else { $("cfgLogoPrev").hidden = true; $("cfgLogoPrev").removeAttribute("src"); }
     $("cfgLogoDel").hidden = !lgP;
     if (window.__capaPers) window.__capaPers();
+    if (window.__pintaCapasTipo) window.__pintaCapasTipo();
     pintaPersPrev();
   }
   $("persPre").addEventListener("click", function (e) {
@@ -10328,8 +10337,14 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return (outroEq.length >= 2 ? outroEq : cands).slice(0, 2).map(function (e) { return e.nome; });
       } catch (e2) { return []; }
     }
+    /* A foto de cada treino vai pela CHAVE do tipo (ck), não pela imagem: duas
+    * fichas de perna usariam a MESMA foto e ela seria copiada duas vezes dentro
+    * do pacote do aluno. O mapa capasTipo abaixo leva cada foto uma vez só. */
+    var capasCfg = (st.config || {}).capasTipo || {};
+    var capasUsadas = {};
+    var marcaCapa = function (k) { if (k && capasCfg[k]) { capasUsadas[k] = capasCfg[k]; return k; } return ""; };
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
-      return { titulo: f.titulo, capa: f.capa || "", itens: f.itens.map(function (it) {
+      return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         return { nome: ex.nome || "?", video: videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
@@ -10381,10 +10396,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // o resumo ("AMRAP 12 min") sai daqui pronto: é dado, não código
     var wodsApp = ((t2 && t2.wods) || []).slice(0, 10).map(function (w) {
       var c = {}; Object.keys(w).forEach(function (k) { c[k] = w[k]; });
-      c.resumo = wodResumo(w); return c;
+      c.resumo = wodResumo(w); c.ck = marcaCapa("wod"); return c;
     });
     // corrida e bike prescritos — entram na sub-página Cardio com o cronômetro de pace
-    var cardiosApp = ((t2 && t2.cardio) || []).slice(0, 10);
+    var cardiosApp = ((t2 && t2.cardio) || []).slice(0, 10).map(function (c) {
+      var o = {}; Object.keys(c).forEach(function (k) { o[k] = c[k]; });
+      o.ck = marcaCapa(c.mod || "corrida"); return o;
+    });
     // Semana do aluno: o plano vai RESOLVIDO (dia → tipo + índice + nome) pro
     // app só desenhar — id de treino apagado no painel simplesmente sai do plano
     var planoApp = null;
@@ -10472,6 +10490,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         mural: (st.config || {}).mural || [],
         conquistas: (st.config || {}).conquistas || [],
         capaTreino: (st.config || {}).capaTreino || "",
+        capasTipo: capasUsadas,
       },
       desafio: st.desafio || null,
       // banco de GIFs do dono: vai UMA regra (endereço base + padrão do nome), e o
@@ -11456,6 +11475,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       st.config.sitePro.capaId = im.id;
       S.write("ptStudio", st);
       renderSitePro();
+    } else if (galDestino.tipo === "tipocapa") {
+      salvaCapaTipo(galDestino.chave, im.d);
     } else if (galDestino.tipo === "geral") {
       st.config = st.config || {};
       st.config.capaTreino = im.d;
@@ -11467,6 +11488,82 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       poeCapa(galDestino.tipo, galDestino.id, galDestino.aluno, im.d);
     }
     $("dlgGaleria").close();
+  });
+  /* Fotos por tipo de treino (v589): o professor sobe UMA por tipo e o sistema
+   * escolhe a de cada treino sozinho — senão seriam 24 alunos × 5 fichas de
+   * escolha na mão. A foto da ficha continua vencendo, e o tipo sem foto cai
+   * na foto geral. */
+  var TIPOS_CAPA = [["peito", "Peito"], ["costas", "Costas"], ["ombros", "Ombros"], ["bracos", "Braços"],
+    ["pernas", "Pernas"], ["core", "Core"], ["wod", "Circuito (WOD)"],
+    ["corrida", "Corrida"], ["caminhada", "Caminhada"], ["bike", "Bike"]];
+  /* Pernas ANTES de braços de propósito: "QuadrÍCEPS" casa com /íceps/ e ia
+   * parar em braços (foi exatamente esse o bug da v572 no app). */
+  function grupoCapa(g) {
+    g = String(g || "").toLowerCase();
+    if (/peito|peitoral/.test(g)) return "peito";
+    if (/costas|dorsal|trap[ée]zio/.test(g)) return "costas";
+    if (/ombro|deltoid/.test(g)) return "ombros";
+    if (/quadr[íi]|posterior|gl[úu]teo|panturr|perna|adutor|abdutor|coxa/.test(g)) return "pernas";
+    if (/b[íi]ceps|tr[íi]ceps|antebra|bra[çc]o/.test(g)) return "bracos";
+    if (/core|abd[oô]|lombar|obl[íi]quo/.test(g)) return "core";
+    if (/cardio|condicionamento/.test(g)) return "corrida";
+    return "";
+  }
+  // o tipo da ficha é o grupo que mais aparece nos exercícios dela
+  function tipoDaFicha(st, f) {
+    var cont = {}, campeao = "", max = 0;
+    (f.itens || []).forEach(function (it) {
+      var ex = exPorId(st, it.exId);
+      var k = grupoCapa(ex && ex.grupo);
+      if (!k) return;
+      cont[k] = (cont[k] || 0) + 1;
+      if (cont[k] > max) { max = cont[k]; campeao = k; }
+    });
+    return campeao;
+  }
+  window.__capasTipo = { grupoCapa: grupoCapa, tipoDaFicha: tipoDaFicha, lista: TIPOS_CAPA }; // testes
+  function pintaCapasTipo() {
+    var box = $("cfgCapasTipo");
+    if (!box) return;
+    var mapa = (load().config || {}).capasTipo || {};
+    box.innerHTML = TIPOS_CAPA.map(function (par) {
+      var img = mapa[par[0]] || "";
+      return '<div style="border:1px solid var(--linha);border-radius:12px;padding:10px;">' +
+        (img ? '<img src="' + img + '" alt="" style="width:100%;height:84px;object-fit:cover;border-radius:9px;display:block;">'
+          : '<div style="width:100%;height:84px;border:1px dashed var(--linha);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#6e6a78;font-size:11.5px;">sem foto</div>') +
+        '<div style="font-size:13px;font-weight:700;margin:8px 0 6px;">' + esc(par[1]) + "</div>" +
+        '<div class="linha-flex" style="gap:6px;">' +
+        '<button class="btn sec mini" data-tpcapa="' + par[0] + '">' + (img ? "Trocar" : "Enviar") + "</button>" +
+        '<button class="btn sec mini" data-tpcapag="' + par[0] + '" title="usar uma foto do seu banco de imagens">🖼</button>' +
+        (img ? '<button class="btn sec mini" data-tpcapax="' + par[0] + '" title="tirar esta foto">✕</button>' : "") +
+        "</div></div>";
+    }).join("");
+  }
+  window.__pintaCapasTipo = pintaCapasTipo; // testes
+  var tipoCapaAlvo = "";
+  function salvaCapaTipo(k, dado) {
+    var st = load();
+    st.config = st.config || {};
+    st.config.capasTipo = st.config.capasTipo || {};
+    if (dado) st.config.capasTipo[k] = dado; else delete st.config.capasTipo[k];
+    st.config.appEditGeralEm = new Date().toISOString(); // entra no app de todo mundo
+    S.write("ptStudio", st);
+    pintaCapasTipo();
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-tpcapa],[data-tpcapag],[data-tpcapax]");
+    if (!b) return;
+    var envia = b.getAttribute("data-tpcapa"), gal = b.getAttribute("data-tpcapag"), tira = b.getAttribute("data-tpcapax");
+    if (envia) { tipoCapaAlvo = envia; $("cfgTipoFile").click(); return; }
+    if (gal) { abreGaleria({ tipo: "tipocapa", chave: gal }); return; }
+    if (tira) salvaCapaTipo(tira, "");
+  });
+  $("cfgTipoFile").addEventListener("change", function () {
+    var arq = this.files && this.files[0];
+    this.value = "";
+    if (!arq || !tipoCapaAlvo) return;
+    var k = tipoCapaAlvo;
+    leCapa(arq, function (d) { salvaCapaTipo(k, d); });
   });
   // foto geral (Personalização): vale pra todos os alunos que não têm foto na ficha
   function pintaCapaPers() {

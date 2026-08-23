@@ -161,6 +161,19 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Foto do treino por TIPO** (a partir da v589): escolher foto ficha por ficha
+não escala (24 alunos × 5 fichas). Agora o professor sobe **uma foto por tipo**
+em Personalização → *Fotos por tipo de treino* (`st.config.capasTipo`): peito,
+costas, ombros, braços, pernas, core, wod, corrida, caminhada, bike. O painel
+descobre o tipo de cada ficha pelo grupo muscular que MAIS aparece nela
+(`tipoDaFicha` → `grupoCapa`; **pernas é testado antes de braços** porque
+"QuadrÍCEPS" casa com `/íceps/` — mesmo bug da v572 no app). Precedência:
+foto da ficha > foto do tipo > `capaTreino` (geral) > nada. No pacote a foto do
+tipo viaja como **CHAVE** (`ck` no painel; `c`/`cp` no app guardam a chave ou um
+`data:`), com o mapa `CAPAS_TIPO` uma vez só e `capaFM()` resolvendo — senão
+três fichas de perna copiariam a mesma imagem três vezes dentro do pacote.
+`CAPT` no builder lê de `D.cfg.capasTipo`.
+
 **Técnicas de intensidade no exercício** (a partir da v588): o item da ficha
 ganhou `tec` — `drop` (Drop-set), `up` (Up set), `rest` (Rest-pause), `bi`
 (Bi-set) ou `iso` (Isometria); vazio = série normal. **Só o NOME é modelado**:
