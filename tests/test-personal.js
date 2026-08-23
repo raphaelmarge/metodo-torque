@@ -6551,6 +6551,9 @@ async function abaPt(p, a) {
       out.carrossel = /id='heroCarr'/.test(html) && /class='htdash'/.test(html) &&
         /data-carrver='wod'/.test(html) && /data-carrver='cardio'/.test(html) &&
         /Começar circuito/.test(html) && /Começar corrida/.test(html) && /arraste/.test(html);
+      // em dia de circuito/corrida/descanso a musculação também entra no carrossel
+      out.cardFicha = /id='heroFicha'/.test(html) && /data-carrver='ficha'/.test(html) &&
+        /data-hk='MUSCULAÇÃO'/.test(html) && /data-hk='CIRCUITO'/.test(html);
       // limpa o rastro (plano + wods/cardio que a IA de teste criou) pros próximos blocos
       const st3 = S.read("ptStudio", {});
       delete st3.treinosV2[id].plano;
@@ -6568,6 +6571,7 @@ async function abaPt(p, a) {
       "o pacote leva o plano resolvido: dia → tipo + índice + nome do treino");
     ok(pln.heroLeDia, "o card HOJE do app lê o dia da semana do plano (com dia de descanso incluído)");
     ok(pln.carrossel, "🎠 R1: os treinos do dia viram carrossel — cards de circuito e corrida com botão pro fluxo certo");
+    ok(pln.cardFicha, "🎠 o carrossel tem card de musculação também — em dia de circuito/corrida a ficha não sumia mais do Início");
   }
 
   // 🎭 skin do redesenho (Claude Design): camada visual embutida no app publicado
@@ -7374,6 +7378,18 @@ async function abaPt(p, a) {
     pA.on("request", (r) => { if (!/127\.0\.0\.1|localhost/.test(r.url()) && !/^data:/.test(r.url())) externas.push(r.url()); });
     await pA.goto(BASE + "/demo-aluno.html");
     await pA.waitForTimeout(1200);
+    /* 🎠 as três fotos do demo (leg press, corrida e circuito) precisam aparecer:
+     * com só circuito e corrida no carrossel, a foto de musculação nunca subia. */
+    const capasDemo = await pA.evaluate(() => {
+      const vis = [].slice.call(document.querySelectorAll("#heroCarr > *")).filter((c) => c.style.display !== "none");
+      const fotos = vis.map((c) => { const i = c.querySelector("img[src^='data:image/jpeg']"); return i ? i.src.slice(-80) : ""; });
+      return { cards: vis.length, distintas: new Set(fotos.filter(Boolean)).size,
+        kickers: vis.map((c) => ((c.querySelector(".htk") || {}).textContent || "")) };
+    });
+    ok(capasDemo.cards === 3 && capasDemo.distintas === 3,
+      "🎠 o carrossel do demo mostra 3 treinos, cada um com a SUA foto (" + capasDemo.cards + " cards, " + capasDemo.distintas + " fotos distintas)");
+    ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
+      "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
     await pA.evaluate(() => window.__trocaSec && window.__trocaSec("treino"));
     await pA.waitForTimeout(400);
     // 🗂 fichas A/B/C viraram gavetas: só a do dia nasce aberta
