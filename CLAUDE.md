@@ -161,9 +161,16 @@ treino guiado e a corrida. Dois caminhos reais, nesta ordem: `window.MTNativo.fc
 serviço 0x180D / característica 0x2A37 — Chrome no Android; Safari não tem).
 **Sem um dos dois, NADA aparece** — nem card, nem linha nos Ajustes, nem o
 coração no player; mesma regra honesta do `ajSaude`. O batimento cru fica só no
-aparelho; o que é guardado e devolvido pro professor (campo `batimentos` do
-`retorno`, jsonb livre — **sem SQL novo**) é o resumo: `ptfc` por data (média e
-máximo do treino) e `fc`/`fcx` dentro de cada corrida em `ptcardio`. Motor no
+aparelho; o que é guardado e devolvido pro professor (chaves `fc` e `idade` do
+`retorno`, jsonb livre — **sem SQL novo**; no arquivo "baixar meus dados" a
+mesma coisa se chama `batimentos`) é o resumo: `ptfc` por data (média e máximo
+do treino) e `fc`/`fcx` dentro de cada corrida em `ptcardio`. No painel
+(v581) isso vira o KPI *Batimento médio*, o bpm na linha de cada corrida e o
+gráfico *Batimentos — esforço nos treinos* (barra = média colorida pela zona,
+traço = pico, escala com piso porque batimento não vive perto do zero) mais o
+aviso de carga alta. A zona sai de `idadeDe(a.nasc)` e, sem data de nascimento
+na ficha, da `idade` que o aluno digitou no app; sem as duas, o painel mostra
+só os números em vez de inventar faixa. Motor no
 `app/aluno-builder.js` sob o prefixo `hr*`/`HR` (o nome `fc` já era usado como
 variável local em duas funções); ganchos: `window.__fc`, `__fcAmostra`,
 `__fcConecta`, `__fcResumo`, `__fcZera`. Contrato do shell nativo em

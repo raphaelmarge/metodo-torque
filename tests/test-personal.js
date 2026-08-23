@@ -1895,6 +1895,34 @@ async function abaPt(p, a) {
     "painel mostra o esforço percebido (RPE) com alerta de treino pesado");
   ok(/Como o aluno se apresentou/.test(painelNovo) && /emagrecer/.test(painelNovo) && /joelho estala/.test(painelNovo),
     "painel mostra objetivo, dias e a dor relatada no onboarding");
+  // 💓 batimentos da cinta do app viram KPI + gráfico de esforço no perfil
+  const painelFc = await p.evaluate(() => {
+    const iso = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const fc = {};
+    for (let i = 27; i >= 0; i -= 2) { const m = 140 + (i % 4) * 6; fc[iso(i)] = { m, x: m + 22 }; }
+    const ret = { feitos: {}, fc, cardio: [{ d: iso(3), n: "Rodagem", m: "corrida", k: 5.2, s: 1860, p: "5:58", fc: 158, fcx: 188 }] };
+    return {
+      // 1986 → 40 anos em 2026: máxima estimada 180
+      comIdade: window.__painelApp(ret, { nasc: "1986-04-12" }),
+      semIdade: window.__painelApp(ret, {}),
+      // sem data de nascimento a idade que o ALUNO digitou no app resolve
+      peloApp: window.__painelApp(Object.assign({ idade: 40 }, ret), {}),
+      sujo: window.__painelApp({ feitos: {}, fc: { "2026-08-01": { m: 900, x: 12 }, naoEData: { m: 140, x: 160 } } }, { nasc: "1986-04-12" }),
+    };
+  });
+  ok(/Batimento médio/.test(painelFc.comIdade) && /máximo 188 bpm/.test(painelFc.comIdade),
+    "painel resume os batimentos num KPI (média dos treinos e o pico geral, corrida incluída)");
+  ok(/Batimentos — esforço nos treinos/.test(painelFc.comIdade) && /barra = média, traço = pico/.test(painelFc.comIdade) &&
+    /máxima estimada: 180 bpm \(40 anos\)/.test(painelFc.comIdade) && /Z4 forte/.test(painelFc.comIdade),
+    "o gráfico de esforço sai com as zonas calculadas por 220 − idade do cadastro");
+  ok(/158 bpm<\/b> \(máx 188\)/.test(painelFc.comIdade),
+    "cada corrida do app mostra o batimento médio e o pico daquela corrida");
+  ok(/Preencha a data de nascimento/.test(painelFc.semIdade) && !/máxima estimada/.test(painelFc.semIdade),
+    "sem idade o painel mostra os números crus e pede a data de nascimento — não inventa zona");
+  ok(/máxima estimada: 180 bpm/.test(painelFc.peloApp),
+    "sem data de nascimento na ficha, a idade que o aluno digitou no app calcula a zona");
+  ok(!/Batimento médio/.test(painelFc.sujo) && !/Batimentos —/.test(painelFc.sujo),
+    "retorno adulterado (bpm impossível ou chave que não é data) não vira gráfico nenhum");
   // 📊 cada pergunta do questionário vira uma métrica no perfil do aluno
   {
     const metricas = await p.evaluate(() => {
@@ -4163,8 +4191,8 @@ async function abaPt(p, a) {
   ok(fcCorrida.reg && fcCorrida.reg.fc === 160 && fcCorrida.reg.fcx === 180 && /160 bpm médio · 180 máx/.test(fcCorrida.aviso),
     "a corrida guarda média e máximo de batimento no registro (o cru nunca sai do aparelho)");
   ok(fcCorrida.desligou, "desconectar a cinta apaga a leitura e avisa a ponte nativa");
-  ok(/batimentos:L\('ptfc',\{\}\)/.test(cardioProf.appHtml) && /fc:L\('ptfc',\{\}\)/.test(cardioProf.appHtml),
-    "o resumo de batimentos viaja pro professor no retorno (campo batimentos) e no arquivo de dados do aluno");
+  ok(/fc:L\('ptfc',\{\}\),idade:\+L\('ptidade',0\)/.test(cardioProf.appHtml) && /batimentos:L\('ptfc',\{\}\)/.test(cardioProf.appHtml),
+    "o resumo de batimentos (e a idade, pras zonas) viaja pro professor no retorno, e entra no arquivo de dados do aluno");
   await pFc.close();
   // --- WhatsApp de hoje: fila de mensagens prontas + modelos editáveis ---
   const stSnapZap = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
@@ -7063,6 +7091,8 @@ async function abaPt(p, a) {
     ok(demo.autos === 3 && demo.servicos === 3 && demo.temImg, "demo traz as automações de WhatsApp, o catálogo de serviços e a foto da promo");
     ok(demo.fila.sumido && demo.fila.boasVindas && demo.fila.pacoteFoto, "fila do demo mostra aluno sumido, boas-vindas e pacote acabando com a foto");
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
+    ok(/Batimento médio/.test(demo.app) && /Batimentos — esforço nos treinos/.test(demo.app) && /máxima estimada/.test(demo.app),
+      "demo do studio já vem com os batimentos da cinta no perfil (é o que o Raphael manda pro cliente ver)");
     ok(/check-ins? respondidos?/.test(demo.quest) && /(melhorando|estável|piorando)/.test(demo.quest) &&
       /resposta mais comum/.test(demo.quest) && /Como foram os treinos da semana\?/.test(demo.quest),
       "demo mostra os check-ins em linguagem clara: pergunta por extenso, tendência e resposta mais comum");
