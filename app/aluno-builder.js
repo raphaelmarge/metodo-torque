@@ -1272,8 +1272,12 @@
       "<span style='font-size:11.5px;color:#8a8695;'>só você e seu personal veem</span></div>" +
       "<div id='ftAbas' style='display:flex;gap:8px;margin-bottom:12px;'></div>" +
       "<div id='fotosBox' class='vz'>Tire a primeira foto — daqui a uns meses você vai agradecer.</div>" +
-      "<label class='btnx' id='fotoBtn' style='display:block;text-align:center;margin-top:12px;min-height:54px;line-height:32px;font-size:15.5px;'>+ Adicionar foto de frente" +
+      "<div style='display:flex;gap:8px;margin-top:12px;'>" +
+      "<label class='btnx' id='fotoBtn' style='flex:1;display:flex;align-items:center;justify-content:center;text-align:center;min-height:54px;line-height:1.2;font-size:14.5px;cursor:pointer;'>\ud83d\udcf7 Tirar foto" +
       "<input id='fotoInput' type='file' accept='image/*' capture='user' style='display:none;'></label>" +
+      "<label class='btnx' id='fotoBtnG' style='flex:1;display:flex;align-items:center;justify-content:center;text-align:center;min-height:54px;line-height:1.2;font-size:14.5px;cursor:pointer;'>\ud83d\uddbc\ufe0f Escolher da galeria" +
+      "<input id='fotoGal' type='file' accept='image/*' style='display:none;'></label></div>" +
+      "<div id='fotoDica' class='vz' style='font-size:11.5px;margin-top:8px;'>A pr\u00f3xima foto entra como frente.</div>" +
       "<div class='vz' style='font-size:11px;'>Suas fotos ficam com você e com o seu personal — mais ninguém vê.</div></div>" +
       (vidsApp.length ? "<div class='cardx'><h2>Conteúdos de " + esc(studio.split(" ")[0]) + "</h2>" +
         (function () {
@@ -3617,7 +3621,7 @@
       "if(abas)abas.innerHTML=FTT.map(function(par){var n=ftDe(fs,par[0]).length;var on=ftTipo===par[0];" +
       "return \"<button type='button' data-fttipo='\"+par[0]+\"' style='flex:1;min-height:52px;border-radius:14px;cursor:pointer;font-family:inherit;text-align:center;padding:6px 2px;\"+(on?'background:rgba(var(--cor-rgb),.14);border:1.5px solid var(--corc);color:#fff;':'background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;')+\"'>\"+" +
       "\"<b style='display:block;font-size:14px;'>\"+par[1]+\"</b><span style='font-size:10.5px;color:\"+(on?'var(--corc)':'#6e6a78')+\";'>\"+(n?pl(n,'foto','fotos'):'nenhuma')+\"</span></button>\";}).join('');" +
-      "var bt0=document.getElementById('fotoBtn');if(bt0&&bt0.firstChild)bt0.firstChild.textContent='+ Adicionar foto de '+ftTipo+' ';" +
+      "var dc0=document.getElementById('fotoDica');if(dc0)dc0.textContent='A pr\u00f3xima foto entra como '+ftTipo+'.';" +
       "var l=ftDe(fs,ftTipo);var pri=l[0],ult=l[l.length-1];" +
       "if(!l.length){box.className='vz';box.innerHTML='Tire a primeira foto de '+ftTipo+' — daqui a uns meses você vai agradecer.';return;}" +
       "box.className='';" +
@@ -3640,17 +3644,22 @@
       "box.innerHTML=\"<div style='text-align:center;'><div style='font-size:10.5px;color:#a9a4b5;letter-spacing:.1em;margin-bottom:4px;'>ANTES · \"+pri.d.slice(8,10)+'/'+pri.d.slice(5,7)+\"</div><img src='\"+pri.img+\"' style='width:100%;border-radius:16px;'></div>\"+" +
       "\"<div class='vz' style='font-size:11.5px;'>Tire a próxima foto de \"+ftTipo+\" pra liberar o comparador antes × agora</div>\";}" +
       "var dias=Math.round((new Date()-new Date(ult.d))/864e5);" +
-      "if(dias>=30&&bt0&&bt0.firstChild)bt0.firstChild.textContent='Faz '+dias+' dias — hora da foto do mês! ';}" +
+      "if(dias>=30&&dc0)dc0.textContent='Faz '+dias+' dias — hora da foto de '+ftTipo+' do mês!';}" +
       "var ftA=document.getElementById('ftAbas');if(ftA)ftA.addEventListener('click',function(e){var b=e.target.closest('[data-fttipo]');if(!b)return;" +
       "ftTipo=b.getAttribute('data-fttipo');pintaFotos();if(navigator.vibrate)navigator.vibrate(8);});" +
-      "document.getElementById('fotoInput').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;" +
+      "function guardaFotoProg(f){if(!f)return;" +
       "var img=new Image();var rd=new FileReader();rd.onload=function(){img.onload=function(){" +
       "var c=document.createElement('canvas');var esc2=480/Math.max(img.width,img.height);if(esc2>1)esc2=1;" +
       "c.width=Math.round(img.width*esc2);c.height=Math.round(img.height*esc2);" +
       "c.getContext('2d').drawImage(img,0,0,c.width,c.height);" +
       "var fs=L('ptfotos',[]);fs.push({d:isoHj(),img:c.toDataURL('image/jpeg',.68),tipo:ftTipo});if(fs.length>12)fs.shift();" +
       "try{Sv('ptfotos',fs);}catch(e){alert('Memória de fotos cheia — apague fotos antigas do app.');return;}pintaFotos();};" +
-      "img.src=rd.result;};rd.readAsDataURL(f);this.value='';});" +
+      "img.onerror=function(){alert('N\u00e3o consegui abrir esse arquivo — escolha uma foto.');};" +
+      "img.src=rd.result;};rd.readAsDataURL(f);}" +
+      "window.__fotoProg=guardaFotoProg;" +
+      // câmera (capture) e galeria (sem capture) caem no MESMO caminho
+      "['fotoInput','fotoGal'].forEach(function(idf){var el=document.getElementById(idf);if(!el)return;" +
+      "el.addEventListener('change',function(){guardaFotoProg(this.files&&this.files[0]);this.value='';});});" +
       "pintaFotos();" +
       // chat aluno ↔ personal (+ robô de atendimento)
       "var BOT=" + jsonApp(botApp) + ";" +
