@@ -51,10 +51,10 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
       metaSemana: 4,
       fichas: [
         { id: "dmf0", titulo: "A — Peito e tríceps", itens: [
-          { exId: mk("Supino reto", "Peito", "Pegada na largura dos ombros, desça controlando até o peito."), series: "4", reps: "12", descanso: 60 },
+          { exId: mk("Supino reto", "Peito", "Pegada na largura dos ombros, desça controlando até o peito."), series: "4", reps: "12", descanso: 60, tec: "drop", obs: "na última série tira 20% e faz até falhar" },
           { exId: mk("Supino inclinado com halteres", "Peito"), series: "3", reps: "12", descanso: 60 },
           { exId: mk("Crucifixo na máquina", "Peito"), series: "3", reps: "15", descanso: 45 },
-          { exId: mk("Tríceps na corda", "Tríceps"), series: "4", reps: "12", descanso: 45 },
+          { exId: mk("Tríceps na corda", "Tríceps"), series: "4", reps: "12", descanso: 45, tec: "up" },
           { exId: mk("Francês com halter", "Tríceps"), series: "3", reps: "12", descanso: 45 },
         ] },
         { id: "dmf1", titulo: "B — Costas e bíceps", itens: [

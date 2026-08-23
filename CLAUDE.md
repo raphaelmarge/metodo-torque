@@ -161,6 +161,20 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Técnicas de intensidade no exercício** (a partir da v588): o item da ficha
+ganhou `tec` — `drop` (Drop-set), `up` (Up set), `rest` (Rest-pause), `bi`
+(Bi-set) ou `iso` (Isometria); vazio = série normal. **Só o NOME é modelado**:
+o que muda (peso ou repetição) o professor escreve na `obs`, porque o Raphael
+usa as duas leituras. A tabela mora em dois lugares de propósito, porque são
+arquivos separados: `TECS_PT` no `personal.html` (botão `data-ttec` na linha do
+exercício, prompt numerado 0–5, whitelist na ficha vinda da IA, e o texto do
+WhatsApp) e `TECS_APP` no `app/aluno-builder.js` (fora do concat gigante) —
+**mexeu numa, mexe na outra**. No app: selo `.tecchip` laranja colado no nome,
+a explicação ao abrir o exercício, e `#gTec` no treino guiado (`gPoeTec(it)`,
+com `tc` viajando no `GUIA`). Fotos de progresso: a v587 fez lado e costas
+chegarem no painel em `ret.fotosAng` (a frente segue em
+`fotoAntes`/`fotoDepois`, sem duplicar).
+
 **Circuito e corrida viram gavetas** (a partir da v586): as três abas de Treinos
 usam o MESMO desenho — `<details class='fichabox'>` com quadradinho da letra
 (A, B, C…), nome, resumo na tampa e só a do dia aberta. Âncoras: `data-fi`

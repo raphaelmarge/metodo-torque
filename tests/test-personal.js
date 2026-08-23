@@ -941,6 +941,34 @@ async function abaPt(p, a) {
     return { obs: st.treinosV2[st.alunos[0].id].fichas[0].itens[0].obs, tela: document.getElementById("fichasBox").textContent };
   });
   ok(aposObs.obs === "pegada fechada" && /pegada fechada/.test(aposObs.tela), "obs do exercício editável por prompt (📝)");
+  // ⚡ técnica de intensidade NO MESMO exercício (drop-set, up set…)
+  await p.evaluate(() => { window.prompt = () => "1"; });
+  await p.click('[data-ttec="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+  const aposTec = await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const a = st.alunos[0];
+    return { tec: st.treinosV2[a.id].fichas[0].itens[0].tec,
+      tela: document.getElementById("fichasBox").textContent,
+      zap: window.__treinoTexto ? window.__treinoTexto(st, a.id) : "" };
+  });
+  ok(aposTec.tec === "drop" && /⚡ Drop-set/.test(aposTec.tela),
+    "⚡ o professor marca drop-set no exercício e o botão passa a mostrar a técnica");
+  ok(/Drop-set/.test(aposTec.zap), "o treino mandado no WhatsApp também leva a técnica");
+  await p.evaluate(() => { window.prompt = () => "9"; });
+  await p.click('[data-ttec="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+  ok(await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return st.treinosV2[st.alunos[0].id].fichas[0].itens[0].tec === "drop";
+  }), "número fora da lista não vira técnica inventada — o exercício continua como estava");
+  await p.evaluate(() => { window.prompt = () => "0"; });
+  await p.click('[data-ttec="' + fichaId + ':0"]');
+  await p.waitForTimeout(150);
+  ok(await p.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    return !st.treinosV2[st.alunos[0].id].fichas[0].itens[0].tec;
+  }), "0 tira a técnica e o exercício volta a ser série normal");
   // volta pro 4×10 sem obs — o resto da suíte depende desse estado
   await p.evaluate(() => { const seq = ["4", "10"]; window.prompt = () => seq.shift(); });
   await p.click('[data-tsr="' + fichaId + ':0"]');
@@ -3424,6 +3452,32 @@ async function abaPt(p, a) {
   await p.fill("#buscaAluno", "");
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
+  {
+    // ⚡ a técnica chega no app: selo na lista, explicação ao abrir e aviso no player
+    const appTec = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const a = st.alunos[0];
+      const snap = JSON.stringify(st.treinosV2[a.id]);
+      const f = st.treinosV2[a.id].fichas[0];
+      f.itens[0].tec = "drop";
+      S.write("ptStudio", st);
+      const html = window.__montaAppAluno(a, "teste-tec");
+      const st2 = S.read("ptStudio", {});
+      st2.treinosV2[a.id] = JSON.parse(snap);
+      S.write("ptStudio", st2);
+      return html;
+    });
+    // o selo TEM que estar colado no nome do exercício (o player também usa a
+    // classe, então procurar só por tecchip acharia até em quem não tem técnica)
+    const seloNaLista = /font-size:14\.5px;'>[^<]*<span class='tecchip'>Drop-set<\/span>/;
+    ok(seloNaLista.test(appTec), "⚡ o app mostra o selo da técnica no exercício");
+    ok(/tira peso \(ou repetições\) e continua sem descanso/.test(appTec),
+      "abrindo o exercício o aluno lê o que é a técnica, com as palavras dele");
+    ok(/"tc":"drop"/.test(appTec) && /function gPoeTec/.test(appTec),
+      "a técnica viaja pro treino guiado e o player tem onde mostrar");
+    ok(!seloNaLista.test(appHtml) && !/<span class='tecchip'>(Up set|Rest-pause|Bi-set|Isometria)/.test(appHtml),
+      "exercício sem técnica não ganha selo nenhum (nada de rótulo vazio)");
+  }
   {
     // 📸 o pacote que vai pro professor: recorta o trecho REAL do app e roda em
     // node — frente continua nas chaves antigas, lado e costas viram fotosAng
