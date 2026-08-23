@@ -6085,7 +6085,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<button class="btn sec mini" data-tsr="' + f.id + ":" + i + '" title="mudar séries e repetições">' + it.series + "×" + it.reps + "</button>" +
             '<button class="btn sec mini" data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">⏱ ' + (+it.descanso || 60) + "s</button>" +
             '<button class="btn sec mini" data-ttec="' + f.id + ":" + i + '" title="técnica de intensidade neste exercício (drop-set, up set…)">' + (tecNome(it.tec) ? "⚡ " + esc(tecNome(it.tec)) : "⚡") + "</button>" +
-            '<button class="btn sec mini" data-tobs="' + f.id + ":" + i + '" title="editar a observação do exercício">' + (it.obs ? "✎ " + esc(it.obs) : "✎") + "</button>" +
+            // a observação inteira fica no title: no botão ela é cortada, senão a
+            // linha do exercício quebra e joga o ↑↓✕ pra segunda fileira
+            '<button class="btn sec mini" data-tobs="' + f.id + ":" + i + '" title="' + (it.obs ? esc(it.obs) + " — clique para editar" : "editar a observação do exercício") + '">' +
+            (it.obs ? "✎ " + esc(it.obs.length > 26 ? it.obs.slice(0, 25) + "…" : it.obs) : "✎") + "</button>" +
             (videoDoEx(ex) ? "<span title='tem vídeo'>▸</span>" : "") +
             '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '" title="subir na ficha">↑</button>' : "") +
