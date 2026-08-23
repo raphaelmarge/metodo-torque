@@ -6189,6 +6189,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       return '<div class="sessao-pt"><b>' + esc(w.nome) + "</b><span class='tag roxo'>" + esc(wodResumo(w)) + "</span>" +
         '<span class="muted" style="font-size:12px;">' + w.mov.length + " movimento(s)</span>" +
         '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+        (w.capa ? '<img src="' + w.capa + '" alt="capa do circuito" style="width:64px;height:36px;object-fit:cover;border-radius:8px;">' : "") +
+        '<button class="btn sec mini" data-wcapa="' + w.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' + (w.capa ? "Trocar foto" : "📷 Foto") + "</button>" +
+        '<button class="btn sec mini" data-wcapag="' + w.id + '" title="escolher do seu banco de imagens">🖼</button>' +
+        (w.capa ? '<button class="btn sec mini" data-wcapax="' + w.id + '" title="tirar a foto deste circuito">✕ foto</button>' : "") +
         '<button class="btn sec mini" data-wped="' + w.id + '">Editar</button>' +
         '<button class="btn sec mini" data-wprm="' + w.id + '" aria-label="excluir o circuito">✕</button></span></div>';
     }).join("") : "Nenhum circuito ainda — monte o primeiro abaixo e salve.";
@@ -6313,6 +6317,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("wpLista").addEventListener("click", function (e) {
     var ed = e.target.getAttribute && e.target.getAttribute("data-wped");
     var rm = e.target.getAttribute && e.target.getAttribute("data-wprm");
+    // foto do circuito: vira a capa do card "treino de hoje" no dia de WOD
+    var wc = e.target.getAttribute && e.target.getAttribute("data-wcapa");
+    var wcG = e.target.getAttribute && e.target.getAttribute("data-wcapag");
+    var wcX = e.target.getAttribute && e.target.getAttribute("data-wcapax");
+    if (wc) { capaAlvo = { tipo: "wod", id: wc, aluno: $("wpAluno").value }; $("fCapaFile").click(); return; }
+    if (wcG) { abreGaleria({ tipo: "wod", id: wcG, aluno: $("wpAluno").value }); return; }
+    if (wcX) { tiraCapa("wod", wcX, $("wpAluno").value, renderWods); return; }
     if (!ed && !rm) return;
     var st = load();
     var t = (st.treinosV2 || {})[$("wpAluno").value];
@@ -6368,6 +6379,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           '<span class="tag ok">' + (CB_MODS[c.mod] || c.mod) + "</span>" +
           '<span class="muted">' + esc(cbResumo(c)) + "</span>" +
           '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
+          (c.capa ? '<img src="' + c.capa + '" alt="capa do treino" style="width:64px;height:36px;object-fit:cover;border-radius:8px;">' : "") +
+          '<button class="btn sec mini" data-ccapa="' + c.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' + (c.capa ? "Trocar foto" : "📷 Foto") + "</button>" +
+          '<button class="btn sec mini" data-ccapag="' + c.id + '" title="escolher do seu banco de imagens">🖼</button>' +
+          (c.capa ? '<button class="btn sec mini" data-ccapax="' + c.id + '" title="tirar a foto deste treino">✕ foto</button>' : "") +
           '<button class="btn sec mini" data-cbed="' + c.id + '">editar</button>' +
           '<button class="btn sec mini" data-cbrm="' + c.id + '">remover</button></span></div>';
       }).join("") : "Nenhum treino de corrida/bike ainda — monte o primeiro abaixo.";
@@ -6414,6 +6429,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var ed = e.target.closest("[data-cbed]");
     var rm = e.target.closest("[data-cbrm]");
     var alunoId = $("cbAluno").value;
+    // foto do treino de corrida/bike: capa do card "treino de hoje" no dia dele
+    var cc = e.target.closest("[data-ccapa]");
+    var ccG = e.target.closest("[data-ccapag]");
+    var ccX = e.target.closest("[data-ccapax]");
+    if (alunoId && cc) { capaAlvo = { tipo: "cardio", id: cc.getAttribute("data-ccapa"), aluno: alunoId }; $("fCapaFile").click(); return; }
+    if (alunoId && ccG) { abreGaleria({ tipo: "cardio", id: ccG.getAttribute("data-ccapag"), aluno: alunoId }); return; }
+    if (alunoId && ccX) { tiraCapa("cardio", ccX.getAttribute("data-ccapax"), alunoId, renderCardios); return; }
     if (!alunoId || (!ed && !rm)) return;
     var st = load();
     var t = ((st.treinosV2 || {})[alunoId] || {});
@@ -8189,7 +8211,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cap = e.target.getAttribute && e.target.getAttribute("data-fcapa");
     var capX = e.target.getAttribute && e.target.getAttribute("data-fcapax");
     var capG = e.target.getAttribute && e.target.getAttribute("data-fcapag");
-    if (cap) { fichaCapaId = cap; $("fCapaFile").click(); return; }
+    if (cap) { capaAlvo = { tipo: "ficha", id: cap, aluno: $("tAluno").value }; $("fCapaFile").click(); return; }
     if (capG) { abreGaleria({ tipo: "ficha", id: capG, aluno: $("tAluno").value }); return; }
     if (capX) {
       var stCx = load();
@@ -11145,22 +11167,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo?"); };
     img.src = url;
   }
-  var fichaCapaId = null;
+  // a MESMA janela de arquivo serve ficha, circuito e corrida — o alvo diz quem
+  var capaAlvo = null;
+  function capaColecao(t, tipo) { return tipo === "wod" ? (t.wods || []) : tipo === "cardio" ? (t.cardio || []) : (t.fichas || []); }
+  function capaRedesenha(tipo) { if (tipo === "wod") renderWods(); else if (tipo === "cardio") renderCardios(); else renderFichas(); }
+  function poeCapa(tipo, id, alunoId, dado) {
+    var st = load();
+    var t = treinoDe(st, alunoId);
+    var alvo = capaColecao(t, tipo).find(function (x) { return x.id === id; });
+    if (!alvo) return;
+    alvo.capa = dado;
+    marcaAppPendente(st, alunoId); // o app precisa ser republicado pra foto chegar
+    save(st);
+    capaRedesenha(tipo);
+  }
+  function tiraCapa(tipo, id, alunoId, redesenha) {
+    var st = load();
+    var t = treinoDe(st, alunoId);
+    var alvo = capaColecao(t, tipo).find(function (x) { return x.id === id; });
+    if (!alvo) return;
+    delete alvo.capa;
+    marcaAppPendente(st, alunoId);
+    save(st);
+    (redesenha || function () { capaRedesenha(tipo); })();
+  }
   $("fCapaFile").addEventListener("change", function () {
     var arq = this.files && this.files[0];
     this.value = "";
-    if (!arq || !fichaCapaId) return;
-    leCapa(arq, function (d) {
-      var st = load();
-      var alunoIdC = $("tAluno").value;
-      var t = treinoDe(st, alunoIdC);
-      var f = t.fichas.find(function (x) { return x.id === fichaCapaId; });
-      if (!f) return;
-      f.capa = d;
-      marcaAppPendente(st, alunoIdC); // o app precisa ser republicado pra foto chegar
-      save(st);
-      renderFichas();
-    });
+    if (!arq || !capaAlvo) return;
+    var alvo = capaAlvo;
+    leCapa(arq, function (d) { poeCapa(alvo.tipo, alvo.id, alvo.aluno, d); });
   });
   // ---------- 🖼 banco de imagens do studio ----------
   // fica numa chave própria (não incha o ptStudio, que viaja a cada salvamento);
@@ -11295,9 +11331,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       S.write("ptStudio", st);
       pintaCapaPers();
     } else {
-      var t = treinoDe(st, galDestino.aluno);
-      var f = t.fichas.find(function (x) { return x.id === galDestino.id; });
-      if (f) { f.capa = im.d; marcaAppPendente(st, galDestino.aluno); save(st); renderFichas(); }
+      // ficha, circuito ou corrida — o destino diz em qual coleção mexer
+      poeCapa(galDestino.tipo, galDestino.id, galDestino.aluno, im.d);
     }
     $("dlgGaleria").close();
   });
