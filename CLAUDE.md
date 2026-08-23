@@ -161,6 +161,19 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Questionários viram área própria** (a partir da v585): o check-in da semana
+(`#ckCard`) e o questionário do personal (`#qaCard`) moravam embaixo da conversa,
+na área do Chat — quem abria o chat pra mandar um recado caía num formulário
+grande logo abaixo. Agora existe a seção `quest` (`#qsTopo` faixa roxa +
+`#qaCard` + `#ckCard` + `#qsVazio`), com entrada própria no menu: o botão
+**Questionários** da gaveta (`#mgQaBt`, `data-msec='quest'`, com o badge somando
+`__qaPend()+__ckPend()`) e a linha dos Ajustes (`data-ajgo='quest'`). O
+cabeçalho conta a mesma verdade do badge ("N pra responder" × "Tudo em dia"),
+pintado por `pintaMB`. Como o check-in respondido SOME até a semana virar
+(pedido antigo do Raphael), `#qsVazio` aparece quando nada mais está visível na
+seção — senão sobrava só a faixa roxa. `secDe` não manda mais "Check-in" pro
+chat; a classificação é por id.
+
 **Tela de Início enxuta** (a partir da v584): o card **Minha semana** (`#semBlock`)
 é um bloco só — recado do coach (`#coachTxt`), os chips seg–dom (`#diasSem`),
 a linha de resumo (`#semResumo` = "4 de 4 na semana · N dias seguidos") e o

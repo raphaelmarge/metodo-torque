@@ -1244,14 +1244,6 @@
       "<div id='botChips' style='display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;'></div>" +
       "<div style='display:flex;gap:8px;align-items:center;'><input id='chTexto' placeholder='Escreve pro seu personal…' style='flex:1;min-width:0;border-radius:99px;padding-left:18px;'>" +
       "<button class='btnx' id='chEnvia' aria-label='Enviar' style='flex:none;width:52px;height:52px;border-radius:50%;padding:0;'><svg width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 12h14M12 6l6 6-6 6'/></svg></button></div></div>" +
-      // o check-in é um questionário: o atalho Questionários do menu aponta pra cá
-      "<div class='cardx' id='ckCard'><h2>Check-in da semana</h2>" +
-      "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem!</div>" +
-      "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
-      "<div id='ckNotas' style='display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;'></div>" +
-      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
-      "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
-      "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in</button></div></div>" +
       // R3: o card virou o CONVITE do questionário (tela 03) — o fluxo abre por cima
       (plApp && ve("pag") ? "<div class='cardx'><h2>Meu plano</h2>" +
         "<div class='kv'><span>" + esc(plApp.nome) + "</span><b>R$ " + (+plApp.valor).toLocaleString("pt-BR") + "/mês</b></div>" +
@@ -1305,7 +1297,7 @@
         if (+a.altura) rows += "<div class='mgrow' style='cursor:default;'><span style='line-height:0;'>" + sv("<path d='M12 3v18M8.5 6.5 12 3l3.5 3.5M8.5 17.5 12 21l3.5-3.5'/>") + "</span>" +
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Altura</span><span class='mgsub'>" + String((+a.altura / 100).toFixed(2)).replace(".", ",") + " m · quem mede é seu personal</span></span></div>";
         // o check-in da semana também é questionário — sem qa a linha leva nele
-        rows += "<button class='mgrow' data-ajgo='chat' data-ajgoto='" + (qa ? "qaCard" : "ckCard") + "'><span style='line-height:0;'>" + sv("<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>") + "</span>" +
+        rows += "<button class='mgrow' data-ajgo='quest'><span style='line-height:0;'>" + sv("<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>") + "</span>" +
           "<span style='flex:1;min-width:0;'><span class='mgtit'>Meus questionários</span><span class='mgsub'>" + (qa ? "responder leva 1 minuto" : "o check-in da semana mora aqui") + "</span></span>" + chev + "</button>";
         // baixar meus dados (LGPD na prática): um arquivo com tudo do aparelho
         rows += "<button class='mgrow' id='ajBaixa'><span style='line-height:0;'>" + sv("<path d='M12 3v12M7.5 10.5 12 15l4.5-4.5'/><path d='M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2'/>") + "</span>" +
@@ -1356,8 +1348,29 @@
       "<span style='flex:1;min-width:0;'><b style='display:block;font-size:16px;font-weight:800;'>Chamar um amigo</b>" +
       "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>treinar em dupla rende mais — manda o convite no WhatsApp</span></span>" +
       "<span style='flex:none;color:#57525f;line-height:0;'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></a></div>" : "") +
-      // o convite do questionário mora na área do chat, abaixo da conversa
+      /* ---------- Questionários: área PRÓPRIA (a partir da v585) ----------
+       * O check-in da semana e o questionário do personal moravam embaixo da
+       * conversa, na área do Chat. Quem abria o chat pra mandar um recado caía
+       * num formulário grande logo abaixo; e quem queria responder tinha que
+       * rolar a conversa inteira. Agora é uma área só deles, com entrada
+       * própria no menu (o botão Questionários, com o badge de pendências). */
+      "<div class='cardx' id='qsTopo' style='margin:0;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 20px;color:#fff;'>" +
+      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Meus questionários</div>" +
+      "<div id='qsTopN' style='font-size:26px;font-weight:900;letter-spacing:-.02em;margin-top:3px;'>Tudo em dia</div>" +
+      "<div id='qsTopS' style='font-size:12.5px;color:rgba(255,255,255,.85);margin-top:4px;'>o que seu personal mandar aparece aqui</div></div></div>" +
       (qa ? "<div class='cardx' id='qaCard'><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
+      "<div class='cardx' id='ckCard'><h2>Check-in da semana</h2>" +
+      "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem!</div>" +
+      "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
+      "<div id='ckNotas' style='display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;'></div>" +
+      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
+      "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
+      "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in</button></div></div>" +
+      // area vazia tem que dizer que esta vazia: o check-in ja respondido some
+      // (pedido do Raphael), e sem isso sobrava so a faixa roxa sozinha
+      "<div class='cardx' id='qsVazio' style='display:none;'>" +
+      "<div class='vz' style='padding:30px 18px;line-height:1.6;'>Nada pra responder agora.<br>O check-in da semana volta na segunda, e o que seu personal mandar cai aqui.</div></div>" +
       "<div id='tmrBar' style='display:none;position:fixed;bottom:calc(62px + env(safe-area-inset-bottom,0px));left:0;right:0;max-width:480px;margin:0 auto;background:linear-gradient(90deg,var(--cor),var(--corc));color:#fff;font-weight:800;text-align:center;padding:13px;font-size:15px;z-index:8;'></div>" +
       /* Treino guiado: uma tela por exercício, estilo story. O aluno olha de
        * longe (barra, número, cronômetro), toca em coisa grande, e no fim de
@@ -4259,6 +4272,7 @@
       "['feed',\"<circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/>\",'Turma']," +
       "['agenda',\"<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 11h18'/>\",'Agenda']," +
       "['chat',\"<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>\",'Chat']," +
+      "['quest',\"<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>\",'Questionários']," +
       "['util',\"<path d='M14.5 6.5a4.2 4.2 0 0 0-5.7 5.4L3 17.7 6.3 21l5.8-5.8a4.2 4.2 0 0 0 5.4-5.7l-2.8 2.8-2.4-.6-.6-2.4z'/>\",'Utilidades']," +
       "['pagamento',\"<rect x='2' y='5' width='20' height='14' rx='2'/><path d='M2 10h20'/>\",'Plano']," +
       // Ajustes fica por último de propósito: aparece na gaveta ☰, não nas abas de baixo
@@ -4270,7 +4284,7 @@
       "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
-      "if(/Check-in|Fale com/.test(t))return 'chat';" +
+      "if(/Fale com/.test(t))return 'chat';" +
       "if(/Pagamento|Mensalidade|Meus pacotes/.test(t)||/copia e cola/.test(tx))return 'pagamento';" +
       "if(/Minha conta|Meu login|Lembretes/.test(t))return 'ajustes';" +
       "if(/Mural|Minha semana|Hábitos|Desafio/.test(t))return 'inicio';" +
@@ -4286,7 +4300,7 @@
       "var IGNORA={navApp:1,tmrBar:1,guiaBox:1,fundoMenuApp:1,menuApp:1};" +
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
-      "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
+      "if(el.id==='qsTopo'||el.id==='qaCard'||el.id==='ckCard'||el.id==='qsVazio'){el.setAttribute('data-sec','quest');return;}" +
       "if(el.id==='trTopo'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
       "if(el.id==='evTopo'||el.id==='evCargas'||el.id==='evMarcas'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
@@ -4349,7 +4363,7 @@
       "\"<div class='mghd'><span class='mgav'><img id='mgImg' alt='' style='display:none;'><span id='mgIni'></span></span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgnome'></span><span class='mgstudio'></span></span></div>\"+" +
       // o atalho existe com questionário do personal OU com o check-in da semana
-      "((document.getElementById('qaCard')||document.getElementById('ckCard'))&&MICO.chat?\"<button class='nitem mgq' id='mgQaBt' data-msec='chat' data-mgoto='\"+(document.getElementById('qaCard')?'qaCard':'ckCard')+\"'>\"+" +
+      "(MICO.quest?\"<button class='nitem mgq' id='mgQaBt' data-msec='quest'>\"+" +
       "\"<span style='line-height:0;'>\"+ic(\"<path d='M9 4.5h6v3H9z'/><path d='M15 4.5h3a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V6A1.5 1.5 0 0 1 6 4.5h3'/><path d='M8.5 12h7M8.5 15.5h5'/>\")+\"</span>\"+" +
       "\"<span style='flex:1;min-width:0;'><span class='mgtit'>Questionários</span><span class='mgsub' id='mgQaSub'></span></span>\"+" +
       "\"<span class='mgbadge' id='mgQaB' style='display:none;'></span></button>\":'')+" +
@@ -4371,8 +4385,13 @@
       "if(qb){var pq=window.__qaPend?window.__qaPend():0;var pk=window.__ckPend?window.__ckPend():0;var p9=pq+pk;" +
       "qb.style.display=p9?'flex':'none';qb.textContent=p9||'';" +
       "if(qs)qs.textContent=p9?p9+' esperando você':'em dia — nada esperando';" +
-      "var bt9=document.getElementById('mgQaBt');" +
-      "if(bt9)bt9.setAttribute('data-mgoto',pq&&document.getElementById('qaCard')?'qaCard':pk?'ckCard':(document.getElementById('qaCard')?'qaCard':'ckCard'));}" +
+      "var tn9=document.getElementById('qsTopN'),ts9=document.getElementById('qsTopS');" +
+      "if(tn9)tn9.textContent=p9?p9+(p9>1?' pra responder':' pra responder'):'Tudo em dia';" +
+      "if(ts9)ts9.textContent=p9?'leva 1 minuto \\u2014 seu personal l\\u00ea tudo':'o que seu personal mandar aparece aqui';" +
+      "var qv9=document.getElementById('qsVazio');if(qv9){var vis9=false;" +
+      "document.querySelectorAll(\"[data-sec='quest']\").forEach(function(e9){" +
+      "if(e9.id!=='qsTopo'&&e9.id!=='qsVazio'&&e9.style.display!=='none')vis9=true;});" +
+      "qv9.style.display=vis9?'none':'';}}" +
       "var cb=document.getElementById('mgChatB');if(cb){var pc9=L('ptchat',[]);var vi9=String(L('ptvisto',''));var n9=0;" +
       "pc9.forEach(function(m9){if(m9&&m9.de&&m9.de!=='aluno'&&m9.de!=='aluno-local'&&m9.de!=='bot'&&String(m9.criado||'')>vi9)n9++;});" +
       "cb.style.display=n9?'flex':'none';cb.textContent=n9>9?'9+':n9;var cv9=cb.parentElement.querySelector('.mgchev');if(cv9)cv9.style.display=n9?'none':'';}}" +
@@ -4407,7 +4426,7 @@
       "document.getElementById('secTit').textContent=rot?rot[2]:'';" +
       // no Início, Treinos, Evolução e Utilidades a faixa colorida some: cada
       // área tem o próprio cabeçalho — roxo em cima de roxo, nunca mais
-      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='ajustes');" +
+      "document.body.classList.toggle('semtopo',s==='inicio'||s==='treino'||s==='evolucao'||s==='util'||s==='agenda'||s==='chat'||s==='quest'||s==='ajustes');" +
       // entrar na área de treino repinta as últimas cargas (tela 25)
       "if(s==='treino'&&window.__pintaUlt)window.__pintaUlt();" +
       // entrar nas Utilidades sempre começa no hub (água + grade)
