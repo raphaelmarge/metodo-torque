@@ -166,9 +166,10 @@ ganhou `tec` — `drop` (Drop-set), `up` (Up set), `rest` (Rest-pause), `bi`
 (Bi-set) ou `iso` (Isometria); vazio = série normal. **Só o NOME é modelado**:
 o que muda (peso ou repetição) o professor escreve na `obs`, porque o Raphael
 usa as duas leituras. A tabela mora em dois lugares de propósito, porque são
-arquivos separados: `TECS_PT` no `personal.html` (botão `data-ttec` na linha do
-exercício, prompt numerado 0–5, whitelist na ficha vinda da IA, e o texto do
-WhatsApp) e `TECS_APP` no `app/aluno-builder.js` (fora do concat gigante) —
+arquivos separados: `TECS_PT` no `personal.html` (seletor **Tipo de série** na
+cascata de montar — a ordem é tipo de treino → tipo de série → grupamento →
+exercício, pedido do Raphael — mais o `select.tecsel` na linha de cada
+exercício já montado, whitelist na ficha vinda da IA, e o texto do WhatsApp) e `TECS_APP` no `app/aluno-builder.js` (fora do concat gigante) —
 **mexeu numa, mexe na outra**. No app: selo `.tecchip` laranja colado no nome,
 a explicação ao abrir o exercício, e `#gTec` no treino guiado (`gPoeTec(it)`,
 com `tc` viajando no `GUIA`).

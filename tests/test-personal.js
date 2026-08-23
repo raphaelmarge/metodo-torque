@@ -941,34 +941,44 @@ async function abaPt(p, a) {
     return { obs: st.treinosV2[st.alunos[0].id].fichas[0].itens[0].obs, tela: document.getElementById("fichasBox").textContent };
   });
   ok(aposObs.obs === "pegada fechada" && /pegada fechada/.test(aposObs.tela), "obs do exercício editável por prompt (📝)");
-  // ⚡ técnica de intensidade NO MESMO exercício (drop-set, up set…)
-  await p.evaluate(() => { window.prompt = () => "1"; });
-  await p.click('[data-ttec="' + fichaId + ':0"]');
-  await p.waitForTimeout(150);
-  const aposTec = await p.evaluate(() => {
-    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    const a = st.alunos[0];
-    return { tec: st.treinosV2[a.id].fichas[0].itens[0].tec,
-      tela: document.getElementById("fichasBox").textContent,
-      zap: window.__treinoTexto ? window.__treinoTexto(st, a.id) : "" };
+  // 🏋️ tipo de série NO MESMO exercício (drop-set, up set…): escolhido na
+  // cascata de montar e trocável direto na linha, sem prompt
+  const cascataTec = await p.evaluate(() => {
+    const f = document.querySelector("#fichasBox details");
+    const fid = f.getAttribute("data-fdet");
+    const campos = [].slice.call(f.querySelectorAll(".linha-flex select"))
+      .map((e) => e.getAttribute("data-exmov") ? "treino" : e.getAttribute("data-extec") ? "serie"
+        : e.getAttribute("data-exzona") ? "grupo" : e.getAttribute("data-exsel") ? "exercicio" : "?");
+    const sel = f.querySelector('[data-extec="' + fid + '"]');
+    return { ordem: campos.join(">"), opcoes: [].slice.call(sel.options).map((o) => o.textContent) };
   });
-  ok(aposTec.tec === "drop" && /⚡ Drop-set/.test(aposTec.tela),
-    "⚡ o professor marca drop-set no exercício e o botão passa a mostrar a técnica");
-  ok(/Drop-set/.test(aposTec.zap), "o treino mandado no WhatsApp também leva a técnica");
-  await p.evaluate(() => { window.prompt = () => "9"; });
-  await p.click('[data-ttec="' + fichaId + ':0"]');
-  await p.waitForTimeout(150);
-  ok(await p.evaluate(() => {
+  ok(cascataTec.ordem === "treino>serie>grupo>exercicio",
+    "montar exercício segue a ordem do Raphael: tipo de treino → tipo de série → grupamento → exercício");
+  ok(cascataTec.opcoes[0] === "Série normal" && cascataTec.opcoes.indexOf("Drop-set") > 0 && cascataTec.opcoes.indexOf("Up set") > 0,
+    "a lista de tipo de série abre em Série normal e traz drop-set, up set e as outras");
+  // trocar na linha de um exercício que já está na ficha salva na hora
+  const trocaTec = await p.evaluate(async () => {
+    const sel = document.querySelector(".tecsel");
+    sel.value = "drop";
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 250));
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    return st.treinosV2[st.alunos[0].id].fichas[0].itens[0].tec === "drop";
-  }), "número fora da lista não vira técnica inventada — o exercício continua como estava");
-  await p.evaluate(() => { window.prompt = () => "0"; });
-  await p.click('[data-ttec="' + fichaId + ':0"]');
-  await p.waitForTimeout(150);
-  ok(await p.evaluate(() => {
+    const it = st.treinosV2[st.alunos[0].id].fichas[0].itens[0];
+    return { tec: it.tec, zap: window.__treinoTexto(st, st.alunos[0].id),
+      naTela: document.querySelector(".tecsel").value };
+  });
+  ok(trocaTec.tec === "drop" && trocaTec.naTela === "drop",
+    "🏋️ trocar o tipo de série na linha do exercício salva na hora (drop-set)");
+  ok(/Drop-set/.test(trocaTec.zap), "o treino mandado no WhatsApp também leva o tipo de série");
+  const limpaTec = await p.evaluate(async () => {
+    const sel = document.querySelector(".tecsel");
+    sel.value = "";
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 250));
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return !st.treinosV2[st.alunos[0].id].fichas[0].itens[0].tec;
-  }), "0 tira a técnica e o exercício volta a ser série normal");
+  });
+  ok(limpaTec, "voltar pra Série normal tira a marcação do exercício");
   // volta pro 4×10 sem obs — o resto da suíte depende desse estado
   await p.evaluate(() => { const seq = ["4", "10"]; window.prompt = () => seq.shift(); });
   await p.click('[data-tsr="' + fichaId + ':0"]');
