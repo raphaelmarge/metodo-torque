@@ -2680,8 +2680,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__diarioPT = pintaDiario; // testes
   // dados que o aluno registrou no app dele (sincronizados pela nuvem)
   // monta o HTML do painel de métricas a partir do retorno do app (nuvem ou demo)
-  window.__painelApp = function (ret) { return htmlRetornoApp(ret); }; // testes
-  function htmlRetornoApp(ret) {
+  window.__painelApp = function (ret, al) { return htmlRetornoApp(ret, al); }; // testes
+  /* `aluno` é opcional e serve só pra idade (zona de batimento). Sem ele o
+   * painel mostra os números crus em vez de inventar zona. */
+  function htmlRetornoApp(ret, aluno) {
         var html = "";
         var dataRe = function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); };
         var isoLocal = function (d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
@@ -2745,6 +2747,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           kpis.push(kpi("Esforço percebido", med >= 2.5 ? "Pesado" : med >= 1.6 ? "Na medida" : "Leve",
             "últimos " + rks.length + " treino(s)" + (med >= 2.5 ? " — considere aliviar" : "")));
         }
+        /* ---- batimentos (cinta/pulseira lida pelo app do aluno) ----
+         * O app manda só o RESUMO de cada treino: média e máximo. A zona sai de
+         * 220 − idade; sem data de nascimento no cadastro (e sem a idade que o
+         * aluno digitou no app) não dá pra calcular zona, e aí o painel mostra
+         * só os números — inventar faixa em cima de idade chutada seria pior. */
+        var fcH = (ret.fc && typeof ret.fc === "object" && !Array.isArray(ret.fc)) ? ret.fc : {};
+        var bpmOk = function (v) { return isFinite(+v) && +v >= 25 && +v <= 240; };
+        var fcDias = Object.keys(fcH).filter(function (k) {
+          var v = fcH[k];
+          return dataRe(k) && v && typeof v === "object" && !Array.isArray(v) && bpmOk(v.m) && bpmOk(v.x);
+        }).sort();
+        var idadeAl = (aluno && idadeDe(aluno.nasc)) || ((+ret.idade >= 8 && +ret.idade <= 99) ? +ret.idade : null);
+        var fcMaxAl = idadeAl ? 220 - idadeAl : null;
+        var FCZC = ["#60a5fa", "#4ade80", "#facc15", "#fb923c", "#f87171"];
+        var FCZN = ["Z1 leve", "Z2 tranquilo", "Z3 moderado", "Z4 forte", "Z5 máximo"];
+        var fcZona = function (b) { if (!fcMaxAl) return -1; var p = b / fcMaxAl; return p < 0.6 ? 0 : p < 0.7 ? 1 : p < 0.8 ? 2 : p < 0.9 ? 3 : 4; };
+        var crFc = (Array.isArray(ret.cardio) ? ret.cardio : []).filter(function (x) { return x && typeof x === "object" && bpmOk(x.fc); });
+        if (fcDias.length || crFc.length) {
+          var ultFc = fcDias.slice(-10), somaFc = 0;
+          ultFc.forEach(function (k) { somaFc += +fcH[k].m; });
+          crFc.slice(-10).forEach(function (x) { somaFc += +x.fc; });
+          var qtdFc = ultFc.length + crFc.slice(-10).length;
+          var medFc = Math.round(somaFc / qtdFc);
+          var mxFc = 0;
+          fcDias.forEach(function (k) { if (+fcH[k].x > mxFc) mxFc = +fcH[k].x; });
+          crFc.forEach(function (x) { if (bpmOk(x.fcx) && +x.fcx > mxFc) mxFc = +x.fcx; else if (+x.fc > mxFc) mxFc = +x.fc; });
+          var zMed = fcZona(medFc);
+          kpis.push(kpi("Batimento médio", medFc + " bpm",
+            (zMed >= 0 ? "<b style='color:" + FCZC[zMed] + ";'>" + FCZN[zMed] + "</b> · " : "") + "máximo " + mxFc + " bpm"));
+        }
         if (kpis.length) html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:6px 0 2px;'>" + kpis.join("") + "</div>";
         // placares dos circuitos (WOD) prescritos
         var wres = (ret.wodres && typeof ret.wodres === "object" && !Array.isArray(ret.wodres)) ? ret.wodres : {};
@@ -2773,8 +2805,57 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               " <span class='muted'>(" + esc(crModsP[x.m] || x.m || "") + ")</span> — " +
               (+x.k ? String((+x.k).toFixed(2)).replace(".", ",") + " km · " : "") + fmtSegP(x.s) +
               (x.p ? " · pace " + esc(String(x.p).slice(0, 8)) + " /km" : "") +
+              (bpmOk(x.fc) ? " · <b>" + Math.round(+x.fc) + " bpm</b>" + (bpmOk(x.fcx) ? " (máx " + Math.round(+x.fcx) + ")" : "") : "") +
               " <span class='muted'>(" + x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + ")</span></div>";
           }).join("");
+        }
+        // ---- batimentos: barra por treino (média) com o pico marcado em cima ----
+        if (fcDias.length) {
+          var lFc = fcDias.slice(-14);
+          /* a escala NÃO começa no zero: batimento humano vive entre ~50% e 100%
+           * da máxima, e um eixo a partir do zero espreme tudo no topo. O piso
+           * vai escrito embaixo do gráfico pra ninguém ler diferença demais. */
+          var maxObs = Math.max.apply(null, lFc.map(function (k) { return +fcH[k].x; }));
+          var minObs = Math.min.apply(null, lFc.map(function (k) { return +fcH[k].m; }));
+          var pisoFc = Math.max(30, Math.floor((fcMaxAl ? Math.min(minObs, fcMaxAl * 0.55) : minObs) - 6));
+          var tetoFc = Math.max(maxObs, fcMaxAl ? Math.round(fcMaxAl * 0.95) : 0) + 4;
+          var WF = 340, HF = 96, PF = 10;
+          var yFc = function (v) { return Math.round(HF - (HF - PF) * ((Math.max(pisoFc, Math.min(tetoFc, v)) - pisoFc) / (tetoFc - pisoFc))); };
+          var passo = (WF - 2 * PF) / lFc.length, larg = Math.max(6, Math.min(22, passo * 0.62));
+          var barras = lFc.map(function (k, i) {
+            var m9 = +fcH[k].m, x9 = +fcH[k].x, z9 = fcZona(m9);
+            var cx = PF + passo * (i + 0.5), x0 = Math.round(cx - larg / 2);
+            return "<rect x='" + x0 + "' y='" + yFc(m9) + "' width='" + Math.round(larg) + "' height='" + Math.max(1, HF - yFc(m9)) + "' rx='3' fill='" + (z9 >= 0 ? FCZC[z9] : "#a78bfa") + "' opacity='.85'><title>" +
+              k.slice(8, 10) + "/" + k.slice(5, 7) + ": " + m9 + " bpm médio, " + x9 + " máx</title></rect>" +
+              "<line x1='" + x0 + "' y1='" + yFc(x9) + "' x2='" + (x0 + Math.round(larg)) + "' y2='" + yFc(x9) + "' stroke='#e9d5ff' stroke-width='2' stroke-linecap='round'/>";
+          }).join("");
+          /* as duas réguas (80% e 90% da máxima) são só linha: rótulo dentro do
+           * gráfico esbarrava nos traços de pico e virava sopa de letra. A
+           * explicação mora na legenda, logo abaixo. */
+          var reguas = fcMaxAl ? [0.8, 0.9].map(function (r) {
+            var yy = yFc(fcMaxAl * r);
+            return "<line x1='" + PF + "' y1='" + yy + "' x2='" + (WF - PF) + "' y2='" + yy + "' stroke='#8a8695' stroke-width='1' stroke-dasharray='3 4' opacity='.55'/>";
+          }).join("") : "";
+          html += titulo("Batimentos — esforço nos treinos (cinta do app)") +
+            "<svg viewBox='0 0 " + WF + " " + (HF + 20) + "' style='width:100%;max-width:440px;display:block;' role='img' aria-label='Gráfico de batimentos por treino'>" +
+            reguas + barras +
+            "<text x='" + PF + "' y='" + (HF + 15) + "' font-size='10' fill='#8a8695'>" + lFc[0].slice(8, 10) + "/" + lFc[0].slice(5, 7) + " · barra = média, traço = pico (escala a partir de " + pisoFc + " bpm)</text>" +
+            "<text x='" + (WF - PF) + "' y='" + (HF + 15) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + lFc[lFc.length - 1].slice(8, 10) + "/" + lFc[lFc.length - 1].slice(5, 7) + "</text></svg>";
+          if (fcMaxAl) {
+            html += "<div style='display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:10.5px;color:#a9a4b5;'>" +
+              FCZN.map(function (z9, i9) { return "<span><b style='display:inline-block;width:9px;height:9px;border-radius:2px;background:" + FCZC[i9] + ";'></b> " + z9 + "</span>"; }).join("") +
+              "<span class='muted'>máxima estimada: " + fcMaxAl + " bpm (" + idadeAl + " anos) · tracejado = 80% e 90% dela</span></div>";
+            /* sinal de carga: muito treino seguido na zona forte pede recuperação */
+            var corteFc = isoLocal(new Date(Date.now() - 29 * 864e5));
+            var ult30Fc = fcDias.filter(function (k) { return k >= corteFc; });
+            var pesados = ult30Fc.filter(function (k) { return fcZona(+fcH[k].m) >= 3; }).length;
+            if (pesados >= 3 && pesados >= ult30Fc.length * 0.6) {
+              html += "<div style='color:#fbbf24;font-size:12.5px;margin-top:6px;'>" + pesados + " dos " + ult30Fc.length +
+                " treinos dos últimos 30 dias ficaram em zona forte ou máxima — vale olhar a recuperação dele.</div>";
+            }
+          } else {
+            html += "<div class='muted' style='font-size:12px;margin-top:6px;'>Preencha a data de nascimento na ficha pra ver as zonas de esforço (a conta é 220 − idade).</div>";
+          }
         }
         // onboarding: como o aluno se apresentou no primeiro uso do app
         var onb = (ret.onb && typeof ret.onb === "object" && !Array.isArray(ret.onb)) ? ret.onb : null;
@@ -3023,7 +3104,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var box = $("pfAppDados");
     // modo demonstração: retorno fake gravado direto no aluno (sem nuvem)
     if (a.demoRetorno) {
-      try { box.innerHTML = htmlRetornoApp(a.demoRetorno) || "Sem registros no demo."; }
+      try { box.innerHTML = htmlRetornoApp(a.demoRetorno, a) || "Sem registros no demo."; }
       catch (e) { box.textContent = "Dados do demo num formato inesperado."; }
       pintaCheckins(a.demoRetorno);
       return;
@@ -3095,7 +3176,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         }
         var html = "";
         try {
-        html = htmlRetornoApp(ret);
+        html = htmlRetornoApp(ret, a);
         } catch (eApp) {
           // retorno adulterado/malformado não pode travar o painel em "Carregando…"
           box.textContent = "Os dados do app deste aluno vieram num formato inesperado — peça pra ele abrir o app com internet que o sistema regrava tudo.";

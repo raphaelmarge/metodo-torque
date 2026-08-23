@@ -74,6 +74,17 @@
     }
     return m;
   }
+  /* batimentos da cinta: um resumo (média e máximo) por dia treinado. O ruído é
+   * determinístico de propósito — a demo tem que sair igual toda vez. */
+  function serieFc(feitos, idade, esforco) {
+    var max = 220 - idade, m = {};
+    Object.keys(feitos).sort().slice(-24).forEach(function (k, i) {
+      var pct = esforco + Math.sin(i * 2.3) * 0.06;          // ~65% a ~85% da máxima
+      var med = Math.round(max * pct);
+      m[k] = { m: med, x: Math.min(max, Math.round(med * (1.14 + Math.abs(Math.sin(i * 1.9)) * 0.05))) };
+    });
+    return m;
+  }
   // check-ins semanais de questionário (pontuação com ruído determinístico)
   function serieChecks(semanas, capricho) {
     var out = [];
@@ -175,6 +186,9 @@
       },
     };
     // circuitos (WOD) prescritos + placares devolvidos (nos dois primeiros alunos)
+    // batimentos da cinta (só quem usa): o primeiro puxa forte, o segundo é regular
+    if (idx === 0) a.demoRetorno.fc = serieFc(a.demoRetorno.feitos, cfg.nascAnos, 0.84);
+    if (idx === 1) a.demoRetorno.fc = serieFc(a.demoRetorno.feitos, cfg.nascAnos, 0.71);
     if (idx === 0) {
       a.demoRetorno.wodres = {};
       a.demoRetorno.wodres["wod" + id] = [

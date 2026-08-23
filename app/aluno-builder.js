@@ -1394,7 +1394,7 @@
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptfotoperfil')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptidade'||k==='ptfotoperfil')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
@@ -1403,7 +1403,7 @@
       "var pri=fr[0]||null;var ult=fr.length>1?fr[fr.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{})," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "fotoPerfil:L('ptfotoperfil','')||null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
