@@ -701,20 +701,27 @@
         return "<div id='blocoHoje' style='position:relative;'>" +
           "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + fichaCard + wodCard + crCard + "</div>" + heroTopo + "</div>";
       })() +
-      // card do ritmo da semana: recado curto + anel X/Y (o script preenche)
-      "<div class='cardx' id='coachCard' style='margin-top:18px;display:none;'>" +
-      "<div style='display:flex;gap:14px;align-items:center;background:var(--bg2);border-radius:22px;padding:16px 18px;'>" +
-      "<div id='coachTxt' style='flex:1;min-width:0;font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;'></div>" +
-      "<div id='ringSem' style='flex:none;width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;'>" +
-      "<div style='width:56px;height:56px;border-radius:50%;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;'>" +
-      "<b id='ringNum' style='font-size:16px;font-weight:900;line-height:1;'>–</b>" +
-      "<span style='font-size:7.5px;font-weight:800;letter-spacing:.12em;color:#8a8695;text-transform:uppercase;margin-top:2px;'>semana</span></div></div></div></div>" +
-      // a semana em chips (seg-dom) + a sequência de dias embaixo
-      "<div class='cardx' id='semBlock' style='margin-top:18px;'>" +
+      /* ---------- MINHA SEMANA: um card só ----------
+       * Estavam separados o card do coach (com anel X/Y), os chips seg-dom e um
+       * terceiro card com a barra "Meta da semana" + o Treinei hoje!. Os três
+       * diziam a MESMA coisa ("4 de 4 nesta semana") em três desenhos, e a ação
+       * principal ficava enterrada no fim. Agora: recado do coach, os dias, uma
+       * linha de resumo e o botão — nessa ordem, num bloco só.
+       * A sequência de SEMANAS na meta saiu daqui pras Conquistas (é conquista,
+       * não é status de hoje) e a de DIAS DE HÁBITO foi pro card dos hábitos,
+       * que é do que ela fala — embaixo dos chips de treino ela era lida como
+       * "dias treinados", que é outra coisa. */
+      "<div class='cardx' id='semBlock'><h2>Minha semana</h2>" +
+      "<div style='background:var(--bg2);border-radius:22px;padding:18px;'>" +
+      "<div id='coachTxt' style='font-size:14px;line-height:1.5;color:#cfcbdb;font-weight:600;margin-bottom:16px;'></div>" +
       "<div id='diasSem' style='display:flex;gap:6px;justify-content:space-between;'></div>" +
+      "<div id='semResumo' style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 16px;font-size:14px;font-weight:800;'></div>" +
+      "<button class='btnx' id='btnFeito' style='width:100%;padding:15px;font-size:15px;'>Treinei hoje!</button>" +
+      "<div id='medalhas' style='font-size:11.5px;color:#6e6a78;text-align:center;margin-top:10px;'></div></div></div>" +
+      // hábitos do dia em grade, estilo "HOJE EU JÁ" — com a sequência de dias
+      // de hábito logo abaixo (era #stkLine, que morava embaixo dos chips)
+      "<div class='cardx' id='habWrap'><h2>Hoje eu já</h2><div id='habBox' class='habgrid' aria-label='Hábitos de hoje'></div>" +
       "<div id='stkLine' style='display:none;align-items:center;gap:7px;margin-top:12px;font-size:13px;font-weight:700;color:#fb923c;'></div></div>" +
-      // hábitos do dia em grade, estilo "HOJE EU JÁ"
-      "<div class='cardx' id='habWrap'><h2>Hoje eu já</h2><div id='habBox' class='habgrid' aria-label='Hábitos de hoje'></div></div>" +
       // onboarding de 30 segundos (só aparece no primeiro uso — some depois de responder)
       "<div class='cardx' id='onbCard' style='display:none;border-color:var(--cor);'>" +
       "<h2>Bora começar!</h2><div class='vz' style='text-align:left;padding:2px 0 8px;'>3 perguntinhas rápidas pro " + esc(a.nome.split(" ")[0]) + " do futuro agradecer:</div>" +
@@ -724,11 +731,6 @@
       "<div id='onbDias' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       "<input id='onbDor' placeholder='Alguma dor ou limitação? (opcional)' style='width:100%;margin-bottom:10px;'>" +
       "<button class='btnx' id='onbOk' style='width:100%;'>Pronto, bora treinar!</button></div>" +
-      // o resto da semana (meta, sequência e o Treinei hoje!) fica logo abaixo
-      "<div class='cardx'><h2>Minha semana</h2>" +
-      "<div id='metaBox' style='margin-bottom:12px;'></div>" +
-      "<button class='btnx' id='btnFeito' style='width:100%;padding:14px;font-size:15px;'>Treinei hoje!</button>" +
-      "<div id='medalhas' class='vz' style='margin-top:10px;'></div></div>" +
       // Progresso e retrospectiva saíram daqui (pedido do Raphael): moram na
       // aba Conquistas, e sem os dados de CORPO — peso e gordura ficam no Corpo
       // recado do professor (tela 13): avatar com as iniciais do studio,
@@ -1561,25 +1563,21 @@
       "\"<div style='font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:\"+(fez?'rgba(255,255,255,.85)':'#6e6a78')+\";'>\"+rot[i]+\"</div>\"+" +
       "\"<div style='font-size:14px;font-weight:800;margin-top:1px;color:\"+(fez?'#fff':'#d6d2df')+\";'>\"+d.getDate()+\"</div></div></div>\";}" +
       "document.getElementById('diasSem').innerHTML=html;" +
-      "var pct=Math.min(100,Math.round(100*naSem/META));" +
-      "var stk=streakSem(f);" +
-      "document.getElementById('metaBox').innerHTML=\"<div style='display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;'><span>Meta da semana</span><b>\"+naSem+\" de \"+META+\"</b></div><div style='height:10px;background:var(--bg4);border-radius:99px;overflow:hidden;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg,var(--cor),var(--corc));border-radius:99px;transition:width .5s;'></div></div>\"+" +
-      "(stk>0?\"<div id='stkBox' style='display:flex;align-items:center;gap:7px;margin-top:9px;font-weight:800;font-size:13.5px;color:#fb923c;'>\"+icx(ICO.chama,18)+\"sequência de \"+stk+\" semana\"+(stk>1?'s':'')+\" batendo a meta — não deixa apagar!</div>\":" +
-      "\"<div id='stkBox' style='margin-top:9px;font-size:12px;color:#a9a4b5;'>Bata a meta desta semana pra acender a sequência \"+icx(ICO.chama,13)+\"</div>\");" +
-      // card do coach no Início: anel X/Y da semana + recado honesto pelo estado
-      "var rg=document.getElementById('ringSem');if(rg){var p2=Math.max(0,Math.min(100,pct));" +
-      "rg.style.background='conic-gradient(var(--cor) 0 '+p2+'%,var(--bg4) '+p2+'% 100%)';" +
-      "document.getElementById('ringNum').textContent=naSem+'/'+META;" +
+      /* a linha de resumo substitui o anel 4/4 E a barra "Meta da semana":
+       * os chips seg-dom acima já mostram quantos e QUAIS dias foram. */
+      "var sq9=seqAtual(f);var sr9=document.getElementById('semResumo');" +
+      "if(sr9)sr9.innerHTML=\"<span>\"+naSem+' de '+META+' na semana</span>'+" +
+      "(sq9>0?\"<span style='color:#3c3846;'>\\u2022</span><span style='color:#fb923c;display:inline-flex;align-items:center;gap:5px;'>\"+icx(ICO.chama,17)+sq9+' dia'+(sq9>1?'s':'')+' seguido'+(sq9>1?'s':'')+'</span>':'');" +
       // a dica do treino de HOJE (carga, circuito ou pace) vence o recado
       // genérico da semana — é o que o desenho chama de recado do coach
       "var ct=document.getElementById('coachTxt');if(ct)ct.innerHTML=(typeof coachDica==='function'?coachDica():null)||(naSem>=META?" +
       "'Semana fechada: <b>'+naSem+' de '+META+'</b> treinos. Orgulho define — mantém o ritmo!':" +
       "naSem>0?'Você já fez <b>'+naSem+' de '+META+'</b> treinos essa semana — hoje dá pra somar mais um.':" +
       "'Bora abrir a semana: <b>'+META+' treino'+(META>1?'s':'')+'</b> te esperando.');" +
-      "var cc2=document.getElementById('coachCard');if(cc2)cc2.style.display='';}" +
       "var total=Object.keys(f).length;var marcos=[100,50,25,10,5];" +
       "var falta=null;for(var j=marcos.length-1;j>=0;j--){if(total<marcos[j]){falta=marcos[j];break;}}" +
-      "document.getElementById('medalhas').innerHTML='<b>'+pl(total,'treino registrado','treinos registrados')+'</b>'+(falta?\"<br><small>faltam \"+(falta-total)+\" pra marca de \"+falta+\" treinos</small>\":'');}" +
+      "var md9=document.getElementById('medalhas');" +
+      "if(md9)md9.innerHTML='<b>'+pl(total,'treino registrado','treinos registrados')+'</b>'+(falta?\" \\u00b7 faltam \"+(falta-total)+\" pra marca de \"+falta:'');}" +
       "document.getElementById('btnFeito').addEventListener('click',function(){var f=L('ptfeitos',{});var iso=isoHj();" +
       "if(f[iso]){alert('Treino de hoje já registrado! Descansa que amanhã tem mais.');return;}" +
       "f[iso]=1;Sv('ptfeitos',f);pintaSemana();" +
@@ -1889,7 +1887,13 @@
       "c29=dif9>0?'#4ade80':dif9<0?'#f87171':'#8a8695';}" +
       "else{s29=tot9>noMes9?tot9+' no total':'seu primeiro mês';}" +
       "el.innerHTML=cqTile('Sequência',sq,sq===1?'dia':'dias',rec?'recorde de '+rec+(rec===1?' dia':' dias'):'','#fbbf24')+" +
-      "cqTile('Treinos no mês',noMes9,'',s29,c29);}" +
+      "cqTile('Treinos no mês',noMes9,'',s29,c29)+" +
+      "(function(){var sw9=streakSem(f);" +
+      "return \"<div style='grid-column:1/-1;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:18px;padding:14px 16px;'>\"+" +
+      "\"<div class='wpk' style='margin:0 0 4px;'>Semanas batendo a meta</div>\"+" +
+      "\"<b style='font-size:24px;font-weight:900;'>\"+(sw9||'\\u2014')+(sw9?\"<small style='font-size:12px;font-weight:800;'> \"+(sw9===1?'semana':'semanas')+'</small>':'')+'</b>'+" +
+      "\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:\"+(sw9?'#fb923c':'#8a8695')+\";'>\"+" +
+      "(sw9?'seguidas \\u2014 n\\u00e3o deixa apagar!':'bata a meta desta semana pra acender')+'</div></div>';})();}" +
       "pintaCqTiles();" +
       // tela 49: ranking da turma no mês (só com a nuvem ligada — a RPC conta
       // os treinos de cada colega no período; o token revogado não passa)
@@ -3492,7 +3496,9 @@
       "document.getElementById('habRec').textContent=rec>1?'Recorde: '+rec+' dias':'Marque 3 pra contar o dia';" +
       // a chama embaixo da semana (telas finais): sequência de dias com 3+ hábitos
       "var sl=document.getElementById('stkLine');if(sl){if(streak>0){sl.style.display='flex';" +
-      "sl.innerHTML=icx(ICO.chama,16)+'<b>'+streak+' dia'+(streak===1?'':'s')+' seguido'+(streak===1?'':'s')+'</b>'+" +
+      // diz COM QUE a sequencia e: a do card da semana conta dias TREINADOS, e
+      // duas linhas "N dias seguidos" com numeros diferentes na mesma tela confunde
+      "sl.innerHTML=icx(ICO.chama,16)+'<b>'+streak+' dia'+(streak===1?'':'s')+'</b> seguido'+(streak===1?'':'s')+' com 3+ h\\u00e1bitos'+" +
       "(rec>1?\"<span style='color:#6e6a78;font-weight:600;'>· recorde \"+rec+' dias</span>':'');}" +
       "else{sl.style.display='none';}}}" +
       "document.getElementById('habBox').addEventListener('click',function(e){var b=e.target.closest('[data-hab]');if(!b)return;" +
