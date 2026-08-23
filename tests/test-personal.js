@@ -2230,6 +2230,14 @@ async function abaPt(p, a) {
     ok(corte.deitada.w === 640 && corte.empe.w === 640, "a foto é reduzida pra 640 px de largura (leve pra viajar no app)");
     ok(corte.pequena.w === 300 && quatroCinco(corte.pequena),
       "foto pequena não é esticada — só cortada no formato (300 px continuam 300 px)");
+    // a receita da foto tem que estar ESCRITA na tela — o professor não pode
+    // precisar perguntar qual tamanho mandar
+    const receita = await p.evaluate(() => {
+      const g = [].slice.call(document.querySelectorAll(".fotoguia"));
+      return { quantos: g.length, txt: g.map((e) => e.textContent.replace(/\s+/g, " ")).join(" | ") };
+    });
+    ok(receita.quantos >= 2 && /1080 × 1350/.test(receita.txt) && /Em pé/.test(receita.txt) && /no meio/.test(receita.txt),
+      "🖼 a Personalização diz na tela o que subir: em pé, 1080 × 1350 e o assunto no meio");
   }
   /* Com foto, o card do treino de hoje ganha um véu escuro por cima da imagem
    * — nos DOIS temas. Antes o texto seguia o tema, então no modo claro o nome
