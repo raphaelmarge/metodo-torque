@@ -6002,16 +6002,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.treinosV2[alunoId] = st.treinosV2[alunoId] || { fichas: [] };
     return st.treinosV2[alunoId];
   }
+  /* Técnicas de intensidade dentro do MESMO exercício (v588). O que muda —
+   * peso ou repetição — o professor escreve na observação; aqui é só o nome,
+   * que é o que o aluno precisa reconhecer na hora do treino. */
+  var TECS_PT = [
+    ["drop", "Drop-set", "chega na falha, tira peso (ou repetições) e continua sem descanso"],
+    ["up", "Up set", "sobe o peso (ou as repetições) a cada série"],
+    ["rest", "Rest-pause", "vai à falha, para 15-20 s e faz mais algumas repetições"],
+    ["bi", "Bi-set", "emenda no próximo exercício sem descanso no meio"],
+    ["iso", "Isometria", "segura parado no ponto mais difícil do movimento"],
+  ];
+  var tecNome = function (k) { var t = TECS_PT.find(function (x) { return x[0] === k; }); return t ? t[1] : ""; };
   function treinoTexto(st, alunoId) {
     var t = (st.treinosV2 || {})[alunoId];
     if (!t || !t.fichas.length) return (st.treinos || {})[alunoId] || "";
     return t.fichas.map(function (f) {
       return f.titulo + "\n" + f.itens.map(function (it) {
         var ex = exPorId(st, it.exId) || { nome: "?" };
-        return "• " + ex.nome + " — " + it.series + "x" + it.reps + (it.descanso ? " · descanso " + it.descanso + "s" : "") + (it.obs ? " (" + it.obs + ")" : "");
+        return "• " + ex.nome + " — " + it.series + "x" + it.reps + (it.descanso ? " · descanso " + it.descanso + "s" : "") +
+          (tecNome(it.tec) ? " · " + tecNome(it.tec) : "") + (it.obs ? " (" + it.obs + ")" : "");
       }).join("\n");
     }).join("\n\n");
   }
+  window.__treinoTexto = treinoTexto; // testes
   function renderFichas() {
     var el = $("fichasBox");
     // o evento toggle do <details> é assíncrono — lê o estado real do DOM
@@ -6050,7 +6063,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return '<div class="sessao-pt"><b>' + esc(ex.nome) + "</b>" +
             '<button class="btn sec mini" data-tsr="' + f.id + ":" + i + '" title="mudar séries e repetições">' + it.series + "×" + it.reps + "</button>" +
             '<button class="btn sec mini" data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">⏱ ' + (+it.descanso || 60) + "s</button>" +
-            '<button class="btn sec mini" data-tobs="' + f.id + ":" + i + '" title="editar a observação do exercício">' + (it.obs ? "✎ " + esc(it.obs) : "✎") + "</button>" +
+            '<button class="btn sec mini" data-ttec="' + f.id + ":" + i + '" title="técnica de intensidade neste exercício (drop-set, up set…)">' + (tecNome(it.tec) ? "⚡ " + esc(tecNome(it.tec)) : "⚡") + "</button>" +
+            // a observação inteira fica no title: no botão ela é cortada, senão a
+            // linha do exercício quebra e joga o ↑↓✕ pra segunda fileira
+            '<button class="btn sec mini" data-tobs="' + f.id + ":" + i + '" title="' + (it.obs ? esc(it.obs) + " — clique para editar" : "editar a observação do exercício") + '">' +
+            (it.obs ? "✎ " + esc(it.obs.length > 26 ? it.obs.slice(0, 25) + "…" : it.obs) : "✎") + "</button>" +
             (videoDoEx(ex) ? "<span title='tem vídeo'>▸</span>" : "") +
             '<span style="margin-left:auto;display:inline-flex;gap:8px;flex:none;">' +
             (i > 0 ? '<button class="btn sec mini" data-sobe="' + f.id + ":" + i + '" title="subir na ficha">↑</button>' : "") +
@@ -8203,6 +8220,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             reps: String(it.reps || "10").slice(0, 8),
             descanso: Math.min(300, Math.max(15, parseInt(it.descanso, 10) || 60)),
             obs: String(it.obs || "").slice(0, 120),
+            tec: TECS_PT.some(function (x) { return x[0] === it.tec; }) ? it.tec : "",
           });
           total++;
         });
@@ -8287,6 +8305,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var tds = e.target.getAttribute && e.target.getAttribute("data-tdesc");
     var tsr = e.target.getAttribute && e.target.getAttribute("data-tsr");
     var tob = e.target.getAttribute && e.target.getAttribute("data-tobs");
+    var ttc = e.target.getAttribute && e.target.getAttribute("data-ttec");
     var des = e.target.getAttribute && e.target.getAttribute("data-desce");
     // foto da ficha (vira a capa do card "treino de hoje" no app do aluno)
     var cap = e.target.getAttribute && e.target.getAttribute("data-fcapa");
@@ -8301,7 +8320,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (fCx) { delete fCx.capa; marcaAppPendente(stCx, $("tAluno").value); save(stCx); renderFichas(); }
       return;
     }
-    if (!add && !rmF && !rmI && !sob && !tds && !tsr && !tob && !des) return;
+    if (!add && !rmF && !rmI && !sob && !tds && !tsr && !tob && !ttc && !des) return;
     var alunoId = $("tAluno").value;
     var st = load();
     var t = treinoDe(st, alunoId);
@@ -8367,6 +8386,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var nObs = prompt("Observação do exercício (deixe vazio pra remover):", ito.obs || "");
       if (nObs === null) return;
       ito.obs = nObs.trim();
+    }
+    if (ttc) {
+      var pc9 = ttc.split(":");
+      var fc9 = t.fichas.find(function (x) { return x.id === pc9[0]; });
+      var itc = fc9 && fc9.itens[+pc9[1]];
+      if (!itc) return;
+      var atual = TECS_PT.findIndex(function (x) { return x[0] === itc.tec; }) + 1;
+      var nTec = prompt("Técnica neste exercício:\n\n0 = nenhuma (série normal)\n" +
+        TECS_PT.map(function (x, k) { return (k + 1) + " = " + x[1] + " — " + x[2]; }).join("\n") +
+        "\n\nO que muda (peso ou repetição) você escreve na observação ✎.", atual);
+      if (nTec === null) return;
+      var iTec = parseInt(nTec, 10);
+      if (!(iTec >= 0 && iTec <= TECS_PT.length)) { alert("Digite um número de 0 a " + TECS_PT.length + "."); return; }
+      if (iTec === 0) delete itc.tec; else itc.tec = TECS_PT[iTec - 1][0];
     }
     if (des) {
       var pd = des.split(":");
@@ -10280,7 +10313,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
       return { titulo: f.titulo, capa: f.capa || "", itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
-        return { nome: ex.nome || "?", video: videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "",
+        return { nome: ex.nome || "?", video: videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
       }) };
     }) : null;

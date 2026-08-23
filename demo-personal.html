@@ -121,8 +121,13 @@
   });
   var exId = {};
   exercicios.forEach(function (e) { exId[e.nome] = e.id; });
-  function ficha(titulo, nomes, series, reps, desc) {
-    return { id: uid(), titulo: titulo, itens: nomes.map(function (n) { return { exId: exId[n], series: series, reps: reps, descanso: desc, obs: "" }; }) };
+  /* `tecs` marca a técnica de intensidade de alguns exercícios (v588): o cliente
+   * que vê a demo entende na hora que dá pra prescrever drop-set e afins. */
+  function ficha(titulo, nomes, series, reps, desc, tecs) {
+    return { id: uid(), titulo: titulo, itens: nomes.map(function (n, i) {
+      return { exId: exId[n], series: series, reps: reps, descanso: desc,
+        obs: (tecs && tecs[i] && tecs[i][1]) || "", tec: (tecs && tecs[i] && tecs[i][0]) || "" };
+    }) };
   }
 
   var ALUNOS = [
@@ -155,9 +160,11 @@
 
   var alunos = [], pagamentos = [], avaliacoes = [], sessoes = [], treinosV2 = {}, diarioPT = {};
   var FICHAS = {
-    Hipertrofia: [ficha("A — Peito e Tríceps", ["Supino reto com barra", "Crucifixo com halteres", "Tríceps na polia"], 4, "10", 90),
+    Hipertrofia: [ficha("A — Peito e Tríceps", ["Supino reto com barra", "Crucifixo com halteres", "Tríceps na polia"], 4, "10", 90,
+      [["drop", "na última série tira 20% do peso e vai até falhar"], null, ["rest", "falhou? para 15 s e faz mais 4"]]),
       ficha("B — Costas e Bíceps", ["Remada curvada com barra", "Puxada alta na polia", "Rosca direta com barra"], 4, "10", 90),
-      ficha("C — Pernas e Core", ["Agachamento livre", "Leg press 45°", "Levantamento terra romeno", "Prancha"], 4, "10", 90)],
+      ficha("C — Pernas e Core", ["Agachamento livre", "Leg press 45°", "Levantamento terra romeno", "Prancha"], 4, "10", 90,
+        [null, ["up", "sobe 10 kg por série e desce pra 8 repetições"], null, ["iso", "segura 40 s em cada série"]])],
     Outro: [ficha("A — Corpo todo (ênfase inferior)", ["Agachamento livre", "Elevação pélvica", "Leg press 45°", "Prancha"], 3, "12", 60),
       ficha("B — Corpo todo (ênfase superior)", ["Supino reto com barra", "Puxada alta na polia", "Desenvolvimento com halteres"], 3, "12", 60)],
   };
@@ -206,7 +213,10 @@
     }
     alunos.push(a);
     treinosV2[id] = { fichas: (cfg.objetivo === "Hipertrofia" ? FICHAS.Hipertrofia : FICHAS.Outro).map(function (f) {
-      return { id: uid(), titulo: f.titulo, itens: f.itens.map(function (it) { return { exId: it.exId, series: it.series, reps: it.reps, descanso: it.descanso, obs: "" }; }) };
+      // copia o item INTEIRO (obs e técnica inclusive) — antes zerava os dois aqui
+      return { id: uid(), titulo: f.titulo, itens: f.itens.map(function (it) {
+        return { exId: it.exId, series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs || "", tec: it.tec || "" };
+      }) };
     }), objetivo: cfg.objetivo.toLowerCase(), semana: 3, validade: iso(-30) };
     if (idx === 0) {
       treinosV2[id].wods = [{ id: "wod" + id, nome: "WOD do sábado", tipo: "amrap", cap: 12, min: 12, rounds: 8, work: 20, rest: 10,

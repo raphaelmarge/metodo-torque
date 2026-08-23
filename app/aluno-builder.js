@@ -119,6 +119,18 @@
         "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>" + esc(sub) + "</span></span>" +
         "<span class='fseta' style='color:#6e6a78;font-size:13px;'>▾</span></summary>";
     };
+    /* Técnicas de intensidade no MESMO exercício (v588) — o professor marca no
+     * painel e aqui só mostramos. O que muda (peso ou repetição) ele escreve na
+     * observação; o nome é o que o aluno reconhece na hora. */
+    var TECS_APP = { drop: ["Drop-set", "chega na falha, tira peso (ou repetições) e continua sem descanso"],
+      up: ["Up set", "sobe o peso (ou as repetições) a cada série"],
+      rest: ["Rest-pause", "vai até a falha, para 15-20 s e faz mais algumas repetições"],
+      bi: ["Bi-set", "emenda no próximo exercício sem descanso no meio"],
+      iso: ["Isometria", "segura parado no ponto mais difícil do movimento"] };
+    var tecChip = function (k) {
+      var t = TECS_APP[k];
+      return t ? "<span class='tecchip'>" + esc(t[0]) + "</span>" : "";
+    };
     var htmlApp = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<link rel='manifest' href='/app/manifest.webmanifest'>" +
@@ -373,6 +385,7 @@
       // título primeiro, "Série 3 de 4" logo abaixo (tela 47) — só a ORDEM do
       // flex muda; o #gGrupo continua o mesmo elemento de sempre
       ".gtopo{order:0}.gbarra{order:1}.gcont{order:2}.gtit{order:3}.ggrupo{order:4}.gcard{order:5}.gbase{order:6}.gpe{order:7}" +
+      ".gtecl{order:4;margin-top:8px;line-height:1.5}" +
       ".gtopo .gx{order:-1;margin-right:2px}" +
       ".gtopo #gPularEx{display:none}" + // pular mora no miolo (#gPulaEx2); o clique de teste segue vivo
       ".gmarca{text-align:center;color:#8a8695}" +
@@ -427,7 +440,7 @@
       /* ---------- fim do treino em festa (tela 48): fundo na cor do studio ---------- */
       ".gwrap.festa{background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%)}" +
       ".gwrap.festa .gcard{background:none;border:none;box-shadow:none;max-height:none}" +
-      ".gwrap.festa .gbarra,.gwrap.festa .gcont,.gwrap.festa .ggrupo,.gwrap.festa .gbase,.gwrap.festa .gtit,.gwrap.festa .gchip{display:none}" +
+      ".gwrap.festa .gbarra,.gwrap.festa .gcont,.gwrap.festa .ggrupo,.gwrap.festa .gbase,.gwrap.festa .gtit,.gwrap.festa .gchip,.gwrap.festa .gtecl{display:none!important}" +
       ".gwrap.festa .gmarca{color:rgba(255,255,255,.8)}" +
       ".gwrap.festa .gtopo button{color:#fff}" +
       ".wtile2{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:12px 6px;text-align:center;color:#fff}" +
@@ -571,6 +584,10 @@
       "#gFc{display:none;margin-left:auto;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#f87171;background:rgba(248,113,113,.12);border-radius:99px;padding:0 12px;min-height:34px}" +
       "#gFc.on{display:inline-flex}" +
       ".gwrap.festa #gFc{display:none}" +
+      // selo da técnica de intensidade (drop-set, up set…) — laranja porque é
+      // aviso de esforço, não é a cor do studio
+      ".tecchip{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fdba74;background:rgba(251,146,60,.14);border:1px solid rgba(251,146,60,.4);border-radius:99px;padding:2px 8px;vertical-align:middle;margin-left:7px;white-space:nowrap}" +
+      ".gwrap .tecchip{margin:0;font-size:10px;padding:4px 11px}" +
       "</style>" + (raiz.MT_APP_SKIN ? "<style>" + raiz.MT_APP_SKIN.css + "</style>" : "") + "</head><body class='semtopo'>" + (raiz.MT_APP_SKIN ? "<script>" + raiz.MT_APP_SKIN.js + "<\/script>" : "") +
       "<div class='topo'>" +
       // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
@@ -940,12 +957,13 @@
             // prescrição e kg (pintados do diário do aparelho) à direita
             return "<details class='exrow' style='border-top:1px solid var(--bg11);'>" +
               "<summary style='padding:12px 16px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;font-size:14px;'>" +
-              "<span style='flex:1;min-width:0;'><b style='display:block;font-size:14.5px;'>" + esc(it.nome) + "</b>" +
+              "<span style='flex:1;min-width:0;'><b style='display:block;font-size:14.5px;'>" + esc(it.nome) + tecChip(it.tec) + "</b>" +
               "<span class='exult' data-exn='" + esc(it.nome) + "' style='display:block;font-size:11.5px;color:#6e6a78;margin-top:2px;'>sem carga anotada</span></span>" +
               "<span style='flex:none;font-size:14.5px;font-weight:800;white-space:nowrap;'>" + it.series + " × " + esc(String(it.reps)) + "</span>" +
               "<span class='exkg' data-exn='" + esc(it.nome) + "' style='flex:none;min-width:44px;text-align:right;font-size:14px;font-weight:800;color:var(--corc);white-space:nowrap;'></span></summary>" +
               "<div style='padding:0 16px 12px;font-size:13.5px;color:#d6d2df;line-height:1.6;'>" +
               (it.desc ? "<div style='margin-bottom:8px;'>" + esc(it.desc) + "</div>" : "") +
+              (TECS_APP[it.tec] ? "<div style='color:#fdba74;margin-bottom:8px;'><b>" + esc(TECS_APP[it.tec][0]) + "</b> — " + esc(TECS_APP[it.tec][1]) + "</div>" : "") +
               (it.obs ? "<div style='color:var(--corc);margin-bottom:8px;'>" + esc(it.obs) + "</div>" : "") +
               (it.video ? "<button class='vidbtn' data-v='" + esc(it.video) + "' style='background:none;border:none;color:#8a8695;font-weight:700;font-size:12px;padding:5px 4px;font-family:inherit;cursor:pointer;text-decoration:underline;'>vídeo</button>" : "") +
               ((!it.desc && !it.obs) ? "<span style='color:#6e6a78;font-size:12.5px;margin-left:8px;'>Dúvidas? Chama no chat!</span>" : "") +
@@ -1417,6 +1435,7 @@
       "<div class='ghist' id='gHist'></div></div>" +
       "<div class='ggrupo' id='gGrupo'></div>" +
       "<div class='gtit' id='gEx'></div>" +
+      "<div class='gtecl' id='gTec' style='display:none;'></div>" +
       "<div class='gbase'><div class='gmeta' id='gMeta'></div>" +
       "<div class='grelo'><b id='gRelo'>0:00</b><em id='gReloLab'>neste exercício</em></div></div>" +
       "<div class='gpe' id='gPe'>" +
@@ -2848,16 +2867,20 @@
       "var GUIA=" + jsonApp((function () {
         var extra = (fichasApp || []).map(function (f) {
           return (f.itens || []).map(function (it) {
-            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "" };
+            return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "", tc: it.tec || "" };
           });
         });
         return (guiaFichasP || []).map(function (f, fi) {
           return { n: f.n, it: (f.it || []).map(function (it, ii) {
             var x = (extra[fi] || [])[ii] || {};
-            return { e: it.e, s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "" };
+            return { e: it.e, s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "" };
           }) };
         });
       })()) + ";" +
+      "var TECS_G=" + jsonApp(TECS_APP) + ";" +
+      "function gPoeTec(it){var el=gEl('gTec');if(!el)return;var t=TECS_G[(it&&it.tc)||''];" +
+      "if(!t){el.style.display='none';el.innerHTML='';return;}" +
+      "el.style.display='block';el.innerHTML=\"<span class='tecchip'>\"+esc2(t[0])+\"</span> <span style='color:#8a8695;font-size:12.5px;'>\"+esc2(t[1])+'</span>';}" +
       "function beepG(){try{var ac=new (window.AudioContext||window.webkitAudioContext)();var o=ac.createOscillator(),ga=ac.createGain();" +
       "o.connect(ga);ga.connect(ac.destination);o.frequency.value=880;ga.gain.value=.25;o.start();" +
       "setTimeout(function(){o.frequency.value=1320;},180);setTimeout(function(){o.stop();ac.close();},380);}catch(e){}}" +
@@ -3003,7 +3026,7 @@
       // a linha roxa embaixo do título virou a posição na série (tela 47); o
       // grupo muscular continua nas listas de treino, onde sempre esteve
       "gEl('gGrupo').textContent='Série '+Math.min(gv.s+1,it.s)+' de '+it.s;gEl('gGrupo').style.display='block';" +
-      "gEl('gEx').textContent=it.e;" +
+      "gEl('gEx').textContent=it.e;gPoeTec(it);" +
       "gEl('gMeta').innerHTML=\"<i class='forte'>\"+it.s+' × '+esc2(it.r||'?')+\"</i><i>\"+(it.d||60)+' s descanso</i>';" +
       "gEl('gReloLab').textContent='neste exercício';" +
       "gEl('gDesc').style.display='none';" +
@@ -3200,7 +3223,7 @@
       // repescagem: abre o registro daquele exercício sem sair da tela final
       "function gRepesca(i){var it=GUIA[gv.f].it[i];if(!it)return;" +
       "var gea=gEl('gEstado');gea.style.display='inline-block';gea.textContent='Anotar carga';gea.classList.remove('verde');gEl('gEx').textContent=it.e;" +
-      "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';" +
+      "gEl('gGrupo').textContent=it.g||'';gEl('gGrupo').style.display=it.g?'block':'none';gPoeTec(it);" +
       "gEl('gMiolo').innerHTML='';gEl('gMiolo2').innerHTML=gCargaHtml(it);" +
       "gEl('gHist').textContent=gHistTxt(it.e);gEl('gHist').style.display='';" +
       "ligaStepper(it,gv.f+':'+i);" +
