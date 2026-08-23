@@ -4073,9 +4073,43 @@ async function abaPt(p, a) {
   });
   ok(nrc.mapa && nrc.redondo, "área de corrida estilo NRC: trajeto no mapa e botão INICIAR redondo gigante");
   ok(/tile\.openstreetmap\.org/.test(cardioProf.appHtml) && /OpenStreetMap/.test(cardioProf.appHtml) && /navigator\.onLine/.test(cardioProf.appHtml),
-    "on-line o mapa usa ruas de verdade (OpenStreetMap com crédito); sem internet cai no traçado offline");
+    "on-line o mapa usa ruas de verdade (com crédito); sem internet cai no traçado offline");
   ok(/globalCompositeOperation='saturation'/.test(cardioProf.appHtml),
-    "o mapa sai limpo (tiles dessaturados com véu claro) — a rota é quem brilha, não as ruas");
+    "o OSM cru continua saindo dessaturado com véu claro — a rota é quem brilha, não as ruas");
+  // estilos de mapa (v592): CARTO escuro/claro/colorido, satélite da Esri e o OSM cru
+  ok(/setTransform\(dp,0,0,dp,0,0\)/.test(cardioProf.appHtml) && /,256,256\);\}catch/.test(cardioProf.appHtml),
+    "mapa nítido no celular: o canvas usa a densidade da tela e o tile é desenhado em 256 de CSS");
+  ok(/t\.img\.onerror=function\(\)\{if\(t\.fb\)return;t\.fb=1/.test(cardioProf.appHtml),
+    "tile que não carrega cai no OpenStreetMap — o estilo escolhido nunca deixa o mapa em branco");
+  const mapaEst = await pCr.evaluate(async () => {
+    const M = window.__crMapa, out = { ids: Object.keys(M.estilos), dpr: M.dpr() };
+    const cfg = (mp) => localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, mp }));
+    cfg("auto");
+    document.documentElement.classList.remove("claro");
+    out.autoEscuro = M.estilo();
+    document.documentElement.classList.add("claro");
+    out.autoClaro = M.estilo();
+    document.documentElement.classList.remove("claro");
+    cfg("satelite");
+    out.escolhido = M.estilo();
+    out.urlSat = M.url(M.estilos.satelite.u, M.estilos.satelite, 15, 3, 7);
+    out.urlEsc = M.url(M.estilos.escuro.u, M.estilos.escuro, 15, 3, 7);
+    const sel = document.getElementById("crCfgMp");
+    out.opcoes = sel ? [...sel.options].map((o) => o.value) : [];
+    if (sel) { sel.value = "colorido"; sel.dispatchEvent(new Event("change")); }
+    out.salvou = (JSON.parse(localStorage.getItem("ptcrCfg") || "{}") || {}).mp;
+    localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
+    return out;
+  });
+  ok(["escuro", "claro", "colorido", "satelite", "ruas"].every((k) => mapaEst.ids.includes(k)),
+    "o aluno tem 5 estilos de mapa: escuro, claro, colorido, satélite e ruas");
+  ok(mapaEst.autoEscuro === "escuro" && mapaEst.autoClaro === "claro" && mapaEst.escolhido === "satelite",
+    "Automático segue o tema do app (noturno = mapa escuro) e a escolha do aluno manda quando existe");
+  ok(/^https:\/\/[abcd]\.basemaps\.cartocdn\.com\/rastertiles\/dark_all\/15\/3\/7(@2x)?\.png$/.test(mapaEst.urlEsc) &&
+    mapaEst.urlSat === "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/7/3",
+    "endereço do tile sai montado certo (satélite é z/y/x, CARTO é z/x/y com @2x no retina)");
+  ok(mapaEst.opcoes[0] === "auto" && mapaEst.opcoes.length === 6 && mapaEst.salvou === "colorido",
+    "engrenagem da corrida tem o seletor Estilo do mapa e guarda a escolha no aparelho");
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
   // modo tela cheia estilo NRC: painel de cor chapada ao iniciar; mapa é a 2ª página;

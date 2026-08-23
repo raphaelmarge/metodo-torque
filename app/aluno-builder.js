@@ -2418,23 +2418,45 @@
       "var CRICOS={mapa:\"" + CRICO_MAPA + "\",painel:\"" + CRICO_PAINEL + "\"};" +
       "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
       "function crEl(id){return document.getElementById(id);}" +
-      "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap};}" +
+      "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap,mp:c.mp||'auto'};}" +
       "function crFala(txt){try{if(!window.speechSynthesis)return false;var u=new SpeechSynthesisUtterance(txt);u.lang='pt-BR';speechSynthesis.speak(u);return true;}catch(e){return false;}}" +
-      // mapa de ruas (OpenStreetMap) quando on-line; sem internet cai no traçado offline
+      /* mapa de ruas quando on-line; sem internet cai no traçado offline.
+       * Estilos: CARTO (escuro/claro/colorido, com @2x pra tela retina),
+       * satélite da Esri e o OSM cru. Tile que não carrega cai no OSM —
+       * o mapa nunca fica em branco por causa do estilo escolhido. */
+      "var CRMAPS={" +
+      "escuro:{n:'Escuro',u:'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png',s:'abcd',hd:1,bg:'#1a1c20',a:'\u00a9 OpenStreetMap \u00b7 CARTO'}," +
+      "claro:{n:'Claro',u:'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png',s:'abcd',hd:1,bg:'#eceae5',a:'\u00a9 OpenStreetMap \u00b7 CARTO'}," +
+      "colorido:{n:'Colorido',u:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',s:'abcd',hd:1,bg:'#eceae5',a:'\u00a9 OpenStreetMap \u00b7 CARTO'}," +
+      "satelite:{n:'Sat\u00e9lite',u:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',bg:'#20242a',veu:'rgba(0,0,0,.18)',a:'Esri, Maxar, Earthstar'}," +
+      "ruas:{n:'Ruas (OSM)',u:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',bg:'#eceae5',lava:1,a:'\u00a9 OpenStreetMap'}};" +
+      "var CRMAPOSM='https://tile.openstreetmap.org/{z}/{x}/{y}.png';" +
+      "function crDpr(){return Math.min(2,Math.max(1,window.devicePixelRatio||1));}" +
+      // 'auto' = segue o tema do app (noturno -> mapa escuro)
+      "function crEstiloId(){var m=crCfg().mp;if(m&&CRMAPS[m])return m;" +
+      "return document.documentElement.classList.contains('claro')?'claro':'escuro';}" +
+      "function crEstilo(){return CRMAPS[crEstiloId()]||CRMAPS.ruas;}" +
+      "function crUrl(tpl,e,z,x,y){return String(tpl).replace('{s}',(e&&e.s)?e.s[(x+y)%e.s.length]:'a')" +
+      ".replace('{z}',z).replace('{x}',x).replace('{y}',y).replace('{r}',(e&&e.hd&&crDpr()>1.4)?'@2x':'');}" +
       "var crTiles={};" +
       "function merc(lat,lng,z){var n=Math.pow(2,z);var x=(lng+180)/360*n;var la=lat*Math.PI/180;" +
       "var y=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n;return {x:x,y:y};}" +
       "function crTile(z,x,y){var n=Math.pow(2,z);if(y<0||y>=n)return null;x=((x%n)+n)%n;" +
-      "var k=z+'/'+x+'/'+y;var t=crTiles[k];if(t)return t;" +
-      "if(Object.keys(crTiles).length>140)crTiles={};" +
-      "t={img:new Image(),ok:false};crTiles[k]=t;t.img.crossOrigin='anonymous';" +
+      "var es=crEstiloId(),e9=CRMAPS[es];var k=es+'/'+z+'/'+x+'/'+y;var t=crTiles[k];if(t)return t;" +
+      "if(Object.keys(crTiles).length>200)crTiles={};" +
+      "t={img:new Image(),ok:false,fb:0};crTiles[k]=t;t.img.crossOrigin='anonymous';" +
       "t.img.onload=function(){t.ok=true;try{desenhaRota();}catch(e){}};" +
-      "t.img.src='https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png';return t;}" +
+      "t.img.onerror=function(){if(t.fb)return;t.fb=1;t.img.src=crUrl(CRMAPOSM,null,z,x,y);};" +
+      "t.img.src=crUrl(e9.u,e9,z,x,y);return t;}" +
       "function crFullAberto(){var f=crEl('crFull');return !!f&&f.style.display!=='none';}" +
-      "function crFullDim(){var cv=crEl('crMapaFull');if(!cv)return;var r=cv.getBoundingClientRect();" +
-      "if(r.width>0&&Math.abs(cv.width-r.width)>4){cv.width=Math.round(r.width);cv.height=Math.round(r.height);}}" +
-      "function desenhaRota(){desenhaCv(crEl('crMapa'));if(crFullAberto()){crFullDim();desenhaCv(crEl('crMapaFull'));}}" +
-      "function desenhaCv(cv){if(!cv)return;var g=cv.getContext('2d');var W=cv.width,H=cv.height;g.clearRect(0,0,W,H);" +
+      // o canvas guarda pixel de VERDADE (largura na tela x densidade), senão
+      // no iPhone o mapa sai borrado; o desenho continua em pixel de CSS
+      "function crDim(cv){if(!cv)return;var r=cv.getBoundingClientRect();var d=crDpr();" +
+      "if(r.width>0&&Math.abs(cv.width-Math.round(r.width*d))>4){cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);}}" +
+      "function crFullDim(){crDim(crEl('crMapaFull'));}" +
+      "function desenhaRota(){crDim(crEl('crMapa'));desenhaCv(crEl('crMapa'));if(crFullAberto()){crFullDim();desenhaCv(crEl('crMapaFull'));}}" +
+      "function desenhaCv(cv){if(!cv)return;var g=cv.getContext('2d');var dp=crDpr();" +
+      "var W=cv.width/dp,H=cv.height/dp;g.setTransform(dp,0,0,dp,0,0);g.clearRect(0,0,W,H);" +
       "var CLR=document.documentElement.classList.contains('claro');" +
       "var centro=cr.rota.length?cr.rota[cr.rota.length-1]:cr.lastPos;" +
       "if(navigator.onLine&&centro){" +
@@ -2446,15 +2468,16 @@
       "for(z=17;z>12;z--){var q1=merc(b.la2,b.lo1,z),q2=merc(b.la1,b.lo2,z);" +
       "if((q2.x-q1.x)*256<W-60&&(q2.y-q1.y)*256<H-60)break;}}" +
       "var c0=merc(centro.lat,centro.lng,z);var px0=c0.x*256-W/2,py0=c0.y*256-H/2;" +
-      "g.fillStyle='#eceae5';g.fillRect(0,0,W,H);" +
+      "var EST=crEstilo();g.fillStyle=EST.bg||'#eceae5';g.fillRect(0,0,W,H);" +
       "for(var tx=Math.floor(px0/256);tx<=Math.floor((px0+W)/256);tx++){for(var ty=Math.floor(py0/256);ty<=Math.floor((py0+H)/256);ty++){" +
-      "var tl=crTile(z,tx,ty);if(tl&&tl.ok)try{g.drawImage(tl.img,Math.round(tx*256-px0),Math.round(ty*256-py0));}catch(e){}}}" +
+      "var tl=crTile(z,tx,ty);if(tl&&tl.ok)try{g.drawImage(tl.img,Math.round(tx*256-px0),Math.round(ty*256-py0),256,256);}catch(e){}}}" +
       /* visual clean, estilo app de corrida: tira a cor berrante dos tiles
        * (composição 'saturation' — o filtro de canvas não roda em iPhone
        * antigo, composição roda em tudo) e passa um véu claro por cima.
        * A rota e a posição são pintadas DEPOIS, então continuam vivas. */
-      "g.globalCompositeOperation='saturation';g.fillStyle='hsl(0, 14%, 50%)';g.fillRect(0,0,W,H);" +
-      "g.globalCompositeOperation='source-over';g.fillStyle='rgba(244,242,237,.42)';g.fillRect(0,0,W,H);" +
+      "if(EST.lava){g.globalCompositeOperation='saturation';g.fillStyle='hsl(0, 14%, 50%)';g.fillRect(0,0,W,H);" +
+      "g.globalCompositeOperation='source-over';g.fillStyle='rgba(244,242,237,.42)';g.fillRect(0,0,W,H);}" +
+      "else if(EST.veu){g.fillStyle=EST.veu;g.fillRect(0,0,W,H);}" +
       "var pj=function(pp){var m2=merc(pp.lat,pp.lng,z);return {x:m2.x*256-px0,y:m2.y*256-py0};};" +
       "if(cr.rota.length>1){g.lineJoin='round';g.lineCap='round';" +
       "g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=8;g.beginPath();" +
@@ -2467,8 +2490,10 @@
       "var pAt=pj(posAt);g.fillStyle='#fff';g.beginPath();g.arc(pAt.x,pAt.y,10,0,7);g.fill();" +
       "g.fillStyle='#2563eb';g.beginPath();g.arc(pAt.x,pAt.y,6.5,0,7);g.fill();" +
       // atribuição obrigatória do OpenStreetMap
-      "g.fillStyle='rgba(255,255,255,.85)';g.fillRect(W-150,H-22,150,22);" +
-      "g.fillStyle='#444';g.font='11px system-ui,sans-serif';g.textAlign='right';g.fillText('\\u00a9 OpenStreetMap',W-8,H-7);" +
+      "var atb=EST.a||'\\u00a9 OpenStreetMap';g.font='11px system-ui,sans-serif';g.textAlign='right';" +
+      "var atw=Math.round(g.measureText(atb).width)+16;" +
+      "g.fillStyle='rgba(255,255,255,.85)';g.fillRect(W-atw,H-22,atw,22);" +
+      "g.fillStyle='#444';g.fillText(atb,W-8,H-7);" +
       "return;}" +
       // offline (ou ainda sem posição): grade + traçado do percurso
       "g.strokeStyle=CLR?'rgba(0,0,0,.07)':'rgba(255,255,255,.05)';g.lineWidth=1;" +
@@ -2742,13 +2767,17 @@
       // configurações da corrida (engrenagem): contagem, aviso por km e pausa automática
       "function pintaCrCfg(){var c=crCfg();crEl('crCfgBox').innerHTML=" +
       "\"<div style='font-size:11px;font-weight:800;letter-spacing:.14em;color:#6e6a78;margin-bottom:6px;'>CONFIGURA\\u00c7\\u00d5ES DA CORRIDA</div>\"+" +
+      "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>Estilo do mapa<select id='crCfgMp' style='width:120px;'>\"+" +
+      "[['auto','Autom\\u00e1tico']].concat(Object.keys(CRMAPS).map(function(k9){return [k9,CRMAPS[k9].n];}))" +
+      ".map(function(o){return \"<option value='\"+o[0]+\"'\"+(c.mp===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'+" +
       "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>Contagem regressiva<select id='crCfgCd' style='width:120px;'>\"+" +
       "[0,3,5,10].map(function(v){return \"<option value='\"+v+\"'\"+(c.cd===v?' selected':'')+'>'+(v?v+' segundos':'Desligada')+'</option>';}).join('')+'</select></label>'+" +
       "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>Aviso a cada km<select id='crCfgFb' style='width:120px;'>\"+" +
       "[['voz','Voz'],['bip','Bipe'],['off','Desligado']].map(function(o){return \"<option value='\"+o[0]+\"'\"+(c.fb===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'+" +
       "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;'>Pausa autom\\u00e1tica (com GPS)<input type='checkbox' id='crCfgAp' style='width:18px;height:18px;'\"+(c.ap?' checked':'')+'>'+'</label>';" +
-      "['crCfgCd','crCfgFb','crCfgAp'].forEach(function(id2){crEl(id2).addEventListener('change',function(){" +
-      "Sv('ptcrCfg',{cd:+crEl('crCfgCd').value,fb:crEl('crCfgFb').value,ap:crEl('crCfgAp').checked?1:0});});});}" +
+      "['crCfgMp','crCfgCd','crCfgFb','crCfgAp'].forEach(function(id2){crEl(id2).addEventListener('change',function(){" +
+      "Sv('ptcrCfg',{cd:+crEl('crCfgCd').value,fb:crEl('crCfgFb').value,ap:crEl('crCfgAp').checked?1:0,mp:crEl('crCfgMp').value});" +
+      "try{desenhaRota();}catch(e9){}});});}" +
       "crEl('crCfgBtn').addEventListener('click',function(){var bx=crEl('crCfgBox');" +
       "if(bx.style.display==='none'){pintaCrCfg();bx.style.display='block';crEl('crMetaBox').style.display='none';}else bx.style.display='none';});" +
       // meta da corrida livre (pill "Defina uma meta")
@@ -2866,6 +2895,7 @@
       "crUnB.addEventListener('touchstart',function(e){e.preventDefault();crSeg();});crUnB.addEventListener('touchend',crSolta);crUnB.addEventListener('touchcancel',crSolta);" +
       "crUnB.addEventListener('mousedown',crSeg);crUnB.addEventListener('mouseup',crSolta);crUnB.addEventListener('mouseleave',crSolta);" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
+      "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr};" +
       "}" +
       "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
       "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
@@ -4526,7 +4556,7 @@
       "var idAlvo=s==='wod'?'cardWod':s==='cardio'?'cardCardio':null;" +
       "el.style.display=(idAlvo?el.id===idAlvo:(el.id!=='cardWod'&&el.id!=='cardCardio'))?'':'none';});" +
       // GPS sempre ativo: liga ao abrir a área de cardio, desliga ao sair (se não tem treino rodando)
-      "try{if(s==='cardio')crAutoGps();else if(!cr.run)crGpsPara();}catch(e){}" +
+      "try{if(s==='cardio'){crAutoGps();desenhaRota();}else if(!cr.run)crGpsPara();}catch(e){}" +
       "document.querySelectorAll('[data-trsub]').forEach(function(b){var on=b.dataset.trsub===s;" +
       "b.style.background=on?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)';b.style.border=on?'none':'1px solid var(--bg11)';b.style.color=on?'#fff':'#a9a4b5';});" +
       "window.scrollTo(0,0);}" +
@@ -4541,7 +4571,7 @@
       "var sw9=document.getElementById('swTema');if(sw9)sw9.classList.toggle('on',claro);" +
       "if(btTema){document.getElementById('mgTemaTit').textContent=claro?'Modo noturno':'Modo claro';" +
       "document.getElementById('mgTemaIco').innerHTML=icoTema(claro?\"<path d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/>\":\"<circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/>\");}" +
-      "try{trocaSec(SEC);}catch(e){}}" +
+      "try{trocaSec(SEC);}catch(e){}try{desenhaRota();}catch(e){}}" +
       "if(btTema)btTema.addEventListener('click',function(){Sv('pttema',+L('pttema',0)===1?0:1);aplicaTemaApp();if(navigator.vibrate)navigator.vibrate(10);});" +
       "aplicaTemaApp();window.__temaApp=aplicaTemaApp;" +
       // ---- Ajustes (tela 11): notificações com interruptor ----

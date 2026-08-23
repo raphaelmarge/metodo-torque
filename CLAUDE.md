@@ -161,6 +161,23 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Mapa da corrida com estilo** (a partir da v592): o mapa do GPS é canvas puro
+(sem Leaflet), e agora tem `CRMAPS` com cinco estilos — `escuro`/`claro`/
+`colorido` (CARTO, com `@2x` quando a tela é retina), `satelite` (Esri World
+Imagery, endereço em `z/y/x`) e `ruas` (OSM cru, o único que ainda leva o
+tratamento de dessaturação + véu, marcado por `lava:1`). O aluno escolhe em
+Corrida → engrenagem → *Estilo do mapa* (`ptcrCfg.mp`); o padrão `auto` segue o
+tema do app (noturno → mapa escuro). Tile que não carrega cai no OSM
+(`t.img.onerror`, uma tentativa só) — estilo fora do ar nunca deixa o mapa em
+branco. Nitidez: o canvas passou a guardar pixel de verdade (largura na tela ×
+`devicePixelRatio`, teto 2) e o desenho continua em pixel de CSS via
+`setTransform(dp,0,0,dp,0,0)` + `drawImage(...,256,256)` — sem isso o mapa em
+tela cheia saía borrado no iPhone. A atribuição é por estilo e a caixa branca
+tem a largura do texto (`measureText`). Ganchos: `window.__crMapa`
+(`estilos`, `url`, `estilo`, `dpr`). Volume: os tiles do CARTO são de uso livre
+com crédito dentro do razoável — se a base crescer muito, o caminho é uma chave
+paga (MapTiler/Mapbox) entrando no lugar da `u` do estilo.
+
 **Corte das fotos é 4:5** (a partir da v590): `leCapa()` corta em **4:5 pelo
 centro** e reduz pra **640 px** de largura (era 16:9 / 720 px). Motivo: o card
 do aluno é EM PÉ (`clamp(470px,64vh,570px)` num corpo de 480 px), então com
