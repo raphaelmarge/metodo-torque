@@ -154,6 +154,21 @@ e salva na coleção certa, pulando pra aba certa. chat-envia antiga (ignora tip
 devolve fichas) → erro honesto mandando republicar, nada cai na aba errada.
 Hooks: `window.__planoPT`. A demo do aluno não tem plano — segue no rodízio.
 
+**Frequência cardíaca ao vivo** (a partir da v580): o app do aluno lê cinta ou
+pulseira de batimento e mostra FC + zona (Z1–Z5, sobre 220 − idade) durante o
+treino guiado e a corrida. Dois caminhos reais, nesta ordem: `window.MTNativo.fc`
+(ponte do app de loja, cobre iPhone) e Web Bluetooth (`navigator.bluetooth`,
+serviço 0x180D / característica 0x2A37 — Chrome no Android; Safari não tem).
+**Sem um dos dois, NADA aparece** — nem card, nem linha nos Ajustes, nem o
+coração no player; mesma regra honesta do `ajSaude`. O batimento cru fica só no
+aparelho; o que é guardado e devolvido pro professor (campo `batimentos` do
+`retorno`, jsonb livre — **sem SQL novo**) é o resumo: `ptfc` por data (média e
+máximo do treino) e `fc`/`fcx` dentro de cada corrida em `ptcardio`. Motor no
+`app/aluno-builder.js` sob o prefixo `hr*`/`HR` (o nome `fc` já era usado como
+variável local em duas funções); ganchos: `window.__fc`, `__fcAmostra`,
+`__fcConecta`, `__fcResumo`, `__fcZera`. Contrato do shell nativo em
+`nativo/SAUDE.md`.
+
 **Avaliação física** (`assets/composicao-corporal.js`, `window.MT_CORPO`): motor
 compartilhado Personal × Nutri. De peso/altura/idade/sexo/%gordura sai o laudo
 completo (água, proteína, minerais, massa magra, músculo, IMC, controle de peso,

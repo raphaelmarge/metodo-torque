@@ -4083,7 +4083,89 @@ async function abaPt(p, a) {
   await pCr.evaluate(() => { const f = document.getElementById("arteFecha"); if (f) f.click(); });
   ok(await p.evaluate((cardio) => /Corrida e bike — registros do app/.test(window.__painelApp({ cardio })) && /pace/.test(window.__painelApp({ cardio })), cardioFim.lst),
     "painel do professor mostra os registros de corrida e bike com pace");
+  // --- frequência cardíaca ao vivo (cinta/pulseira por Bluetooth) ---
+  // regra honesta: sem Web Bluetooth e sem a ponte nativa, NADA aparece
+  const fcSem = await pCr.evaluate(() => ({
+    bt: !!navigator.bluetooth,
+    card: getComputedStyle(document.getElementById("fcCard")).display,
+    aj: getComputedStyle(document.getElementById("ajFc")).display,
+    chip: getComputedStyle(document.getElementById("gFc")).display,
+  }));
+  ok(!fcSem.bt && fcSem.card === "none" && fcSem.aj === "none" && fcSem.chip === "none",
+    "sem cinta possível (nem Bluetooth nem app nativo) o app não mostra NENHUM botão de batimento");
+  // a conta das zonas: 220 − idade, cinco faixas
+  const fcZonas = await pCr.evaluate(async () => {
+    document.getElementById("fcCard").style.display = "block";
+    const ia = document.getElementById("fcIdade");
+    ia.value = "40"; ia.dispatchEvent(new Event("change"));
+    const out = { max: document.getElementById("fcMaxT").textContent, idade: localStorage.getItem("ptidade") };
+    window.__fcZera();
+    window.__fcAmostra(100); // 100/180 = 55% → Z1
+    out.z1 = document.getElementById("fcZona").textContent;
+    window.__fcAmostra(140); // 78% → Z3
+    out.z3 = document.getElementById("fcZona").textContent;
+    out.bpm = document.getElementById("fcBpm").textContent;
+    out.barras = [].slice.call(document.getElementById("fcBar").children).filter((i) => i.style.background).length;
+    window.__fcAmostra(175); // 97% → Z5
+    out.z5 = document.getElementById("fcZona").textContent;
+    out.resumo = window.__fcResumo();
+    return out;
+  });
+  ok(/180 bpm/.test(fcZonas.max) && fcZonas.idade === "40", "a idade do aluno define a FC máxima estimada (220 − 40 = 180)");
+  ok(/^Z1 /.test(fcZonas.z1) && /^Z3 /.test(fcZonas.z3) && /^Z5 /.test(fcZonas.z5) && fcZonas.bpm === "140" && fcZonas.barras === 3,
+    "o batimento vira zona (Z1 a Z5) com as barrinhas acendendo até a faixa atual");
+  ok(fcZonas.resumo && fcZonas.resumo.m === 138 && fcZonas.resumo.x === 175,
+    "o resumo do esforço guarda média e máximo (" + JSON.stringify(fcZonas.resumo) + ")");
   await pCr.close();
+  // com a ponte do app de loja (window.MTNativo.fc) tudo acende e a corrida guarda o resumo
+  const pFc = await ctx.newPage();
+  pFc.on("dialog", (d) => d.accept());
+  await pFc.addInitScript(() => {
+    window.MTNativo = { fc: { conectar: function (cb) { window.__cbFc = cb; }, parar: function () { window.__fcParou = true; } } };
+  });
+  await pFc.route("**/app-teste-fc.html", (r) => r.fulfill({ contentType: "text/html", body: cardioProf.appHtml }));
+  await pFc.goto(BASE + "/app-teste-fc.html", { waitUntil: "domcontentloaded" });
+  await pFc.waitForTimeout(400);
+  const fcCom = await pFc.evaluate(async () => {
+    window.__trocaSec("treino"); window.__trSub("cardio");
+    const out = {
+      card: getComputedStyle(document.getElementById("fcCard")).display,
+      aj: getComputedStyle(document.getElementById("ajFc")).display,
+    };
+    document.getElementById("fcBt").click();
+    await new Promise((r) => setTimeout(r, 100));
+    window.__cbFc(150); window.__cbFc(160);
+    out.bt = document.getElementById("fcBt").textContent;
+    out.chip = document.getElementById("gFc").textContent.trim();
+    out.chipVis = getComputedStyle(document.getElementById("gFc")).display !== "none";
+    out.telaCheia = document.getElementById("crBpmC").style.display + "/" + document.getElementById("crBpmF").textContent;
+    return out;
+  });
+  ok(fcCom.card === "block" && fcCom.aj !== "none" && /Desconectar/.test(fcCom.bt),
+    "com a ponte do app de loja o card de batimentos e a linha dos Ajustes acendem");
+  ok(/160/.test(fcCom.chip) && fcCom.chipVis && fcCom.telaCheia === "block/160",
+    "o batimento ao vivo aparece no topo do treino guiado e na tela cheia da corrida");
+  const fcCorrida = await pFc.evaluate(async () => {
+    localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
+    document.getElementById("crGo").click();
+    await new Promise((r) => setTimeout(r, 200));
+    window.__cbFc(140); window.__cbFc(180);
+    document.getElementById("crKm").value = "2";
+    await new Promise((r) => setTimeout(r, 5600));
+    document.getElementById("crFim").click();
+    await new Promise((r) => setTimeout(r, 300));
+    const lst = JSON.parse(localStorage.getItem("ptcardio") || "[]");
+    const out = { reg: lst[lst.length - 1], aviso: document.getElementById("crFase").textContent + " " + document.getElementById("crInfo").textContent };
+    document.getElementById("fcBt").click();
+    out.desligou = !document.getElementById("fcVivo").className && !!window.__fcParou;
+    return out;
+  });
+  ok(fcCorrida.reg && fcCorrida.reg.fc === 160 && fcCorrida.reg.fcx === 180 && /160 bpm médio · 180 máx/.test(fcCorrida.aviso),
+    "a corrida guarda média e máximo de batimento no registro (o cru nunca sai do aparelho)");
+  ok(fcCorrida.desligou, "desconectar a cinta apaga a leitura e avisa a ponte nativa");
+  ok(/batimentos:L\('ptfc',\{\}\)/.test(cardioProf.appHtml) && /fc:L\('ptfc',\{\}\)/.test(cardioProf.appHtml),
+    "o resumo de batimentos viaja pro professor no retorno (campo batimentos) e no arquivo de dados do aluno");
+  await pFc.close();
   // --- WhatsApp de hoje: fila de mensagens prontas + modelos editáveis ---
   const stSnapZap = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
   await p.evaluate(() => {

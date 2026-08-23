@@ -531,6 +531,25 @@
       ".qabar{display:flex;gap:6px;margin-top:12px}" +
       ".qabar i{flex:1;height:6px;border-radius:99px;background:var(--bg8)}" +
       ".qabar i.on{background:var(--cor)}" +
+      /* ---------- frequencia cardiaca ao vivo (cinta/pulseira Bluetooth) ----------
+       * So aparece quando existe caminho REAL: Web Bluetooth (Chrome no Android,
+       * servico padrao 0x180D) ou a ponte do app de loja (window.MTNativo.fc).
+       * Sem um dos dois, nem botao nasce — nada de botao que finge conectar. */
+      "#fcCard{background:var(--bg5);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px;margin-top:10px;text-align:left}" +
+      "#fcBt{width:100%;min-height:46px;border-radius:99px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);color:#d6d2df;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer}" +
+      "#fcBt.on{border-color:#f87171;color:#f87171}" +
+      "#fcVivo{display:none;align-items:center;gap:13px;margin-top:11px}" +
+      "#fcVivo.on{display:flex}" +
+      "#fcBpm{font-size:36px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}" +
+      ".fcbat{display:inline-block;font-style:normal;line-height:1}" +
+      "@keyframes fcbate{0%,100%{transform:scale(1)}16%{transform:scale(1.25)}34%{transform:scale(1)}}" +
+      ".fcbat.pulsa{animation:fcbate 1s infinite}" +
+      "@media (prefers-reduced-motion: reduce){.fcbat.pulsa{animation:none}}" +
+      ".fczb{display:flex;gap:3px;margin-top:7px}" +
+      ".fczb i{flex:1;height:7px;border-radius:3px;background:var(--bg11)}" +
+      "#gFc{display:none;margin-left:auto;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#f87171;background:rgba(248,113,113,.12);border-radius:99px;padding:0 12px;min-height:34px}" +
+      "#gFc.on{display:inline-flex}" +
+      ".gwrap.festa #gFc{display:none}" +
       "</style>" + (raiz.MT_APP_SKIN ? "<style>" + raiz.MT_APP_SKIN.css + "</style>" : "") + "</head><body class='semtopo'>" + (raiz.MT_APP_SKIN ? "<script>" + raiz.MT_APP_SKIN.js + "<\/script>" : "") +
       "<div class='topo'>" +
       // a marca do studio ganha uma linha inteira: dividindo espaço com a foto
@@ -1020,6 +1039,20 @@
       "<label class='btnx' style='display:block;text-align:center;margin-top:10px;background:var(--bg4);border:1px solid rgba(255,255,255,.08);color:#d6d2df;box-shadow:none;cursor:pointer;'>Importar do relógio (GPX/TCX)" +
       "<input id='crImp' type='file' accept='.gpx,.tcx,.xml' style='display:none;'></label>" +
       "<div class='vz' style='font-size:11px;padding:4px 0 0;'>Apple Watch, Garmin, Xiaomi, Polar… — exporta o treino no app do relógio e traz o arquivo pra cá.</div>" +
+      // batimentos ao vivo: cinta/pulseira Bluetooth (o card nasce escondido e
+      // so acende quando existe caminho real de conexao — ver bloco HR no motor)
+      "<div id='fcCard' style='display:none;'>" +
+      "<div style='font-size:10.5px;font-weight:800;letter-spacing:.2em;color:#8a8695;text-transform:uppercase;margin-bottom:9px;'>Batimentos ao vivo</div>" +
+      "<button type='button' id='fcBt'>Conectar cinta ou pulseira</button>" +
+      "<div id='fcVivo'>" +
+      "<div style='flex:none;'><span id='fcBpm'>--</span><span style='font-size:12px;font-weight:800;color:#8a8695;margin-left:4px;'>bpm</span></div>" +
+      "<div style='flex:1;min-width:0;'><div id='fcZona' style='font-size:12.5px;font-weight:800;'>--</div>" +
+      "<div class='fczb' id='fcBar'><i></i><i></i><i></i><i></i><i></i></div></div></div>" +
+      "<div style='display:flex;align-items:center;gap:9px;margin-top:11px;'>" +
+      "<label for='fcIdade' style='font-size:12px;color:#8a8695;'>Sua idade</label>" +
+      "<input id='fcIdade' inputmode='numeric' maxlength='2' placeholder='30' style='width:66px;text-align:center;'>" +
+      "<span id='fcMaxT' style='font-size:11.5px;color:#8a8695;'></span></div>" +
+      "<div class='vz' id='fcDica' style='font-size:11px;padding:7px 0 0;text-align:left;'></div></div>" +
       // arte da corrida pro aluno postar (aparece depois de finalizar): trajeto +
       // números + marca do studio — cada corrida compartilhada é propaganda
       "<div id='crShare' style='display:none;margin-top:10px;'>" +
@@ -1042,7 +1075,8 @@
       "<div style='display:flex;text-align:center;'>" +
       "<div style='flex:1;'><b id='crTempoF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0:00</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>TEMPO</div></div>" +
       "<div style='flex:1;'><b id='crPaceF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>--:--</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>RITMO</div></div>" +
-      "<div style='flex:1;'><b id='crKcalF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>CALORIAS</div></div></div>" +
+      "<div style='flex:1;'><b id='crKcalF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>CALORIAS</div></div>" +
+      "<div id='crBpmC' style='flex:1;display:none;'><b id='crBpmF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>--</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>BATIMENTOS</div></div></div>" +
       "<div id='crFaseF' style='text-align:center;font-size:11px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.85);text-transform:uppercase;margin-top:4px;'>Pronto?</div>" +
       "<div id='crInfoF' style='text-align:center;font-size:11.5px;color:rgba(255,255,255,.8);'></div></div>" +
       "<div style='position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 14px;'>" +
@@ -1264,6 +1298,10 @@
       "<button class='mgrow' id='ajInstala' style='display:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='2.5' width='14' height='19' rx='2.5'/><path d='M12 8v6M9 11.5 12 14.5l3-3'/></svg></span>" +
       "<span style='flex:1;min-width:0;'><span class='mgtit'>Instalar na tela de início</span><span class='mgsub'>abre sem navegador, direto do ícone</span></span>" +
       "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
+      // cinta/pulseira de batimento: acende com Web Bluetooth ou com a ponte nativa
+      "<button class='mgrow' id='ajFc' style='display:none;'><span style='line-height:0;color:#f87171;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.8 8.6c0 4.6-8.8 10.4-8.8 10.4S3.2 13.2 3.2 8.6a4.6 4.6 0 0 1 8.8-1.9 4.6 4.6 0 0 1 8.8 1.9z'/></svg></span>" +
+      "<span style='flex:1;min-width:0;'><span class='mgtit'>Conectar cinta de batimento</span><span class='mgsub' id='ajFcSub'>cinta ou pulseira por Bluetooth</span></span>" +
+      "<span class='mgchev'><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 6l6 6-6 6'/></svg></span></button>" +
       // ponte do app de verdade (nativo/SAUDE.md): quando o shell da loja
       // injetar window.MTNativo.saude, esta linha acende sozinha
       "<button class='mgrow' id='ajSaude' style='display:none;'><span style='line-height:0;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='6.5'/><path d='M12 9v3l2 1.5M9 3.5h6M9 20.5h6'/></svg></span>" +
@@ -1309,6 +1347,7 @@
       "<span class='gmarca'>" + esc(studio) + "</span>" +
       "<button id='gVoltaEx' class='gvolta' aria-label='Exercício anterior'>‹</button>" +
       "<button id='gPularEx'>Pular exercício</button>" +
+      "<button type='button' id='gFc' aria-label='Batimentos'></button>" +
       "<button id='gFechar' class='gx' aria-label='Fechar o treino guiado'>✕</button></div>" +
       "<div class='gbarra' id='gBarra' aria-hidden='true'></div>" +
       "<div class='gcont'><div id='gProg'></div><span id='gReloTot'></span></div>" +
@@ -1355,7 +1394,7 @@
       "function L(k,f){try{return JSON.parse(localStorage.getItem(k))||f;}catch(e){return f;}}" +
       "function pl(n,s1,s2){return n+' '+(n===1?s1:s2);}" +
       "function Sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}" +
-      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfotoperfil')devolveApp();" +
+      "if(k==='ptpeso'||k==='ptdc'||k==='ptfeitos'||k==='ptfotos'||k==='pthab'||k==='ptrpe'||k==='ptonb'||k==='ptwodres'||k==='ptcardio'||k==='ptfc'||k==='ptfotoperfil')devolveApp();" +
       "if(k==='ptfeitos'||k==='pthab'||k==='ptpeso'||k==='ptqa'){try{pintaHero();pintaCqTiles();pintaXP();}catch(e){}}}" +
       // devolve pro personal o que o aluno registra (peso, cargas, treinos, fotos antes/depois)
       "var devT=null;function devolveApp(){if(!NUVEM||!TOKEN)return;clearTimeout(devT);devT=setTimeout(function(){" +
@@ -1364,7 +1403,7 @@
       "var pri=fr[0]||null;var ult=fr.length>1?fr[fr.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[])," +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{})," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
       "fotoPerfil:L('ptfotoperfil','')||null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
@@ -2413,10 +2452,77 @@
       "var falou=fb2==='voz'&&crFala(cr.ultKm+(cr.ultKm===1?' quil\\u00f4metro':' quil\\u00f4metros')+(med3?'. Pace m\\u00e9dio '+paceFmt(med3).replace(':',' e ')+'.':'.'));" +
       "if(!falou&&fb2!=='off')bip(1000,220);if(navigator.vibrate)navigator.vibrate([120,60,120]);}}" +
       "try{espelhaCr();}catch(e){}}" +
+      /* ---------- frequencia cardiaca ao vivo (HR) ----------
+       * Dois caminhos REAIS de conexao, nesta ordem:
+       *   1) window.MTNativo.fc  — a ponte do app de loja (cobre iPhone e Android)
+       *   2) navigator.bluetooth — Web Bluetooth, servico padrao de batimento
+       *      0x180D (Chrome no Android; o Safari do iPhone nao tem)
+       * Sem nenhum dos dois, hrSuporta() e falso e NADA aparece: o app nunca
+       * mostra botao que nao consegue conectar (mesma regra do ajSaude).
+       * O batimento cru fica so no aparelho enquanto o treino roda; o que e
+       * guardado (e devolvido pro professor) e o RESUMO: media e maximo. */
+      "var HRZN=['Z1 leve','Z2 tranquilo','Z3 moderado','Z4 forte','Z5 m\\u00e1ximo'];" +
+      "var HRZC=['#60a5fa','#4ade80','#facc15','#fb923c','#f87171'];" +
+      "var HR={dev:null,ch:null,on:false,nat:false,bpm:0,mx:0,soma:0,n:0};" +
+      "function hrEl(i){return document.getElementById(i);}" +
+      "function hrIdade(){var v=+L('ptidade',0)||0;return v>=8&&v<=99?v:0;}" +
+      "function hrMax(){return 220-(hrIdade()||30);}" +
+      "function hrZ(b){var p=b/hrMax();return p<.6?0:p<.7?1:p<.8?2:p<.9?3:4;}" +
+      "function hrSuporta(){return !!(window.MTNativo&&window.MTNativo.fc&&window.MTNativo.fc.conectar)||!!(navigator.bluetooth&&navigator.bluetooth.requestDevice);}" +
+      "function hrZera(){HR.mx=0;HR.soma=0;HR.n=0;}" +
+      "function hrResumo(){return HR.n?{m:Math.round(HR.soma/HR.n),x:HR.mx}:null;}" +
+      "function hrPinta(){var b=HR.bpm,z=b>0?hrZ(b):-1,cor=z>=0?HRZC[z]:'#8a8695';" +
+      "var v=hrEl('fcVivo');if(v)v.className=HR.on?'on':'';" +
+      "var bt=hrEl('fcBt');if(bt){bt.textContent=HR.on?'Desconectar a cinta':'Conectar cinta ou pulseira';bt.className=HR.on?'on':'';}" +
+      "var e1=hrEl('fcBpm');if(e1){e1.textContent=b>0?b:'--';e1.style.color=cor;}" +
+      "var e2=hrEl('fcZona');if(e2){e2.textContent=z>=0?HRZN[z]+' \\u00b7 '+Math.round(100*b/hrMax())+'% da m\\u00e1xima':(HR.on?'esperando o primeiro batimento\\u2026':'sem cinta conectada');e2.style.color=cor;}" +
+      "var e3=hrEl('fcBar');if(e3)for(var i9=0;i9<e3.children.length;i9++)e3.children[i9].style.background=(i9<=z?HRZC[i9]:'');" +
+      "var g=hrEl('gFc');if(g){g.className=hrSuporta()?'on':'';" +
+      "g.innerHTML=HR.on?\"<span class='fcbat pulsa'>\\u2665</span> \"+(b>0?b:'--'):\"<span class='fcbat'>\\u2665</span> Cinta\";" +
+      "g.style.color=(HR.on&&b>0)?cor:'';}" +
+      "var cc=hrEl('crBpmC'),cb=hrEl('crBpmF');if(cc)cc.style.display=HR.on?'block':'none';if(cb)cb.textContent=b>0?b:'--';" +
+      "var aj=hrEl('ajFcSub');if(aj)aj.textContent=HR.on?(b>0?b+' bpm agora \\u00b7 toque pra desconectar':'conectada \\u00b7 esperando batimento'):'cinta ou pulseira por Bluetooth';}" +
+      "function hrAmostra(b){b=+b||0;if(b<25||b>240)return;HR.bpm=b;if(b>HR.mx)HR.mx=b;HR.soma+=b;HR.n++;hrPinta();}" +
+      "function hrLe(ev){var d=ev.target.value;if(!d||d.byteLength<2)return;" +
+      "hrAmostra((d.getUint8(0)&1)?d.getUint16(1,true):d.getUint8(1));}" +
+      "function hrSolta(){try{if(HR.ch)HR.ch.removeEventListener('characteristicvaluechanged',hrLe);}catch(e){}" +
+      "try{if(HR.ch)HR.ch.stopNotifications();}catch(e){}" +
+      "try{if(HR.dev&&HR.dev.gatt&&HR.dev.gatt.connected)HR.dev.gatt.disconnect();}catch(e){}" +
+      "try{if(HR.nat&&window.MTNativo.fc.parar)window.MTNativo.fc.parar();}catch(e){}" +
+      "HR.ch=null;HR.dev=null;HR.on=false;HR.nat=false;HR.bpm=0;hrPinta();}" +
+      "function hrConecta(){if(HR.on){hrSolta();return;}" +
+      "var nv=window.MTNativo&&window.MTNativo.fc;" +
+      "if(nv&&nv.conectar){try{nv.conectar(function(b){hrAmostra(b);});HR.nat=true;HR.on=true;hrZera();hrPinta();}" +
+      "catch(e){alert('N\\u00e3o deu pra conectar a cinta agora.');}return;}" +
+      "if(!(navigator.bluetooth&&navigator.bluetooth.requestDevice)){alert('Este navegador n\\u00e3o conecta cinta por Bluetooth. No Android, use o Chrome; no iPhone vai funcionar pelo app da loja.');return;}" +
+      "var bt9=hrEl('fcBt');if(bt9)bt9.textContent='Procurando a cinta\\u2026';" +
+      "navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]}).then(function(d){" +
+      "HR.dev=d;d.addEventListener('gattserverdisconnected',function(){HR.on=false;HR.bpm=0;hrPinta();});return d.gatt.connect();})" +
+      ".then(function(sv){return sv.getPrimaryService('heart_rate');})" +
+      ".then(function(sr){return sr.getCharacteristic('heart_rate_measurement');})" +
+      ".then(function(ch){HR.ch=ch;ch.addEventListener('characteristicvaluechanged',hrLe);return ch.startNotifications();})" +
+      ".then(function(){HR.on=true;hrZera();hrPinta();})" +
+      ".catch(function(e){HR.on=false;hrPinta();" +
+      "if(e&&(e.name==='NotFoundError'||e.name==='AbortError'))return;" +
+      "alert('N\\u00e3o deu pra conectar: '+((e&&e.message)||'ligue a cinta e deixe o celular perto.'));});}" +
+      "(function(){var bt=hrEl('fcBt');if(bt)bt.addEventListener('click',hrConecta);" +
+      "var g=hrEl('gFc');if(g)g.addEventListener('click',hrConecta);" +
+      "var aj=hrEl('ajFc');if(aj)aj.addEventListener('click',hrConecta);" +
+      "function pintaMax(){var t=hrEl('fcMaxT');if(t)t.textContent='FC m\\u00e1xima estimada: '+hrMax()+' bpm';}" +
+      "var ia=hrEl('fcIdade');if(ia){ia.value=hrIdade()||'';" +
+      "ia.addEventListener('change',function(){var v=parseInt(ia.value,10)||0;" +
+      "if(v>=8&&v<=99)Sv('ptidade',v);else{ia.value='';Sv('ptidade',0);}pintaMax();hrPinta();});}" +
+      "pintaMax();" +
+      "if(!hrSuporta())return;" +
+      "var cd=hrEl('fcCard');if(cd)cd.style.display='block';" +
+      "var aj2=hrEl('ajFc');if(aj2)aj2.style.display='';" +
+      "var dc=hrEl('fcDica');if(dc)dc.textContent=(window.MTNativo&&window.MTNativo.fc)?'Cinta, pulseira ou rel\\u00f3gio pelo app.':'Funciona com cinta e pulseira de batimento (padr\\u00e3o Bluetooth). Ligue a cinta antes de tocar em conectar.';" +
+      "hrPinta();})();" +
+      "window.__fc=HR;window.__fcAmostra=hrAmostra;window.__fcConecta=hrConecta;window.__fcResumo=hrResumo;window.__fcZera=hrZera;" +
       "function pintaCrHist(){var el=crEl('crHist');if(!el)return;var lst=L('ptcardio',[]);" +
       "el.innerHTML=lst.length?'<b>Seus \\u00faltimos treinos:</b><br>'+lst.slice(-5).reverse().map(function(x){" +
       "return String(x.d).slice(8,10)+'/'+String(x.d).slice(5,7)+' \\u2014 '+String(x.n).replace(/[<>&]/g,'')+': '+" +
-      "(x.k?x.k.toFixed(2).replace('.',',')+' km \\u00b7 ':'')+wodFmt(x.s)+(x.p?' \\u00b7 pace '+x.p:'');}).join('<br>'):'';}" +
+      "(x.k?x.k.toFixed(2).replace('.',',')+' km \\u00b7 ':'')+wodFmt(x.s)+(x.p?' \\u00b7 pace '+x.p:'')+(x.fc?' \\u00b7 '+x.fc+' bpm':'');}).join('<br>'):'';}" +
       // medalhas de corrida (mesmos critérios do card Conquistas): usado pra
       // avisar NA HORA quando a corrida recém-terminada conquista uma
       "var CRMEDN=['Primeira corrida','10 corridas','5 km numa corrida','10 km numa corrida','100 km somados','Pace abaixo de 6:00'];" +
@@ -2428,6 +2534,7 @@
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;soltaTela();crGpsPara();" +
       "var km=crKmAtual();var med=km>0.015?(el2/60)/km:null;" +
       "var reg={d:isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null};" +
+      "var fcR=hrResumo();if(fcR){reg.fc=fcR.m;reg.fcx=fcR.x;}hrZera();" +
       "var lst=L('ptcardio',[]);" +
       // recordes pessoais e medalhas: compara o histórico antes e depois do registro
       "var antes=crMedQ(lst);var corr=lst.filter(function(x){return x.m==='corrida';});" +
@@ -2439,6 +2546,7 @@
       "depois.forEach(function(t9,i9){if(t9&&!antes[i9])extras.push('Medalha nova: '+CRMEDN[i9]);});" +
       "if(corr.length&&reg.k>mxAnt)extras.push('RECORDE: sua corrida mais longa ('+String(reg.k).replace('.',',')+' km)');" +
       "if(reg.k>=3&&med&&isFinite(pcAnt)&&med<pcAnt)extras.push('RECORDE: seu melhor pace ('+paceFmt(med)+')');}" +
+      "if(fcR)extras.push('Batimentos \\u00b7 '+fcR.m+' bpm m\\u00e9dio \\u00b7 '+fcR.x+' m\\u00e1x');" +
       "cr.fimReg=reg;cr.fimRota=cr.rota.slice();" +
       "crEl('crGo').textContent='Iniciar';crEl('crFase').textContent=msg||(extras.length?extras[0]:'BOA! Treino registrado');crEl('crFase').style.color='#4ade80';" +
       "crEl('crInfo').textContent=extras.slice(msg?0:1).join(' \\u00b7 ');" +
@@ -2527,7 +2635,7 @@
       "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.plano=p3;cr.mod=p3.m;" +
       "crEl('crGo').textContent='Iniciar';crChips();crAutoGps();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
-      "function crLarga(){cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
+      "function crLarga(){hrZera();cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
       "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
       "crEl('crFase').style.color='#a9a4b5';cr.iv=setInterval(pintaCr,200);pintaCr();}" +
       "crEl('crGo').addEventListener('click',function(){" +
@@ -2753,7 +2861,7 @@
       "gEl('gVoltaEx').style.display='';gEl('gPularEx').style.display='';" +
       // gPular e gMais15 agora são fixos na barra do rodapé — só o gSerie volta
       "gEl('gPe').innerHTML=\"<button class='prin' id='gSerie'>Série feita ✓</button>\";" +
-      "gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();}" +
+      "hrZera();gv.relo=setInterval(gTicRelo,1000);gTicRelo();pintaGuia();}" +
       "function fechaGuia(){gSalvaSeSujo();clearInterval(gv.timer);clearInterval(gv.relo);" +
       "gEl('guiaBox').classList.remove('resta');" +
       "var vb=gEl('gVideo');if(vb){var bx=vb.nextElementSibling;if(bx&&bx.classList.contains('vidbox')){bx.innerHTML='';bx.style.display='none';}}" +
@@ -2960,6 +3068,9 @@
       // pela ficha (ptsets_<hoje>, a fonte de verdade do dia) ou entrou pelo
       // Iniciar exercicio no meio via 3 de 10 num treino que o app ja deu por feito
       "var hjR=isoHj(),stR=L('ptsets_'+hjR,{}),dcR=L('ptdc',{});" +
+      // resumo dos batimentos do treino (media e maximo) — 90 dias de historico
+      "var fcR9=hrResumo();if(fcR9){var fcH=L('ptfc',{});fcH[hjR]=fcR9;" +
+      "var kf9=Object.keys(fcH).sort();if(kf9.length>90)delete fcH[kf9[0]];Sv('ptfc',fcH);}" +
       "var marc=0,pres=0,anot=0,faltam=[];" +
       "f.it.forEach(function(it,i){pres+=it.s;" +
       "marc+=Math.min(Math.max(gv.feitas[i]||0,stR[it.e]||0),it.s);" +
@@ -3001,7 +3112,7 @@
       // o detalhe do dia (o recibo de sempre, agora discreto)
       "m+=\"<div class='gdica' style='margin-top:12px;font-size:13.5px;color:rgba(255,255,255,.85);text-align:center;'>\"+" +
       "'Séries feitas aqui · '+marc+' de '+pres+\" — Cargas anotadas · \"+anot+' de '+f.it.length+" +
-      "' — Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+'</div>';" +
+      "' — Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+(fcR9?' \u2014 Batimentos \u00b7 '+fcR9.m+' bpm m\u00e9dio \u00b7 '+fcR9.x+' m\u00e1x':'')+'</div>';" +
       // a pergunta chega no momento certo: acabou de treinar, ainda ofegante
       "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:16px;'>\"+rpeHtml()+'</div>';" +
       "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +
@@ -4300,7 +4411,7 @@
       "(function(){var b=document.getElementById('ajBaixa');if(!b)return;b.addEventListener('click',function(){" +
       "var dados={gerado:new Date().toISOString(),aluno:PRIMEIRO," +
       "peso:L('ptpeso',{}),cargas:L('ptdc',{}),treinos_feitos:L('ptfeitos',{}),habitos:L('pthab',{})," +
-      "como_foi_o_treino:L('ptrpe',{}),circuitos:L('ptwodres',{}),corridas:L('ptcardio',[]),marcas:L('ptmarcas',[])," +
+      "como_foi_o_treino:L('ptrpe',{}),circuitos:L('ptwodres',{}),corridas:L('ptcardio',[]),batimentos:L('ptfc',{}),marcas:L('ptmarcas',[])," +
       "agua:L('ptaguaCfg',null),avaliacoes:AVS};" +
       "var bl=new Blob([JSON.stringify(dados,null,1)],{type:'application/json'});" +
       "var a9=document.createElement('a');a9.href=URL.createObjectURL(bl);a9.download='meus-dados-torque.json';" +

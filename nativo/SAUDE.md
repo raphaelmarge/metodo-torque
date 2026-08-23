@@ -65,12 +65,48 @@ lá. A web NUNCA mostra essa linha sem a ponte: nada de botão que finge.
 5. Revisão da App Store: HealthKit exige que o app SÓ leia o que usa e mostre
    política de privacidade (usar `/privacidade.html` do site).
 
-## Frequência cardíaca ao vivo (bônus, sem loja no Android)
+## Frequência cardíaca ao vivo — JÁ ESTÁ NO AR (a partir da v580)
 
-Chrome no Android tem Web Bluetooth: cintas/bands com o serviço padrão de
-batimento (0x180D) conectam direto na página. Se formos fazer, é um botão na
-corrida/treino guiado que mostra FC ao vivo + zonas — no iPhone só via app
-nativo (o plugin de Bluetooth do Capacitor cobre os dois).
+O app do aluno lê cinta/pulseira de batimento e mostra **FC ao vivo + zona**
+durante o treino guiado e durante a corrida. Dois caminhos, nesta ordem:
+
+1. **`window.MTNativo.fc`** — a ponte do app de loja (cobre iPhone e Android).
+2. **Web Bluetooth** (`navigator.bluetooth`) — serviço padrão de batimento
+   `0x180D`, característica `0x2A37`. Funciona no **Chrome do Android**; o
+   Safari do iPhone não tem Web Bluetooth.
+
+Sem nenhum dos dois, **nada aparece** — nem o card da corrida, nem a linha
+"Conectar cinta de batimento" nos Ajustes, nem o coração no topo do treino
+guiado. Mesma regra do `ajSaude`: o app nunca mostra botão que não conecta.
+
+Onde aparece: card *Batimentos ao vivo* na área **Corrida e bike** (com a idade
+do aluno pra calcular a FC máxima = 220 − idade), coração com o BPM no topo do
+**treino guiado**, coluna BATIMENTOS no **modo tela cheia** da corrida e a linha
+**Ajustes → App → Conectar cinta de batimento**.
+
+O batimento cru fica só no aparelho enquanto o treino roda. O que é guardado (e
+devolvido pro professor no `retorno`, campo `batimentos`, sem SQL novo) é o
+**resumo**: média e máximo do treino (`ptfc`, por data) e da corrida
+(`fc`/`fcx` dentro do registro em `ptcardio`).
+
+### O contrato pro shell nativo
+
+```js
+window.MTNativo.fc = {
+  // conecta a cinta/relógio e chama o callback a cada batimento (número inteiro)
+  conectar: function (callback) {},
+  // opcional: encerra a leitura (o app chama quando o aluno desconecta)
+  parar: function () {},
+};
+```
+
+Plugin sugerido nos dois sistemas: `@capacitor-community/bluetooth-le` (lê o
+serviço `0000180d-...` e a característica `00002a37-...`; o primeiro byte é o
+flag — bit 0 diz se o valor tem 8 ou 16 bits). No iPhone o `Info.plist` precisa
+de `NSBluetoothAlwaysUsageDescription` em pt-BR.
+
+Ganchos de teste no app: `window.__fc` (estado), `window.__fcAmostra(bpm)`,
+`window.__fcConecta()`, `window.__fcResumo()`, `window.__fcZera()`.
 
 ## Strava (alternativa que cobre qualquer relógio, sem loja)
 
