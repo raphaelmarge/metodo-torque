@@ -3120,28 +3120,6 @@ async function abaPt(p, a) {
       return { html: document.getElementById("pfAppDados").innerHTML, hit: !!window.__xssHit };
     });
     ok(!xss.hit && !/onerror/.test(xss.html) && !/Fotos de progresso/.test(xss.html), "foto maliciosa vinda do app é descartada (anti-XSS)");
-  // 📸 três ângulos (v587): frente vem nas chaves antigas, lado e costas em fotosAng
-  const angs = await p.evaluate(() => {
-    const px = (c) => "data:image/svg+xml;base64," + btoa("<svg xmlns='http://www.w3.org/2000/svg' width='60' height='90'><rect width='60' height='90' fill='" + c + "'/></svg>");
-    const soFrente = { fotoAntes: px("#444"), fotoAntesD: "2026-06-29", fotoDepois: px("#7c3aed"), fotoDepoisD: "2026-08-20" };
-    return {
-      // app velho: só a frente — o painel não pode inventar espaço vazio
-      velho: window.__painelApp(soFrente),
-      tres: window.__painelApp(Object.assign({}, soFrente, { fotosAng: {
-        lado: { a: px("#333"), ad: "2026-06-29", d: px("#a78bfa"), dd: "2026-08-20" },
-        costas: { a: px("#222"), ad: "2026-07-01" } } })),
-      // retorno é RPC pública: ângulo adulterado tem que cair fora inteiro
-      sujo: window.__painelApp(Object.assign({}, soFrente, { fotosAng: {
-        lado: { a: "javascript:alert(1)" }, costas: "nao-e-objeto" } })),
-    };
-  });
-  ok(/Frente/.test(angs.velho) && !/Lado/.test(angs.velho) && !/Costas/.test(angs.velho),
-    "aluno com app antigo (só foto de frente) continua aparecendo certinho, sem bloco vazio");
-  ok(/Frente/.test(angs.tres) && /Lado/.test(angs.tres) && /Costas/.test(angs.tres) &&
-    (angs.tres.match(/AGORA/g) || []).length === 2,
-    "📸 painel mostra frente, lado e costas — e o ângulo com uma foto só não finge um 'agora'");
-  ok(!/javascript:/.test(angs.sujo) && !/Lado/.test(angs.sujo) && !/Costas/.test(angs.sujo),
-    "ângulo com foto adulterada ou fora do formato é descartado (o retorno vem de RPC pública)");
     const fotoSuja = await p.evaluate(() => (window.MTStore.read("ptStudio", {}).alunos || [])
       .some((x) => /onerror/.test(String(x.fotoAluno || ""))));
     ok(!fotoSuja, "foto de perfil maliciosa não é guardada na ficha do aluno");
@@ -3477,30 +3455,6 @@ async function abaPt(p, a) {
       "a técnica viaja pro treino guiado e o player tem onde mostrar");
     ok(!seloNaLista.test(appHtml) && !/<span class='tecchip'>(Up set|Rest-pause|Bi-set|Isometria)/.test(appHtml),
       "exercício sem técnica não ganha selo nenhum (nada de rótulo vazio)");
-  }
-  {
-    // 📸 o pacote que vai pro professor: recorta o trecho REAL do app e roda em
-    // node — frente continua nas chaves antigas, lado e costas viram fotosAng
-    const m = appHtml.match(/var angs=\{\};\['lado','costas'\][\s\S]*?\}\}\);/);
-    ok(!!m, "o app monta o pacote de fotos de lado e de costas pro professor");
-    if (m) {
-      const monta = new Function("fs", m[0] + " return angs;");
-      const semAng = monta([{ tipo: "frente", img: "f1", d: "2026-01-01" }]);
-      const comAng = monta([
-        { tipo: "frente", img: "f1", d: "2026-01-01" },
-        { tipo: "lado", img: "l1", d: "2026-01-02" },
-        { tipo: "lado", img: "l2", d: "2026-03-02" },
-        { tipo: "costas", img: "c1", d: "2026-01-03" },
-      ]);
-      ok(Object.keys(semAng).length === 0, "aluno que só tirou foto de frente não engorda o pacote com ângulo vazio");
-      ok(comAng.lado && comAng.lado.a === "l1" && comAng.lado.d === "l2" && comAng.lado.dd === "2026-03-02",
-        "lado viaja com a PRIMEIRA e a ÚLTIMA foto (é o antes × agora do professor)");
-      ok(comAng.costas && comAng.costas.a === "c1" && !comAng.costas.d,
-        "ângulo com uma foto só viaja sem o 'agora' — o painel não inventa par");
-      ok(!comAng.frente, "a frente não é duplicada no pacote: ela já vai em fotoAntes/fotoDepois");
-    }
-    ok(/fotosAng:Object\.keys\(angs\)\.length\?angs:null/.test(appHtml),
-      "o pacote só leva fotosAng quando existe ângulo — null não apaga o que já está na nuvem");
   }
   ok(/Fale com/.test(appHtml) && /chEnvia/.test(appHtml), "app tem o card de chat com o personal");
   ok(!/Diário de cargas/.test(appHtml) && /NOVO RECORDE/.test(appHtml), "sem diário manual, mas o recorde segue celebrado pelo player");
@@ -7248,8 +7202,6 @@ async function abaPt(p, a) {
     ok(/<svg/.test(demo.app) && /Hábitos diários/.test(demo.app) && /ANTES/.test(demo.app), "perfil do demo mostra os gráficos do app (peso, hábitos, fotos)");
     ok(/Batimento médio/.test(demo.app) && /Batimentos — esforço nos treinos/.test(demo.app) && /máxima estimada/.test(demo.app),
       "demo do studio já vem com os batimentos da cinta no perfil (é o que o Raphael manda pro cliente ver)");
-    ok(/Fotos de progresso/.test(demo.app) && /Frente/.test(demo.app) && /Lado/.test(demo.app) && /Costas/.test(demo.app),
-      "demo do studio mostra as fotos de progresso nos três ângulos");
     ok(/check-ins? respondidos?/.test(demo.quest) && /(melhorando|estável|piorando)/.test(demo.quest) &&
       /resposta mais comum/.test(demo.quest) && /Como foram os treinos da semana\?/.test(demo.quest),
       "demo mostra os check-ins em linguagem clara: pergunta por extenso, tendência e resposta mais comum");

@@ -1476,14 +1476,10 @@
       // o antes/depois que vai pro painel prioriza as fotos de FRENTE (tela 41)
       "var fs=L('ptfotos',[]);var fr=fs.filter(function(x){return (x.tipo||'frente')==='frente';});if(!fr.length)fr=fs;" +
       "var pri=fr[0]||null;var ult=fr.length>1?fr[fr.length-1]:null;" +
-      "var angs={};['lado','costas'].forEach(function(t9){var l9=fs.filter(function(x){return x.tipo===t9;});" +
-      "if(!l9.length)return;angs[t9]={a:l9[0].img,ad:l9[0].d};" +
-      "if(l9.length>1){angs[t9].d=l9[l9.length-1].img;angs[t9].dd=l9[l9.length-1].d;}});" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
       "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
       "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
-      "fotosAng:Object.keys(angs).length?angs:null," +
       "fotoPerfil:L('ptfotoperfil','')||null," +
       "atualizado:new Date().toISOString()}});},1800);}" +
       "setTimeout(devolveApp,2500);" +

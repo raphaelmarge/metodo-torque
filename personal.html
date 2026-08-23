@@ -2942,34 +2942,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // o retorno vem de RPC pública — só aceita foto data:image/https e data com dígitos (anti-XSS)
         var fotoOk = function (u) { u = String(u || ""); return (/^data:image\//.test(u) || /^https:\/\//.test(u)) && !/['"<>\\]/.test(u) ? u : ""; };
         var dataOk = function (d) { return String(d || "").replace(/[^0-9-]/g, ""); };
-        /* três ângulos (v587): o aluno tira foto de frente, de lado e de costas.
-         * A de FRENTE continua chegando nas chaves antigas (fotoAntes/fotoDepois);
-         * lado e costas vêm em ret.fotosAng. App velho manda só a frente e o
-         * painel mostra só ela — sem erro e sem espaço vazio. */
-        var angRet = (ret.fotosAng && typeof ret.fotosAng === "object" && !Array.isArray(ret.fotosAng)) ? ret.fotosAng : {};
-        var dtCurta = function (d) { return d ? " · " + d.slice(8, 10) + "/" + d.slice(5, 7) : ""; };
-        var colFoto = function (rot, url) {
-          return "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>" + rot +
-            "</div><img src='" + url + "' style='width:100%;border-radius:11px;'></div>";
-        };
-        var blocosFoto = [["frente", "Frente"], ["lado", "Lado"], ["costas", "Costas"]].map(function (par) {
-          var o = angRet[par[0]];
-          if (!o && par[0] === "frente") o = { a: ret.fotoAntes, ad: ret.fotoAntesD, d: ret.fotoDepois, dd: ret.fotoDepoisD };
-          if (!o || typeof o !== "object") return "";
-          var fA = fotoOk(o.a), fD = fotoOk(o.d);
-          if (!fA) return "";
-          return "<div style='margin-top:8px;'>" +
-            "<div style='font-size:10px;font-weight:800;letter-spacing:.16em;color:#a78bfa;text-transform:uppercase;margin-bottom:4px;'>" + par[1] + "</div>" +
+        var fA = fotoOk(ret.fotoAntes), fD = fotoOk(ret.fotoDepois), fAd = dataOk(ret.fotoAntesD), fDd = dataOk(ret.fotoDepoisD);
+        if (fA) {
+          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>Fotos de progresso</b></div>" +
             "<div style='display:flex;gap:10px;max-width:400px;'>" +
-            colFoto("ANTES" + dtCurta(dataOk(o.ad)), fA) +
-            // ângulo com uma foto só mantém a coluna vazia do lado, senão a foto
-            // sozinha estica pro dobro e desalinha dos outros ângulos
-            (fD ? colFoto("AGORA" + dtCurta(dataOk(o.dd)), fD)
-              : "<div style='flex:1;display:flex;align-items:center;justify-content:center;border:1px dashed var(--linha);border-radius:11px;font-size:11px;color:#6e6a78;text-align:center;padding:8px;'>a próxima foto de " + par[1].toLowerCase() + " abre o antes × agora</div>") +
-            "</div></div>";
-        }).filter(Boolean);
-        if (blocosFoto.length) {
-          html += "<div style='margin:12px 0 4px;font-size:12.5px;color:#cfcbdb;'><b>Fotos de progresso</b></div>" + blocosFoto.join("");
+            "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>ANTES" + (fAd ? " · " + fAd.slice(8, 10) + "/" + fAd.slice(5, 7) : "") + "</div><img src='" + fA + "' style='width:100%;border-radius:11px;'></div>" +
+            (fD ? "<div style='flex:1;text-align:center;'><div style='font-size:10px;color:#8a8695;letter-spacing:.1em;margin-bottom:3px;'>AGORA" + (fDd ? " · " + fDd.slice(8, 10) + "/" + fDd.slice(5, 7) : "") + "</div><img src='" + fD + "' style='width:100%;border-radius:11px;'></div>" : "") +
+            "</div>";
         }
         return html;
   }

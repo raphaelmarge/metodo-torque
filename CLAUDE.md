@@ -171,9 +171,7 @@ exercício, prompt numerado 0–5, whitelist na ficha vinda da IA, e o texto do
 WhatsApp) e `TECS_APP` no `app/aluno-builder.js` (fora do concat gigante) —
 **mexeu numa, mexe na outra**. No app: selo `.tecchip` laranja colado no nome,
 a explicação ao abrir o exercício, e `#gTec` no treino guiado (`gPoeTec(it)`,
-com `tc` viajando no `GUIA`). Fotos de progresso: a v587 fez lado e costas
-chegarem no painel em `ret.fotosAng` (a frente segue em
-`fotoAntes`/`fotoDepois`, sem duplicar).
+com `tc` viajando no `GUIA`).
 
 **Circuito e corrida viram gavetas** (a partir da v586): as três abas de Treinos
 usam o MESMO desenho — `<details class='fichabox'>` com quadradinho da letra
