@@ -7446,7 +7446,9 @@ async function abaPt(p, a) {
     // 🗂 fichas A/B/C viraram gavetas: só a do dia nasce aberta
     {
       const gav = await pA.evaluate(() => {
-        const g = Array.from(document.querySelectorAll(".fichabox"));
+        // .fichabox agora é o desenho das TRÊS abas (ficha, circuito e corrida):
+        // aqui a conta é só das fichas
+        const g = Array.from(document.querySelectorAll("#trFichasWrap .fichabox"));
         return { n: g.length, abertas: g.filter((x) => x.open).length,
           resumo: g.map((x) => x.querySelector("summary").textContent.replace(/\s+/g, " ").trim()),
           temGuiado: !!g[0].querySelector(".guiabtn"), temEx: g[0].querySelectorAll("details").length };
@@ -7454,6 +7456,27 @@ async function abaPt(p, a) {
       ok(gav.n >= 2 && gav.abertas === 1, "🗂 as fichas do treino são gavetas e só a do dia nasce aberta (" + gav.abertas + " de " + gav.n + ")");
       ok(/exercícios/.test(gav.resumo[0]), "o resumo da ficha fechada já diz quantos exercícios tem — " + gav.resumo[0]);
       ok(gav.temGuiado && gav.temEx >= 1, "aquecimento, treino guiado e exercícios ficam dentro da gaveta da ficha");
+      // 🗂 circuito e corrida ganharam o MESMO desenho: gaveta com letra A/B/C…,
+      // resumo na tampa e só a do dia aberta (pedido do Raphael)
+      const gavTr = await pA.evaluate(() => {
+        const ler = (sel) => Array.from(document.querySelectorAll(sel)).map((d) => ({
+          letra: (d.querySelector("summary span") || {}).textContent,
+          sub: (d.querySelector("summary span:nth-child(2) span") || {}).textContent || "",
+          aberta: d.open,
+        }));
+        return { wod: ler("[data-wi]"), cardio: ler("[data-cri]") };
+      });
+      const letras = (l) => l.map((x) => x.letra).join("");
+      ok(gavTr.wod.length >= 2 && letras(gavTr.wod) === "ABC".slice(0, gavTr.wod.length) &&
+        gavTr.wod.filter((x) => x.aberta).length === 1 && /movimento/.test(gavTr.wod[0].sub),
+        "🗂 os circuitos viraram gavetas A/B/C com o resumo na tampa e só uma aberta");
+      ok(gavTr.cardio.length >= 2 && letras(gavTr.cardio) === "ABC".slice(0, gavTr.cardio.length) &&
+        gavTr.cardio.filter((x) => x.aberta).length === 1 && /Corrida|Bike|Caminhada/.test(gavTr.cardio[0].sub),
+        "🗂 as corridas e pedais viraram gavetas A/B/C, no mesmo desenho da ficha");
+      // o rótulo do dia vem da Semana do aluno; qual deles cai em "hoje" muda
+      // conforme o dia em que o teste roda, então a trava é só a de existir
+      ok(gavTr.cardio.concat(gavTr.wod).some((x) => /· (hoje|segunda|terça|quarta|quinta|sexta|sábado|domingo)/.test(x.sub)),
+        "a tampa da gaveta diz em que dia da semana aquele treino está marcado");
     }
     await pA.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
     // a demonstração de bonequinho saiu do app na v465 — aqui fica a trava de que

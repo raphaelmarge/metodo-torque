@@ -161,6 +161,19 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Circuito e corrida viram gavetas** (a partir da v586): as três abas de Treinos
+usam o MESMO desenho — `<details class='fichabox'>` com quadradinho da letra
+(A, B, C…), nome, resumo na tampa e só a do dia aberta. Âncoras: `data-fi`
+(ficha), `data-wi` (circuito) e `data-cri` (corrida — **não** `data-ci`, que já
+é dos copinhos de água). Helpers no builder, fora do concat gigante:
+`diaDoPlano(tipo, idx)` (rótulo "· hoje"/"· terça" lendo o `planoApp`) e
+`gavetaTop(letra, nome, sub)`. O "só a do dia aberta" da ficha agora usa
+`#trFichasWrap .fichabox` — sem isso ele fechava as gavetas das outras abas. As
+gavetas de circuito/corrida abrem numa IIFE própria, antes do `var trSub`.
+Corrigido junto: no `regen-demo.js` as fichas ganharam `id` (`dmf0`…`dmf4`),
+porque o painel casa o dia do plano pelo **id** do treino e não pela posição —
+sem isso os dias de musculação sumiam do plano da demo.
+
 **Questionários viram área própria** (a partir da v585): o check-in da semana
 (`#ckCard`) e o questionário do personal (`#qaCard`) moravam embaixo da conversa,
 na área do Chat — quem abria o chat pra mandar um recado caía num formulário

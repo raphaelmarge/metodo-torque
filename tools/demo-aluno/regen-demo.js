@@ -50,28 +50,28 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
     st.treinosV2.demoAlx = {
       metaSemana: 4,
       fichas: [
-        { titulo: "A — Peito e tríceps", itens: [
+        { id: "dmf0", titulo: "A — Peito e tríceps", itens: [
           { exId: mk("Supino reto", "Peito", "Pegada na largura dos ombros, desça controlando até o peito."), series: "4", reps: "12", descanso: 60 },
           { exId: mk("Supino inclinado com halteres", "Peito"), series: "3", reps: "12", descanso: 60 },
           { exId: mk("Crucifixo na máquina", "Peito"), series: "3", reps: "15", descanso: 45 },
           { exId: mk("Tríceps na corda", "Tríceps"), series: "4", reps: "12", descanso: 45 },
           { exId: mk("Francês com halter", "Tríceps"), series: "3", reps: "12", descanso: 45 },
         ] },
-        { titulo: "B — Costas e bíceps", itens: [
+        { id: "dmf1", titulo: "B — Costas e bíceps", itens: [
           { exId: mk("Remada curvada", "Costas", "Tronco firme, puxe a barra até a linha do umbigo."), series: "4", reps: "12", descanso: 60 },
           { exId: mk("Puxada aberta", "Costas"), series: "4", reps: "12", descanso: 60 },
           { exId: mk("Remada baixa", "Costas"), series: "3", reps: "12", descanso: 60 },
           { exId: mk("Rosca direta", "Bíceps"), series: "3", reps: "12", descanso: 45 },
           { exId: mk("Rosca martelo", "Bíceps"), series: "3", reps: "12", descanso: 45 },
         ] },
-        { titulo: "C — Pernas e core", itens: [
+        { id: "dmf2", titulo: "C — Pernas e core", itens: [
           { exId: mk("Agachamento livre", "Quadríceps", "Desça até a coxa passar da linha do joelho, peito aberto."), series: "4", reps: "10", descanso: 90 },
           { exId: mk("Leg press 45", "Quadríceps"), series: "4", reps: "12", descanso: 60 },
           { exId: mk("Stiff com halteres", "Posterior e glúteo"), series: "3", reps: "12", descanso: 60 },
           { exId: mk("Panturrilha em pé", "Quadríceps"), series: "4", reps: "15", descanso: 30 },
           { exId: mk("Prancha", "Core"), series: "4", reps: "40s", descanso: 30 },
         ] },
-        { titulo: "D — Ombros e core", itens: [
+        { id: "dmf3", titulo: "D — Ombros e core", itens: [
           { exId: mk("Desenvolvimento com halteres", "Ombros", "Cotovelos um pouco à frente, sobe sem bater os halteres."), series: "4", reps: "10", descanso: 60 },
           { exId: mk("Elevação lateral", "Ombros"), series: "4", reps: "15", descanso: 45 },
           { exId: mk("Face pull", "Ombros"), series: "3", reps: "15", descanso: 45 },
@@ -79,7 +79,7 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
           { exId: mk("Abdominal na polia (crunch)", "Core"), series: "4", reps: "15", descanso: 30 },
           { exId: mk("Elevação de pernas na barra", "Core"), series: "3", reps: "12", descanso: 45 },
         ] },
-        { titulo: "E — Posterior e glúteos", itens: [
+        { id: "dmf4", titulo: "E — Posterior e glúteos", itens: [
           { exId: mk("Levantamento terra", "Posterior e glúteo", "Barra rente à canela, costas retas do começo ao fim."), series: "4", reps: "8", descanso: 90 },
           { exId: mk("Hip thrust", "Posterior e glúteo"), series: "4", reps: "12", descanso: 60 },
           { exId: mk("Mesa flexora", "Posterior e glúteo"), series: "3", reps: "12", descanso: 60 },
@@ -101,7 +101,9 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         { id: "dmc2", nome: "Tiros na praça", mod: "corrida", tipo: "intervalado", reps: 8, tiro: 60, desc: 90 },
         { id: "dmc3", nome: "Pedal regenerativo", mod: "bike", tipo: "continuo", dist: 15, tempo: 40 },
       ],
-      plano: { dias: { "1": { tp: "ficha", id: 0 }, "3": { tp: "ficha", id: 1 }, "5": { tp: "ficha", id: 2 }, "6": { tp: "wod", id: "dmw1" }, "0": { tp: "cardio", id: "dmc1" } } },
+      // o painel casa o dia com o ID do treino (não com a posição): ficha sem id
+      // sumia do plano — e a Semana do aluno da demo ficava só com sábado e domingo
+      plano: { dias: { "1": { tp: "ficha", id: "dmf0" }, "3": { tp: "ficha", id: "dmf1" }, "5": { tp: "ficha", id: "dmf2" }, "6": { tp: "wod", id: "dmw1" }, "0": { tp: "cardio", id: "dmc1" } } },
     };
     window.MTStore.write("ptStudio", st);
     const out = window.__montaAppAluno(alex, new Date().toISOString());
