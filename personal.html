@@ -1210,9 +1210,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
     <div class="card" style="margin-top: 14px;">
       <h2>Foto do card “treino de hoje”</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">É a imagem de fundo do card que o aluno vê ao abrir o app. Vale pra <b>todos os alunos</b> — e a gente corta e deixa leve sozinho. Quer uma foto diferente por treino (A de peito, B de perna)? Dá pra escolher ficha por ficha em <b>Treinos → Fichas do aluno</b>; quando a ficha tem foto própria, ela ganha desta.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">É a imagem de fundo do card que o aluno vê ao abrir o app. Vale pra <b>todos os alunos</b> — e a gente corta e deixa leve sozinho. Manda <b>em pé</b> (foto normal de celular serve): o card é em pé, e a gente corta em 4:5 pelo centro. Quer uma foto diferente por treino (A de peito, B de perna)? Dá pra escolher ficha por ficha em <b>Treinos → Fichas do aluno</b>; quando a ficha tem foto própria, ela ganha desta.</p>
       <div class="linha-flex" style="gap: 12px; align-items: center; flex-wrap: wrap;">
-        <img id="cfgCapaPrev" hidden alt="Prévia da foto do card" style="width: 160px; height: 90px; object-fit: cover; border-radius: 12px;">
+        <img id="cfgCapaPrev" hidden alt="Prévia da foto do card" style="width: 120px; height: 150px; object-fit: cover; border-radius: 12px;">
         <button class="btn sec mini" id="cfgCapaBtn">Enviar foto</button>
         <button class="btn sec mini" id="cfgCapaGal" title="usar uma foto que já está no seu banco de imagens">🖼 Escolher da galeria</button>
         <button class="btn sec mini" id="cfgCapaDel" hidden>✕ tirar foto</button>
@@ -1248,7 +1248,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vImagens" hidden>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Banco de imagens</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Guarde aqui as fotos que você usa no app — capas de treino, fotos do studio, do equipamento. Depois é só escolher da galeria em <b>Personalização</b> ou em cada ficha, sem reenviar do celular toda vez. Cada foto é cortada em 16:9 e comprimida sozinha — o banco guarda até 2 MB pra sobrar memória do navegador pro resto do sistema.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Guarde aqui as fotos que você usa no app — capas de treino, fotos do studio, do equipamento. Depois é só escolher da galeria em <b>Personalização</b> ou em cada ficha, sem reenviar do celular toda vez. Cada foto é cortada em 4:5 (em pé, o formato do card do aluno) e comprimida sozinha — o banco guarda até 2 MB pra sobrar memória do navegador pro resto do sistema.</p>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
         <button class="btn" id="imgAdd"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Enviar imagem</button>
         <input type="file" id="imgFile" accept="image/*" multiple hidden>
@@ -6067,7 +6067,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<div style="padding:0 14px 14px;">' +
         // capa da ficha: aparece no card "treino de hoje" do app do aluno
         '<div class="linha-flex" style="gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">' +
-        (f.capa ? '<img src="' + f.capa + '" alt="capa da ficha" style="width:96px;height:54px;object-fit:cover;border-radius:10px;flex:none;">' : "") +
+        (f.capa ? '<img src="' + f.capa + '" alt="capa da ficha" style="width:64px;height:80px;object-fit:cover;border-radius:10px;flex:none;">' : "") +
         '<button class="btn sec mini" data-fcapa="' + f.id + '" title="a foto aparece no card “treino de hoje” do app do aluno">' +
         (f.capa ? "Trocar foto" : "📷 Foto do treino") + "</button>" +
         '<button class="btn sec mini" data-fcapag="' + f.id + '" title="escolher do seu banco de imagens">🖼 Galeria</button>' +
@@ -11298,17 +11298,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     try { renderPers(); } catch (e) {}
   });
   // ---------- foto do card "treino de hoje" (geral na Personalização, ou por ficha) ----------
-  // corta em 16:9 pelo centro e reduz pra 720px — leve pra viajar dentro do app
+  /* Corta em 4:5 pelo centro e reduz pra 640 px de largura (v590).
+   * Era 16:9, e aí a foto era jogada fora DUAS vezes: o corte deixava a foto
+   * deitada e o card do app é em pé (uns 400×520), então na tela sobrava só a
+   * faixa do meio — menos da metade do que o professor tinha mandado. Em 4:5 o
+   * que ele manda é quase exatamente o que o aluno vê, e foto de celular (que
+   * já nasce em pé) para de perder as pontas.
+   * As miniaturas do painel usam object-fit:cover, então aceitam qualquer
+   * formato — inclusive as fotos 16:9 que já estão salvas, que seguem valendo. */
   function leCapa(arq, pronto) {
     var url = URL.createObjectURL(arq);
     var img = new Image();
     img.onload = function () {
       URL.revokeObjectURL(url);
-      var alvoR = 16 / 9, lw = img.width || 1, lh = img.height || 1;
+      var alvoR = 4 / 5, lw = img.width || 1, lh = img.height || 1;
       var cw = lw, ch = Math.round(lw / alvoR);
       if (ch > lh) { ch = lh; cw = Math.round(lh * alvoR); }
       var c = document.createElement("canvas");
-      c.width = Math.min(720, cw);
+      c.width = Math.min(640, cw);
       c.height = Math.round(c.width / alvoR);
       c.getContext("2d").drawImage(img, Math.round((lw - cw) / 2), Math.round((lh - ch) / 2), cw, ch, 0, 0, c.width, c.height);
       var d = c.toDataURL("image/jpeg", .78);
@@ -11318,6 +11325,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     img.onerror = function () { URL.revokeObjectURL(url); alert("Não consegui ler essa imagem — tenta outro arquivo?"); };
     img.src = url;
   }
+  window.__leCapa = leCapa; // testes
   // a MESMA janela de arquivo serve ficha, circuito e corrida — o alvo diz quem
   var capaAlvo = null;
   function capaColecao(t, tipo) { return tipo === "wod" ? (t.wods || []) : tipo === "cardio" ? (t.cardio || []) : (t.fichas || []); }
@@ -11529,8 +11537,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     box.innerHTML = TIPOS_CAPA.map(function (par) {
       var img = mapa[par[0]] || "";
       return '<div style="border:1px solid var(--linha);border-radius:12px;padding:10px;">' +
-        (img ? '<img src="' + img + '" alt="" style="width:100%;height:84px;object-fit:cover;border-radius:9px;display:block;">'
-          : '<div style="width:100%;height:84px;border:1px dashed var(--linha);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#6e6a78;font-size:11.5px;">sem foto</div>') +
+        // a miniatura tem o formato do card do aluno (4:5) — a prévia tem que
+        // mostrar o que ele vai ver, senão o professor enquadra errado
+        (img ? '<img src="' + img + '" alt="" style="width:112px;height:140px;object-fit:cover;border-radius:9px;display:block;margin:0 auto;">'
+          : '<div style="width:112px;height:140px;margin:0 auto;border:1px dashed var(--linha);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#6e6a78;font-size:11.5px;">sem foto</div>') +
         '<div style="font-size:13px;font-weight:700;margin:8px 0 6px;">' + esc(par[1]) + "</div>" +
         '<div class="linha-flex" style="gap:6px;">' +
         '<button class="btn sec mini" data-tpcapa="' + par[0] + '">' + (img ? "Trocar" : "Enviar") + "</button>" +

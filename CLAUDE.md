@@ -161,6 +161,14 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Corte das fotos é 4:5** (a partir da v590): `leCapa()` corta em **4:5 pelo
+centro** e reduz pra **640 px** de largura (era 16:9 / 720 px). Motivo: o card
+do aluno é EM PÉ (`clamp(470px,64vh,570px)` num corpo de 480 px), então com
+16:9 o `object-fit:cover` mostrava só a faixa do meio — menos da metade do que
+o professor mandou. As miniaturas do painel também viraram 4:5, pra prévia
+mostrar o enquadramento de verdade. Foto 16:9 já salva continua valendo (todo
+lugar usa `object-fit:cover`). Gancho de teste: `window.__leCapa`.
+
 **Foto do treino por TIPO** (a partir da v589): escolher foto ficha por ficha
 não escala (24 alunos × 5 fichas). Agora o professor sobe **uma foto por tipo**
 em Personalização → *Fotos por tipo de treino* (`st.config.capasTipo`): peito,
