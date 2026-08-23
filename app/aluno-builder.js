@@ -98,6 +98,27 @@
     var avs = D.avs || [], botApp = D.botApp || null, atualizador = D.atualizador || "";
     var vem = D.ve || {};
     var ve = function (k) { return vem[k] !== false; };
+    /* rótulo "· terça" / "· hoje" pra qualquer treino amarrado na Semana do
+     * aluno — a ficha já fazia isso na mão; agora circuito e corrida usam o
+     * mesmo texto, porque viraram gaveta igual à dela. */
+    var diaDoPlano = function (tipo, idx) {
+      if (!planoApp) return "";
+      var rot7 = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+      var hj7 = String(new Date().getDay()), out = "";
+      Object.keys(planoApp).some(function (dk) {
+        if (planoApp[dk].tp === tipo && planoApp[dk].i === idx) { out = " · " + (dk === hj7 ? "hoje" : rot7[+dk]); return true; }
+        return false;
+      });
+      return out;
+    };
+    // gaveta igual à da ficha: quadradinho com a letra, nome, resumo e seta
+    var gavetaTop = function (letra, nome, sub) {
+      return "<summary style='list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 16px;'>" +
+        "<span style='flex:none;width:44px;height:44px;border-radius:14px;background:rgba(var(--cor-rgb),.25);color:var(--corc);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;'>" + esc(letra) + "</span>" +
+        "<span style='flex:1;min-width:0;'><b style='display:block;font-size:16px;font-weight:800;'>" + esc(nome) + "</b>" +
+        "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>" + esc(sub) + "</span></span>" +
+        "<span class='fseta' style='color:#6e6a78;font-size:13px;'>▾</span></summary>";
+    };
     var htmlApp = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<link rel='manifest' href='/app/manifest.webmanifest'>" +
@@ -971,7 +992,7 @@
       (ve("wod") ? "<div class='cardx' id='cardWod'>" +
       "<div style='display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px;'>" +
       "<h2 style='margin-bottom:0;'>Modo circuito (WOD)</h2><span id='wodHoje' style='font-size:12px;color:#8a8695;white-space:nowrap;'></span></div>" +
-      (wodsApp.length ? wodsApp.map(function (w) {
+      (wodsApp.length ? wodsApp.map(function (w, wi) {
         // folha de WOD estilo quadro da academia: tipo em destaque, blocos com rótulos
         var bloco = function (rot, html) {
           return "<div style='margin-top:14px;'><div style='color:var(--corc);font-size:10.5px;font-weight:800;letter-spacing:.18em;'>" + rot + "</div>" + html + "</div>";
@@ -981,14 +1002,16 @@
             (m.q ? "<b style='color:var(--corc);flex:none;min-width:60px;'>" + esc(m.q) + "</b>" : "") +
             "<span>" + esc(m.n) + "</span></div>";
         }).join("");
-        return "<div style='background:var(--bg1);border:1.5px solid var(--cor);border-radius:24px;padding:18px;margin-bottom:12px;'>" +
-          "<div style='font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--corc);text-transform:uppercase;'>" + esc(w.resumo || "") + "</div>" +
-          "<div style='font-size:clamp(24px,7vw,30px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;margin:4px 0 2px;'>" + esc(w.nome) + "</div>" +
+        var nMov = (w.movs && w.movs.length) ? w.movs.length : (w.mov || []).length;
+        var subW = [w.resumo || "", nMov ? nMov + (nMov === 1 ? " movimento" : " movimentos") : ""].filter(Boolean).join(" · ") + diaDoPlano("wod", wi);
+        return "<details class='fichabox' data-wi='" + wi + "'" + (wi === 0 ? " open" : "") + " style='margin:12px 0 0;background:var(--bg1);border-radius:22px;overflow:hidden;'>" +
+          gavetaTop(String.fromCharCode(65 + wi), w.nome, subW) +
+          "<div style='padding:0 18px 18px;'>" +
           (w.aq ? bloco("AQUECIMENTO", "<div style='font-size:14px;color:#d6d2df;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.aq) + "</div>") : "") +
           bloco("WOD", "<div style='margin-top:3px;'>" + movsH + "</div>") +
           (w.obs ? bloco("ESCALAS / OBS", "<div style='font-size:13px;color:#a9a4b5;white-space:pre-wrap;line-height:1.6;margin-top:3px;'>" + esc(w.obs) + "</div>") : "") +
           "<div class='wodres' data-wid='" + w.id + "' style='font-size:13.5px;font-weight:700;color:#4ade80;margin-top:10px;'></div>" +
-          "<button class='btnx' data-wodstart='" + w.id + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;margin-top:12px;'>Começar circuito</button></div>";
+          "<button class='btnx' data-wodstart='" + w.id + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;margin-top:12px;'>Começar circuito</button></div></details>";
       }).join("") : "") +
       "<div id='wodHist'></div>" +
       (wodsApp.length ? "<button type='button' class='btnx' id='wodLivreBt' style='display:block;width:100%;background:var(--bg4);border:1px solid var(--bg11);color:#d6d2df;box-shadow:none;margin-top:10px;'>Montar o meu circuito</button>" : "") +
@@ -1008,17 +1031,17 @@
       "<div id='wodFimBox' style='display:none;margin-top:10px;'></div></div>" : "") +
       // corrida e bike: folhas prescritas + cronômetro próprio com pace (min/km), GPS e tiros
       (ve("cardio") ? "<div class='cardx' id='cardCardio'><h2>Corrida e bike</h2>" +
-      (cardiosApp.length ? cardiosApp.map(function (c) {
+      (cardiosApp.length ? cardiosApp.map(function (c, ci) {
         var rotMod = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c.mod] || "CARDIO";
         var alvo = c.tipo === "intervalado"
           ? (c.reps || 8) + "× " + (c.tiro || 60) + "s forte / " + (c.desc || 90) + "s leve"
           : [(+c.dist ? String(c.dist).replace(".", ",") + " km" : ""), (+c.tempo ? c.tempo + " min" : ""), (c.pace ? "pace " + c.pace : "")].filter(Boolean).join(" · ") || "livre";
-        return "<div style='background:linear-gradient(165deg,var(--bg5),var(--bg4));border:1px solid var(--cor);border-radius:14px;padding:15px 16px;margin-bottom:10px;'>" +
-          "<div style='font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--corc);text-transform:uppercase;'>" + rotMod + " · " + esc(alvo) + "</div>" +
-          "<div style='font-size:20px;font-weight:900;text-transform:uppercase;margin:2px 0;'>" + esc(c.nome) + "</div>" +
-          (c.obs ? "<div style='font-size:12.5px;color:#a9a4b5;margin-top:4px;'>" + esc(c.obs) + "</div>" : "") +
-          "<button class='btnx' data-cbstart='" + c.id + "' style='display:block;width:100%;text-align:center;margin-top:10px;'>Começar</button></div>";
-      }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:2px 0 10px;'>Ou treine livre aqui embaixo:</div>" : "") +
+        return "<details class='fichabox' data-cri='" + ci + "'" + (ci === 0 ? " open" : "") + " style='margin:12px 0 0;background:var(--bg1);border-radius:22px;overflow:hidden;'>" +
+          gavetaTop(String.fromCharCode(65 + ci), c.nome, rotMod.charAt(0) + rotMod.slice(1).toLowerCase() + " · " + alvo + diaDoPlano("cardio", ci)) +
+          "<div style='padding:0 18px 18px;'>" +
+          (c.obs ? "<div style='font-size:13px;color:#a9a4b5;white-space:pre-wrap;line-height:1.6;'>" + esc(c.obs) + "</div>" : "") +
+          "<button class='btnx' data-cbstart='" + c.id + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;margin-top:10px;'>Começar</button></div></details>";
+      }).join("") + "<div style='font-size:11.5px;color:#6e6a78;margin:14px 0 10px;'>Ou treine livre aqui embaixo:</div>" : "") +
       "<div id='crTipos' style='display:flex;gap:6px;margin-bottom:10px;'></div>" +
       // trajeto estilo app de corrida: o caminho do GPS vai sendo desenhado aqui
       "<div style='position:relative;margin-bottom:10px;'>" +
@@ -4183,7 +4206,7 @@
       "if(hf){if(cImg){hf.src=cImg;hf.style.display='block';}else{hf.removeAttribute('src');hf.style.display='none';}" +
       "el.classList.toggle('comfoto',!!cImg);}" +
       // a ficha do dia já abre pronta na aba Treino; as outras ficam recolhidas
-      "var gav=document.querySelectorAll('.fichabox');" +
+      "var gav=document.querySelectorAll('#trFichasWrap .fichabox');" +
       "if(gav.length>1&&i>=0)for(var g=0;g<gav.length;g++)gav[g].open=(+gav[g].dataset.fi===i);}" +
       // Começar treino: além de ir pra área de Treino, cai na SUB-ABA do dia (plano)
       "var hv=document.getElementById('htVer');if(hv)hv.addEventListener('click',function(){if(window.__trocaSec)window.__trocaSec('treino');" +
@@ -4447,6 +4470,11 @@
       // bolinha no Chat quando chega recado do personal que o aluno ainda não viu
       "window.__chatDot=function(ultima){if(ultima&&SEC!=='chat'&&String(ultima)>String(L('ptvisto','')))mostraDot(true);if(window.__menuBadges)window.__menuBadges();};" +
       // sub-abas do Treino: "Minha ficha" mostra a ficha; "Circuito (WOD)" mostra só o cronômetro
+      "(function(){var pj9=PLANO&&PLANO[String(new Date().getDay())];" +
+      "[['data-wi','wod'],['data-cri','cardio']].forEach(function(par){" +
+      "var gv9=document.querySelectorAll('['+par[0]+']');if(gv9.length<2)return;" +
+      "var alvo9=(pj9&&pj9.tp===par[1]&&typeof pj9.i==='number')?pj9.i:0;" +
+      "for(var k9=0;k9<gv9.length;k9++)gv9[k9].open=(+gv9[k9].getAttribute(par[0])===alvo9);});})();" +
       "var trSub='ficha';" +
       "function trocaTrSub(s){trSub=s;" +
       "var th=TRHEAD[s]||TRHEAD.ficha;" +
