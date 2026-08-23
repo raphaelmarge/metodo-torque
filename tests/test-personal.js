@@ -2091,6 +2091,27 @@ async function abaPt(p, a) {
       "quando a ficha tem foto própria, ela ganha da geral (que segue disponível pras outras fichas)");
     ok(geral.previa.visivel && geral.previa.temSrc && /Trocar foto/.test(geral.previa.rot),
       "a Personalização mostra a prévia da foto e troca o botão pra 'Trocar foto'");
+    // circuito e corrida também têm foto própria (o dia de WOD/corrida no card)
+    const capaWC = await p.evaluate(() => {
+      const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+      // mexe numa CÓPIA e devolve o original inteiro: o resto da suíte conta
+      // com os circuitos/corridas exatamente como o professor deixou
+      const original = JSON.stringify(window.MTStore.read("ptStudio", {}));
+      const st = window.MTStore.read("ptStudio", {});
+      const al = st.alunos.find((x) => x.ativo !== false);
+      const t = st.treinosV2[al.id];
+      t.wods = [{ id: "wCapa", nome: "Circuito da foto", tipo: "amrap", min: 10, mov: ["burpee"], movs: [{ q: "10", n: "burpee" }], capa: PNG }];
+      t.cardio = [{ id: "cCapa", nome: "Corrida da foto", mod: "corrida", tipo: "continuo", dist: 5,
+        capa: "data:image/svg+xml,<svg onload=alert(1)>" }]; // forjada: tem que sumir
+      window.MTStore.write("ptStudio", st);
+      const html = window.__montaAppAluno(al, new Date().toISOString());
+      window.MTStore.write("ptStudio", JSON.parse(original));
+      return html;
+    });
+    ok(/"cp":"data:image\/png;base64,/.test(capaWC) && /id='heroWod'[^>]*>\s*<img/.test(capaWC),
+      "📷 a foto do circuito viaja no app e vira a capa do slide de circuito");
+    ok(!/onload=alert/.test(capaWC),
+      "capa forjada no circuito/corrida é descartada igual à da ficha");
     // a foto geral não pode ser copiada ficha por ficha (o app do aluno inchava)
     const peso = await p.evaluate(() => {
       const cv = document.createElement("canvas");

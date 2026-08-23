@@ -14,13 +14,17 @@ const { chromium } = require(fs.existsSync(PW) ? PW : "playwright");
 const EXEC = "/opt/pw-browsers/chromium";
 const RAIZ = path.join(__dirname, "..", "..");
 
+// fotos de capa da demo (já passadas pelo mesmo corte 16:9 / 720 px do painel)
+const capa = (arq) => "data:image/jpeg;base64," + fs.readFileSync(path.join(__dirname, arq)).toString("base64");
+const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.jpg"), corrida: capa("capa-corrida.jpg") };
+
 (async () => {
   const br = await chromium.launch({ executablePath: fs.existsSync(EXEC) ? EXEC : undefined, args: ["--no-sandbox"] });
   const p = await (await br.newContext()).newPage();
   p.on("pageerror", (e) => console.log("PAGEERROR:", e.message));
   await p.goto("http://127.0.0.1:8765/personal.html");
   await p.waitForTimeout(800);
-  const html = await p.evaluate(() => {
+  const html = await p.evaluate((CAPAS) => {
     const S = window.MTStore;
     const snap = JSON.stringify(S.read("ptStudio", {}));
     const st = S.read("ptStudio", {});
@@ -29,6 +33,7 @@ const RAIZ = path.join(__dirname, "..", "..");
     st.config.feedOn = true;
     st.config.conquistas = [{ e: "rato", n: "Rato de academia", meta: 30 }, { e: "medalha", n: "Lenda do Studio", meta: 100 }];
     st.config.mural = ["Sábado o studio abre 8h em vez de 7h. Quem treina cedo, me chama que a gente remarca."];
+    st.config.capaTreino = CAPAS.treino; // leg press: capa de qualquer ficha sem foto própria
     st.exercicios = st.exercicios || [];
     const mk = (nome, grupo, desc) => {
       let e = st.exercicios.find((x) => x.nome === nome);
@@ -83,7 +88,8 @@ const RAIZ = path.join(__dirname, "..", "..");
         ] },
       ],
       wods: [
-        { id: "dmw1", nome: "Chipper do sábado", tipo: "amrap", min: 20, aq: "5 min de corrida leve + 2 rodadas de mobilidade de ombro",
+        { id: "dmw1", nome: "Chipper do sábado", tipo: "amrap", min: 20, capa: CAPAS.circuito,
+          aq: "5 min de corrida leve + 2 rodadas de mobilidade de ombro",
           obs: "Wall ball 6 kg · barra fixa com elástico · clean and jerk 30 kg",
           movs: [{ q: "400 m", n: "corrida" }, { q: "30", n: "wall ball" }, { q: "20", n: "burpees" }, { q: "15", n: "barra fixa" }, { q: "10", n: "clean and jerk" }] },
         { id: "dmw2", nome: "Fran", tipo: "fortime", cap: 12, movs: [{ q: "21-15-9", n: "thruster e barra fixa" }] },
@@ -91,7 +97,7 @@ const RAIZ = path.join(__dirname, "..", "..");
           movs: [{ q: "ímpar", n: "12 cal no remo" }, { q: "par", n: "10 burpees" }] },
       ],
       cardio: [
-        { id: "dmc1", nome: "Rodagem leve", mod: "corrida", tipo: "continuo", dist: 5, tempo: 30, pace: "6:00" },
+        { id: "dmc1", nome: "Rodagem leve", mod: "corrida", tipo: "continuo", dist: 5, tempo: 30, pace: "6:00", capa: CAPAS.corrida },
         { id: "dmc2", nome: "Tiros na praça", mod: "corrida", tipo: "intervalado", reps: 8, tiro: 60, desc: 90 },
         { id: "dmc3", nome: "Pedal regenerativo", mod: "bike", tipo: "continuo", dist: 15, tempo: 40 },
       ],
@@ -101,7 +107,7 @@ const RAIZ = path.join(__dirname, "..", "..");
     const out = window.__montaAppAluno(alex, new Date().toISOString());
     window.MTStore.write("ptStudio", JSON.parse(snap));
     return out;
-  });
+  }, CAPAS);
   await br.close();
   if (!html || html.length < 50000) { console.log("ERRO: html curto", html && html.length); process.exit(1); }
 
