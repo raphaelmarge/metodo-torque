@@ -152,7 +152,14 @@ musculação/wod/corrida): `geraTreinoIA(id, objetivo, equip, cb, tipo)` manda
 peneira com as MESMAS regras dos formulários (`peneiraWodsIA`/`peneiraCardiosIA`)
 e salva na coleção certa, pulando pra aba certa. chat-envia antiga (ignora tipo,
 devolve fichas) → erro honesto mandando republicar, nada cai na aba errada.
-Hooks: `window.__planoPT`. A demo do aluno não tem plano — segue no rodízio.
+Hooks: `window.__planoPT`. A demo do aluno TEM plano (o `regen-demo.js` grava
+`plano.dias`); aluno sem plano segue no rodízio. O carrossel do Início tem 3
+cards — `#heroTreino` (o do dia, montado por `pintaHero`) mais os extras
+`#heroFicha` / `#heroWod` / `#heroCr`, e some o extra que repete o tipo do dia
+(`tpHoje`), então são sempre 3. `#heroFicha` (v582) usa a ficha do rodízio e é
+o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
+de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
+viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
 **Frequência cardíaca ao vivo** (a partir da v580): o app do aluno lê cinta ou
 pulseira de batimento e mostra FC + zona (Z1–Z5, sobre 220 − idade) durante o

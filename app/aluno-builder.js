@@ -627,8 +627,26 @@
             "<div class='htdash'></div>" +
             "<button id='htVer' class='btnx' style='" + btnCss + "'>Começar treino</button></div></div>"
           : "";
-        // cards extras nascem escondidos: o script mostra os que não repetem o
-        // treino que o card principal já está mostrando (plano do dia)
+        /* cards extras: nascem escondidos e o script mostra os que NÃO repetem o
+         * treino que o card principal já está mostrando (plano do dia). O rótulo
+         * de cada um sai do data-hk lá embaixo — "HOJE" só no primeiro card. */
+        // musculação: em dia de circuito/corrida/descanso o aluno não tinha
+        // como chegar na ficha pelo carrossel (o script preenche pelo rodízio)
+        var fichaCard = "";
+        if (fichasApp && fichasApp.length) {
+          fichaCard = "<div id='heroFicha' style='display:none;" + cardCss + "'>" +
+            "<div style='position:absolute;inset:0;background:linear-gradient(160deg,var(--cor),var(--cor2) 52%,var(--bg0) 100%);overflow:hidden;'>" +
+            "<div style='position:absolute;top:-70px;right:-90px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.09);'></div></div>" +
+            "<div id='hfGhost' style='position:absolute;left:20px;top:112px;right:40px;'></div>" +
+            "<img id='hfFoto' alt='' style='display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'>" +
+            "<div style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.55) 0%,rgba(13,12,16,.08) 34%,rgba(13,12,16,.88) 74%,var(--bg0) 100%);pointer-events:none;'></div>" +
+            "<div style='" + botCss + "'>" +
+            "<div class='htk htk2' data-hk='MUSCULAÇÃO'>MUSCULAÇÃO</div>" +
+            "<div class='htit' id='hfTit'></div>" +
+            "<div class='hsub' id='hfSub'></div>" +
+            "<div class='htdash'></div>" +
+            "<button data-carrver='ficha' class='btnx' style='" + btnCss + "'>Começar treino</button></div></div>";
+        }
         var wodCard = "";
         if (ve("wod") && wodsApp.length) {
           var w0 = wodsApp[0];
@@ -639,7 +657,7 @@
             (capaW ? "<img alt='' style='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;' src='" + capaW + "'>" : ghost(movsG)) +
             "<div style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.45) 0%,rgba(13,12,16,0) 34%,rgba(13,12,16,.86) 74%,var(--bg0) 100%);pointer-events:none;'></div>" +
             "<div style='" + botCss + "'>" +
-            "<div class='htk htk2'>HOJE · CIRCUITO</div>" +
+            "<div class='htk htk2' data-hk='CIRCUITO'>CIRCUITO</div>" +
             "<div class='htit'>" + esc(w0.nome || "Circuito") + "</div>" +
             "<div class='hsub'>" + esc((w0.resumo || "circuito completo") + " · " + (((w0.movs && w0.movs.length) || (w0.mov && w0.mov.length)) || 0) + " movimentos") + "</div>" +
             "<div class='htdash'></div>" +
@@ -660,7 +678,7 @@
               : "<svg viewBox='0 0 200 200' aria-hidden='true' style='position:absolute;top:36px;right:-24px;width:72%;opacity:.5;stroke:var(--cor);' fill='none' stroke-width='10' stroke-linecap='round'><path d='M30 172 C 18 120, 82 132, 92 92 S 152 64, 152 32 S 102 12, 112 48'/></svg>") +
             "<div style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.45) 0%,rgba(13,12,16,0) 34%,rgba(13,12,16,.86) 74%,var(--bg0) 100%);pointer-events:none;'></div>" +
             "<div style='" + botCss + "'>" +
-            "<div class='htk htk2'>HOJE · " + rotCr + "</div>" +
+            "<div class='htk htk2' data-hk='" + rotCr + "'>" + rotCr + "</div>" +
             "<div class='htit'>" + esc(c0.nome || "Cardio") + "</div>" +
             "<div class='hsub'>" + esc(alvoCr) + "</div>" +
             "<div class='htdash'></div>" +
@@ -675,13 +693,13 @@
           "<button type='button' id='avBtn2' aria-label='Trocar a sua foto' style='pointer-events:auto;flex:none;width:42px;height:42px;padding:0;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;color:#fff;font-family:inherit;cursor:pointer;overflow:hidden;'>" +
           "<img id='avImg2' alt='' style='width:100%;height:100%;object-fit:cover;border-radius:50%;" + (FOTOAL ? "" : "display:none;") + "'" + (FOTOAL ? " src='" + FOTOAL + "'" : "") + ">" +
           "<span id='avIni2'" + (FOTOAL ? " style='display:none;'" : "") + ">" + esc(INICIAIS) + "</span></button></div>";
-        if (!hero && !wodCard && !crCard) {
+        if (!hero && !fichaCard && !wodCard && !crCard) {
           // aluno ainda sem treino prescrito: só a faixa com a saudação
           return "<div id='blocoHoje' style='position:relative;'>" +
             "<div style='height:170px;background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:0 0 26px 26px;'></div>" + heroTopo + "</div>";
         }
         return "<div id='blocoHoje' style='position:relative;'>" +
-          "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + wodCard + crCard + "</div>" + heroTopo + "</div>";
+          "<div class='carr' id='heroCarr' aria-label='Treinos de hoje'>" + hero + fichaCard + wodCard + crCard + "</div>" + heroTopo + "</div>";
       })() +
       // card do ritmo da semana: recado curto + anel X/Y (o script preenche)
       "<div class='cardx' id='coachCard' style='margin-top:18px;display:none;'>" +
@@ -4142,7 +4160,23 @@
       "var pj3=PLANO&&PLANO[String(new Date().getDay())];var tpHoje=pj3?pj3.tp:'ficha';" +
       "var cw=document.getElementById('heroWod');if(cw&&tpHoje!=='wod')cw.style.display='';" +
       "var cc=document.getElementById('heroCr');if(cc&&tpHoje!=='cardio')cc.style.display='';" +
+      "var cf=document.getElementById('heroFicha');" +
+      "if(cf&&tpHoje!=='ficha'&&FICHAS_META.length){" +
+      "var ti9=Object.keys(L('ptfeitos',{})).length%FICHAS_META.length;var fm9=FICHAS_META[ti9];" +
+      "var pr9=String(fm9.t).split('\u2014');" +
+      "document.getElementById('hfTit').textContent=pr9.length>1?('Treino '+pr9[0].trim()+' '+pr9.slice(1).join('\u2014').trim()):fm9.t;" +
+      "var s9=pl(fm9.n,'exerc\u00edcio','exerc\u00edcios')+(fm9.m?' \u00b7 ~'+fm9.m+' min':'');" +
+      "var d9=fichaFezHa(fm9);if(d9===1)s9+=' \u00b7 voc\u00ea fez esse treino ontem';else if(d9)s9+=' \u00b7 voc\u00ea fez esse treino h\u00e1 '+d9+' dias';" +
+      "document.getElementById('hfSub').textContent=s9;" +
+      "var im9=fm9.c||CAPA_GERAL;var hi9=document.getElementById('hfFoto');" +
+      "if(im9&&hi9){hi9.src=im9;hi9.style.display='block';}" +
+      "var hg9=document.getElementById('hfGhost'),ge9=fm9.e||[];" +
+      "if(hg9){hg9.innerHTML=ge9.map(function(){return \"<div class='hgline'></div>\";}).join('');" +
+      "for(var q9=0;q9<hg9.children.length;q9++)hg9.children[q9].textContent=ge9[q9]||'';}" +
+      "cf.style.display='';}" +
       "var cards=Array.prototype.filter.call(cr.children,function(x){return x.style.display!=='none';});" +
+      "cards.forEach(function(c,ci){var k9=c.querySelector('[data-hk]');" +
+      "if(k9)k9.textContent=(ci===0?'HOJE \u00b7 ':'TAMB\u00c9M \u00b7 ')+k9.getAttribute('data-hk');});" +
       "cards.forEach(function(c,ci){var d=c.querySelector('.htdash');if(!d)return;" +
       "if(cards.length<2){d.style.display='none';return;}" +
       "d.innerHTML=cards.map(function(x,xi){return \"<span style='\"+(xi===ci?'width:26px;background:#fff;':'width:6px;background:rgba(255,255,255,.42);')+\"'></span>\";}).join('')+" +
