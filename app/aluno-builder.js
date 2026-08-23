@@ -853,31 +853,31 @@
       "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
       "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
+      /* ---------- cabeçalho da área Treinos: faixa roxa + as três abas ----------
+       * A faixa vinha DEPOIS das abas e só existia dentro da lista de fichas —
+       * na tela as abas apareciam soltas lá em cima, antes de qualquer título.
+       * Agora é o mesmo desenho da Evolução: faixa colorida em cima, pílulas
+       * logo abaixo dela, tudo num bloco só que fica visível nas três abas. O
+       * texto da faixa troca junto com a aba (trocaTrSub → TRHEAD). */
+      "<div class='cardx' id='trTopo' style='margin:0;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 18px;color:#fff;'>" +
+      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Meu treino</div>" +
+      "<div style='display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap;'>" +
+      "<span id='trTopN' style='font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;'></span>" +
+      "<span id='trTopS' style='font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);'></span></div>" +
+      "<div id='trTopSub' style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'></div></div>" +
+      ((ve("wod") || ve("cardio")) ? "<div id='trTabs' style='display:flex;gap:8px;padding:14px 20px 16px;'>" +
+      "<button data-trsub='ficha' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;'>Minha ficha</button>" +
+      (ve("wod") ? "<button data-trsub='wod' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
+      (ve("cardio") ? "<button data-trsub='cardio' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Corrida e bike</button>" : "") +
+      "</div>" : "") + "</div>" +
       // "Como foi o treino?" mora aqui, na área de Treino, e não na primeira
       // tela: a pergunta só faz sentido depois de treinar. Quem termina pelo
       // player responde no recibo; este card pega quem só marcou "Treinei hoje!".
+      // Fica DEPOIS do cabeçalho: antes abria a área e empurrava a faixa pra baixo.
       "<div class='cardx' id='cardRpe' data-rpebox style='display:none;'></div>" +
-      // sub-abas da área de treino: ficha tradicional × circuito (WOD) × corrida — conforme o professor liberou
-      ((ve("wod") || ve("cardio")) ? "<div class='cardx' id='trTabs' style='padding:9px 11px;'><div style='display:flex;gap:6px;'>" +
-      "<button data-trsub='ficha' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;'>Minha ficha</button>" +
-      (ve("wod") ? "<button data-trsub='wod' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
-      (ve("cardio") ? "<button data-trsub='cardio' style='flex:1;padding:9px 0;border-radius:16px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Corrida e bike</button>" : "") +
-      "</div></div>" : "") +
-      // ---------- aba Treinos (tela 25): cabeçalho roxo + fichas em cards ----------
+      // ---------- aba Treinos (tela 25): as fichas em cards ----------
       "<div class='cardx' id='trFichasWrap' style='margin:0;'>" +
-      "<div id='trTopo' style='background:linear-gradient(160deg,var(--cor),var(--cor2));padding:24px 20px 18px;color:#fff;'>" +
-      "<div style='font-size:9.5px;letter-spacing:.22em;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.75);'>Meu treino</div>" +
-      (fichasApp
-        ? (function () {
-            var totSer = 0;
-            fichasApp.forEach(function (f) { f.itens.forEach(function (it) { totSer += (+it.series || 3); }); });
-            return "<div style='display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap;'>" +
-              "<span style='font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;'>" + fichasApp.length + (fichasApp.length === 1 ? " ficha" : " fichas") + "</span>" +
-              "<span style='font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);'>" + totSer + " séries na semana</span></div>";
-          })()
-        : "<div style='font-size:24px;font-weight:900;margin-top:4px;'>Seu treino</div>") +
-      "<div style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'>montado por " + esc(studio) +
-      (fichaVenceApp ? " · vale até " + esc(S.fmtData(fichaVenceApp)) : "") + "</div></div>" +
       "<div style='padding:0 20px;'>" +
       (fichaVenceApp ? "<div style='background:rgba(217,119,6,.15);border:1px solid #d97706;border-radius:16px;padding:10px 13px;font-size:13px;color:#fbbf24;margin-top:12px;'>" + appIco(APPIC.relogio, 13) + "Sua ficha venceu em " + esc(S.fmtData(fichaVenceApp)) + " — cobra o treino novo de " + esc(studio.split(" ")[0]) + "!</div>" : "") +
       // cada ficha (A, B, C…) é um card-gaveta: a do dia abre sozinha
@@ -4060,7 +4060,24 @@
               e: f.itens.slice(0, 7).map(function (it) { return String(it.nome || "").slice(0, 40); }) };
           })) + ";" +
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
-          "var PLANO=" + jsonApp(planoApp) + ";";
+          "var PLANO=" + jsonApp(planoApp) + ";" +
+          // texto da faixa roxa dos Treinos, um por aba (o script só troca o texto)
+          "var TRHEAD=" + jsonApp((function () {
+            var porStudio = "montado por " + studio;
+            var totSer = 0;
+            (fichasApp || []).forEach(function (f) { f.itens.forEach(function (it) { totSer += (+it.series || 3); }); });
+            var nw = (wodsApp || []).length, nc = (cardiosApp || []).length;
+            return {
+              ficha: fichasApp && fichasApp.length
+                ? { n: fichasApp.length + (fichasApp.length === 1 ? " ficha" : " fichas"), s: totSer + " séries na semana",
+                    sub: porStudio + (fichaVenceApp ? " · vale até " + S.fmtData(fichaVenceApp) : "") }
+                : { n: "Seu treino", s: "", sub: porStudio },
+              wod: nw ? { n: nw + (nw === 1 ? " circuito" : " circuitos"), s: "prontos pra você", sub: porStudio }
+                : { n: "Circuito", s: "cronômetro livre", sub: "monte o seu aqui mesmo" },
+              cardio: nc ? { n: nc + (nc === 1 ? " treino" : " treinos"), s: "de corrida e bike", sub: porStudio }
+                : { n: "Corrida e bike", s: "treino livre", sub: "comece quando quiser" },
+            };
+          })()) + ";";
       })() +
       // com a Semana do aluno (PLANO), o card HOJE segue o plano do professor:
       // ficha abre a gaveta certa, circuito/corrida apontam a sub-aba, dia sem
@@ -4264,7 +4281,7 @@
       "Array.prototype.slice.call(document.body.children).forEach(function(el){" +
       "if(el.tagName==='SCRIPT'||IGNORA[el.id]||(el.className||'').indexOf('topo')>=0)return;" +
       "if(el.id==='qaCard'){el.setAttribute('data-sec','chat');return;}" +
-      "if(el.id==='trTabs'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
+      "if(el.id==='trTopo'||el.id==='cardWod'||el.id==='cardCardio'||el.id==='cardRpe'||el.id==='trFichasWrap'){el.setAttribute('data-sec','treino');return;}" +
       "if(el.id==='evTopo'||el.id==='evCargas'||el.id==='evMarcas'){el.setAttribute('data-sec','evolucao');return;}" +
       "if(el.id==='agTopo'){el.setAttribute('data-sec','agenda');return;}" +
       "if(el.id==='chTopo'){el.setAttribute('data-sec','chat');return;}" +
@@ -4407,7 +4424,11 @@
       // sub-abas do Treino: "Minha ficha" mostra a ficha; "Circuito (WOD)" mostra só o cronômetro
       "var trSub='ficha';" +
       "function trocaTrSub(s){trSub=s;" +
-      "document.querySelectorAll(\"[data-sec='treino']\").forEach(function(el){if(el.id==='trTabs')return;" +
+      "var th=TRHEAD[s]||TRHEAD.ficha;" +
+      "var tn=document.getElementById('trTopN');if(tn)tn.textContent=th.n;" +
+      "var ts=document.getElementById('trTopS');if(ts)ts.textContent=th.s;" +
+      "var tb=document.getElementById('trTopSub');if(tb)tb.textContent=th.sub;" +
+      "document.querySelectorAll(\"[data-sec='treino']\").forEach(function(el){if(el.id==='trTopo')return;" +
       "var idAlvo=s==='wod'?'cardWod':s==='cardio'?'cardCardio':null;" +
       "el.style.display=(idAlvo?el.id===idAlvo:(el.id!=='cardWod'&&el.id!=='cardCardio'))?'':'none';});" +
       // GPS sempre ativo: liga ao abrir a área de cardio, desliga ao sair (se não tem treino rodando)

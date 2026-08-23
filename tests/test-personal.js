@@ -5809,13 +5809,27 @@ async function abaPt(p, a) {
     const secCerta = wodCard.getAttribute("data-sec") === "treino";
     window.__trSub("wod");
     const wodVisivel = wodCard.style.display !== "none";
-    const fichaCard = Array.from(document.querySelectorAll("[data-sec='treino']")).find((c) => /Meu treino/.test(c.textContent) && c.id !== "cardWod" && c.id !== "trTabs");
+    const fichaCard = document.getElementById("trFichasWrap");
     const fichaSumiu = fichaCard && fichaCard.style.display === "none";
+    // o cabeçalho (faixa roxa + as três pílulas) é o chapéu das três abas: fica
+    // sempre visível, e o texto da faixa acompanha a aba escolhida
+    const topo = document.getElementById("trTopo");
+    const topoFica = topo && topo.style.display !== "none" && !!document.getElementById("trTabs");
+    const faixaWod = (document.getElementById("trTopN") || {}).textContent;
     window.__trSub("ficha");
-    return { fichaEscondida1, secCerta, wodVisivel, fichaSumiu };
+    const faixaFicha = (document.getElementById("trTopN") || {}).textContent;
+    // a faixa tem que vir ANTES das pílulas (era o contrário: abas soltas no topo)
+    const ordemOk = !!(topo && document.getElementById("trTabs") &&
+      topo.firstElementChild !== document.getElementById("trTabs") &&
+      topo.compareDocumentPosition(document.getElementById("trTabs")) & Node.DOCUMENT_POSITION_CONTAINED_BY);
+    return { fichaEscondida1, secCerta, wodVisivel, fichaSumiu, topoFica, faixaWod, faixaFicha, ordemOk };
   });
   ok(subWod.secCerta && subWod.fichaEscondida1 && subWod.wodVisivel && subWod.fichaSumiu,
     "WOD vive numa sub-aba do Treino: 'Minha ficha' esconde o cronômetro e 'Circuito (WOD)' esconde a ficha");
+  ok(subWod.topoFica && subWod.ordemOk,
+    "o cabeçalho dos Treinos é faixa roxa EM CIMA e as três abas logo abaixo dela, visível nas três");
+  ok(/circuito/i.test(subWod.faixaWod) && /ficha/i.test(subWod.faixaFicha),
+    "o texto da faixa acompanha a aba escolhida (" + subWod.faixaWod + " ↔ " + subWod.faixaFicha + ")");
   ok(/FOR TIME\|0:0/.test(wodR.fortime) && /1 volta/.test(wodR.fortime), "For Time conta pra cima e marca voltas");
   ok(/TRABALHA · ROUND 1 DE 1/.test(wodR.tabataFase), "Tabata alterna trabalho/descanso com o round na tela");
   ok(/FIM!/.test(wodR.fim) && /Tabata completo/.test(wodR.fim), "Tabata termina sozinho com a festa de FIM (o botão de registrar só aparece se o dia ainda não foi marcado)");
@@ -6543,7 +6557,7 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);var DSEM_/);
+      const m = html.match(/var PLANO=(.+?);var TRHEAD=/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
       // receita R1 + telas finais: os treinos do dia viram carrossel de tela
