@@ -81,6 +81,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   #calAgenda .cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   #calAgenda .cal-sem { font-size: 10.5px; font-weight: 800; color: var(--cinza, #a9a4b5); text-transform: uppercase; padding: 4px 0; text-align: center; }
   #calAgenda .cal-dia { position: relative; border: 1px solid var(--linha, #2a2536); background: transparent; color: inherit; border-radius: 10px; min-height: 44px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px; }
+  /* receita da foto: o professor precisa saber o que subir SEM perguntar */
+  .fotoguia { background: rgba(124,58,237,.10); border-left: 3px solid var(--roxo); border-radius: 10px; padding: 11px 14px; margin: 0 0 12px; font-size: 12.5px; line-height: 1.7; }
+  .fotoguia .fgt { display: block; font-weight: 800; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 5px; opacity: .8; }
+  .fotoguia .fgm { display: inline-block; background: rgba(124,58,237,.25); border-radius: 6px; padding: 1px 7px; font-weight: 800; }
   #calAgenda .cal-dia:hover { border-color: var(--roxo); }
   #calAgenda .cal-dia.hoje { border-color: var(--roxo); box-shadow: inset 0 0 0 1px var(--roxo); }
   #calAgenda .cal-dia.sel { background: var(--roxo); color: #fff; border-color: var(--roxo); }
@@ -1210,7 +1214,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
     <div class="card" style="margin-top: 14px;">
       <h2>Foto do card “treino de hoje”</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">É a imagem de fundo do card que o aluno vê ao abrir o app. Vale pra <b>todos os alunos</b> — e a gente corta e deixa leve sozinho. Manda <b>em pé</b> (foto normal de celular serve): o card é em pé, e a gente corta em 4:5 pelo centro. Quer uma foto diferente por treino (A de peito, B de perna)? Dá pra escolher ficha por ficha em <b>Treinos → Fichas do aluno</b>; quando a ficha tem foto própria, ela ganha desta.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">É a imagem de fundo do card que o aluno vê ao abrir o app. Vale pra <b>todos os alunos</b> que não tenham foto mais específica. Quer uma foto diferente por treino? Use o card <b>Fotos por tipo de treino</b> aqui embaixo, ou escolha ficha por ficha em <b>Treinos → Fichas do aluno</b>.</p>
+      <div class="fotoguia">
+        <span class="fgt">Como mandar a foto</span>
+        <b>Em pé</b> (vertical), no tamanho <span class="fgm">1080 × 1350</span> — foto de celular na vertical já está boa.<br>
+        Deixe a pessoa (ou o aparelho) <b>no meio</b>: a gente corta pelo centro, então as beiradas somem.<br>
+        Pode mandar deitada ou quadrada também — só vai sobrar menos foto. O resto é com a gente: cortamos em 4:5 e deixamos leve sozinho.
+      </div>
       <div class="linha-flex" style="gap: 12px; align-items: center; flex-wrap: wrap;">
         <img id="cfgCapaPrev" hidden alt="Prévia da foto do card" style="width: 120px; height: 150px; object-fit: cover; border-radius: 12px;">
         <button class="btn sec mini" id="cfgCapaBtn">Enviar foto</button>
@@ -1224,6 +1234,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-top: 14px;">
       <h2>Fotos por tipo de treino</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Suba <b>uma foto por tipo</b> e pronto: o sistema olha os exercícios de cada ficha, vê que é dia de perna (ou de costas, ou circuito, ou corrida) e usa a foto certa — em <b>todos os alunos</b>, inclusive nas fichas que você criar depois. Foto escolhida na ficha continua ganhando desta; tipo sem foto cai na foto geral aí de cima.</p>
+      <div class="fotoguia">
+        <span class="fgt">Como mandar a foto</span>
+        <b>Em pé</b> (vertical), no tamanho <span class="fgm">1080 × 1350</span> — foto de celular na vertical já está boa.<br>
+        Deixe a pessoa (ou o aparelho) <b>no meio</b>: a gente corta pelo centro, então as beiradas somem.<br>
+        Pode mandar deitada ou quadrada também — só vai sobrar menos foto. O resto é com a gente: cortamos em 4:5 e deixamos leve sozinho.
+      </div>
       <div id="cfgCapasTipo" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;"></div>
       <input type="file" id="cfgTipoFile" accept="image/*" hidden>
       <p class="muted" style="margin: 12px 0 0; font-size: 12px;">Depois de subir, toque em <b>Publicar apps atualizados</b> pros alunos verem.</p>
@@ -1248,7 +1264,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <section id="vImagens" hidden>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Banco de imagens</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Guarde aqui as fotos que você usa no app — capas de treino, fotos do studio, do equipamento. Depois é só escolher da galeria em <b>Personalização</b> ou em cada ficha, sem reenviar do celular toda vez. Cada foto é cortada em 4:5 (em pé, o formato do card do aluno) e comprimida sozinha — o banco guarda até 2 MB pra sobrar memória do navegador pro resto do sistema.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Guarde aqui as fotos que você usa no app — capas de treino, fotos do studio, do equipamento. Depois é só escolher da galeria em <b>Personalização</b> ou em cada ficha, sem reenviar do celular toda vez. Cada foto é cortada em <b>4:5</b> (em pé, o formato do card do aluno) e comprimida sozinha — mande <b>1080 × 1350</b> com o assunto no meio. O banco guarda até 2 MB pra sobrar memória do navegador pro resto do sistema.</p>
       <div class="linha-flex" style="gap: 10px; flex-wrap: wrap; align-items: center;">
         <button class="btn" id="imgAdd"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Enviar imagem</button>
         <input type="file" id="imgFile" accept="image/*" multiple hidden>
