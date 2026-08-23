@@ -122,6 +122,20 @@
     /* Técnicas de intensidade no MESMO exercício (v588) — o professor marca no
      * painel e aqui só mostramos. O que muda (peso ou repetição) ele escreve na
      * observação; o nome é o que o aluno reconhece na hora. */
+    /* foto do treino: a escolhida na ficha vence; sem ela vale a do TIPO
+     * (grupo muscular, circuito, corrida...), que o professor sobe uma vez so;
+     * sem nenhuma das duas, o app cai na geral. */
+    var CAPT = (D.cfg && D.cfg.capasTipo) || {};
+    var capaTipo = function (o) { return capaOk(o && o.capa) || capaOk(CAPT[(o && o.ck) || ""]) || ""; };
+    /* Nos pacotes (FICHAS_META, WODS, CARDIOS) a foto do TIPO viaja como CHAVE,
+     * não como imagem: três fichas de perna guardariam a mesma foto três vezes.
+     * O mapa vai uma vez em CAPAS_TIPO e o app resolve com capaFM(). */
+    var capaRef = function (o) {
+      var pp = capaOk(o && o.capa);
+      if (pp) return pp;
+      var k = (o && o.ck) || "";
+      return (k && capaOk(CAPT[k])) ? k : "";
+    };
     var TECS_APP = { drop: ["Drop-set", "chega na falha, tira peso (ou repetições) e continua sem descanso"],
       up: ["Up set", "sobe o peso (ou as repetições) a cada série"],
       rest: ["Rest-pause", "vai até a falha, para 15-20 s e faz mais algumas repetições"],
@@ -690,7 +704,7 @@
           var w0 = wodsApp[0];
           var movsG = (w0.movs && w0.movs.length ? w0.movs.map(function (m) { return ((m.q ? m.q + " " : "") + (m.n || "")).trim(); })
             : (w0.mov || [])).filter(Boolean).slice(0, 7);
-          var capaW = capaOk(w0.capa);
+          var capaW = capaTipo(w0);
           wodCard = "<div id='heroWod' style='display:none;" + cardCss + "'>" +
             (capaW ? "<img alt='' style='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;' src='" + capaW + "'>" : ghost(movsG)) +
             "<div style='position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,12,16,.45) 0%,rgba(13,12,16,0) 34%,rgba(13,12,16,.86) 74%,var(--bg0) 100%);pointer-events:none;'></div>" +
@@ -709,7 +723,7 @@
             : [(+c0.dist ? String(c0.dist).replace(".", ",") + " km" : ""), (+c0.tempo ? c0.tempo + " min" : ""), (c0.pace ? "pace " + c0.pace : "")].filter(Boolean).join(" · ") || "treino livre";
           var rotCr = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c0.mod] || "CARDIO";
           var btnCr = { corrida: "Começar corrida", caminhada: "Começar caminhada", bike: "Começar pedal" }[c0.mod] || "Começar";
-          var capaC = capaOk(c0.capa);
+          var capaC = capaTipo(c0);
           crCard = "<div id='heroCr' style='display:none;" + cardCss + "'>" +
             // foto do treino quando tem; senão o traçado decorativo do GPS
             (capaC ? "<img alt='' style='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;' src='" + capaC + "'>"
@@ -2114,7 +2128,7 @@
       "var WODT=[['fortime','For Time'],['amrap','AMRAP'],['emom','EMOM'],['tabata','Tabata']];" +
       "var WODS=" + jsonApp(wodsApp.map(function (w) {
         return { id: w.id, n: w.nome, t: w.tipo, cap: +w.cap || 0, min: +w.min || 10, rd: +w.rounds || 8, wk: +w.work || 20, rs: +w.rest || 10,
-          cp: capaOk(w.capa),
+          cp: capaRef(w),
           mv: ((w.movs && w.movs.length) || (w.mov && w.mov.length) || 0),
           // a lista de movimentos vai junto: a tela cheia mostra a volta atual
           ms: (w.movs && w.movs.length ? w.movs.map(function (m) { return { q: String(m.q || ""), n: String(m.n || "") }; })
@@ -2399,7 +2413,7 @@
       "}" +
       // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
       "if(document.getElementById('cardCardio')){" +
-      "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90, cp: capaOk(c.capa) }; })) + ";" +
+      "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90, cp: capaRef(c) }; })) + ";" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
       "var CRICOS={mapa:\"" + CRICO_MAPA + "\",painel:\"" + CRICO_PAINEL + "\"};" +
       "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
@@ -4114,9 +4128,13 @@
       (function () {
         var imgOk = function (u) { return /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u || "")) ? u : ""; };
         var geral = imgOk((st.config || {}).capaTreino);
-        return "var CAPA_GERAL=" + jsonApp(geral) + ";" +
+        // só os tipos realmente usados por este aluno (o painel já filtra)
+        var usadas = {};
+        Object.keys(CAPT).forEach(function (k) { if (imgOk(CAPT[k])) usadas[k] = CAPT[k]; });
+        return "var CAPA_GERAL=" + jsonApp(geral) + ";var CAPAS_TIPO=" + jsonApp(usadas) + ";" +
+          "function capaFM(c){return c?(String(c).slice(0,5)==='data:'?c:(CAPAS_TIPO[c]||'')):'';}" +
           "var FICHAS_META=" + jsonApp((fichasApp || []).map(function (f) {
-            var propria = imgOk(f.capa);
+            var propria = imgOk(f.capa) || (f.ck && imgOk(CAPT[f.ck] || "") ? f.ck : "");
             // duração estimada: séries × (execução ~40s + descanso), em blocos de 5 min
             var seg = f.itens.reduce(function (t, it) { return t + (parseInt(it.series, 10) || 3) * (40 + (+it.descanso || 60)); }, 0);
             // e = nomes dos primeiros exercícios: viram a lista fantasma do herói
@@ -4194,7 +4212,7 @@
       "if(pj&&pj.tp==='ficha'&&FICHAS_META[pj.i]){i=pj.i;fm=FICHAS_META[i];}" +
       // circuito do plano: o card ganha o resumo do quadro, a contagem de
       // movimentos, o último resultado e a lista fantasma (tela 45)
-      "else if(pj&&pj.tp==='wod'){var w9=WODS[pj.i]||null;rt='HOJE · CIRCUITO';tit=pj.n;cImg=(w9&&w9.cp)||CAPA_GERAL;btn='Começar circuito';" +
+      "else if(pj&&pj.tp==='wod'){var w9=WODS[pj.i]||null;rt='HOJE · CIRCUITO';tit=pj.n;cImg=capaFM(w9&&w9.cp)||CAPA_GERAL;btn='Começar circuito';" +
       "sub=w9?wodResumo(w9)+' · '+pl(w9.mv,'movimento','movimentos'):'circuito completo te esperando';" +
       "if(w9){var uw=(L('ptwodres',{})[w9.id]||[]).slice(-1)[0];" +
       "if(uw&&uw.d)sub+=' · em '+uw.d.slice(8,10)+'/'+uw.d.slice(5,7)+' você fez '+String(uw.r||'').slice(0,18);" +
@@ -4202,7 +4220,7 @@
       // corrida/bike do plano: alvo do treino + seu melhor pace + o traçado (tela 46)
       "else if(pj&&pj.tp==='cardio'){var c9=CARDIOS[pj.i]||null;" +
       "var rotC={corrida:'CORRIDA',caminhada:'CAMINHADA',bike:'BIKE'}[c9&&c9.m]||'CORRIDA E BIKE';" +
-      "rt='HOJE · '+rotC;tit=pj.n;cImg=(c9&&c9.cp)||CAPA_GERAL;" +
+      "rt='HOJE · '+rotC;tit=pj.n;cImg=capaFM(c9&&c9.cp)||CAPA_GERAL;" +
       "btn={corrida:'Começar corrida',caminhada:'Começar caminhada',bike:'Começar pedal'}[c9&&c9.m]||'Começar corrida';" +
       "if(c9){sub=c9.t==='intervalado'?(c9.r+'× '+c9.ti+'s forte / '+c9.de+'s leve'+(c9.p?' · alvo de pace '+c9.p:'')):" +
       "[(c9.d?String(c9.d).replace('.',',')+' km':''),(c9.tp?c9.tp+' min':''),(c9.p?'pace '+c9.p:'')].filter(Boolean).join(' · ')||'treino livre';" +
@@ -4215,7 +4233,7 @@
       "if(fm){var par=String(fm.t).split('—');rt=dataHj;tit=par.length>1?('Treino '+par[0].trim()+' '+par.slice(1).join('—').trim()):fm.t;" +
       "sub=pl(fm.n,'exercício','exercícios')+(fm.m?' · ~'+fm.m+' min':'');" +
       "var dd9=fichaFezHa(fm);if(dd9===1)sub+=' · você fez esse treino ontem';else if(dd9)sub+=' · você fez esse treino há '+dd9+' dias';" +
-      "cImg=fm.c||CAPA_GERAL;}" +
+      "cImg=capaFM(fm.c)||CAPA_GERAL;}" +
       "document.getElementById('htRot').textContent=rt;document.getElementById('htTitulo').textContent=tit;" +
       "document.getElementById('htSub').textContent=sub;" +
       "var hb0=document.getElementById('htVer');if(hb0)hb0.textContent=btn;" +
@@ -4250,7 +4268,7 @@
       "var s9=pl(fm9.n,'exerc\u00edcio','exerc\u00edcios')+(fm9.m?' \u00b7 ~'+fm9.m+' min':'');" +
       "var d9=fichaFezHa(fm9);if(d9===1)s9+=' \u00b7 voc\u00ea fez esse treino ontem';else if(d9)s9+=' \u00b7 voc\u00ea fez esse treino h\u00e1 '+d9+' dias';" +
       "document.getElementById('hfSub').textContent=s9;" +
-      "var im9=fm9.c||CAPA_GERAL;var hi9=document.getElementById('hfFoto');" +
+      "var im9=capaFM(fm9.c)||CAPA_GERAL;var hi9=document.getElementById('hfFoto');" +
       "if(im9&&hi9){hi9.src=im9;hi9.style.display='block';}" +
       "var hg9=document.getElementById('hfGhost'),ge9=fm9.e||[];" +
       "if(hg9){hg9.innerHTML=ge9.map(function(){return \"<div class='hgline'></div>\";}).join('');" +

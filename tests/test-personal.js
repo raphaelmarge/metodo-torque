@@ -3441,6 +3441,67 @@ async function abaPt(p, a) {
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
   {
+    // 📸 foto por TIPO de treino: o professor sobe uma por tipo e o sistema
+    // escolhe a de cada ficha — senão seria foto por foto, aluno por aluno
+    const grupos = await p.evaluate(() => ["Peito", "Costas", "Ombros", "Quadríceps",
+      "Posterior e glúteo", "Panturrilha", "Bíceps", "Tríceps", "Core", "Cardio", "Xablau"]
+      .map((g) => g + ">" + window.__capasTipo.grupoCapa(g)).join(" "));
+    ok(/Quadríceps>pernas/.test(grupos) && /Posterior e glúteo>pernas/.test(grupos) && /Panturrilha>pernas/.test(grupos),
+      "grupo de perna cai em PERNAS — 'QuadrÍCEPS' não pode ser confundido com bíceps/tríceps");
+    ok(/Bíceps>bracos/.test(grupos) && /Tríceps>bracos/.test(grupos) && /Peito>peito/.test(grupos) &&
+      /Costas>costas/.test(grupos) && /Ombros>ombros/.test(grupos) && /Core>core/.test(grupos) && /Xablau>(\s|$)/.test(grupos),
+      "cada grupo muscular cai no seu tipo de foto (e grupo desconhecido não chuta nenhum)");
+    const capas = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const a = st.alunos[0];
+      const snap = JSON.stringify({ t: st.treinosV2[a.id], c: st.config });
+      const px = (t) => "data:image/png;base64," + btoa(t);
+      const mk = (nome, grupo) => {
+        st.exercicios = st.exercicios || [];
+        let e = st.exercicios.find((x) => x.nome === nome);
+        if (!e) { e = { id: "cap" + nome, nome, grupo }; st.exercicios.push(e); }
+        return e.id;
+      };
+      st.config = st.config || {};
+      st.config.capaTreino = px("GERAL");
+      st.config.capasTipo = { peito: px("PEITO"), pernas: px("PERNAS"), wod: px("WOD") };
+      st.treinosV2[a.id] = {
+        fichas: [
+          { id: "k1", titulo: "A", itens: [{ exId: mk("Sup", "Peito"), series: "4", reps: "10", descanso: 60 }] },
+          { id: "k2", titulo: "B", itens: [{ exId: mk("Agc", "Quadríceps"), series: "4", reps: "10", descanso: 90 },
+            { exId: mk("Sti", "Posterior e glúteo"), series: "3", reps: "12", descanso: 60 }] },
+          { id: "k3", titulo: "C", itens: [{ exId: mk("Leg", "Quadríceps"), series: "4", reps: "12", descanso: 60 }] },
+          { id: "k4", titulo: "D", capa: px("PROPRIA"), itens: [{ exId: mk("Ros", "Bíceps"), series: "3", reps: "12", descanso: 45 }] },
+          { id: "k5", titulo: "E", itens: [{ exId: mk("Ele", "Ombros"), series: "3", reps: "12", descanso: 45 }] },
+        ],
+        wods: [{ id: "kw", nome: "WOD", tipo: "amrap", min: 12, movs: [{ q: "10", n: "burpee" }] }],
+        cardio: [{ id: "kc", nome: "Pedal", mod: "bike", tipo: "continuo", dist: 15, tempo: 40 }],
+      };
+      S.write("ptStudio", st);
+      const html = window.__montaAppAluno(a, "teste-capas");
+      const st2 = S.read("ptStudio", {});
+      const velho = JSON.parse(snap);
+      st2.treinosV2[a.id] = velho.t; st2.config = velho.c;
+      S.write("ptStudio", st2);
+      const meta = html.match(/var FICHAS_META=(\[[\s\S]*?\]);var PLANO/);
+      const mapa = html.match(/var CAPAS_TIPO=(\{[\s\S]*?\});function capaFM/);
+      return {
+        fichas: meta ? JSON.parse(meta[1]).map((f) => f.c) : null,
+        mapa: mapa ? Object.keys(JSON.parse(mapa[1])) : null,
+        // a mesma foto de perna não pode ser copiada duas vezes dentro do pacote
+        repetiu: (html.match(new RegExp(btoa("PERNAS"), "g")) || []).length,
+        wodCp: (html.match(/"cp":"([^"]*)"/) || [])[1],
+      };
+    });
+    ok(capas.fichas && capas.fichas[0] === "peito" && capas.fichas[1] === "pernas" && capas.fichas[2] === "pernas",
+      "📸 cada ficha pega a foto do grupo que mais aparece nela (peito, perna, perna)");
+    ok(String(capas.fichas[3]).slice(0, 5) === "data:", "a foto escolhida na ficha continua ganhando da foto do tipo");
+    ok(capas.fichas[4] === "", "tipo sem foto (ombros) fica vazio e cai na foto geral — nada de imagem errada");
+    ok(capas.wodCp === "wod", "o circuito pega a foto de circuito");
+    ok(capas.mapa && capas.mapa.length === 3 && capas.repetiu === 1,
+      "a foto viaja UMA vez no pacote, por chave: duas fichas de perna não copiam a mesma imagem duas vezes");
+  }
+  {
     // ⚡ a técnica chega no app: selo na lista, explicação ao abrir e aviso no player
     const appTec = await p.evaluate(() => {
       const S = window.MTStore, st = S.read("ptStudio", {});
