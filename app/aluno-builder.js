@@ -764,14 +764,6 @@
       // páginas novas (telas 42 e 32) — pintadas em runtime dos dados do aparelho
       "<div class='cardx' id='evCargas'><div id='cgBox' class='vz'>Anote as cargas nos treinos e elas aparecem aqui.</div></div>" +
       "<div class='cardx' id='evMarcas'><div id='mkBox' class='vz'>Suas marcas aparecem aqui.</div></div>" +
-      // retrospectiva do mês fechado (aparece no comecinho do mês seguinte, some
-      // ao fechar) — mora na aba Conquistas, sem linha de peso
-      "<div class='cardx' id='retroCard' style='display:none;'><h2>Retrospectiva</h2>" +
-      "<div style='background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:6px 16px 14px;'>" +
-      "<div id='retroBox'></div>" +
-      "<div style='display:flex;gap:8px;margin-top:12px;'>" +
-      "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
-      "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div></div>" +
       "<div class='cardx'><h2>Conquistas</h2>" +
       "<div id='nvCard' style='margin-bottom:12px;'></div>" +
       "<div id='cqGrid' style='display:grid;grid-template-columns:repeat(3,1fr);gap:8px;'></div>" +
@@ -783,6 +775,14 @@
       "<div id='cqTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
+      // retrospectiva do mês fechado: aparece no comecinho do mês seguinte,
+      // logo abaixo do mapa do ano, e some ao fechar (sem dado de corpo)
+      "<div id='retroCard' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'>" +
+      "<div class='wpk' id='retroTit' style='margin:0 0 6px;'>Retrospectiva</div>" +
+      "<div id='retroBox'></div>" +
+      "<div style='display:flex;gap:8px;margin-top:12px;'>" +
+      "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
+      "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
       "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
       // "Como foi o treino?" mora aqui, na área de Treino, e não na primeira
@@ -1835,7 +1835,7 @@
       "return {m:m,nome:MESN[+m.slice(5,7)-1],tr:tr,nh:nh,rec:rec,dp:dp};}" +
       "function pintaRetro(){var card=document.getElementById('retroCard');if(!card)return;var d=retroDados();" +
       "if(!d.tr||L('ptretroV','')===d.m){card.style.display='none';return;}" +
-      "card.style.display='block';card.querySelector('h2').textContent='Seu m\\u00eas de '+d.nome;" +
+      "card.style.display='block';document.getElementById('retroTit').textContent='Seu m\\u00eas de '+d.nome;" +
       "var linhas=[['Treinos registrados','<b>'+d.tr+'</b>']];" +
       "if(d.rec)linhas.push(['Maior carga do m\\u00eas','<b>'+String(d.rec.ex).replace(/[<>&]/g,'').slice(0,26)+' \\u2014 '+String(d.rec.kg).replace('.',',')+' kg</b>']);" +
 
@@ -3988,7 +3988,7 @@
       "var OCULTA=" + jsonApp(menuOculta) + ";MENU=MENU.filter(function(m){return OCULTA.indexOf(m[0])===-1;});" +
       "function secDe(el){var h=el.querySelector&&el.querySelector('h2');var t=(h?h.textContent:'')||'';var tx=el.textContent||'';" +
       "if(/Meu treino|Raio-X|Modo circuito/.test(t))return 'treino';" +
-      "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso|Retrospectiva|Seu mês de/.test(t))return 'evolucao';" +
+      "if(/Conquistas|Minha evolução|Avaliações físicas|Última avaliação|Meu peso|Fotos de progresso/.test(t))return 'evolucao';" +
       "if(/Agenda|Minhas sessões/.test(t))return 'agenda';" +
       "if(/Comunidade/.test(t))return 'feed';" +
       "if(/Check-in|Fale com/.test(t))return 'chat';" +
@@ -4018,7 +4018,6 @@
       // pílulas da Evolução (telas 49/41/42/32): Conquistas × Corpo × Cargas × Marcas
       "(function(){document.querySelectorAll(\"[data-sec='evolucao']\").forEach(function(el){if(el.id==='evTopo')return;" +
       "if(el.id==='evCargas'){el.setAttribute('data-evsub','cargas');return;}" +
-      "if(el.id==='retroCard'){el.setAttribute('data-evsub','conq');return;}" +
       "if(el.id==='evMarcas'){el.setAttribute('data-evsub','marcas');return;}" +
       "var h=el.querySelector('h2');el.setAttribute('data-evsub',/Conquistas/.test(h?h.textContent:'')?'conq':'corpo');});" +
       "var atual='conq';function pintaEv(){document.querySelectorAll(\"[data-sec='evolucao'][data-evsub]\").forEach(function(el){" +
