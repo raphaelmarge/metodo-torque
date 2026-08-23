@@ -2206,6 +2206,30 @@ async function abaPt(p, a) {
     });
     ok(peso.copias === 1, "a foto geral viaja UMA vez só no app, mesmo com 6 fichas (" + peso.copias + " cópia)");
     ok(peso.kb < peso.fotoKb * 2 + 250, "o app do aluno com foto fica em " + peso.kb + " KB — sem repetir a imagem por ficha");
+    // 🖼 o corte é 4:5 (em pé), o formato do card do aluno — antes era 16:9 e a
+    // foto era jogada fora duas vezes (no corte e de novo na tela)
+    const corte = await p.evaluate(async () => {
+      const faz = (w, h) => new Promise((res) => {
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        const x = cv.getContext("2d");
+        const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, "#7c3aed"); g.addColorStop(1, "#111");
+        x.fillStyle = g; x.fillRect(0, 0, w, h);
+        cv.toBlob((b) => res(new File([b], "f.jpg", { type: "image/jpeg" })), "image/jpeg", .9);
+      });
+      const mede = (d) => new Promise((res) => { const i = new Image(); i.onload = () => res({ w: i.width, h: i.height }); i.src = d; });
+      const out = {};
+      for (const [nome, w, h] of [["deitada", 1920, 1080], ["empe", 1080, 1920], ["quadrada", 1000, 1000], ["pequena", 300, 400]]) {
+        const arq = await faz(w, h);
+        out[nome] = await mede(await new Promise((res) => window.__leCapa(arq, res)));
+      }
+      return out;
+    });
+    const quatroCinco = (o) => Math.abs(o.w / o.h - 4 / 5) < 0.01;
+    ok(quatroCinco(corte.deitada) && quatroCinco(corte.empe) && quatroCinco(corte.quadrada),
+      "🖼 foto deitada, em pé ou quadrada — todas viram 4:5, o formato do card do aluno");
+    ok(corte.deitada.w === 640 && corte.empe.w === 640, "a foto é reduzida pra 640 px de largura (leve pra viajar no app)");
+    ok(corte.pequena.w === 300 && quatroCinco(corte.pequena),
+      "foto pequena não é esticada — só cortada no formato (300 px continuam 300 px)");
   }
   /* Com foto, o card do treino de hoje ganha um véu escuro por cima da imagem
    * — nos DOIS temas. Antes o texto seguia o tema, então no modo claro o nome
