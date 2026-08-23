@@ -181,6 +181,11 @@
         checks: serieChecks(Math.min(Math.floor(cfg.desde / 7), 26), cfg.capricho),
         fotoAntes: svgFoto("ANTES", "#4c4560"), fotoAntesD: iso(Math.min(cfg.desde, 120)),
         fotoDepois: svgFoto("AGORA", "#7c3aed"), fotoDepoisD: iso(2),
+        // três ângulos: a frente vai nas chaves acima; lado e costas em fotosAng
+        fotosAng: idx % 2 === 0 ? {
+          lado: { a: svgFoto("LADO ANTES", "#413b52"), ad: iso(Math.min(cfg.desde, 120)), d: svgFoto("LADO AGORA", "#6d28d9"), dd: iso(2) },
+          costas: { a: svgFoto("COSTAS", "#3a3346"), ad: iso(Math.min(cfg.desde, 120)) },
+        } : null,
         rpe: (function () { var r = {}; r[iso(1)] = idx % 3 === 0 ? 3 : 2; r[iso(3)] = 2; r[iso(5)] = idx % 2 ? 1 : 2; return r; })(),
         onb: { obj: cfg.objetivo === "Hipertrofia" ? "musculo" : "saude", dias: String(cfg.meta), dor: idx === 3 ? "joelho esquerdo (condromalácia)" : "", em: iso(cfg.desde) },
       },
