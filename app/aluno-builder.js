@@ -162,7 +162,7 @@
         "<div style='display:flex;align-items:center;gap:10px;padding:12px 14px 8px;'>" +
         "<span style='flex:none;width:34px;height:34px;border-radius:11px;background:rgba(96,165,250,.22);color:#93c5fd;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;'>" + esc(letra + "2") + "</span>" +
         "<span style='flex:1;min-width:0;'><b style='display:block;font-size:14.5px;color:#bfdbfe;'>" + esc((p2 && p2.n) || "Cardio e alongamento") + "</b>" +
-        "<span style='display:block;font-size:11.5px;color:#8a8695;margin-top:1px;'>parte 2 do mesmo dia · " + linhas.length + " item" + (linhas.length === 1 ? "" : "s") + "</span></span></div>" +
+        "<span style='display:block;font-size:11.5px;color:#8a8695;margin-top:1px;'>parte 2 do mesmo dia · " + linhas.length + (linhas.length === 1 ? " item" : " itens") + "</span></span></div>" +
         "<div style='padding:0 14px 12px;'>" +
         linhas.map(function (ln, li) {
           var seg = minutosDe(ln.v);
