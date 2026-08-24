@@ -123,12 +123,17 @@
   exercicios.forEach(function (e) { exId[e.nome] = e.id; });
   /* `tecs` marca a técnica de intensidade de alguns exercícios (v588): o cliente
    * que vê a demo entende na hora que dá pra prescrever drop-set e afins. */
-  function ficha(titulo, nomes, series, reps, desc, tecs) {
-    return { id: uid(), titulo: titulo, itens: nomes.map(function (n, i) {
+  function ficha(titulo, nomes, series, reps, desc, tecs, p2) {
+    return { id: uid(), titulo: titulo, p2: p2 || null, itens: nomes.map(function (n, i) {
       return { exId: exId[n], series: series, reps: reps, descanso: desc,
         obs: (tecs && tecs[i] && tecs[i][1]) || "", tec: (tecs && tecs[i] && tecs[i][0]) || "" };
     }) };
   }
+  // parte 2 do dia (A2): cardio e alongamento em linhas de tempo/distância
+  var P2_DEMO = { n: "Cardio e alongamento", l: [
+    { t: "Esteira", v: "12 min", o: "ritmo de conversa" },
+    { t: "Alongamento de peitoral", v: "40s", o: "cada lado" },
+  ] };
 
   var ALUNOS = [
     { nome: "Ana Beatriz Souza", sexo: "F", altura: 165, nascAnos: 34, zap: "21988110001", valor: 450, objetivo: "Emagrecimento", meta: 4, desde: 380, peso: [82, -9, 120, 4], freq: 4, capricho: 1.15, cargas: [["Agachamento livre", 30, 55, 10], ["Leg press 45°", 80, 140, 9], ["Supino reto com barra", 20, 32.5, 8]], pago: true, rec: true },
@@ -162,7 +167,7 @@
   var FICHAS = {
     Hipertrofia: [ficha("A — Peito e Tríceps", ["Supino reto com barra", "Crucifixo com halteres", "Tríceps na polia"], 4, "10", 90,
       [["drop", "na última série tira 20% do peso e vai até falhar"], null, ["rest", "falhou? para 15 s e faz mais 4"]]),
-      ficha("B — Costas e Bíceps", ["Remada curvada com barra", "Puxada alta na polia", "Rosca direta com barra"], 4, "10", 90),
+      ficha("B — Costas e Bíceps", ["Remada curvada com barra", "Puxada alta na polia", "Rosca direta com barra"], 4, "10", 90, null, P2_DEMO),
       ficha("C — Pernas e Core", ["Agachamento livre", "Leg press 45°", "Levantamento terra romeno", "Prancha"], 4, "10", 90,
         [null, ["up", "sobe 10 kg por série e desce pra 8 repetições"], null, ["iso", "segura 40 s em cada série"]])],
     Outro: [ficha("A — Corpo todo (ênfase inferior)", ["Agachamento livre", "Elevação pélvica", "Leg press 45°", "Prancha"], 3, "12", 60),
@@ -214,7 +219,7 @@
     alunos.push(a);
     treinosV2[id] = { fichas: (cfg.objetivo === "Hipertrofia" ? FICHAS.Hipertrofia : FICHAS.Outro).map(function (f) {
       // copia o item INTEIRO (obs e técnica inclusive) — antes zerava os dois aqui
-      return { id: uid(), titulo: f.titulo, itens: f.itens.map(function (it) {
+      return { id: uid(), titulo: f.titulo, p2: f.p2 || null, itens: f.itens.map(function (it) {
         return { exId: it.exId, series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs || "", tec: it.tec || "" };
       }) };
     }), objetivo: cfg.objetivo.toLowerCase(), semana: 3, validade: iso(-30) };

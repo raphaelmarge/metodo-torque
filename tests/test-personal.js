@@ -3472,6 +3472,32 @@ async function abaPt(p, a) {
   await p.fill("#buscaAluno", "");
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
+  {
+    // parte 2 do dia (A2, B2…): cardio e alongamento grudados na ficha —
+    // não é outra ficha, então não rouba a letra seguinte nem entra sozinha na semana
+    const p2 = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const aid = st.alunos[0].id;
+      const t = st.treinosV2[aid];
+      t.fichas[0].p2 = { n: "Cardio e alongamento", l: [
+        { t: "Esteira", v: "12 min", o: "ritmo de conversa" },
+        { t: "Alongamento de posterior", v: "45s", o: "cada perna" },
+      ] };
+      S.write("ptStudio", st);
+      return {
+        letras: t.fichas.map((f, i) => window.__letraFicha(f, i)),
+        texto: window.__treinoTexto(st, aid),
+        pacote: window.__dadosApp(st.alunos[0], "t"),
+      };
+    });
+    ok(p2.letras[0] === "A" && p2.letras[1] === "B",
+      "a parte 2 não vira ficha: as letras seguem A, B, C (o A2 mora dentro do A)");
+    ok(/\nA2 — Cardio e alongamento\n/.test(p2.texto) && /• Esteira — 12 min \(ritmo de conversa\)/.test(p2.texto),
+      "a prescrição do WhatsApp leva o A2 com as linhas de tempo/distância");
+    const fp2 = p2.pacote && p2.pacote.fichasApp && p2.pacote.fichasApp[0] && p2.pacote.fichasApp[0].p2;
+    ok(!!fp2 && fp2.l.length === 2 && fp2.l[0].t === "Esteira",
+      "o pacote do aluno leva a parte 2 grudada na ficha");
+  }
   // foto de progresso: UM botão só. O capture='user' é que trancava no
   // autorretrato — sem ele o próprio celular oferece câmera OU galeria
   ok(/id='fotoInput' type='file' accept='image\/\*' style/.test(appHtml) && !/capture=/.test(appHtml),

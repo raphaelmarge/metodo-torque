@@ -145,6 +145,36 @@
       var t = TECS_APP[k];
       return t ? "<span class='tecchip'>" + esc(t[0]) + "</span>" : "";
     };
+    /* Parte 2 do dia (A2, B2…): cardio e alongamento que o professor escreveu
+     * em linhas de tempo/distância. Fica DENTRO da gaveta da ficha, depois do
+     * botão de começar — é o mesmo dia, não outro treino. Cada linha vira um
+     * item marcável; linha com minutos ganha o cronômetro (o mesmo do descanso,
+     * com rótulo próprio). O que foi marcado vale só pro dia de hoje. */
+    var minutosDe = function (v) {
+      var m = /(\d+)\s*(min|m\b)/i.exec(String(v || ""));
+      if (m) return Math.min(90, +m[1]) * 60;
+      var sg = /(\d+)\s*s\b/i.exec(String(v || ""));
+      return sg ? Math.min(600, +sg[1]) : 0;
+    };
+    var blocoP2 = function (gi, letra, p2) {
+      var linhas = (p2 && p2.l) || [];
+      return "<div class='p2box' style='margin:14px 16px 0;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.32);border-radius:18px;overflow:hidden;'>" +
+        "<div style='display:flex;align-items:center;gap:10px;padding:12px 14px 8px;'>" +
+        "<span style='flex:none;width:34px;height:34px;border-radius:11px;background:rgba(96,165,250,.22);color:#93c5fd;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;'>" + esc(letra + "2") + "</span>" +
+        "<span style='flex:1;min-width:0;'><b style='display:block;font-size:14.5px;color:#bfdbfe;'>" + esc((p2 && p2.n) || "Cardio e alongamento") + "</b>" +
+        "<span style='display:block;font-size:11.5px;color:#8a8695;margin-top:1px;'>parte 2 do mesmo dia · " + linhas.length + " item" + (linhas.length === 1 ? "" : "s") + "</span></span></div>" +
+        "<div style='padding:0 14px 12px;'>" +
+        linhas.map(function (ln, li) {
+          var seg = minutosDe(ln.v);
+          return "<div class='p2row' data-p2='" + gi + ":" + li + "' style='display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid rgba(96,165,250,.14);font-size:13.5px;'>" +
+            "<span class='p2ck' style='flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(96,165,250,.5);display:flex;align-items:center;justify-content:center;font-size:13px;color:#93c5fd;cursor:pointer;'></span>" +
+            "<span style='flex:1;min-width:0;'><b style='display:block;font-weight:700;'>" + esc(ln.t) + "</b>" +
+            (ln.o ? "<span style='display:block;font-size:11.5px;color:#8a8695;margin-top:1px;'>" + esc(ln.o) + "</span>" : "") + "</span>" +
+            (ln.v ? "<b style='flex:none;color:#93c5fd;white-space:nowrap;'>" + esc(ln.v) + "</b>" : "") +
+            (seg ? "<button class='tmrbtn' data-s='" + seg + "' data-rot='" + esc(ln.t) + "' style='flex:none;background:rgba(96,165,250,.18);border:1px solid transparent;color:#bfdbfe;border-radius:99px;padding:7px 13px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;'>▶</button>" : "") +
+            "</div>";
+        }).join("") + "</div></div>";
+    };
     var htmlApp = "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='utf-8'>" +
       "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
       "<link rel='manifest' href='/app/manifest.webmanifest'>" +
@@ -941,6 +971,8 @@
         var letra = parT.length > 1 ? parT[0].trim().slice(0, 2) : String.fromCharCode(65 + gi);
         var nomeF = parT.length > 1 ? parT.slice(1).join("—").trim() : (f.titulo || "Ficha");
         var serF = 0; f.itens.forEach(function (it) { serF += (+it.series || 3); });
+        // parte 2 do MESMO dia (A2, B2…): cardio e alongamento em linhas de tempo
+        var p2L = (f.p2 && f.p2.l) || [];
         // dia da semana amarrado na Semana do aluno (se houver)
         var diaTxt = "";
         if (planoApp) {
@@ -955,7 +987,7 @@
           "<summary style='list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 16px;'>" +
           "<span style='flex:none;width:44px;height:44px;border-radius:14px;background:rgba(var(--cor-rgb),.25);color:var(--corc);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;'>" + esc(letra) + "</span>" +
           "<span style='flex:1;min-width:0;'><b style='display:block;font-size:16px;font-weight:800;'>" + esc(nomeF) + "</b>" +
-          "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>" + f.itens.length + " exercício" + (f.itens.length === 1 ? "" : "s") + " · " + serF + " séries" + esc(diaTxt) + "</span></span>" +
+          "<span style='display:block;font-size:12.5px;color:#8a8695;margin-top:2px;'>" + f.itens.length + " exercício" + (f.itens.length === 1 ? "" : "s") + " · " + serF + " séries" + (p2L.length ? " · + " + esc(letra) + "2" : "") + esc(diaTxt) + "</span></span>" +
           "<span class='fseta' style='color:#6e6a78;font-size:13px;'>▾</span></summary>" +
           "<div style='padding:0 0 14px;'>" +
           (aqPorFicha[gi] && aqPorFicha[gi].length > 1
@@ -993,6 +1025,7 @@
           }).join("") +
           // o botão grandão fecha o card, igual à tela 25
           (f.itens.length ? "<div style='padding:12px 16px 0;'><button class='btnx guiabtn' data-g='" + gi + "' style='display:block;width:100%;min-height:54px;text-align:center;font-size:15.5px;'>Começar essa ficha</button></div>" : "") +
+          (p2L.length ? blocoP2(gi, letra, f.p2) : "") +
           "</div></details>";
       }).join("")
       : treino ? "<div style='font-size:14.5px;line-height:1.7;'>" + treino.split("\n").map(function (ln) {
@@ -2107,7 +2140,17 @@
       "if(n===max&&navigator.vibrate)navigator.vibrate(90);" +
       "if(FEXS.length&&FEXS.every(function(x){return (st[x.n]||0)>=x.s;})){var f=L('ptfeitos',{});if(!f[isoHj()]){document.getElementById('btnFeito').click();}}return;}" +
       "var ab=e.target.closest('.altbtn');if(ab){var bx2=ab.nextElementSibling;if(bx2)bx2.style.display=bx2.style.display==='none'?'block':'none';return;}" +
-      "var t=e.target.closest('.tmrbtn');if(t){iniciaTmr(+t.dataset.s);return;}});" +
+      "var t=e.target.closest('.tmrbtn');if(t){iniciaTmr(+t.dataset.s,t.dataset.rot||'');return;}" +
+      // parte 2 do dia: marcar/desmarcar a linha (vale só pro dia de hoje)
+      "var pk=e.target.closest('.p2row');if(pk&&e.target.closest('.p2ck')){p2Marca(pk.dataset.p2);return;}});" +
+      "function p2Feitos(){var o=L('ptp2',{});return (o&&o.d===isoHj()&&o.f)?o.f:{};}" +
+      "function p2Marca(k){var f=p2Feitos();if(f[k])delete f[k];else f[k]=1;Sv('ptp2',{d:isoHj(),f:f});p2Pinta();" +
+      "if(navigator.vibrate)navigator.vibrate(8);}" +
+      "function p2Pinta(){var f=p2Feitos();document.querySelectorAll('.p2row').forEach(function(r){" +
+      "var on=!!f[r.dataset.p2];var ck=r.querySelector('.p2ck');if(ck){ck.textContent=on?'\u2713':'';" +
+      "ck.style.background=on?'#60a5fa':'transparent';ck.style.color=on?'#0b1020':'#93c5fd';}" +
+      "r.style.opacity=on?'.55':'1';});}" +
+      "p2Pinta();window.__p2={marca:p2Marca,feitos:p2Feitos,pinta:p2Pinta};" +
       // confirmação de presença da próxima sessão (avisa o personal pelo chat do app)
       "(function(){var bx=document.getElementById('sconfBox');if(!bx)return;var kcf=bx.dataset.d+'|'+bx.dataset.h;" +
       "function pintaCf(){var v=L('ptconf',{})[kcf];if(!v)return;bx.innerHTML=v===1?\"<span style='color:#4ade80;font-size:13px;font-weight:700;'>✓ Avisei que vou</span>\":\"<span style='color:#fbbf24;font-size:13px;font-weight:700;'>Avisei que não consigo — combina outro horário no chat</span>\";}" +
@@ -2897,11 +2940,13 @@
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
       "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr};" +
       "}" +
-      "var tmrI=null;function iniciaTmr(sg){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
-      "bar.style.display='block';bar.textContent='Descanso: '+resta+'s';" +
-      "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent='Bora! Próxima série!';" +
+      "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
+      "function iniciaTmr(sg,rot){var bar=document.getElementById('tmrBar');clearInterval(tmrI);var resta=sg;ligaTela();" +
+      "var tit=rot||'Descanso';" +
+      "bar.style.display='block';bar.textContent=tit+': '+tmrFmt(resta);" +
+      "tmrI=setInterval(function(){resta--;if(resta<=0){clearInterval(tmrI);bar.textContent=rot?('Feito! '+rot):'Bora! Próxima série!';" +
       "if(navigator.vibrate)navigator.vibrate([200,100,200]);bip(1300,300);setTimeout(function(){bar.style.display='none';},2200);}" +
-      "else{bar.textContent='Descanso: '+resta+'s';if(resta<=3)bip(600,100);}},1000);}" +
+      "else{bar.textContent=tit+': '+tmrFmt(resta);if(resta<=3)bip(600,100);}},1000);}" +
       "pintaSets();" +
       // modo treino guiado: conduz série a série; a série 'feita' clica no setbtn
       // real do exercício, reaproveitando toda a lógica existente (dia completo etc.)
@@ -2914,8 +2959,17 @@
             return { g: it.grupo || "", dc: it.desc || "", ob: it.obs || "", tc: it.tec || "" };
           });
         });
+        // parte 2 do dia: entra no recibo do fim do treino ("ainda falta o A2")
+        var p2s = (fichasApp || []).map(function (f, fi) {
+          var l2 = (f.p2 && f.p2.l) || [];
+          if (!l2.length) return null;
+          var parP = String(f.titulo || "").split("—");
+          var letP = parP.length > 1 ? parP[0].trim().slice(0, 2) : String.fromCharCode(65 + fi);
+          return { k: letP + "2 · " + ((f.p2 && f.p2.n) || "Cardio e alongamento"),
+            l: l2.map(function (ln) { return { t: ln.t, v: ln.v || "" }; }) };
+        });
         return (guiaFichasP || []).map(function (f, fi) {
-          return { n: f.n, it: (f.it || []).map(function (it, ii) {
+          return { n: f.n, p2: p2s[fi] || null, it: (f.it || []).map(function (it, ii) {
             var x = (extra[fi] || [])[ii] || {};
             return { e: it.e, s: it.s, r: it.r, d: it.d, v: it.v, g: x.g || "", dc: x.dc || "", ob: x.ob || "", tc: x.tc || "" };
           }) };
@@ -3238,6 +3292,10 @@
       "m+=\"<div class='gdica' style='margin-top:12px;font-size:13.5px;color:rgba(255,255,255,.85);text-align:center;'>\"+" +
       "'Séries feitas aqui · '+marc+' de '+pres+\" — Cargas anotadas · \"+anot+' de '+f.it.length+" +
       "' — Tempo de treino · '+gmmss((Date.now()-gv.t0)/1000)+(fcR9?' \u2014 Batimentos \u00b7 '+fcR9.m+' bpm m\u00e9dio \u00b7 '+fcR9.x+' m\u00e1x':'')+'</div>';" +
+      // emenda: o dia so acaba depois da parte 2 (A2 — cardio e alongamento)
+      "if(f.p2&&f.p2.l&&f.p2.l.length){m+=\"<div class='gcglab' style='margin-top:16px;'>Ainda falta \"+esc2(f.p2.k)+'</div>'+" +
+      "\"<div style='background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:6px 14px;color:#fff;font-size:13.5px;'>\"+" +
+      "f.p2.l.map(function(ln){return \"<div style='display:flex;justify-content:space-between;gap:10px;padding:7px 0;'><span>\"+esc2(ln.t)+\"</span><b style='color:#bfdbfe;white-space:nowrap;'>\"+esc2(ln.v||'')+'</b></div>';}).join('')+'</div>';}" +
       // a pergunta chega no momento certo: acabou de treinar, ainda ofegante
       "if(!L('ptrpe',{})[hjR])m+=\"<div data-rpebox style='margin-top:16px;'>\"+rpeHtml()+'</div>';" +
       "if(faltam.length)m+=\"<div class='gcglab' style='margin-top:16px;'>Faltou anotar \"+faltam.length+(faltam.length>1?' cargas':' carga')+'</div>'+" +

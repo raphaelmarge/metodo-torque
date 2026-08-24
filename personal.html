@@ -681,6 +681,13 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn" id="tplAplicar">Aplicar no aluno</button>
       </div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
+      <datalist id="p2sugestoes">
+        <option>Esteira</option><option>Bike</option><option>Elíptico</option><option>Escada</option>
+        <option>Remo</option><option>Corda</option><option>Caminhada</option><option>Corrida leve</option>
+        <option>Alongamento de posterior</option><option>Alongamento de quadríceps</option>
+        <option>Alongamento de peitoral</option><option>Alongamento de costas</option>
+        <option>Mobilidade de quadril</option><option>Mobilidade de ombro</option><option>Liberação com rolo</option>
+      </datalist>
       <!-- a ficha só chega no celular do aluno depois de publicar; até agora a
            única porta era o botão de lote lá na aba "Em grupo" -->
       <button class="btn" id="tEnviaApp" style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
@@ -6048,15 +6055,29 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function treinoTexto(st, alunoId) {
     var t = (st.treinosV2 || {})[alunoId];
     if (!t || !t.fichas.length) return (st.treinos || {})[alunoId] || "";
-    return t.fichas.map(function (f) {
+    return t.fichas.map(function (f, fi) {
+      var p2l = (f.p2 && f.p2.l) || [];
       return f.titulo + "\n" + f.itens.map(function (it) {
         var ex = exPorId(st, it.exId) || { nome: "?" };
         return "• " + ex.nome + " — " + it.series + "x" + it.reps + (it.descanso ? " · descanso " + it.descanso + "s" : "") +
           (tecNome(it.tec) ? " · " + tecNome(it.tec) : "") + (it.obs ? " (" + it.obs + ")" : "");
-      }).join("\n");
+      }).join("\n") +
+        // a parte 2 do dia entra logo abaixo, com a letra + 2 (A2, B2…)
+        (p2l.length ? "\n" + letraFicha(f, fi) + "2 — " + ((f.p2 && f.p2.n) || "Cardio e alongamento") + "\n" +
+          p2l.map(function (ln) {
+            return "• " + ln.t + (ln.v ? " — " + ln.v : "") + (ln.o ? " (" + ln.o + ")" : "");
+          }).join("\n") : "");
     }).join("\n\n");
   }
   window.__treinoTexto = treinoTexto; // testes
+  /* A letra da ficha sai do título ("A — Peito/Tríceps" → A) e, sem traço,
+   * da posição. É a MESMA regra do app do aluno — a parte 2 vira letra+"2". */
+  function letraFicha(f, idx) {
+    var p = String((f && f.titulo) || "").split("—");
+    if (p.length > 1) { var l = p[0].trim().slice(0, 2); if (l) return l; }
+    return String.fromCharCode(65 + (idx || 0));
+  }
+  window.__letraFicha = letraFicha; // testes
   function renderFichas() {
     var el = $("fichasBox");
     // o evento toggle do <details> é assíncrono — lê o estado real do DOM
@@ -6074,7 +6095,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         ((st.treinos || {})[alunoId] ? " (O texto antigo deste aluno continua no app até você montar as fichas.)" : "") + "</span>";
       return;
     }
-    el.innerHTML = t.fichas.map(function (f) {
+    el.innerHTML = t.fichas.map(function (f, fi) {
+      var letraF = letraFicha(f, fi);
+      var p2 = f.p2 || {};
+      var p2l = p2.l || [];
       return '<details data-fdet="' + f.id + '"' + (fichasAbertas[f.id] ? " open" : "") + ' style="border:1px solid var(--linha);border-radius:12px;margin-bottom:10px;">' +
         '<summary style="padding:14px;cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
         '<b style="font-size:14.5px;">' + esc(f.titulo) + "</b>" +
@@ -6125,7 +6149,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<input data-exdes="' + f.id + '" type="number" min="0" step="5" value="60" style="width:70px;" title="descanso entre séries (segundos)">' +
         '<span class="muted">s</span>' +
         '<input data-exobs="' + f.id + '" placeholder="obs (opcional)" style="flex:1;min-width:110px;">' +
-        '<button class="btn mini" data-additem="' + f.id + '">+ Adicionar</button></div></div></details>';
+        '<button class="btn mini" data-additem="' + f.id + '">+ Adicionar</button></div>' +
+        /* Parte 2 do MESMO dia (A2, B2…): cardio e alongamento em linhas de
+         * tempo/distância. Não é outra ficha — não rouba a letra seguinte, não
+         * entra na Semana do aluno sozinha e viaja grudada na ficha. */
+        '<div style="margin-top:12px;border-top:1px dashed var(--linha);padding-top:10px;">' +
+        '<div class="linha-flex" style="align-items:center;gap:8px;">' +
+        '<b style="font-size:13.5px;color:#93c5fd;">' + esc(letraF + "2") + " — " + esc(p2.n || "Cardio e alongamento") + "</b>" +
+        '<span class="muted" style="font-size:11.5px;">parte 2 do mesmo dia</span>' +
+        '<span style="margin-left:auto;"></span>' +
+        '<button class="btn sec mini" data-p2nome="' + f.id + '" title="mudar o nome da parte 2">✎ nome</button></div>' +
+        (p2l.length ? p2l.map(function (ln, li) {
+          return '<div class="sessao-pt"><b>' + esc(ln.t) + "</b>" +
+            '<span class="muted">' + esc(ln.v || "") + (ln.o ? " · " + esc(ln.o) : "") + "</span>" +
+            '<span style="margin-left:auto;"><button class="btn sec mini" data-rmp2="' + f.id + ":" + li + '" aria-label="tirar esta linha da parte 2">✕</button></span></div>';
+        }).join("") : '<div class="muted" style="padding:4px 0;font-size:12.5px;">Vazia — é aqui que entram a esteira, a bike e os alongamentos do fim do treino.</div>') +
+        '<div class="linha-flex" style="margin-top:8px;">' +
+        '<input data-p2t="' + f.id + '" list="p2sugestoes" placeholder="O quê (ex.: Esteira)" style="flex:2;min-width:150px;">' +
+        '<input data-p2v="' + f.id + '" placeholder="Quanto (ex.: 12 min)" style="flex:1;min-width:110px;">' +
+        '<input data-p2o="' + f.id + '" placeholder="obs (opcional)" style="flex:1;min-width:110px;">' +
+        '<button class="btn mini" data-addp2="' + f.id + '">+ Adicionar</button></div></div>' +
+        "</div></details>";
     }).join("");
     t.fichas.forEach(function (f) { populaCascata(f.id); });
   }
@@ -8372,6 +8416,43 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (fCx) { delete fCx.capa; marcaAppPendente(stCx, $("tAluno").value); save(stCx); renderFichas(); }
       return;
     }
+    // ---- parte 2 do dia (A2): linha nova, tirar linha e renomear ----
+    var p2Add = e.target.getAttribute && e.target.getAttribute("data-addp2");
+    var p2Rm = e.target.getAttribute && e.target.getAttribute("data-rmp2");
+    var p2Nm = e.target.getAttribute && e.target.getAttribute("data-p2nome");
+    if (p2Add || p2Rm || p2Nm) {
+      var stP2 = load();
+      var tP2 = treinoDe(stP2, $("tAluno").value);
+      var achaP2 = function (fid) {
+        var fP = tP2.fichas.find(function (x) { return x.id === fid; });
+        if (fP && !fP.p2) fP.p2 = { n: "Cardio e alongamento", l: [] };
+        if (fP && !fP.p2.l) fP.p2.l = [];
+        return fP;
+      };
+      if (p2Add) {
+        var fA = achaP2(p2Add); if (!fA) return;
+        var oQue = (document.querySelector('[data-p2t="' + p2Add + '"]').value || "").trim();
+        if (!oQue) { alert("Escreva o que é — ex.: Esteira, Bike, Alongamento de posterior."); return; }
+        fA.p2.l.push({
+          t: oQue.slice(0, 60),
+          v: (document.querySelector('[data-p2v="' + p2Add + '"]').value || "").trim().slice(0, 24),
+          o: (document.querySelector('[data-p2o="' + p2Add + '"]').value || "").trim().slice(0, 80),
+        });
+      } else if (p2Rm) {
+        var parR = p2Rm.split(":");
+        var fR = achaP2(parR[0]); if (!fR) return;
+        fR.p2.l.splice(+parR[1], 1);
+      } else {
+        var fN = achaP2(p2Nm); if (!fN) return;
+        var novo = prompt("Nome da parte 2 deste dia:", fN.p2.n || "Cardio e alongamento");
+        if (novo === null) return;
+        fN.p2.n = novo.trim().slice(0, 40) || "Cardio e alongamento";
+      }
+      marcaAppPendente(stP2, $("tAluno").value);
+      save(stP2);
+      renderFichas();
+      return;
+    }
     if (!add && !rmF && !rmI && !sob && !tds && !tsr && !tob && !des) return;
     var alunoId = $("tAluno").value;
     var st = load();
@@ -10360,7 +10441,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var capasUsadas = {};
     var marcaCapa = function (k) { if (k && capasCfg[k]) { capasUsadas[k] = capasCfg[k]; return k; } return ""; };
     var fichasApp = (t2 && t2.fichas.length) ? t2.fichas.map(function (f) {
-      return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), itens: f.itens.map(function (it) {
+      var p2f = (f.p2 && f.p2.l && f.p2.l.length)
+        ? { n: String(f.p2.n || "Cardio e alongamento").slice(0, 40),
+            l: f.p2.l.slice(0, 12).map(function (ln) { return { t: String(ln.t || "").slice(0, 60), v: String(ln.v || "").slice(0, 24), o: String(ln.o || "").slice(0, 80) }; }) }
+        : null;
+      return { titulo: f.titulo, capa: f.capa || "", ck: marcaCapa(tipoDaFicha(st, f)), p2: p2f, itens: f.itens.map(function (it) {
         var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; }) || {};
         return { nome: ex.nome || "?", video: videoDoEx(ex), desc: ex.descricao || "", series: it.series, reps: it.reps, descanso: +it.descanso || 0, obs: it.obs || "", tec: it.tec || "",
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
@@ -10521,6 +10606,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       feedLigado: feedLigado, avs: avs, botApp: botApp, atualizador: atualizador,
     };
   }
+  window.__dadosApp = dadosAppAluno; // testes
   // junta os dois: dados deste aluno + código do site
   function montaAppAluno(a, stamp) { return self.MT_APP_ALUNO.monta(dadosAppAluno(a, stamp)); }
   /* O que vai pra nuvem em app_aluno.dados. O que importa é o `dados`: com ele

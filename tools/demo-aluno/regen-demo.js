@@ -56,7 +56,11 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
           { exId: mk("Crucifixo na máquina", "Peito"), series: "3", reps: "15", descanso: 45 },
           { exId: mk("Tríceps na corda", "Tríceps"), series: "4", reps: "12", descanso: 45, tec: "up" },
           { exId: mk("Francês com halter", "Tríceps"), series: "3", reps: "12", descanso: 45 },
-        ] },
+        ], p2: { n: "Cardio e alongamento", l: [
+          { t: "Esteira", v: "12 min", o: "ritmo de conversa, sem correr" },
+          { t: "Alongamento de peitoral", v: "40s", o: "cada lado, na quina da parede" },
+          { t: "Alongamento de tríceps", v: "30s", o: "cada lado" },
+        ] } },
         { id: "dmf1", titulo: "B — Costas e bíceps", itens: [
           { exId: mk("Remada curvada", "Costas", "Tronco firme, puxe a barra até a linha do umbigo."), series: "4", reps: "12", descanso: 60 },
           { exId: mk("Puxada aberta", "Costas"), series: "4", reps: "12", descanso: 60 },
@@ -70,7 +74,11 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
           { exId: mk("Stiff com halteres", "Posterior e glúteo"), series: "3", reps: "12", descanso: 60 },
           { exId: mk("Panturrilha em pé", "Quadríceps"), series: "4", reps: "15", descanso: 30 },
           { exId: mk("Prancha", "Core"), series: "4", reps: "40s", descanso: 30 },
-        ] },
+        ], p2: { n: "Bike leve e mobilidade", l: [
+          { t: "Bike", v: "10 min", o: "carga leve, só pra soltar a perna" },
+          { t: "Alongamento de posterior", v: "45s", o: "cada perna" },
+          { t: "Mobilidade de quadril", v: "8 rep", o: "cada lado" },
+        ] } },
         { id: "dmf3", titulo: "D — Ombros e core", itens: [
           { exId: mk("Desenvolvimento com halteres", "Ombros", "Cotovelos um pouco à frente, sobe sem bater os halteres."), series: "4", reps: "10", descanso: 60 },
           { exId: mk("Elevação lateral", "Ombros"), series: "4", reps: "15", descanso: 45 },
