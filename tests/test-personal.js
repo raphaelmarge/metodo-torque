@@ -3472,12 +3472,12 @@ async function abaPt(p, a) {
   await p.fill("#buscaAluno", "");
   ok(/Conteúdos de/.test(appHtml) && /Mobilidade de quadril/.test(appHtml), "videoteca do studio no app");
   ok(/Meu peso/.test(appHtml) && /Hábitos de hoje/.test(appHtml) && /Fotos de progresso/.test(appHtml), "cards de peso, hábitos e fotos presentes");
-  // foto de progresso: câmera E galeria (o capture='user' sozinho trancava no autorretrato)
-  ok(/id='fotoInput' type='file' accept='image\/\*' capture='user'/.test(appHtml) &&
-    /id='fotoGal' type='file' accept='image\/\*' style/.test(appHtml) && !/id='fotoGal'[^>]*capture/.test(appHtml),
-    "foto de progresso tem os dois caminhos: tirar na hora (câmera) e escolher da galeria (sem capture)");
-  ok(/\['fotoInput','fotoGal'\]\.forEach/.test(appHtml) && /function guardaFotoProg\(f\)/.test(appHtml),
-    "câmera e galeria caem no mesmo caminho de guardar (mesmo corte, mesmo limite de 12 fotos)");
+  // foto de progresso: UM botão só. O capture='user' é que trancava no
+  // autorretrato — sem ele o próprio celular oferece câmera OU galeria
+  ok(/id='fotoInput' type='file' accept='image\/\*' style/.test(appHtml) && !/capture=/.test(appHtml),
+    "foto de progresso num botão só: sem capture, o celular pergunta se é câmera ou galeria");
+  ok(/function guardaFotoProg\(f\)/.test(appHtml) && /window\.__fotoProg=guardaFotoProg/.test(appHtml),
+    "a foto escolhida passa pelo mesmo corte de 480 px e pelo teto de 12 fotos");
   {
     // 📸 foto por TIPO de treino: o professor sobe uma por tipo e o sistema
     // escolhe a de cada ficha — senão seria foto por foto, aluno por aluno
