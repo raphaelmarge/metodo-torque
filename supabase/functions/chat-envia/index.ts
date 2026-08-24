@@ -36,8 +36,30 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+/* .trim() de propósito: colar um secret no painel do Supabase pelo celular
+ * traz espaço ou quebra de linha na ponta com facilidade, e um espaço invisível
+ * no fim da ANTHROPIC_API_KEY faz a Anthropic responder 401 "API key is
+ * invalid" — chave certa, erro de chave errada, sem nada visível pra explicar. */
 function env(k: string): string {
-  return Deno.env.get(k) || "";
+  return (Deno.env.get(k) || "").trim();
+}
+
+/* Retrato da chave da IA pro diagnóstico, SEM mostrar a chave. Serve pra separar
+ * as três causas de um 401 que ninguém enxerga no painel:
+ *   - colada pela metade  → tamanho bem menor que o normal (~100+)
+ *   - copiada com sujeira → pontas com espaço, ou caractere fora do ASCII
+ *                           (aspa curva, espaço invisível do teclado do celular)
+ *   - simplesmente errada → tamanho e formato certos, e ainda assim 401 */
+function retratoChave(): Record<string, unknown> {
+  const cru = Deno.env.get("ANTHROPIC_API_KEY") || "";
+  const limpa = cru.trim();
+  return {
+    tem: !!limpa,
+    tamanho: limpa.length,
+    comecaCerto: limpa.startsWith("sk-ant-"),
+    pontasComEspaco: cru !== limpa,
+    soAscii: /^[\x21-\x7e]*$/.test(limpa),
+  };
 }
 
 function sb(path: string, init: RequestInit = {}): Promise<Response> {
@@ -225,6 +247,7 @@ Deno.serve(async (req: Request) => {
         ((credP && credP.donoUnico) && env("WHATSAPP_TOKEN") && env("WHATSAPP_PHONE_ID"))),
       instagram: !!((credP && credP.ig_token) || ((credP && credP.donoUnico) && env("INSTAGRAM_TOKEN"))),
       ia: !!env("ANTHROPIC_API_KEY"),
+      chaveIa: retratoChave(),
       verify: !!env("META_VERIFY_TOKEN"),
       // o diagnóstico usa esta lista pra saber se a função publicada está
       // atualizada — uma versão velha responde o ping sem ela
