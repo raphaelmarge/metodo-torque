@@ -3485,13 +3485,16 @@ async function abaPt(p, a) {
       ] };
       S.write("ptStudio", st);
       return {
-        letras: t.fichas.map((f, i) => window.__letraFicha(f, i)),
+        nFichas: t.fichas.length,
+        letras: [window.__letraFicha({ titulo: "A — Peito e tríceps" }, 0),
+          window.__letraFicha({ titulo: "Treino do dia" }, 1),
+          window.__letraFicha({ titulo: "C — Pernas" }, 5)],
         texto: window.__treinoTexto(st, aid),
         pacote: window.__dadosApp(st.alunos[0], "t"),
       };
     });
-    ok(p2.letras[0] === "A" && p2.letras[1] === "B",
-      "a parte 2 não vira ficha: as letras seguem A, B, C (o A2 mora dentro do A)");
+    ok(p2.letras.join("|") === "A|B|C" && p2.nFichas === (p2.pacote.fichasApp || []).length,
+      "a parte 2 não vira ficha: a letra sai do título (ou da posição) e a contagem de fichas não muda");
     ok(/\nA2 — Cardio e alongamento\n/.test(p2.texto) && /• Esteira — 12 min \(ritmo de conversa\)/.test(p2.texto),
       "a prescrição do WhatsApp leva o A2 com as linhas de tempo/distância");
     const fp2 = p2.pacote && p2.pacote.fichasApp && p2.pacote.fichasApp[0] && p2.pacote.fichasApp[0].p2;
