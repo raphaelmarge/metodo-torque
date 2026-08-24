@@ -434,15 +434,18 @@ ninguém atropelar ninguém — valem pros dois:
     e o domínio `torqueon.com.br` está **verified** no Resend (região sa-east-1,
     envio habilitado), então o e-mail de senha chega na caixa do aluno de verdade,
     não só na do dono.
-  - ⏳ `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` — **par NOVO gerado em 2026-08-24**
-    (a privada antiga tinha se perdido). Custo zero: a `push_subs` estava com
-    ZERO inscrições, então não havia push de ninguém pra derrubar. A pública nova
-    é `BCF653mK3mhwGp4W3c4Wq9MlprvFVwcfBGKDBmxVRdaI_S3y-umX1w6z1MyJuR_-WiO3IthaYSaDF9XMtK1O66I`
-    e já está nos CINCO arquivos do repo que a carregam (app/aluno-builder.js,
+  - ✅ `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` — **par NOVO gerado em 2026-08-24**
+    (a privada antiga tinha se perdido) e já nos Secrets: a push-envia responde
+    `vapid: true`. Custo zero: a `push_subs` estava com ZERO inscrições, então
+    não havia push de ninguém pra derrubar. A pública nova é
+    `BCF653mK3mhwGp4W3c4Wq9MlprvFVwcfBGKDBmxVRdaI_S3y-umX1w6z1MyJuR_-WiO3IthaYSaDF9XMtK1O66I`
+    e está nos CINCO arquivos do repo que a carregam (app/aluno-builder.js,
     apps/app-aluno.html, nutricao.html, demo-aluno.html, demo-paciente.html) —
     o comentário da push-envia dizia "TRÊS lugares", o que estava errado e foi
-    corrigido. Falta só o Raphael colar as duas nos Secrets; o ping responde
-    `vapid: true` quando entrar.
+    corrigido. **O push só fecha o ciclo depois do mt-v597 entrar na main**: até
+    lá o site entrega a pública ANTIGA pro app, o celular guarda ela e a
+    assinatura feita com a privada nova não bate (a notificação é descartada em
+    silêncio, sem erro nenhum aparecer).
   - ⚪ Opcionais e ainda desligados: `META_VERIFY_TOKEN`, `WHATSAPP_TOKEN`/
     `WHATSAPP_PHONE_ID`, `INSTAGRAM_TOKEN` (o robô da Meta) e a conta Pagar.me.
 - Escala: o painel aguenta milhares de alunos (índices + paginação). Os passos
