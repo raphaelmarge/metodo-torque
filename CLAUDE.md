@@ -425,11 +425,19 @@ ninguém atropelar ninguém — valem pros dois:
   RPCs conferidos). O SQL da Comunidade ele já tinha rodado.
 - Secrets — conferido pelo diagnóstico em 2026-08-24 (o ping de cada função diz
   o que ela enxerga; `diagnostico.html` é o caminho curto):
-  - ✅ `ANTHROPIC_API_KEY` — a chat-envia responde `ia: true`. **Atenção**: o ping
-    só prova que o secret EXISTE (`!!env(...)`), não chama a Anthropic. Chave
-    revogada ou sem crédito passa no ping e falha no uso — o teste de verdade é
-    gerar um treino pela IA (o erro vem traduzido por `erroAnthropic`: 401/403 =
-    chave ruim, 429 = sem crédito/limite).
+  - ✅ `ANTHROPIC_API_KEY` — **testada de verdade em 2026-08-24**: a IA de treino
+    gerou ficha. A primeira chave colada foi recusada com `401 authentication_error
+    "API key is invalid."` em TODA tentativa, e só uma chave nova resolveu.
+    **A lição**: o ping (`ia: true`) prova só que o secret EXISTE (`!!env(...)`),
+    não chama a Anthropic — chave pela metade, revogada ou suja passa no ping e
+    falha no uso. O teste que vale é gerar um treino; o erro vem traduzido por
+    `erroAnthropic` (401/403 = chave ruim, 429 = sem crédito/limite) e o motivo
+    cru fica no log da função (`console.error("anthropic", status, corpo)`).
+    Desde então o ping devolve `chaveIa` — tamanho, `comecaCerto` (sk-ant-),
+    `pontasComEspaco` e `soAscii` — que separa "colada pela metade" de "copiada
+    com lixo invisível" de "simplesmente errada", sem nunca mostrar a chave. E
+    `env()` faz `.trim()`, porque espaço na ponta de um secret colado pelo
+    celular derruba a chave certa com cara de chave errada.
   - ✅ `RESEND_API_KEY` + `EMAIL_DE` (`TORQUE ON <nao-responda@torqueon.com.br>`) —
     e o domínio `torqueon.com.br` está **verified** no Resend (região sa-east-1,
     envio habilitado), então o e-mail de senha chega na caixa do aluno de verdade,
