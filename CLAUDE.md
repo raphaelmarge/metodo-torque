@@ -416,14 +416,21 @@ ninguém atropelar ninguém — valem pros dois:
 
 ## Estado atual e pendências do Raphael
 
-- Pendências dele no Supabase: **rodar o SQL de novo** (blocos zap_config,
-  RECEBER POR PROFISSIONAL e BAIXA AUTOMÁTICA MULTI-GATEWAY), **publicar
-  pagamentos e pagamentos-webhook** (baixa automática dos gateways próprios)
-  e **republicar whatsapp, meta-webhook e chat-envia**; **republicar a chat-envia** (sem ela a IA de
-  treino e a IA de dieta não funcionam), publicar envia-email e push-envia
-  (+ conta resend.com com domínio verificado, secrets RESEND_API_KEY/EMAIL_DE),
-  conta Pagar.me e ativação Meta do WhatsApp/Instagram (funcoes.html).
-  O SQL da Comunidade ele já rodou.
+- Supabase (projeto `hdcufkaalxfhwmfwoiqp`, "metodo-torque") — FEITO em 2026-08-24
+  pelo conector: as 8 Edge Functions do repo estão publicadas com **Verify JWT
+  OFF** (chat-envia v3, push-envia v3, envia-email v3, meta-webhook v3,
+  pagamentos v3, pagamentos-webhook v2, whatsapp v2 — a pagarme v1 é a antiga) e
+  os blocos zap_config, RECEBER POR PROFISSIONAL, BAIXA AUTOMÁTICA MULTI-GATEWAY
+  e push_subs do SQL foram rodados (tabelas, colunas, índices únicos parciais e
+  RPCs conferidos). O SQL da Comunidade ele já tinha rodado.
+- Pendências dele (fora do que o conector alcança — Secrets e contas externas):
+  `ANTHROPIC_API_KEY` (sem ela a IA de treino e a IA de dieta não funcionam),
+  `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` (o par que JÁ existe — a pública
+  `BLesSk8…` está gravada no app de todos os alunos; trocar por um par novo
+  derruba o push de quem já ativou), `RESEND_API_KEY`/`EMAIL_DE` (+ conta
+  resend.com com domínio verificado), conta Pagar.me e ativação Meta do
+  WhatsApp/Instagram (funcoes.html). Diagnóstico rápido: cada função responde
+  `{acao:"ping"}` dizendo quais secrets enxerga.
 - Escala: o painel aguenta milhares de alunos (índices + paginação). Os passos
   seguintes, se a base crescer muito: fotos no Supabase Storage, IndexedDB no
   lugar do localStorage e sync incremental (salvar só o que mudou).
