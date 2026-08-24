@@ -416,14 +416,38 @@ ninguém atropelar ninguém — valem pros dois:
 
 ## Estado atual e pendências do Raphael
 
-- Pendências dele no Supabase: **rodar o SQL de novo** (blocos zap_config,
-  RECEBER POR PROFISSIONAL e BAIXA AUTOMÁTICA MULTI-GATEWAY), **publicar
-  pagamentos e pagamentos-webhook** (baixa automática dos gateways próprios)
-  e **republicar whatsapp, meta-webhook e chat-envia**; **republicar a chat-envia** (sem ela a IA de
-  treino e a IA de dieta não funcionam), publicar envia-email e push-envia
-  (+ conta resend.com com domínio verificado, secrets RESEND_API_KEY/EMAIL_DE),
-  conta Pagar.me e ativação Meta do WhatsApp/Instagram (funcoes.html).
-  O SQL da Comunidade ele já rodou.
+- Supabase (projeto `hdcufkaalxfhwmfwoiqp`, "metodo-torque") — FEITO em 2026-08-24
+  pelo conector: as 8 Edge Functions do repo estão publicadas com **Verify JWT
+  OFF** (chat-envia v3, push-envia v3, envia-email v3, meta-webhook v3,
+  pagamentos v3, pagamentos-webhook v2, whatsapp v2 — a pagarme v1 é a antiga) e
+  os blocos zap_config, RECEBER POR PROFISSIONAL, BAIXA AUTOMÁTICA MULTI-GATEWAY
+  e push_subs do SQL foram rodados (tabelas, colunas, índices únicos parciais e
+  RPCs conferidos). O SQL da Comunidade ele já tinha rodado.
+- Secrets — conferido pelo diagnóstico em 2026-08-24 (o ping de cada função diz
+  o que ela enxerga; `diagnostico.html` é o caminho curto):
+  - ✅ `ANTHROPIC_API_KEY` — a chat-envia responde `ia: true`. **Atenção**: o ping
+    só prova que o secret EXISTE (`!!env(...)`), não chama a Anthropic. Chave
+    revogada ou sem crédito passa no ping e falha no uso — o teste de verdade é
+    gerar um treino pela IA (o erro vem traduzido por `erroAnthropic`: 401/403 =
+    chave ruim, 429 = sem crédito/limite).
+  - ✅ `RESEND_API_KEY` + `EMAIL_DE` (`TORQUE ON <nao-responda@torqueon.com.br>`) —
+    e o domínio `torqueon.com.br` está **verified** no Resend (região sa-east-1,
+    envio habilitado), então o e-mail de senha chega na caixa do aluno de verdade,
+    não só na do dono.
+  - ✅ `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` — **par NOVO gerado em 2026-08-24**
+    (a privada antiga tinha se perdido) e já nos Secrets: a push-envia responde
+    `vapid: true`. Custo zero: a `push_subs` estava com ZERO inscrições, então
+    não havia push de ninguém pra derrubar. A pública nova é
+    `BCF653mK3mhwGp4W3c4Wq9MlprvFVwcfBGKDBmxVRdaI_S3y-umX1w6z1MyJuR_-WiO3IthaYSaDF9XMtK1O66I`
+    e está nos CINCO arquivos do repo que a carregam (app/aluno-builder.js,
+    apps/app-aluno.html, nutricao.html, demo-aluno.html, demo-paciente.html) —
+    o comentário da push-envia dizia "TRÊS lugares", o que estava errado e foi
+    corrigido. **O push só fecha o ciclo depois do mt-v597 entrar na main**: até
+    lá o site entrega a pública ANTIGA pro app, o celular guarda ela e a
+    assinatura feita com a privada nova não bate (a notificação é descartada em
+    silêncio, sem erro nenhum aparecer).
+  - ⚪ Opcionais e ainda desligados: `META_VERIFY_TOKEN`, `WHATSAPP_TOKEN`/
+    `WHATSAPP_PHONE_ID`, `INSTAGRAM_TOKEN` (o robô da Meta) e a conta Pagar.me.
 - Escala: o painel aguenta milhares de alunos (índices + paginação). Os passos
   seguintes, se a base crescer muito: fotos no Supabase Storage, IndexedDB no
   lugar do localStorage e sync incremental (salvar só o que mudou).
