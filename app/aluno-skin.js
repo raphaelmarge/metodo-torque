@@ -64,61 +64,71 @@
     + ".gcard .rpebtn{min-height:48px}"
 
     /* ---------- treino guiado: mesma informação, menos ruído (2026-08) ----------
-     * O Raphael: "não quero tirar, mas tá muita informação". Então nada some —
-     * o que muda é o PESO de cada coisa. Três problemas concretos na tela:
-     * o nome da ficha aparecia duas vezes a 40px de distância (no topo e
-     * embaixo do 01/05), o card externo era uma moldura em volta de outras
-     * molduras (card > tiles > "na última vez"), e o roxo estava em quatro
-     * lugares brigando com o título. */
+     * O Raphael: "não quero tirar, mas tá muita informação" — e depois, vendo
+     * duas propostas: a mais radical, porém com o DROP-SET e TODOS os blocos
+     * de informação continuando visíveis. Então nada some da tela; o que muda
+     * é o peso. Três coisas em primeiro plano — nome do exercício, tiles e
+     * botão — e todo o resto vira apoio, num cinza só e num tamanho só. */
 
-    /* 1. o nome da ficha, escrito duas vezes, fica só no topo.
+    /* 1. o nome da ficha estava escrito DUAS vezes a 40px de distância: no topo
+     *    ("A · PEITO E TRÍCEPS") e de novo embaixo do 01/05. Fica só o de cima.
      *    A regra do construtor é `.gcont #gProg span` — repetir a mesma
      *    especificidade aqui basta, porque o skin carrega depois. */
     + ".gcont #gProg span{display:none}"
     + ".gcont{margin-top:7px;align-items:center}"
-    + "#gProg{font-size:12px;letter-spacing:.14em;color:#8a8695;font-weight:700}"
-    + "#gProg b{font-size:12px;color:#cfcbdb}"
-    + "#gReloTot{font-size:12px;color:#8a8695}"
+    + "#gProg{font-size:11.5px;letter-spacing:.16em;color:#6f6a7c;font-weight:700}"
+    + "#gProg b{font-size:11.5px;color:#a9a4b5}"
+    + "#gReloTot{font-size:11.5px;color:#6f6a7c;letter-spacing:.04em}"
 
-    /* 2. o título é o herói; o "Série 1 de 4" desce um degrau e larga o roxo */
-    + ".gtit{margin-top:14px;line-height:.96}"
-    + ".ggrupo{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8a8695;margin-top:8px;font-weight:800}"
+    /* 2. os DOIS cronômetros passam a morar juntos no topo (são a mesma
+     *    natureza de informação; separados, o do exercício ficava flutuando
+     *    solto entre o conteúdo e o botão) */
+    + ".gbase{order:2;margin:6px 0 0;justify-content:flex-start}"
+    + ".grelo{color:#6f6a7c}"
+    + ".grelo b{font-size:11.5px;font-weight:700}"
+    + ".grelo em{font-size:11.5px;font-style:normal}"
 
-    /* 3. a explicação da técnica vira uma linha discreta ao lado do selo */
-    + ".gtecl{margin-top:10px;font-size:12.5px;line-height:1.45;color:#8a8695}"
-    + ".gtecl .tecchip{font-size:9.5px;padding:4px 9px;vertical-align:1px}"
+    /* 3. o título ganha o palco; o "Série 1 de 4" larga o roxo e desce um degrau */
+    + ".gtit{margin-top:20px;line-height:.94}"
+    + ".ggrupo{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:#6f6a7c;margin-top:9px;font-weight:800}"
 
-    /* 4. o card externo vira o próprio fundo da tela — uma moldura a menos.
-     *    O padding CONTINUA (com margem negativa que devolve o alinhamento):
-     *    com padding 0 o `overflow-y:auto` raspa o glifo da primeira letra. */
-    + ".gwrap .gcard{background:none;border:none;box-shadow:none;padding:0 18px;margin:14px -18px 0}"
+    /* 4. o selo da técnica CONTINUA (pedido explícito), com a explicação no
+     *    mesmo tom do resto do apoio */
+    + ".gtecl{margin-top:9px;font-size:12px;line-height:1.45;color:#6f6a7c}"
+    + ".gtecl .tecchip{font-size:9px;padding:3px 8px;vertical-align:1px}"
 
-    /* 5. a fileira das séries encolhe, sem deixar de dizer qual é a de agora */
-    + ".gsets.mini{gap:6px;margin-top:0}"
-    + ".gsets.mini i{height:30px;min-height:30px;min-width:0;max-width:none;border-radius:9px;font-size:12.5px;font-weight:800}"
+    /* 5. o card externo era uma moldura em volta de outras molduras (card >
+     *    tiles > "na última vez") e vira o próprio fundo. O padding CONTINUA,
+     *    com margem negativa devolvendo o alinhamento: com padding 0 o
+     *    `overflow-y:auto` raspa o glifo da primeira letra das linhas. */
+    + ".gwrap .gcard{background:none;border:none;box-shadow:none;padding:0 18px;margin:18px -18px 0}"
 
-    /* 6. recado e dica continuam lá, sem gritar mais alto que o exercício */
-    + ".gobs{margin-top:16px;padding-left:12px;border-left-width:2px}"
-    + ".gobs em{font-size:9.5px;letter-spacing:.18em}"
-    + ".gobs p{font-size:13.5px;line-height:1.4;font-weight:700}"
-    + ".gdica{margin-top:10px;font-size:12.5px;line-height:1.5;color:#8a8695}"
+    /* 6. as séries continuam com os NÚMEROS (tentei virar trilho liso e era a
+     *    única informação que sumia de verdade). Viram pastilhas de 26px em vez
+     *    de caixas de 52px, e estreitas — em largura cheia viravam gêmeas da
+     *    barra de exercícios do topo, e duas barras iguais dizendo coisas
+     *    diferentes confundem mais do que ajudam. */
+    + ".gsets.mini{gap:5px;margin-top:0;max-width:196px}"
+    + ".gsets.mini i{height:26px;min-height:26px;min-width:0;max-width:none;border-radius:8px;font-size:11.5px;font-weight:800;padding:0}"
 
-    /* 7. os tiles passam a ser a ÚNICA superfície forte da tela */
-    + ".gtiles{margin-top:18px}"
-    + ".gtile{border-radius:16px;padding:12px 14px;min-height:82px}"
+    /* 7. recado e dica continuam inteiros, sem gritar mais que o exercício */
+    + ".gobs{margin-top:18px;padding-left:11px;border-left-width:2px}"
+    + ".gobs em{font-size:9px;letter-spacing:.2em;color:#6f6a7c}"
+    + ".gobs p{font-size:12.5px;line-height:1.45;font-weight:600;color:#a9a4b5}"
+    + ".gdica{margin-top:9px;font-size:12px;line-height:1.5;color:#6f6a7c}"
 
-    /* 8. os blocos de apoio trocam moldura por um fio */
-    + ".gsecrow{margin-top:10px}"
-    + ".gultvez{background:none;border:none;border-top:1px solid var(--bg11);border-radius:0;padding:15px 2px 0;margin-top:18px}"
-    + ".gultvez>span{font-size:9.5px;letter-spacing:.18em}"
-    + ".guvrow{font-size:13px;color:#8a8695;margin-top:8px}"
-    + ".guvrow b{color:#cfcbdb}"
-    + ".gprox{margin-top:15px;padding-top:15px;border-top:1px solid var(--bg11);font-size:12.5px}"
+    /* 8. os tiles são o segundo herói — crescem e ganham respiro */
+    + ".gtiles{margin-top:22px;gap:11px}"
+    + ".gtile{border-radius:18px;padding:15px 16px;min-height:96px}"
 
-    /* 9. o cronômetro para de flutuar solto entre o card e o botão */
-    + ".gbase{margin-top:16px}"
-    + ".grelo b{font-size:15px}"
-    + ".grelo em{font-size:11px}"
+    /* 9. o apoio depois dos tiles troca moldura por um fio */
+    + ".gsecrow{margin-top:11px}"
+    + ".gultvez{background:none;border:none;border-top:1px solid var(--bg11);border-radius:0;padding:16px 2px 0;margin-top:22px}"
+    + ".gultvez>span{font-size:9px;letter-spacing:.2em;color:#6f6a7c}"
+    + ".guvrow{font-size:12.5px;color:#6f6a7c;margin-top:9px}"
+    + ".guvrow b{color:#a9a4b5;font-weight:700}"
+    + ".gprox{margin-top:16px;padding-top:16px;border-top:1px solid var(--bg11);font-size:12px;color:#6f6a7c}"
+    + ".gprox b{color:#a9a4b5}"
 
     /* ---------- listas, conquistas, agenda ---------- */
     + "#cqGrid{gap:10px!important}"
