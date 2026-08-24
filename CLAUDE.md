@@ -161,6 +161,23 @@ o que faz a foto de musculação aparecer em dia de circuito/corrida. O rótulo
 de cada extra sai do `data-hk` na hora: **HOJE** só no primeiro card, os outros
 viram **TAMBÉM** — antes todo card dizia HOJE, inclusive o que não era do dia.
 
+**Parte 2 do dia — A2, B2** (a partir da v595): o professor pediu um
+sub-treino de cardio/alongamento dentro do dia. A parte 2 **não é outra ficha**:
+é um campo dentro dela, `f.p2 = {n, l:[{t,v,o}]}` (o quê / quanto / obs). Assim
+ela não rouba a letra seguinte (as fichas seguem A, B, C), não entra sozinha na
+Semana do aluno (que casa pelo **id** da ficha) e viaja no mesmo pacote.
+`letraFicha(f, idx)` no painel tira a letra do título ("A — Peito" → A) ou da
+posição — **a mesma regra do app**, que faz o mesmo `split("—")` no builder;
+mexeu numa, confira a outra. O painel tem o formulário curto com `datalist`
+`#p2sugestoes`; a prescrição do WhatsApp (`treinoTexto`) imprime o A2 embaixo
+dos exercícios; o pacote leva `p2` em `fichasApp` e um resumo `{k, l}` dentro do
+`GUIA` (é o que o recibo do fim do treino usa pra dizer "Ainda falta A2"). No
+app o bloco azul fica DENTRO da gaveta da ficha, depois do botão de começar,
+com cada linha marcável (`ptp2 = {d: hoje, f:{...}}` — só vale pro dia) e
+cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo próprio
+e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
+`window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
+
 **Mapa da corrida com estilo** (a partir da v592): o mapa do GPS é canvas puro
 (sem Leaflet), e agora tem `CRMAPS` com cinco estilos — `escuro`/`claro`/
 `colorido` (CARTO, com `@2x` quando a tela é retina), `satelite` (Esri World
