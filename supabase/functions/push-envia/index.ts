@@ -9,12 +9,16 @@
 //   2. Deploy desta função com o nome: push-envia. Pode DESLIGAR o "Verify
 //      JWT": ela confere sozinha quem está chamando.
 //   3. Secrets (as duas chaves são um PAR — trocar uma sem a outra quebra o push):
-//        VAPID_PUBLIC_KEY  = BLesSk80OGEOnbJj9iqH2_KHPIhdN0GsGhVpuVWx4O7YqvtV_P961-hqBtqOHw3SWp3GnwDbpauRyEcRVFmdb-I
+//        VAPID_PUBLIC_KEY  = BCF653mK3mhwGp4W3c4Wq9MlprvFVwcfBGKDBmxVRdaI_S3y-umX1w6z1MyJuR_-WiO3IthaYSaDF9XMtK1O66I
 //        VAPID_PRIVATE_KEY = (a metade secreta desta pública — o Raphael recebeu na conversa;
 //                             ela NUNCA entra no repositório, só nos Secrets do Supabase)
 //      Perdeu a privada? Gere um par novo (npx web-push generate-vapid-keys) e troque a
-//      pública nos TRÊS lugares que o app usa — app/aluno-builder.js, apps/app-aluno.html
-//      e nutricao.html — senão o navegador recusa a inscrição.
+//      pública nos CINCO arquivos do repo que a carregam — app/aluno-builder.js,
+//      apps/app-aluno.html, nutricao.html, demo-aluno.html e demo-paciente.html —
+//      senão o navegador recusa a inscrição. (nativo/www é cópia gerada por
+//      `node nativo/copia-www.js`, não está no git; não conte ela.) Trocar o par
+//      derruba o push de quem JÁ ativou: confira antes quantas linhas tem a
+//      push_subs — vazia, a troca não custa nada.
 //   4. Agendar o lembrete diário: Supabase → Integrations → Cron (pg_cron):
 //        select cron.schedule('lembrete-aulas', '0 9 * * *', $$
 //          select net.http_post(
