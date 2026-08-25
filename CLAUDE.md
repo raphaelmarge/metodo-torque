@@ -251,6 +251,15 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Ver todas / Mostrar menos das Conquistas** (conserto na v612): a grade
+retrátil trocava o texto do botão e a classe `.enc`, mas **não escondia medalha
+nenhuma** — o botão de cada medalha nasce com `display:block` no PRÓPRIO
+elemento, e estilo inline ganha da folha de estilo, então
+`#cqGrid.enc>button:nth-child(n+7){display:none}` nunca valia. Virou
+`display:none!important`. Lição pro resto do app: **teste de coisa que
+aparece/some tem que contar o que o aluno VÊ** (`getComputedStyle(...).display`),
+nunca a classe — a classe entrava certinha o tempo todo.
+
 **Foto só quando muda no retorno** (a partir da v611): `devolveApp()` dispara a
 cada `Sv` de peso, carga, treino marcado, hábito, corrida ou batimento — e num
 treino real as anotações estão minutos umas das outras, então a folga de 1,8 s

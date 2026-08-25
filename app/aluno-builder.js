@@ -489,7 +489,7 @@
       /* ---------- fim do treino em festa (tela 48): fundo na cor do studio ---------- */
       ".gwrap.festa{background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%)}" +
       ".gwrap.festa .gcard{background:none;border:none;box-shadow:none;max-height:none}" +
-      ".gwrap.festa .gbarra,.gwrap.festa .gcont,.gwrap.festa .ggrupo,.gwrap.festa .gbase,.gwrap.festa .gtit,.gwrap.festa .gchip,.gwrap.festa .gtecl{display:none!important}" +
+      ".gwrap.festa .gbarra,.gwrap.festa .gcont,.gwrap.festa .ggrupo,.gwrap.festa .gbase,.gwrap.festa .gtit,.gwrap.festa .gchip,.gwrap.festa .gtecl{display:none}" +
       ".gwrap.festa .gmarca{color:rgba(255,255,255,.8)}" +
       ".gwrap.festa .gtopo button{color:#fff}" +
       ".wtile2{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:12px 6px;text-align:center;color:#fff}" +
@@ -536,7 +536,11 @@
       ".mgsw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .18s;box-shadow:0 1px 4px rgba(0,0,0,.35)}" +
       ".mgsw.on{background:var(--cor)}.mgsw.on i{left:21px}" +
       // conquistas encolhidas: só as 6 primeiras aparecem até o Ver todas
-      "#cqGrid.enc>button:nth-child(n+7){display:none}" +
+      /* !important de propósito: o botão da medalha nasce com display:block no
+       * PRÓPRIO elemento, e estilo inline ganha da folha — sem isto o "Ver
+       * todas / Mostrar menos" trocava o texto e a classe mas não escondia
+       * medalha nenhuma. */
+      "#cqGrid.enc>button:nth-child(n+7){display:none!important}" +
       /* ---------- conquista em tela cheia (estilo Nike Run) ----------
        * A medalha gira em 3D acompanhando o celular (giroscópio) e o brilho
        * caminha junto. Sem giroscópio, o dedo arrasta — e sozinha ela balança

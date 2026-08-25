@@ -4710,6 +4710,30 @@ async function abaPt(p, a) {
   ok(/Bloqueada/.test(cqTela.bloqSelo) && cqTela.bloqBarra && cqTela.bloqSemShare,
     "conquista ainda bloqueada mostra a barra de progresso e não oferece compartilhar");
   ok(/5\/100/.test(cqCorrida.soma) && cqCorrida.bikeNaoConta, "os km somados contam só corrida (bike e caminhada ficam de fora)");
+
+  /* 🏅 Ver todas / Mostrar menos: o teste conta as medalhas que o aluno REALMENTE
+   * enxerga. Contar a classe .enc não servia — ela entrava certinho e mesmo
+   * assim as 17 apareciam, porque o botão da medalha nasce com display:block no
+   * próprio elemento e estilo inline ganha da folha de estilo. */
+  const cqRetratil = await pCr.evaluate(async () => {
+    window.__evSub("conq");
+    await new Promise((r) => setTimeout(r, 150));
+    const g = document.getElementById("cqGrid"), bt = document.getElementById("cqVerMais");
+    const vistas = () => [...g.children].filter((c) => getComputedStyle(c).display !== "none").length;
+    const clica = async () => { bt.click(); await new Promise((r) => setTimeout(r, 200)); };
+    const out = { total: g.children.length, btVisivel: getComputedStyle(bt).display !== "none",
+      fechado: vistas(), txtFechado: bt.textContent };
+    await clica(); out.aberto = vistas(); out.txtAberto = bt.textContent;
+    await clica(); out.fechouDeNovo = vistas();
+    return out;
+  });
+  ok(cqRetratil.total > 6 && cqRetratil.btVisivel && cqRetratil.fechado === 6,
+    "🏅 com mais de 6 medalhas a grade nasce encolhida em 6 (" + cqRetratil.fechado + " de " + cqRetratil.total + ")");
+  ok(cqRetratil.aberto === cqRetratil.total && /Mostrar menos/.test(cqRetratil.txtAberto)
+    && /Ver todas as /.test(cqRetratil.txtFechado),
+    "🏅 Ver todas abre as " + cqRetratil.total + " e o botão vira Mostrar menos");
+  ok(cqRetratil.fechouDeNovo === 6,
+    "🏅 Mostrar menos volta pra 6 de verdade (não só troca o texto)");
   // recorde pessoal + arte compartilhável: corrida mais longa celebra na hora
   const share = await pCr.evaluate(async () => {
     window.__trocaSec("treino");
