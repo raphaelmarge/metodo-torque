@@ -534,13 +534,18 @@ ninguém atropelar ninguém — valem pros dois:
 
 ## Estado atual e pendências do Raphael
 
-- Supabase (projeto `hdcufkaalxfhwmfwoiqp`, "metodo-torque") — FEITO em 2026-08-24
-  pelo conector: as 8 Edge Functions do repo estão publicadas com **Verify JWT
-  OFF** (chat-envia v3, push-envia v3, envia-email v3, meta-webhook v3,
-  pagamentos v3, pagamentos-webhook v2, whatsapp v2 — a pagarme v1 é a antiga) e
-  os blocos zap_config, RECEBER POR PROFISSIONAL, BAIXA AUTOMÁTICA MULTI-GATEWAY
-  e push_subs do SQL foram rodados (tabelas, colunas, índices únicos parciais e
-  RPCs conferidos). O SQL da Comunidade ele já tinha rodado.
+- Supabase (projeto `hdcufkaalxfhwmfwoiqp`, "metodo-torque") — FEITO pelo
+  conector: as **10 Edge Functions** do repo estão publicadas com **Verify JWT
+  OFF** (a pagarme antiga continua lá) e os blocos zap_config, RECEBER POR
+  PROFISSIONAL, BAIXA AUTOMÁTICA MULTI-GATEWAY e push_subs do SQL foram rodados
+  (tabelas, colunas, índices únicos parciais e RPCs conferidos). O SQL da
+  Comunidade ele já tinha rodado. A **chat-envia está na v12** (2026-08-25), com
+  as regras da v604 dentro dela — `MES_REGRA` (a IA monta o MÊS, 4 semanas de
+  progressão, a 4ª sempre mais leve) e `BRIEF_REGRA` (a leitura do professor
+  vence os números; adaptações e limitações são regra absoluta) — mais o
+  `.trim()` do `env()` e o `chaveIa` do ping. ⚠️ Antes de republicar qualquer
+  função, CONFIRA o que está no ar: a v11 tinha duas melhorias que ainda não
+  estavam no repo, e publicar por cima teria apagado as duas.
 - Secrets — conferido pelo diagnóstico em 2026-08-24 (o ping de cada função diz
   o que ela enxerga; `diagnostico.html` é o caminho curto):
   - ✅ `ANTHROPIC_API_KEY` — **testada de verdade em 2026-08-24**: a IA de treino
