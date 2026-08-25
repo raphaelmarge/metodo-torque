@@ -178,6 +178,110 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**IA prescreve o MÊS, com perfil profundo e a leitura do professor** (a partir
+da v604): o `ia_treino` deixou de montar "a semana" e passou a montar o **mês**
+— as MESMAS fichas/circuitos/corridas valem 4 semanas e o que muda é a
+progressão escrita, que a IA devolve no campo `mes` (`MES_REGRA` na chat-envia,
+usada pelos três formatos: 4 semanas, ajuste concreto, **semana 4 sempre mais
+leve**). `peneiraMesIA` só aceita as 4 semanas completas (resposta antiga →
+`null` e o treino entra igual, sem progressão); `semanaDoMes(mes)` resolve em
+que semana o aluno está pela data de geração (passou do mês, trava na 4). Guarda
+em `t.mes[tipo]`; o painel pinta o card **📅 Plano do mês** (`pintaMesPlano`) e o
+pacote leva `mesApp` com a semana **já resolvida** — o app só imprime a faixa
+`#trMes`. ⚠️ `var MESAPP=` entra ENTRE `var PLANO=` e `var TRHEAD=`: o teste que
+recorta o pacote por regex teve de ser reancorado (a mesma armadilha da v583).
+
+O prompt ganhou três blocos novos: `perfilFisicoIA` (última avaliação + o quanto
+mudou desde a primeira), `evolucaoIA` (cargas REAIS do `retorno.cargas`,
+frequência dos últimos 28 dias, RPE, bpm) e `corridasIA` (pace e maior distância
+já feita). Cada bloco diz honestamente quando o dado não existe, em vez de
+deixar a IA estimar. E `briefIA(a)` põe **na frente de tudo** a leitura humana
+do professor — `a.briefIA = {desejo, quer, adapta, leitura}`, editada no
+`<details>` `#taBrief` da aba Automático e IA e guardada NO ALUNO (o mês
+seguinte só ajusta o que mudou). `BRIEF_REGRA` na chat-envia manda esse bloco
+vencer qualquer conclusão tirada dos números, trata *adaptações e limitações*
+como **regra absoluta** e exige ressalva no resumo em vez de ignorar em
+silêncio um pedido perigoso. Ganchos: `window.__peneiraMes`, `__semanaMes`,
+`__montaDadosIA`, `__briefIA`, `__brief`, `__pintaMes`.
+
+**Peso sugerido na série** (a partir da v603): `gSugereKg(ex, repsAlvo)` olha o
+`ptdc` daquele exercício e devolve o próximo degrau (`gPasso`: 1 kg abaixo de
+20, 2,5 acima) **só quando** o aluno bateu as repetições prescritas na última
+vez E não subiu no treino anterior a essa (deixa consolidar). Sem histórico,
+sem reps prescritas, ou reps abaixo do alvo → devolve 0 e nada aparece. O
+botão `#gSugT` (classe `.gsug`) fica na TELA do exercício, embaixo dos tiles —
+dentro de "Mudar a carga" o aluno nunca veria. Tocar nele grava a carga do dia
+(`gv.cargas` + `gGrava`) e repinta: o tile CARGA já mostra o número novo com o
+"+2,5 kg desde a última", e o botão some. **Nada sobe sozinho** — a sugestão é
+sempre um toque explícito. Gancho: `window.__gSugere`.
+
+**Resumo do fim da corrida** (a partir da v602): os números do fim eram duas
+linhas de texto dentro do card; agora `crResumo(reg, extras)` abre a tela
+cheia `#crResumoF` com seis tiles (km, tempo, pace, kcal, bpm médio, pico),
+as medalhas/recordes em verde e os botões de postar. `cr.resumo` trava o
+`espelhaCr` enquanto ela está aberta — senão a pintura do cronômetro passava
+por cima. A arte (`cardCorrida`) ganhou o batimento e passou a servir a
+ESTEIRA: sem km o número grande vira o TEMPO, e o botão de compartilhar não
+exige mais GPS (antes `reg.k > 0` deixava quem corre em esteira de fora).
+`crEh()` é um escape próprio do bloco de cardio — o `esc2` nasce noutro
+pedaço do script.
+
+**Tela por zona de batimento** (a partir da v601): com a cinta conectada, o
+fundo da tela cheia da corrida (`#crPainelF`) vira a cor da zona (`HRZC`, Z1
+azul → Z5 vermelho) e a faixa `#crZonaFx` mostra zona, bpm e % da máxima.
+`crZonaPinta(mapaAberto)` é chamada no fim do `espelhaCr` e também pelo
+`hrPinta` (senão a zona congelava com o cronômetro pausado). **Sem cinta nada
+muda**: `HR.on` falso devolve o gradiente do studio e esconde a faixa — mesma
+regra honesta do resto do batimento. A voz só entra depois que a zona firma
+(12 s em `crZDesde`), senão falaria a cada batida na fronteira entre duas
+zonas. A faixa do bloco guiado (`#crFaseF`) vai a branco quando o fundo
+colorido entra, porque o ciano do aquecimento sumia no laranja do Z4.
+
+**Treino guiado no circuito** (a partir da v600): o WOD ganhou o mesmo desenho
+da musculação — UM movimento por vez. `wfGuia()` pinta o `#wfAgora` com a
+quantidade em 38 px, o nome, a linha "depois: X" e o botão `#wfFeito`;
+`wfAvanca()` anda um movimento e, ao passar do último, zera `wod.gi` e clica no
+**mesmo** `#wodVolta` de sempre (um caminho só pra contar volta, senão dois
+contadores divergem). Só vale pra **amrap** e **fortime** — EMOM e Tabata são
+definidos pelo relógio e seguem como estavam. A lista embaixo (`listaMovs(t, gd)`)
+passa a derivar o riscado de `wod.gi` em vez do `wfRisc` manual nesses dois
+tipos, e tocar num item PULA pra ele. Com o guiado na tela, o `#wfVolta` é
+rebaixado a atalho discreto ("Fechei a volta inteira") — e volta ao normal a
+cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi`
+zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
+Ganchos: `window.__wodGuia.avanca`.
+
+**Mapa de calor do mês** (a partir da v599): o bloco `#mapaAno` das
+Conquistas era a fita de 52 semanas (364 quadradinhos de 4 px) — bonita de
+longe, ilegível num celular de 480. Virou o **mês em calendário**, com `‹ ›`
+pra andar pra trás (`mapMes`, 0 = mês atual), semana começando na segunda
+(igual aos chips do Início), hoje com anel e os dias que ainda não chegaram
+pontilhados. A cor conta QUANTO foi treinado: `forcaDoDia(iso, feitos)` soma
+as séries de `ptsets_<dia>` em três degraus (>=20, >=10, resto) e devolve 1
+pro dia que só está em `ptfeitos` sem série anotada (uma corrida, por
+exemplo). O cabeçalho diz "N treinos em agosto" e compara com o melhor mês
+ANTERIOR (nunca consigo mesmo). O id continua `mapaAno` de propósito — o
+classificador `[data-sec]` e os testes já apontam pra ele. A demo semeia
+`ptsets_<dia>` (segunda cheia, quarta média, sábado leve) senão o degradê
+não aparece. Ganchos: `window.__mapaMes` (`forca`, `mes`, `pinta`).
+
+**Player guiado de cardio** (a partir da v598): o treino de corrida/bike
+prescrito vira uma FILA de blocos — `crMontaBlocos(plano)` devolve
+`[{k,n,d,s,km}]`: aquecimento (`aq`, 5 min), o miolo (`c` contínuo, ou `f`/`l`
+alternando um par por tiro) e a volta à calma (`vc`, 3 min). A moldura entra
+sozinha, do mesmo jeito que o aquecimento da musculação já entrava (o professor
+prescreve o miolo, o app põe a borda) e o aluno desliga em Corrida →
+engrenagem → *Aquecimento e volta à calma* (`ptcrCfg.bl`). Corrida LIVRE não
+ganha blocos. Quem fecha o bloco é a **distância quando o GPS está ligado**, e
+o tempo quando não está — com `5 km em 30 min`, fechar no primeiro cortaria o
+treino no meio. Na tela cheia entra o `#crBlocoBox` (trilho `#crTrilho` +
+`#crBlocoD` "depois: X" + `#crBlocoT` relógio + `#crPulaF`); a faixa
+`#crFase`/`#crInfo` passa a falar do bloco. Troca de bloco fala em voz
+(`crFala`) ou bipa, conforme `ptcrCfg.fb`, e vibra. Estado em
+`cr.blocos/bi/bt0/bkm0`, limpo em `crZera`, `crFinaliza` e ao trocar de treino;
+a pausa automática não corta um bloco guiado. Ganchos: `window.__crGuia`
+(`monta`, `pula`, `atual`).
+
 **Mapa da corrida com estilo** (a partir da v592): o mapa do GPS é canvas puro
 (sem Leaflet), e agora tem `CRMAPS` com cinco estilos — `escuro`/`claro`/
 `colorido` (CARTO, com `@2x` quando a tela é retina), `satelite` (Esri World

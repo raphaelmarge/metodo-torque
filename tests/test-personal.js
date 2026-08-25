@@ -3759,6 +3759,122 @@ async function abaPt(p, a) {
   // avisos sonoros: contagem 3-2-1 nos timers e áudio destravado no primeiro toque (iPhone)
   ok(/function ucCd\(/.test(appHtml2) && /function wodCd\(/.test(appHtml2) && /ac\.resume\(\)/.test(appHtml2) && /o\.type='square'/.test(appHtml2),
     "timers com contagem sonora 3-2-1 e áudio alto destravado no toque");
+  {
+    // peso sugerido na série (v603): bateu as reps da última vez -> sobe um degrau
+    const sug = await pApp.evaluate(async () => {
+      const S = (h) => localStorage.setItem("ptdc", JSON.stringify(h));
+      const snap = localStorage.getItem("ptdc");
+      const out = {};
+      S({ Sup: [{ d: "2026-08-01", kg: 30, r: 12 }, { d: "2026-08-08", kg: 30, r: 12 }] });
+      out.bateu = window.__gSugere("Sup", "12");
+      S({ Sup: [{ d: "2026-08-08", kg: 30, r: 9 }] });
+      out.naoBateu = window.__gSugere("Sup", "12");
+      S({ Sup: [{ d: "2026-08-01", kg: 30, r: 12 }, { d: "2026-08-08", kg: 32.5, r: 12 }] });
+      out.subiuAgora = window.__gSugere("Sup", "12");
+      S({ Rosca: [{ d: "2026-08-08", kg: 12, r: 12 }] });
+      out.leve = window.__gSugere("Rosca", "12");
+      out.semNada = window.__gSugere("Nunca feito", "12");
+      out.semAlvo = window.__gSugere("Sup", "");
+      if (snap) localStorage.setItem("ptdc", snap); else localStorage.removeItem("ptdc");
+      return out;
+    });
+    ok(sug.bateu === 32.5 && sug.leve === 13,
+      "🏁 peso sugerido: bateu as reps na última, sobe um degrau (2,5 kg acima de 20 kg; 1 kg abaixo)");
+    ok(sug.naoBateu === 0 && sug.subiuAgora === 0,
+      "não bateu as reps, ou acabou de subir no treino passado: o app NÃO sugere subir");
+    ok(sug.semNada === 0 && sug.semAlvo === 0,
+      "sem histórico ou sem repetições prescritas, nenhuma sugestão é inventada");
+  }
+  {
+    // IA do MÊS (v604): perfil mais fundo + progressão de 4 semanas
+    const mes = await p.evaluate(() => {
+      // estúdio SINTÉTICO: o do teste já tem avaliações próprias e mascararia
+      // os números que este bloco quer conferir
+      const hj = new Date();
+      const dISO = (n) => new Date(hj.getTime() - n * 864e5).toISOString().slice(0, 10);
+      const feitos = {}; for (let i = 1; i <= 10; i++) feitos[dISO(i * 2)] = 1;
+      const a = {
+        id: "aIA", nome: "Teste IA", metaSemana: 4, anamnese: { nivel: "intermediário", dias: 4 },
+        retorno: {
+          cargas: { "Supino reto": [{ d: "2026-08-01", kg: 60, r: 10 }, { d: "2026-08-15", kg: 70, r: 10 }] },
+          feitos: feitos,
+        },
+      };
+      const st = { alunos: [a], exercicios: [], exFav: [], avaliacoes: [
+        { alunoId: "aIA", data: "2026-05-10", peso: 88, gordura: 26, cintura: 98, biaMme: 34 },
+        { alunoId: "aIA", data: "2026-08-10", peso: 83, gordura: 21, cintura: 92, biaMme: 36 },
+      ] };
+      const txt = window.__montaDadosIA(st, a, "Hipertrofia", "academia completa");
+      const bom = { mes: [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n })) };
+      const hoje = new Date().toISOString().slice(0, 10);
+      const mais = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+      const pl = window.__peneiraMes(bom);
+      return {
+        temAval: /AVALIA[ÇC][ÃA]O F[ÍI]SICA \(10\/08\/2026\): peso 83 kg · gordura 21%/.test(txt),
+        temDelta: /MUDOU DESDE 10\/05\/2026/.test(txt) && /peso -5 kg/.test(txt) && /% de gordura -5%/.test(txt),
+        temCargas: /CARGAS DE HOJE/.test(txt) && /Supino reto 70 kg/.test(txt),
+        temFreq: /FREQU[ÊE]NCIA REAL: 10 treinos/.test(txt),
+        semAval: /nenhuma registrada/.test(window.__montaDadosIA({ alunos: [], avaliacoes: [] }, { id: "x", nome: "y" }, "o", "e")),
+        quatro: pl && pl.semanas.length === 4,
+        tres: window.__peneiraMes({ mes: [{ n: 1, foco: "a", ajuste: "b" }] }),
+        semMes: window.__peneiraMes({}),
+        s1: window.__semanaMes({ geradoEm: hoje, semanas: [1, 2, 3, 4] }),
+        s2: window.__semanaMes({ geradoEm: new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
+        s4: window.__semanaMes({ geradoEm: new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
+        futuro: window.__semanaMes({ geradoEm: mais(5), semanas: [1, 2, 3, 4] }),
+      };
+    });
+    ok(mes.temAval && mes.temDelta,
+      "🏁 a IA recebe a avaliação física e o quanto mudou desde a primeira (peso, gordura, cintura, massa magra)");
+    ok(mes.temCargas && mes.temFreq,
+      "a IA recebe o que o aluno levanta HOJE e quantas vezes ele treinou de verdade nos últimos 28 dias");
+    ok(mes.semAval, "sem avaliação registrada, o texto diz isso — a IA não estima composição corporal");
+    ok(mes.quatro && mes.tres === null && mes.semMes === null,
+      "o plano do mês só vale com as 4 semanas completas (resposta antiga ou torta é descartada)");
+    ok(mes.s1 === 1 && mes.s2 === 2 && mes.s4 === 4 && mes.futuro === 1,
+      "a semana atual sai da data em que a IA montou (passou do mês, fica na 4; data no futuro, fica na 1)");
+    // a chat-envia manda os TRÊS formatos devolverem o plano do mês
+    const fn = require("fs").readFileSync(__dirname + "/../supabase/functions/chat-envia/index.ts", "utf8");
+    ok((fn.match(/MES_REGRA/g) || []).length === 4 && (fn.match(/"mes":\[/g) || []).length === 3,
+      "a chat-envia pede o plano do mês nos três formatos (musculação, circuito e corrida)");
+    ok(/EXATAMENTE 4 objetos/.test(fn) && /semana 4 deve ser SEMPRE mais leve/i.test(fn),
+      "a regra do mês exige 4 semanas e manda a última ser deload — nunca a mais pesada");
+    ok((fn.match(/BRIEF_REGRA/g) || []).length === 4 && /PRIORIDADE MÁXIMA/.test(fn) && /regra absoluta/.test(fn),
+      "a chat-envia manda a leitura do professor vencer os números, e as adaptações serem regra absoluta");
+  }
+  {
+    // ✍️ a leitura do professor entra no prompt, na frente de tudo
+    const br = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      window.__trAba("auto");
+      document.getElementById("taAluno").value = id;
+      window.__brief.carrega();
+      const out = { vazioChip: document.getElementById("taBriefChip").textContent };
+      document.getElementById("brDesejo").value = "ABCD em vez de ABC, nada acima de 50 minutos";
+      document.getElementById("brQuer").value = "quer mais peito, odeia esteira";
+      document.getElementById("brAdapta").value = "ombro direito trava acima de 90 graus";
+      document.getElementById("brLeitura").value = "estagnou no supino ha 6 semanas";
+      window.__brief.salva();
+      const st2 = S.read("ptStudio", {});
+      const a2 = st2.alunos.find((x) => x.id === id);
+      out.guardou = !!(a2.briefIA && a2.briefIA.desejo && a2.briefIA.adapta);
+      out.chip = document.getElementById("taBriefChip").textContent;
+      out.txt = window.__briefIA(a2);
+      out.noPrompt = window.__montaDadosIA(st2, a2, "Hipertrofia", "academia completa");
+      out.vazio = window.__briefIA({ id: "z" });
+      // devolve o aluno como estava
+      delete a2.briefIA; S.write("ptStudio", st2); window.__brief.carrega();
+      return out;
+    });
+    ok(br.guardou && /4 de 4 preenchidos/.test(br.chip) && /em branco/.test(br.vazioChip),
+      "🏁 a leitura do professor fica guardada NO ALUNO e o card diz quantos campos estão preenchidos");
+    ok(/REGRA ABSOLUTA/.test(br.txt) && /siga à risca/.test(br.txt) && /ombro direito trava/.test(br.txt),
+      "os quatro campos viram o bloco A LEITURA DO PROFESSOR, com as adaptações marcadas como regra absoluta");
+    ok(br.noPrompt.indexOf("A LEITURA DO PROFESSOR") < br.noPrompt.indexOf("ALUNO:"),
+      "a leitura do professor vai na FRENTE dos dados do aluno no prompt");
+    ok(br.vazio === "", "professor que não escreveu nada não gera bloco nenhum — o prompt fica como era");
+  }
   // --- R2: placar de circuito por tipo (telas 07/08/09) ---
   {
     const r2 = await pApp.evaluate(() => {
@@ -3787,6 +3903,69 @@ async function abaPt(p, a) {
     });
     ok(r2.abriu && r2.pecas, "🏁 R2: encerrar circuito prescrito abre o placar do tipo (voltas + como fez + tempo de cada volta)");
     ok(r2.salvo && r2.fechou, "Salvar resultado grava voltas/como fez/splits no ptwodres (que o personal recebe) e fecha o placar");
+  }
+  {
+    // treino guiado no circuito (v600): um movimento por vez, igual à musculação.
+    // Precisa de um WOD PRESCRITO (o guiado lê os movimentos dele), então
+    // semeia um, monta um app só pra isso e devolve o estudio como estava.
+    const snapWod = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+    const wodApp = await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const a = st.alunos[0];
+      const t = (st.treinosV2[a.id] = st.treinosV2[a.id] || { fichas: [] });
+      t.wods = [{ id: "wg1", nome: "Chipper guiado", tipo: "amrap", min: 12,
+        movs: [{ q: "10", n: "burpee" }, { q: "20", n: "agachamento" }, { q: "30", n: "abdominal" }] }];
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      return window.__montaAppAluno(a, new Date().toISOString());
+    });
+    const pW = await ctx.newPage();
+    pW.on("dialog", (d) => d.accept());
+    await pW.route("**/app-teste-wod.html", (r) => r.fulfill({ contentType: "text/html", body: wodApp }));
+    await pW.goto(BASE + "/app-teste-wod.html", { waitUntil: "domcontentloaded" });
+    await pW.waitForTimeout(400);
+    const gw = await pW.evaluate(async () => {
+      const w = window.__wod;
+      window.__trSub("wod");
+      await new Promise((r) => setTimeout(r, 200));
+      document.querySelector("[data-wodstart]").click();
+      await new Promise((r) => setTimeout(r, 150));
+      document.getElementById("wodGo").click();
+      await new Promise((r) => setTimeout(r, 400));
+      const le = () => ({
+        gi: w.gi, voltas: w.voltas,
+        agora: (document.getElementById("wfAgora").textContent || "").replace(/\s+/g, " "),
+        vis: document.getElementById("wfAgora").style.display,
+        movs: document.querySelectorAll("[data-wfmov]").length,
+      });
+      const out = { ini: le() };
+      document.getElementById("wfFeito").click();
+      await new Promise((r) => setTimeout(r, 150));
+      out.um = le();
+      // clica EXATAMENTE o que falta pra fechar a volta (o circuito de teste
+      // tem 3 movimentos; um número fixo de cliques fecharia mais de uma)
+      const faltam = out.um.movs - w.gi;
+      for (let i = 0; i < faltam; i++) { document.getElementById("wfFeito").click(); await new Promise((r) => setTimeout(r, 80)); }
+      out.volta = le();
+      document.querySelectorAll("[data-wfmov]")[1].click();
+      await new Promise((r) => setTimeout(r, 150));
+      out.pulo = le();
+      out.riscados = [...document.querySelectorAll("[data-wfmov]")].map((x) => /line-through/.test(x.getAttribute("style") || "") ? 1 : 0).join("");
+      // limpa o rastro
+      document.getElementById("wodZera").click();
+      out.zerou = { gi: w.gi, voltas: w.voltas };
+      return out;
+    });
+    ok(gw.ini.vis === "block" && gw.ini.gi === 0 && /Agora · 1 de \d/.test(gw.ini.agora) && /Feito/.test(gw.ini.agora),
+      "🏁 circuito guiado abre no 1º movimento, com a quantidade grande e o botão Feito");
+    ok(gw.um.gi === 1 && /depois:/.test(gw.ini.agora),
+      "Feito › anda um movimento e a linha já diz qual vem depois");
+    ok(gw.volta.voltas === 1 && gw.volta.gi < gw.volta.movs,
+      "passar do último movimento fecha a volta sozinho e recomeça a lista");
+    ok(gw.pulo.gi === 1 && gw.riscados.slice(0, 1) === "1",
+      "tocar num movimento pula pra ele, e o que ficou pra trás aparece riscado");
+    ok(gw.zerou.gi === 0 && gw.zerou.voltas === 0, "zerar o circuito volta pro primeiro movimento");
+    await pW.close();
+    await p.evaluate((snap) => localStorage.setItem("mtapp:ptStudio", snap), snapWod);
   }
   // --- R3: questionário uma-pergunta-por-tela (telas 02-06) ---
   {
@@ -4055,8 +4234,11 @@ async function abaPt(p, a) {
   }));
   ok(cardioReg.lst.length === 1 && cardioReg.lst[0].k === 0.02 && !!cardioReg.lst[0].p && /últimos treinos/.test(cardioReg.hist),
     "Terminei! registra o treino com pace e monta o histórico");
-  // tiros prescritos terminam sozinhos e registram
+  // tiros prescritos terminam sozinhos e registram — com a moldura de
+  // aquecimento/volta à calma DESLIGADA, que é o caminho de quem prefere
+  // largar direto no treino (o player guiado é testado mais abaixo)
   await pCr.evaluate(() => {
+    localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, bl: 0 }));
     document.querySelectorAll("[data-cbstart]")[1].click();
     document.getElementById("crGo").click();
   });
@@ -4070,6 +4252,52 @@ async function abaPt(p, a) {
   }));
   ok(/TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 && /Tiros de quinta/.test(cardioFim.lst[1].n),
     "treino de tiros completa sozinho e registra o resultado");
+  {
+    // tela de resumo no fim da corrida (v602): tiles grandes, medalhas e postar
+    const rs = await pCr.evaluate(async () => {
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, bl: 0 }));
+      localStorage.setItem("ptidade", "40");
+      document.getElementById("crZera").click();
+      document.querySelector("[data-cbstart]").click();
+      await new Promise((r) => setTimeout(r, 150));
+      document.getElementById("crGo").click();
+      await new Promise((r) => setTimeout(r, 350));
+      window.__fc.on = true; window.__fcAmostra(150); window.__fcAmostra(170);
+      window.__cr.t0 -= 22 * 60 * 1000;
+      document.getElementById("crKm").value = "4,2";
+      document.getElementById("crKm").dispatchEvent(new Event("input"));
+      await new Promise((r) => setTimeout(r, 250));
+      document.getElementById("crFim").click();
+      await new Promise((r) => setTimeout(r, 600));
+      const el = document.getElementById("crResumoF");
+      const out = {
+        vis: el.style.display,
+        txt: (el.textContent || "").replace(/\s+/g, " "),
+        tiles: el.querySelectorAll("div[style*='border-radius:18px']").length,
+        flag: window.__cr.resumo,
+        // a arte sai mesmo sem GPS: o número grande vira o TEMPO
+        arteSemKm: (function () {
+          window.__cr.fimReg = { d: "2026-08-25", n: "Esteira", m: "corrida", s: 1500, k: 0, p: null, fc: 150 };
+          window.__cr.fimRota = [];
+          const c = window.__crCard(null);
+          return c ? c.width + "x" + c.height : "";
+        })(),
+      };
+      document.getElementById("crRsFechar").click();
+      out.fechou = { vis: el.style.display, flag: window.__cr.resumo };
+      window.__fc.on = false; window.__fc.bpm = 0;
+      return out;
+    });
+    ok(rs.vis === "block" && rs.flag === true && rs.tiles === 6,
+      "🏁 terminar a corrida abre a tela de resumo com os seis números (km, tempo, pace, kcal, bpm médio e pico)");
+    ok(/4,2 quilômetros/i.test(rs.txt.replace(/(\d),(\d) ?/, "$1,$2 ")) || /4,2/.test(rs.txt),
+      "o resumo traz a distância do treino");
+    ok(/batimento médio/i.test(rs.txt) && /calorias/i.test(rs.txt) && /Postar com foto/.test(rs.txt),
+      "o resumo mostra batimento e calorias e oferece postar");
+    ok(rs.arteSemKm === "1080x1350",
+      "a arte de postar sai mesmo sem GPS (esteira): o número grande vira o tempo");
+    ok(rs.fechou.vis === "none" && rs.fechou.flag === false, "Fechar sai do resumo e libera a tela");
+  }
   // importar do relógio: GPX sintético de ~2 km em 12 min entra no ptcardio
   const imp = await pCr.evaluate(() => {
     // ponto a cada 30 s andando ~83 m (0,00075° de latitude): 24 passos ≈ 2 km em 12 min
@@ -4147,6 +4375,89 @@ async function abaPt(p, a) {
     "engrenagem da corrida tem o seletor Estilo do mapa e guarda a escolha no aparelho");
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
+  {
+    // player guiado de cardio (v597): o treino prescrito vira uma fila de
+    // blocos — aquecimento, o miolo e a volta à calma — com voz e vibração
+    const gc = await pCr.evaluate(async () => {
+      const G = window.__crGuia, out = {};
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
+      out.cont = G.monta({ n: "Rodagem leve", t: "continuo", d: 5, tp: 30, p: "6:00", m: "corrida" })
+        .map((x) => x.k + ":" + x.s + (x.km ? ":" + x.km : ""));
+      out.int = G.monta({ n: "Tiros", t: "intervalado", r: 6, ti: 60, de: 90, m: "corrida" }).map((x) => x.k).join("");
+      out.livre = G.monta(null);
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, bl: 0 }));
+      out.desligado = G.monta({ n: "x", t: "continuo", d: 5 });
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
+      return out;
+    });
+    ok(gc.cont.join(" ") === "aq:300 c:1800:5 vc:180",
+      "cardio contínuo vira 3 blocos: aquecimento 5 min, o treino do professor e volta à calma 3 min");
+    ok(gc.int === "aq" + "fl".repeat(6) + "vc",
+      "cardio intervalado vira aquecimento + um bloco por tiro (forte e leve) + volta à calma");
+    ok(gc.livre === null && gc.desligado === null,
+      "corrida livre não ganha blocos, e o aluno desliga a moldura na engrenagem");
+    const gr = await pCr.evaluate(async () => {
+      document.getElementById("crZera").click();
+      document.querySelector("[data-cbstart]").click();
+      await new Promise((r) => setTimeout(r, 150));
+      document.getElementById("crGo").click();
+      await new Promise((r) => setTimeout(r, 700));
+      const out = {
+        caixa: document.getElementById("crBlocoBox").style.display,
+        trilho: document.getElementById("crTrilho").children.length,
+        fase: document.getElementById("crFase").textContent,
+        depois: document.getElementById("crBlocoD").textContent,
+        relogio: document.getElementById("crBlocoT").textContent,
+      };
+      window.__crGuia.pula();
+      await new Promise((r) => setTimeout(r, 300));
+      out.fase2 = document.getElementById("crFase").textContent;
+      out.bi = window.__cr.bi;
+      document.getElementById("crZera").click();
+      out.sumiu = document.getElementById("crBlocoBox").style.display;
+      return out;
+    });
+    ok(gr.caixa === "block" && gr.trilho === 3 && /AQUECIMENTO/.test(gr.fase) && /^4:5\d$/.test(gr.relogio),
+      "ao começar o treino prescrito o player abre no aquecimento, com o trilho dos blocos e o relógio andando");
+    ok(/depois:/.test(gr.depois) && gr.bi === 1 && !/AQUECIMENTO/.test(gr.fase2) && gr.sumiu === "none",
+      "a linha diz qual é o próximo bloco, Pular avança de verdade e zerar apaga o player");
+    {
+      // tela por zona de batimento (v601): sem cinta NADA muda; com cinta, o
+      // fundo da tela cheia vira a cor da zona e a faixa diz bpm e % da máxima
+      const zn = await pCr.evaluate(async () => {
+        localStorage.setItem("ptidade", "40"); // máxima = 180
+        // reabre a tela cheia: o teste anterior zerou a corrida e fechou ela
+        document.querySelector("[data-cbstart]").click();
+        await new Promise((r) => setTimeout(r, 150));
+        document.getElementById("crGo").click();
+        await new Promise((r) => setTimeout(r, 400));
+        const out = { semCinta: document.getElementById("crPainelF").style.background,
+          fxSem: document.getElementById("crZonaFx").style.display };
+        window.__fc.on = true;
+        window.__fcAmostra(100); // 55% -> Z1
+        await new Promise((r) => setTimeout(r, 250));
+        out.z1 = { bg: document.getElementById("crPainelF").style.background,
+          fx: (document.getElementById("crZonaFx").textContent || "").replace(/\s+/g, " ") };
+        window.__fcAmostra(160); // 89% -> Z4
+        await new Promise((r) => setTimeout(r, 250));
+        out.z4 = { bg: document.getElementById("crPainelF").style.background,
+          fx: (document.getElementById("crZonaFx").textContent || "").replace(/\s+/g, " ") };
+        window.__fc.on = false; window.__fc.bpm = 0;
+        await new Promise((r) => setTimeout(r, 250));
+        out.voltou = document.getElementById("crPainelF").style.background;
+        document.getElementById("crZera").click();
+        return out;
+      });
+      ok(/var\(--cor\)/.test(zn.semCinta) && zn.fxSem === "none",
+        "sem cinta conectada a tela cheia da corrida não muda nada (mesma regra honesta do batimento)");
+      ok(/96, 165, 250|#60a5fa/.test(zn.z1.bg) && /Z1 leve/.test(zn.z1.fx) && /100 bpm · 56%/.test(zn.z1.fx),
+        "com cinta, o fundo vira a cor da zona e a faixa diz bpm e % da máxima (Z1)");
+      ok(/251, 146, 60|#fb923c/.test(zn.z4.bg) && /Z4 forte/.test(zn.z4.fx),
+        "subiu o esforço, a tela troca de zona (Z4 laranja)");
+      ok(/var\(--cor\)/.test(zn.voltou), "desconectou a cinta, a tela volta pra cor do studio");
+    }
+
+  }
   // modo tela cheia estilo NRC: painel de cor chapada ao iniciar; mapa é a 2ª página;
   // métrica gigante troca com toque; cadeado bloqueia; pausar mostra mapa + grade
   const full = await pCr.evaluate(async () => {
@@ -5964,7 +6275,7 @@ async function abaPt(p, a) {
 
   // --- leva 2: aquecimento, raio-X, mapa do ano, meta de peso, Já paguei, wake lock ---
   ok(/Aquecimento do dia/.test(appHtml2) && /Raio-X do treino/.test(appHtml2) && /wakeLock/.test(appHtml2) && /mapaAno/.test(appHtml2),
-    "app traz aquecimento automático, raio-X por grupo, wake lock e mapa do ano");
+    "app traz aquecimento automático, raio-X por grupo, wake lock e mapa de calor do mês");
   const leva2 = await pApp.evaluate(async () => {
     window.__trocaSec("evolucao");
     const pz = {};
@@ -5987,14 +6298,19 @@ async function abaPt(p, a) {
     return {
       meta: document.getElementById("mpMetaTxt").textContent + "|" + document.getElementById("mpBarra").textContent,
       mapaTxt: mapa ? mapa.textContent : "",
-      mapaCells: mapa ? mapa.querySelectorAll("div div div").length : 0,
+      mapaCells: mapa ? mapa.querySelectorAll("div[style*='aspect-ratio']").length : 0,
+      mapaForca: window.__mapaMes ? [window.__mapaMes.forca("2099-01-01", {}),
+        window.__mapaMes.forca(isoLocal(new Date()), f2)] : null,
       mapaCabe: mapa ? mapa.scrollWidth <= mapa.clientWidth + 1 : false,
       semAtual,
     };
   });
   ok(/meta 80 kg/.test(leva2.meta) && /faltam 5 kg/.test(leva2.meta), "meta de peso vira barra de progresso (90→85, alvo 80: faltam 5)");
-  ok(/Seu ano de treinos/.test(leva2.mapaTxt) && leva2.mapaCells >= 360, "mapa de constância pinta as 52 semanas do ano");
-  ok(leva2.mapaCabe, "mapa do ano cabe na largura da tela (sem estourar o card)");
+  ok(/treinos? em \w+/.test(leva2.mapaTxt) && leva2.mapaCells >= 28 && leva2.mapaCells <= 31,
+    "mapa de calor é o MÊS em calendário (28 a 31 quadradinhos, um por dia)");
+  ok(/mais treino/.test(leva2.mapaTxt) && leva2.mapaForca[0] === 0 && leva2.mapaForca[1] >= 1,
+    "a cor conta quanto foi treinado no dia: dia sem treino é 0, dia treinado começa no degrau leve");
+  ok(leva2.mapaCabe, "o mês cabe na largura da tela (sem estourar o card)");
   ok(+leva2.semAtual >= 1, "gráfico Treinos por semana conta o treino de hoje na semana atual (sem bug de fuso)");
   const jaPag = await pApp.evaluate(async () => {
     window.__trocaSec("inicio");
@@ -6838,7 +7154,7 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);var TRHEAD=/);
+      const m = html.match(/var PLANO=(.+?);var MESAPP=/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
       // receita R1 + telas finais: os treinos do dia viram carrossel de tela

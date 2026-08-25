@@ -440,6 +440,9 @@
       ".gchip{color:var(--corc);background:rgba(var(--cor-rgb),.16)}" +
       ".gchip.verde{color:#4ade80;background:rgba(74,222,128,.15)}" + // selo '✓ 4 séries feitas' (tela 22)
       ".gcgult{margin:10px 0 2px;font-size:12.5px;color:#8a8695;text-align:center}" +
+      // botão do peso sugerido: aparece só quando o aluno bateu as reps
+      ".gsug{display:block;width:100%;margin:9px 0 0;min-height:46px;border-radius:99px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:800;background:rgba(34,211,238,.14);border:1px solid rgba(34,211,238,.5);color:#67e8f9}" +
+      ".gsug.on{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.55);color:#4ade80}" +
       ".gsets i{background:var(--bg4);color:#8a8695}" +
       ".gsets i.now{background:var(--bg2);color:var(--corc);box-shadow:inset 0 0 0 2px var(--cor)}" +
       ".gobs em{color:#8a8695}.gobs p{color:var(--corc)}" +
@@ -949,7 +952,8 @@
       "<div style='display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap;'>" +
       "<span id='trTopN' style='font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;'></span>" +
       "<span id='trTopS' style='font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);'></span></div>" +
-      "<div id='trTopSub' style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'></div></div>" +
+      "<div id='trTopSub' style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'></div>" +
+      "<div id='trMes' style='display:none;margin-top:12px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px 13px;'></div></div>" +
       ((ve("wod") || ve("cardio")) ? "<div id='trTabs' style='display:flex;gap:8px;padding:14px 20px 16px;'>" +
       "<button data-trsub='ficha' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;'>Minha ficha</button>" +
       (ve("wod") ? "<button data-trsub='wod' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
@@ -1186,7 +1190,15 @@
       "<div style='flex:1;'><b id='crKcalF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>CALORIAS</div></div>" +
       "<div id='crBpmC' style='flex:1;display:none;'><b id='crBpmF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>--</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>BATIMENTOS</div></div></div>" +
       "<div id='crFaseF' style='text-align:center;font-size:11px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.85);text-transform:uppercase;margin-top:4px;'>Pronto?</div>" +
-      "<div id='crInfoF' style='text-align:center;font-size:11.5px;color:rgba(255,255,255,.8);'></div></div>" +
+      "<div id='crInfoF' style='text-align:center;font-size:11.5px;color:rgba(255,255,255,.8);'></div>" +
+      // player guiado: trilho dos blocos + o bloco de agora e o de depois
+      "<div id='crBlocoBox' style='display:none;margin-top:10px;'>" +
+      "<div id='crTrilho' style='display:flex;gap:3px;'></div>" +
+      "<div style='display:flex;align-items:center;gap:10px;margin-top:8px;text-align:left;'>" +
+      "<span id='crBlocoD' style='flex:1;min-width:0;font-size:11.5px;color:rgba(255,255,255,.72);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'></span>" +
+      "<b id='crBlocoT' style='flex:none;font-size:22px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'></b>" +
+      "<button id='crPulaF' style='flex:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:7px 13px;color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;'>Pular \u203a</button></div></div>" +
+      "<div id='crZonaFx' style='display:none;text-align:center;margin-top:10px;color:#fff;'></div></div>" +
       "<div style='position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 14px;'>" +
       "<div id='crPausaF' style='display:none;width:100%;max-width:440px;background:rgba(var(--bg0-rgb),.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:18px;padding:14px;'>" +
       "<div style='display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;'>" +
@@ -1204,6 +1216,7 @@
       "<button id='crFimF' style='display:none;background:rgba(var(--bg0-rgb),.82);border:1px solid #4ade80;border-radius:99px;padding:11px 24px;color:#4ade80;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Terminei!</button>" +
       "</div>" +
       "<div id='crContagemF' style='display:none;position:absolute;inset:0;z-index:6;background:rgba(0,0,0,.62);align-items:center;justify-content:center;font-size:130px;font-weight:900;color:#fff;'>3</div>" +
+      "<div id='crResumoF' style='display:none;position:absolute;inset:0;z-index:5;background:var(--bg0);overflow:auto;padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(26px + env(safe-area-inset-bottom,0px));'></div>" +
       "<div id='crLockOverF' style='display:none;position:absolute;inset:0;z-index:5;background:rgba(var(--bg0-rgb),.55);flex-direction:column;align-items:center;justify-content:center;gap:10px;'>" +
       "<div style='color:#fff;line-height:0;'>" + crIco(CRICO_LOCK_P, 46) + "</div><div style='color:#fff;font-weight:800;font-size:14px;'>Tela bloqueada</div>" +
       "<button id='crUnlockF' style='background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:12px 26px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;'>Segure pra destravar</button></div>" +
@@ -2009,18 +2022,54 @@
       "document.getElementById('cqGraf').innerHTML=bars;pintaMapaAno();}" +
       // mapa de constância: 52 semanas, cada quadradinho é um dia (estilo GitHub/Strava)
       // tela 31: o mapa do ano virou um card com os meses embaixo
+      /* Mapa de calor do MÊS (v599). A fita de 52 semanas ficava com 364
+       * quadradinhos de 4 px num celular de 480 — bonita de longe, ilegível
+       * de perto. Agora é o mês em calendário, com ‹ › pra andar pra trás, e
+       * a cor conta QUANTO foi treinado naquele dia: as séries marcadas
+       * (ptsets_<dia>) em três degraus; dia que só foi marcado como treinado,
+       * sem série anotada (uma corrida, por exemplo), fica no degrau leve. */
+      "var MESN=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
+      "var mapMes=0;" + // 0 = mês atual, 1 = o anterior, e assim por diante
+      "function forcaDoDia(iso,f){if(!f[iso])return 0;var st=L('ptsets_'+iso,null);" +
+      "if(!st)return 1;var n=0;for(var k in st)if(Object.prototype.hasOwnProperty.call(st,k))n+=+st[k]||0;" +
+      "return n>=20?3:(n>=10?2:1);}" +
+      "function treinosDoMes(f,y,m){var n=0;for(var k in f){if(!Object.prototype.hasOwnProperty.call(f,k))continue;" +
+      "if(+k.slice(0,4)===y&&+k.slice(5,7)===m+1)n++;}return n;}" +
       "function pintaMapaAno(){var el=document.getElementById('mapaAno');if(!el)return;var f=L('ptfeitos',{});" +
       "el.style.cssText='margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;';" +
-      "var hoje=new Date();var fim=new Date(hoje);fim.setDate(fim.getDate()+(6-((fim.getDay()+6)%7)));" +
-      "var html='';var tot=0;" +
-      "for(var w=51;w>=0;w--){html+=\"<div style='flex:1;min-width:0;display:flex;flex-direction:column;gap:1.5px;'>\";" +
-      "for(var d=0;d<7;d++){var dt=new Date(fim);dt.setDate(dt.getDate()-w*7-(6-d));var iso=isoLoc(dt);var fez=!!f[iso];if(fez)tot++;var fut=dt>hoje;" +
-      "html+=\"<div style='width:100%;aspect-ratio:1;border-radius:1.5px;background:\"+(fut?'transparent':fez?'var(--cor)':'var(--bg8)')+\";'></div>\";}html+='</div>';}" +
-      "var MES3B=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
-      "var labs=[51,38,25,12].map(function(w9){var d9=new Date(fim);d9.setDate(d9.getDate()-w9*7);return \"<span>\"+MES3B[d9.getMonth()]+'</span>';}).join('')+'<span>hoje</span>';" +
-      "el.innerHTML=\"<div style='font-size:12px;color:#a9a4b5;margin-bottom:8px;'>Seu ano de treinos — <b>\"+pl(tot,'dia pintado','dias pintados')+\"</b> (cada quadrado é 1 dia)</div>\"+" +
-      "\"<div style='display:flex;gap:1.5px;max-width:100%;overflow:hidden;'>\"+html+'</div>'+" +
-      "\"<div style='display:flex;justify-content:space-between;font-size:10px;color:#6e6a78;margin-top:6px;'>\"+labs+'</div>';}" +
+      "var hoje=new Date();var base=new Date(hoje.getFullYear(),hoje.getMonth()-mapMes,1);" +
+      "var y=base.getFullYear(),m=base.getMonth();" +
+      "var nMes=treinosDoMes(f,y,m);" +
+      // recorde: o melhor mês ANTES deste, pra não competir consigo mesmo
+      "var rec=0,mesesV={};for(var k9 in f){if(!Object.prototype.hasOwnProperty.call(f,k9))continue;" +
+      "var ch=k9.slice(0,7);if(ch>=(y+'-'+('0'+(m+1)).slice(-2)))continue;mesesV[ch]=(mesesV[ch]||0)+1;}" +
+      "for(var c9 in mesesV)if(mesesV[c9]>rec)rec=mesesV[c9];" +
+      "var sub=nMes===0?'nenhum treino marcado ainda':(rec&&nMes>rec?('seu melhor mês até agora · o recorde era '+rec):(rec?('seu recorde é '+rec+' num mês'):'primeiro mês de treinos'));" +
+      // a semana começa na segunda, igual aos chips do Início
+      "var pri=new Date(y,m,1);var vazias=(pri.getDay()+6)%7;var ult=new Date(y,m+1,0).getDate();" +
+      "var cels='';for(var v=0;v<vazias;v++)cels+=\"<div></div>\";" +
+      "for(var d=1;d<=ult;d++){var dt=new Date(y,m,d);var iso=isoLoc(dt);" +
+      "var fut=dt>hoje&&iso!==isoHj();var hj=iso===isoHj();var fo=forcaDoDia(iso,f);" +
+      "var bg=fo===3?'var(--cor)':(fo===2?'rgba(var(--cor-rgb),.62)':(fo===1?'rgba(var(--cor-rgb),.3)':(fut?'transparent':'var(--bg8)')));" +
+      "cels+=\"<div style='aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:\"+(fo?'800':'600')+\";\"+" +
+      "\"background:\"+bg+\";color:\"+(fo?'#fff':(fut?'#4b4856':'#8a8695'))+\";\"+" +
+      "(fut?'border:1px dashed rgba(255,255,255,.13);':'')+(hj?'box-shadow:0 0 0 2px var(--corc);':'')+\"'>\"+d+'</div>';}" +
+      "var DSEM3=['S','T','Q','Q','S','S','D'];" +
+      "el.innerHTML=\"<div style='display:flex;align-items:flex-start;gap:10px;'>\"+" +
+      "\"<span style='flex:1;min-width:0;'><b style='display:block;font-size:19px;font-weight:900;letter-spacing:-.02em;'>\"+nMes+(nMes===1?' treino':' treinos')+' em '+MESN[m]+'</b>'+\"<span style='display:block;font-size:12px;color:#8a8695;margin-top:2px;'>\"+sub+'</span></span>'+" +
+      "\"<span style='flex:none;display:flex;gap:6px;'>\"+" +
+      "\"<button type='button' id='mapAnt' aria-label='Mês anterior' style='width:34px;height:34px;border-radius:11px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:15px;cursor:pointer;'>\\u2039</button>\"+" +
+      "\"<button type='button' id='mapProx' aria-label='Próximo mês'\"+(mapMes<=0?\" disabled style='opacity:.35;\":\" style='\")+\"width:34px;height:34px;border-radius:11px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:15px;cursor:pointer;'>\\u203a</button></span></div>\"+" +
+      "\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px;font-size:10px;font-weight:800;letter-spacing:.06em;color:#6e6a78;text-align:center;'>\"+" +
+      "DSEM3.map(function(x9){return '<div>'+x9+'</div>';}).join('')+'</div>'+" +
+      "\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:5px;'>\"+cels+'</div>'+" +
+      "\"<div style='display:flex;align-items:center;gap:7px;font-size:10.5px;color:#6e6a78;margin-top:11px;'><span>menos</span>\"+" +
+      "[['var(--bg8)'],['rgba(var(--cor-rgb),.3)'],['rgba(var(--cor-rgb),.62)'],['var(--cor)']].map(function(c8){" +
+      "return \"<i style='width:13px;height:13px;border-radius:4px;background:\"+c8[0]+\";'></i>\";}).join('')+'<span>mais</span>'+" +
+      "\"<span style='margin-left:auto;'>quanto mais forte a cor, mais treino</span></div>\";" +
+      "var ba=document.getElementById('mapAnt');if(ba)ba.addEventListener('click',function(){mapMes++;pintaMapaAno();});" +
+      "var bp=document.getElementById('mapProx');if(bp)bp.addEventListener('click',function(){if(mapMes>0){mapMes--;pintaMapaAno();}});}" +
+      "window.__mapaMes={forca:forcaDoDia,mes:function(){return mapMes;},pinta:pintaMapaAno};" +
       // tela 49: cartões PESO e SEQUÊNCIA embaixo da grade de conquistas
       "function seqAtual(f){var n=0;var d=new Date();for(var k=0;k<400;k++){var iso=isoLoc(d);" +
       "if(f[iso])n++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}return n;}" +
@@ -2233,7 +2282,7 @@
           ms: (w.movs && w.movs.length ? w.movs.map(function (m) { return { q: String(m.q || ""), n: String(m.n || "") }; })
             : (w.mov || []).map(function (n) { return { q: "", n: String(n) }; })).slice(0, 12) };
       })) + ";" +
-      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
+      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,gi:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
       "function wodCd(resta){if(!wod.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
       "if(cd&&cd!==wod.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}wod.ultCd=cd;}" +
       // último resultado de cada circuito prescrito aparece no card
@@ -2254,7 +2303,7 @@
       "\"<b style='flex:none;color:#4ade80;'>\"+res+'</b></div>';}).join(''):'';}}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-wodstart]');if(!b)return;" +
       "var w=WODS.find(function(x){return x.id===b.dataset.wodstart;});if(!w||wod.run)return;" +
-      "wod.tipo=w.t;wod.voltas=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
+      "wod.tipo=w.t;wod.voltas=0;wod.gi=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
       "if(w.t==='fortime')document.getElementById('wodCap').value=w.cap;" +
       "else if(w.t==='tabata'){document.getElementById('wodRounds').value=w.rd;document.getElementById('wodWork').value=w.wk;document.getElementById('wodRest').value=w.rs;}" +
       "else document.getElementById('wodMin').value=w.min;" +
@@ -2320,12 +2369,24 @@
       "wodF.addEventListener('click',function(e){var b=e.target.closest('button,[data-wfmov]');if(!b)return;" +
       "if(b.id==='wfMin'){wodF.style.display='none';return;}" +
       "if(b.id==='wfPausa'){document.getElementById('wodGo').click();espelhaW();return;}" +
-      "if(b.id==='wfVolta'){var bv=document.getElementById('wodVolta');if(bv)bv.click();return;}" +
+      "if(b.id==='wfVolta'){wod.gi=0;var bv=document.getElementById('wodVolta');if(bv)bv.click();return;}" +
+      "if(b.id==='wfFeito'){wfAvanca();return;}" +
       "if(b.id==='wfFim'){var el9=wod.run?(Date.now()-wod.t0)/1000:wod.acum;if(el9<1)return;" +
       "if(wod.tipo==='fortime'){document.getElementById('wodTermina').click();return;}" +
       "if(wod.tipo==='amrap'){wodFim(pl(wod.voltas,'volta','voltas')+' — terminou antes do tempo',wod.voltas);return;}" +
       "wodFim('Circuito encerrado');return;}" +
-      "var mv=b.getAttribute&&b.getAttribute('data-wfmov');if(mv!=null){wfRisc[mv]=!wfRisc[mv];espelhaW();}});}" +
+      "var mv=b.getAttribute&&b.getAttribute('data-wfmov');if(mv==null)return;" +
+      "if(wod.tipo==='amrap'||wod.tipo==='fortime'){wod.gi=+mv;espelhaW();return;}" +
+      "wfRisc[mv]=!wfRisc[mv];espelhaW();});}" +
+      /* Feito ›: anda um movimento. Passou do último, a VOLTA fecha sozinha —
+       * pelo mesmo botão de sempre (wodVolta), pra não existirem dois caminhos
+       * de contar volta. */
+      "function wfAvanca(){var wmA=WODS.find(function(x){return x.id===wod.wodId;})||{};" +
+      "var n=(wmA.ms||[]).length;if(!n)return;" +
+      "if(navigator.vibrate)navigator.vibrate(35);" +
+      "if(wod.gi+1<n){wod.gi++;bip(920,90);espelhaW();return;}" +
+      "wod.gi=0;var bv2=document.getElementById('wodVolta');" +
+      "if(bv2&&wod.run)bv2.click();else espelhaW();}" +
       "function abreWodFull(){criaWodFull();wfRisc={};wfUltVoltas=wod.voltas;wodF.style.display='block';espelhaW();}" +
       "function fechaWodFull(){if(wodF)wodF.style.display='none';}" +
       "function espelhaW(){if(!wodF||wodF.style.display==='none')return;" +
@@ -2339,12 +2400,30 @@
       "var topo=document.getElementById('wfTopo'),kick=document.getElementById('wfKick'),fase=document.getElementById('wfFase'),sub=document.getElementById('wfSub');" +
       "var tempo=document.getElementById('wfTempo'),bar=document.getElementById('wfBar'),plc=document.getElementById('wfPlacar'),ago=document.getElementById('wfAgora'),mv9=document.getElementById('wfMovs');" +
       "topo.style.background='none';kick.style.color='var(--corc)';fase.style.color='#8a8695';sub.style.color='#cfcbdb';" +
-      "document.getElementById('wfVolta').style.display='none';plc.style.display='none';ago.style.display='none';mv9.innerHTML='';" +
+            // o botão da volta volta ao normal a cada pintura: só o guiado o rebaixa
+      "var bvR=document.getElementById('wfVolta');bvR.className='btnx';bvR.textContent='Fechei a volta';" +
+      "bvR.style.cssText='display:none;width:100%;min-height:62px;font-size:19px;';" +
+      "plc.style.display='none';ago.style.display='none';mv9.innerHTML='';" +
       "if(wod.voltas!==wfUltVoltas){wfRisc={};wfUltVoltas=wod.voltas;}" +
-      "function listaMovs(titulo){if(!ms.length)return;" +
-      "mv9.innerHTML=\"<div class='wpk'>\"+titulo+'</div>'+ms.map(function(m,i){var r=wfRisc[String(i)];" +
-      "return \"<div data-wfmov='\"+i+\"' style='display:flex;gap:14px;align-items:baseline;font-size:17px;padding:9px 0;border-bottom:1px dashed var(--bg11);cursor:pointer;\"+(r?'opacity:.4;text-decoration:line-through;':'')+\"'>\"+" +
+      "function listaMovs(titulo,gd){if(!ms.length)return;" +
+      "mv9.innerHTML=\"<div class='wpk'>\"+titulo+'</div>'+ms.map(function(m,i){var r=gd?(i<wod.gi):wfRisc[String(i)];" +
+      "var ag=gd&&i===wod.gi;" +
+      "return \"<div data-wfmov='\"+i+\"' style='display:flex;gap:14px;align-items:baseline;font-size:17px;padding:9px 0;border-bottom:1px dashed var(--bg11);cursor:pointer;\"+(r?'opacity:.4;text-decoration:line-through;':'')+(ag?'background:rgba(var(--cor-rgb),.14);border-radius:12px;padding-left:10px;padding-right:10px;':'')+\"'>\"+" +
       "(m.q?\"<b style='color:var(--corc);flex:none;min-width:60px;'>\"+eh7(m.q)+'</b>':'')+'<span>'+eh7(m.n)+'</span></div>';}).join('');}" +
+      /* Guiado no circuito: um movimento por vez, igual à musculação. Vale
+       * pra AMRAP e For Time, que são os tipos em que o aluno anda pela lista;
+       * EMOM e Tabata seguem pelo relógio, que é o que define os dois. */
+      "function wfGuia(){if(!ms.length)return;var i=Math.min(wod.gi,ms.length-1);var m=ms[i]||{};" +
+      "var prox=ms[i+1];ago.style.display='block';" +
+      "ago.innerHTML=\"<div class='wpk'>Agora \u00b7 \"+(i+1)+' de '+ms.length+'</div>'+" +
+      "\"<div style='display:flex;align-items:baseline;gap:12px;margin-top:2px;'>\"+" +
+      "(m.q?\"<b style='flex:none;font-size:38px;font-weight:900;color:var(--corc);letter-spacing:-.03em;'>\"+eh7(m.q)+'</b>':'')+" +
+      "\"<b style='flex:1;min-width:0;font-size:21px;font-weight:800;line-height:1.15;'>\"+eh7(m.n)+'</b></div>'+" +
+      "\"<div style='font-size:12.5px;color:#8a8695;margin-top:6px;'>\"+(prox?('depois: '+(prox.q?eh7(prox.q)+' ':'')+eh7(prox.n)):'\u00faltimo da volta \u2014 fecha e recome\u00e7a')+'</div>'+" +
+      "\"<button id='wfFeito' class='btnx' style='display:block;width:100%;min-height:58px;font-size:18px;margin-top:12px;'>Feito \u203a</button>\";" +
+      "var bv9=document.getElementById('wfVolta');" +
+      "if(bv9){bv9.className='';bv9.textContent='Fechei a volta inteira';" +
+      "bv9.style.cssText='display:block;width:100%;min-height:52px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;border-radius:99px;';}}" +
       "if(wod.tipo==='amrap'){var tot=60*pvi7('wodMin',wm.min||10);var resta=Math.max(0,tot-el2);" +
       "kick.textContent='AMRAP '+Math.round(tot/60)+' MIN';fase.textContent='Falta';tempo.textContent=wodFmt(resta);sub.textContent='';" +
       "bar.style.width=Math.min(100,Math.round(100*el2/tot))+'%';" +
@@ -2354,11 +2433,13 @@
       "\"<div style='color:#8a8695;font-size:12px;'>em \"+String(ant.d||'').slice(8,10)+'/'+String(ant.d||'').slice(5,7)+' fechou '+ant.v+(ant.ex?' + '+ant.ex:'')+'</div></div>';}" +
       "plc.style.display='block';plc.innerHTML=\"<div style='display:flex;align-items:center;gap:12px;justify-content:space-between;'>\"+" +
       "\"<div><b style='font-size:34px;font-weight:900;'>\"+wod.voltas+\"</b><div style='font-size:9.5px;letter-spacing:.18em;font-weight:800;color:#8a8695;text-transform:uppercase;'>Voltas completas</div></div>\"+ritmo+'</div>';" +
-      "document.getElementById('wfVolta').style.display='block';listaMovs('Volta '+(wod.voltas+1));}" +
+      "document.getElementById('wfVolta').style.display='block';" +
+      "if(wod.run||wod.acum>0)wfGuia();listaMovs('Volta '+(wod.voltas+1),true);}" +
       "else if(wod.tipo==='fortime'){var cap=60*pvi7('wodCap',0);" +
       "kick.textContent='FOR TIME'+(cap?' · LIMITE '+Math.round(cap/60)+' MIN':'');fase.textContent='Tempo';tempo.textContent=wodFmt(el2);" +
       "sub.textContent=wod.voltas?pl(wod.voltas,'volta','voltas'):'';bar.style.width=cap?Math.min(100,Math.round(100*el2/cap))+'%':'0';" +
-      "document.getElementById('wfVolta').style.display='block';listaMovs('O circuito');}" +
+      "document.getElementById('wfVolta').style.display='block';" +
+      "if(wod.run||wod.acum>0)wfGuia();listaMovs('O circuito',true);}" +
       "else if(wod.tipo==='emom'){var totE=60*pvi7('wodMin',wm.min||10);var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
       "kick.textContent='EMOM '+Math.round(totE/60)+' MIN';fase.textContent='Minuto '+(mn+1)+' de '+Math.round(totE/60);tempo.textContent=wodFmt(segRes);" +
       "sub.textContent='novo movimento a cada minuto cheio';bar.style.width=Math.min(100,Math.round(100*el2/totE))+'%';" +
@@ -2491,13 +2572,13 @@
       "document.getElementById('wodTermina').addEventListener('click',function(){if(!wod.run)return;var el2=(Date.now()-wod.t0)/1000;" +
       "wodFim('Seu tempo: '+wodFmt(el2)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''),el2);});" +
       "document.getElementById('wodTipos').addEventListener('click',function(e){var b=e.target.closest('[data-wodt]');if(!b||wod.run)return;" +
-      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
+      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.gi=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       "document.getElementById('wodGo').addEventListener('click',function(){" +
       "if(wod.run){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=(Date.now()-wod.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
-      "wod.run=true;wod.t0=Date.now()-wod.acum*1000;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
+      "wod.run=true;wod.t0=Date.now()-wod.acum*1000;if(wod.acum<1)wod.gi=0;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
       "bip(880,120);wod.iv=setInterval(wodTick,200);wodTick();abreWodFull();});" +
-      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();fechaWodFull();" +
+      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();fechaWodFull();" +
       "document.getElementById('wodGo').textContent='Iniciar';document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       // cada volta guarda o instante: vira a lista "tempo de cada volta" do placar
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;wod.laps.push((Date.now()-wod.t0)/1000);if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
@@ -2508,16 +2589,16 @@
       "wh.textContent=ds[d0.getDay()]+', '+d0.getDate()+' de '+ms[d0.getMonth()];}" +
       "var lb=document.getElementById('wodLivreBt');if(lb)lb.addEventListener('click',function(){" +
       "var lv=document.getElementById('wodLivre');lv.style.display=lv.style.display==='none'?'block':'none';});})();" +
-      "window.__wod=wod;" +
+      "window.__wod=wod;window.__wodGuia={avanca:wfAvanca};" +
       "}" +
       // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
       "if(document.getElementById('cardCardio')){" +
       "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90, cp: capaRef(c) }; })) + ";" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
       "var CRICOS={mapa:\"" + CRICO_MAPA + "\",painel:\"" + CRICO_PAINEL + "\"};" +
-      "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
+      "var cr={resumo:false,blocos:null,bi:0,bt0:0,bkm0:0,run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
       "function crEl(id){return document.getElementById(id);}" +
-      "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap,mp:c.mp||'auto'};}" +
+      "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap,mp:c.mp||'auto',bl:(c.bl==null?1:+c.bl)};}" +
       "function crFala(txt){try{if(!window.speechSynthesis)return false;var u=new SpeechSynthesisUtterance(txt);u.lang='pt-BR';speechSynthesis.speak(u);return true;}catch(e){return false;}}" +
       /* mapa de ruas quando on-line; sem internet cai no traçado offline.
        * Estilos: CARTO (escuro/claro/colorido, com @2x pra tela retina),
@@ -2620,7 +2701,7 @@
       "function crKmAtual(){if(cr.gpsOn)return cr.km;var v=parseFloat(String(crEl('crKm').value||'').replace(',','.'));return isFinite(v)&&v>0?v:cr.km;}" +
       "function pintaCr(){" +
       // pausa automática (estilo app de corrida): parou de andar com GPS ligado → o relógio pausa sozinho
-      "if(cr.run&&cr.gpsOn&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!(cr.plano&&cr.plano.t==='intervalado')){" +
+      "if(cr.run&&cr.gpsOn&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!cr.blocos&&!(cr.plano&&cr.plano.t==='intervalado')){" +
       "cr.autoP=true;cr.run=false;cr.acum=(Date.now()-cr.t0)/1000;crEl('crGo').textContent='Continuar';if(navigator.vibrate)navigator.vibrate(120);}" +
       "var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;var km=crKmAtual();" +
       "crEl('crTempo').textContent=wodFmt(el2);" +
@@ -2648,6 +2729,14 @@
       "crEl('crMetaTxt').textContent=mD?(km.toFixed(2).replace('.',',')+' de '+String(mD).replace('.',',')+' km'):(Math.floor(el2/60)+' de '+mT+' min');}" +
       "else mb.style.display='none';})();" +
       "var p2=cr.plano;var fase=crEl('crFase'),info=crEl('crInfo');" +
+      // com o player guiado ligado, é o BLOCO que manda no texto e no ritmo
+      "var rb9=cr.blocos?crBlocos(el2,km):0;if(rb9===2)return;" +
+      "if(rb9){var b5=crBlocoAtual();" +
+      "fase.textContent=b5.n.toUpperCase();" +
+      "fase.style.color=b5.k==='f'?'var(--corc)':(b5.k==='aq'||b5.k==='vc'?'#22d3ee':'#a9a4b5');" +
+      "info.textContent=(b5.d||'')+' · bloco '+(cr.bi+1)+' de '+cr.blocos.length;" +
+      "try{espelhaCr();}catch(e){}return;}" +
+      "var cbx=crEl('crBlocoBox');if(cbx)cbx.style.display='none';" +
       "if(p2&&p2.t==='intervalado'){var ciclo=p2.ti+p2.de;var tot=p2.r*ciclo;" +
       "if(cr.run&&el2>=tot){crFinaliza('TIROS COMPLETOS \\u2014 '+p2.r+'\\u00d7!');return;}" +
       "var rdA=Math.min(p2.r,Math.floor(el2/ciclo)+1);var pos=el2%ciclo;var forte=pos<p2.ti;" +
@@ -2696,6 +2785,7 @@
       "g.innerHTML=HR.on?\"<span class='fcbat pulsa'>\\u2665</span> \"+(b>0?b:'--'):\"<span class='fcbat'>\\u2665</span> Cinta\";" +
       "g.style.color=(HR.on&&b>0)?cor:'';}" +
       "var cc=hrEl('crBpmC'),cb=hrEl('crBpmF');if(cc)cc.style.display=HR.on?'block':'none';if(cb)cb.textContent=b>0?b:'--';" +
+      "try{if(typeof crFullAberto==='function'&&crFullAberto())espelhaCr();}catch(e){}" +
       "var aj=hrEl('ajFcSub');if(aj)aj.textContent=HR.on?(b>0?b+' bpm agora \\u00b7 toque pra desconectar':'conectada \\u00b7 esperando batimento'):'cinta ou pulseira por Bluetooth';}" +
       "function hrAmostra(b){b=+b||0;if(b<25||b>240)return;HR.bpm=b;if(b>HR.mx)HR.mx=b;HR.soma+=b;HR.n++;hrPinta();}" +
       "function hrLe(ev){var d=ev.target.value;if(!d||d.byteLength<2)return;" +
@@ -2745,7 +2835,42 @@
       "var n=q.length,mx=0,so=0,rp=0;q.forEach(function(x){var k9=+x.k||0;if(k9>mx)mx=k9;so+=k9;" +
       "if(k9>=3&&+x.s>0&&((+x.s/60)/k9)<=6.05)rp=1;});" +
       "return [n>=1,n>=10,mx>=5,mx>=10,so>=100,rp>=1];}" +
+      /* Tela de resumo do fim da corrida: os números que antes eram duas
+       * linhas de texto dentro do card viram tiles grandes na tela cheia,
+       * com as medalhas/recordes e o botão de postar. */
+      "function crEh(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}" +
+      "function crTile(v,r){return \"<div style='background:var(--bg1);border-radius:18px;padding:14px 10px;text-align:center;'>\"+" +
+      "\"<b style='display:block;font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;'>\"+v+'</b>'+" +
+      "\"<span style='display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#8a8695;text-transform:uppercase;margin-top:3px;'>\"+r+'</span></div>';}" +
+      "function crResumo(reg,extras){var el=crEl('crResumoF');if(!el)return;" +
+      "abreCrFull(0);cr.resumo=true;" +
+      "var tiles=[];" +
+      "if(reg.k>0)tiles.push(crTile(String(reg.k).replace('.',','),'quil\u00f4metros'));" +
+      "tiles.push(crTile(wodFmt(reg.s),'tempo'));" +
+      "if(reg.p)tiles.push(crTile(reg.p,'pace m\u00e9dio'));" +
+      "tiles.push(crTile(String(crKcal(reg.k||0)),'calorias'));" +
+      "if(reg.fc)tiles.push(crTile(reg.fc+' bpm','batimento m\u00e9dio'));" +
+      "if(reg.fcx)tiles.push(crTile(reg.fcx+' bpm','pico'));" +
+      "el.innerHTML=\"<div style='max-width:440px;margin:0 auto;'>\"+" +
+      "\"<div style='text-align:center;color:#4ade80;font-size:10.5px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;'>Treino registrado</div>\"+" +
+      "\"<div style='text-align:center;font-size:clamp(26px,8vw,34px);font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-top:6px;'>\"+crEh(reg.n)+'</div>'+" +
+      "\"<div style='text-align:center;font-size:12.5px;color:#8a8695;margin-top:4px;'>\"+(CRMODS[reg.m]||'Cardio')+' \u00b7 '+String(reg.d).slice(8,10)+'/'+String(reg.d).slice(5,7)+'</div>'+" +
+      "\"<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;'>\"+tiles.join('')+'</div>'+" +
+      "((extras&&extras.length)?\"<div style='margin-top:16px;'>\"+extras.map(function(x){" +
+      "return \"<div style='background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.4);border-radius:14px;padding:10px 14px;font-size:13.5px;color:#4ade80;font-weight:700;margin-top:8px;'>\"+crEh(x)+'</div>';}).join('')+'</div>':'')+" +
+      "\"<div style='display:flex;gap:8px;margin-top:20px;'>\"+" +
+      "\"<label class='btnx' id='crRsFoto' style='flex:1;text-align:center;cursor:pointer;min-height:54px;line-height:34px;'>Postar com foto<input id='crRsArq' type='file' accept='image/*' style='display:none;'></label>\"+" +
+      "\"<button type='button' id='crRsSem' style='flex:1;min-height:54px;border-radius:99px;background:var(--bg4);border:1px solid var(--bg11);color:#cfcbdb;font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;'>S\u00f3 os n\u00fameros</button></div>\"+" +
+      "\"<button type='button' id='crRsFechar' style='display:block;width:100%;min-height:50px;margin-top:10px;background:none;border:none;color:#8a8695;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;'>Fechar</button></div>\";" +
+      "el.style.display='block';" +
+      "var bf=document.getElementById('crRsFechar');if(bf)bf.addEventListener('click',crResumoFecha);" +
+      "var bs=document.getElementById('crRsSem');if(bs)bs.addEventListener('click',function(){cardCorrida(null);});" +
+      "var ba=document.getElementById('crRsArq');if(ba)ba.addEventListener('change',function(){" +
+      "var f=this.files&&this.files[0];this.value='';if(!f)return;" +
+      "var im=new Image();var rd=new FileReader();rd.onload=function(){im.onload=function(){cardCorrida(im);};im.src=rd.result;};rd.readAsDataURL(f);});}" +
+      "function crResumoFecha(){cr.resumo=false;var el=crEl('crResumoF');if(el)el.style.display='none';fechaCrFull();}" +
       "function crFinaliza(msg){var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;if(el2<5)return;" +
+      "cr.blocos=null;cr.bi=0;var cb8=crEl('crBlocoBox');if(cb8)cb8.style.display='none';" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;soltaTela();crGpsPara();" +
       "var km=crKmAtual();var med=km>0.015?(el2/60)/km:null;" +
       "var reg={d:isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null};" +
@@ -2765,9 +2890,10 @@
       "cr.fimReg=reg;cr.fimRota=cr.rota.slice();" +
       "crEl('crGo').textContent='Iniciar';crEl('crFase').textContent=msg||(extras.length?extras[0]:'BOA! Treino registrado');crEl('crFase').style.color='#4ade80';" +
       "crEl('crInfo').textContent=extras.slice(msg?0:1).join(' \\u00b7 ');" +
-      "var bSh=crEl('crShare');if(bSh)bSh.style.display=reg.k>0?'block':'none';" +
+      "var bSh=crEl('crShare');if(bSh)bSh.style.display='block';" +
       "if(navigator.vibrate)navigator.vibrate([250,100,250,100,400]);bip(1300,350);confete();pintaCrHist();" +
-      "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.rota=[];cr.autoP=false;cr.lastMove=0;crEl('crKm').value='';try{desenhaRota();}catch(e){}}" +
+      "cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.rota=[];cr.autoP=false;cr.lastMove=0;crEl('crKm').value='';try{desenhaRota();}catch(e){}" +
+      "try{crResumo(reg,extras);}catch(e){}}" +
       /* ---------- importar do relógio (GPX/TCX) ----------
        * Todo smartwatch/band exporta o treino nesses formatos. Lê o arquivo NO
        * aparelho (nada sobe pra rede), tira km/tempo/pace/data reais e grava
@@ -2849,9 +2975,67 @@
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-cbstart]');if(!b)return;" +
       "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.plano=p3;cr.mod=p3.m;" +
+      "cr.blocos=null;cr.bi=0;cr.bt0=0;cr.bkm0=0;" +
       "crEl('crGo').textContent='Iniciar';crChips();crAutoGps();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
+      /* ---------- player guiado por blocos ----------
+       * O treino prescrito vira uma FILA de blocos: aquecimento, o miolo
+       * (rodagem ou os tiros) e a volta à calma. Cada bloco acaba pelo tempo
+       * OU pela distância, e a troca fala em voz alta e vibra — o aluno não
+       * precisa olhar a tela. Aquecer e desaquecer entram sozinhos, do mesmo
+       * jeito que o aquecimento da musculação já entra (o professor prescreve
+       * o miolo; a moldura é do app), e o aluno desliga na engrenagem. */
+      "var AQ_SEG=300,VC_SEG=180;" +
+      "function crMMSS(sg){sg=Math.max(0,Math.round(sg));return Math.floor(sg/60)+':'+('0'+(sg%60)).slice(-2);}" +
+      "function crMontaBlocos(p){if(!p||!crCfg().bl)return null;" +
+      "var b=[{k:'aq',n:'Aquecimento',d:'ritmo leve — dá pra conversar',s:AQ_SEG}];" +
+      "if(p.t==='intervalado'){for(var i=0;i<p.r;i++){" +
+      "b.push({k:'f',n:'Tiro '+(i+1)+' de '+p.r,d:'forte',s:p.ti});" +
+      "b.push({k:'l',n:'Leve '+(i+1)+' de '+p.r,d:'recupera',s:p.de});}}" +
+      "else{var alvo=[];if(p.d)alvo.push(p.d+' km');if(p.tp)alvo.push(p.tp+' min');if(p.p)alvo.push('pace '+p.p);" +
+      "b.push({k:'c',n:p.n||'Rodagem',d:alvo.join(' · ')||'no seu ritmo',s:(+p.tp||0)*60,km:+p.d||0});}" +
+      "b.push({k:'vc',n:'Volta à calma',d:'solta o corpo e respira',s:VC_SEG});return b;}" +
+      "function crBlocoAtual(){return cr.blocos?cr.blocos[cr.bi]:null;}" +
+      // aviso do bloco novo: voz quando o aluno escolheu voz, senão bipe
+      "function crAvisaBloco(b2){if(!b2)return;var fb9=crCfg().fb;" +
+      "var forte=b2.k==='f';if(navigator.vibrate)navigator.vibrate(forte?[90,60,90,60,90]:[180]);" +
+      "var falou=fb9==='voz'&&crFala(b2.n+'. '+(b2.d||''));" +
+      "if(!falou&&fb9!=='off')bip(forte?1150:640,220);}" +
+      "function crAvanca(modo){var ant=cr.blocos[cr.bi];cr.bi++;" +
+      "if(cr.bi>=cr.blocos.length){cr.bi=cr.blocos.length-1;crFinaliza('TREINO GUIADO COMPLETO!');return false;}" +
+      "var agora=(Date.now()-cr.t0)/1000;" +
+      "cr.bt0=(modo==='t'&&ant&&ant.s)?((cr.bt0||0)+ant.s):agora;" +
+      "cr.bkm0=(modo==='k'&&ant&&ant.km)?((cr.bkm0||0)+ant.km):cr.km;" +
+      "crAvisaBloco(crBlocoAtual());return true;}" +
+      "function crPulaBloco(){if(!cr.blocos)return;if(crAvanca(''))pintaCr();}" +
+      "function crTrilhoPinta(){var tr=crEl('crTrilho');if(!tr||!cr.blocos)return;" +
+      "tr.innerHTML=cr.blocos.map(function(b3,i3){" +
+      "var cor=i3<cr.bi?'rgba(255,255,255,.85)':(i3===cr.bi?'#fff':'rgba(255,255,255,.22)');" +
+      "return \"<i style='flex:1;height:4px;border-radius:99px;background:\"+cor+\";'></i>\";}).join('');}" +
+      // desenha o bloco de agora e decide se ele já acabou (tempo OU distância)
+      "function crBlocos(el2,km){var cx=crEl('crBlocoBox');" +
+      "if(!cr.blocos){if(cx)cx.style.display='none';return false;}" +
+      // acerta a fila inteira: quem deixou o celular no bolso volta minutos depois
+      "if(cr.run){var giro=0;while(cr.blocos&&giro++<60){var bx=cr.blocos[cr.bi];if(!bx)break;" +
+      "var pkX=!!(bx.km&&cr.gpsOn);" +
+      "var fimX=pkX?((km-(cr.bkm0||0))>=bx.km):(!!bx.s&&(el2-(cr.bt0||0))>=bx.s);" +
+      "if(!fimX)break;if(!crAvanca(pkX?'k':'t'))return 2;}}" +
+      "var b4=crBlocoAtual();" +
+      "if(!b4){if(cx)cx.style.display='none';return false;}" +
+      "if(cx)cx.style.display='block';" +
+      "var pas=el2-(cr.bt0||0),falta=b4.s?Math.max(0,b4.s-pas):0;" +
+      "var fkm=b4.km?Math.max(0,b4.km-(km-(cr.bkm0||0))):0;" +
+      "crTrilhoPinta();" +
+      "var bd=crEl('crBlocoD'),bt=crEl('crBlocoT');" +
+      "var prox=cr.blocos[cr.bi+1];" +
+      "if(bd)bd.textContent=prox?('depois: '+prox.n):'último bloco';" +
+      "var porKm=!!(b4.km&&cr.gpsOn);" +
+      "if(bt)bt.textContent=porKm?(String(Math.round(fkm*100)/100).replace('.',',')+' km'):(b4.s?crMMSS(falta):'livre');" +
+      "if(!porKm&&b4.s&&falta<=3.05&&falta>0.05&&cr.run)crCd(falta);" +
+      "return true;}" +
       "function crLarga(){hrZera();cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
       "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
+      "if(!cr.blocos&&cr.acum<1){cr.blocos=crMontaBlocos(cr.plano);cr.bi=0;cr.bt0=0;cr.bkm0=0;" +
+      "if(cr.blocos)crAvisaBloco(crBlocoAtual());}" +
       "crEl('crFase').style.color='#a9a4b5';cr.iv=setInterval(pintaCr,200);pintaCr();}" +
       "crEl('crGo').addEventListener('click',function(){" +
       "if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fC=crEl('crContagemF');if(fC)fC.style.display='none';this.textContent='Iniciar';return;}" +
@@ -2873,9 +3057,10 @@
       "[0,3,5,10].map(function(v){return \"<option value='\"+v+\"'\"+(c.cd===v?' selected':'')+'>'+(v?v+' segundos':'Desligada')+'</option>';}).join('')+'</select></label>'+" +
       "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>Aviso a cada km<select id='crCfgFb' style='width:120px;'>\"+" +
       "[['voz','Voz'],['bip','Bipe'],['off','Desligado']].map(function(o){return \"<option value='\"+o[0]+\"'\"+(c.fb===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'+" +
-      "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;'>Pausa autom\\u00e1tica (com GPS)<input type='checkbox' id='crCfgAp' style='width:18px;height:18px;'\"+(c.ap?' checked':'')+'>'+'</label>';" +
-      "['crCfgMp','crCfgCd','crCfgFb','crCfgAp'].forEach(function(id2){crEl(id2).addEventListener('change',function(){" +
-      "Sv('ptcrCfg',{cd:+crEl('crCfgCd').value,fb:crEl('crCfgFb').value,ap:crEl('crCfgAp').checked?1:0,mp:crEl('crCfgMp').value});" +
+      "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>Pausa autom\\u00e1tica (com GPS)<input type='checkbox' id='crCfgAp' style='width:18px;height:18px;'\"+(c.ap?' checked':'')+'>'+'</label>'+" +
+      "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;'><span>Aquecimento e volta \\u00e0 calma<span style='display:block;font-size:11px;color:#6e6a78;'>5 min antes e 3 min depois, guiados por voz</span></span><input type='checkbox' id='crCfgBl' style='width:18px;height:18px;flex:none;'\"+(c.bl?' checked':'')+'>'+'</label>';" +
+      "['crCfgMp','crCfgCd','crCfgFb','crCfgAp','crCfgBl'].forEach(function(id2){crEl(id2).addEventListener('change',function(){" +
+      "Sv('ptcrCfg',{cd:+crEl('crCfgCd').value,fb:crEl('crCfgFb').value,ap:crEl('crCfgAp').checked?1:0,mp:crEl('crCfgMp').value,bl:crEl('crCfgBl').checked?1:0});" +
       "try{desenhaRota();}catch(e9){}});});}" +
       "crEl('crCfgBtn').addEventListener('click',function(){var bx=crEl('crCfgBox');" +
       "if(bx.style.display==='none'){pintaCrCfg();bx.style.display='block';crEl('crMetaBox').style.display='none';}else bx.style.display='none';});" +
@@ -2898,6 +3083,7 @@
       "var crDs=crEl('crDescarta');if(crDs)crDs.addEventListener('click',function(){" +
       "if(!confirm('Descartar esta corrida? Nada será salvo.'))return;crEl('crZera').click();});" +
       "crEl('crZera').addEventListener('click',function(){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;" +
+      "cr.blocos=null;cr.bi=0;cr.bt0=0;cr.bkm0=0;var cb9=crEl('crBlocoBox');if(cb9)cb9.style.display='none';" +
       "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();" +
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';" +
       "var bS7=crEl('crShare');if(bS7)bS7.style.display='none';desenhaRota();pintaCr();});" +
@@ -2925,9 +3111,12 @@
       "rt.forEach(function(pp,i9){var x9=190+(pp.lng-lo1)*zz+(700-dLo*zz)/2;var y9=830-(pp.lat-la1)*zz-(520-dLa*zz)/2;if(i9)g.lineTo(x9,y9);else g.moveTo(x9,y9);});g.stroke();g.shadowBlur=0;}" +
       "g.textAlign='center';g.fillStyle='rgba(255,255,255,.85)';g.font='700 40px system-ui,sans-serif';g.fillText(STUDIO.toUpperCase().slice(0,30),540,120);" +
       "var yK=temRota?1010:660;" +
-      "g.fillStyle='#fff';g.font='900 170px system-ui,sans-serif';g.fillText(String(rg.k).replace('.',',')+' km',540,yK);" +
+      "g.fillStyle='#fff';g.font='900 170px system-ui,sans-serif';" +
+      "g.fillText(rg.k>0?(String(rg.k).replace('.',',')+' km'):wodFmt(rg.s),540,yK);" +
       "g.font='600 52px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.9)';" +
-      "g.fillText(wodFmt(rg.s)+(rg.p?' \\u00b7 pace '+rg.p:'')+' \\u00b7 '+(CRMODS[rg.m]||'Cardio'),540,yK+95);" +
+      "var lin2=rg.k>0?(wodFmt(rg.s)+(rg.p?' \\u00b7 pace '+rg.p:'')):'';" +
+      "if(rg.fc)lin2+=(lin2?' \\u00b7 ':'')+rg.fc+' bpm';" +
+      "g.fillText(lin2+(lin2?' \\u00b7 ':'')+(CRMODS[rg.m]||'Cardio'),540,yK+95);" +
       "g.font='700 36px system-ui,sans-serif';g.fillStyle='rgba(255,255,255,.75)';" +
       "g.fillText(PRIMEIRO+' \\u00b7 '+String(rg.d).slice(8,10)+'/'+String(rg.d).slice(5,7),540,1250);" +
       "if(soCanvas)return c;" +
@@ -2951,7 +3140,30 @@
       "if(pg===0||pg===1)cr.pagF=pg;f.style.display='block';crFullDim();espelhaCr();try{desenhaRota();}catch(e){}}" +
       "function fechaCrFull(){var f=crEl('crFull');if(!f)return;f.style.display='none';cr.lockF=false;crEl('crLockOverF').style.display='none';}" +
       "var GIGAS=[['km','QUIL\\u00d4METROS'],['tempo','TEMPO'],['pace','PACE M\\u00c9DIO'],['kcal','CALORIAS']];" +
-      "function espelhaCr(){if(!crFullAberto())return;" +
+      /* Tela por zona de batimento: com a cinta ligada, o fundo da tela cheia
+       * passa a ser a cor da zona (Z1 azul ... Z5 vermelho) e a voz avisa a
+       * troca. Sem cinta, hrSuporta()/HR.on são falsos e a tela segue como
+       * sempre foi — mesma regra honesta do resto do batimento. */
+      "var crZAnt=-1,crZDesde=0;" +
+      "function crZonaPinta(mapaAberto){var pf=crEl('crPainelF');if(!pf)return;" +
+      "var z=(HR.on&&HR.bpm>0)?hrZ(HR.bpm):-1;" +
+      "var fx=crEl('crZonaFx');" +
+      "if(z<0){if(crZAnt!==-1){pf.style.background='linear-gradient(165deg,var(--cor) 0%,var(--cor) 58%,var(--corc) 175%)';crZAnt=-1;}" +
+      "if(fx)fx.style.display='none';return;}" +
+      "if(z!==crZAnt){" +
+      "pf.style.background='linear-gradient(165deg,'+HRZC[z]+' 0%,'+HRZC[z]+' 58%,rgba(255,255,255,.35) 210%)';" +
+      // a voz só entra depois que a zona se firma, senão fala a cada batida
+      "if(crZAnt>=0&&cr.run&&Date.now()-crZDesde>12000){var fb8=crCfg().fb;" +
+      "if(navigator.vibrate)navigator.vibrate(z>crZAnt?[70,50,70]:[160]);" +
+      "var falou8=fb8==='voz'&&crFala('Zona '+(z+1)+'. '+HRZN[z].split(' ').slice(1).join(' '));" +
+      "if(!falou8&&fb8!=='off')bip(z>crZAnt?1100:640,180);}" +
+      "crZAnt=z;crZDesde=Date.now();}" +
+            // com o fundo colorido da zona, a faixa do bloco em ciano some — vai a branco
+      "var ff=crEl('crFaseF');if(ff)ff.style.color='#fff';" +
+      "if(fx){fx.style.display=mapaAberto?'none':'block';" +
+      "fx.innerHTML=\"<b style='font-size:13px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;'>\"+HRZN[z]+'</b>'+" +
+      "\"<span style='display:block;font-size:11.5px;opacity:.85;margin-top:2px;'>\"+HR.bpm+' bpm \u00b7 '+Math.round(100*HR.bpm/hrMax())+'% da m\u00e1xima</span>';}}" +
+      "function espelhaCr(){if(!crFullAberto()||cr.resumo)return;" +
       "var rodou=cr.run||cr.acum>0;var pausado=!cr.run&&cr.acum>0;var km=crKmAtual();" +
       "var tTxt=crEl('crTempo').textContent,medTxt=crEl('crPaceMed').textContent,kmTxt=km.toFixed(2).replace('.',','),kcTxt=String(crKcal(km));" +
       "crEl('crTempoF').textContent=tTxt;crEl('crPaceF').textContent=crEl('crPace').textContent;crEl('crKcalF').textContent=kcTxt;" +
@@ -2969,6 +3181,7 @@
       "crEl('crLockBtnF').style.display=cr.run?'flex':'none';crEl('crMapBtnF').style.display=cr.run?'flex':'none';" +
       "crEl('crMapBtnF').innerHTML=cr.pagF===1?CRICOS.painel:CRICOS.mapa;crEl('crMapBtnF').setAttribute('aria-label',cr.pagF===1?'Ver o painel':'Ver o mapa');" +
       "crEl('crFimF').style.display=rodou?'block':'none';" +
+      "try{crZonaPinta(mapa);}catch(e){}" +
       "crEl('crGoF').style.background=pausado?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg0)';" +
       "crEl('crMetaBtnF').style.display=rodou?'none':'block';crEl('crMetaBtnF').textContent=crEl('crMetaBtn').textContent;" +
       "crEl('crGpsF').style.borderColor=cr.gpsOn?'#4ade80':'rgba(255,255,255,.3)';crEl('crGpsF').style.color=cr.gpsOn?'#4ade80':'#fff';}" +
@@ -2993,7 +3206,9 @@
       "function crSolta(){if(crUnT){clearTimeout(crUnT);crUnT=null;}if(cr.lockF)crUnB.textContent='Segure pra destravar';}" +
       "crUnB.addEventListener('touchstart',function(e){e.preventDefault();crSeg();});crUnB.addEventListener('touchend',crSolta);crUnB.addEventListener('touchcancel',crSolta);" +
       "crUnB.addEventListener('mousedown',crSeg);crUnB.addEventListener('mouseup',crSolta);crUnB.addEventListener('mouseleave',crSolta);" +
+      "var bp9=crEl('crPulaF');if(bp9)bp9.addEventListener('click',function(){if(cr.blocos)crPulaBloco();});" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
+      "window.__crGuia={monta:crMontaBlocos,pula:crPulaBloco,atual:crBlocoAtual};" +
       "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr};" +
       "}" +
       "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
@@ -3054,6 +3269,19 @@
       // passo do stepper: quem levanta 5 kg não sobe de 5 em 5, quem levanta 80 não sobe de 1 em 1
       "function gnum(v){return String(Math.round(v*100)/100).replace('.',',');}" +
       "function gultimo(ex){var l=(L('ptdc',{})[ex]||[]);return l.length?l[l.length-1]:null;}" +
+      /* Peso sugerido na série: se da última vez o aluno BATEU as repetições
+       * prescritas naquela carga (e não acabou de subir), o app sugere o
+       * próximo degrau. O campo continua nascendo na carga de sempre — a
+       * sugestão é um botão que o aluno toca se quiser; nada sobe sozinho. */
+      "function gPasso(kg){return kg<20?1:2.5;}" +
+      "function gSugereKg(ex,repsAlvo){var l=(L('ptdc',{})[ex]||[]);if(!l.length)return 0;" +
+      "var u=l[l.length-1];var kg=+u.kg||0;if(kg<=0)return 0;" +
+      "var alvo=parseInt(repsAlvo,10)||0;if(!alvo)return 0;" +
+      "if((+u.r||0)<alvo)return 0;" +
+      // acabou de subir no treino passado: deixa consolidar antes de subir de novo
+      "if(l.length>=2&&+l[l.length-2].kg<kg)return 0;" +
+      "return Math.round((kg+gPasso(kg))*100)/100;}" +
+      "window.__gSugere=gSugereKg;" +
       "function grecorde(ex){var l=(L('ptdc',{})[ex]||[]);var m=0;l.forEach(function(x){if(+x.kg>m)m=+x.kg;});return m;}" +
       // ---------- gravação da carga: só grava o que o aluno CONFIRMOU ----------
       // O 'change' antigo perdia o registro quando o aluno saía sem tirar o foco,
@@ -3154,6 +3382,8 @@
       "if(dl)tc+=\"<em\"+(dl>0?'':\" class='mn'\")+'>'+(dl>0?'+':'\\u2212')+gnum(Math.abs(dl))+' kg desde a última</em>';" +
       "m+=\"<div class='gtiles'><div class='gtile'><span>Repetições</span><b>\"+esc2(it.r||'—')+'</b></div>'+" +
       "\"<div class='gtile'><span>Carga</span>\"+tc+'</div></div>';" +
+      "var sgT=(gv.cargas[it.e]==null)?gSugereKg(it.e,it.r):0;" +
+      "if(sgT)m+=\"<button type='button' class='gsug' id='gSugT' data-kg='\"+sgT+\"'>Bateu as \"+(parseInt(it.r,10)||0)+\" na \u00faltima \u2014 tenta \"+gnum(sgT)+' kg hoje \u203a</button>';" +
       "m+=\"<div class='gsecrow'><button type='button' id='gMudaCarga'>Mudar a carga</button>\"+" +
       "\"<button type='button' id='gPulaEx2'>Pular exercício</button></div>\";" +
       // card 'NA ÚLTIMA VEZ · 17 de agosto' com as anotações daquele dia
@@ -3275,6 +3505,8 @@
       "gRegua('gWRep',GW.rep,r)+\"</div>\"+" +
       // lembrete da sessão anterior, igual à tela 22 ('na última vez você fez 30')
       "(u?\"<div class='gcgult'>na última vez você fez \"+gnum(+u.kg)+' kg'+(+u.r>0?' × '+u.r:'')+'</div>':'')+" +
+      "(function(){var sg=gSugereKg(it.e,it.r);if(!sg)return '';" +
+      "return \"<button type='button' class='gsug' id='gSug' data-kg='\"+sg+\"'>Bateu as \"+(parseInt(it.r,10)||0)+\" \u2014 tenta \"+gnum(sg)+' kg \u203a</button>';})()+" +
       "\"<button type='button' class='gsalvar' id='gSalvar'>Salvar carga</button>\"+" +
       "\"<button type='button' class='gsemcarga' id='gSemCarga'>Foi sem carga (peso do corpo)</button></div>\";}" +
       "function ligaStepper(it,slot){var kg=gEl('gKg'),rp=gEl('gReps');if(!kg)return;gv.reg=it.e;gv.regi=slot||'';" +
@@ -3285,6 +3517,9 @@
       "requestAnimationFrame(function(){var a=gEl('gWKg'),b=gEl('gWRep');" +
       "if(a)a.scrollLeft=gIdx(GW.kg,parseFloat(String(kg.value).replace(',','.'))||0)*GW.kg.px;" +
       "if(b)b.scrollLeft=gIdx(GW.rep,parseInt(rp.value,10)||0)*GW.rep.px;});" +
+      "var bs9=gEl('gSug');if(bs9)bs9.onclick=function(){kg.value=gnum(+bs9.dataset.kg);gv.sujo=true;" +
+      "var a9=gEl('gWKg');if(a9)a9.scrollLeft=gIdx(GW.kg,+bs9.dataset.kg)*GW.kg.px;" +
+      "bs9.textContent='Vamos nessa! \u2713';bs9.classList.add('on');if(navigator.vibrate)navigator.vibrate(40);};" +
       "kg.oninput=function(){gv.sujo=true;};rp.oninput=function(){gv.sujo=true;};" +
       "gEl('gSalvar').onclick=function(){gv.sujo=false;" +
       "var ok=gGrava(it.e,parseFloat(String(kg.value).replace(',','.')),parseInt(rp.value,10)||0,gv.regi);" +
@@ -3401,6 +3636,12 @@
       /* 'Mudar a carga': abre o MESMO formulário de régua do fim do exercício,
          dentro do card. Salvou (ou marcou sem carga) → fecha e o tile CARGA já
          acorda com o número novo; tocar de novo no botão também fecha. */
+      // aceitar a sugestão = a carga de hoje passa a ser ela (o tile CARGA muda
+      // na hora); nada é gravado ainda — quem grava é o Salvar de sempre
+      "if(e.target.id==='gSugT'){if(gv.fim)return;var itS=GUIA[gv.f].it[gv.e];" +
+      "gv.cargas[itS.e]=+e.target.dataset.kg;gv.sujo=true;" +
+      "gGrava(itS.e,+e.target.dataset.kg,parseInt(itS.r,10)||0,gv.f+':'+gv.e);" +
+      "if(navigator.vibrate)navigator.vibrate(45);pintaGuia();return;}" +
       "if(e.target.id==='gMudaCarga'){if(gv.fim)return;var itM=GUIA[gv.f].it[gv.e],m2=gEl('gMiolo2');" +
       "if(m2.innerHTML){gSalvaSeSujo();m2.innerHTML='';gv.reg='';gv.regi='';pintaGuia();return;}" +
       "m2.innerHTML=gCargaHtml(itM);ligaStepper(itM,gv.f+':'+gv.e);" +
@@ -4293,6 +4534,7 @@
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
           "var PLANO=" + jsonApp(planoApp) + ";" +
           // texto da faixa roxa dos Treinos, um por aba (o script só troca o texto)
+          "var MESAPP=" + jsonApp(D.mesApp || {}) + ";" +
           "var TRHEAD=" + jsonApp((function () {
             var porStudio = "montado por " + studio;
             var totSer = 0;
@@ -4670,6 +4912,14 @@
       "var tn=document.getElementById('trTopN');if(tn)tn.textContent=th.n;" +
       "var ts=document.getElementById('trTopS');if(ts)ts.textContent=th.s;" +
       "var tb=document.getElementById('trTopSub');if(tb)tb.textContent=th.sub;" +
+      // plano do mês: a semana em que o aluno está e o que muda nela
+      "var mEh=function(t9){return String(t9==null?'':t9).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};" +
+      "var mk=s==='wod'?'wod':(s==='cardio'?'corrida':'musculacao');var mw=MESAPP[mk];" +
+      "var mb=document.getElementById('trMes');" +
+      "if(mb){if(mw){mb.style.display='block';" +
+      "mb.innerHTML=\"<b style='display:block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.8);'>Semana \"+mw.s+' de 4'+(mw.f?' \u00b7 '+mEh(mw.f):'')+'</b>'+" +
+      "(mw.a?\"<span style='display:block;font-size:12.5px;color:rgba(255,255,255,.92);margin-top:3px;line-height:1.45;'>\"+mEh(mw.a)+'</span>':'');}" +
+      "else mb.style.display='none';}" +
       "document.querySelectorAll(\"[data-sec='treino']\").forEach(function(el){if(el.id==='trTopo')return;" +
       "var idAlvo=s==='wod'?'cardWod':s==='cardio'?'cardCardio':null;" +
       "el.style.display=(idAlvo?el.id===idAlvo:(el.id!=='cardWod'&&el.id!=='cardCardio'))?'':'none';});" +
