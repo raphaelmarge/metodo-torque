@@ -3839,6 +3839,41 @@ async function abaPt(p, a) {
       "a chat-envia pede o plano do mês nos três formatos (musculação, circuito e corrida)");
     ok(/EXATAMENTE 4 objetos/.test(fn) && /semana 4 deve ser SEMPRE mais leve/i.test(fn),
       "a regra do mês exige 4 semanas e manda a última ser deload — nunca a mais pesada");
+    ok((fn.match(/BRIEF_REGRA/g) || []).length === 4 && /PRIORIDADE MÁXIMA/.test(fn) && /regra absoluta/.test(fn),
+      "a chat-envia manda a leitura do professor vencer os números, e as adaptações serem regra absoluta");
+  }
+  {
+    // ✍️ a leitura do professor entra no prompt, na frente de tudo
+    const br = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      window.__trAba("auto");
+      document.getElementById("taAluno").value = id;
+      window.__brief.carrega();
+      const out = { vazioChip: document.getElementById("taBriefChip").textContent };
+      document.getElementById("brDesejo").value = "ABCD em vez de ABC, nada acima de 50 minutos";
+      document.getElementById("brQuer").value = "quer mais peito, odeia esteira";
+      document.getElementById("brAdapta").value = "ombro direito trava acima de 90 graus";
+      document.getElementById("brLeitura").value = "estagnou no supino ha 6 semanas";
+      window.__brief.salva();
+      const st2 = S.read("ptStudio", {});
+      const a2 = st2.alunos.find((x) => x.id === id);
+      out.guardou = !!(a2.briefIA && a2.briefIA.desejo && a2.briefIA.adapta);
+      out.chip = document.getElementById("taBriefChip").textContent;
+      out.txt = window.__briefIA(a2);
+      out.noPrompt = window.__montaDadosIA(st2, a2, "Hipertrofia", "academia completa");
+      out.vazio = window.__briefIA({ id: "z" });
+      // devolve o aluno como estava
+      delete a2.briefIA; S.write("ptStudio", st2); window.__brief.carrega();
+      return out;
+    });
+    ok(br.guardou && /4 de 4 preenchidos/.test(br.chip) && /em branco/.test(br.vazioChip),
+      "🏁 a leitura do professor fica guardada NO ALUNO e o card diz quantos campos estão preenchidos");
+    ok(/REGRA ABSOLUTA/.test(br.txt) && /siga à risca/.test(br.txt) && /ombro direito trava/.test(br.txt),
+      "os quatro campos viram o bloco A LEITURA DO PROFESSOR, com as adaptações marcadas como regra absoluta");
+    ok(br.noPrompt.indexOf("A LEITURA DO PROFESSOR") < br.noPrompt.indexOf("ALUNO:"),
+      "a leitura do professor vai na FRENTE dos dados do aluno no prompt");
+    ok(br.vazio === "", "professor que não escreveu nada não gera bloco nenhum — o prompt fica como era");
   }
   // --- R2: placar de circuito por tipo (telas 07/08/09) ---
   {

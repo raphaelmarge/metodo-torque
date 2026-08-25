@@ -343,6 +343,17 @@ Deno.serve(async (req: Request) => {
       "HOJE e a FREQUÊNCIA REAL do aluno pra dosar o quanto subir: quem treina 2x por semana progride " +
       "mais devagar que quem treina 5x, e quem já levanta muito sobe em degraus menores. Nunca escreva " +
       "ajuste vago como \"aumente se sentir que dá\" — o aluno precisa saber o que fazer sem interpretar.";
+    /* A leitura do professor vem no início dos dados e MANDA. Sem esta regra
+     * o modelo trata o bloco como mais um contexto e às vezes prescreve o que
+     * o professor proibiu — que é o pior erro possível aqui. */
+    const BRIEF_REGRA =
+      "PRIORIDADE MÁXIMA: se os dados trouxerem um bloco \"A LEITURA DO PROFESSOR\", ele vence qualquer " +
+      "conclusão que você tire dos números, do objetivo ou da anamnese. Dentro dele, \"ADAPTAÇÕES E " +
+      "LIMITAÇÕES\" é regra absoluta — nunca prescreva nada que a contrarie, nem como alternativa, nem " +
+      "com ressalva. \"COMO O PROFESSOR QUER ESTE TREINO MONTADO\" define a estrutura (quantidade de " +
+      "fichas, divisão, duração, exercícios obrigatórios): siga à risca mesmo que você faria diferente. " +
+      "Se algum pedido do professor for perigoso pra saúde do aluno, cumpra o resto e explique a ressalva " +
+      "no resumo — nunca ignore em silêncio. ";
     const SISTEMAS: Record<string, string> = {
       musculacao: "Você é um personal trainer sênior que prescreve treinos de musculação individualizados. " +
         "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
@@ -354,7 +365,7 @@ Deno.serve(async (req: Request) => {
         'preferências da anamnese; reps pode ser número ("10") ou tempo ("30s"); descanso em segundos; ' +
         "obs é opcional e curta (técnica ou cuidado com a lesão). Se o PAR-Q tiver resposta SIM, seja conservador " +
         "e avise no resumo que o aluno precisa de liberação médica antes de intensificar. " +
-        MES_REGRA,
+        MES_REGRA + " " + BRIEF_REGRA,
       wod: "Você é um coach sênior de treino em circuito (estilo cross/HIIT) que prescreve WODs individualizados. " +
         "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
         "JSON válido, sem markdown e sem comentários, neste formato exato: " +
@@ -366,7 +377,7 @@ Deno.serve(async (req: Request) => {
         "(nome do movimento — prefira nomes do catálogo recebido); aq é um aquecimento de 1 linha; respeite lesões, " +
         "PAR-Q, nível e equipamento da anamnese, escalando os movimentos quando precisar. Se o PAR-Q tiver resposta " +
         "SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica antes de intensificar. " +
-        MES_REGRA,
+        MES_REGRA + " " + BRIEF_REGRA,
       corrida: "Você é um treinador de corrida sênior que monta planilhas individualizadas. " +
         "Recebe a anamnese do aluno e o objetivo e responde APENAS com um JSON válido, sem markdown e sem " +
         "comentários, neste formato exato: " +
@@ -378,7 +389,7 @@ Deno.serve(async (req: Request) => {
         "de tiros, tiro = segundos forte, desc = segundos leve); iniciante começa com caminhada ou corrida+caminhada " +
         "e pace conservador; progressão prudente (nada de saltos de volume); respeite lesões e PAR-Q. Se o PAR-Q " +
         "tiver resposta SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica. " +
-        MES_REGRA,
+        MES_REGRA + " " + BRIEF_REGRA,
     };
     const tipoIa = String(corpo.tipo || "musculacao");
     const r2 = await fetch("https://api.anthropic.com/v1/messages", {

@@ -805,6 +805,24 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="taIA" title="a IA lê a anamnese completa e prescreve o treino (precisa da conta na nuvem)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m12 3.5 2.3 5.3 5.7.5-4.3 3.8 1.3 5.6-5-3-5 3 1.3-5.6L4 9.3l5.7-.5z'/></svg> Gerar com IA</button>
         <button class="btn sec" id="taEvoluir" title="evolui séries/reps da ficha atual (progressão dupla)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Evoluir semana</button>
       </div>
+      <details id="taBrief" style="margin-top: 12px; border: 1px solid var(--linha); border-radius: 12px;">
+        <summary style="padding: 11px 14px; cursor: pointer; font-weight: 700; font-size: 13.5px;">
+          ✍️ Sua leitura deste aluno <span class="muted" style="font-weight: 400; font-size: 12.5px;">— a IA obedece isso antes dos números</span>
+          <span id="taBriefChip" class="muted" style="font-size: 12px; margin-left: 6px;"></span>
+        </summary>
+        <div style="padding: 0 14px 14px;">
+          <p class="muted" style="margin: 0 0 10px; font-size: 12.5px;">Fica guardado neste aluno — escreva uma vez e vá ajustando. Deixe em branco o que não se aplica.</p>
+          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Como você quer este treino montado
+            <textarea id="brDesejo" rows="2" placeholder="ex.: ABCD em vez de ABC · terra romeno obrigatório · nada acima de 50 minutos · 2 dias de circuito no meio da semana"></textarea></label>
+          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">O que o aluno pede
+            <textarea id="brQuer" rows="2" placeholder="ex.: quer definir o abdômen pro verão, odeia esteira, pediu mais peito"></textarea></label>
+          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Adaptações e limitações <b style="color: #f59e0b;">(a IA nunca desrespeita)</b>
+            <textarea id="brAdapta" rows="2" placeholder="ex.: ombro direito trava acima de 90° — nada de desenvolvimento militar · joelho sensível, leg press só até 90°"></textarea></label>
+          <label style="display: block; font-size: 12.5px;">Sua leitura do momento dele
+            <textarea id="brLeitura" rows="2" placeholder="ex.: estagnou no supino há 6 semanas, vou trocar pra halteres e subir volume · some quando o treino passa de 50 min"></textarea></label>
+          <p id="brStatus" class="muted" style="margin: 8px 0 0; font-size: 12px;"></p>
+        </div>
+      </details>
       <button class="btn" id="taEnviaApp" style="margin-top: 10px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
       <!-- caixa PRÓPRIA: dividindo a de cima, o recado da IA e o do envio se
            confundiam e um erro antigo parecia ser do botão recém-clicado -->
@@ -4811,6 +4829,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__congelados = { checa: checaAppsCongelados, render: renderCongelados, lista: alunosCongelados }; // testes
   setTimeout(checaAppsCongelados, 3500);
+  /* A leitura do professor sobre ESTE aluno: fica guardada nele (a.briefIA),
+   * não só na hora de gerar — no mês seguinte ele ajusta o que mudou em vez
+   * de reescrever tudo. É o que dá a "visão humana" pra IA. */
+  var BRIEF_CAMPOS = [["brDesejo", "desejo"], ["brQuer", "quer"], ["brAdapta", "adapta"], ["brLeitura", "leitura"]];
+  function carregaBrief() {
+    var id = $("taAluno") ? $("taAluno").value : "";
+    var a = id ? (load().alunos || []).find(function (x) { return x.id === id; }) : null;
+    var b = (a && a.briefIA) || {};
+    BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) el.value = b[c[1]] || ""; });
+    var n = BRIEF_CAMPOS.filter(function (c) { return (b[c[1]] || "").trim(); }).length;
+    var chip = $("taBriefChip");
+    if (chip) chip.textContent = !a ? "" : (n ? "· " + n + " de 4 preenchidos" : "· em branco");
+    var st9 = $("brStatus"); if (st9) st9.textContent = "";
+  }
+  function salvaBrief() {
+    var id = $("taAluno") ? $("taAluno").value : "";
+    if (!id) return;
+    var st = load();
+    var a = (st.alunos || []).find(function (x) { return x.id === id; });
+    if (!a) return;
+    var b = {};
+    BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) b[c[1]] = String(el.value || "").trim().slice(0, 600); });
+    a.briefIA = b;
+    S.write("ptStudio", st);
+    var el2 = $("brStatus"); if (el2) el2.textContent = "Guardado ✓";
+    carregaBrief();
+    if (el2) el2.textContent = "Guardado ✓";
+  }
+  window.__brief = { carrega: carregaBrief, salva: salvaBrief }; // testes
+  BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) el.addEventListener("change", salvaBrief); });
+  if ($("taAluno")) $("taAluno").addEventListener("change", carregaBrief);
+  carregaBrief();
   ligaEnvioApp("taEnviaApp", "taAluno", "taEnvioStatus");
   ligaEnvioApp("tEnviaApp", "tAluno", "tEnvioStatus");
 
@@ -8149,6 +8199,20 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * esforço). Sem esses dados, a IA prescrevia no escuro: carga de iniciante
    * pra quem já levanta 100 kg. Cada bloco só aparece quando existe — nada é
    * inventado, e a linha diz honestamente quando falta. */
+  /* A leitura do professor entra ANTES dos números e com prioridade: é ele
+   * que conhece o aluno. Bloco só aparece se ele escreveu alguma coisa. */
+  function briefIA(a) {
+    var b = (a && a.briefIA) || {};
+    var l = [];
+    if ((b.desejo || "").trim()) l.push("COMO O PROFESSOR QUER ESTE TREINO MONTADO (siga à risca): " + b.desejo.trim());
+    if ((b.quer || "").trim()) l.push("O QUE O ALUNO PEDE: " + b.quer.trim());
+    if ((b.adapta || "").trim()) l.push("ADAPTAÇÕES E LIMITAÇÕES — REGRA ABSOLUTA, nunca prescreva nada que contrarie isto: " + b.adapta.trim());
+    if ((b.leitura || "").trim()) l.push("LEITURA DO PROFESSOR SOBRE O MOMENTO DELE: " + b.leitura.trim());
+    if (!l.length) return "";
+    return "=== A LEITURA DO PROFESSOR (vale mais que qualquer coisa que você deduza dos números) ===\n" +
+      l.join("\n") + "\n=== fim da leitura do professor ===\n";
+  }
+  window.__briefIA = briefIA; // testes
   function perfilFisicoIA(st, a) {
     var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
       .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
@@ -8226,6 +8290,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var idade = "";
     if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
     return [
+      briefIA(a),
       "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
       "OBJETIVO: " + objetivo + " | EQUIPAMENTO: " + equip + " | DIAS/SEMANA: " + dias,
       "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
@@ -8256,6 +8321,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var idade = "";
     if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
     return [
+      briefIA(a),
       "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
       "OBJETIVO DA CORRIDA: " + prova + " | DIAS DISPONÍVEIS POR SEMANA: " + dias,
       "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
