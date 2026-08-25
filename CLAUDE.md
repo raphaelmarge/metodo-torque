@@ -178,6 +178,20 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**Treino guiado no circuito** (a partir da v600): o WOD ganhou o mesmo desenho
+da musculação — UM movimento por vez. `wfGuia()` pinta o `#wfAgora` com a
+quantidade em 38 px, o nome, a linha "depois: X" e o botão `#wfFeito`;
+`wfAvanca()` anda um movimento e, ao passar do último, zera `wod.gi` e clica no
+**mesmo** `#wodVolta` de sempre (um caminho só pra contar volta, senão dois
+contadores divergem). Só vale pra **amrap** e **fortime** — EMOM e Tabata são
+definidos pelo relógio e seguem como estavam. A lista embaixo (`listaMovs(t, gd)`)
+passa a derivar o riscado de `wod.gi` em vez do `wfRisc` manual nesses dois
+tipos, e tocar num item PULA pra ele. Com o guiado na tela, o `#wfVolta` é
+rebaixado a atalho discreto ("Fechei a volta inteira") — e volta ao normal a
+cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi`
+zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
+Ganchos: `window.__wodGuia.avanca`.
+
 **Mapa de calor do mês** (a partir da v599): o bloco `#mapaAno` das
 Conquistas era a fita de 52 semanas (364 quadradinhos de 4 px) — bonita de
 longe, ilegível num celular de 480. Virou o **mês em calendário**, com `‹ ›`

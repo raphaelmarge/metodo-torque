@@ -3788,6 +3788,45 @@ async function abaPt(p, a) {
     ok(r2.abriu && r2.pecas, "🏁 R2: encerrar circuito prescrito abre o placar do tipo (voltas + como fez + tempo de cada volta)");
     ok(r2.salvo && r2.fechou, "Salvar resultado grava voltas/como fez/splits no ptwodres (que o personal recebe) e fecha o placar");
   }
+  {
+    // treino guiado no circuito (v600): um movimento por vez, igual à musculação
+    const gw = await pApp.evaluate(async () => {
+      const w = window.__wod;
+      document.querySelector("[data-wodstart]").click();
+      await new Promise((r) => setTimeout(r, 150));
+      document.getElementById("wodGo").click();
+      await new Promise((r) => setTimeout(r, 400));
+      const le = () => ({
+        gi: w.gi, voltas: w.voltas,
+        agora: (document.getElementById("wfAgora").textContent || "").replace(/\s+/g, " "),
+        vis: document.getElementById("wfAgora").style.display,
+        movs: document.querySelectorAll("[data-wfmov]").length,
+      });
+      const out = { ini: le() };
+      document.getElementById("wfFeito").click();
+      await new Promise((r) => setTimeout(r, 150));
+      out.um = le();
+      for (let i = 0; i < 8; i++) { const f = document.getElementById("wfFeito"); if (f) f.click(); await new Promise((r) => setTimeout(r, 70)); }
+      out.volta = le();
+      document.querySelectorAll("[data-wfmov]")[1].click();
+      await new Promise((r) => setTimeout(r, 150));
+      out.pulo = le();
+      out.riscados = [...document.querySelectorAll("[data-wfmov]")].map((x) => /line-through/.test(x.getAttribute("style") || "") ? 1 : 0).join("");
+      // limpa o rastro
+      document.getElementById("wodZera").click();
+      out.zerou = { gi: w.gi, voltas: w.voltas };
+      return out;
+    });
+    ok(gw.ini.vis === "block" && gw.ini.gi === 0 && /Agora · 1 de \d/.test(gw.ini.agora) && /Feito/.test(gw.ini.agora),
+      "🏁 circuito guiado abre no 1º movimento, com a quantidade grande e o botão Feito");
+    ok(gw.um.gi === 1 && /depois:/.test(gw.ini.agora),
+      "Feito › anda um movimento e a linha já diz qual vem depois");
+    ok(gw.volta.voltas === 1 && gw.volta.gi < gw.volta.movs,
+      "passar do último movimento fecha a volta sozinho e recomeça a lista");
+    ok(gw.pulo.gi === 1 && gw.riscados.slice(0, 1) === "1",
+      "tocar num movimento pula pra ele, e o que ficou pra trás aparece riscado");
+    ok(gw.zerou.gi === 0 && gw.zerou.voltas === 0, "zerar o circuito volta pro primeiro movimento");
+  }
   // --- R3: questionário uma-pergunta-por-tela (telas 02-06) ---
   {
     const qaHtml = await p.evaluate(() => {
