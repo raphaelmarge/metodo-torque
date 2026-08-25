@@ -1128,6 +1128,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="qeApp"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> Mandar pro app do aluno</button>
       </div>
       <p id="qeAppAviso" hidden class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+      <p class="muted" style="margin: 8px 0 0; font-size: 12.5px;">🔔 <b>Lembrete automático:</b> quem não responder recebe um aviso no celular — o do questionário sai no dia em que ele libera, e o do <b>check-in da semana</b> sai a partir de sexta. Quem já respondeu não é incomodado. Precisa do aluno com o app instalado e com os lembretes ligados.</p>
       <div id="qeSaida" hidden style="margin-top: 10px;">
         <input id="qeLink" readonly style="width: 100%; font-size: 12px;">
         <div class="linha-flex" style="gap: 8px; margin-top: 8px;">
@@ -4644,9 +4645,96 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     pintaReguaStatus(st, enviados);
     return { enviados: enviados };
   }
+  /* Aviso de check-in e questionário esperando resposta.
+   *
+   * Fica FORA da rotinaDiariaPush de propósito: pra não cutucar quem JÁ
+   * respondeu, isso precisa perguntar pra nuvem quem respondeu — e a rotina
+   * de cima é síncrona (os testes contam com isso). Se a leitura falhar,
+   * NINGUÉM recebe nada: um "seu check-in está esperando" pra quem já mandou
+   * é pior do que aviso nenhum. */
+  function pushPendencias() {
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem) return Promise.resolve({ motivo: "sem-nuvem", enviados: 0 });
+    var st = load();
+    if ((st.config || {}).reguaOff) return Promise.resolve({ motivo: "desligada", enviados: 0 });
+    var ativos = (st.alunos || []).filter(function (a) { return a.ativo !== false && a.appTokenP; });
+    var tokens = ativos.map(function (a) { return a.appTokenP; });
+    if (!tokens.length) return Promise.resolve({ motivo: "sem-token", enviados: 0 });
+    var hoje = S.todayISO();
+    var seg = new Date(hoje + "T12:00"); seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    var iniSemana = S.todayISO(seg);
+    // o mais antigo que interessa: esta semana, ou a liberação do questionário mais velho
+    var desdeQ = ativos.reduce(function (m, a) {
+      var d = (a.questApp || {}).desde;
+      return (/^\d{4}-\d{2}-\d{2}$/.test(d || "") && d < m) ? d : m;
+    }, iniSemana);
+    // roda num timer: qualquer tropeço aqui vira "não avisa ninguém", nunca erro na tela
+    var leitura;
+    try {
+      leitura = Promise.all([
+        nuvem.client.from("app_checkin").select("token,dia").gte("dia", iniSemana).in("token", tokens).limit(500),
+        nuvem.client.from("app_quest").select("token,criado").gte("criado", desdeQ).in("token", tokens).limit(500),
+      ]);
+    } catch (e) { return Promise.resolve({ motivo: "sem-leitura", enviados: 0 }); }
+    return leitura.then(function (rs) {
+      if (!rs[0] || !rs[1] || rs[0].error || rs[1].error) return { motivo: "sem-leitura", enviados: 0 };
+      var fezCk = {};
+      (rs[0].data || []).forEach(function (r) { fezCk[r.token] = 1; });
+      var respQ = {};
+      (rs[1].data || []).forEach(function (r) {
+        var d = String(r.criado || "").slice(0, 10);
+        if (!respQ[r.token] || respQ[r.token] < d) respQ[r.token] = d;
+      });
+      var semana = Math.floor(Date.parse(hoje + "T12:00:00Z") / 6048e5);
+      var dSem = (new Date(hoje + "T12:00").getDay() + 6) % 7; // 0 = segunda
+      var enviados = 0;
+      var st2 = load();
+      st2.pushLog = st2.pushLog || {};
+      function manda(chave, token, titulo, corpo) {
+        // igual à régua: só marca o log quando a push-envia responde ok
+        if (st2.pushLog[chave] || pushEmVoo[chave]) return;
+        pushEmVoo[chave] = 1;
+        enviados++;
+        pushAluno(token, titulo, corpo).then(function (deuCerto) {
+          delete pushEmVoo[chave];
+          if (!deuCerto) return;
+          var st3 = load();
+          st3.pushLog = st3.pushLog || {};
+          st3.pushLog[chave] = S.todayISO();
+          S.write("ptStudio", st3);
+        });
+      }
+      ativos.forEach(function (a) {
+        // check-in da semana: cutuca da SEXTA em diante (a semana já rendeu
+        // assunto), no máximo 1 vez por semana
+        if (dSem >= 4 && !fezCk[a.appTokenP]) {
+          manda("ckin|" + a.id + "|" + semana, a.appTokenP, "Seu check-in da semana",
+            "3 perguntas, 30 segundos — e eu já ajusto a sua próxima semana.");
+        }
+        // questionário liberado e ainda sem resposta NESTE período
+        var q = a.questApp;
+        if (q && Array.isArray(q.ps) && q.ps.length) {
+          var desde = /^\d{4}-\d{2}-\d{2}$/.test(q.desde || "") ? q.desde : hoje;
+          var per = desde;
+          if (q.repete && hoje >= desde) {
+            // mesma conta do app: o período corrente anda de 7 em 7 dias
+            var nSem = Math.floor((Date.parse(hoje + "T12:00") - Date.parse(desde + "T12:00")) / 6048e5);
+            var dPer = new Date(desde + "T12:00"); dPer.setDate(dPer.getDate() + nSem * 7);
+            per = S.todayISO(dPer);
+          }
+          if (hoje >= per && !(respQ[a.appTokenP] && respQ[a.appTokenP] >= per)) {
+            manda("quest|" + a.id + "|" + per, a.appTokenP, q.nome || "Questionário",
+              "Seu personal mandou um questionário pra você — leva 1 minuto.");
+          }
+        }
+      });
+      return { enviados: enviados };
+    }).catch(function () { return { motivo: "sem-leitura", enviados: 0 }; });
+  }
+  window.__pendPT = pushPendencias; // testes
   window.__reguaPT = rotinaDiariaPush; // testes
-  setTimeout(rotinaDiariaPush, 5000);
-  setInterval(rotinaDiariaPush, 6 * 3600 * 1000);
+  setTimeout(function () { rotinaDiariaPush(); pushPendencias(); }, 5000);
+  setInterval(function () { rotinaDiariaPush(); pushPendencias(); }, 6 * 3600 * 1000);
   $("reguaOn").addEventListener("change", function () {
     var st = load();
     st.config = st.config || {};
