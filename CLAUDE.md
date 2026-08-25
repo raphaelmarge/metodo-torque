@@ -178,6 +178,20 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**Mapa de calor do mês** (a partir da v599): o bloco `#mapaAno` das
+Conquistas era a fita de 52 semanas (364 quadradinhos de 4 px) — bonita de
+longe, ilegível num celular de 480. Virou o **mês em calendário**, com `‹ ›`
+pra andar pra trás (`mapMes`, 0 = mês atual), semana começando na segunda
+(igual aos chips do Início), hoje com anel e os dias que ainda não chegaram
+pontilhados. A cor conta QUANTO foi treinado: `forcaDoDia(iso, feitos)` soma
+as séries de `ptsets_<dia>` em três degraus (>=20, >=10, resto) e devolve 1
+pro dia que só está em `ptfeitos` sem série anotada (uma corrida, por
+exemplo). O cabeçalho diz "N treinos em agosto" e compara com o melhor mês
+ANTERIOR (nunca consigo mesmo). O id continua `mapaAno` de propósito — o
+classificador `[data-sec]` e os testes já apontam pra ele. A demo semeia
+`ptsets_<dia>` (segunda cheia, quarta média, sábado leve) senão o degradê
+não aparece. Ganchos: `window.__mapaMes` (`forca`, `mes`, `pinta`).
+
 **Player guiado de cardio** (a partir da v598): o treino de corrida/bike
 prescrito vira uma FILA de blocos — `crMontaBlocos(plano)` devolve
 `[{k,n,d,s,km}]`: aquecimento (`aq`, 5 min), o miolo (`c` contínuo, ou `f`/`l`

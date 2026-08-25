@@ -31,6 +31,12 @@ var __demoDados={};
   ];
   __demoDados.ptpeso=JSON.stringify(peso);
   __demoDados.ptfeitos=JSON.stringify(feitos);
+  /* séries marcadas por dia: é o que pinta o mapa de calor do mês (dia forte
+   * fica mais escuro). Segunda e quarta são dias cheios, sexta média, sábado
+   * é o circuito/corrida — que não marca série e fica no degrau leve. */
+  for(var iS=420;iS>=1;iS--){var dS=new Date(Date.now()-iS*864e5).getDay();if(!feitos[iso(iS)])continue;
+    var nS=dS===1?22:(dS===3?16:(dS===5?11:4));
+    __demoDados["ptsets_"+iso(iS)]=JSON.stringify({"Supino reto":Math.round(nS/3),"Agachamento livre":Math.round(nS/3),"Remada curvada":nS-2*Math.round(nS/3)});}
   __demoDados.ptdc=JSON.stringify(dc);
   __demoDados.pthab=JSON.stringify(hab);
   __demoDados.ptfotos=JSON.stringify(fotos);
