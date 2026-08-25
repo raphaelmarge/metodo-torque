@@ -251,6 +251,22 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Mês E ano no mapa de calor** (a partir da v606): a v599 trocou a fita de 52
+semanas pelo calendário do mês e o Raphael sentiu falta dos pontinhos do ano
+inteiro. Agora os dois moram no MESMO card, com o botão **Mês | Ano**
+(`#mapVm`/`#mapVa`) no cabeçalho; as setas `‹ ›` só aparecem no modo mês, que
+é o único onde andar pra trás faz sentido. A fita voltou legível: quadradinho
+de **13 px** com rolagem lateral por dentro do card (`#mapaAnoRol`), em vez dos
+4 px espremidos na largura da tela que motivaram a v599 — o CARD nunca estoura,
+quem rola é a fita. Ela nasce encostada em HOJE por **`direction:rtl` no
+rolador** (com `direction:ltr` de volta nas duas linhas de dentro), não por
+`scrollLeft`: quando o app abre, a aba Conquistas está escondida, a largura é
+zero e ajustar o scroll na mão vira nada — quem tinha deixado o app no Ano
+voltava e via janeiro do ano passado. A escolha fica em `ptmapv`. As duas
+visões usam a MESMA régua de cor (`mapCor` + `forcaDoDia`), então o degradê
+conta a mesma história nos dois lugares. Ganchos: `window.__mapaMes` ganhou
+`vis` e `ve`.
+
 **Mapa de calor do mês** (a partir da v599): o bloco `#mapaAno` das
 Conquistas era a fita de 52 semanas (364 quadradinhos de 4 px) — bonita de
 longe, ilegível num celular de 480. Virou o **mês em calendário**, com `‹ ›`
