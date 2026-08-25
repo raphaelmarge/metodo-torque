@@ -1186,7 +1186,14 @@
       "<div style='flex:1;'><b id='crKcalF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>0</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>CALORIAS</div></div>" +
       "<div id='crBpmC' style='flex:1;display:none;'><b id='crBpmF' style='font-size:21px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'>--</b><div style='font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.75);'>BATIMENTOS</div></div></div>" +
       "<div id='crFaseF' style='text-align:center;font-size:11px;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.85);text-transform:uppercase;margin-top:4px;'>Pronto?</div>" +
-      "<div id='crInfoF' style='text-align:center;font-size:11.5px;color:rgba(255,255,255,.8);'></div></div>" +
+      "<div id='crInfoF' style='text-align:center;font-size:11.5px;color:rgba(255,255,255,.8);'></div>" +
+      // player guiado: trilho dos blocos + o bloco de agora e o de depois
+      "<div id='crBlocoBox' style='display:none;margin-top:10px;'>" +
+      "<div id='crTrilho' style='display:flex;gap:3px;'></div>" +
+      "<div style='display:flex;align-items:center;gap:10px;margin-top:8px;text-align:left;'>" +
+      "<span id='crBlocoD' style='flex:1;min-width:0;font-size:11.5px;color:rgba(255,255,255,.72);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'></span>" +
+      "<b id='crBlocoT' style='flex:none;font-size:22px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'></b>" +
+      "<button id='crPulaF' style='flex:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:7px 13px;color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;'>Pular \u203a</button></div></div></div>" +
       "<div style='position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 14px;'>" +
       "<div id='crPausaF' style='display:none;width:100%;max-width:440px;background:rgba(var(--bg0-rgb),.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:18px;padding:14px;'>" +
       "<div style='display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;'>" +
@@ -2459,9 +2466,9 @@
       "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90, cp: capaRef(c) }; })) + ";" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
       "var CRICOS={mapa:\"" + CRICO_MAPA + "\",painel:\"" + CRICO_PAINEL + "\"};" +
-      "var cr={run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
+      "var cr={blocos:null,bi:0,bt0:0,bkm0:0,run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
       "function crEl(id){return document.getElementById(id);}" +
-      "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap,mp:c.mp||'auto'};}" +
+      "function crCfg(){var c=L('ptcrCfg',null)||{};return {cd:(c.cd==null?3:+c.cd),fb:c.fb||'voz',ap:c.ap==null?1:+c.ap,mp:c.mp||'auto',bl:(c.bl==null?1:+c.bl)};}" +
       "function crFala(txt){try{if(!window.speechSynthesis)return false;var u=new SpeechSynthesisUtterance(txt);u.lang='pt-BR';speechSynthesis.speak(u);return true;}catch(e){return false;}}" +
       /* mapa de ruas quando on-line; sem internet cai no traçado offline.
        * Estilos: CARTO (escuro/claro/colorido, com @2x pra tela retina),
@@ -2564,7 +2571,7 @@
       "function crKmAtual(){if(cr.gpsOn)return cr.km;var v=parseFloat(String(crEl('crKm').value||'').replace(',','.'));return isFinite(v)&&v>0?v:cr.km;}" +
       "function pintaCr(){" +
       // pausa automática (estilo app de corrida): parou de andar com GPS ligado → o relógio pausa sozinho
-      "if(cr.run&&cr.gpsOn&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!(cr.plano&&cr.plano.t==='intervalado')){" +
+      "if(cr.run&&cr.gpsOn&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!cr.blocos&&!(cr.plano&&cr.plano.t==='intervalado')){" +
       "cr.autoP=true;cr.run=false;cr.acum=(Date.now()-cr.t0)/1000;crEl('crGo').textContent='Continuar';if(navigator.vibrate)navigator.vibrate(120);}" +
       "var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;var km=crKmAtual();" +
       "crEl('crTempo').textContent=wodFmt(el2);" +
@@ -2592,6 +2599,14 @@
       "crEl('crMetaTxt').textContent=mD?(km.toFixed(2).replace('.',',')+' de '+String(mD).replace('.',',')+' km'):(Math.floor(el2/60)+' de '+mT+' min');}" +
       "else mb.style.display='none';})();" +
       "var p2=cr.plano;var fase=crEl('crFase'),info=crEl('crInfo');" +
+      // com o player guiado ligado, é o BLOCO que manda no texto e no ritmo
+      "var rb9=cr.blocos?crBlocos(el2,km):0;if(rb9===2)return;" +
+      "if(rb9){var b5=crBlocoAtual();" +
+      "fase.textContent=b5.n.toUpperCase();" +
+      "fase.style.color=b5.k==='f'?'var(--corc)':(b5.k==='aq'||b5.k==='vc'?'#22d3ee':'#a9a4b5');" +
+      "info.textContent=(b5.d||'')+' · bloco '+(cr.bi+1)+' de '+cr.blocos.length;" +
+      "try{espelhaCr();}catch(e){}return;}" +
+      "var cbx=crEl('crBlocoBox');if(cbx)cbx.style.display='none';" +
       "if(p2&&p2.t==='intervalado'){var ciclo=p2.ti+p2.de;var tot=p2.r*ciclo;" +
       "if(cr.run&&el2>=tot){crFinaliza('TIROS COMPLETOS \\u2014 '+p2.r+'\\u00d7!');return;}" +
       "var rdA=Math.min(p2.r,Math.floor(el2/ciclo)+1);var pos=el2%ciclo;var forte=pos<p2.ti;" +
@@ -2690,6 +2705,7 @@
       "if(k9>=3&&+x.s>0&&((+x.s/60)/k9)<=6.05)rp=1;});" +
       "return [n>=1,n>=10,mx>=5,mx>=10,so>=100,rp>=1];}" +
       "function crFinaliza(msg){var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;if(el2<5)return;" +
+      "cr.blocos=null;cr.bi=0;var cb8=crEl('crBlocoBox');if(cb8)cb8.style.display='none';" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;soltaTela();crGpsPara();" +
       "var km=crKmAtual();var med=km>0.015?(el2/60)/km:null;" +
       "var reg={d:isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null};" +
@@ -2793,9 +2809,67 @@
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-cbstart]');if(!b)return;" +
       "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.plano=p3;cr.mod=p3.m;" +
+      "cr.blocos=null;cr.bi=0;cr.bt0=0;cr.bkm0=0;" +
       "crEl('crGo').textContent='Iniciar';crChips();crAutoGps();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
+      /* ---------- player guiado por blocos ----------
+       * O treino prescrito vira uma FILA de blocos: aquecimento, o miolo
+       * (rodagem ou os tiros) e a volta à calma. Cada bloco acaba pelo tempo
+       * OU pela distância, e a troca fala em voz alta e vibra — o aluno não
+       * precisa olhar a tela. Aquecer e desaquecer entram sozinhos, do mesmo
+       * jeito que o aquecimento da musculação já entra (o professor prescreve
+       * o miolo; a moldura é do app), e o aluno desliga na engrenagem. */
+      "var AQ_SEG=300,VC_SEG=180;" +
+      "function crMMSS(sg){sg=Math.max(0,Math.round(sg));return Math.floor(sg/60)+':'+('0'+(sg%60)).slice(-2);}" +
+      "function crMontaBlocos(p){if(!p||!crCfg().bl)return null;" +
+      "var b=[{k:'aq',n:'Aquecimento',d:'ritmo leve — dá pra conversar',s:AQ_SEG}];" +
+      "if(p.t==='intervalado'){for(var i=0;i<p.r;i++){" +
+      "b.push({k:'f',n:'Tiro '+(i+1)+' de '+p.r,d:'forte',s:p.ti});" +
+      "b.push({k:'l',n:'Leve '+(i+1)+' de '+p.r,d:'recupera',s:p.de});}}" +
+      "else{var alvo=[];if(p.d)alvo.push(p.d+' km');if(p.tp)alvo.push(p.tp+' min');if(p.p)alvo.push('pace '+p.p);" +
+      "b.push({k:'c',n:p.n||'Rodagem',d:alvo.join(' · ')||'no seu ritmo',s:(+p.tp||0)*60,km:+p.d||0});}" +
+      "b.push({k:'vc',n:'Volta à calma',d:'solta o corpo e respira',s:VC_SEG});return b;}" +
+      "function crBlocoAtual(){return cr.blocos?cr.blocos[cr.bi]:null;}" +
+      // aviso do bloco novo: voz quando o aluno escolheu voz, senão bipe
+      "function crAvisaBloco(b2){if(!b2)return;var fb9=crCfg().fb;" +
+      "var forte=b2.k==='f';if(navigator.vibrate)navigator.vibrate(forte?[90,60,90,60,90]:[180]);" +
+      "var falou=fb9==='voz'&&crFala(b2.n+'. '+(b2.d||''));" +
+      "if(!falou&&fb9!=='off')bip(forte?1150:640,220);}" +
+      "function crAvanca(modo){var ant=cr.blocos[cr.bi];cr.bi++;" +
+      "if(cr.bi>=cr.blocos.length){cr.bi=cr.blocos.length-1;crFinaliza('TREINO GUIADO COMPLETO!');return false;}" +
+      "var agora=(Date.now()-cr.t0)/1000;" +
+      "cr.bt0=(modo==='t'&&ant&&ant.s)?((cr.bt0||0)+ant.s):agora;" +
+      "cr.bkm0=(modo==='k'&&ant&&ant.km)?((cr.bkm0||0)+ant.km):cr.km;" +
+      "crAvisaBloco(crBlocoAtual());return true;}" +
+      "function crPulaBloco(){if(!cr.blocos)return;if(crAvanca(''))pintaCr();}" +
+      "function crTrilhoPinta(){var tr=crEl('crTrilho');if(!tr||!cr.blocos)return;" +
+      "tr.innerHTML=cr.blocos.map(function(b3,i3){" +
+      "var cor=i3<cr.bi?'rgba(255,255,255,.85)':(i3===cr.bi?'#fff':'rgba(255,255,255,.22)');" +
+      "return \"<i style='flex:1;height:4px;border-radius:99px;background:\"+cor+\";'></i>\";}).join('');}" +
+      // desenha o bloco de agora e decide se ele já acabou (tempo OU distância)
+      "function crBlocos(el2,km){var cx=crEl('crBlocoBox');" +
+      "if(!cr.blocos){if(cx)cx.style.display='none';return false;}" +
+      // acerta a fila inteira: quem deixou o celular no bolso volta minutos depois
+      "if(cr.run){var giro=0;while(cr.blocos&&giro++<60){var bx=cr.blocos[cr.bi];if(!bx)break;" +
+      "var pkX=!!(bx.km&&cr.gpsOn);" +
+      "var fimX=pkX?((km-(cr.bkm0||0))>=bx.km):(!!bx.s&&(el2-(cr.bt0||0))>=bx.s);" +
+      "if(!fimX)break;if(!crAvanca(pkX?'k':'t'))return 2;}}" +
+      "var b4=crBlocoAtual();" +
+      "if(!b4){if(cx)cx.style.display='none';return false;}" +
+      "if(cx)cx.style.display='block';" +
+      "var pas=el2-(cr.bt0||0),falta=b4.s?Math.max(0,b4.s-pas):0;" +
+      "var fkm=b4.km?Math.max(0,b4.km-(km-(cr.bkm0||0))):0;" +
+      "crTrilhoPinta();" +
+      "var bd=crEl('crBlocoD'),bt=crEl('crBlocoT');" +
+      "var prox=cr.blocos[cr.bi+1];" +
+      "if(bd)bd.textContent=prox?('depois: '+prox.n):'último bloco';" +
+      "var porKm=!!(b4.km&&cr.gpsOn);" +
+      "if(bt)bt.textContent=porKm?(String(Math.round(fkm*100)/100).replace('.',',')+' km'):(b4.s?crMMSS(falta):'livre');" +
+      "if(!porKm&&b4.s&&falta<=3.05&&falta>0.05&&cr.run)crCd(falta);" +
+      "return true;}" +
       "function crLarga(){hrZera();cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
       "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
+      "if(!cr.blocos&&cr.acum<1){cr.blocos=crMontaBlocos(cr.plano);cr.bi=0;cr.bt0=0;cr.bkm0=0;" +
+      "if(cr.blocos)crAvisaBloco(crBlocoAtual());}" +
       "crEl('crFase').style.color='#a9a4b5';cr.iv=setInterval(pintaCr,200);pintaCr();}" +
       "crEl('crGo').addEventListener('click',function(){" +
       "if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fC=crEl('crContagemF');if(fC)fC.style.display='none';this.textContent='Iniciar';return;}" +
@@ -2817,9 +2891,10 @@
       "[0,3,5,10].map(function(v){return \"<option value='\"+v+\"'\"+(c.cd===v?' selected':'')+'>'+(v?v+' segundos':'Desligada')+'</option>';}).join('')+'</select></label>'+" +
       "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>Aviso a cada km<select id='crCfgFb' style='width:120px;'>\"+" +
       "[['voz','Voz'],['bip','Bipe'],['off','Desligado']].map(function(o){return \"<option value='\"+o[0]+\"'\"+(c.fb===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'+" +
-      "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;'>Pausa autom\\u00e1tica (com GPS)<input type='checkbox' id='crCfgAp' style='width:18px;height:18px;'\"+(c.ap?' checked':'')+'>'+'</label>';" +
-      "['crCfgMp','crCfgCd','crCfgFb','crCfgAp'].forEach(function(id2){crEl(id2).addEventListener('change',function(){" +
-      "Sv('ptcrCfg',{cd:+crEl('crCfgCd').value,fb:crEl('crCfgFb').value,ap:crEl('crCfgAp').checked?1:0,mp:crEl('crCfgMp').value});" +
+      "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--bg11);'>Pausa autom\\u00e1tica (com GPS)<input type='checkbox' id='crCfgAp' style='width:18px;height:18px;'\"+(c.ap?' checked':'')+'>'+'</label>'+" +
+      "\"<label style='display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:7px 0;'><span>Aquecimento e volta \\u00e0 calma<span style='display:block;font-size:11px;color:#6e6a78;'>5 min antes e 3 min depois, guiados por voz</span></span><input type='checkbox' id='crCfgBl' style='width:18px;height:18px;flex:none;'\"+(c.bl?' checked':'')+'>'+'</label>';" +
+      "['crCfgMp','crCfgCd','crCfgFb','crCfgAp','crCfgBl'].forEach(function(id2){crEl(id2).addEventListener('change',function(){" +
+      "Sv('ptcrCfg',{cd:+crEl('crCfgCd').value,fb:crEl('crCfgFb').value,ap:crEl('crCfgAp').checked?1:0,mp:crEl('crCfgMp').value,bl:crEl('crCfgBl').checked?1:0});" +
       "try{desenhaRota();}catch(e9){}});});}" +
       "crEl('crCfgBtn').addEventListener('click',function(){var bx=crEl('crCfgBox');" +
       "if(bx.style.display==='none'){pintaCrCfg();bx.style.display='block';crEl('crMetaBox').style.display='none';}else bx.style.display='none';});" +
@@ -2842,6 +2917,7 @@
       "var crDs=crEl('crDescarta');if(crDs)crDs.addEventListener('click',function(){" +
       "if(!confirm('Descartar esta corrida? Nada será salvo.'))return;crEl('crZera').click();});" +
       "crEl('crZera').addEventListener('click',function(){clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;" +
+      "cr.blocos=null;cr.bi=0;cr.bt0=0;cr.bkm0=0;var cb9=crEl('crBlocoBox');if(cb9)cb9.style.display='none';" +
       "cr.rota=[];cr.autoP=false;cr.lastMove=0;if(cr.cdIv){clearInterval(cr.cdIv);cr.cdIv=null;crEl('crContagem').style.display='none';var fZ=crEl('crContagemF');if(fZ)fZ.style.display='none';}soltaTela();crGpsPara();" +
       "crEl('crGo').textContent='Iniciar';crEl('crKm').value='';crEl('crFase').style.color='#a9a4b5';" +
       "var bS7=crEl('crShare');if(bS7)bS7.style.display='none';desenhaRota();pintaCr();});" +
@@ -2937,7 +3013,9 @@
       "function crSolta(){if(crUnT){clearTimeout(crUnT);crUnT=null;}if(cr.lockF)crUnB.textContent='Segure pra destravar';}" +
       "crUnB.addEventListener('touchstart',function(e){e.preventDefault();crSeg();});crUnB.addEventListener('touchend',crSolta);crUnB.addEventListener('touchcancel',crSolta);" +
       "crUnB.addEventListener('mousedown',crSeg);crUnB.addEventListener('mouseup',crSolta);crUnB.addEventListener('mouseleave',crSolta);" +
+      "var bp9=crEl('crPulaF');if(bp9)bp9.addEventListener('click',function(){if(cr.blocos)crPulaBloco();});" +
       "crChips();pintaCr();pintaCrHist();desenhaRota();window.__cr=cr;window.__pintaCr=pintaCr;window.__crRota=desenhaRota;" +
+      "window.__crGuia={monta:crMontaBlocos,pula:crPulaBloco,atual:crBlocoAtual};" +
       "window.__crMapa={estilos:CRMAPS,url:crUrl,estilo:crEstiloId,dpr:crDpr};" +
       "}" +
       "var tmrI=null;function tmrFmt(s){return s>=90?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):(s+'s');}" +
