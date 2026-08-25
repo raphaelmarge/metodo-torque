@@ -1950,8 +1950,78 @@ async function abaPt(p, a) {
   ok(/<details/.test(appHtml) && /Pegada na largura dos ombros/.test(appHtml), "cada exercício é uma sub-página com a descrição");
   ok(/Sem esse aparelho hoje\?/.test(appHtml) && /Troca por: /.test(appHtml), "exercícios trazem substitutos do mesmo padrão de movimento");
   ok(/sconfBox/.test(appHtml) && /Confirmo presença/.test(appHtml) && /app_chat_envia/.test(appHtml), "próxima sessão tem os botões Vou/Não vou que avisam pelo chat");
-  ok(/id='avBtn'/.test(appHtml) && /ptfotoperfil/.test(appHtml) && /fotoPerfil:/.test(appHtml),
+  ok(/id='avBtn'/.test(appHtml) && /ptfotoperfil/.test(appHtml) && /dd9\.fotoPerfil=/.test(appHtml),
     "o aluno troca a própria foto pelo topo do app, e ela volta pro personal");
+
+  // 📷 a foto só sobe quando MUDA: antes ela ia junto em todo envio do retorno
+  // (peso, carga, treino marcado…), reenviando a mesma imagem dezenas de vezes
+  {
+    const ctxF = await b.newContext({ viewport: { width: 390, height: 844 } });
+    const pF = await ctxF.newPage();
+    const envios = [];
+    // ordem importa: no Playwright a rota registrada por ÚLTIMO vence, então o
+    // abort genérico entra ANTES da rota específica do devolve
+    await pF.route("**/rest/v1/rpc/**", (r) => r.abort());
+    await pF.route("**/rest/v1/rpc/app_aluno_devolve", (r) => {
+      envios.push(JSON.parse(r.request().postData() || "{}"));
+      r.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true }) });
+    });
+    // o app precisa ter NUVEM: só nasce com MT_CLOUD.url E o aluno com appTokenP
+    const appFoto = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const a = st.alunos[0], snap = a.appTokenP;
+      a.appTokenP = "tok-foto-teste"; S.write("ptStudio", st);
+      const html = window.__montaAppAluno(a, new Date().toISOString());
+      const st2 = S.read("ptStudio", {});
+      if (snap) st2.alunos[0].appTokenP = snap; else delete st2.alunos[0].appTokenP;
+      S.write("ptStudio", st2);
+      return { html, temNuvem: /,NUVEM=\{/.test(html) };
+    });
+    ok(appFoto.temNuvem, "📷 (preparo) o app de teste nasce com a nuvem ligada");
+    await pF.route("**/app-teste-foto.html", (r) => r.fulfill({ contentType: "text/html", body: appFoto.html }));
+    await pF.goto(BASE + "/app-teste-foto.html", { waitUntil: "domcontentloaded" });
+    const fotoDe = (c) => "data:image/jpeg;base64," + c.repeat(200);
+    const res = await pF.evaluate(async (px) => {
+      const esperar = () => new Promise((r) => setTimeout(r, 2100));
+      localStorage.setItem("ptpeso", JSON.stringify({ "2026-08-01": 80 }));
+      localStorage.setItem("ptfotos", JSON.stringify([{ d: "2026-01-10", img: px.a, tipo: "frente" },
+        { d: "2026-08-10", img: px.b, tipo: "frente" }]));
+      localStorage.setItem("ptfotoperfil", px.c);
+      localStorage.removeItem("ptdevfoto");
+      window.__devolveApp(); await esperar();          // 1º: tem que levar a foto
+      window.__devolveApp(); await esperar();          // 2º: nada mudou → sem foto
+      // o aluno tira uma foto nova: a marca muda e a imagem volta a subir
+      const fs = JSON.parse(localStorage.getItem("ptfotos"));
+      fs.push({ d: "2026-08-20", img: px.d, tipo: "frente" });
+      localStorage.setItem("ptfotos", JSON.stringify(fs));
+      window.__devolveApp(); await esperar();
+      return { marca: localStorage.getItem("ptdevfoto") };
+    }, { a: fotoDe("A"), b: fotoDe("B"), c: fotoDe("C"), d: fotoDe("D") });
+    const temFoto = (e) => !!(e && e.p_dados && e.p_dados.fotoAntes);
+    const temPeso = (e) => !!(e && e.p_dados && e.p_dados.peso);
+    ok(envios.length === 3 && temFoto(envios[0]),
+      "📷 o primeiro envio do retorno leva a foto (" + envios.length + " envios)");
+    ok(envios.length === 3 && !temFoto(envios[1]) && temPeso(envios[1]),
+      "📷 o segundo envio NÃO repete a foto — mas peso, cargas e treinos continuam subindo");
+    ok(envios.length === 3 && temFoto(envios[2]) && /2026-08-20/.test(JSON.stringify(envios[2].p_dados.fotoDepoisD || "")),
+      "📷 foto nova volta a subir na hora (a marca mudou)");
+    ok(!!res.marca, "📷 a marca do que já subiu fica guardada no aparelho (ptdevfoto)");
+    // envio que FALHA não pode marcar como enviado — senão a foto nunca chega
+    const envios2 = [];
+    await pF.route("**/rest/v1/rpc/app_aluno_devolve", (r) => {
+      envios2.push(JSON.parse(r.request().postData() || "{}"));
+      r.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ erro: "off" }) });
+    });
+    const falha = await pF.evaluate(async () => {
+      const esperar = () => new Promise((r) => setTimeout(r, 2100));
+      localStorage.removeItem("ptdevfoto");
+      window.__devolveApp(); await esperar();
+      return localStorage.getItem("ptdevfoto");
+    });
+    ok(envios2.length === 1 && !!envios2[0].p_dados.fotoAntes && !falha,
+      "📷 envio que falhou NÃO marca a foto como enviada (ela vai de novo na próxima)");
+    await ctxF.close();
+  }
   // no modo claro o fundo escuro fixo do assistente deixava texto escuro sobre
   // fundo escuro; agora as três peças usam um véu da própria cor do studio
   ok(!/#241b36/.test(appHtml) && (appHtml.match(/rgba\(var\(--cor-rgb\),\.14\)/g) || []).length >= 3,
