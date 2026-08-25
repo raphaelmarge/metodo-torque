@@ -3789,9 +3789,28 @@ async function abaPt(p, a) {
     ok(r2.salvo && r2.fechou, "Salvar resultado grava voltas/como fez/splits no ptwodres (que o personal recebe) e fecha o placar");
   }
   {
-    // treino guiado no circuito (v600): um movimento por vez, igual à musculação
-    const gw = await pApp.evaluate(async () => {
+    // treino guiado no circuito (v600): um movimento por vez, igual à musculação.
+    // Precisa de um WOD PRESCRITO (o guiado lê os movimentos dele), então
+    // semeia um, monta um app só pra isso e devolve o estudio como estava.
+    const snapWod = await p.evaluate(() => localStorage.getItem("mtapp:ptStudio"));
+    const wodApp = await p.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      const a = st.alunos[0];
+      const t = (st.treinosV2[a.id] = st.treinosV2[a.id] || { fichas: [] });
+      t.wods = [{ id: "wg1", nome: "Chipper guiado", tipo: "amrap", min: 12,
+        movs: [{ q: "10", n: "burpee" }, { q: "20", n: "agachamento" }, { q: "30", n: "abdominal" }] }];
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+      return window.__montaAppAluno(a, new Date().toISOString());
+    });
+    const pW = await ctx.newPage();
+    pW.on("dialog", (d) => d.accept());
+    await pW.route("**/app-teste-wod.html", (r) => r.fulfill({ contentType: "text/html", body: wodApp }));
+    await pW.goto(BASE + "/app-teste-wod.html", { waitUntil: "domcontentloaded" });
+    await pW.waitForTimeout(400);
+    const gw = await pW.evaluate(async () => {
       const w = window.__wod;
+      window.__trSub("wod");
+      await new Promise((r) => setTimeout(r, 200));
       document.querySelector("[data-wodstart]").click();
       await new Promise((r) => setTimeout(r, 150));
       document.getElementById("wodGo").click();
@@ -3826,6 +3845,8 @@ async function abaPt(p, a) {
     ok(gw.pulo.gi === 1 && gw.riscados.slice(0, 1) === "1",
       "tocar num movimento pula pra ele, e o que ficou pra trás aparece riscado");
     ok(gw.zerou.gi === 0 && gw.zerou.voltas === 0, "zerar o circuito volta pro primeiro movimento");
+    await pW.close();
+    await p.evaluate((snap) => localStorage.setItem("mtapp:ptStudio", snap), snapWod);
   }
   // --- R3: questionário uma-pergunta-por-tela (telas 02-06) ---
   {
