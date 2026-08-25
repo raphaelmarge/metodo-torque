@@ -28,6 +28,12 @@
     + ".tphab button{min-height:44px!important}"
     + "input,select,textarea{min-height:48px;border-radius:14px}"
     + ".rpebtn{min-height:48px;border-radius:16px;font-weight:800;font-size:13px}"
+    /* alvos que ficaram abaixo do piso de 44px do handoff (conferido tela a tela
+     * em 2026-08-25 nas telas 44–51). Os três primeiros têm style inline no HTML
+     * montado, então aqui precisa de !important — senão o inline vence. */
+    + ".crModBt{min-height:44px!important}"          // Corrida / Caminhada / Bike: 32px
+    + "#crMetaBtn{min-height:44px!important}"        // "Defina uma meta": 36px
+    + "#avBtn2{min-height:44px;min-width:44px}"      // avatar do topo: 42px (segue redondo)
     + ".rperow{gap:6px}"
     + ".fichabox>summary{min-height:56px;align-items:center!important}"
     + ".kv{min-height:40px;align-items:center}"
