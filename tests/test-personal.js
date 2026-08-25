@@ -3759,6 +3759,32 @@ async function abaPt(p, a) {
   // avisos sonoros: contagem 3-2-1 nos timers e áudio destravado no primeiro toque (iPhone)
   ok(/function ucCd\(/.test(appHtml2) && /function wodCd\(/.test(appHtml2) && /ac\.resume\(\)/.test(appHtml2) && /o\.type='square'/.test(appHtml2),
     "timers com contagem sonora 3-2-1 e áudio alto destravado no toque");
+  {
+    // peso sugerido na série (v603): bateu as reps da última vez -> sobe um degrau
+    const sug = await pApp.evaluate(async () => {
+      const S = (h) => localStorage.setItem("ptdc", JSON.stringify(h));
+      const snap = localStorage.getItem("ptdc");
+      const out = {};
+      S({ Sup: [{ d: "2026-08-01", kg: 30, r: 12 }, { d: "2026-08-08", kg: 30, r: 12 }] });
+      out.bateu = window.__gSugere("Sup", "12");
+      S({ Sup: [{ d: "2026-08-08", kg: 30, r: 9 }] });
+      out.naoBateu = window.__gSugere("Sup", "12");
+      S({ Sup: [{ d: "2026-08-01", kg: 30, r: 12 }, { d: "2026-08-08", kg: 32.5, r: 12 }] });
+      out.subiuAgora = window.__gSugere("Sup", "12");
+      S({ Rosca: [{ d: "2026-08-08", kg: 12, r: 12 }] });
+      out.leve = window.__gSugere("Rosca", "12");
+      out.semNada = window.__gSugere("Nunca feito", "12");
+      out.semAlvo = window.__gSugere("Sup", "");
+      if (snap) localStorage.setItem("ptdc", snap); else localStorage.removeItem("ptdc");
+      return out;
+    });
+    ok(sug.bateu === 32.5 && sug.leve === 13,
+      "🏁 peso sugerido: bateu as reps na última, sobe um degrau (2,5 kg acima de 20 kg; 1 kg abaixo)");
+    ok(sug.naoBateu === 0 && sug.subiuAgora === 0,
+      "não bateu as reps, ou acabou de subir no treino passado: o app NÃO sugere subir");
+    ok(sug.semNada === 0 && sug.semAlvo === 0,
+      "sem histórico ou sem repetições prescritas, nenhuma sugestão é inventada");
+  }
   // --- R2: placar de circuito por tipo (telas 07/08/09) ---
   {
     const r2 = await pApp.evaluate(() => {
