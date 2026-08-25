@@ -178,6 +178,17 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**Tela por zona de batimento** (a partir da v601): com a cinta conectada, o
+fundo da tela cheia da corrida (`#crPainelF`) vira a cor da zona (`HRZC`, Z1
+azul → Z5 vermelho) e a faixa `#crZonaFx` mostra zona, bpm e % da máxima.
+`crZonaPinta(mapaAberto)` é chamada no fim do `espelhaCr` e também pelo
+`hrPinta` (senão a zona congelava com o cronômetro pausado). **Sem cinta nada
+muda**: `HR.on` falso devolve o gradiente do studio e esconde a faixa — mesma
+regra honesta do resto do batimento. A voz só entra depois que a zona firma
+(12 s em `crZDesde`), senão falaria a cada batida na fronteira entre duas
+zonas. A faixa do bloco guiado (`#crFaseF`) vai a branco quando o fundo
+colorido entra, porque o ciano do aquecimento sumia no laranja do Z4.
+
 **Treino guiado no circuito** (a partir da v600): o WOD ganhou o mesmo desenho
 da musculação — UM movimento por vez. `wfGuia()` pinta o `#wfAgora` com a
 quantidade em 38 px, o nome, a linha "depois: X" e o botão `#wfFeito`;
