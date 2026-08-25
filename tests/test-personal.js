@@ -6463,13 +6463,31 @@ async function abaPt(p, a) {
   }));
   ok(ckArea.sec === "quest" && ckArea.topo && ckArea.naGaveta === "quest" && ckArea.foraDoChat,
     "Questionários viraram área própria com entrada no menu — saíram de baixo da conversa do chat");
-  await pApp.click("#ckNotas button:nth-child(4)");
+  // o check-in virou fluxo de uma pergunta por tela (v600): o card mostra um
+  // convite e um botão só; a pilha antiga (#ckNotas/#ckEnvia) não existe mais
+  const ckConvite = await pApp.evaluate(() => ({
+    abrir: !!document.getElementById("ckAbrir"),
+    pilhaAntiga: !!document.getElementById("ckNotas"),
+  }));
+  ok(ckConvite.abrir && !ckConvite.pilhaAntiga,
+    "check-in da semana vira convite com um botão, em vez do formulário empilhado");
+  await pApp.click("#ckAbrir");
+  await pApp.click("[data-ckn='4']");
+  await pApp.waitForTimeout(600);          // a carinha avança sozinha (350ms)
+  const ckP2 = await pApp.evaluate(() => !!document.getElementById("ckPeso"));
+  ok(ckP2, "tocar na carinha avança sozinho pra pergunta do peso");
   await pApp.fill("#ckPeso", "84,5");
+  await pApp.click("#ckProx");
   await pApp.fill("#ckTexto", "Semana boa!");
-  await pApp.click("#ckEnvia");
-  await pApp.waitForTimeout(200);
+  await pApp.click("#ckProx");
+  await pApp.waitForTimeout(400);
   const ckOk = await pApp.evaluate(() => document.getElementById("ckOk").style.display !== "none");
   ok(ckOk, "check-in enviado marca a semana como feita");
+  const ckFim = await pApp.evaluate(() => (document.getElementById("ckFluxo") || {}).textContent || "");
+  ok(/Semana registrada/.test(ckFim), "o fluxo termina na tela de enviado");
+  await pApp.click("#ckVoltaIni");          // fecha o overlay pro resto do teste seguir
+  await pApp.waitForTimeout(250);
+  await pApp.evaluate(() => window.__trocaSec("quest"));
   // o card some na semana seguinte (pedido do Raphael): a área não pode ficar
   // só com a faixa roxa e mais nada
   const qsVazio = await pApp.evaluate(() => {

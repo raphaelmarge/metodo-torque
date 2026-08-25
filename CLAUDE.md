@@ -346,6 +346,19 @@ Corrigido junto: no `regen-demo.js` as fichas ganharam `id` (`dmf0`…`dmf4`),
 porque o painel casa o dia do plano pelo **id** do treino e não pela posição —
 sem isso os dias de musculação sumiam do plano da demo.
 
+**Check-in da semana em uma pergunta por tela** (a partir da v600): era o último
+formulário empilhado do app — cinco carinhas + peso + recado + botão, tudo de uma
+vez dentro do card. Agora o card mostra um convite (faixa colorida, "3 perguntas ·
+leva 30 segundos") e UM botão (`#ckAbrir`); o fluxo abre em tela cheia reusando a
+casca do `#qaFluxo` (o seletor virou `#qaFluxo,#ckFluxo`). Três telas: carinha (avança
+sozinha ao tocar, 350 ms), peso (número grande, opcional) e recado (opcional). Parou no
+meio? `ptckdraft` guarda o rascunho POR SEMANA e o botão vira "Continuar de onde parou".
+O envio é o MESMO de antes (`app_aluno_checkin` com `p_nota`/`p_texto`/`p_peso`; sem
+nuvem, cai no WhatsApp) — **sem SQL novo**, e `ptck`, `window.__ckPend` e o badge do
+menu não mudaram. Gancho de teste: `window.__ckFluxo`. Cuidado ao mexer: `EMO` e
+`FACES` continuam definidos ANTES do fluxo porque o código novo usa os dois, e a
+suíte `test-personal.js` dirige o fluxo (não existe mais `#ckNotas`/`#ckEnvia`).
+
 **Questionários viram área própria** (a partir da v585): o check-in da semana
 (`#ckCard`) e o questionário do personal (`#qaCard`) moravam embaixo da conversa,
 na área do Chat — quem abria o chat pra mandar um recado caía num formulário
@@ -438,9 +451,10 @@ Comunidade; o professor lê/edita `app_feed` direto pela RLS de membro.
   ler só o miolo do JWT deixava passar token forjado quando o Verify JWT estava
   desligado, e no projeto do Raphael o portão passou a recusar até token BOM
   (401 INVALID_CREDENTIALS só na chat-envia, enquanto a envia-email respondia
-  200 com a MESMA credencial). Lista em `supabase/functions/`: meta-webhook,
-  chat-envia, whatsapp, envia-email (Resend), pagarme, push-envia, pagamentos,
-  pagamentos-webhook.
+  200 com a MESMA credencial). Lista em `supabase/functions/` — as **10**, todas
+  publicadas e ACTIVE: meta-webhook, chat-envia, whatsapp, envia-email (Resend),
+  pagarme, push-envia, pagamentos, pagamentos-webhook, **pagarme-webhook** e
+  **assinatura-loja** (as duas últimas entraram em 2026-08-25).
   Ele publica copiando de www.torqueon.com.br/funcoes.html.
 - Nunca coloque service key no site — só anonKey (`assets/cloud-config.js`).
 - **Redundância** (v513/v515): todo update/delete no `dados` guarda o valor
@@ -529,11 +543,19 @@ ninguém atropelar ninguém — valem pros dois:
   RPCs conferidos). O SQL da Comunidade ele já tinha rodado.
 - Secrets — conferido pelo diagnóstico em 2026-08-24 (o ping de cada função diz
   o que ela enxerga; `diagnostico.html` é o caminho curto):
-  - ✅ `ANTHROPIC_API_KEY` — a chat-envia responde `ia: true`. **Atenção**: o ping
-    só prova que o secret EXISTE (`!!env(...)`), não chama a Anthropic. Chave
-    revogada ou sem crédito passa no ping e falha no uso — o teste de verdade é
-    gerar um treino pela IA (o erro vem traduzido por `erroAnthropic`: 401/403 =
-    chave ruim, 429 = sem crédito/limite).
+  - ✅ `ANTHROPIC_API_KEY` — **testada de verdade em 2026-08-24**: a IA de treino
+    gerou ficha. A primeira chave colada foi recusada com `401 authentication_error
+    "API key is invalid."` em TODA tentativa, e só uma chave nova resolveu.
+    **A lição**: o ping (`ia: true`) prova só que o secret EXISTE (`!!env(...)`),
+    não chama a Anthropic — chave pela metade, revogada ou suja passa no ping e
+    falha no uso. O teste que vale é gerar um treino; o erro vem traduzido por
+    `erroAnthropic` (401/403 = chave ruim, 429 = sem crédito/limite) e o motivo
+    cru fica no log da função (`console.error("anthropic", status, corpo)`).
+    Desde então o ping devolve `chaveIa` — tamanho, `comecaCerto` (sk-ant-),
+    `pontasComEspaco` e `soAscii` — que separa "colada pela metade" de "copiada
+    com lixo invisível" de "simplesmente errada", sem nunca mostrar a chave. E
+    `env()` faz `.trim()`, porque espaço na ponta de um secret colado pelo
+    celular derruba a chave certa com cara de chave errada.
   - ✅ `RESEND_API_KEY` + `EMAIL_DE` (`TORQUE ON <nao-responda@torqueon.com.br>`) —
     e o domínio `torqueon.com.br` está **verified** no Resend (região sa-east-1,
     envio habilitado), então o e-mail de senha chega na caixa do aluno de verdade,

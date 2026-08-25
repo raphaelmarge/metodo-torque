@@ -605,7 +605,7 @@
       ".wptg.on{background:var(--cor)}.wptg.on::after{left:25px}" +
       ".wpobs{width:100%;background:var(--bg4);border:1px solid var(--bg11);border-radius:14px;color:#fff;font-family:inherit;font-size:14px;padding:12px;min-height:84px}" +
       /* ---------- questionário paginado (telas 02-06) ---------- */
-      "#qaFluxo{position:fixed;inset:0;z-index:71;overflow:auto;background:var(--bg0);color:#fff}" +
+      "#qaFluxo,#ckFluxo{position:fixed;inset:0;z-index:71;overflow:auto;background:var(--bg0);color:#fff}" +
       ".qaop{display:flex;align-items:center;gap:14px;width:100%;min-height:72px;background:var(--bg2);border:1px solid var(--bg11);border-radius:20px;padding:0 18px;font-family:inherit;color:#fff;cursor:pointer;margin-top:10px}" +
       ".qaop.on{border-color:var(--cor);background:rgba(var(--cor-rgb),.12)}" +
       ".qaop .qe{font-size:32px;line-height:1}" +
@@ -1463,11 +1463,15 @@
       (qa ? "<div class='cardx' id='qaCard'><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
       "<div class='cardx' id='ckCard'><h2>Check-in da semana</h2>" +
       "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem!</div>" +
-      "<div id='ckForm'><div class='vz' style='text-align:left;padding:0 0 8px;'>Como foi a semana de treino?</div>" +
-      "<div id='ckNotas' style='display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;'></div>" +
-      "<div style='display:flex;gap:8px;margin-bottom:10px;'><input id='ckPeso' inputmode='decimal' placeholder='Peso hoje (opcional)' style='flex:1;min-width:0'></div>" +
-      "<input id='ckTexto' placeholder='Algum recado pro seu personal?' style='width:100%;margin-bottom:10px;'>" +
-      "<button class='btnx' id='ckEnvia' style='width:100%;'>Enviar check-in</button></div></div>" +
+      "<div id='ckForm'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px;color:#fff;'>" +
+      "<div style='font-size:9.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);'>Toda semana</div>" +
+      "<div style='font-size:24px;font-weight:900;letter-spacing:-.02em;margin-top:4px;'>Como foi a sua semana?</div>" +
+      "<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:4px;'>3 perguntas · leva 30 segundos</div></div>" +
+      "<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;font-size:14px;line-height:1.5;color:#d6d2df;'>Seu personal usa o check-in pra ajustar a sua próxima semana." +
+      "<div style='border-top:1px solid var(--bg11);margin-top:10px;padding-top:10px;font-size:13px;color:#8a8695;'>🔒 só o seu personal vê as suas respostas</div></div>" +
+      "<button class='btnx' id='ckAbrir' style='width:100%;min-height:58px;font-size:16px;margin-top:14px;'>Fazer meu check-in</button>" +
+      "<div id='ckRet' style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:8px;'>você pode parar no meio e voltar depois</div></div></div>" +
       // area vazia tem que dizer que esta vazia: o check-in ja respondido some
       // (pedido do Raphael), e sem isso sobrava so a faixa roxa sozinha
       "<div class='cardx' id='qsVazio' style='display:none;'>" +
@@ -1705,30 +1709,82 @@
       "if(naSem>=META)confete();" +
       "mostraRpe();" +
       "rpcApp('app_aluno_treino_reg',{t:TOKEN,p_dia:iso,p_itens:[{ex:'__feito',f:1,c:''}]});});" +
-      // check-in semanal
-      "var ckNota=0;var EMO=['Péssima','Ruim','Normal','Boa','Incrível'];" +
+      "var EMO=['Péssima','Ruim','Normal','Boa','Incrível'];" +
       "var FACES=[\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M8.5 16.2c1-1.5 2.3-2.2 3.5-2.2s2.5.7 3.5 2.2'/>\"," +
       "\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M9 15.6c1-.7 2-1 3-1s2 .3 3 1'/>\"," +
       "\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M9 15h6'/>\"," +
       "\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M8.5 14c1 1.5 2.3 2.2 3.5 2.2s2.5-.7 3.5-2.2'/>\"," +
       "\"<circle cx='12' cy='12' r='9'/><path d='M9 9.5v.01M15 9.5v.01'/><path d='M8 13.5a4.2 4.2 0 0 0 8 0z'/>\"];" +
-      "document.getElementById('ckNotas').innerHTML=EMO.map(function(e,i){return \"<button data-n='\"+(i+1)+\"' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:8px 0 6px;cursor:pointer;color:#fff;font-family:inherit;'><div style='line-height:0;'>\"+icx(FACES[i],22)+\"</div><div style='font-size:8.5px;color:#a9a4b5;margin-top:3px;'>\"+e+\"</div></button>\";}).join('');" +
-      "document.getElementById('ckNotas').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;ckNota=+b.dataset.n;" +
-      "this.querySelectorAll('button').forEach(function(x){x.style.background=x===b?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)';x.style.borderColor=x===b?'var(--corc)':'var(--bg11)';});});" +
       "function semanaCK(){return semDe(new Date());}" +
       // o menu Questionários conta o check-in pendente da semana junto
       "window.__ckPend=function(){return L('ptck','')===semanaCK()?0:1;};" +
       // check-in da semana já enviado? O card SOME até a semana virar (pedido
       // do Raphael) — a confirmação só aparece na hora do envio (fim())
       "if(L('ptck','')===semanaCK()){var ckc9=document.getElementById('ckCard');if(ckc9)ckc9.style.display='none';}" +
-      "document.getElementById('ckEnvia').addEventListener('click',function(){if(!ckNota){alert('Escolha uma nota pra semana.');return;}" +
-      "var peso=parseFloat((document.getElementById('ckPeso').value||'').replace(',','.'))||null;var texto=document.getElementById('ckTexto').value.trim();" +
-      "var fim=function(){Sv('ptck',semanaCK());document.getElementById('ckOk').style.display='';document.getElementById('ckForm').style.display='none';" +
-      "if(window.__menuBadges)window.__menuBadges();};" + // o badge do menu apaga na hora
-      "if(NUVEM){rpcApp('app_aluno_checkin',{t:TOKEN,p_nota:ckNota,p_texto:texto,p_peso:peso}).then(function(r){" +
-      "if(r&&r.ok){fim();}else{alert('Não deu pra enviar agora — tenta de novo em instantes.');}});}" +
-      "else{var msg='Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[ckNota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
-      "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}});" +
+      // check-in semanal — uma pergunta por tela (mesma casca do #qaFluxo do questionário)
+      "(function(){var abre=document.getElementById('ckAbrir');if(!abre)return;" +
+      "var CKP=[{k:'nota',t:'Como foi a sua semana de treino?'},{k:'peso',t:'Quanto você tá pesando hoje?'},{k:'texto',t:'Algum recado pro seu personal?'}];" +
+      "var T=CKP.length,fx=null,st9=null;" +
+      "function dLe(){var d=L('ptckdraft',{})[semanaCK()];return d?{i:Math.min(+d.i||0,T-1),nota:+d.nota||0,peso:d.peso||'',texto:d.texto||''}:{i:0,nota:0,peso:'',texto:''};}" +
+      "function dSalva(){var a9=L('ptckdraft',{});a9[semanaCK()]=st9;Sv('ptckdraft',a9);}" +
+      "function dLimpa(){var a9=L('ptckdraft',{});delete a9[semanaCK()];Sv('ptckdraft',a9);}" +
+      "function fecha(){if(fx){fx.remove();fx=null;}}" +
+      "function pinta(){var p=CKP[st9.i],ultima=st9.i===T-1,ok=p.k!=='nota'||!!st9.nota,corpo='';" +
+      "var barra=CKP.map(function(x,xi){return \"<i class='\"+(xi===st9.i?'on':'')+\"'></i>\";}).join('');" +
+      "if(p.k==='nota'){corpo=EMO.map(function(e,i){var on=st9.nota===i+1;" +
+      "return \"<button class='qaop\"+(on?' on':'')+\"' data-ckn='\"+(i+1)+\"'><span class='qe' style='line-height:0;color:var(--corc);'>\"+icx(FACES[i],30)+\"</span><span style='flex:1;text-align:left;font-size:17px;font-weight:800;'>\"+e+'</span>'+(on?\"<span style='font-size:20px;'>✓</span>\":'')+'</button>';}).join('')+" +
+      "\"<div style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:12px;'>toque numa opção pra avançar automático</div>\";}" +
+      "else if(p.k==='peso'){corpo=\"<div style='display:flex;align-items:baseline;justify-content:center;gap:8px;margin-top:8px;'><input id='ckPeso' inputmode='decimal' placeholder='0,0' style='width:4.2em;background:none;border:none;text-align:right;color:#fff;font-size:52px;font-weight:900;font-variant-numeric:tabular-nums;padding:0;min-height:60px;'><u style='font-style:normal;text-decoration:none;font-size:17px;font-weight:800;color:#8a8695;'>kg</u></div>\"+" +
+      "\"<div style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:10px;'>opcional — sem peso hoje, toca em Próxima</div>\";}" +
+      "else{corpo=\"<textarea id='ckTexto' rows='4' class='wpobs' placeholder='Escreve aqui… (opcional)'></textarea>\";}" +
+      "fx.innerHTML=\"<div style='max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px));'>\"+" +
+      "\"<div style='display:flex;align-items:center;gap:10px;'><button id='ckX' aria-label='Fechar o check-in' style='flex:none;width:44px;height:44px;border-radius:50%;background:var(--bg2);border:1px solid var(--bg11);color:#fff;font-size:16px;font-family:inherit;cursor:pointer;'>✕</button>\"+" +
+      "\"<span style='flex:1;text-align:center;font-size:10.5px;font-weight:800;letter-spacing:.22em;color:#8a8695;text-transform:uppercase;'>Check-in da semana</span>\"+" +
+      "\"<span style='flex:none;font-size:15px;font-weight:900;'>\"+(st9.i+1)+\"<span style='color:#6e6a78;'>/\"+T+'</span></span></div>'+" +
+      "\"<div class='qabar'>\"+barra+'</div>'+" +
+      "\"<div style='font-size:clamp(24px,7vw,30px);font-weight:900;letter-spacing:-.02em;line-height:1.15;margin:22px 0 14px;'>\"+p.t+'</div>'+" +
+      "\"<div style='flex:1;'>\"+corpo+'</div>'+" +
+      "\"<button id='ckProx' class='btnx' style='width:100%;min-height:58px;font-size:17px;margin-top:16px;\"+(ok?'':'opacity:.45;')+\"'>\"+(ultima?'Enviar check-in':'Próxima')+'</button>'+" +
+      "(st9.i>0?\"<button id='ckAnt' style='background:none;border:none;color:#8a8695;font-family:inherit;font-size:13.5px;font-weight:700;padding:12px;cursor:pointer;'>‹ pergunta anterior</button>\":'')+'</div>';" +
+      "var pi=document.getElementById('ckPeso');if(pi)pi.value=st9.peso;" +
+      "var tx=document.getElementById('ckTexto');if(tx)tx.value=st9.texto;}" +
+      "function avanca(){if(!fx)return;if(CKP[st9.i].k==='nota'&&!st9.nota)return;" +
+      "if(st9.i<T-1){st9.i++;dSalva();pinta();}else{envia();}}" +
+      "function enviadoTela(){if(!fx)return;fx.innerHTML=\"<div style='min-height:100%;background:linear-gradient(180deg,var(--cor) 0%,var(--cor2) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px calc(24px + env(safe-area-inset-bottom,0px));'>\"+" +
+      "\"<div style='width:82px;height:82px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:38px;color:#fff;'>✓</div>\"+" +
+      "\"<div style='font-size:11px;font-weight:800;letter-spacing:.26em;color:rgba(255,255,255,.75);text-transform:uppercase;margin-top:22px;'>Check-in enviado</div>\"+" +
+      "\"<div style='font-size:30px;font-weight:900;color:#fff;letter-spacing:-.02em;margin-top:8px;'>Semana registrada</div>\"+" +
+      "\"<div style='font-size:15px;color:rgba(255,255,255,.85);margin-top:10px;max-width:320px;line-height:1.5;'>Seu personal já viu. O próximo check-in abre na segunda.</div>\"+" +
+      "\"<div style='flex:1;min-height:24px;'></div>\"+" +
+      "\"<button id='ckVoltaIni' style='width:100%;min-height:58px;border-radius:99px;background:#fff;border:none;color:var(--cor-esc,#3b2b63);font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;'>Voltar pro início</button>\"+" +
+      "\"<button id='ckChat' style='width:100%;min-height:52px;border-radius:99px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px;'>Falar com o seu personal</button></div>\";" +
+      "var vi=document.getElementById('ckVoltaIni');if(vi)vi.onclick=function(){fecha();if(window.__trocaSec)window.__trocaSec('inicio');};" +
+      "var fc=document.getElementById('ckChat');if(fc)fc.onclick=function(){fecha();if(window.__trocaSec)window.__trocaSec('chat');};}" +
+      "function envia(){var peso=parseFloat(String(st9.peso||'').replace(',','.'))||null,texto=String(st9.texto||'').trim();" +
+      "var bt=document.getElementById('ckProx');if(bt){bt.disabled=true;bt.textContent='Enviando…';}" +
+      "var fim=function(){Sv('ptck',semanaCK());dLimpa();" +
+      "var fo=document.getElementById('ckForm'),ok9=document.getElementById('ckOk');if(fo)fo.style.display='none';if(ok9)ok9.style.display='';" +
+      "if(window.__menuBadges)window.__menuBadges();enviadoTela();};" +
+      "if(NUVEM){rpcApp('app_aluno_checkin',{t:TOKEN,p_nota:st9.nota,p_texto:texto,p_peso:peso}).then(function(r){" +
+      "if(r&&r.ok){fim();}else{if(bt){bt.disabled=false;bt.textContent='Enviar check-in';}alert('Não deu pra enviar agora — tenta de novo em instantes.');}});}" +
+      "else{var msg='Check-in da semana — '+PRIMEIRO+'\\nSemana: '+EMO[st9.nota-1]+(peso?'\\nPeso: '+peso+' kg':'')+(texto?'\\n'+texto:'');" +
+      "window.open('https://wa.me/'+(ZAPP?'55'+ZAPP:'')+'?text='+encodeURIComponent(msg),'_blank');fim();}}" +
+      "function abreFluxo(){st9=dLe();fx=document.createElement('div');fx.id='ckFluxo';document.body.appendChild(fx);" +
+      "fx.addEventListener('input',function(e){if(e.target.id==='ckPeso'){st9.peso=e.target.value;dSalva();}" +
+      "if(e.target.id==='ckTexto'){st9.texto=e.target.value;dSalva();}});" +
+      "fx.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;" +
+      "if(b.id==='ckX'){dSalva();fecha();var r9=document.getElementById('ckRet');" +
+      "if(r9&&(st9.nota||st9.peso||st9.texto))r9.textContent='Você parou na pergunta '+(st9.i+1)+' de '+T+' — dá pra continuar.';" +
+      "var ab=document.getElementById('ckAbrir');if(ab&&(st9.nota||st9.peso||st9.texto))ab.textContent='Continuar de onde parou';return;}" +
+      "if(b.id==='ckAnt'){st9.i=Math.max(0,st9.i-1);pinta();return;}" +
+      "if(b.id==='ckProx'){avanca();return;}" +
+      "if(b.dataset.ckn!=null){st9.nota=+b.dataset.ckn;dSalva();pinta();setTimeout(avanca,350);return;}});" +
+      "pinta();}" +
+      "abre.addEventListener('click',abreFluxo);window.__ckFluxo=abreFluxo;" +
+      "var d9=L('ptckdraft',{})[semanaCK()];" +
+      "if(d9&&(d9.nota||d9.peso||d9.texto)){abre.textContent='Continuar de onde parou';" +
+      "var r8=document.getElementById('ckRet');if(r8)r8.textContent='Você parou na pergunta '+((+d9.i||0)+1)+' de '+T+' — dá pra continuar.';}" +
+      "})();" +
       "pintaSemana();mostraRpe();" +
       // onboarding de 30 segundos: 3 respostas que personalizam o acompanhamento
       "(function(){var card=document.getElementById('onbCard');if(!card||L('ptonb',null))return;card.style.display='block';" +
