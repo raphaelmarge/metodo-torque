@@ -251,6 +251,16 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Demo do aluno com questionário** (a partir da v609): a área Questionários da
+demo mostrava só o check-in — quem assistia não via o recurso que o professor
+mais usa. O `regen-demo.js` passa a dar ao Alex um `questApp` de 4 perguntas
+("Como você está?": sono em carinhas, dor de 0 a 10, energia em carinhas e um
+campo livre), liberado ONTEM e com `repete`, então a faixa diz **2 pra
+responder** e o menu carrega o badge 2. O push do professor (v608) NÃO aparece
+na demo de propósito: é notificação de verdade do celular, disparada pelo
+painel — o que a demo mostra é o badge e a bolinha, que é o aviso de dentro do
+app.
+
 **Lembrete de questionário e check-in** (a partir da v608): a régua de push
 avisava treino do dia, aniversário, marco, aluno sumido e cobrança — mas
 questionário liberado e check-in esperando não avisavam nada, e o aluno só

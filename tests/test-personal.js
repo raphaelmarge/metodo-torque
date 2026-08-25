@@ -8127,6 +8127,38 @@ async function abaPt(p, a) {
       "🎠 o carrossel do demo mostra 3 treinos, cada um com a SUA foto (" + capasDemo.cards + " cards, " + capasDemo.distintas + " fotos distintas)");
     ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
       "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
+    // 📋 o demo mostra a área Questionários cheia: o do personal E o check-in
+    {
+      await pA.evaluate(() => window.__trocaSec && window.__trocaSec("quest"));
+      await pA.waitForTimeout(400);
+      const q = await pA.evaluate(() => {
+        const vis = (id) => { const e = document.getElementById(id); return !!e && e.style.display !== "none"; };
+        return { qa: vis("qaCard"), ck: vis("ckCard"), vazio: vis("qsVazio"),
+          topo: (document.getElementById("qsTopo") || {}).textContent || "",
+          menu: (document.getElementById("mgQaBt") || {}).textContent || "" };
+      });
+      ok(q.qa && q.ck && !q.vazio,
+        "📋 o demo tem os DOIS: o questionário do personal e o check-in da semana");
+      ok(/2 pra responder/.test(q.topo) && /2/.test(q.menu),
+        "a faixa e o menu do demo contam as duas pendências");
+      // o questionário abre uma pergunta por tela e volta pra trás
+      const fluxo = await pA.evaluate(async () => {
+        document.querySelector("#qaCard button").click();
+        await new Promise((r) => setTimeout(r, 300));
+        const p1 = document.querySelector("#qaFluxo").textContent;
+        document.querySelector("#qaFluxo .qaop").click();
+        await new Promise((r) => setTimeout(r, 500));
+        const p2 = document.querySelector("#qaFluxo").textContent;
+        const notas = document.querySelectorAll("#qaFluxo .notabtn").length;
+        document.querySelector("#qaX").click();
+        await new Promise((r) => setTimeout(r, 200));
+        return { p1, p2, notas, fechou: !document.getElementById("qaFluxo") };
+      });
+      ok(/1\/4/.test(fluxo.p1) && /2\/4/.test(fluxo.p2) && fluxo.notas === 11 && fluxo.fechou,
+        "no demo o questionário anda sozinho ao tocar na carinha e a pergunta de 0 a 10 vem depois");
+      await pA.evaluate(() => window.__trocaSec && window.__trocaSec("inicio"));
+      await pA.waitForTimeout(200);
+    }
     await pA.evaluate(() => window.__trocaSec && window.__trocaSec("treino"));
     await pA.waitForTimeout(400);
     // 🗂 fichas A/B/C viraram gavetas: só a do dia nasce aberta
