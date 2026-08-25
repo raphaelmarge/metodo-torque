@@ -2035,41 +2035,80 @@
       "return n>=20?3:(n>=10?2:1);}" +
       "function treinosDoMes(f,y,m){var n=0;for(var k in f){if(!Object.prototype.hasOwnProperty.call(f,k))continue;" +
       "if(+k.slice(0,4)===y&&+k.slice(5,7)===m+1)n++;}return n;}" +
+      /* A FITA DO ANO voltou (pedido do Raphael): o calendario do mes ficou,
+       * mas quem quiser ver o ano inteiro toca em "Ano". A fita agora rola de
+       * lado com quadradinho de 13px em vez de 4px espremidos na largura da
+       * tela, entao da' pra enxergar dia por dia. A escolha fica guardada em
+       * ptmapv, pra nao ter que trocar toda vez que abre. */
+      "var mapVis=L('ptmapv','mes')==='ano'?'ano':'mes';" +
+      "function mapCor(fo,fut){return fo===3?'var(--cor)':(fo===2?'rgba(var(--cor-rgb),.62)':(fo===1?'rgba(var(--cor-rgb),.3)':(fut?'transparent':'var(--bg8)')));}" +
+      "function mapPil(id,rot,on){return \"<button type='button' id='\"+id+\"' style='padding:0 11px;height:30px;border-radius:10px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;border:1px solid \"+(on?'transparent':'var(--bg11)')+\";background:\"+(on?'var(--cor)':'var(--bg4)')+\";color:\"+(on?'#fff':'#a9a4b5')+\";'>\"+rot+'</button>';}" +
+      "function mapSeta(id,rot,lab,off){return \"<button type='button' id='\"+id+\"' aria-label='\"+lab+\"'\"+(off?\" disabled style='opacity:.35;\":\" style='\")+\"width:30px;height:30px;border-radius:10px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:15px;cursor:pointer;'>\"+rot+'</button>';}" +
+      // 52 semanas em colunas de 7 dias, a mais nova na direita (estilo GitHub)
+      "function mapaAnoHtml(f){var hoje=new Date();var fim=new Date(hoje);fim.setDate(fim.getDate()+(6-((fim.getDay()+6)%7)));" +
+      "var MES3B=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];" +
+      "var cols='',labs='',tot=0,ultM=-1;" +
+      "for(var w=51;w>=0;w--){var dSeg=new Date(fim);dSeg.setDate(dSeg.getDate()-w*7-6);" +
+      "var mrc=dSeg.getMonth()!==ultM;ultM=dSeg.getMonth();" +
+      "labs+=\"<div style='width:13px;flex:none;white-space:nowrap;font-size:9.5px;font-weight:800;color:#6e6a78;'>\"+(mrc?MES3B[dSeg.getMonth()]:'')+'</div>';" +
+      "cols+=\"<div style='width:13px;flex:none;display:flex;flex-direction:column;gap:3px;'>\";" +
+      "for(var d=0;d<7;d++){var dt=new Date(fim);dt.setDate(dt.getDate()-w*7-(6-d));var iso=isoLoc(dt);" +
+      "if(f[iso])tot++;var fut=dt>hoje&&iso!==isoHj();var fo=forcaDoDia(iso,f);" +
+      "cols+=\"<div title='\"+iso+\"' style='width:13px;height:13px;border-radius:4px;background:\"+mapCor(fo,fut)+\";\"+(fut?'border:1px dashed rgba(255,255,255,.13);':'')+(iso===isoHj()?'box-shadow:0 0 0 2px var(--corc);':'')+\"'></div>\";}" +
+      "cols+='</div>';}" +
+      /* direction:rtl no rolador (e ltr de volta por dentro) faz a fita NASCER
+       * encostada na direita, ou seja, em hoje. Ajustar o scrollLeft na mao nao
+       * servia: quando o app abre, a aba Conquistas ainda esta escondida, a
+       * largura e' zero e o ajuste vira nada — quem deixou o app na aba Ano
+       * voltava e via janeiro do ano passado. */
+      "return {tot:tot,html:\"<div id='mapaAnoRol' style='direction:rtl;overflow-x:auto;overflow-y:hidden;margin-top:12px;padding:3px 3px 0;-webkit-overflow-scrolling:touch;'>\"+" +
+      "\"<div style='direction:ltr;display:flex;gap:3px;width:max-content;'>\"+cols+'</div>'+" +
+      "\"<div style='direction:ltr;display:flex;gap:3px;width:max-content;margin-top:5px;'>\"+labs+'</div></div>'};}" +
       "function pintaMapaAno(){var el=document.getElementById('mapaAno');if(!el)return;var f=L('ptfeitos',{});" +
       "el.style.cssText='margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;';" +
-      "var hoje=new Date();var base=new Date(hoje.getFullYear(),hoje.getMonth()-mapMes,1);" +
+      "var hoje=new Date();var ano=mapVis==='ano';var corpo='',tit='',sub='';" +
+      "if(ano){var ra=mapaAnoHtml(f);corpo=ra.html;" +
+      "tit=ra.tot+(ra.tot===1?' treino':' treinos')+' em 12 meses';" +
+      "sub=ra.tot?'cada quadradinho \\u00e9 um dia \\u00b7 arraste pro lado':'nenhum treino marcado ainda';}" +
+      "else{var base=new Date(hoje.getFullYear(),hoje.getMonth()-mapMes,1);" +
       "var y=base.getFullYear(),m=base.getMonth();" +
       "var nMes=treinosDoMes(f,y,m);" +
       // recorde: o melhor mês ANTES deste, pra não competir consigo mesmo
       "var rec=0,mesesV={};for(var k9 in f){if(!Object.prototype.hasOwnProperty.call(f,k9))continue;" +
       "var ch=k9.slice(0,7);if(ch>=(y+'-'+('0'+(m+1)).slice(-2)))continue;mesesV[ch]=(mesesV[ch]||0)+1;}" +
       "for(var c9 in mesesV)if(mesesV[c9]>rec)rec=mesesV[c9];" +
-      "var sub=nMes===0?'nenhum treino marcado ainda':(rec&&nMes>rec?('seu melhor mês até agora · o recorde era '+rec):(rec?('seu recorde é '+rec+' num mês'):'primeiro mês de treinos'));" +
+      "tit=nMes+(nMes===1?' treino':' treinos')+' em '+MESN[m];" +
+      "sub=nMes===0?'nenhum treino marcado ainda':(rec&&nMes>rec?('seu melhor m\\u00eas at\\u00e9 agora \\u00b7 o recorde era '+rec):(rec?('seu recorde \\u00e9 '+rec+' num m\\u00eas'):'primeiro m\\u00eas de treinos'));" +
       // a semana começa na segunda, igual aos chips do Início
       "var pri=new Date(y,m,1);var vazias=(pri.getDay()+6)%7;var ult=new Date(y,m+1,0).getDate();" +
       "var cels='';for(var v=0;v<vazias;v++)cels+=\"<div></div>\";" +
       "for(var d=1;d<=ult;d++){var dt=new Date(y,m,d);var iso=isoLoc(dt);" +
       "var fut=dt>hoje&&iso!==isoHj();var hj=iso===isoHj();var fo=forcaDoDia(iso,f);" +
-      "var bg=fo===3?'var(--cor)':(fo===2?'rgba(var(--cor-rgb),.62)':(fo===1?'rgba(var(--cor-rgb),.3)':(fut?'transparent':'var(--bg8)')));" +
       "cels+=\"<div style='aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:\"+(fo?'800':'600')+\";\"+" +
-      "\"background:\"+bg+\";color:\"+(fo?'#fff':(fut?'#4b4856':'#8a8695'))+\";\"+" +
+      "\"background:\"+mapCor(fo,fut)+\";color:\"+(fo?'#fff':(fut?'#4b4856':'#8a8695'))+\";\"+" +
       "(fut?'border:1px dashed rgba(255,255,255,.13);':'')+(hj?'box-shadow:0 0 0 2px var(--corc);':'')+\"'>\"+d+'</div>';}" +
       "var DSEM3=['S','T','Q','Q','S','S','D'];" +
-      "el.innerHTML=\"<div style='display:flex;align-items:flex-start;gap:10px;'>\"+" +
-      "\"<span style='flex:1;min-width:0;'><b style='display:block;font-size:19px;font-weight:900;letter-spacing:-.02em;'>\"+nMes+(nMes===1?' treino':' treinos')+' em '+MESN[m]+'</b>'+\"<span style='display:block;font-size:12px;color:#8a8695;margin-top:2px;'>\"+sub+'</span></span>'+" +
-      "\"<span style='flex:none;display:flex;gap:6px;'>\"+" +
-      "\"<button type='button' id='mapAnt' aria-label='Mês anterior' style='width:34px;height:34px;border-radius:11px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:15px;cursor:pointer;'>\\u2039</button>\"+" +
-      "\"<button type='button' id='mapProx' aria-label='Próximo mês'\"+(mapMes<=0?\" disabled style='opacity:.35;\":\" style='\")+\"width:34px;height:34px;border-radius:11px;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;font-family:inherit;font-size:15px;cursor:pointer;'>\\u203a</button></span></div>\"+" +
-      "\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px;font-size:10px;font-weight:800;letter-spacing:.06em;color:#6e6a78;text-align:center;'>\"+" +
+      "corpo=\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px;font-size:10px;font-weight:800;letter-spacing:.06em;color:#6e6a78;text-align:center;'>\"+" +
       "DSEM3.map(function(x9){return '<div>'+x9+'</div>';}).join('')+'</div>'+" +
-      "\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:5px;'>\"+cels+'</div>'+" +
+      "\"<div style='display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:5px;'>\"+cels+'</div>';}" +
+      "el.innerHTML=\"<div style='display:flex;align-items:flex-start;gap:8px;'>\"+" +
+      "\"<span style='flex:1;min-width:0;'><b style='display:block;font-size:17px;font-weight:900;letter-spacing:-.02em;'>\"+tit+'</b>'+" +
+      "\"<span style='display:block;font-size:12px;color:#8a8695;margin-top:2px;'>\"+sub+'</span></span>'+" +
+      "\"<span style='flex:none;display:flex;gap:5px;align-items:center;'>\"+" +
+      "mapPil('mapVm','M\\u00eas',!ano)+mapPil('mapVa','Ano',ano)+" +
+      "(ano?'':(mapSeta('mapAnt','\\u2039','M\\u00eas anterior',false)+mapSeta('mapProx','\\u203a','Pr\\u00f3ximo m\\u00eas',mapMes<=0)))+" +
+      "'</span></div>'+corpo+" +
       "\"<div style='display:flex;align-items:center;gap:7px;font-size:10.5px;color:#6e6a78;margin-top:11px;'><span>menos</span>\"+" +
       "[['var(--bg8)'],['rgba(var(--cor-rgb),.3)'],['rgba(var(--cor-rgb),.62)'],['var(--cor)']].map(function(c8){" +
       "return \"<i style='width:13px;height:13px;border-radius:4px;background:\"+c8[0]+\";'></i>\";}).join('')+'<span>mais</span>'+" +
       "\"<span style='margin-left:auto;'>quanto mais forte a cor, mais treino</span></div>\";" +
+      "function mapVai(v){if(mapVis===v)return;mapVis=v;Sv('ptmapv',v);pintaMapaAno();}" +
+      "var bm=document.getElementById('mapVm');if(bm)bm.addEventListener('click',function(){mapVai('mes');});" +
+      "var by=document.getElementById('mapVa');if(by)by.addEventListener('click',function(){mapVai('ano');});" +
       "var ba=document.getElementById('mapAnt');if(ba)ba.addEventListener('click',function(){mapMes++;pintaMapaAno();});" +
       "var bp=document.getElementById('mapProx');if(bp)bp.addEventListener('click',function(){if(mapMes>0){mapMes--;pintaMapaAno();}});}" +
-      "window.__mapaMes={forca:forcaDoDia,mes:function(){return mapMes;},pinta:pintaMapaAno};" +
+      "window.__mapaMes={forca:forcaDoDia,mes:function(){return mapMes;},pinta:pintaMapaAno," +
+      "vis:function(){return mapVis;},ve:function(v){mapVis=v==='ano'?'ano':'mes';Sv('ptmapv',mapVis);pintaMapaAno();}};" +
       // tela 49: cartões PESO e SEQUÊNCIA embaixo da grade de conquistas
       "function seqAtual(f){var n=0;var d=new Date();for(var k=0;k<400;k++){var iso=isoLoc(d);" +
       "if(f[iso])n++;else if(iso!==isoHj())break;d.setDate(d.getDate()-1);}return n;}" +

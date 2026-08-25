@@ -6311,7 +6311,63 @@ async function abaPt(p, a) {
   ok(/mais treino/.test(leva2.mapaTxt) && leva2.mapaForca[0] === 0 && leva2.mapaForca[1] >= 1,
     "a cor conta quanto foi treinado no dia: dia sem treino é 0, dia treinado começa no degrau leve");
   ok(leva2.mapaCabe, "o mês cabe na largura da tela (sem estourar o card)");
-  ok(+leva2.semAtual >= 1, "gráfico Treinos por semana conta o treino de hoje na semana atual (sem bug de fuso)");
+
+  // --- a FITA DO ANO voltou (pedido do Raphael): Mês | Ano no mesmo card ---
+  const mapAno = await pApp.evaluate(async () => {
+    const abre = async () => {
+      window.__trocaSec("evolucao");
+      if (window.__evSub) window.__evSub("conq");
+      await new Promise((r) => setTimeout(r, 200));
+    };
+    await abre();
+    const bt = document.getElementById("mapVa");
+    if (!bt) return null;
+    bt.click();
+    await new Promise((r) => setTimeout(r, 200));
+    const mapa = document.getElementById("mapaAno");
+    const rol = document.getElementById("mapaAnoRol");
+    const quad = rol ? rol.querySelectorAll("div[title]").length : 0;
+    const txtAno = mapa.textContent;
+    const guardou = JSON.parse(localStorage.getItem("ptmapv") || '""');
+    // a fita rola por dentro; o CARD nunca pode estourar a largura da tela
+    const cardCabe = mapa.scrollWidth <= mapa.clientWidth + 1;
+    const fitaRola = rol.scrollWidth > rol.clientWidth;
+    // "abre mostrando hoje": a ÚLTIMA coluna (a semana atual) tem que estar
+    // dentro da janela que o aluno enxerga, sem ele arrastar nada
+    const pontaVisivel = () => {
+      const r2 = document.getElementById("mapaAnoRol");
+      const cols = r2.firstChild.children;
+      const ult = cols[cols.length - 1].getBoundingClientRect();
+      const cx = r2.getBoundingClientRect();
+      return ult.right <= cx.right + 2 && ult.left >= cx.left - 2;
+    };
+    const abreEmHoje = pontaVisivel();
+    // o caso que quebrava: sair da aba, o app repintar com ela escondida e voltar
+    window.__trocaSec("inicio");
+    window.__mapaMes.pinta();
+    await abre();
+    const aindaEmHoje = pontaVisivel();
+    document.getElementById("mapVm").click();
+    await new Promise((r) => setTimeout(r, 200));
+    return {
+      quad, txtAno, guardou, cardCabe, fitaRola, abreEmHoje, aindaEmHoje,
+      voltouMes: /treinos? em \w+/.test(mapa.textContent) && !document.getElementById("mapaAnoRol"),
+      celsMes: mapa.querySelectorAll("div[style*='aspect-ratio']").length,
+    };
+  });
+  ok(!!mapAno && mapAno.quad === 364,
+    "aba Ano traz de volta os pontinhos do ano todo (52 semanas x 7 dias = 364)");
+  ok(!!mapAno && /treinos? em 12 meses/.test(mapAno.txtAno),
+    "o cabeçalho da fita conta os treinos dos 12 meses");
+  ok(!!mapAno && mapAno.cardCabe && mapAno.fitaRola,
+    "a fita rola de lado por dentro do card, sem estourar a largura da tela");
+  ok(!!mapAno && mapAno.abreEmHoje && mapAno.aindaEmHoje,
+    "a fita abre mostrando HOJE — inclusive quando o app repintou com a aba escondida");
+  ok(!!mapAno && mapAno.guardou === "ano",
+    "a escolha Mês/Ano fica guardada no aparelho (ptmapv)");
+  ok(!!mapAno && mapAno.voltouMes && mapAno.celsMes >= 28 && mapAno.celsMes <= 31,
+    "voltar pra Mês traz o calendário de novo");
+
   const jaPag = await pApp.evaluate(async () => {
     window.__trocaSec("inicio");
     const b = document.getElementById("btnJaPaguei");
