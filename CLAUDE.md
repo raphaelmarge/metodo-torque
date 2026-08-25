@@ -178,6 +178,17 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**Resumo do fim da corrida** (a partir da v602): os números do fim eram duas
+linhas de texto dentro do card; agora `crResumo(reg, extras)` abre a tela
+cheia `#crResumoF` com seis tiles (km, tempo, pace, kcal, bpm médio, pico),
+as medalhas/recordes em verde e os botões de postar. `cr.resumo` trava o
+`espelhaCr` enquanto ela está aberta — senão a pintura do cronômetro passava
+por cima. A arte (`cardCorrida`) ganhou o batimento e passou a servir a
+ESTEIRA: sem km o número grande vira o TEMPO, e o botão de compartilhar não
+exige mais GPS (antes `reg.k > 0` deixava quem corre em esteira de fora).
+`crEh()` é um escape próprio do bloco de cardio — o `esc2` nasce noutro
+pedaço do script.
+
 **Tela por zona de batimento** (a partir da v601): com a cinta conectada, o
 fundo da tela cheia da corrida (`#crPainelF`) vira a cor da zona (`HRZC`, Z1
 azul → Z5 vermelho) e a faixa `#crZonaFx` mostra zona, bpm e % da máxima.

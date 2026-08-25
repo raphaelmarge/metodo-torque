@@ -4136,6 +4136,52 @@ async function abaPt(p, a) {
   }));
   ok(/TIROS COMPLETOS/.test(cardioFim.fase) && cardioFim.lst.length === 2 && /Tiros de quinta/.test(cardioFim.lst[1].n),
     "treino de tiros completa sozinho e registra o resultado");
+  {
+    // tela de resumo no fim da corrida (v602): tiles grandes, medalhas e postar
+    const rs = await pCr.evaluate(async () => {
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, bl: 0 }));
+      localStorage.setItem("ptidade", "40");
+      document.getElementById("crZera").click();
+      document.querySelector("[data-cbstart]").click();
+      await new Promise((r) => setTimeout(r, 150));
+      document.getElementById("crGo").click();
+      await new Promise((r) => setTimeout(r, 350));
+      window.__fc.on = true; window.__fcAmostra(150); window.__fcAmostra(170);
+      window.__cr.t0 -= 22 * 60 * 1000;
+      document.getElementById("crKm").value = "4,2";
+      document.getElementById("crKm").dispatchEvent(new Event("input"));
+      await new Promise((r) => setTimeout(r, 250));
+      document.getElementById("crFim").click();
+      await new Promise((r) => setTimeout(r, 600));
+      const el = document.getElementById("crResumoF");
+      const out = {
+        vis: el.style.display,
+        txt: (el.textContent || "").replace(/\s+/g, " "),
+        tiles: el.querySelectorAll("div[style*='border-radius:18px']").length,
+        flag: window.__cr.resumo,
+        // a arte sai mesmo sem GPS: o número grande vira o TEMPO
+        arteSemKm: (function () {
+          window.__cr.fimReg = { d: "2026-08-25", n: "Esteira", m: "corrida", s: 1500, k: 0, p: null, fc: 150 };
+          window.__cr.fimRota = [];
+          const c = window.__crCard(null);
+          return c ? c.width + "x" + c.height : "";
+        })(),
+      };
+      document.getElementById("crRsFechar").click();
+      out.fechou = { vis: el.style.display, flag: window.__cr.resumo };
+      window.__fc.on = false; window.__fc.bpm = 0;
+      return out;
+    });
+    ok(rs.vis === "block" && rs.flag === true && rs.tiles === 6,
+      "🏁 terminar a corrida abre a tela de resumo com os seis números (km, tempo, pace, kcal, bpm médio e pico)");
+    ok(/4,2 quilômetros/i.test(rs.txt.replace(/(\d),(\d) ?/, "$1,$2 ")) || /4,2/.test(rs.txt),
+      "o resumo traz a distância do treino");
+    ok(/batimento médio/i.test(rs.txt) && /calorias/i.test(rs.txt) && /Postar com foto/.test(rs.txt),
+      "o resumo mostra batimento e calorias e oferece postar");
+    ok(rs.arteSemKm === "1080x1350",
+      "a arte de postar sai mesmo sem GPS (esteira): o número grande vira o tempo");
+    ok(rs.fechou.vis === "none" && rs.fechou.flag === false, "Fechar sai do resumo e libera a tela");
+  }
   // importar do relógio: GPX sintético de ~2 km em 12 min entra no ptcardio
   const imp = await pCr.evaluate(() => {
     // ponto a cada 30 s andando ~83 m (0,00075° de latitude): 24 passos ≈ 2 km em 12 min
