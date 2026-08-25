@@ -2220,7 +2220,7 @@
           ms: (w.movs && w.movs.length ? w.movs.map(function (m) { return { q: String(m.q || ""), n: String(m.n || "") }; })
             : (w.mov || []).map(function (n) { return { q: "", n: String(n) }; })).slice(0, 12) };
       })) + ";" +
-      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
+      "var wod={tipo:'fortime',run:false,iv:null,t0:0,acum:0,voltas:0,gi:0,laps:[],ultMin:-1,ultFase:'',wodId:null,wodNome:'',ultCd:0};" +
       "function wodCd(resta){if(!wod.run)return;var cd=(resta<=3.05&&resta>0.05)?Math.ceil(resta):0;" +
       "if(cd&&cd!==wod.ultCd){bip(600,110);if(navigator.vibrate)navigator.vibrate(60);}wod.ultCd=cd;}" +
       // último resultado de cada circuito prescrito aparece no card
@@ -2241,7 +2241,7 @@
       "\"<b style='flex:none;color:#4ade80;'>\"+res+'</b></div>';}).join(''):'';}}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-wodstart]');if(!b)return;" +
       "var w=WODS.find(function(x){return x.id===b.dataset.wodstart;});if(!w||wod.run)return;" +
-      "wod.tipo=w.t;wod.voltas=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
+      "wod.tipo=w.t;wod.voltas=0;wod.gi=0;wod.laps=[];wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=w.id;wod.wodNome=w.n;wodChips();wodCfg();" +
       "if(w.t==='fortime')document.getElementById('wodCap').value=w.cap;" +
       "else if(w.t==='tabata'){document.getElementById('wodRounds').value=w.rd;document.getElementById('wodWork').value=w.wk;document.getElementById('wodRest').value=w.rs;}" +
       "else document.getElementById('wodMin').value=w.min;" +
@@ -2307,12 +2307,24 @@
       "wodF.addEventListener('click',function(e){var b=e.target.closest('button,[data-wfmov]');if(!b)return;" +
       "if(b.id==='wfMin'){wodF.style.display='none';return;}" +
       "if(b.id==='wfPausa'){document.getElementById('wodGo').click();espelhaW();return;}" +
-      "if(b.id==='wfVolta'){var bv=document.getElementById('wodVolta');if(bv)bv.click();return;}" +
+      "if(b.id==='wfVolta'){wod.gi=0;var bv=document.getElementById('wodVolta');if(bv)bv.click();return;}" +
+      "if(b.id==='wfFeito'){wfAvanca();return;}" +
       "if(b.id==='wfFim'){var el9=wod.run?(Date.now()-wod.t0)/1000:wod.acum;if(el9<1)return;" +
       "if(wod.tipo==='fortime'){document.getElementById('wodTermina').click();return;}" +
       "if(wod.tipo==='amrap'){wodFim(pl(wod.voltas,'volta','voltas')+' — terminou antes do tempo',wod.voltas);return;}" +
       "wodFim('Circuito encerrado');return;}" +
-      "var mv=b.getAttribute&&b.getAttribute('data-wfmov');if(mv!=null){wfRisc[mv]=!wfRisc[mv];espelhaW();}});}" +
+      "var mv=b.getAttribute&&b.getAttribute('data-wfmov');if(mv==null)return;" +
+      "if(wod.tipo==='amrap'||wod.tipo==='fortime'){wod.gi=+mv;espelhaW();return;}" +
+      "wfRisc[mv]=!wfRisc[mv];espelhaW();});}" +
+      /* Feito ›: anda um movimento. Passou do último, a VOLTA fecha sozinha —
+       * pelo mesmo botão de sempre (wodVolta), pra não existirem dois caminhos
+       * de contar volta. */
+      "function wfAvanca(){var wmA=WODS.find(function(x){return x.id===wod.wodId;})||{};" +
+      "var n=(wmA.ms||[]).length;if(!n)return;" +
+      "if(navigator.vibrate)navigator.vibrate(35);" +
+      "if(wod.gi+1<n){wod.gi++;bip(920,90);espelhaW();return;}" +
+      "wod.gi=0;var bv2=document.getElementById('wodVolta');" +
+      "if(bv2&&wod.run)bv2.click();else espelhaW();}" +
       "function abreWodFull(){criaWodFull();wfRisc={};wfUltVoltas=wod.voltas;wodF.style.display='block';espelhaW();}" +
       "function fechaWodFull(){if(wodF)wodF.style.display='none';}" +
       "function espelhaW(){if(!wodF||wodF.style.display==='none')return;" +
@@ -2326,12 +2338,30 @@
       "var topo=document.getElementById('wfTopo'),kick=document.getElementById('wfKick'),fase=document.getElementById('wfFase'),sub=document.getElementById('wfSub');" +
       "var tempo=document.getElementById('wfTempo'),bar=document.getElementById('wfBar'),plc=document.getElementById('wfPlacar'),ago=document.getElementById('wfAgora'),mv9=document.getElementById('wfMovs');" +
       "topo.style.background='none';kick.style.color='var(--corc)';fase.style.color='#8a8695';sub.style.color='#cfcbdb';" +
-      "document.getElementById('wfVolta').style.display='none';plc.style.display='none';ago.style.display='none';mv9.innerHTML='';" +
+            // o botão da volta volta ao normal a cada pintura: só o guiado o rebaixa
+      "var bvR=document.getElementById('wfVolta');bvR.className='btnx';bvR.textContent='Fechei a volta';" +
+      "bvR.style.cssText='display:none;width:100%;min-height:62px;font-size:19px;';" +
+      "plc.style.display='none';ago.style.display='none';mv9.innerHTML='';" +
       "if(wod.voltas!==wfUltVoltas){wfRisc={};wfUltVoltas=wod.voltas;}" +
-      "function listaMovs(titulo){if(!ms.length)return;" +
-      "mv9.innerHTML=\"<div class='wpk'>\"+titulo+'</div>'+ms.map(function(m,i){var r=wfRisc[String(i)];" +
-      "return \"<div data-wfmov='\"+i+\"' style='display:flex;gap:14px;align-items:baseline;font-size:17px;padding:9px 0;border-bottom:1px dashed var(--bg11);cursor:pointer;\"+(r?'opacity:.4;text-decoration:line-through;':'')+\"'>\"+" +
+      "function listaMovs(titulo,gd){if(!ms.length)return;" +
+      "mv9.innerHTML=\"<div class='wpk'>\"+titulo+'</div>'+ms.map(function(m,i){var r=gd?(i<wod.gi):wfRisc[String(i)];" +
+      "var ag=gd&&i===wod.gi;" +
+      "return \"<div data-wfmov='\"+i+\"' style='display:flex;gap:14px;align-items:baseline;font-size:17px;padding:9px 0;border-bottom:1px dashed var(--bg11);cursor:pointer;\"+(r?'opacity:.4;text-decoration:line-through;':'')+(ag?'background:rgba(var(--cor-rgb),.14);border-radius:12px;padding-left:10px;padding-right:10px;':'')+\"'>\"+" +
       "(m.q?\"<b style='color:var(--corc);flex:none;min-width:60px;'>\"+eh7(m.q)+'</b>':'')+'<span>'+eh7(m.n)+'</span></div>';}).join('');}" +
+      /* Guiado no circuito: um movimento por vez, igual à musculação. Vale
+       * pra AMRAP e For Time, que são os tipos em que o aluno anda pela lista;
+       * EMOM e Tabata seguem pelo relógio, que é o que define os dois. */
+      "function wfGuia(){if(!ms.length)return;var i=Math.min(wod.gi,ms.length-1);var m=ms[i]||{};" +
+      "var prox=ms[i+1];ago.style.display='block';" +
+      "ago.innerHTML=\"<div class='wpk'>Agora \u00b7 \"+(i+1)+' de '+ms.length+'</div>'+" +
+      "\"<div style='display:flex;align-items:baseline;gap:12px;margin-top:2px;'>\"+" +
+      "(m.q?\"<b style='flex:none;font-size:38px;font-weight:900;color:var(--corc);letter-spacing:-.03em;'>\"+eh7(m.q)+'</b>':'')+" +
+      "\"<b style='flex:1;min-width:0;font-size:21px;font-weight:800;line-height:1.15;'>\"+eh7(m.n)+'</b></div>'+" +
+      "\"<div style='font-size:12.5px;color:#8a8695;margin-top:6px;'>\"+(prox?('depois: '+(prox.q?eh7(prox.q)+' ':'')+eh7(prox.n)):'\u00faltimo da volta \u2014 fecha e recome\u00e7a')+'</div>'+" +
+      "\"<button id='wfFeito' class='btnx' style='display:block;width:100%;min-height:58px;font-size:18px;margin-top:12px;'>Feito \u203a</button>\";" +
+      "var bv9=document.getElementById('wfVolta');" +
+      "if(bv9){bv9.className='';bv9.textContent='Fechei a volta inteira';" +
+      "bv9.style.cssText='display:block;width:100%;min-height:52px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;background:var(--bg4);border:1px solid var(--bg11);color:#a9a4b5;border-radius:99px;';}}" +
       "if(wod.tipo==='amrap'){var tot=60*pvi7('wodMin',wm.min||10);var resta=Math.max(0,tot-el2);" +
       "kick.textContent='AMRAP '+Math.round(tot/60)+' MIN';fase.textContent='Falta';tempo.textContent=wodFmt(resta);sub.textContent='';" +
       "bar.style.width=Math.min(100,Math.round(100*el2/tot))+'%';" +
@@ -2341,11 +2371,13 @@
       "\"<div style='color:#8a8695;font-size:12px;'>em \"+String(ant.d||'').slice(8,10)+'/'+String(ant.d||'').slice(5,7)+' fechou '+ant.v+(ant.ex?' + '+ant.ex:'')+'</div></div>';}" +
       "plc.style.display='block';plc.innerHTML=\"<div style='display:flex;align-items:center;gap:12px;justify-content:space-between;'>\"+" +
       "\"<div><b style='font-size:34px;font-weight:900;'>\"+wod.voltas+\"</b><div style='font-size:9.5px;letter-spacing:.18em;font-weight:800;color:#8a8695;text-transform:uppercase;'>Voltas completas</div></div>\"+ritmo+'</div>';" +
-      "document.getElementById('wfVolta').style.display='block';listaMovs('Volta '+(wod.voltas+1));}" +
+      "document.getElementById('wfVolta').style.display='block';" +
+      "if(wod.run||wod.acum>0)wfGuia();listaMovs('Volta '+(wod.voltas+1),true);}" +
       "else if(wod.tipo==='fortime'){var cap=60*pvi7('wodCap',0);" +
       "kick.textContent='FOR TIME'+(cap?' · LIMITE '+Math.round(cap/60)+' MIN':'');fase.textContent='Tempo';tempo.textContent=wodFmt(el2);" +
       "sub.textContent=wod.voltas?pl(wod.voltas,'volta','voltas'):'';bar.style.width=cap?Math.min(100,Math.round(100*el2/cap))+'%':'0';" +
-      "document.getElementById('wfVolta').style.display='block';listaMovs('O circuito');}" +
+      "document.getElementById('wfVolta').style.display='block';" +
+      "if(wod.run||wod.acum>0)wfGuia();listaMovs('O circuito',true);}" +
       "else if(wod.tipo==='emom'){var totE=60*pvi7('wodMin',wm.min||10);var mn=Math.floor(el2/60);var segRes=60-Math.floor(el2%60);" +
       "kick.textContent='EMOM '+Math.round(totE/60)+' MIN';fase.textContent='Minuto '+(mn+1)+' de '+Math.round(totE/60);tempo.textContent=wodFmt(segRes);" +
       "sub.textContent='novo movimento a cada minuto cheio';bar.style.width=Math.min(100,Math.round(100*el2/totE))+'%';" +
@@ -2478,13 +2510,13 @@
       "document.getElementById('wodTermina').addEventListener('click',function(){if(!wod.run)return;var el2=(Date.now()-wod.t0)/1000;" +
       "wodFim('Seu tempo: '+wodFmt(el2)+(wod.voltas?' · '+pl(wod.voltas,'volta','voltas'):''),el2);});" +
       "document.getElementById('wodTipos').addEventListener('click',function(e){var b=e.target.closest('[data-wodt]');if(!b||wod.run)return;" +
-      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
+      "wod.tipo=b.dataset.wodt;wod.voltas=0;wod.gi=0;wod.acum=0;wod.ultMin=-1;wod.ultFase='';wod.wodId=null;wod.wodNome='';wodChips();wodCfg();" +
       "document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       "document.getElementById('wodGo').addEventListener('click',function(){" +
       "if(wod.run){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=(Date.now()-wod.t0)/1000;this.textContent='Continuar';soltaTela();return;}" +
-      "wod.run=true;wod.t0=Date.now()-wod.acum*1000;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
+      "wod.run=true;wod.t0=Date.now()-wod.acum*1000;if(wod.acum<1)wod.gi=0;this.textContent='Pausar';document.getElementById('wodFimBox').style.display='none';ligaTela();" +
       "bip(880,120);wod.iv=setInterval(wodTick,200);wodTick();abreWodFull();});" +
-      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();fechaWodFull();" +
+      "document.getElementById('wodZera').addEventListener('click',function(){clearInterval(wod.iv);wod.iv=null;wod.run=false;wod.acum=0;wod.voltas=0;wod.gi=0;wod.laps=[];wod.ultMin=-1;wod.ultFase='';soltaTela();fechaWodFull();" +
       "document.getElementById('wodGo').textContent='Iniciar';document.getElementById('wodTempo').textContent='0:00';document.getElementById('wodFase').textContent='Pronto?';document.getElementById('wodInfo').textContent='';document.getElementById('wodFimBox').style.display='none';});" +
       // cada volta guarda o instante: vira a lista "tempo de cada volta" do placar
       "document.getElementById('wodVolta').addEventListener('click',function(){if(!wod.run)return;wod.voltas++;wod.laps.push((Date.now()-wod.t0)/1000);if(navigator.vibrate)navigator.vibrate(70);wodTick();});" +
@@ -2495,7 +2527,7 @@
       "wh.textContent=ds[d0.getDay()]+', '+d0.getDate()+' de '+ms[d0.getMonth()];}" +
       "var lb=document.getElementById('wodLivreBt');if(lb)lb.addEventListener('click',function(){" +
       "var lv=document.getElementById('wodLivre');lv.style.display=lv.style.display==='none'?'block':'none';});})();" +
-      "window.__wod=wod;" +
+      "window.__wod=wod;window.__wodGuia={avanca:wfAvanca};" +
       "}" +
       // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
       "if(document.getElementById('cardCardio')){" +
