@@ -926,7 +926,8 @@
       // do Raphael — a lista só cresce com o tempo)
       "<button type='button' id='cqVerMais' style='display:none;width:100%;min-height:48px;margin-top:10px;border-radius:99px;border:1px solid var(--bg11);background:var(--bg2);color:#b9b4c6;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;'></button>" +
       // ordem do Raphael: medalhas → peso/sequência → semanas → mapa do ano →
-      // ranking da turma POR ÚLTIMO; o botão do Stories fecha a página
+      // retrospectiva; o botão do Stories fecha a página. O ranking da turma
+      // saiu na v607 — ele mora na Comunidade
       "<div id='cqTiles' style='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;'></div>" +
       "<div id='cqGraf' style='margin-top:14px;'></div>" +
       "<div id='mapaAno' style='margin-top:14px;'></div>" +
@@ -938,7 +939,6 @@
       "<div style='display:flex;gap:8px;margin-top:12px;'>" +
       "<button class='btnx' id='retroShare' style='flex:2;'>Compartilhar meu mês</button>" +
       "<button class='btnx' id='retroFecha' style='flex:1;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;box-shadow:none;'>Fechar</button></div></div>" +
-      "<div id='cqRank' style='display:none;margin-top:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:20px;padding:14px 16px;'></div>" +
       "<button class='btnx' id='btnCardStories' style='display:block;width:100%;text-align:center;margin-top:10px;'>Gerar card pro Stories</button></div>" +
       /* ---------- cabeçalho da área Treinos: faixa roxa + as três abas ----------
        * A faixa vinha DEPOIS das abas e só existia dentro da lista de fichas —
@@ -2141,21 +2141,11 @@
       "\"<div style='font-size:12px;font-weight:800;margin-top:2px;color:\"+(sw9?'#fb923c':'#8a8695')+\";'>\"+" +
       "(sw9?'seguidas \\u2014 n\\u00e3o deixa apagar!':'bata a meta desta semana pra acender')+'</div></div>';})();}" +
       "pintaCqTiles();" +
-      // tela 49: ranking da turma no mês (só com a nuvem ligada — a RPC conta
-      // os treinos de cada colega no período; o token revogado não passa)
-      "if(NUVEM){(function(){var hj9=isoHj();var ini9=hj9.slice(0,8)+'01';" +
-      "rpcApp('app_desafio_ranking',{t:TOKEN,p_ini:ini9,p_fim:hj9}).then(function(d){" +
-      "var rk=d&&(d.ranking||d);if(!Array.isArray(rk)||rk.length<2)return;var box=document.getElementById('cqRank');if(!box)return;" +
-      "var MESL7=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];" +
-      "box.style.display='block';" +
-      "box.innerHTML=\"<div class='wpk' style='margin:0 0 6px;'>Ranking da turma · \"+MESL7[+hj9.slice(5,7)-1]+\"</div>\"+" +
-      "rk.slice(0,5).map(function(r,i){var eu=String(r.nome||'')===PRIMEIRO;" +
-      "var ini2=String(r.nome||'A').trim().slice(0,2).toUpperCase();" +
-      "return \"<div style='display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:14px;margin-top:4px;\"+(eu?'background:rgba(var(--cor-rgb),.14);border:1px solid rgba(var(--cor-rgb),.5);':'')+\"'>\"+" +
-      "\"<b style='width:16px;color:\"+(i===0?'#fbbf24':'#8a8695')+\";'>\"+(i+1)+\"</b>\"+" +
-      "\"<span style='flex:none;width:32px;height:32px;border-radius:50%;background:\"+(eu?'var(--cor)':'var(--bg7)')+\";color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;'>\"+ini2+\"</span>\"+" +
-      "\"<span style='flex:1;font-size:14.5px;font-weight:700;'>\"+(eu?'Você':String(r.nome||'Aluno').replace(/</g,'&lt;'))+\"</span>\"+" +
-      "\"<b style='font-size:13.5px;'>\"+pl(+r.dias||0,'treino','treinos')+'</b></div>';}).join('');}).catch(function(){});})();}" +
+      /* O "Ranking da turma" saiu daqui (pedido do Raphael, v607): ele repetia
+       * o Ranking da semana que a Comunidade ja' mostra, e no meio das
+       * Conquistas — que sao do aluno consigo mesmo — a comparacao com os
+       * colegas ficava fora de lugar. A RPC app_desafio_ranking continua viva:
+       * quem usa e' a Comunidade (#fdRank) e o placar do Desafio. */
       "pintaConquistas();document.getElementById('btnFeito').addEventListener('click',function(){setTimeout(function(){pintaConquistas();pintaCqTiles();},150);});" +
       // card de conquista pro Stories (canvas 1080×1080 com a marca do studio)
       "var STUDIO=" + jsonApp(studio) + ";" +

@@ -251,6 +251,15 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Ranking da turma sai das Conquistas** (a partir da v607): o card
+`#cqRank` ("Ranking da turma · agosto") repetia o **Ranking da semana** que a
+Comunidade já mostra (`#fdRank`) e, no meio das Conquistas — que são do aluno
+consigo mesmo —, a comparação com os colegas ficava fora de lugar. Apagado o
+div e o bloco que o preenchia; a ordem do bloco das Conquistas passa a ser
+medalhas → peso/sequência → semanas → mapa de calor → retrospectiva → Stories.
+A RPC `app_desafio_ranking` **continua viva e não mudou**: quem usa é a
+Comunidade e o placar do Desafio — nada de SQL foi tocado.
+
 **Mês E ano no mapa de calor** (a partir da v606): a v599 trocou a fita de 52
 semanas pelo calendário do mês e o Raphael sentiu falta dos pontinhos do ano
 inteiro. Agora os dois moram no MESMO card, com o botão **Mês | Ano**
