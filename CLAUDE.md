@@ -242,6 +242,19 @@ Corrigido junto: no `regen-demo.js` as fichas ganharam `id` (`dmf0`…`dmf4`),
 porque o painel casa o dia do plano pelo **id** do treino e não pela posição —
 sem isso os dias de musculação sumiam do plano da demo.
 
+**Check-in da semana em uma pergunta por tela** (a partir da v600): era o último
+formulário empilhado do app — cinco carinhas + peso + recado + botão, tudo de uma
+vez dentro do card. Agora o card mostra um convite (faixa colorida, "3 perguntas ·
+leva 30 segundos") e UM botão (`#ckAbrir`); o fluxo abre em tela cheia reusando a
+casca do `#qaFluxo` (o seletor virou `#qaFluxo,#ckFluxo`). Três telas: carinha (avança
+sozinha ao tocar, 350 ms), peso (número grande, opcional) e recado (opcional). Parou no
+meio? `ptckdraft` guarda o rascunho POR SEMANA e o botão vira "Continuar de onde parou".
+O envio é o MESMO de antes (`app_aluno_checkin` com `p_nota`/`p_texto`/`p_peso`; sem
+nuvem, cai no WhatsApp) — **sem SQL novo**, e `ptck`, `window.__ckPend` e o badge do
+menu não mudaram. Gancho de teste: `window.__ckFluxo`. Cuidado ao mexer: `EMO` e
+`FACES` continuam definidos ANTES do fluxo porque o código novo usa os dois, e a
+suíte `test-personal.js` dirige o fluxo (não existe mais `#ckNotas`/`#ckEnvia`).
+
 **Questionários viram área própria** (a partir da v585): o check-in da semana
 (`#ckCard`) e o questionário do personal (`#qaCard`) moravam embaixo da conversa,
 na área do Chat — quem abria o chat pra mandar um recado caía num formulário
