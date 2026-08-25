@@ -8227,6 +8227,40 @@ async function abaPt(p, a) {
       "🎠 o carrossel do demo mostra 3 treinos, cada um com a SUA foto (" + capasDemo.cards + " cards, " + capasDemo.distintas + " fotos distintas)");
     ok(capasDemo.kickers.slice(1).length > 0 && capasDemo.kickers.slice(1).every((k) => /^TAMBÉM · /.test(k)),
       "os cards extras dizem TAMBÉM, não HOJE — só o primeiro card é o treino do dia");
+
+    /* ⏱ TODOS os timers do app rodam sem estourar.
+     *
+     * O feed recarregava com "if(SEC==='feed')", mas SEC é private do IIFE do
+     * menu: o timer de 45 s estourava "SEC is not defined" a cada rodada e a
+     * Comunidade nunca se atualizava sozinha. Ninguém via, porque o erro só
+     * aparece 45 s depois de abrir. Este teste captura os callbacks de
+     * setInterval na hora em que são criados e chama cada um, então um
+     * vazamento de escopo desses aparece na hora. */
+    {
+      const ctxT = await b.newContext({ viewport: { width: 390, height: 844 } });
+      const pT = await ctxT.newPage();
+      await pT.addInitScript(() => {
+        window.__timers = [];
+        const orig = window.setInterval;
+        window.setInterval = function (fn, ms) {
+          if (typeof fn === "function") window.__timers.push({ fn, ms });
+          return orig.apply(window, arguments);
+        };
+      });
+      await pT.goto(BASE + "/demo-aluno.html");
+      await pT.waitForTimeout(1500);
+      const tim = await pT.evaluate(() => {
+        const falhas = [];
+        (window.__timers || []).forEach((t, i) => {
+          try { t.fn(); } catch (e) { falhas.push(t.ms + "ms #" + i + ": " + e.message); }
+        });
+        return { n: (window.__timers || []).length, falhas };
+      });
+      ok(tim.n >= 3, "⏱ o app registra os timers de fundo (" + tim.n + " encontrados)");
+      ok(tim.falhas.length === 0,
+        "⏱ nenhum timer do app estoura ao rodar" + (tim.falhas.length ? " — " + tim.falhas.join(" | ") : ""));
+      await ctxT.close();
+    }
     // 📋 o demo mostra a área Questionários cheia: o do personal E o check-in
     {
       await pA.evaluate(() => window.__trocaSec && window.__trocaSec("quest"));
