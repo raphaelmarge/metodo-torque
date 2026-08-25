@@ -178,6 +178,17 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**Peso sugerido na série** (a partir da v603): `gSugereKg(ex, repsAlvo)` olha o
+`ptdc` daquele exercício e devolve o próximo degrau (`gPasso`: 1 kg abaixo de
+20, 2,5 acima) **só quando** o aluno bateu as repetições prescritas na última
+vez E não subiu no treino anterior a essa (deixa consolidar). Sem histórico,
+sem reps prescritas, ou reps abaixo do alvo → devolve 0 e nada aparece. O
+botão `#gSugT` (classe `.gsug`) fica na TELA do exercício, embaixo dos tiles —
+dentro de "Mudar a carga" o aluno nunca veria. Tocar nele grava a carga do dia
+(`gv.cargas` + `gGrava`) e repinta: o tile CARGA já mostra o número novo com o
+"+2,5 kg desde a última", e o botão some. **Nada sobe sozinho** — a sugestão é
+sempre um toque explícito. Gancho: `window.__gSugere`.
+
 **Resumo do fim da corrida** (a partir da v602): os números do fim eram duas
 linhas de texto dentro do card; agora `crResumo(reg, extras)` abre a tela
 cheia `#crResumoF` com seis tiles (km, tempo, pace, kcal, bpm médio, pico),

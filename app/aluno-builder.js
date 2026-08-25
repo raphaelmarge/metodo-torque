@@ -440,6 +440,9 @@
       ".gchip{color:var(--corc);background:rgba(var(--cor-rgb),.16)}" +
       ".gchip.verde{color:#4ade80;background:rgba(74,222,128,.15)}" + // selo '✓ 4 séries feitas' (tela 22)
       ".gcgult{margin:10px 0 2px;font-size:12.5px;color:#8a8695;text-align:center}" +
+      // botão do peso sugerido: aparece só quando o aluno bateu as reps
+      ".gsug{display:block;width:100%;margin:9px 0 0;min-height:46px;border-radius:99px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:800;background:rgba(34,211,238,.14);border:1px solid rgba(34,211,238,.5);color:#67e8f9}" +
+      ".gsug.on{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.55);color:#4ade80}" +
       ".gsets i{background:var(--bg4);color:#8a8695}" +
       ".gsets i.now{background:var(--bg2);color:var(--corc);box-shadow:inset 0 0 0 2px var(--cor)}" +
       ".gobs em{color:#8a8695}.gobs p{color:var(--corc)}" +
@@ -3209,6 +3212,19 @@
       // passo do stepper: quem levanta 5 kg não sobe de 5 em 5, quem levanta 80 não sobe de 1 em 1
       "function gnum(v){return String(Math.round(v*100)/100).replace('.',',');}" +
       "function gultimo(ex){var l=(L('ptdc',{})[ex]||[]);return l.length?l[l.length-1]:null;}" +
+      /* Peso sugerido na série: se da última vez o aluno BATEU as repetições
+       * prescritas naquela carga (e não acabou de subir), o app sugere o
+       * próximo degrau. O campo continua nascendo na carga de sempre — a
+       * sugestão é um botão que o aluno toca se quiser; nada sobe sozinho. */
+      "function gPasso(kg){return kg<20?1:2.5;}" +
+      "function gSugereKg(ex,repsAlvo){var l=(L('ptdc',{})[ex]||[]);if(!l.length)return 0;" +
+      "var u=l[l.length-1];var kg=+u.kg||0;if(kg<=0)return 0;" +
+      "var alvo=parseInt(repsAlvo,10)||0;if(!alvo)return 0;" +
+      "if((+u.r||0)<alvo)return 0;" +
+      // acabou de subir no treino passado: deixa consolidar antes de subir de novo
+      "if(l.length>=2&&+l[l.length-2].kg<kg)return 0;" +
+      "return Math.round((kg+gPasso(kg))*100)/100;}" +
+      "window.__gSugere=gSugereKg;" +
       "function grecorde(ex){var l=(L('ptdc',{})[ex]||[]);var m=0;l.forEach(function(x){if(+x.kg>m)m=+x.kg;});return m;}" +
       // ---------- gravação da carga: só grava o que o aluno CONFIRMOU ----------
       // O 'change' antigo perdia o registro quando o aluno saía sem tirar o foco,
@@ -3309,6 +3325,8 @@
       "if(dl)tc+=\"<em\"+(dl>0?'':\" class='mn'\")+'>'+(dl>0?'+':'\\u2212')+gnum(Math.abs(dl))+' kg desde a última</em>';" +
       "m+=\"<div class='gtiles'><div class='gtile'><span>Repetições</span><b>\"+esc2(it.r||'—')+'</b></div>'+" +
       "\"<div class='gtile'><span>Carga</span>\"+tc+'</div></div>';" +
+      "var sgT=(gv.cargas[it.e]==null)?gSugereKg(it.e,it.r):0;" +
+      "if(sgT)m+=\"<button type='button' class='gsug' id='gSugT' data-kg='\"+sgT+\"'>Bateu as \"+(parseInt(it.r,10)||0)+\" na \u00faltima \u2014 tenta \"+gnum(sgT)+' kg hoje \u203a</button>';" +
       "m+=\"<div class='gsecrow'><button type='button' id='gMudaCarga'>Mudar a carga</button>\"+" +
       "\"<button type='button' id='gPulaEx2'>Pular exercício</button></div>\";" +
       // card 'NA ÚLTIMA VEZ · 17 de agosto' com as anotações daquele dia
@@ -3430,6 +3448,8 @@
       "gRegua('gWRep',GW.rep,r)+\"</div>\"+" +
       // lembrete da sessão anterior, igual à tela 22 ('na última vez você fez 30')
       "(u?\"<div class='gcgult'>na última vez você fez \"+gnum(+u.kg)+' kg'+(+u.r>0?' × '+u.r:'')+'</div>':'')+" +
+      "(function(){var sg=gSugereKg(it.e,it.r);if(!sg)return '';" +
+      "return \"<button type='button' class='gsug' id='gSug' data-kg='\"+sg+\"'>Bateu as \"+(parseInt(it.r,10)||0)+\" \u2014 tenta \"+gnum(sg)+' kg \u203a</button>';})()+" +
       "\"<button type='button' class='gsalvar' id='gSalvar'>Salvar carga</button>\"+" +
       "\"<button type='button' class='gsemcarga' id='gSemCarga'>Foi sem carga (peso do corpo)</button></div>\";}" +
       "function ligaStepper(it,slot){var kg=gEl('gKg'),rp=gEl('gReps');if(!kg)return;gv.reg=it.e;gv.regi=slot||'';" +
@@ -3440,6 +3460,9 @@
       "requestAnimationFrame(function(){var a=gEl('gWKg'),b=gEl('gWRep');" +
       "if(a)a.scrollLeft=gIdx(GW.kg,parseFloat(String(kg.value).replace(',','.'))||0)*GW.kg.px;" +
       "if(b)b.scrollLeft=gIdx(GW.rep,parseInt(rp.value,10)||0)*GW.rep.px;});" +
+      "var bs9=gEl('gSug');if(bs9)bs9.onclick=function(){kg.value=gnum(+bs9.dataset.kg);gv.sujo=true;" +
+      "var a9=gEl('gWKg');if(a9)a9.scrollLeft=gIdx(GW.kg,+bs9.dataset.kg)*GW.kg.px;" +
+      "bs9.textContent='Vamos nessa! \u2713';bs9.classList.add('on');if(navigator.vibrate)navigator.vibrate(40);};" +
       "kg.oninput=function(){gv.sujo=true;};rp.oninput=function(){gv.sujo=true;};" +
       "gEl('gSalvar').onclick=function(){gv.sujo=false;" +
       "var ok=gGrava(it.e,parseFloat(String(kg.value).replace(',','.')),parseInt(rp.value,10)||0,gv.regi);" +
@@ -3556,6 +3579,12 @@
       /* 'Mudar a carga': abre o MESMO formulário de régua do fim do exercício,
          dentro do card. Salvou (ou marcou sem carga) → fecha e o tile CARGA já
          acorda com o número novo; tocar de novo no botão também fecha. */
+      // aceitar a sugestão = a carga de hoje passa a ser ela (o tile CARGA muda
+      // na hora); nada é gravado ainda — quem grava é o Salvar de sempre
+      "if(e.target.id==='gSugT'){if(gv.fim)return;var itS=GUIA[gv.f].it[gv.e];" +
+      "gv.cargas[itS.e]=+e.target.dataset.kg;gv.sujo=true;" +
+      "gGrava(itS.e,+e.target.dataset.kg,parseInt(itS.r,10)||0,gv.f+':'+gv.e);" +
+      "if(navigator.vibrate)navigator.vibrate(45);pintaGuia();return;}" +
       "if(e.target.id==='gMudaCarga'){if(gv.fim)return;var itM=GUIA[gv.f].it[gv.e],m2=gEl('gMiolo2');" +
       "if(m2.innerHTML){gSalvaSeSujo();m2.innerHTML='';gv.reg='';gv.regi='';pintaGuia();return;}" +
       "m2.innerHTML=gCargaHtml(itM);ligaStepper(itM,gv.f+':'+gv.e);" +
