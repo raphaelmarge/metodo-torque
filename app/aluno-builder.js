@@ -1193,7 +1193,8 @@
       "<div style='display:flex;align-items:center;gap:10px;margin-top:8px;text-align:left;'>" +
       "<span id='crBlocoD' style='flex:1;min-width:0;font-size:11.5px;color:rgba(255,255,255,.72);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'></span>" +
       "<b id='crBlocoT' style='flex:none;font-size:22px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;'></b>" +
-      "<button id='crPulaF' style='flex:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:7px 13px;color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;'>Pular \u203a</button></div></div></div>" +
+      "<button id='crPulaF' style='flex:none;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:7px 13px;color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;'>Pular \u203a</button></div></div>" +
+      "<div id='crZonaFx' style='display:none;text-align:center;margin-top:10px;color:#fff;'></div></div>" +
       "<div style='position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 14px;'>" +
       "<div id='crPausaF' style='display:none;width:100%;max-width:440px;background:rgba(var(--bg0-rgb),.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:18px;padding:14px;'>" +
       "<div style='display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;'>" +
@@ -2723,6 +2724,7 @@
       "g.innerHTML=HR.on?\"<span class='fcbat pulsa'>\\u2665</span> \"+(b>0?b:'--'):\"<span class='fcbat'>\\u2665</span> Cinta\";" +
       "g.style.color=(HR.on&&b>0)?cor:'';}" +
       "var cc=hrEl('crBpmC'),cb=hrEl('crBpmF');if(cc)cc.style.display=HR.on?'block':'none';if(cb)cb.textContent=b>0?b:'--';" +
+      "try{if(typeof crFullAberto==='function'&&crFullAberto())espelhaCr();}catch(e){}" +
       "var aj=hrEl('ajFcSub');if(aj)aj.textContent=HR.on?(b>0?b+' bpm agora \\u00b7 toque pra desconectar':'conectada \\u00b7 esperando batimento'):'cinta ou pulseira por Bluetooth';}" +
       "function hrAmostra(b){b=+b||0;if(b<25||b>240)return;HR.bpm=b;if(b>HR.mx)HR.mx=b;HR.soma+=b;HR.n++;hrPinta();}" +
       "function hrLe(ev){var d=ev.target.value;if(!d||d.byteLength<2)return;" +
@@ -3039,6 +3041,29 @@
       "if(pg===0||pg===1)cr.pagF=pg;f.style.display='block';crFullDim();espelhaCr();try{desenhaRota();}catch(e){}}" +
       "function fechaCrFull(){var f=crEl('crFull');if(!f)return;f.style.display='none';cr.lockF=false;crEl('crLockOverF').style.display='none';}" +
       "var GIGAS=[['km','QUIL\\u00d4METROS'],['tempo','TEMPO'],['pace','PACE M\\u00c9DIO'],['kcal','CALORIAS']];" +
+      /* Tela por zona de batimento: com a cinta ligada, o fundo da tela cheia
+       * passa a ser a cor da zona (Z1 azul ... Z5 vermelho) e a voz avisa a
+       * troca. Sem cinta, hrSuporta()/HR.on são falsos e a tela segue como
+       * sempre foi — mesma regra honesta do resto do batimento. */
+      "var crZAnt=-1,crZDesde=0;" +
+      "function crZonaPinta(mapaAberto){var pf=crEl('crPainelF');if(!pf)return;" +
+      "var z=(HR.on&&HR.bpm>0)?hrZ(HR.bpm):-1;" +
+      "var fx=crEl('crZonaFx');" +
+      "if(z<0){if(crZAnt!==-1){pf.style.background='linear-gradient(165deg,var(--cor) 0%,var(--cor) 58%,var(--corc) 175%)';crZAnt=-1;}" +
+      "if(fx)fx.style.display='none';return;}" +
+      "if(z!==crZAnt){" +
+      "pf.style.background='linear-gradient(165deg,'+HRZC[z]+' 0%,'+HRZC[z]+' 58%,rgba(255,255,255,.35) 210%)';" +
+      // a voz só entra depois que a zona se firma, senão fala a cada batida
+      "if(crZAnt>=0&&cr.run&&Date.now()-crZDesde>12000){var fb8=crCfg().fb;" +
+      "if(navigator.vibrate)navigator.vibrate(z>crZAnt?[70,50,70]:[160]);" +
+      "var falou8=fb8==='voz'&&crFala('Zona '+(z+1)+'. '+HRZN[z].split(' ').slice(1).join(' '));" +
+      "if(!falou8&&fb8!=='off')bip(z>crZAnt?1100:640,180);}" +
+      "crZAnt=z;crZDesde=Date.now();}" +
+            // com o fundo colorido da zona, a faixa do bloco em ciano some — vai a branco
+      "var ff=crEl('crFaseF');if(ff)ff.style.color='#fff';" +
+      "if(fx){fx.style.display=mapaAberto?'none':'block';" +
+      "fx.innerHTML=\"<b style='font-size:13px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;'>\"+HRZN[z]+'</b>'+" +
+      "\"<span style='display:block;font-size:11.5px;opacity:.85;margin-top:2px;'>\"+HR.bpm+' bpm \u00b7 '+Math.round(100*HR.bpm/hrMax())+'% da m\u00e1xima</span>';}}" +
       "function espelhaCr(){if(!crFullAberto())return;" +
       "var rodou=cr.run||cr.acum>0;var pausado=!cr.run&&cr.acum>0;var km=crKmAtual();" +
       "var tTxt=crEl('crTempo').textContent,medTxt=crEl('crPaceMed').textContent,kmTxt=km.toFixed(2).replace('.',','),kcTxt=String(crKcal(km));" +
@@ -3057,6 +3082,7 @@
       "crEl('crLockBtnF').style.display=cr.run?'flex':'none';crEl('crMapBtnF').style.display=cr.run?'flex':'none';" +
       "crEl('crMapBtnF').innerHTML=cr.pagF===1?CRICOS.painel:CRICOS.mapa;crEl('crMapBtnF').setAttribute('aria-label',cr.pagF===1?'Ver o painel':'Ver o mapa');" +
       "crEl('crFimF').style.display=rodou?'block':'none';" +
+      "try{crZonaPinta(mapa);}catch(e){}" +
       "crEl('crGoF').style.background=pausado?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg0)';" +
       "crEl('crMetaBtnF').style.display=rodou?'none':'block';crEl('crMetaBtnF').textContent=crEl('crMetaBtn').textContent;" +
       "crEl('crGpsF').style.borderColor=cr.gpsOn?'#4ade80':'rgba(255,255,255,.3)';crEl('crGpsF').style.color=cr.gpsOn?'#4ade80':'#fff';}" +

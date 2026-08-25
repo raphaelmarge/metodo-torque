@@ -4259,6 +4259,42 @@ async function abaPt(p, a) {
       "ao começar o treino prescrito o player abre no aquecimento, com o trilho dos blocos e o relógio andando");
     ok(/depois:/.test(gr.depois) && gr.bi === 1 && !/AQUECIMENTO/.test(gr.fase2) && gr.sumiu === "none",
       "a linha diz qual é o próximo bloco, Pular avança de verdade e zerar apaga o player");
+    {
+      // tela por zona de batimento (v601): sem cinta NADA muda; com cinta, o
+      // fundo da tela cheia vira a cor da zona e a faixa diz bpm e % da máxima
+      const zn = await pCr.evaluate(async () => {
+        localStorage.setItem("ptidade", "40"); // máxima = 180
+        // reabre a tela cheia: o teste anterior zerou a corrida e fechou ela
+        document.querySelector("[data-cbstart]").click();
+        await new Promise((r) => setTimeout(r, 150));
+        document.getElementById("crGo").click();
+        await new Promise((r) => setTimeout(r, 400));
+        const out = { semCinta: document.getElementById("crPainelF").style.background,
+          fxSem: document.getElementById("crZonaFx").style.display };
+        window.__fc.on = true;
+        window.__fcAmostra(100); // 55% -> Z1
+        await new Promise((r) => setTimeout(r, 250));
+        out.z1 = { bg: document.getElementById("crPainelF").style.background,
+          fx: (document.getElementById("crZonaFx").textContent || "").replace(/\s+/g, " ") };
+        window.__fcAmostra(160); // 89% -> Z4
+        await new Promise((r) => setTimeout(r, 250));
+        out.z4 = { bg: document.getElementById("crPainelF").style.background,
+          fx: (document.getElementById("crZonaFx").textContent || "").replace(/\s+/g, " ") };
+        window.__fc.on = false; window.__fc.bpm = 0;
+        await new Promise((r) => setTimeout(r, 250));
+        out.voltou = document.getElementById("crPainelF").style.background;
+        document.getElementById("crZera").click();
+        return out;
+      });
+      ok(/var\(--cor\)/.test(zn.semCinta) && zn.fxSem === "none",
+        "sem cinta conectada a tela cheia da corrida não muda nada (mesma regra honesta do batimento)");
+      ok(/96, 165, 250|#60a5fa/.test(zn.z1.bg) && /Z1 leve/.test(zn.z1.fx) && /100 bpm · 56%/.test(zn.z1.fx),
+        "com cinta, o fundo vira a cor da zona e a faixa diz bpm e % da máxima (Z1)");
+      ok(/251, 146, 60|#fb923c/.test(zn.z4.bg) && /Z4 forte/.test(zn.z4.fx),
+        "subiu o esforço, a tela troca de zona (Z4 laranja)");
+      ok(/var\(--cor\)/.test(zn.voltou), "desconectou a cinta, a tela volta pra cor do studio");
+    }
+
   }
   // modo tela cheia estilo NRC: painel de cor chapada ao iniciar; mapa é a 2ª página;
   // métrica gigante troca com toque; cadeado bloqueia; pausar mostra mapa + grade
