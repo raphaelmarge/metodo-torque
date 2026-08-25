@@ -1546,10 +1546,27 @@
       "var pri=fr[0]||null;var ult=fr.length>1?fr[fr.length-1]:null;" +
       // celular novo/limpo: sem nenhum registro local não devolve nada (senão apagaria o histórico que já está na nuvem)
       "if(!Object.keys(L('ptpeso',{})).length&&!Object.keys(L('ptdc',{})).length&&!Object.keys(L('ptfeitos',{})).length&&!Object.keys(L('pthab',{})).length&&!fs.length&&!L('ptonb',null)&&!Object.keys(L('ptrpe',{})).length&&!L('ptfotoperfil',''))return;" +
-      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:{nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
-      "fotoAntes:pri?pri.img:null,fotoAntesD:pri?pri.d:null,fotoDepois:ult?ult.img:null,fotoDepoisD:ult?ult.d:null," +
-      "fotoPerfil:L('ptfotoperfil','')||null," +
-      "atualizado:new Date().toISOString()}});},1800);}" +
+      /* FOTO SÓ QUANDO MUDA (v611). Este devolve dispara a cada peso, carga,
+       * treino marcado, hábito, corrida ou batimento — e num treino de verdade
+       * as anotações estão minutos umas das outras, então a folga de 1,8 s não
+       * junta quase nada: era um envio por anotação, cada um carregando as TRÊS
+       * fotos de novo (antes, depois e perfil), sem terem mudado. Ordem de 30 MB
+       * por aluno por mês de banda jogada fora.
+       *
+       * Some as chaves de foto quando a marca bate com a do último envio que
+       * DEU CERTO. Omitir é seguro porque o app_retorno_mescla só mexe nas
+       * chaves que chegam: o que não vem fica como está na nuvem. E a marca só
+       * é guardada quando o servidor responde ok — envio que falhou manda a
+       * foto de novo na próxima. */
+      "var perf9=L('ptfotoperfil','')||null;" +
+      "function mrc9(x){if(!x||!x.img)return '-';var im=String(x.img);return x.d+':'+im.length+':'+im.slice(-24);}" +
+      "var marca9=[mrc9(pri),mrc9(ult),perf9?(perf9.length+':'+perf9.slice(-24)):'-'].join('|');" +
+      "var dd9={nome:PRIMEIRO,nivel:nivelDe(xpDados()),peso:L('ptpeso',{}),cargas:L('ptdc',{}),feitos:L('ptfeitos',{}),habitos:L('pthab',{}),rpe:L('ptrpe',{}),onb:L('ptonb',null),wodres:L('ptwodres',{}),cardio:L('ptcardio',[]),fc:L('ptfc',{}),idade:+L('ptidade',0)||0," +
+      "atualizado:new Date().toISOString()};" +
+      "if(marca9!==L('ptdevfoto','')){dd9.fotoAntes=pri?pri.img:null;dd9.fotoAntesD=pri?pri.d:null;" +
+      "dd9.fotoDepois=ult?ult.img:null;dd9.fotoDepoisD=ult?ult.d:null;dd9.fotoPerfil=perf9;}" +
+      "rpcApp('app_aluno_devolve',{t:TOKEN,p_dados:dd9}).then(function(r9){if(r9&&r9.ok)Sv('ptdevfoto',marca9);});},1800);}" +
+      "window.__devolveApp=devolveApp;" +
       "setTimeout(devolveApp,2500);" +
       /* O ALUNO troca a própria foto tocando no avatar. A imagem é cortada em
        * quadrado e reduzida pra 320 px aqui no aparelho — a mesma medida que o

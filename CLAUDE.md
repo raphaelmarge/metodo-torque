@@ -251,6 +251,21 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Foto só quando muda no retorno** (a partir da v611): `devolveApp()` dispara a
+cada `Sv` de peso, carga, treino marcado, hábito, corrida ou batimento — e num
+treino real as anotações estão minutos umas das outras, então a folga de 1,8 s
+não junta quase nada: era **um envio por anotação**, cada um recarregando as
+TRÊS fotos (antes, depois e perfil) sem terem mudado. Medido com uma foto real:
+~37 KB o trio, ~9 MB por aluno/mês, ~207 MB/mês com 24 alunos. Agora uma marca
+(`ptdevfoto` = data + tamanho + últimos 24 chars de cada imagem) guarda o que
+já subiu, e as chaves de foto **somem do payload** quando a marca bate. Omitir é
+seguro porque o `app_retorno_mescla` só mexe nas chaves que CHEGAM — o que não
+vem fica como está na nuvem. A marca só é gravada quando o servidor responde
+`ok`, então envio que falhou manda a foto de novo. `ptdevfoto` não está na lista
+de chaves que disparam `devolveApp` (senão viraria laço). Gancho:
+`window.__devolveApp`. ⚠️ o teste que checava a string `fotoPerfil:` no HTML
+passou a checar `dd9.fotoPerfil=`.
+
 **Questionário vira UM card só** (a partir da v610): cada questionário eram
 TRÊS caixas empilhadas pra dizer "responde isso" — a faixa roxa, um parágrafo
 de "seu personal usa as respostas pra…" + 🔒, e a lista inteira do que ia ser
