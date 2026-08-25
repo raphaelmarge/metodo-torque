@@ -6368,6 +6368,15 @@ async function abaPt(p, a) {
   ok(!!mapAno && mapAno.voltouMes && mapAno.celsMes >= 28 && mapAno.celsMes <= 31,
     "voltar pra Mês traz o calendário de novo");
 
+  // --- o Ranking da turma saiu das Conquistas (pedido do Raphael) ---
+  ok(!/cqRank/.test(appHtml2) && !/Ranking da turma/.test(appHtml2),
+    "o Ranking da turma não aparece mais nas Conquistas");
+  // a Comunidade vem DESLIGADA (st.config.feedOn), entao o app de teste nao a
+  // carrega — quem responde por ela e' o codigo do builder
+  const buiSrc = fs.readFileSync(__dirname + "/../app/aluno-builder.js", "utf8");
+  ok(!/cqRank/.test(buiSrc) && /fdRank/.test(buiSrc) && /Ranking da semana/.test(buiSrc),
+    "o ranking continua vivo onde é o lugar dele: a Comunidade (Ranking da semana)");
+
   const jaPag = await pApp.evaluate(async () => {
     window.__trocaSec("inicio");
     const b = document.getElementById("btnJaPaguei");
