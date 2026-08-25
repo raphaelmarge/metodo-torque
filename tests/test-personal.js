@@ -4055,8 +4055,11 @@ async function abaPt(p, a) {
   }));
   ok(cardioReg.lst.length === 1 && cardioReg.lst[0].k === 0.02 && !!cardioReg.lst[0].p && /últimos treinos/.test(cardioReg.hist),
     "Terminei! registra o treino com pace e monta o histórico");
-  // tiros prescritos terminam sozinhos e registram
+  // tiros prescritos terminam sozinhos e registram — com a moldura de
+  // aquecimento/volta à calma DESLIGADA, que é o caminho de quem prefere
+  // largar direto no treino (o player guiado é testado mais abaixo)
   await pCr.evaluate(() => {
+    localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, bl: 0 }));
     document.querySelectorAll("[data-cbstart]")[1].click();
     document.getElementById("crGo").click();
   });

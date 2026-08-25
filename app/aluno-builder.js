@@ -2600,7 +2600,8 @@
       "else mb.style.display='none';})();" +
       "var p2=cr.plano;var fase=crEl('crFase'),info=crEl('crInfo');" +
       // com o player guiado ligado, é o BLOCO que manda no texto e no ritmo
-      "if(cr.blocos&&crBlocos(el2,km)){var b5=crBlocoAtual();" +
+      "var rb9=cr.blocos?crBlocos(el2,km):0;if(rb9===2)return;" +
+      "if(rb9){var b5=crBlocoAtual();" +
       "fase.textContent=b5.n.toUpperCase();" +
       "fase.style.color=b5.k==='f'?'var(--corc)':(b5.k==='aq'||b5.k==='vc'?'#22d3ee':'#a9a4b5');" +
       "info.textContent=(b5.d||'')+' · bloco '+(cr.bi+1)+' de '+cr.blocos.length;" +
@@ -2833,15 +2834,26 @@
       "var forte=b2.k==='f';if(navigator.vibrate)navigator.vibrate(forte?[90,60,90,60,90]:[180]);" +
       "var falou=fb9==='voz'&&crFala(b2.n+'. '+(b2.d||''));" +
       "if(!falou&&fb9!=='off')bip(forte?1150:640,220);}" +
-      "function crPulaBloco(){if(!cr.blocos)return;cr.bi++;" +
-      "if(cr.bi>=cr.blocos.length){cr.bi=cr.blocos.length-1;crFinaliza('TREINO GUIADO COMPLETO!');return;}" +
-      "cr.bt0=(Date.now()-cr.t0)/1000;cr.bkm0=cr.km;crAvisaBloco(crBlocoAtual());pintaCr();}" +
+      "function crAvanca(modo){var ant=cr.blocos[cr.bi];cr.bi++;" +
+      "if(cr.bi>=cr.blocos.length){cr.bi=cr.blocos.length-1;crFinaliza('TREINO GUIADO COMPLETO!');return false;}" +
+      "var agora=(Date.now()-cr.t0)/1000;" +
+      "cr.bt0=(modo==='t'&&ant&&ant.s)?((cr.bt0||0)+ant.s):agora;" +
+      "cr.bkm0=(modo==='k'&&ant&&ant.km)?((cr.bkm0||0)+ant.km):cr.km;" +
+      "crAvisaBloco(crBlocoAtual());return true;}" +
+      "function crPulaBloco(){if(!cr.blocos)return;if(crAvanca(''))pintaCr();}" +
       "function crTrilhoPinta(){var tr=crEl('crTrilho');if(!tr||!cr.blocos)return;" +
       "tr.innerHTML=cr.blocos.map(function(b3,i3){" +
       "var cor=i3<cr.bi?'rgba(255,255,255,.85)':(i3===cr.bi?'#fff':'rgba(255,255,255,.22)');" +
       "return \"<i style='flex:1;height:4px;border-radius:99px;background:\"+cor+\";'></i>\";}).join('');}" +
       // desenha o bloco de agora e decide se ele já acabou (tempo OU distância)
-      "function crBlocos(el2,km){var b4=crBlocoAtual();var cx=crEl('crBlocoBox');" +
+      "function crBlocos(el2,km){var cx=crEl('crBlocoBox');" +
+      "if(!cr.blocos){if(cx)cx.style.display='none';return false;}" +
+      // acerta a fila inteira: quem deixou o celular no bolso volta minutos depois
+      "if(cr.run){var giro=0;while(cr.blocos&&giro++<60){var bx=cr.blocos[cr.bi];if(!bx)break;" +
+      "var pkX=!!(bx.km&&cr.gpsOn);" +
+      "var fimX=pkX?((km-(cr.bkm0||0))>=bx.km):(!!bx.s&&(el2-(cr.bt0||0))>=bx.s);" +
+      "if(!fimX)break;if(!crAvanca(pkX?'k':'t'))return 2;}}" +
+      "var b4=crBlocoAtual();" +
       "if(!b4){if(cx)cx.style.display='none';return false;}" +
       "if(cx)cx.style.display='block';" +
       "var pas=el2-(cr.bt0||0),falta=b4.s?Math.max(0,b4.s-pas):0;" +
@@ -2853,9 +2865,6 @@
       "var porKm=!!(b4.km&&cr.gpsOn);" +
       "if(bt)bt.textContent=porKm?(String(Math.round(fkm*100)/100).replace('.',',')+' km'):(b4.s?crMMSS(falta):'livre');" +
       "if(!porKm&&b4.s&&falta<=3.05&&falta>0.05&&cr.run)crCd(falta);" +
-      "if(!cr.run)return true;" +
-      "var acabou=porKm?((km-(cr.bkm0||0))>=b4.km):(b4.s&&pas>=b4.s);" +
-      "if(acabou)crPulaBloco();" +
       "return true;}" +
       "function crLarga(){hrZera();cr.run=true;cr.autoP=false;cr.t0=Date.now()-cr.acum*1000;crEl('crGo').textContent='Pausar';ligaTela();bip(880,110);" +
       "var bS8=crEl('crShare');if(bS8)bS8.style.display='none';" +
