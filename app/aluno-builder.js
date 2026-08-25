@@ -952,7 +952,8 @@
       "<div style='display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap;'>" +
       "<span id='trTopN' style='font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;'></span>" +
       "<span id='trTopS' style='font-size:13.5px;font-weight:700;color:rgba(255,255,255,.85);'></span></div>" +
-      "<div id='trTopSub' style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'></div></div>" +
+      "<div id='trTopSub' style='font-size:12.5px;color:rgba(255,255,255,.8);margin-top:4px;'></div>" +
+      "<div id='trMes' style='display:none;margin-top:12px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px 13px;'></div></div>" +
       ((ve("wod") || ve("cardio")) ? "<div id='trTabs' style='display:flex;gap:8px;padding:14px 20px 16px;'>" +
       "<button data-trsub='ficha' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--cor),var(--corc));border:none;color:#fff;'>Minha ficha</button>" +
       (ve("wod") ? "<button data-trsub='wod' style='flex:1;min-height:44px;padding:0 6px;border-radius:99px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:var(--bg4);border:1px solid rgba(255,255,255,.06);color:#a9a4b5;'>Circuito (WOD)</button>" : "") +
@@ -4477,6 +4478,7 @@
           // semana do aluno: dia da semana → treino planejado (já resolvido no painel)
           "var PLANO=" + jsonApp(planoApp) + ";" +
           // texto da faixa roxa dos Treinos, um por aba (o script só troca o texto)
+          "var MESAPP=" + jsonApp(D.mesApp || {}) + ";" +
           "var TRHEAD=" + jsonApp((function () {
             var porStudio = "montado por " + studio;
             var totSer = 0;
@@ -4854,6 +4856,14 @@
       "var tn=document.getElementById('trTopN');if(tn)tn.textContent=th.n;" +
       "var ts=document.getElementById('trTopS');if(ts)ts.textContent=th.s;" +
       "var tb=document.getElementById('trTopSub');if(tb)tb.textContent=th.sub;" +
+      // plano do mês: a semana em que o aluno está e o que muda nela
+      "var mEh=function(t9){return String(t9==null?'':t9).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};" +
+      "var mk=s==='wod'?'wod':(s==='cardio'?'corrida':'musculacao');var mw=MESAPP[mk];" +
+      "var mb=document.getElementById('trMes');" +
+      "if(mb){if(mw){mb.style.display='block';" +
+      "mb.innerHTML=\"<b style='display:block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.8);'>Semana \"+mw.s+' de 4'+(mw.f?' \u00b7 '+mEh(mw.f):'')+'</b>'+" +
+      "(mw.a?\"<span style='display:block;font-size:12.5px;color:rgba(255,255,255,.92);margin-top:3px;line-height:1.45;'>\"+mEh(mw.a)+'</span>':'');}" +
+      "else mb.style.display='none';}" +
       "document.querySelectorAll(\"[data-sec='treino']\").forEach(function(el){if(el.id==='trTopo')return;" +
       "var idAlvo=s==='wod'?'cardWod':s==='cardio'?'cardCardio':null;" +
       "el.style.display=(idAlvo?el.id===idAlvo:(el.id!=='cardWod'&&el.id!=='cardCardio'))?'':'none';});" +

@@ -3785,6 +3785,56 @@ async function abaPt(p, a) {
     ok(sug.semNada === 0 && sug.semAlvo === 0,
       "sem histórico ou sem repetições prescritas, nenhuma sugestão é inventada");
   }
+  {
+    // IA do MÊS (v604): perfil mais fundo + progressão de 4 semanas
+    const mes = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const a = st.alunos[0];
+      st.avaliacoes = st.avaliacoes || [];
+      st.avaliacoes.push({ alunoId: a.id, data: "2026-05-10", peso: 88, gordura: 26, cintura: 98, biaMme: 34 });
+      st.avaliacoes.push({ alunoId: a.id, data: "2026-08-10", peso: 83, gordura: 21, cintura: 92, biaMme: 36 });
+      a.retorno = a.retorno || {};
+      a.retorno.cargas = { "Supino reto": [{ d: "2026-08-01", kg: 60, r: 10 }, { d: "2026-08-15", kg: 70, r: 10 }] };
+      const hj = new Date();
+      const dISO = (n) => new Date(hj.getTime() - n * 864e5).toISOString().slice(0, 10);
+      a.retorno.feitos = {}; for (let i = 1; i <= 10; i++) a.retorno.feitos[dISO(i * 2)] = 1;
+      S.write("ptStudio", st);
+      const txt = window.__montaDadosIA(st, a, "Hipertrofia", "academia completa");
+      const bom = { mes: [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n })) };
+      const hoje = new Date().toISOString().slice(0, 10);
+      const mais = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+      const pl = window.__peneiraMes(bom);
+      return {
+        temAval: /AVALIA[ÇC][ÃA]O F[ÍI]SICA \(/.test(txt),
+        temDelta: /MUDOU DESDE/.test(txt) && /gordura -5/.test(txt.replace(",", ".")),
+        temCargas: /CARGAS DE HOJE/.test(txt) && /Supino reto 70 kg/.test(txt),
+        temFreq: /FREQU[ÊE]NCIA REAL: 10 treinos/.test(txt),
+        semAval: /nenhuma registrada/.test(window.__montaDadosIA({ alunos: [], avaliacoes: [] }, { id: "x", nome: "y" }, "o", "e")),
+        quatro: pl && pl.semanas.length === 4,
+        tres: window.__peneiraMes({ mes: [{ n: 1, foco: "a", ajuste: "b" }] }),
+        semMes: window.__peneiraMes({}),
+        s1: window.__semanaMes({ geradoEm: hoje, semanas: [1, 2, 3, 4] }),
+        s2: window.__semanaMes({ geradoEm: new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
+        s4: window.__semanaMes({ geradoEm: new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
+        futuro: window.__semanaMes({ geradoEm: mais(5), semanas: [1, 2, 3, 4] }),
+      };
+    });
+    ok(mes.temAval && mes.temDelta,
+      "🏁 a IA recebe a avaliação física e o quanto mudou desde a primeira (peso, gordura, cintura, massa magra)");
+    ok(mes.temCargas && mes.temFreq,
+      "a IA recebe o que o aluno levanta HOJE e quantas vezes ele treinou de verdade nos últimos 28 dias");
+    ok(mes.semAval, "sem avaliação registrada, o texto diz isso — a IA não estima composição corporal");
+    ok(mes.quatro && mes.tres === null && mes.semMes === null,
+      "o plano do mês só vale com as 4 semanas completas (resposta antiga ou torta é descartada)");
+    ok(mes.s1 === 1 && mes.s2 === 2 && mes.s4 === 4 && mes.futuro === 1,
+      "a semana atual sai da data em que a IA montou (passou do mês, fica na 4; data no futuro, fica na 1)");
+    // a chat-envia manda os TRÊS formatos devolverem o plano do mês
+    const fn = require("fs").readFileSync(__dirname + "/../supabase/functions/chat-envia/index.ts", "utf8");
+    ok((fn.match(/MES_REGRA/g) || []).length === 4 && (fn.match(/"mes":\[/g) || []).length === 3,
+      "a chat-envia pede o plano do mês nos três formatos (musculação, circuito e corrida)");
+    ok(/EXATAMENTE 4 objetos/.test(fn) && /semana 4 deve ser SEMPRE mais leve/i.test(fn),
+      "a regra do mês exige 4 semanas e manda a última ser deload — nunca a mais pesada");
+  }
   // --- R2: placar de circuito por tipo (telas 07/08/09) ---
   {
     const r2 = await pApp.evaluate(() => {
