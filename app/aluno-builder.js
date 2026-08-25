@@ -234,6 +234,8 @@
       "input,select,textarea{background:var(--bg2);border:1.5px solid rgba(255,255,255,.07);border-radius:12px;color:#fff;padding:12px 14px;font-family:inherit;font-size:15px}" +
       "input:focus,select:focus,textarea:focus{outline:none;border-color:var(--cor)}" +
       ".btnx{background:var(--cor);color:#fff;border:none;border-radius:99px;padding:13px 24px;font-weight:800;letter-spacing:.02em;font-size:13.5px;font-family:inherit;cursor:pointer;box-shadow:0 10px 30px -14px rgba(var(--cor-rgb),.9)}" +
+      // botão do questionário: mora DENTRO da faixa roxa, então vira branco
+      ".qsbt{display:block;width:100%;min-height:52px;margin-top:16px;background:#fff;color:var(--cor-esc,#3b2b63);font-size:15.5px;box-shadow:none}" +
       ".kv{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-bottom:none}" +
       ".vz{color:#6e6a78;font-size:13px;text-align:center;padding:14px 0}" +
       // "Como foi o treino?" aparece em dois fundos: o card escuro da área de
@@ -1461,17 +1463,19 @@
       "<div id='qsTopN' style='font-size:26px;font-weight:900;letter-spacing:-.02em;margin-top:3px;'>Tudo em dia</div>" +
       "<div id='qsTopS' style='font-size:12.5px;color:rgba(255,255,255,.85);margin-top:4px;'>o que seu personal mandar aparece aqui</div></div></div>" +
       (qa ? "<div class='cardx' id='qaCard'><div id='qaBox' class='vz'>Carregando…</div></div>" : "") +
-      "<div class='cardx' id='ckCard'><h2>Check-in da semana</h2>" +
+      /* UM card por questionário (v610). Antes eram três caixas empilhadas pra
+       * dizer "responde isso": a faixa roxa, um parágrafo explicando pra que
+       * serve e a lista de tudo o que ia ser perguntado. O aluno já sabe pra
+       * que serve, e a lista de perguntas ele vê na hora de responder. */
+      "<div class='cardx' id='ckCard'>" +
       "<div id='ckOk' class='vz' style='display:none;'>Check-in enviado — seu personal já viu. Até semana que vem!</div>" +
       "<div id='ckForm'>" +
-      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px;color:#fff;'>" +
+      "<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px 18px;color:#fff;'>" +
       "<div style='font-size:9.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);'>Toda semana</div>" +
       "<div style='font-size:24px;font-weight:900;letter-spacing:-.02em;margin-top:4px;'>Como foi a sua semana?</div>" +
-      "<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:4px;'>3 perguntas · leva 30 segundos</div></div>" +
-      "<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;font-size:14px;line-height:1.5;color:#d6d2df;'>Seu personal usa o check-in pra ajustar a sua próxima semana." +
-      "<div style='border-top:1px solid var(--bg11);margin-top:10px;padding-top:10px;font-size:13px;color:#8a8695;'>🔒 só o seu personal vê as suas respostas</div></div>" +
-      "<button class='btnx' id='ckAbrir' style='width:100%;min-height:58px;font-size:16px;margin-top:14px;'>Fazer meu check-in</button>" +
-      "<div id='ckRet' style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:8px;'>você pode parar no meio e voltar depois</div></div></div>" +
+      "<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:4px;'>3 perguntas · leva 30 segundos</div>" +
+      "<button class='btnx qsbt' id='ckAbrir'>Fazer meu check-in</button>" +
+      "</div></div></div>" +
       // area vazia tem que dizer que esta vazia: o check-in ja respondido some
       // (pedido do Raphael), e sem isso sobrava so a faixa roxa sozinha
       "<div class='cardx' id='qsVazio' style='display:none;'>" +
@@ -1773,8 +1777,7 @@
       "fx.addEventListener('input',function(e){if(e.target.id==='ckPeso'){st9.peso=e.target.value;dSalva();}" +
       "if(e.target.id==='ckTexto'){st9.texto=e.target.value;dSalva();}});" +
       "fx.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;" +
-      "if(b.id==='ckX'){dSalva();fecha();var r9=document.getElementById('ckRet');" +
-      "if(r9&&(st9.nota||st9.peso||st9.texto))r9.textContent='Você parou na pergunta '+(st9.i+1)+' de '+T+' — dá pra continuar.';" +
+      "if(b.id==='ckX'){dSalva();fecha();" +
       "var ab=document.getElementById('ckAbrir');if(ab&&(st9.nota||st9.peso||st9.texto))ab.textContent='Continuar de onde parou';return;}" +
       "if(b.id==='ckAnt'){st9.i=Math.max(0,st9.i-1);pinta();return;}" +
       "if(b.id==='ckProx'){avanca();return;}" +
@@ -1782,8 +1785,7 @@
       "pinta();}" +
       "abre.addEventListener('click',abreFluxo);window.__ckFluxo=abreFluxo;" +
       "var d9=L('ptckdraft',{})[semanaCK()];" +
-      "if(d9&&(d9.nota||d9.peso||d9.texto)){abre.textContent='Continuar de onde parou';" +
-      "var r8=document.getElementById('ckRet');if(r8)r8.textContent='Você parou na pergunta '+((+d9.i||0)+1)+' de '+T+' — dá pra continuar.';}" +
+      "if(d9&&(d9.nota||d9.peso||d9.texto))abre.textContent='Continuar de onde parou';" +
       "})();" +
       "pintaSemana();mostraRpe();" +
       // onboarding de 30 segundos: 3 respostas que personalizam o acompanhamento
@@ -4464,20 +4466,18 @@
         // responder/destrancar também atualiza o badge do menu (tela 01)
         "function pinta(){pinta0();if(window.__menuBadges)window.__menuBadges();}" +
         "function pinta0(){var resp=L('ptqa',{});el.className='';el.style.textAlign='left';" +
-        "var cab=\"<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px;color:#fff;'>\"+" +
+        // a faixa roxa É o card: o que vier em "dentro" fica junto dela
+        "function cabQ(dentro){return \"<div style='background:linear-gradient(160deg,var(--cor),var(--cor2));border-radius:22px;padding:18px 20px;color:#fff;'>\"+" +
         "\"<div style='font-size:9.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);'>Do seu personal pra você</div>\"+" +
         "\"<div style='font-size:24px;font-weight:900;letter-spacing:-.02em;margin-top:4px;'>\"+eh(QUESTAPP.nome)+'</div>'+" +
-        "\"<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:4px;'>\"+pl(T,'pergunta','perguntas')+' · leva 1 minuto</div></div>';" +
+        "\"<div style='font-size:13.5px;color:rgba(255,255,255,.85);margin-top:4px;'>\"+pl(T,'pergunta','perguntas')+' · leva 1 minuto</div>'+(dentro||'')+'</div>';}" +
+        "var cab=cabQ('');" +
         "if(hj<desde){el.innerHTML=cab+\"<div style='border:1.5px dashed var(--bg11);border-radius:18px;padding:14px 16px;margin-top:12px;'><b style='font-size:14.5px;'>Trancado até \"+diaBr(desde)+\"</b><div style='font-size:12.5px;color:#8a8695;margin-top:2px;'>seu personal libera nesse dia — volta aqui</div></div>\";return;}" +
         "if(resp[chave]){el.innerHTML=cab+\"<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;font-size:14px;color:#d6d2df;'>Respondido — seu personal já recebeu.\"+(QUESTAPP.repete?' O próximo libera dia <b>'+diaBr(isoAdd(per,7))+'</b>.':'')+'</div>';return;}" +
         "var d0=L('ptqadraft',{})[chave];var temD=!!(d0&&(Object.keys(d0.R||{}).length||Object.keys(d0.T||{}).length));" +
-        "el.innerHTML=cab+" +
-        "\"<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;font-size:14px;line-height:1.5;color:#d6d2df;'>Seu personal usa as respostas pra ajustar o treino da próxima semana.\"+" +
-        "\"<div style='border-top:1px solid var(--bg11);margin-top:10px;padding-top:10px;font-size:13px;color:#8a8695;'>🔒 só o seu personal vê as suas respostas</div></div>\"+" +
-        "\"<div style='background:var(--bg2);border-radius:18px;padding:14px 16px;margin-top:12px;'><div class='wpk'>O que ele vai perguntar</div>\"+" +
-        "QUESTAPP.ps.map(function(p){return \"<div style='font-size:14px;color:#d6d2df;padding:3px 0;'>\"+eh(p.texto)+'</div>';}).join('')+'</div>'+" +
-        "\"<button class='btnx' id='qaAbrir' style='width:100%;min-height:58px;font-size:16px;margin-top:14px;'>\"+(temD?'Continuar de onde parou':'Responder agora')+'</button>'+" +
-        "\"<div style='text-align:center;font-size:12.5px;color:#6e6a78;margin-top:8px;'>você pode parar no meio e voltar depois</div>\";}" +
+        // o botão entra DENTRO da faixa roxa: um card só, sem o parágrafo de
+        // "pra que serve" nem a lista de perguntas (que ele vê ao responder)
+        "el.innerHTML=cabQ(\"<button class='btnx qsbt' id='qaAbrir'>\"+(temD?'Continuar de onde parou':'Responder agora')+'</button>');}" +
         "var fx=null,stq=null;" +
         "function fechaFluxo(){if(fx){fx.remove();fx=null;}pinta();}" +
         "function respondida(i){var p=QUESTAPP.ps[i]||{};if(p.tipo==='emoji'||p.tipo==='linear')return stq.R[i]!=null;return true;}" +

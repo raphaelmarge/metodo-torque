@@ -251,6 +251,17 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Questionário vira UM card só** (a partir da v610): cada questionário eram
+TRÊS caixas empilhadas pra dizer "responde isso" — a faixa roxa, um parágrafo
+de "seu personal usa as respostas pra…" + 🔒, e a lista inteira do que ia ser
+perguntado. O Raphael chamou de poluído e tinha razão. Agora a faixa roxa **é**
+o card: rótulo, nome, "N perguntas · leva X" e o botão branco (`.qsbt`) dentro
+dela. Saíram o parágrafo, a lista de perguntas (o aluno vê ao responder) e o
+`#ckRet` — o botão já diz *Continuar de onde parou*, que é a mesma informação.
+A privacidade continua dita uma vez, na faixa do topo (`#qsTopS`). No builder,
+`cab` virou `cabQ(dentro)` pra o botão entrar DENTRO da faixa em vez de um
+`replace` no HTML pronto.
+
 **Demo do aluno com questionário** (a partir da v609): a área Questionários da
 demo mostrava só o check-in — quem assistia não via o recurso que o professor
 mais usa. O `regen-demo.js` passa a dar ao Alex um `questApp` de 4 perguntas

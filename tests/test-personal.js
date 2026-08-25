@@ -4057,9 +4057,15 @@ async function abaPt(p, a) {
     const conv = await pQ.evaluate(() => {
       window.__trocaSec("chat");
       const el = document.getElementById("qaBox");
-      return /Responder agora/.test(el.textContent) && /O que ele vai perguntar/i.test(el.textContent) && /só o seu personal vê/.test(el.textContent);
+      // v610: UM card só — faixa roxa com nome, quantas perguntas e o botão.
+      // O parágrafo de "pra que serve" e a lista de perguntas saíram (poluíam).
+      return { txt: el.textContent, caixas: el.querySelectorAll("div[style*='background:var(--bg2)']").length,
+        bt: !!el.querySelector("#qaAbrir") };
     });
-    ok(conv, "📝 R3: o card do questionário virou o convite (o que ele vai perguntar + Responder agora)");
+    ok(/Responder agora/.test(conv.txt) && /perguntas · leva/.test(conv.txt) && conv.bt,
+      "📝 o card do questionário é o convite: nome, quantas perguntas e o botão");
+    ok(!/O que ele vai perguntar/i.test(conv.txt) && conv.caixas === 0,
+      "📝 e nada além disso — sem a lista de perguntas nem a caixa de explicação");
     const fluxo = await pQ.evaluate(async () => {
       const out = {};
       // as páginas da suíte dividem o MESMO localStorage — guarda pra devolver
