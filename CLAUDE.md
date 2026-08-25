@@ -251,6 +251,18 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Comunidade não recarregava sozinha** (conserto na v613): o timer de 45 s do
+feed fazia `if(SEC==='feed')carrega()`, mas `SEC` é **private do IIFE do menu**
+(declarado lá embaixo, noutra função) — então o timer estourava
+`SEC is not defined` a cada rodada e a Comunidade só mostrava post novo quando
+o aluno reabria o app. Ninguém via porque o erro só acontece 45 s depois de
+abrir. Agora a checagem é no DOM
+(`document.querySelector("[data-sec='feed']:not([data-sec-off])")`), que é a
+mesma verdade e é pública. Teste novo (**⏱ nenhum timer do app estoura ao
+rodar**): o `addInitScript` embrulha o `setInterval`, guarda cada callback e
+chama todos — vazamento de escopo em timer aparece na hora, sem esperar
+45 segundos. O painel tem 8 timers e passou pela mesma checagem.
+
 **Ver todas / Mostrar menos das Conquistas** (conserto na v612): a grade
 retrátil trocava o texto do botão e a classe `.enc`, mas **não escondia medalha
 nenhuma** — o botão de cada medalha nasce com `display:block` no PRÓPRIO

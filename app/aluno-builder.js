@@ -4464,7 +4464,11 @@
           "if(r&&r.ok&&Array.isArray(r.posts)){try{Sv('ptfeed',r.posts.map(function(p){var q=Object.assign({},p);delete q.foto;return q;}));}catch(e){}pinta(r.posts);return;}" +
           "pinta(L('ptfeed',[]));}).catch(function(){carregando=false;pinta(L('ptfeed',[]));});}" +
           "pinta(L('ptfeed',[]));carrega();rankSemana();" +
-          "setInterval(function(){if(SEC==='feed')carrega();},45000);})();"
+          /* Olha o DOM em vez da variável SEC: SEC é private do IIFE do menu
+           * (lá embaixo), então aqui ela nunca existiu — o timer estourava
+           * "SEC is not defined" a cada 45 s e a Comunidade nunca recarregava
+           * sozinha. O atributo data-sec-off é a mesma verdade, e é público. */
+          "setInterval(function(){if(document.querySelector(\"[data-sec='feed']:not([data-sec-off])\"))carrega();},45000);})();"
         : "") +
       // questionário do personal: trancado até a data de liberação; respostas
       // vão pela RPC pública app_quest_responde e viram métricas no perfil
