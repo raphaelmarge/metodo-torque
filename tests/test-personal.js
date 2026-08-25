@@ -3825,7 +3825,10 @@ async function abaPt(p, a) {
       document.getElementById("wfFeito").click();
       await new Promise((r) => setTimeout(r, 150));
       out.um = le();
-      for (let i = 0; i < 8; i++) { const f = document.getElementById("wfFeito"); if (f) f.click(); await new Promise((r) => setTimeout(r, 70)); }
+      // clica EXATAMENTE o que falta pra fechar a volta (o circuito de teste
+      // tem 3 movimentos; um número fixo de cliques fecharia mais de uma)
+      const faltam = out.um.movs - w.gi;
+      for (let i = 0; i < faltam; i++) { document.getElementById("wfFeito").click(); await new Promise((r) => setTimeout(r, 80)); }
       out.volta = le();
       document.querySelectorAll("[data-wfmov]")[1].click();
       await new Promise((r) => setTimeout(r, 150));
