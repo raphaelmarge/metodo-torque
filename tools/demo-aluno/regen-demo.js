@@ -41,6 +41,27 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
       return e.id;
     };
     const alex = { id: "demoAlx", nome: "Alex Silva", appTokenP: "demo-token-comunidade", metaSemana: 4, altura: 178, objetivo: "Ganhar músculo" };
+    /* questionário do personal esperando resposta: sem isso a área Questionários
+     * da demo mostrava só o check-in da semana, e quem assiste não via o recurso
+     * que o professor mais usa. Liberado ONTEM pra já estar aberto na tela. */
+    alex.questApp = {
+      nome: "Como você está?",
+      desde: new Date(Date.now() - 864e5).toISOString().slice(0, 10),
+      repete: true,
+      enviadoEm: new Date(Date.now() - 864e5).toISOString(),
+      ps: [
+        { s: "SONO", texto: "Como andou o seu sono esta semana?", tipo: "emoji", mm: false, ops: [
+          { e: "😴", r: "Muito ruim", p: 0 }, { e: "😕", r: "Ruim", p: 2.5 }, { e: "😐", r: "Normal", p: 5 },
+          { e: "🙂", r: "Bom", p: 7.5 }, { e: "😃", r: "Ótimo", p: 10 },
+        ] },
+        { s: "DOR", texto: "Sentiu alguma dor treinando? (0 = nenhuma, 10 = muita)", tipo: "linear", mm: true, ops: [] },
+        { s: "ENER", texto: "E a energia pro treino?", tipo: "emoji", mm: false, ops: [
+          { e: "🔋", r: "No fim", p: 0 }, { e: "😑", r: "Fraca", p: 3.3 }, { e: "💪", r: "Boa", p: 6.6 },
+          { e: "🔥", r: "Lá em cima", p: 10 },
+        ] },
+        { s: "OBS", texto: "Quer me contar mais alguma coisa?", tipo: "texto", mm: false, ops: [] },
+      ],
+    };
     st.avaliacoes = (st.avaliacoes || []).filter((v) => v.alunoId !== "demoAlx").concat(
       [["2025-06-27", 86.4, 24.5, 96, 33], ["2025-08-26", 85.6, 23.9, 95, 33.2], ["2025-10-25", 84.9, 23.2, 93.5, 33.5],
        ["2025-12-24", 84.1, 22.6, 92, 33.9], ["2026-02-22", 83.0, 21.8, 90.5, 34.2], ["2026-04-23", 81.9, 21.1, 89, 34.6],
