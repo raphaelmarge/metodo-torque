@@ -4147,6 +4147,53 @@ async function abaPt(p, a) {
     "engrenagem da corrida tem o seletor Estilo do mapa e guarda a escolha no aparelho");
   ok(/Meta: 5 km/.test(nrc.metaBtn) && /Meta: 5 km/.test(nrc.metaInfo), "pill Defina uma meta configura a corrida livre (5 km)");
   ok(nrc.cfgSalva && nrc.cfgSalva.cd === 5, "engrenagem salva as configurações da corrida (contagem regressiva de 5s)");
+  {
+    // player guiado de cardio (v597): o treino prescrito vira uma fila de
+    // blocos — aquecimento, o miolo e a volta à calma — com voz e vibração
+    const gc = await pCr.evaluate(async () => {
+      const G = window.__crGuia, out = {};
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
+      out.cont = G.monta({ n: "Rodagem leve", t: "continuo", d: 5, tp: 30, p: "6:00", m: "corrida" })
+        .map((x) => x.k + ":" + x.s + (x.km ? ":" + x.km : ""));
+      out.int = G.monta({ n: "Tiros", t: "intervalado", r: 6, ti: 60, de: 90, m: "corrida" }).map((x) => x.k).join("");
+      out.livre = G.monta(null);
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0, bl: 0 }));
+      out.desligado = G.monta({ n: "x", t: "continuo", d: 5 });
+      localStorage.setItem("ptcrCfg", JSON.stringify({ cd: 0, fb: "bip", ap: 0 }));
+      return out;
+    });
+    ok(gc.cont.join(" ") === "aq:300 c:1800:5 vc:180",
+      "cardio contínuo vira 3 blocos: aquecimento 5 min, o treino do professor e volta à calma 3 min");
+    ok(gc.int === "aq" + "fl".repeat(6) + "vc",
+      "cardio intervalado vira aquecimento + um bloco por tiro (forte e leve) + volta à calma");
+    ok(gc.livre === null && gc.desligado === null,
+      "corrida livre não ganha blocos, e o aluno desliga a moldura na engrenagem");
+    const gr = await pCr.evaluate(async () => {
+      document.getElementById("crZera").click();
+      document.querySelector("[data-cbstart]").click();
+      await new Promise((r) => setTimeout(r, 150));
+      document.getElementById("crGo").click();
+      await new Promise((r) => setTimeout(r, 700));
+      const out = {
+        caixa: document.getElementById("crBlocoBox").style.display,
+        trilho: document.getElementById("crTrilho").children.length,
+        fase: document.getElementById("crFase").textContent,
+        depois: document.getElementById("crBlocoD").textContent,
+        relogio: document.getElementById("crBlocoT").textContent,
+      };
+      window.__crGuia.pula();
+      await new Promise((r) => setTimeout(r, 300));
+      out.fase2 = document.getElementById("crFase").textContent;
+      out.bi = window.__cr.bi;
+      document.getElementById("crZera").click();
+      out.sumiu = document.getElementById("crBlocoBox").style.display;
+      return out;
+    });
+    ok(gr.caixa === "block" && gr.trilho === 3 && /AQUECIMENTO/.test(gr.fase) && /^4:5\d$/.test(gr.relogio),
+      "ao começar o treino prescrito o player abre no aquecimento, com o trilho dos blocos e o relógio andando");
+    ok(/depois:/.test(gr.depois) && gr.bi === 1 && !/AQUECIMENTO/.test(gr.fase2) && gr.sumiu === "none",
+      "a linha diz qual é o próximo bloco, Pular avança de verdade e zerar apaga o player");
+  }
   // modo tela cheia estilo NRC: painel de cor chapada ao iniciar; mapa é a 2ª página;
   // métrica gigante troca com toque; cadeado bloqueia; pausar mostra mapa + grade
   const full = await pCr.evaluate(async () => {

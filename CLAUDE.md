@@ -178,6 +178,23 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**Player guiado de cardio** (a partir da v597): o treino de corrida/bike
+prescrito vira uma FILA de blocos — `crMontaBlocos(plano)` devolve
+`[{k,n,d,s,km}]`: aquecimento (`aq`, 5 min), o miolo (`c` contínuo, ou `f`/`l`
+alternando um par por tiro) e a volta à calma (`vc`, 3 min). A moldura entra
+sozinha, do mesmo jeito que o aquecimento da musculação já entrava (o professor
+prescreve o miolo, o app põe a borda) e o aluno desliga em Corrida →
+engrenagem → *Aquecimento e volta à calma* (`ptcrCfg.bl`). Corrida LIVRE não
+ganha blocos. Quem fecha o bloco é a **distância quando o GPS está ligado**, e
+o tempo quando não está — com `5 km em 30 min`, fechar no primeiro cortaria o
+treino no meio. Na tela cheia entra o `#crBlocoBox` (trilho `#crTrilho` +
+`#crBlocoD` "depois: X" + `#crBlocoT` relógio + `#crPulaF`); a faixa
+`#crFase`/`#crInfo` passa a falar do bloco. Troca de bloco fala em voz
+(`crFala`) ou bipa, conforme `ptcrCfg.fb`, e vibra. Estado em
+`cr.blocos/bi/bt0/bkm0`, limpo em `crZera`, `crFinaliza` e ao trocar de treino;
+a pausa automática não corta um bloco guiado. Ganchos: `window.__crGuia`
+(`monta`, `pula`, `atual`).
+
 **Mapa da corrida com estilo** (a partir da v592): o mapa do GPS é canvas puro
 (sem Leaflet), e agora tem `CRMAPS` com cinco estilos — `escuro`/`claro`/
 `colorido` (CARTO, com `@2x` quando a tela é retina), `satelite` (Esri World
