@@ -251,6 +251,22 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Lembrete de questionário e check-in** (a partir da v608): a régua de push
+avisava treino do dia, aniversário, marco, aluno sumido e cobrança — mas
+questionário liberado e check-in esperando não avisavam nada, e o aluno só
+descobria se abrisse o app por conta. Entrou `pushPendencias()` no
+`personal.html`, **fora** da `rotinaDiariaPush`: pra não cutucar quem já
+respondeu ela precisa LER a nuvem (`app_checkin` desta semana + `app_quest`
+desde a liberação), e a rotina antiga é síncrona (os testes contam com isso).
+Regras: o questionário avisa no dia em que libera (com `repete`, o período
+corrente anda de 7 em 7 dias — **mesma conta do app**); o check-in avisa **da
+sexta em diante** (`dSem >= 4`, 0 = segunda), no máximo 1 por semana. Chaves do
+`pushLog`: `quest|<alunoId>|<per>` e `ckin|<alunoId>|<semana>`. **Leitura que
+falha = ninguém recebe nada** (`motivo: "sem-leitura"`): um "seu check-in está
+esperando" pra quem já mandou é pior do que aviso nenhum — e a chamada da nuvem
+está dentro de `try` porque a função roda num timer. Gancho:
+`window.__pendPT`.
+
 **Ranking da turma sai das Conquistas** (a partir da v607): o card
 `#cqRank` ("Ranking da turma · agosto") repetia o **Ranking da semana** que a
 Comunidade já mostra (`#fdRank`) e, no meio das Conquistas — que são do aluno

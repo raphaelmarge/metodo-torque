@@ -1868,6 +1868,67 @@ async function abaPt(p, a) {
     localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
   });
 
+  // --- push de check-in e questionário esperando resposta ---
+  const pendQ = await p.evaluate(async () => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const j = st.alunos.find((a) => a.nome === "João Cliente");
+    j.appTokenP = "tok-pend";
+    j.questApp = { nome: "Dor e sono", ps: [{ texto: "Dormiu bem?", tipo: "emoji" }], desde: hoje, repete: false, enviadoEm: hoje };
+    st.pushLog = {};
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st));
+    // nuvem falsa: devolve o que cada tabela "respondeu"
+    const mockCloud = (ck, qu, erro) => {
+      const alvo = (nome) => {
+        const linhas = nome === "app_checkin" ? ck : qu;
+        const enc = { select: () => enc, gte: () => enc, in: () => enc,
+          limit: () => Promise.resolve(erro ? { error: { message: "off" } } : { data: linhas }) };
+        return enc;
+      };
+      return () => ({ aid: "acad-1", client: { from: alvo, auth: { getSession: async () => ({ data: { session: { access_token: "t" } } }) } } });
+    };
+    window.__cloudOrigP = window.MTStore.cloud;
+    window.__mtCloudOrigP = window.MT_CLOUD;
+    window.__fetchOrigP = window.fetch;
+    window.MT_CLOUD = { url: "https://mock.local", anonKey: "k" };
+    window.fetch = async (url, opts) => { window.__pu.push(JSON.parse(opts.body)); return { ok: true }; };
+    const roda = async (ck, qu, erro) => {
+      window.__pu = [];
+      const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      st2.pushLog = {};
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+      window.MTStore.cloud = mockCloud(ck, qu, erro);
+      const r = await window.__pendPT();
+      await new Promise((res) => setTimeout(res, 150));
+      return { enviados: r.enviados, motivo: r.motivo || "", titulos: window.__pu.map((x) => x.titulo) };
+    };
+    // 1) nada respondido
+    const semNada = await roda([], []);
+    // 2) tudo respondido (check-in desta semana + questionário de hoje)
+    const respondeu = await roda([{ token: "tok-pend", dia: hoje }], [{ token: "tok-pend", criado: hoje + "T10:00:00Z" }]);
+    // 3) a leitura da nuvem falhou
+    const cego = await roda([], [], true);
+    window.fetch = window.__fetchOrigP;
+    window.MTStore.cloud = window.__cloudOrigP;
+    window.MT_CLOUD = window.__mtCloudOrigP;
+    const st3 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+    const j3 = st3.alunos.find((a) => a.nome === "João Cliente");
+    delete j3.appTokenP; delete j3.questApp; st3.pushLog = {};
+    localStorage.setItem("mtapp:ptStudio", JSON.stringify(st3));
+    return { semNada, respondeu, cego, dSem: (new Date(hoje + "T12:00").getDay() + 6) % 7 };
+  });
+  ok(pendQ.semNada.titulos.includes("Dor e sono"),
+    "questionário liberado e sem resposta avisa o aluno pelo push");
+  // o check-in só cutuca da sexta em diante — o teste confere o lado certo do dia
+  ok(pendQ.dSem >= 4
+    ? pendQ.semNada.titulos.includes("Seu check-in da semana")
+    : !pendQ.semNada.titulos.includes("Seu check-in da semana"),
+    "check-in da semana avisa da sexta em diante (hoje: dia " + pendQ.dSem + " da semana)");
+  ok(pendQ.respondeu.enviados === 0,
+    "quem JÁ respondeu não recebe aviso nenhum");
+  ok(pendQ.cego.enviados === 0 && pendQ.cego.motivo === "sem-leitura",
+    "se a nuvem não responde, ninguém é cutucado (melhor calado que errado)");
+
   // aniversários dos próximos 7 dias no Dashboard
   await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
