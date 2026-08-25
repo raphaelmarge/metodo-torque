@@ -3785,6 +3785,96 @@ async function abaPt(p, a) {
     ok(sug.semNada === 0 && sug.semAlvo === 0,
       "sem histórico ou sem repetições prescritas, nenhuma sugestão é inventada");
   }
+  {
+    // IA do MÊS (v604): perfil mais fundo + progressão de 4 semanas
+    const mes = await p.evaluate(() => {
+      // estúdio SINTÉTICO: o do teste já tem avaliações próprias e mascararia
+      // os números que este bloco quer conferir
+      const hj = new Date();
+      const dISO = (n) => new Date(hj.getTime() - n * 864e5).toISOString().slice(0, 10);
+      const feitos = {}; for (let i = 1; i <= 10; i++) feitos[dISO(i * 2)] = 1;
+      const a = {
+        id: "aIA", nome: "Teste IA", metaSemana: 4, anamnese: { nivel: "intermediário", dias: 4 },
+        retorno: {
+          cargas: { "Supino reto": [{ d: "2026-08-01", kg: 60, r: 10 }, { d: "2026-08-15", kg: 70, r: 10 }] },
+          feitos: feitos,
+        },
+      };
+      const st = { alunos: [a], exercicios: [], exFav: [], avaliacoes: [
+        { alunoId: "aIA", data: "2026-05-10", peso: 88, gordura: 26, cintura: 98, biaMme: 34 },
+        { alunoId: "aIA", data: "2026-08-10", peso: 83, gordura: 21, cintura: 92, biaMme: 36 },
+      ] };
+      const txt = window.__montaDadosIA(st, a, "Hipertrofia", "academia completa");
+      const bom = { mes: [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n })) };
+      const hoje = new Date().toISOString().slice(0, 10);
+      const mais = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+      const pl = window.__peneiraMes(bom);
+      return {
+        temAval: /AVALIA[ÇC][ÃA]O F[ÍI]SICA \(10\/08\/2026\): peso 83 kg · gordura 21%/.test(txt),
+        temDelta: /MUDOU DESDE 10\/05\/2026/.test(txt) && /peso -5 kg/.test(txt) && /% de gordura -5%/.test(txt),
+        temCargas: /CARGAS DE HOJE/.test(txt) && /Supino reto 70 kg/.test(txt),
+        temFreq: /FREQU[ÊE]NCIA REAL: 10 treinos/.test(txt),
+        semAval: /nenhuma registrada/.test(window.__montaDadosIA({ alunos: [], avaliacoes: [] }, { id: "x", nome: "y" }, "o", "e")),
+        quatro: pl && pl.semanas.length === 4,
+        tres: window.__peneiraMes({ mes: [{ n: 1, foco: "a", ajuste: "b" }] }),
+        semMes: window.__peneiraMes({}),
+        s1: window.__semanaMes({ geradoEm: hoje, semanas: [1, 2, 3, 4] }),
+        s2: window.__semanaMes({ geradoEm: new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
+        s4: window.__semanaMes({ geradoEm: new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10), semanas: [1, 2, 3, 4] }),
+        futuro: window.__semanaMes({ geradoEm: mais(5), semanas: [1, 2, 3, 4] }),
+      };
+    });
+    ok(mes.temAval && mes.temDelta,
+      "🏁 a IA recebe a avaliação física e o quanto mudou desde a primeira (peso, gordura, cintura, massa magra)");
+    ok(mes.temCargas && mes.temFreq,
+      "a IA recebe o que o aluno levanta HOJE e quantas vezes ele treinou de verdade nos últimos 28 dias");
+    ok(mes.semAval, "sem avaliação registrada, o texto diz isso — a IA não estima composição corporal");
+    ok(mes.quatro && mes.tres === null && mes.semMes === null,
+      "o plano do mês só vale com as 4 semanas completas (resposta antiga ou torta é descartada)");
+    ok(mes.s1 === 1 && mes.s2 === 2 && mes.s4 === 4 && mes.futuro === 1,
+      "a semana atual sai da data em que a IA montou (passou do mês, fica na 4; data no futuro, fica na 1)");
+    // a chat-envia manda os TRÊS formatos devolverem o plano do mês
+    const fn = require("fs").readFileSync(__dirname + "/../supabase/functions/chat-envia/index.ts", "utf8");
+    ok((fn.match(/MES_REGRA/g) || []).length === 4 && (fn.match(/"mes":\[/g) || []).length === 3,
+      "a chat-envia pede o plano do mês nos três formatos (musculação, circuito e corrida)");
+    ok(/EXATAMENTE 4 objetos/.test(fn) && /semana 4 deve ser SEMPRE mais leve/i.test(fn),
+      "a regra do mês exige 4 semanas e manda a última ser deload — nunca a mais pesada");
+    ok((fn.match(/BRIEF_REGRA/g) || []).length === 4 && /PRIORIDADE MÁXIMA/.test(fn) && /regra absoluta/.test(fn),
+      "a chat-envia manda a leitura do professor vencer os números, e as adaptações serem regra absoluta");
+  }
+  {
+    // ✍️ a leitura do professor entra no prompt, na frente de tudo
+    const br = await p.evaluate(() => {
+      const S = window.MTStore, st = S.read("ptStudio", {});
+      const id = st.alunos[0].id;
+      window.__trAba("auto");
+      document.getElementById("taAluno").value = id;
+      window.__brief.carrega();
+      const out = { vazioChip: document.getElementById("taBriefChip").textContent };
+      document.getElementById("brDesejo").value = "ABCD em vez de ABC, nada acima de 50 minutos";
+      document.getElementById("brQuer").value = "quer mais peito, odeia esteira";
+      document.getElementById("brAdapta").value = "ombro direito trava acima de 90 graus";
+      document.getElementById("brLeitura").value = "estagnou no supino ha 6 semanas";
+      window.__brief.salva();
+      const st2 = S.read("ptStudio", {});
+      const a2 = st2.alunos.find((x) => x.id === id);
+      out.guardou = !!(a2.briefIA && a2.briefIA.desejo && a2.briefIA.adapta);
+      out.chip = document.getElementById("taBriefChip").textContent;
+      out.txt = window.__briefIA(a2);
+      out.noPrompt = window.__montaDadosIA(st2, a2, "Hipertrofia", "academia completa");
+      out.vazio = window.__briefIA({ id: "z" });
+      // devolve o aluno como estava
+      delete a2.briefIA; S.write("ptStudio", st2); window.__brief.carrega();
+      return out;
+    });
+    ok(br.guardou && /4 de 4 preenchidos/.test(br.chip) && /em branco/.test(br.vazioChip),
+      "🏁 a leitura do professor fica guardada NO ALUNO e o card diz quantos campos estão preenchidos");
+    ok(/REGRA ABSOLUTA/.test(br.txt) && /siga à risca/.test(br.txt) && /ombro direito trava/.test(br.txt),
+      "os quatro campos viram o bloco A LEITURA DO PROFESSOR, com as adaptações marcadas como regra absoluta");
+    ok(br.noPrompt.indexOf("A LEITURA DO PROFESSOR") < br.noPrompt.indexOf("ALUNO:"),
+      "a leitura do professor vai na FRENTE dos dados do aluno no prompt");
+    ok(br.vazio === "", "professor que não escreveu nada não gera bloco nenhum — o prompt fica como era");
+  }
   // --- R2: placar de circuito por tipo (telas 07/08/09) ---
   {
     const r2 = await pApp.evaluate(() => {
@@ -7046,7 +7136,7 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);var TRHEAD=/);
+      const m = html.match(/var PLANO=(.+?);var MESAPP=/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
       // receita R1 + telas finais: os treinos do dia viram carrossel de tela

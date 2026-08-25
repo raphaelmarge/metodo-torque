@@ -680,6 +680,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <select id="tplSel" style="min-width: 220px;"><option value="">Ficha pronta (modelo)…</option></select>
         <button class="btn" id="tplAplicar">Aplicar no aluno</button>
       </div>
+      <div id="mesBox"></div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
       <datalist id="p2sugestoes">
         <option>Esteira</option><option>Bike</option><option>Elíptico</option><option>Escada</option>
@@ -804,6 +805,24 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button class="btn sec" id="taIA" title="a IA lê a anamnese completa e prescreve o treino (precisa da conta na nuvem)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m12 3.5 2.3 5.3 5.7.5-4.3 3.8 1.3 5.6-5-3-5 3 1.3-5.6L4 9.3l5.7-.5z'/></svg> Gerar com IA</button>
         <button class="btn sec" id="taEvoluir" title="evolui séries/reps da ficha atual (progressão dupla)"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Evoluir semana</button>
       </div>
+      <details id="taBrief" style="margin-top: 12px; border: 1px solid var(--linha); border-radius: 12px;">
+        <summary style="padding: 11px 14px; cursor: pointer; font-weight: 700; font-size: 13.5px;">
+          ✍️ Sua leitura deste aluno <span class="muted" style="font-weight: 400; font-size: 12.5px;">— a IA obedece isso antes dos números</span>
+          <span id="taBriefChip" class="muted" style="font-size: 12px; margin-left: 6px;"></span>
+        </summary>
+        <div style="padding: 0 14px 14px;">
+          <p class="muted" style="margin: 0 0 10px; font-size: 12.5px;">Fica guardado neste aluno — escreva uma vez e vá ajustando. Deixe em branco o que não se aplica.</p>
+          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Como você quer este treino montado
+            <textarea id="brDesejo" rows="2" placeholder="ex.: ABCD em vez de ABC · terra romeno obrigatório · nada acima de 50 minutos · 2 dias de circuito no meio da semana"></textarea></label>
+          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">O que o aluno pede
+            <textarea id="brQuer" rows="2" placeholder="ex.: quer definir o abdômen pro verão, odeia esteira, pediu mais peito"></textarea></label>
+          <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Adaptações e limitações <b style="color: #f59e0b;">(a IA nunca desrespeita)</b>
+            <textarea id="brAdapta" rows="2" placeholder="ex.: ombro direito trava acima de 90° — nada de desenvolvimento militar · joelho sensível, leg press só até 90°"></textarea></label>
+          <label style="display: block; font-size: 12.5px;">Sua leitura do momento dele
+            <textarea id="brLeitura" rows="2" placeholder="ex.: estagnou no supino há 6 semanas, vou trocar pra halteres e subir volume · some quando o treino passa de 50 min"></textarea></label>
+          <p id="brStatus" class="muted" style="margin: 8px 0 0; font-size: 12px;"></p>
+        </div>
+      </details>
       <button class="btn" id="taEnviaApp" style="margin-top: 10px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
       <!-- caixa PRÓPRIA: dividindo a de cima, o recado da IA e o do envio se
            confundiam e um erro antigo parecia ser do botão recém-clicado -->
@@ -4810,6 +4829,38 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__congelados = { checa: checaAppsCongelados, render: renderCongelados, lista: alunosCongelados }; // testes
   setTimeout(checaAppsCongelados, 3500);
+  /* A leitura do professor sobre ESTE aluno: fica guardada nele (a.briefIA),
+   * não só na hora de gerar — no mês seguinte ele ajusta o que mudou em vez
+   * de reescrever tudo. É o que dá a "visão humana" pra IA. */
+  var BRIEF_CAMPOS = [["brDesejo", "desejo"], ["brQuer", "quer"], ["brAdapta", "adapta"], ["brLeitura", "leitura"]];
+  function carregaBrief() {
+    var id = $("taAluno") ? $("taAluno").value : "";
+    var a = id ? (load().alunos || []).find(function (x) { return x.id === id; }) : null;
+    var b = (a && a.briefIA) || {};
+    BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) el.value = b[c[1]] || ""; });
+    var n = BRIEF_CAMPOS.filter(function (c) { return (b[c[1]] || "").trim(); }).length;
+    var chip = $("taBriefChip");
+    if (chip) chip.textContent = !a ? "" : (n ? "· " + n + " de 4 preenchidos" : "· em branco");
+    var st9 = $("brStatus"); if (st9) st9.textContent = "";
+  }
+  function salvaBrief() {
+    var id = $("taAluno") ? $("taAluno").value : "";
+    if (!id) return;
+    var st = load();
+    var a = (st.alunos || []).find(function (x) { return x.id === id; });
+    if (!a) return;
+    var b = {};
+    BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) b[c[1]] = String(el.value || "").trim().slice(0, 600); });
+    a.briefIA = b;
+    S.write("ptStudio", st);
+    var el2 = $("brStatus"); if (el2) el2.textContent = "Guardado ✓";
+    carregaBrief();
+    if (el2) el2.textContent = "Guardado ✓";
+  }
+  window.__brief = { carrega: carregaBrief, salva: salvaBrief }; // testes
+  BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) el.addEventListener("change", salvaBrief); });
+  if ($("taAluno")) $("taAluno").addEventListener("change", carregaBrief);
+  carregaBrief();
   ligaEnvioApp("taEnviaApp", "taAluno", "taEnvioStatus");
   ligaEnvioApp("tEnviaApp", "tAluno", "tEnvioStatus");
 
@@ -6078,6 +6129,30 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return String.fromCharCode(65 + (idx || 0));
   }
   window.__letraFicha = letraFicha; // testes
+  var MES_ROT = { musculacao: "Musculação", wod: "Circuito", corrida: "Corrida e bike" };
+  function pintaMesPlano(t) {
+    var el = $("mesBox"); if (!el) return;
+    var mes = (t && t.mes) || {};
+    var tipos = Object.keys(MES_ROT).filter(function (k) { return mes[k] && (mes[k].semanas || []).length === 4; });
+    if (!tipos.length) { el.innerHTML = ""; return; }
+    el.innerHTML = tipos.map(function (k) {
+      var m = mes[k], atual = semanaDoMes(m);
+      return '<div class="card" style="margin-bottom:12px;">' +
+        '<div class="linha-flex" style="align-items:baseline;gap:8px;">' +
+        '<b style="font-size:14px;">📅 Plano do mês — ' + MES_ROT[k] + "</b>" +
+        '<span class="muted" style="font-size:12px;">montado em ' + S.fmtData(m.geradoEm) +
+        " · os mesmos treinos valem as 4 semanas</span></div>" +
+        m.semanas.map(function (w) {
+          var on = w.n === atual;
+          return '<div class="sessao-pt" style="align-items:flex-start;' +
+            (on ? "border-left:3px solid var(--roxo);background:rgba(124,58,237,.08);" : "opacity:.72;") + '">' +
+            '<b style="min-width:92px;">Semana ' + w.n + (on ? " · agora" : "") + "</b>" +
+            "<span><b>" + esc(w.foco) + "</b>" + (w.ajuste ? '<span class="muted" style="display:block;font-size:12.5px;">' + esc(w.ajuste) + "</span>" : "") +
+            "</span></div>";
+        }).join("") + "</div>";
+    }).join("");
+  }
+  window.__pintaMes = pintaMesPlano; // testes
   function renderFichas() {
     var el = $("fichasBox");
     // o evento toggle do <details> é assíncrono — lê o estado real do DOM
@@ -6086,10 +6161,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       fichasAbertas[d.getAttribute("data-fdet")] = d.open;
     });
     var alunoId = $("tAluno").value;
-    if (!alunoId) { el.innerHTML = '<span class="muted">Escolha o aluno e crie a primeira ficha.</span>'; $("tValidade").value = ""; return; }
+    if (!alunoId) { el.innerHTML = '<span class="muted">Escolha o aluno e crie a primeira ficha.</span>'; $("tValidade").value = ""; pintaMesPlano(null); return; }
     var st = load();
     var t = (st.treinosV2 || {})[alunoId];
     $("tValidade").value = (t && t.validade) || "";
+    pintaMesPlano(t);
     if (!t || !t.fichas.length) {
       el.innerHTML = '<span class="muted">Nenhuma ficha ainda — clique em <b>+ Nova ficha</b>.' +
         ((st.treinos || {})[alunoId] ? " (O texto antigo deste aluno continua no app até você montar as fichas.)" : "") + "</span>";
@@ -8117,6 +8193,83 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- IA prescritiva (o Claude lê a anamnese inteira e prescreve as fichas) ----------
   var PARQ_RESUMO = ["problema cardíaco diagnosticado", "dor no peito em atividade física", "dor no peito em repouso no último mês",
     "tontura ou perda de consciência", "problema ósseo/articular que piora com exercício", "usa remédio pra pressão/coração", "outra razão pra não treinar"];
+  /* Perfil profundo pra IA: além da anamnese, entra a AVALIAÇÃO FÍSICA (a
+   * última e o quanto mudou desde a primeira) e a EVOLUÇÃO REAL nos treinos
+   * (o que ele levanta hoje, quantas vezes treinou de verdade, como avaliou o
+   * esforço). Sem esses dados, a IA prescrevia no escuro: carga de iniciante
+   * pra quem já levanta 100 kg. Cada bloco só aparece quando existe — nada é
+   * inventado, e a linha diz honestamente quando falta. */
+  /* A leitura do professor entra ANTES dos números e com prioridade: é ele
+   * que conhece o aluno. Bloco só aparece se ele escreveu alguma coisa. */
+  function briefIA(a) {
+    var b = (a && a.briefIA) || {};
+    var l = [];
+    if ((b.desejo || "").trim()) l.push("COMO O PROFESSOR QUER ESTE TREINO MONTADO (siga à risca): " + b.desejo.trim());
+    if ((b.quer || "").trim()) l.push("O QUE O ALUNO PEDE: " + b.quer.trim());
+    if ((b.adapta || "").trim()) l.push("ADAPTAÇÕES E LIMITAÇÕES — REGRA ABSOLUTA, nunca prescreva nada que contrarie isto: " + b.adapta.trim());
+    if ((b.leitura || "").trim()) l.push("LEITURA DO PROFESSOR SOBRE O MOMENTO DELE: " + b.leitura.trim());
+    if (!l.length) return "";
+    return "=== A LEITURA DO PROFESSOR (vale mais que qualquer coisa que você deduza dos números) ===\n" +
+      l.join("\n") + "\n=== fim da leitura do professor ===\n";
+  }
+  window.__briefIA = briefIA; // testes
+  function perfilFisicoIA(st, a) {
+    var avs = (st.avaliacoes || []).filter(function (v) { return v.alunoId === a.id; })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    if (!avs.length) return "AVALIAÇÃO FÍSICA: nenhuma registrada — não estime composição corporal.";
+    var u = avs[avs.length - 1], p0 = avs[0];
+    var linhas = [];
+    var med = function (r, v, un) { return (v == null || v === "") ? "" : r + " " + String(v).replace(".", ",") + un; };
+    var partes = [med("peso", u.peso, " kg"), med("gordura", u.gordura, "%"), med("cintura", u.cintura, " cm"),
+      med("quadril", u.quadril, " cm"), med("braço", u.braco, " cm"), med("coxa", u.ccCoxa, " cm"),
+      med("massa magra", u.biaMme, " kg"), med("gordura visceral", u.biaVisceral, "")].filter(Boolean);
+    linhas.push("AVALIAÇÃO FÍSICA (" + S.fmtData(u.data) + "): " + (partes.join(" · ") || "sem números"));
+    if (avs.length >= 2) {
+      var dl = [];
+      [["peso", "peso", " kg"], ["gordura", "% de gordura", "%"], ["cintura", "cintura", " cm"], ["biaMme", "massa magra", " kg"]]
+        .forEach(function (c) {
+          var a0 = parseFloat(p0[c[0]]), a1 = parseFloat(u[c[0]]);
+          if (!isFinite(a0) || !isFinite(a1)) return;
+          var d = Math.round((a1 - a0) * 10) / 10;
+          if (d) dl.push(c[1] + " " + (d > 0 ? "+" : "") + String(d).replace(".", ",") + c[2]);
+        });
+      if (dl.length) linhas.push("MUDOU DESDE " + S.fmtData(p0.data) + ": " + dl.join(" · ") + " (em " + avs.length + " avaliações)");
+    }
+    return linhas.join("\n");
+  }
+  /* O que o aluno REALMENTE fez — vem do app pelo `retorno`. */
+  function evolucaoIA(a) {
+    var ret = a.retorno || {};
+    var out = [];
+    var dc = (ret.cargas && typeof ret.cargas === "object" && !Array.isArray(ret.cargas)) ? ret.cargas : {};
+    var cargas = Object.keys(dc).map(function (ex) {
+      var l = Array.isArray(dc[ex]) ? dc[ex] : [];
+      var ult = l[l.length - 1]; if (!ult || !(+ult.kg > 0)) return null;
+      var rec = 0; l.forEach(function (x) { if (+x.kg > rec) rec = +x.kg; });
+      return ex + " " + String(+ult.kg).replace(".", ",") + " kg" + (+ult.r > 0 ? "×" + ult.r : "") +
+        (rec > +ult.kg ? " (recorde " + String(rec).replace(".", ",") + ")" : "");
+    }).filter(Boolean);
+    out.push(cargas.length
+      ? "CARGAS DE HOJE (o que ele levanta de verdade — prescreva a partir daqui, não do zero): " + cargas.slice(0, 24).join(" | ")
+      : "CARGAS: o aluno ainda não anotou carga nenhuma no app — comece conservador.");
+    var fe = (ret.feitos && typeof ret.feitos === "object" && !Array.isArray(ret.feitos)) ? ret.feitos : {};
+    var lim = Date.now() - 28 * 864e5, n28 = 0;
+    Object.keys(fe).forEach(function (d) { var t = Date.parse(d + "T12:00:00"); if (isFinite(t) && t >= lim) n28++; });
+    out.push("FREQUÊNCIA REAL: " + n28 + " treinos marcados nos últimos 28 dias" +
+      (a.metaSemana ? " (a meta combinada é " + a.metaSemana + "/semana, ou seja ~" + a.metaSemana * 4 + " no mês)" : ""));
+    var rpe = (ret.rpe && typeof ret.rpe === "object" && !Array.isArray(ret.rpe)) ? ret.rpe : {};
+    var ks = Object.keys(rpe).sort().slice(-8), sm = 0, nn = 0;
+    ks.forEach(function (k) { var v = +(rpe[k] && rpe[k].v != null ? rpe[k].v : rpe[k]); if (isFinite(v) && v > 0) { sm += v; nn++; } });
+    if (nn) out.push("ESFORÇO PERCEBIDO (RPE médio dos últimos " + nn + " treinos, escala 1-5): " + (Math.round(10 * sm / nn) / 10));
+    var fcH = (ret.fc && typeof ret.fc === "object" && !Array.isArray(ret.fc)) ? ret.fc : {};
+    var fks = Object.keys(fcH).sort().slice(-6);
+    if (fks.length) {
+      var sf = 0; fks.forEach(function (k) { sf += +(fcH[k] || {}).m || 0; });
+      out.push("BATIMENTO MÉDIO nos últimos " + fks.length + " treinos: " + Math.round(sf / fks.length) + " bpm");
+    }
+    return out.join("\n");
+  }
+  window.__montaDadosIA = function (st, a, obj, eq) { return montaDadosIA(st, a, obj, eq); }; // testes
   function montaDadosIA(st, a, objetivo, equip) {
     var an = a.anamnese || {};
     var parqSim = [];
@@ -8137,6 +8290,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var idade = "";
     if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
     return [
+      briefIA(a),
       "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
       "OBJETIVO: " + objetivo + " | EQUIPAMENTO: " + equip + " | DIAS/SEMANA: " + dias,
       "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
@@ -8146,6 +8300,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "NÍVEL: " + (an.nivel || "iniciante") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
       "GOSTA DE: " + (an.gosta || "?") + " | NÃO GOSTA DE: " + (an.naogosta || "nada informado"),
       "OBSERVAÇÕES DO PERSONAL: " + (a.obs || "—"),
+      "",
+      perfilFisicoIA(st, a),
+      evolucaoIA(a),
       "",
       // os favoritos do professor entram como preferência — a IA prescreve o que ele gosta de passar
       ((st.exFav || []).length
@@ -8164,6 +8321,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var idade = "";
     if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
     return [
+      briefIA(a),
       "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
       "OBJETIVO DA CORRIDA: " + prova + " | DIAS DISPONÍVEIS POR SEMANA: " + dias,
       "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
@@ -8171,7 +8329,24 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       "DOENÇAS CRÔNICAS: " + (an.doencas || "nenhuma") + " | MEDICAMENTOS: " + (an.meds || "nenhum"),
       "NÍVEL GERAL: " + (an.nivel || "iniciante") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
       "OBSERVAÇÕES DO PERSONAL: " + (a.obs || "—"),
+      "",
+      perfilFisicoIA(st, a),
+      evolucaoIA(a),
+      corridasIA(a),
     ].join("\n");
+  }
+  /* Corridas que ele já fez (vêm do app): a IA precisa saber o pace real antes
+   * de prescrever tiro nenhum. */
+  function corridasIA(a) {
+    var lst = (a.retorno && Array.isArray(a.retorno.cardio)) ? a.retorno.cardio : [];
+    if (!lst.length) return "CORRIDAS REGISTRADAS: nenhuma ainda — não presuma pace.";
+    var ult = lst.slice(-6).map(function (x) {
+      return String(x.d || "").slice(8, 10) + "/" + String(x.d || "").slice(5, 7) + " " +
+        (x.k ? String(x.k).replace(".", ",") + " km" : "") + (x.p ? " pace " + x.p : "") + (x.fc ? " " + x.fc + " bpm" : "");
+    });
+    var mx = 0; lst.forEach(function (x) { if (+x.k > mx) mx = +x.k; });
+    return "CORRIDAS REGISTRADAS (últimas): " + ult.join(" | ") +
+      (mx ? "\nMAIOR DISTÂNCIA JÁ FEITA: " + String(mx).replace(".", ",") + " km" : "");
   }
   // circuitos vindos da IA → t.wods, pela MESMA peneira do formulário
   // (tipo válido, números com teto, movimentos com quantidade + nome)
@@ -8222,6 +8397,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     });
     return lista;
   }
+  /* O plano do MÊS que veio da IA: exatamente 4 semanas, textos curtos e
+   * limpos. Resposta sem "mes" (chat-envia antiga) devolve null e o painel
+   * segue funcionando — o treino entra igual, só sem a progressão. */
+  function peneiraMesIA(plano) {
+    var l = (plano && Array.isArray(plano.mes)) ? plano.mes : [];
+    var sem = [];
+    l.slice(0, 4).forEach(function (x, i) {
+      if (!x || typeof x !== "object") return;
+      var foco = String(x.foco || "").trim().slice(0, 40);
+      var aj = String(x.ajuste || "").trim().slice(0, 220);
+      if (!foco && !aj) return;
+      sem.push({ n: Math.min(4, Math.max(1, parseInt(x.n, 10) || i + 1)), foco: foco, ajuste: aj });
+    });
+    if (sem.length !== 4) return null;
+    return { geradoEm: new Date().toISOString().slice(0, 10), semanas: sem };
+  }
+  window.__peneiraMes = peneiraMesIA; // testes
+  /* Em que semana do plano o aluno está (1 a 4), contando do dia em que foi
+   * gerado. Passou do mês, fica na 4 — melhor repetir o deload do que sumir. */
+  function semanaDoMes(mes, hojeIso) {
+    if (!mes || !mes.geradoEm || !(mes.semanas || []).length) return 0;
+    var d0 = Date.parse(mes.geradoEm + "T12:00:00");
+    var d1 = Date.parse((hojeIso || new Date().toISOString().slice(0, 10)) + "T12:00:00");
+    if (!isFinite(d0) || !isFinite(d1) || d1 < d0) return 1;
+    return Math.min(4, Math.floor((d1 - d0) / (7 * 864e5)) + 1);
+  }
+  window.__semanaMes = semanaDoMes; // testes
   function parseFichasIA(texto) {
     var s = String(texto || "").replace(/```json|```/g, "").trim();
     var i = s.indexOf("{");
@@ -8281,9 +8483,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var stW = load();
         var tW = treinoDe(stW, alunoId);
         tW.wods = wodsIA;
+        var mW = peneiraMesIA(plano); if (mW) { tW.mes = tW.mes || {}; tW.mes.wod = mW; }
         marcaAppPendente(stW, alunoId);
         S.write("ptStudio", stW);
-        cb({ ok: true, tipo: "wod", wods: wodsIA.length, resumo: String(plano.resumo || "").slice(0, 400) });
+        cb({ ok: true, tipo: "wod", wods: wodsIA.length, mes: !!mW, resumo: String(plano.resumo || "").slice(0, 400) });
         return;
       }
       if (tipo === "corrida") {
@@ -8292,9 +8495,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var stC = load();
         var tC = treinoDe(stC, alunoId);
         tC.cardio = cardIA;
+        var mC = peneiraMesIA(plano); if (mC) { tC.mes = tC.mes || {}; tC.mes.corrida = mC; }
         marcaAppPendente(stC, alunoId);
         S.write("ptStudio", stC);
-        cb({ ok: true, tipo: "corrida", cardios: cardIA.length, resumo: String(plano.resumo || "").slice(0, 400) });
+        cb({ ok: true, tipo: "corrida", cardios: cardIA.length, mes: !!mC, resumo: String(plano.resumo || "").slice(0, 400) });
         return;
       }
       if (!plano || !(plano.fichas || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
@@ -8329,9 +8533,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       t.geradaIA = true;
       t.objetivo = objetivo;
       t.semana = 1;
+      var mF = peneiraMesIA(plano); if (mF) { t.mes = t.mes || {}; t.mes.musculacao = mF; }
       marcaAppPendente(st2, alunoId);
       S.write("ptStudio", st2);
-      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, resumo: String(plano.resumo || "").slice(0, 400) });
+      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, mes: !!mF, resumo: String(plano.resumo || "").slice(0, 400) });
     }, function (e) { cb({ erro: "Não consegui falar com a IA: " + ((e && e.message) || "sem conexão") +
       " — se falar em Failed to fetch, a chat-envia não está publicada neste projeto." }); });
   }
@@ -10451,6 +10656,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           grupo: ex.grupo || "", alts: substApp(ex.nome || "", ex.grupo) };
       }) };
     }) : null;
+    /* Plano do mês: o pacote leva a semana JÁ RESOLVIDA (1 a 4) com o foco e o
+     * ajuste daquela semana — o app não precisa saber a data em que a IA
+     * montou nem fazer conta nenhuma. */
+    var mesApp = (function () {
+      var m = (t2 && t2.mes) || {}, out = null;
+      ["musculacao", "wod", "corrida"].forEach(function (k) {
+        var pl = m[k]; if (!pl || (pl.semanas || []).length !== 4) return;
+        var n = semanaDoMes(pl);
+        var w = pl.semanas.find(function (x) { return x.n === n; }) || pl.semanas[pl.semanas.length - 1];
+        (out = out || {})[k] = { s: n, f: String(w.foco || "").slice(0, 40), a: String(w.ajuste || "").slice(0, 220) };
+      });
+      return out;
+    })();
     var fexs = [];
     if (fichasApp) fichasApp.forEach(function (f) {
       f.itens.forEach(function (it) { fexs.push({ n: it.nome, s: +it.series || 3 }); });
@@ -10600,7 +10818,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       studio: studio, COR: COR, COR2: COR2, CORC: CORC, CORE: CORE, CORCL1: CORCL1, CORCL2: CORCL2,
       PAL: PAL, LOGOAPP: LOGOAPP, zapPersonal: zapPersonal, metaSemana: metaSemana,
       sessApp: sessApp, vidsApp: vidsApp, qa: qa, ctApp: ctApp, plApp: plApp, pixApp: pixApp, svApp: svApp,
-      treino: treino, t2: t2, fichaVenceApp: fichaVenceApp, fichasApp: fichasApp, fexs: fexs,
+      treino: treino, t2: t2, fichaVenceApp: fichaVenceApp, fichasApp: fichasApp, fexs: fexs, mesApp: mesApp,
       guiaFichasP: guiaFichasP, aqPorFicha: aqPorFicha, raioX: raioX,
       wodsApp: wodsApp, cardiosApp: cardiosApp, planoApp: planoApp, ve: cfgVe, menuOculta: menuOculta,
       feedLigado: feedLigado, avs: avs, botApp: botApp, atualizador: atualizador,

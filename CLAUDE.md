@@ -178,6 +178,32 @@ cronômetro na linha que tem minutos. `iniciaTmr(sg, rot)` ganhou rótulo própr
 e mm:ss acima de 90 s — antes dizia "Descanso" pra tudo. Ganchos:
 `window.__letraFicha`, `window.__dadosApp`, `window.__p2`.
 
+**IA prescreve o MÊS, com perfil profundo e a leitura do professor** (a partir
+da v604): o `ia_treino` deixou de montar "a semana" e passou a montar o **mês**
+— as MESMAS fichas/circuitos/corridas valem 4 semanas e o que muda é a
+progressão escrita, que a IA devolve no campo `mes` (`MES_REGRA` na chat-envia,
+usada pelos três formatos: 4 semanas, ajuste concreto, **semana 4 sempre mais
+leve**). `peneiraMesIA` só aceita as 4 semanas completas (resposta antiga →
+`null` e o treino entra igual, sem progressão); `semanaDoMes(mes)` resolve em
+que semana o aluno está pela data de geração (passou do mês, trava na 4). Guarda
+em `t.mes[tipo]`; o painel pinta o card **📅 Plano do mês** (`pintaMesPlano`) e o
+pacote leva `mesApp` com a semana **já resolvida** — o app só imprime a faixa
+`#trMes`. ⚠️ `var MESAPP=` entra ENTRE `var PLANO=` e `var TRHEAD=`: o teste que
+recorta o pacote por regex teve de ser reancorado (a mesma armadilha da v583).
+
+O prompt ganhou três blocos novos: `perfilFisicoIA` (última avaliação + o quanto
+mudou desde a primeira), `evolucaoIA` (cargas REAIS do `retorno.cargas`,
+frequência dos últimos 28 dias, RPE, bpm) e `corridasIA` (pace e maior distância
+já feita). Cada bloco diz honestamente quando o dado não existe, em vez de
+deixar a IA estimar. E `briefIA(a)` põe **na frente de tudo** a leitura humana
+do professor — `a.briefIA = {desejo, quer, adapta, leitura}`, editada no
+`<details>` `#taBrief` da aba Automático e IA e guardada NO ALUNO (o mês
+seguinte só ajusta o que mudou). `BRIEF_REGRA` na chat-envia manda esse bloco
+vencer qualquer conclusão tirada dos números, trata *adaptações e limitações*
+como **regra absoluta** e exige ressalva no resumo em vez de ignorar em
+silêncio um pedido perigoso. Ganchos: `window.__peneiraMes`, `__semanaMes`,
+`__montaDadosIA`, `__briefIA`, `__brief`, `__pintaMes`.
+
 **Peso sugerido na série** (a partir da v603): `gSugereKg(ex, repsAlvo)` olha o
 `ptdc` daquele exercício e devolve o próximo degrau (`gPasso`: 1 kg abaixo de
 20, 2,5 acima) **só quando** o aluno bateu as repetições prescritas na última

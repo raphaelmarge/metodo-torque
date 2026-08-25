@@ -111,6 +111,13 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
       ],
       // o painel casa o dia com o ID do treino (não com a posição): ficha sem id
       // sumia do plano — e a Semana do aluno da demo ficava só com sábado e domingo
+      // plano do mês montado pela IA (v604): as mesmas fichas valem 4 semanas
+      mes: { musculacao: { geradoEm: new Date(Date.now() - 9 * 864e5).toISOString().slice(0, 10), semanas: [
+        { n: 1, foco: "aprender o movimento", ajuste: "mesma carga da avaliação, pare 2 repetições antes da falha" },
+        { n: 2, foco: "subir carga", ajuste: "suba 2,5 kg no supino, no agachamento e na remada" },
+        { n: 3, foco: "volume máximo", ajuste: "+1 série no primeiro exercício de cada ficha, mantenha a carga" },
+        { n: 4, foco: "deload", ajuste: "reduza 30% das séries e mantenha a carga — semana de recuperação" },
+      ] } },
       plano: { dias: { "1": { tp: "ficha", id: "dmf0" }, "3": { tp: "ficha", id: "dmf1" }, "5": { tp: "ficha", id: "dmf2" }, "6": { tp: "wod", id: "dmw1" }, "0": { tp: "cardio", id: "dmc1" } } },
     };
     window.MTStore.write("ptStudio", st);

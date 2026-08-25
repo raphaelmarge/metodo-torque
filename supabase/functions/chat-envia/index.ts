@@ -327,36 +327,69 @@ Deno.serve(async (req: Request) => {
     // 60000: a anamnese + catálogo passam folgado; 30000 cortava o rabo do catálogo
     const dados = String(corpo.dados || "").slice(0, 60000);
     if (!dados) return json({ erro: "dados vazios" }, 400);
+    /* O treino sai pro MÊS, não pra semana: as MESMAS fichas/circuitos/corridas
+     * valem as 4 semanas, e o que muda é a progressão escrita em "mes". Assim o
+     * professor revisa 3 a 5 treinos em vez de 20, e o aluno vê "Semana 2 de 4"
+     * com o ajuste daquela semana. */
+    const MES_REGRA =
+      "IMPORTANTE — O PLANO É DO MÊS, NÃO DA SEMANA. Além dos treinos, devolva o campo \"mes\" com " +
+      "EXATAMENTE 4 objetos (n de 1 a 4). Os MESMOS treinos valem as quatro semanas; o que muda é a " +
+      "progressão que você escreve em cada semana. Em cada objeto: \"foco\" é o objetivo daquela semana " +
+      "em 2 a 5 palavras (ex.: \"aprender o movimento\", \"subir carga\", \"volume máximo\", \"deload\"); " +
+      "\"ajuste\" é a instrução CONCRETA e verificável do que fazer (ex.: \"mesma carga, foco na técnica, " +
+      "pare 2 repetições antes da falha\", \"suba 2,5 kg nos exercícios principais\", \"+1 série no primeiro " +
+      "exercício de cada ficha\", \"reduza 30% do volume e mantenha a carga — semana de recuperação\"). " +
+      "A semana 4 deve ser SEMPRE mais leve (deload) ou de teste, nunca a mais pesada. Use as CARGAS DE " +
+      "HOJE e a FREQUÊNCIA REAL do aluno pra dosar o quanto subir: quem treina 2x por semana progride " +
+      "mais devagar que quem treina 5x, e quem já levanta muito sobe em degraus menores. Nunca escreva " +
+      "ajuste vago como \"aumente se sentir que dá\" — o aluno precisa saber o que fazer sem interpretar.";
+    /* A leitura do professor vem no início dos dados e MANDA. Sem esta regra
+     * o modelo trata o bloco como mais um contexto e às vezes prescreve o que
+     * o professor proibiu — que é o pior erro possível aqui. */
+    const BRIEF_REGRA =
+      "PRIORIDADE MÁXIMA: se os dados trouxerem um bloco \"A LEITURA DO PROFESSOR\", ele vence qualquer " +
+      "conclusão que você tire dos números, do objetivo ou da anamnese. Dentro dele, \"ADAPTAÇÕES E " +
+      "LIMITAÇÕES\" é regra absoluta — nunca prescreva nada que a contrarie, nem como alternativa, nem " +
+      "com ressalva. \"COMO O PROFESSOR QUER ESTE TREINO MONTADO\" define a estrutura (quantidade de " +
+      "fichas, divisão, duração, exercícios obrigatórios): siga à risca mesmo que você faria diferente. " +
+      "Se algum pedido do professor for perigoso pra saúde do aluno, cumpra o resto e explique a ressalva " +
+      "no resumo — nunca ignore em silêncio. ";
     const SISTEMAS: Record<string, string> = {
       musculacao: "Você é um personal trainer sênior que prescreve treinos de musculação individualizados. " +
         "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
         "JSON válido, sem markdown e sem comentários, neste formato exato: " +
-        '{"fichas":[{"titulo":"A — Nome da ficha","itens":[{"nome":"Exercício","series":3,"reps":"10","descanso":90,"obs":"dica curta"}]}],"resumo":"2 a 3 frases explicando as escolhas"} ' +
+        '{"fichas":[{"titulo":"A — Nome da ficha","itens":[{"nome":"Exercício","series":3,"reps":"10","descanso":90,"obs":"dica curta"}]}],' +
+        '"mes":[{"n":1,"foco":"foco da semana","ajuste":"o que muda nesta semana"}],"resumo":"2 a 3 frases explicando as escolhas"} ' +
         "Regras: use SOMENTE exercícios do catálogo recebido, com o nome EXATAMENTE igual; monte 1 ficha por dia " +
         "disponível (máximo 6); 5 a 8 exercícios por ficha; respeite lesões, PAR-Q, nível, equipamento e " +
         'preferências da anamnese; reps pode ser número ("10") ou tempo ("30s"); descanso em segundos; ' +
         "obs é opcional e curta (técnica ou cuidado com a lesão). Se o PAR-Q tiver resposta SIM, seja conservador " +
-        "e avise no resumo que o aluno precisa de liberação médica antes de intensificar.",
+        "e avise no resumo que o aluno precisa de liberação médica antes de intensificar. " +
+        MES_REGRA + " " + BRIEF_REGRA,
       wod: "Você é um coach sênior de treino em circuito (estilo cross/HIIT) que prescreve WODs individualizados. " +
         "Recebe a anamnese completa do aluno e o catálogo de exercícios disponíveis e responde APENAS com um " +
         "JSON válido, sem markdown e sem comentários, neste formato exato: " +
-        '{"wods":[{"nome":"Nome do circuito","tipo":"fortime","cap":12,"min":10,"rounds":8,"work":20,"rest":10,"movs":[{"q":"10","n":"Movimento"}],"aq":"aquecimento curto","obs":"dica curta"}],"resumo":"2 a 3 frases explicando as escolhas"} ' +
+        '{"wods":[{"nome":"Nome do circuito","tipo":"fortime","cap":12,"min":10,"rounds":8,"work":20,"rest":10,"movs":[{"q":"10","n":"Movimento"}],"aq":"aquecimento curto","obs":"dica curta"}],' +
+        '"mes":[{"n":1,"foco":"foco da semana","ajuste":"o que muda nesta semana"}],"resumo":"2 a 3 frases explicando as escolhas"} ' +
         'Regras: tipo é um de "fortime" (use cap = limite em minutos, 0 = livre), "amrap" ou "emom" (use min = ' +
         'duração em minutos) ou "tabata" (use rounds, work e rest em segundos); monte 1 circuito por dia disponível ' +
         "(máximo 6); 3 a 8 movimentos por circuito, cada um com q (quantidade, ex.: \"10\", \"200m\", \"30s\") e n " +
         "(nome do movimento — prefira nomes do catálogo recebido); aq é um aquecimento de 1 linha; respeite lesões, " +
         "PAR-Q, nível e equipamento da anamnese, escalando os movimentos quando precisar. Se o PAR-Q tiver resposta " +
-        "SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica antes de intensificar.",
+        "SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica antes de intensificar. " +
+        MES_REGRA + " " + BRIEF_REGRA,
       corrida: "Você é um treinador de corrida sênior que monta planilhas individualizadas. " +
         "Recebe a anamnese do aluno e o objetivo e responde APENAS com um JSON válido, sem markdown e sem " +
         "comentários, neste formato exato: " +
-        '{"cardio":[{"nome":"Rodagem leve","mod":"corrida","tipo":"continuo","dist":5,"tempo":0,"pace":"6:30","reps":8,"tiro":60,"desc":90,"obs":"dica curta"}],"resumo":"2 a 3 frases explicando a semana"} ' +
+        '{"cardio":[{"nome":"Rodagem leve","mod":"corrida","tipo":"continuo","dist":5,"tempo":0,"pace":"6:30","reps":8,"tiro":60,"desc":90,"obs":"dica curta"}],' +
+        '"mes":[{"n":1,"foco":"foco da semana","ajuste":"o que muda nesta semana"}],"resumo":"2 a 3 frases explicando o mês"} ' +
         'Regras: monte a SEMANA de treinos (1 por dia disponível, máximo 6), variando rodagem leve, intervalado ' +
         '(tiros) e um treino mais longo; mod é "corrida", "caminhada" ou "bike"; tipo é "continuo" (use dist em km ' +
         'e/ou tempo em minutos; 0 = livre; pace alvo opcional no formato "6:30") ou "intervalado" (use reps = número ' +
         "de tiros, tiro = segundos forte, desc = segundos leve); iniciante começa com caminhada ou corrida+caminhada " +
         "e pace conservador; progressão prudente (nada de saltos de volume); respeite lesões e PAR-Q. Se o PAR-Q " +
-        "tiver resposta SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica.",
+        "tiver resposta SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica. " +
+        MES_REGRA + " " + BRIEF_REGRA,
     };
     const tipoIa = String(corpo.tipo || "musculacao");
     const r2 = await fetch("https://api.anthropic.com/v1/messages", {
