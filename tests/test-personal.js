@@ -6014,7 +6014,7 @@ async function abaPt(p, a) {
 
   // --- leva 2: aquecimento, raio-X, mapa do ano, meta de peso, Já paguei, wake lock ---
   ok(/Aquecimento do dia/.test(appHtml2) && /Raio-X do treino/.test(appHtml2) && /wakeLock/.test(appHtml2) && /mapaAno/.test(appHtml2),
-    "app traz aquecimento automático, raio-X por grupo, wake lock e mapa do ano");
+    "app traz aquecimento automático, raio-X por grupo, wake lock e mapa de calor do mês");
   const leva2 = await pApp.evaluate(async () => {
     window.__trocaSec("evolucao");
     const pz = {};
@@ -6037,14 +6037,19 @@ async function abaPt(p, a) {
     return {
       meta: document.getElementById("mpMetaTxt").textContent + "|" + document.getElementById("mpBarra").textContent,
       mapaTxt: mapa ? mapa.textContent : "",
-      mapaCells: mapa ? mapa.querySelectorAll("div div div").length : 0,
+      mapaCells: mapa ? mapa.querySelectorAll("div[style*='aspect-ratio']").length : 0,
+      mapaForca: window.__mapaMes ? [window.__mapaMes.forca("2099-01-01", {}),
+        window.__mapaMes.forca(isoLocal(new Date()), f2)] : null,
       mapaCabe: mapa ? mapa.scrollWidth <= mapa.clientWidth + 1 : false,
       semAtual,
     };
   });
   ok(/meta 80 kg/.test(leva2.meta) && /faltam 5 kg/.test(leva2.meta), "meta de peso vira barra de progresso (90→85, alvo 80: faltam 5)");
-  ok(/Seu ano de treinos/.test(leva2.mapaTxt) && leva2.mapaCells >= 360, "mapa de constância pinta as 52 semanas do ano");
-  ok(leva2.mapaCabe, "mapa do ano cabe na largura da tela (sem estourar o card)");
+  ok(/treinos? em \w+/.test(leva2.mapaTxt) && leva2.mapaCells >= 28 && leva2.mapaCells <= 31,
+    "mapa de calor é o MÊS em calendário (28 a 31 quadradinhos, um por dia)");
+  ok(/mais treino/.test(leva2.mapaTxt) && leva2.mapaForca[0] === 0 && leva2.mapaForca[1] >= 1,
+    "a cor conta quanto foi treinado no dia: dia sem treino é 0, dia treinado começa no degrau leve");
+  ok(leva2.mapaCabe, "o mês cabe na largura da tela (sem estourar o card)");
   ok(+leva2.semAtual >= 1, "gráfico Treinos por semana conta o treino de hoje na semana atual (sem bug de fuso)");
   const jaPag = await pApp.evaluate(async () => {
     window.__trocaSec("inicio");
