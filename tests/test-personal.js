@@ -3788,25 +3788,30 @@ async function abaPt(p, a) {
   {
     // IA do MÊS (v604): perfil mais fundo + progressão de 4 semanas
     const mes = await p.evaluate(() => {
-      const S = window.MTStore, st = S.read("ptStudio", {});
-      const a = st.alunos[0];
-      st.avaliacoes = st.avaliacoes || [];
-      st.avaliacoes.push({ alunoId: a.id, data: "2026-05-10", peso: 88, gordura: 26, cintura: 98, biaMme: 34 });
-      st.avaliacoes.push({ alunoId: a.id, data: "2026-08-10", peso: 83, gordura: 21, cintura: 92, biaMme: 36 });
-      a.retorno = a.retorno || {};
-      a.retorno.cargas = { "Supino reto": [{ d: "2026-08-01", kg: 60, r: 10 }, { d: "2026-08-15", kg: 70, r: 10 }] };
+      // estúdio SINTÉTICO: o do teste já tem avaliações próprias e mascararia
+      // os números que este bloco quer conferir
       const hj = new Date();
       const dISO = (n) => new Date(hj.getTime() - n * 864e5).toISOString().slice(0, 10);
-      a.retorno.feitos = {}; for (let i = 1; i <= 10; i++) a.retorno.feitos[dISO(i * 2)] = 1;
-      S.write("ptStudio", st);
+      const feitos = {}; for (let i = 1; i <= 10; i++) feitos[dISO(i * 2)] = 1;
+      const a = {
+        id: "aIA", nome: "Teste IA", metaSemana: 4, anamnese: { nivel: "intermediário", dias: 4 },
+        retorno: {
+          cargas: { "Supino reto": [{ d: "2026-08-01", kg: 60, r: 10 }, { d: "2026-08-15", kg: 70, r: 10 }] },
+          feitos: feitos,
+        },
+      };
+      const st = { alunos: [a], exercicios: [], exFav: [], avaliacoes: [
+        { alunoId: "aIA", data: "2026-05-10", peso: 88, gordura: 26, cintura: 98, biaMme: 34 },
+        { alunoId: "aIA", data: "2026-08-10", peso: 83, gordura: 21, cintura: 92, biaMme: 36 },
+      ] };
       const txt = window.__montaDadosIA(st, a, "Hipertrofia", "academia completa");
       const bom = { mes: [1, 2, 3, 4].map((n) => ({ n, foco: "f" + n, ajuste: "a" + n })) };
       const hoje = new Date().toISOString().slice(0, 10);
       const mais = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
       const pl = window.__peneiraMes(bom);
       return {
-        temAval: /AVALIA[ÇC][ÃA]O F[ÍI]SICA \(/.test(txt),
-        temDelta: /MUDOU DESDE/.test(txt) && /gordura -5/.test(txt.replace(",", ".")),
+        temAval: /AVALIA[ÇC][ÃA]O F[ÍI]SICA \(10\/08\/2026\): peso 83 kg · gordura 21%/.test(txt),
+        temDelta: /MUDOU DESDE 10\/05\/2026/.test(txt) && /peso -5 kg/.test(txt) && /% de gordura -5%/.test(txt),
         temCargas: /CARGAS DE HOJE/.test(txt) && /Supino reto 70 kg/.test(txt),
         temFreq: /FREQU[ÊE]NCIA REAL: 10 treinos/.test(txt),
         semAval: /nenhuma registrada/.test(window.__montaDadosIA({ alunos: [], avaliacoes: [] }, { id: "x", nome: "y" }, "o", "e")),
@@ -7096,7 +7101,7 @@ async function abaPt(p, a) {
       // pacote do app: o plano viaja RESOLVIDO (dia → tipo + índice + nome) e o
       // card HOJE do app passa a ler o dia da semana
       const html = window.__montaAppAluno(st2.alunos.find((x) => x.id === id), "teste-plano");
-      const m = html.match(/var PLANO=(.+?);var TRHEAD=/);
+      const m = html.match(/var PLANO=(.+?);var MESAPP=/);
       out.planoApp = m ? JSON.parse(m[1]) : null;
       out.heroLeDia = html.indexOf("PLANO[String(new Date().getDay())]") > -1 && html.indexOf("Dia de recuperar") > -1;
       // receita R1 + telas finais: os treinos do dia viram carrossel de tela
