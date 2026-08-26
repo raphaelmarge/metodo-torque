@@ -294,6 +294,48 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**O painel no CELULAR** (a partir da v623): o Raphael mandou a foto do celular
+dele e o cabeçalho da ficha do aluno estava destruído — o **nome do aluno com
+largura ZERO** (some, porque tem `nowrap` + `overflow:hidden`) e a linha do
+objetivo com **uma palavra por linha**, os botões vazando por cima. Causa: o
+redesenho da v614–v622 foi revisado numa tela de 1280 px, e todas as linhas
+novas nasceram como **flex sem `flex-wrap` e sem `min-width: 0`** — quando o
+vizinho de largura fixa não cabe, a coluna do texto é espremida até zero em vez
+de a linha quebrar. Consertados, todos da mesma família: `#pfTopo` (vira grade
+de 2 fileiras até 900px; o layout saiu do `style` inline pro CSS, senão media
+query nenhuma vence sem `!important`), `.altopo` (a URL da Minha página não tem
+espaço, tinha 411px de largura mínima e empurrava a **página inteira** pra
+518px — até a barra de menu fixa esticava), `.dlinha` (o nome do aluno na linha
+do dia em 93px), `.fdcab`, `.kv-pt` e o `<label>` do questionário (`display:flex`
+quebra a FRASE em vários itens de flex — o mesmo defeito da `.dnota` na v621).
+A **lista de Alunos** virava um prédio de 6 andares no celular (232px por
+aluno, dois alunos por tela): os quatro valores do meio ganharam o embrulho
+`.aldet`, que é `display: contents` no computador (a tabela fica idêntica) e
+**uma linha corrida** no celular — 108px por aluno.
+
+Dois defeitos que não eram só de celular saíram junto: (1) na **Agenda**, dois
+alunos no MESMO dia e hora levavam o mesmo `grid-column`/`grid-row` e ficavam
+**um por cima do outro** — o professor via só o de cima; agora a célula é uma
+pilha (`.agpil`); (2) tabela dentro de caixa que rola (`.tabrola`) precisa de
+`white-space: nowrap` nas células, senão o navegador aperta as colunas e cada
+número quebra em duas linhas em vez de a caixa rolar.
+
+⚠️ Lição que virou suíte: `tests/test-celular-painel.js` varre as 16 telas (e
+as sub-abas) num celular de 390 px e mede **o que o professor VÊ** — texto com
+largura zero, rótulo curto partido em duas linhas, caixa com menos de 1,6
+palavra por linha, irmãos sobrepostos e página rolando de lado. Contar linha é
+com `Range.getClientRects()`, **nunca** altura-da-caixa ÷ entrelinha: o padding
+de um botão de 44px vira "3 linhas" e a suíte acusa 1490 falsos positivos.
+Guardas obrigatórias: pular quem tem `input/select/button/svg` dentro (a altura
+do controle entra na conta), pular `display:inline` (o rect de um inline que
+quebra é a UNIÃO das linhas, então dois `<b>` na mesma frase "se cobrem") e
+pular o que está dentro de `<svg>` (lá sobrepor é o desenho).
+⚠️ `white-space: nowrap` num valor é armadilha: pôr no `.kv-pt strong` fez o
+valor composto "cartão auto R$ 2.920 · pix R$ 2.140 · dinheiro R$ 3.310" virar
+342px intocáveis e empurrar a página. Quem quebra é a LINHA, não o valor.
+⚠️ `grid-template-columns: 1fr` deixa a coluna crescer até o min-content do
+conteúdo: use `minmax(0, 1fr)` onde um texto sem espaço possa entrar.
+
 **Demo do painel com nuvem simulada** (a partir da v622): o demo público
 (`demo-personal.html`, já no ar) mostrava o painel inteiro **menos três telas** —
 Chat, Questionários e Comunidade vivem da nuvem e, sem conta, só sabiam dizer
