@@ -3804,10 +3804,14 @@
       "var ys=vals.map(function(v){return PT+(H-PT-PB)*(1-(v-min)/fx);});" +
       "var linha='';xs.forEach(function(x,i){linha+=(i?' L':'M')+x+' '+ys[i];});" +
       "var sv=\"<svg viewBox='0 0 \"+W+' '+H+\"' style='width:100%;display:block;'>\";" +
-      "sv+=\"<path d='\"+linha+\"' fill='none' stroke='var(--corc)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/>\";" +
+      // ATENCAO: a cor entra por style= (propriedade CSS). Atributo de SVG
+      // (fill='...' / stroke='...') NAO entende var(): o valor vira invalido e
+      // o navegador cai no inicial — stroke none (linha some) e fill preto
+      // (o ponto some no fundo escuro). Foi exatamente isso que apagou a curva.
+      "sv+=\"<path d='\"+linha+\"' fill='none' style='stroke:var(--corc)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/>\";" +
       "xs.forEach(function(x,i){var ult=i===xs.length-1;" +
-      "sv+=\"<circle cx='\"+x+\"' cy='\"+ys[i]+\"' r='\"+(ult?6:5)+\"' fill='\"+(ult?'var(--corc)':'var(--bg2)')+\"' stroke='var(--corc)' stroke-width='2.5' data-pzk='\"+l[i]+\"' data-pzv='\"+String(vals[i]).replace('.',',')+\"' style='cursor:pointer;'/>\";" +
-      "sv+=\"<text x='\"+x+\"' y='\"+(ys[i]-11)+\"' text-anchor='middle' font-size='12' font-weight='\"+(ult?'900':'700')+\"' fill='\"+(ult?'var(--corc)':'#8a8695')+\"'>\"+String(vals[i]).replace('.',',')+\"</text>\";" +
+      "sv+=\"<circle cx='\"+x+\"' cy='\"+ys[i]+\"' r='\"+(ult?6:5)+\"' stroke-width='2.5' data-pzk='\"+l[i]+\"' data-pzv='\"+String(vals[i]).replace('.',',')+\"' style='cursor:pointer;stroke:var(--corc);fill:\"+(ult?'var(--corc)':'var(--bg2)')+\";'/>\";" +
+      "sv+=\"<text x='\"+x+\"' y='\"+(ys[i]-11)+\"' text-anchor='middle' font-size='12' font-weight='\"+(ult?'900':'700')+\"' style='fill:\"+(ult?'var(--corc)':'#8a8695')+\";'>\"+String(vals[i]).replace('.',',')+\"</text>\";" +
       "sv+=\"<text x='\"+x+\"' y='\"+(H-4)+\"' text-anchor='middle' font-size='10' fill='#6e6a78'>\"+l[i].slice(8,10)+'/'+l[i].slice(5,7)+\"</text>\";});" +
       "sv+='</svg>';g.className='';g.innerHTML=sv;" +
       "var nota=document.getElementById('pzNota');if(nota){var nav9=(AVS||[]).filter(function(v){return v.peso!=null;}).length;" +
@@ -4786,7 +4790,7 @@
       "var card=document.getElementById('nvCard');if(card){var C2=2*Math.PI*26;" +
       "card.innerHTML=\"<div style='display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px 14px;'>\"+" +
       "\"<svg width='64' height='64' viewBox='0 0 64 64' style='flex:none;'><circle cx='32' cy='32' r='26' fill='none' stroke='rgba(255,255,255,.09)' stroke-width='6'/>\"+" +
-      "\"<circle cx='32' cy='32' r='26' fill='none' stroke='var(--cor)' stroke-width='6' stroke-linecap='round' stroke-dasharray='\"+(C2*pct/100).toFixed(1)+' '+C2.toFixed(1)+\"' transform='rotate(-90 32 32)'/>\"+" +
+      "\"<circle cx='32' cy='32' r='26' fill='none' style='stroke:var(--cor)' stroke-width='6' stroke-linecap='round' stroke-dasharray='\"+(C2*pct/100).toFixed(1)+' '+C2.toFixed(1)+\"' transform='rotate(-90 32 32)'/>\"+" +
       "\"<text x='32' y='39' text-anchor='middle' font-size='20' font-weight='800' fill='currentColor'>\"+n+'</text></svg>'+" +
       "\"<div style='flex:1;min-width:0;'><div style='font-weight:800;font-size:15px;'>Nível \"+n+' — '+nvTitulo(n)+\"</div>\"+" +
       "\"<div style='height:7px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:7px;'><div style='height:100%;width:\"+pct+\"%;background:linear-gradient(90deg,var(--cor),var(--corc));'></div></div>\"+" +
