@@ -2391,13 +2391,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div style="padding: 0 14px 14px;">
           <p class="muted" style="margin: 0 0 10px; font-size: 12.5px;">Fica guardado neste aluno — escreva uma vez e vá ajustando. Deixe em branco o que não se aplica.</p>
           <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Como você quer este treino montado
-            <textarea id="brDesejo" rows="2" placeholder="ex.: ABCD em vez de ABC · terra romeno obrigatório · nada acima de 50 minutos · 2 dias de circuito no meio da semana"></textarea></label>
+            <textarea id="brDesejo" rows="3" placeholder="ex.: ABCD em vez de ABC · terra romeno obrigatório · nada acima de 50 minutos · 2 dias de circuito no meio da semana"></textarea><span id="brDesejoCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
           <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">O que o aluno pede
-            <textarea id="brQuer" rows="2" placeholder="ex.: quer definir o abdômen pro verão, odeia esteira, pediu mais peito"></textarea></label>
+            <textarea id="brQuer" rows="3" placeholder="ex.: quer definir o abdômen pro verão, odeia esteira, pediu mais peito"></textarea><span id="brQuerCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
           <label style="display: block; font-size: 12.5px; margin-bottom: 8px;">Adaptações e limitações <b style="color: var(--pt-atencao);">(a IA nunca desrespeita)</b>
-            <textarea id="brAdapta" rows="2" placeholder="ex.: ombro direito trava acima de 90° — nada de desenvolvimento militar · joelho sensível, leg press só até 90°"></textarea></label>
+            <textarea id="brAdapta" rows="3" placeholder="ex.: ombro direito trava acima de 90° — nada de desenvolvimento militar · joelho sensível, leg press só até 90°"></textarea><span id="brAdaptaCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
           <label style="display: block; font-size: 12.5px;">Sua leitura do momento dele
-            <textarea id="brLeitura" rows="2" placeholder="ex.: estagnou no supino há 6 semanas, vou trocar pra halteres e subir volume · some quando o treino passa de 50 min"></textarea></label>
+            <textarea id="brLeitura" rows="3" placeholder="ex.: estagnou no supino há 6 semanas, vou trocar pra halteres e subir volume · some quando o treino passa de 50 min"></textarea><span id="brLeituraCnt" style="display: block; font-size: 11px; margin-top: 2px;"></span></label>
+          <p id="brAviso" hidden style="margin: 10px 0 0; font-size: 12.5px; background: var(--pt-caixa); border: 1px solid var(--pt-borda-forte); border-radius: 10px; padding: 10px 12px;"></p>
           <p id="brStatus" class="muted" style="margin: 8px 0 0; font-size: 12px;"></p>
         </div>
       </details>
@@ -7497,11 +7498,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * não só na hora de gerar — no mês seguinte ele ajusta o que mudou em vez
    * de reescrever tudo. É o que dá a "visão humana" pra IA. */
   var BRIEF_CAMPOS = [["brDesejo", "desejo"], ["brQuer", "quer"], ["brAdapta", "adapta"], ["brLeitura", "leitura"]];
+  var BRIEF_MAX = 2000;
   function carregaBrief() {
     var id = $("taAluno") ? $("taAluno").value : "";
     var a = id ? (load().alunos || []).find(function (x) { return x.id === id; }) : null;
     var b = (a && a.briefIA) || {};
     BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) el.value = b[c[1]] || ""; });
+    BRIEF_CAMPOS.forEach(function (c) {
+      var el = $(c[0]); if (!el) return;
+      var cnt = $(c[0] + "Cnt");
+      if (cnt) {
+        var usado = String(el.value || "").length;
+        cnt.textContent = usado ? usado + " de " + BRIEF_MAX + " caracteres" : "";
+        cnt.style.color = usado > BRIEF_MAX * 0.9 ? "var(--pt-aten)" : "var(--pt-txt-5)";
+      }
+    });
     var n = BRIEF_CAMPOS.filter(function (c) { return (b[c[1]] || "").trim(); }).length;
     var chip = $("taBriefChip");
     if (chip) chip.textContent = !a ? "" : (n ? "· " + n + " de 4 preenchidos" : "· em branco");
@@ -7514,15 +7525,61 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var a = (st.alunos || []).find(function (x) { return x.id === id; });
     if (!a) return;
     var b = {};
-    BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) b[c[1]] = String(el.value || "").trim().slice(0, 600); });
+    /* 2000, nao 600: com 600 uma diretriz um pouco mais longa era cortada no
+     * meio SEM AVISO — o professor escrevia a regra inteira e so metade dela
+     * chegava na IA. O contador embaixo do campo mostra quanto falta. */
+    var cortou = 0;
+    BRIEF_CAMPOS.forEach(function (c) {
+      var el = $(c[0]); if (!el) return;
+      var v = String(el.value || "").trim();
+      if (v.length > BRIEF_MAX) { cortou++; v = v.slice(0, BRIEF_MAX); el.value = v; }
+      b[c[1]] = v;
+    });
     a.briefIA = b;
     S.write("ptStudio", st);
     var el2 = $("brStatus"); if (el2) el2.textContent = "Guardado ✓";
     carregaBrief();
-    if (el2) el2.textContent = "Guardado ✓";
+    if (el2) el2.textContent = cortou
+      ? "Guardado ✓ — mas " + S.plural(cortou, "campo passou", "campos passaram") + " de " + BRIEF_MAX +
+        " caracteres e foi cortado. Escreva mais curto pra nada se perder."
+      : "Guardado ✓";
   }
-  window.__brief = { carrega: carregaBrief, salva: salvaBrief }; // testes
-  BRIEF_CAMPOS.forEach(function (c) { var el = $(c[0]); if (el) el.addEventListener("change", salvaBrief); });
+  /* A chat-envia publicada no Supabase pode ser mais VELHA que o site: a
+   * leitura do professor só vira regra de verdade a partir de "briefManda".
+   * Com uma versão antiga no ar, o treino sai ignorando o que ele escreveu e
+   * NADA na tela diz por quê — o professor conclui que a IA é ruim. O ping
+   * devolve as regras que a versão publicada carrega; sem elas, avisamos. */
+  var iaChecada = false;
+  function confereIaPublicada() {
+    if (iaChecada) return;
+    var av = $("brAviso"); if (!av) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !self.MT_FUNCAO) return; // sem nuvem a IA nem roda — o botão já explica
+    iaChecada = true;
+    try {
+      self.MT_FUNCAO.chama(nuvem.client, "chat-envia", { acao: "ping" }, "A IA de treino").then(function (d) {
+        var regras = (d && d.regras) || [];
+        if (regras.indexOf("briefManda") >= 0) { av.hidden = true; return; }
+        av.innerHTML = "⚠️ <b>A IA publicada no seu Supabase é de uma versão antiga</b> e não trata esta leitura " +
+          "como regra — por isso o treino pode sair diferente do que você pediu. Abra " +
+          "<a href='https://www.torqueon.com.br/funcoes.html' target='_blank' rel='noopener'>torqueon.com.br/funcoes.html</a>, " +
+          "copie a <b>chat-envia</b> e publique de novo no Supabase.";
+        av.hidden = false;
+      }, function () { iaChecada = false; }); // caiu a rede: tenta de novo depois
+    } catch (eIa) { iaChecada = false; }
+  }
+  if ($("taBrief")) $("taBrief").addEventListener("toggle", function () { if (this.open) confereIaPublicada(); });
+  window.__brief = { carrega: carregaBrief, salva: salvaBrief, confere: confereIaPublicada }; // testes
+  BRIEF_CAMPOS.forEach(function (c) {
+    var el = $(c[0]); if (!el) return;
+    el.addEventListener("change", salvaBrief);
+    el.addEventListener("input", function () {
+      var cnt = $(c[0] + "Cnt"); if (!cnt) return;
+      var usado = String(el.value || "").length;
+      cnt.textContent = usado ? usado + " de " + BRIEF_MAX + " caracteres" : "";
+      cnt.style.color = usado > BRIEF_MAX * 0.9 ? "var(--pt-aten)" : "var(--pt-txt-5)";
+    });
+  });
   if ($("taAluno")) $("taAluno").addEventListener("change", carregaBrief);
   carregaBrief();
   ligaEnvioApp("taEnviaApp", "taAluno", "taEnvioStatus");
@@ -11850,6 +11907,126 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return out.join("\n");
   }
   window.__montaDadosIA = function (st, a, obj, eq) { return montaDadosIA(st, a, obj, eq); }; // testes
+  /* O texto que o professor escreveu, TODO junto: a leitura (briefIA), as
+   * observações do aluno e os campos da anamnese onde ele fala de exercício.
+   * Serve pra duas coisas: achar os exercícios que ele CITOU e repetir o
+   * pedido no fim do envio. */
+  function textoDoProfessor(a) {
+    var b = (a && a.briefIA) || {}, an = (a && a.anamnese) || {};
+    return [b.desejo, b.quer, b.adapta, b.leitura, a && a.obs, an.lesoes, an.gosta, an.naogosta]
+      .filter(function (x) { return (x || "").trim(); }).join("\n");
+  }
+  // "Agachamento Búlgaro" e "agachamento bulgaro" têm de casar
+  function chaveEx(n) {
+    return String(n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+  /* Só o que o professor PEDE entra na lista de obrigatórios. As proibições
+   * (adaptações, lesões, "não gosta de") ficam de fora de propósito: elas já
+   * mandam pelo bloco de ADAPTAÇÕES, e virar "obrigatório" ali seria o
+   * contrário do que ele escreveu. */
+  function textoPedidoDoProfessor(a) {
+    var b = (a && a.briefIA) || {}, an = (a && a.anamnese) || {};
+    return [b.desejo, b.quer, a && a.obs, an.gosta]
+      .filter(function (x) { return (x || "").trim(); }).join("\n");
+  }
+  var NEGA = /\b(nada|nao|sem|evitar|evite|proibid[oa]|tirar|tire|retirar|cortar|corte|menos|exceto|fora|trocar|troque|substituir)\b/;
+  /* Quais exercícios do banco o professor citou. Casa nos DOIS sentidos,
+   * porque ele escreve dos dois jeitos:
+   *   1. o nome do catálogo inteiro dentro do texto dele
+   *      ("quero stiff e remada curvada" → Stiff, Remada curvada)
+   *   2. um pedaço do texto dele dentro do nome do catálogo
+   *      ("terra romeno obrigatório" → Levantamento terra romeno)
+   * No caso 2 vence o nome mais CURTO — o movimento base, não a variação com
+   * kettlebell. E um trecho logo depois de uma negação ("nada de
+   * desenvolvimento militar") não vira obrigação: seria o oposto do pedido. */
+  function exCitados(texto, cands) {
+    var t = chaveEx(texto);
+    if (t.length < 6) return [];
+    var cerca = " " + t + " ", achados = [], vistos = {};
+    /* Uma variação não entra quando o movimento base já entrou: com
+     * "agachamento búlgaro" pedido, obrigar também o "com salto", o "1 e 1/2"
+     * e o "com pausa de 2 segundos" encheria a ficha de repetição. */
+    var poe = function (n) {
+      var k = chaveEx(n);
+      if (vistos[k]) return;
+      for (var v in vistos) if (k.indexOf(v + " ") === 0) return;
+      vistos[k] = 1; achados.push(n);
+    };
+    /* A negação só conta se estiver COLADA no pedido — "nada de
+     * desenvolvimento militar", "sem agachamento". Anda pra trás pulando
+     * palavrinha de ligação (de, do, com…) e para na primeira palavra de
+     * conteúdo. Uma janela larga demais reprovava por engano: em "quero ABCD,
+     * não ABC, terra romeno obrigatório", o "não" do ABC matava o terra. */
+    var LIGA = { de: 1, do: 1, da: 1, dos: 1, das: 1, e: 1, ou: 1, no: 1, na: 1, em: 1, com: 1, pra: 1, para: 1, que: 1, a: 1, o: 1 };
+    var negado = function (pos) {
+      if (pos < 0) return false;
+      var antes = t.slice(0, pos).trim().split(" ");
+      for (var k2 = antes.length - 1; k2 >= 0 && antes.length - k2 <= 3; k2--) {
+        var w = antes[k2];
+        if (!w) continue;
+        if (NEGA.test(" " + w + " ")) return true;
+        if (!LIGA[w]) return false; // palavra de conteúdo: a negação não é deste pedido
+      }
+      return false;
+    };
+    // 1) nome do catálogo inteiro dentro do texto do professor
+    cands.forEach(function (c) {
+      var k = chaveEx(c.n);
+      if (k.length <= 4) return; // "remo" casaria dentro de "remoção"
+      var i = cerca.indexOf(" " + k + " ");
+      if (i >= 0 && !negado(i)) poe(c.n);
+    });
+    // 2) trecho do professor dentro do nome do catálogo
+    var pal = t.split(" ").filter(Boolean);
+    for (var i2 = 0; i2 < pal.length; i2++) {
+      for (var tam = 4; tam >= 2; tam--) {
+        if (i2 + tam > pal.length) continue;
+        var frase = pal.slice(i2, i2 + tam).join(" ");
+        if (frase.length < 9) continue;
+        if (negado(t.indexOf(frase))) continue;
+        var casam = cands.filter(function (c) { return chaveEx(c.n).indexOf(frase) >= 0; });
+        if (!casam.length || casam.length > 60) continue; // 60+ = trecho genérico demais
+        // só o mais CURTO: é o movimento base, não a variação com kettlebell
+        casam.sort(function (x, y) { return x.n.length - y.n.length; });
+        poe(casam[0].n);
+      }
+    }
+    return achados.slice(0, 40);
+  }
+  /* O catálogo que a IA enxerga.
+   *
+   * Antes eram os 25 PRIMEIROS de cada grupo, na ordem do arquivo: 436 de
+   * 1828 exercícios, 24% do banco, sorteados por acaso. Se o professor pedia
+   * um exercício fora desses 25, a IA nem sabia que ele existia — e o painel
+   * ainda jogava fora, calado, o que ela prescrevesse de fora da lista.
+   *
+   * Agora manda o máximo que couber no envelope (a chat-envia aceita 60000
+   * caracteres em "dados") e, dentro de cada grupo, quem o professor citou,
+   * favoritou ou já usa com este aluno vem PRIMEIRO — então nunca é cortado. */
+  function catalogoIA(cands, primeiro, orcamento) {
+    var peso = {};
+    primeiro.forEach(function (n, i) { peso[chaveEx(n)] = i + 1; });
+    var porGrupo = {};
+    cands.forEach(function (c) { (porGrupo[c.g] = porGrupo[c.g] || []).push(c.n); });
+    Object.keys(porGrupo).forEach(function (g) {
+      porGrupo[g].sort(function (x, y) {
+        var px = peso[chaveEx(x)] || 9999, py = peso[chaveEx(y)] || 9999;
+        return px - py;
+      });
+    });
+    var monta = function (cap) {
+      return Object.keys(porGrupo).map(function (g) {
+        return g + ": " + porGrupo[g].slice(0, cap).join(" | ");
+      }).join("\n");
+    };
+    var cap = 25, txt = monta(cap);
+    [40, 60, 80, 100, 130, 180, 250].forEach(function (c) {
+      var t = monta(c);
+      if (t.length <= orcamento) { cap = c; txt = t; }
+    });
+    return { texto: txt, cap: cap, total: cands.length };
+  }
   function montaDadosIA(st, a, objetivo, equip) {
     var an = a.anamnese || {};
     var parqSim = [];
@@ -11864,34 +12041,66 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         vistos[c.n.toLowerCase()] = 1;
         return !(eqOk && eqOk.indexOf(c.eq) < 0);
       });
-    var porGrupo = {};
-    cands.forEach(function (c) { (porGrupo[c.g] = porGrupo[c.g] || []).push(c.n); });
-    var catalogo = Object.keys(porGrupo).map(function (g) { return g + ": " + porGrupo[g].slice(0, 25).join(" | "); }).join("\n");
+    var recado = textoDoProfessor(a);
+    var citados = exCitados(textoPedidoDoProfessor(a), cands);
+    // o que este aluno já treina hoje: trocar o treino inteiro sem motivo é
+    // justamente o que faz o professor achar que a IA não ouviu ninguém
+    var jaUsa = [];
+    var tAtual = (st.treinosV2 || {})[a.id];
+    ((tAtual && tAtual.fichas) || []).forEach(function (f) {
+      (f.itens || []).forEach(function (it) {
+        var ex = (st.exercicios || []).find(function (e) { return e.id === it.exId; });
+        if (ex && ex.nome && jaUsa.indexOf(ex.nome) < 0) jaUsa.push(ex.nome);
+      });
+    });
+    var primeiro = citados.concat((st.exFav || []).slice(0, 60)).concat(jaUsa.slice(0, 40));
+    var cat = catalogoIA(cands, primeiro, 44000);
     var idade = "";
     if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
     return [
       briefIA(a),
+      // as observações do professor sobem pra JUNTO da leitura dele: enterradas
+      // no meio da anamnese, viravam mais uma linha de contexto
+      ((a.obs || "").trim() ? "OBSERVAÇÕES DO PERSONAL SOBRE ESTE ALUNO (leve a sério): " + a.obs + "\n" : ""),
       "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
-      "OBJETIVO: " + objetivo + " | EQUIPAMENTO: " + equip + " | DIAS/SEMANA: " + dias,
+      "OBJETIVO: " + objetivo + " | EQUIPAMENTO: " + equip + " | DIAS/SEMANA: " + dias +
+        " (o DIAS/SEMANA é o padrão da anamnese; se o professor pediu outra quantidade de fichas ou outra divisão na leitura dele, vale o que ELE pediu)",
       "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
       "LESÕES/CIRURGIAS: " + (an.lesoes || "nenhuma informada"),
       "DOENÇAS CRÔNICAS: " + (an.doencas || "nenhuma") + " | MEDICAMENTOS: " + (an.meds || "nenhum"),
       "SONO: " + (an.sono || "?") + " | ESTRESSE: " + (an.estresse || "?") + " | FUMA: " + (an.fuma || "?") + " | ÁLCOOL: " + (an.alcool || "?"),
       "NÍVEL: " + (an.nivel || "iniciante") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
       "GOSTA DE: " + (an.gosta || "?") + " | NÃO GOSTA DE: " + (an.naogosta || "nada informado"),
-      "OBSERVAÇÕES DO PERSONAL: " + (a.obs || "—"),
       "",
       perfilFisicoIA(st, a),
       evolucaoIA(a),
       "",
+      // o que o professor citou pelo nome não é sugestão: é encomenda
+      (citados.length
+        ? "EXERCÍCIOS QUE O PROFESSOR CITOU NO TEXTO (são OBRIGATÓRIOS — use estes nomes, exatamente assim): " +
+          citados.join(" | ") + "\n"
+        : ""),
       // os favoritos do professor entram como preferência — a IA prescreve o que ele gosta de passar
       ((st.exFav || []).length
         ? "EXERCÍCIOS FAVORITOS DO PERSONAL (prefira estes quando servirem ao objetivo): " + st.exFav.slice(0, 60).join(" | ") + "\n"
         : "") +
+      (jaUsa.length
+        ? "O QUE ELE JÁ TREINA HOJE (mantenha o que ainda serve; não troque o treino inteiro sem motivo): " +
+          jaUsa.slice(0, 40).join(" | ") + "\n"
+        : "") +
       "CATÁLOGO DISPONÍVEL (use somente estes nomes, agrupados por grupo muscular):",
-      catalogo,
-    ].join("\n");
+      cat.texto,
+      // repetir o pedido no FIM ajuda: é a última coisa que o modelo lê antes
+      // de responder, e era comum a leitura do professor se perder no meio
+      (recado.trim()
+        ? "\n=== LEMBRETE FINAL, ANTES DE RESPONDER ===\nO professor escreveu isto sobre este aluno. " +
+          "Confira cada linha do seu plano contra o texto abaixo antes de devolver o JSON:\n" + recado +
+          "\n=== fim do lembrete ==="
+        : ""),
+    ].filter(function (x) { return x !== ""; }).join("\n");
   }
+  window.__catalogoIA = catalogoIA; // testes
+  window.__exCitados = exCitados; // testes
   // corrida: a IA não precisa do catálogo de exercícios — só da anamnese e do alvo
   function montaDadosCorridaIA(st, a, prova) {
     var an = a.anamnese || {};
@@ -11900,20 +12109,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var dias = Math.min(6, Math.max(1, parseInt(an.dias, 10) || a.metaSemana || 3));
     var idade = "";
     if (a.nasc) { var nd = new Date(a.nasc); if (isFinite(nd)) idade = Math.floor((Date.now() - nd.getTime()) / 31557600000) + " anos"; }
+    var recadoC = textoDoProfessor(a);
     return [
       briefIA(a),
+      ((a.obs || "").trim() ? "OBSERVAÇÕES DO PERSONAL SOBRE ESTE ALUNO (leve a sério): " + a.obs + "\n" : ""),
       "ALUNO: " + (a.nome || "?") + (idade ? ", " + idade : "") + (a.sexo ? ", sexo " + a.sexo : "") + (a.altura ? ", " + a.altura + " cm" : ""),
-      "OBJETIVO DA CORRIDA: " + prova + " | DIAS DISPONÍVEIS POR SEMANA: " + dias,
+      "OBJETIVO DA CORRIDA: " + prova + " | DIAS DISPONÍVEIS POR SEMANA: " + dias +
+        " (é o padrão da anamnese; se o professor pediu outra quantidade de treinos na leitura dele, vale o que ELE pediu)",
       "PAR-Q (respostas SIM): " + (parqSim.length ? parqSim.join("; ") : "nenhuma — liberado"),
       "LESÕES/CIRURGIAS: " + (an.lesoes || "nenhuma informada"),
       "DOENÇAS CRÔNICAS: " + (an.doencas || "nenhuma") + " | MEDICAMENTOS: " + (an.meds || "nenhum"),
       "NÍVEL GERAL: " + (an.nivel || "iniciante") + " | TEMPO DE TREINO: " + (an.tempo || "?") + " ano(s)",
-      "OBSERVAÇÕES DO PERSONAL: " + (a.obs || "—"),
       "",
       perfilFisicoIA(st, a),
       evolucaoIA(a),
       corridasIA(a),
-    ].join("\n");
+      (recadoC.trim()
+        ? "\n=== LEMBRETE FINAL, ANTES DE RESPONDER ===\nO professor escreveu isto sobre este aluno. " +
+          "Confira cada linha do seu plano contra o texto abaixo antes de devolver o JSON:\n" + recadoC +
+          "\n=== fim do lembrete ==="
+        : ""),
+    ].filter(function (x) { return x !== ""; }).join("\n");
   }
   /* Corridas que ele já fez (vêm do app): a IA precisa saber o pace real antes
    * de prescrever tiro nenhum. */
@@ -12085,7 +12301,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (!plano || !(plano.fichas || []).length) { cb({ erro: "A IA respondeu num formato inesperado — tente de novo." }); return; }
       var st2 = load();
       var t = treinoDe(st2, alunoId);
-      var fichas = [], total = 0, ignorados = 0;
+      var fichas = [], total = 0, ignorados = 0, nomesFora = [];
       plano.fichas.slice(0, 6).forEach(function (f) {
         var itens = [];
         (f.itens || []).slice(0, 10).forEach(function (it) {
@@ -12094,7 +12310,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           // a IA só pode usar exercício que existe (catálogo ou biblioteca) — nada inventado
           var existe = (st2.exercicios || []).some(function (e) { return e.nome.toLowerCase() === nome.toLowerCase(); }) ||
             (self.MT_EXERCICIOS || []).some(function (c) { return c.n.toLowerCase() === nome.toLowerCase(); });
-          if (!existe) { ignorados++; return; }
+          /* Antes de descartar, tenta casar SEM acento e sem pontuação:
+           * "Agachamento Búlgaro" × "agachamento bulgaro" é a mesma coisa, e
+           * jogar fora por causa de um acento era perder exercício que o
+           * professor tinha pedido pelo nome. */
+          if (!existe) {
+            var k = chaveEx(nome);
+            var achou = (st2.exercicios || []).find(function (e) { return chaveEx(e.nome) === k; }) ||
+              (self.MT_EXERCICIOS || []).find(function (c) { return chaveEx(c.n) === k; });
+            if (achou) { nome = achou.nome || achou.n; existe = true; }
+          }
+          if (!existe) { ignorados++; if (nomesFora.indexOf(nome) < 0) nomesFora.push(nome); return; }
           var ex = exercicioPorNome(st2, nome);
           itens.push({
             exId: ex.id,
@@ -12117,7 +12343,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var mF = peneiraMesIA(plano); if (mF) { t.mes = t.mes || {}; t.mes.musculacao = mF; }
       marcaAppPendente(st2, alunoId);
       S.write("ptStudio", st2);
-      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados, mes: !!mF, resumo: String(plano.resumo || "").slice(0, 400) });
+      cb({ ok: true, fichas: fichas.length, exercicios: total, ignorados: ignorados,
+        nomesFora: nomesFora.slice(0, 8), mes: !!mF, resumo: String(plano.resumo || "").slice(0, 400) });
     }, function (e) { cb({ erro: "Não consegui falar com a IA: " + ((e && e.message) || "sem conexão") +
       " — se falar em Failed to fetch, a chat-envia não está publicada neste projeto." }); });
   }
@@ -12166,7 +12393,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         if ($("cbStatus")) $("cbStatus").textContent = msgC;
         return;
       }
+      /* O que a IA prescreveu e o painel descartou aparece. Antes o número
+       * `ignorados` era calculado e NUNCA mostrado: se o professor pedia um
+       * exercício, a IA obedecia e o nome não batia com o banco, o exercício
+       * sumia em silêncio e a tela ainda dizia que tinha dado tudo certo. */
       $("taStatus").textContent = S.plural(r.fichas, "ficha prescrita", "fichas prescritas") + " pela IA, com " + r.exercicios + " exercícios." +
+        (r.ignorados
+          ? " ⚠️ " + S.plural(r.ignorados, "exercício ficou de fora", "exercícios ficaram de fora") +
+            " porque não existe no banco com esse nome" +
+            ((r.nomesFora || []).length ? " (" + r.nomesFora.join(", ") + ")" : "") +
+            " — cadastre na biblioteca ou escreva o nome do banco na sua leitura."
+          : "") +
         (r.resumo ? " " + r.resumo : "") + " Revise abaixo, ajuste e envie!";
       $("tAluno").value = id; sincronizaBusca("tAluno");
       renderFichas();

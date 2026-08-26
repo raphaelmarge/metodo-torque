@@ -251,6 +251,54 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**A IA não obedecia as diretrizes do professor** (conserto na v639): o Raphael
+disse que o treino saía fora do que ele tinha escrito. Eram QUATRO gargalos no
+caminho entre o que ele digita e o que a IA recebe — nenhum deles no prompt:
+
+1. **A IA via 24% do banco.** `montaDadosIA` mandava os **25 primeiros de cada
+   grupo** na ordem do arquivo — 436 de 1828 exercícios, sorteados por acaso.
+   Pedir um exercício fora desses 25 era pedir uma coisa que ela não sabia que
+   existia. Agora `catalogoIA(cands, primeiro, orcamento)` cresce o teto por
+   grupo até encostar no orçamento de caracteres (a chat-envia aceita 60000 em
+   `dados`) e, dentro de cada grupo, ordena **quem o professor citou, favoritou
+   ou já usa com este aluno na frente** — 1306 exercícios, envio de 45 KB.
+2. **O nome citado não virava obrigação.** `exCitados(texto, cands)` casa nos
+   **dois sentidos**: nome do catálogo inteiro dentro do texto dele ("quero
+   stiff") e trecho do texto dele dentro do nome do catálogo ("terra romeno" →
+   *Levantamento terra romeno*), sempre pelo nome mais **curto** (o movimento
+   base, não a variação com kettlebell) e sem repetir variação de quem já
+   entrou. Vira o bloco `EXERCÍCIOS QUE O PROFESSOR CITOU … são OBRIGATÓRIOS`.
+   ⚠️ só o texto de **pedido** alimenta isso (`desejo`, `quer`, `obs`, `gosta`)
+   — `adapta`, `lesoes` e `naogosta` são proibições e virariam o contrário do
+   que ele escreveu. E uma negação **colada** no pedido ("nada de
+   desenvolvimento militar") desqualifica o trecho: `negado()` anda pra trás no
+   máximo 3 palavras, pulando ligação (de, com, na…) e parando na primeira
+   palavra de conteúdo — janela larga reprovava por engano ("quero ABCD, **não**
+   ABC, terra romeno obrigatório" matava o terra).
+3. **A regra do sistema ganhava do professor.** O prompt mandava "1 ficha por
+   dia disponível" e "5 a 8 exercícios por ficha"; quem pedia ABCD recebia ABC.
+   `BRIEF_REGRA` na chat-envia passou a dizer que **a estrutura pedida
+   substitui esses padrões** (quantidade, divisão, exercícios por ficha,
+   duração), que o exercício citado é obrigatório e que existe um `LEMBRETE
+   FINAL` no fim dos dados pra conferir o plano contra o texto dele antes de
+   responder. O painel repete o recado no fim do envio (recência) e a linha de
+   DIAS/SEMANA diz na cara que é padrão da anamnese e cede ao professor.
+4. **O que a IA prescrevia e o painel descartava sumia calado.** `ignorados`
+   era contado desde sempre e **nunca mostrado**: pedido atendido pela IA que
+   não batesse com o banco virava nada, e a tela ainda dizia que deu tudo
+   certo. Agora o painel primeiro tenta **recuperar** o nome sem acento e sem
+   pontuação (`chaveEx`: "AGACHAMENTO BULGARO" → *Agachamento búlgaro*) e, o
+   que sobrar, aparece **pelo nome** no aviso.
+
+Junto: o campo da diretriz deixou de ser cortado em **600 caracteres em
+silêncio** (`BRIEF_MAX` = 2000, com contador por campo e recado quando corta),
+as **observações do aluno** subiram pra junto da leitura (estavam enterradas no
+meio da anamnese) e o `ping` da chat-envia passou a devolver
+`regras: ["mes","brief","briefManda"]` — se a função publicada no Supabase for
+velha demais pra obedecer a leitura, o painel **avisa dentro da gaveta**
+(`#brAviso`) em vez de deixar o treino sair errado sem explicação.
+Ganchos: `window.__catalogoIA`, `__exCitados`, `__brief.confere`.
+
 **Os gráficos do app do aluno sumiram** (conserto na v638): o Raphael mandou
 duas fotos — em **Evolução → Corpo** a curva do peso aparecia só com os
 pontinhos PRETOS e sem linha nenhuma; em **Evolução → Cargas** as barras
