@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v637** |
-| Estado do repo em | 2026-08-26 (commit `fe013a6`) |
+| App em | **mt-v638** |
+| Estado do repo em | 2026-08-26 (commit `8fb70c7`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 99 |
+| Lançamentos no histórico | 100 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v637** — ou seja, **36 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v638** — ou seja, **37 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -28,7 +28,7 @@ e o arquivo já tinha mudado quatro vezes desde então.
 Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
 trecho a mudar — nunca o arquivo inteiro.
 
-O motor (`app/aluno-builder.js`) encostou em **mt-v631** (2026-08-26).
+O motor (`app/aluno-builder.js`) encostou em **mt-v638** (2026-08-26).
 Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
 
 ## ⚠️ Número de versão NÃO serve como endereço
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v638 | os graficos do app do aluno voltaram (paleta e cor de SVG) ([#627](https://github.com/raphaelmarge/metodo-torque/pull/627)) |
 | mt-v637 | um calendario so na Agenda + sub-menus em fita de sublinhado ([#626](https://github.com/raphaelmarge/metodo-torque/pull/626)) |
 | mt-v634 | escolher exercicio virou tela a parte (uma coisa por vez) ([#623](https://github.com/raphaelmarge/metodo-torque/pull/623)) |
 | mt-v633 | montar ficha — a gaveta cobria a ficha e havia 4 jeitos de editar ([#620](https://github.com/raphaelmarge/metodo-torque/pull/620)) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v624 | tokens do handoff + as telas 02 e 17 (Inicio e Alunos no celular) ([#611](https://github.com/raphaelmarge/metodo-torque/pull/611)) |
 | mt-v623 | conserta o painel no celular (a foto que o Raphael mandou) ([#610](https://github.com/raphaelmarge/metodo-torque/pull/610)) |
 | mt-v622 | demo do painel com nuvem simulada (Chat, Questionarios e Comunidade) ([#609](https://github.com/raphaelmarge/metodo-torque/pull/609)) |
-| mt-v621 | menu do computador retratil + revisao visual das 16 telas ([#608](https://github.com/raphaelmarge/metodo-torque/pull/608)) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
