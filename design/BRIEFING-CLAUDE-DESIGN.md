@@ -5,9 +5,9 @@
 | | |
 |---|---|
 | App em | **mt-v633** |
-| Estado do repo em | 2026-08-26 (commit `35d4b66`) |
+| Estado do repo em | 2026-08-26 (commit `ec88c93`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 87 |
+| Lançamentos no histórico | 97 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
