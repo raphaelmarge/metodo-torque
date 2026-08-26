@@ -276,12 +276,17 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
   t(cab.desde <= 60, "a linha do objetivo cabe em 1–2 linhas (" + cab.desde + "px de altura)");
   t(cab.topo < 220, "o cabeçalho inteiro é compacto (" + cab.topo + "px)");
 
-  /* MONTAR FICHA com a ficha ABERTA — foi assim que o Raphael abriu no celular
-   * e mandou a foto: o bloco de escolher exercício ficava GRUDADO no pé da
-   * tela (position: sticky) e cobria os exercícios da ficha, sem jeito de
-   * fechar. Aqui a medida é direta: nada por cima de nada, e a tela não rola
-   * de lado com a ficha aberta. */
+  /* MONTAR FICHA no celular: UMA COISA POR VEZ (v634).
+   *
+   * A ficha aberta mostra so os exercicios DELA e o botao "+ Adicionar
+   * exercicio". O botao abre uma TELA CHEIA com um trabalho so — buscar,
+   * escolher, series/reps/descanso, Adicionar — e voltar cai na ficha.
+   * Antes tudo convivia na mesma pagina: 1594px de altura, quatro telas de
+   * controles na cara ao mesmo tempo. */
   await aba("treinos");
+  // a varredura la de cima ja passeou pelas sub-abas de Treinos e parou noutra:
+  // sem voltar pra "Fichas do aluno" o bloco fica escondido e mede zero
+  await sub("tra", "fichas");
   const abriu = await p.evaluate(() => {
     const sel = document.getElementById("tAluno");
     if (!sel || sel.options.length < 2) return false;
@@ -293,32 +298,45 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
     await p.waitForTimeout(1400);
     await p.evaluate(() => { const d = document.querySelector("#fichasBox details"); if (d) d.open = true; });
     await p.waitForTimeout(900);
-    const mt = await p.evaluate(() => {
-      const esq = document.querySelector(".tdesq"), dir = document.querySelector(".tddir");
-      const de = document.documentElement;
-      let cobre = -1;              // -1 = os blocos nem existem: o teste nao pode passar de graca
-      if (esq && dir) {
-        cobre = 0;
-        const a2 = esq.getBoundingClientRect(), b2 = dir.getBoundingClientRect();
-        const ix = Math.min(a2.right, b2.right) - Math.max(a2.left, b2.left);
-        const iy = Math.min(a2.bottom, b2.bottom) - Math.max(a2.top, b2.top);
-        if (ix > 6 && iy > 6) cobre = Math.round(ix * iy);
-      }
-      // o editor do exercicio: uma linha aberta por vez, com os 5 campos
-      const bt = document.querySelector("[data-exab]");
-      if (bt) bt.click();
-      return { cobre: cobre, pos: esq ? getComputedStyle(esq).position : "-",
-        largura: de.scrollWidth, tela: de.clientWidth,
-        campos: document.querySelectorAll(".tdex.aberto [data-tfld]").length,
-        abertos: document.querySelectorAll(".tdex.aberto").length,
-        handleFalso: document.querySelectorAll(".tdex .tdh").length };
+    const ve = (s2) => p.evaluate((q) => {
+      const e = document.querySelector(q);
+      return !!e && getComputedStyle(e).display !== "none" && e.getBoundingClientRect().height > 0;
+    }, s2);
+    const fechada = await p.evaluate(() => ({
+      altura: Math.round(document.querySelector("#fichasBox details").getBoundingClientRect().height),
+      p2NaFicha: !!document.querySelector(".tddir .tdp2"),
+      handleFalso: document.querySelectorAll(".tdex .tdh").length,
+    }));
+    console.log("\nMontar ficha no celular (uma coisa por vez):");
+    t(!(await ve(".tdesq")) && (await ve(".tdaddbt")),
+      "a ficha aberta mostra os exercícios e o botão + Adicionar — o escolher fica fora da tela");
+    t(fechada.altura < 1200, "a ficha aberta cabe em duas telas de celular (" + fechada.altura + "px, era 1594)");
+    t(fechada.p2NaFicha, "a parte 2 do dia (A2) é conteúdo da FICHA, não passo de escolher exercício");
+    t(fechada.handleFalso === 0, "o puxador falso ≡ saiu da linha (ele parecia arrastar e não arrastava)");
+    // abre a tela cheia
+    await p.evaluate(() => { const b2 = document.querySelector("[data-exadd]"); if (b2) b2.click(); });
+    await p.waitForTimeout(500);
+    const cheia = await p.evaluate(() => {
+      const e = document.querySelector(".tdesq");
+      const b2 = e.getBoundingClientRect();
+      return { larg: Math.round(b2.width), alt: Math.round(b2.height), pos: getComputedStyle(e).position,
+        tela: document.documentElement.clientWidth, telaH: window.innerHeight,
+        voltar: !!e.querySelector("[data-exfechar]"),
+        nav: !document.getElementById("navPt") || getComputedStyle(document.getElementById("navPt")).display === "none",
+        campos: e.querySelectorAll(".tdadd input").length };
     });
-    console.log("\nMontar ficha no celular (a foto que o Raphael mandou):");
-    t(mt.cobre === 0, "o bloco de escolher exercício EXISTE e não fica por CIMA da ficha (" +
-      (mt.cobre < 0 ? "não achei .tdesq/.tddir" : mt.cobre + "px² de sobreposição, position: " + mt.pos) + ")");
-    t(mt.largura <= mt.tela + 1, "com a ficha aberta a tela não rola de lado (" + mt.largura + "px em " + mt.tela + "px)");
-    t(mt.campos === 5 && mt.abertos === 1, "tocar na linha abre UM editor com os 5 campos do exercício (" + mt.campos + " campos, " + mt.abertos + " aberto)");
-    t(mt.handleFalso === 0, "o puxador falso ≡ saiu da linha (ele parecia arrastar e não arrastava)");
+    /* ⚠️ o .card do apps.css tem `animation … both`, que deixa um transform
+     * IDENTIDADE computado — e transform, mesmo identidade, cria bloco de
+     * contenção e faz o position:fixed colar no CARD em vez da tela. A medida
+     * abaixo é justamente essa: a tela cheia tem a largura da TELA. */
+    t(cheia.pos === "fixed" && cheia.larg === cheia.tela,
+      "o + Adicionar abre uma tela CHEIA de verdade (" + cheia.larg + "px de " + cheia.tela + "px, position: " + cheia.pos + ")");
+    t(cheia.voltar && cheia.nav, "a tela cheia tem o ‹ Voltar e esconde a barra de baixo");
+    t(cheia.campos === 4, "e traz os campos do exercício num lugar só (séries, repetições, descanso, obs)");
+    // voltar fecha
+    await p.evaluate(() => { const b2 = document.querySelector("[data-exfechar]"); if (b2) b2.click(); });
+    await p.waitForTimeout(400);
+    t(!(await ve(".tdesq")), "o ‹ Voltar fecha a tela cheia e devolve a ficha");
   }
 
   await b.close();

@@ -251,6 +251,33 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Montar ficha: escolher exercício virou tela à parte** (a partir da v634): com
+tudo na mesma página a ficha aberta media **1594 px** de altura — quatro telas
+de celular de controles na cara ao mesmo tempo, e o Raphael disse "ainda está
+pouco intuitivo". Ele escolheu o fluxo de **uma coisa por vez**: a ficha aberta
+mostra só os exercícios dela e o botão **+ Adicionar exercício**; o botão abre
+uma **tela cheia** (`.tdesq.abrir`, `position: fixed`) com um trabalho só —
+buscar → escolher → séries/reps/descanso → Adicionar —, e somar o exercício
+volta pra ficha. Ficou em **941 px**. A tela cheia não guarda estado: a classe
+`abrir` entra no DOM que já está na tela (nada de re-render, a rolagem não se
+perde) e o `renderFichas()` do "+ Adicionar" reconstrói tudo, o que **fecha
+sozinho** — que é justamente o caminho de volta. No computador nada muda: lá o
+escolher é a coluna da esquerda, sempre à vista, e o botão e o cabeçalho da
+tela cheia ficam `display: none` por `@media (min-width: 901px)` (⚠️ não por
+regra solta: a base vinha DEPOIS do bloco de celular no arquivo e, com a mesma
+especificidade, escondia o botão nos dois tamanhos). A **parte 2 do dia (A2)**
+saiu do "escolher" e foi pra dentro da ficha — ela é conteúdo da ficha, não
+passo de escolher exercício. E os dois formulários de somar (exercício e A2)
+passaram a usar a MESMA linguagem do editor: rótulo em cima, campo embaixo.
+Antes era `☆ [3] × [12] ⏱ [60] s [obs] [+ Adicionar]` numa fileira de caixinhas
+sem nome, que num celular de 390 quebrava com o "s" sozinho numa linha.
+⚠️⚠️ **A armadilha que custou caro**: o `.card` do `apps.css` tem
+`animation: tqUp .4s … both`, e o `both` deixa o transform final **computado**
+(matriz identidade) em vez de `none`. Transform, mesmo identidade, **cria bloco
+de contenção** — então o `position: fixed` colava no CARD e não na tela (a
+"tela cheia" saía com 364×1097 num aparelho de 390×844). Enquanto ela está
+aberta, `body.tela-escolher .card { animation: none; transform: none }`.
+
 **Montar ficha: a gaveta cobria a ficha e havia 4 jeitos de editar** (conserto
 na v633): o Raphael abriu no celular e mandou a foto — os exercícios apareciam
 **cortados atrás** do "Buscar nos 1780 exercícios". A gaveta de baixo da v627
