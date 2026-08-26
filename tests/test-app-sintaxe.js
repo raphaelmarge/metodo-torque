@@ -60,5 +60,23 @@ try { html2 = self.MT_APP_ALUNO.monta(D2); } catch (e) { ok(false, "monta(D vazi
   ok(!erro, "aluno sem treino: script " + (i + 1) + " válido" + (erro ? " — " + erro : ""));
 });
 
+// Cor em SVG: atributo NAO entende var(), so a propriedade CSS entende.
+// fill='var(--corc)' vira valor invalido e o navegador cai no inicial:
+// stroke none (a linha do grafico some) e fill preto (o ponto some no fundo
+// escuro). Foi assim que a curva do peso e o anel de XP sumiram. O jeito
+// certo e style='stroke:var(--corc)'.
+const svgVar = [];
+[...html.matchAll(/(fill|stroke)=['"]/g)].forEach((m) => {
+  const jan = html.slice(m.index + m[0].length, m.index + m[0].length + 70);
+  const iv = jan.indexOf("var(--");
+  if (iv < 0) return;
+  const antes = jan.slice(0, iv);
+  // ja passou pro proximo atributo/tag, ou a cor entra por style= (o certo)
+  if (/[>]/.test(antes) || /style\s*=/.test(antes)) return;
+  svgVar.push(m[1] + "=" + jan.slice(0, iv + 22).replace(/\s+/g, " "));
+});
+ok(svgVar.length === 0, "nenhuma cor de SVG entra por atributo com var() — atributo nao le variavel CSS" +
+  (svgVar.length ? " — achei " + svgVar.length + ": " + svgVar.slice(0, 3).join(" | ") : " (0)"));
+
 console.log(falhas ? "\n💥 " + falhas + " falha(s)" : "\n🏁 TUDO PASSOU");
 process.exit(falhas ? 1 : 0);

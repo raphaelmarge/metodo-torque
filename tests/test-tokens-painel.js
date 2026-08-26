@@ -204,6 +204,31 @@ const ESPERADO = {
   t(base.zap.bg === base.sec.bg, "o botao de WhatsApp e secundario com tinta verde, nao verde chapado");
   t(Math.round(parseFloat(base.corpo)) === 26, "a area de conteudo respira 26px dos lados (" + base.corpo + ")");
 
+  /* A FRONTEIRA: o pacote do app do aluno NAO e CSS do painel.
+   *
+   * `dadosAppAluno` monta a paleta que vira o `:root` de OUTRO documento (o
+   * app publicado). Os tokens --tk- e --pt- nao existem la: um var() daqui
+   * chega como valor invalido, a variavel fica VAZIA e todo fundo que depende
+   * dela some. Foi assim que a v620 apagou 6 dos 13 tons de fundo do app e a
+   * cor de destaque — e com eles a curva do peso e as barras de carga.
+   *
+   * Regra: dentro de `dadosAppAluno` a cor e HEX cravado, sempre. */
+  const fonte = fs.readFileSync(ARQ, "utf8");
+  const ini = fonte.indexOf("function dadosAppAluno(");
+  let corpoFn = "";
+  if (ini > 0) {
+    let i = fonte.indexOf("{", ini), n = 0;
+    for (let j = i; j < fonte.length; j++) {
+      if (fonte[j] === "{") n++;
+      else if (fonte[j] === "}") { n--; if (!n) { corpoFn = fonte.slice(i, j); break; } }
+    }
+  }
+  t(corpoFn.length > 2000, "achou o corpo de dadosAppAluno pra conferir (" + corpoFn.length + " chars)");
+  const vazando = (corpoFn.match(/var\(--(?:tk|pt)-[a-zA-Z0-9-]+\)/g) || []);
+  t(vazando.length === 0,
+    "nenhum token do painel vaza pro pacote do aluno" +
+    (vazando.length ? " — vazaram: " + [...new Set(vazando)].join(", ") : " (0)"));
+
   await b.close();
   console.log("\n" + ok + " ok, " + falhas + " falhas");
   process.exit(falhas ? 1 : 0);

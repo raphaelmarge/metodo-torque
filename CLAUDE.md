@@ -251,6 +251,40 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Os gráficos do app do aluno sumiram** (conserto na v638): o Raphael mandou
+duas fotos — em **Evolução → Corpo** a curva do peso aparecia só com os
+pontinhos PRETOS e sem linha nenhuma; em **Evolução → Cargas** as barras
+tinham sumido, sobrando os números no ar e as datas embaixo. Eram DOIS
+defeitos da mesma família, cor que não chega:
+
+1. **Token do painel vazou pro pacote do aluno** (desde a v620). A `PADFUNDO`
+   dentro de `dadosAppAluno` é a lista dos 13 tons de fundo que viram o
+   `:root` do app publicado — **outro documento**. A migração de tokens do
+   painel trocou 6 deles por `var(--tk-sup2)`, `var(--tk-sup)`, `var(--tk-bd2)`,
+   `var(--tk-trilha)`, `var(--tk-bd)`, `var(--tk-bd4)`, e o `CORC` padrão por
+   `var(--tk-roxoTx2)`. Lá esses nomes não existem: o valor chega inválido e a
+   variável fica **vazia** — medido no navegador, `--bg2`, `--bg3`, `--bg7`,
+   `--bg8`, `--bg10`, `--bg11` e `--corc` voltavam string vazia. Sem `--bg7`
+   as barras de carga ficam transparentes; sem `--bg2` os cards do app perdem
+   o fundo. Voltaram a ser **hex cravado**, com o aviso no código.
+2. **Cor de SVG entrando por ATRIBUTO** (desde a v550). `stroke='var(--corc)'`
+   e `fill='var(--corc)'` são atributos de apresentação, e **atributo não lê
+   variável CSS**: o valor vira inválido e o navegador cai no inicial —
+   `stroke: none` (a linha some) e `fill: black` (o ponto some no fundo
+   escuro), que é exatamente a foto que ele mandou. Viraram
+   `style='stroke:var(--corc)'` (propriedade CSS) na curva do peso (linha,
+   pontos e números) e no anel de XP do nível, que estava invisível pelo mesmo
+   motivo.
+
+⚠️ A regra geral: **o pacote do aluno não é CSS do painel**. Tudo que sai de
+`dadosAppAluno` é DADO que vira o `:root` de outro documento — cor ali é hex,
+sempre. Duas travas novas: `test-tokens-painel.js` recorta o corpo de
+`dadosAppAluno` e reprova qualquer `var(--tk-…)`/`var(--pt-…)` (pega os 7
+vazamentos da v620), e `test-app-sintaxe.js` varre o app montado atrás de
+`fill=`/`stroke=` com `var()` dentro, ignorando quem entra por `style=` (pega
+as 7 ocorrências da v550). As duas foram testadas contra o código quebrado
+antes de entrar.
+
 **Agenda: um calendário só, e os sub-menus viram fita** (a partir da v635): o
 Raphael abriu a Agenda e disse "uns 4 calendários diferentes pra mesma coisa".
 Eram mesmo: a **grade da semana**, o **calendário do mês**, o **um dia por vez**

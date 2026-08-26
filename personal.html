@@ -14649,7 +14649,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     // tema do studio dentro do app gerado (cor válida ou padrão roxo)
     var COR = corOk((st.config || {}).cor) || "#7c3aed";
     var COR2 = corOk((st.config || {}).cor) ? escurece(COR, .18) : "#6d28d9";
-    var CORC = corOk((st.config || {}).cor) ? clareia(COR, .5) : "var(--tk-roxoTx2)";
+    var CORC = corOk((st.config || {}).cor) ? clareia(COR, .5) : "#a78bfa";
     var temCor = corOk((st.config || {}).cor);
     var CORE = temCor ? escurece(COR, .4) : "#4c1d95";
     var CORCL1 = temCor ? clareia(COR, .68) : "#d6c9f5";
@@ -14667,8 +14667,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     })();
     var temFundo = !!corOk((st.config || {}).fundo);
     // os 13 tons de fundo, na mesma ordem/força de antes
-    var PADFUNDO = ["#0d0c10", "#100e15", "var(--tk-sup2)", "var(--tk-sup)", "#14121a", "#1b1724", "#1c1826",
-      "var(--tk-bd2)", "var(--tk-trilha)", "#26222e", "var(--tk-bd)", "var(--tk-bd4)", "#3a3346"];
+    // ATENCAO: hex CRAVADO de proposito. Esta lista nao e CSS do painel — ela
+    // viaja no pacote do aluno e vira o :root de OUTRO documento (o app), onde
+    // os tokens --tk-*/--pt-* nao existem. Um var() daqui chega no app como
+    // valor invalido: a variavel fica VAZIA e todo fundo que depende dela some.
+    var PADFUNDO = ["#0d0c10", "#100e15", "#121016", "#141218", "#14121a", "#1b1724", "#1c1826",
+      "#1d1a24", "#221f2b", "#26222e", "#26222f", "#322e3d", "#3a3346"];
     var FORCA = [0, .035, .045, .05, .05, .09, .095, .10, .115, .13, .13, .2, .23];
     var PAL = PADFUNDO.map(function (padrao, i) { return temFundo ? (i ? clareia(FBASE, FORCA[i]) : FBASE) : padrao; });
     var zapPersonal = (st.config || {}).zap || "";
