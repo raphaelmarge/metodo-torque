@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| App em | **mt-v638** |
-| Estado do repo em | 2026-08-26 (commit `8fb70c7`) |
+| App em | **mt-v639** |
+| Estado do repo em | 2026-08-26 (commit `c5db76e`) |
 | Repositório | `raphaelmarge/metodo-torque` |
-| Lançamentos no histórico | 100 |
+| Lançamentos no histórico | 101 |
 
 > 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
 > mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v638** — ou seja, **37 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v639** — ou seja, **38 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
@@ -48,6 +48,7 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 
 | Versão | O que entrou |
 |---|---|
+| mt-v639 | a IA passa a obedecer as diretrizes do professor ([#628](https://github.com/raphaelmarge/metodo-torque/pull/628)) |
 | mt-v638 | os graficos do app do aluno voltaram (paleta e cor de SVG) ([#627](https://github.com/raphaelmarge/metodo-torque/pull/627)) |
 | mt-v637 | um calendario so na Agenda + sub-menus em fita de sublinhado ([#626](https://github.com/raphaelmarge/metodo-torque/pull/626)) |
 | mt-v634 | escolher exercicio virou tela a parte (uma coisa por vez) ([#623](https://github.com/raphaelmarge/metodo-torque/pull/623)) |
@@ -62,7 +63,6 @@ Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
 | mt-v625 | ficha do aluno e Agenda no celular (telas 18 e 19 do handoff) ([#612](https://github.com/raphaelmarge/metodo-torque/pull/612)) |
 | mt-v624 | tokens do handoff + as telas 02 e 17 (Inicio e Alunos no celular) ([#611](https://github.com/raphaelmarge/metodo-torque/pull/611)) |
 | mt-v623 | conserta o painel no celular (a foto que o Raphael mandou) ([#610](https://github.com/raphaelmarge/metodo-torque/pull/610)) |
-| mt-v622 | demo do painel com nuvem simulada (Chat, Questionarios e Comunidade) ([#609](https://github.com/raphaelmarge/metodo-torque/pull/609)) |
 
 ## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
