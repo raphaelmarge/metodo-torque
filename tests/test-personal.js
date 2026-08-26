@@ -1507,7 +1507,11 @@ async function abaPt(p, a) {
   ok(troca === 0, "contrato encerrado por troca de plano não entra no churn do mês");
   ok(/Taxa de presença/.test(dash.ag) && /Horário mais cheio/.test(dash.ag), "bloco Agenda e presença renderiza");
   ok(/Com ficha de treino montada/.test(dash.app), "bloco App e treinos renderiza");
-  // metas com projeção run-rate
+  // metas com projeção run-rate — o formulário saiu do Início e agora mora em
+  // Relatórios → Do dia a dia (repaginação do painel, tela 4c do canvas)
+  await abaPt(p, "relatorios");
+  await p.evaluate(() => window.__relAba && window.__relAba("geral"));
+  await p.waitForTimeout(200);
   await p.fill("#mtFatP", "1000");
   await p.click("#mtSalvarP");
   ok(await p.evaluate(() => /meta R\$\s?1\.000/.test(document.getElementById("mtPainelP").textContent) && /projeção/.test(document.getElementById("mtPainelP").textContent)),
@@ -1557,9 +1561,100 @@ async function abaPt(p, a) {
     ok(await p.evaluate(() => JSON.parse(localStorage.getItem("mtapp:ptStudio")).sessoes.find((x) => x.id === "sc1").feita === true),
       "marcar Feita direto do card do Início funciona");
 
+    /* ---- Início repaginado (canvas "Painel do professor", tela 1a) ----
+     * O que o desenho promete: faixa roxa com a PRÓXIMA sessão e as duas ações,
+     * três cards "Resolver hoje" que já carregam o botão, linha do tempo com a
+     * próxima destacada, e o mês na coluna da direita. Os cards que não mudam
+     * decisão hoje saíram pra Relatórios. */
+    const ini1a = await p.evaluate(() => {
+      // uma sessão daqui a ~90 min, pra existir "próxima" (as do bloco acima já
+      // foram marcadas). Se a hora virar o dia, cai pro fim da noite mesmo.
+      const ag = new Date(Date.now() + 90 * 60000);
+      const hh = ag.getDate() === new Date().getDate()
+        ? String(ag.getHours()).padStart(2, "0") + ":" + String(ag.getMinutes()).padStart(2, "0") : "23:59";
+      // grava direto no localStorage: MTStore.write dispara a sincronização com
+      // a nuvem, e aqui pode haver mock estreito instalado por outro bloco
+      const st2 = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
+      st2.sessoes.push({ id: "sc-prox", alunoId: st2.alunos[0].id, data: new Date().toISOString().slice(0, 10), hora: hh, feita: false });
+      localStorage.setItem("mtapp:ptStudio", JSON.stringify(st2));
+      window.__dashPT.render(st2);
+      const topo = document.getElementById("dashTopo");
+      const dia = document.getElementById("bHojeP");
+      const prox = dia.querySelector(".dlinha.prox");
+      return {
+        temTopo: !!topo && /dtopo/.test(topo.className),
+        saudacao: (topo.querySelector("h2") || {}).textContent || "",
+        sub: (topo.querySelector(".dsub") || {}).textContent || "",
+        agora: !!topo.querySelector(".dagora"),
+        kicker: (topo.querySelector(".dagora .dk") || {}).textContent || "",
+        acoesTopo: [...topo.querySelectorAll(".dacoes button")].map((b) => b.textContent.trim()),
+        abrirFicha: !!topo.querySelector(".dagora [data-abreperfil]"),
+        feitaNoTopo: !!topo.querySelector(".dagora [data-feita]"),
+        linhas: dia.querySelectorAll(".dlinha").length,
+        proxNome: prox ? (prox.querySelector(".dnm") || {}).textContent : "",
+        feitasEsmaecidas: dia.querySelectorAll(".dlinha.feita").length,
+        verSemana: !!document.getElementById("dVerSemana"),
+      };
+    });
+    ok(ini1a.temTopo && /Bom treino/.test(ini1a.saudacao) && /sess/.test(ini1a.sub),
+      "🎨 1a: o Início abre com a faixa roxa do dia (" + ini1a.saudacao.trim() + ")");
+    ok(ini1a.agora && ini1a.abrirFicha && ini1a.feitaNoTopo && /AGORA|MAIS TARDE|EM |ACONTECENDO/.test(ini1a.kicker),
+      "🎨 1a: a próxima sessão vem na faixa com Abrir ficha e Feita (" + ini1a.kicker + ")");
+    ok(ini1a.acoesTopo.length === 2 && /Novo aluno/.test(ini1a.acoesTopo[0]) && /Marcar sessão/.test(ini1a.acoesTopo[1]),
+      "🎨 1a: as duas ações do topo são Novo aluno e Marcar sessão (a 1b foi descartada, não há Turno|Placar)");
+    ok(ini1a.linhas >= 2 && !!ini1a.proxNome && ini1a.feitasEsmaecidas >= 1 && ini1a.verSemana,
+      "🎨 1a: a linha do tempo destaca a próxima e esmaece as feitas (" + ini1a.linhas + " linhas)");
+    // o mês, na coluna da direita
+    const mes1a = await p.evaluate(() => {
+      const el = document.getElementById("dashMes");
+      return { cls: el.className, txt: el.textContent,
+        kpis: [...el.querySelectorAll(".dkpis .dk")].map((x) => x.textContent) };
+    });
+    ok(/dmes/.test(mes1a.cls) && /No ritmo de agora fecha em/.test(mes1a.txt),
+      "🎨 1a: a coluna da direita traz o mês com a projeção pelo ritmo de agora");
+    ok(mes1a.kpis.length === 4 && /A RECEBER/.test(mes1a.kpis[0]) && /PRESEN/.test(mes1a.kpis[3]),
+      "🎨 1a: os quatro números do mês (a receber, sessões, alunos, presença)");
+    // os cards que saíram do Início foram pra Relatórios → Do dia a dia
+    const mudou = await p.evaluate(() => {
+      const noDash = (id) => !!document.querySelector("#vDash #" + id);
+      const noRel = (id) => !!document.querySelector("#vRelatorios #" + id);
+      return {
+        saiuDoDash: !noDash("kpis") && !noDash("bNiverP") && !noDash("mtFatP") && !noDash("relAlertas"),
+        chegouNoRel: noRel("kpis") && noRel("bNiverP") && noRel("mtFatP") && noRel("relAlertas"),
+        temSubAba: !!document.querySelector('#relAbas [data-rela="geral"]'),
+        nota: (document.querySelector("#vDash .dnota") || {}).textContent || "",
+      };
+    });
+    ok(mudou.saiuDoDash && mudou.chegouNoRel && mudou.temSubAba,
+      "🎨 1a: aniversários, metas, indicadores e alertas saíram do Início e moram em Relatórios → Do dia a dia");
+    ok(/Relatórios/.test(mudou.nota),
+      "🎨 1a: o Início explica pra onde os cards foram, com atalho");
+    // barra lateral: as 6 do dia a dia em cima, o resto sob MENOS USADO
+    const menu1a = await p.evaluate(() => {
+      const bs = [...document.querySelectorAll("#abas button[data-a]")];
+      const grupo = document.querySelector("#abas .navgrupo");
+      const antes = [], depois = [];
+      let passou = false;
+      [...document.querySelector("#abas").children].forEach((el) => {
+        if (el.classList.contains("navgrupo")) { passou = true; return; }
+        if (!el.dataset || !el.dataset.a) return;
+        (passou ? depois : antes).push(el.dataset.a);
+      });
+      return { total: bs.length, grupo: grupo ? grupo.textContent : "", antes, depois,
+        contadores: [...document.querySelectorAll("#abas .cnt")].map((c) => c.parentElement.dataset.a) };
+    });
+    ok(menu1a.total === 16 && /Menos usado/i.test(menu1a.grupo),
+      "🎨 menu: as 16 abas continuam todas lá, agora cortadas em dois grupos");
+    ok(menu1a.antes.join(",") === "dash,alunos,agenda,pagamentos,treinos,chat" && menu1a.depois.length === 10,
+      "🎨 menu: as 6 do dia a dia em cima (" + menu1a.antes.join(", ") + ")");
+    ok(menu1a.contadores.indexOf("alunos") > -1,
+      "🎨 menu: as abas do dia a dia mostram o contador do que está esperando");
+
     // radar de retenção
     const radar = await p.evaluate(() => document.getElementById("bRadarP").innerHTML);
-    ok(/Parado Silva/.test(radar) && /6 dias sem treinar/.test(radar) && /Resgatar no Zap/.test(radar), "radar de retenção lista quem parou, com botão de resgate");
+    // o botão virou "Chamar" no desenho novo (linha compacta com as iniciais)
+    ok(/Parado Silva/.test(radar) && /6 dias sem treinar/.test(radar) && /Chamar/.test(radar) && /wa\.me/.test(radar),
+      "radar de retenção lista quem parou, com botão de resgate");
 
     // alertas com botão de ação: sem ficha → Montar treino leva pra aba certa com o aluno escolhido
     const alHtml = await p.evaluate(() => document.getElementById("relAlertas").innerHTML);
