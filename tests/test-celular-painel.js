@@ -276,6 +276,51 @@ const ABAS_PERFIL = ["resumo", "app", "cadastro", "fin", "freq", "quest", "aval"
   t(cab.desde <= 60, "a linha do objetivo cabe em 1–2 linhas (" + cab.desde + "px de altura)");
   t(cab.topo < 220, "o cabeçalho inteiro é compacto (" + cab.topo + "px)");
 
+  /* MONTAR FICHA com a ficha ABERTA — foi assim que o Raphael abriu no celular
+   * e mandou a foto: o bloco de escolher exercício ficava GRUDADO no pé da
+   * tela (position: sticky) e cobria os exercícios da ficha, sem jeito de
+   * fechar. Aqui a medida é direta: nada por cima de nada, e a tela não rola
+   * de lado com a ficha aberta. */
+  await aba("treinos");
+  const abriu = await p.evaluate(() => {
+    const sel = document.getElementById("tAluno");
+    if (!sel || sel.options.length < 2) return false;
+    sel.value = sel.options[1].value;
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  });
+  if (abriu) {
+    await p.waitForTimeout(1400);
+    await p.evaluate(() => { const d = document.querySelector("#fichasBox details"); if (d) d.open = true; });
+    await p.waitForTimeout(900);
+    const mt = await p.evaluate(() => {
+      const esq = document.querySelector(".tdesq"), dir = document.querySelector(".tddir");
+      const de = document.documentElement;
+      let cobre = -1;              // -1 = os blocos nem existem: o teste nao pode passar de graca
+      if (esq && dir) {
+        cobre = 0;
+        const a2 = esq.getBoundingClientRect(), b2 = dir.getBoundingClientRect();
+        const ix = Math.min(a2.right, b2.right) - Math.max(a2.left, b2.left);
+        const iy = Math.min(a2.bottom, b2.bottom) - Math.max(a2.top, b2.top);
+        if (ix > 6 && iy > 6) cobre = Math.round(ix * iy);
+      }
+      // o editor do exercicio: uma linha aberta por vez, com os 5 campos
+      const bt = document.querySelector("[data-exab]");
+      if (bt) bt.click();
+      return { cobre: cobre, pos: esq ? getComputedStyle(esq).position : "-",
+        largura: de.scrollWidth, tela: de.clientWidth,
+        campos: document.querySelectorAll(".tdex.aberto [data-tfld]").length,
+        abertos: document.querySelectorAll(".tdex.aberto").length,
+        handleFalso: document.querySelectorAll(".tdex .tdh").length };
+    });
+    console.log("\nMontar ficha no celular (a foto que o Raphael mandou):");
+    t(mt.cobre === 0, "o bloco de escolher exercício EXISTE e não fica por CIMA da ficha (" +
+      (mt.cobre < 0 ? "não achei .tdesq/.tddir" : mt.cobre + "px² de sobreposição, position: " + mt.pos) + ")");
+    t(mt.largura <= mt.tela + 1, "com a ficha aberta a tela não rola de lado (" + mt.largura + "px em " + mt.tela + "px)");
+    t(mt.campos === 5 && mt.abertos === 1, "tocar na linha abre UM editor com os 5 campos do exercício (" + mt.campos + " campos, " + mt.abertos + " aberto)");
+    t(mt.handleFalso === 0, "o puxador falso ≡ saiu da linha (ele parecia arrastar e não arrastava)");
+  }
+
   await b.close();
   console.log("\n" + ok + " ok, " + falhas + " falhas");
   process.exit(falhas ? 1 : 0);

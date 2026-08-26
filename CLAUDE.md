@@ -251,6 +251,35 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Montar ficha: a gaveta cobria a ficha e havia 4 jeitos de editar** (conserto
+na v633): o Raphael abriu no celular e mandou a foto — os exercícios apareciam
+**cortados atrás** do "Buscar nos 1780 exercícios". A gaveta de baixo da v627
+(`position: sticky; bottom: 0`) ficava **por cima** da ficha e não tinha como
+fechar: bonita na maquete, inviável no polegar. Agora `.tdesq` é bloco normal
+logo abaixo da ficha — a ordem de leitura é a de uso (vê a ficha → escolhe o
+próximo exercício) e nada cobre nada. ⚠️ junto veio de novo a armadilha do
+`grid-template-columns: 1fr`: a fita de 3 seletores de 132px empurrava a coluna
+pra 484 px numa tela de 390 (`overflow-x: auto` zera o mínimo automático de
+item de FLEX, não de coluna de grid) — virou `minmax(0, 1fr)` + `min-width: 0`
+nos filhos.
+
+E a MESMA linha tinha **quatro linguagens de edição** ao mesmo tempo: um `≡`
+que parecia arrastar e **não arrastava** (`cursor: default`), um `<select>` de
+tipo de série colado no nome, três textos que abriam `prompt()` do navegador
+(séries, descanso, obs) e as setas. Agora a linha inteira é **um botão que abre
+o editor daquele exercício** — séries, repetições, descanso, tipo de série e
+observação como campos de verdade, num lugar só (`data-tfld="fid:i:campo"`,
+gravados no `change`). Fora do editor sobram apenas as três ações de POSIÇÃO
+(↑ ↓ ✕), que são coisa diferente de editar. ⚠️ `exAberto` mora FORA do render,
+porque `renderFichas()` reconstrói a lista a cada campo mexido — sem isso o
+editor fechava na cara do professor; e só **um** editor abre por vez. Sumiram
+`data-tsr`/`data-tdesc`/`data-tobs`/`data-ttecsel` e os quatro `prompt()`. O
+nome da ficha também parou de aparecer **duas vezes** (tampa da gaveta + o
+cabeçalho da coluna da direita, que agora só diz "~20 min de treino" e o botão
+de apagar). Testes: `test-celular-painel.js` mede a sobreposição em 390 px com
+a ficha ABERTA (e falha se `.tdesq`/`.tddir` nem existirem, pra não passar de
+graça).
+
 **Os hábitos viram média no perfil** (a partir da v632): o Raphael pediu "a
 média de cada ícone que ele clica — dieta, sono, cardio e etc". São os quatro
 botões do app (`HABS` = Água, Comida, Sono, Cardio) que gravam

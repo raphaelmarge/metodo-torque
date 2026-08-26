@@ -1022,38 +1022,47 @@ async function abaPt(p, a) {
       "🎨 2d: o rodapé não fala mais de uma 'biblioteca (abaixo)' que não existe (a busca é dentro da ficha)");
   }
 
-  // descanso entre séries: default 60s no item novo, editável pelo botão ⏱
+  /* ✏️ UMA forma de editar (v633): tocar na linha abre o editor do exercício,
+   * com séries, repetições, descanso, tipo de série e observação como CAMPOS
+   * de verdade. Antes eram três prompt() do navegador, um <select> solto no
+   * meio do nome e um "≡" que parecia arrastar e não arrastava — o Raphael
+   * abriu no celular e disse "extremamente confuso". */
   ok(/60 s/.test(fichas), "item novo nasce com descanso padrão de 60s visível");
-  await p.evaluate(() => { window.prompt = () => "100"; });
-  await p.click('[data-tdesc="' + fichaId + ':0"]');
-  await p.waitForTimeout(150);
-  const aposDesc = await p.evaluate(() => {
-    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    return {
-      guardado: st.treinosV2[st.alunos[0].id].fichas[0].itens[0].descanso,
-      tela: document.getElementById("fichasBox").textContent,
-    };
+  const editor = await p.evaluate(() => {
+    const linha = document.querySelector(".tdex");
+    const antes = { editorFechado: !!linha.querySelector(".tdedit[hidden]"),
+      handleFalso: !!linha.querySelector(".tdh"), promptAntigo: !!linha.querySelector("[data-tsr],[data-tdesc],[data-tobs]") };
+    linha.querySelector("[data-exab]").click();
+    return antes;
   });
-  ok(aposDesc.guardado === 100 && /100 s/.test(aposDesc.tela), "⏱ edita o descanso do exercício (60 → 100s)");
-
-  // séries×reps e obs editáveis por prompt (sem apagar e recriar)
-  await p.evaluate(() => { const seq = ["5", "8"]; window.prompt = () => seq.shift(); });
-  await p.click('[data-tsr="' + fichaId + ':0"]');
-  await p.waitForTimeout(150);
-  const aposSR = await p.evaluate(() => {
+  await p.waitForTimeout(200);
+  ok(editor.editorFechado && !editor.handleFalso && !editor.promptAntigo,
+    "✏️ a linha nasce fechada, sem o puxador falso e sem os textos que abriam prompt");
+  // mexer num campo salva na hora — e o editor CONTINUA aberto
+  const mexe = async (campo, valor) => p.evaluate(([c, v]) => {
+    const el = document.querySelector('[data-tfld$=":' + c + '"]');
+    el.value = v;
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }, [campo, valor]);
+  await mexe("descanso", "100"); await p.waitForTimeout(200);
+  await mexe("series", "5"); await p.waitForTimeout(200);
+  await mexe("reps", "8"); await p.waitForTimeout(200);
+  await mexe("obs", "pegada fechada"); await p.waitForTimeout(200);
+  const aposEd = await p.evaluate(() => {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const it = st.treinosV2[st.alunos[0].id].fichas[0].itens[0];
-    return { series: it.series, reps: it.reps, tela: document.getElementById("fichasBox").textContent };
+    return { series: it.series, reps: it.reps, descanso: it.descanso, obs: it.obs,
+      tela: document.getElementById("fichasBox").textContent,
+      aberto: !!document.querySelector(".tdex.aberto .tdedit:not([hidden])"),
+      campos: document.querySelectorAll(".tdex.aberto [data-tfld]").length };
   });
-  ok(aposSR.series === 5 && aposSR.reps === "8" && /5 × 8/.test(aposSR.tela), "séries×reps editável por prompt (4×10 → 5×8)");
-  await p.evaluate(() => { window.prompt = () => "pegada fechada"; });
-  await p.click('[data-tobs="' + fichaId + ':0"]');
-  await p.waitForTimeout(150);
-  const aposObs = await p.evaluate(() => {
-    const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
-    return { obs: st.treinosV2[st.alunos[0].id].fichas[0].itens[0].obs, tela: document.getElementById("fichasBox").textContent };
-  });
-  ok(aposObs.obs === "pegada fechada" && /pegada fechada/.test(aposObs.tela), "obs do exercício editável por prompt (📝)");
+  ok(aposEd.descanso === 100 && aposEd.series === 5 && aposEd.reps === "8" && aposEd.obs === "pegada fechada",
+    "✏️ séries, repetições, descanso e observação viram campos e salvam na hora (5 × 8 · 100 s · pegada fechada)");
+  ok(/5 × 8 · 100 s/.test(aposEd.tela) && /pegada fechada/.test(aposEd.tela),
+    "✏️ o resumo da linha fechada mostra tudo numa frase só");
+  ok(aposEd.aberto && aposEd.campos === 5,
+    "✏️ o editor NÃO fecha a cada campo mexido (os 5 campos continuam à mão)");
+  const aposObs = aposEd;
   // 🏋️ tipo de série NO MESMO exercício (drop-set, up set…): escolhido na
   // cascata de montar e trocável direto na linha, sem prompt
   const cascataTec = await p.evaluate(() => {
@@ -1070,22 +1079,23 @@ async function abaPt(p, a) {
     "montar exercício segue a ordem do Raphael: tipo de treino → tipo de série → grupamento, e o exercício sai dos chips");
   ok(cascataTec.opcoes[0] === "Série normal" && cascataTec.opcoes.indexOf("Drop-set") > 0 && cascataTec.opcoes.indexOf("Up set") > 0,
     "a lista de tipo de série abre em Série normal e traz drop-set, up set e as outras");
-  // trocar na linha de um exercício que já está na ficha salva na hora
+  // o tipo de série é o MESMO campo do editor — nada de <select> solto na linha
   const trocaTec = await p.evaluate(async () => {
-    const sel = document.querySelector(".tecsel");
+    const sel = document.querySelector('[data-tfld$=":tec"]');
     sel.value = "drop";
     sel.dispatchEvent(new Event("change", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 250));
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     const it = st.treinosV2[st.alunos[0].id].fichas[0].itens[0];
     return { tec: it.tec, zap: window.__treinoTexto(st, st.alunos[0].id),
-      naTela: document.querySelector(".tecsel").value };
+      naTela: document.querySelector('[data-tfld$=":tec"]').value,
+      noResumo: /Drop-set/.test(document.getElementById("fichasBox").textContent) };
   });
-  ok(trocaTec.tec === "drop" && trocaTec.naTela === "drop",
-    "🏋️ trocar o tipo de série na linha do exercício salva na hora (drop-set)");
+  ok(trocaTec.tec === "drop" && trocaTec.naTela === "drop" && trocaTec.noResumo,
+    "🏋️ o tipo de série é um campo do editor e aparece no resumo da linha (drop-set)");
   ok(/Drop-set/.test(trocaTec.zap), "o treino mandado no WhatsApp também leva o tipo de série");
   const limpaTec = await p.evaluate(async () => {
-    const sel = document.querySelector(".tecsel");
+    const sel = document.querySelector('[data-tfld$=":tec"]');
     sel.value = "";
     sel.dispatchEvent(new Event("change", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 250));
@@ -1094,11 +1104,16 @@ async function abaPt(p, a) {
   });
   ok(limpaTec, "voltar pra Série normal tira a marcação do exercício");
   // volta pro 4×10 sem obs — o resto da suíte depende desse estado
-  await p.evaluate(() => { const seq = ["4", "10"]; window.prompt = () => seq.shift(); });
-  await p.click('[data-tsr="' + fichaId + ':0"]');
-  await p.evaluate(() => { window.prompt = () => ""; });
-  await p.click('[data-tobs="' + fichaId + ':0"]');
-  await p.waitForTimeout(150);
+  await p.evaluate(async () => {
+    const poe = (c, v) => { const el = document.querySelector('[data-tfld$=":' + c + '"]');
+      el.value = v; el.dispatchEvent(new Event("change", { bubbles: true })); };
+    poe("series", "4"); await new Promise((r) => setTimeout(r, 200));
+    poe("reps", "10"); await new Promise((r) => setTimeout(r, 200));
+    poe("obs", ""); await new Promise((r) => setTimeout(r, 200));
+    // fecha o editor: o resto da suite conta com a linha compacta
+    const b = document.querySelector("[data-exab]"); if (b) b.click();
+  });
+  await p.waitForTimeout(250);
 
   // a edição marca o app do aluno como pendente de publicar
   const pendApp = await p.evaluate(() => {
