@@ -194,7 +194,7 @@ function ok(cond, nome) {
   ok(fichas.length === 3, "template ABC criou as 3 fichas em 1 clique");
   ok(/A — Peito\/Tríceps/.test(fichas[0].titulo) && fichas[0].itens.length === 3, "ficha A com 3 exercícios ligados à biblioteca");
   const fichasBox = await p.evaluate(() => document.getElementById("fichasBox").textContent);
-  ok(/Supino reto/.test(fichasBox) && /4×10/.test(fichasBox), "fichas renderizam com séries×reps do template");
+  ok(/Supino reto/.test(fichasBox) && /4 × 10/.test(fichasBox), "fichas renderizam com séries×reps do template");
 
   // progressão: app do aluno com 2 registros iguais no diário → 3º dispara a sugestão
   const appP = await p.evaluate(() => {

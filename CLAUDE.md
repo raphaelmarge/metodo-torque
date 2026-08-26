@@ -294,6 +294,30 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Painel repaginado — Financeiro, Agenda e Montar treino** (v616 e v617): o
+canvas do Claude Design (16 telas) virou código, seguindo a ordem do handoff.
+**Financeiro (2e)**: cabeçalho do mês numa linha, **bloco vermelho de Atrasados
+no topo com a ação DENTRO da linha** (Link/Pix/Recebi — a regra nº 1 do handoff é
+"todo aviso tem botão"), "Cobrar todos" que abre o WhatsApp de cada um e **conta
+as abas que o navegador bloqueou** em vez de fingir que mandou, 6 meses com o mês
+corrente hachurado (projeção), "Como você recebe" e "Entrou hoje". O handler dos
+botões de cobrança virou UM só (`cliqueCobranca`), servindo a lista de pendentes
+e o bloco novo. **Agenda (2c)**: a semana em grade — 7 dias a partir de hoje nas
+colunas, os horários que existem de verdade nas linhas, o estado na célula
+(FEITA/FALTOU/PEDIDO/DEVENDO ou a ficha prescrita **pra aquele dia**, por
+`agTreinoTxt`, não a de hoje); dia vazio vira coluna DESCANSO; buraco dentro do
+expediente abre Agendar já preenchido; a faixa roxa de pedidos aceita todos
+clicando no MESMO botão Confirmar de cada um. **Montar treino (2d)**: cabeçalho
+"MONTANDO PRA <aluno>" com *Gerar com IA* e *Salvar e publicar* (que aciona o
+mesmo `#tEnviaApp` de sempre), e cada ficha aberta em duas colunas — à esquerda a
+cascata (tipo de treino → tipo de série → grupamento, a ordem que o Raphael
+pediu) + busca + **chips** de exercício + a Parte 2 do dia; à direita a ficha
+montada com o tipo de série como selo colado no nome. O `<select data-exsel>`
+continua existindo **escondido** (é a fonte da verdade do "+ Adicionar"); quem o
+professor toca são os chips. `TECS_PT` ganhou um 4º campo (nome curto) só pro
+selo — "Rest-pause" comia meia linha. ⚠️ os testes que liam `4×10`/`⏱ 60s` agora
+leem `4 × 10`/`60 s`, que é o formato do desenho.
+
 **Comunidade não recarregava sozinha** (conserto na v613): o timer de 45 s do
 feed fazia `if(SEC==='feed')carrega()`, mas `SEC` é **private do IIFE do menu**
 (declarado lá embaixo, noutra função) — então o timer estourava
