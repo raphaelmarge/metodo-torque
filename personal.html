@@ -367,6 +367,44 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     .pgatrlin { flex-wrap: wrap; }
     .pgatrlin .dac { width: 100%; justify-content: flex-start; }
   }
+  /* ---------- Comunidade na tela 4d ---------- */
+  .fdpost { padding: 14px 16px; margin-bottom: 10px; border-radius: 16px; background: #121016; border: 1px solid #26222f; }
+  .fdpost.off { opacity: .55; }
+  .fdcab { display: flex; align-items: center; gap: 11px; }
+  .fdtxt { font-size: 14px; font-weight: 700; line-height: 1.5; margin-top: 10px; white-space: pre-wrap; color: #f2f0f6; }
+  /* ---------- Configurações na tela 4a ---------- */
+  .cfgnuvem { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 12px;
+              background: #141218; border: 1px solid #26222f; font-size: 12.5px; font-weight: 700; color: #8a8695; }
+  .cfgnuvem.on { color: #4ade80; }
+  .cfgnuvem::before { content: ""; width: 8px; height: 8px; border-radius: 99px; background: #6e6a78; }
+  .cfgnuvem.on::before { background: #4ade80; }
+  .cfgcard { display: flex; align-items: center; gap: 14px; padding: 16px 18px; margin-bottom: 12px; border-radius: 18px;
+             background: #141218; border: 1px solid #26222f; flex-wrap: wrap; }
+  .cfgcard .cfgic { width: 38px; height: 38px; flex: none; border-radius: 12px; display: flex; align-items: center;
+                    justify-content: center; font-size: 16px; font-weight: 900; }
+  .cfgcard .cfgt { font-size: 15px; font-weight: 900; }
+  .cfgcard .cfgs { font-size: 12.5px; font-weight: 600; color: #8a8695; margin-top: 2px; }
+  .cfgselo { display: inline-block; margin-left: 9px; padding: 3px 8px; border-radius: 7px; font-size: 9.5px;
+             font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: #241a3d; color: #c4b5fd; vertical-align: 2px; }
+  .cfgselo.on { background: rgba(74,222,128,.14); color: #4ade80; }
+  .pfbox.pq { padding: 12px 14px; }
+  .cfgv { font-size: 13.5px; font-weight: 800; margin-top: 4px; }
+  .cfgv.on { color: #4ade80; }
+  .cfgsw { background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 4px 18px; margin-bottom: 12px; }
+  .cfgln { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0;
+           padding: 13px 0; border-top: 1px solid #1d1a24; font-size: 13.5px; font-weight: 700; }
+  .cfgln:first-child { border-top: 0; }
+  input[type="checkbox"].sw2 { appearance: none; -webkit-appearance: none; width: 46px; height: 26px; flex: none; border-radius: 99px;
+         background: #24202e; border: 1px solid #3a3546; position: relative; cursor: pointer; margin: 0; }
+  input[type="checkbox"].sw2::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 99px;
+                background: #6e6a78; transition: transform .15s, background .15s; }
+  input[type="checkbox"].sw2:checked { background: var(--roxo, #7c3aed); border-color: var(--roxo, #7c3aed); }
+  input[type="checkbox"].sw2:checked::after { transform: translateX(20px); background: #fff; }
+  /* ---------- Relatórios na tela 4c ---------- */
+  .rel3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: start; }
+  @media (max-width: 900px) { .rel3 { grid-template-columns: 1fr; } }
+  .rel3 .avkv:first-of-type { border-top: 0; }
+  #rel4cNiver .sessao-pt, #rel4cAlertas .sessao-pt { padding-left: 0; padding-right: 0; }
   /* ---------- Chat na tela 3c ---------- */
   .chpanel { display: grid; grid-template-columns: 280px 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
   @media (max-width: 900px) { .chpanel { grid-template-columns: 1fr; } }
@@ -1593,15 +1631,25 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <h2>Placar</h2>
       <div id="dsRanking" class="muted" style="margin-top: 8px; font-size: 13.5px;">Carregando…</div>
     </div>
+    <!-- tela 4d do canvas: a moderacao mora no proprio post -->
+    <div class="altopo" data-dssec="feed" hidden>
+      <div>
+        <div class="alk">Feed da turma</div>
+        <div class="alh" id="fdmResumo">—</div>
+      </div>
+      <label style="margin-left:auto;margin-bottom:0;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;">
+        <span id="fdmLigRot">Ligado no app</span>
+        <input type="checkbox" class="sw2" id="fdmLiga">
+      </label>
+    </div>
     <div class="card" data-dssec="feed" hidden>
-      <h2><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8' r='3.4'/><path d='M2.8 20c0-3.4 2.8-6.2 6.2-6.2s6.2 2.8 6.2 6.2'/><path d='M16 5.2a3.4 3.4 0 0 1 0 6.4M17.5 14.2c2 1.1 3.4 3.2 3.4 5.8'/></svg> Comunidade (o mural da turma)</h2>
-      <p class="muted" style="margin: 4px 0 10px;">O que os seus alunos publicam entre eles: resultado, foto e recado. Você lê tudo e pode <b>esconder</b> um post que saiu da linha — ele some do app de todo mundo na hora, sem republicar nada.</p>
       <div id="fdmAviso" class="muted" style="font-size: 12.5px; margin-bottom: 10px;"></div>
       <div class="linha-flex" style="margin-bottom: 10px;">
         <button class="btn sec" id="fdmRecarrega">Atualizar</button>
         <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 0;"><input type="checkbox" id="fdmOcultos" style="width: 16px; height: 16px;"> mostrar os escondidos</label>
       </div>
       <div id="fdmLista" class="muted">Carregando…</div>
+      <div class="dnota" style="display:block;margin-top:14px;line-height:1.6;">Você modera daqui: <b>esconder</b> um post (some do app de todo mundo na hora), <b>apagar</b> de vez, ou desligar o feed pra turma inteira no interruptor lá em cima.</div>
     </div>
   </section>
 
@@ -1622,6 +1670,19 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
       <div style="margin-top: 10px;"><button class="btn sec mini" id="relCSV">Baixar CSV (receita por aluno)</button></div></div>
+    <!-- tela 4c do canvas: o resumo do mes em tres caixas, as sessoes por
+         semana com as faltas empilhadas, e os alertas do studio ao lado -->
+    <div class="altopo" data-relsec="geral" hidden>
+      <div>
+        <div class="alk">Relatórios</div>
+        <div class="alh" id="relMesRot">—</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select id="fchMesP" style="width: auto;"></select>
+        <button type="button" class="dbt" id="fchZapP">Mandar fechamento</button>
+      </div>
+    </div>
+    <div id="rel4c" data-relsec="geral" hidden></div>
     <!-- o que saiu do Início (tela 4c do canvas): números do mês, metas,
          movimentação, fechamento, aniversários e alertas do studio -->
 <div class="kpi-pt" id="kpis" data-relsec="geral" hidden></div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
@@ -1642,19 +1703,30 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <div class="card"><h2>App e treinos dos alunos</h2><div id="bAppP" class="muted"></div></div>
     </div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
       <h2>Fechamento do mês</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Resumo prontinho do mês — receita, novos e encerrados, sessões e quem falta pagar — pra mandar pro seu WhatsApp, sócio ou contador.</p>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Resumo prontinho do mês — receita, novos e encerrados, sessões e quem falta pagar — pra mandar pro seu WhatsApp, sócio ou contador. O mês e o botão de mandar ficam no <b>cabeçalho</b> aqui de cima.</p>
       <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
-        <select id="fchMesP" style="width: auto;"></select>
-        <button class="btn" id="fchZapP">Mandar no WhatsApp</button>
         <button class="btn sec" id="fchCopiaP">Copiar resumo</button>
       </div>
       <p id="fchStatusP" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-    </div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;"><h2>Aniversários dos próximos 7 dias</h2><div id="bNiverP" class="muted">Ninguém faz aniversário nos próximos 7 dias.</div></div><div class="card" data-relsec="geral" hidden><h2>Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
+    </div><!-- os dois blocos moram aqui e sao MOVIDOS pras caixas da 4c a cada pintura;
+         este guarda-volumes existe pra eles nunca serem apagados pelo innerHTML -->
+    <div id="relGuarda" hidden>
+      <div id="bNiverP" class="muted">Ninguém faz aniversário nos próximos 7 dias.</div>
+      <div id="relAlertas" class="muted">Tudo em ordem.</div>
+    </div>
   </section>
 
   <!-- ASSESSORIA -->
   <!-- PERSONALIZAÇÃO: cores e logo do app -->
   <section id="vPers" hidden>
+    <!-- tela 4b do canvas: a cara do app com o botao de mandar pros alunos -->
+    <div class="altopo">
+      <div>
+        <div class="alk">A cara do seu app</div>
+        <div class="alh" id="persNome">—</div>
+      </div>
+      <button type="button" class="dbt" id="persPublica" style="margin-left:auto;">Publicar</button>
+    </div>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Cores do app</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Escolha a cor da sua marca — a <b>paleta inteira</b> do app do aluno muda junto: botões, gráficos, gradientes, cronômetros e até o card pro Stories, com os tons claro e escuro calculados sozinhos. O seu painel pinta na hora.</p>
@@ -1805,6 +1877,18 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- MINHA PÁGINA: site de vendas do personal, montado dentro do sistema -->
   <section id="vSitePro" hidden>
+    <!-- tela 4e do canvas: o endereco da pagina e o que ela ja rendeu, no topo -->
+    <div class="altopo">
+      <div>
+        <div class="alk">Sua página de vendas</div>
+        <div class="alh" id="spEndereco">—</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="dbt sec" id="spAbrir">Abrir página</button>
+        <button type="button" class="dbt" id="spCopiar">Copiar link</button>
+      </div>
+    </div>
+    <div id="spNumeros" style="margin-bottom:14px;"></div>
     <div class="card" style="margin-bottom: 14px;">
       <h2>Minha página de vendas</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Monte a sua página de divulgação e mande o link pra quem quiser te conhecer. Você escreve os textos e escolhe a foto; o resto entra sozinho: <b>WhatsApp com botão flutuante</b>, Instagram e e-mail, sua logo e suas cores (da Personalização) e os seus <b>planos e serviços</b> direto do cadastro.</p>
@@ -1880,10 +1964,22 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <!-- CONFIGURAÇÕES -->
   <section id="vConfig" hidden>
     <div class="abas" id="cfgAbas" style="margin: 0 0 14px;">
-      <button data-cfga="zap" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.5-1a8.5 8.5 0 1 0 4-16z'/></svg> WhatsApp</button>
+      <button data-cfga="resumo" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4' y='4' width='7' height='7' rx='1.6'/><rect x='13' y='4' width='7' height='7' rx='1.6'/><rect x='4' y='13' width='7' height='7' rx='1.6'/><rect x='13' y='13' width='7' height='7' rx='1.6'/></svg> Resumo</button>
+      <button data-cfga="zap"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.5-1a8.5 8.5 0 1 0 4-16z'/></svg> WhatsApp</button>
       <button data-cfga="app"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='2.5' width='10' height='19' rx='2.5'/><path d='M11 18.5h2'/></svg> App do aluno</button>
       <button data-cfga="conta"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='3.2'/><path d='M19.5 12a7.5 7.5 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-2-1.2L14.6 3h-5.2l-.4 2.6a7.6 7.6 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.7 7.7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 2 1.2l.4 2.6h5.2l.4-2.6a7.6 7.6 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z'/></svg> Cobrança e conta</button>
     </div>
+    <!-- tela 4a do canvas: cada grupo diz o ESTADO dele, e o que e liga/desliga
+         e interruptor em vez de formulario -->
+    <div class="altopo" data-cfgsec="resumo">
+      <div>
+        <div class="alk">Configurações</div>
+        <div class="alh" id="cfgTitulo">—</div>
+      </div>
+      <span class="cfgnuvem" id="cfgNuvem" style="margin-left:auto;">—</span>
+    </div>
+    <div id="cfgResumo" data-cfgsec="resumo"></div>
+    <div class="dnota" data-cfgsec="resumo" style="display:block;margin-bottom:14px;line-height:1.6;">Chave e token <b>nunca voltam pra tela</b>: o painel só sabe <b>se existe</b>. Isso é regra do sistema — quem guarda o segredo é a nuvem, com a chave de serviço que o site não tem.</div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="conta">
       <h2>Cobrança</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quantos dias de tolerância depois do vencimento antes do aluno aparecer como <b>ATRASADO</b>? Vale pros alertas do Início, pra lista "Quem ainda não pagou", pra saúde da cobrança e pra régua automática. 0 = cobra no dia seguinte ao vencimento.</p>
@@ -5004,29 +5100,43 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 
   // ---------- moderação da Comunidade (o feed que os alunos publicam entre si) ----------
   // o professor é membro da academia, então lê e edita a tabela app_feed direto pela RLS
+  function fdmQuando(iso) {
+    var q = new Date(iso);
+    if (!isFinite(q)) return "";
+    var d = String(iso || "").slice(0, 10);
+    var hoje = S.todayISO();
+    var on = new Date(hoje + "T12:00:00"); on.setDate(on.getDate() - 1);
+    var hm = String(q.getHours()).padStart(2, "0") + ":" + String(q.getMinutes()).padStart(2, "0");
+    if (d === hoje) return "hoje " + hm;
+    if (d === S.todayISO(on)) return "ontem " + hm;
+    return S.fmtData(d) + " " + hm;
+  }
   function pintaFeedMod(box, posts) {
     box.innerHTML = posts.map(function (p) {
-      var q = new Date(p.criado);
-      return "<div style='padding:12px 0;border-top:1px solid var(--linha);" + (p.oculto ? "opacity:.55;" : "") + "'>" +
-        "<div class='linha-flex' style='gap:8px;align-items:center;'>" +
-        "<b style='font-size:14px;'>" + esc(p.nome || "Aluno") + "</b>" +
-        "<span class='muted' style='font-size:11.5px;'>" + (isFinite(q) ? q.toLocaleString("pt-BR").replace(/:\d\d$/, "") : "") +
-        (p.treino ? " · " + esc(p.treino) : "") + "</span>" +
-        (p.oculto ? "<span class='tag alerta' style='font-size:10px;'>escondido</span>" : "") +
-        "<span style='margin-left:auto;display:inline-flex;gap:8px;flex:none;'>" +
+      var nome = String(p.nome || "Aluno");
+      return '<div class="fdpost' + (p.oculto ? " off" : "") + '">' +
+        '<div class="fdcab"><span class="qsav">' + esc(nome.trim().slice(0, 2).toUpperCase()) + "</span>" +
+        '<div style="min-width:0;"><div style="font-size:14px;font-weight:800;">' + esc(nome) +
+        (p.oculto ? '<span class="cfgselo">escondido</span>' : "") + "</div>" +
+        '<div style="font-size:11.5px;font-weight:600;color:#8a8695;margin-top:1px;">' + esc(fdmQuando(p.criado)) +
+        (p.treino ? " · " + esc(p.treino) : "") + "</div></div>" +
+        '<span style="margin-left:auto;display:inline-flex;gap:6px;flex:none;">' +
         "<button class='btn sec mini' data-fdmoc='" + esc(p.id) + "'>" + (p.oculto ? "Mostrar" : "Esconder") + "</button>" +
-        "<button class='btn sec mini' data-fdmrm='" + esc(p.id) + "' title='apagar de vez'>✕</button></span></div>" +
-        (p.texto ? "<div style='font-size:14px;margin-top:6px;white-space:pre-wrap;'>" + esc(p.texto) + "</div>" : "") +
-        (p.foto ? "<img src='" + esc(p.foto) + "' alt='foto do post' loading='lazy' style='max-width:220px;border-radius:10px;margin-top:8px;display:block;'>" : "") +
+        "<button class='btn sec mini' data-fdmrm='" + esc(p.id) + "' title='apagar de vez' aria-label='apagar o post'>✕</button></span></div>" +
+        (p.texto ? '<div class="fdtxt">“' + esc(p.texto) + "”</div>" : "") +
+        (p.foto ? "<img src='" + esc(p.foto) + "' alt='foto do post' loading='lazy' style='max-width:220px;border-radius:12px;margin-top:10px;display:block;'>" : "") +
         "</div>";
     }).join("");
   }
   function carregaFeedMod() {
     var box = $("fdmLista");
     var st = load();
-    $("fdmAviso").textContent = (st.config || {}).feedOn
+    var lig = !!(st.config || {}).feedOn;
+    $("fdmAviso").textContent = lig
       ? ""
-      : "A Comunidade está DESLIGADA — ligue em Configurações e publique os apps pros alunos verem.";
+      : "A Comunidade está DESLIGADA — ligue no interruptor aqui em cima e publique os apps pros alunos verem.";
+    if ($("fdmLiga")) $("fdmLiga").checked = lig;
+    if ($("fdmLigRot")) $("fdmLigRot").textContent = lig ? "Ligado no app" : "Desligado";
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) { box.textContent = "Entre com a conta da nuvem (card Sua ilha) pra ver o que a turma postou."; return; }
     box.textContent = "Carregando…";
@@ -5036,11 +5146,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     q.then(function (r) {
       if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a Comunidade."; return; }
       var posts = (r && r.data) || [];
+      // o titulo conta a MESMA verdade da lista: os posts dos ultimos 7 dias
+      var corte = new Date(); corte.setDate(corte.getDate() - 7);
+      var isoC = S.todayISO(corte);
+      var naSem = posts.filter(function (x) { return String(x.criado || "").slice(0, 10) >= isoC; }).length;
+      if ($("fdmResumo")) $("fdmResumo").textContent = naSem
+        ? S.plural(naSem, "post esta semana", "posts esta semana")
+        : posts.length ? "Nenhum post nos últimos 7 dias" : "Ninguém postou ainda";
       if (!posts.length) { box.textContent = "Ninguém postou ainda."; return; }
       pintaFeedMod(box, posts);
     }, function () { box.textContent = "Sem conexão com a nuvem agora."; });
   }
   $("fdmRecarrega").addEventListener("click", carregaFeedMod);
+  // o interruptor da 4d e o MESMO estado da caixinha de Configuracoes
+  $("fdmLiga").addEventListener("change", function () {
+    var stF = load();
+    stF.config = stF.config || {};
+    stF.config.feedOn = this.checked;
+    stF.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(stF, a.id); });
+    save(stF);
+    carregaFeedMod();
+  });
   $("fdmOcultos").addEventListener("change", carregaFeedMod);
   $("fdmLista").addEventListener("click", function (e) {
     var oc = e.target.getAttribute && e.target.getAttribute("data-fdmoc");
@@ -5783,6 +5909,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   window.__appsPendentes = { pendente: appPendente, publica: publicaAppsPendentes, publicaUm: publicaAppDe, auto: autoPublicaApps }; // testes
   $("btnPubPendentes").addEventListener("click", publicaAppsPendentes);
+  // o botao da tela 4b e o MESMO caminho de publicar de sempre
+  // o botao da tela 4b e o MESMO caminho de publicar de sempre
+  if ($("persPublica")) $("persPublica").addEventListener("click", function () { publicaAppsPendentes(); });
+
   /* ---------- apps congelados no formato antigo ----------
    * Antes da v467 o app do aluno era um HTML pronto guardado na nuvem, sem o
    * campo `dados`. Um pacote desses não se reconstrói pelo código do site — é
@@ -8249,6 +8379,111 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   window.__planoPT = { render: renderPlanoSem }; // testes
 
   // ---------- configurações do studio: tolerância de atraso + o que o aluno vê no app ----------
+  /* ---------- tela 4a: o resumo com o ESTADO de cada grupo ----------
+   * O que liga/desliga vira interruptor aqui; o que precisa de chave ou token
+   * continua no formulario da sub-aba, e o resumo so diz SE existe (a chave em
+   * si nunca volta pro navegador — quem guarda e a nuvem).
+   */
+  var CFG_TOGGLES = [
+    ["feedOn", "Comunidade (feed da turma)", "cfgFeed"],
+    ["scanOn", "Medidas pela câmera", "cfgScan"],
+  ];
+  var PROV_NOME = { mercadopago: "Mercado Pago", asaas: "Asaas", pagarme: "Pagar.me", outro: "link próprio" };
+  function cfgCard(o) {
+    return '<div class="cfgcard' + (o.pequeno ? " pq" : "") + '">' +
+      '<span class="cfgic" style="background:' + (o.on ? "rgba(74,222,128,.14)" : "#241a3d") + ";color:" +
+      (o.on ? "#4ade80" : "#c4b5fd") + ';">' + o.icone + "</span>" +
+      '<div style="min-width:0;"><div class="cfgt">' + esc(o.titulo) +
+      (o.selo ? '<span class="cfgselo' + (o.on ? " on" : "") + '">' + esc(o.selo) + "</span>" : "") + "</div>" +
+      '<div class="cfgs">' + o.sub + "</div></div>" +
+      '<div style="margin-left:auto;flex:none;">' + (o.acao || "") + "</div></div>";
+  }
+  function pintaCfgResumo() {
+    var box = $("cfgResumo");
+    if (!box) return;
+    var st = load();
+    var cfg = st.config || {};
+    var pagApi = cfg.pagApi || {};
+    var zapApi = cfg.zapApi || {};
+    var nuvem = S.cloud && S.cloud();
+    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
+    var comApp = ativos.filter(function (a) { return a.appTokenP; }).length;
+    var mes = S.todayISO().slice(0, 7);
+    var baixas = st.pagamentos.filter(function (x) { return x.eventoId && (x.data || "").slice(0, 7) === mes; }).length;
+    var assinas = ativos.filter(function (a) { return a.assinaturaAs || a.assinaturaRec; }).length;
+    // o cabecalho conta a mesma verdade dos cards, numa frase
+    var desligados = [];
+    if (!pagApi.ligado && !cfg.pixChave) desligados.push("o recebimento");
+    if (!zapApi.ligado) desligados.push("o WhatsApp");
+    if (!cfg.feedOn) desligados.push("a Comunidade");
+    var tit = $("cfgTitulo");
+    if (tit) tit.textContent = !desligados.length ? "Tudo ligado"
+      : desligados.length === 1 ? "Tudo ligado, menos " + desligados[0]
+      : "Falta ligar " + desligados.slice(0, -1).join(", ") + " e " + desligados[desligados.length - 1];
+    var nv = $("cfgNuvem");
+    if (nv) {
+      nv.textContent = nuvem ? "Nuvem sincronizada · " + new Date().toTimeString().slice(0, 5) : "Só neste aparelho";
+      nv.className = "cfgnuvem" + (nuvem ? " on" : "");
+    }
+    var html = "";
+    // 1) receber dos alunos
+    html += cfgCard({
+      icone: "$", on: !!(pagApi.ligado || cfg.pixChave),
+      titulo: "Receber dos alunos",
+      selo: pagApi.ligado ? (PROV_NOME[pagApi.provedor] || pagApi.provedor) + " · sua conta" : cfg.pixChave ? "Pix · sua chave" : "desligado",
+      sub: pagApi.ligado ? "O dinheiro cai direto com você. Chave guardada e selada — nem o painel lê de volta."
+        : cfg.pixChave ? "O Pix sai com a sua chave. Pra cartão e boleto, ligue um gateway."
+        : "Sem chave Pix nem gateway, o Link e o Pix não aparecem na cobrança.",
+      acao: '<button type="button" class="btn sec" data-cfgir="conta">' + (pagApi.ligado ? "Trocar chave" : "Configurar") + "</button>",
+    });
+    if (pagApi.ligado) {
+      html += '<div class="rel3" style="margin:-6px 0 12px;">' +
+        '<div class="pfbox pq"><div class="tdrot">Baixa automática</div><div class="cfgv on">Ligada · ' +
+        S.plural(baixas, "baixa", "baixas") + " em " + MES_LONGO[+mes.slice(5, 7) - 1] + "</div></div>" +
+        '<div class="pfbox pq"><div class="tdrot">Assinaturas</div><div class="cfgv">' +
+        S.plural(assinas, "ativa", "ativas") + " · mensal</div></div>" +
+        '<div class="pfbox pq"><div class="tdrot">Comissão da plataforma</div><div class="cfgv">0% · você recebe tudo</div></div>' +
+        "</div>";
+    }
+    // 2) WhatsApp oficial
+    html += cfgCard({
+      icone: "✆", on: !!zapApi.ligado,
+      titulo: "WhatsApp oficial",
+      selo: zapApi.ligado ? "seu número" : "desligado",
+      sub: zapApi.ligado ? "Mensagem sai e chega no seu número."
+        : "Sem credencial própria, as mensagens saem pelo WhatsApp do seu celular, uma a uma.",
+      acao: '<button type="button" class="btn sec" data-cfgir="zap">' + (zapApi.ligado ? "Ajustar" : "Ligar") + "</button>",
+    });
+    // 3) app dos alunos + os interruptores
+    html += cfgCard({
+      icone: "▤", on: comApp > 0,
+      titulo: "App dos alunos",
+      sub: comApp + " de " + ativos.length + " usando · correção de código chega em todos sem republicar",
+      acao: '<button type="button" class="btn sec" data-cfgir="app">Ajustar o que aparece</button>',
+    });
+    html += '<div class="cfgsw">' + CFG_TOGGLES.map(function (t) {
+      var on = !!cfg[t[0]];
+      return '<label class="cfgln"><span>' + esc(t[1]) + "</span>" +
+        '<input type="checkbox" class="sw2" data-cfgtg="' + t[0] + '"' + (on ? " checked" : "") + '></label>';
+    }).join("") + "</div>";
+    box.innerHTML = html;
+  }
+  window.__cfg4a = pintaCfgResumo; // testes
+  $("cfgResumo").addEventListener("click", function (e) {
+    var ir = e.target.closest && e.target.closest("[data-cfgir]");
+    if (ir) { window.__cfgAba(ir.getAttribute("data-cfgir")); return; }
+  });
+  $("cfgResumo").addEventListener("change", function (e) {
+    var tg = e.target.getAttribute && e.target.getAttribute("data-cfgtg");
+    if (!tg) return;
+    var st = load();
+    st.config = st.config || {};
+    st.config[tg] = e.target.checked;
+    // o app dos alunos muda de cara: todos entram na fila de publicar (mesma
+    // regra do botao Salvar da sub-aba — nada de dois caminhos diferentes)
+    if (tg === "feedOn") st.alunos.forEach(function (a) { if (a.ativo !== false) marcaAppPendente(st, a.id); });
+    save(st);
+  });
   var CFG_VE = [["cfgVeWod", "wod"], ["cfgVeCardio", "cardio"], ["cfgVeUtil", "util"], ["cfgVeAgenda", "agenda"], ["cfgVeChat", "chat"], ["cfgVePag", "pag"], ["cfgVeIndica", "indica"]];
   function renderConfigPT() {
     var st = load();
@@ -8268,6 +8503,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("cfgScan").checked = !!(st.config || {}).scanOn; // Medidas pela câmera também
     renderConta(); // o cartão Minha conta vive aqui também (entrar/senha/sair)
     renderAutos();
+    pintaCfgResumo();
   }
   $("cfgSalva").addEventListener("click", function () {
     var st = load();
@@ -8923,6 +9159,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spAuto").innerHTML = "Entram sozinhos: WhatsApp " + (cfg.zap ? "<b>" + esc(cfg.zap) + "</b>" : "<b>nenhum — preencha no card Sua ilha</b>") +
       " · " + (st.planosPT || []).length + " plano(s) · " + (st.servicosPT || []).length + " serviço(s) · logo e cores da Personalização.";
     $("spPreview").srcdoc = montaSitePro(st);
+    pintaSp4e(st);
   }
   function spSalva() {
     var st = load();
@@ -9063,6 +9300,41 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         $("spStatus").textContent = "Sem conexão agora — tenta de novo com internet.";
       });
   });
+  // ---------- tela 4e: o endereco da pagina e o que ela ja rendeu ----------
+  function spURL(st) {
+    var sp = (st.config || {}).sitePro || {};
+    return sp.slugPub ? "www.torqueon.com.br/pagina.html?s=" + sp.slugPub : "";
+  }
+  function pintaSp4e(st) {
+    var el = $("spEndereco"), box = $("spNumeros");
+    if (!el || !box) return;
+    var sp = (st.config || {}).sitePro || {};
+    var url = spURL(st);
+    el.textContent = url || (sp.slug ? "ainda não publicada" : "escolha o endereço abaixo");
+    $("spCopiar").hidden = !url;
+    $("spAbrir").hidden = !url;
+    // O painel NAO conta visitas nem pedidos: a pagina publicada e HTML estatico
+    // e quem pede aula cai no WhatsApp. Dizer um numero aqui seria inventar.
+    box.innerHTML = '<div class="dnota" style="display:block;line-height:1.6;">' +
+      (url ? "A página está <b>no ar</b>. " : "") +
+      "Quem pede aula por ela chega direto no <b>seu WhatsApp</b> — o painel ainda não conta visitas nem pedidos, " +
+      "então não mostra número nenhum aqui em vez de inventar um.</div>";
+  }
+  $("spCopiar").addEventListener("click", function () {
+    var url = "https://" + spURL(load());
+    var ta = document.createElement("textarea");
+    ta.value = url;
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); this.textContent = "Copiado!"; } catch (e) { prompt("Copie o link:", url); }
+    document.body.removeChild(ta);
+    var bt = this;
+    setTimeout(function () { bt.textContent = "Copiar link"; }, 1800);
+  });
+  $("spAbrir").addEventListener("click", function () {
+    var url = spURL(load());
+    if (url) window.open("https://" + url, "_blank", "noopener");
+  });
+  window.__sp4e = pintaSp4e; // testes
   window.__sitePro = { monta: montaSitePro, render: renderSitePro }; // testes
 
   // ---------- personalização: paleta de cores + logo do app ----------
@@ -9093,6 +9365,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<span style="flex:1;text-align:center;border:1px solid ' + cor + ';color:' + cla + ';border-radius:9px;padding:9px 0;font-weight:800;font-size:12.5px;background:' + clareia(fnd, .05) + ';">Ver treino</span></div></div>';
   }
   function renderPers() {
+    // cabecalho da tela 4b: o nome do studio e quantos apps estao esperando
+    var stP = load();
+    if ($("persNome")) $("persNome").textContent = (stP.config || {}).nome || "Seu studio";
+    if ($("persPublica")) {
+      var pendP = stP.alunos.filter(function (a) { return appPendente(stP, a); }).length;
+      $("persPublica").textContent = pendP ? "Publicar pros " + pendP : "Tudo publicado";
+      $("persPublica").disabled = !pendP;
+      $("persPublica").style.opacity = pendP ? "" : ".55";
+    }
     var st = load();
     if (document.activeElement !== $("cfgCor")) $("cfgCor").value = corOk((st.config || {}).cor) || "#7c3aed";
     if (document.activeElement !== $("cfgFundo")) $("cfgFundo").value = corOk((st.config || {}).fundo) || "#0d0c10";
@@ -9411,7 +9692,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     abrePerfil(idF);
     mostraPfAba("app");
   });
-  window.__cfgAba = fazSubAbas("vConfig", "cfgAbas", "data-cfga", "data-cfgsec", "zap");
+  window.__cfgAba = fazSubAbas("vConfig", "cfgAbas", "data-cfga", "data-cfgsec", "resumo");
   window.__qtAba = fazSubAbas("vQuest", "qtAbas", "data-qta", "data-qtsec", "semana");
   // ao entrar em "A semana" recarrega — os check-ins chegam da nuvem
   $("qtAbas").addEventListener("click", function (e) {
@@ -11559,6 +11840,98 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if ((pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao")) return 0;
     return pl ? +pl.valor : +a.valor || 0;
   }
+  // ---------- tela 4c: o resumo do mes em tres caixas + sessoes por semana ----------
+  var MES_LONGO = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+    "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  function relKv(rot, val, cor) {
+    return '<div class="avkv"><span>' + esc(rot) + '</span><b' + (cor ? ' style="color:' + cor + ';"' : "") + ">" + val + "</b></div>";
+  }
+  function pinta4c(st) {
+    var box = $("rel4c");
+    if (!box) return;
+    var mes = ($("fchMesP") && $("fchMesP").value) || S.todayISO().slice(0, 7);
+    var rot = $("relMesRot");
+    if (rot) {
+      var nm = MES_LONGO[+mes.slice(5, 7) - 1];
+      rot.textContent = nm.charAt(0).toUpperCase() + nm.slice(1) + " de " + mes.slice(0, 4);
+    }
+    var d = dadosDoMes(st, mes);
+    var saldo = d.ativos.length;
+    var perda = d.ativos.length + d.encerrados ? d.encerrados / (d.ativos.length + d.encerrados) * 100 : 0;
+    // ticket medio: o que cada mensalista paga, na media
+    var soma = 0, n = 0;
+    d.ativos.forEach(function (a) {
+      var ct = contratoDe(st, a.id);
+      var pl = ct ? planoDe(st, ct.planoId) : null;
+      if ((pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao")) return;
+      var v = pl ? +pl.valor : +a.valor || 0;
+      if (v > 0) { soma += v; n++; }
+    });
+    var ticket = n ? soma / n : 0;
+    // tempo de casa: media de meses desde a data de entrada
+    var somaC = 0, nC = 0;
+    d.ativos.forEach(function (a) {
+      if (!a.desde || a.desde.length < 10) return;
+      var m = (new Date(S.todayISO() + "T12:00:00") - new Date(a.desde + "T12:00:00")) / (30.4 * 864e5);
+      if (m >= 0 && m < 600) { somaC += m; nC++; }
+    });
+    var casa = nC ? somaC / nC : 0;
+    var num1 = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
+    // sessoes por semana das ultimas 4 semanas, com as faltas empilhadas em cima
+    var hoje = S.todayISO();
+    var seg = new Date(hoje + "T12:00:00");
+    seg.setDate(seg.getDate() - ((seg.getDay() + 6) % 7));
+    var sems = [];
+    for (var i = 3; i >= 0; i--) {
+      var a1 = new Date(seg.getTime()); a1.setDate(a1.getDate() - i * 7);
+      var b1 = new Date(a1.getTime()); b1.setDate(b1.getDate() + 6);
+      var de = S.todayISO(a1), ate = S.todayISO(b1);
+      var na = st.sessoes.filter(function (x) { return x.data >= de && x.data <= ate; });
+      sems.push({ rot: i === 0 ? "ESTA" : (4 - i) + "ª SEM", feitas: na.filter(function (x) { return x.feita; }).length,
+        faltas: na.filter(function (x) { return x.faltou; }).length, agora: i === 0 });
+    }
+    var topo = Math.max(1, Math.max.apply(null, sems.map(function (x) { return x.feitas + x.faltas; })));
+    // devolve os dois blocos pro guarda-volumes antes de refazer a caixa, senao
+    // o innerHTML apagaria elementos que outro trecho do painel ainda preenche
+    var gd = $("relGuarda"), nvA = $("bNiverP"), alA = $("relAlertas");
+    if (gd && nvA) gd.appendChild(nvA);
+    if (gd && alA) gd.appendChild(alA);
+    box.innerHTML =
+      '<div class="rel3" style="margin-bottom:14px;">' +
+      '<div class="pfbox"><div class="tdrot">Movimentação</div>' +
+      relKv("Entraram", (d.novos ? "+" : "") + d.novos, d.novos ? "#4ade80" : null) +
+      relKv("Encerraram", d.encerrados ? "-" + d.encerrados : "0", d.encerrados ? "#f87171" : null) +
+      relKv("Saldo", saldo) + "</div>" +
+      '<div class="pfbox"><div class="tdrot">Indicadores</div>' +
+      relKv("Ticket médio", S.fmtBRL(ticket)) +
+      relKv("Tempo de casa", num1(casa) + " meses") +
+      relKv("Perda no mês", num1(perda) + "%", perda > 5 ? "#f87171" : "#4ade80") + "</div>" +
+      '<div class="pfbox" id="rel4cNiver"><div class="tdrot">Aniversários · 7 dias</div></div>' +
+      "</div>" +
+      '<div class="dcols" style="margin-bottom:14px;">' +
+      '<div class="pfbox"><h3>Sessões por semana<small style="font-weight:600;color:#6e6a78;font-size:12px;margin-left:8px;">e quanto disso virou falta</small>' +
+      '<span style="float:right;font-size:11px;font-weight:700;color:#8a8695;">' +
+      '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:#7c3aed;margin-right:4px;"></i>feitas ' +
+      '<i style="display:inline-block;width:8px;height:8px;border-radius:3px;background:#5b2b2b;margin:0 4px 0 8px;"></i>faltas</span></h3>' +
+      '<div style="display:flex;gap:12px;align-items:flex-end;height:150px;margin-top:10px;">' +
+      sems.map(function (w) {
+        var hF = Math.round(110 * w.feitas / topo), hX = Math.round(110 * w.faltas / topo);
+        return '<div style="flex:1;text-align:center;">' +
+          '<div style="height:' + Math.max(0, 114 - hF - hX) + 'px;"></div>' +
+          (hX ? '<div style="height:' + Math.max(4, hX) + 'px;border-radius:8px 8px 0 0;background:#5b2b2b;" title="' + w.faltas + ' falta(s)"></div>' : "") +
+          '<div style="height:' + Math.max(4, hF) + "px;border-radius:" + (hX ? "0 0 3px 3px" : "8px 8px 3px 3px") +
+          ";background:" + (w.agora ? "#a78bfa" : "#7c3aed") + ';" title="' + w.feitas + ' feita(s)"></div>' +
+          '<div style="font-size:10px;font-weight:800;color:' + (w.agora ? "#a78bfa" : "#6e6a78") + ';margin-top:6px;">' + w.rot + "</div></div>";
+      }).join("") + "</div></div>" +
+      '<div class="pfbox" id="rel4cAlertas"><div class="tdrot">Alertas do studio</div></div>' +
+      "</div>";
+    // os dois blocos ja existem e ja sao preenchidos por quem sempre preencheu:
+    // aqui eles so MUDAM DE LUGAR, pra caber no desenho da 4c
+    var nv = $("bNiverP"), al = $("relAlertas");
+    if (nv) $("rel4cNiver").appendChild(nv);
+    if (al) $("rel4cAlertas").appendChild(al);
+  }
+  window.__rel4c = pinta4c; // testes
   function renderRelatorios() {
     var st = load();
     var hoje = S.todayISO();
@@ -12126,6 +12499,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     }
     sel.innerHTML = ops.join("");
     if (atual) sel.value = atual;
+    // a 4c depende do bNiverP e do relAlertas ja preenchidos aqui em cima
+    pinta4c(st);
   }
   function resumoFechamentoPT(mes) {
     var st = load();
@@ -12149,6 +12524,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     S.write("ptStudio", st);
     renderDashPT(st);
   });
+  $("fchMesP").addEventListener("change", function () { pinta4c(load()); });
   $("fchCopiaP").addEventListener("click", function () {
     var ta = document.createElement("textarea");
     ta.value = resumoFechamentoPT($("fchMesP").value);
@@ -13856,7 +14232,16 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pintaCapasTipo() {
     var box = $("cfgCapasTipo");
     if (!box) return;
-    var mapa = (load().config || {}).capasTipo || {};
+    var stC = load();
+    var mapa = (stC.config || {}).capasTipo || {};
+    // quantas fichas cada tipo de foto atende hoje — a mesma conta do pacote
+    var contaTipo = {};
+    Object.keys(stC.treinosV2 || {}).forEach(function (aid) {
+      ((stC.treinosV2[aid] || {}).fichas || []).forEach(function (f) {
+        var k = tipoDaFicha(stC, f);
+        if (k) contaTipo[k] = (contaTipo[k] || 0) + 1;
+      });
+    });
     box.innerHTML = TIPOS_CAPA.map(function (par) {
       var img = mapa[par[0]] || "";
       return '<div style="border:1px solid var(--linha);border-radius:12px;padding:10px;">' +
@@ -13864,7 +14249,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // mostrar o que ele vai ver, senão o professor enquadra errado
         (img ? '<img src="' + img + '" alt="" style="width:112px;height:140px;object-fit:cover;border-radius:9px;display:block;margin:0 auto;">'
           : '<div style="width:112px;height:140px;margin:0 auto;border:1px dashed var(--linha);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#6e6a78;font-size:11.5px;">sem foto</div>') +
-        '<div style="font-size:13px;font-weight:700;margin:8px 0 6px;">' + esc(par[1]) + "</div>" +
+        '<div style="font-size:13px;font-weight:700;margin:8px 0 2px;">' + esc(par[1]) + "</div>" +
+        '<div style="font-size:11.5px;font-weight:600;color:#6e6a78;margin-bottom:6px;">' +
+        (contaTipo[par[0]] ? S.plural(contaTipo[par[0]], "ficha", "fichas") : "nenhuma ficha ainda") + "</div>" +
         '<div class="linha-flex" style="gap:6px;">' +
         '<button class="btn sec mini" data-tpcapa="' + par[0] + '">' + (img ? "Trocar" : "Enviar") + "</button>" +
         '<button class="btn sec mini" data-tpcapag="' + par[0] + '" title="usar uma foto do seu banco de imagens">🖼</button>' +
