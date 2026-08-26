@@ -640,7 +640,16 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
                                      background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2); }
   .pftopo #pfTitulo { font-size: 26px; font-weight: 900; letter-spacing: -.03em; color: #fff; }
   .pftopo #pfDesde { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85) !important; }
-  .pftopo #pfFotoBtn { width: 62px !important; height: 62px !important; border-radius: 18px !important; background: rgba(255,255,255,.2) !important; color: #fff; font-size: 19px; font-weight: 900; }
+  #pfAbas { margin: 12px 0; }
+  #pfFotoBtn { width: 52px; height: 52px; border-radius: 50%; }
+  /* O que era style inline no HTML virou CSS: media query NAO vence estilo
+   * inline, entao a ficha no celular nunca conseguia encolher o titulo nem
+   * a foto — a regra existia desde a v563 e estava morta. */
+  #pfTitulo { font-size: 20px; margin: 0; overflow: hidden; text-overflow: ellipsis;
+              white-space: nowrap; letter-spacing: -.01em; text-transform: none;
+              color: var(--texto); font-weight: 800; }
+  .pftopo #pfFotoBtn { width: 62px; height: 62px; border-radius: 18px;
+                       background: var(--pt-sobre-roxo-cx); color: #fff; font-size: 19px; font-weight: 900; }
   /* O cabecalho da ficha e UMA linha no computador: foto, nome, as 4 acoes do
    * dia e o botao de Acoes. No celular isso nao cabe de jeito nenhum — as
    * quatro acoes sozinhas passam de 230px — e o que acontecia era o pior
@@ -681,6 +690,102 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* selo curto nunca quebra no meio: "4 treinos no mês" em quatro linhas foi
    * um dos sintomas da coluna espremida */
   .pfchips span { white-space: nowrap; }
+  /* card/linha da proxima sessao (tela 18). No computador e uma linha; no
+   * celular vira o card roxo "HOJE 18:00 … Abrir" do desenho. */
+  .pfprox .pfpk, .pfprox .pfph, .pfprox .pfpt, .pfprox .pfpb { display: inline; }
+  .pfprox .pfpt b, .pfprox .pfpt i { font-style: normal; font-weight: inherit; }
+  .pfprox .pfpk::after { content: " "; }
+  .pfprox .pfpt b::after { content: ": "; }
+  .pfprox .pfph::after { content: " · "; }
+  .pfprox .pfpb { display: none; }
+  /* ============================================================
+   * TELA 18 do handoff — A FICHA DO ALUNO NO CELULAR.
+   * Valores do recorte telas-html/18-5b-ficha-aluno-celular.html.
+   * O que NAO foi seguido, de proposito:
+   *  - o desenho mostra 5 abas; o codigo tem 8, e cortar 3 sumiria com App do
+   *    aluno, Cadastro e Frequencia. Viram uma FITA que rola — o proprio
+   *    desenho ja mostra a 5a cortada na borda, ou seja, ele preve rolagem.
+   *  - o tile "DOR NO OMBRO" do desenho nao tem dado no painel (a dor mora na
+   *    resposta do questionario, noutra tabela). Fica CHECK-IN DA SEMANA, que
+   *    e real. Numero inventado nao entra.
+   * ============================================================ */
+  @media (max-width: 900px) {
+    /* a faixa roxa encosta no topo e nas bordas */
+    #vPerfil .pftopo { margin: -18px -12px 0; border-radius: 0; padding: 14px 18px 16px;
+                       display: flex; flex-direction: column; gap: 14px; position: relative; }
+    #vPerfil .pftopo .pfvolta { margin-bottom: 0; padding-right: 46px; }
+    #vPerfil .pftopo .pfvolta button { font-size: 12px; }
+    /* o "···" do desenho E o menu de acoes que ja existe — trocar por um
+     * quadradinho novo tiraria as 6 acoes de dentro dele */
+    #vPerfil #pfAcoesBtn { position: absolute; top: 14px; right: 18px; width: 36px; height: 36px;
+                           padding: 0; border-radius: 11px; justify-content: center;
+                           background: var(--pt-sobre-roxo-cx); border: 1px solid var(--pt-sobre-roxo-bd);
+                           color: #fff; font-size: 15px; font-weight: 900; }
+    /* o botao vira o "···" do desenho: font-size 0 apaga o raio e a setinha e
+     * deixa o rotulo no leitor de tela (o title ja diz "Acoes do aluno") */
+    #vPerfil #pfAcoesBtn { font-size: 0; }
+    #vPerfil #pfAcoesBtn::after { content: "···"; font-size: 15px; font-weight: 900; line-height: 0; }
+    #vPerfil #pfAcoesBtn .pf-ac-rot, #vPerfil #pfAcoesBtn .fseta { display: none; }
+    /* "Editar cadastro" fica, mas compacto: no desenho ele mora dentro do "···",
+     * e mover as 7 acoes pra la sem montar o menu tiraria funcao da tela */
+    #vPerfil .pftopo .pfvolta button + button { height: 36px; padding: 0 12px; font-size: 12px; }
+    /* quem e o aluno */
+    #vPerfil #pfTopo { grid-template-columns: auto minmax(0, 1fr); gap: 13px; }
+    #vPerfil .pftopo #pfFotoBtn { width: 54px; height: 54px; border-radius: 17px; font-size: 19px; }
+    #vPerfil .pftopo #pfTitulo { font-size: 21px; font-weight: 900; letter-spacing: -.025em; }
+    #vPerfil .pftopo #pfDesde { font-size: 11.5px; font-weight: 700; }
+    #vPerfil .pfchips { display: none; }     /* o desenho tira os selos daqui: eles viram KPI */
+    /* as 4 acoes do dia: a principal estica, as tres de icone tem 44px */
+    #vPerfil .pfacoes { gap: 7px; }
+    #vPerfil .pfacoes .dbt { height: 44px; border-radius: 12px; font-size: 13px; }
+    #vPerfil .pfacoes .dbt:not(.pfic) { flex: 1; background: #fff; color: var(--pt-roxo-fundo); }
+    #vPerfil .pfacoes .pfic { width: 44px; height: 44px; background: var(--pt-sobre-roxo-cx);
+                              border: 1px solid var(--pt-sobre-roxo-bd2); }
+    /* a proxima sessao sai do roxo e vira o card HOJE */
+    /* ⚠️ desvio consciente do desenho: nele este card fica FORA do roxo, mas no
+     * computador (tela 04) a mesma informacao e uma linha DENTRO do roxo — e e
+     * o mesmo elemento no HTML. Em vez de duplicar o DOM, ele continua dentro e
+     * usa os tokens "sobre fundo roxo" do proprio handoff. A hierarquia que o
+     * desenho queria (hora grande + botao) fica de pe. */
+    #vPerfil .pfprox { margin: 13px 0 0; display: flex; align-items: center; gap: 11px;
+                       padding: 13px 14px; border-radius: 15px; color: #fff;
+                       background: var(--pt-sobre-roxo-cx); border: 1px solid var(--pt-sobre-roxo-bd); }
+    #vPerfil .pfprox .pfpk { display: block; font-size: 9px; font-weight: 800; letter-spacing: .16em;
+                             text-transform: uppercase; color: var(--pt-sobre-roxo-lbl); }
+    #vPerfil .pfprox .pfpk::after { content: none; }
+    #vPerfil .pfprox .pfph { display: block; font-size: 21px; font-weight: 900; letter-spacing: -.03em;
+                             font-variant-numeric: tabular-nums; padding-right: 13px;
+                             border-right: 1px solid var(--pt-sobre-roxo-bd); }
+    #vPerfil .pfprox .pfph::after { content: none; }
+    #vPerfil .pfprox .pfpt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    #vPerfil .pfprox .pfpt b { font-size: 13.5px; font-weight: 800; }
+    #vPerfil .pfprox .pfpt b::after { content: none; }
+    #vPerfil .pfprox .pfpt i { font-size: 11px; font-weight: 600; color: var(--pt-sobre-roxo-txt); }
+    #vPerfil .pfprox .pfpb { display: inline-flex; flex: none; height: 38px; padding: 0 13px;
+                             border-radius: 11px; font-size: 12.5px; font-weight: 800;
+                             background: #fff; color: var(--pt-roxo-fundo); border: 0; }
+    /* as 8 abas viram uma fita de sublinhado que rola */
+    #pfAbas { margin: 0; display: flex; gap: 4px; padding: 0 6px; overflow-x: auto;
+              flex-wrap: nowrap; border-bottom: 1px solid var(--pt-hairline);
+              background: none; border-radius: 0; scrollbar-width: none; }
+    #pfAbas::-webkit-scrollbar { display: none; }
+    #pfAbas button { flex: none; height: 44px; padding: 0 11px; font-size: 13px; font-weight: 700;
+                     background: none; border: 0; border-radius: 0; color: var(--pt-txt-4); }
+    #pfAbas button.ativa { font-weight: 800; color: var(--pt-txt);
+                           background: none; border-bottom: 2px solid var(--pt-roxo); }
+    /* os 4 numeros em 2 x 2 (regra 4 do README: nunca 4 em linha, nunca carrossel) */
+    #vPerfil .pfkpis { grid-template-columns: 1fr 1fr; gap: 9px; }
+    #vPerfil .pfkpi { border-radius: 14px; padding: 12px 13px; }
+    #vPerfil .pfkpi .k { font-size: 9px; letter-spacing: .16em; }
+    #vPerfil .pfkpi .v { font-size: 21px; line-height: 1; margin-top: 4px; }
+    #vPerfil .pfkpi .v small { font-size: 10.5px; }
+    #vPerfil .pfkpi .s { font-size: 10px; margin-top: 4px; }
+    /* a semana do aluno: chips de 30px, sem borda */
+    #vPerfil .pfbox { border-radius: 15px; padding: 14px 15px 15px; }
+    #vPerfil .pfsem { gap: 4px; }
+    #vPerfil .pfsem .d { font-size: 9px; font-weight: 800; }
+    #vPerfil .pfsem .c { height: 30px; border-radius: 8px; border: 0; font-size: 10.5px; font-weight: 900; }
+  }
   /* Resumo: 4 números + a semana + a ficha atual */
   .pfkpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
   .pfkpi { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 16px; padding: 15px 17px; }
@@ -834,6 +939,81 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     /* o traco entre um aluno e outro sumia no escuro: cada aluno vira um cartao */
     .alrow { border-top: 0; border-bottom: 1px solid var(--tk-bd3); }
     .alrow:last-child { border-bottom: 0; }
+  }
+  /* ============================================================
+   * TELA 19 do handoff — AGENDA NO CELULAR (um dia por vez).
+   * Valores do recorte telas-html/19-5c-agenda-celular.html.
+   * ============================================================ */
+  #agDia { display: none; }
+  @media (max-width: 900px) {
+    #vAgenda .agrol { display: none; }        /* a grade da semana e do computador */
+    #vAgenda #agAbas { display: none; }       /* "Agendar" mora no botao + do cabecalho */
+    #vAgenda .altopo[data-agsec="sessoes"] { display: none; }
+    #agDia { display: block; margin: 0 -12px 14px; }
+    .agdcab { display: flex; align-items: center; gap: 10px; padding: 0 18px 13px; }
+    .agdcab .alk { font-size: 9.5px; letter-spacing: .18em; }
+    .agdcab .agdd { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: var(--pt-txt); }
+    .agdmais { margin-left: auto; width: 44px; height: 44px; flex: none; border: 0; border-radius: 13px;
+               background: var(--pt-roxo); color: #fff; font-size: 22px; font-weight: 700;
+               font-family: inherit; cursor: pointer; }
+    /* os 7 chips: 390 - 36 de padding - 6 gaps de 5 = 46,3px cada */
+    .agchips { display: flex; gap: 5px; padding: 0 18px 13px; border-bottom: 1px solid var(--pt-hairline); }
+    .agchip { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+              padding: 8px 0; border-radius: 11px; cursor: pointer; font-family: inherit;
+              background: var(--pt-card); border: 1px solid var(--pt-borda); }
+    .agchip .agcd { font-size: 9px; font-weight: 800; letter-spacing: .08em; color: var(--pt-txt-4); }
+    .agchip .agcn { font-size: 15px; font-weight: 900; color: var(--pt-txt-2); font-variant-numeric: tabular-nums; }
+    .agchip .agcp { width: 5px; height: 5px; border-radius: 50%; background: var(--tk-tx6); display: block; }
+    .agchip.on { background: var(--pt-roxo); border-color: var(--pt-roxo); }
+    .agchip.on .agcd { color: var(--pt-sobre-roxo-lbl); }
+    .agchip.on .agcn { color: #fff; }
+    .agchip.on .agcp { background: #fff; }
+    /* laranja = pedido de horario esperando (a regra 5 do colapso) */
+    .agchip.ped { border-color: var(--pt-atencao-borda); }
+    .agchip.ped .agcp { background: var(--pt-atencao); }
+    .agchip.off { background: var(--pt-caixa); opacity: .6; }
+    .agchip.off .agcn { color: var(--pt-txt-5); }
+    /* a lista do dia: de ponta a ponta, so o fio entre as linhas */
+    .agdlista { display: flex; flex-direction: column; }
+    .agl { display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+           border-bottom: 1px solid var(--pt-hairline); }
+    .agl:last-child { border-bottom: 0; }
+    .agl .aglh { width: 44px; flex: none; font-size: 13px; font-weight: 800; color: var(--pt-txt-4);
+                 font-variant-numeric: tabular-nums; }
+    .agl .aglm { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .agl .aglm b { font-size: 14px; font-weight: 700; color: var(--pt-txt); }
+    .agl .aglm i { font-size: 11px; font-weight: 600; font-style: normal; color: var(--pt-txt-4);
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .agl .aglb { display: inline-flex; align-items: center; justify-content: center; flex: none;
+                 height: 36px; padding: 0 12px; border-radius: 10px; background: var(--pt-elev);
+                 border: 1px solid var(--pt-borda-forte); color: var(--pt-txt-2);
+                 font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; text-decoration: none; }
+    .agl .aglb.pri { background: var(--pt-roxo); border-color: var(--pt-roxo); color: #fff; }
+    .agl .aglb.roxo { color: var(--pt-roxo-claro); }
+    .agl.feita { opacity: .5; }
+    .agl.feita .aglm b { font-weight: 700; color: var(--pt-txt-2); }
+    .agl.faltou .aglh { color: var(--pt-erro); }
+    /* a proxima sessao: faixa lateral e as duas acoes embaixo do nome */
+    .agl.prox { flex-direction: column; align-items: stretch; gap: 11px; padding: 13px 18px;
+                background: var(--pt-sel); border-left: 3px solid var(--pt-roxo); }
+    .agl.prox .agltopo { display: flex; align-items: center; gap: 12px; }
+    .agl.prox .aglh { width: 41px; font-weight: 900; color: var(--pt-roxo-claro); }
+    .agl.prox .aglm b { font-size: 14.5px; font-weight: 800; }
+    .agl.prox .aglm i { font-weight: 700; color: var(--pt-roxo-claro); }
+    .agl.prox .aglac { display: flex; gap: 7px; padding-left: 53px; }
+    .agl.prox .aglac .aglb { height: 40px; border-radius: 11px; font-size: 12.5px; }
+    .agl.prox .aglac .aglb.pri { flex: 1; }
+    .agl .agsel { display: inline-flex; align-items: center; flex: none; height: 22px; padding: 0 8px;
+                  border-radius: 6px; background: var(--pt-erro-bg); color: var(--pt-erro);
+                  font-size: 10px; font-weight: 900; }
+    /* a faixa de pedidos encosta nas bordas, sem raio */
+    #vAgenda .agfaixa { border-radius: 0; margin: 0 -12px 12px; border: 0;
+                        border-bottom: 1px solid var(--pt-sel-borda); padding: 12px 18px;
+                        flex-wrap: nowrap; gap: 10px; }
+    #vAgenda .agfaixa .agt { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #vAgenda .agfaixa .agn { width: 24px; height: 24px; border-radius: 8px; font-size: 11.5px; }
+    #vAgenda .agfaixa .agb { flex: none; }
+    #vAgenda .agfaixa .agb .btn { height: 34px; padding: 0 12px; border-radius: 10px; font-size: 12px; }
   }
   /* ---------- Financeiro na tela 2e: bloco vermelho dos atrasados ---------- */
   .pgatr { background: rgba(248,113,113,.14); border: 1px solid rgba(248,113,113,.32); border-radius: 18px;
@@ -1420,6 +1600,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
     </div>
     <div id="agPedFaixa" data-agsec="sessoes" hidden></div>
+    <!-- tela 19 do handoff: no celular a semana de 7 colunas vira UM DIA POR
+         VEZ (regra 5 do colapso). Os dois convivem: o CSS mostra um ou o outro. -->
+    <div id="agDia" data-agsec="sessoes" hidden></div>
     <div class="agrol" data-agsec="sessoes" style="margin-bottom:14px;"><div class="agsem" id="agGrade"></div></div>
     <div class="card" id="cardPedidosApp" hidden data-agsec="sessoes" style="margin-bottom: 14px; border-left: 4px solid var(--pt-atencao);">
       <h2>Pedidos de horário pelo app</h2>
@@ -2736,12 +2919,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     </div>
     <div id="pfTopo">
       
-      <button id="pfFotoBtn" title="Foto do aluno — toque pra colocar ou trocar" style="flex: none; width: 52px; height: 52px; border-radius: 50%; border: none; padding: 0; overflow: hidden; cursor: pointer; background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; font-weight: 800; font-size: 18px; font-family: inherit; display: flex; align-items: center; justify-content: center;">
+      <button id="pfFotoBtn" title="Foto do aluno — toque pra colocar ou trocar" style="flex: none; border: none; padding: 0; overflow: hidden; cursor: pointer; background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; font-weight: 800; font-size: 18px; font-family: inherit; display: flex; align-items: center; justify-content: center;">
         <img id="pfFotoImg" alt="" hidden style="width: 100%; height: 100%; object-fit: cover;"><span id="pfIniciais">?</span>
       </button>
       <input type="file" id="pfFotoInput" accept="image/*" hidden>
       <div class="pfid">
-        <h2 id="pfTitulo" style="font-size: 20px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.01em; text-transform: none; color: var(--texto); font-weight: 800;">Perfil</h2>
+        <h2 id="pfTitulo">Perfil</h2>
         <span id="pfDesde" class="muted" style="font-size: 12px; display: block;"></span>
         <div class="pfchips" id="pfChips"></div>
       </div>
@@ -2765,7 +2948,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     <div id="pfProxima" class="pfprox"></div>
   </div>
 
-  <div class="abas" id="pfAbas" style="margin: 12px 0;">
+  <div class="abas" id="pfAbas">
     <button data-pfa="resumo" class="ativa">Resumo</button>
     <button data-pfa="app"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> App do aluno</button>
     <button data-pfa="cadastro"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='8' r='3.6'/><path d='M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5'/></svg> Cadastro</button>
@@ -3668,7 +3851,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var px = alProxima(st, a);
     var fi = alFicha(st, a);
     var pr = $("pfProxima");
-    if (pr) pr.textContent = "Próxima sessão: " + px.txt.toLowerCase() + (fi.o !== "Sem ficha" ? " · " + fi.o : "");
+    /* Tela 18 do handoff: no celular a proxima sessao SAI de dentro do roxo e
+     * vira um card com hora grande e o botao "Abrir". No computador as mesmas
+     * pecas ficam numa linha so, como sempre — quem decide e o CSS. */
+    if (pr) {
+      var pp = String(px.txt || "").split(" ");
+      var quando = pp[0] || "", hora = /^\d{1,2}:\d{2}$/.test(pp[pp.length - 1] || "") ? pp[pp.length - 1] : "";
+      pr.innerHTML = '<span class="pfpk">' + esc(quando) + "</span>" +
+        (hora ? '<span class="pfph">' + esc(hora) + "</span>" : "") +
+        '<span class="pfpt"><b>Próxima sessão</b>' +
+        (fi.o !== "Sem ficha" ? '<i>' + fi.o + "</i>" : '<i>sem ficha montada</i>') + "</span>" +
+        '<button type="button" class="btn mini pfpb" data-montatreino="' + a.id + '">Abrir</button>';
+      pr.classList.toggle("semses", !hora && /sem sess/i.test(px.txt || ""));
+    }
   }
   function pintaPfResumo(st, a) {
     var el = $("pfResumo"); if (!el) return;
@@ -3698,7 +3893,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         dif < 0 ? "var(--tk-ok)" : "", "pfKpiPeso") +
       kpi("BATIMENTO MÉDIO", fcMed || "—", fcMed ? "bpm" : "", fcMed ? "pico " + fcMax + " bpm" : "sem cinta conectada",
         "", "pfKpiFc") +
-      kpi("CHECK-IN DA SEMANA", "—", "", "sem check-in esta semana", "", "pfKpiCk") +
+      kpi("CHECK-IN", "—", "", "sem check-in esta semana", "", "pfKpiCk") +
       "</div>";
     // Semana do aluno: os 7 dias com a letra da ficha de cada um
     var t = (st.treinosV2 || {})[a.id] || {};
@@ -6715,6 +6910,97 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (tr) return { cls: "", txt: tr };
     return { cls: "", txt: x.data < hoje ? "SEM MARCAR" : "AGENDADA" };
   }
+  /* ============================================================
+   * TELA 19 do handoff — A AGENDA NO CELULAR.
+   * Regra 5 do colapso: "semana de 7 colunas vira UM DIA POR VEZ, com os 7
+   * chips no topo e um pontinho por dia que tem coisa acontecendo (laranja =
+   * pedido de horario esperando)".
+   *
+   * A grade da semana continua existindo pro computador — as duas leem os
+   * MESMOS dados (dias, noIntervalo), entao nunca contam diferente. Quem
+   * escolhe qual aparece e o CSS, no ponto de virada de 900px.
+   * ============================================================ */
+  var agDiaSel = null;
+  function pintaAgendaDia(st, dias, noIntervalo, hoje) {
+    var el = $("agDia");
+    if (!el) return;
+    // o dia escolhido: o de hoje quando ele esta na semana a vista, senao o 1o
+    var temSel = dias.some(function (d) { return d.iso === agDiaSel; });
+    if (!temSel) agDiaSel = dias.some(function (d) { return d.iso === hoje; }) ? hoje : dias[0].iso;
+    var d0 = dias.filter(function (d) { return d.iso === agDiaSel; })[0] || dias[0];
+
+    var chips = dias.map(function (d) {
+      var doDia = noIntervalo[d.iso] || [];
+      var temPed = doDia.some(function (x) { return x.pedido; });
+      var vazio = !doDia.length;
+      var cls = "agchip" + (d.iso === agDiaSel ? " on" : "") + (temPed ? " ped" : "") + (vazio ? " off" : "");
+      return '<button type="button" class="' + cls + '" data-agdia="' + d.iso + '">' +
+        '<span class="agcd">' + esc(d.dia) + "</span><span class=\"agcn\">" + d.n + "</span>" +
+        (vazio ? "" : '<i class="agcp"></i>') + "</button>";
+    }).join("");
+
+    // as sessoes do dia, em ordem de horario
+    var doDia = (noIntervalo[d0.iso] || []).slice().sort(function (a, b) {
+      return (a.hora || "99:99") < (b.hora || "99:99") ? -1 : 1;
+    });
+    var proxId = (doDia.filter(function (x) { return !x.feita && !x.faltou && !x.pedido && x.hora; })
+      .filter(function (x) { return d0.iso > hoje || (d0.iso === hoje && faltaPra(x.hora).min > -60); })[0] || {}).id;
+
+    var linhas = doDia.map(function (x) {
+      var aP = st.alunos.find(function (y) { return y.id === x.alunoId; }) || {};
+      var es = agEstado(st, x, hoje);
+      var trTxt = agTreinoTxt(st, x.alunoId, d0.iso);
+      /* na linha FEITA o "FEITA" seria redundante com o check verde ao lado:
+       * quando nao houver treino prescrito pro dia, a sublinha some */
+      var sub = x.pedido ? "Pediu pelo app" : (trTxt || (x.feita ? "" : es.txt));
+      var hora = x.hora || "—";
+      if (x.feita) {
+        return '<div class="agl feita"><span class="aglh">' + esc(hora) + "</span>" +
+          '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(sub) + "</i></span>" +
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--pt-ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
+      }
+      if (x.faltou) {
+        return '<div class="agl faltou"><span class="aglh">' + esc(hora) + "</span>" +
+          '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>Faltou</i></span>" +
+          (aP.zap ? '<a class="aglb" target="_blank" rel="noopener" href="https://wa.me/55' + String(aP.zap).replace(/\D/g, "") +
+            "?text=" + encodeURIComponent("Oi " + String(aP.nome).split(" ")[0] + "! Senti sua falta no treino — bora remarcar?") + '">Cobrar</a>' : "") + "</div>";
+      }
+      if (x.id === proxId) {
+        var falta = d0.iso === hoje && x.hora ? faltaPra(x.hora).txt : "";
+        return '<div class="agl prox"><div class="agltopo"><span class="aglh">' + esc(hora) + "</span>" +
+          '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(falta ? "Próxima · " + falta.toLowerCase() : sub) + "</i></span></div>" +
+          '<div class="aglac"><button type="button" class="aglb pri" data-abreperfil="' + x.alunoId + '">Abrir ficha</button>' +
+          '<button type="button" class="aglb" data-feita="' + x.id + '">Feita</button></div></div>';
+      }
+      var deve = !x.pedido && (dividaDe(st, aP) || {}).total > 0;
+      return '<div class="agl"><span class="aglh">' + esc(hora) + "</span>" +
+        '<span class="aglm"><b>' + esc(aP.nome || "?") + "</b><i>" + esc(sub) + "</i></span>" +
+        (x.pedido ? '<button type="button" class="aglb pri" data-agok="' + String(x.id).slice(4) + '">Confirmar</button>'
+          : deve ? '<span class="agsel">DEVE</span>' : "") + "</div>";
+    }).join("");
+
+    // a vaga livre: o proximo horario redondo depois da ultima sessao do dia
+    var vaga = "";
+    if (doDia.length) {
+      var ult = doDia[doDia.length - 1].hora || "";
+      if (/^\d{2}:\d{2}$/.test(ult)) {
+        var hv = String(Math.min(23, +ult.slice(0, 2) + 1)).padStart(2, "0") + ":00";
+        var semSes = st.alunos.filter(function (a2) {
+          return a2.ativo !== false && !(st.sessoes || []).some(function (y) { return y.alunoId === a2.id && y.data >= hoje && !y.feita && !y.faltou; });
+        }).length;
+        vaga = '<div class="agl vaga"><span class="aglh">' + hv + "</span>" +
+          '<span class="aglm"><b>Vaga livre</b><i>' + S.plural(semSes, "aluno sem sessão", "alunos sem sessão") + "</i></span>" +
+          '<button type="button" class="aglb roxo" data-agnovo="' + d0.iso + "|" + hv + '">Oferecer</button></div>';
+      }
+    }
+
+    el.innerHTML = '<div class="agdcab"><div class="agdt">' +
+      '<div class="alk">' + esc(AG_MESES[d0.mes].toUpperCase()) + "</div>" +
+      '<div class="agdd">' + esc(d0.dia.charAt(0) + d0.dia.slice(1).toLowerCase()) + ", " + d0.n + "</div></div>" +
+      '<button type="button" class="agdmais" id="agDiaNovo" title="Marcar sessão" aria-label="Marcar sessão" data-agnovo="' + d0.iso + '|">+</button>' +
+      '</div><div class="agchips">' + chips + "</div>" +
+      '<div class="agdlista">' + (linhas || '<div class="agl vazio"><span class="aglm"><b>Nenhuma sessão neste dia</b><i>Dia de descanso</i></span></div>') + vaga + "</div>";
+  }
   function pintaSemana(st) {
     var grade = $("agGrade");
     if (!grade) return;
@@ -6748,6 +7034,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return '<div class="agh' + (d.iso === hoje ? " hoje" : "") + '" style="grid-column:' + (dias.indexOf(d) + 2) + ';grid-row:1;">' +
           '<div class="agd">' + d.dia + "</div><div class=\"agdn\">" + d.n + "</div></div>";
       }).join("");
+    pintaAgendaDia(st, dias, noIntervalo, hoje);
     if (!linhas.length) {
       grade.innerHTML = html;
       var resVaz = $("agSemResumo");
@@ -6807,6 +7094,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       $("sAluno").focus();
       return;
     }
+    var chip = e.target.closest && e.target.closest("[data-agdia]");
+    if (chip) { agDiaSel = chip.getAttribute("data-agdia"); pintaSemana(load()); return; }
     var cel = e.target.closest && e.target.closest("[data-agcel]");
     if (cel) window.__agDia(cel.getAttribute("data-agcel")); // abre o dia na lista de baixo
   });

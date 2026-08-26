@@ -294,6 +294,32 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Ficha do aluno e Agenda no celular** (a partir da v625): telas 18 e 19 do
+handoff. **18** — a faixa roxa vira cabeçalho **full-bleed**, o avatar é
+quadrado de 54px (raio 17, não círculo), o nome sobe pra 21px/900, as 4 ações
+do dia ficam numa fileira de 44px (a principal branca com texto
+`--pt-roxo-fundo`), as 8 abas viram **fita de sublinhado que rola** e os 4
+números viram grade **2×2**. ⚠️ Três estilos **inline** do HTML (`#pfAbas`,
+`#pfTitulo`, `#pfFotoBtn`) e três `!important` mantinham as regras de celular
+**mortas desde a v563** — media query não vence estilo inline. Tudo foi pro CSS.
+⚠️ Desvios conscientes, todos por não perder função: as **8 abas ficam** (o
+desenho mostra 5, e cortar sumiria com App do aluno, Cadastro e Frequência — o
+próprio desenho mostra a 5ª cortada na borda, ou seja, prevê rolagem); o "···"
+**é** o `#pfAcoesBtn` que já existe (trocar por um quadradinho novo tiraria as 6
+ações de dentro dele); o card da próxima sessão fica **dentro** do roxo, com os
+tokens `--pt-sobre-roxo-*` (no computador a mesma informação é uma linha dentro
+do roxo, e é o mesmo elemento no HTML — duplicar o DOM seria pior); e o tile
+"DOR NO OMBRO" do desenho **não existe**, porque a dor mora na resposta do
+questionário e nenhuma consulta do Resumo a traz — fica CHECK-IN, que é real.
+
+**19** — a grade de 7 colunas vira **um dia por vez** (regra 5 do colapso):
+`pintaAgendaDia()` desenha 7 chips de data com **pontinho** de estado (laranja =
+pedido de horário esperando) e a lista corrida do dia embaixo, cada linha com a
+ação DENTRO dela (Cobrar na falta, Abrir ficha + Feita na próxima, Oferecer na
+vaga). As duas visões leem os **mesmos dados** (`dias`, `noIntervalo`) — nunca
+contam diferente — e quem escolhe é o CSS em 900px. `agDiaSel` guarda o dia
+escolhido; sem ele na semana à vista, vale hoje.
+
 **Handoff do painel: tokens e as telas de celular** (a partir da v624): chegou o
 pacote `design_handoff_painel_personal` (22 PNGs em 2×, o HTML de cada tela
 **recortado com os estilos inline**, `tokens-painel.css` e as 9 regras de
