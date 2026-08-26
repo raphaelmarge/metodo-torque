@@ -4,8 +4,8 @@
 
 | | |
 |---|---|
-| App em | **mt-v634** |
-| Estado do repo em | 2026-08-26 (commit `43a6daf`) |
+| App em | **mt-v635** |
+| Estado do repo em | 2026-08-26 (commit `426320d`) |
 | Repositório | `raphaelmarge/metodo-torque` |
 | Lançamentos no histórico | 98 |
 
@@ -18,7 +18,7 @@
 ## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
 O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
-vez em **mt-v601** (2026-08-25), e o app está em **mt-v634** — ou seja, **33 versões** aconteceram depois disso.
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v635** — ou seja, **34 versões** aconteceram depois disso.
 
 Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
 velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
