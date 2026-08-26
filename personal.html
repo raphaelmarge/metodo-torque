@@ -285,6 +285,70 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dmes .dkpis .dk { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: #8a8695; }
   .dmes .dkpis .dv { font-size: 22px; font-weight: 900; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .dmes .dkpis .ds { font-size: 11.5px; font-weight: 700; color: #6e6a78; margin-top: 1px; }
+  /* ---------- Ficha do aluno na tela 2b ---------- */
+  .pftopo { background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 20px; padding: 18px 22px 16px; color: #fff; margin-bottom: 12px; }
+  .pftopo .pfvolta { display: flex; align-items: center; margin-bottom: 12px; }
+  .pftopo .pfvolta button { background: none; border: 0; color: rgba(255,255,255,.85); font-family: inherit;
+                            font-size: 13px; font-weight: 800; cursor: pointer; padding: 6px 0; }
+  .pftopo .pfvolta button + button { margin-left: auto; padding: 0 14px; height: 36px; border-radius: 11px;
+                                     background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2); }
+  .pftopo #pfTitulo { font-size: 26px; font-weight: 900; letter-spacing: -.03em; color: #fff; }
+  .pftopo #pfDesde { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85) !important; }
+  .pftopo #pfFotoBtn { width: 62px !important; height: 62px !important; border-radius: 18px !important; background: rgba(255,255,255,.2) !important; color: #fff; font-size: 19px; font-weight: 900; }
+  .pfchips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 7px; }
+  .pfchips span { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 8px;
+                  background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.2); }
+  .pfacoes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .pfacoes .dbt { height: 42px; }
+  .pfacoes .pfic { width: 42px; height: 42px; padding: 0; justify-content: center; }
+  .pfprox { margin-top: 12px; font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.85); }
+  /* Resumo: 4 números + a semana + a ficha atual */
+  .pfkpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+  .pfkpi { background: #141218; border: 1px solid #26222f; border-radius: 16px; padding: 15px 17px; }
+  .pfkpi .k { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: #8a8695; }
+  .pfkpi .v { font-size: 28px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 3px; }
+  .pfkpi .v small { font-size: 13px; font-weight: 800; color: #8a8695; }
+  .pfkpi .s { font-size: 12px; font-weight: 700; margin-top: 3px; }
+  .pfcols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-top: 12px; align-items: start; }
+  @media (max-width: 900px) { .pfcols { grid-template-columns: 1fr; } }
+  .pfbox { background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 16px 18px; }
+  .pfbox h3 { font-size: 16px; font-weight: 900; letter-spacing: -.02em; margin: 0 0 10px; }
+  .pfsem { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+  .pfsem .d { font-size: 10px; font-weight: 800; color: #6e6a78; }
+  .pfsem .c { height: 38px; border-radius: 11px; background: #1d1a24; border: 1px solid #26222f; color: #8a8695;
+              display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; margin-top: 5px; }
+  .pfsem .c.tem { background: #241a3d; border-color: rgba(124,58,237,.5); color: #c4b5fd; }
+  .pfsem .c.hoje { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+  /* ---------- Alunos na tela 2a ---------- */
+  .altopo { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .altopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: #8a8695; }
+  .altopo .alh { font-size: 24px; font-weight: 900; letter-spacing: -.03em; margin-top: 2px; }
+  .altopo .dbt { margin-left: auto; }
+  .albusca { margin-bottom: 12px; }
+  .albusca input { width: 100%; height: 46px; border-radius: 14px; background: #141218; border: 1px solid #26222f;
+                   color: #f2f0f6; font-family: inherit; font-size: 14px; padding: 0 16px; }
+  .altab { background: #141218; border: 1px solid #26222f; border-radius: 18px; overflow: hidden; }
+  .alcab, .alrow { display: grid; grid-template-columns: 2fr 1.4fr 1.1fr 1.2fr 1.2fr auto; gap: 14px; align-items: center; padding: 12px 18px; }
+  .alcab { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #6e6a78; border-bottom: 1px solid #1d1a24; }
+  .alrow { border-top: 1px solid #1d1a24; }
+  .alrow:first-child { border-top: 0; }
+  .alrow.devendo { background: rgba(124,58,237,.10); }
+  .alrow .alq { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .alrow .alav { width: 38px; height: 38px; flex: none; border-radius: 12px; background: #241a3d; color: #c4b5fd;
+                 display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+  .alrow .alnm { font-size: 14.5px; font-weight: 800; color: #f2f0f6; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
+  .alrow .alsub { font-size: 12px; font-weight: 600; color: #6e6a78; margin-top: 1px; }
+  .alrow .alp1 { font-size: 13px; font-weight: 700; color: #cfcbdb; }
+  .alrow .alp2 { font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .alrow .albar { height: 5px; border-radius: 99px; background: #221f2b; margin-top: 5px; overflow: hidden; }
+  .alrow .albar i { display: block; height: 100%; border-radius: 99px; }
+  .alrow .alac { display: flex; gap: 6px; justify-content: flex-end; }
+  .alsel { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: .1em; padding: 2px 7px; border-radius: 6px; margin-left: 7px; vertical-align: 2px; }
+  @media (max-width: 1000px) {
+    .alcab { display: none; }
+    .alrow { grid-template-columns: 1fr auto; row-gap: 8px; }
+    .alrow > :nth-child(n+2):nth-child(-n+5) { grid-column: 1 / -1; }
+  }
   /* radar de retenção com a linha do desenho */
   .drad { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid #1d1a24; }
   .drad:first-child { border-top: 0; }
@@ -495,13 +559,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- ALUNOS -->
   <section id="vAlunos" hidden>
-    <div class="card" style="margin-bottom: 14px;">
-      <div class="linha-flex" style="align-items: center; gap: 12px;">
-        <button class="btn" id="btnNovoAluno"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Novo aluno</button>
-        <span class="muted" style="font-size: 12.5px;">Cadastro completo com contrato e primeira venda na sequência.</span>
-      </div>
-      <p id="aAcessoStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-    </div>
+    <p id="aAcessoStatus" class="muted" style="margin: 0 0 10px; font-size: 12.5px;"></p>
 
     <dialog id="dlgNovoAluno">
       <div class="card" style="display: flex; flex-direction: column; gap: 12px; width: 560px; max-width: 100%;">
@@ -552,12 +610,27 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         </div>
       </div>
     </dialog>
-    <div class="abas" id="alFiltro" style="margin: 0 0 12px;">
-      <button data-alf="todos" class="ativa">Todos</button>
-      <button data-alf="pagos">Pagos no mês</button>
-      <button data-alf="devendo">Sem pagamento</button>
+    <!-- tela 2a do canvas: cabeçalho com o tamanho da carteira, busca, os
+         quatro filtros que importam e uma linha por aluno com plano, treinos do
+         mês, idade da ficha e próxima sessão -->
+    <div class="altopo">
+      <div>
+        <div class="alk">Seus alunos</div>
+        <div class="alh" id="alResumo">—</div>
+      </div>
+      <button type="button" class="dbt" id="btnNovoAluno"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Novo aluno</button>
     </div>
-    <div id="listaAlunos"></div>
+    <div class="albusca"><input id="alBusca" placeholder="Buscar por nome ou telefone" autocomplete="off"></div>
+    <div class="abas" id="alFiltro" style="margin: 0 0 12px;">
+      <button data-alf="ativos" class="ativa">Ativos</button>
+      <button data-alf="sumindo">Sumindo</button>
+      <button data-alf="devendo">Devendo</button>
+      <button data-alf="encerrados">Encerrados</button>
+    </div>
+    <div class="altab">
+      <div class="alcab"><span>Aluno</span><span>Plano</span><span>Mês</span><span>Ficha</span><span>Próxima</span><span></span></div>
+      <div id="listaAlunos"></div>
+    </div>
   </section>
 
   <!-- AGENDA -->
@@ -1774,9 +1847,15 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     </div>
   </div>
 <section id="vPerfil" hidden>
-  <div class="card" style="border-left: 4px solid var(--roxo);">
-    <div id="pfTopo" style="display: flex; align-items: center; gap: 12px;">
-      <button class="btn sec mini" id="pfFechar" title="Voltar pra lista" aria-label="Voltar pra lista" style="flex: none; padding: 8px 13px; min-height: 38px;">←</button>
+  <!-- tela 2b do canvas: cabeçalho roxo com quem é o aluno, as 4 ações do dia
+       e a próxima sessão; as abas vêm logo abaixo -->
+  <div class="pftopo">
+    <div class="pfvolta">
+      <button type="button" id="pfFechar" title="Voltar pra lista" aria-label="Voltar pra lista">&lsaquo; Alunos</button>
+      <button type="button" id="pfEditar">Editar cadastro</button>
+    </div>
+    <div id="pfTopo" style="display: flex; align-items: center; gap: 14px;">
+      
       <button id="pfFotoBtn" title="Foto do aluno — toque pra colocar ou trocar" style="flex: none; width: 52px; height: 52px; border-radius: 50%; border: none; padding: 0; overflow: hidden; cursor: pointer; background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; font-weight: 800; font-size: 18px; font-family: inherit; display: flex; align-items: center; justify-content: center;">
         <img id="pfFotoImg" alt="" hidden style="width: 100%; height: 100%; object-fit: cover;"><span id="pfIniciais">?</span>
       </button>
@@ -1784,6 +1863,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <div style="flex: 1; min-width: 0;">
         <h2 id="pfTitulo" style="font-size: 20px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.01em; text-transform: none; color: var(--texto); font-weight: 800;">Perfil</h2>
         <span id="pfDesde" class="muted" style="font-size: 12px; display: block;"></span>
+        <div class="pfchips" id="pfChips"></div>
+      </div>
+      <div class="pfacoes">
+        <button type="button" class="dbt" id="pfMontaTreino">Montar treino</button>
+        <button type="button" class="dbt sec pfic" id="pfIrChat" title="abrir o chat com o aluno" aria-label="abrir o chat com o aluno">&#9993;</button>
+        <button type="button" class="dbt sec pfic" id="pfIrFin" title="financeiro do aluno" aria-label="financeiro do aluno">$</button>
+        <button type="button" class="dbt sec pfic" id="pfIrAgenda" title="marcar sessão" aria-label="marcar sessão">&#128197;</button>
       </div>
       <button class="btn mini" id="pfAcoesBtn" aria-expanded="false" title="Ações do aluno" style="flex: none;">⚡<span class="pf-ac-rot"> Ações</span> <span class="fseta" style="display: inline-block; transition: transform .15s;">▾</span></button>
     </div>
@@ -1796,16 +1882,22 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       <a class="btn whats mini" id="pfWhats" target="_blank" rel="noopener" style="display:none; width: 100%;">WhatsApp</a>
       <div id="pfAssinaturaBox" style="grid-column: 1 / -1; font-size: 13px; margin-top: 2px;"></div>
     </div>
+    <div id="pfProxima" class="pfprox"></div>
   </div>
 
   <div class="abas" id="pfAbas" style="margin: 12px 0;">
-    <button data-pfa="app" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> App do aluno</button>
+    <button data-pfa="resumo" class="ativa">Resumo</button>
+    <button data-pfa="app"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='7' y='3' width='10' height='18' rx='2.5'/><path d='M10.8 17.8h2.4'/></svg> App do aluno</button>
     <button data-pfa="cadastro"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='8' r='3.6'/><path d='M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5'/></svg> Cadastro</button>
     <button data-pfa="fin"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg> Financeiro</button>
     <button data-pfa="freq"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Frequência</button>
     <button data-pfa="quest"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg> Check-ins</button>
     <button data-pfa="aval"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Avaliações</button>
     <button data-pfa="treino"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg> Treino</button>
+  </div>
+
+  <div class="card" data-pfsec="resumo" hidden>
+    <div id="pfResumo"></div>
   </div>
 
   <div class="card" data-pfsec="cadastro">
@@ -2204,65 +2296,183 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
 
   // ---------- alunos ----------
-  var alFiltro = "todos"; // topo da lista: todos × pagos no mês × sem pagamento
+  var alFiltro = "ativos"; // tela 2a: Ativos / Sumindo / Devendo / Encerrados
+  var alBusca = "";
+  /* Os quatro estados que a tela 2a mostra. Cada um usa a MESMA regra da tela
+   * dona do assunto: "devendo" é dividaDe + atrasoTol (igual ao Financeiro),
+   * "sumindo" é 5+ dias sem treinar e nada marcado (igual ao Radar do Início).
+   * Duas contas diferentes pro mesmo aluno seria pior que não ter o filtro. */
+  function alEstado(st, a) {
+    var hoje = S.todayISO();
+    if (a.ativo === false) return "encerrados";
+    /* "devendo" é a MESMA conta da lista "Quem ainda não pagou este mês": não
+     * pagou o mês corrente E já passou do vencimento. Usar dividaDe aqui marcava
+     * 22 de 24 alunos, porque ela soma todos os meses do histórico — e a linha
+     * dizia "DEVENDO" logo ao lado de "Pago dia 5". */
+    var ct = contratoDe(st, a.id);
+    var pl = ct ? planoDe(st, ct.planoId) : null;
+    var ehSessao = (pl && pl.cobranca === "sessao") || (!pl && a.modo === "sessao");
+    // sem contrato não existe dia de vencimento: aí vale o mesmo sinal que a
+    // lista do Financeiro usa — não pagou o mês corrente
+    var cobra = ct || +a.valor;
+    if (cobra && !ehSessao && !idxDe(st).pagouMes(a.id, hoje.slice(0, 7)) &&
+        (!ct || +hoje.slice(8, 10) > ct.diaVenc + atrasoTol(st))) return "devendo";
+    var ult = idxDe(st).sessFeitasDe(a.id).map(function (x) { return x.data; }).sort().pop() || "";
+    var futura = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
+    if (ult && !futura && Math.floor((new Date(hoje) - new Date(ult)) / 864e5) >= 5) return "sumindo";
+    return "ativos";
+  }
+  // "Hoje 18:00" / "Amanhã 07:30" / "Quinta 06:30" / sem nada marcado
+  function alProxima(st, a) {
+    var hoje = S.todayISO();
+    var s2 = idxDe(st).sessDe(a.id).filter(function (x) { return x.data >= hoje && !x.feita && !x.faltou; })
+      .sort(function (x, y) { return (x.data + (x.hora || "")) < (y.data + (y.hora || "")) ? -1 : 1; })[0];
+    if (!s2) return { txt: "Sem sessão marcada", cor: "#fb923c" };
+    var dias = Math.round((new Date(s2.data + "T12:00") - new Date(hoje + "T12:00")) / 864e5);
+    var DS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    var quando = dias === 0 ? "Hoje" : dias === 1 ? "Amanhã" : dias < 7 ? DS[new Date(s2.data + "T12:00").getDay()] : S.fmtData(s2.data);
+    return { txt: quando + (s2.hora ? " " + s2.hora : ""), cor: dias === 0 ? "#a78bfa" : "" };
+  }
+  // plano em duas linhas: o que é, e como está o pagamento
+  function alPlano(st, a) {
+    var ct = contratoDe(st, a.id);
+    var pl = ct ? planoDe(st, ct.planoId) : null;
+    var cart = carteiraPT(st, a);
+    if (cart) {
+      // carteiraPT.saldo é DINHEIRO (pago − consumido), não quantidade de aulas
+      return { o: pl ? esc(pl.nome) : "Hora-aula",
+        st: "Saldo " + S.fmtBRL(cart.saldo),
+        cor: cart.saldo > 0 ? "#4ade80" : cart.saldo === 0 ? "#fb923c" : "#f87171" };
+    }
+    if (a.pacote && +a.pacote.total > 0) {
+      var resta = Math.max(0, +a.pacote.total - (+a.pacote.usadas || 0));
+      return { o: "Pacote " + a.pacote.total + " aulas", st: resta + " na carteira", cor: resta ? "#8a8695" : "#fb923c" };
+    }
+    if (!ct) return { o: +a.valor ? S.fmtBRL(+a.valor) + "/mês" : "Sem plano", st: "sem contrato", cor: "#6e6a78" };
+    var nome = (pl ? pl.nome : "Mensal") + (pl && +pl.valor ? " " + S.fmtBRL(+pl.valor) : "");
+    if (a.cartaoFalhouEm) return { o: nome, st: "Recusado " + S.fmtData(String(a.cartaoFalhouEm).slice(0, 10)), cor: "#f87171" };
+    var pgs = st.pagamentos.filter(function (x) { return x.alunoId === a.id && (x.data || "").slice(0, 7) === S.todayISO().slice(0, 7); })
+      .sort(function (x, y) { return x.data < y.data ? -1 : 1; });
+    if (pgs.length) return { o: nome, st: "Pago dia " + (+pgs[0].data.slice(8, 10)), cor: "#4ade80" };
+    var venc = S.todayISO().slice(0, 8) + ("0" + ct.diaVenc).slice(-2);
+    var atrasado = +S.todayISO().slice(8, 10) > ct.diaVenc + atrasoTol(st);
+    return { o: nome, st: (atrasado ? "Venceu " : "Vence ") + S.fmtData(venc).slice(0, 5), cor: atrasado ? "#f87171" : "#8a8695" };
+  }
+  // a ficha do aluno: letra, grupo e há quanto tempo é a mesma
+  function alFicha(st, a) {
+    var t = (st.treinosV2 || {})[a.id];
+    if (!t || !(t.fichas || []).length) return { o: "Sem ficha", sub: "—", cor: "#fb923c", velha: true };
+    var f = t.fichas[0];
+    var tit = String(f.titulo || "Ficha A");
+    var mesG = "";
+    Object.keys(t.mes || {}).forEach(function (k) {
+      var g = String(((t.mes || {})[k] || {}).geradoEm || "").slice(0, 10);
+      if (g > mesG) mesG = g;
+    });
+    var em = [mesG, String(a.appPubEm || "").slice(0, 10)].sort().pop() || "";
+    var sem = /^\d{4}-\d{2}-\d{2}$/.test(em)
+      ? Math.floor((Date.parse(S.todayISO() + "T12:00") - Date.parse(em + "T12:00")) / 6048e5) : null;
+    // o "⏰ vale até" que o professor digita manda; sem ele, vale a idade
+    var venceEm = String(t.validade || "");
+    var vencida = /^\d{4}-\d{2}-\d{2}$/.test(venceEm) ? venceEm < S.todayISO() : (sem !== null && sem >= 8);
+    // a coluna é estreita: fica a letra e as duas primeiras palavras do grupo
+    var pt = tit.split(/\s*[—-]\s*/);
+    var corta = function (x) { x = String(x).replace(/\s*\(.*$/, "").trim(); return x.length > 17 ? x.slice(0, 16).trim() + "…" : x; };
+    var curto = pt.length > 1 ? pt[0].trim() + " · " + corta(pt.slice(1).join(" ")) : corta(tit);
+    return { o: esc(curto),
+      sub: (/^\d{4}-\d{2}-\d{2}$/.test(venceEm) && vencida) ? "⏰ TREINO VENCIDO"
+        : sem === null ? S.plural((t.fichas || []).length, "ficha", "fichas")
+        : S.plural(sem, "semana", "semanas") + (vencida ? " · vencida" : ""),
+      cor: vencida ? "#f87171" : "#6e6a78", velha: vencida };
+  }
   var alMostra = 60;      // quantos cards a lista desenha por vez (o resto entra no "Ver mais")
   function renderAlunos(st) {
-    var ativos = st.alunos.filter(function (a) { return a.ativo !== false; });
-    var pagouNoMes = function (a) {
-      return idxDe(st).pagouMes(a.id, mesAtual);
-    };
-    var nPagos = ativos.filter(pagouNoMes).length;
-    // os contadores ficam no próprio botão — dá pra ver o tamanho do problema sem filtrar
-    var rot = { todos: "Todos", pagos: "Pagos no mês", devendo: "Sem pagamento" };
-    var qtd = { todos: ativos.length, pagos: nPagos, devendo: ativos.length - nPagos };
+    var hoje = S.todayISO();
+    var todos = st.alunos.slice();
+    var porEstado = {};
+    todos.forEach(function (a) {
+      var e = alEstado(st, a);
+      (porEstado[e] = porEstado[e] || []).push(a);
+    });
+    var qtd = { ativos: (porEstado.ativos || []).length + (porEstado.sumindo || []).length + (porEstado.devendo || []).length,
+      sumindo: (porEstado.sumindo || []).length, devendo: (porEstado.devendo || []).length,
+      encerrados: (porEstado.encerrados || []).length };
+    var rot = { ativos: "Ativos", sumindo: "Sumindo", devendo: "Devendo", encerrados: "Encerrados" };
     document.querySelectorAll("#alFiltro button").forEach(function (b) {
       var k = b.getAttribute("data-alf");
-      b.textContent = rot[k] + " (" + qtd[k] + ")";
+      // o contador só aparece quando há o que resolver — "Sumindo 0" é ruído
+      b.innerHTML = rot[k] + (qtd[k] && k !== "ativos" ? ' <span class="alsel" style="background:rgba(251,146,60,.18);color:#fb923c;">' + qtd[k] + "</span>" : "");
       b.classList.toggle("ativa", k === alFiltro);
     });
-    if (alFiltro === "pagos") ativos = ativos.filter(pagouNoMes);
-    else if (alFiltro === "devendo") ativos = ativos.filter(function (a) { return !pagouNoMes(a); });
-    // com muitos alunos, a lista sai em partes: 1000 cards de uma vez travam a tela
-    var totalFiltrado = ativos.length;
-    if (totalFiltrado > alMostra) ativos = ativos.slice(0, alMostra);
-    $("listaAlunos").innerHTML = ativos.length ? ativos.map(function (a) {
-      var pagoMes = pagouNoMes(a);
-      var tA = (st.treinosV2 || {})[a.id];
-      var fichaVencida = !!(tA && (tA.fichas || []).length && tA.validade && tA.validade < S.todayISO());
-      // linha limpa: nome (toque abre o perfil) + situação + menu retrátil com as ações
-      return '<div class="aluno-pt" style="flex-wrap:wrap;"><div class="quem"><strong data-perfil="' + a.id + '" role="button" tabindex="0" style="cursor:pointer;" title="abrir o perfil">' + esc(a.nome) + "</strong>" +
-        '<div class="muted" style="font-size:12.5px;">' + (+a.valor ? S.fmtBRL(+a.valor) + (a.modo === "sessao" ? "/sessão" : "/mês") : "valor a combinar") + "</div></div>" +
-        // as etiquetas ficam num bloco próprio: no celular caem pra linha de baixo
-        // sem empurrar o ⋮, que fica sempre grudado no nome
-        '<span class="al-tags">' +
-        (function () {
-          // quem paga por sessão vive de saldo, não de mês: a etiqueta mostra a
-          // carteira (e "sem pagamento no mês" deixaria de ser verdade útil)
-          var cartL = carteiraPT(st, a);
-          if (cartL) {
-            return cartL.saldo < 0 ? '<span class="tag alerta">SALDO ' + S.fmtBRL(cartL.saldo) + "</span>"
-              : cartL.saldo === 0 ? '<span class="tag alerta">CRÉDITOS NO FIM</span>'
-              : '<span class="tag ok">SALDO ' + S.fmtBRL(cartL.saldo) + "</span>";
-          }
-          return pagoMes ? '<span class="tag ok">PAGO NO MÊS</span>' : '<span class="tag alerta">SEM PAGAMENTO NO MÊS</span>';
-        })() +
-        (fichaVencida ? '<span class="tag alerta" title="a validade da ficha passou — gere a nova fase">⏰ TREINO VENCIDO</span>' : "") +
-        (a.acessoEm ? '<span class="tag ok" title="login e senha enviados por e-mail">APP ✓</span>' : "") +
-        "</span>" +
-        '<button class="btn sec mini al-mais" data-mais="' + a.id + '" aria-label="mais ações de ' + esc(a.nome) + '" title="mais ações" style="padding:6px 12px;font-size:16px;line-height:1;">⋮</button>' +
-        '<div class="al-acoes" data-acoes="' + a.id + '" hidden>' +
+    var el = $("alResumo");
+    if (el) el.innerHTML = qtd.ativos + (qtd.ativos === 1 ? " ativo" : " ativos") +
+      (qtd.sumindo ? ' · <span style="color:#fb923c;">' + qtd.sumindo + " sumindo</span>" : "");
+    var lista = alFiltro === "ativos"
+      ? todos.filter(function (a) { return a.ativo !== false; })
+      : (porEstado[alFiltro] || []);
+    if (alBusca) {
+      var q = alBusca.toLowerCase();
+      lista = lista.filter(function (a) {
+        return String(a.nome || "").toLowerCase().indexOf(q) > -1 ||
+          String(a.zap || "").replace(/\D/g, "").indexOf(q.replace(/\D/g, "")) > -1 && q.replace(/\D/g, "");
+      });
+    }
+    lista.sort(function (a, b) { return String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"); });
+    // com muitos alunos a lista sai em partes: 1000 linhas de uma vez travam a tela
+    var totalFiltrado = lista.length;
+    if (totalFiltrado > alMostra) lista = lista.slice(0, alMostra);
+    var META_MES = 12; // referência da barra do mês (3 por semana)
+    $("listaAlunos").innerHTML = lista.length ? lista.map(function (a) {
+      var est = alEstado(st, a);
+      var pl = alPlano(st, a);
+      var fi = alFicha(st, a);
+      var px = alProxima(st, a);
+      var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
+      var pctM = Math.min(100, Math.round(nMes / META_MES * 100));
+      var corM = nMes >= META_MES * .75 ? "#4ade80" : nMes >= META_MES * .4 ? "#fb923c" : "#f87171";
+      var desde = a.desde ? Math.max(1, Math.round((new Date(hoje) - new Date(a.desde)) / 2629800000)) : 0;
+      /* a ação da linha é a que resolve o estado dela: quem deve, cobra; quem
+       * está com a ficha velha, remonta; quem sumiu, chama. É a regra 1 do
+       * handoff (todo aviso tem botão) aplicada à lista. */
+      var acao = est === "devendo"
+        ? '<button type="button" class="btn mini" data-pgm="' + a.id + '" data-v="' + ((dividaDe(st, a) || {}).total || 0) + '" data-origem="mensal">Cobrar</button>'
+        : fi.velha && a.ativo !== false
+        ? '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '">Montar ficha</button>'
+        : est === "sumindo"
+        ? (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") +
+            "?text=" + encodeURIComponent("Oi " + String(a.nome).split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪") + '">Chamar</a>'
+          : '<button type="button" class="btn sec mini" data-perfil="' + a.id + '">Ver</button>')
+        : (a.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" title="falar no WhatsApp" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Zap</a>' : "");
+      return '<div class="alrow aluno-pt' + (est === "devendo" ? " devendo" : "") + '">' +
+        '<div class="alq"><div class="alav">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
+        '<div style="min-width:0;"><button class="alnm" data-perfil="' + a.id + '">' + esc(a.nome) + "</button>" +
+        (est === "devendo" ? '<span class="alsel" style="background:rgba(248,113,113,.18);color:#f87171;">DEVENDO</span>'
+          : est === "sumindo" ? '<span class="alsel" style="background:rgba(251,146,60,.18);color:#fb923c;">SUMINDO</span>' : "") +
+        '<div class="alsub">' + (a.objetivo ? esc(a.objetivo) : "sem objetivo anotado") +
+        (desde ? " · " + S.plural(desde, "mês", "meses") : "") + "</div></div></div>" +
+        '<div><div class="alp1">' + pl.o + '</div><div class="alp2" style="color:' + pl.cor + ';">' + pl.st + "</div></div>" +
+        '<div><div class="alp1">' + S.plural(nMes, "treino", "treinos") + '</div>' +
+        '<div class="albar"><i style="width:' + Math.max(4, pctM) + "%;background:" + corM + ';"></i></div></div>' +
+        '<div><div class="alp1">' + fi.o + '</div><div class="alp2" style="color:' + fi.cor + ';">' + fi.sub + "</div></div>" +
+        '<div class="alp1" style="color:' + (px.cor || "#cfcbdb") + ';">' + px.txt + "</div>" +
+        '<div class="alac">' + acao +
+        '<button type="button" class="btn sec mini al-mais" data-mais="' + a.id + '" aria-label="mais ações de ' + esc(a.nome) + '" title="mais ações">···</button></div>' +
+        '<div class="al-acoes" data-acoes="' + a.id + '" hidden style="grid-column:1/-1;">' +
         '<button class="btn mini" data-perfil="' + a.id + '">Perfil</button>' +
         (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + '">Zap</a>' : "") +
         '<button class="btn mini" data-app="' + a.id + '">Publicar app</button>' +
         (a.acessoEm ? "" : '<button class="btn mini" data-acesso="' + a.id + '" title="cria o login e envia por e-mail">Enviar acesso</button>') +
-        '<button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button></div></div>';
-    }).join("") + (totalFiltrado > ativos.length
-      ? '<div class="linha-flex" style="justify-content:center;margin-top:10px;">' +
-        '<button class="btn sec mini" id="alMais">Ver mais ' + Math.min(60, totalFiltrado - ativos.length) +
-        " (mostrando " + ativos.length + " de " + totalFiltrado + ")</button></div>"
-      : "") : '<div class="vazio">' + (alFiltro === "pagos" ? "Ninguém pagou este mês ainda — o filtro <b>Sem pagamento</b> mostra quem falta."
-      : alFiltro === "devendo" ? "Todo mundo em dia este mês! 🎉"
-      : "Cadastre seu primeiro aluno acima.") + "</div>";
+        (a.ativo === false ? "" : '<button class="btn sec mini" data-rm="' + a.id + '">Encerrar</button>') + "</div></div>";
+    }).join("") + (totalFiltrado > lista.length
+      ? '<div class="linha-flex" style="justify-content:center;padding:12px;">' +
+        '<button class="btn sec mini" id="alMais">Ver mais ' + Math.min(60, totalFiltrado - lista.length) +
+        " (mostrando " + lista.length + " de " + totalFiltrado + ")</button></div>"
+      : "") : '<div class="vazio" style="padding:26px 18px;">' + (
+        alBusca ? "Ninguém com esse nome ou telefone."
+        : alFiltro === "sumindo" ? "Ninguém sumido — todo mundo treinando. 🎉"
+        : alFiltro === "devendo" ? "Todo mundo em dia este mês! 🎉"
+        : alFiltro === "encerrados" ? "Nenhum aluno encerrado."
+        : "Cadastre seu primeiro aluno no botão lá em cima.") + "</div>";
   }
   $("alFiltro").addEventListener("click", function (e) {
     var b = e.target.closest("button[data-alf]");
@@ -2274,7 +2484,17 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("listaAlunos").addEventListener("click", function (e) {
     if (e.target && e.target.id === "alMais") { alMostra += 60; renderAlunos(load()); }
   });
-  window.__alFiltro = function (f) { alFiltro = f || "todos"; renderAlunos(load()); }; // testes
+  // busca da tela 2a: filtra a lista enquanto digita
+  $("alBusca").addEventListener("input", function () {
+    alBusca = this.value.trim();
+    alMostra = 60;
+    renderAlunos(load());
+  });
+  window.__alFiltro = function (f) { // testes
+    alFiltro = ["ativos", "sumindo", "devendo", "encerrados"].indexOf(f) > -1 ? f : "ativos";
+    alBusca = ""; renderAlunos(load());
+  };
+  window.__alBusca = function (q) { alBusca = q || ""; renderAlunos(load()); }; // testes
   // assistente de novo aluno: cadastro completo → contrato e venda na sequência
   var naAlunoId = null;
   $("btnNovoAluno").addEventListener("click", function () {
@@ -2491,20 +2711,122 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   window.__pfAba = mostraPfAba; // testes
 
+  /* ---------- Ficha do aluno na tela 2b ----------
+   * O cabeçalho diz quem é, como está e o que fazer agora; o Resumo junta os
+   * quatro números que o professor olha antes de atender, a Semana do aluno e
+   * a ficha atual. Tudo já existia espalhado — aqui vira a primeira tela. */
+  function pintaPfTopo(st, a) {
+    var idade = a.nasc ? idadeDe(a.nasc) : 0;
+    var pl = alPlano(st, a);
+    var est = alEstado(st, a);
+    var linha = [a.objetivo || "", a.desde ? S.plural(Math.max(1, Math.round((new Date(S.todayISO()) - new Date(a.desde)) / 2629800000)), "mês", "meses") : "",
+      pl.o, est === "devendo" ? "devendo" : "em dia", idade ? idade + " anos" : ""].filter(Boolean);
+    $("pfDesde").textContent = linha.join(" · ") + (a.appRevogadoEm ? " · acesso ao app cortado" : "");
+    var hoje = S.todayISO();
+    var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
+    var chips = $("pfChips");
+    if (chips) {
+      chips.innerHTML =
+        (a.appTokenP ? "<span>" + (a.appRevogadoEm ? "App cortado" : a.acessoEm ? "App ativo" : "App gerado") + "</span>" : "<span>Sem app ainda</span>") +
+        "<span>" + S.plural(nMes, "treino no mês", "treinos no mês") + "</span>";
+    }
+    var px = alProxima(st, a);
+    var fi = alFicha(st, a);
+    var pr = $("pfProxima");
+    if (pr) pr.textContent = "Próxima sessão: " + px.txt.toLowerCase() + (fi.o !== "Sem ficha" ? " · " + fi.o : "");
+  }
+  function pintaPfResumo(st, a) {
+    var el = $("pfResumo"); if (!el) return;
+    var hoje = S.todayISO();
+    var ret = a.retorno || {};
+    var meta = (+a.metaSemana || 3) * 4;
+    var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
+    // peso: o primeiro e o último que o aluno registrou no app
+    var pesos = Object.keys(ret.peso || {}).sort();
+    var pAtual = pesos.length ? +ret.peso[pesos[pesos.length - 1]] : 0;
+    var pPri = pesos.length ? +ret.peso[pesos[0]] : 0;
+    var dif = pesos.length > 1 ? Math.round((pAtual - pPri) * 10) / 10 : 0;
+    // batimento: média das médias que voltaram do app
+    var fcs = Object.keys(ret.fc || {}).map(function (k) { return ret.fc[k]; }).filter(Boolean);
+    var fcMed = fcs.length ? Math.round(fcs.reduce(function (t, x) { return t + (+x.m || 0); }, 0) / fcs.length) : 0;
+    var fcMax = fcs.length ? Math.max.apply(null, fcs.map(function (x) { return +x.x || 0; })) : 0;
+    function kpi(k, v, un, s, cor) {
+      return '<div class="pfkpi"><div class="k">' + k + '</div><div class="v">' + v +
+        (un ? "<small> " + un + "</small>" : "") + '</div><div class="s" style="color:' + (cor || "#8a8695") + ';">' + s + "</div></div>";
+    }
+    var kpis = '<div class="pfkpis">' +
+      kpi("TREINOS NO MÊS", nMes, "de " + meta, nMes >= meta ? "bateu a meta do mês" : S.plural(meta - nMes, "treino", "treinos") + " pra bater",
+        nMes >= meta ? "#4ade80" : "#8a8695") +
+      kpi("PESO", pAtual ? String(pAtual).replace(".", ",") : "—", pAtual ? "kg" : "",
+        pesos.length > 1 ? (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg desde o início" : "o aluno ainda não pesou no app",
+        dif < 0 ? "#4ade80" : "") +
+      kpi("BATIMENTO MÉDIO", fcMed || "—", fcMed ? "bpm" : "", fcMed ? "pico " + fcMax + " bpm" : "sem cinta conectada") +
+      kpi("CHECK-IN DA SEMANA", ret.ckNota || "—", ret.ckNota ? "/5" : "",
+        ret.ckTexto ? esc(String(ret.ckTexto).slice(0, 40)) : "sem check-in esta semana") +
+      "</div>";
+    // Semana do aluno: os 7 dias com a letra da ficha de cada um
+    var t = (st.treinosV2 || {})[a.id] || {};
+    var dias = (t.plano || {}).dias || {};
+    var DS = ["S", "T", "Q", "Q", "S", "S", "D"];
+    var hojeI = (new Date().getDay() + 6) % 7;
+    var cels = "";
+    for (var i = 0; i < 7; i++) {
+      var d = dias[String(i)];
+      var rot = "—";
+      if (d && d.tp === "ficha") {
+        var f = (t.fichas || []).find(function (x) { return x.id === d.id; });
+        rot = f ? (String(f.titulo || "A").trim()[0] || "A").toUpperCase() : "A";
+      } else if (d && d.tp === "wod") rot = "W";
+      else if (d && d.tp === "cardio") rot = "CR";
+      cels += '<div><div class="d">' + DS[i] + '</div><div class="c' + (d ? " tem" : "") + (i === hojeI ? " hoje" : "") + '">' + rot + "</div></div>";
+    }
+    var fi = alFicha(st, a);
+    var f0 = (t.fichas || [])[0];
+    var col = '<div class="pfcols">' +
+      '<div class="pfbox"><h3>Semana do aluno</h3><div class="pfsem">' + cels + "</div>" +
+      '<div style="font-size:12.5px;color:#8a8695;margin-top:11px;">' +
+      (Object.keys(dias).length ? "O app dele abre no treino do dia sozinho."
+        : "Sem dias definidos — o app usa o rodízio das fichas. Defina em Treinos → Semana do aluno.") + "</div>" +
+      '<button type="button" class="btn sec mini" data-montatreino="' + a.id + '" style="margin-top:10px;">Editar a semana</button></div>' +
+      '<div class="pfbox"><h3>Ficha atual</h3>' +
+      (f0 ? '<div style="font-size:14.5px;font-weight:800;">' + esc(f0.titulo || "Ficha A") + "</div>" +
+        '<div style="font-size:12.5px;color:#8a8695;margin-top:3px;">' + S.plural((f0.itens || []).length, "exercício", "exercícios") +
+        (f0.p2 && f0.p2.n ? " · " + esc(f0.p2.n) : "") + "</div>" +
+        '<div style="font-size:12.5px;font-weight:700;margin-top:10px;color:' + fi.cor + ';">' + fi.sub + "</div>"
+        : '<div class="muted" style="font-size:13px;">Nenhuma ficha montada ainda.</div>') +
+      '<div style="display:flex;gap:8px;margin-top:12px;">' +
+      '<button type="button" class="btn mini" data-montatreino="' + a.id + '" style="flex:1;">' + (f0 ? "Abrir" : "Montar") + "</button>" +
+      '<button type="button" class="btn sec mini" data-app="' + a.id + '" style="flex:1;">Mandar app</button></div></div></div>';
+    el.innerHTML = kpis + col;
+  }
+  // as 4 ações do dia no cabeçalho da ficha (tela 2b)
+  document.addEventListener("click", function (e) {
+    var id = e.target && e.target.id;
+    if (id === "pfEditar") { mostraPfAba("cadastro"); return; }
+    if (id === "pfIrChat") { mostraPfAba("app"); vaiAba("chat"); return; }
+    if (id === "pfIrFin") { mostraPfAba("fin"); return; }
+    if (id === "pfIrAgenda") { vaiAba("agenda"); return; }
+    if (id === "pfMontaTreino" && perfilId) {
+      vaiAba("treinos");
+      var sel = $("taAluno");
+      if (sel) { sel.value = perfilId; sel.dispatchEvent(new Event("change")); }
+      return;
+    }
+  });
   function abrePerfil(id) {
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     if (!a) return;
     perfilId = id;
-    mostraPfAba("app");
+    mostraPfAba("resumo");
     $("pfTitulo").textContent = a.nome;
     pintaPfFoto(a);
+    pintaPfTopo(st, a);
+    pintaPfResumo(st, a);
     // acesso cortado: troca o botão e avisa no título
     var cortado = !!a.appRevogadoEm;
     $("pfRevoga").hidden = cortado || !a.appTokenP;
     $("pfReliga").hidden = !cortado;
-    $("pfDesde").textContent = (a.desde ? "aluno desde " + S.fmtData(a.desde) : "") +
-      (cortado ? " · acesso ao app cortado em " + S.fmtData(a.appRevogadoEm) : "");
     // menu de ações começa fechado a cada perfil aberto
     $("pfAcoes").hidden = true;
     $("pfAcoesBtn").setAttribute("aria-expanded", "false");

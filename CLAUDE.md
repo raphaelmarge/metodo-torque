@@ -251,6 +251,26 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Painel repaginado: Alunos e ficha do aluno** (a partir da v615): telas 2a e
+2b do canvas. **2a** — a lista virou tabela (`.altab`/`.alrow`) com cabeçalho
+(`#alResumo` = "N ativos · M sumindo"), busca por nome/telefone (`#alBusca`) e
+os filtros **Ativos / Sumindo / Devendo / Encerrados** (`alEstado`). Cada linha
+traz plano + situação do pagamento, treinos do mês com barra, idade da ficha e
+próxima sessão, e **a ação que resolve o estado dela** (Cobrar / Montar ficha /
+Chamar / Zap) — regra 1 do handoff. ⚠️ `alEstado` usa a MESMA conta do
+Financeiro (não pagou o mês corrente + passou do vencimento); a primeira versão
+usava `dividaDe`, que soma o histórico inteiro e marcava 22 de 24 como DEVENDO
+ao lado de "Pago dia 5". ⚠️ `carteiraPT().saldo` é **dinheiro**, não quantidade
+de aulas. A linha mantém a classe `.aluno-pt` porque outros trechos e testes
+miram nela. **2b** — cabeçalho roxo (`.pftopo`) com voltar, "Editar cadastro",
+nome, a linha objetivo · tempo de casa · plano · situação · idade, dois selos,
+as **4 ações do dia** (Montar treino, chat, financeiro, agenda) e a próxima
+sessão; aba nova **Resumo** (primeira, `data-pfa="resumo"`) com 4 números
+(treinos no mês, peso, batimento, check-in), a Semana do aluno em 7 chips e a
+Ficha atual. O `←` antigo sumiu: quem herdou o id `pfFechar` (e o listener) é o
+"‹ Alunos". Ganchos: `window.__alBusca`. **Faltam 10 telas** (2c-2e, 3a-3d,
+4a-4e).
+
 **Painel repaginado: Início e menu** (a partir da v614): primeiro lote do
 canvas *Painel do professor* (16 telas, handoff em `design_handoff_painel_personal`).
 **A tela 1b foi descartada** — o Raphael escolheu a 1a, e o registro disso mora
