@@ -490,13 +490,6 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
      * ficava boiando sozinha no canto; a de 5 virava 3+2 e a de 3 (Desafio)
      * caía como 2+1. No flex cada linha se completa sozinha, seja qual for a
      * quantidade de abas. */
-    #pfAbas, #trAbas, #pgAbas, #qtAbas, #relAbas, #cfgAbas,
-    #agAbas, #avAbas, #dsAbas, #chAbas { display: flex; flex-wrap: wrap; gap: 6px; }
-    #pfAbas button, #trAbas button, #pgAbas button, #qtAbas button, #relAbas button, #cfgAbas button,
-    #agAbas button, #avAbas button, #dsAbas button, #chAbas button {
-      flex: 1 1 104px; min-width: 0; width: auto; padding: 9px 6px; font-size: 12px; text-align: center;
-      line-height: 1.25; white-space: normal;   /* rótulo longo quebra em duas linhas em vez de virar "Automáti…" */
-    }
     /* ícone junto do texto some quando o rótulo é longo: o que importa é a palavra */
     #trAbas button .mi, #pfAbas button .mi { display: none; }
     /* card do aluno no celular: nome e ⋮ na 1ª linha, etiquetas na 2ª (nada empurra o menu) */
@@ -838,15 +831,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #vPerfil .pfprox .pfpb { display: inline-flex; flex: none; height: 38px; padding: 0 13px;
                              border-radius: 11px; font-size: 12.5px; font-weight: 800;
                              background: #fff; color: var(--pt-roxo-fundo); border: 0; }
-    /* as 8 abas viram uma fita de sublinhado que rola */
-    #pfAbas { margin: 0; display: flex; gap: 4px; padding: 0 6px; overflow-x: auto;
-              flex-wrap: nowrap; border-bottom: 1px solid var(--pt-hairline);
-              background: none; border-radius: 0; scrollbar-width: none; }
-    #pfAbas::-webkit-scrollbar { display: none; }
-    #pfAbas button { flex: none; height: 44px; padding: 0 11px; font-size: 13px; font-weight: 700;
-                     background: none; border: 0; border-radius: 0; color: var(--pt-txt-4); }
-    #pfAbas button.ativa { font-weight: 800; color: var(--pt-txt);
-                           background: none; border-bottom: 2px solid var(--pt-roxo); }
+    /* a fita das 8 abas da ficha agora vem da regra base (.abas); aqui so o
+     * encosto na borda da tela, que e proprio do cabecalho roxo */
+    #pfAbas { margin: 0; padding: 0 6px; }
     /* os 4 numeros em 2 x 2 (regra 4 do README: nunca 4 em linha, nunca carrossel) */
     #vPerfil .pfkpis { grid-template-columns: 1fr 1fr; gap: 9px; }
     #vPerfil .pfkpi { border-radius: 14px; padding: 12px 13px; }
@@ -1501,6 +1488,53 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
    * de celular no arquivo e, com a mesma especificidade, escondia o botao nos
    * dois tamanhos. */
   @media (min-width: 901px) { .tdesqcab, .tdaddbt { display: none; } }
+  /* ============================================================
+   * SUB-MENUS: FITA DE SUBLINHADO (v635)
+   *
+   * O apps.css faz `.abas` em PILULA roxa, e a ficha do aluno no celular era a
+   * unica tela que ja seguia o desenho (tela 04 do handoff: aba de 46px,
+   * sublinhado roxo de 2px na ativa, sem fundo). O Raphael reparou na
+   * diferenca. Agora o painel inteiro fala a mesma lingua.
+   * ⚠️ NAO mexer no apps.css: ele veste o nutricao.html e o index.html.
+   * ============================================================ */
+  .abas { gap: 2px; flex-wrap: wrap; border-bottom: 1px solid var(--pt-hairline); }
+  .abas button { display: inline-flex; align-items: center; gap: 7px; height: 46px; padding: 0 14px;
+                 background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+                 margin-bottom: -1px; color: var(--pt-txt-4); font-size: 13.5px; font-weight: 700; }
+  .abas button:hover { background: none; color: var(--pt-txt-2); border-bottom-color: var(--pt-borda-forte); }
+  /* .ativa DEPOIS do :hover: as duas tem a mesma forca, entao quem vem por
+   * ultimo ganha — sem isso passar o mouse apagava o sublinhado roxo */
+  .abas button.ativa, .abas button.ativa:hover { background: none; color: var(--pt-txt);
+                       font-weight: 800; border-bottom-color: var(--pt-roxo); }
+  html[data-tema="claro"] .abas button { background: none; }
+  html[data-tema="claro"] .abas button:hover { border-bottom-color: var(--pt-borda-forte); }
+  html[data-tema="claro"] .abas button.ativa { background: none; border-bottom-color: var(--pt-roxo); }
+  /* ⚠️ este bloco vem LOGO DEPOIS da regra base de proposito: no arquivo, com a
+   * mesma especificidade, quem vem por ultimo ganha — la em cima (no bloco de
+   * 640px) a altura de 44px nao valia, porque a base de 46px vinha depois.
+   * No celular a fita ROLA de lado: com os botoes quebrando em fileiras, oito
+   * abas viravam um paredao de tres andares. */
+  @media (max-width: 900px) {
+    .abas { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .abas::-webkit-scrollbar { display: none; }
+    .abas button { flex: none; height: 44px; padding: 0 11px; font-size: 13px; white-space: nowrap; }
+  }
+  /* botao de dois estados Semana | Mes: um trilho so, o escolhido em roxo */
+  .agvis { display: inline-flex; background: var(--pt-elev); border: 1px solid var(--pt-borda-forte);
+           border-radius: var(--pt-r-bt); padding: 3px; gap: 3px; flex: none; }
+  .agvis button { background: none; border: 0; border-radius: 8px; padding: 0 13px; height: 34px;
+                  font-family: inherit; font-size: 12.5px; font-weight: 800; color: var(--pt-txt-4); cursor: pointer; }
+  .agvis button.on { background: var(--pt-roxo); color: #fff; }
+  /* a faixa de pedidos leva a lista DENTRO dela: um bloco so, colado, em vez
+   * dos dois cards separados que diziam a mesma coisa */
+  #agPedFaixa { margin-bottom: 14px; }
+  #agPedFaixa .agfaixa { margin-bottom: 0; border-radius: 16px 16px 0 0; }
+  #agPedFaixa #listaPedidosApp:not(:empty) { background: var(--pt-caixa);
+                                             border: 1px solid var(--pt-sel-borda); border-top: 0;
+                                             border-radius: 0 0 16px 16px; padding: 2px 16px 6px; }
+  #agPedFaixa .sessao-pt { border-bottom: 1px solid var(--pt-hairline); }
+  #agPedFaixa .sessao-pt:last-child { border-bottom: 0; }
+  .agics { margin-top: 12px; align-items: center; }
   .tdrot { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--tk-tx4); margin-bottom: 8px; }
   .tdrot small { letter-spacing: 0; text-transform: none; font-size: 11.5px; font-weight: 600; color: var(--tk-tx5); margin-left: 8px; }
   .tdcasc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
@@ -2017,26 +2051,33 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button type="button" class="dbt sec" id="agSemAnt" title="semana anterior">‹ Semana</button>
         <button type="button" class="dbt sec" id="agSemHoje">Hoje</button>
         <button type="button" class="dbt sec" id="agSemProx" title="próxima semana">Semana ›</button>
+        <span class="agvis" id="agVisTopo"></span>
         <button type="button" class="dbt" id="agMarcar"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 5v14M5 12h14'/></svg> Marcar sessão</button>
       </div>
     </div>
-    <div id="agPedFaixa" data-agsec="sessoes" hidden></div>
+    <!-- os pedidos de horario apareciam DUAS vezes: esta faixa e um card
+         identico no meio da tela. Agora e um bloco so — o resumo em cima e
+         cada pedido com Confirmar/Recusar embaixo (regra 1 do handoff). -->
+    <div id="agPedFaixa" data-agsec="sessoes" hidden>
+      <div id="agPedTopo"></div>
+      <div id="listaPedidosApp"></div>
+    </div>
     <!-- tela 19 do handoff: no celular a semana de 7 colunas vira UM DIA POR
          VEZ (regra 5 do colapso). Os dois convivem: o CSS mostra um ou o outro. -->
     <div id="agDia" data-agsec="sessoes" hidden></div>
     <div class="agrol" data-agsec="sessoes" style="margin-bottom:14px;"><div class="agsem" id="agGrade"></div></div>
-    <div class="card" id="cardPedidosApp" hidden data-agsec="sessoes" style="margin-bottom: 14px; border-left: 4px solid var(--pt-atencao);">
-      <h2>Pedidos de horário pelo app</h2>
-      <p class="muted" style="margin: 4px 0 8px; font-size: 12.5px;">O aluno pede pela Agenda do app dele — confirme aqui e a sessão entra na sua agenda na hora.</p>
-      <div id="listaPedidosApp"></div>
-    </div>
-    <div class="card" data-agsec="sessoes"><h2>Agenda do mês</h2>
-      <div id="calAgenda" style="margin: 10px 0 12px;"></div>
+    <!-- o MESMO calendario, outro zoom: o botao Semana | Mes la em cima troca
+         entre a grade de horarios e o mes inteiro. Antes os dois ficavam na
+         tela ao mesmo tempo, um embaixo do outro. -->
+    <div class="card" id="agCardMes" data-agsec="sessoes" hidden>
+      <div id="calAgenda" style="margin: 2px 0 12px;"></div>
       <div id="listaSessoes" class="muted">Nenhuma sessão agendada.</div>
-      <div class="linha-flex" style="margin-top: 12px;">
-        <button class="btn sec" id="btnIcsP"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Enviar pro meu calendário</button>
-        <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as sessões entram lá.</span>
-      </div>
+    </div>
+    <!-- exportar pro calendário do celular não é de UMA das visões: vale pra
+         agenda inteira, então fica fora do card do mês -->
+    <div class="linha-flex agics" data-agsec="sessoes">
+      <button class="btn sec" id="btnIcsP"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Enviar pro meu calendário</button>
+      <span class="muted" style="font-size: 12px;">Baixa um arquivo .ics — abre no Google Agenda ou no Calendário do iPhone e as sessões entram lá.</span>
     </div>
   </section>
 
@@ -7639,10 +7680,64 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     el.innerHTML = '<div class="agdcab"><div class="agdt">' +
       '<div class="alk">' + esc(AG_MESES[d0.mes].toUpperCase()) + "</div>" +
       '<div class="agdd">' + esc(d0.dia.charAt(0) + d0.dia.slice(1).toLowerCase()) + ", " + d0.n + "</div></div>" +
+      /* no celular o cabecalho da semana (.altopo) nao existe — sem este
+       * botao aqui, a visao de Mes ficava fora de alcance no telefone */
+      '<span class="agvis">' + agVisBt() + "</span>" +
       '<button type="button" class="agdmais" id="agDiaNovo" title="Marcar sessão" aria-label="Marcar sessão" data-agnovo="' + d0.iso + '|">+</button>' +
       '</div><div class="agchips">' + chips + "</div>" +
       '<div class="agdlista">' + (linhas || '<div class="agl vazio"><span class="aglm"><b>Nenhuma sessão neste dia</b><i>Dia de descanso</i></span></div>') + vaga + "</div>";
   }
+  /* ============================================================
+   * UM CALENDARIO SO, DOIS ZOOMS (v635)
+   *
+   * A Agenda tinha QUATRO calendarios na mesma tela: a grade da semana, o
+   * calendario do mes, o "um dia por vez" do celular e o seletor de data do
+   * formulario de agendar — 3591px de altura. O Raphael: "uns 4 calendarios
+   * diferentes pra mesma coisa".
+   *
+   * Agora e UM: o botao Semana | Mes troca o zoom. Semana = a grade de
+   * horarios (no celular, um dia por vez, que e a MESMA visao noutro tamanho).
+   * Mes = o calendario do mes, pra achar uma data longe. A escolha fica em
+   * mtapp:ptAgVis, gravada com localStorage direto — preferencia de tela nao
+   * passa pelo S.write, que sincroniza.
+   * ============================================================ */
+  var agVis = "semana";
+  try { if (localStorage.getItem("mtapp:ptAgVis") === "mes") agVis = "mes"; } catch (eAgV) {}
+  /* o botao Semana | Mes aparece em DOIS lugares (o cabecalho da semana no
+   * computador e o do dia no celular), entao ele e um molde com data-agvis —
+   * id repetido em dois pontos do DOM nao existe. */
+  function agVisBt() {
+    return '<button type="button" data-agvis="semana"' + (agVis === "mes" ? "" : ' class="on"') + ">Semana</button>" +
+      '<button type="button" data-agvis="mes"' + (agVis === "mes" ? ' class="on"' : "") + ">Mês</button>";
+  }
+  function pintaAgVis() {
+    var mes = agVis === "mes";
+    /* ⚠️ nao da pra usar o atributo `hidden` aqui: o fazSubAbas mexe no hidden
+     * de TODO [data-agsec] e devolveria o card do mes pra tela. Estilo em
+     * linha ganha do hidden, entao e ele que manda. */
+    var cm = $("agCardMes");
+    if (cm) cm.style.display = mes ? "" : "none";
+    // a grade da semana e o "um dia por vez" sao a MESMA visao em dois
+    // tamanhos: quem escolhe entre eles e o CSS, aqui so ligamos as duas
+    var rol = document.querySelector("#vAgenda .agrol");
+    if (rol) rol.style.display = mes ? "none" : "";
+    var dia = $("agDia");
+    if (dia) dia.style.display = mes ? "none" : "";
+    // as setas de semana nao servem no mes (ele tem as proprias)
+    ["agSemAnt", "agSemProx"].forEach(function (id) { var b = $(id); if (b) b.hidden = mes; });
+    var topo = $("agVisTopo");
+    if (topo) topo.innerHTML = agVisBt();
+    document.querySelectorAll("#vAgenda [data-agvis]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-agvis") === agVis);
+    });
+  }
+  function trocaAgVis(v) {
+    agVis = v === "mes" ? "mes" : "semana";
+    try { localStorage.setItem("mtapp:ptAgVis", agVis); } catch (eAgS) {}
+    pintaAgVis();
+    if (agVis === "mes") { var c = $("agCardMes"); if (c && c.scrollIntoView) c.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+  }
+  window.__agVis = { troca: trocaAgVis, atual: function () { return agVis; } };
   function pintaSemana(st) {
     var grade = $("agGrade");
     if (!grade) return;
@@ -7724,6 +7819,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("agSemAnt").addEventListener("click", function () { agSemOff--; pintaSemana(load()); });
   $("agSemProx").addEventListener("click", function () { agSemOff++; pintaSemana(load()); });
   $("agSemHoje").addEventListener("click", function () { agSemOff = 0; pintaSemana(load()); });
+  $("vAgenda").addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-agvis]");
+    if (b) trocaAgVis(b.getAttribute("data-agvis"));
+  });
   $("agMarcar").addEventListener("click", function () { if (window.__agAba) window.__agAba("agendar"); });
   $("agGrade").addEventListener("click", function (e) {
     var nv = e.target.closest && e.target.closest("[data-agnovo]");
@@ -7743,6 +7842,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
 
   function renderAgenda(st) {
+    pintaAgVis();
     var opts = st.alunos.filter(function (a) { return a.ativo !== false; })
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + "</option>"; }).join("");
     var opsGt = (st.treinosGrupo || []).map(function (g) {
@@ -7848,8 +7948,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function renderPedidosApp(st) {
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
-      $("cardPedidosApp").removeAttribute("data-tem"); $("cardPedidosApp").hidden = true;
-      agPedCache = null; $("agPedFaixa").hidden = true; $("agPedFaixa").innerHTML = "";
+      agPedCache = null; $("agPedFaixa").hidden = true;
+      $("agPedTopo").innerHTML = ""; $("listaPedidosApp").innerHTML = "";
       return;
     }
     nuvem.client.from("app_agenda").select("id,token,dia,hora,obs").eq("academia_id", nuvem.aid).eq("status", "pedido")
@@ -7858,9 +7958,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         var alunoPorToken = {};
         st.alunos.forEach(function (a) { if (a.appTokenP && a.ativo !== false) alunoPorToken[a.appTokenP] = a; }); // encerrado não aparece nos pedidos
         pedidos = pedidos.filter(function (p) { return alunoPorToken[p.token]; });
-        $("cardPedidosApp").toggleAttribute("data-tem", pedidos.length > 0);
+        $("agPedFaixa").toggleAttribute("data-tem", pedidos.length > 0);
         if (window.__agAba) window.__agAba(window.__agAba.atual || "sessoes");
-        else $("cardPedidosApp").hidden = !pedidos.length;
         $("listaPedidosApp").innerHTML = pedidos.map(function (p) {
           var a = alunoPorToken[p.token];
           return '<div class="sessao-pt"><b>' + S.fmtData(p.dia) + " " + (p.hora || "") + "</b>" +
@@ -7874,10 +7973,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         agPedCache = pedidos.map(function (p) {
           return { id: p.id, dia: p.dia, hora: p.hora || "", alunoId: alunoPorToken[p.token].id };
         });
-        var fx = $("agPedFaixa");
-        if (fx) {
+        var fx = $("agPedFaixa"), fxT = $("agPedTopo");
+        if (fx && fxT) {
           fx.hidden = !pedidos.length;
-          fx.innerHTML = !pedidos.length ? "" :
+          fxT.innerHTML = !pedidos.length ? "" :
             '<div class="agfaixa"><span class="agn">' + pedidos.length + "</span>" +
             '<span class="agt">' + (pedidos.length === 1 ? "Pedido de horário esperando resposta" : "Pedidos de horário esperando resposta") + " — " +
             pedidos.slice(0, 3).map(function (p) {
@@ -7885,17 +7984,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
               return esc(aF.nome.split(" ")[0]) + " quer " + S.fmtData(p.dia) + (p.hora ? " " + esc(p.hora) : "");
             }).join(", ") + (pedidos.length > 3 ? " e mais " + (pedidos.length - 3) : "") + "</span>" +
             '<span class="agb"><button type="button" class="dbt" id="agPedTodos">' +
-            (pedidos.length === 1 ? "Aceitar" : "Aceitar " + (pedidos.length === 2 ? "os dois" : "todos")) + "</button>" +
-            '<button type="button" class="dbt sec" id="agPedVer">Ver</button></span></div>';
+            (pedidos.length === 1 ? "Aceitar" : "Aceitar " + (pedidos.length === 2 ? "os dois" : "todos")) + "</button></span></div>";
         }
         pintaSemana(st);
       });
   }
-  $("agPedFaixa").addEventListener("click", function (e) {
-    if (e.target.closest && e.target.closest("#agPedVer")) {
-      $("cardPedidosApp").scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
+  $("agPedTopo").addEventListener("click", function (e) {
     if (!(e.target.closest && e.target.closest("#agPedTodos"))) return;
     var bts = $("listaPedidosApp").querySelectorAll("[data-agok]");
     if (!bts.length) return;
@@ -11365,7 +11459,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       mostra.atual = aba;
       document.querySelectorAll("#" + secId + " [" + dataSec + "]").forEach(function (c) {
         c.hidden = c.getAttribute(dataSec) !== aba ||
-          (c.id === "cardPedidosApp" && !c.hasAttribute("data-tem")); // pedidos só aparecem quando existem
+          (c.id === "agPedFaixa" && !c.hasAttribute("data-tem")); // pedidos só aparecem quando existem
       });
       document.querySelectorAll("#" + abasId + " button").forEach(function (b) {
         b.classList.toggle("ativa", b.getAttribute(dataAba) === aba);

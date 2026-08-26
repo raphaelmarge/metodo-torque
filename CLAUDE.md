@@ -251,6 +251,38 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Agenda: um calendário só, e os sub-menus viram fita** (a partir da v635): o
+Raphael abriu a Agenda e disse "uns 4 calendários diferentes pra mesma coisa".
+Eram mesmo: a **grade da semana**, o **calendário do mês**, o **um dia por vez**
+do celular e o seletor de data do formulário de agendar — 3591 px de altura —
+e o bloco de **pedidos de horário aparecia duas vezes** (a faixa roxa e um card
+idêntico no meio). Agora é UM: o botão **Semana | Mês** (`data-agvis`, escolha
+em `mtapp:ptAgVis` gravada com `localStorage` direto) troca o zoom do mesmo
+calendário. Semana = a grade de horários — no celular ela é o "um dia por vez",
+que é a MESMA visão noutro tamanho, quem escolhe é o CSS. Mês = o calendário do
+mês com a contagem por dia, pra achar uma data longe. Ficou em **1714 px**.
+⚠️ o card do mês não pode ser escondido pelo atributo `hidden`: o `fazSubAbas`
+mexe no `hidden` de TODO `[data-agsec]` e o devolveria pra tela — quem manda é
+`style.display`, que ganha do `hidden`. ⚠️ o botão Semana|Mês aparece em DOIS
+cabeçalhos (o da semana no computador, o do dia no celular, porque lá o
+`.altopo` é `display: none`), então ele é um molde com `data-agvis` e um
+listener delegado — id repetido em dois pontos do DOM não existe. O
+`#btnIcsP` (enviar pro calendário do celular) saiu do card do mês: ele vale pra
+agenda inteira, não pra uma das visões. Ganchos: `window.__agVis`.
+
+**Os sub-menus viram fita de sublinhado** (v635): o Raphael reparou que todos
+eram pílula roxa e que a ficha do aluno tinha virado outra coisa. Estava certo
+— e a exceção era justamente a que seguia o desenho: a tela 04 do handoff mostra
+aba de **46 px com sublinhado roxo de 2 px e sem fundo**, que eu só tinha
+aplicado no `#pfAbas` do celular (v625). Agora `.abas` inteiro segue o desenho,
+computador e celular, e no celular a fita **rola de lado** em vez de quebrar em
+fileiras. ⚠️ o `apps.css` faz `.abas` em pílula e **não pode ser tocado** (veste
+o Nutri e o portal); a regra vive no `<style>` do painel. ⚠️ `.ativa` tem de vir
+DEPOIS de `:hover` — mesma especificidade, quem vem por último ganha, e sem isso
+passar o mouse apagava o sublinhado roxo. ⚠️ o bloco de celular do `.abas` está
+logo depois da regra base **de propósito**: o que estava lá em cima (no bloco de
+640 px) não valia, porque a base de 46 px vinha depois no arquivo.
+
 **Montar ficha: escolher exercício virou tela à parte** (a partir da v634): com
 tudo na mesma página a ficha aberta media **1594 px** de altura — quatro telas
 de celular de controles na cara ao mesmo tempo, e o Raphael disse "ainda está
