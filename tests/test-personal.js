@@ -995,6 +995,31 @@ async function abaPt(p, a) {
       return n;
     });
     ok(mesmo === 1, "🎨 2d: Salvar e publicar aciona o mesmo Enviar pro app do aluno de sempre");
+    /* A tela juntava o modelo velho com o novo: o cabecalho novo trazia
+     * "Salvar e publicar" e, logo abaixo, um card VELHO repetia o nome do
+     * aluno e trazia um SEGUNDO botao de publicar. O professor nao sabia qual
+     * era o caminho. Agora as ferramentas moram no cabecalho e o botao velho
+     * fica no DOM (e a unica rota pra nuvem) mas fora do caminho. */
+    const semDup = await p.evaluate(() => {
+      const ve = (el) => !!el && !el.hidden && getComputedStyle(el).display !== "none" &&
+        el.getBoundingClientRect().height > 0;
+      const linha = document.querySelector(".tdtopo .tdlinha");
+      const publicar = Array.from(document.querySelectorAll("#vTreinos button"))
+        .filter((b) => ve(b) && /publicar|enviar pro app/i.test(b.textContent)).length;
+      return {
+        publicar: publicar,
+        enviaEscondido: !ve(document.getElementById("tEnviaApp")) && !!document.getElementById("tEnviaApp"),
+        noCabecalho: !!linha && ["tAluno", "tFicha", "tplSel", "tplAplicar", "tZap", "tValidade"]
+          .every((id) => linha.contains(document.getElementById(id))),
+        rodapeHonesto: !/biblioteca \(abaixo\)/.test(document.getElementById("vTreinos").textContent),
+      };
+    });
+    ok(semDup.publicar === 1 && semDup.enviaEscondido,
+      "🎨 2d: um botão de publicar só na tela (o antigo continua no DOM, que é a rota de verdade)");
+    ok(semDup.noCabecalho,
+      "🎨 2d: aluno, nova ficha, modelo, WhatsApp e validade vivem no MESMO cabeçalho — não num card repetido");
+    ok(semDup.rodapeHonesto,
+      "🎨 2d: o rodapé não fala mais de uma 'biblioteca (abaixo)' que não existe (a busca é dentro da ficha)");
   }
 
   // descanso entre séries: default 60s no item novo, editável pelo botão ⏱
@@ -2412,6 +2437,33 @@ async function abaPt(p, a) {
     ok(/Nenhuma/.test(metricas) && /resposta mais comum/.test(metricas) && /Ombro esquerdo/.test(metricas) && /2 de 3/.test(metricas),
       "pergunta de resposta livre mostra a última resposta e a mais comum das semanas");
     ok(/Últimos check-ins/.test(metricas), "o histórico dos check-ins continua listado abaixo das métricas");
+    /* 💧 os quatro botoes que o aluno toca no app (Agua, Comida, Sono, Cardio)
+     * viram a MEDIA que interessa: quantos dias por semana ele marca cada um.
+     * A semana em curso fica de fora — meia semana contra semanas cheias faria
+     * todo aluno parecer que piorou na quarta-feira. */
+    const habs = await p.evaluate(() => {
+      const hab = {};
+      const hoje = new Date();
+      // 10 semanas cheias pra tras: Agua todo dia, Sono dia sim dia nao, Cardio so no comeco
+      for (let d = 7; d <= 77; d++) {
+        const dt = new Date(hoje.getTime() - d * 86400000);
+        const m = { 0: true };
+        if (d % 2 === 0) m[2] = true;
+        if (Math.floor(d / 7) <= 4) m[3] = true;
+        hab[dt.toISOString().slice(0, 10)] = m;
+      }
+      return { html: window.__checkinsPT({ habitos: hab }), vazio: window.__checkinsPT({ checks: [] }) };
+    });
+    ok(/Hábitos do dia a dia/.test(habs.html) && /Água/.test(habs.html) && /Comida/.test(habs.html) &&
+      /Sono/.test(habs.html) && /Cardio/.test(habs.html),
+      "💧 os quatro botões do app (água, comida, sono, cardio) viram métrica no perfil");
+    ok(/dias por semana/.test(habs.html) && /class=['"]qsgraf['"]/.test(habs.html),
+      "💧 cada hábito mostra a MÉDIA de dias por semana com o gráfico de evolução");
+    ok(/melhor semana: <b>7 de 7<\/b>/.test(habs.html),
+      "💧 água marcada todo dia dá 7 de 7 na melhor semana");
+    ok(/(melhorando|piorando|estável|acompanhando)/.test(habs.html),
+      "💧 o hábito também diz se está melhorando ou piorando contra o mês anterior");
+    ok(habs.vazio === "", "💧 sem check-in e sem hábito o bloco não inventa nada (volta vazio)");
     // --- achados do diagnóstico: escala, formulários misturados, plural e "menos é melhor" ---
     const diag = await p.evaluate(() => {
       const S = window.MTStore, snap = localStorage.getItem("mtapp:ptStudio");

@@ -251,6 +251,35 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Os hábitos viram média no perfil** (a partir da v632): o Raphael pediu "a
+média de cada ícone que ele clica — dieta, sono, cardio e etc". São os quatro
+botões do app (`HABS` = Água, Comida, Sono, Cardio) que gravam
+`pthab[dia][i] = true` e voltam no `retorno.habitos`. Na aba **Check-ins** do
+perfil (a mesma da v630 — nada de aba nova) eles viram um cartão cada, com a
+média de **dias por semana**, o selo de melhorando/estável/piorando e o mesmo
+gráfico de evolução das perguntas. A semana começa na **segunda** (regra dos
+chips do Início) e a **semana em curso fica de fora da conta** — meia semana
+contra semanas cheias faria todo aluno parecer que piorou na quarta-feira.
+⚠️ o `grafico()` saiu de dentro do bloco dos check-ins e virou helper da função
+inteira, porque agora serve os dois blocos; e `htmlCheckinsApp` passou a
+devolver conteúdo mesmo **sem** questionário respondido (só com hábito).
+
+**Montar ficha: o velho e o novo estavam juntos** (conserto na v632): o Raphael
+disse que a tela estava "inviável", e estava — o cabeçalho novo da v617
+("MONTANDO PRA <aluno>", *Gerar com IA*, *Salvar e publicar*) convivia com o
+card VELHO logo abaixo, que repetia o nome do aluno num campo, trazia
+*+ Nova ficha*, *WhatsApp*, *vale até*, *Ficha pronta* e — pior — um **segundo
+botão de publicar** (`#tEnviaApp`, "Enviar pro app do aluno"). Dois botões pra
+mesma ação e o nome do aluno em dois lugares. Agora as ferramentas moram todas
+na **segunda fileira do próprio cabeçalho** (`.tdlinha`, `flex: 1 0 100%` pra
+cair na linha de baixo do mesmo flex) e o `#tEnviaApp` continua no DOM — é a
+ÚNICA rota pra nuvem, e o *Salvar e publicar* clica nele — só que `hidden`.
+⚠️ o `apps.css` põe `width: 100%` em todo `<select>`: sem `width: auto` no
+`.tdlinha > select`, o "Ficha pronta" tomava a linha inteira e a fileira virava
+três andares. O rodapé mandava "selecione os exercícios da biblioteca
+(abaixo)" — biblioteca que **não existe mais abaixo** desde que a busca passou
+a viver dentro da gaveta de cada ficha; o texto foi corrigido.
+
 **Corrida contínua E intervalada no mesmo treino** (a partir da v631): o
 professor pediu uma folha só com as duas coisas. Entrou o tipo `misto` no
 `#cbTipo` — com ele o formulário mostra os **dois** grupos de campos ao mesmo

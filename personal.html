@@ -1394,6 +1394,21 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .tdtopo .alk { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--tk-tx4); }
   .tdtopo .alh { font-size: 21px; font-weight: 900; letter-spacing: -.03em; margin-top: 1px; }
   .tdtopo .tdacoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  /* fileira 2 do cabecalho: quem, ficha nova, modelo, WhatsApp e a validade.
+   * flex-basis 100% joga ela pra LINHA de baixo dentro do mesmo flex. */
+  .tdtopo .tdlinha { flex: 1 0 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+                     margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--pt-borda); }
+  .tdtopo .tdlinha .btn { min-height: var(--pt-h-bt-2); padding: 0 14px; font-size: 12.5px; }
+  .tdtopo .tdlinha select, .tdtopo .tdlinha input { min-height: var(--pt-h-bt-2); font-size: 13px; }
+  .tdtopo .tdlinha > select { width: auto; flex: 0 1 186px; min-width: 0; }
+  .tdtopo .tdlinha > span { flex: 1 1 200px; min-width: 0; }   /* o combo de busca do aluno */
+  .tdtopo .tdvale { display: inline-flex; align-items: center; gap: 6px; margin: 0;
+                    font-size: 12px; white-space: nowrap; letter-spacing: 0; }
+  .tdtopo .tdvale input { width: 138px; }
+  @media (max-width: 700px) {
+    .tdtopo .tdlinha > span, .tdtopo .tdlinha select, .tdtopo .tdlinha .tdvale { flex: 1 1 100%; }
+    .tdtopo .tdvale input { flex: 1; width: auto; }
+  }
   .tdtopo .dbt { background: var(--roxo, #7c3aed); color: #fff; }
   .tdtopo .dbt.sec { background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: var(--tk-tx2); }
   .tdcols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: start; }
@@ -2124,19 +2139,21 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <button type="button" class="dbt sec" id="tdIA"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5 13.6 9l5.4 1.6-5.4 1.6L12 17.6l-1.6-5.4L5 10.6 10.4 9z'/><path d='M18.5 16.5l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z'/></svg> Gerar com IA</button>
         <button type="button" class="dbt" id="tdPublica"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Salvar e publicar</button>
       </div>
+      <!-- As ferramentas da ficha moram AQUI, no mesmo cabecalho. Antes elas
+           viviam num card separado logo abaixo, que repetia o nome do aluno e
+           trazia um segundo botao de publicar — o painel dizia a mesma coisa
+           duas vezes e o professor nao sabia qual era o caminho. -->
+      <div class="tdlinha">
+        <select id="tAluno" style="min-width: 200px;"></select>
+        <button class="btn sec" id="tFicha" title="cria a próxima ficha: A, B, C…">+ Nova ficha</button>
+        <select id="tplSel" style="min-width: 0;"><option value="">Ficha pronta (modelo)…</option></select>
+        <button class="btn sec" id="tplAplicar">Aplicar</button>
+        <button class="btn sec" id="tZap">WhatsApp</button>
+        <label class="muted tdvale">⏰ vale até
+          <input id="tValidade" type="date" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
+      </div>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-trsec="fichas">
-      <div class="linha-flex" style="margin: 0 0 10px;">
-        <select id="tAluno" style="min-width: 200px;"></select>
-        <button class="btn sec" id="tFicha">+ Nova ficha (A, B, C…)</button>
-        <button class="btn sec" id="tZap">Enviar no WhatsApp</button>
-        <label class="muted" style="font-size: 12px; margin: 0; white-space: nowrap;">⏰ vale até
-          <input id="tValidade" type="date" style="width: 140px; display: inline-block; margin-left: 4px;" title="quando vencer, você e o aluno recebem o aviso de renovar"></label>
-      </div>
-      <div class="linha-flex" style="margin: 0 0 10px;">
-        <select id="tplSel" style="min-width: 220px;"><option value="">Ficha pronta (modelo)…</option></select>
-        <button class="btn" id="tplAplicar">Aplicar no aluno</button>
-      </div>
       <div id="mesBox"></div>
       <div id="fichasBox" class="muted">Escolha o aluno e crie a primeira ficha.</div>
       <datalist id="p2sugestoes">
@@ -2146,12 +2163,14 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <option>Alongamento de peitoral</option><option>Alongamento de costas</option>
         <option>Mobilidade de quadril</option><option>Mobilidade de ombro</option><option>Liberação com rolo</option>
       </datalist>
-      <!-- a ficha só chega no celular do aluno depois de publicar; até agora a
-           única porta era o botão de lote lá na aba "Em grupo" -->
-      <button class="btn" id="tEnviaApp" style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
+      <!-- A ficha só chega no celular do aluno depois de publicar. Este botão
+           é o MESMO que o "Salvar e publicar" do cabeçalho aciona — ter os dois
+           à vista era a duplicata que confundia, então ele fica escondido e
+           continua sendo a única rota pra nuvem. -->
+      <button class="btn" id="tEnviaApp" hidden style="margin-top: 12px;"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 16.5v3a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-3'/><path d='M12 4v11M7.5 8.5 12 4l4.5 4.5'/></svg> Enviar pro app do aluno</button>
       <p id="tEnvioStatus" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
       <input type="file" id="fCapaFile" accept="image/*" hidden>
-      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Selecione os exercícios da biblioteca (abaixo) — no app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos criam as fichas completas em 1 clique; depois é só ajustar.</p>
+      <p class="muted" style="margin: 10px 0 0; font-size: 12.5px;">Abra uma ficha pra escolher os exercícios — a busca fica dentro dela. No app do aluno cada exercício vira uma página com a descrição e o botão ▶ ver vídeo. Os modelos (“Ficha pronta”) criam as fichas completas em 1 clique; depois é só ajustar.</p>
     </div>
 
     <div class="card" style="margin-bottom: 14px;" data-trsec="wod" hidden>
@@ -5028,10 +5047,56 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var cks = (ret && Array.isArray(ret.checks) ? ret.checks : []).filter(function (c) {
       return c && typeof c === "object" && dataRe(String(c.d || ""));
     }).sort(function (x, y) { return x.d < y.d ? -1 : 1; });
+    var fmtD = function (d) { return d.slice(8, 10) + "/" + d.slice(5, 7); };
+    /* O GRAFICO de evolucao. Uma serie so, entao sem legenda — o titulo do
+     * cartao diz de quem e a linha. Area de tinta embaixo, linha de 2px, um
+     * pontinho por ponto e o ULTIMO maior com anel da cor do cartao (senao ele
+     * some quando cai em cima do vizinho). A linha tracejada e a media do
+     * periodo anterior — e ELA que faz "evoluiu" virar coisa que se enxerga.
+     * Serve as respostas do questionario E os habitos do dia a dia. */
+    function grafico(serie, cor, faixa, refAntes, rotAntes) {
+      var W = 320, H = 104, PL = 30, PR = 10, PT = 12, PB = 20;
+      var x0 = PL, x1 = W - PR, y0 = PT, y1 = H - PB;
+      var fx = (faixa.max - faixa.min) || 1;
+      var px = function (i) { return serie.length === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * i / (serie.length - 1); };
+      var py = function (v) { return y1 - (y1 - y0) * (Math.max(faixa.min, Math.min(faixa.max, v)) - faixa.min) / fx; };
+      var pts = serie.map(function (s, i) { return px(i).toFixed(1) + "," + py(s.pts).toFixed(1); });
+      var s = "<svg viewBox='0 0 " + W + " " + H + "' class='qsgraf' role='img' aria-label='Evolução das respostas'>";
+      // moldura discreta: o chão e o teto da escala
+      s += "<line x1='" + x0 + "' y1='" + y1 + "' x2='" + x1 + "' y2='" + y1 + "' class='qsreg'/>" +
+           "<line x1='" + x0 + "' y1='" + y0 + "' x2='" + x1 + "' y2='" + y0 + "' class='qsreg'/>";
+      // média do mês anterior: a régua contra a qual "melhorou" faz sentido
+      if (refAntes != null) {
+        var yr = py(refAntes);
+        s += "<line x1='" + x0 + "' y1='" + yr.toFixed(1) + "' x2='" + x1 + "' y2='" + yr.toFixed(1) + "' class='qsref'/>" +
+             "<text x='" + (x0 + 3) + "' y='" + (yr - 3).toFixed(1) + "' class='qsreft'>" + rotAntes + "</text>";
+      }
+      // tinta embaixo da linha
+      if (serie.length > 1) {
+        s += "<path d='M" + pts.join("L") + "L" + px(serie.length - 1).toFixed(1) + "," + y1 + "L" + px(0).toFixed(1) + "," + y1 + "Z' " +
+             "class='qsarea' style='fill:" + cor + "'/>";
+        s += "<polyline points='" + pts.join(" ") + "' class='qslinha' style='stroke:" + cor + "'/>";
+      }
+      serie.forEach(function (s2, i) {
+        var ult = i === serie.length - 1;
+        s += "<circle cx='" + px(i).toFixed(1) + "' cy='" + py(s2.pts).toFixed(1) + "' r='" + (ult ? 4.6 : 2.4) + "' " +
+             "class='" + (ult ? "qsdot qsdot-ult" : "qsdot") + "' style='fill:" + cor + "'/>";
+        // alvo de mouse largo: o pontinho de 2,4px é pequeno demais pra acertar
+        var meia = serie.length === 1 ? (x1 - x0) / 2 : (x1 - x0) / (serie.length - 1) / 2;
+        s += "<rect x='" + Math.max(x0, px(i) - meia).toFixed(1) + "' y='" + y0 + "' width='" + (meia * 2).toFixed(1) +
+             "' height='" + (y1 - y0) + "' fill='transparent'><title>" + fmtD(s2.d) + ": " +
+             esc(s2.txt || num(s2.pts)) + "</title></rect>";
+      });
+      // escala no eixo e as datas das pontas
+      s += "<text x='" + (x0 - 5) + "' y='" + (y0 + 4) + "' class='qseixo' text-anchor='end'>" + num(faixa.max) + "</text>" +
+           "<text x='" + (x0 - 5) + "' y='" + (y1 + 3) + "' class='qseixo' text-anchor='end'>" + num(faixa.min) + "</text>" +
+           "<text x='" + x0 + "' y='" + (H - 5) + "' class='qseixo'>" + fmtD(serie[0].d) + "</text>" +
+           "<text x='" + x1 + "' y='" + (H - 5) + "' class='qseixo' text-anchor='end'>" + fmtD(serie[serie.length - 1].d) + "</text>";
+      return s + "</svg>";
+    }
     var html = "";
       if (cks.length) {
         var comPts = cks.filter(function (c) { return c.pts != null && isFinite(+c.pts); });
-        var fmtD = function (d) { return d.slice(8, 10) + "/" + d.slice(5, 7); };
         // LIM_CHECKS: a consulta traz no máximo 40 respostas (as mais novas). Com a
         // lista cheia não dá pra dizer "desde sempre" — o aluno pode responder há anos.
         var LIM_CHECKS = 40;
@@ -5096,51 +5161,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           return { min: mn, max: mx, dono: num(mn) + " a " + num(mx) };
         }
 
-        /* O GRÁFICO. Uma série só, então sem legenda — o título do cartão diz
-         * de quem é a linha. Área de tinta embaixo, linha de 2px, um pontinho
-         * por resposta e o de hoje maior com anel da cor do cartão (senão ele
-         * some quando cai em cima do vizinho). A linha tracejada é a média do
-         * mês anterior — é ELA que faz "evoluiu" virar coisa que se enxerga. */
-        function grafico(serie, cor, faixa, refAntes, rotAntes) {
-          var W = 320, H = 104, PL = 30, PR = 10, PT = 12, PB = 20;
-          var x0 = PL, x1 = W - PR, y0 = PT, y1 = H - PB;
-          var fx = (faixa.max - faixa.min) || 1;
-          var px = function (i) { return serie.length === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * i / (serie.length - 1); };
-          var py = function (v) { return y1 - (y1 - y0) * (Math.max(faixa.min, Math.min(faixa.max, v)) - faixa.min) / fx; };
-          var pts = serie.map(function (s, i) { return px(i).toFixed(1) + "," + py(s.pts).toFixed(1); });
-          var s = "<svg viewBox='0 0 " + W + " " + H + "' class='qsgraf' role='img' aria-label='Evolução das respostas'>";
-          // moldura discreta: o chão e o teto da escala
-          s += "<line x1='" + x0 + "' y1='" + y1 + "' x2='" + x1 + "' y2='" + y1 + "' class='qsreg'/>" +
-               "<line x1='" + x0 + "' y1='" + y0 + "' x2='" + x1 + "' y2='" + y0 + "' class='qsreg'/>";
-          // média do mês anterior: a régua contra a qual "melhorou" faz sentido
-          if (refAntes != null) {
-            var yr = py(refAntes);
-            s += "<line x1='" + x0 + "' y1='" + yr.toFixed(1) + "' x2='" + x1 + "' y2='" + yr.toFixed(1) + "' class='qsref'/>" +
-                 "<text x='" + (x0 + 3) + "' y='" + (yr - 3).toFixed(1) + "' class='qsreft'>" + rotAntes + "</text>";
-          }
-          // tinta embaixo da linha
-          if (serie.length > 1) {
-            s += "<path d='M" + pts.join("L") + "L" + px(serie.length - 1).toFixed(1) + "," + y1 + "L" + px(0).toFixed(1) + "," + y1 + "Z' " +
-                 "class='qsarea' style='fill:" + cor + "'/>";
-            s += "<polyline points='" + pts.join(" ") + "' class='qslinha' style='stroke:" + cor + "'/>";
-          }
-          serie.forEach(function (s2, i) {
-            var ult = i === serie.length - 1;
-            s += "<circle cx='" + px(i).toFixed(1) + "' cy='" + py(s2.pts).toFixed(1) + "' r='" + (ult ? 4.6 : 2.4) + "' " +
-                 "class='" + (ult ? "qsdot qsdot-ult" : "qsdot") + "' style='fill:" + cor + "'/>";
-            // alvo de mouse largo: o pontinho de 2,4px é pequeno demais pra acertar
-            var meia = serie.length === 1 ? (x1 - x0) / 2 : (x1 - x0) / (serie.length - 1) / 2;
-            s += "<rect x='" + Math.max(x0, px(i) - meia).toFixed(1) + "' y='" + y0 + "' width='" + (meia * 2).toFixed(1) +
-                 "' height='" + (y1 - y0) + "' fill='transparent'><title>" + fmtD(s2.d) + ": " +
-                 esc(s2.txt || num(s2.pts)) + "</title></rect>";
-          });
-          // escala no eixo e as datas das pontas
-          s += "<text x='" + (x0 - 5) + "' y='" + (y0 + 4) + "' class='qseixo' text-anchor='end'>" + num(faixa.max) + "</text>" +
-               "<text x='" + (x0 - 5) + "' y='" + (y1 + 3) + "' class='qseixo' text-anchor='end'>" + num(faixa.min) + "</text>" +
-               "<text x='" + x0 + "' y='" + (H - 5) + "' class='qseixo'>" + fmtD(serie[0].d) + "</text>" +
-               "<text x='" + x1 + "' y='" + (H - 5) + "' class='qseixo' text-anchor='end'>" + fmtD(serie[serie.length - 1].d) + "</text>";
-          return s + "</svg>";
-        }
 
         if (metricas.length) {
           html += titulo("Pergunta por pergunta") +
@@ -5265,6 +5285,77 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             }).filter(Boolean).join(" · ") + "</div></div>";
         }).join("") + "</details>";
       }
+
+      /* ============================================================
+       * OS HABITOS DO DIA A DIA (pedido do Raphael: "a media de cada icone
+       * que ele clica — dieta, sono, cardio e etc").
+       *
+       * No app sao QUATRO botoes que o aluno toca: Agua, Comida, Sono e
+       * Cardio. Cada toque grava `pthab[dia][i] = true`, e o retorno traz o
+       * mapa inteiro. Aqui isso vira a MEDIA que interessa ao professor:
+       * quantos dias por semana ele marca cada um — nao "12 vezes", que sem
+       * o periodo do lado nao quer dizer nada.
+       *
+       * A semana comeca na SEGUNDA (mesma regra dos chips do Inicio e do mapa
+       * de calor); a semana corrente fica de FORA da conta, porque comparar
+       * uma semana pela metade com semanas cheias faria todo aluno parecer
+       * estar piorando na quarta-feira.
+       * ============================================================ */
+      var hab = (ret && ret.habitos && typeof ret.habitos === "object") ? ret.habitos : null;
+      if (hab) {
+        var HAB_NOMES = ["Água", "Comida", "Sono", "Cardio"];
+        var HAB_SUB = ["copos de água em dia", "alimentação no plano", "dormiu 7h+", "cardio ou passos"];
+        var diasHab = Object.keys(hab).filter(dataRe).sort();
+        if (diasHab.length) {
+          // segunda-feira da semana de uma data (a semana do app começa na segunda)
+          var segDe = function (iso) {
+            var d = new Date(iso + "T12:00:00");
+            d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+            return d.toISOString().slice(0, 10);
+          };
+          var semAgora = segDe(S.todayISO());
+          var porSem = {};           // segunda → [0,0,0,0] marcações de cada hábito
+          diasHab.forEach(function (dia) {
+            var sg = segDe(dia);
+            if (sg >= semAgora) return;          // a semana em curso ainda não fechou
+            var v = porSem[sg] || (porSem[sg] = [0, 0, 0, 0]);
+            var m = hab[dia] || {};
+            for (var i = 0; i < 4; i++) if (m[i]) v[i]++;
+          });
+          var semanas = Object.keys(porSem).sort().slice(-12);
+          if (semanas.length) {
+            html += titulo("Hábitos do dia a dia") +
+              "<div class='qssub'>Quantos dias por semana ele marca cada botão do app. A semana em curso fica " +
+              "de fora da conta — meia semana contra semanas cheias faria todo aluno parecer que piorou.</div>" +
+              "<div class='qsgrid'>" +
+              HAB_NOMES.map(function (nome, i) {
+                var serie = semanas.map(function (sg) { return { d: sg, pts: porSem[sg][i] }; });
+                var vals = serie.map(function (x) { return x.pts; });
+                var med = function (a) { var t = 0; a.forEach(function (v) { t += v; }); return a.length ? t / a.length : 0; };
+                var mRec = med(vals.slice(-4));
+                var vAnt = vals.slice(-8, -4);
+                var mAnt = vAnt.length ? med(vAnt) : null;
+                var dif = mAnt == null ? null : mRec - mAnt;
+                var est = dif == null ? "acompanhando" : dif > 0.3 ? "melhorando" : dif < -0.3 ? "piorando" : "estável";
+                var cor = est === "melhorando" ? "var(--pt-ok)" : est === "piorando" ? "var(--pt-erro)" : "var(--pt-roxo-claro)";
+                var seta = est === "melhorando" ? "↑" : est === "piorando" ? "↓" : est === "estável" ? "→" : "•";
+                var chip = "<span class='qschip' style='color:" + cor + ";'>" + seta + " " + est +
+                  (dif != null && Math.abs(dif) >= 0.05 ? " " + num(Math.abs(dif)) : "") + "</span>";
+                var melhor = Math.max.apply(null, vals);
+                return "<div class='qscard'>" +
+                  "<div class='qstop'><span class='qsrot'>" + esc(nome) + "</span>" + chip + "</div>" +
+                  "<div class='qsval'>" + num(mRec) + "</div>" +
+                  "<div class='qsvsub'>dias por semana · " + esc(HAB_SUB[i]) + "</div>" +
+                  (serie.length > 1 ? grafico(serie, cor, { min: 0, max: 7, dono: "0 a 7" }, mAnt,
+                    mAnt == null ? "" : "antes " + num(mAnt)) : "") +
+                  "<div class='qspe'>" +
+                  (mAnt != null ? "no mês anterior: <b>" + num(mAnt) + "</b> · " : "") +
+                  "melhor semana: <b>" + melhor + " de 7</b> · " +
+                  S.plural(semanas.length, "semana cheia", "semanas cheias") + " de histórico</div></div>";
+              }).join("") + "</div>";
+          }
+        }
+      }
     return html;
   }
   window.__checkinsPT = htmlCheckinsApp; // testes
@@ -5274,7 +5365,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!cx) return;
     var html = "";
     try { html = htmlCheckinsApp(ret); } catch (e) { html = ""; }
-    cx.innerHTML = html || (aviso || "Este aluno ainda não respondeu nenhum questionário. Mande um pela aba Questionários (menu ☰) — as respostas caem aqui viradas em métricas.");
+    cx.innerHTML = html || (aviso || "Este aluno ainda não respondeu nenhum questionário nem marcou hábito no app. Mande um questionário pela aba Questionários (menu ☰) — as respostas caem aqui viradas em métricas.");
   }
   function pintaAppDados(a) {
     var box = $("pfAppDados");
