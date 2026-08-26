@@ -2420,12 +2420,12 @@ async function abaPt(p, a) {
       const out = {};
       // todas as semanas com a nota máxima: barras altas e verdes (escala ancorada no zero)
       const iguais = window.__checkinsPT({ checks: [1,2,3,4,5,6].map((i) => semana(i, 5)) });
-      out.empateVerde = (iguais.match(/fill='#4ade80'/g) || []).length === 6 && !/fill='#f87171'/.test(iguais);
+      out.empateVerde = (iguais.match(/data-cor='ok'/g) || []).length === 6 && !/data-cor='ruim'/.test(iguais);
       // dois formulários: o gráfico é de um só e avisa
       const mistos = [1,2,3,4].map((i) => semana(i, 8)).concat([{ d: "2026-05-06", nome: "Como foi o treino?", pts: 2,
         respostas: [{ sigla: "B", pergunta: "E aí?", resposta: "r", pontos: 2 }] }]);
       const hm = window.__checkinsPT({ checks: mistos });
-      out.umFormulario = /Como foram as semanas de <b>Check-in semanal<\/b>/.test(hm) && /outros formulários/.test(hm);
+      out.umFormulario = /Soma dos pontos de <b>Check-in semanal<\/b>/.test(hm) && /outros formulários/.test(hm);
       // cabeçalho: singular certo; lista cheia não promete "desde sempre"
       out.singular = /1 check-in respondido/.test(window.__checkinsPT({ checks: [semana(1, 3)] }));
       const cheio = Array.from({ length: 40 }, (_, i) => semana((i % 8) + 1, 3));
@@ -2442,7 +2442,7 @@ async function abaPt(p, a) {
       // pontuação toda NEGATIVA (a escala de carinhas que vem pronta tem -1 e -2):
       // a melhor semana de quem só vai mal não pode aparecer alta e verde
       const negs = window.__checkinsPT({ checks: [[1,-2],[2,-4],[3,-6],[4,-3]].map((par) => semana(par[0], par[1])) });
-      out.negativoSemVerde = !/fill='#4ade80'/.test(negs) && /fill='#f87171'/.test(negs);
+      out.negativoSemVerde = !/data-cor='ok'/.test(negs) && /data-cor='ruim'/.test(negs);
       S.write("ptStudio", JSON.parse(snap));
       return out;
     });
@@ -3573,7 +3573,7 @@ async function abaPt(p, a) {
     ok(!fotoAl.doPersonal, "ela fica num campo só dela — a foto que o personal põe pela ficha não é sobrescrita");
     const questBox = await p.evaluate(() => document.getElementById("pfQuestBox").innerHTML);
     ok(/3 check-ins respondidos/.test(questBox) && /— de \d\d\/\d\d até \d\d\/\d\d/.test(questBox), "respostas de questionário (app_quest) viram a aba de check-ins");
-    ok(/Como foram as semanas/.test(questBox) && /fill=['"]#4ade80['"]/.test(questBox) && /fill=['"]#f87171['"]/.test(questBox) && /9 ponto/.test(questBox),
+    ok(/Placar de cada semana/.test(questBox) && /data-cor=['"]ok['"]/.test(questBox) && /data-cor=['"]ruim['"]/.test(questBox) && /9 ponto/.test(questBox),
       "pontuação vira barras coloridas por semana (verde = boa, vermelha = fraca), com o valor no toque");
     ok(/\+9 pts/.test(questBox) && /MOTEX/.test(questBox), "última resposta listada com pontuação (sigla vale de reserva quando não veio a pergunta)");
     ok(/Check-ins/.test(appDados) && /último em 03\/08/.test(appDados), "KPI de check-ins com a data do último");
@@ -8464,8 +8464,10 @@ async function abaPt(p, a) {
     ok(/Batimento médio/.test(demo.app) && /Batimentos — esforço nos treinos/.test(demo.app) && /máxima estimada/.test(demo.app),
       "demo do studio já vem com os batimentos da cinta no perfil (é o que o Raphael manda pro cliente ver)");
     ok(/check-ins? respondidos?/.test(demo.quest) && /(melhorando|estável|piorando)/.test(demo.quest) &&
-      /resposta mais comum/.test(demo.quest) && /Como foram os treinos da semana\?/.test(demo.quest),
+      /resposta mais comum/.test(demo.quest) && /De 0 a 10, qual foi sua disposição\?/.test(demo.quest),
       "demo mostra os check-ins em linguagem clara: pergunta por extenso, tendência e resposta mais comum");
+    ok(/class=['"]qsgraf['"]/.test(demo.quest) && /média do último mês/.test(demo.quest) && /antes /.test(demo.quest),
+      "cada pergunta com nota vira gráfico de evolução com a média do mês anterior como régua");
     ok(demo.scanOn && demo.scanCard, "no demo as Medidas pela câmera já vêm ligadas (quem testa acha o recurso sozinho)");
     // com dados existentes o demo NÃO sobrescreve
     const pD2 = await ctxD.newPage();

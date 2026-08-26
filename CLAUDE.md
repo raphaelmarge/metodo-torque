@@ -251,6 +251,35 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Questionário respondido vira métrica do aluno** (v630): a aba **Check-ins**
+da ficha (`data-pfa="quest"`, que já existia — o Raphael pediu explicitamente
+pra NÃO nascer aba nova) mostrava número solto: um rabisco laranja sem eixo e
+um "média 3,5 · 3,5" em letra miúda. Agora cada pergunta **com nota** vira um
+cartão (`.qscard`) com o valor de hoje em número grande, o selo do estado
+(↑ melhorando / → estável / ↓ piorando — sempre com a PALAVRA junto, cor
+sozinha não conta história) e um **gráfico de linha** com eixo, escala, a média
+do mês anterior tracejada como régua e a data das duas pontas. Regras do
+gráfico: uma série por gráfico, então **sem legenda** (o título do cartão diz de
+quem é a linha); a escala Y sai da **pergunta** (`escalaDe` lê `questPerguntas`:
+0 a 10 do `linear`, os pontos das carinhas do `emoji`), nunca do mínimo/máximo
+do aluno — senão uma variação de 0,2 vira montanha; rótulo direto só onde vale
+(o número grande e a régua "antes 7,5"), porque número em todo ponto é ruído;
+alvo de mouse largo (`<rect>` transparente com `<title>`) porque o pontinho de
+2,4 px é pequeno demais. Pergunta de **texto** não vira gráfico: mostra a última
+resposta, as três anteriores com data e a resposta mais comum. A lista crua foi
+pra dentro de um `<details>` — ela é a prova, não o resumo. **"Estável" é ROXO,
+não laranja**: laranja é o token de atenção e aluno constante não é problema.
+⚠️ a cor entra por `style='stroke:var(--pt-ok)'` (propriedade CSS) e nunca por
+`fill='#...'` — atributo de SVG não entende `var()` e sem isso o gráfico não
+acompanha o modo claro; os testes que liam `fill='#4ade80'` passaram a ler
+`data-cor='ok'` (e com `['"]`, porque `innerHTML` devolve aspas duplas).
+⚠️ `var esc = escalaDe(...)` **sombreava a função `esc()` do painel inteiro**
+(`var` sobe pro topo do escopo) e derrubava a aba com "esc is not a function" —
+virou `escP`. O demo passou a mandar cinco perguntas com história (disposição
+subindo, dor caindo, sono balançando, motivação em carinhas e um recado
+escrito) e as perguntas do cadastro batem com as respostas, senão a escala do
+gráfico cai no plano B.
+
 **A camada de baixo do painel** (v629): o Raphael olhou o redesenho pronto e
 disse "tem muita coisa que está diferente". Estava — e não era tela nenhuma: era
 o `apps/apps.css`, a folha COMPARTILHADA (portal, Nutri, Personal). Ela dava ao

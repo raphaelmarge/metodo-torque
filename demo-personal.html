@@ -88,14 +88,38 @@
     return m;
   }
   // check-ins semanais de questionário (pontuação com ruído determinístico)
+  /* As respostas do questionário viram MÉTRICA no perfil do aluno, então a
+   * demo precisa de história pra contar: disposição subindo, dor caindo (é a
+   * pergunta em que nota MENOR é melhor), sono balançando e um recado escrito.
+   * Antes era um seno puro — bonito de longe e sem nada pra ler. */
   function serieChecks(semanas, capricho) {
     var out = [];
-    for (var i = semanas - 1; i >= 0; i--) {
-      var pts = Math.round(Math.sin(i * 2.3) * 2 + capricho * 3);
-      out.push({ d: iso(i * 7 + 1), nome: "Check-in semanal", pts: pts, respostas: [
-        { sigla: "TRE", pergunta: "Como foram os treinos da semana?", resposta: pts >= 3 ? "Treinei tudo 🤩" : pts >= 1 ? "Quase tudo 🙂" : "Semana corrida 😕", pontos: pts },
-        { sigla: "SONO", pergunta: "Dormiu bem essa semana?", resposta: i % 2 ? "Dormi 7h+" : "Menos de 7h", pontos: null },
-      ] });
+    var n = Math.max(1, semanas);
+    var FALAS = [
+      "Semana boa, tô gostando do A2 de esteira.",
+      "O ombro incomodou no fim das séries, mas passou.",
+      "Semana corrida no trabalho, treinei menos do que eu queria.",
+      "Dormi melhor essa semana e senti diferença no treino.",
+      "Bati recorde no leg press 💪",
+    ];
+    for (var i = n - 1; i >= 0; i--) {
+      var prog = n === 1 ? 1 : (n - 1 - i) / (n - 1);   // 0 = o mais antigo, 1 = agora
+      var onda = Math.sin(i * 1.7);                     // o balanço de toda semana
+      var lim = function (v) { return Math.round(Math.min(10, Math.max(0, v))); };
+      var disp = lim(4 + 4 * prog * capricho + onda);
+      var dor = lim(7 - 4.5 * prog + onda * 0.8);
+      var sono = lim(6 + 1.5 * prog + onda * 1.4);
+      var mot = disp >= 8 ? 2 : disp >= 6 ? 1 : disp >= 4 ? 0 : -1;
+      var motR = mot === 2 ? "Altíssima 🤩" : mot === 1 ? "Alta 🙂" : mot === 0 ? "Média 😐" : "Baixa 😕";
+      out.push({ d: iso(i * 7 + 1), nome: "Check-in semanal",
+        pts: mot + (disp >= 7 ? 2 : disp >= 5 ? 1 : 0) + (dor <= 3 ? 2 : dor <= 5 ? 1 : 0) + (sono >= 7 ? 1 : 0),
+        respostas: [
+          { sigla: "MOTEX", pergunta: "Qual foi sua motivação pra treinar nos últimos 7 dias?", resposta: motR, pontos: mot },
+          { sigla: "DISP", pergunta: "De 0 a 10, qual foi sua disposição?", resposta: String(disp), pontos: disp },
+          { sigla: "SONO", pergunta: "De 0 a 10, como foi seu sono?", resposta: String(sono), pontos: sono },
+          { sigla: "DOR", pergunta: "De 0 a 10, quanta dor você sentiu?", resposta: String(dor), pontos: dor, menos: true },
+          { sigla: "OBS", pergunta: "Algum recado ou dor pra me contar?", resposta: FALAS[i % FALAS.length], pontos: null },
+        ] });
     }
     return out;
   }
@@ -381,10 +405,14 @@
     questPerguntas: [
       { id: "qp1", sigla: "MOTEX", titulo: "Motivação", texto: "Qual foi sua motivação pra treinar nos últimos 7 dias?", tipo: "emoji",
         ops: [{ e: "🤩", r: "Altíssima", p: 2 }, { e: "🙂", r: "Alta", p: 1 }, { e: "😐", r: "Média", p: 0 }, { e: "😕", r: "Baixa", p: -1 }, { e: "😫", r: "Nenhuma", p: -2 }] },
-      { id: "qp2", sigla: "CARDIO", titulo: "Cardio", texto: "De 0 a 10, quanto cardio você fez essa semana?", tipo: "linear", ops: [] },
+      { id: "qp2", sigla: "DISP", titulo: "Disposição", texto: "De 0 a 10, qual foi sua disposição?", tipo: "linear", ops: [] },
+      { id: "qp4", sigla: "SONO", titulo: "Sono", texto: "De 0 a 10, como foi seu sono?", tipo: "linear", ops: [] },
+      // a única em que nota MENOR é melhor: é ela que mostra o painel lendo
+      // "melhorando" quando a nota CAI
+      { id: "qp5", sigla: "DOR", titulo: "Dor", texto: "De 0 a 10, quanta dor você sentiu?", tipo: "linear", ops: [], menosMelhor: true },
       { id: "qp3", sigla: "OBS", titulo: "Recado", texto: "Algum recado ou dor pra me contar?", tipo: "texto", ops: [] },
     ],
-    questionarios: [{ id: "qq1", nome: "Check-in semanal", perguntas: ["qp1", "qp2", "qp3"] }],
+    questionarios: [{ id: "qq1", nome: "Check-in semanal", perguntas: ["qp1", "qp2", "qp4", "qp5", "qp3"] }],
     desafio: { nome: "30 dias TORQUE", ini: iso(20), fim: iso(-10), premio: "1 mês de assessoria grátis", ativo: true },
   };
 

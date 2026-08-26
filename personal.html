@@ -1541,6 +1541,59 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dplacar { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; margin-bottom: 16px; }
   .dplacar .dbox { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: center; }
   .dplacar .dcol { display: grid; gap: 12px; }
+  /* ============================================================
+   * RESPOSTAS DO QUESTIONARIO VIRANDO METRICA (aba Check-ins do perfil)
+   * Um cartao por pergunta: valor de hoje em numero grande, selo do estado
+   * COM a palavra (cor sozinha nao conta historia) e o grafico de evolucao.
+   * Tudo em token: o grafico acompanha o modo claro porque a cor entra pela
+   * propriedade CSS, nunca pelo atributo fill= (atributo nao le var()).
+   * ============================================================ */
+  .qsh { margin: 16px 0 4px; font-size: 13px; font-weight: 800; color: var(--pt-txt); }
+  .qsh:first-child { margin-top: 0; }
+  .qssub { font-size: 12px; font-weight: 600; color: var(--pt-txt-4); line-height: 1.55; margin-bottom: 8px; }
+  .qsgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 8px;
+            align-items: start; }   /* cada cartao com a propria altura, sem esticar pelo vizinho */
+  .qscard { background: var(--pt-caixa); border: 1px solid var(--pt-borda); border-radius: var(--pt-r-caixa); padding: 13px 15px 12px; }
+  .qstop { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .qsrot { font-size: 10.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--pt-txt-4); min-width: 0; }
+  /* selo de estado: tinta transparente + texto na cor cheia (regra 2 do handoff).
+   * currentColor no fundo deixa a cor vir do style= da cor do estado. */
+  .qschip { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px;
+            border-radius: 6px; font-size: 10.5px; font-weight: 900; letter-spacing: .04em;
+            background: var(--pt-elev);   /* reserva: navegador sem color-mix ainda le o selo */
+            background: color-mix(in srgb, currentColor 16%, transparent); }
+  .qsval { font-size: 26px; font-weight: 900; letter-spacing: -.03em; color: var(--pt-txt);
+           font-variant-numeric: tabular-nums; margin-top: 9px; line-height: 1.15; word-break: break-word; }
+  .qsvsub { font-size: 11.5px; font-weight: 600; color: var(--pt-txt-4); margin-top: 2px; }
+  /* recado escrito nao e numero: cabe em 15px, senao uma frase vira tres linhas de 26px */
+  .qsval .qstxt { display: block; font-size: 15px; font-weight: 800; letter-spacing: 0; line-height: 1.4; }
+  .qsgraf { width: 100%; height: auto; display: block; margin: 9px 0 2px; overflow: visible; }
+  .qsgraf .qsreg { stroke: var(--pt-borda); stroke-width: 1; }
+  .qsgraf .qsref { stroke: var(--pt-txt-5); stroke-width: 1; stroke-dasharray: 3 3; }
+  /* o rotulo da regua cai em cima da linha em serie apertada: o contorno na cor
+   * do cartao (paint-order) faz ele continuar legivel sem precisar de caixa */
+  .qsgraf .qsreft { font-size: 9px; font-weight: 700; fill: var(--pt-txt-4);
+                    paint-order: stroke; stroke: var(--pt-caixa); stroke-width: 3px; stroke-linejoin: round; }
+  .qsgraf .qseixo { font-size: 9px; font-weight: 700; fill: var(--pt-txt-5); }
+  .qsgraf .qsarea { fill-opacity: .10; }
+  .qsgraf .qslinha { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .qsgraf .qsdot { fill-opacity: .85; }
+  /* o ponto de hoje ganha anel da cor do cartao pra nao sumir em cima do vizinho */
+  .qsgraf .qsdot-ult { fill-opacity: 1; stroke: var(--pt-caixa); stroke-width: 2; }
+  .qsbarras { width: 100%; max-width: 440px; display: block; margin: 2px 0 4px; }
+  .qsbarras .qseixo { font-size: 10px; font-weight: 700; fill: var(--pt-txt-4); }
+  .qspe { font-size: 11.5px; font-weight: 600; color: var(--pt-txt-4); margin-top: 6px; line-height: 1.55; }
+  .qspe b { color: var(--pt-txt-2); }
+  /* pergunta de texto: nao vira grafico. Vale o que ele escreveu das ultimas vezes. */
+  .qsfala { margin-top: 9px; display: grid; gap: 5px; font-size: 12px; font-weight: 600;
+            color: var(--pt-txt-3); line-height: 1.5; }
+  .qsfala b { color: var(--pt-txt-5); font-weight: 800; margin-right: 4px; }
+  .qsdet { margin-top: 16px; border: 1px dashed var(--pt-borda-forte); border-radius: var(--pt-r-caixa); padding: 10px 14px; }
+  .qsdet > summary { cursor: pointer; font-size: 12.5px; font-weight: 800; color: var(--pt-txt-3); }
+  .qsdet[open] > summary { margin-bottom: 8px; }
+  .qslin { padding: 7px 0; border-bottom: 1px dashed var(--pt-hairline); font-size: 12.5px; }
+  .qslin:last-child { border-bottom: 0; }
+  .qslin .muted { font-size: 12px; margin-top: 2px; }
   .dfat { font-size: 34px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
   .dbarra { height: 10px; border-radius: 99px; background: var(--tk-bd); overflow: hidden; margin: 12px 0 10px; }
   .dbarra i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #a78bfa, #7c3aed); }
@@ -4940,10 +4993,37 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         return html;
   }
   // ---------- aba Check-ins do perfil: cada pergunta respondida vira uma métrica ----------
+  /* ============================================================
+   * AS RESPOSTAS DO QUESTIONARIO VIRAM METRICA DO ALUNO (v630)
+   *
+   * Antes daqui saiam numeros soltos: um rabisco laranja sem eixo e um
+   * "media 3,5 · 3,5" em letra miuda. O professor nao conseguia ver se o
+   * aluno estava melhorando. Agora cada pergunta COM NOTA vira um cartao
+   * com: o valor de hoje em numero grande, o selo do estado (melhorando /
+   * estavel / piorando, sempre com a PALAVRA junto — cor sozinha nao conta
+   * historia), e um grafico de LINHA com eixo, escala, a media do mes
+   * anterior tracejada e a data das duas pontas.
+   *
+   * Regras que valem pro grafico:
+   *  - uma serie por grafico, entao nao existe legenda: o titulo do cartao
+   *    ja diz de quem e a linha.
+   *  - a escala Y sai da PERGUNTA (0 a 10 do linear, os pontos das carinhas),
+   *    nao do minimo e maximo do aluno: senao uma variacao de 0,2 vira uma
+   *    montanha e o professor le exagero.
+   *  - rotulo direto so onde vale: no valor de hoje (que ja e o numero
+   *    grande) e na linha tracejada da media anterior. Numero em todo ponto
+   *    e ruido.
+   *  - "nota menor e melhor" (dor, estresse) inverte o sentido de melhorar,
+   *    e a marcacao vem gravada NA RESPOSTA — apagar a pergunta do cadastro
+   *    nao pode virar o sentido do historico inteiro.
+   *  - cor entra pela propriedade CSS (style='stroke:var(--pt-ok)') e nao
+   *    pelo atributo fill='#...': atributo de SVG nao entende var(), e sem
+   *    isso o grafico nao acompanha o modo claro.
+   * ============================================================ */
   function htmlCheckinsApp(ret) {
     var num = function (v) { return String(Math.round(v * 10) / 10).replace(".", ","); };
     var dataRe = function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); };
-    var titulo = function (t) { return "<div style='margin:14px 0 6px;font-size:12.5px;color:var(--tk-tx2);'><b>" + t + "</b></div>"; };
+    var titulo = function (t) { return "<div class='qsh'>" + t + "</div>"; };
     var cks = (ret && Array.isArray(ret.checks) ? ret.checks : []).filter(function (c) {
       return c && typeof c === "object" && dataRe(String(c.d || ""));
     }).sort(function (x, y) { return x.d < y.d ? -1 : 1; });
@@ -4955,10 +5035,184 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         // lista cheia não dá pra dizer "desde sempre" — o aluno pode responder há anos.
         var LIM_CHECKS = 40;
         var cortou = cks.length >= LIM_CHECKS;
+        var diasDesde = Math.round((Date.now() - new Date(cks[cks.length - 1].d + "T12:00:00").getTime()) / 86400000);
         html += titulo(cks.length === 1
           ? "1 check-in respondido — em " + fmtD(cks[0].d)
           : (cortou ? "Últimos " + cks.length + " check-ins" : cks.length + " check-ins respondidos") +
-            " — de " + fmtD(cks[0].d) + " até " + fmtD(cks[cks.length - 1].d));
+            " — de " + fmtD(cks[0].d) + " até " + fmtD(cks[cks.length - 1].d)) +
+          "<div class='qssub'>" + (
+            diasDesde <= 0 ? "A última chegou hoje."
+            : diasDesde === 1 ? "A última chegou ontem."
+            : diasDesde <= 60 ? "A última chegou há " + diasDesde + " dias."
+            : "Faz mais de dois meses que não responde.") + "</div>";
+
+        // ---- cada PERGUNTA vira uma métrica acompanhável (valor de hoje, tendência e histórico) ----
+        // configuração das perguntas do professor: dá a ESCALA da pergunta e o
+        // sentido (onde nota menor é melhor). Sem ela o gráfico ainda sai — só
+        // usa a faixa que o aluno já respondeu.
+        var cfgPerg = {};
+        ((load().questPerguntas) || []).forEach(function (q) {
+          if (q && q.sigla) cfgPerg[String(q.sigla).toLowerCase()] = q;
+          if (q && q.texto) cfgPerg[String(q.texto).toLowerCase()] = q;
+        });
+        var porPerg = {};
+        cks.forEach(function (c) {
+          (Array.isArray(c.respostas) ? c.respostas : []).forEach(function (r) {
+            if (!r || typeof r !== "object") return;
+            var chave = String(r.sigla || r.pergunta || "").slice(0, 40);
+            if (!chave) return;
+            // a marcação vem gravada na própria resposta; o cadastro é só o plano B
+            // (assim apagar a pergunta não vira o sentido de todo o histórico)
+            var qc = cfgPerg[chave.toLowerCase()] || cfgPerg[String(r.pergunta || "").toLowerCase()];
+            var m = porPerg[chave] || (porPerg[chave] = { sigla: chave, pergunta: String(r.pergunta || ""),
+              /* o rotulo do cartao e o NOME CURTO da pergunta ("Disposicao"), nao a
+               * pergunta inteira: cortada em 40 caracteres ela virava
+               * "QUAL FOI SUA MOTIVACAO PRA TREINAR NOS U" */
+              curto: String((qc && qc.titulo) || r.pergunta || chave),
+              menosMelhor: r.menos != null ? !!r.menos : !!(cfgPerg[chave.toLowerCase()] || {}).menosMelhor, serie: [] });
+            if (r.menos != null) m.menosMelhor = !!r.menos;
+            m.serie.push({ d: c.d, txt: String(r.resposta == null ? "" : r.resposta),
+              pts: (r.pontos == null || !isFinite(+r.pontos)) ? null : +r.pontos });
+          });
+        });
+        var metricas = Object.keys(porPerg).map(function (k) { return porPerg[k]; })
+          .filter(function (m) { return m.serie.length; });
+
+        /* A ESCALA da pergunta. Vem do cadastro quando existe (0 a 10 do
+         * "linear", os pontos das carinhas do "emoji") — assim duas semanas
+         * de 7 e 8 sobem um degrau de 10, e não a tela inteira. Sem cadastro,
+         * usa a faixa que o aluno já respondeu, com uma folga de 1. */
+        function escalaDe(m, vals) {
+          var q = cfgPerg[String(m.sigla).toLowerCase()] || cfgPerg[String(m.pergunta).toLowerCase()];
+          if (q && q.tipo === "linear") return { min: 0, max: 10, dono: "0 a 10" };
+          if (q && Array.isArray(q.ops) && q.ops.length) {
+            var ps = q.ops.map(function (o) { return +o.p; }).filter(function (x) { return isFinite(x); });
+            if (ps.length) return { min: Math.min.apply(null, ps), max: Math.max.apply(null, ps),
+              dono: num(Math.min.apply(null, ps)) + " a " + num(Math.max.apply(null, ps)) };
+          }
+          var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+          if (mn === mx) { mn -= 1; mx += 1; }
+          return { min: mn, max: mx, dono: num(mn) + " a " + num(mx) };
+        }
+
+        /* O GRÁFICO. Uma série só, então sem legenda — o título do cartão diz
+         * de quem é a linha. Área de tinta embaixo, linha de 2px, um pontinho
+         * por resposta e o de hoje maior com anel da cor do cartão (senão ele
+         * some quando cai em cima do vizinho). A linha tracejada é a média do
+         * mês anterior — é ELA que faz "evoluiu" virar coisa que se enxerga. */
+        function grafico(serie, cor, faixa, refAntes, rotAntes) {
+          var W = 320, H = 104, PL = 30, PR = 10, PT = 12, PB = 20;
+          var x0 = PL, x1 = W - PR, y0 = PT, y1 = H - PB;
+          var fx = (faixa.max - faixa.min) || 1;
+          var px = function (i) { return serie.length === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * i / (serie.length - 1); };
+          var py = function (v) { return y1 - (y1 - y0) * (Math.max(faixa.min, Math.min(faixa.max, v)) - faixa.min) / fx; };
+          var pts = serie.map(function (s, i) { return px(i).toFixed(1) + "," + py(s.pts).toFixed(1); });
+          var s = "<svg viewBox='0 0 " + W + " " + H + "' class='qsgraf' role='img' aria-label='Evolução das respostas'>";
+          // moldura discreta: o chão e o teto da escala
+          s += "<line x1='" + x0 + "' y1='" + y1 + "' x2='" + x1 + "' y2='" + y1 + "' class='qsreg'/>" +
+               "<line x1='" + x0 + "' y1='" + y0 + "' x2='" + x1 + "' y2='" + y0 + "' class='qsreg'/>";
+          // média do mês anterior: a régua contra a qual "melhorou" faz sentido
+          if (refAntes != null) {
+            var yr = py(refAntes);
+            s += "<line x1='" + x0 + "' y1='" + yr.toFixed(1) + "' x2='" + x1 + "' y2='" + yr.toFixed(1) + "' class='qsref'/>" +
+                 "<text x='" + (x0 + 3) + "' y='" + (yr - 3).toFixed(1) + "' class='qsreft'>" + rotAntes + "</text>";
+          }
+          // tinta embaixo da linha
+          if (serie.length > 1) {
+            s += "<path d='M" + pts.join("L") + "L" + px(serie.length - 1).toFixed(1) + "," + y1 + "L" + px(0).toFixed(1) + "," + y1 + "Z' " +
+                 "class='qsarea' style='fill:" + cor + "'/>";
+            s += "<polyline points='" + pts.join(" ") + "' class='qslinha' style='stroke:" + cor + "'/>";
+          }
+          serie.forEach(function (s2, i) {
+            var ult = i === serie.length - 1;
+            s += "<circle cx='" + px(i).toFixed(1) + "' cy='" + py(s2.pts).toFixed(1) + "' r='" + (ult ? 4.6 : 2.4) + "' " +
+                 "class='" + (ult ? "qsdot qsdot-ult" : "qsdot") + "' style='fill:" + cor + "'/>";
+            // alvo de mouse largo: o pontinho de 2,4px é pequeno demais pra acertar
+            var meia = serie.length === 1 ? (x1 - x0) / 2 : (x1 - x0) / (serie.length - 1) / 2;
+            s += "<rect x='" + Math.max(x0, px(i) - meia).toFixed(1) + "' y='" + y0 + "' width='" + (meia * 2).toFixed(1) +
+                 "' height='" + (y1 - y0) + "' fill='transparent'><title>" + fmtD(s2.d) + ": " +
+                 esc(s2.txt || num(s2.pts)) + "</title></rect>";
+          });
+          // escala no eixo e as datas das pontas
+          s += "<text x='" + (x0 - 5) + "' y='" + (y0 + 4) + "' class='qseixo' text-anchor='end'>" + num(faixa.max) + "</text>" +
+               "<text x='" + (x0 - 5) + "' y='" + (y1 + 3) + "' class='qseixo' text-anchor='end'>" + num(faixa.min) + "</text>" +
+               "<text x='" + x0 + "' y='" + (H - 5) + "' class='qseixo'>" + fmtD(serie[0].d) + "</text>" +
+               "<text x='" + x1 + "' y='" + (H - 5) + "' class='qseixo' text-anchor='end'>" + fmtD(serie[serie.length - 1].d) + "</text>";
+          return s + "</svg>";
+        }
+
+        if (metricas.length) {
+          html += titulo("Pergunta por pergunta") +
+            "<div class='qsgrid'>" +
+            metricas.map(function (m) {
+              var ult = m.serie[m.serie.length - 1];
+              var comPtsM = m.serie.filter(function (s) { return s.pts != null; });
+              var corp = "", rodape = "", chip = "", grande = "", sob = "";
+              if (comPtsM.length >= 2) {
+                // compara o último mês (4 respostas) com o mês anterior — e fala claro
+                var vals = comPtsM.map(function (s) { return s.pts; });
+                var med = function (a) { var s2 = 0; a.forEach(function (v) { s2 += v; }); return s2 / a.length; };
+                var mRec = med(vals.slice(-4));
+                var vAntes = vals.slice(-8, -4);
+                var mAnt = vAntes.length ? med(vAntes) : null;
+                // pergunta marcada como "nota menor é melhor" (dor, cansaço, fome):
+                // subir a nota é PIORAR — sem isso o painel elogiava aluno com mais dor
+                var dif = mAnt == null ? null : (mRec - mAnt) * (m.menosMelhor ? -1 : 1);
+                var est = dif == null ? "acompanhando" : dif > 0.3 ? "melhorando" : dif < -0.3 ? "piorando" : "estável";
+                /* estavel NAO e laranja: laranja e o token de ATENCAO, e aluno
+                 * constante nao e problema. Fica o roxo da marca — o que separa
+                 * "estavel" de "acompanhando" e a seta e a palavra, nao a cor. */
+                var cor = est === "melhorando" ? "var(--pt-ok)" : est === "piorando" ? "var(--pt-erro)"
+                        : "var(--pt-roxo-claro)";
+                var seta = est === "melhorando" ? "↑" : est === "piorando" ? "↓" : est === "estável" ? "→" : "•";
+                chip = "<span class='qschip' style='color:" + cor + ";'>" + seta + " " + est +
+                  (dif != null && Math.abs(dif) >= 0.05 ? " " + num(Math.abs(dif)) : "") + "</span>";
+                var serieG = comPtsM.slice(-14);
+                var escP = escalaDe(m, vals);
+                corp = grafico(serieG, cor, escP, mAnt, mAnt == null ? "" : "antes " + num(mAnt));
+                // NÚMERO GRANDE: o valor de hoje. Se a resposta é uma palavra
+                // (carinha, "Dormi 7h+"), a palavra manda e a nota vira o apoio.
+                var soNum = /^-?\d+([.,]\d+)?$/.test(String(ult.txt).trim());
+                grande = soNum || !ult.txt ? num(ult.pts == null ? 0 : ult.pts) : esc(ult.txt.slice(0, 22));
+                var nUlt = ult.pts == null ? 0 : ult.pts;
+                sob = (soNum || !ult.txt ? "de " + escP.dono + " · em " + fmtD(ult.d)
+                       : "em " + fmtD(ult.d) + " · vale " + num(nUlt) + (Math.abs(nUlt) === 1 ? " ponto" : " pontos"));
+                var melhor = m.menosMelhor ? Math.min.apply(null, vals) : Math.max.apply(null, vals);
+                rodape = "média do último mês: <b>" + num(mRec) + "</b>" +
+                  (mAnt != null ? " · do mês anterior: <b>" + num(mAnt) + "</b>" : " (ainda no primeiro mês)") +
+                  " · melhor: <b>" + num(melhor) + "</b> · " + S.plural(comPtsM.length, "resposta", "respostas");
+              } else if (comPtsM.length === 1) {
+                grande = esc(String(comPtsM[0].txt || num(comPtsM[0].pts)).slice(0, 22));
+                sob = "em " + fmtD(comPtsM[0].d);
+                rodape = "primeira resposta com nota — o histórico começa aqui";
+              } else {
+                // pergunta sem pontuação (recado, dor por extenso): número não
+                // existe, então nada de gráfico inventado. O que conta é o
+                // padrão das respostas e o que ele escreveu das últimas vezes.
+                var cont = {};
+                m.serie.forEach(function (s3) { var t3 = s3.txt.slice(0, 60); cont[t3] = (cont[t3] || 0) + 1; });
+                var top = Object.keys(cont).sort(function (a, b2) { return cont[b2] - cont[a]; })[0];
+                grande = "<span class='qstxt'>" + esc(String(ult.txt || "—").slice(0, 90)) + "</span>";
+                sob = "em " + fmtD(ult.d);
+                var antes = m.serie.slice(-4, -1).reverse();
+                if (antes.length) {
+                  corp = "<div class='qsfala'>" + antes.map(function (s4) {
+                    return "<div><b>" + fmtD(s4.d) + "</b> " + esc(s4.txt.slice(0, 70)) + "</div>";
+                  }).join("") + "</div>";
+                }
+                rodape = "resposta mais comum: <b>" + esc(top) + "</b> (" + cont[top] + " de " + m.serie.length + " semana(s))";
+              }
+              return "<div class='qscard'>" +
+                "<div class='qstop'><span class='qsrot' title='" + esc(m.pergunta || m.sigla) + "'>" +
+                  esc(String(m.curto || m.pergunta || m.sigla).slice(0, 34)) + "</span>" + chip + "</div>" +
+                "<div class='qsval'>" + grande + "</div>" +
+                "<div class='qsvsub'>" + sob + "</div>" +
+                corp +
+                "<div class='qspe'>" + rodape + "</div>" +
+                "</div>";
+            }).join("") + "</div>";
+        }
+
         if (comPts.length >= 2) {
           // cada barra é uma semana: alta e verde = semana boa; baixa e vermelha = semana ruim.
           // Questionários diferentes somam faixas de pontos diferentes (um de 5 perguntas
@@ -4979,102 +5233,36 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
           var cbase = Math.min(0, cmin), ctopo = Math.max(0, cmax);
           var cfx = (ctopo - cbase) || 1;
           var CW = 340, CH = 66, CP = 4, BW = Math.max(6, Math.floor((CW - 2 * CP) / cds.length) - 3);
-          html += "<div class='muted' style='font-size:12px;margin:2px 0 4px;'>Como foram as semanas de <b>" + esc(formAlvo) + "</b> — barra alta e verde = semana boa; baixa e vermelha = semana fraca." +
+          html += titulo("Placar de cada semana") +
+            "<div class='qssub'>Soma dos pontos de <b>" + esc(formAlvo) + "</b> — barra alta e verde = semana boa; baixa e vermelha = semana fraca." +
             (varios ? " (os outros formulários ficam na lista aqui embaixo)" : "") + "</div>" +
-            "<svg viewBox='0 0 " + CW + " " + (CH + 18) + "' style='width:100%;max-width:440px;display:block;' role='img' aria-label='Pontuação semana a semana dos check-ins'>" +
+            "<svg viewBox='0 0 " + CW + " " + (CH + 18) + "' class='qsbarras' role='img' aria-label='Pontuação semana a semana dos check-ins'>" +
             cv.map(function (v, i) {
               var frac = (v - cbase) / cfx;
               var h = Math.max(4, Math.round((CH - 8) * frac) + 4);
               var x = CP + Math.round((CW - 2 * CP - BW) * (cds.length === 1 ? 0 : i / (cds.length - 1)));
               var fcor = v < 0 ? -1 : (ctopo > 0 ? v / ctopo : 0.5);
-              var cor = fcor >= 0.66 ? "#4ade80" : fcor >= 0.33 ? "#fbbf24" : "#f87171";
-              return "<rect x='" + x + "' y='" + (CH - h) + "' width='" + BW + "' height='" + h + "' rx='2.5' fill='" + cor + "'><title>" + fmtD(cds[i].d) + ": " + num(v) + " ponto(s)</title></rect>";
+              var qual = fcor >= 0.66 ? "ok" : fcor >= 0.33 ? "media" : "ruim";
+              var cor = qual === "ok" ? "var(--pt-ok)" : qual === "media" ? "var(--tk-aten2)" : "var(--pt-erro)";
+              return "<rect x='" + x + "' y='" + (CH - h) + "' width='" + BW + "' height='" + h + "' rx='2.5' data-cor='" + qual +
+                "' style='fill:" + cor + "'><title>" + fmtD(cds[i].d) + ": " + num(v) + " ponto(s)</title></rect>";
             }).join("") +
-            "<text x='" + CP + "' y='" + (CH + 14) + "' font-size='10' fill='#8a8695'>" + fmtD(cds[0].d) + "</text>" +
-            "<text x='" + (CW - CP) + "' y='" + (CH + 14) + "' font-size='10' fill='#8a8695' text-anchor='end'>" + fmtD(cds[cds.length - 1].d) + "</text></svg>";
+            "<text x='" + CP + "' y='" + (CH + 14) + "' class='qseixo'>" + fmtD(cds[0].d) + "</text>" +
+            "<text x='" + (CW - CP) + "' y='" + (CH + 14) + "' class='qseixo' text-anchor='end'>" + fmtD(cds[cds.length - 1].d) + "</text></svg>";
         }
-        // ---- cada PERGUNTA vira uma métrica acompanhável (valor de hoje, tendência e histórico) ----
-        // configuração das perguntas do professor (pra saber onde nota menor é melhor)
-        var cfgPerg = {};
-        ((load().questPerguntas) || []).forEach(function (q) {
-          if (q && q.sigla) cfgPerg[String(q.sigla).toLowerCase()] = q;
-          if (q && q.texto) cfgPerg[String(q.texto).toLowerCase()] = q;
-        });
-        var porPerg = {};
-        cks.forEach(function (c) {
-          (Array.isArray(c.respostas) ? c.respostas : []).forEach(function (r) {
-            if (!r || typeof r !== "object") return;
-            var chave = String(r.sigla || r.pergunta || "").slice(0, 40);
-            if (!chave) return;
-            // a marcação vem gravada na própria resposta; o cadastro é só o plano B
-            // (assim apagar a pergunta não vira o sentido de todo o histórico)
-            var m = porPerg[chave] || (porPerg[chave] = { sigla: chave, pergunta: String(r.pergunta || ""),
-              menosMelhor: r.menos != null ? !!r.menos : !!(cfgPerg[chave.toLowerCase()] || {}).menosMelhor, serie: [] });
-            if (r.menos != null) m.menosMelhor = !!r.menos;
-            m.serie.push({ d: c.d, txt: String(r.resposta == null ? "" : r.resposta),
-              pts: (r.pontos == null || !isFinite(+r.pontos)) ? null : +r.pontos });
-          });
-        });
-        var metricas = Object.keys(porPerg).map(function (k) { return porPerg[k]; })
-          .filter(function (m) { return m.serie.length; });
-        if (metricas.length) {
-          html += "<div style='margin:14px 0 6px;font-size:12.5px;color:#cfcbdb;'><b>Pergunta por pergunta</b></div>" +
-            "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:4px;'>" +
-            metricas.map(function (m) {
-              var ult = m.serie[m.serie.length - 1];
-              var comPtsM = m.serie.filter(function (s) { return s.pts != null; });
-              var trecho = "", rodape = "", chip = "";
-              if (comPtsM.length >= 2) {
-                // compara o último mês (4 respostas) com o mês anterior — e fala claro
-                var vals = comPtsM.map(function (s) { return s.pts; });
-                var med = function (a) { var s2 = 0; a.forEach(function (v) { s2 += v; }); return s2 / a.length; };
-                var mRec = med(vals.slice(-4));
-                var vAntes = vals.slice(-8, -4);
-                var mAnt = vAntes.length ? med(vAntes) : null;
-                // pergunta marcada como "nota menor é melhor" (dor, cansaço, fome):
-                // subir a nota é PIORAR — sem isso o painel elogiava aluno com mais dor
-                var dif = mAnt == null ? null : (mRec - mAnt) * (m.menosMelhor ? -1 : 1);
-                var cor = dif == null ? "#a78bfa" : dif > 0.3 ? "#4ade80" : dif < -0.3 ? "#f87171" : "#fbbf24";
-                var rot = dif == null ? "acompanhando" : dif > 0.3 ? "melhorando" : dif < -0.3 ? "piorando" : "estável";
-                chip = "<span style='background:" + cor + "22;color:" + cor + ";border-radius:99px;padding:2px 10px;font-size:11px;font-weight:800;'>" + rot + "</span>";
-                var vSpark = vals.slice(-12);
-                var mn = Math.min.apply(null, vSpark), mx = Math.max.apply(null, vSpark), fx = (mx - mn) || 1;
-                var W = 150, H = 26;
-                trecho = "<svg viewBox='0 0 " + W + " " + H + "' style='width:100%;height:26px;display:block;margin:8px 0 2px;' aria-hidden='true'>" +
-                  "<polyline points='" + vSpark.map(function (v, i) {
-                    return (3 + Math.round((W - 6) * i / (vSpark.length - 1))) + "," + (3 + Math.round((H - 6) * (1 - (v - mn) / fx)));
-                  }).join(" ") + "' fill='none' stroke='" + cor + "' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/></svg>";
-                rodape = "média do último mês: <b>" + num(mRec) + "</b>" + (mAnt != null ? " · do mês anterior: " + num(mAnt) : " (ainda no primeiro mês)");
-              } else if (comPtsM.length === 1) {
-                rodape = "primeira resposta com nota — o histórico começa aqui";
-              } else {
-                // pergunta sem pontuação: o que importa é o padrão das respostas
-                var cont = {};
-                m.serie.forEach(function (s3) { var t3 = s3.txt.slice(0, 60); cont[t3] = (cont[t3] || 0) + 1; });
-                var top = Object.keys(cont).sort(function (a, b2) { return cont[b2] - cont[a]; })[0];
-                rodape = "resposta mais comum: <b>" + esc(top) + "</b> (" + cont[top] + " de " + m.serie.length + " semana(s))";
-              }
-              return "<div style='background:#100e15;border:1px solid var(--linha);border-radius:14px;padding:12px 14px;'>" +
-                "<div style='display:flex;justify-content:space-between;gap:8px;align-items:center;'>" +
-                "<span style='font-size:10.5px;font-weight:800;letter-spacing:.1em;color:var(--cinza-2);text-transform:uppercase;'>" + esc(m.pergunta ? m.pergunta.slice(0, 40) : m.sigla) + "</span>" + chip + "</div>" +
-                "<div style='font-size:12px;color:var(--cinza);margin-top:6px;'>Última resposta (" + ult.d.slice(8, 10) + "/" + ult.d.slice(5, 7) + "):</div>" +
-                "<div style='font-size:16px;font-weight:800;margin-top:2px;word-break:break-word;'>" + esc(ult.txt.slice(0, 60)) + "</div>" +
-                trecho +
-                "<div class='muted' style='font-size:11.5px;margin-top:4px;'>" + rodape + "</div>" +
-                "</div>";
-            }).join("") + "</div>";
-        }
-        html += "<div class='muted' style='font-size:12px;margin:10px 0 4px;'>Últimos check-ins</div>";
-        html += cks.slice(-5).reverse().map(function (c) {
+
+        // a lista crua fica atrás de uma porta: ela é a prova, não o resumo
+        html += "<details class='qsdet'><summary>Últimos check-ins, um a um</summary>";
+        html += cks.slice(-8).reverse().map(function (c) {
           var pts = c.pts;
-          var corC = pts == null ? "#a9a4b5" : pts > 0 ? "#4ade80" : pts < 0 ? "#f87171" : "#fbbf24";
-          return "<div style='padding:6px 0;border-bottom:1px dashed var(--linha);font-size:12.5px;'>" +
+          var corC = pts == null ? "var(--pt-txt-3)" : pts > 0 ? "var(--pt-ok)" : pts < 0 ? "var(--pt-erro)" : "var(--tk-aten2)";
+          return "<div class='qslin'>" +
             "<b>" + c.d.slice(8, 10) + "/" + c.d.slice(5, 7) + "</b> · " + esc(String(c.nome || "Check-in")) +
             (pts != null ? " <b style='color:" + corC + ";'>" + (pts > 0 ? "+" : "") + num(pts) + " pts</b>" : "") +
-            "<div class='muted' style='font-size:12px;margin-top:2px;'>" + (Array.isArray(c.respostas) ? c.respostas : []).map(function (x2) {
+            "<div class='muted'>" + (Array.isArray(c.respostas) ? c.respostas : []).map(function (x2) {
               return x2 && typeof x2 === "object" ? esc(String(x2.pergunta || x2.sigla || "")) + ": <b>" + esc(String(x2.resposta == null ? "" : x2.resposta)) + "</b>" : "";
             }).filter(Boolean).join(" · ") + "</div></div>";
-        }).join("");
+        }).join("") + "</details>";
       }
     return html;
   }
