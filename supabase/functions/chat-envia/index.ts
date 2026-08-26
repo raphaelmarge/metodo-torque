@@ -408,8 +408,10 @@ Deno.serve(async (req: Request) => {
         '"mes":[{"n":1,"foco":"foco da semana","ajuste":"o que muda nesta semana"}],"resumo":"2 a 3 frases explicando o mês"} ' +
         'Regras: monte a SEMANA de treinos (1 por dia disponível, máximo 6), variando rodagem leve, intervalado ' +
         '(tiros) e um treino mais longo; mod é "corrida", "caminhada" ou "bike"; tipo é "continuo" (use dist em km ' +
-        'e/ou tempo em minutos; 0 = livre; pace alvo opcional no formato "6:30") ou "intervalado" (use reps = número ' +
-        "de tiros, tiro = segundos forte, desc = segundos leve); iniciante começa com caminhada ou corrida+caminhada " +
+        'e/ou tempo em minutos; 0 = livre; pace alvo opcional no formato "6:30"), "intervalado" (use reps = número ' +
+        'de tiros, tiro = segundos forte, desc = segundos leve) ou "misto" (o MESMO treino tem parte contínua E ' +
+        "tiros: preencha os dois grupos de campos — o aluno faz a parte contínua primeiro e os tiros depois); " +
+        "iniciante começa com caminhada ou corrida+caminhada " +
         "e pace conservador; progressão prudente (nada de saltos de volume); respeite lesões e PAR-Q. Se o PAR-Q " +
         "tiver resposta SIM, seja conservador e avise no resumo que o aluno precisa de liberação médica. " +
         MES_REGRA + " " + BRIEF_REGRA,

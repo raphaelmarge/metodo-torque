@@ -129,6 +129,11 @@ const CAPAS = { treino: capa("capa-treino.jpg"), circuito: capa("capa-circuito.j
         { id: "dmc1", nome: "Rodagem leve", mod: "corrida", tipo: "continuo", dist: 5, tempo: 30, pace: "6:00", capa: CAPAS.corrida },
         { id: "dmc2", nome: "Tiros na praça", mod: "corrida", tipo: "intervalado", reps: 8, tiro: 60, desc: 90 },
         { id: "dmc3", nome: "Pedal regenerativo", mod: "bike", tipo: "continuo", dist: 15, tempo: 40 },
+        // 'misto': a MESMA folha tem parte continua E tiros — o app faz o
+        // continuo primeiro e os tiros depois, guiado por voz
+        { id: "dmc4", nome: "Longão com finalização", mod: "corrida", tipo: "misto",
+          dist: 6, tempo: 35, pace: "6:20", reps: 6, tiro: 45, desc: 75,
+          obs: "Os 6 km no ritmo de conversa. Só depois os tiros — e neles não segura nada." },
       ],
       // o painel casa o dia com o ID do treino (não com a posição): ficha sem id
       // sumia do plano — e a Semana do aluno da demo ficava só com sábado e domingo

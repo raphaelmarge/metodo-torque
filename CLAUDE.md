@@ -251,6 +251,32 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Corrida contínua E intervalada no mesmo treino** (a partir da v631): o
+professor pediu uma folha só com as duas coisas. Entrou o tipo `misto` no
+`#cbTipo` — com ele o formulário mostra os **dois** grupos de campos ao mesmo
+tempo (`cbMostraCfg` deixou de esconder o grupo que não é o tipo escolhido) e o
+resumo sai como "6 km · 35 min · pace 6:20 **+** 6× 45s forte / 75s leve". No
+app, `crMontaBlocos` enfileira **aquecimento → parte contínua → tiros → volta à
+calma**, nessa ordem (é a que o corpo aguenta); sem o player guiado, o
+`pintaCr` roda a parte contínua e só começa os tiros quando passa do **tempo
+alvo** dela — ou da **distância**, quando só há km prescrito — guardando o
+instante em `cr.mistoT0` (zerado junto com o resto do estado, senão o treino
+seguinte já nasceria "nos tiros"). A pausa automática fica **desligada** no
+misto, igual ao intervalado: um treino com tiro não pode pausar sozinho no meio.
+O resumo do cardio virou **um lugar só, dois gêmeos**: `cbResumo` no painel e
+`alvoCardio` no builder leem as chaves longas (`dist/tempo/pace/reps/tiro/desc`)
+e `crAlvoTxt`, dentro do app, lê as curtas (`d/tp/p/r/ti/de`) — mexeu num,
+confira os outros. A `chat-envia` aprendeu o `misto` no prompt de corrida e a
+`peneiraCardiosIA` aceita o valor.
+
+**O quadro do trajeto parecia sumido** (conserto na v631): o "mapa do treino"
+não tinha sumido — a frase **"Ligue o GPS pra desenhar o trajeto"** era
+desenhada com `700 22px` cravado e, num celular de 390 px, saía **cortada nas
+duas pontas** ("gue o GPS pra desenhar o trajet"), o que faz o quadro parecer
+quebrado. Agora ela encolhe até caber (`measureText` num laço, piso de 11px).
+⚠️ é canvas: `var()` não existe lá, e o tamanho tem de ser calculado na largura
+CSS (`W = cv.width / dpr`), não na do backing store.
+
 **Questionário respondido vira métrica do aluno** (v630): a aba **Check-ins**
 da ficha (`data-pfa="quest"`, que já existia — o Raphael pediu explicitamente
 pra NÃO nascer aba nova) mostrava número solto: um rabisco laranja sem eixo e

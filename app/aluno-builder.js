@@ -111,6 +111,18 @@
       });
       return out;
     };
+    /* Resumo do treino de cardio numa linha. O tipo 'misto' e o pedido do
+     * professor: a MESMA folha tem parte CONTINUA e TIROS, e o resumo mostra
+     * os dois na ordem em que o aluno vai fazer. Gemeo do crAlvoTxt() la
+     * dentro do app (que le as chaves curtas) — mexeu num, confira o outro. */
+    var alvoCardio = function (c) {
+      var cont = [(+c.dist ? String(c.dist).replace(".", ",") + " km" : ""),
+        (+c.tempo ? c.tempo + " min" : ""), (c.pace ? "pace " + c.pace : "")].filter(Boolean).join(" · ");
+      var tiros = (c.reps || 8) + "× " + (c.tiro || 60) + "s forte / " + (c.desc || 90) + "s leve";
+      if (c.tipo === "intervalado") return tiros;
+      if (c.tipo === "misto") return (cont || "parte contínua") + " + " + tiros;
+      return cont || "livre";
+    };
     // gaveta igual à da ficha: quadradinho com a letra, nome, resumo e seta
     var gavetaTop = function (letra, nome, sub) {
       return "<summary style='list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 16px;'>" +
@@ -757,9 +769,7 @@
         var crCard = "";
         if (ve("cardio") && cardiosApp.length) {
           var c0 = cardiosApp[0];
-          var alvoCr = c0.tipo === "intervalado"
-            ? (c0.reps || 8) + "× " + (c0.tiro || 60) + "s forte / " + (c0.desc || 90) + "s leve"
-            : [(+c0.dist ? String(c0.dist).replace(".", ",") + " km" : ""), (+c0.tempo ? c0.tempo + " min" : ""), (c0.pace ? "pace " + c0.pace : "")].filter(Boolean).join(" · ") || "treino livre";
+          var alvoCr = alvoCardio(c0) === "livre" ? "treino livre" : alvoCardio(c0);
           var rotCr = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c0.mod] || "CARDIO";
           var btnCr = { corrida: "Começar corrida", caminhada: "Começar caminhada", bike: "Começar pedal" }[c0.mod] || "Começar";
           var capaC = capaTipo(c0);
@@ -1108,9 +1118,7 @@
       (ve("cardio") ? "<div class='cardx' id='cardCardio'><h2>Corrida e bike</h2>" +
       (cardiosApp.length ? cardiosApp.map(function (c, ci) {
         var rotMod = { corrida: "CORRIDA", caminhada: "CAMINHADA", bike: "BIKE" }[c.mod] || "CARDIO";
-        var alvo = c.tipo === "intervalado"
-          ? (c.reps || 8) + "× " + (c.tiro || 60) + "s forte / " + (c.desc || 90) + "s leve"
-          : [(+c.dist ? String(c.dist).replace(".", ",") + " km" : ""), (+c.tempo ? c.tempo + " min" : ""), (c.pace ? "pace " + c.pace : "")].filter(Boolean).join(" · ") || "livre";
+        var alvo = alvoCardio(c);
         return "<details class='fichabox' data-cri='" + ci + "'" + (ci === 0 ? " open" : "") + " style='margin:12px 0 0;background:var(--bg1);border-radius:22px;overflow:hidden;'>" +
           gavetaTop(String.fromCharCode(65 + ci), c.nome, rotMod.charAt(0) + rotMod.slice(1).toLowerCase() + " · " + alvo + diaDoPlano("cardio", ci)) +
           "<div style='padding:0 18px 18px;'>" +
@@ -2646,6 +2654,14 @@
       // ---- corrida e bike: cronômetro com pace — só roda se o card existe (Configurações) ----
       "if(document.getElementById('cardCardio')){" +
       "var CARDIOS=" + jsonApp(cardiosApp.map(function (c) { return { id: c.id, n: c.nome, m: c.mod, t: c.tipo, d: +c.dist || 0, tp: +c.tempo || 0, p: c.pace || "", r: +c.reps || 8, ti: +c.tiro || 60, de: +c.desc || 90, cp: capaRef(c) }; })) + ";" +
+      /* O resumo do treino de cardio numa linha. 'misto' e o pedido do
+       * professor: a MESMA folha tem parte continua E tiros, entao o resumo
+       * mostra os dois na ordem em que o aluno vai fazer. Gemeo do
+       * alvoCardio() aqui de cima — mexeu num, confira o outro. */
+      "function crAlvoTxt(c){if(!c)return 'livre';" +
+      "var ct=[(c.d?String(c.d).replace('.',',')+' km':''),(c.tp?c.tp+' min':''),(c.p?'pace '+c.p:'')].filter(Boolean).join(' \\u00b7 ');" +
+      "var ti=(c.r||8)+'\\u00d7 '+(c.ti||60)+'s forte / '+(c.de||90)+'s leve';" +
+      "if(c.t==='intervalado')return ti;if(c.t==='misto')return (ct||'parte cont\\u00ednua')+' + '+ti;return ct||'livre';}" +
       "var CRMODS={corrida:'Corrida',caminhada:'Caminhada',bike:'Bike'};" +
       "var CRICOS={mapa:\"" + CRICO_MAPA + "\",painel:\"" + CRICO_PAINEL + "\"};" +
       "var cr={resumo:false,blocos:null,bi:0,bt0:0,bkm0:0,run:false,iv:null,t0:0,acum:0,km:0,gpsOn:false,watch:null,lastPos:null,plano:null,mod:'corrida',ultFase:'',ultCd:0,ultKm:0,jan:[],alvoBipou:false,rota:[],autoP:false,lastMove:0,metaD:0,metaT:0,cdIv:null,pagF:0,gigaF:0,lockF:false,swF:0};" +
@@ -2731,8 +2747,13 @@
       "g.strokeStyle=CLR?'rgba(0,0,0,.07)':'rgba(255,255,255,.05)';g.lineWidth=1;" +
       "for(var gx=40;gx<W;gx+=40){g.beginPath();g.moveTo(gx,0);g.lineTo(gx,H);g.stroke();}" +
       "for(var gy=40;gy<H;gy+=40){g.beginPath();g.moveTo(0,gy);g.lineTo(W,gy);g.stroke();}" +
-      "if(cr.rota.length<2){g.fillStyle=CLR?'rgba(0,0,0,.35)':'rgba(255,255,255,.3)';g.font='700 22px system-ui,sans-serif';g.textAlign='center';" +
-      "g.fillText(cr.gpsOn?'Seu trajeto vai aparecer aqui':'Ligue o GPS pra desenhar o trajeto',W/2,H/2+7);return;}" +
+      // 22px cravado nao cabia num celular de 390: a frase saia cortada nas DUAS
+      // pontas e o quadro parecia quebrado. Agora o texto encolhe ate caber.
+      "if(cr.rota.length<2){g.fillStyle=CLR?'rgba(0,0,0,.35)':'rgba(255,255,255,.3)';g.textAlign='center';" +
+      "var ms9=cr.gpsOn?'Seu trajeto vai aparecer aqui':'Ligue o GPS pra desenhar o trajeto';" +
+      "var fs9=20;g.font='700 '+fs9+'px system-ui,sans-serif';" +
+      "while(fs9>11&&g.measureText(ms9).width>W-30){fs9--;g.font='700 '+fs9+'px system-ui,sans-serif';}" +
+      "g.fillText(ms9,W/2,H/2+Math.round(fs9/3));return;}" +
       "var la1=1/0,la2=-1/0,lo1=1/0,lo2=-1/0;cr.rota.forEach(function(pp){if(pp.lat<la1)la1=pp.lat;if(pp.lat>la2)la2=pp.lat;if(pp.lng<lo1)lo1=pp.lng;if(pp.lng>lo2)lo2=pp.lng;});" +
       "var dLa=Math.max(la2-la1,1e-5),dLo=Math.max(lo2-lo1,1e-5);var zz=Math.min((W-60)/dLo,(H-60)/dLa);" +
       "function px(pp){return {x:30+(pp.lng-lo1)*zz+(W-60-dLo*zz)/2,y:H-30-(pp.lat-la1)*zz-(H-60-dLa*zz)/2};}" +
@@ -2753,7 +2774,7 @@
       "function crKmAtual(){if(cr.gpsOn)return cr.km;var v=parseFloat(String(crEl('crKm').value||'').replace(',','.'));return isFinite(v)&&v>0?v:cr.km;}" +
       "function pintaCr(){" +
       // pausa automática (estilo app de corrida): parou de andar com GPS ligado → o relógio pausa sozinho
-      "if(cr.run&&cr.gpsOn&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!cr.blocos&&!(cr.plano&&cr.plano.t==='intervalado')){" +
+      "if(cr.run&&cr.gpsOn&&crCfg().ap&&cr.lastMove&&Date.now()-cr.lastMove>8000&&!cr.blocos&&!(cr.plano&&(cr.plano.t==='intervalado'||cr.plano.t==='misto'))){" +
       "cr.autoP=true;cr.run=false;cr.acum=(Date.now()-cr.t0)/1000;crEl('crGo').textContent='Continuar';if(navigator.vibrate)navigator.vibrate(120);}" +
       "var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;var km=crKmAtual();" +
       "crEl('crTempo').textContent=wodFmt(el2);" +
@@ -2789,6 +2810,21 @@
       "info.textContent=(b5.d||'')+' · bloco '+(cr.bi+1)+' de '+cr.blocos.length;" +
       "try{espelhaCr();}catch(e){}return;}" +
       "var cbx=crEl('crBlocoBox');if(cbx)cbx.style.display='none';" +
+      /* Sem o player guiado (o aluno desligou aquecimento/volta a calma), o
+       * misto ainda precisa saber QUANDO os tiros comecam: pelo tempo alvo da
+       * parte continua, ou pela distancia dela quando so ha km prescrito. */
+      "if(p2&&p2.t==='misto'){var iniM=(+p2.tp||0)*60;" +
+      "var vaiM=p2.tp?el2>=iniM:(p2.d?km>=(+p2.d):false);" +
+      "if(!vaiM){fase.textContent='PARTE CONTÍNUA';fase.style.color='#a9a4b5';" +
+      "info.textContent=p2.n+' — depois vêm '+p2.r+' tiros de '+p2.ti+'s';return;}" +
+      "if(cr.mistoT0==null)cr.mistoT0=el2;" +
+      "var elM=el2-cr.mistoT0,cicM=p2.ti+p2.de,totM=p2.r*cicM;" +
+      "if(cr.run&&elM>=totM){crFinaliza('CONTÍNUO + '+p2.r+' TIROS COMPLETOS!');return;}" +
+      "var rdM=Math.min(p2.r,Math.floor(elM/cicM)+1),posM=elM%cicM,ftM=posM<p2.ti;" +
+      "fase.textContent=(ftM?'FORTE':'LEVE')+' \\u00b7 TIRO '+rdM+' DE '+p2.r;fase.style.color=ftM?'var(--corc)':'#22d3ee';" +
+      "info.textContent=p2.ti+'s forte / '+p2.de+'s leve — a parte contínua já foi';" +
+      "var fM=(ftM?'F':'L')+rdM;if(cr.run&&fM!==cr.ultFase){cr.ultFase=fM;if(elM>0.3){if(navigator.vibrate)navigator.vibrate(ftM?[90,50,90]:200);bip(ftM?1100:600,200);}}" +
+      "crCd(ftM?p2.ti-posM:cicM-posM);return;}" +
       "if(p2&&p2.t==='intervalado'){var ciclo=p2.ti+p2.de;var tot=p2.r*ciclo;" +
       "if(cr.run&&el2>=tot){crFinaliza('TIROS COMPLETOS \\u2014 '+p2.r+'\\u00d7!');return;}" +
       "var rdA=Math.min(p2.r,Math.floor(el2/ciclo)+1);var pos=el2%ciclo;var forte=pos<p2.ti;" +
@@ -2922,7 +2958,7 @@
       "var im=new Image();var rd=new FileReader();rd.onload=function(){im.onload=function(){cardCorrida(im);};im.src=rd.result;};rd.readAsDataURL(f);});}" +
       "function crResumoFecha(){cr.resumo=false;var el=crEl('crResumoF');if(el)el.style.display='none';fechaCrFull();}" +
       "function crFinaliza(msg){var el2=cr.run?(Date.now()-cr.t0)/1000:cr.acum;if(el2<5)return;" +
-      "cr.blocos=null;cr.bi=0;var cb8=crEl('crBlocoBox');if(cb8)cb8.style.display='none';" +
+      "cr.blocos=null;cr.bi=0;cr.mistoT0=null;var cb8=crEl('crBlocoBox');if(cb8)cb8.style.display='none';" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;soltaTela();crGpsPara();" +
       "var km=crKmAtual();var med=km>0.015?(el2/60)/km:null;" +
       "var reg={d:isoHj(),n:cr.plano?cr.plano.n:'Livre \\u2014 '+(CRMODS[cr.mod]||'Cardio'),m:cr.plano?cr.plano.m:cr.mod,s:Math.round(el2),k:Math.round(km*100)/100,p:med?paceFmt(med):null};" +
@@ -3023,11 +3059,11 @@
       "function crChips(){var box=crEl('crTipos');if(!box)return;box.innerHTML=Object.keys(CRMODS).map(function(m){var on=!cr.plano&&cr.mod===m;" +
       "return \"<button type='button' class='crModBt' data-crmod='\"+m+\"' style='flex:1;padding:8px 2px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;background:\"+(on?'linear-gradient(135deg,var(--cor),var(--corc))':'var(--bg4)')+\";border:\"+(on?'none':'1px solid var(--bg11)')+\";color:\"+(on?'#fff':'#a9a4b5')+\";'>\"+CRMODS[m]+\"</button>\";}).join('');}" +
       "document.addEventListener('click',function(e){var b=e.target.closest('.crModBt');if(!b||cr.run)return;" +
-      "cr.plano=null;cr.mod=b.dataset.crmod;cr.alvoBipou=false;crChips();pintaCr();});" +
+      "cr.plano=null;cr.mod=b.dataset.crmod;cr.alvoBipou=false;cr.mistoT0=null;crChips();pintaCr();});" +
       "document.addEventListener('click',function(e){var b=e.target.closest('[data-cbstart]');if(!b)return;" +
       "var p3=null;CARDIOS.forEach(function(x){if(x.id===b.dataset.cbstart)p3=x;});if(!p3)return;" +
       "clearInterval(cr.iv);cr.iv=null;cr.run=false;cr.acum=0;cr.km=0;cr.ultKm=0;cr.jan=[];cr.alvoBipou=false;cr.plano=p3;cr.mod=p3.m;" +
-      "cr.blocos=null;cr.bi=0;cr.bt0=0;cr.bkm0=0;" +
+      "cr.blocos=null;cr.bi=0;cr.bt0=0;cr.bkm0=0;cr.mistoT0=null;" +
       "crEl('crGo').textContent='Iniciar';crChips();crAutoGps();pintaCr();crEl('crTela').scrollIntoView({behavior:'smooth',block:'center'});});" +
       /* ---------- player guiado por blocos ----------
        * O treino prescrito vira uma FILA de blocos: aquecimento, o miolo
@@ -3038,13 +3074,18 @@
        * o miolo; a moldura é do app), e o aluno desliga na engrenagem. */
       "var AQ_SEG=300,VC_SEG=180;" +
       "function crMMSS(sg){sg=Math.max(0,Math.round(sg));return Math.floor(sg/60)+':'+('0'+(sg%60)).slice(-2);}" +
+      /* A fila de blocos do treino guiado. 'misto' e o pedido do professor: o
+       * MESMO treino tem uma parte continua E os tiros. Ela entra como continuo
+       * PRIMEIRO e tiros depois — e a ordem que o corpo aguenta. */
       "function crMontaBlocos(p){if(!p||!crCfg().bl)return null;" +
       "var b=[{k:'aq',n:'Aquecimento',d:'ritmo leve — dá pra conversar',s:AQ_SEG}];" +
-      "if(p.t==='intervalado'){for(var i=0;i<p.r;i++){" +
+      "var temC=p.t==='continuo'||p.t==='misto',temI=p.t==='intervalado'||p.t==='misto';" +
+      "if(!temC&&!temI)temC=true;" +
+      "if(temC){var alvo=[];if(p.d)alvo.push(p.d+' km');if(p.tp)alvo.push(p.tp+' min');if(p.p)alvo.push('pace '+p.p);" +
+      "b.push({k:'c',n:p.t==='misto'?'Parte contínua':(p.n||'Rodagem'),d:alvo.join(' · ')||'no seu ritmo',s:(+p.tp||0)*60,km:+p.d||0});}" +
+      "if(temI){for(var i=0;i<p.r;i++){" +
       "b.push({k:'f',n:'Tiro '+(i+1)+' de '+p.r,d:'forte',s:p.ti});" +
       "b.push({k:'l',n:'Leve '+(i+1)+' de '+p.r,d:'recupera',s:p.de});}}" +
-      "else{var alvo=[];if(p.d)alvo.push(p.d+' km');if(p.tp)alvo.push(p.tp+' min');if(p.p)alvo.push('pace '+p.p);" +
-      "b.push({k:'c',n:p.n||'Rodagem',d:alvo.join(' · ')||'no seu ritmo',s:(+p.tp||0)*60,km:+p.d||0});}" +
       "b.push({k:'vc',n:'Volta à calma',d:'solta o corpo e respira',s:VC_SEG});return b;}" +
       "function crBlocoAtual(){return cr.blocos?cr.blocos[cr.bi]:null;}" +
       // aviso do bloco novo: voz quando o aluno escolheu voz, senão bipe
@@ -4623,7 +4664,8 @@
       "return u?'Última vez no <b>'+e9(w.n)+'</b>: <b>'+e9(String(u.r||'').slice(0,20))+'</b>. Bora passar disso hoje?':" +
       "'Circuito novo na área: <b>'+e9(w.n)+'</b>. Anota o placar no fim!';}" +
       "else if(pj&&pj.tp==='cardio'){var c=CARDIOS[pj.i];if(!c)return null;" +
-      "return c.t==='intervalado'?('Segura o forte nos '+c.ti+' segundos e recupera DE VERDADE nos '+c.de+'s leves. Sem pressa na largada.'):" +
+      "return c.t==='misto'?('Faz a parte cont\\u00ednua inteira ANTES dos tiros — e nos '+c.ti+'s fortes n\\u00e3o segura nada.'):" +
+      "c.t==='intervalado'?('Segura o forte nos '+c.ti+' segundos e recupera DE VERDADE nos '+c.de+'s leves. Sem pressa na largada.'):" +
       "(c.p?'Segura o pace de <b>'+e9(c.p)+'</b> do começo ao fim — terminar com sobra é o plano.':" +
       "'Ritmo de conversa do começo ao fim — constância vale mais que velocidade.');}" +
       "else return null;}" + // dia de descanso no plano → recado da semana
@@ -4666,8 +4708,7 @@
       "var rotC={corrida:'CORRIDA',caminhada:'CAMINHADA',bike:'BIKE'}[c9&&c9.m]||'CORRIDA E BIKE';" +
       "rt='HOJE · '+rotC;tit=pj.n;cImg=capaFM(c9&&c9.cp)||CAPA_GERAL;" +
       "btn={corrida:'Começar corrida',caminhada:'Começar caminhada',bike:'Começar pedal'}[c9&&c9.m]||'Começar corrida';" +
-      "if(c9){sub=c9.t==='intervalado'?(c9.r+'× '+c9.ti+'s forte / '+c9.de+'s leve'+(c9.p?' · alvo de pace '+c9.p:'')):" +
-      "[(c9.d?String(c9.d).replace('.',',')+' km':''),(c9.tp?c9.tp+' min':''),(c9.p?'pace '+c9.p:'')].filter(Boolean).join(' · ')||'treino livre';" +
+      "if(c9){sub=crAlvoTxt(c9);" +
       "var bp=melhorPace(c9.m);if(bp)sub+=' · seu melhor: '+bp;}else{sub='treino prescrito te esperando';}" +
       "gSvg=\"<svg viewBox='0 0 200 200' aria-hidden='true' style='position:absolute;top:0;right:0;width:78%;opacity:.5;stroke:rgba(255,255,255,.55);' fill='none' stroke-width='10' stroke-linecap='round'><path d='M30 172 C 18 120, 82 132, 92 92 S 152 64, 152 32 S 102 12, 112 48'/></svg>\";}" +
       "else{rt='HOJE · DESCANSO';tit='Dia de recuperar';sub='alongue, caminhe leve e durma bem — amanhã tem mais';cImg=CAPA_GERAL;btn='Ver meus treinos';}" +
