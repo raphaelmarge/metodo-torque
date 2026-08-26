@@ -2531,6 +2531,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
 <script src="assets/funcao-nuvem.js"></script>
 <script src="assets/vendor/supabase.js"></script>
 <script src="apps/store.js"></script>
+<!-- simulador de nuvem do demo publico: so liga com as duas marcas do demo-personal.html -->
+<script src="assets/demo-nuvem.js"></script>
 <script src="assets/pagarme-cartao.js"></script>
 <script src="assets/exercicios-db.js"></script>
 <script src="assets/composicao-corporal.js"></script>
@@ -2909,6 +2911,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     return { o: esc(curto),
       sub: (/^\d{4}-\d{2}-\d{2}$/.test(venceEm) && vencida) ? "⏰ TREINO VENCIDO"
         : sem === null ? S.plural((t.fichas || []).length, "ficha", "fichas")
+        // "0 semanas" nao diz nada: ficha publicada nesta semana e ficha NOVA
+        : sem <= 0 ? "publicada esta semana"
         : S.plural(sem, "semana", "semanas") + (vencida ? " · vencida" : ""),
       cor: vencida ? "var(--tk-erro)" : "var(--tk-tx5)", velha: vencida };
   }
@@ -3265,7 +3269,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   function pintaPfResumo(st, a) {
     var el = $("pfResumo"); if (!el) return;
     var hoje = S.todayISO();
-    var ret = a.retorno || {};
+    // demoRetorno: o que o demo do studio grava direto no aluno, sem nuvem
+    var ret = a.retorno || a.demoRetorno || {};
     var meta = (+a.metaSemana || 3) * 4;
     var nMes = idxDe(st).sessFeitasDe(a.id).filter(function (x) { return (x.data || "").slice(0, 7) === hoje.slice(0, 7); }).length;
     // peso: o primeiro e o último que o aluno registrou no app
@@ -3277,8 +3282,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var fcs = Object.keys(ret.fc || {}).map(function (k) { return ret.fc[k]; }).filter(Boolean);
     var fcMed = fcs.length ? Math.round(fcs.reduce(function (t, x) { return t + (+x.m || 0); }, 0) / fcs.length) : 0;
     var fcMax = fcs.length ? Math.max.apply(null, fcs.map(function (x) { return +x.x || 0; })) : 0;
-    function kpi(k, v, un, s, cor) {
-      return '<div class="pfkpi"><div class="k">' + k + '</div><div class="v">' + v +
+    function kpi(k, v, un, s, cor, id) {
+      return '<div class="pfkpi"' + (id ? ' id="' + id + '"' : "") + '><div class="k">' + k + '</div><div class="v">' + v +
         (un ? "<small> " + un + "</small>" : "") + '</div><div class="s" style="color:' + (cor || "var(--tk-tx4)") + ';">' + s + "</div></div>";
     }
     var kpis = '<div class="pfkpis">' +
@@ -3286,10 +3291,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         nMes >= meta ? "var(--tk-ok)" : "var(--tk-tx4)") +
       kpi("PESO", pAtual ? String(pAtual).replace(".", ",") : "—", pAtual ? "kg" : "",
         pesos.length > 1 ? (dif > 0 ? "+" : "") + String(dif).replace(".", ",") + " kg desde o início" : "o aluno ainda não pesou no app",
-        dif < 0 ? "var(--tk-ok)" : "") +
-      kpi("BATIMENTO MÉDIO", fcMed || "—", fcMed ? "bpm" : "", fcMed ? "pico " + fcMax + " bpm" : "sem cinta conectada") +
-      kpi("CHECK-IN DA SEMANA", ret.ckNota || "—", ret.ckNota ? "/5" : "",
-        ret.ckTexto ? esc(String(ret.ckTexto).slice(0, 40)) : "sem check-in esta semana") +
+        dif < 0 ? "var(--tk-ok)" : "", "pfKpiPeso") +
+      kpi("BATIMENTO MÉDIO", fcMed || "—", fcMed ? "bpm" : "", fcMed ? "pico " + fcMax + " bpm" : "sem cinta conectada",
+        "", "pfKpiFc") +
+      kpi("CHECK-IN DA SEMANA", "—", "", "sem check-in esta semana", "", "pfKpiCk") +
       "</div>";
     // Semana do aluno: os 7 dias com a letra da ficha de cada um
     var t = (st.treinosV2 || {})[a.id] || {};
@@ -3325,6 +3330,82 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<button type="button" class="btn mini" data-montatreino="' + a.id + '" style="flex:1;">' + (f0 ? "Abrir" : "Montar") + "</button>" +
       '<button type="button" class="btn sec mini" data-app="' + a.id + '" style="flex:1;">Mandar app</button></div></div></div>';
     el.innerHTML = kpis + col;
+    pfResumoNuvem(a);
+  }
+  // troca o numero de UM tile ja pintado (sem repintar o resumo inteiro, que
+  // chamaria a nuvem de novo e viraria laco)
+  // corta no ULTIMO espaco: fatiar em 40 no seco partia palavra no meio
+  function corta40(t) {
+    t = String(t).trim();
+    if (t.length <= 40) return t;
+    var c = t.slice(0, 40);
+    var e = c.lastIndexOf(" ");
+    return (e > 20 ? c.slice(0, e) : c).replace(/[,.;:]$/, "") + "…";
+  }
+  function poeKpi(id, v, un, sub, cor) {
+    var box = $(id); if (!box) return;
+    box.querySelector(".v").innerHTML = esc(String(v)) + (un ? "<small> " + esc(un) + "</small>" : "");
+    var s = box.querySelector(".s");
+    s.textContent = sub;
+    if (cor) s.style.color = cor;
+  }
+  /* O tile CHECK-IN DA SEMANA lia a.retorno.ckNota, um campo que NAO existe em
+   * lugar nenhum do sistema — entao ele ficava eternamente em "—". O check-in
+   * do aluno mora na tabela app_checkin, a mesma que a tela "A semana" dos
+   * Questionarios le. Aqui a gente busca so o deste aluno, e sem nuvem o texto
+   * honesto de sempre continua na tela. */
+  function pfResumoNuvem(a) {
+    var box = $("pfKpiCk");
+    if (!box || !a.appTokenP) return;
+    var nuvem = S.cloud && S.cloud();
+    if (!nuvem || !nuvem.client || typeof nuvem.client.from !== "function") return;
+    var sem = qsSemana();
+    // o perfil pode ter trocado de aluno enquanto a nuvem responde: esta caixa
+    // ser a MESMA que esta na tela e a prova de que a resposta ainda serve
+    function ainda() { return $("pfKpiCk") === box; }
+    /* try/catch nas duas consultas de proposito: a ficha do aluno nao pode
+     * quebrar porque a nuvem respondeu torto (tabela que ainda nao existe,
+     * versao antiga do supabase-js). Sem dado, os tiles ficam no texto
+     * honesto que ja esta na tela — e o resto do perfil segue de pe. */
+    try {
+      nuvem.client.from("app_checkin").select("dia,nota,texto").eq("token", a.appTokenP)
+        .gte("dia", sem.ini).order("dia", { ascending: false }).limit(1)
+        .then(function (r) {
+          var c = !r.error && r.data && r.data[0];
+          if (!c || c.nota == null || !ainda()) return;
+          poeKpi("pfKpiCk", c.nota, "/5", c.texto ? corta40(c.texto) : "respondeu " + S.fmtData(c.dia));
+        }, function () {});
+    } catch (e1) {}
+    /* Peso e batimento vem do `retorno` do app — e ate aqui NADA no painel
+     * gravava esse campo no aluno, entao os dois tiles ficavam em "—" pra
+     * sempre. Buscamos junto com o check-in e guardamos a copia local: ela
+     * tambem alimenta os blocos de evolucao que vao no pedido da IA. */
+    try {
+      nuvem.client.from("app_aluno").select("retorno").eq("token", a.appTokenP).limit(1)
+        .then(function (r) {
+          var ret = !r.error && r.data && r.data[0] && r.data[0].retorno;
+          if (!ret || typeof ret !== "object") return;
+          var st2 = load();
+          var a2 = (st2.alunos || []).find(function (x) { return x.id === a.id; });
+          // S.write e nao save(): gravar sem redesenhar a tela embaixo de quem le
+          if (a2) { a2.retorno = ret; S.write("ptStudio", st2); }
+          if (!ainda()) return;
+          var pesos = Object.keys(ret.peso || {}).sort();
+          if (pesos.length) {
+            var pA = +ret.peso[pesos[pesos.length - 1]], pP = +ret.peso[pesos[0]];
+            var d = Math.round((pA - pP) * 10) / 10;
+            poeKpi("pfKpiPeso", String(pA).replace(".", ","), "kg",
+              pesos.length > 1 ? (d > 0 ? "+" : "") + String(d).replace(".", ",") + " kg desde o início" : "primeiro peso anotado",
+              d < 0 ? "var(--tk-ok)" : "");
+          }
+          var fcs = Object.keys(ret.fc || {}).map(function (k) { return ret.fc[k]; }).filter(Boolean);
+          if (fcs.length) {
+            var med = Math.round(fcs.reduce(function (t, x) { return t + (+x.m || 0); }, 0) / fcs.length);
+            var mx = Math.max.apply(null, fcs.map(function (x) { return +x.x || 0; }));
+            if (med) poeKpi("pfKpiFc", med, "bpm", "pico " + mx + " bpm");
+          }
+        }, function () {});
+    } catch (e2) {}
   }
   // as 4 ações do dia no cabeçalho da ficha (tela 2b)
   document.addEventListener("click", function (e) {
@@ -4200,8 +4281,13 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (alvo && !estava) alvo.hidden = false;
       return;
     }
-    var id = e.target.getAttribute && e.target.getAttribute("data-perfil");
-    if (id) abrePerfil(id);
+    /* O NOME do aluno tambem abre a ficha. Ele e o alvo mais obvio da linha e,
+     * ate aqui, era o unico que nao fazia nada: o data-abreperfil da tabela nova
+     * (v615) so tinha dono no bloco de pacotes de servico, noutro pedaco do
+     * painel — entao clicar no nome nao respondia, e o unico caminho pra ficha
+     * era abrir o menu "···" e escolher Perfil. */
+    var pf = e.target.closest && e.target.closest("[data-perfil],[data-abreperfil]");
+    if (pf) abrePerfil(pf.getAttribute("data-perfil") || pf.getAttribute("data-abreperfil"));
   });
   function pintaParqBadge(an) {
     var temSim = false;

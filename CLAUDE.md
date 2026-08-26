@@ -294,6 +294,42 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Demo do painel com nuvem simulada** (a partir da v622): o demo público
+(`demo-personal.html`, já no ar) mostrava o painel inteiro **menos três telas** —
+Chat, Questionários e Comunidade vivem da nuvem e, sem conta, só sabiam dizer
+"entre na sua conta". Agora `assets/demo-nuvem.js` troca o `MTStore.cloud()` por
+um cliente de mentira resolvido **em memória** (tabelas `app_chat`,
+`app_checkin`, `app_quest`, `app_feed`, `app_agenda`, `app_aluno`…, com
+`eq/gte/in/order/limit/single` e `insert/update/upsert/delete` de verdade). Os
+nomes saem do `mtapp:ptStudio` que o próprio demo semeia, então o Chat fala com
+a Carla que está na lista de Alunos. **Trava dupla**: só liga com
+`mtapp:ptDemo` **E** `mtapp:ptDemoNuvem`, as duas gravadas só pelo
+demo-personal.html — o professor de verdade não tem nenhuma das duas. Ele
+**não** mexe em `sync.client`, então o motor de sincronização segue desligado
+(o demo não escreve em banco nenhum), e embrulha o `MT_FUNCAO.chama` pra
+**nenhuma Edge Function rodar** — demo público não dispara WhatsApp, link de
+cobrança nem gasta IA. `minha_assinatura` devolve `null` de propósito, pra a
+faixa "Modo teste" continuar dizendo a verdade. ⚠️ os instantes são gravados
+**sem "Z"**: o Chat lê a hora por fatia de string, mas a Comunidade lê com
+`new Date(iso).getHours()` — com Z, o post das 07:58 apareceria às 04:58. O
+demo passou a semear `appTokenP` (`dtk1`…`dtk24`), `appPubEm`/`appVer` e
+`feedOn: true`; não adianta deixar aluno "pendente" de propósito, porque
+`autoPublicaApps` republica sozinho ao abrir. Suíte nova: `tests/test-demo-painel.js`
+(aborta e conta qualquer chamada a `*.supabase.co` — vazamento aparece na hora).
+
+Três defeitos do painel apareceram na revisão do demo e foram consertados
+junto: (1) o **nome do aluno na lista nova não abria a ficha** — o
+`data-abreperfil` da tabela da v615 só tinha dono no bloco de pacotes de
+serviço, noutro pedaço do painel, então o alvo mais óbvio da linha não
+respondia e o único caminho era o menu "···"; (2) os tiles **PESO**,
+**BATIMENTO** e **CHECK-IN** do Resumo da ficha liam `a.retorno`, campo que
+**nada no painel gravava** — agora `pfResumoNuvem(a)` busca `app_checkin` (o
+mesmo lugar da tela "A semana") e o `retorno` do `app_aluno`, guarda a cópia
+local com `S.write` (ela também alimenta os blocos de evolução do pedido da IA)
+e troca só o tile pintado, com `poeKpi`, pra não repintar o resumo e virar
+laço; no demo vale `a.demoRetorno` como fonte; (3) ficha publicada nesta semana
+dizia "0 semanas" — agora diz "publicada esta semana".
+
 **Menu do computador retrátil + revisão visual** (v621): o professor encolhe a
 gaveta no botão do cabeçalho (`#btnMenuFino`) e ela vira uma faixa de **66 px**
 só de ícones — a grade da Agenda e as duas colunas de Montar treino ganham a
