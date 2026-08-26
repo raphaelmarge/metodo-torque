@@ -206,10 +206,52 @@ async function abaPt(p, a) {
   ok(await p.evaluate(() => ["agAbas", "avAbas", "qtAbas", "dsAbas", "relAbas", "chAbas", "cfgAbas"].every((id) => !!document.getElementById(id))),
     "todas as seções grandes têm barra de sub-abas");
   ok(await p.evaluate(() => document.querySelector('#agAbas button.ativa').textContent.includes("Sessões")), "Agenda abre na sub-aba Sessões");
+  /* 📅 UM CALENDARIO SO (v635). A Agenda tinha quatro na mesma tela — a grade
+   * da semana, o calendario do mes, o "um dia por vez" e o seletor do
+   * formulario — e o bloco de pedidos aparecia duas vezes. O Raphael: "uns 4
+   * calendarios diferentes pra mesma coisa". */
+  {
+    const conta = () => p.evaluate(() => {
+      const ve = (s2) => { const e = document.querySelector(s2);
+        return !!e && getComputedStyle(e).display !== "none" && e.getBoundingClientRect().height > 0; };
+      return { semana: ve("#vAgenda .agrol"), dia: ve("#agDia"), mes: ve("#agCardMes"),
+        calendarios: [ve("#vAgenda .agrol"), ve("#agDia"), ve("#agCardMes")].filter(Boolean).length,
+        pedidos: document.querySelectorAll("#vAgenda #agPedFaixa, #vAgenda #cardPedidosApp").length,
+        ics: ve("#btnIcsP"),
+        botoes: Array.from(document.querySelectorAll("#vAgenda [data-agvis]"))
+          .filter((b) => b.getBoundingClientRect().height > 0).map((b) => b.textContent).join("|") };
+    });
+    const naSemana = await conta();
+    ok(naSemana.calendarios === 1 && naSemana.semana,
+      "📅 na visão Semana só a grade de horários está na tela (" + naSemana.calendarios + " calendário)");
+    ok(naSemana.pedidos === 1, "📅 o bloco de pedidos de horário aparece UMA vez só");
+    ok(naSemana.botoes === "Semana|Mês", "📅 o botão Semana | Mês troca o zoom do mesmo calendário");
+    ok(naSemana.ics, "📅 o Enviar pro meu calendário vale pra agenda inteira, então não some com a visão");
+    await p.evaluate(() => window.__agVis.troca("mes"));
+    await p.waitForTimeout(300);
+    const noMes = await conta();
+    ok(noMes.calendarios === 1 && noMes.mes,
+      "📅 na visão Mês só o calendário do mês está na tela (" + noMes.calendarios + " calendário)");
+    await p.evaluate(() => window.__agVis.troca("semana"));
+    await p.waitForTimeout(300);
+    // 🎗 sub-menus: fita de sublinhado (o desenho do handoff), nada de pílula
+    const fita = await p.evaluate(() => {
+      const b = document.querySelector("#agAbas button.ativa"), c = getComputedStyle(b);
+      return { raio: c.borderRadius, fundo: c.backgroundColor, linha: c.borderBottomWidth,
+        cor: c.borderBottomColor, alt: Math.round(b.getBoundingClientRect().height) };
+    });
+    ok(fita.raio === "0px" && /rgba\(0, 0, 0, 0\)|transparent/.test(fita.fundo) &&
+      fita.linha === "2px" && /124, 58, 237/.test(fita.cor) && fita.alt === 46,
+      "🎗 sub-menu é fita de sublinhado como o desenho manda, não pílula roxa (" +
+      fita.alt + "px, raio " + fita.raio + ", sublinhado " + fita.linha + ")");
+  }
   await p.evaluate(() => window.__agAba("agendar"));
   await p.selectOption("#sAluno", { index: 1 });
   await p.fill("#sHora", "07:00");
   await p.click("#sAdd");
+  // a visao Mes e onde moram o calendario do mes e a lista do dia (v635)
+  await p.evaluate(() => { window.__agAba("sessoes"); window.__agVis.troca("mes"); });
+  await p.waitForTimeout(300);
   let ses = await p.evaluate(() => document.getElementById("listaSessoes").textContent);
   ok(/João Cliente/.test(ses) && /07:00/.test(ses), "sessão agendada aparece no detalhe do dia");
   ok(await p.evaluate(() => !!document.querySelector("#calAgenda .cal-dia.hoje .cal-n")), "calendário do mês marca hoje com a contagem de sessões");
@@ -3494,9 +3536,10 @@ async function abaPt(p, a) {
     ok(fluxo.menuOps === 2 && fluxo.voltaMenu === "b_menu" && fluxo.opDestino === "b_r0" && fluxo.temPos, "destino/pos no formato que o webhook anda de verdade");
   }
   {
+    // os pedidos do app viraram UM bloco so (v635): a faixa roxa leva a lista dentro
     const perModulo = await p.evaluate(() => document.body.innerHTML);
-    if (!/cardPedidosApp/.test(perModulo)) ok(false, "módulo tem o card de pedidos do app na Agenda");
-    else ok(true, "módulo tem o card de pedidos do app na Agenda");
+    ok(/listaPedidosApp/.test(perModulo) && /agPedFaixa/.test(perModulo) && !/cardPedidosApp/.test(perModulo),
+      "módulo tem os pedidos do app num bloco só na Agenda (o card repetido saiu)");
   }
 
   // ---------- perfil completo do aluno ----------
