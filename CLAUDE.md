@@ -251,6 +251,40 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**A camada de baixo do painel** (v629): o Raphael olhou o redesenho pronto e
+disse "tem muita coisa que está diferente". Estava — e não era tela nenhuma: era
+o `apps/apps.css`, a folha COMPARTILHADA (portal, Nutri, Personal). Ela dava ao
+painel um `.card` com sombra e **sem borda**, um `.card h2` de **10,5px em CAIXA
+ALTA cinza** (que inverte a hierarquia: o título do card ficava menor que o
+texto dele), `.btn` em **pílula de 46px**, `.btn.sec` sem borda, `.muted` num
+cinza fora da paleta e `.corpo` com 48px de lado. O handoff pede o contrário em
+todos. Como as 16 telas usam essas classes, **um desvio ali reaparecia em todas
+de uma vez** — por isso cada tela refeita continuava "diferente". Agora o
+`<style>` do `personal.html` reescreve essa base com os valores do desenho
+(card com borda de 1px e sem sombra, padding 17/18, título 15,5px caixa mista,
+botão 44px raio 11, secundário com borda, WhatsApp virou secundário com tinta
+verde, conteúdo com 26px) e aponta os tokens velhos do apps.css (`--fundo`,
+`--card`, `--linha`, `--texto`, `--cinza`, `--cinza-2`) pros `--pt-*`. **Não
+mexa no apps.css** — ele veste o `nutricao.html` e o `index.html`, que não
+passaram pelo handoff. `.corpo` ganhou `--corpo-px`/`--corpo-py` porque a faixa
+roxa do Início precisa DESENCOSTAR exatamente do respiro dela pra ir de ponta a
+ponta (e o `:has()` desliga o `margin-top` negativo quando existe um aviso
+acima: modo teste, boas-vindas, assinatura). Junto vieram: contador da aba vira
+selo de tinta (`.cnt.leve` = só o número pra "quantos alunos", roxo pro chat,
+`.cnt.aten` pro que pede ação hoje — pílula roxa chapada com texto branco é
+justamente o que a regra 2 proíbe), "Módulo Personal" sai da CAIXA ALTA, "Modo
+claro" desce pro pé da gaveta (`margin-top: auto`), o grupo MENOS USADO vira
+lista de texto (ícone só volta com o menu encolhido), a `.topo` vira faixa fina
+de 17px (o desenho não tem cabeçalho: a tela começa na faixa roxa), a `.dnota`
+ganha fundo `--pt-caixa` com o botão na mesma linha, e a busca de Alunos divide
+a linha com os filtros e ganhou a lupa. Três cores velhas que só apareciam pelo
+JS foram trocadas pelos tokens nos **Relatórios** (`#16a34a`/`#d97706`/`#dc2626`
+e o `#faf9fc` que fazia os KPIs do mês saírem em cartões BRANCOS no painel
+escuro). ⚠️ `montaSitePro` e o laudo imprimível continuam com hex cravado **de
+propósito** — são documentos autônomos, `var()` não existe lá. A suíte
+`test-tokens-painel.js` passou a medir a base (borda, sombra, padding, tamanho
+do título, altura e raio do botão) **na geometria calculada**, não na classe.
+
 **Painel repaginado: Alunos e ficha do aluno** (a partir da v615): telas 2a e
 2b do canvas. **2a** — a lista virou tabela (`.altab`/`.alrow`) com cabeçalho
 (`#alResumo` = "N ativos · M sumindo"), busca por nome/telefone (`#alBusca`) e
