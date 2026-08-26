@@ -508,7 +508,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dcard .dqu { font-size: 15px; font-weight: 800; color: var(--tk-tx); }
   .dcard .dpq { font-size: 12.5px; font-weight: 600; color: var(--tk-tx4); margin-top: 3px; }
   .dcard .dacs { display: flex; gap: 7px; margin-top: auto; }
-  .dcard .dacs .btn { flex: 1; justify-content: center; height: 40px; border-radius: 11px; font-size: 12.5px; }
+  .dcard .dacs .btn { flex: 1; justify-content: center; height: 40px; min-height: 40px; border-radius: 11px; font-size: 12.5px; }
   .dcard .dacs .btn.ic { flex: none; width: 40px; padding: 0; }
   /* ============================================================
    * TELA 02 do handoff — o INÍCIO NO CELULAR (1a Início celular).
@@ -827,11 +827,20 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .albusca input { width: 100%; height: 46px; border-radius: 14px; background: var(--tk-sup); border: 1px solid var(--tk-bd);
                    color: var(--tk-tx); font-family: inherit; font-size: 14px; padding: 0 16px; }
   .altab { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; overflow: hidden; }
-  .alcab, .alrow { display: grid; grid-template-columns: 2fr 1.4fr 1.1fr 1.2fr 1.2fr auto; gap: 14px; align-items: center; padding: 12px 18px; }
+  /* larguras FIXAS nas duas faixas: com fracoes, a 6a coluna do cabecalho
+   * (um span vazio) e a da linha (94px de botoes) resolviam diferente e o
+   * rotulo PROXIMA ficava 78px longe do dado. */
+  .alcab, .alrow { display: grid; grid-template-columns: minmax(0, 2fr) 118px 96px 128px minmax(0, 1fr) 104px;
+                   gap: 14px; align-items: center; padding: 12px 18px; }
   .alcab { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--tk-tx5); border-bottom: 1px solid var(--tk-bd2); }
   .alrow { border-top: 1px solid var(--tk-bd2); }
   .alrow:first-child { border-top: 0; }
-  .alrow.devendo { background: rgba(124,58,237,.10); }
+  .alrow.devendo { background: var(--pt-sel); }
+  /* o avatar diz o estado do aluno — estas tres regras viviam presas no
+   * bloco de celular, entao no computador todo avatar saia roxo */
+  .alrow.sumindo { opacity: .72; }
+  .alrow.devendo .alav { background: var(--pt-erro-bg); color: var(--pt-erro); }
+  .alrow.sumindo .alav { background: var(--pt-atencao-bg); color: var(--pt-atencao); }
   .alrow .alq { display: flex; align-items: center; gap: 11px; min-width: 0; }
   .alrow .alav, .pgatrlin .alav { width: 38px; height: 38px; flex: none; border-radius: 12px; background: var(--tk-roxoFraco); color: var(--tk-roxoTx);
                  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
@@ -840,7 +849,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* nascem escondidos: sao a tela 17 (celular). No computador a linha
    * continua sendo a tabela de 6 colunas da tela 03. */
   .alrow .alqc { min-width: 0; }
-  .alrow .alnmrow { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+  .alrow .alnmrow { display: flex; align-items: center; gap: 7px; min-width: 0; }
   .alrow .alhora, .alrow .almob { display: none; }
   .alrow .alp1 { font-size: 13px; font-weight: 700; color: var(--tk-tx2); }
   .alrow .alp2 { font-size: 12px; font-weight: 700; margin-top: 2px; }
@@ -887,11 +896,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
              padding: 13px 18px; border: 0; border-bottom: 1px solid var(--pt-hairline); }
     .alrow:last-child { border-bottom: 0; }
     .alrow.devendo { background: none; }          /* o realce agora e do aluno ABERTO */
-    .alrow.sumindo { opacity: .72; }
     .alrow .alq { flex: 1; min-width: 0; align-items: flex-start; gap: 11px; }
     .alrow .alav { width: 40px; height: 40px; border-radius: 13px; font-size: 13px; font-weight: 900; }
-    .alrow.devendo .alav { background: var(--pt-erro-bg); color: var(--pt-erro); }
-    .alrow.sumindo .alav { background: var(--pt-atencao-bg); color: var(--pt-atencao); }
     .alrow .alqc { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
     .alrow .alnm { font-size: 14.5px; font-weight: 800; }
     .alrow .alsel { margin-left: 0; height: 19px; padding: 0 7px; border-radius: 6px;
@@ -3672,7 +3678,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       sub: (/^\d{4}-\d{2}-\d{2}$/.test(venceEm) && vencida) ? "⏰ TREINO VENCIDO"
         : sem === null ? S.plural((t.fichas || []).length, "ficha", "fichas")
         // "0 semanas" nao diz nada: ficha publicada nesta semana e ficha NOVA
-        : sem <= 0 ? "publicada esta semana"
+        : sem <= 0 ? "esta semana"
         : S.plural(sem, "semana", "semanas") + (vencida ? " · vencida" : ""),
       cor: vencida ? "var(--tk-erro)" : "var(--tk-tx5)", velha: vencida };
   }
@@ -13417,7 +13423,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       cab.innerHTML = "Seu dia hoje " +
         '<span class="ddsub">' + feitasN + " de " + sesHoje.length + " feitas" +
         (hs.length ? '<b class="ddhora"> · ' + hs[0] + " às " + hs[hs.length - 1] + "</b>" : "") + "</span>" +
-        '<button type="button" class="btn sec mini" id="dVerSemana" style="float:right;">Ver semana</button>';
+        '<button type="button" class="btn sec mini" id="dVerSemana">Ver semana</button>';
     }
     $("bHojeP").innerHTML = sesHoje.length ? sesHoje.map(function (x) {
       var cls = x.feita ? " feita" : x.faltou ? " faltou" : (x.id === proxId ? " prox" : "");

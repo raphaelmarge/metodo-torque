@@ -294,6 +294,22 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Seis defeitos de COMPUTADOR do handoff** (a partir da v628): dois agentes
+compararam o desenho de desktop (telas 01, 03 e 04) com o implementado a
+1280 px e mediram o que estava fora. Consertados: (1) o botão **Ver semana**
+usava `float: right` **dentro do `<h2>`** e o float invadia a caixa da linha
+seguinte — a primeira linha do "Seu dia" media **357px** contra 455px das
+outras; virou flex e agora todas medem 456; (2) o **cabeçalho da tabela de
+Alunos não batia com os dados** — até **78px** de erro na coluna PRÓXIMA,
+porque as duas faixas usavam frações e a 6ª coluna do cabeçalho é um `<span>`
+vazio enquanto a da linha tem 94px de botões; larguras fixas nas duas, erro
+agora **0**; (3) as regras `.alrow.devendo .alav` / `.sumindo` viviam **presas
+no bloco de celular**, então no computador todo avatar saía roxo; (4) o botão
+do Resolver hoje saía com **46px** porque o `min-height: 46px` do `.btn` do
+`apps.css` vencia o `height: 40px`; (5) o nome com selo quebrava em duas linhas
+(`align-items: baseline`); (6) "publicada esta semana" não cabia na coluna
+FICHA e virava três linhas — agora é "esta semana".
+
 **Montar treino no celular** (a partir da v627): tela 20 — a última das sete.
 Regra 6 do colapso: o formulário de escolher exercício vira **gaveta de baixo**
 (`border-radius: 22px 22px 0 0`, `box-shadow: 0 -18px 40px rgba(0,0,0,.5)`,
