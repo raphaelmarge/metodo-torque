@@ -2112,5 +2112,80 @@ self.MT_RECEITAS = [
    "Pra desenformar, passe a forminha rapidamente em água da torneira."
   ],
   "dica": "Sobremesa de 60 kcal com fruta de verdade: o pedaço de morango inteiro engana a vontade de sorvete de massa."
+ },
+ {
+  "id": "rc94",
+  "n": "Cheesecake de pote sem forno com proteína",
+  "cat": "Doces fit",
+  "tempo": 15,
+  "rende": 4,
+  "k": 180,
+  "pt": 18,
+  "ing": [
+   "300 g de queijo cottage ou ricota fresca",
+   "1 scoop (30 g) de whey sabor baunilha",
+   "150 g de iogurte natural desnatado",
+   "1 col. sopa de mel",
+   "4 col. sopa de aveia em flocos finos",
+   "200 g de morangos picados",
+   "Suco de meio limão"
+  ],
+  "modo": [
+   "Bata o cottage, o whey, o iogurte e o mel no liquidificador até ficar bem liso — sem grumos é o segredo da textura.",
+   "Toste a aveia numa frigideira seca por 3 minutos, mexendo, até dourar. Ela faz as vezes da base de biscoito.",
+   "Monte nos potes: aveia no fundo, creme por cima e os morangos com o limão para finalizar.",
+   "Leve à geladeira por pelo menos 2 horas — o creme firma sozinho, sem gelatina e sem forno."
+  ],
+  "dica": "18 g de proteína numa sobremesa de 180 kcal. Um cheesecake de padaria tem 295 kcal e 6 g de proteína."
+ },
+ {
+  "id": "rc95",
+  "n": "Sanduíche natural de frango que não fica molhado",
+  "cat": "Lanches",
+  "tempo": 20,
+  "rende": 3,
+  "k": 285,
+  "pt": 24,
+  "ing": [
+   "300 g de peito de frango cozido e desfiado",
+   "3 col. sopa de iogurte natural desnatado",
+   "1 col. sopa de mostarda",
+   "1 cenoura pequena ralada",
+   "6 fatias de pão de forma integral",
+   "Folhas de alface americana",
+   "Sal e pimenta"
+  ],
+  "modo": [
+   "Esprema a cenoura ralada num pano de prato até tirar o excesso de água — é ela que encharca o sanduíche.",
+   "Misture o frango com o iogurte, a mostarda, a cenoura e os temperos.",
+   "Forre o pão com a folha de alface INTEIRA dos dois lados: ela vira uma barreira entre o recheio e o pão.",
+   "Recheie, feche, embrulhe em filme bem apertado e leve à geladeira por 30 minutos antes de cortar."
+  ],
+  "dica": "A alface como barreira é o truque das lanchonetes: o sanduíche aguenta o dia inteiro na bolsa sem murchar."
+ },
+ {
+  "id": "rc96",
+  "n": "Creme de abóbora com gengibre",
+  "cat": "Almoço e jantar",
+  "tempo": 30,
+  "rende": 4,
+  "k": 140,
+  "pt": 4,
+  "ing": [
+   "800 g de abóbora cabotiá em cubos",
+   "1 cebola picada",
+   "2 dentes de alho",
+   "1 col. sopa de gengibre ralado",
+   "1 col. sopa de azeite de oliva",
+   "800 ml de caldo de legumes",
+   "Sal, pimenta e cheiro-verde"
+  ],
+  "modo": [
+   "Refogue a cebola e o alho no azeite até ficarem transparentes e junte o gengibre por 30 segundos.",
+   "Acrescente a abóbora e o caldo, tampe e cozinhe por 20 minutos, até a abóbora desmanchar no garfo.",
+   "Bata tudo no liquidificador (ou com mixer na panela) até ficar aveludado.",
+   "Volte ao fogo, acerte o sal e a pimenta, e sirva com cheiro-verde por cima."
+  ],
+  "dica": "O gengibre resolve o sabor sem creme de leite: são 140 kcal contra as 235 de uma sopa de cebola gratinada."
  }
 ];

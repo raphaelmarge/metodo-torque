@@ -10677,5 +10677,311 @@ self.MT_EXERCICIOS = [
   "g": "Tríceps",
   "eq": "Banco",
   "d": "No mergulho de banco, mantenha uma perna estendida no ar: o core trabalha junto e a carga sobe sem peso extra."
+ },
+ {
+  "n": "Desenvolvimento de ombros sentado na cadeira de rodas",
+  "g": "Treino adaptado",
+  "eq": "Halteres",
+  "d": "Trave o freio da cadeira, apoie as costas e empurre os halteres para cima sem arquear a lombar nem elevar os ombros."
+ },
+ {
+  "n": "Remada com elástico preso na maçaneta",
+  "g": "Treino adaptado",
+  "eq": "Elástico",
+  "d": "Prenda o elástico na altura do peito, puxe até as mãos passarem das costelas e junte as escápulas no fim."
+ },
+ {
+  "n": "Rosca de bíceps sentado com apoio no braço da cadeira",
+  "g": "Treino adaptado",
+  "eq": "Halteres",
+  "d": "Apoie o cotovelo no braço da cadeira e suba o halter sem balançar o tronco, descendo em três tempos."
+ },
+ {
+  "n": "Elevação lateral sentado com tronco apoiado",
+  "g": "Treino adaptado",
+  "eq": "Halteres",
+  "d": "Suba os braços até a linha dos ombros com os cotovelos macios, sem usar impulso do tronco."
+ },
+ {
+  "n": "Propulsão da cadeira de rodas em rampa",
+  "g": "Treino adaptado",
+  "eq": "Cadeira de rodas",
+  "d": "Empurre o aro em impulsos longos com o tronco levemente à frente, controlando a descida com a palma da mão."
+ },
+ {
+  "n": "Sprint de propulsão em piso plano",
+  "g": "Treino adaptado",
+  "eq": "Cadeira de rodas",
+  "d": "Faça arrancadas de 20 metros com impulsos curtos e rápidos, e recupere no trajeto de volta em ritmo leve."
+ },
+ {
+  "n": "Mergulho no apoio de braço da cadeira",
+  "g": "Treino adaptado",
+  "eq": "Cadeira de rodas",
+  "d": "Com as mãos nos apoios e o freio travado, eleve o corpo estendendo os cotovelos e desça devagar até sentar."
+ },
+ {
+  "n": "Puxada na polia alta sentado na cadeira de rodas",
+  "g": "Treino adaptado",
+  "eq": "Polia",
+  "d": "Posicione a cadeira sob a polia, trave o freio e puxe a barra até a linha do queixo com o tronco estável."
+ },
+ {
+  "n": "Crucifixo com elástico à frente do peito",
+  "g": "Treino adaptado",
+  "eq": "Elástico",
+  "d": "Com o elástico passando pelas costas, abra e feche os braços na linha do peito com os cotovelos levemente flexionados."
+ },
+ {
+  "n": "Alcance funcional à frente sentado",
+  "g": "Treino adaptado",
+  "eq": "Sem equipamento",
+  "d": "Incline o tronco à frente para pegar um objeto no chão e volte ao apoio, treinando equilíbrio de tronco com segurança."
+ },
+ {
+  "n": "Rotação externa de manguito sentado com elástico",
+  "g": "Treino adaptado",
+  "eq": "Elástico",
+  "d": "Cotovelo colado ao tronco e antebraço girando para fora, sem deixar o ombro subir em direção à orelha."
+ },
+ {
+  "n": "Boxe adaptado no aparador sentado",
+  "g": "Treino adaptado",
+  "eq": "Aparador",
+  "d": "Golpeie o aparador alternando os braços com o tronco firme, recolhendo a guarda depois de cada golpe."
+ },
+ {
+  "n": "Handbike (ergômetro de braços)",
+  "g": "Treino adaptado",
+  "eq": "Ergômetro de braços",
+  "d": "Pedale com os braços em ritmo constante mantendo os ombros baixos e o tronco apoiado no encosto."
+ },
+ {
+  "n": "Arremesso de bola contra a parede sentado",
+  "g": "Treino adaptado",
+  "eq": "Medicine ball",
+  "d": "Arremesse a bola na parede na altura do peito e receba o rebote com os braços amortecendo o impacto."
+ },
+ {
+  "n": "Alongamento de isquiotibiais com parceiro (contrai e relaxa)",
+  "g": "Mobilidade e alongamento",
+  "eq": "Livre",
+  "d": "O parceiro eleva a perna até o limite, você empurra contra a mão dele por 6 segundos e relaxa — ele ganha amplitude."
+ },
+ {
+  "n": "Contrai e relaxa de adutores sentado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Colchonete",
+  "d": "Sentado com as solas dos pés unidas, empurre os joelhos contra as mãos por 6 segundos e depois deixe-os cair mais."
+ },
+ {
+  "n": "Alongamento ativo de posterior com elevação de perna",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "Em pé, eleve a perna estendida à frente e desça sem balanço, repetindo dez vezes de cada lado."
+ },
+ {
+  "n": "Alongamento ativo de flexor de quadril em afundo",
+  "g": "Mobilidade e alongamento",
+  "eq": "Sem equipamento",
+  "d": "No afundo, aperte o glúteo de trás e leve o quadril à frente por 3 segundos, soltando entre as repetições."
+ },
+ {
+  "n": "Isometria alongada de panturrilha no degrau",
+  "g": "Mobilidade e alongamento",
+  "eq": "Degrau",
+  "d": "Com a ponta do pé no degrau, deixe o calcanhar descer abaixo da borda e sustente por trinta segundos."
+ },
+ {
+  "n": "Alongamento de dorsal pendurado na barra",
+  "g": "Mobilidade e alongamento",
+  "eq": "Barra fixa",
+  "d": "Pendure-se com os braços estendidos e relaxe o tronco, respirando fundo para soltar as costas."
+ },
+ {
+  "n": "Contrai e relaxa de trapézio superior sentado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Cadeira",
+  "d": "Incline a cabeça para o lado, empurre contra a mão por 6 segundos e solte, aumentando a inclinação a cada rodada."
+ },
+ {
+  "n": "Adutora na máquina com pausa no fechamento",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Feche as pernas contra a resistência, segure dois segundos com a parte interna da coxa contraída e abra devagar."
+ },
+ {
+  "n": "Puxada frontal na máquina com pegada supinada",
+  "g": "Costas",
+  "eq": "Máquina",
+  "d": "Palmas voltadas para você e cotovelos rentes ao tronco, puxe até a barra tocar o alto do peito."
+ },
+ {
+  "n": "Extensora com pés em rotação externa",
+  "g": "Quadríceps",
+  "eq": "Máquina",
+  "d": "Aponte as pontas dos pés levemente para fora e estenda os joelhos até quase travar, com pausa curta no topo."
+ },
+ {
+  "n": "Cadeira flexora com quadril flexionado",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Sentado, flexione os joelhos puxando o apoio para baixo e volte controlando, sem tirar o quadril do assento."
+ },
+ {
+  "n": "Mergulho assistido na máquina",
+  "g": "Tríceps",
+  "eq": "Máquina",
+  "d": "Com os joelhos no apoio ajustado, desça até os cotovelos a noventa graus e suba sem travar o movimento no topo."
+ },
+ {
+  "n": "Extensão de quadril em pé na máquina",
+  "g": "Posterior e glúteo",
+  "eq": "Máquina",
+  "d": "Apoie o tronco e leve a perna para trás apertando o glúteo, sem arquear a lombar para ganhar amplitude."
+ },
+ {
+  "n": "Dead bug com peso nos pés",
+  "g": "Core",
+  "eq": "Caneleira",
+  "d": "Com caneleiras leves, desça uma perna de cada vez sem deixar a lombar descolar do chão."
+ },
+ {
+  "n": "Bird dog com elástico nos pés",
+  "g": "Core",
+  "eq": "Elástico",
+  "d": "Estenda o braço e a perna opostos contra a resistência do elástico, mantendo o quadril paralelo ao chão."
+ },
+ {
+  "n": "Hollow hold com braços estendidos",
+  "g": "Core",
+  "eq": "Colchonete",
+  "d": "Deitado, tire ombros e pernas do chão formando uma banana com a lombar colada no solo, e segure."
+ },
+ {
+  "n": "Arch hold de bruços",
+  "g": "Core",
+  "eq": "Colchonete",
+  "d": "De bruços, eleve braços e pernas ao mesmo tempo apertando os glúteos e segure sem prender a respiração."
+ },
+ {
+  "n": "Abdominal com giro e bola medicinal",
+  "g": "Core",
+  "eq": "Medicine ball",
+  "d": "Suba o tronco com a bola no peito e gire levando-a ao lado do quadril, alternando os lados a cada repetição."
+ },
+ {
+  "n": "Elevação de pernas nas paralelas com pausa",
+  "g": "Core",
+  "eq": "Paralelas",
+  "d": "Apoiado nos antebraços, suba as pernas até noventa graus, segure um segundo e desça em três tempos."
+ },
+ {
+  "n": "Agachamento frontal com calcanhar elevado",
+  "g": "Quadríceps",
+  "eq": "Barra",
+  "d": "Com anilhas finas sob os calcanhares, desça com o tronco ereto e o cotovelo alto até a coxa passar da paralela."
+ },
+ {
+  "n": "Remada curvada supinada com pausa no abdome",
+  "g": "Costas",
+  "eq": "Barra",
+  "d": "Palmas voltadas para cima, puxe a barra ao umbigo, segure um segundo e desça controlando toda a descida."
+ },
+ {
+  "n": "Desenvolvimento militar com pegada fechada",
+  "g": "Ombros",
+  "eq": "Barra",
+  "d": "Mãos na largura dos ombros, empurre a barra acima da cabeça sem arquear a lombar e trave o abdome."
+ },
+ {
+  "n": "Afundo búlgaro com barra nas costas",
+  "g": "Quadríceps",
+  "eq": "Barra",
+  "d": "Pé de trás no banco e barra apoiada no trapézio, desça vertical mantendo o joelho da frente alinhado ao pé."
+ },
+ {
+  "n": "Puxada com triângulo e pausa no peito",
+  "g": "Costas",
+  "eq": "Polia",
+  "d": "Puxe o triângulo até tocar o alto do peito, segure um segundo com as escápulas juntas e volte devagar."
+ },
+ {
+  "n": "Rosca concentrada com giro no topo",
+  "g": "Bíceps",
+  "eq": "Halteres",
+  "d": "Com o cotovelo apoiado na coxa, gire o punho no fim da subida como se olhasse a hora e desça em três tempos."
+ },
+ {
+  "n": "Elevação frontal alternada com rotação de punho",
+  "g": "Ombros",
+  "eq": "Halteres",
+  "d": "Suba o halter com a palma para baixo e gire a palma para cima ao chegar na linha do ombro."
+ },
+ {
+  "n": "Agachamento frontal com dois kettlebells no rack",
+  "g": "Quadríceps",
+  "eq": "Kettlebell",
+  "d": "Com os pesos apoiados nos ombros e cotovelos altos, desça mantendo o tronco ereto e os calcanhares no chão."
+ },
+ {
+  "n": "Transferência da cadeira para o banco",
+  "g": "Treino adaptado",
+  "eq": "Banco",
+  "d": "Com o freio travado e o banco na mesma altura, apoie as mãos e deslize o quadril de lado num movimento só."
+ },
+ {
+  "n": "Equilíbrio de tronco sentado sem apoio das mãos",
+  "g": "Treino adaptado",
+  "eq": "Sem equipamento",
+  "d": "Solte as mãos do apoio e sustente o tronco ereto por trinta segundos, com alguém por perto na primeira vez."
+ },
+ {
+  "n": "Isometria de empurrar a parede sentado",
+  "g": "Treino adaptado",
+  "eq": "Parede",
+  "d": "Empurre a parede com as duas palmas na altura do peito por dez segundos, sem prender a respiração."
+ },
+ {
+  "n": "Arremesso ao cesto sentado",
+  "g": "Treino adaptado",
+  "eq": "Bola",
+  "d": "Arremesse com as duas mãos partindo do peito, estendendo os cotovelos e soltando a bola no ponto mais alto."
+ },
+ {
+  "n": "Arranque e frenagem na cadeira de rodas",
+  "g": "Treino adaptado",
+  "eq": "Cadeira de rodas",
+  "d": "Acelere por cinco metros e freie segurando o aro com firmeza, protegendo a palma com luva."
+ },
+ {
+  "n": "Alongamento de flexores de punho sentado",
+  "g": "Treino adaptado",
+  "eq": "Sem equipamento",
+  "d": "Estenda o braço com a palma pra cima e puxe os dedos para baixo com a outra mão por vinte segundos."
+ },
+ {
+  "n": "Contrai e relaxa de glúteo em figura quatro",
+  "g": "Mobilidade e alongamento",
+  "eq": "Colchonete",
+  "d": "Deitado com o tornozelo sobre o joelho oposto, empurre o joelho contra a mão por 6 segundos e relaxe puxando mais."
+ },
+ {
+  "n": "Alongamento de panturrilha com toalha deitado",
+  "g": "Mobilidade e alongamento",
+  "eq": "Toalha",
+  "d": "Passe a toalha na planta do pé e puxe a ponta em sua direção com a perna estendida, sem dobrar o joelho."
+ },
+ {
+  "n": "Agachamento afundo com passada caminhando",
+  "g": "Quadríceps",
+  "eq": "Halteres",
+  "d": "Avance em passadas longas alternando as pernas, descendo até o joelho de trás quase tocar o chão."
+ },
+ {
+  "n": "Flexão de braço com as mãos na bola suíça",
+  "g": "Peito",
+  "eq": "Bola suíça",
+  "d": "Mãos na lateral da bola e corpo em linha reta, desça devagar controlando a instabilidade e suba firme."
  }
 ];
