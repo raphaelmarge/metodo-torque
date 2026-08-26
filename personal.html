@@ -1015,6 +1015,76 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     #vAgenda .agfaixa .agb { flex: none; }
     #vAgenda .agfaixa .agb .btn { height: 34px; padding: 0 12px; border-radius: 10px; font-size: 12px; }
   }
+  /* ============================================================
+   * TELA 21 do handoff — O FINANCEIRO NO CELULAR.
+   * Valores do recorte telas-html/21-5e-financeiro-celular.html.
+   * Quatro blocos so: o placar roxo do mes, os Atrasados com a acao numa
+   * fileira propria, o "Entrou hoje" e a nota que guarda o resto atras de
+   * "Ver mais" — a regra 9 do colapso.
+   * ============================================================ */
+  #pgHero { display: none; }
+  #vPagamentos .pgmais { display: none; }   /* a porta so existe no celular */
+  #pgResumo .pgrCel { display: none; }
+  @media (max-width: 900px) {
+    #pgHero { display: flex; flex-direction: column; gap: 11px; padding: 16px 17px 17px;
+              border-radius: 18px; margin-bottom: 13px; background: var(--pt-grad-card); color: #fff; }
+    #pgHero .pghlin { display: flex; align-items: center; gap: 8px; }
+    #pgHero .pghk { font-size: 9px; font-weight: 800; letter-spacing: .18em; color: var(--pt-sobre-roxo-lbl); }
+    #pgHero .pghs { margin-left: auto; display: inline-flex; align-items: center; height: 21px;
+                    padding: 0 8px; border-radius: 6px; background: var(--pt-sobre-roxo-bd);
+                    color: #fff; font-size: 10.5px; font-weight: 800; }
+    #pgHero .pghn { display: flex; align-items: flex-end; gap: 7px; }
+    #pgHero .pghn b { font-size: 34px; font-weight: 900; letter-spacing: -.04em; line-height: .95;
+                      font-variant-numeric: tabular-nums; }
+    #pgHero .pghn i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--pt-sobre-roxo-txt); }
+    #pgHero .pghb { height: 6px; border-radius: 99px; background: var(--pt-sobre-roxo-trilha); overflow: hidden; }
+    #pgHero .pghb span { display: block; height: 100%; border-radius: 99px; background: #fff; }
+    #pgHero .pghp { font-size: 11.5px; font-weight: 700; color: var(--pt-sobre-roxo-txt); }
+    #pgHero .pghp b { color: #fff; }
+    /* o cabecalho da tela: mes em cima, nome embaixo, so o "+" a direita */
+    #pgResumo .pgrCel { display: inline; }
+    #pgResumo .pgrPc { display: none; }
+    /* "+ Lançar recebimento" vira o "+" de 44px do desenho; "Planos" e sub-aba */
+    #vPagamentos .altopo #pgLancar { width: 44px; height: 44px; padding: 0; border-radius: 13px;
+                                     font-size: 0; gap: 0; justify-content: center; }
+    #vPagamentos .altopo #pgLancar::after { content: "+"; font-size: 22px; font-weight: 700; }
+    #vPagamentos .altopo #pgVerPlanos { display: none; }
+    /* as sub-abas viram uma fita que rola, numa linha so */
+    #pgAbas { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px;
+              scrollbar-width: none; margin-bottom: 12px; }
+    #pgAbas::-webkit-scrollbar { display: none; }
+    #pgAbas button { flex: none; height: 36px; padding: 0 13px; font-size: 12.5px; }
+    /* a casca dos atrasados e CARD com borda vermelha — nao o vermelho cheio */
+    #vPagamentos .pgatr { background: var(--pt-card); border-radius: 16px; }
+    #vPagamentos .pgatrcab { padding: 12px 15px; }
+    #vPagamentos .pgatrcab b { font-size: 13.5px; font-weight: 800; color: var(--pt-txt); }
+    #vPagamentos .pgatrcab i { width: 7px; height: 7px; }
+    #vPagamentos .pgatrcab span { font-size: 11.5px; color: var(--pt-txt-4); }
+    /* cada atrasado em DUAS fileiras: quem e + quanto em cima, a acao embaixo */
+    #vPagamentos .pgatrlin { flex-wrap: wrap; gap: 10px 10px; padding: 12px 15px;
+                             border-top: 1px solid var(--pt-hairline); }
+    /* nome e valor dividem a fileira de cima; a acao ocupa a de baixo */
+    #vPagamentos .pgatrlin > div:nth-child(2) { flex: 1 1 auto; min-width: 0; }
+    #vPagamentos .pgatrlin > b { flex: none; margin-left: auto; }
+    #vPagamentos .pgatrlin .alav { width: 32px; height: 32px; border-radius: 10px; font-size: 11.5px; }
+    #vPagamentos .pgatrlin .alnm { font-size: 13.5px; }
+    #vPagamentos .pgatrlin .alsub { font-size: 10.5px; }
+    #vPagamentos .pgatrlin > b { font-size: 15px; }
+    #vPagamentos .pgatrlin .dac { flex: 1 1 100%; gap: 7px; justify-content: stretch; flex-wrap: nowrap; }
+    #vPagamentos .pgatrlin .dac .btn { flex: 1; height: 38px; padding: 0 10px; border-radius: 11px;
+                                       font-size: 12px; font-weight: 800; justify-content: center; }
+    /* regra 9: historico de 6 meses e planos ficam atras de "Ver mais" */
+    /* display:block e nao flex: com flex, cada trecho de texto e o <b> viram
+     * itens separados e "Ver mais" some numa caixa de 38px — a mesma armadilha
+     * da .dnota na v621 e do <label> do questionario na v623. */
+    #vPagamentos .pgmais { display: block; line-height: 1.6; padding: 12px 14px;
+                           border-radius: 15px; background: var(--pt-caixa); width: 100%;
+                           border: 1px dashed var(--pt-borda-forte); color: var(--pt-txt-4);
+                           font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; text-align: left; }
+    #vPagamentos .pgmais b { color: var(--pt-txt-2); }
+    #vPagamentos.pg-mais .pgmais { display: none; }
+    #vPagamentos:not(.pg-mais) #pg6meses, #vPagamentos:not(.pg-mais) #pgComo { display: none; }
+  }
   /* ---------- Financeiro na tela 2e: bloco vermelho dos atrasados ---------- */
   .pgatr { background: rgba(248,113,113,.14); border: 1px solid rgba(248,113,113,.32); border-radius: 18px;
            overflow: hidden; margin-bottom: 14px; }
@@ -1104,6 +1174,72 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .chrb { padding: 8px 13px; border-radius: 10px; background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: var(--tk-tx2);
           font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .chrb:hover { border-color: var(--roxo, #7c3aed); }
+  .chvolta { display: none; }
+  /* saiu do style inline pra media query conseguir encolher no celular */
+  #chatTitulo { font-size: 17px; font-weight: 900; }
+  #chatSub { font-size: 12px; font-weight: 600; margin-top: 2px; }
+  /* ============================================================
+   * TELA 22 do handoff — O CHAT NO CELULAR.
+   * Valores do recorte telas-html/22-5f-chat-celular.html.
+   * A conversa vira TELA CHEIA: a lista sai da frente e volta pelo "‹".
+   * Antes o celular herdava o layout de computador — a lista inteira
+   * empilhava em cima e a conversa so comecava depois de 1.600px, ou seja,
+   * tocar num aluno nao mudava nada na tela.
+   *
+   * O que NAO entra, por nao existir dado (a mesma recusa da v618):
+   *  - "digitando…" no cabecalho e a bolha de tres pontos: o chat e polling
+   *    de 25s numa tabela sem coluna de estado. Nao ha canal de presenca.
+   *  - o selo de reacao "💪 1": app_chat nao tem coluna de reacao, e a tabela
+   *    de reacoes e exclusiva do feed. Exigiria SQL novo E mexer no app do
+   *    aluno — fora do escopo de um handoff do painel.
+   * ============================================================ */
+  @media (max-width: 900px) {
+    #vChat.chat-aberto .chlado { display: none; }
+    #vChat.chat-aberto .chpanel { grid-template-columns: 1fr; gap: 0; margin: -18px -12px 0; }
+    #vChat.chat-aberto .chconv { border: 0; border-radius: 0; min-height: calc(100vh - 88px); }
+    #vChat.chat-aberto .chvolta { display: inline-flex; align-items: center; justify-content: center;
+                                  flex: none; width: 24px; height: 36px; padding: 0; border: 0;
+                                  background: none; color: var(--pt-txt-4); font-size: 26px;
+                                  font-family: inherit; cursor: pointer; }
+    #vChat.chat-aberto .chtopo { padding: 13px 18px; gap: 11px; flex-wrap: wrap; }
+    #vChat.chat-aberto .chtopo > div:nth-of-type(1) { flex: 1 1 auto; min-width: 0; }
+    #vChat.chat-aberto .chtopo .qsav.grande { width: 36px; height: 36px; border-radius: 11px; font-size: 12.5px; }
+    #vChat.chat-aberto #chatTitulo { font-size: 14px; font-weight: 800; }
+    #vChat.chat-aberto #chatSub { font-size: 10.5px; font-weight: 700; color: var(--pt-roxo-claro); }
+    /* o chip de contexto vira FAIXA de ponta a ponta */
+    #vChat.chat-aberto .chtopo > div:last-child { flex: 1 1 100%; margin: 0 -18px -13px; order: 9;
+                                                 display: flex; align-items: center; gap: 9px;
+                                                 padding: 10px 18px; background: var(--pt-caixa);
+                                                 border-top: 1px solid var(--pt-hairline); flex-wrap: nowrap; }
+    #vChat.chat-aberto .chchip { padding: 0; border: 0; background: none; font-size: 11px;
+                                 font-weight: 700; color: var(--pt-txt-4); min-width: 0;
+                                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #vChat.chat-aberto #chatFicha { margin-left: auto; flex: none; height: auto; padding: 0;
+                                    border: 0; background: none; color: var(--pt-roxo-claro);
+                                    font-size: 11px; font-weight: 800; }
+    /* so as mensagens rolam */
+    #vChat.chat-aberto #chatMsgs { max-height: none; padding: 15px 18px; gap: 11px; justify-content: flex-end; }
+    /* o desenho nao poe avatar ao lado das bolhas: quem esta falando ja esta
+     * no cabecalho da tela cheia */
+    #vChat.chat-aberto .chbolha .qsav { display: none; }
+    #vChat.chat-aberto .chbolha { max-width: 82%; align-items: flex-start; flex-direction: column; gap: 5px; }
+    #vChat.chat-aberto .chbolha.minha { align-items: flex-end; }
+    #vChat.chat-aberto .chbolha .cht { padding: 11px 13px; font-size: 13px;
+                                       border-radius: 16px 16px 16px 5px; }
+    #vChat.chat-aberto .chbolha.minha .cht { border-radius: 16px 16px 5px 16px;
+                                             background: var(--pt-grad-faixa); border-color: transparent; }
+    /* a barra de escrever cola embaixo: respostas rapidas numa fita que rola */
+    #vChat.chat-aberto #chatEnvio { padding: 11px 18px 16px; }
+    #vChat.chat-aberto .chrapidas { flex-wrap: nowrap; overflow-x: auto; gap: 6px;
+                                    margin-bottom: 9px; scrollbar-width: none; }
+    #vChat.chat-aberto .chrapidas::-webkit-scrollbar { display: none; }
+    #vChat.chat-aberto .chrb { flex: none; height: 32px; padding: 0 11px; border-radius: 9px; font-size: 11.5px; }
+    #vChat.chat-aberto #chatTexto { height: 46px; border-radius: 13px; padding: 0 15px; font-size: 13px; }
+    #vChat.chat-aberto #chatEnviar { width: 46px; height: 46px; flex: none; padding: 0;
+                                     border-radius: 13px; font-size: 0; justify-content: center; }
+    #vChat.chat-aberto #chatEnviar::after { content: "➤"; font-size: 17px; }
+    #vChat.chat-aberto #chAbas { display: none; }
+  }
   /* ---------- Questionários na tela 3b ---------- */
   .qspanel { display: grid; grid-template-columns: 268px 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
   .qspanel:has(.qslista:empty) { grid-template-columns: 1fr; }
@@ -1715,6 +1851,8 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <button type="button" class="dbt sec" id="pgVerPlanos" style="margin-left:auto;">Planos</button>
       <button type="button" class="dbt" id="pgLancar" style="margin-left:0;">+ Lançar recebimento</button>
     </div>
+    <!-- tela 21 do handoff: o placar roxo do mes, so no celular -->
+    <div id="pgHero" data-pgsec="receb"></div>
     <div id="pgAtrasados" data-pgsec="receb"></div>
     <div class="dcols" data-pgsec="receb" style="margin-bottom:14px;">
       <div class="pfbox" id="pg6meses"></div>
@@ -1723,6 +1861,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <div class="pfbox" id="pgHoje"></div>
       </div>
     </div>
+    <!-- regra 9 do colapso: no celular o historico de 6 meses e o "Como voce
+         recebe" ficam atras desta porta. No computador ela nao existe. -->
+    <button type="button" class="pgmais" id="pgVerMais" data-pgsec="receb">Histórico de 6 meses e como você recebe: no celular ficam atrás de <b>Ver mais</b>.</button>
     <div class="card" style="margin-bottom: 14px;" data-pgsec="receb">
       <h2>Registrar pagamento</h2>
       <div class="linha-flex" style="margin-top: 8px;">
@@ -2834,10 +2975,12 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
       <div class="chconv">
         <div class="chtopo">
+          <!-- tela 22: no celular a conversa vira tela cheia e precisa de volta -->
+          <button type="button" class="chvolta" id="chatVolta" title="Voltar pras conversas" aria-label="Voltar pras conversas">&lsaquo;</button>
           <span class="qsav grande" id="chatAv">—</span>
           <div style="min-width:0;">
-            <div id="chatTitulo" style="font-size:17px;font-weight:900;">Escolha um aluno</div>
-            <div id="chatSub" class="muted" style="font-size:12px;font-weight:600;margin-top:2px;"></div>
+            <div id="chatTitulo">Escolha um aluno</div>
+            <div id="chatSub" class="muted"></div>
           </div>
           <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <span class="chchip" id="chatCtx" hidden></span>
@@ -8063,6 +8206,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
    * O mês numa linha, os ATRASADOS num bloco vermelho com Link/Pix/Recebi em
    * cada linha (regra 1 do handoff), o histórico de 6 meses com a projeção
    * hachurada e o que entrou hoje. As contas são as mesmas do resto do painel. */
+  /* a porta do "Ver mais" (tela 21, regra 9 do colapso) */
+  if ($("pgVerMais")) $("pgVerMais").addEventListener("click", function () {
+    var sec = $("vPagamentos");
+    if (sec) sec.classList.add("pg-mais");
+  });
   function pintaFin2e(st) {
     var hoje = S.todayISO();
     var mes = hoje.slice(0, 7);
@@ -8094,9 +8242,33 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       if (dv && dv.total) aReceber += dv.total;
     });
     var rot = $("pgMesRot"); if (rot) rot.textContent = MES[+mes.slice(5, 7) - 1];
+    /* Tela 21 do handoff: no celular o dinheiro do mes vira um CARD ROXO com o
+     * numero de 34px, a meta, a barra e a linha "a receber · vencidos". Ele le
+     * exatamente os mesmos numeros do card do mes do Inicio (dadosDoMes +
+     * config.metasPT), entao as duas telas nunca contam diferente. */
+    var hero = $("pgHero");
+    if (hero) {
+      var metaF = +((st.config || {}).metasPT || {}).fat || 0;
+      var pctF = metaF ? Math.min(100, Math.round(d.fat / metaF * 100)) : 0;
+      var dAntH = new Date(hoje + "T12:00"); dAntH.setMonth(dAntH.getMonth() - 1);
+      var mesAntH = dAntH.toISOString().slice(0, 7);
+      var fatAntH = dadosDoMes(st, mesAntH).fat;
+      var vsH = fatAntH ? Math.round((d.fat - fatAntH) / fatAntH * 100) : 0;
+      hero.innerHTML = '<div class="pghlin"><span class="pghk">RECEBIDO</span>' +
+        (fatAntH ? '<span class="pghs">' + (vsH >= 0 ? "+" : "") + vsH + "%</span>" : "") + "</div>" +
+        '<div class="pghn"><b>' + S.fmtBRL(d.fat) + "</b>" +
+        (metaF ? "<i>de " + S.fmtBRL(metaF) + "</i>" : "") + "</div>" +
+        (metaF ? '<div class="pghb"><span style="width:' + pctF + '%;"></span></div>' : "") +
+        '<div class="pghp">' + S.fmtBRL(aReceber) + " a receber" +
+        (totalAtr ? " · <b>" + S.fmtBRL(totalAtr) + " vencidos</b>" : "") + "</div>";
+    }
     var res = $("pgResumo");
-    if (res) res.innerHTML = S.fmtBRL(d.fat) + " recebidos" +
-      (aReceber ? ' · <span style="color:var(--tk-aten);">' + S.fmtBRL(aReceber) + " a receber</span>" : "");
+    /* No celular o dinheiro do mes ja esta no card roxo logo abaixo: repetir aqui
+     * em 24px era o mesmo numero duas vezes na mesma dobra. La o titulo e o NOME
+     * da tela, como no desenho (tela 21). */
+    if (res) res.innerHTML = '<span class="pgrCel">Financeiro</span><span class="pgrPc">' +
+      S.fmtBRL(d.fat) + " recebidos" +
+      (aReceber ? ' · <span style="color:var(--tk-aten);">' + S.fmtBRL(aReceber) + " a receber</span>" : "") + "</span>";
     // ---- bloco vermelho dos atrasados ----
     var box = $("pgAtrasados");
     if (box) {
@@ -14570,6 +14742,9 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   }
   function abreChat(id) {
     chatAluno = id;
+    /* tela 22 do handoff: no celular a conversa e uma TELA CHEIA — a lista de
+     * conversas sai da frente. Quem decide e o CSS; aqui so marcamos o estado. */
+    if ($("vChat")) $("vChat").classList.add("chat-aberto");
     var st = load();
     var a = st.alunos.find(function (x) { return x.id === id; });
     var nuvem = S.cloud && S.cloud();
@@ -14618,6 +14793,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       });
   }
   if ($("chatBusca")) $("chatBusca").addEventListener("input", renderChatPT);
+  if ($("chatVolta")) $("chatVolta").addEventListener("click", function () {
+    chatAluno = null;
+    if ($("vChat")) $("vChat").classList.remove("chat-aberto");
+    renderChatPT();
+  });
   $("chatRapidas").addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-chrap]");
     if (!b) return;
