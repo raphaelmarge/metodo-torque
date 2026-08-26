@@ -1104,6 +1104,18 @@ ninguém atropelar ninguém — valem pros dois:
   antes ou vá de PR).
 - O Claude Code puxa `origin/main` antes de cada lote — o que entrar por PR
   mergeado é incorporado automaticamente ao trabalho dele.
+- **`design/BRIEFING-CLAUDE-DESIGN.md` é GERADO — não edite à mão.** É o recado
+  que o Raphael cola no começo da conversa em claude.ai/design. Quem escreve é
+  `tools/briefing-design/gera.js`, que lê do repo a versão, os 15 últimos
+  lançamentos e em que versão `aluno-skin.js`/`aluno-builder.js` encostaram —
+  mais dois avisos que ele descobre sozinho: **quantas versões o app andou
+  desde a última mexida no skin** (o argumento contra copiar uma cópia velha
+  por cima) e os **números de versão repetidos** (v598–v601 saíram duas vezes,
+  de quando duas conversas trabalharam em paralelo — número de versão não serve
+  como endereço). A prosa fixa mora no script. O workflow
+  `.github/workflows/briefing-design.yml` roda o gerador e publica sozinho
+  quando muda `assets/versao.js`, o skin, o builder ou o próprio gerador — não
+  a cada push, senão viraria um commit de robô por empurrão.
 
 ## Como publicar (fluxo obrigatório)
 

@@ -1,0 +1,82 @@
+# TORQUE ON — o recado pro Claude Design se reescreve sozinho a cada publicação.
+#
+# Por que existe: o design/BRIEFING-CLAUDE-DESIGN.md era escrito à mão e
+# envelhecia em DIAS. Em 25/08 ele dizia "app em mt-v601" e o app já estava no
+# v605; no dia seguinte, no v633. Recado velho é pior que recado nenhum — o
+# Claude Design desenha em cima de uma foto do app que não existe mais, e foi
+# assim que um pacote de handoff quase apagou o v598 e o v599.
+#
+# Agora, toda vez que algo entra na main, o robô roda o gerador e, se o texto
+# mudou, publica o texto novo. Ninguém precisa lembrar de nada.
+#
+# Não entra em laço: push feito com o GITHUB_TOKEN não dispara workflow de novo
+# (regra do próprio GitHub). O "if" do passo de publicar é o segundo cinto.
+name: briefing do Claude Design
+
+on:
+  push:
+    branches: [main]
+    # NÃO roda a cada empurrão — só quando muda alguma coisa que o briefing
+    # conta. Senão viraria um commit de robô por push (a main recebe vários por
+    # dia) e o histórico ficaria ilegível.
+    paths:
+      - "assets/versao.js"          # subiu de versão = lote publicado
+      - "app/aluno-skin.js"         # o visual mudou
+      - "app/aluno-builder.js"      # o motor do app mudou
+      - "tools/briefing-design/gera.js"  # o próprio gerador mudou
+  workflow_dispatch:                # e o Raphael pode forçar quando quiser
+
+# duas publicações seguidas não brigam pelo mesmo arquivo
+concurrency:
+  group: briefing-design
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  gera:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # fetch-depth: 0 é OBRIGATÓRIO — o gerador lê o histórico inteiro pra
+      # montar a tabela de lançamentos e descobrir em que versão cada arquivo
+      # do visual encostou. Com a cópia rasa (o padrão) ele veria um commit só.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Gera o briefing a partir do repositório
+        run: node tools/briefing-design/gera.js
+
+      - name: Mudou?
+        id: mudou
+        run: |
+          if git diff --quiet -- design/BRIEFING-CLAUDE-DESIGN.md; then
+            echo "sim=nao" >> "$GITHUB_OUTPUT"
+            echo "O briefing já estava em dia — nada a publicar."
+          else
+            echo "sim=sim" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat -- design/BRIEFING-CLAUDE-DESIGN.md
+          fi
+
+      - name: Publica o briefing novo
+        if: steps.mudou.outputs.sim == 'sim'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design/BRIEFING-CLAUDE-DESIGN.md
+          git commit -m "docs: briefing do Claude Design em dia (gerado)" \
+                     -m "Reescrito por tools/briefing-design/gera.js depois da publicação $GITHUB_SHA."
+          # alguém pode ter publicado enquanto este robô rodava
+          for tentativa in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "tentativa $tentativa falhou; esperando..."
+            sleep $((tentativa * 5))
+          done
+          echo "não consegui publicar o briefing depois de 3 tentativas"
+          exit 1

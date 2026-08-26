@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | App em | **mt-v633** |
-| Estado do repo em | 2026-08-26 (commit `c688aa8`) |
+| Estado do repo em | 2026-08-26 (commit `35d4b66`) |
 | Repositório | `raphaelmarge/metodo-torque` |
 | Lançamentos no histórico | 87 |
 
