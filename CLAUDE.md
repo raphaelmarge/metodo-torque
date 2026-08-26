@@ -294,6 +294,28 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Menu do computador retrátil + revisão visual** (v621): o professor encolhe a
+gaveta no botão do cabeçalho (`#btnMenuFino`) e ela vira uma faixa de **66 px**
+só de ícones — a grade da Agenda e as duas colunas de Montar treino ganham a
+largura. O rótulo **não sai do documento**: vira `font-size: 0`, então o leitor
+de tela continua lendo "Início" e o `title` de cada botão é posto uma vez a
+partir do próprio texto (nada de repetir 17 rótulos na mão). A escolha fica em
+`mtapp:ptMenuFino`, gravada com `localStorage` direto — preferência de tela não
+passa pelo `S.write`, que sincroniza. No celular nada muda: lá o menu já é a
+gaveta do ☰, e o botão de encolher some.
+
+A revisão tela a tela achou cinco defeitos que os testes não pegavam porque são
+de aparência: (1) `nav .cnt`, `nav button.pouco` e `nav button.pouco .mi` da
+v614 miravam `nav`, mas a gaveta do computador é uma `<div class="abas-pt">` —
+o contador nunca virou pilha roxa e o grupo "menos usado" nunca ficou compacto;
+(2) `.abas-pt button` (classe+elemento) vencia `.mcab-bt` e engolia o botão de
+encolher; (3) `.dnota` era `display: flex`, então texto corrido com `<b>` no
+meio virava três itens e a frase quebrava em pedaços — agora o padrão é bloco e
+quem precisa do botão à direita pede `.dnota.lado`; (4) sem nuvem, o título do
+feed e o avatar do chat ficavam com um traço solto; (5) o `letter-spacing`
+negativo dos números gigantes vazava no `<small>` e comia o espaço entre as
+palavras ("kcalemrepouso").
+
 **Modo claro do painel** (v620, tela 3d): as telas novas (v614–v619) cravavam o
 hex escuro na mão, então o tema claro não alcançava nenhuma delas. Agora a
 paleta do painel é **um token por papel** — `--tk-sup`/`--tk-sup2`… (superfície),

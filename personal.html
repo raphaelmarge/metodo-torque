@@ -171,6 +171,44 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     body { padding-left: 258px; }
     .corpo { padding-bottom: 28px; }
   }
+  /* ---------- menu retratil no computador ----------
+   * O professor encolhe a gaveta pra ganhar largura na tela (a grade da Agenda e
+   * as duas colunas de Montar treino agradecem) e ela vira uma faixa so de icones.
+   * O rotulo NAO e apagado: vira font-size 0, entao continua no leitor de tela e
+   * no title. A escolha fica em mtapp:ptMenuFino. No celular nada muda — la o
+   * menu ja e a gaveta do hamburguer. */
+  .menu-cab { display: flex; align-items: flex-start; gap: 10px; }
+  .mcab-txt { flex: 1; min-width: 0; }
+  .abas-pt .mcab-bt { display: none; flex: none; align-items: center; justify-content: center; width: 30px; height: 30px;
+                      border-left: 0; font-size: 0;
+             margin: -4px -6px 0 0; padding: 0; border: 0; border-radius: 9px; background: rgba(255,255,255,.07);
+             color: var(--tk-tx3); cursor: pointer; transition: background .12s, color .12s, transform .2s; }
+  .abas-pt .mcab-bt:hover { background: rgba(255,255,255,.14); color: #fff; }
+  @media (min-width: 1100px) { .abas-pt .mcab-bt { display: inline-flex; } }
+  html[data-tema="claro"] .abas-pt .mcab-bt { background: rgba(19,17,24,.06); color: #6b6779; }
+  html[data-tema="claro"] .abas-pt .mcab-bt:hover { background: rgba(124,58,237,.10); color: var(--roxo); }
+  @media (min-width: 1100px) {
+    body.menu-fino { padding-left: 66px; }
+    body.menu-fino .abas-pt { width: 66px; }
+    body.menu-fino .abas-pt .mcab-txt,
+    body.menu-fino .abas-pt .navgrupo { font-size: 0; height: 0; padding: 0; margin: 0; overflow: hidden; }
+    body.menu-fino .abas-pt .mcab-txt { flex: 0 0 0; width: 0; }
+    body.menu-fino .abas-pt .navgrupo { border-top: 1px solid var(--tk-bd3); margin: 8px 12px 4px; }
+    body.menu-fino .menu-cab { padding: 6px 0 12px; justify-content: center; border-bottom: 1px solid var(--tk-bd3); }
+    body.menu-fino .abas-pt .mcab-bt { margin: 0; transform: rotate(180deg); }
+    body.menu-fino .abas-pt button[data-a] {
+      position: relative; font-size: 0; gap: 0; justify-content: center;
+      padding: 13px 0; margin-right: 0; border-radius: 0; border-left-width: 3px;
+    }
+    body.menu-fino .abas-pt button[data-a] .mi { margin-right: 0; width: 19px; height: 19px; }
+    body.menu-fino .abas-pt button.pouco { min-height: 0; opacity: 1; }
+    /* o contador vira bolinha: numero nao cabe numa faixa de 66px */
+    body.menu-fino .abas-pt .cnt { position: absolute; top: 9px; right: 13px; min-width: 8px; width: 8px;
+                                   height: 8px; padding: 0; font-size: 0; margin: 0; }
+    body.menu-fino .menu-tema { justify-content: center; padding: 14px 0; gap: 0; }
+    body.menu-fino .menu-tema > span { font-size: 0; gap: 0; }
+    body.menu-fino .menu-tema .sw { margin-left: 0; }
+  }
   html[data-tema="claro"] .abas-pt { background: #fff; border-right-color: #e3e0ec; }
   html[data-tema="claro"] .abas-pt .menu-cab { color: #6b6779; border-bottom-color: #e3e0ec; }
   html[data-tema="claro"] .abas-pt .menu-cab b { color: #191622; }
@@ -326,8 +364,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .dcols > .card, .dcol2 > .card { margin: 0; }
   .dcol2 { display: grid; gap: 12px; }
   @media (max-width: 980px) { .dcols { grid-template-columns: 1fr; } }
-  .dnota { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-radius: 16px;
+  .dnota { display: block; line-height: 1.6; padding: 14px 18px; border-radius: 16px;
            border: 1px dashed var(--tk-bd4); color: var(--tk-tx4); font-size: 12.5px; font-weight: 600; }
+  .dnota.lado { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .dnota b { color: var(--tk-roxoTx2); }
   .dnota .btn { margin-left: auto; }
   /* linha do tempo do dia (tela 1a) */
@@ -374,7 +413,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .pfkpi { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 16px; padding: 15px 17px; }
   .pfkpi .k { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: var(--tk-tx4); }
   .pfkpi .v { font-size: 28px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 3px; }
-  .pfkpi .v small { font-size: 13px; font-weight: 800; color: var(--tk-tx4); }
+  .pfkpi .v small { font-size: 13px; font-weight: 800; color: var(--tk-tx4); letter-spacing: normal; }
   .pfkpi .s { font-size: 12px; font-weight: 700; margin-top: 3px; }
   .pfcols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-top: 12px; align-items: start; }
   @media (max-width: 900px) { .pfcols { grid-template-columns: 1fr; } }
@@ -509,6 +548,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .chrb:hover { border-color: var(--roxo, #7c3aed); }
   /* ---------- Questionários na tela 3b ---------- */
   .qspanel { display: grid; grid-template-columns: 268px 1fr; gap: 14px; align-items: start; margin-bottom: 14px; }
+  .qspanel:has(.qslista:empty) { grid-template-columns: 1fr; }
   @media (max-width: 900px) { .qspanel { grid-template-columns: 1fr; } }
   .qslista:empty { display: none; }
   .qslista { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; overflow: hidden; padding-bottom: 6px; }
@@ -545,7 +585,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .avt { background: var(--tk-sup2); border: 1px solid var(--tk-bd); border-radius: 14px; padding: 12px 13px; }
   .avt .k { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--tk-tx4); }
   .avt .v { font-size: 25px; font-weight: 900; letter-spacing: -.03em; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  .avt .v small { font-size: 12px; font-weight: 700; color: var(--tk-tx4); margin-left: 3px; }
+  .avt .v small { font-size: 12px; font-weight: 700; color: var(--tk-tx4); margin-left: 4px; letter-spacing: normal; }
   .avt .d { font-size: 11.5px; font-weight: 800; margin-top: 4px; }
   .avlin { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
   .avlin .avr { flex: none; width: 88px; font-size: 12.5px; font-weight: 700; color: var(--tk-tx2); }
@@ -670,10 +710,10 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   /* barra lateral: o grupo "menos usado" fica compacto */
   .navgrupo { margin: 10px 0 4px; padding: 0 14px; font-size: 9.5px; font-weight: 800; letter-spacing: .18em;
               text-transform: uppercase; color: #6e6a78; }
-  nav .cnt { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: #7c3aed;
+  .abas-pt .cnt, nav .cnt { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: #7c3aed;
              color: #fff; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
-  nav button.pouco { min-height: 34px; font-size: 12.5px; opacity: .78; }
-  nav button.pouco .mi { opacity: .7; }
+  .abas-pt button.pouco, nav button.pouco { min-height: 34px; padding-top: 9px; padding-bottom: 9px; font-size: 12.5px; opacity: .78; }
+  .abas-pt button.pouco .mi, nav button.pouco .mi { opacity: .7; }
 </style>
 </head>
 <body>
@@ -782,7 +822,15 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <div class="menu-fundo" id="fundoMenuPt"></div>
   <div class="abas-pt" id="abas">
-    <div class="menu-cab">TORQUE ON<b>Módulo Personal</b></div>
+    <div class="menu-cab">
+      <span class="mcab-txt">TORQUE ON<b>Módulo Personal</b></span>
+      <button type="button" id="btnMenuFino" class="mcab-bt" aria-expanded="true"
+        title="Encolher o menu" aria-label="Encolher o menu">
+        <svg class="mi" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14.5 7 9.5 12l5 5"/><path d="M19 4.5v15"/></svg>
+      </button>
+    </div>
     
     <button data-a="dash" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/></svg>Início</button>
     <button data-a="alunos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg>Alunos</button>
@@ -824,7 +872,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       </div>
     </div>
     <div class="card" style="margin-bottom: 14px;"><h2>WhatsApp de hoje</h2><div id="bZapP" class="muted">Nenhuma mensagem pendente.</div></div>
-    <div class="dnota">
+    <div class="dnota lado">
       <span>Aniversários, fechamento do mês, indicadores completos e alertas do studio agora moram em <b>Relatórios</b> — saíram do Início porque não pedem ação hoje.</span>
       <button type="button" class="btn sec" id="dVerRel">Ver relatórios</button>
     </div>
@@ -1719,7 +1767,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
         <label style="display: flex; gap: 8px; align-items: center; font-size: 12.5px; margin: 0;"><input type="checkbox" id="fdmOcultos" style="width: 16px; height: 16px;"> mostrar os escondidos</label>
       </div>
       <div id="fdmLista" class="muted">Carregando…</div>
-      <div class="dnota" style="display:block;margin-top:14px;line-height:1.6;">Você modera daqui: <b>esconder</b> um post (some do app de todo mundo na hora), <b>apagar</b> de vez, ou desligar o feed pra turma inteira no interruptor lá em cima.</div>
+      <div class="dnota" style="margin-top:14px;">Você modera daqui: <b>esconder</b> um post (some do app de todo mundo na hora), <b>apagar</b> de vez, ou desligar o feed pra turma inteira no interruptor lá em cima.</div>
     </div>
   </section>
 
@@ -2049,7 +2097,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
       <span class="cfgnuvem" id="cfgNuvem" style="margin-left:auto;">—</span>
     </div>
     <div id="cfgResumo" data-cfgsec="resumo"></div>
-    <div class="dnota" data-cfgsec="resumo" style="display:block;margin-bottom:14px;line-height:1.6;">Chave e token <b>nunca voltam pra tela</b>: o painel só sabe <b>se existe</b>. Isso é regra do sistema — quem guarda o segredo é a nuvem, com a chave de serviço que o site não tem.</div>
+    <div class="dnota" data-cfgsec="resumo" style="margin-bottom:14px;">Chave e token <b>nunca voltam pra tela</b>: o painel só sabe <b>se existe</b>. Isso é regra do sistema — quem guarda o segredo é a nuvem, com a chave de serviço que o site não tem.</div>
     <div class="card" style="margin-bottom: 14px;" data-cfgsec="conta">
       <h2>Cobrança</h2>
       <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Quantos dias de tolerância depois do vencimento antes do aluno aparecer como <b>ATRASADO</b>? Vale pros alertas do Início, pra lista "Quem ainda não pagou", pra saúde da cobrança e pra régua automática. 0 = cobra no dia seguinte ao vencimento.</p>
@@ -2650,6 +2698,32 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // ---------- menu lateral ----------
   $("btnMenuPt").onclick = function () { document.body.classList.toggle("menu-aberto"); };
   $("fundoMenuPt").onclick = function () { document.body.classList.remove("menu-aberto"); };
+  /* ---------- menu retratil no computador ----------
+   * Encolhido, a gaveta vira uma faixa so de icones. O rotulo nao some do
+   * documento (vira font-size 0), entao o leitor de tela continua lendo "Inicio";
+   * o title de cada botao e posto aqui, uma vez, a partir do proprio texto — sem
+   * repetir os 17 rotulos na mao (que sairiam do compasso na proxima aba nova). */
+  (function () {
+    var bt = $("btnMenuFino");
+    if (!bt) return;
+    document.querySelectorAll("#abas button[data-a]").forEach(function (b) {
+      if (!b.title) b.title = b.textContent.trim();
+    });
+    function pinta(fino) {
+      document.body.classList.toggle("menu-fino", fino);
+      bt.setAttribute("aria-expanded", fino ? "false" : "true");
+      bt.title = fino ? "Abrir o menu" : "Encolher o menu";
+      bt.setAttribute("aria-label", bt.title);
+    }
+    var CHAVE = "mtapp:ptMenuFino";
+    try { pinta(localStorage.getItem(CHAVE) === "1"); } catch (e) { pinta(false); }
+    bt.addEventListener("click", function () {
+      var fino = !document.body.classList.contains("menu-fino");
+      pinta(fino);
+      try { localStorage.setItem(CHAVE, fino ? "1" : "0"); } catch (e) {}
+    });
+    window.__menuFino = { pinta: pinta, esta: function () { return document.body.classList.contains("menu-fino"); } }; // testes
+  })();
 
   // ---------- abas ----------
   document.querySelectorAll("#navPt [data-nav]").forEach(function (x) {
@@ -5208,13 +5282,21 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if ($("fdmLiga")) $("fdmLiga").checked = lig;
     if ($("fdmLigRot")) $("fdmLigRot").textContent = lig ? "Ligado no app" : "Desligado";
     var nuvem = S.cloud && S.cloud();
-    if (!nuvem) { box.textContent = "Entre com a conta da nuvem (card Sua ilha) pra ver o que a turma postou."; return; }
+    if (!nuvem) {
+      if ($("fdmResumo")) $("fdmResumo").textContent = "Precisa da sua conta";
+      box.textContent = "Entre com a conta da nuvem (card Sua ilha) pra ver o que a turma postou.";
+      return;
+    }
     box.textContent = "Carregando…";
     var q = nuvem.client.from("app_feed").select("id,nome,texto,foto,treino,oculto,criado")
       .eq("academia_id", nuvem.aid).order("criado", { ascending: false }).limit(60);
     if (!$("fdmOcultos").checked) q = q.eq("oculto", false);
     q.then(function (r) {
-      if (r && r.error) { box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a Comunidade."; return; }
+      if (r && r.error) {
+        if ($("fdmResumo")) $("fdmResumo").textContent = "Falta rodar o SQL";
+        box.textContent = "Rode o SQL novo (torqueon.com.br/sql.html) pra ligar a Comunidade.";
+        return;
+      }
       var posts = (r && r.data) || [];
       // o titulo conta a MESMA verdade da lista: os posts dos ultimos 7 dias
       var corte = new Date(); corte.setDate(corte.getDate() - 7);
@@ -7816,8 +7898,8 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
             '<div style="min-width:0;"><div class="tdnm">' + esc(ex.nome) +
             // o tipo de serie e um SELECT com cara de selo, colado no nome — na
             // sub-linha ele empurrava tudo pra segunda fileira
-            '<select class="tecsel tecchip3' + (it.tec ? " on" : "") + '" data-ttecsel="' + f.id + ":" + i + '" title="tipo de série neste exercício" aria-label="tipo de série">' + opcoesTec(it.tec, 1) + "</select>" +
-            (videoDoEx(ex) ? " <span title='tem vídeo' style='color:var(--tk-tx5);'>▸</span>" : "") + "</div>" +
+            (videoDoEx(ex) ? " <span title='tem vídeo' style='color:var(--tk-tx5);'>▸</span>" : "") +
+            '<select class="tecsel tecchip3' + (it.tec ? " on" : "") + '" data-ttecsel="' + f.id + ":" + i + '" title="tipo de série neste exercício" aria-label="tipo de série">' + opcoesTec(it.tec, 1) + "</select></div>" +
             '<div class="tdsub"><button data-tsr="' + f.id + ":" + i + '" title="mudar séries e repetições">' + it.series + " × " + esc(String(it.reps)) + "</button>" +
             '<span>·</span><button data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">' + (+it.descanso || 60) + " s</button>" +
             '<span>·</span><button data-tobs="' + f.id + ":" + i + '" title="' + (it.obs ? esc(it.obs) + " — clique para editar" : "editar a observação do exercício") + '">' +
@@ -9385,7 +9467,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     $("spAbrir").hidden = !url;
     // O painel NAO conta visitas nem pedidos: a pagina publicada e HTML estatico
     // e quem pede aula cai no WhatsApp. Dizer um numero aqui seria inventar.
-    box.innerHTML = '<div class="dnota" style="display:block;line-height:1.6;">' +
+    box.innerHTML = '<div class="dnota">' +
       (url ? "A página está <b>no ar</b>. " : "") +
       "Quem pede aula por ela chega direto no <b>seu WhatsApp</b> — o painel ainda não conta visitas nem pedidos, " +
       "então não mostra número nenhum aqui em vez de inventar um.</div>";
@@ -11704,7 +11786,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       '<div class="pfbox"><h3>Gasto e metabolismo</h3>' +
       '<div class="tdrot" style="margin:10px 0 2px;">TMB</div>' +
       '<div style="font-size:34px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;">' +
-      l.tmb.toLocaleString("pt-BR") + '<small style="font-size:13px;font-weight:700;color:var(--tk-tx4);margin-left:6px;">kcal em repouso</small></div>' +
+      l.tmb.toLocaleString("pt-BR") + '<small style="font-size:13px;font-weight:700;color:var(--tk-tx4);margin-left:8px;letter-spacing:normal;">kcal em repouso</small></div>' +
       '<div class="avkv"><span>Dia leve</span><b>' + Math.round(l.tmb * 1.375).toLocaleString("pt-BR") + "</b></div>" +
       '<div class="avkv"><span>Dia de treino</span><b>' + Math.round(l.tmb * 1.55).toLocaleString("pt-BR") + "</b></div>" +
       (l.controlePeso != null ? '<div class="avkv"><span>Controle de peso</span><b style="color:' +
@@ -11714,12 +11796,12 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         (lp && lp.pontuacao && lp.pontuacao !== l.pontuacao ? '<span style="float:right;font-size:12px;font-weight:800;color:' +
           (l.pontuacao >= lp.pontuacao ? "var(--tk-ok)" : "var(--tk-erro)") + ';">' + (l.pontuacao > lp.pontuacao ? "+" : "") + (l.pontuacao - lp.pontuacao) + " pontos</span>" : "") + "</h3>" +
         '<div style="font-size:44px;font-weight:900;letter-spacing:-.04em;">' + l.pontuacao +
-        '<small style="font-size:14px;font-weight:700;color:var(--tk-tx4);margin-left:6px;">de 100</small></div>' +
+        '<small style="font-size:14px;font-weight:700;color:var(--tk-tx4);margin-left:8px;letter-spacing:normal;">de 100</small></div>' +
         '<div class="dbarra" style="margin:10px 0 8px;"><i style="width:' + l.pontuacao + '%;"></i></div>' +
         '<div class="muted" style="font-size:11.5px;">O laudo imprimível sai com esses números e o histórico das ' +
         S.plural(lista.length, "medição", "medições") + ".</div></div>" : "") +
       "</div></div>" +
-      '<div class="dnota" style="margin-bottom:14px;"><span style="font-size:16px;">🖼</span>' +
+      '<div class="dnota lado" style="margin-bottom:14px;"><span style="font-size:16px;">🖼</span>' +
       "<span>As fotos de progresso que " + esc(String(a.nome).split(" ")[0]) + " manda pelo app moram na ficha dela, na aba <b>App do aluno</b>.</span>" +
       '<button type="button" class="btn sec mini" id="avCmpFotos" style="margin-left:auto;">Ver as fotos</button></div>';
   }
@@ -12875,7 +12957,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       (meta ? '<div style="font-size:12.5px;font-weight:700;color:var(--tk-tx4);">de ' + S.fmtBRL(meta) + "</div>" : "") + "</div>" +
       (meta ? '<div class="dbarra"><i style="width:' + pct + '%;"></i></div>' : '<div style="height:10px;"></div>') +
       '<div style="font-size:12.5px;font-weight:700;color:var(--tk-tx4);">No ritmo de agora fecha em <b style="color:var(--tk-roxoTx2);">' +
-      S.fmtBRL(proj) + "</b>" + (meta ? "" : ' · <button type="button" class="btn sec mini" id="dVerRel2" style="height:26px;">definir meta</button>') + "</div>" +
+      S.fmtBRL(proj) + "</b>" + (meta ? "" : ' <button type="button" class="btn sec mini" id="dVerRel2" style="height:26px;margin-left:10px;vertical-align:1px;">definir meta</button>') + "</div>" +
       '<div class="dkpis">' +
       kpi("A RECEBER", S.fmtBRL(aReceber), vencidos ? S.fmtBRL(vencidos) + " vencidos" : "nada vencido", vencidos ? "var(--tk-erro)" : "") +
       kpi("SESSÕES", d.feitas, metas.ses ? "meta " + metas.ses : S.plural(sesMes.length, "marcada", "marcadas") + " no mês") +
@@ -13630,12 +13712,19 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var st = load();
     var nuvem = S.cloud && S.cloud();
     if (!nuvem) {
-      el.innerHTML = "";
+      el.innerHTML = '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Nenhuma conversa por aqui ainda.</div>';
+      $("chatBusca").hidden = true;
+      $("chatAv").hidden = true;
+      $("chatFicha").hidden = true;
+      $("chatCtx").hidden = true;
+      $("chatSub").textContent = "";
       $("chatTitulo").textContent = "Chat interno";
       $("chatMsgs").innerHTML = '<div class="muted" style="padding:10px 0;">O chat interno precisa da sua conta (card lá embaixo) e do bloco CHAT DO PERSONAL do supabase-setup.sql. Enquanto isso, fale com os alunos pelo WhatsApp da aba Alunos.</div>';
       $("chatEnvio").hidden = true;
       return;
     }
+    $("chatBusca").hidden = false;
+    $("chatAv").hidden = !chatAluno;
     var ativos = st.alunos.filter(function (a) { return a.ativo !== false && a.appTokenP; });
     if (!ativos.length) {
       el.innerHTML = '<div class="muted" style="padding:14px 16px;font-size:12.5px;">Gere o App dos alunos primeiro — o chat vive dentro dele.</div>';
@@ -13679,6 +13768,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     if (!a || !nuvem) return;
     $("chatTitulo").textContent = a.nome;
     $("chatAv").textContent = String(a.nome || "?").trim().slice(0, 2).toUpperCase();
+    $("chatAv").hidden = false;
     $("chatEnvio").hidden = false;
     $("chatTexto").placeholder = "Escrever pra " + String(a.nome).split(" ")[0] + "…";
     $("chatRapidas").innerHTML = CH_RAPIDAS.map(function (t) {

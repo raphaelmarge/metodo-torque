@@ -9494,6 +9494,66 @@ async function abaPt(p, a) {
       ok(cel.menuEscondido && cel.temHamburguer, alvo.url + ": no celular o menu volta a ser a gaveta do ☰");
       await ctxD.close();
     }
+    /* ---- menu retrátil no computador ---- */
+    console.log("Menu retrátil no computador:");
+    {
+      const ctxR = await b.newContext({ viewport: { width: 1400, height: 900 } });
+      await ctxR.addInitScript(() => {
+        localStorage.setItem("mtapp:perfil", JSON.stringify({ nome: "Raphael" }));
+        localStorage.setItem("mtapp:ptSemConta", "1");
+        if (!sessionStorage.getItem("__limpouMenu")) {
+          localStorage.removeItem("mtapp:ptMenuFino");
+          sessionStorage.setItem("__limpouMenu", "1");
+        }
+      });
+      const pR = await ctxR.newPage();
+      await pR.goto(BASE + "/personal.html");
+      await pR.waitForTimeout(600);
+      const largura = () => pR.evaluate(() => ({
+        menu: Math.round(document.getElementById("abas").getBoundingClientRect().width),
+        corpo: getComputedStyle(document.body).paddingLeft,
+        rotulo: getComputedStyle(document.querySelector('#abas button[data-a="dash"]')).fontSize,
+        icone: !!document.querySelector('#abas button[data-a="dash"] .mi'),
+        bt: getComputedStyle(document.getElementById("btnMenuFino")).display,
+      }));
+      const aberto = await largura();
+      ok(aberto.menu === 258 && aberto.bt !== "none",
+        "menu aberto tem 258px e mostra o botão de encolher");
+      await pR.click("#btnMenuFino");
+      await pR.waitForTimeout(350);
+      const fino = await largura();
+      ok(fino.menu === 66 && fino.corpo === "66px",
+        "encolhido vira faixa de 66px e o conteúdo acompanha (" + fino.menu + "px / " + fino.corpo + ")");
+      ok(fino.rotulo === "0px" && fino.icone,
+        "encolhido some o rótulo e mantém o ícone");
+      // o rótulo NÃO sai do documento: continua no leitor de tela e vira o title
+      const acess = await pR.evaluate(() => {
+        const b2 = document.querySelector('#abas button[data-a="agenda"]');
+        return { texto: b2.textContent.trim(), title: b2.title };
+      });
+      ok(/Agenda/.test(acess.texto) && /Agenda/.test(acess.title),
+        "o rótulo continua no documento e no title (leitor de tela não perde a aba)");
+      // a escolha sobrevive ao recarregar
+      await pR.reload();
+      await pR.waitForTimeout(700);
+      const depois = await largura();
+      ok(depois.menu === 66, "a escolha de encolher fica guardada e volta assim ao recarregar");
+      // e o botão devolve o menu ao tamanho normal
+      await pR.click("#btnMenuFino");
+      await pR.waitForTimeout(350);
+      const volta = await largura();
+      ok(volta.menu === 258, "tocar de novo devolve o menu inteiro");
+      // no celular o retrátil não existe: lá a gaveta é a do ☰
+      await pR.setViewportSize({ width: 390, height: 844 });
+      await pR.waitForTimeout(300);
+      const noCel = await pR.evaluate(() => ({
+        bt: getComputedStyle(document.getElementById("btnMenuFino")).display,
+        pad: getComputedStyle(document.body).paddingLeft,
+      }));
+      ok(noCel.bt === "none" && noCel.pad === "0px",
+        "no celular o botão de encolher some e o corpo volta a ocupar a tela toda");
+      await ctxR.close();
+    }
   }
 
   ok(erros.length === 0, "nenhuma página com erro de JS" + (erros.length ? " — " + erros[0] : ""));
