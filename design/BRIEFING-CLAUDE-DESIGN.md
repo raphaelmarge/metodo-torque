@@ -1,58 +1,94 @@
 # Recado pro Claude Design — estado do app do aluno
 
 **Cole isto no começo da conversa em claude.ai/design.**
-Atualizado em 2026-08-25 · app em **mt-v601** · repo `raphaelmarge/metodo-torque`
+
+| | |
+|---|---|
+| App em | **mt-v633** |
+| Estado do repo em | 2026-08-26 (commit `c688aa8`) |
+| Repositório | `raphaelmarge/metodo-torque` |
+| Lançamentos no histórico | 87 |
+
+> 🤖 Este arquivo é **gerado** por `tools/briefing-design/gera.js`. Não edite à
+> mão — rode o script de novo. A versão, a data e a tabela de lançamentos são
+> lidas do próprio repositório, então elas nunca ficam desatualizadas.
 
 ---
 
-## Onde o app está agora
+## ⚠️ Não mande cópia do `app/aluno-skin.js`
 
-O pacote de handoff que você montou está **todo aplicado**. Os três passos
-mecânicos do `PATCH-APLICAR.md` (skin copiado, replace no builder, include antes
-do builder) foram conferidos no repo, e as **4 receitas entraram** — a última, o
-check-in da semana em uma pergunta por tela, entrou no mt-v600.
+O visual do app do aluno mora em `app/aluno-skin.js`. Ele encostou pela última
+vez em **mt-v601** (2026-08-25), e o app está em **mt-v633** — ou seja, **32 versões** aconteceram depois disso.
 
-Não precisa mandar nada disso de novo.
+Se você estiver com uma cópia desse arquivo de um pacote antigo, **ela está
+velha** e copiá-la por cima apaga o que veio depois. Isso quase aconteceu de
+verdade: um pacote de handoff sincronizado no mt-v597 mandava "copie por cima",
+e o arquivo já tinha mudado quatro vezes desde então.
 
-## ⚠️ O app mudou depois do mt-v597 — não mande cópia do skin
+Se precisar mexer no visual: peça o arquivo **atual** ao Raphael, ou mande só o
+trecho a mudar — nunca o arquivo inteiro.
 
-O pacote trazia um `app/aluno-skin.js` sincronizado no **mt-v597**. De lá pra cá o
-arquivo mudou quatro vezes. **Copiar aquela cópia por cima apagaria tudo abaixo:**
+O motor (`app/aluno-builder.js`) encostou em **mt-v631** (2026-08-26).
+Esse **não é** território de design — sync, push, PIX, GPS e chat moram nele.
+
+## ⚠️ Número de versão NÃO serve como endereço
+
+Estes números aparecem **mais de uma vez** no histórico, com conteúdos
+diferentes: mt-v601, mt-v600, mt-v599, mt-v598.
+
+Isso acontece quando duas conversas trabalham no mesmo repositório ao mesmo
+tempo — as duas numeram a partir do mesmo ponto e chegam ao mesmo número
+falando de coisas distintas. Nada se perdeu (as duas linhas foram juntadas),
+mas o rótulo ficou ambíguo.
+
+**Consequência prática:** não diga "volte pro jeito que estava no mt-v599".
+Descreva a tela, ou aponte o commit. Um número pode significar duas coisas.
+
+## Últimos 15 lançamentos
 
 | Versão | O que entrou |
 |---|---|
-| mt-v598 | Treino guiado mais limpo: fim do nome da ficha duplicado, card externo virou fundo, roxo só no botão e no progresso |
-| mt-v599 | Segunda volta do guiado: cronômetros juntos no topo, apoio num cinza e num tamanho só, tiles maiores, séries em pastilhas de 26px |
-| mt-v600 | Check-in da semana vira fluxo de uma pergunta por tela (`#ckFluxo`, rascunho em `ptckdraft`) |
-| mt-v601 | Alvos de toque abaixo de 44px fechados nas telas 44–51 (`.crModBt`, `#crMetaBtn`, `#avBtn2`) |
+| mt-v633 | montar ficha — a gaveta cobria a ficha e havia 4 jeitos de editar ([#620](https://github.com/raphaelmarge/metodo-torque/pull/620)) |
+| mt-v632 | habitos viram media no perfil + montar ficha sem o velho e o novo juntos ([#619](https://github.com/raphaelmarge/metodo-torque/pull/619)) |
+| mt-v631 | corrida continua E intervalada no mesmo treino + o quadro do trajeto ([#618](https://github.com/raphaelmarge/metodo-torque/pull/618)) |
+| mt-v630 | questionario respondido vira metrica no perfil do aluno ([#617](https://github.com/raphaelmarge/metodo-torque/pull/617)) |
+| mt-v629 | a camada de baixo do painel (o que fazia tudo continuar diferente) ([#616](https://github.com/raphaelmarge/metodo-torque/pull/616)) |
+| mt-v628 | seis defeitos de computador que o handoff revelou ([#615](https://github.com/raphaelmarge/metodo-torque/pull/615)) |
+| mt-v627 | montar treino no celular (tela 20) — a ultima das sete ([#614](https://github.com/raphaelmarge/metodo-torque/pull/614)) |
+| mt-v626 | Financeiro e Chat no celular (telas 21 e 22 do handoff) ([#613](https://github.com/raphaelmarge/metodo-torque/pull/613)) |
+| mt-v625 | ficha do aluno e Agenda no celular (telas 18 e 19 do handoff) ([#612](https://github.com/raphaelmarge/metodo-torque/pull/612)) |
+| mt-v624 | tokens do handoff + as telas 02 e 17 (Inicio e Alunos no celular) ([#611](https://github.com/raphaelmarge/metodo-torque/pull/611)) |
+| mt-v623 | conserta o painel no celular (a foto que o Raphael mandou) ([#610](https://github.com/raphaelmarge/metodo-torque/pull/610)) |
+| mt-v622 | demo do painel com nuvem simulada (Chat, Questionarios e Comunidade) ([#609](https://github.com/raphaelmarge/metodo-torque/pull/609)) |
+| mt-v621 | menu do computador retratil + revisao visual das 16 telas ([#608](https://github.com/raphaelmarge/metodo-torque/pull/608)) |
+| mt-v620 | modo claro do painel (tela 3d) — paleta em tokens ([#607](https://github.com/raphaelmarge/metodo-torque/pull/607)) |
+| mt-v619 | painel repaginado — as abas de fundo (4a, 4b, 4c, 4d, 4e) ([#606](https://github.com/raphaelmarge/metodo-torque/pull/606)) |
 
-Se precisar mexer no skin, peça o arquivo **atual** ao Raphael ou mande só o
-trecho a mudar — nunca o arquivo inteiro de uma cópia antiga.
-
-## 🚫 A tela 47 (treino guiado) saiu do mockup DE PROPÓSITO
+## 🚫 A tela do treino guiado saiu do mockup DE PROPÓSITO
 
 O Raphael viu a tela implementada, disse **"tá muita informação"** e pediu mais
-limpa. As versões v598 e v599 são o resultado desse retorno ao vivo, e ele
-**aprovou a versão enxuta**.
+limpa. O resultado foi um vai-e-vem ao vivo, e ele **aprovou a versão enxuta**.
 
-Ou seja: a tela no app hoje está **mais limpa que a 47 do `.dc.html`**, e isso é
-a decisão dele, não um erro de implementação. Se for redesenhar essa tela, parta
-do que está no app, não do mockup antigo.
+Ou seja: a tela no app hoje está **mais limpa que a do `.dc.html`**, e isso é
+decisão dele, não erro de implementação. Se for redesenhar essa tela, parta do
+que está no app, não do mockup.
 
-O que mudou em relação ao mockup, resumido: o nome da ficha aparecia duas vezes
-(topo e embaixo do 01/05) e ficou só uma; o card externo perdeu a moldura (era
-moldura dentro de moldura dentro de moldura); os dois cronômetros foram morar
-juntos no topo; e recado, dica, "na última vez" e "depois vem" adotaram um cinza
-só e um tamanho só. **Nada foi removido** — só mudou o peso.
+O que mudou em relação ao mockup: o nome da ficha aparecia duas vezes (topo e
+embaixo do 01/05) e ficou só uma; o card externo perdeu a moldura (era moldura
+dentro de moldura dentro de moldura); os dois cronômetros foram morar juntos no
+topo; e recado, dica, "na última vez" e "depois vem" adotaram um cinza só e um
+tamanho só. **Nada foi removido** — só mudou o peso.
 
-## Como mandar trabalho (pedido do CLAUDE.md)
+## Como mandar trabalho
 
-Prefira **PR em branch `design/...`** em vez de arquivo solto no chat. Assim as 20
-suítes rodam antes de publicar, e o Git mostra conflito em vez de esconder —
-que é exatamente o que quase aconteceu com o skin.
+Prefira **PR num branch `design/...`** em vez de arquivo solto no chat. Três
+motivos:
 
-Merge na `main` publica o site na hora (GitHub Pages), então tudo que entra passa
-pelos testes.
+1. As 20 suítes rodam **antes** de publicar.
+2. O Git mostra conflito em vez de escondê-lo — que é exatamente o que quase
+   aconteceu com o skin.
+3. Merge na `main` publica o site **na hora** (GitHub Pages). Não existe
+   rascunho: o que entra vai pro celular dos alunos.
 
 ## Regras que continuam valendo
 
@@ -63,18 +99,12 @@ pelos testes.
 - Não converter estilo inline existente pra classe: o modo claro lê `[style*=…]`.
 - Alvo de toque mínimo 44px; botão principal de largura cheia 58px.
 - `!important` só onde o alvo tem estilo inline no HTML montado — senão o inline
-  vence. (Foi o que os três botões de modalidade da corrida precisaram.)
+  vence.
 
 ## O que ainda está aberto
 
-- **Tela 48 (treino feito)** — a única das telas "direção final" que não foi
+- **Tela do "treino feito"** — a única das telas "direção final" que não foi
   conferida contra o app. Ela só aparece ao concluir um treino inteiro, e não
   existe caminho de teste que chegue lá sem simular o fluxo todo.
-- **Paridade NUTRI × PERSONAL** — o app do paciente já tem XP, semana, medalhas e
-  Comunidade; falta o painel (cadastro com anamnese, sub-abas, perfil).
-
-## Conferido no app real em 2026-08-25 (telas 44–51)
-
-Medido no DOM, não a olho: `--cor` #7c3aed, `--bg0` #0d0c10 e fonte Archivo nas
-sete telas capturadas, zero erro de JS, botão principal de largura cheia em 58px
-e — depois do mt-v601 — zero alvo de toque abaixo de 44px.
+- **Paridade NUTRI × PERSONAL** — o app do paciente já tem XP, semana, medalhas
+  e Comunidade; falta o painel (cadastro com anamnese, sub-abas, perfil).
