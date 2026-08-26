@@ -14,7 +14,7 @@ importScripts("assets/content.js");
  * a resposta que vinha sempre igual.
  *
  * tests/test-versao.js não deixa este número ficar diferente do versao.js. */
-var VERSION = "mt-v621";
+var VERSION = "mt-v622";
 var PRECACHE = "precache-" + VERSION;
 var RUNTIME = "runtime-" + VERSION;
 // O leitor de imagem das Medidas pela câmera tem ~17 MB e vive numa cache
@@ -84,6 +84,8 @@ var CORE = [
   "assets/modulo-conta.js",
   "assets/excluir-conta.js",
   "assets/bot-builder.js",
+  // simulador de nuvem do demo do painel (auto-desligado fora do demo)
+  "assets/demo-nuvem.js",
   // construtor do app do aluno: fonte única do código do app
   "app/aluno-builder.js",
   // skin do redesenho: a camada visual que o builder embute no app publicado

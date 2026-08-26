@@ -6,6 +6,8 @@
 <title>Demo — TORQUE PERSONAL</title>
 <link rel="icon" href="assets/icons/icon-personal.svg" type="image/svg+xml">
 <link href="assets/fonts/archivo.css" rel="stylesheet">
+<!-- MT_VERSAO: o demo marca os apps ja publicados com a versao do site -->
+<script src="assets/versao.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; }
   body { font-family: "Archivo", system-ui, sans-serif; background: radial-gradient(80% 30% at 50% 0%, rgba(124,58,237,.16), transparent 70%), #0e0d12; color: #f2f0f6; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
@@ -216,6 +218,14 @@
       a.servPacotes = [{ id: "sp" + id, nome: cfg.pacoteServ.nome, total: cfg.pacoteServ.total, usadas: cfg.pacoteServ.usadas, vendidoEm: iso(30) }];
       pagamentos.push({ id: uid(), alunoId: id, valor: 450, forma: "pix", data: iso(30), desc: "Pacote " + cfg.pacoteServ.total + "x " + cfg.pacoteServ.nome });
     }
+    /* Acesso ao app do aluno: no demo TODO mundo ja tem o app criado e publicado
+     * — e o que da com quem conversar no Chat, nos Questionarios e na
+     * Comunidade. Nao adianta deixar alguem "pendente" de proposito: ao abrir,
+     * o painel republica sozinho quem esta em versao velha (autoPublicaApps). */
+    a.appTokenP = "dtk" + (idx + 1);
+    a.acessoEm = iso(Math.min(cfg.desde, 20));
+    a.appPubEm = new Date(Date.now() - ((idx % 5) + 1) * 864e5).toISOString();
+    a.appVer = self.MT_VERSAO || "";
     alunos.push(a);
     treinosV2[id] = { fichas: (cfg.objetivo === "Hipertrofia" ? FICHAS.Hipertrofia : FICHAS.Outro).map(function (f) {
       // copia o item INTEIRO (obs e técnica inclusive) — antes zerava os dois aqui
@@ -327,12 +337,12 @@
   var seed = {
     config: {
       nome: "TORQUE Demo", zap: "21994429198", pixChave: "demo@torqueon.com.br", pixNome: "Studio TORQUE Demo", pixCidade: "Rio de Janeiro",
-      // no produto vem desligada; no demo fica ligada pra quem testa achar o recurso
-      scanOn: true,
+      // no produto vem desligadas; no demo ficam ligadas pra quem testa achar o recurso
+      scanOn: true, feedOn: true,
       mural: ["Sábado 7h tem treinão ao ar livre no parque — bora?", "Semana que vem começa o desafio de agosto. Prêmio: 1 mês grátis!"],
       // Minha página (site de vendas) já montada — abre em Minha página com prévia
       sitePro: {
-        slug: "torque-demo", headline: "Treine com quem acompanha de verdade",
+        slug: "torque-demo", slugPub: "torque-demo", headline: "Treine com quem acompanha de verdade",
         sub: "Treinos sob medida, avaliação física completa e acompanhamento diário pelo app",
         bio: "Sou personal trainer há 10 anos. Treino gente de todo nível — do primeiro treino à primeira maratona — com ficha própria, avaliação física e acompanhamento pelo app.",
         insta: "torquefit", youtube: "torquefit", email: "demo@torqueon.com.br",
@@ -399,6 +409,9 @@
       localStorage.setItem("mtapp:ptSemConta", "1");
       localStorage.setItem("mtapp:seeded", "1");
       localStorage.setItem("mtapp:ptDemo", "1");
+      // liga o simulador de nuvem (assets/demo-nuvem.js) — sem esta marca ele
+      // nao faz nada, entao o painel de verdade nunca ve nuvem de mentira
+      localStorage.setItem("mtapp:ptDemoNuvem", "1");
     } catch (e) { alert("Não deu pra gravar o demo neste navegador."); return; }
     location.href = "personal.html";
   };
