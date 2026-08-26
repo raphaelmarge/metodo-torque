@@ -294,6 +294,28 @@ mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
 function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
 **Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
 
+**Painel repaginado — as abas de fundo** (v619): **4a Configurações** ganhou a
+aba **Resumo** (a primeira): um card por grupo dizendo o próprio ESTADO
+(Receber dos alunos com o provedor, WhatsApp oficial, App dos alunos com quantos
+usam), o que liga/desliga virou **interruptor** (`.sw2` — precisa da regra
+`input[type="checkbox"].sw2` porque o `apps.css` tem um seletor de atributo mais
+forte que a classe sozinha) e a tela **diz em português** que chave e token
+nunca voltam pra ela. **4b Personalização** ganhou o cabeçalho "A cara do seu
+app" com *Publicar pros N* (o MESMO `publicaAppsPendentes` de sempre) e cada
+foto por tipo agora diz **quantas fichas ela atende hoje**. **4c Relatórios**:
+a sub-aba *Do dia a dia* abre com movimentação/indicadores/aniversários em três
+caixas, *Sessões por semana* com as faltas empilhadas e os *Alertas do studio*
+ao lado; o mês e o *Mandar fechamento* subiram pro cabeçalho. ⚠️ `#bNiverP` e
+`#relAlertas` são **movidos** (appendChild) pras caixas novas e voltam pro
+`#relGuarda` antes de cada repintura — sem isso o `innerHTML` apagaria elementos
+que outro trecho do painel ainda preenche. **4d Comunidade**: cabeçalho com a
+contagem da semana e o interruptor do feed, e cada post virou card com avatar,
+"hoje 07:58 · Treino B", texto entre aspas e a moderação dentro dele. **4e Minha
+página**: o endereço publicado no topo, com *Copiar link* e *Abrir página* — e,
+onde o desenho mostrava "184 visitas · 6 pedidos", a tela **diz que o painel
+ainda não conta visitas nem pedidos**, porque a página é HTML estático e quem
+pede aula cai no WhatsApp. Número inventado não entra.
+
 **Painel repaginado — Avaliação, Questionários e Chat** (v618): **3a** — a aba
 *Histórico e evolução* das Avaliações abre com as DUAS últimas medições
 comparadas: 4 tiles (peso, gordura, massa magra, IMC) com o delta, a composição

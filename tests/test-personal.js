@@ -1689,6 +1689,39 @@ async function abaPt(p, a) {
   await p.click("#fchCopiaP");
   ok(await p.evaluate(() => /copiado/.test(document.getElementById("fchStatusP").textContent)), "copiar resumo confirma");
 
+  /* ---- Relatórios repaginados (tela 4c) ---- */
+  {
+    const b4c = await p.evaluate(() => {
+      window.__rel4c(window.MTStore.read("ptStudio", {}));
+      const box = document.getElementById("rel4c");
+      return {
+        rot: (document.getElementById("relMesRot") || {}).textContent || "",
+        caixas: [...box.querySelectorAll(".rel3 .tdrot")].map((x) => x.textContent),
+        linhas: [...box.querySelectorAll(".rel3 .avkv span")].map((x) => x.textContent),
+        semanas: box.querySelectorAll(".dcols .pfbox div[title]").length,
+        niver: !!box.querySelector("#bNiverP"),
+        alertas: !!box.querySelector("#relAlertas"),
+        botao: (document.getElementById("fchZapP") || {}).textContent || "",
+      };
+    });
+    ok(/^[A-Z]\S* de \d{4}$/.test(b4c.rot), "🎨 4c: o topo diz o mês por extenso (" + b4c.rot + ")");
+    ok(b4c.caixas.length === 3 && /Movimenta/.test(b4c.caixas[0]) && /Indicadores/.test(b4c.caixas[1]) && /Aniversários/.test(b4c.caixas[2]),
+      "🎨 4c: movimentação, indicadores e aniversários em três caixas");
+    ok(b4c.linhas.includes("Entraram") && b4c.linhas.includes("Ticket médio") && b4c.linhas.includes("Tempo de casa"),
+      "🎨 4c: cada caixa traz as linhas do desenho");
+    ok(b4c.semanas >= 4, "🎨 4c: sessões por semana viram barras (" + b4c.semanas + " pedaços)");
+    ok(b4c.niver && b4c.alertas, "🎨 4c: aniversários e alertas do studio moram dentro das caixas novas");
+    ok(/Mandar fechamento/.test(b4c.botao), "🎨 4c: o fechamento do mês virou botão do cabeçalho");
+    // repintar não pode perder os dois blocos que são preenchidos por outro trecho
+    const duasVezes = await p.evaluate(() => {
+      const st = window.MTStore.read("ptStudio", {});
+      window.__rel4c(st); window.__rel4c(st);
+      return { niver: !!document.querySelector("#rel4c #bNiverP"), alertas: !!document.querySelector("#rel4c #relAlertas") };
+    });
+    ok(duasVezes.niver && duasVezes.alertas,
+      "🎨 4c: repintar duas vezes não apaga os blocos de aniversário e alertas (o guarda-volumes segura)");
+  }
+
   // ---------- dia a dia e retenção: Seu dia hoje, radar, alertas com ação, badges, pushes ----------
   console.log("Dia a dia e retenção:");
   {
@@ -5448,6 +5481,42 @@ async function abaPt(p, a) {
     return niver && niver.texto;
   });
   ok(zapModelo === "Parabéns Nivea, sucesso!", "mensagem fixa editada pela lista unificada muda o texto da fila na hora");
+
+  /* ---- Configurações repaginadas (tela 4a) ---- */
+  {
+    const b4a = await p.evaluate(() => {
+      window.__cfgAba("resumo");
+      window.__cfg4a();
+      const box = document.getElementById("cfgResumo");
+      return {
+        aba: document.querySelector("#cfgAbas button.ativa").textContent.trim(),
+        titulo: (document.getElementById("cfgTitulo") || {}).textContent || "",
+        nuvem: (document.getElementById("cfgNuvem") || {}).textContent || "",
+        cards: [...box.querySelectorAll(".cfgcard .cfgt")].map((x) => x.textContent),
+        toggles: [...box.querySelectorAll("[data-cfgtg]")].map((x) => x.getAttribute("data-cfgtg")),
+        nota: [...document.querySelectorAll('[data-cfgsec="resumo"]')].map((x) => x.textContent).join(" "),
+      };
+    });
+    ok(/Resumo/.test(b4a.aba), "🎨 4a: Configurações abre no Resumo");
+    ok(/ligado|Falta ligar/i.test(b4a.titulo), "🎨 4a: o título conta o estado em uma frase (" + b4a.titulo + ")");
+    ok(/aparelho|Nuvem/.test(b4a.nuvem), "🎨 4a: o selo diz se está sincronizado com a nuvem");
+    ok(b4a.cards.length === 3 && /Receber dos alunos/.test(b4a.cards[0]) && /WhatsApp/.test(b4a.cards[1]) && /App dos alunos/.test(b4a.cards[2]),
+      "🎨 4a: um card por grupo, cada um dizendo o próprio estado");
+    ok(b4a.toggles.join(",") === "feedOn,scanOn", "🎨 4a: o que liga/desliga virou interruptor");
+    ok(/nunca voltam pra tela/.test(b4a.nota), "🎨 4a: a tela diz em português que chave e token nunca voltam");
+    // o interruptor grava do mesmo jeito que o botão Salvar de sempre
+    const liga = await p.evaluate(async () => {
+      const antes = !!(window.MTStore.read("ptStudio", {}).config || {}).feedOn;
+      const sw = document.querySelector('[data-cfgtg="feedOn"]');
+      sw.checked = !antes;
+      sw.dispatchEvent(new Event("change", { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 150));
+      const st = window.MTStore.read("ptStudio", {});
+      return { antes, depois: !!(st.config || {}).feedOn, pend: st.alunos.some((a) => a.appEditEm) };
+    });
+    ok(liga.depois !== liga.antes && liga.pend,
+      "🎨 4a: mexer no interruptor grava e joga os apps na fila de publicar");
+  }
   const fixasUi = await p.evaluate(async () => {
     const t = document.getElementById("autoLista").textContent;
     const temFixas = /Lembrete de treino/.test(t) && /Aniversário/.test(t) && /Pagamento atrasado/.test(t) && /Renovação de plano/.test(t);
@@ -5481,6 +5550,24 @@ async function abaPt(p, a) {
     S.write("ptStudio", st);
   });
   await abaPt(p, "sitepro");
+
+  /* ---- Minha página repaginada (tela 4e) ---- */
+  {
+    const b4e = await p.evaluate(() => {
+      window.__sitePro.render();
+      return {
+        kicker: (document.querySelector("#vSitePro .alk") || {}).textContent || "",
+        endereco: (document.getElementById("spEndereco") || {}).textContent || "",
+        copiar: !!document.getElementById("spCopiar") && document.getElementById("spCopiar").hidden,
+        numeros: (document.getElementById("spNumeros") || {}).textContent || "",
+      };
+    });
+    ok(/página de vendas/i.test(b4e.kicker), "🎨 4e: o topo é o endereço da página de vendas");
+    ok(/endereço|publicada|torqueon/.test(b4e.endereco), "🎨 4e: e diz o link, ou o que falta pra ele existir (" + b4e.endereco + ")");
+    ok(b4e.copiar, "🎨 4e: sem página publicada, Copiar link não aparece");
+    ok(/não conta visitas nem pedidos/.test(b4e.numeros),
+      "🎨 4e: o painel diz que ainda NÃO conta visitas nem pedidos, em vez de mostrar número inventado");
+  }
   await p.fill("#spSlug", "Studio Teste!");
   await p.fill("#spHeadline", "Treine de verdade");
   await p.fill("#spBio", "Sou o professor <b>Teste</b> & cia");
@@ -7215,6 +7302,25 @@ async function abaPt(p, a) {
 
   // ---------- 🎨 aba Personalização: paleta completa com cores prontas ----------
   await abaPt(p, "pers");
+
+  /* ---- Personalização repaginada (tela 4b) ---- */
+  {
+    const b4b = await p.evaluate(() => {
+      window.__pintaCapasTipo();
+      return {
+        kicker: (document.querySelector("#vPers .alk") || {}).textContent || "",
+        nome: (document.getElementById("persNome") || {}).textContent || "",
+        botao: (document.getElementById("persPublica") || {}).textContent || "",
+        contagens: [...document.querySelectorAll("#cfgCapasTipo > div")].map((d) => d.textContent).filter((t) => /ficha|nenhuma/.test(t)).length,
+        tipos: document.querySelectorAll("#cfgCapasTipo > div").length,
+      };
+    });
+    ok(/A cara do seu app/i.test(b4b.kicker) && b4b.nome.length > 0,
+      "🎨 4b: o topo diz de quem é o app que está sendo pintado");
+    ok(/Publicar|Tudo publicado/.test(b4b.botao), "🎨 4b: o botão do topo diz quantos apps estão esperando (" + b4b.botao + ")");
+    ok(b4b.tipos === 10 && b4b.contagens === 10,
+      "🎨 4b: cada foto por tipo diz quantas fichas ela atende hoje");
+  }
   const pers = await p.evaluate(async () => {
     const out = { visivel: !document.getElementById("vPers").hidden, presets: document.querySelectorAll("[data-perscor]").length };
     document.querySelector("[data-perscor='#dc2626']").click();
@@ -8540,6 +8646,23 @@ async function abaPt(p, a) {
     });
     ok(/Mariana/.test(mod.html) && /PR de agacho/.test(mod.html), "o professor vê no painel o que a turma postou");
     ok(mod.chamadas.some((c) => c[0] === "update" && c[1] === "f1" && c[2] === true), "'Esconder' marca o post como oculto na nuvem (some do app na hora)");
+
+    /* ---- Comunidade repaginada (tela 4d) ---- */
+    {
+      const b4d = await pC.evaluate(() => ({
+        resumo: (document.getElementById("fdmResumo") || {}).textContent || "",
+        rotulo: (document.getElementById("fdmLigRot") || {}).textContent || "",
+        temSw: !!document.getElementById("fdmLiga"),
+        cards: document.querySelectorAll("#fdmLista .fdpost").length,
+        cab: !!document.querySelector("#fdmLista .fdpost .fdcab .qsav"),
+        aspas: /“PR de agacho!”/.test(document.getElementById("fdmLista").textContent),
+        acoes: document.querySelectorAll("#fdmLista .fdpost [data-fdmoc]").length,
+      }));
+      ok(/post|Ningu[ée]m/.test(b4d.resumo), "🎨 4d: o topo conta os posts da semana (" + b4d.resumo + ")");
+      ok(b4d.temSw && /Ligado|Desligado/.test(b4d.rotulo), "🎨 4d: ligar/desligar o feed virou interruptor do cabeçalho");
+      ok(b4d.cards === 1 && b4d.cab, "🎨 4d: cada post é um card com avatar e nome");
+      ok(b4d.aspas && b4d.acoes === 1, "🎨 4d: o texto sai entre aspas e a moderação fica no próprio post");
+    }
 
     // 5) sem nuvem, o painel explica em vez de quebrar
     const semNuvem = await pC.evaluate(() => {
