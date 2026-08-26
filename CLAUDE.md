@@ -251,6 +251,29 @@ cada pintura, porque `espelhaW` reseta classe/texto/estilo dele no topo. `wod.gi
 zera em wodZera, ao começar do zero, ao trocar de tipo e ao escolher outro WOD.
 Ganchos: `window.__wodGuia.avanca`.
 
+**Painel repaginado: Início e menu** (a partir da v614): primeiro lote do
+canvas *Painel do professor* (16 telas, handoff em `design_handoff_painel_personal`).
+**A tela 1b foi descartada** — o Raphael escolheu a 1a, e o registro disso mora
+no próprio arquivo de design. Entregue: (1) **menu cortado em dois** — as 6 do
+dia a dia em cima (Início, Alunos, Agenda, Financeiro, Treinos, **Chat, que
+subiu**) e as outras 10 sob `MENOS USADO` (`.navgrupo` + `.pouco`), com
+contador `.cnt` em Alunos/Agenda/Chat; a gaveta `.abas-pt` **não** virou pílula,
+como o handoff pede. (2) **Início na 1a**: faixa roxa (`#dashTopo`) com a
+próxima sessão — `faltaPra()` dá o rótulo "AGORA EM 40 MIN"/"MAIS TARDE" — mais
+`Resolver hoje` (`pintaResolver`: cobrança vencida pela MESMA regra do
+Financeiro, ficha sem prescrição nova, e conversa parada que entra depois por
+`resolverChat()`, porque o chat é da nuvem e o render é síncrono), a linha do
+tempo do dia (`.dlinha`, próxima com faixa roxa, feita esmaecida, quem faltou
+com "Cobrar aula") e a coluna da direita com o mês (`pintaMesDash`) e o Radar.
+(3) **Cinco blocos saíram do Início pra Relatórios** → sub-aba nova *Do dia a
+dia* (`data-rela="geral"`): KPIs, metas, movimentação/indicadores, fechamento,
+aniversários e alertas — o Início mostra só o que muda decisão hoje, e uma nota
+com atalho diz pra onde foram. ⚠️ Ao semear dados em teste use
+`localStorage.setItem` direto: `MTStore.write` dispara a sincronização e, com
+mock estreito de nuvem instalado por outro bloco, estoura `upsert is not a
+function`. Ganchos: `window.__dashPT` ganhou `topo`, `resolver`, `mes`, `falta`.
+**Faltam as outras 12 telas** (2a-2e, 3a-3d, 4a-4e).
+
 **Comunidade não recarregava sozinha** (conserto na v613): o timer de 45 s do
 feed fazia `if(SEC==='feed')carrega()`, mas `SEC` é **private do IIFE do menu**
 (declarado lá embaixo, noutra função) — então o timer estourava

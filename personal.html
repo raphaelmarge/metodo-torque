@@ -217,6 +217,94 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .sessao-pt.feita { opacity: .55; }
   /* nome do aluno no topo do perfil sem o espaçamento largo do h2 padrão */
   #pfTitulo { letter-spacing: .02em; }
+
+  /* ---------- Início do desenho novo (canvas "Painel do professor") ----------
+     Topo roxo com o dia, a próxima sessão e o Resolver hoje. As cores e os
+     raios vêm do canvas: #7c3aed / #141218 / #26222f, raio 16-20. */
+  .dtopo { background: linear-gradient(135deg, #7c3aed, #6d28d9); border-radius: 20px; padding: 22px 26px; margin-bottom: 14px; color: #fff; }
+  .dtopo .dlin { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .dtopo .ddata { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+  .dtopo h2 { font-size: 27px; font-weight: 900; letter-spacing: -.03em; margin: 3px 0 4px; color: #fff; text-transform: none; }
+  .dtopo .dsub { font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,.82); }
+  .dtopo .dacoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .dbt { display: inline-flex; align-items: center; gap: 7px; height: 44px; padding: 0 16px; border-radius: 12px; border: 0;
+         background: #fff; color: #4c1d95; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+  .dbt.sec { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18); color: #fff; }
+  /* card da próxima sessão, dentro do topo */
+  .dagora { display: flex; align-items: center; gap: 16px; padding: 15px 18px; margin-top: 16px; border-radius: 16px;
+            background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18); flex-wrap: wrap; }
+  .dagora .dq { display: flex; flex-direction: column; gap: 1px; padding-right: 16px; border-right: 1px solid rgba(255,255,255,.2); }
+  .dagora .dk { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: rgba(255,255,255,.75); }
+  .dagora .dh { font-size: 30px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .dagora .dav { width: 46px; height: 46px; flex: none; border-radius: 14px; background: rgba(255,255,255,.2);
+                 display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; }
+  .dagora .dnome { font-size: 16.5px; font-weight: 800; }
+  .dagora .dfic { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.82); }
+  /* Resolver hoje */
+  .dres { margin-bottom: 16px; }
+  .dres .dtit { display: flex; align-items: baseline; gap: 9px; margin-bottom: 11px; }
+  .dres .dtit b { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; color: #8a8695; text-transform: uppercase; }
+  .dres .dtit span { font-size: 12px; font-weight: 700; color: #6e6a78; }
+  .dres .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+  .dcard { background: #141218; border: 1px solid #26222f; border-radius: 16px; padding: 15px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .dcard .dsel { display: flex; align-items: center; gap: 8px; font-size: 9.5px; font-weight: 800; letter-spacing: .18em; }
+  .dcard .dsel i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: block; }
+  .dcard .dqu { font-size: 15px; font-weight: 800; color: #f2f0f6; }
+  .dcard .dpq { font-size: 12.5px; font-weight: 600; color: #8a8695; margin-top: 3px; }
+  .dcard .dacs { display: flex; gap: 7px; margin-top: auto; }
+  .dcard .dacs .btn { flex: 1; justify-content: center; height: 40px; border-radius: 11px; font-size: 12.5px; }
+  .dcard .dacs .btn.ic { flex: none; width: 40px; padding: 0; }
+  /* duas colunas do Início: o dia à esquerda, o mês e o radar à direita */
+  .dcols { display: grid; grid-template-columns: 1.25fr 1fr; gap: 12px; align-items: start; margin-bottom: 14px; }
+  .dcols > .card, .dcol2 > .card { margin: 0; }
+  .dcol2 { display: grid; gap: 12px; }
+  @media (max-width: 980px) { .dcols { grid-template-columns: 1fr; } }
+  .dnota { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-radius: 16px;
+           border: 1px dashed #322e3d; color: #8a8695; font-size: 12.5px; font-weight: 600; }
+  .dnota b { color: #a78bfa; }
+  .dnota .btn { margin-left: auto; }
+  /* linha do tempo do dia (tela 1a) */
+  .dlinha { display: flex; align-items: center; gap: 14px; padding: 11px 4px; border-top: 1px solid #1d1a24; }
+  .dlinha:first-child { border-top: 0; }
+  .dlinha .dhh { width: 52px; flex: none; font-size: 12.5px; font-weight: 800; color: #8a8695; font-variant-numeric: tabular-nums; }
+  .dlinha .dnm { font-size: 14px; font-weight: 800; color: #f2f0f6; }
+  .dlinha .dfi { font-size: 12px; font-weight: 600; color: #6e6a78; margin-top: 1px; }
+  .dlinha .dac { margin-left: auto; display: flex; gap: 7px; align-items: center; }
+  .dlinha.feita { opacity: .5; }
+  .dlinha.faltou .dhh { color: #f87171; }
+  .dlinha.prox { background: rgba(124,58,237,.18); border-left: 3px solid #7c3aed; border-radius: 0 12px 12px 0; padding-left: 12px; }
+  .dlinha.prox .dfi { color: #c4b5fd; }
+  .dlinha.vaga .dnm { color: #a9a4b5; }
+  .dok { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; color: #4ade80; }
+  /* card do mês, na coluna da direita */
+  .dmes .dtop { display: flex; align-items: baseline; gap: 8px; }
+  .dmes .dtop b { font-size: 17px; font-weight: 900; letter-spacing: -.02em; }
+  .dmes .dtop span { font-size: 12px; font-weight: 700; color: #8a8695; }
+  .dmes .dfat { font-size: 34px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 6px; }
+  .dmes .dkpis { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; margin-top: 16px; }
+  .dmes .dkpis .dk { font-size: 9.5px; font-weight: 800; letter-spacing: .18em; color: #8a8695; }
+  .dmes .dkpis .dv { font-size: 22px; font-weight: 900; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .dmes .dkpis .ds { font-size: 11.5px; font-weight: 700; color: #6e6a78; margin-top: 1px; }
+  /* radar de retenção com a linha do desenho */
+  .drad { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid #1d1a24; }
+  .drad:first-child { border-top: 0; }
+  .drad .dav2 { width: 34px; height: 34px; flex: none; border-radius: 11px; background: #241a3d; color: #c4b5fd;
+                display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800; }
+  /* Placar do mês */
+  .dplacar { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .dplacar .dbox { background: #141218; border: 1px solid #26222f; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: center; }
+  .dplacar .dcol { display: grid; gap: 12px; }
+  .dfat { font-size: 34px; font-weight: 900; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .dbarra { height: 10px; border-radius: 99px; background: #26222f; overflow: hidden; margin: 12px 0 10px; }
+  .dbarra i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+  @media (max-width: 900px) { .dplacar { grid-template-columns: 1fr; } }
+  /* barra lateral: o grupo "menos usado" fica compacto */
+  .navgrupo { margin: 10px 0 4px; padding: 0 14px; font-size: 9.5px; font-weight: 800; letter-spacing: .18em;
+              text-transform: uppercase; color: #6e6a78; }
+  nav .cnt { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: #7c3aed;
+             color: #fff; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+  nav button.pouco { min-height: 34px; font-size: 12.5px; opacity: .78; }
+  nav button.pouco .mi { opacity: .7; }
 </style>
 </head>
 <body>
@@ -327,22 +415,24 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   <div class="menu-fundo" id="fundoMenuPt"></div>
   <div class="abas-pt" id="abas">
     <div class="menu-cab">TORQUE ON<b>Módulo Personal</b></div>
+    
     <button data-a="dash" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 11.5 12 4l8 7.5'/><path d='M6.5 10.5V20h11v-9.5'/></svg>Início</button>
     <button data-a="alunos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='9' cy='8.5' r='3.2'/><path d='M3.5 19.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5'/><path d='M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.5c1.8 1 3 2.9 3 5'/></svg>Alunos</button>
     <button data-a="agenda"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg>Agenda</button>
     <button data-a="pagamentos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg>Financeiro</button>
     <button data-a="treinos"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8.5 6.5v11M15.5 6.5v11M5.5 9v6M18.5 9v6M8.5 12h7M2.5 12h3M18.5 12h3'/></svg>Treinos</button>
-    <button data-a="avaliacoes"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/></svg>Avaliações</button>
-    <button data-a="quest"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg>Questionários</button>
-    <button data-a="desafio"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/></svg>Desafio</button>
-    <button data-a="relatorios"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg>Relatórios</button>
-    <button data-a="assessoria"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/></svg>Assessoria</button>
-    <button data-a="sitepro"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/></svg>Minha página</button>
     <button data-a="chat"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z'/></svg>Chat</button>
-    <button data-a="config"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/></svg>Configurações</button>
-    <button data-a="pers"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg>Personalização</button>
-    <button data-a="imagens"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='14' rx='2.5'/><circle cx='8.5' cy='10' r='1.6'/><path d='m4 17 4.5-4.5 3.5 3.5 3-3 5 5'/></svg>Imagens</button>
-    <button data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
+    <div class="navgrupo">Menos usado</div>
+    <button class="pouco" data-a="avaliacoes"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/></svg>Avaliações</button>
+    <button class="pouco" data-a="quest"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='5' y='4.5' width='14' height='16.5' rx='2'/><path d='M9 4.5a3 3 0 0 1 6 0M8.5 10.5h7M8.5 14h7M8.5 17.5h4.5'/></svg>Questionários</button>
+    <button class="pouco" data-a="desafio"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8 4.5h8v5a4 4 0 0 1-8 0z'/><path d='M8 5.5H4.5A3.5 3.5 0 0 0 8 9M16 5.5h3.5A3.5 3.5 0 0 1 16 9M12 13.5v3M8.5 20.5h7M9.5 16.5h5v4h-5z'/></svg>Desafio</button>
+    <button class="pouco" data-a="relatorios"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 20.5h17M6.5 20v-7M12 20V6.5M17.5 20v-10'/></svg>Relatórios</button>
+    <button class="pouco" data-a="assessoria"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><circle cx='12' cy='12' r='4.5'/><circle cx='12' cy='12' r='.8'/></svg>Assessoria</button>
+    <button class="pouco" data-a="sitepro"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='9'/><path d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/></svg>Minha página</button>
+    <button class="pouco" data-a="config"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2'/></svg>Configurações</button>
+    <button class="pouco" data-a="pers"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-.8 2-1.8 0-1.2-1-1.5-1-2.5 0-.8.6-1.3 1.5-1.3h1.8a4.2 4.2 0 0 0 4.2-4.2c0-4-3.9-7.2-8.5-7.2z'/><circle cx='7.8' cy='10.8' r='1'/><circle cx='11.5' cy='7.6' r='1'/><circle cx='15.5' cy='9.6' r='1'/></svg>Personalização</button>
+    <button class="pouco" data-a="imagens"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='14' rx='2.5'/><circle cx='8.5' cy='10' r='1.6'/><path d='m4 17 4.5-4.5 3.5 3.5 3-3 5 5'/></svg>Imagens</button>
+    <button class="pouco" data-a="conta"><svg class='mi' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17.5 18.5h-11a4 4 0 0 1-.6-7.96 5.5 5.5 0 0 1 10.7-1.4 4.5 4.5 0 0 1 .9 9.36z'/></svg>Sua ilha</button>
     <div class="menu-tema">
       <span><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.2 5.2l1.7 1.7M17.1 17.1l1.7 1.7M18.8 5.2l-1.7 1.7M6.9 17.1l-1.7 1.7'/></svg> Modo claro</span>
       <button id="btnTemaPt" class="sw" role="switch" aria-checked="false" title="Mudar pro modo claro"><span class="sw-bola"></span></button>
@@ -351,40 +441,25 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
 
   <!-- DASHBOARD (estilo Resumo Gerencial da academia) -->
   <section id="vDash">
-    <div class="kpi-pt" id="kpis"></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Seu dia hoje</h2><div id="bHojeP" class="muted">Nenhuma sessão marcada pra hoje.</div></div>
+    <!-- Início na tela 1a do canvas ("Painel do professor"): faixa roxa com a
+         próxima sessão, três cards Resolver hoje, e embaixo duas colunas — a
+         linha do tempo do dia à esquerda, o mês e o Radar de retenção à direita.
+         Aniversários, movimentação, indicadores, fechamento e alertas saíram
+         daqui pra Relatórios: não mudam decisão HOJE. -->
+    <div id="dashTopo"></div>
+    <div id="dashResolver"></div>
+    <div class="dcols">
+      <div class="card" id="dashDia"><h2>Seu dia hoje</h2><div id="bHojeP" class="muted">Nenhuma sessão marcada pra hoje.</div></div>
+      <div class="dcol2">
+        <div id="dashMes"></div>
+        <div class="card" id="dashRadar"><h2>Radar de retenção</h2><div id="bRadarP" class="muted">Todo mundo em movimento.</div></div>
+      </div>
+    </div>
     <div class="card" style="margin-bottom: 14px;"><h2>WhatsApp de hoje</h2><div id="bZapP" class="muted">Nenhuma mensagem pendente.</div></div>
-    <div class="card" style="margin-bottom: 14px;">
-      <h2>Metas do mês e projeção</h2>
-      <div class="metas-pt" style="margin: 8px 0 10px;">
-        <label>Meta de faturamento (R$) <input id="mtFatP" type="number" min="0"></label>
-        <label>Meta de novos alunos <input id="mtNovosP" type="number" min="0"></label>
-        <label>Meta de sessões dadas <input id="mtSesP" type="number" min="0"></label>
-        <button class="btn sec mini" id="mtSalvarP">Salvar metas</button>
-      </div>
-      <div id="mtPainelP" class="muted" style="font-size:13.5px;">Defina as metas acima — a projeção usa o ritmo do mês até agora.</div>
+    <div class="dnota">
+      <span>Aniversários, fechamento do mês, indicadores completos e alertas do studio agora moram em <b>Relatórios</b> — saíram do Início porque não pedem ação hoje.</span>
+      <button type="button" class="btn sec" id="dVerRel">Ver relatórios</button>
     </div>
-    <div class="colunas-dash">
-      <div class="card"><h2>Recebimentos</h2><div id="bRecebP" class="muted"></div></div>
-      <div class="card"><h2>Status da base</h2><div id="bBaseP" class="muted"></div></div>
-      <div class="card"><h2>Movimentação do mês</h2><div id="bMovP" class="muted"></div></div>
-      <div class="card"><h2>Indicadores do negócio</h2><div id="bIndP" class="muted"></div></div>
-      <div class="card"><h2>Agenda e presença</h2><div id="bAgP" class="muted"></div></div>
-      <div class="card"><h2>App e treinos dos alunos</h2><div id="bAppP" class="muted"></div></div>
-    </div>
-    <div class="card" style="margin-bottom: 14px;">
-      <h2>Fechamento do mês</h2>
-      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Resumo prontinho do mês — receita, novos e encerrados, sessões e quem falta pagar — pra mandar pro seu WhatsApp, sócio ou contador.</p>
-      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
-        <select id="fchMesP" style="width: auto;"></select>
-        <button class="btn" id="fchZapP">Mandar no WhatsApp</button>
-        <button class="btn sec" id="fchCopiaP">Copiar resumo</button>
-      </div>
-      <p id="fchStatusP" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
-    </div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Aniversários dos próximos 7 dias</h2><div id="bNiverP" class="muted">Ninguém faz aniversário nos próximos 7 dias.</div></div>
-    <div class="card" style="margin-bottom: 14px;"><h2>Radar de retenção</h2><div id="bRadarP" class="muted">Todo mundo em movimento.</div></div>
-    <div class="card"><h2>Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
   </section>
 
   <div id="wodProf" hidden style="position: fixed; inset: 0; z-index: 90; background: #0d0c10; display: flex; flex-direction: column; padding: 18px 20px calc(18px + env(safe-area-inset-bottom));">
@@ -1189,7 +1264,7 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="abas" id="relAbas" style="margin: 0 0 14px;">
       <button data-rela="fin" class="ativa"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v10M14.8 9.2c-.6-.9-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.2 0 2.9 6 1.4 6 4.1 0 1.3-1.3 2.2-3 2.2-1.2 0-2.2-.5-2.8-1.4'/></svg> Financeiro</button>
       <button data-rela="agenda"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3.5' y='5' width='17' height='15.5' rx='2.5'/><path d='M3.5 9.5h17M8 3v4M16 3v4'/></svg> Agenda e presença</button>
-      <button data-rela="alunos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Alunos</button>
+      <button data-rela="geral"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='4' y='4' width='7' height='7' rx='1.6'/><rect x='13' y='4' width='7' height='7' rx='1.6'/><rect x='4' y='13' width='7' height='7' rx='1.6'/><rect x='13' y='13' width='7' height='7' rx='1.6'/></svg> Do dia a dia</button><button data-rela="alunos"><svg class='mi' viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 17 9.5 11l3.5 3.5L20.5 7'/><path d='M14.5 7h6v6'/></svg> Alunos</button>
     </div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Resumo do mês</h2><div id="relResumo" class="muted">Sem dados ainda.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Previsto × recebido no mês</h2><div id="relPrevisto" class="muted">Cadastre alunos e contratos para ver a previsão.</div></div>
@@ -1201,6 +1276,34 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
     <div class="card" style="margin-bottom: 14px;" data-relsec="alunos" hidden><h2>Resultados dos alunos</h2><div id="relResultados" class="muted">Registre pelo menos 2 avaliações por aluno para ver a evolução.</div></div>
     <div class="card" style="margin-bottom: 14px;" data-relsec="fin"><h2>Receita por aluno (histórico)</h2><div id="relLTV" class="muted">Sem pagamentos ainda.</div>
       <div style="margin-top: 10px;"><button class="btn sec mini" id="relCSV">Baixar CSV (receita por aluno)</button></div></div>
+    <!-- o que saiu do Início (tela 4c do canvas): números do mês, metas,
+         movimentação, fechamento, aniversários e alertas do studio -->
+<div class="kpi-pt" id="kpis" data-relsec="geral" hidden></div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
+      <h2>Metas do mês e projeção</h2>
+      <div class="metas-pt" style="margin: 8px 0 10px;">
+        <label>Meta de faturamento (R$) <input id="mtFatP" type="number" min="0"></label>
+        <label>Meta de novos alunos <input id="mtNovosP" type="number" min="0"></label>
+        <label>Meta de sessões dadas <input id="mtSesP" type="number" min="0"></label>
+        <button class="btn sec mini" id="mtSalvarP">Salvar metas</button>
+      </div>
+      <div id="mtPainelP" class="muted" style="font-size:13.5px;">Defina as metas acima — a projeção usa o ritmo do mês até agora.</div>
+    </div><div class="colunas-dash" data-relsec="geral" hidden>
+      <div class="card"><h2>Recebimentos</h2><div id="bRecebP" class="muted"></div></div>
+      <div class="card"><h2>Status da base</h2><div id="bBaseP" class="muted"></div></div>
+      <div class="card"><h2>Movimentação do mês</h2><div id="bMovP" class="muted"></div></div>
+      <div class="card"><h2>Indicadores do negócio</h2><div id="bIndP" class="muted"></div></div>
+      <div class="card"><h2>Agenda e presença</h2><div id="bAgP" class="muted"></div></div>
+      <div class="card"><h2>App e treinos dos alunos</h2><div id="bAppP" class="muted"></div></div>
+    </div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;">
+      <h2>Fechamento do mês</h2>
+      <p class="muted" style="margin: 4px 0 10px; font-size: 12.5px;">Resumo prontinho do mês — receita, novos e encerrados, sessões e quem falta pagar — pra mandar pro seu WhatsApp, sócio ou contador.</p>
+      <div class="linha-flex" style="gap: 8px; flex-wrap: wrap;">
+        <select id="fchMesP" style="width: auto;"></select>
+        <button class="btn" id="fchZapP">Mandar no WhatsApp</button>
+        <button class="btn sec" id="fchCopiaP">Copiar resumo</button>
+      </div>
+      <p id="fchStatusP" class="muted" style="margin: 8px 0 0; font-size: 12.5px;"></p>
+    </div><div class="card" data-relsec="geral" hidden style="margin-bottom: 14px;"><h2>Aniversários dos próximos 7 dias</h2><div id="bNiverP" class="muted">Ninguém faz aniversário nos próximos 7 dias.</div></div><div class="card" data-relsec="geral" hidden><h2>Alertas do studio</h2><div id="relAlertas" class="muted">Tudo em ordem.</div></div>
   </section>
 
   <!-- ASSESSORIA -->
@@ -10368,14 +10471,34 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     st.alunos.forEach(function (a) { nomeHj[a.id] = a.nome; });
     var sesHoje = st.sessoes.filter(function (x) { return x.data === hoje; })
       .sort(function (a, b) { return (a.hora || "99") < (b.hora || "99") ? -1 : 1; });
+    /* Linha do tempo do dia (tela 1a): feita fica esmaecida, quem faltou tem a
+     * hora em vermelho e a ação de cobrar a aula, e a PRÓXIMA ganha a faixa
+     * roxa. Cada linha carrega a ação — a regra 1 do handoff: todo aviso tem
+     * botão, nada de "vá procurar onde resolver". */
+    var proxId = (sesHoje.filter(function (x) { return !x.feita && !x.faltou && x.hora; })
+      .filter(function (x) { return faltaPra(x.hora).min > -60; })[0] || {}).id;
+    var cab = $("dashDia") && $("dashDia").querySelector("h2");
+    if (cab && sesHoje.length) {
+      var hs = sesHoje.map(function (x) { return x.hora; }).filter(Boolean).sort();
+      cab.innerHTML = "Seu dia hoje " + (hs.length ? '<span style="font-size:12px;font-weight:700;color:#6e6a78;text-transform:none;letter-spacing:0;">' +
+        hs[0] + " às " + hs[hs.length - 1] + "</span>" : "") +
+        '<button type="button" class="btn sec mini" id="dVerSemana" style="float:right;">Ver semana</button>';
+    }
     $("bHojeP").innerHTML = sesHoje.length ? sesHoje.map(function (x) {
-      return '<div class="sessao-pt' + (x.feita ? " feita" : "") + '"><b>' + (x.hora || "sem hora") + "</b>" +
-        '<button data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">' + esc(nomeHj[x.alunoId] || "?") + "</button>" +
-        '<span style="margin-left:auto;display:inline-flex;gap:8px;">' +
-        (x.feita ? '<span class="tag ok">FEITA ✓</span>'
-          : x.faltou ? '<span class="tag erro">FALTOU</span>'
+      var cls = x.feita ? " feita" : x.faltou ? " faltou" : (x.id === proxId ? " prox" : "");
+      var aP = st.alunos.find(function (y) { return y.id === x.alunoId; }) || {};
+      return '<div class="dlinha' + cls + '"><div class="dhh">' + (x.hora || "—") + "</div>" +
+        '<div style="min-width:0;">' +
+        '<button class="dnm" data-vernome="' + x.alunoId + '" title="ver o treino do dia e falar com o aluno" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:800;cursor:pointer;text-align:left;">' +
+        esc(nomeHj[x.alunoId] || "?") + "</button>" +
+        '<div class="dfi">' + (x.faltou ? "Faltou" : treinoDoDiaTxt(st, x.alunoId, true)) + "</div></div>" +
+        '<div class="dac">' +
+        (x.feita ? '<span class="dok">✓ Feita</span>'
+          : x.faltou ? (aP.zap ? '<a class="btn sec mini" target="_blank" rel="noopener" href="https://wa.me/55' +
+              String(aP.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi " + String(aP.nome || "").split(" ")[0] +
+              "! Senti sua falta hoje. Bora remarcar?") + '">Cobrar aula</a>' : '<span class="tag erro">FALTOU</span>')
           : '<button class="btn mini" data-feita="' + x.id + '">Feita</button>' +
-            '<button class="btn sec mini" data-faltou="' + x.id + '">Faltou</button>') + "</span></div>";
+            '<button class="btn sec mini" data-faltou="' + x.id + '">Faltou</button>') + "</div></div>";
     }).join("") : "Nenhuma sessão marcada pra hoje — dia livre ou hora de puxar agendamentos.";
     // ---- WhatsApp de hoje: mensagens prontas, cada uma sai com um toque ----
     var filaZ = filaZapDe(st);
@@ -10430,18 +10553,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var temFutura = idxDe(st).sessDe(a.id).some(function (x) { return x.data >= hoje && !x.feita && !x.faltou; });
       if (temFutura) return;
       var msgR = "Oi " + a.nome.split(" ")[0] + "! Senti sua falta por aqui — bora marcar o próximo treino? 💪";
-      radar.push('<div class="sessao-pt"><b>' + esc(a.nome) + "</b>" +
-        '<span class="tag ' + (diasP >= 10 ? "erro" : "alerta") + '">' + diasP + " dias sem treinar</span>" +
-        '<span style="margin-left:auto;display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">' +
-        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgR) + '">Resgatar no Zap</a>' : "") +
-        '<button class="btn sec mini" data-vernome="' + a.id + '">Ver aluno</button></span></div>');
+      // linha do Radar no desenho da 1a: iniciais, nome, o motivo e o atalho
+      radar.push('<div class="drad"><div class="dav2">' + esc(String(a.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
+        '<div style="min-width:0;"><button class="dnm" data-vernome="' + a.id + '" style="background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:800;cursor:pointer;text-align:left;">' +
+        esc(a.nome) + '</button><div class="dfi" style="color:' + (diasP >= 10 ? "#f87171" : "#8a8695") + ';">' +
+        S.plural(diasP, "dia sem treinar", "dias sem treinar") + "</div></div>" +
+        '<div class="dac">' +
+        (a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" title="chamar no WhatsApp" href="https://wa.me/55' +
+          String(a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgR) + '">Chamar</a>' : "") + "</div></div>");
     });
     var nuvemR = S.cloud && S.cloud();
     var bd = window.__badgesPT || {};
-    if (nuvemR && bd.chat) radar.push('<div class="sessao-pt"><b>' + bd.chat + " mensagem(ns) sem resposta no chat</b>" +
-      '<span style="margin-left:auto;"><button class="btn sec mini" data-radaba="chat">Abrir chat</button></span></div>');
-    if (nuvemR && bd.pedidos) radar.push('<div class="sessao-pt"><b>' + bd.pedidos + " pedido(s) de horário esperando</b>" +
-      '<span style="margin-left:auto;"><button class="btn sec mini" data-radaba="agenda">Abrir agenda</button></span></div>');
+    if (nuvemR && bd.chat) radar.push('<div class="drad"><div class="dav2">' + "\u2709" + '</div><div style="min-width:0;">' +
+      '<div class="dnm">' + S.plural(bd.chat, "mensagem sem resposta", "mensagens sem resposta") + '</div><div class="dfi">no chat do app</div></div>' +
+      '<div class="dac"><button class="btn sec mini" data-radaba="chat">Abrir chat</button></div></div>');
+    if (nuvemR && bd.pedidos) radar.push('<div class="drad"><div class="dav2">' + "\u23F1" + '</div><div style="min-width:0;">' +
+      '<div class="dnm">' + S.plural(bd.pedidos, "pedido de horário", "pedidos de horário") + '</div><div class="dfi">esperando você</div></div>' +
+      '<div class="dac"><button class="btn sec mini" data-radaba="agenda">Abrir agenda</button></div></div>');
+    var cabR = $("dashRadar") && $("dashRadar").querySelector("h2");
+    if (cabR) cabR.innerHTML = "Radar de retenção" + (radar.length ?
+      '<span style="float:right;font-size:12px;font-weight:800;color:#fb923c;text-transform:none;letter-spacing:0;">' + radar.length + " sumindo</span>" : "");
     $("bRadarP").innerHTML = radar.length ? radar.join("")
       : "Todo mundo em movimento" + (nuvemR ? "" : " — entre na sua conta pra ver também chat e pedidos de horário aqui") + ".";
     // carteira: MRR, ticket, contratos
@@ -10588,6 +10719,11 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         '<span style="margin-left:auto;"></span>' +
         (n.a.zap ? '<a class="btn whats mini" target="_blank" rel="noopener" href="https://wa.me/55' + String(n.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent(msgN) + '">Dar parabéns</a>' : "") + "</div>";
     }).join("") : "Ninguém faz aniversário nos próximos 7 dias.";
+    // ---- Início do desenho novo: topo roxo, Resolver hoje e Placar do mês ----
+    pintaDashTopo(st, d);
+    pintaResolver(st);
+    pintaMesDash(st, d);
+    resolverChat();
     // fechamento: popula o seletor de meses (últimos 12) uma vez por render
     var sel = $("fchMesP");
     var atual = sel.value;
@@ -10633,7 +10769,299 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("fchZapP").addEventListener("click", function () {
     window.open("https://wa.me/?text=" + encodeURIComponent(resumoFechamentoPT($("fchMesP").value)), "_blank");
   });
-  window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT }; // testes
+  /* ---------- Início do desenho novo (canvas "Painel do professor", 1a e 1b) ----------
+   *
+   * A faixa roxa com a próxima sessão, os três cards de Resolver hoje, a linha
+   * do tempo do dia e — na coluna da direita — o mês e o Radar de retenção.
+   */
+  // trocar de aba é clicar na aba de verdade: um caminho só, e o estado do
+  // menu (classe .ativa, seções escondidas) continua saindo de um lugar só
+  function vaiAba(a) {
+    var b = document.querySelector('#abas [data-a="' + a + '"]');
+    if (b) b.click();
+  }
+  /* O terceiro card do Resolver hoje (conversa parada) vem da NUVEM: o chat
+   * mora em app_chat, e o renderDashPT é síncrono. Então ele entra depois, por
+   * aqui. Sem nuvem, sem leitura ou sem mensagem parada, o card simplesmente
+   * não aparece — nada de card mentindo "0 mensagens". */
+  function resolverChat() {
+    var nuvem = S.cloud && S.cloud();
+    var el = $("dashResolver");
+    if (!nuvem || !el || !nuvem.client || typeof nuvem.client.from !== "function") return;
+    var st = load();
+    var nomePorTok = {};
+    st.alunos.forEach(function (a) { if (a.appTokenP) nomePorTok[a.appTokenP] = a.nome; });
+    if (!Object.keys(nomePorTok).length) return;
+    var q;
+    try {
+      q = nuvem.client.from("app_chat").select("token,de,lida").eq("academia_id", nuvem.aid);
+    } catch (e) { return; }
+    q.then(function (r) {
+      if (!r || r.error || !Array.isArray(r.data)) return;
+      var porAluno = {};
+      r.data.forEach(function (m) {
+        if (m.de !== "aluno" || m.lida) return;
+        if (!nomePorTok[m.token]) return;
+        porAluno[m.token] = (porAluno[m.token] || 0) + 1;
+      });
+      var toks = Object.keys(porAluno);
+      if (!toks.length) return;
+      var grade = el.querySelector(".dgrid");
+      if (!grade) return; // a área está no estado "tudo em dia" — não desmonta
+      var total = toks.reduce(function (t, k) { return t + porAluno[k]; }, 0);
+      var nomes = toks.slice(0, 3).map(function (k) { return String(nomePorTok[k]).split(" ")[0]; }).join(", ");
+      var d = document.createElement("div");
+      d.className = "dcard";
+      d.innerHTML = '<div class="dsel" style="color:#60a5fa;"><i></i>SEM RESPOSTA</div>' +
+        '<div><div class="dqu">' + S.plural(total, "mensagem no chat", "mensagens no chat") + "</div>" +
+        '<div class="dpq">' + esc(nomes) + (toks.length > 3 ? " e mais " + (toks.length - 3) : "") + "</div></div>" +
+        '<div class="dacs"><button type="button" class="btn" id="dVaiChat">Abrir chat</button></div>';
+      grade.appendChild(d);
+      var t = el.querySelector(".dtit span");
+      if (t) t.textContent = S.plural(grade.children.length, "coisa", "coisas") + " · 2 min";
+      var bc = document.querySelector('#abas [data-a="chat"]');
+      if (bc) {
+        var ec = bc.querySelector(".cnt");
+        if (!ec) { ec = document.createElement("span"); ec.className = "cnt"; bc.appendChild(ec); }
+        ec.textContent = total > 99 ? "99+" : total;
+      }
+    }, function () { /* sem rede agora: o card fica de fora, sem erro na tela */ });
+  }
+  /* A tela 1b ("placar do mês primeiro") foi DESCARTADA no handoff — o Raphael
+   * escolheu a 1a. Os números do mês não sumiram: viraram a coluna da direita,
+   * do lado da linha do tempo do dia. */
+  // "em 40 min" / "agora" / "às 18:00": o rótulo muda com a distância
+  function faltaPra(hora) {
+    var m = String(hora || "").match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return { txt: "HOJE", min: 9999 };
+    var ag = new Date();
+    var min = (+m[1] * 60 + +m[2]) - (ag.getHours() * 60 + ag.getMinutes());
+    if (min <= 0 && min > -60) return { txt: "ACONTECENDO AGORA", min: 0 };
+    if (min <= 0) return { txt: "JÁ PASSOU", min: min };
+    if (min < 60) return { txt: "AGORA EM " + min + " MIN", min: min };
+    if (min < 240) return { txt: "EM " + Math.round(min / 60) + "H", min: min };
+    return { txt: "MAIS TARDE", min: min };
+  }
+  // o que o aluno faz hoje, na linguagem do professor (Ficha B — Costas · 7 exercícios)
+  function treinoDoDiaTxt(st, alunoId, curto) {
+    var t = (st.treinosV2 || {})[alunoId];
+    if (!t) return curto ? "" : "Sem ficha montada ainda";
+    var dia = String((new Date().getDay() + 6) % 7);
+    var pl = ((t.plano || {}).dias || {})[dia];
+    if (pl && pl.tp === "ficha") {
+      var f = (t.fichas || []).find(function (x) { return x.id === pl.id; });
+      if (f) return esc(f.titulo || "Ficha") + " · " + S.plural((f.itens || []).length, "exercício", "exercícios") +
+        (f.p2 && f.p2.n ? " · " + esc(f.p2.n) : "");
+    }
+    if (pl && pl.tp === "wod") {
+      var w = (t.wods || []).find(function (x) { return x.id === pl.id; });
+      if (w) return "Circuito · " + esc(w.nome || "WOD");
+    }
+    if (pl && pl.tp === "cardio") {
+      var c = (t.cardio || []).find(function (x) { return x.id === pl.id; });
+      if (c) return "Corrida · " + esc(c.nome || "Cardio");
+    }
+    var n = (t.fichas || []).length;
+    // na linha do tempo a frase longa vira ruído (ela repete em toda linha):
+    // sem dia definido, a linha simplesmente não diz nada
+    if (curto) return "";
+    return n ? S.plural(n, "ficha montada", "fichas montadas") + " · sem dia definido na Semana do aluno" : "Sem ficha montada ainda";
+  }
+  function pintaDashTopo(st, d) {
+    var el = $("dashTopo"); if (!el) return;
+    var hoje = S.todayISO();
+    var DSEM = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+    var MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var dt = new Date(hoje + "T12:00");
+    var dia = DSEM[dt.getDay()].charAt(0).toUpperCase() + DSEM[dt.getDay()].slice(1) + ", " + dt.getDate() + " de " + MES[dt.getMonth()];
+    var sesHoje = st.sessoes.filter(function (x) { return x.data === hoje; });
+    var feitasHj = sesHoje.filter(function (x) { return x.feita; }).length;
+    /* o painel guarda o nome do STUDIO, não o do professor — "Bom treino,
+     * Studio TORQUE" soaria errado, então a saudação vai sem nome. */
+    var sub = S.plural(sesHoje.length, "sessão hoje", "sessões hoje") +
+      (sesHoje.length ? " · " + feitasHj + " já " + (feitasHj === 1 ? "feita" : "feitas") : "") +
+      " · " + S.fmtBRL(d.fat) + " no mês";
+    // a próxima sessão do dia: a primeira ainda não marcada que não passou
+    var prox = sesHoje.filter(function (x) { return !x.feita && !x.faltou && x.hora; })
+      .sort(function (a, b) { return a.hora < b.hora ? -1 : 1; })
+      .filter(function (x) { return faltaPra(x.hora).min > -60; })[0] || null;
+    var aP = prox ? st.alunos.find(function (x) { return x.id === prox.alunoId; }) : null;
+    var fp = prox ? faltaPra(prox.hora) : null;
+    el.className = "dtopo";
+    el.innerHTML = '<div class="dlin">' +
+      '<div style="min-width:0;">' +
+      '<div class="ddata">' + esc(dia) + "</div>" +
+      "<h2>Bom treino</h2>" +
+      '<div class="dsub">' + sub + "</div></div>" +
+      '<div class="dacoes">' +
+      '<button type="button" class="dbt" id="dNovoAluno">+ Novo aluno</button>' +
+      '<button type="button" class="dbt sec" id="dMarcaSes">Marcar sessão</button>' +
+      "</div></div>" +
+      (aP ? '<div class="dagora">' +
+        '<div class="dq"><div class="dk">' + esc(fp.txt) + '</div><div class="dh">' + esc(prox.hora) + "</div></div>" +
+        '<div class="dav">' + esc(String(aP.nome || "?").trim().slice(0, 2).toUpperCase()) + "</div>" +
+        '<div style="min-width:0;"><div class="dnome">' + esc(aP.nome) + '</div><div class="dfic">' + treinoDoDiaTxt(st, aP.id) + "</div></div>" +
+        '<div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">' +
+        '<button type="button" class="dbt" data-abreperfil="' + aP.id + '" style="height:40px;">Abrir ficha</button>' +
+        '<button type="button" class="dbt sec" data-feita="' + prox.id + '" style="height:40px;">Feita</button>' +
+        "</div></div>" : "");
+  }
+  /* Resolver hoje: as 3 pendências que valem um toque agora. A ordem é por
+   * urgência de dinheiro → risco de perder o aluno → conversa parada. Cada card
+   * usa a MESMA regra da tela dona do assunto (atraso usa dividaDe/atrasoTol,
+   * igual à lista "Quem ainda não pagou"), senão o Início contaria diferente. */
+  var ZAPSVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a8 8 0 0 1-8.2 7.9 8.7 8.7 0 0 1-3.9-.9L3.5 19.6l1.2-4.1a7.8 7.8 0 0 1-1.2-4A8 8 0 0 1 11.7 3.6h.6a8 8 0 0 1 8.2 7.9z"></path></svg>';
+  function pintaResolver(st) {
+    var el = $("dashResolver"); if (!el) return;
+    var hoje = S.todayISO();
+    var diaHoje = +hoje.slice(8, 10);
+    var itens = [];
+    // 1) cobrança vencida — o mais atrasado primeiro
+    var atrasados = st.alunos.filter(function (a) { return a.ativo !== false && !a.assinaturaRec && !a.assinaturaAs; })
+      .map(function (a) {
+        var ct = contratoDe(st, a.id);
+        if (!ct) return null;
+        var dv = dividaDe(st, a);
+        if (!dv || !dv.total) return null;
+        if (!(diaHoje > ct.diaVenc + atrasoTol(st))) return null;
+        return { a: a, ct: ct, dv: dv, dias: diaHoje - ct.diaVenc };
+      }).filter(Boolean).sort(function (x, y) { return y.dias - x.dias; });
+    if (atrasados[0]) {
+      var v = atrasados[0];
+      itens.push({
+        cor: "#f87171", sel: "COBRANÇA VENCIDA",
+        qu: esc(v.a.nome) + " · " + S.fmtBRL(v.dv.total),
+        pq: "Venceu dia " + v.ct.diaVenc + " — " + S.plural(v.dias, "dia atrás", "dias atrás") +
+          (atrasados.length > 1 ? " · e mais " + (atrasados.length - 1) : ""),
+        acao: '<button type="button" class="btn" data-pgm="' + v.a.id + '" data-v="' + v.dv.total + '" data-origem="mensal">Mandar link</button>' +
+          (v.a.zap ? '<a class="btn whats ic" target="_blank" rel="noopener" title="cobrar no WhatsApp" href="https://wa.me/55' +
+            String(v.a.zap).replace(/\D/g, "") + "?text=" + encodeURIComponent("Oi " + String(v.a.nome).split(" ")[0] +
+            "! Passando pra lembrar do plano — venceu dia " + v.ct.diaVenc + ". Te mando o Pix? 💪") + '">' + ZAPSVG + "</a>" : ""),
+      });
+    }
+    // 2) ficha vencendo — quem está na mesma ficha há muito tempo
+    var velhos = st.alunos.filter(function (a) { return a.ativo !== false; }).map(function (a) {
+      var t = (st.treinosV2 || {})[a.id];
+      if (!t || !(t.fichas || []).length) return null;
+      /* o painel não carimba "quando a ficha foi montada". As duas datas que
+       * ele guarda de verdade são a geração do mês pela IA e a última
+       * publicação do app — a mais recente das duas é quando o aluno recebeu
+       * prescrição nova pela última vez. */
+      var mesG = "";
+      Object.keys(t.mes || {}).forEach(function (k) {
+        var g = String(((t.mes || {})[k] || {}).geradoEm || "").slice(0, 10);
+        if (g > mesG) mesG = g;
+      });
+      var em = [mesG, String(a.appPubEm || "").slice(0, 10)].sort().pop() || "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(em)) return null;
+      var sem = Math.floor((Date.parse(hoje + "T12:00") - Date.parse(em + "T12:00")) / 6048e5);
+      if (sem < 8) return null;
+      return { a: a, sem: sem, n: idxDe(st).sessFeitasDe(a.id).length };
+    }).filter(Boolean).sort(function (x, y) { return y.sem - x.sem; });
+    if (velhos[0]) {
+      var w = velhos[0];
+      itens.push({
+        cor: "#fb923c", sel: "FICHA VENCENDO",
+        qu: esc(w.a.nome),
+        pq: "Sem prescrição nova há " + S.plural(w.sem, "semana", "semanas") + " · " + S.plural(w.n, "treino feito", "treinos feitos") +
+          (velhos.length > 1 ? " · e mais " + (velhos.length - 1) : ""),
+        acao: '<button type="button" class="btn" data-montatreino="' + w.a.id + '">Montar nova</button>',
+      });
+    }
+    // 3) conversa parada: o chat vive na NUVEM, e esta função é síncrona — o
+    //    card entra depois, por resolverChat(). Sem nuvem, simplesmente não
+    //    aparece (mesma regra honesta do resto do painel).
+    if (!itens.length) {
+      el.className = "dres";
+      el.innerHTML = '<div class="dtit"><b>Resolver hoje</b><span>nada pendente</span></div>' +
+        '<div class="dcard"><div class="dqu">Tudo em dia por aqui ✓</div>' +
+        '<div class="dpq">Sem cobrança vencida, sem ficha velha e sem mensagem esperando resposta.</div></div>';
+      return;
+    }
+    el.className = "dres";
+    el.innerHTML = '<div class="dtit"><b>Resolver hoje</b><span>' +
+      S.plural(itens.length, "coisa", "coisas") + " · 2 min</span></div>" +
+      '<div class="dgrid">' + itens.map(function (it) {
+        return '<div class="dcard"><div class="dsel" style="color:' + it.cor + ';"><i></i>' + it.sel + "</div>" +
+          '<div><div class="dqu">' + it.qu + '</div><div class="dpq">' + it.pq + "</div></div>" +
+          '<div class="dacs">' + it.acao + "</div></div>";
+      }).join("") + "</div>";
+  }
+  /* O mês, na coluna da direita da tela 1a: faturamento contra a meta com a
+   * projeção pelo ritmo de agora, e quatro números que o professor olha de
+   * relance — a receber, sessões, alunos ativos e presença. */
+  function pintaMesDash(st, d) {
+    var el = $("dashMes"); if (!el) return;
+    var hoje = S.todayISO();
+    var mes = hoje.slice(0, 7);
+    var diaAtual = +hoje.slice(8, 10) || 1;
+    var diasNoMes = new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate();
+    var MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    var metas = (st.config || {}).metasPT || {};
+    var meta = +metas.fat || 0;
+    var proj = Math.round(d.fat / diaAtual * diasNoMes);
+    var pct = meta ? Math.min(100, Math.round(d.fat / meta * 100)) : 0;
+    // mês passado, pra dizer se está melhor ou pior
+    // -2 porque o mês do Date é 0-based: para "2026-08", mês 7 É agosto, e o
+    // anterior é 6. Com -1 o card comparava agosto com agosto ("+0% vs agosto").
+    var dAnt = new Date(+mes.slice(0, 4), +mes.slice(5, 7) - 2, 1);
+    var mesAnt = dAnt.getFullYear() + "-" + ("0" + (dAnt.getMonth() + 1)).slice(-2);
+    var fatAnt = st.pagamentos.filter(function (x) { return (x.data || "").slice(0, 7) === mesAnt; })
+      .reduce(function (t, x) { return t + +x.valor; }, 0);
+    var vs = fatAnt ? Math.round((d.fat - fatAnt) / fatAnt * 100) : 0;
+    // a receber e o que já venceu (mesma regra da lista "Quem ainda não pagou")
+    var aReceber = 0, vencidos = 0;
+    st.alunos.forEach(function (a) {
+      if (a.ativo === false) return;
+      var ct = contratoDe(st, a.id);
+      if (!ct) return;
+      var dv = dividaDe(st, a);
+      if (!dv || !dv.total) return;
+      aReceber += dv.total;
+      if (diaAtual > ct.diaVenc + atrasoTol(st)) vencidos += dv.total;
+    });
+    var sesMes = st.sessoes.filter(function (x) { return (x.data || "").slice(0, 7) === mes; });
+    var marcadas = sesMes.filter(function (x) { return x.feita || x.faltou; }).length;
+    var pres = marcadas ? Math.round(d.feitas / marcadas * 100) : 0;
+    var novosMes = st.alunos.filter(function (a) { return (a.desde || "").slice(0, 7) === mes; }).length;
+    function kpi(rot, val, sub, cor) {
+      return '<div><div class="dk">' + rot + '</div><div class="dv">' + val + "</div>" +
+        '<div class="ds"' + (cor ? ' style="color:' + cor + ';"' : "") + ">" + sub + "</div></div>";
+    }
+    el.className = "card dmes";
+    el.innerHTML = '<div class="dtop"><b>' + MES[+mes.slice(5, 7) - 1].replace(/^./, function (c) { return c.toUpperCase(); }) +
+      '</b><span>até hoje</span>' +
+      (fatAnt ? '<span style="margin-left:auto;font-weight:800;color:' + (vs >= 0 ? "#4ade80" : "#f87171") + ';">' +
+        (vs >= 0 ? "+" : "") + vs + "% vs " + MES[dAnt.getMonth()] + "</span>" : "") + "</div>" +
+      '<div style="display:flex;align-items:baseline;gap:9px;">' +
+      '<div class="dfat">' + S.fmtBRL(d.fat) + "</div>" +
+      (meta ? '<div style="font-size:12.5px;font-weight:700;color:#8a8695;">de ' + S.fmtBRL(meta) + "</div>" : "") + "</div>" +
+      (meta ? '<div class="dbarra"><i style="width:' + pct + '%;"></i></div>' : '<div style="height:10px;"></div>') +
+      '<div style="font-size:12.5px;font-weight:700;color:#8a8695;">No ritmo de agora fecha em <b style="color:#a78bfa;">' +
+      S.fmtBRL(proj) + "</b>" + (meta ? "" : ' · <button type="button" class="btn sec mini" id="dVerRel2" style="height:26px;">definir meta</button>') + "</div>" +
+      '<div class="dkpis">' +
+      kpi("A RECEBER", S.fmtBRL(aReceber), vencidos ? S.fmtBRL(vencidos) + " vencidos" : "nada vencido", vencidos ? "#f87171" : "") +
+      kpi("SESSÕES", d.feitas, metas.ses ? "meta " + metas.ses : S.plural(sesMes.length, "marcada", "marcadas") + " no mês") +
+      kpi("ALUNOS ATIVOS", d.ativos.length, novosMes ? "+" + novosMes + " no mês" : "sem entrada este mês", novosMes ? "#4ade80" : "") +
+      kpi("PRESENÇA", marcadas ? pres + "%" : "—", marcadas ? S.plural(d.faltas, "falta", "faltas") : "sem sessão marcada") +
+      "</div>";
+  }
+  // um clique só pra tudo do topo: trocar de modo e os atalhos
+  document.addEventListener("click", function (e) {
+    if (e.target.id === "dVerRel" || e.target.id === "dVerRel2") { vaiAba("relatorios"); if (window.__relAba) window.__relAba("geral"); return; }
+    if (e.target.id === "dVerSemana") { vaiAba("agenda"); return; }
+    if (e.target.id === "dNovoAluno") { vaiAba("alunos"); var nb = $("btnNovoAluno"); if (nb) nb.click(); return; }
+    if (e.target.id === "dMarcaSes") { vaiAba("agenda"); return; }
+    if (e.target.id === "dVaiChat") { vaiAba("chat"); return; }
+    var mt = e.target.closest && e.target.closest("[data-montatreino]");
+    if (mt) {
+      vaiAba("treinos");
+      var sel = $("taAluno");
+      if (sel) { sel.value = mt.getAttribute("data-montatreino"); sel.dispatchEvent(new Event("change")); }
+      return;
+    }
+  });
+  window.__dashPT = { render: renderDashPT, resumo: resumoFechamentoPT, topo: pintaDashTopo, resolver: pintaResolver, mes: pintaMesDash, falta: faltaPra }; // testes
 
   $("relCSV").addEventListener("click", function () {
     var st = load();
@@ -11652,8 +12080,26 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   $("taDepois").addEventListener("click", function () { $("telaAssinatura").hidden = true; });
   window.__telaAssinatura = { mostra: mostraTelaAssinatura, compra: compraAssinatura }; // testes
 
+  /* números nas abas mais usadas (desenho novo): quantos alunos ativos, quantas
+   * sessões de hoje ainda sem marcar. O do Chat vem da nuvem, por resolverChat. */
+  function pintaContasNav(st) {
+    var hoje = S.todayISO();
+    var n = {
+      alunos: st.alunos.filter(function (a) { return a.ativo !== false; }).length,
+      agenda: st.sessoes.filter(function (x) { return x.data === hoje && !x.feita && !x.faltou; }).length,
+    };
+    Object.keys(n).forEach(function (k) {
+      var b = document.querySelector('#abas [data-a="' + (k === "alunos" ? "alunos" : "agenda") + '"]');
+      if (!b) return;
+      var e = b.querySelector(".cnt");
+      if (!n[k]) { if (e) e.remove(); return; }
+      if (!e) { e = document.createElement("span"); e.className = "cnt"; b.appendChild(e); }
+      e.textContent = n[k] > 99 ? "99+" : n[k];
+    });
+  }
   function render() {
     var st = load();
+    pintaContasNav(st);
     renderKpis(st);
     renderAlunos(st);
     renderAgenda(st);
