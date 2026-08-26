@@ -935,15 +935,70 @@ async function abaPt(p, a) {
     const st = JSON.parse(localStorage.getItem("mtapp:ptStudio"));
     return st.treinosV2[st.alunos[0].id].fichas[0].id;
   });
-  await p.selectOption('[data-exsel="' + fichaId + '"]', "Supino reto");
+  // na tela 2d o exercício é escolhido pelos CHIPS (a busca peneira, o chip marca).
+  // O <select data-exsel> continua existindo escondido, como fonte da verdade.
+  async function escolheEx(pg, fid, nome) {
+    await pg.fill('[data-exbusca="' + fid + '"]', nome);
+    await pg.waitForTimeout(120);
+    const achou = await pg.evaluate((a) => {
+      const c = [...document.querySelectorAll('[data-exchip="' + a.fid + '"]')]
+        .find((x) => x.getAttribute("data-nome").toLowerCase() === a.nome.toLowerCase());
+      if (!c) return false;
+      c.click();
+      return true;
+    }, { fid: fid, nome: nome });
+    return achou;
+  }
+  ok(await escolheEx(p, fichaId, "Supino reto"), "🎨 2d: buscar e tocar no chip escolhe o exercício");
   await p.fill('[data-exser="' + fichaId + '"]', "4");
   await p.fill('[data-exrep="' + fichaId + '"]', "10");
   await p.click('[data-additem="' + fichaId + '"]');
   const fichas = await p.evaluate(() => document.getElementById("fichasBox").textContent);
-  ok(/Supino reto/.test(fichas) && /4×10/.test(fichas), "ficha montada por seleção (Supino 4×10)");
+  ok(/Supino reto/.test(fichas) && /4 × 10/.test(fichas), "ficha montada por seleção (Supino 4×10)");
+
+  /* ---- Montar treino repaginado (tela 2d) ---- */
+  {
+    const b2d = await p.evaluate((fid) => {
+      const f = document.querySelector('[data-fdet="' + fid + '"]');
+      f.open = true;
+      return {
+        kicker: (document.querySelector(".tdtopo .alk") || {}).textContent || "",
+        nome: (document.getElementById("tdNome") || {}).textContent || "",
+        av: (document.getElementById("tdAv") || {}).textContent || "",
+        acoes: !!document.getElementById("tdIA") && !!document.getElementById("tdPublica"),
+        colunas: !!f.querySelector(".tdcols") && !!f.querySelector(".tdesq") && !!f.querySelector(".tddir"),
+        casc: f.querySelectorAll(".tdcasc select").length,
+        busca: !!f.querySelector('[data-exbusca="' + fid + '"]'),
+        conta: (f.querySelector('[data-exn="' + fid + '"]') || {}).textContent || "",
+        chips: f.querySelectorAll('[data-exchip="' + fid + '"]').length,
+        exs: f.querySelectorAll(".tdex").length,
+        nota: (f.querySelector(".tdnota") || {}).textContent || "",
+        p2: !!f.querySelector(".tdp2"),
+      };
+    }, fichaId);
+    ok(/Montando pra/i.test(b2d.kicker) && b2d.av.length === 2 && b2d.acoes,
+      "🎨 2d: o topo diz pra quem é a ficha e carrega Gerar com IA + Salvar e publicar");
+    ok(b2d.colunas && b2d.casc === 3 && b2d.busca,
+      "🎨 2d: escolher exercício à esquerda (3 seletores + busca), ficha montada à direita");
+    ok(b2d.chips > 0 && /^\d+/.test(b2d.conta),
+      "🎨 2d: os exercícios viram chips e a busca mostra quantos sobraram (" + b2d.conta + ")");
+    ok(b2d.exs >= 1, "🎨 2d: cada exercício da ficha é uma linha na coluna da direita");
+    ok(/Salvar e publicar/.test(b2d.nota), "🎨 2d: a nota roxa lembra que a ficha só sai no Salvar e publicar");
+    ok(b2d.p2, "🎨 2d: a Parte 2 do dia (A2) fecha a coluna da esquerda");
+    // o botão do topo é o MESMO de sempre — não uma segunda rota pra nuvem
+    const mesmo = await p.evaluate(() => {
+      let n = 0;
+      const orig = document.getElementById("tEnviaApp").click;
+      document.getElementById("tEnviaApp").click = function () { n++; };
+      document.getElementById("tdPublica").click();
+      document.getElementById("tEnviaApp").click = orig;
+      return n;
+    });
+    ok(mesmo === 1, "🎨 2d: Salvar e publicar aciona o mesmo Enviar pro app do aluno de sempre");
+  }
 
   // descanso entre séries: default 60s no item novo, editável pelo botão ⏱
-  ok(/⏱ 60s/.test(fichas), "item novo nasce com descanso padrão de 60s visível");
+  ok(/60 s/.test(fichas), "item novo nasce com descanso padrão de 60s visível");
   await p.evaluate(() => { window.prompt = () => "100"; });
   await p.click('[data-tdesc="' + fichaId + ':0"]');
   await p.waitForTimeout(150);
@@ -954,7 +1009,7 @@ async function abaPt(p, a) {
       tela: document.getElementById("fichasBox").textContent,
     };
   });
-  ok(aposDesc.guardado === 100 && /⏱ 100s/.test(aposDesc.tela), "⏱ edita o descanso do exercício (60 → 100s)");
+  ok(aposDesc.guardado === 100 && /100 s/.test(aposDesc.tela), "⏱ edita o descanso do exercício (60 → 100s)");
 
   // séries×reps e obs editáveis por prompt (sem apagar e recriar)
   await p.evaluate(() => { const seq = ["5", "8"]; window.prompt = () => seq.shift(); });
@@ -965,7 +1020,7 @@ async function abaPt(p, a) {
     const it = st.treinosV2[st.alunos[0].id].fichas[0].itens[0];
     return { series: it.series, reps: it.reps, tela: document.getElementById("fichasBox").textContent };
   });
-  ok(aposSR.series === 5 && aposSR.reps === "8" && /5×8/.test(aposSR.tela), "séries×reps editável por prompt (4×10 → 5×8)");
+  ok(aposSR.series === 5 && aposSR.reps === "8" && /5 × 8/.test(aposSR.tela), "séries×reps editável por prompt (4×10 → 5×8)");
   await p.evaluate(() => { window.prompt = () => "pegada fechada"; });
   await p.click('[data-tobs="' + fichaId + ':0"]');
   await p.waitForTimeout(150);
@@ -979,14 +1034,15 @@ async function abaPt(p, a) {
   const cascataTec = await p.evaluate(() => {
     const f = document.querySelector("#fichasBox details");
     const fid = f.getAttribute("data-fdet");
-    const campos = [].slice.call(f.querySelectorAll(".linha-flex select"))
+    const campos = [].slice.call(f.querySelectorAll(".tdcasc select"))
       .map((e) => e.getAttribute("data-exmov") ? "treino" : e.getAttribute("data-extec") ? "serie"
-        : e.getAttribute("data-exzona") ? "grupo" : e.getAttribute("data-exsel") ? "exercicio" : "?");
+        : e.getAttribute("data-exzona") ? "grupo" : "?");
     const sel = f.querySelector('[data-extec="' + fid + '"]');
-    return { ordem: campos.join(">"), opcoes: [].slice.call(sel.options).map((o) => o.textContent) };
+    return { ordem: campos.join(">"), opcoes: [].slice.call(sel.options).map((o) => o.textContent),
+      chips: f.querySelectorAll('[data-exchip="' + fid + '"]').length };
   });
-  ok(cascataTec.ordem === "treino>serie>grupo>exercicio",
-    "montar exercício segue a ordem do Raphael: tipo de treino → tipo de série → grupamento → exercício");
+  ok(cascataTec.ordem === "treino>serie>grupo" && cascataTec.chips > 0,
+    "montar exercício segue a ordem do Raphael: tipo de treino → tipo de série → grupamento, e o exercício sai dos chips");
   ok(cascataTec.opcoes[0] === "Série normal" && cascataTec.opcoes.indexOf("Drop-set") > 0 && cascataTec.opcoes.indexOf("Up set") > 0,
     "a lista de tipo de série abre em Série normal e traz drop-set, up set e as outras");
   // trocar na linha de um exercício que já está na ficha salva na hora
@@ -1145,7 +1201,7 @@ async function abaPt(p, a) {
     "'invertido' sozinho não vira puxada (barquinho fica no core) e a remada invertida continua puxar");
   ok(/Posterior e glúteo/.test(casc.zonas) && !/^Peito$/m.test(casc.zonas.split("|").join("\n")), "grupamentos oferecidos seguem o tipo de treino escolhido");
   ok(!!casc.valor, "lista filtrada traz os levantamentos terra");
-  await p.selectOption('[data-exsel="' + fichaId + '"]', casc.valor);
+  ok(await escolheEx(p, fichaId, casc.valor), "🎨 2d: o chip acha o exercício filtrado pela cascata");
   await p.click('[data-additem="' + fichaId + '"]');
   await p.waitForTimeout(150);
   const aposCat = await p.evaluate((nome) => {
@@ -8399,20 +8455,23 @@ async function abaPt(p, a) {
       const sel = document.getElementById("tAluno");
       sel.value = "af1"; sel.dispatchEvent(new Event("change", { bubbles: true }));
       document.querySelectorAll("#fichasBox details").forEach((d) => { d.open = true; });
-      const ex = document.querySelector('[data-exsel="ff1"]');
+      const chips = Array.from(document.querySelectorAll('[data-exchip="ff1"]'));
       return {
-        grupos: Array.from(ex.querySelectorAll("optgroup")).map((g) => g.label),
-        favs: Array.from(ex.querySelectorAll("optgroup:first-of-type option")).map((o) => o.value),
+        primeiro: chips.length ? chips[0].getAttribute("data-nome") : "",
+        temEstrela: chips.length ? /★/.test(chips[0].textContent) : false,
         temFiltro: Array.from(document.querySelectorAll('[data-exmov="ff1"] option')).some((o) => /Meus favoritos/.test(o.value)),
       };
     });
-    ok(naFicha.grupos[0] === "★ Meus favoritos" && naFicha.favs[0] === "Agachamento livre", "na ficha o favorito vem num grupo próprio, antes do resto");
+    ok(naFicha.primeiro === "Agachamento livre" && naFicha.temEstrela, "na ficha o favorito é o primeiro chip e leva a ★");
     ok(naFicha.temFiltro, "o seletor de tipo de treino ganha a opção '★ Meus favoritos'");
 
     // 4) a estrela ao lado do seletor favorita sem sair da ficha
     const pelaFicha = await pF.evaluate(() => {
-      const ex = document.querySelector('[data-exsel="ff1"]');
-      ex.value = "Remada curvada"; ex.dispatchEvent(new Event("change", { bubbles: true }));
+      const bs = document.querySelector('[data-exbusca="ff1"]');
+      bs.value = "Remada curvada";
+      bs.dispatchEvent(new Event("input", { bubbles: true }));
+      const c = [...document.querySelectorAll('[data-exchip="ff1"]')].find((x) => x.getAttribute("data-nome") === "Remada curvada");
+      c.click();
       const antes = document.querySelector('[data-exfavsel="ff1"]').textContent;
       document.querySelector('[data-exfavsel="ff1"]').click();
       return { antes: antes, depois: document.querySelector('[data-exfavsel="ff1"]').textContent, lista: window.__favPT.lista() };
@@ -8421,9 +8480,11 @@ async function abaPt(p, a) {
 
     // 5) o filtro de favoritos no tipo de treino deixa só eles
     const soFav = await pF.evaluate(() => {
+      const bs2 = document.querySelector('[data-exbusca="ff1"]');
+      bs2.value = ""; bs2.dispatchEvent(new Event("input", { bubbles: true }));
       const mv = document.querySelector('[data-exmov="ff1"]');
       mv.value = "★ Meus favoritos"; mv.dispatchEvent(new Event("change", { bubbles: true }));
-      return Array.from(document.querySelectorAll('[data-exsel="ff1"] option')).map((o) => o.value).filter(Boolean);
+      return Array.from(document.querySelectorAll('[data-exchip="ff1"]')).map((o) => o.getAttribute("data-nome"));
     });
     ok(soFav.length === 2 && soFav.indexOf("Agachamento livre") >= 0, "escolher '★ Meus favoritos' deixa só os favoritos na lista (" + soFav.length + ")");
     await pF.close();
