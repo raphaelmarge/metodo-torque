@@ -1411,8 +1411,9 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   }
   .tdtopo .dbt { background: var(--roxo, #7c3aed); color: #fff; }
   .tdtopo .dbt.sec { background: var(--tk-sup3); border: 1px solid var(--tk-bd3); color: var(--tk-tx2); }
-  .tdcols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: start; }
-  @media (max-width: 1000px) { .tdcols { grid-template-columns: 1fr; } }
+  .tdcols { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .tdcols > * { min-width: 0; }
+  @media (max-width: 1000px) { .tdcols { grid-template-columns: minmax(0, 1fr); } }
   /* ============================================================
    * TELA 20 do handoff — MONTAR TREINO NO CELULAR.
    * Regra 6 do colapso: "formulario de montar vira gaveta de baixo
@@ -1432,17 +1433,17 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
    * tempo dariam duas gavetas empilhadas na mesma parte da tela.
    * ============================================================ */
   @media (max-width: 900px) {
-    .tdcols { grid-template-columns: 1fr; gap: 12px; }
+    .tdcols { grid-template-columns: minmax(0, 1fr); gap: 12px; }
     .tddir { order: 1; }                 /* a ficha vem primeiro: e o que se le */
-    .tdesq { order: 2; position: sticky; bottom: 0; z-index: 5;
-             background: var(--pt-card); border-top: 1px solid var(--pt-borda-gaveta);
-             border-radius: 22px 22px 0 0; box-shadow: 0 -18px 40px rgba(0,0,0,.5);
-             margin: 0 -12px; padding: 12px 18px 16px;
-             max-height: 52vh; overflow-y: auto; }
-    /* o puxador da gaveta */
-    .tdesq::before { content: ""; display: block; width: 38px; height: 4px; border-radius: 3px;
-                     background: var(--pt-borda-forte); margin: 0 auto 12px; }
-    .tdesq .tdrot { text-align: center; }
+    /* ⚠️ AQUI ELA ERA UMA GAVETA GRUDADA NO PE DA TELA (position: sticky).
+     * Na pratica ela ficava POR CIMA da ficha — o Raphael abriu no celular e
+     * viu os exercicios cortados atras do "Buscar nos 1780 exercicios", sem
+     * jeito de fechar. Bonito na maquete, inviavel no polegar. Agora ela e um
+     * bloco NORMAL logo abaixo da ficha: nada cobre nada, e a ordem de leitura
+     * e a ordem de uso (ve a ficha -> escolhe o proximo exercicio). */
+    .tdesq { order: 2; position: static; background: var(--pt-caixa);
+             border: 1px solid var(--pt-borda); border-radius: 16px;
+             margin: 0; padding: 13px 14px 15px; box-shadow: none; }
     /* a cascata em UMA fita que rola: empilhada, os tres seletores comiam
      * 180px da gaveta e a ficha atras sumia */
     .tdesq .tdcasc { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 7px;
@@ -1480,22 +1481,42 @@ window.mi = function (n, s) { return "<svg class='mi' viewBox='0 0 24 24' width=
   .tdchip.mais { border-style: dashed; color: var(--tk-tx4); }
   .tdficha { background: var(--tk-sup); border: 1px solid var(--tk-bd); border-radius: 18px; padding: 14px 16px; }
   .tdfcab { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
-  .tdfcab .tdl { width: 34px; height: 34px; flex: none; border-radius: 11px; background: var(--roxo, #7c3aed); color: #fff;
-                 display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; }
-  .tdfcab .tdn2 { font-size: 15px; font-weight: 800; }
-  .tdfcab .tds { font-size: 11.5px; font-weight: 600; color: var(--tk-tx5); margin-top: 1px; }
-  .tdex { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 13px;
+  .tdfcab .tds { font-size: 11.5px; font-weight: 700; color: var(--pt-txt-4); margin-right: auto; }
+  /* ============================================================
+   * A LINHA DO EXERCICIO — uma forma so de editar (v633)
+   *
+   * A linha inteira e UM botao que abre o editor. Fora dele so existem as
+   * tres acoes de POSICAO (subir, descer, tirar), que sao coisa diferente de
+   * editar. Nada de puxador falso, nada de <select> solto no meio do nome,
+   * nada de prompt() do navegador.
+   * ============================================================ */
+  .tdex { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+          gap: 6px 10px; padding: 4px 6px 4px 4px; border-radius: 13px;
           background: var(--tk-sup3); border: 1px solid var(--tk-bd3); margin-bottom: 8px; }
-  .tdex .tdh { flex: none; color: var(--tk-tx6); font-size: 14px; cursor: default; }
-  .tdex .tdnm { font-size: 13.5px; font-weight: 800; color: var(--tk-tx); }
-  .tdex .tdsub { font-size: 11.5px; font-weight: 600; color: var(--tk-tx4); margin-top: 2px; display: flex;
-                 flex-wrap: wrap; align-items: center; gap: 4px; }
-  .tdex .tdsub button { background: none; border: 0; padding: 0; font: inherit; color: var(--tk-roxoTx2); cursor: pointer; }
-  .tdex .tdsub button:hover { text-decoration: underline; }
-  .tdex .tdac { margin-left: auto; display: flex; gap: 4px; flex: none; }
-  .tdex .tdac button { background: none; border: 0; color: var(--tk-tx5); font-size: 13px; cursor: pointer; padding: 3px 5px;
-                       border-radius: 7px; font-family: inherit; }
+  .tdex.aberto { border-color: var(--pt-sel-borda); background: var(--pt-caixa); }
+  .tdex .tdexbt { display: block; width: 100%; min-width: 0; text-align: left; background: none; border: 0;
+                  font-family: inherit; cursor: pointer; padding: 7px 8px; border-radius: 10px; color: inherit; }
+  .tdex .tdexbt:hover { background: var(--pt-sel); }
+  .tdex .tdnm { display: block; font-size: 13.5px; font-weight: 800; color: var(--tk-tx); }
+  .tdex .tdnm span { white-space: nowrap; font-size: 11px; }
+  .tdex .tdsub { display: block; font-size: 11.5px; font-weight: 600; color: var(--tk-tx4); margin-top: 2px;
+                 font-variant-numeric: tabular-nums; }
+  .tdex .tdac { display: flex; gap: 2px; flex: none; }
+  .tdex .tdac button { background: none; border: 0; color: var(--tk-tx5); font-size: 14px; cursor: pointer;
+                       width: var(--pt-h-bt-3); height: var(--pt-h-bt-3); border-radius: 9px; font-family: inherit; }
   .tdex .tdac button:hover { background: var(--tk-roxoFraco); color: var(--tk-roxoTx); }
+  /* o editor: todos os campos daquele exercicio, num lugar so */
+  .tdex .tdedit { grid-column: 1 / -1; display: grid; gap: 9px 10px; padding: 4px 8px 9px;
+                  grid-template-columns: 82px 1fr 92px; }
+  .tdex .tdedit label { display: block; margin: 0; font-size: 9.5px; font-weight: 800; letter-spacing: .16em;
+                        text-transform: uppercase; color: var(--pt-txt-5); }
+  .tdex .tdedit input, .tdex .tdedit select { width: 100%; margin-top: 4px; min-height: var(--pt-h-bt-2);
+                                              font-size: 13px; }
+  /* series | repeticoes | descanso na primeira fileira; tipo de serie e
+   * observacao ocupam a linha inteira — num "1fr" de 82px o nome da tecnica
+   * saia cortado em "Serie" */
+  .tdex .tdedit label:nth-child(4), .tdex .tdedit .tdeobs { grid-column: 1 / -1; }
+  @media (max-width: 700px) { .tdex .tdedit { grid-template-columns: 1fr 1fr; } }
   .tecchip3 { height: 21px; padding: 0 4px; margin-left: 7px; border-radius: 6px; font-size: 9.5px; font-weight: 800;
               background: var(--tk-sup4); border: 1px solid var(--tk-bd3); color: var(--tk-tx5); width: auto; vertical-align: 2px; }
   .tecchip3.on { background: rgba(251,146,60,.18); border-color: rgba(251,146,60,.32); color: var(--tk-aten); }
@@ -9293,29 +9314,47 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
         "</div>" +
         /* ---------- coluna da direita: a ficha que esta sendo montada ---------- */
         '<div class="tddir"><div class="tdficha">' +
-        '<div class="tdfcab"><span class="tdl">' + esc(letraF) + "</span>" +
-        '<div style="min-width:0;"><div class="tdn2">' + esc(f.titulo) + "</div>" +
-        '<div class="tds">' + S.plural(f.itens.length, "exercício", "exercícios") + (f.itens.length ? " · ~" + min + " min" : "") + "</div></div>" +
-        '<span style="margin-left:auto;"></span>' +
-        '<button class="btn sec mini" data-rmficha="' + f.id + '" aria-label="apagar a ficha inteira" title="apagar a ficha inteira">✕</button></div>' +
+        /* o NOME da ficha ja esta na tampa da gaveta, logo acima — repetir
+         * aqui era a segunda duplicata da tela. Fica so o tamanho dela. */
+        '<div class="tdfcab"><div class="tds">' +
+        (f.itens.length ? "~" + min + " min de treino" : "Ficha vazia") + "</div>" +
+        '<button class="btn sec mini" data-rmficha="' + f.id + '" aria-label="apagar a ficha inteira" title="apagar a ficha inteira">✕ apagar ficha</button></div>' +
+        /* UMA forma de editar (conserto da v633). Antes a mesma linha tinha
+         * quatro linguagens ao mesmo tempo: um "≡" que PARECIA arrastar e não
+         * arrastava, um <select> de tipo de série colado no nome, três textos
+         * que abriam prompt() do navegador e as setas. O Raphael abriu no
+         * celular e disse "extremamente confuso" — com razão.
+         *
+         * Agora: tocar na linha ABRE o editor do exercício, com todos os
+         * campos de verdade num lugar só. Fora dele sobram apenas as três
+         * ações de posição (↑ ↓ ✕), que são coisa diferente de editar. */
         (f.itens.length ? f.itens.map(function (it, i) {
           var ex = exPorId(st, it.exId) || { nome: "(exercício removido)" };
-          return '<div class="tdex"><span class="tdh" title="use ↑ ↓ pra mudar a ordem">≡</span>' +
-            '<div style="min-width:0;"><div class="tdnm">' + esc(ex.nome) +
-            // o tipo de serie e um SELECT com cara de selo, colado no nome — na
-            // sub-linha ele empurrava tudo pra segunda fileira
-            (videoDoEx(ex) ? " <span title='tem vídeo' style='color:var(--tk-tx5);'>▸</span>" : "") +
-            '<select class="tecsel tecchip3' + (it.tec ? " on" : "") + '" data-ttecsel="' + f.id + ":" + i + '" title="tipo de série neste exercício" aria-label="tipo de série">' + opcoesTec(it.tec, 1) + "</select></div>" +
-            '<div class="tdsub"><button data-tsr="' + f.id + ":" + i + '" title="mudar séries e repetições">' + it.series + " × " + esc(String(it.reps)) + "</button>" +
-            '<span>·</span><button data-tdesc="' + f.id + ":" + i + '" title="mudar o descanso entre séries">' + (+it.descanso || 60) + " s</button>" +
-            '<span>·</span><button data-tobs="' + f.id + ":" + i + '" title="' + (it.obs ? esc(it.obs) + " — clique para editar" : "editar a observação do exercício") + '">' +
-            (it.obs ? esc(it.obs.length > 30 ? it.obs.slice(0, 29) + "…" : it.obs) : "✎ obs") + "</button></div></div>" +
+          var chave = f.id + ":" + i;
+          var aberto = !!exAberto[chave];
+          var resumo = it.series + " × " + esc(String(it.reps)) + " · " + (+it.descanso || 60) + " s" +
+            (it.tec ? " · " + esc(tecNome(it.tec)) : "") +
+            (it.obs ? " · " + esc(it.obs.length > 26 ? it.obs.slice(0, 25) + "…" : it.obs) : "");
+          return '<div class="tdex' + (aberto ? " aberto" : "") + '">' +
+            '<button type="button" class="tdexbt" data-exab="' + chave + '" aria-expanded="' + (aberto ? "true" : "false") + '">' +
+            '<span class="tdnm">' + esc(ex.nome) + "</span>" +
+            // o "tem video" e FATO do exercicio, entao vive na linha dos fatos —
+            // colado no nome ele caia sozinho numa segunda linha e parecia parte do nome
+            '<span class="tdsub">' + resumo +
+            (videoDoEx(ex) ? " · <span title='este exercício tem vídeo'>▸ vídeo</span>" : "") + "</span></button>" +
             '<span class="tdac">' +
-            (i > 0 ? '<button data-sobe="' + f.id + ":" + i + '" title="subir na ficha">↑</button>' : "") +
-            (i < f.itens.length - 1 ? '<button data-desce="' + f.id + ":" + i + '" title="descer na ficha">↓</button>' : "") +
-            '<button data-rmitem="' + f.id + ":" + i + '" aria-label="tirar o exercício da ficha" title="tirar da ficha">✕</button></span></div>';
+            (i > 0 ? '<button data-sobe="' + chave + '" title="subir na ficha" aria-label="subir na ficha">↑</button>' : "") +
+            (i < f.itens.length - 1 ? '<button data-desce="' + chave + '" title="descer na ficha" aria-label="descer na ficha">↓</button>' : "") +
+            '<button data-rmitem="' + chave + '" aria-label="tirar o exercício da ficha" title="tirar da ficha">✕</button></span>' +
+            '<div class="tdedit"' + (aberto ? "" : " hidden") + '>' +
+            '<label>Séries<input type="number" min="1" inputmode="numeric" data-tfld="' + chave + ':series" value="' + esc(String(it.series || 3)) + '"></label>' +
+            '<label>Repetições<input data-tfld="' + chave + ':reps" value="' + esc(String(it.reps == null ? "" : it.reps)) + '" placeholder="12 ou 30s"></label>' +
+            '<label>Descanso (s)<input type="number" min="0" inputmode="numeric" data-tfld="' + chave + ':descanso" value="' + (+it.descanso || 60) + '"></label>' +
+            '<label>Tipo de série<select data-tfld="' + chave + ':tec">' + opcoesTec(it.tec) + "</select></label>" +
+            '<label class="tdeobs">Observação pro aluno<input data-tfld="' + chave + ':obs" value="' + esc(String(it.obs || "")) + '" placeholder="ex.: pegada fechada, desce devagar"></label>' +
+            "</div></div>";
         }).join("") : "") +
-        '<div class="tdvazio">' + (f.itens.length ? "Escolha ao lado e toque em + Adicionar" : "Ficha vazia — escolha o primeiro exercício ao lado") + "</div>" +
+        '<div class="tdvazio">' + (f.itens.length ? "Pra somar mais um, use o <b>Escolher exercício</b> desta ficha" : "Ficha vazia — escolha o primeiro exercício no <b>Escolher exercício</b>") + "</div>" +
         // capa da ficha: aparece no card "treino de hoje" do app do aluno
         '<div class="linha-flex" style="gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">' +
         (f.capa ? '<img src="' + f.capa + '" alt="capa da ficha" style="width:52px;height:65px;object-fit:cover;border-radius:10px;flex:none;">' : "") +
@@ -9333,6 +9372,10 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   // Na tela 2d quem aparece sao os CHIPS; o <select data-exsel> continua existindo,
   // escondido, porque e ele que o "+ Adicionar" le (e o que os testes dirigem).
   var chipsAbertos = {}; // fid -> mostrar a lista inteira em vez dos 5 primeiros
+  /* qual exercicio esta com o editor aberto ("fid:i" -> 1). Fica FORA do
+   * render porque renderFichas() reconstroi a lista inteira a cada troca de
+   * campo — sem isso o editor fechava na cara do professor a cada digito. */
+  var exAberto = {};
   function populaCascata(fid) {
     var movSel = document.querySelector('[data-exmov="' + fid + '"]');
     var zonaSel = document.querySelector('[data-exzona="' + fid + '"]');
@@ -9397,19 +9440,27 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     btn.title = !nome ? "escolha um exercício pra favoritar" : fav ? "tirar dos favoritos" : "marcar como favorito — aparece primeiro na próxima ficha";
   }
   $("fichasBox").addEventListener("change", function (e) {
-    // tipo de série de um exercício que já está na ficha
-    var alvoTec = e.target.getAttribute && e.target.getAttribute("data-ttecsel");
-    if (alvoTec) {
-      var pTec = alvoTec.split(":");
-      var stT = load();
-      var tT = treinoDe(stT, $("tAluno").value);
-      var fT = tT.fichas.find(function (x) { return x.id === pTec[0]; });
-      var itT = fT && fT.itens[+pTec[1]];
-      if (!itT) return;
-      var vTec = e.target.value;
-      if (!vTec || !TECS_PT.some(function (x) { return x[0] === vTec; })) delete itT.tec; else itT.tec = vTec;
-      marcaAppPendente(stT, $("tAluno").value);
-      S.write("ptStudio", stT);
+    /* os campos do editor do exercicio: series, repeticoes, descanso, tipo de
+     * serie e observacao. UM caminho so — antes eram tres prompt() do
+     * navegador mais um <select> solto na linha. */
+    var fld = e.target.getAttribute && e.target.getAttribute("data-tfld");
+    if (fld) {
+      var pf = fld.split(":");
+      var stF = load();
+      var tF = treinoDe(stF, $("tAluno").value);
+      var fF = tF.fichas.find(function (x) { return x.id === pf[0]; });
+      var itF = fF && fF.itens[+pf[1]];
+      if (!itF) return;
+      var campo = pf[2], vF = e.target.value;
+      if (campo === "series") itF.series = Math.max(1, parseInt(vF, 10) || 0) || +itF.series || 3;
+      else if (campo === "reps") itF.reps = String(vF).trim() || itF.reps || "12";
+      else if (campo === "descanso") itF.descanso = Math.max(0, parseInt(vF, 10) || 0);
+      else if (campo === "obs") { if (String(vF).trim()) itF.obs = String(vF).trim().slice(0, 120); else delete itF.obs; }
+      else if (campo === "tec") {
+        if (!vF || !TECS_PT.some(function (x) { return x[0] === vF; })) delete itF.tec; else itF.tec = vF;
+      } else return;
+      marcaAppPendente(stF, $("tAluno").value);
+      S.write("ptStudio", stF);
       renderFichas();
       return;
     }
@@ -9425,6 +9476,23 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
   });
   // toque no chip = escolher o exercicio (o <select> escondido continua a fonte da verdade)
   $("fichasBox").addEventListener("click", function (e) {
+    /* tocar na linha do exercicio abre (ou fecha) o editor dele. E o UNICO
+     * caminho pra mexer em serie, repeticao, descanso, tipo de serie e
+     * observacao — o resto da linha sao so as acoes de posicao. */
+    var ab = e.target.closest && e.target.closest("[data-exab]");
+    if (ab) {
+      var chAb = ab.getAttribute("data-exab");
+      var estava = !!exAberto[chAb];
+      exAberto = {};                       // um editor por vez: dois abertos viram parede
+      if (!estava) exAberto[chAb] = 1;
+      renderFichas();
+      // devolve o foco pro primeiro campo do que acabou de abrir
+      if (!estava) {
+        var pri = document.querySelector('[data-tfld="' + chAb + ':series"]');
+        if (pri && pri.focus) pri.focus();
+      }
+      return;
+    }
     var chip = e.target.closest && e.target.closest("[data-exchip]");
     if (chip) {
       var fidC = chip.getAttribute("data-exchip");
@@ -11951,9 +12019,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
     var rmF = e.target.getAttribute && e.target.getAttribute("data-rmficha");
     var rmI = e.target.getAttribute && e.target.getAttribute("data-rmitem");
     var sob = e.target.getAttribute && e.target.getAttribute("data-sobe");
-    var tds = e.target.getAttribute && e.target.getAttribute("data-tdesc");
-    var tsr = e.target.getAttribute && e.target.getAttribute("data-tsr");
-    var tob = e.target.getAttribute && e.target.getAttribute("data-tobs");
     var des = e.target.getAttribute && e.target.getAttribute("data-desce");
     // foto da ficha (vira a capa do card "treino de hoje" no app do aluno)
     var cap = e.target.getAttribute && e.target.getAttribute("data-fcapa");
@@ -12005,7 +12070,7 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       renderFichas();
       return;
     }
-    if (!add && !rmF && !rmI && !sob && !tds && !tsr && !tob && !des) return;
+    if (!add && !rmF && !rmI && !sob && !des) return;
     var alunoId = $("tAluno").value;
     var st = load();
     var t = treinoDe(st, alunoId);
@@ -12046,36 +12111,6 @@ Novo horário: atendimentos de 6h às 21h" style="width: 100%; margin-top: 4px;"
       var fs = t.fichas.find(function (x) { return x.id === ps[0]; });
       var idx = +ps[1];
       if (fs && idx > 0) { var tmp = fs.itens[idx - 1]; fs.itens[idx - 1] = fs.itens[idx]; fs.itens[idx] = tmp; }
-    }
-    if (tds) {
-      var pt2 = tds.split(":");
-      var ft = t.fichas.find(function (x) { return x.id === pt2[0]; });
-      var itd = ft && ft.itens[+pt2[1]];
-      if (!itd) return;
-      var novo = prompt("Descanso entre séries (segundos):", itd.descanso || 60);
-      if (novo === null) return;
-      itd.descanso = Math.max(0, parseInt(novo, 10) || 0) || 60;
-    }
-    if (tsr) {
-      var pr = tsr.split(":");
-      var fr = t.fichas.find(function (x) { return x.id === pr[0]; });
-      var itr = fr && fr.itens[+pr[1]];
-      if (!itr) return;
-      var nSer = prompt("Séries:", itr.series || 3);
-      if (nSer === null) return;
-      var nRep = prompt("Repetições (ex.: 12 ou 30s):", itr.reps || "12");
-      if (nRep === null) return;
-      itr.series = Math.max(1, parseInt(nSer, 10) || 0) || +itr.series || 3;
-      itr.reps = nRep.trim() || itr.reps || "12";
-    }
-    if (tob) {
-      var po = tob.split(":");
-      var fo = t.fichas.find(function (x) { return x.id === po[0]; });
-      var ito = fo && fo.itens[+po[1]];
-      if (!ito) return;
-      var nObs = prompt("Observação do exercício (deixe vazio pra remover):", ito.obs || "");
-      if (nObs === null) return;
-      ito.obs = nObs.trim();
     }
     if (des) {
       var pd = des.split(":");
